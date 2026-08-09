@@ -36,16 +36,16 @@ export function clearActivityTransition(save: PlayerSave): PlayerSave {
   return { ...save, activityTransition: null }
 }
 
-function makeTransition(
+function makeStopTransition(
   db: GameDatabase,
-  partial: Omit<ActivityTransition, 'startedAt' | 'durationMs'> & {
+  partial: Omit<ActivityTransition, 'startedAt' | 'durationMs' | 'kind'> & {
     startedAt?: string
     durationMs?: number
   },
   nowMs: number,
 ): ActivityTransition {
   return {
-    kind: partial.kind,
+    kind: 'stopping',
     activityId: partial.activityId,
     followUpActivityId: partial.followUpActivityId ?? null,
     productionRecipeId: partial.productionRecipeId ?? null,
@@ -71,10 +71,9 @@ function beginCancelTransition(
 ): PlayerSave {
   return {
     ...save,
-    activityTransition: makeTransition(
+    activityTransition: makeStopTransition(
       db,
       {
-        kind: 'stopping',
         activityId: save.currentActivityId ?? save.productionRecipeId ?? 'activity',
         followUpActivityId: followUp.followUpActivityId ?? null,
         productionRecipeId: followUp.productionRecipeId ?? null,
@@ -85,7 +84,41 @@ function beginCancelTransition(
   }
 }
 
-/** Begin the start delay for a validated pool activity (or replace via cancel→start). */
+/** Immediately begin a pool activity (no start delay). */
+function startPoolActivityNow(
+  db: GameDatabase,
+  save: PlayerSave,
+  activityId: string,
+  nowMs: number,
+): PlayerSave {
+  const nowIso = new Date(nowMs).toISOString()
+  const cleared = clearActivityTransition(save)
+  const started = beginActivitySave(cleared, activityId, nowIso)
+  const generated = generateNextAction(db, started, activityId, Math.random, nowMs)
+  return generated ? generated.save : started
+}
+
+/** Immediately begin a Standard Production queue (no start delay). */
+function startProductionNow(
+  db: GameDatabase,
+  save: PlayerSave,
+  activityId: string,
+  recipeId: string,
+  quantity: number,
+  nowMs: number,
+): PlayerSave | { ok: false; reason: string } {
+  const nowIso = new Date(nowMs).toISOString()
+  const cleared = clearActivityTransition(save)
+  const started = beginActivitySave(cleared, activityId, nowIso)
+  const queued = beginProductionQueue(db, started, activityId, recipeId, quantity)
+  if (!queued.ok) return queued
+  return queued.save
+}
+
+/**
+ * Start a pool activity immediately, or cancel a running activity first (30s stop delay)
+ * then start the new one as soon as that stop completes — with no second start delay.
+ */
 export function requestActivityStart(
   db: GameDatabase,
   save: PlayerSave,
@@ -96,13 +129,12 @@ export function requestActivityStart(
     return { ok: false, reason: 'Cannot change activities while recovering from defeat.' }
   }
   if (isActivityTransitionPending(save, nowMs)) {
-    return { ok: false, reason: 'Wait for the current start/stop delay to finish.' }
+    return { ok: false, reason: 'Wait for the current stop delay to finish.' }
   }
 
   const validation = validateActivityStart(db, save, activityId)
   if (!validation.ok) return validation
 
-  // Already running this activity with no production queue — nothing to do.
   if (
     save.currentActivityId === activityId &&
     !save.productionRecipeId &&
@@ -111,7 +143,7 @@ export function requestActivityStart(
     return { ok: true, save }
   }
 
-  // Cancel any running Primary Activity first (including Replace without an explicit Stop).
+  // Replace: 30s cancel only, then immediate start of the follow-up.
   if (hasRunningPrimaryActivity(save) && save.currentActivityId !== activityId) {
     return {
       ok: true,
@@ -123,23 +155,7 @@ export function requestActivityStart(
     }
   }
 
-  return {
-    ok: true,
-    save: {
-      ...save,
-      activityTransition: makeTransition(
-        db,
-        {
-          kind: 'starting',
-          activityId,
-          followUpActivityId: null,
-          productionRecipeId: null,
-          productionQuantity: null,
-        },
-        nowMs,
-      ),
-    },
-  }
+  return { ok: true, save: startPoolActivityNow(db, save, activityId, nowMs) }
 }
 
 /**
@@ -156,12 +172,11 @@ export function requestCancelForProductionPicker(
     return { ok: false, reason: 'Cannot change activities while recovering from defeat.' }
   }
   if (isActivityTransitionPending(save, nowMs)) {
-    return { ok: false, reason: 'Wait for the current start/stop delay to finish.' }
+    return { ok: false, reason: 'Wait for the current stop delay to finish.' }
   }
   if (!hasRunningPrimaryActivity(save)) {
     return { ok: true, save }
   }
-  // Already on this production activity with no queue — picker can open immediately.
   if (save.currentActivityId === productionActivityId && !save.productionRecipeId) {
     return { ok: true, save }
   }
@@ -176,7 +191,7 @@ export function requestCancelForProductionPicker(
   }
 }
 
-/** Begin the start delay for a confirmed Standard Production queue. */
+/** Start Standard Production immediately, or after a 30s cancel if something is already running. */
 export function requestProductionStart(
   db: GameDatabase,
   save: PlayerSave,
@@ -189,13 +204,12 @@ export function requestProductionStart(
     return { ok: false, reason: 'Cannot change activities while recovering from defeat.' }
   }
   if (isActivityTransitionPending(save, nowMs)) {
-    return { ok: false, reason: 'Wait for the current start/stop delay to finish.' }
+    return { ok: false, reason: 'Wait for the current stop delay to finish.' }
   }
 
   const validation = validateActivityStart(db, save, activityId)
   if (!validation.ok) return validation
 
-  // Always cancel a running Primary Activity / queue first (same station included).
   if (hasRunningPrimaryActivity(save)) {
     return {
       ok: true,
@@ -207,23 +221,9 @@ export function requestProductionStart(
     }
   }
 
-  return {
-    ok: true,
-    save: {
-      ...save,
-      activityTransition: makeTransition(
-        db,
-        {
-          kind: 'starting',
-          activityId,
-          followUpActivityId: null,
-          productionRecipeId: recipeId,
-          productionQuantity: quantity,
-        },
-        nowMs,
-      ),
-    },
-  }
+  const started = startProductionNow(db, save, activityId, recipeId, quantity, nowMs)
+  if ('ok' in started && started.ok === false) return started
+  return { ok: true, save: started as PlayerSave }
 }
 
 /** Begin the stop/cancel delay for the current primary activity. */
@@ -236,7 +236,7 @@ export function requestActivityStop(
     return { ok: false, reason: 'Cannot change activities while recovering from defeat.' }
   }
   if (isActivityTransitionPending(save, nowMs)) {
-    return { ok: false, reason: 'Wait for the current start/stop delay to finish.' }
+    return { ok: false, reason: 'Wait for the current stop delay to finish.' }
   }
   if (!hasRunningPrimaryActivity(save)) {
     return { ok: false, reason: 'No activity is running.' }
@@ -252,40 +252,35 @@ export function cancelActivityTransition(save: PlayerSave): PlayerSave {
   return clearActivityTransition(save)
 }
 
-function applyStartingTransition(
+function applyFollowUpStart(
   db: GameDatabase,
   save: PlayerSave,
   transition: ActivityTransition,
   nowMs: number,
 ): PlayerSave {
-  const activityId = transition.activityId
-  const nowIso = new Date(nowMs).toISOString()
-  let next = clearActivityTransition(save)
+  const followUp = transition.followUpActivityId
+  if (!followUp) return save
 
   if (transition.productionRecipeId && transition.productionQuantity) {
-    const started = beginActivitySave(next, activityId, nowIso)
-    const queued = beginProductionQueue(
+    const started = startProductionNow(
       db,
-      started,
-      activityId,
+      save,
+      followUp,
       transition.productionRecipeId,
       transition.productionQuantity,
+      nowMs,
     )
-    if (!queued.ok) {
-      return { ...next, activityTransition: null }
-    }
-    return queued.save
+    if ('ok' in started && started.ok === false) return save
+    return started as PlayerSave
   }
 
-  const activity = getActivity(db, activityId)
+  const activity = getActivity(db, followUp)
   if (activity && isStandardProductionActivity(db, activity)) {
-    // Production start without a queued recipe should not happen via transition.
-    return next
+    // Picker opens from the UI after a plain cancel; nothing to auto-start.
+    return save
   }
 
-  const started = beginActivitySave(next, activityId, nowIso)
-  const generated = generateNextAction(db, started, activityId, Math.random, nowMs)
-  return generated ? generated.save : started
+  return startPoolActivityNow(db, save, followUp, nowMs)
 }
 
 function applyStoppingTransition(
@@ -301,29 +296,13 @@ function applyStoppingTransition(
     next = clearActivitySave(next, nowMs)
   }
 
-  const followUp = transition.followUpActivityId
-  if (!followUp) return next
-
-  // Chain into a start delay for the replacement activity.
-  return {
-    ...next,
-    activityTransition: makeTransition(
-      db,
-      {
-        kind: 'starting',
-        activityId: followUp,
-        followUpActivityId: null,
-        productionRecipeId: transition.productionRecipeId,
-        productionQuantity: transition.productionQuantity,
-      },
-      nowMs,
-    ),
-  }
+  // After stop completes: no second delay — start the follow-up immediately if any.
+  return applyFollowUpStart(db, next, transition, nowMs)
 }
 
 /**
- * Apply completed start/stop delays. Safe to call every frame and during AFK catch-up.
- * Chains stop→start follow-ups, resolving multiple completed steps within the window.
+ * Apply completed stop delays. Safe to call every frame and during AFK catch-up.
+ * Follow-up activities begin immediately when the stop delay finishes (no start cooldown).
  */
 export function resolveActivityTransitions(
   db: GameDatabase,
@@ -339,8 +318,17 @@ export function resolveActivityTransitions(
     const completedAt = Date.parse(transition.startedAt) + transition.durationMs
     const at = Number.isFinite(completedAt) ? Math.min(completedAt, nowMs) : nowMs
 
+    // Start transitions are no longer queued; ignore any legacy ones by applying immediately.
     if (transition.kind === 'starting') {
-      current = applyStartingTransition(db, current, transition, at)
+      current = applyFollowUpStart(
+        db,
+        clearActivityTransition(current),
+        {
+          ...transition,
+          followUpActivityId: transition.activityId,
+        },
+        at,
+      )
     } else {
       current = applyStoppingTransition(db, current, transition, at)
     }

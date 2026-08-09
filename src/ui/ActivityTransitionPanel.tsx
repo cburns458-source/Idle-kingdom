@@ -5,6 +5,8 @@ interface ActivityTransitionPanelProps {
   transition: ActivityTransition
   activity: ActivityRow | undefined
   remainingMs: number
+  /** When false, the Cancel control is hidden (e.g. delay already finished). */
+  showCancel?: boolean
   onCancel: () => void
 }
 
@@ -12,6 +14,7 @@ export function ActivityTransitionPanel({
   transition,
   activity,
   remainingMs,
+  showCancel = true,
   onCancel,
 }: ActivityTransitionPanelProps) {
   const total = Math.max(1, transition.durationMs)
@@ -21,12 +24,8 @@ export function ActivityTransitionPanel({
   const secondsLeft = Math.max(0, Math.ceil(remainingMs / 1000))
   const label = activity?.['Contextual Name'] ?? activity?.['Internal Key'] ?? 'Activity'
   const switching = transition.kind === 'stopping' && Boolean(transition.followUpActivityId)
-  const title =
-    transition.kind === 'starting'
-      ? 'Starting activity'
-      : switching
-        ? 'Cancelling activity'
-        : 'Stopping activity'
+  const title = switching ? 'Cancelling activity' : 'Stopping activity'
+  const canCancel = showCancel && remainingMs > 0
 
   return (
     <section className="panel glass-panel activity-transition-panel" aria-live="polite">
@@ -35,12 +34,14 @@ export function ActivityTransitionPanel({
           <h2>{title}</h2>
           <p className="lead">{label}</p>
           {switching && (
-            <p className="muted tiny">Then starting the selected activity after this delay.</p>
+            <p className="muted tiny">Selected activity starts as soon as this delay ends.</p>
           )}
         </div>
-        <button type="button" className="btn secondary" onClick={onCancel}>
-          Cancel
-        </button>
+        {canCancel ? (
+          <button type="button" className="btn secondary" onClick={onCancel}>
+            Cancel
+          </button>
+        ) : null}
       </div>
       <div className="action-bar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct}>
         <div className="action-bar-fill" style={{ width: `${pct}%` }} />

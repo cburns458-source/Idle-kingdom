@@ -1088,6 +1088,7 @@ export default function App() {
                       transition={pendingTransition}
                       activity={pendingTransitionActivity}
                       remainingMs={transitionRemaining}
+                      showCancel={transitionRemaining > 0}
                       onCancel={cancelPendingActivityChange}
                     />
                   )}

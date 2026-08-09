@@ -9,15 +9,14 @@ import {
   requestCancelForProductionPicker,
   requestProductionStart,
   resolveActivityTransitions,
-  transitionRemainingMs,
 } from './transition'
 
 const rawDatabase = JSON.parse(
   readFileSync(resolve(process.cwd(), 'public/data/game-database.json'), 'utf8'),
 )
 
-describe('activity start/stop delay', () => {
-  it('delays activity start by the configured 30 seconds', () => {
+describe('activity stop delay (starts are immediate)', () => {
+  it('starts an activity immediately with no start cooldown', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const now = Date.parse('2026-01-01T00:00:00.000Z')
     let save = { ...createNewSave(launch), currentLocationId: 'LOC-0009' }
@@ -27,18 +26,9 @@ describe('activity start/stop delay', () => {
     if (!requested.ok) return
     save = requested.save
 
-    expect(save.currentActivityId).toBeNull()
-    expect(save.activityTransition?.kind).toBe('starting')
-    expect(save.activityTransition?.durationMs).toBe(30_000)
-    expect(transitionRemainingMs(save, now + 10_000)).toBe(20_000)
-
-    save = resolveActivityTransitions(launch, save, now + 29_999)
-    expect(save.currentActivityId).toBeNull()
-    expect(save.activityTransition?.kind).toBe('starting')
-
-    save = resolveActivityTransitions(launch, save, now + 30_000)
     expect(save.activityTransition).toBeNull()
     expect(save.currentActivityId).toBe('ACT-0012')
+    expect(save.currentActionId).toBeTruthy()
   })
 
   it('delays activity stop while the activity keeps running', () => {
@@ -49,10 +39,10 @@ describe('activity start/stop delay', () => {
     const started = requestActivityStart(launch, save, 'ACT-0012', now)
     expect(started.ok).toBe(true)
     if (!started.ok) return
-    save = resolveActivityTransitions(launch, started.save, now + 30_000)
+    save = started.save
     expect(save.currentActivityId).toBe('ACT-0012')
 
-    const stopAt = now + 60_000
+    const stopAt = now + 10_000
     const stopping = requestActivityStop(launch, save, stopAt)
     expect(stopping.ok).toBe(true)
     if (!stopping.ok) return
@@ -65,7 +55,32 @@ describe('activity start/stop delay', () => {
     expect(save.currentActivityId).toBeNull()
   })
 
-  it('replace chains a cancel delay into a start delay', () => {
+  it('after stop completes, starting a new activity has no second cooldown', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const now = Date.parse('2026-01-01T00:00:00.000Z')
+    let save = { ...createNewSave(launch), currentLocationId: 'LOC-0009' }
+
+    const started = requestActivityStart(launch, save, 'ACT-0012', now)
+    expect(started.ok).toBe(true)
+    if (!started.ok) return
+    save = started.save
+
+    const stopAt = now + 10_000
+    const stopping = requestActivityStop(launch, save, stopAt)
+    expect(stopping.ok).toBe(true)
+    if (!stopping.ok) return
+    save = resolveActivityTransitions(launch, stopping.save, stopAt + 30_000)
+    expect(save.currentActivityId).toBeNull()
+    expect(save.activityTransition).toBeNull()
+
+    const nextStart = requestActivityStart(launch, save, 'ACT-0012', stopAt + 30_000)
+    expect(nextStart.ok).toBe(true)
+    if (!nextStart.ok) return
+    expect(nextStart.save.activityTransition).toBeNull()
+    expect(nextStart.save.currentActivityId).toBe('ACT-0012')
+  })
+
+  it('replace uses one stop delay then starts the new activity immediately', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const now = Date.parse('2026-01-01T00:00:00.000Z')
     let save = { ...createNewSave(launch), currentLocationId: 'LOC-0001' }
@@ -73,10 +88,10 @@ describe('activity start/stop delay', () => {
     const first = requestActivityStart(launch, save, 'ACT-0001', now)
     expect(first.ok).toBe(true)
     if (!first.ok) return
-    save = resolveActivityTransitions(launch, first.save, now + 30_000)
+    save = first.save
     expect(save.currentActivityId).toBe('ACT-0001')
 
-    const replaceAt = now + 60_000
+    const replaceAt = now + 10_000
     const replaced = requestActivityStart(launch, save, 'ACT-0021', replaceAt)
     expect(replaced.ok).toBe(true)
     if (!replaced.ok) return
@@ -87,11 +102,6 @@ describe('activity start/stop delay', () => {
     expect(save.activityTransition?.durationMs).toBe(30_000)
 
     save = resolveActivityTransitions(launch, save, replaceAt + 30_000)
-    expect(save.currentActivityId).toBeNull()
-    expect(save.activityTransition?.kind).toBe('starting')
-    expect(save.activityTransition?.activityId).toBe('ACT-0021')
-
-    save = resolveActivityTransitions(launch, save, replaceAt + 60_000)
     expect(save.activityTransition).toBeNull()
     expect(save.currentActivityId).toBe('ACT-0021')
   })
@@ -104,19 +114,15 @@ describe('activity start/stop delay', () => {
     const started = requestActivityStart(launch, save, 'ACT-0012', now)
     expect(started.ok).toBe(true)
     if (!started.ok) return
-    save = resolveActivityTransitions(launch, started.save, now + 30_000)
-    expect(save.currentActivityId).toBe('ACT-0012')
+    save = started.save
 
-    const cancelAt = now + 60_000
-    // Cook at the Kitchen is in Town; move there for validation of later start.
+    const cancelAt = now + 10_000
     save = { ...save, currentLocationId: 'LOC-0002' }
     const cancel = requestCancelForProductionPicker(launch, save, 'ACT-0017', cancelAt)
     expect(cancel.ok).toBe(true)
     if (!cancel.ok) return
     save = cancel.save
-    expect(save.currentActivityId).toBe('ACT-0012')
     expect(save.activityTransition?.kind).toBe('stopping')
-    expect(save.activityTransition?.durationMs).toBe(30_000)
 
     save = resolveActivityTransitions(launch, save, cancelAt + 30_000)
     expect(save.currentActivityId).toBeNull()

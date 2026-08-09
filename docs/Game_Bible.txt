@@ -255,7 +255,7 @@ Starting another Primary Activity stops or replaces the previous one.
 5.2 ACTIVITY FLOW
 1. Select an Activity at the current Location.
 2. Validate Activity requirements.
-3. Wait the configured activity change delay (30 seconds) before the Activity begins.
+3. Begin the Activity immediately (no start cooldown).
 4. Reference the Activity Pool.
 5. Generate one valid Action by weight.
 6. Route the Action to its gameplay system.
@@ -263,7 +263,7 @@ Starting another Primary Activity stops or replaces the previous one.
 8. Grant rewards and XP.
 9. Generate the next Action.
 10. Continue until stopped, interrupted, invalidated, or the unattended-progression limit is reached.
-11. Stopping an Activity also waits the same activity change delay before it ends; travel still interrupts immediately.
+11. Stopping an Activity waits the configured activity change delay (30 seconds) before it ends; Cancel is available during that delay and is removed when the delay completes. Starting another Activity after a completed stop does not apply a second delay. Travel still interrupts immediately.
 
 5.3 MULTI-SKILL POOLS
 - An Activity Pool may contain Actions from different skills or gameplay categories.
