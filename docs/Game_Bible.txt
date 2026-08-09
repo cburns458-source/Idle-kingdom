@@ -703,8 +703,9 @@ Arcana is the instant Special Production skill for item enchantment and magical 
 
 Core resources and relationships:
 - Essence is a primary Arcana resource gathered through Mining.
-- Crafting creates Enchanting Tablets.
+- Crafting creates Enchanting Tablets and Spell Tablets.
 - Arcana consumes an Enchanting Tablet, Essence, and any project-specific materials to apply an enchantment to a valid item.
+- Arcana may also craft prepared Spells (for example Strength Spell) that equip into Spell slots and cycle timed player effects.
 - Arcana projects may require knowledge from NPCs, quests, discoveries, or Locations.
 
 ======================================================================
@@ -749,6 +750,9 @@ Current functional slots:
 - Back.
 - Food.
 - Potion.
+- Spell 1–4.
+
+Spell slots hold prepared Arcana spells. Exactly one spell may occupy each slot. The same spell type may fill multiple slots. Equipped spells cycle in order for one hour each; the active slot’s effect applies to the player for that hour.
 
 11.4 INVENTORY
 - Items use stack limits defined in game data.

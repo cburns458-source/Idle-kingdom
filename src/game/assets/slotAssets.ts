@@ -15,6 +15,10 @@ const SLOT_KEYS: Record<string, string> = {
   'SLOT-0010': 'back',
   'SLOT-0011': 'food',
   'SLOT-0012': 'potion',
+  'SLOT-0013': 'spell_1',
+  'SLOT-0014': 'spell_2',
+  'SLOT-0015': 'spell_3',
+  'SLOT-0016': 'spell_4',
 }
 
 export function slotAssetPath(slotId: string): string {

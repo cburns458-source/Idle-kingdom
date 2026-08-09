@@ -187,7 +187,11 @@
       "offhand": "/assets/icons/slots/slot_offhand.png",
       "potion": "/assets/icons/slots/slot_potion.png",
       "ring": "/assets/icons/slots/slot_ring.png",
-      "weapon_tool": "/assets/icons/slots/slot_weapon_tool.png"
+      "weapon_tool": "/assets/icons/slots/slot_weapon_tool.png",
+      "spell_1": "/assets/icons/slots/slot_spell_1.png",
+      "spell_2": "/assets/icons/slots/slot_spell_2.png",
+      "spell_3": "/assets/icons/slots/slot_spell_3.png",
+      "spell_4": "/assets/icons/slots/slot_spell_4.png"
     },
     "items": {
       "axe": "/assets/icons/items/item_axe.png",
@@ -229,7 +233,8 @@
       "shield": "/assets/icons/items/item_shield.png",
       "steel_pickaxe": "/assets/icons/items/item_steel_pickaxe.png",
       "sword": "/assets/icons/items/item_sword.png",
-      "timber": "/assets/icons/items/item_timber.png"
+      "timber": "/assets/icons/items/item_timber.png",
+      "spell": "/assets/icons/items/item_spell.png"
     },
     "ui": {
       "map": "/assets/icons/ui/ui_map.png"

@@ -18,6 +18,7 @@ const ITEM_ID_ICONS: Record<string, string> = {
   'ITEM-0123': 'hammer',
   'ITEM-0169': 'backpack',
   'ITEM-0288': 'insignia',
+  'ITEM-0295': 'spell',
 }
 
 /** Resolve an icon path for an item using ID, then category/subtype heuristics. */
@@ -122,6 +123,8 @@ function iconStemFromText(blob: string, category: string, subtype: string): stri
   }
   if (blob.includes('dragon') && blob.includes('scale')) return 'dragon_scale'
   if (blob.includes('insignia')) return 'insignia'
+  // Prepared spells only — not "Spell Component" tablets.
+  if (category === 'spell') return 'spell'
   if (category.includes('food') || subtype.includes('food')) return 'food'
   if (category.includes('raw')) return 'raw_food'
   if (category.includes('weapon') || category.includes('tool')) return 'sword'

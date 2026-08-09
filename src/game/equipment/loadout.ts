@@ -2,6 +2,7 @@ import type { EquipmentRow, GameDatabase } from '../data/types'
 import type { EquippedStack, PlayerSave } from '../save/types'
 import { addItemToInventory } from '../activity/rewards'
 import { getSkillProgress } from '../activity/xp'
+import { firstEmptySpellSlot, isSpellEquipment, isSpellSlotId } from '../spells/spells'
 
 export const FOOD_SLOT_ID = 'SLOT-0011'
 export const WEAPON_TOOL_SLOT_ID = 'SLOT-0001'
@@ -147,14 +148,23 @@ export function equipInventoryIndex(
   }
   const itemId = invStack.itemId
   const equipment = db.Equipment.find((row) => row['Item ID'] === itemId)
-  const slotId = equipment?.['Slot ID']
-  if (!equipment || !slotId) {
+  if (!equipment?.['Slot ID']) {
     return { ok: false, reason: 'That item cannot be equipped.' }
   }
 
   const requirementFailure = equipmentRequirementFailure(db, save, equipment)
   if (requirementFailure) {
     return { ok: false, reason: requirementFailure }
+  }
+
+  // Spells may fill any empty spell slot; duplicates are allowed across slots.
+  let slotId = equipment['Slot ID']
+  if (isSpellEquipment(equipment) || isSpellSlotId(slotId)) {
+    const empty = firstEmptySpellSlot(save)
+    if (!empty) {
+      return { ok: false, reason: 'All spell slots are full.' }
+    }
+    slotId = empty
   }
 
   let next = save

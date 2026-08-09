@@ -13,24 +13,35 @@ import { playerDamageRange, playerDamageReduction, playerMaxHp } from '../game/c
 import { destroyInventoryIndexes } from '../game/inventory/destroy'
 import { enchantmentTooltipLines } from '../game/projects/enchantments'
 import type { PlayerSave } from '../game/save/types'
+import {
+  activeSpellSlotId,
+  activeSpellSlotRemainingMs,
+  isSpellItem,
+  isSpellSlotId,
+  spellTooltipLines,
+} from '../game/spells/spells'
 import { ItemIcon, SlotGlyph } from './itemIcons'
 
 type ItemsSubTab = 'items' | 'equipment'
 
-/** Paper-doll order: 3 columns × 4 rows. */
+/** Paper-doll order: 4 columns × 4 rows (spells in the right column). */
 const EQUIPMENT_GRID_ORDER = [
   'SLOT-0008', // Neck
   'SLOT-0003', // Helmet
   'SLOT-0010', // Back
+  'SLOT-0013', // Spell 1
   'SLOT-0001', // Weapon / Tool
   'SLOT-0004', // Chest
   'SLOT-0002', // Off-hand / Shield
+  'SLOT-0014', // Spell 2
   'SLOT-0009', // Ring
   'SLOT-0005', // Legs
   'SLOT-0007', // Gloves
+  'SLOT-0015', // Spell 3
   'SLOT-0011', // Food
   'SLOT-0006', // Boots
   'SLOT-0012', // Potion
+  'SLOT-0016', // Spell 4
 ] as const
 
 interface InventoryViewProps {
@@ -51,6 +62,8 @@ export function InventoryView({ save, database, onChangeSave }: InventoryViewPro
   const maxHp = playerMaxHp(db, save)
   const dr = playerDamageReduction(db, save)
   const selectedCount = selectedIndexes.size
+  const activeSpellSlot = activeSpellSlotId(db)
+  const spellCycleSecondsLeft = Math.ceil(activeSpellSlotRemainingMs(db) / 1000)
 
   function commit(next: PlayerSave) {
     onChangeSave(withRecalculatedVitals(db, next))
@@ -199,10 +212,14 @@ export function InventoryView({ save, database, onChangeSave }: InventoryViewPro
                 const tipId = `bag:${index}:${stack.itemId}:${stack.enchantmentId ?? 'plain'}`
                 const equipment = equipmentForItemId(db, stack.itemId)
                 const enchantLines = enchantmentTooltipLines(db, stack)
+                const spellLines = isSpellItem(db, stack.itemId)
+                  ? spellTooltipLines(db, item, stack.itemId)
+                  : []
                 const tipText = [
                   item?.['Display Name'] ?? stack.itemId,
                   ...equipmentTooltipStatLines(equipment),
                   ...enchantLines,
+                  ...spellLines,
                 ].join('\n')
                 const enchanted = Boolean(stack.enchantmentId)
                 const selected = selectedIndexes.has(index)
@@ -271,6 +288,10 @@ export function InventoryView({ save, database, onChangeSave }: InventoryViewPro
               const tipId = `slot:${slotId}`
               const equipment = stack ? equipmentForItemId(db, stack.itemId) : undefined
               const enchantLines = enchantmentTooltipLines(db, stack)
+              const spellLines = stack && isSpellItem(db, stack.itemId)
+                ? spellTooltipLines(db, item, stack.itemId)
+                : []
+              const isActiveSpell = isSpellSlotId(slotId) && slotId === activeSpellSlot
               const tipText = stack
                 ? [
                     `${item?.['Display Name'] ?? stack.itemId}${
@@ -278,8 +299,18 @@ export function InventoryView({ save, database, onChangeSave }: InventoryViewPro
                     }`,
                     ...equipmentTooltipStatLines(equipment),
                     ...enchantLines,
-                  ].join('\n')
-                : (slot?.['Display Name'] ?? slotId)
+                    ...spellLines,
+                    isActiveSpell ? 'Active spell slot' : null,
+                  ]
+                    .filter(Boolean)
+                    .join('\n')
+                : [
+                    slot?.['Display Name'] ?? slotId,
+                    isSpellSlotId(slotId) ? 'Equip a spell from your bag.' : null,
+                    isActiveSpell ? 'Active spell slot' : null,
+                  ]
+                    .filter(Boolean)
+                    .join('\n')
               const enchanted = Boolean(stack?.enchantmentId)
 
               return (
@@ -288,6 +319,7 @@ export function InventoryView({ save, database, onChangeSave }: InventoryViewPro
                     className={[
                       stack ? 'equip-slot-tile filled' : 'equip-slot-tile empty',
                       enchanted ? 'enchanted' : '',
+                      isActiveSpell ? 'spell-slot-active' : '',
                     ]
                       .filter(Boolean)
                       .join(' ')}
@@ -310,6 +342,9 @@ export function InventoryView({ save, database, onChangeSave }: InventoryViewPro
               )
             })}
           </ul>
+          <p className="muted tiny">
+            Spell slots cycle every hour. Active slot changes in {spellCycleSecondsLeft}s.
+          </p>
           <p className="muted tiny">
             Hold a slot for its name, combat stats, and enchantment. Tap equipped gear to unequip.
           </p>

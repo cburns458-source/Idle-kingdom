@@ -101,6 +101,12 @@
       "Value": "ITEM-0001",
       "Unit": null,
       "Notes": "Gold item record."
+    },
+    {
+      "Key": "spell_cycle_duration",
+      "Value": 3600,
+      "Unit": "seconds",
+      "Notes": "Duration each spell slot remains the active player spell before cycling to the next."
     }
   ],
   "Skills": [
@@ -833,6 +839,38 @@
       "Slot Group": "Consumable Loadout",
       "Status": "Planned",
       "Notes": "One Potion type equipped under current concept."
+    },
+    {
+      "Slot ID": "SLOT-0013",
+      "Internal Key": "spell_1",
+      "Display Name": "Spell 1",
+      "Slot Group": "Spell Loadout",
+      "Status": "Confirmed",
+      "Notes": "Equippable spell. Active spell cycles through slots 1–4 for one hour each."
+    },
+    {
+      "Slot ID": "SLOT-0014",
+      "Internal Key": "spell_2",
+      "Display Name": "Spell 2",
+      "Slot Group": "Spell Loadout",
+      "Status": "Confirmed",
+      "Notes": "Equippable spell. Active spell cycles through slots 1–4 for one hour each."
+    },
+    {
+      "Slot ID": "SLOT-0015",
+      "Internal Key": "spell_3",
+      "Display Name": "Spell 3",
+      "Slot Group": "Spell Loadout",
+      "Status": "Confirmed",
+      "Notes": "Equippable spell. Active spell cycles through slots 1–4 for one hour each."
+    },
+    {
+      "Slot ID": "SLOT-0016",
+      "Internal Key": "spell_4",
+      "Display Name": "Spell 4",
+      "Slot Group": "Spell Loadout",
+      "Status": "Confirmed",
+      "Notes": "Equippable spell. Active spell cycles through slots 1–4 for one hour each."
     }
   ],
   "Items": [
@@ -5027,6 +5065,22 @@
       "Icon Asset Key": null,
       "Notes": "Required by the Boar Spear project; acquisition method is not fixed in the game bible.",
       "Base Sell Value": null
+    },
+    {
+      "Item ID": "ITEM-0295",
+      "Internal Key": "strength_spell",
+      "Display Name": "Strength Spell",
+      "Category": "Spell",
+      "Subtype": "Combat spell",
+      "Associated Skill ID": "SKL-0013",
+      "Equipment Slot ID": "SLOT-0013",
+      "Functional / Source Tags": "spell; spell_effect:ENCH-0005; arcana_output",
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Description": "A prepared Strength spell. Equip it in a spell slot to grant +10% damage range while that slot is active in the one-hour cycle.",
+      "Icon Asset Key": null,
+      "Notes": "Crafted at the Arcana Facility. May fill any spell slot; duplicates allowed.",
+      "Base Sell Value": 8000
     }
   ],
   "Equipment": [
@@ -7873,6 +7927,24 @@
       "Capabilities / Effects": "combat_defense",
       "Status": "Planned",
       "Notes": "Individual bonus; no armor set bonus."
+    },
+    {
+      "Equipment ID": "EQP-0176",
+      "Item ID": "ITEM-0295",
+      "Slot ID": "SLOT-0013",
+      "Required Skill ID": "SKL-0013",
+      "Required Level": 1,
+      "Secondary Required Skill ID": null,
+      "Secondary Required Level": null,
+      "Min Damage": null,
+      "Max Damage": null,
+      "HP Bonus": null,
+      "Damage Reduction": null,
+      "Healing Amount": null,
+      "Action Time Reduction %": null,
+      "Capabilities / Effects": "spell; spell_effect:ENCH-0005; damage_range_bonus_percent:10; duration_seconds:3600",
+      "Status": "Confirmed",
+      "Notes": "May be equipped to any Spell slot (SLOT-0013–SLOT-0016)."
     }
   ],
   "Statistics": [
@@ -7957,6 +8029,17 @@
       "Status": "Planned",
       "Release Phase": "Expansion",
       "Notes": null
+    },
+    {
+      "Enchantment ID": "ENCH-0005",
+      "Internal Key": "strength_spell",
+      "Display Name": "Strength",
+      "Valid Target": "Spell slot / player",
+      "Effect": "+10% damage range for 1 hour",
+      "Required Materials": "Spell Tablet; Bull Horns",
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Notes": "Player spell effect. Active while the equipped Strength Spell occupies the current cycling spell slot."
     }
   ],
   "Maps": [
@@ -20071,6 +20154,36 @@
       "Input 4 Quantity": null,
       "Required Skill 1 ID": "SKL-0013",
       "Required Skill 1 Level": 80,
+      "Required Skill 2 ID": "SKL-0009",
+      "Required Skill 2 Level": 15,
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
+    },
+    {
+      "Project ID": "PRJ-0139",
+      "Internal Key": "arcana_strength_spell",
+      "Display Name": "Strength Spell",
+      "Skill ID": "SKL-0013",
+      "Output Item / Target ID": "ITEM-0295",
+      "Output Quantity": 1,
+      "Facility ID": "FAC-0008",
+      "Recipe ID": null,
+      "XP Reward": 2500000,
+      "Gold Cost": 0,
+      "Instant": "Yes",
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Notes": "Creates an equippable Strength Spell for the spell-slot cycle.",
+      "Input 1 Item ID": "ITEM-0099",
+      "Input 1 Quantity": 1,
+      "Input 2 Item ID": "ITEM-0040",
+      "Input 2 Quantity": 10,
+      "Input 3 Item ID": null,
+      "Input 3 Quantity": null,
+      "Input 4 Item ID": null,
+      "Input 4 Quantity": null,
+      "Required Skill 1 ID": "SKL-0013",
+      "Required Skill 1 Level": 20,
       "Required Skill 2 ID": "SKL-0009",
       "Required Skill 2 Level": 15,
       "Required Skill 3 ID": null,

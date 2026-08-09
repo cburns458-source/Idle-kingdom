@@ -3,6 +3,7 @@ import { getSkillProgress } from '../activity/xp'
 import { equippedEnchantmentDamageBonus } from '../projects/enchantments'
 import type { PlayerSave } from '../save/types'
 import { configNumber } from '../activity/gathering'
+import { activeSpellDamageRangeMultiplier } from '../spells/spells'
 
 const WEAPON_SLOT = 'SLOT-0001'
 export const COMBAT_SKILL_ID = 'SKL-0001'
@@ -39,9 +40,11 @@ function scaleStat(value: number, multiplier: number): number {
 export function playerDamageRange(
   db: GameDatabase,
   save: PlayerSave,
+  nowMs: number = Date.now(),
 ): { min: number; max: number } {
   const enchantBonus = equippedEnchantmentDamageBonus(db, save)
   const levelMult = combatLevelBonusMultiplier(save)
+  const spellMult = activeSpellDamageRangeMultiplier(db, save, nowMs)
   const weaponId = save.equipment.slots[WEAPON_SLOT]?.itemId
   let min: number
   let max: number
@@ -61,9 +64,10 @@ export function playerDamageRange(
     max = configNumber(db, 'unarmed_max_damage', 30) + enchantBonus
   }
 
+  const combined = levelMult * spellMult
   return {
-    min: scaleStat(min, levelMult),
-    max: Math.max(scaleStat(min, levelMult), scaleStat(max, levelMult)),
+    min: scaleStat(min, combined),
+    max: Math.max(scaleStat(min, combined), scaleStat(max, combined)),
   }
 }
 
