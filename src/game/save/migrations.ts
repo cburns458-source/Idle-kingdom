@@ -115,6 +115,19 @@ export const SAVE_MIGRATIONS: SaveMigration[] = [
       saveVersion: 8,
     }),
   },
+  {
+    fromVersion: 8,
+    toVersion: 9,
+    migrate: (save) => ({
+      ...save,
+      // Anchor absence catch-up to last save touch so old creates do not grant a free 24h.
+      unattendedProgressAt:
+        typeof save.unattendedProgressAt === 'string' && save.unattendedProgressAt.length > 0
+          ? save.unattendedProgressAt
+          : (save.updatedAt ?? new Date().toISOString()),
+      saveVersion: 9,
+    }),
+  },
 ]
 
 export function migrateSave(save: PlayerSave): PlayerSave {

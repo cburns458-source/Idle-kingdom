@@ -1,4 +1,4 @@
-export const SAVE_VERSION = 8
+export const SAVE_VERSION = 9
 export const SAVE_STORAGE_KEY = 'idle-kingdoms.demo.save'
 export const STARTING_LOCATION_ID = 'LOC-0002'
 export const STARTING_GOLD = 0

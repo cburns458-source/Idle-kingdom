@@ -44,7 +44,6 @@ import {
   beginProductionQueue,
   cancelProductionActivity,
   completeProductionCraft,
-  resolveProductionProgress,
 } from './game/production/engine'
 import { getRecipe, isStandardProductionActivity } from './game/production/recipes'
 import { asAchievementRows, syncProgressionMeta } from './game/achievements/progress'
@@ -53,6 +52,10 @@ import {
   getQuestProgress,
   questStatusLabel,
 } from './game/quests/quests'
+import {
+  resolveUnattendedProgress,
+  stampUnattendedProgressAt,
+} from './game/unattended/resolve'
 import { completeSpecialProject } from './game/projects/engine'
 import type { SpecialProductionStation } from './game/projects/projects'
 import { totalLevel, totalSkillXp } from './game/skills/totals'
@@ -112,8 +115,9 @@ export default function App() {
       try {
         const database = await loadDatabase()
         const { save, created } = loadOrCreateSave(database.source)
-        const resolved = resolveProductionProgress(database.launch, save)
-        const nextSave = resolved.craftsCompleted > 0 ? persistSave(resolved.save) : resolved.save
+        const resolved = resolveUnattendedProgress(database.launch, save)
+        const synced = syncProgressionMeta(database.launch, resolved.save)
+        const nextSave = writeSave(synced)
         if (!cancelled) {
           const location = database.launchIndexes.locationsById.get(nextSave.currentLocationId)
           setBrowseMapId(location ? resolveActiveMapId(location) : MAIN_MAP_ID)
@@ -593,8 +597,11 @@ export default function App() {
 
   function persistSave(next: PlayerSave): PlayerSave {
     const current = bootRef.current
+    const stamped = stampUnattendedProgressAt(next)
     const synced =
-      current.status === 'ready' ? syncProgressionMeta(current.database.launch, next) : next
+      current.status === 'ready'
+        ? syncProgressionMeta(current.database.launch, stamped)
+        : stamped
     return writeSave(synced)
   }
 
