@@ -28,6 +28,7 @@ describe('special production', () => {
     expect(listed.map((project) => project['Project ID']).sort()).toEqual([
       'PRJ-0134',
       'PRJ-0135',
+      'PRJ-0139',
     ])
     expect(listed.every((project) => project['Required Skill 1 Level']! > 1)).toBe(true)
     // Level-1 saves still see projects; completion remains hard-gated.
