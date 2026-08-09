@@ -141,7 +141,8 @@ export default function App() {
     let frame = 0
     const tick = () => {
       const elapsed = Date.now() - travel.startedAt
-      const progress = Math.min(1, elapsed / travel.durationMs)
+      const progress =
+        travel.durationMs <= 0 ? 1 : Math.min(1, elapsed / travel.durationMs)
       setTravelProgress(progress)
       if (progress >= 1) {
         setBoot((current) => {
@@ -614,16 +615,34 @@ export default function App() {
     setActiveShopId(null)
     setActiveNpcId(null)
     // Interrupt primary activity immediately; refund remaining production materials.
-    if (save.productionRecipeId) {
-      updateSave(cancelProductionActivity(database.launch, save))
-    } else if (save.currentActivityId) {
-      updateSave(clearActivitySave(save))
+    let working = save
+    if (working.productionRecipeId) {
+      working = cancelProductionActivity(database.launch, working)
+    } else if (working.currentActivityId) {
+      working = clearActivitySave(working)
     }
+
+    const durationMs = travelDurationMs(connection)
+    if (durationMs <= 0) {
+      const arrived = applyTravelArrival(working, destinationId)
+      updateSave(arrived)
+      const nextLocation = database.launchIndexes.locationsById.get(destinationId)
+      setBrowseMapId(nextLocation ? resolveActiveMapId(nextLocation) : MAIN_MAP_ID)
+      setSelectedLocationId(destinationId)
+      setScreen('location')
+      setActionProgress(0)
+      setLastMessage(null)
+      setTravel(null)
+      setTravelProgress(0)
+      return
+    }
+
+    if (working !== save) updateSave(working)
     setTravel({
       fromLocationId: save.currentLocationId,
       toLocationId: destinationId,
       startedAt: Date.now(),
-      durationMs: travelDurationMs(connection),
+      durationMs,
     })
     setTravelProgress(0)
   }

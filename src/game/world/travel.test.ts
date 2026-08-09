@@ -16,9 +16,9 @@ const rawDatabase = JSON.parse(
 )
 
 describe('travel rules', () => {
-  it('uses the owner-approved 5 second default duration', () => {
+  it('uses instant travel when Base Duration is unset', () => {
     expect(travelDurationMs(null)).toBe(DEFAULT_TRAVEL_DURATION_MS)
-    expect(DEFAULT_TRAVEL_DURATION_MS).toBe(5000)
+    expect(DEFAULT_TRAVEL_DURATION_MS).toBe(0)
   })
 
   it('allows main-map node travel between Launch overworld locations', () => {

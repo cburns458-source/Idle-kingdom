@@ -1,5 +1,5 @@
-/** Owner-approved Step 2 travel delay when database Base Duration is null. */
-export const DEFAULT_TRAVEL_DURATION_MS = 5_000
+/** Travel delay when database Base Duration is null. 0 = instant travel. */
+export const DEFAULT_TRAVEL_DURATION_MS = 0
 
 export const MAIN_MAP_ID = 'MAP-0001'
 export const CAVE_MAP_ID = 'MAP-0002'
