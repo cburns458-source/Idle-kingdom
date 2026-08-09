@@ -10,6 +10,7 @@ import {
 } from '../game/equipment/tooltips'
 import { withRecalculatedVitals } from '../game/equipment/vitals'
 import { playerDamageRange, playerDamageReduction, playerMaxHp } from '../game/combat/stats'
+import { destroyInventoryIndexes } from '../game/inventory/destroy'
 import { enchantmentTooltipLines } from '../game/projects/enchantments'
 import type { PlayerSave } from '../game/save/types'
 import { ItemIcon, SlotGlyph } from './itemIcons'
@@ -42,13 +43,24 @@ export function InventoryView({ save, database, onChangeSave }: InventoryViewPro
   const [subTab, setSubTab] = useState<ItemsSubTab>('items')
   const [message, setMessage] = useState<string | null>(null)
   const [heldTip, setHeldTip] = useState<string | null>(null)
+  const [destroyMode, setDestroyMode] = useState(false)
+  const [selectedIndexes, setSelectedIndexes] = useState<Set<number>>(() => new Set())
+  const [confirmDestroy, setConfirmDestroy] = useState(false)
   const db = database.launch
   const damage = playerDamageRange(db, save)
   const maxHp = playerMaxHp(db, save)
   const dr = playerDamageReduction(db, save)
+  const selectedCount = selectedIndexes.size
 
   function commit(next: PlayerSave) {
     onChangeSave(withRecalculatedVitals(db, next))
+  }
+
+  function exitDestroyMode() {
+    setDestroyMode(false)
+    setSelectedIndexes(new Set())
+    setConfirmDestroy(false)
+    setHeldTip(null)
   }
 
   function equipAt(index: number) {
@@ -64,6 +76,25 @@ export function InventoryView({ save, database, onChangeSave }: InventoryViewPro
   function unequip(slotId: string) {
     setMessage(null)
     commit(unequipSlot(save, slotId))
+  }
+
+  function toggleDestroySelection(index: number) {
+    setSelectedIndexes((current) => {
+      const next = new Set(current)
+      if (next.has(index)) next.delete(index)
+      else next.add(index)
+      return next
+    })
+  }
+
+  function confirmDestroySelected() {
+    if (selectedCount === 0) return
+    const next = destroyInventoryIndexes(save, selectedIndexes)
+    commit(next)
+    setMessage(
+      selectedCount === 1 ? 'Destroyed 1 item stack.' : `Destroyed ${selectedCount} item stacks.`,
+    )
+    exitDestroyMode()
   }
 
   return (
@@ -110,6 +141,7 @@ export function InventoryView({ save, database, onChangeSave }: InventoryViewPro
             }
             onClick={() => {
               setSubTab('equipment')
+              exitDestroyMode()
               setHeldTip(null)
             }}
           >
@@ -121,6 +153,43 @@ export function InventoryView({ save, database, onChangeSave }: InventoryViewPro
 
       {subTab === 'items' ? (
         <section className="panel inventory-bag-panel">
+          <div className="inventory-bag-actions">
+            {!destroyMode ? (
+              <button
+                type="button"
+                className="btn secondary"
+                disabled={save.inventory.length === 0}
+                onClick={() => {
+                  setDestroyMode(true)
+                  setSelectedIndexes(new Set())
+                  setConfirmDestroy(false)
+                  setMessage(null)
+                  setHeldTip(null)
+                }}
+              >
+                Destroy items
+              </button>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  className="btn secondary"
+                  onClick={exitDestroyMode}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="btn danger"
+                  disabled={selectedCount === 0}
+                  onClick={() => setConfirmDestroy(true)}
+                >
+                  Destroy selected{selectedCount > 0 ? ` (${selectedCount})` : ''}
+                </button>
+              </>
+            )}
+          </div>
+
           {save.inventory.length === 0 ? (
             <p className="lead">No items yet. Fight or gather to fill this grid.</p>
           ) : (
@@ -136,20 +205,35 @@ export function InventoryView({ save, database, onChangeSave }: InventoryViewPro
                   ...enchantLines,
                 ].join('\n')
                 const enchanted = Boolean(stack.enchantmentId)
+                const selected = selectedIndexes.has(index)
                 return (
                   <li key={tipId}>
                     <HoldTile
-                      className={
-                        enchanted ? 'bag-item-tile enchanted' : 'bag-item-tile'
+                      className={[
+                        'bag-item-tile',
+                        enchanted ? 'enchanted' : '',
+                        destroyMode && selected ? 'selected-destroy' : '',
+                      ]
+                        .filter(Boolean)
+                        .join(' ')}
+                      ariaLabel={
+                        destroyMode
+                          ? `${selected ? 'Deselect' : 'Select'} ${item?.['Display Name'] ?? stack.itemId}`
+                          : tipText
                       }
-                      ariaLabel={tipText}
-                      showingTip={heldTip === tipId}
+                      showingTip={!destroyMode && heldTip === tipId}
                       tipText={tipText}
-                      onHoldStart={() => setHeldTip(tipId)}
+                      onHoldStart={() => {
+                        if (!destroyMode) setHeldTip(tipId)
+                      }}
                       onHoldEnd={() =>
                         setHeldTip((current) => (current === tipId ? null : current))
                       }
                       onActivate={() => {
+                        if (destroyMode) {
+                          toggleDestroySelection(index)
+                          return
+                        }
                         if (equipment?.['Slot ID']) equipAt(index)
                       }}
                     >
@@ -158,6 +242,11 @@ export function InventoryView({ save, database, onChangeSave }: InventoryViewPro
                       {!enchanted && stack.quantity > 1 && (
                         <span className="bag-item-qty">{stack.quantity}</span>
                       )}
+                      {destroyMode && selected && (
+                        <span className="bag-item-selected-mark" aria-hidden>
+                          ✓
+                        </span>
+                      )}
                     </HoldTile>
                   </li>
                 )
@@ -165,8 +254,9 @@ export function InventoryView({ save, database, onChangeSave }: InventoryViewPro
             </ul>
           )}
           <p className="muted tiny">
-            Hold an item for its name, combat stats, and enchantment. Tap gear to equip. Enchanted
-            items do not stack.
+            {destroyMode
+              ? 'Tap items to select them, then confirm to destroy the selected stacks.'
+              : 'Hold an item for its name, combat stats, and enchantment. Tap gear to equip. Enchanted items do not stack.'}
           </p>
         </section>
       ) : (
@@ -225,6 +315,31 @@ export function InventoryView({ save, database, onChangeSave }: InventoryViewPro
           </p>
         </section>
       )}
+
+      {confirmDestroy ? (
+        <div
+          className="destroy-confirm-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="destroy-confirm-title"
+        >
+          <div className="panel destroy-confirm-card">
+            <h2 id="destroy-confirm-title">Destroy items?</h2>
+            <p className="lead">
+              Permanently remove {selectedCount} selected stack
+              {selectedCount === 1 ? '' : 's'} from your bag. Equipped items are not affected.
+            </p>
+            <div className="button-row">
+              <button type="button" className="btn secondary" onClick={() => setConfirmDestroy(false)}>
+                Keep items
+              </button>
+              <button type="button" className="btn danger" onClick={confirmDestroySelected}>
+                Confirm destroy
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </section>
   )
 }

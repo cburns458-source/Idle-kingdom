@@ -332,6 +332,12 @@
   background: linear-gradient(180deg, #6a4a30, #45301f);
 }
 
+.btn.danger {
+  background: linear-gradient(180deg, #a45a45, #7a3a2c);
+  border-color: rgba(220, 140, 110, 0.55);
+  color: #fff4e8;
+}
+
 .btn:disabled {
   opacity: 0.55;
   cursor: not-allowed;
@@ -1531,6 +1537,69 @@
 .inventory-bag-panel .muted.tiny,
 .inventory-equipment-panel .muted.tiny {
   margin-top: 0.65rem;
+}
+
+.inventory-bag-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-bottom: 0.65rem;
+}
+
+.inventory-bag-actions .btn {
+  min-height: 2.35rem;
+  padding: 0.5rem 0.85rem;
+  font-size: 0.85rem;
+}
+
+.bag-item-tile.selected-destroy {
+  border-color: rgba(220, 120, 90, 0.85);
+  box-shadow: 0 0 0 2px rgba(180, 70, 50, 0.35);
+  background: rgba(90, 36, 24, 0.55);
+}
+
+.bag-item-selected-mark {
+  position: absolute;
+  top: 0.15rem;
+  right: 0.2rem;
+  z-index: 1;
+  width: 1.1rem;
+  height: 1.1rem;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: rgba(180, 70, 50, 0.95);
+  color: #fff4e8;
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.destroy-confirm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(12, 10, 8, 0.62);
+  animation: overlay-in 180ms ease-out;
+}
+
+.destroy-confirm-card {
+  width: min(100%, 22rem);
+  display: grid;
+  gap: 0.55rem;
+  text-align: center;
+}
+
+.destroy-confirm-card h2 {
+  margin: 0;
+}
+
+.destroy-confirm-card .button-row {
+  justify-content: center;
 }
 
 @media (min-width: 640px) {
