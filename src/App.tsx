@@ -707,6 +707,7 @@ function SettingsPanel({
   onRename: (name: string) => void
 }) {
   const bakedPotatoId = 'ITEM-0058'
+  const steelPickaxeId = 'ITEM-0119'
 
   function grantTestFood() {
     const withItems = addItemToInventory(save, bakedPotatoId, 5)
@@ -716,6 +717,12 @@ function SettingsPanel({
       return
     }
     onChangeSave(withRecalculatedVitals(database.launch, equipped.save))
+  }
+
+  function grantSteelPickaxe() {
+    onChangeSave(
+      withRecalculatedVitals(database.launch, addItemToInventory(save, steelPickaxeId, 1)),
+    )
   }
 
   if (renaming) {
@@ -743,11 +750,16 @@ function SettingsPanel({
         </button>
       </div>
 
-      <button type="button" className="btn primary" onClick={grantTestFood}>
-        Add & equip Baked Potato ×5
-      </button>
+      <div className="button-row">
+        <button type="button" className="btn primary" onClick={grantTestFood}>
+          Add & equip Baked Potato ×5
+        </button>
+        <button type="button" className="btn secondary" onClick={grantSteelPickaxe}>
+          Give Steel Pickaxe
+        </button>
+      </div>
       <p className="muted tiny">
-        Demo aid: grants potatoes and moves the full stack into the Food slot.
+        Demo aids for food and mining gear testing. Steel Pickaxe needs Mining 35 to equip.
       </p>
     </section>
   )
