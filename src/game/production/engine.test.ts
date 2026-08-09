@@ -7,6 +7,7 @@ import { createNewSave } from '../save/saveStore'
 import {
   beginProductionQueue,
   cancelProductionActivity,
+  completeProductionCraft,
   resolveProductionProgress,
 } from './engine'
 import { canKnowRecipe, getRecipe, isCompleteRecipe, recipesForActivity } from './recipes'
@@ -52,6 +53,37 @@ describe('standard production', () => {
     save = addItemToInventory(save, 'ITEM-0025', 10_000)
     const overCap = beginProductionQueue(launch, save, 'ACT-0017', 'RCP-0001', 10_000)
     expect(overCap.ok).toBe(false)
+  })
+
+  it('builds a gathering-style reward summary for each completed craft', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    let save = createNewSave(launch)
+    save = addItemToInventory(save, 'ITEM-0025', 1)
+    const queued = beginProductionQueue(
+      launch,
+      save,
+      'ACT-0017',
+      'RCP-0001',
+      1,
+      Date.parse('2026-01-01T00:00:00.000Z'),
+    )
+    expect(queued.ok).toBe(true)
+    if (!queued.ok) return
+
+    const finished = completeProductionCraft(
+      launch,
+      queued.save,
+      Date.parse('2026-01-01T00:00:20.000Z'),
+    )
+    expect(finished).not.toBeNull()
+    if (!finished) return
+    expect(finished.reward.loot).toEqual([
+      { itemId: 'ITEM-0058', quantity: 1, displayName: expect.any(String) },
+    ])
+    expect(finished.reward.xpRewards).toHaveLength(1)
+    expect(finished.reward.xpRewards[0]?.skillId).toBe('SKL-0007')
+    expect(finished.reward.xpRewards[0]?.xp).toBe(5_000)
+    expect(finished.reward.goldGained).toBe(0)
   })
 
   it('completes crafts offline and grants output + XP', () => {

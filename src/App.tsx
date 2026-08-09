@@ -15,7 +15,6 @@ import {
   isActivityTransitionPending,
   requestActivityStart,
   requestActivityStop,
-  requestCancelForProductionPicker,
   requestProductionStart,
   resolveActivityTransitions,
   transitionRemainingMs,
@@ -433,10 +432,8 @@ export default function App() {
       if (current.status !== 'ready' || !current.save.productionRecipeId) return
       const finished = completeProductionCraft(current.database.launch, current.save)
       if (!finished) return
-      setLastMessage(
-        `Crafted ${finished.outputQty} ${finished.outputName}` +
-          (finished.xpGained > 0 ? ` · +${finished.xpGained} XP` : ''),
-      )
+      setRecentRewards((prev) => [finished.reward, ...prev].slice(0, 4))
+      setLastMessage(null)
       setActionProgress(0)
       setBoot({
         ...current,
@@ -816,31 +813,9 @@ export default function App() {
 
     const activityRow = database.launchIndexes.activitiesById.get(activityId)
     if (activityRow && isStandardProductionActivity(database.launch, activityRow)) {
+      // Browse any Standard Production station without starting the shared cooldown.
+      // Cooldown begins only when Start queue is pressed (requestProductionStart).
       setSpecialStation(null)
-      // During the shared delay, open the picker immediately to queue a follow-up recipe.
-      if (isActivityTransitionPending(fromSave)) {
-        setDeferredProductionPickerId(null)
-        setProductionPickerActivityId(activityId)
-        if (fromSave !== save) updateSave(fromSave)
-        return
-      }
-      // Cancel any running Primary Activity before opening the production picker.
-      if (
-        hasRunningPrimaryActivity(fromSave) &&
-        (fromSave.currentActivityId !== activityId || fromSave.productionRecipeId)
-      ) {
-        const cancel = requestCancelForProductionPicker(database.launch, fromSave, activityId)
-        if (!cancel.ok) {
-          setActivityError(cancel.reason)
-          return
-        }
-        if (cancel.save.activityTransition) {
-          setDeferredProductionPickerId(activityId)
-          setProductionPickerActivityId(null)
-          updateSave(cancel.save)
-          return
-        }
-      }
       setDeferredProductionPickerId(null)
       setProductionPickerActivityId(activityId)
       if (fromSave !== save) updateSave(fromSave)
@@ -1004,6 +979,9 @@ export default function App() {
               activityChangePending={transitionLocked}
               activityError={activityError}
               requirementHint={requirementHint}
+              isRecipeBrowserActivity={(row) =>
+                isStandardProductionActivity(database.launch, row)
+              }
               actionsLocked={deathLocked}
               stopLocked={deathLocked || transitionLocked}
               onStartActivity={startActivity}
@@ -1132,7 +1110,8 @@ export default function App() {
                       recipe={productionRecipe}
                       save={save}
                       progress={actionProgress}
-                      lastMessage={lastMessage}
+                      recentRewards={recentRewards}
+                      itemsById={database.launchIndexes.itemsById}
                       onStop={stopActivity}
                     />
                   )}

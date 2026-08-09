@@ -1,4 +1,6 @@
 import { addItemToInventory } from '../activity/rewards'
+import { summarizeXpReward } from '../activity/rewardSummary'
+import type { ActionRewardBundle } from '../activity/types'
 import { applyXp } from '../activity/xp'
 import type { GameDatabase } from '../data/types'
 import type { PlayerSave } from '../save/types'
@@ -99,7 +101,15 @@ export function completeProductionCraft(
   db: GameDatabase,
   save: PlayerSave,
   nowMs: number = Date.now(),
-): { save: PlayerSave; finishedQueue: boolean; xpGained: number; outputName: string; outputQty: number } | null {
+): {
+  save: PlayerSave
+  finishedQueue: boolean
+  xpGained: number
+  outputName: string
+  outputQty: number
+  /** Same reward summary shape used by gathering/combat panels. */
+  reward: ActionRewardBundle
+} | null {
   if (!save.productionRecipeId || !save.productionQuantityRemaining) return null
   const recipe = getRecipe(db, save.productionRecipeId)
   if (!recipe) return null
@@ -110,9 +120,27 @@ export function completeProductionCraft(
   next = xpApplied.save
 
   const remaining = save.productionQuantityRemaining - 1
-  const outputName =
-    db.Items.find((item) => item['Item ID'] === recipe['Output Item ID'])?.['Display Name'] ??
-    recipe['Display Name']
+  const outputItem = db.Items.find((item) => item['Item ID'] === recipe['Output Item ID'])
+  const outputName = outputItem?.['Display Name'] ?? recipe['Display Name']
+  const xpReward = summarizeXpReward(
+    db,
+    next,
+    recipe['Skill ID'],
+    recipe['XP Reward'],
+    xpApplied.leveledUpTo,
+  )
+  const reward: ActionRewardBundle = {
+    id: `craft-${recipe['Recipe ID']}-${nowMs}-${remaining}`,
+    xpRewards: xpReward ? [xpReward] : [],
+    loot: [
+      {
+        itemId: recipe['Output Item ID'],
+        quantity: outputQty,
+        displayName: outputName,
+      },
+    ],
+    goldGained: 0,
+  }
 
   if (remaining <= 0) {
     return {
@@ -125,6 +153,7 @@ export function completeProductionCraft(
       xpGained: recipe['XP Reward'],
       outputName,
       outputQty,
+      reward,
     }
   }
 
@@ -141,6 +170,7 @@ export function completeProductionCraft(
     xpGained: recipe['XP Reward'],
     outputName,
     outputQty,
+    reward,
   }
 }
 

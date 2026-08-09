@@ -257,40 +257,6 @@ export function requestActivityStart(
   return { ok: true, save: startPoolActivityNow(db, save, activityId, nowMs) }
 }
 
-/**
- * Cancel the running Primary Activity with the normal delay, then let the UI open a
- * Standard Production picker for followUpActivityId.
- */
-export function requestCancelForProductionPicker(
-  db: GameDatabase,
-  save: PlayerSave,
-  productionActivityId: string,
-  nowMs: number = Date.now(),
-): { ok: true; save: PlayerSave } | { ok: false; reason: string } {
-  if (isDeathPaused(save, nowMs)) {
-    return { ok: false, reason: 'Cannot change activities while recovering from defeat.' }
-  }
-  if (isActivityTransitionPending(save, nowMs)) {
-    // Already in the shared cooldown — open the picker; confirm will set follow-up.
-    return { ok: true, save }
-  }
-  if (!hasRunningPrimaryActivity(save)) {
-    return { ok: true, save }
-  }
-  if (save.currentActivityId === productionActivityId && !save.productionRecipeId) {
-    return { ok: true, save }
-  }
-
-  return {
-    ok: true,
-    save: beginCancelTransition(db, save, nowMs, {
-      followUpActivityId: null,
-      productionRecipeId: null,
-      productionQuantity: null,
-    }),
-  }
-}
-
 /** Start Standard Production immediately, or queue it on the shared cooldown. */
 export function requestProductionStart(
   db: GameDatabase,

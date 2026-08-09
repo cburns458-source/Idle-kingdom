@@ -9,7 +9,6 @@ import {
   isActivityTransitionCancellable,
   requestActivityStart,
   requestActivityStop,
-  requestCancelForProductionPicker,
   requestProductionStart,
   resolveActivityTransitions,
 } from './transition'
@@ -198,7 +197,7 @@ describe('shared activity-change delay', () => {
     expect(arrived.save.currentActivityId).toBeNull()
   })
 
-  it('cancels a running activity before opening a production picker', () => {
+  it('Start queue while busy begins the shared cooldown (not opening the picker)', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const now = Date.parse('2026-01-01T00:00:00.000Z')
     let save = { ...createNewSave(launch), currentLocationId: 'LOC-0009' }
@@ -208,17 +207,27 @@ describe('shared activity-change delay', () => {
     if (!started.ok) return
     save = started.save
 
-    const cancelAt = now + 10_000
-    save = { ...save, currentLocationId: 'LOC-0002' }
-    const cancel = requestCancelForProductionPicker(launch, save, 'ACT-0017', cancelAt)
-    expect(cancel.ok).toBe(true)
-    if (!cancel.ok) return
-    save = cancel.save
+    // Browsing a production station does not require a transition; Start queue does.
+    const queueAt = now + 10_000
+    save = {
+      ...save,
+      currentLocationId: 'LOC-0002',
+      inventory: [...save.inventory, { itemId: 'ITEM-0025', quantity: 4 }],
+    }
+    const requested = requestProductionStart(launch, save, 'ACT-0017', 'RCP-0001', 2, queueAt)
+    expect(requested.ok).toBe(true)
+    if (!requested.ok) return
+    save = requested.save
+    expect(save.currentActivityId).toBe('ACT-0012')
     expect(save.activityTransition?.kind).toBe('stopping')
+    expect(save.activityTransition?.followUpActivityId).toBe('ACT-0017')
+    expect(save.activityTransition?.productionRecipeId).toBe('RCP-0001')
+    expect(save.activityTransition?.productionQuantity).toBe(2)
 
-    save = resolveActivityTransitions(launch, save, cancelAt + 30_000)
-    expect(save.currentActivityId).toBeNull()
+    save = resolveActivityTransitions(launch, save, queueAt + 30_000)
     expect(save.activityTransition).toBeNull()
+    expect(save.currentActivityId).toBe('ACT-0017')
+    expect(save.productionRecipeId).toBe('RCP-0001')
   })
 
   it('cancels an existing production queue before starting a new recipe', () => {

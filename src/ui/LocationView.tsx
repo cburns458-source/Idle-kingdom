@@ -28,6 +28,8 @@ interface LocationViewProps {
   onOpenMap: () => void
   onOpenSubMap?: () => void
   requirementHint?: (activity: ActivityRow) => string | null
+  /** Standard Production opens a recipe picker without starting a cooldown. */
+  isRecipeBrowserActivity?: (activity: ActivityRow) => boolean
 }
 
 function MapIcon() {
@@ -59,6 +61,7 @@ export function LocationView({
   onOpenMap,
   onOpenSubMap,
   requirementHint,
+  isRecipeBrowserActivity,
 }: LocationViewProps) {
   const locationId = location['Location ID']
   const activities = indexes.activitiesByLocationId.get(locationId) ?? []
@@ -123,13 +126,16 @@ export function LocationView({
                 const queued = pendingFollowUpActivityId === activity['Activity ID']
                 const label = activity['Contextual Name'] ?? activity['Internal Key']
                 const hint = requirementHint?.(activity) ?? null
+                const recipeBrowser = isRecipeBrowserActivity?.(activity) ?? false
                 const startLabel = activityChangePending
                   ? queued
                     ? 'Queued'
                     : 'Queue'
-                  : currentActivityId
-                    ? 'Replace'
-                    : 'Start'
+                  : recipeBrowser
+                    ? 'Recipes'
+                    : currentActivityId
+                      ? 'Replace'
+                      : 'Start'
                 return (
                   <li key={activity['Activity ID']}>
                     <div>
