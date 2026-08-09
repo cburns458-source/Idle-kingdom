@@ -954,6 +954,14 @@ function SettingsPanel({
     onChangeSave(withRecalculatedVitals(database.launch, next))
   }
 
+  function grantArcanaMaterials() {
+    let next = addItemToInventory(save, 'ITEM-0098', 5)
+    next = addItemToInventory(next, 'ITEM-0011', 20)
+    next = addItemToInventory(next, 'ITEM-0031', 30)
+    next = addItemToInventory(next, 'ITEM-0040', 5)
+    onChangeSave(withRecalculatedVitals(database.launch, next))
+  }
+
   function raiseAlchemyToLevel10() {
     const alchemyId = 'SKL-0010'
     const xpAtLevel10 =
@@ -1013,10 +1021,13 @@ function SettingsPanel({
         <button type="button" className="btn secondary" onClick={grantSmithingMaterials}>
           Give smithing materials
         </button>
+        <button type="button" className="btn secondary" onClick={grantArcanaMaterials}>
+          Give Arcana ingredients
+        </button>
       </div>
       <p className="muted tiny">
-        Demo aids: food, mining gear, production mats, Alchemy 10, and Copper Bar / Cedar Timber /
-        Leather Straps for Smithing.
+        Demo aids: food, mining gear, production mats, Alchemy 10, smithing mats, and Enchanting
+        Tablet / Essence / Fernleaf / Bull Horns for Arcana.
       </p>
     </section>
   )
