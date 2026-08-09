@@ -568,72 +568,74 @@ export default function App() {
 
         <div className="screen-body">
           {screen === 'location' && (
-            <>
-              {activity && inCombat && combatEnemy && (
-                <CombatPanel
-                  activity={activity}
-                  enemy={combatEnemy}
-                  enemyHp={save.combatEnemyHp ?? combatEnemy['Maximum HP']}
-                  playerHp={save.currentHp}
-                  playerMaxHp={maxHp}
-                  roundProgress={roundProgress}
-                  deathPauseRemainingMs={pauseRemainingMs}
-                  lastCombatMessage={lastMessage}
-                  onStop={stopActivity}
-                />
-              )}
-              {activity && !inCombat && pauseRemainingMs <= 0 && (
-                <ActivityPanel
-                  activity={activity}
-                  action={currentAction ?? null}
-                  save={save}
-                  skill={actionSkill}
-                  progress={actionProgress}
-                  durationMs={save.actionDurationMs}
-                  recentLoot={recentLoot}
-                  lastMessage={lastMessage}
-                  onStop={stopActivity}
-                />
-              )}
-              {activity && pauseRemainingMs > 0 && !inCombat && (
-                <section className="panel">
-                  <div className="activity-panel-head">
-                    <div>
-                      <h2>Recovering</h2>
-                      <p className="muted">Death pause</p>
-                    </div>
-                  </div>
-                  <p className="danger-note">
-                    Resuming in {Math.ceil(pauseRemainingMs / 1000)}s…
-                  </p>
-                  <p className="muted tiny">
-                    Travel and activities are locked until recovery finishes.
-                  </p>
-                  {lastMessage && <p className="loot-message">{lastMessage}</p>}
-                </section>
-              )}
-              <LocationView
-                indexes={database.launchIndexes}
-                location={location}
-                currentActivityId={save.currentActivityId}
-                activityError={activityError}
-                requirementHint={requirementHint}
-                actionsLocked={deathLocked}
-                onStartActivity={startActivity}
-                onStopActivity={stopActivity}
-                onOpenMap={() => {
-                  setBrowseMapId(resolveActiveMapId(location))
-                  setSelectedLocationId(save.currentLocationId)
-                  setScreen('map')
-                }}
-                onOpenSubMap={() => {
-                  if (save.currentLocationId === CAVE_ENTRANCE_ID) setBrowseMapId(CAVE_MAP_ID)
-                  if (save.currentLocationId === CASTLE_GATEWAY_ID) setBrowseMapId(CASTLE_MAP_ID)
-                  setSelectedLocationId(save.currentLocationId)
-                  setScreen('map')
-                }}
-              />
-            </>
+            <LocationView
+              indexes={database.launchIndexes}
+              location={location}
+              currentActivityId={save.currentActivityId}
+              activityError={activityError}
+              requirementHint={requirementHint}
+              actionsLocked={deathLocked}
+              onStartActivity={startActivity}
+              onStopActivity={stopActivity}
+              onOpenMap={() => {
+                setBrowseMapId(MAIN_MAP_ID)
+                setSelectedLocationId(save.currentLocationId)
+                setScreen('map')
+              }}
+              onOpenSubMap={() => {
+                if (save.currentLocationId === CAVE_ENTRANCE_ID) setBrowseMapId(CAVE_MAP_ID)
+                if (save.currentLocationId === CASTLE_GATEWAY_ID) setBrowseMapId(CASTLE_MAP_ID)
+                setSelectedLocationId(save.currentLocationId)
+                setScreen('map')
+              }}
+              statusPanel={
+                <>
+                  {activity && inCombat && combatEnemy && (
+                    <CombatPanel
+                      activity={activity}
+                      enemy={combatEnemy}
+                      enemyHp={save.combatEnemyHp ?? combatEnemy['Maximum HP']}
+                      playerHp={save.currentHp}
+                      playerMaxHp={maxHp}
+                      roundProgress={roundProgress}
+                      deathPauseRemainingMs={pauseRemainingMs}
+                      lastCombatMessage={lastMessage}
+                      onStop={stopActivity}
+                    />
+                  )}
+                  {activity && !inCombat && pauseRemainingMs <= 0 && (
+                    <ActivityPanel
+                      activity={activity}
+                      action={currentAction ?? null}
+                      save={save}
+                      skill={actionSkill}
+                      progress={actionProgress}
+                      durationMs={save.actionDurationMs}
+                      recentLoot={recentLoot}
+                      lastMessage={lastMessage}
+                      onStop={stopActivity}
+                    />
+                  )}
+                  {activity && pauseRemainingMs > 0 && !inCombat && (
+                    <section className="panel glass-panel">
+                      <div className="activity-panel-head">
+                        <div>
+                          <h2>Recovering</h2>
+                          <p className="muted">Death pause</p>
+                        </div>
+                      </div>
+                      <p className="danger-note">
+                        Resuming in {Math.ceil(pauseRemainingMs / 1000)}s…
+                      </p>
+                      <p className="muted tiny">
+                        Travel and activities are locked until recovery finishes.
+                      </p>
+                      {lastMessage && <p className="loot-message">{lastMessage}</p>}
+                    </section>
+                  )}
+                </>
+              }
+            />
           )}
 
           {screen === 'map' && (
