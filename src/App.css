@@ -1463,15 +1463,16 @@
 .skill-icon {
   width: 3rem;
   height: 3rem;
-  border-radius: 0.7rem;
+  border-radius: 0.55rem;
   display: block;
-  background-color: rgba(34, 24, 16, 0.55);
+  background-color: transparent;
   background-size: contain;
   background-repeat: no-repeat;
   background-position: center;
-  image-rendering: auto;
-  border: 1px solid rgba(212, 175, 55, 0.35);
-  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.2);
+  image-rendering: -moz-crisp-edges;
+  image-rendering: pixelated;
+  border: 1px solid rgba(212, 175, 55, 0.28);
+  box-shadow: none;
 }
 
 .skill-tile .skill-icon {
