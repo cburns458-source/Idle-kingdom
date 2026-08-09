@@ -8534,7 +8534,7 @@
     {
       "Facility ID": "FAC-0005",
       "Internal Key": "smithing_forge",
-      "Display Name": "Smithing Forge",
+      "Display Name": "Smithing forge",
       "Location ID": "LOC-0002",
       "Facility Type": "Special Production Station",
       "Skill ID": "SKL-0011",
@@ -8570,7 +8570,7 @@
     {
       "Facility ID": "FAC-0008",
       "Internal Key": "arcana_facility",
-      "Display Name": "Arcana Facility",
+      "Display Name": "Mages quarters",
       "Location ID": "LOC-0007",
       "Facility Type": "Special Production Station",
       "Skill ID": "SKL-0013",

@@ -133,9 +133,6 @@ export function ProjectPicker({
       <div className="activity-panel-head">
         <div>
           <h2>{station.label}</h2>
-          <p className="muted">
-            {station.facility['Display Name']} · instant Special Production
-          </p>
         </div>
         <button type="button" className="btn secondary" onClick={onCancel}>
           Cancel
@@ -198,7 +195,7 @@ export function ProjectPicker({
               <ProjectDetails db={db} save={save} project={project} />
               {!knowledgeMet && !knowledge.ok && (
                 <p className="danger-note">
-                  Locked — speak with the {knowledge.npcName} to unlock {station.label} projects.
+                  Locked — speak with the {knowledge.npcName} to unlock {station.skillName} projects.
                 </p>
               )}
               {knowledgeMet && !skillsMet && (

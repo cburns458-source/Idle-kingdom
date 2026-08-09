@@ -17,6 +17,10 @@ describe('special production', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const stations = specialProductionStationsAt(launch, 'LOC-0002')
     expect(stations.map((station) => station.skillId).sort()).toEqual(['SKL-0011', 'SKL-0012'])
+    expect(stations.map((station) => station.label).sort()).toEqual([
+      'Artisans workshop',
+      'Smithing forge',
+    ])
   })
 
   it('lists Arcana at the Wizard Tower including locked Launch projects', () => {
@@ -24,6 +28,7 @@ describe('special production', () => {
     const save = createNewSave(launch)
     const stations = specialProductionStationsAt(launch, 'LOC-0007')
     expect(stations.some((station) => station.skillId === 'SKL-0013')).toBe(true)
+    expect(stations.find((station) => station.skillId === 'SKL-0013')?.label).toBe('Mages quarters')
     const listed = projectsForFacility(launch, 'FAC-0008', 'SKL-0013')
     expect(listed.map((project) => project['Project ID']).sort()).toEqual([
       'PRJ-0134',

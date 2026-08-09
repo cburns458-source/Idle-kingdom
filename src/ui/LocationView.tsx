@@ -187,8 +187,6 @@ export function LocationView({
                 <li key={`${station.facility['Facility ID']}-${station.skillId}`}>
                   <div>
                     <strong>{station.label}</strong>
-                    <p className="muted">{station.facility['Display Name']}</p>
-                    <p className="muted tiny">Instant Special Production</p>
                   </div>
                   <button
                     type="button"
@@ -222,21 +220,26 @@ export function LocationView({
                   </button>
                 </li>
               ))}
-              {npcs.map((npc) => (
-                <li key={npc['NPC ID']}>
-                  <div>
-                    <strong>{npc['Display Name']}</strong>
-                    {npc.Description && <p className="muted">{npc.Description}</p>}
-                  </div>
-                  <button
-                    type="button"
-                    className="btn secondary"
-                    onClick={() => onOpenNpc(npc['NPC ID'])}
-                  >
-                    Talk
-                  </button>
-                </li>
-              ))}
+              {npcs.map((npc) => {
+                const isMerchant = (npc.Role ?? '').toLowerCase() === 'merchant'
+                return (
+                  <li key={npc['NPC ID']}>
+                    <div>
+                      <strong>{npc['Display Name']}</strong>
+                      {!isMerchant && npc.Description && (
+                        <p className="muted">{npc.Description}</p>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      className="btn secondary"
+                      onClick={() => onOpenNpc(npc['NPC ID'])}
+                    >
+                      {isMerchant ? 'Talk to merchant' : 'Talk'}
+                    </button>
+                  </li>
+                )
+              })}
             </ul>
           </section>
         )}

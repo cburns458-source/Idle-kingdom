@@ -17,6 +17,14 @@ export interface SpecialProductionStation {
   label: string
 }
 
+/** Menu labels for Special Production stations (place names, not skill names). */
+export function specialProductionStationLabel(skillId: string, skillName: string): string {
+  if (skillId === 'SKL-0011') return 'Smithing forge'
+  if (skillId === 'SKL-0012') return 'Artisans workshop'
+  if (skillId === 'SKL-0013') return 'Mages quarters'
+  return skillName
+}
+
 export function isCompleteProject(project: ProjectRow): boolean {
   if (project.Status === 'Needs Data') return false
   if (project.Instant !== 'Yes') return false
@@ -179,7 +187,7 @@ export function specialProductionStationsAt(
         facility,
         skillId,
         skillName,
-        label: skillName,
+        label: specialProductionStationLabel(skillId, skillName),
       })
     }
   }
@@ -205,7 +213,7 @@ export function specialProductionStationsAt(
       facility,
       skillId: 'SKL-0012',
       skillName: 'Artisanry',
-      label: 'Artisanry',
+      label: specialProductionStationLabel('SKL-0012', 'Artisanry'),
     })
   }
 

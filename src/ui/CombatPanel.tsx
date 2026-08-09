@@ -49,7 +49,6 @@ export function CombatPanel({
       <div className="activity-panel-head">
         <div>
           <h2>{label}</h2>
-          <p className="muted">Combat</p>
         </div>
         {deathPauseRemainingMs <= 0 && (
           <button type="button" className="btn secondary" onClick={onStop}>

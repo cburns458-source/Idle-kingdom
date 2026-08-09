@@ -196,7 +196,6 @@ export function ProductionProgress({
       <div className="activity-panel-head">
         <div>
           <h2>{activity['Contextual Name'] ?? activity['Internal Key']}</h2>
-          <p className="muted">Standard Production</p>
         </div>
         <button type="button" className="btn secondary" onClick={onStop}>
           Stop

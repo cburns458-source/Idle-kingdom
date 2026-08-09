@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { GameDatabase, NpcRow } from '../game/data/types'
 import {
   ARCHMAGE_ID,
@@ -17,6 +17,8 @@ import type { PlayerSave } from '../game/save/types'
 import { inventoryCount } from '../game/production/recipes'
 import { QuestRewardPopup } from './QuestRewardPopup'
 
+const MERCHANT_TIP_GOLD = 1000
+
 interface NpcPanelProps {
   db: GameDatabase
   save: PlayerSave
@@ -32,15 +34,64 @@ export function NpcPanel({
   npc,
   onClose,
   onChangeSave,
-  onOpenShop,
 }: NpcPanelProps) {
   const quests = questsForNpc(db, npc['NPC ID'])
   const isMentor = npc['NPC ID'] === MASTER_DWARF_ID || npc['NPC ID'] === ARCHMAGE_ID
+  const isMerchant = (npc.Role ?? '').toLowerCase() === 'merchant'
   const knowsMentor = hasNpcKnowledge(save, npc['NPC ID'])
   const [rewardPopup, setRewardPopup] = useState<{
     questName: string
     rewards: QuestRewardLine[]
   } | null>(null)
+  const [merchantDialogueOpen, setMerchantDialogueOpen] = useState(isMerchant)
+  const merchantTipGranted = useRef(false)
+
+  useEffect(() => {
+    if (!isMerchant || merchantTipGranted.current) return
+    merchantTipGranted.current = true
+    onChangeSave(
+      {
+        ...save,
+        gold: save.gold + MERCHANT_TIP_GOLD,
+        updatedAt: new Date().toISOString(),
+      },
+      null,
+    )
+    setMerchantDialogueOpen(true)
+    // Grant once when this merchant talk session opens.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional mount-only tip
+  }, [npc['NPC ID']])
+
+  if (isMerchant) {
+    return (
+      <>
+        {merchantDialogueOpen && (
+          <div
+            className="quest-reward-overlay"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="merchant-dialogue-title"
+          >
+            <div className="panel quest-reward-card">
+              <h2 id="merchant-dialogue-title">{npc['Display Name']}</h2>
+              <p className="lead">Good luck!</p>
+              <p className="muted">+{MERCHANT_TIP_GOLD.toLocaleString()} gold</p>
+              <button
+                type="button"
+                className="btn primary"
+                onClick={() => {
+                  setMerchantDialogueOpen(false)
+                  onClose()
+                }}
+              >
+                Continue
+              </button>
+            </div>
+          </div>
+        )}
+      </>
+    )
+  }
 
   return (
     <>
@@ -150,9 +201,6 @@ export function NpcPanel({
           )
         })}
 
-        {(npc.Role ?? '').toLowerCase() === 'merchant' && onOpenShop && (
-          <p className="muted tiny">Use the shop listing below to trade.</p>
-        )}
       </section>
 
       {rewardPopup && (

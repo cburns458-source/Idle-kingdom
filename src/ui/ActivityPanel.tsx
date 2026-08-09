@@ -42,7 +42,6 @@ export function ActivityPanel({
       <div className="activity-panel-head">
         <div>
           <h2>{label}</h2>
-          <p className="muted">Primary Activity</p>
         </div>
         <button type="button" className="btn secondary" onClick={onStop}>
           Stop
