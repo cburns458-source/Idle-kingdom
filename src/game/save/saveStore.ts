@@ -68,6 +68,7 @@ export function createNewSave(db: GameDatabase): PlayerSave {
     productionRecipeId: null,
     productionQuantityTotal: null,
     productionQuantityRemaining: null,
+    activityTransition: null,
     unattendedProgressAt: timestamp,
     currentHp: maxHp,
     maxHp,

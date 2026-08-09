@@ -128,6 +128,15 @@ export const SAVE_MIGRATIONS: SaveMigration[] = [
       saveVersion: 9,
     }),
   },
+  {
+    fromVersion: 9,
+    toVersion: 10,
+    migrate: (save) => ({
+      ...save,
+      activityTransition: save.activityTransition ?? null,
+      saveVersion: 10,
+    }),
+  },
 ]
 
 export function migrateSave(save: PlayerSave): PlayerSave {

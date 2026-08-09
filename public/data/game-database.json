@@ -37,6 +37,12 @@
       "Notes": "Pause after Combat defeat."
     },
     {
+      "Key": "activity_change_delay",
+      "Value": 30,
+      "Unit": "seconds",
+      "Notes": "Delay before a Primary Activity start or stop takes effect."
+    },
+    {
       "Key": "combat_round_duration",
       "Value": 4,
       "Unit": "seconds",

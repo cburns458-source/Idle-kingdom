@@ -96,6 +96,7 @@ export function beginActivitySave(
       actionStartedAt: null,
       actionDurationMs: null,
       deathPauseUntil: null,
+      activityTransition: null,
     }),
   )
 }
@@ -114,6 +115,7 @@ export function clearActivitySave(
       actionStartedAt: null,
       actionDurationMs: null,
       deathPauseUntil: null,
+      activityTransition: null,
     }),
   )
 }

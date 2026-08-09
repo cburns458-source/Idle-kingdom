@@ -7,6 +7,7 @@ import {
 } from '../activity/engine'
 import { configNumber } from '../activity/gathering'
 import type { RandomFn } from '../activity/pools'
+import { resolveActivityTransitions } from '../activity/transition'
 import {
   applyCombatDefeat,
   applyCombatVictory,
@@ -68,7 +69,7 @@ export function resolveUnattendedProgress(
   const anchor = Number.isFinite(anchorRaw) ? anchorRaw : nowMs
   const effectiveElapsedMs = Math.max(0, endMs - anchor)
 
-  let current = save
+  let current = resolveActivityTransitions(db, save, endMs)
   const messages: string[] = []
   let gatheringActions = 0
   let craftsCompleted = 0

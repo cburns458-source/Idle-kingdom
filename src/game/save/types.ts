@@ -1,4 +1,4 @@
-export const SAVE_VERSION = 9
+export const SAVE_VERSION = 10
 export const SAVE_STORAGE_KEY = 'idle-kingdoms.demo.save'
 export const STARTING_LOCATION_ID = 'LOC-0002'
 export const STARTING_GOLD = 0
@@ -54,6 +54,19 @@ export interface PlayerSettings {
   soundEnabled: boolean
 }
 
+/** Pending Primary Activity start/stop delay. */
+export interface ActivityTransition {
+  kind: 'starting' | 'stopping'
+  activityId: string
+  /** After a stop delay completes, begin starting this activity. */
+  followUpActivityId: string | null
+  /** Optional Standard Production payload applied when the start delay completes. */
+  productionRecipeId: string | null
+  productionQuantity: number | null
+  startedAt: string
+  durationMs: number
+}
+
 export interface PlayerSave {
   saveVersion: number
   createdAt: string
@@ -84,6 +97,8 @@ export interface PlayerSave {
   productionRecipeId: string | null
   productionQuantityTotal: number | null
   productionQuantityRemaining: number | null
+  /** Pending start/stop delay for Primary Activities. */
+  activityTransition: ActivityTransition | null
   unattendedProgressAt: string | null
   currentHp: number
   maxHp: number

@@ -4,7 +4,7 @@ import type { PlayerSave } from '../save/types'
 
 function saveWithInventory(itemIds: string[]): PlayerSave {
   return {
-    saveVersion: 9,
+    saveVersion: 10,
     createdAt: 't',
     updatedAt: 't',
     characterName: 'Test',
@@ -30,6 +30,7 @@ function saveWithInventory(itemIds: string[]): PlayerSave {
     productionRecipeId: null,
     productionQuantityTotal: null,
     productionQuantityRemaining: null,
+    activityTransition: null,
     maxHp: 100,
     currentHp: 100,
     unattendedProgressAt: null,

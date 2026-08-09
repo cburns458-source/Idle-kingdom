@@ -138,6 +138,7 @@ export function stopPrimaryActivity<
     productionRecipeId?: string | null
     productionQuantityTotal?: number | null
     productionQuantityRemaining?: number | null
+    activityTransition?: unknown
   },
 >(save: T, nowMs: number = Date.now()): T {
   if (save.deathPauseUntil && Date.parse(save.deathPauseUntil) > nowMs) {
@@ -157,6 +158,7 @@ export function stopPrimaryActivity<
     productionRecipeId: null,
     productionQuantityTotal: null,
     productionQuantityRemaining: null,
+    activityTransition: null,
   }
 }
 
@@ -172,6 +174,7 @@ export function applyTravelArrival<
     productionRecipeId?: string | null
     productionQuantityTotal?: number | null
     productionQuantityRemaining?: number | null
+    activityTransition?: unknown
   },
 >(save: T, destinationLocationId: string, nowMs: number = Date.now()): T {
   if (save.deathPauseUntil && Date.parse(save.deathPauseUntil) > nowMs) {
