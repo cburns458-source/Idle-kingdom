@@ -9637,7 +9637,7 @@
       "Target ID": "ITEM-0025",
       "Proficiency Level": 10,
       "Base Duration Seconds": 120,
-      "XP Reward": 26000,
+      "XP Reward": 13000,
       "Guaranteed Gold": 0,
       "Drop Chance": 100,
       "Reward Table ID": "RWT-0043",
@@ -9645,7 +9645,7 @@
       "Secondary Reward Table ID": null,
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": null
+      "Notes": "Owner Step 3 request: XP reduced by 50%."
     },
     {
       "Action ID": "ACN-0036",
@@ -9657,7 +9657,7 @@
       "Target ID": "ITEM-0026",
       "Proficiency Level": 10,
       "Base Duration Seconds": 120,
-      "XP Reward": 26000,
+      "XP Reward": 13000,
       "Guaranteed Gold": 0,
       "Drop Chance": 100,
       "Reward Table ID": "RWT-0057",
@@ -9665,7 +9665,7 @@
       "Secondary Reward Table ID": null,
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": "Player-facing display name is Potato; the Action ID and reward identify Golden Spud."
+      "Notes": "Player-facing display name is Potato; the Action ID and reward identify Golden Spud.; Owner Step 3 request: XP reduced by 50%."
     },
     {
       "Action ID": "ACN-0046",
@@ -10137,7 +10137,7 @@
       "Target ID": "ITEM-0028",
       "Proficiency Level": 30,
       "Base Duration Seconds": 1800,
-      "XP Reward": 450000,
+      "XP Reward": 225000,
       "Guaranteed Gold": 0,
       "Drop Chance": 90,
       "Reward Table ID": "RWT-0045",
@@ -10145,7 +10145,7 @@
       "Secondary Reward Table ID": null,
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": null
+      "Notes": "Owner Step 3 request: XP reduced by 50%."
     },
     {
       "Action ID": "ACN-0109",
@@ -14282,7 +14282,7 @@
     {
       "Reward Entry ID": "RWE-0100",
       "Reward Table ID": "RWT-0058",
-      "Reward Table Name": "Secondary Gems — Sapphire Only",
+      "Reward Table Name": "Secondary Gems \u2014 Sapphire Only",
       "Purpose": "Independent Mining gem drop",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0012",
@@ -14297,7 +14297,7 @@
     {
       "Reward Entry ID": "RWE-0101",
       "Reward Table ID": "RWT-0059",
-      "Reward Table Name": "Secondary Gems — Sapphire Emerald",
+      "Reward Table Name": "Secondary Gems \u2014 Sapphire Emerald",
       "Purpose": "Independent Mining gem drop",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0012",
@@ -14312,7 +14312,7 @@
     {
       "Reward Entry ID": "RWE-0102",
       "Reward Table ID": "RWT-0059",
-      "Reward Table Name": "Secondary Gems — Sapphire Emerald",
+      "Reward Table Name": "Secondary Gems \u2014 Sapphire Emerald",
       "Purpose": "Independent Mining gem drop",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0013",
@@ -14327,7 +14327,7 @@
     {
       "Reward Entry ID": "RWE-0103",
       "Reward Table ID": "RWT-0060",
-      "Reward Table Name": "Secondary Gems — All Gems",
+      "Reward Table Name": "Secondary Gems \u2014 All Gems",
       "Purpose": "Independent Mining gem drop",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0012",
@@ -14342,7 +14342,7 @@
     {
       "Reward Entry ID": "RWE-0104",
       "Reward Table ID": "RWT-0060",
-      "Reward Table Name": "Secondary Gems — All Gems",
+      "Reward Table Name": "Secondary Gems \u2014 All Gems",
       "Purpose": "Independent Mining gem drop",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0013",
@@ -14357,7 +14357,7 @@
     {
       "Reward Entry ID": "RWE-0105",
       "Reward Table ID": "RWT-0060",
-      "Reward Table Name": "Secondary Gems — All Gems",
+      "Reward Table Name": "Secondary Gems \u2014 All Gems",
       "Purpose": "Independent Mining gem drop",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0014",

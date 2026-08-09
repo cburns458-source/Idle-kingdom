@@ -477,9 +477,10 @@
   filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.45));
 }
 
-.horse-icon {
-  width: 3.4rem;
-  height: 2.25rem;
+.horse-icon,
+.travel-runner-icon {
+  width: 3.25rem;
+  height: 3.25rem;
   display: block;
 }
 
