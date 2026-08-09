@@ -54,13 +54,14 @@ describe('primary activity engine', () => {
     expect(gatheringDurationMs(launch, save, potato)).toBe(240_000)
   })
 
-  it('excludes Needs Data and Combat actions from Step 3 pools', () => {
+  it('excludes Needs Data actions and includes Combat when complete', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const woodland = eligiblePoolEntries(launch, 'POOL-0010')
     expect(woodland).toHaveLength(0)
 
     const pasture = eligiblePoolEntries(launch, 'POOL-0001')
-    expect(pasture).toHaveLength(0)
+    expect(pasture.every((pair) => pair.action.Category === 'Combat')).toBe(true)
+    expect(pasture.length).toBeGreaterThan(0)
 
     const copper = eligiblePoolEntries(launch, 'POOL-0005')
     expect(copper.every((pair) => pair.action.Category === 'Gathering')).toBe(true)

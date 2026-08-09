@@ -121,6 +121,10 @@ export function stopPrimaryActivity<
     currentActionId?: string | null
     actionStartedAt?: string | null
     actionDurationMs?: number | null
+    combatEnemyId?: string | null
+    combatEnemyHp?: number | null
+    combatRoundStartedAt?: string | null
+    deathPauseUntil?: string | null
   },
 >(save: T): T {
   return {
@@ -130,6 +134,10 @@ export function stopPrimaryActivity<
     currentActionId: null,
     actionStartedAt: null,
     actionDurationMs: null,
+    combatEnemyId: null,
+    combatEnemyHp: null,
+    combatRoundStartedAt: null,
+    deathPauseUntil: null,
   }
 }
 

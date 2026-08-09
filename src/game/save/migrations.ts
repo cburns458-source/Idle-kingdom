@@ -14,6 +14,18 @@ export const SAVE_MIGRATIONS: SaveMigration[] = [
       saveVersion: 2,
     }),
   },
+  {
+    fromVersion: 2,
+    toVersion: 3,
+    migrate: (save) => ({
+      ...save,
+      combatEnemyId: save.combatEnemyId ?? null,
+      combatEnemyHp: save.combatEnemyHp ?? null,
+      combatRoundStartedAt: save.combatRoundStartedAt ?? null,
+      deathPauseUntil: save.deathPauseUntil ?? null,
+      saveVersion: 3,
+    }),
+  },
 ]
 
 export function migrateSave(save: PlayerSave): PlayerSave {

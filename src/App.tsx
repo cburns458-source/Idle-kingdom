@@ -27,10 +27,22 @@ import {
   resolveActiveMapId,
   travelDurationMs,
 } from './game/world/travel'
+import { configNumber } from './game/activity/gathering'
+import {
+  applyCombatDefeat,
+  applyCombatVictory,
+  deathPauseRemainingMs,
+  getEnemy,
+  isDeathPaused,
+  resolveCombatRound,
+} from './game/combat/engine'
+import { playerMaxHp } from './game/combat/stats'
+import { addItemToInventory } from './game/activity/rewards'
 import { totalLevel, totalSkillXp } from './game/skills/totals'
 import { ActivityPanel } from './ui/ActivityPanel'
 import { BottomNav, type AppScreen } from './ui/BottomNav'
-import { LogStub, SettingsStub } from './ui/StubScreens'
+import { CombatPanel } from './ui/CombatPanel'
+import { LogStub } from './ui/StubScreens'
 import { LocationView } from './ui/LocationView'
 import { SkillsView } from './ui/SkillsView'
 import { TopHud } from './ui/TopHud'
@@ -61,6 +73,8 @@ export default function App() {
   const [activityError, setActivityError] = useState<string | null>(null)
   const [recentLoot, setRecentLoot] = useState<LootGrant[]>([])
   const [lastMessage, setLastMessage] = useState<string | null>(null)
+  const [roundProgress, setRoundProgress] = useState(0)
+  const [pauseRemainingMs, setPauseRemainingMs] = useState(0)
   const bootRef = useRef(boot)
   bootRef.current = boot
 
@@ -128,11 +142,12 @@ export default function App() {
     return () => window.cancelAnimationFrame(frame)
   }, [travel, boot.status])
 
-  // Ensure an action exists while an activity is running.
+  // Ensure an action exists while an activity is running (not during death pause).
   useEffect(() => {
     if (boot.status !== 'ready' || travel) return
     const { database, save } = boot
     if (!save.currentActivityId || save.currentActionId) return
+    if (isDeathPaused(save)) return
 
     if (!activityStillValid(database.launch, save, save.currentActivityId)) {
       const stopped = writeSave(clearActivitySave(save))
@@ -145,7 +160,7 @@ export default function App() {
     if (!generated) {
       const stopped = writeSave(clearActivitySave(save))
       setBoot({ ...boot, save: stopped, saveCreated: false })
-      setActivityError('No gatherable actions remain for this activity.')
+      setActivityError('No actions remain for this activity.')
       return
     }
     setBoot({ ...boot, save: writeSave(generated.save), saveCreated: false })
@@ -160,6 +175,7 @@ export default function App() {
   useEffect(() => {
     if (boot.status !== 'ready' || travel) return
     const save = boot.save
+    if (save.combatEnemyId) return
     const actionState = restoreActiveActionState(save)
     if (!save.currentActivityId || !actionState) {
       setActionProgress(0)
@@ -245,6 +261,176 @@ export default function App() {
     runningActionDurationMs,
   ])
 
+  const combatEnemyId = boot.status === 'ready' ? boot.save.combatEnemyId : null
+  const combatRoundStartedAt = boot.status === 'ready' ? boot.save.combatRoundStartedAt : null
+  const deathPauseUntil = boot.status === 'ready' ? boot.save.deathPauseUntil : null
+
+  // Combat rounds + death pause.
+  useEffect(() => {
+    if (boot.status !== 'ready' || travel) return
+    const { database, save } = boot
+    if (!save.currentActivityId) {
+      setRoundProgress(0)
+      setPauseRemainingMs(0)
+      return
+    }
+
+    const roundMs = configNumber(database.launch, 'combat_round_duration', 4) * 1000
+    let frame = 0
+    let resolved = false
+
+    const tick = () => {
+      const current = bootRef.current
+      if (current.status !== 'ready') return
+      const now = Date.now()
+      const pauseLeft = deathPauseRemainingMs(current.save, now)
+      setPauseRemainingMs(pauseLeft)
+
+      if (pauseLeft > 0) {
+        setRoundProgress(0)
+        frame = window.requestAnimationFrame(tick)
+        return
+      }
+
+      if (current.save.deathPauseUntil) {
+        if (resolved) return
+        resolved = true
+        const resumed = {
+          ...current.save,
+          deathPauseUntil: null,
+        }
+        if (!activityStillValid(current.database.launch, resumed, resumed.currentActivityId!)) {
+          setBoot({
+            ...current,
+            save: writeSave(clearActivitySave(resumed)),
+            saveCreated: false,
+          })
+          setActivityError('Activity stopped after defeat — requirements no longer met.')
+          return
+        }
+        const generated = generateNextAction(
+          current.database.launch,
+          resumed,
+          resumed.currentActivityId!,
+        )
+        setBoot({
+          ...current,
+          save: writeSave(generated ? generated.save : resumed),
+          saveCreated: false,
+        })
+        setLastMessage('Recovered. Resuming activity…')
+        return
+      }
+
+      if (!current.save.combatEnemyId || !current.save.combatRoundStartedAt) {
+        setRoundProgress(0)
+        return
+      }
+
+      const started = Date.parse(current.save.combatRoundStartedAt)
+      const progress = Math.min(1, (now - started) / roundMs)
+      setRoundProgress(progress)
+      if (progress < 1) {
+        frame = window.requestAnimationFrame(tick)
+        return
+      }
+      if (resolved) return
+      resolved = true
+
+      const enemy = getEnemy(current.database.launch, current.save.combatEnemyId)
+      const action = current.save.currentActionId
+        ? current.database.launchIndexes.actionsById.get(current.save.currentActionId)
+        : undefined
+      if (!enemy || !action || current.save.combatEnemyHp == null) {
+        setBoot({
+          ...current,
+          save: writeSave(clearActivitySave(current.save)),
+          saveCreated: false,
+        })
+        return
+      }
+
+      const round = resolveCombatRound(
+        current.database.launch,
+        current.save,
+        enemy,
+        current.save.combatEnemyHp,
+      )
+
+      if (round.outcome === 'victory') {
+        const victoryResult = applyCombatVictory(
+          current.database.launch,
+          { ...current.save, combatEnemyHp: 0 },
+          action,
+          enemy,
+        )
+        const nextSave = victoryResult.save
+
+        setRecentLoot((prev) => [...victoryResult.loot, ...prev].slice(0, 8))
+        setLastMessage(
+          [
+            `Defeated ${enemy['Display Name']}`,
+            victoryResult.xpGained > 0 ? `+${victoryResult.xpGained} Combat XP` : null,
+            victoryResult.goldGained > 0 ? `+${victoryResult.goldGained} gold` : null,
+            victoryResult.loot.map((loot) => `+${loot.quantity} ${loot.displayName}`).join(', ') ||
+              null,
+            victoryResult.foodConsumed
+              ? `Ate ${victoryResult.foodName} (+${victoryResult.foodHealed} HP)`
+              : null,
+          ]
+            .filter(Boolean)
+            .join(' · '),
+        )
+
+        const activityId = current.save.currentActivityId!
+        if (!activityStillValid(current.database.launch, nextSave, activityId)) {
+          setBoot({
+            ...current,
+            save: writeSave(clearActivitySave(nextSave)),
+            saveCreated: false,
+          })
+          return
+        }
+        const generated = generateNextAction(current.database.launch, nextSave, activityId)
+        setRoundProgress(0)
+        setBoot({
+          ...current,
+          save: writeSave(generated ? generated.save : nextSave),
+          saveCreated: false,
+        })
+        return
+      }
+
+      if (round.outcome === 'defeat') {
+        const defeated = applyCombatDefeat(current.database.launch, {
+          ...current.save,
+          currentHp: 0,
+        })
+        setLastMessage(`Defeated by ${enemy['Display Name']}. Recovering…`)
+        setRoundProgress(0)
+        setBoot({ ...current, save: writeSave(defeated), saveCreated: false })
+        return
+      }
+
+      setLastMessage(
+        `You hit ${round.playerHit}. ${enemy['Display Name']} hits ${round.enemyHit}.`,
+      )
+      setBoot({
+        ...current,
+        save: writeSave({
+          ...current.save,
+          currentHp: round.playerHp,
+          combatEnemyHp: round.enemyHp,
+          combatRoundStartedAt: new Date().toISOString(),
+        }),
+        saveCreated: false,
+      })
+    }
+
+    frame = window.requestAnimationFrame(tick)
+    return () => window.cancelAnimationFrame(frame)
+  }, [boot, travel, combatEnemyId, combatRoundStartedAt, deathPauseUntil, runningActivityId])
+
   const ready = boot.status === 'ready' ? boot : null
 
   const overallXp = useMemo(
@@ -298,6 +484,10 @@ export default function App() {
   const actionSkill = currentAction
     ? database.launchIndexes.skillsById.get(currentAction['Relevant Skill ID'])
     : undefined
+  const combatEnemy =
+    save.combatEnemyId != null ? getEnemy(database.launch, save.combatEnemyId) : undefined
+  const maxHp = playerMaxHp(database.launch, save)
+  const inCombat = Boolean(combatEnemy && save.combatEnemyHp != null)
 
   const fromLocation = database.launchIndexes.locationsById.get(
     travel?.fromLocationId ?? save.currentLocationId,
@@ -359,6 +549,8 @@ export default function App() {
           totalLevel={overallLevel}
           totalXp={overallXp}
           gold={save.gold}
+          currentHp={save.currentHp}
+          maxHp={maxHp}
           activityLabel={activityLabel}
           locationLabel={location['Display Name']}
         />
@@ -366,7 +558,20 @@ export default function App() {
         <div className="screen-body">
           {screen === 'location' && (
             <>
-              {activity && (
+              {activity && inCombat && combatEnemy && (
+                <CombatPanel
+                  activity={activity}
+                  enemy={combatEnemy}
+                  enemyHp={save.combatEnemyHp ?? combatEnemy['Maximum HP']}
+                  playerHp={save.currentHp}
+                  playerMaxHp={maxHp}
+                  roundProgress={roundProgress}
+                  deathPauseRemainingMs={pauseRemainingMs}
+                  lastCombatMessage={lastMessage}
+                  onStop={stopActivity}
+                />
+              )}
+              {activity && !inCombat && pauseRemainingMs <= 0 && (
                 <ActivityPanel
                   activity={activity}
                   action={currentAction ?? null}
@@ -377,6 +582,23 @@ export default function App() {
                   lastMessage={lastMessage}
                   onStop={stopActivity}
                 />
+              )}
+              {activity && pauseRemainingMs > 0 && !inCombat && (
+                <section className="panel">
+                  <div className="activity-panel-head">
+                    <div>
+                      <h2>Recovering</h2>
+                      <p className="muted">Death pause</p>
+                    </div>
+                    <button type="button" className="btn secondary" onClick={stopActivity}>
+                      Stop
+                    </button>
+                  </div>
+                  <p className="danger-note">
+                    Resuming in {Math.ceil(pauseRemainingMs / 1000)}s…
+                  </p>
+                  {lastMessage && <p className="loot-message">{lastMessage}</p>}
+                </section>
               )}
               <LocationView
                 indexes={database.launchIndexes}
@@ -415,9 +637,13 @@ export default function App() {
           )}
 
           {screen === 'skills' && <SkillsView db={database.launch} save={save} />}
-          {screen === 'inventory' && <InventoryPanel save={save} database={database} />}
+          {screen === 'inventory' && (
+            <InventoryPanel save={save} database={database} onChangeSave={updateSave} />
+          )}
           {screen === 'log' && <LogStub />}
-          {screen === 'settings' && <SettingsStub />}
+          {screen === 'settings' && (
+            <SettingsPanel save={save} database={database} onChangeSave={updateSave} />
+          )}
         </div>
 
         <BottomNav screen={screen} onChange={setScreen} mapDisabled={Boolean(travel)} />
@@ -437,29 +663,131 @@ export default function App() {
 function InventoryPanel({
   save,
   database,
+  onChangeSave,
 }: {
   save: PlayerSave
   database: LoadedDatabase
+  onChangeSave: (save: PlayerSave) => void
 }) {
+  function equipItem(itemId: string) {
+    const equipment = database.launch.Equipment.find((row) => row['Item ID'] === itemId)
+    const slotId = equipment?.['Slot ID']
+    if (!slotId) return
+    onChangeSave({
+      ...save,
+      maxHp: playerMaxHp(database.launch, {
+        ...save,
+        equipment: {
+          ...save.equipment,
+          slots: { ...save.equipment.slots, [slotId]: itemId },
+        },
+      }),
+      equipment: {
+        ...save.equipment,
+        slots: { ...save.equipment.slots, [slotId]: itemId },
+      },
+    })
+  }
+
+  function unequipSlot(slotId: string) {
+    const slots = { ...save.equipment.slots, [slotId]: null }
+    const next = { ...save, equipment: { ...save.equipment, slots } }
+    onChangeSave({ ...next, maxHp: playerMaxHp(database.launch, next) })
+  }
+
+  const equipped = Object.entries(save.equipment.slots).filter(([, itemId]) => itemId)
+
   return (
     <section className="panel">
       <h1>Inventory</h1>
       {save.inventory.length === 0 ? (
-        <p className="lead">No items yet. Gather resources to fill this list.</p>
+        <p className="lead">No items yet. Fight or gather to fill this list.</p>
       ) : (
-        <ul className="plain-list">
-          {save.inventory.map((stack) => (
-            <li key={stack.itemId}>
-              <strong>
-                {database.launchIndexes.itemsById.get(stack.itemId)?.['Display Name'] ??
-                  stack.itemId}
-              </strong>
-              <span className="muted"> × {stack.quantity}</span>
+        <ul className="interaction-list">
+          {save.inventory.map((stack) => {
+            const equipment = database.launch.Equipment.find((row) => row['Item ID'] === stack.itemId)
+            const name =
+              database.launchIndexes.itemsById.get(stack.itemId)?.['Display Name'] ?? stack.itemId
+            return (
+              <li key={stack.itemId}>
+                <div>
+                  <strong>{name}</strong>
+                  <p className="muted">× {stack.quantity}</p>
+                </div>
+                {equipment?.['Slot ID'] && (
+                  <button
+                    type="button"
+                    className="btn primary"
+                    onClick={() => equipItem(stack.itemId)}
+                  >
+                    Equip
+                  </button>
+                )}
+              </li>
+            )
+          })}
+        </ul>
+      )}
+
+      <h2>Equipped</h2>
+      {equipped.length === 0 ? (
+        <p className="muted">Nothing equipped.</p>
+      ) : (
+        <ul className="interaction-list">
+          {equipped.map(([slotId, itemId]) => (
+            <li key={slotId}>
+              <div>
+                <strong>
+                  {database.launchIndexes.itemsById.get(itemId!)?.['Display Name'] ?? itemId}
+                </strong>
+                <p className="muted">
+                  {database.launch.EquipmentSlots.find((slot) => slot['Slot ID'] === slotId)?.[
+                    'Display Name'
+                  ] ?? slotId}
+                </p>
+              </div>
+              <button type="button" className="btn secondary" onClick={() => unequipSlot(slotId)}>
+                Unequip
+              </button>
             </li>
           ))}
         </ul>
       )}
-      <p className="muted tiny">Equip / unequip arrives in a later step.</p>
+    </section>
+  )
+}
+
+function SettingsPanel({
+  save,
+  database,
+  onChangeSave,
+}: {
+  save: PlayerSave
+  database: LoadedDatabase
+  onChangeSave: (save: PlayerSave) => void
+}) {
+  const bakedPotatoId = 'ITEM-0058'
+
+  function grantTestFood() {
+    const withItems = addItemToInventory(save, bakedPotatoId, 5)
+    const equipped = {
+      ...withItems,
+      equipment: {
+        ...withItems.equipment,
+        slots: { ...withItems.equipment.slots, 'SLOT-0011': bakedPotatoId },
+      },
+    }
+    onChangeSave({ ...equipped, maxHp: playerMaxHp(database.launch, equipped) })
+  }
+
+  return (
+    <section className="panel">
+      <h1>Menu</h1>
+      <p className="lead">Settings and temporary demo aids.</p>
+      <button type="button" className="btn primary" onClick={grantTestFood}>
+        Add & equip Baked Potato ×5
+      </button>
+      <p className="muted tiny">Demo aid for food testing until Cooking is available.</p>
     </section>
   )
 }

@@ -1,5 +1,5 @@
 {
-  "generatedForStep": 2,
+  "generatedForStep": 4,
   "artDirection": "Game Bible section 16 — warm hand-crafted 2D fantasy, cozy, readable, square sources",
   "maps": {
     "MAP-0001": {
@@ -33,5 +33,19 @@
     "LOC-0015": { "internalKey": "castle_main_hall", "path": "/assets/locations/loc_castle_main_hall.png" },
     "LOC-0016": { "internalKey": "kings_quarters", "path": "/assets/locations/loc_kings_quarters.png" },
     "LOC-0017": { "internalKey": "castle_barracks", "path": "/assets/locations/loc_castle_barracks.png" }
+  },
+  "enemies": {
+    "ENM-0001": { "internalKey": "cow", "path": "/assets/enemies/enm_cow.png" },
+    "ENM-0002": { "internalKey": "bull", "path": "/assets/enemies/enm_bull.png" },
+    "ENM-0003": { "internalKey": "goblin_scout", "path": "/assets/enemies/enm_goblin_scout.png" },
+    "ENM-0004": { "internalKey": "goblin_chief", "path": "/assets/enemies/enm_goblin_chief.png" },
+    "ENM-0005": { "internalKey": "pirate", "path": "/assets/enemies/enm_pirate.png" },
+    "ENM-0007": { "internalKey": "rock_troll", "path": "/assets/enemies/enm_rock_troll.png" },
+    "ENM-0008": { "internalKey": "skeleton", "path": "/assets/enemies/enm_skeleton.png" },
+    "ENM-0009": { "internalKey": "zombie", "path": "/assets/enemies/enm_zombie.png" },
+    "ENM-0010": { "internalKey": "wild_boar", "path": "/assets/enemies/enm_wild_boar.png" },
+    "ENM-0011": { "internalKey": "castle_guard", "path": "/assets/enemies/enm_castle_guard.png" },
+    "ENM-0016": { "internalKey": "goblin_warrior", "path": "/assets/enemies/enm_goblin_warrior.png" },
+    "ENM-0017": { "internalKey": "rabbit_buck", "path": "/assets/enemies/enm_rabbit_buck.png" }
   }
 }

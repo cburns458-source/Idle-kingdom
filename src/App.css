@@ -80,8 +80,14 @@
 .hud-stats {
   margin: 0;
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr;
   gap: 0.4rem;
+}
+
+@media (min-width: 640px) {
+  .hud-stats {
+    grid-template-columns: repeat(4, 1fr);
+  }
 }
 
 .hud-stats .hud-activity {
@@ -689,4 +695,40 @@
 .skill-tile .skill-icon svg {
   width: 1.55rem;
   height: 1.55rem;
+}
+
+.combat-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.combat-enemy-art {
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  border-radius: 0.85rem;
+  background-size: cover;
+  background-position: center;
+  border: 1px solid rgba(212, 175, 55, 0.28);
+}
+
+.combat-bars {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.combat-bar-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: #e7d8b6;
+  margin-bottom: 0.2rem;
+}
+
+.combat-enemy-fill {
+  background: linear-gradient(90deg, #c46b3d, #d4af37);
+}
+
+.combat-player-fill {
+  background: linear-gradient(90deg, #7f9d63, #b7d48a);
 }

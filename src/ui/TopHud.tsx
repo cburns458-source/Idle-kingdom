@@ -2,11 +2,21 @@ interface TopHudProps {
   totalLevel: number
   totalXp: number
   gold: number
+  currentHp: number
+  maxHp: number
   activityLabel: string
   locationLabel: string
 }
 
-export function TopHud({ totalLevel, totalXp, gold, activityLabel, locationLabel }: TopHudProps) {
+export function TopHud({
+  totalLevel,
+  totalXp,
+  gold,
+  currentHp,
+  maxHp,
+  activityLabel,
+  locationLabel,
+}: TopHudProps) {
   return (
     <header className="top-hud">
       <div className="top-hud-brand">
@@ -25,6 +35,12 @@ export function TopHud({ totalLevel, totalXp, gold, activityLabel, locationLabel
         <div>
           <dt>Gold</dt>
           <dd>{gold.toLocaleString()}</dd>
+        </div>
+        <div>
+          <dt>HP</dt>
+          <dd>
+            {currentHp.toLocaleString()} / {maxHp.toLocaleString()}
+          </dd>
         </div>
         <div className="hud-activity">
           <dt>Activity</dt>

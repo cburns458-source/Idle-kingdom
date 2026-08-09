@@ -1,3 +1,8 @@
+import {
+  beginCombatSave,
+  clearCombatSave,
+  enemyForAction,
+} from '../combat/engine'
 import type { ActionRow, ActivityRow, GameDatabase } from '../data/types'
 import type { PlayerSave } from '../save/types'
 import { gatheringDurationMs } from './gathering'
@@ -45,7 +50,7 @@ export function validateActivityStart(
   if (eligible.length === 0) {
     return {
       ok: false,
-      reason: 'No gatherable actions are ready for this activity yet.',
+      reason: 'No actions are ready for this activity yet.',
     }
   }
 
@@ -68,25 +73,27 @@ export function beginActivitySave(
   activityId: string,
   nowIso: string = new Date().toISOString(),
 ): PlayerSave {
-  return {
+  return clearCombatSave({
     ...save,
     currentActivityId: activityId,
     activityStartedAt: nowIso,
     currentActionId: null,
     actionStartedAt: null,
     actionDurationMs: null,
-  }
+    deathPauseUntil: null,
+  })
 }
 
 export function clearActivitySave(save: PlayerSave): PlayerSave {
-  return {
+  return clearCombatSave({
     ...save,
     currentActivityId: null,
     activityStartedAt: null,
     currentActionId: null,
     actionStartedAt: null,
     actionDurationMs: null,
-  }
+    deathPauseUntil: null,
+  })
 }
 
 export function generateNextAction(
@@ -95,15 +102,31 @@ export function generateNextAction(
   activityId: string,
   random: RandomFn = Math.random,
   nowMs: number = Date.now(),
-): { save: PlayerSave; action: ActionRow; state: ActiveActionState } | null {
+): { save: PlayerSave; action: ActionRow; state: ActiveActionState | null } | null {
   const activity = getActivity(db, activityId)
   if (!activity?.['Pool ID']) return null
   const eligible = eligiblePoolEntries(db, activity['Pool ID'])
   const action = pickWeightedAction(eligible, random)
   if (!action) return null
 
-  const durationMs = gatheringDurationMs(db, save, action)
   const startedAt = new Date(nowMs).toISOString()
+
+  if (action.Category === 'Combat') {
+    const enemy = enemyForAction(db, action)
+    if (!enemy) return null
+    const withActivity = {
+      ...save,
+      currentActivityId: activityId,
+      activityStartedAt: save.activityStartedAt ?? startedAt,
+    }
+    return {
+      action,
+      state: null,
+      save: beginCombatSave(withActivity, action, enemy, startedAt),
+    }
+  }
+
+  const durationMs = gatheringDurationMs(db, save, action)
   return {
     action,
     state: {
@@ -111,13 +134,13 @@ export function generateNextAction(
       startedAtMs: nowMs,
       durationMs,
     },
-    save: {
+    save: clearCombatSave({
       ...save,
       currentActivityId: activityId,
       currentActionId: action['Action ID'],
       actionStartedAt: startedAt,
       actionDurationMs: durationMs,
-    },
+    }),
   }
 }
 

@@ -2,14 +2,20 @@ import type { ActionRow, GameDatabase, PoolEntryRow } from '../data/types'
 
 export type RandomFn = () => number
 
-/** Step 3: Gathering actions with complete runtime data only. */
-export function isStep3SelectableAction(action: ActionRow): boolean {
+/** Gathering or Combat actions with complete runtime data. */
+export function isSelectableAction(action: ActionRow): boolean {
   if (action.Status === 'Needs Data') return false
-  if (action.Category !== 'Gathering') return false
-  if (typeof action['Base Duration Seconds'] !== 'number') return false
-  if (typeof action['XP Reward'] !== 'number') return false
-  return true
+  if (action.Category === 'Gathering') {
+    return typeof action['Base Duration Seconds'] === 'number' && typeof action['XP Reward'] === 'number'
+  }
+  if (action.Category === 'Combat') {
+    return typeof action['Target ID'] === 'string' && action['Target ID'].length > 0
+  }
+  return false
 }
+
+/** @deprecated use isSelectableAction */
+export const isStep3SelectableAction = isSelectableAction
 
 export function eligiblePoolEntries(
   db: GameDatabase,
@@ -21,7 +27,7 @@ export function eligiblePoolEntries(
     if (entry.Status === 'Needs Data') continue
     if (typeof entry.Weight !== 'number' || entry.Weight <= 0) continue
     const action = db.Actions.find((row) => row['Action ID'] === entry['Action ID'])
-    if (!action || !isStep3SelectableAction(action)) continue
+    if (!action || !isSelectableAction(action)) continue
     pairs.push({ entry, action })
   }
   return pairs
