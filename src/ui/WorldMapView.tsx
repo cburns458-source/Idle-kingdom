@@ -34,15 +34,6 @@ export function WorldMapView({
 
   return (
     <section className="map-view">
-      <div className="map-toolbar">
-        <h1>{map?.['Display Name'] ?? 'Map'}</h1>
-        {mapId !== MAIN_MAP_ID && onShowWorldMap && (
-          <button type="button" className="btn secondary" onClick={onShowWorldMap}>
-            World Map
-          </button>
-        )}
-      </div>
-
       <div
         className="map-stage"
         style={{ backgroundImage: `url(${mapAssetPath(mapId)})` }}
@@ -77,14 +68,25 @@ export function WorldMapView({
         })}
       </div>
 
-      <SelectedLocationCard
-        mapId={mapId}
-        location={selected}
-        isCurrent={selected?.['Location ID'] === currentLocationId}
-        onTravel={() => selected && onTravel(selected['Location ID'])}
-        travelDisabled={travelDisabled}
-        travelLockReason={travelLockReason}
-      />
+      <div className="map-toolbar map-overlay-top">
+        <h1>{map?.['Display Name'] ?? 'Map'}</h1>
+        {mapId !== MAIN_MAP_ID && onShowWorldMap && (
+          <button type="button" className="btn secondary" onClick={onShowWorldMap}>
+            World Map
+          </button>
+        )}
+      </div>
+
+      <div className="map-overlay-bottom">
+        <SelectedLocationCard
+          mapId={mapId}
+          location={selected}
+          isCurrent={selected?.['Location ID'] === currentLocationId}
+          onTravel={() => selected && onTravel(selected['Location ID'])}
+          travelDisabled={travelDisabled}
+          travelLockReason={travelLockReason}
+        />
+      </div>
     </section>
   )
 }

@@ -734,7 +734,7 @@ export default function App() {
           locationLabel={location['Display Name']}
         />
 
-        <div className="screen-body">
+        <div className={screen === 'map' ? 'screen-body screen-body-map' : 'screen-body'}>
           {screen === 'location' && (
             <LocationView
               indexes={database.launchIndexes}
