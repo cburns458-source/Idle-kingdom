@@ -186,8 +186,7 @@ export function ProductionProgress({
   const clamped = Math.min(1, Math.max(0, progress))
   const pct = Math.round(clamped * 100)
   const craftSeconds = Math.max(0, (save.actionDurationMs ?? 0) / 1000)
-  const craftElapsedSeconds = Math.min(craftSeconds, clamped * craftSeconds)
-  const craftRemainingSeconds = Math.max(0, craftSeconds - craftElapsedSeconds)
+  const craftRemainingSeconds = Math.max(0, craftSeconds - clamped * craftSeconds)
   const upcomingCrafts = Math.max(0, remaining - (remaining > 0 ? 1 : 0))
   const queueRemainingSeconds = craftRemainingSeconds + upcomingCrafts * craftSeconds
   const output = recipe['Display Name']
@@ -207,7 +206,7 @@ export function ProductionProgress({
         Crafting <strong>{output}</strong>
       </p>
       <p className="muted">
-        Queue {completed}/{total} done · {remaining} remaining
+        {completed}/{total}
       </p>
       <p className="lead">
         Total time remaining: <strong>{formatDurationSeconds(queueRemainingSeconds)}</strong>
@@ -215,10 +214,6 @@ export function ProductionProgress({
       <div className="action-bar">
         <div className="action-bar-fill" style={{ width: `${pct}%` }} />
       </div>
-      <p className="muted tiny">
-        This craft · elapsed {formatDurationSeconds(craftElapsedSeconds)} /{' '}
-        {formatDurationSeconds(craftSeconds)}
-      </p>
       <ActionRewardList rewards={recentRewards} itemsById={itemsById} />
     </section>
   )

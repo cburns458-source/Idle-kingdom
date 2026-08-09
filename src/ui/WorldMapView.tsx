@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { locationAssetPath, mapAssetPath } from '../game/assets/assetMap'
 import type { GameDatabase, LocationRow } from '../game/data/types'
 import {
@@ -40,6 +41,11 @@ export function WorldMapView({
   const layout = layoutForMap(mapId)
   const selected = nodes.find((location) => location['Location ID'] === selectedLocationId) ?? null
   const isFutureRegion = mapId === WEST_MAP_ID || mapId === EAST_MAP_ID
+  const [selectionHidden, setSelectionHidden] = useState(false)
+
+  useEffect(() => {
+    setSelectionHidden(false)
+  }, [selectedLocationId, mapId])
 
   return (
     <section className="map-view">
@@ -101,10 +107,20 @@ export function WorldMapView({
       </div>
 
       <div className="map-overlay-bottom">
-        {isFutureRegion ? (
+        {selectionHidden ? (
+          <button
+            type="button"
+            className="btn secondary map-selection-reveal"
+            onClick={() => setSelectionHidden(false)}
+          >
+            Show selection
+          </button>
+        ) : isFutureRegion ? (
           <div className="panel location-card">
             <div className="location-card-body" style={{ gridColumn: '1 / -1' }}>
-              <h2>{map?.['Display Name'] ?? 'Uncharted lands'}</h2>
+              <div className="location-card-head">
+                <h2>{map?.['Display Name'] ?? 'Uncharted lands'}</h2>
+              </div>
               <p className="lead location-card-desc">
                 {map?.Description ?? 'Reserved for future content.'}
               </p>
@@ -122,6 +138,7 @@ export function WorldMapView({
               const adjacent = adjacentMapForHorizon(selected['Location ID'])
               if (adjacent && onBrowseMap) onBrowseMap(adjacent)
             }}
+            onHide={() => setSelectionHidden(true)}
             travelDisabled={travelDisabled}
             travelLockReason={travelLockReason}
           />
@@ -137,6 +154,7 @@ function SelectedLocationCard({
   isCurrent,
   onTravel,
   onViewAdjacent,
+  onHide,
   travelDisabled,
   travelLockReason,
 }: {
@@ -145,6 +163,7 @@ function SelectedLocationCard({
   isCurrent: boolean
   onTravel: () => void
   onViewAdjacent: () => void
+  onHide: () => void
   travelDisabled: boolean
   travelLockReason?: string
 }) {
@@ -168,7 +187,12 @@ function SelectedLocationCard({
         />
       )}
       <div className="location-card-body" style={future ? { gridColumn: '1 / -1' } : undefined}>
-        <h2>{location['Display Name']}</h2>
+        <div className="location-card-head">
+          <h2>{location['Display Name']}</h2>
+          <button type="button" className="btn secondary location-card-hide" onClick={onHide}>
+            Hide
+          </button>
+        </div>
         {location['Danger / Hostility'] && (
           <p className="danger-note">{location['Danger / Hostility']}</p>
         )}

@@ -908,9 +908,29 @@
   min-width: 0;
 }
 
+.location-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.45rem;
+}
+
 .location-card-body h2 {
   margin-bottom: 0.1rem;
   font-size: 0.95rem;
+}
+
+.location-card-hide {
+  flex: 0 0 auto;
+  min-height: 1.85rem;
+  padding: 0.2rem 0.55rem;
+  font-size: 0.75rem;
+}
+
+.map-selection-reveal {
+  min-height: 2.15rem;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.85rem;
 }
 
 .location-card-body .danger-note {
