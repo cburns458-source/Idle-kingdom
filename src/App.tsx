@@ -722,7 +722,10 @@ export default function App() {
 
   return (
     <div className="app-shell">
-      <main className="portrait-frame" aria-label="Idle Kingdoms">
+      <main
+        className={screen === 'map' ? 'portrait-frame portrait-frame-map' : 'portrait-frame'}
+        aria-label="Idle Kingdoms"
+      >
         <TopHud
           characterName={save.characterName}
           totalLevel={overallLevel}

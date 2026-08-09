@@ -8,31 +8,32 @@ export interface NodePosition {
 
 /**
  * UI node placement aligned to landmarks in the generated map art.
- * Coordinates are percent of the square map image (not balance data).
+ * Coordinates are percent of the map image (not balance data).
+ * Main map art is a tall expanded canvas; original square landmarks sit in the middle band.
  */
 export const MAIN_MAP_NODE_LAYOUT: Record<string, NodePosition> = {
   // NW castle with blue roofs
-  'LOC-0013': { x: 22, y: 20 },
+  'LOC-0013': { x: 22, y: 29.3 },
   // Mountain peaks / range
-  'LOC-0006': { x: 50, y: 14 },
+  'LOC-0006': { x: 50, y: 25.1 },
   // Cave mouth in the mountains (shifted right)
-  'LOC-0010': { x: 58, y: 32 },
+  'LOC-0010': { x: 58, y: 37.6 },
   // Wizard tower with blue magic (NE)
-  'LOC-0007': { x: 80, y: 25 },
+  'LOC-0007': { x: 80, y: 32.7 },
   // West of the castle (Kingswoods), nudged right
-  'LOC-0008': { x: 13, y: 28 },
+  'LOC-0008': { x: 13, y: 34.8 },
   // Central village / town square
-  'LOC-0002': { x: 33, y: 52 },
+  'LOC-0002': { x: 33, y: 51.3 },
   // Fortified orange-tent camp (Goblin Camp)
-  'LOC-0003': { x: 64, y: 49 },
+  'LOC-0003': { x: 64, y: 49.3 },
   // Meadow kept
-  'LOC-0009': { x: 12, y: 68 },
+  'LOC-0009': { x: 12, y: 62.4 },
   // Mine entrance with ore piles
-  'LOC-0005': { x: 24, y: 82 },
+  'LOC-0005': { x: 24, y: 72.0 },
   // Farm kept
-  'LOC-0001': { x: 74, y: 70 },
+  'LOC-0001': { x: 74, y: 63.8 },
   // Harbor / dock at river mouth
-  'LOC-0004': { x: 50, y: 88 },
+  'LOC-0004': { x: 50, y: 76.2 },
 }
 
 export const CAVE_MAP_NODE_LAYOUT: Record<string, NodePosition> = {

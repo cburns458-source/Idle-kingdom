@@ -316,6 +316,52 @@
   border-top: 1px solid rgba(212, 175, 55, 0.22);
 }
 
+/* Full-bleed world map: art runs under the HUD and location card. */
+.portrait-frame-map {
+  gap: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.portrait-frame-map .top-hud {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 6;
+  margin: 0;
+  padding: max(0.55rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) 0.85rem
+    max(1rem, env(safe-area-inset-left));
+  border-bottom: none;
+  background: linear-gradient(180deg, rgba(18, 14, 10, 0.82), rgba(18, 14, 10, 0.35), transparent);
+  pointer-events: none;
+}
+
+.portrait-frame-map .top-hud * {
+  pointer-events: none;
+}
+
+.portrait-frame-map .screen-body-map {
+  position: absolute;
+  inset: 0;
+  bottom: 0;
+  padding: 0;
+  z-index: 1;
+}
+
+.portrait-frame-map .bottom-nav {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 6;
+  margin: 0;
+  padding: 0.45rem max(1rem, env(safe-area-inset-right))
+    max(0.55rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
+  border-top: 1px solid rgba(212, 175, 55, 0.18);
+  background: linear-gradient(0deg, rgba(18, 14, 10, 0.88), rgba(18, 14, 10, 0.45), transparent);
+}
+
 .nav-btn {
   appearance: none;
   border: 1px solid rgba(212, 175, 55, 0.22);
@@ -346,8 +392,8 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
-  border-radius: 0.9rem;
-  border: 1px solid rgba(212, 175, 55, 0.28);
+  border-radius: 0;
+  border: none;
   overflow: hidden;
 }
 
@@ -549,8 +595,13 @@
 }
 
 .map-overlay-bottom {
-  bottom: 0;
-  padding: 0 0.7rem 0.7rem;
+  bottom: 4.6rem;
+  padding: 0 0.7rem 0.55rem;
+}
+
+.portrait-frame-map .map-overlay-top {
+  top: 4.6rem;
+  padding-top: 0.25rem;
 }
 
 .map-overlay-top > *,
@@ -585,7 +636,8 @@
   border-radius: 0;
   border: none;
   background-size: cover;
-  background-position: center;
+  background-position: center center;
+  background-repeat: no-repeat;
   overflow: hidden;
 }
 
@@ -652,17 +704,17 @@
 
 .location-card {
   display: grid;
-  grid-template-columns: 5.5rem 1fr;
-  gap: 0.75rem;
+  grid-template-columns: 4.25rem 1fr;
+  gap: 0.55rem;
   align-items: stretch;
-  padding: 0.7rem;
+  padding: 0.55rem 0.65rem;
 }
 
 .location-card-art {
-  border-radius: 0.75rem;
+  border-radius: 0.65rem;
   background-size: cover;
   background-position: center;
-  min-height: 5.5rem;
+  min-height: 4.25rem;
   border: 1px solid rgba(212, 175, 55, 0.25);
 }
 
@@ -671,7 +723,24 @@
 }
 
 .location-card-body h2 {
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.15rem;
+  font-size: 1rem;
+}
+
+.location-card-body .lead,
+.location-card-desc {
+  margin: 0 0 0.35rem;
+  font-size: 0.78rem;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+.location-card-body .btn {
+  min-height: 2.35rem;
+  padding: 0.45rem 0.8rem;
 }
 
 .travel-overlay {

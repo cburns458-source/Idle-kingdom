@@ -126,7 +126,9 @@ function SelectedLocationCard({
         {location['Danger / Hostility'] && (
           <p className="danger-note">{location['Danger / Hostility']}</p>
         )}
-        <p className="lead">{location.Description ?? 'A place in Idale.'}</p>
+        <p className="lead location-card-desc">
+          {location.Description ?? 'A place in Idale.'}
+        </p>
         {isCurrent ? (
           <p className="muted">You are here.</p>
         ) : (
