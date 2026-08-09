@@ -392,34 +392,52 @@
 .map-icon-btn {
   appearance: none;
   flex-shrink: 0;
-  width: 2.75rem;
-  height: 2.75rem;
+  width: 3.75rem;
+  height: 3.75rem;
   display: grid;
   place-items: center;
-  border-radius: 0.85rem;
-  border: 1px solid rgba(212, 175, 55, 0.45);
-  background: rgba(28, 18, 10, 0.72);
-  color: #f0d78c;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.28);
+  border-radius: 1rem;
+  border: 1px solid rgba(180, 220, 150, 0.7);
+  background: rgba(186, 220, 160, 0.92);
+  color: #2f4a24;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.28);
   cursor: pointer;
 }
 
 .map-icon-btn:hover {
-  background: rgba(48, 32, 18, 0.85);
-  color: #ffe7a8;
+  background: rgba(204, 232, 178, 0.96);
+  color: #243a1c;
 }
 
 .map-icon {
-  width: 1.45rem;
-  height: 1.45rem;
+  width: 2rem;
+  height: 2rem;
   display: block;
 }
 
 .glass-panel,
 .glass-btn,
 .location-view .panel {
-  background: rgba(28, 18, 10, 0.72) !important;
+  background: rgba(170, 210, 145, 0.78) !important;
+  border-color: rgba(150, 195, 125, 0.65) !important;
   backdrop-filter: blur(3px);
+  color: #243a1c;
+}
+
+.location-view .panel h1,
+.location-view .panel h2,
+.location-view .panel .lead,
+.location-view .panel .loot-message {
+  color: #243a1c;
+}
+
+.location-view .panel .muted,
+.location-view .panel .muted.tiny {
+  color: #3d5a32;
+}
+
+.location-view .panel .danger-note {
+  color: #6b3a1f;
 }
 
 .location-activities {
@@ -427,7 +445,13 @@
 }
 
 .location-view .interaction-list li {
-  background: rgba(20, 13, 8, 0.55);
+  background: rgba(198, 228, 172, 0.72);
+  color: #243a1c;
+}
+
+.location-view .interaction-list li .muted,
+.location-view .interaction-list li .muted.tiny {
+  color: #3d5a32;
 }
 
 .interaction-list,
