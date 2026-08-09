@@ -1,7 +1,13 @@
 import type { ReactNode } from 'react'
 import { locationAssetPath } from '../game/assets/assetMap'
 import type { ActivityRow, DatabaseIndexes, LocationRow } from '../game/data/types'
-import { CASTLE_GATEWAY_ID, CAVE_ENTRANCE_ID } from '../game/world/constants'
+import {
+  CASTLE_GATEWAY_ID,
+  CASTLE_MAP_ID,
+  CAVE_ENTRANCE_ID,
+  CAVE_MAP_ID,
+} from '../game/world/constants'
+import { getLocationMapId } from '../game/world/travel'
 
 interface LocationViewProps {
   indexes: DatabaseIndexes
@@ -42,9 +48,16 @@ export function LocationView({
 }: LocationViewProps) {
   const locationId = location['Location ID']
   const activities = indexes.activitiesByLocationId.get(locationId) ?? []
-  const showSubMap =
+  const mapId = getLocationMapId(location)
+  const isSubMapLocation = mapId === CAVE_MAP_ID || mapId === CASTLE_MAP_ID
+  const showSubMapEntrance =
     Boolean(onOpenSubMap) &&
     (locationId === CAVE_ENTRANCE_ID || locationId === CASTLE_GATEWAY_ID)
+  const primaryActivity = activities[0]
+  const primaryActive = Boolean(
+    primaryActivity && currentActivityId === primaryActivity['Activity ID'],
+  )
+  const enterHint = primaryActivity && !primaryActive ? requirementHint?.(primaryActivity) : null
 
   return (
     <section
@@ -73,7 +86,7 @@ export function LocationView({
           </button>
         </header>
 
-        {showSubMap && (
+        {showSubMapEntrance && (
           <div className="location-overlay-actions">
             <button type="button" className="btn secondary glass-btn" onClick={onOpenSubMap}>
               {locationId === CAVE_ENTRANCE_ID ? 'Enter Caves' : 'Enter Castle'}
@@ -89,53 +102,87 @@ export function LocationView({
           </section>
         )}
 
-        <section className="panel glass-panel location-activities">
-          <h2>Activities</h2>
-          {activities.length === 0 ? (
-            <p className="muted">No activities at this location.</p>
-          ) : (
-            <ul className="interaction-list">
-              {activities.map((activity) => {
-                const active = currentActivityId === activity['Activity ID']
-                const label = activity['Contextual Name'] ?? activity['Internal Key']
-                const hint = requirementHint?.(activity) ?? null
-                return (
-                  <li key={activity['Activity ID']}>
-                    <div>
-                      <strong>{label}</strong>
-                      {activity['Danger Warning Combat Level'] != null && (
-                        <p className="danger-note">
-                          Combat warning ~ Level {activity['Danger Warning Combat Level']}
-                        </p>
-                      )}
-                      {activity.Description && <p className="muted">{activity.Description}</p>}
-                      {hint && !active && <p className="muted tiny">{hint}</p>}
-                    </div>
-                    {active ? (
-                      <button
-                        type="button"
-                        className="btn secondary"
-                        disabled={actionsLocked}
-                        onClick={onStopActivity}
-                      >
-                        Stop
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        className="btn primary"
-                        disabled={actionsLocked}
-                        onClick={() => onStartActivity(activity['Activity ID'])}
-                      >
-                        {currentActivityId ? 'Replace' : 'Start'}
-                      </button>
-                    )}
-                  </li>
-                )
-              })}
-            </ul>
-          )}
-        </section>
+        {isSubMapLocation ? (
+          primaryActivity && (
+            <div className="location-overlay-actions">
+              {primaryActive ? (
+                <button
+                  type="button"
+                  className="btn secondary glass-btn"
+                  disabled={actionsLocked}
+                  onClick={onStopActivity}
+                >
+                  Stop
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="btn primary glass-btn"
+                  disabled={actionsLocked}
+                  onClick={() => onStartActivity(primaryActivity['Activity ID'])}
+                >
+                  Enter {location['Display Name']}
+                </button>
+              )}
+              {enterHint && <p className="muted tiny glass-hint">{enterHint}</p>}
+              {primaryActivity['Danger Warning Combat Level'] != null && !primaryActive && (
+                <p className="danger-note">
+                  Combat warning ~ Level {primaryActivity['Danger Warning Combat Level']}
+                </p>
+              )}
+            </div>
+          )
+        ) : (
+          !showSubMapEntrance && (
+            <section className="panel glass-panel location-activities">
+              <h2>Activities</h2>
+              {activities.length === 0 ? (
+                <p className="muted">No activities at this location.</p>
+              ) : (
+                <ul className="interaction-list">
+                  {activities.map((activity) => {
+                    const active = currentActivityId === activity['Activity ID']
+                    const label = activity['Contextual Name'] ?? activity['Internal Key']
+                    const hint = requirementHint?.(activity) ?? null
+                    return (
+                      <li key={activity['Activity ID']}>
+                        <div>
+                          <strong>{label}</strong>
+                          {activity['Danger Warning Combat Level'] != null && (
+                            <p className="danger-note">
+                              Combat warning ~ Level {activity['Danger Warning Combat Level']}
+                            </p>
+                          )}
+                          {activity.Description && <p className="muted">{activity.Description}</p>}
+                          {hint && !active && <p className="muted tiny">{hint}</p>}
+                        </div>
+                        {active ? (
+                          <button
+                            type="button"
+                            className="btn secondary"
+                            disabled={actionsLocked}
+                            onClick={onStopActivity}
+                          >
+                            Stop
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            className="btn primary"
+                            disabled={actionsLocked}
+                            onClick={() => onStartActivity(activity['Activity ID'])}
+                          >
+                            {currentActivityId ? 'Replace' : 'Start'}
+                          </button>
+                        )}
+                      </li>
+                    )
+                  })}
+                </ul>
+              )}
+            </section>
+          )
+        )}
       </div>
     </section>
   )

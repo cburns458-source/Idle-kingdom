@@ -78,6 +78,7 @@ export function WorldMapView({
       </div>
 
       <SelectedLocationCard
+        mapId={mapId}
         location={selected}
         isCurrent={selected?.['Location ID'] === currentLocationId}
         onTravel={() => selected && onTravel(selected['Location ID'])}
@@ -89,12 +90,14 @@ export function WorldMapView({
 }
 
 function SelectedLocationCard({
+  mapId,
   location,
   isCurrent,
   onTravel,
   travelDisabled,
   travelLockReason,
 }: {
+  mapId: string
   location: LocationRow | null
   isCurrent: boolean
   onTravel: () => void
@@ -132,7 +135,9 @@ function SelectedLocationCard({
               disabled={travelDisabled}
               onClick={onTravel}
             >
-              Travel
+              {mapId !== MAIN_MAP_ID
+                ? `Enter ${location['Display Name']}`
+                : 'Travel'}
             </button>
             {travelDisabled && travelLockReason && (
               <p className="muted tiny">{travelLockReason}</p>
