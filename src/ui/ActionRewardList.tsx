@@ -9,10 +9,10 @@ interface ActionRewardListProps {
   itemsById?: Map<string, ItemRow>
   /** How many recent action bundles to show. */
   limit?: number
-  /** Compact HUD placement with hide control. */
+  /** Compact placement on the location background. */
   compact?: boolean
+  /** When true, the compact summary is not shown. */
   hidden?: boolean
-  onToggleHidden?: () => void
 }
 
 export function ActionRewardList({
@@ -21,7 +21,6 @@ export function ActionRewardList({
   limit = 3,
   compact = false,
   hidden = false,
-  onToggleHidden,
 }: ActionRewardListProps) {
   const [heldTip, setHeldTip] = useState<string | null>(null)
   const hasRewards = rewards.some((bundle) => {
@@ -29,38 +28,20 @@ export function ActionRewardList({
   })
 
   if (compact) {
-    if (!hasRewards && !hidden) return null
+    if (hidden || !hasRewards) return null
     return (
       <section className="hud-reward-summary">
-        <div className="hud-reward-summary-head">
-          {!hidden && hasRewards ? (
-            <span className="hud-reward-summary-title">Rewards</span>
-          ) : (
-            <span />
-          )}
-          {onToggleHidden && (
-            <button
-              type="button"
-              className="btn secondary hud-reward-hide"
-              onClick={onToggleHidden}
-            >
-              {hidden ? 'Show rewards' : 'Hide'}
-            </button>
-          )}
-        </div>
-        {!hidden && hasRewards && (
-          <ul className="action-reward-list action-reward-list-compact">
-            {rewards.slice(0, limit).map((bundle) => (
-              <RewardRow
-                key={bundle.id}
-                bundle={bundle}
-                itemsById={itemsById}
-                heldTip={heldTip}
-                setHeldTip={setHeldTip}
-              />
-            ))}
-          </ul>
-        )}
+        <ul className="action-reward-list action-reward-list-compact">
+          {rewards.slice(0, limit).map((bundle) => (
+            <RewardRow
+              key={bundle.id}
+              bundle={bundle}
+              itemsById={itemsById}
+              heldTip={heldTip}
+              setHeldTip={setHeldTip}
+            />
+          ))}
+        </ul>
       </section>
     )
   }

@@ -1,4 +1,4 @@
-export const SAVE_VERSION = 10
+export const SAVE_VERSION = 11
 export const SAVE_STORAGE_KEY = 'idle-kingdoms.demo.save'
 export const STARTING_LOCATION_ID = 'LOC-0002'
 export const STARTING_GOLD = 0
@@ -52,6 +52,8 @@ export interface PlayerStatistics {
 export interface PlayerSettings {
   /** Reserved for later Settings/Menu work. */
   soundEnabled: boolean
+  /** When false, the on-location activity reward summary is hidden. */
+  showActivityRewards: boolean
 }
 
 /** Pending Primary Activity start/stop delay. */

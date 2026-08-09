@@ -119,7 +119,6 @@ export default function App() {
   const [actionProgress, setActionProgress] = useState(0)
   const [activityError, setActivityError] = useState<string | null>(null)
   const [recentRewards, setRecentRewards] = useState<ActionRewardBundle[]>([])
-  const [rewardsHidden, setRewardsHidden] = useState(false)
   const [hudNowMs, setHudNowMs] = useState(() => Date.now())
   const [lastMessage, setLastMessage] = useState<string | null>(null)
   const [roundProgress, setRoundProgress] = useState(0)
@@ -963,8 +962,7 @@ export default function App() {
                   rewards={recentRewards}
                   itemsById={database.launchIndexes.itemsById}
                   compact
-                  hidden={rewardsHidden}
-                  onToggleHidden={() => setRewardsHidden((value) => !value)}
+                  hidden={save.settings.showActivityRewards === false}
                 />
               }
               onStartActivity={startActivity}
@@ -1482,6 +1480,31 @@ function SettingsPanel({
             <p className="lead">{save.characterName ?? 'Unnamed'}</p>
             <button type="button" className="btn secondary" onClick={onStartRename}>
               Change name
+            </button>
+          </div>
+
+          <div className="menu-demo-block">
+            <p className="muted tiny">Activity rewards</p>
+            <p className="muted tiny">
+              Show the recent reward summary on the location background.
+            </p>
+            <button
+              type="button"
+              className="btn secondary"
+              onClick={() =>
+                onChangeSave({
+                  ...save,
+                  settings: {
+                    ...save.settings,
+                    showActivityRewards: save.settings.showActivityRewards === false,
+                  },
+                  updatedAt: new Date().toISOString(),
+                })
+              }
+            >
+              {save.settings.showActivityRewards === false
+                ? 'Show activity rewards'
+                : 'Hide activity rewards'}
             </button>
           </div>
 

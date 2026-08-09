@@ -137,6 +137,18 @@ export const SAVE_MIGRATIONS: SaveMigration[] = [
       saveVersion: 10,
     }),
   },
+  {
+    fromVersion: 10,
+    toVersion: 11,
+    migrate: (save) => ({
+      ...save,
+      settings: {
+        soundEnabled: save.settings?.soundEnabled ?? true,
+        showActivityRewards: save.settings?.showActivityRewards ?? true,
+      },
+      saveVersion: 11,
+    }),
+  },
 ]
 
 export function migrateSave(save: PlayerSave): PlayerSave {
