@@ -3,6 +3,7 @@ import { isBelowProficiency } from '../game/activity/gathering'
 import type { ActionRewardBundle } from '../game/activity/types'
 import type { PlayerSave } from '../game/save/types'
 import { ActionRewardList } from './ActionRewardList'
+import { formatDurationSeconds } from './formatDuration'
 
 interface ActivityPanelProps {
   activity: ActivityRow
@@ -16,11 +17,6 @@ interface ActivityPanelProps {
   recentRewards: ActionRewardBundle[]
   itemsById?: Map<string, ItemRow>
   onStop: () => void
-}
-
-function formatSeconds(value: number): string {
-  if (!Number.isFinite(value) || value < 0) return '0'
-  return String(Math.floor(value))
 }
 
 export function ActivityPanel({
@@ -64,7 +60,8 @@ export function ActivityPanel({
             <div className="action-bar-fill" style={{ width: `${pct}%` }} />
           </div>
           <p className="muted tiny">
-            {formatSeconds(elapsedSeconds)} / {formatSeconds(totalSeconds)}s
+            Time elapsed: {formatDurationSeconds(elapsedSeconds)} /{' '}
+            {formatDurationSeconds(totalSeconds)}
           </p>
         </>
       ) : (

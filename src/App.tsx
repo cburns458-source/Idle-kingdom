@@ -1099,6 +1099,9 @@ export default function App() {
                       playerHp={save.currentHp}
                       playerMaxHp={maxHp}
                       roundProgress={roundProgress}
+                      roundDurationMs={
+                        configNumber(database.launch, 'combat_round_duration', 4) * 1000
+                      }
                       deathPauseRemainingMs={pauseRemainingMs}
                       lastCombatMessage={lastMessage}
                       recentRewards={recentRewards}

@@ -11,6 +11,7 @@ import {
   recipesForActivity,
 } from '../game/production/recipes'
 import type { PlayerSave } from '../game/save/types'
+import { formatDurationSeconds } from './formatDuration'
 import { IngredientIconList } from './IngredientIcons'
 import { ItemIcon } from './itemIcons'
 
@@ -168,9 +169,13 @@ export function ProductionProgress({
   const total = save.productionQuantityTotal ?? 0
   const remaining = save.productionQuantityRemaining ?? 0
   const completed = Math.max(0, total - remaining)
-  const pct = Math.round(Math.min(1, Math.max(0, progress)) * 100)
-  const totalSeconds = Math.max(0, (save.actionDurationMs ?? 0) / 1000)
-  const elapsedSeconds = Math.min(totalSeconds, progress * totalSeconds)
+  const clamped = Math.min(1, Math.max(0, progress))
+  const pct = Math.round(clamped * 100)
+  const craftSeconds = Math.max(0, (save.actionDurationMs ?? 0) / 1000)
+  const craftElapsedSeconds = Math.min(craftSeconds, clamped * craftSeconds)
+  const craftRemainingSeconds = Math.max(0, craftSeconds - craftElapsedSeconds)
+  const upcomingCrafts = Math.max(0, remaining - (remaining > 0 ? 1 : 0))
+  const queueRemainingSeconds = craftRemainingSeconds + upcomingCrafts * craftSeconds
   const output = recipe['Display Name']
 
   return (
@@ -190,11 +195,15 @@ export function ProductionProgress({
       <p className="muted">
         Queue {completed}/{total} done · {remaining} remaining
       </p>
+      <p className="lead">
+        Total time remaining: <strong>{formatDurationSeconds(queueRemainingSeconds)}</strong>
+      </p>
       <div className="action-bar">
         <div className="action-bar-fill" style={{ width: `${pct}%` }} />
       </div>
       <p className="muted tiny">
-        {Math.floor(elapsedSeconds)} / {Math.floor(totalSeconds)}s
+        This craft · elapsed {formatDurationSeconds(craftElapsedSeconds)} /{' '}
+        {formatDurationSeconds(craftSeconds)}
       </p>
       {lastMessage && <p className="loot-message">{lastMessage}</p>}
     </section>

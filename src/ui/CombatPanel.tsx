@@ -3,6 +3,7 @@ import type { EnemyRow } from '../game/data/enemyTypes'
 import type { ActivityRow, ItemRow } from '../game/data/types'
 import type { ActionRewardBundle } from '../game/activity/types'
 import { ActionRewardList } from './ActionRewardList'
+import { formatDurationSeconds } from './formatDuration'
 
 interface CombatPanelProps {
   activity: ActivityRow
@@ -11,6 +12,8 @@ interface CombatPanelProps {
   playerHp: number
   playerMaxHp: number
   roundProgress: number
+  /** Combat round length in ms (from config). */
+  roundDurationMs: number
   deathPauseRemainingMs: number
   lastCombatMessage: string | null
   recentRewards: ActionRewardBundle[]
@@ -25,6 +28,7 @@ export function CombatPanel({
   playerHp,
   playerMaxHp,
   roundProgress,
+  roundDurationMs,
   deathPauseRemainingMs,
   lastCombatMessage,
   recentRewards,
@@ -33,9 +37,12 @@ export function CombatPanel({
 }: CombatPanelProps) {
   const enemyPct = Math.round((enemyHp / Math.max(1, enemy['Maximum HP'])) * 100)
   const playerPct = Math.round((playerHp / Math.max(1, playerMaxHp)) * 100)
-  const roundPct = Math.round(Math.min(1, Math.max(0, roundProgress)) * 100)
+  const clampedRound = Math.min(1, Math.max(0, roundProgress))
+  const roundPct = Math.round(clampedRound * 100)
   const pauseSec = Math.ceil(deathPauseRemainingMs / 1000)
   const label = activity['Contextual Name'] ?? activity['Internal Key']
+  const roundSeconds = Math.max(0, roundDurationMs / 1000)
+  const roundElapsedSeconds = Math.min(roundSeconds, clampedRound * roundSeconds)
 
   return (
     <section className="panel combat-panel">
@@ -95,6 +102,10 @@ export function CombatPanel({
           <div className="action-bar">
             <div className="action-bar-fill" style={{ width: `${roundPct}%` }} />
           </div>
+          <p className="muted tiny">
+            Time elapsed: {formatDurationSeconds(roundElapsedSeconds)} /{' '}
+            {formatDurationSeconds(roundSeconds)}
+          </p>
         </>
       )}
 
