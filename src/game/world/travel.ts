@@ -102,10 +102,8 @@ export function canTravelTo(
   if (!destination) return false
 
   if (activeMapId === MAIN_MAP_ID) {
-    if (destination['Map ID'] !== MAIN_MAP_ID) return false
-    const origin = db.Locations.find((location) => location['Location ID'] === fromLocationId)
-    // Main-map travel is available from overworld/gateway nodes, not from deep sub-locations.
-    return origin?.['Map ID'] === MAIN_MAP_ID
+    // World-map travel is allowed from anywhere, including cave/castle sub-locations.
+    return destination['Map ID'] === MAIN_MAP_ID
   }
 
   if (findConnection(db, fromLocationId, toLocationId)) return true
