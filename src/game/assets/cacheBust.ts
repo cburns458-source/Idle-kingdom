@@ -1,5 +1,5 @@
 /** Bump when replacing files under /public/assets so browsers fetch new art. */
-export const ASSET_CACHE_VERSION = 's12-skill-hunting-tracks'
+export const ASSET_CACHE_VERSION = 's12-items-enemies-cute-pixel'
 
 export function withAssetVersion(path: string): string {
   if (!path) return path

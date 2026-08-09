@@ -1,6 +1,6 @@
 {
-  "generatedForStep": "skill-icons-cute-32",
-  "artDirection": "Cute old-school fantasy pixel icons; skills 32x32 transparent PNG; avoid white fills",
+  "generatedForStep": "items-enemies-cute-pixel",
+  "artDirection": "Cute old-school fantasy pixel art; skills/items 32x32 transparent; enemies 256x256 transparent",
   "maps": {
     "MAP-0001": {
       "internalKey": "idale_main",
@@ -98,66 +98,24 @@
     }
   },
   "enemies": {
-    "ENM-0001": {
-      "internalKey": "cow",
-      "path": "/assets/enemies/enm_cow.png"
-    },
-    "ENM-0002": {
-      "internalKey": "bull",
-      "path": "/assets/enemies/enm_bull.png"
-    },
-    "ENM-0003": {
-      "internalKey": "goblin_scout",
-      "path": "/assets/enemies/enm_goblin_scout.png"
-    },
-    "ENM-0004": {
-      "internalKey": "goblin_chief",
-      "path": "/assets/enemies/enm_goblin_chief.png"
-    },
-    "ENM-0005": {
-      "internalKey": "pirate",
-      "path": "/assets/enemies/enm_pirate.png"
-    },
-    "ENM-0007": {
-      "internalKey": "rock_troll",
-      "path": "/assets/enemies/enm_rock_troll.png"
-    },
-    "ENM-0008": {
-      "internalKey": "skeleton",
-      "path": "/assets/enemies/enm_skeleton.png"
-    },
-    "ENM-0009": {
-      "internalKey": "zombie",
-      "path": "/assets/enemies/enm_zombie.png"
-    },
-    "ENM-0010": {
-      "internalKey": "wild_boar",
-      "path": "/assets/enemies/enm_wild_boar.png"
-    },
-    "ENM-0011": {
-      "internalKey": "castle_guard",
-      "path": "/assets/enemies/enm_castle_guard.png"
-    },
-    "ENM-0016": {
-      "internalKey": "goblin_warrior",
-      "path": "/assets/enemies/enm_goblin_warrior.png"
-    },
-    "ENM-0017": {
-      "internalKey": "rabbit_buck",
-      "path": "/assets/enemies/enm_rabbit_buck.png"
-    },
-    "ENM-0012": {
-      "internalKey": "ent",
-      "path": "/assets/enemies/enm_ent.png"
-    },
-    "ENM-0013": {
-      "internalKey": "ancient_ent",
-      "path": "/assets/enemies/enm_ancient_ent.png"
-    },
-    "ENM-0014": {
-      "internalKey": "corrupted_ent",
-      "path": "/assets/enemies/enm_corrupted_ent.png"
-    }
+    "ancient_ent": "/assets/enemies/enm_ancient_ent.png",
+    "bull": "/assets/enemies/enm_bull.png",
+    "castle_guard": "/assets/enemies/enm_castle_guard.png",
+    "corrupted_ent": "/assets/enemies/enm_corrupted_ent.png",
+    "cow": "/assets/enemies/enm_cow.png",
+    "dragon": "/assets/enemies/enm_dragon.png",
+    "elder_rock_troll": "/assets/enemies/enm_elder_rock_troll.png",
+    "ent": "/assets/enemies/enm_ent.png",
+    "goblin_chief": "/assets/enemies/enm_goblin_chief.png",
+    "goblin_scout": "/assets/enemies/enm_goblin_scout.png",
+    "goblin_warrior": "/assets/enemies/enm_goblin_warrior.png",
+    "pirate": "/assets/enemies/enm_pirate.png",
+    "rabbit_buck": "/assets/enemies/enm_rabbit_buck.png",
+    "rock_troll": "/assets/enemies/enm_rock_troll.png",
+    "shade_goblin": "/assets/enemies/enm_shade_goblin.png",
+    "skeleton": "/assets/enemies/enm_skeleton.png",
+    "wild_boar": "/assets/enemies/enm_wild_boar.png",
+    "zombie": "/assets/enemies/enm_zombie.png"
   },
   "icons": {
     "skills": {
@@ -231,10 +189,10 @@
       "raw_food": "/assets/icons/items/item_raw_food.png",
       "ring": "/assets/icons/items/item_ring.png",
       "shield": "/assets/icons/items/item_shield.png",
+      "spell": "/assets/icons/items/item_spell.png",
       "steel_pickaxe": "/assets/icons/items/item_steel_pickaxe.png",
       "sword": "/assets/icons/items/item_sword.png",
-      "timber": "/assets/icons/items/item_timber.png",
-      "spell": "/assets/icons/items/item_spell.png"
+      "timber": "/assets/icons/items/item_timber.png"
     },
     "ui": {
       "map": "/assets/icons/ui/ui_map.png"
