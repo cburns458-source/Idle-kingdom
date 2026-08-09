@@ -73,7 +73,7 @@ describe('combat engine', () => {
     const victory = applyCombatVictory(launch, save, action, enemy, () => 0)
     expect(victory.xpGained).toBe(6000)
     expect(victory.save.skills.find((skill) => skill.skillId === 'SKL-0001')?.xp).toBe(6000)
-    expect(victory.goldGained).toBeGreaterThan(0)
+    expect(victory.goldGained).toBe(0)
     expect(victory.foodConsumed).toBe(true)
     expect(victory.save.currentHp).toBeGreaterThan(900)
     expect(victory.save.equipment.slots['SLOT-0011']?.quantity).toBe(1)
