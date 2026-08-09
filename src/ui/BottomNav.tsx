@@ -3,19 +3,17 @@ export type AppScreen = 'location' | 'map' | 'skills' | 'inventory' | 'log' | 's
 interface BottomNavProps {
   screen: AppScreen
   onChange: (screen: AppScreen) => void
-  mapDisabled?: boolean
 }
 
 const ITEMS: { id: AppScreen; label: string }[] = [
   { id: 'location', label: 'Current' },
-  { id: 'map', label: 'Map' },
   { id: 'skills', label: 'Skills' },
   { id: 'inventory', label: 'Items' },
   { id: 'log', label: 'Log' },
   { id: 'settings', label: 'Menu' },
 ]
 
-export function BottomNav({ screen, onChange, mapDisabled = false }: BottomNavProps) {
+export function BottomNav({ screen, onChange }: BottomNavProps) {
   return (
     <nav className="bottom-nav" aria-label="Main">
       {ITEMS.map((item) => (
@@ -23,7 +21,6 @@ export function BottomNav({ screen, onChange, mapDisabled = false }: BottomNavPr
           key={item.id}
           type="button"
           className={screen === item.id ? 'nav-btn active' : 'nav-btn'}
-          disabled={item.id === 'map' && mapDisabled}
           onClick={() => onChange(item.id)}
         >
           {item.label}

@@ -817,7 +817,7 @@ export default function App() {
           )}
         </div>
 
-        <BottomNav screen={screen} onChange={setScreen} mapDisabled={Boolean(travel)} />
+        <BottomNav screen={screen} onChange={setScreen} />
 
         {travel && fromLocation && toLocation && (
           <TravelOverlay
