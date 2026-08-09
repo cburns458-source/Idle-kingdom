@@ -696,6 +696,49 @@
   line-height: 1.35;
 }
 
+.production-picker {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.production-picker .text-input {
+  margin-bottom: 0.15rem;
+}
+
+.recipe-details {
+  display: grid;
+  gap: 0.45rem;
+  padding: 0.55rem 0.6rem;
+  border: 1px solid rgba(212, 175, 55, 0.22);
+  background: rgba(20, 14, 9, 0.45);
+  border-radius: 0.55rem;
+}
+
+.recipe-output {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.recipe-output .item-icon {
+  width: 2.6rem;
+  height: 2.6rem;
+  flex-shrink: 0;
+}
+
+.recipe-output strong {
+  display: block;
+  color: #fff4d4;
+}
+
+.recipe-output p {
+  margin: 0.15rem 0 0;
+}
+
+.recipe-ingredients {
+  margin: 0;
+}
+
 .skills-view {
   display: flex;
   flex-direction: column;

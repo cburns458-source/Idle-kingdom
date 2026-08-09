@@ -34,6 +34,13 @@ import { playerMaxHp } from './game/combat/stats'
 import { addItemToInventory } from './game/activity/rewards'
 import { equipItemFromInventory } from './game/equipment/loadout'
 import { withRecalculatedVitals } from './game/equipment/vitals'
+import {
+  beginProductionQueue,
+  cancelProductionActivity,
+  completeProductionCraft,
+  resolveProductionProgress,
+} from './game/production/engine'
+import { getRecipe, isStandardProductionActivity } from './game/production/recipes'
 import { totalLevel, totalSkillXp } from './game/skills/totals'
 import { ActivityPanel } from './ui/ActivityPanel'
 import { BottomNav, type AppScreen } from './ui/BottomNav'
@@ -42,6 +49,7 @@ import { InventoryView } from './ui/InventoryView'
 import { LogStub } from './ui/StubScreens'
 import { LocationView } from './ui/LocationView'
 import { NamePrompt } from './ui/NamePrompt'
+import { ProductionPicker, ProductionProgress } from './ui/ProductionPanel'
 import { SkillsView } from './ui/SkillsView'
 import { TopHud } from './ui/TopHud'
 import { TravelOverlay } from './ui/TravelOverlay'
@@ -74,6 +82,7 @@ export default function App() {
   const [roundProgress, setRoundProgress] = useState(0)
   const [pauseRemainingMs, setPauseRemainingMs] = useState(0)
   const [renamingCharacter, setRenamingCharacter] = useState(false)
+  const [productionPickerActivityId, setProductionPickerActivityId] = useState<string | null>(null)
   const bootRef = useRef(boot)
   bootRef.current = boot
 
@@ -84,14 +93,17 @@ export default function App() {
       try {
         const database = await loadDatabase()
         const { save, created } = loadOrCreateSave(database.source)
+        const resolved = resolveProductionProgress(database.launch, save)
+        const nextSave = resolved.craftsCompleted > 0 ? writeSave(resolved.save) : resolved.save
         if (!cancelled) {
-          const location = database.launchIndexes.locationsById.get(save.currentLocationId)
+          const location = database.launchIndexes.locationsById.get(nextSave.currentLocationId)
           setBrowseMapId(location ? resolveActiveMapId(location) : MAIN_MAP_ID)
-          setSelectedLocationId(save.currentLocationId)
+          setSelectedLocationId(nextSave.currentLocationId)
+          if (resolved.messages[0]) setLastMessage(resolved.messages[0]!)
           setBoot({
             status: 'ready',
             database,
-            save,
+            save: nextSave,
             saveCreated: created,
           })
         }
@@ -146,7 +158,11 @@ export default function App() {
     if (boot.status !== 'ready' || travel) return
     const { database, save } = boot
     if (!save.currentActivityId || save.currentActionId) return
+    if (save.productionRecipeId) return
     if (isDeathPaused(save)) return
+
+    const running = database.launchIndexes.activitiesById.get(save.currentActivityId)
+    if (running && isStandardProductionActivity(database.launch, running)) return
 
     if (!activityStillValid(database.launch, save, save.currentActivityId)) {
       const stopped = writeSave(clearActivitySave(save))
@@ -174,7 +190,7 @@ export default function App() {
   useEffect(() => {
     if (boot.status !== 'ready' || travel) return
     const save = boot.save
-    if (save.combatEnemyId) return
+    if (save.combatEnemyId || save.productionRecipeId) return
     const actionState = restoreActiveActionState(save)
     if (!save.currentActivityId || !actionState) {
       setActionProgress(0)
@@ -256,6 +272,61 @@ export default function App() {
     travel,
     runningActivityId,
     runningActionId,
+    runningActionStartedAt,
+    runningActionDurationMs,
+  ])
+
+  const productionRecipeId = boot.status === 'ready' ? boot.save.productionRecipeId : null
+  const productionRemaining =
+    boot.status === 'ready' ? boot.save.productionQuantityRemaining : null
+
+  // Progress + complete standard production crafts.
+  useEffect(() => {
+    if (boot.status !== 'ready' || travel) return
+    const save = boot.save
+    if (!save.productionRecipeId || !save.actionStartedAt || !save.actionDurationMs) {
+      return
+    }
+
+    let frame = 0
+    let completed = false
+    const startedAtMs = Date.parse(save.actionStartedAt)
+    const durationMs = save.actionDurationMs
+
+    const tick = () => {
+      const elapsed = Date.now() - startedAtMs
+      const progress = Math.min(1, elapsed / Math.max(1, durationMs))
+      setActionProgress(progress)
+      if (progress < 1) {
+        frame = window.requestAnimationFrame(tick)
+        return
+      }
+      if (completed) return
+      completed = true
+
+      const current = bootRef.current
+      if (current.status !== 'ready' || !current.save.productionRecipeId) return
+      const finished = completeProductionCraft(current.database.launch, current.save)
+      if (!finished) return
+      setLastMessage(
+        `Crafted ${finished.outputQty} ${finished.outputName}` +
+          (finished.xpGained > 0 ? ` · +${finished.xpGained} XP` : ''),
+      )
+      setActionProgress(0)
+      setBoot({
+        ...current,
+        save: writeSave(finished.save),
+        saveCreated: false,
+      })
+    }
+
+    frame = window.requestAnimationFrame(tick)
+    return () => window.cancelAnimationFrame(frame)
+  }, [
+    boot,
+    travel,
+    productionRecipeId,
+    productionRemaining,
     runningActionStartedAt,
     runningActionDurationMs,
   ])
@@ -487,6 +558,13 @@ export default function App() {
     save.combatEnemyId != null ? getEnemy(database.launch, save.combatEnemyId) : undefined
   const maxHp = playerMaxHp(database.launch, save)
   const inCombat = Boolean(combatEnemy && save.combatEnemyHp != null)
+  const productionRecipe = save.productionRecipeId
+    ? getRecipe(database.launch, save.productionRecipeId)
+    : undefined
+  const inProduction = Boolean(productionRecipe && save.productionQuantityRemaining)
+  const pickerActivity = productionPickerActivityId
+    ? database.launchIndexes.activitiesById.get(productionPickerActivityId)
+    : undefined
 
   const fromLocation = database.launchIndexes.locationsById.get(
     travel?.fromLocationId ?? save.currentLocationId,
@@ -508,6 +586,13 @@ export default function App() {
       return
     }
     const connection = findConnection(database.launch, save.currentLocationId, destinationId)
+    setProductionPickerActivityId(null)
+    // Interrupt primary activity immediately; refund remaining production materials.
+    if (save.productionRecipeId) {
+      updateSave(cancelProductionActivity(database.launch, save))
+    } else if (save.currentActivityId) {
+      updateSave(clearActivitySave(save))
+    }
     setTravel({
       fromLocationId: save.currentLocationId,
       toLocationId: destinationId,
@@ -530,9 +615,36 @@ export default function App() {
     setActivityError(null)
     setLastMessage(null)
     setActionProgress(0)
+
+    const activityRow = database.launchIndexes.activitiesById.get(activityId)
+    if (activityRow && isStandardProductionActivity(database.launch, activityRow)) {
+      setProductionPickerActivityId(activityId)
+      return
+    }
+
     const started = beginActivitySave(save, activityId)
     const generated = generateNextAction(database.launch, started, activityId)
     updateSave(generated ? generated.save : started)
+  }
+
+  function confirmProduction(recipeId: string, quantity: number) {
+    if (!productionPickerActivityId) return
+    const started = beginActivitySave(save, productionPickerActivityId)
+    const queued = beginProductionQueue(
+      database.launch,
+      started,
+      productionPickerActivityId,
+      recipeId,
+      quantity,
+    )
+    if (!queued.ok) {
+      setActivityError(queued.reason)
+      return
+    }
+    setProductionPickerActivityId(null)
+    setActivityError(null)
+    setActionProgress(0)
+    updateSave(queued.save)
   }
 
   function stopActivity() {
@@ -540,6 +652,11 @@ export default function App() {
     setActivityError(null)
     setActionProgress(0)
     setLastMessage(null)
+    setProductionPickerActivityId(null)
+    if (save.productionRecipeId) {
+      updateSave(cancelProductionActivity(database.launch, save))
+      return
+    }
     updateSave(clearActivitySave(save))
   }
 
@@ -580,6 +697,15 @@ export default function App() {
               }}
               statusPanel={
                 <>
+                  {pickerActivity && (
+                    <ProductionPicker
+                      db={database.launch}
+                      save={save}
+                      activity={pickerActivity}
+                      onCancel={() => setProductionPickerActivityId(null)}
+                      onConfirm={confirmProduction}
+                    />
+                  )}
                   {activity && inCombat && combatEnemy && (
                     <CombatPanel
                       activity={activity}
@@ -593,19 +719,33 @@ export default function App() {
                       onStop={stopActivity}
                     />
                   )}
-                  {activity && !inCombat && pauseRemainingMs <= 0 && (
-                    <ActivityPanel
+                  {activity && inProduction && productionRecipe && pauseRemainingMs <= 0 && (
+                    <ProductionProgress
                       activity={activity}
-                      action={currentAction ?? null}
+                      recipe={productionRecipe}
                       save={save}
-                      skill={actionSkill}
                       progress={actionProgress}
-                      durationMs={save.actionDurationMs}
-                      recentLoot={recentLoot}
                       lastMessage={lastMessage}
                       onStop={stopActivity}
                     />
                   )}
+                  {activity &&
+                    !inCombat &&
+                    !inProduction &&
+                    pauseRemainingMs <= 0 &&
+                    !pickerActivity && (
+                      <ActivityPanel
+                        activity={activity}
+                        action={currentAction ?? null}
+                        save={save}
+                        skill={actionSkill}
+                        progress={actionProgress}
+                        durationMs={save.actionDurationMs}
+                        recentLoot={recentLoot}
+                        lastMessage={lastMessage}
+                        onStop={stopActivity}
+                      />
+                    )}
                   {activity && pauseRemainingMs > 0 && !inCombat && (
                     <section className="panel glass-panel">
                       <div className="activity-panel-head">
@@ -708,6 +848,9 @@ function SettingsPanel({
 }) {
   const bakedPotatoId = 'ITEM-0058'
   const steelPickaxeId = 'ITEM-0119'
+  const potatoId = 'ITEM-0025'
+  const copperOreId = 'ITEM-0003'
+  const wildRootsId = 'ITEM-0030'
 
   function grantTestFood() {
     const withItems = addItemToInventory(save, bakedPotatoId, 5)
@@ -723,6 +866,13 @@ function SettingsPanel({
     onChangeSave(
       withRecalculatedVitals(database.launch, addItemToInventory(save, steelPickaxeId, 1)),
     )
+  }
+
+  function grantProductionMaterials() {
+    let next = addItemToInventory(save, potatoId, 20)
+    next = addItemToInventory(next, copperOreId, 20)
+    next = addItemToInventory(next, wildRootsId, 20)
+    onChangeSave(withRecalculatedVitals(database.launch, next))
   }
 
   if (renaming) {
@@ -757,9 +907,13 @@ function SettingsPanel({
         <button type="button" className="btn secondary" onClick={grantSteelPickaxe}>
           Give Steel Pickaxe
         </button>
+        <button type="button" className="btn secondary" onClick={grantProductionMaterials}>
+          Give production materials
+        </button>
       </div>
       <p className="muted tiny">
-        Demo aids for food and mining gear testing. Steel Pickaxe needs Mining 35 to equip.
+        Demo aids: food, mining gear (Mining 35 to equip), and Potato / Copper Ore / Wild Roots for
+        Standard Production.
       </p>
     </section>
   )

@@ -125,6 +125,9 @@ export function stopPrimaryActivity<
     combatEnemyHp?: number | null
     combatRoundStartedAt?: string | null
     deathPauseUntil?: string | null
+    productionRecipeId?: string | null
+    productionQuantityTotal?: number | null
+    productionQuantityRemaining?: number | null
   },
 >(save: T, nowMs: number = Date.now()): T {
   if (save.deathPauseUntil && Date.parse(save.deathPauseUntil) > nowMs) {
@@ -141,6 +144,9 @@ export function stopPrimaryActivity<
     combatEnemyHp: null,
     combatRoundStartedAt: null,
     deathPauseUntil: null,
+    productionRecipeId: null,
+    productionQuantityTotal: null,
+    productionQuantityRemaining: null,
   }
 }
 
@@ -153,6 +159,9 @@ export function applyTravelArrival<
     actionStartedAt?: string | null
     actionDurationMs?: number | null
     deathPauseUntil?: string | null
+    productionRecipeId?: string | null
+    productionQuantityTotal?: number | null
+    productionQuantityRemaining?: number | null
   },
 >(save: T, destinationLocationId: string, nowMs: number = Date.now()): T {
   if (save.deathPauseUntil && Date.parse(save.deathPauseUntil) > nowMs) {

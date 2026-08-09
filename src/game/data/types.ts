@@ -1,8 +1,9 @@
 /** Raw compact database shape (source field names preserved). */
 
 import type { EnemyRow } from './enemyTypes'
+import type { RecipeRow } from './recipeTypes'
 
-export type { EnemyRow }
+export type { EnemyRow, RecipeRow }
 
 export type ReleasePhase = 'Launch' | 'Expansion' | string
 export type RecordStatus = 'Confirmed' | 'Planned' | 'Needs Data' | 'Proposed' | string
@@ -246,7 +247,7 @@ export interface GameDatabase {
   Requirements: RequirementRow[]
   Enemies: EnemyRow[]
   RewardEntries: RewardEntryRow[]
-  Recipes: Record<string, unknown>[]
+  Recipes: RecipeRow[]
   Projects: Record<string, unknown>[]
   NPCs: NpcRow[]
   Shops: ShopRow[]

@@ -4,6 +4,8 @@ import {
   enemyForAction,
   isDeathPaused,
 } from '../combat/engine'
+import { clearProductionSave } from '../production/engine'
+import { isStandardProductionActivity, recipesForActivity } from '../production/recipes'
 import type { ActionRow, ActivityRow, GameDatabase } from '../data/types'
 import type { PlayerSave } from '../save/types'
 import { gatheringDurationMs } from './gathering'
@@ -34,10 +36,6 @@ export function validateActivityStart(
   if (activity['Location ID'] !== save.currentLocationId) {
     return { ok: false, reason: 'Travel to this location before starting the activity.' }
   }
-  if (!activity['Pool ID']) {
-    return { ok: false, reason: 'This activity is not available yet.' }
-  }
-
   const activityReqFailures = unmetHardRequirements(
     db,
     save,
@@ -45,6 +43,17 @@ export function validateActivityStart(
   )
   if (activityReqFailures.length > 0) {
     return { ok: false, reason: activityReqFailures[0]! }
+  }
+
+  if (isStandardProductionActivity(db, activity)) {
+    if (recipesForActivity(db, save, activityId).length === 0) {
+      return { ok: false, reason: 'No known recipes are available at this station yet.' }
+    }
+    return { ok: true }
+  }
+
+  if (!activity['Pool ID']) {
+    return { ok: false, reason: 'This activity is not available yet.' }
   }
 
   const eligible = eligiblePoolEntries(db, activity['Pool ID'])
@@ -75,15 +84,17 @@ export function beginActivitySave(
   nowIso: string = new Date().toISOString(),
 ): PlayerSave {
   if (isDeathPaused(save, Date.parse(nowIso))) return save
-  return clearCombatSave({
-    ...save,
-    currentActivityId: activityId,
-    activityStartedAt: nowIso,
-    currentActionId: null,
-    actionStartedAt: null,
-    actionDurationMs: null,
-    deathPauseUntil: null,
-  })
+  return clearProductionSave(
+    clearCombatSave({
+      ...save,
+      currentActivityId: activityId,
+      activityStartedAt: nowIso,
+      currentActionId: null,
+      actionStartedAt: null,
+      actionDurationMs: null,
+      deathPauseUntil: null,
+    }),
+  )
 }
 
 export function clearActivitySave(
@@ -91,15 +102,17 @@ export function clearActivitySave(
   nowMs: number = Date.now(),
 ): PlayerSave {
   if (isDeathPaused(save, nowMs)) return save
-  return clearCombatSave({
-    ...save,
-    currentActivityId: null,
-    activityStartedAt: null,
-    currentActionId: null,
-    actionStartedAt: null,
-    actionDurationMs: null,
-    deathPauseUntil: null,
-  })
+  return clearProductionSave(
+    clearCombatSave({
+      ...save,
+      currentActivityId: null,
+      activityStartedAt: null,
+      currentActionId: null,
+      actionStartedAt: null,
+      actionDurationMs: null,
+      deathPauseUntil: null,
+    }),
+  )
 }
 
 export function generateNextAction(

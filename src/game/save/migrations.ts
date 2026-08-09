@@ -95,6 +95,17 @@ export const SAVE_MIGRATIONS: SaveMigration[] = [
       saveVersion: 6,
     }),
   },
+  {
+    fromVersion: 6,
+    toVersion: 7,
+    migrate: (save) => ({
+      ...save,
+      productionRecipeId: save.productionRecipeId ?? null,
+      productionQuantityTotal: save.productionQuantityTotal ?? null,
+      productionQuantityRemaining: save.productionQuantityRemaining ?? null,
+      saveVersion: 7,
+    }),
+  },
 ]
 
 export function migrateSave(save: PlayerSave): PlayerSave {
