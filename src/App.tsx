@@ -47,7 +47,7 @@ import {
   resolveProductionProgress,
 } from './game/production/engine'
 import { getRecipe, isStandardProductionActivity } from './game/production/recipes'
-import { syncProgressionMeta } from './game/achievements/progress'
+import { asAchievementRows, syncProgressionMeta } from './game/achievements/progress'
 import { completeSpecialProject } from './game/projects/engine'
 import type { SpecialProductionStation } from './game/projects/projects'
 import { totalLevel, totalSkillXp } from './game/skills/totals'
@@ -1006,10 +1006,12 @@ function SettingsPanel({
   const launchItems = database.launch.Items
   const levelCap = configNumber(database.launch, 'display_level_cap', 100)
 
+  const [menuTab, setMenuTab] = useState<'settings' | 'achievements'>('settings')
   const [selectedSkillId, setSelectedSkillId] = useState(
     launchSkills[0]?.['Skill ID'] ?? 'SKL-0001',
   )
   const [itemSearch, setItemSearch] = useState('')
+  const achievements = asAchievementRows(database.launch)
   const filteredItems = useMemo(() => {
     const needle = itemSearch.trim().toLowerCase()
     const list = !needle
@@ -1158,130 +1160,183 @@ function SettingsPanel({
   }
 
   return (
-    <section className="panel">
+    <section className="panel menu-panel">
       <h1>Menu</h1>
-      <p className="lead">Settings and temporary demo aids.</p>
-
-      <div className="menu-name-block">
-        <p className="muted tiny">Character</p>
-        <p className="lead">{save.characterName ?? 'Unnamed'}</p>
-        <button type="button" className="btn secondary" onClick={onStartRename}>
-          Change name
-        </button>
-      </div>
-
-      <div className="menu-demo-block">
-        <p className="muted tiny">Raise skill +10</p>
-        <label className="field-label" htmlFor="menu-skill-select">
-          Skill
-        </label>
-        <select
-          id="menu-skill-select"
-          className="text-input"
-          value={selectedSkillId}
-          onChange={(event) => setSelectedSkillId(event.target.value)}
+      <div className="menu-tabs" role="tablist" aria-label="Menu sections">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={menuTab === 'settings'}
+          className={menuTab === 'settings' ? 'menu-tab active' : 'menu-tab'}
+          onClick={() => setMenuTab('settings')}
         >
-          {launchSkills.map((skill) => {
-            const level =
-              save.skills.find((entry) => entry.skillId === skill['Skill ID'])?.level ?? 1
-            return (
-              <option key={skill['Skill ID']} value={skill['Skill ID']}>
-                {skill['Display Name']} (Lv {level})
-              </option>
-            )
-          })}
-        </select>
-        <div className="button-row">
-          <button type="button" className="btn primary" onClick={raiseSelectedSkillBy10}>
-            Raise skill by 10 levels
-          </button>
-          <button type="button" className="btn secondary" onClick={resetAllSkills}>
-            Reset skills
-          </button>
-        </div>
+          Settings
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={menuTab === 'achievements'}
+          className={menuTab === 'achievements' ? 'menu-tab active' : 'menu-tab'}
+          onClick={() => setMenuTab('achievements')}
+        >
+          Achievements
+        </button>
       </div>
 
-      <div className="menu-demo-block">
-        <p className="muted tiny">Add items ×100</p>
-        <label className="field-label" htmlFor="menu-item-search">
-          Search items
-        </label>
-        <input
-          id="menu-item-search"
-          className="text-input"
-          type="search"
-          enterKeyHint="search"
-          placeholder="Type an item name…"
-          value={itemSearch}
-          onChange={(event) => setItemSearch(event.target.value)}
-          autoComplete="off"
-        />
-        <label className="field-label" htmlFor="menu-item-select">
-          Item
-          {itemSearch.trim()
-            ? ` (${filteredItems.length} shown)`
-            : ` (${launchItems.length})`}
-        </label>
-        {filteredItems.length === 0 ? (
-          <p className="muted tiny">No items match that search.</p>
-        ) : (
-          <select
-            id="menu-item-select"
-            className="text-input"
-            value={
-              filteredItems.some((item) => item['Item ID'] === selectedItemId)
-                ? selectedItemId
-                : filteredItems[0]!['Item ID']
-            }
-            onChange={(event) => setSelectedItemId(event.target.value)}
-            size={Math.min(6, Math.max(3, filteredItems.length))}
-          >
-            {filteredItems.map((item) => (
-              <option key={item['Item ID']} value={item['Item ID']}>
-                {item['Display Name']}
-              </option>
-            ))}
-          </select>
-        )}
-        <div className="button-row">
-          <button
-            type="button"
-            className="btn primary"
-            disabled={!selectedItemId || filteredItems.length === 0}
-            onClick={grantSelectedItem100}
-          >
-            Add 100 items
-          </button>
-          <button type="button" className="btn secondary" onClick={clearAllItems}>
-            Clear items
-          </button>
+      {menuTab === 'achievements' ? (
+        <div role="tabpanel" className="menu-tab-panel">
+          <p className="lead">Skill milestones unlocked on this save.</p>
+          <ul className="achievement-list">
+            {achievements.map((achievement) => {
+              const unlocked = save.achievements.some(
+                (row) => row.achievementId === achievement['Achievement ID'] && row.unlocked,
+              )
+              const skillName =
+                database.launch.Skills.find(
+                  (skill) => skill['Skill ID'] === achievement['Target Skill ID'],
+                )?.['Display Name'] ?? 'Skill'
+              return (
+                <li
+                  key={achievement['Achievement ID']}
+                  className={unlocked ? 'unlocked' : undefined}
+                >
+                  <strong>{achievement['Display Name']}</strong>
+                  <span className="muted tiny">
+                    {unlocked
+                      ? 'Unlocked'
+                      : `Reach ${skillName} level ${achievement['Required Level'] ?? 50}`}
+                  </span>
+                </li>
+              )
+            })}
+          </ul>
         </div>
-      </div>
+      ) : (
+        <div role="tabpanel" className="menu-tab-panel">
+          <p className="lead">Settings and temporary demo aids.</p>
 
-      <div className="button-row">
-        <button type="button" className="btn primary" onClick={grantTestFood}>
-          Add & equip Baked Potato ×5
-        </button>
-        <button type="button" className="btn secondary" onClick={grantSteelPickaxe}>
-          Give Steel Pickaxe
-        </button>
-        <button type="button" className="btn secondary" onClick={grantProductionMaterials}>
-          Give production materials
-        </button>
-        <button type="button" className="btn secondary" onClick={raiseAlchemyToLevel10}>
-          Set Alchemy to level 10
-        </button>
-        <button type="button" className="btn secondary" onClick={grantSmithingMaterials}>
-          Give smithing materials
-        </button>
-        <button type="button" className="btn secondary" onClick={grantArcanaMaterials}>
-          Give Arcana ingredients
-        </button>
-      </div>
-      <p className="muted tiny">
-        Demo aids: raise/reset skills, grant or clear items, plus quick mats for food, mining,
-        production, smithing, and Arcana. Clear items empties inventory and equipment.
-      </p>
+          <div className="menu-name-block">
+            <p className="muted tiny">Character</p>
+            <p className="lead">{save.characterName ?? 'Unnamed'}</p>
+            <button type="button" className="btn secondary" onClick={onStartRename}>
+              Change name
+            </button>
+          </div>
+
+          <div className="menu-demo-block">
+            <p className="muted tiny">Raise skill +10</p>
+            <label className="field-label" htmlFor="menu-skill-select">
+              Skill
+            </label>
+            <select
+              id="menu-skill-select"
+              className="text-input"
+              value={selectedSkillId}
+              onChange={(event) => setSelectedSkillId(event.target.value)}
+            >
+              {launchSkills.map((skill) => {
+                const level =
+                  save.skills.find((entry) => entry.skillId === skill['Skill ID'])?.level ?? 1
+                return (
+                  <option key={skill['Skill ID']} value={skill['Skill ID']}>
+                    {skill['Display Name']} (Lv {level})
+                  </option>
+                )
+              })}
+            </select>
+            <div className="button-row">
+              <button type="button" className="btn primary" onClick={raiseSelectedSkillBy10}>
+                Raise skill by 10 levels
+              </button>
+              <button type="button" className="btn secondary" onClick={resetAllSkills}>
+                Reset skills
+              </button>
+            </div>
+          </div>
+
+          <div className="menu-demo-block">
+            <p className="muted tiny">Add items ×100</p>
+            <label className="field-label" htmlFor="menu-item-search">
+              Search items
+            </label>
+            <input
+              id="menu-item-search"
+              className="text-input"
+              type="search"
+              enterKeyHint="search"
+              placeholder="Type an item name…"
+              value={itemSearch}
+              onChange={(event) => setItemSearch(event.target.value)}
+              autoComplete="off"
+            />
+            <label className="field-label" htmlFor="menu-item-select">
+              Item
+              {itemSearch.trim()
+                ? ` (${filteredItems.length} shown)`
+                : ` (${launchItems.length})`}
+            </label>
+            {filteredItems.length === 0 ? (
+              <p className="muted tiny">No items match that search.</p>
+            ) : (
+              <select
+                id="menu-item-select"
+                className="text-input"
+                value={
+                  filteredItems.some((item) => item['Item ID'] === selectedItemId)
+                    ? selectedItemId
+                    : filteredItems[0]!['Item ID']
+                }
+                onChange={(event) => setSelectedItemId(event.target.value)}
+                size={Math.min(6, Math.max(3, filteredItems.length))}
+              >
+                {filteredItems.map((item) => (
+                  <option key={item['Item ID']} value={item['Item ID']}>
+                    {item['Display Name']}
+                  </option>
+                ))}
+              </select>
+            )}
+            <div className="button-row">
+              <button
+                type="button"
+                className="btn primary"
+                disabled={!selectedItemId || filteredItems.length === 0}
+                onClick={grantSelectedItem100}
+              >
+                Add 100 items
+              </button>
+              <button type="button" className="btn secondary" onClick={clearAllItems}>
+                Clear items
+              </button>
+            </div>
+          </div>
+
+          <div className="button-row">
+            <button type="button" className="btn primary" onClick={grantTestFood}>
+              Add & equip Baked Potato ×5
+            </button>
+            <button type="button" className="btn secondary" onClick={grantSteelPickaxe}>
+              Give Steel Pickaxe
+            </button>
+            <button type="button" className="btn secondary" onClick={grantProductionMaterials}>
+              Give production materials
+            </button>
+            <button type="button" className="btn secondary" onClick={raiseAlchemyToLevel10}>
+              Set Alchemy to level 10
+            </button>
+            <button type="button" className="btn secondary" onClick={grantSmithingMaterials}>
+              Give smithing materials
+            </button>
+            <button type="button" className="btn secondary" onClick={grantArcanaMaterials}>
+              Give Arcana ingredients
+            </button>
+          </div>
+          <p className="muted tiny">
+            Demo aids: raise/reset skills, grant or clear items, plus quick mats for food, mining,
+            production, smithing, and Arcana. Clear items empties inventory and equipment.
+          </p>
+        </div>
+      )}
     </section>
   )
 }

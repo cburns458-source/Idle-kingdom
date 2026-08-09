@@ -183,6 +183,36 @@
   overflow: auto;
 }
 
+.menu-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.35rem;
+  margin: 0.55rem 0 0.75rem;
+}
+
+.menu-tab {
+  appearance: none;
+  border: 1px solid rgba(212, 175, 55, 0.28);
+  border-radius: 0.7rem;
+  background: rgba(34, 24, 16, 0.35);
+  color: #e8dcc0;
+  font: inherit;
+  font-weight: 700;
+  padding: 0.55rem 0.65rem;
+  cursor: pointer;
+}
+
+.menu-tab.active {
+  background: rgba(127, 157, 99, 0.28);
+  border-color: rgba(212, 175, 55, 0.55);
+  color: #fff6d8;
+}
+
+.menu-tab-panel {
+  display: grid;
+  gap: 0.35rem;
+}
+
 .menu-name-block {
   display: flex;
   flex-direction: column;
