@@ -76,11 +76,23 @@ export function acceptQuest(
   return { ok: true, save: { ...save, quests: nextQuests } }
 }
 
+export interface QuestRewardLine {
+  label: string
+}
+
 export function completeQuest(
   db: GameDatabase,
   save: PlayerSave,
   questId: string,
-): { ok: true; save: PlayerSave; message: string } | { ok: false; reason: string } {
+):
+  | {
+      ok: true
+      save: PlayerSave
+      message: string
+      questName: string
+      rewards: QuestRewardLine[]
+    }
+  | { ok: false; reason: string } {
   const quest = getQuest(db, questId)
   if (!quest) return { ok: false, reason: 'Quest not found.' }
   const npc = db.NPCs.find((row) => row['NPC ID'] === quest['NPC ID'])
@@ -116,38 +128,46 @@ export function completeQuest(
   if (!removed) return { ok: false, reason: 'Missing required items.' }
 
   let next = removed
+  const rewards: QuestRewardLine[] = []
   const xpSkill = quest['Reward XP Skill ID']
   const xpAmount = quest['Reward XP Amount']
-  let xpNote = ''
   if (xpSkill && typeof xpAmount === 'number' && xpAmount > 0) {
     const applied = applyXp(next, db, xpSkill, xpAmount)
     next = applied.save
     const skillName =
       db.Skills.find((skill) => skill['Skill ID'] === xpSkill)?.['Display Name'] ?? 'skill'
-    xpNote = `${xpAmount.toLocaleString()} ${skillName} XP`
+    rewards.push({ label: `${xpAmount.toLocaleString()} ${skillName} XP` })
   }
 
   const rewardItemId = quest['Reward Item ID']
   const rewardQty = quest['Reward Item Quantity']
-  let itemNote = ''
   if (rewardItemId && typeof rewardQty === 'number' && rewardQty > 0) {
     next = addItemToInventory(next, rewardItemId, rewardQty)
     const itemName =
       db.Items.find((item) => item['Item ID'] === rewardItemId)?.['Display Name'] ?? 'item'
-    itemNote = `${rewardQty}× ${itemName}`
+    rewards.push({ label: `${rewardQty}× ${itemName}` })
   }
 
   const nextQuests = next.quests.filter((row) => row.questId !== questId)
   nextQuests.push({ questId, status: 'completed', progress: required })
   next = { ...next, quests: nextQuests }
 
-  const rewardParts = [xpNote, itemNote].filter(Boolean)
   return {
     ok: true,
     save: next,
+    questName: quest['Display Name'],
+    rewards,
     message:
-      rewardParts.length > 0
-        ? `Quest complete — ${rewardParts.join(' and ')}.`
+      rewards.length > 0
+        ? `Quest complete — ${rewards.map((reward) => reward.label).join(' and ')}.`
         : 'Quest complete.',
   }
+}
+
+export function questStatusLabel(
+  status: 'inactive' | 'active' | 'completed',
+): string {
+  if (status === 'completed') return 'Completed'
+  if (status === 'active') return 'Active'
+  return 'Not started'
 }

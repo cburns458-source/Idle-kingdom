@@ -643,6 +643,59 @@
   box-shadow: inset 0 0 0 1px rgba(212, 175, 90, 0.35);
 }
 
+.menu-section-heading {
+  margin: 1rem 0 0.25rem;
+  font-size: 1.05rem;
+}
+
+.quest-log-list li {
+  align-items: flex-start;
+}
+
+.quest-log-copy {
+  display: grid;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.quest-reward-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(12, 10, 8, 0.62);
+  animation: overlay-in 180ms ease-out;
+}
+
+.quest-reward-card {
+  width: min(100%, 22rem);
+  display: grid;
+  gap: 0.45rem;
+  text-align: center;
+}
+
+.quest-reward-card h2 {
+  margin: 0;
+}
+
+.quest-reward-list {
+  list-style: none;
+  margin: 0;
+  padding: 0.35rem 0 0.55rem;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.quest-reward-list li {
+  padding: 0.45rem 0.55rem;
+  border-radius: 0.55rem;
+  background: rgba(127, 157, 99, 0.22);
+  color: #f4efd8;
+  font-weight: 700;
+}
+
 .plain-list li {
   padding: 0.35rem 0;
 }

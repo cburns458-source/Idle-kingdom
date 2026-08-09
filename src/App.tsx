@@ -48,6 +48,11 @@ import {
 } from './game/production/engine'
 import { getRecipe, isStandardProductionActivity } from './game/production/recipes'
 import { asAchievementRows, syncProgressionMeta } from './game/achievements/progress'
+import {
+  asQuestRows,
+  getQuestProgress,
+  questStatusLabel,
+} from './game/quests/quests'
 import { completeSpecialProject } from './game/projects/engine'
 import type { SpecialProductionStation } from './game/projects/projects'
 import { totalLevel, totalSkillXp } from './game/skills/totals'
@@ -1031,6 +1036,7 @@ function SettingsPanel({
   )
   const [itemSearch, setItemSearch] = useState('')
   const achievements = asAchievementRows(database.launch)
+  const quests = asQuestRows(database.launch)
   const filteredItems = useMemo(() => {
     const needle = itemSearch.trim().toLowerCase()
     const list = !needle
@@ -1225,6 +1231,32 @@ function SettingsPanel({
                       ? 'Unlocked'
                       : `Reach ${skillName} level ${achievement['Required Level'] ?? 50}`}
                   </span>
+                </li>
+              )
+            })}
+          </ul>
+
+          <h2 className="menu-section-heading">Quests</h2>
+          <p className="muted tiny">Quest log for this save.</p>
+          <ul className="achievement-list quest-log-list">
+            {quests.map((quest) => {
+              const progress = getQuestProgress(save, quest['Quest ID'])
+              const npcName =
+                database.launch.NPCs.find((npc) => npc['NPC ID'] === quest['NPC ID'])?.[
+                  'Display Name'
+                ] ?? 'NPC'
+              return (
+                <li
+                  key={quest['Quest ID']}
+                  className={progress.status === 'completed' ? 'unlocked' : undefined}
+                >
+                  <div className="quest-log-copy">
+                    <strong>{quest['Display Name']}</strong>
+                    <span className="muted tiny">
+                      {quest.Summary ?? 'No summary.'} · {npcName}
+                    </span>
+                  </div>
+                  <span className="muted tiny">{questStatusLabel(progress.status)}</span>
                 </li>
               )
             })}
