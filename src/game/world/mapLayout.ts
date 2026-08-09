@@ -12,7 +12,7 @@ export interface NodePosition {
  */
 export const MAIN_MAP_NODE_LAYOUT: Record<string, NodePosition> = {
   // NW castle with blue roofs
-  'LOC-0013': { x: 22, y: 24 },
+  'LOC-0013': { x: 22, y: 20 },
   // Mountain peaks / range
   'LOC-0006': { x: 50, y: 18 },
   // Cave mouth in the mountains (shifted right)
