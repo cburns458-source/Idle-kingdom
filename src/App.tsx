@@ -40,6 +40,11 @@ import {
 } from './game/combat/engine'
 import { playerMaxHp } from './game/combat/stats'
 import { addItemToInventory } from './game/activity/rewards'
+import {
+  applyAutoEquipProposal,
+  proposeAutoEquipForActivity,
+  type AutoEquipProposal,
+} from './game/equipment/autoEquip'
 import { equipItemFromInventory } from './game/equipment/loadout'
 import { withRecalculatedVitals } from './game/equipment/vitals'
 import {
@@ -75,6 +80,7 @@ import { LocationView } from './ui/LocationView'
 import { NamePrompt } from './ui/NamePrompt'
 import { NpcPanel } from './ui/NpcPanel'
 import { ProductionPicker, ProductionProgress } from './ui/ProductionPanel'
+import { AutoEquipPrompt } from './ui/AutoEquipPrompt'
 import { ProjectCompletePopup } from './ui/ProjectCompletePopup'
 import { ProjectPicker } from './ui/ProjectPanel'
 import { getProject } from './game/projects/projects'
@@ -120,6 +126,7 @@ export default function App() {
     projectName: string
     lines: string[]
   } | null>(null)
+  const [autoEquipPrompt, setAutoEquipPrompt] = useState<AutoEquipProposal | null>(null)
   const bootRef = useRef(boot)
   bootRef.current = boot
 
@@ -679,16 +686,34 @@ export default function App() {
     setTravelProgress(0)
   }
 
-  function startActivity(activityId: string) {
+  function startActivity(
+    activityId: string,
+    fromSave: PlayerSave = save,
+    allowAutoEquipPrompt = true,
+  ) {
     if (deathLocked) {
       setActivityError('Cannot change activities while recovering from defeat.')
       return
     }
-    const result = validateActivityStart(database.launch, save, activityId)
+    const result = validateActivityStart(database.launch, fromSave, activityId)
     if (!result.ok) {
+      if (allowAutoEquipPrompt) {
+        const proposal = proposeAutoEquipForActivity(
+          database.launch,
+          fromSave,
+          activityId,
+          result.reason,
+        )
+        if (proposal) {
+          setAutoEquipPrompt(proposal)
+          setActivityError(null)
+          return
+        }
+      }
       setActivityError(result.reason)
       return
     }
+    setAutoEquipPrompt(null)
     setActivityError(null)
     setLastMessage(null)
     setActionProgress(0)
@@ -697,13 +722,27 @@ export default function App() {
     if (activityRow && isStandardProductionActivity(database.launch, activityRow)) {
       setSpecialStation(null)
       setProductionPickerActivityId(activityId)
+      if (fromSave !== save) updateSave(fromSave)
       return
     }
     setSpecialStation(null)
 
-    const started = beginActivitySave(save, activityId)
+    const started = beginActivitySave(fromSave, activityId)
     const generated = generateNextAction(database.launch, started, activityId)
     updateSave(generated ? generated.save : started)
+  }
+
+  function confirmAutoEquipAndStart() {
+    if (!autoEquipPrompt) return
+    const equipped = applyAutoEquipProposal(database.launch, save, autoEquipPrompt)
+    if (!equipped.ok) {
+      setAutoEquipPrompt(null)
+      setActivityError(equipped.reason)
+      return
+    }
+    const activityId = autoEquipPrompt.activityId
+    setAutoEquipPrompt(null)
+    startActivity(activityId, withRecalculatedVitals(database.launch, equipped.save), false)
   }
 
   function confirmProduction(recipeId: string, quantity: number) {
@@ -1050,6 +1089,17 @@ export default function App() {
             projectName={projectCompletePopup.projectName}
             lines={projectCompletePopup.lines}
             onClose={() => setProjectCompletePopup(null)}
+          />
+        ) : null}
+
+        {autoEquipPrompt ? (
+          <AutoEquipPrompt
+            proposal={autoEquipPrompt}
+            onCancel={() => {
+              setActivityError(autoEquipPrompt.failureReason)
+              setAutoEquipPrompt(null)
+            }}
+            onConfirm={confirmAutoEquipAndStart}
           />
         ) : null}
       </main>
