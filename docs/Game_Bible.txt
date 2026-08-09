@@ -126,6 +126,9 @@ Dangerous Areas:
 - Remain accessible.
 - Clearly communicate danger or Combat chance.
 - Can defeat an unprepared player.
+- Hostile Activities define a Danger Warning Combat Level.
+- When a player travels to a Location while their Combat Level is below that warning, they are immediately forced to start the hostile Combat Activity there (bypassing the normal activity start delay).
+- If mandatory requirements block that Activity (for example a required tool on a mixed pool), the player still arrives and is warned, but the Activity does not start until requirements are met.
 
 4.4 LOCATIONS AND CURRENT ACTIVITIES
 

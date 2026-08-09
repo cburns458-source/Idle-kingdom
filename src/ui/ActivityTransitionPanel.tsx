@@ -20,7 +20,13 @@ export function ActivityTransitionPanel({
   const pct = Math.round(progress * 100)
   const secondsLeft = Math.max(0, Math.ceil(remainingMs / 1000))
   const label = activity?.['Contextual Name'] ?? activity?.['Internal Key'] ?? 'Activity'
-  const title = transition.kind === 'starting' ? 'Starting activity' : 'Stopping activity'
+  const switching = transition.kind === 'stopping' && Boolean(transition.followUpActivityId)
+  const title =
+    transition.kind === 'starting'
+      ? 'Starting activity'
+      : switching
+        ? 'Cancelling activity'
+        : 'Stopping activity'
 
   return (
     <section className="panel glass-panel activity-transition-panel" aria-live="polite">
@@ -28,6 +34,9 @@ export function ActivityTransitionPanel({
         <div>
           <h2>{title}</h2>
           <p className="lead">{label}</p>
+          {switching && (
+            <p className="muted tiny">Then starting the selected activity after this delay.</p>
+          )}
         </div>
         <button type="button" className="btn secondary" onClick={onCancel}>
           Cancel

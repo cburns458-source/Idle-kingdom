@@ -9,9 +9,11 @@ import {
 } from './game/activity/engine'
 import {
   cancelActivityTransition,
+  hasRunningPrimaryActivity,
   isActivityTransitionPending,
   requestActivityStart,
   requestActivityStop,
+  requestCancelForProductionPicker,
   requestProductionStart,
   resolveActivityTransitions,
   transitionRemainingMs,
@@ -31,7 +33,10 @@ import {
   MAIN_MAP_ID,
 } from './game/world/constants'
 import {
-  applyTravelArrival,
+  applyHostileTravelArrival,
+  hostileForceMessage,
+} from './game/world/hostility'
+import {
   canTravelTo,
   findConnection,
   resolveActiveMapId,
@@ -133,6 +138,9 @@ export default function App() {
   } | null>(null)
   const [autoEquipPrompt, setAutoEquipPrompt] = useState<AutoEquipProposal | null>(null)
   const [transitionRemaining, setTransitionRemaining] = useState(0)
+  const [deferredProductionPickerId, setDeferredProductionPickerId] = useState<string | null>(
+    null,
+  )
   const bootRef = useRef(boot)
   bootRef.current = boot
 
@@ -190,18 +198,31 @@ export default function App() {
         travel.durationMs <= 0 ? 1 : Math.min(1, elapsed / travel.durationMs)
       setTravelProgress(progress)
       if (progress >= 1) {
-        setBoot((current) => {
-          if (current.status !== 'ready') return current
-          const arrived = applyTravelArrival(current.save, travel.toLocationId)
-          const saved = persistSave(arrived)
-          const location = current.database.launchIndexes.locationsById.get(saved.currentLocationId)
-          setBrowseMapId(location ? resolveActiveMapId(location) : MAIN_MAP_ID)
-          setSelectedLocationId(saved.currentLocationId)
-          setScreen('location')
-          setActionProgress(0)
+        const current = bootRef.current
+        if (current.status !== 'ready') return
+        const arrived = applyHostileTravelArrival(
+          current.database.launch,
+          current.save,
+          travel.toLocationId,
+        )
+        const saved = persistSave(arrived.save)
+        const location = current.database.launchIndexes.locationsById.get(saved.currentLocationId)
+        setBoot({ ...current, save: saved, saveCreated: false })
+        setBrowseMapId(location ? resolveActiveMapId(location) : MAIN_MAP_ID)
+        setSelectedLocationId(saved.currentLocationId)
+        setScreen('location')
+        setActionProgress(0)
+        const forceMessage = hostileForceMessage(current.database.launch, arrived)
+        if (arrived.forcedActivityId) {
+          setActivityError(null)
+          setLastMessage(forceMessage)
+        } else if (arrived.forceBlockedReason) {
           setLastMessage(null)
-          return { ...current, save: saved, saveCreated: false }
-        })
+          setActivityError(forceMessage)
+        } else {
+          setLastMessage(null)
+          setActivityError(null)
+        }
         setTravel(null)
         setTravelProgress(0)
         return
@@ -245,6 +266,23 @@ export default function App() {
     frame = window.requestAnimationFrame(tick)
     return () => window.cancelAnimationFrame(frame)
   }, [boot.status, boot.status === 'ready' ? boot.save.activityTransition : null, travel])
+
+  // After a cancel delay finishes, open a deferred Standard Production picker.
+  useEffect(() => {
+    if (boot.status !== 'ready' || travel) return
+    if (!deferredProductionPickerId) return
+    if (boot.save.activityTransition) return
+    if (hasRunningPrimaryActivity(boot.save)) return
+    setProductionPickerActivityId(deferredProductionPickerId)
+    setDeferredProductionPickerId(null)
+  }, [
+    boot.status,
+    boot.status === 'ready' ? boot.save.activityTransition : null,
+    boot.status === 'ready' ? boot.save.currentActivityId : null,
+    boot.status === 'ready' ? boot.save.productionRecipeId : null,
+    deferredProductionPickerId,
+    travel,
+  ])
 
   // Ensure an action exists while an activity is running (not during death pause).
   useEffect(() => {
@@ -709,14 +747,24 @@ export default function App() {
 
     const durationMs = travelDurationMs(connection)
     if (durationMs <= 0) {
-      const arrived = applyTravelArrival(working, destinationId)
-      updateSave(arrived)
+      const arrived = applyHostileTravelArrival(database.launch, working, destinationId)
+      updateSave(arrived.save)
       const nextLocation = database.launchIndexes.locationsById.get(destinationId)
       setBrowseMapId(nextLocation ? resolveActiveMapId(nextLocation) : MAIN_MAP_ID)
       setSelectedLocationId(destinationId)
       setScreen('location')
       setActionProgress(0)
-      setLastMessage(null)
+      const forceMessage = hostileForceMessage(database.launch, arrived)
+      if (arrived.forcedActivityId) {
+        setActivityError(null)
+        setLastMessage(forceMessage)
+      } else if (arrived.forceBlockedReason) {
+        setLastMessage(null)
+        setActivityError(forceMessage)
+      } else {
+        setLastMessage(null)
+        setActivityError(null)
+      }
       setTravel(null)
       setTravelProgress(0)
       return
@@ -771,12 +819,31 @@ export default function App() {
     const activityRow = database.launchIndexes.activitiesById.get(activityId)
     if (activityRow && isStandardProductionActivity(database.launch, activityRow)) {
       setSpecialStation(null)
+      // Cancel any running Primary Activity before opening the production picker.
+      if (
+        hasRunningPrimaryActivity(fromSave) &&
+        (fromSave.currentActivityId !== activityId || fromSave.productionRecipeId)
+      ) {
+        const cancel = requestCancelForProductionPicker(database.launch, fromSave, activityId)
+        if (!cancel.ok) {
+          setActivityError(cancel.reason)
+          return
+        }
+        if (cancel.save.activityTransition) {
+          setDeferredProductionPickerId(activityId)
+          setProductionPickerActivityId(null)
+          updateSave(cancel.save)
+          return
+        }
+      }
+      setDeferredProductionPickerId(null)
       setProductionPickerActivityId(activityId)
       if (fromSave !== save) updateSave(fromSave)
       return
     }
     setSpecialStation(null)
     setProductionPickerActivityId(null)
+    setDeferredProductionPickerId(null)
 
     const requested = requestActivityStart(database.launch, fromSave, activityId)
     if (!requested.ok) {
@@ -895,6 +962,7 @@ export default function App() {
     if (!save.activityTransition) return
     setActivityError(null)
     setTransitionRemaining(0)
+    setDeferredProductionPickerId(null)
     updateSave(cancelActivityTransition(save))
   }
 

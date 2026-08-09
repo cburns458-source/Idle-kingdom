@@ -55,7 +55,37 @@ function makeTransition(
   }
 }
 
-/** Begin the start delay for a validated pool activity (or replace via stop→start). */
+export function hasRunningPrimaryActivity(save: PlayerSave): boolean {
+  return Boolean(save.currentActivityId || save.productionRecipeId)
+}
+
+function beginCancelTransition(
+  db: GameDatabase,
+  save: PlayerSave,
+  nowMs: number,
+  followUp: {
+    followUpActivityId?: string | null
+    productionRecipeId?: string | null
+    productionQuantity?: number | null
+  } = {},
+): PlayerSave {
+  return {
+    ...save,
+    activityTransition: makeTransition(
+      db,
+      {
+        kind: 'stopping',
+        activityId: save.currentActivityId ?? save.productionRecipeId ?? 'activity',
+        followUpActivityId: followUp.followUpActivityId ?? null,
+        productionRecipeId: followUp.productionRecipeId ?? null,
+        productionQuantity: followUp.productionQuantity ?? null,
+      },
+      nowMs,
+    ),
+  }
+}
+
+/** Begin the start delay for a validated pool activity (or replace via cancel→start). */
 export function requestActivityStart(
   db: GameDatabase,
   save: PlayerSave,
@@ -72,29 +102,24 @@ export function requestActivityStart(
   const validation = validateActivityStart(db, save, activityId)
   if (!validation.ok) return validation
 
-  // Already running this activity — nothing to do.
-  if (save.currentActivityId === activityId && !save.activityTransition) {
+  // Already running this activity with no production queue — nothing to do.
+  if (
+    save.currentActivityId === activityId &&
+    !save.productionRecipeId &&
+    !save.activityTransition
+  ) {
     return { ok: true, save }
   }
 
-  // Replace: delay stop of the current activity, then start the new one.
-  if (save.currentActivityId && save.currentActivityId !== activityId) {
+  // Cancel any running Primary Activity first (including Replace without an explicit Stop).
+  if (hasRunningPrimaryActivity(save) && save.currentActivityId !== activityId) {
     return {
       ok: true,
-      save: {
-        ...save,
-        activityTransition: makeTransition(
-          db,
-          {
-            kind: 'stopping',
-            activityId: save.currentActivityId,
-            followUpActivityId: activityId,
-            productionRecipeId: null,
-            productionQuantity: null,
-          },
-          nowMs,
-        ),
-      },
+      save: beginCancelTransition(db, save, nowMs, {
+        followUpActivityId: activityId,
+        productionRecipeId: null,
+        productionQuantity: null,
+      }),
     }
   }
 
@@ -114,6 +139,40 @@ export function requestActivityStart(
         nowMs,
       ),
     },
+  }
+}
+
+/**
+ * Cancel the running Primary Activity with the normal delay, then let the UI open a
+ * Standard Production picker for followUpActivityId.
+ */
+export function requestCancelForProductionPicker(
+  db: GameDatabase,
+  save: PlayerSave,
+  productionActivityId: string,
+  nowMs: number = Date.now(),
+): { ok: true; save: PlayerSave } | { ok: false; reason: string } {
+  if (isDeathPaused(save, nowMs)) {
+    return { ok: false, reason: 'Cannot change activities while recovering from defeat.' }
+  }
+  if (isActivityTransitionPending(save, nowMs)) {
+    return { ok: false, reason: 'Wait for the current start/stop delay to finish.' }
+  }
+  if (!hasRunningPrimaryActivity(save)) {
+    return { ok: true, save }
+  }
+  // Already on this production activity with no queue — picker can open immediately.
+  if (save.currentActivityId === productionActivityId && !save.productionRecipeId) {
+    return { ok: true, save }
+  }
+
+  return {
+    ok: true,
+    save: beginCancelTransition(db, save, nowMs, {
+      followUpActivityId: null,
+      productionRecipeId: null,
+      productionQuantity: null,
+    }),
   }
 }
 
@@ -136,24 +195,15 @@ export function requestProductionStart(
   const validation = validateActivityStart(db, save, activityId)
   if (!validation.ok) return validation
 
-  // If another primary activity is running, stop it first then start production.
-  if (save.currentActivityId && save.currentActivityId !== activityId) {
+  // Always cancel a running Primary Activity / queue first (same station included).
+  if (hasRunningPrimaryActivity(save)) {
     return {
       ok: true,
-      save: {
-        ...save,
-        activityTransition: makeTransition(
-          db,
-          {
-            kind: 'stopping',
-            activityId: save.currentActivityId,
-            followUpActivityId: activityId,
-            productionRecipeId: recipeId,
-            productionQuantity: quantity,
-          },
-          nowMs,
-        ),
-      },
+      save: beginCancelTransition(db, save, nowMs, {
+        followUpActivityId: activityId,
+        productionRecipeId: recipeId,
+        productionQuantity: quantity,
+      }),
     }
   }
 
@@ -176,7 +226,7 @@ export function requestProductionStart(
   }
 }
 
-/** Begin the stop delay for the current primary activity. */
+/** Begin the stop/cancel delay for the current primary activity. */
 export function requestActivityStop(
   db: GameDatabase,
   save: PlayerSave,
@@ -188,26 +238,13 @@ export function requestActivityStop(
   if (isActivityTransitionPending(save, nowMs)) {
     return { ok: false, reason: 'Wait for the current start/stop delay to finish.' }
   }
-  if (!save.currentActivityId && !save.productionRecipeId) {
+  if (!hasRunningPrimaryActivity(save)) {
     return { ok: false, reason: 'No activity is running.' }
   }
 
   return {
     ok: true,
-    save: {
-      ...save,
-      activityTransition: makeTransition(
-        db,
-        {
-          kind: 'stopping',
-          activityId: save.currentActivityId ?? 'production',
-          followUpActivityId: null,
-          productionRecipeId: null,
-          productionQuantity: null,
-        },
-        nowMs,
-      ),
-    },
+    save: beginCancelTransition(db, save, nowMs),
   }
 }
 
