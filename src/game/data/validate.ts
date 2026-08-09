@@ -1,7 +1,11 @@
 import {
   DATABASE_TABLES,
+  type ActivityRow,
   type DatabaseIndexes,
+  type FacilityRow,
   type GameDatabase,
+  type NpcRow,
+  type ShopRow,
   type ValidationIssue,
 } from './types'
 
@@ -34,6 +38,16 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
+function groupByLocationId<T extends { 'Location ID': string }>(rows: T[]): Map<string, T[]> {
+  const map = new Map<string, T[]>()
+  for (const row of rows) {
+    const list = map.get(row['Location ID']) ?? []
+    list.push(row)
+    map.set(row['Location ID'], list)
+  }
+  return map
+}
+
 export function assertGameDatabaseShape(raw: unknown): asserts raw is GameDatabase {
   if (!isRecord(raw)) {
     throw new Error('Database root must be an object')
@@ -54,6 +68,8 @@ export function buildIndexes(db: GameDatabase): DatabaseIndexes {
   const skillsById = new Map(db.Skills.map((row) => [row['Skill ID'], row]))
   const locationsById = new Map(db.Locations.map((row) => [row['Location ID'], row]))
   const itemsById = new Map(db.Items.map((row) => [row['Item ID'], row]))
+  const mapsById = new Map(db.Maps.map((row) => [row['Map ID'], row]))
+  const activitiesById = new Map(db.Activities.map((row) => [row['Activity ID'], row]))
 
   for (const [table, idField] of Object.entries(TABLE_ID_FIELDS)) {
     const map = new Map<string, Record<string, unknown>>()
@@ -67,7 +83,19 @@ export function buildIndexes(db: GameDatabase): DatabaseIndexes {
     byTableId.set(table, map)
   }
 
-  return { byTableId, configByKey, skillsById, locationsById, itemsById }
+  return {
+    byTableId,
+    configByKey,
+    skillsById,
+    locationsById,
+    itemsById,
+    mapsById,
+    activitiesById,
+    facilitiesByLocationId: groupByLocationId(db.Facilities),
+    activitiesByLocationId: groupByLocationId(db.Activities),
+    npcsByLocationId: groupByLocationId(db.NPCs),
+    shopsByLocationId: groupByLocationId(db.Shops),
+  }
 }
 
 export function lookupById(
@@ -134,7 +162,7 @@ export function validateDatabase(db: GameDatabase): ValidationIssue[] {
       issues.push({
         severity: 'error',
         table: 'Activities',
-        id: String(activity['Activity ID'] ?? ''),
+        id: activity['Activity ID'],
         message: `Missing Location ID reference: ${locationId}`,
       })
     }
@@ -209,14 +237,14 @@ export function filterLaunchContent(db: GameDatabase): GameDatabase {
     Maps: db.Maps.filter(hasLaunchPhase),
     Locations: db.Locations.filter(hasLaunchPhase),
     TravelConnections: db.TravelConnections.filter(hasLaunchPhase),
-    Facilities: db.Facilities.filter(hasLaunchPhase),
-    Activities: db.Activities.filter(hasLaunchPhase),
+    Facilities: db.Facilities.filter(hasLaunchPhase) as FacilityRow[],
+    Activities: db.Activities.filter(hasLaunchPhase) as ActivityRow[],
     Actions: db.Actions.filter(hasLaunchPhase),
     Enemies: db.Enemies.filter(hasLaunchPhase),
     Recipes: db.Recipes.filter(hasLaunchPhase),
     Projects: db.Projects.filter(hasLaunchPhase),
-    NPCs: db.NPCs.filter(hasLaunchPhase),
-    Shops: db.Shops.filter(hasLaunchPhase),
+    NPCs: db.NPCs.filter(hasLaunchPhase) as NpcRow[],
+    Shops: db.Shops.filter(hasLaunchPhase) as ShopRow[],
     Quests: db.Quests.filter(hasLaunchPhase),
     Achievements: db.Achievements.filter(hasLaunchPhase),
   }

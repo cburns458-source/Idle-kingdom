@@ -69,6 +69,81 @@ export interface LocationRow {
   Notes: string | null
 }
 
+export interface MapRow {
+  'Map ID': string
+  'Internal Key': string
+  'Display Name': string
+  'Map Type': string | null
+  'Asset Key': string | null
+  Status: RecordStatus
+  'Release Phase': ReleasePhase
+  Description: string | null
+}
+
+export interface TravelConnectionRow {
+  'Connection ID': string
+  'From Location ID': string
+  'To Location ID': string
+  Method: string | null
+  Direction: string | null
+  'Base Duration': number | null
+  'Required Mount / Status': string | null
+  Status: RecordStatus
+  'Release Phase': ReleasePhase
+  Notes: string | null
+}
+
+export interface FacilityRow {
+  'Facility ID': string
+  'Internal Key': string
+  'Display Name': string
+  'Facility Type': string | null
+  'Location ID': string
+  'Skill ID': string | null
+  Status: RecordStatus
+  'Release Phase': ReleasePhase
+  Description: string | null
+  Notes: string | null
+}
+
+export interface ActivityRow {
+  'Activity ID': string
+  'Internal Key': string
+  'Contextual Name': string | null
+  'Location ID': string
+  'Pool ID': string | null
+  'Pool Internal Key': string | null
+  Description: string | null
+  'Danger Warning Combat Level': number | null
+  Status: RecordStatus
+  'Release Phase': ReleasePhase
+  Notes: string | null
+}
+
+export interface NpcRow {
+  'NPC ID': string
+  'Internal Key': string
+  'Display Name': string
+  'Location ID': string
+  Role: string | null
+  Status: RecordStatus
+  'Release Phase': ReleasePhase
+  Description: string | null
+  Notes: string | null
+}
+
+export interface ShopRow {
+  'Shop ID': string
+  'Internal Key': string
+  'Display Name': string
+  'Location ID': string
+  'Shop Type': string | null
+  Status: RecordStatus
+  'Release Phase': ReleasePhase
+  Description: string | null
+  Notes: string | null
+}
+
 export interface GameDatabase {
   Config: ConfigRow[]
   Skills: SkillRow[]
@@ -78,11 +153,11 @@ export interface GameDatabase {
   Equipment: Record<string, unknown>[]
   Statistics: Record<string, unknown>[]
   Enchantments: Record<string, unknown>[]
-  Maps: Record<string, unknown>[]
+  Maps: MapRow[]
   Locations: LocationRow[]
-  TravelConnections: Record<string, unknown>[]
-  Facilities: Record<string, unknown>[]
-  Activities: Record<string, unknown>[]
+  TravelConnections: TravelConnectionRow[]
+  Facilities: FacilityRow[]
+  Activities: ActivityRow[]
   PoolEntries: Record<string, unknown>[]
   Actions: Record<string, unknown>[]
   Requirements: Record<string, unknown>[]
@@ -90,8 +165,8 @@ export interface GameDatabase {
   RewardEntries: Record<string, unknown>[]
   Recipes: Record<string, unknown>[]
   Projects: Record<string, unknown>[]
-  NPCs: Record<string, unknown>[]
-  Shops: Record<string, unknown>[]
+  NPCs: NpcRow[]
+  Shops: ShopRow[]
   Quests: Record<string, unknown>[]
   Achievements: Record<string, unknown>[]
 }
@@ -138,4 +213,10 @@ export interface DatabaseIndexes {
   skillsById: Map<string, SkillRow>
   locationsById: Map<string, LocationRow>
   itemsById: Map<string, ItemRow>
+  mapsById: Map<string, MapRow>
+  activitiesById: Map<string, ActivityRow>
+  facilitiesByLocationId: Map<string, FacilityRow[]>
+  activitiesByLocationId: Map<string, ActivityRow[]>
+  npcsByLocationId: Map<string, NpcRow[]>
+  shopsByLocationId: Map<string, ShopRow[]>
 }
