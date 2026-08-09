@@ -49,4 +49,21 @@ describe('hostile travel forcing', () => {
     expect(arrived.forcedActivityId).toBeNull()
     expect(arrived.save.currentLocationId).toBe('LOC-0002')
   })
+
+  it('keeps the activity-change cooldown when arriving busy at a safe location', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const now = Date.parse('2026-01-01T00:00:00.000Z')
+    const save = {
+      ...createNewSave(launch),
+      currentLocationId: 'LOC-0009',
+      currentActivityId: 'ACT-0012',
+      activityStartedAt: new Date(now).toISOString(),
+    }
+    const arrived = applyHostileTravelArrival(launch, save, 'LOC-0002', now)
+    expect(arrived.forcedActivityId).toBeNull()
+    expect(arrived.save.currentLocationId).toBe('LOC-0002')
+    expect(arrived.save.currentActivityId).toBeNull()
+    expect(arrived.save.activityTransition?.kind).toBe('stopping')
+    expect(arrived.save.activityTransition?.durationMs).toBe(30_000)
+  })
 })

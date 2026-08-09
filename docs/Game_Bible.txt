@@ -104,7 +104,7 @@ Idale is presented as a selectable map. Current geography includes:
 - Selecting a node allows travel to that Location.
 - A Location shows its Activities, NPCs, shops, and facilities.
 - Starting a new Primary Activity replaces the current one.
-- Traveling to another Location stops the current Primary Activity.
+- Traveling to another Location stops the current Primary Activity using the shared activity-change delay (30 seconds). During that delay the player may queue the next Activity at the new Location; it begins when the delay ends (no second cooldown).
 - Passive Interactions at the active Location do not stop the Primary Activity.
 
 4.3 OPEN-WORLD PROGRESSION
@@ -263,7 +263,7 @@ Starting another Primary Activity stops or replaces the previous one.
 8. Grant rewards and XP.
 9. Generate the next Action.
 10. Continue until stopped, interrupted, invalidated, or the unattended-progression limit is reached.
-11. Stopping an Activity waits the configured activity change delay (30 seconds) before it ends; Cancel is available during that delay and is removed when the delay completes. Starting another Activity after a completed stop does not apply a second delay. Travel still interrupts immediately.
+11. All Primary Activity changes share one activity-change delay (30 seconds by default): Stop, Replace, and travel while an Activity is running. During the delay the player may queue (or change) the next Activity without resetting the timer; it begins when the delay ends (no second cooldown). Cancel is available only for soft stops where the old Activity is still running; after travel the Activity is already cleared so Cancel is unavailable.
 
 5.3 MULTI-SKILL POOLS
 - An Activity Pool may contain Actions from different skills or gameplay categories.

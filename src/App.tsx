@@ -8,8 +8,10 @@ import {
   validateActivityStart,
 } from './game/activity/engine'
 import {
+  beginTravelActivityChange,
   cancelActivityTransition,
   hasRunningPrimaryActivity,
+  isActivityTransitionCancellable,
   isActivityTransitionPending,
   requestActivityStart,
   requestActivityStop,
@@ -60,7 +62,7 @@ import {
 } from './game/equipment/autoEquip'
 import { equipItemFromInventory } from './game/equipment/loadout'
 import { withRecalculatedVitals } from './game/equipment/vitals'
-import { cancelProductionActivity, completeProductionCraft } from './game/production/engine'
+import { completeProductionCraft } from './game/production/engine'
 import { getRecipe, isStandardProductionActivity } from './game/production/recipes'
 import { asAchievementRows, syncProgressionMeta } from './game/achievements/progress'
 import {
@@ -721,10 +723,13 @@ export default function App() {
 
   const deathLocked = isDeathPaused(save) || pauseRemainingMs > 0
   const transitionLocked = isActivityTransitionPending(save) || transitionRemaining > 0
-  const activityActionsLocked = deathLocked || transitionLocked
   const pendingTransition = save.activityTransition
   const pendingTransitionActivity = pendingTransition
     ? database.launchIndexes.activitiesById.get(pendingTransition.activityId)
+    : undefined
+  const pendingFollowUpActivityId = pendingTransition?.followUpActivityId ?? null
+  const followUpActivity = pendingFollowUpActivityId
+    ? database.launchIndexes.activitiesById.get(pendingFollowUpActivityId)
     : undefined
 
   function beginTravel(destinationId: string) {
@@ -737,23 +742,18 @@ export default function App() {
     setSpecialStation(null)
     setActiveShopId(null)
     setActiveNpcId(null)
-    // Interrupt primary activity immediately; refund remaining production materials.
-    let working = save
-    if (working.productionRecipeId) {
-      working = cancelProductionActivity(database.launch, working)
-    } else if (working.currentActivityId) {
-      working = clearActivitySave(working)
-    }
+    setDeferredProductionPickerId(null)
+    setActionProgress(0)
 
+    const now = Date.now()
     const durationMs = travelDurationMs(connection)
     if (durationMs <= 0) {
-      const arrived = applyHostileTravelArrival(database.launch, working, destinationId)
+      const arrived = applyHostileTravelArrival(database.launch, save, destinationId, now)
       updateSave(arrived.save)
       const nextLocation = database.launchIndexes.locationsById.get(destinationId)
       setBrowseMapId(nextLocation ? resolveActiveMapId(nextLocation) : MAIN_MAP_ID)
       setSelectedLocationId(destinationId)
       setScreen('location')
-      setActionProgress(0)
       const forceMessage = hostileForceMessage(database.launch, arrived)
       if (arrived.forcedActivityId) {
         setActivityError(null)
@@ -770,11 +770,13 @@ export default function App() {
       return
     }
 
-    if (working !== save) updateSave(working)
+    // Timed travel: start the shared activity-change cooldown when travel begins.
+    const prepared = beginTravelActivityChange(database.launch, save, now)
+    if (prepared !== save) updateSave(prepared)
     setTravel({
       fromLocationId: save.currentLocationId,
       toLocationId: destinationId,
-      startedAt: Date.now(),
+      startedAt: now,
       durationMs,
     })
     setTravelProgress(0)
@@ -787,10 +789,6 @@ export default function App() {
   ) {
     if (deathLocked) {
       setActivityError('Cannot change activities while recovering from defeat.')
-      return
-    }
-    if (isActivityTransitionPending(fromSave)) {
-      setActivityError('Wait for the current start/stop delay to finish.')
       return
     }
     const result = validateActivityStart(database.launch, fromSave, activityId)
@@ -819,6 +817,13 @@ export default function App() {
     const activityRow = database.launchIndexes.activitiesById.get(activityId)
     if (activityRow && isStandardProductionActivity(database.launch, activityRow)) {
       setSpecialStation(null)
+      // During the shared delay, open the picker immediately to queue a follow-up recipe.
+      if (isActivityTransitionPending(fromSave)) {
+        setDeferredProductionPickerId(null)
+        setProductionPickerActivityId(activityId)
+        if (fromSave !== save) updateSave(fromSave)
+        return
+      }
       // Cancel any running Primary Activity before opening the production picker.
       if (
         hasRunningPrimaryActivity(fromSave) &&
@@ -995,9 +1000,12 @@ export default function App() {
               db={database.launch}
               location={location}
               currentActivityId={save.currentActivityId}
+              pendingFollowUpActivityId={pendingFollowUpActivityId}
+              activityChangePending={transitionLocked}
               activityError={activityError}
               requirementHint={requirementHint}
-              actionsLocked={activityActionsLocked}
+              actionsLocked={deathLocked}
+              stopLocked={deathLocked || transitionLocked}
               onStartActivity={startActivity}
               onStopActivity={stopActivity}
               onOpenSpecialProduction={(station) => {
@@ -1087,8 +1095,11 @@ export default function App() {
                     <ActivityTransitionPanel
                       transition={pendingTransition}
                       activity={pendingTransitionActivity}
+                      followUpActivity={followUpActivity}
                       remainingMs={transitionRemaining}
-                      showCancel={transitionRemaining > 0}
+                      showCancel={
+                        transitionRemaining > 0 && isActivityTransitionCancellable(save)
+                      }
                       onCancel={cancelPendingActivityChange}
                     />
                   )}

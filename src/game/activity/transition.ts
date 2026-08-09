@@ -36,6 +36,11 @@ export function clearActivityTransition(save: PlayerSave): PlayerSave {
   return { ...save, activityTransition: null }
 }
 
+/** Cancel is only meaningful while the old activity is still running (soft stop). */
+export function isActivityTransitionCancellable(save: PlayerSave): boolean {
+  return Boolean(save.activityTransition && hasRunningPrimaryActivity(save))
+}
+
 function makeStopTransition(
   db: GameDatabase,
   partial: Omit<ActivityTransition, 'startedAt' | 'durationMs' | 'kind'> & {
@@ -57,6 +62,36 @@ function makeStopTransition(
 
 export function hasRunningPrimaryActivity(save: PlayerSave): boolean {
   return Boolean(save.currentActivityId || save.productionRecipeId)
+}
+
+function withFollowUp(
+  save: PlayerSave,
+  followUp: {
+    followUpActivityId?: string | null
+    productionRecipeId?: string | null
+    productionQuantity?: number | null
+  },
+): PlayerSave {
+  const transition = save.activityTransition
+  if (!transition) return save
+  return {
+    ...save,
+    activityTransition: {
+      ...transition,
+      followUpActivityId:
+        followUp.followUpActivityId !== undefined
+          ? followUp.followUpActivityId
+          : transition.followUpActivityId,
+      productionRecipeId:
+        followUp.productionRecipeId !== undefined
+          ? followUp.productionRecipeId
+          : transition.productionRecipeId,
+      productionQuantity:
+        followUp.productionQuantity !== undefined
+          ? followUp.productionQuantity
+          : transition.productionQuantity,
+    },
+  }
 }
 
 function beginCancelTransition(
@@ -82,6 +117,62 @@ function beginCancelTransition(
       nowMs,
     ),
   }
+}
+
+/** Hard-stop running work and ensure the shared activity-change cooldown is running. */
+function hardStopIntoActivityChange(
+  db: GameDatabase,
+  save: PlayerSave,
+  nowMs: number,
+): PlayerSave {
+  const hadPrimary = hasRunningPrimaryActivity(save)
+  const existing = save.activityTransition
+  const pending = isActivityTransitionPending(save, nowMs)
+  const labelId =
+    save.currentActivityId ?? existing?.activityId ?? save.productionRecipeId ?? 'activity'
+
+  let next = save
+  if (next.productionRecipeId) {
+    next = cancelProductionActivity(db, next)
+  } else if (next.currentActivityId) {
+    next = clearActivitySave(next, nowMs)
+  }
+
+  if (!hadPrimary && !existing) {
+    return clearActivityTransition(next)
+  }
+
+  if (pending && existing) {
+    return {
+      ...next,
+      activityTransition: {
+        ...existing,
+        kind: 'stopping',
+        followUpActivityId: null,
+        productionRecipeId: null,
+        productionQuantity: null,
+      },
+    }
+  }
+
+  return {
+    ...next,
+    activityTransition: makeStopTransition(db, { activityId: labelId }, nowMs),
+  }
+}
+
+/**
+ * When travel begins (or arrives, for instant travel): hard-stop the current Primary
+ * Activity and start the shared activity-change cooldown. Location is unchanged here.
+ */
+export function beginTravelActivityChange(
+  db: GameDatabase,
+  save: PlayerSave,
+  nowMs: number = Date.now(),
+): PlayerSave {
+  if (isDeathPaused(save, nowMs)) return save
+  if (!hasRunningPrimaryActivity(save) && !save.activityTransition) return save
+  return hardStopIntoActivityChange(db, save, nowMs)
 }
 
 /** Immediately begin a pool activity (no start delay). */
@@ -116,8 +207,8 @@ function startProductionNow(
 }
 
 /**
- * Start a pool activity immediately, or cancel a running activity first (30s stop delay)
- * then start the new one as soon as that stop completes — with no second start delay.
+ * Start a pool activity immediately, or queue it on the shared activity-change cooldown.
+ * Selecting during an active cooldown updates the follow-up without resetting the timer.
  */
 export function requestActivityStart(
   db: GameDatabase,
@@ -128,12 +219,20 @@ export function requestActivityStart(
   if (isDeathPaused(save, nowMs)) {
     return { ok: false, reason: 'Cannot change activities while recovering from defeat.' }
   }
-  if (isActivityTransitionPending(save, nowMs)) {
-    return { ok: false, reason: 'Wait for the current stop delay to finish.' }
-  }
 
   const validation = validateActivityStart(db, save, activityId)
   if (!validation.ok) return validation
+
+  if (isActivityTransitionPending(save, nowMs)) {
+    return {
+      ok: true,
+      save: withFollowUp(save, {
+        followUpActivityId: activityId,
+        productionRecipeId: null,
+        productionQuantity: null,
+      }),
+    }
+  }
 
   if (
     save.currentActivityId === activityId &&
@@ -143,7 +242,7 @@ export function requestActivityStart(
     return { ok: true, save }
   }
 
-  // Replace: 30s cancel only, then immediate start of the follow-up.
+  // Replace: one shared cancel delay, then immediate start of the follow-up.
   if (hasRunningPrimaryActivity(save) && save.currentActivityId !== activityId) {
     return {
       ok: true,
@@ -172,7 +271,8 @@ export function requestCancelForProductionPicker(
     return { ok: false, reason: 'Cannot change activities while recovering from defeat.' }
   }
   if (isActivityTransitionPending(save, nowMs)) {
-    return { ok: false, reason: 'Wait for the current stop delay to finish.' }
+    // Already in the shared cooldown — open the picker; confirm will set follow-up.
+    return { ok: true, save }
   }
   if (!hasRunningPrimaryActivity(save)) {
     return { ok: true, save }
@@ -191,7 +291,7 @@ export function requestCancelForProductionPicker(
   }
 }
 
-/** Start Standard Production immediately, or after a 30s cancel if something is already running. */
+/** Start Standard Production immediately, or queue it on the shared cooldown. */
 export function requestProductionStart(
   db: GameDatabase,
   save: PlayerSave,
@@ -203,12 +303,20 @@ export function requestProductionStart(
   if (isDeathPaused(save, nowMs)) {
     return { ok: false, reason: 'Cannot change activities while recovering from defeat.' }
   }
-  if (isActivityTransitionPending(save, nowMs)) {
-    return { ok: false, reason: 'Wait for the current stop delay to finish.' }
-  }
 
   const validation = validateActivityStart(db, save, activityId)
   if (!validation.ok) return validation
+
+  if (isActivityTransitionPending(save, nowMs)) {
+    return {
+      ok: true,
+      save: withFollowUp(save, {
+        followUpActivityId: activityId,
+        productionRecipeId: recipeId,
+        productionQuantity: quantity,
+      }),
+    }
+  }
 
   if (hasRunningPrimaryActivity(save)) {
     return {
@@ -236,7 +344,7 @@ export function requestActivityStop(
     return { ok: false, reason: 'Cannot change activities while recovering from defeat.' }
   }
   if (isActivityTransitionPending(save, nowMs)) {
-    return { ok: false, reason: 'Wait for the current stop delay to finish.' }
+    return { ok: false, reason: 'Wait for the current activity change delay to finish.' }
   }
   if (!hasRunningPrimaryActivity(save)) {
     return { ok: false, reason: 'No activity is running.' }
@@ -249,6 +357,8 @@ export function requestActivityStop(
 }
 
 export function cancelActivityTransition(save: PlayerSave): PlayerSave {
+  // Only abort soft-stops (activity still running). Hard-stops keep the timer.
+  if (!isActivityTransitionCancellable(save)) return save
   return clearActivityTransition(save)
 }
 
@@ -292,17 +402,17 @@ function applyStoppingTransition(
   let next = clearActivityTransition(save)
   if (next.productionRecipeId) {
     next = cancelProductionActivity(db, next)
-  } else {
+  } else if (next.currentActivityId) {
     next = clearActivitySave(next, nowMs)
   }
 
-  // After stop completes: no second delay — start the follow-up immediately if any.
+  // After the shared delay completes: start the follow-up immediately if any.
   return applyFollowUpStart(db, next, transition, nowMs)
 }
 
 /**
- * Apply completed stop delays. Safe to call every frame and during AFK catch-up.
- * Follow-up activities begin immediately when the stop delay finishes (no start cooldown).
+ * Apply completed activity-change delays. Safe to call every frame and during AFK catch-up.
+ * Follow-up activities begin immediately when the delay finishes (no second cooldown).
  */
 export function resolveActivityTransitions(
   db: GameDatabase,

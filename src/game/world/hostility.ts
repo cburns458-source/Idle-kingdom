@@ -3,7 +3,10 @@ import {
   generateNextAction,
   validateActivityStart,
 } from '../activity/engine'
-import { clearActivityTransition } from '../activity/transition'
+import {
+  beginTravelActivityChange,
+  clearActivityTransition,
+} from '../activity/transition'
 import { getSkillProgress } from '../activity/xp'
 import { COMBAT_SKILL_ID } from '../combat/stats'
 import type { ActivityRow, GameDatabase } from '../data/types'
@@ -48,8 +51,9 @@ export interface HostileTravelArrivalResult {
 }
 
 /**
- * Arrive at a destination, then force-start a hostile activity when Combat Level
- * is below that activity's Danger Warning Combat Level.
+ * Arrive at a destination. If a Primary Activity was running, the shared activity-change
+ * cooldown is started (or kept) so the player can queue a next activity at the new location.
+ * Under-level hostile arrivals still force-start combat and bypass that delay.
  */
 export function applyHostileTravelArrival(
   db: GameDatabase,
@@ -57,8 +61,9 @@ export function applyHostileTravelArrival(
   destinationLocationId: string,
   nowMs: number = Date.now(),
 ): HostileTravelArrivalResult {
-  let next = applyTravelArrival(save, destinationLocationId, nowMs) as PlayerSave
-  next = clearActivityTransition(next)
+  // Start/keep the shared cooldown when leaving mid-activity, then move.
+  let next = beginTravelActivityChange(db, save, nowMs)
+  next = applyTravelArrival(next, destinationLocationId, nowMs) as PlayerSave
 
   const threatened = forcedHostileActivity(db, next, destinationLocationId)
   if (!threatened) {
@@ -69,6 +74,9 @@ export function applyHostileTravelArrival(
       threatenedActivityId: null,
     }
   }
+
+  // Hostile force bypasses the normal activity-change delay.
+  next = clearActivityTransition(next)
 
   const validation = validateActivityStart(db, next, threatened['Activity ID'])
   if (!validation.ok) {

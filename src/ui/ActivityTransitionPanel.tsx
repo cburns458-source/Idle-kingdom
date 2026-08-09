@@ -4,8 +4,9 @@ import type { ActivityTransition } from '../game/save/types'
 interface ActivityTransitionPanelProps {
   transition: ActivityTransition
   activity: ActivityRow | undefined
+  followUpActivity?: ActivityRow | undefined
   remainingMs: number
-  /** When false, the Cancel control is hidden (e.g. delay already finished). */
+  /** When false, the Cancel control is hidden (hard stop / delay finished). */
   showCancel?: boolean
   onCancel: () => void
 }
@@ -13,6 +14,7 @@ interface ActivityTransitionPanelProps {
 export function ActivityTransitionPanel({
   transition,
   activity,
+  followUpActivity,
   remainingMs,
   showCancel = true,
   onCancel,
@@ -23,8 +25,12 @@ export function ActivityTransitionPanel({
   const pct = Math.round(progress * 100)
   const secondsLeft = Math.max(0, Math.ceil(remainingMs / 1000))
   const label = activity?.['Contextual Name'] ?? activity?.['Internal Key'] ?? 'Activity'
+  const followUpLabel =
+    followUpActivity?.['Contextual Name'] ??
+    followUpActivity?.['Internal Key'] ??
+    null
   const switching = transition.kind === 'stopping' && Boolean(transition.followUpActivityId)
-  const title = switching ? 'Cancelling activity' : 'Stopping activity'
+  const title = switching ? 'Changing activity' : 'Stopping activity'
   const canCancel = showCancel && remainingMs > 0
 
   return (
@@ -33,8 +39,14 @@ export function ActivityTransitionPanel({
         <div>
           <h2>{title}</h2>
           <p className="lead">{label}</p>
-          {switching && (
-            <p className="muted tiny">Selected activity starts as soon as this delay ends.</p>
+          {switching && followUpLabel ? (
+            <p className="muted tiny">
+              Next: <strong>{followUpLabel}</strong> — starts when this delay ends.
+            </p>
+          ) : (
+            <p className="muted tiny">
+              You can queue another activity here before the delay ends.
+            </p>
           )}
         </div>
         {canCancel ? (

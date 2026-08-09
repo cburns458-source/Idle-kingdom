@@ -158,10 +158,14 @@ export function stopPrimaryActivity<
     productionRecipeId: null,
     productionQuantityTotal: null,
     productionQuantityRemaining: null,
-    activityTransition: null,
+    // Keep activityTransition — travel uses the shared activity-change cooldown.
   }
 }
 
+/**
+ * Move the player to a destination. Does not clear a pending activity-change delay;
+ * call beginTravelActivityChange first when leaving with a running Primary Activity.
+ */
 export function applyTravelArrival<
   T extends {
     currentLocationId: string
