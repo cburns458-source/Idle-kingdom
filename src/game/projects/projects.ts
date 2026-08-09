@@ -79,6 +79,26 @@ export function meetsProjectSkills(save: PlayerSave, project: ProjectRow): boole
   )
 }
 
+export function unmetProjectSkillRequirements(
+  db: GameDatabase,
+  save: PlayerSave,
+  project: ProjectRow,
+): Array<{ skillId: string; skillName: string; level: number; have: number }> {
+  return projectSkillRequirements(project)
+    .map((requirement) => {
+      const have = getSkillProgress(save, requirement.skillId).level
+      return {
+        skillId: requirement.skillId,
+        skillName:
+          db.Skills.find((skill) => skill['Skill ID'] === requirement.skillId)?.['Display Name'] ??
+          requirement.skillId,
+        level: requirement.level,
+        have,
+      }
+    })
+    .filter((requirement) => requirement.have < requirement.level)
+}
+
 export function maxProjectsFromMaterials(save: PlayerSave, project: ProjectRow): number {
   const inputs = projectInputs(project)
   if (inputs.length === 0) return Number.POSITIVE_INFINITY
@@ -102,10 +122,9 @@ export function maxProjectQuantity(save: PlayerSave, project: ProjectRow): numbe
   return Math.max(0, Math.min(materialMax, goldMax))
 }
 
-/** Launch projects available at a facility once hard skill gates are met. */
+/** Launch projects at a facility (skill gates affect completion, not listing). */
 export function projectsForFacility(
   db: GameDatabase,
-  save: PlayerSave,
   facilityId: string,
   skillId?: string,
 ): ProjectRow[] {
@@ -113,8 +132,7 @@ export function projectsForFacility(
     (project) =>
       isCompleteProject(project) &&
       project['Facility ID'] === facilityId &&
-      (!skillId || project['Skill ID'] === skillId) &&
-      meetsProjectSkills(save, project),
+      (!skillId || project['Skill ID'] === skillId),
   ).sort((a, b) => {
     const aLevel = a['Required Skill 1 Level'] ?? 0
     const bLevel = b['Required Skill 1 Level'] ?? 0

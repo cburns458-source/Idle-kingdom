@@ -9,9 +9,11 @@ import {
   getEnchantment,
   isEnchantmentOutput,
   maxProjectQuantity,
+  meetsProjectSkills,
   projectInputs,
   projectSkillRequirements,
   projectsForFacility,
+  unmetProjectSkillRequirements,
   type SpecialProductionStation,
 } from '../game/projects/projects'
 import type { PlayerSave } from '../game/save/types'
@@ -49,20 +51,26 @@ export function ProjectPicker({
   onConfirm,
 }: ProjectPickerProps) {
   const projects = useMemo(
-    () => projectsForFacility(db, save, station.facility['Facility ID'], station.skillId),
-    [db, save, station],
+    () => projectsForFacility(db, station.facility['Facility ID'], station.skillId),
+    [db, station],
   )
   const [search, setSearch] = useState('')
   const filteredProjects = useMemo(
     () => projects.filter((project) => projectMatchesQuery(project, search, db)),
     [projects, search, db],
   )
-  const [projectId, setProjectId] = useState(projects[0]?.['Project ID'] ?? '')
+  const initialProjectId =
+    projects.find((row) => meetsProjectSkills(save, row))?.['Project ID'] ??
+    projects[0]?.['Project ID'] ??
+    ''
+  const [projectId, setProjectId] = useState(initialProjectId)
   const project =
     projects.find((row) => row['Project ID'] === projectId) ??
     filteredProjects[0] ??
     null
-  const maxQty = project ? maxProjectQuantity(save, project) : 0
+  const skillsMet = project ? meetsProjectSkills(save, project) : false
+  const unmetSkills = project ? unmetProjectSkillRequirements(db, save, project) : []
+  const maxQty = project && skillsMet ? maxProjectQuantity(save, project) : 0
   const isEnchant = project ? isEnchantmentOutput(project['Output Item / Target ID']) : false
   const enchantment =
     project && isEnchant ? getEnchantment(db, project['Output Item / Target ID']) : undefined
@@ -105,7 +113,7 @@ export function ProjectPicker({
       </div>
 
       {projects.length === 0 ? (
-        <p className="lead">No projects available. Raise the required skill levels first.</p>
+        <p className="lead">No projects are defined for this station yet.</p>
       ) : (
         <>
           <label className="field-label" htmlFor="project-search">
@@ -142,17 +150,30 @@ export function ProjectPicker({
               onChange={(event) => selectProject(event.target.value)}
               size={Math.min(6, Math.max(3, filteredProjects.length))}
             >
-              {filteredProjects.map((row) => (
-                <option key={row['Project ID']} value={row['Project ID']}>
-                  {row['Display Name']} (Lv {row['Required Skill 1 Level'] ?? 1})
-                </option>
-              ))}
+              {filteredProjects.map((row) => {
+                const locked = !meetsProjectSkills(save, row)
+                return (
+                  <option key={row['Project ID']} value={row['Project ID']}>
+                    {row['Display Name']} (Lv {row['Required Skill 1 Level'] ?? 1})
+                    {locked ? ' — locked' : ''}
+                  </option>
+                )
+              })}
             </select>
           )}
 
           {project && (
             <>
               <ProjectDetails db={db} save={save} project={project} />
+              {!skillsMet && (
+                <p className="danger-note">
+                  Locked — needs{' '}
+                  {unmetSkills
+                    .map((requirement) => `${requirement.skillName} ${requirement.level}`)
+                    .join(', ')}
+                  .
+                </p>
+              )}
               {!isEnchant && (
                 <>
                   <label className="field-label" htmlFor="project-qty">
@@ -165,6 +186,7 @@ export function ProjectPicker({
                     min={1}
                     max={Math.max(1, maxQty)}
                     value={clampedQty}
+                    disabled={!skillsMet}
                     onChange={(event) => setQuantity(Number(event.target.value) || 1)}
                   />
                 </>
@@ -181,6 +203,7 @@ export function ProjectPicker({
                       id="enchant-slot"
                       className="text-input"
                       value={enchantSlotId || enchantSlots[0]!.slotId}
+                      disabled={!skillsMet}
                       onChange={(event) => setEnchantSlotId(event.target.value)}
                     >
                       {enchantSlots.map((slot) => {
@@ -203,7 +226,7 @@ export function ProjectPicker({
                 type="button"
                 className="btn primary"
                 disabled={
-                  maxQty <= 0 || (isEnchant && enchantSlots.length === 0)
+                  !skillsMet || maxQty <= 0 || (isEnchant && enchantSlots.length === 0)
                 }
                 onClick={() =>
                   onConfirm(
