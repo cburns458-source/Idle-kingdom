@@ -1,3 +1,4 @@
+import { equippedActionTimeReductionPercent } from '../equipment/loadout'
 import type { ActionRow, GameDatabase } from '../data/types'
 import type { PlayerSave } from '../save/types'
 import { getSkillProgress } from './xp'
@@ -19,7 +20,9 @@ export function gatheringDurationMs(
     skill.level < proficiency
       ? configNumber(db, 'gathering_below_proficiency_duration_multiplier', 2)
       : 1
-  return Math.max(0, baseSeconds * multiplier * 1000)
+  const atr = equippedActionTimeReductionPercent(db, save)
+  const reductionFactor = Math.max(0.01, 1 - atr / 100)
+  return Math.max(0, baseSeconds * multiplier * reductionFactor * 1000)
 }
 
 export function isBelowProficiency(save: PlayerSave, action: ActionRow): boolean {

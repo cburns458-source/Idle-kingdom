@@ -899,3 +899,98 @@
 .combat-player-fill {
   background: linear-gradient(90deg, #7f9d63, #b7d48a);
 }
+
+.inventory-view {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.inventory-stat-strip {
+  margin: 0.35rem 0 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.35rem;
+}
+
+.inventory-stat-strip div {
+  background: rgba(34, 24, 16, 0.35);
+  border-radius: 0.55rem;
+  padding: 0.4rem 0.5rem;
+}
+
+.inventory-stat-strip dt {
+  margin: 0;
+  font-size: 0.62rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: #b7c9a4;
+}
+
+.inventory-stat-strip dd {
+  margin: 0.1rem 0 0;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #fff4d4;
+}
+
+.equipment-slot-grid {
+  list-style: none;
+  margin: 0.35rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.equipment-slot-grid li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.5rem 0.6rem;
+  border-radius: 0.7rem;
+  background: rgba(34, 24, 16, 0.35);
+  border: 1px solid rgba(212, 175, 55, 0.16);
+}
+
+.equipment-slot-grid li.empty {
+  opacity: 0.78;
+}
+
+.equipment-slot-main,
+.inventory-bag-main {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
+}
+
+.equipment-slot-main strong,
+.inventory-bag-main strong {
+  display: block;
+  font-size: 0.92rem;
+}
+
+.item-icon {
+  flex-shrink: 0;
+  width: 2.2rem;
+  height: 2.2rem;
+  border-radius: 0.55rem;
+  display: grid;
+  place-items: center;
+  background: rgba(20, 13, 8, 0.55);
+  border: 1px solid rgba(212, 175, 55, 0.28);
+  color: #f0d78c;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.item-icon-art {
+  background-size: cover;
+  background-position: center;
+  font-size: 0;
+}
+
+.inventory-bag-list .muted.tiny {
+  margin-top: 0.15rem;
+}

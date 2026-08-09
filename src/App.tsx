@@ -32,11 +32,13 @@ import {
 } from './game/combat/engine'
 import { playerMaxHp } from './game/combat/stats'
 import { addItemToInventory } from './game/activity/rewards'
-import { equipItemFromInventory, unequipSlot } from './game/equipment/loadout'
+import { equipItemFromInventory } from './game/equipment/loadout'
+import { withRecalculatedVitals } from './game/equipment/vitals'
 import { totalLevel, totalSkillXp } from './game/skills/totals'
 import { ActivityPanel } from './ui/ActivityPanel'
 import { BottomNav, type AppScreen } from './ui/BottomNav'
 import { CombatPanel } from './ui/CombatPanel'
+import { InventoryView } from './ui/InventoryView'
 import { LogStub } from './ui/StubScreens'
 import { LocationView } from './ui/LocationView'
 import { NamePrompt } from './ui/NamePrompt'
@@ -644,7 +646,7 @@ export default function App() {
 
           {screen === 'skills' && <SkillsView db={database.launch} save={save} />}
           {screen === 'inventory' && (
-            <InventoryPanel save={save} database={database} onChangeSave={updateSave} />
+            <InventoryView save={save} database={database} onChangeSave={updateSave} />
           )}
           {screen === 'log' && <LogStub />}
           {screen === 'settings' && (
@@ -687,89 +689,6 @@ export default function App() {
   )
 }
 
-function InventoryPanel({
-  save,
-  database,
-  onChangeSave,
-}: {
-  save: PlayerSave
-  database: LoadedDatabase
-  onChangeSave: (save: PlayerSave) => void
-}) {
-  function equipItem(itemId: string) {
-    const next = equipItemFromInventory(database.launch, save, itemId)
-    onChangeSave({ ...next, maxHp: playerMaxHp(database.launch, next) })
-  }
-
-  function unequip(slotId: string) {
-    const next = unequipSlot(save, slotId)
-    onChangeSave({ ...next, maxHp: playerMaxHp(database.launch, next) })
-  }
-
-  const equipped = Object.entries(save.equipment.slots).filter(([, stack]) => stack)
-
-  return (
-    <section className="panel">
-      <h1>Inventory</h1>
-      {save.inventory.length === 0 ? (
-        <p className="lead">No items yet. Fight or gather to fill this list.</p>
-      ) : (
-        <ul className="interaction-list">
-          {save.inventory.map((stack) => {
-            const equipment = database.launch.Equipment.find((row) => row['Item ID'] === stack.itemId)
-            const name =
-              database.launchIndexes.itemsById.get(stack.itemId)?.['Display Name'] ?? stack.itemId
-            return (
-              <li key={stack.itemId}>
-                <div>
-                  <strong>{name}</strong>
-                  <p className="muted">× {stack.quantity}</p>
-                </div>
-                {equipment?.['Slot ID'] && (
-                  <button
-                    type="button"
-                    className="btn primary"
-                    onClick={() => equipItem(stack.itemId)}
-                  >
-                    Equip
-                  </button>
-                )}
-              </li>
-            )
-          })}
-        </ul>
-      )}
-
-      <h2>Equipped</h2>
-      {equipped.length === 0 ? (
-        <p className="muted">Nothing equipped.</p>
-      ) : (
-        <ul className="interaction-list">
-          {equipped.map(([slotId, stack]) => (
-            <li key={slotId}>
-              <div>
-                <strong>
-                  {database.launchIndexes.itemsById.get(stack!.itemId)?.['Display Name'] ??
-                    stack!.itemId}
-                </strong>
-                <p className="muted">
-                  {database.launch.EquipmentSlots.find((slot) => slot['Slot ID'] === slotId)?.[
-                    'Display Name'
-                  ] ?? slotId}
-                  {stack!.quantity > 1 ? ` · × ${stack!.quantity}` : ''}
-                </p>
-              </div>
-              <button type="button" className="btn secondary" onClick={() => unequip(slotId)}>
-                Unequip
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
-    </section>
-  )
-}
-
 function SettingsPanel({
   save,
   database,
@@ -792,7 +711,11 @@ function SettingsPanel({
   function grantTestFood() {
     const withItems = addItemToInventory(save, bakedPotatoId, 5)
     const equipped = equipItemFromInventory(database.launch, withItems, bakedPotatoId)
-    onChangeSave({ ...equipped, maxHp: playerMaxHp(database.launch, equipped) })
+    if (!equipped.ok) {
+      onChangeSave(withRecalculatedVitals(database.launch, withItems))
+      return
+    }
+    onChangeSave(withRecalculatedVitals(database.launch, equipped.save))
   }
 
   if (renaming) {

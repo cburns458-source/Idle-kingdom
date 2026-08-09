@@ -1,5 +1,5 @@
 {
-  "generatedForStep": 4,
+  "generatedForStep": 5,
   "artDirection": "Game Bible section 16 — warm hand-crafted 2D fantasy, cozy, readable, square sources",
   "maps": {
     "MAP-0001": {
@@ -47,5 +47,10 @@
     "ENM-0011": { "internalKey": "castle_guard", "path": "/assets/enemies/enm_castle_guard.png" },
     "ENM-0016": { "internalKey": "goblin_warrior", "path": "/assets/enemies/enm_goblin_warrior.png" },
     "ENM-0017": { "internalKey": "rabbit_buck", "path": "/assets/enemies/enm_rabbit_buck.png" }
+  },
+  "items": {
+    "ITEM-0108": { "internalKey": "net", "path": "/assets/items/item_net.png" },
+    "ITEM-0058": { "internalKey": "baked_potato", "path": "/assets/items/item_baked_potato.png" },
+    "ITEM-0111": { "internalKey": "copper_pickaxe", "path": "/assets/items/item_copper_pickaxe.png" }
   }
 }
