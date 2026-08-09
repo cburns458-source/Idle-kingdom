@@ -1102,13 +1102,14 @@
   left: 50%;
   transform: translateX(-50%);
   width: max-content;
-  max-width: min(18rem, 85vw);
+  min-width: max-content;
+  max-width: none;
   white-space: nowrap;
   overflow: visible;
   text-overflow: clip;
   z-index: 6;
-  padding: 0.4rem 0.65rem;
-  font-size: 0.78rem;
+  padding: 0.4rem 0.7rem;
+  font-size: 0.8rem;
   line-height: 1.25;
 }
 
