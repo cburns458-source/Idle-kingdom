@@ -17,12 +17,11 @@ interface LocationViewProps {
 
 function MapIcon() {
   return (
-    <svg className="map-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-      <path
-        fill="currentColor"
-        d="M3.5 5.8 9 4.2l6 1.7 5.5-1.7v14l-5.5 1.7-6-1.7-5.5 1.7V5.8Zm2 .9v10.7l3.5-1.1V5.6L5.5 6.7Zm5.5-.9v10.8l4 1.1V7l-4-1.2Zm6 1.4v10.8l3.5-1.1V6.1L17 7.2Z"
-      />
-    </svg>
+    <span
+      className="map-icon map-icon-pixel"
+      style={{ backgroundImage: 'url(/assets/icons/ui/ui_map.png)' }}
+      aria-hidden
+    />
   )
 }
 

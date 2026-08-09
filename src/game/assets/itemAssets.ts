@@ -1,11 +1,67 @@
-/** Known generated item icon paths keyed by Item ID. */
+import type { ItemRow } from '../data/types'
 
-export const ITEM_ASSET_PATHS: Record<string, string> = {
-  'ITEM-0108': '/assets/items/item_net.png',
-  'ITEM-0058': '/assets/items/item_baked_potato.png',
-  'ITEM-0111': '/assets/items/item_copper_pickaxe.png',
+/** Specific item overrides (Item ID -> icon file stem under /assets/icons/items/). */
+const ITEM_ID_ICONS: Record<string, string> = {
+  'ITEM-0108': 'net',
+  'ITEM-0058': 'baked_potato',
+  'ITEM-0111': 'copper_pickaxe',
+  'ITEM-0119': 'steel_pickaxe',
 }
 
-export function itemAssetPath(itemId: string): string | null {
-  return ITEM_ASSET_PATHS[itemId] ?? null
+/** Resolve a pixel icon path for an item using ID, then category/subtype heuristics. */
+export function itemAssetPath(item: ItemRow | string | undefined): string {
+  if (!item) return '/assets/icons/items/item_default.png'
+  if (typeof item === 'string') {
+    const stem = ITEM_ID_ICONS[item] ?? 'default'
+    return `/assets/icons/items/item_${stem}.png`
+  }
+
+  const byId = ITEM_ID_ICONS[item['Item ID']]
+  if (byId) return `/assets/icons/items/item_${byId}.png`
+
+  const key = (item['Internal Key'] ?? '').toLowerCase()
+  const category = (item.Category ?? '').toLowerCase()
+  const subtype = (item.Subtype ?? '').toLowerCase()
+  const blob = `${key} ${category} ${subtype}`
+
+  const stem = iconStemFromText(blob, category, subtype)
+  return `/assets/icons/items/item_${stem}.png`
+}
+
+function iconStemFromText(blob: string, category: string, subtype: string): string {
+  if (blob.includes('net') || blob.includes('sling')) return 'net'
+  if (blob.includes('pickaxe') || blob.includes('pick')) return 'pickaxe'
+  if (blob.includes('hatchet')) return 'hatchet'
+  if (blob.includes('bow')) return 'bow'
+  if (blob.includes('sword')) return 'sword'
+  if (blob.includes('dagger')) return 'dagger'
+  if (blob.includes('axe') && !blob.includes('pickaxe')) return 'axe'
+  if (blob.includes('shield') || blob.includes('off-hand') || blob.includes('offhand'))
+    return 'shield'
+  if (blob.includes('helmet') || blob.includes('hat')) return 'helmet'
+  if (blob.includes('chest') || blob.includes('plate') || blob.includes('mail')) return 'chest'
+  if (blob.includes('leg') || blob.includes('plateleg')) return 'legs'
+  if (blob.includes('boot')) return 'boots'
+  if (blob.includes('glove')) return 'gloves'
+  if (blob.includes('necklace') || blob.includes('amulet')) return 'necklace'
+  if (blob.includes('ring')) return 'ring'
+  if (blob.includes('potion') || blob.includes('vial')) return 'potion'
+  if (blob.includes('ore')) return 'ore'
+  if (blob.includes('bar') || category.includes('metal bar')) return 'bar'
+  if (blob.includes('log') || blob.includes('wood')) return 'log'
+  if (blob.includes('herb')) return 'herb'
+  if (blob.includes('fishing') || blob.includes('rod') || blob.includes('harpoon'))
+    return 'fishing_tool'
+  if (
+    blob.includes('hide') ||
+    blob.includes('meat') ||
+    blob.includes('feather') ||
+    blob.includes('creature')
+  )
+    return 'creature'
+  if (category.includes('food') || subtype.includes('food')) return 'food'
+  if (category.includes('raw')) return 'raw_food'
+  if (category.includes('weapon') || category.includes('tool')) return 'sword'
+  if (category.includes('armor')) return 'chest'
+  return 'default'
 }

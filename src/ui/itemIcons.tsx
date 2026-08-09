@@ -1,7 +1,8 @@
 import { itemAssetPath } from '../game/assets/itemAssets'
+import { slotAssetPath } from '../game/assets/slotAssets'
 import type { ItemRow } from '../game/data/types'
 
-/** Compact item glyph / art for inventory and equipment. */
+/** Pixel item icon for inventory and filled equipment slots. */
 export function ItemIcon({
   item,
   className = '',
@@ -9,94 +10,22 @@ export function ItemIcon({
   item: ItemRow | undefined
   className?: string
 }) {
-  const path = item ? itemAssetPath(item['Item ID']) : null
-  if (path) {
-    return (
-      <span
-        className={`item-icon item-icon-art ${className}`.trim()}
-        style={{ backgroundImage: `url(${path})` }}
-        aria-hidden
-      />
-    )
-  }
-
-  const key = (item?.['Internal Key'] ?? item?.Category ?? 'item').toLowerCase()
-  const label = glyphFor(key, item?.Category, item?.Subtype)
   return (
-    <span className={`item-icon ${className}`.trim()} aria-hidden>
-      {label}
-    </span>
+    <span
+      className={`item-icon item-icon-art ${className}`.trim()}
+      style={{ backgroundImage: `url(${itemAssetPath(item)})` }}
+      aria-hidden
+    />
   )
 }
 
-/** Placeholder mark for an empty equipment slot. */
+/** Pixel placeholder for an empty equipment slot. */
 export function SlotGlyph({ slotId }: { slotId: string }) {
   return (
-    <span className="item-icon item-icon-slot" aria-hidden>
-      {slotGlyph(slotId)}
-    </span>
+    <span
+      className="item-icon item-icon-art item-icon-slot"
+      style={{ backgroundImage: `url(${slotAssetPath(slotId)})` }}
+      aria-hidden
+    />
   )
-}
-
-function slotGlyph(slotId: string): string {
-  switch (slotId) {
-    case 'SLOT-0001':
-      return 'W'
-    case 'SLOT-0002':
-      return 'S'
-    case 'SLOT-0003':
-      return 'H'
-    case 'SLOT-0004':
-      return 'C'
-    case 'SLOT-0005':
-      return 'L'
-    case 'SLOT-0006':
-      return 'T'
-    case 'SLOT-0007':
-      return 'G'
-    case 'SLOT-0008':
-      return '@'
-    case 'SLOT-0009':
-      return 'o'
-    case 'SLOT-0010':
-      return 'K'
-    case 'SLOT-0011':
-      return 'F'
-    case 'SLOT-0012':
-      return 'V'
-    default:
-      return '·'
-  }
-}
-
-function glyphFor(
-  key: string,
-  category: string | null | undefined,
-  subtype: string | null | undefined,
-): string {
-  if (key.includes('net') || key.includes('sling')) return 'N'
-  if (key.includes('bow')) return 'B'
-  if (key.includes('pickaxe') || key.includes('pick')) return 'P'
-  if (key.includes('hatchet') || key.includes('axe')) return 'A'
-  if (key.includes('sword') || key.includes('spear') || key.includes('dagger')) return 'W'
-  if (key.includes('shield')) return 'S'
-  if (key.includes('potato') || key.includes('berry') || key.includes('bread')) return 'F'
-  if (key.includes('potion') || key.includes('vial')) return 'V'
-  if (key.includes('ore') || key.includes('bar') || key.includes('coal')) return 'O'
-  if (key.includes('hide') || key.includes('meat') || key.includes('feather')) return 'R'
-  if (key.includes('helmet') || key.includes('hat')) return 'H'
-  if (key.includes('chest') || key.includes('plate') || key.includes('mail')) return 'C'
-  if (key.includes('boot')) return 'T'
-  if (key.includes('glove')) return 'G'
-  if (key.includes('ring')) return 'o'
-  if (key.includes('necklace') || key.includes('amulet')) return '@'
-  if (key.includes('rod') || key.includes('harpoon')) return 'L'
-
-  const cat = (category ?? '').toLowerCase()
-  if (cat.includes('food')) return 'F'
-  if (cat.includes('weapon') || cat.includes('tool')) return 'W'
-  if (cat.includes('armor')) return 'C'
-  if (cat.includes('resource') || cat.includes('material')) return 'O'
-  if ((subtype ?? '').toLowerCase().includes('potion')) return 'V'
-  return '·'
 }
