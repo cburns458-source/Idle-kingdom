@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react'
-import type { ActionRewardBundle } from '../game/activity/types'
 import type { RecipeRow } from '../game/data/recipeTypes'
-import type { GameDatabase, ItemRow } from '../game/data/types'
+import type { GameDatabase } from '../game/data/types'
 import type { ActivityRow } from '../game/data/types'
 import {
   clampProductionQuantity,
@@ -12,7 +11,6 @@ import {
   recipesForActivity,
 } from '../game/production/recipes'
 import type { PlayerSave } from '../game/save/types'
-import { ActionRewardList } from './ActionRewardList'
 import { formatDurationSeconds } from './formatDuration'
 import { IngredientIconList } from './IngredientIcons'
 import { ItemIcon } from './itemIcons'
@@ -166,8 +164,6 @@ interface ProductionProgressProps {
   recipe: RecipeRow
   save: PlayerSave
   progress: number
-  recentRewards: ActionRewardBundle[]
-  itemsById?: Map<string, ItemRow>
   onStop: () => void
 }
 
@@ -176,8 +172,6 @@ export function ProductionProgress({
   recipe,
   save,
   progress,
-  recentRewards,
-  itemsById,
   onStop,
 }: ProductionProgressProps) {
   const total = save.productionQuantityTotal ?? 0
@@ -216,7 +210,6 @@ export function ProductionProgress({
       <p className="muted tiny">
         <strong>{formatDurationSeconds(craftRemainingSeconds)}</strong>
       </p>
-      <ActionRewardList rewards={recentRewards} itemsById={itemsById} />
     </section>
   )
 }

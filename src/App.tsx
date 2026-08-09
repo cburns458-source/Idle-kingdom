@@ -91,7 +91,8 @@ import { ProjectPicker } from './ui/ProjectPanel'
 import { getProject } from './game/projects/projects'
 import { ShopPanel } from './ui/ShopPanel'
 import { SkillsView } from './ui/SkillsView'
-import { TopHud } from './ui/TopHud'
+import { ActionRewardList } from './ui/ActionRewardList'
+import { TopHud, type HudActivityStatus } from './ui/TopHud'
 import { TravelOverlay } from './ui/TravelOverlay'
 import { WorldMapView } from './ui/WorldMapView'
 import './App.css'
@@ -118,6 +119,8 @@ export default function App() {
   const [actionProgress, setActionProgress] = useState(0)
   const [activityError, setActivityError] = useState<string | null>(null)
   const [recentRewards, setRecentRewards] = useState<ActionRewardBundle[]>([])
+  const [rewardsHidden, setRewardsHidden] = useState(false)
+  const [hudNowMs, setHudNowMs] = useState(() => Date.now())
   const [lastMessage, setLastMessage] = useState<string | null>(null)
   const [roundProgress, setRoundProgress] = useState(0)
   const [pauseRemainingMs, setPauseRemainingMs] = useState(0)
@@ -272,6 +275,15 @@ export default function App() {
   const runningActionId = boot.status === 'ready' ? boot.save.currentActionId : null
   const runningActionStartedAt = boot.status === 'ready' ? boot.save.actionStartedAt : null
   const runningActionDurationMs = boot.status === 'ready' ? boot.save.actionDurationMs : null
+  const runningProductionRecipeId = boot.status === 'ready' ? boot.save.productionRecipeId : null
+
+  // Keep HUD activity timers current while something is running.
+  useEffect(() => {
+    if (!runningActivityId && !runningProductionRecipeId) return
+    setHudNowMs(Date.now())
+    const id = window.setInterval(() => setHudNowMs(Date.now()), 250)
+    return () => window.clearInterval(id)
+  }, [runningActivityId, runningActionId, runningProductionRecipeId, runningActionStartedAt])
 
   // Progress + complete the current gathering action.
   useEffect(() => {
@@ -635,9 +647,6 @@ export default function App() {
   const currentAction = save.currentActionId
     ? database.launchIndexes.actionsById.get(save.currentActionId)
     : null
-  const activityLabel = activity
-    ? (activity['Contextual Name'] ?? activity['Internal Key'])
-    : 'None'
   const actionSkill = currentAction
     ? database.launchIndexes.skillsById.get(currentAction['Relevant Skill ID'])
     : undefined
@@ -649,6 +658,50 @@ export default function App() {
     ? getRecipe(database.launch, save.productionRecipeId)
     : undefined
   const inProduction = Boolean(productionRecipe && save.productionQuantityRemaining)
+
+  let hudActivityStatus: HudActivityStatus = null
+  if (inProduction && productionRecipe) {
+    const total = save.productionQuantityTotal ?? 0
+    const remaining = save.productionQuantityRemaining ?? 0
+    const completed = Math.max(0, total - remaining)
+    const craftSeconds = Math.max(0, (save.actionDurationMs ?? 0) / 1000)
+    const craftRemainingSeconds = Math.max(0, craftSeconds * (1 - actionProgress))
+    const upcomingCrafts = Math.max(0, remaining - (remaining > 0 ? 1 : 0))
+    hudActivityStatus = {
+      kind: 'production',
+      itemName: productionRecipe['Display Name'],
+      completed,
+      total,
+      remainingSeconds: craftRemainingSeconds + upcomingCrafts * craftSeconds,
+    }
+  } else if (activity && (currentAction || inCombat)) {
+    const startedAtMs = save.actionStartedAt ? Date.parse(save.actionStartedAt) : Number.NaN
+    const elapsedSeconds =
+      Number.isFinite(startedAtMs) ? Math.max(0, (hudNowMs - startedAtMs) / 1000) : 0
+    const actionName = inCombat
+      ? (combatEnemy?.['Display Name'] ?? currentAction?.['Display Name'] ?? 'Combat')
+      : (currentAction?.['Display Name'] ?? '…')
+    hudActivityStatus = {
+      kind: 'action',
+      activityName: activity['Contextual Name'] ?? activity['Internal Key'],
+      actionName,
+      elapsedSeconds,
+    }
+  } else if (activity) {
+    const startedAtMs = save.activityStartedAt
+      ? Date.parse(save.activityStartedAt)
+      : save.actionStartedAt
+        ? Date.parse(save.actionStartedAt)
+        : Number.NaN
+    hudActivityStatus = {
+      kind: 'action',
+      activityName: activity['Contextual Name'] ?? activity['Internal Key'],
+      actionName: '…',
+      elapsedSeconds: Number.isFinite(startedAtMs)
+        ? Math.max(0, (hudNowMs - startedAtMs) / 1000)
+        : 0,
+    }
+  }
   const pickerActivity = productionPickerActivityId
     ? database.launchIndexes.activitiesById.get(productionPickerActivityId)
     : undefined
@@ -899,8 +952,15 @@ export default function App() {
           gold={save.gold}
           currentHp={save.currentHp}
           maxHp={maxHp}
-          activityLabel={activityLabel}
           locationLabel={location['Display Name']}
+          activityStatus={hudActivityStatus}
+        />
+        <ActionRewardList
+          rewards={recentRewards}
+          itemsById={database.launchIndexes.itemsById}
+          compact
+          hidden={rewardsHidden}
+          onToggleHidden={() => setRewardsHidden((value) => !value)}
         />
 
         <div className={screen === 'map' ? 'screen-body screen-body-map' : 'screen-body'}>
@@ -1014,8 +1074,6 @@ export default function App() {
                       }
                       deathPauseRemainingMs={pauseRemainingMs}
                       lastCombatMessage={lastMessage}
-                      recentRewards={recentRewards}
-                      itemsById={database.launchIndexes.itemsById}
                       onStop={stopActivity}
                     />
                   )}
@@ -1030,8 +1088,6 @@ export default function App() {
                       recipe={productionRecipe}
                       save={save}
                       progress={actionProgress}
-                      recentRewards={recentRewards}
-                      itemsById={database.launchIndexes.itemsById}
                       onStop={stopActivity}
                     />
                   )}
@@ -1050,8 +1106,6 @@ export default function App() {
                         skill={actionSkill}
                         progress={actionProgress}
                         durationMs={save.actionDurationMs}
-                        recentRewards={recentRewards}
-                        itemsById={database.launchIndexes.itemsById}
                         onStop={stopActivity}
                       />
                     )}

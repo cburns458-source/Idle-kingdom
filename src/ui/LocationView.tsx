@@ -114,135 +114,137 @@ export function LocationView({
           </section>
         )}
 
-        {showActivityPanel && activitiesHidden && (
-          <div className="location-activities-reveal">
-            <button
-              type="button"
-              className="btn secondary glass-btn"
-              onClick={() => setActivitiesHidden(false)}
-            >
-              Show activities
-            </button>
-          </div>
-        )}
-
-        {showActivityPanel && !activitiesHidden && (
-          <section className="panel glass-panel location-activities">
-            <div className="location-activities-head">
-              <h2>Activities</h2>
+        <div className="location-bottom-panels">
+          {showActivityPanel && activitiesHidden && (
+            <div className="location-activities-reveal">
               <button
                 type="button"
-                className="btn secondary location-activities-hide"
-                onClick={() => setActivitiesHidden(true)}
+                className="btn secondary glass-btn"
+                onClick={() => setActivitiesHidden(false)}
               >
-                Hide
+                Show activities
               </button>
             </div>
-            <ul className="interaction-list">
-              {activities.map((activity) => {
-                const active = currentActivityId === activity['Activity ID']
-                const label = activity['Contextual Name'] ?? activity['Internal Key']
-                const hint = requirementHint?.(activity) ?? null
-                const recipeBrowser = isRecipeBrowserActivity?.(activity) ?? false
-                const startLabel = recipeBrowser
-                  ? 'Recipes'
-                  : currentActivityId
-                    ? 'Replace'
-                    : 'Start'
-                return (
-                  <li key={activity['Activity ID']}>
-                    <div>
-                      <strong>{label}</strong>
-                      {activity['Danger Warning Combat Level'] != null && (
-                        <p className="danger-note">
-                          Combat warning ~ Level {activity['Danger Warning Combat Level']}
-                        </p>
-                      )}
-                      {activity.Description && <p className="muted">{activity.Description}</p>}
-                      {hint && !active && <p className="muted tiny">{hint}</p>}
-                    </div>
-                    {active ? (
-                      <button
-                        type="button"
-                        className="btn secondary"
-                        disabled={actionsLocked}
-                        onClick={onStopActivity}
-                      >
-                        Stop
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        className="btn primary"
-                        disabled={actionsLocked && !recipeBrowser}
-                        onClick={() => onStartActivity(activity['Activity ID'])}
-                      >
-                        {startLabel}
-                      </button>
-                    )}
-                  </li>
-                )
-              })}
-              {specialStations.map((station) => (
-                <li key={`${station.facility['Facility ID']}-${station.skillId}`}>
-                  <div>
-                    <strong>{station.label}</strong>
-                  </div>
-                  <button
-                    type="button"
-                    className="btn primary"
-                    onClick={() => onOpenSpecialProduction(station)}
-                  >
-                    Open
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </section>
-        )}
+          )}
 
-        {(shops.length > 0 || npcs.length > 0) && (
-          <section className="panel glass-panel location-activities">
-            <h2>People & shops</h2>
-            <ul className="interaction-list">
-              {shops.map((shop) => (
-                <li key={shop['Shop ID']}>
-                  <div>
-                    <strong>{shop['Display Name']}</strong>
-                    {shop.Description && <p className="muted">{shop.Description}</p>}
-                  </div>
-                  <button
-                    type="button"
-                    className="btn secondary"
-                    onClick={() => onOpenShop(shop['Shop ID'])}
-                  >
-                    Shop
-                  </button>
-                </li>
-              ))}
-              {npcs.map((npc) => {
-                const isMerchant = (npc.Role ?? '').toLowerCase() === 'merchant'
-                return (
-                  <li key={npc['NPC ID']}>
-                    <div>
-                      <strong>{npc['Display Name']}</strong>
-                      {!isMerchant && npc.Description && (
-                        <p className="muted">{npc.Description}</p>
+          {showActivityPanel && !activitiesHidden && (
+            <section className="panel glass-panel location-activities">
+              <div className="location-activities-head">
+                <h2>Activities</h2>
+                <button
+                  type="button"
+                  className="btn secondary location-activities-hide"
+                  onClick={() => setActivitiesHidden(true)}
+                >
+                  Hide
+                </button>
+              </div>
+              <ul className="interaction-list">
+                {activities.map((activity) => {
+                  const active = currentActivityId === activity['Activity ID']
+                  const label = activity['Contextual Name'] ?? activity['Internal Key']
+                  const hint = requirementHint?.(activity) ?? null
+                  const recipeBrowser = isRecipeBrowserActivity?.(activity) ?? false
+                  const startLabel = recipeBrowser
+                    ? 'Recipes'
+                    : currentActivityId
+                      ? 'Replace'
+                      : 'Start'
+                  return (
+                    <li key={activity['Activity ID']}>
+                      <div>
+                        <strong>{label}</strong>
+                        {activity['Danger Warning Combat Level'] != null && (
+                          <p className="danger-note">
+                            Combat warning ~ Level {activity['Danger Warning Combat Level']}
+                          </p>
+                        )}
+                        {activity.Description && <p className="muted">{activity.Description}</p>}
+                        {hint && !active && <p className="muted tiny">{hint}</p>}
+                      </div>
+                      {active ? (
+                        <button
+                          type="button"
+                          className="btn secondary"
+                          disabled={actionsLocked}
+                          onClick={onStopActivity}
+                        >
+                          Stop
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          className="btn primary"
+                          disabled={actionsLocked && !recipeBrowser}
+                          onClick={() => onStartActivity(activity['Activity ID'])}
+                        >
+                          {startLabel}
+                        </button>
                       )}
+                    </li>
+                  )
+                })}
+                {specialStations.map((station) => (
+                  <li key={`${station.facility['Facility ID']}-${station.skillId}`}>
+                    <div>
+                      <strong>{station.label}</strong>
+                    </div>
+                    <button
+                      type="button"
+                      className="btn primary"
+                      onClick={() => onOpenSpecialProduction(station)}
+                    >
+                      Open
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          {(shops.length > 0 || npcs.length > 0) && (
+            <section className="panel glass-panel location-activities">
+              <h2>People & shops</h2>
+              <ul className="interaction-list">
+                {shops.map((shop) => (
+                  <li key={shop['Shop ID']}>
+                    <div>
+                      <strong>{shop['Display Name']}</strong>
+                      {shop.Description && <p className="muted">{shop.Description}</p>}
                     </div>
                     <button
                       type="button"
                       className="btn secondary"
-                      onClick={() => onOpenNpc(npc['NPC ID'])}
+                      onClick={() => onOpenShop(shop['Shop ID'])}
                     >
-                      {isMerchant ? 'Talk to merchant' : 'Talk'}
+                      Shop
                     </button>
                   </li>
-                )
-              })}
-            </ul>
-          </section>
-        )}
+                ))}
+                {npcs.map((npc) => {
+                  const isMerchant = (npc.Role ?? '').toLowerCase() === 'merchant'
+                  return (
+                    <li key={npc['NPC ID']}>
+                      <div>
+                        <strong>{npc['Display Name']}</strong>
+                        {!isMerchant && npc.Description && (
+                          <p className="muted">{npc.Description}</p>
+                        )}
+                      </div>
+                      <button
+                        type="button"
+                        className="btn secondary"
+                        onClick={() => onOpenNpc(npc['NPC ID'])}
+                      >
+                        {isMerchant ? 'Talk to merchant' : 'Talk'}
+                      </button>
+                    </li>
+                  )
+                })}
+              </ul>
+            </section>
+          )}
+        </div>
       </div>
     </section>
   )

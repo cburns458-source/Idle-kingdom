@@ -1,3 +1,21 @@
+import { formatDurationSeconds } from './formatDuration'
+
+export type HudActivityStatus =
+  | {
+      kind: 'action'
+      activityName: string
+      actionName: string
+      elapsedSeconds: number
+    }
+  | {
+      kind: 'production'
+      itemName: string
+      completed: number
+      total: number
+      remainingSeconds: number
+    }
+  | null
+
 interface TopHudProps {
   characterName: string | null
   totalLevel: number
@@ -5,8 +23,8 @@ interface TopHudProps {
   gold: number
   currentHp: number
   maxHp: number
-  activityLabel: string
   locationLabel: string
+  activityStatus: HudActivityStatus
 }
 
 export function TopHud({
@@ -16,18 +34,39 @@ export function TopHud({
   gold,
   currentHp,
   maxHp,
-  activityLabel,
   locationLabel,
+  activityStatus,
 }: TopHudProps) {
   return (
     <header className="top-hud">
-      <div className="top-hud-brand">
-        <p className="brand">{characterName?.trim() || 'Adventurer'}</p>
-        <p className="hud-location">
-          {locationLabel}
-          <span className="hud-sep">·</span>
-          {activityLabel}
-        </p>
+      <div className="top-hud-row">
+        <div className="top-hud-brand">
+          <p className="brand">{characterName?.trim() || 'Adventurer'}</p>
+          <p className="hud-location">{locationLabel}</p>
+        </div>
+        {activityStatus && (
+          <div className="hud-activity" aria-live="polite">
+            {activityStatus.kind === 'action' ? (
+              <>
+                <p className="hud-activity-line">{activityStatus.activityName}</p>
+                <p className="hud-activity-line">{activityStatus.actionName}</p>
+                <p className="hud-activity-timer">
+                  {formatDurationSeconds(activityStatus.elapsedSeconds)}
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="hud-activity-line">{activityStatus.itemName}</p>
+                <p className="hud-activity-line">
+                  {activityStatus.completed}/{activityStatus.total}
+                </p>
+                <p className="hud-activity-timer">
+                  {formatDurationSeconds(activityStatus.remainingSeconds)}
+                </p>
+              </>
+            )}
+          </div>
+        )}
       </div>
       <dl className="hud-stats">
         <div>

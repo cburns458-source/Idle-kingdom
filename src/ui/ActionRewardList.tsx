@@ -9,78 +9,146 @@ interface ActionRewardListProps {
   itemsById?: Map<string, ItemRow>
   /** How many recent action bundles to show. */
   limit?: number
+  /** Compact HUD placement with hide control. */
+  compact?: boolean
+  hidden?: boolean
+  onToggleHidden?: () => void
 }
 
 export function ActionRewardList({
   rewards,
   itemsById,
   limit = 3,
+  compact = false,
+  hidden = false,
+  onToggleHidden,
 }: ActionRewardListProps) {
   const [heldTip, setHeldTip] = useState<string | null>(null)
-  if (rewards.length === 0) return null
+  const hasRewards = rewards.some((bundle) => {
+    return bundle.xpRewards.length > 0 || bundle.loot.length > 0 || bundle.goldGained > 0
+  })
+
+  if (compact) {
+    if (!hasRewards && !hidden) return null
+    return (
+      <section className="hud-reward-summary">
+        <div className="hud-reward-summary-head">
+          {!hidden && hasRewards ? (
+            <span className="hud-reward-summary-title">Rewards</span>
+          ) : (
+            <span />
+          )}
+          {onToggleHidden && (
+            <button
+              type="button"
+              className="btn secondary hud-reward-hide"
+              onClick={onToggleHidden}
+            >
+              {hidden ? 'Show rewards' : 'Hide'}
+            </button>
+          )}
+        </div>
+        {!hidden && hasRewards && (
+          <ul className="action-reward-list action-reward-list-compact">
+            {rewards.slice(0, limit).map((bundle) => (
+              <RewardRow
+                key={bundle.id}
+                bundle={bundle}
+                itemsById={itemsById}
+                heldTip={heldTip}
+                setHeldTip={setHeldTip}
+              />
+            ))}
+          </ul>
+        )}
+      </section>
+    )
+  }
+
+  if (!hasRewards) return null
+
   return (
     <ul className="action-reward-list">
-      {rewards.slice(0, limit).map((bundle) => {
-        const levelUps = bundle.xpRewards.filter((reward) => reward.leveledUp)
-        const hasContent =
-          bundle.xpRewards.length > 0 || bundle.loot.length > 0 || bundle.goldGained > 0
-        if (!hasContent) return null
+      {rewards.slice(0, limit).map((bundle) => (
+        <RewardRow
+          key={bundle.id}
+          bundle={bundle}
+          itemsById={itemsById}
+          heldTip={heldTip}
+          setHeldTip={setHeldTip}
+        />
+      ))}
+    </ul>
+  )
+}
+
+function RewardRow({
+  bundle,
+  itemsById,
+  heldTip,
+  setHeldTip,
+}: {
+  bundle: ActionRewardBundle
+  itemsById?: Map<string, ItemRow>
+  heldTip: string | null
+  setHeldTip: (value: string | null | ((current: string | null) => string | null)) => void
+}) {
+  const levelUps = bundle.xpRewards.filter((reward) => reward.leveledUp)
+  const hasContent =
+    bundle.xpRewards.length > 0 || bundle.loot.length > 0 || bundle.goldGained > 0
+  if (!hasContent) return null
+  return (
+    <li className="action-reward-row">
+      <span className="action-reward-label">Reward:</span>
+      {bundle.xpRewards.map((reward) => {
+        const tipId = `${bundle.id}-xp-${reward.skillId}`
         return (
-          <li key={bundle.id} className="action-reward-row">
-            <span className="action-reward-label">Reward:</span>
-            {bundle.xpRewards.map((reward) => {
-              const tipId = `${bundle.id}-xp-${reward.skillId}`
-              return (
-                <RewardTipChip
-                  key={tipId}
-                  tipId={tipId}
-                  tipText={reward.skillName}
-                  showingTip={heldTip === tipId}
-                  onTipStart={() => setHeldTip(tipId)}
-                  onTipEnd={() => setHeldTip((current) => (current === tipId ? null : current))}
-                >
-                  <span className="action-reward-xp">{reward.xp.toLocaleString()}</span>
-                  <SkillIcon internalKey={reward.skillKey} title={reward.skillName} />
-                </RewardTipChip>
-              )
-            })}
-            {bundle.goldGained > 0 ? (
-              <span className="action-reward-chip action-reward-gold">
-                +{bundle.goldGained.toLocaleString()} gold
-              </span>
-            ) : null}
-            {bundle.loot.map((loot, index) => {
-              const tipId = `${bundle.id}-loot-${loot.itemId}-${index}`
-              const tipText = loot.displayName
-              return (
-                <RewardTipChip
-                  key={tipId}
-                  tipId={tipId}
-                  tipText={tipText}
-                  showingTip={heldTip === tipId}
-                  onTipStart={() => setHeldTip(tipId)}
-                  onTipEnd={() => setHeldTip((current) => (current === tipId ? null : current))}
-                >
-                  <span className="action-reward-xp">+{loot.quantity}</span>
-                  <span
-                    className="item-icon item-icon-art action-reward-item-icon"
-                    style={{
-                      backgroundImage: `url(${itemAssetPath(itemsById?.get(loot.itemId) ?? loot.itemId)})`,
-                    }}
-                    aria-hidden
-                  />
-                </RewardTipChip>
-              )
-            })}
-            {levelUps.map((reward) => (
-              <span key={`${bundle.id}-lvl-${reward.skillId}`} className="action-reward-level">
-                level {reward.level} {reward.skillName} achieved
-              </span>
-            ))}
-          </li>
+          <RewardTipChip
+            key={tipId}
+            tipId={tipId}
+            tipText={reward.skillName}
+            showingTip={heldTip === tipId}
+            onTipStart={() => setHeldTip(tipId)}
+            onTipEnd={() => setHeldTip((current) => (current === tipId ? null : current))}
+          >
+            <span className="action-reward-xp">{reward.xp.toLocaleString()}</span>
+            <SkillIcon internalKey={reward.skillKey} title={reward.skillName} />
+          </RewardTipChip>
         )
       })}
-    </ul>
+      {bundle.goldGained > 0 ? (
+        <span className="action-reward-chip action-reward-gold">
+          +{bundle.goldGained.toLocaleString()} gold
+        </span>
+      ) : null}
+      {bundle.loot.map((loot, index) => {
+        const tipId = `${bundle.id}-loot-${loot.itemId}-${index}`
+        return (
+          <RewardTipChip
+            key={tipId}
+            tipId={tipId}
+            tipText={loot.displayName}
+            showingTip={heldTip === tipId}
+            onTipStart={() => setHeldTip(tipId)}
+            onTipEnd={() => setHeldTip((current) => (current === tipId ? null : current))}
+          >
+            <span className="action-reward-xp">+{loot.quantity}</span>
+            <span
+              className="item-icon item-icon-art action-reward-item-icon"
+              style={{
+                backgroundImage: `url(${itemAssetPath(itemsById?.get(loot.itemId) ?? loot.itemId)})`,
+              }}
+              aria-hidden
+            />
+          </RewardTipChip>
+        )
+      })}
+      {levelUps.map((reward) => (
+        <span key={`${bundle.id}-lvl-${reward.skillId}`} className="action-reward-level">
+          level {reward.level} {reward.skillName} achieved
+        </span>
+      ))}
+    </li>
   )
 }
 
@@ -130,7 +198,9 @@ function RewardTipChip({
     <button
       type="button"
       className={
-        showingTip ? 'action-reward-chip action-reward-chip-tip showing-tip' : 'action-reward-chip action-reward-chip-tip'
+        showingTip
+          ? 'action-reward-chip action-reward-chip-tip showing-tip'
+          : 'action-reward-chip action-reward-chip-tip'
       }
       aria-label={tipText}
       onPointerDown={beginTip}
