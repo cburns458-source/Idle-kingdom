@@ -36,6 +36,18 @@ describe('primary activity engine', () => {
     expect(completed.save.skills.find((skill) => skill.skillId === 'SKL-0004')?.xp).toBe(1000)
   })
 
+  it('grants 1000 Arcana XP when delving for essence', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const save = createNewSave(launch)
+    const action = launch.Actions.find((row) => row['Action ID'] === 'ACN-0028')
+    expect(action).toBeTruthy()
+
+    const completed = completeGatheringAction(launch, save, action!, () => 0)
+    expect(completed.result.xpGained).toBe(7000)
+    expect(completed.save.skills.find((skill) => skill.skillId === 'SKL-0002')?.xp).toBe(7000)
+    expect(completed.save.skills.find((skill) => skill.skillId === 'SKL-0013')?.xp).toBe(1000)
+  })
+
   it('rejects copper mining without a mining tool', () => {
     const { launch } = prepareDatabase(rawDatabase)
     let save = createNewSave(launch)

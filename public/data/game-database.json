@@ -9675,7 +9675,7 @@
       "Secondary Reward Table ID": null,
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": "Below-normal Mining XP; also awards 100 Arcana XP through explicit reward logic."
+      "Notes": "Below-normal Mining XP; also awards 1000 Arcana XP through explicit reward logic."
     },
     {
       "Action ID": "ACN-0035",
