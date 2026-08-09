@@ -543,6 +543,34 @@
 
 .location-activities {
   margin-top: auto;
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.location-view .panel.location-activities {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+}
+
+.location-view .location-activities .interaction-list li {
+  background: rgba(20, 14, 10, 0.42);
+  border: 1px solid rgba(232, 220, 180, 0.18);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
+}
+
+.location-view .activity-panel.panel,
+.location-view .combat-panel.panel {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
 }
 
 .location-activities-head {
@@ -1484,15 +1512,47 @@
   display: flex;
   flex-direction: column;
   gap: 0.45rem;
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  padding: 0.35rem 0.15rem;
+}
+
+.combat-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(7.5rem, 42%);
+  gap: 0.65rem;
+  align-items: stretch;
+  min-height: 11rem;
+}
+
+.combat-main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
 }
 
 .combat-enemy-art {
   width: 100%;
-  aspect-ratio: 16 / 10;
+  min-height: 11rem;
+  align-self: stretch;
   border-radius: 0.85rem;
-  background-size: cover;
-  background-position: center;
-  border: 1px solid rgba(212, 175, 55, 0.28);
+  background-color: transparent;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center right;
+  border: none;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: pixelated;
+}
+
+.activity-panel.panel {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
 }
 
 .combat-bars {
