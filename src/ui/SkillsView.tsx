@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react'
 import type { GameDatabase, SkillRow } from '../game/data/types'
 import type { PlayerSave } from '../game/save/types'
 import { getSkillProgress } from '../game/activity/xp'
-import { playerDamageRange, playerMaxHp } from '../game/combat/stats'
 import { totalLevel, totalSkillXp } from '../game/skills/totals'
 import { SkillIcon } from './skillIcons'
 
@@ -15,14 +14,12 @@ export function SkillsView({ db, save }: SkillsViewProps) {
   const skills = [...db.Skills].sort((a, b) => a['Skill ID'].localeCompare(b['Skill ID']))
   const overallLevel = totalLevel(save)
   const overallXp = totalSkillXp(save)
-  const damage = playerDamageRange(db, save)
-  const maxHp = playerMaxHp(db, save)
   const [heldSkillId, setHeldSkillId] = useState<string | null>(null)
 
   return (
     <section className="skills-view">
       <section className="panel skills-summary">
-        <h1>Stats</h1>
+        <h1>Skills</h1>
         <dl className="skills-summary-stats">
           <div>
             <dt>Total Level</dt>
@@ -31,18 +28,6 @@ export function SkillsView({ db, save }: SkillsViewProps) {
           <div>
             <dt>Total XP</dt>
             <dd>{overallXp.toLocaleString()}</dd>
-          </div>
-          <div>
-            <dt>Damage</dt>
-            <dd>
-              {damage.min.toLocaleString()}–{damage.max.toLocaleString()}
-            </dd>
-          </div>
-          <div>
-            <dt>Health</dt>
-            <dd>
-              {save.currentHp.toLocaleString()} / {maxHp.toLocaleString()}
-            </dd>
           </div>
         </dl>
         <p className="muted tiny">Hold a skill to see its total XP.</p>
