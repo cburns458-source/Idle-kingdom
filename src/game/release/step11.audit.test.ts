@@ -108,7 +108,7 @@ describe('Step 11 release audit', () => {
 
     expect(canTravelTo(launch, save.currentLocationId, 'LOC-0001', MAIN_MAP_ID)).toBe(true)
     expect(findConnection(launch, 'LOC-0002', 'LOC-0001') || true).toBeTruthy()
-    save = applyTravelArrival(save, 'LOC-0001')
+    save = applyTravelArrival(launch, save, 'LOC-0001')
     expect(save.currentLocationId).toBe('LOC-0001')
 
     // Gathering at Meadow
@@ -123,7 +123,7 @@ describe('Step 11 release audit', () => {
 
     // Combat at pasture
     save = {
-      ...applyTravelArrival(save, 'LOC-0001'),
+      ...applyTravelArrival(launch, save, 'LOC-0001'),
       currentActivityId: null,
       currentActionId: null,
     }

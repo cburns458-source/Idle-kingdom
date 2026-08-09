@@ -1,4 +1,4 @@
-import { addItemToInventory } from '../activity/rewards'
+import { addItemToInventoryExact } from '../activity/rewards'
 import { applyXp } from '../activity/xp'
 import type { GameDatabase } from '../data/types'
 import { removeIngredients } from '../production/inventory'
@@ -171,7 +171,9 @@ export function completeSpecialProject(
     if (!enchanted) return { ok: false, reason: 'Could not apply the enchantment.' }
     next = enchanted
   } else {
-    next = addItemToInventory(next, outputId, outputQty)
+    const granted = addItemToInventoryExact(next, outputId, outputQty)
+    if (!granted.ok) return granted
+    next = granted.save
     outputLabel =
       db.Items.find((item) => item['Item ID'] === outputId)?.['Display Name'] ?? outputLabel
   }

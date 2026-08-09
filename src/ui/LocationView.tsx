@@ -148,7 +148,7 @@ export function LocationView({
                       <button
                         type="button"
                         className="btn primary"
-                        disabled={actionsLocked}
+                        disabled={actionsLocked && !recipeBrowser}
                         onClick={() => onStartActivity(activity['Activity ID'])}
                       >
                         {startLabel}
@@ -167,7 +167,6 @@ export function LocationView({
                   <button
                     type="button"
                     className="btn primary"
-                    disabled={actionsLocked}
                     onClick={() => onOpenSpecialProduction(station)}
                   >
                     Open

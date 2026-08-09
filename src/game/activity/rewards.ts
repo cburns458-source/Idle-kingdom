@@ -1,3 +1,9 @@
+import {
+  canFitItemQuantity,
+  INVENTORY_SLOT_LIMIT,
+  INVENTORY_STACK_MAX,
+  maxAddableQuantity,
+} from '../inventory/capacity'
 import type { ActionRow, GameDatabase, RewardEntryRow } from '../data/types'
 import type { PlayerSave } from '../save/types'
 import type { LootGrant } from './types'
@@ -27,32 +33,73 @@ export function pickWeightedReward(
   return usable[usable.length - 1] ?? null
 }
 
-export function addItemToInventory(
+/**
+ * Add as many as fit without exceeding the 180-slot bag or MAX_SAFE_INTEGER stacks.
+ * Returns how many were actually added (may be less than requested).
+ */
+export function addItemsToInventory(
   save: PlayerSave,
   itemId: string,
   quantity: number,
   enchantmentId: string | null = null,
-): PlayerSave {
-  if (quantity <= 0) return save
+): { save: PlayerSave; added: number } {
+  const want = Math.floor(quantity)
+  if (want <= 0) return { save, added: 0 }
+
+  const addable = maxAddableQuantity(save, itemId, enchantmentId)
+  const added = Math.min(want, addable)
+  if (added <= 0) return { save, added: 0 }
+
   const inventory = save.inventory.map((stack) => ({ ...stack }))
 
-  // Enchanted items are unique and never stack with anything.
   if (enchantmentId) {
-    for (let i = 0; i < quantity; i += 1) {
+    for (let i = 0; i < added; i += 1) {
       inventory.push({ itemId, quantity: 1, enchantmentId })
     }
-    return { ...save, inventory }
+    return { save: { ...save, inventory }, added }
   }
 
   const existing = inventory.find(
     (stack) => stack.itemId === itemId && !stack.enchantmentId,
   )
   if (existing) {
-    existing.quantity += quantity
+    existing.quantity = Math.min(INVENTORY_STACK_MAX, existing.quantity + added)
   } else {
-    inventory.push({ itemId, quantity })
+    inventory.push({ itemId, quantity: added })
   }
-  return { ...save, inventory }
+  return { save: { ...save, inventory }, added }
+}
+
+/** Convenience wrapper — adds only what fits (never overflows slots/stacks). */
+export function addItemToInventory(
+  save: PlayerSave,
+  itemId: string,
+  quantity: number,
+  enchantmentId: string | null = null,
+): PlayerSave {
+  return addItemsToInventory(save, itemId, quantity, enchantmentId).save
+}
+
+/** Add the full quantity or fail without changing the save. */
+export function addItemToInventoryExact(
+  save: PlayerSave,
+  itemId: string,
+  quantity: number,
+  enchantmentId: string | null = null,
+): { ok: true; save: PlayerSave } | { ok: false; reason: string } {
+  const want = Math.floor(quantity)
+  if (want <= 0) return { ok: true, save }
+  if (!canFitItemQuantity(save, itemId, want, enchantmentId)) {
+    if (save.inventory.length >= INVENTORY_SLOT_LIMIT) {
+      return { ok: false, reason: 'Inventory is full (180 slots).' }
+    }
+    return { ok: false, reason: 'That stack cannot hold more of this item.' }
+  }
+  const result = addItemsToInventory(save, itemId, want, enchantmentId)
+  if (result.added < want) {
+    return { ok: false, reason: 'Inventory is full (180 slots).' }
+  }
+  return { ok: true, save: result.save }
 }
 
 export function resolveActionRewards(
@@ -78,12 +125,16 @@ export function resolveActionRewards(
     if (picked['Reward Type'] === 'Item' && picked['Reward ID / Value']) {
       const quantity = rollQuantity(picked, random)
       const itemId = picked['Reward ID / Value']
-      next = addItemToInventory(next, itemId, quantity)
-      loot.push({
-        itemId,
-        quantity,
-        displayName: db.Items.find((item) => item['Item ID'] === itemId)?.['Display Name'] ?? itemId,
-      })
+      const granted = addItemsToInventory(next, itemId, quantity)
+      next = granted.save
+      if (granted.added > 0) {
+        loot.push({
+          itemId,
+          quantity: granted.added,
+          displayName:
+            db.Items.find((item) => item['Item ID'] === itemId)?.['Display Name'] ?? itemId,
+        })
+      }
     } else if (picked['Reward Type'] === 'Gold' || picked['Reward Type'] === 'Currency') {
       const quantity = rollQuantity(picked, random)
       goldGained += quantity

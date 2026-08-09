@@ -3,7 +3,7 @@ import {
   generateNextAction,
   validateActivityStart,
 } from '../activity/engine'
-import { beginTravelActivityChange, clearActivityTransition } from '../activity/transition'
+import { clearActivityTransition } from '../activity/transition'
 import { getSkillProgress } from '../activity/xp'
 import { COMBAT_SKILL_ID } from '../combat/stats'
 import type { ActivityRow, GameDatabase } from '../data/types'
@@ -57,8 +57,7 @@ export function applyHostileTravelArrival(
   destinationLocationId: string,
   nowMs: number = Date.now(),
 ): HostileTravelArrivalResult {
-  let next = beginTravelActivityChange(db, save, nowMs)
-  next = applyTravelArrival(next, destinationLocationId, nowMs) as PlayerSave
+  let next = applyTravelArrival(db, save, destinationLocationId, nowMs)
   next = clearActivityTransition(next)
 
   const threatened = forcedHostileActivity(db, next, destinationLocationId)

@@ -385,9 +385,14 @@ export default function App() {
       const current = bootRef.current
       if (current.status !== 'ready' || !current.save.productionRecipeId) return
       const finished = completeProductionCraft(current.database.launch, current.save)
-      if (!finished) return
+      if (!finished) {
+        setActivityError('Inventory full — free space to continue crafting.')
+        setActionProgress(1)
+        return
+      }
       setRecentRewards((prev) => [finished.reward, ...prev].slice(0, 4))
       setLastMessage(null)
+      setActivityError(null)
       setActionProgress(0)
       setBoot({
         ...current,
@@ -728,13 +733,19 @@ export default function App() {
     fromSave: PlayerSave = save,
     allowAutoEquipPrompt = true,
   ) {
-    if (deathLocked) {
+    const activityRow = database.launchIndexes.activitiesById.get(activityId)
+    const isProduction =
+      Boolean(activityRow) && isStandardProductionActivity(database.launch, activityRow!)
+
+    // Recipe browsing stays available during death pause; Primary Activity changes do not.
+    if (deathLocked && !isProduction) {
       setActivityError('Cannot change activities while recovering from defeat.')
       return
     }
+
     const result = validateActivityStart(database.launch, fromSave, activityId)
     if (!result.ok) {
-      if (allowAutoEquipPrompt) {
+      if (allowAutoEquipPrompt && !deathLocked) {
         const proposal = proposeAutoEquipForActivity(
           database.launch,
           fromSave,
@@ -755,8 +766,7 @@ export default function App() {
     setLastMessage(null)
     setActionProgress(0)
 
-    const activityRow = database.launchIndexes.activitiesById.get(activityId)
-    if (activityRow && isStandardProductionActivity(database.launch, activityRow)) {
+    if (isProduction) {
       setSpecialStation(null)
       setProductionPickerActivityId(activityId)
       if (fromSave !== save) updateSave(fromSave)
@@ -806,10 +816,7 @@ export default function App() {
   }
 
   function openSpecialProduction(station: SpecialProductionStation) {
-    if (deathLocked) {
-      setActivityError('Cannot use Special Production while recovering from defeat.')
-      return
-    }
+    // Browse/complete Special Production during death pause; do not force-close the picker.
     setProductionPickerActivityId(null)
     setActivityError(null)
     setSpecialStation(station)

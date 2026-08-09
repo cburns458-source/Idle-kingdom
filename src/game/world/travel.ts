@@ -1,4 +1,7 @@
+import { isDeathPaused } from '../combat/engine'
+import { stopPrimaryActivityNow } from '../activity/transition'
 import type { GameDatabase, LocationRow, TravelConnectionRow } from '../data/types'
+import type { PlayerSave } from '../save/types'
 import {
   CASTLE_GATEWAY_ID,
   CASTLE_MAP_ID,
@@ -124,68 +127,20 @@ export function canTravelTo(
   )
 }
 
-export function stopPrimaryActivity<
-  T extends {
-    currentActivityId: string | null
-    activityStartedAt: string | null
-    currentActionId?: string | null
-    actionStartedAt?: string | null
-    actionDurationMs?: number | null
-    combatEnemyId?: string | null
-    combatEnemyHp?: number | null
-    combatRoundStartedAt?: string | null
-    deathPauseUntil?: string | null
-    productionRecipeId?: string | null
-    productionQuantityTotal?: number | null
-    productionQuantityRemaining?: number | null
-    activityTransition?: unknown
-  },
->(save: T, nowMs: number = Date.now()): T {
-  if (save.deathPauseUntil && Date.parse(save.deathPauseUntil) > nowMs) {
-    return save
-  }
-  return {
-    ...save,
-    currentActivityId: null,
-    activityStartedAt: null,
-    currentActionId: null,
-    actionStartedAt: null,
-    actionDurationMs: null,
-    combatEnemyId: null,
-    combatEnemyHp: null,
-    combatRoundStartedAt: null,
-    deathPauseUntil: null,
-    productionRecipeId: null,
-    productionQuantityTotal: null,
-    productionQuantityRemaining: null,
-    activityTransition: null,
-  }
-}
-
 /**
- * Move the player to a destination and clear any running Primary Activity.
- * Death pause blocks arrival.
+ * Move the player to a destination and stop any running Primary Activity with refunds.
+ * Death pause blocks arrival (activity is not cleared).
  */
-export function applyTravelArrival<
-  T extends {
-    currentLocationId: string
-    currentActivityId: string | null
-    activityStartedAt: string | null
-    currentActionId?: string | null
-    actionStartedAt?: string | null
-    actionDurationMs?: number | null
-    deathPauseUntil?: string | null
-    productionRecipeId?: string | null
-    productionQuantityTotal?: number | null
-    productionQuantityRemaining?: number | null
-    activityTransition?: unknown
-  },
->(save: T, destinationLocationId: string, nowMs: number = Date.now()): T {
-  if (save.deathPauseUntil && Date.parse(save.deathPauseUntil) > nowMs) {
-    return save
-  }
+export function applyTravelArrival(
+  db: GameDatabase,
+  save: PlayerSave,
+  destinationLocationId: string,
+  nowMs: number = Date.now(),
+): PlayerSave {
+  if (isDeathPaused(save, nowMs)) return save
+  const stopped = stopPrimaryActivityNow(db, save, nowMs)
   return {
-    ...stopPrimaryActivity(save, nowMs),
+    ...stopped,
     currentLocationId: destinationLocationId,
   }
 }

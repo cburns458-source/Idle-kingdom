@@ -759,10 +759,12 @@ Current functional slots:
 Spell slots hold prepared Arcana spells. Exactly one spell may occupy each slot. The same spell type may fill multiple slots. Equipped spells cycle in order for one hour each; the active slot’s effect applies to the player for that hour.
 
 11.4 INVENTORY
-- Items use stack limits defined in game data.
-- The system should prevent uncontrolled hoarding without requiring constant interruption.
-- Standard Production must validate required materials and available inventory space before starting.
-- Unattended progression must handle inventory limits safely.
+- The bag has 180 slots. Each item stack (or each enchanted item) uses one slot.
+- Non-enchanted stacks may grow to the maximum safe integer; adds stop before overflow.
+- Enchanted items never stack.
+- Standard Production and shops must validate available inventory space before committing.
+- Unattended progression grants only what fits and must not overflow slots or stacks.
+- Death pause keeps the Primary Activity; clearing/stopping it is refused until recovery ends. Passive browse (recipes, Special Production, shops, NPCs) remains available.
 
 ======================================================================
 12. ECONOMY AND SHOPS

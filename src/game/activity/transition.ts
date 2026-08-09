@@ -26,6 +26,9 @@ export function stopPrimaryActivityNow(
   save: PlayerSave,
   nowMs: number = Date.now(),
 ): PlayerSave {
+  // Death pause keeps the Primary Activity until recovery finishes.
+  if (isDeathPaused(save, nowMs)) return save
+
   let next = clearActivityTransition(save)
   if (next.productionRecipeId) {
     next = cancelProductionActivity(db, next)

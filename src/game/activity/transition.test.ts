@@ -64,23 +64,22 @@ describe('immediate activity changes (no change cooldown)', () => {
     expect(replaced.save.currentActivityId).toBe('ACT-0021')
   })
 
-  it('blocks start and stop during death pause', () => {
+  it('blocks start and stop during death pause and keeps the activity', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const now = Date.parse('2026-01-01T00:00:00.000Z')
-    let save = {
+    const pausedIdle = {
       ...createNewSave(launch),
       currentLocationId: 'LOC-0009',
       deathPauseUntil: new Date(now + 30_000).toISOString(),
     }
+    expect(requestActivityStart(launch, pausedIdle, 'ACT-0012', now).ok).toBe(false)
 
-    const start = requestActivityStart(launch, save, 'ACT-0012', now)
-    expect(start.ok).toBe(false)
-
-    save = {
-      ...save,
-      deathPauseUntil: null,
-    }
-    const started = requestActivityStart(launch, save, 'ACT-0012', now)
+    const started = requestActivityStart(
+      launch,
+      { ...createNewSave(launch), currentLocationId: 'LOC-0009' },
+      'ACT-0012',
+      now,
+    )
     expect(started.ok).toBe(true)
     if (!started.ok) return
 
@@ -90,6 +89,7 @@ describe('immediate activity changes (no change cooldown)', () => {
     }
     const stop = requestActivityStop(launch, paused, now + 1_000)
     expect(stop.ok).toBe(false)
+    expect(stop.ok === false ? paused.currentActivityId : null).toBe('ACT-0012')
   })
 
   it('travel while busy stops the activity immediately with no cooldown', () => {

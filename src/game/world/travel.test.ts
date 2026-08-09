@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { prepareDatabase } from '../data/loadDatabase'
+import { createNewSave } from '../save/saveStore'
 import {
   applyTravelArrival,
   canTravelTo,
@@ -55,43 +56,40 @@ describe('travel rules', () => {
     expect(locationsForMapView(launch, 'MAP-0005')).toEqual([])
   })
 
-  it('stops primary activity on travel arrival', () => {
-    const next = applyTravelArrival(
-      {
-        currentLocationId: 'LOC-0002',
-        currentActivityId: 'ACT-0017',
-        activityStartedAt: '2026-01-01T00:00:00.000Z',
-        currentActionId: 'ACN-0105',
-        actionStartedAt: '2026-01-01T00:00:00.000Z',
-        actionDurationMs: 20000,
-        activityTransition: {
-          kind: 'stopping',
-          activityId: 'ACT-0017',
-          followUpActivityId: null,
-          productionRecipeId: null,
-          productionQuantity: null,
-          startedAt: '2026-01-01T00:00:00.000Z',
-          durationMs: 30_000,
-        },
-      },
-      'LOC-0001',
-    )
+  it('stops primary activity on travel arrival and refunds production materials', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const now = Date.parse('2026-01-01T00:00:00.000Z')
+    const save = {
+      ...createNewSave(launch),
+      currentLocationId: 'LOC-0002',
+      currentActivityId: 'ACT-0017',
+      activityStartedAt: '2026-01-01T00:00:00.000Z',
+      currentActionId: 'ACN-0105',
+      actionStartedAt: '2026-01-01T00:00:00.000Z',
+      actionDurationMs: 20000,
+      productionRecipeId: 'RCP-0001',
+      productionQuantityTotal: 2,
+      productionQuantityRemaining: 2,
+      inventory: [],
+    }
+    const next = applyTravelArrival(launch, save, 'LOC-0001', now)
     expect(next.currentLocationId).toBe('LOC-0001')
     expect(next.currentActivityId).toBeNull()
-    expect(next.activityStartedAt).toBeNull()
-    expect(next.currentActionId).toBeNull()
-    expect(next.activityTransition).toBeNull()
+    expect(next.productionRecipeId).toBeNull()
+    expect(next.inventory.find((stack) => stack.itemId === 'ITEM-0025')?.quantity).toBe(2)
   })
 
   it('blocks travel arrival during death pause', () => {
+    const { launch } = prepareDatabase(rawDatabase)
     const now = Date.parse('2026-01-01T00:00:00.000Z')
     const save = {
+      ...createNewSave(launch),
       currentLocationId: 'LOC-0002',
       currentActivityId: 'ACT-0001',
       activityStartedAt: '2026-01-01T00:00:00.000Z',
       deathPauseUntil: new Date(now + 30_000).toISOString(),
     }
-    const next = applyTravelArrival(save, 'LOC-0001', now + 1000)
+    const next = applyTravelArrival(launch, save, 'LOC-0001', now + 1000)
     expect(next).toEqual(save)
   })
 

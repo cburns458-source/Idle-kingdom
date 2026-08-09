@@ -1,7 +1,8 @@
-import { addItemToInventory } from '../activity/rewards'
+import { addItemToInventory, addItemToInventoryExact } from '../activity/rewards'
 import { summarizeXpReward } from '../activity/rewardSummary'
 import type { ActionRewardBundle } from '../activity/types'
 import { applyXp } from '../activity/xp'
+import { canFitItemQuantity } from '../inventory/capacity'
 import type { GameDatabase } from '../data/types'
 import type { PlayerSave } from '../save/types'
 import { removeIngredients } from './inventory'
@@ -79,6 +80,14 @@ export function beginProductionQueue(
     return { ok: false, reason: 'Missing required materials.' }
   }
 
+  const outputTotal = recipe['Output Quantity'] * crafts
+  if (!canFitItemQuantity(withMaterials, recipe['Output Item ID'], outputTotal)) {
+    return {
+      ok: false,
+      reason: 'Not enough inventory space for that queue (180 slots, stacks to max).',
+    }
+  }
+
   const startedAt = new Date(nowMs).toISOString()
   const durationMs = recipe['Base Duration Seconds'] * 1000
   return {
@@ -115,7 +124,9 @@ export function completeProductionCraft(
   if (!recipe) return null
 
   const outputQty = recipe['Output Quantity']
-  let next = addItemToInventory(save, recipe['Output Item ID'], outputQty)
+  const granted = addItemToInventoryExact(save, recipe['Output Item ID'], outputQty)
+  if (!granted.ok) return null
+  let next = granted.save
   const xpApplied = applyXp(next, db, recipe['Skill ID'], recipe['XP Reward'])
   next = xpApplied.save
 

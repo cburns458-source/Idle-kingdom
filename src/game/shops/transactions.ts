@@ -1,4 +1,5 @@
-import { addItemToInventory } from '../activity/rewards'
+import { addItemToInventoryExact } from '../activity/rewards'
+import { canFitItemQuantity } from '../inventory/capacity'
 import { removeIngredients } from '../production/inventory'
 import type { GameDatabase } from '../data/types'
 import type { PlayerSave } from '../save/types'
@@ -92,9 +93,18 @@ export function confirmShopOffer(
 
   next = { ...next, gold: next.gold + goldDelta }
 
+  // Validate bag space after sells free slots, before committing buys.
+  let spaceCheck = next
   for (const line of buys) {
-    next = addItemToInventory(next, line.itemId, Math.floor(line.quantity))
+    const qty = Math.floor(line.quantity)
+    if (!canFitItemQuantity(spaceCheck, line.itemId, qty)) {
+      return { ok: false, reason: 'Not enough inventory space (180 slots).' }
+    }
+    const staged = addItemToInventoryExact(spaceCheck, line.itemId, qty)
+    if (!staged.ok) return { ok: false, reason: staged.reason }
+    spaceCheck = staged.save
   }
+  next = spaceCheck
 
   if (sellCredit.total > 0) {
     const earned = Number(next.statistics.values.gold_earned ?? 0) + sellCredit.total
