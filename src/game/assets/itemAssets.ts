@@ -7,10 +7,16 @@ const ITEM_ID_ICONS: Record<string, string> = {
   'ITEM-0011': 'essence',
   'ITEM-0025': 'potato',
   'ITEM-0026': 'potato',
+  'ITEM-0028': 'berries',
+  'ITEM-0046': 'dragon_scale',
   'ITEM-0058': 'baked_potato',
+  'ITEM-0103': 'fishing_tool',
   'ITEM-0108': 'net',
   'ITEM-0111': 'copper_pickaxe',
   'ITEM-0119': 'steel_pickaxe',
+  'ITEM-0123': 'hammer',
+  'ITEM-0169': 'backpack',
+  'ITEM-0288': 'insignia',
 }
 
 /** Resolve a pixel icon path for an item using ID, then category/subtype heuristics. */
@@ -40,6 +46,15 @@ function iconStemFromText(blob: string, category: string, subtype: string): stri
   if (blob.includes('potato') || blob.includes('spud')) {
     return blob.includes('baked') ? 'baked_potato' : 'potato'
   }
+  if (blob.includes('backpack') || blob.includes('back item') || subtype.includes('back')) {
+    return 'backpack'
+  }
+  if (blob.includes('fishing') || blob.includes('rod') || blob.includes('harpoon')) {
+    return 'fishing_tool'
+  }
+  if (blob.includes('warhammer') || blob.includes('hammer')) return 'hammer'
+  if (blob.includes('necklace') || blob.includes('amulet')) return 'necklace'
+  if (/\bring\b/.test(blob) || subtype.includes('ring')) return 'ring'
   if (
     blob.includes('sapphire') ||
     blob.includes('emerald') ||
@@ -63,28 +78,28 @@ function iconStemFromText(blob: string, category: string, subtype: string): stri
     return 'component'
   }
   if (blob.includes('net') || blob.includes('sling')) return 'net'
-  if (blob.includes('pickaxe') || blob.includes('pick')) return 'pickaxe'
+  if (blob.includes('pickaxe') || /\bpick\b/.test(blob)) return 'pickaxe'
   if (blob.includes('hatchet')) return 'hatchet'
   if (blob.includes('bow')) return 'bow'
   if (blob.includes('sword')) return 'sword'
   if (blob.includes('dagger')) return 'dagger'
   if (blob.includes('axe') && !blob.includes('pickaxe')) return 'axe'
-  if (blob.includes('shield') || blob.includes('off-hand') || blob.includes('offhand'))
+  if (blob.includes('shield') || blob.includes('off-hand') || blob.includes('offhand')) {
     return 'shield'
+  }
   if (blob.includes('helmet') || blob.includes('hat')) return 'helmet'
+  // Legs before chest so "platelegs" does not resolve as chest plate.
+  if (blob.includes('leg') || blob.includes('plateleg') || subtype.includes('plateleg')) {
+    return 'legs'
+  }
   if (blob.includes('chest') || blob.includes('plate') || blob.includes('mail')) return 'chest'
-  if (blob.includes('leg') || blob.includes('plateleg')) return 'legs'
   if (blob.includes('boot')) return 'boots'
   if (blob.includes('glove')) return 'gloves'
-  if (blob.includes('necklace') || blob.includes('amulet')) return 'necklace'
-  if (blob.includes('ring')) return 'ring'
   if (blob.includes('potion') || blob.includes('vial')) return 'potion'
-  if (blob.includes('ore')) return 'ore'
+  if (/\bore\b/.test(blob) || subtype.includes('ore') || category.includes('ore')) return 'ore'
   if (blob.includes('bar') || category.includes('metal bar')) return 'bar'
   if (blob.includes('log') || blob.includes('wood')) return 'log'
   if (blob.includes('herb') || blob.includes('fern') || blob.includes('weed')) return 'herb'
-  if (blob.includes('fishing') || blob.includes('rod') || blob.includes('harpoon'))
-    return 'fishing_tool'
   if (
     blob.includes('hide') ||
     blob.includes('meat') ||
@@ -96,6 +111,7 @@ function iconStemFromText(blob: string, category: string, subtype: string): stri
   }
   if (
     blob.includes('berry') ||
+    blob.includes('berrie') ||
     blob.includes('grape') ||
     blob.includes('carrot') ||
     blob.includes('clay') ||
@@ -103,6 +119,8 @@ function iconStemFromText(blob: string, category: string, subtype: string): stri
   ) {
     return 'raw_food'
   }
+  if (blob.includes('dragon') && blob.includes('scale')) return 'dragon_scale'
+  if (blob.includes('insignia')) return 'insignia'
   if (category.includes('food') || subtype.includes('food')) return 'food'
   if (category.includes('raw')) return 'raw_food'
   if (category.includes('weapon') || category.includes('tool')) return 'sword'

@@ -1286,8 +1286,6 @@
   image-rendering: auto;
   border: 1px solid rgba(212, 175, 55, 0.35);
   box-shadow: 0 2px 0 rgba(0, 0, 0, 0.2);
-  image-rendering: pixelated;
-  image-rendering: crisp-edges;
 }
 
 .skill-tile .skill-icon {
@@ -1473,7 +1471,6 @@
   background-color: rgba(20, 13, 8, 0.35);
   border: 1px solid rgba(212, 175, 55, 0.22);
   image-rendering: auto;
-  image-rendering: crisp-edges;
 }
 
 .bag-item-tile .item-icon,

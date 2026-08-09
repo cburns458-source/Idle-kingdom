@@ -1,5 +1,5 @@
 {
-  "generatedForStep": 5,
+  "generatedForStep": 10,
   "artDirection": "Game Bible section 16 \u2014 warm hand-crafted 2D fantasy, cozy, readable, square sources",
   "maps": {
     "MAP-0001": {
@@ -11,8 +11,16 @@
       "path": "/assets/maps/map_mountain_caves.png"
     },
     "MAP-0003": {
-      "internalKey": "castle_map",
+      "internalKey": "castle_grounds",
       "path": "/assets/maps/map_castle_grounds.png"
+    },
+    "MAP-0004": {
+      "internalKey": "idale_west",
+      "path": "/assets/maps/map_idale_west.png"
+    },
+    "MAP-0005": {
+      "internalKey": "idale_east",
+      "path": "/assets/maps/map_idale_east.png"
     }
   },
   "locations": {
@@ -135,20 +143,6 @@
       "path": "/assets/enemies/enm_rabbit_buck.png"
     }
   },
-  "items": {
-    "ITEM-0108": {
-      "internalKey": "net",
-      "path": "/assets/items/item_net.png"
-    },
-    "ITEM-0058": {
-      "internalKey": "baked_potato",
-      "path": "/assets/items/item_baked_potato.png"
-    },
-    "ITEM-0111": {
-      "internalKey": "copper_pickaxe",
-      "path": "/assets/items/item_copper_pickaxe.png"
-    }
-  },
   "icons": {
     "skills": {
       "alchemy": "/assets/icons/skills/skl_alchemy.png",
@@ -181,33 +175,45 @@
     },
     "items": {
       "axe": "/assets/icons/items/item_axe.png",
+      "backpack": "/assets/icons/items/item_backpack.png",
       "baked_potato": "/assets/icons/items/item_baked_potato.png",
       "bar": "/assets/icons/items/item_bar.png",
+      "berries": "/assets/icons/items/item_berries.png",
       "boots": "/assets/icons/items/item_boots.png",
       "bow": "/assets/icons/items/item_bow.png",
       "chest": "/assets/icons/items/item_chest.png",
+      "coal": "/assets/icons/items/item_coal.png",
+      "component": "/assets/icons/items/item_component.png",
       "copper_pickaxe": "/assets/icons/items/item_copper_pickaxe.png",
       "creature": "/assets/icons/items/item_creature.png",
       "dagger": "/assets/icons/items/item_dagger.png",
       "default": "/assets/icons/items/item_default.png",
+      "dragon_scale": "/assets/icons/items/item_dragon_scale.png",
+      "essence": "/assets/icons/items/item_essence.png",
       "fishing_tool": "/assets/icons/items/item_fishing_tool.png",
       "food": "/assets/icons/items/item_food.png",
+      "gem": "/assets/icons/items/item_gem.png",
       "gloves": "/assets/icons/items/item_gloves.png",
+      "gold": "/assets/icons/items/item_gold.png",
+      "hammer": "/assets/icons/items/item_hammer.png",
       "hatchet": "/assets/icons/items/item_hatchet.png",
       "helmet": "/assets/icons/items/item_helmet.png",
       "herb": "/assets/icons/items/item_herb.png",
+      "insignia": "/assets/icons/items/item_insignia.png",
       "legs": "/assets/icons/items/item_legs.png",
       "log": "/assets/icons/items/item_log.png",
       "necklace": "/assets/icons/items/item_necklace.png",
       "net": "/assets/icons/items/item_net.png",
       "ore": "/assets/icons/items/item_ore.png",
       "pickaxe": "/assets/icons/items/item_pickaxe.png",
+      "potato": "/assets/icons/items/item_potato.png",
       "potion": "/assets/icons/items/item_potion.png",
       "raw_food": "/assets/icons/items/item_raw_food.png",
       "ring": "/assets/icons/items/item_ring.png",
       "shield": "/assets/icons/items/item_shield.png",
       "steel_pickaxe": "/assets/icons/items/item_steel_pickaxe.png",
-      "sword": "/assets/icons/items/item_sword.png"
+      "sword": "/assets/icons/items/item_sword.png",
+      "timber": "/assets/icons/items/item_timber.png"
     },
     "ui": {
       "map": "/assets/icons/ui/ui_map.png"
