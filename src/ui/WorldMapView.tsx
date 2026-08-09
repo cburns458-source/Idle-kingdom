@@ -13,6 +13,7 @@ interface WorldMapViewProps {
   onTravel: (locationId: string) => void
   onShowWorldMap?: () => void
   travelDisabled?: boolean
+  travelLockReason?: string
 }
 
 export function WorldMapView({
@@ -24,6 +25,7 @@ export function WorldMapView({
   onTravel,
   onShowWorldMap,
   travelDisabled = false,
+  travelLockReason,
 }: WorldMapViewProps) {
   const map = db.Maps.find((entry) => entry['Map ID'] === mapId)
   const nodes = locationsForMapView(db, mapId)
@@ -80,6 +82,7 @@ export function WorldMapView({
         isCurrent={selected?.['Location ID'] === currentLocationId}
         onTravel={() => selected && onTravel(selected['Location ID'])}
         travelDisabled={travelDisabled}
+        travelLockReason={travelLockReason}
       />
     </section>
   )
@@ -90,11 +93,13 @@ function SelectedLocationCard({
   isCurrent,
   onTravel,
   travelDisabled,
+  travelLockReason,
 }: {
   location: LocationRow | null
   isCurrent: boolean
   onTravel: () => void
   travelDisabled: boolean
+  travelLockReason?: string
 }) {
   if (!location) {
     return (
@@ -120,9 +125,19 @@ function SelectedLocationCard({
         {isCurrent ? (
           <p className="muted">You are here.</p>
         ) : (
-          <button type="button" className="btn primary" disabled={travelDisabled} onClick={onTravel}>
-            Travel
-          </button>
+          <>
+            <button
+              type="button"
+              className="btn primary"
+              disabled={travelDisabled}
+              onClick={onTravel}
+            >
+              Travel
+            </button>
+            {travelDisabled && travelLockReason && (
+              <p className="muted tiny">{travelLockReason}</p>
+            )}
+          </>
         )}
       </div>
     </div>

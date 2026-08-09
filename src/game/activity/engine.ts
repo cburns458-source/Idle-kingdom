@@ -2,6 +2,7 @@ import {
   beginCombatSave,
   clearCombatSave,
   enemyForAction,
+  isDeathPaused,
 } from '../combat/engine'
 import type { ActionRow, ActivityRow, GameDatabase } from '../data/types'
 import type { PlayerSave } from '../save/types'
@@ -73,6 +74,7 @@ export function beginActivitySave(
   activityId: string,
   nowIso: string = new Date().toISOString(),
 ): PlayerSave {
+  if (isDeathPaused(save, Date.parse(nowIso))) return save
   return clearCombatSave({
     ...save,
     currentActivityId: activityId,
@@ -84,7 +86,11 @@ export function beginActivitySave(
   })
 }
 
-export function clearActivitySave(save: PlayerSave): PlayerSave {
+export function clearActivitySave(
+  save: PlayerSave,
+  nowMs: number = Date.now(),
+): PlayerSave {
+  if (isDeathPaused(save, nowMs)) return save
   return clearCombatSave({
     ...save,
     currentActivityId: null,

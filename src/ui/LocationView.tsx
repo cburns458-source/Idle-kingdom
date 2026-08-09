@@ -7,6 +7,7 @@ interface LocationViewProps {
   location: LocationRow
   currentActivityId: string | null
   activityError: string | null
+  actionsLocked?: boolean
   onStartActivity: (activityId: string) => void
   onStopActivity: () => void
   onOpenMap: () => void
@@ -19,6 +20,7 @@ export function LocationView({
   location,
   currentActivityId,
   activityError,
+  actionsLocked = false,
   onStartActivity,
   onStopActivity,
   onOpenMap,
@@ -88,13 +90,19 @@ export function LocationView({
                     {hint && !active && <p className="muted tiny">{hint}</p>}
                   </div>
                   {active ? (
-                    <button type="button" className="btn secondary" onClick={onStopActivity}>
+                    <button
+                      type="button"
+                      className="btn secondary"
+                      disabled={actionsLocked}
+                      onClick={onStopActivity}
+                    >
                       Stop
                     </button>
                   ) : (
                     <button
                       type="button"
                       className="btn primary"
+                      disabled={actionsLocked}
                       onClick={() => onStartActivity(activity['Activity ID'])}
                     >
                       {currentActivityId ? 'Replace' : 'Start'}

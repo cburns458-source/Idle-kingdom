@@ -5,6 +5,7 @@ import { prepareDatabase } from '../data/loadDatabase'
 import { createNewSave } from '../save/saveStore'
 import {
   beginActivitySave,
+  clearActivitySave,
   completeGatheringAction,
   generateNextAction,
   validateActivityStart,
@@ -74,5 +75,18 @@ describe('primary activity engine', () => {
     // Only Wild Roots remains after Needs Data exclusion.
     expect(meadow).toHaveLength(1)
     expect(pickWeightedAction(meadow, () => 0.99)?.['Action ID']).toBe('ACN-0105')
+  })
+
+  it('refuses to stop or replace activities during death pause', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const now = Date.parse('2026-01-01T00:00:00.000Z')
+    let save = createNewSave(launch)
+    save = {
+      ...beginActivitySave(save, 'ACT-0001', new Date(now).toISOString()),
+      deathPauseUntil: new Date(now + 30_000).toISOString(),
+    }
+
+    expect(clearActivitySave(save, now + 1000)).toEqual(save)
+    expect(beginActivitySave(save, 'ACT-0002', new Date(now + 1000).toISOString())).toEqual(save)
   })
 })

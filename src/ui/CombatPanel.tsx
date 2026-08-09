@@ -38,9 +38,11 @@ export function CombatPanel({
           <h2>{label}</h2>
           <p className="muted">Combat</p>
         </div>
-        <button type="button" className="btn secondary" onClick={onStop}>
-          Stop
-        </button>
+        {deathPauseRemainingMs <= 0 && (
+          <button type="button" className="btn secondary" onClick={onStop}>
+            Stop
+          </button>
+        )}
       </div>
 
       <div

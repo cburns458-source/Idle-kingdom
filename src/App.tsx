@@ -502,8 +502,10 @@ export default function App() {
     )
   }
 
+  const deathLocked = isDeathPaused(save) || pauseRemainingMs > 0
+
   function beginTravel(destinationId: string) {
-    if (travel) return
+    if (travel || deathLocked) return
     if (!canTravelTo(database.launch, save.currentLocationId, destinationId, browseMapId)) {
       return
     }
@@ -518,6 +520,10 @@ export default function App() {
   }
 
   function startActivity(activityId: string) {
+    if (deathLocked) {
+      setActivityError('Cannot change activities while recovering from defeat.')
+      return
+    }
     const result = validateActivityStart(database.launch, save, activityId)
     if (!result.ok) {
       setActivityError(result.reason)
@@ -532,6 +538,7 @@ export default function App() {
   }
 
   function stopActivity() {
+    if (deathLocked) return
     setActivityError(null)
     setActionProgress(0)
     setLastMessage(null)
@@ -591,12 +598,12 @@ export default function App() {
                       <h2>Recovering</h2>
                       <p className="muted">Death pause</p>
                     </div>
-                    <button type="button" className="btn secondary" onClick={stopActivity}>
-                      Stop
-                    </button>
                   </div>
                   <p className="danger-note">
                     Resuming in {Math.ceil(pauseRemainingMs / 1000)}s…
+                  </p>
+                  <p className="muted tiny">
+                    Travel and activities are locked until recovery finishes.
                   </p>
                   {lastMessage && <p className="loot-message">{lastMessage}</p>}
                 </section>
@@ -607,6 +614,7 @@ export default function App() {
                 currentActivityId={save.currentActivityId}
                 activityError={activityError}
                 requirementHint={requirementHint}
+                actionsLocked={deathLocked}
                 onStartActivity={startActivity}
                 onStopActivity={stopActivity}
                 onOpenMap={() => {
@@ -633,7 +641,10 @@ export default function App() {
               onSelect={setSelectedLocationId}
               onTravel={beginTravel}
               onShowWorldMap={() => setBrowseMapId(MAIN_MAP_ID)}
-              travelDisabled={Boolean(travel)}
+              travelDisabled={Boolean(travel) || deathLocked}
+              travelLockReason={
+                deathLocked ? 'Cannot travel while recovering from defeat.' : undefined
+              }
             />
           )}
 

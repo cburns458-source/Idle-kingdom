@@ -57,6 +57,18 @@ describe('travel rules', () => {
     expect(next.currentActionId).toBeNull()
   })
 
+  it('blocks travel arrival during death pause', () => {
+    const now = Date.parse('2026-01-01T00:00:00.000Z')
+    const save = {
+      currentLocationId: 'LOC-0002',
+      currentActivityId: 'ACT-0001',
+      activityStartedAt: '2026-01-01T00:00:00.000Z',
+      deathPauseUntil: new Date(now + 30_000).toISOString(),
+    }
+    const next = applyTravelArrival(save, 'LOC-0001', now + 1000)
+    expect(next).toEqual(save)
+  })
+
   it('opens cave sub-map from the cave entrance location', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const entrance = launch.Locations.find((location) => location['Location ID'] === 'LOC-0010')!

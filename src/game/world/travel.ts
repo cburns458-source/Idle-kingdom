@@ -126,7 +126,10 @@ export function stopPrimaryActivity<
     combatRoundStartedAt?: string | null
     deathPauseUntil?: string | null
   },
->(save: T): T {
+>(save: T, nowMs: number = Date.now()): T {
+  if (save.deathPauseUntil && Date.parse(save.deathPauseUntil) > nowMs) {
+    return save
+  }
   return {
     ...save,
     currentActivityId: null,
@@ -149,10 +152,14 @@ export function applyTravelArrival<
     currentActionId?: string | null
     actionStartedAt?: string | null
     actionDurationMs?: number | null
+    deathPauseUntil?: string | null
   },
->(save: T, destinationLocationId: string): T {
+>(save: T, destinationLocationId: string, nowMs: number = Date.now()): T {
+  if (save.deathPauseUntil && Date.parse(save.deathPauseUntil) > nowMs) {
+    return save
+  }
   return {
-    ...stopPrimaryActivity(save),
+    ...stopPrimaryActivity(save, nowMs),
     currentLocationId: destinationLocationId,
   }
 }
