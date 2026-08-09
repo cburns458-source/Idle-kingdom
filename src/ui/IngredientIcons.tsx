@@ -19,7 +19,7 @@ export function IngredientIconList({ ingredients }: { ingredients: IngredientIco
         const short = entry.owned < entry.need
         const name = entry.item?.['Display Name'] ?? entry.itemId
         const tipId = entry.itemId
-        const tipText = `${name}\n×${entry.need} needed · have ${entry.owned}`
+        const tipText = `${name}\n${entry.owned}`
         return (
           <li key={entry.itemId}>
             <IngredientTipTile
