@@ -1,5 +1,6 @@
 import { equippedActionTimeReductionPercent } from '../equipment/loadout'
 import type { ActionRow, GameDatabase } from '../data/types'
+import { equippedEnchantmentGatheringMultiplier } from '../projects/enchantments'
 import type { PlayerSave } from '../save/types'
 import { getSkillProgress } from './xp'
 
@@ -22,7 +23,8 @@ export function gatheringDurationMs(
       : 1
   const atr = equippedActionTimeReductionPercent(db, save)
   const reductionFactor = Math.max(0.01, 1 - atr / 100)
-  return Math.max(0, baseSeconds * multiplier * reductionFactor * 1000)
+  const enchantFactor = equippedEnchantmentGatheringMultiplier(db, save)
+  return Math.max(0, baseSeconds * multiplier * reductionFactor * enchantFactor * 1000)
 }
 
 export function isBelowProficiency(save: PlayerSave, action: ActionRow): boolean {

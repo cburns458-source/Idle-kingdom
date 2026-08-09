@@ -1,4 +1,5 @@
 import type { EquipmentRow, GameDatabase } from '../data/types'
+import { equippedEnchantmentDamageBonus } from '../projects/enchantments'
 import type { PlayerSave } from '../save/types'
 import { configNumber } from '../activity/gathering'
 
@@ -18,18 +19,22 @@ export function playerDamageRange(
   db: GameDatabase,
   save: PlayerSave,
 ): { min: number; max: number } {
+  const enchantBonus = equippedEnchantmentDamageBonus(db, save)
   const weaponId = save.equipment.slots[WEAPON_SLOT]?.itemId
   if (weaponId) {
     const weapon = db.Equipment.find((entry) => entry['Item ID'] === weaponId)
     const min = weapon?.['Min Damage']
     const max = weapon?.['Max Damage']
     if (typeof min === 'number' && typeof max === 'number') {
-      return { min, max: Math.max(min, max) }
+      return {
+        min: min + enchantBonus,
+        max: Math.max(min, max) + enchantBonus,
+      }
     }
   }
   return {
-    min: configNumber(db, 'unarmed_min_damage', 10),
-    max: configNumber(db, 'unarmed_max_damage', 30),
+    min: configNumber(db, 'unarmed_min_damage', 10) + enchantBonus,
+    max: configNumber(db, 'unarmed_max_damage', 30) + enchantBonus,
   }
 }
 

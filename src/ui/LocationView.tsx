@@ -1,6 +1,10 @@
 import type { ReactNode } from 'react'
 import { locationAssetPath } from '../game/assets/assetMap'
-import type { ActivityRow, DatabaseIndexes, LocationRow } from '../game/data/types'
+import type { ActivityRow, DatabaseIndexes, GameDatabase, LocationRow } from '../game/data/types'
+import {
+  specialProductionStationsAt,
+  type SpecialProductionStation,
+} from '../game/projects/projects'
 import {
   CASTLE_GATEWAY_ID,
   CASTLE_MAP_ID,
@@ -11,6 +15,7 @@ import { getLocationMapId } from '../game/world/travel'
 
 interface LocationViewProps {
   indexes: DatabaseIndexes
+  db: GameDatabase
   location: LocationRow
   currentActivityId: string | null
   activityError: string | null
@@ -18,6 +23,7 @@ interface LocationViewProps {
   statusPanel?: ReactNode
   onStartActivity: (activityId: string) => void
   onStopActivity: () => void
+  onOpenSpecialProduction: (station: SpecialProductionStation) => void
   onOpenMap: () => void
   onOpenSubMap?: () => void
   requirementHint?: (activity: ActivityRow) => string | null
@@ -35,6 +41,7 @@ function MapIcon() {
 
 export function LocationView({
   indexes,
+  db,
   location,
   currentActivityId,
   activityError,
@@ -42,12 +49,14 @@ export function LocationView({
   statusPanel,
   onStartActivity,
   onStopActivity,
+  onOpenSpecialProduction,
   onOpenMap,
   onOpenSubMap,
   requirementHint,
 }: LocationViewProps) {
   const locationId = location['Location ID']
   const activities = indexes.activitiesByLocationId.get(locationId) ?? []
+  const specialStations = specialProductionStationsAt(db, locationId)
   const mapId = getLocationMapId(location)
   const isSubMapLocation = mapId === CAVE_MAP_ID || mapId === CASTLE_MAP_ID
   const showSubMapEntrance =
@@ -136,7 +145,7 @@ export function LocationView({
           !showSubMapEntrance && (
             <section className="panel glass-panel location-activities">
               <h2>Activities</h2>
-              {activities.length === 0 ? (
+              {activities.length === 0 && specialStations.length === 0 ? (
                 <p className="muted">No activities at this location.</p>
               ) : (
                 <ul className="interaction-list">
@@ -178,6 +187,23 @@ export function LocationView({
                       </li>
                     )
                   })}
+                  {specialStations.map((station) => (
+                    <li key={`${station.facility['Facility ID']}-${station.skillId}`}>
+                      <div>
+                        <strong>{station.label}</strong>
+                        <p className="muted">{station.facility['Display Name']}</p>
+                        <p className="muted tiny">Instant Special Production</p>
+                      </div>
+                      <button
+                        type="button"
+                        className="btn primary"
+                        disabled={actionsLocked}
+                        onClick={() => onOpenSpecialProduction(station)}
+                      >
+                        Open
+                      </button>
+                    </li>
+                  ))}
                 </ul>
               )}
             </section>

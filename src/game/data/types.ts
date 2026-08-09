@@ -1,9 +1,10 @@
 /** Raw compact database shape (source field names preserved). */
 
 import type { EnemyRow } from './enemyTypes'
+import type { EnchantmentRow, ProjectRow } from './projectTypes'
 import type { RecipeRow } from './recipeTypes'
 
-export type { EnemyRow, RecipeRow }
+export type { EnemyRow, EnchantmentRow, ProjectRow, RecipeRow }
 
 export type ReleasePhase = 'Launch' | 'Expansion' | string
 export type RecordStatus = 'Confirmed' | 'Planned' | 'Needs Data' | 'Proposed' | string
@@ -236,7 +237,7 @@ export interface GameDatabase {
   Items: ItemRow[]
   Equipment: EquipmentRow[]
   Statistics: Record<string, unknown>[]
-  Enchantments: Record<string, unknown>[]
+  Enchantments: EnchantmentRow[]
   Maps: MapRow[]
   Locations: LocationRow[]
   TravelConnections: TravelConnectionRow[]
@@ -248,7 +249,7 @@ export interface GameDatabase {
   Enemies: EnemyRow[]
   RewardEntries: RewardEntryRow[]
   Recipes: RecipeRow[]
-  Projects: Record<string, unknown>[]
+  Projects: ProjectRow[]
   NPCs: NpcRow[]
   Shops: ShopRow[]
   Quests: Record<string, unknown>[]

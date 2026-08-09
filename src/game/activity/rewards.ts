@@ -31,14 +31,22 @@ export function addItemToInventory(
   save: PlayerSave,
   itemId: string,
   quantity: number,
+  enchantmentId: string | null = null,
 ): PlayerSave {
   if (quantity <= 0) return save
   const inventory = save.inventory.map((stack) => ({ ...stack }))
-  const existing = inventory.find((stack) => stack.itemId === itemId)
+  const existing = inventory.find(
+    (stack) =>
+      stack.itemId === itemId && (stack.enchantmentId ?? null) === (enchantmentId ?? null),
+  )
   if (existing) {
     existing.quantity += quantity
   } else {
-    inventory.push({ itemId, quantity })
+    inventory.push({
+      itemId,
+      quantity,
+      ...(enchantmentId ? { enchantmentId } : {}),
+    })
   }
   return { ...save, inventory }
 }

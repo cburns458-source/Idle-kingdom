@@ -16,12 +16,16 @@ export interface SkillProgress {
 export interface InventoryStack {
   itemId: string
   quantity: number
+  /** Optional Arcana enchantment applied to this stack. */
+  enchantmentId?: string | null
 }
 
 /** Equipped contents for one slot. Food may hold any stack size. */
 export interface EquippedStack {
   itemId: string
   quantity: number
+  /** Optional Arcana enchantment applied to this equipped item. */
+  enchantmentId?: string | null
 }
 
 export interface EquipmentLoadout {

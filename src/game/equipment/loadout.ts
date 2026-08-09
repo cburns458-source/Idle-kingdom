@@ -90,7 +90,12 @@ export function unequipSlot(save: PlayerSave, slotId: string): PlayerSave {
   const equipped = slotStack(save, slotId)
   let next = setSlot(save, slotId, null)
   if (equipped && equipped.quantity > 0) {
-    next = addItemToInventory(next, equipped.itemId, equipped.quantity)
+    next = addItemToInventory(
+      next,
+      equipped.itemId,
+      equipped.quantity,
+      equipped.enchantmentId ?? null,
+    )
   }
   return next
 }
@@ -124,6 +129,8 @@ export function equipItemFromInventory(
   let next = save
   const current = slotStack(next, slotId)
 
+  const enchantmentId = invStack.enchantmentId ?? null
+
   if (isFoodSlot(slotId)) {
     const moveQty = invStack.quantity
     if (current && current.itemId !== itemId) {
@@ -131,14 +138,28 @@ export function equipItemFromInventory(
     }
     const existingQty = current?.itemId === itemId ? current.quantity : 0
     next = removeItemQuantity(next, itemId, moveQty)
-    return { ok: true, save: setSlot(next, slotId, { itemId, quantity: existingQty + moveQty }) }
+    return {
+      ok: true,
+      save: setSlot(next, slotId, {
+        itemId,
+        quantity: existingQty + moveQty,
+        ...(enchantmentId ? { enchantmentId } : {}),
+      }),
+    }
   }
 
   if (current) {
     next = unequipSlot(next, slotId)
   }
   next = removeItemQuantity(next, itemId, 1)
-  return { ok: true, save: setSlot(next, slotId, { itemId, quantity: 1 }) }
+  return {
+    ok: true,
+    save: setSlot(next, slotId, {
+      itemId,
+      quantity: 1,
+      ...(enchantmentId ? { enchantmentId } : {}),
+    }),
+  }
 }
 
 /** Place a stack directly into a slot (demo aids / migrations). Removes matching inventory. */

@@ -47,6 +47,8 @@ import {
   resolveProductionProgress,
 } from './game/production/engine'
 import { getRecipe, isStandardProductionActivity } from './game/production/recipes'
+import { completeSpecialProject } from './game/projects/engine'
+import type { SpecialProductionStation } from './game/projects/projects'
 import { totalLevel, totalSkillXp } from './game/skills/totals'
 import { ActivityPanel } from './ui/ActivityPanel'
 import { BottomNav, type AppScreen } from './ui/BottomNav'
@@ -55,6 +57,7 @@ import { InventoryView } from './ui/InventoryView'
 import { LocationView } from './ui/LocationView'
 import { NamePrompt } from './ui/NamePrompt'
 import { ProductionPicker, ProductionProgress } from './ui/ProductionPanel'
+import { ProjectPicker } from './ui/ProjectPanel'
 import { SkillsView } from './ui/SkillsView'
 import { TopHud } from './ui/TopHud'
 import { TravelOverlay } from './ui/TravelOverlay'
@@ -88,6 +91,7 @@ export default function App() {
   const [pauseRemainingMs, setPauseRemainingMs] = useState(0)
   const [renamingCharacter, setRenamingCharacter] = useState(false)
   const [productionPickerActivityId, setProductionPickerActivityId] = useState<string | null>(null)
+  const [specialStation, setSpecialStation] = useState<SpecialProductionStation | null>(null)
   const bootRef = useRef(boot)
   bootRef.current = boot
 
@@ -592,6 +596,7 @@ export default function App() {
     }
     const connection = findConnection(database.launch, save.currentLocationId, destinationId)
     setProductionPickerActivityId(null)
+    setSpecialStation(null)
     // Interrupt primary activity immediately; refund remaining production materials.
     if (save.productionRecipeId) {
       updateSave(cancelProductionActivity(database.launch, save))
@@ -623,9 +628,11 @@ export default function App() {
 
     const activityRow = database.launchIndexes.activitiesById.get(activityId)
     if (activityRow && isStandardProductionActivity(database.launch, activityRow)) {
+      setSpecialStation(null)
       setProductionPickerActivityId(activityId)
       return
     }
+    setSpecialStation(null)
 
     const started = beginActivitySave(save, activityId)
     const generated = generateNextAction(database.launch, started, activityId)
@@ -652,12 +659,55 @@ export default function App() {
     updateSave(queued.save)
   }
 
+  function openSpecialProduction(station: SpecialProductionStation) {
+    if (deathLocked) {
+      setActivityError('Cannot use Special Production while recovering from defeat.')
+      return
+    }
+    setProductionPickerActivityId(null)
+    setActivityError(null)
+    setSpecialStation(station)
+  }
+
+  function confirmSpecialProject(
+    projectId: string,
+    quantity: number,
+    enchantSlotId: string | null,
+  ) {
+    if (!specialStation) return
+    const result = completeSpecialProject(
+      database.launch,
+      save,
+      projectId,
+      quantity,
+      enchantSlotId,
+    )
+    if (!result.ok) {
+      setActivityError(result.reason)
+      return
+    }
+    setSpecialStation(null)
+    setActivityError(null)
+    setLastMessage(
+      [
+        `Completed ${result.outputLabel}`,
+        result.outputQty > 1 ? `×${result.outputQty}` : null,
+        result.xpGained > 0 ? `+${result.xpGained.toLocaleString()} XP` : null,
+        result.goldSpent > 0 ? `-${result.goldSpent} gold` : null,
+      ]
+        .filter(Boolean)
+        .join(' · '),
+    )
+    updateSave(withRecalculatedVitals(database.launch, result.save))
+  }
+
   function stopActivity() {
     if (deathLocked) return
     setActivityError(null)
     setActionProgress(0)
     setLastMessage(null)
     setProductionPickerActivityId(null)
+    setSpecialStation(null)
     if (save.productionRecipeId) {
       updateSave(cancelProductionActivity(database.launch, save))
       return
@@ -688,6 +738,7 @@ export default function App() {
           {screen === 'location' && (
             <LocationView
               indexes={database.launchIndexes}
+              db={database.launch}
               location={location}
               currentActivityId={save.currentActivityId}
               activityError={activityError}
@@ -695,6 +746,7 @@ export default function App() {
               actionsLocked={deathLocked}
               onStartActivity={startActivity}
               onStopActivity={stopActivity}
+              onOpenSpecialProduction={openSpecialProduction}
               onOpenMap={() => {
                 setBrowseMapId(MAIN_MAP_ID)
                 setSelectedLocationId(save.currentLocationId)
@@ -708,7 +760,16 @@ export default function App() {
               }}
               statusPanel={
                 <>
-                  {pickerActivity && (
+                  {specialStation && (
+                    <ProjectPicker
+                      db={database.launch}
+                      save={save}
+                      station={specialStation}
+                      onCancel={() => setSpecialStation(null)}
+                      onConfirm={confirmSpecialProject}
+                    />
+                  )}
+                  {pickerActivity && !specialStation && (
                     <ProductionPicker
                       db={database.launch}
                       save={save}
@@ -744,7 +805,8 @@ export default function App() {
                     !inCombat &&
                     !inProduction &&
                     pauseRemainingMs <= 0 &&
-                    !pickerActivity && (
+                    !pickerActivity &&
+                    !specialStation && (
                       <ActivityPanel
                         activity={activity}
                         action={currentAction ?? null}
@@ -885,6 +947,13 @@ function SettingsPanel({
     onChangeSave(withRecalculatedVitals(database.launch, next))
   }
 
+  function grantSmithingMaterials() {
+    let next = addItemToInventory(save, 'ITEM-0074', 20)
+    next = addItemToInventory(next, 'ITEM-0214', 10)
+    next = addItemToInventory(next, 'ITEM-0084', 30)
+    onChangeSave(withRecalculatedVitals(database.launch, next))
+  }
+
   function raiseAlchemyToLevel10() {
     const alchemyId = 'SKL-0010'
     const xpAtLevel10 =
@@ -941,10 +1010,13 @@ function SettingsPanel({
         <button type="button" className="btn secondary" onClick={raiseAlchemyToLevel10}>
           Set Alchemy to level 10
         </button>
+        <button type="button" className="btn secondary" onClick={grantSmithingMaterials}>
+          Give smithing materials
+        </button>
       </div>
       <p className="muted tiny">
-        Demo aids: food, mining gear (Mining 35 to equip), Potato / Copper Ore / Wild Roots, and
-        Alchemy 10 for Apothecary recipes.
+        Demo aids: food, mining gear, production mats, Alchemy 10, and Copper Bar / Cedar Timber /
+        Leather Straps for Smithing.
       </p>
     </section>
   )
