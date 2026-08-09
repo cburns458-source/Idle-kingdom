@@ -73,7 +73,9 @@ import { LocationView } from './ui/LocationView'
 import { NamePrompt } from './ui/NamePrompt'
 import { NpcPanel } from './ui/NpcPanel'
 import { ProductionPicker, ProductionProgress } from './ui/ProductionPanel'
+import { ProjectCompletePopup } from './ui/ProjectCompletePopup'
 import { ProjectPicker } from './ui/ProjectPanel'
+import { getProject } from './game/projects/projects'
 import { ShopPanel } from './ui/ShopPanel'
 import { SkillsView } from './ui/SkillsView'
 import { TopHud } from './ui/TopHud'
@@ -112,6 +114,10 @@ export default function App() {
   const [activeShopId, setActiveShopId] = useState<string | null>(null)
   const [activeNpcId, setActiveNpcId] = useState<string | null>(null)
   const [afkSummary, setAfkSummary] = useState<AfkSummaryData | null>(null)
+  const [projectCompletePopup, setProjectCompletePopup] = useState<{
+    projectName: string
+    lines: string[]
+  } | null>(null)
   const bootRef = useRef(boot)
   bootRef.current = boot
 
@@ -748,6 +754,17 @@ export default function App() {
       setActivityError(result.reason)
       return
     }
+    const projectName =
+      getProject(database.launch, projectId)?.['Display Name'] ?? result.outputLabel
+    const lines = [
+      result.outputQty > 1
+        ? `${result.outputLabel} ×${result.outputQty}`
+        : result.outputLabel,
+      result.xpGained > 0 ? `+${result.xpGained.toLocaleString()} XP` : null,
+      result.goldSpent > 0 ? `Spent ${result.goldSpent.toLocaleString()} gold` : null,
+      quantity > 1 ? `Crafted ${quantity} times` : null,
+    ].filter(Boolean) as string[]
+
     setSpecialStation(null)
     setActivityError(null)
     setLastMessage(
@@ -760,6 +777,7 @@ export default function App() {
         .filter(Boolean)
         .join(' · '),
     )
+    setProjectCompletePopup({ projectName, lines })
     updateSave(withRecalculatedVitals(database.launch, result.save))
   }
 
@@ -1024,6 +1042,14 @@ export default function App() {
 
         {afkSummary ? (
           <AfkSummaryPanel summary={afkSummary} onClose={() => setAfkSummary(null)} />
+        ) : null}
+
+        {projectCompletePopup ? (
+          <ProjectCompletePopup
+            projectName={projectCompletePopup.projectName}
+            lines={projectCompletePopup.lines}
+            onClose={() => setProjectCompletePopup(null)}
+          />
         ) : null}
       </main>
     </div>
