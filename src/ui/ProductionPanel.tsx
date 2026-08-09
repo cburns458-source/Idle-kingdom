@@ -11,6 +11,7 @@ import {
   recipesForActivity,
 } from '../game/production/recipes'
 import type { PlayerSave } from '../game/save/types'
+import { IngredientIconList } from './IngredientIcons'
 import { ItemIcon } from './itemIcons'
 
 interface ProductionPickerProps {
@@ -135,19 +136,14 @@ function RecipeDetails({
           </p>
         </div>
       </div>
-      <ul className="plain-list recipe-ingredients">
-        {ingredients.map((ingredient) => {
-          const item = db.Items.find((row) => row['Item ID'] === ingredient.itemId)
-          const owned = inventoryCount(save, ingredient.itemId)
-          const short = owned < ingredient.quantity
-          return (
-            <li key={ingredient.itemId} className={short ? 'danger-note' : undefined}>
-              {item?.['Display Name'] ?? ingredient.itemId} ×{ingredient.quantity}{' '}
-              <span className="muted">(have {owned})</span>
-            </li>
-          )
-        })}
-      </ul>
+      <IngredientIconList
+        ingredients={ingredients.map((ingredient) => ({
+          itemId: ingredient.itemId,
+          item: db.Items.find((row) => row['Item ID'] === ingredient.itemId),
+          need: ingredient.quantity,
+          owned: inventoryCount(save, ingredient.itemId),
+        }))}
+      />
     </div>
   )
 }

@@ -15,6 +15,7 @@ import {
   type SpecialProductionStation,
 } from '../game/projects/projects'
 import type { PlayerSave } from '../game/save/types'
+import { IngredientIconList } from './IngredientIcons'
 import { ItemIcon } from './itemIcons'
 
 interface ProjectPickerProps {
@@ -197,35 +198,29 @@ function ProjectDetails({
           {enchantment?.Effect && <p className="muted tiny">{enchantment.Effect}</p>}
         </div>
       </div>
-      <ul className="plain-list recipe-ingredients">
-        {skills.map((requirement) => {
-          const skill = db.Skills.find((row) => row['Skill ID'] === requirement.skillId)
-          const level = save.skills.find((row) => row.skillId === requirement.skillId)?.level ?? 1
-          const short = level < requirement.level
-          return (
-            <li key={`${requirement.skillId}-${requirement.level}`} className={short ? 'danger-note' : undefined}>
-              {skill?.['Display Name'] ?? requirement.skillId} {requirement.level}{' '}
-              <span className="muted">(have {level})</span>
-            </li>
-          )
-        })}
-        {inputs.map((input) => {
-          const item = db.Items.find((row) => row['Item ID'] === input.itemId)
-          const owned = inventoryCount(save, input.itemId)
-          const short = owned < input.quantity
-          return (
-            <li key={input.itemId} className={short ? 'danger-note' : undefined}>
-              {item?.['Display Name'] ?? input.itemId} ×{input.quantity}{' '}
-              <span className="muted">(have {owned})</span>
-            </li>
-          )
-        })}
-        {project['Gold Cost'] > 0 && (
-          <li className={save.gold < project['Gold Cost'] ? 'danger-note' : undefined}>
-            Gold ×{project['Gold Cost']} <span className="muted">(have {save.gold})</span>
-          </li>
-        )}
-      </ul>
+      {skills.length > 0 && (
+        <p className="muted tiny project-skill-reqs">
+          {skills
+            .map((requirement) => {
+              const skill = db.Skills.find((row) => row['Skill ID'] === requirement.skillId)
+              return `${skill?.['Display Name'] ?? requirement.skillId} ${requirement.level}`
+            })
+            .join(' · ')}
+        </p>
+      )}
+      <IngredientIconList
+        ingredients={inputs.map((input) => ({
+          itemId: input.itemId,
+          item: db.Items.find((row) => row['Item ID'] === input.itemId),
+          need: input.quantity,
+          owned: inventoryCount(save, input.itemId),
+        }))}
+      />
+      {project['Gold Cost'] > 0 && (
+        <p className={save.gold < project['Gold Cost'] ? 'danger-note tiny' : 'muted tiny'}>
+          Gold ×{project['Gold Cost']} (have {save.gold})
+        </p>
+      )}
     </div>
   )
 }
