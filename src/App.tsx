@@ -924,6 +924,70 @@ function SettingsPanel({
   const copperOreId = 'ITEM-0003'
   const wildRootsId = 'ITEM-0030'
 
+  const launchSkills = database.launch.Skills
+  const launchItems = database.launch.Items
+  const levelCap = configNumber(database.launch, 'display_level_cap', 100)
+
+  const [selectedSkillId, setSelectedSkillId] = useState(
+    launchSkills[0]?.['Skill ID'] ?? 'SKL-0001',
+  )
+  const [itemSearch, setItemSearch] = useState('')
+  const filteredItems = useMemo(() => {
+    const needle = itemSearch.trim().toLowerCase()
+    const list = !needle
+      ? launchItems
+      : launchItems.filter(
+          (item) =>
+            item['Display Name'].toLowerCase().includes(needle) ||
+            item['Internal Key'].toLowerCase().includes(needle) ||
+            item['Item ID'].toLowerCase().includes(needle),
+        )
+    return list.slice(0, 80)
+  }, [itemSearch, launchItems])
+  const [selectedItemId, setSelectedItemId] = useState(filteredItems[0]?.['Item ID'] ?? '')
+
+  useEffect(() => {
+    if (filteredItems.length === 0) return
+    if (!filteredItems.some((item) => item['Item ID'] === selectedItemId)) {
+      setSelectedItemId(filteredItems[0]!['Item ID'])
+    }
+  }, [filteredItems, selectedItemId])
+
+  function xpAtLevel(level: number): number {
+    const row = database.launch.XPCurve.find((entry) => entry.Level === level)
+    return row?.['Total XP at Level'] ?? 0
+  }
+
+  function raiseSelectedSkillBy10() {
+    if (!selectedSkillId) return
+    const current =
+      save.skills.find((skill) => skill.skillId === selectedSkillId)?.level ?? 1
+    const nextLevel = Math.min(levelCap, current + 10)
+    const nextXp = Math.max(
+      save.skills.find((skill) => skill.skillId === selectedSkillId)?.xp ?? 0,
+      xpAtLevel(nextLevel),
+    )
+    const skills = save.skills.map((skill) =>
+      skill.skillId === selectedSkillId
+        ? { ...skill, level: nextLevel, xp: nextXp }
+        : skill,
+    )
+    if (!skills.some((skill) => skill.skillId === selectedSkillId)) {
+      skills.push({ skillId: selectedSkillId, level: nextLevel, xp: nextXp })
+    }
+    onChangeSave({ ...save, skills })
+  }
+
+  function grantSelectedItem100() {
+    if (!selectedItemId) return
+    onChangeSave(
+      withRecalculatedVitals(
+        database.launch,
+        addItemToInventory(save, selectedItemId, 100),
+      ),
+    )
+  }
+
   function grantTestFood() {
     const withItems = addItemToInventory(save, bakedPotatoId, 5)
     const equipped = equipItemFromInventory(database.launch, withItems, bakedPotatoId)
@@ -1005,6 +1069,84 @@ function SettingsPanel({
         </button>
       </div>
 
+      <div className="menu-demo-block">
+        <p className="muted tiny">Raise skill +10</p>
+        <label className="field-label" htmlFor="menu-skill-select">
+          Skill
+        </label>
+        <select
+          id="menu-skill-select"
+          className="text-input"
+          value={selectedSkillId}
+          onChange={(event) => setSelectedSkillId(event.target.value)}
+        >
+          {launchSkills.map((skill) => {
+            const level =
+              save.skills.find((entry) => entry.skillId === skill['Skill ID'])?.level ?? 1
+            return (
+              <option key={skill['Skill ID']} value={skill['Skill ID']}>
+                {skill['Display Name']} (Lv {level})
+              </option>
+            )
+          })}
+        </select>
+        <button type="button" className="btn primary" onClick={raiseSelectedSkillBy10}>
+          Raise skill by 10 levels
+        </button>
+      </div>
+
+      <div className="menu-demo-block">
+        <p className="muted tiny">Add items ×100</p>
+        <label className="field-label" htmlFor="menu-item-search">
+          Search items
+        </label>
+        <input
+          id="menu-item-search"
+          className="text-input"
+          type="search"
+          enterKeyHint="search"
+          placeholder="Type an item name…"
+          value={itemSearch}
+          onChange={(event) => setItemSearch(event.target.value)}
+          autoComplete="off"
+        />
+        <label className="field-label" htmlFor="menu-item-select">
+          Item
+          {itemSearch.trim()
+            ? ` (${filteredItems.length} shown)`
+            : ` (${launchItems.length})`}
+        </label>
+        {filteredItems.length === 0 ? (
+          <p className="muted tiny">No items match that search.</p>
+        ) : (
+          <select
+            id="menu-item-select"
+            className="text-input"
+            value={
+              filteredItems.some((item) => item['Item ID'] === selectedItemId)
+                ? selectedItemId
+                : filteredItems[0]!['Item ID']
+            }
+            onChange={(event) => setSelectedItemId(event.target.value)}
+            size={Math.min(6, Math.max(3, filteredItems.length))}
+          >
+            {filteredItems.map((item) => (
+              <option key={item['Item ID']} value={item['Item ID']}>
+                {item['Display Name']}
+              </option>
+            ))}
+          </select>
+        )}
+        <button
+          type="button"
+          className="btn primary"
+          disabled={!selectedItemId || filteredItems.length === 0}
+          onClick={grantSelectedItem100}
+        >
+          Add 100 items
+        </button>
+      </div>
+
       <div className="button-row">
         <button type="button" className="btn primary" onClick={grantTestFood}>
           Add & equip Baked Potato ×5
@@ -1026,8 +1168,8 @@ function SettingsPanel({
         </button>
       </div>
       <p className="muted tiny">
-        Demo aids: food, mining gear, production mats, Alchemy 10, smithing mats, and Enchanting
-        Tablet / Essence / Fernleaf / Bull Horns for Arcana.
+        Demo aids: raise any skill +10, grant ×100 of a searched item, plus quick mats for food,
+        mining, production, smithing, and Arcana.
       </p>
     </section>
   )

@@ -163,6 +163,26 @@
   width: min(100%, 22rem);
 }
 
+.menu-demo-block {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0.85rem 0;
+  padding: 0.7rem 0.75rem;
+  border: 1px solid rgba(212, 175, 55, 0.22);
+  border-radius: 0.85rem;
+  background: rgba(24, 16, 10, 0.35);
+}
+
+.menu-demo-block .btn {
+  margin-top: 0.25rem;
+}
+
+.menu-demo-block select.text-input[size] {
+  min-height: 6.5rem;
+  padding: 0.35rem;
+  overflow: auto;
+}
+
 .menu-name-block {
   display: flex;
   flex-direction: column;
