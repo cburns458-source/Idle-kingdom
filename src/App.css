@@ -717,6 +717,22 @@
   margin-bottom: 0.15rem;
 }
 
+.production-picker select.text-input[size] {
+  min-height: 6.5rem;
+  padding: 0.35rem;
+  overflow: auto;
+}
+
+.production-picker select.text-input[size] option {
+  padding: 0.35rem 0.45rem;
+  border-radius: 0.35rem;
+}
+
+.production-picker input[type='search'].text-input {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
 .recipe-details {
   display: grid;
   gap: 0.45rem;
