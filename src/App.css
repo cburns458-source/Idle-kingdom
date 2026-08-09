@@ -1097,6 +1097,14 @@
   white-space: nowrap;
   pointer-events: none;
   z-index: 5;
+  /* Prefer below the chip so panel tops are less likely to clip the tip. */
+  bottom: auto;
+  top: calc(100% + 0.3rem);
+}
+
+.activity-panel.panel,
+.combat-panel.panel {
+  overflow: visible;
 }
 
 .action-reward-xp {
