@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react'
 import { locationAssetPath } from '../game/assets/assetMap'
 import type { ActivityRow, DatabaseIndexes, LocationRow } from '../game/data/types'
-import { CASTLE_GATEWAY_ID, CAVE_ENTRANCE_ID } from '../game/world/constants'
 
 interface LocationViewProps {
   indexes: DatabaseIndexes
@@ -13,7 +12,6 @@ interface LocationViewProps {
   onStartActivity: (activityId: string) => void
   onStopActivity: () => void
   onOpenMap: () => void
-  onOpenSubMap?: () => void
   requirementHint?: (activity: ActivityRow) => string | null
 }
 
@@ -38,14 +36,10 @@ export function LocationView({
   onStartActivity,
   onStopActivity,
   onOpenMap,
-  onOpenSubMap,
   requirementHint,
 }: LocationViewProps) {
   const locationId = location['Location ID']
   const activities = indexes.activitiesByLocationId.get(locationId) ?? []
-  const showSubMap =
-    Boolean(onOpenSubMap) &&
-    (locationId === CAVE_ENTRANCE_ID || locationId === CASTLE_GATEWAY_ID)
 
   return (
     <section
@@ -73,14 +67,6 @@ export function LocationView({
             <MapIcon />
           </button>
         </header>
-
-        {showSubMap && (
-          <div className="location-overlay-actions">
-            <button type="button" className="btn secondary glass-btn" onClick={onOpenSubMap}>
-              {locationId === CAVE_ENTRANCE_ID ? 'Enter Caves' : 'Enter Castle'}
-            </button>
-          </div>
-        )}
 
         {statusPanel}
 

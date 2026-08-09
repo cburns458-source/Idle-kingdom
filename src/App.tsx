@@ -13,13 +13,7 @@ import { loadDatabase, type LoadedDatabase } from './game/data/loadDatabase'
 import type { ActivityRow } from './game/data/types'
 import { loadOrCreateSave, writeSave } from './game/save/saveStore'
 import type { PlayerSave } from './game/save/types'
-import {
-  CASTLE_GATEWAY_ID,
-  CASTLE_MAP_ID,
-  CAVE_ENTRANCE_ID,
-  CAVE_MAP_ID,
-  MAIN_MAP_ID,
-} from './game/world/constants'
+import { MAIN_MAP_ID } from './game/world/constants'
 import {
   applyTravelArrival,
   canTravelTo,
@@ -579,12 +573,6 @@ export default function App() {
               onStopActivity={stopActivity}
               onOpenMap={() => {
                 setBrowseMapId(MAIN_MAP_ID)
-                setSelectedLocationId(save.currentLocationId)
-                setScreen('map')
-              }}
-              onOpenSubMap={() => {
-                if (save.currentLocationId === CAVE_ENTRANCE_ID) setBrowseMapId(CAVE_MAP_ID)
-                if (save.currentLocationId === CASTLE_GATEWAY_ID) setBrowseMapId(CASTLE_MAP_ID)
                 setSelectedLocationId(save.currentLocationId)
                 setScreen('map')
               }}
