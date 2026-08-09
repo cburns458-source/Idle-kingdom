@@ -10,7 +10,9 @@ import {
 } from '../game/equipment/tooltips'
 import { withRecalculatedVitals } from '../game/equipment/vitals'
 import { playerDamageRange, playerDamageReduction, playerMaxHp } from '../game/combat/stats'
+import { INVENTORY_SLOT_LIMIT, inventorySlotCount } from '../game/inventory/capacity'
 import { destroyInventoryIndexes } from '../game/inventory/destroy'
+import { sellInventoryIndexes, sellPriceAtLocation } from '../game/inventory/sell'
 import { enchantmentTooltipLines } from '../game/projects/enchantments'
 import type { PlayerSave } from '../game/save/types'
 import {
@@ -23,6 +25,7 @@ import {
 import { ItemIcon, SlotGlyph } from './itemIcons'
 
 type ItemsSubTab = 'items' | 'equipment'
+type BagSelectMode = 'none' | 'destroy' | 'sell'
 
 /** Paper-doll order: 4 columns × 4 rows (spells in the right column). */
 const EQUIPMENT_GRID_ORDER = [
@@ -54,25 +57,35 @@ export function InventoryView({ save, database, onChangeSave }: InventoryViewPro
   const [subTab, setSubTab] = useState<ItemsSubTab>('items')
   const [message, setMessage] = useState<string | null>(null)
   const [heldTip, setHeldTip] = useState<string | null>(null)
-  const [destroyMode, setDestroyMode] = useState(false)
+  const [bagMode, setBagMode] = useState<BagSelectMode>('none')
   const [selectedIndexes, setSelectedIndexes] = useState<Set<number>>(() => new Set())
   const [confirmDestroy, setConfirmDestroy] = useState(false)
+  const [confirmSell, setConfirmSell] = useState(false)
   const db = database.launch
   const damage = playerDamageRange(db, save)
   const maxHp = playerMaxHp(db, save)
   const dr = playerDamageReduction(db, save)
   const selectedCount = selectedIndexes.size
+  const slotCount = inventorySlotCount(save)
   const activeSpellSlot = activeSpellSlotId(db)
   const spellCycleSecondsLeft = Math.ceil(activeSpellSlotRemainingMs(db) / 1000)
+  const selectedSellGold = [...selectedIndexes].reduce((sum, index) => {
+    const stack = save.inventory[index]
+    if (!stack || stack.enchantmentId) return sum
+    const priced = sellPriceAtLocation(db, save, stack.itemId)
+    if (!priced) return sum
+    return sum + priced.unitPrice * stack.quantity
+  }, 0)
 
   function commit(next: PlayerSave) {
     onChangeSave(withRecalculatedVitals(db, next))
   }
 
-  function exitDestroyMode() {
-    setDestroyMode(false)
+  function exitBagMode() {
+    setBagMode('none')
     setSelectedIndexes(new Set())
     setConfirmDestroy(false)
+    setConfirmSell(false)
     setHeldTip(null)
   }
 
@@ -91,7 +104,7 @@ export function InventoryView({ save, database, onChangeSave }: InventoryViewPro
     commit(unequipSlot(save, slotId))
   }
 
-  function toggleDestroySelection(index: number) {
+  function toggleBagSelection(index: number) {
     setSelectedIndexes((current) => {
       const next = new Set(current)
       if (next.has(index)) next.delete(index)
@@ -107,13 +120,26 @@ export function InventoryView({ save, database, onChangeSave }: InventoryViewPro
     setMessage(
       selectedCount === 1 ? 'Destroyed 1 item stack.' : `Destroyed ${selectedCount} item stacks.`,
     )
-    exitDestroyMode()
+    exitBagMode()
+  }
+
+  function confirmSellSelected() {
+    if (selectedCount === 0) return
+    const result = sellInventoryIndexes(db, save, selectedIndexes)
+    if (!result.ok) {
+      setMessage(result.reason)
+      setConfirmSell(false)
+      return
+    }
+    commit(result.save)
+    setMessage(result.message)
+    exitBagMode()
   }
 
   return (
     <section className="inventory-view">
       <section className="panel inventory-head">
-        <h1>Items</h1>
+        <h1>Inventory</h1>
         <dl className="inventory-stat-strip">
           <div>
             <dt>Damage</dt>
@@ -132,7 +158,7 @@ export function InventoryView({ save, database, onChangeSave }: InventoryViewPro
             <dd>{dr}</dd>
           </div>
         </dl>
-        <div className="inventory-subnav" role="tablist" aria-label="Items sections">
+        <div className="inventory-subnav" role="tablist" aria-label="Inventory sections">
           <button
             type="button"
             role="tab"
@@ -154,7 +180,7 @@ export function InventoryView({ save, database, onChangeSave }: InventoryViewPro
             }
             onClick={() => {
               setSubTab('equipment')
-              exitDestroyMode()
+              exitBagMode()
               setHeldTip(null)
             }}
           >
@@ -167,38 +193,68 @@ export function InventoryView({ save, database, onChangeSave }: InventoryViewPro
       {subTab === 'items' ? (
         <section className="panel inventory-bag-panel">
           <div className="inventory-bag-actions">
-            {!destroyMode ? (
-              <button
-                type="button"
-                className="btn secondary"
-                disabled={save.inventory.length === 0}
-                onClick={() => {
-                  setDestroyMode(true)
-                  setSelectedIndexes(new Set())
-                  setConfirmDestroy(false)
-                  setMessage(null)
-                  setHeldTip(null)
-                }}
-              >
-                Destroy items
-              </button>
-            ) : (
+            {bagMode === 'none' ? (
               <>
                 <button
                   type="button"
                   className="btn secondary"
-                  onClick={exitDestroyMode}
+                  disabled={save.inventory.length === 0}
+                  onClick={() => {
+                    setBagMode('sell')
+                    setSelectedIndexes(new Set())
+                    setConfirmSell(false)
+                    setMessage(null)
+                    setHeldTip(null)
+                  }}
                 >
-                  Cancel
+                  Sell items
                 </button>
                 <button
                   type="button"
-                  className="btn danger"
-                  disabled={selectedCount === 0}
-                  onClick={() => setConfirmDestroy(true)}
+                  className="btn secondary"
+                  disabled={save.inventory.length === 0}
+                  onClick={() => {
+                    setBagMode('destroy')
+                    setSelectedIndexes(new Set())
+                    setConfirmDestroy(false)
+                    setMessage(null)
+                    setHeldTip(null)
+                  }}
                 >
-                  Destroy selected{selectedCount > 0 ? ` (${selectedCount})` : ''}
+                  Destroy items
                 </button>
+                <span className="inventory-capacity" aria-label="Inventory capacity">
+                  {slotCount}/{INVENTORY_SLOT_LIMIT}
+                </span>
+              </>
+            ) : (
+              <>
+                <button type="button" className="btn secondary" onClick={exitBagMode}>
+                  Cancel
+                </button>
+                {bagMode === 'destroy' ? (
+                  <button
+                    type="button"
+                    className="btn danger"
+                    disabled={selectedCount === 0}
+                    onClick={() => setConfirmDestroy(true)}
+                  >
+                    Destroy selected{selectedCount > 0 ? ` (${selectedCount})` : ''}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="btn primary"
+                    disabled={selectedCount === 0}
+                    onClick={() => setConfirmSell(true)}
+                  >
+                    Sell selected
+                    {selectedCount > 0 ? ` (${selectedSellGold.toLocaleString()}g)` : ''}
+                  </button>
+                )}
+                <span className="inventory-capacity" aria-label="Inventory capacity">
+                  {slotCount}/{INVENTORY_SLOT_LIMIT}
+                </span>
               </>
             )}
           </div>
@@ -229,26 +285,30 @@ export function InventoryView({ save, database, onChangeSave }: InventoryViewPro
                       className={[
                         'bag-item-tile',
                         enchanted ? 'enchanted' : '',
-                        destroyMode && selected ? 'selected-destroy' : '',
+                        bagMode !== 'none' && selected
+                          ? bagMode === 'sell'
+                            ? 'selected-sell'
+                            : 'selected-destroy'
+                          : '',
                       ]
                         .filter(Boolean)
                         .join(' ')}
                       ariaLabel={
-                        destroyMode
+                        bagMode !== 'none'
                           ? `${selected ? 'Deselect' : 'Select'} ${item?.['Display Name'] ?? stack.itemId}`
                           : tipText
                       }
-                      showingTip={!destroyMode && heldTip === tipId}
+                      showingTip={bagMode === 'none' && heldTip === tipId}
                       tipText={tipText}
                       onHoldStart={() => {
-                        if (!destroyMode) setHeldTip(tipId)
+                        if (bagMode === 'none') setHeldTip(tipId)
                       }}
                       onHoldEnd={() =>
                         setHeldTip((current) => (current === tipId ? null : current))
                       }
                       onActivate={() => {
-                        if (destroyMode) {
-                          toggleDestroySelection(index)
+                        if (bagMode !== 'none') {
+                          toggleBagSelection(index)
                           return
                         }
                         if (equipment?.['Slot ID']) equipAt(index)
@@ -264,7 +324,7 @@ export function InventoryView({ save, database, onChangeSave }: InventoryViewPro
                       {!enchanted && stack.quantity > 1 && (
                         <span className="bag-item-qty">{stack.quantity}</span>
                       )}
-                      {destroyMode && selected && (
+                      {bagMode !== 'none' && selected && (
                         <span className="bag-item-selected-mark" aria-hidden>
                           ✓
                         </span>
@@ -276,9 +336,11 @@ export function InventoryView({ save, database, onChangeSave }: InventoryViewPro
             </ul>
           )}
           <p className="muted tiny">
-            {destroyMode
+            {bagMode === 'destroy'
               ? 'Tap items to select them, then confirm to destroy the selected stacks.'
-              : 'Hold an item for its name, combat stats, and enchantment. Tap gear to equip. Enchanted items do not stack.'}
+              : bagMode === 'sell'
+                ? 'Tap items to select them, then confirm to sell. Shop locations pay full sell value; elsewhere pays 50%.'
+                : 'Hold an item for its name, combat stats, and enchantment. Tap gear to equip. Enchanted items do not stack.'}
           </p>
         </section>
       ) : (
@@ -375,6 +437,31 @@ export function InventoryView({ save, database, onChangeSave }: InventoryViewPro
               </button>
               <button type="button" className="btn danger" onClick={confirmDestroySelected}>
                 Confirm destroy
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {confirmSell ? (
+        <div
+          className="destroy-confirm-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="sell-confirm-title"
+        >
+          <div className="panel destroy-confirm-card">
+            <h2 id="sell-confirm-title">Sell items?</h2>
+            <p className="lead">
+              Sell {selectedCount} selected stack{selectedCount === 1 ? '' : 's'} for{' '}
+              {selectedSellGold.toLocaleString()} gold.
+            </p>
+            <div className="button-row">
+              <button type="button" className="btn secondary" onClick={() => setConfirmSell(false)}>
+                Keep items
+              </button>
+              <button type="button" className="btn primary" onClick={confirmSellSelected}>
+                Confirm sell
               </button>
             </div>
           </div>

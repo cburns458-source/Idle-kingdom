@@ -1705,6 +1705,7 @@
 .inventory-bag-actions {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 0.45rem;
   margin-bottom: 0.65rem;
 }
@@ -1715,10 +1716,23 @@
   font-size: 0.85rem;
 }
 
+.inventory-capacity {
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.9rem;
+  color: rgba(236, 224, 196, 0.88);
+}
+
 .bag-item-tile.selected-destroy {
   border-color: rgba(220, 120, 90, 0.85);
   box-shadow: 0 0 0 2px rgba(180, 70, 50, 0.35);
   background: rgba(90, 36, 24, 0.55);
+}
+
+.bag-item-tile.selected-sell {
+  border-color: rgba(212, 175, 55, 0.85);
+  box-shadow: 0 0 0 2px rgba(160, 120, 40, 0.35);
+  background: rgba(70, 52, 18, 0.55);
 }
 
 .bag-item-selected-mark {

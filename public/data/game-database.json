@@ -8608,7 +8608,7 @@
     {
       "Activity ID": "ACT-0001",
       "Internal Key": "tend_pasture",
-      "Contextual Name": "Tend the Pasture",
+      "Contextual Name": "Tend the pasture",
       "Location ID": "LOC-0001",
       "Description": "Repeated Cow and rare Bull Combat encounters.",
       "Danger Warning Combat Level": null,
@@ -8621,7 +8621,7 @@
     {
       "Activity ID": "ACT-0002",
       "Internal Key": "fight_goblins",
-      "Contextual Name": "Fight the Goblins",
+      "Contextual Name": "Fight the goblins",
       "Location ID": "LOC-0003",
       "Description": "Hostile Goblin Combat Activity.",
       "Danger Warning Combat Level": 10,
@@ -8634,7 +8634,7 @@
     {
       "Activity ID": "ACT-0003",
       "Internal Key": "search_riverside",
-      "Contextual Name": "Search the Riverside",
+      "Contextual Name": "Search the riverside",
       "Location ID": "LOC-0003",
       "Description": "Fishing Actions at the river.",
       "Danger Warning Combat Level": null,
@@ -8647,7 +8647,7 @@
     {
       "Activity ID": "ACT-0004",
       "Internal Key": "fish_river_coast",
-      "Contextual Name": "Fish the River and Coast",
+      "Contextual Name": "Fish the river and coast",
       "Location ID": "LOC-0004",
       "Description": "Fishing along river, coast, and dock areas.",
       "Danger Warning Combat Level": null,
@@ -8660,7 +8660,7 @@
     {
       "Activity ID": "ACT-0005",
       "Internal Key": "work_copper_mine",
-      "Contextual Name": "Work the Copper Mine",
+      "Contextual Name": "Work the copper mine",
       "Location ID": "LOC-0005",
       "Description": "Mine Copper Ore, Clay, Tin Ore, and rare Coal. Gems are independent secondary drops.",
       "Danger Warning Combat Level": null,
@@ -8673,7 +8673,7 @@
     {
       "Activity ID": "ACT-0006",
       "Internal Key": "explore_mountain_slopes",
-      "Contextual Name": "Explore the Mountain Slopes",
+      "Contextual Name": "Explore the mountain slopes",
       "Location ID": "LOC-0006",
       "Description": "Compatible Mining and Rock Troll Actions.",
       "Danger Warning Combat Level": 55,
@@ -8686,7 +8686,7 @@
     {
       "Activity ID": "ACT-0007",
       "Internal Key": "challenge_undead",
-      "Contextual Name": "Challenge the Undead",
+      "Contextual Name": "Challenge the undead",
       "Location ID": "LOC-0007",
       "Description": "Skeleton and Zombie Combat Actions.",
       "Danger Warning Combat Level": 28,
@@ -8699,7 +8699,7 @@
     {
       "Activity ID": "ACT-0008",
       "Internal Key": "delve_for_essence",
-      "Contextual Name": "Delve for Essence",
+      "Contextual Name": "Delve for essence",
       "Location ID": "LOC-0007",
       "Description": "Low-level Essence Mining Action with below-normal Mining XP and secondary Arcana XP.",
       "Danger Warning Combat Level": null,
@@ -8712,7 +8712,7 @@
     {
       "Activity ID": "ACT-0009",
       "Internal Key": "poach_kingswoods",
-      "Contextual Name": "Poach in the Kingswoods",
+      "Contextual Name": "Poach in the kingswoods",
       "Location ID": "LOC-0008",
       "Description": "Hunting with a rare Wild Boar Combat encounter.",
       "Danger Warning Combat Level": null,
@@ -8725,7 +8725,7 @@
     {
       "Activity ID": "ACT-0010",
       "Internal Key": "gather_woodland_supplies",
-      "Contextual Name": "Gather Woodland Supplies",
+      "Contextual Name": "Gather woodland supplies",
       "Location ID": "LOC-0008",
       "Description": "Cut Cedar Trees and harvest Augur Weed.",
       "Danger Warning Combat Level": null,
@@ -8738,7 +8738,7 @@
     {
       "Activity ID": "ACT-0011",
       "Internal Key": "search_small_game",
-      "Contextual Name": "Search for Small Game",
+      "Contextual Name": "Search for small game",
       "Location ID": "LOC-0009",
       "Description": "Butterfly and Rabbit Hunting.",
       "Danger Warning Combat Level": null,
@@ -8751,7 +8751,7 @@
     {
       "Activity ID": "ACT-0012",
       "Internal Key": "gather_meadow_supplies",
-      "Contextual Name": "Gather Meadow Supplies",
+      "Contextual Name": "Gather meadow supplies",
       "Location ID": "LOC-0009",
       "Description": "Wild Roots and Fernleaf Harvesting.",
       "Danger Warning Combat Level": null,
@@ -8764,7 +8764,7 @@
     {
       "Activity ID": "ACT-0013",
       "Internal Key": "work_deep_mines",
-      "Contextual Name": "Work the Deep Mines",
+      "Contextual Name": "Work the deep mines",
       "Location ID": "LOC-0011",
       "Description": "Mine Iron, Coal, gems, and additional progression ores.",
       "Danger Warning Combat Level": null,
@@ -8777,7 +8777,7 @@
     {
       "Activity ID": "ACT-0014",
       "Internal Key": "search_courtyard",
-      "Contextual Name": "Search the Courtyard Grounds",
+      "Contextual Name": "Search the courtyard grounds",
       "Location ID": "LOC-0014",
       "Description": "Butterfly Hunting and herb Harvesting with compatible requirements.",
       "Danger Warning Combat Level": null,
@@ -8790,7 +8790,7 @@
     {
       "Activity ID": "ACT-0015",
       "Internal Key": "challenge_guards",
-      "Contextual Name": "Challenge the Guards",
+      "Contextual Name": "Challenge the guards",
       "Location ID": "LOC-0017",
       "Description": "Guard Combat Actions.",
       "Danger Warning Combat Level": 45,
@@ -8803,7 +8803,7 @@
     {
       "Activity ID": "ACT-0016",
       "Internal Key": "explore_ancient_forest",
-      "Contextual Name": "Explore the Ancient Forest",
+      "Contextual Name": "Explore the ancient forest",
       "Location ID": "LOC-0018",
       "Description": "One axe-compatible pool containing Ancient Tree, Ent, Ancient Ent, and Corrupted Ent.",
       "Danger Warning Combat Level": 65,
@@ -8816,7 +8816,7 @@
     {
       "Activity ID": "ACT-0017",
       "Internal Key": "cook_kitchen",
-      "Contextual Name": "Cook at the Kitchen",
+      "Contextual Name": "Cook at the kitchen",
       "Location ID": "LOC-0002",
       "Description": "Timed Cooking queue using selected recipe.",
       "Danger Warning Combat Level": null,
@@ -8829,7 +8829,7 @@
     {
       "Activity ID": "ACT-0018",
       "Internal Key": "refine_metals",
-      "Contextual Name": "Refine Metals",
+      "Contextual Name": "Refine metals",
       "Location ID": "LOC-0002",
       "Description": "Timed Metallurgy queue using selected recipe.",
       "Danger Warning Combat Level": null,
@@ -8842,7 +8842,7 @@
     {
       "Activity ID": "ACT-0019",
       "Internal Key": "craft_components",
-      "Contextual Name": "Craft Components",
+      "Contextual Name": "Craft components",
       "Location ID": "LOC-0002",
       "Description": "Timed Crafting queue using selected recipe.",
       "Danger Warning Combat Level": null,
@@ -8855,7 +8855,7 @@
     {
       "Activity ID": "ACT-0020",
       "Internal Key": "brew_potions",
-      "Contextual Name": "Brew Potions",
+      "Contextual Name": "Brew potions",
       "Location ID": "LOC-0002",
       "Description": "Timed Alchemy queue using selected recipe.",
       "Danger Warning Combat Level": null,
@@ -8868,7 +8868,7 @@
     {
       "Activity ID": "ACT-0021",
       "Internal Key": "work_farm_fields",
-      "Contextual Name": "Work the Fields",
+      "Contextual Name": "Work the fields",
       "Location ID": "LOC-0001",
       "Description": "Harvest Potatoes with a rare Golden Spud Action that is displayed as Potato.",
       "Danger Warning Combat Level": null,
@@ -9269,7 +9269,7 @@
     {
       "Action ID": "ACN-0001",
       "Internal Key": "fight_cow",
-      "Display Name": "Fight Cow",
+      "Display Name": "Fight cow",
       "Category": "Combat",
       "Relevant Skill ID": "SKL-0001",
       "Target Type": "Enemy",
@@ -9289,7 +9289,7 @@
     {
       "Action ID": "ACN-0002",
       "Internal Key": "fight_bull",
-      "Display Name": "Fight Bull",
+      "Display Name": "Fight bull",
       "Category": "Combat",
       "Relevant Skill ID": "SKL-0001",
       "Target Type": "Enemy",
@@ -9309,7 +9309,7 @@
     {
       "Action ID": "ACN-0003",
       "Internal Key": "fight_goblin",
-      "Display Name": "Fight Goblin Scout",
+      "Display Name": "Fight goblin scout",
       "Category": "Combat",
       "Relevant Skill ID": "SKL-0001",
       "Target Type": "Enemy",
@@ -9329,7 +9329,7 @@
     {
       "Action ID": "ACN-0004",
       "Internal Key": "fight_goblin_chief",
-      "Display Name": "Fight Goblin Chief",
+      "Display Name": "Fight goblin chief",
       "Category": "Combat",
       "Relevant Skill ID": "SKL-0001",
       "Target Type": "Enemy",
@@ -9349,7 +9349,7 @@
     {
       "Action ID": "ACN-0005",
       "Internal Key": "fight_rock_troll",
-      "Display Name": "Fight Rock Troll",
+      "Display Name": "Fight rock troll",
       "Category": "Combat",
       "Relevant Skill ID": "SKL-0001",
       "Target Type": "Enemy",
@@ -9369,7 +9369,7 @@
     {
       "Action ID": "ACN-0006",
       "Internal Key": "fight_skeleton",
-      "Display Name": "Fight Skeleton",
+      "Display Name": "Fight skeleton",
       "Category": "Combat",
       "Relevant Skill ID": "SKL-0001",
       "Target Type": "Enemy",
@@ -9389,7 +9389,7 @@
     {
       "Action ID": "ACN-0007",
       "Internal Key": "fight_zombie",
-      "Display Name": "Fight Zombie",
+      "Display Name": "Fight zombie",
       "Category": "Combat",
       "Relevant Skill ID": "SKL-0001",
       "Target Type": "Enemy",
@@ -9409,7 +9409,7 @@
     {
       "Action ID": "ACN-0008",
       "Internal Key": "fight_wild_boar",
-      "Display Name": "Fight Wild Boar",
+      "Display Name": "Fight wild boar",
       "Category": "Combat",
       "Relevant Skill ID": "SKL-0001",
       "Target Type": "Enemy",
@@ -9429,7 +9429,7 @@
     {
       "Action ID": "ACN-0009",
       "Internal Key": "fight_guard",
-      "Display Name": "Fight Castle Guard",
+      "Display Name": "Fight castle guard",
       "Category": "Combat",
       "Relevant Skill ID": "SKL-0001",
       "Target Type": "Enemy",
@@ -9449,7 +9449,7 @@
     {
       "Action ID": "ACN-0010",
       "Internal Key": "fight_ent",
-      "Display Name": "Fight Ent",
+      "Display Name": "Fight ent",
       "Category": "Combat",
       "Relevant Skill ID": "SKL-0001",
       "Target Type": "Enemy",
@@ -9469,7 +9469,7 @@
     {
       "Action ID": "ACN-0011",
       "Internal Key": "fight_ancient_ent",
-      "Display Name": "Fight Ancient Ent",
+      "Display Name": "Fight ancient ent",
       "Category": "Combat",
       "Relevant Skill ID": "SKL-0001",
       "Target Type": "Enemy",
@@ -9489,7 +9489,7 @@
     {
       "Action ID": "ACN-0012",
       "Internal Key": "fight_corrupted_ent",
-      "Display Name": "Fight Corrupted Ent",
+      "Display Name": "Fight corrupted ent",
       "Category": "Combat",
       "Relevant Skill ID": "SKL-0001",
       "Target Type": "Enemy",
@@ -9509,7 +9509,7 @@
     {
       "Action ID": "ACN-0013",
       "Internal Key": "hunt_duck",
-      "Display Name": "Hunt Duck",
+      "Display Name": "Hunt duck",
       "Category": "Gathering",
       "Relevant Skill ID": "SKL-0005",
       "Target Type": "Item",
@@ -9529,7 +9529,7 @@
     {
       "Action ID": "ACN-0014",
       "Internal Key": "hunt_elk",
-      "Display Name": "Hunt Elk",
+      "Display Name": "Hunt elk",
       "Category": "Gathering",
       "Relevant Skill ID": "SKL-0005",
       "Target Type": "Item",
@@ -9549,7 +9549,7 @@
     {
       "Action ID": "ACN-0015",
       "Internal Key": "hunt_butterfly",
-      "Display Name": "Hunt Butterfly",
+      "Display Name": "Hunt butterfly",
       "Category": "Gathering",
       "Relevant Skill ID": "SKL-0005",
       "Target Type": "Item",
@@ -9569,7 +9569,7 @@
     {
       "Action ID": "ACN-0016",
       "Internal Key": "hunt_rabbit",
-      "Display Name": "Hunt Rabbit",
+      "Display Name": "Hunt rabbit",
       "Category": "Gathering",
       "Relevant Skill ID": "SKL-0005",
       "Target Type": "Item",
@@ -9589,7 +9589,7 @@
     {
       "Action ID": "ACN-0017",
       "Internal Key": "hunt_pheasant",
-      "Display Name": "Hunt Pheasant",
+      "Display Name": "Hunt pheasant",
       "Category": "Gathering",
       "Relevant Skill ID": "SKL-0005",
       "Target Type": "Item",
@@ -9609,7 +9609,7 @@
     {
       "Action ID": "ACN-0018",
       "Internal Key": "mine_copper_ore",
-      "Display Name": "Mine Copper Ore",
+      "Display Name": "Mine copper ore",
       "Category": "Gathering",
       "Relevant Skill ID": "SKL-0002",
       "Target Type": "Item",
@@ -9629,7 +9629,7 @@
     {
       "Action ID": "ACN-0019",
       "Internal Key": "mine_clay",
-      "Display Name": "Dig Clay",
+      "Display Name": "Dig clay",
       "Category": "Gathering",
       "Relevant Skill ID": "SKL-0002",
       "Target Type": "Item",
@@ -9649,7 +9649,7 @@
     {
       "Action ID": "ACN-0020",
       "Internal Key": "mine_tin_ore",
-      "Display Name": "Mine Tin Ore",
+      "Display Name": "Mine tin ore",
       "Category": "Gathering",
       "Relevant Skill ID": "SKL-0002",
       "Target Type": "Item",
@@ -9669,7 +9669,7 @@
     {
       "Action ID": "ACN-0021",
       "Internal Key": "mine_coal",
-      "Display Name": "Mine Coal",
+      "Display Name": "Mine coal",
       "Category": "Gathering",
       "Relevant Skill ID": "SKL-0002",
       "Target Type": "Item",
@@ -9689,7 +9689,7 @@
     {
       "Action ID": "ACN-0022",
       "Internal Key": "mine_iron_ore",
-      "Display Name": "Mine Iron Ore",
+      "Display Name": "Mine iron ore",
       "Category": "Gathering",
       "Relevant Skill ID": "SKL-0002",
       "Target Type": "Item",
@@ -9709,7 +9709,7 @@
     {
       "Action ID": "ACN-0026",
       "Internal Key": "mine_titanium_ore",
-      "Display Name": "Mine Titanium Ore",
+      "Display Name": "Mine titanium ore",
       "Category": "Gathering",
       "Relevant Skill ID": "SKL-0002",
       "Target Type": "Item",
@@ -9729,7 +9729,7 @@
     {
       "Action ID": "ACN-0027",
       "Internal Key": "mine_tungsten_ore",
-      "Display Name": "Mine Tungsten Ore",
+      "Display Name": "Mine tungsten ore",
       "Category": "Gathering",
       "Relevant Skill ID": "SKL-0002",
       "Target Type": "Item",
@@ -9749,7 +9749,7 @@
     {
       "Action ID": "ACN-0028",
       "Internal Key": "mine_essence",
-      "Display Name": "Delve for Essence",
+      "Display Name": "Delve for essence",
       "Category": "Gathering",
       "Relevant Skill ID": "SKL-0002",
       "Target Type": "Item",
@@ -9769,7 +9769,7 @@
     {
       "Action ID": "ACN-0035",
       "Internal Key": "harvest_potato",
-      "Display Name": "Harvest Potato",
+      "Display Name": "Harvest potato",
       "Category": "Gathering",
       "Relevant Skill ID": "SKL-0004",
       "Target Type": "Item",
@@ -9789,7 +9789,7 @@
     {
       "Action ID": "ACN-0036",
       "Internal Key": "harvest_golden_spud",
-      "Display Name": "Potato",
+      "Display Name": "Harvest potato",
       "Category": "Gathering",
       "Relevant Skill ID": "SKL-0004",
       "Target Type": "Item",
@@ -9809,7 +9809,7 @@
     {
       "Action ID": "ACN-0046",
       "Internal Key": "cut_cedar_tree",
-      "Display Name": "Cut Cedar Tree",
+      "Display Name": "Cut cedar tree",
       "Category": "Gathering",
       "Relevant Skill ID": "SKL-0006",
       "Target Type": "Item",
@@ -9829,7 +9829,7 @@
     {
       "Action ID": "ACN-0047",
       "Internal Key": "cut_oak_tree",
-      "Display Name": "Cut Oak Tree",
+      "Display Name": "Cut oak tree",
       "Category": "Gathering",
       "Relevant Skill ID": "SKL-0006",
       "Target Type": "Item",
@@ -9849,7 +9849,7 @@
     {
       "Action ID": "ACN-0048",
       "Internal Key": "cut_poplar_tree",
-      "Display Name": "Cut Poplar Tree",
+      "Display Name": "Cut poplar tree",
       "Category": "Gathering",
       "Relevant Skill ID": "SKL-0006",
       "Target Type": "Item",
@@ -9869,7 +9869,7 @@
     {
       "Action ID": "ACN-0049",
       "Internal Key": "cut_maple_tree",
-      "Display Name": "Cut Maple Tree",
+      "Display Name": "Cut maple tree",
       "Category": "Gathering",
       "Relevant Skill ID": "SKL-0006",
       "Target Type": "Item",
@@ -9889,7 +9889,7 @@
     {
       "Action ID": "ACN-0050",
       "Internal Key": "cut_mahogany_tree",
-      "Display Name": "Cut Mahogany Tree",
+      "Display Name": "Cut mahogany tree",
       "Category": "Gathering",
       "Relevant Skill ID": "SKL-0006",
       "Target Type": "Item",
@@ -9909,7 +9909,7 @@
     {
       "Action ID": "ACN-0051",
       "Internal Key": "cut_ancient_tree",
-      "Display Name": "Cut Ancient Tree",
+      "Display Name": "Cut ancient tree",
       "Category": "Gathering",
       "Relevant Skill ID": "SKL-0006",
       "Target Type": "Item",
@@ -9929,7 +9929,7 @@
     {
       "Action ID": "ACN-0091",
       "Internal Key": "fight_pirate",
-      "Display Name": "Fight Pirate",
+      "Display Name": "Fight pirate",
       "Category": "Combat",
       "Relevant Skill ID": "SKL-0001",
       "Target Type": "Enemy",
@@ -9989,7 +9989,7 @@
     {
       "Action ID": "ACN-0094",
       "Internal Key": "fight_goblin_warrior",
-      "Display Name": "Fight Goblin Warrior",
+      "Display Name": "Fight goblin warrior",
       "Category": "Combat",
       "Relevant Skill ID": "SKL-0001",
       "Target Type": "Enemy",
@@ -10009,7 +10009,7 @@
     {
       "Action ID": "ACN-0095",
       "Internal Key": "fight_rabbit_buck",
-      "Display Name": "Fight Rabbit Buck",
+      "Display Name": "Fight rabbit buck",
       "Category": "Combat",
       "Relevant Skill ID": "SKL-0001",
       "Target Type": "Enemy",
@@ -10049,7 +10049,7 @@
     {
       "Action ID": "ACN-0097",
       "Internal Key": "mine_silver_ore",
-      "Display Name": "Mine Silver Ore",
+      "Display Name": "Mine silver ore",
       "Category": "Gathering",
       "Relevant Skill ID": "SKL-0002",
       "Target Type": "Item",
@@ -10069,7 +10069,7 @@
     {
       "Action ID": "ACN-0098",
       "Internal Key": "mine_gold_ore",
-      "Display Name": "Mine Gold Ore",
+      "Display Name": "Mine gold ore",
       "Category": "Gathering",
       "Relevant Skill ID": "SKL-0002",
       "Target Type": "Item",
@@ -10089,7 +10089,7 @@
     {
       "Action ID": "ACN-0099",
       "Internal Key": "catch_crawfish",
-      "Display Name": "Catch Crawfish",
+      "Display Name": "Catch crawfish",
       "Category": "Gathering",
       "Relevant Skill ID": "SKL-0003",
       "Target Type": "Item",
@@ -10109,7 +10109,7 @@
     {
       "Action ID": "ACN-0100",
       "Internal Key": "catch_trout",
-      "Display Name": "Catch Trout",
+      "Display Name": "Catch trout",
       "Category": "Gathering",
       "Relevant Skill ID": "SKL-0003",
       "Target Type": "Item",
@@ -10129,7 +10129,7 @@
     {
       "Action ID": "ACN-0101",
       "Internal Key": "catch_salmon",
-      "Display Name": "Catch Salmon",
+      "Display Name": "Catch salmon",
       "Category": "Gathering",
       "Relevant Skill ID": "SKL-0003",
       "Target Type": "Item",
@@ -10149,7 +10149,7 @@
     {
       "Action ID": "ACN-0102",
       "Internal Key": "catch_tuna",
-      "Display Name": "Catch Tuna",
+      "Display Name": "Catch tuna",
       "Category": "Gathering",
       "Relevant Skill ID": "SKL-0003",
       "Target Type": "Item",
@@ -10169,7 +10169,7 @@
     {
       "Action ID": "ACN-0103",
       "Internal Key": "catch_shark",
-      "Display Name": "Catch Shark",
+      "Display Name": "Catch shark",
       "Category": "Gathering",
       "Relevant Skill ID": "SKL-0003",
       "Target Type": "Item",
@@ -10209,7 +10209,7 @@
     {
       "Action ID": "ACN-0105",
       "Internal Key": "gather_wild_roots",
-      "Display Name": "Gather Wild Roots",
+      "Display Name": "Gather wild roots",
       "Category": "Gathering",
       "Relevant Skill ID": "SKL-0004",
       "Target Type": "Item",
@@ -10229,7 +10229,7 @@
     {
       "Action ID": "ACN-0106",
       "Internal Key": "gather_fernleaf",
-      "Display Name": "Gather Fernleaf",
+      "Display Name": "Gather fernleaf",
       "Category": "Gathering",
       "Relevant Skill ID": "SKL-0004",
       "Target Type": "Item",
@@ -10249,7 +10249,7 @@
     {
       "Action ID": "ACN-0107",
       "Internal Key": "gather_mosstole",
-      "Display Name": "Gather Mosstole",
+      "Display Name": "Gather mosstole",
       "Category": "Gathering",
       "Relevant Skill ID": "SKL-0004",
       "Target Type": "Item",
@@ -10269,7 +10269,7 @@
     {
       "Action ID": "ACN-0108",
       "Internal Key": "gather_wild_berries",
-      "Display Name": "Gather Wild Berries",
+      "Display Name": "Gather wild berries",
       "Category": "Gathering",
       "Relevant Skill ID": "SKL-0004",
       "Target Type": "Item",
@@ -10289,7 +10289,7 @@
     {
       "Action ID": "ACN-0109",
       "Internal Key": "gather_augur_weed",
-      "Display Name": "Gather Augur Weed",
+      "Display Name": "Gather augur weed",
       "Category": "Gathering",
       "Relevant Skill ID": "SKL-0004",
       "Target Type": "Item",
@@ -10309,7 +10309,7 @@
     {
       "Action ID": "ACN-0110",
       "Internal Key": "gather_moonblossom",
-      "Display Name": "Gather Moonblossom",
+      "Display Name": "Gather moonblossom",
       "Category": "Gathering",
       "Relevant Skill ID": "SKL-0004",
       "Target Type": "Item",
@@ -10349,7 +10349,7 @@
     {
       "Action ID": "ACN-0112",
       "Internal Key": "hunt_mountain_goat",
-      "Display Name": "Hunt Mountain Goat",
+      "Display Name": "Hunt mountain goat",
       "Category": "Gathering",
       "Relevant Skill ID": "SKL-0005",
       "Target Type": "Item",
@@ -10369,7 +10369,7 @@
     {
       "Action ID": "ACN-0113",
       "Internal Key": "hunt_great_stag",
-      "Display Name": "Hunt Great Stag",
+      "Display Name": "Hunt great stag",
       "Category": "Gathering",
       "Relevant Skill ID": "SKL-0005",
       "Target Type": "Item",
@@ -10409,7 +10409,7 @@
     {
       "Action ID": "ACN-0115",
       "Internal Key": "cook_baked_potato",
-      "Display Name": "Baked Potato",
+      "Display Name": "Baked potato",
       "Category": "Standard Production",
       "Relevant Skill ID": "SKL-0007",
       "Target Type": "Item",
@@ -10429,7 +10429,7 @@
     {
       "Action ID": "ACN-0116",
       "Internal Key": "cook_cooked_crawfish",
-      "Display Name": "Cooked Crawfish",
+      "Display Name": "Cooked crawfish",
       "Category": "Standard Production",
       "Relevant Skill ID": "SKL-0007",
       "Target Type": "Item",
@@ -10449,7 +10449,7 @@
     {
       "Action ID": "ACN-0117",
       "Internal Key": "cook_cooked_trout",
-      "Display Name": "Cooked Trout",
+      "Display Name": "Cooked trout",
       "Category": "Standard Production",
       "Relevant Skill ID": "SKL-0007",
       "Target Type": "Item",
@@ -10469,7 +10469,7 @@
     {
       "Action ID": "ACN-0118",
       "Internal Key": "cook_cooked_rabbit",
-      "Display Name": "Cooked Rabbit",
+      "Display Name": "Cooked rabbit",
       "Category": "Standard Production",
       "Relevant Skill ID": "SKL-0007",
       "Target Type": "Item",
@@ -10489,7 +10489,7 @@
     {
       "Action ID": "ACN-0119",
       "Internal Key": "cook_cooked_salmon",
-      "Display Name": "Cooked Salmon",
+      "Display Name": "Cooked salmon",
       "Category": "Standard Production",
       "Relevant Skill ID": "SKL-0007",
       "Target Type": "Item",
@@ -10509,7 +10509,7 @@
     {
       "Action ID": "ACN-0120",
       "Internal Key": "cook_cooked_beef",
-      "Display Name": "Cooked Beef",
+      "Display Name": "Cooked beef",
       "Category": "Standard Production",
       "Relevant Skill ID": "SKL-0007",
       "Target Type": "Item",
@@ -10529,7 +10529,7 @@
     {
       "Action ID": "ACN-0121",
       "Internal Key": "cook_cooked_pheasant",
-      "Display Name": "Cooked Pheasant",
+      "Display Name": "Cooked pheasant",
       "Category": "Standard Production",
       "Relevant Skill ID": "SKL-0007",
       "Target Type": "Item",
@@ -10549,7 +10549,7 @@
     {
       "Action ID": "ACN-0122",
       "Internal Key": "cook_pheasant_stew",
-      "Display Name": "Pheasant Stew",
+      "Display Name": "Pheasant stew",
       "Category": "Standard Production",
       "Relevant Skill ID": "SKL-0007",
       "Target Type": "Item",
@@ -10569,7 +10569,7 @@
     {
       "Action ID": "ACN-0123",
       "Internal Key": "cook_cooked_tuna",
-      "Display Name": "Cooked Tuna",
+      "Display Name": "Cooked tuna",
       "Category": "Standard Production",
       "Relevant Skill ID": "SKL-0007",
       "Target Type": "Item",
@@ -10589,7 +10589,7 @@
     {
       "Action ID": "ACN-0124",
       "Internal Key": "cook_cooked_venison",
-      "Display Name": "Cooked Venison",
+      "Display Name": "Cooked venison",
       "Category": "Standard Production",
       "Relevant Skill ID": "SKL-0007",
       "Target Type": "Item",
@@ -10609,7 +10609,7 @@
     {
       "Action ID": "ACN-0125",
       "Internal Key": "cook_venison_stew",
-      "Display Name": "Venison Stew",
+      "Display Name": "Venison stew",
       "Category": "Standard Production",
       "Relevant Skill ID": "SKL-0007",
       "Target Type": "Item",
@@ -10629,7 +10629,7 @@
     {
       "Action ID": "ACN-0126",
       "Internal Key": "cook_cooked_shark",
-      "Display Name": "Cooked Shark",
+      "Display Name": "Cooked shark",
       "Category": "Standard Production",
       "Relevant Skill ID": "SKL-0007",
       "Target Type": "Item",
@@ -10669,7 +10669,7 @@
     {
       "Action ID": "ACN-0128",
       "Internal Key": "metallurgy_copper_bar",
-      "Display Name": "Copper Bar",
+      "Display Name": "Copper bar",
       "Category": "Standard Production",
       "Relevant Skill ID": "SKL-0008",
       "Target Type": "Item",
@@ -10689,7 +10689,7 @@
     {
       "Action ID": "ACN-0129",
       "Internal Key": "metallurgy_bronze_bar",
-      "Display Name": "Bronze Bar",
+      "Display Name": "Bronze bar",
       "Category": "Standard Production",
       "Relevant Skill ID": "SKL-0008",
       "Target Type": "Item",
@@ -10709,7 +10709,7 @@
     {
       "Action ID": "ACN-0130",
       "Internal Key": "metallurgy_iron_bar",
-      "Display Name": "Iron Bar",
+      "Display Name": "Iron bar",
       "Category": "Standard Production",
       "Relevant Skill ID": "SKL-0008",
       "Target Type": "Item",
@@ -10729,7 +10729,7 @@
     {
       "Action ID": "ACN-0131",
       "Internal Key": "metallurgy_steel_bar",
-      "Display Name": "Steel Bar",
+      "Display Name": "Steel bar",
       "Category": "Standard Production",
       "Relevant Skill ID": "SKL-0008",
       "Target Type": "Item",
@@ -10749,7 +10749,7 @@
     {
       "Action ID": "ACN-0132",
       "Internal Key": "metallurgy_silver_bar",
-      "Display Name": "Silver Bar",
+      "Display Name": "Silver bar",
       "Category": "Standard Production",
       "Relevant Skill ID": "SKL-0008",
       "Target Type": "Item",
@@ -10769,7 +10769,7 @@
     {
       "Action ID": "ACN-0133",
       "Internal Key": "metallurgy_reinforced_steel_bar",
-      "Display Name": "Reinforced Steel Bar",
+      "Display Name": "Reinforced steel bar",
       "Category": "Standard Production",
       "Relevant Skill ID": "SKL-0008",
       "Target Type": "Item",
@@ -10789,7 +10789,7 @@
     {
       "Action ID": "ACN-0134",
       "Internal Key": "metallurgy_gold_bar",
-      "Display Name": "Gold Bar",
+      "Display Name": "Gold bar",
       "Category": "Standard Production",
       "Relevant Skill ID": "SKL-0008",
       "Target Type": "Item",
@@ -10809,7 +10809,7 @@
     {
       "Action ID": "ACN-0135",
       "Internal Key": "metallurgy_titanium_bar",
-      "Display Name": "Titanium Bar",
+      "Display Name": "Titanium bar",
       "Category": "Standard Production",
       "Relevant Skill ID": "SKL-0008",
       "Target Type": "Item",
@@ -10829,7 +10829,7 @@
     {
       "Action ID": "ACN-0136",
       "Internal Key": "metallurgy_tungsten_bar",
-      "Display Name": "Tungsten Bar",
+      "Display Name": "Tungsten bar",
       "Category": "Standard Production",
       "Relevant Skill ID": "SKL-0008",
       "Target Type": "Item",
@@ -10869,7 +10869,7 @@
     {
       "Action ID": "ACN-0138",
       "Internal Key": "craft_plant_fiber",
-      "Display Name": "Plant-Fiber Component",
+      "Display Name": "Plant-fiber component",
       "Category": "Standard Production",
       "Relevant Skill ID": "SKL-0009",
       "Target Type": "Item",
@@ -10889,7 +10889,7 @@
     {
       "Action ID": "ACN-0139",
       "Internal Key": "craft_leather_straps",
-      "Display Name": "Leather Straps",
+      "Display Name": "Leather straps",
       "Category": "Standard Production",
       "Relevant Skill ID": "SKL-0009",
       "Target Type": "Item",
@@ -10929,7 +10929,7 @@
     {
       "Action ID": "ACN-0141",
       "Internal Key": "craft_cedar_timber",
-      "Display Name": "Cedar Timber",
+      "Display Name": "Cedar timber",
       "Category": "Standard Production",
       "Relevant Skill ID": "SKL-0009",
       "Target Type": "Item",
@@ -10949,7 +10949,7 @@
     {
       "Action ID": "ACN-0142",
       "Internal Key": "craft_oak_timber",
-      "Display Name": "Oak Timber",
+      "Display Name": "Oak timber",
       "Category": "Standard Production",
       "Relevant Skill ID": "SKL-0009",
       "Target Type": "Item",
@@ -10969,7 +10969,7 @@
     {
       "Action ID": "ACN-0143",
       "Internal Key": "craft_poplar_timber",
-      "Display Name": "Poplar Timber",
+      "Display Name": "Poplar timber",
       "Category": "Standard Production",
       "Relevant Skill ID": "SKL-0009",
       "Target Type": "Item",
@@ -10989,7 +10989,7 @@
     {
       "Action ID": "ACN-0144",
       "Internal Key": "craft_maple_timber",
-      "Display Name": "Maple Timber",
+      "Display Name": "Maple timber",
       "Category": "Standard Production",
       "Relevant Skill ID": "SKL-0009",
       "Target Type": "Item",
@@ -11009,7 +11009,7 @@
     {
       "Action ID": "ACN-0145",
       "Internal Key": "craft_mahogany_timber",
-      "Display Name": "Mahogany Timber",
+      "Display Name": "Mahogany timber",
       "Category": "Standard Production",
       "Relevant Skill ID": "SKL-0009",
       "Target Type": "Item",
@@ -11049,7 +11049,7 @@
     {
       "Action ID": "ACN-0147",
       "Internal Key": "craft_cut_sapphire",
-      "Display Name": "Cut Sapphire",
+      "Display Name": "Cut sapphire",
       "Category": "Standard Production",
       "Relevant Skill ID": "SKL-0009",
       "Target Type": "Item",
@@ -11069,7 +11069,7 @@
     {
       "Action ID": "ACN-0148",
       "Internal Key": "craft_cut_emerald",
-      "Display Name": "Cut Emerald",
+      "Display Name": "Cut emerald",
       "Category": "Standard Production",
       "Relevant Skill ID": "SKL-0009",
       "Target Type": "Item",
@@ -11089,7 +11089,7 @@
     {
       "Action ID": "ACN-0149",
       "Internal Key": "craft_cut_ruby",
-      "Display Name": "Cut Ruby",
+      "Display Name": "Cut ruby",
       "Category": "Standard Production",
       "Relevant Skill ID": "SKL-0009",
       "Target Type": "Item",
@@ -11149,7 +11149,7 @@
     {
       "Action ID": "ACN-0152",
       "Internal Key": "craft_enchanting_tablet",
-      "Display Name": "Enchanting Tablet",
+      "Display Name": "Enchanting tablet",
       "Category": "Standard Production",
       "Relevant Skill ID": "SKL-0009",
       "Target Type": "Item",
@@ -11169,7 +11169,7 @@
     {
       "Action ID": "ACN-0153",
       "Internal Key": "craft_spell_tablet",
-      "Display Name": "Spell Tablet",
+      "Display Name": "Spell tablet",
       "Category": "Standard Production",
       "Relevant Skill ID": "SKL-0009",
       "Target Type": "Item",
@@ -11189,7 +11189,7 @@
     {
       "Action ID": "ACN-0154",
       "Internal Key": "alchemy_minor_luck_potion",
-      "Display Name": "Minor Luck Potion",
+      "Display Name": "Minor luck potion",
       "Category": "Standard Production",
       "Relevant Skill ID": "SKL-0010",
       "Target Type": "Item",
@@ -11209,7 +11209,7 @@
     {
       "Action ID": "ACN-0155",
       "Internal Key": "alchemy_minor_strength_potion",
-      "Display Name": "Minor Strength Potion",
+      "Display Name": "Minor strength potion",
       "Category": "Standard Production",
       "Relevant Skill ID": "SKL-0010",
       "Target Type": "Item",
@@ -11229,7 +11229,7 @@
     {
       "Action ID": "ACN-0156",
       "Internal Key": "alchemy_poison_potion",
-      "Display Name": "Poison Potion",
+      "Display Name": "Poison potion",
       "Category": "Standard Production",
       "Relevant Skill ID": "SKL-0010",
       "Target Type": "Item",
@@ -11249,7 +11249,7 @@
     {
       "Action ID": "ACN-0157",
       "Internal Key": "alchemy_speed_potion",
-      "Display Name": "Speed Potion",
+      "Display Name": "Speed potion",
       "Category": "Standard Production",
       "Relevant Skill ID": "SKL-0010",
       "Target Type": "Item",
@@ -11269,7 +11269,7 @@
     {
       "Action ID": "ACN-0158",
       "Internal Key": "alchemy_luck_potion",
-      "Display Name": "Luck Potion",
+      "Display Name": "Luck potion",
       "Category": "Standard Production",
       "Relevant Skill ID": "SKL-0010",
       "Target Type": "Item",
@@ -11289,7 +11289,7 @@
     {
       "Action ID": "ACN-0159",
       "Internal Key": "alchemy_greater_strength_potion",
-      "Display Name": "Greater Strength Potion",
+      "Display Name": "Greater strength potion",
       "Category": "Standard Production",
       "Relevant Skill ID": "SKL-0010",
       "Target Type": "Item",
@@ -11349,7 +11349,7 @@
     {
       "Action ID": "ACN-0162",
       "Internal Key": "gather_carrot",
-      "Display Name": "Gather Carrot",
+      "Display Name": "Gather carrot",
       "Category": "Gathering",
       "Relevant Skill ID": "SKL-0004",
       "Target Type": "Item",
@@ -11369,7 +11369,7 @@
     {
       "Action ID": "ACN-0163",
       "Internal Key": "gather_grapes",
-      "Display Name": "Gather Grapes",
+      "Display Name": "Gather grapes",
       "Category": "Gathering",
       "Relevant Skill ID": "SKL-0004",
       "Target Type": "Item",
@@ -11389,7 +11389,7 @@
     {
       "Action ID": "ACN-0164",
       "Internal Key": "gather_herb_1",
-      "Display Name": "Gather Herb 1",
+      "Display Name": "Gather herb 1",
       "Category": "Gathering",
       "Relevant Skill ID": "SKL-0004",
       "Target Type": "Item",
@@ -11409,7 +11409,7 @@
     {
       "Action ID": "ACN-0165",
       "Internal Key": "gather_herb_2",
-      "Display Name": "Gather Herb 2",
+      "Display Name": "Gather herb 2",
       "Category": "Gathering",
       "Relevant Skill ID": "SKL-0004",
       "Target Type": "Item",
@@ -11429,7 +11429,7 @@
     {
       "Action ID": "ACN-0166",
       "Internal Key": "mine_sapphire",
-      "Display Name": "Mine Sapphire",
+      "Display Name": "Mine sapphire",
       "Category": "Gathering",
       "Relevant Skill ID": "SKL-0002",
       "Target Type": "Item",
@@ -11449,7 +11449,7 @@
     {
       "Action ID": "ACN-0167",
       "Internal Key": "mine_emerald",
-      "Display Name": "Mine Emerald",
+      "Display Name": "Mine emerald",
       "Category": "Gathering",
       "Relevant Skill ID": "SKL-0002",
       "Target Type": "Item",
@@ -11469,7 +11469,7 @@
     {
       "Action ID": "ACN-0168",
       "Internal Key": "mine_ruby",
-      "Display Name": "Mine Ruby",
+      "Display Name": "Mine ruby",
       "Category": "Gathering",
       "Relevant Skill ID": "SKL-0002",
       "Target Type": "Item",
@@ -11489,7 +11489,7 @@
     {
       "Action ID": "ACN-0169",
       "Internal Key": "craft_cloth_wrap",
-      "Display Name": "Cloth Wrap",
+      "Display Name": "Cloth wrap",
       "Category": "Standard Production",
       "Relevant Skill ID": "SKL-0009",
       "Target Type": "Item",

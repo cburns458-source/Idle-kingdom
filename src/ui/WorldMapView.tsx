@@ -71,6 +71,18 @@ export function WorldMapView({
                 .join(' ')}
               style={{ left: `${pos.x}%`, top: `${pos.y}%` }}
               onClick={() => onSelect(location['Location ID'])}
+              onDoubleClick={() => {
+                if (future || travelDisabled) return
+                if (location['Location ID'] === currentLocationId) return
+                onTravel(location['Location ID'])
+              }}
+              title={
+                future
+                  ? undefined
+                  : travelDisabled
+                    ? travelLockReason
+                    : 'Click to select · Double-click to travel'
+              }
             >
               <span className="map-node-dot" />
               <span className="map-node-label">{location['Display Name']}</span>

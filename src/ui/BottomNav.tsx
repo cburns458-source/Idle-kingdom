@@ -8,7 +8,7 @@ interface BottomNavProps {
 const ITEMS: { id: AppScreen; label: string }[] = [
   { id: 'location', label: 'Current' },
   { id: 'skills', label: 'Skills' },
-  { id: 'inventory', label: 'Items' },
+  { id: 'inventory', label: 'Inventory' },
   { id: 'settings', label: 'Menu' },
 ]
 

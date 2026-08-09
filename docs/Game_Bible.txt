@@ -762,6 +762,7 @@ Spell slots hold prepared Arcana spells. Exactly one spell may occupy each slot.
 - The bag has 180 slots. Each item stack (or each enchanted item) uses one slot.
 - Non-enchanted stacks may grow to the maximum safe integer; adds stop before overflow.
 - Enchanted items never stack.
+- Players may sell bag stacks from Inventory: at a Location with an accessible shop that buys the item, they receive that shop's sell price; otherwise they receive 50% of Base Sell Value.
 - Standard Production and shops must validate available inventory space before committing.
 - Unattended progression grants only what fits and must not overflow slots or stacks.
 - Death pause keeps the Primary Activity; clearing/stopping it is refused until recovery ends. Passive browse (recipes, Special Production, shops, NPCs) remains available.

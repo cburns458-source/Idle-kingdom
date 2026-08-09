@@ -16,12 +16,12 @@ export const MAIN_MAP_NODE_LAYOUT: Record<string, NodePosition> = {
   'LOC-0013': { x: 24, y: 24 },
   // Ancient Forest north of the castle
   'LOC-0018': { x: 22, y: 10 },
-  // Mountain peaks / range
-  'LOC-0006': { x: 50, y: 16 },
+  // Mountain peaks / range (nudged right)
+  'LOC-0006': { x: 62, y: 16 },
   // Cave mouth in the mountains
   'LOC-0010': { x: 52, y: 36 },
-  // Wizard tower with blue magic (NE)
-  'LOC-0007': { x: 78, y: 22 },
+  // Wizard tower with blue magic (NE, lowered)
+  'LOC-0007': { x: 78, y: 34 },
   // West kingswoods forest
   'LOC-0008': { x: 14, y: 34 },
   // Central village / town square
@@ -34,8 +34,8 @@ export const MAIN_MAP_NODE_LAYOUT: Record<string, NodePosition> = {
   'LOC-0005': { x: 24, y: 70 },
   // Farm fields / windmill
   'LOC-0001': { x: 76, y: 66 },
-  // Harbor / dock at river mouth
-  'LOC-0004': { x: 50, y: 80 },
+  // Harbor / dock at river mouth (raised)
+  'LOC-0004': { x: 50, y: 68 },
   // Future west / east horizon gateways
   'LOC-0019': { x: 4, y: 50 },
   'LOC-0020': { x: 96, y: 50 },
