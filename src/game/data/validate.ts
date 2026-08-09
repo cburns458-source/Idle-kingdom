@@ -193,39 +193,32 @@ export function validateDatabase(db: GameDatabase): ValidationIssue[] {
   return issues
 }
 
+function hasLaunchPhase(row: object): boolean {
+  if (!('Release Phase' in row)) return true
+  return (row as { 'Release Phase'?: unknown })['Release Phase'] === 'Launch'
+}
+
 /** Keep source rows intact; expose Launch-eligible views for runtime. */
 export function filterLaunchContent(db: GameDatabase): GameDatabase {
-  const filterRows = <T extends Record<string, unknown>>(rows: T[]): T[] =>
-    rows.filter((row) => {
-      if (!('Release Phase' in row)) return true
-      return row['Release Phase'] === 'Launch'
-    })
-
   return {
     ...db,
-    Skills: filterRows(db.Skills),
-    Items: filterRows(db.Items),
-    Statistics: filterRows(db.Statistics as Record<string, unknown>[]) as GameDatabase['Statistics'],
-    Enchantments: filterRows(
-      db.Enchantments as Record<string, unknown>[],
-    ) as GameDatabase['Enchantments'],
-    Maps: filterRows(db.Maps as Record<string, unknown>[]) as GameDatabase['Maps'],
-    Locations: filterRows(db.Locations),
-    TravelConnections: filterRows(
-      db.TravelConnections as Record<string, unknown>[],
-    ) as GameDatabase['TravelConnections'],
-    Facilities: filterRows(db.Facilities as Record<string, unknown>[]) as GameDatabase['Facilities'],
-    Activities: filterRows(db.Activities as Record<string, unknown>[]) as GameDatabase['Activities'],
-    Actions: filterRows(db.Actions as Record<string, unknown>[]) as GameDatabase['Actions'],
-    Enemies: filterRows(db.Enemies as Record<string, unknown>[]) as GameDatabase['Enemies'],
-    Recipes: filterRows(db.Recipes as Record<string, unknown>[]) as GameDatabase['Recipes'],
-    Projects: filterRows(db.Projects as Record<string, unknown>[]) as GameDatabase['Projects'],
-    NPCs: filterRows(db.NPCs as Record<string, unknown>[]) as GameDatabase['NPCs'],
-    Shops: filterRows(db.Shops as Record<string, unknown>[]) as GameDatabase['Shops'],
-    Quests: filterRows(db.Quests as Record<string, unknown>[]) as GameDatabase['Quests'],
-    Achievements: filterRows(
-      db.Achievements as Record<string, unknown>[],
-    ) as GameDatabase['Achievements'],
+    Skills: db.Skills.filter(hasLaunchPhase),
+    Items: db.Items.filter(hasLaunchPhase),
+    Statistics: db.Statistics.filter(hasLaunchPhase),
+    Enchantments: db.Enchantments.filter(hasLaunchPhase),
+    Maps: db.Maps.filter(hasLaunchPhase),
+    Locations: db.Locations.filter(hasLaunchPhase),
+    TravelConnections: db.TravelConnections.filter(hasLaunchPhase),
+    Facilities: db.Facilities.filter(hasLaunchPhase),
+    Activities: db.Activities.filter(hasLaunchPhase),
+    Actions: db.Actions.filter(hasLaunchPhase),
+    Enemies: db.Enemies.filter(hasLaunchPhase),
+    Recipes: db.Recipes.filter(hasLaunchPhase),
+    Projects: db.Projects.filter(hasLaunchPhase),
+    NPCs: db.NPCs.filter(hasLaunchPhase),
+    Shops: db.Shops.filter(hasLaunchPhase),
+    Quests: db.Quests.filter(hasLaunchPhase),
+    Achievements: db.Achievements.filter(hasLaunchPhase),
   }
 }
 
