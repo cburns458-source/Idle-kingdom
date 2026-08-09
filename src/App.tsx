@@ -149,6 +149,11 @@ export default function App() {
     setBoot({ ...boot, save: writeSave(generated.save), saveCreated: false })
   }, [boot, travel])
 
+  const runningActivityId = boot.status === 'ready' ? boot.save.currentActivityId : null
+  const runningActionId = boot.status === 'ready' ? boot.save.currentActionId : null
+  const runningActionStartedAt = boot.status === 'ready' ? boot.save.actionStartedAt : null
+  const runningActionDurationMs = boot.status === 'ready' ? boot.save.actionDurationMs : null
+
   // Progress + complete the current gathering action.
   useEffect(() => {
     if (boot.status !== 'ready' || travel) return
@@ -230,12 +235,12 @@ export default function App() {
     frame = window.requestAnimationFrame(tick)
     return () => window.cancelAnimationFrame(frame)
   }, [
-    boot.status,
+    boot,
     travel,
-    boot.status === 'ready' ? boot.save.currentActivityId : null,
-    boot.status === 'ready' ? boot.save.currentActionId : null,
-    boot.status === 'ready' ? boot.save.actionStartedAt : null,
-    boot.status === 'ready' ? boot.save.actionDurationMs : null,
+    runningActivityId,
+    runningActionId,
+    runningActionStartedAt,
+    runningActionDurationMs,
   ])
 
   const ready = boot.status === 'ready' ? boot : null
