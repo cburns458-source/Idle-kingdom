@@ -124,7 +124,6 @@ export default function App() {
   const [lastPlayerHit, setLastPlayerHit] = useState<number | null>(null)
   const [lastEnemyHit, setLastEnemyHit] = useState<number | null>(null)
   const [defeatedFlash, setDefeatedFlash] = useState(false)
-  const [roundProgress, setRoundProgress] = useState(0)
   const [pauseRemainingMs, setPauseRemainingMs] = useState(0)
   const pendingVictoryRef = useRef<{
     save: PlayerSave
