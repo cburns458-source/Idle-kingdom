@@ -2,8 +2,13 @@ import type { ItemRow } from '../data/types'
 
 /** Specific item overrides (Item ID -> icon file stem under /assets/icons/items/). */
 const ITEM_ID_ICONS: Record<string, string> = {
-  'ITEM-0108': 'net',
+  'ITEM-0001': 'gold',
+  'ITEM-0006': 'coal',
+  'ITEM-0011': 'essence',
+  'ITEM-0025': 'potato',
+  'ITEM-0026': 'potato',
   'ITEM-0058': 'baked_potato',
+  'ITEM-0108': 'net',
   'ITEM-0111': 'copper_pickaxe',
   'ITEM-0119': 'steel_pickaxe',
 }
@@ -22,13 +27,41 @@ export function itemAssetPath(item: ItemRow | string | undefined): string {
   const key = (item['Internal Key'] ?? '').toLowerCase()
   const category = (item.Category ?? '').toLowerCase()
   const subtype = (item.Subtype ?? '').toLowerCase()
-  const blob = `${key} ${category} ${subtype}`
+  const blob = `${key} ${category} ${subtype} ${item['Display Name']?.toLowerCase() ?? ''}`
 
   const stem = iconStemFromText(blob, category, subtype)
   return `/assets/icons/items/item_${stem}.png`
 }
 
 function iconStemFromText(blob: string, category: string, subtype: string): string {
+  if (blob.includes('gold') && (category.includes('currency') || blob.includes('coin'))) return 'gold'
+  if (blob.includes('essence')) return 'essence'
+  if (blob.includes('coal')) return 'coal'
+  if (blob.includes('potato') || blob.includes('spud')) {
+    return blob.includes('baked') ? 'baked_potato' : 'potato'
+  }
+  if (
+    blob.includes('sapphire') ||
+    blob.includes('emerald') ||
+    blob.includes('ruby') ||
+    blob.includes('gem')
+  ) {
+    return 'gem'
+  }
+  if (blob.includes('timber') || blob.includes('plank')) return 'timber'
+  if (
+    blob.includes('leather') ||
+    blob.includes('strap') ||
+    blob.includes('cloth') ||
+    blob.includes('component') ||
+    blob.includes('tablet') ||
+    blob.includes('chain') ||
+    blob.includes('clasp') ||
+    blob.includes('fiber') ||
+    category.includes('component')
+  ) {
+    return 'component'
+  }
   if (blob.includes('net') || blob.includes('sling')) return 'net'
   if (blob.includes('pickaxe') || blob.includes('pick')) return 'pickaxe'
   if (blob.includes('hatchet')) return 'hatchet'
@@ -49,16 +82,27 @@ function iconStemFromText(blob: string, category: string, subtype: string): stri
   if (blob.includes('ore')) return 'ore'
   if (blob.includes('bar') || category.includes('metal bar')) return 'bar'
   if (blob.includes('log') || blob.includes('wood')) return 'log'
-  if (blob.includes('herb')) return 'herb'
+  if (blob.includes('herb') || blob.includes('fern') || blob.includes('weed')) return 'herb'
   if (blob.includes('fishing') || blob.includes('rod') || blob.includes('harpoon'))
     return 'fishing_tool'
   if (
     blob.includes('hide') ||
     blob.includes('meat') ||
     blob.includes('feather') ||
-    blob.includes('creature')
-  )
+    blob.includes('creature') ||
+    blob.includes('bone')
+  ) {
     return 'creature'
+  }
+  if (
+    blob.includes('berry') ||
+    blob.includes('grape') ||
+    blob.includes('carrot') ||
+    blob.includes('clay') ||
+    blob.includes('root')
+  ) {
+    return 'raw_food'
+  }
   if (category.includes('food') || subtype.includes('food')) return 'food'
   if (category.includes('raw')) return 'raw_food'
   if (category.includes('weapon') || category.includes('tool')) return 'sword'
