@@ -7,7 +7,9 @@ import {
 } from './validate'
 import type { DatabaseIndexes, GameDatabase, ValidationIssue } from './types'
 
-export const DATABASE_URL = '/data/game-database.json'
+/** Bump when Launch content rows change so browsers skip stale JSON. */
+export const DATABASE_CONTENT_VERSION = '2026-08-09-strength-spell'
+export const DATABASE_URL = `/data/game-database.json?v=${DATABASE_CONTENT_VERSION}`
 
 export interface LoadedDatabase {
   /** Full source database (never mutated / filtered away). */
@@ -21,7 +23,7 @@ export interface LoadedDatabase {
 }
 
 export async function fetchDatabase(url: string = DATABASE_URL): Promise<unknown> {
-  const response = await fetch(url)
+  const response = await fetch(url, { cache: 'no-cache' })
   if (!response.ok) {
     throw new Error(`Failed to load database (${response.status}) from ${url}`)
   }

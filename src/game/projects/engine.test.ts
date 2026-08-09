@@ -30,9 +30,44 @@ describe('special production', () => {
       'PRJ-0135',
       'PRJ-0139',
     ])
+    expect(listed.find((project) => project['Project ID'] === 'PRJ-0139')?.['Display Name']).toBe(
+      'Strength Spell',
+    )
+    expect(listed.find((project) => project['Project ID'] === 'PRJ-0139')?.['Output Item / Target ID']).toBe(
+      'ITEM-0295',
+    )
+    expect(launch.Items.find((item) => item['Item ID'] === 'ITEM-0295')?.['Display Name']).toBe(
+      'Strength Spell',
+    )
     expect(listed.every((project) => project['Required Skill 1 Level']! > 1)).toBe(true)
     // Level-1 saves still see projects; completion remains hard-gated.
     expect(save.skills.find((skill) => skill.skillId === 'SKL-0013')?.level ?? 1).toBe(1)
+  })
+
+  it('crafts Strength Spell as a named inventory item', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    let save = createNewSave(launch)
+    save = {
+      ...save,
+      unlockedNpcIds: ['NPC-0004'],
+      currentLocationId: 'LOC-0007',
+      skills: save.skills.map((skill) =>
+        skill.skillId === 'SKL-0013' || skill.skillId === 'SKL-0009'
+          ? { ...skill, level: 20, xp: 50_000 }
+          : skill,
+      ),
+    }
+    save = addItemToInventory(save, 'ITEM-0099', 1)
+    save = addItemToInventory(save, 'ITEM-0040', 10)
+
+    const result = completeSpecialProject(launch, save, 'PRJ-0139', 1)
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    expect(result.outputLabel).toBe('Strength Spell')
+    expect(result.save.inventory.find((stack) => stack.itemId === 'ITEM-0295')?.quantity).toBe(1)
+    expect(launch.Items.find((item) => item['Item ID'] === 'ITEM-0295')?.['Display Name']).toBe(
+      'Strength Spell',
+    )
   })
 
   it('instantly completes a L1 smithing project and consumes materials once', () => {

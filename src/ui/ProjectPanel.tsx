@@ -16,9 +16,22 @@ import {
   unmetProjectSkillRequirements,
   type SpecialProductionStation,
 } from '../game/projects/projects'
+import { isSpellItem, spellEffectEnchantmentId, spellTooltipLines } from '../game/spells/spells'
 import type { PlayerSave } from '../game/save/types'
 import { IngredientIconList } from './IngredientIcons'
 import { ItemIcon } from './itemIcons'
+
+function projectOptionLabel(project: ProjectRow, db: GameDatabase): string {
+  const outputId = project['Output Item / Target ID']
+  const level = project['Required Skill 1 Level'] ?? 1
+  if (isEnchantmentOutput(outputId)) {
+    return `${project['Display Name']} (Lv ${level})`
+  }
+  const itemName =
+    db.Items.find((item) => item['Item ID'] === outputId)?.['Display Name'] ??
+    project['Display Name']
+  return `${project['Display Name']} → ${itemName} (Lv ${level})`
+}
 
 interface ProjectPickerProps {
   db: GameDatabase
@@ -158,21 +171,21 @@ export function ProjectPicker({
           ) : (
             <select
               id="project-select"
-              className="text-input"
+              className="text-input project-select-list"
               value={
                 filteredProjects.some((row) => row['Project ID'] === projectId)
                   ? projectId
                   : filteredProjects[0]!['Project ID']
               }
               onChange={(event) => selectProject(event.target.value)}
-              size={Math.min(6, Math.max(3, filteredProjects.length))}
+              size={Math.min(8, Math.max(filteredProjects.length, 3))}
             >
               {filteredProjects.map((row) => {
                 const locked =
                   !meetsProjectSkills(save, row) || !meetsProjectKnowledge(db, save, row)
                 return (
                   <option key={row['Project ID']} value={row['Project ID']}>
-                    {row['Display Name']} (Lv {row['Required Skill 1 Level'] ?? 1})
+                    {projectOptionLabel(row, db)}
                     {locked ? ' — locked' : ''}
                   </option>
                 )
@@ -281,7 +294,16 @@ function ProjectDetails({
   const outputItem = !enchantment
     ? db.Items.find((item) => item['Item ID'] === outputId)
     : undefined
+  const spellEffectId =
+    outputItem && isSpellItem(db, outputItem['Item ID'])
+      ? spellEffectEnchantmentId(db, outputItem['Item ID'])
+      : null
+  const spellEffect = spellEffectId ? getEnchantment(db, spellEffectId) : undefined
   const skills = projectSkillRequirements(project)
+  const outputName =
+    outputItem?.['Display Name'] ??
+    enchantment?.['Display Name'] ??
+    project['Display Name']
 
   return (
     <div className="recipe-details">
@@ -289,16 +311,23 @@ function ProjectDetails({
         {outputItem ? <ItemIcon item={outputItem} /> : <span className="item-icon" />}
         <div>
           <strong>
-            {enchantment?.['Display Name'] ??
-              outputItem?.['Display Name'] ??
-              project['Display Name']}{' '}
-            ×{project['Output Quantity']}
+            {outputName} ×{project['Output Quantity']}
           </strong>
+          {outputItem && (
+            <p className="muted tiny">Item · {outputItem['Item ID']}</p>
+          )}
           <p className="muted tiny">
             Instant · {project['XP Reward'].toLocaleString()} XP
             {project['Gold Cost'] > 0 ? ` · ${project['Gold Cost']} gold` : ''}
           </p>
-          {enchantment?.Effect && <p className="muted tiny">{enchantment.Effect}</p>}
+          {(enchantment?.Effect || spellEffect?.Effect) && (
+            <p className="muted tiny">{enchantment?.Effect ?? spellEffect?.Effect}</p>
+          )}
+          {outputItem && isSpellItem(db, outputItem['Item ID']) && (
+            <p className="muted tiny">
+              {spellTooltipLines(db, outputItem, outputItem['Item ID']).slice(-1)[0]}
+            </p>
+          )}
         </div>
       </div>
       {skills.length > 0 && (

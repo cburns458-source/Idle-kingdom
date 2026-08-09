@@ -1224,9 +1224,12 @@ function SettingsPanel({
           (item) =>
             item['Display Name'].toLowerCase().includes(needle) ||
             item['Internal Key'].toLowerCase().includes(needle) ||
-            item['Item ID'].toLowerCase().includes(needle),
+            item['Item ID'].toLowerCase().includes(needle) ||
+            (item.Category ?? '').toLowerCase().includes(needle),
         )
-    return list.slice(0, 80)
+    return [...list].sort((a, b) =>
+      a['Display Name'].localeCompare(b['Display Name'], undefined, { sensitivity: 'base' }),
+    )
   }, [itemSearch, launchItems])
   const [selectedItemId, setSelectedItemId] = useState(filteredItems[0]?.['Item ID'] ?? '')
 
@@ -1326,10 +1329,12 @@ function SettingsPanel({
   }
 
   function grantArcanaMaterials() {
-    let next = addItemToInventory(save, 'ITEM-0098', 5)
-    next = addItemToInventory(next, 'ITEM-0011', 20)
-    next = addItemToInventory(next, 'ITEM-0031', 30)
-    next = addItemToInventory(next, 'ITEM-0040', 5)
+    let next = addItemToInventory(save, 'ITEM-0098', 5) // Enchanting Tablet
+    next = addItemToInventory(next, 'ITEM-0099', 5) // Spell Tablet
+    next = addItemToInventory(next, 'ITEM-0011', 20) // Essence
+    next = addItemToInventory(next, 'ITEM-0031', 30) // Fernleaf
+    next = addItemToInventory(next, 'ITEM-0040', 20) // Bull Horns
+    next = addItemToInventory(next, 'ITEM-0295', 1) // Strength Spell item
     onChangeSave(withRecalculatedVitals(database.launch, next))
   }
 

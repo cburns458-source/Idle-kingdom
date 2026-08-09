@@ -256,6 +256,11 @@ export function InventoryView({ save, database, onChangeSave }: InventoryViewPro
                     >
                       <ItemIcon item={item} className="bag-item-icon" />
                       {enchanted && <span className="item-enchant-star" aria-hidden>★</span>}
+                      {isSpellItem(db, stack.itemId) && (
+                        <span className="bag-item-name-tag">
+                          {item?.['Display Name'] ?? 'Spell'}
+                        </span>
+                      )}
                       {!enchanted && stack.quantity > 1 && (
                         <span className="bag-item-qty">{stack.quantity}</span>
                       )}
