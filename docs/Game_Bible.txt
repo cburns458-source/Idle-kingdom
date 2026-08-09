@@ -386,6 +386,7 @@ Production:
 - Damage Reduction or equivalent armor mitigation.
 - Combat Level requirements on equipment.
 - Defined buffs and enchantments.
+- From Combat Level 10 upward, each Combat Level grants a 1% increase to Maximum HP and Damage Range (Level 10 = +10%, Level 20 = +20%).
 
 7.3 DAMAGE
 - Each attack rolls a random integer from the attacker's Damage Range.
