@@ -1,118 +1,82 @@
 import { enemyAssetPath } from '../game/assets/enemyAssets'
 import type { EnemyRow } from '../game/data/enemyTypes'
-import type { ActivityRow } from '../game/data/types'
-import { formatDurationSeconds } from './formatDuration'
 
 interface CombatPanelProps {
-  activity: ActivityRow
   enemy: EnemyRow
   enemyHp: number
   playerHp: number
   playerMaxHp: number
-  roundProgress: number
-  /** Combat round length in ms (from config). */
-  roundDurationMs: number
+  /** Damage the player dealt last round (orange overlay on enemy). */
+  lastPlayerHit: number | null
+  /** Damage the enemy dealt last round (centered above player). */
+  lastEnemyHit: number | null
+  /** When set, show "defeated" in place of the enemy art. */
+  defeatedFlash: boolean
   deathPauseRemainingMs: number
-  lastCombatMessage: string | null
-  onStop: () => void
 }
 
 export function CombatPanel({
-  activity,
   enemy,
   enemyHp,
   playerHp,
   playerMaxHp,
-  roundProgress,
-  roundDurationMs,
+  lastPlayerHit,
+  lastEnemyHit,
+  defeatedFlash,
   deathPauseRemainingMs,
-  lastCombatMessage,
-  onStop,
 }: CombatPanelProps) {
-  const enemyPct = Math.round((enemyHp / Math.max(1, enemy['Maximum HP'])) * 100)
-  const playerPct = Math.round((playerHp / Math.max(1, playerMaxHp)) * 100)
-  const clampedRound = Math.min(1, Math.max(0, roundProgress))
-  const roundPct = Math.round(clampedRound * 100)
+  const enemyMax = Math.max(1, enemy['Maximum HP'])
   const pauseSec = Math.ceil(deathPauseRemainingMs / 1000)
-  const label = activity['Contextual Name'] ?? activity['Internal Key']
-  const roundSeconds = Math.max(0, roundDurationMs / 1000)
-  const roundElapsedSeconds = Math.min(roundSeconds, clampedRound * roundSeconds)
 
   return (
-    <section className="panel combat-panel">
-      <div className="activity-panel-head">
-        <div>
-          <h2>{label}</h2>
-        </div>
-        {deathPauseRemainingMs <= 0 && (
-          <button type="button" className="btn secondary" onClick={onStop}>
-            Stop
-          </button>
-        )}
-      </div>
-
+    <section className="panel combat-panel" aria-label="Combat">
       <div className="combat-layout">
-        <div className="combat-main">
-          <p className="lead">
-            Fighting <strong>{enemy['Display Name']}</strong>
-            {enemy['Combat Level'] != null ? ` · Lv ${enemy['Combat Level']}` : ''}
-          </p>
-
-          <div className="combat-bars">
-            <div>
-              <div className="combat-bar-label">
-                <span>Enemy</span>
-                <span>
-                  {enemyHp} / {enemy['Maximum HP']}
-                </span>
-              </div>
-              <div className="action-bar">
-                <div
-                  className="action-bar-fill combat-enemy-fill"
-                  style={{ width: `${enemyPct}%` }}
-                />
-              </div>
-            </div>
-            <div>
-              <div className="combat-bar-label">
-                <span>You</span>
-                <span>
-                  {playerHp} / {playerMaxHp}
-                </span>
-              </div>
-              <div className="action-bar">
-                <div
-                  className="action-bar-fill combat-player-fill"
-                  style={{ width: `${playerPct}%` }}
-                />
-              </div>
-            </div>
+        <div className="combat-side combat-player-side">
+          <div className="combat-float-slot">
+            {lastEnemyHit != null && lastEnemyHit > 0 && !defeatedFlash && (
+              <span className="combat-damage combat-damage-enemy">{lastEnemyHit}</span>
+            )}
           </div>
-
-          {deathPauseRemainingMs > 0 ? (
-            <p className="danger-note">Recovering… {pauseSec}s</p>
-          ) : (
-            <>
-              <p className="muted">Round</p>
-              <div className="action-bar">
-                <div className="action-bar-fill" style={{ width: `${roundPct}%` }} />
-              </div>
-              <p className="muted tiny">
-                Time elapsed: {formatDurationSeconds(roundElapsedSeconds)} /{' '}
-                {formatDurationSeconds(roundSeconds)}
-              </p>
-            </>
-          )}
-
-          {lastCombatMessage && <p className="loot-message">{lastCombatMessage}</p>}
+          <div className="combat-portrait combat-portrait-player" aria-hidden>
+            {deathPauseRemainingMs > 0 && (
+              <span className="combat-recovering">Recovering… {pauseSec}s</span>
+            )}
+          </div>
+          <div className="combat-meta combat-meta-player">
+            <p className="combat-enemy-name combat-player-spacer" aria-hidden>
+              &nbsp;
+            </p>
+            <p className="combat-hp combat-hp-player">
+              {playerHp}/{playerMaxHp}
+            </p>
+          </div>
         </div>
 
-        <div
-          className="combat-enemy-art"
-          style={{ backgroundImage: `url(${enemyAssetPath(enemy['Enemy ID'])})` }}
-          role="img"
-          aria-label={enemy['Display Name']}
-        />
+        <div className="combat-side combat-enemy-side">
+          <div className="combat-portrait combat-portrait-enemy">
+            {defeatedFlash ? (
+              <span className="combat-defeated">defeated</span>
+            ) : (
+              <>
+                <div
+                  className="combat-enemy-art"
+                  style={{ backgroundImage: `url(${enemyAssetPath(enemy['Enemy ID'])})` }}
+                  role="img"
+                  aria-label={enemy['Display Name']}
+                />
+                {lastPlayerHit != null && lastPlayerHit > 0 && (
+                  <span className="combat-damage combat-damage-player">{lastPlayerHit}</span>
+                )}
+              </>
+            )}
+          </div>
+          <div className="combat-meta combat-meta-enemy">
+            <p className="combat-enemy-name">{enemy['Display Name']}</p>
+            <p className="combat-hp combat-hp-enemy">
+              {defeatedFlash ? 0 : enemyHp}/{enemyMax}
+            </p>
+          </div>
+        </div>
       </div>
     </section>
   )

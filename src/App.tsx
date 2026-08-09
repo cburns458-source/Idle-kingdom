@@ -121,8 +121,16 @@ export default function App() {
   const [recentRewards, setRecentRewards] = useState<ActionRewardBundle[]>([])
   const [hudNowMs, setHudNowMs] = useState(() => Date.now())
   const [lastMessage, setLastMessage] = useState<string | null>(null)
+  const [lastPlayerHit, setLastPlayerHit] = useState<number | null>(null)
+  const [lastEnemyHit, setLastEnemyHit] = useState<number | null>(null)
+  const [defeatedFlash, setDefeatedFlash] = useState(false)
   const [roundProgress, setRoundProgress] = useState(0)
   const [pauseRemainingMs, setPauseRemainingMs] = useState(0)
+  const pendingVictoryRef = useRef<{
+    save: PlayerSave
+    activityId: string
+    message: string
+  } | null>(null)
   const [renamingCharacter, setRenamingCharacter] = useState(false)
   const [productionPickerActivityId, setProductionPickerActivityId] = useState<string | null>(null)
   const [specialStation, setSpecialStation] = useState<SpecialProductionStation | null>(null)
@@ -488,6 +496,11 @@ export default function App() {
         setRoundProgress(0)
         return
       }
+      // Hold rounds while the defeated flash / next-enemy handoff is pending.
+      if (pendingVictoryRef.current) {
+        setRoundProgress(0)
+        return
+      }
 
       const started = Date.parse(current.save.combatRoundStartedAt)
       const progress = Math.min(1, (now - started) / roundMs)
@@ -544,28 +557,32 @@ export default function App() {
           goldGained: victoryResult.goldGained,
         }
         setRecentRewards((prev) => [combatBundle, ...prev].slice(0, 4))
+        setLastPlayerHit(round.playerHit)
+        setLastEnemyHit(null)
         setLastMessage(
           victoryResult.foodConsumed
             ? `Ate ${victoryResult.foodName} (+${victoryResult.foodHealed} HP)`
             : `Defeated ${enemy['Display Name']}`,
         )
-
-        const activityId = current.save.currentActivityId!
-        if (!activityStillValid(current.database.launch, nextSave, activityId)) {
-          setBoot({
-            ...current,
-            save: persistSave(clearActivitySave(nextSave)),
-            saveCreated: false,
-          })
-          return
-        }
-        const generated = generateNextAction(current.database.launch, nextSave, activityId)
         setRoundProgress(0)
         setBoot({
           ...current,
-          save: persistSave(generated ? generated.save : nextSave),
+          save: persistSave({
+            ...current.save,
+            combatEnemyHp: 0,
+            currentHp: nextSave.currentHp,
+          }),
           saveCreated: false,
         })
+        pendingVictoryRef.current = {
+          save: nextSave,
+          activityId: current.save.currentActivityId!,
+          message:
+            victoryResult.foodConsumed
+              ? `Ate ${victoryResult.foodName} (+${victoryResult.foodHealed} HP)`
+              : `Defeated ${enemy['Display Name']}`,
+        }
+        setDefeatedFlash(true)
         return
       }
 
@@ -574,12 +591,16 @@ export default function App() {
           ...current.save,
           currentHp: 0,
         })
+        setLastPlayerHit(round.playerHit)
+        setLastEnemyHit(round.enemyHit)
         setLastMessage(`Defeated by ${enemy['Display Name']}. Recovering…`)
         setRoundProgress(0)
         setBoot({ ...current, save: persistSave(defeated), saveCreated: false })
         return
       }
 
+      setLastPlayerHit(round.playerHit)
+      setLastEnemyHit(round.enemyHit)
       setLastMessage(
         `You hit ${round.playerHit}. ${enemy['Display Name']} hits ${round.enemyHit}.`,
       )
@@ -708,6 +729,45 @@ export default function App() {
         : stamped
     return writeSave(synced)
   }
+
+  // After a kill, flash "defeated" then advance to the next enemy.
+  useEffect(() => {
+    if (!defeatedFlash) return
+    const pending = pendingVictoryRef.current
+    if (!pending) {
+      setDefeatedFlash(false)
+      return
+    }
+    const timer = window.setTimeout(() => {
+      const current = bootRef.current
+      if (current.status !== 'ready') {
+        setDefeatedFlash(false)
+        pendingVictoryRef.current = null
+        return
+      }
+      const { save: nextSave, activityId } = pending
+      pendingVictoryRef.current = null
+      setDefeatedFlash(false)
+      setLastPlayerHit(null)
+      setLastEnemyHit(null)
+      if (!activityStillValid(current.database.launch, nextSave, activityId)) {
+        setBoot({
+          ...current,
+          save: persistSave(clearActivitySave(nextSave)),
+          saveCreated: false,
+        })
+        return
+      }
+      const generated = generateNextAction(current.database.launch, nextSave, activityId)
+      setRoundProgress(0)
+      setBoot({
+        ...current,
+        save: persistSave(generated ? generated.save : nextSave),
+        saveCreated: false,
+      })
+    }, 750)
+    return () => window.clearTimeout(timer)
+  }, [defeatedFlash])
 
   function updateSave(next: PlayerSave) {
     const saved = persistSave(next)
@@ -912,6 +972,10 @@ export default function App() {
     setActivityError(null)
     setActionProgress(0)
     setLastMessage(null)
+    setLastPlayerHit(null)
+    setLastEnemyHit(null)
+    setDefeatedFlash(false)
+    pendingVictoryRef.current = null
     setProductionPickerActivityId(null)
     setSpecialStation(null)
     const requested = requestActivityStop(database.launch, save)
@@ -1052,18 +1116,14 @@ export default function App() {
                   )}
                   {activity && inCombat && combatEnemy && !activeShopId && !activeNpcId && (
                     <CombatPanel
-                      activity={activity}
                       enemy={combatEnemy}
                       enemyHp={save.combatEnemyHp ?? combatEnemy['Maximum HP']}
                       playerHp={save.currentHp}
                       playerMaxHp={maxHp}
-                      roundProgress={roundProgress}
-                      roundDurationMs={
-                        configNumber(database.launch, 'combat_round_duration', 4) * 1000
-                      }
+                      lastPlayerHit={lastPlayerHit}
+                      lastEnemyHit={lastEnemyHit}
+                      defeatedFlash={defeatedFlash}
                       deathPauseRemainingMs={pauseRemainingMs}
-                      lastCombatMessage={lastMessage}
-                      onStop={stopActivity}
                     />
                   )}
                   {activity &&
