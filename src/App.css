@@ -549,23 +549,78 @@
   color: #fff4d4;
 }
 
-.skills-list {
+.skills-grid {
   list-style: none;
   margin: 0;
   padding: 0;
   display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.55rem;
 }
 
-.skill-row {
-  display: grid;
-  grid-template-columns: 3rem 1fr;
-  gap: 0.75rem;
-  align-items: center;
-  padding: 0.7rem 0.8rem;
-  border-radius: 0.9rem;
+@media (min-width: 700px) {
+  .skills-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.skill-tile {
+  position: relative;
+  width: 100%;
+  appearance: none;
+  border: 1px solid rgba(212, 175, 55, 0.28);
+  border-radius: 0.95rem;
   background: rgba(78, 54, 34, 0.78);
-  border: 1px solid rgba(212, 175, 55, 0.22);
+  color: inherit;
+  font: inherit;
+  padding: 0.7rem 0.45rem 0.65rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 7.2rem;
+  cursor: pointer;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.16);
+}
+
+.skill-tile.showing-xp {
+  border-color: rgba(240, 215, 140, 0.7);
+  box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.25);
+}
+
+.skill-tile-name {
+  font-size: 0.78rem;
+  line-height: 1.15;
+  text-align: center;
+  color: #fff4d4;
+}
+
+.skill-tile-level {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #f0d78c;
+}
+
+.skill-xp-tooltip {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 0.35rem);
+  transform: translateX(-50%);
+  white-space: nowrap;
+  background: rgba(24, 16, 10, 0.94);
+  color: #ffe7a8;
+  border: 1px solid rgba(212, 175, 55, 0.45);
+  border-radius: 0.65rem;
+  padding: 0.4rem 0.55rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.35);
+  z-index: 3;
+  pointer-events: none;
+  animation: overlay-in 140ms ease-out;
 }
 
 .skill-icon {
@@ -626,20 +681,12 @@
   background: linear-gradient(180deg, #5a6aaa, #323a6a);
 }
 
-.skill-row-top {
-  display: flex;
-  justify-content: space-between;
-  gap: 0.5rem;
-  align-items: baseline;
+.skill-tile .skill-icon {
+  width: 2.75rem;
+  height: 2.75rem;
 }
 
-.skill-level {
-  font-weight: 700;
-  color: #f0d78c;
-}
-
-.skill-xp {
-  margin: 0.15rem 0 0;
-  color: #e7d8b6;
-  font-weight: 600;
+.skill-tile .skill-icon svg {
+  width: 1.55rem;
+  height: 1.55rem;
 }
