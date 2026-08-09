@@ -4,6 +4,10 @@ import {
   equipInventoryIndex,
   unequipSlot,
 } from '../game/equipment/loadout'
+import {
+  equipmentForItemId,
+  equipmentTooltipStatLines,
+} from '../game/equipment/tooltips'
 import { withRecalculatedVitals } from '../game/equipment/vitals'
 import { playerDamageRange, playerDamageReduction, playerMaxHp } from '../game/combat/stats'
 import { enchantmentTooltipLines } from '../game/projects/enchantments'
@@ -124,11 +128,13 @@ export function InventoryView({ save, database, onChangeSave }: InventoryViewPro
               {save.inventory.map((stack, index) => {
                 const item = database.launchIndexes.itemsById.get(stack.itemId)
                 const tipId = `bag:${index}:${stack.itemId}:${stack.enchantmentId ?? 'plain'}`
-                const equipment = db.Equipment.find((row) => row['Item ID'] === stack.itemId)
+                const equipment = equipmentForItemId(db, stack.itemId)
                 const enchantLines = enchantmentTooltipLines(db, stack)
-                const tipText = [item?.['Display Name'] ?? stack.itemId, ...enchantLines].join(
-                  ' — ',
-                )
+                const tipText = [
+                  item?.['Display Name'] ?? stack.itemId,
+                  ...equipmentTooltipStatLines(equipment),
+                  ...enchantLines,
+                ].join('\n')
                 const enchanted = Boolean(stack.enchantmentId)
                 return (
                   <li key={tipId}>
@@ -159,8 +165,8 @@ export function InventoryView({ save, database, onChangeSave }: InventoryViewPro
             </ul>
           )}
           <p className="muted tiny">
-            Hold an item for its name and enchantment. Tap gear to equip. Enchanted items do not
-            stack.
+            Hold an item for its name, combat stats, and enchantment. Tap gear to equip. Enchanted
+            items do not stack.
           </p>
         </section>
       ) : (
@@ -173,14 +179,16 @@ export function InventoryView({ save, database, onChangeSave }: InventoryViewPro
                 ? database.launchIndexes.itemsById.get(stack.itemId)
                 : undefined
               const tipId = `slot:${slotId}`
+              const equipment = stack ? equipmentForItemId(db, stack.itemId) : undefined
               const enchantLines = enchantmentTooltipLines(db, stack)
               const tipText = stack
                 ? [
                     `${item?.['Display Name'] ?? stack.itemId}${
                       stack.quantity > 1 ? ` ×${stack.quantity}` : ''
                     }`,
+                    ...equipmentTooltipStatLines(equipment),
                     ...enchantLines,
-                  ].join(' — ')
+                  ].join('\n')
                 : (slot?.['Display Name'] ?? slotId)
               const enchanted = Boolean(stack?.enchantmentId)
 
@@ -213,7 +221,7 @@ export function InventoryView({ save, database, onChangeSave }: InventoryViewPro
             })}
           </ul>
           <p className="muted tiny">
-            Hold a slot for its name and enchantment. Tap equipped gear to unequip.
+            Hold a slot for its name, combat stats, and enchantment. Tap equipped gear to unequip.
           </p>
         </section>
       )}
