@@ -439,7 +439,6 @@ export default function App() {
     if (boot.status !== 'ready' || travel) return
     const { database, save } = boot
     if (!save.currentActivityId) {
-      setRoundProgress(0)
       setPauseRemainingMs(0)
       return
     }
@@ -456,7 +455,6 @@ export default function App() {
       setPauseRemainingMs(pauseLeft)
 
       if (pauseLeft > 0) {
-        setRoundProgress(0)
         frame = window.requestAnimationFrame(tick)
         return
       }
@@ -492,18 +490,15 @@ export default function App() {
       }
 
       if (!current.save.combatEnemyId || !current.save.combatRoundStartedAt) {
-        setRoundProgress(0)
         return
       }
       // Hold rounds while the defeated flash / next-enemy handoff is pending.
       if (pendingVictoryRef.current) {
-        setRoundProgress(0)
         return
       }
 
       const started = Date.parse(current.save.combatRoundStartedAt)
       const progress = Math.min(1, (now - started) / roundMs)
-      setRoundProgress(progress)
       if (progress < 1) {
         frame = window.requestAnimationFrame(tick)
         return
@@ -563,7 +558,6 @@ export default function App() {
             ? `Ate ${victoryResult.foodName} (+${victoryResult.foodHealed} HP)`
             : `Defeated ${enemy['Display Name']}`,
         )
-        setRoundProgress(0)
         setBoot({
           ...current,
           save: persistSave({
@@ -593,7 +587,6 @@ export default function App() {
         setLastPlayerHit(round.playerHit)
         setLastEnemyHit(round.enemyHit)
         setLastMessage(`Defeated by ${enemy['Display Name']}. Recovering…`)
-        setRoundProgress(0)
         setBoot({ ...current, save: persistSave(defeated), saveCreated: false })
         return
       }
@@ -758,7 +751,6 @@ export default function App() {
         return
       }
       const generated = generateNextAction(current.database.launch, nextSave, activityId)
-      setRoundProgress(0)
       setBoot({
         ...current,
         save: persistSave(generated ? generated.save : nextSave),
