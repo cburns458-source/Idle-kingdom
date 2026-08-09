@@ -18,8 +18,7 @@ interface ActivityPanelProps {
 
 function formatSeconds(value: number): string {
   if (!Number.isFinite(value) || value < 0) return '0'
-  const rounded = Math.round(value * 10) / 10
-  return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1)
+  return String(Math.floor(value))
 }
 
 export function ActivityPanel({
