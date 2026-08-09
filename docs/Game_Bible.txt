@@ -104,7 +104,7 @@ Idale is presented as a selectable map. Current geography includes:
 - Selecting a node allows travel to that Location.
 - A Location shows its Activities, NPCs, shops, and facilities.
 - Starting a new Primary Activity replaces the current one.
-- Traveling to another Location stops the current Primary Activity using the shared activity-change delay (30 seconds). During that delay the player may queue the next Activity at the new Location; it begins when the delay ends (no second cooldown).
+- Traveling to another Location stops the current Primary Activity immediately.
 - Passive Interactions at the active Location do not stop the Primary Activity.
 
 4.3 OPEN-WORLD PROGRESSION
@@ -127,7 +127,7 @@ Dangerous Areas:
 - Clearly communicate danger or Combat chance.
 - Can defeat an unprepared player.
 - Hostile Activities define a Danger Warning Combat Level.
-- When a player travels to a Location while their Combat Level is below that warning, they are immediately forced to start the hostile Combat Activity there (bypassing the normal activity start delay).
+- When a player travels to a Location while their Combat Level is below that warning, they are immediately forced to start the hostile Combat Activity there.
 - If mandatory requirements block that Activity (for example a required tool on a mixed pool), the player still arrives and is warned, but the Activity does not start until requirements are met.
 
 4.4 LOCATIONS AND CURRENT ACTIVITIES
@@ -263,7 +263,7 @@ Starting another Primary Activity stops or replaces the previous one.
 8. Grant rewards and XP.
 9. Generate the next Action.
 10. Continue until stopped, interrupted, invalidated, or the unattended-progression limit is reached.
-11. All Primary Activity changes share one activity-change delay (30 seconds by default): Stop, Replace, Start queue (Standard Production), and travel while an Activity is running. Opening a Standard Production recipe picker alone does not start the delay — it begins when Start queue is pressed. During the delay the player may queue (or change) the next Activity without resetting the timer; it begins when the delay ends (no second cooldown). Cancel is available only for soft stops where the old Activity is still running; after travel the Activity is already cleared so Cancel is unavailable.
+11. Primary Activity changes (Start, Stop, Replace, Start queue, and travel) apply immediately. There is no activity-change cooldown. Death pause after defeat still blocks travel and activity changes until recovery finishes.
 
 5.3 MULTI-SKILL POOLS
 - An Activity Pool may contain Actions from different skills or gameplay categories.
@@ -577,7 +577,7 @@ Standard Production includes Cooking, Metallurgy, Crafting, and Alchemy.
 - Hard-gated by Proficiency Level.
 - Requires the appropriate station.
 - Player may browse any Standard Production station and recipes without stopping the current Primary Activity.
-- Selecting Start queue validates materials/capacity and begins the shared activity-change delay when another Primary Activity is running; otherwise the queue starts immediately.
+- Selecting Start queue validates materials/capacity and starts the queue immediately (replacing any running Primary Activity).
 - Completed crafts use the same Reward summary UI as Gathering and Combat (XP, output items, level-ups).
 - Queue may contain up to 24 hours of work.
 - Mid- and late-game Actions generally take longer than Gathering Actions.

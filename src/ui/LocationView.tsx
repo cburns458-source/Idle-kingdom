@@ -12,13 +12,8 @@ interface LocationViewProps {
   db: GameDatabase
   location: LocationRow
   currentActivityId: string | null
-  /** Queued follow-up while the shared activity-change delay is running. */
-  pendingFollowUpActivityId?: string | null
-  activityChangePending?: boolean
   activityError: string | null
   actionsLocked?: boolean
-  /** When true, Stop is disabled (e.g. delay already in progress). */
-  stopLocked?: boolean
   statusPanel?: ReactNode
   onStartActivity: (activityId: string) => void
   onStopActivity: () => void
@@ -28,7 +23,7 @@ interface LocationViewProps {
   onOpenMap: () => void
   onOpenSubMap?: () => void
   requirementHint?: (activity: ActivityRow) => string | null
-  /** Standard Production opens a recipe picker without starting a cooldown. */
+  /** Standard Production opens a recipe picker. */
   isRecipeBrowserActivity?: (activity: ActivityRow) => boolean
 }
 
@@ -47,11 +42,8 @@ export function LocationView({
   db,
   location,
   currentActivityId,
-  pendingFollowUpActivityId = null,
-  activityChangePending = false,
   activityError,
   actionsLocked = false,
-  stopLocked = false,
   statusPanel,
   onStartActivity,
   onStopActivity,
@@ -123,19 +115,14 @@ export function LocationView({
             <ul className="interaction-list">
               {activities.map((activity) => {
                 const active = currentActivityId === activity['Activity ID']
-                const queued = pendingFollowUpActivityId === activity['Activity ID']
                 const label = activity['Contextual Name'] ?? activity['Internal Key']
                 const hint = requirementHint?.(activity) ?? null
                 const recipeBrowser = isRecipeBrowserActivity?.(activity) ?? false
-                const startLabel = activityChangePending
-                  ? queued
-                    ? 'Queued'
-                    : 'Queue'
-                  : recipeBrowser
-                    ? 'Recipes'
-                    : currentActivityId
-                      ? 'Replace'
-                      : 'Start'
+                const startLabel = recipeBrowser
+                  ? 'Recipes'
+                  : currentActivityId
+                    ? 'Replace'
+                    : 'Start'
                 return (
                   <li key={activity['Activity ID']}>
                     <div>
@@ -152,7 +139,7 @@ export function LocationView({
                       <button
                         type="button"
                         className="btn secondary"
-                        disabled={actionsLocked || stopLocked}
+                        disabled={actionsLocked}
                         onClick={onStopActivity}
                       >
                         Stop
@@ -200,14 +187,13 @@ export function LocationView({
                   <div>
                     <strong>{shop['Display Name']}</strong>
                     {shop.Description && <p className="muted">{shop.Description}</p>}
-                    <p className="muted tiny">Passive shop</p>
                   </div>
                   <button
                     type="button"
-                    className="btn primary"
+                    className="btn secondary"
                     onClick={() => onOpenShop(shop['Shop ID'])}
                   >
-                    Trade
+                    Shop
                   </button>
                 </li>
               ))}
@@ -215,12 +201,11 @@ export function LocationView({
                 <li key={npc['NPC ID']}>
                   <div>
                     <strong>{npc['Display Name']}</strong>
-                    {npc.Role && <p className="muted tiny">{npc.Role}</p>}
                     {npc.Description && <p className="muted">{npc.Description}</p>}
                   </div>
                   <button
                     type="button"
-                    className="btn primary"
+                    className="btn secondary"
                     onClick={() => onOpenNpc(npc['NPC ID'])}
                   >
                     Talk

@@ -5,20 +5,17 @@ import { prepareDatabase } from '../data/loadDatabase'
 import { createNewSave } from '../save/saveStore'
 import { applyHostileTravelArrival } from '../world/hostility'
 import {
-  beginTravelActivityChange,
-  isActivityTransitionCancellable,
   requestActivityStart,
   requestActivityStop,
   requestProductionStart,
-  resolveActivityTransitions,
 } from './transition'
 
 const rawDatabase = JSON.parse(
   readFileSync(resolve(process.cwd(), 'public/data/game-database.json'), 'utf8'),
 )
 
-describe('shared activity-change delay', () => {
-  it('starts an activity immediately with no start cooldown', () => {
+describe('immediate activity changes (no change cooldown)', () => {
+  it('starts an activity immediately', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const now = Date.parse('2026-01-01T00:00:00.000Z')
     let save = { ...createNewSave(launch), currentLocationId: 'LOC-0009' }
@@ -33,70 +30,7 @@ describe('shared activity-change delay', () => {
     expect(save.currentActionId).toBeTruthy()
   })
 
-  it('delays activity stop while the activity keeps running', () => {
-    const { launch } = prepareDatabase(rawDatabase)
-    const now = Date.parse('2026-01-01T00:00:00.000Z')
-    let save = { ...createNewSave(launch), currentLocationId: 'LOC-0009' }
-
-    const started = requestActivityStart(launch, save, 'ACT-0012', now)
-    expect(started.ok).toBe(true)
-    if (!started.ok) return
-    save = started.save
-    expect(save.currentActivityId).toBe('ACT-0012')
-
-    const stopAt = now + 10_000
-    const stopping = requestActivityStop(launch, save, stopAt)
-    expect(stopping.ok).toBe(true)
-    if (!stopping.ok) return
-    save = stopping.save
-    expect(save.currentActivityId).toBe('ACT-0012')
-    expect(save.activityTransition?.kind).toBe('stopping')
-    expect(isActivityTransitionCancellable(save)).toBe(true)
-
-    save = resolveActivityTransitions(launch, save, stopAt + 30_000)
-    expect(save.activityTransition).toBeNull()
-    expect(save.currentActivityId).toBeNull()
-  })
-
-  it('queues a follow-up during the shared delay without resetting the timer', () => {
-    const { launch } = prepareDatabase(rawDatabase)
-    const now = Date.parse('2026-01-01T00:00:00.000Z')
-    let save = { ...createNewSave(launch), currentLocationId: 'LOC-0001' }
-
-    const first = requestActivityStart(launch, save, 'ACT-0001', now)
-    expect(first.ok).toBe(true)
-    if (!first.ok) return
-    save = first.save
-
-    const stopAt = now + 5_000
-    const stopping = requestActivityStop(launch, save, stopAt)
-    expect(stopping.ok).toBe(true)
-    if (!stopping.ok) return
-    save = stopping.save
-    const startedAt = save.activityTransition?.startedAt
-    expect(startedAt).toBeTruthy()
-
-    const mid = stopAt + 10_000
-    save = { ...save, currentLocationId: 'LOC-0009' }
-    // Simulate travel hard-stop mid-cooldown, then queue at the new location.
-    save = beginTravelActivityChange(launch, save, mid)
-    expect(save.currentActivityId).toBeNull()
-    expect(save.activityTransition?.startedAt).toBe(startedAt)
-    expect(isActivityTransitionCancellable(save)).toBe(false)
-
-    const queued = requestActivityStart(launch, save, 'ACT-0012', mid)
-    expect(queued.ok).toBe(true)
-    if (!queued.ok) return
-    save = queued.save
-    expect(save.activityTransition?.followUpActivityId).toBe('ACT-0012')
-    expect(save.activityTransition?.startedAt).toBe(startedAt)
-
-    save = resolveActivityTransitions(launch, save, stopAt + 30_000)
-    expect(save.activityTransition).toBeNull()
-    expect(save.currentActivityId).toBe('ACT-0012')
-  })
-
-  it('after stop completes, starting a new activity has no second cooldown', () => {
+  it('stops an activity immediately', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const now = Date.parse('2026-01-01T00:00:00.000Z')
     let save = { ...createNewSave(launch), currentLocationId: 'LOC-0009' }
@@ -106,22 +40,14 @@ describe('shared activity-change delay', () => {
     if (!started.ok) return
     save = started.save
 
-    const stopAt = now + 10_000
-    const stopping = requestActivityStop(launch, save, stopAt)
+    const stopping = requestActivityStop(launch, save, now + 10_000)
     expect(stopping.ok).toBe(true)
     if (!stopping.ok) return
-    save = resolveActivityTransitions(launch, stopping.save, stopAt + 30_000)
-    expect(save.currentActivityId).toBeNull()
-    expect(save.activityTransition).toBeNull()
-
-    const nextStart = requestActivityStart(launch, save, 'ACT-0012', stopAt + 30_000)
-    expect(nextStart.ok).toBe(true)
-    if (!nextStart.ok) return
-    expect(nextStart.save.activityTransition).toBeNull()
-    expect(nextStart.save.currentActivityId).toBe('ACT-0012')
+    expect(stopping.save.currentActivityId).toBeNull()
+    expect(stopping.save.activityTransition).toBeNull()
   })
 
-  it('replace uses one stop delay then starts the new activity immediately', () => {
+  it('replaces an activity immediately', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const now = Date.parse('2026-01-01T00:00:00.000Z')
     let save = { ...createNewSave(launch), currentLocationId: 'LOC-0001' }
@@ -130,126 +56,79 @@ describe('shared activity-change delay', () => {
     expect(first.ok).toBe(true)
     if (!first.ok) return
     save = first.save
-    expect(save.currentActivityId).toBe('ACT-0001')
 
-    const replaceAt = now + 10_000
-    const replaced = requestActivityStart(launch, save, 'ACT-0021', replaceAt)
+    const replaced = requestActivityStart(launch, save, 'ACT-0021', now + 10_000)
     expect(replaced.ok).toBe(true)
     if (!replaced.ok) return
-    save = replaced.save
-    expect(save.currentActivityId).toBe('ACT-0001')
-    expect(save.activityTransition?.kind).toBe('stopping')
-    expect(save.activityTransition?.followUpActivityId).toBe('ACT-0021')
-    expect(save.activityTransition?.durationMs).toBe(30_000)
-
-    save = resolveActivityTransitions(launch, save, replaceAt + 30_000)
-    expect(save.activityTransition).toBeNull()
-    expect(save.currentActivityId).toBe('ACT-0021')
+    expect(replaced.save.activityTransition).toBeNull()
+    expect(replaced.save.currentActivityId).toBe('ACT-0021')
   })
 
-  it('travel while busy starts the shared cooldown and allows queueing at the destination', () => {
-    const { launch } = prepareDatabase(rawDatabase)
-    const now = Date.parse('2026-01-01T00:00:00.000Z')
-    let save = { ...createNewSave(launch), currentLocationId: 'LOC-0009' }
-
-    const started = requestActivityStart(launch, save, 'ACT-0012', now)
-    expect(started.ok).toBe(true)
-    if (!started.ok) return
-    save = started.save
-
-    const travelAt = now + 8_000
-    const arrived = applyHostileTravelArrival(launch, save, 'LOC-0001', travelAt)
-    save = arrived.save
-    expect(arrived.forcedActivityId).toBeNull()
-    expect(save.currentLocationId).toBe('LOC-0001')
-    expect(save.currentActivityId).toBeNull()
-    expect(save.activityTransition?.kind).toBe('stopping')
-    expect(save.activityTransition?.durationMs).toBe(30_000)
-    expect(isActivityTransitionCancellable(save)).toBe(false)
-
-    const queued = requestActivityStart(launch, save, 'ACT-0001', travelAt + 5_000)
-    expect(queued.ok).toBe(true)
-    if (!queued.ok) return
-    save = queued.save
-    expect(save.activityTransition?.followUpActivityId).toBe('ACT-0001')
-    expect(save.activityTransition?.startedAt).toBe(arrived.save.activityTransition?.startedAt)
-
-    // Changing the queued follow-up keeps the same cooldown clock.
-    const requeued = requestActivityStart(launch, save, 'ACT-0021', travelAt + 12_000)
-    expect(requeued.ok).toBe(true)
-    if (!requeued.ok) return
-    save = requeued.save
-    expect(save.activityTransition?.followUpActivityId).toBe('ACT-0021')
-    expect(save.activityTransition?.startedAt).toBe(arrived.save.activityTransition?.startedAt)
-
-    save = resolveActivityTransitions(launch, save, travelAt + 30_000)
-    expect(save.activityTransition).toBeNull()
-    expect(save.currentActivityId).toBe('ACT-0021')
-  })
-
-  it('idle travel does not start an activity-change cooldown', () => {
-    const { launch } = prepareDatabase(rawDatabase)
-    const now = Date.parse('2026-01-01T00:00:00.000Z')
-    const save = createNewSave(launch)
-    const arrived = applyHostileTravelArrival(launch, save, 'LOC-0002', now)
-    expect(arrived.save.currentLocationId).toBe('LOC-0002')
-    expect(arrived.save.activityTransition).toBeNull()
-    expect(arrived.save.currentActivityId).toBeNull()
-  })
-
-  it('Start queue while busy begins the shared cooldown (not opening the picker)', () => {
-    const { launch } = prepareDatabase(rawDatabase)
-    const now = Date.parse('2026-01-01T00:00:00.000Z')
-    let save = { ...createNewSave(launch), currentLocationId: 'LOC-0009' }
-
-    const started = requestActivityStart(launch, save, 'ACT-0012', now)
-    expect(started.ok).toBe(true)
-    if (!started.ok) return
-    save = started.save
-
-    // Browsing a production station does not require a transition; Start queue does.
-    const queueAt = now + 10_000
-    save = {
-      ...save,
-      currentLocationId: 'LOC-0002',
-      inventory: [...save.inventory, { itemId: 'ITEM-0025', quantity: 4 }],
-    }
-    const requested = requestProductionStart(launch, save, 'ACT-0017', 'RCP-0001', 2, queueAt)
-    expect(requested.ok).toBe(true)
-    if (!requested.ok) return
-    save = requested.save
-    expect(save.currentActivityId).toBe('ACT-0012')
-    expect(save.activityTransition?.kind).toBe('stopping')
-    expect(save.activityTransition?.followUpActivityId).toBe('ACT-0017')
-    expect(save.activityTransition?.productionRecipeId).toBe('RCP-0001')
-    expect(save.activityTransition?.productionQuantity).toBe(2)
-
-    save = resolveActivityTransitions(launch, save, queueAt + 30_000)
-    expect(save.activityTransition).toBeNull()
-    expect(save.currentActivityId).toBe('ACT-0017')
-    expect(save.productionRecipeId).toBe('RCP-0001')
-  })
-
-  it('cancels an existing production queue before starting a new recipe', () => {
+  it('blocks start and stop during death pause', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const now = Date.parse('2026-01-01T00:00:00.000Z')
     let save = {
       ...createNewSave(launch),
-      currentLocationId: 'LOC-0002',
-      currentActivityId: 'ACT-0017',
-      activityStartedAt: new Date(now).toISOString(),
-      productionRecipeId: 'RCP-0001',
-      productionQuantityTotal: 1,
-      productionQuantityRemaining: 1,
+      currentLocationId: 'LOC-0009',
+      deathPauseUntil: new Date(now + 30_000).toISOString(),
     }
 
-    const requested = requestProductionStart(launch, save, 'ACT-0017', 'RCP-0001', 2, now)
-    expect(requested.ok).toBe(true)
-    if (!requested.ok) return
-    save = requested.save
-    expect(save.activityTransition?.kind).toBe('stopping')
-    expect(save.activityTransition?.followUpActivityId).toBe('ACT-0017')
-    expect(save.activityTransition?.productionRecipeId).toBe('RCP-0001')
-    expect(save.activityTransition?.productionQuantity).toBe(2)
+    const start = requestActivityStart(launch, save, 'ACT-0012', now)
+    expect(start.ok).toBe(false)
+
+    save = {
+      ...save,
+      deathPauseUntil: null,
+    }
+    const started = requestActivityStart(launch, save, 'ACT-0012', now)
+    expect(started.ok).toBe(true)
+    if (!started.ok) return
+
+    const paused = {
+      ...started.save,
+      deathPauseUntil: new Date(now + 30_000).toISOString(),
+    }
+    const stop = requestActivityStop(launch, paused, now + 1_000)
+    expect(stop.ok).toBe(false)
+  })
+
+  it('travel while busy stops the activity immediately with no cooldown', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const now = Date.parse('2026-01-01T00:00:00.000Z')
+    let save = { ...createNewSave(launch), currentLocationId: 'LOC-0009' }
+
+    const started = requestActivityStart(launch, save, 'ACT-0012', now)
+    expect(started.ok).toBe(true)
+    if (!started.ok) return
+    save = started.save
+
+    const arrived = applyHostileTravelArrival(launch, save, 'LOC-0001', now + 8_000)
+    expect(arrived.forcedActivityId).toBeNull()
+    expect(arrived.save.currentLocationId).toBe('LOC-0001')
+    expect(arrived.save.currentActivityId).toBeNull()
+    expect(arrived.save.activityTransition).toBeNull()
+  })
+
+  it('Start queue replaces a running activity immediately', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const now = Date.parse('2026-01-01T00:00:00.000Z')
+    let save = { ...createNewSave(launch), currentLocationId: 'LOC-0009' }
+
+    const started = requestActivityStart(launch, save, 'ACT-0012', now)
+    expect(started.ok).toBe(true)
+    if (!started.ok) return
+    save = {
+      ...started.save,
+      currentLocationId: 'LOC-0002',
+      inventory: [...started.save.inventory, { itemId: 'ITEM-0025', quantity: 4 }],
+    }
+
+    const queued = requestProductionStart(launch, save, 'ACT-0017', 'RCP-0001', 2, now + 10_000)
+    expect(queued.ok).toBe(true)
+    if (!queued.ok) return
+    expect(queued.save.activityTransition).toBeNull()
+    expect(queued.save.currentActivityId).toBe('ACT-0017')
+    expect(queued.save.productionRecipeId).toBe('RCP-0001')
+    expect(queued.save.productionQuantityRemaining).toBe(2)
   })
 })

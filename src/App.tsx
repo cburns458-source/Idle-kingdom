@@ -9,15 +9,10 @@ import {
 } from './game/activity/engine'
 import {
   beginTravelActivityChange,
-  cancelActivityTransition,
-  hasRunningPrimaryActivity,
-  isActivityTransitionCancellable,
-  isActivityTransitionPending,
   requestActivityStart,
   requestActivityStop,
   requestProductionStart,
   resolveActivityTransitions,
-  transitionRemainingMs,
 } from './game/activity/transition'
 import { loadDatabase, type LoadedDatabase } from './game/data/loadDatabase'
 import type { ActionRewardBundle } from './game/activity/types'
@@ -90,7 +85,6 @@ import { LocationView } from './ui/LocationView'
 import { NamePrompt } from './ui/NamePrompt'
 import { NpcPanel } from './ui/NpcPanel'
 import { ProductionPicker, ProductionProgress } from './ui/ProductionPanel'
-import { ActivityTransitionPanel } from './ui/ActivityTransitionPanel'
 import { AutoEquipPrompt } from './ui/AutoEquipPrompt'
 import { ProjectCompletePopup } from './ui/ProjectCompletePopup'
 import { ProjectPicker } from './ui/ProjectPanel'
@@ -138,10 +132,6 @@ export default function App() {
     lines: string[]
   } | null>(null)
   const [autoEquipPrompt, setAutoEquipPrompt] = useState<AutoEquipProposal | null>(null)
-  const [transitionRemaining, setTransitionRemaining] = useState(0)
-  const [deferredProductionPickerId, setDeferredProductionPickerId] = useState<string | null>(
-    null,
-  )
   const bootRef = useRef(boot)
   bootRef.current = boot
 
@@ -235,55 +225,20 @@ export default function App() {
     return () => window.cancelAnimationFrame(frame)
   }, [travel, boot.status])
 
-  // Resolve Primary Activity start/stop delays.
+  // Clear any legacy activity-change delays from older saves.
   useEffect(() => {
     if (boot.status !== 'ready' || travel) return
-    if (!boot.save.activityTransition) {
-      setTransitionRemaining(0)
-      return
+    if (!boot.save.activityTransition) return
+    const resolved = resolveActivityTransitions(
+      boot.database.launch,
+      boot.save,
+      Date.now(),
+    )
+    if (resolved !== boot.save) {
+      setBoot({ ...boot, save: persistSave(resolved), saveCreated: false })
+      setActionProgress(0)
     }
-
-    let frame = 0
-    const tick = () => {
-      const current = bootRef.current
-      if (current.status !== 'ready') return
-      const now = Date.now()
-      const remaining = transitionRemainingMs(current.save, now)
-      setTransitionRemaining(remaining)
-
-      if (remaining <= 0 && current.save.activityTransition) {
-        const resolved = resolveActivityTransitions(current.database.launch, current.save, now)
-        if (resolved !== current.save) {
-          const saved = persistSave(resolved)
-          setBoot({ ...current, save: saved, saveCreated: false })
-          setActionProgress(0)
-        }
-        return
-      }
-
-      frame = window.requestAnimationFrame(tick)
-    }
-
-    frame = window.requestAnimationFrame(tick)
-    return () => window.cancelAnimationFrame(frame)
-  }, [boot.status, boot.status === 'ready' ? boot.save.activityTransition : null, travel])
-
-  // After a cancel delay finishes, open a deferred Standard Production picker.
-  useEffect(() => {
-    if (boot.status !== 'ready' || travel) return
-    if (!deferredProductionPickerId) return
-    if (boot.save.activityTransition) return
-    if (hasRunningPrimaryActivity(boot.save)) return
-    setProductionPickerActivityId(deferredProductionPickerId)
-    setDeferredProductionPickerId(null)
-  }, [
-    boot.status,
-    boot.status === 'ready' ? boot.save.activityTransition : null,
-    boot.status === 'ready' ? boot.save.currentActivityId : null,
-    boot.status === 'ready' ? boot.save.productionRecipeId : null,
-    deferredProductionPickerId,
-    travel,
-  ])
+  }, [boot, travel])
 
   // Ensure an action exists while an activity is running (not during death pause).
   useEffect(() => {
@@ -292,7 +247,6 @@ export default function App() {
     if (!save.currentActivityId || save.currentActionId) return
     if (save.productionRecipeId) return
     if (isDeathPaused(save)) return
-    if (save.activityTransition?.kind === 'starting') return
 
     const running = database.launchIndexes.activitiesById.get(save.currentActivityId)
     if (running && isStandardProductionActivity(database.launch, running)) return
@@ -719,15 +673,6 @@ export default function App() {
   }
 
   const deathLocked = isDeathPaused(save) || pauseRemainingMs > 0
-  const transitionLocked = isActivityTransitionPending(save) || transitionRemaining > 0
-  const pendingTransition = save.activityTransition
-  const pendingTransitionActivity = pendingTransition
-    ? database.launchIndexes.activitiesById.get(pendingTransition.activityId)
-    : undefined
-  const pendingFollowUpActivityId = pendingTransition?.followUpActivityId ?? null
-  const followUpActivity = pendingFollowUpActivityId
-    ? database.launchIndexes.activitiesById.get(pendingFollowUpActivityId)
-    : undefined
 
   function beginTravel(destinationId: string) {
     if (travel || deathLocked) return
@@ -739,7 +684,6 @@ export default function App() {
     setSpecialStation(null)
     setActiveShopId(null)
     setActiveNpcId(null)
-    setDeferredProductionPickerId(null)
     setActionProgress(0)
 
     const now = Date.now()
@@ -767,7 +711,7 @@ export default function App() {
       return
     }
 
-    // Timed travel: start the shared activity-change cooldown when travel begins.
+    // Timed travel: stop the current activity immediately when travel begins.
     const prepared = beginTravelActivityChange(database.launch, save, now)
     if (prepared !== save) updateSave(prepared)
     setTravel({
@@ -813,17 +757,13 @@ export default function App() {
 
     const activityRow = database.launchIndexes.activitiesById.get(activityId)
     if (activityRow && isStandardProductionActivity(database.launch, activityRow)) {
-      // Browse any Standard Production station without starting the shared cooldown.
-      // Cooldown begins only when Start queue is pressed (requestProductionStart).
       setSpecialStation(null)
-      setDeferredProductionPickerId(null)
       setProductionPickerActivityId(activityId)
       if (fromSave !== save) updateSave(fromSave)
       return
     }
     setSpecialStation(null)
     setProductionPickerActivityId(null)
-    setDeferredProductionPickerId(null)
 
     const requested = requestActivityStart(database.launch, fromSave, activityId)
     if (!requested.ok) {
@@ -921,10 +861,6 @@ export default function App() {
 
   function stopActivity() {
     if (deathLocked) return
-    if (isActivityTransitionPending(save)) {
-      setActivityError('Wait for the current start/stop delay to finish.')
-      return
-    }
     setActivityError(null)
     setActionProgress(0)
     setLastMessage(null)
@@ -936,14 +872,6 @@ export default function App() {
       return
     }
     updateSave(requested.save)
-  }
-
-  function cancelPendingActivityChange() {
-    if (!save.activityTransition) return
-    setActivityError(null)
-    setTransitionRemaining(0)
-    setDeferredProductionPickerId(null)
-    updateSave(cancelActivityTransition(save))
   }
 
   function requirementHint(row: ActivityRow): string | null {
@@ -975,15 +903,12 @@ export default function App() {
               db={database.launch}
               location={location}
               currentActivityId={save.currentActivityId}
-              pendingFollowUpActivityId={pendingFollowUpActivityId}
-              activityChangePending={transitionLocked}
               activityError={activityError}
               requirementHint={requirementHint}
               isRecipeBrowserActivity={(row) =>
                 isStandardProductionActivity(database.launch, row)
               }
               actionsLocked={deathLocked}
-              stopLocked={deathLocked || transitionLocked}
               onStartActivity={startActivity}
               onStopActivity={stopActivity}
               onOpenSpecialProduction={(station) => {
@@ -1067,18 +992,6 @@ export default function App() {
                       activity={pickerActivity}
                       onCancel={() => setProductionPickerActivityId(null)}
                       onConfirm={confirmProduction}
-                    />
-                  )}
-                  {pendingTransition && !activeShopId && !activeNpcId && (
-                    <ActivityTransitionPanel
-                      transition={pendingTransition}
-                      activity={pendingTransitionActivity}
-                      followUpActivity={followUpActivity}
-                      remainingMs={transitionRemaining}
-                      showCancel={
-                        transitionRemaining > 0 && isActivityTransitionCancellable(save)
-                      }
-                      onCancel={cancelPendingActivityChange}
                     />
                   )}
                   {activity && inCombat && combatEnemy && !activeShopId && !activeNpcId && (

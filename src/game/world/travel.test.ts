@@ -55,16 +55,7 @@ describe('travel rules', () => {
     expect(locationsForMapView(launch, 'MAP-0005')).toEqual([])
   })
 
-  it('stops primary activity on travel arrival without clearing a pending change delay', () => {
-    const transition = {
-      kind: 'stopping' as const,
-      activityId: 'ACT-0017',
-      followUpActivityId: null,
-      productionRecipeId: null,
-      productionQuantity: null,
-      startedAt: '2026-01-01T00:00:00.000Z',
-      durationMs: 30_000,
-    }
+  it('stops primary activity on travel arrival', () => {
     const next = applyTravelArrival(
       {
         currentLocationId: 'LOC-0002',
@@ -73,7 +64,15 @@ describe('travel rules', () => {
         currentActionId: 'ACN-0105',
         actionStartedAt: '2026-01-01T00:00:00.000Z',
         actionDurationMs: 20000,
-        activityTransition: transition,
+        activityTransition: {
+          kind: 'stopping',
+          activityId: 'ACT-0017',
+          followUpActivityId: null,
+          productionRecipeId: null,
+          productionQuantity: null,
+          startedAt: '2026-01-01T00:00:00.000Z',
+          durationMs: 30_000,
+        },
       },
       'LOC-0001',
     )
@@ -81,7 +80,7 @@ describe('travel rules', () => {
     expect(next.currentActivityId).toBeNull()
     expect(next.activityStartedAt).toBeNull()
     expect(next.currentActionId).toBeNull()
-    expect(next.activityTransition).toEqual(transition)
+    expect(next.activityTransition).toBeNull()
   })
 
   it('blocks travel arrival during death pause', () => {

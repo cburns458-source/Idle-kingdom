@@ -3,7 +3,6 @@ import type { ActivityTransition, PlayerSave } from '../save/types'
 import { isDeathPaused } from '../combat/engine'
 import { cancelProductionActivity, beginProductionQueue } from '../production/engine'
 import { isStandardProductionActivity } from '../production/recipes'
-import { configNumber } from './gathering'
 import {
   beginActivitySave,
   clearActivitySave,
@@ -12,158 +11,33 @@ import {
   validateActivityStart,
 } from './engine'
 
-export function activityChangeDelayMs(db: GameDatabase): number {
-  return Math.max(0, configNumber(db, 'activity_change_delay', 30) * 1000)
-}
-
-export function transitionRemainingMs(
-  save: PlayerSave,
-  nowMs: number = Date.now(),
-): number {
-  const transition = save.activityTransition
-  if (!transition) return 0
-  const started = Date.parse(transition.startedAt)
-  if (!Number.isFinite(started)) return 0
-  return Math.max(0, started + transition.durationMs - nowMs)
-}
-
-export function isActivityTransitionPending(save: PlayerSave, nowMs: number = Date.now()): boolean {
-  return transitionRemainingMs(save, nowMs) > 0
-}
-
 export function clearActivityTransition(save: PlayerSave): PlayerSave {
   if (!save.activityTransition) return save
   return { ...save, activityTransition: null }
-}
-
-/** Cancel is only meaningful while the old activity is still running (soft stop). */
-export function isActivityTransitionCancellable(save: PlayerSave): boolean {
-  return Boolean(save.activityTransition && hasRunningPrimaryActivity(save))
-}
-
-function makeStopTransition(
-  db: GameDatabase,
-  partial: Omit<ActivityTransition, 'startedAt' | 'durationMs' | 'kind'> & {
-    startedAt?: string
-    durationMs?: number
-  },
-  nowMs: number,
-): ActivityTransition {
-  return {
-    kind: 'stopping',
-    activityId: partial.activityId,
-    followUpActivityId: partial.followUpActivityId ?? null,
-    productionRecipeId: partial.productionRecipeId ?? null,
-    productionQuantity: partial.productionQuantity ?? null,
-    startedAt: partial.startedAt ?? new Date(nowMs).toISOString(),
-    durationMs: partial.durationMs ?? activityChangeDelayMs(db),
-  }
 }
 
 export function hasRunningPrimaryActivity(save: PlayerSave): boolean {
   return Boolean(save.currentActivityId || save.productionRecipeId)
 }
 
-function withFollowUp(
-  save: PlayerSave,
-  followUp: {
-    followUpActivityId?: string | null
-    productionRecipeId?: string | null
-    productionQuantity?: number | null
-  },
-): PlayerSave {
-  const transition = save.activityTransition
-  if (!transition) return save
-  return {
-    ...save,
-    activityTransition: {
-      ...transition,
-      followUpActivityId:
-        followUp.followUpActivityId !== undefined
-          ? followUp.followUpActivityId
-          : transition.followUpActivityId,
-      productionRecipeId:
-        followUp.productionRecipeId !== undefined
-          ? followUp.productionRecipeId
-          : transition.productionRecipeId,
-      productionQuantity:
-        followUp.productionQuantity !== undefined
-          ? followUp.productionQuantity
-          : transition.productionQuantity,
-    },
-  }
-}
-
-function beginCancelTransition(
+/** Immediately stop the current Primary Activity (refunds remaining production materials). */
+export function stopPrimaryActivityNow(
   db: GameDatabase,
   save: PlayerSave,
-  nowMs: number,
-  followUp: {
-    followUpActivityId?: string | null
-    productionRecipeId?: string | null
-    productionQuantity?: number | null
-  } = {},
+  nowMs: number = Date.now(),
 ): PlayerSave {
-  return {
-    ...save,
-    activityTransition: makeStopTransition(
-      db,
-      {
-        activityId: save.currentActivityId ?? save.productionRecipeId ?? 'activity',
-        followUpActivityId: followUp.followUpActivityId ?? null,
-        productionRecipeId: followUp.productionRecipeId ?? null,
-        productionQuantity: followUp.productionQuantity ?? null,
-      },
-      nowMs,
-    ),
-  }
-}
-
-/** Hard-stop running work and ensure the shared activity-change cooldown is running. */
-function hardStopIntoActivityChange(
-  db: GameDatabase,
-  save: PlayerSave,
-  nowMs: number,
-): PlayerSave {
-  const hadPrimary = hasRunningPrimaryActivity(save)
-  const existing = save.activityTransition
-  const pending = isActivityTransitionPending(save, nowMs)
-  const labelId =
-    save.currentActivityId ?? existing?.activityId ?? save.productionRecipeId ?? 'activity'
-
-  let next = save
+  let next = clearActivityTransition(save)
   if (next.productionRecipeId) {
     next = cancelProductionActivity(db, next)
   } else if (next.currentActivityId) {
     next = clearActivitySave(next, nowMs)
   }
-
-  if (!hadPrimary && !existing) {
-    return clearActivityTransition(next)
-  }
-
-  if (pending && existing) {
-    return {
-      ...next,
-      activityTransition: {
-        ...existing,
-        kind: 'stopping',
-        followUpActivityId: null,
-        productionRecipeId: null,
-        productionQuantity: null,
-      },
-    }
-  }
-
-  return {
-    ...next,
-    activityTransition: makeStopTransition(db, { activityId: labelId }, nowMs),
-  }
+  return next
 }
 
 /**
- * When travel begins (or arrives, for instant travel): hard-stop the current Primary
- * Activity and start the shared activity-change cooldown. Location is unchanged here.
+ * Travel interrupt: hard-stop the current Primary Activity immediately.
+ * No activity-change cooldown — death pause still blocks travel in the UI/hostility layer.
  */
 export function beginTravelActivityChange(
   db: GameDatabase,
@@ -172,10 +46,9 @@ export function beginTravelActivityChange(
 ): PlayerSave {
   if (isDeathPaused(save, nowMs)) return save
   if (!hasRunningPrimaryActivity(save) && !save.activityTransition) return save
-  return hardStopIntoActivityChange(db, save, nowMs)
+  return stopPrimaryActivityNow(db, save, nowMs)
 }
 
-/** Immediately begin a pool activity (no start delay). */
 function startPoolActivityNow(
   db: GameDatabase,
   save: PlayerSave,
@@ -189,7 +62,6 @@ function startPoolActivityNow(
   return generated ? generated.save : started
 }
 
-/** Immediately begin a Standard Production queue (no start delay). */
 function startProductionNow(
   db: GameDatabase,
   save: PlayerSave,
@@ -206,10 +78,7 @@ function startProductionNow(
   return queued.save
 }
 
-/**
- * Start a pool activity immediately, or queue it on the shared activity-change cooldown.
- * Selecting during an active cooldown updates the follow-up without resetting the timer.
- */
+/** Start or replace a pool activity immediately. Death pause still blocks. */
 export function requestActivityStart(
   db: GameDatabase,
   save: PlayerSave,
@@ -223,41 +92,23 @@ export function requestActivityStart(
   const validation = validateActivityStart(db, save, activityId)
   if (!validation.ok) return validation
 
-  if (isActivityTransitionPending(save, nowMs)) {
-    return {
-      ok: true,
-      save: withFollowUp(save, {
-        followUpActivityId: activityId,
-        productionRecipeId: null,
-        productionQuantity: null,
-      }),
-    }
-  }
-
   if (
     save.currentActivityId === activityId &&
     !save.productionRecipeId &&
     !save.activityTransition
   ) {
-    return { ok: true, save }
+    return { ok: true, save: clearActivityTransition(save) }
   }
 
-  // Replace: one shared cancel delay, then immediate start of the follow-up.
-  if (hasRunningPrimaryActivity(save) && save.currentActivityId !== activityId) {
-    return {
-      ok: true,
-      save: beginCancelTransition(db, save, nowMs, {
-        followUpActivityId: activityId,
-        productionRecipeId: null,
-        productionQuantity: null,
-      }),
-    }
+  let next = save
+  if (hasRunningPrimaryActivity(save) || save.activityTransition) {
+    next = stopPrimaryActivityNow(db, save, nowMs)
   }
 
-  return { ok: true, save: startPoolActivityNow(db, save, activityId, nowMs) }
+  return { ok: true, save: startPoolActivityNow(db, next, activityId, nowMs) }
 }
 
-/** Start Standard Production immediately, or queue it on the shared cooldown. */
+/** Start Standard Production immediately, replacing any running Primary Activity. */
 export function requestProductionStart(
   db: GameDatabase,
   save: PlayerSave,
@@ -273,34 +124,17 @@ export function requestProductionStart(
   const validation = validateActivityStart(db, save, activityId)
   if (!validation.ok) return validation
 
-  if (isActivityTransitionPending(save, nowMs)) {
-    return {
-      ok: true,
-      save: withFollowUp(save, {
-        followUpActivityId: activityId,
-        productionRecipeId: recipeId,
-        productionQuantity: quantity,
-      }),
-    }
+  let next = save
+  if (hasRunningPrimaryActivity(save) || save.activityTransition) {
+    next = stopPrimaryActivityNow(db, save, nowMs)
   }
 
-  if (hasRunningPrimaryActivity(save)) {
-    return {
-      ok: true,
-      save: beginCancelTransition(db, save, nowMs, {
-        followUpActivityId: activityId,
-        productionRecipeId: recipeId,
-        productionQuantity: quantity,
-      }),
-    }
-  }
-
-  const started = startProductionNow(db, save, activityId, recipeId, quantity, nowMs)
+  const started = startProductionNow(db, next, activityId, recipeId, quantity, nowMs)
   if ('ok' in started && started.ok === false) return started
   return { ok: true, save: started as PlayerSave }
 }
 
-/** Begin the stop/cancel delay for the current primary activity. */
+/** Stop the current Primary Activity immediately. */
 export function requestActivityStop(
   db: GameDatabase,
   save: PlayerSave,
@@ -309,23 +143,11 @@ export function requestActivityStop(
   if (isDeathPaused(save, nowMs)) {
     return { ok: false, reason: 'Cannot change activities while recovering from defeat.' }
   }
-  if (isActivityTransitionPending(save, nowMs)) {
-    return { ok: false, reason: 'Wait for the current activity change delay to finish.' }
-  }
-  if (!hasRunningPrimaryActivity(save)) {
+  if (!hasRunningPrimaryActivity(save) && !save.activityTransition) {
     return { ok: false, reason: 'No activity is running.' }
   }
 
-  return {
-    ok: true,
-    save: beginCancelTransition(db, save, nowMs),
-  }
-}
-
-export function cancelActivityTransition(save: PlayerSave): PlayerSave {
-  // Only abort soft-stops (activity still running). Hard-stops keep the timer.
-  if (!isActivityTransitionCancellable(save)) return save
-  return clearActivityTransition(save)
+  return { ok: true, save: stopPrimaryActivityNow(db, save, nowMs) }
 }
 
 function applyFollowUpStart(
@@ -352,62 +174,32 @@ function applyFollowUpStart(
 
   const activity = getActivity(db, followUp)
   if (activity && isStandardProductionActivity(db, activity)) {
-    // Picker opens from the UI after a plain cancel; nothing to auto-start.
     return save
   }
 
   return startPoolActivityNow(db, save, followUp, nowMs)
 }
 
-function applyStoppingTransition(
-  db: GameDatabase,
-  save: PlayerSave,
-  transition: ActivityTransition,
-  nowMs: number,
-): PlayerSave {
-  let next = clearActivityTransition(save)
-  if (next.productionRecipeId) {
-    next = cancelProductionActivity(db, next)
-  } else if (next.currentActivityId) {
-    next = clearActivitySave(next, nowMs)
-  }
-
-  // After the shared delay completes: start the follow-up immediately if any.
-  return applyFollowUpStart(db, next, transition, nowMs)
-}
-
 /**
- * Apply completed activity-change delays. Safe to call every frame and during AFK catch-up.
- * Follow-up activities begin immediately when the delay finishes (no second cooldown).
+ * Clear legacy activity-change delays from older saves (apply any follow-up immediately).
+ * New gameplay no longer queues these transitions.
  */
 export function resolveActivityTransitions(
   db: GameDatabase,
   save: PlayerSave,
   nowMs: number = Date.now(),
 ): PlayerSave {
-  let current = save
-  for (let step = 0; step < 4; step += 1) {
-    const transition = current.activityTransition
-    if (!transition) return current
-    if (transitionRemainingMs(current, nowMs) > 0) return current
+  const transition = save.activityTransition
+  if (!transition) return save
 
-    const completedAt = Date.parse(transition.startedAt) + transition.durationMs
-    const at = Number.isFinite(completedAt) ? Math.min(completedAt, nowMs) : nowMs
-
-    // Start transitions are no longer queued; ignore any legacy ones by applying immediately.
-    if (transition.kind === 'starting') {
-      current = applyFollowUpStart(
-        db,
-        clearActivityTransition(current),
-        {
-          ...transition,
-          followUpActivityId: transition.activityId,
-        },
-        at,
-      )
-    } else {
-      current = applyStoppingTransition(db, current, transition, at)
-    }
+  let next = stopPrimaryActivityNow(db, save, nowMs)
+  if (transition.kind === 'starting') {
+    return applyFollowUpStart(
+      db,
+      next,
+      { ...transition, followUpActivityId: transition.activityId },
+      nowMs,
+    )
   }
-  return current
+  return applyFollowUpStart(db, next, transition, nowMs)
 }
