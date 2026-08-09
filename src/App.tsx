@@ -988,6 +988,29 @@ function SettingsPanel({
     )
   }
 
+  function resetAllSkills() {
+    const skills = save.skills.map((skill) => ({
+      ...skill,
+      level: 1,
+      xp: 0,
+    }))
+    onChangeSave({ ...save, skills })
+  }
+
+  function clearAllItems() {
+    const slots = { ...save.equipment.slots }
+    for (const slotId of Object.keys(slots)) {
+      slots[slotId] = null
+    }
+    onChangeSave(
+      withRecalculatedVitals(database.launch, {
+        ...save,
+        inventory: [],
+        equipment: { slots },
+      }),
+    )
+  }
+
   function grantTestFood() {
     const withItems = addItemToInventory(save, bakedPotatoId, 5)
     const equipped = equipItemFromInventory(database.launch, withItems, bakedPotatoId)
@@ -1090,9 +1113,14 @@ function SettingsPanel({
             )
           })}
         </select>
-        <button type="button" className="btn primary" onClick={raiseSelectedSkillBy10}>
-          Raise skill by 10 levels
-        </button>
+        <div className="button-row">
+          <button type="button" className="btn primary" onClick={raiseSelectedSkillBy10}>
+            Raise skill by 10 levels
+          </button>
+          <button type="button" className="btn secondary" onClick={resetAllSkills}>
+            Reset skills
+          </button>
+        </div>
       </div>
 
       <div className="menu-demo-block">
@@ -1137,14 +1165,19 @@ function SettingsPanel({
             ))}
           </select>
         )}
-        <button
-          type="button"
-          className="btn primary"
-          disabled={!selectedItemId || filteredItems.length === 0}
-          onClick={grantSelectedItem100}
-        >
-          Add 100 items
-        </button>
+        <div className="button-row">
+          <button
+            type="button"
+            className="btn primary"
+            disabled={!selectedItemId || filteredItems.length === 0}
+            onClick={grantSelectedItem100}
+          >
+            Add 100 items
+          </button>
+          <button type="button" className="btn secondary" onClick={clearAllItems}>
+            Clear items
+          </button>
+        </div>
       </div>
 
       <div className="button-row">
@@ -1168,8 +1201,8 @@ function SettingsPanel({
         </button>
       </div>
       <p className="muted tiny">
-        Demo aids: raise any skill +10, grant ×100 of a searched item, plus quick mats for food,
-        mining, production, smithing, and Arcana.
+        Demo aids: raise/reset skills, grant or clear items, plus quick mats for food, mining,
+        production, smithing, and Arcana. Clear items empties inventory and equipment.
       </p>
     </section>
   )
