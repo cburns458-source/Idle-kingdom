@@ -19883,7 +19883,7 @@
       "Required Skill 1 ID": "SKL-0013",
       "Required Skill 1 Level": 20,
       "Required Skill 2 ID": "SKL-0009",
-      "Required Skill 2 Level": 20,
+      "Required Skill 2 Level": 15,
       "Required Skill 3 ID": null,
       "Required Skill 3 Level": null
     },
@@ -19913,7 +19913,7 @@
       "Required Skill 1 ID": "SKL-0013",
       "Required Skill 1 Level": 30,
       "Required Skill 2 ID": "SKL-0009",
-      "Required Skill 2 Level": 25,
+      "Required Skill 2 Level": 15,
       "Required Skill 3 ID": null,
       "Required Skill 3 Level": null
     },
@@ -19943,7 +19943,7 @@
       "Required Skill 1 ID": "SKL-0013",
       "Required Skill 1 Level": 80,
       "Required Skill 2 ID": "SKL-0009",
-      "Required Skill 2 Level": 70,
+      "Required Skill 2 Level": 15,
       "Required Skill 3 ID": null,
       "Required Skill 3 Level": null
     }
