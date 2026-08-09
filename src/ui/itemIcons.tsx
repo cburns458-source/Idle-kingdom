@@ -2,15 +2,20 @@ import { itemAssetPath } from '../game/assets/itemAssets'
 import type { ItemRow } from '../game/data/types'
 
 /** Compact item glyph / art for inventory and equipment. */
-export function ItemIcon({ item }: { item: ItemRow | undefined }) {
+export function ItemIcon({
+  item,
+  className = '',
+}: {
+  item: ItemRow | undefined
+  className?: string
+}) {
   const path = item ? itemAssetPath(item['Item ID']) : null
   if (path) {
     return (
       <span
-        className="item-icon item-icon-art"
+        className={`item-icon item-icon-art ${className}`.trim()}
         style={{ backgroundImage: `url(${path})` }}
         aria-hidden
-        title={item?.['Display Name']}
       />
     )
   }
@@ -18,10 +23,50 @@ export function ItemIcon({ item }: { item: ItemRow | undefined }) {
   const key = (item?.['Internal Key'] ?? item?.Category ?? 'item').toLowerCase()
   const label = glyphFor(key, item?.Category, item?.Subtype)
   return (
-    <span className="item-icon" aria-hidden title={item?.['Display Name']}>
+    <span className={`item-icon ${className}`.trim()} aria-hidden>
       {label}
     </span>
   )
+}
+
+/** Placeholder mark for an empty equipment slot. */
+export function SlotGlyph({ slotId }: { slotId: string }) {
+  return (
+    <span className="item-icon item-icon-slot" aria-hidden>
+      {slotGlyph(slotId)}
+    </span>
+  )
+}
+
+function slotGlyph(slotId: string): string {
+  switch (slotId) {
+    case 'SLOT-0001':
+      return 'W'
+    case 'SLOT-0002':
+      return 'S'
+    case 'SLOT-0003':
+      return 'H'
+    case 'SLOT-0004':
+      return 'C'
+    case 'SLOT-0005':
+      return 'L'
+    case 'SLOT-0006':
+      return 'T'
+    case 'SLOT-0007':
+      return 'G'
+    case 'SLOT-0008':
+      return '@'
+    case 'SLOT-0009':
+      return 'o'
+    case 'SLOT-0010':
+      return 'K'
+    case 'SLOT-0011':
+      return 'F'
+    case 'SLOT-0012':
+      return 'V'
+    default:
+      return '·'
+  }
 }
 
 function glyphFor(

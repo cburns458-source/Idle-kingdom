@@ -1,14 +1,31 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import type { LoadedDatabase } from '../game/data/loadDatabase'
 import {
   equipItemFromInventory,
-  equipmentRequirementFailure,
   unequipSlot,
 } from '../game/equipment/loadout'
 import { withRecalculatedVitals } from '../game/equipment/vitals'
 import { playerDamageRange, playerDamageReduction, playerMaxHp } from '../game/combat/stats'
 import type { PlayerSave } from '../game/save/types'
-import { ItemIcon } from './itemIcons'
+import { ItemIcon, SlotGlyph } from './itemIcons'
+
+type ItemsSubTab = 'items' | 'equipment'
+
+/** Paper-doll order: 3 columns × 4 rows. */
+const EQUIPMENT_GRID_ORDER = [
+  'SLOT-0008', // Neck
+  'SLOT-0003', // Helmet
+  'SLOT-0010', // Back
+  'SLOT-0001', // Weapon / Tool
+  'SLOT-0004', // Chest
+  'SLOT-0002', // Off-hand / Shield
+  'SLOT-0009', // Ring
+  'SLOT-0005', // Legs
+  'SLOT-0007', // Gloves
+  'SLOT-0011', // Food
+  'SLOT-0006', // Boots
+  'SLOT-0012', // Potion
+] as const
 
 interface InventoryViewProps {
   save: PlayerSave
@@ -17,11 +34,10 @@ interface InventoryViewProps {
 }
 
 export function InventoryView({ save, database, onChangeSave }: InventoryViewProps) {
+  const [subTab, setSubTab] = useState<ItemsSubTab>('items')
   const [message, setMessage] = useState<string | null>(null)
+  const [heldTip, setHeldTip] = useState<string | null>(null)
   const db = database.launch
-  const slots = [...db.EquipmentSlots].sort((a, b) =>
-    a['Slot ID'].localeCompare(b['Slot ID']),
-  )
   const damage = playerDamageRange(db, save)
   const maxHp = playerMaxHp(db, save)
   const dr = playerDamageReduction(db, save)
@@ -47,7 +63,7 @@ export function InventoryView({ save, database, onChangeSave }: InventoryViewPro
 
   return (
     <section className="inventory-view">
-      <section className="panel">
+      <section className="panel inventory-head">
         <h1>Items</h1>
         <dl className="inventory-stat-strip">
           <div>
@@ -67,93 +83,187 @@ export function InventoryView({ save, database, onChangeSave }: InventoryViewPro
             <dd>{dr}</dd>
           </div>
         </dl>
+        <div className="inventory-subnav" role="tablist" aria-label="Items sections">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={subTab === 'items'}
+            className={subTab === 'items' ? 'inventory-subnav-btn active' : 'inventory-subnav-btn'}
+            onClick={() => {
+              setSubTab('items')
+              setHeldTip(null)
+            }}
+          >
+            Items
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={subTab === 'equipment'}
+            className={
+              subTab === 'equipment' ? 'inventory-subnav-btn active' : 'inventory-subnav-btn'
+            }
+            onClick={() => {
+              setSubTab('equipment')
+              setHeldTip(null)
+            }}
+          >
+            Equipment
+          </button>
+        </div>
         {message && <p className="danger-note">{message}</p>}
       </section>
 
-      <section className="panel">
-        <h2>Equipment</h2>
-        <ul className="equipment-slot-grid">
-          {slots.map((slot) => {
-            const stack = save.equipment.slots[slot['Slot ID']]
-            const item = stack
-              ? database.launchIndexes.itemsById.get(stack.itemId)
-              : undefined
-            return (
-              <li key={slot['Slot ID']} className={stack ? 'filled' : 'empty'}>
-                <div className="equipment-slot-main">
-                  <ItemIcon item={item} />
-                  <div>
-                    <p className="muted tiny">{slot['Display Name']}</p>
-                    <strong>
-                      {item?.['Display Name'] ?? 'Empty'}
-                      {stack && stack.quantity > 1 ? ` ×${stack.quantity}` : ''}
-                    </strong>
-                  </div>
-                </div>
-                {stack && (
-                  <button
-                    type="button"
-                    className="btn secondary"
-                    onClick={() => unequip(slot['Slot ID'])}
-                  >
-                    Unequip
-                  </button>
-                )}
-              </li>
-            )
-          })}
-        </ul>
-      </section>
-
-      <section className="panel">
-        <h2>Bag</h2>
-        {save.inventory.length === 0 ? (
-          <p className="lead">No items yet. Fight or gather to fill this list.</p>
-        ) : (
-          <ul className="interaction-list inventory-bag-list">
-            {save.inventory.map((stack) => {
-              const item = database.launchIndexes.itemsById.get(stack.itemId)
-              const equipment = db.Equipment.find((row) => row['Item ID'] === stack.itemId)
-              const gate =
-                equipment != null ? equipmentRequirementFailure(db, save, equipment) : null
-              return (
-                <li key={stack.itemId}>
-                  <div className="inventory-bag-main">
-                    <ItemIcon item={item} />
-                    <div>
-                      <strong>{item?.['Display Name'] ?? stack.itemId}</strong>
-                      <p className="muted">
-                        × {stack.quantity}
-                        {equipment?.['Slot ID']
-                          ? ` · ${
-                              db.EquipmentSlots.find(
-                                (slot) => slot['Slot ID'] === equipment['Slot ID'],
-                              )?.['Display Name'] ?? 'Gear'
-                            }`
-                          : ''}
-                      </p>
-                      {gate && <p className="muted tiny">{gate}</p>}
-                    </div>
-                  </div>
-                  {equipment?.['Slot ID'] && (
-                    <button
-                      type="button"
-                      className="btn primary"
-                      disabled={Boolean(gate)}
-                      onClick={() => equipItem(stack.itemId)}
+      {subTab === 'items' ? (
+        <section className="panel inventory-bag-panel">
+          {save.inventory.length === 0 ? (
+            <p className="lead">No items yet. Fight or gather to fill this grid.</p>
+          ) : (
+            <ul className="item-bag-grid">
+              {save.inventory.map((stack) => {
+                const item = database.launchIndexes.itemsById.get(stack.itemId)
+                const tipId = `bag:${stack.itemId}`
+                const equipment = db.Equipment.find((row) => row['Item ID'] === stack.itemId)
+                return (
+                  <li key={stack.itemId}>
+                    <HoldTile
+                      className="bag-item-tile"
+                      ariaLabel={`${item?.['Display Name'] ?? stack.itemId}, quantity ${stack.quantity}`}
+                      showingTip={heldTip === tipId}
+                      tipText={item?.['Display Name'] ?? stack.itemId}
+                      onHoldStart={() => setHeldTip(tipId)}
+                      onHoldEnd={() =>
+                        setHeldTip((current) => (current === tipId ? null : current))
+                      }
+                      onActivate={() => {
+                        if (equipment?.['Slot ID']) equipItem(stack.itemId)
+                      }}
                     >
-                      Equip
-                    </button>
-                  )}
+                      <ItemIcon item={item} className="bag-item-icon" />
+                      <span className="bag-item-qty">{stack.quantity}</span>
+                    </HoldTile>
+                  </li>
+                )
+              })}
+            </ul>
+          )}
+          <p className="muted tiny">Hold an item to see its name. Tap gear to equip.</p>
+        </section>
+      ) : (
+        <section className="panel inventory-equipment-panel">
+          <ul className="equipment-paper-grid">
+            {EQUIPMENT_GRID_ORDER.map((slotId) => {
+              const slot = db.EquipmentSlots.find((entry) => entry['Slot ID'] === slotId)
+              const stack = save.equipment.slots[slotId]
+              const item = stack
+                ? database.launchIndexes.itemsById.get(stack.itemId)
+                : undefined
+              const tipId = `slot:${slotId}`
+              const tipText = stack
+                ? `${item?.['Display Name'] ?? stack.itemId}${
+                    stack.quantity > 1 ? ` ×${stack.quantity}` : ''
+                  }`
+                : (slot?.['Display Name'] ?? slotId)
+
+              return (
+                <li key={slotId}>
+                  <HoldTile
+                    className={stack ? 'equip-slot-tile filled' : 'equip-slot-tile empty'}
+                    ariaLabel={tipText}
+                    showingTip={heldTip === tipId}
+                    tipText={tipText}
+                    onHoldStart={() => setHeldTip(tipId)}
+                    onHoldEnd={() => setHeldTip((current) => (current === tipId ? null : current))}
+                    onActivate={() => {
+                      if (stack) unequip(slotId)
+                    }}
+                  >
+                    {stack ? <ItemIcon item={item} /> : <SlotGlyph slotId={slotId} />}
+                    {stack && stack.quantity > 1 && (
+                      <span className="bag-item-qty">{stack.quantity}</span>
+                    )}
+                  </HoldTile>
                 </li>
               )
             })}
           </ul>
-        )}
-        <p className="muted tiny">
-          Stack and bag limits apply when defined in game data. Potion effects are not active yet.
-        </p>
-      </section>
+          <p className="muted tiny">Hold a slot for its name. Tap equipped gear to unequip.</p>
+        </section>
+      )}
     </section>
+  )
+}
+
+function HoldTile({
+  className,
+  ariaLabel,
+  showingTip,
+  tipText,
+  onHoldStart,
+  onHoldEnd,
+  onActivate,
+  children,
+}: {
+  className: string
+  ariaLabel: string
+  showingTip: boolean
+  tipText: string
+  onHoldStart: () => void
+  onHoldEnd: () => void
+  onActivate: () => void
+  children: ReactNode
+}) {
+  const timerRef = useRef<number | null>(null)
+  const heldRef = useRef(false)
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current != null) window.clearTimeout(timerRef.current)
+    }
+  }, [])
+
+  function clearHoldTimer() {
+    if (timerRef.current != null) {
+      window.clearTimeout(timerRef.current)
+      timerRef.current = null
+    }
+  }
+
+  function beginHold() {
+    heldRef.current = false
+    clearHoldTimer()
+    timerRef.current = window.setTimeout(() => {
+      heldRef.current = true
+      onHoldStart()
+    }, 280)
+  }
+
+  function endHold() {
+    clearHoldTimer()
+    onHoldEnd()
+  }
+
+  return (
+    <button
+      type="button"
+      className={showingTip ? `${className} showing-tip` : className}
+      aria-label={ariaLabel}
+      onPointerDown={beginHold}
+      onPointerUp={(event) => {
+        const wasHeld = heldRef.current
+        endHold()
+        if (!wasHeld && event.button === 0) onActivate()
+      }}
+      onPointerLeave={endHold}
+      onPointerCancel={endHold}
+      onContextMenu={(event) => event.preventDefault()}
+    >
+      {children}
+      {showingTip && (
+        <span className="item-name-tooltip" role="tooltip">
+          {tipText}
+        </span>
+      )}
+    </button>
   )
 }

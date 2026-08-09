@@ -906,8 +906,12 @@
   gap: 0.75rem;
 }
 
+.inventory-head h1 {
+  margin-bottom: 0.35rem;
+}
+
 .inventory-stat-strip {
-  margin: 0.35rem 0 0;
+  margin: 0.2rem 0 0.55rem;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.35rem;
@@ -934,47 +938,105 @@
   color: #fff4d4;
 }
 
-.equipment-slot-grid {
+.inventory-subnav {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.35rem;
+}
+
+.inventory-subnav-btn {
+  appearance: none;
+  border: 1px solid rgba(212, 175, 55, 0.28);
+  border-radius: 0.65rem;
+  min-height: 2.2rem;
+  background: rgba(34, 24, 16, 0.4);
+  color: #d8c59a;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.inventory-subnav-btn.active {
+  background: rgba(88, 122, 78, 0.35);
+  border-color: rgba(170, 210, 140, 0.55);
+  color: #f4ffe8;
+}
+
+.item-bag-grid,
+.equipment-paper-grid {
   list-style: none;
-  margin: 0.35rem 0 0;
+  margin: 0;
   padding: 0;
   display: grid;
   gap: 0.45rem;
 }
 
-.equipment-slot-grid li {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.6rem;
-  padding: 0.5rem 0.6rem;
-  border-radius: 0.7rem;
-  background: rgba(34, 24, 16, 0.35);
-  border: 1px solid rgba(212, 175, 55, 0.16);
+.item-bag-grid {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
 }
 
-.equipment-slot-grid li.empty {
-  opacity: 0.78;
+.equipment-paper-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  max-width: 18rem;
+  margin: 0.35rem auto 0;
+  padding: 0.7rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(212, 175, 55, 0.28);
+  background:
+    radial-gradient(circle at 50% 35%, rgba(214, 180, 110, 0.12), transparent 55%),
+    rgba(24, 16, 10, 0.45);
 }
 
-.equipment-slot-main,
-.inventory-bag-main {
-  display: flex;
-  align-items: center;
-  gap: 0.55rem;
-  min-width: 0;
+.bag-item-tile,
+.equip-slot-tile {
+  position: relative;
+  appearance: none;
+  width: 100%;
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(212, 175, 55, 0.28);
+  background: rgba(34, 24, 16, 0.5);
+  color: #f0d78c;
+  padding: 0.2rem;
+  cursor: pointer;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
-.equipment-slot-main strong,
-.inventory-bag-main strong {
-  display: block;
-  font-size: 0.92rem;
+.equip-slot-tile.empty {
+  opacity: 0.72;
+  border-style: dashed;
+}
+
+.equip-slot-tile.filled,
+.bag-item-tile.showing-tip,
+.equip-slot-tile.showing-tip {
+  border-color: rgba(240, 215, 140, 0.7);
+  box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.2);
+}
+
+.bag-item-qty {
+  position: absolute;
+  right: 0.2rem;
+  bottom: 0.15rem;
+  min-width: 1rem;
+  padding: 0.05rem 0.25rem;
+  border-radius: 0.4rem;
+  background: rgba(18, 12, 8, 0.85);
+  color: #fff4d4;
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 1.1;
 }
 
 .item-icon {
   flex-shrink: 0;
-  width: 2.2rem;
-  height: 2.2rem;
+  width: 2.15rem;
+  height: 2.15rem;
   border-radius: 0.55rem;
   display: grid;
   place-items: center;
@@ -985,12 +1047,57 @@
   font-size: 0.95rem;
 }
 
+.bag-item-tile .item-icon,
+.equip-slot-tile .item-icon {
+  width: 70%;
+  height: 70%;
+  border: none;
+  background: transparent;
+  font-size: 1.15rem;
+}
+
 .item-icon-art {
   background-size: cover;
   background-position: center;
-  font-size: 0;
+  font-size: 0 !important;
+  border-radius: 0.45rem;
 }
 
-.inventory-bag-list .muted.tiny {
-  margin-top: 0.15rem;
+.item-icon-slot {
+  color: rgba(212, 175, 55, 0.55);
+}
+
+.item-name-tooltip {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 0.3rem);
+  transform: translateX(-50%);
+  z-index: 3;
+  white-space: nowrap;
+  max-width: 10rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  background: rgba(24, 16, 10, 0.94);
+  color: #ffe7a8;
+  border: 1px solid rgba(212, 175, 55, 0.45);
+  border-radius: 0.55rem;
+  padding: 0.25rem 0.45rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  pointer-events: none;
+}
+
+.inventory-bag-panel .muted.tiny,
+.inventory-equipment-panel .muted.tiny {
+  margin-top: 0.65rem;
+}
+
+@media (min-width: 640px) {
+  .item-bag-grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  .equipment-paper-grid {
+    max-width: 22rem;
+  }
 }
