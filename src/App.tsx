@@ -60,6 +60,12 @@ import { completeSpecialProject } from './game/projects/engine'
 import type { SpecialProductionStation } from './game/projects/projects'
 import { totalLevel, totalSkillXp } from './game/skills/totals'
 import { ActivityPanel } from './ui/ActivityPanel'
+import {
+  AfkSummaryPanel,
+  afkSummaryFromUnattended,
+  exampleAfkSummary,
+  type AfkSummaryData,
+} from './ui/AfkSummaryPanel'
 import { BottomNav, type AppScreen } from './ui/BottomNav'
 import { CombatPanel } from './ui/CombatPanel'
 import { InventoryView } from './ui/InventoryView'
@@ -105,6 +111,7 @@ export default function App() {
   const [specialStation, setSpecialStation] = useState<SpecialProductionStation | null>(null)
   const [activeShopId, setActiveShopId] = useState<string | null>(null)
   const [activeNpcId, setActiveNpcId] = useState<string | null>(null)
+  const [afkSummary, setAfkSummary] = useState<AfkSummaryData | null>(null)
   const bootRef = useRef(boot)
   bootRef.current = boot
 
@@ -123,6 +130,14 @@ export default function App() {
           setBrowseMapId(location ? resolveActiveMapId(location) : MAIN_MAP_ID)
           setSelectedLocationId(nextSave.currentLocationId)
           if (resolved.messages[0]) setLastMessage(resolved.messages[0]!)
+          const hadAfkProgress =
+            resolved.gatheringActions > 0 ||
+            resolved.craftsCompleted > 0 ||
+            resolved.combatVictories > 0 ||
+            resolved.combatDeaths > 0
+          if (hadAfkProgress) {
+            setAfkSummary(afkSummaryFromUnattended(resolved))
+          }
           setBoot({
             status: 'ready',
             database,
@@ -982,6 +997,7 @@ export default function App() {
                 updateSave({ ...save, characterName: name })
                 setRenamingCharacter(false)
               }}
+              onPreviewAfkSummary={() => setAfkSummary(exampleAfkSummary())}
             />
           )}
         </div>
@@ -1005,6 +1021,10 @@ export default function App() {
             />
           </div>
         )}
+
+        {afkSummary ? (
+          <AfkSummaryPanel summary={afkSummary} onClose={() => setAfkSummary(null)} />
+        ) : null}
       </main>
     </div>
   )
@@ -1018,6 +1038,7 @@ function SettingsPanel({
   onStartRename,
   onCancelRename,
   onRename,
+  onPreviewAfkSummary,
 }: {
   save: PlayerSave
   database: LoadedDatabase
@@ -1026,6 +1047,7 @@ function SettingsPanel({
   onStartRename: () => void
   onCancelRename: () => void
   onRename: (name: string) => void
+  onPreviewAfkSummary: () => void
 }) {
   const bakedPotatoId = 'ITEM-0058'
   const steelPickaxeId = 'ITEM-0119'
@@ -1278,6 +1300,16 @@ function SettingsPanel({
             <p className="lead">{save.characterName ?? 'Unnamed'}</p>
             <button type="button" className="btn secondary" onClick={onStartRename}>
               Change name
+            </button>
+          </div>
+
+          <div className="menu-demo-block">
+            <p className="muted tiny">AFK summary</p>
+            <p className="muted tiny">
+              Preview the offline catch-up report shown when you return after time away.
+            </p>
+            <button type="button" className="btn secondary" onClick={onPreviewAfkSummary}>
+              Example AFK summary
             </button>
           </div>
 
