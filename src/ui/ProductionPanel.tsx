@@ -84,27 +84,47 @@ export function ProductionPicker({
               <label className="field-label" htmlFor="recipe-qty">
                 Quantity (max {maxQty}: materials {materialMax}, queue {queueMax})
               </label>
-              <input
-                id="recipe-qty"
-                className="text-input"
-                type="number"
-                min={1}
-                max={Math.max(1, maxQty)}
-                value={clampedQty}
-                onChange={(event) => setQuantity(Number(event.target.value) || 1)}
-              />
+              <div className="production-qty-row">
+                <input
+                  id="recipe-qty"
+                  className="text-input"
+                  type="number"
+                  min={1}
+                  max={Math.max(1, maxQty)}
+                  value={clampedQty}
+                  onChange={(event) => setQuantity(Number(event.target.value) || 1)}
+                />
+                <button
+                  type="button"
+                  className="btn secondary"
+                  disabled={maxQty <= 0}
+                  onClick={() => setQuantity(Math.max(1, maxQty))}
+                >
+                  Max
+                </button>
+              </div>
               <p className="muted tiny">
                 Queue uses {(clampedQty * recipe['Base Duration Seconds']).toLocaleString()}s of the
                 24h cap.
               </p>
-              <button
-                type="button"
-                className="btn primary"
-                disabled={maxQty <= 0}
-                onClick={() => onConfirm(recipe['Recipe ID'], clampedQty)}
-              >
-                Start queue
-              </button>
+              <div className="production-actions-row">
+                <button
+                  type="button"
+                  className="btn primary"
+                  disabled={maxQty <= 0}
+                  onClick={() => onConfirm(recipe['Recipe ID'], clampedQty)}
+                >
+                  Start queue
+                </button>
+                <button
+                  type="button"
+                  className="btn secondary"
+                  disabled={maxQty <= 0}
+                  onClick={() => onConfirm(recipe['Recipe ID'], Math.max(1, maxQty))}
+                >
+                  Craft Max
+                </button>
+              </div>
             </>
           )}
         </>
