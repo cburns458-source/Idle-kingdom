@@ -8,7 +8,6 @@ import {
   restoreActiveActionState,
   validateActivityStart,
 } from './game/activity/engine'
-import type { LootGrant } from './game/activity/types'
 import { loadDatabase, type LoadedDatabase } from './game/data/loadDatabase'
 import type { ActivityRow } from './game/data/types'
 import { loadOrCreateSave, writeSave } from './game/save/saveStore'
@@ -104,7 +103,7 @@ export default function App() {
   const [travelProgress, setTravelProgress] = useState(0)
   const [actionProgress, setActionProgress] = useState(0)
   const [activityError, setActivityError] = useState<string | null>(null)
-  const [recentLoot, setRecentLoot] = useState<LootGrant[]>([])
+  const [recentRewards, setRecentRewards] = useState<string[]>([])
   const [lastMessage, setLastMessage] = useState<string | null>(null)
   const [roundProgress, setRoundProgress] = useState(0)
   const [pauseRemainingMs, setPauseRemainingMs] = useState(0)
@@ -271,15 +270,24 @@ export default function App() {
       const skillName =
         current.database.launchIndexes.skillsById.get(finished.result.skillId)?.['Display Name'] ??
         'Skill'
-      const lootText = finished.result.loot
-        .map((loot) => `+${loot.quantity} ${loot.displayName}`)
-        .join(', ')
-      setRecentLoot((prev) => [...finished.result.loot, ...prev].slice(0, 8))
+      const bonusXpText = finished.result.bonusXp.map((grant) => {
+        const bonusSkillName =
+          current.database.launchIndexes.skillsById.get(grant.skillId)?.['Display Name'] ?? 'Skill'
+        return `+${grant.xp} ${bonusSkillName} XP`
+      })
+      const lootLines = finished.result.loot.map(
+        (loot) => `+${loot.quantity} ${loot.displayName}`,
+      )
+      const rewardLines = [
+        finished.result.xpGained > 0 ? `+${finished.result.xpGained} ${skillName} XP` : null,
+        ...bonusXpText,
+        ...lootLines,
+      ].filter(Boolean) as string[]
+      setRecentRewards((prev) => [...rewardLines, ...prev].slice(0, 12))
       setLastMessage(
         [
           `${finished.result.actionName} complete`,
-          finished.result.xpGained > 0 ? `+${finished.result.xpGained} ${skillName} XP` : null,
-          lootText || null,
+          ...rewardLines,
           finished.result.leveledUpTo ? `Reached level ${finished.result.leveledUpTo}` : null,
         ]
           .filter(Boolean)
@@ -481,20 +489,17 @@ export default function App() {
         )
         const nextSave = victoryResult.save
 
-        setRecentLoot((prev) => [...victoryResult.loot, ...prev].slice(0, 8))
+        const combatRewardLines = [
+          victoryResult.xpGained > 0 ? `+${victoryResult.xpGained} Combat XP` : null,
+          victoryResult.goldGained > 0 ? `+${victoryResult.goldGained} gold` : null,
+          ...victoryResult.loot.map((loot) => `+${loot.quantity} ${loot.displayName}`),
+          victoryResult.foodConsumed
+            ? `Ate ${victoryResult.foodName} (+${victoryResult.foodHealed} HP)`
+            : null,
+        ].filter(Boolean) as string[]
+        setRecentRewards((prev) => [...combatRewardLines, ...prev].slice(0, 12))
         setLastMessage(
-          [
-            `Defeated ${enemy['Display Name']}`,
-            victoryResult.xpGained > 0 ? `+${victoryResult.xpGained} Combat XP` : null,
-            victoryResult.goldGained > 0 ? `+${victoryResult.goldGained} gold` : null,
-            victoryResult.loot.map((loot) => `+${loot.quantity} ${loot.displayName}`).join(', ') ||
-              null,
-            victoryResult.foodConsumed
-              ? `Ate ${victoryResult.foodName} (+${victoryResult.foodHealed} HP)`
-              : null,
-          ]
-            .filter(Boolean)
-            .join(' · '),
+          [`Defeated ${enemy['Display Name']}`, ...combatRewardLines].filter(Boolean).join(' · '),
         )
 
         const activityId = current.save.currentActivityId!
@@ -955,7 +960,7 @@ export default function App() {
                         skill={actionSkill}
                         progress={actionProgress}
                         durationMs={save.actionDurationMs}
-                        recentLoot={recentLoot}
+                        recentRewards={recentRewards}
                         lastMessage={lastMessage}
                         onStop={stopActivity}
                       />

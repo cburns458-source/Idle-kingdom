@@ -177,10 +177,12 @@ export function completeGatheringAction(
   next = xpApplied.save
   let leveledUpTo = xpApplied.leveledUpTo
 
+  const bonusXp: { skillId: string; xp: number }[] = []
   const bonus = bonusSkillXpForAction(action)
   if (bonus && bonus.xp > 0) {
     const bonusApplied = applyXp(next, db, bonus.skillId, bonus.xp)
     next = bonusApplied.save
+    bonusXp.push({ skillId: bonus.skillId, xp: bonus.xp })
     if (bonusApplied.leveledUpTo != null) {
       leveledUpTo = bonusApplied.leveledUpTo
     }
@@ -193,6 +195,7 @@ export function completeGatheringAction(
       actionName: action['Display Name'],
       skillId: action['Relevant Skill ID'],
       xpGained: xpAmount,
+      bonusXp,
       goldGained: rewarded.goldGained,
       loot: rewarded.loot,
       leveledUpTo,
