@@ -15,7 +15,7 @@ function item(partial: {
     'Display Name': partial['Display Name'],
     Category: partial.Category ?? null,
     Subtype: partial.Subtype ?? null,
-    Status: 'Active',
+    Status: 'Confirmed',
     'Release Phase': 'Launch',
     'Associated Skill ID': null,
     'Equipment Slot ID': null,
