@@ -1,4 +1,4 @@
-export const SAVE_VERSION = 7
+export const SAVE_VERSION = 8
 export const SAVE_STORAGE_KEY = 'idle-kingdoms.demo.save'
 export const STARTING_LOCATION_ID = 'LOC-0002'
 export const STARTING_GOLD = 0
@@ -68,6 +68,8 @@ export interface PlayerSave {
   quests: QuestProgress[]
   achievements: AchievementProgress[]
   statistics: PlayerStatistics
+  /** NPC IDs that have granted permanent project knowledge (Master Dwarf / Archmage). */
+  unlockedNpcIds: string[]
   settings: PlayerSettings
   currentLocationId: string
   currentActivityId: string | null

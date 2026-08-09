@@ -8,12 +8,14 @@ import {
   decodeEnchantTarget,
   eligibleEnchantmentTargets,
 } from './enchantments'
+import { hasProjectKnowledge } from '../npcs/knowledge'
 import {
   getEnchantment,
   getProject,
   isCompleteProject,
   isEnchantmentOutput,
   maxProjectQuantity,
+  meetsProjectKnowledge,
   meetsProjectSkills,
   projectInputs,
   projectSkillRequirements,
@@ -45,6 +47,16 @@ export function validateProjectCompletion(
   const facility = db.Facilities.find((row) => row['Facility ID'] === project['Facility ID'])
   if (!facility || facility['Location ID'] !== save.currentLocationId) {
     return { ok: false, reason: 'Travel to the required facility first.' }
+  }
+
+  if (!meetsProjectKnowledge(db, save, project)) {
+    const knowledge = hasProjectKnowledge(db, save, project['Skill ID'])
+    if (!knowledge.ok) {
+      return {
+        ok: false,
+        reason: `Speak with the ${knowledge.npcName} to unlock these projects.`,
+      }
+    }
   }
 
   if (!meetsProjectSkills(save, project)) {

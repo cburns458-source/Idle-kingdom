@@ -106,6 +106,15 @@ export const SAVE_MIGRATIONS: SaveMigration[] = [
       saveVersion: 7,
     }),
   },
+  {
+    fromVersion: 7,
+    toVersion: 8,
+    migrate: (save) => ({
+      ...save,
+      unlockedNpcIds: Array.isArray(save.unlockedNpcIds) ? save.unlockedNpcIds : [],
+      saveVersion: 8,
+    }),
+  },
 ]
 
 export function migrateSave(save: PlayerSave): PlayerSave {

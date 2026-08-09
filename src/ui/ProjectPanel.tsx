@@ -3,10 +3,12 @@ import type { ProjectRow } from '../game/data/projectTypes'
 import type { GameDatabase } from '../game/data/types'
 import { inventoryCount } from '../game/production/recipes'
 import { eligibleEnchantmentTargets } from '../game/projects/enchantments'
+import { hasProjectKnowledge } from '../game/npcs/knowledge'
 import {
   getEnchantment,
   isEnchantmentOutput,
   maxProjectQuantity,
+  meetsProjectKnowledge,
   meetsProjectSkills,
   projectInputs,
   projectSkillRequirements,
@@ -57,8 +59,11 @@ export function ProjectPicker({
     () => projects.filter((project) => projectMatchesQuery(project, search, db)),
     [projects, search, db],
   )
+  const knowledge = hasProjectKnowledge(db, save, station.skillId)
   const initialProjectId =
-    projects.find((row) => meetsProjectSkills(save, row))?.['Project ID'] ??
+    projects.find(
+      (row) => meetsProjectSkills(save, row) && meetsProjectKnowledge(db, save, row),
+    )?.['Project ID'] ??
     projects[0]?.['Project ID'] ??
     ''
   const [projectId, setProjectId] = useState(initialProjectId)
@@ -66,9 +71,11 @@ export function ProjectPicker({
     projects.find((row) => row['Project ID'] === projectId) ??
     filteredProjects[0] ??
     null
+  const knowledgeMet = project ? meetsProjectKnowledge(db, save, project) : knowledge.ok
   const skillsMet = project ? meetsProjectSkills(save, project) : false
   const unmetSkills = project ? unmetProjectSkillRequirements(db, save, project) : []
-  const maxQty = project && skillsMet ? maxProjectQuantity(save, project) : 0
+  const canCraft = knowledgeMet && skillsMet
+  const maxQty = project && canCraft ? maxProjectQuantity(save, project) : 0
   const isEnchant = project ? isEnchantmentOutput(project['Output Item / Target ID']) : false
   const enchantment =
     project && isEnchant ? getEnchantment(db, project['Output Item / Target ID']) : undefined
@@ -161,7 +168,8 @@ export function ProjectPicker({
               size={Math.min(6, Math.max(3, filteredProjects.length))}
             >
               {filteredProjects.map((row) => {
-                const locked = !meetsProjectSkills(save, row)
+                const locked =
+                  !meetsProjectSkills(save, row) || !meetsProjectKnowledge(db, save, row)
                 return (
                   <option key={row['Project ID']} value={row['Project ID']}>
                     {row['Display Name']} (Lv {row['Required Skill 1 Level'] ?? 1})
@@ -175,7 +183,12 @@ export function ProjectPicker({
           {project && (
             <>
               <ProjectDetails db={db} save={save} project={project} />
-              {!skillsMet && (
+              {!knowledgeMet && !knowledge.ok && (
+                <p className="danger-note">
+                  Locked — speak with the {knowledge.npcName} to unlock {station.label} projects.
+                </p>
+              )}
+              {knowledgeMet && !skillsMet && (
                 <p className="danger-note">
                   Locked — needs{' '}
                   {unmetSkills
@@ -196,7 +209,7 @@ export function ProjectPicker({
                     min={1}
                     max={Math.max(1, maxQty)}
                     value={clampedQty}
-                    disabled={!skillsMet}
+                    disabled={!canCraft}
                     onChange={(event) => setQuantity(Number(event.target.value) || 1)}
                   />
                 </>
@@ -215,7 +228,7 @@ export function ProjectPicker({
                       id="enchant-target"
                       className="text-input"
                       value={enchantTargetId || preferredTargetId}
-                      disabled={!skillsMet}
+                      disabled={!canCraft}
                       onChange={(event) => setEnchantTargetId(event.target.value)}
                     >
                       {enchantTargets.map((target) => (
@@ -231,7 +244,7 @@ export function ProjectPicker({
                 type="button"
                 className="btn primary"
                 disabled={
-                  !skillsMet ||
+                  !canCraft ||
                   maxQty <= 0 ||
                   (isEnchant && enchantTargets.length === 0)
                 }

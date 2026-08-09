@@ -53,6 +53,7 @@ export function createNewSave(db: GameDatabase): PlayerSave {
     quests: [],
     achievements: [],
     statistics: { values: {} },
+    unlockedNpcIds: [],
     settings: { soundEnabled: true },
     currentLocationId: STARTING_LOCATION_ID,
     currentActivityId: null,

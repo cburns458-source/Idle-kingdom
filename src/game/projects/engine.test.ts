@@ -37,6 +37,7 @@ describe('special production', () => {
   it('instantly completes a L1 smithing project and consumes materials once', () => {
     const { launch } = prepareDatabase(rawDatabase)
     let save = createNewSave(launch)
+    save = { ...save, unlockedNpcIds: ['NPC-0003'] }
     save = addItemToInventory(save, 'ITEM-0074', 10)
     save = addItemToInventory(save, 'ITEM-0214', 2)
     save = addItemToInventory(save, 'ITEM-0084', 10)
@@ -54,9 +55,21 @@ describe('special production', () => {
     expect(result.save.currentActivityId).toBeNull()
   })
 
+  it('rejects smithing projects before Master Dwarf knowledge', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    let save = createNewSave(launch)
+    save = addItemToInventory(save, 'ITEM-0074', 10)
+    save = addItemToInventory(save, 'ITEM-0214', 2)
+    save = addItemToInventory(save, 'ITEM-0084', 10)
+    const result = completeSpecialProject(launch, save, 'PRJ-0007', 1)
+    expect(result.ok).toBe(false)
+    if (result.ok) return
+    expect(result.reason).toMatch(/Master Dwarf/i)
+  })
+
   it('rejects projects when materials are missing', () => {
     const { launch } = prepareDatabase(rawDatabase)
-    const save = createNewSave(launch)
+    const save = { ...createNewSave(launch), unlockedNpcIds: ['NPC-0003'] }
     const result = completeSpecialProject(launch, save, 'PRJ-0007', 1)
     expect(result.ok).toBe(false)
   })
@@ -66,6 +79,7 @@ describe('special production', () => {
     let save = createNewSave(launch)
     save = {
       ...save,
+      unlockedNpcIds: ['NPC-0003'],
       currentLocationId: 'LOC-0001',
     }
     save = addItemToInventory(save, 'ITEM-0074', 10)
@@ -82,6 +96,7 @@ describe('special production', () => {
     let save = createNewSave(launch)
     save = {
       ...save,
+      unlockedNpcIds: ['NPC-0004'],
       currentLocationId: 'LOC-0007',
       skills: save.skills.map((skill) =>
         skill.skillId === 'SKL-0013' || skill.skillId === 'SKL-0009'

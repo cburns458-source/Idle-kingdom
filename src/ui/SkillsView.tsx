@@ -1,4 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
+import {
+  asAchievementRows,
+  asStatisticRows,
+} from '../game/achievements/progress'
 import type { GameDatabase, SkillRow } from '../game/data/types'
 import type { PlayerSave } from '../game/save/types'
 import { getSkillProgress } from '../game/activity/xp'
@@ -15,6 +19,8 @@ export function SkillsView({ db, save }: SkillsViewProps) {
   const overallLevel = totalLevel(save)
   const overallXp = totalSkillXp(save)
   const [heldSkillId, setHeldSkillId] = useState<string | null>(null)
+  const statistics = asStatisticRows(db)
+  const achievements = asAchievementRows(db)
 
   return (
     <section className="skills-view">
@@ -31,6 +37,43 @@ export function SkillsView({ db, save }: SkillsViewProps) {
           </div>
         </dl>
         <p className="muted tiny">Hold a skill to see its total XP.</p>
+      </section>
+
+      <section className="panel skills-summary">
+        <h2>Statistics</h2>
+        <dl className="skills-summary-stats">
+          {statistics.map((stat) => (
+            <div key={stat['Statistic ID']}>
+              <dt>{stat['Display Name']}</dt>
+              <dd>{Number(save.statistics.values[stat['Internal Key']] ?? 0).toLocaleString()}</dd>
+            </div>
+          ))}
+        </dl>
+      </section>
+
+      <section className="panel skills-summary">
+        <h2>Achievements</h2>
+        <ul className="achievement-list">
+          {achievements.map((achievement) => {
+            const unlocked = save.achievements.some(
+              (row) => row.achievementId === achievement['Achievement ID'] && row.unlocked,
+            )
+            const skillName =
+              db.Skills.find((skill) => skill['Skill ID'] === achievement['Target Skill ID'])?.[
+                'Display Name'
+              ] ?? 'Skill'
+            return (
+              <li key={achievement['Achievement ID']} className={unlocked ? 'unlocked' : ''}>
+                <strong>{achievement['Display Name']}</strong>
+                <span className="muted tiny">
+                  {unlocked
+                    ? 'Unlocked'
+                    : `Reach ${skillName} level ${achievement['Required Level'] ?? 50}`}
+                </span>
+              </li>
+            )
+          })}
+        </ul>
       </section>
 
       <ul className="skills-grid">

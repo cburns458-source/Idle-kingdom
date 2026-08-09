@@ -123,7 +123,8 @@ describe('equipment loadout', () => {
     } as unknown as PlayerSave
 
     const migrated = migrateSave(legacy)
-    expect(migrated.saveVersion).toBe(7)
+    expect(migrated.saveVersion).toBe(8)
+    expect(migrated.unlockedNpcIds).toEqual([])
     expect(migrated.inventory.find((stack) => stack.itemId === 'ITEM-0058')).toBeUndefined()
     expect(migrated.equipment.slots[FOOD_SLOT_ID]).toEqual({ itemId: 'ITEM-0058', quantity: 5 })
     expect(migrated.equipment.slots['SLOT-0001']?.itemId).toBe('ITEM-0108')

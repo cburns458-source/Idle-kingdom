@@ -1,6 +1,7 @@
 import { getSkillProgress } from '../activity/xp'
 import type { EnchantmentRow, ProjectRow } from '../data/projectTypes'
 import type { FacilityRow, GameDatabase } from '../data/types'
+import { hasProjectKnowledge } from '../npcs/knowledge'
 import { inventoryCount } from '../production/recipes'
 import type { PlayerSave } from '../save/types'
 
@@ -77,6 +78,14 @@ export function meetsProjectSkills(save: PlayerSave, project: ProjectRow): boole
   return projectSkillRequirements(project).every(
     (requirement) => getSkillProgress(save, requirement.skillId).level >= requirement.level,
   )
+}
+
+export function meetsProjectKnowledge(
+  db: GameDatabase,
+  save: PlayerSave,
+  project: ProjectRow,
+): boolean {
+  return hasProjectKnowledge(db, save, project['Skill ID']).ok
 }
 
 export function unmetProjectSkillRequirements(

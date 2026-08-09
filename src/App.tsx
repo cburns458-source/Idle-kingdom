@@ -47,6 +47,7 @@ import {
   resolveProductionProgress,
 } from './game/production/engine'
 import { getRecipe, isStandardProductionActivity } from './game/production/recipes'
+import { syncProgressionMeta } from './game/achievements/progress'
 import { completeSpecialProject } from './game/projects/engine'
 import type { SpecialProductionStation } from './game/projects/projects'
 import { totalLevel, totalSkillXp } from './game/skills/totals'
@@ -56,8 +57,10 @@ import { CombatPanel } from './ui/CombatPanel'
 import { InventoryView } from './ui/InventoryView'
 import { LocationView } from './ui/LocationView'
 import { NamePrompt } from './ui/NamePrompt'
+import { NpcPanel } from './ui/NpcPanel'
 import { ProductionPicker, ProductionProgress } from './ui/ProductionPanel'
 import { ProjectPicker } from './ui/ProjectPanel'
+import { ShopPanel } from './ui/ShopPanel'
 import { SkillsView } from './ui/SkillsView'
 import { TopHud } from './ui/TopHud'
 import { TravelOverlay } from './ui/TravelOverlay'
@@ -92,6 +95,8 @@ export default function App() {
   const [renamingCharacter, setRenamingCharacter] = useState(false)
   const [productionPickerActivityId, setProductionPickerActivityId] = useState<string | null>(null)
   const [specialStation, setSpecialStation] = useState<SpecialProductionStation | null>(null)
+  const [activeShopId, setActiveShopId] = useState<string | null>(null)
+  const [activeNpcId, setActiveNpcId] = useState<string | null>(null)
   const bootRef = useRef(boot)
   bootRef.current = boot
 
@@ -103,7 +108,7 @@ export default function App() {
         const database = await loadDatabase()
         const { save, created } = loadOrCreateSave(database.source)
         const resolved = resolveProductionProgress(database.launch, save)
-        const nextSave = resolved.craftsCompleted > 0 ? writeSave(resolved.save) : resolved.save
+        const nextSave = resolved.craftsCompleted > 0 ? persistSave(resolved.save) : resolved.save
         if (!cancelled) {
           const location = database.launchIndexes.locationsById.get(nextSave.currentLocationId)
           setBrowseMapId(location ? resolveActiveMapId(location) : MAIN_MAP_ID)
@@ -142,7 +147,7 @@ export default function App() {
         setBoot((current) => {
           if (current.status !== 'ready') return current
           const arrived = applyTravelArrival(current.save, travel.toLocationId)
-          const saved = writeSave(arrived)
+          const saved = persistSave(arrived)
           const location = current.database.launchIndexes.locationsById.get(saved.currentLocationId)
           setBrowseMapId(location ? resolveActiveMapId(location) : MAIN_MAP_ID)
           setSelectedLocationId(saved.currentLocationId)
@@ -174,7 +179,7 @@ export default function App() {
     if (running && isStandardProductionActivity(database.launch, running)) return
 
     if (!activityStillValid(database.launch, save, save.currentActivityId)) {
-      const stopped = writeSave(clearActivitySave(save))
+      const stopped = persistSave(clearActivitySave(save))
       setBoot({ ...boot, save: stopped, saveCreated: false })
       setActivityError('Activity stopped — requirements are no longer met.')
       return
@@ -182,12 +187,12 @@ export default function App() {
 
     const generated = generateNextAction(database.launch, save, save.currentActivityId)
     if (!generated) {
-      const stopped = writeSave(clearActivitySave(save))
+      const stopped = persistSave(clearActivitySave(save))
       setBoot({ ...boot, save: stopped, saveCreated: false })
       setActivityError('No actions remain for this activity.')
       return
     }
-    setBoot({ ...boot, save: writeSave(generated.save), saveCreated: false })
+    setBoot({ ...boot, save: persistSave(generated.save), saveCreated: false })
   }, [boot, travel])
 
   const runningActivityId = boot.status === 'ready' ? boot.save.currentActivityId : null
@@ -225,7 +230,7 @@ export default function App() {
 
       const action = current.database.launchIndexes.actionsById.get(actionState.actionId)
       if (!action) {
-        const stopped = writeSave(clearActivitySave(current.save))
+        const stopped = persistSave(clearActivitySave(current.save))
         setBoot({ ...current, save: stopped, saveCreated: false })
         return
       }
@@ -255,7 +260,7 @@ export default function App() {
         nextSave = clearActivitySave(nextSave)
         setActivityError('Activity stopped — requirements are no longer met.')
         setActionProgress(0)
-        setBoot({ ...current, save: writeSave(nextSave), saveCreated: false })
+        setBoot({ ...current, save: persistSave(nextSave), saveCreated: false })
         return
       }
 
@@ -263,7 +268,7 @@ export default function App() {
       if (!generated) {
         setBoot({
           ...current,
-          save: writeSave(clearActivitySave(nextSave)),
+          save: persistSave(clearActivitySave(nextSave)),
           saveCreated: false,
         })
         setActionProgress(0)
@@ -271,7 +276,7 @@ export default function App() {
       }
 
       setActionProgress(0)
-      setBoot({ ...current, save: writeSave(generated.save), saveCreated: false })
+      setBoot({ ...current, save: persistSave(generated.save), saveCreated: false })
     }
 
     frame = window.requestAnimationFrame(tick)
@@ -324,7 +329,7 @@ export default function App() {
       setActionProgress(0)
       setBoot({
         ...current,
-        save: writeSave(finished.save),
+        save: persistSave(finished.save),
         saveCreated: false,
       })
     }
@@ -381,7 +386,7 @@ export default function App() {
         if (!activityStillValid(current.database.launch, resumed, resumed.currentActivityId!)) {
           setBoot({
             ...current,
-            save: writeSave(clearActivitySave(resumed)),
+            save: persistSave(clearActivitySave(resumed)),
             saveCreated: false,
           })
           setActivityError('Activity stopped after defeat — requirements no longer met.')
@@ -394,7 +399,7 @@ export default function App() {
         )
         setBoot({
           ...current,
-          save: writeSave(generated ? generated.save : resumed),
+          save: persistSave(generated ? generated.save : resumed),
           saveCreated: false,
         })
         setLastMessage('Recovered. Resuming activity…')
@@ -423,7 +428,7 @@ export default function App() {
       if (!enemy || !action || current.save.combatEnemyHp == null) {
         setBoot({
           ...current,
-          save: writeSave(clearActivitySave(current.save)),
+          save: persistSave(clearActivitySave(current.save)),
           saveCreated: false,
         })
         return
@@ -465,7 +470,7 @@ export default function App() {
         if (!activityStillValid(current.database.launch, nextSave, activityId)) {
           setBoot({
             ...current,
-            save: writeSave(clearActivitySave(nextSave)),
+            save: persistSave(clearActivitySave(nextSave)),
             saveCreated: false,
           })
           return
@@ -474,7 +479,7 @@ export default function App() {
         setRoundProgress(0)
         setBoot({
           ...current,
-          save: writeSave(generated ? generated.save : nextSave),
+          save: persistSave(generated ? generated.save : nextSave),
           saveCreated: false,
         })
         return
@@ -487,7 +492,7 @@ export default function App() {
         })
         setLastMessage(`Defeated by ${enemy['Display Name']}. Recovering…`)
         setRoundProgress(0)
-        setBoot({ ...current, save: writeSave(defeated), saveCreated: false })
+        setBoot({ ...current, save: persistSave(defeated), saveCreated: false })
         return
       }
 
@@ -496,7 +501,7 @@ export default function App() {
       )
       setBoot({
         ...current,
-        save: writeSave({
+        save: persistSave({
           ...current.save,
           currentHp: round.playerHp,
           combatEnemyHp: round.enemyHp,
@@ -580,10 +585,19 @@ export default function App() {
   )
   const toLocation = database.launchIndexes.locationsById.get(travel?.toLocationId ?? '')
 
+  function persistSave(next: PlayerSave): PlayerSave {
+    const current = bootRef.current
+    const synced =
+      current.status === 'ready' ? syncProgressionMeta(current.database.launch, next) : next
+    return writeSave(synced)
+  }
+
   function updateSave(next: PlayerSave) {
-    const saved = writeSave(next)
-    setBoot((current) =>
-      current.status === 'ready' ? { ...current, save: saved, saveCreated: false } : current,
+    const saved = persistSave(next)
+    setBoot((bootState) =>
+      bootState.status === 'ready'
+        ? { ...bootState, save: saved, saveCreated: false }
+        : bootState,
     )
   }
 
@@ -597,6 +611,8 @@ export default function App() {
     const connection = findConnection(database.launch, save.currentLocationId, destinationId)
     setProductionPickerActivityId(null)
     setSpecialStation(null)
+    setActiveShopId(null)
+    setActiveNpcId(null)
     // Interrupt primary activity immediately; refund remaining production materials.
     if (save.productionRecipeId) {
       updateSave(cancelProductionActivity(database.launch, save))
@@ -749,7 +765,23 @@ export default function App() {
               actionsLocked={deathLocked}
               onStartActivity={startActivity}
               onStopActivity={stopActivity}
-              onOpenSpecialProduction={openSpecialProduction}
+              onOpenSpecialProduction={(station) => {
+                setActiveShopId(null)
+                setActiveNpcId(null)
+                openSpecialProduction(station)
+              }}
+              onOpenShop={(shopId) => {
+                setSpecialStation(null)
+                setProductionPickerActivityId(null)
+                setActiveNpcId(null)
+                setActiveShopId(shopId)
+              }}
+              onOpenNpc={(npcId) => {
+                setSpecialStation(null)
+                setProductionPickerActivityId(null)
+                setActiveShopId(null)
+                setActiveNpcId(npcId)
+              }}
               onOpenMap={() => {
                 setBrowseMapId(MAIN_MAP_ID)
                 setSelectedLocationId(save.currentLocationId)
@@ -763,7 +795,42 @@ export default function App() {
               }}
               statusPanel={
                 <>
-                  {specialStation && (
+                  {activeShopId && (
+                    <ShopPanel
+                      db={database.launch}
+                      save={save}
+                      shopId={activeShopId}
+                      onClose={() => setActiveShopId(null)}
+                      onComplete={(next, message) => {
+                        updateSave(next)
+                        setLastMessage(message)
+                      }}
+                    />
+                  )}
+                  {activeNpcId &&
+                    (() => {
+                      const npc = database.launch.NPCs.find(
+                        (row) => row['NPC ID'] === activeNpcId,
+                      )
+                      if (!npc) return null
+                      return (
+                        <NpcPanel
+                          db={database.launch}
+                          save={save}
+                          npc={npc}
+                          onClose={() => setActiveNpcId(null)}
+                          onChangeSave={(next, message) => {
+                            updateSave(next)
+                            if (message) setLastMessage(message)
+                          }}
+                          onOpenShop={(shopId) => {
+                            setActiveNpcId(null)
+                            setActiveShopId(shopId)
+                          }}
+                        />
+                      )
+                    })()}
+                  {specialStation && !activeShopId && !activeNpcId && (
                     <ProjectPicker
                       db={database.launch}
                       save={save}
@@ -772,7 +839,7 @@ export default function App() {
                       onConfirm={confirmSpecialProject}
                     />
                   )}
-                  {pickerActivity && !specialStation && (
+                  {pickerActivity && !specialStation && !activeShopId && !activeNpcId && (
                     <ProductionPicker
                       db={database.launch}
                       save={save}
@@ -781,7 +848,7 @@ export default function App() {
                       onConfirm={confirmProduction}
                     />
                   )}
-                  {activity && inCombat && combatEnemy && (
+                  {activity && inCombat && combatEnemy && !activeShopId && !activeNpcId && (
                     <CombatPanel
                       activity={activity}
                       enemy={combatEnemy}
@@ -794,7 +861,12 @@ export default function App() {
                       onStop={stopActivity}
                     />
                   )}
-                  {activity && inProduction && productionRecipe && pauseRemainingMs <= 0 && (
+                  {activity &&
+                    inProduction &&
+                    productionRecipe &&
+                    pauseRemainingMs <= 0 &&
+                    !activeShopId &&
+                    !activeNpcId && (
                     <ProductionProgress
                       activity={activity}
                       recipe={productionRecipe}
@@ -809,7 +881,9 @@ export default function App() {
                     !inProduction &&
                     pauseRemainingMs <= 0 &&
                     !pickerActivity &&
-                    !specialStation && (
+                    !specialStation &&
+                    !activeShopId &&
+                    !activeNpcId && (
                       <ActivityPanel
                         activity={activity}
                         action={currentAction ?? null}
@@ -822,7 +896,7 @@ export default function App() {
                         onStop={stopActivity}
                       />
                     )}
-                  {activity && pauseRemainingMs > 0 && !inCombat && (
+                  {activity && pauseRemainingMs > 0 && !inCombat && !activeShopId && !activeNpcId && (
                     <section className="panel glass-panel">
                       <div className="activity-panel-head">
                         <div>

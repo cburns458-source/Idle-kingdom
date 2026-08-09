@@ -24,6 +24,8 @@ interface LocationViewProps {
   onStartActivity: (activityId: string) => void
   onStopActivity: () => void
   onOpenSpecialProduction: (station: SpecialProductionStation) => void
+  onOpenShop: (shopId: string) => void
+  onOpenNpc: (npcId: string) => void
   onOpenMap: () => void
   onOpenSubMap?: () => void
   requirementHint?: (activity: ActivityRow) => string | null
@@ -50,6 +52,8 @@ export function LocationView({
   onStartActivity,
   onStopActivity,
   onOpenSpecialProduction,
+  onOpenShop,
+  onOpenNpc,
   onOpenMap,
   onOpenSubMap,
   requirementHint,
@@ -57,6 +61,8 @@ export function LocationView({
   const locationId = location['Location ID']
   const activities = indexes.activitiesByLocationId.get(locationId) ?? []
   const specialStations = specialProductionStationsAt(db, locationId)
+  const shops = indexes.shopsByLocationId.get(locationId) ?? []
+  const npcs = indexes.npcsByLocationId.get(locationId) ?? []
   const mapId = getLocationMapId(location)
   const isSubMapLocation = mapId === CAVE_MAP_ID || mapId === CASTLE_MAP_ID
   const showSubMapEntrance =
@@ -208,6 +214,46 @@ export function LocationView({
               )}
             </section>
           )
+        )}
+
+        {(shops.length > 0 || npcs.length > 0) && (
+          <section className="panel glass-panel location-activities">
+            <h2>People & shops</h2>
+            <ul className="interaction-list">
+              {shops.map((shop) => (
+                <li key={shop['Shop ID']}>
+                  <div>
+                    <strong>{shop['Display Name']}</strong>
+                    {shop.Description && <p className="muted">{shop.Description}</p>}
+                    <p className="muted tiny">Passive shop</p>
+                  </div>
+                  <button
+                    type="button"
+                    className="btn primary"
+                    onClick={() => onOpenShop(shop['Shop ID'])}
+                  >
+                    Trade
+                  </button>
+                </li>
+              ))}
+              {npcs.map((npc) => (
+                <li key={npc['NPC ID']}>
+                  <div>
+                    <strong>{npc['Display Name']}</strong>
+                    {npc.Role && <p className="muted tiny">{npc.Role}</p>}
+                    {npc.Description && <p className="muted">{npc.Description}</p>}
+                  </div>
+                  <button
+                    type="button"
+                    className="btn primary"
+                    onClick={() => onOpenNpc(npc['NPC ID'])}
+                  >
+                    Talk
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </section>
         )}
       </div>
     </section>

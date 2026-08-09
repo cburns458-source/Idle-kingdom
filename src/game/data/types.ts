@@ -227,6 +227,8 @@ export interface ShopRow {
   'Release Phase': ReleasePhase
   Description: string | null
   Notes: string | null
+  /** Dynamic Entry N Item/Mode/Price/Currency fields are read at runtime. */
+  [entryField: string]: string | number | null | undefined
 }
 
 export interface GameDatabase {
