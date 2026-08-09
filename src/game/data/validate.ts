@@ -1,0 +1,241 @@
+import {
+  DATABASE_TABLES,
+  type DatabaseIndexes,
+  type GameDatabase,
+  type ValidationIssue,
+} from './types'
+
+const TABLE_ID_FIELDS: Record<string, string> = {
+  Skills: 'Skill ID',
+  EquipmentSlots: 'Slot ID',
+  Items: 'Item ID',
+  Equipment: 'Equipment ID',
+  Statistics: 'Statistic ID',
+  Enchantments: 'Enchantment ID',
+  Maps: 'Map ID',
+  Locations: 'Location ID',
+  TravelConnections: 'Connection ID',
+  Facilities: 'Facility ID',
+  Activities: 'Activity ID',
+  PoolEntries: 'Pool Entry ID',
+  Actions: 'Action ID',
+  Requirements: 'Requirement ID',
+  Enemies: 'Enemy ID',
+  RewardEntries: 'Reward Entry ID',
+  Recipes: 'Recipe ID',
+  Projects: 'Project ID',
+  NPCs: 'NPC ID',
+  Shops: 'Shop ID',
+  Quests: 'Quest ID',
+  Achievements: 'Achievement ID',
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+export function assertGameDatabaseShape(raw: unknown): asserts raw is GameDatabase {
+  if (!isRecord(raw)) {
+    throw new Error('Database root must be an object')
+  }
+  for (const table of DATABASE_TABLES) {
+    if (!(table in raw)) {
+      throw new Error(`Database missing required table: ${table}`)
+    }
+    if (!Array.isArray(raw[table])) {
+      throw new Error(`Database table must be an array: ${table}`)
+    }
+  }
+}
+
+export function buildIndexes(db: GameDatabase): DatabaseIndexes {
+  const byTableId = new Map<string, Map<string, Record<string, unknown>>>()
+  const configByKey = new Map(db.Config.map((row) => [row.Key, row]))
+  const skillsById = new Map(db.Skills.map((row) => [row['Skill ID'], row]))
+  const locationsById = new Map(db.Locations.map((row) => [row['Location ID'], row]))
+  const itemsById = new Map(db.Items.map((row) => [row['Item ID'], row]))
+
+  for (const [table, idField] of Object.entries(TABLE_ID_FIELDS)) {
+    const map = new Map<string, Record<string, unknown>>()
+    const rows = db[table as keyof GameDatabase] as Record<string, unknown>[]
+    for (const row of rows) {
+      const id = row[idField]
+      if (typeof id === 'string' && id.length > 0) {
+        map.set(id, row)
+      }
+    }
+    byTableId.set(table, map)
+  }
+
+  return { byTableId, configByKey, skillsById, locationsById, itemsById }
+}
+
+export function lookupById(
+  indexes: DatabaseIndexes,
+  table: string,
+  id: string,
+): Record<string, unknown> | undefined {
+  return indexes.byTableId.get(table)?.get(id)
+}
+
+export function validateDatabase(db: GameDatabase): ValidationIssue[] {
+  const issues: ValidationIssue[] = []
+  const indexes = buildIndexes(db)
+
+  for (const [table, idField] of Object.entries(TABLE_ID_FIELDS)) {
+    const rows = db[table as keyof GameDatabase] as Record<string, unknown>[]
+    const seen = new Set<string>()
+    for (const row of rows) {
+      const id = row[idField]
+      if (typeof id !== 'string' || id.length === 0) {
+        issues.push({
+          severity: 'error',
+          table,
+          message: `Missing ${idField}`,
+        })
+        continue
+      }
+      if (seen.has(id)) {
+        issues.push({
+          severity: 'error',
+          table,
+          id,
+          message: `Duplicate ${idField}: ${id}`,
+        })
+      }
+      seen.add(id)
+    }
+  }
+
+  for (const location of db.Locations) {
+    const mapId = location['Map ID']
+    if (mapId && !lookupById(indexes, 'Maps', mapId)) {
+      issues.push({
+        severity: 'error',
+        table: 'Locations',
+        id: location['Location ID'],
+        message: `Missing Map ID reference: ${mapId}`,
+      })
+    }
+    const parentId = location['Parent Location ID']
+    if (parentId && !indexes.locationsById.has(parentId)) {
+      issues.push({
+        severity: 'error',
+        table: 'Locations',
+        id: location['Location ID'],
+        message: `Missing Parent Location ID reference: ${parentId}`,
+      })
+    }
+  }
+
+  for (const activity of db.Activities) {
+    const locationId = activity['Location ID']
+    if (typeof locationId === 'string' && !indexes.locationsById.has(locationId)) {
+      issues.push({
+        severity: 'error',
+        table: 'Activities',
+        id: String(activity['Activity ID'] ?? ''),
+        message: `Missing Location ID reference: ${locationId}`,
+      })
+    }
+  }
+
+  for (const entry of db.PoolEntries) {
+    const actionId = entry['Action ID']
+    if (typeof actionId === 'string' && !lookupById(indexes, 'Actions', actionId)) {
+      issues.push({
+        severity: 'error',
+        table: 'PoolEntries',
+        id: String(entry['Pool Entry ID'] ?? ''),
+        message: `Missing Action ID reference: ${actionId}`,
+      })
+    }
+  }
+
+  for (const action of db.Actions) {
+    const skillId = action['Relevant Skill ID']
+    if (typeof skillId === 'string' && !indexes.skillsById.has(skillId)) {
+      issues.push({
+        severity: 'error',
+        table: 'Actions',
+        id: String(action['Action ID'] ?? ''),
+        message: `Missing Relevant Skill ID reference: ${skillId}`,
+      })
+    }
+  }
+
+  const requiredConfig = [
+    'primary_activity_slots',
+    'save_slots',
+    'unattended_cap',
+    'currency_item_id',
+    'starting_max_hp',
+  ]
+  for (const key of requiredConfig) {
+    if (!indexes.configByKey.has(key)) {
+      issues.push({
+        severity: 'error',
+        table: 'Config',
+        message: `Missing required config key: ${key}`,
+      })
+    }
+  }
+
+  if (!indexes.locationsById.has('LOC-0002')) {
+    issues.push({
+      severity: 'error',
+      table: 'Locations',
+      id: 'LOC-0002',
+      message: 'Starting location The Town (LOC-0002) is missing',
+    })
+  }
+
+  return issues
+}
+
+/** Keep source rows intact; expose Launch-eligible views for runtime. */
+export function filterLaunchContent(db: GameDatabase): GameDatabase {
+  const filterRows = <T extends Record<string, unknown>>(rows: T[]): T[] =>
+    rows.filter((row) => {
+      if (!('Release Phase' in row)) return true
+      return row['Release Phase'] === 'Launch'
+    })
+
+  return {
+    ...db,
+    Skills: filterRows(db.Skills),
+    Items: filterRows(db.Items),
+    Statistics: filterRows(db.Statistics as Record<string, unknown>[]) as GameDatabase['Statistics'],
+    Enchantments: filterRows(
+      db.Enchantments as Record<string, unknown>[],
+    ) as GameDatabase['Enchantments'],
+    Maps: filterRows(db.Maps as Record<string, unknown>[]) as GameDatabase['Maps'],
+    Locations: filterRows(db.Locations),
+    TravelConnections: filterRows(
+      db.TravelConnections as Record<string, unknown>[],
+    ) as GameDatabase['TravelConnections'],
+    Facilities: filterRows(db.Facilities as Record<string, unknown>[]) as GameDatabase['Facilities'],
+    Activities: filterRows(db.Activities as Record<string, unknown>[]) as GameDatabase['Activities'],
+    Actions: filterRows(db.Actions as Record<string, unknown>[]) as GameDatabase['Actions'],
+    Enemies: filterRows(db.Enemies as Record<string, unknown>[]) as GameDatabase['Enemies'],
+    Recipes: filterRows(db.Recipes as Record<string, unknown>[]) as GameDatabase['Recipes'],
+    Projects: filterRows(db.Projects as Record<string, unknown>[]) as GameDatabase['Projects'],
+    NPCs: filterRows(db.NPCs as Record<string, unknown>[]) as GameDatabase['NPCs'],
+    Shops: filterRows(db.Shops as Record<string, unknown>[]) as GameDatabase['Shops'],
+    Quests: filterRows(db.Quests as Record<string, unknown>[]) as GameDatabase['Quests'],
+    Achievements: filterRows(
+      db.Achievements as Record<string, unknown>[],
+    ) as GameDatabase['Achievements'],
+  }
+}
+
+export function countNeedsData(db: GameDatabase): number {
+  let count = 0
+  for (const table of DATABASE_TABLES) {
+    const rows = db[table] as Record<string, unknown>[]
+    for (const row of rows) {
+      if (row.Status === 'Needs Data') count += 1
+    }
+  }
+  return count
+}

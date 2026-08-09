@@ -1,0 +1,39 @@
+:root {
+  color: #f4e7c8;
+  background: #1f1610;
+  font-family:
+    'Segoe UI',
+    'Avenir Next',
+    Candara,
+    Calibri,
+    sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  --parchment: #5c4027;
+  --parchment-deep: #3d2a1a;
+  --gold: #d4af37;
+  --soft-green: #8faf7a;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  min-height: 100dvh;
+  overscroll-behavior: none;
+}
+
+button,
+a {
+  touch-action: manipulation;
+}

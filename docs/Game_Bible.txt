@@ -1,0 +1,1039 @@
+IDLE KINGDOMS
+SINGLE-PLAYER DEMO GAME BIBLE
+
+Document status: Current source of truth for the single-player demo
+Game title: Idle Kingdoms (placeholder)
+World name: Idale (placeholder)
+
+PURPOSE
+This document defines the playable offline-capable web demo. It contains the current gameplay, content, progression, art, interface, save, and data rules needed for the demo. Numerical balance values should remain data-driven unless explicitly fixed here.
+
+======================================================================
+1. GAME OVERVIEW
+======================================================================
+
+1.1 HIGH CONCEPT
+Idle Kingdoms is a portrait-oriented 2D idle fantasy RPG set in the open world of Idale. The player explores a visible world map, selects location-based Activities, and progresses through Combat, Gathering, Standard Production, and Special Production. The game supports active play and up to 24 hours of unattended progression.
+
+Core loop:
+Explore -> Gather or Fight -> Process -> Create -> Improve -> Explore further
+
+1.2 DESIGN PILLARS
+- Location-driven world rather than a menu-only skill list.
+- Most locations are available early; danger, inefficiency, equipment, and recipe requirements guide progression.
+- Gathering is soft-gated by Proficiency Level.
+- Combat is open but dangerous rather than level-gated.
+- Production is hard-gated by Proficiency Level and recipe requirements.
+- Combat is optional as a deliberate progression path.
+- Skills feed into one another through resources, components, equipment, and projects.
+- Activities may contain Actions from multiple skills when their equipment requirements are compatible.
+- Frequent Actions use controlled reward tables so resources remain meaningful.
+- Item and currency values should remain readable and avoid unnecessary inflation.
+- Content should be data-driven rather than individually hardcoded.
+
+1.3 TARGET EXPERIENCE
+- Relaxing and cozy during ordinary progression.
+- Curious and exploratory when visiting new places.
+- Occasionally dangerous without becoming punishing.
+- Readable and comfortable to leave open while idling.
+- Built around long-term skill and equipment progression.
+
+======================================================================
+2. CORE TERMINOLOGY
+======================================================================
+
+Location Node: A selectable place on a map or sub-map containing Activities and Passive Interactions.
+
+Location: The world place represented by a Location Node. A Location may contain a background, Activities, NPCs, shops, and facilities.
+
+Activity: An ongoing process selected by the player. An Activity repeatedly generates or processes Actions and occupies the single Primary Activity slot.
+
+Action: One resource attempt, creature encounter, combat encounter, or production operation. Each Action defines its skill, category, requirements, timing or combat data, experience, and rewards.
+
+Activity Pool: The weighted list of Actions an Activity can generate at a Location.
+
+Primary Activity: The one ongoing Combat, Gathering, or Standard Production Activity.
+
+Passive Interaction: An interaction that does not interrupt the Primary Activity, such as NPC dialogue, shops, inventory management, or menus at the same Location.
+
+Special Production Project: An instant production operation. The player selects a valid project and quantity, requirements and materials are validated, and the result is granted immediately.
+
+Proficiency Level: The level used for Gathering efficiency and Production requirements.
+
+Base Duration: The normal duration of a non-combat Action before modifiers.
+
+Weight: The relative probability that an Action is selected from an Activity Pool.
+
+Requirement: A mandatory condition for starting or continuing an Activity, Action, recipe, project, or interaction.
+
+Reward: Experience, items, gold, or other progression granted by an Action or project.
+
+Damage Range: The minimum and maximum damage an entity can deal with one attack. Damage is selected as a random integer in the range and cannot be reduced below 1.
+
+======================================================================
+3. PLAYER SAVE AND UNATTENDED PROGRESSION
+======================================================================
+
+- The demo uses one local player save.
+- A new save is created on first launch and automatically loaded on later launches.
+- The save contains skills and XP, inventory, equipment, currency, quests, achievements, statistics, settings, current Location, current Activity, Activity start time, unattended-progress timestamp, and save version.
+- Saving must support versioning and migration so later demo builds can update existing saves safely.
+- Gathering and Combat may continue for up to 24 hours while the game is closed.
+- Standard Production queues may contain up to 24 hours of work and continue while the game is closed.
+- Special Production completes instantly and does not require unattended simulation.
+- On return, elapsed progress is calculated from the saved Activity state, equipment, modifiers, resources, and timestamps.
+- Unattended Combat must reproduce the same combat rounds, food use, victories, deaths, rewards, and 30-second death pauses used during active play.
+
+======================================================================
+4. WORLD AND EXPLORATION
+======================================================================
+
+4.1 WORLD MAP
+Idale is presented as a selectable map. Current geography includes:
+- A river through the world.
+- The Farm, Town, and Goblin Encampment near the river.
+- Three river crossings.
+- Mountains with a cave entrance.
+- Wizard's Tower near the mountains.
+- Kingswoods between the mountains and Castle.
+- River access to the coast and dock.
+
+4.2 NAVIGATION
+- Main nodes may open Locations or sub-maps containing several Activities and interactions.
+- Smaller nodes may contain one Activity or interaction.
+- Selecting a node allows travel to that Location.
+- A Location shows its Activities, NPCs, shops, and facilities.
+- Starting a new Primary Activity replaces the current one.
+- Traveling to another Location stops the current Primary Activity.
+- Passive Interactions at the active Location do not stop the Primary Activity.
+
+4.3 OPEN-WORLD PROGRESSION
+Gathering:
+- No hard skill-level access lock.
+- Mandatory tools are still required.
+- Below the Action's Proficiency Level, Base Duration is doubled.
+- XP and reward rules are otherwise unchanged.
+
+Combat:
+- No Combat-level access lock.
+- Strong enemies discourage early attempts through HP, damage, fight length, and food consumption.
+
+Production:
+- Recipes and projects require their defined Proficiency Levels.
+- Stations, materials, recipe knowledge, and other requirements may also apply.
+
+Dangerous Areas:
+- Remain accessible.
+- Clearly communicate danger or Combat chance.
+- Can defeat an unprepared player.
+
+4.4 LOCATIONS AND CURRENT ACTIVITIES
+
+THE FARM
+- Combat Activity: Cows.
+- Bulls may appear as a rarer, more dangerous Action.
+- Cows can reward Beef.
+- Bulls reward more Beef and XP and may rarely reward Bull Horns.
+
+THE TOWN
+Facilities:
+- Kitchen for Cooking.
+- General Store.
+- Workshop for Crafting.
+- Metalworking facilities.
+- Apothecary for Alchemy.
+- NPC and quest interactions.
+
+General Store interface:
+- Player inventory and store inventory are shown separately.
+- Items can be added to a buy or sell offer.
+- The transaction requires confirmation.
+
+GOBLIN ENCAMPMENT
+- Combat Activity: Goblins.
+- Rare Goblin Chief encounter.
+- Rewards may include gold, daggers, armor pieces, and gems from the Goblin Chief.
+- Fishing Activity.
+- Dangerous for players below approximately Combat Level 10.
+
+RIVER, COAST, AND DOCK
+- Fishing Activities.
+- Coastal shops or NPCs.
+- Pirate encounters may exist as Combat content.
+- Transportation interactions may exist.
+
+COPPER MINE NEAR TOWN
+Mining pool:
+- Copper Ore as the main result.
+- Clay.
+- Tin Ore.
+- Coal as a rarer result.
+- Rare gems may appear.
+
+MOUNTAINS
+- Mining Activities.
+- Rock Troll Combat.
+- Entrance to the caves beneath the mountain.
+
+WIZARD'S TOWER
+- Skeleton Combat.
+- Zombie Combat.
+- Wizard's Shop.
+- Arcana access.
+- Magical NPCs.
+- Essence Mining.
+- Enchantment progression.
+
+KINGSWOODS
+Hunting pool:
+- Duck: 70%.
+- Elk: 25%.
+- Wild Boar Combat Action: 5%.
+
+Harvesting pool:
+- Herb 1: 60%.
+- Herb 2: 40%.
+
+MEADOW
+Hunting pool:
+- Butterfly: 10%.
+- Rabbit: 90%.
+
+Harvesting pool:
+- Wild Roots: 50%.
+- Herb 1: 50%.
+
+CAVES BENEATH THE MOUNTAIN
+- Underground connected Location Nodes.
+- Mining focused on Iron Ore and Coal.
+- Rare Sapphire, Emerald, and Ruby Actions.
+- Mining Store sells improved pickaxes and pays better prices for ores.
+- Mining Store requirement: Mining Level 40.
+
+CASTLE AND CASTLE GROUNDS
+Sub-map:
+- Courtyard and Gate.
+- Main Hall.
+- King's Quarters.
+- Barracks.
+
+Courtyard and Gate:
+- Hunting butterflies.
+- Harvesting herbs.
+
+Main Hall:
+- Kitchen for Cooking.
+- NPC interactions.
+
+King's Quarters:
+- Material-gathering quests.
+- Rewards may include enchanted swords, unique jewelry, rare items, or recipe knowledge.
+
+Barracks:
+- Combat Activity against Guards.
+
+ANCIENT FOREST
+- High-level woodland Location.
+- Woodcutting Actions: Ancient Tree, Cedar Tree, Mahogany Tree.
+- Combat Actions: Ent, Ancient Ent, Corrupted Ent.
+
+======================================================================
+5. ACTIVITY, ACTION, AND POOL SYSTEM
+======================================================================
+
+5.1 PRIMARY ACTIVITY
+Only one Primary Activity can run at a time:
+- Combat.
+- Gathering.
+- Standard Production.
+
+Starting another Primary Activity stops or replaces the previous one.
+
+5.2 ACTIVITY FLOW
+1. Select an Activity at the current Location.
+2. Validate Activity requirements.
+3. Reference the Activity Pool.
+4. Generate one valid Action by weight.
+5. Route the Action to its gameplay system.
+6. Complete the Action using its timing or Combat rules.
+7. Grant rewards and XP.
+8. Generate the next Action.
+9. Continue until stopped, interrupted, invalidated, or the unattended-progression limit is reached.
+
+5.3 MULTI-SKILL POOLS
+- An Activity Pool may contain Actions from different skills or gameplay categories.
+- XP is granted according to each generated Action, not the parent Activity.
+- Mixed pools are allowed only when every possible Action is compatible with the same required equipment setup.
+
+Example Hunting Activity:
+- Rabbit: Hunting.
+- Pheasant: Hunting.
+- Elk: Hunting.
+- Wolf: Combat.
+- Bear: Combat.
+
+5.4 START VALIDATION
+An Activity may start only when the player satisfies the mandatory requirements of every Action that can currently be generated from the pool.
+
+Requirements may include:
+- Equipped tool or weapon.
+- Production Proficiency Level.
+- Station access.
+- Recipe knowledge.
+- Required item or status.
+
+Activity selection should show required equipment, required levels, Combat chance, and important warnings.
+
+5.5 ACTION DATA
+Each Action defines:
+- ID and name.
+- Category.
+- Relevant skill.
+- Proficiency Level.
+- Base Duration or Combat data.
+- Requirements.
+- XP.
+- Reward table.
+- Required tool or weapon.
+- Status.
+
+The same Action should use the same core mechanics wherever it appears. Locations determine which Actions appear and their weights.
+
+5.6 WEIGHTED GENERATION AND REWARDS
+- Each Activity Pool entry has a weight.
+- Weights may total 100 or be normalized.
+- Higher-level Locations may contain more advanced Actions or give them greater weight.
+- Reward tables are separate from Activity Pools.
+- An Action may award nothing.
+- Rare rewards should remain rare.
+
+5.7 RECALCULATION
+A running Activity recalculates when relevant state changes, including skill level, equipment, requirements, buffs, Location availability, or required inventory materials. If a mandatory requirement is no longer met, the Activity stops.
+
+======================================================================
+6. SKILLS AND PROGRESSION
+======================================================================
+
+6.1 SKILL LIST
+Combat:
+1. Combat
+
+Gathering:
+2. Mining
+3. Fishing
+4. Harvesting
+5. Hunting
+6. Woodcutting
+
+Standard Production:
+7. Cooking
+8. Metallurgy
+9. Crafting
+10. Alchemy
+
+Special Production:
+11. Smithing
+12. Artisanry
+13. Arcana
+
+6.2 LEVELS AND EXPERIENCE
+- Skills begin at Level 1.
+- Displayed levels run from 1 through 100.
+- Level 100 begins at 100,579,020 total XP.
+- XP may continue beyond Level 100.
+
+Selected total-XP milestones:
+Level 1: 0
+Level 10: 10,873
+Level 20: 41,007
+Level 30: 119,224
+Level 40: 322,176
+Level 50: 848,633
+Level 60: 2,214,199
+Level 70: 5,756,204
+Level 75: 9,275,482
+Level 80: 14,943,326
+Level 90: 38,772,419
+Level 93: 51,608,858
+Level 100: 100,579,020
+
+6.3 PROGRESSION RULES
+Gathering:
+- May be attempted below Proficiency Level if all non-level requirements are met.
+- Below Proficiency Level, Base Duration is doubled.
+- XP and rewards are unchanged.
+
+Combat:
+- Not level-gated.
+- Difficulty is determined by enemy health, damage, fight length, and resource consumption.
+
+Production:
+- Standard and Special Production are hard-gated by their defined Proficiency Levels and other recipe requirements.
+
+======================================================================
+7. COMBAT
+======================================================================
+
+7.1 COMBAT ACTION
+- Combat begins immediately when a Combat Action is generated.
+- Combat continues until the enemy or player reaches 0 HP.
+- The player attacks first.
+
+7.2 CORE STATS
+- Current HP.
+- Maximum HP.
+- Damage Range.
+- Damage Reduction or equivalent armor mitigation.
+- Combat Level requirements on equipment.
+- Defined buffs and enchantments.
+
+7.3 DAMAGE
+- Each attack rolls a random integer from the attacker's Damage Range.
+- Damage cannot be reduced below 1.
+
+7.4 COMBAT ROUND
+1. Player attacks.
+2. If the enemy dies, resolve victory.
+3. If the enemy survives, it attacks.
+4. If the player dies, resolve defeat.
+5. Otherwise begin another round.
+
+Combat uses fixed-duration rounds so active and unattended resolution follow the same rules.
+
+7.5 VICTORY
+- Award Combat XP.
+- Award gold where defined.
+- Roll item drops.
+- Update kill statistics.
+- If HP is below maximum and food is equipped, consume one food and heal by its defined amount.
+- Generate the next Action from the selected Activity.
+
+7.6 DEATH
+- No XP, item drops, or gold from the failed encounter.
+- Pause the Activity for 30 seconds.
+- Resume afterward if requirements still permit it.
+- Equipment and inventory are not lost.
+
+7.7 FOOD
+- Food has a dedicated equipment slot.
+- Only one food type is equipped at a time.
+- One food is automatically consumed after a victory when HP is below maximum.
+- No food is consumed at full HP.
+
+7.8 COMBAT INSIDE OTHER ACTIVITIES
+Equipment-compatible non-Combat Activities may generate Combat Actions. After the encounter resolves, the parent Activity continues.
+
+7.9 WEAPONS AND TOOLS
+- Purpose-built weapons are intended for Combat.
+- Hunting Net has a Damage Range of 1-1.
+- Sling supports basic ranged Combat and Hunting.
+- Bows are both Hunting tools and Combat weapons.
+
+======================================================================
+8. GATHERING SKILLS
+======================================================================
+
+8.1 MINING
+Mining gathers ores, coal, clay, gems, and Essence and requires an appropriate pickaxe or other defined tool.
+
+Current resources:
+- Clay.
+- Copper Ore.
+- Tin Ore.
+- Iron Ore.
+- Coal.
+- Silver Ore.
+- Gold Ore.
+- Titanium Ore.
+- Tungsten Ore.
+- Essence.
+- Sapphire.
+- Emerald.
+- Ruby.
+
+Current Proficiency Levels:
+- Level 1: Copper Ore.
+- Level 5: Tin Ore.
+- Level 20: Iron Ore.
+- Level 35: Coal.
+- Level 60: Titanium Ore.
+- Level 70: Tungsten Ore.
+
+Essence is a Mining resource used by Arcana and is available near or within the Wizard's Tower.
+
+8.2 FISHING
+Fishing catches fish and water-related resources.
+
+Tools include:
+- Fishing Net.
+- Fishing Rods.
+- Harpoons.
+
+Current fish:
+- Raw Crawfish.
+- Raw Trout.
+- Raw Salmon.
+- Raw Tuna.
+- Raw Shark.
+
+8.3 HARVESTING
+Harvesting covers cultivated crops and wild plants.
+
+Resource categories:
+- Wild herbs.
+- Wild roots.
+- Berries.
+- Mushrooms.
+- Cultivated crops.
+- Other plant resources.
+
+Current resources:
+- Potato.
+- Golden Spud.
+- Carrot.
+- Wild Berries.
+- Grapes.
+- Wild Roots.
+- Fernleaf.
+- Mosstole.
+- Augur Weed.
+- Herb 1.
+- Herb 2.
+
+Harvesting supplies Cooking, Alchemy, Crafting, Artisanry, and Arcana.
+
+8.4 HUNTING
+Hunting collects animals and creature-derived resources.
+
+Current Actions and rewards:
+Rabbit:
+- Raw Rabbit.
+- Rabbit's Foot.
+
+Pheasant:
+- Raw Pheasant.
+- Pheasant Feathers.
+
+Elk:
+- Venison.
+- Elk Horns.
+
+Duck:
+- Hunting Action.
+
+Butterfly:
+- Butterfly Wing.
+
+Hunting tools:
+- Net.
+- Sling.
+- Bow.
+
+Tool progression:
+- Hunting Level 1: Net, Damage Range 1-1, for small creatures.
+- Hunting Level 5: Sling, supporting basic ranged Combat and Hunting.
+- Hunting Level 10: Regular Bow.
+
+Bow progression:
+- Regular Bow.
+- Cedar Bow.
+- Oak Bow.
+- Poplar Bow.
+- Maple Bow.
+- Mahogany Bow.
+
+Bow rules:
+- The same bow is used for Combat and Hunting.
+- A qualifying Hunting Action may require a bow.
+- A Combat Action may use the equipped bow without an equipment swap.
+- Bow Damage Range should be slightly below a metal melee weapon of comparable progression because bows are more versatile.
+- Qualifying bow-based Hunting Actions grant Combat XP equal to 10% of the Hunting XP.
+- Bows are created through Artisanry.
+
+8.5 WOODCUTTING
+Woodcutting gathers logs and requires an appropriate axe or hatchet.
+
+Current log progression:
+- Cedar Log.
+- Oak Log.
+- Poplar Log.
+- Maple Log.
+- Mahogany Log.
+
+======================================================================
+9. STANDARD PRODUCTION
+======================================================================
+
+9.1 RULES
+Standard Production includes Cooking, Metallurgy, Crafting, and Alchemy.
+
+- Repeatable Actions.
+- Hard-gated by Proficiency Level.
+- Requires the appropriate station.
+- Player selects an output and quantity.
+- Materials and inventory capacity are validated.
+- Queue may contain up to 24 hours of work.
+- Mid- and late-game Actions generally take longer than Gathering Actions.
+- Longer Actions grant proportionally higher XP.
+
+9.2 COOKING
+Cooking turns raw ingredients into food and meals and requires a Kitchen.
+
+Current products:
+- Baked Potato.
+- Cooked Crawfish.
+- Cooked Trout.
+- Cooked Salmon.
+- Cooked Tuna.
+- Cooked Shark.
+- Cooked Rabbit.
+- Cooked Pheasant.
+- Cooked Beef.
+- Cooked Venison.
+- Pheasant Stew.
+- Venison Stew.
+
+Cooked food supplies the automatic post-victory healing system.
+
+9.3 METALLURGY
+Metallurgy refines ores into bars and metal components used by later production.
+
+Current progression:
+Level 1 - Copper Bar:
+- Copper Ore.
+
+Level 5 - Bronze Bar:
+- Copper Ore + Tin Ore.
+
+Level 20 - Iron Bar:
+- Iron Ore.
+
+Level 35 - Steel Bar:
+- Iron Ore + Coal.
+
+Level 45 - Reinforced Steel Bar:
+- Steel Bar + Coal.
+
+Level 60 - Titanium Bar:
+- Titanium Ore + Tin Ore.
+
+Level 70 - Tungsten Bar:
+- Copper Ore + Iron Ore + Tungsten Ore.
+
+9.4 CRAFTING
+Crafting creates everyday components and standard crafted goods used by other skills.
+
+Current product categories:
+- Bowstrings.
+- Leather straps.
+- Cut gems.
+- Cloth wraps.
+- Enchanting Tablets.
+- Other components used by Artisanry and Arcana.
+
+Enchanting Tablets are Crafting components consumed by Arcana enchantment projects.
+
+9.5 ALCHEMY
+Alchemy combines herbs, creature materials, and other ingredients into potions and requires an Apothecary or Alchemy station. Potion mechanics and effects are defined only when finalized in the game data.
+
+======================================================================
+10. SPECIAL PRODUCTION
+======================================================================
+
+10.1 RULES
+Special Production includes Smithing, Artisanry, and Arcana.
+
+- Projects are hard-gated by their defined Proficiency Levels and requirements.
+- Projects may require NPC knowledge, quests, discoveries, Locations, materials, or gold.
+- Materials are validated before completion.
+- Projects complete instantly once confirmed.
+- Special Production does not use a repeating timer or queue.
+- Projects should be material-intensive and grant substantial XP relative to ordinary production.
+
+10.2 SMITHING
+Smithing is the instant Special Production skill for conventional metal equipment.
+
+Smithing consumes bars and components created through Metallurgy and Crafting to create metal equipment such as:
+- Weapons.
+- Armor.
+- Shields.
+- Metal tools.
+
+Smithing projects complete instantly after all level, material, and project requirements are met.
+
+10.3 ARTISANRY
+Artisanry is the master-craftsmanship skill for complex finished equipment and specialist projects.
+
+It combines materials from multiple systems, including:
+- Metallurgy materials.
+- Crafting components.
+- Logs.
+- Harvested materials.
+- Hunting materials.
+- Monster drops.
+- Rare resources.
+- Gold where defined.
+
+It creates:
+- Bows.
+- Unique tools.
+- Utility items.
+- Complex or legendary equipment.
+
+Defined example project: Boar Spear
+Requirements:
+- Crafting 30.
+- Metallurgy 25.
+- Artisanry 20.
+
+Materials:
+- Steel Spear Head.
+- Boar Tusk.
+- Oak Shaft.
+- Leather Grip.
+
+Output:
+- Boar Spear.
+
+10.4 ARCANA
+Arcana is the instant Special Production skill for item enchantment and magical production.
+
+Core resources and relationships:
+- Essence is a primary Arcana resource gathered through Mining.
+- Crafting creates Enchanting Tablets.
+- Arcana consumes an Enchanting Tablet, Essence, and any project-specific materials to apply an enchantment to a valid item.
+- Arcana projects may require knowledge from NPCs, quests, discoveries, or Locations.
+
+======================================================================
+11. ITEMS, EQUIPMENT, AND INVENTORY
+======================================================================
+
+11.1 ITEM PHILOSOPHY
+- Item quantities should remain moderate.
+- Rare items should remain meaningful.
+- Early resources should remain useful in later recipes.
+- Equipment should have clear gameplay roles.
+- Exact numerical values belong in the game data.
+
+11.2 EQUIPMENT PURPOSES
+Tools:
+- Enable or improve Gathering Activities.
+
+Weapons:
+- Optimize Combat.
+- Some also function as Gathering tools.
+
+Armor:
+- Improves survivability through defined defensive statistics.
+
+Food:
+- Sustains Combat through automatic healing after victories.
+
+Potions:
+- Provide Alchemy-created temporary effects only when those effects are explicitly defined in the game data.
+
+11.3 EQUIPMENT SLOTS
+Current functional slots:
+- Weapon or Tool.
+- Shield or Off-hand.
+- Helmet.
+- Chest.
+- Legs.
+- Boots.
+- Gloves.
+- Necklace.
+- Ring.
+- Back.
+- Food.
+- Potion.
+
+11.4 INVENTORY
+- Items use stack limits defined in game data.
+- The system should prevent uncontrolled hoarding without requiring constant interruption.
+- Standard Production must validate required materials and available inventory space before starting.
+- Unattended progression must handle inventory limits safely.
+
+======================================================================
+12. ECONOMY AND SHOPS
+======================================================================
+
+12.1 ECONOMY
+The economy should avoid:
+- Millions or billions of ordinary resources.
+- Huge routine stacks.
+- Excessively large gold values.
+- Guaranteed rewards from every short Action.
+- Obsolete early resources.
+
+The economy should encourage:
+- Meaningful resource choices.
+- Valuable uncommon drops.
+- Cross-skill recipes.
+- Resource sinks through Production and projects.
+- Readable long-term progression.
+
+12.2 ACTION AND REWARD FREQUENCY
+- Gathering and Combat Actions are relatively fast.
+- Reward probabilities are controlled.
+- Some Actions award nothing.
+- Rare results remain rare.
+- Standard Production becomes slower at higher progression.
+- Longer Standard Production grants more XP.
+- Special Production is instant but material-intensive.
+
+Illustrative timing ranges:
+- Gathering Action: approximately 2-6 seconds.
+- Early Standard Production Action: approximately 5-150 seconds.
+- Late Standard Production Action: approximately 20-60+ minutes.
+
+12.3 SHOPS
+General Store:
+- Buys and sells ordinary items.
+
+Mining Store:
+- Sells improved pickaxes.
+- Pays better prices for ores.
+- Requires Mining Level 40.
+
+Wizard's Shop:
+- Sells magical items.
+- May sell Essence at a premium so Mining remains the primary efficient source.
+
+Additional world shops may be attached to appropriate Locations and NPCs.
+
+======================================================================
+13. NPCS, QUESTS, AND RECIPE DISCOVERY
+======================================================================
+
+13.1 NPC INTERACTIONS
+NPC interactions are Passive Interactions at the current Location and may provide:
+- Shops.
+- Quests.
+- Recipe teaching.
+- Lore information.
+- Transportation.
+
+13.2 KING'S QUESTS
+The King may request specified quantities of materials. Rewards may include enchanted swords, unique jewelry, rare items, or recipe knowledge.
+
+13.3 RECIPE DISCOVERY
+Specialists throughout the world may teach recipes tied to exploration and skill progression. Recipe knowledge may also come from quests, discoveries, or Locations.
+
+13.4 QUEST TYPES
+- Gather materials.
+- Process items.
+- Defeat enemies.
+- Deliver rare resources.
+- Restore a facility.
+- Construct a portal.
+
+======================================================================
+14. ACHIEVEMENTS AND STATISTICS
+======================================================================
+
+Achievements may track:
+- Skill levels.
+- Total levels.
+- Monster kills.
+- Gold earned.
+- Rare drops.
+- World exploration.
+- Smithing projects.
+- Artisanry projects.
+- Arcana projects.
+
+Statistics should support the same core progression categories where useful.
+
+======================================================================
+15. USER INTERFACE AND WEB LAYOUT
+======================================================================
+
+15.1 ORIENTATION
+- The game uses a responsive portrait game viewport.
+- Important nodes and controls should remain inside a central safe area.
+- On narrow screens, the game interface fills the available viewport.
+- On wider desktop screens, the portrait game viewport may appear alongside supporting website content.
+
+15.2 TOP HUD
+The top HUD should prioritize:
+- Total experience.
+- Gold.
+- Current Activity.
+- Current combat or progression information when relevant.
+
+15.3 BOTTOM NAVIGATION
+Confirmed navigation functions include:
+- Inventory.
+- Log.
+- Settings/Menu.
+
+Additional navigation should remain minimal and consistent with the same layout.
+
+15.4 INVENTORY SCREEN
+Inventory is a full-screen menu with:
+- Items.
+- Equipment.
+
+Equipment management includes armor, weapon/tool, shield/off-hand, food, potion, and other defined functional slots.
+
+15.5 ACTIVITY SCREEN
+An Activity screen may show:
+- Location background.
+- Current Action.
+- Progress or Combat state.
+- Required tool.
+- Combat chance warning.
+- Rewards or recent drops.
+- Activity controls.
+
+======================================================================
+16. ART DIRECTION
+======================================================================
+
+16.1 OVERALL STYLE
+A warm, hand-crafted 2D fantasy style that is:
+- Inviting.
+- Readable.
+- Charming.
+- Cozy.
+- Colorful.
+- Timeless rather than realistic.
+- Peaceful with occasional danger.
+
+The default mood should not be dark or gritty. Every screen should feel comfortable to leave open for long idle sessions.
+
+16.2 WORLD AND LOCATION ART
+- Cozy fantasy environments.
+- Distinct biomes and readable landmarks.
+- Clear visual separation between safe, ordinary, magical, and dangerous Locations.
+- Main-map and Location backgrounds may use square source compositions that crop or scale into the portrait viewport.
+
+16.3 INTERFACE STYLE
+- Medium-brown parchment panels.
+- Gold highlights.
+- Soft green accents.
+- Rounded buttons.
+- Subtle shadows.
+- Large touch-friendly controls.
+- Uncluttered mobile-first layout.
+
+16.4 ITEM ICONS
+- Bold silhouettes.
+- Bright colors.
+- Minimal visual noise.
+- Consistent proportions.
+- Recognizable without reading the item name.
+
+16.5 VISUAL PRINCIPLES
+The visual identity should emphasize:
+- Cozy fantasy environments.
+- Clear equipment and item progression.
+- Long-term skilling.
+- Distinct biomes.
+- Readability over excessive detail.
+
+======================================================================
+17. DATA AND SAVE ARCHITECTURE
+======================================================================
+
+17.1 DATA-DRIVEN CONTENT
+Data records should define:
+- Items.
+- Equipment.
+- Consumables.
+- Currency.
+- Skills.
+- XP curve.
+- Locations.
+- Activities.
+- Actions.
+- Activity Pool entries.
+- Enemies.
+- Combat stats.
+- Reward and drop tables.
+- Recipes.
+- Smithing projects.
+- Artisanry projects.
+- Arcana projects.
+- Enchantments.
+- NPCs.
+- Quests.
+- Achievements.
+- Shops.
+- Unlocks.
+
+Stable IDs should be used for relationships between records.
+
+17.2 PLAYER SAVE DATA
+The local save should contain:
+- Skills and XP.
+- Inventory.
+- Equipment.
+- Currency.
+- Quests.
+- Achievements.
+- Statistics.
+- Settings.
+- Current Location.
+- Current Activity.
+- Activity start time.
+- Unattended-progress timestamp.
+- Save version.
+
+17.3 UNATTENDED CALCULATION MODEL
+- Store the selected Activity, start time, relevant state, and modifiers.
+- Calculate progress from elapsed time when the game resumes.
+- Apply the 24-hour cap.
+- Recalculate when equipment, skill, buff, requirement, or inventory state changes.
+- Combat calculation must reproduce active Combat rules exactly.
+
+======================================================================
+18. BALANCING AND CONTENT DEPENDENCIES
+======================================================================
+
+18.1 BALANCING CATEGORIES
+Track:
+- XP per hour.
+- Gold per hour.
+- Resource entry rate.
+- Item values.
+- Standard Production costs.
+- Special Production costs.
+- Enemy difficulty.
+- Drop rates.
+- Resource scarcity.
+- Food consumption.
+- Death frequency.
+- Travel time if used.
+- Stack pressure.
+- Potion use where defined.
+- Enchantment strength where defined.
+
+18.2 DEPENDENCY CHAINS
+Mining -> Ore -> Metallurgy -> Bars/components -> Smithing or Artisanry -> Equipment -> Improved Combat/Gathering -> New resources/projects
+
+Harvesting -> Herbs -> Alchemy -> Potions -> Improved Activities -> Rare materials -> Arcana or Artisanry
+
+Crafting -> Components/Enchanting Tablets -> Arcana or Artisanry -> Equipment improvements -> Further progression
+
+Woodcutting + Hunting + Crafting -> Artisanry -> Bows -> Hunting and Combat progression
+
+======================================================================
+19. DEMO COMPLETION TARGET
+======================================================================
+
+The playable demo should allow the player to:
+- Start and automatically continue one local save.
+- Explore the world map and travel between available Locations.
+- Start, stop, and replace Primary Activities.
+- Perform weighted Gathering and mixed-category Activities.
+- Fight enemies using the defined Combat loop.
+- Gain XP and skill levels.
+- Gather resources and receive controlled rewards.
+- Use equipment, food, inventory, and shops.
+- Use Cooking, Metallurgy, Crafting, and Alchemy.
+- Complete instant Smithing, Artisanry, and Arcana projects.
+- Complete quests and track achievements/statistics.
+- Close the game and later receive up to 24 hours of correctly calculated unattended progression.
+
+END OF GAME BIBLE
