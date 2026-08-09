@@ -107,24 +107,14 @@ export function ProductionPicker({
                 Queue uses {(clampedQty * recipe['Base Duration Seconds']).toLocaleString()}s of the
                 24h cap.
               </p>
-              <div className="production-actions-row">
-                <button
-                  type="button"
-                  className="btn primary"
-                  disabled={maxQty <= 0}
-                  onClick={() => onConfirm(recipe['Recipe ID'], clampedQty)}
-                >
-                  Start queue
-                </button>
-                <button
-                  type="button"
-                  className="btn secondary"
-                  disabled={maxQty <= 0}
-                  onClick={() => onConfirm(recipe['Recipe ID'], Math.max(1, maxQty))}
-                >
-                  Craft Max
-                </button>
-              </div>
+              <button
+                type="button"
+                className="btn primary"
+                disabled={maxQty <= 0}
+                onClick={() => onConfirm(recipe['Recipe ID'], clampedQty)}
+              >
+                Start queue
+              </button>
             </>
           )}
         </>

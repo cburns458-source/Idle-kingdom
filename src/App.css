@@ -1165,12 +1165,6 @@
   margin-bottom: 0;
 }
 
-.production-actions-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.45rem;
-}
-
 .production-picker select.text-input[size] {
   min-height: 6.5rem;
   padding: 0.35rem;
