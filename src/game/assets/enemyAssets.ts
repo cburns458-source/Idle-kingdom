@@ -1,3 +1,5 @@
+import { withAssetVersion } from './cacheBust'
+
 /** Stable enemy sprite paths keyed by Enemy ID / internal key. */
 
 export const ENEMY_ASSET_PATHS: Record<string, string> = {
@@ -16,5 +18,5 @@ export const ENEMY_ASSET_PATHS: Record<string, string> = {
 }
 
 export function enemyAssetPath(enemyId: string): string {
-  return ENEMY_ASSET_PATHS[enemyId] ?? '/assets/enemies/enm_cow.png'
+  return withAssetVersion(ENEMY_ASSET_PATHS[enemyId] ?? '/assets/enemies/enm_cow.png')
 }

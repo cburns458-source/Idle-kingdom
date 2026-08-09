@@ -1,4 +1,5 @@
 import type { ItemRow } from '../data/types'
+import { withAssetVersion } from './cacheBust'
 
 /** Specific item overrides (Item ID -> icon file stem under /assets/icons/items/). */
 const ITEM_ID_ICONS: Record<string, string> = {
@@ -19,16 +20,16 @@ const ITEM_ID_ICONS: Record<string, string> = {
   'ITEM-0288': 'insignia',
 }
 
-/** Resolve a pixel icon path for an item using ID, then category/subtype heuristics. */
+/** Resolve an icon path for an item using ID, then category/subtype heuristics. */
 export function itemAssetPath(item: ItemRow | string | undefined): string {
-  if (!item) return '/assets/icons/items/item_default.png'
+  if (!item) return withAssetVersion('/assets/icons/items/item_default.png')
   if (typeof item === 'string') {
     const stem = ITEM_ID_ICONS[item] ?? 'default'
-    return `/assets/icons/items/item_${stem}.png`
+    return withAssetVersion(`/assets/icons/items/item_${stem}.png`)
   }
 
   const byId = ITEM_ID_ICONS[item['Item ID']]
-  if (byId) return `/assets/icons/items/item_${byId}.png`
+  if (byId) return withAssetVersion(`/assets/icons/items/item_${byId}.png`)
 
   const key = (item['Internal Key'] ?? '').toLowerCase()
   const category = (item.Category ?? '').toLowerCase()
@@ -36,7 +37,7 @@ export function itemAssetPath(item: ItemRow | string | undefined): string {
   const blob = `${key} ${category} ${subtype} ${item['Display Name']?.toLowerCase() ?? ''}`
 
   const stem = iconStemFromText(blob, category, subtype)
-  return `/assets/icons/items/item_${stem}.png`
+  return withAssetVersion(`/assets/icons/items/item_${stem}.png`)
 }
 
 function iconStemFromText(blob: string, category: string, subtype: string): string {

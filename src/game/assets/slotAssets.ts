@@ -1,4 +1,6 @@
-/** Pixel empty-slot icons keyed by EquipmentSlots.Internal Key / Slot ID. */
+import { withAssetVersion } from './cacheBust'
+
+/** Empty-slot icons keyed by EquipmentSlots.Internal Key / Slot ID. */
 
 const SLOT_KEYS: Record<string, string> = {
   'SLOT-0001': 'weapon_tool',
@@ -17,5 +19,5 @@ const SLOT_KEYS: Record<string, string> = {
 
 export function slotAssetPath(slotId: string): string {
   const key = SLOT_KEYS[slotId] ?? 'weapon_tool'
-  return `/assets/icons/slots/slot_${key}.png`
+  return withAssetVersion(`/assets/icons/slots/slot_${key}.png`)
 }

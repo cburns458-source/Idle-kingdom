@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { locationAssetPath } from '../game/assets/assetMap'
+import { locationAssetPath, uiMapAssetPath } from '../game/assets/assetMap'
 import type { ActivityRow, DatabaseIndexes, GameDatabase, LocationRow } from '../game/data/types'
 import {
   specialProductionStationsAt,
@@ -29,7 +29,7 @@ function MapIcon() {
   return (
     <span
       className="map-icon map-icon-pixel"
-      style={{ backgroundImage: 'url(/assets/icons/ui/ui_map.png)' }}
+      style={{ backgroundImage: `url(${uiMapAssetPath()})` }}
       aria-hidden
     />
   )

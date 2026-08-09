@@ -1,3 +1,5 @@
+import { withAssetVersion } from './cacheBust'
+
 /** Stable runtime asset paths keyed by database IDs / internal keys. */
 
 export const MAP_ASSET_PATHS: Record<string, string> = {
@@ -29,9 +31,13 @@ export const LOCATION_ASSET_PATHS: Record<string, string> = {
 }
 
 export function mapAssetPath(mapId: string): string {
-  return MAP_ASSET_PATHS[mapId] ?? '/assets/maps/map_idale_main.png'
+  return withAssetVersion(MAP_ASSET_PATHS[mapId] ?? '/assets/maps/map_idale_main.png')
 }
 
 export function locationAssetPath(locationId: string): string {
-  return LOCATION_ASSET_PATHS[locationId] ?? '/assets/locations/loc_town.png'
+  return withAssetVersion(LOCATION_ASSET_PATHS[locationId] ?? '/assets/locations/loc_town.png')
+}
+
+export function uiMapAssetPath(): string {
+  return withAssetVersion('/assets/icons/ui/ui_map.png')
 }
