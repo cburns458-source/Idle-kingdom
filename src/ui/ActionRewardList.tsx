@@ -42,6 +42,7 @@ export function ActionRewardList({
                 key={`${bundle.id}-${loot.itemId}-${index}`}
                 className="action-reward-chip"
                 title={`${loot.displayName} ×${loot.quantity}`}
+                aria-label={`${loot.displayName} ×${loot.quantity}`}
               >
                 <span className="action-reward-xp">+{loot.quantity}</span>
                 <span
@@ -51,7 +52,6 @@ export function ActionRewardList({
                   }}
                   aria-hidden
                 />
-                <span className="action-reward-item-name">{loot.displayName}</span>
               </span>
             ))}
             {levelUps.map((reward) => (
