@@ -438,26 +438,26 @@
 .glass-panel,
 .glass-btn,
 .location-view .panel {
-  background: rgba(148, 152, 158, 0.82) !important;
-  border-color: rgba(120, 124, 130, 0.7) !important;
+  background: rgba(42, 46, 52, 0.88) !important;
+  border-color: rgba(90, 96, 104, 0.75) !important;
   backdrop-filter: blur(3px);
-  color: #1f2428;
+  color: #e8eaed;
 }
 
 .location-view .panel h1,
 .location-view .panel h2,
 .location-view .panel .lead,
 .location-view .panel .loot-message {
-  color: #1f2428;
+  color: #f0f2f4;
 }
 
 .location-view .panel .muted,
 .location-view .panel .muted.tiny {
-  color: #3f464e;
+  color: #a8b0b8;
 }
 
 .location-view .panel .danger-note {
-  color: #6b3a1f;
+  color: #e0a080;
 }
 
 .location-activities {
@@ -465,13 +465,13 @@
 }
 
 .location-view .interaction-list li {
-  background: rgba(176, 180, 186, 0.78);
-  color: #1f2428;
+  background: rgba(58, 62, 70, 0.85);
+  color: #e8eaed;
 }
 
 .location-view .interaction-list li .muted,
 .location-view .interaction-list li .muted.tiny {
-  color: #3f464e;
+  color: #a8b0b8;
 }
 
 .interaction-list,
