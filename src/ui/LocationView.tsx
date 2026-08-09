@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { locationAssetPath, uiMapAssetPath } from '../game/assets/assetMap'
 import type { ActivityRow, DatabaseIndexes, GameDatabase, LocationRow } from '../game/data/types'
 import {
@@ -65,6 +65,11 @@ export function LocationView({
     (locationId === CAVE_ENTRANCE_ID || locationId === CASTLE_GATEWAY_ID)
   const showActivityPanel =
     !showSubMapEntrance && (activities.length > 0 || specialStations.length > 0)
+  const [activitiesHidden, setActivitiesHidden] = useState(false)
+
+  useEffect(() => {
+    setActivitiesHidden(false)
+  }, [locationId])
 
   return (
     <section
@@ -109,9 +114,30 @@ export function LocationView({
           </section>
         )}
 
-        {showActivityPanel && (
+        {showActivityPanel && activitiesHidden && (
+          <div className="location-activities-reveal">
+            <button
+              type="button"
+              className="btn secondary glass-btn"
+              onClick={() => setActivitiesHidden(false)}
+            >
+              Show activities
+            </button>
+          </div>
+        )}
+
+        {showActivityPanel && !activitiesHidden && (
           <section className="panel glass-panel location-activities">
-            <h2>Activities</h2>
+            <div className="location-activities-head">
+              <h2>Activities</h2>
+              <button
+                type="button"
+                className="btn secondary location-activities-hide"
+                onClick={() => setActivitiesHidden(true)}
+              >
+                Hide
+              </button>
+            </div>
             <ul className="interaction-list">
               {activities.map((activity) => {
                 const active = currentActivityId === activity['Activity ID']
