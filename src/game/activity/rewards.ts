@@ -35,18 +35,22 @@ export function addItemToInventory(
 ): PlayerSave {
   if (quantity <= 0) return save
   const inventory = save.inventory.map((stack) => ({ ...stack }))
+
+  // Enchanted items are unique and never stack with anything.
+  if (enchantmentId) {
+    for (let i = 0; i < quantity; i += 1) {
+      inventory.push({ itemId, quantity: 1, enchantmentId })
+    }
+    return { ...save, inventory }
+  }
+
   const existing = inventory.find(
-    (stack) =>
-      stack.itemId === itemId && (stack.enchantmentId ?? null) === (enchantmentId ?? null),
+    (stack) => stack.itemId === itemId && !stack.enchantmentId,
   )
   if (existing) {
     existing.quantity += quantity
   } else {
-    inventory.push({
-      itemId,
-      quantity,
-      ...(enchantmentId ? { enchantmentId } : {}),
-    })
+    inventory.push({ itemId, quantity })
   }
   return { ...save, inventory }
 }

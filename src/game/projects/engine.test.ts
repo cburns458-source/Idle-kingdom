@@ -5,6 +5,7 @@ import { addItemToInventory } from '../activity/rewards'
 import { prepareDatabase } from '../data/loadDatabase'
 import { createNewSave } from '../save/saveStore'
 import { completeSpecialProject } from './engine'
+import { encodeEnchantTarget } from './enchantments'
 import { projectsForFacility, specialProductionStationsAt } from './projects'
 
 const rawDatabase = JSON.parse(
@@ -74,5 +75,53 @@ describe('special production', () => {
     expect(result.ok).toBe(false)
     if (result.ok) return
     expect(result.reason).toMatch(/facility/i)
+  })
+
+  it('can enchant an inventory item and keeps enchanted stacks unique', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    let save = createNewSave(launch)
+    save = {
+      ...save,
+      currentLocationId: 'LOC-0007',
+      skills: save.skills.map((skill) =>
+        skill.skillId === 'SKL-0013' || skill.skillId === 'SKL-0009'
+          ? { ...skill, level: 20, xp: 50_000 }
+          : skill,
+      ),
+    }
+    save = addItemToInventory(save, 'ITEM-0098', 1)
+    save = addItemToInventory(save, 'ITEM-0011', 2)
+    save = addItemToInventory(save, 'ITEM-0031', 10)
+    // Steel pickaxe is gathering gear eligible for minor gathering enchantment.
+    save = addItemToInventory(save, 'ITEM-0119', 2)
+    const invIndex = save.inventory.findIndex((stack) => stack.itemId === 'ITEM-0119')
+    expect(invIndex).toBeGreaterThanOrEqual(0)
+
+    const result = completeSpecialProject(
+      launch,
+      save,
+      'PRJ-0134',
+      1,
+      encodeEnchantTarget({ kind: 'inventory', index: invIndex }),
+    )
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+
+    const enchanted = result.save.inventory.filter(
+      (stack) => stack.itemId === 'ITEM-0119' && stack.enchantmentId === 'ENCH-0002',
+    )
+    const plain = result.save.inventory.filter(
+      (stack) => stack.itemId === 'ITEM-0119' && !stack.enchantmentId,
+    )
+    expect(enchanted).toHaveLength(1)
+    expect(enchanted[0]?.quantity).toBe(1)
+    expect(plain[0]?.quantity).toBe(1)
+
+    const merged = addItemToInventory(result.save, 'ITEM-0119', 1, 'ENCH-0002')
+    expect(
+      merged.inventory.filter(
+        (stack) => stack.itemId === 'ITEM-0119' && stack.enchantmentId === 'ENCH-0002',
+      ),
+    ).toHaveLength(2)
   })
 })

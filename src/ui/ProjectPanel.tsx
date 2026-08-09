@@ -2,9 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import type { ProjectRow } from '../game/data/projectTypes'
 import type { GameDatabase } from '../game/data/types'
 import { inventoryCount } from '../game/production/recipes'
-import {
-  eligibleEnchantmentSlots,
-} from '../game/projects/enchantments'
+import { eligibleEnchantmentTargets } from '../game/projects/enchantments'
 import {
   getEnchantment,
   isEnchantmentOutput,
@@ -25,7 +23,7 @@ interface ProjectPickerProps {
   save: PlayerSave
   station: SpecialProductionStation
   onCancel: () => void
-  onConfirm: (projectId: string, quantity: number, enchantSlotId: string | null) => void
+  onConfirm: (projectId: string, quantity: number, enchantTargetId: string | null) => void
 }
 
 function projectMatchesQuery(project: ProjectRow, query: string, db: GameDatabase): boolean {
@@ -74,9 +72,11 @@ export function ProjectPicker({
   const isEnchant = project ? isEnchantmentOutput(project['Output Item / Target ID']) : false
   const enchantment =
     project && isEnchant ? getEnchantment(db, project['Output Item / Target ID']) : undefined
-  const enchantSlots =
-    enchantment != null ? eligibleEnchantmentSlots(db, save, enchantment) : []
-  const [enchantSlotId, setEnchantSlotId] = useState(enchantSlots[0]?.slotId ?? '')
+  const enchantTargets =
+    enchantment != null ? eligibleEnchantmentTargets(db, save, enchantment) : []
+  const preferredTargetId =
+    enchantTargets.find((target) => target.preferred)?.id ?? enchantTargets[0]?.id ?? ''
+  const [enchantTargetId, setEnchantTargetId] = useState(preferredTargetId)
   const [quantity, setQuantity] = useState(1)
 
   useEffect(() => {
@@ -84,9 +84,19 @@ export function ProjectPicker({
     if (!filteredProjects.some((row) => row['Project ID'] === projectId)) {
       setProjectId(filteredProjects[0]!['Project ID'])
       setQuantity(1)
-      setEnchantSlotId('')
+      setEnchantTargetId('')
     }
   }, [filteredProjects, projectId])
+
+  useEffect(() => {
+    if (enchantTargets.length === 0) {
+      setEnchantTargetId('')
+      return
+    }
+    if (!enchantTargets.some((target) => target.id === enchantTargetId)) {
+      setEnchantTargetId(preferredTargetId)
+    }
+  }, [enchantTargets, enchantTargetId, preferredTargetId])
 
   const clampedQty = isEnchant
     ? 1
@@ -95,7 +105,7 @@ export function ProjectPicker({
   function selectProject(nextId: string) {
     setProjectId(nextId)
     setQuantity(1)
-    setEnchantSlotId('')
+    setEnchantTargetId('')
   }
 
   return (
@@ -193,31 +203,26 @@ export function ProjectPicker({
               )}
               {isEnchant && (
                 <>
-                  <label className="field-label" htmlFor="enchant-slot">
-                    Enchant equipped item
+                  <label className="field-label" htmlFor="enchant-target">
+                    Item to enchant
                   </label>
-                  {enchantSlots.length === 0 ? (
-                    <p className="danger-note">Equip a valid item first.</p>
+                  {enchantTargets.length === 0 ? (
+                    <p className="danger-note">
+                      Equip or keep a valid unenchanted item in inventory.
+                    </p>
                   ) : (
                     <select
-                      id="enchant-slot"
+                      id="enchant-target"
                       className="text-input"
-                      value={enchantSlotId || enchantSlots[0]!.slotId}
+                      value={enchantTargetId || preferredTargetId}
                       disabled={!skillsMet}
-                      onChange={(event) => setEnchantSlotId(event.target.value)}
+                      onChange={(event) => setEnchantTargetId(event.target.value)}
                     >
-                      {enchantSlots.map((slot) => {
-                        const item = db.Items.find((row) => row['Item ID'] === slot.stack.itemId)
-                        const slotName =
-                          db.EquipmentSlots.find((row) => row['Slot ID'] === slot.slotId)?.[
-                            'Display Name'
-                          ] ?? slot.slotId
-                        return (
-                          <option key={slot.slotId} value={slot.slotId}>
-                            {slotName}: {item?.['Display Name'] ?? slot.stack.itemId}
-                          </option>
-                        )
-                      })}
+                      {enchantTargets.map((target) => (
+                        <option key={target.id} value={target.id}>
+                          {target.label}
+                        </option>
+                      ))}
                     </select>
                   )}
                 </>
@@ -226,13 +231,15 @@ export function ProjectPicker({
                 type="button"
                 className="btn primary"
                 disabled={
-                  !skillsMet || maxQty <= 0 || (isEnchant && enchantSlots.length === 0)
+                  !skillsMet ||
+                  maxQty <= 0 ||
+                  (isEnchant && enchantTargets.length === 0)
                 }
                 onClick={() =>
                   onConfirm(
                     project['Project ID'],
                     clampedQty,
-                    isEnchant ? enchantSlotId || enchantSlots[0]?.slotId || null : null,
+                    isEnchant ? enchantTargetId || preferredTargetId || null : null,
                   )
                 }
               >

@@ -26,18 +26,36 @@ function removeItemQuantity(
   save: PlayerSave,
   itemId: string,
   quantity: number,
+  enchantmentId: string | null = null,
 ): PlayerSave {
   if (quantity <= 0) return save
   let remaining = quantity
   const inventory = save.inventory
     .map((stack) => {
       if (stack.itemId !== itemId || remaining <= 0) return { ...stack }
+      if ((stack.enchantmentId ?? null) !== enchantmentId) return { ...stack }
       const take = Math.min(stack.quantity, remaining)
       remaining -= take
       return { ...stack, quantity: stack.quantity - take }
     })
     .filter((stack) => stack.quantity > 0)
   return { ...save, inventory }
+}
+
+function removeInventoryAtIndex(
+  save: PlayerSave,
+  index: number,
+  quantity: number,
+): PlayerSave {
+  if (quantity <= 0) return save
+  const inventory = save.inventory.map((stack) => ({ ...stack }))
+  const stack = inventory[index]
+  if (!stack || stack.quantity < quantity) return save
+  stack.quantity -= quantity
+  return {
+    ...save,
+    inventory: inventory.filter((entry) => entry.quantity > 0),
+  }
 }
 
 function setSlot(save: PlayerSave, slotId: string, stack: EquippedStack | null): PlayerSave {
@@ -110,15 +128,28 @@ export function equipItemFromInventory(
   save: PlayerSave,
   itemId: string,
 ): EquipResult {
+  const index = save.inventory.findIndex(
+    (entry) => entry.itemId === itemId && !entry.enchantmentId,
+  )
+  const fallback = save.inventory.findIndex((entry) => entry.itemId === itemId)
+  return equipInventoryIndex(db, save, index >= 0 ? index : fallback)
+}
+
+/** Equip a specific inventory stack index (preserves enchantments). */
+export function equipInventoryIndex(
+  db: GameDatabase,
+  save: PlayerSave,
+  index: number,
+): EquipResult {
+  const invStack = save.inventory[index]
+  if (!invStack || invStack.quantity <= 0) {
+    return { ok: false, reason: 'Item is not in inventory.' }
+  }
+  const itemId = invStack.itemId
   const equipment = db.Equipment.find((row) => row['Item ID'] === itemId)
   const slotId = equipment?.['Slot ID']
   if (!equipment || !slotId) {
     return { ok: false, reason: 'That item cannot be equipped.' }
-  }
-
-  const invStack = save.inventory.find((entry) => entry.itemId === itemId)
-  if (!invStack || invStack.quantity <= 0) {
-    return { ok: false, reason: 'Item is not in inventory.' }
   }
 
   const requirementFailure = equipmentRequirementFailure(db, save, equipment)
@@ -128,30 +159,40 @@ export function equipItemFromInventory(
 
   let next = save
   const current = slotStack(next, slotId)
-
   const enchantmentId = invStack.enchantmentId ?? null
 
   if (isFoodSlot(slotId)) {
+    if (enchantmentId) {
+      return { ok: false, reason: 'Enchanted items cannot fill the food slot.' }
+    }
     const moveQty = invStack.quantity
-    if (current && current.itemId !== itemId) {
+    if (current && (current.itemId !== itemId || current.enchantmentId)) {
       next = unequipSlot(next, slotId)
     }
-    const existingQty = current?.itemId === itemId ? current.quantity : 0
-    next = removeItemQuantity(next, itemId, moveQty)
+    const existingQty =
+      current?.itemId === itemId && !current.enchantmentId ? current.quantity : 0
+    next = removeInventoryAtIndex(next, index, moveQty)
     return {
       ok: true,
-      save: setSlot(next, slotId, {
-        itemId,
-        quantity: existingQty + moveQty,
-        ...(enchantmentId ? { enchantmentId } : {}),
-      }),
+      save: setSlot(next, slotId, { itemId, quantity: existingQty + moveQty }),
     }
   }
 
   if (current) {
     next = unequipSlot(next, slotId)
+    // Index may shift after unequip returns an item to inventory.
+    const refreshed = next.inventory.findIndex(
+      (entry) =>
+        entry.itemId === itemId &&
+        (entry.enchantmentId ?? null) === enchantmentId &&
+        entry.quantity > 0,
+    )
+    if (refreshed < 0) return { ok: false, reason: 'Item is not in inventory.' }
+    next = removeInventoryAtIndex(next, refreshed, 1)
+  } else {
+    next = removeInventoryAtIndex(next, index, 1)
   }
-  next = removeItemQuantity(next, itemId, 1)
+
   return {
     ok: true,
     save: setSlot(next, slotId, {

@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import type { LoadedDatabase } from '../game/data/loadDatabase'
 import {
-  equipItemFromInventory,
+  equipInventoryIndex,
   unequipSlot,
 } from '../game/equipment/loadout'
 import { withRecalculatedVitals } from '../game/equipment/vitals'
 import { playerDamageRange, playerDamageReduction, playerMaxHp } from '../game/combat/stats'
+import { enchantmentTooltipLines } from '../game/projects/enchantments'
 import type { PlayerSave } from '../game/save/types'
 import { ItemIcon, SlotGlyph } from './itemIcons'
 
@@ -46,8 +47,8 @@ export function InventoryView({ save, database, onChangeSave }: InventoryViewPro
     onChangeSave(withRecalculatedVitals(db, next))
   }
 
-  function equipItem(itemId: string) {
-    const result = equipItemFromInventory(db, save, itemId)
+  function equipAt(index: number) {
+    const result = equipInventoryIndex(db, save, index)
     if (!result.ok) {
       setMessage(result.reason)
       return
@@ -120,34 +121,47 @@ export function InventoryView({ save, database, onChangeSave }: InventoryViewPro
             <p className="lead">No items yet. Fight or gather to fill this grid.</p>
           ) : (
             <ul className="item-bag-grid">
-              {save.inventory.map((stack) => {
+              {save.inventory.map((stack, index) => {
                 const item = database.launchIndexes.itemsById.get(stack.itemId)
-                const tipId = `bag:${stack.itemId}`
+                const tipId = `bag:${index}:${stack.itemId}:${stack.enchantmentId ?? 'plain'}`
                 const equipment = db.Equipment.find((row) => row['Item ID'] === stack.itemId)
+                const enchantLines = enchantmentTooltipLines(db, stack)
+                const tipText = [item?.['Display Name'] ?? stack.itemId, ...enchantLines].join(
+                  ' — ',
+                )
+                const enchanted = Boolean(stack.enchantmentId)
                 return (
-                  <li key={stack.itemId}>
+                  <li key={tipId}>
                     <HoldTile
-                      className="bag-item-tile"
-                      ariaLabel={`${item?.['Display Name'] ?? stack.itemId}, quantity ${stack.quantity}`}
+                      className={
+                        enchanted ? 'bag-item-tile enchanted' : 'bag-item-tile'
+                      }
+                      ariaLabel={tipText}
                       showingTip={heldTip === tipId}
-                      tipText={item?.['Display Name'] ?? stack.itemId}
+                      tipText={tipText}
                       onHoldStart={() => setHeldTip(tipId)}
                       onHoldEnd={() =>
                         setHeldTip((current) => (current === tipId ? null : current))
                       }
                       onActivate={() => {
-                        if (equipment?.['Slot ID']) equipItem(stack.itemId)
+                        if (equipment?.['Slot ID']) equipAt(index)
                       }}
                     >
                       <ItemIcon item={item} className="bag-item-icon" />
-                      <span className="bag-item-qty">{stack.quantity}</span>
+                      {enchanted && <span className="item-enchant-star" aria-hidden>★</span>}
+                      {!enchanted && stack.quantity > 1 && (
+                        <span className="bag-item-qty">{stack.quantity}</span>
+                      )}
                     </HoldTile>
                   </li>
                 )
               })}
             </ul>
           )}
-          <p className="muted tiny">Hold an item to see its name. Tap gear to equip.</p>
+          <p className="muted tiny">
+            Hold an item for its name and enchantment. Tap gear to equip. Enchanted items do not
+            stack.
+          </p>
         </section>
       ) : (
         <section className="panel inventory-equipment-panel">
@@ -159,16 +173,26 @@ export function InventoryView({ save, database, onChangeSave }: InventoryViewPro
                 ? database.launchIndexes.itemsById.get(stack.itemId)
                 : undefined
               const tipId = `slot:${slotId}`
+              const enchantLines = enchantmentTooltipLines(db, stack)
               const tipText = stack
-                ? `${item?.['Display Name'] ?? stack.itemId}${
-                    stack.quantity > 1 ? ` ×${stack.quantity}` : ''
-                  }`
+                ? [
+                    `${item?.['Display Name'] ?? stack.itemId}${
+                      stack.quantity > 1 ? ` ×${stack.quantity}` : ''
+                    }`,
+                    ...enchantLines,
+                  ].join(' — ')
                 : (slot?.['Display Name'] ?? slotId)
+              const enchanted = Boolean(stack?.enchantmentId)
 
               return (
                 <li key={slotId}>
                   <HoldTile
-                    className={stack ? 'equip-slot-tile filled' : 'equip-slot-tile empty'}
+                    className={[
+                      stack ? 'equip-slot-tile filled' : 'equip-slot-tile empty',
+                      enchanted ? 'enchanted' : '',
+                    ]
+                      .filter(Boolean)
+                      .join(' ')}
                     ariaLabel={tipText}
                     showingTip={heldTip === tipId}
                     tipText={tipText}
@@ -179,7 +203,8 @@ export function InventoryView({ save, database, onChangeSave }: InventoryViewPro
                     }}
                   >
                     {stack ? <ItemIcon item={item} /> : <SlotGlyph slotId={slotId} />}
-                    {stack && stack.quantity > 1 && (
+                    {enchanted && <span className="item-enchant-star" aria-hidden>★</span>}
+                    {stack && !enchanted && stack.quantity > 1 && (
                       <span className="bag-item-qty">{stack.quantity}</span>
                     )}
                   </HoldTile>
@@ -187,7 +212,9 @@ export function InventoryView({ save, database, onChangeSave }: InventoryViewPro
               )
             })}
           </ul>
-          <p className="muted tiny">Hold a slot for its name. Tap equipped gear to unequip.</p>
+          <p className="muted tiny">
+            Hold a slot for its name and enchantment. Tap equipped gear to unequip.
+          </p>
         </section>
       )}
     </section>

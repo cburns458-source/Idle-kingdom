@@ -4,8 +4,9 @@ import type { GameDatabase } from '../data/types'
 import { removeIngredients } from '../production/inventory'
 import type { PlayerSave } from '../save/types'
 import {
-  applyEnchantmentToSlot,
-  eligibleEnchantmentSlots,
+  applyEnchantmentToTarget,
+  decodeEnchantTarget,
+  eligibleEnchantmentTargets,
 } from './enchantments'
 import {
   getEnchantment,
@@ -34,7 +35,7 @@ export function validateProjectCompletion(
   save: PlayerSave,
   projectId: string,
   quantity: number,
-  enchantTargetSlotId?: string | null,
+  enchantTargetId?: string | null,
 ): { ok: true } | { ok: false; reason: string } {
   const project = getProject(db, projectId)
   if (!project || !isCompleteProject(project)) {
@@ -79,15 +80,15 @@ export function validateProjectCompletion(
     if (crafts !== 1) {
       return { ok: false, reason: 'Enchantment projects complete one at a time.' }
     }
-    const slots = eligibleEnchantmentSlots(db, save, enchantment)
-    if (slots.length === 0) {
+    const targets = eligibleEnchantmentTargets(db, save, enchantment)
+    if (targets.length === 0) {
       return {
         ok: false,
-        reason: 'Equip a valid item before applying this enchantment.',
+        reason: 'Select a valid equipped or inventory item to enchant.',
       }
     }
-    if (!enchantTargetSlotId || !slots.some((slot) => slot.slotId === enchantTargetSlotId)) {
-      return { ok: false, reason: 'Choose a valid equipped item to enchant.' }
+    if (!enchantTargetId || !targets.some((target) => target.id === enchantTargetId)) {
+      return { ok: false, reason: 'Choose a valid item to enchant.' }
     }
   } else {
     const item = db.Items.find((row) => row['Item ID'] === outputId)
@@ -103,14 +104,14 @@ export function completeSpecialProject(
   save: PlayerSave,
   projectId: string,
   quantity: number,
-  enchantTargetSlotId?: string | null,
+  enchantTargetId?: string | null,
 ): ProjectCompleteResult {
   const validation = validateProjectCompletion(
     db,
     save,
     projectId,
     quantity,
-    enchantTargetSlotId,
+    enchantTargetId,
   )
   if (!validation.ok) return validation
 
@@ -135,7 +136,26 @@ export function completeSpecialProject(
   if (isEnchantmentOutput(outputId)) {
     const enchantment = getEnchantment(db, outputId)!
     outputLabel = enchantment['Display Name']
-    const enchanted = applyEnchantmentToSlot(next, enchantTargetSlotId!, outputId)
+    const target = decodeEnchantTarget(enchantTargetId)
+    if (!target) return { ok: false, reason: 'Choose a valid item to enchant.' }
+
+    // Inventory indexes can shift when materials are removed; re-resolve by item id.
+    let resolved = target
+    if (target.kind === 'inventory') {
+      const prior = save.inventory[target.index]
+      if (!prior || prior.enchantmentId) {
+        return { ok: false, reason: 'Choose a valid item to enchant.' }
+      }
+      const refreshed = next.inventory.findIndex(
+        (stack) => stack.itemId === prior.itemId && !stack.enchantmentId,
+      )
+      if (refreshed < 0) {
+        return { ok: false, reason: 'Choose a valid item to enchant.' }
+      }
+      resolved = { kind: 'inventory', index: refreshed }
+    }
+
+    const enchanted = applyEnchantmentToTarget(next, resolved, outputId)
     if (!enchanted) return { ok: false, reason: 'Could not apply the enchantment.' }
     next = enchanted
   } else {

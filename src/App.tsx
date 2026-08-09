@@ -672,7 +672,7 @@ export default function App() {
   function confirmSpecialProject(
     projectId: string,
     quantity: number,
-    enchantSlotId: string | null,
+    enchantTargetId: string | null,
   ) {
     if (!specialStation) return
     const result = completeSpecialProject(
@@ -680,7 +680,7 @@ export default function App() {
       save,
       projectId,
       quantity,
-      enchantSlotId,
+      enchantTargetId,
     )
     if (!result.ok) {
       setActivityError(result.reason)
