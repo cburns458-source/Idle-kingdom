@@ -5,13 +5,7 @@ import {
   specialProductionStationsAt,
   type SpecialProductionStation,
 } from '../game/projects/projects'
-import {
-  CASTLE_GATEWAY_ID,
-  CASTLE_MAP_ID,
-  CAVE_ENTRANCE_ID,
-  CAVE_MAP_ID,
-} from '../game/world/constants'
-import { getLocationMapId } from '../game/world/travel'
+import { CASTLE_GATEWAY_ID, CAVE_ENTRANCE_ID } from '../game/world/constants'
 
 interface LocationViewProps {
   indexes: DatabaseIndexes
@@ -63,16 +57,11 @@ export function LocationView({
   const specialStations = specialProductionStationsAt(db, locationId)
   const shops = indexes.shopsByLocationId.get(locationId) ?? []
   const npcs = indexes.npcsByLocationId.get(locationId) ?? []
-  const mapId = getLocationMapId(location)
-  const isSubMapLocation = mapId === CAVE_MAP_ID || mapId === CASTLE_MAP_ID
   const showSubMapEntrance =
     Boolean(onOpenSubMap) &&
     (locationId === CAVE_ENTRANCE_ID || locationId === CASTLE_GATEWAY_ID)
-  const primaryActivity = activities[0]
-  const primaryActive = Boolean(
-    primaryActivity && currentActivityId === primaryActivity['Activity ID'],
-  )
-  const enterHint = primaryActivity && !primaryActive ? requirementHint?.(primaryActivity) : null
+  const showActivityPanel =
+    !showSubMapEntrance && (activities.length > 0 || specialStations.length > 0)
 
   return (
     <section
@@ -117,103 +106,67 @@ export function LocationView({
           </section>
         )}
 
-        {isSubMapLocation ? (
-          primaryActivity && (
-            <div className="location-overlay-actions">
-              {primaryActive ? (
-                <button
-                  type="button"
-                  className="btn secondary glass-btn"
-                  disabled={actionsLocked}
-                  onClick={onStopActivity}
-                >
-                  Stop
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  className="btn primary glass-btn"
-                  disabled={actionsLocked}
-                  onClick={() => onStartActivity(primaryActivity['Activity ID'])}
-                >
-                  Enter {location['Display Name']}
-                </button>
-              )}
-              {enterHint && <p className="muted tiny glass-hint">{enterHint}</p>}
-              {primaryActivity['Danger Warning Combat Level'] != null && !primaryActive && (
-                <p className="danger-note">
-                  Combat warning ~ Level {primaryActivity['Danger Warning Combat Level']}
-                </p>
-              )}
-            </div>
-          )
-        ) : (
-          !showSubMapEntrance && (
-            <section className="panel glass-panel location-activities">
-              <h2>Activities</h2>
-              {activities.length === 0 && specialStations.length === 0 ? (
-                <p className="muted">No activities at this location.</p>
-              ) : (
-                <ul className="interaction-list">
-                  {activities.map((activity) => {
-                    const active = currentActivityId === activity['Activity ID']
-                    const label = activity['Contextual Name'] ?? activity['Internal Key']
-                    const hint = requirementHint?.(activity) ?? null
-                    return (
-                      <li key={activity['Activity ID']}>
-                        <div>
-                          <strong>{label}</strong>
-                          {activity['Danger Warning Combat Level'] != null && (
-                            <p className="danger-note">
-                              Combat warning ~ Level {activity['Danger Warning Combat Level']}
-                            </p>
-                          )}
-                          {activity.Description && <p className="muted">{activity.Description}</p>}
-                          {hint && !active && <p className="muted tiny">{hint}</p>}
-                        </div>
-                        {active ? (
-                          <button
-                            type="button"
-                            className="btn secondary"
-                            disabled={actionsLocked}
-                            onClick={onStopActivity}
-                          >
-                            Stop
-                          </button>
-                        ) : (
-                          <button
-                            type="button"
-                            className="btn primary"
-                            disabled={actionsLocked}
-                            onClick={() => onStartActivity(activity['Activity ID'])}
-                          >
-                            {currentActivityId ? 'Replace' : 'Start'}
-                          </button>
-                        )}
-                      </li>
-                    )
-                  })}
-                  {specialStations.map((station) => (
-                    <li key={`${station.facility['Facility ID']}-${station.skillId}`}>
-                      <div>
-                        <strong>{station.label}</strong>
-                        <p className="muted">{station.facility['Display Name']}</p>
-                        <p className="muted tiny">Instant Special Production</p>
-                      </div>
+        {showActivityPanel && (
+          <section className="panel glass-panel location-activities">
+            <h2>Activities</h2>
+            <ul className="interaction-list">
+              {activities.map((activity) => {
+                const active = currentActivityId === activity['Activity ID']
+                const label = activity['Contextual Name'] ?? activity['Internal Key']
+                const hint = requirementHint?.(activity) ?? null
+                return (
+                  <li key={activity['Activity ID']}>
+                    <div>
+                      <strong>{label}</strong>
+                      {activity['Danger Warning Combat Level'] != null && (
+                        <p className="danger-note">
+                          Combat warning ~ Level {activity['Danger Warning Combat Level']}
+                        </p>
+                      )}
+                      {activity.Description && <p className="muted">{activity.Description}</p>}
+                      {hint && !active && <p className="muted tiny">{hint}</p>}
+                    </div>
+                    {active ? (
+                      <button
+                        type="button"
+                        className="btn secondary"
+                        disabled={actionsLocked}
+                        onClick={onStopActivity}
+                      >
+                        Stop
+                      </button>
+                    ) : (
                       <button
                         type="button"
                         className="btn primary"
                         disabled={actionsLocked}
-                        onClick={() => onOpenSpecialProduction(station)}
+                        onClick={() => onStartActivity(activity['Activity ID'])}
                       >
-                        Open
+                        {currentActivityId ? 'Replace' : 'Start'}
                       </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
-          )
+                    )}
+                  </li>
+                )
+              })}
+              {specialStations.map((station) => (
+                <li key={`${station.facility['Facility ID']}-${station.skillId}`}>
+                  <div>
+                    <strong>{station.label}</strong>
+                    <p className="muted">{station.facility['Display Name']}</p>
+                    <p className="muted tiny">Instant Special Production</p>
+                  </div>
+                  <button
+                    type="button"
+                    className="btn primary"
+                    disabled={actionsLocked}
+                    onClick={() => onOpenSpecialProduction(station)}
+                  >
+                    Open
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </section>
         )}
 
         {(shops.length > 0 || npcs.length > 0) && (
