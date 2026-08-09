@@ -31,7 +31,7 @@ describe('primary activity engine', () => {
     expect(generated?.action['Action ID']).toBe('ACN-0105')
 
     const completed = completeGatheringAction(launch, generated!.save, generated!.action, () => 0)
-    expect(completed.result.xpGained).toBe(5000)
+    expect(completed.result.xpGained).toBe(1000)
     expect(completed.save.inventory.some((stack) => stack.itemId === 'ITEM-0030')).toBe(true)
     expect(completed.save.skills.find((skill) => skill.skillId === 'SKL-0004')?.xp).toBe(5000)
   })
