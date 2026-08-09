@@ -123,8 +123,9 @@ describe('equipment loadout', () => {
     } as unknown as PlayerSave
 
     const migrated = migrateSave(legacy)
-    expect(migrated.saveVersion).toBe(10)
+    expect(migrated.saveVersion).toBe(11)
     expect(migrated.activityTransition).toBeNull()
+    expect(migrated.settings.showActivityRewards).toBe(true)
     expect(migrated.unlockedNpcIds).toEqual([])
     expect(typeof migrated.unattendedProgressAt).toBe('string')
     expect(migrated.inventory.find((stack) => stack.itemId === 'ITEM-0058')).toBeUndefined()
