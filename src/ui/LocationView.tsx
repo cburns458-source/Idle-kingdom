@@ -29,9 +29,6 @@ export function LocationView({
 }: LocationViewProps) {
   const locationId = location['Location ID']
   const activities = indexes.activitiesByLocationId.get(locationId) ?? []
-  const facilities = indexes.facilitiesByLocationId.get(locationId) ?? []
-  const npcs = indexes.npcsByLocationId.get(locationId) ?? []
-  const shops = indexes.shopsByLocationId.get(locationId) ?? []
 
   return (
     <section className="location-view">
@@ -111,44 +108,6 @@ export function LocationView({
                 </li>
               )
             })}
-          </ul>
-        )}
-      </section>
-
-      <section className="panel panel-quiet">
-        <h2>Facilities</h2>
-        {facilities.length === 0 ? (
-          <p className="muted">None</p>
-        ) : (
-          <ul className="plain-list">
-            {facilities.map((facility) => (
-              <li key={facility['Facility ID']}>
-                <strong>{facility['Display Name']}</strong>
-                <span className="muted"> — {facility['Facility Type'] ?? 'Facility'}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-
-      <section className="panel panel-quiet">
-        <h2>People & shops</h2>
-        {npcs.length === 0 && shops.length === 0 ? (
-          <p className="muted">None</p>
-        ) : (
-          <ul className="plain-list">
-            {npcs.map((npc) => (
-              <li key={npc['NPC ID']}>
-                <strong>{npc['Display Name']}</strong>
-                <span className="muted"> — {npc.Role ?? 'NPC'}</span>
-              </li>
-            ))}
-            {shops.map((shop) => (
-              <li key={shop['Shop ID']}>
-                <strong>{shop['Display Name']}</strong>
-                <span className="muted"> — Shop</span>
-              </li>
-            ))}
           </ul>
         )}
       </section>
