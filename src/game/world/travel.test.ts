@@ -37,6 +37,16 @@ describe('travel rules', () => {
     const nodes = locationsForMapView(launch, MAIN_MAP_ID)
     expect(nodes.some((location) => location['Location ID'] === 'LOC-0002')).toBe(true)
     expect(nodes.some((location) => location['Location ID'] === 'LOC-0018')).toBe(false)
+    expect(nodes.some((location) => location['Location ID'] === 'LOC-0019')).toBe(true)
+    expect(nodes.some((location) => location['Location ID'] === 'LOC-0020')).toBe(true)
+  })
+
+  it('treats west/east horizons as browse-only future gateways', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    expect(canTravelTo(launch, 'LOC-0002', 'LOC-0019', MAIN_MAP_ID)).toBe(false)
+    expect(canTravelTo(launch, 'LOC-0002', 'LOC-0020', MAIN_MAP_ID)).toBe(false)
+    expect(locationsForMapView(launch, 'MAP-0004')).toEqual([])
+    expect(locationsForMapView(launch, 'MAP-0005')).toEqual([])
   })
 
   it('stops primary activity on travel arrival', () => {
