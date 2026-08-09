@@ -215,7 +215,7 @@ export function ProductionProgress({
         <div className="action-bar-fill" style={{ width: `${pct}%` }} />
       </div>
       <p className="muted tiny">
-        This craft: <strong>{formatDurationSeconds(craftRemainingSeconds)}</strong>
+        <strong>{formatDurationSeconds(craftRemainingSeconds)}</strong>
       </p>
       <ActionRewardList rewards={recentRewards} itemsById={itemsById} />
     </section>
