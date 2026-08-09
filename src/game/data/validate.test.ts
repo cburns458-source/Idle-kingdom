@@ -22,9 +22,10 @@ describe('database loading', () => {
     const loaded = prepareDatabase(rawDatabase)
     const launch = filterLaunchContent(loaded.source)
 
-    expect(loaded.source.Locations.some((row) => row['Release Phase'] === 'Expansion')).toBe(true)
+    expect(loaded.source.Enemies.some((row) => row['Release Phase'] === 'Expansion')).toBe(true)
+    expect(launch.Enemies.every((row) => row['Release Phase'] === 'Launch')).toBe(true)
+    expect(launch.Enemies.length).toBeLessThan(loaded.source.Enemies.length)
     expect(launch.Locations.every((row) => row['Release Phase'] === 'Launch')).toBe(true)
-    expect(launch.Locations).toHaveLength(loaded.source.Locations.length - 1)
     expect(validateDatabase(loaded.source).filter((issue) => issue.severity === 'error')).toEqual([])
   })
 
