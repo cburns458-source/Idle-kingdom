@@ -1,6 +1,6 @@
-import type { ActionRow, ActivityRow, SkillRow } from '../game/data/types'
+import type { ActionRow, ActivityRow, ItemRow, SkillRow } from '../game/data/types'
 import { isBelowProficiency } from '../game/activity/gathering'
-import type { ActionXpRewardSummary } from '../game/activity/types'
+import type { ActionRewardBundle } from '../game/activity/types'
 import type { PlayerSave } from '../game/save/types'
 import { ActionRewardList } from './ActionRewardList'
 
@@ -12,8 +12,9 @@ interface ActivityPanelProps {
   progress: number
   /** True action duration in ms (includes proficiency multiplier). */
   durationMs: number | null
-  /** Newest-first XP reward summaries from recent actions. */
-  recentRewards: ActionXpRewardSummary[]
+  /** Newest-first combined reward lines from recent actions. */
+  recentRewards: ActionRewardBundle[]
+  itemsById?: Map<string, ItemRow>
   onStop: () => void
 }
 
@@ -30,6 +31,7 @@ export function ActivityPanel({
   progress,
   durationMs,
   recentRewards,
+  itemsById,
   onStop,
 }: ActivityPanelProps) {
   const clamped = Math.min(1, Math.max(0, progress))
@@ -69,7 +71,7 @@ export function ActivityPanel({
         <p className="lead">Preparing next action…</p>
       )}
 
-      <ActionRewardList rewards={recentRewards} />
+      <ActionRewardList rewards={recentRewards} itemsById={itemsById} />
     </section>
   )
 }

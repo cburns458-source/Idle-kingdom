@@ -9,7 +9,7 @@ import {
   validateActivityStart,
 } from './game/activity/engine'
 import { loadDatabase, type LoadedDatabase } from './game/data/loadDatabase'
-import type { ActionXpRewardSummary } from './game/activity/types'
+import type { ActionRewardBundle } from './game/activity/types'
 import type { ActivityRow } from './game/data/types'
 import { summarizeXpReward } from './game/activity/rewardSummary'
 import { getSkillProgress } from './game/activity/xp'
@@ -106,7 +106,7 @@ export default function App() {
   const [travelProgress, setTravelProgress] = useState(0)
   const [actionProgress, setActionProgress] = useState(0)
   const [activityError, setActivityError] = useState<string | null>(null)
-  const [recentRewards, setRecentRewards] = useState<ActionXpRewardSummary[]>([])
+  const [recentRewards, setRecentRewards] = useState<ActionRewardBundle[]>([])
   const [lastMessage, setLastMessage] = useState<string | null>(null)
   const [roundProgress, setRoundProgress] = useState(0)
   const [pauseRemainingMs, setPauseRemainingMs] = useState(0)
@@ -270,7 +270,13 @@ export default function App() {
 
       const finished = completeGatheringAction(current.database.launch, current.save, action)
       let nextSave = finished.save
-      setRecentRewards((prev) => [...finished.result.xpRewards, ...prev].slice(0, 8))
+      const gatheringBundle: ActionRewardBundle = {
+        id: `${finished.result.actionId}-${Date.now()}`,
+        xpRewards: finished.result.xpRewards,
+        loot: finished.result.loot,
+        goldGained: finished.result.goldGained,
+      }
+      setRecentRewards((prev) => [gatheringBundle, ...prev].slice(0, 4))
       setLastMessage(null)
 
       const activityId = current.save.currentActivityId
@@ -477,21 +483,17 @@ export default function App() {
           victoryResult.xpGained,
           combatLevelAfter > combatLevelBefore ? combatLevelAfter : null,
         )
-        setRecentRewards((prev) =>
-          combatXpReward ? [combatXpReward, ...prev].slice(0, 8) : prev,
-        )
+        const combatBundle: ActionRewardBundle = {
+          id: `combat-${enemy['Enemy ID']}-${Date.now()}`,
+          xpRewards: combatXpReward ? [combatXpReward] : [],
+          loot: victoryResult.loot,
+          goldGained: victoryResult.goldGained,
+        }
+        setRecentRewards((prev) => [combatBundle, ...prev].slice(0, 4))
         setLastMessage(
-          [
-            `Defeated ${enemy['Display Name']}`,
-            victoryResult.goldGained > 0 ? `+${victoryResult.goldGained} gold` : null,
-            victoryResult.loot.map((loot) => `+${loot.quantity} ${loot.displayName}`).join(', ') ||
-              null,
-            victoryResult.foodConsumed
-              ? `Ate ${victoryResult.foodName} (+${victoryResult.foodHealed} HP)`
-              : null,
-          ]
-            .filter(Boolean)
-            .join(' · '),
+          victoryResult.foodConsumed
+            ? `Ate ${victoryResult.foodName} (+${victoryResult.foodHealed} HP)`
+            : `Defeated ${enemy['Display Name']}`,
         )
 
         const activityId = current.save.currentActivityId!
@@ -920,6 +922,7 @@ export default function App() {
                       deathPauseRemainingMs={pauseRemainingMs}
                       lastCombatMessage={lastMessage}
                       recentRewards={recentRewards}
+                      itemsById={database.launchIndexes.itemsById}
                       onStop={stopActivity}
                     />
                   )}
@@ -954,6 +957,7 @@ export default function App() {
                         progress={actionProgress}
                         durationMs={save.actionDurationMs}
                         recentRewards={recentRewards}
+                        itemsById={database.launchIndexes.itemsById}
                         onStop={stopActivity}
                       />
                     )}

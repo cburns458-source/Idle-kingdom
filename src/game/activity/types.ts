@@ -24,6 +24,14 @@ export interface ActionXpRewardSummary {
   leveledUp: boolean
 }
 
+/** One completed action's combined reward line (all XP + items). */
+export interface ActionRewardBundle {
+  id: string
+  xpRewards: ActionXpRewardSummary[]
+  loot: LootGrant[]
+  goldGained: number
+}
+
 export interface ActionCompletionResult {
   actionId: string
   actionName: string
