@@ -4,20 +4,30 @@ import { describe, expect, it } from 'vitest'
 import { prepareDatabase } from '../data/loadDatabase'
 import { createMemoryStorage } from '../../test/memoryStorage'
 import { createNewSave, loadOrCreateSave, readSave, writeSave } from './saveStore'
-import { SAVE_STORAGE_KEY, STARTING_GOLD, STARTING_LOCATION_ID } from './types'
+import {
+  SAVE_STORAGE_KEY,
+  STARTING_GOLD,
+  STARTING_HUNTING_TOOL_ID,
+  STARTING_LOCATION_ID,
+  WEAPON_TOOL_SLOT_ID,
+} from './types'
 
 const rawDatabase = JSON.parse(
   readFileSync(resolve(process.cwd(), 'public/data/game-database.json'), 'utf8'),
 )
 
 describe('local save', () => {
-  it('creates one Town save with no items or gold', () => {
+  it('creates one Town save with starting hunting Net equipped and no gold', () => {
     const { source } = prepareDatabase(rawDatabase)
     const save = createNewSave(source)
 
     expect(save.currentLocationId).toBe(STARTING_LOCATION_ID)
     expect(save.gold).toBe(STARTING_GOLD)
     expect(save.inventory).toEqual([])
+    expect(save.equipment.slots[WEAPON_TOOL_SLOT_ID]).toEqual({
+      itemId: STARTING_HUNTING_TOOL_ID,
+      quantity: 1,
+    })
     expect(save.currentActivityId).toBeNull()
     expect(save.skills.length).toBeGreaterThan(0)
     expect(save.skills.every((skill) => skill.level === 1 && skill.xp === 0)).toBe(true)
@@ -47,6 +57,6 @@ describe('local save', () => {
 
     expect(loaded?.saveVersion).toBe(written.saveVersion)
     expect(loaded?.currentLocationId).toBe(STARTING_LOCATION_ID)
-    expect(loaded?.inventory).toEqual([])
+    expect(loaded?.equipment.slots[WEAPON_TOOL_SLOT_ID]?.itemId).toBe(STARTING_HUNTING_TOOL_ID)
   })
 })

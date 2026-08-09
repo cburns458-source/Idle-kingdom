@@ -1,3 +1,4 @@
+import { ensureStartingHuntingTool } from './startingGear'
 import type { EquippedStack, PlayerSave, SaveMigration } from './types'
 import { SAVE_VERSION } from './types'
 
@@ -75,6 +76,14 @@ export const SAVE_MIGRATIONS: SaveMigration[] = [
     migrate: (save) => ({
       ...migrateEquipmentSlotsToStacks(save),
       saveVersion: 4,
+    }),
+  },
+  {
+    fromVersion: 4,
+    toVersion: 5,
+    migrate: (save) => ({
+      ...ensureStartingHuntingTool(save),
+      saveVersion: 5,
     }),
   },
 ]

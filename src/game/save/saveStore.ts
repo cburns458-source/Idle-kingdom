@@ -1,5 +1,6 @@
 import type { GameDatabase } from '../data/types'
 import { migrateSave } from './migrations'
+import { ensureStartingHuntingTool } from './startingGear'
 import {
   SAVE_STORAGE_KEY,
   SAVE_VERSION,
@@ -40,7 +41,7 @@ export function createNewSave(db: GameDatabase): PlayerSave {
     slots[slot['Slot ID']] = null
   }
 
-  return {
+  return ensureStartingHuntingTool({
     saveVersion: SAVE_VERSION,
     createdAt: timestamp,
     updatedAt: timestamp,
@@ -65,7 +66,7 @@ export function createNewSave(db: GameDatabase): PlayerSave {
     unattendedProgressAt: timestamp,
     currentHp: maxHp,
     maxHp,
-  }
+  })
 }
 
 function isObject(value: unknown): value is Record<string, unknown> {

@@ -41,7 +41,16 @@ describe('combat engine', () => {
 
   it('uses unarmed damage when no weapon is equipped', () => {
     const { launch } = prepareDatabase(rawDatabase)
-    const save = createNewSave(launch)
+    const base = createNewSave(launch)
+    const save = {
+      ...base,
+      equipment: {
+        slots: {
+          ...base.equipment.slots,
+          'SLOT-0001': null,
+        },
+      },
+    }
     expect(playerDamageRange(launch, save)).toEqual({ min: 10, max: 30 })
   })
 
