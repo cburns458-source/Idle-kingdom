@@ -16,7 +16,7 @@ export const MAIN_MAP_NODE_LAYOUT: Record<string, NodePosition> = {
   // Mountain peaks / range
   'LOC-0006': { x: 50, y: 14 },
   // Cave mouth in the mountains (shifted right)
-  'LOC-0010': { x: 58, y: 28 },
+  'LOC-0010': { x: 58, y: 32 },
   // Wizard tower with blue magic (NE)
   'LOC-0007': { x: 80, y: 25 },
   // West of the castle (Kingswoods), nudged right
