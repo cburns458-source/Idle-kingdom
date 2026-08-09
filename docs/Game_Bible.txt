@@ -191,7 +191,7 @@ Hunting pool:
 - Wild Boar Combat Action: 5%.
 
 Harvesting pool:
-- Fernleaf: 60%.
+- Cedar Tree (Woodcutting): 60%.
 - Augur Weed: 40%.
 
 MEADOW

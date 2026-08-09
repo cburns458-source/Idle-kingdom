@@ -8638,7 +8638,7 @@
       "Internal Key": "gather_woodland_supplies",
       "Contextual Name": "Gather Woodland Supplies",
       "Location ID": "LOC-0008",
-      "Description": "Harvest Fernleaf and Augur Weed.",
+      "Description": "Cut Cedar Trees and harvest Augur Weed.",
       "Danger Warning Combat Level": null,
       "Pool ID": "POOL-0010",
       "Pool Internal Key": "kingswoods_harvest",
@@ -9018,10 +9018,10 @@
     {
       "Pool Entry ID": "PEN-0029",
       "Pool ID": "POOL-0010",
-      "Action ID": "ACN-0106",
+      "Action ID": "ACN-0046",
       "Weight": 60,
       "Status": "Planned",
-      "Notes": null
+      "Notes": "Level 1 Woodcutting; replaces Fernleaf in Kingswoods harvest pool."
     },
     {
       "Pool Entry ID": "PEN-0030",
@@ -12497,6 +12497,19 @@
       "Required Value": 85,
       "Status": "Confirmed",
       "Notes": null
+    },
+    {
+      "Requirement ID": "REQ-0088",
+      "Entity Type": "Activity",
+      "Entity ID": "ACT-0010",
+      "Requirement Group": "A",
+      "Group Logic": "AND",
+      "Requirement Type": "Tool Capability",
+      "Reference ID / Value": "woodcutting_tool",
+      "Operator": null,
+      "Required Value": null,
+      "Status": "Planned",
+      "Notes": "Player may select this Activity only when every possible Action is compatible with the equipped requirement."
     }
   ],
   "Enemies": [
