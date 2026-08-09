@@ -15,9 +15,11 @@ export function ActionRewardList({ rewards, limit = 6 }: ActionRewardListProps) 
           <span className="action-reward-label">Reward:</span>
           <span className="action-reward-xp">{reward.xp.toLocaleString()}</span>
           <SkillIcon internalKey={reward.skillKey} title={reward.skillName} />
-          <span className="action-reward-level">
-            level {reward.level} {reward.skillName} achieved
-          </span>
+          {reward.leveledUp ? (
+            <span className="action-reward-level">
+              level {reward.level} {reward.skillName} achieved
+            </span>
+          ) : null}
         </li>
       ))}
     </ul>
