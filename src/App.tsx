@@ -887,6 +887,24 @@ function SettingsPanel({
     onChangeSave(withRecalculatedVitals(database.launch, next))
   }
 
+  function raiseAlchemyToLevel10() {
+    const alchemyId = 'SKL-0010'
+    const xpAtLevel10 =
+      database.launch.XPCurve.find((row) => row.Level === 10)?.['Total XP at Level'] ?? 10873
+    const skills = save.skills.map((skill) => {
+      if (skill.skillId !== alchemyId) return skill
+      return {
+        ...skill,
+        level: Math.max(skill.level, 10),
+        xp: Math.max(skill.xp, xpAtLevel10),
+      }
+    })
+    if (!skills.some((skill) => skill.skillId === alchemyId)) {
+      skills.push({ skillId: alchemyId, level: 10, xp: xpAtLevel10 })
+    }
+    onChangeSave({ ...save, skills })
+  }
+
   if (renaming) {
     return (
       <NamePrompt
@@ -922,10 +940,13 @@ function SettingsPanel({
         <button type="button" className="btn secondary" onClick={grantProductionMaterials}>
           Give production materials
         </button>
+        <button type="button" className="btn secondary" onClick={raiseAlchemyToLevel10}>
+          Set Alchemy to level 10
+        </button>
       </div>
       <p className="muted tiny">
-        Demo aids: food, mining gear (Mining 35 to equip), and Potato / Copper Ore / Wild Roots for
-        Standard Production.
+        Demo aids: food, mining gear (Mining 35 to equip), Potato / Copper Ore / Wild Roots, and
+        Alchemy 10 for Apothecary recipes.
       </p>
     </section>
   )
