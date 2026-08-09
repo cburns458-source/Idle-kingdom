@@ -191,7 +191,7 @@ Hunting pool:
 - Wild Boar Combat Action: 5%.
 
 Harvesting pool:
-- Herb 1: 60%.
+- Fernleaf: 60%.
 - Herb 2: 40%.
 
 MEADOW
@@ -201,7 +201,7 @@ Hunting pool:
 
 Harvesting pool:
 - Wild Roots: 50%.
-- Herb 1: 50%.
+- Fernleaf: 50%.
 
 CAVES BENEATH THE MOUNTAIN
 - Underground connected Location Nodes.

@@ -58,7 +58,9 @@ describe('primary activity engine', () => {
   it('excludes Needs Data actions and includes Combat when complete', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const woodland = eligiblePoolEntries(launch, 'POOL-0010')
-    expect(woodland).toHaveLength(0)
+    // Fernleaf is Launch-ready; Herb 2 remains Needs Data.
+    expect(woodland).toHaveLength(1)
+    expect(woodland[0]?.action['Action ID']).toBe('ACN-0106')
 
     const pasture = eligiblePoolEntries(launch, 'POOL-0001')
     expect(pasture.every((pair) => pair.action.Category === 'Combat')).toBe(true)
@@ -72,9 +74,12 @@ describe('primary activity engine', () => {
   it('weighted selection respects ordering', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const meadow = eligiblePoolEntries(launch, 'POOL-0012')
-    // Only Wild Roots remains after Needs Data exclusion.
-    expect(meadow).toHaveLength(1)
-    expect(pickWeightedAction(meadow, () => 0.99)?.['Action ID']).toBe('ACN-0105')
+    expect(meadow.map((pair) => pair.action['Action ID']).sort()).toEqual([
+      'ACN-0105',
+      'ACN-0106',
+    ])
+    // Weights are equal (50/50); high roll selects the second entry (Fernleaf).
+    expect(pickWeightedAction(meadow, () => 0.99)?.['Action ID']).toBe('ACN-0106')
   })
 
   it('refuses to stop or replace activities during death pause', () => {

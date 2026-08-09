@@ -8588,7 +8588,7 @@
       "Internal Key": "gather_woodland_supplies",
       "Contextual Name": "Gather Woodland Supplies",
       "Location ID": "LOC-0008",
-      "Description": "Harvest Herb 1 and Herb 2.",
+      "Description": "Harvest Fernleaf and Herb 2.",
       "Danger Warning Combat Level": null,
       "Pool ID": "POOL-0010",
       "Pool Internal Key": "kingswoods_harvest",
@@ -8614,7 +8614,7 @@
       "Internal Key": "gather_meadow_supplies",
       "Contextual Name": "Gather Meadow Supplies",
       "Location ID": "LOC-0009",
-      "Description": "Wild Roots and Herb 1 Harvesting.",
+      "Description": "Wild Roots and Fernleaf Harvesting.",
       "Danger Warning Combat Level": null,
       "Pool ID": "POOL-0012",
       "Pool Internal Key": "meadow_harvest",
@@ -8968,7 +8968,7 @@
     {
       "Pool Entry ID": "PEN-0029",
       "Pool ID": "POOL-0010",
-      "Action ID": "ACN-0164",
+      "Action ID": "ACN-0106",
       "Weight": 60,
       "Status": "Planned",
       "Notes": null
@@ -9008,7 +9008,7 @@
     {
       "Pool Entry ID": "PEN-0034",
       "Pool ID": "POOL-0012",
-      "Action ID": "ACN-0164",
+      "Action ID": "ACN-0106",
       "Weight": 50,
       "Status": "Planned",
       "Notes": null
@@ -11265,7 +11265,7 @@
       "Secondary Reward Table ID": null,
       "Status": "Needs Data",
       "Release Phase": "Launch",
-      "Notes": "Used in Kingswoods and Meadow Harvesting pools; timing, XP, and reward chance are not fixed in the game bible."
+      "Notes": "Replaced in Launch pools by Gather Fernleaf (ACN-0106); retained as Needs Data placeholder."
     },
     {
       "Action ID": "ACN-0165",
@@ -14282,7 +14282,7 @@
     {
       "Reward Entry ID": "RWE-0100",
       "Reward Table ID": "RWT-0058",
-      "Reward Table Name": "Secondary Gems \u2014 Sapphire Only",
+      "Reward Table Name": "Secondary Gems — Sapphire Only",
       "Purpose": "Independent Mining gem drop",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0012",
@@ -14297,7 +14297,7 @@
     {
       "Reward Entry ID": "RWE-0101",
       "Reward Table ID": "RWT-0059",
-      "Reward Table Name": "Secondary Gems \u2014 Sapphire Emerald",
+      "Reward Table Name": "Secondary Gems — Sapphire Emerald",
       "Purpose": "Independent Mining gem drop",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0012",
@@ -14312,7 +14312,7 @@
     {
       "Reward Entry ID": "RWE-0102",
       "Reward Table ID": "RWT-0059",
-      "Reward Table Name": "Secondary Gems \u2014 Sapphire Emerald",
+      "Reward Table Name": "Secondary Gems — Sapphire Emerald",
       "Purpose": "Independent Mining gem drop",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0013",
@@ -14327,7 +14327,7 @@
     {
       "Reward Entry ID": "RWE-0103",
       "Reward Table ID": "RWT-0060",
-      "Reward Table Name": "Secondary Gems \u2014 All Gems",
+      "Reward Table Name": "Secondary Gems — All Gems",
       "Purpose": "Independent Mining gem drop",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0012",
@@ -14342,7 +14342,7 @@
     {
       "Reward Entry ID": "RWE-0104",
       "Reward Table ID": "RWT-0060",
-      "Reward Table Name": "Secondary Gems \u2014 All Gems",
+      "Reward Table Name": "Secondary Gems — All Gems",
       "Purpose": "Independent Mining gem drop",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0013",
@@ -14357,7 +14357,7 @@
     {
       "Reward Entry ID": "RWE-0105",
       "Reward Table ID": "RWT-0060",
-      "Reward Table Name": "Secondary Gems \u2014 All Gems",
+      "Reward Table Name": "Secondary Gems — All Gems",
       "Purpose": "Independent Mining gem drop",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0014",
