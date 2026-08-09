@@ -19,16 +19,16 @@ export const MAIN_MAP_NODE_LAYOUT: Record<string, NodePosition> = {
   'LOC-0010': { x: 47, y: 21 },
   // Wizard tower with blue magic (NE)
   'LOC-0007': { x: 80, y: 17 },
-  // Forest between castle and river (Kingswoods)
-  'LOC-0008': { x: 30, y: 28 },
+  // West of the castle (Kingswoods)
+  'LOC-0008': { x: 8, y: 20 },
   // Central village / town square
   'LOC-0002': { x: 33, y: 44 },
   // Fortified orange-tent camp (Goblin Camp)
   'LOC-0003': { x: 64, y: 41 },
-  // Open grassy plain (Meadow)
-  'LOC-0009': { x: 14, y: 50 },
-  // Mine entrance with ore piles (SW)
-  'LOC-0005': { x: 24, y: 64 },
+  // Open grassy plain (Meadow), lower on the map
+  'LOC-0009': { x: 12, y: 68 },
+  // Mine entrance with ore piles, lowered
+  'LOC-0005': { x: 24, y: 76 },
   // Windmill farmland (SE)
   'LOC-0001': { x: 74, y: 70 },
   // Harbor / dock at river mouth
