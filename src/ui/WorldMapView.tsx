@@ -1,6 +1,12 @@
 import { locationAssetPath, mapAssetPath } from '../game/assets/assetMap'
 import type { GameDatabase, LocationRow } from '../game/data/types'
-import { MAIN_MAP_ID } from '../game/world/constants'
+import {
+  EAST_MAP_ID,
+  MAIN_MAP_ID,
+  WEST_MAP_ID,
+  adjacentMapForHorizon,
+  isFutureHorizonLocation,
+} from '../game/world/constants'
 import { layoutForMap } from '../game/world/mapLayout'
 import { locationsForMapView } from '../game/world/travel'
 
@@ -11,6 +17,7 @@ interface WorldMapViewProps {
   selectedLocationId: string | null
   onSelect: (locationId: string) => void
   onTravel: (locationId: string) => void
+  onBrowseMap?: (mapId: string) => void
   onShowWorldMap?: () => void
   travelDisabled?: boolean
   travelLockReason?: string
@@ -23,6 +30,7 @@ export function WorldMapView({
   selectedLocationId,
   onSelect,
   onTravel,
+  onBrowseMap,
   onShowWorldMap,
   travelDisabled = false,
   travelLockReason,
@@ -31,6 +39,7 @@ export function WorldMapView({
   const nodes = locationsForMapView(db, mapId)
   const layout = layoutForMap(mapId)
   const selected = nodes.find((location) => location['Location ID'] === selectedLocationId) ?? null
+  const isFutureRegion = mapId === WEST_MAP_ID || mapId === EAST_MAP_ID
 
   return (
     <section className="map-view">
@@ -45,6 +54,7 @@ export function WorldMapView({
           const isCurrent = location['Location ID'] === currentLocationId
           const isSelected = location['Location ID'] === selectedLocationId
           const dangerous = Boolean(location['Danger / Hostility'])
+          const future = isFutureHorizonLocation(location['Location ID'])
           return (
             <button
               key={location['Location ID']}
@@ -55,6 +65,7 @@ export function WorldMapView({
                 isCurrent ? 'current' : '',
                 isSelected ? 'selected' : '',
                 dangerous ? 'dangerous' : '',
+                future ? 'future-horizon' : '',
               ]
                 .filter(Boolean)
                 .join(' ')}
@@ -78,14 +89,31 @@ export function WorldMapView({
       </div>
 
       <div className="map-overlay-bottom">
-        <SelectedLocationCard
-          mapId={mapId}
-          location={selected}
-          isCurrent={selected?.['Location ID'] === currentLocationId}
-          onTravel={() => selected && onTravel(selected['Location ID'])}
-          travelDisabled={travelDisabled}
-          travelLockReason={travelLockReason}
-        />
+        {isFutureRegion ? (
+          <div className="panel location-card">
+            <div className="location-card-body" style={{ gridColumn: '1 / -1' }}>
+              <h2>{map?.['Display Name'] ?? 'Uncharted lands'}</h2>
+              <p className="lead location-card-desc">
+                {map?.Description ?? 'Reserved for future content.'}
+              </p>
+              <p className="muted tiny">No destinations here yet.</p>
+            </div>
+          </div>
+        ) : (
+          <SelectedLocationCard
+            mapId={mapId}
+            location={selected}
+            isCurrent={selected?.['Location ID'] === currentLocationId}
+            onTravel={() => selected && onTravel(selected['Location ID'])}
+            onViewAdjacent={() => {
+              if (!selected) return
+              const adjacent = adjacentMapForHorizon(selected['Location ID'])
+              if (adjacent && onBrowseMap) onBrowseMap(adjacent)
+            }}
+            travelDisabled={travelDisabled}
+            travelLockReason={travelLockReason}
+          />
+        )}
       </div>
     </section>
   )
@@ -96,6 +124,7 @@ function SelectedLocationCard({
   location,
   isCurrent,
   onTravel,
+  onViewAdjacent,
   travelDisabled,
   travelLockReason,
 }: {
@@ -103,6 +132,7 @@ function SelectedLocationCard({
   location: LocationRow | null
   isCurrent: boolean
   onTravel: () => void
+  onViewAdjacent: () => void
   travelDisabled: boolean
   travelLockReason?: string
 }) {
@@ -114,14 +144,18 @@ function SelectedLocationCard({
     )
   }
 
+  const future = isFutureHorizonLocation(location['Location ID'])
+
   return (
     <div className="panel location-card">
-      <div
-        className="location-card-art"
-        style={{ backgroundImage: `url(${locationAssetPath(location['Location ID'])})` }}
-        aria-hidden
-      />
-      <div className="location-card-body">
+      {!future && (
+        <div
+          className="location-card-art"
+          style={{ backgroundImage: `url(${locationAssetPath(location['Location ID'])})` }}
+          aria-hidden
+        />
+      )}
+      <div className="location-card-body" style={future ? { gridColumn: '1 / -1' } : undefined}>
         <h2>{location['Display Name']}</h2>
         {location['Danger / Hostility'] && (
           <p className="danger-note">{location['Danger / Hostility']}</p>
@@ -129,7 +163,11 @@ function SelectedLocationCard({
         <p className="lead location-card-desc">
           {location.Description ?? 'A place in Idale.'}
         </p>
-        {isCurrent ? (
+        {future ? (
+          <button type="button" className="btn primary" onClick={onViewAdjacent}>
+            View lands
+          </button>
+        ) : isCurrent ? (
           <p className="muted">You are here.</p>
         ) : (
           <>

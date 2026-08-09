@@ -5,7 +5,10 @@ import {
   CAVE_ENTRANCE_ID,
   CAVE_MAP_ID,
   DEFAULT_TRAVEL_DURATION_MS,
+  EAST_MAP_ID,
   MAIN_MAP_ID,
+  WEST_MAP_ID,
+  isFutureHorizonLocation,
 } from './constants'
 
 export function travelDurationMs(connection?: TravelConnectionRow | null): number {
@@ -82,6 +85,11 @@ export function locationsForMapView(db: GameDatabase, mapId: string): LocationRo
     return db.Locations.filter((location) => location['Map ID'] === MAIN_MAP_ID)
   }
 
+  // Future west/east region previews have art only — no destination nodes yet.
+  if (mapId === WEST_MAP_ID || mapId === EAST_MAP_ID) {
+    return []
+  }
+
   const onMap = db.Locations.filter((location) => location['Map ID'] === mapId)
   const gatewayId = mapId === CAVE_MAP_ID ? CAVE_ENTRANCE_ID : CASTLE_GATEWAY_ID
   const gateway = db.Locations.find((location) => location['Location ID'] === gatewayId)
@@ -98,12 +106,14 @@ export function canTravelTo(
   activeMapId: string,
 ): boolean {
   if (fromLocationId === toLocationId) return false
+  if (isFutureHorizonLocation(toLocationId)) return false
   const destination = db.Locations.find((location) => location['Location ID'] === toLocationId)
   if (!destination) return false
 
   if (activeMapId === MAIN_MAP_ID) {
     // World-map travel is allowed from anywhere, including cave/castle sub-locations.
-    return destination['Map ID'] === MAIN_MAP_ID
+    // Future horizon gateways are browse-only.
+    return destination['Map ID'] === MAIN_MAP_ID && !isFutureHorizonLocation(toLocationId)
   }
 
   if (findConnection(db, fromLocationId, toLocationId)) return true

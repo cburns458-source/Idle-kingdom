@@ -4,6 +4,8 @@ export const MAP_ASSET_PATHS: Record<string, string> = {
   'MAP-0001': '/assets/maps/map_idale_main.png',
   'MAP-0002': '/assets/maps/map_mountain_caves.png',
   'MAP-0003': '/assets/maps/map_castle_grounds.png',
+  'MAP-0004': '/assets/maps/map_idale_west.png',
+  'MAP-0005': '/assets/maps/map_idale_east.png',
 }
 
 export const LOCATION_ASSET_PATHS: Record<string, string> = {

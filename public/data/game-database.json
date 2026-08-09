@@ -7983,6 +7983,26 @@
       "Release Phase": "Launch",
       "Description": "Courtyard and Gate, Main Hall, King's Quarters, and Barracks.",
       "Asset Key": null
+    },
+    {
+      "Map ID": "MAP-0004",
+      "Internal Key": "idale_west",
+      "Display Name": "Western Idale",
+      "Map Type": "Future region",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Description": "Uncharted lands west of the main Idale map. Reserved for future content.",
+      "Asset Key": "map_idale_west"
+    },
+    {
+      "Map ID": "MAP-0005",
+      "Internal Key": "idale_east",
+      "Display Name": "Eastern Idale",
+      "Map Type": "Future region",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Description": "Uncharted lands east of the main Idale map. Reserved for future content.",
+      "Asset Key": "map_idale_east"
     }
   ],
   "Locations": [
@@ -8255,6 +8275,36 @@
       "Danger / Hostility": "Includes Ent Combat encounters.",
       "Background Asset Key": null,
       "Notes": "Activity Pool: Ancient Tree, Ent, Ancient Ent, Corrupted Ent."
+    },
+    {
+      "Location ID": "LOC-0019",
+      "Internal Key": "west_horizon",
+      "Display Name": "…",
+      "Map ID": "MAP-0001",
+      "Location Type": "Future Gateway",
+      "Parent Location ID": null,
+      "Node ID": "NODE-0019",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Description": "Uncharted lands stretch beyond the western edge of Idale.",
+      "Danger / Hostility": null,
+      "Background Asset Key": null,
+      "Notes": "Future-content gateway to Western Idale (MAP-0004). Not a travel destination."
+    },
+    {
+      "Location ID": "LOC-0020",
+      "Internal Key": "east_horizon",
+      "Display Name": "…",
+      "Map ID": "MAP-0001",
+      "Location Type": "Future Gateway",
+      "Parent Location ID": null,
+      "Node ID": "NODE-0020",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Description": "Uncharted lands stretch beyond the eastern edge of Idale.",
+      "Danger / Hostility": null,
+      "Background Asset Key": null,
+      "Notes": "Future-content gateway to Eastern Idale (MAP-0005). Not a travel destination."
     }
   ],
   "TravelConnections": [

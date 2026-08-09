@@ -852,6 +852,7 @@ export default function App() {
               selectedLocationId={selectedLocationId}
               onSelect={setSelectedLocationId}
               onTravel={beginTravel}
+              onBrowseMap={setBrowseMapId}
               onShowWorldMap={() => setBrowseMapId(MAIN_MAP_ID)}
               travelDisabled={Boolean(travel) || deathLocked}
               travelLockReason={

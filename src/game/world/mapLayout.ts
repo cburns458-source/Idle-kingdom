@@ -34,6 +34,9 @@ export const MAIN_MAP_NODE_LAYOUT: Record<string, NodePosition> = {
   'LOC-0001': { x: 76, y: 66 },
   // Harbor / dock at river mouth
   'LOC-0004': { x: 50, y: 80 },
+  // Future west / east horizon gateways
+  'LOC-0019': { x: 4, y: 50 },
+  'LOC-0020': { x: 96, y: 50 },
 }
 
 export const CAVE_MAP_NODE_LAYOUT: Record<string, NodePosition> = {
