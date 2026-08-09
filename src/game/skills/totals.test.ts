@@ -15,6 +15,7 @@ function sampleSave(skills: Array<{ skillId: string; level: number; xp: number }
     achievements: [],
     statistics: { values: {} },
     settings: { soundEnabled: true },
+    characterName: 'Tester',
     currentLocationId: 'LOC-0002',
     currentActivityId: null,
     activityStartedAt: null,

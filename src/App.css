@@ -50,8 +50,8 @@
 
 .top-hud {
   display: grid;
-  gap: 0.45rem;
-  padding-bottom: 0.35rem;
+  gap: 0.3rem;
+  padding-bottom: 0.25rem;
   border-bottom: 1px solid rgba(212, 175, 55, 0.28);
   flex-shrink: 0;
 }
@@ -59,63 +59,122 @@
 .top-hud-brand {
   display: flex;
   flex-direction: column;
-  gap: 0.1rem;
+  gap: 0.05rem;
+  min-width: 0;
 }
 
 .brand {
   margin: 0;
   font-family: 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
-  font-size: clamp(1.45rem, 5.5vw, 1.85rem);
+  font-size: clamp(1rem, 3.8vw, 1.2rem);
   letter-spacing: 0.02em;
+  line-height: 1.15;
   color: #f0d78c;
   text-shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .hud-location {
   margin: 0;
-  font-size: 0.85rem;
+  font-size: 0.7rem;
+  line-height: 1.2;
   color: #c8d7b6;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hud-sep {
+  margin: 0 0.3rem;
+  opacity: 0.7;
 }
 
 .hud-stats {
   margin: 0;
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.4rem;
-}
-
-@media (min-width: 640px) {
-  .hud-stats {
-    grid-template-columns: repeat(4, 1fr);
-  }
-}
-
-.hud-stats .hud-activity {
-  grid-column: 1 / -1;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.25rem;
 }
 
 .hud-stats div {
   background: rgba(34, 24, 16, 0.35);
-  border-radius: 0.7rem;
-  padding: 0.45rem 0.65rem;
+  border-radius: 0.45rem;
+  padding: 0.25rem 0.4rem;
+  min-width: 0;
 }
 
 .hud-stats dt {
   margin: 0;
-  font-size: 0.68rem;
-  letter-spacing: 0.04em;
+  font-size: 0.58rem;
+  letter-spacing: 0.03em;
   text-transform: uppercase;
   color: #b7c9a4;
 }
 
 .hud-stats dd {
-  margin: 0.1rem 0 0;
-  font-size: 1rem;
+  margin: 0.05rem 0 0;
+  font-size: 0.78rem;
   font-weight: 700;
+  line-height: 1.15;
   color: #fff4d4;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.field-label {
+  display: block;
+  margin: 0.35rem 0 0.25rem;
+  font-size: 0.78rem;
+  color: #c8d7b6;
+}
+
+.text-input {
+  width: 100%;
+  box-sizing: border-box;
+  border-radius: 0.55rem;
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  background: rgba(24, 16, 10, 0.55);
+  color: #fff4d4;
+  padding: 0.55rem 0.7rem;
+  font: inherit;
+  font-size: 0.95rem;
+}
+
+.text-input:focus {
+  outline: 2px solid rgba(212, 175, 55, 0.55);
+  outline-offset: 1px;
+}
+
+.name-prompt-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(18, 12, 8, 0.72);
+  backdrop-filter: blur(2px);
+}
+
+.name-prompt {
+  width: min(100%, 22rem);
+}
+
+.menu-name-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin: 0.75rem 0 1rem;
+  padding: 0.7rem 0.8rem;
+  border-radius: 0.7rem;
+  background: rgba(34, 24, 16, 0.35);
+}
+
+.menu-name-block .lead {
+  margin: 0;
 }
 
 .screen-body {

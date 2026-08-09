@@ -86,6 +86,15 @@ export const SAVE_MIGRATIONS: SaveMigration[] = [
       saveVersion: 5,
     }),
   },
+  {
+    fromVersion: 5,
+    toVersion: 6,
+    migrate: (save) => ({
+      ...save,
+      characterName: save.characterName ?? null,
+      saveVersion: 6,
+    }),
+  },
 ]
 
 export function migrateSave(save: PlayerSave): PlayerSave {

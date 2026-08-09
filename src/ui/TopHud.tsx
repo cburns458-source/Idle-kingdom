@@ -1,4 +1,5 @@
 interface TopHudProps {
+  characterName: string | null
   totalLevel: number
   totalXp: number
   gold: number
@@ -9,6 +10,7 @@ interface TopHudProps {
 }
 
 export function TopHud({
+  characterName,
   totalLevel,
   totalXp,
   gold,
@@ -20,16 +22,20 @@ export function TopHud({
   return (
     <header className="top-hud">
       <div className="top-hud-brand">
-        <p className="brand">Idle Kingdoms</p>
-        <p className="hud-location">{locationLabel}</p>
+        <p className="brand">{characterName?.trim() || 'Adventurer'}</p>
+        <p className="hud-location">
+          {locationLabel}
+          <span className="hud-sep">·</span>
+          {activityLabel}
+        </p>
       </div>
       <dl className="hud-stats">
         <div>
-          <dt>Total Level</dt>
+          <dt>Lvl</dt>
           <dd>{totalLevel.toLocaleString()}</dd>
         </div>
         <div>
-          <dt>Total XP</dt>
+          <dt>XP</dt>
           <dd>{totalXp.toLocaleString()}</dd>
         </div>
         <div>
@@ -39,12 +45,8 @@ export function TopHud({
         <div>
           <dt>HP</dt>
           <dd>
-            {currentHp.toLocaleString()} / {maxHp.toLocaleString()}
+            {currentHp.toLocaleString()}/{maxHp.toLocaleString()}
           </dd>
-        </div>
-        <div className="hud-activity">
-          <dt>Activity</dt>
-          <dd>{activityLabel}</dd>
         </div>
       </dl>
     </header>

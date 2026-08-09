@@ -45,6 +45,7 @@ export function createNewSave(db: GameDatabase): PlayerSave {
     saveVersion: SAVE_VERSION,
     createdAt: timestamp,
     updatedAt: timestamp,
+    characterName: null,
     skills,
     inventory: [],
     equipment: { slots },

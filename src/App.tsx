@@ -45,6 +45,7 @@ import { BottomNav, type AppScreen } from './ui/BottomNav'
 import { CombatPanel } from './ui/CombatPanel'
 import { LogStub } from './ui/StubScreens'
 import { LocationView } from './ui/LocationView'
+import { NamePrompt } from './ui/NamePrompt'
 import { SkillsView } from './ui/SkillsView'
 import { TopHud } from './ui/TopHud'
 import { TravelOverlay } from './ui/TravelOverlay'
@@ -76,6 +77,7 @@ export default function App() {
   const [lastMessage, setLastMessage] = useState<string | null>(null)
   const [roundProgress, setRoundProgress] = useState(0)
   const [pauseRemainingMs, setPauseRemainingMs] = useState(0)
+  const [renamingCharacter, setRenamingCharacter] = useState(false)
   const bootRef = useRef(boot)
   bootRef.current = boot
 
@@ -554,6 +556,7 @@ export default function App() {
     <div className="app-shell">
       <main className="portrait-frame" aria-label="Idle Kingdoms">
         <TopHud
+          characterName={save.characterName}
           totalLevel={overallLevel}
           totalXp={overallXp}
           gold={save.gold}
@@ -655,7 +658,18 @@ export default function App() {
           )}
           {screen === 'log' && <LogStub />}
           {screen === 'settings' && (
-            <SettingsPanel save={save} database={database} onChangeSave={updateSave} />
+            <SettingsPanel
+              save={save}
+              database={database}
+              onChangeSave={updateSave}
+              renaming={renamingCharacter}
+              onStartRename={() => setRenamingCharacter(true)}
+              onCancelRename={() => setRenamingCharacter(false)}
+              onRename={(name) => {
+                updateSave({ ...save, characterName: name })
+                setRenamingCharacter(false)
+              }}
+            />
           )}
         </div>
 
@@ -667,6 +681,16 @@ export default function App() {
             toName={toLocation['Display Name']}
             progress={travelProgress}
           />
+        )}
+
+        {!save.characterName && (
+          <div className="name-prompt-overlay">
+            <NamePrompt
+              onSubmit={(name) => {
+                updateSave({ ...save, characterName: name })
+              }}
+            />
+          </div>
         )}
       </main>
     </div>
@@ -760,10 +784,18 @@ function SettingsPanel({
   save,
   database,
   onChangeSave,
+  renaming,
+  onStartRename,
+  onCancelRename,
+  onRename,
 }: {
   save: PlayerSave
   database: LoadedDatabase
   onChangeSave: (save: PlayerSave) => void
+  renaming: boolean
+  onStartRename: () => void
+  onCancelRename: () => void
+  onRename: (name: string) => void
 }) {
   const bakedPotatoId = 'ITEM-0058'
 
@@ -773,10 +805,31 @@ function SettingsPanel({
     onChangeSave({ ...equipped, maxHp: playerMaxHp(database.launch, equipped) })
   }
 
+  if (renaming) {
+    return (
+      <NamePrompt
+        title="Change character name"
+        initialName={save.characterName ?? ''}
+        submitLabel="Save name"
+        onSubmit={onRename}
+        onCancel={onCancelRename}
+      />
+    )
+  }
+
   return (
     <section className="panel">
       <h1>Menu</h1>
       <p className="lead">Settings and temporary demo aids.</p>
+
+      <div className="menu-name-block">
+        <p className="muted tiny">Character</p>
+        <p className="lead">{save.characterName ?? 'Unnamed'}</p>
+        <button type="button" className="btn secondary" onClick={onStartRename}>
+          Change name
+        </button>
+      </div>
+
       <button type="button" className="btn primary" onClick={grantTestFood}>
         Add & equip Baked Potato ×5
       </button>
