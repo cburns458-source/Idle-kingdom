@@ -15,6 +15,8 @@ interface LocationViewProps {
   activityError: string | null
   actionsLocked?: boolean
   statusPanel?: ReactNode
+  /** Activity reward summary rendered on the location background. */
+  rewardSummary?: ReactNode
   onStartActivity: (activityId: string) => void
   onStopActivity: () => void
   onOpenSpecialProduction: (station: SpecialProductionStation) => void
@@ -45,6 +47,7 @@ export function LocationView({
   activityError,
   actionsLocked = false,
   statusPanel,
+  rewardSummary,
   onStartActivity,
   onStopActivity,
   onOpenSpecialProduction,
@@ -105,6 +108,8 @@ export function LocationView({
             </button>
           </div>
         )}
+
+        {rewardSummary}
 
         {statusPanel}
 

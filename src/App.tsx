@@ -283,7 +283,7 @@ export default function App() {
     setHudNowMs(Date.now())
     const id = window.setInterval(() => setHudNowMs(Date.now()), 250)
     return () => window.clearInterval(id)
-  }, [runningActivityId, runningActionId, runningProductionRecipeId, runningActionStartedAt])
+  }, [runningActivityId, runningProductionRecipeId])
 
   // Progress + complete the current gathering action.
   useEffect(() => {
@@ -674,10 +674,13 @@ export default function App() {
       total,
       remainingSeconds: craftRemainingSeconds + upcomingCrafts * craftSeconds,
     }
-  } else if (activity && (currentAction || inCombat)) {
-    const startedAtMs = save.actionStartedAt ? Date.parse(save.actionStartedAt) : Number.NaN
-    const elapsedSeconds =
-      Number.isFinite(startedAtMs) ? Math.max(0, (hudNowMs - startedAtMs) / 1000) : 0
+  } else if (activity) {
+    const startedAtMs = save.activityStartedAt
+      ? Date.parse(save.activityStartedAt)
+      : Number.NaN
+    const elapsedSeconds = Number.isFinite(startedAtMs)
+      ? Math.max(0, (hudNowMs - startedAtMs) / 1000)
+      : 0
     const actionName = inCombat
       ? (combatEnemy?.['Display Name'] ?? currentAction?.['Display Name'] ?? 'Combat')
       : (currentAction?.['Display Name'] ?? '…')
@@ -686,20 +689,6 @@ export default function App() {
       activityName: activity['Contextual Name'] ?? activity['Internal Key'],
       actionName,
       elapsedSeconds,
-    }
-  } else if (activity) {
-    const startedAtMs = save.activityStartedAt
-      ? Date.parse(save.activityStartedAt)
-      : save.actionStartedAt
-        ? Date.parse(save.actionStartedAt)
-        : Number.NaN
-    hudActivityStatus = {
-      kind: 'action',
-      activityName: activity['Contextual Name'] ?? activity['Internal Key'],
-      actionName: '…',
-      elapsedSeconds: Number.isFinite(startedAtMs)
-        ? Math.max(0, (hudNowMs - startedAtMs) / 1000)
-        : 0,
     }
   }
   const pickerActivity = productionPickerActivityId
@@ -955,13 +944,6 @@ export default function App() {
           locationLabel={location['Display Name']}
           activityStatus={hudActivityStatus}
         />
-        <ActionRewardList
-          rewards={recentRewards}
-          itemsById={database.launchIndexes.itemsById}
-          compact
-          hidden={rewardsHidden}
-          onToggleHidden={() => setRewardsHidden((value) => !value)}
-        />
 
         <div className={screen === 'map' ? 'screen-body screen-body-map' : 'screen-body'}>
           {screen === 'location' && (
@@ -976,6 +958,15 @@ export default function App() {
                 isStandardProductionActivity(database.launch, row)
               }
               actionsLocked={deathLocked}
+              rewardSummary={
+                <ActionRewardList
+                  rewards={recentRewards}
+                  itemsById={database.launchIndexes.itemsById}
+                  compact
+                  hidden={rewardsHidden}
+                  onToggleHidden={() => setRewardsHidden((value) => !value)}
+                />
+              }
               onStartActivity={startActivity}
               onStopActivity={stopActivity}
               onOpenSpecialProduction={(station) => {
