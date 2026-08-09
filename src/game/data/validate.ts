@@ -5,6 +5,8 @@ import {
   type FacilityRow,
   type GameDatabase,
   type NpcRow,
+  type PoolEntryRow,
+  type RewardEntryRow,
   type ShopRow,
   type ValidationIssue,
 } from './types'
@@ -48,6 +50,17 @@ function groupByLocationId<T extends { 'Location ID': string }>(rows: T[]): Map<
   return map
 }
 
+function groupByKey<T>(rows: T[], keyFn: (row: T) => string): Map<string, T[]> {
+  const map = new Map<string, T[]>()
+  for (const row of rows) {
+    const key = keyFn(row)
+    const list = map.get(key) ?? []
+    list.push(row)
+    map.set(key, list)
+  }
+  return map
+}
+
 export function assertGameDatabaseShape(raw: unknown): asserts raw is GameDatabase {
   if (!isRecord(raw)) {
     throw new Error('Database root must be an object')
@@ -70,6 +83,7 @@ export function buildIndexes(db: GameDatabase): DatabaseIndexes {
   const itemsById = new Map(db.Items.map((row) => [row['Item ID'], row]))
   const mapsById = new Map(db.Maps.map((row) => [row['Map ID'], row]))
   const activitiesById = new Map(db.Activities.map((row) => [row['Activity ID'], row]))
+  const actionsById = new Map(db.Actions.map((row) => [row['Action ID'], row]))
 
   for (const [table, idField] of Object.entries(TABLE_ID_FIELDS)) {
     const map = new Map<string, Record<string, unknown>>()
@@ -91,10 +105,16 @@ export function buildIndexes(db: GameDatabase): DatabaseIndexes {
     itemsById,
     mapsById,
     activitiesById,
+    actionsById,
     facilitiesByLocationId: groupByLocationId(db.Facilities),
     activitiesByLocationId: groupByLocationId(db.Activities),
     npcsByLocationId: groupByLocationId(db.NPCs),
     shopsByLocationId: groupByLocationId(db.Shops),
+    poolEntriesByPoolId: groupByKey(db.PoolEntries as PoolEntryRow[], (row) => row['Pool ID']),
+    rewardEntriesByTableId: groupByKey(
+      db.RewardEntries as RewardEntryRow[],
+      (row) => row['Reward Table ID'],
+    ),
   }
 }
 

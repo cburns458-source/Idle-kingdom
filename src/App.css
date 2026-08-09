@@ -482,3 +482,34 @@
   height: 2.25rem;
   display: block;
 }
+
+.activity-panel-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.35rem;
+}
+
+.action-bar {
+  width: 100%;
+  height: 0.85rem;
+  border-radius: 999px;
+  background: rgba(30, 20, 12, 0.65);
+  overflow: hidden;
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  margin: 0.55rem 0 0.2rem;
+}
+
+.action-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #7f9d63, #d4af37);
+  transition: width 80ms linear;
+}
+
+.loot-message {
+  margin: 0.55rem 0 0.35rem;
+  color: #e7f0c8;
+  font-weight: 600;
+  line-height: 1.35;
+}

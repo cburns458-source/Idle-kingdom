@@ -53,6 +53,25 @@ export interface ItemRow {
   Notes: string | null
 }
 
+export interface EquipmentRow {
+  'Equipment ID': string
+  'Item ID': string
+  'Slot ID': string | null
+  'Required Skill ID': string | null
+  'Required Level': number | null
+  'Secondary Required Skill ID': string | null
+  'Secondary Required Level': number | null
+  'Min Damage': number | null
+  'Max Damage': number | null
+  'Damage Reduction': number | null
+  'HP Bonus': number | null
+  'Healing Amount': number | null
+  'Action Time Reduction %': number | null
+  'Capabilities / Effects': string | null
+  Status: RecordStatus
+  Notes: string | null
+}
+
 export interface LocationRow {
   'Location ID': string
   'Internal Key': string
@@ -120,6 +139,66 @@ export interface ActivityRow {
   Notes: string | null
 }
 
+export interface PoolEntryRow {
+  'Pool Entry ID': string
+  'Pool ID': string
+  'Action ID': string
+  Weight: number | null
+  Status: RecordStatus
+  Notes: string | null
+}
+
+export interface ActionRow {
+  'Action ID': string
+  'Internal Key': string
+  'Display Name': string
+  Category: string
+  'Relevant Skill ID': string
+  'Target Type': string | null
+  'Target ID': string | null
+  'Proficiency Level': number | null
+  'Base Duration Seconds': number | null
+  'XP Reward': number | null
+  'Guaranteed Gold': number | null
+  'Drop Chance': number | null
+  'Reward Table ID': string | null
+  'Secondary Drop Chance': number | null
+  'Secondary Reward Table ID': string | null
+  Status: RecordStatus
+  'Release Phase': ReleasePhase
+  Notes: string | null
+}
+
+export interface RequirementRow {
+  'Requirement ID': string
+  'Entity Type': string
+  'Entity ID': string
+  'Requirement Group': string | null
+  'Group Logic': string | null
+  'Requirement Type': string
+  'Reference ID / Value': string | number | null
+  Operator: string | null
+  'Required Value': number | null
+  Status: RecordStatus
+  Notes: string | null
+}
+
+export interface RewardEntryRow {
+  'Reward Entry ID': string
+  'Reward Table ID': string
+  'Reward Table Name': string | null
+  Purpose: string | null
+  'Reward Type': string
+  'Reward ID / Value': string | null
+  Weight: number | null
+  'Minimum Quantity': number | null
+  'Maximum Quantity': number | null
+  'Skill ID': string | null
+  'XP Amount': number | null
+  Status: RecordStatus
+  Notes: string | null
+}
+
 export interface NpcRow {
   'NPC ID': string
   'Internal Key': string
@@ -150,7 +229,7 @@ export interface GameDatabase {
   XPCurve: XPCurveRow[]
   EquipmentSlots: EquipmentSlotRow[]
   Items: ItemRow[]
-  Equipment: Record<string, unknown>[]
+  Equipment: EquipmentRow[]
   Statistics: Record<string, unknown>[]
   Enchantments: Record<string, unknown>[]
   Maps: MapRow[]
@@ -158,11 +237,11 @@ export interface GameDatabase {
   TravelConnections: TravelConnectionRow[]
   Facilities: FacilityRow[]
   Activities: ActivityRow[]
-  PoolEntries: Record<string, unknown>[]
-  Actions: Record<string, unknown>[]
-  Requirements: Record<string, unknown>[]
+  PoolEntries: PoolEntryRow[]
+  Actions: ActionRow[]
+  Requirements: RequirementRow[]
   Enemies: Record<string, unknown>[]
-  RewardEntries: Record<string, unknown>[]
+  RewardEntries: RewardEntryRow[]
   Recipes: Record<string, unknown>[]
   Projects: Record<string, unknown>[]
   NPCs: NpcRow[]
@@ -215,8 +294,11 @@ export interface DatabaseIndexes {
   itemsById: Map<string, ItemRow>
   mapsById: Map<string, MapRow>
   activitiesById: Map<string, ActivityRow>
+  actionsById: Map<string, ActionRow>
   facilitiesByLocationId: Map<string, FacilityRow[]>
   activitiesByLocationId: Map<string, ActivityRow[]>
   npcsByLocationId: Map<string, NpcRow[]>
   shopsByLocationId: Map<string, ShopRow[]>
+  poolEntriesByPoolId: Map<string, PoolEntryRow[]>
+  rewardEntriesByTableId: Map<string, RewardEntryRow[]>
 }

@@ -1,4 +1,4 @@
-export const SAVE_VERSION = 1
+export const SAVE_VERSION = 2
 export const SAVE_STORAGE_KEY = 'idle-kingdoms.demo.save'
 export const STARTING_LOCATION_ID = 'LOC-0002'
 export const STARTING_GOLD = 0
@@ -56,6 +56,9 @@ export interface PlayerSave {
   currentLocationId: string
   currentActivityId: string | null
   activityStartedAt: string | null
+  currentActionId: string | null
+  actionStartedAt: string | null
+  actionDurationMs: number | null
   unattendedProgressAt: string | null
   currentHp: number
   maxHp: number

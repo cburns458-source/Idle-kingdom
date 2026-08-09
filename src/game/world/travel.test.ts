@@ -45,12 +45,16 @@ describe('travel rules', () => {
         currentLocationId: 'LOC-0002',
         currentActivityId: 'ACT-0017',
         activityStartedAt: '2026-01-01T00:00:00.000Z',
+        currentActionId: 'ACN-0105',
+        actionStartedAt: '2026-01-01T00:00:00.000Z',
+        actionDurationMs: 20000,
       },
       'LOC-0001',
     )
     expect(next.currentLocationId).toBe('LOC-0001')
     expect(next.currentActivityId).toBeNull()
     expect(next.activityStartedAt).toBeNull()
+    expect(next.currentActionId).toBeNull()
   })
 
   it('opens cave sub-map from the cave entrance location', () => {

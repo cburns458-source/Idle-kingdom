@@ -1,25 +1,29 @@
 import { locationAssetPath } from '../game/assets/assetMap'
-import type { DatabaseIndexes, LocationRow } from '../game/data/types'
+import type { ActivityRow, DatabaseIndexes, LocationRow } from '../game/data/types'
 import { CASTLE_GATEWAY_ID, CAVE_ENTRANCE_ID } from '../game/world/constants'
 
 interface LocationViewProps {
   indexes: DatabaseIndexes
   location: LocationRow
   currentActivityId: string | null
+  activityError: string | null
   onStartActivity: (activityId: string) => void
   onStopActivity: () => void
   onOpenMap: () => void
   onOpenSubMap?: () => void
+  requirementHint?: (activity: ActivityRow) => string | null
 }
 
 export function LocationView({
   indexes,
   location,
   currentActivityId,
+  activityError,
   onStartActivity,
   onStopActivity,
   onOpenMap,
   onOpenSubMap,
+  requirementHint,
 }: LocationViewProps) {
   const locationId = location['Location ID']
   const activities = indexes.activitiesByLocationId.get(locationId) ?? []
@@ -55,6 +59,12 @@ export function LocationView({
         </div>
       </div>
 
+      {activityError && (
+        <section className="panel panel-error">
+          <p className="lead">{activityError}</p>
+        </section>
+      )}
+
       <section className="panel">
         <h2>Activities</h2>
         {activities.length === 0 ? (
@@ -64,6 +74,7 @@ export function LocationView({
             {activities.map((activity) => {
               const active = currentActivityId === activity['Activity ID']
               const label = activity['Contextual Name'] ?? activity['Internal Key']
+              const hint = requirementHint?.(activity) ?? null
               return (
                 <li key={activity['Activity ID']}>
                   <div>
@@ -74,6 +85,7 @@ export function LocationView({
                       </p>
                     )}
                     {activity.Description && <p className="muted">{activity.Description}</p>}
+                    {hint && !active && <p className="muted tiny">{hint}</p>}
                   </div>
                   {active ? (
                     <button type="button" className="btn secondary" onClick={onStopActivity}>
@@ -85,7 +97,7 @@ export function LocationView({
                       className="btn primary"
                       onClick={() => onStartActivity(activity['Activity ID'])}
                     >
-                      Start
+                      {currentActivityId ? 'Replace' : 'Start'}
                     </button>
                   )}
                 </li>
@@ -93,10 +105,6 @@ export function LocationView({
             })}
           </ul>
         )}
-        <p className="muted tiny">
-          Starting an activity occupies the Primary Activity slot for travel testing. Full action
-          resolution arrives in a later step.
-        </p>
       </section>
 
       <section className="panel panel-quiet">

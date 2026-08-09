@@ -114,13 +114,22 @@ export function canTravelTo(
   )
 }
 
-export function stopPrimaryActivity<T extends { currentActivityId: string | null; activityStartedAt: string | null }>(
-  save: T,
-): T {
+export function stopPrimaryActivity<
+  T extends {
+    currentActivityId: string | null
+    activityStartedAt: string | null
+    currentActionId?: string | null
+    actionStartedAt?: string | null
+    actionDurationMs?: number | null
+  },
+>(save: T): T {
   return {
     ...save,
     currentActivityId: null,
     activityStartedAt: null,
+    currentActionId: null,
+    actionStartedAt: null,
+    actionDurationMs: null,
   }
 }
 
@@ -129,6 +138,9 @@ export function applyTravelArrival<
     currentLocationId: string
     currentActivityId: string | null
     activityStartedAt: string | null
+    currentActionId?: string | null
+    actionStartedAt?: string | null
+    actionDurationMs?: number | null
   },
 >(save: T, destinationLocationId: string): T {
   return {

@@ -3,12 +3,17 @@ import { SAVE_VERSION } from './types'
 
 /** Ordered migrations from older save versions up to SAVE_VERSION. */
 export const SAVE_MIGRATIONS: SaveMigration[] = [
-  // Example scaffold for future versions:
-  // {
-  //   fromVersion: 1,
-  //   toVersion: 2,
-  //   migrate: (save) => ({ ...save, saveVersion: 2 }),
-  // },
+  {
+    fromVersion: 1,
+    toVersion: 2,
+    migrate: (save) => ({
+      ...save,
+      currentActionId: save.currentActionId ?? null,
+      actionStartedAt: save.actionStartedAt ?? null,
+      actionDurationMs: save.actionDurationMs ?? null,
+      saveVersion: 2,
+    }),
+  },
 ]
 
 export function migrateSave(save: PlayerSave): PlayerSave {
