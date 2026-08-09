@@ -27,10 +27,12 @@ import {
   resolveActiveMapId,
   travelDurationMs,
 } from './game/world/travel'
+import { totalLevel, totalSkillXp } from './game/skills/totals'
 import { ActivityPanel } from './ui/ActivityPanel'
 import { BottomNav, type AppScreen } from './ui/BottomNav'
 import { LogStub, SettingsStub } from './ui/StubScreens'
 import { LocationView } from './ui/LocationView'
+import { SkillsView } from './ui/SkillsView'
 import { TopHud } from './ui/TopHud'
 import { TravelOverlay } from './ui/TravelOverlay'
 import { WorldMapView } from './ui/WorldMapView'
@@ -245,8 +247,12 @@ export default function App() {
 
   const ready = boot.status === 'ready' ? boot : null
 
-  const totalXp = useMemo(
-    () => ready?.save.skills.reduce((sum, skill) => sum + skill.xp, 0) ?? 0,
+  const overallXp = useMemo(
+    () => (ready ? totalSkillXp(ready.save) : 0),
+    [ready?.save.skills],
+  )
+  const overallLevel = useMemo(
+    () => (ready ? totalLevel(ready.save) : 0),
     [ready?.save.skills],
   )
 
@@ -350,7 +356,8 @@ export default function App() {
     <div className="app-shell">
       <main className="portrait-frame" aria-label="Idle Kingdoms">
         <TopHud
-          totalXp={totalXp}
+          totalLevel={overallLevel}
+          totalXp={overallXp}
           gold={save.gold}
           activityLabel={activityLabel}
           locationLabel={location['Display Name']}
@@ -407,6 +414,7 @@ export default function App() {
             />
           )}
 
+          {screen === 'skills' && <SkillsView db={database.launch} save={save} />}
           {screen === 'inventory' && <InventoryPanel save={save} database={database} />}
           {screen === 'log' && <LogStub />}
           {screen === 'settings' && <SettingsStub />}

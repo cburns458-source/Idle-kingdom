@@ -1,4 +1,4 @@
-export type AppScreen = 'location' | 'map' | 'inventory' | 'log' | 'settings'
+export type AppScreen = 'location' | 'map' | 'skills' | 'inventory' | 'log' | 'settings'
 
 interface BottomNavProps {
   screen: AppScreen
@@ -9,7 +9,8 @@ interface BottomNavProps {
 const ITEMS: { id: AppScreen; label: string }[] = [
   { id: 'location', label: 'Place' },
   { id: 'map', label: 'Map' },
-  { id: 'inventory', label: 'Inventory' },
+  { id: 'skills', label: 'Skills' },
+  { id: 'inventory', label: 'Items' },
   { id: 'log', label: 'Log' },
   { id: 'settings', label: 'Menu' },
 ]
