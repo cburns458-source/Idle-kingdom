@@ -15,6 +15,15 @@ export interface BonusXpGrant {
   xp: number
 }
 
+export interface ActionXpRewardSummary {
+  skillId: string
+  skillName: string
+  skillKey: string
+  xp: number
+  level: number
+  leveledUp: boolean
+}
+
 export interface ActionCompletionResult {
   actionId: string
   actionName: string
@@ -22,6 +31,8 @@ export interface ActionCompletionResult {
   xpGained: number
   /** Extra skill XP beyond the action's primary Relevant Skill reward. */
   bonusXp: BonusXpGrant[]
+  /** Ordered XP reward summaries for the action reward UI. */
+  xpRewards: ActionXpRewardSummary[]
   goldGained: number
   loot: LootGrant[]
   leveledUpTo: number | null

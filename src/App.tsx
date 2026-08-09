@@ -9,7 +9,10 @@ import {
   validateActivityStart,
 } from './game/activity/engine'
 import { loadDatabase, type LoadedDatabase } from './game/data/loadDatabase'
+import type { ActionXpRewardSummary } from './game/activity/types'
 import type { ActivityRow } from './game/data/types'
+import { summarizeXpReward } from './game/activity/rewardSummary'
+import { getSkillProgress } from './game/activity/xp'
 import { loadOrCreateSave, writeSave } from './game/save/saveStore'
 import type { PlayerSave } from './game/save/types'
 import {
@@ -103,7 +106,7 @@ export default function App() {
   const [travelProgress, setTravelProgress] = useState(0)
   const [actionProgress, setActionProgress] = useState(0)
   const [activityError, setActivityError] = useState<string | null>(null)
-  const [recentRewards, setRecentRewards] = useState<string[]>([])
+  const [recentRewards, setRecentRewards] = useState<ActionXpRewardSummary[]>([])
   const [lastMessage, setLastMessage] = useState<string | null>(null)
   const [roundProgress, setRoundProgress] = useState(0)
   const [pauseRemainingMs, setPauseRemainingMs] = useState(0)
@@ -267,32 +270,8 @@ export default function App() {
 
       const finished = completeGatheringAction(current.database.launch, current.save, action)
       let nextSave = finished.save
-      const skillName =
-        current.database.launchIndexes.skillsById.get(finished.result.skillId)?.['Display Name'] ??
-        'Skill'
-      const bonusXpText = finished.result.bonusXp.map((grant) => {
-        const bonusSkillName =
-          current.database.launchIndexes.skillsById.get(grant.skillId)?.['Display Name'] ?? 'Skill'
-        return `+${grant.xp} ${bonusSkillName} XP`
-      })
-      const lootLines = finished.result.loot.map(
-        (loot) => `+${loot.quantity} ${loot.displayName}`,
-      )
-      const rewardLines = [
-        finished.result.xpGained > 0 ? `+${finished.result.xpGained} ${skillName} XP` : null,
-        ...bonusXpText,
-        ...lootLines,
-      ].filter(Boolean) as string[]
-      setRecentRewards((prev) => [...rewardLines, ...prev].slice(0, 12))
-      setLastMessage(
-        [
-          `${finished.result.actionName} complete`,
-          ...rewardLines,
-          finished.result.leveledUpTo ? `Reached level ${finished.result.leveledUpTo}` : null,
-        ]
-          .filter(Boolean)
-          .join(' · '),
-      )
+      setRecentRewards((prev) => [...finished.result.xpRewards, ...prev].slice(0, 8))
+      setLastMessage(null)
 
       const activityId = current.save.currentActivityId
       if (!activityStillValid(current.database.launch, nextSave, activityId)) {
@@ -489,17 +468,30 @@ export default function App() {
         )
         const nextSave = victoryResult.save
 
-        const combatRewardLines = [
-          victoryResult.xpGained > 0 ? `+${victoryResult.xpGained} Combat XP` : null,
-          victoryResult.goldGained > 0 ? `+${victoryResult.goldGained} gold` : null,
-          ...victoryResult.loot.map((loot) => `+${loot.quantity} ${loot.displayName}`),
-          victoryResult.foodConsumed
-            ? `Ate ${victoryResult.foodName} (+${victoryResult.foodHealed} HP)`
-            : null,
-        ].filter(Boolean) as string[]
-        setRecentRewards((prev) => [...combatRewardLines, ...prev].slice(0, 12))
+        const combatLevelBefore = getSkillProgress(current.save, 'SKL-0001').level
+        const combatLevelAfter = getSkillProgress(victoryResult.save, 'SKL-0001').level
+        const combatXpReward = summarizeXpReward(
+          current.database.launch,
+          victoryResult.save,
+          'SKL-0001',
+          victoryResult.xpGained,
+          combatLevelAfter > combatLevelBefore ? combatLevelAfter : null,
+        )
+        setRecentRewards((prev) =>
+          combatXpReward ? [combatXpReward, ...prev].slice(0, 8) : prev,
+        )
         setLastMessage(
-          [`Defeated ${enemy['Display Name']}`, ...combatRewardLines].filter(Boolean).join(' · '),
+          [
+            `Defeated ${enemy['Display Name']}`,
+            victoryResult.goldGained > 0 ? `+${victoryResult.goldGained} gold` : null,
+            victoryResult.loot.map((loot) => `+${loot.quantity} ${loot.displayName}`).join(', ') ||
+              null,
+            victoryResult.foodConsumed
+              ? `Ate ${victoryResult.foodName} (+${victoryResult.foodHealed} HP)`
+              : null,
+          ]
+            .filter(Boolean)
+            .join(' · '),
         )
 
         const activityId = current.save.currentActivityId!
@@ -927,6 +919,7 @@ export default function App() {
                       roundProgress={roundProgress}
                       deathPauseRemainingMs={pauseRemainingMs}
                       lastCombatMessage={lastMessage}
+                      recentRewards={recentRewards}
                       onStop={stopActivity}
                     />
                   )}
@@ -961,7 +954,6 @@ export default function App() {
                         progress={actionProgress}
                         durationMs={save.actionDurationMs}
                         recentRewards={recentRewards}
-                        lastMessage={lastMessage}
                         onStop={stopActivity}
                       />
                     )}

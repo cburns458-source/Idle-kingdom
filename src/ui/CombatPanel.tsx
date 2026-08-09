@@ -1,6 +1,8 @@
 import { enemyAssetPath } from '../game/assets/enemyAssets'
 import type { EnemyRow } from '../game/data/enemyTypes'
 import type { ActivityRow } from '../game/data/types'
+import type { ActionXpRewardSummary } from '../game/activity/types'
+import { ActionRewardList } from './ActionRewardList'
 
 interface CombatPanelProps {
   activity: ActivityRow
@@ -11,6 +13,7 @@ interface CombatPanelProps {
   roundProgress: number
   deathPauseRemainingMs: number
   lastCombatMessage: string | null
+  recentRewards: ActionXpRewardSummary[]
   onStop: () => void
 }
 
@@ -23,6 +26,7 @@ export function CombatPanel({
   roundProgress,
   deathPauseRemainingMs,
   lastCombatMessage,
+  recentRewards,
   onStop,
 }: CombatPanelProps) {
   const enemyPct = Math.round((enemyHp / Math.max(1, enemy['Maximum HP'])) * 100)
@@ -92,6 +96,7 @@ export function CombatPanel({
         </>
       )}
 
+      <ActionRewardList rewards={recentRewards} />
       {lastCombatMessage && <p className="loot-message">{lastCombatMessage}</p>}
     </section>
   )

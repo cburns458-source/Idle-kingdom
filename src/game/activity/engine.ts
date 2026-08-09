@@ -17,10 +17,12 @@ import {
 import { resolveActionRewards } from './rewards'
 import type {
   ActionCompletionResult,
+  ActionXpRewardSummary,
   ActiveActionState,
   ActivityStartResult,
 } from './types'
 import { bonusSkillXpForAction } from './bonusXp'
+import { summarizeXpReward } from './rewardSummary'
 import { applyXp } from './xp'
 
 export function getActivity(db: GameDatabase, activityId: string): ActivityRow | undefined {
@@ -178,11 +180,29 @@ export function completeGatheringAction(
   let leveledUpTo = xpApplied.leveledUpTo
 
   const bonusXp: { skillId: string; xp: number }[] = []
+  const xpRewards: ActionXpRewardSummary[] = []
+  const primaryReward = summarizeXpReward(
+    db,
+    next,
+    action['Relevant Skill ID'],
+    xpAmount,
+    xpApplied.leveledUpTo,
+  )
+  if (primaryReward) xpRewards.push(primaryReward)
+
   const bonus = bonusSkillXpForAction(action)
   if (bonus && bonus.xp > 0) {
     const bonusApplied = applyXp(next, db, bonus.skillId, bonus.xp)
     next = bonusApplied.save
     bonusXp.push({ skillId: bonus.skillId, xp: bonus.xp })
+    const bonusReward = summarizeXpReward(
+      db,
+      next,
+      bonus.skillId,
+      bonus.xp,
+      bonusApplied.leveledUpTo,
+    )
+    if (bonusReward) xpRewards.push(bonusReward)
     if (bonusApplied.leveledUpTo != null) {
       leveledUpTo = bonusApplied.leveledUpTo
     }
@@ -196,6 +216,7 @@ export function completeGatheringAction(
       skillId: action['Relevant Skill ID'],
       xpGained: xpAmount,
       bonusXp,
+      xpRewards,
       goldGained: rewarded.goldGained,
       loot: rewarded.loot,
       leveledUpTo,

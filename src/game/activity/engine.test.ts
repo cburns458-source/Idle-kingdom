@@ -45,6 +45,17 @@ describe('primary activity engine', () => {
     const completed = completeGatheringAction(launch, save, action!, () => 0)
     expect(completed.result.xpGained).toBe(7000)
     expect(completed.result.bonusXp).toEqual([{ skillId: 'SKL-0013', xp: 1000 }])
+    expect(completed.result.xpRewards.map((reward) => reward.skillId)).toEqual([
+      'SKL-0002',
+      'SKL-0013',
+    ])
+    expect(completed.result.xpRewards[1]).toMatchObject({
+      skillId: 'SKL-0013',
+      skillName: 'Arcana',
+      xp: 1000,
+      level: 2,
+      leveledUp: true,
+    })
     expect(completed.save.skills.find((skill) => skill.skillId === 'SKL-0002')?.xp).toBe(7000)
     expect(completed.save.skills.find((skill) => skill.skillId === 'SKL-0013')?.xp).toBe(1000)
   })

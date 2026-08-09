@@ -1,6 +1,8 @@
 import type { ActionRow, ActivityRow, SkillRow } from '../game/data/types'
 import { isBelowProficiency } from '../game/activity/gathering'
+import type { ActionXpRewardSummary } from '../game/activity/types'
 import type { PlayerSave } from '../game/save/types'
+import { ActionRewardList } from './ActionRewardList'
 
 interface ActivityPanelProps {
   activity: ActivityRow
@@ -10,9 +12,8 @@ interface ActivityPanelProps {
   progress: number
   /** True action duration in ms (includes proficiency multiplier). */
   durationMs: number | null
-  /** Newest-first reward lines from recent actions (XP, loot, etc.). */
-  recentRewards: string[]
-  lastMessage: string | null
+  /** Newest-first XP reward summaries from recent actions. */
+  recentRewards: ActionXpRewardSummary[]
   onStop: () => void
 }
 
@@ -29,7 +30,6 @@ export function ActivityPanel({
   progress,
   durationMs,
   recentRewards,
-  lastMessage,
   onStop,
 }: ActivityPanelProps) {
   const clamped = Math.min(1, Math.max(0, progress))
@@ -69,15 +69,7 @@ export function ActivityPanel({
         <p className="lead">Preparing next action…</p>
       )}
 
-      {lastMessage && <p className="loot-message">{lastMessage}</p>}
-
-      {recentRewards.length > 0 && (
-        <ul className="plain-list">
-          {recentRewards.slice(0, 8).map((reward, index) => (
-            <li key={`${reward}-${index}`}>{reward}</li>
-          ))}
-        </ul>
-      )}
+      <ActionRewardList rewards={recentRewards} />
     </section>
   )
 }
