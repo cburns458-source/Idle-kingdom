@@ -3,7 +3,6 @@ import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { prepareDatabase } from '../data/loadDatabase'
 import { createNewSave } from '../save/saveStore'
-import { addItemToInventory } from '../activity/rewards'
 import {
   applyCombatDefeat,
   applyCombatVictory,
@@ -49,13 +48,15 @@ describe('combat engine', () => {
   it('grants combat XP/gold on victory and can consume food when hurt', () => {
     const { launch } = prepareDatabase(rawDatabase)
     let save = createNewSave(launch)
-    save = addItemToInventory(save, 'ITEM-0058', 2)
     save = {
       ...save,
       currentHp: 900,
       equipment: {
         ...save.equipment,
-        slots: { ...save.equipment.slots, 'SLOT-0011': 'ITEM-0058' },
+        slots: {
+          ...save.equipment.slots,
+          'SLOT-0011': { itemId: 'ITEM-0058', quantity: 2 },
+        },
       },
     }
     const enemy = launch.Enemies.find((row) => row['Enemy ID'] === 'ENM-0001')!
@@ -66,23 +67,26 @@ describe('combat engine', () => {
     expect(victory.goldGained).toBeGreaterThan(0)
     expect(victory.foodConsumed).toBe(true)
     expect(victory.save.currentHp).toBeGreaterThan(900)
+    expect(victory.save.equipment.slots['SLOT-0011']?.quantity).toBe(1)
     expect(victory.save.statistics.values.monsters_killed).toBe(1)
   })
 
   it('does not eat food at full HP', () => {
     const { launch } = prepareDatabase(rawDatabase)
     let save = createNewSave(launch)
-    save = addItemToInventory(save, 'ITEM-0058', 1)
     save = {
       ...save,
       equipment: {
         ...save.equipment,
-        slots: { ...save.equipment.slots, 'SLOT-0011': 'ITEM-0058' },
+        slots: {
+          ...save.equipment.slots,
+          'SLOT-0011': { itemId: 'ITEM-0058', quantity: 1 },
+        },
       },
     }
     const result = tryConsumeFoodAfterVictory(launch, save)
     expect(result.consumed).toBe(false)
-    expect(result.save.inventory.find((stack) => stack.itemId === 'ITEM-0058')?.quantity).toBe(1)
+    expect(result.save.equipment.slots['SLOT-0011']?.quantity).toBe(1)
   })
 
   it('starts a death pause with no rewards on defeat', () => {

@@ -4,9 +4,9 @@ import { getSkillProgress } from './xp'
 
 function equippedCapabilityTags(db: GameDatabase, save: PlayerSave): Set<string> {
   const tags = new Set<string>()
-  for (const itemId of Object.values(save.equipment.slots)) {
-    if (!itemId) continue
-    const equipment = db.Equipment.find((row) => row['Item ID'] === itemId)
+  for (const stack of Object.values(save.equipment.slots)) {
+    if (!stack?.itemId) continue
+    const equipment = db.Equipment.find((row) => row['Item ID'] === stack.itemId)
     const caps = equipment?.['Capabilities / Effects']
     if (typeof caps !== 'string') continue
     for (const part of caps.split(';')) {

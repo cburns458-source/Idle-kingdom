@@ -38,6 +38,7 @@ import {
 } from './game/combat/engine'
 import { playerMaxHp } from './game/combat/stats'
 import { addItemToInventory } from './game/activity/rewards'
+import { equipItemFromInventory, unequipSlot } from './game/equipment/loadout'
 import { totalLevel, totalSkillXp } from './game/skills/totals'
 import { ActivityPanel } from './ui/ActivityPanel'
 import { BottomNav, type AppScreen } from './ui/BottomNav'
@@ -670,32 +671,16 @@ function InventoryPanel({
   onChangeSave: (save: PlayerSave) => void
 }) {
   function equipItem(itemId: string) {
-    const equipment = database.launch.Equipment.find((row) => row['Item ID'] === itemId)
-    const slotId = equipment?.['Slot ID']
-    if (!slotId) return
-    onChangeSave({
-      ...save,
-      maxHp: playerMaxHp(database.launch, {
-        ...save,
-        equipment: {
-          ...save.equipment,
-          slots: { ...save.equipment.slots, [slotId]: itemId },
-        },
-      }),
-      equipment: {
-        ...save.equipment,
-        slots: { ...save.equipment.slots, [slotId]: itemId },
-      },
-    })
-  }
-
-  function unequipSlot(slotId: string) {
-    const slots = { ...save.equipment.slots, [slotId]: null }
-    const next = { ...save, equipment: { ...save.equipment, slots } }
+    const next = equipItemFromInventory(database.launch, save, itemId)
     onChangeSave({ ...next, maxHp: playerMaxHp(database.launch, next) })
   }
 
-  const equipped = Object.entries(save.equipment.slots).filter(([, itemId]) => itemId)
+  function unequip(slotId: string) {
+    const next = unequipSlot(save, slotId)
+    onChangeSave({ ...next, maxHp: playerMaxHp(database.launch, next) })
+  }
+
+  const equipped = Object.entries(save.equipment.slots).filter(([, stack]) => stack)
 
   return (
     <section className="panel">
@@ -734,19 +719,21 @@ function InventoryPanel({
         <p className="muted">Nothing equipped.</p>
       ) : (
         <ul className="interaction-list">
-          {equipped.map(([slotId, itemId]) => (
+          {equipped.map(([slotId, stack]) => (
             <li key={slotId}>
               <div>
                 <strong>
-                  {database.launchIndexes.itemsById.get(itemId!)?.['Display Name'] ?? itemId}
+                  {database.launchIndexes.itemsById.get(stack!.itemId)?.['Display Name'] ??
+                    stack!.itemId}
                 </strong>
                 <p className="muted">
                   {database.launch.EquipmentSlots.find((slot) => slot['Slot ID'] === slotId)?.[
                     'Display Name'
                   ] ?? slotId}
+                  {stack!.quantity > 1 ? ` · × ${stack!.quantity}` : ''}
                 </p>
               </div>
-              <button type="button" className="btn secondary" onClick={() => unequipSlot(slotId)}>
+              <button type="button" className="btn secondary" onClick={() => unequip(slotId)}>
                 Unequip
               </button>
             </li>
@@ -770,13 +757,7 @@ function SettingsPanel({
 
   function grantTestFood() {
     const withItems = addItemToInventory(save, bakedPotatoId, 5)
-    const equipped = {
-      ...withItems,
-      equipment: {
-        ...withItems.equipment,
-        slots: { ...withItems.equipment.slots, 'SLOT-0011': bakedPotatoId },
-      },
-    }
+    const equipped = equipItemFromInventory(database.launch, withItems, bakedPotatoId)
     onChangeSave({ ...equipped, maxHp: playerMaxHp(database.launch, equipped) })
   }
 
@@ -787,7 +768,9 @@ function SettingsPanel({
       <button type="button" className="btn primary" onClick={grantTestFood}>
         Add & equip Baked Potato ×5
       </button>
-      <p className="muted tiny">Demo aid for food testing until Cooking is available.</p>
+      <p className="muted tiny">
+        Demo aid: grants potatoes and moves the full stack into the Food slot.
+      </p>
     </section>
   )
 }

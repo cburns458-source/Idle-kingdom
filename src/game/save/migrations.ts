@@ -1,5 +1,48 @@
-import type { PlayerSave, SaveMigration } from './types'
+import type { EquippedStack, PlayerSave, SaveMigration } from './types'
 import { SAVE_VERSION } from './types'
+
+const FOOD_SLOT_ID = 'SLOT-0011'
+
+function migrateEquipmentSlotsToStacks(save: PlayerSave): PlayerSave {
+  const rawSlots = save.equipment?.slots ?? {}
+  const nextSlots: Record<string, EquippedStack | null> = {}
+  let inventory = (save.inventory ?? []).map((stack) => ({ ...stack }))
+
+  for (const [slotId, value] of Object.entries(rawSlots)) {
+    if (value == null) {
+      nextSlots[slotId] = null
+      continue
+    }
+    if (typeof value === 'object' && value !== null && 'itemId' in value) {
+      const stack = value as EquippedStack
+      nextSlots[slotId] = {
+        itemId: stack.itemId,
+        quantity: Math.max(1, Number(stack.quantity) || 1),
+      }
+      continue
+    }
+    if (typeof value !== 'string') {
+      nextSlots[slotId] = null
+      continue
+    }
+
+    const itemId = value
+    if (slotId === FOOD_SLOT_ID) {
+      const inv = inventory.find((entry) => entry.itemId === itemId)
+      const quantity = inv?.quantity ?? 1
+      inventory = inventory.filter((entry) => entry.itemId !== itemId)
+      nextSlots[slotId] = { itemId, quantity }
+    } else {
+      nextSlots[slotId] = { itemId, quantity: 1 }
+    }
+  }
+
+  return {
+    ...save,
+    inventory,
+    equipment: { slots: nextSlots },
+  }
+}
 
 /** Ordered migrations from older save versions up to SAVE_VERSION. */
 export const SAVE_MIGRATIONS: SaveMigration[] = [
@@ -24,6 +67,14 @@ export const SAVE_MIGRATIONS: SaveMigration[] = [
       combatRoundStartedAt: save.combatRoundStartedAt ?? null,
       deathPauseUntil: save.deathPauseUntil ?? null,
       saveVersion: 3,
+    }),
+  },
+  {
+    fromVersion: 3,
+    toVersion: 4,
+    migrate: (save) => ({
+      ...migrateEquipmentSlotsToStacks(save),
+      saveVersion: 4,
     }),
   },
 ]

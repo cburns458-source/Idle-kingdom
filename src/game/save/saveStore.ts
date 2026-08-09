@@ -5,6 +5,7 @@ import {
   SAVE_VERSION,
   STARTING_GOLD,
   STARTING_LOCATION_ID,
+  type EquippedStack,
   type PlayerSave,
 } from './types'
 
@@ -34,7 +35,7 @@ export function createNewSave(db: GameDatabase): PlayerSave {
     xp: 0,
   }))
 
-  const slots: Record<string, string | null> = {}
+  const slots: Record<string, EquippedStack | null> = {}
   for (const slot of db.EquipmentSlots) {
     slots[slot['Slot ID']] = null
   }

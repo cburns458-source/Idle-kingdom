@@ -1,4 +1,4 @@
-export const SAVE_VERSION = 3
+export const SAVE_VERSION = 4
 export const SAVE_STORAGE_KEY = 'idle-kingdoms.demo.save'
 export const STARTING_LOCATION_ID = 'LOC-0002'
 export const STARTING_GOLD = 0
@@ -14,9 +14,15 @@ export interface InventoryStack {
   quantity: number
 }
 
+/** Equipped contents for one slot. Food may hold any stack size. */
+export interface EquippedStack {
+  itemId: string
+  quantity: number
+}
+
 export interface EquipmentLoadout {
-  /** Slot ID -> equipped Item ID or null */
-  slots: Record<string, string | null>
+  /** Slot ID -> equipped stack or null */
+  slots: Record<string, EquippedStack | null>
 }
 
 export interface QuestProgress {

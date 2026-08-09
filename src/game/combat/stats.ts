@@ -6,9 +6,9 @@ const WEAPON_SLOT = 'SLOT-0001'
 
 function equippedRows(db: GameDatabase, save: PlayerSave): EquipmentRow[] {
   const rows: EquipmentRow[] = []
-  for (const itemId of Object.values(save.equipment.slots)) {
-    if (!itemId) continue
-    const row = db.Equipment.find((entry) => entry['Item ID'] === itemId)
+  for (const stack of Object.values(save.equipment.slots)) {
+    if (!stack?.itemId) continue
+    const row = db.Equipment.find((entry) => entry['Item ID'] === stack.itemId)
     if (row) rows.push(row)
   }
   return rows
@@ -18,7 +18,7 @@ export function playerDamageRange(
   db: GameDatabase,
   save: PlayerSave,
 ): { min: number; max: number } {
-  const weaponId = save.equipment.slots[WEAPON_SLOT]
+  const weaponId = save.equipment.slots[WEAPON_SLOT]?.itemId
   if (weaponId) {
     const weapon = db.Equipment.find((entry) => entry['Item ID'] === weaponId)
     const min = weapon?.['Min Damage']
