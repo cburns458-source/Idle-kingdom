@@ -3544,7 +3544,7 @@
       "Equipment Slot ID": null,
       "Functional / Source Tags": "ent_drop; arcana_input; artisanry_input",
       "Status": "Planned",
-      "Release Phase": "Expansion",
+      "Release Phase": "Launch",
       "Description": null,
       "Icon Asset Key": null,
       "Notes": null,
@@ -3560,7 +3560,7 @@
       "Equipment Slot ID": null,
       "Functional / Source Tags": "ent_drop; crafting_input",
       "Status": "Planned",
-      "Release Phase": "Expansion",
+      "Release Phase": "Launch",
       "Description": null,
       "Icon Asset Key": null,
       "Notes": null,
@@ -3576,7 +3576,7 @@
       "Equipment Slot ID": null,
       "Functional / Source Tags": "ancient_ent_drop; project_input",
       "Status": "Planned",
-      "Release Phase": "Expansion",
+      "Release Phase": "Launch",
       "Description": null,
       "Icon Asset Key": null,
       "Notes": null,
@@ -3592,7 +3592,7 @@
       "Equipment Slot ID": null,
       "Functional / Source Tags": "corrupted_ent_drop; alchemy_input",
       "Status": "Planned",
-      "Release Phase": "Expansion",
+      "Release Phase": "Launch",
       "Description": null,
       "Icon Asset Key": null,
       "Notes": null,
@@ -3608,7 +3608,7 @@
       "Equipment Slot ID": null,
       "Functional / Source Tags": "corrupted_ent_drop; arcana_input",
       "Status": "Planned",
-      "Release Phase": "Expansion",
+      "Release Phase": "Launch",
       "Description": null,
       "Icon Asset Key": null,
       "Notes": null,
@@ -3816,7 +3816,7 @@
       "Equipment Slot ID": null,
       "Functional / Source Tags": "crafting_output; smithing_input; artisanry_input",
       "Status": "Planned",
-      "Release Phase": "Expansion",
+      "Release Phase": "Launch",
       "Description": null,
       "Icon Asset Key": null,
       "Notes": null,
@@ -8266,11 +8266,11 @@
       "Internal Key": "ancient_forest",
       "Display Name": "Ancient Forest",
       "Map ID": "MAP-0001",
-      "Location Type": "Future Area",
+      "Location Type": "Region",
       "Parent Location ID": null,
       "Node ID": "NODE-0018",
       "Status": "Planned",
-      "Release Phase": "Expansion",
+      "Release Phase": "Launch",
       "Description": "High-level woodland with one axe-compatible Activity containing an Ancient Tree and three Ent encounters.",
       "Danger / Hostility": "Includes Ent Combat encounters.",
       "Background Asset Key": null,
@@ -8279,7 +8279,7 @@
     {
       "Location ID": "LOC-0019",
       "Internal Key": "west_horizon",
-      "Display Name": "\u2026",
+      "Display Name": "…",
       "Map ID": "MAP-0001",
       "Location Type": "Future Gateway",
       "Parent Location ID": null,
@@ -8294,7 +8294,7 @@
     {
       "Location ID": "LOC-0020",
       "Internal Key": "east_horizon",
-      "Display Name": "\u2026",
+      "Display Name": "…",
       "Map ID": "MAP-0001",
       "Location Type": "Future Gateway",
       "Parent Location ID": null,
@@ -8721,7 +8721,7 @@
       "Pool ID": "POOL-0016",
       "Pool Internal Key": "ancient_forest_pool",
       "Status": "Planned",
-      "Release Phase": "Expansion",
+      "Release Phase": "Launch",
       "Notes": null
     },
     {
@@ -9374,7 +9374,7 @@
       "Secondary Drop Chance": null,
       "Secondary Reward Table ID": null,
       "Status": "Planned",
-      "Release Phase": "Expansion",
+      "Release Phase": "Launch",
       "Notes": "Combat is resolved in four-second rounds; Enemy record owns HP, damage, and guaranteed Gold."
     },
     {
@@ -9394,7 +9394,7 @@
       "Secondary Drop Chance": null,
       "Secondary Reward Table ID": null,
       "Status": "Planned",
-      "Release Phase": "Expansion",
+      "Release Phase": "Launch",
       "Notes": "Combat is resolved in four-second rounds; Enemy record owns HP, damage, and guaranteed Gold."
     },
     {
@@ -9414,7 +9414,7 @@
       "Secondary Drop Chance": null,
       "Secondary Reward Table ID": null,
       "Status": "Planned",
-      "Release Phase": "Expansion",
+      "Release Phase": "Launch",
       "Notes": "Combat is resolved in four-second rounds; Enemy record owns HP, damage, and guaranteed Gold."
     },
     {
@@ -9834,7 +9834,7 @@
       "Secondary Drop Chance": null,
       "Secondary Reward Table ID": null,
       "Status": "Planned",
-      "Release Phase": "Expansion",
+      "Release Phase": "Launch",
       "Notes": null
     },
     {
@@ -12724,7 +12724,7 @@
       "Drop Chance": 18,
       "Reward Table ID": "RWT-0013",
       "Status": "Planned",
-      "Release Phase": "Expansion",
+      "Release Phase": "Launch",
       "Sprite Asset Key": null,
       "Notes": null
     },
@@ -12743,7 +12743,7 @@
       "Drop Chance": 15,
       "Reward Table ID": "RWT-0014",
       "Status": "Planned",
-      "Release Phase": "Expansion",
+      "Release Phase": "Launch",
       "Sprite Asset Key": null,
       "Notes": "HP reduced from the initial proposal."
     },
@@ -12762,7 +12762,7 @@
       "Drop Chance": 20,
       "Reward Table ID": "RWT-0015",
       "Status": "Planned",
-      "Release Phase": "Expansion",
+      "Release Phase": "Launch",
       "Sprite Asset Key": null,
       "Notes": "HP reduced and damage increased by confirmed revision."
     },
@@ -14332,7 +14332,7 @@
     {
       "Reward Entry ID": "RWE-0100",
       "Reward Table ID": "RWT-0058",
-      "Reward Table Name": "Secondary Gems \u2014 Sapphire Only",
+      "Reward Table Name": "Secondary Gems — Sapphire Only",
       "Purpose": "Independent Mining gem drop",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0012",
@@ -14347,7 +14347,7 @@
     {
       "Reward Entry ID": "RWE-0101",
       "Reward Table ID": "RWT-0059",
-      "Reward Table Name": "Secondary Gems \u2014 Sapphire Emerald",
+      "Reward Table Name": "Secondary Gems — Sapphire Emerald",
       "Purpose": "Independent Mining gem drop",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0012",
@@ -14362,7 +14362,7 @@
     {
       "Reward Entry ID": "RWE-0102",
       "Reward Table ID": "RWT-0059",
-      "Reward Table Name": "Secondary Gems \u2014 Sapphire Emerald",
+      "Reward Table Name": "Secondary Gems — Sapphire Emerald",
       "Purpose": "Independent Mining gem drop",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0013",
@@ -14377,7 +14377,7 @@
     {
       "Reward Entry ID": "RWE-0103",
       "Reward Table ID": "RWT-0060",
-      "Reward Table Name": "Secondary Gems \u2014 All Gems",
+      "Reward Table Name": "Secondary Gems — All Gems",
       "Purpose": "Independent Mining gem drop",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0012",
@@ -14392,7 +14392,7 @@
     {
       "Reward Entry ID": "RWE-0104",
       "Reward Table ID": "RWT-0060",
-      "Reward Table Name": "Secondary Gems \u2014 All Gems",
+      "Reward Table Name": "Secondary Gems — All Gems",
       "Purpose": "Independent Mining gem drop",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0013",
@@ -14407,7 +14407,7 @@
     {
       "Reward Entry ID": "RWE-0105",
       "Reward Table ID": "RWT-0060",
-      "Reward Table Name": "Secondary Gems \u2014 All Gems",
+      "Reward Table Name": "Secondary Gems — All Gems",
       "Purpose": "Independent Mining gem drop",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0014",
@@ -20147,7 +20147,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": "Buys and sells ordinary items. Stocks starter tools.",
-      "Notes": "Sells all level-1 tools. Player buy price = 2\u00d7 Base Sell Value. Buys ordinary items at Base Sell Value.",
+      "Notes": "Sells all level-1 tools. Player buy price = 2× Base Sell Value. Buys ordinary items at Base Sell Value.",
       "Entry 1 Item ID": "ITEM-0100",
       "Entry 1 Mode": "Sell",
       "Entry 1 Price": null,
@@ -20238,7 +20238,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": "Sells improved pickaxes and pays better prices for ores.",
-      "Notes": "Access requires Mining Level 40. Player buy price = 2\u00d7 Base Sell Value. Buys ores at 1.5\u00d7 Base Sell Value.",
+      "Notes": "Access requires Mining Level 40. Player buy price = 2× Base Sell Value. Buys ores at 1.5× Base Sell Value.",
       "Entry 1 Item ID": "ITEM-0111",
       "Entry 1 Mode": "Sell",
       "Entry 1 Price": null,
@@ -20329,7 +20329,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": "Sells Essence at a premium so Mining remains the primary efficient source.",
-      "Notes": "Essence buy price = 100\u00d7 Base Sell Value. Other stock buy price = 2\u00d7 Base Sell Value.",
+      "Notes": "Essence buy price = 100× Base Sell Value. Other stock buy price = 2× Base Sell Value.",
       "Entry 1 Item ID": "ITEM-0011",
       "Entry 1 Mode": "Sell",
       "Entry 1 Price": null,

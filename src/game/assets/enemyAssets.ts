@@ -13,6 +13,9 @@ export const ENEMY_ASSET_PATHS: Record<string, string> = {
   'ENM-0009': '/assets/enemies/enm_zombie.png',
   'ENM-0010': '/assets/enemies/enm_wild_boar.png',
   'ENM-0011': '/assets/enemies/enm_castle_guard.png',
+  'ENM-0012': '/assets/enemies/enm_ent.png',
+  'ENM-0013': '/assets/enemies/enm_ancient_ent.png',
+  'ENM-0014': '/assets/enemies/enm_corrupted_ent.png',
   'ENM-0016': '/assets/enemies/enm_goblin_warrior.png',
   'ENM-0017': '/assets/enemies/enm_rabbit_buck.png',
 }

@@ -28,6 +28,7 @@ export const LOCATION_ASSET_PATHS: Record<string, string> = {
   'LOC-0015': '/assets/locations/loc_castle_main_hall.png',
   'LOC-0016': '/assets/locations/loc_kings_quarters.png',
   'LOC-0017': '/assets/locations/loc_castle_barracks.png',
+  'LOC-0018': '/assets/locations/loc_ancient_forest.png',
 }
 
 export function mapAssetPath(mapId: string): string {

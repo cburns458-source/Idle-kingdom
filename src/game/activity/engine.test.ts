@@ -94,6 +94,14 @@ describe('primary activity engine', () => {
     const copper = eligiblePoolEntries(launch, 'POOL-0005')
     expect(copper.every((pair) => pair.action.Category === 'Gathering')).toBe(true)
     expect(pickWeightedAction(copper, () => 0)?.['Action ID']).toBeTruthy()
+
+    const ancientForest = eligiblePoolEntries(launch, 'POOL-0016')
+    expect(ancientForest.map((pair) => pair.action['Action ID']).sort()).toEqual([
+      'ACN-0010',
+      'ACN-0011',
+      'ACN-0012',
+      'ACN-0051',
+    ])
   })
 
   it('weighted selection respects ordering', () => {

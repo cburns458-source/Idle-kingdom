@@ -14,6 +14,8 @@ export interface NodePosition {
 export const MAIN_MAP_NODE_LAYOUT: Record<string, NodePosition> = {
   // NW castle with blue roofs
   'LOC-0013': { x: 24, y: 24 },
+  // Ancient Forest north of the castle
+  'LOC-0018': { x: 22, y: 10 },
   // Mountain peaks / range
   'LOC-0006': { x: 50, y: 16 },
   // Cave mouth in the mountains

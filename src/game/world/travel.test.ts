@@ -32,13 +32,19 @@ describe('travel rules', () => {
     expect(canTravelTo(launch, 'LOC-0017', 'LOC-0001', MAIN_MAP_ID)).toBe(true)
   })
 
-  it('lists main-map Launch locations and excludes Expansion', () => {
+  it('lists main-map Launch locations including Ancient Forest', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const nodes = locationsForMapView(launch, MAIN_MAP_ID)
     expect(nodes.some((location) => location['Location ID'] === 'LOC-0002')).toBe(true)
-    expect(nodes.some((location) => location['Location ID'] === 'LOC-0018')).toBe(false)
+    expect(nodes.some((location) => location['Location ID'] === 'LOC-0018')).toBe(true)
     expect(nodes.some((location) => location['Location ID'] === 'LOC-0019')).toBe(true)
     expect(nodes.some((location) => location['Location ID'] === 'LOC-0020')).toBe(true)
+  })
+
+  it('allows travel to Ancient Forest from the overworld', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    expect(canTravelTo(launch, 'LOC-0002', 'LOC-0018', MAIN_MAP_ID)).toBe(true)
+    expect(canTravelTo(launch, 'LOC-0013', 'LOC-0018', MAIN_MAP_ID)).toBe(true)
   })
 
   it('treats west/east horizons as browse-only future gateways', () => {

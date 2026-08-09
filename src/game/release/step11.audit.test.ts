@@ -52,9 +52,10 @@ describe('Step 11 release audit', () => {
     expect(needsDataCount).toBeGreaterThan(0)
   })
 
-  it('keeps Expansion content out of the Launch runtime view', () => {
-    expect(launch.Locations.some((row) => row['Location ID'] === 'LOC-0018')).toBe(false)
-    expect(launch.Activities.some((row) => row['Activity ID'] === 'ACT-0016')).toBe(false)
+  it('keeps remaining Expansion content out of the Launch runtime view', () => {
+    expect(launch.Locations.some((row) => row['Location ID'] === 'LOC-0018')).toBe(true)
+    expect(launch.Activities.some((row) => row['Activity ID'] === 'ACT-0016')).toBe(true)
+    expect(launch.Enemies.some((row) => row['Enemy ID'] === 'ENM-0012')).toBe(true)
     expect(launch.Enemies.some((row) => row['Enemy ID'] === 'ENM-0006')).toBe(false)
     expect(source.Locations.some((row) => row['Location ID'] === 'LOC-0018')).toBe(true)
   })

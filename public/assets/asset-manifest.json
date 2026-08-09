@@ -91,6 +91,10 @@
     "LOC-0017": {
       "internalKey": "castle_barracks",
       "path": "/assets/locations/loc_castle_barracks.png"
+    },
+    "LOC-0018": {
+      "internalKey": "ancient_forest",
+      "path": "/assets/locations/loc_ancient_forest.png"
     }
   },
   "enemies": {
@@ -141,6 +145,18 @@
     "ENM-0017": {
       "internalKey": "rabbit_buck",
       "path": "/assets/enemies/enm_rabbit_buck.png"
+    },
+    "ENM-0012": {
+      "internalKey": "ent",
+      "path": "/assets/enemies/enm_ent.png"
+    },
+    "ENM-0013": {
+      "internalKey": "ancient_ent",
+      "path": "/assets/enemies/enm_ancient_ent.png"
+    },
+    "ENM-0014": {
+      "internalKey": "corrupted_ent",
+      "path": "/assets/enemies/enm_corrupted_ent.png"
     }
   },
   "icons": {
