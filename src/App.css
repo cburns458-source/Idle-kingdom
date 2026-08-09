@@ -514,6 +514,12 @@
   transition: width 80ms linear;
 }
 
+.tough-work {
+  margin: 0;
+  font-style: italic;
+  color: #c9b896;
+}
+
 .loot-message {
   margin: 0.55rem 0 0.35rem;
   color: #e7f0c8;

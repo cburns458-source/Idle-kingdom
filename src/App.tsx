@@ -586,6 +586,7 @@ export default function App() {
                   save={save}
                   skill={actionSkill}
                   progress={actionProgress}
+                  durationMs={save.actionDurationMs}
                   recentLoot={recentLoot}
                   lastMessage={lastMessage}
                   onStop={stopActivity}

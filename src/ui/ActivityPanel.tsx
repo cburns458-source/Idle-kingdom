@@ -9,9 +9,17 @@ interface ActivityPanelProps {
   save: PlayerSave
   skill: SkillRow | undefined
   progress: number
+  /** True action duration in ms (includes proficiency multiplier). */
+  durationMs: number | null
   recentLoot: LootGrant[]
   lastMessage: string | null
   onStop: () => void
+}
+
+function formatSeconds(value: number): string {
+  if (!Number.isFinite(value) || value < 0) return '0'
+  const rounded = Math.round(value * 10) / 10
+  return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1)
 }
 
 export function ActivityPanel({
@@ -20,13 +28,17 @@ export function ActivityPanel({
   save,
   skill,
   progress,
+  durationMs,
   recentLoot,
   lastMessage,
   onStop,
 }: ActivityPanelProps) {
-  const pct = Math.round(Math.min(1, Math.max(0, progress)) * 100)
+  const clamped = Math.min(1, Math.max(0, progress))
+  const pct = Math.round(clamped * 100)
   const slow = action ? isBelowProficiency(save, action) : false
   const label = activity['Contextual Name'] ?? activity['Internal Key']
+  const totalSeconds = Math.max(0, (durationMs ?? 0) / 1000)
+  const elapsedSeconds = Math.min(totalSeconds, clamped * totalSeconds)
 
   return (
     <section className="panel activity-panel">
@@ -45,17 +57,14 @@ export function ActivityPanel({
           <p className="lead">
             Current action: <strong>{action['Display Name']}</strong>
           </p>
-          <p className="muted">
-            {skill?.['Display Name'] ?? 'Skill'} ·{' '}
-            {action['Base Duration Seconds'] != null
-              ? `${action['Base Duration Seconds']}s base`
-              : 'Timed'}
-            {slow ? ' · below proficiency (slower)' : ''}
-          </p>
+          <p className="muted">{skill?.['Display Name'] ?? 'Skill'}</p>
+          {slow && <p className="tough-work">this is tough work</p>}
           <div className="action-bar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct}>
             <div className="action-bar-fill" style={{ width: `${pct}%` }} />
           </div>
-          <p className="muted tiny">{pct}%</p>
+          <p className="muted tiny">
+            {formatSeconds(elapsedSeconds)} / {formatSeconds(totalSeconds)}s
+          </p>
         </>
       ) : (
         <p className="lead">Preparing next action…</p>
