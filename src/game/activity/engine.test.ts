@@ -58,9 +58,10 @@ describe('primary activity engine', () => {
   it('excludes Needs Data actions and includes Combat when complete', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const woodland = eligiblePoolEntries(launch, 'POOL-0010')
-    // Fernleaf is Launch-ready; Herb 2 remains Needs Data.
-    expect(woodland).toHaveLength(1)
-    expect(woodland[0]?.action['Action ID']).toBe('ACN-0106')
+    expect(woodland.map((pair) => pair.action['Action ID']).sort()).toEqual([
+      'ACN-0106',
+      'ACN-0109',
+    ])
 
     const pasture = eligiblePoolEntries(launch, 'POOL-0001')
     expect(pasture.every((pair) => pair.action.Category === 'Combat')).toBe(true)

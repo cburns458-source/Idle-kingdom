@@ -52,7 +52,6 @@ import { ActivityPanel } from './ui/ActivityPanel'
 import { BottomNav, type AppScreen } from './ui/BottomNav'
 import { CombatPanel } from './ui/CombatPanel'
 import { InventoryView } from './ui/InventoryView'
-import { LogStub } from './ui/StubScreens'
 import { LocationView } from './ui/LocationView'
 import { NamePrompt } from './ui/NamePrompt'
 import { ProductionPicker, ProductionProgress } from './ui/ProductionPanel'
@@ -800,7 +799,6 @@ export default function App() {
           {screen === 'inventory' && (
             <InventoryView save={save} database={database} onChangeSave={updateSave} />
           )}
-          {screen === 'log' && <LogStub />}
           {screen === 'settings' && (
             <SettingsPanel
               save={save}

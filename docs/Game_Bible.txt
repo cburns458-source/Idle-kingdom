@@ -192,7 +192,7 @@ Hunting pool:
 
 Harvesting pool:
 - Fernleaf: 60%.
-- Herb 2: 40%.
+- Augur Weed: 40%.
 
 MEADOW
 Hunting pool:

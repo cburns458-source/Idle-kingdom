@@ -8588,7 +8588,7 @@
       "Internal Key": "gather_woodland_supplies",
       "Contextual Name": "Gather Woodland Supplies",
       "Location ID": "LOC-0008",
-      "Description": "Harvest Fernleaf and Herb 2.",
+      "Description": "Harvest Fernleaf and Augur Weed.",
       "Danger Warning Combat Level": null,
       "Pool ID": "POOL-0010",
       "Pool Internal Key": "kingswoods_harvest",
@@ -8976,7 +8976,7 @@
     {
       "Pool Entry ID": "PEN-0030",
       "Pool ID": "POOL-0010",
-      "Action ID": "ACN-0165",
+      "Action ID": "ACN-0109",
       "Weight": 40,
       "Status": "Planned",
       "Notes": null
@@ -11285,7 +11285,7 @@
       "Secondary Reward Table ID": null,
       "Status": "Needs Data",
       "Release Phase": "Launch",
-      "Notes": "Used in Kingswoods Harvesting; timing, XP, and reward chance are not fixed in the game bible."
+      "Notes": "Replaced in Launch pools by Gather Augur Weed (ACN-0109); retained as Needs Data placeholder."
     },
     {
       "Action ID": "ACN-0166",

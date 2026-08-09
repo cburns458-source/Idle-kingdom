@@ -284,23 +284,23 @@
 
 .bottom-nav {
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 0.3rem;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.4rem;
   flex-shrink: 0;
-  padding-top: 0.35rem;
+  padding-top: 0.4rem;
   border-top: 1px solid rgba(212, 175, 55, 0.22);
 }
 
 .nav-btn {
   appearance: none;
   border: 1px solid rgba(212, 175, 55, 0.22);
-  border-radius: 0.8rem;
-  min-height: 2.8rem;
-  padding: 0.35rem 0.15rem;
+  border-radius: 0.85rem;
+  min-height: 3.15rem;
+  padding: 0.45rem 0.35rem;
   background: rgba(40, 28, 18, 0.55);
   color: #e7d5ad;
   font: inherit;
-  font-size: 0.68rem;
+  font-size: 0.82rem;
   font-weight: 700;
   cursor: pointer;
 }
@@ -438,22 +438,22 @@
 .glass-panel,
 .glass-btn,
 .location-view .panel {
-  background: rgba(170, 210, 145, 0.78) !important;
-  border-color: rgba(150, 195, 125, 0.65) !important;
+  background: rgba(148, 152, 158, 0.82) !important;
+  border-color: rgba(120, 124, 130, 0.7) !important;
   backdrop-filter: blur(3px);
-  color: #243a1c;
+  color: #1f2428;
 }
 
 .location-view .panel h1,
 .location-view .panel h2,
 .location-view .panel .lead,
 .location-view .panel .loot-message {
-  color: #243a1c;
+  color: #1f2428;
 }
 
 .location-view .panel .muted,
 .location-view .panel .muted.tiny {
-  color: #3d5a32;
+  color: #3f464e;
 }
 
 .location-view .panel .danger-note {
@@ -465,13 +465,13 @@
 }
 
 .location-view .interaction-list li {
-  background: rgba(198, 228, 172, 0.72);
-  color: #243a1c;
+  background: rgba(176, 180, 186, 0.78);
+  color: #1f2428;
 }
 
 .location-view .interaction-list li .muted,
 .location-view .interaction-list li .muted.tiny {
-  color: #3d5a32;
+  color: #3f464e;
 }
 
 .interaction-list,
