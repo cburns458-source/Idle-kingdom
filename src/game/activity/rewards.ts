@@ -5,6 +5,7 @@ import {
   maxAddableQuantity,
 } from '../inventory/capacity'
 import { isGoldCurrencyItem } from '../inventory/gold'
+import { applyPotionDropChance } from '../potions/effects'
 import type { ActionRow, GameDatabase, RewardEntryRow } from '../data/types'
 import type { PlayerSave } from '../save/types'
 import type { LootGrant } from './types'
@@ -129,8 +130,11 @@ export function resolveActionRewards(
 
   const rollTable = (tableId: string | null, chance: number | null) => {
     if (!tableId) return
-    const dropChance = typeof chance === 'number' ? chance : 100
-    if (random() * 100 >= dropChance) return
+    const dropChance = applyPotionDropChance(
+      typeof chance === 'number' ? chance : 100,
+      save.activePotionEffect?.scope === 'one_action' ? save.activePotionEffect : null,
+    )
+    if (typeof dropChance !== 'number' || random() * 100 >= dropChance) return
     const entries = db.RewardEntries.filter((row) => row['Reward Table ID'] === tableId)
     const picked = pickWeightedReward(entries, random)
     if (!picked) return

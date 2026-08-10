@@ -6,7 +6,10 @@ import type { EnemyRow } from '../data/enemyTypes'
 import type { PlayerSave } from '../save/types'
 import type { LootGrant } from '../activity/types'
 import { tryConsumeFoodAfterVictory } from './food'
-import { tryConsumeCombatEncounterPotion } from './potion'
+import {
+  potionEnemyMaxHpDamage,
+  tryConsumePotionForScope,
+} from '../potions/effects'
 import {
   applyMitigation,
   playerDamageRange,
@@ -51,16 +54,18 @@ export function beginCombatSave(
   enemy: EnemyRow,
   nowIso: string = new Date().toISOString(),
 ): PlayerSave {
-  const potion = tryConsumeCombatEncounterPotion(db, save)
+  const potion = tryConsumePotionForScope(db, save, 'one_combat_encounter')
+  const poisonDamage = potionEnemyMaxHpDamage(enemy['Maximum HP'], potion.effect)
+  const enemyHp = Math.max(0, enemy['Maximum HP'] - poisonDamage)
   return {
     ...potion.save,
     currentActionId: action['Action ID'],
     actionStartedAt: nowIso,
     actionDurationMs: null,
     combatEnemyId: enemy['Enemy ID'],
-    combatEnemyHp: enemy['Maximum HP'],
+    combatEnemyHp: enemyHp,
     combatRoundStartedAt: nowIso,
-    combatPotionDamageBonusPercent: potion.consumed ? potion.damageBonusPercent : null,
+    activePotionEffect: potion.effect,
     deathPauseUntil: null,
   }
 }
@@ -71,7 +76,8 @@ export function clearCombatSave(save: PlayerSave): PlayerSave {
     combatEnemyId: null,
     combatEnemyHp: null,
     combatRoundStartedAt: null,
-    combatPotionDamageBonusPercent: null,
+    activePotionEffect:
+      save.activePotionEffect?.scope === 'one_combat_encounter' ? null : save.activePotionEffect,
   }
 }
 

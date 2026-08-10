@@ -26,7 +26,7 @@ function sampleSave(skills: Array<{ skillId: string; level: number; xp: number }
     combatEnemyId: null,
     combatEnemyHp: null,
     combatRoundStartedAt: null,
-    combatPotionDamageBonusPercent: null,
+    activePotionEffect: null,
     deathPauseUntil: null,
     productionRecipeId: null,
     productionQuantityTotal: null,

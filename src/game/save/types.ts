@@ -1,4 +1,4 @@
-export const SAVE_VERSION = 12
+export const SAVE_VERSION = 13
 export const SAVE_STORAGE_KEY = 'idle-kingdoms.demo.save'
 export const STARTING_LOCATION_ID = 'LOC-0002'
 export const STARTING_GOLD = 25
@@ -11,6 +11,21 @@ export const STARTING_BAKED_POTATO_QTY = 5
 export const STARTING_MINOR_STRENGTH_POTION_ID = 'ITEM-0211'
 export const STARTING_WOODEN_AXE_ID = 'ITEM-0100'
 export const CHARACTER_NAME_MAX_LENGTH = 24
+
+export type PotionConsumeScope =
+  | 'one_combat_encounter'
+  | 'one_action'
+  | 'one_standard_production_action'
+
+/** Data-driven potion effect active for the current eligible action/encounter. */
+export interface ActivePotionEffect {
+  scope: PotionConsumeScope
+  itemId: string
+  damageBonusPercent: number | null
+  enemyMaxHpDamagePercent: number | null
+  relativeDropChanceBonusPercent: number | null
+  baseDurationReductionPercent: number | null
+}
 
 export interface SkillProgress {
   skillId: string
@@ -100,8 +115,8 @@ export interface PlayerSave {
   combatEnemyId: string | null
   combatEnemyHp: number | null
   combatRoundStartedAt: string | null
-  /** Active encounter potion damage bonus percent; set when a combat potion is consumed. */
-  combatPotionDamageBonusPercent: number | null
+  /** Potion consumed for the current gathering action, craft, or combat encounter. */
+  activePotionEffect: ActivePotionEffect | null
   deathPauseUntil: string | null
   productionRecipeId: string | null
   productionQuantityTotal: number | null

@@ -4,6 +4,11 @@ import type { ActionRewardBundle } from '../activity/types'
 import { applyXp } from '../activity/xp'
 import { canFitItemQuantity } from '../inventory/capacity'
 import type { GameDatabase } from '../data/types'
+import {
+  applyPotionDurationMs,
+  clearActivePotionEffect,
+  tryConsumePotionForScope,
+} from '../potions/effects'
 import type { PlayerSave } from '../save/types'
 import { removeIngredients } from './inventory'
 import {
@@ -17,7 +22,7 @@ import {
 } from './recipes'
 
 export function clearProductionSave(save: PlayerSave): PlayerSave {
-  return {
+  return clearActivePotionEffect({
     ...save,
     productionRecipeId: null,
     productionQuantityTotal: null,
@@ -25,7 +30,7 @@ export function clearProductionSave(save: PlayerSave): PlayerSave {
     currentActionId: null,
     actionStartedAt: null,
     actionDurationMs: null,
-  }
+  })
 }
 
 /** Stop production and refund materials for crafts still remaining in the queue. */
@@ -90,13 +95,15 @@ export function beginProductionQueue(
   }
 
   const startedAt = new Date(nowMs).toISOString()
-  const durationMs = recipe['Base Duration Seconds'] * 1000
+  const baseDurationMs = recipe['Base Duration Seconds'] * 1000
+  const potion = tryConsumePotionForScope(db, withMaterials, 'one_standard_production_action')
+  const durationMs = applyPotionDurationMs(baseDurationMs, potion.effect)
   return {
     ok: true,
     save: {
-      ...withMaterials,
+      ...potion.save,
       currentActivityId: activityId,
-      activityStartedAt: withMaterials.activityStartedAt ?? startedAt,
+      activityStartedAt: potion.save.activityStartedAt ?? startedAt,
       productionRecipeId: recipeId,
       productionQuantityTotal: crafts,
       productionQuantityRemaining: crafts,
@@ -170,13 +177,20 @@ export function completeProductionCraft(
   }
 
   const startedAt = new Date(nowMs).toISOString()
+  const cleared = clearActivePotionEffect({
+    ...next,
+    productionQuantityRemaining: remaining,
+  })
+  const potion = tryConsumePotionForScope(db, cleared, 'one_standard_production_action')
+  const baseDurationMs = recipe['Base Duration Seconds'] * 1000
+  const durationMs = applyPotionDurationMs(baseDurationMs, potion.effect)
   return {
     save: {
-      ...next,
+      ...potion.save,
       productionQuantityRemaining: remaining,
       currentActionId: recipe['Action ID'],
       actionStartedAt: startedAt,
-      actionDurationMs: recipe['Base Duration Seconds'] * 1000,
+      actionDurationMs: durationMs,
     },
     finishedQueue: false,
     xpGained: recipe['XP Reward'],

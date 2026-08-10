@@ -1,5 +1,5 @@
 import { ensureStartingHuntingTool } from './startingGear'
-import type { EquippedStack, PlayerSave, SaveMigration } from './types'
+import type { ActivePotionEffect, EquippedStack, PlayerSave, SaveMigration } from './types'
 import { SAVE_VERSION } from './types'
 
 const FOOD_SLOT_ID = 'SLOT-0011'
@@ -154,9 +154,40 @@ export const SAVE_MIGRATIONS: SaveMigration[] = [
     toVersion: 12,
     migrate: (save) => ({
       ...save,
-      combatPotionDamageBonusPercent: save.combatPotionDamageBonusPercent ?? null,
+      combatPotionDamageBonusPercent:
+        (save as PlayerSave & { combatPotionDamageBonusPercent?: number | null })
+          .combatPotionDamageBonusPercent ?? null,
       saveVersion: 12,
     }),
+  },
+  {
+    fromVersion: 12,
+    toVersion: 13,
+    migrate: (save) => {
+      const legacy = save as PlayerSave & {
+        combatPotionDamageBonusPercent?: number | null
+        activePotionEffect?: ActivePotionEffect | null
+      }
+      const bonus = legacy.combatPotionDamageBonusPercent
+      const activePotionEffect =
+        legacy.activePotionEffect ??
+        (typeof bonus === 'number' && bonus > 0
+          ? {
+              scope: 'one_combat_encounter' as const,
+              itemId: '',
+              damageBonusPercent: bonus,
+              enemyMaxHpDamagePercent: null,
+              relativeDropChanceBonusPercent: null,
+              baseDurationReductionPercent: null,
+            }
+          : null)
+      const { combatPotionDamageBonusPercent: _removed, ...rest } = legacy
+      return {
+        ...rest,
+        activePotionEffect,
+        saveVersion: 13,
+      }
+    },
   },
 ]
 

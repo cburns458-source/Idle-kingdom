@@ -8,6 +8,7 @@ import { clearProductionSave } from '../production/engine'
 import { isStandardProductionActivity, recipesForActivity } from '../production/recipes'
 import type { ActionRow, ActivityRow, GameDatabase } from '../data/types'
 import type { PlayerSave } from '../save/types'
+import { clearActivePotionEffect, tryConsumePotionForScope } from '../potions/effects'
 import { gatheringDurationMs, gatheringXpReward } from './gathering'
 import { eligiblePoolEntries, pickWeightedAction, type RandomFn } from './pools'
 import {
@@ -151,6 +152,15 @@ export function generateNextAction(
   }
 
   const durationMs = gatheringDurationMs(db, save, action)
+  let next = clearCombatSave({
+    ...save,
+    currentActivityId: activityId,
+    currentActionId: action['Action ID'],
+    actionStartedAt: startedAt,
+    actionDurationMs: durationMs,
+  })
+  const potion = tryConsumePotionForScope(db, next, 'one_action')
+  next = potion.save
   return {
     action,
     state: {
@@ -158,13 +168,7 @@ export function generateNextAction(
       startedAtMs: nowMs,
       durationMs,
     },
-    save: clearCombatSave({
-      ...save,
-      currentActivityId: activityId,
-      currentActionId: action['Action ID'],
-      actionStartedAt: startedAt,
-      actionDurationMs: durationMs,
-    }),
+    save: next,
   }
 }
 
@@ -176,7 +180,7 @@ export function completeGatheringAction(
 ): { save: PlayerSave; result: ActionCompletionResult } {
   const rewarded = resolveActionRewards(db, save, action, random)
   const xpAmount = gatheringXpReward(db, save, action)
-  let next = rewarded.save
+  let next = clearActivePotionEffect(rewarded.save)
   const xpApplied = applyXp(next, db, action['Relevant Skill ID'], xpAmount)
   next = xpApplied.save
   let leveledUpTo = xpApplied.leveledUpTo

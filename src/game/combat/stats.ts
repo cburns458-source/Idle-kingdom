@@ -45,9 +45,10 @@ export function playerDamageRange(
   const enchantBonus = equippedEnchantmentDamageBonus(db, save)
   const levelMult = combatLevelBonusMultiplier(save)
   const spellMult = activeSpellDamageRangeMultiplier(db, save, nowMs)
+  const potionBonus = save.activePotionEffect?.damageBonusPercent
   const potionMult =
-    save.combatPotionDamageBonusPercent && save.combatPotionDamageBonusPercent > 0
-      ? 1 + save.combatPotionDamageBonusPercent / 100
+    potionBonus && potionBonus > 0 && save.activePotionEffect?.scope === 'one_combat_encounter'
+      ? 1 + potionBonus / 100
       : 1
   const weaponId = save.equipment.slots[WEAPON_SLOT]?.itemId
   let min: number

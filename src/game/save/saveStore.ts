@@ -71,7 +71,7 @@ export function createNewSave(db: GameDatabase): PlayerSave {
     combatEnemyId: null,
     combatEnemyHp: null,
     combatRoundStartedAt: null,
-    combatPotionDamageBonusPercent: null,
+    activePotionEffect: null,
     deathPauseUntil: null,
     productionRecipeId: null,
     productionQuantityTotal: null,
