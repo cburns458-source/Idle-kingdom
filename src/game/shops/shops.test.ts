@@ -60,7 +60,7 @@ describe('shops', () => {
   it('requires confirmation flow to buy a tool for 2× base sell value', () => {
     const { launch } = prepareDatabase(rawDatabase)
     let save = createNewSave(launch)
-    save = { ...save, gold: 30 }
+    save = { ...save, gold: 30, currentLocationId: 'LOC-0024' }
     const result = confirmShopOffer(launch, save, 'SHP-0001', {
       buys: [{ itemId: 'ITEM-0102', quantity: 1 }],
       sells: [],

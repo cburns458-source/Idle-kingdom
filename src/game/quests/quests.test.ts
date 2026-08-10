@@ -4,43 +4,43 @@ import { describe, expect, it } from 'vitest'
 import { addItemToInventory } from '../activity/rewards'
 import { prepareDatabase } from '../data/loadDatabase'
 import { createNewSave } from '../save/saveStore'
-import { acceptQuest, completeQuest, getQuest } from './quests'
+import { acceptQuest, completeQuest } from './quests'
+import { locationsForMapView } from '../world/travel'
 
 const rawDatabase = JSON.parse(
   readFileSync(resolve(process.cwd(), 'public/data/game-database.json'), 'utf8'),
 )
 
-describe('quests', () => {
-  it('defines The Grand Feast delivery for the King', () => {
+describe('quest multi-deliver and unlocks', () => {
+  it('completes Help the aspiring apothecary with items, gold, and location unlock', () => {
     const { launch } = prepareDatabase(rawDatabase)
-    const quest = getQuest(launch, 'QST-0001')
-    expect(quest?.['Display Name']).toBe('The Grand Feast')
-    expect(quest?.['Objective Target ID']).toBe('ITEM-0058')
-    expect(quest?.['Required Quantity']).toBe(10)
-    expect(quest?.['Reward XP Amount']).toBe(50_000)
-    expect(quest?.['Reward Item ID']).toBe('ITEM-0026')
-  })
+    let save = {
+      ...createNewSave(launch),
+      currentLocationId: 'LOC-0023',
+      gold: 1_500,
+    }
+    save = addItemToInventory(save, 'ITEM-0038', 5)
+    save = addItemToInventory(save, 'ITEM-0031', 5)
 
-  it('completes The Grand Feast once with potatoes for cooking XP and a Golden Spud', () => {
-    const { launch } = prepareDatabase(rawDatabase)
-    let save = createNewSave(launch)
-    save = { ...save, inventory: [], currentLocationId: 'LOC-0016' }
-    const accepted = acceptQuest(launch, save, 'QST-0001')
+    const accepted = acceptQuest(launch, save, 'QST-0002')
     expect(accepted.ok).toBe(true)
     if (!accepted.ok) return
-    save = addItemToInventory(accepted.save, 'ITEM-0058', 10)
+    save = accepted.save
 
-    const done = completeQuest(launch, save, 'QST-0001')
-    expect(done.ok).toBe(true)
-    if (!done.ok) return
-    expect(done.save.inventory.find((stack) => stack.itemId === 'ITEM-0058')).toBeUndefined()
-    expect(done.save.inventory.find((stack) => stack.itemId === 'ITEM-0026')?.quantity).toBe(1)
-    expect(done.save.skills.find((skill) => skill.skillId === 'SKL-0007')?.xp).toBe(50_000)
-    expect(done.save.quests.find((quest) => quest.questId === 'QST-0001')?.status).toBe(
-      'completed',
+    const locked = locationsForMapView(launch, 'MAP-0006', save).map((row) => row['Location ID'])
+    expect(locked).not.toContain('LOC-0026')
+
+    const completed = completeQuest(launch, save, 'QST-0002')
+    expect(completed.ok).toBe(true)
+    if (!completed.ok) return
+    expect(completed.save.gold).toBe(500)
+    expect(completed.save.unlockedLocationIds).toContain('LOC-0026')
+    expect(completed.rewards.some((reward) => /Alchemy XP/i.test(reward.label))).toBe(true)
+    expect(completed.rewards.some((reward) => /Apothecary/i.test(reward.label))).toBe(true)
+
+    const unlocked = locationsForMapView(launch, 'MAP-0006', completed.save).map(
+      (row) => row['Location ID'],
     )
-
-    const again = acceptQuest(launch, done.save, 'QST-0001')
-    expect(again.ok).toBe(false)
+    expect(unlocked).toContain('LOC-0026')
   })
 })

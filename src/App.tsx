@@ -21,18 +21,16 @@ import { summarizeXpReward } from './game/activity/rewardSummary'
 import { getSkillProgress } from './game/activity/xp'
 import { loadOrCreateSave, writeSave } from './game/save/saveStore'
 import type { PlayerSave } from './game/save/types'
-import {
-  CASTLE_GATEWAY_ID,
-  CASTLE_MAP_ID,
-  CAVE_ENTRANCE_ID,
-  CAVE_MAP_ID,
-  isSubMapId,
-  MAIN_MAP_ID,
-} from './game/world/constants'
+import { MAIN_MAP_ID } from './game/world/constants'
 import {
   applyHostileTravelArrival,
   hostileForceMessage,
 } from './game/world/hostility'
+import {
+  enterSubMapLabel,
+  isSubMap,
+  subMapIdForGateway,
+} from './game/world/submaps'
 import {
   canTravelTo,
   findConnection,
@@ -162,7 +160,7 @@ export default function App() {
         const nextSave = writeSave(synced)
         if (!cancelled) {
           const location = database.launchIndexes.locationsById.get(nextSave.currentLocationId)
-          setBrowseMapId(location ? resolveActiveMapId(location) : MAIN_MAP_ID)
+          setBrowseMapId(location ? resolveActiveMapId(database.launch, location) : MAIN_MAP_ID)
           setSelectedLocationId(nextSave.currentLocationId)
           if (resolved.messages[0]) setLastMessage(resolved.messages[0]!)
           const hadAfkProgress =
@@ -214,7 +212,9 @@ export default function App() {
         const saved = persistSave(arrived.save)
         const location = current.database.launchIndexes.locationsById.get(saved.currentLocationId)
         setBoot({ ...current, save: saved, saveCreated: false })
-        setBrowseMapId(location ? resolveActiveMapId(location) : MAIN_MAP_ID)
+        setBrowseMapId(
+          location ? resolveActiveMapId(current.database.launch, location) : MAIN_MAP_ID,
+        )
         setSelectedLocationId(saved.currentLocationId)
         setScreen('location')
         setActionProgress(0)
@@ -781,7 +781,9 @@ export default function App() {
 
   function beginTravel(destinationId: string) {
     if (travel || deathLocked) return
-    if (!canTravelTo(database.launch, save.currentLocationId, destinationId, browseMapId)) {
+    if (
+      !canTravelTo(database.launch, save.currentLocationId, destinationId, browseMapId, save)
+    ) {
       return
     }
     const connection = findConnection(database.launch, save.currentLocationId, destinationId)
@@ -797,7 +799,9 @@ export default function App() {
       const arrived = applyHostileTravelArrival(database.launch, save, destinationId, now)
       updateSave(arrived.save)
       const nextLocation = database.launchIndexes.locationsById.get(destinationId)
-      setBrowseMapId(nextLocation ? resolveActiveMapId(nextLocation) : MAIN_MAP_ID)
+      setBrowseMapId(
+        nextLocation ? resolveActiveMapId(database.launch, nextLocation) : MAIN_MAP_ID,
+      )
       setSelectedLocationId(destinationId)
       setScreen('location')
       setRecentRewards([])
@@ -1066,21 +1070,22 @@ export default function App() {
                 setSelectedLocationId(save.currentLocationId)
                 setScreen('map')
               }}
+              enterSubMapLabelText={enterSubMapLabel(database.launch, location)}
               onOpenSubMap={() => {
-                if (save.currentLocationId === CAVE_ENTRANCE_ID) setBrowseMapId(CAVE_MAP_ID)
-                if (save.currentLocationId === CASTLE_GATEWAY_ID) setBrowseMapId(CASTLE_MAP_ID)
+                const childMap = subMapIdForGateway(database.launch, save.currentLocationId)
+                if (childMap) setBrowseMapId(childMap)
                 setSelectedLocationId(save.currentLocationId)
                 setScreen('map')
               }}
               parentSubMapName={
-                isSubMapId(location['Map ID'])
+                isSubMap(database.launch, location['Map ID'])
                   ? (database.launch.Maps.find((map) => map['Map ID'] === location['Map ID'])?.[
                       'Display Name'
                     ] ?? 'Sub-map')
                   : null
               }
               onOpenParentSubMap={
-                isSubMapId(location['Map ID'])
+                isSubMap(database.launch, location['Map ID'])
                   ? () => {
                       setBrowseMapId(location['Map ID']!)
                       setSelectedLocationId(save.currentLocationId)
@@ -1215,6 +1220,7 @@ export default function App() {
           {screen === 'map' && (
             <WorldMapView
               db={database.launch}
+              save={save}
               mapId={browseMapId}
               currentLocationId={save.currentLocationId}
               selectedLocationId={selectedLocationId}

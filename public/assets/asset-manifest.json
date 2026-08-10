@@ -21,7 +21,8 @@
     "MAP-0005": {
       "internalKey": "idale_east",
       "path": "/assets/maps/map_idale_east.png"
-    }
+    },
+    "MAP-0006": "/assets/maps/map_town.png"
   },
   "locations": {
     "LOC-0001": {
@@ -95,7 +96,11 @@
     "LOC-0018": {
       "internalKey": "ancient_forest",
       "path": "/assets/locations/loc_ancient_forest.png"
-    }
+    },
+    "LOC-0023": "/assets/locations/loc_town_kitchen.png",
+    "LOC-0024": "/assets/locations/loc_town_general_store.png",
+    "LOC-0025": "/assets/locations/loc_town_foundry.png",
+    "LOC-0026": "/assets/locations/loc_town_apothecary.png"
   },
   "enemies": {
     "ancient_ent": "/assets/enemies/enm_ancient_ent.png",

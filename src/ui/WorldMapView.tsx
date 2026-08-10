@@ -9,10 +9,12 @@ import {
   isFutureHorizonLocation,
 } from '../game/world/constants'
 import { layoutForMap } from '../game/world/mapLayout'
+import type { PlayerSave } from '../game/save/types'
 import { locationsForMapView } from '../game/world/travel'
 
 interface WorldMapViewProps {
   db: GameDatabase
+  save: PlayerSave
   mapId: string
   currentLocationId: string
   selectedLocationId: string | null
@@ -26,6 +28,7 @@ interface WorldMapViewProps {
 
 export function WorldMapView({
   db,
+  save,
   mapId,
   currentLocationId,
   selectedLocationId,
@@ -37,7 +40,7 @@ export function WorldMapView({
   travelLockReason,
 }: WorldMapViewProps) {
   const map = db.Maps.find((entry) => entry['Map ID'] === mapId)
-  const nodes = locationsForMapView(db, mapId)
+  const nodes = locationsForMapView(db, mapId, save)
   const layout = layoutForMap(mapId)
   const selected = nodes.find((location) => location['Location ID'] === selectedLocationId) ?? null
   const isFutureRegion = mapId === WEST_MAP_ID || mapId === EAST_MAP_ID

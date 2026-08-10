@@ -15,7 +15,7 @@ const rawDatabase = JSON.parse(
 describe('special production', () => {
   it('lists Smithing and Artisanry stations in Town', () => {
     const { launch } = prepareDatabase(rawDatabase)
-    const stations = specialProductionStationsAt(launch, 'LOC-0002')
+    const stations = specialProductionStationsAt(launch, 'LOC-0025')
     expect(stations.map((station) => station.skillId).sort()).toEqual(['SKL-0011', 'SKL-0012'])
     expect(stations.map((station) => station.label).sort()).toEqual([
       'Artisans workshop',
@@ -78,7 +78,7 @@ describe('special production', () => {
   it('instantly completes a L1 smithing project and consumes materials once', () => {
     const { launch } = prepareDatabase(rawDatabase)
     let save = createNewSave(launch)
-    save = { ...save, unlockedNpcIds: ['NPC-0003'] }
+    save = { ...save, unlockedNpcIds: ['NPC-0003'], currentLocationId: 'LOC-0025' }
     save = addItemToInventory(save, 'ITEM-0074', 10)
     save = addItemToInventory(save, 'ITEM-0214', 2)
     save = addItemToInventory(save, 'ITEM-0084', 10)
@@ -99,6 +99,7 @@ describe('special production', () => {
   it('rejects smithing projects before Master Dwarf knowledge', () => {
     const { launch } = prepareDatabase(rawDatabase)
     let save = createNewSave(launch)
+    save = { ...save, currentLocationId: 'LOC-0025' }
     save = addItemToInventory(save, 'ITEM-0074', 10)
     save = addItemToInventory(save, 'ITEM-0214', 2)
     save = addItemToInventory(save, 'ITEM-0084', 10)
@@ -110,7 +111,11 @@ describe('special production', () => {
 
   it('rejects projects when materials are missing', () => {
     const { launch } = prepareDatabase(rawDatabase)
-    const save = { ...createNewSave(launch), unlockedNpcIds: ['NPC-0003'] }
+    const save = {
+      ...createNewSave(launch),
+      unlockedNpcIds: ['NPC-0003'],
+      currentLocationId: 'LOC-0025',
+    }
     const result = completeSpecialProject(launch, save, 'PRJ-0007', 1)
     expect(result.ok).toBe(false)
   })

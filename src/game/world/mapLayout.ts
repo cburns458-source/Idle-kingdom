@@ -1,5 +1,5 @@
 import type { LocationRow } from '../data/types'
-import { CASTLE_MAP_ID, CAVE_MAP_ID, MAIN_MAP_ID } from './constants'
+import { CASTLE_MAP_ID, CAVE_MAP_ID, MAIN_MAP_ID, TOWN_MAP_ID } from './constants'
 
 export interface NodePosition {
   x: number
@@ -16,7 +16,7 @@ export const MAIN_MAP_NODE_LAYOUT: Record<string, NodePosition> = {
   'LOC-0013': { x: 24, y: 24 },
   // Ancient Forest north of the castle
   'LOC-0018': { x: 22, y: 10 },
-  // Mountain peaks / range (nudged right)
+  // Mountain peaks / ridge (nudged right)
   'LOC-0006': { x: 62, y: 16 },
   // Cave mouth in the mountains
   'LOC-0010': { x: 52, y: 36 },
@@ -24,7 +24,7 @@ export const MAIN_MAP_NODE_LAYOUT: Record<string, NodePosition> = {
   'LOC-0007': { x: 78, y: 34 },
   // West kingswoods forest
   'LOC-0008': { x: 14, y: 34 },
-  // Central village / town square
+  // Central village / town square (gateway into Town Map)
   'LOC-0002': { x: 30, y: 48 },
   // Fortified camp (Goblin Camp)
   'LOC-0003': { x: 72, y: 48 },
@@ -67,16 +67,28 @@ export const CASTLE_MAP_NODE_LAYOUT: Record<string, NodePosition> = {
   'LOC-0013': { x: 50, y: 90 },
 }
 
+export const TOWN_MAP_NODE_LAYOUT: Record<string, NodePosition> = {
+  // Town gateway / square (top)
+  'LOC-0002': { x: 50, y: 12 },
+  // Kitchen
+  'LOC-0023': { x: 22, y: 38 },
+  // General Store
+  'LOC-0024': { x: 78, y: 38 },
+  // The Foundry
+  'LOC-0025': { x: 30, y: 72 },
+  // Rose's Apothecary (unlocks after quest)
+  'LOC-0026': { x: 70, y: 72 },
+}
+
+const LAYOUTS: Record<string, Record<string, NodePosition>> = {
+  [MAIN_MAP_ID]: MAIN_MAP_NODE_LAYOUT,
+  [CAVE_MAP_ID]: CAVE_MAP_NODE_LAYOUT,
+  [CASTLE_MAP_ID]: CASTLE_MAP_NODE_LAYOUT,
+  [TOWN_MAP_ID]: TOWN_MAP_NODE_LAYOUT,
+}
+
 export function layoutForMap(mapId: string): Record<string, NodePosition> {
-  switch (mapId) {
-    case CAVE_MAP_ID:
-      return CAVE_MAP_NODE_LAYOUT
-    case CASTLE_MAP_ID:
-      return CASTLE_MAP_NODE_LAYOUT
-    case MAIN_MAP_ID:
-    default:
-      return MAIN_MAP_NODE_LAYOUT
-  }
+  return LAYOUTS[mapId] ?? MAIN_MAP_NODE_LAYOUT
 }
 
 export function positionForLocation(location: LocationRow): NodePosition {

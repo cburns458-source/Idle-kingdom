@@ -61,7 +61,7 @@ describe('travel rules', () => {
     const now = Date.parse('2026-01-01T00:00:00.000Z')
     const save = {
       ...createNewSave(launch),
-      currentLocationId: 'LOC-0002',
+      currentLocationId: 'LOC-0023',
       currentActivityId: 'ACT-0017',
       activityStartedAt: '2026-01-01T00:00:00.000Z',
       currentActionId: 'ACN-0105',
@@ -96,7 +96,22 @@ describe('travel rules', () => {
   it('opens cave sub-map from the cave entrance location', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const entrance = launch.Locations.find((location) => location['Location ID'] === 'LOC-0010')!
-    expect(resolveActiveMapId(entrance)).toBe('MAP-0002')
+    expect(resolveActiveMapId(launch, entrance)).toBe('MAP-0002')
+  })
+
+  it('opens town sub-map from The Town gateway', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const town = launch.Locations.find((location) => location['Location ID'] === 'LOC-0002')!
+    expect(resolveActiveMapId(launch, town)).toBe('MAP-0006')
+    const townNodes = locationsForMapView(launch, 'MAP-0006').map((row) => row['Location ID'])
+    expect(townNodes).toEqual(
+      expect.arrayContaining(['LOC-0002', 'LOC-0023', 'LOC-0024', 'LOC-0025']),
+    )
+    expect(townNodes).not.toContain('LOC-0026')
+    const unlocked = locationsForMapView(launch, 'MAP-0006', {
+      unlockedLocationIds: ['LOC-0026'],
+    }).map((row) => row['Location ID'])
+    expect(unlocked).toContain('LOC-0026')
   })
 
   it('lists castle and cave sub-map nodes including new content rooms', () => {

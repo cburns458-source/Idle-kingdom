@@ -30,7 +30,7 @@ describe('inventory selling', () => {
 
   it('uses shop sell price when an accessible shop will buy the item', () => {
     const { launch } = prepareDatabase(rawDatabase)
-    let save = { ...createNewSave(launch), currentLocationId: 'LOC-0002' }
+    let save = { ...createNewSave(launch), currentLocationId: 'LOC-0024' }
     save = addItemToInventory(save, 'ITEM-0025', 2)
     const priced = sellPriceAtLocation(launch, save, 'ITEM-0025')
     expect(priced?.shopId).toBeTruthy()

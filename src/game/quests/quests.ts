@@ -1,9 +1,10 @@
 import { addItemToInventory } from '../activity/rewards'
 import { applyXp } from '../activity/xp'
 import type { GameDatabase } from '../data/types'
-import { inventoryCount } from '../production/recipes'
 import { removeIngredients } from '../production/inventory'
 import type { PlayerSave, QuestProgress } from '../save/types'
+import { unlockLocation } from '../world/submaps'
+import { parseQuestObjectives, questObjectiveProgress } from './objectives'
 
 export interface QuestRow {
   'Quest ID': string
@@ -113,21 +114,43 @@ export function completeQuest(
     return { ok: false, reason: 'Accept this quest before turning it in.' }
   }
 
-  const targetId = quest['Objective Target ID']
-  const required = quest['Required Quantity']
-  if (!targetId || typeof required !== 'number' || required <= 0) {
+  const parsed = parseQuestObjectives(quest)
+  if (parsed.delivers.length === 0 && parsed.goldCost <= 0) {
     return { ok: false, reason: 'Quest objectives are incomplete in data.' }
   }
-  if (inventoryCount(save, targetId) < required) {
-    const itemName =
-      db.Items.find((item) => item['Item ID'] === targetId)?.['Display Name'] ?? 'items'
-    return { ok: false, reason: `Need ${required} ${itemName}.` }
+
+  const status = questObjectiveProgress(db, save, quest)
+  if (!status.ready) {
+    const missing = status.lines
+      .filter((line) => line.owned < line.required)
+      .map((line) => `${line.required} ${line.name}`)
+    if (status.goldOwned < status.goldRequired) {
+      missing.push(`${status.goldRequired.toLocaleString()} gold`)
+    }
+    return {
+      ok: false,
+      reason: missing.length > 0 ? `Need ${missing.join(', ')}.` : 'Objectives incomplete.',
+    }
   }
 
-  const removed = removeIngredients(save, [{ itemId: targetId, quantity: required }], 1)
-  if (!removed) return { ok: false, reason: 'Missing required items.' }
+  let next: PlayerSave = save
+  if (parsed.delivers.length > 0) {
+    const removed = removeIngredients(
+      next,
+      parsed.delivers.map((line) => ({ itemId: line.itemId, quantity: line.quantity })),
+      1,
+    )
+    if (!removed) return { ok: false, reason: 'Missing required items.' }
+    next = removed
+  }
 
-  let next = removed
+  if (parsed.goldCost > 0) {
+    if (next.gold < parsed.goldCost) {
+      return { ok: false, reason: `Need ${parsed.goldCost.toLocaleString()} gold.` }
+    }
+    next = { ...next, gold: next.gold - parsed.goldCost }
+  }
+
   const rewards: QuestRewardLine[] = []
   const xpSkill = quest['Reward XP Skill ID']
   const xpAmount = quest['Reward XP Amount']
@@ -148,9 +171,23 @@ export function completeQuest(
     rewards.push({ label: `${rewardQty}× ${itemName}` })
   }
 
+  let unlocked = next.unlockedLocationIds ?? []
+  for (const locationId of parsed.unlockLocationIds) {
+    const before = unlocked.length
+    unlocked = unlockLocation({ unlockedLocationIds: unlocked }, locationId)
+    if (unlocked.length > before) {
+      const locName =
+        db.Locations.find((location) => location['Location ID'] === locationId)?.[
+          'Display Name'
+        ] ?? locationId
+      rewards.push({ label: `Unlocked ${locName}` })
+    }
+  }
+
   const nextQuests = next.quests.filter((row) => row.questId !== questId)
-  nextQuests.push({ questId, status: 'completed', progress: required })
-  next = { ...next, quests: nextQuests }
+  const progressTotal = parsed.delivers.reduce((sum, line) => sum + line.quantity, 0)
+  nextQuests.push({ questId, status: 'completed', progress: progressTotal })
+  next = { ...next, quests: nextQuests, unlockedLocationIds: unlocked }
 
   return {
     ok: true,

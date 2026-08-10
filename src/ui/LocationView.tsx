@@ -5,7 +5,7 @@ import {
   specialProductionStationsAt,
   type SpecialProductionStation,
 } from '../game/projects/projects'
-import { CASTLE_GATEWAY_ID, CAVE_ENTRANCE_ID } from '../game/world/constants'
+import { enterSubMapLabel, isSubMapGateway } from '../game/world/submaps'
 
 interface LocationViewProps {
   indexes: DatabaseIndexes
@@ -24,6 +24,8 @@ interface LocationViewProps {
   onOpenNpc: (npcId: string) => void
   onOpenMap: () => void
   onOpenSubMap?: () => void
+  /** CTA label for entering this location's child sub-map. */
+  enterSubMapLabelText?: string | null
   /** When set, show a control to reopen this location's sub-map. */
   parentSubMapName?: string | null
   onOpenParentSubMap?: () => void
@@ -58,6 +60,7 @@ export function LocationView({
   onOpenNpc,
   onOpenMap,
   onOpenSubMap,
+  enterSubMapLabelText,
   parentSubMapName,
   onOpenParentSubMap,
   requirementHint,
@@ -68,9 +71,10 @@ export function LocationView({
   const specialStations = specialProductionStationsAt(db, locationId)
   const shops = indexes.shopsByLocationId.get(locationId) ?? []
   const npcs = indexes.npcsByLocationId.get(locationId) ?? []
+  const gatewayLabel =
+    enterSubMapLabelText ?? enterSubMapLabel(db, location)
   const showSubMapEntrance =
-    Boolean(onOpenSubMap) &&
-    (locationId === CAVE_ENTRANCE_ID || locationId === CASTLE_GATEWAY_ID)
+    Boolean(onOpenSubMap) && isSubMapGateway(location) && Boolean(gatewayLabel)
   const showBackToSubMap =
     Boolean(onOpenParentSubMap) && Boolean(parentSubMapName) && !showSubMapEntrance
   const showActivityPanel =
@@ -132,7 +136,7 @@ export function LocationView({
         {showSubMapEntrance && (
           <div className="location-overlay-actions">
             <button type="button" className="btn secondary glass-btn" onClick={onOpenSubMap}>
-              {locationId === CAVE_ENTRANCE_ID ? 'Enter Caves' : 'Enter Castle'}
+              {gatewayLabel}
             </button>
           </div>
         )}

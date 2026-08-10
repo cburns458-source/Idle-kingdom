@@ -202,6 +202,20 @@ export const SAVE_MIGRATIONS: SaveMigration[] = [
       saveVersion: 14,
     }),
   },
+  {
+    fromVersion: 14,
+    toVersion: 15,
+    migrate: (save) => ({
+      ...save,
+      unlockedLocationIds: Array.isArray(save.unlockedLocationIds)
+        ? save.unlockedLocationIds
+        : [],
+      claimedMerchantTipIds: Array.isArray(save.claimedMerchantTipIds)
+        ? save.claimedMerchantTipIds
+        : [],
+      saveVersion: 15,
+    }),
+  },
 ]
 
 export function migrateSave(save: PlayerSave): PlayerSave {

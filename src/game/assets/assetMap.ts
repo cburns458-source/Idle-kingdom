@@ -8,6 +8,7 @@ export const MAP_ASSET_PATHS: Record<string, string> = {
   'MAP-0003': '/assets/maps/map_castle_grounds.png',
   'MAP-0004': '/assets/maps/map_idale_west.png',
   'MAP-0005': '/assets/maps/map_idale_east.png',
+  'MAP-0006': '/assets/maps/map_town.png',
 }
 
 export const LOCATION_ASSET_PATHS: Record<string, string> = {
@@ -32,6 +33,10 @@ export const LOCATION_ASSET_PATHS: Record<string, string> = {
   // Temporary reuse until dedicated art exists.
   'LOC-0021': '/assets/locations/loc_kings_quarters.png',
   'LOC-0022': '/assets/locations/loc_deep_mines.png',
+  'LOC-0023': '/assets/locations/loc_town_kitchen.png',
+  'LOC-0024': '/assets/locations/loc_town_general_store.png',
+  'LOC-0025': '/assets/locations/loc_town_foundry.png',
+  'LOC-0026': '/assets/locations/loc_town_apothecary.png',
 }
 
 export function mapAssetPath(mapId: string): string {

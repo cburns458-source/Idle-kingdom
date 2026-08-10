@@ -15,6 +15,8 @@ function sampleSave(skills: Array<{ skillId: string; level: number; xp: number }
     achievements: [],
     statistics: { values: {} },
     unlockedNpcIds: [],
+    unlockedLocationIds: [],
+    claimedMerchantTipIds: [],
     settings: { soundEnabled: true, showActivityRewards: true, hudShowTotalXp: false },
     characterName: 'Tester',
     currentLocationId: 'LOC-0002',

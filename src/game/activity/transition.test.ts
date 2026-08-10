@@ -119,7 +119,7 @@ describe('immediate activity changes (no change cooldown)', () => {
     if (!started.ok) return
     save = {
       ...started.save,
-      currentLocationId: 'LOC-0002',
+      currentLocationId: 'LOC-0023',
       inventory: [...started.save.inventory, { itemId: 'ITEM-0025', quantity: 4 }],
     }
 

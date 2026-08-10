@@ -1,12 +1,13 @@
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 import type { GameDatabase, NpcRow } from '../game/data/types'
-import { raiseSkillToMinimumLevel } from '../game/activity/xp'
+import { applyXp } from '../game/activity/xp'
 import {
   ARCHMAGE_ID,
   MASTER_DWARF_ID,
   hasNpcKnowledge,
   unlockNpcKnowledge,
 } from '../game/npcs/knowledge'
+import { questObjectiveProgress } from '../game/quests/objectives'
 import {
   acceptQuest,
   completeQuest,
@@ -15,11 +16,13 @@ import {
   type QuestRewardLine,
 } from '../game/quests/quests'
 import type { PlayerSave } from '../game/save/types'
-import { inventoryCount } from '../game/production/recipes'
 import { QuestRewardPopup } from './QuestRewardPopup'
 
-const ALCHEMY_SKILL_ID = 'SKL-0010'
-const MERCHANT_ALCHEMY_TIP_LEVEL = 10
+const GENERAL_STORE_MERCHANT_ID = 'NPC-0007'
+const ARTISANRY_SKILL_ID = 'SKL-0012'
+const MERCHANT_ARTISANRY_TIP_XP = 11_000
+const ROSE_NPC_ID = 'NPC-0005'
+const ROSE_QUEST_ID = 'QST-0002'
 
 interface NpcPanelProps {
   db: GameDatabase
@@ -40,38 +43,32 @@ export function NpcPanel({
   const quests = questsForNpc(db, npc['NPC ID'])
   const isMentor = npc['NPC ID'] === MASTER_DWARF_ID || npc['NPC ID'] === ARCHMAGE_ID
   const isMerchant = (npc.Role ?? '').toLowerCase() === 'merchant'
+  const isGeneralStoreMerchant = npc['NPC ID'] === GENERAL_STORE_MERCHANT_ID
+  const isRose = npc['NPC ID'] === ROSE_NPC_ID
   const knowsMentor = hasNpcKnowledge(save, npc['NPC ID'])
   const [rewardPopup, setRewardPopup] = useState<{
     questName: string
     rewards: QuestRewardLine[]
   } | null>(null)
+  const tipClaimed = (save.claimedMerchantTipIds ?? []).includes(npc['NPC ID'])
   const [merchantDialogueOpen, setMerchantDialogueOpen] = useState(isMerchant)
-  const merchantTipGranted = useRef(false)
-
-  useEffect(() => {
-    if (!isMerchant || merchantTipGranted.current) return
-    merchantTipGranted.current = true
-    const tipped = raiseSkillToMinimumLevel(
-      save,
-      db,
-      ALCHEMY_SKILL_ID,
-      MERCHANT_ALCHEMY_TIP_LEVEL,
-    )
-    if (tipped.raised) {
-      onChangeSave(
-        {
-          ...tipped.save,
-          updatedAt: new Date().toISOString(),
-        },
-        null,
-      )
-    }
-    setMerchantDialogueOpen(true)
-    // Grant once when this merchant talk session opens.
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional mount-only tip
-  }, [npc['NPC ID']])
+  const roseQuest = quests.find((quest) => quest['Quest ID'] === ROSE_QUEST_ID)
+  const roseProgress = roseQuest ? getQuestProgress(save, ROSE_QUEST_ID) : null
+  const [rosePitchOpen, setRosePitchOpen] = useState(
+    Boolean(isRose && roseQuest && roseProgress?.status === 'inactive'),
+  )
 
   if (isMerchant) {
+    const tipLine = isGeneralStoreMerchant
+      ? tipClaimed
+        ? 'I’ve already shared what I know about artisanry.'
+        : 'Here’s some tips about artisanry'
+      : npc.Description ?? 'Welcome to my shop.'
+    const tipDetail =
+      isGeneralStoreMerchant && !tipClaimed
+        ? `${MERCHANT_ARTISANRY_TIP_XP.toLocaleString()} Artisanry XP`
+        : null
+
     return (
       <>
         {merchantDialogueOpen && (
@@ -83,12 +80,26 @@ export function NpcPanel({
           >
             <div className="panel quest-reward-card">
               <h2 id="merchant-dialogue-title">{npc['Display Name']}</h2>
-              <p className="lead">Here’s some tips on how to brew potions</p>
-              <p className="muted">level 10 alchemy</p>
+              <p className="lead">{tipLine}</p>
+              {tipDetail && <p className="muted">{tipDetail}</p>}
               <button
                 type="button"
                 className="btn primary"
                 onClick={() => {
+                  if (isGeneralStoreMerchant && !tipClaimed) {
+                    const applied = applyXp(save, db, ARTISANRY_SKILL_ID, MERCHANT_ARTISANRY_TIP_XP)
+                    onChangeSave(
+                      {
+                        ...applied.save,
+                        claimedMerchantTipIds: [
+                          ...(save.claimedMerchantTipIds ?? []),
+                          npc['NPC ID'],
+                        ],
+                        updatedAt: new Date().toISOString(),
+                      },
+                      `Learned artisanry tips (+${MERCHANT_ARTISANRY_TIP_XP.toLocaleString()} XP).`,
+                    )
+                  }
                   setMerchantDialogueOpen(false)
                   onClose()
                 }}
@@ -99,6 +110,52 @@ export function NpcPanel({
           </div>
         )}
       </>
+    )
+  }
+
+  if (isRose && rosePitchOpen && roseQuest && roseProgress?.status === 'inactive') {
+    return (
+      <div
+        className="quest-reward-overlay"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="rose-dialogue-title"
+      >
+        <div className="panel quest-reward-card">
+          <h2 id="rose-dialogue-title">{npc['Display Name']}</h2>
+          <p className="lead">
+            I’m tired of working in the kitchen, I just saw a lot for sale down the street, I’m
+            thinking of starting the alchemy shop I’ve always dreamed of…
+          </p>
+          <div className="button-row" style={{ justifyContent: 'center' }}>
+            <button
+              type="button"
+              className="btn secondary"
+              onClick={() => {
+                setRosePitchOpen(false)
+                onClose()
+              }}
+            >
+              Not now
+            </button>
+            <button
+              type="button"
+              className="btn primary"
+              onClick={() => {
+                const result = acceptQuest(db, save, ROSE_QUEST_ID)
+                if (!result.ok) {
+                  onChangeSave(save, result.reason)
+                  return
+                }
+                setRosePitchOpen(false)
+                onChangeSave(result.save, `Started quest: ${roseQuest['Display Name']}.`)
+              }}
+            >
+              Start quest: Help the aspiring apothecary
+            </button>
+          </div>
+        </div>
+      </div>
     )
   }
 
@@ -152,24 +209,27 @@ export function NpcPanel({
 
         {quests.map((quest) => {
           const progress = getQuestProgress(save, quest['Quest ID'])
-          const targetId = quest['Objective Target ID']
-          const required = quest['Required Quantity'] ?? 0
-          const owned = targetId ? inventoryCount(save, targetId) : 0
-          const targetName = targetId
-            ? (db.Items.find((item) => item['Item ID'] === targetId)?.['Display Name'] ?? targetId)
-            : 'items'
+          const objective = questObjectiveProgress(db, save, quest)
 
           return (
             <div key={quest['Quest ID']} className="npc-quest-block">
               <h3>{quest['Display Name']}</h3>
               <p className="lead">{quest.Summary}</p>
               {progress.status === 'completed' ? (
-                <p className="muted">Completed.</p>
+                <p className="muted">
+                  {quest['Quest ID'] === ROSE_QUEST_ID
+                    ? 'Completed — Rose’s Apothecary is open on the Town Map.'
+                    : 'Completed.'}
+                </p>
               ) : progress.status === 'inactive' ? (
                 <button
                   type="button"
                   className="btn primary"
                   onClick={() => {
+                    if (quest['Quest ID'] === ROSE_QUEST_ID) {
+                      setRosePitchOpen(true)
+                      return
+                    }
                     const result = acceptQuest(db, save, quest['Quest ID'])
                     if (!result.ok) {
                       onChangeSave(save, result.reason)
@@ -178,17 +238,27 @@ export function NpcPanel({
                     onChangeSave(result.save, `Accepted: ${quest['Display Name']}.`)
                   }}
                 >
-                  Accept quest
+                  {quest['Quest ID'] === ROSE_QUEST_ID
+                    ? 'Start quest: Help the aspiring apothecary'
+                    : 'Accept quest'}
                 </button>
               ) : (
                 <>
-                  <p className="muted tiny">
-                    Progress: {Math.min(owned, required)} / {required} {targetName}
-                  </p>
+                  {objective.lines.map((line) => (
+                    <p key={line.itemId} className="muted tiny">
+                      Progress: {Math.min(line.owned, line.required)} / {line.required} {line.name}
+                    </p>
+                  ))}
+                  {objective.goldRequired > 0 && (
+                    <p className="muted tiny">
+                      Gold: {objective.goldOwned.toLocaleString()} /{' '}
+                      {objective.goldRequired.toLocaleString()}
+                    </p>
+                  )}
                   <button
                     type="button"
                     className="btn primary"
-                    disabled={owned < required}
+                    disabled={!objective.ready}
                     onClick={() => {
                       const result = completeQuest(db, save, quest['Quest ID'])
                       if (!result.ok) {
@@ -209,7 +279,6 @@ export function NpcPanel({
             </div>
           )
         })}
-
       </section>
 
       {rewardPopup && (

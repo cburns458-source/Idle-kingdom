@@ -1,4 +1,4 @@
-export const SAVE_VERSION = 14
+export const SAVE_VERSION = 15
 export const SAVE_STORAGE_KEY = 'idle-kingdoms.demo.save'
 export const STARTING_LOCATION_ID = 'LOC-0002'
 export const STARTING_GOLD = 25
@@ -107,6 +107,10 @@ export interface PlayerSave {
   statistics: PlayerStatistics
   /** NPC IDs that have granted permanent project knowledge (Master Dwarf / Archmage). */
   unlockedNpcIds: string[]
+  /** Location IDs unlocked by quests (e.g. Rose's Apothecary). */
+  unlockedLocationIds: string[]
+  /** Merchant tip rewards already claimed (one-time dialogue grants). */
+  claimedMerchantTipIds: string[]
   settings: PlayerSettings
   currentLocationId: string
   currentActivityId: string | null

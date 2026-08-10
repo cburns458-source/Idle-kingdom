@@ -6,15 +6,19 @@ export const CAVE_MAP_ID = 'MAP-0002'
 export const CASTLE_MAP_ID = 'MAP-0003'
 export const WEST_MAP_ID = 'MAP-0004'
 export const EAST_MAP_ID = 'MAP-0005'
+export const TOWN_MAP_ID = 'MAP-0006'
 
 export const CAVE_ENTRANCE_ID = 'LOC-0010'
 export const CASTLE_GATEWAY_ID = 'LOC-0013'
+export const TOWN_GATEWAY_ID = 'LOC-0002'
 export const WEST_HORIZON_ID = 'LOC-0019'
 export const EAST_HORIZON_ID = 'LOC-0020'
 
-export function isSubMapId(mapId: string | null | undefined): boolean {
-  return mapId === CAVE_MAP_ID || mapId === CASTLE_MAP_ID
-}
+/** Town district nodes (MAP-0006). */
+export const TOWN_KITCHEN_ID = 'LOC-0023'
+export const TOWN_GENERAL_STORE_ID = 'LOC-0024'
+export const TOWN_FOUNDRY_ID = 'LOC-0025'
+export const TOWN_APOTHECARY_ID = 'LOC-0026'
 
 export function isFutureHorizonLocation(locationId: string): boolean {
   return locationId === WEST_HORIZON_ID || locationId === EAST_HORIZON_ID
@@ -24,4 +28,8 @@ export function adjacentMapForHorizon(locationId: string): string | null {
   if (locationId === WEST_HORIZON_ID) return WEST_MAP_ID
   if (locationId === EAST_HORIZON_ID) return EAST_MAP_ID
   return null
+}
+
+export function isFutureRegionMapId(mapId: string | null | undefined): boolean {
+  return mapId === WEST_MAP_ID || mapId === EAST_MAP_ID
 }

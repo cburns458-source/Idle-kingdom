@@ -148,7 +148,7 @@ describe('Step 11 release audit', () => {
     save = addItemToInventory(
       {
         ...save,
-        currentLocationId: 'LOC-0002',
+        currentLocationId: 'LOC-0023',
         currentActivityId: null,
         currentActionId: null,
         productionRecipeId: null,
