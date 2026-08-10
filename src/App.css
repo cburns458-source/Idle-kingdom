@@ -220,7 +220,7 @@
   width: 100%;
   height: 100%;
   transform-origin: left center;
-  background: linear-gradient(90deg, #7f4a3a 0%, #c45c48 45%, #e2a06a 100%);
+  background: linear-gradient(90deg, #2f6b3a 0%, #4f9a55 45%, #8fce6b 100%);
   transition: transform 160ms ease-out;
 }
 
