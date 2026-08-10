@@ -127,6 +127,9 @@ describe('standard production', () => {
     expect(resolved.save.inventory.find((stack) => stack.itemId === 'ITEM-0058')?.quantity).toBe(2)
     const cooking = resolved.save.skills.find((skill) => skill.skillId === 'SKL-0007')
     expect(cooking?.xp).toBe(1_000)
+    expect(resolved.messages).toEqual([
+      expect.stringMatching(/^Crafted 2 Baked Potato \(\+\d+ XP\)$/),
+    ])
   })
 
   it('refunds remaining materials when cancelled', () => {

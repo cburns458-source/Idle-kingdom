@@ -194,7 +194,9 @@ export function resolveProductionProgress(
 ): { save: PlayerSave; craftsCompleted: number; messages: string[] } {
   let current = save
   let craftsCompleted = 0
-  const messages: string[] = []
+  /** Aggregate identical outputs so AFK summaries show one line per item. */
+  const craftTotals = new Map<string, { qty: number; xp: number }>()
+  const craftOrder: string[] = []
 
   while (
     current.productionRecipeId &&
@@ -208,11 +210,24 @@ export function resolveProductionProgress(
     if (!completed) break
     current = completed.save
     craftsCompleted += 1
-    messages.push(
-      `Crafted ${completed.outputQty} ${completed.outputName} (+${completed.xpGained} XP)`,
-    )
+    const existing = craftTotals.get(completed.outputName)
+    if (!existing) {
+      craftOrder.push(completed.outputName)
+      craftTotals.set(completed.outputName, {
+        qty: completed.outputQty,
+        xp: completed.xpGained,
+      })
+    } else {
+      existing.qty += completed.outputQty
+      existing.xp += completed.xpGained
+    }
     if (completed.finishedQueue) break
   }
+
+  const messages = craftOrder.map((name) => {
+    const total = craftTotals.get(name)!
+    return `Crafted ${total.qty} ${name} (+${total.xp} XP)`
+  })
 
   return { save: current, craftsCompleted, messages }
 }
