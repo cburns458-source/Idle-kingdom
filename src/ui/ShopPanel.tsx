@@ -303,7 +303,7 @@ export function ShopPanel({ db, save, shopId, onClose, onComplete }: ShopPanelPr
 
       {qtyDialog && (
         <div
-          className="quest-reward-overlay"
+          className="quest-reward-overlay shop-qty-overlay"
           role="dialog"
           aria-modal="true"
           aria-labelledby="shop-qty-title"

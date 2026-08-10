@@ -6,9 +6,12 @@ import { createMemoryStorage } from '../../test/memoryStorage'
 import { createNewSave, loadOrCreateSave, readSave, writeSave } from './saveStore'
 import {
   SAVE_STORAGE_KEY,
+  STARTING_BAKED_POTATO_ID,
+  STARTING_BAKED_POTATO_QTY,
   STARTING_GOLD,
-  STARTING_HUNTING_TOOL_ID,
   STARTING_LOCATION_ID,
+  STARTING_MINOR_STRENGTH_POTION_ID,
+  STARTING_WOODEN_AXE_ID,
   WEAPON_TOOL_SLOT_ID,
 } from './types'
 
@@ -17,17 +20,19 @@ const rawDatabase = JSON.parse(
 )
 
 describe('local save', () => {
-  it('creates one Town save with starting hunting Net equipped and no gold', () => {
+  it('creates one Town save with starter kit items and gold', () => {
     const { source } = prepareDatabase(rawDatabase)
     const save = createNewSave(source)
 
     expect(save.currentLocationId).toBe(STARTING_LOCATION_ID)
     expect(save.gold).toBe(STARTING_GOLD)
-    expect(save.inventory).toEqual([])
-    expect(save.equipment.slots[WEAPON_TOOL_SLOT_ID]).toEqual({
-      itemId: STARTING_HUNTING_TOOL_ID,
-      quantity: 1,
-    })
+    expect(save.gold).toBe(25)
+    expect(save.inventory).toEqual([
+      { itemId: STARTING_BAKED_POTATO_ID, quantity: STARTING_BAKED_POTATO_QTY },
+      { itemId: STARTING_MINOR_STRENGTH_POTION_ID, quantity: 1 },
+      { itemId: STARTING_WOODEN_AXE_ID, quantity: 1 },
+    ])
+    expect(save.equipment.slots[WEAPON_TOOL_SLOT_ID]).toBeNull()
     expect(save.currentActivityId).toBeNull()
     expect(save.skills.length).toBeGreaterThan(0)
     expect(save.skills.every((skill) => skill.level === 1 && skill.xp === 0)).toBe(true)
@@ -45,7 +50,7 @@ describe('local save', () => {
     expect(second.created).toBe(false)
     expect(second.save.createdAt).toBe(first.save.createdAt)
     expect(second.save.currentLocationId).toBe(STARTING_LOCATION_ID)
-    expect(second.save.gold).toBe(0)
+    expect(second.save.gold).toBe(STARTING_GOLD)
   })
 
   it('persists updates through write/read', () => {
@@ -57,6 +62,8 @@ describe('local save', () => {
 
     expect(loaded?.saveVersion).toBe(written.saveVersion)
     expect(loaded?.currentLocationId).toBe(STARTING_LOCATION_ID)
-    expect(loaded?.equipment.slots[WEAPON_TOOL_SLOT_ID]?.itemId).toBe(STARTING_HUNTING_TOOL_ID)
+    expect(loaded?.inventory.find((stack) => stack.itemId === STARTING_WOODEN_AXE_ID)?.quantity).toBe(
+      1,
+    )
   })
 })

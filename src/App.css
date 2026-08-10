@@ -821,6 +821,14 @@
   flex: 1;
 }
 
+/* Keep buy/sell amount dialog in the upper half so mobile keyboards do not cover the input. */
+.quest-reward-overlay.shop-qty-overlay {
+  place-items: start center;
+  align-content: start;
+  padding-top: max(0.75rem, 6vh);
+  padding-bottom: 48vh;
+}
+
 .npc-quest-block,
 .npc-action-block {
   margin-top: 0.65rem;

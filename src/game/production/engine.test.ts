@@ -104,6 +104,7 @@ describe('standard production', () => {
   it('completes crafts offline and grants output + XP', () => {
     const { launch } = prepareDatabase(rawDatabase)
     let save = createNewSave(launch)
+    save = { ...save, inventory: [] }
     save = addItemToInventory(save, 'ITEM-0025', 2)
     const queued = beginProductionQueue(
       launch,

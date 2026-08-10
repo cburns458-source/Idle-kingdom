@@ -1,10 +1,15 @@
 export const SAVE_VERSION = 11
 export const SAVE_STORAGE_KEY = 'idle-kingdoms.demo.save'
 export const STARTING_LOCATION_ID = 'LOC-0002'
-export const STARTING_GOLD = 0
-/** Level 1 Hunting Net — demo starting tool for hunting tests. */
+export const STARTING_GOLD = 25
+/** Level 1 Hunting Net — granted on older save migration only. */
 export const STARTING_HUNTING_TOOL_ID = 'ITEM-0108'
 export const WEAPON_TOOL_SLOT_ID = 'SLOT-0001'
+/** New-player starter kit item IDs. */
+export const STARTING_BAKED_POTATO_ID = 'ITEM-0058'
+export const STARTING_BAKED_POTATO_QTY = 5
+export const STARTING_MINOR_STRENGTH_POTION_ID = 'ITEM-0211'
+export const STARTING_WOODEN_AXE_ID = 'ITEM-0100'
 export const CHARACTER_NAME_MAX_LENGTH = 24
 
 export interface SkillProgress {

@@ -1,11 +1,14 @@
 import type { GameDatabase } from '../data/types'
 import { migrateSave } from './migrations'
-import { ensureStartingHuntingTool } from './startingGear'
 import {
   SAVE_STORAGE_KEY,
   SAVE_VERSION,
+  STARTING_BAKED_POTATO_ID,
+  STARTING_BAKED_POTATO_QTY,
   STARTING_GOLD,
   STARTING_LOCATION_ID,
+  STARTING_MINOR_STRENGTH_POTION_ID,
+  STARTING_WOODEN_AXE_ID,
   type EquippedStack,
   type PlayerSave,
 } from './types'
@@ -41,13 +44,17 @@ export function createNewSave(db: GameDatabase): PlayerSave {
     slots[slot['Slot ID']] = null
   }
 
-  return ensureStartingHuntingTool({
+  return {
     saveVersion: SAVE_VERSION,
     createdAt: timestamp,
     updatedAt: timestamp,
     characterName: null,
     skills,
-    inventory: [],
+    inventory: [
+      { itemId: STARTING_BAKED_POTATO_ID, quantity: STARTING_BAKED_POTATO_QTY },
+      { itemId: STARTING_MINOR_STRENGTH_POTION_ID, quantity: 1 },
+      { itemId: STARTING_WOODEN_AXE_ID, quantity: 1 },
+    ],
     equipment: { slots },
     gold: STARTING_GOLD,
     quests: [],
@@ -72,7 +79,7 @@ export function createNewSave(db: GameDatabase): PlayerSave {
     unattendedProgressAt: timestamp,
     currentHp: maxHp,
     maxHp,
-  })
+  }
 }
 
 function isObject(value: unknown): value is Record<string, unknown> {

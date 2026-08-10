@@ -24,7 +24,7 @@ describe('quests', () => {
   it('completes The Grand Feast once with potatoes for cooking XP and a Golden Spud', () => {
     const { launch } = prepareDatabase(rawDatabase)
     let save = createNewSave(launch)
-    save = { ...save, currentLocationId: 'LOC-0016' }
+    save = { ...save, inventory: [], currentLocationId: 'LOC-0016' }
     const accepted = acceptQuest(launch, save, 'QST-0001')
     expect(accepted.ok).toBe(true)
     if (!accepted.ok) return

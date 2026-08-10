@@ -25,6 +25,7 @@ describe('equipment loadout', () => {
   it('moves the entire food stack out of inventory into the food slot', () => {
     const { launch } = prepareDatabase(rawDatabase)
     let save = createNewSave(launch)
+    save = { ...save, inventory: [] }
     save = addItemToInventory(save, 'ITEM-0058', 5)
     const equipped = equipItemFromInventory(launch, save, 'ITEM-0058')
     expect(equipped.ok).toBe(true)
@@ -40,6 +41,7 @@ describe('equipment loadout', () => {
   it('consumes from the equipped food stack across multiple victories', () => {
     const { launch } = prepareDatabase(rawDatabase)
     let save = createNewSave(launch)
+    save = { ...save, inventory: [] }
     save = equipStackToSlot(save, FOOD_SLOT_ID, 'ITEM-0058', 3)
     save = { ...save, currentHp: 900 }
 
@@ -60,6 +62,7 @@ describe('equipment loadout', () => {
   it('returns the remaining food stack to inventory on unequip', () => {
     const { launch } = prepareDatabase(rawDatabase)
     let save = createNewSave(launch)
+    save = { ...save, inventory: [] }
     save = equipStackToSlot(save, FOOD_SLOT_ID, 'ITEM-0058', 4)
     save = unequipSlot(save, FOOD_SLOT_ID)
     expect(save.equipment.slots[FOOD_SLOT_ID]).toBeNull()
