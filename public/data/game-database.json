@@ -8763,7 +8763,7 @@
       "Internal Key": "gather_woodland_supplies",
       "Contextual Name": "Gather woodland supplies",
       "Location ID": "LOC-0008",
-      "Description": "Cut Cedar Trees and harvest Augur Weed.",
+      "Description": "Cut Cedar Trees and harvest Mosstole and Wild Berries.",
       "Danger Warning Combat Level": null,
       "Pool ID": "POOL-0010",
       "Pool Internal Key": "kingswoods_harvest",
@@ -9222,9 +9222,9 @@
       "Pool Entry ID": "PEN-0029",
       "Pool ID": "POOL-0010",
       "Action ID": "ACN-0046",
-      "Weight": 60,
+      "Weight": 50,
       "Status": "Planned",
-      "Notes": "Level 1 Woodcutting; replaces Fernleaf in Kingswoods harvest pool."
+      "Notes": "Level 1 Woodcutting; weight 50 with wild berries at 10."
     },
     {
       "Pool Entry ID": "PEN-0030",
@@ -9233,6 +9233,14 @@
       "Weight": 40,
       "Status": "Planned",
       "Notes": "Replaced Augur Weed with Mosstole."
+    },
+    {
+      "Pool Entry ID": "PEN-0060",
+      "Pool ID": "POOL-0010",
+      "Action ID": "ACN-0108",
+      "Weight": 10,
+      "Status": "Planned",
+      "Notes": "Wild berries; 10% of kingswoods harvest pool."
     },
     {
       "Pool Entry ID": "PEN-0031",
