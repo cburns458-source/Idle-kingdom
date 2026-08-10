@@ -6,6 +6,7 @@ import type { EnemyRow } from '../data/enemyTypes'
 import type { PlayerSave } from '../save/types'
 import type { LootGrant } from '../activity/types'
 import { tryConsumeFoodAfterVictory } from './food'
+import { tryConsumeCombatEncounterPotion } from './potion'
 import {
   applyMitigation,
   playerDamageRange,
@@ -44,19 +45,22 @@ export function enemyForAction(db: GameDatabase, action: ActionRow): EnemyRow | 
 }
 
 export function beginCombatSave(
+  db: GameDatabase,
   save: PlayerSave,
   action: ActionRow,
   enemy: EnemyRow,
   nowIso: string = new Date().toISOString(),
 ): PlayerSave {
+  const potion = tryConsumeCombatEncounterPotion(db, save)
   return {
-    ...save,
+    ...potion.save,
     currentActionId: action['Action ID'],
     actionStartedAt: nowIso,
     actionDurationMs: null,
     combatEnemyId: enemy['Enemy ID'],
     combatEnemyHp: enemy['Maximum HP'],
     combatRoundStartedAt: nowIso,
+    combatPotionDamageBonusPercent: potion.consumed ? potion.damageBonusPercent : null,
     deathPauseUntil: null,
   }
 }
@@ -67,6 +71,7 @@ export function clearCombatSave(save: PlayerSave): PlayerSave {
     combatEnemyId: null,
     combatEnemyHp: null,
     combatRoundStartedAt: null,
+    combatPotionDamageBonusPercent: null,
   }
 }
 

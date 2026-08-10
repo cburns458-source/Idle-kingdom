@@ -146,7 +146,7 @@ export function generateNextAction(
     return {
       action,
       state: null,
-      save: beginCombatSave(withActivity, action, enemy, startedAt),
+      save: beginCombatSave(db, withActivity, action, enemy, startedAt),
     }
   }
 

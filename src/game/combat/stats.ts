@@ -45,6 +45,10 @@ export function playerDamageRange(
   const enchantBonus = equippedEnchantmentDamageBonus(db, save)
   const levelMult = combatLevelBonusMultiplier(save)
   const spellMult = activeSpellDamageRangeMultiplier(db, save, nowMs)
+  const potionMult =
+    save.combatPotionDamageBonusPercent && save.combatPotionDamageBonusPercent > 0
+      ? 1 + save.combatPotionDamageBonusPercent / 100
+      : 1
   const weaponId = save.equipment.slots[WEAPON_SLOT]?.itemId
   let min: number
   let max: number
@@ -64,7 +68,7 @@ export function playerDamageRange(
     max = configNumber(db, 'unarmed_max_damage', 30) + enchantBonus
   }
 
-  const combined = levelMult * spellMult
+  const combined = levelMult * spellMult * potionMult
   return {
     min: scaleStat(min, combined),
     max: Math.max(scaleStat(min, combined), scaleStat(max, combined)),

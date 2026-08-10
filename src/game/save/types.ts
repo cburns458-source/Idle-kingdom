@@ -1,4 +1,4 @@
-export const SAVE_VERSION = 11
+export const SAVE_VERSION = 12
 export const SAVE_STORAGE_KEY = 'idle-kingdoms.demo.save'
 export const STARTING_LOCATION_ID = 'LOC-0002'
 export const STARTING_GOLD = 25
@@ -100,6 +100,8 @@ export interface PlayerSave {
   combatEnemyId: string | null
   combatEnemyHp: number | null
   combatRoundStartedAt: string | null
+  /** Active encounter potion damage bonus percent; set when a combat potion is consumed. */
+  combatPotionDamageBonusPercent: number | null
   deathPauseUntil: string | null
   productionRecipeId: string | null
   productionQuantityTotal: number | null

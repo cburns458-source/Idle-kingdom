@@ -23,7 +23,7 @@ describe('combat engine', () => {
     const save = createNewSave(launch)
     const enemy = launch.Enemies.find((row) => row['Enemy ID'] === 'ENM-0001')!
     const action = launch.Actions.find((row) => row['Action ID'] === 'ACN-0001')!
-    const started = beginCombatSave(save, action, enemy)
+    const started = beginCombatSave(launch, save, action, enemy)
 
     // Force high player damage via stubbed random: first roll max-ish for player.
     const round = resolveCombatRound(launch, started, enemy, enemy['Maximum HP'], () => 0.999)

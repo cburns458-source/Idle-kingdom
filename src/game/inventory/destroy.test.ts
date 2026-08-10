@@ -26,6 +26,7 @@ function saveWithInventory(itemIds: string[]): PlayerSave {
     combatEnemyId: null,
     combatEnemyHp: null,
     combatRoundStartedAt: null,
+    combatPotionDamageBonusPercent: null,
     deathPauseUntil: null,
     productionRecipeId: null,
     productionQuantityTotal: null,

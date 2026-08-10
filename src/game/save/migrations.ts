@@ -149,6 +149,15 @@ export const SAVE_MIGRATIONS: SaveMigration[] = [
       saveVersion: 11,
     }),
   },
+  {
+    fromVersion: 11,
+    toVersion: 12,
+    migrate: (save) => ({
+      ...save,
+      combatPotionDamageBonusPercent: save.combatPotionDamageBonusPercent ?? null,
+      saveVersion: 12,
+    }),
+  },
 ]
 
 export function migrateSave(save: PlayerSave): PlayerSave {
