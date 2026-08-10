@@ -3,6 +3,7 @@ import { asStatisticRows } from '../game/achievements/progress'
 import type { GameDatabase, SkillRow } from '../game/data/types'
 import type { PlayerSave } from '../game/save/types'
 import { getSkillProgress } from '../game/activity/xp'
+import { actionsForSkill, type SkillActionListItem } from '../game/skills/skillActions'
 import { totalLevel, totalSkillXp } from '../game/skills/totals'
 import { SkillIcon } from './skillIcons'
 
@@ -16,7 +17,12 @@ export function SkillsView({ db, save }: SkillsViewProps) {
   const overallLevel = totalLevel(save)
   const overallXp = totalSkillXp(save)
   const [heldSkillId, setHeldSkillId] = useState<string | null>(null)
+  const [openSkillId, setOpenSkillId] = useState<string | null>(null)
   const statistics = asStatisticRows(db)
+  const openSkill = openSkillId
+    ? (skills.find((skill) => skill['Skill ID'] === openSkillId) ?? null)
+    : null
+  const openActions = openSkillId ? actionsForSkill(db, openSkillId) : []
 
   return (
     <section className="skills-view">
@@ -61,10 +67,19 @@ export function SkillsView({ db, save }: SkillsViewProps) {
               onHoldEnd={() =>
                 setHeldSkillId((current) => (current === skill['Skill ID'] ? null : current))
               }
+              onOpen={() => setOpenSkillId(skill['Skill ID'])}
             />
           )
         })}
       </ul>
+
+      {openSkill && (
+        <SkillActionsMenu
+          skill={openSkill}
+          actions={openActions}
+          onClose={() => setOpenSkillId(null)}
+        />
+      )}
     </section>
   )
 }
@@ -76,6 +91,7 @@ function SkillTile({
   showingXp,
   onHoldStart,
   onHoldEnd,
+  onOpen,
 }: {
   skill: SkillRow
   level: number
@@ -83,8 +99,10 @@ function SkillTile({
   showingXp: boolean
   onHoldStart: () => void
   onHoldEnd: () => void
+  onOpen: () => void
 }) {
   const timerRef = useRef<number | null>(null)
+  const holdFiredRef = useRef(false)
 
   useEffect(() => {
     return () => {
@@ -100,8 +118,10 @@ function SkillTile({
   }
 
   function beginHold() {
+    holdFiredRef.current = false
     clearHoldTimer()
     timerRef.current = window.setTimeout(() => {
+      holdFiredRef.current = true
       onHoldStart()
     }, 280)
   }
@@ -109,6 +129,14 @@ function SkillTile({
   function endHold() {
     clearHoldTimer()
     onHoldEnd()
+  }
+
+  function handleClick() {
+    if (holdFiredRef.current) {
+      holdFiredRef.current = false
+      return
+    }
+    onOpen()
   }
 
   return (
@@ -121,6 +149,8 @@ function SkillTile({
         onPointerUp={endHold}
         onPointerLeave={endHold}
         onPointerCancel={endHold}
+        onPointerEnter={() => onHoldStart()}
+        onClick={handleClick}
         onContextMenu={(event) => event.preventDefault()}
       >
         <SkillIcon internalKey={skill['Internal Key']} title={skill['Display Name']} />
@@ -133,5 +163,43 @@ function SkillTile({
         )}
       </button>
     </li>
+  )
+}
+
+function SkillActionsMenu({
+  skill,
+  actions,
+  onClose,
+}: {
+  skill: SkillRow
+  actions: SkillActionListItem[]
+  onClose: () => void
+}) {
+  return (
+    <div className="skill-actions-overlay" role="presentation" onClick={onClose}>
+      <section
+        className="panel skill-actions-menu"
+        role="dialog"
+        aria-label={skill['Display Name']}
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="skill-actions-head">
+          <h2>{skill['Display Name']}</h2>
+          <button type="button" className="btn secondary" onClick={onClose}>
+            Close
+          </button>
+        </div>
+        <ul className="skill-actions-list">
+          {actions.map((action) => (
+            <li key={action.actionId}>
+              <span className="skill-action-name">{action.displayName}</span>
+              {action.proficiencyLevel != null && (
+                <span className="skill-action-proficiency">{action.proficiencyLevel}</span>
+              )}
+            </li>
+          ))}
+        </ul>
+      </section>
+    </div>
   )
 }
