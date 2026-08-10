@@ -1306,10 +1306,6 @@ function SettingsPanel({
   onPreviewAfkSummary: () => void
 }) {
   const bakedPotatoId = 'ITEM-0058'
-  const steelPickaxeId = 'ITEM-0119'
-  const potatoId = 'ITEM-0025'
-  const copperOreId = 'ITEM-0003'
-  const wildRootsId = 'ITEM-0030'
 
   const launchSkills = database.launch.Skills
   const launchItems = database.launch.Items
@@ -1414,52 +1410,8 @@ function SettingsPanel({
     onChangeSave(withRecalculatedVitals(database.launch, equipped.save))
   }
 
-  function grantSteelPickaxe() {
-    onChangeSave(
-      withRecalculatedVitals(database.launch, addItemToInventory(save, steelPickaxeId, 1)),
-    )
-  }
-
-  function grantProductionMaterials() {
-    let next = addItemToInventory(save, potatoId, 20)
-    next = addItemToInventory(next, copperOreId, 20)
-    next = addItemToInventory(next, wildRootsId, 20)
-    onChangeSave(withRecalculatedVitals(database.launch, next))
-  }
-
-  function grantSmithingMaterials() {
-    let next = addItemToInventory(save, 'ITEM-0074', 20)
-    next = addItemToInventory(next, 'ITEM-0214', 10)
-    next = addItemToInventory(next, 'ITEM-0084', 30)
-    onChangeSave(withRecalculatedVitals(database.launch, next))
-  }
-
-  function grantArcanaMaterials() {
-    let next = addItemToInventory(save, 'ITEM-0098', 5) // Enchanting Tablet
-    next = addItemToInventory(next, 'ITEM-0099', 5) // Spell Tablet
-    next = addItemToInventory(next, 'ITEM-0011', 20) // Essence
-    next = addItemToInventory(next, 'ITEM-0031', 30) // Fernleaf
-    next = addItemToInventory(next, 'ITEM-0040', 20) // Bull Horns
-    next = addItemToInventory(next, 'ITEM-0295', 1) // Strength Spell item
-    onChangeSave(withRecalculatedVitals(database.launch, next))
-  }
-
-  function raiseAlchemyToLevel10() {
-    const alchemyId = 'SKL-0010'
-    const xpAtLevel10 =
-      database.launch.XPCurve.find((row) => row.Level === 10)?.['Total XP at Level'] ?? 10873
-    const skills = save.skills.map((skill) => {
-      if (skill.skillId !== alchemyId) return skill
-      return {
-        ...skill,
-        level: Math.max(skill.level, 10),
-        xp: Math.max(skill.xp, xpAtLevel10),
-      }
-    })
-    if (!skills.some((skill) => skill.skillId === alchemyId)) {
-      skills.push({ skillId: alchemyId, level: 10, xp: xpAtLevel10 })
-    }
-    onChangeSave({ ...save, skills })
+  function clearGold() {
+    onChangeSave({ ...save, gold: 0, updatedAt: new Date().toISOString() })
   }
 
   if (renaming) {
@@ -1691,25 +1643,13 @@ function SettingsPanel({
             <button type="button" className="btn primary" onClick={grantTestFood}>
               Add & equip Baked Potato ×5
             </button>
-            <button type="button" className="btn secondary" onClick={grantSteelPickaxe}>
-              Give Steel Pickaxe
-            </button>
-            <button type="button" className="btn secondary" onClick={grantProductionMaterials}>
-              Give production materials
-            </button>
-            <button type="button" className="btn secondary" onClick={raiseAlchemyToLevel10}>
-              Set Alchemy to level 10
-            </button>
-            <button type="button" className="btn secondary" onClick={grantSmithingMaterials}>
-              Give smithing materials
-            </button>
-            <button type="button" className="btn secondary" onClick={grantArcanaMaterials}>
-              Give Arcana ingredients
+            <button type="button" className="btn secondary" onClick={clearGold}>
+              Clear gold
             </button>
           </div>
           <p className="muted tiny">
-            Demo aids: raise/reset skills, grant or clear items, plus quick mats for food, mining,
-            production, smithing, and Arcana. Clear items empties inventory and equipment.
+            Demo aids: raise/reset skills, grant or clear items, and clear gold. Clear items empties
+            inventory and equipment.
           </p>
         </div>
       )}
