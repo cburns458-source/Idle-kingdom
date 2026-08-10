@@ -80,7 +80,6 @@ function RewardRow({
   if (!hasContent) return null
   return (
     <li className="action-reward-row">
-      <span className="action-reward-label">Reward:</span>
       {bundle.xpRewards.map((reward) => {
         const tipId = `${bundle.id}-xp-${reward.skillId}`
         return (
@@ -113,7 +112,7 @@ function RewardRow({
             onTipStart={() => setHeldTip(tipId)}
             onTipEnd={() => setHeldTip((current) => (current === tipId ? null : current))}
           >
-            <span className="action-reward-xp">+{loot.quantity}</span>
+            <span className="action-reward-xp">{loot.quantity}</span>
             <span
               className="item-icon item-icon-art action-reward-item-icon"
               style={{
