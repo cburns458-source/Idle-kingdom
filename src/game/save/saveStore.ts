@@ -61,7 +61,7 @@ export function createNewSave(db: GameDatabase): PlayerSave {
     achievements: [],
     statistics: { values: {} },
     unlockedNpcIds: [],
-    settings: { soundEnabled: true, showActivityRewards: true },
+    settings: { soundEnabled: true, showActivityRewards: true, hudShowTotalXp: false },
     currentLocationId: STARTING_LOCATION_ID,
     currentActivityId: null,
     activityStartedAt: null,

@@ -16,7 +16,7 @@ function saveWithInventory(itemIds: string[]): PlayerSave {
     achievements: [],
     statistics: { values: {} },
     unlockedNpcIds: [],
-    settings: { soundEnabled: true, showActivityRewards: true },
+    settings: { soundEnabled: true, showActivityRewards: true, hudShowTotalXp: false },
     currentLocationId: 'LOC-0002',
     currentActivityId: null,
     activityStartedAt: null,

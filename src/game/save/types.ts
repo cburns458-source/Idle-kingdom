@@ -1,4 +1,4 @@
-export const SAVE_VERSION = 13
+export const SAVE_VERSION = 14
 export const SAVE_STORAGE_KEY = 'idle-kingdoms.demo.save'
 export const STARTING_LOCATION_ID = 'LOC-0002'
 export const STARTING_GOLD = 25
@@ -74,6 +74,8 @@ export interface PlayerSettings {
   soundEnabled: boolean
   /** When false, the on-location activity reward summary is hidden. */
   showActivityRewards: boolean
+  /** When true, HUD identity line shows total XP instead of total level. */
+  hudShowTotalXp: boolean
 }
 
 /** Pending Primary Activity start/stop delay. */

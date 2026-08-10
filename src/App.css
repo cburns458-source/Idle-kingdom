@@ -157,7 +157,8 @@
   color: #c8d7b6;
 }
 
-.hud-total-level {
+.hud-total-level,
+.hud-total-stat {
   margin: 0;
   font-size: 0.72rem;
   line-height: 1.2;
@@ -165,6 +166,24 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+button.hud-total-stat {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  max-width: 100%;
+}
+
+button.hud-total-stat:focus-visible {
+  outline: 2px solid rgba(212, 175, 55, 0.55);
+  outline-offset: 2px;
+  border-radius: 0.2rem;
 }
 
 .hud-gold {

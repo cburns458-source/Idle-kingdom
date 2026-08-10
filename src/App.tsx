@@ -70,7 +70,7 @@ import {
 } from './game/unattended/resolve'
 import { completeSpecialProject } from './game/projects/engine'
 import type { SpecialProductionStation } from './game/projects/projects'
-import { totalLevel } from './game/skills/totals'
+import { totalLevel, totalSkillXp } from './game/skills/totals'
 import { ActivityPanel } from './ui/ActivityPanel'
 import {
   AfkSummaryPanel,
@@ -621,6 +621,10 @@ export default function App() {
 
   const ready = boot.status === 'ready' ? boot : null
 
+  const overallXp = useMemo(
+    () => (ready ? totalSkillXp(ready.save) : 0),
+    [ready?.save.skills],
+  )
   const overallLevel = useMemo(
     () => (ready ? totalLevel(ready.save) : 0),
     [ready?.save.skills],
@@ -997,6 +1001,17 @@ export default function App() {
         <TopHud
           characterName={save.characterName}
           totalLevel={overallLevel}
+          totalXp={overallXp}
+          showTotalXp={save.settings.hudShowTotalXp === true}
+          onToggleTotalStat={() => {
+            persistSave({
+              ...save,
+              settings: {
+                ...save.settings,
+                hudShowTotalXp: save.settings.hudShowTotalXp !== true,
+              },
+            })
+          }}
           gold={save.gold}
           currentHp={save.currentHp}
           maxHp={maxHp}

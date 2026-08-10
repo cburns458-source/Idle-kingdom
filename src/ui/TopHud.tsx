@@ -22,6 +22,10 @@ export type HudActivityStatus =
 interface TopHudProps {
   characterName: string | null
   totalLevel: number
+  totalXp: number
+  /** When true, show total XP instead of total level. */
+  showTotalXp?: boolean
+  onToggleTotalStat?: () => void
   gold: number
   currentHp: number
   maxHp: number
@@ -33,6 +37,9 @@ interface TopHudProps {
 export function TopHud({
   characterName,
   totalLevel,
+  totalXp,
+  showTotalXp = false,
+  onToggleTotalStat,
   gold,
   currentHp,
   maxHp,
@@ -44,6 +51,9 @@ export function TopHud({
   const hpLabel = dead
     ? 'Dead'
     : `${currentHp.toLocaleString()}/${maxHp.toLocaleString()}`
+  const totalStatLabel = showTotalXp
+    ? `Total XP: ${totalXp.toLocaleString()}`
+    : `Total level: ${totalLevel.toLocaleString()}`
 
   return (
     <header className="top-hud">
@@ -54,7 +64,22 @@ export function TopHud({
           </div>
           <div className="top-hud-identity">
             <p className="brand">{characterName?.trim() || 'Adventurer'}</p>
-            <p className="hud-total-level">Total level: {totalLevel.toLocaleString()}</p>
+            {onToggleTotalStat ? (
+              <button
+                type="button"
+                className="hud-total-stat"
+                onClick={onToggleTotalStat}
+                aria-label={
+                  showTotalXp
+                    ? 'Show total level. Currently showing total XP.'
+                    : 'Show total XP. Currently showing total level.'
+                }
+              >
+                {totalStatLabel}
+              </button>
+            ) : (
+              <p className="hud-total-stat">{totalStatLabel}</p>
+            )}
             <p className="hud-gold">
               <img src={GOLD_ICON_SRC} alt="" className="hud-gold-icon" />
               <span>{gold.toLocaleString()}</span>
