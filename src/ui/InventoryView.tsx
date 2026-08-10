@@ -11,7 +11,6 @@ import {
 import { withRecalculatedVitals } from '../game/equipment/vitals'
 import { playerDamageRange, playerDamageReduction, playerMaxHp } from '../game/combat/stats'
 import { INVENTORY_SLOT_LIMIT, inventorySlotCount } from '../game/inventory/capacity'
-import { destroyInventoryIndexes } from '../game/inventory/destroy'
 import { sellInventoryIndexes, sellPriceAtLocation } from '../game/inventory/sell'
 import { enchantmentTooltipLines } from '../game/projects/enchantments'
 import type { PlayerSave } from '../game/save/types'
@@ -25,7 +24,7 @@ import {
 import { ItemIcon, SlotGlyph } from './itemIcons'
 
 type ItemsSubTab = 'items' | 'equipment'
-type BagSelectMode = 'none' | 'destroy' | 'sell'
+type BagSelectMode = 'none' | 'sell'
 
 /** Paper-doll order: 4 columns × 4 rows (spells in the right column). */
 const EQUIPMENT_GRID_ORDER = [
@@ -59,7 +58,6 @@ export function InventoryView({ save, database, onChangeSave }: InventoryViewPro
   const [heldTip, setHeldTip] = useState<string | null>(null)
   const [bagMode, setBagMode] = useState<BagSelectMode>('none')
   const [selectedIndexes, setSelectedIndexes] = useState<Set<number>>(() => new Set())
-  const [confirmDestroy, setConfirmDestroy] = useState(false)
   const [confirmSell, setConfirmSell] = useState(false)
   const db = database.launch
   const damage = playerDamageRange(db, save)
@@ -84,7 +82,6 @@ export function InventoryView({ save, database, onChangeSave }: InventoryViewPro
   function exitBagMode() {
     setBagMode('none')
     setSelectedIndexes(new Set())
-    setConfirmDestroy(false)
     setConfirmSell(false)
     setHeldTip(null)
   }
@@ -111,16 +108,6 @@ export function InventoryView({ save, database, onChangeSave }: InventoryViewPro
       else next.add(index)
       return next
     })
-  }
-
-  function confirmDestroySelected() {
-    if (selectedCount === 0) return
-    const next = destroyInventoryIndexes(save, selectedIndexes)
-    commit(next)
-    setMessage(
-      selectedCount === 1 ? 'Destroyed 1 item stack.' : `Destroyed ${selectedCount} item stacks.`,
-    )
-    exitBagMode()
   }
 
   function confirmSellSelected() {
@@ -209,20 +196,6 @@ export function InventoryView({ save, database, onChangeSave }: InventoryViewPro
                 >
                   Sell items
                 </button>
-                <button
-                  type="button"
-                  className="btn secondary"
-                  disabled={save.inventory.length === 0}
-                  onClick={() => {
-                    setBagMode('destroy')
-                    setSelectedIndexes(new Set())
-                    setConfirmDestroy(false)
-                    setMessage(null)
-                    setHeldTip(null)
-                  }}
-                >
-                  Destroy items
-                </button>
                 <span className="inventory-capacity" aria-label="Inventory capacity">
                   {slotCount}/{INVENTORY_SLOT_LIMIT}
                 </span>
@@ -232,26 +205,15 @@ export function InventoryView({ save, database, onChangeSave }: InventoryViewPro
                 <button type="button" className="btn secondary" onClick={exitBagMode}>
                   Cancel
                 </button>
-                {bagMode === 'destroy' ? (
-                  <button
-                    type="button"
-                    className="btn danger"
-                    disabled={selectedCount === 0}
-                    onClick={() => setConfirmDestroy(true)}
-                  >
-                    Destroy selected{selectedCount > 0 ? ` (${selectedCount})` : ''}
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    className="btn primary"
-                    disabled={selectedCount === 0}
-                    onClick={() => setConfirmSell(true)}
-                  >
-                    Sell selected
-                    {selectedCount > 0 ? ` (${selectedSellGold.toLocaleString()}g)` : ''}
-                  </button>
-                )}
+                <button
+                  type="button"
+                  className="btn primary"
+                  disabled={selectedCount === 0}
+                  onClick={() => setConfirmSell(true)}
+                >
+                  Sell selected
+                  {selectedCount > 0 ? ` (${selectedSellGold.toLocaleString()}g)` : ''}
+                </button>
                 <span className="inventory-capacity" aria-label="Inventory capacity">
                   {slotCount}/{INVENTORY_SLOT_LIMIT}
                 </span>
@@ -285,11 +247,7 @@ export function InventoryView({ save, database, onChangeSave }: InventoryViewPro
                       className={[
                         'bag-item-tile',
                         enchanted ? 'enchanted' : '',
-                        bagMode !== 'none' && selected
-                          ? bagMode === 'sell'
-                            ? 'selected-sell'
-                            : 'selected-destroy'
-                          : '',
+                        bagMode !== 'none' && selected ? 'selected-sell' : '',
                       ]
                         .filter(Boolean)
                         .join(' ')}
@@ -336,11 +294,9 @@ export function InventoryView({ save, database, onChangeSave }: InventoryViewPro
             </ul>
           )}
           <p className="muted tiny">
-            {bagMode === 'destroy'
-              ? 'Tap items to select them, then confirm to destroy the selected stacks.'
-              : bagMode === 'sell'
-                ? 'Tap items to select them, then confirm to sell. Shop locations pay full sell value; elsewhere pays 50%.'
-                : 'Hold an item for its name, combat stats, and enchantment. Tap gear to equip. Enchanted items do not stack.'}
+            {bagMode === 'sell'
+              ? 'Tap items to select them, then confirm to sell. Shop locations pay full sell value; elsewhere pays 50%.'
+              : 'Hold an item for its name, combat stats, and enchantment. Tap gear to equip. Enchanted items do not stack.'}
           </p>
         </section>
       ) : (
@@ -417,31 +373,6 @@ export function InventoryView({ save, database, onChangeSave }: InventoryViewPro
           </p>
         </section>
       )}
-
-      {confirmDestroy ? (
-        <div
-          className="destroy-confirm-overlay"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="destroy-confirm-title"
-        >
-          <div className="panel destroy-confirm-card">
-            <h2 id="destroy-confirm-title">Destroy items?</h2>
-            <p className="lead">
-              Permanently remove {selectedCount} selected stack
-              {selectedCount === 1 ? '' : 's'} from your bag. Equipped items are not affected.
-            </p>
-            <div className="button-row">
-              <button type="button" className="btn secondary" onClick={() => setConfirmDestroy(false)}>
-                Keep items
-              </button>
-              <button type="button" className="btn danger" onClick={confirmDestroySelected}>
-                Confirm destroy
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : null}
 
       {confirmSell ? (
         <div

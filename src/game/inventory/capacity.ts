@@ -1,4 +1,5 @@
 import type { PlayerSave } from '../save/types'
+import { isGoldCurrencyItem } from './gold'
 
 /** Bag slot cap (each stack or enchanted item uses one slot). */
 export const INVENTORY_SLOT_LIMIT = 180
@@ -20,6 +21,9 @@ export function maxAddableQuantity(
   itemId: string,
   enchantmentId: string | null = null,
 ): number {
+  if (isGoldCurrencyItem(itemId) && !enchantmentId) {
+    return INVENTORY_STACK_MAX
+  }
   if (enchantmentId) {
     return inventorySlotsFree(save)
   }

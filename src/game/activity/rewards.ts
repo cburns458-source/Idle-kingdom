@@ -4,6 +4,7 @@ import {
   INVENTORY_STACK_MAX,
   maxAddableQuantity,
 } from '../inventory/capacity'
+import { isGoldCurrencyItem } from '../inventory/gold'
 import type { ActionRow, GameDatabase, RewardEntryRow } from '../data/types'
 import type { PlayerSave } from '../save/types'
 import type { LootGrant } from './types'
@@ -35,6 +36,7 @@ export function pickWeightedReward(
 
 /**
  * Add as many as fit without exceeding the 180-slot bag or MAX_SAFE_INTEGER stacks.
+ * Gold currency items are converted into `save.gold` instead of bag slots.
  * Returns how many were actually added (may be less than requested).
  */
 export function addItemsToInventory(
@@ -45,6 +47,13 @@ export function addItemsToInventory(
 ): { save: PlayerSave; added: number } {
   const want = Math.floor(quantity)
   if (want <= 0) return { save, added: 0 }
+
+  if (isGoldCurrencyItem(itemId) && !enchantmentId) {
+    return {
+      save: { ...save, gold: save.gold + want },
+      added: want,
+    }
+  }
 
   const addable = maxAddableQuantity(save, itemId, enchantmentId)
   const added = Math.min(want, addable)
@@ -89,6 +98,9 @@ export function addItemToInventoryExact(
 ): { ok: true; save: PlayerSave } | { ok: false; reason: string } {
   const want = Math.floor(quantity)
   if (want <= 0) return { ok: true, save }
+  if (isGoldCurrencyItem(itemId) && !enchantmentId) {
+    return { ok: true, save: addItemsToInventory(save, itemId, want).save }
+  }
   if (!canFitItemQuantity(save, itemId, want, enchantmentId)) {
     if (save.inventory.length >= INVENTORY_SLOT_LIMIT) {
       return { ok: false, reason: 'Inventory is full (180 slots).' }
@@ -125,6 +137,12 @@ export function resolveActionRewards(
     if (picked['Reward Type'] === 'Item' && picked['Reward ID / Value']) {
       const quantity = rollQuantity(picked, random)
       const itemId = picked['Reward ID / Value']
+      if (isGoldCurrencyItem(itemId)) {
+        const granted = addItemsToInventory(next, itemId, quantity)
+        next = granted.save
+        goldGained += granted.added
+        return
+      }
       const granted = addItemsToInventory(next, itemId, quantity)
       next = granted.save
       if (granted.added > 0) {

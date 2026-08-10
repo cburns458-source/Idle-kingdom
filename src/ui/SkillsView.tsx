@@ -3,9 +3,19 @@ import { asStatisticRows } from '../game/achievements/progress'
 import type { GameDatabase, SkillRow } from '../game/data/types'
 import type { PlayerSave } from '../game/save/types'
 import { getSkillProgress } from '../game/activity/xp'
+import { skillXpProgress } from '../game/activity/xpProgress'
 import { skillMenuEntries, type SkillMenuListItem } from '../game/skills/skillActions'
 import { totalLevel, totalSkillXp } from '../game/skills/totals'
 import { SkillIcon } from './skillIcons'
+
+function skillXpTooltipText(db: GameDatabase, totalXp: number): string {
+  const progress = skillXpProgress(db, totalXp)
+  const total = `${progress.totalXp.toLocaleString()} XP`
+  if (progress.atCap || progress.nextLevel == null || progress.toNextLevel <= 0) {
+    return total
+  }
+  return `${total} · ${progress.intoLevel.toLocaleString()}/${progress.toNextLevel.toLocaleString()} to Lv ${progress.nextLevel}`
+}
 
 interface SkillsViewProps {
   db: GameDatabase
@@ -62,6 +72,7 @@ export function SkillsView({ db, save }: SkillsViewProps) {
               skill={skill}
               level={progress.level}
               xp={progress.xp}
+              xpTooltip={skillXpTooltipText(db, progress.xp)}
               showingXp={heldSkillId === skill['Skill ID']}
               onHoldStart={() => setHeldSkillId(skill['Skill ID'])}
               onHoldEnd={() =>
@@ -87,7 +98,7 @@ export function SkillsView({ db, save }: SkillsViewProps) {
 function SkillTile({
   skill,
   level,
-  xp,
+  xpTooltip,
   showingXp,
   onHoldStart,
   onHoldEnd,
@@ -95,7 +106,7 @@ function SkillTile({
 }: {
   skill: SkillRow
   level: number
-  xp: number
+  xpTooltip: string
   showingXp: boolean
   onHoldStart: () => void
   onHoldEnd: () => void
@@ -158,7 +169,7 @@ function SkillTile({
         <span className="skill-tile-level">Lv {level}</span>
         {showingXp && (
           <span className="skill-xp-tooltip" role="tooltip">
-            {xp.toLocaleString()} XP
+            {xpTooltip}
           </span>
         )}
       </button>
