@@ -32,3 +32,17 @@ export function isBelowProficiency(save: PlayerSave, action: ActionRow): boolean
   const skill = getSkillProgress(save, action['Relevant Skill ID'])
   return skill.level < proficiency
 }
+
+/** XP granted for a gathering action (halved when below proficiency). */
+export function gatheringXpReward(
+  db: GameDatabase,
+  save: PlayerSave,
+  action: ActionRow,
+  baseXp: number = Number(action['XP Reward'] ?? 0),
+): number {
+  const amount = Math.max(0, Number(baseXp) || 0)
+  if (amount <= 0) return 0
+  if (!isBelowProficiency(save, action)) return Math.floor(amount)
+  const factor = configNumber(db, 'gathering_below_proficiency_xp_multiplier', 0.5)
+  return Math.floor(amount * factor)
+}

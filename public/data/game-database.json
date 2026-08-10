@@ -52,7 +52,13 @@
       "Key": "gathering_below_proficiency_duration_multiplier",
       "Value": 2,
       "Unit": "x",
-      "Notes": "XP and rewards remain unchanged."
+      "Notes": "Below-proficiency gathering takes longer; XP uses gathering_below_proficiency_xp_multiplier."
+    },
+    {
+      "Key": "gathering_below_proficiency_xp_multiplier",
+      "Value": 0.5,
+      "Unit": "x",
+      "Notes": "Applied to gathering XP (including bonus skill XP) when below proficiency."
     },
     {
       "Key": "starting_max_hp",
