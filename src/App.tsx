@@ -621,10 +621,6 @@ export default function App() {
 
   const ready = boot.status === 'ready' ? boot : null
 
-  const overallXp = useMemo(
-    () => (ready ? totalSkillXp(ready.save) : 0),
-    [ready?.save.skills],
-  )
   const overallLevel = useMemo(
     () => (ready ? totalLevel(ready.save) : 0),
     [ready?.save.skills],

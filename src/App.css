@@ -54,6 +54,9 @@
   padding-bottom: 0.35rem;
   border-bottom: 1px solid rgba(212, 175, 55, 0.28);
   flex-shrink: 0;
+  position: relative;
+  z-index: 3;
+  overflow: visible;
 }
 
 .top-hud-main {
@@ -62,25 +65,32 @@
   gap: 0.5rem;
   align-items: start;
   min-width: 0;
+  /* Keep text rows compact while the avatar can exceed HUD height. */
+  min-height: 3.15rem;
 }
 
 .top-hud-left {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.55rem;
   min-width: 0;
 }
 
 .hud-avatar {
   flex: 0 0 auto;
-  width: 3.35rem;
-  height: 3.35rem;
+  width: 5.75rem;
+  height: 5.75rem;
+  margin-top: -0.35rem;
+  margin-bottom: -2.1rem;
   border-radius: 999px;
   overflow: hidden;
   border: 1px solid rgba(212, 175, 55, 0.45);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
   background:
     radial-gradient(circle at 35% 30%, rgba(255, 236, 180, 0.18), transparent 55%),
     rgba(24, 16, 10, 0.35);
+  position: relative;
+  z-index: 4;
 }
 
 .hud-avatar-image {
@@ -358,6 +368,12 @@
 }
 
 .screen-body {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
   flex: 1;
   min-height: 0;
   overflow: auto;
