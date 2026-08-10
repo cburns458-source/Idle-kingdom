@@ -1792,7 +1792,8 @@ button.hud-total-stat:focus-visible {
 .skill-xp-tooltip {
   position: absolute;
   left: 50%;
-  bottom: calc(100% + 0.35rem);
+  top: calc(100% + 0.35rem);
+  bottom: auto;
   transform: translateX(-50%);
   white-space: pre-line;
   text-align: center;
