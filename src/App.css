@@ -1739,6 +1739,23 @@
   background: linear-gradient(180deg, #f0c090 0%, #d4844a 55%, #a85a2a 100%);
 }
 
+.combat-round-bar {
+  width: 100%;
+  height: 0.48rem;
+  border-radius: 999px;
+  background: rgba(18, 12, 8, 0.72);
+  border: 1px solid rgba(255, 236, 196, 0.22);
+  overflow: hidden;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.45);
+}
+
+.combat-round-bar-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(180deg, #d8ecff 0%, #7eb6e8 55%, #4a8ec8 100%);
+  transition: width 80ms linear;
+}
+
 .combat-damage {
   font-size: 1.35rem;
   font-weight: 800;

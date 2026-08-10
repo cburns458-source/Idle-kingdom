@@ -8,6 +8,8 @@ interface CombatPanelProps {
   enemyHp: number
   playerHp: number
   playerMaxHp: number
+  /** 0–1 progress through the current combat round. */
+  roundProgress: number
   /** Damage the player dealt last round (orange overlay on enemy). */
   lastPlayerHit: number | null
   /** Damage the enemy dealt last round (centered above player). */
@@ -29,6 +31,7 @@ export function CombatPanel({
   enemyHp,
   playerHp,
   playerMaxHp,
+  roundProgress,
   lastPlayerHit,
   lastEnemyHit,
   defeatedFlash,
@@ -38,7 +41,9 @@ export function CombatPanel({
   const playerMax = Math.max(1, playerMaxHp)
   const enemyPct = Math.max(0, Math.min(100, (enemyHp / enemyMax) * 100))
   const playerPct = Math.max(0, Math.min(100, (playerHp / playerMax) * 100))
+  const roundPct = Math.max(0, Math.min(100, roundProgress * 100))
   const pauseSec = Math.ceil(deathPauseRemainingMs / 1000)
+  const showRoundBar = deathPauseRemainingMs <= 0 && !defeatedFlash
 
   const [playerHitOffset, setPlayerHitOffset] = useState({ x: 0, y: 0 })
   const [enemyHitOffset, setEnemyHitOffset] = useState({ x: 0, y: 0 })
@@ -159,6 +164,18 @@ export function CombatPanel({
           </div>
         </div>
       </div>
+      {showRoundBar && (
+        <div
+          className="combat-round-bar"
+          role="progressbar"
+          aria-label="Round progress"
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={Math.round(roundPct)}
+        >
+          <div className="combat-round-bar-fill" style={{ width: `${roundPct}%` }} />
+        </div>
+      )}
     </section>
   )
 }
