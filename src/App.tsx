@@ -1004,11 +1004,13 @@ export default function App() {
           totalXp={overallXp}
           showTotalXp={save.settings.hudShowTotalXp === true}
           onToggleTotalStat={() => {
+            const current = bootRef.current
+            if (current.status !== 'ready') return
             updateSave({
-              ...save,
+              ...current.save,
               settings: {
-                ...save.settings,
-                hudShowTotalXp: save.settings.hudShowTotalXp !== true,
+                ...current.save.settings,
+                hudShowTotalXp: current.save.settings.hudShowTotalXp !== true,
               },
             })
           }}

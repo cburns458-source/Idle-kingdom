@@ -61,19 +61,13 @@
 
 .top-hud-main {
   display: grid;
-  grid-template-columns: minmax(0, 1.55fr) minmax(0, 0.9fr);
+  /* Avatar | flexible identity text | compact activity/HP */
+  grid-template-columns: auto minmax(0, 1fr) minmax(0, max-content);
   gap: 0.35rem;
   align-items: start;
   min-width: 0;
   /* Keep text rows compact while the avatar can exceed HUD height. */
   min-height: 3.15rem;
-}
-
-.top-hud-left {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.45rem;
-  min-width: 0;
 }
 
 .hud-avatar {
@@ -107,9 +101,10 @@
 .top-hud-identity {
   display: flex;
   flex-direction: column;
-  gap: 0.08rem;
+  gap: 0.06rem;
   min-width: 0;
-  flex: 1 1 auto;
+  width: 100%;
+  padding-top: 0.08rem;
 }
 
 .top-hud-right {
@@ -119,12 +114,13 @@
   justify-content: flex-start;
   gap: 0.2rem;
   min-width: 0;
+  max-width: 9.5rem;
   text-align: right;
 }
 
 .hud-activity {
   width: 100%;
-  max-width: 100%;
+  max-width: 9.5rem;
   min-width: 0;
   text-align: right;
   line-height: 1.15;
@@ -160,7 +156,7 @@
 .hud-total-level,
 .hud-total-stat {
   margin: 0;
-  font-size: 0.62rem;
+  font-size: 0.55rem;
   line-height: 1.2;
   color: #c8d7b6;
   white-space: nowrap;
@@ -191,12 +187,13 @@ button.hud-total-stat:focus-visible {
 
 .hud-gold {
   margin: 0;
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 0.25rem;
+  gap: 0.22rem;
+  width: 100%;
   max-width: 100%;
   min-width: 0;
-  font-size: 0.62rem;
+  font-size: 0.55rem;
   font-weight: 700;
   line-height: 1.15;
   color: #fff4d4;
@@ -205,14 +202,15 @@ button.hud-total-stat:focus-visible {
 
 .hud-gold span {
   min-width: 0;
+  flex: 1 1 auto;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .hud-gold-icon {
-  width: 0.8rem;
-  height: 0.8rem;
+  width: 0.72rem;
+  height: 0.72rem;
   object-fit: contain;
   flex: 0 0 auto;
   image-rendering: pixelated;
@@ -298,8 +296,9 @@ button.hud-total-stat:focus-visible {
 }
 
 .top-hud .brand {
-  font-size: 0.82rem;
+  font-size: 0.7rem;
   max-width: 100%;
+  width: 100%;
 }
 
 .field-label {

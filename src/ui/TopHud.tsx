@@ -58,33 +58,31 @@ export function TopHud({
   return (
     <header className="top-hud">
       <div className="top-hud-main">
-        <div className="top-hud-left">
-          <div className="hud-avatar" aria-hidden="true">
-            <img src={PLAYER_AVATAR_SRC} alt="" className="hud-avatar-image" />
-          </div>
-          <div className="top-hud-identity">
-            <p className="brand">{characterName?.trim() || 'Adventurer'}</p>
-            {onToggleTotalStat ? (
-              <button
-                type="button"
-                className="hud-total-stat"
-                onClick={onToggleTotalStat}
-                aria-label={
-                  showTotalXp
-                    ? 'Show total level. Currently showing total XP.'
-                    : 'Show total XP. Currently showing total level.'
-                }
-              >
-                {totalStatLabel}
-              </button>
-            ) : (
-              <p className="hud-total-stat">{totalStatLabel}</p>
-            )}
-            <p className="hud-gold">
-              <img src={GOLD_ICON_SRC} alt="" className="hud-gold-icon" />
-              <span>{gold.toLocaleString()}</span>
-            </p>
-          </div>
+        <div className="hud-avatar" aria-hidden="true">
+          <img src={PLAYER_AVATAR_SRC} alt="" className="hud-avatar-image" />
+        </div>
+        <div className="top-hud-identity">
+          <p className="brand">{characterName?.trim() || 'Adventurer'}</p>
+          {onToggleTotalStat ? (
+            <button
+              type="button"
+              className="hud-total-stat"
+              onClick={onToggleTotalStat}
+              aria-label={
+                showTotalXp
+                  ? 'Show total level. Currently showing total XP.'
+                  : 'Show total XP. Currently showing total level.'
+              }
+            >
+              {totalStatLabel}
+            </button>
+          ) : (
+            <p className="hud-total-stat">{totalStatLabel}</p>
+          )}
+          <p className="hud-gold">
+            <img src={GOLD_ICON_SRC} alt="" className="hud-gold-icon" />
+            <span>{gold.toLocaleString()}</span>
+          </p>
         </div>
 
         <div className="top-hud-right">
