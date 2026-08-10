@@ -1,6 +1,6 @@
 import { addItemToInventory } from '../activity/rewards'
 import type { EnchantmentRow } from '../data/projectTypes'
-import type { EquipmentRow, GameDatabase } from '../data/types'
+import type { EquipmentRow, GameDatabase, ItemRow } from '../data/types'
 import type { EquippedStack, InventoryStack, PlayerSave } from '../save/types'
 import { getEnchantment } from './projects'
 
@@ -15,19 +15,73 @@ export interface EnchantTargetOption {
   preferred: boolean
 }
 
+function capabilityTags(effects: string | null | undefined): string[] {
+  if (typeof effects !== 'string') return []
+  return effects
+    .split(';')
+    .map((part) => part.trim().toLowerCase())
+    .filter(Boolean)
+}
+
+/** Combat axes (not hatchets/pickaxes) — weapon enchantments only. */
+export function isAxeItem(item: ItemRow | undefined, equipment: EquipmentRow): boolean {
+  const subtype = (item?.Subtype ?? '').toLowerCase()
+  const key = (item?.['Internal Key'] ?? '').toLowerCase()
+  const name = (item?.['Display Name'] ?? '').toLowerCase()
+  const caps = capabilityTags(equipment['Capabilities / Effects'])
+
+  if (subtype === 'hatchet' || key.includes('hatchet') || name.includes('hatchet')) return false
+  if (subtype === 'pickaxe' || key.includes('pickaxe') || name.includes('pickaxe')) return false
+  if (subtype === 'axe') return true
+  if (caps.includes('combat_weapon') && caps.includes('woodcutting_tool')) return true
+  if (/\baxe\b/.test(name) || /(^|_)axe$/.test(key) || key.includes('_axe')) return true
+  return false
+}
+
+function isWeaponEquipment(
+  item: ItemRow | undefined,
+  equipment: EquipmentRow,
+): boolean {
+  const hasDamage =
+    typeof equipment['Min Damage'] === 'number' || typeof equipment['Max Damage'] === 'number'
+  if (!hasDamage) return false
+  // Axes are combat weapons even when they also carry woodcutting_tool.
+  if (isAxeItem(item, equipment)) return true
+  const caps = capabilityTags(equipment['Capabilities / Effects'])
+  if (caps.includes('combat_weapon')) return true
+  return hasDamage
+}
+
+function isGatheringToolEquipment(
+  item: ItemRow | undefined,
+  equipment: EquipmentRow,
+): boolean {
+  // Axes are combat-classified for Arcana; hatchets remain gathering tools.
+  if (isAxeItem(item, equipment)) return false
+
+  if (typeof equipment['Action Time Reduction %'] === 'number') return true
+
+  const caps = capabilityTags(equipment['Capabilities / Effects'])
+  return (
+    caps.includes('mining_tool') ||
+    caps.includes('woodcutting_tool') ||
+    caps.includes('fishing_tool') ||
+    caps.includes('hunting_tool') ||
+    caps.includes('harvesting_tool')
+  )
+}
+
 function equipmentMatchesEnchantment(
+  db: GameDatabase,
+  itemId: string,
   equipment: EquipmentRow,
   enchantment: EnchantmentRow,
 ): boolean {
   const target = (enchantment['Valid Target'] ?? '').toLowerCase()
-  const isWeapon =
-    typeof equipment['Min Damage'] === 'number' || typeof equipment['Max Damage'] === 'number'
-  const isGatheringTool =
-    typeof equipment['Action Time Reduction %'] === 'number' ||
-    Boolean(equipment['Capabilities / Effects'])
+  const item = db.Items.find((row) => row['Item ID'] === itemId)
 
-  if (target.includes('weapon') && isWeapon) return true
-  if (target.includes('gathering') && isGatheringTool) return true
+  if (target.includes('weapon') && isWeaponEquipment(item, equipment)) return true
+  if (target.includes('gathering') && isGatheringToolEquipment(item, equipment)) return true
   return false
 }
 
@@ -65,7 +119,8 @@ export function eligibleEnchantmentTargets(
   for (const [slotId, stack] of Object.entries(save.equipment.slots)) {
     if (!stack?.itemId || stack.enchantmentId) continue
     const equipment = db.Equipment.find((row) => row['Item ID'] === stack.itemId)
-    if (!equipment || !equipmentMatchesEnchantment(equipment, enchantment)) continue
+    if (!equipment || !equipmentMatchesEnchantment(db, stack.itemId, equipment, enchantment))
+      continue
     const item = db.Items.find((row) => row['Item ID'] === stack.itemId)
     const slotName =
       db.EquipmentSlots.find((row) => row['Slot ID'] === slotId)?.['Display Name'] ?? slotId
@@ -81,7 +136,8 @@ export function eligibleEnchantmentTargets(
   save.inventory.forEach((stack, index) => {
     if (!stack.itemId || stack.enchantmentId) return
     const equipment = db.Equipment.find((row) => row['Item ID'] === stack.itemId)
-    if (!equipment || !equipmentMatchesEnchantment(equipment, enchantment)) return
+    if (!equipment || !equipmentMatchesEnchantment(db, stack.itemId, equipment, enchantment))
+      return
     const item = db.Items.find((row) => row['Item ID'] === stack.itemId)
     const target: EnchantTarget = { kind: 'inventory', index }
     out.push({
