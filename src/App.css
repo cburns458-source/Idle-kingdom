@@ -785,6 +785,42 @@
   gap: 0.45rem;
 }
 
+.shop-qty-card {
+  text-align: left;
+}
+
+.shop-qty-card h2 {
+  text-align: center;
+}
+
+.shop-qty-card .muted.tiny:first-child {
+  text-align: center;
+}
+
+.shop-qty-available {
+  margin: 0;
+}
+
+.shop-qty-row {
+  display: flex;
+  gap: 0.45rem;
+  align-items: center;
+}
+
+.shop-qty-row .text-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.shop-qty-actions {
+  margin-top: 0.25rem;
+  justify-content: stretch;
+}
+
+.shop-qty-actions .btn {
+  flex: 1;
+}
+
 .npc-quest-block,
 .npc-action-block {
   margin-top: 0.65rem;
