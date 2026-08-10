@@ -111,21 +111,23 @@ export function TopHud({
               )}
             </div>
           )}
-          <p className={dead ? 'hud-hp-text dead' : 'hud-hp-text'}>{hpLabel}</p>
         </div>
       </div>
 
       <div className="top-hud-hp-row">
-        <div
-          className="hud-hp-bar"
-          role="progressbar"
-          aria-label="Hit points"
-          aria-valuemin={0}
-          aria-valuemax={maxHp}
-          aria-valuenow={dead ? 0 : currentHp}
-          aria-valuetext={hpLabel}
-        >
-          <div className="hud-hp-bar-fill" style={{ transform: `scaleX(${hpRatio})` }} />
+        <div className="top-hud-hp-cluster">
+          <p className={dead ? 'hud-hp-text dead' : 'hud-hp-text'}>{hpLabel}</p>
+          <div
+            className="hud-hp-bar"
+            role="progressbar"
+            aria-label="Hit points"
+            aria-valuemin={0}
+            aria-valuemax={maxHp}
+            aria-valuenow={dead ? 0 : currentHp}
+            aria-valuetext={hpLabel}
+          >
+            <div className="hud-hp-bar-fill" style={{ transform: `scaleX(${hpRatio})` }} />
+          </div>
         </div>
       </div>
     </header>
