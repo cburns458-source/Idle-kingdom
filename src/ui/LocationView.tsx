@@ -129,15 +129,16 @@ export function LocationView({
 
         {rewardSummary}
 
-        {statusPanel}
-
         {activityError && (
           <section className="panel panel-error glass-panel">
             <p className="lead">{activityError}</p>
           </section>
         )}
 
-        <div className="location-bottom-panels">
+        <div className="location-stage">
+          {statusPanel}
+
+          <div className="location-bottom-panels">
           {showActivityPanel && activitiesHidden && (
             <div className="location-activities-reveal">
               <button
@@ -267,6 +268,7 @@ export function LocationView({
               </ul>
             </section>
           )}
+          </div>
         </div>
       </div>
     </section>
