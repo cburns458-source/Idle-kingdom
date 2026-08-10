@@ -212,6 +212,7 @@ export default function App() {
         setSelectedLocationId(saved.currentLocationId)
         setScreen('location')
         setActionProgress(0)
+        setRecentRewards([])
         const forceMessage = hostileForceMessage(current.database.launch, arrived)
         if (arrived.forcedActivityId) {
           setActivityError(null)
@@ -793,6 +794,7 @@ export default function App() {
       setBrowseMapId(nextLocation ? resolveActiveMapId(nextLocation) : MAIN_MAP_ID)
       setSelectedLocationId(destinationId)
       setScreen('location')
+      setRecentRewards([])
       const forceMessage = hostileForceMessage(database.launch, arrived)
       if (arrived.forcedActivityId) {
         setActivityError(null)
@@ -812,6 +814,7 @@ export default function App() {
     // Timed travel: stop the current activity immediately when travel begins.
     const prepared = beginTravelActivityChange(database.launch, save, now)
     if (prepared !== save) updateSave(prepared)
+    setRecentRewards([])
     setTravel({
       fromLocationId: save.currentLocationId,
       toLocationId: destinationId,

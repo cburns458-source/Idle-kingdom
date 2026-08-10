@@ -5,6 +5,7 @@ import { getSkillProgress } from '../activity/xp'
 import { firstEmptySpellSlot, isSpellEquipment, isSpellSlotId } from '../spells/spells'
 
 export const FOOD_SLOT_ID = 'SLOT-0011'
+export const POTION_SLOT_ID = 'SLOT-0012'
 export const WEAPON_TOOL_SLOT_ID = 'SLOT-0001'
 
 export type EquipResult =
@@ -21,6 +22,15 @@ export function slotItemId(save: PlayerSave, slotId: string): string | null {
 
 export function isFoodSlot(slotId: string): boolean {
   return slotId === FOOD_SLOT_ID
+}
+
+export function isPotionSlot(slotId: string): boolean {
+  return slotId === POTION_SLOT_ID
+}
+
+/** Food and potion slots hold full stacks (any quantity). */
+export function isStackableConsumableSlot(slotId: string): boolean {
+  return isFoodSlot(slotId) || isPotionSlot(slotId)
 }
 
 function removeItemQuantity(
@@ -121,7 +131,7 @@ export function unequipSlot(save: PlayerSave, slotId: string): PlayerSave {
 
 /**
  * Equip an inventory item into its equipment slot.
- * Food: moves the entire inventory stack into the food slot (any quantity).
+ * Food / potion: moves the entire inventory stack into the slot (any quantity).
  * Other gear: moves one item into the slot.
  */
 export function equipItemFromInventory(
@@ -171,9 +181,14 @@ export function equipInventoryIndex(
   const current = slotStack(next, slotId)
   const enchantmentId = invStack.enchantmentId ?? null
 
-  if (isFoodSlot(slotId)) {
+  if (isStackableConsumableSlot(slotId)) {
     if (enchantmentId) {
-      return { ok: false, reason: 'Enchanted items cannot fill the food slot.' }
+      return {
+        ok: false,
+        reason: isPotionSlot(slotId)
+          ? 'Enchanted items cannot fill the potion slot.'
+          : 'Enchanted items cannot fill the food slot.',
+      }
     }
     const moveQty = invStack.quantity
     if (current && (current.itemId !== itemId || current.enchantmentId)) {

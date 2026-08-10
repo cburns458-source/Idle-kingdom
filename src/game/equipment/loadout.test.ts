@@ -12,6 +12,7 @@ import {
   equipItemFromInventory,
   equipStackToSlot,
   FOOD_SLOT_ID,
+  POTION_SLOT_ID,
   unequipSlot,
 } from './loadout'
 import { withRecalculatedVitals } from './vitals'
@@ -63,6 +64,25 @@ describe('equipment loadout', () => {
     save = unequipSlot(save, FOOD_SLOT_ID)
     expect(save.equipment.slots[FOOD_SLOT_ID]).toBeNull()
     expect(save.inventory.find((stack) => stack.itemId === 'ITEM-0058')?.quantity).toBe(4)
+  })
+
+  it('moves the entire potion stack into the potion slot and returns it on unequip', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    let save = createNewSave(launch)
+    save = addItemToInventory(save, 'ITEM-0070', 4) // Luck Potion
+    const equipped = equipItemFromInventory(launch, save, 'ITEM-0070')
+    expect(equipped.ok).toBe(true)
+    if (!equipped.ok) return
+
+    expect(equipped.save.inventory.find((stack) => stack.itemId === 'ITEM-0070')).toBeUndefined()
+    expect(equipped.save.equipment.slots[POTION_SLOT_ID]).toEqual({
+      itemId: 'ITEM-0070',
+      quantity: 4,
+    })
+
+    const unequipped = unequipSlot(equipped.save, POTION_SLOT_ID)
+    expect(unequipped.equipment.slots[POTION_SLOT_ID]).toBeNull()
+    expect(unequipped.inventory.find((stack) => stack.itemId === 'ITEM-0070')?.quantity).toBe(4)
   })
 
   it('blocks equipping gear below required skill level', () => {

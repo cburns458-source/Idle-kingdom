@@ -20,7 +20,7 @@ export interface InventoryStack {
   enchantmentId?: string | null
 }
 
-/** Equipped contents for one slot. Food may hold any stack size. */
+/** Equipped contents for one slot. Food and potions may hold any stack size. */
 export interface EquippedStack {
   itemId: string
   quantity: number
