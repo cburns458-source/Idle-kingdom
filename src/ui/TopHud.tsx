@@ -49,7 +49,7 @@ export function TopHud({
             {activityStatus.kind === 'action' ? (
               <>
                 <p className="hud-activity-line">{activityStatus.activityName}</p>
-                <p className="hud-activity-line">{activityStatus.actionName}</p>
+                <p className="hud-activity-line hud-activity-action">{activityStatus.actionName}</p>
                 <p className="hud-activity-timer">
                   {formatDurationSeconds(activityStatus.elapsedSeconds)}
                 </p>
