@@ -48,7 +48,7 @@ export function SkillsView({ db, save }: SkillsViewProps) {
             <dd>{overallXp.toLocaleString()}</dd>
           </div>
         </dl>
-        <p className="muted tiny">Hold a skill to see its total XP.</p>
+        <p className="muted tiny">Hold a skill to see total XP and progress to the next level.</p>
       </section>
 
       <section className="panel skills-summary">
