@@ -1597,7 +1597,7 @@
 
 .combat-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(7.5rem, 42%);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 0.65rem;
   align-items: stretch;
   min-height: 12rem;
@@ -1640,6 +1640,7 @@
   border-radius: 0.85rem;
 }
 
+.combat-player-art,
 .combat-enemy-art {
   width: 100%;
   height: 100%;
@@ -1648,16 +1649,23 @@
   background-color: transparent;
   background-size: contain;
   background-repeat: no-repeat;
-  background-position: center right;
   border: none;
   image-rendering: -moz-crisp-edges;
   image-rendering: pixelated;
 }
 
+.combat-player-art {
+  background-position: center left;
+}
+
+.combat-enemy-art {
+  background-position: center right;
+}
+
 .combat-meta {
   display: flex;
   flex-direction: column;
-  gap: 0.15rem;
+  gap: 0.2rem;
   min-height: 2.4rem;
   justify-content: flex-start;
 }
@@ -1685,20 +1693,32 @@
   line-height: 1.15;
 }
 
-.combat-hp {
-  margin: 0;
-  font-size: 0.78rem;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  line-height: 1.15;
+.combat-hp-bar {
+  width: min(100%, 8.5rem);
+  height: 0.72rem;
+  border-radius: 999px;
+  background: rgba(18, 12, 8, 0.72);
+  border: 1px solid rgba(255, 236, 196, 0.28);
+  overflow: hidden;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.45);
 }
 
-.combat-hp-player {
-  color: #b7d48a;
+.combat-meta-enemy .combat-hp-bar {
+  margin-left: auto;
 }
 
-.combat-hp-enemy {
-  color: #f0c090;
+.combat-hp-bar-fill {
+  height: 100%;
+  border-radius: inherit;
+  transition: width 180ms ease-out;
+}
+
+.combat-hp-bar-fill-player {
+  background: linear-gradient(180deg, #c5e08a 0%, #7fad45 55%, #5e8a2f 100%);
+}
+
+.combat-hp-bar-fill-enemy {
+  background: linear-gradient(180deg, #f0c090 0%, #d4844a 55%, #a85a2a 100%);
 }
 
 .combat-damage {
@@ -1709,10 +1729,24 @@
   pointer-events: none;
 }
 
+.combat-damage-enemy {
+  --damage-x: 0px;
+  --damage-y: 0px;
+  display: inline-block;
+  color: #ffd0d0;
+  text-shadow:
+    0 0 2px rgba(0, 0, 0, 0.85),
+    0 2px 4px rgba(0, 0, 0, 0.55);
+  animation: combat-damage-pop 420ms ease-out;
+  transform: translate(var(--damage-x), var(--damage-y));
+}
+
 .combat-damage-player {
+  --damage-x: 0px;
+  --damage-y: 0px;
   position: absolute;
-  top: 12%;
-  left: 50%;
+  top: calc(18% + var(--damage-y));
+  left: calc(50% + var(--damage-x));
   transform: translateX(-50%);
   color: #ff8a3d;
   text-shadow:
@@ -1722,12 +1756,26 @@
   animation: combat-damage-pop-enemy-overlay 420ms ease-out;
 }
 
-.combat-damage-enemy {
-  color: #ffd0d0;
-  text-shadow:
-    0 0 2px rgba(0, 0, 0, 0.85),
-    0 2px 4px rgba(0, 0, 0, 0.55);
-  animation: combat-damage-pop 420ms ease-out;
+@keyframes combat-damage-pop {
+  from {
+    opacity: 0;
+    transform: translate(var(--damage-x), calc(var(--damage-y) + 0.45rem)) scale(0.85);
+  }
+  to {
+    opacity: 1;
+    transform: translate(var(--damage-x), var(--damage-y)) scale(1);
+  }
+}
+
+@keyframes combat-damage-pop-enemy-overlay {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(0.45rem) scale(0.85);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(1);
+  }
 }
 
 .combat-defeated {
@@ -1743,33 +1791,15 @@
 }
 
 .combat-recovering {
+  position: absolute;
+  inset: auto 0.4rem 0.4rem;
   font-size: 0.75rem;
   font-weight: 700;
   color: #e0a080;
   text-align: center;
-  padding: 0.4rem;
-}
-
-@keyframes combat-damage-pop {
-  from {
-    opacity: 0;
-    transform: translateY(0.45rem) scale(0.85);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-@keyframes combat-damage-pop-enemy-overlay {
-  from {
-    opacity: 0;
-    transform: translateX(-50%) translateY(0.45rem) scale(0.85);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0) scale(1);
-  }
+  padding: 0.35rem 0.4rem;
+  border-radius: 0.5rem;
+  background: rgba(20, 12, 8, 0.55);
 }
 
 @keyframes combat-defeated-flash {
