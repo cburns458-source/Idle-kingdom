@@ -145,6 +145,17 @@ export function ShopPanel({ db, save, shopId, onClose, onComplete }: ShopPanelPr
     setQtyDialog({ mode: 'sell', itemId, unit, name, owned, alreadyOffered })
   }
 
+  /** Second Sell press on an offered item removes it from the trade. */
+  function toggleSellOffer(itemId: string, unit: number, name: string, owned: number) {
+    const alreadyOffered = sells.find((line) => line.itemId === itemId)?.quantity ?? 0
+    if (alreadyOffered > 0) {
+      setError(null)
+      setSells((current) => current.filter((line) => line.itemId !== itemId))
+      return
+    }
+    openSellDialog(itemId, unit, name, owned)
+  }
+
   function applyQuantity() {
     if (!qtyDialog) return
     const max =
@@ -259,8 +270,8 @@ export function ShopPanel({ db, save, shopId, onClose, onComplete }: ShopPanelPr
                   <button
                     type="button"
                     className="btn secondary"
-                    disabled={inOffer >= owned}
-                    onClick={() => openSellDialog(row.itemId, row.unit, name, owned)}
+                    disabled={owned <= 0}
+                    onClick={() => toggleSellOffer(row.itemId, row.unit, name, owned)}
                   >
                     Sell
                   </button>

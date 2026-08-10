@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { locationAssetPath, uiMapAssetPath } from '../game/assets/assetMap'
 import type { ActivityRow, DatabaseIndexes, GameDatabase, LocationRow } from '../game/data/types'
 import {
@@ -76,17 +76,27 @@ export function LocationView({
   const showActivityPanel =
     !showSubMapEntrance && (activities.length > 0 || specialStations.length > 0)
   const [activitiesHidden, setActivitiesHidden] = useState(false)
+  const shadeRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
     setActivitiesHidden(false)
   }, [locationId])
+
+  function scrollLocationToTop() {
+    const shade = shadeRef.current
+    if (!shade) return
+    // Wait a frame so status panels (shop / NPC / activity) can mount first.
+    requestAnimationFrame(() => {
+      shade.scrollTo({ top: 0, behavior: 'smooth' })
+    })
+  }
 
   return (
     <section
       className="location-view"
       style={{ backgroundImage: `url(${locationAssetPath(locationId)})` }}
     >
-      <div className="location-view-shade">
+      <div className="location-view-shade" ref={shadeRef}>
         <header className="location-overlay-head">
           <div className="location-overlay-copy">
             <h1>{location['Display Name']}</h1>
@@ -200,7 +210,10 @@ export function LocationView({
                           type="button"
                           className="btn primary"
                           disabled={actionsLocked && !recipeBrowser}
-                          onClick={() => onStartActivity(activity['Activity ID'])}
+                          onClick={() => {
+                            onStartActivity(activity['Activity ID'])
+                            scrollLocationToTop()
+                          }}
                         >
                           {startLabel}
                         </button>
@@ -216,7 +229,10 @@ export function LocationView({
                     <button
                       type="button"
                       className="btn primary"
-                      onClick={() => onOpenSpecialProduction(station)}
+                      onClick={() => {
+                        onOpenSpecialProduction(station)
+                        scrollLocationToTop()
+                      }}
                     >
                       Open
                     </button>
@@ -239,7 +255,10 @@ export function LocationView({
                     <button
                       type="button"
                       className="btn secondary"
-                      onClick={() => onOpenShop(shop['Shop ID'])}
+                      onClick={() => {
+                        onOpenShop(shop['Shop ID'])
+                        scrollLocationToTop()
+                      }}
                     >
                       Shop
                     </button>
@@ -258,7 +277,10 @@ export function LocationView({
                       <button
                         type="button"
                         className="btn secondary"
-                        onClick={() => onOpenNpc(npc['NPC ID'])}
+                        onClick={() => {
+                          onOpenNpc(npc['NPC ID'])
+                          scrollLocationToTop()
+                        }}
                       >
                         {isMerchant ? 'Talk to merchant' : 'Talk'}
                       </button>
