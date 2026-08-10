@@ -623,6 +623,55 @@ export default function App() {
     [ready?.save.skills],
   )
 
+  function persistSave(next: PlayerSave): PlayerSave {
+    const current = bootRef.current
+    const stamped = stampUnattendedProgressAt(next)
+    const synced =
+      current.status === 'ready'
+        ? syncProgressionMeta(current.database.launch, stamped)
+        : stamped
+    return writeSave(synced)
+  }
+
+  // After a kill, flash "defeated" then advance to the next enemy.
+  // Must stay above early returns so hook order is stable while boot loads.
+  useEffect(() => {
+    if (!defeatedFlash) return
+    const pending = pendingVictoryRef.current
+    if (!pending) {
+      setDefeatedFlash(false)
+      return
+    }
+    const timer = window.setTimeout(() => {
+      const current = bootRef.current
+      if (current.status !== 'ready') {
+        setDefeatedFlash(false)
+        pendingVictoryRef.current = null
+        return
+      }
+      const { save: nextSave, activityId } = pending
+      pendingVictoryRef.current = null
+      setDefeatedFlash(false)
+      setLastPlayerHit(null)
+      setLastEnemyHit(null)
+      if (!activityStillValid(current.database.launch, nextSave, activityId)) {
+        setBoot({
+          ...current,
+          save: persistSave(clearActivitySave(nextSave)),
+          saveCreated: false,
+        })
+        return
+      }
+      const generated = generateNextAction(current.database.launch, nextSave, activityId)
+      setBoot({
+        ...current,
+        save: persistSave(generated ? generated.save : nextSave),
+        saveCreated: false,
+      })
+    }, 750)
+    return () => window.clearTimeout(timer)
+  }, [defeatedFlash])
+
   if (boot.status === 'loading') {
     return (
       <div className="app-shell">
@@ -711,54 +760,6 @@ export default function App() {
     travel?.fromLocationId ?? save.currentLocationId,
   )
   const toLocation = database.launchIndexes.locationsById.get(travel?.toLocationId ?? '')
-
-  function persistSave(next: PlayerSave): PlayerSave {
-    const current = bootRef.current
-    const stamped = stampUnattendedProgressAt(next)
-    const synced =
-      current.status === 'ready'
-        ? syncProgressionMeta(current.database.launch, stamped)
-        : stamped
-    return writeSave(synced)
-  }
-
-  // After a kill, flash "defeated" then advance to the next enemy.
-  useEffect(() => {
-    if (!defeatedFlash) return
-    const pending = pendingVictoryRef.current
-    if (!pending) {
-      setDefeatedFlash(false)
-      return
-    }
-    const timer = window.setTimeout(() => {
-      const current = bootRef.current
-      if (current.status !== 'ready') {
-        setDefeatedFlash(false)
-        pendingVictoryRef.current = null
-        return
-      }
-      const { save: nextSave, activityId } = pending
-      pendingVictoryRef.current = null
-      setDefeatedFlash(false)
-      setLastPlayerHit(null)
-      setLastEnemyHit(null)
-      if (!activityStillValid(current.database.launch, nextSave, activityId)) {
-        setBoot({
-          ...current,
-          save: persistSave(clearActivitySave(nextSave)),
-          saveCreated: false,
-        })
-        return
-      }
-      const generated = generateNextAction(current.database.launch, nextSave, activityId)
-      setBoot({
-        ...current,
-        save: persistSave(generated ? generated.save : nextSave),
-        saveCreated: false,
-      })
-    }, 750)
-    return () => window.clearTimeout(timer)
-  }, [defeatedFlash])
 
   function updateSave(next: PlayerSave) {
     const saved = persistSave(next)

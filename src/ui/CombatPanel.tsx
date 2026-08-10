@@ -53,6 +53,7 @@ export function CombatPanel({
         </div>
 
         <div className="combat-side combat-enemy-side">
+          <div className="combat-float-slot" aria-hidden />
           <div className="combat-portrait combat-portrait-enemy">
             {defeatedFlash ? (
               <span className="combat-defeated">defeated</span>
