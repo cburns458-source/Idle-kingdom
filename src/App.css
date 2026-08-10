@@ -94,6 +94,12 @@
   color: #f4efd8;
 }
 
+.hud-activity-action {
+  font-size: 0.55rem;
+  font-weight: 600;
+  color: #d8d0b8;
+}
+
 .hud-activity-timer {
   margin-top: 0.08rem;
   font-size: 0.62rem;
