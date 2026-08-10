@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import type { GameDatabase } from '../game/data/types'
 import { inventoryCount } from '../game/production/recipes'
 import type { PlayerSave } from '../game/save/types'
@@ -301,93 +302,97 @@ export function ShopPanel({ db, save, shopId, onClose, onComplete }: ShopPanelPr
         {error && <p className="danger-note">{error}</p>}
       </div>
 
-      {qtyDialog && (
-        <div
-          className="quest-reward-overlay shop-qty-overlay"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="shop-qty-title"
-        >
-          <div className="panel quest-reward-card shop-qty-card">
-            <p className="muted tiny">{qtyDialog.mode === 'buy' ? 'Buy' : 'Sell'}</p>
-            <h2 id="shop-qty-title">{qtyDialog.name}</h2>
-            <p className="muted">
-              {qtyDialog.unit.toLocaleString()} gold each
-              {liveTotal != null ? ` · ${liveTotal.toLocaleString()} gold total` : ''}
-            </p>
-            {qtyDialog.mode === 'sell' && (
-              <p className="lead shop-qty-available">
-                Available in inventory: {qtyDialog.owned.toLocaleString()}
-                {qtyDialog.alreadyOffered > 0
-                  ? ` · ${sellRemaining?.toLocaleString() ?? 0} left to offer`
-                  : ''}
+      {qtyDialog &&
+        createPortal(
+          <div
+            className="quest-reward-overlay shop-qty-overlay"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="shop-qty-title"
+          >
+            <div className="panel quest-reward-card shop-qty-card">
+              <p className="muted tiny">{qtyDialog.mode === 'buy' ? 'Buy' : 'Sell'}</p>
+              <h2 id="shop-qty-title">{qtyDialog.name}</h2>
+              <p className="muted">
+                {qtyDialog.unit.toLocaleString()} gold each
+                {liveTotal != null ? ` · ${liveTotal.toLocaleString()} gold total` : ''}
               </p>
-            )}
-            {qtyDialog.mode === 'buy' && buyAffordHint != null && (
-              <p className="muted tiny">Afford up to {buyAffordHint.toLocaleString()} with current gold</p>
-            )}
-            <label className="field-label" htmlFor="shop-qty-input">
-              Amount
-            </label>
-            <div className="shop-qty-row">
-              <input
-                id="shop-qty-input"
-                ref={qtyInputRef}
-                className="text-input"
-                type="text"
-                inputMode="numeric"
-                autoComplete="off"
-                value={qtyText}
-                onChange={(event) => {
-                  setQtyText(event.target.value)
-                  setQtyError(null)
-                }}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter') {
-                    event.preventDefault()
-                    applyQuantity()
+              {qtyDialog.mode === 'sell' && (
+                <p className="lead shop-qty-available">
+                  Available in inventory: {qtyDialog.owned.toLocaleString()}
+                  {qtyDialog.alreadyOffered > 0
+                    ? ` · ${sellRemaining?.toLocaleString() ?? 0} left to offer`
+                    : ''}
+                </p>
+              )}
+              {qtyDialog.mode === 'buy' && buyAffordHint != null && (
+                <p className="muted tiny">
+                  Afford up to {buyAffordHint.toLocaleString()} with current gold
+                </p>
+              )}
+              <label className="field-label" htmlFor="shop-qty-input">
+                Amount
+              </label>
+              <div className="shop-qty-row">
+                <input
+                  id="shop-qty-input"
+                  ref={qtyInputRef}
+                  className="text-input"
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="off"
+                  value={qtyText}
+                  onChange={(event) => {
+                    setQtyText(event.target.value)
+                    setQtyError(null)
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter') {
+                      event.preventDefault()
+                      applyQuantity()
+                    }
+                  }}
+                />
+                <button
+                  type="button"
+                  className="btn secondary"
+                  disabled={
+                    qtyDialog.mode === 'sell'
+                      ? (sellRemaining ?? 0) <= 0
+                      : (buyAffordHint ?? 0) <= 0
                   }
-                }}
-              />
-              <button
-                type="button"
-                className="btn secondary"
-                disabled={
-                  qtyDialog.mode === 'sell'
-                    ? (sellRemaining ?? 0) <= 0
-                    : (buyAffordHint ?? 0) <= 0
-                }
-                onClick={() => {
-                  if (qtyDialog.mode === 'sell') {
-                    setQtyText(String(Math.max(1, sellRemaining ?? 1)))
-                  } else {
-                    setQtyText(String(Math.max(1, buyAffordHint ?? 1)))
-                  }
-                  setQtyError(null)
-                }}
-              >
-                Max
-              </button>
+                  onClick={() => {
+                    if (qtyDialog.mode === 'sell') {
+                      setQtyText(String(Math.max(1, sellRemaining ?? 1)))
+                    } else {
+                      setQtyText(String(Math.max(1, buyAffordHint ?? 1)))
+                    }
+                    setQtyError(null)
+                  }}
+                >
+                  Max
+                </button>
+              </div>
+              {qtyError && <p className="danger-note">{qtyError}</p>}
+              <div className="button-row shop-qty-actions">
+                <button
+                  type="button"
+                  className="btn secondary"
+                  onClick={() => {
+                    setQtyDialog(null)
+                    setQtyError(null)
+                  }}
+                >
+                  Cancel
+                </button>
+                <button type="button" className="btn primary" onClick={applyQuantity}>
+                  Add to offer
+                </button>
+              </div>
             </div>
-            {qtyError && <p className="danger-note">{qtyError}</p>}
-            <div className="button-row shop-qty-actions">
-              <button
-                type="button"
-                className="btn secondary"
-                onClick={() => {
-                  setQtyDialog(null)
-                  setQtyError(null)
-                }}
-              >
-                Cancel
-              </button>
-              <button type="button" className="btn primary" onClick={applyQuantity}>
-                Add to offer
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body,
+        )}
     </section>
   )
 }

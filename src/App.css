@@ -3,6 +3,9 @@
   display: grid;
   place-items: stretch;
   padding: 0;
+  /* Approximate HUD content height; shop qty popup anchors below this. */
+  --hud-block-height: 5.25rem;
+  --hud-to-popup-gap: 0.75rem;
   background:
     radial-gradient(circle at 20% 10%, rgba(214, 180, 110, 0.28), transparent 42%),
     radial-gradient(circle at 80% 90%, rgba(88, 122, 78, 0.22), transparent 40%),
@@ -821,12 +824,23 @@
   flex: 1;
 }
 
-/* Keep buy/sell amount dialog in the upper half so mobile keyboards do not cover the input. */
+/* Portal to body: sit below HUD (not under screen-body stacking) and clear keyboards. */
 .quest-reward-overlay.shop-qty-overlay {
-  place-items: start center;
-  align-content: start;
-  padding-top: max(0.75rem, 6vh);
-  padding-bottom: 48vh;
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  place-items: unset;
+  align-content: unset;
+  padding: 0 1rem 45vh;
+  padding-top: calc(
+    max(0.75rem, env(safe-area-inset-top, 0px)) + 0.75rem + var(--hud-block-height, 5.25rem) +
+      var(--hud-to-popup-gap, 0.75rem)
+  );
+  background: rgba(12, 10, 8, 0.62);
 }
 
 .npc-quest-block,
