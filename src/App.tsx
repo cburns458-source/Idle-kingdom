@@ -55,7 +55,6 @@ import {
   proposeAutoEquipForActivity,
   type AutoEquipProposal,
 } from './game/equipment/autoEquip'
-import { equipItemFromInventory } from './game/equipment/loadout'
 import { withRecalculatedVitals } from './game/equipment/vitals'
 import { completeProductionCraft } from './game/production/engine'
 import { getRecipe, isStandardProductionActivity } from './game/production/recipes'
@@ -1305,8 +1304,6 @@ function SettingsPanel({
   onRename: (name: string) => void
   onPreviewAfkSummary: () => void
 }) {
-  const bakedPotatoId = 'ITEM-0058'
-
   const launchSkills = database.launch.Skills
   const launchItems = database.launch.Items
   const levelCap = configNumber(database.launch, 'display_level_cap', 100)
@@ -1398,16 +1395,6 @@ function SettingsPanel({
         equipment: { slots },
       }),
     )
-  }
-
-  function grantTestFood() {
-    const withItems = addItemToInventory(save, bakedPotatoId, 5)
-    const equipped = equipItemFromInventory(database.launch, withItems, bakedPotatoId)
-    if (!equipped.ok) {
-      onChangeSave(withRecalculatedVitals(database.launch, withItems))
-      return
-    }
-    onChangeSave(withRecalculatedVitals(database.launch, equipped.save))
   }
 
   function clearGold() {
@@ -1640,9 +1627,6 @@ function SettingsPanel({
           </div>
 
           <div className="button-row">
-            <button type="button" className="btn primary" onClick={grantTestFood}>
-              Add & equip Baked Potato ×5
-            </button>
             <button type="button" className="btn secondary" onClick={clearGold}>
               Clear gold
             </button>
