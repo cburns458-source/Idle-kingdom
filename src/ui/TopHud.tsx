@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { formatDurationSeconds } from './formatDuration'
 
 const PLAYER_AVATAR_SRC = '/assets/player/player_adventurer_temp.png'
@@ -47,6 +49,7 @@ export function TopHud({
   dead = false,
   activityStatus,
 }: TopHudProps) {
+  const [wardrobeOpen, setWardrobeOpen] = useState(false)
   const hpRatio =
     dead || maxHp <= 0 ? 0 : Math.max(0, Math.min(1, currentHp / maxHp))
   const hpLabel = dead
@@ -56,84 +59,134 @@ export function TopHud({
     ? `Total XP: ${totalXp.toLocaleString()}`
     : `Total level: ${totalLevel.toLocaleString()}`
 
+  useEffect(() => {
+    if (!wardrobeOpen) return
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        setWardrobeOpen(false)
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [wardrobeOpen])
+
   return (
-    <header className="top-hud">
-      <div className="top-hud-main">
-        <div className="hud-avatar" aria-hidden="true">
-          <div className="hud-avatar-portrait">
+    <>
+      <header className="top-hud">
+        <button
+          type="button"
+          className="hud-avatar"
+          onClick={() => setWardrobeOpen(true)}
+          aria-label="Open wardrobe"
+          title="Wardrobe"
+        >
+          <span className="hud-avatar-portrait">
             <img src={PLAYER_AVATAR_SRC} alt="" className="hud-avatar-image" />
-          </div>
+          </span>
           <img src={AVATAR_FRAME_SRC} alt="" className="hud-avatar-frame" />
-        </div>
-        <div className="top-hud-identity">
-          <p className="brand">{characterName?.trim() || 'Adventurer'}</p>
-          {onToggleTotalStat ? (
-            <button
-              type="button"
-              className="hud-total-stat"
-              onClick={onToggleTotalStat}
-              aria-label={
-                showTotalXp
-                  ? 'Show total level. Currently showing total XP.'
-                  : 'Show total XP. Currently showing total level.'
-              }
-            >
-              {totalStatLabel}
-            </button>
-          ) : (
-            <p className="hud-total-stat">{totalStatLabel}</p>
-          )}
-          <p className="hud-gold">
-            <img src={GOLD_ICON_SRC} alt="" className="hud-gold-icon" />
-            <span>{gold.toLocaleString()}</span>
-          </p>
-        </div>
+        </button>
 
-        <div className="top-hud-right">
-          {activityStatus && (
-            <div className="hud-activity" aria-live="polite">
-              {activityStatus.kind === 'action' ? (
-                <>
-                  <p className="hud-activity-line">{activityStatus.activityName}</p>
-                  <p className="hud-activity-line hud-activity-action">
-                    {activityStatus.actionName}
-                  </p>
-                  <p className="hud-activity-timer">
-                    {formatDurationSeconds(activityStatus.elapsedSeconds)}
-                  </p>
-                </>
-              ) : (
-                <>
-                  <p className="hud-activity-line">{activityStatus.itemName}</p>
-                  <p className="hud-activity-line">
-                    {activityStatus.completed}/{activityStatus.total}
-                  </p>
-                  <p className="hud-activity-timer">
-                    {formatDurationSeconds(activityStatus.remainingSeconds)}
-                  </p>
-                </>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
+        <div className="top-hud-main">
+          <div className="top-hud-identity">
+            <p className="brand">{characterName?.trim() || 'Adventurer'}</p>
+            {onToggleTotalStat ? (
+              <button
+                type="button"
+                className="hud-total-stat"
+                onClick={onToggleTotalStat}
+                aria-label={
+                  showTotalXp
+                    ? 'Show total level. Currently showing total XP.'
+                    : 'Show total XP. Currently showing total level.'
+                }
+              >
+                {totalStatLabel}
+              </button>
+            ) : (
+              <p className="hud-total-stat">{totalStatLabel}</p>
+            )}
+            <p className="hud-gold">
+              <img src={GOLD_ICON_SRC} alt="" className="hud-gold-icon" />
+              <span>{gold.toLocaleString()}</span>
+            </p>
+          </div>
 
-      <div className="top-hud-hp-row">
-        <div className="top-hud-hp-cluster">
-          <p className={dead ? 'hud-hp-text dead' : 'hud-hp-text'}>{hpLabel}</p>
-          <div
-            className="hud-hp-bar"
-            role="progressbar"
-            aria-label="Hit points"
-            aria-valuemin={0}
-            aria-valuemax={maxHp}
-            aria-valuenow={dead ? 0 : currentHp}
-            aria-valuetext={hpLabel}
-          >
-            <div className="hud-hp-bar-fill" style={{ transform: `scaleX(${hpRatio})` }} />
+          <div className="top-hud-right">
+            {activityStatus && (
+              <div className="hud-activity" aria-live="polite">
+                {activityStatus.kind === 'action' ? (
+                  <>
+                    <p className="hud-activity-line">{activityStatus.activityName}</p>
+                    <p className="hud-activity-line hud-activity-action">
+                      {activityStatus.actionName}
+                    </p>
+                    <p className="hud-activity-timer">
+                      {formatDurationSeconds(activityStatus.elapsedSeconds)}
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p className="hud-activity-line">{activityStatus.itemName}</p>
+                    <p className="hud-activity-line">
+                      {activityStatus.completed}/{activityStatus.total}
+                    </p>
+                    <p className="hud-activity-timer">
+                      {formatDurationSeconds(activityStatus.remainingSeconds)}
+                    </p>
+                  </>
+                )}
+              </div>
+            )}
           </div>
         </div>
-      </div>
-    </header>
+
+        <div className="top-hud-hp-row">
+          <div className="top-hud-hp-cluster">
+            <p className={dead ? 'hud-hp-text dead' : 'hud-hp-text'}>{hpLabel}</p>
+            <div
+              className="hud-hp-bar"
+              role="progressbar"
+              aria-label="Hit points"
+              aria-valuemin={0}
+              aria-valuemax={maxHp}
+              aria-valuenow={dead ? 0 : currentHp}
+              aria-valuetext={hpLabel}
+            >
+              <div className="hud-hp-bar-fill" style={{ transform: `scaleX(${hpRatio})` }} />
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {wardrobeOpen &&
+        createPortal(
+          <div
+            className="quest-reward-overlay wardrobe-overlay"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="wardrobe-title"
+            onClick={() => setWardrobeOpen(false)}
+          >
+            <div
+              className="panel quest-reward-card wardrobe-card"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <h2 id="wardrobe-title">Wardrobe</h2>
+              <p className="lead">Wardrobe coming soon…</p>
+              <div className="button-row" style={{ justifyContent: 'center' }}>
+                <button
+                  type="button"
+                  className="btn secondary"
+                  onClick={() => setWardrobeOpen(false)}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body,
+        )}
+    </>
   )
 }
