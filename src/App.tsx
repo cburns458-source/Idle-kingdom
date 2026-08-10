@@ -1004,7 +1004,7 @@ export default function App() {
           totalXp={overallXp}
           showTotalXp={save.settings.hudShowTotalXp === true}
           onToggleTotalStat={() => {
-            persistSave({
+            updateSave({
               ...save,
               settings: {
                 ...save.settings,
