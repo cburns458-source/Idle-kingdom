@@ -3,7 +3,7 @@ import { asStatisticRows } from '../game/achievements/progress'
 import type { GameDatabase, SkillRow } from '../game/data/types'
 import type { PlayerSave } from '../game/save/types'
 import { getSkillProgress } from '../game/activity/xp'
-import { actionsForSkill, type SkillActionListItem } from '../game/skills/skillActions'
+import { skillMenuEntries, type SkillMenuListItem } from '../game/skills/skillActions'
 import { totalLevel, totalSkillXp } from '../game/skills/totals'
 import { SkillIcon } from './skillIcons'
 
@@ -22,7 +22,7 @@ export function SkillsView({ db, save }: SkillsViewProps) {
   const openSkill = openSkillId
     ? (skills.find((skill) => skill['Skill ID'] === openSkillId) ?? null)
     : null
-  const openActions = openSkillId ? actionsForSkill(db, openSkillId) : []
+  const openEntries = openSkillId ? skillMenuEntries(db, openSkillId) : []
 
   return (
     <section className="skills-view">
@@ -76,7 +76,7 @@ export function SkillsView({ db, save }: SkillsViewProps) {
       {openSkill && (
         <SkillActionsMenu
           skill={openSkill}
-          actions={openActions}
+          entries={openEntries}
           onClose={() => setOpenSkillId(null)}
         />
       )}
@@ -168,11 +168,11 @@ function SkillTile({
 
 function SkillActionsMenu({
   skill,
-  actions,
+  entries,
   onClose,
 }: {
   skill: SkillRow
-  actions: SkillActionListItem[]
+  entries: SkillMenuListItem[]
   onClose: () => void
 }) {
   return (
@@ -190,11 +190,11 @@ function SkillActionsMenu({
           </button>
         </div>
         <ul className="skill-actions-list">
-          {actions.map((action) => (
-            <li key={action.actionId}>
-              <span className="skill-action-name">{action.displayName}</span>
-              {action.proficiencyLevel != null && (
-                <span className="skill-action-proficiency">{action.proficiencyLevel}</span>
+          {entries.map((entry) => (
+            <li key={entry.id}>
+              <span className="skill-action-name">{entry.displayName}</span>
+              {entry.level != null && (
+                <span className="skill-action-proficiency">{entry.level}</span>
               )}
             </li>
           ))}

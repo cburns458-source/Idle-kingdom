@@ -1630,7 +1630,7 @@
   display: grid;
   place-items: center;
   padding: 1rem;
-  background: rgba(12, 8, 5, 0.55);
+  background: rgba(12, 8, 5, 0.72);
 }
 
 .skill-actions-menu {
@@ -1640,6 +1640,9 @@
   display: flex;
   flex-direction: column;
   gap: 0.65rem;
+  background: #3d2a1a !important;
+  border-color: rgba(212, 175, 55, 0.4) !important;
+  opacity: 1;
 }
 
 .skill-actions-head {
