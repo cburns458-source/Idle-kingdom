@@ -146,6 +146,12 @@ export default function App() {
   bootRef.current = boot
 
   useEffect(() => {
+    if (!activityError) return
+    const timer = window.setTimeout(() => setActivityError(null), 2000)
+    return () => window.clearTimeout(timer)
+  }, [activityError])
+
+  useEffect(() => {
     let cancelled = false
 
     async function bootGame() {

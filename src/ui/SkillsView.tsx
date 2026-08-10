@@ -14,7 +14,7 @@ function skillXpTooltipText(db: GameDatabase, totalXp: number): string {
   if (progress.atCap || progress.nextLevel == null || progress.toNextLevel <= 0) {
     return total
   }
-  return `${total} · ${progress.intoLevel.toLocaleString()}/${progress.toNextLevel.toLocaleString()} to Lv ${progress.nextLevel}`
+  return `${total}\n${progress.intoLevel.toLocaleString()}/${progress.toNextLevel.toLocaleString()} to Lv ${progress.nextLevel}`
 }
 
 interface SkillsViewProps {

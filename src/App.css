@@ -1589,7 +1589,8 @@
   left: 50%;
   bottom: calc(100% + 0.35rem);
   transform: translateX(-50%);
-  white-space: nowrap;
+  white-space: pre-line;
+  text-align: center;
   background: rgba(24, 16, 10, 0.94);
   color: #ffe7a8;
   border: 1px solid rgba(212, 175, 55, 0.45);
