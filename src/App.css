@@ -1859,6 +1859,60 @@
   backdrop-filter: none !important;
 }
 
+.gather-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  padding: 0.35rem 0.15rem;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
+}
+
+.gather-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.gather-head-copy h2 {
+  margin: 0;
+  font-size: 1rem;
+  color: #f4efd8;
+}
+
+.gather-skill {
+  margin: 0.15rem 0 0;
+  font-size: 0.75rem;
+}
+
+.gather-layout {
+  min-height: 11rem;
+}
+
+.gather-action-art {
+  background-position: center right;
+}
+
+.gather-preparing {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #f4efd8;
+  opacity: 0.7;
+}
+
+.gather-tough {
+  margin: 0.1rem 0 0;
+  text-align: right;
+}
+
+.gather-progress-bar {
+  margin-top: 0.15rem;
+}
+
+.gather-progress-fill {
+  background: linear-gradient(180deg, #e8f6c8 0%, #9bc85a 55%, #6a9a35 100%);
+}
+
 .inventory-view {
   display: flex;
   flex-direction: column;

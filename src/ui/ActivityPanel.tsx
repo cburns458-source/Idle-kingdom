@@ -1,7 +1,8 @@
+import { actionAssetPath } from '../game/assets/actionAssets'
+import { playerCombatAssetPath } from '../game/assets/playerAssets'
 import type { ActionRow, ActivityRow, SkillRow } from '../game/data/types'
 import { isBelowProficiency } from '../game/activity/gathering'
 import type { PlayerSave } from '../game/save/types'
-import { formatDurationSeconds } from './formatDuration'
 
 interface ActivityPanelProps {
   activity: ActivityRow
@@ -20,45 +21,75 @@ export function ActivityPanel({
   save,
   skill,
   progress,
-  durationMs,
+  durationMs: _durationMs,
   onStop,
 }: ActivityPanelProps) {
   const clamped = Math.min(1, Math.max(0, progress))
   const pct = Math.round(clamped * 100)
   const slow = action ? isBelowProficiency(save, action) : false
   const label = activity['Contextual Name'] ?? activity['Internal Key']
-  const totalSeconds = Math.max(0, (durationMs ?? 0) / 1000)
-  const elapsedSeconds = Math.min(totalSeconds, clamped * totalSeconds)
+  const actionName = action?.['Display Name'] ?? 'Preparing…'
+  const actionId = action?.['Action ID']
 
   return (
-    <section className="panel activity-panel">
-      <div className="activity-panel-head">
-        <div>
+    <section className="panel activity-panel gather-panel" aria-label="Gathering">
+      <div className="gather-head">
+        <div className="gather-head-copy">
           <h2>{label}</h2>
+          {skill && <p className="gather-skill muted">{skill['Display Name']}</p>}
         </div>
-        <button type="button" className="btn secondary" onClick={onStop}>
+        <button type="button" className="btn secondary glass-btn" onClick={onStop}>
           Stop
         </button>
       </div>
 
-      {action ? (
-        <>
-          <p className="lead">
-            Current action: <strong>{action['Display Name']}</strong>
-          </p>
-          <p className="muted">{skill?.['Display Name'] ?? 'Skill'}</p>
-          {slow && <p className="tough-work">this is tough work</p>}
-          <div className="action-bar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct}>
-            <div className="action-bar-fill" style={{ width: `${pct}%` }} />
+      <div className="combat-layout gather-layout">
+        <div className="combat-side combat-player-side">
+          <div className="combat-portrait combat-portrait-player">
+            <div
+              className="combat-player-art"
+              style={{ backgroundImage: `url(${playerCombatAssetPath()})` }}
+              role="img"
+              aria-label="Adventurer"
+            />
           </div>
-          <p className="muted tiny">
-            Time elapsed: {formatDurationSeconds(elapsedSeconds)} /{' '}
-            {formatDurationSeconds(totalSeconds)}
-          </p>
-        </>
-      ) : (
-        <p className="lead">Preparing next action…</p>
-      )}
+          <div className="combat-meta combat-meta-player">
+            <p className="combat-enemy-name combat-player-spacer" aria-hidden>
+              &nbsp;
+            </p>
+          </div>
+        </div>
+
+        <div className="combat-side combat-enemy-side">
+          <div className="combat-portrait combat-portrait-enemy">
+            {actionId ? (
+              <div
+                className="combat-enemy-art gather-action-art"
+                style={{ backgroundImage: `url(${actionAssetPath(actionId)})` }}
+                role="img"
+                aria-label={actionName}
+              />
+            ) : (
+              <span className="gather-preparing">…</span>
+            )}
+          </div>
+          <div className="combat-meta combat-meta-enemy">
+            <p className="combat-enemy-name">{actionName}</p>
+            {slow && <p className="tough-work gather-tough">this is tough work</p>}
+          </div>
+        </div>
+      </div>
+
+      <div
+        className="combat-round-bar gather-progress-bar"
+        role="progressbar"
+        aria-label="Action progress"
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={pct}
+      >
+        <div className="combat-round-bar-fill gather-progress-fill" style={{ width: `${pct}%` }} />
+      </div>
     </section>
   )
 }

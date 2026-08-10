@@ -1,5 +1,5 @@
 /** Bump when replacing files under /public/assets so browsers fetch new art. */
-export const ASSET_CACHE_VERSION = 's14-player-girl-transparent'
+export const ASSET_CACHE_VERSION = 's15-gathering-action-art'
 
 export function withAssetVersion(path: string): string {
   if (!path) return path
