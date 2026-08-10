@@ -507,11 +507,27 @@
 }
 
 .location-bottom-panels {
-  margin-top: auto;
+  margin-top: 0;
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
   padding-bottom: 0;
+}
+
+.location-stage {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  flex-shrink: 0;
+}
+
+.location-stage .combat-panel,
+.location-stage .gather-panel,
+.location-stage .activity-panel,
+.location-stage .production-progress,
+.location-stage > .panel {
+  margin: 0;
 }
 
 .location-overlay-head {
