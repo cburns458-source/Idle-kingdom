@@ -23,6 +23,8 @@ interface TopHudProps {
   gold: number
   currentHp: number
   maxHp: number
+  /** When true, HP reads "Dead" instead of current/max (death pause). */
+  dead?: boolean
   locationLabel: string
   activityStatus: HudActivityStatus
 }
@@ -34,6 +36,7 @@ export function TopHud({
   gold,
   currentHp,
   maxHp,
+  dead = false,
   locationLabel,
   activityStatus,
 }: TopHudProps) {
@@ -83,9 +86,7 @@ export function TopHud({
         </div>
         <div>
           <dt>HP</dt>
-          <dd>
-            {currentHp.toLocaleString()}/{maxHp.toLocaleString()}
-          </dd>
+          <dd>{dead ? 'Dead' : `${currentHp.toLocaleString()}/${maxHp.toLocaleString()}`}</dd>
         </div>
       </dl>
     </header>

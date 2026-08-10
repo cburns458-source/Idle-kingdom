@@ -1005,6 +1005,7 @@ export default function App() {
           gold={save.gold}
           currentHp={save.currentHp}
           maxHp={maxHp}
+          dead={deathLocked}
           locationLabel={location['Display Name']}
           activityStatus={hudActivityStatus}
         />
