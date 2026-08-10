@@ -44,3 +44,32 @@ export function applyXp(
     leveledUpTo,
   }
 }
+
+/** Raise a skill to at least `minLevel` (by total XP). No-op if already there or higher. */
+export function raiseSkillToMinimumLevel(
+  save: PlayerSave,
+  db: GameDatabase,
+  skillId: string,
+  minLevel: number,
+): { save: PlayerSave; raised: boolean } {
+  if (minLevel <= 1) return { save, raised: false }
+  const current = getSkillProgress(save, skillId)
+  if (current.level >= minLevel) return { save, raised: false }
+
+  const xpAtLevel = db.XPCurve.find((row) => row.Level === minLevel)?.['Total XP at Level']
+  if (typeof xpAtLevel !== 'number') return { save, raised: false }
+
+  const skills = save.skills.map((skill) => ({ ...skill }))
+  let progress = skills.find((skill) => skill.skillId === skillId)
+  if (!progress) {
+    progress = { skillId, level: 1, xp: 0 }
+    skills.push(progress)
+  }
+  progress.xp = Math.max(progress.xp, xpAtLevel)
+  progress.level = levelForTotalXp(db, progress.xp)
+
+  return {
+    save: { ...save, skills },
+    raised: progress.level >= minLevel && current.level < minLevel,
+  }
+}

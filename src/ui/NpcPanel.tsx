@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { GameDatabase, NpcRow } from '../game/data/types'
+import { raiseSkillToMinimumLevel } from '../game/activity/xp'
 import {
   ARCHMAGE_ID,
   MASTER_DWARF_ID,
@@ -17,7 +18,8 @@ import type { PlayerSave } from '../game/save/types'
 import { inventoryCount } from '../game/production/recipes'
 import { QuestRewardPopup } from './QuestRewardPopup'
 
-const MERCHANT_TIP_GOLD = 1000
+const ALCHEMY_SKILL_ID = 'SKL-0010'
+const MERCHANT_ALCHEMY_TIP_LEVEL = 10
 
 interface NpcPanelProps {
   db: GameDatabase
@@ -49,14 +51,21 @@ export function NpcPanel({
   useEffect(() => {
     if (!isMerchant || merchantTipGranted.current) return
     merchantTipGranted.current = true
-    onChangeSave(
-      {
-        ...save,
-        gold: save.gold + MERCHANT_TIP_GOLD,
-        updatedAt: new Date().toISOString(),
-      },
-      null,
+    const tipped = raiseSkillToMinimumLevel(
+      save,
+      db,
+      ALCHEMY_SKILL_ID,
+      MERCHANT_ALCHEMY_TIP_LEVEL,
     )
+    if (tipped.raised) {
+      onChangeSave(
+        {
+          ...tipped.save,
+          updatedAt: new Date().toISOString(),
+        },
+        null,
+      )
+    }
     setMerchantDialogueOpen(true)
     // Grant once when this merchant talk session opens.
     // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional mount-only tip
@@ -74,8 +83,8 @@ export function NpcPanel({
           >
             <div className="panel quest-reward-card">
               <h2 id="merchant-dialogue-title">{npc['Display Name']}</h2>
-              <p className="lead">Good luck!</p>
-              <p className="muted">+{MERCHANT_TIP_GOLD.toLocaleString()} gold</p>
+              <p className="lead">Here’s some tips on how to brew potions</p>
+              <p className="muted">level 10 alchemy</p>
               <button
                 type="button"
                 className="btn primary"
