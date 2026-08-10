@@ -42,26 +42,39 @@ export function CombatPanel({
 
   const [playerHitOffset, setPlayerHitOffset] = useState({ x: 0, y: 0 })
   const [enemyHitOffset, setEnemyHitOffset] = useState({ x: 0, y: 0 })
+  const [shownPlayerHit, setShownPlayerHit] = useState<number | null>(null)
+  const [shownEnemyHit, setShownEnemyHit] = useState<number | null>(null)
 
-  // Nudge popup position each time a hit lands (HP change covers same-damage rounds).
+  // Show hit pops briefly, nudge position each time, then clear after 2s.
   useEffect(() => {
-    if (lastPlayerHit != null && lastPlayerHit > 0) {
-      setPlayerHitOffset(randomDamageOffset())
-    }
+    if (lastPlayerHit == null || lastPlayerHit <= 0) return
+    setShownPlayerHit(lastPlayerHit)
+    setPlayerHitOffset(randomDamageOffset())
+    const timer = window.setTimeout(() => setShownPlayerHit(null), 2000)
+    return () => window.clearTimeout(timer)
   }, [lastPlayerHit, enemyHp])
 
   useEffect(() => {
-    if (lastEnemyHit != null && lastEnemyHit > 0) {
-      setEnemyHitOffset(randomDamageOffset())
-    }
+    if (lastEnemyHit == null || lastEnemyHit <= 0) return
+    setShownEnemyHit(lastEnemyHit)
+    setEnemyHitOffset(randomDamageOffset())
+    const timer = window.setTimeout(() => setShownEnemyHit(null), 2000)
+    return () => window.clearTimeout(timer)
   }, [lastEnemyHit, playerHp])
+
+  useEffect(() => {
+    if (defeatedFlash) {
+      setShownPlayerHit(null)
+      setShownEnemyHit(null)
+    }
+  }, [defeatedFlash])
 
   return (
     <section className="panel combat-panel" aria-label="Combat">
       <div className="combat-layout">
         <div className="combat-side combat-player-side">
           <div className="combat-float-slot">
-            {lastEnemyHit != null && lastEnemyHit > 0 && !defeatedFlash && (
+            {shownEnemyHit != null && shownEnemyHit > 0 && !defeatedFlash && (
               <span
                 className="combat-damage combat-damage-enemy"
                 style={{
@@ -69,7 +82,7 @@ export function CombatPanel({
                   ['--damage-y' as string]: `${enemyHitOffset.y}px`,
                 }}
               >
-                {lastEnemyHit}
+                {shownEnemyHit}
               </span>
             )}
           </div>
@@ -114,7 +127,7 @@ export function CombatPanel({
                   role="img"
                   aria-label={enemy['Display Name']}
                 />
-                {lastPlayerHit != null && lastPlayerHit > 0 && (
+                {shownPlayerHit != null && shownPlayerHit > 0 && (
                   <span
                     className="combat-damage combat-damage-player"
                     style={{
@@ -122,7 +135,7 @@ export function CombatPanel({
                       ['--damage-y' as string]: `${playerHitOffset.y}px`,
                     }}
                   >
-                    {lastPlayerHit}
+                    {shownPlayerHit}
                   </span>
                 )}
               </>
