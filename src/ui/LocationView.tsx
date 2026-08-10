@@ -24,6 +24,9 @@ interface LocationViewProps {
   onOpenNpc: (npcId: string) => void
   onOpenMap: () => void
   onOpenSubMap?: () => void
+  /** When set, show a control to reopen this location's sub-map. */
+  parentSubMapName?: string | null
+  onOpenParentSubMap?: () => void
   requirementHint?: (activity: ActivityRow) => string | null
   /** Standard Production opens a recipe picker. */
   isRecipeBrowserActivity?: (activity: ActivityRow) => boolean
@@ -55,6 +58,8 @@ export function LocationView({
   onOpenNpc,
   onOpenMap,
   onOpenSubMap,
+  parentSubMapName,
+  onOpenParentSubMap,
   requirementHint,
   isRecipeBrowserActivity,
 }: LocationViewProps) {
@@ -66,6 +71,8 @@ export function LocationView({
   const showSubMapEntrance =
     Boolean(onOpenSubMap) &&
     (locationId === CAVE_ENTRANCE_ID || locationId === CASTLE_GATEWAY_ID)
+  const showBackToSubMap =
+    Boolean(onOpenParentSubMap) && Boolean(parentSubMapName) && !showSubMapEntrance
   const showActivityPanel =
     !showSubMapEntrance && (activities.length > 0 || specialStations.length > 0)
   const [activitiesHidden, setActivitiesHidden] = useState(false)
@@ -90,15 +97,26 @@ export function LocationView({
               <p className="danger-note">{location['Danger / Hostility']}</p>
             )}
           </div>
-          <button
-            type="button"
-            className="map-icon-btn"
-            onClick={onOpenMap}
-            aria-label="Open world map"
-            title="Open world map"
-          >
-            <MapIcon />
-          </button>
+          <div className="location-map-actions">
+            {showBackToSubMap && (
+              <button
+                type="button"
+                className="btn secondary glass-btn location-submap-back"
+                onClick={onOpenParentSubMap}
+              >
+                Back to {parentSubMapName}
+              </button>
+            )}
+            <button
+              type="button"
+              className="map-icon-btn"
+              onClick={onOpenMap}
+              aria-label="Open world map"
+              title="Open world map"
+            >
+              <MapIcon />
+            </button>
+          </div>
         </header>
 
         {showSubMapEntrance && (

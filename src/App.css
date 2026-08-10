@@ -521,6 +521,24 @@
   gap: 0.75rem;
 }
 
+.location-map-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.45rem;
+  flex-shrink: 0;
+}
+
+.location-submap-back {
+  max-width: 11rem;
+  padding: 0.4rem 0.65rem;
+  font-size: 0.78rem;
+  line-height: 1.2;
+  white-space: normal;
+  text-align: center;
+}
+
 .location-overlay-copy {
   min-width: 0;
   flex: 1;

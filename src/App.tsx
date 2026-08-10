@@ -26,6 +26,7 @@ import {
   CASTLE_MAP_ID,
   CAVE_ENTRANCE_ID,
   CAVE_MAP_ID,
+  isSubMapId,
   MAIN_MAP_ID,
 } from './game/world/constants'
 import {
@@ -1054,6 +1055,22 @@ export default function App() {
                 setSelectedLocationId(save.currentLocationId)
                 setScreen('map')
               }}
+              parentSubMapName={
+                isSubMapId(location['Map ID'])
+                  ? (database.launch.Maps.find((map) => map['Map ID'] === location['Map ID'])?.[
+                      'Display Name'
+                    ] ?? 'Sub-map')
+                  : null
+              }
+              onOpenParentSubMap={
+                isSubMapId(location['Map ID'])
+                  ? () => {
+                      setBrowseMapId(location['Map ID']!)
+                      setSelectedLocationId(save.currentLocationId)
+                      setScreen('map')
+                    }
+                  : undefined
+              }
               statusPanel={
                 <>
                   {activeShopId && (

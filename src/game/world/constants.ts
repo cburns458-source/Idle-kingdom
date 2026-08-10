@@ -12,6 +12,10 @@ export const CASTLE_GATEWAY_ID = 'LOC-0013'
 export const WEST_HORIZON_ID = 'LOC-0019'
 export const EAST_HORIZON_ID = 'LOC-0020'
 
+export function isSubMapId(mapId: string | null | undefined): boolean {
+  return mapId === CAVE_MAP_ID || mapId === CASTLE_MAP_ID
+}
+
 export function isFutureHorizonLocation(locationId: string): boolean {
   return locationId === WEST_HORIZON_ID || locationId === EAST_HORIZON_ID
 }
