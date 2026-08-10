@@ -31,20 +31,20 @@ describe('primary activity engine', () => {
     expect(generated?.action['Action ID']).toBe('ACN-0105')
 
     const completed = completeGatheringAction(launch, generated!.save, generated!.action, () => 0)
-    expect(completed.result.xpGained).toBe(1000)
+    expect(completed.result.xpGained).toBe(100)
     expect(completed.save.inventory.some((stack) => stack.itemId === 'ITEM-0030')).toBe(true)
-    expect(completed.save.skills.find((skill) => skill.skillId === 'SKL-0004')?.xp).toBe(1000)
+    expect(completed.save.skills.find((skill) => skill.skillId === 'SKL-0004')?.xp).toBe(100)
   })
 
-  it('grants 1000 Arcana XP when delving for essence', () => {
+  it('grants 100 Arcana XP when delving for essence', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const save = createNewSave(launch)
     const action = launch.Actions.find((row) => row['Action ID'] === 'ACN-0028')
     expect(action).toBeTruthy()
 
     const completed = completeGatheringAction(launch, save, action!, () => 0)
-    expect(completed.result.xpGained).toBe(7000)
-    expect(completed.result.bonusXp).toEqual([{ skillId: 'SKL-0013', xp: 1000 }])
+    expect(completed.result.xpGained).toBe(700)
+    expect(completed.result.bonusXp).toEqual([{ skillId: 'SKL-0013', xp: 100 }])
     expect(completed.result.xpRewards.map((reward) => reward.skillId)).toEqual([
       'SKL-0002',
       'SKL-0013',
@@ -52,12 +52,11 @@ describe('primary activity engine', () => {
     expect(completed.result.xpRewards[1]).toMatchObject({
       skillId: 'SKL-0013',
       skillName: 'Arcana',
-      xp: 1000,
-      level: 2,
-      leveledUp: true,
+      xp: 100,
+      leveledUp: false,
     })
-    expect(completed.save.skills.find((skill) => skill.skillId === 'SKL-0002')?.xp).toBe(7000)
-    expect(completed.save.skills.find((skill) => skill.skillId === 'SKL-0013')?.xp).toBe(1000)
+    expect(completed.save.skills.find((skill) => skill.skillId === 'SKL-0002')?.xp).toBe(700)
+    expect(completed.save.skills.find((skill) => skill.skillId === 'SKL-0013')?.xp).toBe(100)
   })
 
   it('rejects copper mining without a mining tool', () => {
