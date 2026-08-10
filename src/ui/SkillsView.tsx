@@ -5,7 +5,6 @@ import type { PlayerSave } from '../game/save/types'
 import { getSkillProgress } from '../game/activity/xp'
 import { skillXpProgress } from '../game/activity/xpProgress'
 import { skillMenuEntries, type SkillMenuListItem } from '../game/skills/skillActions'
-import { totalLevel, totalSkillXp } from '../game/skills/totals'
 import { SkillIcon } from './skillIcons'
 
 function skillXpTooltipText(db: GameDatabase, totalXp: number): string {
@@ -24,8 +23,6 @@ interface SkillsViewProps {
 
 export function SkillsView({ db, save }: SkillsViewProps) {
   const skills = [...db.Skills].sort((a, b) => a['Skill ID'].localeCompare(b['Skill ID']))
-  const overallLevel = totalLevel(save)
-  const overallXp = totalSkillXp(save)
   const [heldSkillId, setHeldSkillId] = useState<string | null>(null)
   const [openSkillId, setOpenSkillId] = useState<string | null>(null)
   const statistics = asStatisticRows(db)
@@ -36,33 +33,6 @@ export function SkillsView({ db, save }: SkillsViewProps) {
 
   return (
     <section className="skills-view">
-      <section className="panel skills-summary">
-        <h1>Skills</h1>
-        <dl className="skills-summary-stats">
-          <div>
-            <dt>Total Level</dt>
-            <dd>{overallLevel.toLocaleString()}</dd>
-          </div>
-          <div>
-            <dt>Total XP</dt>
-            <dd>{overallXp.toLocaleString()}</dd>
-          </div>
-        </dl>
-        <p className="muted tiny">Hold a skill to see total XP and progress to the next level.</p>
-      </section>
-
-      <section className="panel skills-summary">
-        <h2>Statistics</h2>
-        <dl className="skills-summary-stats">
-          {statistics.map((stat) => (
-            <div key={stat['Statistic ID']}>
-              <dt>{stat['Display Name']}</dt>
-              <dd>{Number(save.statistics.values[stat['Internal Key']] ?? 0).toLocaleString()}</dd>
-            </div>
-          ))}
-        </dl>
-      </section>
-
       <ul className="skills-grid">
         {skills.map((skill) => {
           const progress = getSkillProgress(save, skill['Skill ID'])
@@ -83,6 +53,18 @@ export function SkillsView({ db, save }: SkillsViewProps) {
           )
         })}
       </ul>
+
+      <section className="panel skills-summary">
+        <h2>Statistics</h2>
+        <dl className="skills-summary-stats">
+          {statistics.map((stat) => (
+            <div key={stat['Statistic ID']}>
+              <dt>{stat['Display Name']}</dt>
+              <dd>{Number(save.statistics.values[stat['Internal Key']] ?? 0).toLocaleString()}</dd>
+            </div>
+          ))}
+        </dl>
+      </section>
 
       {openSkill && (
         <SkillActionsMenu
