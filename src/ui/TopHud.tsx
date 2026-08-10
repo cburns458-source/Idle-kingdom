@@ -1,6 +1,7 @@
 import { formatDurationSeconds } from './formatDuration'
 
 const PLAYER_AVATAR_SRC = '/assets/player/player_adventurer_temp.png'
+const AVATAR_FRAME_SRC = '/assets/player/avatar_frame_pixel.png'
 const GOLD_ICON_SRC = '/assets/icons/items/item_gold.png'
 
 export type HudActivityStatus =
@@ -59,7 +60,10 @@ export function TopHud({
     <header className="top-hud">
       <div className="top-hud-main">
         <div className="hud-avatar" aria-hidden="true">
-          <img src={PLAYER_AVATAR_SRC} alt="" className="hud-avatar-image" />
+          <div className="hud-avatar-portrait">
+            <img src={PLAYER_AVATAR_SRC} alt="" className="hud-avatar-image" />
+          </div>
+          <img src={AVATAR_FRAME_SRC} alt="" className="hud-avatar-frame" />
         </div>
         <div className="top-hud-identity">
           <p className="brand">{characterName?.trim() || 'Adventurer'}</p>
