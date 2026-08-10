@@ -78,10 +78,10 @@
 
 .hud-avatar {
   flex: 0 0 auto;
-  width: 5.75rem;
-  height: 5.75rem;
-  margin-top: -0.35rem;
-  margin-bottom: -2.1rem;
+  width: 6.5rem;
+  height: 6.5rem;
+  margin-top: -0.4rem;
+  margin-bottom: -2.6rem;
   border-radius: 999px;
   overflow: hidden;
   border: 1px solid rgba(212, 175, 55, 0.45);
