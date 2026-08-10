@@ -70,7 +70,7 @@ import {
 } from './game/unattended/resolve'
 import { completeSpecialProject } from './game/projects/engine'
 import type { SpecialProductionStation } from './game/projects/projects'
-import { totalLevel, totalSkillXp } from './game/skills/totals'
+import { totalLevel } from './game/skills/totals'
 import { ActivityPanel } from './ui/ActivityPanel'
 import {
   AfkSummaryPanel,
@@ -1001,12 +1001,10 @@ export default function App() {
         <TopHud
           characterName={save.characterName}
           totalLevel={overallLevel}
-          totalXp={overallXp}
           gold={save.gold}
           currentHp={save.currentHp}
           maxHp={maxHp}
           dead={deathLocked}
-          locationLabel={location['Display Name']}
           activityStatus={hudActivityStatus}
         />
 
