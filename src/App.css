@@ -1750,10 +1750,13 @@
 }
 
 .combat-round-bar-fill {
+  width: 100%;
   height: 100%;
   border-radius: inherit;
   background: linear-gradient(180deg, #d8ecff 0%, #7eb6e8 55%, #4a8ec8 100%);
-  transition: width 80ms linear;
+  transform-origin: left center;
+  transform: scaleX(0);
+  will-change: transform;
 }
 
 .combat-damage {
@@ -1867,24 +1870,6 @@
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
 }
 
-.gather-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.6rem;
-}
-
-.gather-head-copy h2 {
-  margin: 0;
-  font-size: 1rem;
-  color: #f4efd8;
-}
-
-.gather-skill {
-  margin: 0.15rem 0 0;
-  font-size: 0.75rem;
-}
-
 .gather-layout {
   min-height: 11rem;
 }
@@ -1906,7 +1891,23 @@
 }
 
 .gather-progress-bar {
+  margin-top: 0;
+  flex: 1;
+}
+
+.gather-progress-row {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
   margin-top: 0.15rem;
+}
+
+.gather-progress-time {
+  margin: 0;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+  color: #f4efd8;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
 }
 
 .gather-progress-fill {

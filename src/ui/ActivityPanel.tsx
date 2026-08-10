@@ -3,6 +3,7 @@ import { playerCombatAssetPath } from '../game/assets/playerAssets'
 import type { ActionRow, ActivityRow, SkillRow } from '../game/data/types'
 import { isBelowProficiency } from '../game/activity/gathering'
 import type { PlayerSave } from '../game/save/types'
+import { formatDurationSeconds } from './formatDuration'
 
 interface ActivityPanelProps {
   activity: ActivityRow
@@ -12,37 +13,24 @@ interface ActivityPanelProps {
   progress: number
   /** True action duration in ms (includes proficiency multiplier). */
   durationMs: number | null
-  onStop: () => void
 }
 
 export function ActivityPanel({
-  activity,
   action,
   save,
-  skill,
   progress,
-  durationMs: _durationMs,
-  onStop,
+  durationMs,
 }: ActivityPanelProps) {
   const clamped = Math.min(1, Math.max(0, progress))
   const pct = Math.round(clamped * 100)
   const slow = action ? isBelowProficiency(save, action) : false
-  const label = activity['Contextual Name'] ?? activity['Internal Key']
   const actionName = action?.['Display Name'] ?? 'Preparing…'
   const actionId = action?.['Action ID']
+  const totalSeconds = Math.max(0, (durationMs ?? 0) / 1000)
+  const elapsedSeconds = Math.min(totalSeconds, clamped * totalSeconds)
 
   return (
     <section className="panel activity-panel gather-panel" aria-label="Gathering">
-      <div className="gather-head">
-        <div className="gather-head-copy">
-          <h2>{label}</h2>
-          {skill && <p className="gather-skill muted">{skill['Display Name']}</p>}
-        </div>
-        <button type="button" className="btn secondary glass-btn" onClick={onStop}>
-          Stop
-        </button>
-      </div>
-
       <div className="combat-layout gather-layout">
         <div className="combat-side combat-player-side">
           <div className="combat-portrait combat-portrait-player">
@@ -80,15 +68,23 @@ export function ActivityPanel({
         </div>
       </div>
 
-      <div
-        className="combat-round-bar gather-progress-bar"
-        role="progressbar"
-        aria-label="Action progress"
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-valuenow={pct}
-      >
-        <div className="combat-round-bar-fill gather-progress-fill" style={{ width: `${pct}%` }} />
+      <div className="gather-progress-row">
+        <div
+          className="combat-round-bar gather-progress-bar"
+          role="progressbar"
+          aria-label="Action progress"
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={pct}
+        >
+          <div
+            className="combat-round-bar-fill gather-progress-fill"
+            style={{ transform: `scaleX(${clamped})` }}
+          />
+        </div>
+        <p className="gather-progress-time muted tiny">
+          {formatDurationSeconds(elapsedSeconds)} / {formatDurationSeconds(totalSeconds)}
+        </p>
       </div>
     </section>
   )

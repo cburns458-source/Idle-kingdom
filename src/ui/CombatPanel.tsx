@@ -8,8 +8,10 @@ interface CombatPanelProps {
   enemyHp: number
   playerHp: number
   playerMaxHp: number
-  /** 0–1 progress through the current combat round. */
-  roundProgress: number
+  /** ISO timestamp when the current combat round started. */
+  roundStartedAt: string | null
+  /** Combat round length in ms. */
+  roundDurationMs: number
   /** Damage the player dealt last round (orange overlay on enemy). */
   lastPlayerHit: number | null
   /** Damage the enemy dealt last round (centered above player). */
@@ -31,7 +33,8 @@ export function CombatPanel({
   enemyHp,
   playerHp,
   playerMaxHp,
-  roundProgress,
+  roundStartedAt,
+  roundDurationMs,
   lastPlayerHit,
   lastEnemyHit,
   defeatedFlash,
@@ -41,14 +44,38 @@ export function CombatPanel({
   const playerMax = Math.max(1, playerMaxHp)
   const enemyPct = Math.max(0, Math.min(100, (enemyHp / enemyMax) * 100))
   const playerPct = Math.max(0, Math.min(100, (playerHp / playerMax) * 100))
-  const roundPct = Math.max(0, Math.min(100, roundProgress * 100))
   const pauseSec = Math.ceil(deathPauseRemainingMs / 1000)
-  const showRoundBar = deathPauseRemainingMs <= 0 && !defeatedFlash
+  const showRoundBar = deathPauseRemainingMs <= 0 && !defeatedFlash && Boolean(roundStartedAt)
 
+  const [roundProgress, setRoundProgress] = useState(0)
   const [playerHitOffset, setPlayerHitOffset] = useState({ x: 0, y: 0 })
   const [enemyHitOffset, setEnemyHitOffset] = useState({ x: 0, y: 0 })
   const [shownPlayerHit, setShownPlayerHit] = useState<number | null>(null)
   const [shownEnemyHit, setShownEnemyHit] = useState<number | null>(null)
+
+  // Smooth local round fill: 0 → 1 over roundDurationMs, resets each round.
+  useEffect(() => {
+    if (!showRoundBar || !roundStartedAt || roundDurationMs <= 0) {
+      setRoundProgress(0)
+      return
+    }
+    const started = Date.parse(roundStartedAt)
+    if (!Number.isFinite(started)) {
+      setRoundProgress(0)
+      return
+    }
+
+    let frame = 0
+    const tick = () => {
+      const progress = Math.min(1, Math.max(0, (Date.now() - started) / roundDurationMs))
+      setRoundProgress(progress)
+      if (progress < 1) {
+        frame = window.requestAnimationFrame(tick)
+      }
+    }
+    frame = window.requestAnimationFrame(tick)
+    return () => window.cancelAnimationFrame(frame)
+  }, [showRoundBar, roundStartedAt, roundDurationMs])
 
   // Show hit pops briefly, nudge position each time, then clear after 2s.
   useEffect(() => {
@@ -73,6 +100,8 @@ export function CombatPanel({
       setShownEnemyHit(null)
     }
   }, [defeatedFlash])
+
+  const roundPct = Math.round(roundProgress * 100)
 
   return (
     <section className="panel combat-panel" aria-label="Combat">
@@ -171,9 +200,12 @@ export function CombatPanel({
           aria-label="Round progress"
           aria-valuemin={0}
           aria-valuemax={100}
-          aria-valuenow={Math.round(roundPct)}
+          aria-valuenow={roundPct}
         >
-          <div className="combat-round-bar-fill" style={{ width: `${roundPct}%` }} />
+          <div
+            className="combat-round-bar-fill"
+            style={{ transform: `scaleX(${roundProgress})` }}
+          />
         </div>
       )}
     </section>
