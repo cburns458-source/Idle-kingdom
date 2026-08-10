@@ -846,7 +846,7 @@
       "Display Name": "Spell 1",
       "Slot Group": "Spell Loadout",
       "Status": "Confirmed",
-      "Notes": "Equippable spell. Active spell cycles through slots 1–4 for one hour each."
+      "Notes": "Equippable spell. Active spell cycles through slots 1\u20134 for one hour each."
     },
     {
       "Slot ID": "SLOT-0014",
@@ -854,7 +854,7 @@
       "Display Name": "Spell 2",
       "Slot Group": "Spell Loadout",
       "Status": "Confirmed",
-      "Notes": "Equippable spell. Active spell cycles through slots 1–4 for one hour each."
+      "Notes": "Equippable spell. Active spell cycles through slots 1\u20134 for one hour each."
     },
     {
       "Slot ID": "SLOT-0015",
@@ -862,7 +862,7 @@
       "Display Name": "Spell 3",
       "Slot Group": "Spell Loadout",
       "Status": "Confirmed",
-      "Notes": "Equippable spell. Active spell cycles through slots 1–4 for one hour each."
+      "Notes": "Equippable spell. Active spell cycles through slots 1\u20134 for one hour each."
     },
     {
       "Slot ID": "SLOT-0016",
@@ -870,7 +870,7 @@
       "Display Name": "Spell 4",
       "Slot Group": "Spell Loadout",
       "Status": "Confirmed",
-      "Notes": "Equippable spell. Active spell cycles through slots 1–4 for one hour each."
+      "Notes": "Equippable spell. Active spell cycles through slots 1\u20134 for one hour each."
     }
   ],
   "Items": [
@@ -7944,7 +7944,7 @@
       "Action Time Reduction %": null,
       "Capabilities / Effects": "spell; spell_effect:ENCH-0005; damage_range_bonus_percent:10; duration_seconds:3600",
       "Status": "Confirmed",
-      "Notes": "May be equipped to any Spell slot (SLOT-0013–SLOT-0016)."
+      "Notes": "May be equipped to any Spell slot (SLOT-0013\u2013SLOT-0016)."
     }
   ],
   "Statistics": [
@@ -8151,7 +8151,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": "Fishing, transportation, coastal NPCs, pirates, and possible future settlement.",
-      "Danger / Hostility": null,
+      "Danger / Hostility": "Pirate encounters can occur.",
       "Background Asset Key": null,
       "Notes": null
     },
@@ -8368,7 +8368,7 @@
     {
       "Location ID": "LOC-0019",
       "Internal Key": "west_horizon",
-      "Display Name": "…",
+      "Display Name": "\u2026",
       "Map ID": "MAP-0001",
       "Location Type": "Future Gateway",
       "Parent Location ID": null,
@@ -8383,7 +8383,7 @@
     {
       "Location ID": "LOC-0020",
       "Internal Key": "east_horizon",
-      "Display Name": "…",
+      "Display Name": "\u2026",
       "Map ID": "MAP-0001",
       "Location Type": "Future Gateway",
       "Parent Location ID": null,
@@ -8394,6 +8394,36 @@
       "Danger / Hostility": null,
       "Background Asset Key": null,
       "Notes": "Future-content gateway to Eastern Idale (MAP-0005). Not a travel destination."
+    },
+    {
+      "Location ID": "LOC-0021",
+      "Internal Key": "queens_quarters",
+      "Display Name": "Queen's Quarters",
+      "Map ID": "MAP-0003",
+      "Location Type": "Sub-location",
+      "Parent Location ID": "LOC-0013",
+      "Node ID": "NODE-0021",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Description": "Hostile royal chamber. The Queen and her dragon await.",
+      "Danger / Hostility": "A dragon guards the Queen.",
+      "Background Asset Key": null,
+      "Notes": null
+    },
+    {
+      "Location ID": "LOC-0022",
+      "Internal Key": "abandoned_mineshaft",
+      "Display Name": "Abandoned Mineshaft",
+      "Map ID": "MAP-0002",
+      "Location Type": "Sub-location",
+      "Parent Location ID": "LOC-0010",
+      "Node ID": "NODE-0022",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Description": "A forgotten shaft rich with rare ores.",
+      "Danger / Hostility": null,
+      "Background Asset Key": null,
+      "Notes": null
     }
   ],
   "TravelConnections": [
@@ -8672,10 +8702,10 @@
     },
     {
       "Activity ID": "ACT-0006",
-      "Internal Key": "explore_mountain_slopes",
-      "Contextual Name": "Explore the mountain slopes",
+      "Internal Key": "prospect_mountain_side",
+      "Contextual Name": "Prospect the mountain side",
       "Location ID": "LOC-0006",
-      "Description": "Compatible Mining and Rock Troll Actions.",
+      "Description": "Mine the slopes and face Rock Troll encounters.",
       "Danger Warning Combat Level": 55,
       "Pool ID": "POOL-0006",
       "Pool Internal Key": "mountain_slopes_pool",
@@ -8877,6 +8907,84 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": null
+    },
+    {
+      "Activity ID": "ACT-0022",
+      "Internal Key": "reason_with_pirates",
+      "Contextual Name": "Try to reason with the pirates",
+      "Location ID": "LOC-0004",
+      "Description": "Pirate Combat encounters along the river coast and dock.",
+      "Danger Warning Combat Level": 50,
+      "Pool ID": "POOL-0018",
+      "Pool Internal Key": "dock_pirates",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": null
+    },
+    {
+      "Activity ID": "ACT-0023",
+      "Internal Key": "cook_castle_kitchen",
+      "Contextual Name": "Cook at the kitchen",
+      "Location ID": "LOC-0015",
+      "Description": "Timed Cooking queue using selected recipe at the Castle Kitchen.",
+      "Danger Warning Combat Level": null,
+      "Pool ID": null,
+      "Pool Internal Key": null,
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": "Shares Town kitchen recipes via FAC-0010 alias."
+    },
+    {
+      "Activity ID": "ACT-0024",
+      "Internal Key": "slay_queen",
+      "Contextual Name": "Slay Queen",
+      "Location ID": "LOC-0021",
+      "Description": "Dragon Combat in the Queen's Quarters.",
+      "Danger Warning Combat Level": 95,
+      "Pool ID": "POOL-0019",
+      "Pool Internal Key": "queens_dragon",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": null
+    },
+    {
+      "Activity ID": "ACT-0025",
+      "Internal Key": "search_rare_ores",
+      "Contextual Name": "Search for rare ores",
+      "Location ID": "LOC-0022",
+      "Description": "Mine titanium and tungsten in the abandoned shaft.",
+      "Danger Warning Combat Level": null,
+      "Pool ID": "POOL-0020",
+      "Pool Internal Key": "abandoned_mineshaft_ores",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": null
+    },
+    {
+      "Activity ID": "ACT-0026",
+      "Internal Key": "search_rare_wood",
+      "Contextual Name": "Search for rare wood",
+      "Location ID": "LOC-0008",
+      "Description": "Cut rare hardwood trees in the Kingswoods.",
+      "Danger Warning Combat Level": null,
+      "Pool ID": "POOL-0021",
+      "Pool Internal Key": "kingswoods_rare_wood",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": null
+    },
+    {
+      "Activity ID": "ACT-0027",
+      "Internal Key": "hunt_the_slopes",
+      "Contextual Name": "Hunt the slopes",
+      "Location ID": "LOC-0006",
+      "Description": "Hunt mountain goats and great stags on the slopes.",
+      "Danger Warning Combat Level": null,
+      "Pool ID": "POOL-0022",
+      "Pool Internal Key": "mountain_hunting",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": null
     }
   ],
   "PoolEntries": [
@@ -8900,7 +9008,7 @@
       "Pool Entry ID": "PEN-0003",
       "Pool ID": "POOL-0017",
       "Action ID": "ACN-0035",
-      "Weight": 99,
+      "Weight": 79,
       "Status": "Planned",
       "Notes": null
     },
@@ -9115,10 +9223,10 @@
     {
       "Pool Entry ID": "PEN-0030",
       "Pool ID": "POOL-0010",
-      "Action ID": "ACN-0109",
+      "Action ID": "ACN-0107",
       "Weight": 40,
       "Status": "Planned",
-      "Notes": null
+      "Notes": "Replaced Augur Weed with Mosstole."
     },
     {
       "Pool Entry ID": "PEN-0031",
@@ -9263,6 +9371,94 @@
       "Weight": null,
       "Status": "Needs Data",
       "Notes": "Rare Deep Mines weight not fixed in the game bible."
+    },
+    {
+      "Pool Entry ID": "PEN-0049",
+      "Pool ID": "POOL-0018",
+      "Action ID": "ACN-0091",
+      "Weight": 100,
+      "Status": "Planned",
+      "Notes": null
+    },
+    {
+      "Pool Entry ID": "PEN-0050",
+      "Pool ID": "POOL-0019",
+      "Action ID": "ACN-0092",
+      "Weight": 100,
+      "Status": "Planned",
+      "Notes": null
+    },
+    {
+      "Pool Entry ID": "PEN-0051",
+      "Pool ID": "POOL-0020",
+      "Action ID": "ACN-0026",
+      "Weight": 60,
+      "Status": "Planned",
+      "Notes": null
+    },
+    {
+      "Pool Entry ID": "PEN-0052",
+      "Pool ID": "POOL-0020",
+      "Action ID": "ACN-0027",
+      "Weight": 40,
+      "Status": "Planned",
+      "Notes": null
+    },
+    {
+      "Pool Entry ID": "PEN-0053",
+      "Pool ID": "POOL-0021",
+      "Action ID": "ACN-0047",
+      "Weight": 50,
+      "Status": "Planned",
+      "Notes": null
+    },
+    {
+      "Pool Entry ID": "PEN-0054",
+      "Pool ID": "POOL-0021",
+      "Action ID": "ACN-0048",
+      "Weight": 20,
+      "Status": "Planned",
+      "Notes": null
+    },
+    {
+      "Pool Entry ID": "PEN-0055",
+      "Pool ID": "POOL-0021",
+      "Action ID": "ACN-0049",
+      "Weight": 18,
+      "Status": "Planned",
+      "Notes": null
+    },
+    {
+      "Pool Entry ID": "PEN-0056",
+      "Pool ID": "POOL-0021",
+      "Action ID": "ACN-0050",
+      "Weight": 12,
+      "Status": "Planned",
+      "Notes": null
+    },
+    {
+      "Pool Entry ID": "PEN-0057",
+      "Pool ID": "POOL-0022",
+      "Action ID": "ACN-0112",
+      "Weight": 80,
+      "Status": "Planned",
+      "Notes": null
+    },
+    {
+      "Pool Entry ID": "PEN-0058",
+      "Pool ID": "POOL-0022",
+      "Action ID": "ACN-0113",
+      "Weight": 20,
+      "Status": "Planned",
+      "Notes": null
+    },
+    {
+      "Pool Entry ID": "PEN-0059",
+      "Pool ID": "POOL-0017",
+      "Action ID": "ACN-0162",
+      "Weight": 20,
+      "Status": "Planned",
+      "Notes": null
     }
   ],
   "Actions": [
@@ -9963,7 +10159,7 @@
       "Secondary Drop Chance": null,
       "Secondary Reward Table ID": null,
       "Status": "Planned",
-      "Release Phase": "Expansion",
+      "Release Phase": "Launch",
       "Notes": "Combat is resolved in four-second rounds; Enemy record owns HP, damage, and guaranteed Gold."
     },
     {
@@ -11354,17 +11550,17 @@
       "Relevant Skill ID": "SKL-0004",
       "Target Type": "Item",
       "Target ID": "ITEM-0027",
-      "Proficiency Level": null,
-      "Base Duration Seconds": null,
-      "XP Reward": null,
-      "Guaranteed Gold": null,
-      "Drop Chance": null,
-      "Reward Table ID": null,
+      "Proficiency Level": 10,
+      "Base Duration Seconds": 120,
+      "XP Reward": 13000,
+      "Guaranteed Gold": 0,
+      "Drop Chance": 100,
+      "Reward Table ID": "RWT-0113",
       "Secondary Drop Chance": null,
       "Secondary Reward Table ID": null,
-      "Status": "Needs Data",
+      "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": "Current Harvesting resource; Location, timing, XP, and reward chance are not fixed in the game bible."
+      "Notes": "Mirrored from Harvest potato (ACN-0035) for Work the fields."
     },
     {
       "Action ID": "ACN-0163",
@@ -12599,6 +12795,71 @@
       "Required Value": null,
       "Status": "Planned",
       "Notes": "Player may select this Activity only when every possible Action is compatible with the equipped requirement."
+    },
+    {
+      "Requirement ID": "REQ-0089",
+      "Entity Type": "Activity",
+      "Entity ID": "ACT-0023",
+      "Requirement Group": "A",
+      "Group Logic": "AND",
+      "Requirement Type": "Station",
+      "Reference ID / Value": "FAC-0010",
+      "Operator": null,
+      "Required Value": null,
+      "Status": "Planned",
+      "Notes": null
+    },
+    {
+      "Requirement ID": "REQ-0090",
+      "Entity Type": "Activity",
+      "Entity ID": "ACT-0026",
+      "Requirement Group": "A",
+      "Group Logic": "AND",
+      "Requirement Type": "Tool Capability",
+      "Reference ID / Value": "woodcutting_tool",
+      "Operator": null,
+      "Required Value": null,
+      "Status": "Planned",
+      "Notes": "Mirrored from ACT-0010."
+    },
+    {
+      "Requirement ID": "REQ-0091",
+      "Entity Type": "Activity",
+      "Entity ID": "ACT-0025",
+      "Requirement Group": "A",
+      "Group Logic": "AND",
+      "Requirement Type": "Tool Capability",
+      "Reference ID / Value": "mining_tool",
+      "Operator": null,
+      "Required Value": null,
+      "Status": "Confirmed",
+      "Notes": "Mirrored from ACT-0013."
+    },
+    {
+      "Requirement ID": "REQ-0092",
+      "Entity Type": "Activity",
+      "Entity ID": "ACT-0027",
+      "Requirement Group": "A",
+      "Group Logic": "AND",
+      "Requirement Type": "Tool Capability",
+      "Reference ID / Value": "hunting_tool",
+      "Operator": null,
+      "Required Value": null,
+      "Status": "Planned",
+      "Notes": "Mirrored from ACT-0009."
+    },
+    {
+      "Requirement ID": "REQ-0093",
+      "Entity Type": "Action",
+      "Entity ID": "ACN-0162",
+      "Requirement Group": "LEVEL",
+      "Group Logic": "AND",
+      "Requirement Type": "Skill Level",
+      "Reference ID / Value": "SKL-0004",
+      "Operator": "Proficiency",
+      "Required Value": 10,
+      "Status": "Confirmed",
+      "Notes": "Mirrored from Harvest potato."
     }
   ],
   "Enemies": [
@@ -12701,7 +12962,7 @@
       "Enemy ID": "ENM-0006",
       "Internal Key": "dragon",
       "Display Name": "Dragon",
-      "Location ID": null,
+      "Location ID": "LOC-0021",
       "Combat Level": 95,
       "Maximum HP": 80000,
       "Min Damage": 600,
@@ -12712,7 +12973,7 @@
       "Drop Chance": 20,
       "Reward Table ID": "RWT-0018",
       "Status": "Planned",
-      "Release Phase": "Expansion",
+      "Release Phase": "Launch",
       "Sprite Asset Key": null,
       "Notes": null
     },
@@ -14434,7 +14695,7 @@
     {
       "Reward Entry ID": "RWE-0100",
       "Reward Table ID": "RWT-0058",
-      "Reward Table Name": "Secondary Gems — Sapphire Only",
+      "Reward Table Name": "Secondary Gems \u2014 Sapphire Only",
       "Purpose": "Independent Mining gem drop",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0012",
@@ -14449,7 +14710,7 @@
     {
       "Reward Entry ID": "RWE-0101",
       "Reward Table ID": "RWT-0059",
-      "Reward Table Name": "Secondary Gems — Sapphire Emerald",
+      "Reward Table Name": "Secondary Gems \u2014 Sapphire Emerald",
       "Purpose": "Independent Mining gem drop",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0012",
@@ -14464,7 +14725,7 @@
     {
       "Reward Entry ID": "RWE-0102",
       "Reward Table ID": "RWT-0059",
-      "Reward Table Name": "Secondary Gems — Sapphire Emerald",
+      "Reward Table Name": "Secondary Gems \u2014 Sapphire Emerald",
       "Purpose": "Independent Mining gem drop",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0013",
@@ -14479,7 +14740,7 @@
     {
       "Reward Entry ID": "RWE-0103",
       "Reward Table ID": "RWT-0060",
-      "Reward Table Name": "Secondary Gems — All Gems",
+      "Reward Table Name": "Secondary Gems \u2014 All Gems",
       "Purpose": "Independent Mining gem drop",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0012",
@@ -14494,7 +14755,7 @@
     {
       "Reward Entry ID": "RWE-0104",
       "Reward Table ID": "RWT-0060",
-      "Reward Table Name": "Secondary Gems — All Gems",
+      "Reward Table Name": "Secondary Gems \u2014 All Gems",
       "Purpose": "Independent Mining gem drop",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0013",
@@ -14509,7 +14770,7 @@
     {
       "Reward Entry ID": "RWE-0105",
       "Reward Table ID": "RWT-0060",
-      "Reward Table Name": "Secondary Gems — All Gems",
+      "Reward Table Name": "Secondary Gems \u2014 All Gems",
       "Purpose": "Independent Mining gem drop",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0014",
@@ -15360,6 +15621,21 @@
       "XP Amount": null,
       "Status": "Planned",
       "Notes": "Equal drop chance/weight as matching Beef entry."
+    },
+    {
+      "Reward Entry ID": "RWE-0162",
+      "Reward Table ID": "RWT-0113",
+      "Reward Table Name": "Carrot Main Reward",
+      "Purpose": "Primary Gathering output",
+      "Reward Type": "Item",
+      "Reward ID / Value": "ITEM-0027",
+      "Weight": 100,
+      "Minimum Quantity": 1,
+      "Maximum Quantity": 1,
+      "Skill ID": null,
+      "XP Amount": null,
+      "Status": "Planned",
+      "Notes": null
     }
   ],
   "Recipes": [
@@ -20279,7 +20555,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": "Buys and sells ordinary items. Stocks starter tools.",
-      "Notes": "Sells all level-1 tools. Player buy price = 2× Base Sell Value. Buys ordinary items at Base Sell Value.",
+      "Notes": "Sells all level-1 tools. Player buy price = 2\u00d7 Base Sell Value. Buys ordinary items at Base Sell Value.",
       "Entry 1 Item ID": "ITEM-0100",
       "Entry 1 Mode": "Sell",
       "Entry 1 Price": null,
@@ -20370,7 +20646,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": "Sells improved pickaxes and pays better prices for ores.",
-      "Notes": "Access requires Mining Level 40. Player buy price = 2× Base Sell Value. Buys ores at 1.5× Base Sell Value.",
+      "Notes": "Access requires Mining Level 40. Player buy price = 2\u00d7 Base Sell Value. Buys ores at 1.5\u00d7 Base Sell Value.",
       "Entry 1 Item ID": "ITEM-0111",
       "Entry 1 Mode": "Sell",
       "Entry 1 Price": null,
@@ -20461,7 +20737,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": "Sells Essence at a premium so Mining remains the primary efficient source.",
-      "Notes": "Essence buy price = 100× Base Sell Value. Other stock buy price = 2× Base Sell Value.",
+      "Notes": "Essence buy price = 100\u00d7 Base Sell Value. Other stock buy price = 2\u00d7 Base Sell Value.",
       "Entry 1 Item ID": "ITEM-0011",
       "Entry 1 Mode": "Sell",
       "Entry 1 Price": null,

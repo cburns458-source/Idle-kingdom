@@ -56,7 +56,8 @@ describe('Step 11 release audit', () => {
     expect(launch.Locations.some((row) => row['Location ID'] === 'LOC-0018')).toBe(true)
     expect(launch.Activities.some((row) => row['Activity ID'] === 'ACT-0016')).toBe(true)
     expect(launch.Enemies.some((row) => row['Enemy ID'] === 'ENM-0012')).toBe(true)
-    expect(launch.Enemies.some((row) => row['Enemy ID'] === 'ENM-0006')).toBe(false)
+    // Dragon promoted to Launch for Queen's Quarters.
+    expect(launch.Enemies.some((row) => row['Enemy ID'] === 'ENM-0006')).toBe(true)
     expect(source.Locations.some((row) => row['Location ID'] === 'LOC-0018')).toBe(true)
   })
 

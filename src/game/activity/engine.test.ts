@@ -84,7 +84,7 @@ describe('primary activity engine', () => {
     const woodland = eligiblePoolEntries(launch, 'POOL-0010')
     expect(woodland.map((pair) => pair.action['Action ID']).sort()).toEqual([
       'ACN-0046',
-      'ACN-0109',
+      'ACN-0107',
     ])
 
     const pasture = eligiblePoolEntries(launch, 'POOL-0001')

@@ -42,6 +42,21 @@ describe('standard production', () => {
     expect(queued.save.inventory.find((stack) => stack.itemId === 'ITEM-0025')?.quantity).toBe(2)
   })
 
+  it('shares Town kitchen recipes with the Castle kitchen activity', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    let save = createNewSave(launch)
+    save = { ...save, currentLocationId: 'LOC-0015' }
+    save = addItemToInventory(save, 'ITEM-0025', 2)
+
+    const recipes = recipesForActivity(launch, save, 'ACT-0023')
+    expect(recipes.some((recipe) => recipe['Recipe ID'] === 'RCP-0001')).toBe(true)
+
+    const queued = beginProductionQueue(launch, save, 'ACT-0023', 'RCP-0001', 1)
+    expect(queued.ok).toBe(true)
+    if (!queued.ok) return
+    expect(queued.save.productionRecipeId).toBe('RCP-0001')
+  })
+
   it('rejects queues larger than materials or the 24h cap', () => {
     const { launch } = prepareDatabase(rawDatabase)
     let save = createNewSave(launch)

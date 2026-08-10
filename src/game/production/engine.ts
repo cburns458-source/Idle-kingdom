@@ -13,6 +13,7 @@ import {
   maxCraftsFromMaterials,
   maxCraftsFromQueueCap,
   recipeIngredients,
+  recipeMatchesFacility,
 } from './recipes'
 
 export function clearProductionSave(save: PlayerSave): PlayerSave {
@@ -58,7 +59,7 @@ export function beginProductionQueue(
   if (!recipe || !isCompleteRecipe(recipe)) {
     return { ok: false, reason: 'That recipe is not available.' }
   }
-  if (recipe['Facility ID'] !== facilityIdForActivity(db, activityId)) {
+  if (!recipeMatchesFacility(recipe['Facility ID'], facilityIdForActivity(db, activityId) ?? '')) {
     return { ok: false, reason: 'That recipe cannot be made at this station.' }
   }
 

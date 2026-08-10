@@ -48,9 +48,13 @@ export const CAVE_MAP_NODE_LAYOUT: Record<string, NodePosition> = {
   'LOC-0012': { x: 22, y: 30 },
   // Active mine shaft / ore chambers
   'LOC-0011': { x: 68, y: 58 },
+  // Abandoned Mineshaft (bottom-left)
+  'LOC-0022': { x: 22, y: 78 },
 }
 
 export const CASTLE_MAP_NODE_LAYOUT: Record<string, NodePosition> = {
+  // Queen's Quarters (top-left)
+  'LOC-0021': { x: 22, y: 14 },
   // Grand blue-roof palace (Main Hall)
   'LOC-0015': { x: 50, y: 18 },
   // Private chamber with bed / shelves (King's Quarters)

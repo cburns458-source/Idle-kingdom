@@ -64,6 +64,19 @@ export function canKnowRecipe(save: PlayerSave, recipe: RecipeRow): boolean {
   return level >= recipe['Proficiency Level']
 }
 
+/** Castle kitchen shares the Town kitchen recipe book. */
+const SHARED_RECIPE_FACILITY_IDS: Record<string, string> = {
+  'FAC-0010': 'FAC-0001',
+}
+
+export function recipeFacilityIdForLookup(facilityId: string): string {
+  return SHARED_RECIPE_FACILITY_IDS[facilityId] ?? facilityId
+}
+
+export function recipeMatchesFacility(recipeFacilityId: string, activityFacilityId: string): boolean {
+  return recipeFacilityId === recipeFacilityIdForLookup(activityFacilityId)
+}
+
 export function facilityIdForActivity(db: GameDatabase, activityId: string): string | null {
   const station = requirementsForEntity(db, 'Activity', activityId).find(
     (row) => row['Requirement Type'] === 'Station',
@@ -87,7 +100,7 @@ export function recipesForActivity(
   return db.Recipes.filter(
     (recipe) =>
       isCompleteRecipe(recipe) &&
-      recipe['Facility ID'] === facilityId &&
+      recipeMatchesFacility(recipe['Facility ID'], facilityId) &&
       canKnowRecipe(save, recipe),
   ).sort((a, b) => a['Proficiency Level'] - b['Proficiency Level'])
 }

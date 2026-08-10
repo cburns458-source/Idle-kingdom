@@ -10,7 +10,7 @@ import {
   resolveActiveMapId,
   travelDurationMs,
 } from './travel'
-import { DEFAULT_TRAVEL_DURATION_MS, MAIN_MAP_ID } from './constants'
+import { DEFAULT_TRAVEL_DURATION_MS, MAIN_MAP_ID, CASTLE_MAP_ID, CAVE_MAP_ID } from './constants'
 
 const rawDatabase = JSON.parse(
   readFileSync(resolve(process.cwd(), 'public/data/game-database.json'), 'utf8'),
@@ -97,5 +97,13 @@ describe('travel rules', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const entrance = launch.Locations.find((location) => location['Location ID'] === 'LOC-0010')!
     expect(resolveActiveMapId(entrance)).toBe('MAP-0002')
+  })
+
+  it('lists castle and cave sub-map nodes including new content rooms', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const castleNodes = locationsForMapView(launch, CASTLE_MAP_ID).map((row) => row['Location ID'])
+    expect(castleNodes).toEqual(expect.arrayContaining(['LOC-0015', 'LOC-0021']))
+    const caveNodes = locationsForMapView(launch, CAVE_MAP_ID).map((row) => row['Location ID'])
+    expect(caveNodes).toEqual(expect.arrayContaining(['LOC-0011', 'LOC-0022']))
   })
 })
