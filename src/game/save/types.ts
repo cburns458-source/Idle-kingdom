@@ -1,4 +1,4 @@
-export const SAVE_VERSION = 16
+export const SAVE_VERSION = 17
 export const SAVE_STORAGE_KEY = 'idle-kingdoms.demo.save'
 export const STARTING_LOCATION_ID = 'LOC-0002'
 export const STARTING_GOLD = 25
@@ -11,6 +11,19 @@ export const STARTING_BAKED_POTATO_QTY = 5
 export const STARTING_MINOR_STRENGTH_POTION_ID = 'ITEM-0211'
 export const STARTING_WOODEN_AXE_ID = 'ITEM-0100'
 export const CHARACTER_NAME_MAX_LENGTH = 24
+
+// Wardrobe / Cosmetics
+export const OUTFIT_COSMETIC_SLOT_ID = 'CSLOT-0001'
+export const PET_COSMETIC_SLOT_ID = 'CSLOT-0002'
+export const STARTER_OUTFIT_COSMETIC_ID = 'COS-0001'
+
+/** Baseline Appearance Option IDs used until the player (or an old save) picks their own. */
+export const DEFAULT_SKIN_TONE_ID = 'APR-0001'
+export const DEFAULT_HAIRSTYLE_ID = 'APR-0004'
+export const DEFAULT_HAIR_COLOR_ID = 'APR-0007'
+export const DEFAULT_EXPRESSION_ID = 'APR-0011'
+export const DEFAULT_BEARD_ID = 'APR-0014'
+export const DEFAULT_GENDER_PRESENTATION_ID = 'APR-0017'
 
 export type PotionConsumeScope =
   | 'one_combat_encounter'
@@ -78,6 +91,34 @@ export interface PlayerSettings {
   hudShowTotalXp: boolean
 }
 
+export const APPEARANCE_CATEGORIES = [
+  'skinTone',
+  'hairstyle',
+  'hairColor',
+  'expression',
+  'beard',
+  'genderPresentation',
+] as const
+
+export type AppearanceCategory = (typeof APPEARANCE_CATEGORIES)[number]
+
+/** Selected Appearance Option ID per category. */
+export interface PlayerAppearance {
+  skinTone: string
+  hairstyle: string
+  hairColor: string
+  expression: string
+  beard: string
+  genderPresentation: string
+}
+
+export interface CosmeticsState {
+  /** Cosmetic IDs ever unlocked — owned forever, not consumable/stackable. */
+  unlocked: string[]
+  /** Cosmetic Slot ID -> equipped Cosmetic ID, or null. */
+  equipped: Record<string, string | null>
+}
+
 /** Pending Primary Activity start/stop delay. */
 export interface ActivityTransition {
   kind: 'starting' | 'stopping'
@@ -117,6 +158,12 @@ export interface PlayerSave {
   activeCritterSpawns: Array<{ locationId: string; critterId: string; appearedAt: string }>
   /** Remainder activity ms toward the next Critter hour-roll, keyed by location. */
   critterProgressMs: Record<string, number>
+  /** Owned/equipped Wardrobe Cosmetics. */
+  cosmetics: CosmeticsState
+  /** Selected character Appearance options. */
+  appearance: PlayerAppearance
+  /** Whether the player has ever opened the Wardrobe (gates the intro hint highlight). */
+  hasSeenWardrobeIntro: boolean
   settings: PlayerSettings
   currentLocationId: string
   currentActivityId: string | null

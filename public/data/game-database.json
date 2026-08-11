@@ -5093,6 +5093,22 @@
       "Icon Asset Key": null,
       "Notes": "Crafted at the Arcana Facility. May fill any spell slot; duplicates allowed.",
       "Base Sell Value": 8000
+    },
+    {
+      "Item ID": "ITEM-0296",
+      "Internal Key": "cosmetic_travelers_tunic",
+      "Display Name": "Traveler's Tunic",
+      "Category": "Cosmetic",
+      "Subtype": "Outfit",
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Associated Skill ID": null,
+      "Equipment Slot ID": null,
+      "Base Sell Value": null,
+      "Icon Asset Key": null,
+      "Description": "A cozy, well-worn medieval traveler's outfit.",
+      "Functional / Source Tags": "cosmetic; outfit",
+      "Notes": "Default starter Wardrobe outfit, granted and equipped automatically."
     }
   ],
   "Equipment": [
@@ -21223,6 +21239,219 @@
       "Target Skill ID": "SKL-0013",
       "Required Level": 50,
       "Notes": "Unlocks when Arcana reaches level 50."
+    }
+  ],
+  "CosmeticSlots": [
+    {
+      "Cosmetic Slot ID": "CSLOT-0001",
+      "Internal Key": "outfit",
+      "Display Name": "Outfit",
+      "Slot Group": "Cosmetic",
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Notes": "Full-body outfit cosmetic."
+    },
+    {
+      "Cosmetic Slot ID": "CSLOT-0002",
+      "Internal Key": "pet",
+      "Display Name": "Pet",
+      "Slot Group": "Cosmetic",
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Notes": "Companion pet cosmetic."
+    }
+  ],
+  "Cosmetics": [
+    {
+      "Cosmetic ID": "COS-0001",
+      "Item ID": "ITEM-0296",
+      "Cosmetic Slot ID": "CSLOT-0001",
+      "Acquisition Tags": "starter",
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Notes": "Default starter outfit, granted and equipped automatically for every new character."
+    }
+  ],
+  "AppearanceOptions": [
+    {
+      "Appearance Option ID": "APR-0001",
+      "Category": "skin_tone",
+      "Display Name": "Fair",
+      "Swatch Color": "#F2C9A0",
+      "Sort Order": 1,
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Notes": null
+    },
+    {
+      "Appearance Option ID": "APR-0002",
+      "Category": "skin_tone",
+      "Display Name": "Tan",
+      "Swatch Color": "#C68B59",
+      "Sort Order": 2,
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Notes": null
+    },
+    {
+      "Appearance Option ID": "APR-0003",
+      "Category": "skin_tone",
+      "Display Name": "Deep",
+      "Swatch Color": "#6B4226",
+      "Sort Order": 3,
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Notes": null
+    },
+    {
+      "Appearance Option ID": "APR-0004",
+      "Category": "hairstyle",
+      "Display Name": "Short",
+      "Swatch Color": null,
+      "Sort Order": 1,
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Notes": null
+    },
+    {
+      "Appearance Option ID": "APR-0005",
+      "Category": "hairstyle",
+      "Display Name": "Long",
+      "Swatch Color": null,
+      "Sort Order": 2,
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Notes": null
+    },
+    {
+      "Appearance Option ID": "APR-0006",
+      "Category": "hairstyle",
+      "Display Name": "Braided",
+      "Swatch Color": null,
+      "Sort Order": 3,
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Notes": null
+    },
+    {
+      "Appearance Option ID": "APR-0007",
+      "Category": "hair_color",
+      "Display Name": "Brown",
+      "Swatch Color": "#5A3825",
+      "Sort Order": 1,
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Notes": null
+    },
+    {
+      "Appearance Option ID": "APR-0008",
+      "Category": "hair_color",
+      "Display Name": "Black",
+      "Swatch Color": "#1C1410",
+      "Sort Order": 2,
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Notes": null
+    },
+    {
+      "Appearance Option ID": "APR-0009",
+      "Category": "hair_color",
+      "Display Name": "Blonde",
+      "Swatch Color": "#D9B36C",
+      "Sort Order": 3,
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Notes": null
+    },
+    {
+      "Appearance Option ID": "APR-0010",
+      "Category": "hair_color",
+      "Display Name": "Auburn",
+      "Swatch Color": "#8B3A2B",
+      "Sort Order": 4,
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Notes": null
+    },
+    {
+      "Appearance Option ID": "APR-0011",
+      "Category": "expression",
+      "Display Name": "Neutral",
+      "Swatch Color": null,
+      "Sort Order": 1,
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Notes": null
+    },
+    {
+      "Appearance Option ID": "APR-0012",
+      "Category": "expression",
+      "Display Name": "Smiling",
+      "Swatch Color": null,
+      "Sort Order": 2,
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Notes": null
+    },
+    {
+      "Appearance Option ID": "APR-0013",
+      "Category": "expression",
+      "Display Name": "Determined",
+      "Swatch Color": null,
+      "Sort Order": 3,
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Notes": null
+    },
+    {
+      "Appearance Option ID": "APR-0014",
+      "Category": "beard",
+      "Display Name": "None",
+      "Swatch Color": null,
+      "Sort Order": 1,
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Notes": null
+    },
+    {
+      "Appearance Option ID": "APR-0015",
+      "Category": "beard",
+      "Display Name": "Stubble",
+      "Swatch Color": null,
+      "Sort Order": 2,
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Notes": null
+    },
+    {
+      "Appearance Option ID": "APR-0016",
+      "Category": "beard",
+      "Display Name": "Full",
+      "Swatch Color": null,
+      "Sort Order": 3,
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Notes": null
+    },
+    {
+      "Appearance Option ID": "APR-0017",
+      "Category": "gender_presentation",
+      "Display Name": "Feminine",
+      "Swatch Color": null,
+      "Sort Order": 1,
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Notes": null
+    },
+    {
+      "Appearance Option ID": "APR-0018",
+      "Category": "gender_presentation",
+      "Display Name": "Masculine",
+      "Swatch Color": null,
+      "Sort Order": 2,
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Notes": null
     }
   ]
 }

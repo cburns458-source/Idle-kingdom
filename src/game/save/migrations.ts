@@ -1,6 +1,17 @@
 import { ensureStartingHuntingTool } from './startingGear'
 import type { ActivePotionEffect, EquippedStack, PlayerSave, SaveMigration } from './types'
-import { SAVE_VERSION } from './types'
+import {
+  DEFAULT_BEARD_ID,
+  DEFAULT_EXPRESSION_ID,
+  DEFAULT_GENDER_PRESENTATION_ID,
+  DEFAULT_HAIRSTYLE_ID,
+  DEFAULT_HAIR_COLOR_ID,
+  DEFAULT_SKIN_TONE_ID,
+  OUTFIT_COSMETIC_SLOT_ID,
+  PET_COSMETIC_SLOT_ID,
+  SAVE_VERSION,
+  STARTER_OUTFIT_COSMETIC_ID,
+} from './types'
 
 const FOOD_SLOT_ID = 'SLOT-0011'
 
@@ -231,6 +242,39 @@ export const SAVE_MIGRATIONS: SaveMigration[] = [
           : {},
       saveVersion: 16,
     }),
+  },
+  {
+    fromVersion: 16,
+    toVersion: 17,
+    migrate: (save) => {
+      const unlocked = Array.isArray(save.cosmetics?.unlocked) ? save.cosmetics.unlocked : []
+      // Every character (new or migrated) starts fully dressed with the
+      // default starter outfit unless something else is already equipped.
+      const alreadyUnlocked = unlocked.includes(STARTER_OUTFIT_COSMETIC_ID)
+      return {
+        ...save,
+        cosmetics: {
+          unlocked: alreadyUnlocked ? unlocked : [...unlocked, STARTER_OUTFIT_COSMETIC_ID],
+          equipped: {
+            ...save.cosmetics?.equipped,
+            [OUTFIT_COSMETIC_SLOT_ID]:
+              save.cosmetics?.equipped?.[OUTFIT_COSMETIC_SLOT_ID] ?? STARTER_OUTFIT_COSMETIC_ID,
+            [PET_COSMETIC_SLOT_ID]: save.cosmetics?.equipped?.[PET_COSMETIC_SLOT_ID] ?? null,
+          },
+        },
+        appearance: {
+          skinTone: save.appearance?.skinTone ?? DEFAULT_SKIN_TONE_ID,
+          hairstyle: save.appearance?.hairstyle ?? DEFAULT_HAIRSTYLE_ID,
+          hairColor: save.appearance?.hairColor ?? DEFAULT_HAIR_COLOR_ID,
+          expression: save.appearance?.expression ?? DEFAULT_EXPRESSION_ID,
+          beard: save.appearance?.beard ?? DEFAULT_BEARD_ID,
+          genderPresentation:
+            save.appearance?.genderPresentation ?? DEFAULT_GENDER_PRESENTATION_ID,
+        },
+        hasSeenWardrobeIntro: save.hasSeenWardrobeIntro ?? false,
+        saveVersion: 17,
+      }
+    },
   },
 ]
 

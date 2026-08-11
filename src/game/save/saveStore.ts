@@ -1,8 +1,17 @@
 import type { GameDatabase } from '../data/types'
 import { migrateSave } from './migrations'
 import {
+  DEFAULT_BEARD_ID,
+  DEFAULT_EXPRESSION_ID,
+  DEFAULT_GENDER_PRESENTATION_ID,
+  DEFAULT_HAIRSTYLE_ID,
+  DEFAULT_HAIR_COLOR_ID,
+  DEFAULT_SKIN_TONE_ID,
+  OUTFIT_COSMETIC_SLOT_ID,
+  PET_COSMETIC_SLOT_ID,
   SAVE_STORAGE_KEY,
   SAVE_VERSION,
+  STARTER_OUTFIT_COSMETIC_ID,
   STARTING_BAKED_POTATO_ID,
   STARTING_BAKED_POTATO_QTY,
   STARTING_GOLD,
@@ -66,6 +75,22 @@ export function createNewSave(db: GameDatabase): PlayerSave {
     critterCollections: [],
     activeCritterSpawns: [],
     critterProgressMs: {},
+    cosmetics: {
+      unlocked: [STARTER_OUTFIT_COSMETIC_ID],
+      equipped: {
+        [OUTFIT_COSMETIC_SLOT_ID]: STARTER_OUTFIT_COSMETIC_ID,
+        [PET_COSMETIC_SLOT_ID]: null,
+      },
+    },
+    appearance: {
+      skinTone: DEFAULT_SKIN_TONE_ID,
+      hairstyle: DEFAULT_HAIRSTYLE_ID,
+      hairColor: DEFAULT_HAIR_COLOR_ID,
+      expression: DEFAULT_EXPRESSION_ID,
+      beard: DEFAULT_BEARD_ID,
+      genderPresentation: DEFAULT_GENDER_PRESENTATION_ID,
+    },
+    hasSeenWardrobeIntro: false,
     settings: { soundEnabled: true, showActivityRewards: true, hudShowTotalXp: false },
     currentLocationId: STARTING_LOCATION_ID,
     currentActivityId: null,

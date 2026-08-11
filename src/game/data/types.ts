@@ -231,6 +231,47 @@ export interface ShopRow {
   [entryField: string]: string | number | null | undefined
 }
 
+export interface CosmeticSlotRow {
+  'Cosmetic Slot ID': string
+  'Internal Key': string
+  'Display Name': string
+  'Slot Group': string | null
+  Status: RecordStatus
+  'Release Phase': ReleasePhase
+  Notes: string | null
+}
+
+export interface CosmeticRow {
+  'Cosmetic ID': string
+  'Item ID': string
+  'Cosmetic Slot ID': string
+  /** Semicolon-separated: crafting; unlock; shop_gold; shop_real_money; starter. */
+  'Acquisition Tags': string | null
+  Status: RecordStatus
+  'Release Phase': ReleasePhase
+  Notes: string | null
+}
+
+export type AppearanceCategoryKey =
+  | 'skin_tone'
+  | 'hairstyle'
+  | 'hair_color'
+  | 'expression'
+  | 'beard'
+  | 'gender_presentation'
+
+export interface AppearanceOptionRow {
+  'Appearance Option ID': string
+  Category: AppearanceCategoryKey | string
+  'Display Name': string
+  /** Hex swatch color for swatch-style categories (skin tone, hair color); null otherwise. */
+  'Swatch Color': string | null
+  'Sort Order': number | null
+  Status: RecordStatus
+  'Release Phase': ReleasePhase
+  Notes: string | null
+}
+
 export interface GameDatabase {
   Config: ConfigRow[]
   Skills: SkillRow[]
@@ -256,6 +297,9 @@ export interface GameDatabase {
   Shops: ShopRow[]
   Quests: Record<string, unknown>[]
   Achievements: Record<string, unknown>[]
+  CosmeticSlots: CosmeticSlotRow[]
+  Cosmetics: CosmeticRow[]
+  AppearanceOptions: AppearanceOptionRow[]
 }
 
 export const DATABASE_TABLES = [
@@ -283,6 +327,9 @@ export const DATABASE_TABLES = [
   'Shops',
   'Quests',
   'Achievements',
+  'CosmeticSlots',
+  'Cosmetics',
+  'AppearanceOptions',
 ] as const
 
 export type DatabaseTableName = (typeof DATABASE_TABLES)[number]

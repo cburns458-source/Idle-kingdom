@@ -34,6 +34,9 @@ const TABLE_ID_FIELDS: Record<string, string> = {
   Shops: 'Shop ID',
   Quests: 'Quest ID',
   Achievements: 'Achievement ID',
+  CosmeticSlots: 'Cosmetic Slot ID',
+  Cosmetics: 'Cosmetic ID',
+  AppearanceOptions: 'Appearance Option ID',
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -212,6 +215,27 @@ export function validateDatabase(db: GameDatabase): ValidationIssue[] {
     }
   }
 
+  for (const cosmetic of db.Cosmetics) {
+    const itemId = cosmetic['Item ID']
+    if (typeof itemId === 'string' && !indexes.itemsById.has(itemId)) {
+      issues.push({
+        severity: 'error',
+        table: 'Cosmetics',
+        id: cosmetic['Cosmetic ID'],
+        message: `Missing Item ID reference: ${itemId}`,
+      })
+    }
+    const slotId = cosmetic['Cosmetic Slot ID']
+    if (typeof slotId === 'string' && !lookupById(indexes, 'CosmeticSlots', slotId)) {
+      issues.push({
+        severity: 'error',
+        table: 'Cosmetics',
+        id: cosmetic['Cosmetic ID'],
+        message: `Missing Cosmetic Slot ID reference: ${slotId}`,
+      })
+    }
+  }
+
   const requiredConfig = [
     'primary_activity_slots',
     'save_slots',
@@ -267,6 +291,9 @@ export function filterLaunchContent(db: GameDatabase): GameDatabase {
     Shops: db.Shops.filter(hasLaunchPhase) as ShopRow[],
     Quests: db.Quests.filter(hasLaunchPhase),
     Achievements: db.Achievements.filter(hasLaunchPhase),
+    CosmeticSlots: db.CosmeticSlots.filter(hasLaunchPhase),
+    Cosmetics: db.Cosmetics.filter(hasLaunchPhase),
+    AppearanceOptions: db.AppearanceOptions.filter(hasLaunchPhase),
   }
 }
 
