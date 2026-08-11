@@ -1,6 +1,13 @@
 import { useRef } from 'react'
 
-export type AppScreen = 'location' | 'map' | 'skills' | 'inventory' | 'log' | 'settings'
+export type AppScreen =
+  | 'location'
+  | 'map'
+  | 'skills'
+  | 'inventory'
+  | 'log'
+  | 'social'
+  | 'settings'
 
 interface BottomNavProps {
   screen: AppScreen

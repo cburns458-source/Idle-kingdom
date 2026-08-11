@@ -48,12 +48,18 @@ function upsertAchievement(
 
 /** Refresh lifetime totals and unlock skill-level achievements. */
 export function syncProgressionMeta(db: GameDatabase, save: PlayerSave, now = Date.now()): PlayerSave {
+  const crittersCollected = (save.critterCollections ?? []).reduce(
+    (sum, row) => sum + Math.max(0, row.count),
+    0,
+  )
   const values = {
     ...save.statistics.values,
     total_level: totalLevel(save),
     total_experience: totalSkillXp(save),
     gold_earned: Number(save.statistics.values.gold_earned ?? 0),
     monsters_killed: Number(save.statistics.values.monsters_killed ?? 0),
+    critters_collected: crittersCollected,
+    bounties_completed: Number(save.statistics.values.bounties_completed ?? 0),
   }
 
   let achievements = [...save.achievements]

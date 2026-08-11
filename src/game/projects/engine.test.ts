@@ -35,6 +35,8 @@ describe('special production', () => {
       'PRJ-0135',
       'PRJ-0139',
       'PRJ-0140',
+      'PRJ-0141',
+      'PRJ-0142',
     ])
     expect(listed.find((project) => project['Project ID'] === 'PRJ-0139')?.['Display Name']).toBe(
       'Strength Spell',

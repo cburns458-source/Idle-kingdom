@@ -3321,3 +3321,149 @@ button.hud-total-stat:focus-visible {
     max-width: 26rem;
   }
 }
+
+.social-portrait {
+  flex-shrink: 0;
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 0.4rem;
+  border: 1px solid rgba(212, 175, 55, 0.4);
+  background-color: rgba(20, 13, 8, 0.55);
+  background-size: cover;
+  background-position: center;
+  image-rendering: pixelated;
+}
+
+.social-portrait.large {
+  width: 3.4rem;
+  height: 3.4rem;
+}
+
+.social-leaderboard-list li,
+.chat-message-list li {
+  align-items: center;
+}
+
+.chat-compose,
+.guild-create-form,
+.chat-drawer-panel form,
+.public-profile-sheet form {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.4rem;
+  margin-top: 0.6rem;
+}
+
+.chat-mod-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.chat-drawer {
+  position: fixed;
+  right: 0.75rem;
+  bottom: 4.5rem;
+  z-index: 30;
+  display: grid;
+  justify-items: end;
+  gap: 0.35rem;
+}
+
+.chat-drawer-toggle {
+  border: 1px solid rgba(212, 175, 90, 0.45);
+  background: rgba(28, 20, 14, 0.92);
+  color: inherit;
+  border-radius: 999px;
+  padding: 0.45rem 0.85rem;
+}
+
+.chat-drawer-panel {
+  width: min(92vw, 20rem);
+  max-height: 18rem;
+  overflow: auto;
+  padding: 0.55rem;
+  border-radius: 0.65rem;
+  border: 1px solid rgba(212, 175, 90, 0.35);
+  background: rgba(18, 13, 9, 0.96);
+  display: grid;
+  gap: 0.4rem;
+}
+
+.chat-drawer-messages {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.3rem;
+  font-size: 0.85rem;
+}
+
+.active-players-panel {
+  margin: 0.75rem 0 0;
+  padding: 0.65rem 0.75rem;
+  border-top: 1px solid rgba(212, 175, 90, 0.2);
+}
+
+.active-players-panel h2 {
+  margin: 0 0 0.35rem;
+  font-size: 1rem;
+}
+
+.active-players-panel ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.active-player-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  width: 100%;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  padding: 0.2rem 0;
+}
+
+.public-profile-sheet {
+  margin-top: 0.6rem;
+  padding: 0.6rem;
+  border: 1px solid rgba(212, 175, 90, 0.3);
+  border-radius: 0.5rem;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.public-profile-header {
+  display: flex;
+  gap: 0.55rem;
+  align-items: center;
+}
+
+.public-skill-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.15rem 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.account-panel {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.linkish {
+  border: 0;
+  background: transparent;
+  color: rgba(212, 175, 90, 0.95);
+  padding: 0;
+  text-decoration: underline;
+  cursor: pointer;
+}

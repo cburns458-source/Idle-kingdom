@@ -46,7 +46,7 @@ Preserve these core requirements:
 - Content is data-driven rather than individually hardcoded.
 - Stable database IDs are used for relationships.
 - The experience is portrait-oriented, readable, cozy, mobile-first, and suitable for long idle sessions.
-- No multiplayer architecture, multiplayer UI, account system, login requirement, matchmaking, social systems, remote-authoritative gameplay, or unnecessary network dependency should be introduced unless the owner explicitly adds it later.
+- Multiplayer is an owner-approved exception (Quests / Recipe Book / Multiplayer roadmap): optional Supabase accounts, cloud save, leaderboards, chat, guilds, presence, and Citadel placeholder. Local offline play must remain intact; multiplayer UI stays hidden until signed in. Combat/gathering stay client-resolved with soft server validation — do not make the game remotely authoritative in v1. Do not require login for core single-player loops.
 
 Do not add features simply because they are common in other RPGs.
 

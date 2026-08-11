@@ -76,9 +76,15 @@ import {
 } from './ui/AfkSummaryPanel'
 import { BottomNav, type AppScreen } from './ui/BottomNav'
 import { CombatPanel } from './ui/CombatPanel'
+import { ChatDrawer } from './ui/ChatDrawer'
+import { ActivePlayersPanel } from './ui/ActivePlayersPanel'
+import { AccountPanel } from './ui/AccountPanel'
 import { InventoryView } from './ui/InventoryView'
 import { LocationView } from './ui/LocationView'
 import { LogView } from './ui/LogView'
+import { SocialView } from './ui/SocialView'
+import { getSession } from './game/multiplayer/auth'
+import { pushCloudSave } from './game/multiplayer/cloudSave'
 import { NamePrompt } from './ui/NamePrompt'
 import { NewCharacterFlow, RaceOnlyPicker } from './ui/NewCharacterFlow'
 import { assignRace } from './game/races/assignRace'
@@ -1055,6 +1061,11 @@ export default function App() {
     updateSave(withRecalculatedVitals(database.launch, result.save))
   }
 
+  function syncCloudIfSignedIn(next: PlayerSave) {
+    if (!getSession()) return
+    void pushCloudSave(database.launch, next)
+  }
+
   function stopActivity() {
     if (deathLocked) return
     setActivityError(null)
@@ -1074,6 +1085,7 @@ export default function App() {
       return
     }
     updateSave(requested.save)
+    syncCloudIfSignedIn(requested.save)
   }
 
   function requirementHint(row: ActivityRow): string | null {
@@ -1359,6 +1371,7 @@ export default function App() {
             <InventoryView save={save} database={database} onChangeSave={updateSave} />
           )}
           {screen === 'log' && <LogView save={save} database={database} />}
+          {screen === 'social' && <SocialView save={save} database={database} />}
           {screen === 'settings' && (
             <SettingsPanel
               save={save}
@@ -1395,9 +1408,25 @@ export default function App() {
                 setLastMessage(`${result.critter.displayName} appeared nearby.`)
                 setScreen('location')
               }}
+              onOpenSocial={() => setScreen('social')}
+              onMessage={setLastMessage}
+            />
+          )}
+          {screen === 'location' && (
+            <ActivePlayersPanel
+              save={save}
+              skillNameForId={(skillId) =>
+                skillId
+                  ? (database.launch.Skills.find((skill) => skill['Skill ID'] === skillId)?.[
+                      'Display Name'
+                    ] ?? skillId)
+                  : 'Skill'
+              }
             />
           )}
         </div>
+
+        <ChatDrawer locationId={save.currentLocationId} />
 
         <BottomNav
           screen={screen}
@@ -1523,6 +1552,8 @@ function SettingsPanel({
   onChangeRace,
   onPreviewAfkSummary,
   onSpawnCritter,
+  onOpenSocial,
+  onMessage,
 }: {
   save: PlayerSave
   database: LoadedDatabase
@@ -1537,6 +1568,8 @@ function SettingsPanel({
   onChangeRace: (raceId: string) => void
   onPreviewAfkSummary: () => void
   onSpawnCritter: () => void
+  onOpenSocial: () => void
+  onMessage: (message: string) => void
 }) {
   const launchSkills = database.launch.Skills
   const launchItems = database.launch.Items
@@ -1677,6 +1710,14 @@ function SettingsPanel({
             Change race (test)
           </button>
         </div>
+
+        <AccountPanel
+          db={database.launch}
+          save={save}
+          onChangeSave={onChangeSave}
+          onOpenSocial={onOpenSocial}
+          onMessage={onMessage}
+        />
 
         <div className="menu-demo-block">
           <p className="muted tiny">Activity rewards</p>
