@@ -19,6 +19,7 @@ const ITEM_ID_ICONS: Record<string, string> = {
   'ITEM-0169': 'backpack',
   'ITEM-0288': 'insignia',
   'ITEM-0295': 'spell',
+  'ITEM-0296': 'cosmetic_outfit_travelers_tunic',
 }
 
 /** Resolve an icon path for an item using ID, then category/subtype heuristics. */
