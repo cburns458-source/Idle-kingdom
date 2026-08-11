@@ -52,7 +52,6 @@ export function ProductionPicker({
       <div className="activity-panel-head">
         <div>
           <h2>{activity['Contextual Name'] ?? activity['Internal Key']}</h2>
-          <p className="muted">Choose a recipe and queue quantity</p>
         </div>
         <button type="button" className="btn secondary" onClick={onCancel}>
           Cancel
