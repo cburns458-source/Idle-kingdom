@@ -5,7 +5,10 @@ import {
   maxAddableQuantity,
 } from '../inventory/capacity'
 import { isGoldCurrencyItem } from '../inventory/gold'
-import { applyPotionDropChance } from '../potions/effects'
+import {
+  applyRelativeDropChance,
+  totalRelativeDropChanceBonusPercent,
+} from '../loot/dropChance'
 import type { ActionRow, GameDatabase, RewardEntryRow } from '../data/types'
 import { applyRaceGoldGain } from '../races/races'
 import type { PlayerSave } from '../save/types'
@@ -128,9 +131,9 @@ export function resolveActionRewards(
 
   const rollTable = (tableId: string | null, chance: number | null) => {
     if (!tableId) return
-    const dropChance = applyPotionDropChance(
+    const dropChance = applyRelativeDropChance(
       typeof chance === 'number' ? chance : 100,
-      save.activePotionEffect?.scope === 'one_action' ? save.activePotionEffect : null,
+      totalRelativeDropChanceBonusPercent(db, save),
     )
     if (typeof dropChance !== 'number' || random() * 100 >= dropChance) return
     const entries = db.RewardEntries.filter((row) => row['Reward Table ID'] === tableId)

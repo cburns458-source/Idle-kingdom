@@ -1,3 +1,4 @@
+import { parseRelativeDropChanceBonusPercent } from '../loot/dropChance'
 import type { EquipmentRow, GameDatabase } from '../data/types'
 
 /** Combat-facing equipment stats for hold tooltips. */
@@ -17,6 +18,11 @@ export function equipmentTooltipStatLines(equipment: EquipmentRow | undefined): 
   const hp = equipment['HP Bonus']
   if (typeof hp === 'number' && hp !== 0) {
     lines.push(hp > 0 ? `Health +${hp}` : `Health ${hp}`)
+  }
+
+  const dropBonus = parseRelativeDropChanceBonusPercent(equipment['Capabilities / Effects'])
+  if (dropBonus > 0) {
+    lines.push(`+${dropBonus}% relative Drop Chance`)
   }
 
   return lines
