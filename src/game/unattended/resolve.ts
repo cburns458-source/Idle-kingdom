@@ -17,6 +17,7 @@ import {
   resolveCombatRound,
 } from '../combat/engine'
 import type { GameDatabase } from '../data/types'
+import { applyActivityTimeTowardCritters } from '../critters/critters'
 import { resolveProductionProgress } from '../production/engine'
 import type { PlayerSave } from '../save/types'
 
@@ -30,6 +31,7 @@ export interface UnattendedResult {
   craftsCompleted: number
   combatVictories: number
   combatDeaths: number
+  crittersSpawned: number
   effectiveElapsedMs: number
 }
 
@@ -75,15 +77,33 @@ export function resolveUnattendedProgress(
   let craftsCompleted = 0
   let combatVictories = 0
   let combatDeaths = 0
+  let crittersSpawned = 0
   let steps = 0
 
+  const pushCritterSpawn = (spawned: { displayName: string } | null) => {
+    if (!spawned) return
+    crittersSpawned += 1
+    messages.push(`A ${spawned.displayName} appeared while you were away.`)
+  }
+
   const production = resolveProductionProgress(db, current, endMs)
-  if (production.craftsCompleted > 0) {
+  if (production.craftsCompleted > 0 || production.activityMs > 0) {
     current = production.save
     craftsCompleted = production.craftsCompleted
     messages.push(...production.messages.slice(0, 6))
     if (production.messages.length > 6) {
       messages.push(`…and ${production.messages.length - 6} more crafts.`)
+    }
+    if (production.activityMs > 0) {
+      const critter = applyActivityTimeTowardCritters(
+        current,
+        current.currentLocationId,
+        production.activityMs,
+        endMs,
+        random,
+      )
+      current = critter.save
+      pushCritterSpawn(critter.spawned)
     }
   }
 
@@ -145,6 +165,15 @@ export function resolveUnattendedProgress(
         )
         combatVictories += 1
         let next = victory.save
+        const critter = applyActivityTimeTowardCritters(
+          next,
+          next.currentLocationId,
+          roundMs,
+          roundEnd,
+          random,
+        )
+        next = critter.save
+        pushCritterSpawn(critter.spawned)
         const activityId = current.currentActivityId
         if (!activityStillValid(db, next, activityId)) {
           current = clearActivitySave(next, roundEnd)
@@ -158,21 +187,41 @@ export function resolveUnattendedProgress(
 
       if (round.outcome === 'defeat') {
         combatDeaths += 1
-        current = applyCombatDefeat(
+        let defeated = applyCombatDefeat(
           db,
           { ...current, currentHp: 0 },
           roundEnd,
         )
+        const critter = applyActivityTimeTowardCritters(
+          defeated,
+          defeated.currentLocationId,
+          roundMs,
+          roundEnd,
+          random,
+        )
+        defeated = critter.save
+        pushCritterSpawn(critter.spawned)
+        current = defeated
         messages.push(`Defeated by ${enemy['Display Name']} while away.`)
         continue
       }
 
-      current = {
+      let continued: PlayerSave = {
         ...current,
         currentHp: round.playerHp,
         combatEnemyHp: round.enemyHp,
         combatRoundStartedAt: new Date(roundEnd).toISOString(),
       }
+      const critter = applyActivityTimeTowardCritters(
+        continued,
+        continued.currentLocationId,
+        roundMs,
+        roundEnd,
+        random,
+      )
+      continued = critter.save
+      pushCritterSpawn(critter.spawned)
+      current = continued
       continue
     }
 
@@ -198,6 +247,15 @@ export function resolveUnattendedProgress(
         actionStartedAt: null,
         actionDurationMs: null,
       })
+      const critter = applyActivityTimeTowardCritters(
+        next,
+        next.currentLocationId,
+        actionState.durationMs,
+        due,
+        random,
+      )
+      next = critter.save
+      pushCritterSpawn(critter.spawned)
 
       const activityId = current.currentActivityId
       if (!activityStillValid(db, next, activityId)) {
@@ -259,6 +317,7 @@ export function resolveUnattendedProgress(
       craftsCompleted > 0 ||
       combatVictories > 0 ||
       combatDeaths > 0 ||
+      crittersSpawned > 0 ||
       stamped.unattendedProgressAt !== save.unattendedProgressAt ||
       stamped.currentActionId !== save.currentActionId ||
       stamped.combatEnemyHp !== save.combatEnemyHp ||
@@ -267,7 +326,9 @@ export function resolveUnattendedProgress(
       stamped.deathPauseUntil !== save.deathPauseUntil ||
       stamped.productionQuantityRemaining !== save.productionQuantityRemaining ||
       JSON.stringify(stamped.inventory) !== JSON.stringify(save.inventory) ||
-      JSON.stringify(stamped.skills) !== JSON.stringify(save.skills))
+      JSON.stringify(stamped.skills) !== JSON.stringify(save.skills) ||
+      JSON.stringify(stamped.activeCritterSpawns) !== JSON.stringify(save.activeCritterSpawns) ||
+      JSON.stringify(stamped.critterProgressMs) !== JSON.stringify(save.critterProgressMs))
 
   return {
     save: stamped,
@@ -277,6 +338,7 @@ export function resolveUnattendedProgress(
     craftsCompleted,
     combatVictories,
     combatDeaths,
+    crittersSpawned,
     effectiveElapsedMs,
   }
 }

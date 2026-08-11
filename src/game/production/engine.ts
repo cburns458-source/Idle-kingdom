@@ -205,9 +205,10 @@ export function resolveProductionProgress(
   db: GameDatabase,
   save: PlayerSave,
   nowMs: number = Date.now(),
-): { save: PlayerSave; craftsCompleted: number; messages: string[] } {
+): { save: PlayerSave; craftsCompleted: number; messages: string[]; activityMs: number } {
   let current = save
   let craftsCompleted = 0
+  let activityMs = 0
   /** Aggregate identical outputs so AFK summaries show one line per item. */
   const craftTotals = new Map<string, { qty: number; xp: number }>()
   const craftOrder: string[] = []
@@ -218,12 +219,14 @@ export function resolveProductionProgress(
     current.actionStartedAt &&
     current.actionDurationMs
   ) {
-    const due = Date.parse(current.actionStartedAt) + current.actionDurationMs
+    const durationMs = current.actionDurationMs
+    const due = Date.parse(current.actionStartedAt) + durationMs
     if (due > nowMs) break
     const completed = completeProductionCraft(db, current, due)
     if (!completed) break
     current = completed.save
     craftsCompleted += 1
+    activityMs += durationMs
     const existing = craftTotals.get(completed.outputName)
     if (!existing) {
       craftOrder.push(completed.outputName)
@@ -243,5 +246,5 @@ export function resolveProductionProgress(
     return `Crafted ${total.qty} ${name} (+${total.xp} XP)`
   })
 
-  return { save: current, craftsCompleted, messages }
+  return { save: current, craftsCompleted, messages, activityMs }
 }

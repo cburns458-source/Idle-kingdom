@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { asAchievementRows } from '../game/achievements/progress'
+import { CRITTER_DEFS, collectionCount } from '../game/critters/critters'
 import type { LoadedDatabase } from '../game/data/loadDatabase'
 import { asQuestRows, getQuestProgress, questStatusLabel } from '../game/quests/quests'
 import type { PlayerSave } from '../game/save/types'
@@ -110,8 +111,23 @@ export function LogView({ save, database }: LogViewProps) {
 
       {tab === 'critters' && (
         <div role="tabpanel" className="menu-tab-panel">
-          <p className="lead">Coming Soon</p>
-          <p className="muted tiny">Critters will appear here in a later update.</p>
+          <p className="lead">Critters found while working their habitats.</p>
+          <ul className="achievement-list critter-log-list">
+            {CRITTER_DEFS.map((critter) => {
+              const count = collectionCount(save, critter.id)
+              return (
+                <li key={critter.id} className={count > 0 ? 'unlocked' : undefined}>
+                  <div className="quest-log-copy">
+                    <strong>{critter.displayName}</strong>
+                    <span className="muted tiny">{critter.description}</span>
+                  </div>
+                  <span className="muted tiny">
+                    {count <= 0 ? 'Not found' : count === 1 ? 'Found' : `×${count}`}
+                  </span>
+                </li>
+              )
+            })}
+          </ul>
         </div>
       )}
     </section>

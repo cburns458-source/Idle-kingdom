@@ -216,6 +216,22 @@ export const SAVE_MIGRATIONS: SaveMigration[] = [
       saveVersion: 15,
     }),
   },
+  {
+    fromVersion: 15,
+    toVersion: 16,
+    migrate: (save) => ({
+      ...save,
+      critterCollections: Array.isArray(save.critterCollections) ? save.critterCollections : [],
+      activeCritterSpawns: Array.isArray(save.activeCritterSpawns)
+        ? save.activeCritterSpawns
+        : [],
+      critterProgressMs:
+        save.critterProgressMs && typeof save.critterProgressMs === 'object'
+          ? save.critterProgressMs
+          : {},
+      saveVersion: 16,
+    }),
+  },
 ]
 
 export function migrateSave(save: PlayerSave): PlayerSave {

@@ -57,6 +57,7 @@ import { withRecalculatedVitals } from './game/equipment/vitals'
 import { completeProductionCraft } from './game/production/engine'
 import { getRecipe, isStandardProductionActivity } from './game/production/recipes'
 import { syncProgressionMeta } from './game/achievements/progress'
+import { applyActivityTimeTowardCritters } from './game/critters/critters'
 import {
   resolveUnattendedProgress,
   stampUnattendedProgressAt,
@@ -134,6 +135,11 @@ export default function App() {
     projectName: string
     lines: string[]
   } | null>(null)
+  const [craftPopup, setCraftPopup] = useState<{
+    itemId: string
+    name: string
+    key: number
+  } | null>(null)
   const [autoEquipPrompt, setAutoEquipPrompt] = useState<AutoEquipProposal | null>(null)
   const bootRef = useRef(boot)
   bootRef.current = boot
@@ -143,6 +149,12 @@ export default function App() {
     const timer = window.setTimeout(() => setActivityError(null), 2000)
     return () => window.clearTimeout(timer)
   }, [activityError])
+
+  useEffect(() => {
+    if (!craftPopup) return
+    const timer = window.setTimeout(() => setCraftPopup(null), 2000)
+    return () => window.clearTimeout(timer)
+  }, [craftPopup])
 
   useEffect(() => {
     let cancelled = false
@@ -163,7 +175,8 @@ export default function App() {
             resolved.gatheringActions > 0 ||
             resolved.craftsCompleted > 0 ||
             resolved.combatVictories > 0 ||
-            resolved.combatDeaths > 0
+            resolved.combatDeaths > 0 ||
+            resolved.crittersSpawned > 0
           if (hadAfkProgress) {
             setAfkSummary(afkSummaryFromUnattended(resolved))
           }
@@ -330,7 +343,11 @@ export default function App() {
       }
 
       const finished = completeGatheringAction(current.database.launch, current.save, action)
-      let nextSave = finished.save
+      let nextSave = applyActivityTimeTowardCritters(
+        finished.save,
+        finished.save.currentLocationId,
+        actionState.durationMs,
+      ).save
       const gatheringBundle: ActionRewardBundle = {
         id: `${finished.result.actionId}-${Date.now()}`,
         xpRewards: finished.result.xpRewards,
@@ -411,13 +428,27 @@ export default function App() {
         setActionProgress(1)
         return
       }
+      const craftDurationMs = current.save.actionDurationMs ?? 0
+      const withCritter = applyActivityTimeTowardCritters(
+        finished.save,
+        finished.save.currentLocationId,
+        craftDurationMs,
+      ).save
+      const outputLoot = finished.reward.loot[0]
+      if (outputLoot) {
+        setCraftPopup({
+          itemId: outputLoot.itemId,
+          name: outputLoot.displayName,
+          key: Date.now(),
+        })
+      }
       setRecentRewards((prev) => [finished.reward, ...prev].slice(0, 4))
       setLastMessage(null)
       setActivityError(null)
       setActionProgress(0)
       setBoot({
         ...current,
-        save: persistSave(finished.save),
+        save: persistSave(withCritter),
         saveCreated: false,
       })
     }
@@ -536,13 +567,17 @@ export default function App() {
           action,
           enemy,
         )
-        const nextSave = victoryResult.save
+        const nextSave = applyActivityTimeTowardCritters(
+          victoryResult.save,
+          victoryResult.save.currentLocationId,
+          roundMs,
+        ).save
 
         const combatLevelBefore = getSkillProgress(current.save, 'SKL-0001').level
-        const combatLevelAfter = getSkillProgress(victoryResult.save, 'SKL-0001').level
+        const combatLevelAfter = getSkillProgress(nextSave, 'SKL-0001').level
         const combatXpReward = summarizeXpReward(
           current.database.launch,
-          victoryResult.save,
+          nextSave,
           'SKL-0001',
           victoryResult.xpGained,
           combatLevelAfter > combatLevelBefore ? combatLevelAfter : null,
@@ -567,6 +602,8 @@ export default function App() {
             ...current.save,
             combatEnemyHp: 0,
             currentHp: nextSave.currentHp,
+            critterProgressMs: nextSave.critterProgressMs,
+            activeCritterSpawns: nextSave.activeCritterSpawns,
           }),
           saveCreated: false,
         })
@@ -583,10 +620,15 @@ export default function App() {
       }
 
       if (round.outcome === 'defeat') {
-        const defeated = applyCombatDefeat(current.database.launch, {
+        const defeatedBase = applyCombatDefeat(current.database.launch, {
           ...current.save,
           currentHp: 0,
         })
+        const defeated = applyActivityTimeTowardCritters(
+          defeatedBase,
+          defeatedBase.currentLocationId,
+          roundMs,
+        ).save
         setLastPlayerHit(round.playerHit)
         setLastEnemyHit(round.enemyHit)
         setLastMessage(`Defeated by ${enemy['Display Name']}. Recovering…`)
@@ -599,14 +641,19 @@ export default function App() {
       setLastMessage(
         `You hit ${round.playerHit}. ${enemy['Display Name']} hits ${round.enemyHit}.`,
       )
-      setBoot({
-        ...current,
-        save: persistSave({
+      const continued = applyActivityTimeTowardCritters(
+        {
           ...current.save,
           currentHp: round.playerHp,
           combatEnemyHp: round.enemyHp,
           combatRoundStartedAt: new Date().toISOString(),
-        }),
+        },
+        current.save.currentLocationId,
+        roundMs,
+      ).save
+      setBoot({
+        ...current,
+        save: persistSave(continued),
         saveCreated: false,
       })
     }
@@ -1027,6 +1074,7 @@ export default function App() {
               indexes={database.launchIndexes}
               db={database.launch}
               location={location}
+              save={save}
               currentActivityId={save.currentActivityId}
               activityError={activityError}
               requirementHint={requirementHint}
@@ -1044,6 +1092,10 @@ export default function App() {
               }
               onStartActivity={startActivity}
               onStopActivity={stopActivity}
+              onCollectCritter={(next, message) => {
+                updateSave(next)
+                setLastMessage(message)
+              }}
               onOpenSpecialProduction={(station) => {
                 setActiveShopId(null)
                 setActiveNpcId(null)
@@ -1173,6 +1225,7 @@ export default function App() {
                       save={save}
                       progress={actionProgress}
                       onStop={stopActivity}
+                      craftPopup={craftPopup}
                     />
                   )}
                   {activity &&

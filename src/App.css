@@ -650,6 +650,7 @@ button.hud-total-stat:focus-visible {
 }
 
 .location-view {
+  position: relative;
   flex: 1;
   min-height: 0;
   display: flex;
@@ -674,6 +675,8 @@ button.hud-total-stat:focus-visible {
 }
 
 .location-view-shade {
+  position: relative;
+  z-index: 1;
   flex: 1;
   min-height: 0;
   overflow: auto;
@@ -683,6 +686,56 @@ button.hud-total-stat:focus-visible {
   padding: 0.85rem 0.85rem 0;
   background:
     linear-gradient(180deg, rgba(20, 13, 8, 0.42) 0%, rgba(20, 13, 8, 0.18) 28%, rgba(20, 13, 8, 0.72) 100%);
+}
+
+.critter-overlay {
+  position: absolute;
+  top: 12%;
+  left: 50%;
+  z-index: 2;
+  transform: translateX(-50%);
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.35rem 0.45rem 0.4rem;
+  border: 1px solid rgba(212, 175, 55, 0.45);
+  border-radius: 0.7rem;
+  background: rgba(18, 12, 8, 0.55);
+  color: #fff4d4;
+  cursor: pointer;
+  animation: critter-bob 1.8s ease-in-out infinite;
+}
+
+.critter-overlay:focus-visible {
+  outline: 2px solid rgba(212, 175, 55, 0.85);
+  outline-offset: 2px;
+}
+
+.critter-overlay-art {
+  width: 4.5rem;
+  height: 4.5rem;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  image-rendering: pixelated;
+}
+
+.critter-overlay-name {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.75);
+}
+
+@keyframes critter-bob {
+  0%,
+  100% {
+    transform: translateX(-50%) translateY(0);
+  }
+  50% {
+    transform: translateX(-50%) translateY(-0.35rem);
+  }
 }
 
 .location-bottom-band {

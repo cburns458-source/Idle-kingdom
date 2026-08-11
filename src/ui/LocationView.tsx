@@ -6,11 +6,14 @@ import {
   type SpecialProductionStation,
 } from '../game/projects/projects'
 import { enterSubMapLabel, isSubMapGateway } from '../game/world/submaps'
+import type { PlayerSave } from '../game/save/types'
+import { CritterOverlay } from './CritterOverlay'
 
 interface LocationViewProps {
   indexes: DatabaseIndexes
   db: GameDatabase
   location: LocationRow
+  save: PlayerSave
   currentActivityId: string | null
   activityError: string | null
   actionsLocked?: boolean
@@ -29,6 +32,7 @@ interface LocationViewProps {
   /** When set, show a control to reopen this location's sub-map. */
   parentSubMapName?: string | null
   onOpenParentSubMap?: () => void
+  onCollectCritter: (save: PlayerSave, message: string) => void
   requirementHint?: (activity: ActivityRow) => string | null
   /** Standard Production opens a recipe picker. */
   isRecipeBrowserActivity?: (activity: ActivityRow) => boolean
@@ -48,6 +52,7 @@ export function LocationView({
   indexes,
   db,
   location,
+  save,
   currentActivityId,
   activityError,
   actionsLocked = false,
@@ -63,6 +68,7 @@ export function LocationView({
   enterSubMapLabelText,
   parentSubMapName,
   onOpenParentSubMap,
+  onCollectCritter,
   requirementHint,
   isRecipeBrowserActivity,
 }: LocationViewProps) {
@@ -100,6 +106,7 @@ export function LocationView({
       className="location-view"
       style={{ backgroundImage: `url(${locationAssetPath(locationId)})` }}
     >
+      <CritterOverlay save={save} locationId={locationId} onCollect={onCollectCritter} />
       <div className="location-view-shade" ref={shadeRef}>
         <header className="location-overlay-head">
           <div className="location-overlay-copy">

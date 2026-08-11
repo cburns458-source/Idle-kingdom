@@ -1,4 +1,4 @@
-export const SAVE_VERSION = 15
+export const SAVE_VERSION = 16
 export const SAVE_STORAGE_KEY = 'idle-kingdoms.demo.save'
 export const STARTING_LOCATION_ID = 'LOC-0002'
 export const STARTING_GOLD = 25
@@ -111,6 +111,12 @@ export interface PlayerSave {
   unlockedLocationIds: string[]
   /** Merchant tip rewards already claimed (one-time dialogue grants). */
   claimedMerchantTipIds: string[]
+  /** Critter collection counts (unlocked entries in the Log). */
+  critterCollections: Array<{ critterId: string; count: number }>
+  /** At most one pending Critter spawn per location until collected. */
+  activeCritterSpawns: Array<{ locationId: string; critterId: string; appearedAt: string }>
+  /** Remainder activity ms toward the next Critter hour-roll, keyed by location. */
+  critterProgressMs: Record<string, number>
   settings: PlayerSettings
   currentLocationId: string
   currentActivityId: string | null
