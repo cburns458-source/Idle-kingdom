@@ -18,6 +18,7 @@ import {
 } from '../game/projects/projects'
 import { isSpellItem, spellEffectEnchantmentId, spellTooltipLines } from '../game/spells/spells'
 import type { PlayerSave } from '../game/save/types'
+import { CloseButton } from './CloseButton'
 import { IngredientIconList } from './IngredientIcons'
 import { ItemIcon } from './itemIcons'
 import { QuantityNumpad } from './QuantityNumpad'
@@ -136,9 +137,7 @@ export function ProjectPicker({
         <div>
           <h2>{station.label}</h2>
         </div>
-        <button type="button" className="btn secondary" onClick={onCancel}>
-          Cancel
-        </button>
+        <CloseButton onClick={onCancel} label="Cancel" />
       </div>
 
       {projects.length === 0 ? (

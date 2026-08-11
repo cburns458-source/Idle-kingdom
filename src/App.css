@@ -1163,12 +1163,12 @@ button.hud-total-stat:focus-visible {
   text-align: left;
 }
 
-.shop-qty-card h2 {
-  text-align: center;
+.qty-numpad-head {
+  margin-bottom: 0.35rem;
 }
 
-.shop-qty-card .muted.tiny:first-child {
-  text-align: center;
+.qty-numpad-head h2 {
+  margin: 0;
 }
 
 .shop-qty-available {

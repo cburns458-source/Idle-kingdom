@@ -11,6 +11,7 @@ import {
   recipesForActivity,
 } from '../game/production/recipes'
 import type { PlayerSave } from '../game/save/types'
+import { CloseButton } from './CloseButton'
 import { formatDurationSeconds } from './formatDuration'
 import { IngredientIconList } from './IngredientIcons'
 import { ItemIcon } from './itemIcons'
@@ -53,9 +54,7 @@ export function ProductionPicker({
         <div>
           <h2>{activity['Contextual Name'] ?? activity['Internal Key']}</h2>
         </div>
-        <button type="button" className="btn secondary" onClick={onCancel}>
-          Cancel
-        </button>
+        <CloseButton onClick={onCancel} label="Cancel" />
       </div>
 
       {recipes.length === 0 ? (

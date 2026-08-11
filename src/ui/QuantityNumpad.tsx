@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
+import { CloseButton } from './CloseButton'
 
 export interface QuantityNumpadProps {
   title: string
@@ -99,8 +100,13 @@ export function QuantityNumpad({
       aria-labelledby="qty-numpad-title"
     >
       <div className="panel quest-reward-card shop-qty-card qty-numpad-card">
-        {subtitle && <p className="muted tiny">{subtitle}</p>}
-        <h2 id="qty-numpad-title">{title}</h2>
+        <div className="activity-panel-head qty-numpad-head">
+          <div>
+            {subtitle && <p className="muted tiny">{subtitle}</p>}
+            <h2 id="qty-numpad-title">{title}</h2>
+          </div>
+          <CloseButton onClick={onCancel} label="Cancel" />
+        </div>
         {details}
         <label className="field-label" htmlFor="qty-numpad-input">
           Amount
@@ -156,9 +162,6 @@ export function QuantityNumpad({
 
         {displayError && <p className="danger-note">{displayError}</p>}
         <div className="button-row shop-qty-actions">
-          <button type="button" className="btn secondary" onClick={onCancel}>
-            Cancel
-          </button>
           <button type="button" className="btn primary" onClick={confirm}>
             {confirmLabel}
           </button>
