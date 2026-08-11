@@ -131,6 +131,37 @@ describe('combat engine', () => {
     expect(round.enemyHp).toBe(90)
   })
 
+  it('applies 1.5× damage on critical strikes and adds crit chance across items', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const base = createNewSave(launch)
+    const save = {
+      ...base,
+      equipment: {
+        ...base.equipment,
+        slots: {
+          ...base.equipment.slots,
+          'SLOT-0001': { itemId: 'ITEM-0124', quantity: 1, enchantmentId: 'ENCH-0008' },
+          'SLOT-0008': { itemId: 'ITEM-0170', quantity: 1, enchantmentId: 'ENCH-0008' },
+        },
+      },
+    }
+    const enemy = launch.Enemies.find((row) => row['Enemy ID'] === 'ENM-0001')!
+    // damage roll → 0 (min 10), crit roll → 0 (< 20% succeeds)
+    const critRound = resolveCombatRound(launch, save, enemy, enemy['Maximum HP'], () => 0)
+    expect(critRound.playerCrit).toBe(true)
+    expect(critRound.playerHit).toBe(15) // floor(10 * 1.5)
+
+    // Fail the crit roll with a high second random value.
+    let calls = 0
+    const random = () => {
+      calls += 1
+      return calls === 1 ? 0 : 0.99
+    }
+    const miss = resolveCombatRound(launch, save, enemy, enemy['Maximum HP'], random)
+    expect(miss.playerCrit).toBe(false)
+    expect(miss.playerHit).toBe(10)
+  })
+
   it('starts a death pause with no rewards on defeat', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const save = createNewSave(launch)

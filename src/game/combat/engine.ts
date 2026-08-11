@@ -10,7 +10,11 @@ import {
   potionEnemyMaxHpDamage,
   tryConsumePotionForScope,
 } from '../potions/effects'
-import { equippedEnchantmentThornsPercent } from '../projects/enchantments'
+import {
+  criticalStrikeDamageMultiplier,
+  equippedEnchantmentCritChancePercent,
+  equippedEnchantmentThornsPercent,
+} from '../projects/enchantments'
 import { applyRaceGoldGain } from '../races/races'
 import {
   applyMitigation,
@@ -24,6 +28,8 @@ export type RandomFn = () => number
 
 export interface CombatRoundResult {
   playerHit: number
+  /** True when this round's player hit was a critical strike. */
+  playerCrit: boolean
   enemyHit: number | null
   /** Damage reflected back at the enemy this round via armor enchantments (e.g. Thorns). */
   thornsHit: number
@@ -94,12 +100,19 @@ export function resolveCombatRound(
 ): CombatRoundResult {
   const floor = configNumber(db, 'damage_floor', 1)
   const playerRange = playerDamageRange(db, save)
-  const playerHit = rollDamage(playerRange.min, playerRange.max, random)
+  let playerHit = rollDamage(playerRange.min, playerRange.max, random)
+  let playerCrit = false
+  const critChance = equippedEnchantmentCritChancePercent(db, save)
+  if (critChance > 0 && random() * 100 < critChance) {
+    playerCrit = true
+    playerHit = Math.max(1, Math.floor(playerHit * criticalStrikeDamageMultiplier()))
+  }
   let nextEnemyHp = Math.max(0, enemyHp - playerHit)
 
   if (nextEnemyHp <= 0) {
     return {
       playerHit,
+      playerCrit,
       enemyHit: null,
       thornsHit: 0,
       enemyHp: 0,
@@ -120,6 +133,7 @@ export function resolveCombatRound(
 
   return {
     playerHit,
+    playerCrit,
     enemyHit,
     thornsHit,
     enemyHp: nextEnemyHp,

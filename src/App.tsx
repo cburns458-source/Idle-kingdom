@@ -124,6 +124,7 @@ export default function App() {
   const [hudNowMs, setHudNowMs] = useState(() => Date.now())
   const [lastMessage, setLastMessage] = useState<string | null>(null)
   const [lastPlayerHit, setLastPlayerHit] = useState<number | null>(null)
+  const [lastPlayerCrit, setLastPlayerCrit] = useState(false)
   const [lastEnemyHit, setLastEnemyHit] = useState<number | null>(null)
   const [defeatedFlash, setDefeatedFlash] = useState(false)
   const [pauseRemainingMs, setPauseRemainingMs] = useState(0)
@@ -603,13 +604,16 @@ export default function App() {
         }
         setRecentRewards((prev) => [combatBundle, ...prev].slice(0, 4))
         setLastPlayerHit(round.playerHit)
+        setLastPlayerCrit(round.playerCrit)
         setLastEnemyHit(round.enemyHit)
         setLastMessage(
           victoryResult.foodConsumed
             ? `Ate ${victoryResult.foodName} (+${victoryResult.foodHealed} HP)`
             : round.thornsHit > 0
               ? `Thorns reflects ${round.thornsHit} and defeats ${enemy['Display Name']}!`
-              : `Defeated ${enemy['Display Name']}`,
+              : round.playerCrit
+                ? `Critical hit! Defeated ${enemy['Display Name']}`
+                : `Defeated ${enemy['Display Name']}`,
         )
         setBoot({
           ...current,
@@ -645,6 +649,7 @@ export default function App() {
           roundMs,
         ).save
         setLastPlayerHit(round.playerHit)
+        setLastPlayerCrit(round.playerCrit)
         setLastEnemyHit(round.enemyHit)
         setLastMessage(`Defeated by ${enemy['Display Name']}. Recovering…`)
         setBoot({ ...current, save: persistSave(defeated), saveCreated: false })
@@ -652,11 +657,13 @@ export default function App() {
       }
 
       setLastPlayerHit(round.playerHit)
+      setLastPlayerCrit(round.playerCrit)
       setLastEnemyHit(round.enemyHit)
+      const hitLabel = round.playerCrit ? `crit for ${round.playerHit}` : `hit ${round.playerHit}`
       setLastMessage(
         round.thornsHit > 0
-          ? `You hit ${round.playerHit}. ${enemy['Display Name']} hits ${round.enemyHit}. Thorns reflects ${round.thornsHit}.`
-          : `You hit ${round.playerHit}. ${enemy['Display Name']} hits ${round.enemyHit}.`,
+          ? `You ${hitLabel}. ${enemy['Display Name']} hits ${round.enemyHit}. Thorns reflects ${round.thornsHit}.`
+          : `You ${hitLabel}. ${enemy['Display Name']} hits ${round.enemyHit}.`,
       )
       const continued = applyActivityTimeTowardCritters(
         {
@@ -720,6 +727,7 @@ export default function App() {
       pendingVictoryRef.current = null
       setDefeatedFlash(false)
       setLastPlayerHit(null)
+      setLastPlayerCrit(false)
       setLastEnemyHit(null)
       if (!activityStillValid(current.database.launch, nextSave, activityId)) {
         setBoot({
@@ -1044,6 +1052,7 @@ export default function App() {
     setActionProgress(0)
     setLastMessage(null)
     setLastPlayerHit(null)
+    setLastPlayerCrit(false)
     setLastEnemyHit(null)
     setDefeatedFlash(false)
     pendingVictoryRef.current = null
@@ -1254,6 +1263,7 @@ export default function App() {
                         configNumber(database.launch, 'combat_round_duration', 4) * 1000
                       }
                       lastPlayerHit={lastPlayerHit}
+                      lastPlayerCrit={lastPlayerCrit}
                       lastEnemyHit={lastEnemyHit}
                       defeatedFlash={defeatedFlash}
                       deathPauseRemainingMs={pauseRemainingMs}

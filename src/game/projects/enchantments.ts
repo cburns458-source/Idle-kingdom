@@ -49,6 +49,8 @@ function isWeaponEquipment(
   if (isAxeItem(item, equipment)) return true
   const caps = capabilityTags(equipment['Capabilities / Effects'])
   if (caps.includes('combat_weapon')) return true
+  // Gathering tools may list damage for emergency combat but are not weapon-enchant targets.
+  if (isGatheringToolEquipment(item, equipment)) return false
   return hasDamage
 }
 
@@ -94,6 +96,7 @@ function equipmentMatchesEnchantment(
 
   if (target.includes('weapon') && (isWeaponEquipment(item, equipment) || isEnchantableAccessory))
     return true
+  if (target.includes('jewelry') && isEnchantableAccessory) return true
   if (
     target.includes('gathering') &&
     (isGatheringToolEquipment(item, equipment) || isEnchantableAccessory)
@@ -265,6 +268,33 @@ export function equippedEnchantmentDamageBonus(db: GameDatabase, save: PlayerSav
     }
   }
   return bonus
+}
+
+const CRIT_STRIKE_ENCHANTMENT_ID = 'ENCH-0008'
+const CRIT_STRIKE_CHANCE_PER_ENCHANT = 10
+
+/** Total critical strike chance percent from equipped crit enchantments (adds across items). */
+export function equippedEnchantmentCritChancePercent(
+  db: GameDatabase,
+  save: PlayerSave,
+): number {
+  let percent = 0
+  for (const stack of Object.values(save.equipment.slots)) {
+    if (!stack?.enchantmentId) continue
+    if (stack.enchantmentId === CRIT_STRIKE_ENCHANTMENT_ID) {
+      percent += CRIT_STRIKE_CHANCE_PER_ENCHANT
+      continue
+    }
+    const row = getEnchantment(db, stack.enchantmentId)
+    const match = row?.Effect?.match(/\+(\d+(?:\.\d+)?)%\s*Critical Strike Chance/i)
+    if (match) percent += Number(match[1])
+  }
+  return Math.min(100, percent)
+}
+
+/** Critical strike damage multiplier (1.5×). */
+export function criticalStrikeDamageMultiplier(): number {
+  return 1.5
 }
 
 /** Percent of damage received in a combat round reflected back at the attacker (e.g. Thorns). */

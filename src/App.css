@@ -728,11 +728,6 @@ button.hud-total-stat:focus-visible {
   margin: 0.35rem 0 0;
 }
 
-.menu-name-block {
-  display: grid;
-  gap: 0.4rem;
-}
-
 .menu-demo-block {
   display: grid;
   gap: 0.35rem;
@@ -2777,6 +2772,11 @@ button.hud-total-stat:focus-visible {
     0 2px 4px rgba(0, 0, 0, 0.55);
   z-index: 2;
   animation: combat-damage-pop-enemy-overlay 420ms ease-out;
+}
+
+.combat-damage-player.combat-damage-crit {
+  color: #ffd166;
+  font-size: 1.35rem;
 }
 
 @keyframes combat-damage-pop {

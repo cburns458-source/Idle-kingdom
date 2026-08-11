@@ -14,6 +14,8 @@ interface CombatPanelProps {
   roundDurationMs: number
   /** Damage the player dealt last round (orange overlay on enemy). */
   lastPlayerHit: number | null
+  /** Whether the last player hit was a critical strike. */
+  lastPlayerCrit?: boolean
   /** Damage the enemy dealt last round (centered above player). */
   lastEnemyHit: number | null
   /** When set, show "defeated" in place of the enemy art. */
@@ -36,6 +38,7 @@ export function CombatPanel({
   roundStartedAt,
   roundDurationMs,
   lastPlayerHit,
+  lastPlayerCrit = false,
   lastEnemyHit,
   defeatedFlash,
   deathPauseRemainingMs,
@@ -51,6 +54,7 @@ export function CombatPanel({
   const [playerHitOffset, setPlayerHitOffset] = useState({ x: 0, y: 0 })
   const [enemyHitOffset, setEnemyHitOffset] = useState({ x: 0, y: 0 })
   const [shownPlayerHit, setShownPlayerHit] = useState<number | null>(null)
+  const [shownPlayerCrit, setShownPlayerCrit] = useState(false)
   const [shownEnemyHit, setShownEnemyHit] = useState<number | null>(null)
 
   // Smooth local round fill: 0 → 1 over roundDurationMs, resets each round.
@@ -81,10 +85,14 @@ export function CombatPanel({
   useEffect(() => {
     if (lastPlayerHit == null || lastPlayerHit <= 0) return
     setShownPlayerHit(lastPlayerHit)
+    setShownPlayerCrit(lastPlayerCrit)
     setPlayerHitOffset(randomDamageOffset())
-    const timer = window.setTimeout(() => setShownPlayerHit(null), 2000)
+    const timer = window.setTimeout(() => {
+      setShownPlayerHit(null)
+      setShownPlayerCrit(false)
+    }, 2000)
     return () => window.clearTimeout(timer)
-  }, [lastPlayerHit, enemyHp])
+  }, [lastPlayerHit, lastPlayerCrit, enemyHp])
 
   useEffect(() => {
     if (lastEnemyHit == null || lastEnemyHit <= 0) return
@@ -163,13 +171,19 @@ export function CombatPanel({
                 />
                 {shownPlayerHit != null && shownPlayerHit > 0 && (
                   <span
-                    className="combat-damage combat-damage-player"
+                    className={[
+                      'combat-damage',
+                      'combat-damage-player',
+                      shownPlayerCrit ? 'combat-damage-crit' : '',
+                    ]
+                      .filter(Boolean)
+                      .join(' ')}
                     style={{
                       ['--damage-x' as string]: `${playerHitOffset.x}px`,
                       ['--damage-y' as string]: `${playerHitOffset.y}px`,
                     }}
                   >
-                    {shownPlayerHit}
+                    {shownPlayerCrit ? `CRIT ${shownPlayerHit}` : shownPlayerHit}
                   </span>
                 )}
               </>
