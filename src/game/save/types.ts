@@ -1,7 +1,8 @@
 export const SAVE_VERSION = 19
 export const SAVE_STORAGE_KEY = 'idle-kingdoms.demo.save'
 export const STARTING_LOCATION_ID = 'LOC-0002'
-export const STARTING_GOLD = 25
+/** Base gold before race kit; race starters grant the real starting gold. */
+export const STARTING_GOLD = 0
 /** Level 1 Hunting Net — granted on older save migration only. */
 export const STARTING_HUNTING_TOOL_ID = 'ITEM-0108'
 export const WEAPON_TOOL_SLOT_ID = 'SLOT-0001'

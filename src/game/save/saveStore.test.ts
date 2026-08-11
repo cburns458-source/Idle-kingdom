@@ -22,7 +22,7 @@ describe('local save', () => {
 
     expect(save.currentLocationId).toBe(STARTING_LOCATION_ID)
     expect(save.gold).toBe(STARTING_GOLD)
-    expect(save.gold).toBe(25)
+    expect(save.gold).toBe(0)
     expect(save.raceId).toBeNull()
     expect(save.inventory).toEqual([])
     expect(save.equipment.slots[WEAPON_TOOL_SLOT_ID]).toBeNull()

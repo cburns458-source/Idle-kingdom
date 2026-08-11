@@ -46,7 +46,9 @@ describe('playable races', () => {
     expect(first.grantedStarterKit).toBe(true)
     expect(first.save.raceId).toBe('RACE-0006')
     expect(first.save.inventory.find((stack) => stack.itemId === 'ITEM-0102')?.quantity).toBe(1)
-    expect(first.save.inventory.find((stack) => stack.itemId === 'ITEM-0003')?.quantity).toBe(5)
+    expect(first.save.inventory.find((stack) => stack.itemId === 'ITEM-0058')?.quantity).toBe(5)
+    expect(first.save.inventory.find((stack) => stack.itemId === 'ITEM-0211')?.quantity).toBe(1)
+    expect(first.save.gold).toBe(25)
 
     const changed = assignRace(launch, first.save, 'RACE-0001') // Human (test change)
     expect(changed.ok).toBe(true)
@@ -56,6 +58,30 @@ describe('playable races', () => {
     expect(changed.save.inventory.find((stack) => stack.itemId === 'ITEM-0102')?.quantity).toBe(1)
     expect(changed.save.inventory.find((stack) => stack.itemId === 'ITEM-0103')).toBeUndefined()
     expect(changed.save.raceId).toBe('RACE-0001')
+  })
+
+  it('grants race-unique starters and shared potatoes/gold/potion', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const expected: Record<string, { uniqueItemId?: string; gold: number }> = {
+      'RACE-0001': { uniqueItemId: 'ITEM-0103', gold: 25 }, // Human rod
+      'RACE-0002': { uniqueItemId: 'ITEM-0108', gold: 25 }, // Wood Elf net
+      'RACE-0003': { gold: 225 }, // High Elf +200 gold
+      'RACE-0004': { uniqueItemId: 'ITEM-0224', gold: 25 }, // Orc bronze sword
+      'RACE-0005': { uniqueItemId: 'ITEM-0225', gold: 25 }, // Goblin bronze dagger
+      'RACE-0006': { uniqueItemId: 'ITEM-0102', gold: 25 }, // Dwarf pickaxe
+      'RACE-0007': { uniqueItemId: 'ITEM-0101', gold: 25 }, // Halfling hatchet
+    }
+    for (const [raceId, { uniqueItemId, gold }] of Object.entries(expected)) {
+      const assigned = assignRace(launch, createNewSave(launch), raceId)
+      expect(assigned.ok).toBe(true)
+      if (!assigned.ok) continue
+      expect(assigned.save.gold).toBe(gold)
+      expect(assigned.save.inventory.find((s) => s.itemId === 'ITEM-0058')?.quantity).toBe(5)
+      expect(assigned.save.inventory.find((s) => s.itemId === 'ITEM-0211')?.quantity).toBe(1)
+      if (uniqueItemId) {
+        expect(assigned.save.inventory.find((s) => s.itemId === uniqueItemId)?.quantity).toBe(1)
+      }
+    }
   })
 
   it('applies High Elf +20% max HP and Orc +5% damage', () => {

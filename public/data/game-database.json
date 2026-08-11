@@ -858,7 +858,7 @@
       "Display Name": "Spell 1",
       "Slot Group": "Spell Loadout",
       "Status": "Confirmed",
-      "Notes": "Equippable spell. Active spell cycles through slots 1–4 for one hour each."
+      "Notes": "Equippable spell. Active spell cycles through slots 1\u20134 for one hour each."
     },
     {
       "Slot ID": "SLOT-0014",
@@ -866,7 +866,7 @@
       "Display Name": "Spell 2",
       "Slot Group": "Spell Loadout",
       "Status": "Confirmed",
-      "Notes": "Equippable spell. Active spell cycles through slots 1–4 for one hour each."
+      "Notes": "Equippable spell. Active spell cycles through slots 1\u20134 for one hour each."
     },
     {
       "Slot ID": "SLOT-0015",
@@ -874,7 +874,7 @@
       "Display Name": "Spell 3",
       "Slot Group": "Spell Loadout",
       "Status": "Confirmed",
-      "Notes": "Equippable spell. Active spell cycles through slots 1–4 for one hour each."
+      "Notes": "Equippable spell. Active spell cycles through slots 1\u20134 for one hour each."
     },
     {
       "Slot ID": "SLOT-0016",
@@ -882,7 +882,7 @@
       "Display Name": "Spell 4",
       "Slot Group": "Spell Loadout",
       "Status": "Confirmed",
-      "Notes": "Equippable spell. Active spell cycles through slots 1–4 for one hour each."
+      "Notes": "Equippable spell. Active spell cycles through slots 1\u20134 for one hour each."
     }
   ],
   "Items": [
@@ -7938,7 +7938,7 @@
       "Action Time Reduction %": null,
       "Capabilities / Effects": "spell; spell_effect:ENCH-0005; damage_range_bonus_percent:10; duration_seconds:3600",
       "Status": "Confirmed",
-      "Notes": "May be equipped to any Spell slot (SLOT-0013–SLOT-0016)."
+      "Notes": "May be equipped to any Spell slot (SLOT-0013\u2013SLOT-0016)."
     }
   ],
   "Statistics": [
@@ -8383,7 +8383,7 @@
     {
       "Location ID": "LOC-0019",
       "Internal Key": "west_horizon",
-      "Display Name": "…",
+      "Display Name": "\u2026",
       "Map ID": "MAP-0001",
       "Location Type": "Future Gateway",
       "Parent Location ID": null,
@@ -8398,7 +8398,7 @@
     {
       "Location ID": "LOC-0020",
       "Internal Key": "east_horizon",
-      "Display Name": "…",
+      "Display Name": "\u2026",
       "Map ID": "MAP-0001",
       "Location Type": "Future Gateway",
       "Parent Location ID": null,
@@ -8632,7 +8632,7 @@
       "Required Mount / Status": null,
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": "Town square to Rose’s Apothecary"
+      "Notes": "Town square to Rose\u2019s Apothecary"
     }
   ],
   "Facilities": [
@@ -14816,7 +14816,7 @@
     {
       "Reward Entry ID": "RWE-0100",
       "Reward Table ID": "RWT-0058",
-      "Reward Table Name": "Secondary Gems — Sapphire Only",
+      "Reward Table Name": "Secondary Gems \u2014 Sapphire Only",
       "Purpose": "Independent Mining gem drop",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0012",
@@ -14831,7 +14831,7 @@
     {
       "Reward Entry ID": "RWE-0101",
       "Reward Table ID": "RWT-0059",
-      "Reward Table Name": "Secondary Gems — Sapphire Emerald",
+      "Reward Table Name": "Secondary Gems \u2014 Sapphire Emerald",
       "Purpose": "Independent Mining gem drop",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0012",
@@ -14846,7 +14846,7 @@
     {
       "Reward Entry ID": "RWE-0102",
       "Reward Table ID": "RWT-0059",
-      "Reward Table Name": "Secondary Gems — Sapphire Emerald",
+      "Reward Table Name": "Secondary Gems \u2014 Sapphire Emerald",
       "Purpose": "Independent Mining gem drop",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0013",
@@ -14861,7 +14861,7 @@
     {
       "Reward Entry ID": "RWE-0103",
       "Reward Table ID": "RWT-0060",
-      "Reward Table Name": "Secondary Gems — All Gems",
+      "Reward Table Name": "Secondary Gems \u2014 All Gems",
       "Purpose": "Independent Mining gem drop",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0012",
@@ -14876,7 +14876,7 @@
     {
       "Reward Entry ID": "RWE-0104",
       "Reward Table ID": "RWT-0060",
-      "Reward Table Name": "Secondary Gems — All Gems",
+      "Reward Table Name": "Secondary Gems \u2014 All Gems",
       "Purpose": "Independent Mining gem drop",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0013",
@@ -14891,7 +14891,7 @@
     {
       "Reward Entry ID": "RWE-0105",
       "Reward Table ID": "RWT-0060",
-      "Reward Table Name": "Secondary Gems — All Gems",
+      "Reward Table Name": "Secondary Gems \u2014 All Gems",
       "Purpose": "Independent Mining gem drop",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0014",
@@ -20785,7 +20785,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": "Buys and sells ordinary items. Stocks starter tools.",
-      "Notes": "Sells all level-1 tools. Player buy price = 2× Base Sell Value. Buys ordinary items at Base Sell Value.",
+      "Notes": "Sells all level-1 tools. Player buy price = 2\u00d7 Base Sell Value. Buys ordinary items at Base Sell Value.",
       "Entry 1 Item ID": "ITEM-0100",
       "Entry 1 Mode": "Sell",
       "Entry 1 Price": null,
@@ -20876,7 +20876,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": "Sells improved pickaxes and pays better prices for ores.",
-      "Notes": "Access requires Mining Level 40. Player buy price = 2× Base Sell Value. Buys ores at 1.5× Base Sell Value.",
+      "Notes": "Access requires Mining Level 40. Player buy price = 2\u00d7 Base Sell Value. Buys ores at 1.5\u00d7 Base Sell Value.",
       "Entry 1 Item ID": "ITEM-0111",
       "Entry 1 Mode": "Sell",
       "Entry 1 Price": null,
@@ -20967,7 +20967,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": "Sells Essence at a premium so Mining remains the primary efficient source.",
-      "Notes": "Essence buy price = 100× Base Sell Value. Other stock buy price = 2× Base Sell Value.",
+      "Notes": "Essence buy price = 100\u00d7 Base Sell Value. Other stock buy price = 2\u00d7 Base Sell Value.",
       "Entry 1 Item ID": "ITEM-0011",
       "Entry 1 Mode": "Sell",
       "Entry 1 Price": null,
@@ -21075,7 +21075,7 @@
       "Internal Key": "help_the_aspiring_apothecary",
       "Display Name": "Help the aspiring apothecary",
       "NPC ID": "NPC-0005",
-      "Summary": "Help Rose gather supplies to open her apothecary: 5 Rabbit’s Feet, 5 Fernleaf, and 1,000 gold.",
+      "Summary": "Help Rose gather supplies to open her apothecary: 5 Rabbit\u2019s Feet, 5 Fernleaf, and 1,000 gold.",
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": "Deliver: ITEM-0038 x5, ITEM-0031 x5; GoldCost: 1000; UnlockLocation: LOC-0026",
@@ -21087,7 +21087,7 @@
       "Reward XP Amount": 11000,
       "Reward Item ID": "ITEM-0165",
       "Reward Item Quantity": 1,
-      "Possible Rewards": "11,000 Alchemy XP; Chef's Hat x1; unlocks Rose’s Apothecary"
+      "Possible Rewards": "11,000 Alchemy XP; Chef's Hat x1; unlocks Rose\u2019s Apothecary"
     }
   ],
   "Achievements": [
@@ -21539,7 +21539,7 @@
       "Race ID": "RACE-0005",
       "Internal Key": "goblin",
       "Display Name": "Goblin",
-      "Description": "Small and green — welcome among the camps of their kin.",
+      "Description": "Small and green \u2014 welcome among the camps of their kin.",
       "Sort Order": 5,
       "Portrait Asset Key": null,
       "Hostility Immunity Location IDs": "LOC-0003",
@@ -21677,8 +21677,8 @@
     {
       "Race Starting Item ID": "RST-0002",
       "Race ID": "RACE-0001",
-      "Item ID": "ITEM-0101",
-      "Quantity": 1,
+      "Item ID": "ITEM-0058",
+      "Quantity": 5,
       "Sort Order": 2,
       "Status": "Planned",
       "Notes": null
@@ -21686,8 +21686,8 @@
     {
       "Race Starting Item ID": "RST-0003",
       "Race ID": "RACE-0001",
-      "Item ID": "ITEM-0058",
-      "Quantity": 5,
+      "Item ID": "ITEM-0001",
+      "Quantity": 25,
       "Sort Order": 3,
       "Status": "Planned",
       "Notes": null
@@ -21713,8 +21713,8 @@
     {
       "Race Starting Item ID": "RST-0006",
       "Race ID": "RACE-0002",
-      "Item ID": "ITEM-0109",
-      "Quantity": 1,
+      "Item ID": "ITEM-0058",
+      "Quantity": 5,
       "Sort Order": 2,
       "Status": "Planned",
       "Notes": null
@@ -21722,8 +21722,8 @@
     {
       "Race Starting Item ID": "RST-0007",
       "Race ID": "RACE-0002",
-      "Item ID": "ITEM-0058",
-      "Quantity": 5,
+      "Item ID": "ITEM-0001",
+      "Quantity": 25,
       "Sort Order": 3,
       "Status": "Planned",
       "Notes": null
@@ -21740,8 +21740,8 @@
     {
       "Race Starting Item ID": "RST-0009",
       "Race ID": "RACE-0003",
-      "Item ID": "ITEM-0011",
-      "Quantity": 3,
+      "Item ID": "ITEM-0001",
+      "Quantity": 200,
       "Sort Order": 1,
       "Status": "Planned",
       "Notes": null
@@ -21749,8 +21749,8 @@
     {
       "Race Starting Item ID": "RST-0010",
       "Race ID": "RACE-0003",
-      "Item ID": "ITEM-0099",
-      "Quantity": 1,
+      "Item ID": "ITEM-0058",
+      "Quantity": 5,
       "Sort Order": 2,
       "Status": "Planned",
       "Notes": null
@@ -21758,8 +21758,8 @@
     {
       "Race Starting Item ID": "RST-0011",
       "Race ID": "RACE-0003",
-      "Item ID": "ITEM-0166",
-      "Quantity": 1,
+      "Item ID": "ITEM-0001",
+      "Quantity": 25,
       "Sort Order": 3,
       "Status": "Planned",
       "Notes": null
@@ -21767,51 +21767,42 @@
     {
       "Race Starting Item ID": "RST-0012",
       "Race ID": "RACE-0003",
-      "Item ID": "ITEM-0058",
-      "Quantity": 5,
+      "Item ID": "ITEM-0211",
+      "Quantity": 1,
       "Sort Order": 4,
       "Status": "Planned",
       "Notes": null
     },
     {
       "Race Starting Item ID": "RST-0013",
-      "Race ID": "RACE-0003",
-      "Item ID": "ITEM-0211",
+      "Race ID": "RACE-0004",
+      "Item ID": "ITEM-0224",
       "Quantity": 1,
-      "Sort Order": 5,
+      "Sort Order": 1,
       "Status": "Planned",
       "Notes": null
     },
     {
       "Race Starting Item ID": "RST-0014",
       "Race ID": "RACE-0004",
-      "Item ID": "ITEM-0124",
-      "Quantity": 1,
-      "Sort Order": 1,
+      "Item ID": "ITEM-0058",
+      "Quantity": 5,
+      "Sort Order": 2,
       "Status": "Planned",
       "Notes": null
     },
     {
       "Race Starting Item ID": "RST-0015",
       "Race ID": "RACE-0004",
-      "Item ID": "ITEM-0145",
-      "Quantity": 1,
-      "Sort Order": 2,
+      "Item ID": "ITEM-0001",
+      "Quantity": 25,
+      "Sort Order": 3,
       "Status": "Planned",
       "Notes": null
     },
     {
       "Race Starting Item ID": "RST-0016",
       "Race ID": "RACE-0004",
-      "Item ID": "ITEM-0058",
-      "Quantity": 5,
-      "Sort Order": 3,
-      "Status": "Planned",
-      "Notes": null
-    },
-    {
-      "Race Starting Item ID": "RST-0017",
-      "Race ID": "RACE-0004",
       "Item ID": "ITEM-0211",
       "Quantity": 1,
       "Sort Order": 4,
@@ -21819,34 +21810,34 @@
       "Notes": null
     },
     {
-      "Race Starting Item ID": "RST-0018",
+      "Race Starting Item ID": "RST-0017",
       "Race ID": "RACE-0005",
-      "Item ID": "ITEM-0125",
+      "Item ID": "ITEM-0225",
       "Quantity": 1,
       "Sort Order": 1,
       "Status": "Planned",
       "Notes": null
     },
     {
-      "Race Starting Item ID": "RST-0019",
+      "Race Starting Item ID": "RST-0018",
       "Race ID": "RACE-0005",
-      "Item ID": "ITEM-0084",
+      "Item ID": "ITEM-0058",
       "Quantity": 5,
       "Sort Order": 2,
       "Status": "Planned",
       "Notes": null
     },
     {
-      "Race Starting Item ID": "RST-0020",
+      "Race Starting Item ID": "RST-0019",
       "Race ID": "RACE-0005",
-      "Item ID": "ITEM-0058",
-      "Quantity": 5,
+      "Item ID": "ITEM-0001",
+      "Quantity": 25,
       "Sort Order": 3,
       "Status": "Planned",
       "Notes": null
     },
     {
-      "Race Starting Item ID": "RST-0021",
+      "Race Starting Item ID": "RST-0020",
       "Race ID": "RACE-0005",
       "Item ID": "ITEM-0211",
       "Quantity": 1,
@@ -21855,7 +21846,7 @@
       "Notes": null
     },
     {
-      "Race Starting Item ID": "RST-0022",
+      "Race Starting Item ID": "RST-0021",
       "Race ID": "RACE-0006",
       "Item ID": "ITEM-0102",
       "Quantity": 1,
@@ -21864,26 +21855,26 @@
       "Notes": null
     },
     {
-      "Race Starting Item ID": "RST-0023",
+      "Race Starting Item ID": "RST-0022",
       "Race ID": "RACE-0006",
-      "Item ID": "ITEM-0003",
+      "Item ID": "ITEM-0058",
       "Quantity": 5,
       "Sort Order": 2,
+      "Status": "Planned",
+      "Notes": null
+    },
+    {
+      "Race Starting Item ID": "RST-0023",
+      "Race ID": "RACE-0006",
+      "Item ID": "ITEM-0001",
+      "Quantity": 25,
+      "Sort Order": 3,
       "Status": "Planned",
       "Notes": null
     },
     {
       "Race Starting Item ID": "RST-0024",
       "Race ID": "RACE-0006",
-      "Item ID": "ITEM-0058",
-      "Quantity": 5,
-      "Sort Order": 3,
-      "Status": "Planned",
-      "Notes": null
-    },
-    {
-      "Race Starting Item ID": "RST-0025",
-      "Race ID": "RACE-0006",
       "Item ID": "ITEM-0211",
       "Quantity": 1,
       "Sort Order": 4,
@@ -21891,47 +21882,38 @@
       "Notes": null
     },
     {
-      "Race Starting Item ID": "RST-0026",
+      "Race Starting Item ID": "RST-0025",
       "Race ID": "RACE-0007",
-      "Item ID": "ITEM-0165",
+      "Item ID": "ITEM-0101",
       "Quantity": 1,
       "Sort Order": 1,
       "Status": "Planned",
       "Notes": null
     },
     {
-      "Race Starting Item ID": "RST-0027",
+      "Race Starting Item ID": "RST-0026",
       "Race ID": "RACE-0007",
-      "Item ID": "ITEM-0031",
+      "Item ID": "ITEM-0058",
       "Quantity": 5,
       "Sort Order": 2,
       "Status": "Planned",
       "Notes": null
     },
     {
-      "Race Starting Item ID": "RST-0028",
+      "Race Starting Item ID": "RST-0027",
       "Race ID": "RACE-0007",
-      "Item ID": "ITEM-0054",
-      "Quantity": 3,
+      "Item ID": "ITEM-0001",
+      "Quantity": 25,
       "Sort Order": 3,
       "Status": "Planned",
       "Notes": null
     },
     {
-      "Race Starting Item ID": "RST-0029",
-      "Race ID": "RACE-0007",
-      "Item ID": "ITEM-0058",
-      "Quantity": 5,
-      "Sort Order": 4,
-      "Status": "Planned",
-      "Notes": null
-    },
-    {
-      "Race Starting Item ID": "RST-0030",
+      "Race Starting Item ID": "RST-0028",
       "Race ID": "RACE-0007",
       "Item ID": "ITEM-0211",
       "Quantity": 1,
-      "Sort Order": 5,
+      "Sort Order": 4,
       "Status": "Planned",
       "Notes": null
     }
