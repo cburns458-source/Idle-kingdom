@@ -126,17 +126,45 @@
   image-rendering: crisp-edges;
 }
 
-.wardrobe-overlay {
+/* Compound selectors (not just `.wardrobe-overlay`/`.wardrobe-card` alone)
+   so these reliably win over the later-defined `.quest-reward-overlay` /
+   `.quest-reward-card` base rules regardless of source order. */
+.quest-reward-overlay.wardrobe-overlay {
   z-index: 80;
+  align-items: start;
+  justify-items: stretch;
+  padding: 0;
+  background: transparent;
+  animation: none;
 }
 
-.wardrobe-card {
-  width: min(100%, 30rem);
+.quest-reward-card.wardrobe-card {
+  width: 100%;
+  max-width: none;
   text-align: left;
   display: grid;
   gap: 0.6rem;
-  max-height: 85dvh;
+  /* Drops down from directly under the top HUD, filling the rest of the
+     screen the way the Skills/Inventory/Log tabs do — an opaque in-flow
+     panel, not a small centered dialog. */
+  margin-top: 7rem;
+  border-radius: 0 0 1rem 1rem;
+  max-height: calc(100dvh - 11rem);
   overflow: auto;
+  background: rgba(61, 42, 26, 0.98);
+  box-shadow: 0 1.2rem 2rem rgba(0, 0, 0, 0.45);
+  animation: wardrobe-drop-down 220ms ease-out;
+}
+
+@keyframes wardrobe-drop-down {
+  from {
+    transform: translateY(-100%);
+    opacity: 0.4;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 .wardrobe-top {
@@ -147,8 +175,8 @@
 
 .wardrobe-portrait {
   flex: 0 0 auto;
-  width: 5.5rem;
-  height: 5.5rem;
+  width: 11rem;
+  height: 11rem;
   border-radius: 0.75rem;
   overflow: hidden;
   border: 1px solid rgba(212, 175, 55, 0.35);
