@@ -7,6 +7,7 @@ import {
 } from '../shops/shops'
 import type { GameDatabase } from '../data/types'
 import type { PlayerSave } from '../save/types'
+import { isFavoriteStack } from './favorites'
 
 /** Off-shop / field sale: half of Base Sell Value. */
 export const FIELD_SELL_MULT = 0.5
@@ -74,6 +75,9 @@ export function sellInventoryIndexes(
   for (const index of unique) {
     const stack = save.inventory[index]
     if (!stack) continue
+    if (isFavoriteStack(stack)) {
+      return { ok: false, reason: 'Favorited items cannot be sold. Unfavorite them first.' }
+    }
     if (stack.enchantmentId) {
       return { ok: false, reason: 'Enchanted items cannot be sold from the bag.' }
     }

@@ -64,14 +64,16 @@ export function ShopPanel({ db, save, shopId, onClose, onComplete }: ShopPanelPr
 
   const sellable = useMemo(() => {
     if (!shop) return []
-    return save.inventory
-      .filter((stack) => !stack.enchantmentId)
-      .map((stack) => {
-        const unit = playerSellPrice(db, shop, stack.itemId)
-        if (unit == null) return null
-        return { itemId: stack.itemId, owned: stack.quantity, unit }
-      })
-      .filter((row): row is { itemId: string; owned: number; unit: number } => row != null)
+    const byItem = new Map<string, { itemId: string; owned: number; unit: number }>()
+    for (const stack of save.inventory) {
+      if (stack.enchantmentId || stack.favorite) continue
+      const unit = playerSellPrice(db, shop, stack.itemId)
+      if (unit == null) continue
+      const existing = byItem.get(stack.itemId)
+      if (existing) existing.owned += stack.quantity
+      else byItem.set(stack.itemId, { itemId: stack.itemId, owned: stack.quantity, unit })
+    }
+    return [...byItem.values()]
   }, [db, save.inventory, shop])
 
   if (!shop) {

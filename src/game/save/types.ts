@@ -1,4 +1,4 @@
-export const SAVE_VERSION = 19
+export const SAVE_VERSION = 20
 export const SAVE_STORAGE_KEY = 'idle-kingdoms.demo.save'
 export const STARTING_LOCATION_ID = 'LOC-0002'
 /** Base gold before race kit; race starters grant the real starting gold. */
@@ -52,6 +52,8 @@ export interface InventoryStack {
   quantity: number
   /** Optional Arcana enchantment applied to this stack. */
   enchantmentId?: string | null
+  /** Favorited stacks sort to the top of the bag and cannot be sold. */
+  favorite?: boolean
 }
 
 /** Equipped contents for one slot. Food and potions may hold any stack size. */
@@ -60,6 +62,8 @@ export interface EquippedStack {
   quantity: number
   /** Optional Arcana enchantment applied to this equipped item. */
   enchantmentId?: string | null
+  /** Preserved across equip / unequip with the item. */
+  favorite?: boolean
 }
 
 export interface EquipmentLoadout {

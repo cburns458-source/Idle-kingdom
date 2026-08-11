@@ -3066,6 +3066,42 @@ button.hud-total-stat:focus-visible {
   box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.2);
 }
 
+.bag-item-cell {
+  position: relative;
+}
+
+.bag-item-favorite {
+  position: absolute;
+  top: 0.05rem;
+  right: 0.05rem;
+  z-index: 2;
+  width: 1.35rem;
+  height: 1.35rem;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: rgba(18, 12, 8, 0.72);
+  color: rgba(255, 228, 190, 0.55);
+  font-size: 0.85rem;
+  line-height: 1;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+
+.bag-item-favorite.active {
+  color: #ff6b8a;
+  background: rgba(40, 12, 18, 0.85);
+}
+
+.bag-item-tile.favorited {
+  border-color: rgba(255, 120, 150, 0.45);
+}
+
+.bag-item-tile.sell-blocked {
+  opacity: 0.55;
+}
+
 .bag-item-qty {
   position: absolute;
   right: 0.2rem;

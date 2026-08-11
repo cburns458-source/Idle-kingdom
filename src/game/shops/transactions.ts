@@ -1,7 +1,7 @@
 import { addItemToInventoryExact } from '../activity/rewards'
 import { grantCosmetic } from '../cosmetics/cosmetics'
 import { canFitItemQuantity } from '../inventory/capacity'
-import { removeIngredients } from '../production/inventory'
+import { isFavoriteStack } from '../inventory/favorites'
 import type { GameDatabase } from '../data/types'
 import type { PlayerSave } from '../save/types'
 import {
@@ -90,12 +90,13 @@ export function confirmShopOffer(
 
   let next = save
   if (sells.length > 0) {
-    const removed = removeIngredients(
-      next,
-      sells.map((line) => ({ itemId: line.itemId, quantity: Math.floor(line.quantity) })),
-      1,
-    )
-    if (!removed) return { ok: false, reason: 'Missing items to sell.' }
+    const removed = removeSellableInventory(next, sells)
+    if (!removed) {
+      return {
+        ok: false,
+        reason: 'Missing items to sell (favorited items cannot be sold).',
+      }
+    }
     next = removed
   }
 
@@ -148,5 +149,30 @@ export function confirmShopOffer(
     goldDelta,
     message: parts.length > 0 ? `Trade complete — ${parts.join(', ')}.` : 'Trade complete.',
     cosmeticsGranted: cosmeticGrants,
+  }
+}
+
+/** Remove sold quantities from non-favorite, non-enchanted bag stacks only. */
+function removeSellableInventory(
+  save: PlayerSave,
+  sells: ShopOfferLine[],
+): PlayerSave | null {
+  const inventory = save.inventory.map((stack) => ({ ...stack }))
+  for (const line of sells) {
+    let need = Math.floor(line.quantity)
+    if (need <= 0) return null
+    for (const stack of inventory) {
+      if (need <= 0) break
+      if (stack.itemId !== line.itemId) continue
+      if (isFavoriteStack(stack) || stack.enchantmentId) continue
+      const take = Math.min(stack.quantity, need)
+      stack.quantity -= take
+      need -= take
+    }
+    if (need > 0) return null
+  }
+  return {
+    ...save,
+    inventory: inventory.filter((stack) => stack.quantity > 0),
   }
 }

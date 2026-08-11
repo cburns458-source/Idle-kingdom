@@ -4,6 +4,7 @@ import {
   INVENTORY_STACK_MAX,
   maxAddableQuantity,
 } from '../inventory/capacity'
+import { sortInventoryFavoritesFirst } from '../inventory/favorites'
 import { isGoldCurrencyItem } from '../inventory/gold'
 import {
   applyRelativeDropChance,
@@ -50,6 +51,7 @@ export function addItemsToInventory(
   itemId: string,
   quantity: number,
   enchantmentId: string | null = null,
+  favorite = false,
 ): { save: PlayerSave; added: number } {
   const want = Math.floor(quantity)
   if (want <= 0) return { save, added: 0 }
@@ -61,7 +63,7 @@ export function addItemsToInventory(
     }
   }
 
-  const addable = maxAddableQuantity(save, itemId, enchantmentId)
+  const addable = maxAddableQuantity(save, itemId, enchantmentId, favorite)
   const added = Math.min(want, addable)
   if (added <= 0) return { save, added: 0 }
 
@@ -69,20 +71,32 @@ export function addItemsToInventory(
 
   if (enchantmentId) {
     for (let i = 0; i < added; i += 1) {
-      inventory.push({ itemId, quantity: 1, enchantmentId })
+      inventory.push({
+        itemId,
+        quantity: 1,
+        enchantmentId,
+        ...(favorite ? { favorite: true } : {}),
+      })
     }
-    return { save: { ...save, inventory }, added }
+    return { save: sortInventoryFavoritesFirst({ ...save, inventory }), added }
   }
 
   const existing = inventory.find(
-    (stack) => stack.itemId === itemId && !stack.enchantmentId,
+    (stack) =>
+      stack.itemId === itemId &&
+      !stack.enchantmentId &&
+      Boolean(stack.favorite) === favorite,
   )
   if (existing) {
     existing.quantity = Math.min(INVENTORY_STACK_MAX, existing.quantity + added)
   } else {
-    inventory.push({ itemId, quantity: added })
+    inventory.push({
+      itemId,
+      quantity: added,
+      ...(favorite ? { favorite: true } : {}),
+    })
   }
-  return { save: { ...save, inventory }, added }
+  return { save: sortInventoryFavoritesFirst({ ...save, inventory }), added }
 }
 
 /** Convenience wrapper — adds only what fits (never overflows slots/stacks). */
@@ -91,8 +105,9 @@ export function addItemToInventory(
   itemId: string,
   quantity: number,
   enchantmentId: string | null = null,
+  favorite = false,
 ): PlayerSave {
-  return addItemsToInventory(save, itemId, quantity, enchantmentId).save
+  return addItemsToInventory(save, itemId, quantity, enchantmentId, favorite).save
 }
 
 /** Add the full quantity or fail without changing the save. */
@@ -101,19 +116,20 @@ export function addItemToInventoryExact(
   itemId: string,
   quantity: number,
   enchantmentId: string | null = null,
+  favorite = false,
 ): { ok: true; save: PlayerSave } | { ok: false; reason: string } {
   const want = Math.floor(quantity)
   if (want <= 0) return { ok: true, save }
   if (isGoldCurrencyItem(itemId) && !enchantmentId) {
     return { ok: true, save: addItemsToInventory(save, itemId, want).save }
   }
-  if (!canFitItemQuantity(save, itemId, want, enchantmentId)) {
+  if (!canFitItemQuantity(save, itemId, want, enchantmentId, favorite)) {
     if (save.inventory.length >= INVENTORY_SLOT_LIMIT) {
       return { ok: false, reason: 'Inventory is full (180 slots).' }
     }
     return { ok: false, reason: 'That stack cannot hold more of this item.' }
   }
-  const result = addItemsToInventory(save, itemId, want, enchantmentId)
+  const result = addItemsToInventory(save, itemId, want, enchantmentId, favorite)
   if (result.added < want) {
     return { ok: false, reason: 'Inventory is full (180 slots).' }
   }

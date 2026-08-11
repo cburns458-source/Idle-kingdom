@@ -135,7 +135,16 @@ export function unequipSlot(save: PlayerSave, slotId: string): EquipResult {
   if (!equipped || equipped.quantity <= 0) {
     return { ok: true, save: setSlot(save, slotId, null) }
   }
-  if (!canFitItemQuantity(save, equipped.itemId, equipped.quantity, equipped.enchantmentId ?? null)) {
+  const favorite = equipped.favorite === true
+  if (
+    !canFitItemQuantity(
+      save,
+      equipped.itemId,
+      equipped.quantity,
+      equipped.enchantmentId ?? null,
+      favorite,
+    )
+  ) {
     return { ok: false, reason: 'Not enough inventory space to unequip that item.' }
   }
   const next = addItemToInventory(
@@ -143,6 +152,7 @@ export function unequipSlot(save: PlayerSave, slotId: string): EquipResult {
     equipped.itemId,
     equipped.quantity,
     equipped.enchantmentId ?? null,
+    favorite,
   )
   return { ok: true, save: next }
 }
@@ -209,6 +219,7 @@ export function equipInventoryIndex(
   let next = save
   const current = slotStack(next, slotId)
   const enchantmentId = invStack.enchantmentId ?? null
+  const favorite = invStack.favorite === true
 
   if (isStackableConsumableSlot(slotId)) {
     if (enchantmentId) {
@@ -231,15 +242,24 @@ export function equipInventoryIndex(
       next = unequipped.save
       return {
         ok: true,
-        save: setSlot(next, slotId, { itemId, quantity: moveQty }),
+        save: setSlot(next, slotId, {
+          itemId,
+          quantity: moveQty,
+          ...(favorite ? { favorite: true } : {}),
+        }),
       }
     }
     const existingQty =
       current?.itemId === itemId && !current.enchantmentId ? current.quantity : 0
+    const keepFavorite = favorite || current?.favorite === true
     next = removeInventoryAtIndex(next, index, moveQty)
     return {
       ok: true,
-      save: setSlot(next, slotId, { itemId, quantity: existingQty + moveQty }),
+      save: setSlot(next, slotId, {
+        itemId,
+        quantity: existingQty + moveQty,
+        ...(keepFavorite ? { favorite: true } : {}),
+      }),
     }
   }
 
@@ -261,6 +281,7 @@ export function equipInventoryIndex(
       itemId,
       quantity: 1,
       ...(enchantmentId ? { enchantmentId } : {}),
+      ...(favorite ? { favorite: true } : {}),
     }),
   }
 }

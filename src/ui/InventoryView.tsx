@@ -16,6 +16,7 @@ import {
   playerOffhandDamageRange,
 } from '../game/combat/stats'
 import { INVENTORY_SLOT_LIMIT, inventorySlotCount } from '../game/inventory/capacity'
+import { isFavoriteStack, toggleInventoryFavorite } from '../game/inventory/favorites'
 import { sellInventoryIndexes, sellPriceAtLocation } from '../game/inventory/sell'
 import { enchantmentTooltipLines } from '../game/projects/enchantments'
 import type { PlayerSave } from '../game/save/types'
@@ -71,7 +72,7 @@ export function InventoryView({ save, database, onChangeSave }: InventoryViewPro
   const slotCount = inventorySlotCount(save)
   const selectedSellGold = [...selectedIndexes].reduce((sum, index) => {
     const stack = save.inventory[index]
-    if (!stack || stack.enchantmentId) return sum
+    if (!stack || stack.enchantmentId || isFavoriteStack(stack)) return sum
     const priced = sellPriceAtLocation(db, save, stack.itemId)
     if (!priced) return sum
     return sum + priced.unitPrice * stack.quantity
@@ -109,12 +110,30 @@ export function InventoryView({ save, database, onChangeSave }: InventoryViewPro
   }
 
   function toggleBagSelection(index: number) {
+    const stack = save.inventory[index]
+    if (stack && isFavoriteStack(stack)) {
+      setMessage('Favorited items cannot be sold. Unfavorite them first.')
+      return
+    }
     setSelectedIndexes((current) => {
       const next = new Set(current)
       if (next.has(index)) next.delete(index)
       else next.add(index)
       return next
     })
+  }
+
+  function toggleFavorite(index: number) {
+    const next = toggleInventoryFavorite(save, index)
+    if (!next) return
+    setMessage(null)
+    setSelectedIndexes((current) => {
+      const nextSet = new Set<number>()
+      // Indexes shift after favorite sort — clear sell selection.
+      void current
+      return nextSet
+    })
+    commit(next)
   }
 
   function confirmSellSelected() {
@@ -248,20 +267,26 @@ export function InventoryView({ save, database, onChangeSave }: InventoryViewPro
                   ...spellLines,
                 ].join('\n')
                 const enchanted = Boolean(stack.enchantmentId)
+                const favorited = isFavoriteStack(stack)
                 const selected = selectedIndexes.has(index)
+                const sellBlocked = favorited
                 return (
-                  <li key={tipId}>
+                  <li key={tipId} className="bag-item-cell">
                     <HoldTile
                       className={[
                         'bag-item-tile',
                         enchanted ? 'enchanted' : '',
+                        favorited ? 'favorited' : '',
                         bagMode !== 'none' && selected ? 'selected-sell' : '',
+                        bagMode !== 'none' && sellBlocked ? 'sell-blocked' : '',
                       ]
                         .filter(Boolean)
                         .join(' ')}
                       ariaLabel={
                         bagMode !== 'none'
-                          ? `${selected ? 'Deselect' : 'Select'} ${item?.['Display Name'] ?? stack.itemId}`
+                          ? sellBlocked
+                            ? `${item?.['Display Name'] ?? stack.itemId} is favorited and cannot be sold`
+                            : `${selected ? 'Deselect' : 'Select'} ${item?.['Display Name'] ?? stack.itemId}`
                           : tipText
                       }
                       showingTip={bagMode === 'none' && heldTip === tipId}
@@ -296,6 +321,19 @@ export function InventoryView({ save, database, onChangeSave }: InventoryViewPro
                         </span>
                       )}
                     </HoldTile>
+                    <button
+                      type="button"
+                      className={`bag-item-favorite${favorited ? ' active' : ''}`}
+                      aria-label={
+                        favorited
+                          ? `Unfavorite ${item?.['Display Name'] ?? 'item'}`
+                          : `Favorite ${item?.['Display Name'] ?? 'item'}`
+                      }
+                      aria-pressed={favorited}
+                      onClick={() => toggleFavorite(index)}
+                    >
+                      {favorited ? '♥' : '♡'}
+                    </button>
                   </li>
                 )
               })}
@@ -303,8 +341,8 @@ export function InventoryView({ save, database, onChangeSave }: InventoryViewPro
           )}
           <p className="muted tiny">
             {bagMode === 'sell'
-              ? 'Tap items to select them, then confirm to sell. Shop locations pay full sell value; elsewhere pays 50%.'
-              : 'Hold an item for its name, combat stats, and enchantment. Tap gear to equip. Enchanted items do not stack.'}
+              ? 'Tap items to select them, then confirm to sell. Favorited items cannot be sold. Shop locations pay full sell value; elsewhere pays 50%.'
+              : 'Tap the heart to favorite (stays on top, cannot be sold). Hold an item for details. Tap gear to equip.'}
           </p>
         </section>
       ) : (

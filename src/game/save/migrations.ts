@@ -298,6 +298,31 @@ export const SAVE_MIGRATIONS: SaveMigration[] = [
       saveVersion: 19,
     }),
   },
+  {
+    fromVersion: 19,
+    toVersion: 20,
+    migrate: (save) => ({
+      ...save,
+      // Normalize favorite flags; omit false so older stack shapes stay unchanged.
+      inventory: (save.inventory ?? []).map((stack) => {
+        if (stack.favorite === true) return { ...stack, favorite: true }
+        const { favorite: _drop, ...rest } = stack
+        return rest
+      }),
+      equipment: {
+        ...save.equipment,
+        slots: Object.fromEntries(
+          Object.entries(save.equipment?.slots ?? {}).map(([slotId, stack]) => {
+            if (!stack) return [slotId, null]
+            if (stack.favorite === true) return [slotId, { ...stack, favorite: true }]
+            const { favorite: _drop, ...rest } = stack
+            return [slotId, rest]
+          }),
+        ),
+      },
+      saveVersion: 20,
+    }),
+  },
 ]
 
 export function migrateSave(save: PlayerSave): PlayerSave {

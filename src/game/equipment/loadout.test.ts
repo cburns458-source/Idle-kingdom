@@ -214,7 +214,7 @@ describe('equipment loadout', () => {
     } as unknown as PlayerSave
 
     const migrated = migrateSave(legacy)
-    expect(migrated.saveVersion).toBe(19)
+    expect(migrated.saveVersion).toBe(20)
     expect(migrated.activityTransition).toBeNull()
     expect(migrated.settings.showActivityRewards).toBe(true)
     expect(migrated.settings.hudShowTotalXp).toBe(false)
