@@ -61,6 +61,12 @@
       "Notes": "Applied to gathering XP (including bonus skill XP) when below proficiency."
     },
     {
+      "Key": "bow_hunting_combat_xp_percent",
+      "Value": 10,
+      "Unit": "%",
+      "Notes": "Qualifying bow-based Hunting Actions (equipped Weapon/Tool has the bow_combat_xp capability) grant Combat XP equal to this percent of the Hunting XP awarded."
+    },
+    {
       "Key": "starting_max_hp",
       "Value": 1000,
       "Unit": "HP",

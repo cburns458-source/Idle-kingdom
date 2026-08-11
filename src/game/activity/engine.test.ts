@@ -36,6 +36,53 @@ describe('primary activity engine', () => {
     expect(completed.save.skills.find((skill) => skill.skillId === 'SKL-0004')?.xp).toBe(200)
   })
 
+  it('grants bonus Combat XP for a bow-based Hunting Action when a bow is equipped', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    let save = createNewSave(launch)
+    const huntButterfly = launch.Actions.find((action) => action['Action ID'] === 'ACN-0015')!
+
+    // No bow equipped: no Combat XP bonus.
+    const withoutBow = completeGatheringAction(launch, save, huntButterfly, () => 0)
+    expect(withoutBow.result.xpGained).toBe(500)
+    expect(withoutBow.result.bonusXp).toEqual([])
+    expect(
+      withoutBow.save.skills.find((skill) => skill.skillId === 'SKL-0001')?.xp ?? 0,
+    ).toBe(0)
+
+    // Equip a Regular Bow (bow_combat_xp capability) directly for the test —
+    // equipping it through the normal flow requires Hunting 10.
+    save = {
+      ...save,
+      equipment: {
+        ...save.equipment,
+        slots: { ...save.equipment.slots, 'SLOT-0001': { itemId: 'ITEM-0135', quantity: 1 } },
+      },
+    }
+    const withBow = completeGatheringAction(launch, save, huntButterfly, () => 0)
+    expect(withBow.result.xpGained).toBe(500)
+    expect(withBow.result.bonusXp).toEqual([{ skillId: 'SKL-0001', xp: 50 }])
+    expect(withBow.save.skills.find((skill) => skill.skillId === 'SKL-0001')?.xp).toBe(50)
+    const combatReward = withBow.result.xpRewards.find((reward) => reward.skillId === 'SKL-0001')
+    expect(combatReward?.xp).toBe(50)
+  })
+
+  it('grants no bow Combat XP bonus for non-Hunting gathering, even with a bow equipped', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    let save = createNewSave(launch)
+    save = {
+      ...save,
+      currentLocationId: 'LOC-0009',
+      equipment: {
+        ...save.equipment,
+        slots: { ...save.equipment.slots, 'SLOT-0001': { itemId: 'ITEM-0135', quantity: 1 } },
+      },
+    }
+    const generated = generateNextAction(launch, save, 'ACT-0012', () => 0)
+    expect(generated?.action['Relevant Skill ID']).not.toBe('SKL-0005')
+    const completed = completeGatheringAction(launch, generated!.save, generated!.action, () => 0)
+    expect(completed.result.bonusXp).toEqual([])
+  })
+
   it('grants 100 Arcana XP when delving for essence', () => {
     const { launch } = prepareDatabase(rawDatabase)
     let save = createNewSave(launch)

@@ -22,7 +22,7 @@ import type {
   ActiveActionState,
   ActivityStartResult,
 } from './types'
-import { bonusSkillXpForAction } from './bonusXp'
+import { bonusSkillXpForAction, bowHuntingCombatXpBonus } from './bonusXp'
 import { summarizeXpReward } from './rewardSummary'
 import { applyXp } from './xp'
 
@@ -196,23 +196,28 @@ export function completeGatheringAction(
   )
   if (primaryReward) xpRewards.push(primaryReward)
 
+  function applyBonusXp(skillId: string, amount: number) {
+    if (amount <= 0) return
+    const applied = applyXp(next, db, skillId, amount)
+    next = applied.save
+    bonusXp.push({ skillId, xp: amount })
+    const reward = summarizeXpReward(db, next, skillId, amount, applied.leveledUpTo)
+    if (reward) xpRewards.push(reward)
+    if (applied.leveledUpTo != null) {
+      leveledUpTo = applied.leveledUpTo
+    }
+  }
+
   const bonus = bonusSkillXpForAction(action)
   if (bonus && bonus.xp > 0) {
-    const bonusAmount = gatheringXpReward(db, save, action, bonus.xp)
-    const bonusApplied = applyXp(next, db, bonus.skillId, bonusAmount)
-    next = bonusApplied.save
-    bonusXp.push({ skillId: bonus.skillId, xp: bonusAmount })
-    const bonusReward = summarizeXpReward(
-      db,
-      next,
-      bonus.skillId,
-      bonusAmount,
-      bonusApplied.leveledUpTo,
-    )
-    if (bonusReward) xpRewards.push(bonusReward)
-    if (bonusApplied.leveledUpTo != null) {
-      leveledUpTo = bonusApplied.leveledUpTo
-    }
+    applyBonusXp(bonus.skillId, gatheringXpReward(db, save, action, bonus.xp))
+  }
+
+  // Qualifying bow-based Hunting Actions also grant Combat XP (10% of the
+  // Hunting XP just awarded) when a bow is the equipped Weapon/Tool.
+  const bowBonus = bowHuntingCombatXpBonus(db, save, action, xpAmount)
+  if (bowBonus) {
+    applyBonusXp(bowBonus.skillId, bowBonus.xp)
   }
 
   return {
