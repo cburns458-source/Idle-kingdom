@@ -13,8 +13,10 @@ import {
   equipItemFromInventory,
   equipStackToSlot,
   FOOD_SLOT_ID,
+  OFFHAND_SLOT_ID,
   POTION_SLOT_ID,
   unequipSlot,
+  WEAPON_TOOL_SLOT_ID,
 } from './loadout'
 import { withRecalculatedVitals } from './vitals'
 
@@ -237,5 +239,46 @@ describe('equipment loadout', () => {
     expect(migrated.productionRecipeId).toBeNull()
     expect(migrated.productionQuantityTotal).toBeNull()
     expect(migrated.productionQuantityRemaining).toBeNull()
+  })
+
+  it('equips daggers to the off-hand slot and replaces a shield', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    let save = createNewSave(launch)
+    save = { ...save, inventory: [] }
+    save = addItemToInventory(save, 'ITEM-0145', 1) // Wooden Shield
+    save = addItemToInventory(save, 'ITEM-0125', 1) // Wooden Dagger
+
+    const shield = equipItemFromInventory(launch, save, 'ITEM-0145')
+    expect(shield.ok).toBe(true)
+    if (!shield.ok) return
+    save = shield.save
+    expect(save.equipment.slots[OFFHAND_SLOT_ID]?.itemId).toBe('ITEM-0145')
+
+    const dagger = equipItemFromInventory(launch, save, 'ITEM-0125')
+    expect(dagger.ok).toBe(true)
+    if (!dagger.ok) return
+    save = dagger.save
+    expect(save.equipment.slots[OFFHAND_SLOT_ID]?.itemId).toBe('ITEM-0125')
+    expect(save.inventory.find((stack) => stack.itemId === 'ITEM-0145')?.quantity).toBe(1)
+    expect(save.equipment.slots[WEAPON_TOOL_SLOT_ID]?.itemId).not.toBe('ITEM-0125')
+  })
+
+  it('blocks equipping an off-hand dagger while a dagger is already in the main hand', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    let save = createNewSave(launch)
+    save = {
+      ...save,
+      inventory: [],
+      equipment: {
+        ...save.equipment,
+        slots: {
+          ...save.equipment.slots,
+          [WEAPON_TOOL_SLOT_ID]: { itemId: 'ITEM-0125', quantity: 1 },
+        },
+      },
+    }
+    save = addItemToInventory(save, 'ITEM-0225', 1) // Bronze Dagger
+    const result = equipItemFromInventory(launch, save, 'ITEM-0225')
+    expect(result.ok).toBe(false)
   })
 })

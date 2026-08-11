@@ -16,6 +16,8 @@ interface CombatPanelProps {
   lastPlayerHit: number | null
   /** Whether the last player hit was a critical strike. */
   lastPlayerCrit?: boolean
+  /** Off-hand dagger damage last round (separate floater). */
+  lastOffhandHit?: number | null
   /** Damage the enemy dealt last round (centered above player). */
   lastEnemyHit: number | null
   /** When set, show "defeated" in place of the enemy art. */
@@ -39,6 +41,7 @@ export function CombatPanel({
   roundDurationMs,
   lastPlayerHit,
   lastPlayerCrit = false,
+  lastOffhandHit = null,
   lastEnemyHit,
   defeatedFlash,
   deathPauseRemainingMs,
@@ -52,9 +55,11 @@ export function CombatPanel({
 
   const [roundProgress, setRoundProgress] = useState(0)
   const [playerHitOffset, setPlayerHitOffset] = useState({ x: 0, y: 0 })
+  const [offhandHitOffset, setOffhandHitOffset] = useState({ x: 0, y: 0 })
   const [enemyHitOffset, setEnemyHitOffset] = useState({ x: 0, y: 0 })
   const [shownPlayerHit, setShownPlayerHit] = useState<number | null>(null)
   const [shownPlayerCrit, setShownPlayerCrit] = useState(false)
+  const [shownOffhandHit, setShownOffhandHit] = useState<number | null>(null)
   const [shownEnemyHit, setShownEnemyHit] = useState<number | null>(null)
 
   // Smooth local round fill: 0 → 1 over roundDurationMs, resets each round.
@@ -95,6 +100,14 @@ export function CombatPanel({
   }, [lastPlayerHit, lastPlayerCrit, enemyHp])
 
   useEffect(() => {
+    if (lastOffhandHit == null || lastOffhandHit <= 0) return
+    setShownOffhandHit(lastOffhandHit)
+    setOffhandHitOffset(randomDamageOffset())
+    const timer = window.setTimeout(() => setShownOffhandHit(null), 2000)
+    return () => window.clearTimeout(timer)
+  }, [lastOffhandHit, enemyHp])
+
+  useEffect(() => {
     if (lastEnemyHit == null || lastEnemyHit <= 0) return
     setShownEnemyHit(lastEnemyHit)
     setEnemyHitOffset(randomDamageOffset())
@@ -105,6 +118,7 @@ export function CombatPanel({
   useEffect(() => {
     if (defeatedFlash) {
       setShownPlayerHit(null)
+      setShownOffhandHit(null)
       setShownEnemyHit(null)
     }
   }, [defeatedFlash])
@@ -184,6 +198,17 @@ export function CombatPanel({
                     }}
                   >
                     {shownPlayerCrit ? `CRIT ${shownPlayerHit}` : shownPlayerHit}
+                  </span>
+                )}
+                {shownOffhandHit != null && shownOffhandHit > 0 && (
+                  <span
+                    className="combat-damage combat-damage-player combat-damage-offhand"
+                    style={{
+                      ['--damage-x' as string]: `${offhandHitOffset.x}px`,
+                      ['--damage-y' as string]: `${offhandHitOffset.y}px`,
+                    }}
+                  >
+                    {shownOffhandHit}
                   </span>
                 )}
               </>

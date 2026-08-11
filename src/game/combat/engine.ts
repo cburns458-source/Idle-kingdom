@@ -21,6 +21,7 @@ import {
   playerDamageRange,
   playerDamageReduction,
   playerMaxHp,
+  playerOffhandDamageRange,
   rollDamage,
 } from './stats'
 
@@ -28,8 +29,10 @@ export type RandomFn = () => number
 
 export interface CombatRoundResult {
   playerHit: number
-  /** True when this round's player hit was a critical strike. */
+  /** True when this round's main-hand hit was a critical strike. */
   playerCrit: boolean
+  /** Off-hand dagger hit this round, or null when none / skipped. */
+  offhandHit: number | null
   enemyHit: number | null
   /** Damage reflected back at the enemy this round via armor enchantments (e.g. Thorns). */
   thornsHit: number
@@ -109,10 +112,22 @@ export function resolveCombatRound(
   }
   let nextEnemyHp = Math.max(0, enemyHp - playerHit)
 
+  // Off-hand dagger swings after the main-hand hit if the enemy is still up.
+  // Off-hand cannot crit; shared enchant/spell bonuses are already in its range.
+  let offhandHit: number | null = null
+  if (nextEnemyHp > 0) {
+    const offhandRange = playerOffhandDamageRange(db, save)
+    if (offhandRange) {
+      offhandHit = rollDamage(offhandRange.min, offhandRange.max, random)
+      nextEnemyHp = Math.max(0, nextEnemyHp - offhandHit)
+    }
+  }
+
   if (nextEnemyHp <= 0) {
     return {
       playerHit,
       playerCrit,
+      offhandHit,
       enemyHit: null,
       thornsHit: 0,
       enemyHp: 0,
@@ -134,6 +149,7 @@ export function resolveCombatRound(
   return {
     playerHit,
     playerCrit,
+    offhandHit,
     enemyHit,
     thornsHit,
     enemyHp: nextEnemyHp,

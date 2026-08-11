@@ -2779,6 +2779,12 @@ button.hud-total-stat:focus-visible {
   font-size: 1.35rem;
 }
 
+.combat-damage-player.combat-damage-offhand {
+  top: calc(38% + var(--damage-y));
+  color: #f0a868;
+  font-size: 1.05rem;
+}
+
 @keyframes combat-damage-pop {
   from {
     opacity: 0;

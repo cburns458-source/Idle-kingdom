@@ -9,7 +9,12 @@ import {
   equipmentTooltipStatLines,
 } from '../game/equipment/tooltips'
 import { withRecalculatedVitals } from '../game/equipment/vitals'
-import { playerDamageRange, playerDamageReduction, playerMaxHp } from '../game/combat/stats'
+import {
+  playerDamageRange,
+  playerDamageReduction,
+  playerMaxHp,
+  playerOffhandDamageRange,
+} from '../game/combat/stats'
 import { INVENTORY_SLOT_LIMIT, inventorySlotCount } from '../game/inventory/capacity'
 import { sellInventoryIndexes, sellPriceAtLocation } from '../game/inventory/sell'
 import { enchantmentTooltipLines } from '../game/projects/enchantments'
@@ -59,6 +64,7 @@ export function InventoryView({ save, database, onChangeSave }: InventoryViewPro
   const [confirmSell, setConfirmSell] = useState(false)
   const db = database.launch
   const damage = playerDamageRange(db, save)
+  const offhandDamage = playerOffhandDamageRange(db, save)
   const maxHp = playerMaxHp(db, save)
   const dr = playerDamageReduction(db, save)
   const selectedCount = selectedIndexes.size
@@ -133,6 +139,7 @@ export function InventoryView({ save, database, onChangeSave }: InventoryViewPro
             <dt>Damage</dt>
             <dd>
               {damage.min}–{damage.max}
+              {offhandDamage ? ` · OH ${offhandDamage.min}–${offhandDamage.max}` : ''}
             </dd>
           </div>
           <div>

@@ -8,6 +8,16 @@ import { firstEmptySpellSlot, isSpellEquipment, isSpellSlotId } from '../spells/
 export const FOOD_SLOT_ID = 'SLOT-0011'
 export const POTION_SLOT_ID = 'SLOT-0012'
 export const WEAPON_TOOL_SLOT_ID = 'SLOT-0001'
+export const OFFHAND_SLOT_ID = 'SLOT-0002'
+
+export function isDaggerItem(db: GameDatabase, itemId: string): boolean {
+  const item = db.Items.find((row) => row['Item ID'] === itemId)
+  if (!item) return false
+  if ((item.Subtype ?? '').toLowerCase() === 'dagger') return true
+  const key = (item['Internal Key'] ?? '').toLowerCase()
+  const name = (item['Display Name'] ?? '').toLowerCase()
+  return key.includes('dagger') || /\bdagger\b/.test(name)
+}
 
 export type EquipResult =
   | { ok: true; save: PlayerSave }
@@ -183,6 +193,17 @@ export function equipInventoryIndex(
       return { ok: false, reason: 'All spell slots are full.' }
     }
     slotId = empty
+  } else if (isDaggerItem(db, itemId)) {
+    // Daggers equip to the off-hand only (replacing a shield). Dual-wielding two
+    // daggers is not supported yet.
+    slotId = OFFHAND_SLOT_ID
+    const mainhandId = slotItemId(save, WEAPON_TOOL_SLOT_ID)
+    if (mainhandId && isDaggerItem(db, mainhandId)) {
+      return {
+        ok: false,
+        reason: 'Unequip your main-hand dagger before equipping an off-hand dagger.',
+      }
+    }
   }
 
   let next = save

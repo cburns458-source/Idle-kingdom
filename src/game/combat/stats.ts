@@ -1,5 +1,6 @@
 import type { EquipmentRow, GameDatabase } from '../data/types'
 import { getSkillProgress } from '../activity/xp'
+import { OFFHAND_SLOT_ID, WEAPON_TOOL_SLOT_ID, isDaggerItem } from '../equipment/loadout'
 import { equippedEnchantmentDamageBonus } from '../projects/enchantments'
 import {
   raceCombatDamageMultiplier,
@@ -9,7 +10,6 @@ import type { PlayerSave } from '../save/types'
 import { configNumber } from '../activity/gathering'
 import { activeSpellDamageRangeMultiplier } from '../spells/spells'
 
-const WEAPON_SLOT = 'SLOT-0001'
 export const COMBAT_SKILL_ID = 'SKL-0001'
 /** Combat Level bonuses begin at this level (inclusive). */
 export const COMBAT_LEVEL_BONUS_START = 10
@@ -41,12 +41,11 @@ function scaleStat(value: number, multiplier: number): number {
   return Math.max(0, Math.floor(value * multiplier))
 }
 
-export function playerDamageRange(
+function damageRangeMultipliers(
   db: GameDatabase,
   save: PlayerSave,
-  nowMs: number = Date.now(),
-): { min: number; max: number } {
-  const enchantBonus = equippedEnchantmentDamageBonus(db, save)
+  nowMs: number,
+): number {
   const levelMult = combatLevelBonusMultiplier(save)
   const spellMult = activeSpellDamageRangeMultiplier(db, save, nowMs)
   const potionBonus = save.activePotionEffect?.damageBonusPercent
@@ -54,7 +53,30 @@ export function playerDamageRange(
     potionBonus && potionBonus > 0 && save.activePotionEffect?.scope === 'one_combat_encounter'
       ? 1 + potionBonus / 100
       : 1
-  const weaponId = save.equipment.slots[WEAPON_SLOT]?.itemId
+  const raceMult = raceCombatDamageMultiplier(db, save)
+  return levelMult * spellMult * potionMult * raceMult
+}
+
+function scaleDamageRange(
+  min: number,
+  max: number,
+  multiplier: number,
+): { min: number; max: number } {
+  const scaledMin = scaleStat(min, multiplier)
+  return {
+    min: scaledMin,
+    max: Math.max(scaledMin, scaleStat(max, multiplier)),
+  }
+}
+
+export function playerDamageRange(
+  db: GameDatabase,
+  save: PlayerSave,
+  nowMs: number = Date.now(),
+): { min: number; max: number } {
+  const enchantBonus = equippedEnchantmentDamageBonus(db, save)
+  const combined = damageRangeMultipliers(db, save, nowMs)
+  const weaponId = save.equipment.slots[WEAPON_TOOL_SLOT_ID]?.itemId
   let min: number
   let max: number
   if (weaponId) {
@@ -73,12 +95,32 @@ export function playerDamageRange(
     max = configNumber(db, 'unarmed_max_damage', 30) + enchantBonus
   }
 
-  const raceMult = raceCombatDamageMultiplier(db, save)
-  const combined = levelMult * spellMult * potionMult * raceMult
-  return {
-    min: scaleStat(min, combined),
-    max: Math.max(scaleStat(min, combined), scaleStat(max, combined)),
-  }
+  return scaleDamageRange(min, max, combined)
+}
+
+/**
+ * Off-hand dagger damage range, or null when no dagger is equipped there.
+ * Uses the same global enchant / spell / potion / race multipliers as main-hand.
+ */
+export function playerOffhandDamageRange(
+  db: GameDatabase,
+  save: PlayerSave,
+  nowMs: number = Date.now(),
+): { min: number; max: number } | null {
+  const offhandId = save.equipment.slots[OFFHAND_SLOT_ID]?.itemId
+  if (!offhandId || !isDaggerItem(db, offhandId)) return null
+  const dagger = db.Equipment.find((entry) => entry['Item ID'] === offhandId)
+  const daggerMin = dagger?.['Min Damage']
+  const daggerMax = dagger?.['Max Damage']
+  if (typeof daggerMin !== 'number' || typeof daggerMax !== 'number') return null
+
+  const enchantBonus = equippedEnchantmentDamageBonus(db, save)
+  const combined = damageRangeMultipliers(db, save, nowMs)
+  return scaleDamageRange(
+    daggerMin + enchantBonus,
+    Math.max(daggerMin, daggerMax) + enchantBonus,
+    combined,
+  )
 }
 
 export function playerDamageReduction(db: GameDatabase, save: PlayerSave): number {

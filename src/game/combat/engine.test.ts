@@ -131,6 +131,29 @@ describe('combat engine', () => {
     expect(round.enemyHp).toBe(90)
   })
 
+  it('rolls a separate off-hand dagger hit with full damage and no crit', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const base = createNewSave(launch)
+    const save = {
+      ...base,
+      equipment: {
+        ...base.equipment,
+        slots: {
+          ...base.equipment.slots,
+          'SLOT-0001': { itemId: 'ITEM-0124', quantity: 1 }, // Wooden Sword 10-30
+          'SLOT-0002': { itemId: 'ITEM-0125', quantity: 1 }, // Wooden Dagger 10-20
+        },
+      },
+    }
+    const enemy = launch.Enemies.find((row) => row['Enemy ID'] === 'ENM-0001')!
+    // Mainhand min 10, offhand min 10, enemy still alive → then enemy roll.
+    const round = resolveCombatRound(launch, save, enemy, enemy['Maximum HP'], () => 0)
+    expect(round.playerHit).toBe(10)
+    expect(round.playerCrit).toBe(false)
+    expect(round.offhandHit).toBe(10)
+    expect(round.enemyHp).toBe(enemy['Maximum HP'] - 20)
+  })
+
   it('applies 1.5× damage on critical strikes and adds crit chance across items', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const base = createNewSave(launch)

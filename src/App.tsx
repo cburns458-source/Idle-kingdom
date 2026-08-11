@@ -125,6 +125,7 @@ export default function App() {
   const [lastMessage, setLastMessage] = useState<string | null>(null)
   const [lastPlayerHit, setLastPlayerHit] = useState<number | null>(null)
   const [lastPlayerCrit, setLastPlayerCrit] = useState(false)
+  const [lastOffhandHit, setLastOffhandHit] = useState<number | null>(null)
   const [lastEnemyHit, setLastEnemyHit] = useState<number | null>(null)
   const [defeatedFlash, setDefeatedFlash] = useState(false)
   const [pauseRemainingMs, setPauseRemainingMs] = useState(0)
@@ -605,6 +606,7 @@ export default function App() {
         setRecentRewards((prev) => [combatBundle, ...prev].slice(0, 4))
         setLastPlayerHit(round.playerHit)
         setLastPlayerCrit(round.playerCrit)
+        setLastOffhandHit(round.offhandHit)
         setLastEnemyHit(round.enemyHit)
         setLastMessage(
           victoryResult.foodConsumed
@@ -650,6 +652,7 @@ export default function App() {
         ).save
         setLastPlayerHit(round.playerHit)
         setLastPlayerCrit(round.playerCrit)
+        setLastOffhandHit(round.offhandHit)
         setLastEnemyHit(round.enemyHit)
         setLastMessage(`Defeated by ${enemy['Display Name']}. Recovering…`)
         setBoot({ ...current, save: persistSave(defeated), saveCreated: false })
@@ -658,12 +661,17 @@ export default function App() {
 
       setLastPlayerHit(round.playerHit)
       setLastPlayerCrit(round.playerCrit)
+      setLastOffhandHit(round.offhandHit)
       setLastEnemyHit(round.enemyHit)
       const hitLabel = round.playerCrit ? `crit for ${round.playerHit}` : `hit ${round.playerHit}`
+      const offhandLabel =
+        round.offhandHit != null && round.offhandHit > 0
+          ? ` Off-hand hits ${round.offhandHit}.`
+          : ''
       setLastMessage(
         round.thornsHit > 0
-          ? `You ${hitLabel}. ${enemy['Display Name']} hits ${round.enemyHit}. Thorns reflects ${round.thornsHit}.`
-          : `You ${hitLabel}. ${enemy['Display Name']} hits ${round.enemyHit}.`,
+          ? `You ${hitLabel}.${offhandLabel} ${enemy['Display Name']} hits ${round.enemyHit}. Thorns reflects ${round.thornsHit}.`
+          : `You ${hitLabel}.${offhandLabel} ${enemy['Display Name']} hits ${round.enemyHit}.`,
       )
       const continued = applyActivityTimeTowardCritters(
         {
@@ -728,6 +736,7 @@ export default function App() {
       setDefeatedFlash(false)
       setLastPlayerHit(null)
       setLastPlayerCrit(false)
+      setLastOffhandHit(null)
       setLastEnemyHit(null)
       if (!activityStillValid(current.database.launch, nextSave, activityId)) {
         setBoot({
@@ -1053,6 +1062,7 @@ export default function App() {
     setLastMessage(null)
     setLastPlayerHit(null)
     setLastPlayerCrit(false)
+    setLastOffhandHit(null)
     setLastEnemyHit(null)
     setDefeatedFlash(false)
     pendingVictoryRef.current = null
@@ -1264,6 +1274,7 @@ export default function App() {
                       }
                       lastPlayerHit={lastPlayerHit}
                       lastPlayerCrit={lastPlayerCrit}
+                      lastOffhandHit={lastOffhandHit}
                       lastEnemyHit={lastEnemyHit}
                       defeatedFlash={defeatedFlash}
                       deathPauseRemainingMs={pauseRemainingMs}
