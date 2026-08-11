@@ -144,7 +144,7 @@ export function ProjectPicker({
         <p className="lead">No projects are defined for this station yet.</p>
       ) : (
         <>
-          <label className="field-label visually-hidden" htmlFor="project-search">
+          <label className="field-label" htmlFor="project-search">
             Search projects
           </label>
           <input
@@ -176,7 +176,7 @@ export function ProjectPicker({
                   : filteredProjects[0]!['Project ID']
               }
               onChange={(event) => selectProject(event.target.value)}
-              size={Math.min(3, Math.max(filteredProjects.length, 1))}
+              size={Math.min(8, Math.max(filteredProjects.length, 3))}
             >
               {filteredProjects.map((row) => {
                 const locked =
@@ -313,9 +313,6 @@ function ProjectDetails({
       : null
   const spellEffect = spellEffectId ? getEnchantment(db, spellEffectId) : undefined
   const skills = projectSkillRequirements(project)
-  // Skip the requirements summary when the unmet-skill warning below already
-  // spells out what's missing, to avoid showing the same info twice.
-  const showSkillReqs = skills.length > 0 && meetsProjectSkills(save, project)
   const outputName =
     outputItem?.['Display Name'] ??
     enchantment?.['Display Name'] ??
@@ -329,6 +326,9 @@ function ProjectDetails({
           <strong>
             {outputName} ×{project['Output Quantity']}
           </strong>
+          {outputItem && (
+            <p className="muted tiny">Item · {outputItem['Item ID']}</p>
+          )}
           <p className="muted tiny">
             Instant · {project['XP Reward'].toLocaleString()} XP
             {project['Gold Cost'] > 0 ? ` · ${project['Gold Cost']} gold` : ''}
@@ -343,7 +343,7 @@ function ProjectDetails({
           )}
         </div>
       </div>
-      {showSkillReqs && (
+      {skills.length > 0 && (
         <p className="muted tiny project-skill-reqs">
           {skills
             .map((requirement) => {
