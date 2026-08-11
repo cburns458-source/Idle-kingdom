@@ -11,11 +11,10 @@ import {
 import type { GameDatabase } from '../game/data/types'
 import { raceDisplayName } from '../game/races/races'
 import type { PlayerSave } from '../game/save/types'
+import { playerPortraitAssetPath } from '../game/assets/playerAssets'
 import { AppearancePicker } from './AppearancePicker'
 import { CloseButton } from './CloseButton'
 import { ItemIcon } from './itemIcons'
-
-const PLAYER_PORTRAIT_SRC = '/assets/player/player_adventurer_temp.png'
 
 interface WardrobeModalProps {
   db: GameDatabase
@@ -80,7 +79,11 @@ export function WardrobeModal({ db, save, open, onClose, onChangeSave }: Wardrob
 
         <div className="wardrobe-top">
           <div className="wardrobe-portrait">
-            <img src={PLAYER_PORTRAIT_SRC} alt="" className="wardrobe-portrait-image" />
+            <img
+              src={playerPortraitAssetPath(save)}
+              alt=""
+              className="wardrobe-portrait-image"
+            />
             {raceDisplayName(db, save.raceId) && (
               <p className="wardrobe-race muted tiny">{raceDisplayName(db, save.raceId)}</p>
             )}

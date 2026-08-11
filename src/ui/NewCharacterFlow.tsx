@@ -4,6 +4,7 @@ import { races } from '../game/races/races'
 import type { PlayerAppearance } from '../game/save/types'
 import { AppearancePicker } from './AppearancePicker'
 import { NamePrompt } from './NamePrompt'
+import { playerPortraitAssetPath } from '../game/assets/playerAssets'
 import { RacePicker } from './RacePicker'
 
 interface NewCharacterFlowProps {
@@ -63,6 +64,13 @@ export function NewCharacterFlow({ db, initialAppearance, onComplete }: NewChara
       <p className="lead">
         Pick a starting appearance for {name} — change it anytime from the Wardrobe.
       </p>
+      <div className="appearance-creation-preview">
+        <img
+          src={playerPortraitAssetPath(appearance)}
+          alt=""
+          className="appearance-creation-portrait"
+        />
+      </div>
       <AppearancePicker
         db={db}
         value={appearance}

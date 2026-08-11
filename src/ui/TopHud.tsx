@@ -1,6 +1,7 @@
+import { playerPortraitAssetPath } from '../game/assets/playerAssets'
+import type { PlayerAppearance } from '../game/save/types'
 import { formatDurationSeconds } from './formatDuration'
 
-const PLAYER_AVATAR_SRC = '/assets/player/player_adventurer_temp.png'
 const AVATAR_FRAME_SRC = '/assets/player/avatar_frame_pixel.png'
 const GOLD_ICON_SRC = '/assets/icons/items/item_gold.png'
 
@@ -22,6 +23,7 @@ export type HudActivityStatus =
 
 interface TopHudProps {
   characterName: string | null
+  appearance: PlayerAppearance
   raceName?: string | null
   totalLevel: number
   totalXp: number
@@ -41,6 +43,7 @@ interface TopHudProps {
 
 export function TopHud({
   characterName,
+  appearance,
   raceName = null,
   totalLevel,
   totalXp,
@@ -54,6 +57,7 @@ export function TopHud({
   onOpenWardrobe,
   wardrobeHint = false,
 }: TopHudProps) {
+  const avatarSrc = playerPortraitAssetPath(appearance)
   const hpRatio =
     dead || maxHp <= 0 ? 0 : Math.max(0, Math.min(1, currentHp / maxHp))
   const hpLabel = dead
@@ -73,7 +77,7 @@ export function TopHud({
         title="Wardrobe"
       >
         <span className="hud-avatar-portrait">
-          <img src={PLAYER_AVATAR_SRC} alt="" className="hud-avatar-image" />
+          <img src={avatarSrc} alt="" className="hud-avatar-image" />
         </span>
         <img src={AVATAR_FRAME_SRC} alt="" className="hud-avatar-frame" />
       </button>

@@ -1089,6 +1089,7 @@ export default function App() {
       >
         <TopHud
           characterName={save.characterName}
+          appearance={save.appearance}
           raceName={raceDisplayName(database.launch, save.raceId)}
           totalLevel={overallLevel}
           totalXp={overallXp}
@@ -1268,6 +1269,7 @@ export default function App() {
                       enemyHp={save.combatEnemyHp ?? combatEnemy['Maximum HP']}
                       playerHp={save.currentHp}
                       playerMaxHp={maxHp}
+                      appearance={save.appearance}
                       roundStartedAt={save.combatRoundStartedAt}
                       roundDurationMs={
                         configNumber(database.launch, 'combat_round_duration', 4) * 1000

@@ -235,7 +235,7 @@ export function ProductionProgress({
           <div className="combat-portrait combat-portrait-player">
             <div
               className="combat-player-art"
-              style={{ backgroundImage: `url(${playerCombatAssetPath()})` }}
+              style={{ backgroundImage: `url(${playerCombatAssetPath(save)})` }}
               role="img"
               aria-label="Adventurer"
             />

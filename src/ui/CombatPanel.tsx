@@ -2,12 +2,14 @@ import { useEffect, useState } from 'react'
 import { enemyAssetPath } from '../game/assets/enemyAssets'
 import { playerCombatAssetPath } from '../game/assets/playerAssets'
 import type { EnemyRow } from '../game/data/enemyTypes'
+import type { PlayerAppearance } from '../game/save/types'
 
 interface CombatPanelProps {
   enemy: EnemyRow
   enemyHp: number
   playerHp: number
   playerMaxHp: number
+  appearance: PlayerAppearance
   /** ISO timestamp when the current combat round started. */
   roundStartedAt: string | null
   /** Combat round length in ms. */
@@ -37,6 +39,7 @@ export function CombatPanel({
   enemyHp,
   playerHp,
   playerMaxHp,
+  appearance,
   roundStartedAt,
   roundDurationMs,
   lastPlayerHit,
@@ -145,7 +148,7 @@ export function CombatPanel({
           <div className="combat-portrait combat-portrait-player">
             <div
               className="combat-player-art"
-              style={{ backgroundImage: `url(${playerCombatAssetPath()})` }}
+              style={{ backgroundImage: `url(${playerCombatAssetPath(appearance)})` }}
               role="img"
               aria-label="Adventurer"
             />

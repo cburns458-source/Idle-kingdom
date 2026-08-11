@@ -202,6 +202,21 @@
   min-width: 0;
 }
 
+.appearance-creation-preview {
+  display: flex;
+  justify-content: center;
+  margin: 0.35rem 0 0.75rem;
+}
+
+.appearance-creation-portrait {
+  width: min(11rem, 56vw);
+  height: min(11rem, 56vw);
+  object-fit: contain;
+  image-rendering: pixelated;
+  background: #000;
+  border-radius: 0.65rem;
+}
+
 .appearance-creation-step .appearance-picker {
   gap: 0.4rem;
 }
