@@ -2063,13 +2063,13 @@ button.hud-total-stat:focus-visible {
   margin: 0;
   padding: 0;
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.5rem;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.4rem;
 }
 
 @media (min-width: 700px) {
   .skills-grid {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(6, minmax(0, 1fr));
   }
 }
 
@@ -2078,18 +2078,17 @@ button.hud-total-stat:focus-visible {
   width: 100%;
   appearance: none;
   border: 1px solid rgba(212, 175, 55, 0.28);
-  border-radius: 0.85rem;
+  border-radius: 0.7rem;
   background: rgba(78, 54, 34, 0.78);
   color: inherit;
   font: inherit;
-  padding: 0.6rem 0.4rem 0.55rem;
+  padding: 0.4rem 0.3rem 0.35rem;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: space-evenly;
-  gap: 0.3rem;
-  aspect-ratio: 3 / 4;
-  min-height: 7.5rem;
+  justify-content: center;
+  gap: 0.15rem;
+  min-height: 4.6rem;
   cursor: pointer;
   touch-action: manipulation;
   user-select: none;
@@ -2103,19 +2102,20 @@ button.hud-total-stat:focus-visible {
 }
 
 .skill-tile-name {
-  font-size: 0.76rem;
-  line-height: 1.15;
+  font-size: 0.64rem;
+  line-height: 1.05;
   text-align: center;
   color: #fff4d4;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 1;
   -webkit-box-orient: vertical;
   overflow: hidden;
   max-width: 100%;
 }
 
 .skill-tile-level {
-  font-size: 0.85rem;
+  font-size: 0.72rem;
+  line-height: 1.05;
   font-weight: 700;
   color: #f0d78c;
 }
@@ -2157,8 +2157,8 @@ button.hud-total-stat:focus-visible {
 }
 
 .skill-tile .skill-icon {
-  width: 2.9rem;
-  height: 2.9rem;
+  width: 1.9rem;
+  height: 1.9rem;
 }
 
 .skill-actions-overlay {
