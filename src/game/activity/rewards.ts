@@ -11,6 +11,7 @@ import {
 } from '../loot/dropChance'
 import type { ActionRow, GameDatabase, RewardEntryRow } from '../data/types'
 import { applyRaceGoldGain } from '../races/races'
+import { activeSpellItemDoubleChancePercent } from '../spells/spells'
 import type { PlayerSave } from '../save/types'
 import type { LootGrant } from './types'
 import type { RandomFn } from './pools'
@@ -140,11 +141,16 @@ export function resolveActionRewards(
     const picked = pickWeightedReward(entries, random)
     if (!picked) return
     if (picked['Reward Type'] === 'Item' && picked['Reward ID / Value']) {
-      const quantity = rollQuantity(picked, random)
+      let quantity = rollQuantity(picked, random)
       const itemId = picked['Reward ID / Value']
       if (isGoldCurrencyItem(itemId)) {
+        // Abundance doubles item drops only — gold currency item rewards stay single.
         goldGained += quantity
         return
+      }
+      const doubleChance = activeSpellItemDoubleChancePercent(db, save)
+      if (doubleChance > 0 && random() * 100 < doubleChance) {
+        quantity *= 2
       }
       const granted = addItemsToInventory(next, itemId, quantity)
       next = granted.save

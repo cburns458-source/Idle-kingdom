@@ -76,6 +76,36 @@ export function spellEffectEnchantmentId(
   return null
 }
 
+function spellAllowsStacking(db: GameDatabase, itemId: string): boolean {
+  const equipment = db.Equipment.find((row) => row['Item ID'] === itemId)
+  const eqTags = capabilityTags(equipment?.['Capabilities / Effects'])
+  if (eqTags.includes('spell_stacks')) return true
+  if (eqTags.includes('spell_no_stack')) return false
+  const item = db.Items.find((row) => row['Item ID'] === itemId)
+  const itemTags = capabilityTags(item?.['Functional / Source Tags'])
+  if (itemTags.includes('spell_stacks')) return true
+  if (itemTags.includes('spell_no_stack')) return false
+  // Default: stack (matches Strength / Abundance). Future uniques can opt out with spell_no_stack.
+  return true
+}
+
+/**
+ * Combine percent bonuses from equipped spells.
+ * Stacking spells add; non-stacking spells contribute only their single best value.
+ */
+export function combineSpellPercentBonuses(
+  contributions: Array<{ percent: number; stacks: boolean }>,
+): number {
+  let stacked = 0
+  let bestUnique = 0
+  for (const entry of contributions) {
+    if (entry.percent <= 0) continue
+    if (entry.stacks) stacked += entry.percent
+    else bestUnique = Math.max(bestUnique, entry.percent)
+  }
+  return stacked + bestUnique
+}
+
 /** Damage-range bonus percent contributed by one spell item (0 if none). */
 export function spellDamageRangeBonusPercent(db: GameDatabase, itemId: string): number {
   const equipment = db.Equipment.find((row) => row['Item ID'] === itemId)
@@ -92,20 +122,50 @@ export function spellDamageRangeBonusPercent(db: GameDatabase, itemId: string): 
   return 0
 }
 
+/** Chance percent to double item drop quantity from one Abundance-style spell. */
+export function spellItemDoubleChancePercent(db: GameDatabase, itemId: string): number {
+  const equipment = db.Equipment.find((row) => row['Item ID'] === itemId)
+  for (const tag of capabilityTags(equipment?.['Capabilities / Effects'])) {
+    const match = tag.match(/^item_double_chance_percent:(\d+(?:\.\d+)?)$/)
+    if (match) return Number(match[1])
+  }
+
+  const enchantmentId = spellEffectEnchantmentId(db, itemId)
+  const enchantment = enchantmentId ? getEnchantment(db, enchantmentId) : undefined
+  const effect = enchantment?.Effect ?? ''
+  const match = effect.match(
+    /\+(\d+(?:\.\d+)?)%\s*chance to double item quantity/i,
+  )
+  if (match) return Number(match[1])
+  return 0
+}
+
 /**
- * Multiplier from all equipped spells. Same bonus types add (2× Strength = +20% => 1.20).
- * `nowMs` is unused (kept for call-site compatibility after the cycle removal).
+ * Multiplier from all equipped spells. Same bonus types add when spells stack
+ * (2× Strength = +20% => 1.20). `nowMs` kept for call-site compatibility.
  */
 export function activeSpellDamageRangeMultiplier(
   db: GameDatabase,
   save: PlayerSave,
   _nowMs: number = Date.now(),
 ): number {
-  let bonusPercent = 0
-  for (const stack of equippedSpellStacks(save)) {
-    bonusPercent += spellDamageRangeBonusPercent(db, stack.itemId)
-  }
-  return 1 + bonusPercent / 100
+  const contributions = equippedSpellStacks(save).map((stack) => ({
+    percent: spellDamageRangeBonusPercent(db, stack.itemId),
+    stacks: spellAllowsStacking(db, stack.itemId),
+  }))
+  return 1 + combineSpellPercentBonuses(contributions) / 100
+}
+
+/** Total chance to double item quantities on a successful drop (capped at 100). */
+export function activeSpellItemDoubleChancePercent(
+  db: GameDatabase,
+  save: PlayerSave,
+): number {
+  const contributions = equippedSpellStacks(save).map((stack) => ({
+    percent: spellItemDoubleChancePercent(db, stack.itemId),
+    stacks: spellAllowsStacking(db, stack.itemId),
+  }))
+  return Math.min(100, combineSpellPercentBonuses(contributions))
 }
 
 export function spellTooltipLines(
@@ -119,6 +179,11 @@ export function spellTooltipLines(
   if (enchantment?.['Display Name']) lines.push(enchantment['Display Name'])
   if (enchantment?.Effect) lines.push(enchantment.Effect)
   else if (item?.Description) lines.push(item.Description)
-  lines.push('Always active while equipped. Duplicate spells stack.')
+  lines.push('Always active while equipped.')
+  if (spellAllowsStacking(db, itemId)) {
+    lines.push('Duplicate copies stack.')
+  } else {
+    lines.push('Does not stack with duplicate copies.')
+  }
   return lines
 }

@@ -8,6 +8,7 @@ import { equipItemFromInventory, unequipSlot } from '../equipment/loadout'
 import { createNewSave } from '../save/saveStore'
 import {
   activeSpellDamageRangeMultiplier,
+  activeSpellItemDoubleChancePercent,
   firstEmptySpellSlot,
   SPELL_SLOT_IDS,
 } from './spells'
@@ -83,5 +84,29 @@ describe('spell slots and Strength Spell', () => {
     save = second.save
 
     expect(activeSpellDamageRangeMultiplier(launch, save)).toBeCloseTo(1.2)
+  })
+
+  it('includes Abundance Spell project and stacks double-chance', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    expect(launch.Items.some((item) => item['Item ID'] === 'ITEM-0297')).toBe(true)
+    expect(launch.Projects.some((project) => project['Project ID'] === 'PRJ-0141')).toBe(true)
+    const project = launch.Projects.find((row) => row['Project ID'] === 'PRJ-0141')!
+    expect(project['Required Skill 1 Level']).toBe(40)
+    expect(project['Input 1 Item ID']).toBe('ITEM-0099')
+    expect(project['Input 2 Item ID']).toBe('ITEM-0026')
+
+    let save = createNewSave(launch)
+    save = addItemToInventory(save, 'ITEM-0297', 2)
+    const first = equipItemFromInventory(launch, save, 'ITEM-0297')
+    expect(first.ok).toBe(true)
+    if (!first.ok) return
+    save = first.save
+    expect(activeSpellItemDoubleChancePercent(launch, save)).toBe(10)
+
+    const second = equipItemFromInventory(launch, save, 'ITEM-0297')
+    expect(second.ok).toBe(true)
+    if (!second.ok) return
+    save = second.save
+    expect(activeSpellItemDoubleChancePercent(launch, save)).toBe(20)
   })
 })

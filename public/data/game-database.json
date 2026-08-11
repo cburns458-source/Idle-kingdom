@@ -118,7 +118,7 @@
       "Key": "spell_cycle_duration",
       "Value": 3600,
       "Unit": "seconds",
-      "Notes": "Deprecated — equipped spells are always active. Kept for older clients; unused by current runtime."
+      "Notes": "Deprecated \u2014 equipped spells are always active. Kept for older clients; unused by current runtime."
     }
   ],
   "Skills": [
@@ -5070,13 +5070,29 @@
       "Subtype": "Combat spell",
       "Associated Skill ID": "SKL-0013",
       "Equipment Slot ID": "SLOT-0013",
-      "Functional / Source Tags": "spell; spell_effect:ENCH-0005; arcana_output",
+      "Functional / Source Tags": "spell; spell_effect:ENCH-0005; arcana_output; spell_stacks",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Description": "A prepared Strength spell. Equip it in a spell slot to grant +10% damage range while that slot is active in the one-hour cycle.",
+      "Description": "A prepared Strength spell. Equip it in a spell slot to grant +10% damage range while equipped. Duplicate Strength spells stack.",
       "Icon Asset Key": null,
       "Notes": "Crafted at the Arcana Facility. May fill any spell slot; duplicates allowed.",
       "Base Sell Value": 8000
+    },
+    {
+      "Item ID": "ITEM-0297",
+      "Internal Key": "abundance_spell",
+      "Display Name": "Abundance Spell",
+      "Category": "Spell",
+      "Subtype": "Gathering spell",
+      "Associated Skill ID": "SKL-0013",
+      "Equipment Slot ID": "SLOT-0013",
+      "Functional / Source Tags": "spell; spell_effect:ENCH-0007; arcana_output; spell_stacks",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Description": "A prepared Abundance spell. While equipped, each successful item drop has a chance to grant double quantity. Duplicate Abundance spells stack.",
+      "Icon Asset Key": null,
+      "Notes": "Crafted at the Arcana Facility. May fill any spell slot; duplicates stack additively.",
+      "Base Sell Value": 12000
     },
     {
       "Item ID": "ITEM-0296",
@@ -6642,7 +6658,7 @@
       "Action Time Reduction %": null,
       "Capabilities / Effects": "artisanry_output; special_effect; +15% relative Drop Chance",
       "Status": "Planned",
-      "Notes": "Special-effect jewelry — not Arcana-enchantable. +15% relative drop chance (stacks additively with luck potions)."
+      "Notes": "Special-effect jewelry \u2014 not Arcana-enchantable. +15% relative drop chance (stacks additively with luck potions)."
     },
     {
       "Equipment ID": "EQP-0105",
@@ -7936,9 +7952,27 @@
       "Damage Reduction": null,
       "Healing Amount": null,
       "Action Time Reduction %": null,
-      "Capabilities / Effects": "spell; spell_effect:ENCH-0005; damage_range_bonus_percent:10; duration_seconds:3600",
+      "Capabilities / Effects": "spell; spell_effect:ENCH-0005; damage_range_bonus_percent:10; spell_stacks",
       "Status": "Confirmed",
       "Notes": "May be equipped to any Spell slot (SLOT-0013\u2013SLOT-0016)."
+    },
+    {
+      "Equipment ID": "EQP-0177",
+      "Item ID": "ITEM-0297",
+      "Slot ID": "SLOT-0013",
+      "Required Skill ID": "SKL-0013",
+      "Required Level": 1,
+      "Secondary Required Skill ID": null,
+      "Secondary Required Level": null,
+      "Min Damage": null,
+      "Max Damage": null,
+      "HP Bonus": null,
+      "Damage Reduction": null,
+      "Healing Amount": null,
+      "Action Time Reduction %": null,
+      "Capabilities / Effects": "spell; spell_effect:ENCH-0007; item_double_chance_percent:10; spell_stacks",
+      "Status": "Confirmed",
+      "Notes": "May be equipped to any Spell slot (SLOT-0013\u2013SLOT-0016). Stacks additively with other Abundance spells."
     }
   ],
   "Statistics": [
@@ -8029,11 +8063,11 @@
       "Internal Key": "strength_spell",
       "Display Name": "Strength",
       "Valid Target": "Spell slot / player",
-      "Effect": "+10% damage range for 1 hour",
+      "Effect": "+10% damage range while equipped",
       "Required Materials": "Spell Tablet; Bull Horns",
       "Status": "Confirmed",
       "Release Phase": "Launch",
-      "Notes": "Player spell effect. Active while the equipped Strength Spell occupies the current cycling spell slot."
+      "Notes": "Player spell effect. Active while equipped in any spell slot. Duplicate Strength spells stack additively."
     },
     {
       "Enchantment ID": "ENCH-0006",
@@ -8045,6 +8079,17 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": null
+    },
+    {
+      "Enchantment ID": "ENCH-0007",
+      "Internal Key": "abundance_spell",
+      "Display Name": "Abundance",
+      "Valid Target": "Spell slot / player",
+      "Effect": "+10% chance to double item quantity on a successful drop",
+      "Required Materials": "Spell Tablet; Golden Spud",
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Notes": "Player spell effect. Applies to primary and secondary item drops while equipped. Stacks additively unless a future spell opts out via omitting spell_stacks."
     }
   ],
   "Maps": [
@@ -20679,6 +20724,36 @@
       "Input 4 Quantity": null,
       "Required Skill 1 ID": "SKL-0013",
       "Required Skill 1 Level": 30,
+      "Required Skill 2 ID": null,
+      "Required Skill 2 Level": null,
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
+    },
+    {
+      "Project ID": "PRJ-0141",
+      "Internal Key": "arcana_abundance_spell",
+      "Display Name": "Abundance Spell",
+      "Skill ID": "SKL-0013",
+      "Output Item / Target ID": "ITEM-0297",
+      "Output Quantity": 1,
+      "Facility ID": "FAC-0008",
+      "Recipe ID": null,
+      "XP Reward": 400000,
+      "Gold Cost": 0,
+      "Instant": "Yes",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": "Creates the Abundance Spell item for spell slots (+10% chance to double item drops; stacks).",
+      "Input 1 Item ID": "ITEM-0099",
+      "Input 1 Quantity": 1,
+      "Input 2 Item ID": "ITEM-0026",
+      "Input 2 Quantity": 1,
+      "Input 3 Item ID": null,
+      "Input 3 Quantity": null,
+      "Input 4 Item ID": null,
+      "Input 4 Quantity": null,
+      "Required Skill 1 ID": "SKL-0013",
+      "Required Skill 1 Level": 40,
       "Required Skill 2 ID": null,
       "Required Skill 2 Level": null,
       "Required Skill 3 ID": null,
