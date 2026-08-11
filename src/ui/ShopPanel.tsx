@@ -153,9 +153,12 @@ export function ShopPanel({ db, save, shopId, onClose, onComplete }: ShopPanelPr
     qtyDialog?.mode === 'sell'
       ? Math.max(0, qtyDialog.owned - qtyDialog.alreadyOffered)
       : null
+  // Budget available for additional buys: current gold plus offered sells, minus
+  // what's already committed to buys (so re-adding the same item stays consistent).
+  const buyBudget = save.gold + sellTotal - buyTotal
   const buyAffordHint =
     qtyDialog?.mode === 'buy' && qtyDialog.unit > 0
-      ? Math.max(0, Math.floor(save.gold / qtyDialog.unit))
+      ? Math.max(0, Math.floor(buyBudget / qtyDialog.unit))
       : null
   const qtyMax =
     qtyDialog?.mode === 'sell'
@@ -291,7 +294,9 @@ export function ShopPanel({ db, save, shopId, onClose, onComplete }: ShopPanelPr
               )}
               {qtyDialog.mode === 'buy' && buyAffordHint != null && (
                 <p className="muted tiny">
-                  Afford up to {buyAffordHint.toLocaleString()} with current gold
+                  {sellTotal > 0
+                    ? `Afford up to ${buyAffordHint.toLocaleString()} combining gold and offered sells`
+                    : `Afford up to ${buyAffordHint.toLocaleString()} with current gold`}
                 </p>
               )}
             </>

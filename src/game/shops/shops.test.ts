@@ -70,4 +70,37 @@ describe('shops', () => {
     expect(result.save.gold).toBe(0)
     expect(result.save.inventory.some((stack) => stack.itemId === 'ITEM-0102')).toBe(true)
   })
+
+  it('allows a buy when short on gold but covered by items offered in the same trade', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const shop = launch.Shops.find((row) => row['Shop ID'] === 'SHP-0001')!
+    const buyPrice = playerBuyPrice(launch, shop, 'ITEM-0102')!
+    const sellPrice = playerSellPrice(launch, shop, 'ITEM-0025')!
+
+    let save = createNewSave(launch)
+    save = { ...save, gold: 0, currentLocationId: 'LOC-0024' }
+    save = addItemToInventory(save, 'ITEM-0025', 5)
+
+    const result = confirmShopOffer(launch, save, 'SHP-0001', {
+      buys: [{ itemId: 'ITEM-0102', quantity: 1 }],
+      sells: [{ itemId: 'ITEM-0025', quantity: 5 }],
+    })
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    expect(result.save.gold).toBe(sellPrice * 5 - buyPrice)
+    expect(result.save.inventory.some((stack) => stack.itemId === 'ITEM-0102')).toBe(true)
+  })
+
+  it('still rejects a buy when gold plus offered sells fall short', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    let save = createNewSave(launch)
+    save = { ...save, gold: 0, currentLocationId: 'LOC-0024' }
+    save = addItemToInventory(save, 'ITEM-0025', 1)
+
+    const result = confirmShopOffer(launch, save, 'SHP-0001', {
+      buys: [{ itemId: 'ITEM-0102', quantity: 1 }],
+      sells: [{ itemId: 'ITEM-0025', quantity: 1 }],
+    })
+    expect(result.ok).toBe(false)
+  })
 })
