@@ -35,7 +35,9 @@ describe('quest multi-deliver and unlocks', () => {
     if (!completed.ok) return
     expect(completed.save.gold).toBe(500)
     expect(completed.save.unlockedLocationIds).toContain('LOC-0026')
+    expect(completed.save.inventory.find((stack) => stack.itemId === 'ITEM-0165')?.quantity).toBe(1)
     expect(completed.rewards.some((reward) => /Alchemy XP/i.test(reward.label))).toBe(true)
+    expect(completed.rewards.some((reward) => /Chef'?s Hat/i.test(reward.label))).toBe(true)
     expect(completed.rewards.some((reward) => /Apothecary/i.test(reward.label))).toBe(true)
 
     const unlocked = locationsForMapView(launch, 'MAP-0006', completed.save).map(

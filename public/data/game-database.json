@@ -9667,8 +9667,8 @@
       "Guaranteed Gold": null,
       "Drop Chance": 22,
       "Reward Table ID": "RWT-0005",
-      "Secondary Drop Chance": null,
-      "Secondary Reward Table ID": null,
+      "Secondary Drop Chance": 10,
+      "Secondary Reward Table ID": "RWT-0115",
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": "Combat is resolved in four-second rounds; Enemy record owns HP, damage, and guaranteed Gold."
@@ -10267,8 +10267,8 @@
       "Guaranteed Gold": null,
       "Drop Chance": 18,
       "Reward Table ID": "RWT-0011",
-      "Secondary Drop Chance": null,
-      "Secondary Reward Table ID": null,
+      "Secondary Drop Chance": 2,
+      "Secondary Reward Table ID": "RWT-0116",
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": "Combat is resolved in four-second rounds; Enemy record owns HP, damage, and guaranteed Gold."
@@ -13809,21 +13809,6 @@
       "Notes": null
     },
     {
-      "Reward Entry ID": "RWE-0032",
-      "Reward Table ID": "RWT-0011",
-      "Reward Table Name": "Pirate Drops",
-      "Purpose": "Enemy item drops",
-      "Reward Type": "Item",
-      "Reward ID / Value": "ITEM-0288",
-      "Weight": 20,
-      "Minimum Quantity": 1,
-      "Maximum Quantity": 1,
-      "Skill ID": null,
-      "XP Amount": null,
-      "Status": "Planned",
-      "Notes": null
-    },
-    {
       "Reward Entry ID": "RWE-0033",
       "Reward Table ID": "RWT-0011",
       "Reward Table Name": "Pirate Drops",
@@ -15780,6 +15765,36 @@
       "Purpose": "Standard Production output",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0072",
+      "Weight": 100,
+      "Minimum Quantity": 1,
+      "Maximum Quantity": 1,
+      "Skill ID": null,
+      "XP Amount": null,
+      "Status": "Planned",
+      "Notes": null
+    },
+    {
+      "Reward Entry ID": "RWE-0164",
+      "Reward Table ID": "RWT-0115",
+      "Reward Table Name": "Goblin Staff Secondary Drop",
+      "Purpose": "Independent Combat drop",
+      "Reward Type": "Item",
+      "Reward ID / Value": "ITEM-0122",
+      "Weight": 100,
+      "Minimum Quantity": 1,
+      "Maximum Quantity": 1,
+      "Skill ID": null,
+      "XP Amount": null,
+      "Status": "Planned",
+      "Notes": null
+    },
+    {
+      "Reward Entry ID": "RWE-0165",
+      "Reward Table ID": "RWT-0116",
+      "Reward Table Name": "Pirate Insignia Secondary Drop",
+      "Purpose": "Independent Combat drop",
+      "Reward Type": "Item",
+      "Reward ID / Value": "ITEM-0288",
       "Weight": 100,
       "Minimum Quantity": 1,
       "Maximum Quantity": 1,
@@ -21070,9 +21085,9 @@
       "Repeatable": "No",
       "Reward XP Skill ID": "SKL-0010",
       "Reward XP Amount": 11000,
-      "Reward Item ID": null,
-      "Reward Item Quantity": null,
-      "Possible Rewards": "11,000 Alchemy XP; unlocks Rose’s Apothecary"
+      "Reward Item ID": "ITEM-0165",
+      "Reward Item Quantity": 1,
+      "Possible Rewards": "11,000 Alchemy XP; Chef's Hat x1; unlocks Rose’s Apothecary"
     }
   ],
   "Achievements": [
