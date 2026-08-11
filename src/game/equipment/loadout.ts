@@ -2,6 +2,7 @@ import type { EquipmentRow, GameDatabase } from '../data/types'
 import type { EquippedStack, PlayerSave } from '../save/types'
 import { addItemToInventory } from '../activity/rewards'
 import { getSkillProgress } from '../activity/xp'
+import { canFitItemQuantity } from '../inventory/capacity'
 import { firstEmptySpellSlot, isSpellEquipment, isSpellSlotId } from '../spells/spells'
 
 export const FOOD_SLOT_ID = 'SLOT-0011'
@@ -114,19 +115,26 @@ export function equipmentRequirementFailure(
   )
 }
 
-/** Unequip a slot, returning any equipped stack to inventory. */
-export function unequipSlot(save: PlayerSave, slotId: string): PlayerSave {
+/**
+ * Unequip a slot, returning any equipped stack to inventory.
+ * Blocked (not performed) when the bag has no room for the returned item, so
+ * gear is never silently destroyed.
+ */
+export function unequipSlot(save: PlayerSave, slotId: string): EquipResult {
   const equipped = slotStack(save, slotId)
-  let next = setSlot(save, slotId, null)
-  if (equipped && equipped.quantity > 0) {
-    next = addItemToInventory(
-      next,
-      equipped.itemId,
-      equipped.quantity,
-      equipped.enchantmentId ?? null,
-    )
+  if (!equipped || equipped.quantity <= 0) {
+    return { ok: true, save: setSlot(save, slotId, null) }
   }
-  return next
+  if (!canFitItemQuantity(save, equipped.itemId, equipped.quantity, equipped.enchantmentId ?? null)) {
+    return { ok: false, reason: 'Not enough inventory space to unequip that item.' }
+  }
+  const next = addItemToInventory(
+    setSlot(save, slotId, null),
+    equipped.itemId,
+    equipped.quantity,
+    equipped.enchantmentId ?? null,
+  )
+  return { ok: true, save: next }
 }
 
 /**
@@ -191,8 +199,19 @@ export function equipInventoryIndex(
       }
     }
     const moveQty = invStack.quantity
-    if (current && (current.itemId !== itemId || current.enchantmentId)) {
-      next = unequipSlot(next, slotId)
+    const swappingItem = current && (current.itemId !== itemId || current.enchantmentId)
+    if (swappingItem) {
+      // Remove the incoming stack first so unequipping the outgoing one can
+      // reuse the slot it frees up, instead of over-conservatively rejecting
+      // a same-size swap.
+      next = removeInventoryAtIndex(next, index, moveQty)
+      const unequipped = unequipSlot(next, slotId)
+      if (!unequipped.ok) return unequipped
+      next = unequipped.save
+      return {
+        ok: true,
+        save: setSlot(next, slotId, { itemId, quantity: moveQty }),
+      }
     }
     const existingQty =
       current?.itemId === itemId && !current.enchantmentId ? current.quantity : 0
@@ -204,16 +223,13 @@ export function equipInventoryIndex(
   }
 
   if (current) {
-    next = unequipSlot(next, slotId)
-    // Index may shift after unequip returns an item to inventory.
-    const refreshed = next.inventory.findIndex(
-      (entry) =>
-        entry.itemId === itemId &&
-        (entry.enchantmentId ?? null) === enchantmentId &&
-        entry.quantity > 0,
-    )
-    if (refreshed < 0) return { ok: false, reason: 'Item is not in inventory.' }
-    next = removeInventoryAtIndex(next, refreshed, 1)
+    // Remove the incoming item first so unequipping the outgoing one can
+    // reuse the slot it frees up, instead of over-conservatively rejecting
+    // a same-size swap.
+    next = removeInventoryAtIndex(next, index, 1)
+    const unequipped = unequipSlot(next, slotId)
+    if (!unequipped.ok) return unequipped
+    next = unequipped.save
   } else {
     next = removeInventoryAtIndex(next, index, 1)
   }
@@ -228,15 +244,24 @@ export function equipInventoryIndex(
   }
 }
 
-/** Place a stack directly into a slot (demo aids / migrations). Removes matching inventory. */
+/**
+ * Place a stack directly into a slot (demo aids / migrations). Removes matching inventory.
+ * Unlike the player-facing equip flow, this force-set helper always proceeds
+ * (falling back to the pre-unequip save if the bag has no room) since it is
+ * only used for test/migration setup, not reachable from normal play.
+ */
 export function equipStackToSlot(
   save: PlayerSave,
   slotId: string,
   itemId: string,
   quantity: number,
 ): PlayerSave {
-  if (quantity <= 0) return unequipSlot(save, slotId)
-  let next = unequipSlot(save, slotId)
+  if (quantity <= 0) {
+    const result = unequipSlot(save, slotId)
+    return result.ok ? result.save : save
+  }
+  const unequipped = unequipSlot(save, slotId)
+  let next = unequipped.ok ? unequipped.save : save
   next = removeItemQuantity(next, itemId, quantity)
   return setSlot(next, slotId, { itemId, quantity })
 }

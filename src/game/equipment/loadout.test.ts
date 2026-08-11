@@ -9,6 +9,7 @@ import type { PlayerSave } from '../save/types'
 import { tryConsumeFoodAfterVictory } from '../combat/food'
 import { gatheringDurationMs } from '../activity/gathering'
 import {
+  equipInventoryIndex,
   equipItemFromInventory,
   equipStackToSlot,
   FOOD_SLOT_ID,
@@ -64,7 +65,10 @@ describe('equipment loadout', () => {
     let save = createNewSave(launch)
     save = { ...save, inventory: [] }
     save = equipStackToSlot(save, FOOD_SLOT_ID, 'ITEM-0058', 4)
-    save = unequipSlot(save, FOOD_SLOT_ID)
+    const unequippedFood = unequipSlot(save, FOOD_SLOT_ID)
+    expect(unequippedFood.ok).toBe(true)
+    if (!unequippedFood.ok) return
+    save = unequippedFood.save
     expect(save.equipment.slots[FOOD_SLOT_ID]).toBeNull()
     expect(save.inventory.find((stack) => stack.itemId === 'ITEM-0058')?.quantity).toBe(4)
   })
@@ -84,8 +88,10 @@ describe('equipment loadout', () => {
     })
 
     const unequipped = unequipSlot(equipped.save, POTION_SLOT_ID)
-    expect(unequipped.equipment.slots[POTION_SLOT_ID]).toBeNull()
-    expect(unequipped.inventory.find((stack) => stack.itemId === 'ITEM-0070')?.quantity).toBe(4)
+    expect(unequipped.ok).toBe(true)
+    if (!unequipped.ok) return
+    expect(unequipped.save.equipment.slots[POTION_SLOT_ID]).toBeNull()
+    expect(unequipped.save.inventory.find((stack) => stack.itemId === 'ITEM-0070')?.quantity).toBe(4)
   })
 
   it('blocks equipping gear below required skill level', () => {
@@ -102,7 +108,10 @@ describe('equipment loadout', () => {
     const { launch } = prepareDatabase(rawDatabase)
     let save = createNewSave(launch)
     // Clear starting Net so ATR is only from pickaxe.
-    save = unequipSlot(save, 'SLOT-0001')
+    const clearedNet = unequipSlot(save, 'SLOT-0001')
+    expect(clearedNet.ok).toBe(true)
+    if (!clearedNet.ok) return
+    save = clearedNet.save
     save = addItemToInventory(save, 'ITEM-0111', 1) // Copper Pickaxe ATR 5
     const equipped = equipItemFromInventory(launch, save, 'ITEM-0111')
     expect(equipped.ok).toBe(true)
@@ -126,6 +135,63 @@ describe('equipment loadout', () => {
     const next = withRecalculatedVitals(launch, save)
     expect(next.maxHp).toBe(1000)
     expect(next.currentHp).toBe(1000)
+  })
+
+  it('blocks unequip when the bag has no room for the returned item', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    let save = createNewSave(launch)
+    save = addItemToInventory(save, 'ITEM-0111', 1) // Copper Pickaxe
+    const equipped = equipItemFromInventory(launch, save, 'ITEM-0111')
+    expect(equipped.ok).toBe(true)
+    if (!equipped.ok) return
+    save = equipped.save
+
+    // Fill every remaining bag slot with unique, non-stacking stacks.
+    const filler = Array.from({ length: 180 - save.inventory.length }, (_, i) => ({
+      itemId: `FILLER-${i}`,
+      quantity: 1,
+    }))
+    save = { ...save, inventory: [...save.inventory, ...filler] }
+    expect(save.inventory).toHaveLength(180)
+
+    const result = unequipSlot(save, 'SLOT-0001')
+    expect(result.ok).toBe(false)
+    if (result.ok) return
+    expect(result.reason).toMatch(/space/i)
+    // Nothing changed: item stays equipped, bag stays full, nothing lost.
+    expect(save.equipment.slots['SLOT-0001']?.itemId).toBe('ITEM-0111')
+    expect(save.inventory).toHaveLength(180)
+  })
+
+  it('still allows a like-for-like tool swap when the bag is exactly full', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    let save = createNewSave(launch)
+    save = addItemToInventory(save, 'ITEM-0111', 1) // Copper Pickaxe, equip it
+    const equipped = equipItemFromInventory(launch, save, 'ITEM-0111')
+    expect(equipped.ok).toBe(true)
+    if (!equipped.ok) return
+    save = equipped.save
+    save = addItemToInventory(save, 'ITEM-0102', 1) // Wooden Pickaxe (also Mining level 1)
+
+    // Fill the bag to exactly 180 including the incoming Wooden Pickaxe stack.
+    const filler = Array.from({ length: 180 - save.inventory.length }, (_, i) => ({
+      itemId: `FILLER-${i}`,
+      quantity: 1,
+    }))
+    save = { ...save, inventory: [...save.inventory, ...filler] }
+    expect(save.inventory).toHaveLength(180)
+
+    // Swapping to a different single-slot tool must not be blocked just
+    // because the bag is full: removing the incoming item frees the slot
+    // the outgoing item needs.
+    const swapIndex = save.inventory.findIndex((stack) => stack.itemId === 'ITEM-0102')
+    const result = equipInventoryIndex(launch, save, swapIndex)
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    expect(result.save.inventory).toHaveLength(180)
+    expect(
+      result.save.inventory.find((stack) => stack.itemId === 'ITEM-0111')?.quantity,
+    ).toBe(1)
   })
 
   it('migrates v3 food item-id slots by pulling inventory into the equipped stack', () => {

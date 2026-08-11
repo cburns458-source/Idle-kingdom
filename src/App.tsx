@@ -805,6 +805,12 @@ export default function App() {
   const pickerActivity = productionPickerActivityId
     ? database.launchIndexes.activitiesById.get(productionPickerActivityId)
     : undefined
+  // Shop/NPC/Special Production/Standard Production browsing always takes
+  // over the status-panel slot, replacing whatever live activity panel
+  // (combat, production progress, gathering, recovery) would otherwise show
+  // underneath — browsing never stops the running Primary Activity, it just
+  // temporarily covers its panel. See docs/Game_Bible.txt section 9.1.
+  const browsePanelOpen = Boolean(activeShopId || activeNpcId || specialStation || pickerActivity)
 
   const fromLocation = database.launchIndexes.locationsById.get(
     travel?.fromLocationId ?? save.currentLocationId,
@@ -1196,7 +1202,7 @@ export default function App() {
                       onConfirm={confirmProduction}
                     />
                   )}
-                  {activity && inCombat && combatEnemy && !activeShopId && !activeNpcId && (
+                  {activity && inCombat && combatEnemy && !browsePanelOpen && (
                     <CombatPanel
                       enemy={combatEnemy}
                       enemyHp={save.combatEnemyHp ?? combatEnemy['Maximum HP']}
@@ -1216,8 +1222,7 @@ export default function App() {
                     inProduction &&
                     productionRecipe &&
                     pauseRemainingMs <= 0 &&
-                    !activeShopId &&
-                    !activeNpcId && (
+                    !browsePanelOpen && (
                     <ProductionProgress
                       db={database.launch}
                       activity={activity}
@@ -1232,10 +1237,7 @@ export default function App() {
                     !inCombat &&
                     !inProduction &&
                     pauseRemainingMs <= 0 &&
-                    !pickerActivity &&
-                    !specialStation &&
-                    !activeShopId &&
-                    !activeNpcId && (
+                    !browsePanelOpen && (
                       <ActivityPanel
                         activity={activity}
                         action={currentAction ?? null}
@@ -1245,7 +1247,10 @@ export default function App() {
                         durationMs={save.actionDurationMs}
                       />
                     )}
-                  {activity && pauseRemainingMs > 0 && !inCombat && !activeShopId && !activeNpcId && (
+                  {activity &&
+                    pauseRemainingMs > 0 &&
+                    !inCombat &&
+                    !browsePanelOpen && (
                     <section className="panel glass-panel">
                       <div className="activity-panel-head">
                         <div>

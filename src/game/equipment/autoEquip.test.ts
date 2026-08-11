@@ -15,12 +15,19 @@ const rawDatabase = JSON.parse(
   readFileSync(resolve(process.cwd(), 'public/data/game-database.json'), 'utf8'),
 )
 
+/** Test helper: unequip a slot, asserting the bag has room (it always does here). */
+function forceUnequip(save: import('../save/types').PlayerSave, slotId: string) {
+  const result = unequipSlot(save, slotId)
+  if (!result.ok) throw new Error(`Expected unequip to succeed: ${result.reason}`)
+  return result.save
+}
+
 describe('auto-equip for activity requirements', () => {
   it('proposes the highest-tier compatible tool in the bag', () => {
     const { launch } = prepareDatabase(rawDatabase)
     let save = createNewSave(launch)
     save = { ...save, currentLocationId: 'LOC-0005' }
-    save = unequipSlot(save, 'SLOT-0001')
+    save = forceUnequip(save, 'SLOT-0001')
     save = addItemToInventory(save, 'ITEM-0102', 1) // Wooden Pickaxe
     save = addItemToInventory(save, 'ITEM-0111', 1) // Copper Pickaxe (higher ATR / tier)
 
@@ -37,7 +44,7 @@ describe('auto-equip for activity requirements', () => {
     const { launch } = prepareDatabase(rawDatabase)
     let save = createNewSave(launch)
     save = { ...save, currentLocationId: 'LOC-0005' }
-    save = unequipSlot(save, 'SLOT-0001')
+    save = forceUnequip(save, 'SLOT-0001')
     save = addItemToInventory(save, 'ITEM-0119', 1) // Steel Pickaxe, Mining 35
     save = addItemToInventory(save, 'ITEM-0111', 1) // Copper Pickaxe
 
@@ -53,7 +60,7 @@ describe('auto-equip for activity requirements', () => {
     const { launch } = prepareDatabase(rawDatabase)
     let save = createNewSave(launch)
     save = { ...save, currentLocationId: 'LOC-0005' }
-    save = unequipSlot(save, 'SLOT-0001')
+    save = forceUnequip(save, 'SLOT-0001')
 
     const blocked = validateActivityStart(launch, save, 'ACT-0005')
     expect(blocked.ok).toBe(false)
@@ -66,7 +73,7 @@ describe('auto-equip for activity requirements', () => {
     const { launch } = prepareDatabase(rawDatabase)
     let save = createNewSave(launch)
     save = { ...save, currentLocationId: 'LOC-0005' }
-    save = unequipSlot(save, 'SLOT-0001')
+    save = forceUnequip(save, 'SLOT-0001')
     save = addItemToInventory(save, 'ITEM-0111', 1)
 
     const blocked = validateActivityStart(launch, save, 'ACT-0005')

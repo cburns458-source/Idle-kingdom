@@ -51,7 +51,10 @@ describe('spell slots and Strength Spell', () => {
     const { launch } = prepareDatabase(rawDatabase)
     let save = createNewSave(launch)
     // Clear hunting net so unarmed range is used.
-    save = unequipSlot(save, 'SLOT-0001')
+    const clearedNet = unequipSlot(save, 'SLOT-0001')
+    expect(clearedNet.ok).toBe(true)
+    if (!clearedNet.ok) return
+    save = clearedNet.save
     const base = playerDamageRange(launch, save, 0)
 
     save = addItemToInventory(save, 'ITEM-0295', 1)

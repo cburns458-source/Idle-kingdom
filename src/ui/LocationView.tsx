@@ -1,4 +1,12 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import {
+  Children,
+  Fragment,
+  isValidElement,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react'
 import { locationAssetPath, uiMapAssetPath } from '../game/assets/assetMap'
 import type { ActivityRow, DatabaseIndexes, GameDatabase, LocationRow } from '../game/data/types'
 import {
@@ -8,6 +16,29 @@ import {
 import { enterSubMapLabel, isSubMapGateway } from '../game/world/submaps'
 import type { PlayerSave } from '../game/save/types'
 import { CritterOverlay } from './CritterOverlay'
+
+/**
+ * True when a ReactNode will actually mount visible UI. App.tsx always
+ * passes `statusPanel` as a `<>...</>` fragment (even when every conditional
+ * child inside is false), so a plain `Boolean(statusPanel)`/truthy check is
+ * always true and would render an empty wrapper. Walk fragments to find out
+ * whether there's real content inside.
+ */
+export function hasRenderableContent(node: ReactNode): boolean {
+  if (node == null || typeof node === 'boolean') return false
+  if (typeof node === 'string') return node.trim().length > 0
+  if (typeof node === 'number') return true
+  if (Array.isArray(node)) return node.some(hasRenderableContent)
+  if (isValidElement(node)) {
+    if (node.type === Fragment) {
+      return hasRenderableContent((node.props as { children?: ReactNode }).children)
+    }
+    // Treat any real element as content; individual panels are responsible
+    // for not rendering an empty fragment themselves once they're mounted.
+    return true
+  }
+  return Children.count(node) > 0
+}
 
 interface LocationViewProps {
   indexes: DatabaseIndexes
@@ -87,6 +118,7 @@ export function LocationView({
     !showSubMapEntrance && (activities.length > 0 || specialStations.length > 0)
   const [activitiesHidden, setActivitiesHidden] = useState(false)
   const shadeRef = useRef<HTMLDivElement | null>(null)
+  const hasStatusPanel = hasRenderableContent(statusPanel)
 
   useEffect(() => {
     setActivitiesHidden(false)
@@ -157,7 +189,7 @@ export function LocationView({
         )}
 
         <div className="location-dock">
-          {statusPanel ? <div className="location-stage">{statusPanel}</div> : null}
+          {hasStatusPanel ? <div className="location-stage">{statusPanel}</div> : null}
 
           <div className="location-bottom-band">
             <div className="location-bottom-panels">

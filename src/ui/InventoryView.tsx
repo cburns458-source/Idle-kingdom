@@ -97,8 +97,13 @@ export function InventoryView({ save, database, onChangeSave }: InventoryViewPro
   }
 
   function unequip(slotId: string) {
+    const result = unequipSlot(save, slotId)
+    if (!result.ok) {
+      setMessage(result.reason)
+      return
+    }
     setMessage(null)
-    commit(unequipSlot(save, slotId))
+    commit(result.save)
   }
 
   function toggleBagSelection(index: number) {
