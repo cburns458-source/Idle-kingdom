@@ -1,4 +1,5 @@
 import { addItemToInventoryExact } from '../activity/rewards'
+import { grantCosmetic } from '../cosmetics/cosmetics'
 import { canFitItemQuantity } from '../inventory/capacity'
 import { removeIngredients } from '../production/inventory'
 import type { GameDatabase } from '../data/types'
@@ -10,6 +11,12 @@ import {
   playerSellPrice,
   shopSellsItem,
 } from './shops'
+
+/** Cosmetic ID(s) newly granted by a shop purchase (for the Wardrobe-unlock popup). */
+export interface ShopCosmeticGrant {
+  cosmeticId: string
+  isFirstEver: boolean
+}
 
 export interface ShopOfferLine {
   itemId: string
@@ -27,6 +34,7 @@ export type ShopTransactionResult =
       save: PlayerSave
       goldDelta: number
       message: string
+      cosmeticsGranted: ShopCosmeticGrant[]
     }
   | { ok: false; reason: string }
 
@@ -94,9 +102,21 @@ export function confirmShopOffer(
   next = { ...next, gold: next.gold + goldDelta }
 
   // Validate bag space after sells free slots, before committing buys.
+  // Cosmetics bypass the bag entirely — they're unlocked into the Wardrobe's
+  // always-owned collection instead, so they never need inventory space.
   let spaceCheck = next
+  const cosmeticGrants: ShopCosmeticGrant[] = []
   for (const line of buys) {
     const qty = Math.floor(line.quantity)
+    const cosmetic = db.Cosmetics.find((row) => row['Item ID'] === line.itemId)
+    if (cosmetic) {
+      const granted = grantCosmetic(spaceCheck, cosmetic['Cosmetic ID'])
+      spaceCheck = granted.save
+      if (granted.granted) {
+        cosmeticGrants.push({ cosmeticId: cosmetic['Cosmetic ID'], isFirstEver: granted.isFirstEver })
+      }
+      continue
+    }
     if (!canFitItemQuantity(spaceCheck, line.itemId, qty)) {
       return { ok: false, reason: 'Not enough inventory space (180 slots).' }
     }
@@ -127,5 +147,6 @@ export function confirmShopOffer(
     save: next,
     goldDelta,
     message: parts.length > 0 ? `Trade complete — ${parts.join(', ')}.` : 'Trade complete.',
+    cosmeticsGranted: cosmeticGrants,
   }
 }

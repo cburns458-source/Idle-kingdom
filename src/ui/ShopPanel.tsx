@@ -9,7 +9,11 @@ import {
   playerSellPrice,
   shopStockEntries,
 } from '../game/shops/shops'
-import { confirmShopOffer, type ShopOfferLine } from '../game/shops/transactions'
+import {
+  confirmShopOffer,
+  type ShopCosmeticGrant,
+  type ShopOfferLine,
+} from '../game/shops/transactions'
 import { CloseButton } from './CloseButton'
 import { ItemIcon } from './itemIcons'
 import { QuantityNumpad } from './QuantityNumpad'
@@ -19,7 +23,7 @@ interface ShopPanelProps {
   save: PlayerSave
   shopId: string
   onClose: () => void
-  onComplete: (save: PlayerSave, message: string) => void
+  onComplete: (save: PlayerSave, message: string, cosmeticsGranted: ShopCosmeticGrant[]) => void
 }
 
 type QtyDialog =
@@ -127,6 +131,16 @@ export function ShopPanel({ db, save, shopId, onClose, onComplete }: ShopPanelPr
     openSellDialog(itemId, unit, name, owned)
   }
 
+  /** Cosmetics are one-time unlocks, not stackable — toggle in/out of the offer instead of a quantity dialog. */
+  function toggleCosmeticBuy(itemId: string) {
+    setError(null)
+    setBuys((current) => {
+      const already = current.find((line) => line.itemId === itemId)
+      if (already) return current.filter((line) => line.itemId !== itemId)
+      return [...current, { itemId, quantity: 1 }]
+    })
+  }
+
   function applyQuantity(quantity: number) {
     if (!qtyDialog) return
     if (qtyDialog.mode === 'buy') {
@@ -146,7 +160,7 @@ export function ShopPanel({ db, save, shopId, onClose, onComplete }: ShopPanelPr
     setError(null)
     setBuys([])
     setSells([])
-    onComplete(result.save, result.message)
+    onComplete(result.save, result.message, result.cosmeticsGranted)
   }
 
   const sellRemaining =
@@ -180,6 +194,7 @@ export function ShopPanel({ db, save, shopId, onClose, onComplete }: ShopPanelPr
           <div className="shop-item-grid" role="list" aria-label="Store stock">
             {stock.map((entry) => {
               const item = db.Items.find((row) => row['Item ID'] === entry.itemId)
+              const isCosmetic = item?.Category === 'Cosmetic'
               const unit = playerBuyPrice(db, shop, entry.itemId)
               const inOffer = buys.find((line) => line.itemId === entry.itemId)?.quantity ?? 0
               const name = item?.['Display Name'] ?? entry.itemId
@@ -193,6 +208,10 @@ export function ShopPanel({ db, save, shopId, onClose, onComplete }: ShopPanelPr
                   title={unit != null ? `${name} · ${unit.toLocaleString()} gold` : name}
                   onClick={() => {
                     if (unit == null) return
+                    if (isCosmetic) {
+                      toggleCosmeticBuy(entry.itemId)
+                      return
+                    }
                     openBuyDialog(entry.itemId, unit, name)
                   }}
                 >

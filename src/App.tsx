@@ -58,6 +58,7 @@ import { completeProductionCraft } from './game/production/engine'
 import { getRecipe, isStandardProductionActivity } from './game/production/recipes'
 import { syncProgressionMeta } from './game/achievements/progress'
 import { applyActivityTimeTowardCritters, spawnCritterAtLocation } from './game/critters/critters'
+import { cosmeticById } from './game/cosmetics/cosmetics'
 import {
   resolveUnattendedProgress,
   stampUnattendedProgressAt,
@@ -78,6 +79,7 @@ import { InventoryView } from './ui/InventoryView'
 import { LocationView } from './ui/LocationView'
 import { LogView } from './ui/LogView'
 import { NamePrompt } from './ui/NamePrompt'
+import { NewCharacterFlow } from './ui/NewCharacterFlow'
 import { NpcPanel } from './ui/NpcPanel'
 import { ProductionPicker, ProductionProgress } from './ui/ProductionPanel'
 import { AutoEquipPrompt } from './ui/AutoEquipPrompt'
@@ -89,6 +91,8 @@ import { SkillsView } from './ui/SkillsView'
 import { ActionRewardList } from './ui/ActionRewardList'
 import { TopHud, type HudActivityStatus } from './ui/TopHud'
 import { TravelOverlay } from './ui/TravelOverlay'
+import { WardrobeModal } from './ui/WardrobeModal'
+import { WardrobeUnlockPopup } from './ui/WardrobeUnlockPopup'
 import { WorldMapView } from './ui/WorldMapView'
 import './App.css'
 
@@ -141,6 +145,11 @@ export default function App() {
     key: number
   } | null>(null)
   const [autoEquipPrompt, setAutoEquipPrompt] = useState<AutoEquipProposal | null>(null)
+  const [wardrobeOpen, setWardrobeOpen] = useState(false)
+  const [wardrobeUnlockPopup, setWardrobeUnlockPopup] = useState<{
+    cosmeticId: string
+    isFirstEver: boolean
+  } | null>(null)
   const bootRef = useRef(boot)
   bootRef.current = boot
 
@@ -1072,6 +1081,13 @@ export default function App() {
           maxHp={maxHp}
           dead={deathLocked}
           activityStatus={hudActivityStatus}
+          onOpenWardrobe={() => {
+            setWardrobeOpen(true)
+            if (!save.hasSeenWardrobeIntro) {
+              updateSave({ ...save, hasSeenWardrobeIntro: true })
+            }
+          }}
+          wardrobeHint={!save.hasSeenWardrobeIntro && save.cosmetics.unlocked.length > 0}
         />
 
         <div className={screen === 'map' ? 'screen-body screen-body-map' : 'screen-body'}>
@@ -1155,9 +1171,16 @@ export default function App() {
                       save={save}
                       shopId={activeShopId}
                       onClose={() => setActiveShopId(null)}
-                      onComplete={(next, message) => {
+                      onComplete={(next, message, cosmeticsGranted) => {
                         updateSave(next)
                         setLastMessage(message)
+                        if (cosmeticsGranted.length > 0) {
+                          const grant = cosmeticsGranted[0]!
+                          setWardrobeUnlockPopup({
+                            cosmeticId: grant.cosmeticId,
+                            isFirstEver: grant.isFirstEver,
+                          })
+                        }
                       }}
                     />
                   )}
@@ -1343,13 +1366,39 @@ export default function App() {
 
         {!save.characterName && (
           <div className="name-prompt-overlay">
-            <NamePrompt
-              onSubmit={(name) => {
-                updateSave({ ...save, characterName: name })
+            <NewCharacterFlow
+              db={database.launch}
+              initialAppearance={save.appearance}
+              onComplete={(name, appearance) => {
+                updateSave({ ...save, characterName: name, appearance })
               }}
             />
           </div>
         )}
+
+        <WardrobeModal
+          db={database.launch}
+          save={save}
+          open={wardrobeOpen}
+          onClose={() => setWardrobeOpen(false)}
+          onChangeSave={updateSave}
+        />
+
+        {wardrobeUnlockPopup &&
+          (() => {
+            const cosmetic = cosmeticById(database.launch, wardrobeUnlockPopup.cosmeticId)
+            const item = cosmetic
+              ? database.launch.Items.find((row) => row['Item ID'] === cosmetic['Item ID'])
+              : undefined
+            return (
+              <WardrobeUnlockPopup
+                cosmeticName={item?.['Display Name'] ?? 'New Cosmetic'}
+                item={item}
+                isFirstEver={wardrobeUnlockPopup.isFirstEver}
+                onClose={() => setWardrobeUnlockPopup(null)}
+              />
+            )
+          })()}
 
         {afkSummary ? (
           <AfkSummaryPanel summary={afkSummary} onClose={() => setAfkSummary(null)} />
