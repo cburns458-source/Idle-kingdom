@@ -790,12 +790,17 @@ button.hud-total-stat:focus-visible {
 }
 
 .location-dock {
+  margin-top: auto;
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   min-height: 0;
   width: 100%;
+}
+
+.location-dock.panel-open {
+  flex: 1 1 auto;
 }
 
 .location-stage {

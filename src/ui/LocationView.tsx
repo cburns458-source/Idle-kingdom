@@ -1,4 +1,12 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import {
+  Children,
+  Fragment,
+  isValidElement,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react'
 import { locationAssetPath, uiMapAssetPath } from '../game/assets/assetMap'
 import type { ActivityRow, DatabaseIndexes, GameDatabase, LocationRow } from '../game/data/types'
 import {
@@ -8,6 +16,23 @@ import {
 import { enterSubMapLabel, isSubMapGateway } from '../game/world/submaps'
 import type { PlayerSave } from '../game/save/types'
 import { CritterOverlay } from './CritterOverlay'
+
+/** True when a ReactNode will actually mount UI (empty fragments count as false). */
+function hasRenderableContent(node: ReactNode): boolean {
+  if (node == null || typeof node === 'boolean') return false
+  if (typeof node === 'string') return node.trim().length > 0
+  if (typeof node === 'number') return true
+  if (Array.isArray(node)) return node.some(hasRenderableContent)
+  if (isValidElement(node)) {
+    if (node.type === Fragment) {
+      return hasRenderableContent((node.props as { children?: ReactNode }).children)
+    }
+    // Treat any real element as content. Children may still be empty, but App
+    // only mounts panel components when they have something to show.
+    return true
+  }
+  return Children.count(node) > 0
+}
 
 interface LocationViewProps {
   indexes: DatabaseIndexes
@@ -87,7 +112,8 @@ export function LocationView({
     !showSubMapEntrance && (activities.length > 0 || specialStations.length > 0)
   const [activitiesHidden, setActivitiesHidden] = useState(false)
   const shadeRef = useRef<HTMLDivElement | null>(null)
-  const panelOpen = Boolean(statusPanel)
+  // App often passes an empty <>...</> fragment; treat that as "no panel".
+  const panelOpen = hasRenderableContent(statusPanel)
 
   useEffect(() => {
     setActivitiesHidden(false)
@@ -160,7 +186,7 @@ export function LocationView({
         )}
 
         <div className={`location-dock${panelOpen ? ' panel-open' : ''}`}>
-          {statusPanel ? <div className="location-stage">{statusPanel}</div> : null}
+          {panelOpen ? <div className="location-stage">{statusPanel}</div> : null}
 
           <div className="location-bottom-band">
             <div className="location-bottom-panels">
