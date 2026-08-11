@@ -419,6 +419,10 @@ button.hud-total-stat:focus-visible {
   margin: 0.55rem 0 0.75rem;
 }
 
+.log-tabs {
+  grid-template-columns: 1fr 1fr 1fr;
+}
+
 .menu-tab {
   appearance: none;
   border: 1px solid rgba(212, 175, 55, 0.28);
@@ -576,10 +580,10 @@ button.hud-total-stat:focus-visible {
 
 .bottom-nav {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 0.4rem;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.25rem;
   flex-shrink: 0;
-  padding-top: 0.4rem;
+  padding-top: 0.35rem;
   border-top: 1px solid rgba(212, 175, 55, 0.22);
 }
 
@@ -602,15 +606,19 @@ button.hud-total-stat:focus-visible {
 .nav-btn {
   appearance: none;
   border: 1px solid rgba(212, 175, 55, 0.22);
-  border-radius: 0.85rem;
-  min-height: 3.15rem;
-  padding: 0.45rem 0.35rem;
+  border-radius: 0.7rem;
+  min-height: 2.55rem;
+  padding: 0.28rem 0.2rem;
   background: rgba(40, 28, 18, 0.55);
   color: #e7d5ad;
   font: inherit;
-  font-size: 0.82rem;
+  font-size: 0.68rem;
   font-weight: 700;
+  line-height: 1.15;
   cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .nav-btn.active {
@@ -621,6 +629,13 @@ button.hud-total-stat:focus-visible {
 
 .nav-btn:disabled {
   opacity: 0.45;
+}
+
+.nav-btn-icon {
+  display: inline-block;
+  font-size: 1.15rem;
+  line-height: 1;
+  font-weight: 700;
 }
 
 .map-view {
@@ -670,12 +685,25 @@ button.hud-total-stat:focus-visible {
     linear-gradient(180deg, rgba(20, 13, 8, 0.42) 0%, rgba(20, 13, 8, 0.18) 28%, rgba(20, 13, 8, 0.72) 100%);
 }
 
+.location-bottom-band {
+  min-height: 33dvh;
+  max-height: 33dvh;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
 .location-bottom-panels {
   margin-top: 0;
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
   padding-bottom: 0;
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow: auto;
 }
 
 .location-stage {
@@ -684,6 +712,12 @@ button.hud-total-stat:focus-visible {
   flex-direction: column;
   gap: 0.35rem;
   flex-shrink: 0;
+  min-height: 0;
+}
+
+.location-stage.location-bottom-band {
+  min-height: 33dvh;
+  max-height: 33dvh;
 }
 
 .location-stage .combat-panel,
@@ -692,6 +726,10 @@ button.hud-total-stat:focus-visible {
 .location-stage .production-progress,
 .location-stage > .panel {
   margin: 0;
+  flex: 0 1 auto;
+  min-height: 0;
+  max-height: 100%;
+  overflow: auto;
 }
 
 .location-overlay-head {
@@ -977,6 +1015,37 @@ button.hud-total-stat:focus-visible {
 
 .shop-qty-actions .btn {
   flex: 1;
+}
+
+.qty-numpad {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.35rem;
+  margin: 0.55rem 0;
+}
+
+.qty-numpad-key {
+  appearance: none;
+  border: 1px solid rgba(212, 175, 55, 0.45);
+  border-radius: 0.85rem;
+  min-height: 2.6rem;
+  padding: 0.55rem 0.65rem;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  color: #fff4d4;
+  background: linear-gradient(180deg, #6a4a30, #45301f);
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.25);
+}
+
+.qty-numpad-key:active {
+  transform: translateY(1px);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.25);
+}
+
+.qty-open-btn {
+  text-align: left;
+  cursor: pointer;
 }
 
 /* Portal to body: above HUD stacking; centered for readability on mobile. */
@@ -1556,6 +1625,60 @@ button.hud-total-stat:focus-visible {
   flex: 1;
   min-width: 0;
   margin-bottom: 0;
+}
+
+.production-station-portrait {
+  position: relative;
+}
+
+.production-craft-float {
+  position: absolute;
+  top: 12%;
+  left: 50%;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.45rem;
+  border-radius: 0.55rem;
+  background: rgba(20, 12, 8, 0.72);
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  color: #fff4d4;
+  font-size: 0.82rem;
+  font-weight: 700;
+  line-height: 1.1;
+  pointer-events: none;
+  white-space: nowrap;
+  text-shadow:
+    0 0 2px rgba(0, 0, 0, 0.85),
+    0 2px 4px rgba(0, 0, 0, 0.55);
+  animation: production-craft-float-pop 2s ease-out forwards;
+  transform: translateX(-50%);
+}
+
+.production-craft-float .item-icon {
+  width: 1.35rem;
+  height: 1.35rem;
+  flex-shrink: 0;
+}
+
+@keyframes production-craft-float-pop {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(0.55rem) scale(0.85);
+  }
+  12% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(1);
+  }
+  70% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(-0.55rem) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-1.1rem) scale(0.96);
+  }
 }
 
 .production-picker select.text-input[size] {

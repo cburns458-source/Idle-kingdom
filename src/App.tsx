@@ -56,12 +56,7 @@ import {
 import { withRecalculatedVitals } from './game/equipment/vitals'
 import { completeProductionCraft } from './game/production/engine'
 import { getRecipe, isStandardProductionActivity } from './game/production/recipes'
-import { asAchievementRows, syncProgressionMeta } from './game/achievements/progress'
-import {
-  asQuestRows,
-  getQuestProgress,
-  questStatusLabel,
-} from './game/quests/quests'
+import { syncProgressionMeta } from './game/achievements/progress'
 import {
   resolveUnattendedProgress,
   stampUnattendedProgressAt,
@@ -80,6 +75,7 @@ import { BottomNav, type AppScreen } from './ui/BottomNav'
 import { CombatPanel } from './ui/CombatPanel'
 import { InventoryView } from './ui/InventoryView'
 import { LocationView } from './ui/LocationView'
+import { LogView } from './ui/LogView'
 import { NamePrompt } from './ui/NamePrompt'
 import { NpcPanel } from './ui/NpcPanel'
 import { ProductionPicker, ProductionProgress } from './ui/ProductionPanel'
@@ -1171,6 +1167,7 @@ export default function App() {
                     !activeShopId &&
                     !activeNpcId && (
                     <ProductionProgress
+                      db={database.launch}
                       activity={activity}
                       recipe={productionRecipe}
                       save={save}
@@ -1239,6 +1236,7 @@ export default function App() {
           {screen === 'inventory' && (
             <InventoryView save={save} database={database} onChangeSave={updateSave} />
           )}
+          {screen === 'log' && <LogView save={save} database={database} />}
           {screen === 'settings' && (
             <SettingsPanel
               save={save}
@@ -1256,7 +1254,16 @@ export default function App() {
           )}
         </div>
 
-        <BottomNav screen={screen} onChange={setScreen} />
+        <BottomNav
+          screen={screen}
+          onChange={setScreen}
+          currentLocationName={location['Display Name']}
+          onOpenMainMap={() => {
+            setBrowseMapId(MAIN_MAP_ID)
+            setSelectedLocationId(save.currentLocationId)
+            setScreen('map')
+          }}
+        />
 
         {travel && fromLocation && toLocation && (
           <TravelOverlay
@@ -1326,13 +1333,10 @@ function SettingsPanel({
   const launchItems = database.launch.Items
   const levelCap = configNumber(database.launch, 'display_level_cap', 100)
 
-  const [menuTab, setMenuTab] = useState<'settings' | 'achievements'>('settings')
   const [selectedSkillId, setSelectedSkillId] = useState(
     launchSkills[0]?.['Skill ID'] ?? 'SKL-0001',
   )
   const [itemSearch, setItemSearch] = useState('')
-  const achievements = asAchievementRows(database.launch)
-  const quests = asQuestRows(database.launch)
   const filteredItems = useMemo(() => {
     const needle = itemSearch.trim().toLowerCase()
     const list = !needle
@@ -1434,227 +1438,150 @@ function SettingsPanel({
   return (
     <section className="panel menu-panel">
       <h1>Menu</h1>
-      <div className="menu-tabs" role="tablist" aria-label="Menu sections">
-        <button
-          type="button"
-          role="tab"
-          aria-selected={menuTab === 'settings'}
-          className={menuTab === 'settings' ? 'menu-tab active' : 'menu-tab'}
-          onClick={() => setMenuTab('settings')}
-        >
-          Settings
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={menuTab === 'achievements'}
-          className={menuTab === 'achievements' ? 'menu-tab active' : 'menu-tab'}
-          onClick={() => setMenuTab('achievements')}
-        >
-          Achievements
-        </button>
-      </div>
+      <div className="menu-tab-panel">
+        <p className="lead">Settings and temporary demo aids.</p>
 
-      {menuTab === 'achievements' ? (
-        <div role="tabpanel" className="menu-tab-panel">
-          <p className="lead">Skill milestones unlocked on this save.</p>
-          <ul className="achievement-list">
-            {achievements.map((achievement) => {
-              const unlocked = save.achievements.some(
-                (row) => row.achievementId === achievement['Achievement ID'] && row.unlocked,
-              )
-              const skillName =
-                database.launch.Skills.find(
-                  (skill) => skill['Skill ID'] === achievement['Target Skill ID'],
-                )?.['Display Name'] ?? 'Skill'
-              return (
-                <li
-                  key={achievement['Achievement ID']}
-                  className={unlocked ? 'unlocked' : undefined}
-                >
-                  <strong>{achievement['Display Name']}</strong>
-                  <span className="muted tiny">
-                    {unlocked
-                      ? 'Unlocked'
-                      : `Reach ${skillName} level ${achievement['Required Level'] ?? 50}`}
-                  </span>
-                </li>
-              )
-            })}
-          </ul>
-
-          <h2 className="menu-section-heading">Quests</h2>
-          <p className="muted tiny">Quest log for this save.</p>
-          <ul className="achievement-list quest-log-list">
-            {quests.map((quest) => {
-              const progress = getQuestProgress(save, quest['Quest ID'])
-              const npcName =
-                database.launch.NPCs.find((npc) => npc['NPC ID'] === quest['NPC ID'])?.[
-                  'Display Name'
-                ] ?? 'NPC'
-              return (
-                <li
-                  key={quest['Quest ID']}
-                  className={progress.status === 'completed' ? 'unlocked' : undefined}
-                >
-                  <div className="quest-log-copy">
-                    <strong>{quest['Display Name']}</strong>
-                    <span className="muted tiny">
-                      {quest.Summary ?? 'No summary.'} · {npcName}
-                    </span>
-                  </div>
-                  <span className="muted tiny">{questStatusLabel(progress.status)}</span>
-                </li>
-              )
-            })}
-          </ul>
+        <div className="menu-name-block">
+          <p className="muted tiny">Character</p>
+          <p className="lead">{save.characterName ?? 'Unnamed'}</p>
+          <button type="button" className="btn secondary" onClick={onStartRename}>
+            Change name
+          </button>
         </div>
-      ) : (
-        <div role="tabpanel" className="menu-tab-panel">
-          <p className="lead">Settings and temporary demo aids.</p>
 
-          <div className="menu-name-block">
-            <p className="muted tiny">Character</p>
-            <p className="lead">{save.characterName ?? 'Unnamed'}</p>
-            <button type="button" className="btn secondary" onClick={onStartRename}>
-              Change name
+        <div className="menu-demo-block">
+          <p className="muted tiny">Activity rewards</p>
+          <p className="muted tiny">
+            Show the recent reward summary on the location background.
+          </p>
+          <button
+            type="button"
+            className="btn secondary"
+            onClick={() =>
+              onChangeSave({
+                ...save,
+                settings: {
+                  ...save.settings,
+                  showActivityRewards: save.settings.showActivityRewards === false,
+                },
+                updatedAt: new Date().toISOString(),
+              })
+            }
+          >
+            {save.settings.showActivityRewards === false
+              ? 'Show activity rewards'
+              : 'Hide activity rewards'}
+          </button>
+        </div>
+
+        <div className="menu-demo-block">
+          <p className="muted tiny">AFK summary</p>
+          <p className="muted tiny">
+            Preview the offline catch-up report shown when you return after time away.
+          </p>
+          <button type="button" className="btn secondary" onClick={onPreviewAfkSummary}>
+            Example AFK summary
+          </button>
+        </div>
+
+        <div className="menu-demo-block">
+          <p className="muted tiny">Raise skill +10</p>
+          <label className="field-label" htmlFor="menu-skill-select">
+            Skill
+          </label>
+          <select
+            id="menu-skill-select"
+            className="text-input"
+            value={selectedSkillId}
+            onChange={(event) => setSelectedSkillId(event.target.value)}
+          >
+            {launchSkills.map((skill) => {
+              const level =
+                save.skills.find((entry) => entry.skillId === skill['Skill ID'])?.level ?? 1
+              return (
+                <option key={skill['Skill ID']} value={skill['Skill ID']}>
+                  {skill['Display Name']} (Lv {level})
+                </option>
+              )
+            })}
+          </select>
+          <div className="button-row">
+            <button type="button" className="btn primary" onClick={raiseSelectedSkillBy10}>
+              Raise skill by 10 levels
+            </button>
+            <button type="button" className="btn secondary" onClick={resetAllSkills}>
+              Reset skills
             </button>
           </div>
+        </div>
 
-          <div className="menu-demo-block">
-            <p className="muted tiny">Activity rewards</p>
-            <p className="muted tiny">
-              Show the recent reward summary on the location background.
-            </p>
+        <div className="menu-demo-block">
+          <p className="muted tiny">Add items ×100</p>
+          <label className="field-label" htmlFor="menu-item-search">
+            Search items
+          </label>
+          <input
+            id="menu-item-search"
+            className="text-input"
+            type="search"
+            enterKeyHint="search"
+            placeholder="Type an item name…"
+            value={itemSearch}
+            onChange={(event) => setItemSearch(event.target.value)}
+            autoComplete="off"
+          />
+          <label className="field-label" htmlFor="menu-item-select">
+            Item
+            {itemSearch.trim()
+              ? ` (${filteredItems.length} shown)`
+              : ` (${launchItems.length})`}
+          </label>
+          {filteredItems.length === 0 ? (
+            <p className="muted tiny">No items match that search.</p>
+          ) : (
+            <select
+              id="menu-item-select"
+              className="text-input"
+              value={
+                filteredItems.some((item) => item['Item ID'] === selectedItemId)
+                  ? selectedItemId
+                  : filteredItems[0]!['Item ID']
+              }
+              onChange={(event) => setSelectedItemId(event.target.value)}
+              size={Math.min(6, Math.max(3, filteredItems.length))}
+            >
+              {filteredItems.map((item) => (
+                <option key={item['Item ID']} value={item['Item ID']}>
+                  {item['Display Name']}
+                </option>
+              ))}
+            </select>
+          )}
+          <div className="button-row">
             <button
               type="button"
-              className="btn secondary"
-              onClick={() =>
-                onChangeSave({
-                  ...save,
-                  settings: {
-                    ...save.settings,
-                    showActivityRewards: save.settings.showActivityRewards === false,
-                  },
-                  updatedAt: new Date().toISOString(),
-                })
-              }
+              className="btn primary"
+              disabled={!selectedItemId || filteredItems.length === 0}
+              onClick={grantSelectedItem100}
             >
-              {save.settings.showActivityRewards === false
-                ? 'Show activity rewards'
-                : 'Hide activity rewards'}
+              Add 100 items
+            </button>
+            <button type="button" className="btn secondary" onClick={clearAllItems}>
+              Clear items
             </button>
           </div>
-
-          <div className="menu-demo-block">
-            <p className="muted tiny">AFK summary</p>
-            <p className="muted tiny">
-              Preview the offline catch-up report shown when you return after time away.
-            </p>
-            <button type="button" className="btn secondary" onClick={onPreviewAfkSummary}>
-              Example AFK summary
-            </button>
-          </div>
-
-          <div className="menu-demo-block">
-            <p className="muted tiny">Raise skill +10</p>
-            <label className="field-label" htmlFor="menu-skill-select">
-              Skill
-            </label>
-            <select
-              id="menu-skill-select"
-              className="text-input"
-              value={selectedSkillId}
-              onChange={(event) => setSelectedSkillId(event.target.value)}
-            >
-              {launchSkills.map((skill) => {
-                const level =
-                  save.skills.find((entry) => entry.skillId === skill['Skill ID'])?.level ?? 1
-                return (
-                  <option key={skill['Skill ID']} value={skill['Skill ID']}>
-                    {skill['Display Name']} (Lv {level})
-                  </option>
-                )
-              })}
-            </select>
-            <div className="button-row">
-              <button type="button" className="btn primary" onClick={raiseSelectedSkillBy10}>
-                Raise skill by 10 levels
-              </button>
-              <button type="button" className="btn secondary" onClick={resetAllSkills}>
-                Reset skills
-              </button>
-            </div>
-          </div>
-
-          <div className="menu-demo-block">
-            <p className="muted tiny">Add items ×100</p>
-            <label className="field-label" htmlFor="menu-item-search">
-              Search items
-            </label>
-            <input
-              id="menu-item-search"
-              className="text-input"
-              type="search"
-              enterKeyHint="search"
-              placeholder="Type an item name…"
-              value={itemSearch}
-              onChange={(event) => setItemSearch(event.target.value)}
-              autoComplete="off"
-            />
-            <label className="field-label" htmlFor="menu-item-select">
-              Item
-              {itemSearch.trim()
-                ? ` (${filteredItems.length} shown)`
-                : ` (${launchItems.length})`}
-            </label>
-            {filteredItems.length === 0 ? (
-              <p className="muted tiny">No items match that search.</p>
-            ) : (
-              <select
-                id="menu-item-select"
-                className="text-input"
-                value={
-                  filteredItems.some((item) => item['Item ID'] === selectedItemId)
-                    ? selectedItemId
-                    : filteredItems[0]!['Item ID']
-                }
-                onChange={(event) => setSelectedItemId(event.target.value)}
-                size={Math.min(6, Math.max(3, filteredItems.length))}
-              >
-                {filteredItems.map((item) => (
-                  <option key={item['Item ID']} value={item['Item ID']}>
-                    {item['Display Name']}
-                  </option>
-                ))}
-              </select>
-            )}
-            <div className="button-row">
-              <button
-                type="button"
-                className="btn primary"
-                disabled={!selectedItemId || filteredItems.length === 0}
-                onClick={grantSelectedItem100}
-              >
-                Add 100 items
-              </button>
-              <button type="button" className="btn secondary" onClick={clearAllItems}>
-                Clear items
-              </button>
-            </div>
-          </div>
-
-          <div className="button-row">
-            <button type="button" className="btn secondary" onClick={clearGold}>
-              Clear gold
-            </button>
-          </div>
-          <p className="muted tiny">
-            Demo aids: raise/reset skills, grant or clear items, and clear gold. Clear items empties
-            inventory and equipment.
-          </p>
         </div>
-      )}
+
+        <div className="button-row">
+          <button type="button" className="btn secondary" onClick={clearGold}>
+            Clear gold
+          </button>
+        </div>
+        <p className="muted tiny">
+          Demo aids: raise/reset skills, grant or clear items, and clear gold. Clear items empties
+          inventory and equipment.
+        </p>
+      </div>
     </section>
   )
 }

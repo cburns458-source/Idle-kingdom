@@ -20,6 +20,7 @@ import { isSpellItem, spellEffectEnchantmentId, spellTooltipLines } from '../gam
 import type { PlayerSave } from '../game/save/types'
 import { IngredientIconList } from './IngredientIcons'
 import { ItemIcon } from './itemIcons'
+import { QuantityNumpad } from './QuantityNumpad'
 
 function projectOptionLabel(project: ProjectRow, db: GameDatabase): string {
   const outputId = project['Output Item / Target ID']
@@ -98,6 +99,7 @@ export function ProjectPicker({
     enchantTargets.find((target) => target.preferred)?.id ?? enchantTargets[0]?.id ?? ''
   const [enchantTargetId, setEnchantTargetId] = useState(preferredTargetId)
   const [quantity, setQuantity] = useState(1)
+  const [qtyOpen, setQtyOpen] = useState(false)
 
   useEffect(() => {
     if (filteredProjects.length === 0) return
@@ -212,16 +214,15 @@ export function ProjectPicker({
                   <label className="field-label" htmlFor="project-qty">
                     Quantity (max {maxQty})
                   </label>
-                  <input
+                  <button
                     id="project-qty"
-                    className="text-input"
-                    type="number"
-                    min={1}
-                    max={Math.max(1, maxQty)}
-                    value={clampedQty}
+                    type="button"
+                    className="text-input qty-open-btn"
                     disabled={!canCraft}
-                    onChange={(event) => setQuantity(Number(event.target.value) || 1)}
-                  />
+                    onClick={() => setQtyOpen(true)}
+                  >
+                    {clampedQty.toLocaleString()}
+                  </button>
                 </>
               )}
               {isEnchant && (
@@ -271,6 +272,22 @@ export function ProjectPicker({
             </>
           )}
         </>
+      )}
+
+      {qtyOpen && project && !isEnchant && (
+        <QuantityNumpad
+          title={project['Display Name']}
+          subtitle="Project quantity"
+          details={<p className="muted tiny">Max {maxQty.toLocaleString()}</p>}
+          confirmLabel="Set quantity"
+          initialValue={clampedQty}
+          max={Math.max(1, maxQty)}
+          onCancel={() => setQtyOpen(false)}
+          onConfirm={(next) => {
+            setQuantity(next)
+            setQtyOpen(false)
+          }}
+        />
       )}
     </section>
   )

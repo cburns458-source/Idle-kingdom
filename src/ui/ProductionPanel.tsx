@@ -14,6 +14,9 @@ import type { PlayerSave } from '../game/save/types'
 import { formatDurationSeconds } from './formatDuration'
 import { IngredientIconList } from './IngredientIcons'
 import { ItemIcon } from './itemIcons'
+import { QuantityNumpad } from './QuantityNumpad'
+import { playerCombatAssetPath } from '../game/assets/playerAssets'
+import { workstationAssetPath } from '../game/assets/workstationAssets'
 
 interface ProductionPickerProps {
   db: GameDatabase
@@ -40,6 +43,7 @@ export function ProductionPicker({
   const queueMax = recipe ? maxCraftsFromQueueCap(db, recipe) : 0
   const maxQty = recipe ? clampProductionQuantity(db, save, recipe, 999999) : 0
   const [quantity, setQuantity] = useState(1)
+  const [qtyOpen, setQtyOpen] = useState(false)
 
   const clampedQty = Math.min(Math.max(1, quantity), Math.max(1, maxQty || 1))
 
@@ -85,15 +89,14 @@ export function ProductionPicker({
                 Quantity (max {maxQty}: materials {materialMax}, queue {queueMax})
               </label>
               <div className="production-qty-row">
-                <input
+                <button
                   id="recipe-qty"
-                  className="text-input"
-                  type="number"
-                  min={1}
-                  max={Math.max(1, maxQty)}
-                  value={clampedQty}
-                  onChange={(event) => setQuantity(Number(event.target.value) || 1)}
-                />
+                  type="button"
+                  className="text-input qty-open-btn"
+                  onClick={() => setQtyOpen(true)}
+                >
+                  {clampedQty.toLocaleString()}
+                </button>
                 <button
                   type="button"
                   className="btn secondary"
@@ -118,6 +121,26 @@ export function ProductionPicker({
             </>
           )}
         </>
+      )}
+
+      {qtyOpen && recipe && (
+        <QuantityNumpad
+          title={recipe['Display Name']}
+          subtitle="Queue quantity"
+          details={
+            <p className="muted tiny">
+              Max {maxQty.toLocaleString()} (materials {materialMax}, queue {queueMax})
+            </p>
+          }
+          confirmLabel="Set quantity"
+          initialValue={clampedQty}
+          max={Math.max(1, maxQty)}
+          onCancel={() => setQtyOpen(false)}
+          onConfirm={(next) => {
+            setQuantity(next)
+            setQtyOpen(false)
+          }}
+        />
       )}
     </section>
   )
@@ -160,19 +183,24 @@ function RecipeDetails({
 }
 
 interface ProductionProgressProps {
+  db: GameDatabase
   activity: ActivityRow
   recipe: RecipeRow
   save: PlayerSave
   progress: number
   onStop: () => void
+  /** Optional floating craft completion over the workstation. */
+  craftPopup?: { itemId: string; name: string; key: number } | null
 }
 
 export function ProductionProgress({
+  db,
   activity,
   recipe,
   save,
   progress,
   onStop,
+  craftPopup = null,
 }: ProductionProgressProps) {
   const total = save.productionQuantityTotal ?? 0
   const remaining = save.productionQuantityRemaining ?? 0
@@ -183,33 +211,79 @@ export function ProductionProgress({
   const craftRemainingSeconds = Math.max(0, craftSeconds - clamped * craftSeconds)
   const upcomingCrafts = Math.max(0, remaining - (remaining > 0 ? 1 : 0))
   const queueRemainingSeconds = craftRemainingSeconds + upcomingCrafts * craftSeconds
-  const output = recipe['Display Name']
+  const stationArt = workstationAssetPath(recipe['Facility ID'])
+  const outputItem = db.Items.find((item) => item['Item ID'] === recipe['Output Item ID'])
+  const popupItem = craftPopup
+    ? db.Items.find((item) => item['Item ID'] === craftPopup.itemId)
+    : undefined
 
   return (
-    <section className="panel activity-panel">
+    <section className="panel activity-panel gather-panel production-progress-panel" aria-label="Production">
       <div className="activity-panel-head">
         <div>
           <h2>{activity['Contextual Name'] ?? activity['Internal Key']}</h2>
+          <p className="muted tiny">
+            {recipe['Display Name']} · {completed}/{total} ·{' '}
+            {formatDurationSeconds(queueRemainingSeconds)} left
+          </p>
         </div>
         <button type="button" className="btn secondary" onClick={onStop}>
           Stop
         </button>
       </div>
-      <p className="lead">
-        Crafting <strong>{output}</strong>
-      </p>
-      <p className="muted">
-        {completed}/{total}
-      </p>
-      <p className="lead">
-        Total time remaining: <strong>{formatDurationSeconds(queueRemainingSeconds)}</strong>
-      </p>
-      <div className="action-bar">
-        <div className="action-bar-fill" style={{ width: `${pct}%` }} />
+
+      <div className="combat-layout gather-layout">
+        <div className="combat-side combat-player-side">
+          <div className="combat-portrait combat-portrait-player">
+            <div
+              className="combat-player-art"
+              style={{ backgroundImage: `url(${playerCombatAssetPath()})` }}
+              role="img"
+              aria-label="Adventurer"
+            />
+          </div>
+        </div>
+
+        <div className="combat-side combat-enemy-side">
+          <div className="combat-portrait combat-portrait-enemy production-station-portrait">
+            <div
+              className="combat-enemy-art gather-action-art production-station-art"
+              style={{ backgroundImage: `url(${stationArt})` }}
+              role="img"
+              aria-label={recipe['Display Name']}
+            />
+            {craftPopup && (
+              <div key={craftPopup.key} className="production-craft-float" aria-live="polite">
+                <ItemIcon item={popupItem ?? outputItem} />
+                <span>{craftPopup.name}</span>
+              </div>
+            )}
+          </div>
+          <div className="combat-meta combat-meta-enemy">
+            <p className="combat-enemy-name">{recipe['Display Name']}</p>
+          </div>
+        </div>
       </div>
-      <p className="muted tiny">
-        <strong>{formatDurationSeconds(craftRemainingSeconds)}</strong>
-      </p>
+
+      <div className="gather-progress-row">
+        <div
+          className="combat-round-bar gather-progress-bar"
+          role="progressbar"
+          aria-label="Craft progress"
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={pct}
+        >
+          <div
+            className="combat-round-bar-fill gather-progress-fill"
+            style={{ transform: `scaleX(${clamped})` }}
+          />
+        </div>
+        <p className="gather-progress-time muted tiny">
+          {formatDurationSeconds(Math.max(0, craftSeconds - craftRemainingSeconds))} /{' '}
+          {formatDurationSeconds(craftSeconds)}
+        </p>
+      </div>
     </section>
   )
 }
