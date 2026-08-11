@@ -1,4 +1,3 @@
-import { configNumber } from '../activity/gathering'
 import type { EquipmentRow, GameDatabase, ItemRow } from '../data/types'
 import { getEnchantment } from '../projects/projects'
 import type { EquippedStack, PlayerSave } from '../save/types'
@@ -14,28 +13,6 @@ export type SpellSlotId = (typeof SPELL_SLOT_IDS)[number]
 
 export function isSpellSlotId(slotId: string): slotId is SpellSlotId {
   return (SPELL_SLOT_IDS as readonly string[]).includes(slotId)
-}
-
-export function spellCycleDurationMs(db: GameDatabase): number {
-  return Math.max(1_000, configNumber(db, 'spell_cycle_duration', 3600) * 1000)
-}
-
-/** Which of the four spell slots is currently active in the global cycle. */
-export function activeSpellSlotIndex(db: GameDatabase, nowMs: number = Date.now()): number {
-  const duration = spellCycleDurationMs(db)
-  return Math.floor(nowMs / duration) % SPELL_SLOT_IDS.length
-}
-
-export function activeSpellSlotId(db: GameDatabase, nowMs: number = Date.now()): SpellSlotId {
-  return SPELL_SLOT_IDS[activeSpellSlotIndex(db, nowMs)]!
-}
-
-export function activeSpellSlotRemainingMs(
-  db: GameDatabase,
-  nowMs: number = Date.now(),
-): number {
-  const duration = spellCycleDurationMs(db)
-  return duration - (nowMs % duration)
 }
 
 function capabilityTags(effects: string | null | undefined): string[] {
@@ -70,6 +47,16 @@ export function firstEmptySpellSlot(save: PlayerSave): SpellSlotId | null {
   return null
 }
 
+/** All equipped spell stacks (empty slots omitted). Effects from each stack apply. */
+export function equippedSpellStacks(save: PlayerSave): EquippedStack[] {
+  const out: EquippedStack[] = []
+  for (const slotId of SPELL_SLOT_IDS) {
+    const stack = save.equipment.slots[slotId]
+    if (stack?.itemId) out.push(stack)
+  }
+  return out
+}
+
 export function spellEffectEnchantmentId(
   db: GameDatabase,
   itemId: string,
@@ -89,40 +76,36 @@ export function spellEffectEnchantmentId(
   return null
 }
 
-export function activeSpellStack(
-  save: PlayerSave,
-  db: GameDatabase,
-  nowMs: number = Date.now(),
-): EquippedStack | null {
-  const slotId = activeSpellSlotId(db, nowMs)
-  return save.equipment.slots[slotId] ?? null
+/** Damage-range bonus percent contributed by one spell item (0 if none). */
+export function spellDamageRangeBonusPercent(db: GameDatabase, itemId: string): number {
+  const equipment = db.Equipment.find((row) => row['Item ID'] === itemId)
+  for (const tag of capabilityTags(equipment?.['Capabilities / Effects'])) {
+    const match = tag.match(/^damage_range_bonus_percent:(\d+(?:\.\d+)?)$/)
+    if (match) return Number(match[1])
+  }
+
+  const enchantmentId = spellEffectEnchantmentId(db, itemId)
+  const enchantment = enchantmentId ? getEnchantment(db, enchantmentId) : undefined
+  const effect = enchantment?.Effect ?? ''
+  const match = effect.match(/\+(\d+(?:\.\d+)?)%\s*damage range/i)
+  if (match) return Number(match[1])
+  return 0
 }
 
 /**
- * Multiplier applied to the player's damage range from the active cycling spell.
- * Strength Spell: +10% => 1.10
+ * Multiplier from all equipped spells. Same bonus types add (2× Strength = +20% => 1.20).
+ * `nowMs` is unused (kept for call-site compatibility after the cycle removal).
  */
 export function activeSpellDamageRangeMultiplier(
   db: GameDatabase,
   save: PlayerSave,
-  nowMs: number = Date.now(),
+  _nowMs: number = Date.now(),
 ): number {
-  const stack = activeSpellStack(save, db, nowMs)
-  if (!stack?.itemId) return 1
-
-  const equipment = db.Equipment.find((row) => row['Item ID'] === stack.itemId)
-  for (const tag of capabilityTags(equipment?.['Capabilities / Effects'])) {
-    const match = tag.match(/^damage_range_bonus_percent:(\d+(?:\.\d+)?)$/)
-    if (match) return 1 + Number(match[1]) / 100
+  let bonusPercent = 0
+  for (const stack of equippedSpellStacks(save)) {
+    bonusPercent += spellDamageRangeBonusPercent(db, stack.itemId)
   }
-
-  const enchantmentId = spellEffectEnchantmentId(db, stack.itemId)
-  const enchantment = enchantmentId ? getEnchantment(db, enchantmentId) : undefined
-  const effect = enchantment?.Effect ?? ''
-  const match = effect.match(/\+(\d+(?:\.\d+)?)%\s*damage range/i)
-  if (match) return 1 + Number(match[1]) / 100
-
-  return 1
+  return 1 + bonusPercent / 100
 }
 
 export function spellTooltipLines(
@@ -136,6 +119,6 @@ export function spellTooltipLines(
   if (enchantment?.['Display Name']) lines.push(enchantment['Display Name'])
   if (enchantment?.Effect) lines.push(enchantment.Effect)
   else if (item?.Description) lines.push(item.Description)
-  lines.push('Cycles through spell slots — 1 hour each.')
+  lines.push('Always active while equipped. Duplicate spells stack.')
   return lines
 }

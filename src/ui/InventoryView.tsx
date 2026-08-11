@@ -15,8 +15,6 @@ import { sellInventoryIndexes, sellPriceAtLocation } from '../game/inventory/sel
 import { enchantmentTooltipLines } from '../game/projects/enchantments'
 import type { PlayerSave } from '../game/save/types'
 import {
-  activeSpellSlotId,
-  activeSpellSlotRemainingMs,
   isSpellItem,
   isSpellSlotId,
   spellTooltipLines,
@@ -65,8 +63,6 @@ export function InventoryView({ save, database, onChangeSave }: InventoryViewPro
   const dr = playerDamageReduction(db, save)
   const selectedCount = selectedIndexes.size
   const slotCount = inventorySlotCount(save)
-  const activeSpellSlot = activeSpellSlotId(db)
-  const spellCycleSecondsLeft = Math.ceil(activeSpellSlotRemainingMs(db) / 1000)
   const selectedSellGold = [...selectedIndexes].reduce((sum, index) => {
     const stack = save.inventory[index]
     if (!stack || stack.enchantmentId) return sum
@@ -319,7 +315,6 @@ export function InventoryView({ save, database, onChangeSave }: InventoryViewPro
               const spellLines = stack && isSpellItem(db, stack.itemId)
                 ? spellTooltipLines(db, item, stack.itemId)
                 : []
-              const isActiveSpell = isSpellSlotId(slotId) && slotId === activeSpellSlot
               const tipText = stack
                 ? [
                     `${item?.['Display Name'] ?? stack.itemId}${
@@ -328,14 +323,12 @@ export function InventoryView({ save, database, onChangeSave }: InventoryViewPro
                     ...equipmentTooltipStatLines(equipment),
                     ...enchantLines,
                     ...spellLines,
-                    isActiveSpell ? 'Active spell slot' : null,
                   ]
                     .filter(Boolean)
                     .join('\n')
                 : [
                     slot?.['Display Name'] ?? slotId,
-                    isSpellSlotId(slotId) ? 'Equip a spell from your bag.' : null,
-                    isActiveSpell ? 'Active spell slot' : null,
+                    isSpellSlotId(slotId) ? 'Equip a spell from your bag. Spells are always active.' : null,
                   ]
                     .filter(Boolean)
                     .join('\n')
@@ -347,7 +340,6 @@ export function InventoryView({ save, database, onChangeSave }: InventoryViewPro
                     className={[
                       stack ? 'equip-slot-tile filled' : 'equip-slot-tile empty',
                       enchanted ? 'enchanted' : '',
-                      isActiveSpell ? 'spell-slot-active' : '',
                     ]
                       .filter(Boolean)
                       .join(' ')}
@@ -371,7 +363,7 @@ export function InventoryView({ save, database, onChangeSave }: InventoryViewPro
             })}
           </ul>
           <p className="muted tiny">
-            Spell slots cycle every hour. Active slot changes in {spellCycleSecondsLeft}s.
+            Equipped spells are always active. Duplicate spells stack.
           </p>
           <p className="muted tiny">
             Hold a slot for its name, combat stats, and enchantment. Tap equipped gear to unequip.

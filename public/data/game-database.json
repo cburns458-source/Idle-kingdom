@@ -118,7 +118,7 @@
       "Key": "spell_cycle_duration",
       "Value": 3600,
       "Unit": "seconds",
-      "Notes": "Duration each spell slot remains the active player spell before cycling to the next."
+      "Notes": "Deprecated — equipped spells are always active. Kept for older clients; unused by current runtime."
     }
   ],
   "Skills": [
