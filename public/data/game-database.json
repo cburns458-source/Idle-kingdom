@@ -7769,7 +7769,7 @@
       "Min Damage": null,
       "Max Damage": null,
       "HP Bonus": 578,
-      "Damage Reduction": 7,
+      "Damage Reduction": 10,
       "Healing Amount": null,
       "Action Time Reduction %": null,
       "Capabilities / Effects": "combat_armor",
