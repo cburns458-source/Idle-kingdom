@@ -15,6 +15,7 @@ function sampleSave(skills: Array<{ skillId: string; level: number; xp: number }
     achievements: [],
     statistics: { values: {} },
     unlockedNpcIds: [],
+    unlockedRecipeIds: [],
     unlockedLocationIds: [],
     claimedMerchantTipIds: [],
     critterCollections: [],

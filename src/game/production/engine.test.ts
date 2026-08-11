@@ -149,7 +149,7 @@ describe('standard production', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const save = createNewSave(launch)
     const luck = getRecipe(launch, 'RCP-0053')!
-    expect(canKnowRecipe(save, luck)).toBe(false)
+    expect(canKnowRecipe(save, launch, luck)).toBe(false)
     expect(recipesForActivity(launch, save, 'ACT-0020')).toHaveLength(0)
   })
 })

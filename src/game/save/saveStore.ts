@@ -64,6 +64,7 @@ export function createNewSave(db: GameDatabase): PlayerSave {
     achievements: [],
     statistics: { values: {} },
     unlockedNpcIds: [],
+    unlockedRecipeIds: [],
     unlockedLocationIds: [],
     claimedMerchantTipIds: [],
     critterCollections: [],

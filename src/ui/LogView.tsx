@@ -4,9 +4,11 @@ import { critterAssetPath } from '../game/assets/critterAssets'
 import { CRITTER_DEFS, collectionCount } from '../game/critters/critters'
 import type { LoadedDatabase } from '../game/data/loadDatabase'
 import { asQuestRows, getQuestProgress, questStatusLabel } from '../game/quests/quests'
+import { questObjectiveProgress } from '../game/quests/objectives'
+import { listRecipeBookEntries } from '../game/recipes/knowledge'
 import type { PlayerSave } from '../game/save/types'
 
-type LogTab = 'achievements' | 'quests' | 'critters'
+type LogTab = 'achievements' | 'quests' | 'recipes' | 'critters'
 
 interface LogViewProps {
   save: PlayerSave
@@ -17,6 +19,7 @@ export function LogView({ save, database }: LogViewProps) {
   const [tab, setTab] = useState<LogTab>('achievements')
   const achievements = asAchievementRows(database.launch)
   const quests = asQuestRows(database.launch)
+  const recipes = listRecipeBookEntries(save, database.launch)
 
   return (
     <section className="panel menu-panel log-panel">
@@ -39,6 +42,15 @@ export function LogView({ save, database }: LogViewProps) {
           onClick={() => setTab('quests')}
         >
           Quests
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={tab === 'recipes'}
+          className={tab === 'recipes' ? 'menu-tab active' : 'menu-tab'}
+          onClick={() => setTab('recipes')}
+        >
+          Recipe Book
         </button>
         <button
           type="button"
@@ -91,6 +103,10 @@ export function LogView({ save, database }: LogViewProps) {
                 database.launch.NPCs.find((npc) => npc['NPC ID'] === quest['NPC ID'])?.[
                   'Display Name'
                 ] ?? 'NPC'
+              const objectives =
+                progress.status === 'active'
+                  ? questObjectiveProgress(database.launch, save, quest)
+                  : null
               return (
                 <li
                   key={quest['Quest ID']}
@@ -101,11 +117,79 @@ export function LogView({ save, database }: LogViewProps) {
                     <span className="muted tiny">
                       {quest.Summary ?? 'No summary.'} · {npcName}
                     </span>
+                    {objectives && objectives.progressLines.length > 0 && (
+                      <ul className="quest-objective-list">
+                        {objectives.progressLines.map((line) => {
+                          const pct = Math.min(
+                            100,
+                            Math.floor((line.current / Math.max(1, line.required)) * 100),
+                          )
+                          return (
+                            <li key={line.key} className="quest-objective-row">
+                              <span className="muted tiny">
+                                {line.label}: {Math.min(line.current, line.required)}/
+                                {line.required}
+                              </span>
+                              <span
+                                className="quest-progress-bar"
+                                role="progressbar"
+                                aria-valuenow={pct}
+                                aria-valuemin={0}
+                                aria-valuemax={100}
+                              >
+                                <span style={{ width: `${pct}%` }} />
+                              </span>
+                            </li>
+                          )
+                        })}
+                      </ul>
+                    )}
                   </div>
                   <span className="muted tiny">{questStatusLabel(progress.status)}</span>
                 </li>
               )
             })}
+          </ul>
+        </div>
+      )}
+
+      {tab === 'recipes' && (
+        <div role="tabpanel" className="menu-tab-panel">
+          <p className="lead">Known recipes and special projects for this save.</p>
+          <ul className="achievement-list recipe-book-list">
+            {recipes.map((entry) => (
+              <li
+                key={`${entry.kind}-${entry.id}`}
+                className={entry.known ? 'unlocked' : 'recipe-unknown'}
+              >
+                <span
+                  className={entry.known ? 'recipe-book-mark' : 'recipe-book-mark unknown'}
+                  aria-hidden
+                />
+                <div className="quest-log-copy">
+                  <strong>
+                    {entry.known
+                      ? entry.name
+                      : entry.hintUnknown
+                        ? 'Unknown recipe'
+                        : `Locked · ${entry.skill} ${entry.proficiency}`}
+                  </strong>
+                  {entry.known ? (
+                    <span className="muted tiny">
+                      {entry.kind === 'project' ? 'Project' : 'Recipe'} · {entry.skill}{' '}
+                      {entry.proficiency} · {entry.station} ({entry.location}) · {entry.materials} →{' '}
+                      {entry.output}
+                    </span>
+                  ) : (
+                    <span className="muted tiny">
+                      {entry.hintUnknown
+                        ? entry.knowledgeSource
+                        : `Unlocks at ${entry.skill} level ${entry.proficiency}`}
+                    </span>
+                  )}
+                </div>
+              </li>
+            ))}
           </ul>
         </div>
       )}

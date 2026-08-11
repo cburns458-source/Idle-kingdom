@@ -1634,6 +1634,53 @@ button.hud-total-stat:focus-visible {
   min-width: 0;
 }
 
+.quest-objective-list {
+  list-style: none;
+  margin: 0.35rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.3rem;
+}
+
+.quest-objective-row {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.quest-progress-bar {
+  display: block;
+  height: 0.35rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.quest-progress-bar > span {
+  display: block;
+  height: 100%;
+  background: rgba(212, 175, 90, 0.75);
+}
+
+.recipe-book-list li {
+  align-items: center;
+}
+
+.recipe-book-mark {
+  flex-shrink: 0;
+  width: 2.2rem;
+  height: 2.2rem;
+  border-radius: 0.35rem;
+  border: 1px solid rgba(212, 175, 55, 0.4);
+  background: linear-gradient(145deg, rgba(212, 175, 90, 0.35), rgba(20, 13, 8, 0.55));
+}
+
+.recipe-book-mark.unknown,
+.recipe-book-list li.recipe-unknown .recipe-book-mark {
+  background: rgba(20, 13, 8, 0.45);
+  border-style: dashed;
+  opacity: 0.65;
+}
+
 .critter-log-list li {
   align-items: center;
 }

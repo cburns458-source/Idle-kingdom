@@ -1,10 +1,12 @@
 import { addItemToInventory } from '../activity/rewards'
 import { applyXp } from '../activity/xp'
 import type { GameDatabase } from '../data/types'
+import { unlockRecipeId } from '../recipes/knowledge'
 import { removeIngredients } from '../production/inventory'
 import type { PlayerSave, QuestProgress } from '../save/types'
 import { unlockLocation } from '../world/submaps'
-import { parseQuestObjectives, questObjectiveProgress } from './objectives'
+import { parseStructuredObjectives, questObjectiveProgress } from './objectives'
+import { applyQuestLearnRecipeProgress } from './progress'
 
 export interface QuestRow {
   'Quest ID': string
@@ -114,19 +116,22 @@ export function completeQuest(
     return { ok: false, reason: 'Accept this quest before turning it in.' }
   }
 
-  const parsed = parseQuestObjectives(quest)
-  if (parsed.delivers.length === 0 && parsed.goldCost <= 0) {
+  const parsed = parseStructuredObjectives(quest)
+  const hasObjectives =
+    parsed.delivers.length > 0 ||
+    parsed.defeatTargets.length > 0 ||
+    parsed.processTargets.length > 0 ||
+    parsed.learnRecipeIds.length > 0 ||
+    parsed.goldCost > 0
+  if (!hasObjectives) {
     return { ok: false, reason: 'Quest objectives are incomplete in data.' }
   }
 
   const status = questObjectiveProgress(db, save, quest)
   if (!status.ready) {
-    const missing = status.lines
-      .filter((line) => line.owned < line.required)
-      .map((line) => `${line.required} ${line.name}`)
-    if (status.goldOwned < status.goldRequired) {
-      missing.push(`${status.goldRequired.toLocaleString()} gold`)
-    }
+    const missing = status.progressLines
+      .filter((line) => line.current < line.required)
+      .map((line) => `${line.required} ${line.label.replace(/^(Deliver|Defeat|Craft|Learn)\s+/i, '')}`)
     return {
       ok: false,
       reason: missing.length > 0 ? `Need ${missing.join(', ')}.` : 'Objectives incomplete.',
@@ -137,7 +142,7 @@ export function completeQuest(
   if (parsed.delivers.length > 0) {
     const removed = removeIngredients(
       next,
-      parsed.delivers.map((line) => ({ itemId: line.itemId, quantity: line.quantity })),
+      parsed.delivers.map((line) => ({ itemId: line.targetId, quantity: line.quantity })),
       1,
     )
     if (!removed) return { ok: false, reason: 'Missing required items.' }
@@ -184,9 +189,33 @@ export function completeQuest(
     }
   }
 
+  for (const recipeId of parsed.rewardRecipeIds) {
+    const before = next.unlockedRecipeIds?.length ?? 0
+    next = unlockRecipeId(next, recipeId)
+    if ((next.unlockedRecipeIds?.length ?? 0) > before) {
+      next = applyQuestLearnRecipeProgress(db, next, recipeId)
+      const name =
+        db.Recipes.find((recipe) => recipe['Recipe ID'] === recipeId)?.['Display Name'] ??
+        recipeId
+      rewards.push({ label: `Learned ${name}` })
+    }
+  }
+
+  for (const npcId of parsed.rewardProjectNpcIds) {
+    if (!(next.unlockedNpcIds ?? []).includes(npcId)) {
+      next = {
+        ...next,
+        unlockedNpcIds: [...(next.unlockedNpcIds ?? []), npcId],
+      }
+      const name =
+        db.NPCs.find((npc) => npc['NPC ID'] === npcId)?.['Display Name'] ?? npcId
+      rewards.push({ label: `Project knowledge from ${name}` })
+    }
+  }
+
   const nextQuests = next.quests.filter((row) => row.questId !== questId)
-  const progressTotal = parsed.delivers.reduce((sum, line) => sum + line.quantity, 0)
-  nextQuests.push({ questId, status: 'completed', progress: progressTotal })
+  const progressTotal = status.progressLines.reduce((sum, line) => sum + line.required, 0)
+  nextQuests.push({ questId, status: 'completed', progress: progressTotal, counters: {} })
   next = { ...next, quests: nextQuests, unlockedLocationIds: unlocked }
 
   return {

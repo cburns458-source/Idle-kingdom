@@ -1,7 +1,7 @@
 import { configNumber } from '../activity/gathering'
-import { getSkillProgress } from '../activity/xp'
 import type { RecipeRow } from '../data/recipeTypes'
 import type { ActivityRow, GameDatabase } from '../data/types'
+import { canKnowRecipe as recipeKnown } from '../recipes/knowledge'
 import type { PlayerSave } from '../save/types'
 import { requirementsForEntity } from '../activity/requirements'
 
@@ -58,10 +58,9 @@ export function maxCraftsFromQueueCap(db: GameDatabase, recipe: RecipeRow): numb
   return Math.max(0, Math.floor(queueCapSeconds(db) / duration))
 }
 
-/** Hard proficiency gate + automatic level unlock knowledge. */
-export function canKnowRecipe(save: PlayerSave, recipe: RecipeRow): boolean {
-  const level = getSkillProgress(save, recipe['Skill ID']).level
-  return level >= recipe['Proficiency Level']
+/** Hard proficiency gate + knowledge-source unlocks. */
+export function canKnowRecipe(save: PlayerSave, db: GameDatabase, recipe: RecipeRow): boolean {
+  return recipeKnown(save, db, recipe)
 }
 
 /** Castle kitchen shares the Town kitchen recipe book. */
@@ -101,7 +100,7 @@ export function recipesForActivity(
     (recipe) =>
       isCompleteRecipe(recipe) &&
       recipeMatchesFacility(recipe['Facility ID'], facilityId) &&
-      canKnowRecipe(save, recipe),
+      canKnowRecipe(save, db, recipe),
   ).sort((a, b) => a['Proficiency Level'] - b['Proficiency Level'])
 }
 

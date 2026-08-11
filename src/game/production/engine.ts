@@ -13,6 +13,7 @@ import { applyRaceSkillXp } from '../races/races'
 import type { PlayerSave } from '../save/types'
 import { removeIngredients } from './inventory'
 import {
+  canKnowRecipe,
   facilityIdForActivity,
   getRecipe,
   isCompleteRecipe,
@@ -21,6 +22,7 @@ import {
   recipeIngredients,
   recipeMatchesFacility,
 } from './recipes'
+import { applyQuestProcessProgress } from '../quests/progress'
 
 export function clearProductionSave(save: PlayerSave): PlayerSave {
   return clearActivePotionEffect({
@@ -64,6 +66,9 @@ export function beginProductionQueue(
   const recipe = getRecipe(db, recipeId)
   if (!recipe || !isCompleteRecipe(recipe)) {
     return { ok: false, reason: 'That recipe is not available.' }
+  }
+  if (!canKnowRecipe(save, db, recipe)) {
+    return { ok: false, reason: 'You have not learned that recipe yet.' }
   }
   if (!recipeMatchesFacility(recipe['Facility ID'], facilityIdForActivity(db, activityId) ?? '')) {
     return { ok: false, reason: 'That recipe cannot be made at this station.' }
@@ -141,6 +146,7 @@ export function completeProductionCraft(
   next = xpApplied.save
 
   const remaining = save.productionQuantityRemaining - 1
+  next = applyQuestProcessProgress(db, next, recipe['Recipe ID'], 1)
   const outputItem = db.Items.find((item) => item['Item ID'] === recipe['Output Item ID'])
   const outputName = outputItem?.['Display Name'] ?? recipe['Display Name']
   const xpReward = summarizeXpReward(

@@ -1,4 +1,4 @@
-export const SAVE_VERSION = 20
+export const SAVE_VERSION = 21
 export const SAVE_STORAGE_KEY = 'idle-kingdoms.demo.save'
 export const STARTING_LOCATION_ID = 'LOC-0002'
 /** Base gold before race kit; race starters grant the real starting gold. */
@@ -75,6 +75,8 @@ export interface QuestProgress {
   questId: string
   status: 'inactive' | 'active' | 'completed'
   progress: number
+  /** Typed counters for defeat/process/learn objectives (key → count). */
+  counters?: Record<string, number>
 }
 
 export interface AchievementProgress {
@@ -155,6 +157,8 @@ export interface PlayerSave {
   statistics: PlayerStatistics
   /** NPC IDs that have granted permanent project knowledge (Master Dwarf / Archmage). */
   unlockedNpcIds: string[]
+  /** Recipe IDs unlocked by quests, discoveries, NPCs, or drops (beyond automatic level unlocks). */
+  unlockedRecipeIds: string[]
   /** Location IDs unlocked by quests (e.g. Rose's Apothecary). */
   unlockedLocationIds: string[]
   /** Merchant tip rewards already claimed (one-time dialogue grants). */

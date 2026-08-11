@@ -17,6 +17,7 @@ function saveWithInventory(itemIds: string[]): PlayerSave {
     achievements: [],
     statistics: { values: {} },
     unlockedNpcIds: [],
+    unlockedRecipeIds: [],
     unlockedLocationIds: [],
     claimedMerchantTipIds: [],
     critterCollections: [],

@@ -323,6 +323,20 @@ export const SAVE_MIGRATIONS: SaveMigration[] = [
       saveVersion: 20,
     }),
   },
+  {
+    fromVersion: 20,
+    toVersion: 21,
+    migrate: (save) => ({
+      ...save,
+      unlockedRecipeIds: Array.isArray(save.unlockedRecipeIds) ? save.unlockedRecipeIds : [],
+      quests: (save.quests ?? []).map((quest) => ({
+        ...quest,
+        counters:
+          quest.counters && typeof quest.counters === 'object' ? quest.counters : undefined,
+      })),
+      saveVersion: 21,
+    }),
+  },
 ]
 
 export function migrateSave(save: PlayerSave): PlayerSave {

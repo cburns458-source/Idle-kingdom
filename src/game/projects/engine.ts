@@ -10,6 +10,7 @@ import {
   eligibleEnchantmentTargets,
 } from './enchantments'
 import { hasProjectKnowledge } from '../npcs/knowledge'
+import { applyQuestProcessProgress } from '../quests/progress'
 import {
   getEnchantment,
   getProject,
@@ -182,6 +183,7 @@ export function completeSpecialProject(
   const xpTotal = applyRaceSkillXp(db, save, project['Skill ID'], project['XP Reward'] * crafts)
   const xpApplied = applyXp(next, db, project['Skill ID'], xpTotal)
   next = xpApplied.save
+  next = applyQuestProcessProgress(db, next, project['Project ID'], crafts)
 
   return {
     ok: true,
