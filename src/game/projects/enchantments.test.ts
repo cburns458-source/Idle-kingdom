@@ -75,6 +75,25 @@ describe('axe enchantment eligibility', () => {
     expect(combatIds).toContain('ITEM-0171')
   })
 
+  it('blocks the Lucky Necklace from all enchantments', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    let save = createNewSave(launch)
+    save = { ...save, inventory: [] }
+    save = addItemToInventory(save, 'ITEM-0180', 1) // Lucky Necklace
+
+    const gathering = getEnchantment(launch, 'ENCH-0002')!
+    const combat = getEnchantment(launch, 'ENCH-0003')!
+    const thorns = getEnchantment(launch, 'ENCH-0006')!
+
+    for (const enchantment of [gathering, combat, thorns]) {
+      const ids = eligibleEnchantmentTargets(launch, save, enchantment).map(
+        (option) =>
+          option.target.kind === 'inventory' ? save.inventory[option.target.index]?.itemId : null,
+      )
+      expect(ids).not.toContain('ITEM-0180')
+    }
+  })
+
   it('allows armor to take the Thorns enchantment but not weapon enchantments', () => {
     const { launch } = prepareDatabase(rawDatabase)
     let save = createNewSave(launch)

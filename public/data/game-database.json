@@ -6640,9 +6640,9 @@
       "Damage Reduction": null,
       "Healing Amount": null,
       "Action Time Reduction %": null,
-      "Capabilities / Effects": "artisanry_output; arcana_enchantable",
+      "Capabilities / Effects": "artisanry_output; special_effect",
       "Status": "Planned",
-      "Notes": null
+      "Notes": "Special-effect jewelry — not Arcana-enchantable. Drop-rate bonus applied in rewards."
     },
     {
       "Equipment ID": "EQP-0105",

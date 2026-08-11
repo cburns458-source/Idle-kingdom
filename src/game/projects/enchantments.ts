@@ -86,6 +86,8 @@ function equipmentMatchesEnchantment(
   const target = (enchantment['Valid Target'] ?? '').toLowerCase()
   const item = db.Items.find((row) => row['Item ID'] === itemId)
   const caps = capabilityTags(equipment['Capabilities / Effects'])
+  // Special-effect gear (e.g. Lucky Necklace) keeps its own bonus and cannot be enchanted.
+  if (caps.includes('special_effect') || caps.includes('not_enchantable')) return false
   // Craftable Jewelry (necklaces/rings) is flagged enchantable data-side and accepts
   // either gathering or weapon-category (combat) enchantments, despite not being a tool/weapon.
   const isEnchantableAccessory = caps.includes('arcana_enchantable')
