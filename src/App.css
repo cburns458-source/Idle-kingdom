@@ -816,16 +816,16 @@ button.hud-total-stat:focus-visible {
   overflow: auto;
 }
 
-/* When a picker/panel (production, project, shop, npc, combat, etc.) is open,
-   the description text is hidden and the browse list is hidden entirely so
-   the active panel gets the full available height, keeping its confirm
-   button in view without scrolling on small screens. */
+/* When a picker/panel is open, keep the activities/shops/people list visible
+   underneath the action UI, but shrink its share of the dock so the active
+   panel still has room for its confirm button. */
 .location-dock.panel-open .location-bottom-band {
-  display: none;
+  max-height: 12dvh;
 }
 
 .location-dock.panel-open .location-stage {
-  max-height: 85dvh;
+  flex: 1 1 auto;
+  max-height: min(66dvh, calc(100dvh - 9rem - 12dvh));
 }
 
 .location-stage .combat-panel,
