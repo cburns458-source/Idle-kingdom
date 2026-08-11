@@ -8,6 +8,7 @@ import {
   collectCritter,
   CRITTER_HOUR_MS,
   activeSpawnAtLocation,
+  spawnCritterAtLocation,
 } from './critters'
 
 const rawDatabase = JSON.parse(
@@ -77,5 +78,21 @@ describe('critters', () => {
     expect(second.ok).toBe(true)
     if (!second.ok) return
     expect(second.count).toBe(2)
+  })
+
+  it('force-spawns only when a habitat Critter is available and none is waiting', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    let save = createNewSave(launch)
+    const nowhere = spawnCritterAtLocation(save, 'LOC-0009')
+    expect(nowhere.ok).toBe(false)
+
+    const first = spawnCritterAtLocation(save, 'LOC-0001')
+    expect(first.ok).toBe(true)
+    if (!first.ok) return
+    expect(first.critter.displayName).toBe('Fly')
+    save = first.save
+
+    const blocked = spawnCritterAtLocation(save, 'LOC-0001')
+    expect(blocked.ok).toBe(false)
   })
 })

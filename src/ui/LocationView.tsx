@@ -156,10 +156,11 @@ export function LocationView({
           </section>
         )}
 
-        <div className="location-stage location-bottom-band">
-          {statusPanel}
+        <div className="location-dock">
+          {statusPanel ? <div className="location-stage">{statusPanel}</div> : null}
 
-          <div className="location-bottom-panels">
+          <div className="location-bottom-band">
+            <div className="location-bottom-panels">
             {showActivityPanel && activitiesHidden && (
               <div className="location-activities-reveal">
                 <button
@@ -309,6 +310,7 @@ export function LocationView({
                 </ul>
               </section>
             )}
+            </div>
           </div>
         </div>
       </div>

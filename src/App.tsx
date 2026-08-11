@@ -57,7 +57,7 @@ import { withRecalculatedVitals } from './game/equipment/vitals'
 import { completeProductionCraft } from './game/production/engine'
 import { getRecipe, isStandardProductionActivity } from './game/production/recipes'
 import { syncProgressionMeta } from './game/achievements/progress'
-import { applyActivityTimeTowardCritters } from './game/critters/critters'
+import { applyActivityTimeTowardCritters, spawnCritterAtLocation } from './game/critters/critters'
 import {
   resolveUnattendedProgress,
   stampUnattendedProgressAt,
@@ -1303,6 +1303,16 @@ export default function App() {
                 setRenamingCharacter(false)
               }}
               onPreviewAfkSummary={() => setAfkSummary(exampleAfkSummary())}
+              onSpawnCritter={() => {
+                const result = spawnCritterAtLocation(save, save.currentLocationId)
+                if (!result.ok) {
+                  setLastMessage(result.reason)
+                  return
+                }
+                updateSave(result.save)
+                setLastMessage(`${result.critter.displayName} appeared nearby.`)
+                setScreen('location')
+              }}
             />
           )}
         </div>
@@ -1372,6 +1382,7 @@ function SettingsPanel({
   onCancelRename,
   onRename,
   onPreviewAfkSummary,
+  onSpawnCritter,
 }: {
   save: PlayerSave
   database: LoadedDatabase
@@ -1381,6 +1392,7 @@ function SettingsPanel({
   onCancelRename: () => void
   onRename: (name: string) => void
   onPreviewAfkSummary: () => void
+  onSpawnCritter: () => void
 }) {
   const launchSkills = database.launch.Skills
   const launchItems = database.launch.Items
@@ -1534,6 +1546,17 @@ function SettingsPanel({
           </p>
           <button type="button" className="btn secondary" onClick={onPreviewAfkSummary}>
             Example AFK summary
+          </button>
+        </div>
+
+        <div className="menu-demo-block">
+          <p className="muted tiny">Critters</p>
+          <p className="muted tiny">
+            Spawn the habitat Critter at your current location when one is available and none is
+            waiting.
+          </p>
+          <button type="button" className="btn secondary" onClick={onSpawnCritter}>
+            Spawn Critter
           </button>
         </div>
 

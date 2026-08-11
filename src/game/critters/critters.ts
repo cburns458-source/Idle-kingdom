@@ -150,3 +150,36 @@ export function collectCritter(
     count,
   }
 }
+
+/** Demo/debug: force-spawn the habitat Critter if one is available and none is waiting. */
+export function spawnCritterAtLocation(
+  save: PlayerSave,
+  locationId: string,
+  nowMs: number = Date.now(),
+): { ok: true; save: PlayerSave; critter: CritterDef } | { ok: false; reason: string } {
+  const critter = critterForLocation(locationId)
+  if (!critter) {
+    return { ok: false, reason: 'No Critter is available at this location.' }
+  }
+  if (activeSpawnAtLocation(save, locationId)) {
+    return { ok: false, reason: 'A Critter is already waiting here.' }
+  }
+
+  const spawns = [
+    ...(save.activeCritterSpawns ?? []).filter((row) => row.locationId !== locationId),
+    {
+      locationId,
+      critterId: critter.id,
+      appearedAt: new Date(nowMs).toISOString(),
+    },
+  ]
+
+  return {
+    ok: true,
+    save: {
+      ...save,
+      activeCritterSpawns: spawns,
+    },
+    critter,
+  }
+}

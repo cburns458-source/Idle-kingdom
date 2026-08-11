@@ -177,73 +177,73 @@ export function ShopPanel({ db, save, shopId, onClose, onComplete }: ShopPanelPr
       </div>
 
       <div className="shop-columns">
-        <div>
-          <h3>Store</h3>
-          <ul className="shop-list">
+        <div className="shop-column">
+          <h3>Buy</h3>
+          <div className="shop-item-grid" role="list" aria-label="Store stock">
             {stock.map((entry) => {
               const item = db.Items.find((row) => row['Item ID'] === entry.itemId)
               const unit = playerBuyPrice(db, shop, entry.itemId)
               const inOffer = buys.find((line) => line.itemId === entry.itemId)?.quantity ?? 0
               const name = item?.['Display Name'] ?? entry.itemId
               return (
-                <li key={entry.itemId}>
+                <button
+                  key={entry.itemId}
+                  type="button"
+                  role="listitem"
+                  className="shop-item-tile"
+                  disabled={unit == null}
+                  title={unit != null ? `${name} · ${unit.toLocaleString()} gold` : name}
+                  onClick={() => {
+                    if (unit == null) return
+                    openBuyDialog(entry.itemId, unit, name)
+                  }}
+                >
                   <ItemIcon item={item} />
-                  <div>
-                    <strong>{name}</strong>
-                    <p className="muted tiny">
-                      {unit != null ? `${unit.toLocaleString()} gold` : 'No price'}
-                      {inOffer > 0 ? ` · offer ${inOffer}` : ''}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    className="btn secondary"
-                    disabled={unit == null}
-                    onClick={() => {
-                      if (unit == null) return
-                      openBuyDialog(entry.itemId, unit, name)
-                    }}
-                  >
-                    Buy
-                  </button>
-                </li>
+                  <span className="shop-item-name">{name}</span>
+                  <span className="shop-item-price">
+                    {unit != null ? `${unit.toLocaleString()}g` : '—'}
+                  </span>
+                  {inOffer > 0 ? <span className="shop-item-offer">×{inOffer}</span> : null}
+                </button>
               )
             })}
-            {stock.length === 0 && <li className="muted">No stock listed.</li>}
-          </ul>
+            {stock.length === 0 && (
+              <p className="muted tiny shop-item-empty">No stock listed.</p>
+            )}
+          </div>
         </div>
 
-        <div>
-          <h3>Your items</h3>
-          <ul className="shop-list">
+        <div className="shop-column">
+          <h3>Sell</h3>
+          <div className="shop-item-grid" role="list" aria-label="Sellable items">
             {sellable.map((row) => {
               const item = db.Items.find((entry) => entry['Item ID'] === row.itemId)
               const inOffer = sells.find((line) => line.itemId === row.itemId)?.quantity ?? 0
               const owned = inventoryCount(save, row.itemId)
               const name = item?.['Display Name'] ?? row.itemId
               return (
-                <li key={row.itemId}>
+                <button
+                  key={row.itemId}
+                  type="button"
+                  role="listitem"
+                  className="shop-item-tile"
+                  disabled={owned <= 0}
+                  title={`${name} · ${row.unit.toLocaleString()} gold · own ${owned}`}
+                  onClick={() => toggleSellOffer(row.itemId, row.unit, name, owned)}
+                >
                   <ItemIcon item={item} />
-                  <div>
-                    <strong>{name}</strong>
-                    <p className="muted tiny">
-                      {row.unit.toLocaleString()} gold · own {owned}
-                      {inOffer > 0 ? ` · offer ${inOffer}` : ''}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    className="btn secondary"
-                    disabled={owned <= 0}
-                    onClick={() => toggleSellOffer(row.itemId, row.unit, name, owned)}
-                  >
-                    Sell
-                  </button>
-                </li>
+                  <span className="shop-item-name">{name}</span>
+                  <span className="shop-item-price">
+                    {row.unit.toLocaleString()}g · {owned}
+                  </span>
+                  {inOffer > 0 ? <span className="shop-item-offer">×{inOffer}</span> : null}
+                </button>
               )
             })}
-            {sellable.length === 0 && <li className="muted">Nothing this shop will buy.</li>}
-          </ul>
+            {sellable.length === 0 && (
+              <p className="muted tiny shop-item-empty">Nothing this shop will buy.</p>
+            )}
+          </div>
         </div>
       </div>
 
