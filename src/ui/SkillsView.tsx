@@ -5,6 +5,7 @@ import type { PlayerSave } from '../game/save/types'
 import { getSkillProgress } from '../game/activity/xp'
 import { skillXpProgress } from '../game/activity/xpProgress'
 import { skillMenuEntries, type SkillMenuListItem } from '../game/skills/skillActions'
+import { CloseButton } from './CloseButton'
 import { SkillIcon } from './skillIcons'
 
 function skillXpTooltipText(db: GameDatabase, totalXp: number): string {
@@ -178,9 +179,7 @@ function SkillActionsMenu({
       >
         <div className="skill-actions-head">
           <h2>{skill['Display Name']}</h2>
-          <button type="button" className="btn secondary" onClick={onClose}>
-            Close
-          </button>
+          <CloseButton onClick={onClose} />
         </div>
         <ul className="skill-actions-list">
           {entries.map((entry) => (

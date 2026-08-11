@@ -262,7 +262,6 @@ export function LocationView({
                     <li key={shop['Shop ID']}>
                       <div>
                         <strong>{shop['Display Name']}</strong>
-                        {shop.Description && <p className="muted">{shop.Description}</p>}
                       </div>
                       <button
                         type="button"

@@ -10,6 +10,7 @@ import {
   shopStockEntries,
 } from '../game/shops/shops'
 import { confirmShopOffer, type ShopOfferLine } from '../game/shops/transactions'
+import { CloseButton } from './CloseButton'
 import { ItemIcon } from './itemIcons'
 import { QuantityNumpad } from './QuantityNumpad'
 
@@ -72,10 +73,10 @@ export function ShopPanel({ db, save, shopId, onClose, onComplete }: ShopPanelPr
   if (!shop) {
     return (
       <section className="panel glass-panel">
-        <p className="lead">Shop unavailable.</p>
-        <button type="button" className="btn secondary" onClick={onClose}>
-          Close
-        </button>
+        <div className="activity-panel-head">
+          <p className="lead">Shop unavailable.</p>
+          <CloseButton onClick={onClose} />
+        </div>
       </section>
     )
   }
@@ -86,11 +87,8 @@ export function ShopPanel({ db, save, shopId, onClose, onComplete }: ShopPanelPr
         <div className="activity-panel-head">
           <div>
             <h2>{shop['Display Name']}</h2>
-            <p className="muted">{shop.Description}</p>
           </div>
-          <button type="button" className="btn secondary" onClick={onClose}>
-            Close
-          </button>
+          <CloseButton onClick={onClose} />
         </div>
         <p className="danger-note">{access.reason}</p>
       </section>
@@ -169,11 +167,8 @@ export function ShopPanel({ db, save, shopId, onClose, onComplete }: ShopPanelPr
       <div className="activity-panel-head">
         <div>
           <h2>{shop['Display Name']}</h2>
-          <p className="muted">{shop.Description}</p>
         </div>
-        <button type="button" className="btn secondary" onClick={onClose}>
-          Close
-        </button>
+        <CloseButton onClick={onClose} />
       </div>
 
       <div className="shop-columns">

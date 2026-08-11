@@ -16,6 +16,7 @@ import {
   type QuestRewardLine,
 } from '../game/quests/quests'
 import type { PlayerSave } from '../game/save/types'
+import { CloseButton } from './CloseButton'
 import { QuestRewardPopup } from './QuestRewardPopup'
 
 const GENERAL_STORE_MERCHANT_ID = 'NPC-0007'
@@ -168,9 +169,7 @@ export function NpcPanel({
             {npc.Role && <p className="muted tiny">{npc.Role}</p>}
             <p className="lead">{npc.Description ?? 'An inhabitant of Idale.'}</p>
           </div>
-          <button type="button" className="btn secondary" onClick={onClose}>
-            Close
-          </button>
+          <CloseButton onClick={onClose} />
         </div>
 
         {isMentor && (

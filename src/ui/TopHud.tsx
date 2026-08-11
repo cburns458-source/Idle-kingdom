@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { CloseButton } from './CloseButton'
 import { formatDurationSeconds } from './formatDuration'
 
 const PLAYER_AVATAR_SRC = '/assets/player/player_adventurer_temp.png'
@@ -172,17 +173,11 @@ export function TopHud({
               className="panel quest-reward-card wardrobe-card"
               onClick={(event) => event.stopPropagation()}
             >
-              <h2 id="wardrobe-title">Wardrobe</h2>
-              <p className="lead">Wardrobe coming soon…</p>
-              <div className="button-row" style={{ justifyContent: 'center' }}>
-                <button
-                  type="button"
-                  className="btn secondary"
-                  onClick={() => setWardrobeOpen(false)}
-                >
-                  Close
-                </button>
+              <div className="activity-panel-head">
+                <h2 id="wardrobe-title">Wardrobe</h2>
+                <CloseButton onClick={() => setWardrobeOpen(false)} />
               </div>
+              <p className="lead">Wardrobe coming soon…</p>
             </div>
           </div>,
           document.body,

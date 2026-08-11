@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { asAchievementRows } from '../game/achievements/progress'
+import { critterAssetPath } from '../game/assets/critterAssets'
 import { CRITTER_DEFS, collectionCount } from '../game/critters/critters'
 import type { LoadedDatabase } from '../game/data/loadDatabase'
 import { asQuestRows, getQuestProgress, questStatusLabel } from '../game/quests/quests'
@@ -115,15 +116,23 @@ export function LogView({ save, database }: LogViewProps) {
           <ul className="achievement-list critter-log-list">
             {CRITTER_DEFS.map((critter) => {
               const count = collectionCount(save, critter.id)
+              const found = count > 0
               return (
-                <li key={critter.id} className={count > 0 ? 'unlocked' : undefined}>
+                <li key={critter.id} className={found ? 'unlocked' : undefined}>
+                  <span
+                    className={found ? 'critter-log-avatar' : 'critter-log-avatar unknown'}
+                    style={
+                      found
+                        ? { backgroundImage: `url(${critterAssetPath(critter.internalKey)})` }
+                        : undefined
+                    }
+                    aria-hidden
+                  />
                   <div className="quest-log-copy">
-                    <strong>{critter.displayName}</strong>
-                    <span className="muted tiny">{critter.description}</span>
+                    <strong>{found ? critter.displayName : 'Unknown'}</strong>
+                    {found && <span className="muted tiny">{critter.description}</span>}
                   </div>
-                  <span className="muted tiny">
-                    {count <= 0 ? 'Not found' : count === 1 ? 'Found' : `×${count}`}
-                  </span>
+                  {found && count > 1 && <span className="muted tiny">×{count}</span>}
                 </li>
               )
             })}
