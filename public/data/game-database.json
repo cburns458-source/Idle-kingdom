@@ -21444,11 +21444,21 @@
       "Notes": null
     },
     {
+      "Appearance Option ID": "APR-0019",
+      "Category": "gender_presentation",
+      "Display Name": "Androgynous",
+      "Swatch Color": null,
+      "Sort Order": 2,
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Notes": null
+    },
+    {
       "Appearance Option ID": "APR-0018",
       "Category": "gender_presentation",
       "Display Name": "Masculine",
       "Swatch Color": null,
-      "Sort Order": 2,
+      "Sort Order": 3,
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Notes": null

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import type { CSSProperties } from 'react'
 import { appearanceCategoryLabel, appearanceOptions } from '../game/cosmetics/appearance'
 import type { GameDatabase } from '../game/data/types'
 import { APPEARANCE_CATEGORIES, type PlayerAppearance } from '../game/save/types'
@@ -28,6 +28,7 @@ export function AppearancePicker({ db, value, onSelect }: AppearancePickerProps)
   )
 }
 
+/** Bare slider with discrete stops — no value text or swatch, just drag/click to a stop. */
 function AppearanceSlider({
   db,
   category,
@@ -40,54 +41,40 @@ function AppearanceSlider({
   onSelect: (optionId: string) => void
 }) {
   const options = appearanceOptions(db, category)
-  const [direction, setDirection] = useState<'next' | 'prev'>('next')
   if (options.length === 0) return null
 
+  const maxIndex = options.length - 1
   const index = Math.max(0, options.findIndex((option) => option['Appearance Option ID'] === selectedId))
-  const current = options[index] ?? options[0]!
-
-  function slide(delta: 1 | -1) {
-    setDirection(delta > 0 ? 'next' : 'prev')
-    const nextIndex = (index + delta + options.length) % options.length
-    onSelect(options[nextIndex]!['Appearance Option ID'])
-  }
-
-  const swatch = current['Swatch Color']
   const label = appearanceCategoryLabel(category)
+  const fillPercent = maxIndex > 0 ? (index / maxIndex) * 100 : 0
 
   return (
     <div className="appearance-picker-row">
       <p className="field-label">{label}</p>
-      <div className="appearance-slider">
-        <button
-          type="button"
-          className="appearance-slider-arrow"
-          onClick={() => slide(-1)}
-          disabled={options.length <= 1}
-          aria-label={`Previous ${label.toLowerCase()}`}
-        >
-          ‹
-        </button>
-        <div className="appearance-slider-track">
-          <div
-            key={current['Appearance Option ID']}
-            className={`appearance-slider-value appearance-slide-${direction}`}
-          >
-            {swatch && (
-              <span className="appearance-slider-swatch" style={{ backgroundColor: swatch }} aria-hidden />
-            )}
-            <span className="appearance-slider-name">{current['Display Name']}</span>
-          </div>
+      <div className="appearance-slider-track-wrap">
+        <input
+          type="range"
+          className="appearance-slider-input"
+          min={0}
+          max={maxIndex}
+          step={1}
+          value={index}
+          disabled={maxIndex <= 0}
+          style={{ '--slider-fill': `${fillPercent}%` } as CSSProperties}
+          onChange={(event) => {
+            const next = options[Number(event.target.value)]
+            if (next) onSelect(next['Appearance Option ID'])
+          }}
+          aria-label={label}
+        />
+        <div className="appearance-slider-ticks" aria-hidden>
+          {options.map((option, tickIndex) => (
+            <span
+              key={option['Appearance Option ID']}
+              className={`appearance-slider-tick${tickIndex <= index ? ' filled' : ''}`}
+            />
+          ))}
         </div>
-        <button
-          type="button"
-          className="appearance-slider-arrow"
-          onClick={() => slide(1)}
-          disabled={options.length <= 1}
-          aria-label={`Next ${label.toLowerCase()}`}
-        >
-          ›
-        </button>
       </div>
     </div>
   )
