@@ -11,6 +11,7 @@ import {
   tryConsumePotionForScope,
 } from '../potions/effects'
 import { equippedEnchantmentThornsPercent } from '../projects/enchantments'
+import { applyRaceGoldGain } from '../races/races'
 import {
   applyMitigation,
   playerDamageRange,
@@ -152,8 +153,9 @@ export function applyCombatVictory(
   next = rewarded.save
   let goldGained = rewarded.goldGained
   if (goldRoll > 0) {
-    next = { ...next, gold: next.gold + goldRoll }
-    goldGained += goldRoll
+    const racedGold = applyRaceGoldGain(db, save, goldRoll)
+    next = { ...next, gold: next.gold + racedGold }
+    goldGained += racedGold
   }
 
   const kills = Number(next.statistics.values.monsters_killed ?? 0) + 1

@@ -12,12 +12,8 @@ import {
   SAVE_STORAGE_KEY,
   SAVE_VERSION,
   STARTER_OUTFIT_COSMETIC_ID,
-  STARTING_BAKED_POTATO_ID,
-  STARTING_BAKED_POTATO_QTY,
   STARTING_GOLD,
   STARTING_LOCATION_ID,
-  STARTING_MINOR_STRENGTH_POTION_ID,
-  STARTING_WOODEN_AXE_ID,
   type EquippedStack,
   type PlayerSave,
 } from './types'
@@ -58,12 +54,10 @@ export function createNewSave(db: GameDatabase): PlayerSave {
     createdAt: timestamp,
     updatedAt: timestamp,
     characterName: null,
+    raceId: null,
     skills,
-    inventory: [
-      { itemId: STARTING_BAKED_POTATO_ID, quantity: STARTING_BAKED_POTATO_QTY },
-      { itemId: STARTING_MINOR_STRENGTH_POTION_ID, quantity: 1 },
-      { itemId: STARTING_WOODEN_AXE_ID, quantity: 1 },
-    ],
+    // Race-specific starter kits are granted when the player picks a race.
+    inventory: [],
     equipment: { slots },
     gold: STARTING_GOLD,
     quests: [],

@@ -33,6 +33,7 @@ function sampleSave(skills: Array<{ skillId: string; level: number; xp: number }
     hasSeenWardrobeIntro: false,
     settings: { soundEnabled: true, showActivityRewards: true, hudShowTotalXp: false },
     characterName: 'Tester',
+    raceId: null,
     currentLocationId: 'LOC-0002',
     currentActivityId: null,
     activityStartedAt: null,

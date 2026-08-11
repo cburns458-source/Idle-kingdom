@@ -7,6 +7,7 @@ import {
 import { isGoldCurrencyItem } from '../inventory/gold'
 import { applyPotionDropChance } from '../potions/effects'
 import type { ActionRow, GameDatabase, RewardEntryRow } from '../data/types'
+import { applyRaceGoldGain } from '../races/races'
 import type { PlayerSave } from '../save/types'
 import type { LootGrant } from './types'
 import type { RandomFn } from './pools'
@@ -124,9 +125,6 @@ export function resolveActionRewards(
   let next = save
   const loot: LootGrant[] = []
   let goldGained = Number(action['Guaranteed Gold'] ?? 0)
-  if (goldGained > 0) {
-    next = { ...next, gold: next.gold + goldGained }
-  }
 
   const rollTable = (tableId: string | null, chance: number | null) => {
     if (!tableId) return
@@ -142,9 +140,7 @@ export function resolveActionRewards(
       const quantity = rollQuantity(picked, random)
       const itemId = picked['Reward ID / Value']
       if (isGoldCurrencyItem(itemId)) {
-        const granted = addItemsToInventory(next, itemId, quantity)
-        next = granted.save
-        goldGained += granted.added
+        goldGained += quantity
         return
       }
       const granted = addItemsToInventory(next, itemId, quantity)
@@ -158,14 +154,17 @@ export function resolveActionRewards(
         })
       }
     } else if (picked['Reward Type'] === 'Gold' || picked['Reward Type'] === 'Currency') {
-      const quantity = rollQuantity(picked, random)
-      goldGained += quantity
-      next = { ...next, gold: next.gold + quantity }
+      goldGained += rollQuantity(picked, random)
     }
   }
 
   rollTable(action['Reward Table ID'], action['Drop Chance'])
   rollTable(action['Secondary Reward Table ID'], action['Secondary Drop Chance'])
+
+  goldGained = applyRaceGoldGain(db, save, goldGained)
+  if (goldGained > 0) {
+    next = { ...next, gold: next.gold + goldGained }
+  }
 
   return { save: next, loot, goldGained }
 }

@@ -6,12 +6,8 @@ import { createMemoryStorage } from '../../test/memoryStorage'
 import { createNewSave, loadOrCreateSave, readSave, writeSave } from './saveStore'
 import {
   SAVE_STORAGE_KEY,
-  STARTING_BAKED_POTATO_ID,
-  STARTING_BAKED_POTATO_QTY,
   STARTING_GOLD,
   STARTING_LOCATION_ID,
-  STARTING_MINOR_STRENGTH_POTION_ID,
-  STARTING_WOODEN_AXE_ID,
   WEAPON_TOOL_SLOT_ID,
 } from './types'
 
@@ -20,18 +16,15 @@ const rawDatabase = JSON.parse(
 )
 
 describe('local save', () => {
-  it('creates one Town save with starter kit items and gold', () => {
+  it('creates one Town save with gold and no race kit until race is chosen', () => {
     const { source } = prepareDatabase(rawDatabase)
     const save = createNewSave(source)
 
     expect(save.currentLocationId).toBe(STARTING_LOCATION_ID)
     expect(save.gold).toBe(STARTING_GOLD)
     expect(save.gold).toBe(25)
-    expect(save.inventory).toEqual([
-      { itemId: STARTING_BAKED_POTATO_ID, quantity: STARTING_BAKED_POTATO_QTY },
-      { itemId: STARTING_MINOR_STRENGTH_POTION_ID, quantity: 1 },
-      { itemId: STARTING_WOODEN_AXE_ID, quantity: 1 },
-    ])
+    expect(save.raceId).toBeNull()
+    expect(save.inventory).toEqual([])
     expect(save.equipment.slots[WEAPON_TOOL_SLOT_ID]).toBeNull()
     expect(save.currentActivityId).toBeNull()
     expect(save.skills.length).toBeGreaterThan(0)
@@ -62,8 +55,7 @@ describe('local save', () => {
 
     expect(loaded?.saveVersion).toBe(written.saveVersion)
     expect(loaded?.currentLocationId).toBe(STARTING_LOCATION_ID)
-    expect(loaded?.inventory.find((stack) => stack.itemId === STARTING_WOODEN_AXE_ID)?.quantity).toBe(
-      1,
-    )
+    expect(loaded?.inventory).toEqual([])
+    expect(loaded?.raceId).toBeNull()
   })
 })

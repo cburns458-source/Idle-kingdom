@@ -1,4 +1,4 @@
-export const SAVE_VERSION = 18
+export const SAVE_VERSION = 19
 export const SAVE_STORAGE_KEY = 'idle-kingdoms.demo.save'
 export const STARTING_LOCATION_ID = 'LOC-0002'
 export const STARTING_GOLD = 25
@@ -138,6 +138,8 @@ export interface PlayerSave {
   updatedAt: string
   /** Player-chosen display name; null until first set. */
   characterName: string | null
+  /** Selected playable Race ID; null until first-run (or one-time) race picker completes. */
+  raceId: string | null
   skills: SkillProgress[]
   inventory: InventoryStack[]
   equipment: EquipmentLoadout

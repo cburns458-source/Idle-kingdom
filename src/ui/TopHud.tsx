@@ -22,6 +22,7 @@ export type HudActivityStatus =
 
 interface TopHudProps {
   characterName: string | null
+  raceName?: string | null
   totalLevel: number
   totalXp: number
   /** When true, show total XP instead of total level. */
@@ -40,6 +41,7 @@ interface TopHudProps {
 
 export function TopHud({
   characterName,
+  raceName = null,
   totalLevel,
   totalXp,
   showTotalXp = false,
@@ -79,6 +81,7 @@ export function TopHud({
       <div className="top-hud-main">
         <div className="top-hud-identity">
           <p className="brand">{characterName?.trim() || 'Adventurer'}</p>
+          {raceName && <p className="hud-race muted tiny">{raceName}</p>}
           {onToggleTotalStat ? (
             <button
               type="button"

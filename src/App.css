@@ -680,6 +680,59 @@ button.hud-total-stat:focus-visible {
   width: min(100%, 22rem);
 }
 
+.race-creation-step {
+  width: min(100%, 26rem);
+  max-height: min(85vh, 40rem);
+  overflow: auto;
+}
+
+.race-picker-list {
+  list-style: none;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.race-picker-option {
+  appearance: none;
+  width: 100%;
+  text-align: left;
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(212, 175, 55, 0.28);
+  background: rgba(24, 16, 10, 0.4);
+  color: inherit;
+  cursor: pointer;
+}
+
+.race-picker-option.selected {
+  border-color: rgba(212, 175, 55, 0.75);
+  background: rgba(80, 52, 18, 0.45);
+  box-shadow: inset 0 0 0 1px rgba(212, 175, 55, 0.35);
+}
+
+.race-picker-option strong {
+  font-size: 1rem;
+}
+
+.hud-race {
+  margin: 0;
+  line-height: 1.2;
+}
+
+.wardrobe-race {
+  text-align: center;
+  margin: 0.35rem 0 0;
+}
+
+.menu-name-block {
+  display: grid;
+  gap: 0.4rem;
+}
+
 .menu-demo-block {
   display: grid;
   gap: 0.35rem;

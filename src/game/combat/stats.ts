@@ -1,6 +1,10 @@
 import type { EquipmentRow, GameDatabase } from '../data/types'
 import { getSkillProgress } from '../activity/xp'
 import { equippedEnchantmentDamageBonus } from '../projects/enchantments'
+import {
+  raceCombatDamageMultiplier,
+  raceMaxHpMultiplier,
+} from '../races/races'
 import type { PlayerSave } from '../save/types'
 import { configNumber } from '../activity/gathering'
 import { activeSpellDamageRangeMultiplier } from '../spells/spells'
@@ -69,7 +73,8 @@ export function playerDamageRange(
     max = configNumber(db, 'unarmed_max_damage', 30) + enchantBonus
   }
 
-  const combined = levelMult * spellMult * potionMult
+  const raceMult = raceCombatDamageMultiplier(db, save)
+  const combined = levelMult * spellMult * potionMult * raceMult
   return {
     min: scaleStat(min, combined),
     max: Math.max(scaleStat(min, combined), scaleStat(max, combined)),
@@ -84,7 +89,8 @@ export function playerMaxHp(db: GameDatabase, save: PlayerSave): number {
   const base = configNumber(db, 'starting_max_hp', 1000)
   const bonus = equippedRows(db, save).reduce((sum, row) => sum + Number(row['HP Bonus'] ?? 0), 0)
   const levelMult = combatLevelBonusMultiplier(save)
-  return Math.max(1, scaleStat(base + bonus, levelMult))
+  const raceMult = raceMaxHpMultiplier(db, save)
+  return Math.max(1, scaleStat(base + bonus, levelMult * raceMult))
 }
 
 export function rollDamage(min: number, max: number, random: () => number = Math.random): number {

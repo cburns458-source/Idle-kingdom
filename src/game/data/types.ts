@@ -287,6 +287,48 @@ export interface LocationSearchRow {
   Notes: string | null
 }
 
+export type RaceBonusType =
+  | 'skill_xp_percent'
+  | 'combat_damage_percent'
+  | 'max_hp_percent'
+  | 'gold_gain_percent'
+  | string
+
+export interface RaceRow {
+  'Race ID': string
+  'Internal Key': string
+  'Display Name': string
+  Description: string | null
+  'Sort Order': number | null
+  'Portrait Asset Key': string | null
+  /** Semicolon-separated Location IDs where forced hostility is skipped for this race. */
+  'Hostility Immunity Location IDs': string | null
+  Status: RecordStatus
+  'Release Phase': ReleasePhase
+  Notes: string | null
+}
+
+export interface RaceBonusRow {
+  'Race Bonus ID': string
+  'Race ID': string
+  'Bonus Type': RaceBonusType
+  /** Skill ID for skill_xp_percent; null for global bonuses. */
+  'Reference ID': string | null
+  'Bonus Value': number
+  Status: RecordStatus
+  Notes: string | null
+}
+
+export interface RaceStartingItemRow {
+  'Race Starting Item ID': string
+  'Race ID': string
+  'Item ID': string
+  Quantity: number
+  'Sort Order': number | null
+  Status: RecordStatus
+  Notes: string | null
+}
+
 export interface GameDatabase {
   Config: ConfigRow[]
   Skills: SkillRow[]
@@ -316,6 +358,9 @@ export interface GameDatabase {
   Cosmetics: CosmeticRow[]
   AppearanceOptions: AppearanceOptionRow[]
   LocationSearches: LocationSearchRow[]
+  Races: RaceRow[]
+  RaceBonuses: RaceBonusRow[]
+  RaceStartingItems: RaceStartingItemRow[]
 }
 
 export const DATABASE_TABLES = [
@@ -347,6 +392,9 @@ export const DATABASE_TABLES = [
   'Cosmetics',
   'AppearanceOptions',
   'LocationSearches',
+  'Races',
+  'RaceBonuses',
+  'RaceStartingItems',
 ] as const
 
 export type DatabaseTableName = (typeof DATABASE_TABLES)[number]

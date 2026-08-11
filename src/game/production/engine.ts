@@ -9,6 +9,7 @@ import {
   clearActivePotionEffect,
   tryConsumePotionForScope,
 } from '../potions/effects'
+import { applyRaceSkillXp } from '../races/races'
 import type { PlayerSave } from '../save/types'
 import { removeIngredients } from './inventory'
 import {
@@ -135,7 +136,8 @@ export function completeProductionCraft(
   const granted = addItemToInventoryExact(save, recipe['Output Item ID'], outputQty)
   if (!granted.ok) return null
   let next = granted.save
-  const xpApplied = applyXp(next, db, recipe['Skill ID'], recipe['XP Reward'])
+  const xpGained = applyRaceSkillXp(db, save, recipe['Skill ID'], recipe['XP Reward'])
+  const xpApplied = applyXp(next, db, recipe['Skill ID'], xpGained)
   next = xpApplied.save
 
   const remaining = save.productionQuantityRemaining - 1
@@ -145,7 +147,7 @@ export function completeProductionCraft(
     db,
     next,
     recipe['Skill ID'],
-    recipe['XP Reward'],
+    xpGained,
     xpApplied.leveledUpTo,
   )
   const reward: ActionRewardBundle = {
@@ -169,7 +171,7 @@ export function completeProductionCraft(
         activityStartedAt: null,
       }),
       finishedQueue: true,
-      xpGained: recipe['XP Reward'],
+      xpGained,
       outputName,
       outputQty,
       reward,
@@ -193,7 +195,7 @@ export function completeProductionCraft(
       actionDurationMs: durationMs,
     },
     finishedQueue: false,
-    xpGained: recipe['XP Reward'],
+    xpGained,
     outputName,
     outputQty,
     reward,

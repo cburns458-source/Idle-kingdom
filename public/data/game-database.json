@@ -21485,5 +21485,455 @@
       "Release Phase": "Launch",
       "Notes": "Grants a Sling. Limited to once per day (24h cooldown from the last successful search)."
     }
+  ],
+  "Races": [
+    {
+      "Race ID": "RACE-0001",
+      "Internal Key": "human",
+      "Display Name": "Human",
+      "Description": "Versatile riverfolk, at home with rod and axe.",
+      "Sort Order": 1,
+      "Portrait Asset Key": null,
+      "Hostility Immunity Location IDs": null,
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Notes": "Provisional bonuses: Fishing XP, Woodcutting XP."
+    },
+    {
+      "Race ID": "RACE-0002",
+      "Internal Key": "wood_elf",
+      "Display Name": "Wood Elf",
+      "Description": "Slender forest hunters with pointed ears.",
+      "Sort Order": 2,
+      "Portrait Asset Key": null,
+      "Hostility Immunity Location IDs": null,
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Notes": "Provisional bonus: Hunting XP."
+    },
+    {
+      "Race ID": "RACE-0003",
+      "Internal Key": "high_elf",
+      "Display Name": "High Elf",
+      "Description": "Tall, long-lived folk with pointed ears and hardy vitality.",
+      "Sort Order": 3,
+      "Portrait Asset Key": null,
+      "Hostility Immunity Location IDs": null,
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Notes": "Provisional bonus: +20% maximum HP."
+    },
+    {
+      "Race ID": "RACE-0004",
+      "Internal Key": "orc",
+      "Display Name": "Orc",
+      "Description": "Green-gray and muscular warriors.",
+      "Sort Order": 4,
+      "Portrait Asset Key": null,
+      "Hostility Immunity Location IDs": null,
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Notes": "Provisional bonus: +5% combat damage range."
+    },
+    {
+      "Race ID": "RACE-0005",
+      "Internal Key": "goblin",
+      "Display Name": "Goblin",
+      "Description": "Small and green — welcome among the camps of their kin.",
+      "Sort Order": 5,
+      "Portrait Asset Key": null,
+      "Hostility Immunity Location IDs": "LOC-0003",
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Notes": "Provisional bonus: +5% gold gains. Bypasses Goblin Camp forced hostility."
+    },
+    {
+      "Race ID": "RACE-0006",
+      "Internal Key": "dwarf",
+      "Display Name": "Dwarf",
+      "Description": "Short, sturdy, and commonly bearded delvers.",
+      "Sort Order": 6,
+      "Portrait Asset Key": null,
+      "Hostility Immunity Location IDs": null,
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Notes": "Provisional bonuses: Mining XP, Metallurgy XP."
+    },
+    {
+      "Race ID": "RACE-0007",
+      "Internal Key": "halfling",
+      "Display Name": "Halfling",
+      "Description": "Small fantasy folk with a gift for hearth and vial.",
+      "Sort Order": 7,
+      "Portrait Asset Key": null,
+      "Hostility Immunity Location IDs": null,
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Notes": "Provisional bonuses: Cooking XP, Alchemy XP."
+    }
+  ],
+  "RaceBonuses": [
+    {
+      "Race Bonus ID": "RBON-0001",
+      "Race ID": "RACE-0001",
+      "Bonus Type": "skill_xp_percent",
+      "Reference ID": "SKL-0003",
+      "Bonus Value": 5,
+      "Status": "Planned",
+      "Notes": "Human Fishing XP"
+    },
+    {
+      "Race Bonus ID": "RBON-0002",
+      "Race ID": "RACE-0001",
+      "Bonus Type": "skill_xp_percent",
+      "Reference ID": "SKL-0006",
+      "Bonus Value": 5,
+      "Status": "Planned",
+      "Notes": "Human Woodcutting XP"
+    },
+    {
+      "Race Bonus ID": "RBON-0003",
+      "Race ID": "RACE-0002",
+      "Bonus Type": "skill_xp_percent",
+      "Reference ID": "SKL-0005",
+      "Bonus Value": 5,
+      "Status": "Planned",
+      "Notes": "Wood Elf Hunting XP"
+    },
+    {
+      "Race Bonus ID": "RBON-0004",
+      "Race ID": "RACE-0003",
+      "Bonus Type": "max_hp_percent",
+      "Reference ID": null,
+      "Bonus Value": 20,
+      "Status": "Planned",
+      "Notes": "High Elf max HP"
+    },
+    {
+      "Race Bonus ID": "RBON-0005",
+      "Race ID": "RACE-0004",
+      "Bonus Type": "combat_damage_percent",
+      "Reference ID": null,
+      "Bonus Value": 5,
+      "Status": "Planned",
+      "Notes": "Orc damage range"
+    },
+    {
+      "Race Bonus ID": "RBON-0006",
+      "Race ID": "RACE-0005",
+      "Bonus Type": "gold_gain_percent",
+      "Reference ID": null,
+      "Bonus Value": 5,
+      "Status": "Planned",
+      "Notes": "Goblin gold gains"
+    },
+    {
+      "Race Bonus ID": "RBON-0007",
+      "Race ID": "RACE-0006",
+      "Bonus Type": "skill_xp_percent",
+      "Reference ID": "SKL-0002",
+      "Bonus Value": 5,
+      "Status": "Planned",
+      "Notes": "Dwarf Mining XP"
+    },
+    {
+      "Race Bonus ID": "RBON-0008",
+      "Race ID": "RACE-0006",
+      "Bonus Type": "skill_xp_percent",
+      "Reference ID": "SKL-0008",
+      "Bonus Value": 5,
+      "Status": "Planned",
+      "Notes": "Dwarf Metallurgy XP"
+    },
+    {
+      "Race Bonus ID": "RBON-0009",
+      "Race ID": "RACE-0007",
+      "Bonus Type": "skill_xp_percent",
+      "Reference ID": "SKL-0007",
+      "Bonus Value": 5,
+      "Status": "Planned",
+      "Notes": "Halfling Cooking XP"
+    },
+    {
+      "Race Bonus ID": "RBON-0010",
+      "Race ID": "RACE-0007",
+      "Bonus Type": "skill_xp_percent",
+      "Reference ID": "SKL-0010",
+      "Bonus Value": 5,
+      "Status": "Planned",
+      "Notes": "Halfling Alchemy XP"
+    }
+  ],
+  "RaceStartingItems": [
+    {
+      "Race Starting Item ID": "RST-0001",
+      "Race ID": "RACE-0001",
+      "Item ID": "ITEM-0103",
+      "Quantity": 1,
+      "Sort Order": 1,
+      "Status": "Planned",
+      "Notes": null
+    },
+    {
+      "Race Starting Item ID": "RST-0002",
+      "Race ID": "RACE-0001",
+      "Item ID": "ITEM-0101",
+      "Quantity": 1,
+      "Sort Order": 2,
+      "Status": "Planned",
+      "Notes": null
+    },
+    {
+      "Race Starting Item ID": "RST-0003",
+      "Race ID": "RACE-0001",
+      "Item ID": "ITEM-0058",
+      "Quantity": 5,
+      "Sort Order": 3,
+      "Status": "Planned",
+      "Notes": null
+    },
+    {
+      "Race Starting Item ID": "RST-0004",
+      "Race ID": "RACE-0001",
+      "Item ID": "ITEM-0211",
+      "Quantity": 1,
+      "Sort Order": 4,
+      "Status": "Planned",
+      "Notes": null
+    },
+    {
+      "Race Starting Item ID": "RST-0005",
+      "Race ID": "RACE-0002",
+      "Item ID": "ITEM-0108",
+      "Quantity": 1,
+      "Sort Order": 1,
+      "Status": "Planned",
+      "Notes": null
+    },
+    {
+      "Race Starting Item ID": "RST-0006",
+      "Race ID": "RACE-0002",
+      "Item ID": "ITEM-0109",
+      "Quantity": 1,
+      "Sort Order": 2,
+      "Status": "Planned",
+      "Notes": null
+    },
+    {
+      "Race Starting Item ID": "RST-0007",
+      "Race ID": "RACE-0002",
+      "Item ID": "ITEM-0058",
+      "Quantity": 5,
+      "Sort Order": 3,
+      "Status": "Planned",
+      "Notes": null
+    },
+    {
+      "Race Starting Item ID": "RST-0008",
+      "Race ID": "RACE-0002",
+      "Item ID": "ITEM-0211",
+      "Quantity": 1,
+      "Sort Order": 4,
+      "Status": "Planned",
+      "Notes": null
+    },
+    {
+      "Race Starting Item ID": "RST-0009",
+      "Race ID": "RACE-0003",
+      "Item ID": "ITEM-0011",
+      "Quantity": 3,
+      "Sort Order": 1,
+      "Status": "Planned",
+      "Notes": null
+    },
+    {
+      "Race Starting Item ID": "RST-0010",
+      "Race ID": "RACE-0003",
+      "Item ID": "ITEM-0099",
+      "Quantity": 1,
+      "Sort Order": 2,
+      "Status": "Planned",
+      "Notes": null
+    },
+    {
+      "Race Starting Item ID": "RST-0011",
+      "Race ID": "RACE-0003",
+      "Item ID": "ITEM-0166",
+      "Quantity": 1,
+      "Sort Order": 3,
+      "Status": "Planned",
+      "Notes": null
+    },
+    {
+      "Race Starting Item ID": "RST-0012",
+      "Race ID": "RACE-0003",
+      "Item ID": "ITEM-0058",
+      "Quantity": 5,
+      "Sort Order": 4,
+      "Status": "Planned",
+      "Notes": null
+    },
+    {
+      "Race Starting Item ID": "RST-0013",
+      "Race ID": "RACE-0003",
+      "Item ID": "ITEM-0211",
+      "Quantity": 1,
+      "Sort Order": 5,
+      "Status": "Planned",
+      "Notes": null
+    },
+    {
+      "Race Starting Item ID": "RST-0014",
+      "Race ID": "RACE-0004",
+      "Item ID": "ITEM-0124",
+      "Quantity": 1,
+      "Sort Order": 1,
+      "Status": "Planned",
+      "Notes": null
+    },
+    {
+      "Race Starting Item ID": "RST-0015",
+      "Race ID": "RACE-0004",
+      "Item ID": "ITEM-0145",
+      "Quantity": 1,
+      "Sort Order": 2,
+      "Status": "Planned",
+      "Notes": null
+    },
+    {
+      "Race Starting Item ID": "RST-0016",
+      "Race ID": "RACE-0004",
+      "Item ID": "ITEM-0058",
+      "Quantity": 5,
+      "Sort Order": 3,
+      "Status": "Planned",
+      "Notes": null
+    },
+    {
+      "Race Starting Item ID": "RST-0017",
+      "Race ID": "RACE-0004",
+      "Item ID": "ITEM-0211",
+      "Quantity": 1,
+      "Sort Order": 4,
+      "Status": "Planned",
+      "Notes": null
+    },
+    {
+      "Race Starting Item ID": "RST-0018",
+      "Race ID": "RACE-0005",
+      "Item ID": "ITEM-0125",
+      "Quantity": 1,
+      "Sort Order": 1,
+      "Status": "Planned",
+      "Notes": null
+    },
+    {
+      "Race Starting Item ID": "RST-0019",
+      "Race ID": "RACE-0005",
+      "Item ID": "ITEM-0084",
+      "Quantity": 5,
+      "Sort Order": 2,
+      "Status": "Planned",
+      "Notes": null
+    },
+    {
+      "Race Starting Item ID": "RST-0020",
+      "Race ID": "RACE-0005",
+      "Item ID": "ITEM-0058",
+      "Quantity": 5,
+      "Sort Order": 3,
+      "Status": "Planned",
+      "Notes": null
+    },
+    {
+      "Race Starting Item ID": "RST-0021",
+      "Race ID": "RACE-0005",
+      "Item ID": "ITEM-0211",
+      "Quantity": 1,
+      "Sort Order": 4,
+      "Status": "Planned",
+      "Notes": null
+    },
+    {
+      "Race Starting Item ID": "RST-0022",
+      "Race ID": "RACE-0006",
+      "Item ID": "ITEM-0102",
+      "Quantity": 1,
+      "Sort Order": 1,
+      "Status": "Planned",
+      "Notes": null
+    },
+    {
+      "Race Starting Item ID": "RST-0023",
+      "Race ID": "RACE-0006",
+      "Item ID": "ITEM-0003",
+      "Quantity": 5,
+      "Sort Order": 2,
+      "Status": "Planned",
+      "Notes": null
+    },
+    {
+      "Race Starting Item ID": "RST-0024",
+      "Race ID": "RACE-0006",
+      "Item ID": "ITEM-0058",
+      "Quantity": 5,
+      "Sort Order": 3,
+      "Status": "Planned",
+      "Notes": null
+    },
+    {
+      "Race Starting Item ID": "RST-0025",
+      "Race ID": "RACE-0006",
+      "Item ID": "ITEM-0211",
+      "Quantity": 1,
+      "Sort Order": 4,
+      "Status": "Planned",
+      "Notes": null
+    },
+    {
+      "Race Starting Item ID": "RST-0026",
+      "Race ID": "RACE-0007",
+      "Item ID": "ITEM-0165",
+      "Quantity": 1,
+      "Sort Order": 1,
+      "Status": "Planned",
+      "Notes": null
+    },
+    {
+      "Race Starting Item ID": "RST-0027",
+      "Race ID": "RACE-0007",
+      "Item ID": "ITEM-0031",
+      "Quantity": 5,
+      "Sort Order": 2,
+      "Status": "Planned",
+      "Notes": null
+    },
+    {
+      "Race Starting Item ID": "RST-0028",
+      "Race ID": "RACE-0007",
+      "Item ID": "ITEM-0054",
+      "Quantity": 3,
+      "Sort Order": 3,
+      "Status": "Planned",
+      "Notes": null
+    },
+    {
+      "Race Starting Item ID": "RST-0029",
+      "Race ID": "RACE-0007",
+      "Item ID": "ITEM-0058",
+      "Quantity": 5,
+      "Sort Order": 4,
+      "Status": "Planned",
+      "Notes": null
+    },
+    {
+      "Race Starting Item ID": "RST-0030",
+      "Race ID": "RACE-0007",
+      "Item ID": "ITEM-0211",
+      "Quantity": 1,
+      "Sort Order": 5,
+      "Status": "Planned",
+      "Notes": null
+    }
   ]
 }

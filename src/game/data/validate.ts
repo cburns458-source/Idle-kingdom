@@ -39,6 +39,9 @@ const TABLE_ID_FIELDS: Record<string, string> = {
   Cosmetics: 'Cosmetic ID',
   AppearanceOptions: 'Appearance Option ID',
   LocationSearches: 'Search ID',
+  Races: 'Race ID',
+  RaceBonuses: 'Race Bonus ID',
+  RaceStartingItems: 'Race Starting Item ID',
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -260,6 +263,66 @@ export function validateDatabase(db: GameDatabase): ValidationIssue[] {
     }
   }
 
+  for (const bonus of db.RaceBonuses) {
+    const raceId = bonus['Race ID']
+    if (typeof raceId === 'string' && !lookupById(indexes, 'Races', raceId)) {
+      issues.push({
+        severity: 'error',
+        table: 'RaceBonuses',
+        id: bonus['Race Bonus ID'],
+        message: `Missing Race ID reference: ${raceId}`,
+      })
+    }
+    if (
+      bonus['Bonus Type'] === 'skill_xp_percent' &&
+      typeof bonus['Reference ID'] === 'string' &&
+      !indexes.skillsById.has(bonus['Reference ID'])
+    ) {
+      issues.push({
+        severity: 'error',
+        table: 'RaceBonuses',
+        id: bonus['Race Bonus ID'],
+        message: `Missing skill Reference ID: ${bonus['Reference ID']}`,
+      })
+    }
+  }
+
+  for (const starter of db.RaceStartingItems) {
+    const raceId = starter['Race ID']
+    if (typeof raceId === 'string' && !lookupById(indexes, 'Races', raceId)) {
+      issues.push({
+        severity: 'error',
+        table: 'RaceStartingItems',
+        id: starter['Race Starting Item ID'],
+        message: `Missing Race ID reference: ${raceId}`,
+      })
+    }
+    const itemId = starter['Item ID']
+    if (typeof itemId === 'string' && !indexes.itemsById.has(itemId)) {
+      issues.push({
+        severity: 'error',
+        table: 'RaceStartingItems',
+        id: starter['Race Starting Item ID'],
+        message: `Missing Item ID reference: ${itemId}`,
+      })
+    }
+  }
+
+  for (const race of db.Races) {
+    const raw = race['Hostility Immunity Location IDs']
+    if (typeof raw !== 'string' || !raw.trim()) continue
+    for (const locationId of raw.split(';').map((part) => part.trim()).filter(Boolean)) {
+      if (!indexes.locationsById.has(locationId)) {
+        issues.push({
+          severity: 'error',
+          table: 'Races',
+          id: race['Race ID'],
+          message: `Missing Hostility Immunity Location ID reference: ${locationId}`,
+        })
+      }
+    }
+  }
+
   const requiredConfig = [
     'primary_activity_slots',
     'save_slots',
@@ -319,6 +382,9 @@ export function filterLaunchContent(db: GameDatabase): GameDatabase {
     Cosmetics: db.Cosmetics.filter(hasLaunchPhase),
     AppearanceOptions: db.AppearanceOptions.filter(hasLaunchPhase),
     LocationSearches: db.LocationSearches.filter(hasLaunchPhase),
+    Races: db.Races.filter(hasLaunchPhase),
+    RaceBonuses: db.RaceBonuses,
+    RaceStartingItems: db.RaceStartingItems,
   }
 }
 

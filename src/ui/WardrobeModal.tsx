@@ -9,6 +9,7 @@ import {
   isCosmeticUnlocked,
 } from '../game/cosmetics/cosmetics'
 import type { GameDatabase } from '../game/data/types'
+import { raceDisplayName } from '../game/races/races'
 import type { PlayerSave } from '../game/save/types'
 import { AppearancePicker } from './AppearancePicker'
 import { CloseButton } from './CloseButton'
@@ -80,6 +81,9 @@ export function WardrobeModal({ db, save, open, onClose, onChangeSave }: Wardrob
         <div className="wardrobe-top">
           <div className="wardrobe-portrait">
             <img src={PLAYER_PORTRAIT_SRC} alt="" className="wardrobe-portrait-image" />
+            {raceDisplayName(db, save.raceId) && (
+              <p className="wardrobe-race muted tiny">{raceDisplayName(db, save.raceId)}</p>
+            )}
           </div>
           <AppearancePicker
             db={db}

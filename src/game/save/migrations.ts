@@ -288,6 +288,16 @@ export const SAVE_MIGRATIONS: SaveMigration[] = [
       saveVersion: 18,
     }),
   },
+  {
+    fromVersion: 18,
+    toVersion: 19,
+    migrate: (save) => ({
+      ...save,
+      // Existing named characters are forced through a one-time race picker.
+      raceId: typeof save.raceId === 'string' && save.raceId.length > 0 ? save.raceId : null,
+      saveVersion: 19,
+    }),
+  },
 ]
 
 export function migrateSave(save: PlayerSave): PlayerSave {

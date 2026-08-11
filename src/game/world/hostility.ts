@@ -7,6 +7,7 @@ import { clearActivityTransition } from '../activity/transition'
 import { getSkillProgress } from '../activity/xp'
 import { COMBAT_SKILL_ID } from '../combat/stats'
 import type { ActivityRow, GameDatabase } from '../data/types'
+import { raceBypassesForcedHostilityAt } from '../races/races'
 import type { PlayerSave } from '../save/types'
 import { applyTravelArrival } from './travel'
 
@@ -29,6 +30,7 @@ export function forcedHostileActivity(
   save: PlayerSave,
   locationId: string,
 ): ActivityRow | null {
+  if (raceBypassesForcedHostilityAt(db, save, locationId)) return null
   const combatLevel = getSkillProgress(save, COMBAT_SKILL_ID).level
   for (const activity of hostileActivitiesAt(db, locationId)) {
     const warning = activity['Danger Warning Combat Level']

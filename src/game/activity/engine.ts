@@ -9,6 +9,7 @@ import { isStandardProductionActivity, recipesForActivity } from '../production/
 import type { ActionRow, ActivityRow, GameDatabase } from '../data/types'
 import type { PlayerSave } from '../save/types'
 import { clearActivePotionEffect, tryConsumePotionForScope } from '../potions/effects'
+import { applyRaceSkillXp } from '../races/races'
 import { gatheringDurationMs, gatheringXpReward } from './gathering'
 import { eligiblePoolEntries, pickWeightedAction, type RandomFn } from './pools'
 import {
@@ -179,7 +180,12 @@ export function completeGatheringAction(
   random: RandomFn = Math.random,
 ): { save: PlayerSave; result: ActionCompletionResult } {
   const rewarded = resolveActionRewards(db, save, action, random)
-  const xpAmount = gatheringXpReward(db, save, action)
+  const xpAmount = applyRaceSkillXp(
+    db,
+    save,
+    action['Relevant Skill ID'],
+    gatheringXpReward(db, save, action),
+  )
   let next = clearActivePotionEffect(rewarded.save)
   const xpApplied = applyXp(next, db, action['Relevant Skill ID'], xpAmount)
   next = xpApplied.save
@@ -198,10 +204,12 @@ export function completeGatheringAction(
 
   function applyBonusXp(skillId: string, amount: number) {
     if (amount <= 0) return
-    const applied = applyXp(next, db, skillId, amount)
+    const raced = applyRaceSkillXp(db, save, skillId, amount)
+    if (raced <= 0) return
+    const applied = applyXp(next, db, skillId, raced)
     next = applied.save
-    bonusXp.push({ skillId, xp: amount })
-    const reward = summarizeXpReward(db, next, skillId, amount, applied.leveledUpTo)
+    bonusXp.push({ skillId, xp: raced })
+    const reward = summarizeXpReward(db, next, skillId, raced, applied.leveledUpTo)
     if (reward) xpRewards.push(reward)
     if (applied.leveledUpTo != null) {
       leveledUpTo = applied.leveledUpTo

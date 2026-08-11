@@ -80,7 +80,9 @@ import { InventoryView } from './ui/InventoryView'
 import { LocationView } from './ui/LocationView'
 import { LogView } from './ui/LogView'
 import { NamePrompt } from './ui/NamePrompt'
-import { NewCharacterFlow } from './ui/NewCharacterFlow'
+import { NewCharacterFlow, RaceOnlyPicker } from './ui/NewCharacterFlow'
+import { assignRace } from './game/races/assignRace'
+import { raceDisplayName } from './game/races/races'
 import { NpcPanel } from './ui/NpcPanel'
 import { ProductionPicker, ProductionProgress } from './ui/ProductionPanel'
 import { AutoEquipPrompt } from './ui/AutoEquipPrompt'
@@ -131,6 +133,7 @@ export default function App() {
     message: string
   } | null>(null)
   const [renamingCharacter, setRenamingCharacter] = useState(false)
+  const [changingRace, setChangingRace] = useState(false)
   const [productionPickerActivityId, setProductionPickerActivityId] = useState<string | null>(null)
   const [specialStation, setSpecialStation] = useState<SpecialProductionStation | null>(null)
   const [activeShopId, setActiveShopId] = useState<string | null>(null)
@@ -1067,6 +1070,7 @@ export default function App() {
       >
         <TopHud
           characterName={save.characterName}
+          raceName={raceDisplayName(database.launch, save.raceId)}
           totalLevel={overallLevel}
           totalXp={overallXp}
           showTotalXp={save.settings.hudShowTotalXp === true}
@@ -1344,6 +1348,19 @@ export default function App() {
                 updateSave({ ...save, characterName: name })
                 setRenamingCharacter(false)
               }}
+              changingRace={changingRace}
+              onStartChangeRace={() => setChangingRace(true)}
+              onCancelChangeRace={() => setChangingRace(false)}
+              onChangeRace={(raceId) => {
+                const assigned = assignRace(database.launch, save, raceId)
+                if (assigned.ok) {
+                  updateSave(assigned.save)
+                  setLastMessage(
+                    `Race changed to ${raceDisplayName(database.launch, raceId)} (test).`,
+                  )
+                }
+                setChangingRace(false)
+              }}
               onPreviewAfkSummary={() => setAfkSummary(exampleAfkSummary())}
               onSpawnCritter={() => {
                 const result = spawnCritterAtLocation(save, save.currentLocationId)
@@ -1383,8 +1400,36 @@ export default function App() {
             <NewCharacterFlow
               db={database.launch}
               initialAppearance={save.appearance}
-              onComplete={(name, appearance) => {
-                updateSave({ ...save, characterName: name, appearance })
+              onComplete={(name, raceId, appearance) => {
+                const assigned = assignRace(
+                  database.launch,
+                  { ...save, characterName: name, appearance },
+                  raceId,
+                )
+                if (assigned.ok) updateSave(assigned.save)
+              }}
+            />
+          </div>
+        )}
+
+        {save.characterName && !save.raceId && (
+          <div className="name-prompt-overlay">
+            <RaceOnlyPicker
+              db={database.launch}
+              title="Choose your race"
+              lead="Existing adventurers must pick a race once before continuing."
+              submitLabel="Confirm race"
+              showStartingItems
+              onComplete={(raceId) => {
+                const assigned = assignRace(database.launch, save, raceId)
+                if (assigned.ok) {
+                  updateSave(assigned.save)
+                  setLastMessage(
+                    assigned.grantedStarterKit
+                      ? `You are now a ${raceDisplayName(database.launch, raceId)}.`
+                      : null,
+                  )
+                }
               }}
             />
           </div>
@@ -1449,6 +1494,10 @@ function SettingsPanel({
   onStartRename,
   onCancelRename,
   onRename,
+  changingRace,
+  onStartChangeRace,
+  onCancelChangeRace,
+  onChangeRace,
   onPreviewAfkSummary,
   onSpawnCritter,
 }: {
@@ -1459,6 +1508,10 @@ function SettingsPanel({
   onStartRename: () => void
   onCancelRename: () => void
   onRename: (name: string) => void
+  changingRace: boolean
+  onStartChangeRace: () => void
+  onCancelChangeRace: () => void
+  onChangeRace: (raceId: string) => void
   onPreviewAfkSummary: () => void
   onSpawnCritter: () => void
 }) {
@@ -1568,6 +1621,20 @@ function SettingsPanel({
     )
   }
 
+  if (changingRace) {
+    return (
+      <RaceOnlyPicker
+        db={database.launch}
+        title="Change race (test)"
+        lead="Temporary testing control. A future repeatable quest will replace this."
+        submitLabel="Change race"
+        showStartingItems={false}
+        onComplete={onChangeRace}
+        onCancel={onCancelChangeRace}
+      />
+    )
+  }
+
   return (
     <section className="panel menu-panel">
       <h1>Menu</h1>
@@ -1577,8 +1644,14 @@ function SettingsPanel({
         <div className="menu-name-block">
           <p className="muted tiny">Character</p>
           <p className="lead">{save.characterName ?? 'Unnamed'}</p>
+          <p className="muted tiny">
+            Race: {raceDisplayName(database.launch, save.raceId) ?? 'Unchosen'}
+          </p>
           <button type="button" className="btn secondary" onClick={onStartRename}>
             Change name
+          </button>
+          <button type="button" className="btn secondary" onClick={onStartChangeRace}>
+            Change race (test)
           </button>
         </div>
 
