@@ -1,4 +1,4 @@
-export const SAVE_VERSION = 17
+export const SAVE_VERSION = 18
 export const SAVE_STORAGE_KEY = 'idle-kingdoms.demo.save'
 export const STARTING_LOCATION_ID = 'LOC-0002'
 export const STARTING_GOLD = 25
@@ -158,6 +158,8 @@ export interface PlayerSave {
   activeCritterSpawns: Array<{ locationId: string; critterId: string; appearedAt: string }>
   /** Remainder activity ms toward the next Critter hour-roll, keyed by location. */
   critterProgressMs: Record<string, number>
+  /** Location Search ID -> ISO timestamp of the last successful search (for cooldowns). */
+  locationSearchClaims: Record<string, string>
   /** Owned/equipped Wardrobe Cosmetics. */
   cosmetics: CosmeticsState
   /** Selected character Appearance options. */

@@ -3367,22 +3367,6 @@
       "Base Sell Value": 25
     },
     {
-      "Item ID": "ITEM-0186",
-      "Internal Key": "iron_bow",
-      "Display Name": "Iron Bow",
-      "Category": "Weapon",
-      "Subtype": "Bow",
-      "Associated Skill ID": "SKL-0012",
-      "Equipment Slot ID": "SLOT-0001",
-      "Functional / Source Tags": "combat_weapon; hunting_tool; legacy_drop_concept",
-      "Status": "Planned",
-      "Release Phase": "Launch",
-      "Description": null,
-      "Icon Asset Key": null,
-      "Notes": null,
-      "Base Sell Value": 900
-    },
-    {
       "Item ID": "ITEM-0187",
       "Internal Key": "aether_equipment",
       "Display Name": "Aether Equipment",
@@ -6659,24 +6643,6 @@
       "Capabilities / Effects": "artisanry_output; arcana_enchantable",
       "Status": "Planned",
       "Notes": null
-    },
-    {
-      "Equipment ID": "EQP-0103",
-      "Item ID": "ITEM-0186",
-      "Slot ID": "SLOT-0001",
-      "Required Skill ID": "SKL-0005",
-      "Required Level": 30,
-      "Secondary Required Skill ID": "SKL-0001",
-      "Secondary Required Level": 20,
-      "Min Damage": 60,
-      "Max Damage": 110,
-      "HP Bonus": null,
-      "Damage Reduction": null,
-      "Healing Amount": null,
-      "Action Time Reduction %": null,
-      "Capabilities / Effects": "combat_weapon; hunting_tool; bow_combat_xp",
-      "Status": "Planned",
-      "Notes": "Qualifying Hunting Actions grant Combat XP equal to 10% of Hunting XP."
     },
     {
       "Equipment ID": "EQP-0105",
@@ -13805,21 +13771,6 @@
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0147",
       "Weight": 35,
-      "Minimum Quantity": 1,
-      "Maximum Quantity": 1,
-      "Skill ID": null,
-      "XP Amount": null,
-      "Status": "Planned",
-      "Notes": null
-    },
-    {
-      "Reward Entry ID": "RWE-0029",
-      "Reward Table ID": "RWT-0010",
-      "Reward Table Name": "Guard Drops",
-      "Purpose": "Enemy item drops",
-      "Reward Type": "Item",
-      "Reward ID / Value": "ITEM-0186",
-      "Weight": 25,
       "Minimum Quantity": 1,
       "Maximum Quantity": 1,
       "Skill ID": null,
@@ -21503,6 +21454,21 @@
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Notes": null
+    }
+  ],
+  "LocationSearches": [
+    {
+      "Search ID": "SRCH-0001",
+      "Internal Key": "cave_entrance_search",
+      "Location ID": "LOC-0010",
+      "Display Name": "Search around the entrance",
+      "Button Label": "Search",
+      "Reward Item ID": "ITEM-0109",
+      "Reward Quantity": 1,
+      "Cooldown Hours": 24,
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": "Grants a Sling. Limited to once per day (24h cooldown from the last successful search)."
     }
   ]
 }

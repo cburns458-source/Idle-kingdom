@@ -21,6 +21,7 @@ function saveWithInventory(itemIds: string[]): PlayerSave {
     critterCollections: [],
     activeCritterSpawns: [],
     critterProgressMs: {},
+    locationSearchClaims: {},
     cosmetics: { unlocked: [], equipped: {} },
     appearance: {
       skinTone: 'APR-0001',

@@ -75,6 +75,7 @@ export function createNewSave(db: GameDatabase): PlayerSave {
     critterCollections: [],
     activeCritterSpawns: [],
     critterProgressMs: {},
+    locationSearchClaims: {},
     cosmetics: {
       unlocked: [STARTER_OUTFIT_COSMETIC_ID],
       equipped: {

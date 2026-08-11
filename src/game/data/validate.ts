@@ -4,6 +4,7 @@ import {
   type DatabaseIndexes,
   type FacilityRow,
   type GameDatabase,
+  type LocationSearchRow,
   type NpcRow,
   type PoolEntryRow,
   type RewardEntryRow,
@@ -37,6 +38,7 @@ const TABLE_ID_FIELDS: Record<string, string> = {
   CosmeticSlots: 'Cosmetic Slot ID',
   Cosmetics: 'Cosmetic ID',
   AppearanceOptions: 'Appearance Option ID',
+  LocationSearches: 'Search ID',
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -118,6 +120,7 @@ export function buildIndexes(db: GameDatabase): DatabaseIndexes {
       db.RewardEntries as RewardEntryRow[],
       (row) => row['Reward Table ID'],
     ),
+    locationSearchesByLocationId: groupByLocationId(db.LocationSearches as LocationSearchRow[]),
   }
 }
 
@@ -236,6 +239,27 @@ export function validateDatabase(db: GameDatabase): ValidationIssue[] {
     }
   }
 
+  for (const search of db.LocationSearches) {
+    const locationId = search['Location ID']
+    if (typeof locationId === 'string' && !indexes.locationsById.has(locationId)) {
+      issues.push({
+        severity: 'error',
+        table: 'LocationSearches',
+        id: search['Search ID'],
+        message: `Missing Location ID reference: ${locationId}`,
+      })
+    }
+    const itemId = search['Reward Item ID']
+    if (typeof itemId === 'string' && !indexes.itemsById.has(itemId)) {
+      issues.push({
+        severity: 'error',
+        table: 'LocationSearches',
+        id: search['Search ID'],
+        message: `Missing Reward Item ID reference: ${itemId}`,
+      })
+    }
+  }
+
   const requiredConfig = [
     'primary_activity_slots',
     'save_slots',
@@ -294,6 +318,7 @@ export function filterLaunchContent(db: GameDatabase): GameDatabase {
     CosmeticSlots: db.CosmeticSlots.filter(hasLaunchPhase),
     Cosmetics: db.Cosmetics.filter(hasLaunchPhase),
     AppearanceOptions: db.AppearanceOptions.filter(hasLaunchPhase),
+    LocationSearches: db.LocationSearches.filter(hasLaunchPhase),
   }
 }
 

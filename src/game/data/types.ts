@@ -272,6 +272,21 @@ export interface AppearanceOptionRow {
   Notes: string | null
 }
 
+/** A one-click "search this spot" interaction at a Location, on a cooldown (e.g. once per day). */
+export interface LocationSearchRow {
+  'Search ID': string
+  'Internal Key': string
+  'Location ID': string
+  'Display Name': string
+  'Button Label': string
+  'Reward Item ID': string
+  'Reward Quantity': number
+  'Cooldown Hours': number
+  Status: RecordStatus
+  'Release Phase': ReleasePhase
+  Notes: string | null
+}
+
 export interface GameDatabase {
   Config: ConfigRow[]
   Skills: SkillRow[]
@@ -300,6 +315,7 @@ export interface GameDatabase {
   CosmeticSlots: CosmeticSlotRow[]
   Cosmetics: CosmeticRow[]
   AppearanceOptions: AppearanceOptionRow[]
+  LocationSearches: LocationSearchRow[]
 }
 
 export const DATABASE_TABLES = [
@@ -330,6 +346,7 @@ export const DATABASE_TABLES = [
   'CosmeticSlots',
   'Cosmetics',
   'AppearanceOptions',
+  'LocationSearches',
 ] as const
 
 export type DatabaseTableName = (typeof DATABASE_TABLES)[number]
@@ -356,4 +373,5 @@ export interface DatabaseIndexes {
   shopsByLocationId: Map<string, ShopRow[]>
   poolEntriesByPoolId: Map<string, PoolEntryRow[]>
   rewardEntriesByTableId: Map<string, RewardEntryRow[]>
+  locationSearchesByLocationId: Map<string, LocationSearchRow[]>
 }

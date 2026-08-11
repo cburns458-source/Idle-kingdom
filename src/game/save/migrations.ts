@@ -276,6 +276,18 @@ export const SAVE_MIGRATIONS: SaveMigration[] = [
       }
     },
   },
+  {
+    fromVersion: 17,
+    toVersion: 18,
+    migrate: (save) => ({
+      ...save,
+      locationSearchClaims:
+        save.locationSearchClaims && typeof save.locationSearchClaims === 'object'
+          ? save.locationSearchClaims
+          : {},
+      saveVersion: 18,
+    }),
+  },
 ]
 
 export function migrateSave(save: PlayerSave): PlayerSave {

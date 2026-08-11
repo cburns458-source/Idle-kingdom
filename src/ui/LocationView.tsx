@@ -14,8 +14,13 @@ import {
   type SpecialProductionStation,
 } from '../game/projects/projects'
 import { enterSubMapLabel, isSubMapGateway } from '../game/world/submaps'
+import {
+  canClaimLocationSearch,
+  locationSearchCooldownRemainingMs,
+} from '../game/world/locationSearch'
 import type { PlayerSave } from '../game/save/types'
 import { CritterOverlay } from './CritterOverlay'
+import { formatDurationSeconds } from './formatDuration'
 
 /**
  * True when a ReactNode will actually mount visible UI. App.tsx always
@@ -64,6 +69,7 @@ interface LocationViewProps {
   parentSubMapName?: string | null
   onOpenParentSubMap?: () => void
   onCollectCritter: (save: PlayerSave, message: string) => void
+  onSearchLocation: (searchId: string) => void
   requirementHint?: (activity: ActivityRow) => string | null
   /** Standard Production opens a recipe picker. */
   isRecipeBrowserActivity?: (activity: ActivityRow) => boolean
@@ -100,6 +106,7 @@ export function LocationView({
   parentSubMapName,
   onOpenParentSubMap,
   onCollectCritter,
+  onSearchLocation,
   requirementHint,
   isRecipeBrowserActivity,
 }: LocationViewProps) {
@@ -108,6 +115,8 @@ export function LocationView({
   const specialStations = specialProductionStationsAt(db, locationId)
   const shops = indexes.shopsByLocationId.get(locationId) ?? []
   const npcs = indexes.npcsByLocationId.get(locationId) ?? []
+  const searchSpots = indexes.locationSearchesByLocationId.get(locationId) ?? []
+  const [nowTick, setNowTick] = useState(() => Date.now())
   const gatewayLabel =
     enterSubMapLabelText ?? enterSubMapLabel(db, location)
   const showSubMapEntrance =
@@ -123,6 +132,12 @@ export function LocationView({
   useEffect(() => {
     setActivitiesHidden(false)
   }, [locationId])
+
+  useEffect(() => {
+    if (searchSpots.length === 0) return
+    const interval = window.setInterval(() => setNowTick(Date.now()), 30_000)
+    return () => window.clearInterval(interval)
+  }, [searchSpots.length])
 
   function scrollLocationToTop() {
     const shade = shadeRef.current
@@ -334,6 +349,38 @@ export function LocationView({
                           }}
                         >
                           {isMerchant ? 'Talk to merchant' : 'Talk'}
+                        </button>
+                      </li>
+                    )
+                  })}
+                </ul>
+              </section>
+            )}
+
+            {searchSpots.length > 0 && (
+              <section className="panel glass-panel location-activities">
+                <h2>Search</h2>
+                <ul className="interaction-list">
+                  {searchSpots.map((search) => {
+                    const remainingMs = locationSearchCooldownRemainingMs(save, search, nowTick)
+                    const ready = canClaimLocationSearch(save, search, nowTick)
+                    return (
+                      <li key={search['Search ID']}>
+                        <div>
+                          <strong>{search['Display Name']}</strong>
+                          {!ready && (
+                            <p className="muted tiny">
+                              Come back in {formatDurationSeconds(remainingMs / 1000)}.
+                            </p>
+                          )}
+                        </div>
+                        <button
+                          type="button"
+                          className="btn primary"
+                          disabled={!ready}
+                          onClick={() => onSearchLocation(search['Search ID'])}
+                        >
+                          {search['Button Label']}
                         </button>
                       </li>
                     )

@@ -26,6 +26,7 @@ import {
   applyHostileTravelArrival,
   hostileForceMessage,
 } from './game/world/hostility'
+import { claimLocationSearch } from './game/world/locationSearch'
 import {
   enterSubMapLabel,
   isSubMap,
@@ -1121,6 +1122,15 @@ export default function App() {
               onCollectCritter={(next, message) => {
                 updateSave(next)
                 setLastMessage(message)
+              }}
+              onSearchLocation={(searchId) => {
+                const result = claimLocationSearch(database.launch, save, searchId)
+                if (result.ok) {
+                  updateSave(result.save)
+                  setLastMessage(`Found a ${result.itemName}!`)
+                } else if (result.reason) {
+                  setLastMessage(result.reason)
+                }
               }}
               onOpenSpecialProduction={(station) => {
                 setActiveShopId(null)

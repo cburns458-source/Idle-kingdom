@@ -212,7 +212,7 @@ describe('equipment loadout', () => {
     } as unknown as PlayerSave
 
     const migrated = migrateSave(legacy)
-    expect(migrated.saveVersion).toBe(17)
+    expect(migrated.saveVersion).toBe(18)
     expect(migrated.activityTransition).toBeNull()
     expect(migrated.settings.showActivityRewards).toBe(true)
     expect(migrated.settings.hudShowTotalXp).toBe(false)
@@ -222,6 +222,7 @@ describe('equipment loadout', () => {
     expect(migrated.critterCollections).toEqual([])
     expect(migrated.activeCritterSpawns).toEqual([])
     expect(migrated.critterProgressMs).toEqual({})
+    expect(migrated.locationSearchClaims).toEqual({})
     expect(migrated.cosmetics.unlocked).toEqual(['COS-0001'])
     expect(migrated.cosmetics.equipped['CSLOT-0001']).toBe('COS-0001')
     expect(migrated.cosmetics.equipped['CSLOT-0002']).toBeNull()
