@@ -71,6 +71,12 @@ function isGatheringToolEquipment(
   )
 }
 
+function isArmorEquipment(equipment: EquipmentRow): boolean {
+  const caps = capabilityTags(equipment['Capabilities / Effects'])
+  if (caps.includes('combat_armor') || caps.includes('specialist_armor')) return true
+  return typeof equipment['Damage Reduction'] === 'number'
+}
+
 function equipmentMatchesEnchantment(
   db: GameDatabase,
   itemId: string,
@@ -79,9 +85,19 @@ function equipmentMatchesEnchantment(
 ): boolean {
   const target = (enchantment['Valid Target'] ?? '').toLowerCase()
   const item = db.Items.find((row) => row['Item ID'] === itemId)
+  const caps = capabilityTags(equipment['Capabilities / Effects'])
+  // Craftable Jewelry (necklaces/rings) is flagged enchantable data-side and accepts
+  // either gathering or weapon-category (combat) enchantments, despite not being a tool/weapon.
+  const isEnchantableAccessory = caps.includes('arcana_enchantable')
 
-  if (target.includes('weapon') && isWeaponEquipment(item, equipment)) return true
-  if (target.includes('gathering') && isGatheringToolEquipment(item, equipment)) return true
+  if (target.includes('weapon') && (isWeaponEquipment(item, equipment) || isEnchantableAccessory))
+    return true
+  if (
+    target.includes('gathering') &&
+    (isGatheringToolEquipment(item, equipment) || isEnchantableAccessory)
+  )
+    return true
+  if (target.includes('armor') && isArmorEquipment(equipment)) return true
   return false
 }
 
@@ -247,6 +263,24 @@ export function equippedEnchantmentDamageBonus(db: GameDatabase, save: PlayerSav
     }
   }
   return bonus
+}
+
+/** Percent of damage received in a combat round reflected back at the attacker (e.g. Thorns). */
+export function equippedEnchantmentThornsPercent(db: GameDatabase, save: PlayerSave): number {
+  let percent = 0
+  for (const stack of Object.values(save.equipment.slots)) {
+    if (!stack?.enchantmentId) continue
+    if (stack.enchantmentId === 'ENCH-0006') {
+      percent += 10
+      continue
+    }
+    const row = getEnchantment(db, stack.enchantmentId)
+    const match = row?.Effect?.match(/(\d+(?:\.\d+)?)%\s+of damage received/i)
+    if (match) {
+      percent += Number(match[1])
+    }
+  }
+  return percent
 }
 
 /** Gathering duration multiplier from equipped enchantments (e.g. -2% => 0.98). */

@@ -34,6 +34,7 @@ describe('special production', () => {
       'PRJ-0134',
       'PRJ-0135',
       'PRJ-0139',
+      'PRJ-0140',
     ])
     expect(listed.find((project) => project['Project ID'] === 'PRJ-0139')?.['Display Name']).toBe(
       'Strength Spell',
@@ -73,6 +74,32 @@ describe('special production', () => {
     expect(launch.Items.find((item) => item['Item ID'] === 'ITEM-0295')?.['Display Name']).toBe(
       'Strength Spell',
     )
+  })
+
+  it('no longer requires a secondary Crafting level for any Special Production project', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    for (const project of launch.Projects) {
+      expect(project['Required Skill 2 ID']).not.toBe('SKL-0009')
+      expect(project['Required Skill 3 ID']).not.toBe('SKL-0009')
+    }
+  })
+
+  it('crafts Strength Spell with zero Crafting skill now that the requirement is removed', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    let save = createNewSave(launch)
+    save = {
+      ...save,
+      unlockedNpcIds: ['NPC-0004'],
+      currentLocationId: 'LOC-0007',
+      skills: save.skills.map((skill) =>
+        skill.skillId === 'SKL-0013' ? { ...skill, level: 20, xp: 50_000 } : skill,
+      ),
+    }
+    save = addItemToInventory(save, 'ITEM-0099', 1)
+    save = addItemToInventory(save, 'ITEM-0040', 10)
+
+    const result = completeSpecialProject(launch, save, 'PRJ-0139', 1)
+    expect(result.ok).toBe(true)
   })
 
   it('instantly completes a L1 smithing project and consumes materials once', () => {

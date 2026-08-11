@@ -10,6 +10,7 @@ import {
   potionEnemyMaxHpDamage,
   tryConsumePotionForScope,
 } from '../potions/effects'
+import { equippedEnchantmentThornsPercent } from '../projects/enchantments'
 import {
   applyMitigation,
   playerDamageRange,
@@ -23,6 +24,8 @@ export type RandomFn = () => number
 export interface CombatRoundResult {
   playerHit: number
   enemyHit: number | null
+  /** Damage reflected back at the enemy this round via armor enchantments (e.g. Thorns). */
+  thornsHit: number
   enemyHp: number
   playerHp: number
   outcome: 'ongoing' | 'victory' | 'defeat'
@@ -97,6 +100,7 @@ export function resolveCombatRound(
     return {
       playerHit,
       enemyHit: null,
+      thornsHit: 0,
       enemyHp: 0,
       playerHp: save.currentHp,
       outcome: 'victory',
@@ -107,12 +111,20 @@ export function resolveCombatRound(
   const enemyHit = applyMitigation(enemyRaw, playerDamageReduction(db, save), floor)
   const playerHp = Math.max(0, save.currentHp - enemyHit)
 
+  const thornsPercent = equippedEnchantmentThornsPercent(db, save)
+  const thornsHit = thornsPercent > 0 ? Math.round((enemyHit * thornsPercent) / 100) : 0
+  if (thornsHit > 0) {
+    nextEnemyHp = Math.max(0, nextEnemyHp - thornsHit)
+  }
+
   return {
     playerHit,
     enemyHit,
+    thornsHit,
     enemyHp: nextEnemyHp,
     playerHp,
-    outcome: playerHp <= 0 ? 'defeat' : 'ongoing',
+    // Simultaneous kills favor defeat: the enemy's own hit must land before Thorns reflects it.
+    outcome: playerHp <= 0 ? 'defeat' : nextEnemyHp <= 0 ? 'victory' : 'ongoing',
   }
 }
 

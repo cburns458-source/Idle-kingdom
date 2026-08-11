@@ -98,6 +98,39 @@ describe('combat engine', () => {
     expect(result.save.equipment.slots['SLOT-0011']?.quantity).toBe(1)
   })
 
+  it('reflects a percentage of incoming damage back at the enemy when Thorns is equipped', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const base = createNewSave(launch)
+    const save = {
+      ...base,
+      equipment: {
+        ...base.equipment,
+        // ITEM-0229 grants 1 Damage Reduction; enchanting it with Thorns keeps the math simple.
+        slots: {
+          ...base.equipment.slots,
+          'SLOT-0004': { itemId: 'ITEM-0229', quantity: 1, enchantmentId: 'ENCH-0006' },
+        },
+      },
+    }
+    const enemy = launch.Enemies.find((row) => row['Enemy ID'] === 'ENM-0001')!
+    // Both rolls land at their minimum: player hits for 10 (unarmed), enemy rolls 10 raw.
+    const round = resolveCombatRound(launch, save, enemy, enemy['Maximum HP'], () => 0)
+    expect(round.playerHit).toBe(10)
+    expect(round.enemyHit).toBe(9) // 10 raw - 1 Damage Reduction from the chestplate.
+    expect(round.thornsHit).toBe(1) // 10% of 9, rounded.
+    // 100 max HP - 10 (player hit) - 1 (10% Thorns reflect) = 89.
+    expect(round.enemyHp).toBe(89)
+  })
+
+  it('does not reflect damage when no Thorns enchantment is equipped', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const save = createNewSave(launch)
+    const enemy = launch.Enemies.find((row) => row['Enemy ID'] === 'ENM-0001')!
+    const round = resolveCombatRound(launch, save, enemy, enemy['Maximum HP'], () => 0)
+    expect(round.thornsHit).toBe(0)
+    expect(round.enemyHp).toBe(90)
+  })
+
   it('starts a death pause with no rewards on defeat', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const save = createNewSave(launch)

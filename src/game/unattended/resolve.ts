@@ -184,7 +184,7 @@ export function resolveUnattendedProgress(
       if (round.outcome === 'victory') {
         const victory = applyCombatVictory(
           db,
-          { ...current, combatEnemyHp: 0 },
+          { ...current, combatEnemyHp: 0, currentHp: round.playerHp },
           action,
           enemy,
           random,

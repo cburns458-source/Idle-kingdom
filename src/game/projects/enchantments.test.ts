@@ -51,4 +51,47 @@ describe('axe enchantment eligibility', () => {
 
     expect(combatIds).toContain('ITEM-0132')
   })
+
+  it('allows craftable Jewelry to take gathering or combat enchantments', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    let save = createNewSave(launch)
+    save = { ...save, inventory: [] }
+    save = addItemToInventory(save, 'ITEM-0170', 1) // Silver Necklace
+    save = addItemToInventory(save, 'ITEM-0171', 1) // Silver Ring
+
+    const gathering = getEnchantment(launch, 'ENCH-0002')!
+    const combat = getEnchantment(launch, 'ENCH-0003')!
+
+    const gatheringIds = eligibleEnchantmentTargets(launch, save, gathering).map(
+      (option) => (option.target.kind === 'inventory' ? save.inventory[option.target.index]?.itemId : null),
+    )
+    const combatIds = eligibleEnchantmentTargets(launch, save, combat).map(
+      (option) => (option.target.kind === 'inventory' ? save.inventory[option.target.index]?.itemId : null),
+    )
+
+    expect(gatheringIds).toContain('ITEM-0170')
+    expect(gatheringIds).toContain('ITEM-0171')
+    expect(combatIds).toContain('ITEM-0170')
+    expect(combatIds).toContain('ITEM-0171')
+  })
+
+  it('allows armor to take the Thorns enchantment but not weapon enchantments', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    let save = createNewSave(launch)
+    save = { ...save, inventory: [] }
+    save = addItemToInventory(save, 'ITEM-0229', 1) // Chest armor with Damage Reduction
+
+    const thorns = getEnchantment(launch, 'ENCH-0006')!
+    const combat = getEnchantment(launch, 'ENCH-0003')!
+
+    const thornsIds = eligibleEnchantmentTargets(launch, save, thorns).map(
+      (option) => (option.target.kind === 'inventory' ? save.inventory[option.target.index]?.itemId : null),
+    )
+    const combatIds = eligibleEnchantmentTargets(launch, save, combat).map(
+      (option) => (option.target.kind === 'inventory' ? save.inventory[option.target.index]?.itemId : null),
+    )
+
+    expect(thornsIds).toContain('ITEM-0229')
+    expect(combatIds).not.toContain('ITEM-0229')
+  })
 })

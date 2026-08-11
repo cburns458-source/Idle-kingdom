@@ -572,7 +572,7 @@ export default function App() {
       if (round.outcome === 'victory') {
         const victoryResult = applyCombatVictory(
           current.database.launch,
-          { ...current.save, combatEnemyHp: 0 },
+          { ...current.save, combatEnemyHp: 0, currentHp: round.playerHp },
           action,
           enemy,
         )
@@ -599,11 +599,13 @@ export default function App() {
         }
         setRecentRewards((prev) => [combatBundle, ...prev].slice(0, 4))
         setLastPlayerHit(round.playerHit)
-        setLastEnemyHit(null)
+        setLastEnemyHit(round.enemyHit)
         setLastMessage(
           victoryResult.foodConsumed
             ? `Ate ${victoryResult.foodName} (+${victoryResult.foodHealed} HP)`
-            : `Defeated ${enemy['Display Name']}`,
+            : round.thornsHit > 0
+              ? `Thorns reflects ${round.thornsHit} and defeats ${enemy['Display Name']}!`
+              : `Defeated ${enemy['Display Name']}`,
         )
         setBoot({
           ...current,
@@ -648,7 +650,9 @@ export default function App() {
       setLastPlayerHit(round.playerHit)
       setLastEnemyHit(round.enemyHit)
       setLastMessage(
-        `You hit ${round.playerHit}. ${enemy['Display Name']} hits ${round.enemyHit}.`,
+        round.thornsHit > 0
+          ? `You hit ${round.playerHit}. ${enemy['Display Name']} hits ${round.enemyHit}. Thorns reflects ${round.thornsHit}.`
+          : `You hit ${round.playerHit}. ${enemy['Display Name']} hits ${round.enemyHit}.`,
       )
       const continued = applyActivityTimeTowardCritters(
         {

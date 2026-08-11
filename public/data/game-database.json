@@ -8068,6 +8068,17 @@
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Notes": "Player spell effect. Active while the equipped Strength Spell occupies the current cycling spell slot."
+    },
+    {
+      "Enchantment ID": "ENCH-0006",
+      "Internal Key": "thorns_enchantment",
+      "Display Name": "Thorns",
+      "Valid Target": "Eligible armor",
+      "Effect": "Returns 10% of damage received in the last combat round back to the attacker",
+      "Required Materials": "Enchanting Tablet; Essence; Bull Horns",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": null
     }
   ],
   "Maps": [
@@ -16984,8 +16995,8 @@
       "Required Skill 1 Level": 20,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 20,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 15
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0004",
@@ -17014,8 +17025,8 @@
       "Required Skill 1 Level": 20,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 20,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 15
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0005",
@@ -17044,8 +17055,8 @@
       "Required Skill 1 Level": 35,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 35,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 30
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0006",
@@ -17074,8 +17085,8 @@
       "Required Skill 1 Level": 35,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 35,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 30
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0007",
@@ -17104,8 +17115,8 @@
       "Required Skill 1 Level": 1,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 1,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 1
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0008",
@@ -17134,8 +17145,8 @@
       "Required Skill 1 Level": 20,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 20,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 15
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0009",
@@ -17164,8 +17175,8 @@
       "Required Skill 1 Level": 35,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 35,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 30
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0010",
@@ -17194,8 +17205,8 @@
       "Required Skill 1 Level": 35,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 35,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 30
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0011",
@@ -17224,8 +17235,8 @@
       "Required Skill 1 Level": 35,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 35,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 30
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0013",
@@ -17254,8 +17265,8 @@
       "Required Skill 1 Level": 20,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 20,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 15
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0014",
@@ -17284,8 +17295,8 @@
       "Required Skill 1 Level": 35,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 35,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 30
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0020",
@@ -17314,8 +17325,8 @@
       "Required Skill 1 Level": 20,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 20,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 15
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0021",
@@ -17344,8 +17355,8 @@
       "Required Skill 1 Level": 20,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 20,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 15
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0022",
@@ -17374,8 +17385,8 @@
       "Required Skill 1 Level": 20,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 20,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 15
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0023",
@@ -17404,8 +17415,8 @@
       "Required Skill 1 Level": 20,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 20,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 15
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0024",
@@ -17434,8 +17445,8 @@
       "Required Skill 1 Level": 20,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 20,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 15
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0025",
@@ -17464,8 +17475,8 @@
       "Required Skill 1 Level": 35,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 35,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 30
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0026",
@@ -17494,8 +17505,8 @@
       "Required Skill 1 Level": 35,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 35,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 30
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0027",
@@ -17524,8 +17535,8 @@
       "Required Skill 1 Level": 35,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 35,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 30
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0028",
@@ -17554,8 +17565,8 @@
       "Required Skill 1 Level": 35,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 35,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 30
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0029",
@@ -17584,8 +17595,8 @@
       "Required Skill 1 Level": 35,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 35,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 30
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0030",
@@ -17612,8 +17623,8 @@
       "Input 4 Quantity": null,
       "Required Skill 1 ID": "SKL-0012",
       "Required Skill 1 Level": 10,
-      "Required Skill 2 ID": "SKL-0009",
-      "Required Skill 2 Level": 10,
+      "Required Skill 2 ID": null,
+      "Required Skill 2 Level": null,
       "Required Skill 3 ID": null,
       "Required Skill 3 Level": null
     },
@@ -17642,8 +17653,8 @@
       "Input 4 Quantity": null,
       "Required Skill 1 ID": "SKL-0012",
       "Required Skill 1 Level": 20,
-      "Required Skill 2 ID": "SKL-0009",
-      "Required Skill 2 Level": 20,
+      "Required Skill 2 ID": null,
+      "Required Skill 2 Level": null,
       "Required Skill 3 ID": null,
       "Required Skill 3 Level": null
     },
@@ -17672,8 +17683,8 @@
       "Input 4 Quantity": null,
       "Required Skill 1 ID": "SKL-0012",
       "Required Skill 1 Level": 35,
-      "Required Skill 2 ID": "SKL-0009",
-      "Required Skill 2 Level": 35,
+      "Required Skill 2 ID": null,
+      "Required Skill 2 Level": null,
       "Required Skill 3 ID": null,
       "Required Skill 3 Level": null
     },
@@ -17702,8 +17713,8 @@
       "Input 4 Quantity": null,
       "Required Skill 1 ID": "SKL-0012",
       "Required Skill 1 Level": 50,
-      "Required Skill 2 ID": "SKL-0009",
-      "Required Skill 2 Level": 50,
+      "Required Skill 2 ID": null,
+      "Required Skill 2 Level": null,
       "Required Skill 3 ID": null,
       "Required Skill 3 Level": null
     },
@@ -17732,8 +17743,8 @@
       "Input 4 Quantity": null,
       "Required Skill 1 ID": "SKL-0012",
       "Required Skill 1 Level": 65,
-      "Required Skill 2 ID": "SKL-0009",
-      "Required Skill 2 Level": 65,
+      "Required Skill 2 ID": null,
+      "Required Skill 2 Level": null,
       "Required Skill 3 ID": null,
       "Required Skill 3 Level": null
     },
@@ -17762,8 +17773,8 @@
       "Input 4 Quantity": null,
       "Required Skill 1 ID": "SKL-0012",
       "Required Skill 1 Level": 80,
-      "Required Skill 2 ID": "SKL-0009",
-      "Required Skill 2 Level": 80,
+      "Required Skill 2 ID": null,
+      "Required Skill 2 Level": null,
       "Required Skill 3 ID": null,
       "Required Skill 3 Level": null
     },
@@ -17792,8 +17803,8 @@
       "Input 4 Quantity": null,
       "Required Skill 1 ID": "SKL-0012",
       "Required Skill 1 Level": 30,
-      "Required Skill 2 ID": "SKL-0009",
-      "Required Skill 2 Level": 25,
+      "Required Skill 2 ID": null,
+      "Required Skill 2 Level": null,
       "Required Skill 3 ID": null,
       "Required Skill 3 Level": null
     },
@@ -17822,8 +17833,8 @@
       "Input 4 Quantity": null,
       "Required Skill 1 ID": "SKL-0012",
       "Required Skill 1 Level": 45,
-      "Required Skill 2 ID": "SKL-0009",
-      "Required Skill 2 Level": 40,
+      "Required Skill 2 ID": null,
+      "Required Skill 2 Level": null,
       "Required Skill 3 ID": null,
       "Required Skill 3 Level": null
     },
@@ -17852,8 +17863,8 @@
       "Input 4 Quantity": 1,
       "Required Skill 1 ID": "SKL-0012",
       "Required Skill 1 Level": 50,
-      "Required Skill 2 ID": "SKL-0009",
-      "Required Skill 2 Level": 45,
+      "Required Skill 2 ID": null,
+      "Required Skill 2 Level": null,
       "Required Skill 3 ID": null,
       "Required Skill 3 Level": null
     },
@@ -17882,8 +17893,8 @@
       "Input 4 Quantity": 1,
       "Required Skill 1 ID": "SKL-0012",
       "Required Skill 1 Level": 60,
-      "Required Skill 2 ID": "SKL-0009",
-      "Required Skill 2 Level": 55,
+      "Required Skill 2 ID": null,
+      "Required Skill 2 Level": null,
       "Required Skill 3 ID": null,
       "Required Skill 3 Level": null
     },
@@ -17912,8 +17923,8 @@
       "Input 4 Quantity": 1,
       "Required Skill 1 ID": "SKL-0012",
       "Required Skill 1 Level": 65,
-      "Required Skill 2 ID": "SKL-0009",
-      "Required Skill 2 Level": 60,
+      "Required Skill 2 ID": null,
+      "Required Skill 2 Level": null,
       "Required Skill 3 ID": null,
       "Required Skill 3 Level": null
     },
@@ -17942,8 +17953,8 @@
       "Input 4 Quantity": null,
       "Required Skill 1 ID": "SKL-0012",
       "Required Skill 1 Level": 30,
-      "Required Skill 2 ID": "SKL-0009",
-      "Required Skill 2 Level": 25,
+      "Required Skill 2 ID": null,
+      "Required Skill 2 Level": null,
       "Required Skill 3 ID": null,
       "Required Skill 3 Level": null
     },
@@ -17972,8 +17983,8 @@
       "Input 4 Quantity": null,
       "Required Skill 1 ID": "SKL-0012",
       "Required Skill 1 Level": 45,
-      "Required Skill 2 ID": "SKL-0009",
-      "Required Skill 2 Level": 40,
+      "Required Skill 2 ID": null,
+      "Required Skill 2 Level": null,
       "Required Skill 3 ID": null,
       "Required Skill 3 Level": null
     },
@@ -18002,8 +18013,8 @@
       "Input 4 Quantity": null,
       "Required Skill 1 ID": "SKL-0012",
       "Required Skill 1 Level": 50,
-      "Required Skill 2 ID": "SKL-0009",
-      "Required Skill 2 Level": 45,
+      "Required Skill 2 ID": null,
+      "Required Skill 2 Level": null,
       "Required Skill 3 ID": null,
       "Required Skill 3 Level": null
     },
@@ -18032,8 +18043,8 @@
       "Input 4 Quantity": null,
       "Required Skill 1 ID": "SKL-0012",
       "Required Skill 1 Level": 60,
-      "Required Skill 2 ID": "SKL-0009",
-      "Required Skill 2 Level": 55,
+      "Required Skill 2 ID": null,
+      "Required Skill 2 Level": null,
       "Required Skill 3 ID": null,
       "Required Skill 3 Level": null
     },
@@ -18062,8 +18073,8 @@
       "Input 4 Quantity": null,
       "Required Skill 1 ID": "SKL-0012",
       "Required Skill 1 Level": 65,
-      "Required Skill 2 ID": "SKL-0009",
-      "Required Skill 2 Level": 60,
+      "Required Skill 2 ID": null,
+      "Required Skill 2 Level": null,
       "Required Skill 3 ID": null,
       "Required Skill 3 Level": null
     },
@@ -18092,8 +18103,8 @@
       "Input 4 Quantity": null,
       "Required Skill 1 ID": "SKL-0012",
       "Required Skill 1 Level": 25,
-      "Required Skill 2 ID": "SKL-0009",
-      "Required Skill 2 Level": 20,
+      "Required Skill 2 ID": null,
+      "Required Skill 2 Level": null,
       "Required Skill 3 ID": null,
       "Required Skill 3 Level": null
     },
@@ -18124,8 +18135,8 @@
       "Required Skill 1 Level": 20,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 25,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 30
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0048",
@@ -18154,8 +18165,8 @@
       "Required Skill 1 Level": 20,
       "Required Skill 2 ID": "SKL-0011",
       "Required Skill 2 Level": 20,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 15
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0049",
@@ -18182,8 +18193,8 @@
       "Input 4 Quantity": null,
       "Required Skill 1 ID": "SKL-0012",
       "Required Skill 1 Level": 60,
-      "Required Skill 2 ID": "SKL-0009",
-      "Required Skill 2 Level": 60,
+      "Required Skill 2 ID": null,
+      "Required Skill 2 Level": null,
       "Required Skill 3 ID": null,
       "Required Skill 3 Level": null
     },
@@ -18212,8 +18223,8 @@
       "Input 4 Quantity": null,
       "Required Skill 1 ID": "SKL-0012",
       "Required Skill 1 Level": 45,
-      "Required Skill 2 ID": "SKL-0009",
-      "Required Skill 2 Level": 40,
+      "Required Skill 2 ID": null,
+      "Required Skill 2 Level": null,
       "Required Skill 3 ID": null,
       "Required Skill 3 Level": null
     },
@@ -18244,8 +18255,8 @@
       "Required Skill 1 Level": 1,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 1,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 1
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0055",
@@ -18274,8 +18285,8 @@
       "Required Skill 1 Level": 1,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 1,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 1
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0056",
@@ -18304,8 +18315,8 @@
       "Required Skill 1 Level": 1,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 1,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 1
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0057",
@@ -18334,8 +18345,8 @@
       "Required Skill 1 Level": 1,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 1,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 1
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0058",
@@ -18364,8 +18375,8 @@
       "Required Skill 1 Level": 5,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 5,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 1
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0059",
@@ -18394,8 +18405,8 @@
       "Required Skill 1 Level": 5,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 5,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 1
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0060",
@@ -18424,8 +18435,8 @@
       "Required Skill 1 Level": 5,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 5,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 1
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0061",
@@ -18454,8 +18465,8 @@
       "Required Skill 1 Level": 5,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 5,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 1
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0062",
@@ -18484,8 +18495,8 @@
       "Required Skill 1 Level": 5,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 5,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 1
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0063",
@@ -18514,8 +18525,8 @@
       "Required Skill 1 Level": 5,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 5,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 1
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0064",
@@ -18544,8 +18555,8 @@
       "Required Skill 1 Level": 5,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 5,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 1
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0065",
@@ -18574,8 +18585,8 @@
       "Required Skill 1 Level": 5,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 5,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 1
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0066",
@@ -18604,8 +18615,8 @@
       "Required Skill 1 Level": 5,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 5,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 1
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0067",
@@ -18634,8 +18645,8 @@
       "Required Skill 1 Level": 5,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 5,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 1
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0068",
@@ -18664,8 +18675,8 @@
       "Required Skill 1 Level": 5,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 5,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 1
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0069",
@@ -18694,8 +18705,8 @@
       "Required Skill 1 Level": 5,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 5,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 1
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0070",
@@ -18724,8 +18735,8 @@
       "Required Skill 1 Level": 5,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 5,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 1
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0071",
@@ -18754,8 +18765,8 @@
       "Required Skill 1 Level": 20,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 20,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 15
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0072",
@@ -18784,8 +18795,8 @@
       "Required Skill 1 Level": 20,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 20,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 15
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0073",
@@ -18814,8 +18825,8 @@
       "Required Skill 1 Level": 20,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 20,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 15
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0074",
@@ -18844,8 +18855,8 @@
       "Required Skill 1 Level": 20,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 20,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 15
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0075",
@@ -18874,8 +18885,8 @@
       "Required Skill 1 Level": 35,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 35,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 30
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0076",
@@ -18904,8 +18915,8 @@
       "Required Skill 1 Level": 35,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 35,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 30
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0077",
@@ -18934,8 +18945,8 @@
       "Required Skill 1 Level": 35,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 35,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 30
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0078",
@@ -18964,8 +18975,8 @@
       "Required Skill 1 Level": 35,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 35,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 30
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0079",
@@ -18994,8 +19005,8 @@
       "Required Skill 1 Level": 45,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 45,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 40
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0080",
@@ -19024,8 +19035,8 @@
       "Required Skill 1 Level": 45,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 45,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 40
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0081",
@@ -19054,8 +19065,8 @@
       "Required Skill 1 Level": 45,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 45,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 40
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0082",
@@ -19084,8 +19095,8 @@
       "Required Skill 1 Level": 45,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 45,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 40
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0083",
@@ -19114,8 +19125,8 @@
       "Required Skill 1 Level": 45,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 45,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 40
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0084",
@@ -19144,8 +19155,8 @@
       "Required Skill 1 Level": 45,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 45,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 40
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0085",
@@ -19174,8 +19185,8 @@
       "Required Skill 1 Level": 45,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 45,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 40
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0086",
@@ -19204,8 +19215,8 @@
       "Required Skill 1 Level": 45,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 45,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 40
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0087",
@@ -19234,8 +19245,8 @@
       "Required Skill 1 Level": 45,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 45,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 40
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0088",
@@ -19264,8 +19275,8 @@
       "Required Skill 1 Level": 45,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 45,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 40
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0089",
@@ -19294,8 +19305,8 @@
       "Required Skill 1 Level": 45,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 45,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 40
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0090",
@@ -19324,8 +19335,8 @@
       "Required Skill 1 Level": 45,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 45,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 40
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0091",
@@ -19354,8 +19365,8 @@
       "Required Skill 1 Level": 45,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 45,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 40
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0092",
@@ -19384,8 +19395,8 @@
       "Required Skill 1 Level": 60,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 60,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 55
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0093",
@@ -19414,8 +19425,8 @@
       "Required Skill 1 Level": 60,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 60,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 55
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0094",
@@ -19444,8 +19455,8 @@
       "Required Skill 1 Level": 60,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 60,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 55
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0095",
@@ -19474,8 +19485,8 @@
       "Required Skill 1 Level": 60,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 60,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 55
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0096",
@@ -19504,8 +19515,8 @@
       "Required Skill 1 Level": 60,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 60,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 55
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0097",
@@ -19534,8 +19545,8 @@
       "Required Skill 1 Level": 60,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 60,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 55
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0098",
@@ -19564,8 +19575,8 @@
       "Required Skill 1 Level": 60,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 60,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 55
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0099",
@@ -19594,8 +19605,8 @@
       "Required Skill 1 Level": 60,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 60,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 55
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0100",
@@ -19624,8 +19635,8 @@
       "Required Skill 1 Level": 60,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 60,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 55
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0101",
@@ -19654,8 +19665,8 @@
       "Required Skill 1 Level": 60,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 60,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 55
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0102",
@@ -19684,8 +19695,8 @@
       "Required Skill 1 Level": 60,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 60,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 55
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0103",
@@ -19714,8 +19725,8 @@
       "Required Skill 1 Level": 60,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 60,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 55
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0104",
@@ -19744,8 +19755,8 @@
       "Required Skill 1 Level": 60,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 60,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 55
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0105",
@@ -19774,8 +19785,8 @@
       "Required Skill 1 Level": 70,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 70,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 65
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0106",
@@ -19804,8 +19815,8 @@
       "Required Skill 1 Level": 70,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 70,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 65
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0107",
@@ -19834,8 +19845,8 @@
       "Required Skill 1 Level": 70,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 70,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 65
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0108",
@@ -19864,8 +19875,8 @@
       "Required Skill 1 Level": 70,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 70,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 65
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0109",
@@ -19894,8 +19905,8 @@
       "Required Skill 1 Level": 70,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 70,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 65
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0110",
@@ -19924,8 +19935,8 @@
       "Required Skill 1 Level": 70,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 70,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 65
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0111",
@@ -19954,8 +19965,8 @@
       "Required Skill 1 Level": 70,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 70,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 65
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0112",
@@ -19984,8 +19995,8 @@
       "Required Skill 1 Level": 70,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 70,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 65
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0113",
@@ -20014,8 +20025,8 @@
       "Required Skill 1 Level": 70,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 70,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 65
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0114",
@@ -20044,8 +20055,8 @@
       "Required Skill 1 Level": 70,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 70,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 65
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0115",
@@ -20074,8 +20085,8 @@
       "Required Skill 1 Level": 70,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 70,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 65
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0116",
@@ -20104,8 +20115,8 @@
       "Required Skill 1 Level": 70,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 70,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 65
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0117",
@@ -20134,8 +20145,8 @@
       "Required Skill 1 Level": 70,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 70,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 65
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0118",
@@ -20164,8 +20175,8 @@
       "Required Skill 1 Level": 85,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 85,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 80
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0119",
@@ -20194,8 +20205,8 @@
       "Required Skill 1 Level": 85,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 85,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 80
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0120",
@@ -20224,8 +20235,8 @@
       "Required Skill 1 Level": 85,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 85,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 80
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0121",
@@ -20254,8 +20265,8 @@
       "Required Skill 1 Level": 85,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 85,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 80
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0122",
@@ -20284,8 +20295,8 @@
       "Required Skill 1 Level": 85,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 85,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 80
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0123",
@@ -20314,8 +20325,8 @@
       "Required Skill 1 Level": 85,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 85,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 80
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0124",
@@ -20344,8 +20355,8 @@
       "Required Skill 1 Level": 85,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 85,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 80
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0125",
@@ -20374,8 +20385,8 @@
       "Required Skill 1 Level": 85,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 85,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 80
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0126",
@@ -20404,8 +20415,8 @@
       "Required Skill 1 Level": 85,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 85,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 80
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0127",
@@ -20434,8 +20445,8 @@
       "Required Skill 1 Level": 85,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 85,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 80
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0128",
@@ -20464,8 +20475,8 @@
       "Required Skill 1 Level": 85,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 85,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 80
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0129",
@@ -20494,8 +20505,8 @@
       "Required Skill 1 Level": 85,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 85,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 80
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0130",
@@ -20524,8 +20535,8 @@
       "Required Skill 1 Level": 85,
       "Required Skill 2 ID": "SKL-0008",
       "Required Skill 2 Level": 85,
-      "Required Skill 3 ID": "SKL-0009",
-      "Required Skill 3 Level": 80
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
     },
     {
       "Project ID": "PRJ-0131",
@@ -20552,8 +20563,8 @@
       "Input 4 Quantity": null,
       "Required Skill 1 ID": "SKL-0012",
       "Required Skill 1 Level": 90,
-      "Required Skill 2 ID": "SKL-0009",
-      "Required Skill 2 Level": 90,
+      "Required Skill 2 ID": null,
+      "Required Skill 2 Level": null,
       "Required Skill 3 ID": null,
       "Required Skill 3 Level": null
     },
@@ -20582,8 +20593,8 @@
       "Input 4 Quantity": null,
       "Required Skill 1 ID": "SKL-0013",
       "Required Skill 1 Level": 20,
-      "Required Skill 2 ID": "SKL-0009",
-      "Required Skill 2 Level": 15,
+      "Required Skill 2 ID": null,
+      "Required Skill 2 Level": null,
       "Required Skill 3 ID": null,
       "Required Skill 3 Level": null
     },
@@ -20612,8 +20623,8 @@
       "Input 4 Quantity": null,
       "Required Skill 1 ID": "SKL-0013",
       "Required Skill 1 Level": 30,
-      "Required Skill 2 ID": "SKL-0009",
-      "Required Skill 2 Level": 15,
+      "Required Skill 2 ID": null,
+      "Required Skill 2 Level": null,
       "Required Skill 3 ID": null,
       "Required Skill 3 Level": null
     },
@@ -20642,8 +20653,8 @@
       "Input 4 Quantity": null,
       "Required Skill 1 ID": "SKL-0013",
       "Required Skill 1 Level": 80,
-      "Required Skill 2 ID": "SKL-0009",
-      "Required Skill 2 Level": 15,
+      "Required Skill 2 ID": null,
+      "Required Skill 2 Level": null,
       "Required Skill 3 ID": null,
       "Required Skill 3 Level": null
     },
@@ -20672,8 +20683,38 @@
       "Input 4 Quantity": null,
       "Required Skill 1 ID": "SKL-0013",
       "Required Skill 1 Level": 20,
-      "Required Skill 2 ID": "SKL-0009",
-      "Required Skill 2 Level": 15,
+      "Required Skill 2 ID": null,
+      "Required Skill 2 Level": null,
+      "Required Skill 3 ID": null,
+      "Required Skill 3 Level": null
+    },
+    {
+      "Project ID": "PRJ-0140",
+      "Internal Key": "arcana_thorns",
+      "Display Name": "Thorns Enchantment",
+      "Skill ID": "SKL-0013",
+      "Output Item / Target ID": "ENCH-0006",
+      "Output Quantity": 1,
+      "Facility ID": "FAC-0008",
+      "Recipe ID": null,
+      "XP Reward": 300000,
+      "Gold Cost": 0,
+      "Instant": "Yes",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": null,
+      "Input 1 Item ID": "ITEM-0098",
+      "Input 1 Quantity": 1,
+      "Input 2 Item ID": "ITEM-0011",
+      "Input 2 Quantity": 3,
+      "Input 3 Item ID": "ITEM-0040",
+      "Input 3 Quantity": 2,
+      "Input 4 Item ID": null,
+      "Input 4 Quantity": null,
+      "Required Skill 1 ID": "SKL-0013",
+      "Required Skill 1 Level": 30,
+      "Required Skill 2 ID": null,
+      "Required Skill 2 Level": null,
       "Required Skill 3 ID": null,
       "Required Skill 3 Level": null
     }
@@ -20815,14 +20856,14 @@
       "Entry 9 Mode": "Sell",
       "Entry 9 Price": null,
       "Entry 9 Currency ID": "CUR-0001",
-  "Entry 10 Item ID": "ITEM-0113",
-  "Entry 10 Mode": "Sell",
-  "Entry 10 Price": null,
-  "Entry 10 Currency ID": "CUR-0001",
-  "Entry 11 Item ID": "ITEM-0296",
-  "Entry 11 Mode": "Sell",
-  "Entry 11 Price": null,
-  "Entry 11 Currency ID": "CUR-0001",
+      "Entry 10 Item ID": "ITEM-0113",
+      "Entry 10 Mode": "Sell",
+      "Entry 10 Price": null,
+      "Entry 10 Currency ID": "CUR-0001",
+      "Entry 11 Item ID": "ITEM-0296",
+      "Entry 11 Mode": "Sell",
+      "Entry 11 Price": null,
+      "Entry 11 Currency ID": "CUR-0001",
       "Entry 12 Item ID": null,
       "Entry 12 Mode": null,
       "Entry 12 Price": null,
