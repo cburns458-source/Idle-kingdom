@@ -251,9 +251,13 @@ export function ProductionProgress({
               aria-label={recipe['Display Name']}
             />
             {craftPopup && (
-              <div key={craftPopup.key} className="production-craft-float" aria-live="polite">
+              <div
+                key={craftPopup.key}
+                className="production-craft-float"
+                aria-live="polite"
+                aria-label={craftPopup.name}
+              >
                 <ItemIcon item={popupItem ?? outputItem} />
-                <span>{craftPopup.name}</span>
               </div>
             )}
           </div>

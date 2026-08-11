@@ -15,6 +15,9 @@ export function ProjectCompletePopup({
       role="dialog"
       aria-modal="true"
       aria-labelledby="project-complete-title"
+      onClick={(event) => {
+        if (event.target === event.currentTarget) onClose()
+      }}
     >
       <div className="panel quest-reward-card">
         <p className="muted tiny">Project complete</p>

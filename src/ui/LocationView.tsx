@@ -87,6 +87,7 @@ export function LocationView({
     !showSubMapEntrance && (activities.length > 0 || specialStations.length > 0)
   const [activitiesHidden, setActivitiesHidden] = useState(false)
   const shadeRef = useRef<HTMLDivElement | null>(null)
+  const panelOpen = Boolean(statusPanel)
 
   useEffect(() => {
     setActivitiesHidden(false)
@@ -108,13 +109,15 @@ export function LocationView({
     >
       <CritterOverlay save={save} locationId={locationId} onCollect={onCollectCritter} />
       <div className="location-view-shade" ref={shadeRef}>
-        <header className="location-overlay-head">
+        <header className={`location-overlay-head${panelOpen ? ' compact' : ''}`}>
           <div className="location-overlay-copy">
             <h1>{location['Display Name']}</h1>
-            <p className="location-description">
-              {location.Description ?? 'Explore this place.'}
-            </p>
-            {location['Danger / Hostility'] && (
+            {!panelOpen && (
+              <p className="location-description">
+                {location.Description ?? 'Explore this place.'}
+              </p>
+            )}
+            {!panelOpen && location['Danger / Hostility'] && (
               <p className="danger-note">{location['Danger / Hostility']}</p>
             )}
           </div>
@@ -156,7 +159,7 @@ export function LocationView({
           </section>
         )}
 
-        <div className="location-dock">
+        <div className={`location-dock${panelOpen ? ' panel-open' : ''}`}>
           {statusPanel ? <div className="location-stage">{statusPanel}</div> : null}
 
           <div className="location-bottom-band">

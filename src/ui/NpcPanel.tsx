@@ -70,6 +70,22 @@ export function NpcPanel({
         ? `${MERCHANT_ARTISANRY_TIP_XP.toLocaleString()} Artisanry XP`
         : null
 
+    const dismissMerchantDialogue = () => {
+      if (isGeneralStoreMerchant && !tipClaimed) {
+        const applied = applyXp(save, db, ARTISANRY_SKILL_ID, MERCHANT_ARTISANRY_TIP_XP)
+        onChangeSave(
+          {
+            ...applied.save,
+            claimedMerchantTipIds: [...(save.claimedMerchantTipIds ?? []), npc['NPC ID']],
+            updatedAt: new Date().toISOString(),
+          },
+          `Learned artisanry tips (+${MERCHANT_ARTISANRY_TIP_XP.toLocaleString()} XP).`,
+        )
+      }
+      setMerchantDialogueOpen(false)
+      onClose()
+    }
+
     return (
       <>
         {merchantDialogueOpen && (
@@ -78,33 +94,15 @@ export function NpcPanel({
             role="dialog"
             aria-modal="true"
             aria-labelledby="merchant-dialogue-title"
+            onClick={(event) => {
+              if (event.target === event.currentTarget) dismissMerchantDialogue()
+            }}
           >
             <div className="panel quest-reward-card">
               <h2 id="merchant-dialogue-title">{npc['Display Name']}</h2>
               <p className="lead">{tipLine}</p>
               {tipDetail && <p className="muted">{tipDetail}</p>}
-              <button
-                type="button"
-                className="btn primary"
-                onClick={() => {
-                  if (isGeneralStoreMerchant && !tipClaimed) {
-                    const applied = applyXp(save, db, ARTISANRY_SKILL_ID, MERCHANT_ARTISANRY_TIP_XP)
-                    onChangeSave(
-                      {
-                        ...applied.save,
-                        claimedMerchantTipIds: [
-                          ...(save.claimedMerchantTipIds ?? []),
-                          npc['NPC ID'],
-                        ],
-                        updatedAt: new Date().toISOString(),
-                      },
-                      `Learned artisanry tips (+${MERCHANT_ARTISANRY_TIP_XP.toLocaleString()} XP).`,
-                    )
-                  }
-                  setMerchantDialogueOpen(false)
-                  onClose()
-                }}
-              >
+              <button type="button" className="btn primary" onClick={dismissMerchantDialogue}>
                 Continue
               </button>
             </div>
@@ -121,6 +119,12 @@ export function NpcPanel({
         role="dialog"
         aria-modal="true"
         aria-labelledby="rose-dialogue-title"
+        onClick={(event) => {
+          if (event.target === event.currentTarget) {
+            setRosePitchOpen(false)
+            onClose()
+          }
+        }}
       >
         <div className="panel quest-reward-card">
           <h2 id="rose-dialogue-title">{npc['Display Name']}</h2>

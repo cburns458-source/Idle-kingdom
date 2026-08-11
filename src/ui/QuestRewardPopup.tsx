@@ -8,7 +8,15 @@ interface QuestRewardPopupProps {
 
 export function QuestRewardPopup({ questName, rewards, onClose }: QuestRewardPopupProps) {
   return (
-    <div className="quest-reward-overlay" role="dialog" aria-modal="true" aria-labelledby="quest-reward-title">
+    <div
+      className="quest-reward-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="quest-reward-title"
+      onClick={(event) => {
+        if (event.target === event.currentTarget) onClose()
+      }}
+    >
       <div className="panel quest-reward-card">
         <p className="muted tiny">Quest complete</p>
         <h2 id="quest-reward-title">{questName}</h2>
