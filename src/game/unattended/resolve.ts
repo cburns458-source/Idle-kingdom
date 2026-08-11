@@ -21,7 +21,22 @@ import { applyActivityTimeTowardCritters } from '../critters/critters'
 import { resolveProductionProgress } from '../production/engine'
 import type { PlayerSave } from '../save/types'
 
-const MAX_STEPS = 20_000
+/**
+ * Safety valve on the combat/gathering catch-up loop (one discrete
+ * round/action per step). Sized relative to config so it can never fall
+ * short of the advertised unattended cap for the fastest possible tick
+ * (today, combat rounds), with a generous margin for shorter future ticks.
+ * If it's ever exhausted anyway, `resolveUnattendedProgress` only advances
+ * the save's catch-up anchor as far as the simulation actually got (see
+ * `hitStepLimit` below), so the remainder is caught up on the next load
+ * instead of being silently lost.
+ */
+function maxUnattendedSteps(db: GameDatabase): number {
+  const capMs = unattendedCapMs(db)
+  const roundMs = Math.max(1, configNumber(db, 'combat_round_duration', 4) * 1000)
+  const minimumTickMs = Math.min(roundMs, 1_000)
+  return Math.max(20_000, Math.ceil(capMs / minimumTickMs) + 1_000)
+}
 
 export interface UnattendedResult {
   save: PlayerSave
@@ -79,6 +94,12 @@ export function resolveUnattendedProgress(
   let combatDeaths = 0
   let crittersSpawned = 0
   let steps = 0
+  const maxSteps = maxUnattendedSteps(db)
+  // Tracks how far the combat/gathering simulation's own clock has actually
+  // advanced, so we can tell "ran out of step budget mid-catch-up" apart
+  // from "genuinely nothing more to simulate in this window."
+  let lastResolvedMs = anchor
+  let hitStepLimit = false
 
   const pushCritterSpawn = (spawned: { displayName: string } | null) => {
     if (!spawned) return
@@ -107,7 +128,11 @@ export function resolveUnattendedProgress(
     }
   }
 
-  while (steps < MAX_STEPS) {
+  while (true) {
+    if (steps >= maxSteps) {
+      hitStepLimit = true
+      break
+    }
     steps += 1
     if (!current.currentActivityId) break
     // Production is batch-resolved above against the capped clock.
@@ -134,6 +159,7 @@ export function resolveUnattendedProgress(
         Math.max(pauseEnded, anchor),
       )
       current = generated ? generated.save : resumed
+      lastResolvedMs = Math.max(pauseEnded, anchor)
       messages.push('Recovered from defeat while away.')
       continue
     }
@@ -182,6 +208,7 @@ export function resolveUnattendedProgress(
         }
         const generated = generateNextAction(db, next, activityId, random, roundEnd)
         current = generated ? generated.save : next
+        lastResolvedMs = roundEnd
         continue
       }
 
@@ -202,6 +229,7 @@ export function resolveUnattendedProgress(
         defeated = critter.save
         pushCritterSpawn(critter.spawned)
         current = defeated
+        lastResolvedMs = roundEnd
         messages.push(`Defeated by ${enemy['Display Name']} while away.`)
         continue
       }
@@ -222,6 +250,7 @@ export function resolveUnattendedProgress(
       continued = critter.save
       pushCritterSpawn(critter.spawned)
       current = continued
+      lastResolvedMs = roundEnd
       continue
     }
 
@@ -265,6 +294,7 @@ export function resolveUnattendedProgress(
       }
       const generated = generateNextAction(db, next, activityId, random, due)
       current = generated ? generated.save : next
+      lastResolvedMs = due
       continue
     }
 
@@ -292,6 +322,7 @@ export function resolveUnattendedProgress(
         break
       }
       current = generated.save
+      lastResolvedMs = endMs
       continue
     }
 
@@ -310,7 +341,13 @@ export function resolveUnattendedProgress(
     messages.unshift(`Completed ${craftsCompleted} craft${craftsCompleted === 1 ? '' : 's'} while away.`)
   }
 
-  const stamped = stampUnattendedProgressAt(current, nowMs)
+  // Normally we're fully caught up to `endMs` (which is already <= nowMs),
+  // so it's safe to stamp `nowMs`. But if the combat/gathering loop ran out
+  // of step budget while there was still more due within the window, only
+  // advance the anchor as far as the simulation actually got — the
+  // remainder will be caught up on the next load instead of being lost.
+  const stampAt = hitStepLimit ? Math.min(nowMs, lastResolvedMs) : nowMs
+  const stamped = stampUnattendedProgressAt(current, stampAt)
   const changed =
     stamped !== save &&
     (gatheringActions > 0 ||
