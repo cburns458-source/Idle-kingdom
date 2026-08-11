@@ -213,15 +213,25 @@ export function ProjectPicker({
                   <label className="field-label" htmlFor="project-qty">
                     Quantity (max {maxQty})
                   </label>
-                  <button
-                    id="project-qty"
-                    type="button"
-                    className="text-input qty-open-btn"
-                    disabled={!canCraft}
-                    onClick={() => setQtyOpen(true)}
-                  >
-                    {clampedQty.toLocaleString()}
-                  </button>
+                  <div className="production-qty-row">
+                    <button
+                      id="project-qty"
+                      type="button"
+                      className="text-input qty-open-btn"
+                      disabled={!canCraft}
+                      onClick={() => setQtyOpen(true)}
+                    >
+                      {clampedQty.toLocaleString()}
+                    </button>
+                    <button
+                      type="button"
+                      className="btn primary"
+                      disabled={!canCraft || maxQty <= 0}
+                      onClick={() => onConfirm(project['Project ID'], clampedQty, null)}
+                    >
+                      Complete project
+                    </button>
+                  </div>
                 </>
               )}
               {isEnchant && (
@@ -234,40 +244,38 @@ export function ProjectPicker({
                       Equip or keep a valid unenchanted item in inventory.
                     </p>
                   ) : (
-                    <select
-                      id="enchant-target"
-                      className="text-input"
-                      value={enchantTargetId || preferredTargetId}
-                      disabled={!canCraft}
-                      onChange={(event) => setEnchantTargetId(event.target.value)}
-                    >
-                      {enchantTargets.map((target) => (
-                        <option key={target.id} value={target.id}>
-                          {target.label}
-                        </option>
-                      ))}
-                    </select>
+                    <div className="production-qty-row">
+                      <select
+                        id="enchant-target"
+                        className="text-input"
+                        value={enchantTargetId || preferredTargetId}
+                        disabled={!canCraft}
+                        onChange={(event) => setEnchantTargetId(event.target.value)}
+                      >
+                        {enchantTargets.map((target) => (
+                          <option key={target.id} value={target.id}>
+                            {target.label}
+                          </option>
+                        ))}
+                      </select>
+                      <button
+                        type="button"
+                        className="btn primary"
+                        disabled={!canCraft}
+                        onClick={() =>
+                          onConfirm(
+                            project['Project ID'],
+                            clampedQty,
+                            enchantTargetId || preferredTargetId || null,
+                          )
+                        }
+                      >
+                        Complete project
+                      </button>
+                    </div>
                   )}
                 </>
               )}
-              <button
-                type="button"
-                className="btn primary"
-                disabled={
-                  !canCraft ||
-                  maxQty <= 0 ||
-                  (isEnchant && enchantTargets.length === 0)
-                }
-                onClick={() =>
-                  onConfirm(
-                    project['Project ID'],
-                    clampedQty,
-                    isEnchant ? enchantTargetId || preferredTargetId || null : null,
-                  )
-                }
-              >
-                Complete project
-              </button>
             </>
           )}
         </>

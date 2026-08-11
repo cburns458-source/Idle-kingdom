@@ -103,19 +103,19 @@ export function ProductionPicker({
                 >
                   Max
                 </button>
+                <button
+                  type="button"
+                  className="btn primary"
+                  disabled={maxQty <= 0}
+                  onClick={() => onConfirm(recipe['Recipe ID'], clampedQty)}
+                >
+                  Start queue
+                </button>
               </div>
               <p className="muted tiny">
                 Queue uses {(clampedQty * recipe['Base Duration Seconds']).toLocaleString()}s of the
                 24h cap.
               </p>
-              <button
-                type="button"
-                className="btn primary"
-                disabled={maxQty <= 0}
-                onClick={() => onConfirm(recipe['Recipe ID'], clampedQty)}
-              >
-                Start queue
-              </button>
             </>
           )}
         </>
