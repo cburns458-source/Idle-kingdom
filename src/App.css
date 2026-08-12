@@ -3842,13 +3842,21 @@ button.hud-total-stat:focus-visible {
 .guild-member-copy {
   min-width: 0;
   display: grid;
-  gap: 0.05rem;
+  gap: 0;
 }
 
 .guild-member-copy strong {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  line-height: 1.15;
+}
+
+/* `.tiny` adds helper-copy margin-top — kill it under names in roster rows. */
+.guild-member-copy .muted.tiny,
+.leaderboard-row .guild-member-copy .tiny {
+  margin-top: 0;
+  line-height: 1.15;
 }
 
 .guild-member-level {
