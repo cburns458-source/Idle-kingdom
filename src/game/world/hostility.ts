@@ -3,6 +3,7 @@ import {
   generateNextAction,
   validateActivityStart,
 } from '../activity/engine'
+import type { RandomFn } from '../activity/pools'
 import { clearActivityTransition } from '../activity/transition'
 import { getSkillProgress } from '../activity/xp'
 import { COMBAT_SKILL_ID } from '../combat/stats'
@@ -58,6 +59,7 @@ export function applyHostileTravelArrival(
   save: PlayerSave,
   destinationLocationId: string,
   nowMs: number = Date.now(),
+  random: RandomFn = Math.random,
 ): HostileTravelArrivalResult {
   let next = applyTravelArrival(db, save, destinationLocationId, nowMs)
   next = clearActivityTransition(next)
@@ -84,13 +86,7 @@ export function applyHostileTravelArrival(
 
   const nowIso = new Date(nowMs).toISOString()
   const started = beginActivitySave(next, threatened['Activity ID'], nowIso)
-  const generated = generateNextAction(
-    db,
-    started,
-    threatened['Activity ID'],
-    Math.random,
-    nowMs,
-  )
+  const generated = generateNextAction(db, started, threatened['Activity ID'], random, nowMs)
 
   return {
     save: generated ? generated.save : started,

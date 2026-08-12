@@ -45,6 +45,16 @@ String jsNumberToString(num value) {
   return d.toString();
 }
 
+/// `String(row?.[column])` for a database value interpolated into a template.
+///
+/// JavaScript prints `undefined` for a column the row never had and `null` for
+/// one present but empty, and player-facing strings show the difference, so the
+/// two cases stay distinct here instead of collapsing into one.
+String jsRawString(Map<String, Object?>? raw, String column) {
+  if (raw == null || !raw.containsKey(column)) return 'undefined';
+  return jsString(raw[column]);
+}
+
 /// `(value ?? '').toLowerCase()` for optional string columns.
 String lowerOrEmpty(Object? value) => value is String ? value.toLowerCase() : '';
 

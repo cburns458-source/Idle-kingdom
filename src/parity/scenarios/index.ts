@@ -14,6 +14,7 @@ import { raceScenarios } from './races'
 import { rngScenarios } from './rng'
 import { shopScenarios } from './shops'
 import { supportScenarios } from './support'
+import { worldScenarios } from './world'
 
 /**
  * Every scenario recorded for the Dart port. Each porting phase appends its
@@ -36,6 +37,7 @@ export const parityScenarios: ParityScenario[] = [
   ...combatScenarios,
   ...activityScenarios,
   ...shopScenarios,
+  ...worldScenarios,
 ]
 
 export function assertUniqueScenarioNames(scenarios: ParityScenario[]): void {

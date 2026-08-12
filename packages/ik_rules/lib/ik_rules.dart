@@ -66,4 +66,8 @@ export 'src/spells/spells.dart';
 export 'src/tags.dart';
 export 'src/time.dart';
 export 'src/world/constants.dart';
+export 'src/world/hostility.dart';
+export 'src/world/location_search.dart';
+export 'src/world/map_layout.dart';
 export 'src/world/submaps.dart';
+export 'src/world/travel.dart';
