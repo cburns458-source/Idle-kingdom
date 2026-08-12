@@ -7,5 +7,6 @@
 library;
 
 export 'src/canonical_json.dart';
+export 'src/database_input.dart';
 export 'src/fixtures.dart';
 export 'src/purity.dart';

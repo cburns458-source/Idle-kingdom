@@ -1,31 +1,4 @@
-import 'dart:convert';
-import 'dart:io';
-
 import 'package:ik_content/ik_content.dart';
-import 'package:ik_parity/ik_parity.dart';
-
-/// Rebuilds the database a fixture was recorded against.
-///
-/// `content` reads the same shared file the TypeScript recorder read, so both
-/// sides are provably looking at identical bytes.
-Object? resolveDatabaseInput(ParityFixture fixture) {
-  final input = fixture.inputMap;
-  final source = input['source'];
-  switch (source) {
-    case 'content':
-      final file = File('${parityRepoRoot().path}/data/game-database.json');
-      final path = file.existsSync()
-          ? file.path
-          : '${parityRepoRoot().path}/content/data/game-database.json';
-      return jsonDecode(File(path).readAsStringSync());
-    case 'inline':
-      return input['database'];
-    case 'raw':
-      return input['value'];
-    default:
-      throw StateError('Unknown fixture database source: $source');
-  }
-}
 
 Map<String, Object?> issuesOutput(GameDatabase db) => <String, Object?>{
   'issues': validateDatabase(db).map((issue) => issue.toJson()).toList(),

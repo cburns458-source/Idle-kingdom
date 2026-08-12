@@ -139,6 +139,19 @@ export interface ActivityTransition {
   durationMs: number
 }
 
+/** One unlocked Critter entry in the Log, with how many have been collected. */
+export interface CritterCollectionEntry {
+  critterId: string
+  count: number
+}
+
+/** A Critter waiting to be collected at a location. */
+export interface CritterSpawn {
+  locationId: string
+  critterId: string
+  appearedAt: string
+}
+
 export interface PlayerSave {
   saveVersion: number
   createdAt: string
@@ -170,9 +183,9 @@ export interface PlayerSave {
   /** Merchant tip rewards already claimed (one-time dialogue grants). */
   claimedMerchantTipIds: string[]
   /** Critter collection counts (unlocked entries in the Log). */
-  critterCollections: Array<{ critterId: string; count: number }>
+  critterCollections: CritterCollectionEntry[]
   /** At most one pending Critter spawn per location until collected. */
-  activeCritterSpawns: Array<{ locationId: string; critterId: string; appearedAt: string }>
+  activeCritterSpawns: CritterSpawn[]
   /** Remainder activity ms toward the next Critter hour-roll, keyed by location. */
   critterProgressMs: Record<string, number>
   /** Location Search ID -> ISO timestamp of the last successful search (for cooldowns). */

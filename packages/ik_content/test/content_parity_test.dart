@@ -8,7 +8,7 @@ void main() {
   group('validateDatabase parity', () {
     for (final fixture in loadParityFixtures('content/validate')) {
       test(fixture.name, () {
-        final db = assertGameDatabaseShape(resolveDatabaseInput(fixture));
+        final db = assertGameDatabaseShape(fixtureDatabaseJson(fixture));
         expect(checkParity(fixture, issuesOutput(db)), isNull);
       });
     }
@@ -17,7 +17,7 @@ void main() {
   group('prepareDatabase parity', () {
     for (final fixture in loadParityFixtures('content/prepare')) {
       test(fixture.name, () {
-        expect(checkParity(fixture, prepareOutput(resolveDatabaseInput(fixture))), isNull);
+        expect(checkParity(fixture, prepareOutput(fixtureDatabaseJson(fixture))), isNull);
       });
     }
   });
@@ -25,7 +25,7 @@ void main() {
   group('countNeedsData parity', () {
     for (final fixture in loadParityFixtures('content/needs-data')) {
       test(fixture.name, () {
-        final db = assertGameDatabaseShape(resolveDatabaseInput(fixture));
+        final db = assertGameDatabaseShape(fixtureDatabaseJson(fixture));
         expect(checkParity(fixture, {'needsDataCount': countNeedsData(db)}), isNull);
       });
     }
@@ -34,7 +34,7 @@ void main() {
   group('assertGameDatabaseShape parity', () {
     for (final fixture in loadParityFixtures('content/shape')) {
       test(fixture.name, () {
-        expect(checkParity(fixture, shapeOutput(resolveDatabaseInput(fixture))), isNull);
+        expect(checkParity(fixture, shapeOutput(fixtureDatabaseJson(fixture))), isNull);
       });
     }
   });
@@ -42,7 +42,7 @@ void main() {
   group('filterLaunchContent parity', () {
     for (final fixture in loadParityFixtures('content/launch')) {
       test(fixture.name, () {
-        final db = assertGameDatabaseShape(resolveDatabaseInput(fixture));
+        final db = assertGameDatabaseShape(fixtureDatabaseJson(fixture));
         final filtered = filterLaunchContent(db);
         final actual = switch (fixture.name) {
           'phase-filtering' => <String, Object?>{
@@ -61,7 +61,7 @@ void main() {
   group('buildIndexes parity', () {
     for (final fixture in loadParityFixtures('content/indexes')) {
       test(fixture.name, () {
-        final db = assertGameDatabaseShape(resolveDatabaseInput(fixture));
+        final db = assertGameDatabaseShape(fixtureDatabaseJson(fixture));
         final target = fixture.name.endsWith('-launch') ? filterLaunchContent(db) : db;
         final indexes = buildIndexes(target);
         final actual = fixture.name == 'synthetic-database'
@@ -73,7 +73,7 @@ void main() {
   });
 
   test('database rows keep unknown columns', () {
-    final db = assertGameDatabaseShape(resolveDatabaseInput(_contentFixture()));
+    final db = assertGameDatabaseShape(fixtureDatabaseJson(_contentFixture()));
     final shop = db.shops.first;
     // Shops carry dynamic `Entry N ...` columns that no accessor names.
     expect(shop.raw.keys.where((key) => key.startsWith('Entry ')), isNotEmpty);

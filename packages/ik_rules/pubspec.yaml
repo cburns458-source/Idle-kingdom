@@ -7,6 +7,10 @@ resolution: workspace
 environment:
   sdk: ^3.13.0
 
+dependencies:
+  collection: ^1.19.0
+  ik_content: ^0.1.0
+
 dev_dependencies:
   ik_parity: ^0.1.0
   lints: ^6.0.0

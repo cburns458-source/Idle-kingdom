@@ -1,0 +1,1 @@
+{"case":"curve-boundaries","input":{"source":"content","totals":[0,1,82,83,174,1000000,12345.6]},"module":"xp/level-for-total","output":{"levels":[1,1,1,1,1,51,10]}}
