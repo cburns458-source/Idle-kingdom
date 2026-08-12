@@ -199,9 +199,6 @@ function SelectedLocationCard({
         {location['Danger / Hostility'] && (
           <p className="danger-note">{location['Danger / Hostility']}</p>
         )}
-        <p className="lead location-card-desc">
-          {location.Description ?? 'A place in Idale.'}
-        </p>
         {future ? (
           <button type="button" className="btn primary" onClick={onViewAdjacent}>
             View lands
