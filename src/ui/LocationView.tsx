@@ -191,9 +191,6 @@ export function LocationView({
         <header className="location-overlay-head">
           <div className="location-overlay-copy">
             <h1>{location['Display Name']}</h1>
-            <p className="location-description">
-              {location.Description ?? 'Explore this place.'}
-            </p>
             {location['Danger / Hostility'] && (
               <p className="danger-note">{location['Danger / Hostility']}</p>
             )}
@@ -277,7 +274,6 @@ export function LocationView({
                               Combat warning ~ Level {activity['Danger Warning Combat Level']}
                             </p>
                           )}
-                          {activity.Description && <p className="muted">{activity.Description}</p>}
                           {hint && !active && <p className="muted tiny">{hint}</p>}
                         </div>
                         {active ? (
