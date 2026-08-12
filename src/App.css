@@ -2451,6 +2451,7 @@ button.hud-total-stat:focus-visible {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  padding-top: 1rem;
 }
 
 .skills-summary-stats {
@@ -2501,17 +2502,17 @@ button.hud-total-stat:focus-visible {
   width: 100%;
   appearance: none;
   border: 1px solid rgba(212, 175, 55, 0.28);
-  border-radius: 0.7rem;
+  border-radius: 0.75rem;
   background: rgba(78, 54, 34, 0.78);
   color: inherit;
   font: inherit;
-  padding: 0.4rem 0.3rem 0.35rem;
+  padding: 0.5rem 0.35rem 0.4rem;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.15rem;
-  min-height: 4.6rem;
+  gap: 0.18rem;
+  min-height: 5.2rem;
   cursor: pointer;
   touch-action: manipulation;
   user-select: none;
@@ -2525,7 +2526,7 @@ button.hud-total-stat:focus-visible {
 }
 
 .skill-tile-name {
-  font-size: 0.64rem;
+  font-size: 0.7rem;
   line-height: 1.05;
   text-align: center;
   color: #fff4d4;
@@ -2537,7 +2538,7 @@ button.hud-total-stat:focus-visible {
 }
 
 .skill-tile-level {
-  font-size: 0.72rem;
+  font-size: 0.78rem;
   line-height: 1.05;
   font-weight: 700;
   color: #f0d78c;
@@ -2580,8 +2581,8 @@ button.hud-total-stat:focus-visible {
 }
 
 .skill-tile .skill-icon {
-  width: 1.9rem;
-  height: 1.9rem;
+  width: 2.2rem;
+  height: 2.2rem;
 }
 
 .skill-actions-overlay {
