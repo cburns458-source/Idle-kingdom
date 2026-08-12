@@ -20,7 +20,7 @@ interface CombatPanelProps {
   lastPlayerCrit?: boolean
   /** Off-hand dagger damage last round (separate floater). */
   lastOffhandHit?: number | null
-  /** Damage the enemy dealt last round (centered above player). */
+  /** Damage the enemy dealt last round (overlay on player portrait). */
   lastEnemyHit: number | null
   /** When set, show "defeated" in place of the enemy art. */
   defeatedFlash: boolean
@@ -132,7 +132,14 @@ export function CombatPanel({
     <section className="panel combat-panel" aria-label="Combat">
       <div className="combat-layout">
         <div className="combat-side combat-player-side">
-          <div className="combat-float-slot">
+          <div className="combat-float-slot" aria-hidden />
+          <div className="combat-portrait combat-portrait-player">
+            <div
+              className="combat-player-art"
+              style={{ backgroundImage: `url(${playerCombatAssetPath(appearance)})` }}
+              role="img"
+              aria-label="Adventurer"
+            />
             {shownEnemyHit != null && shownEnemyHit > 0 && !defeatedFlash && (
               <span
                 className="combat-damage combat-damage-enemy"
@@ -144,14 +151,6 @@ export function CombatPanel({
                 {shownEnemyHit}
               </span>
             )}
-          </div>
-          <div className="combat-portrait combat-portrait-player">
-            <div
-              className="combat-player-art"
-              style={{ backgroundImage: `url(${playerCombatAssetPath(appearance)})` }}
-              role="img"
-              aria-label="Adventurer"
-            />
             {deathPauseRemainingMs > 0 && (
               <span className="combat-recovering">Recovering… {pauseSec}s</span>
             )}
