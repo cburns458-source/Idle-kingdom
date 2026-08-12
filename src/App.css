@@ -1875,6 +1875,8 @@ button.hud-total-stat:focus-visible {
   width: 100%;
   text-align: center;
   margin: 0;
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
 }
 
 .map-overlay-bottom .panel,
