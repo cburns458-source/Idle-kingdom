@@ -7,10 +7,12 @@ import {
   sendChatMessage,
 } from '../game/multiplayer/chat'
 import { currentGuildId } from '../game/multiplayer/guilds'
-import type { ChatMessage } from '../game/multiplayer/types'
+import { CITADEL_CHAT_LOCATION_ID, type ChatMessage } from '../game/multiplayer/types'
 
 interface ChatDrawerProps {
   locationId: string
+  /** When true, Local chat uses the shared Citadel hub channel. */
+  citadelHubChat?: boolean
 }
 
 type ChatTab = 'global' | 'local' | 'guild' | 'dm'
@@ -48,7 +50,7 @@ function ChatBubbleIcon() {
 }
 
 /** Non-blocking circular chat FAB + draggable bottom sheet. */
-export function ChatDrawer({ locationId }: ChatDrawerProps) {
+export function ChatDrawer({ locationId, citadelHubChat = false }: ChatDrawerProps) {
   const session = getSession()
   const [open, setOpen] = useState(false)
   const [channel, setChannel] = useState<ChatTab>('global')
@@ -65,6 +67,8 @@ export function ChatDrawer({ locationId }: ChatDrawerProps) {
     pointerId: number
   } | null>(null)
   const sheetRef = useRef<HTMLDivElement | null>(null)
+  const localLocationId = citadelHubChat ? CITADEL_CHAT_LOCATION_ID : locationId
+  const localTabLabel = citadelHubChat ? 'Citadel' : 'Local'
 
   function setRatio(next: number) {
     sheetRatioRef.current = next
@@ -105,12 +109,12 @@ export function ChatDrawer({ locationId }: ChatDrawerProps) {
       channel === 'global'
         ? ({ kind: 'global' } as const)
         : channel === 'local'
-          ? ({ kind: 'local', locationId } as const)
+          ? ({ kind: 'local', locationId: localLocationId } as const)
           : guildId
             ? ({ kind: 'guild', guildId } as const)
             : ({ kind: 'global' } as const)
     void listChatMessages(selected).then(setMessages)
-  }, [open, channel, locationId, guildId])
+  }, [open, channel, localLocationId, guildId])
 
   useEffect(() => {
     if (!open) return
@@ -175,7 +179,7 @@ export function ChatDrawer({ locationId }: ChatDrawerProps) {
 
   function activeChannel() {
     if (channel === 'global') return { kind: 'global' } as const
-    if (channel === 'local') return { kind: 'local', locationId } as const
+    if (channel === 'local') return { kind: 'local', locationId: localLocationId } as const
     if (channel === 'guild' && guildId) return { kind: 'guild', guildId } as const
     return null
   }
@@ -228,7 +232,7 @@ export function ChatDrawer({ locationId }: ChatDrawerProps) {
               {(
                 [
                   ['global', 'Global'],
-                  ['local', 'Local'],
+                  ['local', localTabLabel],
                   ['guild', 'Guild'],
                   ['dm', 'DMs'],
                 ] as const

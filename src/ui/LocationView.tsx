@@ -78,8 +78,11 @@ interface LocationViewProps {
   isRecipeBrowserActivity?: (activity: ActivityRow) => boolean
   /** Skill label helper for the Nearby Adventurers panel. */
   skillNameForId?: (skillId: string | null) => string
-  /** When set, show Citadel Plaza Open links (bounties / bazaar). */
+  /** When set, show Citadel Open links (bounties / bazaar). */
   onOpenCitadelHub?: (tab: CitadelHubTab) => void
+  /** Which Citadel hub tabs to show at this location. */
+  citadelHubTabs?: CitadelHubTab[]
+  citadelHubTitle?: string
 }
 
 function MapIcon() {
@@ -142,6 +145,8 @@ export function LocationView({
   isRecipeBrowserActivity,
   skillNameForId,
   onOpenCitadelHub,
+  citadelHubTabs = ['bounties', 'bazaar'],
+  citadelHubTitle = 'Citadel',
 }: LocationViewProps) {
   const locationId = location['Location ID']
   const activities = indexes.activitiesByLocationId.get(locationId) ?? []
@@ -382,8 +387,10 @@ export function LocationView({
               </section>
             )}
 
-            {onOpenCitadelHub && (
+            {onOpenCitadelHub && citadelHubTabs.length > 0 && (
               <CitadelHubLinks
+                tabs={citadelHubTabs}
+                title={citadelHubTitle}
                 onOpen={(tab) => {
                   onOpenCitadelHub(tab)
                   scrollLocationToTop()

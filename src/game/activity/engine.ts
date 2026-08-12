@@ -16,7 +16,6 @@ import {
   requirementsForEntity,
   unmetHardRequirements,
 } from './requirements'
-import { applyBountyGatherProgress } from '../bounties/progress'
 import { resolveActionRewards } from './rewards'
 import type {
   ActionCompletionResult,
@@ -227,10 +226,6 @@ export function completeGatheringAction(
   const bowBonus = bowHuntingCombatXpBonus(db, save, action, xpAmount)
   if (bowBonus) {
     applyBonusXp(bowBonus.skillId, bowBonus.xp)
-  }
-
-  for (const grant of rewarded.loot) {
-    next = applyBountyGatherProgress(next, grant.itemId, grant.quantity)
   }
 
   return {

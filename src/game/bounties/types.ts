@@ -1,4 +1,4 @@
-export type BountyObjectiveKind = 'gather_item' | 'defeat_enemy' | 'process_recipe'
+export type BountyObjectiveKind = 'defeat' | 'gather_deliver' | 'process' | 'project'
 
 export interface BountyDefinition {
   id: string
@@ -8,6 +8,8 @@ export interface BountyDefinition {
   targetId: string
   amount: number
   rewardGold: number
+  /** Extra gold for the first valid turn-in this hour. */
+  firstPlaceBonusGold: number
 }
 
 export interface BountyClaimRecord {

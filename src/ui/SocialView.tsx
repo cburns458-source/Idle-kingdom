@@ -2,17 +2,18 @@ import { useEffect, useMemo, useState } from 'react'
 import { playerPortraitAssetPath } from '../game/assets/playerAssets'
 import type { LoadedDatabase } from '../game/data/loadDatabase'
 import { getSession, isSignedIn } from '../game/multiplayer/auth'
+import { citadelHubSummary, listCitadelVisitors } from '../game/multiplayer/citadel'
 import {
   boardLabel,
   fetchLeaderboard,
   launchBoardKeys,
 } from '../game/multiplayer/leaderboards'
-import type { LeaderboardEntry, MultiplayerBoardKey } from '../game/multiplayer/types'
+import type { ActivityPresence, LeaderboardEntry, MultiplayerBoardKey } from '../game/multiplayer/types'
 import type { PlayerSave } from '../game/save/types'
 import { GuildEmblemBadge } from './guildEmblemIcons'
 import { GuildView } from './GuildView'
 
-export type SocialSection = 'leaderboards' | 'guilds'
+export type SocialSection = 'leaderboards' | 'guilds' | 'citadel'
 
 interface SocialViewProps {
   save: PlayerSave
@@ -31,7 +32,70 @@ export function SocialView({ save, database, section, onChangeSave }: SocialView
     )
   }
 
+  if (section === 'citadel') {
+    return <CitadelSocialView />
+  }
+
   return <LeaderboardsView save={save} database={database} />
+}
+
+function CitadelSocialView() {
+  const session = getSession()
+  const [visitors, setVisitors] = useState<ActivityPresence[]>([])
+  const summary = useMemo(() => citadelHubSummary(), [visitors.length])
+
+  useEffect(() => {
+    if (!isSignedIn()) return
+    function refresh() {
+      setVisitors(listCitadelVisitors())
+    }
+    refresh()
+    const timer = window.setInterval(refresh, 4000)
+    return () => window.clearInterval(timer)
+  }, [])
+
+  if (!session) {
+    return (
+      <section className="panel menu-panel">
+        <h1>Citadel</h1>
+        <p className="lead">Sign in from Menu → Account to use multiplayer features.</p>
+      </section>
+    )
+  }
+
+  return (
+    <section className="panel menu-panel social-panel">
+      <h1>Citadel</h1>
+      <p className="muted tiny">Signed in as {session.username}</p>
+      <div className="menu-tab-panel">
+        <p className="lead">{summary.note}</p>
+        <p className="muted tiny">
+          Plaza presence: {summary.visitorCount} · Chat channel: {summary.chatChannel}
+        </p>
+        <ul className="leaderboard-list">
+          {visitors.map((visitor) => (
+            <li key={visitor.userId} className="leaderboard-row">
+              <span
+                className="social-portrait"
+                style={{ backgroundImage: `url(${playerPortraitAssetPath(visitor.appearance)})` }}
+                aria-hidden
+              />
+              <div className="guild-member-copy">
+                <strong>{visitor.username}</strong>
+                <span className="muted tiny">
+                  {visitor.guildName ?? 'No guild'}
+                  {visitor.skillLevel != null ? ` · Lv ${visitor.skillLevel}` : ''}
+                </span>
+              </div>
+            </li>
+          ))}
+          {visitors.length === 0 && (
+            <li className="muted tiny">No visitors on the Plaza right now. Travel to The Citadel to meet others.</li>
+          )}
+        </ul>
+      </div>
+    </section>
+  )
 }
 
 function LeaderboardsView({

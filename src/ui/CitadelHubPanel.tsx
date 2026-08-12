@@ -13,6 +13,7 @@ import {
   tryClaimBounty,
 } from '../game/bounties/service'
 import type { BountyClaimRecord } from '../game/bounties/types'
+import type { GameDatabase } from '../game/data/types'
 import { isSignedIn } from '../game/multiplayer/auth'
 import type { PlayerSave } from '../game/save/types'
 import { CloseButton } from './CloseButton'
@@ -21,31 +22,33 @@ import { formatDurationSeconds } from './formatDuration'
 export type CitadelHubTab = 'bounties' | 'bazaar'
 
 interface CitadelHubLinksProps {
+  tabs: CitadelHubTab[]
+  title?: string
   onOpen: (tab: CitadelHubTab) => void
 }
 
-/** Plaza list entries that open hub panels the same way shops do. */
-export function CitadelHubLinks({ onOpen }: CitadelHubLinksProps) {
+const TAB_LABELS: Record<CitadelHubTab, string> = {
+  bounties: 'Hourly Bounties',
+  bazaar: 'Grand Bazaar',
+}
+
+/** Location list entries that open hub panels the same way shops do. */
+export function CitadelHubLinks({ tabs, title = 'Citadel', onOpen }: CitadelHubLinksProps) {
+  if (tabs.length === 0) return null
   return (
     <section className="panel glass-panel location-activities">
-      <h2>Citadel Plaza</h2>
+      <h2>{title}</h2>
       <ul className="interaction-list">
-        <li>
-          <div>
-            <strong>Hourly Bounties</strong>
-          </div>
-          <button type="button" className="btn secondary" onClick={() => onOpen('bounties')}>
-            Open
-          </button>
-        </li>
-        <li>
-          <div>
-            <strong>Grand Bazaar</strong>
-          </div>
-          <button type="button" className="btn secondary" onClick={() => onOpen('bazaar')}>
-            Open
-          </button>
-        </li>
+        {tabs.map((tab) => (
+          <li key={tab}>
+            <div>
+              <strong>{TAB_LABELS[tab]}</strong>
+            </div>
+            <button type="button" className="btn secondary" onClick={() => onOpen(tab)}>
+              Open
+            </button>
+          </li>
+        ))}
       </ul>
     </section>
   )
@@ -53,18 +56,22 @@ export function CitadelHubLinks({ onOpen }: CitadelHubLinksProps) {
 
 interface CitadelHubPanelProps {
   tab: CitadelHubTab
+  db: GameDatabase
   save: PlayerSave
   onChangeSave: (save: PlayerSave) => void
   onClose: () => void
   onMessage?: (message: string) => void
+  onOpenGuilds?: () => void
 }
 
 export function CitadelHubPanel({
   tab,
+  db,
   save,
   onChangeSave,
   onClose,
   onMessage,
+  onOpenGuilds,
 }: CitadelHubPanelProps) {
   const signedIn = isSignedIn()
   const [nowMs, setNowMs] = useState(() => Date.now())
@@ -102,7 +109,7 @@ export function CitadelHubPanel({
   function handleClaim(bountyId: string) {
     const bounty = board.bounties.find((row) => row.id === bountyId)
     if (!bounty) return
-    const result = tryClaimBounty(save, bounty, nowMs)
+    const result = tryClaimBounty(db, save, bounty, nowMs)
     if (!result.ok) {
       flash(result.reason)
       setClaims(listBountyClaims(board.hourKey))
@@ -112,8 +119,8 @@ export function CitadelHubPanel({
     setClaims(listBountyClaims(board.hourKey))
     flash(
       result.firstCompleter
-        ? `First completer! +${bounty.rewardGold} gold.`
-        : `Bounty claimed. +${bounty.rewardGold} gold.`,
+        ? `First completer! +${result.goldGained} gold.`
+        : `Bounty claimed. +${result.goldGained} gold.`,
     )
   }
 
@@ -135,21 +142,21 @@ export function CitadelHubPanel({
           <div>
             <h2>Hourly Bounties</h2>
             <p className="muted tiny">
-              Rotates in {formatDurationSeconds(remainingMs / 1000)}. First completer claims the
-              board slot.
+              Rotates in {formatDurationSeconds(remainingMs / 1000)}. First turn-in earns a bonus;
+              others can still claim the base reward.
             </p>
           </div>
           <CloseButton onClick={onClose} />
         </div>
         {!signedIn && (
           <p className="muted tiny">
-            Sign in from Menu → Account to claim first-completer rewards.
+            Sign in from Menu → Account to claim bounty rewards.
           </p>
         )}
         <ul className="interaction-list">
           {board.bounties.map((bounty) => {
             const progress = bountyProgressFor(synced, bounty, nowMs)
-            const claimed =
+            const first =
               claimForBounty(board.hourKey, bounty.id) ??
               claims.find((row) => row.bountyId === bounty.id) ??
               null
@@ -162,18 +169,21 @@ export function CitadelHubPanel({
                   <p className="muted tiny">{bounty.description}</p>
                   <p className="muted tiny">
                     {Math.min(progress, bounty.amount)} / {bounty.amount} · {bounty.rewardGold} gold
+                    {bounty.firstPlaceBonusGold > 0
+                      ? ` (+${bounty.firstPlaceBonusGold} first)`
+                      : ''}
                   </p>
-                  {claimed && (
-                    <p className="muted tiny">First completer: {claimed.username}</p>
+                  {first && (
+                    <p className="muted tiny">First completer: {first.username}</p>
                   )}
                 </div>
                 <button
                   type="button"
                   className="btn primary"
-                  disabled={!signedIn || !ready || selfClaimed || Boolean(claimed)}
+                  disabled={!signedIn || !ready || selfClaimed}
                   onClick={() => handleClaim(bounty.id)}
                 >
-                  {selfClaimed || claimed ? 'Claimed' : ready ? 'Claim' : 'In progress'}
+                  {selfClaimed ? 'Claimed' : ready ? 'Turn in' : 'In progress'}
                 </button>
               </li>
             )
@@ -189,7 +199,9 @@ export function CitadelHubPanel({
       <div className="activity-panel-head">
         <div>
           <h2>Grand Bazaar</h2>
-          <p className="muted tiny">Plaza board for messages, recruitment, and trade notices.</p>
+          <p className="muted tiny">
+            Market board for messages, recruitment, and trade notices.
+          </p>
         </div>
         <CloseButton onClick={onClose} />
       </div>
@@ -219,9 +231,16 @@ export function CitadelHubPanel({
               onChange={(event) => setBazaarBody(event.target.value)}
             />
           </label>
-          <button type="button" className="btn secondary" onClick={handleBazaarPost}>
-            Post
-          </button>
+          <div className="button-row">
+            <button type="button" className="btn secondary" onClick={handleBazaarPost}>
+              Post
+            </button>
+            {bazaarKind === 'recruit' && onOpenGuilds && (
+              <button type="button" className="btn secondary" onClick={onOpenGuilds}>
+                Open Guilds
+              </button>
+            )}
+          </div>
         </div>
       )}
       <ul className="interaction-list citadel-bazaar-list">

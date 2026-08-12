@@ -1005,6 +1005,10 @@ export class LocalMultiplayerBackend {
     )
   }
 
+  /**
+   * Records the first completer for an hourly bounty slot.
+   * Later callers still succeed so they can collect personal base rewards.
+   */
   claimBounty(
     session: MultiplayerSession,
     hourKey: string,
@@ -1017,10 +1021,11 @@ export class LocalMultiplayerBackend {
       (row) => row.hourKey === hourKey && row.bountyId === bountyId,
     )
     if (existing) {
-      if (existing.userId === session.userId) {
-        return { ok: true, claim: existing, firstCompleter: false }
+      return {
+        ok: true,
+        claim: existing,
+        firstCompleter: existing.userId === session.userId,
       }
-      return { ok: false, reason: `Already claimed by ${existing.username}.` }
     }
     const claim: BountyClaimRecord = {
       hourKey,

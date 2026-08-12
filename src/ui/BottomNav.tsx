@@ -8,6 +8,7 @@ export type AppScreen =
   | 'log'
   | 'leaderboards'
   | 'guilds'
+  | 'citadel'
   | 'settings'
 
 interface BottomNavProps {
@@ -31,6 +32,7 @@ const NEST_ITEMS: { id: Exclude<AppScreen, 'map' | 'location' | 'skills' | 'inve
     { id: 'log', label: 'Log' },
     { id: 'leaderboards', label: 'Leaderboards' },
     { id: 'guilds', label: 'Guilds' },
+    { id: 'citadel', label: 'Citadel' },
     { id: 'settings', label: 'Menu' },
   ]
 

@@ -2,7 +2,7 @@ import { getSkillProgress } from '../activity/xp'
 import type { EnchantmentRow, ProjectRow } from '../data/projectTypes'
 import type { FacilityRow, GameDatabase } from '../data/types'
 import { hasProjectKnowledge } from '../npcs/knowledge'
-import { inventoryCount } from '../production/recipes'
+import { inventoryCount, projectFacilityIdForLookup } from '../production/recipes'
 import type { PlayerSave } from '../save/types'
 
 export interface ProjectInput {
@@ -145,10 +145,11 @@ export function projectsForFacility(
   facilityId: string,
   skillId?: string,
 ): ProjectRow[] {
+  const lookupId = projectFacilityIdForLookup(facilityId)
   return db.Projects.filter(
     (project) =>
       isCompleteProject(project) &&
-      project['Facility ID'] === facilityId &&
+      project['Facility ID'] === lookupId &&
       (!skillId || project['Skill ID'] === skillId),
   ).sort((a, b) => {
     const aLevel = a['Required Skill 1 Level'] ?? 0
@@ -174,10 +175,10 @@ export function specialProductionStationsAt(
 
   const stations: SpecialProductionStation[] = []
   for (const facility of facilities) {
+    const lookupId = projectFacilityIdForLookup(facility['Facility ID'])
     const skillIds = new Set(
       db.Projects.filter(
-        (project) =>
-          isCompleteProject(project) && project['Facility ID'] === facility['Facility ID'],
+        (project) => isCompleteProject(project) && project['Facility ID'] === lookupId,
       ).map((project) => project['Skill ID']),
     )
     for (const skillId of skillIds) {
@@ -193,20 +194,27 @@ export function specialProductionStationsAt(
   }
 
   // Artisanry uses the Crafting Workshop facility (not typed as Special Production Station).
-  const workshopProjects = db.Projects.filter(
-    (project) =>
-      isCompleteProject(project) &&
-      project['Skill ID'] === 'SKL-0012' &&
-      db.Facilities.some(
-        (facility) =>
-          facility['Facility ID'] === project['Facility ID'] &&
-          facility['Location ID'] === locationId,
-      ),
+  const workshops = db.Facilities.filter(
+    (facility) =>
+      facility['Location ID'] === locationId &&
+      projectFacilityIdForLookup(facility['Facility ID']) === 'FAC-0003',
   )
-  for (const project of workshopProjects) {
-    const facility = db.Facilities.find((row) => row['Facility ID'] === project['Facility ID'])
-    if (!facility) continue
-    if (stations.some((station) => station.facility['Facility ID'] === facility['Facility ID'] && station.skillId === 'SKL-0012')) {
+  for (const facility of workshops) {
+    const lookupId = projectFacilityIdForLookup(facility['Facility ID'])
+    const hasArtisanry = db.Projects.some(
+      (project) =>
+        isCompleteProject(project) &&
+        project['Skill ID'] === 'SKL-0012' &&
+        project['Facility ID'] === lookupId,
+    )
+    if (!hasArtisanry) continue
+    if (
+      stations.some(
+        (station) =>
+          station.facility['Facility ID'] === facility['Facility ID'] &&
+          station.skillId === 'SKL-0012',
+      )
+    ) {
       continue
     }
     stations.push({

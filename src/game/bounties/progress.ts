@@ -1,3 +1,4 @@
+import { inventoryCount } from '../production/recipes'
 import type { PlayerSave } from '../save/types'
 import { hourlyBountyBoard } from './rotation'
 import type { BountyDefinition, BountyObjectiveKind } from './types'
@@ -26,6 +27,8 @@ function bumpMatching(
   nowMs: number,
 ): PlayerSave {
   if (amount <= 0) return save
+  // gather_deliver is inventory-checked at turn-in, not countered while gathering.
+  if (kind === 'gather_deliver') return save
   let next = syncBountyHour(save, nowMs)
   const board = hourlyBountyBoard(nowMs)
   const progress = { ...(next.bountyProgress ?? {}) }
@@ -42,22 +45,13 @@ function bumpMatching(
   return { ...next, bountyProgress: progress }
 }
 
-export function applyBountyGatherProgress(
-  save: PlayerSave,
-  itemId: string,
-  amount: number,
-  nowMs: number = Date.now(),
-): PlayerSave {
-  return bumpMatching(save, 'gather_item', itemId, amount, nowMs)
-}
-
 export function applyBountyDefeatProgress(
   save: PlayerSave,
   enemyId: string,
   amount = 1,
   nowMs: number = Date.now(),
 ): PlayerSave {
-  return bumpMatching(save, 'defeat_enemy', enemyId, amount, nowMs)
+  return bumpMatching(save, 'defeat', enemyId, amount, nowMs)
 }
 
 export function applyBountyProcessProgress(
@@ -66,7 +60,16 @@ export function applyBountyProcessProgress(
   amount = 1,
   nowMs: number = Date.now(),
 ): PlayerSave {
-  return bumpMatching(save, 'process_recipe', recipeId, amount, nowMs)
+  return bumpMatching(save, 'process', recipeId, amount, nowMs)
+}
+
+export function applyBountyProjectProgress(
+  save: PlayerSave,
+  projectId: string,
+  amount = 1,
+  nowMs: number = Date.now(),
+): PlayerSave {
+  return bumpMatching(save, 'project', projectId, amount, nowMs)
 }
 
 export function bountyProgressFor(
@@ -75,6 +78,9 @@ export function bountyProgressFor(
   nowMs: number = Date.now(),
 ): number {
   const synced = syncBountyHour(save, nowMs)
+  if (bounty.kind === 'gather_deliver') {
+    return Math.min(bounty.amount, inventoryCount(synced, bounty.targetId))
+  }
   return Number(synced.bountyProgress?.[bounty.id] ?? 0)
 }
 

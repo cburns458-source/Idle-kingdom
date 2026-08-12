@@ -88,7 +88,10 @@ describe('local multiplayer backend', () => {
     expect(first.firstCompleter).toBe(true)
 
     const second = backend.claimBounty(b.session, '2026-08-12T13', 'BNT-0001')
-    expect(second.ok).toBe(false)
+    expect(second.ok).toBe(true)
+    if (!second.ok) return
+    expect(second.firstCompleter).toBe(false)
+    expect(second.claim.username).toBe('Alpha')
 
     const post = backend.postBazaar(a.session, 'trade', 'Selling copper ore')
     expect(post.ok).toBe(true)

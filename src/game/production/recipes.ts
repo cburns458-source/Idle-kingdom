@@ -72,6 +72,16 @@ const SHARED_RECIPE_FACILITY_IDS: Record<string, string> = {
   'FAC-0015': 'FAC-0006',
 }
 
+/** Citadel special-production facilities reuse Town project catalogs. */
+export const SHARED_PROJECT_FACILITY_IDS: Record<string, string> = {
+  'FAC-0013': 'FAC-0003',
+  'FAC-0016': 'FAC-0005',
+}
+
+export function projectFacilityIdForLookup(facilityId: string): string {
+  return SHARED_PROJECT_FACILITY_IDS[facilityId] ?? facilityId
+}
+
 export function recipeFacilityIdForLookup(facilityId: string): string {
   return SHARED_RECIPE_FACILITY_IDS[facilityId] ?? facilityId
 }

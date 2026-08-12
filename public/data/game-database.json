@@ -8167,7 +8167,7 @@
     {
       "Map ID": "MAP-0007",
       "Internal Key": "citadel_map",
-      "Display Name": "Citadel Map",
+      "Display Name": "Citadel",
       "Map Type": "Settlement sub-map",
       "Status": "Planned",
       "Release Phase": "Launch",
@@ -9030,6 +9030,18 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": "Shares Town apothecary recipes via facility alias.",
+      "Notes": null
+    },
+    {
+      "Facility ID": "FAC-0016",
+      "Internal Key": "citadel_smithing_forge",
+      "Display Name": "Citadel Smithing forge",
+      "Location ID": "LOC-0030",
+      "Facility Type": "Special Production Station",
+      "Skill ID": "SKL-0011",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Description": "Shares Town foundry smithing projects via facility alias.",
       "Notes": null
     }
   ],
@@ -21268,6 +21280,28 @@
       "Release Phase": "Launch",
       "Description": "A tired kitchen worker who dreams of opening an alchemy shop.",
       "Notes": "Quest giver for Help the aspiring apothecary (QST-0002)."
+    },
+    {
+      "NPC ID": "NPC-0006",
+      "Internal Key": "citadel_market_master",
+      "Display Name": "Market Master",
+      "Location ID": "LOC-0029",
+      "Role": "Merchant",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Description": "Keeps the Market Hall stocked for traveling adventurers.",
+      "Notes": "Merchant for SHP-0004 Market Hall."
+    },
+    {
+      "NPC ID": "NPC-0010",
+      "Internal Key": "citadel_supply_keeper",
+      "Display Name": "Supply Keeper",
+      "Location ID": "LOC-0029",
+      "Role": "Merchant",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Description": "Runs a compact stall of traveler supplies.",
+      "Notes": "Merchant for SHP-0005 Supply Stall."
     }
   ],
   "Shops": [

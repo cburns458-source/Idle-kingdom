@@ -10,6 +10,8 @@ import {
   eligibleEnchantmentTargets,
 } from './enchantments'
 import { hasProjectKnowledge } from '../npcs/knowledge'
+import { applyBountyProjectProgress } from '../bounties/progress'
+import { projectFacilityIdForLookup } from '../production/recipes'
 import { applyQuestProcessProgress } from '../quests/progress'
 import {
   getEnchantment,
@@ -46,8 +48,12 @@ export function validateProjectCompletion(
     return { ok: false, reason: 'That project is not available.' }
   }
 
-  const facility = db.Facilities.find((row) => row['Facility ID'] === project['Facility ID'])
-  if (!facility || facility['Location ID'] !== save.currentLocationId) {
+  const atLocation = db.Facilities.some(
+    (row) =>
+      row['Location ID'] === save.currentLocationId &&
+      projectFacilityIdForLookup(row['Facility ID']) === project['Facility ID'],
+  )
+  if (!atLocation) {
     return { ok: false, reason: 'Travel to the required facility first.' }
   }
 
@@ -184,6 +190,7 @@ export function completeSpecialProject(
   const xpApplied = applyXp(next, db, project['Skill ID'], xpTotal)
   next = xpApplied.save
   next = applyQuestProcessProgress(db, next, project['Project ID'], crafts)
+  next = applyBountyProjectProgress(next, project['Project ID'], crafts)
 
   return {
     ok: true,

@@ -21,7 +21,7 @@ import { summarizeXpReward } from './game/activity/rewardSummary'
 import { getSkillProgress } from './game/activity/xp'
 import { loadOrCreateSave, writeSave } from './game/save/saveStore'
 import type { PlayerSave } from './game/save/types'
-import { MAIN_MAP_ID } from './game/world/constants'
+import { CITADEL_MAP_ID, CITADEL_MARKET_ID, CITADEL_PLAZA_ID, MAIN_MAP_ID } from './game/world/constants'
 import {
   applyHostileTravelArrival,
   hostileForceMessage,
@@ -1194,6 +1194,8 @@ export default function App() {
                 setActiveNpcId(npcId)
               }}
               onOpenCitadelHub={
+                save.currentLocationId === CITADEL_PLAZA_ID ||
+                save.currentLocationId === CITADEL_MARKET_ID ||
                 save.currentLocationId === CITADEL_LOCATION_ID
                   ? (tab) => {
                       setSpecialStation(null)
@@ -1203,6 +1205,17 @@ export default function App() {
                       setActiveCitadelHub(tab)
                     }
                   : undefined
+              }
+              citadelHubTabs={
+                save.currentLocationId === CITADEL_PLAZA_ID ||
+                save.currentLocationId === CITADEL_LOCATION_ID
+                  ? ['bounties']
+                  : save.currentLocationId === CITADEL_MARKET_ID
+                    ? ['bazaar']
+                    : []
+              }
+              citadelHubTitle={
+                save.currentLocationId === CITADEL_MARKET_ID ? 'Market District' : 'Citadel Plaza'
               }
               onOpenMap={() => {
                 setBrowseMapId(MAIN_MAP_ID)
@@ -1286,10 +1299,15 @@ export default function App() {
                   {activeCitadelHub && (
                     <CitadelHubPanel
                       tab={activeCitadelHub}
+                      db={database.launch}
                       save={save}
                       onChangeSave={updateSave}
                       onClose={() => setActiveCitadelHub(null)}
                       onMessage={setLastMessage}
+                      onOpenGuilds={() => {
+                        setActiveCitadelHub(null)
+                        setScreen('guilds')
+                      }}
                     />
                   )}
                   {specialStation && !activeShopId && !activeNpcId && !activeCitadelHub && (
@@ -1421,6 +1439,9 @@ export default function App() {
               onChangeSave={updateSave}
             />
           )}
+          {screen === 'citadel' && (
+            <SocialView save={save} database={database} section="citadel" />
+          )}
           {screen === 'settings' && (
             <SettingsPanel
               save={save}
@@ -1463,7 +1484,10 @@ export default function App() {
           )}
         </div>
 
-        <ChatDrawer locationId={save.currentLocationId} />
+        <ChatDrawer
+          locationId={save.currentLocationId}
+          citadelHubChat={resolveActiveMapId(database.launch, location) === CITADEL_MAP_ID}
+        />
 
         <BottomNav
           screen={screen}

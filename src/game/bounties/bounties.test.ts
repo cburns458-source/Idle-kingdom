@@ -5,7 +5,8 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import {
   applyBountyDefeatProgress,
-  applyBountyGatherProgress,
+  applyBountyProcessProgress,
+  bountyProgressFor,
   isBountyReadyToClaim,
   syncBountyHour,
 } from './progress'
@@ -33,32 +34,40 @@ describe('bounty rotation', () => {
 })
 
 describe('bounty progress', () => {
-  it('tracks gather objectives on the current board', () => {
+  it('tracks gather_deliver from inventory at turn-in time', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const now = Date.parse('2026-08-12T13:15:00.000Z')
     const board = hourlyBountyBoard(now)
-    const gather = board.bounties.find((row) => row.kind === 'gather_item')
+    const gather = board.bounties.find((row) => row.kind === 'gather_deliver')
     let save = syncBountyHour(createNewSave(launch), now)
     if (!gather) {
-      // Force a gather-focused hour by applying a known catalog item and asserting no throw.
-      save = applyBountyGatherProgress(save, 'ITEM-0030', 1, now)
       expect(save.bountyHourKey).toBe(bountyHourKey(now))
       return
     }
-    save = applyBountyGatherProgress(save, gather.targetId, gather.amount, now)
+    save = {
+      ...save,
+      inventory: [{ itemId: gather.targetId, quantity: gather.amount }],
+    }
+    expect(bountyProgressFor(save, gather, now)).toBe(gather.amount)
     expect(isBountyReadyToClaim(save, gather, now)).toBe(true)
   })
 
-  it('tracks defeat objectives', () => {
+  it('tracks defeat and process objectives', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const now = Date.parse('2026-08-12T10:00:00.000Z')
     let save = syncBountyHour(createNewSave(launch), now)
     const board = hourlyBountyBoard(now)
-    const defeat = board.bounties.find((row) => row.kind === 'defeat_enemy')
-    if (!defeat) return
-    for (let i = 0; i < defeat.amount; i += 1) {
-      save = applyBountyDefeatProgress(save, defeat.targetId, 1, now)
+    const defeat = board.bounties.find((row) => row.kind === 'defeat')
+    if (defeat) {
+      for (let i = 0; i < defeat.amount; i += 1) {
+        save = applyBountyDefeatProgress(save, defeat.targetId, 1, now)
+      }
+      expect(isBountyReadyToClaim(save, defeat, now)).toBe(true)
     }
-    expect(isBountyReadyToClaim(save, defeat, now)).toBe(true)
+    const process = board.bounties.find((row) => row.kind === 'process')
+    if (process) {
+      save = applyBountyProcessProgress(save, process.targetId, process.amount, now)
+      expect(isBountyReadyToClaim(save, process, now)).toBe(true)
+    }
   })
 })
