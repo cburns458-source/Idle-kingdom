@@ -14,6 +14,7 @@ import { questScenarios } from './quests'
 import { raceScenarios } from './races'
 import { rngScenarios } from './rng'
 import { saveScenarios } from './save'
+import { sessionScenarios } from './session'
 import { shopScenarios } from './shops'
 import { supportScenarios } from './support'
 import { unattendedScenarios } from './unattended'
@@ -44,6 +45,7 @@ export const parityScenarios: ParityScenario[] = [
   ...metaScenarios,
   ...saveScenarios,
   ...unattendedScenarios,
+  ...sessionScenarios,
 ]
 
 export function assertUniqueScenarioNames(scenarios: ParityScenario[]): void {

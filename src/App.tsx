@@ -1,24 +1,17 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import {
-  activityStillValid,
-  clearActivitySave,
-  completeGatheringAction,
-  generateNextAction,
-  restoreActiveActionState,
-  validateActivityStart,
-} from './game/activity/engine'
+import { validateActivityStart } from './game/activity/engine'
 import {
   beginTravelActivityChange,
   requestActivityStart,
   requestActivityStop,
   requestProductionStart,
-  resolveActivityTransitions,
 } from './game/activity/transition'
 import { loadDatabase, type LoadedDatabase } from './game/data/loadDatabase'
 import type { ActionRewardBundle } from './game/activity/types'
 import type { ActivityRow } from './game/data/types'
-import { summarizeXpReward } from './game/activity/rewardSummary'
-import { getSkillProgress } from './game/activity/xp'
+import { advanceSession } from './game/session/tick'
+import { actionProgressAt } from './game/session/progress'
+import type { SessionEvent } from './game/session/events'
 import { loadOrCreateSave, writeSave } from './game/save/saveStore'
 import type { PlayerSave } from './game/save/types'
 import { CITADEL_MAP_ID, CITADEL_MARKET_ID, CITADEL_PLAZA_ID, MAIN_MAP_ID } from './game/world/constants'
@@ -39,14 +32,7 @@ import {
   travelDurationMs,
 } from './game/world/travel'
 import { configNumber } from './game/activity/gathering'
-import {
-  applyCombatDefeat,
-  applyCombatVictory,
-  deathPauseRemainingMs,
-  getEnemy,
-  isDeathPaused,
-  resolveCombatRound,
-} from './game/combat/engine'
+import { deathPauseRemainingMs, getEnemy, isDeathPaused } from './game/combat/engine'
 import { playerMaxHp } from './game/combat/stats'
 import { addItemToInventory } from './game/activity/rewards'
 import {
@@ -55,10 +41,9 @@ import {
   type AutoEquipProposal,
 } from './game/equipment/autoEquip'
 import { withRecalculatedVitals } from './game/equipment/vitals'
-import { completeProductionCraft } from './game/production/engine'
 import { getRecipe, isStandardProductionActivity } from './game/production/recipes'
 import { syncProgressionMeta } from './game/achievements/progress'
-import { applyActivityTimeTowardCritters, spawnCritterAtLocation } from './game/critters/critters'
+import { spawnCritterAtLocation } from './game/critters/critters'
 import { cosmeticById } from './game/cosmetics/cosmetics'
 import {
   resolveUnattendedProgress,
@@ -136,11 +121,6 @@ export default function App() {
   const [lastEnemyHit, setLastEnemyHit] = useState<number | null>(null)
   const [defeatedFlash, setDefeatedFlash] = useState(false)
   const [pauseRemainingMs, setPauseRemainingMs] = useState(0)
-  const pendingVictoryRef = useRef<{
-    save: PlayerSave
-    activityId: string
-    message: string
-  } | null>(null)
   const [renamingCharacter, setRenamingCharacter] = useState(false)
   const [changingRace, setChangingRace] = useState(false)
   const [productionPickerActivityId, setProductionPickerActivityId] = useState<string | null>(null)
@@ -273,53 +253,7 @@ export default function App() {
     return () => window.cancelAnimationFrame(frame)
   }, [travel, boot.status])
 
-  // Clear any legacy activity-change delays from older saves.
-  useEffect(() => {
-    if (boot.status !== 'ready' || travel) return
-    if (!boot.save.activityTransition) return
-    const resolved = resolveActivityTransitions(
-      boot.database.launch,
-      boot.save,
-      Date.now(),
-    )
-    if (resolved !== boot.save) {
-      setBoot({ ...boot, save: persistSave(resolved), saveCreated: false })
-      setActionProgress(0)
-    }
-  }, [boot, travel])
-
-  // Ensure an action exists while an activity is running (not during death pause).
-  useEffect(() => {
-    if (boot.status !== 'ready' || travel) return
-    const { database, save } = boot
-    if (!save.currentActivityId || save.currentActionId) return
-    if (save.productionRecipeId) return
-    if (isDeathPaused(save)) return
-
-    const running = database.launchIndexes.activitiesById.get(save.currentActivityId)
-    if (running && isStandardProductionActivity(database.launch, running)) return
-
-    if (!activityStillValid(database.launch, save, save.currentActivityId)) {
-      const stopped = persistSave(clearActivitySave(save))
-      setBoot({ ...boot, save: stopped, saveCreated: false })
-      setActivityError('Activity stopped — requirements are no longer met.')
-      return
-    }
-
-    const generated = generateNextAction(database.launch, save, save.currentActivityId)
-    if (!generated) {
-      const stopped = persistSave(clearActivitySave(save))
-      setBoot({ ...boot, save: stopped, saveCreated: false })
-      setActivityError('No actions remain for this activity.')
-      return
-    }
-    setBoot({ ...boot, save: persistSave(generated.save), saveCreated: false })
-  }, [boot, travel])
-
   const runningActivityId = boot.status === 'ready' ? boot.save.currentActivityId : null
-  const runningActionId = boot.status === 'ready' ? boot.save.currentActionId : null
-  const runningActionStartedAt = boot.status === 'ready' ? boot.save.actionStartedAt : null
-  const runningActionDurationMs = boot.status === 'ready' ? boot.save.actionDurationMs : null
   const runningProductionRecipeId = boot.status === 'ready' ? boot.save.productionRecipeId : null
 
   // Keep HUD activity timers current while something is running.
@@ -330,377 +264,76 @@ export default function App() {
     return () => window.clearInterval(id)
   }, [runningActivityId, runningProductionRecipeId])
 
-  // Progress + complete the current gathering action.
+  /** Reflects one tick's events in the screen state they drive. */
+  function applySessionEvents(events: SessionEvent[]) {
+    for (const event of events) {
+      switch (event.kind) {
+        case 'rewards':
+          setRecentRewards((prev) => [event.bundle, ...prev].slice(0, 4))
+          setLastMessage(null)
+          break
+        case 'message':
+          setLastMessage(event.text)
+          break
+        case 'activity-stopped':
+          setActivityError(event.reason)
+          break
+        case 'craft-completed':
+          setActivityError(null)
+          setCraftPopup({ itemId: event.itemId, name: event.displayName, key: Date.now() })
+          break
+        case 'inventory-full':
+          setActivityError('Inventory full — free space to continue crafting.')
+          break
+        case 'combat-round':
+          setLastPlayerHit(event.playerHit)
+          setLastPlayerCrit(event.playerCrit)
+          setLastOffhandHit(event.offhandHit)
+          setLastEnemyHit(event.enemyHit)
+          break
+        case 'enemy-defeated':
+          setDefeatedFlash(true)
+          break
+        case 'recovered':
+          setLastMessage('Recovered. Resuming activity…')
+          break
+        // A death already reads off the save (HP, pause) and a spawn is picked up
+        // by the critter panel, so neither needs its own screen state.
+        case 'player-defeated':
+        case 'critter-spawned':
+          break
+      }
+    }
+  }
+
+  // Everything the save has due — a gathering action, a craft, a combat round,
+  // a death-pause recovery, or the next action for an activity that has none —
+  // is advanced by the headless session, so this loop only draws and reacts.
   useEffect(() => {
     if (boot.status !== 'ready' || travel) return
-    const save = boot.save
-    if (save.combatEnemyId || save.productionRecipeId) return
-    const actionState = restoreActiveActionState(save)
-    if (!save.currentActivityId || !actionState) {
-      setActionProgress(0)
-      return
-    }
 
     let frame = 0
-    let completed = false
-
     const tick = () => {
-      const elapsed = Date.now() - actionState.startedAtMs
-      const progress = Math.min(1, elapsed / Math.max(1, actionState.durationMs))
-      setActionProgress(progress)
-      if (progress < 1) {
-        frame = window.requestAnimationFrame(tick)
-        return
-      }
-      if (completed) return
-      completed = true
-
       const current = bootRef.current
-      if (current.status !== 'ready' || !current.save.currentActivityId) return
+      if (current.status === 'ready') {
+        const now = Date.now()
+        setPauseRemainingMs(deathPauseRemainingMs(current.save, now))
+        setActionProgress(actionProgressAt(current.save, now))
 
-      const action = current.database.launchIndexes.actionsById.get(actionState.actionId)
-      if (!action) {
-        const stopped = persistSave(clearActivitySave(current.save))
-        setBoot({ ...current, save: stopped, saveCreated: false })
-        return
+        const advanced = advanceSession(current.database.launch, current.save, now)
+        if (advanced.changed) {
+          applySessionEvents(advanced.events)
+          setBoot({ ...current, save: persistSave(advanced.save), saveCreated: false })
+        }
       }
-
-      const finished = completeGatheringAction(current.database.launch, current.save, action)
-      let nextSave = applyActivityTimeTowardCritters(
-        finished.save,
-        finished.save.currentLocationId,
-        actionState.durationMs,
-      ).save
-      const gatheringBundle: ActionRewardBundle = {
-        id: `${finished.result.actionId}-${Date.now()}`,
-        xpRewards: finished.result.xpRewards,
-        loot: finished.result.loot,
-        goldGained: finished.result.goldGained,
-      }
-      setRecentRewards((prev) => [gatheringBundle, ...prev].slice(0, 4))
-      setLastMessage(null)
-
-      const activityId = current.save.currentActivityId
-      if (!activityStillValid(current.database.launch, nextSave, activityId)) {
-        nextSave = clearActivitySave(nextSave)
-        setActivityError('Activity stopped — requirements are no longer met.')
-        setActionProgress(0)
-        setBoot({ ...current, save: persistSave(nextSave), saveCreated: false })
-        return
-      }
-
-      const generated = generateNextAction(current.database.launch, nextSave, activityId)
-      if (!generated) {
-        setBoot({
-          ...current,
-          save: persistSave(clearActivitySave(nextSave)),
-          saveCreated: false,
-        })
-        setActionProgress(0)
-        return
-      }
-
-      setActionProgress(0)
-      setBoot({ ...current, save: persistSave(generated.save), saveCreated: false })
+      frame = window.requestAnimationFrame(tick)
     }
 
     frame = window.requestAnimationFrame(tick)
     return () => window.cancelAnimationFrame(frame)
-  }, [
-    boot,
-    travel,
-    runningActivityId,
-    runningActionId,
-    runningActionStartedAt,
-    runningActionDurationMs,
-  ])
-
-  const productionRecipeId = boot.status === 'ready' ? boot.save.productionRecipeId : null
-  const productionRemaining =
-    boot.status === 'ready' ? boot.save.productionQuantityRemaining : null
-
-  // Progress + complete standard production crafts.
-  useEffect(() => {
-    if (boot.status !== 'ready' || travel) return
-    const save = boot.save
-    if (!save.productionRecipeId || !save.actionStartedAt || !save.actionDurationMs) {
-      return
-    }
-
-    let frame = 0
-    let completed = false
-    const startedAtMs = Date.parse(save.actionStartedAt)
-    const durationMs = save.actionDurationMs
-
-    const tick = () => {
-      const elapsed = Date.now() - startedAtMs
-      const progress = Math.min(1, elapsed / Math.max(1, durationMs))
-      setActionProgress(progress)
-      if (progress < 1) {
-        frame = window.requestAnimationFrame(tick)
-        return
-      }
-      if (completed) return
-      completed = true
-
-      const current = bootRef.current
-      if (current.status !== 'ready' || !current.save.productionRecipeId) return
-      const finished = completeProductionCraft(current.database.launch, current.save)
-      if (!finished) {
-        setActivityError('Inventory full — free space to continue crafting.')
-        setActionProgress(1)
-        return
-      }
-      const craftDurationMs = current.save.actionDurationMs ?? 0
-      const withCritter = applyActivityTimeTowardCritters(
-        finished.save,
-        finished.save.currentLocationId,
-        craftDurationMs,
-      ).save
-      const outputLoot = finished.reward.loot[0]
-      if (outputLoot) {
-        setCraftPopup({
-          itemId: outputLoot.itemId,
-          name: outputLoot.displayName,
-          key: Date.now(),
-        })
-      }
-      setRecentRewards((prev) => [finished.reward, ...prev].slice(0, 4))
-      setLastMessage(null)
-      setActivityError(null)
-      setActionProgress(0)
-      setBoot({
-        ...current,
-        save: persistSave(withCritter),
-        saveCreated: false,
-      })
-    }
-
-    frame = window.requestAnimationFrame(tick)
-    return () => window.cancelAnimationFrame(frame)
-  }, [
-    boot,
-    travel,
-    productionRecipeId,
-    productionRemaining,
-    runningActionStartedAt,
-    runningActionDurationMs,
-  ])
-
-  const combatEnemyId = boot.status === 'ready' ? boot.save.combatEnemyId : null
-  const combatRoundStartedAt = boot.status === 'ready' ? boot.save.combatRoundStartedAt : null
-  const deathPauseUntil = boot.status === 'ready' ? boot.save.deathPauseUntil : null
-
-  // Combat rounds + death pause.
-  useEffect(() => {
-    if (boot.status !== 'ready' || travel) return
-    const { database, save } = boot
-    if (!save.currentActivityId) {
-      setPauseRemainingMs(0)
-      return
-    }
-
-    const roundMs = configNumber(database.launch, 'combat_round_duration', 4) * 1000
-    let frame = 0
-    let resolved = false
-
-    const tick = () => {
-      const current = bootRef.current
-      if (current.status !== 'ready') return
-      const now = Date.now()
-      const pauseLeft = deathPauseRemainingMs(current.save, now)
-      setPauseRemainingMs(pauseLeft)
-
-      if (pauseLeft > 0) {
-        frame = window.requestAnimationFrame(tick)
-        return
-      }
-
-      if (current.save.deathPauseUntil) {
-        if (resolved) return
-        resolved = true
-        const resumed = {
-          ...current.save,
-          deathPauseUntil: null,
-        }
-        if (!activityStillValid(current.database.launch, resumed, resumed.currentActivityId!)) {
-          setBoot({
-            ...current,
-            save: persistSave(clearActivitySave(resumed)),
-            saveCreated: false,
-          })
-          setActivityError('Activity stopped after defeat — requirements no longer met.')
-          return
-        }
-        const generated = generateNextAction(
-          current.database.launch,
-          resumed,
-          resumed.currentActivityId!,
-        )
-        setBoot({
-          ...current,
-          save: persistSave(generated ? generated.save : resumed),
-          saveCreated: false,
-        })
-        setLastMessage('Recovered. Resuming activity…')
-        return
-      }
-
-      if (!current.save.combatEnemyId || !current.save.combatRoundStartedAt) {
-        return
-      }
-      // Hold rounds while the defeated flash / next-enemy handoff is pending.
-      if (pendingVictoryRef.current) {
-        return
-      }
-
-      const started = Date.parse(current.save.combatRoundStartedAt)
-      const progress = Math.min(1, (now - started) / roundMs)
-      if (progress < 1) {
-        frame = window.requestAnimationFrame(tick)
-        return
-      }
-      if (resolved) return
-      resolved = true
-
-      const enemy = getEnemy(current.database.launch, current.save.combatEnemyId)
-      const action = current.save.currentActionId
-        ? current.database.launchIndexes.actionsById.get(current.save.currentActionId)
-        : undefined
-      if (!enemy || !action || current.save.combatEnemyHp == null) {
-        setBoot({
-          ...current,
-          save: persistSave(clearActivitySave(current.save)),
-          saveCreated: false,
-        })
-        return
-      }
-
-      const round = resolveCombatRound(
-        current.database.launch,
-        current.save,
-        enemy,
-        current.save.combatEnemyHp,
-      )
-
-      if (round.outcome === 'victory') {
-        const victoryResult = applyCombatVictory(
-          current.database.launch,
-          { ...current.save, combatEnemyHp: 0, currentHp: round.playerHp },
-          action,
-          enemy,
-        )
-        const nextSave = applyActivityTimeTowardCritters(
-          victoryResult.save,
-          victoryResult.save.currentLocationId,
-          roundMs,
-        ).save
-
-        const combatLevelBefore = getSkillProgress(current.save, 'SKL-0001').level
-        const combatLevelAfter = getSkillProgress(nextSave, 'SKL-0001').level
-        const combatXpReward = summarizeXpReward(
-          current.database.launch,
-          nextSave,
-          'SKL-0001',
-          victoryResult.xpGained,
-          combatLevelAfter > combatLevelBefore ? combatLevelAfter : null,
-        )
-        const combatBundle: ActionRewardBundle = {
-          id: `combat-${enemy['Enemy ID']}-${Date.now()}`,
-          xpRewards: combatXpReward ? [combatXpReward] : [],
-          loot: victoryResult.loot,
-          goldGained: victoryResult.goldGained,
-        }
-        setRecentRewards((prev) => [combatBundle, ...prev].slice(0, 4))
-        setLastPlayerHit(round.playerHit)
-        setLastPlayerCrit(round.playerCrit)
-        setLastOffhandHit(round.offhandHit)
-        setLastEnemyHit(round.enemyHit)
-        setLastMessage(
-          victoryResult.foodConsumed
-            ? `Ate ${victoryResult.foodName} (+${victoryResult.foodHealed} HP)`
-            : round.thornsHit > 0
-              ? `Thorns reflects ${round.thornsHit} and defeats ${enemy['Display Name']}!`
-              : round.playerCrit
-                ? `Critical hit! Defeated ${enemy['Display Name']}`
-                : `Defeated ${enemy['Display Name']}`,
-        )
-        setBoot({
-          ...current,
-          save: persistSave({
-            ...current.save,
-            combatEnemyHp: 0,
-            currentHp: nextSave.currentHp,
-            critterProgressMs: nextSave.critterProgressMs,
-            activeCritterSpawns: nextSave.activeCritterSpawns,
-          }),
-          saveCreated: false,
-        })
-        pendingVictoryRef.current = {
-          save: nextSave,
-          activityId: current.save.currentActivityId!,
-          message:
-            victoryResult.foodConsumed
-              ? `Ate ${victoryResult.foodName} (+${victoryResult.foodHealed} HP)`
-              : `Defeated ${enemy['Display Name']}`,
-        }
-        setDefeatedFlash(true)
-        return
-      }
-
-      if (round.outcome === 'defeat') {
-        const defeatedBase = applyCombatDefeat(current.database.launch, {
-          ...current.save,
-          currentHp: 0,
-        })
-        const defeated = applyActivityTimeTowardCritters(
-          defeatedBase,
-          defeatedBase.currentLocationId,
-          roundMs,
-        ).save
-        setLastPlayerHit(round.playerHit)
-        setLastPlayerCrit(round.playerCrit)
-        setLastOffhandHit(round.offhandHit)
-        setLastEnemyHit(round.enemyHit)
-        setLastMessage(`Defeated by ${enemy['Display Name']}. Recovering…`)
-        setBoot({ ...current, save: persistSave(defeated), saveCreated: false })
-        return
-      }
-
-      setLastPlayerHit(round.playerHit)
-      setLastPlayerCrit(round.playerCrit)
-      setLastOffhandHit(round.offhandHit)
-      setLastEnemyHit(round.enemyHit)
-      const hitLabel = round.playerCrit ? `crit for ${round.playerHit}` : `hit ${round.playerHit}`
-      const offhandLabel =
-        round.offhandHit != null && round.offhandHit > 0
-          ? ` Off-hand hits ${round.offhandHit}.`
-          : ''
-      setLastMessage(
-        round.thornsHit > 0
-          ? `You ${hitLabel}.${offhandLabel} ${enemy['Display Name']} hits ${round.enemyHit}. Thorns reflects ${round.thornsHit}.`
-          : `You ${hitLabel}.${offhandLabel} ${enemy['Display Name']} hits ${round.enemyHit}.`,
-      )
-      const continued = applyActivityTimeTowardCritters(
-        {
-          ...current.save,
-          currentHp: round.playerHp,
-          combatEnemyHp: round.enemyHp,
-          combatRoundStartedAt: new Date().toISOString(),
-        },
-        current.save.currentLocationId,
-        roundMs,
-      ).save
-      setBoot({
-        ...current,
-        save: persistSave(continued),
-        saveCreated: false,
-      })
-    }
-
-    frame = window.requestAnimationFrame(tick)
-    return () => window.cancelAnimationFrame(frame)
-  }, [boot, travel, combatEnemyId, combatRoundStartedAt, deathPauseUntil, runningActivityId])
+    // The loop reads the live save through `bootRef`, so it only has to be
+    // rebuilt when the game becomes playable or travel takes over.
+  }, [boot.status, travel])
 
   const ready = boot.status === 'ready' ? boot : null
 
@@ -723,43 +356,18 @@ export default function App() {
     return writeSave(synced)
   }
 
-  // After a kill, flash "defeated" then advance to the next enemy.
+  // A kill flashes "defeated" over the panel. The rewards and the next enemy are
+  // already applied by the tick that resolved the round, so this only clears the
+  // flash and the round's hit numbers once it has been seen.
   // Must stay above early returns so hook order is stable while boot loads.
   useEffect(() => {
     if (!defeatedFlash) return
-    const pending = pendingVictoryRef.current
-    if (!pending) {
-      setDefeatedFlash(false)
-      return
-    }
     const timer = window.setTimeout(() => {
-      const current = bootRef.current
-      if (current.status !== 'ready') {
-        setDefeatedFlash(false)
-        pendingVictoryRef.current = null
-        return
-      }
-      const { save: nextSave, activityId } = pending
-      pendingVictoryRef.current = null
       setDefeatedFlash(false)
       setLastPlayerHit(null)
       setLastPlayerCrit(false)
       setLastOffhandHit(null)
       setLastEnemyHit(null)
-      if (!activityStillValid(current.database.launch, nextSave, activityId)) {
-        setBoot({
-          ...current,
-          save: persistSave(clearActivitySave(nextSave)),
-          saveCreated: false,
-        })
-        return
-      }
-      const generated = generateNextAction(current.database.launch, nextSave, activityId)
-      setBoot({
-        ...current,
-        save: persistSave(generated ? generated.save : nextSave),
-        saveCreated: false,
-      })
     }, 750)
     return () => window.clearTimeout(timer)
   }, [defeatedFlash])
@@ -1081,7 +689,6 @@ export default function App() {
     setLastOffhandHit(null)
     setLastEnemyHit(null)
     setDefeatedFlash(false)
-    pendingVictoryRef.current = null
     setProductionPickerActivityId(null)
     setSpecialStation(null)
     const requested = requestActivityStop(database.launch, save)
