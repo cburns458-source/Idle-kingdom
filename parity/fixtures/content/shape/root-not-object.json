@@ -1,0 +1,1 @@
+{"case":"root-not-object","input":{"source":"raw","value":7},"module":"content/shape","output":{"error":"Database root must be an object"}}

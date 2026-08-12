@@ -17,6 +17,24 @@ a fixture-replay harness rather than by hand.
 | `parity/fixtures` | Committed scenario recordings produced from the TypeScript rules. |
 | `src/parity` | Scenario registry and the recorder/drift test. |
 
+## Schema codegen
+
+Row models in `packages/ik_content/lib/src/generated/rows.dart` are generated
+from the TypeScript interfaces in `src/game/data`, so those interfaces stay the
+single schema source. Adding a column is a one-file edit followed by:
+
+```bash
+npm run gen:dart
+```
+
+`npm run gen:dart:check` runs in CI and fails when the committed Dart drifts.
+
+A row is a typed wrapper over the parsed JSON map, not a copy. The database uses
+spaced column names (`'Skill ID'`) and shops carry dynamic `Entry N ...` columns,
+so wrapping keeps unknown columns intact and lets a row round-trip byte for byte.
+Numeric columns are typed `num` rather than `int` or `double`, because a JSON
+number is neither on the TypeScript side.
+
 ## Parity workflow
 
 Porting a module means making its recorded fixtures replay green in Dart.
@@ -57,13 +75,28 @@ These exist because the two languages disagree in ways that are easy to miss:
   `JSON.stringify`, so a Dart `toJson` must omit them too rather than writing
   `null`.
 
+## Porting status
+
+| Area | State |
+| --- | --- |
+| Parity harness, shared PRNG, CI | Done |
+| `src/game/data` (models, loading, validation, indexes) | Done |
+| Core rules (skills, xp, inventory, equipment, requirements, races) | Not started |
+| Activity, production, recipes, projects | Not started |
+| Combat, loot, potions, spells, critters, quests, achievements, cosmetics, world, bounties, bazaar | Not started |
+| Save, migrations, unattended progress | Not started |
+| Headless session runtime (extracted from `src/App.tsx`) | Not started |
+| Flutter UI | Not started |
+| Multiplayer backends | Not started |
+
 ## Commands
 
 ```bash
 npm test                  # React app tests + parity fixture drift check
 npm run parity:record     # Re-record fixtures from the TypeScript rules
+npm run gen:dart          # Regenerate Dart row models from the TypeScript types
 dart pub get              # Resolve the pub workspace
 dart analyze              # Analyze every Dart package
 dart format packages      # Format (page width 100, set in analysis_options.yaml)
-dart test packages/ik_rules packages/ik_parity
+dart test packages        # Every Dart package, including parity replay
 ```

@@ -1,0 +1,1 @@
+{"case":"root-array","input":{"source":"raw","value":[]},"module":"content/shape","output":{"error":"Database root must be an object"}}

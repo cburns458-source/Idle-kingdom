@@ -1,4 +1,5 @@
 import type { ParityScenario } from '../types'
+import { contentScenarios } from './content'
 import { rngScenarios } from './rng'
 
 /**
@@ -6,7 +7,7 @@ import { rngScenarios } from './rng'
  * modules here, and a module counts as ported once its fixtures replay green in
  * the Dart package tests.
  */
-export const parityScenarios: ParityScenario[] = [...rngScenarios]
+export const parityScenarios: ParityScenario[] = [...rngScenarios, ...contentScenarios]
 
 export function assertUniqueScenarioNames(scenarios: ParityScenario[]): void {
   const seen = new Set<string>()

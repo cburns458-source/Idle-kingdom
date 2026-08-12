@@ -1,0 +1,1 @@
+{"case":"missing-table","input":{"source":"raw","value":{"Config":[]}},"module":"content/shape","output":{"error":"Database missing required table: Skills"}}
