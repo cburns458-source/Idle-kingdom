@@ -22,6 +22,7 @@ import {
   recipeIngredients,
   recipeMatchesFacility,
 } from './recipes'
+import { applyBountyProcessProgress } from '../bounties/progress'
 import { applyQuestProcessProgress } from '../quests/progress'
 
 export function clearProductionSave(save: PlayerSave): PlayerSave {
@@ -147,6 +148,7 @@ export function completeProductionCraft(
 
   const remaining = save.productionQuantityRemaining - 1
   next = applyQuestProcessProgress(db, next, recipe['Recipe ID'], 1)
+  next = applyBountyProcessProgress(next, recipe['Recipe ID'], 1)
   const outputItem = db.Items.find((item) => item['Item ID'] === recipe['Output Item ID'])
   const outputName = outputItem?.['Display Name'] ?? recipe['Display Name']
   const xpReward = summarizeXpReward(

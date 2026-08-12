@@ -222,8 +222,8 @@ export interface PublicPlayerProfile {
   totalLevel: number
 }
 
-export const CITADEL_LOCATION_ID = 'LOC-CITADEL'
-export const CITADEL_PRESENCE_CHANNEL = 'citadel:hub'
+/** Citadel Plaza — hub presence/listing target. Local chat uses `local:{locationId}` like every other node. */
+export const CITADEL_LOCATION_ID = 'LOC-0028'
 export const MULTIPLAYER_SESSION_KEY = 'idle-kingdoms.multiplayer.session'
 export const MULTIPLAYER_LOCAL_DB_KEY = 'idle-kingdoms.multiplayer.local-db'
 

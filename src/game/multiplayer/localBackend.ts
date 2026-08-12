@@ -12,6 +12,8 @@ import { totalLevel } from '../skills/totals'
 import { CHAT_COOLDOWN_SECONDS, PRESENCE_TTL_SECONDS } from './config'
 import { buildLeaderboardSnapshot } from './snapshots'
 import type { GameDatabase } from '../data/types'
+import type { BazaarPost, BazaarPostKind } from '../bazaar/types'
+import type { BountyClaimRecord } from '../bounties/types'
 import {
   chatChannelKey,
   DEFAULT_GUILD_RANK_LABELS,
@@ -65,6 +67,8 @@ interface LocalDb {
   mutes: Array<{ userId: string; mutedUserId: string }>
   friendRequests: Array<{ fromUserId: string; toUserId: string; createdAt: string }>
   friends: Array<{ userA: string; userB: string }>
+  bountyClaims: BountyClaimRecord[]
+  bazaarPosts: BazaarPost[]
 }
 
 function nowIso(): string {
@@ -101,6 +105,8 @@ function emptyDb(): LocalDb {
     mutes: [],
     friendRequests: [],
     friends: [],
+    bountyClaims: [],
+    bazaarPosts: [],
   }
 }
 
@@ -181,6 +187,8 @@ function loadDb(storage: Storage = localStorage): LocalDb {
       appearance: member.appearance ?? defaultAppearance(),
       totalLevel: Number.isFinite(member.totalLevel) ? member.totalLevel : 1,
     }))
+    merged.bountyClaims = Array.isArray(merged.bountyClaims) ? merged.bountyClaims : []
+    merged.bazaarPosts = Array.isArray(merged.bazaarPosts) ? merged.bazaarPosts : []
     return merged
   } catch {
     return emptyDb()
@@ -983,5 +991,89 @@ export class LocalMultiplayerBackend {
       achievementsUnlocked: save?.achievements.filter((row) => row.unlocked).length ?? 0,
       totalLevel: skills.reduce((sum, skill) => sum + skill.level, 0),
     }
+  }
+
+  listBountyClaims(hourKey: string): BountyClaimRecord[] {
+    return this.db().bountyClaims.filter((row) => row.hourKey === hourKey)
+  }
+
+  getBountyClaim(hourKey: string, bountyId: string): BountyClaimRecord | null {
+    return (
+      this.db().bountyClaims.find(
+        (row) => row.hourKey === hourKey && row.bountyId === bountyId,
+      ) ?? null
+    )
+  }
+
+  claimBounty(
+    session: MultiplayerSession,
+    hourKey: string,
+    bountyId: string,
+  ):
+    | { ok: true; claim: BountyClaimRecord; firstCompleter: boolean }
+    | { ok: false; reason: string } {
+    const db = this.db()
+    const existing = db.bountyClaims.find(
+      (row) => row.hourKey === hourKey && row.bountyId === bountyId,
+    )
+    if (existing) {
+      if (existing.userId === session.userId) {
+        return { ok: true, claim: existing, firstCompleter: false }
+      }
+      return { ok: false, reason: `Already claimed by ${existing.username}.` }
+    }
+    const claim: BountyClaimRecord = {
+      hourKey,
+      bountyId,
+      userId: session.userId,
+      username: session.username,
+      claimedAt: nowIso(),
+    }
+    db.bountyClaims.push(claim)
+    this.write(db)
+    return { ok: true, claim, firstCompleter: true }
+  }
+
+  listBazaarPosts(limit = 40): BazaarPost[] {
+    return this.db()
+      .bazaarPosts.slice()
+      .sort((a, b) => Date.parse(a.createdAt) - Date.parse(b.createdAt))
+      .slice(-limit)
+  }
+
+  postBazaar(
+    session: MultiplayerSession,
+    kind: BazaarPostKind,
+    body: string,
+  ): { ok: true; post: BazaarPost } | { ok: false; reason: string } {
+    const trimmed = body.trim().slice(0, 240)
+    if (!trimmed) return { ok: false, reason: 'Message is empty.' }
+    if (kind !== 'message' && kind !== 'recruit' && kind !== 'trade') {
+      return { ok: false, reason: 'Unknown bazaar post kind.' }
+    }
+    const db = this.db()
+    const cooldownKey = `${session.userId}:bazaar`
+    const last = db.lastChatAt[cooldownKey]
+    if (last && Date.now() - Date.parse(last) < CHAT_COOLDOWN_SECONDS.local * 1000) {
+      const wait = Math.ceil(
+        (CHAT_COOLDOWN_SECONDS.local * 1000 - (Date.now() - Date.parse(last))) / 1000,
+      )
+      return { ok: false, reason: `Wait ${wait}s before posting again.` }
+    }
+    const post: BazaarPost = {
+      id: newId('bzr'),
+      kind,
+      userId: session.userId,
+      username: session.username,
+      body: filterProfanity(trimmed),
+      createdAt: nowIso(),
+    }
+    db.bazaarPosts.push(post)
+    if (db.bazaarPosts.length > 200) {
+      db.bazaarPosts = db.bazaarPosts.slice(-200)
+    }
+    db.lastChatAt[cooldownKey] = post.createdAt
+    this.write(db)
+    return { ok: true, post }
   }
 }

@@ -10,7 +10,13 @@ import {
   resolveActiveMapId,
   travelDurationMs,
 } from './travel'
-import { DEFAULT_TRAVEL_DURATION_MS, MAIN_MAP_ID, CASTLE_MAP_ID, CAVE_MAP_ID } from './constants'
+import {
+  DEFAULT_TRAVEL_DURATION_MS,
+  MAIN_MAP_ID,
+  CASTLE_MAP_ID,
+  CAVE_MAP_ID,
+  CITADEL_MAP_ID,
+} from './constants'
 
 const rawDatabase = JSON.parse(
   readFileSync(resolve(process.cwd(), 'public/data/game-database.json'), 'utf8'),
@@ -120,5 +126,25 @@ describe('travel rules', () => {
     expect(castleNodes).toEqual(expect.arrayContaining(['LOC-0015', 'LOC-0021']))
     const caveNodes = locationsForMapView(launch, CAVE_MAP_ID).map((row) => row['Location ID'])
     expect(caveNodes).toEqual(expect.arrayContaining(['LOC-0011', 'LOC-0022']))
+  })
+
+  it('opens citadel sub-map from The Citadel gateway', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const gateway = launch.Locations.find((location) => location['Location ID'] === 'LOC-0027')!
+    expect(resolveActiveMapId(launch, gateway)).toBe(CITADEL_MAP_ID)
+    const nodes = locationsForMapView(launch, CITADEL_MAP_ID).map((row) => row['Location ID'])
+    expect(nodes).toEqual(
+      expect.arrayContaining([
+        'LOC-0027',
+        'LOC-0028',
+        'LOC-0029',
+        'LOC-0030',
+        'LOC-0031',
+        'LOC-0032',
+      ]),
+    )
+    expect(canTravelTo(launch, 'LOC-0027', 'LOC-0028', CITADEL_MAP_ID)).toBe(true)
+    expect(canTravelTo(launch, 'LOC-0028', 'LOC-0029', CITADEL_MAP_ID)).toBe(true)
+    expect(canTravelTo(launch, 'LOC-0002', 'LOC-0027', MAIN_MAP_ID)).toBe(true)
   })
 })

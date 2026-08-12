@@ -1,4 +1,4 @@
-export const SAVE_VERSION = 21
+export const SAVE_VERSION = 22
 export const SAVE_STORAGE_KEY = 'idle-kingdoms.demo.save'
 export const STARTING_LOCATION_ID = 'LOC-0002'
 /** Base gold before race kit; race starters grant the real starting gold. */
@@ -161,6 +161,12 @@ export interface PlayerSave {
   unlockedRecipeIds: string[]
   /** Location IDs unlocked by quests (e.g. Rose's Apothecary). */
   unlockedLocationIds: string[]
+  /** UTC hour key for the active Citadel bounty board. */
+  bountyHourKey: string | null
+  /** Progress counters for the current bounty hour (bountyId → count). */
+  bountyProgress: Record<string, number>
+  /** Bounty IDs claimed by this character during the current hour. */
+  bountyClaimedIds: string[]
   /** Merchant tip rewards already claimed (one-time dialogue grants). */
   claimedMerchantTipIds: string[]
   /** Critter collection counts (unlocked entries in the Log). */

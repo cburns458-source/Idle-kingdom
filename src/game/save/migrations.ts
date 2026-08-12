@@ -337,6 +337,20 @@ export const SAVE_MIGRATIONS: SaveMigration[] = [
       saveVersion: 21,
     }),
   },
+  {
+    fromVersion: 21,
+    toVersion: 22,
+    migrate: (save) => ({
+      ...save,
+      bountyHourKey: typeof save.bountyHourKey === 'string' ? save.bountyHourKey : null,
+      bountyProgress:
+        save.bountyProgress && typeof save.bountyProgress === 'object'
+          ? save.bountyProgress
+          : {},
+      bountyClaimedIds: Array.isArray(save.bountyClaimedIds) ? save.bountyClaimedIds : [],
+      saveVersion: 22,
+    }),
+  },
 ]
 
 export function migrateSave(save: PlayerSave): PlayerSave {

@@ -15,6 +15,7 @@ import {
   equippedEnchantmentCritChancePercent,
   equippedEnchantmentThornsPercent,
 } from '../projects/enchantments'
+import { applyBountyDefeatProgress } from '../bounties/progress'
 import { applyQuestDefeatProgress } from '../quests/progress'
 import { applyRaceGoldGain } from '../races/races'
 import {
@@ -205,6 +206,7 @@ export function applyCombatVictory(
   const food = tryConsumeFoodAfterVictory(db, next)
   next = clearCombatSave(food.save)
   next = applyQuestDefeatProgress(db, next, enemy['Enemy ID'], 1)
+  next = applyBountyDefeatProgress(next, enemy['Enemy ID'], 1)
 
   return {
     save: next,

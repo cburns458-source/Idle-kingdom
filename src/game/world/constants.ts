@@ -7,10 +7,12 @@ export const CASTLE_MAP_ID = 'MAP-0003'
 export const WEST_MAP_ID = 'MAP-0004'
 export const EAST_MAP_ID = 'MAP-0005'
 export const TOWN_MAP_ID = 'MAP-0006'
+export const CITADEL_MAP_ID = 'MAP-0007'
 
 export const CAVE_ENTRANCE_ID = 'LOC-0010'
 export const CASTLE_GATEWAY_ID = 'LOC-0013'
 export const TOWN_GATEWAY_ID = 'LOC-0002'
+export const CITADEL_GATEWAY_ID = 'LOC-0027'
 export const WEST_HORIZON_ID = 'LOC-0019'
 export const EAST_HORIZON_ID = 'LOC-0020'
 
@@ -19,6 +21,13 @@ export const TOWN_KITCHEN_ID = 'LOC-0023'
 export const TOWN_GENERAL_STORE_ID = 'LOC-0024'
 export const TOWN_FOUNDRY_ID = 'LOC-0025'
 export const TOWN_APOTHECARY_ID = 'LOC-0026'
+
+/** Citadel hub nodes (MAP-0007). */
+export const CITADEL_PLAZA_ID = 'LOC-0028'
+export const CITADEL_MARKET_ID = 'LOC-0029'
+export const CITADEL_PROCESSING_ID = 'LOC-0030'
+export const CITADEL_GATHERING_ID = 'LOC-0031'
+export const CITADEL_COMBAT_ID = 'LOC-0032'
 
 export function isFutureHorizonLocation(locationId: string): boolean {
   return locationId === WEST_HORIZON_ID || locationId === EAST_HORIZON_ID

@@ -75,6 +75,26 @@ describe('local multiplayer backend', () => {
     expect(filterProfanity('what the fuck')).toMatch(/\*+/)
   })
 
+  it('supports bounty first-completer claims and bazaar posts', () => {
+    const backend = new LocalMultiplayerBackend()
+    const a = backend.signUp('a@example.com', 'Alpha', 'secret')
+    const b = backend.signUp('b@example.com', 'Beta', 'secret')
+    expect(a.ok && b.ok).toBe(true)
+    if (!a.ok || !b.ok) return
+
+    const first = backend.claimBounty(a.session, '2026-08-12T13', 'BNT-0001')
+    expect(first.ok).toBe(true)
+    if (!first.ok) return
+    expect(first.firstCompleter).toBe(true)
+
+    const second = backend.claimBounty(b.session, '2026-08-12T13', 'BNT-0001')
+    expect(second.ok).toBe(false)
+
+    const post = backend.postBazaar(a.session, 'trade', 'Selling copper ore')
+    expect(post.ok).toBe(true)
+    expect(backend.listBazaarPosts()).toHaveLength(1)
+  })
+
   it('supports guild search fields, open join, closed apps, ranks, and create cost', () => {
     const backend = new LocalMultiplayerBackend()
     const leader = backend.signUp('leader@example.com', 'Leader', 'secret')

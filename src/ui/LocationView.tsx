@@ -77,6 +77,8 @@ interface LocationViewProps {
   isRecipeBrowserActivity?: (activity: ActivityRow) => boolean
   /** Skill label helper for the Nearby Adventurers panel. */
   skillNameForId?: (skillId: string | null) => string
+  /** Extra plaza/hub panels (bounties, bazaar) rendered in the activity band. */
+  hubPanel?: ReactNode
 }
 
 function MapIcon() {
@@ -138,6 +140,7 @@ export function LocationView({
   requirementHint,
   isRecipeBrowserActivity,
   skillNameForId,
+  hubPanel,
 }: LocationViewProps) {
   const locationId = location['Location ID']
   const activities = indexes.activitiesByLocationId.get(locationId) ?? []
@@ -377,6 +380,8 @@ export function LocationView({
                 </ul>
               </section>
             )}
+
+            {hubPanel}
 
             {searchSpots.length > 0 && (
               <section className="panel glass-panel location-activities">

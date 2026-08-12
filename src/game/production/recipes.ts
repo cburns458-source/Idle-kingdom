@@ -63,9 +63,13 @@ export function canKnowRecipe(save: PlayerSave, db: GameDatabase, recipe: Recipe
   return recipeKnown(save, db, recipe)
 }
 
-/** Castle kitchen shares the Town kitchen recipe book. */
+/** Shared recipe books: castle/citadel stations reuse Town facility catalogs. */
 const SHARED_RECIPE_FACILITY_IDS: Record<string, string> = {
   'FAC-0010': 'FAC-0001',
+  'FAC-0012': 'FAC-0001',
+  'FAC-0013': 'FAC-0003',
+  'FAC-0014': 'FAC-0004',
+  'FAC-0015': 'FAC-0006',
 }
 
 export function recipeFacilityIdForLookup(facilityId: string): string {

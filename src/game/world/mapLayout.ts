@@ -1,5 +1,11 @@
 import type { LocationRow } from '../data/types'
-import { CASTLE_MAP_ID, CAVE_MAP_ID, MAIN_MAP_ID, TOWN_MAP_ID } from './constants'
+import {
+  CASTLE_MAP_ID,
+  CAVE_MAP_ID,
+  CITADEL_MAP_ID,
+  MAIN_MAP_ID,
+  TOWN_MAP_ID,
+} from './constants'
 
 export interface NodePosition {
   x: number
@@ -39,6 +45,8 @@ export const MAIN_MAP_NODE_LAYOUT: Record<string, NodePosition> = {
   // Future west / east horizon gateways
   'LOC-0019': { x: 4, y: 50 },
   'LOC-0020': { x: 96, y: 50 },
+  // Citadel Hub gateway (between Town and Goblin Camp)
+  'LOC-0027': { x: 50, y: 46 },
 }
 
 export const CAVE_MAP_NODE_LAYOUT: Record<string, NodePosition> = {
@@ -80,11 +88,27 @@ export const TOWN_MAP_NODE_LAYOUT: Record<string, NodePosition> = {
   'LOC-0026': { x: 70, y: 72 },
 }
 
+export const CITADEL_MAP_NODE_LAYOUT: Record<string, NodePosition> = {
+  // Citadel gateway / exit (top)
+  'LOC-0027': { x: 50, y: 10 },
+  // Plaza hub
+  'LOC-0028': { x: 50, y: 40 },
+  // Market District
+  'LOC-0029': { x: 20, y: 38 },
+  // Processing District
+  'LOC-0030': { x: 80, y: 38 },
+  // Gathering Outskirts
+  'LOC-0031': { x: 28, y: 74 },
+  // Combat Training Grounds
+  'LOC-0032': { x: 72, y: 74 },
+}
+
 const LAYOUTS: Record<string, Record<string, NodePosition>> = {
   [MAIN_MAP_ID]: MAIN_MAP_NODE_LAYOUT,
   [CAVE_MAP_ID]: CAVE_MAP_NODE_LAYOUT,
   [CASTLE_MAP_ID]: CASTLE_MAP_NODE_LAYOUT,
   [TOWN_MAP_ID]: TOWN_MAP_NODE_LAYOUT,
+  [CITADEL_MAP_ID]: CITADEL_MAP_NODE_LAYOUT,
 }
 
 export function layoutForMap(mapId: string): Record<string, NodePosition> {

@@ -79,7 +79,9 @@ import { CombatPanel } from './ui/CombatPanel'
 import { ChatDrawer } from './ui/ChatDrawer'
 import { AccountPanel } from './ui/AccountPanel'
 import { InventoryView } from './ui/InventoryView'
+import { CitadelHubPanel } from './ui/CitadelHubPanel'
 import { LocationView } from './ui/LocationView'
+import { CITADEL_LOCATION_ID } from './game/multiplayer/types'
 import { LogView } from './ui/LogView'
 import { SocialView } from './ui/SocialView'
 import { getSession } from './game/multiplayer/auth'
@@ -1218,6 +1220,15 @@ export default function App() {
                       'Display Name'
                     ] ?? skillId)
                   : 'Skill'
+              }
+              hubPanel={
+                save.currentLocationId === CITADEL_LOCATION_ID ? (
+                  <CitadelHubPanel
+                    save={save}
+                    onChangeSave={updateSave}
+                    onMessage={setLastMessage}
+                  />
+                ) : null
               }
               statusPanel={
                 <>
