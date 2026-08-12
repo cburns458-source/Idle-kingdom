@@ -42,6 +42,7 @@ export function buildLeaderboardSnapshot(
 
 export function boardLabel(db: GameDatabase, boardKey: MultiplayerBoardKey): string {
   if (boardKey === 'total_level') return 'Total Level'
+  if (boardKey === 'guild_total_level') return 'Guild Total Level'
   if (boardKey === 'total_experience') return 'Total XP'
   if (boardKey === 'gold_earned') return 'Gold Earned'
   if (boardKey === 'monsters_killed') return 'Monsters Killed'

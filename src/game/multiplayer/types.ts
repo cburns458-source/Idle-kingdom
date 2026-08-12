@@ -2,6 +2,7 @@ import type { PlayerAppearance, PlayerSave } from '../save/types'
 
 export type MultiplayerBoardKey =
   | 'total_level'
+  | 'guild_total_level'
   | 'total_experience'
   | 'gold_earned'
   | 'monsters_killed'
@@ -34,6 +35,9 @@ export interface LeaderboardEntry {
   boardKey: MultiplayerBoardKey
   value: number
   rank: number
+  /** Present for guild boards (e.g. guild_total_level). */
+  entryKind?: 'player' | 'guild'
+  emblem?: GuildEmblem | null
 }
 
 export type ChatChannel =
@@ -82,6 +86,7 @@ export const PROMOTABLE_GUILD_RANKS: Exclude<GuildRole, 'leader'>[] = [
 ]
 
 export const GUILD_CREATE_GOLD_COST = 25
+export const GUILD_MAX_MEMBERS = 25
 
 export const GUILD_EMBLEM_COLORS = [
   '#5c4027',

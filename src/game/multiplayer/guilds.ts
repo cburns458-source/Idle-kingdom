@@ -25,7 +25,7 @@ export async function createGuild(
   return getLocalBackend().createGuild(session, input, goldAvailable)
 }
 
-export async function listGuilds(): Promise<GuildRecord[]> {
+export async function listGuilds(): Promise<Array<GuildRecord & { memberCount: number }>> {
   return getLocalBackend().listGuilds()
 }
 

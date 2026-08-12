@@ -83,6 +83,7 @@ export function launchBoardKeys(db: GameDatabase): MultiplayerBoardKey[] {
   )
   return [
     'total_level',
+    'guild_total_level',
     'total_experience',
     'gold_earned',
     'monsters_killed',

@@ -18,6 +18,7 @@ import {
   GUILD_CREATE_GOLD_COST,
   GUILD_EMBLEM_COLORS,
   GUILD_EMBLEM_SYMBOLS,
+  GUILD_MAX_MEMBERS,
   MULTIPLAYER_LOCAL_DB_KEY,
   type ActivityPresence,
   type ChatChannel,
@@ -347,6 +348,29 @@ export class LocalMultiplayerBackend {
 
   listLeaderboard(boardKey: MultiplayerBoardKey, limit = 25): LeaderboardEntry[] {
     const db = this.db()
+    if (boardKey === 'guild_total_level') {
+      const scored = db.guilds
+        .map((guild) => {
+          const members = this.guildMembers(guild.id)
+          const value = members.reduce((sum, member) => sum + member.totalLevel, 0)
+          const leader =
+            members.find((member) => member.userId === guild.leaderId) ?? members[0] ?? null
+          return {
+            userId: guild.id,
+            username: `[${guild.tag}] ${guild.name}`,
+            appearance: leader?.appearance ?? defaultAppearance(),
+            guildName: `${members.length}/${GUILD_MAX_MEMBERS} members`,
+            boardKey,
+            value,
+            rank: 0,
+            entryKind: 'guild' as const,
+            emblem: guild.emblem,
+          }
+        })
+        .sort((a, b) => b.value - a.value || a.username.localeCompare(b.username))
+        .slice(0, limit)
+      return scored.map((row, index) => ({ ...row, rank: index + 1 }))
+    }
     const rows = db.leaderboards
       .filter((row) => row.boardKey === boardKey)
       .sort((a, b) => b.value - a.value || a.userId.localeCompare(b.userId))
@@ -361,8 +385,14 @@ export class LocalMultiplayerBackend {
         boardKey,
         value: row.value,
         rank: index + 1,
+        entryKind: 'player' as const,
+        emblem: null,
       }
     })
+  }
+
+  private guildMemberCount(db: LocalDb, guildId: string): number {
+    return db.members.filter((row) => row.guildId === guildId).length
   }
 
   sendChat(
@@ -543,8 +573,14 @@ export class LocalMultiplayerBackend {
     return { ok: true, guild, goldCost: GUILD_CREATE_GOLD_COST }
   }
 
-  listGuilds(): GuildRecord[] {
-    return [...this.db().guilds].sort((a, b) => a.name.localeCompare(b.name))
+  listGuilds(): Array<GuildRecord & { memberCount: number }> {
+    const db = this.db()
+    return [...db.guilds]
+      .map((guild) => ({
+        ...guild,
+        memberCount: this.guildMemberCount(db, guild.id),
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name))
   }
 
   getGuild(guildId: string): GuildRecord | null {
@@ -577,6 +613,9 @@ export class LocalMultiplayerBackend {
     if (!guild) return { ok: false, reason: 'Guild not found.' }
     if (db.members.some((row) => row.userId === session.userId)) {
       return { ok: false, reason: 'Already in a guild.' }
+    }
+    if (this.guildMemberCount(db, guildId) >= GUILD_MAX_MEMBERS) {
+      return { ok: false, reason: `That guild is full (${GUILD_MAX_MEMBERS} members).` }
     }
     if (guild.joinPolicy === 'open') {
       const snapshot = this.memberSnapshot(db, session.userId, session.username)
@@ -638,6 +677,10 @@ export class LocalMultiplayerBackend {
       if (db.members.some((row) => row.userId === application.userId)) {
         this.write(db)
         return { ok: false, reason: 'Applicant already joined another guild.' }
+      }
+      if (this.guildMemberCount(db, guild.id) >= GUILD_MAX_MEMBERS) {
+        this.write(db)
+        return { ok: false, reason: `Guild is full (${GUILD_MAX_MEMBERS} members).` }
       }
       const snapshot = this.memberSnapshot(db, application.userId, application.username)
       db.members.push({

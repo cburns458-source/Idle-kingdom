@@ -21,6 +21,7 @@ import {
   GUILD_CREATE_GOLD_COST,
   GUILD_EMBLEM_COLORS,
   GUILD_EMBLEM_SYMBOLS,
+  GUILD_MAX_MEMBERS,
   PROMOTABLE_GUILD_RANKS,
   type GuildApplication,
   type GuildEmblem,
@@ -58,7 +59,7 @@ function GuildEmblemBadge({ emblem, tag }: { emblem: GuildEmblem; tag?: string }
 export function GuildView({ save, onChangeSave }: GuildViewProps) {
   const session = getSession()
   const [guildId, setGuildId] = useState<string | null>(() => currentGuildId())
-  const [guilds, setGuilds] = useState<GuildRecord[]>([])
+  const [guilds, setGuilds] = useState<Array<GuildRecord & { memberCount: number }>[]>([])
   const [guild, setGuild] = useState<GuildRecord | null>(null)
   const [members, setMembers] = useState<GuildMember[]>([])
   const [applications, setApplications] = useState<GuildApplication[]>([])
@@ -153,13 +154,13 @@ export function GuildView({ save, onChangeSave }: GuildViewProps) {
                   </strong>
                   <span className="muted tiny">
                     {row.joinPolicy === 'open' ? 'Accept applications' : 'Closed'} ·{' '}
-                    {row.description || 'No description.'}
+                    {row.memberCount}/{GUILD_MAX_MEMBERS} · {row.description || 'No description.'}
                   </span>
                 </div>
                 <button
                   type="button"
                   className="btn secondary"
-                  disabled={busy}
+                  disabled={busy || row.memberCount >= GUILD_MAX_MEMBERS}
                   onClick={() => {
                     setBusy(true)
                     void applyToGuild(row.id, `${save.characterName ?? 'Adventurer'} requests to join`).then(
@@ -178,7 +179,11 @@ export function GuildView({ save, onChangeSave }: GuildViewProps) {
                     )
                   }}
                 >
-                  {row.joinPolicy === 'open' ? 'Join' : 'Apply'}
+                  {row.memberCount >= GUILD_MAX_MEMBERS
+                    ? 'Full'
+                    : row.joinPolicy === 'open'
+                      ? 'Join'
+                      : 'Apply'}
                 </button>
               </li>
             ))}
@@ -206,7 +211,7 @@ export function GuildView({ save, onChangeSave }: GuildViewProps) {
               </strong>
               <span className="muted tiny">
                 {guild.joinPolicy === 'open' ? 'Accept applications' : 'Closed'} ·{' '}
-                {members.length} member{members.length === 1 ? '' : 's'}
+                {members.length}/{GUILD_MAX_MEMBERS} members
               </span>
             </div>
           </header>

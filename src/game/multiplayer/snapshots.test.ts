@@ -39,5 +39,6 @@ describe('leaderboard snapshot builder', () => {
       expect(keys).toContain(`skill:${skill['Skill ID']}`)
     }
     expect(boardLabel(launch, 'total_level')).toBe('Total Level')
+    expect(boardLabel(launch, 'guild_total_level')).toBe('Guild Total Level')
   })
 })

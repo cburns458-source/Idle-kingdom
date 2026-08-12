@@ -140,5 +140,41 @@ describe('local multiplayer backend', () => {
     expect(autoJoin.ok).toBe(true)
     if (!autoJoin.ok) return
     expect(autoJoin.joined).toBe(true)
+
+    const guildBoard = backend.listLeaderboard('guild_total_level')
+    expect(guildBoard[0]?.entryKind).toBe('guild')
+    expect(guildBoard[0]?.username).toContain('[IRN]')
+    expect(guildBoard[0]?.value).toBeGreaterThan(0)
+  })
+
+  it('enforces the 25-member guild size limit', () => {
+    const backend = new LocalMultiplayerBackend()
+    const leader = backend.signUp('cap@example.com', 'Cap', 'secret')
+    expect(leader.ok).toBe(true)
+    if (!leader.ok) return
+    const created = backend.createGuild(
+      leader.session,
+      { name: 'Full House', tag: 'FUL', emblem: { color: '#5c4027', symbol: '🏰' } },
+      25,
+    )
+    expect(created.ok).toBe(true)
+    if (!created.ok) return
+
+    for (let i = 0; i < 24; i += 1) {
+      const user = backend.signUp(`u${i}@example.com`, `User${i}`, 'secret')
+      expect(user.ok).toBe(true)
+      if (!user.ok) return
+      const joined = backend.applyToGuild(user.session, created.guild.id, '')
+      expect(joined.ok).toBe(true)
+    }
+    expect(backend.listGuilds()[0]?.memberCount).toBe(25)
+
+    const overflow = backend.signUp('overflow@example.com', 'Overflow', 'secret')
+    expect(overflow.ok).toBe(true)
+    if (!overflow.ok) return
+    const blocked = backend.applyToGuild(overflow.session, created.guild.id, '')
+    expect(blocked.ok).toBe(false)
+    if (blocked.ok) return
+    expect(blocked.reason).toMatch(/full/i)
   })
 })

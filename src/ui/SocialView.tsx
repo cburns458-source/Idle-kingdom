@@ -82,22 +82,40 @@ function LeaderboardsView({
           {entries.map((entry) => (
             <li key={`${entry.boardKey}-${entry.userId}`}>
               <span className="muted tiny">#{entry.rank}</span>
-              <span
-                className="social-portrait"
-                style={{ backgroundImage: `url(${playerPortraitAssetPath(entry.appearance)})` }}
-                aria-hidden
-              />
+              {entry.entryKind === 'guild' && entry.emblem ? (
+                <span
+                  className="guild-emblem-badge"
+                  style={{ backgroundColor: entry.emblem.color }}
+                  aria-hidden
+                >
+                  <span className="guild-emblem-symbol">{entry.emblem.symbol}</span>
+                </span>
+              ) : (
+                <span
+                  className="social-portrait"
+                  style={{ backgroundImage: `url(${playerPortraitAssetPath(entry.appearance)})` }}
+                  aria-hidden
+                />
+              )}
               <div className="quest-log-copy">
                 <strong>{entry.username}</strong>
                 <span className="muted tiny">
-                  {entry.guildName ? entry.guildName : 'No guild'} ·{' '}
-                  {entry.value.toLocaleString()}
+                  {entry.entryKind === 'guild'
+                    ? entry.guildName ?? 'Guild'
+                    : entry.guildName
+                      ? entry.guildName
+                      : 'No guild'}{' '}
+                  · {entry.value.toLocaleString()}
                 </span>
               </div>
             </li>
           ))}
           {entries.length === 0 && (
-            <li className="muted tiny">No scores yet — sync a cloud save to submit.</li>
+            <li className="muted tiny">
+              {boardKey === 'guild_total_level'
+                ? 'No guilds yet — create or join one from the Guilds tab.'
+                : 'No scores yet — sync a cloud save to submit.'}
+            </li>
           )}
         </ul>
       </div>
