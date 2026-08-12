@@ -15,15 +15,57 @@ import {
 import type { BountyClaimRecord } from '../game/bounties/types'
 import { isSignedIn } from '../game/multiplayer/auth'
 import type { PlayerSave } from '../game/save/types'
+import { CloseButton } from './CloseButton'
 import { formatDurationSeconds } from './formatDuration'
 
+export type CitadelHubTab = 'bounties' | 'bazaar'
+
+interface CitadelHubLinksProps {
+  onOpen: (tab: CitadelHubTab) => void
+}
+
+/** Plaza list entries that open hub panels the same way shops do. */
+export function CitadelHubLinks({ onOpen }: CitadelHubLinksProps) {
+  return (
+    <section className="panel glass-panel location-activities">
+      <h2>Citadel Plaza</h2>
+      <ul className="interaction-list">
+        <li>
+          <div>
+            <strong>Hourly Bounties</strong>
+          </div>
+          <button type="button" className="btn secondary" onClick={() => onOpen('bounties')}>
+            Open
+          </button>
+        </li>
+        <li>
+          <div>
+            <strong>Grand Bazaar</strong>
+          </div>
+          <button type="button" className="btn secondary" onClick={() => onOpen('bazaar')}>
+            Open
+          </button>
+        </li>
+      </ul>
+    </section>
+  )
+}
+
 interface CitadelHubPanelProps {
+  tab: CitadelHubTab
   save: PlayerSave
   onChangeSave: (save: PlayerSave) => void
+  onClose: () => void
   onMessage?: (message: string) => void
 }
 
-export function CitadelHubPanel({ save, onChangeSave, onMessage }: CitadelHubPanelProps) {
+export function CitadelHubPanel({
+  tab,
+  save,
+  onChangeSave,
+  onClose,
+  onMessage,
+}: CitadelHubPanelProps) {
   const signedIn = isSignedIn()
   const [nowMs, setNowMs] = useState(() => Date.now())
   const [claims, setClaims] = useState<BountyClaimRecord[]>([])
@@ -50,7 +92,7 @@ export function CitadelHubPanel({ save, onChangeSave, onMessage }: CitadelHubPan
   useEffect(() => {
     setClaims(listBountyClaims(board.hourKey))
     setPosts(listBazaarPosts())
-  }, [board.hourKey, nowMs])
+  }, [board.hourKey, nowMs, tab])
 
   function flash(message: string) {
     setNotice(message)
@@ -86,21 +128,29 @@ export function CitadelHubPanel({ save, onChangeSave, onMessage }: CitadelHubPan
     flash('Posted to the Grand Bazaar.')
   }
 
-  return (
-    <>
-      <section className="panel glass-panel location-activities">
-        <h2>Hourly Bounties</h2>
-        <p className="muted tiny">
-          Rotates in {formatDurationSeconds(remainingMs / 1000)}. First completer claims the board
-          slot.
-        </p>
+  if (tab === 'bounties') {
+    return (
+      <section className="panel glass-panel shop-panel citadel-hub-panel">
+        <div className="activity-panel-head">
+          <div>
+            <h2>Hourly Bounties</h2>
+            <p className="muted tiny">
+              Rotates in {formatDurationSeconds(remainingMs / 1000)}. First completer claims the
+              board slot.
+            </p>
+          </div>
+          <CloseButton onClick={onClose} />
+        </div>
         {!signedIn && (
-          <p className="muted tiny">Sign in from Menu → Account to claim first-completer rewards.</p>
+          <p className="muted tiny">
+            Sign in from Menu → Account to claim first-completer rewards.
+          </p>
         )}
         <ul className="interaction-list">
           {board.bounties.map((bounty) => {
             const progress = bountyProgressFor(synced, bounty, nowMs)
-            const claimed = claimForBounty(board.hourKey, bounty.id) ??
+            const claimed =
+              claimForBounty(board.hourKey, bounty.id) ??
               claims.find((row) => row.bountyId === bounty.id) ??
               null
             const ready = isBountyReadyToClaim(synced, bounty, nowMs)
@@ -131,62 +181,70 @@ export function CitadelHubPanel({ save, onChangeSave, onMessage }: CitadelHubPan
         </ul>
         {notice && <p className="muted tiny">{notice}</p>}
       </section>
+    )
+  }
 
-      <section className="panel glass-panel location-activities">
-        <h2>Grand Bazaar</h2>
-        <p className="muted tiny">Plaza board for messages, recruitment, and trade notices.</p>
-        {!signedIn ? (
-          <p className="muted tiny">Sign in to post.</p>
-        ) : (
-          <div className="citadel-bazaar-compose">
-            <label className="field-label">
-              Kind
-              <select
-                className="text-input"
-                value={bazaarKind}
-                onChange={(event) => setBazaarKind(event.target.value as BazaarPostKind)}
-              >
-                <option value="message">Message</option>
-                <option value="recruit">Recruit</option>
-                <option value="trade">Trade</option>
-              </select>
-            </label>
-            <label className="field-label">
-              Post
-              <input
-                className="text-input"
-                value={bazaarBody}
-                maxLength={240}
-                placeholder="Write a short notice…"
-                onChange={(event) => setBazaarBody(event.target.value)}
-              />
-            </label>
-            <button type="button" className="btn secondary" onClick={handleBazaarPost}>
-              Post
-            </button>
-          </div>
+  return (
+    <section className="panel glass-panel shop-panel citadel-hub-panel">
+      <div className="activity-panel-head">
+        <div>
+          <h2>Grand Bazaar</h2>
+          <p className="muted tiny">Plaza board for messages, recruitment, and trade notices.</p>
+        </div>
+        <CloseButton onClick={onClose} />
+      </div>
+      {!signedIn ? (
+        <p className="muted tiny">Sign in to post.</p>
+      ) : (
+        <div className="citadel-bazaar-compose">
+          <label className="field-label">
+            Kind
+            <select
+              className="text-input"
+              value={bazaarKind}
+              onChange={(event) => setBazaarKind(event.target.value as BazaarPostKind)}
+            >
+              <option value="message">Message</option>
+              <option value="recruit">Recruit</option>
+              <option value="trade">Trade</option>
+            </select>
+          </label>
+          <label className="field-label">
+            Post
+            <input
+              className="text-input"
+              value={bazaarBody}
+              maxLength={240}
+              placeholder="Write a short notice…"
+              onChange={(event) => setBazaarBody(event.target.value)}
+            />
+          </label>
+          <button type="button" className="btn secondary" onClick={handleBazaarPost}>
+            Post
+          </button>
+        </div>
+      )}
+      <ul className="interaction-list citadel-bazaar-list">
+        {posts.length === 0 && (
+          <li>
+            <div>
+              <strong>Quiet for now</strong>
+              <p className="muted tiny">Be the first to post.</p>
+            </div>
+          </li>
         )}
-        <ul className="interaction-list citadel-bazaar-list">
-          {posts.length === 0 && (
-            <li>
-              <div>
-                <strong>Quiet for now</strong>
-                <p className="muted tiny">Be the first to post.</p>
-              </div>
-            </li>
-          )}
-          {[...posts].reverse().map((post) => (
-            <li key={post.id}>
-              <div>
-                <strong>
-                  {post.username} · {post.kind}
-                </strong>
-                <p className="muted tiny">{post.body}</p>
-              </div>
-            </li>
-          ))}
-        </ul>
-      </section>
-    </>
+        {[...posts].reverse().map((post) => (
+          <li key={post.id}>
+            <div>
+              <strong>
+                {post.username} · {post.kind}
+              </strong>
+              <p className="muted tiny">{post.body}</p>
+            </div>
+          </li>
+        ))}
+      </ul>
+      {notice && <p className="muted tiny">{notice}</p>}
+    </section>
   )
 }

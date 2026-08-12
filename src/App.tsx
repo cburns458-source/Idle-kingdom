@@ -79,7 +79,7 @@ import { CombatPanel } from './ui/CombatPanel'
 import { ChatDrawer } from './ui/ChatDrawer'
 import { AccountPanel } from './ui/AccountPanel'
 import { InventoryView } from './ui/InventoryView'
-import { CitadelHubPanel } from './ui/CitadelHubPanel'
+import { CitadelHubPanel, type CitadelHubTab } from './ui/CitadelHubPanel'
 import { LocationView } from './ui/LocationView'
 import { CITADEL_LOCATION_ID } from './game/multiplayer/types'
 import { LogView } from './ui/LogView'
@@ -147,6 +147,7 @@ export default function App() {
   const [specialStation, setSpecialStation] = useState<SpecialProductionStation | null>(null)
   const [activeShopId, setActiveShopId] = useState<string | null>(null)
   const [activeNpcId, setActiveNpcId] = useState<string | null>(null)
+  const [activeCitadelHub, setActiveCitadelHub] = useState<CitadelHubTab | null>(null)
   const [afkSummary, setAfkSummary] = useState<AfkSummaryData | null>(null)
   const [projectCompletePopup, setProjectCompletePopup] = useState<{
     projectName: string
@@ -851,7 +852,9 @@ export default function App() {
   // (combat, production progress, gathering, recovery) would otherwise show
   // underneath — browsing never stops the running Primary Activity, it just
   // temporarily covers its panel. See docs/Game_Bible.txt section 9.1.
-  const browsePanelOpen = Boolean(activeShopId || activeNpcId || specialStation || pickerActivity)
+  const browsePanelOpen = Boolean(
+    activeShopId || activeNpcId || activeCitadelHub || specialStation || pickerActivity,
+  )
 
   const fromLocation = database.launchIndexes.locationsById.get(
     travel?.fromLocationId ?? save.currentLocationId,
@@ -881,6 +884,7 @@ export default function App() {
     setSpecialStation(null)
     setActiveShopId(null)
     setActiveNpcId(null)
+    setActiveCitadelHub(null)
     setActionProgress(0)
 
     const now = Date.now()
@@ -1172,20 +1176,34 @@ export default function App() {
               onOpenSpecialProduction={(station) => {
                 setActiveShopId(null)
                 setActiveNpcId(null)
+                setActiveCitadelHub(null)
                 openSpecialProduction(station)
               }}
               onOpenShop={(shopId) => {
                 setSpecialStation(null)
                 setProductionPickerActivityId(null)
                 setActiveNpcId(null)
+                setActiveCitadelHub(null)
                 setActiveShopId(shopId)
               }}
               onOpenNpc={(npcId) => {
                 setSpecialStation(null)
                 setProductionPickerActivityId(null)
                 setActiveShopId(null)
+                setActiveCitadelHub(null)
                 setActiveNpcId(npcId)
               }}
+              onOpenCitadelHub={
+                save.currentLocationId === CITADEL_LOCATION_ID
+                  ? (tab) => {
+                      setSpecialStation(null)
+                      setProductionPickerActivityId(null)
+                      setActiveShopId(null)
+                      setActiveNpcId(null)
+                      setActiveCitadelHub(tab)
+                    }
+                  : undefined
+              }
               onOpenMap={() => {
                 setBrowseMapId(MAIN_MAP_ID)
                 setSelectedLocationId(save.currentLocationId)
@@ -1220,15 +1238,6 @@ export default function App() {
                       'Display Name'
                     ] ?? skillId)
                   : 'Skill'
-              }
-              hubPanel={
-                save.currentLocationId === CITADEL_LOCATION_ID ? (
-                  <CitadelHubPanel
-                    save={save}
-                    onChangeSave={updateSave}
-                    onMessage={setLastMessage}
-                  />
-                ) : null
               }
               statusPanel={
                 <>
@@ -1274,7 +1283,16 @@ export default function App() {
                         />
                       )
                     })()}
-                  {specialStation && !activeShopId && !activeNpcId && (
+                  {activeCitadelHub && (
+                    <CitadelHubPanel
+                      tab={activeCitadelHub}
+                      save={save}
+                      onChangeSave={updateSave}
+                      onClose={() => setActiveCitadelHub(null)}
+                      onMessage={setLastMessage}
+                    />
+                  )}
+                  {specialStation && !activeShopId && !activeNpcId && !activeCitadelHub && (
                     <ProjectPicker
                       db={database.launch}
                       save={save}
@@ -1283,7 +1301,11 @@ export default function App() {
                       onConfirm={confirmSpecialProject}
                     />
                   )}
-                  {pickerActivity && !specialStation && !activeShopId && !activeNpcId && (
+                  {pickerActivity &&
+                    !specialStation &&
+                    !activeShopId &&
+                    !activeNpcId &&
+                    !activeCitadelHub && (
                     <ProductionPicker
                       db={database.launch}
                       save={save}

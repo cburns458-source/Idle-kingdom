@@ -21,6 +21,7 @@ import {
 import { isSignedIn } from '../game/multiplayer/auth'
 import type { PlayerSave } from '../game/save/types'
 import { ActivePlayersPanel } from './ActivePlayersPanel'
+import { CitadelHubLinks, type CitadelHubTab } from './CitadelHubPanel'
 import { CritterOverlay } from './CritterOverlay'
 import { formatDurationSeconds } from './formatDuration'
 
@@ -77,8 +78,8 @@ interface LocationViewProps {
   isRecipeBrowserActivity?: (activity: ActivityRow) => boolean
   /** Skill label helper for the Nearby Adventurers panel. */
   skillNameForId?: (skillId: string | null) => string
-  /** Extra plaza/hub panels (bounties, bazaar) rendered in the activity band. */
-  hubPanel?: ReactNode
+  /** When set, show Citadel Plaza Open links (bounties / bazaar). */
+  onOpenCitadelHub?: (tab: CitadelHubTab) => void
 }
 
 function MapIcon() {
@@ -140,7 +141,7 @@ export function LocationView({
   requirementHint,
   isRecipeBrowserActivity,
   skillNameForId,
-  hubPanel,
+  onOpenCitadelHub,
 }: LocationViewProps) {
   const locationId = location['Location ID']
   const activities = indexes.activitiesByLocationId.get(locationId) ?? []
@@ -381,7 +382,14 @@ export function LocationView({
               </section>
             )}
 
-            {hubPanel}
+            {onOpenCitadelHub && (
+              <CitadelHubLinks
+                onOpen={(tab) => {
+                  onOpenCitadelHub(tab)
+                  scrollLocationToTop()
+                }}
+              />
+            )}
 
             {searchSpots.length > 0 && (
               <section className="panel glass-panel location-activities">
