@@ -21,6 +21,7 @@ import {
   GUILD_CREATE_GOLD_COST,
   GUILD_EMBLEM_COLORS,
   GUILD_EMBLEM_SYMBOLS,
+  PROMOTABLE_GUILD_RANKS,
   type GuildApplication,
   type GuildEmblem,
   type GuildJoinPolicy,
@@ -39,7 +40,7 @@ interface GuildViewProps {
 
 type JoinSort = 'oldest' | 'newest'
 
-const PROMOTABLE_ROLES: GuildRankKey[] = ['officer', 'veteran', 'member', 'recruit']
+const EDITABLE_RANK_KEYS = Object.keys(DEFAULT_GUILD_RANK_LABELS) as GuildRankKey[]
 
 function GuildEmblemBadge({ emblem, tag }: { emblem: GuildEmblem; tag?: string }) {
   return (
@@ -135,6 +136,7 @@ export function GuildView({ save, onChangeSave }: GuildViewProps) {
           <label className="field-label guild-search-label">
             Search guilds
             <input
+              className="text-input"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               placeholder="Name or tag…"
@@ -214,6 +216,7 @@ export function GuildView({ save, onChangeSave }: GuildViewProps) {
               <label className="field-label">
                 Join policy
                 <select
+                  className="text-input"
                   value={guild.joinPolicy}
                   onChange={(event) => {
                     const joinPolicy = event.target.value as GuildJoinPolicy
@@ -241,6 +244,7 @@ export function GuildView({ save, onChangeSave }: GuildViewProps) {
             <label className="field-label guild-sort-label">
               Sort
               <select
+                className="text-input"
                 value={sort}
                 onChange={(event) => setSort(event.target.value as JoinSort)}
                 aria-label="Sort members by join date"
@@ -280,6 +284,7 @@ export function GuildView({ save, onChangeSave }: GuildViewProps) {
                   <label className="guild-rank-select">
                     <span className="visually-hidden">Rank</span>
                     <select
+                      className="text-input"
                       value={member.role}
                       onChange={(event) => {
                         const role = event.target.value as GuildRole
@@ -288,7 +293,7 @@ export function GuildView({ save, onChangeSave }: GuildViewProps) {
                         )
                       }}
                     >
-                      {PROMOTABLE_ROLES.map((role) => (
+                      {PROMOTABLE_GUILD_RANKS.map((role) => (
                         <option key={role} value={role}>
                           {guild.rankLabels[role]}
                         </option>
@@ -449,6 +454,7 @@ function CreateGuildModal({
         <label className="field-label">
           Tag (2–4 letters)
           <input
+            className="text-input"
             value={tag}
             maxLength={4}
             onChange={(event) =>
@@ -463,6 +469,7 @@ function CreateGuildModal({
         <label className="field-label">
           Name
           <input
+            className="text-input"
             value={name}
             maxLength={28}
             onChange={(event) => setName(event.target.value)}
@@ -561,12 +568,13 @@ function RankLabelsModal({
           <h2>Rank names</h2>
           <CloseButton onClick={onClose} />
         </div>
-        <p className="muted tiny">Leader stays “Leader”. Rename the four promotable ranks.</p>
-        {PROMOTABLE_ROLES.map((role) => (
+        <p className="muted tiny">Rename Leader and the four promotable ranks.</p>
+        {EDITABLE_RANK_KEYS.map((role) => (
           <label key={role} className="field-label">
             {DEFAULT_GUILD_RANK_LABELS[role]} slot
             <input
-              value={labels[role]}
+              className="text-input"
+              value={labels[role] ?? DEFAULT_GUILD_RANK_LABELS[role]}
               maxLength={18}
               onChange={(event) =>
                 setLabels((current) => ({ ...current, [role]: event.target.value }))

@@ -126,9 +126,11 @@ describe('local multiplayer backend', () => {
 
     const renamed = backend.setGuildRankLabels(leader.session.userId, created.guild.id, {
       officer: 'Captain',
+      leader: 'Guildmaster',
     })
     expect(renamed.ok).toBe(true)
     expect(backend.getGuild(created.guild.id)?.rankLabels.officer).toBe('Captain')
+    expect(backend.getGuild(created.guild.id)?.rankLabels.leader).toBe('Guildmaster')
 
     backend.setGuildJoinPolicy(leader.session.userId, created.guild.id, 'open')
     const third = backend.signUp('third@example.com', 'Third', 'secret')

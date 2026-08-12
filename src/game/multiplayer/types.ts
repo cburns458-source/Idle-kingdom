@@ -56,7 +56,8 @@ export type GuildRole = 'leader' | 'officer' | 'veteran' | 'member' | 'recruit'
 
 export type GuildJoinPolicy = 'open' | 'closed'
 
-export type GuildRankKey = Exclude<GuildRole, 'leader'>
+/** All guild roles, including leader — used for customizable display names. */
+export type GuildRankKey = GuildRole
 
 export interface GuildEmblem {
   /** Banner fill color (CSS hex). */
@@ -66,11 +67,19 @@ export interface GuildEmblem {
 }
 
 export const DEFAULT_GUILD_RANK_LABELS: Record<GuildRankKey, string> = {
+  leader: 'Leader',
   officer: 'Officer',
   veteran: 'Veteran',
   member: 'Member',
   recruit: 'Recruit',
 }
+
+export const PROMOTABLE_GUILD_RANKS: Exclude<GuildRole, 'leader'>[] = [
+  'officer',
+  'veteran',
+  'member',
+  'recruit',
+]
 
 export const GUILD_CREATE_GOLD_COST = 25
 

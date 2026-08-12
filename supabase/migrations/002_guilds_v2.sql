@@ -3,7 +3,7 @@
 alter table public.guilds
   add column if not exists tag text,
   add column if not exists join_policy text not null default 'open',
-  add column if not exists rank_labels jsonb not null default '{"officer":"Officer","veteran":"Veteran","member":"Member","recruit":"Recruit"}'::jsonb;
+  add column if not exists rank_labels jsonb not null default '{"leader":"Leader","officer":"Officer","veteran":"Veteran","member":"Member","recruit":"Recruit"}'::jsonb;
 
 update public.guilds
 set tag = upper(substr(regexp_replace(name, '[^a-zA-Z]', '', 'g'), 1, 4))

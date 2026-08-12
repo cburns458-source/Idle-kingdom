@@ -67,6 +67,7 @@ function LeaderboardsView({
         <label className="field-label">
           Board
           <select
+            className="text-input"
             value={boardKey}
             onChange={(event) => setBoardKey(event.target.value as MultiplayerBoardKey)}
           >

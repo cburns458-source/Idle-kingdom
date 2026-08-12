@@ -118,6 +118,5 @@ export function currentGuildId(): string | null {
 }
 
 export function guildRoleLabel(guild: GuildRecord, role: GuildRole): string {
-  if (role === 'leader') return 'Leader'
   return guild.rankLabels[role] ?? role
 }
