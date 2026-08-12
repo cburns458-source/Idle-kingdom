@@ -29,12 +29,12 @@ import { applyTravelArrival, canTravelTo, findConnection } from '../world/travel
 import { createMemoryStorage } from '../../test/memoryStorage'
 
 const rawDatabase = JSON.parse(
-  readFileSync(resolve(process.cwd(), 'public/data/game-database.json'), 'utf8'),
+  readFileSync(resolve(process.cwd(), 'content/data/game-database.json'), 'utf8'),
 )
 
-function publicPath(urlPath: string): string {
+function contentPath(urlPath: string): string {
   const clean = urlPath.split('?')[0]!.replace(/^\//, '')
-  return resolve(process.cwd(), 'public', clean)
+  return resolve(process.cwd(), 'content', clean)
 }
 
 describe('Step 11 release audit', () => {
@@ -66,7 +66,7 @@ describe('Step 11 release audit', () => {
 
     for (const map of launch.Maps) {
       const path = MAP_ASSET_PATHS[map['Map ID']]
-      if (!path || !existsSync(publicPath(path))) missing.push(`map ${map['Map ID']}`)
+      if (!path || !existsSync(contentPath(path))) missing.push(`map ${map['Map ID']}`)
     }
 
     for (const location of launch.Locations) {
@@ -74,29 +74,29 @@ describe('Step 11 release audit', () => {
       // Horizon browse nodes intentionally reuse town art.
       if (id === 'LOC-0019' || id === 'LOC-0020') continue
       const path = LOCATION_ASSET_PATHS[id]
-      if (!path || !existsSync(publicPath(path))) missing.push(`location ${id}`)
+      if (!path || !existsSync(contentPath(path))) missing.push(`location ${id}`)
     }
 
     for (const enemy of launch.Enemies) {
       const path = ENEMY_ASSET_PATHS[enemy['Enemy ID']]
-      if (!path || !existsSync(publicPath(path))) missing.push(`enemy ${enemy['Enemy ID']}`)
+      if (!path || !existsSync(contentPath(path))) missing.push(`enemy ${enemy['Enemy ID']}`)
     }
 
     for (const skill of launch.Skills) {
       const path = skillAssetPath(skill['Internal Key'])
-      if (!existsSync(publicPath(path))) missing.push(`skill ${skill['Skill ID']}`)
+      if (!existsSync(contentPath(path))) missing.push(`skill ${skill['Skill ID']}`)
     }
 
     for (const slot of source.EquipmentSlots) {
       const path = slotAssetPath(slot['Slot ID'])
-      if (!existsSync(publicPath(path))) missing.push(`slot ${slot['Slot ID']}`)
+      if (!existsSync(contentPath(path))) missing.push(`slot ${slot['Slot ID']}`)
     }
 
     expect(missing).toEqual([])
   })
 
   it('resolves Launch item icons to existing files', () => {
-    const missing = launch.Items.filter((item) => !existsSync(publicPath(itemAssetPath(item)))).map(
+    const missing = launch.Items.filter((item) => !existsSync(contentPath(itemAssetPath(item)))).map(
       (item) => item['Item ID'],
     )
     expect(missing).toEqual([])

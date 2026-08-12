@@ -14,5 +14,5 @@ npm run build
 ## Notes
 
 - Launches directly into the single-player experience (no login).
-- Loads `public/data/game-database.json`.
+- Loads `content/data/game-database.json`.
 - Creates and reloads one local save automatically.

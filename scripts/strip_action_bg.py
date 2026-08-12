@@ -57,7 +57,7 @@ def strip_background(path: Path) -> None:
 def main() -> None:
     paths = [Path(p) for p in sys.argv[1:]]
     if not paths:
-        paths = sorted(Path('public/assets/actions').glob('*.png'))
+        paths = sorted(Path('content/assets/actions').glob('*.png'))
     for path in paths:
         if path.exists():
             strip_background(path)

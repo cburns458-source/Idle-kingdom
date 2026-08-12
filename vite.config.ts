@@ -4,6 +4,9 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
+  // Canonical game content is shared with the Flutter client; serving it as the
+  // public dir keeps the existing /data and /assets URLs unchanged.
+  publicDir: 'content',
   server: {
     host: '0.0.0.0',
     port: 5173,

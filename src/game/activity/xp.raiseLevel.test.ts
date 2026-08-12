@@ -6,7 +6,7 @@ import { createNewSave } from '../save/saveStore'
 import { getSkillProgress, raiseSkillToMinimumLevel } from './xp'
 
 const rawDatabase = JSON.parse(
-  readFileSync(resolve(process.cwd(), 'public/data/game-database.json'), 'utf8'),
+  readFileSync(resolve(process.cwd(), 'content/data/game-database.json'), 'utf8'),
 )
 
 describe('raiseSkillToMinimumLevel', () => {

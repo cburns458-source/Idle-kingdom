@@ -13,7 +13,7 @@ import { acceptQuest, getQuest } from './quests'
 import { unlockRecipeId } from '../recipes/knowledge'
 
 const rawDatabase = JSON.parse(
-  readFileSync(resolve(process.cwd(), 'public/data/game-database.json'), 'utf8'),
+  readFileSync(resolve(process.cwd(), 'content/data/game-database.json'), 'utf8'),
 )
 
 describe('quest objective engine v2', () => {

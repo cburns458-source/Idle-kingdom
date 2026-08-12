@@ -9,7 +9,7 @@ import { createNewSave } from '../save/saveStore'
 import { resolveUnattendedProgress, unattendedCapMs } from './resolve'
 
 const rawDatabase = JSON.parse(
-  readFileSync(resolve(process.cwd(), 'public/data/game-database.json'), 'utf8'),
+  readFileSync(resolve(process.cwd(), 'content/data/game-database.json'), 'utf8'),
 )
 
 describe('unattended progression', () => {

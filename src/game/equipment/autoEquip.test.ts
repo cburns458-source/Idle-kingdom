@@ -12,7 +12,7 @@ import {
 import { unequipSlot } from './loadout'
 
 const rawDatabase = JSON.parse(
-  readFileSync(resolve(process.cwd(), 'public/data/game-database.json'), 'utf8'),
+  readFileSync(resolve(process.cwd(), 'content/data/game-database.json'), 'utf8'),
 )
 
 /** Test helper: unequip a slot, asserting the bag has room (it always does here). */

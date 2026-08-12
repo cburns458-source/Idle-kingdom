@@ -5,7 +5,7 @@ import { prepareDatabase } from '../data/loadDatabase'
 import { skillXpProgress } from '../activity/xpProgress'
 
 const rawDatabase = JSON.parse(
-  readFileSync(resolve(process.cwd(), 'public/data/game-database.json'), 'utf8'),
+  readFileSync(resolve(process.cwd(), 'content/data/game-database.json'), 'utf8'),
 )
 
 describe('skillXpProgress', () => {

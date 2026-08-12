@@ -8,7 +8,7 @@ import { acceptQuest, completeQuest } from './quests'
 import { locationsForMapView } from '../world/travel'
 
 const rawDatabase = JSON.parse(
-  readFileSync(resolve(process.cwd(), 'public/data/game-database.json'), 'utf8'),
+  readFileSync(resolve(process.cwd(), 'content/data/game-database.json'), 'utf8'),
 )
 
 describe('quest multi-deliver and unlocks', () => {

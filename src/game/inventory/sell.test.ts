@@ -7,7 +7,7 @@ import { createNewSave } from '../save/saveStore'
 import { fieldSellPrice, sellInventoryIndexes, sellPriceAtLocation } from './sell'
 
 const rawDatabase = JSON.parse(
-  readFileSync(resolve(process.cwd(), 'public/data/game-database.json'), 'utf8'),
+  readFileSync(resolve(process.cwd(), 'content/data/game-database.json'), 'utf8'),
 )
 
 describe('inventory selling', () => {

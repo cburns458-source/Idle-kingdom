@@ -1,4 +1,4 @@
-/** Bump when replacing files under /public/assets so browsers fetch new art. */
+/** Bump when replacing files under content/assets so browsers fetch new art. */
 export const ASSET_CACHE_VERSION = 's16-gender-presentation-sprites'
 
 export function withAssetVersion(path: string): string {

@@ -6,7 +6,7 @@ import { createNewSave } from '../save/saveStore'
 import { resolveActionRewards } from './rewards'
 
 const rawDatabase = JSON.parse(
-  readFileSync(resolve(process.cwd(), 'public/data/game-database.json'), 'utf8'),
+  readFileSync(resolve(process.cwd(), 'content/data/game-database.json'), 'utf8'),
 )
 
 const GEM_IDS = new Set(['ITEM-0012', 'ITEM-0013', 'ITEM-0014'])

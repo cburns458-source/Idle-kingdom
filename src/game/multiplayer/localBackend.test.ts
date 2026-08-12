@@ -7,7 +7,7 @@ import { LocalMultiplayerBackend, filterProfanity } from './localBackend'
 import { MULTIPLAYER_LOCAL_DB_KEY } from './types'
 
 const rawDatabase = JSON.parse(
-  readFileSync(resolve(process.cwd(), 'public/data/game-database.json'), 'utf8'),
+  readFileSync(resolve(process.cwd(), 'content/data/game-database.json'), 'utf8'),
 )
 
 describe('local multiplayer backend', () => {
