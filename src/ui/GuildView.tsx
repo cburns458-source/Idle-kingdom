@@ -12,6 +12,7 @@ import {
   listGuildApplications,
   listGuildMembers,
   listGuilds,
+  setGuildEmblem,
   setGuildJoinPolicy,
   setGuildMemberRole,
   setGuildRankLabels,
@@ -33,6 +34,7 @@ import {
 } from '../game/multiplayer/types'
 import type { PlayerSave } from '../game/save/types'
 import { CloseButton } from './CloseButton'
+import { GuildEmblemBadge, GuildEmblemIcon } from './guildEmblemIcons'
 
 interface GuildViewProps {
   save: PlayerSave
@@ -43,16 +45,63 @@ type JoinSort = 'oldest' | 'newest'
 
 const EDITABLE_RANK_KEYS = Object.keys(DEFAULT_GUILD_RANK_LABELS) as GuildRankKey[]
 
-function GuildEmblemBadge({ emblem, tag }: { emblem: GuildEmblem; tag?: string }) {
+function GearIcon() {
   return (
-    <span
-      className="guild-emblem-badge"
-      style={{ backgroundColor: emblem.color }}
-      title={tag ? `[${tag}]` : undefined}
-      aria-hidden
-    >
-      <span className="guild-emblem-symbol">{emblem.symbol}</span>
-    </span>
+    <svg className="guild-gear-svg" viewBox="0 0 24 24" aria-hidden>
+      <path
+        fill="currentColor"
+        d="M19.1 12.9c0-.3 0-.6-.1-.9l2-1.5-1.9-3.3-2.3.8c-.5-.4-1-.7-1.6-.9L14.8 4h-3.8l-.4 2.4c-.6.2-1.1.5-1.6.9l-2.3-.8L4.8 9.8l2 1.5c0 .3-.1.6-.1.9s0 .6.1.9l-2 1.5 1.9 3.3 2.3-.8c.5.4 1 .7 1.6.9l.4 2.4h3.8l.4-2.4c.6-.2 1.1-.5 1.6-.9l2.3.8 1.9-3.3-2-1.5c.1-.3.1-.6.1-.9zM12.9 15.2c-1.8 0-3.2-1.4-3.2-3.2s1.4-3.2 3.2-3.2 3.2 1.4 3.2 3.2-1.4 3.2-3.2 3.2z"
+      />
+    </svg>
+  )
+}
+
+function EmblemEditor({
+  emblem,
+  onChange,
+  tag,
+}: {
+  emblem: GuildEmblem
+  onChange: (emblem: GuildEmblem) => void
+  tag?: string
+}) {
+  return (
+    <div className="guild-emblem-editor">
+      <p className="field-label">Banner</p>
+      <div className="guild-emblem-preview-row">
+        <GuildEmblemBadge emblem={emblem} tag={tag} />
+        <span className="muted tiny">Color + solid icon</span>
+      </div>
+      <div className="guild-emblem-swatches" role="listbox" aria-label="Banner color">
+        {GUILD_EMBLEM_COLORS.map((color) => (
+          <button
+            key={color}
+            type="button"
+            className={emblem.color === color ? 'guild-emblem-swatch active' : 'guild-emblem-swatch'}
+            style={{ backgroundColor: color }}
+            aria-label={`Color ${color}`}
+            onClick={() => onChange({ ...emblem, color })}
+          />
+        ))}
+      </div>
+      <div className="guild-emblem-symbols" role="listbox" aria-label="Banner icon">
+        {GUILD_EMBLEM_SYMBOLS.map((symbol) => (
+          <button
+            key={symbol}
+            type="button"
+            className={
+              emblem.symbol === symbol
+                ? 'guild-emblem-symbol-btn active'
+                : 'guild-emblem-symbol-btn'
+            }
+            aria-label={symbol}
+            onClick={() => onChange({ ...emblem, symbol })}
+          >
+            <GuildEmblemIcon symbol={symbol} />
+          </button>
+        ))}
+      </div>
+    </div>
   )
 }
 
@@ -66,8 +115,8 @@ export function GuildView({ save, onChangeSave }: GuildViewProps) {
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState<JoinSort>('oldest')
   const [createOpen, setCreateOpen] = useState(false)
+  const [settingsOpen, setSettingsOpen] = useState(false)
   const [leaveConfirm, setLeaveConfirm] = useState(false)
-  const [rankEditOpen, setRankEditOpen] = useState(false)
   const [notice, setNotice] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
 
@@ -163,20 +212,21 @@ export function GuildView({ save, onChangeSave }: GuildViewProps) {
                   disabled={busy || row.memberCount >= GUILD_MAX_MEMBERS}
                   onClick={() => {
                     setBusy(true)
-                    void applyToGuild(row.id, `${save.characterName ?? 'Adventurer'} requests to join`).then(
-                      (result) => {
-                        setBusy(false)
-                        if (!result.ok) {
-                          setNotice(result.reason)
-                          return
-                        }
-                        setNotice(
-                          result.joined
-                            ? `Joined [${row.tag}] ${row.name}.`
-                            : `Application sent to [${row.tag}] ${row.name}.`,
-                        )
-                      },
-                    )
+                    void applyToGuild(
+                      row.id,
+                      `${save.characterName ?? 'Adventurer'} requests to join`,
+                    ).then((result) => {
+                      setBusy(false)
+                      if (!result.ok) {
+                        setNotice(result.reason)
+                        return
+                      }
+                      setNotice(
+                        result.joined
+                          ? `Joined [${row.tag}] ${row.name}.`
+                          : `Application sent to [${row.tag}] ${row.name}.`,
+                      )
+                    })
                   }}
                 >
                   {row.memberCount >= GUILD_MAX_MEMBERS
@@ -214,35 +264,18 @@ export function GuildView({ save, onChangeSave }: GuildViewProps) {
                 {members.length}/{GUILD_MAX_MEMBERS} members
               </span>
             </div>
-          </header>
-
-          {isLeader && (
-            <div className="guild-leader-tools">
-              <label className="field-label">
-                Join policy
-                <select
-                  className="text-input"
-                  value={guild.joinPolicy}
-                  onChange={(event) => {
-                    const joinPolicy = event.target.value as GuildJoinPolicy
-                    void setGuildJoinPolicy(guild.id, joinPolicy).then((result) =>
-                      setNotice(result.ok ? `Join policy set to ${joinPolicy === 'open' ? 'Accept applications' : 'Closed'}.` : result.reason),
-                    )
-                  }}
-                >
-                  <option value="open">Accept applications</option>
-                  <option value="closed">Closed</option>
-                </select>
-              </label>
+            {isLeader && (
               <button
                 type="button"
-                className="btn secondary"
-                onClick={() => setRankEditOpen(true)}
+                className="guild-settings-btn"
+                aria-label="Guild settings"
+                title="Guild settings"
+                onClick={() => setSettingsOpen(true)}
               >
-                Edit rank names
+                <GearIcon />
               </button>
-            </div>
-          )}
+            )}
+          </header>
 
           <div className="guild-roster-toolbar">
             <h2 className="menu-section-heading">Members</h2>
@@ -280,9 +313,7 @@ export function GuildView({ save, onChangeSave }: GuildViewProps) {
                 />
                 <div className="guild-member-copy">
                   <strong>{member.username}</strong>
-                  <span className="muted tiny">
-                    {guildRoleLabel(guild, member.role)}
-                  </span>
+                  <span className="muted tiny">{guildRoleLabel(guild, member.role)}</span>
                 </div>
                 <span className="guild-member-level">{member.totalLevel}</span>
                 {isLeader && member.role !== 'leader' && (
@@ -406,15 +437,13 @@ export function GuildView({ save, onChangeSave }: GuildViewProps) {
         />
       )}
 
-      {rankEditOpen && guild && (
-        <RankLabelsModal
+      {settingsOpen && guild && (
+        <GuildSettingsModal
           guild={guild}
-          onClose={() => setRankEditOpen(false)}
-          onSaved={() => {
-            setRankEditOpen(false)
-            setNotice('Rank names updated.')
+          onClose={() => setSettingsOpen(false)}
+          onChanged={(message) => {
+            setNotice(message)
           }}
-          onError={setNotice}
         />
       )}
     </section>
@@ -454,7 +483,9 @@ function CreateGuildModal({
           <h2>Create guild</h2>
           <CloseButton onClick={onClose} />
         </div>
-        <p className="muted tiny">Costs {GUILD_CREATE_GOLD_COST} gold · you have {gold.toLocaleString()}</p>
+        <p className="muted tiny">
+          Costs {GUILD_CREATE_GOLD_COST} gold · you have {gold.toLocaleString()}
+        </p>
 
         <label className="field-label">
           Tag (2–4 letters)
@@ -483,45 +514,7 @@ function CreateGuildModal({
           />
         </label>
 
-        <div className="guild-emblem-editor">
-          <p className="field-label">Emblem</p>
-          <div className="guild-emblem-preview-row">
-            <GuildEmblemBadge emblem={emblem} tag={tag} />
-            <span className="muted tiny">Banner color + symbol</span>
-          </div>
-          <div className="guild-emblem-swatches" role="listbox" aria-label="Banner color">
-            {GUILD_EMBLEM_COLORS.map((color) => (
-              <button
-                key={color}
-                type="button"
-                className={
-                  emblem.color === color
-                    ? 'guild-emblem-swatch active'
-                    : 'guild-emblem-swatch'
-                }
-                style={{ backgroundColor: color }}
-                aria-label={`Color ${color}`}
-                onClick={() => setEmblem((current) => ({ ...current, color }))}
-              />
-            ))}
-          </div>
-          <div className="guild-emblem-symbols" role="listbox" aria-label="Banner symbol">
-            {GUILD_EMBLEM_SYMBOLS.map((symbol) => (
-              <button
-                key={symbol}
-                type="button"
-                className={
-                  emblem.symbol === symbol
-                    ? 'guild-emblem-symbol-btn active'
-                    : 'guild-emblem-symbol-btn'
-                }
-                onClick={() => setEmblem((current) => ({ ...current, symbol }))}
-              >
-                {symbol}
-              </button>
-            ))}
-          </div>
-        </div>
+        <EmblemEditor emblem={emblem} onChange={setEmblem} tag={tag} />
 
         <button
           type="button"
@@ -546,19 +539,20 @@ function CreateGuildModal({
   )
 }
 
-function RankLabelsModal({
+function GuildSettingsModal({
   guild,
   onClose,
-  onSaved,
-  onError,
+  onChanged,
 }: {
   guild: GuildRecord
   onClose: () => void
-  onSaved: () => void
-  onError: (reason: string) => void
+  onChanged: (message: string) => void
 }) {
+  const [joinPolicy, setJoinPolicy] = useState<GuildJoinPolicy>(guild.joinPolicy)
   const [labels, setLabels] = useState(guild.rankLabels)
+  const [emblem, setEmblem] = useState<GuildEmblem>(guild.emblem)
   const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   return (
     <div className="guild-modal-overlay" role="presentation" onClick={onClose}>
@@ -566,13 +560,29 @@ function RankLabelsModal({
         className="panel guild-modal"
         role="dialog"
         aria-modal="true"
-        aria-label="Edit rank names"
+        aria-label="Guild settings"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="skill-actions-head">
-          <h2>Rank names</h2>
+          <h2>Guild settings</h2>
           <CloseButton onClick={onClose} />
         </div>
+
+        <label className="field-label">
+          Join policy
+          <select
+            className="text-input"
+            value={joinPolicy}
+            onChange={(event) => setJoinPolicy(event.target.value as GuildJoinPolicy)}
+          >
+            <option value="open">Accept applications</option>
+            <option value="closed">Closed</option>
+          </select>
+        </label>
+
+        <EmblemEditor emblem={emblem} onChange={setEmblem} tag={guild.tag} />
+
+        <h3 className="menu-section-heading">Rank names</h3>
         <p className="muted tiny">Rename Leader and the four promotable ranks.</p>
         {EDITABLE_RANK_KEYS.map((role) => (
           <label key={role} className="field-label">
@@ -587,23 +597,41 @@ function RankLabelsModal({
             />
           </label>
         ))}
+
+        {error && <p className="danger-note">{error}</p>}
+
         <button
           type="button"
           className="btn primary"
           disabled={busy}
           onClick={() => {
             setBusy(true)
-            void setGuildRankLabels(guild.id, labels).then((result) => {
-              setBusy(false)
-              if (!result.ok) {
-                onError(result.reason)
+            setError(null)
+            void (async () => {
+              const policyResult = await setGuildJoinPolicy(guild.id, joinPolicy)
+              if (!policyResult.ok) {
+                setBusy(false)
+                setError(policyResult.reason)
                 return
               }
-              onSaved()
-            })
+              const emblemResult = await setGuildEmblem(guild.id, emblem)
+              if (!emblemResult.ok) {
+                setBusy(false)
+                setError(emblemResult.reason)
+                return
+              }
+              const ranksResult = await setGuildRankLabels(guild.id, labels)
+              setBusy(false)
+              if (!ranksResult.ok) {
+                setError(ranksResult.reason)
+                return
+              }
+              onChanged('Guild settings saved.')
+              onClose()
+            })()
           }}
         >
-          Save rank names
+          Save settings
         </button>
       </div>
     </div>

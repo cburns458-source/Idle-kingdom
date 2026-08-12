@@ -4,6 +4,7 @@ import type {
   CreateGuildInput,
   GuildApplication,
   GuildChallenge,
+  GuildEmblem,
   GuildJoinPolicy,
   GuildMember,
   GuildProject,
@@ -85,6 +86,15 @@ export async function setGuildRankLabels(
   const session = getSession()
   if (!session) return { ok: false, reason: 'Sign in required.' }
   return getLocalBackend().setGuildRankLabels(session.userId, guildId, rankLabels)
+}
+
+export async function setGuildEmblem(
+  guildId: string,
+  emblem: GuildEmblem,
+): Promise<{ ok: true } | { ok: false; reason: string }> {
+  const session = getSession()
+  if (!session) return { ok: false, reason: 'Sign in required.' }
+  return getLocalBackend().setGuildEmblem(session.userId, guildId, emblem)
 }
 
 export async function leaveGuild(): Promise<{ ok: true } | { ok: false; reason: string }> {

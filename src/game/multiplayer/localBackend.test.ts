@@ -44,7 +44,7 @@ describe('local multiplayer backend', () => {
         name: 'Oak Guard',
         tag: 'OAK',
         description: 'For the kingdom',
-        emblem: { color: '#2f6b3a', symbol: '🌲' },
+        emblem: { color: '#2f6b3a', symbol: 'tree' },
       },
       100,
     )
@@ -84,14 +84,14 @@ describe('local multiplayer backend', () => {
 
     const poor = backend.createGuild(
       leader.session,
-      { name: 'Broke Band', tag: 'BRK', emblem: { color: '#5c4027', symbol: '⚔️' } },
+      { name: 'Broke Band', tag: 'BRK', emblem: { color: '#5c4027', symbol: 'sword' } },
       10,
     )
     expect(poor.ok).toBe(false)
 
     const created = backend.createGuild(
       leader.session,
-      { name: 'Iron League', tag: 'IRN', emblem: { color: '#3d5a80', symbol: '🛡️' } },
+      { name: 'Iron League', tag: 'IRN', emblem: { color: '#3d5a80', symbol: 'shield' } },
       25,
     )
     expect(created.ok).toBe(true)
@@ -154,7 +154,7 @@ describe('local multiplayer backend', () => {
     if (!leader.ok) return
     const created = backend.createGuild(
       leader.session,
-      { name: 'Full House', tag: 'FUL', emblem: { color: '#5c4027', symbol: '🏰' } },
+      { name: 'Full House', tag: 'FUL', emblem: { color: '#5c4027', symbol: 'castle' } },
       25,
     )
     expect(created.ok).toBe(true)

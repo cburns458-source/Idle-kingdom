@@ -9,6 +9,7 @@ import {
 } from '../game/multiplayer/leaderboards'
 import type { LeaderboardEntry, MultiplayerBoardKey } from '../game/multiplayer/types'
 import type { PlayerSave } from '../game/save/types'
+import { GuildEmblemBadge } from './guildEmblemIcons'
 import { GuildView } from './GuildView'
 
 export type SocialSection = 'leaderboards' | 'guilds'
@@ -83,13 +84,7 @@ function LeaderboardsView({
             <li key={`${entry.boardKey}-${entry.userId}`}>
               <span className="muted tiny">#{entry.rank}</span>
               {entry.entryKind === 'guild' && entry.emblem ? (
-                <span
-                  className="guild-emblem-badge"
-                  style={{ backgroundColor: entry.emblem.color }}
-                  aria-hidden
-                >
-                  <span className="guild-emblem-symbol">{entry.emblem.symbol}</span>
-                </span>
+                <GuildEmblemBadge emblem={entry.emblem} />
               ) : (
                 <span
                   className="social-portrait"

@@ -63,13 +63,6 @@ export type GuildJoinPolicy = 'open' | 'closed'
 /** All guild roles, including leader — used for customizable display names. */
 export type GuildRankKey = GuildRole
 
-export interface GuildEmblem {
-  /** Banner fill color (CSS hex). */
-  color: string
-  /** Symbol shown on the banner (emoji / short glyph). */
-  symbol: string
-}
-
 export const DEFAULT_GUILD_RANK_LABELS: Record<GuildRankKey, string> = {
   leader: 'Leader',
   officer: 'Officer',
@@ -100,19 +93,44 @@ export const GUILD_EMBLEM_COLORS = [
 ] as const
 
 export const GUILD_EMBLEM_SYMBOLS = [
-  '⚔️',
-  '🛡️',
-  '🌲',
-  '🐉',
-  '⭐',
-  '🔥',
-  '🌙',
-  '🦅',
-  '🏰',
-  '💎',
-  '🐺',
-  '🦁',
+  'sword',
+  'shield',
+  'tree',
+  'dragon',
+  'star',
+  'flame',
+  'moon',
+  'eagle',
+  'castle',
+  'gem',
+  'wolf',
+  'lion',
 ] as const
+
+export type GuildEmblemSymbol = (typeof GUILD_EMBLEM_SYMBOLS)[number]
+
+export interface GuildEmblem {
+  /** Banner fill color (CSS hex). */
+  color: string
+  /** Solid icon id shown on the banner. */
+  symbol: GuildEmblemSymbol | string
+}
+
+/** Map legacy emoji emblems to solid icon ids. */
+export const GUILD_EMBLEM_EMOJI_TO_SYMBOL: Record<string, GuildEmblemSymbol> = {
+  '⚔️': 'sword',
+  '🛡️': 'shield',
+  '🌲': 'tree',
+  '🐉': 'dragon',
+  '⭐': 'star',
+  '🔥': 'flame',
+  '🌙': 'moon',
+  '🦅': 'eagle',
+  '🏰': 'castle',
+  '💎': 'gem',
+  '🐺': 'wolf',
+  '🦁': 'lion',
+}
 
 export interface GuildRecord {
   id: string

@@ -17,6 +17,7 @@ import {
   DEFAULT_GUILD_RANK_LABELS,
   GUILD_CREATE_GOLD_COST,
   GUILD_EMBLEM_COLORS,
+  GUILD_EMBLEM_EMOJI_TO_SYMBOL,
   GUILD_EMBLEM_SYMBOLS,
   GUILD_MAX_MEMBERS,
   MULTIPLAYER_LOCAL_DB_KEY,
@@ -103,16 +104,25 @@ function emptyDb(): LocalDb {
   }
 }
 
+function normalizeSymbol(raw: unknown): (typeof GUILD_EMBLEM_SYMBOLS)[number] {
+  if (typeof raw !== 'string' || !raw.trim()) return GUILD_EMBLEM_SYMBOLS[0]
+  const value = raw.trim()
+  if ((GUILD_EMBLEM_SYMBOLS as readonly string[]).includes(value)) {
+    return value as (typeof GUILD_EMBLEM_SYMBOLS)[number]
+  }
+  return GUILD_EMBLEM_EMOJI_TO_SYMBOL[value] ?? GUILD_EMBLEM_SYMBOLS[0]
+}
+
 function normalizeEmblem(raw: unknown): GuildEmblem {
   if (raw && typeof raw === 'object' && 'color' in raw && 'symbol' in raw) {
     const emblem = raw as GuildEmblem
     return {
       color: typeof emblem.color === 'string' ? emblem.color : GUILD_EMBLEM_COLORS[0],
-      symbol: typeof emblem.symbol === 'string' ? emblem.symbol.slice(0, 4) : GUILD_EMBLEM_SYMBOLS[0],
+      symbol: normalizeSymbol(emblem.symbol),
     }
   }
   if (typeof raw === 'string' && raw.trim()) {
-    return { color: GUILD_EMBLEM_COLORS[0], symbol: raw.trim().slice(0, 4) }
+    return { color: GUILD_EMBLEM_COLORS[0], symbol: normalizeSymbol(raw) }
   }
   return { color: GUILD_EMBLEM_COLORS[0], symbol: GUILD_EMBLEM_SYMBOLS[0] }
 }
@@ -752,6 +762,21 @@ export class LocalMultiplayerBackend {
       return { ok: false, reason: 'Only the leader can rename ranks.' }
     }
     guild.rankLabels = normalizeRankLabels({ ...guild.rankLabels, ...rankLabels })
+    this.write(db)
+    return { ok: true }
+  }
+
+  setGuildEmblem(
+    actorId: string,
+    guildId: string,
+    emblem: GuildEmblem,
+  ): { ok: true } | { ok: false; reason: string } {
+    const db = this.db()
+    const guild = db.guilds.find((row) => row.id === guildId)
+    if (!guild || guild.leaderId !== actorId) {
+      return { ok: false, reason: 'Only the leader can edit the banner.' }
+    }
+    guild.emblem = normalizeEmblem(emblem)
     this.write(db)
     return { ok: true }
   }
