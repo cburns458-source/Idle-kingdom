@@ -466,6 +466,35 @@ export class LocalMultiplayerBackend {
       .slice(-limit)
   }
 
+  /** Direct messages involving the viewer (inbox-style, oldest → newest). */
+  listDirectMessages(viewerId: string, limit = 80): ChatMessage[] {
+    const db = this.db()
+    const muted = new Set(
+      db.mutes.filter((row) => row.userId === viewerId).map((row) => row.mutedUserId),
+    )
+    const blocked = new Set(
+      db.blocks.filter((row) => row.userId === viewerId).map((row) => row.blockedUserId),
+    )
+    return db.messages
+      .filter(
+        (row) =>
+          row.channelKey.startsWith('dm:') &&
+          row.channelKey.includes(viewerId) &&
+          !muted.has(row.userId) &&
+          !blocked.has(row.userId),
+      )
+      .sort((a, b) => Date.parse(a.createdAt) - Date.parse(b.createdAt))
+      .slice(-limit)
+  }
+
+  /** Unread DMs sent by other players after `sinceIso` (exclusive). */
+  countUnreadDirectMessages(viewerId: string, sinceIso: string | null): number {
+    const sinceMs = sinceIso ? Date.parse(sinceIso) : 0
+    return this.listDirectMessages(viewerId, 200).filter(
+      (row) => row.userId !== viewerId && Date.parse(row.createdAt) > sinceMs,
+    ).length
+  }
+
   muteUser(userId: string, mutedUserId: string): void {
     const db = this.db()
     if (!db.mutes.some((row) => row.userId === userId && row.mutedUserId === mutedUserId)) {

@@ -47,6 +47,18 @@ export async function listChatMessages(channel: ChatChannel): Promise<ChatMessag
   }))
 }
 
+export async function listDirectMessages(): Promise<ChatMessage[]> {
+  const session = getSession()
+  if (!session) return []
+  return getLocalBackend().listDirectMessages(session.userId)
+}
+
+export function countUnreadDirectMessages(sinceIso: string | null): number {
+  const session = getSession()
+  if (!session) return 0
+  return getLocalBackend().countUnreadDirectMessages(session.userId, sinceIso)
+}
+
 export function mutePlayer(targetUserId: string): void {
   const session = getSession()
   if (!session) return
