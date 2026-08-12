@@ -1,5 +1,13 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
-import { dirname, resolve } from 'node:path'
+import {
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  rmdirSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs'
+import { dirname, relative, resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { canonicalJson } from './canonicalJson'
 import { assertUniqueScenarioNames, parityScenarios } from './scenarios'
@@ -28,10 +36,48 @@ function fixtureBody(entry: ParityScenario): string {
   return `${canonicalJson(document)}\n`
 }
 
+/** Every fixture file currently on disk. */
+function recordedFixtures(dir = FIXTURE_ROOT): string[] {
+  if (!existsSync(dir)) return []
+  return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+    const path = resolve(dir, entry.name)
+    if (entry.isDirectory()) return recordedFixtures(path)
+    return entry.name.endsWith('.json') ? [path] : []
+  })
+}
+
+/** Removes [dir] and its now-empty parents, stopping at the fixture root. */
+function pruneEmptyDirs(dir: string): void {
+  let current = dir
+  while (current !== FIXTURE_ROOT && readdirSync(current).length === 0) {
+    rmdirSync(current)
+    current = dirname(current)
+  }
+}
+
 describe('parity fixtures', () => {
   it('has uniquely named scenarios', () => {
     expect(() => assertUniqueScenarioNames(parityScenarios)).not.toThrow()
     expect(parityScenarios.length).toBeGreaterThan(0)
+  })
+
+  // A renamed scenario leaves its old fixture behind, and a Dart test looping
+  // over a directory would keep replaying it against rules that no longer
+  // produce it. Recording deletes orphans; checking fails on them.
+  it(RECORDING ? 'deletes orphaned fixtures' : 'has no orphaned fixtures', () => {
+    const expected = new Set(parityScenarios.map(fixturePath))
+    const orphans = recordedFixtures().filter((path) => !expected.has(path))
+    if (RECORDING) {
+      for (const path of orphans) {
+        rmSync(path)
+        pruneEmptyDirs(dirname(path))
+      }
+      return
+    }
+    expect(
+      orphans.map((path) => relative(FIXTURE_ROOT, path)),
+      'Fixtures with no scenario. Re-record with npm run parity:record.',
+    ).toEqual([])
   })
 
   for (const entry of parityScenarios) {

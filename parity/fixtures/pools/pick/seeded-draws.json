@@ -1,0 +1,1 @@
+{"case":"seeded-draws","input":{"count":16,"poolId":"POOL-0001","seed":987654321,"source":"content"},"module":"pools/pick","output":{"empty":null,"picks":["ACN-0002","ACN-0001","ACN-0001","ACN-0002","ACN-0001","ACN-0001","ACN-0001","ACN-0001","ACN-0001","ACN-0001","ACN-0002","ACN-0001","ACN-0002","ACN-0001","ACN-0001","ACN-0001"]}}

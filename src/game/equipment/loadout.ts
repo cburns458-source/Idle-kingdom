@@ -1,5 +1,5 @@
 import type { EquipmentRow, GameDatabase } from '../data/types'
-import type { EquippedStack, PlayerSave } from '../save/types'
+import { WEAPON_TOOL_SLOT_ID, type EquippedStack, type PlayerSave } from '../save/types'
 import { addItemToInventory } from '../activity/rewards'
 import { getSkillProgress } from '../activity/xp'
 import { canFitItemQuantity } from '../inventory/capacity'
@@ -7,8 +7,8 @@ import { firstEmptySpellSlot, isSpellEquipment, isSpellSlotId } from '../spells/
 
 export const FOOD_SLOT_ID = 'SLOT-0011'
 export const POTION_SLOT_ID = 'SLOT-0012'
-export const WEAPON_TOOL_SLOT_ID = 'SLOT-0001'
 export const OFFHAND_SLOT_ID = 'SLOT-0002'
+export { WEAPON_TOOL_SLOT_ID }
 
 export function isDaggerItem(db: GameDatabase, itemId: string): boolean {
   const item = db.Items.find((row) => row['Item ID'] === itemId)

@@ -45,6 +45,9 @@ String jsNumberToString(num value) {
   return d.toString();
 }
 
+/// `(value ?? '').toLowerCase()` for optional string columns.
+String lowerOrEmpty(Object? value) => value is String ? value.toLowerCase() : '';
+
 /// `Number.isInteger(value)`, which is true for `2.0` as well as `2`.
 bool jsIsInteger(num value) => value.isFinite && value == value.roundToDouble();
 
@@ -57,4 +60,40 @@ num jsNumber(Object? value) {
     final String s => s.trim().isEmpty ? 0 : (num.tryParse(s.trim()) ?? double.nan),
     _ => double.nan,
   };
+}
+
+/// `Number(value) || 0`, which the rules use to coerce optional numbers.
+num jsNumberOrZero(Object? value) {
+  final number = jsNumber(value);
+  return number.isNaN || number == 0 ? 0 : number;
+}
+
+/// `a - b || tieBreak()`, the comparator shape the sorted lookups use.
+///
+/// JavaScript treats both `0` and `NaN` as falsy, so a missing sort order falls
+/// through to the tie-break instead of ordering by whichever row came first.
+int jsCompareThen(num delta, int Function() tieBreak) {
+  if (delta == 0 || delta.isNaN) return tieBreak();
+  return delta > 0 ? 1 : -1;
+}
+
+/// `String.prototype.localeCompare` for the ASCII text the database holds.
+///
+/// The default collation compares base letters first and only falls back to
+/// case, where lowercase sorts before uppercase. Dart's [String.compareTo] is
+/// code-unit ordering instead, which would put `Zebra` before `apple`, so every
+/// comparison that feeds a sort order goes through here.
+int jsLocaleCompare(String a, String b) {
+  final primary = a.toLowerCase().compareTo(b.toLowerCase());
+  if (primary != 0) return primary < 0 ? -1 : 1;
+  if (a == b) return 0;
+  for (var i = 0; i < a.length && i < b.length; i += 1) {
+    final left = a[i];
+    final right = b[i];
+    if (left == right) continue;
+    final leftIsLower = left.toUpperCase() != left;
+    final rightIsLower = right.toUpperCase() != right;
+    if (leftIsLower != rightIsLower) return leftIsLower ? -1 : 1;
+  }
+  return a.length == b.length ? 0 : (a.length < b.length ? -1 : 1);
 }

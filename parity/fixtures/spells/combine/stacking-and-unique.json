@@ -1,0 +1,1 @@
+{"case":"stacking-and-unique","input":{"contributions":[{"percent":10,"stacks":true},{"percent":10,"stacks":true},{"percent":25,"stacks":false},{"percent":15,"stacks":false},{"percent":0,"stacks":true},{"percent":-5,"stacks":false}],"source":"content"},"module":"spells/combine","output":{"combined":45,"empty":0}}

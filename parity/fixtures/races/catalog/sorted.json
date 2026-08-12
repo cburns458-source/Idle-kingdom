@@ -1,0 +1,1 @@
+{"case":"sorted","input":{"source":"content"},"module":"races/catalog","output":{"foundById":["RACE-0001","RACE-0002","RACE-0003","RACE-0004","RACE-0005","RACE-0006","RACE-0007"],"missing":null,"names":["Human","Wood Elf","High Elf","Orc","Goblin","Dwarf","Halfling"],"nullId":null,"order":["RACE-0001","RACE-0002","RACE-0003","RACE-0004","RACE-0005","RACE-0006","RACE-0007"]}}

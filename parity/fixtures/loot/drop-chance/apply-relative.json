@@ -1,0 +1,1 @@
+{"case":"apply-relative","input":{"cases":[[10,0],[10,15],[90,50],[100,25],[0,15],[null,15]],"source":"content"},"module":"loot/drop-chance","output":{"results":[10,11.5,100,100,0,null]}}

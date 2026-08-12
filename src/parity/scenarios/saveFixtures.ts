@@ -70,6 +70,61 @@ export function richSave(db: GameDatabase): PlayerSave {
   }
 }
 
+/**
+ * A save wearing gear in most slots, so equipment / combat / spell rules have
+ * something to read: enchanted weapon, off-hand dagger, two stacked spells, an
+ * active combat potion, and a race with a max-HP bonus.
+ */
+export function gearedSave(db: GameDatabase): PlayerSave {
+  const base = baseSave(db)
+  return {
+    ...base,
+    characterName: 'Geared',
+    raceId: 'RACE-0003',
+    gold: 5_000,
+    currentLocationId: 'LOC-0002',
+    skills: base.skills.map((skill) =>
+      skill.skillId === 'SKL-0001' ? { ...skill, level: 25, xp: 8_000 } : { ...skill, level: 20, xp: 4_500 },
+    ),
+    inventory: [
+      { itemId: 'ITEM-0114', quantity: 1 },
+      { itemId: 'ITEM-0129', quantity: 1 },
+      { itemId: 'ITEM-0059', quantity: 12 },
+      { itemId: 'ITEM-0295', quantity: 1 },
+      { itemId: 'ITEM-0180', quantity: 1 },
+      { itemId: 'ITEM-0170', quantity: 2 },
+      { itemId: 'ITEM-0100', quantity: 1, enchantmentId: 'ENCH-0002' },
+      { itemId: 'ITEM-0070', quantity: 3, favorite: true },
+      // Gathering tools of two tiers each, so auto-equip has something to rank.
+      { itemId: 'ITEM-0102', quantity: 1 },
+      { itemId: 'ITEM-0115', quantity: 1 },
+      { itemId: 'ITEM-0112', quantity: 1 },
+      { itemId: 'ITEM-0108', quantity: 1 },
+    ],
+    equipment: {
+      slots: {
+        ...base.equipment.slots,
+        'SLOT-0001': { itemId: 'ITEM-0130', quantity: 1, enchantmentId: 'ENCH-0003' },
+        'SLOT-0002': { itemId: 'ITEM-0125', quantity: 1 },
+        'SLOT-0003': { itemId: 'ITEM-0160', quantity: 1, enchantmentId: 'ENCH-0006' },
+        'SLOT-0008': { itemId: 'ITEM-0180', quantity: 1 },
+        'SLOT-0011': { itemId: 'ITEM-0058', quantity: 4 },
+        'SLOT-0013': { itemId: 'ITEM-0295', quantity: 1 },
+        'SLOT-0014': { itemId: 'ITEM-0295', quantity: 1 },
+        'SLOT-0015': { itemId: 'ITEM-0297', quantity: 1 },
+      },
+    },
+    activePotionEffect: {
+      scope: 'one_combat_encounter',
+      itemId: 'ITEM-0072',
+      damageBonusPercent: 10,
+      enemyMaxHpDamagePercent: null,
+      relativeDropChanceBonusPercent: null,
+      baseDurationReductionPercent: null,
+    },
+  }
+}
+
 /** A bag filled to the slot limit, for overflow cases. */
 export function fullBagSave(db: GameDatabase, items: string[]): PlayerSave {
   const base = baseSave(db)
