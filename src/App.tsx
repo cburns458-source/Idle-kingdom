@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { validateActivityStart } from './game/activity/engine'
 import {
-  beginTravelActivityChange,
   requestActivityStart,
   requestActivityStop,
   requestProductionStart,
@@ -11,26 +10,19 @@ import type { ActionRewardBundle } from './game/activity/types'
 import type { ActivityRow } from './game/data/types'
 import { advanceSession } from './game/session/tick'
 import { actionProgressAt } from './game/session/progress'
+import { prepareSaveForWrite } from './game/session/persist'
+import { arriveFromTravel, planTravel, type TravelArrival } from './game/session/travel'
 import type { SessionEvent } from './game/session/events'
 import { loadOrCreateSave, writeSave } from './game/save/saveStore'
 import type { PlayerSave } from './game/save/types'
 import { CITADEL_MAP_ID, CITADEL_MARKET_ID, CITADEL_PLAZA_ID, MAIN_MAP_ID } from './game/world/constants'
-import {
-  applyHostileTravelArrival,
-  hostileForceMessage,
-} from './game/world/hostility'
 import { claimLocationSearch } from './game/world/locationSearch'
 import {
   enterSubMapLabel,
   isSubMap,
   subMapIdForGateway,
 } from './game/world/submaps'
-import {
-  canTravelTo,
-  findConnection,
-  resolveActiveMapId,
-  travelDurationMs,
-} from './game/world/travel'
+import { resolveActiveMapId } from './game/world/travel'
 import { configNumber } from './game/activity/gathering'
 import { deathPauseRemainingMs, getEnemy, isDeathPaused } from './game/combat/engine'
 import { playerMaxHp } from './game/combat/stats'
@@ -216,32 +208,11 @@ export default function App() {
       if (progress >= 1) {
         const current = bootRef.current
         if (current.status !== 'ready') return
-        const arrived = applyHostileTravelArrival(
-          current.database.launch,
-          current.save,
-          travel.toLocationId,
-        )
-        const saved = persistSave(arrived.save)
-        const location = current.database.launchIndexes.locationsById.get(saved.currentLocationId)
+        const arrival = arriveFromTravel(current.database.launch, current.save, travel.toLocationId)
+        const saved = persistSave(arrival.save)
         setBoot({ ...current, save: saved, saveCreated: false })
-        setBrowseMapId(
-          location ? resolveActiveMapId(current.database.launch, location) : MAIN_MAP_ID,
-        )
-        setSelectedLocationId(saved.currentLocationId)
-        setScreen('location')
+        showArrival(current.database, arrival, saved.currentLocationId)
         setActionProgress(0)
-        setRecentRewards([])
-        const forceMessage = hostileForceMessage(current.database.launch, arrived)
-        if (arrived.forcedActivityId) {
-          setActivityError(null)
-          setLastMessage(forceMessage)
-        } else if (arrived.forceBlockedReason) {
-          setLastMessage(null)
-          setActivityError(forceMessage)
-        } else {
-          setLastMessage(null)
-          setActivityError(null)
-        }
         setTravel(null)
         setTravelProgress(0)
         return
@@ -263,6 +234,21 @@ export default function App() {
     const id = window.setInterval(() => setHudNowMs(Date.now()), 250)
     return () => window.clearInterval(id)
   }, [runningActivityId, runningProductionRecipeId])
+
+  /** Shows an arrival: the destination's map, and whatever hostility had to say. */
+  function showArrival(
+    database: LoadedDatabase,
+    arrival: TravelArrival,
+    locationId: string,
+  ) {
+    const location = database.launchIndexes.locationsById.get(locationId)
+    setBrowseMapId(location ? resolveActiveMapId(database.launch, location) : MAIN_MAP_ID)
+    setSelectedLocationId(locationId)
+    setScreen('location')
+    setRecentRewards([])
+    setLastMessage(arrival.forcedActivityId ? arrival.message : null)
+    setActivityError(arrival.blockedReason ? arrival.message : null)
+  }
 
   /** Reflects one tick's events in the screen state they drive. */
   function applySessionEvents(events: SessionEvent[]) {
@@ -348,12 +334,11 @@ export default function App() {
 
   function persistSave(next: PlayerSave): PlayerSave {
     const current = bootRef.current
-    const stamped = stampUnattendedProgressAt(next)
-    const synced =
+    return writeSave(
       current.status === 'ready'
-        ? syncProgressionMeta(current.database.launch, stamped)
-        : stamped
-    return writeSave(synced)
+        ? prepareSaveForWrite(current.database.launch, next)
+        : stampUnattendedProgressAt(next),
+    )
   }
 
   // A kill flashes "defeated" over the panel. The rewards and the next enemy are
@@ -481,13 +466,11 @@ export default function App() {
   const deathLocked = isDeathPaused(save) || pauseRemainingMs > 0
 
   function beginTravel(destinationId: string) {
-    if (travel || deathLocked) return
-    if (
-      !canTravelTo(database.launch, save.currentLocationId, destinationId, browseMapId, save)
-    ) {
-      return
-    }
-    const connection = findConnection(database.launch, save.currentLocationId, destinationId)
+    if (travel) return
+    const now = Date.now()
+    const plan = planTravel(database.launch, save, destinationId, browseMapId, now)
+    if (plan.kind === 'blocked') return
+
     setProductionPickerActivityId(null)
     setSpecialStation(null)
     setActiveShopId(null)
@@ -495,43 +478,21 @@ export default function App() {
     setActiveCitadelHub(null)
     setActionProgress(0)
 
-    const now = Date.now()
-    const durationMs = travelDurationMs(connection)
-    if (durationMs <= 0) {
-      const arrived = applyHostileTravelArrival(database.launch, save, destinationId, now)
-      updateSave(arrived.save)
-      const nextLocation = database.launchIndexes.locationsById.get(destinationId)
-      setBrowseMapId(
-        nextLocation ? resolveActiveMapId(database.launch, nextLocation) : MAIN_MAP_ID,
-      )
-      setSelectedLocationId(destinationId)
-      setScreen('location')
-      setRecentRewards([])
-      const forceMessage = hostileForceMessage(database.launch, arrived)
-      if (arrived.forcedActivityId) {
-        setActivityError(null)
-        setLastMessage(forceMessage)
-      } else if (arrived.forceBlockedReason) {
-        setLastMessage(null)
-        setActivityError(forceMessage)
-      } else {
-        setLastMessage(null)
-        setActivityError(null)
-      }
+    if (plan.kind === 'instant') {
+      updateSave(plan.arrival.save)
+      showArrival(database, plan.arrival, destinationId)
       setTravel(null)
       setTravelProgress(0)
       return
     }
 
-    // Timed travel: stop the current activity immediately when travel begins.
-    const prepared = beginTravelActivityChange(database.launch, save, now)
-    if (prepared !== save) updateSave(prepared)
+    if (plan.save !== save) updateSave(plan.save)
     setRecentRewards([])
     setTravel({
       fromLocationId: save.currentLocationId,
       toLocationId: destinationId,
       startedAt: now,
-      durationMs,
+      durationMs: plan.durationMs,
     })
     setTravelProgress(0)
   }

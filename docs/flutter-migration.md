@@ -85,8 +85,7 @@ These exist because the two languages disagree in ways that are easy to miss:
 | Activity, production, recipes, projects | Done |
 | Combat, loot, potions, spells, critters, quests, achievements, cosmetics, world, bounties | Done |
 | Save, migrations, unattended progress | Done |
-| Headless session runtime (tick, events, storage port) | Done |
-| Player intents (start / stop activity, travel, shops, wardrobe) | Not started |
+| Headless session runtime (tick, events, travel, storage port) | Done |
 | Bazaar and multiplayer backends | Not started |
 | Flutter UI | Not started |
 
@@ -121,6 +120,22 @@ Both halves are recorded as scripted runs under `parity/fixtures/session/tick`:
 each case ticks one save shape at pinned offsets — before the timer is due, the
 tick that resolves it, and enough afterwards to see the follow-up — and compares
 the events, the progress bar, and the whole save at every step.
+
+Travel is the other thing a client would otherwise have to re-derive.
+`planTravel` answers a travel request with `blocked`, `instant` (the arrival has
+already happened), or `timed` (the activity is stopped and the client animates
+the journey, then calls `arriveFromTravel`). Hostility is folded into the
+arrival, so forced combat and its message arrive together.
+
+`prepareSaveForWrite` is the one path to storage: it moves the unattended anchor
+to the write time and catches achievements and statistics up. Boot is the single
+exception, because the catch-up resolver has already set the anchor — and
+deliberately leaves it short when a long absence ran out of steps.
+
+`GameSession` (Dart only) holds those pieces together for the Flutter client: it
+owns the save, boots it, ticks it, applies whatever a rules call returned, and
+runs travel. Intents stay the rules functions themselves; the session is just
+where their result lands, so nothing can skip the write pipeline.
 
 ## Commands
 

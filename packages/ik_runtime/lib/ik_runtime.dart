@@ -6,5 +6,8 @@ library;
 
 export 'src/save_storage.dart';
 export 'src/session/events.dart';
+export 'src/session/game_session.dart';
+export 'src/session/persist.dart';
 export 'src/session/progress.dart';
 export 'src/session/tick.dart';
+export 'src/session/travel.dart';

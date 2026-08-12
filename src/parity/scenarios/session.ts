@@ -3,10 +3,18 @@ import type { GameDatabase } from '../../game/data/types'
 import { INVENTORY_SLOT_LIMIT } from '../../game/inventory/capacity'
 import { mulberry32 } from '../../game/rng/mulberry32'
 import type { PlayerSave } from '../../game/save/types'
+import { prepareSaveForWrite } from '../../game/session/persist'
 import { actionProgressAt } from '../../game/session/progress'
 import { advanceSession } from '../../game/session/tick'
+import { arriveFromTravel, planTravel, type TravelPlan } from '../../game/session/travel'
 import { scenario, type JsonValue, type ParityScenario } from '../types'
-import { contentDatabase } from './contentDatabase'
+import {
+  asDatabase,
+  contentDatabase,
+  location,
+  minimalDatabase,
+  type JsonDatabase,
+} from './contentDatabase'
 import {
   asJson,
   baseSave,
@@ -219,6 +227,128 @@ const PROGRESS_KINDS: SaveKind[] = ['idle', 'gathering', 'fighting', 'production
 
 const PROGRESS_OFFSETS_MS = [0, 5 * SECOND, 20 * SECOND, 3600 * SECOND]
 
+/** The town, from which the Goblin Camp is one hostile step away. */
+const TOWN_LOCATION_ID = 'LOC-0002'
+const GOBLIN_LOCATION_ID = 'LOC-0003'
+
+/** Recovering from a defeat, which blocks travel outright. */
+function downedSave(db: GameDatabase): PlayerSave {
+  return {
+    ...gatheringSave(db),
+    deathPauseUntil: new Date(FIXED_TIMESTAMP_MS + 30 * SECOND).toISOString(),
+  }
+}
+
+/** Levelled past the Goblin Camp danger warning, so arrival forces nothing. */
+function veteranSave(db: GameDatabase): PlayerSave {
+  return { ...combatSave(db), currentLocationId: TOWN_LOCATION_ID }
+}
+
+type TravelSaveKind = 'town' | 'veteran' | 'gathering' | 'downed'
+
+function travelSaveFor(kind: TravelSaveKind): PlayerSave {
+  const db = contentDatabase()
+  switch (kind) {
+    case 'town':
+      return { ...baseSave(db), currentLocationId: TOWN_LOCATION_ID }
+    case 'veteran':
+      return veteranSave(db)
+    case 'gathering':
+      return gatheringSave(db)
+    case 'downed':
+      return downedSave(db)
+  }
+}
+
+/** `planTravel` plus, for a journey, the arrival that ends it. */
+function plannedTravel(
+  db: GameDatabase,
+  save: PlayerSave,
+  destinationId: string,
+  browseMapId: string,
+  nowMs: number,
+): JsonValue {
+  const plan = planTravel(db, save, destinationId, browseMapId, nowMs, mulberry32(SEED))
+  return {
+    plan: planJson(plan),
+    arrival:
+      plan.kind === 'timed'
+        ? (arrivalJson(
+            arriveFromTravel(
+              db,
+              plan.save,
+              destinationId,
+              nowMs + plan.durationMs,
+              mulberry32(SEED),
+            ),
+          ) as JsonValue)
+        : null,
+  } as unknown as JsonValue
+}
+
+function planJson(plan: TravelPlan): JsonValue {
+  if (plan.kind === 'blocked') return { kind: plan.kind }
+  if (plan.kind === 'instant') {
+    return { kind: plan.kind, arrival: arrivalJson(plan.arrival) }
+  }
+  return { kind: plan.kind, durationMs: plan.durationMs, save: asJson(plan.save) }
+}
+
+function arrivalJson(arrival: ReturnType<typeof arriveFromTravel>): JsonValue {
+  return {
+    save: asJson(arrival.save),
+    forcedActivityId: arrival.forcedActivityId,
+    blockedReason: arrival.blockedReason,
+    message: arrival.message,
+  } as unknown as JsonValue
+}
+
+/** Where a travel request can land, on the shipped content. */
+const TRAVEL_CASES: Array<{
+  name: string
+  kind: TravelSaveKind
+  destinationId: string
+  browseMapId: string
+}> = [
+  { name: 'hostile-forced', kind: 'town', destinationId: GOBLIN_LOCATION_ID, browseMapId: 'MAP-0001' },
+  { name: 'hostile-cleared', kind: 'veteran', destinationId: GOBLIN_LOCATION_ID, browseMapId: 'MAP-0001' },
+  // Arriving stops whatever was running, refunding production materials.
+  { name: 'stops-activity', kind: 'gathering', destinationId: TOWN_LOCATION_ID, browseMapId: 'MAP-0001' },
+  { name: 'same-location', kind: 'town', destinationId: TOWN_LOCATION_ID, browseMapId: 'MAP-0001' },
+  { name: 'unknown-destination', kind: 'town', destinationId: 'LOC-9999', browseMapId: 'MAP-0001' },
+  // Still locked, so it cannot be travelled to even while its map is browsed.
+  { name: 'locked-destination', kind: 'town', destinationId: 'LOC-0026', browseMapId: 'MAP-0006' },
+  // A node on the browsed sub-map, reachable without a connection of its own.
+  { name: 'submap-node', kind: 'town', destinationId: 'LOC-0011', browseMapId: 'MAP-0002' },
+  { name: 'death-paused', kind: 'downed', destinationId: TOWN_LOCATION_ID, browseMapId: 'MAP-0001' },
+]
+
+/**
+ * The shipped connections all leave `Base Duration` empty, which means instant
+ * travel, so the journey branch needs a database that names a duration.
+ */
+function timedTravelDatabase(): JsonDatabase {
+  const base = minimalDatabase()
+  return {
+    ...base,
+    Locations: [...base.Locations, location('LOC-0003', 'Goblin Camp')],
+    TravelConnections: [
+      {
+        'Connection ID': 'TRV-0001',
+        'From Location ID': 'LOC-0002',
+        'To Location ID': 'LOC-0003',
+        Method: 'Road',
+        Direction: 'Two-way',
+        'Base Duration': 90,
+        'Required Mount / Status': null,
+        Status: 'Confirmed',
+        'Release Phase': 'Launch',
+        Notes: null,
+      },
+    ],
+  }
+}
+
 export const sessionScenarios: ParityScenario[] = [
   scenario(
     'session/progress',
@@ -252,6 +382,68 @@ export const sessionScenarios: ParityScenario[] = [
         save: asJson(saveFor(entry.kind)),
       },
       () => run(entry.kind, entry.offsetsMs),
+    ),
+  ),
+
+  ...TRAVEL_CASES.map((entry) =>
+    scenario(
+      'session/travel',
+      entry.name,
+      {
+        source: 'content',
+        seed: SEED,
+        nowMs: FIXED_TIMESTAMP_MS,
+        destinationId: entry.destinationId,
+        browseMapId: entry.browseMapId,
+        save: asJson(travelSaveFor(entry.kind)),
+      },
+      () =>
+        plannedTravel(
+          contentDatabase(),
+          travelSaveFor(entry.kind),
+          entry.destinationId,
+          entry.browseMapId,
+          FIXED_TIMESTAMP_MS,
+        ),
+    ),
+  ),
+
+  scenario(
+    'session/travel',
+    'timed-journey',
+    {
+      source: 'inline',
+      database: timedTravelDatabase() as unknown as JsonValue,
+      seed: SEED,
+      nowMs: FIXED_TIMESTAMP_MS,
+      destinationId: 'LOC-0003',
+      browseMapId: 'MAP-0001',
+      save: asJson(baseSave(asDatabase(timedTravelDatabase()))),
+    },
+    () =>
+      plannedTravel(
+        asDatabase(timedTravelDatabase()),
+        baseSave(asDatabase(timedTravelDatabase())),
+        'LOC-0003',
+        'MAP-0001',
+        FIXED_TIMESTAMP_MS,
+      ),
+  ),
+
+  ...(['idle', 'gathering', 'fighting', 'production'] as const).map((kind) =>
+    scenario(
+      'session/persist',
+      kind,
+      { source: 'content', nowMs: FIXED_TIMESTAMP_MS, save: asJson(saveFor(kind)) },
+      () =>
+        asJson(
+          prepareSaveForWrite(
+            contentDatabase(),
+            saveFor(kind),
+            // A later clock, so the anchor visibly moves to the write time.
+            FIXED_TIMESTAMP_MS + 90 * SECOND,
+          ),
+        ),
     ),
   ),
 ]

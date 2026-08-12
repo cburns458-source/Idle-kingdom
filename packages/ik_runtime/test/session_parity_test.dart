@@ -59,6 +59,61 @@ void main() {
       });
     }
   });
+
+  group('travel plan parity', () {
+    for (final fixture in loadParityFixtures('session/travel')) {
+      test(fixture.name, () {
+        final db = databaseOf(fixture);
+        final save = saveOf(fixture);
+        final seed = fixture.inputField<num>('seed').toInt();
+        final nowMs = fixture.inputField<num>('nowMs');
+        final destinationId = fixture.inputField<String>('destinationId');
+
+        final plan = planTravel(
+          db,
+          save,
+          destinationId,
+          fixture.inputField<String>('browseMapId'),
+          nowMs,
+          Mulberry32(seed).asFunction,
+        );
+        // A journey is only half the story, so the arrival that ends it is
+        // recorded alongside the plan.
+        final arrival = plan is TravelTimed
+            ? arriveFromTravel(
+                db,
+                plan.save,
+                destinationId,
+                nowMs + plan.durationMs,
+                Mulberry32(seed).asFunction,
+              )
+            : null;
+
+        expect(
+          checkParity(fixture, <String, Object?>{
+            'plan': plan.toJson(),
+            'arrival': arrival?.toJson(),
+          }),
+          isNull,
+        );
+      });
+    }
+  });
+
+  group('save write pipeline parity', () {
+    for (final fixture in loadParityFixtures('session/persist')) {
+      test(fixture.name, () {
+        final nowMs = fixture.inputField<num>('nowMs');
+        expect(
+          checkParity(
+            fixture,
+            prepareSaveForWrite(databaseOf(fixture), saveOf(fixture), nowMs + 90000).toJson(),
+          ),
+          isNull,
+        );
+      });
+    }
+  });
 }
 
 /// The clock every session fixture is anchored to: 2026-01-01T00:00:00.000Z.
