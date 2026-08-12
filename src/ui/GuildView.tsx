@@ -382,7 +382,7 @@ export function GuildView({ save, onChangeSave }: GuildViewProps) {
           {!leaveConfirm ? (
             <button
               type="button"
-              className="btn secondary guild-leave-btn"
+              className="btn danger guild-leave-btn"
               onClick={() => setLeaveConfirm(true)}
             >
               Leave guild
@@ -402,7 +402,7 @@ export function GuildView({ save, onChangeSave }: GuildViewProps) {
                 </button>
                 <button
                   type="button"
-                  className="btn primary"
+                  className="btn danger"
                   onClick={() =>
                     void leaveGuild().then((result) => {
                       setLeaveConfirm(false)
