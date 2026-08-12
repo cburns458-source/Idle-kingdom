@@ -1380,7 +1380,14 @@ export default function App() {
           {screen === 'leaderboards' && (
             <SocialView save={save} database={database} section="leaderboards" />
           )}
-          {screen === 'guilds' && <SocialView save={save} database={database} section="guilds" />}
+          {screen === 'guilds' && (
+            <SocialView
+              save={save}
+              database={database}
+              section="guilds"
+              onChangeSave={updateSave}
+            />
+          )}
           {screen === 'settings' && (
             <SettingsPanel
               save={save}

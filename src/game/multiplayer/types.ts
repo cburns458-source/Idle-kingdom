@@ -51,14 +51,65 @@ export interface ChatMessage {
   createdAt: string
 }
 
-export type GuildRole = 'leader' | 'officer' | 'member'
+/** Leader plus four promotable ranks. */
+export type GuildRole = 'leader' | 'officer' | 'veteran' | 'member' | 'recruit'
+
+export type GuildJoinPolicy = 'open' | 'closed'
+
+export type GuildRankKey = Exclude<GuildRole, 'leader'>
+
+export interface GuildEmblem {
+  /** Banner fill color (CSS hex). */
+  color: string
+  /** Symbol shown on the banner (emoji / short glyph). */
+  symbol: string
+}
+
+export const DEFAULT_GUILD_RANK_LABELS: Record<GuildRankKey, string> = {
+  officer: 'Officer',
+  veteran: 'Veteran',
+  member: 'Member',
+  recruit: 'Recruit',
+}
+
+export const GUILD_CREATE_GOLD_COST = 25
+
+export const GUILD_EMBLEM_COLORS = [
+  '#5c4027',
+  '#2f6b3a',
+  '#3d5a80',
+  '#7a2f2f',
+  '#6b4f1d',
+  '#4a3b6b',
+  '#1f4b5c',
+  '#5a2d4a',
+] as const
+
+export const GUILD_EMBLEM_SYMBOLS = [
+  '⚔️',
+  '🛡️',
+  '🌲',
+  '🐉',
+  '⭐',
+  '🔥',
+  '🌙',
+  '🦅',
+  '🏰',
+  '💎',
+  '🐺',
+  '🦁',
+] as const
 
 export interface GuildRecord {
   id: string
   name: string
+  /** 2–4 letter tag, displayed as [TAG]. */
+  tag: string
   description: string
-  emblem: string
+  emblem: GuildEmblem
   leaderId: string
+  joinPolicy: GuildJoinPolicy
+  rankLabels: Record<GuildRankKey, string>
   createdAt: string
 }
 
@@ -68,6 +119,15 @@ export interface GuildMember {
   username: string
   role: GuildRole
   joinedAt: string
+  appearance: PlayerAppearance
+  totalLevel: number
+}
+
+export interface CreateGuildInput {
+  name: string
+  tag: string
+  description?: string
+  emblem: GuildEmblem
 }
 
 export interface GuildApplication {

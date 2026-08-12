@@ -38,9 +38,20 @@ describe('local multiplayer backend', () => {
     expect(chat.ok).toBe(true)
     expect(backend.listChat({ kind: 'global' }, signed.session.userId)).toHaveLength(1)
 
-    const guild = backend.createGuild(signed.session, 'Oak Guard', 'For the kingdom')
+    const guild = backend.createGuild(
+      signed.session,
+      {
+        name: 'Oak Guard',
+        tag: 'OAK',
+        description: 'For the kingdom',
+        emblem: { color: '#2f6b3a', symbol: '🌲' },
+      },
+      100,
+    )
     expect(guild.ok).toBe(true)
     if (!guild.ok) return
+    expect(guild.goldCost).toBe(25)
+    expect(guild.guild.tag).toBe('OAK')
     expect(backend.guildMembers(guild.guild.id)).toHaveLength(1)
 
     backend.upsertPresence(signed.session, {
@@ -62,5 +73,70 @@ describe('local multiplayer backend', () => {
 
   it('filters basic profanity', () => {
     expect(filterProfanity('what the fuck')).toMatch(/\*+/)
+  })
+
+  it('supports guild search fields, open join, closed apps, ranks, and create cost', () => {
+    const backend = new LocalMultiplayerBackend()
+    const leader = backend.signUp('leader@example.com', 'Leader', 'secret')
+    const applicant = backend.signUp('join@example.com', 'Joiner', 'secret')
+    expect(leader.ok && applicant.ok).toBe(true)
+    if (!leader.ok || !applicant.ok) return
+
+    const poor = backend.createGuild(
+      leader.session,
+      { name: 'Broke Band', tag: 'BRK', emblem: { color: '#5c4027', symbol: '⚔️' } },
+      10,
+    )
+    expect(poor.ok).toBe(false)
+
+    const created = backend.createGuild(
+      leader.session,
+      { name: 'Iron League', tag: 'IRN', emblem: { color: '#3d5a80', symbol: '🛡️' } },
+      25,
+    )
+    expect(created.ok).toBe(true)
+    if (!created.ok) return
+
+    backend.setGuildJoinPolicy(leader.session.userId, created.guild.id, 'closed')
+    const applied = backend.applyToGuild(applicant.session, created.guild.id, 'Please')
+    expect(applied.ok).toBe(true)
+    if (!applied.ok) return
+    expect(applied.joined).toBe(false)
+    expect(backend.listApplications(created.guild.id)).toHaveLength(1)
+
+    const accepted = backend.decideApplication(
+      leader.session.userId,
+      backend.listApplications(created.guild.id)[0]!.id,
+      true,
+    )
+    expect(accepted.ok).toBe(true)
+    expect(backend.guildMembers(created.guild.id)).toHaveLength(2)
+
+    const promoted = backend.setMemberRole(
+      leader.session.userId,
+      created.guild.id,
+      applicant.session.userId,
+      'officer',
+    )
+    expect(promoted.ok).toBe(true)
+    expect(
+      backend.guildMembers(created.guild.id).find((row) => row.userId === applicant.session.userId)
+        ?.role,
+    ).toBe('officer')
+
+    const renamed = backend.setGuildRankLabels(leader.session.userId, created.guild.id, {
+      officer: 'Captain',
+    })
+    expect(renamed.ok).toBe(true)
+    expect(backend.getGuild(created.guild.id)?.rankLabels.officer).toBe('Captain')
+
+    backend.setGuildJoinPolicy(leader.session.userId, created.guild.id, 'open')
+    const third = backend.signUp('third@example.com', 'Third', 'secret')
+    expect(third.ok).toBe(true)
+    if (!third.ok) return
+    const autoJoin = backend.applyToGuild(third.session, created.guild.id, '')
+    expect(autoJoin.ok).toBe(true)
+    if (!autoJoin.ok) return
+    expect(autoJoin.joined).toBe(true)
   })
 })

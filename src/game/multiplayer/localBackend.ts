@@ -8,20 +8,29 @@ import {
   type PlayerAppearance,
   type PlayerSave,
 } from '../save/types'
+import { totalLevel } from '../skills/totals'
 import { CHAT_COOLDOWN_SECONDS, PRESENCE_TTL_SECONDS } from './config'
 import { buildLeaderboardSnapshot } from './snapshots'
 import type { GameDatabase } from '../data/types'
 import {
   chatChannelKey,
+  DEFAULT_GUILD_RANK_LABELS,
+  GUILD_CREATE_GOLD_COST,
+  GUILD_EMBLEM_COLORS,
+  GUILD_EMBLEM_SYMBOLS,
   MULTIPLAYER_LOCAL_DB_KEY,
   type ActivityPresence,
   type ChatChannel,
   type ChatMessage,
   type CloudSaveRecord,
+  type CreateGuildInput,
   type GuildApplication,
   type GuildChallenge,
+  type GuildEmblem,
+  type GuildJoinPolicy,
   type GuildMember,
   type GuildProject,
+  type GuildRankKey,
   type GuildRecord,
   type GuildRole,
   type LeaderboardEntry,
@@ -93,12 +102,75 @@ function emptyDb(): LocalDb {
   }
 }
 
+function normalizeEmblem(raw: unknown): GuildEmblem {
+  if (raw && typeof raw === 'object' && 'color' in raw && 'symbol' in raw) {
+    const emblem = raw as GuildEmblem
+    return {
+      color: typeof emblem.color === 'string' ? emblem.color : GUILD_EMBLEM_COLORS[0],
+      symbol: typeof emblem.symbol === 'string' ? emblem.symbol.slice(0, 4) : GUILD_EMBLEM_SYMBOLS[0],
+    }
+  }
+  if (typeof raw === 'string' && raw.trim()) {
+    return { color: GUILD_EMBLEM_COLORS[0], symbol: raw.trim().slice(0, 4) }
+  }
+  return { color: GUILD_EMBLEM_COLORS[0], symbol: GUILD_EMBLEM_SYMBOLS[0] }
+}
+
+function normalizeRankLabels(raw: unknown): Record<GuildRankKey, string> {
+  const base = { ...DEFAULT_GUILD_RANK_LABELS }
+  if (!raw || typeof raw !== 'object') return base
+  const labels = raw as Partial<Record<GuildRankKey, string>>
+  for (const key of Object.keys(base) as GuildRankKey[]) {
+    const value = labels[key]?.trim()
+    if (value) base[key] = value.slice(0, 18)
+  }
+  return base
+}
+
+function normalizeRole(raw: unknown): GuildRole {
+  if (raw === 'leader' || raw === 'officer' || raw === 'veteran' || raw === 'member' || raw === 'recruit') {
+    return raw
+  }
+  return 'recruit'
+}
+
+function normalizeTag(name: string, tag: unknown): string {
+  if (typeof tag === 'string') {
+    const clean = tag.replace(/[^a-zA-Z]/g, '').toUpperCase().slice(0, 4)
+    if (clean.length >= 2) return clean
+  }
+  const fromName = name.replace(/[^a-zA-Z]/g, '').toUpperCase().slice(0, 4)
+  return fromName.length >= 2 ? fromName : 'GD'
+}
+
+function normalizeGuild(raw: GuildRecord): GuildRecord {
+  return {
+    ...raw,
+    tag: normalizeTag(raw.name ?? 'Guild', (raw as GuildRecord & { tag?: unknown }).tag),
+    emblem: normalizeEmblem(raw.emblem),
+    joinPolicy:
+      (raw as GuildRecord & { joinPolicy?: GuildJoinPolicy }).joinPolicy === 'closed'
+        ? 'closed'
+        : 'open',
+    rankLabels: normalizeRankLabels((raw as GuildRecord & { rankLabels?: unknown }).rankLabels),
+    description: raw.description ?? '',
+  }
+}
+
 function loadDb(storage: Storage = localStorage): LocalDb {
   try {
     const raw = storage.getItem(MULTIPLAYER_LOCAL_DB_KEY)
     if (!raw) return emptyDb()
     const parsed = JSON.parse(raw) as LocalDb
-    return { ...emptyDb(), ...parsed }
+    const merged = { ...emptyDb(), ...parsed }
+    merged.guilds = (merged.guilds ?? []).map((guild) => normalizeGuild(guild as GuildRecord))
+    merged.members = (merged.members ?? []).map((member) => ({
+      ...member,
+      role: normalizeRole(member.role),
+      appearance: member.appearance ?? defaultAppearance(),
+      totalLevel: Number.isFinite(member.totalLevel) ? member.totalLevel : 1,
+    }))
+    return merged
   } catch {
     return emptyDb()
   }
@@ -382,14 +454,37 @@ export class LocalMultiplayerBackend {
     this.write(db)
   }
 
+  private memberSnapshot(
+    db: LocalDb,
+    userId: string,
+    username: string,
+  ): Pick<GuildMember, 'appearance' | 'totalLevel' | 'username'> {
+    const profile = db.profiles.find((row) => row.userId === userId)
+    const cloud = db.saves.find((row) => row.userId === userId)
+    const level = cloud ? totalLevel(cloud.payload) : 1
+    return {
+      username: cloud?.payload.characterName?.trim() || profile?.username || username,
+      appearance: cloud?.payload.appearance ?? profile?.appearance ?? defaultAppearance(),
+      totalLevel: Math.max(1, level),
+    }
+  }
+
   createGuild(
     session: MultiplayerSession,
-    name: string,
-    description: string,
-    emblem = '⚔️',
-  ): { ok: true; guild: GuildRecord } | { ok: false; reason: string } {
-    const clean = name.trim().slice(0, 28)
+    input: CreateGuildInput,
+    goldAvailable: number,
+  ):
+    | { ok: true; guild: GuildRecord; goldCost: number }
+    | { ok: false; reason: string } {
+    const clean = input.name.trim().slice(0, 28)
+    const tag = input.tag.replace(/[^a-zA-Z]/g, '').toUpperCase().slice(0, 4)
     if (clean.length < 3) return { ok: false, reason: 'Guild name needs at least 3 characters.' }
+    if (tag.length < 2 || tag.length > 4) {
+      return { ok: false, reason: 'Guild tag must be 2–4 letters.' }
+    }
+    if (goldAvailable < GUILD_CREATE_GOLD_COST) {
+      return { ok: false, reason: `Creating a guild costs ${GUILD_CREATE_GOLD_COST} gold.` }
+    }
     const db = this.db()
     if (db.members.some((row) => row.userId === session.userId)) {
       return { ok: false, reason: 'Leave your current guild before creating another.' }
@@ -397,21 +492,30 @@ export class LocalMultiplayerBackend {
     if (db.guilds.some((row) => row.name.toLowerCase() === clean.toLowerCase())) {
       return { ok: false, reason: 'That guild name is taken.' }
     }
+    if (db.guilds.some((row) => row.tag.toUpperCase() === tag)) {
+      return { ok: false, reason: 'That guild tag is taken.' }
+    }
+    const snapshot = this.memberSnapshot(db, session.userId, session.username)
     const guild: GuildRecord = {
       id: newId('gld'),
       name: clean,
-      description: description.trim().slice(0, 160),
-      emblem: emblem.slice(0, 4) || '⚔️',
+      tag,
+      description: (input.description ?? '').trim().slice(0, 160),
+      emblem: normalizeEmblem(input.emblem),
       leaderId: session.userId,
+      joinPolicy: 'open',
+      rankLabels: { ...DEFAULT_GUILD_RANK_LABELS },
       createdAt: nowIso(),
     }
     db.guilds.push(guild)
     db.members.push({
       guildId: guild.id,
       userId: session.userId,
-      username: session.username,
+      username: snapshot.username,
       role: 'leader',
       joinedAt: nowIso(),
+      appearance: snapshot.appearance,
+      totalLevel: snapshot.totalLevel,
     })
     db.profiles = db.profiles.map((row) =>
       row.userId === session.userId
@@ -436,28 +540,65 @@ export class LocalMultiplayerBackend {
       currentValue: 0,
     })
     this.write(db)
-    return { ok: true, guild }
+    return { ok: true, guild, goldCost: GUILD_CREATE_GOLD_COST }
   }
 
   listGuilds(): GuildRecord[] {
     return [...this.db().guilds].sort((a, b) => a.name.localeCompare(b.name))
   }
 
+  getGuild(guildId: string): GuildRecord | null {
+    return this.db().guilds.find((row) => row.id === guildId) ?? null
+  }
+
   guildMembers(guildId: string): GuildMember[] {
-    return this.db().members.filter((row) => row.guildId === guildId)
+    const db = this.db()
+    return db.members
+      .filter((row) => row.guildId === guildId)
+      .map((row) => {
+        const snapshot = this.memberSnapshot(db, row.userId, row.username)
+        return {
+          ...row,
+          role: normalizeRole(row.role),
+          username: snapshot.username,
+          appearance: snapshot.appearance,
+          totalLevel: snapshot.totalLevel,
+        }
+      })
   }
 
   applyToGuild(
     session: MultiplayerSession,
     guildId: string,
     message: string,
-  ): { ok: true } | { ok: false; reason: string } {
+  ): { ok: true; joined: boolean } | { ok: false; reason: string } {
     const db = this.db()
-    if (!db.guilds.some((row) => row.id === guildId)) {
-      return { ok: false, reason: 'Guild not found.' }
-    }
+    const guild = db.guilds.find((row) => row.id === guildId)
+    if (!guild) return { ok: false, reason: 'Guild not found.' }
     if (db.members.some((row) => row.userId === session.userId)) {
       return { ok: false, reason: 'Already in a guild.' }
+    }
+    if (guild.joinPolicy === 'open') {
+      const snapshot = this.memberSnapshot(db, session.userId, session.username)
+      db.members.push({
+        guildId: guild.id,
+        userId: session.userId,
+        username: snapshot.username,
+        role: 'recruit',
+        joinedAt: nowIso(),
+        appearance: snapshot.appearance,
+        totalLevel: snapshot.totalLevel,
+      })
+      db.profiles = db.profiles.map((row) =>
+        row.userId === session.userId
+          ? { ...row, guildId: guild.id, guildName: guild.name, updatedAt: nowIso() }
+          : row,
+      )
+      db.applications = db.applications.filter(
+        (row) => !(row.guildId === guildId && row.userId === session.userId),
+      )
+      this.write(db)
+      return { ok: true, joined: true }
     }
     if (
       db.applications.some((row) => row.guildId === guildId && row.userId === session.userId)
@@ -473,7 +614,7 @@ export class LocalMultiplayerBackend {
       createdAt: nowIso(),
     })
     this.write(db)
-    return { ok: true }
+    return { ok: true, joined: false }
   }
 
   listApplications(guildId: string): GuildApplication[] {
@@ -498,12 +639,15 @@ export class LocalMultiplayerBackend {
         this.write(db)
         return { ok: false, reason: 'Applicant already joined another guild.' }
       }
+      const snapshot = this.memberSnapshot(db, application.userId, application.username)
       db.members.push({
         guildId: guild.id,
         userId: application.userId,
-        username: application.username,
-        role: 'member',
+        username: snapshot.username,
+        role: 'recruit',
         joinedAt: nowIso(),
+        appearance: snapshot.appearance,
+        totalLevel: snapshot.totalLevel,
       })
       db.profiles = db.profiles.map((row) =>
         row.userId === application.userId
@@ -527,9 +671,44 @@ export class LocalMultiplayerBackend {
       return { ok: false, reason: 'Only the leader can change roles.' }
     }
     if (role === 'leader') return { ok: false, reason: 'Transfer leadership is not available yet.' }
+    if (targetUserId === guild.leaderId) {
+      return { ok: false, reason: 'Cannot change the leader rank this way.' }
+    }
+    const allowed: GuildRole[] = ['officer', 'veteran', 'member', 'recruit']
+    if (!allowed.includes(role)) return { ok: false, reason: 'Invalid rank.' }
     db.members = db.members.map((row) =>
       row.guildId === guildId && row.userId === targetUserId ? { ...row, role } : row,
     )
+    this.write(db)
+    return { ok: true }
+  }
+
+  setGuildJoinPolicy(
+    actorId: string,
+    guildId: string,
+    joinPolicy: GuildJoinPolicy,
+  ): { ok: true } | { ok: false; reason: string } {
+    const db = this.db()
+    const guild = db.guilds.find((row) => row.id === guildId)
+    if (!guild || guild.leaderId !== actorId) {
+      return { ok: false, reason: 'Only the leader can change join settings.' }
+    }
+    guild.joinPolicy = joinPolicy
+    this.write(db)
+    return { ok: true }
+  }
+
+  setGuildRankLabels(
+    actorId: string,
+    guildId: string,
+    rankLabels: Partial<Record<GuildRankKey, string>>,
+  ): { ok: true } | { ok: false; reason: string } {
+    const db = this.db()
+    const guild = db.guilds.find((row) => row.id === guildId)
+    if (!guild || guild.leaderId !== actorId) {
+      return { ok: false, reason: 'Only the leader can rename ranks.' }
+    }
+    guild.rankLabels = normalizeRankLabels({ ...guild.rankLabels, ...rankLabels })
     this.write(db)
     return { ok: true }
   }

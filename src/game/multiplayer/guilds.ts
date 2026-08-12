@@ -1,30 +1,36 @@
 import { getSession } from './auth'
 import { getLocalBackend, multiplayerMode } from './client'
 import type {
+  CreateGuildInput,
   GuildApplication,
   GuildChallenge,
+  GuildJoinPolicy,
   GuildMember,
   GuildProject,
+  GuildRankKey,
   GuildRecord,
   GuildRole,
 } from './types'
 
 export async function createGuild(
-  name: string,
-  description: string,
-  emblem?: string,
-): Promise<{ ok: true; guild: GuildRecord } | { ok: false; reason: string }> {
+  input: CreateGuildInput,
+  goldAvailable: number,
+): Promise<
+  { ok: true; guild: GuildRecord; goldCost: number } | { ok: false; reason: string }
+> {
   const session = getSession()
   if (!session) return { ok: false, reason: 'Sign in to create a guild.' }
-  if (multiplayerMode() !== 'local') {
-    // Remote path reuses local semantics via edge functions later; local demo first.
-    return getLocalBackend().createGuild(session, name, description, emblem)
-  }
-  return getLocalBackend().createGuild(session, name, description, emblem)
+  // Remote path reuses local semantics via edge functions later; local demo first.
+  void multiplayerMode()
+  return getLocalBackend().createGuild(session, input, goldAvailable)
 }
 
 export async function listGuilds(): Promise<GuildRecord[]> {
   return getLocalBackend().listGuilds()
+}
+
+export async function getGuild(guildId: string): Promise<GuildRecord | null> {
+  return getLocalBackend().getGuild(guildId)
 }
 
 export async function listGuildMembers(guildId: string): Promise<GuildMember[]> {
@@ -34,7 +40,7 @@ export async function listGuildMembers(guildId: string): Promise<GuildMember[]> 
 export async function applyToGuild(
   guildId: string,
   message: string,
-): Promise<{ ok: true } | { ok: false; reason: string }> {
+): Promise<{ ok: true; joined: boolean } | { ok: false; reason: string }> {
   const session = getSession()
   if (!session) return { ok: false, reason: 'Sign in to apply.' }
   return getLocalBackend().applyToGuild(session, guildId, message)
@@ -61,6 +67,24 @@ export async function setGuildMemberRole(
   const session = getSession()
   if (!session) return { ok: false, reason: 'Sign in required.' }
   return getLocalBackend().setMemberRole(session.userId, guildId, targetUserId, role)
+}
+
+export async function setGuildJoinPolicy(
+  guildId: string,
+  joinPolicy: GuildJoinPolicy,
+): Promise<{ ok: true } | { ok: false; reason: string }> {
+  const session = getSession()
+  if (!session) return { ok: false, reason: 'Sign in required.' }
+  return getLocalBackend().setGuildJoinPolicy(session.userId, guildId, joinPolicy)
+}
+
+export async function setGuildRankLabels(
+  guildId: string,
+  rankLabels: Partial<Record<GuildRankKey, string>>,
+): Promise<{ ok: true } | { ok: false; reason: string }> {
+  const session = getSession()
+  if (!session) return { ok: false, reason: 'Sign in required.' }
+  return getLocalBackend().setGuildRankLabels(session.userId, guildId, rankLabels)
 }
 
 export async function leaveGuild(): Promise<{ ok: true } | { ok: false; reason: string }> {
@@ -91,4 +115,9 @@ export function currentGuildId(): string | null {
   const session = getSession()
   if (!session) return null
   return getLocalBackend().getProfile(session.userId)?.guildId ?? null
+}
+
+export function guildRoleLabel(guild: GuildRecord, role: GuildRole): string {
+  if (role === 'leader') return 'Leader'
+  return guild.rankLabels[role] ?? role
 }
