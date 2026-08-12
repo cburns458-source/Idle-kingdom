@@ -162,13 +162,8 @@ export function LocationView({
     Boolean(onOpenParentSubMap) && Boolean(parentSubMapName) && !showSubMapEntrance
   const showActivityPanel =
     !showSubMapEntrance && (activities.length > 0 || specialStations.length > 0)
-  const [activitiesHidden, setActivitiesHidden] = useState(false)
   const shadeRef = useRef<HTMLDivElement | null>(null)
   const hasStatusPanel = hasRenderableContent(statusPanel)
-
-  useEffect(() => {
-    setActivitiesHidden(false)
-  }, [locationId])
 
   useEffect(() => {
     if (searchSpots.length === 0) return
@@ -259,30 +254,9 @@ export function LocationView({
 
           <div className="location-bottom-band">
             <div className="location-bottom-panels">
-            {showActivityPanel && activitiesHidden && (
-              <div className="location-activities-reveal">
-                <button
-                  type="button"
-                  className="btn secondary glass-btn"
-                  onClick={() => setActivitiesHidden(false)}
-                >
-                  Show activities
-                </button>
-              </div>
-            )}
-
-            {showActivityPanel && !activitiesHidden && (
+            {showActivityPanel && (
               <section className="panel glass-panel location-activities">
-                <div className="location-activities-head">
-                  <h2>Activities</h2>
-                  <button
-                    type="button"
-                    className="btn secondary location-activities-hide"
-                    onClick={() => setActivitiesHidden(true)}
-                  >
-                    Hide
-                  </button>
-                </div>
+                <h2>Activities</h2>
                 <ul className="interaction-list">
                   {activities.map((activity) => {
                     const active = currentActivityId === activity['Activity ID']
