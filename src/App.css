@@ -736,6 +736,7 @@ button.hud-total-stat:focus-visible {
 .hud-race {
   margin: 0;
   line-height: 1.2;
+  font-size: 0.78rem;
 }
 
 .wardrobe-race {

@@ -85,7 +85,7 @@ export function TopHud({
       <div className="top-hud-main">
         <div className="top-hud-identity">
           <p className="brand">{characterName?.trim() || 'Adventurer'}</p>
-          {raceName && <p className="hud-race muted tiny">{raceName}</p>}
+          {raceName && <p className="hud-race muted">{raceName}</p>}
           {onToggleTotalStat ? (
             <button
               type="button"
