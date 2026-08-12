@@ -7,6 +7,7 @@ import { combatStatScenarios } from './combatStats'
 import { contentScenarios } from './content'
 import { coreRuleScenarios } from './coreRules'
 import { equipmentScenarios } from './equipment'
+import { metaScenarios } from './meta'
 import { productionScenarios } from './production'
 import { projectScenarios } from './projects'
 import { questScenarios } from './quests'
@@ -38,6 +39,7 @@ export const parityScenarios: ParityScenario[] = [
   ...activityScenarios,
   ...shopScenarios,
   ...worldScenarios,
+  ...metaScenarios,
 ]
 
 export function assertUniqueScenarioNames(scenarios: ParityScenario[]): void {

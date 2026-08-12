@@ -125,15 +125,13 @@ export function collectCritter(
   const critter = getCritter(spawn.critterId)
   if (!critter) return { ok: false, reason: 'Unknown Critter.' }
 
-  const collections = [...(save.critterCollections ?? [])]
-  const existing = collections.find((row) => row.critterId === critter.id)
-  let count = 1
-  if (existing) {
-    existing.count += 1
-    count = existing.count
-  } else {
-    collections.push({ critterId: critter.id, count: 1 })
-  }
+  const existing = (save.critterCollections ?? []).find((row) => row.critterId === critter.id)
+  const count = (existing?.count ?? 0) + 1
+  const collections = existing
+    ? (save.critterCollections ?? []).map((row) =>
+        row.critterId === critter.id ? { ...row, count } : row,
+      )
+    : [...(save.critterCollections ?? []), { critterId: critter.id, count }]
 
   const spawns = (save.activeCritterSpawns ?? []).filter(
     (row) => row.locationId !== locationId,

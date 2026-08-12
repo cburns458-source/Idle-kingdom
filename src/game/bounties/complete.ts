@@ -29,31 +29,21 @@ function consumeInventoryItems(
   return { ok: true, save: { ...save, inventory } }
 }
 
-export type BountyTurnInResult =
-  | {
-      ok: true
-      save: PlayerSave
-      claim: BountyClaimRecord
-      firstCompleter: boolean
-      goldGained: number
-    }
+export type BountyTurnInCheck =
+  | { ok: true; save: PlayerSave }
   | { ok: false; reason: string }
 
 /**
- * Plaza notice-board turn-in.
- * Grants base gold to each eligible claimer; first server accept also gets first-place bonus.
+ * Everything the turn-in decides locally: the board is current, the objective is
+ * met, and any delivered items have left the bag. The returned save is what the
+ * reward is applied to once a backend accepts the claim.
  */
-export function turnInBounty(
-  db: GameDatabase,
+export function prepareBountyTurnIn(
   save: PlayerSave,
   bounty: BountyDefinition,
-  nowMs: number = Date.now(),
-): BountyTurnInResult {
-  if (!isSignedIn()) return { ok: false, reason: 'Sign in to claim bounties.' }
-  const session = getSession()
-  if (!session) return { ok: false, reason: 'Sign in to claim bounties.' }
-
-  let next = syncBountyHour(save, nowMs)
+  nowMs: number,
+): BountyTurnInCheck {
+  const next = syncBountyHour(save, nowMs)
   const board = hourlyBountyBoard(nowMs)
   if (board.hourKey !== next.bountyHourKey) {
     return { ok: false, reason: 'This bounty board has rotated.' }
@@ -67,43 +57,83 @@ export function turnInBounty(
   if (!isBountyReadyToClaim(next, bounty, nowMs)) {
     return { ok: false, reason: 'Finish the bounty objective first.' }
   }
-
   if (bounty.kind === 'gather_deliver') {
-    const removed = consumeInventoryItems(next, bounty.targetId, bounty.amount)
-    if (!removed.ok) return { ok: false, reason: removed.reason }
-    next = removed.save
+    return consumeInventoryItems(next, bounty.targetId, bounty.amount)
   }
+  return { ok: true, save: next }
+}
 
-  const claimResult = getLocalBackend().claimBounty(session, board.hourKey, bounty.id)
-  if (!claimResult.ok) return { ok: false, reason: claimResult.reason }
+export interface BountyRewardResult {
+  save: PlayerSave
+  goldGained: number
+}
 
-  const bonus =
-    claimResult.firstCompleter && claimResult.claim.userId === session.userId
-      ? bounty.firstPlaceBonusGold
-      : 0
-  // If someone else already claimed first, still allow personal base reward.
-  const goldGained = bounty.rewardGold + bonus
-  const completed = Number(next.statistics.values.bounties_completed ?? 0) + 1
-  next = {
-    ...next,
-    gold: next.gold + goldGained,
-    bountyClaimedIds: [...(next.bountyClaimedIds ?? []), bounty.id],
-    statistics: {
-      values: {
-        ...next.statistics.values,
-        bounties_completed: completed,
-        gold_earned: Number(next.statistics.values.gold_earned ?? 0) + goldGained,
+/**
+ * Pay out a bounty a backend has accepted. Everyone eligible earns the base
+ * reward; only the claim the server recorded first adds the bonus.
+ */
+export function applyBountyReward(
+  save: PlayerSave,
+  bounty: BountyDefinition,
+  firstCompleter: boolean,
+): BountyRewardResult {
+  const goldGained = bounty.rewardGold + (firstCompleter ? bounty.firstPlaceBonusGold : 0)
+  return {
+    save: {
+      ...save,
+      gold: save.gold + goldGained,
+      bountyClaimedIds: [...(save.bountyClaimedIds ?? []), bounty.id],
+      statistics: {
+        values: {
+          ...save.statistics.values,
+          bounties_completed: Number(save.statistics.values.bounties_completed ?? 0) + 1,
+          gold_earned: Number(save.statistics.values.gold_earned ?? 0) + goldGained,
+        },
       },
     },
+    goldGained,
   }
+}
 
-  void submitLeaderboardFromSave(db, next)
+export type BountyTurnInResult =
+  | {
+      ok: true
+      save: PlayerSave
+      claim: BountyClaimRecord
+      firstCompleter: boolean
+      goldGained: number
+    }
+  | { ok: false; reason: string }
+
+/** Plaza notice-board turn-in, against the signed-in player's backend. */
+export function turnInBounty(
+  db: GameDatabase,
+  save: PlayerSave,
+  bounty: BountyDefinition,
+  nowMs: number = Date.now(),
+): BountyTurnInResult {
+  if (!isSignedIn()) return { ok: false, reason: 'Sign in to claim bounties.' }
+  const session = getSession()
+  if (!session) return { ok: false, reason: 'Sign in to claim bounties.' }
+
+  const prepared = prepareBountyTurnIn(save, bounty, nowMs)
+  if (!prepared.ok) return prepared
+
+  const hourKey = hourlyBountyBoard(nowMs).hourKey
+  const claimResult = getLocalBackend().claimBounty(session, hourKey, bounty.id)
+  if (!claimResult.ok) return { ok: false, reason: claimResult.reason }
+
+  const firstCompleter =
+    claimResult.firstCompleter && claimResult.claim.userId === session.userId
+  const rewarded = applyBountyReward(prepared.save, bounty, firstCompleter)
+
+  void submitLeaderboardFromSave(db, rewarded.save)
 
   return {
     ok: true,
-    save: next,
+    save: rewarded.save,
     claim: claimResult.claim,
-    firstCompleter: claimResult.firstCompleter && claimResult.claim.userId === session.userId,
-    goldGained,
+    firstCompleter,
+    goldGained: rewarded.goldGained,
   }
 }

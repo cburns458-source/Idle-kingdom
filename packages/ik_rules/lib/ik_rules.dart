@@ -8,6 +8,7 @@
 /// also how the parity fixtures check them.
 library;
 
+export 'src/achievements/progress.dart';
 export 'src/activity/bonus_xp.dart';
 export 'src/activity/engine.dart';
 export 'src/activity/gathering.dart';
@@ -20,6 +21,7 @@ export 'src/activity/types.dart';
 export 'src/activity/xp.dart';
 export 'src/activity/xp_progress.dart';
 export 'src/bounties/catalog.dart';
+export 'src/bounties/complete.dart';
 export 'src/bounties/progress.dart';
 export 'src/bounties/rotation.dart';
 export 'src/bounties/types.dart';
@@ -27,7 +29,9 @@ export 'src/combat/engine.dart';
 export 'src/combat/food.dart';
 export 'src/combat/stats.dart';
 export 'src/config.dart';
+export 'src/cosmetics/appearance.dart';
 export 'src/cosmetics/cosmetics.dart';
+export 'src/critters/critters.dart';
 export 'src/equipment/auto_equip.dart';
 export 'src/equipment/loadout.dart';
 export 'src/equipment/tooltips.dart';
