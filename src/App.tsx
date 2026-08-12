@@ -77,7 +77,6 @@ import {
 import { BottomNav, type AppScreen } from './ui/BottomNav'
 import { CombatPanel } from './ui/CombatPanel'
 import { ChatDrawer } from './ui/ChatDrawer'
-import { ActivePlayersPanel } from './ui/ActivePlayersPanel'
 import { AccountPanel } from './ui/AccountPanel'
 import { InventoryView } from './ui/InventoryView'
 import { LocationView } from './ui/LocationView'
@@ -1213,6 +1212,13 @@ export default function App() {
                     }
                   : undefined
               }
+              skillNameForId={(skillId) =>
+                skillId
+                  ? (database.launch.Skills.find((skill) => skill['Skill ID'] === skillId)?.[
+                      'Display Name'
+                    ] ?? skillId)
+                  : 'Skill'
+              }
               statusPanel={
                 <>
                   {activeShopId && (
@@ -1410,18 +1416,6 @@ export default function App() {
               }}
               onOpenSocial={() => setScreen('social')}
               onMessage={setLastMessage}
-            />
-          )}
-          {screen === 'location' && (
-            <ActivePlayersPanel
-              save={save}
-              skillNameForId={(skillId) =>
-                skillId
-                  ? (database.launch.Skills.find((skill) => skill['Skill ID'] === skillId)?.[
-                      'Display Name'
-                    ] ?? skillId)
-                  : 'Skill'
-              }
             />
           )}
         </div>

@@ -1189,10 +1189,16 @@ button.hud-total-stat:focus-visible {
 .location-map-actions {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
+  align-items: flex-start;
   justify-content: flex-end;
   gap: 0.45rem;
   flex-shrink: 0;
+}
+
+.location-map-action-stack {
+  display: grid;
+  gap: 0.45rem;
+  justify-items: center;
 }
 
 .location-submap-back {
@@ -3399,15 +3405,56 @@ button.hud-total-stat:focus-visible {
   font-size: 0.85rem;
 }
 
+.active-players-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 28;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(12, 10, 8, 0.55);
+}
+
 .active-players-panel {
-  margin: 0.75rem 0 0;
-  padding: 0.65rem 0.75rem;
-  border-top: 1px solid rgba(212, 175, 90, 0.2);
+  width: min(100%, 22rem);
+  max-height: min(70vh, 28rem);
+  overflow: auto;
+  margin: 0;
+  padding: 0.75rem 0.85rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(212, 175, 90, 0.35);
+  background: rgba(18, 13, 9, 0.96);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+}
+
+.active-players-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.45rem;
 }
 
 .active-players-panel h2 {
-  margin: 0 0 0.35rem;
+  margin: 0;
   font-size: 1rem;
+}
+
+.nearby-players-btn {
+  border-color: rgba(212, 175, 90, 0.55);
+  background: rgba(48, 36, 24, 0.92);
+  color: rgba(236, 214, 168, 0.95);
+}
+
+.nearby-players-btn:hover {
+  background: rgba(62, 46, 30, 0.96);
+  color: #f3e2b8;
+}
+
+.nearby-players-svg {
+  width: 2.1rem;
+  height: 2.1rem;
+  display: block;
 }
 
 .active-players-panel ul {

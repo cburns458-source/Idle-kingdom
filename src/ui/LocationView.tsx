@@ -18,7 +18,9 @@ import {
   canClaimLocationSearch,
   locationSearchCooldownRemainingMs,
 } from '../game/world/locationSearch'
+import { isSignedIn } from '../game/multiplayer/auth'
 import type { PlayerSave } from '../game/save/types'
+import { ActivePlayersPanel } from './ActivePlayersPanel'
 import { CritterOverlay } from './CritterOverlay'
 import { formatDurationSeconds } from './formatDuration'
 
@@ -73,6 +75,8 @@ interface LocationViewProps {
   requirementHint?: (activity: ActivityRow) => string | null
   /** Standard Production opens a recipe picker. */
   isRecipeBrowserActivity?: (activity: ActivityRow) => boolean
+  /** Skill label helper for the Nearby Adventurers panel. */
+  skillNameForId?: (skillId: string | null) => string
 }
 
 function MapIcon() {
@@ -82,6 +86,30 @@ function MapIcon() {
       style={{ backgroundImage: `url(${uiMapAssetPath()})` }}
       aria-hidden
     />
+  )
+}
+
+function NearbyPlayersIcon() {
+  return (
+    <svg className="map-icon nearby-players-svg" viewBox="0 0 24 24" aria-hidden>
+      <circle cx="9" cy="8" r="3.2" fill="currentColor" />
+      <circle cx="16.5" cy="9" r="2.6" fill="currentColor" opacity="0.85" />
+      <path
+        d="M3.5 18.5c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+      <path
+        d="M13.2 18.5c.35-1.9 1.5-3.1 3.3-3.1 1.7 0 2.9 1.1 3.3 3.1"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        opacity="0.85"
+      />
+    </svg>
   )
 }
 
@@ -109,6 +137,7 @@ export function LocationView({
   onSearchLocation,
   requirementHint,
   isRecipeBrowserActivity,
+  skillNameForId,
 }: LocationViewProps) {
   const locationId = location['Location ID']
   const activities = indexes.activitiesByLocationId.get(locationId) ?? []
@@ -117,6 +146,14 @@ export function LocationView({
   const npcs = indexes.npcsByLocationId.get(locationId) ?? []
   const searchSpots = indexes.locationSearchesByLocationId.get(locationId) ?? []
   const [nowTick, setNowTick] = useState(() => Date.now())
+  const [nearbyOpen, setNearbyOpen] = useState(false)
+  const signedIn = isSignedIn()
+  const resolveSkillName =
+    skillNameForId ??
+    ((skillId: string | null) =>
+      skillId
+        ? (db.Skills.find((skill) => skill['Skill ID'] === skillId)?.['Display Name'] ?? skillId)
+        : 'Skill')
   const gatewayLabel =
     enterSubMapLabelText ?? enterSubMapLabel(db, location)
   const showSubMapEntrance =
@@ -149,6 +186,7 @@ export function LocationView({
   }
 
   return (
+    <>
     <section
       className="location-view"
       style={{ backgroundImage: `url(${locationAssetPath(locationId)})` }}
@@ -175,15 +213,28 @@ export function LocationView({
                 Back to {parentSubMapName}
               </button>
             )}
-            <button
-              type="button"
-              className="map-icon-btn"
-              onClick={onOpenMap}
-              aria-label="Open world map"
-              title="Open world map"
-            >
-              <MapIcon />
-            </button>
+            <div className="location-map-action-stack">
+              <button
+                type="button"
+                className="map-icon-btn"
+                onClick={onOpenMap}
+                aria-label="Open world map"
+                title="Open world map"
+              >
+                <MapIcon />
+              </button>
+              {signedIn && (
+                <button
+                  type="button"
+                  className="map-icon-btn nearby-players-btn"
+                  onClick={() => setNearbyOpen(true)}
+                  aria-label="Nearby adventurers"
+                  title="Nearby adventurers"
+                >
+                  <NearbyPlayersIcon />
+                </button>
+              )}
+            </div>
           </div>
         </header>
 
@@ -393,5 +444,12 @@ export function LocationView({
         </div>
       </div>
     </section>
+    <ActivePlayersPanel
+      save={save}
+      skillNameForId={resolveSkillName}
+      open={nearbyOpen}
+      onClose={() => setNearbyOpen(false)}
+    />
+    </>
   )
 }
