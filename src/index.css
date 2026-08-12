@@ -1,0 +1,220 @@
+:root {
+  --bg: #0f1226;
+  --panel: #1b1f3b;
+  --panel-2: #232850;
+  --accent: #f5c542;
+  --accent-dark: #b8860b;
+  --text: #eef0ff;
+  --muted: #9aa0c7;
+  --good: #4ade80;
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  color: var(--text);
+  background:
+    radial-gradient(1200px 600px at 50% -10%, #2a2f63 0%, transparent 60%),
+    var(--bg);
+  min-height: 100vh;
+}
+
+.app {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 24px 16px 48px;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.header h1 {
+  font-size: 2.4rem;
+  margin: 0;
+  letter-spacing: 0.5px;
+}
+
+.crown {
+  filter: drop-shadow(0 2px 6px rgba(245, 197, 66, 0.6));
+}
+
+.tagline {
+  color: var(--muted);
+  margin: 6px 0 0;
+}
+
+.treasury {
+  background: linear-gradient(160deg, var(--panel), var(--panel-2));
+  border: 1px solid rgba(245, 197, 66, 0.25);
+  border-radius: 16px;
+  padding: 24px;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+}
+
+.gold {
+  font-size: 2.8rem;
+  font-weight: 800;
+  color: var(--accent);
+  line-height: 1.1;
+}
+
+.gps {
+  color: var(--good);
+  margin-top: 4px;
+  font-weight: 600;
+}
+
+.collect {
+  margin-top: 18px;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #201a00;
+  background: linear-gradient(180deg, #ffd85c, var(--accent-dark));
+  border: none;
+  border-radius: 12px;
+  padding: 14px 28px;
+  cursor: pointer;
+  transition: transform 0.05s ease, filter 0.15s ease;
+  box-shadow: 0 6px 0 #6b5000;
+}
+
+.collect:hover {
+  filter: brightness(1.05);
+}
+
+.collect:active {
+  transform: translateY(4px);
+  box-shadow: 0 2px 0 #6b5000;
+}
+
+.shop {
+  margin-top: 28px;
+}
+
+.shop h2 {
+  margin: 0 0 12px;
+  font-size: 1.3rem;
+}
+
+.building-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.building {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--panel);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+
+.building-icon {
+  font-size: 2rem;
+  width: 48px;
+  text-align: center;
+}
+
+.building-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.building-name {
+  font-weight: 700;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.building-owned {
+  color: var(--muted);
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.building-desc {
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin-top: 2px;
+}
+
+.building-prod {
+  color: var(--good);
+  font-size: 0.85rem;
+  margin-top: 2px;
+}
+
+.buy {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 96px;
+  font-weight: 700;
+  color: var(--text);
+  background: var(--panel-2);
+  border: 1px solid rgba(245, 197, 66, 0.35);
+  border-radius: 10px;
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: background 0.15s ease, opacity 0.15s ease;
+}
+
+.buy:hover:not(:disabled) {
+  background: #2e356a;
+}
+
+.buy:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.buy .cost {
+  font-size: 0.85rem;
+  color: var(--accent);
+}
+
+.footer {
+  margin-top: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.stats {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.reset {
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.reset:hover {
+  color: var(--text);
+  border-color: rgba(255, 255, 255, 0.3);
+}
