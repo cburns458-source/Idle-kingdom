@@ -79,10 +79,10 @@ function LeaderboardsView({
             ))}
           </select>
         </label>
-        <ul className="achievement-list social-leaderboard-list">
+        <ul className="leaderboard-list">
           {entries.map((entry) => (
-            <li key={`${entry.boardKey}-${entry.userId}`}>
-              <span className="muted tiny">#{entry.rank}</span>
+            <li key={`${entry.boardKey}-${entry.userId}`} className="leaderboard-row">
+              <span className="guild-member-index">{entry.rank}</span>
               {entry.entryKind === 'guild' && entry.emblem ? (
                 <GuildEmblemBadge emblem={entry.emblem} />
               ) : (
@@ -92,17 +92,17 @@ function LeaderboardsView({
                   aria-hidden
                 />
               )}
-              <div className="quest-log-copy">
+              <div className="guild-member-copy">
                 <strong>{entry.username}</strong>
                 <span className="muted tiny">
                   {entry.entryKind === 'guild'
                     ? entry.guildName ?? 'Guild'
                     : entry.guildName
                       ? entry.guildName
-                      : 'No guild'}{' '}
-                  · {entry.value.toLocaleString()}
+                      : 'No guild'}
                 </span>
               </div>
+              <span className="guild-member-level">{entry.value.toLocaleString()}</span>
             </li>
           ))}
           {entries.length === 0 && (
