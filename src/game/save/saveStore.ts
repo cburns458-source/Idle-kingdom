@@ -24,19 +24,15 @@ export interface SaveStorage {
   removeItem(key: string): void
 }
 
-function nowIso(): string {
-  return new Date().toISOString()
-}
-
 function configNumber(db: GameDatabase, key: string, fallback: number): number {
   const row = db.Config.find((entry) => entry.Key === key)
   const value = row?.Value
   return typeof value === 'number' && Number.isFinite(value) ? value : fallback
 }
 
-export function createNewSave(db: GameDatabase): PlayerSave {
+export function createNewSave(db: GameDatabase, nowMs: number = Date.now()): PlayerSave {
   const maxHp = configNumber(db, 'starting_max_hp', 1000)
-  const timestamp = nowIso()
+  const timestamp = new Date(nowMs).toISOString()
 
   const skills = db.Skills.filter((skill) => skill['Release Phase'] === 'Launch').map((skill) => ({
     skillId: skill['Skill ID'],
@@ -116,7 +112,7 @@ function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null
 }
 
-export function parseSave(raw: unknown): PlayerSave {
+export function parseSave(raw: unknown, nowMs: number = Date.now()): PlayerSave {
   if (!isObject(raw)) {
     throw new Error('Save data must be an object')
   }
@@ -126,6 +122,11 @@ export function parseSave(raw: unknown): PlayerSave {
   if (typeof raw.currentLocationId !== 'string') {
     throw new Error('Save missing currentLocationId')
   }
+  // Every save ever written stamped both, and the Dart client's model requires
+  // them, so a save without them is corrupt rather than merely old.
+  if (typeof raw.createdAt !== 'string' || typeof raw.updatedAt !== 'string') {
+    throw new Error('Save missing timestamps')
+  }
   if (!Array.isArray(raw.skills) || !Array.isArray(raw.inventory)) {
     throw new Error('Save missing skills or inventory arrays')
   }
@@ -134,14 +135,19 @@ export function parseSave(raw: unknown): PlayerSave {
   }
 
   const save = raw as unknown as PlayerSave
-  return migrateSave(save)
+  return migrateSave(save, nowMs)
+}
+
+/** The pure half of a save write: stamp the touch time. */
+export function touchSave(save: PlayerSave, nowMs: number = Date.now()): PlayerSave {
+  return {
+    ...save,
+    updatedAt: new Date(nowMs).toISOString(),
+  }
 }
 
 export function writeSave(save: PlayerSave, storage: SaveStorage = localStorage): PlayerSave {
-  const next: PlayerSave = {
-    ...save,
-    updatedAt: nowIso(),
-  }
+  const next = touchSave(save)
   storage.setItem(SAVE_STORAGE_KEY, JSON.stringify(next))
   return next
 }

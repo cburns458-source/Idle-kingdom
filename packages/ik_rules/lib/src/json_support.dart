@@ -21,7 +21,22 @@ List<T> listOf<T>(Object? value, T Function(Object? entry) convert) {
   return value.map(convert).toList();
 }
 
+/// Converts an optional array, where absent stays absent.
+List<T>? listOrNull<T>(Object? value, T Function(Object? entry) convert) {
+  if (value == null) return null;
+  return listOf(value, convert);
+}
+
 Map<String, T> mapOf<T>(Object? value, T Function(Object? value) convert) {
   final source = asJsonMap(value);
   return <String, T>{for (final entry in source.entries) entry.key: convert(entry.value)};
+}
+
+/// Converts an optional record, where absent stays absent.
+///
+/// Optional maps really are omitted in the wild: a quest saved before typed
+/// counters existed has no `counters` key at all.
+Map<String, T>? mapOrNullOf<T>(Object? value, T Function(Object? value) convert) {
+  if (value == null) return null;
+  return mapOf(value, convert);
 }

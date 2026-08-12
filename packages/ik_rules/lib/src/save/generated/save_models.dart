@@ -995,7 +995,7 @@ class QuestProgress {
       questId: json['questId'] as String,
       status: json['status'] as String,
       progress: json['progress'] as num,
-      counters: mapOf(json['counters'], (Object? value) => value as num),
+      counters: mapOrNullOf(json['counters'], (Object? value) => value as num),
     );
   }
 

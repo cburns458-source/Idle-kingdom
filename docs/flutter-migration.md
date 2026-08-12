@@ -81,13 +81,25 @@ These exist because the two languages disagree in ways that are easy to miss:
 | --- | --- |
 | Parity harness, shared PRNG, CI | Done |
 | `src/game/data` (models, loading, validation, indexes) | Done |
-| Core rules (skills, xp, inventory, equipment, requirements, races) | Not started |
-| Activity, production, recipes, projects | Not started |
-| Combat, loot, potions, spells, critters, quests, achievements, cosmetics, world, bounties, bazaar | Not started |
-| Save, migrations, unattended progress | Not started |
-| Headless session runtime (extracted from `src/App.tsx`) | Not started |
+| Core rules (skills, xp, inventory, equipment, requirements, races) | Done |
+| Activity, production, recipes, projects | Done |
+| Combat, loot, potions, spells, critters, quests, achievements, cosmetics, world, bounties | Done |
+| Save, migrations, unattended progress | Done |
+| Headless session runtime (extracted from `src/App.tsx`) | Storage port only |
+| Bazaar and multiplayer backends | Not started |
 | Flutter UI | Not started |
-| Multiplayer backends | Not started |
+
+## Save handling
+
+Migrations are the one place the rules touch loose JSON. A version 1 save has
+none of the fields the generated `PlayerSave` requires, so `migrateSaveJson`
+works on the decoded map and only the finished save is read through the model —
+which is also what proves the chain produces something the schema can load.
+
+Storage itself is a port, not a rule. `ik_rules` owns `createNewSave`,
+`parseSave`, and `touchSave`; `ik_runtime`'s `SaveRepository` adds the read /
+write / clear cycle over a `SaveStorage` the host implements (`localStorage` in
+the React app, `shared_preferences` or IndexedDB under Flutter).
 
 ## Commands
 

@@ -198,7 +198,8 @@ function listType(
     dartType,
     nullable,
     isScalar: false,
-    fromJson: (json) => `listOf(${json}, (Object? entry) => ${entry.fromJson('entry')})`,
+    fromJson: (json) =>
+      `${nullable ? 'listOrNull' : 'listOf'}(${json}, (Object? entry) => ${entry.fromJson('entry')})`,
     toJson: (field, access) =>
       entry.isScalar
         ? field
@@ -219,7 +220,8 @@ function recordType(
     dartType,
     nullable,
     isScalar: false,
-    fromJson: (json) => `mapOf(${json}, (Object? value) => ${entry.fromJson('value')})`,
+    fromJson: (json) =>
+      `${nullable ? 'mapOrNullOf' : 'mapOf'}(${json}, (Object? value) => ${entry.fromJson('value')})`,
     toJson: (field, access) =>
       entry.isScalar
         ? field

@@ -3,7 +3,8 @@ import { createNewSave } from '../../game/save/saveStore'
 import type { PlayerSave } from '../../game/save/types'
 import type { JsonValue } from '../types'
 
-const FIXED_TIMESTAMP = '2026-01-01T00:00:00.000Z'
+export const FIXED_TIMESTAMP = '2026-01-01T00:00:00.000Z'
+export const FIXED_TIMESTAMP_MS = Date.parse(FIXED_TIMESTAMP)
 
 /**
  * A new save with the clock pinned, so fixtures stay reproducible.
@@ -12,7 +13,7 @@ const FIXED_TIMESTAMP = '2026-01-01T00:00:00.000Z'
  * proves the generated model round-trips every field.
  */
 export function baseSave(db: GameDatabase): PlayerSave {
-  return pinTimestamps(createNewSave(db))
+  return pinTimestamps(createNewSave(db, FIXED_TIMESTAMP_MS))
 }
 
 const ISO_TIMESTAMP = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z$/

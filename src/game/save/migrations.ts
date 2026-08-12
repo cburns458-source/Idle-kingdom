@@ -129,13 +129,13 @@ export const SAVE_MIGRATIONS: SaveMigration[] = [
   {
     fromVersion: 8,
     toVersion: 9,
-    migrate: (save) => ({
+    migrate: (save, nowMs) => ({
       ...save,
       // Anchor absence catch-up to last save touch so old creates do not grant a free 24h.
       unattendedProgressAt:
         typeof save.unattendedProgressAt === 'string' && save.unattendedProgressAt.length > 0
           ? save.unattendedProgressAt
-          : (save.updatedAt ?? new Date().toISOString()),
+          : (save.updatedAt ?? new Date(nowMs).toISOString()),
       saveVersion: 9,
     }),
   },
@@ -354,7 +354,7 @@ export const SAVE_MIGRATIONS: SaveMigration[] = [
   },
 ]
 
-export function migrateSave(save: PlayerSave): PlayerSave {
+export function migrateSave(save: PlayerSave, nowMs: number = Date.now()): PlayerSave {
   let current = { ...save }
   if (current.saveVersion > SAVE_VERSION) {
     throw new Error(
@@ -367,7 +367,7 @@ export function migrateSave(save: PlayerSave): PlayerSave {
     if (!migration) {
       throw new Error(`No save migration registered from version ${current.saveVersion}`)
     }
-    current = migration.migrate(current)
+    current = migration.migrate(current, nowMs)
     current.saveVersion = migration.toVersion
   }
 

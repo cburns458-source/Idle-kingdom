@@ -86,7 +86,7 @@ export function resolveUnattendedProgress(
   const anchor = Number.isFinite(anchorRaw) ? anchorRaw : nowMs
   const effectiveElapsedMs = Math.max(0, endMs - anchor)
 
-  let current = resolveActivityTransitions(db, save, endMs)
+  let current = resolveActivityTransitions(db, save, endMs, random)
   const messages: string[] = []
   let gatheringActions = 0
   let craftsCompleted = 0
@@ -188,6 +188,9 @@ export function resolveUnattendedProgress(
           action,
           enemy,
           random,
+          // Credit the kill to the hour it happened in, not to the hour the
+          // player happens to come back in.
+          roundEnd,
         )
         combatVictories += 1
         let next = victory.save

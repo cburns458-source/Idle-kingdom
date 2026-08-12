@@ -222,5 +222,6 @@ export interface PlayerSave {
 export interface SaveMigration {
   fromVersion: number
   toVersion: number
-  migrate: (save: PlayerSave) => PlayerSave
+  /** `nowMs` is only consulted by steps that must invent a missing timestamp. */
+  migrate: (save: PlayerSave, nowMs: number) => PlayerSave
 }
