@@ -140,19 +140,6 @@ export function parseStructuredObjectives(quest: QuestRow): StructuredQuestObjec
   }
 }
 
-/** @deprecated Prefer parseStructuredObjectives */
-export function parseQuestObjectives(quest: QuestRow) {
-  const structured = parseStructuredObjectives(quest)
-  return {
-    delivers: structured.delivers.map((row) => ({
-      itemId: row.targetId,
-      quantity: row.quantity,
-    })),
-    goldCost: structured.goldCost,
-    unlockLocationIds: structured.unlockLocationIds,
-  }
-}
-
 export interface QuestProgressLine {
   key: string
   label: string

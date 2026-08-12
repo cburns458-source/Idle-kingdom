@@ -77,6 +77,48 @@ int jsCompareThen(num delta, int Function() tieBreak) {
   return delta > 0 ? 1 : -1;
 }
 
+const int _uint32Mask = 0xFFFFFFFF;
+
+/// `Math.imul(a, b)`, returned unsigned as the hashes here always mask with `>>> 0`.
+///
+/// Split into 16-bit halves so intermediate products stay under 2^53 and the
+/// result is identical on native and on Flutter Web, where a Dart `int` is a
+/// JavaScript number.
+int jsImul(int a, int b) {
+  final left = a & _uint32Mask;
+  final right = b & _uint32Mask;
+  final aHigh = (left >> 16) & 0xFFFF;
+  final aLow = left & 0xFFFF;
+  final bHigh = (right >> 16) & 0xFFFF;
+  final bLow = right & 0xFFFF;
+  final low = aLow * bLow;
+  final cross = ((aHigh * bLow) + (aLow * bHigh)) & 0xFFFF;
+  return (low + (cross << 16)) & _uint32Mask;
+}
+
+/// `Number.prototype.toLocaleString()` for the en-US default the UI strings use.
+///
+/// Grouping every three digits with commas and rounding to at most three
+/// fraction digits is what the default formatter does for the plain counts the
+/// rules put in player-facing text.
+String jsLocaleNumber(num value) {
+  if (value.isNaN) return 'NaN';
+  if (value.isInfinite) return value.isNegative ? '-∞' : '∞';
+  final rounded = (value * 1000).round() / 1000;
+  final sign = rounded < 0 ? '-' : '';
+  final magnitude = rounded.abs();
+  final whole = magnitude.floor();
+  final fraction = jsNumberToString(magnitude - whole);
+  final digits = whole.toString();
+  final grouped = StringBuffer();
+  for (var i = 0; i < digits.length; i += 1) {
+    if (i > 0 && (digits.length - i) % 3 == 0) grouped.write(',');
+    grouped.write(digits[i]);
+  }
+  // `fraction` renders as `0` or `0.xyz`; only the decimals after it matter.
+  return '$sign$grouped${fraction == '0' ? '' : fraction.substring(1)}';
+}
+
 /// `String.prototype.localeCompare` for the ASCII text the database holds.
 ///
 /// The default collation compares base letters first and only falls back to

@@ -1,0 +1,1 @@
+{"case":"enemies","input":{"enemyIds":["ENM-0001","ENM-0003","ENM-0008","ENM-9999"],"source":"content"},"module":"combat/lookups","output":{"byAction":[{"actionId":"ACN-0003","enemyId":"ENM-0003"},{"actionId":"ACN-0006","enemyId":"ENM-0008"},{"actionId":"ACN-0009","enemyId":"ENM-0011"},{"actionId":"ACN-0046","enemyId":null}],"enemies":["ENM-0001","ENM-0003","ENM-0008",null]}}

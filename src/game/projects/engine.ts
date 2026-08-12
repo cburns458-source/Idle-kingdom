@@ -125,6 +125,7 @@ export function completeSpecialProject(
   projectId: string,
   quantity: number,
   enchantTargetId?: string | null,
+  nowMs: number = Date.now(),
 ): ProjectCompleteResult {
   const validation = validateProjectCompletion(
     db,
@@ -190,7 +191,7 @@ export function completeSpecialProject(
   const xpApplied = applyXp(next, db, project['Skill ID'], xpTotal)
   next = xpApplied.save
   next = applyQuestProcessProgress(db, next, project['Project ID'], crafts)
-  next = applyBountyProjectProgress(next, project['Project ID'], crafts)
+  next = applyBountyProjectProgress(next, project['Project ID'], crafts, nowMs)
 
   return {
     ok: true,

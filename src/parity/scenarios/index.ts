@@ -1,9 +1,15 @@
 import type { ParityScenario } from '../types'
+import { activityScenarios } from './activity'
 import { arcanaScenarios } from './arcana'
+import { bountyScenarios } from './bounties'
+import { combatScenarios } from './combat'
 import { combatStatScenarios } from './combatStats'
 import { contentScenarios } from './content'
 import { coreRuleScenarios } from './coreRules'
 import { equipmentScenarios } from './equipment'
+import { productionScenarios } from './production'
+import { projectScenarios } from './projects'
+import { questScenarios } from './quests'
 import { raceScenarios } from './races'
 import { rngScenarios } from './rng'
 import { supportScenarios } from './support'
@@ -22,6 +28,12 @@ export const parityScenarios: ParityScenario[] = [
   ...arcanaScenarios,
   ...raceScenarios,
   ...combatStatScenarios,
+  ...productionScenarios,
+  ...projectScenarios,
+  ...questScenarios,
+  ...bountyScenarios,
+  ...combatScenarios,
+  ...activityScenarios,
 ]
 
 export function assertUniqueScenarioNames(scenarios: ParityScenario[]): void {

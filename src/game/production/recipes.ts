@@ -1,7 +1,7 @@
 import { configNumber } from '../activity/gathering'
 import type { RecipeRow } from '../data/recipeTypes'
 import type { ActivityRow, GameDatabase } from '../data/types'
-import { canKnowRecipe as recipeKnown } from '../recipes/knowledge'
+import { canKnowRecipe } from '../recipes/knowledge'
 import type { PlayerSave } from '../save/types'
 import { requirementsForEntity } from '../activity/requirements'
 
@@ -59,9 +59,7 @@ export function maxCraftsFromQueueCap(db: GameDatabase, recipe: RecipeRow): numb
 }
 
 /** Hard proficiency gate + knowledge-source unlocks. */
-export function canKnowRecipe(save: PlayerSave, db: GameDatabase, recipe: RecipeRow): boolean {
-  return recipeKnown(save, db, recipe)
-}
+export { canKnowRecipe } from '../recipes/knowledge'
 
 /** Shared recipe books: castle/citadel stations reuse Town facility catalogs. */
 const SHARED_RECIPE_FACILITY_IDS: Record<string, string> = {

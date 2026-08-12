@@ -19,8 +19,13 @@ describe('canonicalJson', () => {
     expect(canonicalJson({ a: 1, b: null })).toBe('{"a":1,"b":null}')
   })
 
+  it('quotes non-finite numbers, which JSON has no literals for', () => {
+    expect(canonicalJson(Number.POSITIVE_INFINITY)).toBe('"Infinity"')
+    expect(canonicalJson(Number.NEGATIVE_INFINITY)).toBe('"-Infinity"')
+    expect(canonicalJson(Number.NaN)).toBe('"NaN"')
+  })
+
   it('rejects values that cannot round-trip', () => {
-    expect(() => canonicalJson(Number.NaN)).toThrow(/non-finite/)
     expect(() => canonicalJson(undefined)).toThrow(/undefined/)
     const cyclic: Record<string, unknown> = {}
     cyclic.self = cyclic

@@ -11,9 +11,9 @@ export function bountyHourKey(nowMs: number = Date.now()): string {
   return `${y}-${m}-${d}T${h}`
 }
 
-export function bountyHourExpiresAtMs(hourKey: string): number {
+export function bountyHourExpiresAtMs(hourKey: string, nowMs: number = Date.now()): number {
   const parsed = Date.parse(`${hourKey}:00:00.000Z`)
-  if (!Number.isFinite(parsed)) return Date.now() + 3_600_000
+  if (!Number.isFinite(parsed)) return nowMs + 3_600_000
   return parsed + 3_600_000
 }
 

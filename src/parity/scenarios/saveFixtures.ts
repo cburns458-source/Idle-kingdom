@@ -125,6 +125,148 @@ export function gearedSave(db: GameDatabase): PlayerSave {
   }
 }
 
+/**
+ * At the Town Kitchen with cooking materials and a production speed potion, so
+ * the recipe lists, queue caps, and potion duration cut all have real inputs.
+ */
+export function kitchenSave(db: GameDatabase): PlayerSave {
+  const base = baseSave(db)
+  return {
+    ...base,
+    characterName: 'Cook',
+    raceId: 'RACE-0002',
+    gold: 2_000,
+    currentLocationId: 'LOC-0023',
+    skills: base.skills.map((skill) =>
+      skill.skillId === 'SKL-0007' ? { ...skill, level: 30, xp: 250_000 } : skill,
+    ),
+    inventory: [
+      { itemId: 'ITEM-0025', quantity: 25 },
+      { itemId: 'ITEM-0047', quantity: 4 },
+      { itemId: 'ITEM-0048', quantity: 2 },
+      { itemId: 'ITEM-0071', quantity: 1 },
+    ],
+    equipment: {
+      slots: { ...base.equipment.slots, 'SLOT-0012': { itemId: 'ITEM-0071', quantity: 2 } },
+    },
+  }
+}
+
+/** Mid-queue production, with the current craft already due at the pinned clock. */
+export function queuedProductionSave(db: GameDatabase): PlayerSave {
+  const kitchen = kitchenSave(db)
+  return {
+    ...kitchen,
+    currentActivityId: 'ACT-0017',
+    activityStartedAt: FIXED_TIMESTAMP,
+    productionRecipeId: 'RCP-0001',
+    productionQuantityTotal: 4,
+    productionQuantityRemaining: 3,
+    currentActionId: 'ACN-0115',
+    actionStartedAt: FIXED_TIMESTAMP,
+    actionDurationMs: 20_000,
+  }
+}
+
+/**
+ * At the Smithing forge with mentor knowledge, bars, and gold, so project
+ * validation exercises the pass path as well as the gates.
+ */
+export function forgeSave(db: GameDatabase): PlayerSave {
+  const base = baseSave(db)
+  return {
+    ...base,
+    characterName: 'Smith',
+    raceId: 'RACE-0004',
+    gold: 50_000,
+    currentLocationId: 'LOC-0025',
+    unlockedNpcIds: ['NPC-0003'],
+    skills: base.skills.map((skill) =>
+      skill.skillId === 'SKL-0011' || skill.skillId === 'SKL-0008' || skill.skillId === 'SKL-0012'
+        ? { ...skill, level: 40, xp: 500_000 }
+        : skill,
+    ),
+    inventory: [
+      { itemId: 'ITEM-0074', quantity: 40 },
+      { itemId: 'ITEM-0214', quantity: 8 },
+      { itemId: 'ITEM-0084', quantity: 30 },
+      { itemId: 'ITEM-0100', quantity: 2 },
+    ],
+  }
+}
+
+/** At the Mages quarters with enchantment inputs and an axe to enchant. */
+export function arcanaSave(db: GameDatabase): PlayerSave {
+  const base = baseSave(db)
+  return {
+    ...base,
+    characterName: 'Mage',
+    raceId: 'RACE-0005',
+    gold: 10_000,
+    currentLocationId: 'LOC-0007',
+    unlockedNpcIds: ['NPC-0004'],
+    skills: base.skills.map((skill) =>
+      skill.skillId === 'SKL-0013' ? { ...skill, level: 40, xp: 900_000 } : skill,
+    ),
+    inventory: [
+      { itemId: 'ITEM-0098', quantity: 2 },
+      { itemId: 'ITEM-0011', quantity: 6 },
+      { itemId: 'ITEM-0040', quantity: 2 },
+      { itemId: 'ITEM-0132', quantity: 1 },
+    ],
+    equipment: {
+      slots: { ...base.equipment.slots, 'SLOT-0001': { itemId: 'ITEM-0102', quantity: 1 } },
+    },
+  }
+}
+
+/**
+ * Standing at Rose with QST-0002 active and everything it asks for, plus a
+ * completed QST-0001 so repeat turn-ins are covered too.
+ */
+export function questSave(db: GameDatabase): PlayerSave {
+  const base = baseSave(db)
+  return {
+    ...base,
+    characterName: 'Runner',
+    gold: 5_000,
+    currentLocationId: 'LOC-0023',
+    inventory: [
+      { itemId: 'ITEM-0038', quantity: 6 },
+      { itemId: 'ITEM-0031', quantity: 5 },
+      { itemId: 'ITEM-0058', quantity: 12 },
+    ],
+    quests: [
+      { questId: 'QST-0001', status: 'completed', progress: 10, counters: {} },
+      { questId: 'QST-0002', status: 'active', progress: 0, counters: {} },
+    ],
+  }
+}
+
+/** In the goblin camp with a weapon, food, and combat XP, ready to trade blows. */
+export function combatSave(db: GameDatabase): PlayerSave {
+  const base = baseSave(db)
+  return {
+    ...base,
+    characterName: 'Fighter',
+    raceId: 'RACE-0003',
+    gold: 500,
+    currentLocationId: 'LOC-0003',
+    currentHp: 700,
+    skills: base.skills.map((skill) =>
+      skill.skillId === 'SKL-0001' ? { ...skill, level: 20, xp: 40_000 } : skill,
+    ),
+    inventory: [{ itemId: 'ITEM-0058', quantity: 5 }],
+    equipment: {
+      slots: {
+        ...base.equipment.slots,
+        'SLOT-0001': { itemId: 'ITEM-0130', quantity: 1 },
+        'SLOT-0011': { itemId: 'ITEM-0059', quantity: 3 },
+      },
+    },
+  }
+}
+
 /** A bag filled to the slot limit, for overflow cases. */
 export function fullBagSave(db: GameDatabase, items: string[]): PlayerSave {
   const base = baseSave(db)

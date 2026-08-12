@@ -10,6 +10,11 @@ const int _jsSafeIntegerLimit = 9007199254740992;
 /// int/double distinction that JavaScript does not, so `1` and `1.0` must
 /// encode the same while `1` and `1.0000001` must not. Non-integral doubles use
 /// the shortest round-trip form, which both languages produce identically.
+///
+/// Rules return infinity for "no limit" quantities, so non-finite numbers encode
+/// as the quoted strings JSON has no literals for. A value that happens to be the
+/// literal string `"Infinity"` encodes the same way on both sides, so the
+/// ambiguity cannot make a mismatch look like a match.
 String canonicalJson(Object? value) {
   final buffer = StringBuffer();
   _write(value, buffer, const <Object>[]);
@@ -68,8 +73,8 @@ void _guardCycle(Object node, List<Object> seen) {
 String canonicalNumber(num value) {
   if (value is int) return value.toString();
   final d = value as double;
-  if (d.isNaN) throw ArgumentError('Cannot canonicalize NaN');
-  if (d.isInfinite) throw ArgumentError('Cannot canonicalize Infinity');
+  if (d.isNaN) return jsonEncode('NaN');
+  if (d.isInfinite) return jsonEncode(d > 0 ? 'Infinity' : '-Infinity');
   if (d == d.roundToDouble() && d.abs() < _jsSafeIntegerLimit) {
     // Also collapses -0.0 to "0", matching String(-0) in JavaScript.
     return d.toInt().toString();

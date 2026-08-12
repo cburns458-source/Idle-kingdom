@@ -1,0 +1,1 @@
+{"case":"modifiers","input":{"source":"content"},"module":"potions/apply","output":{"dropChance":[12.5,100,0,null],"dropChanceNoEffect":10,"durations":[0,900,18000,29999],"durationsNoEffect":[20000],"poison":[0,10,125],"poisonNoEffect":0}}

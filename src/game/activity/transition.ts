@@ -1,6 +1,7 @@
 import type { GameDatabase } from '../data/types'
 import type { ActivityTransition, PlayerSave } from '../save/types'
 import { isDeathPaused } from '../combat/engine'
+import type { RandomFn } from './pools'
 import { cancelProductionActivity, beginProductionQueue } from '../production/engine'
 import { isStandardProductionActivity } from '../production/recipes'
 import {
@@ -57,11 +58,12 @@ function startPoolActivityNow(
   save: PlayerSave,
   activityId: string,
   nowMs: number,
+  random: RandomFn,
 ): PlayerSave {
   const nowIso = new Date(nowMs).toISOString()
   const cleared = clearActivityTransition(save)
   const started = beginActivitySave(cleared, activityId, nowIso)
-  const generated = generateNextAction(db, started, activityId, Math.random, nowMs)
+  const generated = generateNextAction(db, started, activityId, random, nowMs)
   return generated ? generated.save : started
 }
 
@@ -76,7 +78,7 @@ function startProductionNow(
   const nowIso = new Date(nowMs).toISOString()
   const cleared = clearActivityTransition(save)
   const started = beginActivitySave(cleared, activityId, nowIso)
-  const queued = beginProductionQueue(db, started, activityId, recipeId, quantity)
+  const queued = beginProductionQueue(db, started, activityId, recipeId, quantity, nowMs)
   if (!queued.ok) return queued
   return queued.save
 }
@@ -87,6 +89,7 @@ export function requestActivityStart(
   save: PlayerSave,
   activityId: string,
   nowMs: number = Date.now(),
+  random: RandomFn = Math.random,
 ): { ok: true; save: PlayerSave } | { ok: false; reason: string } {
   if (isDeathPaused(save, nowMs)) {
     return { ok: false, reason: 'Cannot change activities while recovering from defeat.' }
@@ -108,7 +111,7 @@ export function requestActivityStart(
     next = stopPrimaryActivityNow(db, save, nowMs)
   }
 
-  return { ok: true, save: startPoolActivityNow(db, next, activityId, nowMs) }
+  return { ok: true, save: startPoolActivityNow(db, next, activityId, nowMs, random) }
 }
 
 /** Start Standard Production immediately, replacing any running Primary Activity. */
@@ -158,6 +161,7 @@ function applyFollowUpStart(
   save: PlayerSave,
   transition: ActivityTransition,
   nowMs: number,
+  random: RandomFn,
 ): PlayerSave {
   const followUp = transition.followUpActivityId
   if (!followUp) return save
@@ -180,7 +184,7 @@ function applyFollowUpStart(
     return save
   }
 
-  return startPoolActivityNow(db, save, followUp, nowMs)
+  return startPoolActivityNow(db, save, followUp, nowMs, random)
 }
 
 /**
@@ -191,18 +195,20 @@ export function resolveActivityTransitions(
   db: GameDatabase,
   save: PlayerSave,
   nowMs: number = Date.now(),
+  random: RandomFn = Math.random,
 ): PlayerSave {
   const transition = save.activityTransition
   if (!transition) return save
 
-  let next = stopPrimaryActivityNow(db, save, nowMs)
+  const next = stopPrimaryActivityNow(db, save, nowMs)
   if (transition.kind === 'starting') {
     return applyFollowUpStart(
       db,
       next,
       { ...transition, followUpActivityId: transition.activityId },
       nowMs,
+      random,
     )
   }
-  return applyFollowUpStart(db, next, transition, nowMs)
+  return applyFollowUpStart(db, next, transition, nowMs, random)
 }

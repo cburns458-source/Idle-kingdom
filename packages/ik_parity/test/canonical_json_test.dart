@@ -20,9 +20,13 @@ void main() {
       expect(canonicalJson({'a': 1, 'b': null}), '{"a":1,"b":null}');
     });
 
+    test('quotes non-finite numbers, which JSON has no literals for', () {
+      expect(canonicalJson(double.infinity), '"Infinity"');
+      expect(canonicalJson(double.negativeInfinity), '"-Infinity"');
+      expect(canonicalJson(double.nan), '"NaN"');
+    });
+
     test('rejects values that cannot round-trip', () {
-      expect(() => canonicalJson(double.nan), throwsArgumentError);
-      expect(() => canonicalJson(double.infinity), throwsArgumentError);
       final cyclic = <String, Object?>{};
       cyclic['self'] = cyclic;
       expect(() => canonicalJson(cyclic), throwsArgumentError);

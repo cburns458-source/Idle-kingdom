@@ -167,6 +167,7 @@ export function applyCombatVictory(
   action: ActionRow,
   enemy: EnemyRow,
   random: RandomFn = Math.random,
+  nowMs: number = Date.now(),
 ): CombatVictoryResult {
   const maxHp = playerMaxHp(db, save)
   let next: PlayerSave = { ...save, maxHp, currentHp: Math.min(save.currentHp, maxHp) }
@@ -206,7 +207,7 @@ export function applyCombatVictory(
   const food = tryConsumeFoodAfterVictory(db, next)
   next = clearCombatSave(food.save)
   next = applyQuestDefeatProgress(db, next, enemy['Enemy ID'], 1)
-  next = applyBountyDefeatProgress(next, enemy['Enemy ID'], 1)
+  next = applyBountyDefeatProgress(next, enemy['Enemy ID'], 1, nowMs)
 
   return {
     save: next,

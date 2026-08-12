@@ -148,7 +148,9 @@ export function completeProductionCraft(
 
   const remaining = save.productionQuantityRemaining - 1
   next = applyQuestProcessProgress(db, next, recipe['Recipe ID'], 1)
-  next = applyBountyProcessProgress(next, recipe['Recipe ID'], 1)
+  // Bounty hour follows the craft's own completion time, so offline catch-up
+  // credits the hour the craft finished in rather than the moment of resolving.
+  next = applyBountyProcessProgress(next, recipe['Recipe ID'], 1, nowMs)
   const outputItem = db.Items.find((item) => item['Item ID'] === recipe['Output Item ID'])
   const outputName = outputItem?.['Display Name'] ?? recipe['Display Name']
   const xpReward = summarizeXpReward(

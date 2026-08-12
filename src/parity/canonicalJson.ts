@@ -5,6 +5,11 @@
  * sides must agree on key order and number formatting. Dart separates `int` from
  * `double` where JavaScript has a single `number`, so `1` and `1.0` must encode
  * identically while `1` and `1.0000001` must not.
+ *
+ * Rules return `Infinity` for "no limit" quantities, so non-finite numbers encode
+ * as the quoted strings JSON has no literals for. A fixture that happens to hold
+ * the literal string `"Infinity"` encodes the same way on both sides, so the
+ * ambiguity cannot make a mismatch look like a match.
  */
 
 const JS_SAFE_INTEGER_LIMIT = 9007199254740992
@@ -19,7 +24,7 @@ export function canonicalEquals(a: unknown, b: unknown): boolean {
 
 export function canonicalNumber(value: number): string {
   if (!Number.isFinite(value)) {
-    throw new Error(`Cannot canonicalize non-finite number: ${value}`)
+    return JSON.stringify(Number.isNaN(value) ? 'NaN' : value > 0 ? 'Infinity' : '-Infinity')
   }
   if (Number.isInteger(value) && Math.abs(value) < JS_SAFE_INTEGER_LIMIT) {
     // `value + 0` collapses -0 to 0 so it matches Dart's canonical form.
