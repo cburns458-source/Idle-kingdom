@@ -1377,7 +1377,10 @@ export default function App() {
             <InventoryView save={save} database={database} onChangeSave={updateSave} />
           )}
           {screen === 'log' && <LogView save={save} database={database} />}
-          {screen === 'social' && <SocialView save={save} database={database} />}
+          {screen === 'leaderboards' && (
+            <SocialView save={save} database={database} section="leaderboards" />
+          )}
+          {screen === 'guilds' && <SocialView save={save} database={database} section="guilds" />}
           {screen === 'settings' && (
             <SettingsPanel
               save={save}
@@ -1414,7 +1417,7 @@ export default function App() {
                 setLastMessage(`${result.critter.displayName} appeared nearby.`)
                 setScreen('location')
               }}
-              onOpenSocial={() => setScreen('social')}
+              onOpenSocial={() => setScreen('leaderboards')}
               onMessage={setLastMessage}
             />
           )}

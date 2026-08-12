@@ -93,7 +93,7 @@ export function AccountPanel({
             Load cloud save
           </button>
           <button type="button" className="btn secondary" onClick={onOpenSocial}>
-            Open Social
+            Open Leaderboards
           </button>
           <button
             type="button"
