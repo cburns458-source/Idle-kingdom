@@ -579,6 +579,7 @@ button.hud-total-stat:focus-visible {
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 0.5rem;
   align-items: end;
+  margin-top: -1rem;
 }
 
 .top-hud-hp-cluster {
