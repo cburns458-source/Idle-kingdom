@@ -52,7 +52,7 @@ npm run parity:record
 3. Port the module to Dart and replay the fixtures:
 
 ```bash
-dart test packages/ik_rules
+dart test packages/ik_rules packages/ik_runtime
 ```
 
 `npm test` re-derives every fixture and fails on drift, so a TypeScript change
@@ -85,7 +85,8 @@ These exist because the two languages disagree in ways that are easy to miss:
 | Activity, production, recipes, projects | Done |
 | Combat, loot, potions, spells, critters, quests, achievements, cosmetics, world, bounties | Done |
 | Save, migrations, unattended progress | Done |
-| Headless session runtime (extracted from `src/App.tsx`) | Storage port only |
+| Headless session runtime (tick, events, storage port) | Done |
+| Player intents (start / stop activity, travel, shops, wardrobe) | Not started |
 | Bazaar and multiplayer backends | Not started |
 | Flutter UI | Not started |
 
@@ -100,6 +101,26 @@ Storage itself is a port, not a rule. `ik_rules` owns `createNewSave`,
 `parseSave`, and `touchSave`; `ik_runtime`'s `SaveRepository` adds the read /
 write / clear cycle over a `SaveStorage` the host implements (`localStorage` in
 the React app, `shared_preferences` or IndexedDB under Flutter).
+
+## The session tick
+
+`advanceSession(db, save, nowMs, random)` advances whatever the save has due at
+`nowMs` — one combat round, one gathering action, one craft, a death-pause
+recovery, or the next action for an activity that has none — and returns the new
+save plus the events the client should react to. It is the only thing a client
+loop has to call: React drives it from a single animation frame callback, and the
+unattended resolver is the same rules run over a past window.
+
+Events (`SessionEvent`) are what keeps presentation out of the rules. A tick says
+`enemy-defeated` or `craft-completed`; whether that is a flash, a toast, or a
+sound is the client's business. Combat rewards are applied in the tick that
+resolves the round rather than after the defeat flash, so closing the game
+mid-animation cannot lose a kill.
+
+Both halves are recorded as scripted runs under `parity/fixtures/session/tick`:
+each case ticks one save shape at pinned offsets — before the timer is due, the
+tick that resolves it, and enough afterwards to see the follow-up — and compares
+the events, the progress bar, and the whole save at every step.
 
 ## Commands
 

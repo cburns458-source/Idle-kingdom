@@ -37,4 +37,4 @@ jobs:
       - run: dart pub get
       - run: dart analyze
       - run: dart format --output=none --set-exit-if-changed packages
-      - run: dart test packages/ik_parity packages/ik_rules packages/ik_content
+      - run: dart test packages/ik_parity packages/ik_rules packages/ik_content packages/ik_runtime
