@@ -156,6 +156,7 @@ export const SAVE_MIGRATIONS: SaveMigration[] = [
       settings: {
         soundEnabled: save.settings?.soundEnabled ?? true,
         showActivityRewards: save.settings?.showActivityRewards ?? true,
+        hudShowTotalXp: save.settings?.hudShowTotalXp ?? false,
       },
       saveVersion: 11,
     }),

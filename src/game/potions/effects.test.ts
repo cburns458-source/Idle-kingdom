@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest'
 import { prepareDatabase } from '../data/loadDatabase'
 import { POTION_SLOT_ID } from '../equipment/loadout'
 import { createNewSave } from '../save/saveStore'
+import type { PlayerSave } from '../save/types'
 import { beginCombatSave } from '../combat/engine'
 import { beginProductionQueue } from '../production/engine'
 import { generateNextAction } from '../activity/engine'
@@ -20,7 +21,7 @@ const rawDatabase = JSON.parse(
   readFileSync(resolve(process.cwd(), 'content/data/game-database.json'), 'utf8'),
 )
 
-function withPotion(save: ReturnType<typeof createNewSave>, itemId: string, quantity = 1) {
+function withPotion(save: PlayerSave, itemId: string, quantity = 1): PlayerSave {
   return {
     ...save,
     equipment: {

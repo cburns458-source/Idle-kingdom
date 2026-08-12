@@ -108,7 +108,7 @@ function EmblemEditor({
 export function GuildView({ save, onChangeSave }: GuildViewProps) {
   const session = getSession()
   const [guildId, setGuildId] = useState<string | null>(() => currentGuildId())
-  const [guilds, setGuilds] = useState<Array<GuildRecord & { memberCount: number }>[]>([])
+  const [guilds, setGuilds] = useState<Array<GuildRecord & { memberCount: number }>>([])
   const [guild, setGuild] = useState<GuildRecord | null>(null)
   const [members, setMembers] = useState<GuildMember[]>([])
   const [applications, setApplications] = useState<GuildApplication[]>([])

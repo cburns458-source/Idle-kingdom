@@ -33,7 +33,7 @@ export function skillXpProgress(db: GameDatabase, totalXp: number): SkillXpProgr
     if (xp >= row['Total XP at Level']) {
       level = row.Level
       totalAtLevel = row['Total XP at Level']
-      xpToNext = row['XP to Next Level']
+      xpToNext = row['XP to Next Level'] ?? 0
     } else {
       break
     }

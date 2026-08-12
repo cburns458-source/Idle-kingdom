@@ -42,7 +42,6 @@ export function SkillsView({ db, save }: SkillsViewProps) {
               key={skill['Skill ID']}
               skill={skill}
               level={progress.level}
-              xp={progress.xp}
               xpTooltip={skillXpTooltipText(db, progress.xp)}
               showingXp={heldSkillId === skill['Skill ID']}
               onHoldStart={() => setHeldSkillId(skill['Skill ID'])}

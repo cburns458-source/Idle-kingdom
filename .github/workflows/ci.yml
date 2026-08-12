@@ -17,6 +17,8 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run lint
+      # The TypeScript rules stay the parity reference, so they must keep compiling.
+      - run: npm run typecheck
       # Fails if the Dart row models drift from src/game/data/types.ts.
       - run: npm run gen:dart:check
       # Also asserts committed parity fixtures still match the TypeScript rules.
