@@ -1867,6 +1867,16 @@ button.hud-total-stat:focus-visible {
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.65);
 }
 
+.map-toolbar.map-overlay-top.map-toolbar-main {
+  justify-content: center;
+}
+
+.map-toolbar-main h1 {
+  width: 100%;
+  text-align: center;
+  margin: 0;
+}
+
 .map-overlay-bottom .panel,
 .map-overlay-bottom .location-card {
   background: rgba(42, 46, 52, 0.9);

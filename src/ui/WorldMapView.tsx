@@ -100,8 +100,14 @@ export function WorldMapView({
         })}
       </div>
 
-      <div className="map-toolbar map-overlay-top">
-        <h1>{map?.['Display Name'] ?? 'Map'}</h1>
+      <div
+        className={
+          mapId === MAIN_MAP_ID
+            ? 'map-toolbar map-overlay-top map-toolbar-main'
+            : 'map-toolbar map-overlay-top'
+        }
+      >
+        <h1>{mapId === MAIN_MAP_ID ? 'Restoria' : (map?.['Display Name'] ?? 'Map')}</h1>
         {mapId !== MAIN_MAP_ID && onShowWorldMap && (
           <button type="button" className="btn secondary" onClick={onShowWorldMap}>
             World Map
