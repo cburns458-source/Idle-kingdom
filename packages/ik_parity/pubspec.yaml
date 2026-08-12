@@ -1,0 +1,14 @@
+name: ik_parity
+description: >-
+  Test-only harness that replays TypeScript-recorded fixtures against the Dart
+  port and compares canonical JSON output.
+publish_to: none
+version: 0.1.0
+resolution: workspace
+
+environment:
+  sdk: ^3.13.0
+
+dev_dependencies:
+  lints: ^6.0.0
+  test: ^1.25.0

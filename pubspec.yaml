@@ -1,0 +1,13 @@
+name: idle_kingdoms_workspace
+publish_to: none
+
+# Pub workspace root. The Dart/Flutter client lives alongside the React app
+# during the migration; both consume the same content/ directory.
+environment:
+  sdk: ^3.13.0
+
+workspace:
+  - packages/ik_parity
+  - packages/ik_rules
+  - packages/ik_content
+  - packages/ik_runtime

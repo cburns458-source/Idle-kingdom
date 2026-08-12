@@ -1,0 +1,15 @@
+name: ik_content
+description: >-
+  Dart view of content/data/game-database.json: generated row models, loading,
+  validation, and lookup indexes.
+publish_to: none
+version: 0.1.0
+resolution: workspace
+
+environment:
+  sdk: ^3.13.0
+
+dev_dependencies:
+  ik_parity: ^0.1.0
+  lints: ^6.0.0
+  test: ^1.25.0

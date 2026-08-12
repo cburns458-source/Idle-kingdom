@@ -9,7 +9,8 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "parity:record": "PARITY_RECORD=1 vitest run src/parity/record.test.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.112.3",

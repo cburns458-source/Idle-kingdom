@@ -1,0 +1,20 @@
+name: ik_runtime
+description: >-
+  Headless session runtime: owns the save, advances activity, production,
+  combat, and travel, and defines the storage and multiplayer ports the Flutter
+  app implements.
+publish_to: none
+version: 0.1.0
+resolution: workspace
+
+environment:
+  sdk: ^3.13.0
+
+dependencies:
+  ik_content: ^0.1.0
+  ik_rules: ^0.1.0
+
+dev_dependencies:
+  ik_parity: ^0.1.0
+  lints: ^6.0.0
+  test: ^1.25.0
