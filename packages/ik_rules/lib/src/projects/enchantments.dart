@@ -12,18 +12,26 @@ import 'projects.dart';
 /// Where an enchantment is being applied.
 sealed class EnchantTarget {
   const EnchantTarget();
+
+  Map<String, Object?> toJson();
 }
 
 class EquippedEnchantTarget extends EnchantTarget {
   const EquippedEnchantTarget(this.slotId);
 
   final String slotId;
+
+  @override
+  Map<String, Object?> toJson() => <String, Object?>{'kind': 'equipped', 'slotId': slotId};
 }
 
 class InventoryEnchantTarget extends EnchantTarget {
   const InventoryEnchantTarget(this.index);
 
   final int index;
+
+  @override
+  Map<String, Object?> toJson() => <String, Object?>{'kind': 'inventory', 'index': index};
 }
 
 class EnchantTargetOption {
@@ -38,6 +46,13 @@ class EnchantTargetOption {
   final String label;
   final EnchantTarget target;
   final bool preferred;
+
+  Map<String, Object?> toJson() => <String, Object?>{
+    'id': id,
+    'label': label,
+    'target': target.toJson(),
+    'preferred': preferred,
+  };
 }
 
 /// Combat axes (not hatchets/pickaxes) — weapon enchantments only.

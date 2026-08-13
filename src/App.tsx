@@ -72,7 +72,7 @@ import { ProductionPicker, ProductionProgress } from './ui/ProductionPanel'
 import { AutoEquipPrompt } from './ui/AutoEquipPrompt'
 import { ProjectCompletePopup } from './ui/ProjectCompletePopup'
 import { ProjectPicker } from './ui/ProjectPanel'
-import { getProject } from './game/projects/projects'
+import { describeProjectCompletion } from './game/projects/menu'
 import { ShopPanel } from './ui/ShopPanel'
 import { SkillsView } from './ui/SkillsView'
 import { ActionRewardList } from './ui/ActionRewardList'
@@ -605,30 +605,12 @@ export default function App() {
       setActivityError(result.reason)
       return
     }
-    const projectName =
-      getProject(database.launch, projectId)?.['Display Name'] ?? result.outputLabel
-    const lines = [
-      result.outputQty > 1
-        ? `${result.outputLabel} ×${result.outputQty}`
-        : result.outputLabel,
-      result.xpGained > 0 ? `+${result.xpGained.toLocaleString()} XP` : null,
-      result.goldSpent > 0 ? `Spent ${result.goldSpent.toLocaleString()} gold` : null,
-      quantity > 1 ? `Crafted ${quantity} times` : null,
-    ].filter(Boolean) as string[]
+    const receipt = describeProjectCompletion(database.launch, projectId, quantity, result)
 
     setSpecialStation(null)
     setActivityError(null)
-    setLastMessage(
-      [
-        `Completed ${result.outputLabel}`,
-        result.outputQty > 1 ? `×${result.outputQty}` : null,
-        result.xpGained > 0 ? `+${result.xpGained.toLocaleString()} XP` : null,
-        result.goldSpent > 0 ? `-${result.goldSpent} gold` : null,
-      ]
-        .filter(Boolean)
-        .join(' · '),
-    )
-    setProjectCompletePopup({ projectName, lines })
+    setLastMessage(receipt.message)
+    setProjectCompletePopup({ projectName: receipt.projectName, lines: receipt.lines })
     updateSave(withRecalculatedVitals(database.launch, result.save))
   }
 

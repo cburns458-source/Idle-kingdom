@@ -5,6 +5,7 @@ import 'package:ik_rules/ik_rules.dart';
 import '../session/game_controller.dart';
 import '../theme.dart';
 import 'format.dart';
+import 'ingredient_chip.dart';
 import 'item_icon.dart';
 import 'quantity_sheet.dart';
 
@@ -220,7 +221,7 @@ class _RecipeDetails extends StatelessWidget {
           runSpacing: 6,
           children: [
             for (final ingredient in recipeIngredients(recipe))
-              _Ingredient(
+              IngredientChip(
                 item: controller.indexes.itemsById[ingredient.itemId],
                 need: ingredient.quantity,
                 owned: inventoryCount(controller.save, ingredient.itemId),
@@ -228,43 +229,6 @@ class _RecipeDetails extends StatelessWidget {
           ],
         ),
       ],
-    );
-  }
-}
-
-/// One ingredient, marked short when the bag cannot cover a single craft.
-class _Ingredient extends StatelessWidget {
-  const _Ingredient({required this.item, required this.need, required this.owned});
-
-  final ItemRow? item;
-  final num need;
-  final num owned;
-
-  @override
-  Widget build(BuildContext context) {
-    final short = owned < need;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-      decoration: BoxDecoration(
-        color: const Color(0x44120C08),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: short ? Palette.danger : Palette.edge),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          ItemIcon(item: item, size: 18),
-          const SizedBox(width: 4),
-          Text(
-            '${formatThousands(owned)}/${formatThousands(need)}',
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              color: short ? Palette.danger : Palette.parchmentText,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

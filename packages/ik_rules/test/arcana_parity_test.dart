@@ -13,25 +13,6 @@ EnchantTarget _targetOf(ParityFixture fixture) {
   return InventoryEnchantTarget((target['index']! as num).toInt());
 }
 
-Map<String, Object?> _optionJson(EnchantTargetOption option) {
-  final target = option.target;
-  return <String, Object?>{
-    'id': option.id,
-    'label': option.label,
-    'target': switch (target) {
-      EquippedEnchantTarget(:final slotId) => <String, Object?>{
-        'kind': 'equipped',
-        'slotId': slotId,
-      },
-      InventoryEnchantTarget(:final index) => <String, Object?>{
-        'kind': 'inventory',
-        'index': index,
-      },
-    },
-    'preferred': option.preferred,
-  };
-}
-
 void main() {
   group('spell slot parity', () {
     for (final fixture in loadParityFixtures('spells/slots')) {
@@ -200,7 +181,7 @@ void main() {
                   db,
                   save,
                   enchantment,
-                ).map(_optionJson).toList(),
+                ).map((option) => option.toJson()).toList(),
               },
             )
             .toList();

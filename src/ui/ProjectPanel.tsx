@@ -1,39 +1,17 @@
 import { useEffect, useMemo, useState } from 'react'
-import type { ProjectRow } from '../game/data/projectTypes'
 import type { GameDatabase } from '../game/data/types'
-import { inventoryCount } from '../game/production/recipes'
-import { eligibleEnchantmentTargets } from '../game/projects/enchantments'
-import { hasProjectKnowledge } from '../game/npcs/knowledge'
 import {
-  getEnchantment,
-  isEnchantmentOutput,
-  maxProjectQuantity,
-  meetsProjectKnowledge,
-  meetsProjectSkills,
-  projectInputs,
-  projectSkillRequirements,
-  projectsForFacility,
-  unmetProjectSkillRequirements,
-  type SpecialProductionStation,
-} from '../game/projects/projects'
-import { isSpellItem, spellEffectEnchantmentId, spellTooltipLines } from '../game/spells/spells'
+  defaultProjectId,
+  projectDetail,
+  projectMenuList,
+  type ProjectDetail,
+} from '../game/projects/menu'
+import type { SpecialProductionStation } from '../game/projects/projects'
 import type { PlayerSave } from '../game/save/types'
 import { CloseButton } from './CloseButton'
 import { IngredientIconList } from './IngredientIcons'
 import { ItemIcon } from './itemIcons'
 import { QuantityNumpad } from './QuantityNumpad'
-
-function projectOptionLabel(project: ProjectRow, db: GameDatabase): string {
-  const outputId = project['Output Item / Target ID']
-  const level = project['Required Skill 1 Level'] ?? 1
-  if (isEnchantmentOutput(outputId)) {
-    return `${project['Display Name']} (Lv ${level})`
-  }
-  const itemName =
-    db.Items.find((item) => item['Item ID'] === outputId)?.['Display Name'] ??
-    project['Display Name']
-  return `${project['Display Name']} → ${itemName} (Lv ${level})`
-}
 
 interface ProjectPickerProps {
   db: GameDatabase
@@ -43,21 +21,6 @@ interface ProjectPickerProps {
   onConfirm: (projectId: string, quantity: number, enchantTargetId: string | null) => void
 }
 
-function projectMatchesQuery(project: ProjectRow, query: string, db: GameDatabase): boolean {
-  const needle = query.trim().toLowerCase()
-  if (!needle) return true
-  if (project['Display Name'].toLowerCase().includes(needle)) return true
-  if (project['Internal Key'].toLowerCase().includes(needle)) return true
-  const outputId = project['Output Item / Target ID']
-  const itemName = db.Items.find((item) => item['Item ID'] === outputId)?.['Display Name']
-  if (itemName?.toLowerCase().includes(needle)) return true
-  const enchantName = db.Enchantments.find((row) => row['Enchantment ID'] === outputId)?.[
-    'Display Name'
-  ]
-  if (enchantName?.toLowerCase().includes(needle)) return true
-  return false
-}
-
 export function ProjectPicker({
   db,
   save,
@@ -65,63 +28,42 @@ export function ProjectPicker({
   onCancel,
   onConfirm,
 }: ProjectPickerProps) {
-  const projects = useMemo(
-    () => projectsForFacility(db, station.facility['Facility ID'], station.skillId),
-    [db, station],
-  )
+  const facilityId = station.facility['Facility ID']
   const [search, setSearch] = useState('')
-  const filteredProjects = useMemo(
-    () => projects.filter((project) => projectMatchesQuery(project, search, db)),
-    [projects, search, db],
+  const all = useMemo(
+    () => projectMenuList(db, save, facilityId, station.skillId),
+    [db, save, facilityId, station.skillId],
   )
-  const knowledge = hasProjectKnowledge(db, save, station.skillId)
-  const initialProjectId =
-    projects.find(
-      (row) => meetsProjectSkills(save, row) && meetsProjectKnowledge(db, save, row),
-    )?.['Project ID'] ??
-    projects[0]?.['Project ID'] ??
-    ''
-  const [projectId, setProjectId] = useState(initialProjectId)
-  const project =
-    projects.find((row) => row['Project ID'] === projectId) ??
-    filteredProjects[0] ??
-    null
-  const knowledgeMet = project ? meetsProjectKnowledge(db, save, project) : knowledge.ok
-  const skillsMet = project ? meetsProjectSkills(save, project) : false
-  const unmetSkills = project ? unmetProjectSkillRequirements(db, save, project) : []
-  const canCraft = knowledgeMet && skillsMet
-  const maxQty = project && canCraft ? maxProjectQuantity(save, project) : 0
-  const isEnchant = project ? isEnchantmentOutput(project['Output Item / Target ID']) : false
-  const enchantment =
-    project && isEnchant ? getEnchantment(db, project['Output Item / Target ID']) : undefined
-  const enchantTargets =
-    enchantment != null ? eligibleEnchantmentTargets(db, save, enchantment) : []
-  const preferredTargetId =
-    enchantTargets.find((target) => target.preferred)?.id ?? enchantTargets[0]?.id ?? ''
-  const [enchantTargetId, setEnchantTargetId] = useState(preferredTargetId)
+  const listed = useMemo(
+    () => projectMenuList(db, save, facilityId, station.skillId, search),
+    [db, save, facilityId, station.skillId, search],
+  )
+  const [projectId, setProjectId] = useState(
+    () => defaultProjectId(db, save, facilityId, station.skillId) ?? '',
+  )
   const [quantity, setQuantity] = useState(1)
+  const [enchantTargetId, setEnchantTargetId] = useState('')
   const [qtyOpen, setQtyOpen] = useState(false)
 
-  useEffect(() => {
-    if (filteredProjects.length === 0) return
-    if (!filteredProjects.some((row) => row['Project ID'] === projectId)) {
-      setProjectId(filteredProjects[0]!['Project ID'])
-      setQuantity(1)
-      setEnchantTargetId('')
-    }
-  }, [filteredProjects, projectId])
+  const selectedId = listed.some((row) => row.projectId === projectId)
+    ? projectId
+    : (listed[0]?.projectId ?? '')
+  const detail = selectedId ? projectDetail(db, save, selectedId) : null
+  const preferredTargetId =
+    detail?.enchantTargets.find((target) => target.preferred)?.id ??
+    detail?.enchantTargets[0]?.id ??
+    ''
 
   useEffect(() => {
-    if (enchantTargets.length === 0) {
-      setEnchantTargetId('')
-      return
-    }
-    if (!enchantTargets.some((target) => target.id === enchantTargetId)) {
+    if (!detail) return
+    if (!detail.enchantTargets.some((target) => target.id === enchantTargetId)) {
       setEnchantTargetId(preferredTargetId)
     }
-  }, [enchantTargets, enchantTargetId, preferredTargetId])
+  }, [detail, enchantTargetId, preferredTargetId])
 
-  const clampedQty = isEnchant
+  const canCraft = detail?.lockedReason === null
+  const maxQty = detail?.maxQuantity ?? 0
+  const clampedQty = detail?.isEnchantment
     ? 1
     : Math.min(Math.max(1, quantity), Math.max(1, maxQty || 1))
 
@@ -140,7 +82,7 @@ export function ProjectPicker({
         <CloseButton onClick={onCancel} label="Cancel" />
       </div>
 
-      {projects.length === 0 ? (
+      {all.length === 0 ? (
         <p className="lead">No projects are defined for this station yet.</p>
       ) : (
         <>
@@ -160,55 +102,32 @@ export function ProjectPicker({
 
           <label className="field-label" htmlFor="project-select">
             Project
-            {search.trim()
-              ? ` (${filteredProjects.length} of ${projects.length})`
-              : ` (${projects.length})`}
+            {search.trim() ? ` (${listed.length} of ${all.length})` : ` (${all.length})`}
           </label>
-          {filteredProjects.length === 0 ? (
+          {listed.length === 0 ? (
             <p className="muted tiny">No projects match that search.</p>
           ) : (
             <select
               id="project-select"
               className="text-input project-select-list"
-              value={
-                filteredProjects.some((row) => row['Project ID'] === projectId)
-                  ? projectId
-                  : filteredProjects[0]!['Project ID']
-              }
+              value={selectedId}
               onChange={(event) => selectProject(event.target.value)}
-              size={Math.min(8, Math.max(filteredProjects.length, 3))}
+              size={Math.min(8, Math.max(listed.length, 3))}
             >
-              {filteredProjects.map((row) => {
-                const locked =
-                  !meetsProjectSkills(save, row) || !meetsProjectKnowledge(db, save, row)
-                return (
-                  <option key={row['Project ID']} value={row['Project ID']}>
-                    {projectOptionLabel(row, db)}
-                    {locked ? ' — locked' : ''}
-                  </option>
-                )
-              })}
+              {listed.map((row) => (
+                <option key={row.projectId} value={row.projectId}>
+                  {row.label}
+                  {row.locked ? ' — locked' : ''}
+                </option>
+              ))}
             </select>
           )}
 
-          {project && (
+          {detail && (
             <>
-              <ProjectDetails db={db} save={save} project={project} />
-              {!knowledgeMet && !knowledge.ok && (
-                <p className="danger-note">
-                  Locked — speak with the {knowledge.npcName} to unlock {station.skillName} projects.
-                </p>
-              )}
-              {knowledgeMet && !skillsMet && (
-                <p className="danger-note">
-                  Locked — needs{' '}
-                  {unmetSkills
-                    .map((requirement) => `${requirement.skillName} ${requirement.level}`)
-                    .join(', ')}
-                  .
-                </p>
-              )}
-              {!isEnchant && (
+              <ProjectDetails db={db} detail={detail} />
+              {detail.lockedReason && <p className="danger-note">{detail.lockedReason}</p>}
+              {!detail.isEnchantment && (
                 <>
                   <label className="field-label" htmlFor="project-qty">
                     Quantity (max {maxQty})
@@ -227,19 +146,19 @@ export function ProjectPicker({
                       type="button"
                       className="btn primary"
                       disabled={!canCraft || maxQty <= 0}
-                      onClick={() => onConfirm(project['Project ID'], clampedQty, null)}
+                      onClick={() => onConfirm(detail.projectId, clampedQty, null)}
                     >
                       Complete project
                     </button>
                   </div>
                 </>
               )}
-              {isEnchant && (
+              {detail.isEnchantment && (
                 <>
                   <label className="field-label" htmlFor="enchant-target">
                     Item to enchant
                   </label>
-                  {enchantTargets.length === 0 ? (
+                  {detail.enchantTargets.length === 0 ? (
                     <p className="danger-note">
                       Equip or keep a valid unenchanted item in inventory.
                     </p>
@@ -252,7 +171,7 @@ export function ProjectPicker({
                         disabled={!canCraft}
                         onChange={(event) => setEnchantTargetId(event.target.value)}
                       >
-                        {enchantTargets.map((target) => (
+                        {detail.enchantTargets.map((target) => (
                           <option key={target.id} value={target.id}>
                             {target.label}
                           </option>
@@ -264,8 +183,8 @@ export function ProjectPicker({
                         disabled={!canCraft}
                         onClick={() =>
                           onConfirm(
-                            project['Project ID'],
-                            clampedQty,
+                            detail.projectId,
+                            1,
                             enchantTargetId || preferredTargetId || null,
                           )
                         }
@@ -281,9 +200,9 @@ export function ProjectPicker({
         </>
       )}
 
-      {qtyOpen && project && !isEnchant && (
+      {qtyOpen && detail && !detail.isEnchantment && (
         <QuantityNumpad
-          title={project['Display Name']}
+          title={detail.name}
           subtitle="Project quantity"
           details={<p className="muted tiny">Max {maxQty.toLocaleString()}</p>}
           confirmLabel="Set quantity"
@@ -300,31 +219,10 @@ export function ProjectPicker({
   )
 }
 
-function ProjectDetails({
-  db,
-  save,
-  project,
-}: {
-  db: GameDatabase
-  save: PlayerSave
-  project: ProjectRow
-}) {
-  const inputs = projectInputs(project)
-  const outputId = project['Output Item / Target ID']
-  const enchantment = isEnchantmentOutput(outputId) ? getEnchantment(db, outputId) : undefined
-  const outputItem = !enchantment
-    ? db.Items.find((item) => item['Item ID'] === outputId)
+function ProjectDetails({ db, detail }: { db: GameDatabase; detail: ProjectDetail }) {
+  const outputItem = detail.outputItemId
+    ? db.Items.find((item) => item['Item ID'] === detail.outputItemId)
     : undefined
-  const spellEffectId =
-    outputItem && isSpellItem(db, outputItem['Item ID'])
-      ? spellEffectEnchantmentId(db, outputItem['Item ID'])
-      : null
-  const spellEffect = spellEffectId ? getEnchantment(db, spellEffectId) : undefined
-  const skills = projectSkillRequirements(project)
-  const outputName =
-    outputItem?.['Display Name'] ??
-    enchantment?.['Display Name'] ??
-    project['Display Name']
 
   return (
     <div className="recipe-details">
@@ -332,46 +230,25 @@ function ProjectDetails({
         {outputItem ? <ItemIcon item={outputItem} /> : <span className="item-icon" />}
         <div>
           <strong>
-            {outputName} ×{project['Output Quantity']}
+            {detail.outputName} ×{detail.outputQuantity}
           </strong>
-          {outputItem && (
-            <p className="muted tiny">Item · {outputItem['Item ID']}</p>
-          )}
-          <p className="muted tiny">
-            Instant · {project['XP Reward'].toLocaleString()} XP
-            {project['Gold Cost'] > 0 ? ` · ${project['Gold Cost']} gold` : ''}
-          </p>
-          {(enchantment?.Effect || spellEffect?.Effect) && (
-            <p className="muted tiny">{enchantment?.Effect ?? spellEffect?.Effect}</p>
-          )}
-          {outputItem && isSpellItem(db, outputItem['Item ID']) && (
-            <p className="muted tiny">
-              {spellTooltipLines(db, outputItem, outputItem['Item ID']).slice(-1)[0]}
-            </p>
-          )}
+          {detail.outputItemId && <p className="muted tiny">Item · {detail.outputItemId}</p>}
+          <p className="muted tiny">{detail.summaryLine}</p>
+          {detail.effectLine && <p className="muted tiny">{detail.effectLine}</p>}
         </div>
       </div>
-      {skills.length > 0 && (
-        <p className="muted tiny project-skill-reqs">
-          {skills
-            .map((requirement) => {
-              const skill = db.Skills.find((row) => row['Skill ID'] === requirement.skillId)
-              return `${skill?.['Display Name'] ?? requirement.skillId} ${requirement.level}`
-            })
-            .join(' · ')}
-        </p>
-      )}
+      {detail.skillLine && <p className="muted tiny project-skill-reqs">{detail.skillLine}</p>}
       <IngredientIconList
-        ingredients={inputs.map((input) => ({
-          itemId: input.itemId,
-          item: db.Items.find((row) => row['Item ID'] === input.itemId),
-          need: input.quantity,
-          owned: inventoryCount(save, input.itemId),
+        ingredients={detail.ingredients.map((line) => ({
+          itemId: line.itemId,
+          item: db.Items.find((row) => row['Item ID'] === line.itemId),
+          need: line.need,
+          owned: line.owned,
         }))}
       />
-      {project['Gold Cost'] > 0 && (
-        <p className={save.gold < project['Gold Cost'] ? 'danger-note tiny' : 'muted tiny'}>
-          Gold ×{project['Gold Cost']} (have {save.gold})
+      {detail.goldCost > 0 && (
+        <p className={detail.goldOwned < detail.goldCost ? 'danger-note tiny' : 'muted tiny'}>
+          Gold ×{detail.goldCost} (have {detail.goldOwned})
         </p>
       )}
     </div>

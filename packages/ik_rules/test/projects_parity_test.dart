@@ -172,6 +172,79 @@ void main() {
     }
   });
 
+  group('project menu parity', () {
+    for (final fixture in loadParityFixtures('projects/menu')) {
+      test(fixture.name, () {
+        final db = databaseOf(fixture);
+        final save = saveOf(fixture);
+        final stations = fixture
+            .inputField<List<Object?>>('stations')
+            .map((value) => asJsonMap(value))
+            .map((station) {
+              final facilityId = station['facilityId']! as String;
+              final skillId = station['skillId']! as String;
+              return <String, Object?>{
+                'facilityId': facilityId,
+                'skillId': skillId,
+                'list': projectMenuList(
+                  db,
+                  save,
+                  facilityId,
+                  skillId,
+                ).map((row) => row.toJson()).toList(),
+                'searched': projectMenuList(
+                  db,
+                  save,
+                  facilityId,
+                  skillId,
+                  station['query']! as String,
+                ).map((row) => row.toJson()).toList(),
+                'defaultProjectId': defaultProjectId(db, save, facilityId, skillId),
+              };
+            })
+            .toList();
+        final details = const <String>[
+          'PRJ-0007',
+          'PRJ-0118',
+          'PRJ-0135',
+          'PRJ-0139',
+          'PRJ-9999',
+        ].map((projectId) => projectDetail(db, save, projectId)?.toJson()).toList();
+        expect(checkParity(fixture, {'stations': stations, 'details': details}), isNull);
+      });
+    }
+  });
+
+  group('project receipt parity', () {
+    for (final fixture in loadParityFixtures('projects/receipt')) {
+      test(fixture.name, () {
+        final db = databaseOf(fixture);
+        final projectId = fixture.inputField<String>('projectId');
+        final quantity = fixture.inputField<num>('quantity');
+        final result = completeSpecialProject(
+          db,
+          saveOf(fixture),
+          projectId,
+          quantity,
+          enchantTargetId: _enchantTarget(fixture),
+          nowMs: fixture.inputField<num>('nowMs'),
+        );
+        expect(
+          checkParity(
+            fixture,
+            result.ok
+                ? <String, Object?>{
+                    'ok': true,
+                    'receipt': describeProjectCompletion(db, projectId, quantity, result).toJson(),
+                  }
+                : <String, Object?>{'ok': false, 'reason': result.reason},
+          ),
+          isNull,
+        );
+      });
+    }
+  });
+
   group('npc knowledge parity', () {
     const knowledgeSkills = <String>['SKL-0011', 'SKL-0012', 'SKL-0013', 'SKL-0007'];
 

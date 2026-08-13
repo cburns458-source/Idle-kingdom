@@ -8,6 +8,12 @@ import {
 } from '../../game/npcs/knowledge'
 import { completeSpecialProject, validateProjectCompletion } from '../../game/projects/engine'
 import {
+  defaultProjectId,
+  describeProjectCompletion,
+  projectDetail,
+  projectMenuList,
+} from '../../game/projects/menu'
+import {
   isCompleteProject,
   maxProjectQuantity,
   maxProjectsFromGold,
@@ -45,6 +51,16 @@ const STATION_LOCATIONS = ['LOC-0025', 'LOC-0007', 'LOC-0030', 'LOC-0023', 'LOC-
 const KNOWLEDGE_SKILLS = ['SKL-0011', 'SKL-0012', 'SKL-0013', 'SKL-0007']
 const NPC_LOCATIONS = ['LOC-0006', 'LOC-0007', 'LOC-0024', 'LOC-0029', 'LOC-9999']
 const UNLOCK_NPCS = ['NPC-0003', 'NPC-0004', 'NPC-0001']
+
+/** The three stations, one search that matches and one that cannot. */
+const MENU_STATIONS = [
+  { facilityId: 'FAC-0005', skillId: 'SKL-0011', query: 'axe' },
+  { facilityId: 'FAC-0008', skillId: 'SKL-0013', query: 'enchant' },
+  { facilityId: 'FAC-0003', skillId: 'SKL-0012', query: 'zzz' },
+]
+
+/** A tool, a level-gated tool, an enchantment, a spell, and a missing row. */
+const MENU_PROJECTS = ['PRJ-0007', 'PRJ-0118', 'PRJ-0135', 'PRJ-0139', 'PRJ-9999']
 
 const VALIDATE_CASES: Array<{
   name: string
@@ -188,6 +204,56 @@ export const projectScenarios: ParityScenario[] = [
               goldSpent: result.goldSpent,
             }
           : result) as unknown as JsonValue
+      },
+    ),
+  ),
+
+  ...(['base', 'forge', 'arcana'] as const).map((kind) =>
+    scenario('projects/menu', kind, withSave(kind, { stations: MENU_STATIONS as JsonValue }), () => {
+      const db = contentDatabase()
+      const save = saveFor(kind)
+      return {
+        stations: MENU_STATIONS.map((station) => ({
+          facilityId: station.facilityId,
+          skillId: station.skillId,
+          list: projectMenuList(db, save, station.facilityId, station.skillId),
+          searched: projectMenuList(db, save, station.facilityId, station.skillId, station.query),
+          defaultProjectId: defaultProjectId(db, save, station.facilityId, station.skillId),
+        })),
+        details: MENU_PROJECTS.map((projectId) => projectDetail(db, save, projectId)),
+      } as unknown as JsonValue
+    }),
+  ),
+
+  ...VALIDATE_CASES.map((entry) =>
+    scenario(
+      'projects/receipt',
+      entry.name,
+      withSave(entry.save, {
+        projectId: entry.projectId,
+        quantity: entry.quantity,
+        target: entry.target ?? null,
+        nowMs: NOW_MS,
+      }),
+      () => {
+        const result = completeSpecialProject(
+          contentDatabase(),
+          saveFor(entry.save),
+          entry.projectId,
+          entry.quantity,
+          entry.target,
+          NOW_MS,
+        )
+        if (!result.ok) return { ok: false, reason: result.reason } as unknown as JsonValue
+        return {
+          ok: true,
+          receipt: describeProjectCompletion(
+            contentDatabase(),
+            entry.projectId,
+            entry.quantity,
+            result,
+          ),
+        } as unknown as JsonValue
       },
     ),
   ),

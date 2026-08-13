@@ -53,6 +53,7 @@ export 'src/production/inventory.dart';
 export 'src/production/recipes.dart';
 export 'src/projects/enchantments.dart';
 export 'src/projects/engine.dart';
+export 'src/projects/menu.dart';
 export 'src/projects/projects.dart';
 export 'src/quests/objectives.dart';
 export 'src/quests/progress.dart';
