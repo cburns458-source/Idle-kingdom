@@ -1,5 +1,6 @@
 import type { GameDatabase } from '../data/types'
 import type { PlayerAppearance } from '../save/types'
+import { filterProfanity } from './moderation'
 import { boardLabel, launchBoardKeys } from './leaderboards'
 import {
   CITADEL_CHAT_LOCATION_ID,
@@ -47,7 +48,9 @@ export interface GuildBrowseRow {
   tag: string
   /** `Join`, `Apply`, or `Full`. */
   actionLabel: string
-  /** True when the guild has no room left. */
+  /** Always `Guest` — guests do not count toward the member cap. */
+  guestLabel: string
+  /** True when the guild has no room left for members. */
   full: boolean
 }
 
@@ -82,6 +85,7 @@ export function guildBrowseRows(rows: GuildListing[], query = ''): GuildBrowseRo
       emblem: row.emblem,
       tag: row.tag,
       actionLabel: full ? 'Full' : row.joinPolicy === 'open' ? 'Join' : 'Apply',
+      guestLabel: 'Guest',
       full,
     }
   })
@@ -187,14 +191,24 @@ export interface GuildApplicationRow {
   applicationId: string
   username: string
   message: string
+  guest?: boolean
 }
 
 export function guildApplicationRows(applications: GuildApplication[]): GuildApplicationRow[] {
-  return applications.map((application) => ({
-    applicationId: application.id,
-    username: application.username,
-    message: application.message || 'No message.',
-  }))
+  return applications.map((application) => {
+    const guest = Boolean(application.guest)
+    const row: GuildApplicationRow = {
+      applicationId: application.id,
+      username: application.username,
+      message: guest
+        ? application.message
+          ? `Guest: ${application.message}`
+          : 'Guest request.'
+        : application.message || 'No message.',
+    }
+    if (guest) row.guest = true
+    return row
+  })
 }
 
 /** Everything the create-guild form needs to render itself. */
@@ -363,16 +377,16 @@ export function publicProfileView(
 }
 
 /** The rooms the chat drawer offers, in tab order. */
-export type ChatTab = 'global' | 'local' | 'guild' | 'dm'
+export type ChatTab = 'global' | 'local' | 'guild' | 'guest' | 'dm'
 
-export const CHAT_TABS: ChatTab[] = ['global', 'local', 'guild', 'dm']
+export const CHAT_TABS: ChatTab[] = ['global', 'local', 'guild', 'guest', 'dm']
 
 /** One tab of the chat drawer. */
 export interface ChatTabView {
   tab: ChatTab
-  /** `Global`, `Citadel` inside the hub, `DMs (3)` when messages wait. */
+  /** `Global`, `Citadel` inside the hub, `Private (3)` when messages wait. */
   label: string
-  /** False for guild chat without a guild, which has no room to show. */
+  /** False for guild or guest chat without a room to show. */
   enabled: boolean
   selected: boolean
 }
@@ -397,28 +411,32 @@ export function chatTabs({
   selected,
   citadelHub,
   hasGuild,
+  hasGuest,
   unreadDms,
 }: {
   selected: ChatTab
   citadelHub: boolean
   hasGuild: boolean
+  hasGuest: boolean
   unreadDms: number
 }): ChatTabView[] {
   return CHAT_TABS.map((tab) => ({
     tab,
     label:
-      tab === 'local'
-        ? citadelHub
-          ? 'Citadel'
-          : 'Local'
-        : tab === 'dm'
-          ? unreadDms > 0
-            ? `DMs (${unreadDms})`
-            : 'DMs'
-          : tab === 'global'
-            ? 'Global'
-            : 'Guild',
-    enabled: tab !== 'guild' || hasGuild,
+      tab === 'global'
+        ? 'Global'
+        : tab === 'local'
+          ? citadelHub
+            ? 'Citadel'
+            : 'Local'
+          : tab === 'guild'
+            ? 'Guild'
+            : tab === 'guest'
+              ? 'Guest'
+              : unreadDms > 0
+                ? `Private (${unreadDms})`
+                : 'Private',
+    enabled: tab === 'guild' ? hasGuild : tab === 'guest' ? hasGuest : true,
     selected: tab === selected,
   }))
 }
@@ -426,12 +444,22 @@ export function chatTabs({
 /**
  * The room a tab writes to, or null when it is not a room at all.
  *
- * DMs are a reply to a person rather than a channel, and guild chat without a
- * guild has nowhere to go.
+ * Private messages are a reply to a person rather than a channel, and guild
+ * or guest chat without a guild has nowhere to go.
  */
 export function chatChannelForTab(
   tab: ChatTab,
-  { locationId, citadelHub, guildId }: { locationId: string; citadelHub: boolean; guildId: string | null },
+  {
+    locationId,
+    citadelHub,
+    guildId,
+    guestGuildId,
+  }: {
+    locationId: string
+    citadelHub: boolean
+    guildId: string | null
+    guestGuildId?: string | null
+  },
 ): ChatChannel | null {
   switch (tab) {
     case 'global':
@@ -440,21 +468,27 @@ export function chatChannelForTab(
       return { kind: 'local', locationId: chatLocalLocationId(locationId, citadelHub) }
     case 'guild':
       return guildId ? { kind: 'guild', guildId } : null
+    case 'guest':
+      return guestGuildId ? { kind: 'guild', guildId: guestGuildId } : null
     case 'dm':
       return null
   }
 }
 
-/** What an empty room says, which differs for DMs. */
+/** What an empty room says, which differs for private messages. */
 export function emptyChatMessage(tab: ChatTab): string {
-  return tab === 'dm' ? 'No direct messages yet.' : 'No messages yet.'
+  return tab === 'dm' ? 'No private messages yet.' : 'No messages yet.'
 }
 
-/** Why the DM tab has no composer. */
+/** Why the Private tab has no composer. */
 export const CHAT_DM_HINT = 'Reply to players from Nearby Adventurers or their public profile.'
 
 /** What a player is told when they try to use guild chat without a guild. */
 export const CHAT_NO_GUILD_NOTICE = 'Join a guild to use guild chat.'
+
+export const CHAT_NO_GUEST_NOTICE = 'Guest a guild to use guest chat.'
+
+export const CHAT_VIEW_GUILDS_LABEL = 'View guilds'
 
 /** Where the read cursor for one account's DMs is kept. */
 export function dmReadCursorKey(userId: string): string {
@@ -470,13 +504,32 @@ export interface ChatLineView {
   mine: boolean
 }
 
-export function chatLines(messages: ChatMessage[], viewerId: string | null): ChatLineView[] {
+export function chatLines(
+  messages: ChatMessage[],
+  viewerId: string | null,
+  { filterProfanityEnabled = false }: { filterProfanityEnabled?: boolean } = {},
+): ChatLineView[] {
   return messages.map((message) => ({
     messageId: message.id,
-    username: message.username,
-    body: message.body,
+    username: chatLineUsername(message),
+    body: filterProfanityEnabled ? filterProfanity(message.body) : message.body,
     mine: viewerId !== null && message.userId === viewerId,
   }))
+}
+
+/** `[TAG] Hero` in global/local, rank or Guest in guild rooms. */
+export function chatLineUsername(message: ChatMessage): string {
+  if (message.channelKey.startsWith('guild:')) {
+    if (message.guest) return `Guest ${message.username}`
+    const icon = message.rankIcon
+    const rank = message.rankLabel
+    if (icon && rank) return `${icon} ${rank} ${message.username}`
+    if (rank) return `${rank} ${message.username}`
+    return message.username
+  }
+  const tag = message.guildTag
+  if (tag) return `[${tag}] ${message.username}`
+  return message.username
 }
 
 /** What the account panel says about where multiplayer data lives. */

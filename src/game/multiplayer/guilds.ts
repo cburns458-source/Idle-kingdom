@@ -47,6 +47,27 @@ export async function applyToGuild(
   return getLocalBackend().applyToGuild(session, guildId, message)
 }
 
+export async function joinAsGuest(
+  guildId: string,
+  message: string,
+): Promise<{ ok: true; joined: boolean } | { ok: false; reason: string }> {
+  const session = getSession()
+  if (!session) return { ok: false, reason: 'Sign in to guest.' }
+  return getLocalBackend().joinAsGuest(session, guildId, message)
+}
+
+export async function leaveGuest(): Promise<{ ok: true } | { ok: false; reason: string }> {
+  const session = getSession()
+  if (!session) return { ok: false, reason: 'Sign in required.' }
+  return getLocalBackend().leaveGuest(session.userId)
+}
+
+export function currentGuestGuildId(): string | null {
+  const session = getSession()
+  if (!session) return null
+  return getLocalBackend().currentGuestGuildId(session.userId)
+}
+
 export async function listGuildApplications(guildId: string): Promise<GuildApplication[]> {
   return getLocalBackend().listApplications(guildId)
 }
@@ -77,6 +98,24 @@ export async function setGuildJoinPolicy(
   const session = getSession()
   if (!session) return { ok: false, reason: 'Sign in required.' }
   return getLocalBackend().setGuildJoinPolicy(session.userId, guildId, joinPolicy)
+}
+
+export async function setGuildGuestAutoAccept(
+  guildId: string,
+  guestAutoAccept: boolean,
+): Promise<{ ok: true } | { ok: false; reason: string }> {
+  const session = getSession()
+  if (!session) return { ok: false, reason: 'Sign in required.' }
+  return getLocalBackend().setGuildGuestAutoAccept(session.userId, guildId, guestAutoAccept)
+}
+
+export async function setGuildRankIconTheme(
+  guildId: string,
+  theme: string,
+): Promise<{ ok: true } | { ok: false; reason: string }> {
+  const session = getSession()
+  if (!session) return { ok: false, reason: 'Sign in required.' }
+  return getLocalBackend().setGuildRankIconTheme(session.userId, guildId, theme)
 }
 
 export async function setGuildRankLabels(

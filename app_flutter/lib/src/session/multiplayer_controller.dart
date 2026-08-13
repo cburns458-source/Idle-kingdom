@@ -32,8 +32,14 @@ class MultiplayerController extends ChangeNotifier {
   /// Where the DM read cursors live, next to the save and the backend document.
   final SaveStorage storage;
 
-  /// How often presence is republished, well inside its two-minute lifetime.
-  static const Duration presenceInterval = Duration(seconds: 15);
+  static const String chatFilterStorageKey = 'idle-kingdoms.client.filter-chat-profanity';
+
+  bool get filterChatProfanity => storage.getItem(chatFilterStorageKey) == '1';
+
+  void setFilterChatProfanity(bool value) {
+    storage.setItem(chatFilterStorageKey, value ? '1' : '0');
+    notifyListeners();
+  }
 
   /// How often the unread count and the visitor lists are refreshed.
   static const Duration pollInterval = Duration(seconds: 4);
@@ -43,6 +49,8 @@ class MultiplayerController extends ChangeNotifier {
 
   String? _guildId;
   GuildRecord? _guild;
+  String? _guestGuildId;
+  GuildRecord? _guestGuild;
   List<GuildMember> _members = const <GuildMember>[];
   List<GuildApplication> _applications = const <GuildApplication>[];
   List<GuildListing> _listings = const <GuildListing>[];
@@ -74,10 +82,12 @@ class MultiplayerController extends ChangeNotifier {
   /// The guild the player belongs to, once a refresh has looked.
   String? get guildId => _guildId;
   GuildRecord? get guild => _guild;
+  String? get guestGuildId => _guestGuildId;
+  GuildRecord? get guestGuild => _guestGuild;
   List<GuildMember> get members => _members;
   List<GuildApplication> get applications => _applications;
 
-  /// Every guild there is, for the browser. Empty while the player has one.
+  /// Every guild there is, for the browser and for guesting from chat.
   List<GuildListing> get listings => _listings;
 
   MultiplayerBoardKey get boardKey => _boardKey;
@@ -171,6 +181,8 @@ class MultiplayerController extends ChangeNotifier {
   void _resetSignedOutState() {
     _guildId = null;
     _guild = null;
+    _guestGuildId = null;
+    _guestGuild = null;
     _members = const <GuildMember>[];
     _applications = const <GuildApplication>[];
     _listings = const <GuildListing>[];
@@ -216,18 +228,20 @@ class MultiplayerController extends ChangeNotifier {
       return;
     }
     _guildId = await service.currentGuildId();
+    _guestGuildId = await service.currentGuestGuildId();
+    _listings = await service.listGuilds();
     final guildId = _guildId;
     if (guildId == null) {
       _guild = null;
       _members = const <GuildMember>[];
       _applications = const <GuildApplication>[];
-      _listings = await service.listGuilds();
     } else {
       _guild = await service.guild(guildId);
       _members = await service.guildMembers(guildId);
       _applications = await service.guildApplications(guildId);
-      _listings = const <GuildListing>[];
     }
+    final guestId = _guestGuildId;
+    _guestGuild = guestId == null ? null : await service.guild(guestId);
     _board = await service.leaderboard(_boardKey);
     _citadelVisitors = await service.citadelVisitors();
     _unreadDms = await service.countUnreadDirectMessages(_dmCursor());
@@ -369,6 +383,7 @@ class MultiplayerController extends ChangeNotifier {
       locationId: locationId,
       citadelHub: citadelHub,
       guildId: _guildId,
+      guestGuildId: _guestGuildId,
     );
     _messages = channel == null ? const <ChatMessage>[] : await service.listChat(channel);
     notifyListeners();
@@ -382,8 +397,11 @@ class MultiplayerController extends ChangeNotifier {
         locationId: locationId,
         citadelHub: citadelHub,
         guildId: _guildId,
+        guestGuildId: _guestGuildId,
       );
-      if (channel == null) return chatNoGuildNotice;
+      if (channel == null) {
+        return _chatTab == ChatTab.guest ? chatNoGuestNotice : chatNoGuildNotice;
+      }
       final result = await service.sendChat(channel, body);
       if (!result.ok) return result.reason;
       _messages = await service.listChat(channel);
@@ -428,6 +446,25 @@ class MultiplayerController extends ChangeNotifier {
     });
   }
 
+  Future<void> joinAsGuest(String guildId, String message, PlayerSave save) {
+    return run(() async {
+      final result = await service.joinAsGuest(guildId, message);
+      if (!result.ok) return result.reason;
+      final joined = result.joined ?? false;
+      await refresh(save);
+      return joined ? 'Joined as a guest.' : 'Guest request sent.';
+    });
+  }
+
+  Future<void> leaveGuest(PlayerSave save) {
+    return run(() async {
+      final result = await service.leaveGuest();
+      if (!result.ok) return result.reason;
+      await refresh(save);
+      return 'Left guest chat.';
+    });
+  }
+
   Future<void> decideApplication(String applicationId, bool accept, PlayerSave save) {
     return run(() async {
       final result = await service.decideGuildApplication(applicationId, accept);
@@ -451,6 +488,8 @@ class MultiplayerController extends ChangeNotifier {
   /// Saves the three things guild settings can change, stopping at the first no.
   Future<void> saveGuildSettings({
     required GuildJoinPolicy joinPolicy,
+    required bool guestAutoAccept,
+    required String rankIconTheme,
     required GuildEmblem emblem,
     required Map<GuildRankKey, String> rankLabels,
     required PlayerSave save,
@@ -460,6 +499,10 @@ class MultiplayerController extends ChangeNotifier {
       if (guildId == null) return 'Join a guild first.';
       final policy = await service.setGuildJoinPolicy(guildId, joinPolicy);
       if (!policy.ok) return policy.reason;
+      final guests = await service.setGuildGuestAutoAccept(guildId, guestAutoAccept);
+      if (!guests.ok) return guests.reason;
+      final icons = await service.setGuildRankIconTheme(guildId, rankIconTheme);
+      if (!icons.ok) return icons.reason;
       final banner = await service.setGuildEmblem(guildId, emblem);
       if (!banner.ok) return banner.reason;
       final ranks = await service.setGuildRankLabels(guildId, rankLabels);

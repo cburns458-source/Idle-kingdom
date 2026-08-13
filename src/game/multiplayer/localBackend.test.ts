@@ -77,6 +77,60 @@ describe('local multiplayer backend', () => {
     expect(filterProfanity('what the fuck')).toMatch(/\*+/)
   })
 
+  it('stores chat raw, prefixes guild tags, and disables chat after a slur', () => {
+    const backend = new LocalMultiplayerBackend()
+    const signed = backend.signUp('hero@example.com', 'Hero', 'secret')
+    expect(signed.ok).toBe(true)
+    if (!signed.ok) return
+    const stored = backend.sendChat(signed.session, { kind: 'global' }, 'what the fuck')
+    expect(stored.ok).toBe(true)
+    if (!stored.ok) return
+    expect(stored.message.body).toBe('what the fuck')
+
+    const slur = backend.sendChat(signed.session, { kind: 'global' }, 'nigger')
+    expect(slur.ok).toBe(false)
+    if (slur.ok) return
+    expect(slur.reason).toBe('Chat has been disabled.')
+    const later = backend.sendChat(signed.session, { kind: 'local', locationId: 'LOC-0002' }, 'Hi')
+    expect(later.ok).toBe(false)
+    if (later.ok) return
+    expect(later.reason).toBe('Chat has been disabled.')
+  })
+
+  it('lets a player guest a guild chat room without joining the roster', () => {
+    const backend = new LocalMultiplayerBackend()
+    const leader = backend.signUp('leader@example.com', 'Leader', 'secret')
+    const guest = backend.signUp('guest@example.com', 'Wanderer', 'secret')
+    expect(leader.ok && guest.ok).toBe(true)
+    if (!leader.ok || !guest.ok) return
+    const created = backend.createGuild(
+      leader.session,
+      {
+        name: 'Oak Guard',
+        tag: 'OAK',
+        description: 'For the kingdom',
+        emblem: { color: '#2f6b3a', symbol: 'tree' },
+      },
+      100,
+    )
+    expect(created.ok).toBe(true)
+    if (!created.ok) return
+    expect(backend.setGuildGuestAutoAccept(leader.session.userId, created.guild.id, true).ok).toBe(
+      true,
+    )
+    const joined = backend.joinAsGuest(guest.session, created.guild.id, '')
+    expect(joined.ok).toBe(true)
+    if (!joined.ok) return
+    expect(joined.joined).toBe(true)
+    expect(backend.guildMembers(created.guild.id)).toHaveLength(1)
+    expect(backend.currentGuestGuildId(guest.session.userId)).toBe(created.guild.id)
+    const chat = backend.sendChat(guest.session, { kind: 'guild', guildId: created.guild.id }, 'Hello')
+    expect(chat.ok).toBe(true)
+    if (!chat.ok) return
+    expect(chat.message.guest).toBe(true)
+    expect(chat.message.guildTag).toBeUndefined()
+  })
+
   it('supports bounty first-completer claims and bazaar posts', () => {
     const backend = new LocalMultiplayerBackend()
     const a = backend.signUp('a@example.com', 'Alpha', 'secret')

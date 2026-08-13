@@ -10,7 +10,7 @@ import {
 } from '../save/types'
 import { totalLevel } from '../skills/totals'
 import { CHAT_COOLDOWN_SECONDS, PRESENCE_TTL_SECONDS } from './config'
-import { filterProfanity } from './moderation'
+import { containsSlur, CHAT_DISABLED_NOTICE } from './moderation'
 import { buildLeaderboardSnapshot } from './snapshots'
 import type { GameDatabase } from '../data/types'
 import { prepareBazaarPost } from '../bazaar/post'
@@ -24,7 +24,10 @@ import {
   GUILD_EMBLEM_EMOJI_TO_SYMBOL,
   GUILD_EMBLEM_SYMBOLS,
   GUILD_MAX_MEMBERS,
+  GUILD_RANK_ICON_THEME_STRIPES,
   MULTIPLAYER_LOCAL_DB_KEY,
+  guildRankIcon,
+  normalizeRankIconTheme,
   type ActivityPresence,
   type ChatChannel,
   type ChatMessage,
@@ -33,6 +36,7 @@ import {
   type GuildApplication,
   type GuildChallenge,
   type GuildEmblem,
+  type GuildGuest,
   type GuildJoinPolicy,
   type GuildMember,
   type GuildProject,
@@ -47,7 +51,13 @@ import {
 } from './types'
 
 interface LocalDb {
-  users: Array<{ userId: string; email: string; username: string; password: string }>
+  users: Array<{
+    userId: string
+    email: string
+    username: string
+    password: string
+    chatBanned?: boolean
+  }>
   profiles: MultiplayerProfile[]
   saves: CloudSaveRecord[]
   leaderboards: Array<{
@@ -71,6 +81,7 @@ interface LocalDb {
   friends: Array<{ userA: string; userB: string }>
   bountyClaims: BountyClaimRecord[]
   bazaarPosts: BazaarPost[]
+  guests?: GuildGuest[]
 }
 
 function defaultAppearance(): PlayerAppearance {
@@ -187,6 +198,7 @@ function loadDb(storage: Storage = localStorage): LocalDb {
     }))
     merged.bountyClaims = Array.isArray(merged.bountyClaims) ? merged.bountyClaims : []
     merged.bazaarPosts = Array.isArray(merged.bazaarPosts) ? merged.bazaarPosts : []
+    merged.guests = Array.isArray(merged.guests) ? merged.guests : []
     return merged
   } catch {
     return emptyDb()
@@ -194,7 +206,9 @@ function loadDb(storage: Storage = localStorage): LocalDb {
 }
 
 function saveDb(db: LocalDb, storage: Storage = localStorage): void {
-  storage.setItem(MULTIPLAYER_LOCAL_DB_KEY, JSON.stringify(db))
+  const payload: LocalDb = { ...db }
+  if (!payload.guests?.length) delete payload.guests
+  storage.setItem(MULTIPLAYER_LOCAL_DB_KEY, JSON.stringify(payload))
 }
 
 /**
@@ -465,6 +479,23 @@ export class LocalMultiplayerBackend {
     return db.members.filter((row) => row.guildId === guildId).length
   }
 
+  private guestsOf(db: LocalDb): GuildGuest[] {
+    return db.guests ?? []
+  }
+
+  private canSpeakInGuild(db: LocalDb, guildId: string, userId: string): boolean {
+    return (
+      db.members.some((row) => row.guildId === guildId && row.userId === userId) ||
+      this.guestsOf(db).some((row) => row.guildId === guildId && row.userId === userId)
+    )
+  }
+
+  private guildForMember(db: LocalDb, userId: string): GuildRecord | undefined {
+    const membership = db.members.find((row) => row.userId === userId)
+    if (!membership) return undefined
+    return db.guilds.find((row) => row.id === membership.guildId)
+  }
+
   sendChat(
     session: MultiplayerSession,
     channel: ChatChannel,
@@ -482,26 +513,54 @@ export class LocalMultiplayerBackend {
             ? CHAT_COOLDOWN_SECONDS.guild
             : CHAT_COOLDOWN_SECONDS.dm
     const db = this.db()
+    const account = db.users.find((row) => row.userId === session.userId)
+    if (account?.chatBanned) {
+      return { ok: false, reason: CHAT_DISABLED_NOTICE }
+    }
+    if (containsSlur(trimmed)) {
+      if (account) {
+        account.chatBanned = true
+        this.write(db)
+      }
+      return { ok: false, reason: CHAT_DISABLED_NOTICE }
+    }
     const stampKey = `${session.userId}:${key}`
     const last = db.lastChatAt[stampKey]
     if (last && this.now() - Date.parse(last) < cooldown * 1000) {
       const wait = Math.ceil((cooldown * 1000 - (this.now() - Date.parse(last))) / 1000)
       return { ok: false, reason: `Wait ${wait}s before chatting again.` }
     }
+    if (channel.kind === 'guild' && !this.canSpeakInGuild(db, channel.guildId, session.userId)) {
+      return { ok: false, reason: 'Join the guild to use guild chat.' }
+    }
+    const memberGuild = this.guildForMember(db, session.userId)
+    let rankLabel: string | undefined
+    let rankIcon: string | undefined
+    let guest = false
     if (channel.kind === 'guild') {
       const member = db.members.find(
         (row) => row.guildId === channel.guildId && row.userId === session.userId,
       )
-      if (!member) return { ok: false, reason: 'Join the guild to use guild chat.' }
+      if (member) {
+        const guild = db.guilds.find((row) => row.id === channel.guildId)
+        rankLabel = guild?.rankLabels[member.role] ?? DEFAULT_GUILD_RANK_LABELS[member.role]
+        rankIcon = guildRankIcon(guild?.rankIconTheme ?? GUILD_RANK_ICON_THEME_STRIPES, member.role)
+      } else {
+        guest = true
+      }
     }
     const message: ChatMessage = {
       id: this.newId('msg'),
       channelKey: key,
       userId: session.userId,
       username: session.username,
-      body: filterProfanity(trimmed),
+      body: trimmed,
       createdAt: this.nowIso(),
     }
+    if (memberGuild?.tag) message.guildTag = memberGuild.tag
+    if (rankLabel) message.rankLabel = rankLabel
+    if (rankIcon) message.rankIcon = rankIcon
+    if (guest) message.guest = true
     db.messages.push(message)
     db.lastChatAt[stampKey] = message.createdAt
     this.write(db)
@@ -735,11 +794,16 @@ export class LocalMultiplayerBackend {
       db.applications = db.applications.filter(
         (row) => !(row.guildId === guildId && row.userId === session.userId),
       )
+      db.guests = this.guestsOf(db).filter(
+        (row) => !(row.guildId === guildId && row.userId === session.userId),
+      )
       this.write(db)
       return { ok: true, joined: true }
     }
     if (
-      db.applications.some((row) => row.guildId === guildId && row.userId === session.userId)
+      db.applications.some(
+        (row) => row.guildId === guildId && row.userId === session.userId && !row.guest,
+      )
     ) {
       return { ok: false, reason: 'Application already pending.' }
     }
@@ -753,6 +817,73 @@ export class LocalMultiplayerBackend {
     })
     this.write(db)
     return { ok: true, joined: false }
+  }
+
+  joinAsGuest(
+    session: MultiplayerSession,
+    guildId: string,
+    message: string,
+  ): { ok: true; joined: boolean } | { ok: false; reason: string } {
+    const db = this.db()
+    const guild = db.guilds.find((row) => row.id === guildId)
+    if (!guild) return { ok: false, reason: 'Guild not found.' }
+    if (db.members.some((row) => row.guildId === guildId && row.userId === session.userId)) {
+      return { ok: false, reason: 'Already a member of that guild.' }
+    }
+    if (this.guestsOf(db).some((row) => row.guildId === guildId && row.userId === session.userId)) {
+      return { ok: false, reason: 'Already a guest of that guild.' }
+    }
+    if (this.guestsOf(db).some((row) => row.userId === session.userId)) {
+      return { ok: false, reason: 'Leave your current guest guild first.' }
+    }
+    if (guild.guestAutoAccept) {
+      const snapshot = this.memberSnapshot(db, session.userId, session.username)
+      db.guests = this.guestsOf(db)
+      db.guests.push({
+        guildId: guild.id,
+        userId: session.userId,
+        username: snapshot.username,
+        joinedAt: this.nowIso(),
+        appearance: snapshot.appearance,
+      })
+      db.applications = db.applications.filter(
+        (row) => !(row.guildId === guildId && row.userId === session.userId && row.guest),
+      )
+      this.write(db)
+      return { ok: true, joined: true }
+    }
+    if (
+      db.applications.some(
+        (row) => row.guildId === guildId && row.userId === session.userId && row.guest,
+      )
+    ) {
+      return { ok: false, reason: 'Guest request already pending.' }
+    }
+    db.applications.push({
+      id: this.newId('app'),
+      guildId,
+      userId: session.userId,
+      username: session.username,
+      message: message.trim().slice(0, 120),
+      createdAt: this.nowIso(),
+      guest: true,
+    })
+    this.write(db)
+    return { ok: true, joined: false }
+  }
+
+  leaveGuest(userId: string): { ok: true } | { ok: false; reason: string } {
+    const db = this.db()
+    if (!this.guestsOf(db).some((row) => row.userId === userId)) {
+      return { ok: false, reason: 'Not a guest of a guild.' }
+    }
+    db.guests = this.guestsOf(db).filter((row) => row.userId !== userId)
+    this.write(db)
+    return { ok: true }
+  }
+
+  currentGuestGuildId(userId: string): string | null {
+    return this.guestsOf(this.db()).find((row) => row.userId === userId)?.guildId ?? null
   }
 
   listApplications(guildId: string): GuildApplication[] {
@@ -773,6 +904,29 @@ export class LocalMultiplayerBackend {
     }
     db.applications = db.applications.filter((row) => row.id !== applicationId)
     if (accept) {
+      if (application.guest) {
+        if (this.guestsOf(db).some((row) => row.userId === application.userId)) {
+          this.write(db)
+          return { ok: false, reason: 'Applicant is already a guest elsewhere.' }
+        }
+        if (
+          db.members.some((row) => row.guildId === guild.id && row.userId === application.userId)
+        ) {
+          this.write(db)
+          return { ok: false, reason: 'Applicant already joined that guild.' }
+        }
+        const snapshot = this.memberSnapshot(db, application.userId, application.username)
+        db.guests = this.guestsOf(db)
+        db.guests.push({
+          guildId: guild.id,
+          userId: application.userId,
+          username: snapshot.username,
+          joinedAt: this.nowIso(),
+          appearance: snapshot.appearance,
+        })
+        this.write(db)
+        return { ok: true }
+      }
       if (db.members.some((row) => row.userId === application.userId)) {
         this.write(db)
         return { ok: false, reason: 'Applicant already joined another guild.' }
@@ -795,6 +949,9 @@ export class LocalMultiplayerBackend {
         row.userId === application.userId
           ? { ...row, guildId: guild.id, guildName: guild.name, updatedAt: this.nowIso() }
           : row,
+      )
+      db.guests = this.guestsOf(db).filter(
+        (row) => !(row.guildId === guild.id && row.userId === application.userId),
       )
     }
     this.write(db)
@@ -836,6 +993,39 @@ export class LocalMultiplayerBackend {
       return { ok: false, reason: 'Only the leader can change join settings.' }
     }
     guild.joinPolicy = joinPolicy
+    this.write(db)
+    return { ok: true }
+  }
+
+  setGuildGuestAutoAccept(
+    actorId: string,
+    guildId: string,
+    guestAutoAccept: boolean,
+  ): { ok: true } | { ok: false; reason: string } {
+    const db = this.db()
+    const guild = db.guilds.find((row) => row.id === guildId)
+    if (!guild || guild.leaderId !== actorId) {
+      return { ok: false, reason: 'Only the leader can change join settings.' }
+    }
+    if (guestAutoAccept) guild.guestAutoAccept = true
+    else delete guild.guestAutoAccept
+    this.write(db)
+    return { ok: true }
+  }
+
+  setGuildRankIconTheme(
+    actorId: string,
+    guildId: string,
+    theme: string,
+  ): { ok: true } | { ok: false; reason: string } {
+    const db = this.db()
+    const guild = db.guilds.find((row) => row.id === guildId)
+    if (!guild || guild.leaderId !== actorId) {
+      return { ok: false, reason: 'Only the leader can change rank icons.' }
+    }
+    const next = normalizeRankIconTheme(theme)
+    if (next !== GUILD_RANK_ICON_THEME_STRIPES) guild.rankIconTheme = next
+    else delete guild.rankIconTheme
     this.write(db)
     return { ok: true }
   }
@@ -886,6 +1076,7 @@ export class LocalMultiplayerBackend {
       db.projects = db.projects.filter((row) => row.guildId !== membership.guildId)
       db.challenges = db.challenges.filter((row) => row.guildId !== membership.guildId)
       db.applications = db.applications.filter((row) => row.guildId !== membership.guildId)
+      db.guests = this.guestsOf(db).filter((row) => row.guildId !== membership.guildId)
     }
     db.members = db.members.filter((row) => row.userId !== userId)
     db.profiles = db.profiles.map((row) =>

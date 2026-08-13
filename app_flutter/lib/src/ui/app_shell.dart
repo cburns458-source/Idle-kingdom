@@ -172,6 +172,7 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
             TopHud(
               controller: controller,
               trailing: ChatLauncher(
+                controller: controller,
                 multiplayer: multiplayer,
                 locationId: save.currentLocationId,
                 citadelHub: _inCitadel,
@@ -293,7 +294,7 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
           section: SocialTab.account,
         );
       case GameScreen.menu:
-        return MenuView(controller: controller);
+        return MenuView(controller: controller, multiplayer: multiplayer);
     }
   }
 }

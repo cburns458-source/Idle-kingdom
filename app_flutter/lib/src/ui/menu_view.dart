@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:ik_rules/ik_rules.dart';
 
 import '../session/game_controller.dart';
+import '../session/multiplayer_controller.dart';
 import '../session/pick_local_png.dart';
 import '../theme.dart';
 import 'player_sprite.dart';
@@ -16,9 +17,10 @@ const String _playerArtReset = 'Back to the default adventurer.';
 
 /// Character identity, a local sprite override, and the save tools.
 class MenuView extends StatefulWidget {
-  const MenuView({super.key, required this.controller});
+  const MenuView({super.key, required this.controller, required this.multiplayer});
 
   final GameController controller;
+  final MultiplayerController multiplayer;
 
   @override
   State<MenuView> createState() => _MenuViewState();
@@ -130,6 +132,21 @@ class _MenuViewState extends State<MenuView> {
               ],
             ],
           ),
+        ),
+        const SizedBox(height: 16),
+        ListenableBuilder(
+          listenable: widget.multiplayer,
+          builder: (context, _) {
+            return GamePanel(
+              child: SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Filter chat'),
+                subtitle: const Text('Hide profanity in chat. Messages are still stored as typed.'),
+                value: widget.multiplayer.filterChatProfanity,
+                onChanged: widget.multiplayer.setFilterChatProfanity,
+              ),
+            );
+          },
         ),
         const SizedBox(height: 16),
         SaveTransferSection(controller: controller),

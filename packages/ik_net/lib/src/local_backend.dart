@@ -323,6 +323,19 @@ class LocalMultiplayerBackend {
   int _guildMemberCount(LocalDb db, String guildId) =>
       db.members.where((row) => row.guildId == guildId).length;
 
+  bool _canSpeakInGuild(LocalDb db, String guildId, String userId) =>
+      db.members.any((row) => row.guildId == guildId && row.userId == userId) ||
+      db.guests.any((row) => row.guildId == guildId && row.userId == userId);
+
+  GuildRecord? _guildForMember(LocalDb db, String userId) {
+    final membership = db.members.firstWhereOrNull((row) => row.userId == userId);
+    if (membership == null) return null;
+    return db.guilds.firstWhereOrNull((row) => row.id == membership.guildId);
+  }
+
+  GuildGuest? _guestOf(LocalDb db, String userId) =>
+      db.guests.firstWhereOrNull((row) => row.userId == userId);
+
   // --- Chat -----------------------------------------------------------------
 
   ChatSendResult sendChat(MultiplayerSession session, ChatChannel channel, String body) {
@@ -337,18 +350,40 @@ class LocalMultiplayerBackend {
       DirectChatChannel() => ChatCooldownSeconds.dm,
     };
     final db = _db();
+    final accountIndex = db.users.indexWhere((row) => row.userId == session.userId);
+    if (accountIndex >= 0 && db.users[accountIndex].chatBanned) {
+      return const ChatSendResult.failed(chatDisabledNotice);
+    }
+    if (containsSlur(trimmed)) {
+      if (accountIndex >= 0) {
+        db.users[accountIndex] = db.users[accountIndex].copyWith(chatBanned: true);
+        _write(db);
+      }
+      return const ChatSendResult.failed(chatDisabledNotice);
+    }
     final stampKey = '${session.userId}:$key';
     final last = db.lastChatAt[stampKey];
     if (isNotBlank(last) && _now() - jsDateParse(last) < cooldown * 1000) {
       final wait = ((cooldown * 1000 - (_now() - jsDateParse(last))) / 1000).ceil();
       return ChatSendResult.failed('Wait ${wait}s before chatting again.');
     }
+    if (channel is GuildChatChannel && !_canSpeakInGuild(db, channel.guildId, session.userId)) {
+      return const ChatSendResult.failed('Join the guild to use guild chat.');
+    }
+    final memberGuild = _guildForMember(db, session.userId);
+    String? rankLabel;
+    String? rankIcon;
+    var guest = false;
     if (channel is GuildChatChannel) {
       final member = db.members.firstWhereOrNull(
         (row) => row.guildId == channel.guildId && row.userId == session.userId,
       );
-      if (member == null) {
-        return const ChatSendResult.failed('Join the guild to use guild chat.');
+      if (member != null) {
+        final guild = db.guilds.firstWhereOrNull((row) => row.id == channel.guildId);
+        rankLabel = guild?.rankLabels[member.role] ?? defaultGuildRankLabels[member.role];
+        rankIcon = guildRankIcon(guild?.rankIconTheme ?? guildRankIconThemeStripes, member.role);
+      } else {
+        guest = true;
       }
     }
     final message = ChatMessage(
@@ -356,8 +391,12 @@ class LocalMultiplayerBackend {
       channelKey: key,
       userId: session.userId,
       username: session.username,
-      body: filterProfanity(trimmed),
+      body: trimmed,
       createdAt: _nowIso(),
+      guildTag: memberGuild?.tag,
+      rankLabel: rankLabel,
+      rankIcon: rankIcon,
+      guest: guest,
     );
     db.messages.add(message);
     db.lastChatAt[stampKey] = message.createdAt;
@@ -696,10 +735,15 @@ class LocalMultiplayerBackend {
       db.applications = db.applications
           .where((row) => !(row.guildId == guildId && row.userId == session.userId))
           .toList();
+      db.guests = db.guests
+          .where((row) => !(row.guildId == guildId && row.userId == session.userId))
+          .toList();
       _write(db);
       return const ApplyToGuildResult.ok(joined: true);
     }
-    if (db.applications.any((row) => row.guildId == guildId && row.userId == session.userId)) {
+    if (db.applications.any(
+      (row) => row.guildId == guildId && row.userId == session.userId && !row.guest,
+    )) {
       return const ApplyToGuildResult.failed('Application already pending.');
     }
     final trimmed = message.trim();
@@ -717,6 +761,69 @@ class LocalMultiplayerBackend {
     return const ApplyToGuildResult.ok(joined: false);
   }
 
+  ApplyToGuildResult joinAsGuest(MultiplayerSession session, String guildId, String message) {
+    final db = _db();
+    final guild = db.guilds.firstWhereOrNull((row) => row.id == guildId);
+    if (guild == null) return const ApplyToGuildResult.failed('Guild not found.');
+    if (db.members.any((row) => row.guildId == guildId && row.userId == session.userId)) {
+      return const ApplyToGuildResult.failed('Already a member of that guild.');
+    }
+    if (db.guests.any((row) => row.guildId == guildId && row.userId == session.userId)) {
+      return const ApplyToGuildResult.failed('Already a guest of that guild.');
+    }
+    if (db.guests.any((row) => row.userId == session.userId)) {
+      return const ApplyToGuildResult.failed('Leave your current guest guild first.');
+    }
+    if (guild.guestAutoAccept) {
+      final snapshot = _memberSnapshot(db, session.userId, session.username);
+      db.guests.add(
+        GuildGuest(
+          guildId: guild.id,
+          userId: session.userId,
+          username: snapshot.username,
+          joinedAt: _nowIso(),
+          appearance: snapshot.appearance,
+        ),
+      );
+      db.applications = db.applications
+          .where((row) => !(row.guildId == guildId && row.userId == session.userId && row.guest))
+          .toList();
+      _write(db);
+      return const ApplyToGuildResult.ok(joined: true);
+    }
+    if (db.applications.any(
+      (row) => row.guildId == guildId && row.userId == session.userId && row.guest,
+    )) {
+      return const ApplyToGuildResult.failed('Guest request already pending.');
+    }
+    final trimmed = message.trim();
+    db.applications.add(
+      GuildApplication(
+        id: _newId('app'),
+        guildId: guildId,
+        userId: session.userId,
+        username: session.username,
+        message: trimmed.length > 120 ? trimmed.substring(0, 120) : trimmed,
+        createdAt: _nowIso(),
+        guest: true,
+      ),
+    );
+    _write(db);
+    return const ApplyToGuildResult.ok(joined: false);
+  }
+
+  ActionResult leaveGuest(String userId) {
+    final db = _db();
+    if (!db.guests.any((row) => row.userId == userId)) {
+      return const ActionResult.failed('Not a guest of a guild.');
+    }
+    db.guests = db.guests.where((row) => row.userId != userId).toList();
+    _write(db);
+    return const ActionResult.ok();
+  }
+
+  String? currentGuestGuildId(String userId) => _guestOf(_db(), userId)?.guildId;
+
   List<GuildApplication> listApplications(String guildId) =>
       _db().applications.where((row) => row.guildId == guildId).toList();
 
@@ -730,6 +837,28 @@ class LocalMultiplayerBackend {
     }
     db.applications = db.applications.where((row) => row.id != applicationId).toList();
     if (accept) {
+      if (application.guest) {
+        if (db.guests.any((row) => row.userId == application.userId)) {
+          _write(db);
+          return const ActionResult.failed('Applicant is already a guest elsewhere.');
+        }
+        if (db.members.any((row) => row.guildId == guild.id && row.userId == application.userId)) {
+          _write(db);
+          return const ActionResult.failed('Applicant already joined that guild.');
+        }
+        final snapshot = _memberSnapshot(db, application.userId, application.username);
+        db.guests.add(
+          GuildGuest(
+            guildId: guild.id,
+            userId: application.userId,
+            username: snapshot.username,
+            joinedAt: _nowIso(),
+            appearance: snapshot.appearance,
+          ),
+        );
+        _write(db);
+        return const ActionResult.ok();
+      }
       if (db.members.any((row) => row.userId == application.userId)) {
         _write(db);
         return const ActionResult.failed('Applicant already joined another guild.');
@@ -751,6 +880,9 @@ class LocalMultiplayerBackend {
         ),
       );
       db.profiles = _withGuild(db.profiles, application.userId, guild);
+      db.guests = db.guests
+          .where((row) => !(row.guildId == guild.id && row.userId == application.userId))
+          .toList();
     }
     _write(db);
     return const ActionResult.ok();
@@ -788,6 +920,28 @@ class LocalMultiplayerBackend {
       return const ActionResult.failed('Only the leader can change join settings.');
     }
     db.guilds[index] = db.guilds[index].copyWith(joinPolicy: joinPolicy);
+    _write(db);
+    return const ActionResult.ok();
+  }
+
+  ActionResult setGuildGuestAutoAccept(String actorId, String guildId, bool guestAutoAccept) {
+    final db = _db();
+    final index = db.guilds.indexWhere((row) => row.id == guildId);
+    if (index < 0 || db.guilds[index].leaderId != actorId) {
+      return const ActionResult.failed('Only the leader can change join settings.');
+    }
+    db.guilds[index] = db.guilds[index].copyWith(guestAutoAccept: guestAutoAccept);
+    _write(db);
+    return const ActionResult.ok();
+  }
+
+  ActionResult setGuildRankIconTheme(String actorId, String guildId, String theme) {
+    final db = _db();
+    final index = db.guilds.indexWhere((row) => row.id == guildId);
+    if (index < 0 || db.guilds[index].leaderId != actorId) {
+      return const ActionResult.failed('Only the leader can change rank icons.');
+    }
+    db.guilds[index] = db.guilds[index].copyWith(rankIconTheme: normalizeRankIconTheme(theme));
     _write(db);
     return const ActionResult.ok();
   }
@@ -839,6 +993,7 @@ class LocalMultiplayerBackend {
       db.projects = db.projects.where((row) => row.guildId != membership.guildId).toList();
       db.challenges = db.challenges.where((row) => row.guildId != membership.guildId).toList();
       db.applications = db.applications.where((row) => row.guildId != membership.guildId).toList();
+      db.guests = db.guests.where((row) => row.guildId != membership.guildId).toList();
     }
     db.members = db.members.where((row) => row.userId != userId).toList();
     db.profiles = _withGuild(db.profiles, userId, null);

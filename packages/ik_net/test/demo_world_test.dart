@@ -85,4 +85,51 @@ void main() {
     await service.unignorePlayer(demoMiraId);
     expect((await service.peersAtLocation(demoMiraLocationId)).single.username, demoMiraName);
   });
+
+  test('a player can guest The Watch without joining the roster', () {
+    final store = backend();
+    store.ensureDemoWorld(database);
+    expect(store.listGuilds().single.guild.guestAutoAccept, isTrue);
+
+    final hero = store.signUp('hero@example.com', 'Hero', 'secret').session!;
+    final guested = store.joinAsGuest(hero, demoGuildId, '');
+    expect(guested.ok, isTrue);
+    expect(guested.joined, isTrue);
+    expect(store.guildMembers(demoGuildId), hasLength(3));
+    expect(store.currentGuestGuildId(hero.userId), demoGuildId);
+
+    final sent = store.sendChat(hero, ChatChannel.guild(demoGuildId), 'Hello from the road');
+    expect(sent.ok, isTrue);
+    expect(sent.message!.guest, isTrue);
+    expect(sent.message!.guildTag, isNull);
+  });
+
+  test('global chat shows The Watch tag, stores raw text, and slurs disable chat', () {
+    final store = backend();
+    store.ensureDemoWorld(database);
+    final hero = store.signUp('hero@example.com', 'Hero', 'secret').session!;
+
+    final lines = chatLines(store.listChat(const ChatChannel.global(), hero.userId), hero.userId);
+    expect(lines, hasLength(1));
+    expect(lines.single.username, '[WCH] Mira');
+
+    final stored = store.sendChat(hero, const ChatChannel.global(), 'what the fuck');
+    expect(stored.ok, isTrue);
+    expect(stored.message!.body, 'what the fuck');
+    expect(
+      chatLines(
+        <ChatMessage>[stored.message!],
+        hero.userId,
+        filterProfanityEnabled: true,
+      ).single.body,
+      contains('*'),
+    );
+
+    final slur = store.sendChat(hero, const ChatChannel.local('LOC-0002'), 'nigger');
+    expect(slur.ok, isFalse);
+    expect(slur.reason, chatDisabledNotice);
+    final later = store.sendChat(hero, const ChatChannel.global(), 'Hi again');
+    expect(later.ok, isFalse);
+    expect(later.reason, chatDisabledNotice);
+  });
 }

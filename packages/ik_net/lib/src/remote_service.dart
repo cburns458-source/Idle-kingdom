@@ -276,6 +276,16 @@ class RemoteMultiplayerService implements MultiplayerService {
       _local.applyToGuild(guildId, message);
 
   @override
+  Future<ApplyToGuildResult> joinAsGuest(String guildId, String message) =>
+      _local.joinAsGuest(guildId, message);
+
+  @override
+  Future<ActionResult> leaveGuest() => _local.leaveGuest();
+
+  @override
+  Future<String?> currentGuestGuildId() => _local.currentGuestGuildId();
+
+  @override
   Future<List<GuildApplication>> guildApplications(String guildId) =>
       _local.guildApplications(guildId);
 
@@ -290,6 +300,14 @@ class RemoteMultiplayerService implements MultiplayerService {
   @override
   Future<ActionResult> setGuildJoinPolicy(String guildId, GuildJoinPolicy joinPolicy) =>
       _local.setGuildJoinPolicy(guildId, joinPolicy);
+
+  @override
+  Future<ActionResult> setGuildGuestAutoAccept(String guildId, bool guestAutoAccept) =>
+      _local.setGuildGuestAutoAccept(guildId, guestAutoAccept);
+
+  @override
+  Future<ActionResult> setGuildRankIconTheme(String guildId, String theme) =>
+      _local.setGuildRankIconTheme(guildId, theme);
 
   @override
   Future<ActionResult> setGuildRankLabels(String guildId, Map<GuildRankKey, String> rankLabels) =>

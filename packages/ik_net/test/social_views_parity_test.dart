@@ -128,6 +128,7 @@ GuildApplication _application({
   String id = 'app_1',
   String username = 'Joiner',
   String message = 'Please',
+  bool guest = false,
 }) {
   return GuildApplication(
     id: id,
@@ -136,6 +137,7 @@ GuildApplication _application({
     username: username,
     message: message,
     createdAt: '2026-08-02T00:00:00.000Z',
+    guest: guest,
   );
 }
 
@@ -284,6 +286,8 @@ void main() {
                   guildApplicationRows(<GuildApplication>[
                     _application(),
                     _application(id: 'app_2', username: 'Quiet', message: ''),
+                    _application(id: 'app_3', username: 'Wanderer', message: 'Hi', guest: true),
+                    _application(id: 'app_4', username: 'Silent', message: '', guest: true),
                   ]),
                 ),
                 'signInPrompts': <String>[signInPrompt, guildSignInPrompt],
@@ -370,13 +374,31 @@ void main() {
           checkParity(fixture, <String, Object?>{
             'tabIds': chatTabOrder.map((tab) => tab.wire).toList(),
             'plain': _rows(
-              chatTabs(selected: ChatTab.global, citadelHub: false, hasGuild: false, unreadDms: 0),
+              chatTabs(
+                selected: ChatTab.global,
+                citadelHub: false,
+                hasGuild: false,
+                hasGuest: false,
+                unreadDms: 0,
+              ),
             ),
             'citadelWithGuild': _rows(
-              chatTabs(selected: ChatTab.local, citadelHub: true, hasGuild: true, unreadDms: 3),
+              chatTabs(
+                selected: ChatTab.local,
+                citadelHub: true,
+                hasGuild: true,
+                hasGuest: false,
+                unreadDms: 3,
+              ),
             ),
             'manyUnread': _rows(
-              chatTabs(selected: ChatTab.dm, citadelHub: false, hasGuild: true, unreadDms: 12),
+              chatTabs(
+                selected: ChatTab.dm,
+                citadelHub: false,
+                hasGuild: true,
+                hasGuest: true,
+                unreadDms: 12,
+              ),
             ),
             'badges': <num>[0, 1, 9, 10, 99].map(unreadBadgeLabel).toList(),
             'localLocationIds': <String>[
@@ -393,6 +415,7 @@ void main() {
                         locationId: 'LOC-0002',
                         citadelHub: false,
                         guildId: 'gld_1',
+                        guestGuildId: 'gld_2',
                       ),
                     ),
                     'inCitadelWithoutGuild': _channelJson(
@@ -407,10 +430,66 @@ void main() {
                 )
                 .toList(),
             'emptyMessages': chatTabOrder.map(emptyChatMessage).toList(),
-            'hints': <String>[chatDmHint, chatNoGuildNotice],
+            'hints': <String>[chatDmHint, chatNoGuildNotice, chatNoGuestNotice],
             'cursorKey': dmReadCursorKey('usr_0001'),
             'lines': _rows(chatLines(messages, 'usr_1')),
             'linesAnonymous': _rows(chatLines(messages, null)),
+            'prefixed': _rows(
+              chatLines(const <ChatMessage>[
+                ChatMessage(
+                  id: 'msg_3',
+                  channelKey: 'global',
+                  userId: 'usr_3',
+                  username: 'Mira',
+                  body: 'The road is clear.',
+                  createdAt: '2026-08-12T21:00:10.000Z',
+                  guildTag: 'WCH',
+                ),
+              ], 'usr_1'),
+            ),
+            'filtered': _rows(
+              chatLines(
+                const <ChatMessage>[
+                  ChatMessage(
+                    id: 'msg_4',
+                    channelKey: 'global',
+                    userId: 'usr_4',
+                    username: 'Loud',
+                    body: 'what the fuck',
+                    createdAt: '2026-08-12T21:00:11.000Z',
+                  ),
+                ],
+                null,
+                filterProfanityEnabled: true,
+              ),
+            ),
+            'guildRank': _rows(
+              chatLines(const <ChatMessage>[
+                ChatMessage(
+                  id: 'msg_5',
+                  channelKey: 'guild:gld_1',
+                  userId: 'usr_3',
+                  username: 'Mira',
+                  body: 'Hold the gate.',
+                  createdAt: '2026-08-12T21:00:12.000Z',
+                  rankLabel: 'Leader',
+                  rankIcon: '★',
+                ),
+              ], 'usr_1'),
+            ),
+            'guestLine': _rows(
+              chatLines(const <ChatMessage>[
+                ChatMessage(
+                  id: 'msg_6',
+                  channelKey: 'guild:gld_1',
+                  userId: 'usr_5',
+                  username: 'Wanderer',
+                  body: 'Passing through.',
+                  createdAt: '2026-08-12T21:00:13.000Z',
+                  guest: true,
+                ),
+              ], null),
+            ),
           }),
           isNull,
         );

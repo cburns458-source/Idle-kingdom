@@ -114,6 +114,7 @@ void applyDemoWorld(LocalDb db, GameDatabase gameDb, {required num nowMs, requir
     joinPolicy: guildJoinOpen,
     rankLabels: <GuildRankKey, String>{...defaultGuildRankLabels},
     createdAt: nowIso,
+    guestAutoAccept: true,
   );
   final existingGuild = db.guilds.indexWhere((row) => row.id == demoGuildId);
   if (existingGuild < 0) {
@@ -194,6 +195,32 @@ void applyDemoWorld(LocalDb db, GameDatabase gameDb, {required num nowMs, requir
       skillLevel: 18,
       nowIso: nowIso,
       expiresAt: expiresAt,
+    ),
+  ];
+
+  db.messages = [
+    ...db.messages.where((row) => !row.id.startsWith('msg_demo_')),
+    ChatMessage(
+      id: 'msg_demo_mira_global',
+      channelKey: 'global',
+      userId: demoMiraId,
+      username: demoMiraName,
+      body: 'The Watch holds the meadow road.',
+      createdAt: nowIso,
+      guildTag: demoGuildTag,
+      rankLabel: 'Leader',
+      rankIcon: guildRankIcon(guildRankIconThemeStripes, guildRoleLeader),
+    ),
+    ChatMessage(
+      id: 'msg_demo_mira_meadow',
+      channelKey: 'local:$demoMiraLocationId',
+      userId: demoMiraId,
+      username: demoMiraName,
+      body: 'Plenty of flax this morning.',
+      createdAt: nowIso,
+      guildTag: demoGuildTag,
+      rankLabel: 'Leader',
+      rankIcon: guildRankIcon(guildRankIconThemeStripes, guildRoleLeader),
     ),
   ];
 }

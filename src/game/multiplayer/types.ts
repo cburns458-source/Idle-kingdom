@@ -72,6 +72,10 @@ export interface ChatMessage {
   username: string
   body: string
   createdAt: string
+  guildTag?: string
+  rankLabel?: string
+  rankIcon?: string
+  guest?: boolean
 }
 
 /** Leader plus four promotable ranks. */
@@ -96,6 +100,30 @@ export const PROMOTABLE_GUILD_RANKS: Exclude<GuildRole, 'leader'>[] = [
   'member',
   'recruit',
 ]
+
+export const GUILD_RANK_ICON_THEME_STRIPES = 'stripes'
+export const GUILD_RANK_ICON_THEME_CROWNS = 'crowns'
+
+export function normalizeRankIconTheme(raw: unknown): string {
+  return raw === GUILD_RANK_ICON_THEME_CROWNS
+    ? GUILD_RANK_ICON_THEME_CROWNS
+    : GUILD_RANK_ICON_THEME_STRIPES
+}
+
+export function guildRankIcon(theme: string, role: string): string {
+  if (normalizeRankIconTheme(theme) === GUILD_RANK_ICON_THEME_CROWNS) {
+    if (role === 'leader') return '♔'
+    if (role === 'officer') return '◆'
+    if (role === 'veteran') return '●'
+    if (role === 'member') return '•'
+    return '·'
+  }
+  if (role === 'leader') return '★'
+  if (role === 'officer') return '▍▍▍▍'
+  if (role === 'veteran') return '▍▍▍'
+  if (role === 'member') return '▍▍'
+  return '▍'
+}
 
 export const GUILD_CREATE_GOLD_COST = 25
 export const GUILD_MAX_MEMBERS = 25
@@ -162,6 +190,8 @@ export interface GuildRecord {
   joinPolicy: GuildJoinPolicy
   rankLabels: Record<GuildRankKey, string>
   createdAt: string
+  guestAutoAccept?: boolean
+  rankIconTheme?: string
 }
 
 /** A guild as the browser lists it, with how full it is. */
@@ -182,6 +212,15 @@ export interface GuildMember {
   totalLevel: number
 }
 
+/** A player who may use this guild's chat without appearing on the roster. */
+export interface GuildGuest {
+  guildId: string
+  userId: string
+  username: string
+  joinedAt: string
+  appearance: PlayerAppearance
+}
+
 export interface CreateGuildInput {
   name: string
   tag: string
@@ -196,6 +235,7 @@ export interface GuildApplication {
   username: string
   message: string
   createdAt: string
+  guest?: boolean
 }
 
 export interface GuildProject {

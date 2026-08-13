@@ -248,6 +248,10 @@ class ChatMessage {
     required this.username,
     required this.body,
     required this.createdAt,
+    this.guildTag,
+    this.rankLabel,
+    this.rankIcon,
+    this.guest = false,
   });
 
   factory ChatMessage.fromJson(Map<String, Object?> json) => ChatMessage(
@@ -257,6 +261,10 @@ class ChatMessage {
     username: json['username']! as String,
     body: json['body']! as String,
     createdAt: json['createdAt']! as String,
+    guildTag: json['guildTag'] as String?,
+    rankLabel: json['rankLabel'] as String?,
+    rankIcon: json['rankIcon'] as String?,
+    guest: json['guest'] as bool? ?? false,
   );
 
   final String id;
@@ -266,6 +274,18 @@ class ChatMessage {
   final String body;
   final String createdAt;
 
+  /// Member guild tag, shown as `[TAG]` in global and local rooms.
+  final String? guildTag;
+
+  /// Guild-chat rank name, from the guild's own labels at send time.
+  final String? rankLabel;
+
+  /// Guild-chat rank mark, from the guild's icon theme at send time.
+  final String? rankIcon;
+
+  /// True when the speaker is a guest of the guild room, not a member.
+  final bool guest;
+
   Map<String, Object?> toJson() => <String, Object?>{
     'id': id,
     'channelKey': channelKey,
@@ -273,6 +293,10 @@ class ChatMessage {
     'username': username,
     'body': body,
     'createdAt': createdAt,
+    if (guildTag != null) 'guildTag': guildTag,
+    if (rankLabel != null) 'rankLabel': rankLabel,
+    if (rankIcon != null) 'rankIcon': rankIcon,
+    if (guest) 'guest': true,
   };
 }
 
@@ -307,6 +331,40 @@ const List<GuildRole> promotableGuildRanks = <GuildRole>[
   guildRoleMember,
   guildRoleRecruit,
 ];
+
+/// Army stripes, with a star for the leader.
+const String guildRankIconThemeStripes = 'stripes';
+
+/// Pips, with a crown for the leader.
+const String guildRankIconThemeCrowns = 'crowns';
+
+const List<String> guildRankIconThemes = <String>[
+  guildRankIconThemeStripes,
+  guildRankIconThemeCrowns,
+];
+
+String normalizeRankIconTheme(String? raw) =>
+    raw == guildRankIconThemeCrowns ? guildRankIconThemeCrowns : guildRankIconThemeStripes;
+
+/// The mark that sits in front of a name in guild chat.
+String guildRankIcon(String theme, String role) {
+  if (normalizeRankIconTheme(theme) == guildRankIconThemeCrowns) {
+    return switch (role) {
+      guildRoleLeader => '♔',
+      guildRoleOfficer => '◆',
+      guildRoleVeteran => '●',
+      guildRoleMember => '•',
+      _ => '·',
+    };
+  }
+  return switch (role) {
+    guildRoleLeader => '★',
+    guildRoleOfficer => '▍▍▍▍',
+    guildRoleVeteran => '▍▍▍',
+    guildRoleMember => '▍▍',
+    _ => '▍',
+  };
+}
 
 const num guildCreateGoldCost = 25;
 const int guildMaxMembers = 25;
@@ -379,6 +437,8 @@ class GuildRecord {
     required this.joinPolicy,
     required this.rankLabels,
     required this.createdAt,
+    this.guestAutoAccept = false,
+    this.rankIconTheme = guildRankIconThemeStripes,
   });
 
   factory GuildRecord.fromJson(Map<String, Object?> json) => GuildRecord(
@@ -391,6 +451,8 @@ class GuildRecord {
     joinPolicy: json['joinPolicy'] as String? ?? guildJoinOpen,
     rankLabels: normalizeRankLabels(json['rankLabels']),
     createdAt: json['createdAt']! as String,
+    guestAutoAccept: json['guestAutoAccept'] as bool? ?? false,
+    rankIconTheme: normalizeRankIconTheme(json['rankIconTheme'] as String?),
   );
 
   final String id;
@@ -405,6 +467,12 @@ class GuildRecord {
   final Map<GuildRankKey, String> rankLabels;
   final String createdAt;
 
+  /// When true, Guest joins this guild's chat without an application.
+  final bool guestAutoAccept;
+
+  /// Which of the two rank-icon themes guild chat uses.
+  final String rankIconTheme;
+
   GuildRecord copyWith({
     String? name,
     String? tag,
@@ -412,6 +480,8 @@ class GuildRecord {
     GuildEmblem? emblem,
     GuildJoinPolicy? joinPolicy,
     Map<GuildRankKey, String>? rankLabels,
+    bool? guestAutoAccept,
+    String? rankIconTheme,
   }) => GuildRecord(
     id: id,
     name: name ?? this.name,
@@ -422,6 +492,8 @@ class GuildRecord {
     joinPolicy: joinPolicy ?? this.joinPolicy,
     rankLabels: rankLabels ?? this.rankLabels,
     createdAt: createdAt,
+    guestAutoAccept: guestAutoAccept ?? this.guestAutoAccept,
+    rankIconTheme: rankIconTheme ?? this.rankIconTheme,
   );
 
   Map<String, Object?> toJson() => <String, Object?>{
@@ -434,6 +506,8 @@ class GuildRecord {
     'joinPolicy': joinPolicy,
     'rankLabels': <String, Object?>{...rankLabels},
     'createdAt': createdAt,
+    if (guestAutoAccept) 'guestAutoAccept': true,
+    if (rankIconTheme != guildRankIconThemeStripes) 'rankIconTheme': rankIconTheme,
   };
 }
 
@@ -450,6 +524,7 @@ class GuildListing {
   String get description => guild.description;
   GuildEmblem get emblem => guild.emblem;
   GuildJoinPolicy get joinPolicy => guild.joinPolicy;
+  bool get guestAutoAccept => guild.guestAutoAccept;
 
   Map<String, Object?> toJson() => <String, Object?>{...guild.toJson(), 'memberCount': memberCount};
 }
@@ -511,6 +586,41 @@ class GuildMember {
   };
 }
 
+/// A player who may use this guild's chat without appearing on the roster.
+class GuildGuest {
+  const GuildGuest({
+    required this.guildId,
+    required this.userId,
+    required this.username,
+    required this.joinedAt,
+    required this.appearance,
+  });
+
+  factory GuildGuest.fromJson(Map<String, Object?> json) => GuildGuest(
+    guildId: json['guildId']! as String,
+    userId: json['userId']! as String,
+    username: json['username']! as String,
+    joinedAt: json['joinedAt']! as String,
+    appearance: json['appearance'] is Map<String, Object?>
+        ? PlayerAppearance.fromJson(json['appearance']! as Map<String, Object?>)
+        : defaultPlayerAppearance,
+  );
+
+  final String guildId;
+  final String userId;
+  final String username;
+  final String joinedAt;
+  final PlayerAppearance appearance;
+
+  Map<String, Object?> toJson() => <String, Object?>{
+    'guildId': guildId,
+    'userId': userId,
+    'username': username,
+    'joinedAt': joinedAt,
+    'appearance': appearance.toJson(),
+  };
+}
+
 class CreateGuildInput {
   const CreateGuildInput({
     required this.name,
@@ -533,6 +643,7 @@ class GuildApplication {
     required this.username,
     required this.message,
     required this.createdAt,
+    this.guest = false,
   });
 
   factory GuildApplication.fromJson(Map<String, Object?> json) => GuildApplication(
@@ -542,6 +653,7 @@ class GuildApplication {
     username: json['username']! as String,
     message: json['message'] as String? ?? '',
     createdAt: json['createdAt']! as String,
+    guest: json['guest'] as bool? ?? false,
   );
 
   final String id;
@@ -550,6 +662,7 @@ class GuildApplication {
   final String username;
   final String message;
   final String createdAt;
+  final bool guest;
 
   Map<String, Object?> toJson() => <String, Object?>{
     'id': id,
@@ -558,6 +671,7 @@ class GuildApplication {
     'username': username,
     'message': message,
     'createdAt': createdAt,
+    if (guest) 'guest': true,
   };
 }
 

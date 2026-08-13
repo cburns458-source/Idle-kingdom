@@ -90,6 +90,12 @@ abstract interface class MultiplayerService {
 
   Future<ApplyToGuildResult> applyToGuild(String guildId, String message);
 
+  Future<ApplyToGuildResult> joinAsGuest(String guildId, String message);
+
+  Future<ActionResult> leaveGuest();
+
+  Future<String?> currentGuestGuildId();
+
   Future<List<GuildApplication>> guildApplications(String guildId);
 
   Future<ActionResult> decideGuildApplication(String applicationId, bool accept);
@@ -97,6 +103,10 @@ abstract interface class MultiplayerService {
   Future<ActionResult> setGuildMemberRole(String guildId, String targetUserId, GuildRole role);
 
   Future<ActionResult> setGuildJoinPolicy(String guildId, GuildJoinPolicy joinPolicy);
+
+  Future<ActionResult> setGuildGuestAutoAccept(String guildId, bool guestAutoAccept);
+
+  Future<ActionResult> setGuildRankIconTheme(String guildId, String theme);
 
   Future<ActionResult> setGuildRankLabels(String guildId, Map<GuildRankKey, String> rankLabels);
 
@@ -395,6 +405,27 @@ class LocalMultiplayerService implements MultiplayerService {
   }
 
   @override
+  Future<ApplyToGuildResult> joinAsGuest(String guildId, String message) async {
+    final current = session;
+    if (current == null) return const ApplyToGuildResult.failed('Sign in to guest.');
+    return _backend.joinAsGuest(current, guildId, message);
+  }
+
+  @override
+  Future<ActionResult> leaveGuest() async {
+    final current = session;
+    if (current == null) return const ActionResult.failed('Sign in required.');
+    return _backend.leaveGuest(current.userId);
+  }
+
+  @override
+  Future<String?> currentGuestGuildId() async {
+    final current = session;
+    if (current == null) return null;
+    return _backend.currentGuestGuildId(current.userId);
+  }
+
+  @override
   Future<List<GuildApplication>> guildApplications(String guildId) async =>
       _backend.listApplications(guildId);
 
@@ -421,6 +452,20 @@ class LocalMultiplayerService implements MultiplayerService {
     final current = session;
     if (current == null) return const ActionResult.failed('Sign in required.');
     return _backend.setGuildJoinPolicy(current.userId, guildId, joinPolicy);
+  }
+
+  @override
+  Future<ActionResult> setGuildGuestAutoAccept(String guildId, bool guestAutoAccept) async {
+    final current = session;
+    if (current == null) return const ActionResult.failed('Sign in required.');
+    return _backend.setGuildGuestAutoAccept(current.userId, guildId, guestAutoAccept);
+  }
+
+  @override
+  Future<ActionResult> setGuildRankIconTheme(String guildId, String theme) async {
+    final current = session;
+    if (current == null) return const ActionResult.failed('Sign in required.');
+    return _backend.setGuildRankIconTheme(current.userId, guildId, theme);
   }
 
   @override

@@ -25,6 +25,7 @@ class LocalAccount {
     required this.email,
     required this.username,
     required this.password,
+    this.chatBanned = false,
   });
 
   factory LocalAccount.fromJson(Map<String, Object?> json) => LocalAccount(
@@ -32,18 +33,29 @@ class LocalAccount {
     email: json['email']! as String,
     username: json['username']! as String,
     password: json['password'] as String? ?? '',
+    chatBanned: json['chatBanned'] as bool? ?? false,
   );
 
   final String userId;
   final String email;
   final String username;
   final String password;
+  final bool chatBanned;
+
+  LocalAccount copyWith({bool? chatBanned}) => LocalAccount(
+    userId: userId,
+    email: email,
+    username: username,
+    password: password,
+    chatBanned: chatBanned ?? this.chatBanned,
+  );
 
   Map<String, Object?> toJson() => <String, Object?>{
     'userId': userId,
     'email': email,
     'username': username,
     'password': password,
+    if (chatBanned) 'chatBanned': true,
   };
 }
 
@@ -162,6 +174,7 @@ class LocalDb {
     required this.friends,
     required this.bountyClaims,
     required this.bazaarPosts,
+    required this.guests,
   });
 
   LocalDb.empty()
@@ -183,7 +196,8 @@ class LocalDb {
       friendRequests = <FriendRequest>[],
       friends = <Friendship>[],
       bountyClaims = <BountyClaimRecord>[],
-      bazaarPosts = <BazaarPost>[];
+      bazaarPosts = <BazaarPost>[],
+      guests = <GuildGuest>[];
 
   /// Reads whatever a previous version wrote, filling in anything it lacks.
   factory LocalDb.fromJson(Object? raw) {
@@ -221,6 +235,7 @@ class LocalDb {
     db.friends.addAll(rows('friends').map(Friendship.fromJson));
     db.bountyClaims.addAll(rows('bountyClaims').map(BountyClaimRecord.fromJson));
     db.bazaarPosts.addAll(rows('bazaarPosts').map(BazaarPost.fromJson));
+    db.guests.addAll(rows('guests').map(GuildGuest.fromJson));
     return db;
   }
 
@@ -243,6 +258,7 @@ class LocalDb {
   List<Friendship> friends;
   List<BountyClaimRecord> bountyClaims;
   List<BazaarPost> bazaarPosts;
+  List<GuildGuest> guests;
 
   Map<String, Object?> toJson() => <String, Object?>{
     'users': users.map((row) => row.toJson()).toList(),
@@ -264,6 +280,7 @@ class LocalDb {
     'friends': friends.map((row) => row.toJson()).toList(),
     'bountyClaims': bountyClaims.map((row) => row.toJson()).toList(),
     'bazaarPosts': bazaarPosts.map((row) => row.toJson()).toList(),
+    if (guests.isNotEmpty) 'guests': guests.map((row) => row.toJson()).toList(),
   };
 }
 
@@ -279,4 +296,6 @@ GuildRecord normalizeGuild(GuildRecord raw) => GuildRecord(
   joinPolicy: raw.joinPolicy == guildJoinClosed ? guildJoinClosed : guildJoinOpen,
   rankLabels: normalizeRankLabels(<String, Object?>{...raw.rankLabels}),
   createdAt: raw.createdAt,
+  guestAutoAccept: raw.guestAutoAccept,
+  rankIconTheme: normalizeRankIconTheme(raw.rankIconTheme),
 );

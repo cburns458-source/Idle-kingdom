@@ -191,7 +191,7 @@ class _NearbyPanelState extends State<NearbyPanel> {
                 child: TextField(
                   controller: _dm,
                   maxLength: 240,
-                  decoration: const InputDecoration(labelText: 'Direct message', counterText: ''),
+                  decoration: const InputDecoration(labelText: 'Private message', counterText: ''),
                 ),
               ),
               const SizedBox(width: 8),
@@ -202,7 +202,7 @@ class _NearbyPanelState extends State<NearbyPanel> {
                         await net.sendDirectMessage(view.userId, _dm.text);
                         if (mounted) _dm.clear();
                       },
-                child: const Text('DM'),
+                child: const Text('Private'),
               ),
             ],
           ),

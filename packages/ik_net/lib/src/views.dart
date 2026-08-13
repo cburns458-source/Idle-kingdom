@@ -1,6 +1,7 @@
 import 'package:ik_content/ik_content.dart';
 import 'package:ik_rules/ik_rules.dart';
 
+import 'moderation.dart';
 import 'snapshots.dart';
 import 'types.dart';
 
@@ -31,6 +32,7 @@ class GuildBrowseRow {
     required this.emblem,
     required this.tag,
     required this.actionLabel,
+    required this.guestLabel,
     required this.full,
   });
 
@@ -47,7 +49,10 @@ class GuildBrowseRow {
   /// `Join`, `Apply`, or `Full`.
   final String actionLabel;
 
-  /// True when the guild has no room left.
+  /// Always `Guest` — guests do not count toward the member cap.
+  final String guestLabel;
+
+  /// True when the guild has no room left for members.
   final bool full;
 
   Map<String, Object?> toJson() => <String, Object?>{
@@ -57,6 +62,7 @@ class GuildBrowseRow {
     'emblem': emblem.toJson(),
     'tag': tag,
     'actionLabel': actionLabel,
+    'guestLabel': guestLabel,
     'full': full,
   };
 }
@@ -95,6 +101,7 @@ List<GuildBrowseRow> guildBrowseRows(List<GuildListing> rows, [String query = ''
           : row.joinPolicy == guildJoinOpen
           ? 'Join'
           : 'Apply',
+      guestLabel: 'Guest',
       full: full,
     );
   }).toList();
@@ -247,16 +254,19 @@ class GuildApplicationRow {
     required this.applicationId,
     required this.username,
     required this.message,
+    this.guest = false,
   });
 
   final String applicationId;
   final String username;
   final String message;
+  final bool guest;
 
   Map<String, Object?> toJson() => <String, Object?>{
     'applicationId': applicationId,
     'username': username,
     'message': message,
+    if (guest) 'guest': true,
   };
 }
 
@@ -266,7 +276,10 @@ List<GuildApplicationRow> guildApplicationRows(List<GuildApplication> applicatio
         (application) => GuildApplicationRow(
           applicationId: application.id,
           username: application.username,
-          message: application.message.isEmpty ? 'No message.' : application.message,
+          message: application.guest
+              ? (application.message.isEmpty ? 'Guest request.' : 'Guest: ${application.message}')
+              : (application.message.isEmpty ? 'No message.' : application.message),
+          guest: application.guest,
         ),
       )
       .toList();
@@ -548,6 +561,7 @@ enum ChatTab {
   global('global'),
   local('local'),
   guild('guild'),
+  guest('guest'),
   dm('dm');
 
   const ChatTab(this.wire);
@@ -559,6 +573,7 @@ const List<ChatTab> chatTabOrder = <ChatTab>[
   ChatTab.global,
   ChatTab.local,
   ChatTab.guild,
+  ChatTab.guest,
   ChatTab.dm,
 ];
 
@@ -573,10 +588,10 @@ class ChatTabView {
 
   final ChatTab tab;
 
-  /// `Global`, `Citadel` inside the hub, `DMs (3)` when messages wait.
+  /// `Global`, `Citadel` inside the hub, `Private (3)` when messages wait.
   final String label;
 
-  /// False for guild chat without a guild, which has no room to show.
+  /// False for guild or guest chat without a room to show.
   final bool enabled;
   final bool selected;
 
@@ -605,6 +620,7 @@ List<ChatTabView> chatTabs({
   required ChatTab selected,
   required bool citadelHub,
   required bool hasGuild,
+  required bool hasGuest,
   required num unreadDms,
 }) {
   return chatTabOrder.map((tab) {
@@ -612,12 +628,17 @@ List<ChatTabView> chatTabs({
       ChatTab.global => 'Global',
       ChatTab.local => citadelHub ? 'Citadel' : 'Local',
       ChatTab.guild => 'Guild',
-      ChatTab.dm => unreadDms > 0 ? 'DMs (${jsNumberToString(unreadDms)})' : 'DMs',
+      ChatTab.guest => 'Guest',
+      ChatTab.dm => unreadDms > 0 ? 'Private (${jsNumberToString(unreadDms)})' : 'Private',
     };
     return ChatTabView(
       tab: tab,
       label: label,
-      enabled: tab != ChatTab.guild || hasGuild,
+      enabled: switch (tab) {
+        ChatTab.guild => hasGuild,
+        ChatTab.guest => hasGuest,
+        _ => true,
+      },
       selected: tab == selected,
     );
   }).toList();
@@ -625,31 +646,37 @@ List<ChatTabView> chatTabs({
 
 /// The room a tab writes to, or null when it is not a room at all.
 ///
-/// DMs are a reply to a person rather than a channel, and guild chat without a
-/// guild has nowhere to go.
+/// Private messages are a reply to a person rather than a channel, and guild
+/// or guest chat without a guild has nowhere to go.
 ChatChannel? chatChannelForTab(
   ChatTab tab, {
   required String locationId,
   required bool citadelHub,
   required String? guildId,
+  String? guestGuildId,
 }) {
   return switch (tab) {
     ChatTab.global => const ChatChannel.global(),
     ChatTab.local => ChatChannel.local(chatLocalLocationId(locationId, citadelHub)),
     ChatTab.guild => guildId == null ? null : ChatChannel.guild(guildId),
+    ChatTab.guest => guestGuildId == null ? null : ChatChannel.guild(guestGuildId),
     ChatTab.dm => null,
   };
 }
 
-/// What an empty room says, which differs for DMs.
+/// What an empty room says, which differs for private messages.
 String emptyChatMessage(ChatTab tab) =>
-    tab == ChatTab.dm ? 'No direct messages yet.' : 'No messages yet.';
+    tab == ChatTab.dm ? 'No private messages yet.' : 'No messages yet.';
 
-/// Why the DM tab has no composer.
+/// Why the Private tab has no composer.
 const String chatDmHint = 'Reply to players from Nearby Adventurers or their public profile.';
 
 /// What a player is told when they try to use guild chat without a guild.
 const String chatNoGuildNotice = 'Join a guild to use guild chat.';
+
+const String chatNoGuestNotice = 'Guest a guild to use guest chat.';
+
+const String chatViewGuildsLabel = 'View guilds';
 
 /// Where the read cursor for one account's DMs is kept.
 String dmReadCursorKey(String userId) => 'idle-kingdoms.chat.dm-read-at:$userId';
@@ -678,17 +705,36 @@ class ChatLineView {
   };
 }
 
-List<ChatLineView> chatLines(List<ChatMessage> messages, String? viewerId) {
+List<ChatLineView> chatLines(
+  List<ChatMessage> messages,
+  String? viewerId, {
+  bool filterProfanityEnabled = false,
+}) {
   return messages
       .map(
         (message) => ChatLineView(
           messageId: message.id,
-          username: message.username,
-          body: message.body,
+          username: chatLineUsername(message),
+          body: filterProfanityEnabled ? filterProfanity(message.body) : message.body,
           mine: viewerId != null && message.userId == viewerId,
         ),
       )
       .toList();
+}
+
+/// `[TAG] Hero` in global/local, rank or Guest in guild rooms.
+String chatLineUsername(ChatMessage message) {
+  if (message.channelKey.startsWith('guild:')) {
+    if (message.guest) return 'Guest ${message.username}';
+    final icon = message.rankIcon;
+    final rank = message.rankLabel;
+    if (icon != null && rank != null) return '$icon $rank ${message.username}';
+    if (rank != null) return '$rank ${message.username}';
+    return message.username;
+  }
+  final tag = message.guildTag;
+  if (tag != null && tag.isNotEmpty) return '[$tag] ${message.username}';
+  return message.username;
 }
 
 /// Where multiplayer data lives, as the account panel says it.

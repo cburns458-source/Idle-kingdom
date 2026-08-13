@@ -2,7 +2,9 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:ik_net/ik_net.dart';
+import 'package:ik_rules/ik_rules.dart';
 
+import '../session/game_controller.dart';
 import '../session/multiplayer_controller.dart';
 import '../theme.dart';
 import 'social_bits.dart';
@@ -14,11 +16,13 @@ import 'social_bits.dart';
 class ChatLauncher extends StatefulWidget {
   const ChatLauncher({
     super.key,
+    required this.controller,
     required this.multiplayer,
     required this.locationId,
     this.citadelHub = false,
   });
 
+  final GameController controller;
   final MultiplayerController multiplayer;
   final String locationId;
 
@@ -108,6 +112,7 @@ class _ChatLauncherState extends State<ChatLauncher> {
               width: width,
               height: height,
               child: ChatSheet(
+                controller: widget.controller,
                 multiplayer: net,
                 locationId: widget.locationId,
                 citadelHub: widget.citadelHub,
@@ -181,11 +186,13 @@ class _ChatLauncherState extends State<ChatLauncher> {
 class ChatSheet extends StatefulWidget {
   const ChatSheet({
     super.key,
+    required this.controller,
     required this.multiplayer,
     required this.locationId,
     required this.citadelHub,
   });
 
+  final GameController controller;
   final MultiplayerController multiplayer;
   final String locationId;
   final bool citadelHub;
@@ -196,8 +203,10 @@ class ChatSheet extends StatefulWidget {
 
 class _ChatSheetState extends State<ChatSheet> {
   final TextEditingController _body = TextEditingController();
+  bool _viewingGuilds = false;
 
   MultiplayerController get net => widget.multiplayer;
+  PlayerSave get save => widget.controller.save;
 
   @override
   void dispose() {
@@ -224,20 +233,26 @@ class _ChatSheetState extends State<ChatSheet> {
           selected: net.chatTab,
           citadelHub: widget.citadelHub,
           hasGuild: net.guildId != null,
+          hasGuest: net.guestGuildId != null,
           unreadDms: net.unreadDms,
         );
-        final lines = chatLines(net.messages, net.session?.userId);
+        final lines = chatLines(
+          net.messages,
+          net.session?.userId,
+          filterProfanityEnabled: net.filterChatProfanity,
+        );
         return Padding(
           padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
           child: Column(
             children: [
               Padding(
                 padding: const EdgeInsets.fromLTRB(12, 12, 12, 6),
-                child: Row(
-                  children: [
-                    for (final tab in tabs) ...[
-                      Expanded(
-                        child: OutlinedButton(
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      for (final tab in tabs) ...[
+                        OutlinedButton(
                           onPressed: tab.enabled
                               ? () => net.selectChatTab(
                                   tab.tab,
@@ -246,25 +261,44 @@ class _ChatSheetState extends State<ChatSheet> {
                                 )
                               : null,
                           style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                             backgroundColor: tab.selected ? const Color(0x33D4AF37) : null,
                             side: BorderSide(color: tab.selected ? Palette.gold : Palette.edge),
                           ),
-                          child: Text(
-                            tab.label,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontSize: 12),
-                          ),
+                          child: Text(tab.label, maxLines: 1, style: const TextStyle(fontSize: 12)),
                         ),
-                      ),
-                      if (tab.tab != tabs.last.tab) const SizedBox(width: 6),
+                        if (tab.tab != tabs.last.tab) const SizedBox(width: 6),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
               ),
+              if (net.chatTab == ChatTab.guild || net.chatTab == ChatTab.guest)
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Wrap(
+                    children: [
+                      TextButton(
+                        onPressed: () => setState(() => _viewingGuilds = !_viewingGuilds),
+                        child: Text(_viewingGuilds ? 'Back to chat' : chatViewGuildsLabel),
+                      ),
+                      if (net.guestGuild != null)
+                        TextButton(
+                          onPressed: net.busy
+                              ? null
+                              : () async {
+                                  await net.leaveGuest(save);
+                                  if (mounted) setState(() => _viewingGuilds = false);
+                                },
+                          child: const Text('Leave guest'),
+                        ),
+                    ],
+                  ),
+                ),
               Expanded(
-                child: lines.isEmpty
+                child: _viewingGuilds
+                    ? _buildGuildBrowser()
+                    : lines.isEmpty
                     ? Center(child: MutedText(emptyChatMessage(net.chatTab)))
                     : ListView.builder(
                         padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -293,7 +327,9 @@ class _ChatSheetState extends State<ChatSheet> {
                       ),
               ),
               SocialNotice(notice: net.notice),
-              if (net.chatTab == ChatTab.dm)
+              if (_viewingGuilds)
+                const SizedBox.shrink()
+              else if (net.chatTab == ChatTab.dm)
                 const Padding(padding: EdgeInsets.all(12), child: MutedText(chatDmHint))
               else
                 Padding(
@@ -317,6 +353,50 @@ class _ChatSheetState extends State<ChatSheet> {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildGuildBrowser() {
+    final own = <String>{
+      if (net.guildId != null) net.guildId!,
+      if (net.guestGuildId != null) net.guestGuildId!,
+    };
+    final rows = guildBrowseRows(net.listings.where((row) => !own.contains(row.id)).toList());
+    if (rows.isEmpty) {
+      return const Center(child: MutedText('No other guilds to guest.'));
+    }
+    return ListView(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      children: [
+        for (final row in rows) ...[
+          SocialRow(
+            title: row.title,
+            subtitle: row.subtitle,
+            leading: GuildEmblemBadge(emblem: row.emblem),
+            trailing: OutlinedButton(
+              onPressed: net.busy
+                  ? null
+                  : () async {
+                      await net.joinAsGuest(
+                        row.guildId,
+                        defaultApplicationMessage(save.characterName),
+                        save,
+                      );
+                      if (mounted) {
+                        setState(() => _viewingGuilds = false);
+                        await net.selectChatTab(
+                          ChatTab.guest,
+                          widget.locationId,
+                          citadelHub: widget.citadelHub,
+                        );
+                      }
+                    },
+              child: Text(row.guestLabel),
+            ),
+          ),
+          const SizedBox(height: 6),
+        ],
+      ],
     );
   }
 }

@@ -37,6 +37,7 @@ import {
   sanitizeGuildTagInput,
   unreadBadgeLabel,
   CHAT_DM_HINT,
+  CHAT_NO_GUEST_NOTICE,
   CHAT_NO_GUILD_NOTICE,
   CHAT_TABS,
   GUILD_SIGN_IN_PROMPT,
@@ -231,6 +232,8 @@ export const socialViewScenarios: ParityScenario[] = [
       applications: guildApplicationRows([
         application(),
         application({ id: 'app_2', username: 'Quiet', message: '' }),
+        application({ id: 'app_3', username: 'Wanderer', message: 'Hi', guest: true }),
+        application({ id: 'app_4', username: 'Silent', message: '', guest: true }),
       ]),
       signInPrompts: [SIGN_IN_PROMPT, GUILD_SIGN_IN_PROMPT],
       symbols: GUILD_EMBLEM_SYMBOLS,
@@ -296,16 +299,65 @@ export const socialViewScenarios: ParityScenario[] = [
         createdAt: '2026-08-12T21:00:05.000Z',
       },
     ]
+    const tagged: ChatMessage = {
+      id: 'msg_3',
+      channelKey: 'global',
+      userId: 'usr_3',
+      username: 'Mira',
+      body: 'The road is clear.',
+      createdAt: '2026-08-12T21:00:10.000Z',
+      guildTag: 'WCH',
+    }
+    const rude: ChatMessage = {
+      id: 'msg_4',
+      channelKey: 'global',
+      userId: 'usr_4',
+      username: 'Loud',
+      body: 'what the fuck',
+      createdAt: '2026-08-12T21:00:11.000Z',
+    }
+    const ranked: ChatMessage = {
+      id: 'msg_5',
+      channelKey: 'guild:gld_1',
+      userId: 'usr_3',
+      username: 'Mira',
+      body: 'Hold the gate.',
+      createdAt: '2026-08-12T21:00:12.000Z',
+      rankLabel: 'Leader',
+      rankIcon: '★',
+    }
+    const guest: ChatMessage = {
+      id: 'msg_6',
+      channelKey: 'guild:gld_1',
+      userId: 'usr_5',
+      username: 'Wanderer',
+      body: 'Passing through.',
+      createdAt: '2026-08-12T21:00:13.000Z',
+      guest: true,
+    }
     return {
       tabIds: CHAT_TABS,
-      plain: chatTabs({ selected: 'global', citadelHub: false, hasGuild: false, unreadDms: 0 }),
+      plain: chatTabs({
+        selected: 'global',
+        citadelHub: false,
+        hasGuild: false,
+        hasGuest: false,
+        unreadDms: 0,
+      }),
       citadelWithGuild: chatTabs({
         selected: 'local',
         citadelHub: true,
         hasGuild: true,
+        hasGuest: false,
         unreadDms: 3,
       }),
-      manyUnread: chatTabs({ selected: 'dm', citadelHub: false, hasGuild: true, unreadDms: 12 }),
+      manyUnread: chatTabs({
+        selected: 'dm',
+        citadelHub: false,
+        hasGuild: true,
+        hasGuest: true,
+        unreadDms: 12,
+      }),
       badges: [0, 1, 9, 10, 99].map(unreadBadgeLabel),
       localLocationIds: [
         chatLocalLocationId('LOC-0002', false),
@@ -317,6 +369,7 @@ export const socialViewScenarios: ParityScenario[] = [
           locationId: 'LOC-0002',
           citadelHub: false,
           guildId: 'gld_1',
+          guestGuildId: 'gld_2',
         }),
         inCitadelWithoutGuild: chatChannelForTab(tab, {
           locationId: 'LOC-0028',
@@ -325,10 +378,14 @@ export const socialViewScenarios: ParityScenario[] = [
         }),
       })),
       emptyMessages: CHAT_TABS.map(emptyChatMessage),
-      hints: [CHAT_DM_HINT, CHAT_NO_GUILD_NOTICE],
+      hints: [CHAT_DM_HINT, CHAT_NO_GUILD_NOTICE, CHAT_NO_GUEST_NOTICE],
       cursorKey: dmReadCursorKey('usr_0001'),
       lines: chatLines(messages, 'usr_1'),
       linesAnonymous: chatLines(messages, null),
+      prefixed: chatLines([tagged], 'usr_1'),
+      filtered: chatLines([rude], null, { filterProfanityEnabled: true }),
+      guildRank: chatLines([ranked], 'usr_1'),
+      guestLine: chatLines([guest], null),
     } as unknown as JsonValue
   }),
 

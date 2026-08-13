@@ -133,6 +133,7 @@ describe('guild browser views', () => {
     expect(open.title).toBe('[IRN] Iron League')
     expect(open.subtitle).toBe('Accept applications · 3/25 · For the kingdom')
     expect(open.actionLabel).toBe('Join')
+    expect(open.guestLabel).toBe('Guest')
     expect(closed.subtitle).toBe('Closed · 3/25 · No description.')
     expect(closed.actionLabel).toBe('Apply')
     expect(full.actionLabel).toBe('Full')
@@ -243,8 +244,33 @@ describe('guild home views', () => {
     const rows = guildApplicationRows([
       { id: 'app_1', guildId: 'gld_1', userId: 'usr_2', username: 'Joiner', message: 'Please', createdAt: '' },
       { id: 'app_2', guildId: 'gld_1', userId: 'usr_3', username: 'Quiet', message: '', createdAt: '' },
+      {
+        id: 'app_3',
+        guildId: 'gld_1',
+        userId: 'usr_4',
+        username: 'Wanderer',
+        message: 'Hi',
+        createdAt: '',
+        guest: true,
+      },
+      {
+        id: 'app_4',
+        guildId: 'gld_1',
+        userId: 'usr_5',
+        username: 'Silent',
+        message: '',
+        createdAt: '',
+        guest: true,
+      },
     ])
-    expect(rows.map((row) => row.message)).toEqual(['Please', 'No message.'])
+    expect(rows.map((row) => row.message)).toEqual([
+      'Please',
+      'No message.',
+      'Guest: Hi',
+      'Guest request.',
+    ])
+    expect(rows[2].guest).toBe(true)
+    expect(rows[0].guest).toBeUndefined()
   })
 })
 

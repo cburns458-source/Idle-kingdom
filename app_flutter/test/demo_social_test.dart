@@ -76,6 +76,35 @@ void main() {
     expect(find.text('Join'), findsOne);
   });
 
+  testWidgets('guest The Watch without joining, and global chat shows [WCH] Mira', (tester) async {
+    final controller = buildController(database, seed: startedCharacter(database));
+    final net = buildMultiplayer(database);
+    addTearDown(controller.dispose);
+    addTearDown(net.dispose);
+    await signIn(net);
+    await pumpShell(tester, controller, multiplayer: net, size: const Size(900, 2400));
+
+    await openChinScreen(tester, 'Guilds');
+    await tester.pump();
+
+    expect(find.text('[WCH] The Watch'), findsOne);
+    await tester.tap(find.text('Guest'));
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.textContaining('Guest of [WCH] The Watch'), findsOne);
+    expect(find.text('Join'), findsOne);
+    expect(find.text('Leave guild'), findsNothing);
+
+    await tester.tap(find.byTooltip('Open chat'));
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('Private'), findsOne);
+    expect(find.text('Guest'), findsWidgets);
+    expect(find.textContaining('[WCH] Mira'), findsOne);
+  });
+
   testWidgets('Account lists friends and ignored players', (tester) async {
     final controller = buildController(database, seed: startedCharacter(database));
     final net = buildMultiplayer(database);

@@ -53,6 +53,17 @@ class _GuildPanelState extends State<GuildPanel> {
           onChanged: (_) => setState(() {}),
         ),
         const SizedBox(height: 10),
+        if (net.guestGuild case final guest?) ...[
+          SocialRow(
+            title: 'Guest of [${guest.tag}] ${guest.name}',
+            subtitle: 'Chat only — not on their roster.',
+            trailing: OutlinedButton(
+              onPressed: net.busy ? null : () => net.leaveGuest(save),
+              child: const Text('Leave guest'),
+            ),
+          ),
+          const SizedBox(height: 10),
+        ],
         if (rows.isEmpty)
           const MutedText('No guilds match that search.')
         else
@@ -61,15 +72,20 @@ class _GuildPanelState extends State<GuildPanel> {
               title: row.title,
               subtitle: row.subtitle,
               leading: GuildEmblemBadge(emblem: row.emblem),
-              trailing: OutlinedButton(
-                onPressed: row.full || net.busy
-                    ? null
-                    : () => net.applyToGuild(
-                        row.guildId,
-                        defaultApplicationMessage(save.characterName),
-                        save,
-                      ),
-                child: Text(row.actionLabel),
+              trailing: _GuildBrowseActions(
+                row: row,
+                busy: net.busy,
+                showGuest: net.guestGuildId != row.guildId,
+                onJoin: () => net.applyToGuild(
+                  row.guildId,
+                  defaultApplicationMessage(save.characterName),
+                  save,
+                ),
+                onGuest: () => net.joinAsGuest(
+                  row.guildId,
+                  defaultApplicationMessage(save.characterName),
+                  save,
+                ),
               ),
             ),
             const SizedBox(height: 6),
@@ -119,6 +135,21 @@ class _GuildPanelState extends State<GuildPanel> {
                 )
               : null,
         ),
+        const SizedBox(height: 10),
+        if (net.guestGuild case final guest?) ...[
+          SocialRow(
+            title: 'Guest of [${guest.tag}] ${guest.name}',
+            subtitle: 'Chat only — not on their roster.',
+            trailing: OutlinedButton(
+              onPressed: net.busy ? null : () => net.leaveGuest(save),
+              child: const Text('Leave guest'),
+            ),
+          ),
+          const SizedBox(height: 10),
+        ],
+        const Text('Other guilds', style: TextStyle(fontWeight: FontWeight.w700)),
+        const SizedBox(height: 6),
+        ..._otherGuildRows(guild.id),
         const SizedBox(height: 10),
         Row(
           children: [
@@ -232,9 +263,68 @@ class _GuildPanelState extends State<GuildPanel> {
     if (settings == null || !mounted) return;
     await net.saveGuildSettings(
       joinPolicy: settings.joinPolicy,
+      guestAutoAccept: settings.guestAutoAccept,
+      rankIconTheme: settings.rankIconTheme,
       emblem: settings.emblem,
       rankLabels: settings.rankLabels,
       save: save,
+    );
+  }
+
+  List<Widget> _otherGuildRows(String ownGuildId) {
+    final skip = <String>{ownGuildId, if (net.guestGuildId != null) net.guestGuildId!};
+    final rows = guildBrowseRows(net.listings.where((row) => !skip.contains(row.id)).toList());
+    if (rows.isEmpty) {
+      return const <Widget>[MutedText('No other guilds yet.')];
+    }
+    return [
+      for (final row in rows) ...[
+        SocialRow(
+          title: row.title,
+          subtitle: row.subtitle,
+          leading: GuildEmblemBadge(emblem: row.emblem),
+          trailing: OutlinedButton(
+            onPressed: net.busy
+                ? null
+                : () => net.joinAsGuest(
+                    row.guildId,
+                    defaultApplicationMessage(save.characterName),
+                    save,
+                  ),
+            child: Text(row.guestLabel),
+          ),
+        ),
+        const SizedBox(height: 6),
+      ],
+    ];
+  }
+}
+
+class _GuildBrowseActions extends StatelessWidget {
+  const _GuildBrowseActions({
+    required this.row,
+    required this.busy,
+    required this.onJoin,
+    required this.onGuest,
+    this.showGuest = true,
+  });
+
+  final GuildBrowseRow row;
+  final bool busy;
+  final VoidCallback onJoin;
+  final VoidCallback onGuest;
+  final bool showGuest;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        OutlinedButton(onPressed: row.full || busy ? null : onJoin, child: Text(row.actionLabel)),
+        if (showGuest)
+          OutlinedButton(onPressed: busy ? null : onGuest, child: Text(row.guestLabel)),
+      ],
     );
   }
 }
@@ -459,9 +549,17 @@ class _CreateGuildSheetState extends State<_CreateGuildSheet> {
 
 /// What the settings sheet hands back, so the controller saves it in one go.
 class _GuildSettings {
-  const _GuildSettings({required this.joinPolicy, required this.emblem, required this.rankLabels});
+  const _GuildSettings({
+    required this.joinPolicy,
+    required this.guestAutoAccept,
+    required this.rankIconTheme,
+    required this.emblem,
+    required this.rankLabels,
+  });
 
   final GuildJoinPolicy joinPolicy;
+  final bool guestAutoAccept;
+  final String rankIconTheme;
   final GuildEmblem emblem;
   final Map<GuildRankKey, String> rankLabels;
 }
@@ -477,6 +575,8 @@ class _GuildSettingsSheet extends StatefulWidget {
 
 class _GuildSettingsSheetState extends State<_GuildSettingsSheet> {
   late GuildJoinPolicy _policy = widget.guild.joinPolicy;
+  late bool _guestAutoAccept = widget.guild.guestAutoAccept;
+  late String _rankIconTheme = widget.guild.rankIconTheme;
   late GuildEmblem _emblem = widget.guild.emblem;
   late final Map<GuildRankKey, TextEditingController> _labels =
       <GuildRankKey, TextEditingController>{
@@ -521,6 +621,24 @@ class _GuildSettingsSheetState extends State<_GuildSettingsSheet> {
                 if (policy != null) setState(() => _policy = policy);
               },
             ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Guest auto-accept'),
+              subtitle: const Text('Guests join chat without an application.'),
+              value: _guestAutoAccept,
+              onChanged: (value) => setState(() => _guestAutoAccept = value),
+            ),
+            DropdownButtonFormField<String>(
+              initialValue: _rankIconTheme,
+              decoration: const InputDecoration(labelText: 'Rank icons'),
+              items: const <DropdownMenuItem<String>>[
+                DropdownMenuItem(value: guildRankIconThemeStripes, child: Text('Army stripes')),
+                DropdownMenuItem(value: guildRankIconThemeCrowns, child: Text('Crowns and pips')),
+              ],
+              onChanged: (theme) {
+                if (theme != null) setState(() => _rankIconTheme = theme);
+              },
+            ),
             const SizedBox(height: 12),
             _EmblemEditor(emblem: _emblem, onChanged: (next) => setState(() => _emblem = next)),
             const SizedBox(height: 12),
@@ -539,6 +657,8 @@ class _GuildSettingsSheetState extends State<_GuildSettingsSheet> {
               onPressed: () => Navigator.of(context).pop(
                 _GuildSettings(
                   joinPolicy: _policy,
+                  guestAutoAccept: _guestAutoAccept,
+                  rankIconTheme: _rankIconTheme,
                   emblem: _emblem,
                   rankLabels: <GuildRankKey, String>{
                     for (final entry in _labels.entries) entry.key: entry.value.text,
