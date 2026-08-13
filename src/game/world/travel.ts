@@ -1,12 +1,9 @@
 import { isDeathPaused } from '../combat/engine'
 import { stopPrimaryActivityNow } from '../activity/transition'
 import type { GameDatabase, LocationRow, TravelConnectionRow } from '../data/types'
+import { applyQuestLocationProgress } from '../quests/progress'
 import type { PlayerSave } from '../save/types'
-import {
-  DEFAULT_TRAVEL_DURATION_MS,
-  MAIN_MAP_ID,
-  isFutureHorizonLocation,
-} from './constants'
+import { MAIN_MAP_ID, isFutureHorizonLocation } from './constants'
 import {
   gatewayLocationIdForSubMap,
   isBrowsableEmptyMap,
@@ -15,13 +12,9 @@ import {
   subMapIdForGateway,
 } from './submaps'
 
-export function travelDurationMs(connection?: TravelConnectionRow | null): number {
-  const base = connection?.['Base Duration']
-  if (typeof base === 'number' && Number.isFinite(base) && base >= 0) {
-    // Database values are expected in seconds when present.
-    return base * 1000
-  }
-  return DEFAULT_TRAVEL_DURATION_MS
+/** Travel is a menu button: destinations are instant, with no walk or mount delay. */
+export function travelDurationMs(_connection?: TravelConnectionRow | null): number {
+  return 0
 }
 
 export function getLocationMapId(location: LocationRow): string {
@@ -149,8 +142,9 @@ export function applyTravelArrival(
 ): PlayerSave {
   if (isDeathPaused(save, nowMs)) return save
   const stopped = stopPrimaryActivityNow(db, save, nowMs)
-  return {
+  const arrived = {
     ...stopped,
     currentLocationId: destinationLocationId,
   }
+  return applyQuestLocationProgress(db, arrived, destinationLocationId)
 }

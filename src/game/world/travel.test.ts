@@ -24,9 +24,12 @@ const rawDatabase = JSON.parse(
 )
 
 describe('travel rules', () => {
-  it('uses instant travel when Base Duration is unset', () => {
-    expect(travelDurationMs(null)).toBe(DEFAULT_TRAVEL_DURATION_MS)
+  it('treats every Travel button as instant', () => {
+    expect(travelDurationMs(null)).toBe(0)
     expect(DEFAULT_TRAVEL_DURATION_MS).toBe(0)
+    const { launch } = prepareDatabase(rawDatabase)
+    const connection = launch.TravelConnections.find((row) => typeof row['Base Duration'] === 'number')
+    expect(travelDurationMs(connection)).toBe(0)
   })
 
   it('allows main-map node travel between Launch overworld locations', () => {

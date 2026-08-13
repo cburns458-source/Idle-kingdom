@@ -5125,6 +5125,38 @@
       "Icon Asset Key": null,
       "Notes": "Owner will fill combat data (HP bonus / damage reduction).",
       "Base Sell Value": 50
+    },
+    {
+      "Item ID": "ITEM-0299",
+      "Internal Key": "stolen_coin_purse",
+      "Display Name": "Stolen Coin Purse",
+      "Category": "Quest",
+      "Subtype": "Key Item",
+      "Associated Skill ID": null,
+      "Equipment Slot ID": null,
+      "Functional / Source Tags": "quest",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Description": "A worn purse the barracks guards took from a beggar.",
+      "Icon Asset Key": null,
+      "Notes": "Delivered to the Beggar for QST-0003 The Missing Purse.",
+      "Base Sell Value": 0
+    },
+    {
+      "Item ID": "ITEM-0300",
+      "Internal Key": "beggars_hood",
+      "Display Name": "Beggar's Hood",
+      "Category": "Cosmetic",
+      "Subtype": "Outfit",
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Associated Skill ID": null,
+      "Equipment Slot ID": null,
+      "Base Sell Value": 0,
+      "Icon Asset Key": null,
+      "Description": "A threadbare hood, given in thanks.",
+      "Functional / Source Tags": "cosmetic; outfit",
+      "Notes": "Wardrobe outfit granted by QST-0003 The Missing Purse."
     }
   ],
   "Equipment": [
@@ -9535,6 +9567,19 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": "Single-action pool: Fight castle guard (ACN-0009)."
+    },
+    {
+      "Activity ID": "ACT-0034",
+      "Internal Key": "pressure_the_guards",
+      "Contextual Name": "Pressure the Guards",
+      "Location ID": "LOC-0017",
+      "Description": "A one-off scuffle with a nervous barracks guard over a stolen purse.",
+      "Danger Warning Combat Level": 4,
+      "Pool ID": "POOL-0025",
+      "Pool Internal Key": "nervous_guard",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": "Temporary QST-0003 combat route. Do not reuse ACT-0015."
     }
   ],
   "PoolEntries": [
@@ -10033,6 +10078,14 @@
       "Weight": 100,
       "Status": "Planned",
       "Notes": "Citadel Combat Training Grounds — castle guard only."
+    },
+    {
+      "Pool Entry ID": "PEN-0063",
+      "Pool ID": "POOL-0025",
+      "Action ID": "ACN-0171",
+      "Weight": 100,
+      "Status": "Planned",
+      "Notes": "QST-0003 Pressure the Guards — nervous guard only."
     }
   ],
   "Actions": [
@@ -12295,6 +12348,26 @@
       "Status": "Needs Data",
       "Release Phase": "Launch",
       "Notes": "Crafting product defined by the game bible; materials, level, duration, and XP are not fixed."
+    },
+    {
+      "Action ID": "ACN-0171",
+      "Internal Key": "fight_nervous_guard",
+      "Display Name": "Pressure the guards",
+      "Category": "Combat",
+      "Relevant Skill ID": "SKL-0001",
+      "Target Type": "Enemy",
+      "Target ID": "ENM-0019",
+      "Proficiency Level": null,
+      "Base Duration Seconds": null,
+      "XP Reward": 2500,
+      "Guaranteed Gold": null,
+      "Drop Chance": 40,
+      "Reward Table ID": "RWT-0117",
+      "Secondary Drop Chance": null,
+      "Secondary Reward Table ID": null,
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": "Temporary QST-0003 combat route versus Nervous Guard."
     }
   ],
   "Requirements": [
@@ -13519,6 +13592,71 @@
       "Required Value": null,
       "Status": "Planned",
       "Notes": "Mirrored from ACT-0010 for citadel cedar cutting."
+    },
+    {
+      "Requirement ID": "REQ-0099",
+      "Entity Type": "Activity",
+      "Entity ID": "ACT-0008",
+      "Requirement Group": "A",
+      "Group Logic": "AND",
+      "Requirement Type": "Quest Access",
+      "Reference ID / Value": "QST-0005",
+      "Operator": null,
+      "Required Value": null,
+      "Status": "Planned",
+      "Notes": "Delve for essence stays locked until Wizard Studies is accepted or completed."
+    },
+    {
+      "Requirement ID": "REQ-0100",
+      "Entity Type": "Activity",
+      "Entity ID": "ACT-0034",
+      "Requirement Group": "A",
+      "Group Logic": "AND",
+      "Requirement Type": "Quest Active",
+      "Reference ID / Value": "QST-0003",
+      "Operator": null,
+      "Required Value": null,
+      "Status": "Planned",
+      "Notes": "Pressure the Guards only while The Missing Purse is active."
+    },
+    {
+      "Requirement ID": "REQ-0101",
+      "Entity Type": "Activity",
+      "Entity ID": "ACT-0034",
+      "Requirement Group": "A",
+      "Group Logic": "AND",
+      "Requirement Type": "Quest Flag",
+      "Reference ID / Value": "QST-0003:choice:combat",
+      "Operator": null,
+      "Required Value": null,
+      "Status": "Planned",
+      "Notes": "Combat route chosen at the Barracks Guard."
+    },
+    {
+      "Requirement ID": "REQ-0102",
+      "Entity Type": "Activity",
+      "Entity ID": "ACT-0034",
+      "Requirement Group": "A",
+      "Group Logic": "AND",
+      "Requirement Type": "Item Absent",
+      "Reference ID / Value": "ITEM-0299",
+      "Operator": null,
+      "Required Value": null,
+      "Status": "Planned",
+      "Notes": "Hide once the Stolen Coin Purse is in the bag."
+    },
+    {
+      "Requirement ID": "REQ-0103",
+      "Entity Type": "Facility",
+      "Entity ID": "FAC-0008",
+      "Requirement Group": "A",
+      "Group Logic": "AND",
+      "Requirement Type": "Quest Access",
+      "Reference ID / Value": "QST-0005",
+      "Operator": null,
+      "Required Value": null,
+      "Status": "Planned",
+      "Notes": "Mages quarters stay locked until Wizard Studies is accepted or completed."
     }
   ],
   "Enemies": [
@@ -13863,6 +14001,25 @@
       "Release Phase": "Expansion",
       "Sprite Asset Key": null,
       "Notes": "HP reduced from the initial proposal."
+    },
+    {
+      "Enemy ID": "ENM-0019",
+      "Internal Key": "nervous_guard",
+      "Display Name": "Nervous Guard",
+      "Location ID": "LOC-0017",
+      "Combat Level": 4,
+      "Maximum HP": 220,
+      "Min Damage": 12,
+      "Max Damage": 28,
+      "Combat XP": 2500,
+      "Minimum Gold": 8,
+      "Maximum Gold": 16,
+      "Drop Chance": 40,
+      "Reward Table ID": "RWT-0117",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Sprite Asset Key": null,
+      "Notes": "Temporary QST-0003 opponent. Weaker than Castle Guard."
     }
   ],
   "RewardEntries": [
@@ -16310,6 +16467,21 @@
       "XP Amount": null,
       "Status": "Planned",
       "Notes": null
+    },
+    {
+      "Reward Entry ID": "RWE-0166",
+      "Reward Table ID": "RWT-0117",
+      "Reward Table Name": "Nervous Guard Purse",
+      "Purpose": "Quest item drop",
+      "Reward Type": "Item",
+      "Reward ID / Value": "ITEM-0299",
+      "Weight": 100,
+      "Minimum Quantity": 1,
+      "Maximum Quantity": 1,
+      "Skill ID": null,
+      "XP Amount": null,
+      "Status": "Planned",
+      "Notes": "Stolen Coin Purse for QST-0003."
     }
   ],
   "Recipes": [
@@ -21363,6 +21535,39 @@
       "Release Phase": "Launch",
       "Description": "Runs a compact stall of traveler supplies.",
       "Notes": "Merchant for SHP-0005 Supply Stall."
+    },
+    {
+      "NPC ID": "NPC-0011",
+      "Internal Key": "beggar",
+      "Display Name": "Beggar",
+      "Location ID": "LOC-0002",
+      "Role": "Quest Giver",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Description": "A hungry traveler waiting at the Town gates.",
+      "Notes": "Quest giver for The Missing Purse (QST-0003). Stands at The Town world-map node."
+    },
+    {
+      "NPC ID": "NPC-0012",
+      "Internal Key": "barracks_guard",
+      "Display Name": "Barracks Guard",
+      "Location ID": "LOC-0017",
+      "Role": "Guard",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Description": "A castle guard who may know where a missing purse went.",
+      "Notes": "Choice NPC for QST-0003: bribe or Pressure the Guards."
+    },
+    {
+      "NPC ID": "NPC-0013",
+      "Internal Key": "citadel_guide",
+      "Display Name": "Citadel Guide",
+      "Location ID": "LOC-0028",
+      "Role": "Guide",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Description": "Welcomes visitors to the Citadel and points them around the hub.",
+      "Notes": "Quest giver for Visiting the Citadel (QST-0004)."
     }
   ],
   "Shops": [
@@ -21951,6 +22156,63 @@
       "Reward Item ID": "ITEM-0165",
       "Reward Item Quantity": 1,
       "Possible Rewards": "11,000 Alchemy XP; Chef's Hat x1; unlocks Rose’s Apothecary"
+    },
+    {
+      "Quest ID": "QST-0003",
+      "Internal Key": "the_missing_purse",
+      "Display Name": "The Missing Purse",
+      "NPC ID": "NPC-0011",
+      "Summary": "Donate 25 gold, ask around town, then recover the beggar's stolen purse from the barracks.",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": "Talk: NPC-0007, NPC-0012; Deliver: ITEM-0299 x1; AcceptGold: 25; RewardGold: 500; RewardCosmetic: COS-0002; BribeGold: 200; ChoiceNpc: NPC-0012; BranchSkillXp: 2500",
+      "Objective Type": "Gather / Deliver",
+      "Objective Target ID": "ITEM-0299",
+      "Required Quantity": 1,
+      "Repeatable": "No",
+      "Reward XP Skill ID": "SKL-0001",
+      "Reward XP Amount": 2500,
+      "Reward Item ID": null,
+      "Reward Item Quantity": null,
+      "Possible Rewards": "500 gold; Beggar's Hood; 2,500 Combat XP or a chosen non-combat skill"
+    },
+    {
+      "Quest ID": "QST-0004",
+      "Internal Key": "visiting_the_citadel",
+      "Display Name": "Visiting the Citadel",
+      "NPC ID": "NPC-0013",
+      "Summary": "Tour the Citadel: talk to the guide and market master, visit the Market and Processing Districts, and inspect the boards.",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": "Talk: NPC-0013, NPC-0006; Visit: LOC-0029, LOC-0030; Inspect: bazaar, bounties, processing; RewardGold: 1000; AutoStart: LOC-0027",
+      "Objective Type": "Gather / Deliver",
+      "Objective Target ID": null,
+      "Required Quantity": null,
+      "Repeatable": "No",
+      "Reward XP Skill ID": null,
+      "Reward XP Amount": null,
+      "Reward Item ID": null,
+      "Reward Item Quantity": null,
+      "Possible Rewards": "1,000 gold"
+    },
+    {
+      "Quest ID": "QST-0005",
+      "Internal Key": "wizard_studies",
+      "Display Name": "Wizard Studies",
+      "NPC ID": "NPC-0009",
+      "Summary": "Accept the shopkeeper's offer, gather 10 Essence, and turn them in to the Archmage.",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": "Talk: NPC-0004; Deliver: ITEM-0011 x10; TurnInNpc: NPC-0004; RewardProjectNpc: NPC-0004",
+      "Objective Type": "Gather / Deliver",
+      "Objective Target ID": "ITEM-0011",
+      "Required Quantity": 10,
+      "Repeatable": "No",
+      "Reward XP Skill ID": "SKL-0013",
+      "Reward XP Amount": 11000,
+      "Reward Item ID": null,
+      "Reward Item Quantity": null,
+      "Possible Rewards": "11,000 Arcana XP; Archmage project knowledge; unlocks Delve for essence"
     }
   ],
   "Achievements": [
@@ -22129,6 +22391,15 @@
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Notes": "Companion pet cosmetic."
+    },
+    {
+      "Cosmetic Slot ID": "CSLOT-0003",
+      "Internal Key": "title",
+      "Display Name": "Titles",
+      "Slot Group": "Cosmetic",
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Notes": "Equipped title. Empty until titles are granted."
     }
   ],
   "Cosmetics": [
@@ -22140,6 +22411,15 @@
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Notes": "Default starter outfit, granted and equipped automatically for every new character."
+    },
+    {
+      "Cosmetic ID": "COS-0002",
+      "Item ID": "ITEM-0300",
+      "Cosmetic Slot ID": "CSLOT-0001",
+      "Acquisition Tags": "quest",
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Notes": "Beggar's Hood, granted by QST-0003 The Missing Purse."
     }
   ],
   "AppearanceOptions": [

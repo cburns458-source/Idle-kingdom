@@ -36,6 +36,8 @@ const String outfitCosmeticSlotId = 'CSLOT-0001';
 
 const String petCosmeticSlotId = 'CSLOT-0002';
 
+const String titleCosmeticSlotId = 'CSLOT-0003';
+
 const String starterOutfitCosmeticId = 'COS-0001';
 
 /// Baseline Appearance Option IDs used until the player (or an old save) picks their own.

@@ -22,6 +22,23 @@ function parseIdList(raw: string): string[] {
     .filter((id) => /^[A-Z]+-\d+$/.test(id))
 }
 
+function parseTokenList(raw: string): string[] {
+  return raw
+    .split(',')
+    .map((part) => part.trim().toLowerCase())
+    .filter((part) => part.length > 0)
+}
+
+function noteField(notes: string, pattern: string): string | undefined {
+  return notes.match(new RegExp(pattern, 'i'))?.[1]
+}
+
+function singleId(raw: string | undefined): string | null {
+  if (!raw) return null
+  const ids = parseIdList(raw)
+  return ids[0] ?? null
+}
+
 export function normalizeObjectiveKind(raw: string | null | undefined): QuestObjectiveKind {
   const value = (raw ?? '').toLowerCase()
   if (value.includes('defeat') || value.includes('kill') || value.includes('combat')) {
@@ -47,10 +64,21 @@ export function normalizeObjectiveKind(raw: string | null | undefined): QuestObj
  *   Defeat: ENM-x xN, ...
  *   Process: RCP-x xN, ...
  *   LearnRecipe: RCP-x, ...
+ *   Talk: NPC-x, ...
+ *   Visit: LOC-x, ...
+ *   Inspect: bazaar, bounties, processing
  *   GoldCost: N
+ *   AcceptGold: N
+ *   RewardGold: N
+ *   BribeGold: N
+ *   BranchSkillXp: N
+ *   ChoiceNpc: NPC-x
+ *   TurnInNpc: NPC-x
+ *   AutoStart: LOC-x
  *   UnlockLocation: LOC-x
  *   RewardRecipe: RCP-x
  *   RewardProjectNpc: NPC-x
+ *   RewardCosmetic: COS-x
  */
 export function parseStructuredObjectives(quest: QuestRow): StructuredQuestObjectives {
   const notes = quest.Notes ?? ''
@@ -58,47 +86,35 @@ export function parseStructuredObjectives(quest: QuestRow): StructuredQuestObjec
   const delivers: StructuredQuestObjectives['delivers'] = []
   const processTargets: StructuredQuestObjectives['processTargets'] = []
   const defeatTargets: StructuredQuestObjectives['defeatTargets'] = []
-  let learnRecipeIds: string[] = []
-  let restoreFacilityIds: string[] = []
-  let constructPortalIds: string[] = []
-  let unlockTravelIds: string[] = []
-  let goldCost = 0
-  const unlockLocationIds: string[] = []
-  let rewardRecipeIds: string[] = []
-  let rewardProjectNpcIds: string[] = []
 
-  const deliverMatch = notes.match(/Deliver:\s*([^;]+)/i)
-  if (deliverMatch) delivers.push(...parseIdQtyList(deliverMatch[1]))
+  const deliverMatch = noteField(notes, String.raw`Deliver:\s*([^;]+)`)
+  if (deliverMatch) delivers.push(...parseIdQtyList(deliverMatch))
 
-  const defeatMatch = notes.match(/Defeat:\s*([^;]+)/i)
-  if (defeatMatch) defeatTargets.push(...parseIdQtyList(defeatMatch[1]))
+  const defeatMatch = noteField(notes, String.raw`Defeat:\s*([^;]+)`)
+  if (defeatMatch) defeatTargets.push(...parseIdQtyList(defeatMatch))
 
-  const processMatch = notes.match(/Process:\s*([^;]+)/i)
-  if (processMatch) processTargets.push(...parseIdQtyList(processMatch[1]))
+  const processMatch = noteField(notes, String.raw`Process:\s*([^;]+)`)
+  if (processMatch) processTargets.push(...parseIdQtyList(processMatch))
 
-  const learnMatch = notes.match(/LearnRecipe:\s*([^;]+)/i)
-  if (learnMatch) learnRecipeIds = parseIdList(learnMatch[1])
-
-  const restoreMatch = notes.match(/RestoreFacility:\s*([^;]+)/i)
-  if (restoreMatch) restoreFacilityIds = parseIdList(restoreMatch[1])
-
-  const portalMatch = notes.match(/ConstructPortal:\s*([^;]+)/i)
-  if (portalMatch) constructPortalIds = parseIdList(portalMatch[1])
-
-  const travelMatch = notes.match(/UnlockTravel:\s*([^;]+)/i)
-  if (travelMatch) unlockTravelIds = parseIdList(travelMatch[1])
-
-  const goldMatch = notes.match(/GoldCost:\s*(\d+)/i)
-  if (goldMatch) goldCost = Number(goldMatch[1])
-
-  const unlockMatch = notes.match(/UnlockLocation(?:s)?:\s*([^;]+)/i)
-  if (unlockMatch) unlockLocationIds.push(...parseIdList(unlockMatch[1]))
-
-  const rewardRecipeMatch = notes.match(/RewardRecipe:\s*([^;]+)/i)
-  if (rewardRecipeMatch) rewardRecipeIds = parseIdList(rewardRecipeMatch[1])
-
-  const rewardNpcMatch = notes.match(/RewardProjectNpc:\s*([^;]+)/i)
-  if (rewardNpcMatch) rewardProjectNpcIds = parseIdList(rewardNpcMatch[1])
+  const learnMatch = noteField(notes, String.raw`LearnRecipe:\s*([^;]+)`)
+  const restoreMatch = noteField(notes, String.raw`RestoreFacility:\s*([^;]+)`)
+  const portalMatch = noteField(notes, String.raw`ConstructPortal:\s*([^;]+)`)
+  const travelMatch = noteField(notes, String.raw`UnlockTravel:\s*([^;]+)`)
+  const talkMatch = noteField(notes, String.raw`Talk:\s*([^;]+)`)
+  const visitMatch = noteField(notes, String.raw`Visit:\s*([^;]+)`)
+  const inspectMatch = noteField(notes, String.raw`Inspect:\s*([^;]+)`)
+  const goldMatch = noteField(notes, String.raw`GoldCost:\s*(\d+)`)
+  const acceptGoldMatch = noteField(notes, String.raw`AcceptGold:\s*(\d+)`)
+  const rewardGoldMatch = noteField(notes, String.raw`RewardGold:\s*(\d+)`)
+  const bribeGoldMatch = noteField(notes, String.raw`BribeGold:\s*(\d+)`)
+  const branchXpMatch = noteField(notes, String.raw`BranchSkillXp:\s*(\d+)`)
+  const choiceNpcMatch = noteField(notes, String.raw`ChoiceNpc:\s*([^;]+)`)
+  const turnInMatch = noteField(notes, String.raw`TurnInNpc:\s*([^;]+)`)
+  const autoStartMatch = noteField(notes, String.raw`AutoStart:\s*([^;]+)`)
+  const unlockMatch = noteField(notes, String.raw`UnlockLocation(?:s)?:\s*([^;]+)`)
+  const rewardRecipeMatch = noteField(notes, String.raw`RewardRecipe:\s*([^;]+)`)
+  const rewardNpcMatch = noteField(notes, String.raw`RewardProjectNpc:\s*([^;]+)`)
+  const rewardCosmeticMatch = noteField(notes, String.raw`RewardCosmetic:\s*([^;]+)`)
 
   if (delivers.length === 0 && kind === 'gather_deliver') {
     const targetId = quest['Objective Target ID']
@@ -129,14 +145,25 @@ export function parseStructuredObjectives(quest: QuestRow): StructuredQuestObjec
     delivers,
     processTargets,
     defeatTargets,
-    learnRecipeIds,
-    restoreFacilityIds,
-    constructPortalIds,
-    unlockTravelIds,
-    goldCost,
-    unlockLocationIds,
-    rewardRecipeIds,
-    rewardProjectNpcIds,
+    learnRecipeIds: learnMatch ? parseIdList(learnMatch) : [],
+    restoreFacilityIds: restoreMatch ? parseIdList(restoreMatch) : [],
+    constructPortalIds: portalMatch ? parseIdList(portalMatch) : [],
+    unlockTravelIds: travelMatch ? parseIdList(travelMatch) : [],
+    talkNpcIds: talkMatch ? parseIdList(talkMatch) : [],
+    visitLocationIds: visitMatch ? parseIdList(visitMatch) : [],
+    inspectIds: inspectMatch ? parseTokenList(inspectMatch) : [],
+    goldCost: goldMatch ? Number(goldMatch) : 0,
+    acceptGoldCost: acceptGoldMatch ? Number(acceptGoldMatch) : 0,
+    rewardGold: rewardGoldMatch ? Number(rewardGoldMatch) : 0,
+    bribeGold: bribeGoldMatch ? Number(bribeGoldMatch) : 0,
+    branchSkillXp: branchXpMatch ? Number(branchXpMatch) : 0,
+    choiceNpcId: singleId(choiceNpcMatch),
+    turnInNpcId: singleId(turnInMatch),
+    autoStartLocationId: singleId(autoStartMatch),
+    unlockLocationIds: unlockMatch ? parseIdList(unlockMatch) : [],
+    rewardRecipeIds: rewardRecipeMatch ? parseIdList(rewardRecipeMatch) : [],
+    rewardProjectNpcIds: rewardNpcMatch ? parseIdList(rewardNpcMatch) : [],
+    rewardCosmeticIds: rewardCosmeticMatch ? parseIdList(rewardCosmeticMatch) : [],
   }
 }
 
@@ -145,6 +172,23 @@ export interface QuestProgressLine {
   label: string
   current: number
   required: number
+}
+
+function npcDisplayName(db: GameDatabase, npcId: string): string {
+  return db.NPCs.find((row) => row['NPC ID'] === npcId)?.['Display Name'] ?? npcId
+}
+
+function locationDisplayName(db: GameDatabase, locationId: string): string {
+  return (
+    db.Locations.find((row) => row['Location ID'] === locationId)?.['Display Name'] ?? locationId
+  )
+}
+
+function inspectLabel(inspectId: string): string {
+  if (inspectId === 'bazaar') return 'Inspect the Grand Bazaar'
+  if (inspectId === 'bounties') return 'Inspect the Bounty Board'
+  if (inspectId === 'processing') return 'Use a Processing District station'
+  return `Inspect ${inspectId}`
 }
 
 export function questObjectiveProgress(
@@ -218,6 +262,24 @@ export function questObjectiveProgress(
         required: 1,
       }
     }),
+    ...structured.talkNpcIds.map((npcId) => ({
+      key: `talk:${npcId}`,
+      label: `Talk to ${npcDisplayName(db, npcId)}`,
+      current: Number(counters[`talk:${npcId}`] ?? 0),
+      required: 1,
+    })),
+    ...structured.visitLocationIds.map((locationId) => ({
+      key: `visit:${locationId}`,
+      label: `Visit ${locationDisplayName(db, locationId)}`,
+      current: Number(counters[`visit:${locationId}`] ?? 0),
+      required: 1,
+    })),
+    ...structured.inspectIds.map((inspectId) => ({
+      key: `inspect:${inspectId}`,
+      label: inspectLabel(inspectId),
+      current: Number(counters[`inspect:${inspectId}`] ?? 0),
+      required: 1,
+    })),
   ]
 
   if (structured.goldCost > 0) {

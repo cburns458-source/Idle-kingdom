@@ -2,6 +2,8 @@ import 'package:collection/collection.dart';
 import 'package:ik_content/ik_content.dart';
 
 import '../activity/xp.dart';
+import '../combat/stats.dart';
+import '../cosmetics/cosmetics.dart';
 import '../inventory/add_items.dart';
 import '../js_compat.dart';
 import '../production/inventory.dart';
@@ -48,12 +50,30 @@ class QuestActionResult {
   final String? reason;
 }
 
-QuestActionResult acceptQuest(GameDatabase db, PlayerSave save, String questId) {
+List<QuestRow> questsTouchingNpc(GameDatabase db, String npcId) {
+  return asQuestRows(db).where((quest) {
+    if (quest['NPC ID'] == npcId) return true;
+    final parsed = parseStructuredObjectives(quest);
+    return parsed.talkNpcIds.contains(npcId) ||
+        parsed.turnInNpcId == npcId ||
+        parsed.choiceNpcId == npcId;
+  }).toList();
+}
+
+QuestActionResult acceptQuest(
+  GameDatabase db,
+  PlayerSave save,
+  String questId, {
+  bool ignoreLocation = false,
+}) {
   final quest = getQuest(db, questId);
   if (quest == null) return const QuestActionResult.failed('Quest not found.');
-  final npc = db.npcs.firstWhereOrNull((row) => row.raw['NPC ID'] == quest['NPC ID']);
-  if (npc == null || npc.raw['Location ID'] != save.currentLocationId) {
-    return const QuestActionResult.failed('Speak with the quest giver at their location.');
+  final parsed = parseStructuredObjectives(quest);
+  if (!ignoreLocation) {
+    final npc = db.npcs.firstWhereOrNull((row) => row.raw['NPC ID'] == quest['NPC ID']);
+    if (npc == null || npc.raw['Location ID'] != save.currentLocationId) {
+      return const QuestActionResult.failed('Speak with the quest giver at their location.');
+    }
   }
   final progress = getQuestProgress(save, questId);
   if (progress.status == 'active') {
@@ -62,11 +82,21 @@ QuestActionResult acceptQuest(GameDatabase db, PlayerSave save, String questId) 
   if (progress.status == 'completed' && !isQuestRepeatable(quest)) {
     return const QuestActionResult.failed('This quest is already completed.');
   }
+  if (parsed.acceptGoldCost > 0 && save.gold < parsed.acceptGoldCost) {
+    return QuestActionResult.failed(
+      'Need ${jsLocaleNumber(parsed.acceptGoldCost)} gold to start this quest.',
+    );
+  }
+
+  var next = save;
+  if (parsed.acceptGoldCost > 0) {
+    next = next.copyWith(gold: next.gold - parsed.acceptGoldCost);
+  }
 
   return QuestActionResult.ok(
-    save.copyWith(
+    next.copyWith(
       quests: [
-        ...save.quests.where((row) => row.questId != questId),
+        ...next.quests.where((row) => row.questId != questId),
         QuestProgress(questId: questId, status: 'active', progress: 0),
       ],
     ),
@@ -79,13 +109,15 @@ class QuestCompletion {
     required this.message,
     required this.questName,
     required this.rewards,
+    this.pendingSkillXp = 0,
   }) : reason = null;
 
   const QuestCompletion.failed(this.reason)
     : save = null,
       message = null,
       questName = null,
-      rewards = const <String>[];
+      rewards = const <String>[],
+      pendingSkillXp = 0;
 
   bool get ok => reason == null;
   final PlayerSave? save;
@@ -94,6 +126,9 @@ class QuestCompletion {
 
   /// Reward lines shown on turn-in, in the order they were granted.
   final List<String> rewards;
+
+  /// Bribe-route XP the player still has to assign to a non-combat skill.
+  final num pendingSkillXp;
   final String? reason;
 }
 
@@ -109,7 +144,9 @@ final RegExp _objectiveVerb = RegExp(r'^(Deliver|Defeat|Craft|Learn)\s+', caseSe
 QuestCompletion completeQuest(GameDatabase db, PlayerSave save, String questId) {
   final quest = getQuest(db, questId);
   if (quest == null) return const QuestCompletion.failed('Quest not found.');
-  final npc = db.npcs.firstWhereOrNull((row) => row.raw['NPC ID'] == quest['NPC ID']);
+  final parsed = parseStructuredObjectives(quest);
+  final npcId = parsed.turnInNpcId ?? quest['NPC ID'];
+  final npc = db.npcs.firstWhereOrNull((row) => row.raw['NPC ID'] == npcId);
   if (npc == null || npc.raw['Location ID'] != save.currentLocationId) {
     return const QuestCompletion.failed('Return to the quest giver to turn this in.');
   }
@@ -126,12 +163,14 @@ QuestCompletion completeQuest(GameDatabase db, PlayerSave save, String questId) 
     return const QuestCompletion.failed('Accept this quest before turning it in.');
   }
 
-  final parsed = parseStructuredObjectives(quest);
   final hasObjectives =
       parsed.delivers.isNotEmpty ||
       parsed.defeatTargets.isNotEmpty ||
       parsed.processTargets.isNotEmpty ||
       parsed.learnRecipeIds.isNotEmpty ||
+      parsed.talkNpcIds.isNotEmpty ||
+      parsed.visitLocationIds.isNotEmpty ||
+      parsed.inspectIds.isNotEmpty ||
       parsed.goldCost > 0;
   if (!hasObjectives) {
     return const QuestCompletion.failed('Quest objectives are incomplete in data.');
@@ -171,11 +210,21 @@ QuestCompletion completeQuest(GameDatabase db, PlayerSave save, String questId) 
   }
 
   final rewards = <String>[];
+  var pendingSkillXp = 0;
+  final bribed = hasQuestFlag(save, questId, 'choice:bribe');
   final xpSkill = quest['Reward XP Skill ID'];
   final xpAmount = quest['Reward XP Amount'];
-  if (xpSkill is String && xpSkill.isNotEmpty && xpAmount is num && xpAmount > 0) {
+  if (bribed && parsed.branchSkillXp > 0) {
+    pendingSkillXp = parsed.branchSkillXp;
+    rewards.add('Choose ${jsLocaleNumber(pendingSkillXp)} XP in a non-combat skill');
+  } else if (xpSkill is String && xpSkill.isNotEmpty && xpAmount is num && xpAmount > 0) {
     next = applyXp(next, db, xpSkill, xpAmount).save;
     rewards.add('${jsLocaleNumber(xpAmount)} ${_skillName(db, xpSkill)} XP');
+  }
+
+  if (parsed.rewardGold > 0) {
+    next = next.copyWith(gold: next.gold + parsed.rewardGold);
+    rewards.add('${jsLocaleNumber(parsed.rewardGold)} gold');
   }
 
   final rewardItemId = quest['Reward Item ID'];
@@ -221,6 +270,19 @@ QuestCompletion completeQuest(GameDatabase db, PlayerSave save, String questId) 
     rewards.add('Project knowledge from ${npcName is String ? npcName : npcId}');
   }
 
+  for (final cosmeticId in parsed.rewardCosmeticIds) {
+    final granted = grantCosmetic(next, cosmeticId);
+    next = granted.save;
+    if (granted.granted) {
+      final cosmetic = cosmeticById(db, cosmeticId);
+      final itemId = cosmetic?.raw['Item ID'];
+      final itemName = itemId is String
+          ? db.items.firstWhereOrNull((item) => item.raw['Item ID'] == itemId)?.raw['Display Name']
+          : null;
+      rewards.add(itemName is String ? itemName : cosmeticId);
+    }
+  }
+
   final progressTotal = status.progressLines.fold<num>(0, (sum, line) => sum + line.required);
   next = next.copyWith(
     quests: [
@@ -239,8 +301,64 @@ QuestCompletion completeQuest(GameDatabase db, PlayerSave save, String questId) 
     save: next,
     questName: jsString(quest['Display Name']),
     rewards: rewards,
+    pendingSkillXp: pendingSkillXp,
     message: rewards.isNotEmpty ? 'Quest complete — ${rewards.join(' and ')}.' : 'Quest complete.',
   );
+}
+
+/// Skills the bribe-route popup may grant, Combat excluded.
+List<SkillRow> selectableNonCombatSkills(GameDatabase db) {
+  return db.skills.where((skill) => skill.skillId != combatSkillId).toList();
+}
+
+QuestActionResult applyQuestBranchSkillXp(
+  GameDatabase db,
+  PlayerSave save,
+  String skillId,
+  num amount,
+) {
+  if (amount <= 0) return QuestActionResult.ok(save);
+  if (skillId == combatSkillId) {
+    return const QuestActionResult.failed('Pick a skill other than Combat.');
+  }
+  if (db.skills.every((skill) => skill.skillId != skillId)) {
+    return const QuestActionResult.failed('Unknown skill.');
+  }
+  return QuestActionResult.ok(applyXp(save, db, skillId, amount).save);
+}
+
+/// Pays a quest bribe: gold out, a stolen purse in, and the bribe flag.
+QuestActionResult bribeQuestNpc(GameDatabase db, PlayerSave save, String questId) {
+  final quest = getQuest(db, questId);
+  if (quest == null) return const QuestActionResult.failed('Quest not found.');
+  final parsed = parseStructuredObjectives(quest);
+  if (getQuestProgress(save, questId).status != 'active') {
+    return const QuestActionResult.failed('This quest is not active.');
+  }
+  if (hasQuestFlag(save, questId, 'choice:bribe') || hasQuestFlag(save, questId, 'choice:combat')) {
+    return const QuestActionResult.failed('You already chose how to handle this.');
+  }
+  if (parsed.bribeGold <= 0) return const QuestActionResult.failed('This quest has no bribe.');
+  if (save.gold < parsed.bribeGold) {
+    return QuestActionResult.failed('Need ${jsLocaleNumber(parsed.bribeGold)} gold.');
+  }
+  var next = save.copyWith(gold: save.gold - parsed.bribeGold);
+  next = setQuestFlag(next, questId, 'choice:bribe');
+  if (parsed.delivers.isNotEmpty) {
+    final purse = parsed.delivers.first;
+    next = addItemToInventory(next, purse.targetId, purse.quantity);
+  }
+  return QuestActionResult.ok(next);
+}
+
+QuestActionResult chooseQuestCombatRoute(PlayerSave save, String questId) {
+  if (getQuestProgress(save, questId).status != 'active') {
+    return const QuestActionResult.failed('This quest is not active.');
+  }
+  if (hasQuestFlag(save, questId, 'choice:bribe') || hasQuestFlag(save, questId, 'choice:combat')) {
+    return const QuestActionResult.failed('You already chose how to handle this.');
+  }
+  return QuestActionResult.ok(setQuestFlag(save, questId, 'choice:combat'));
 }
 
 String questStatusLabel(String status) {

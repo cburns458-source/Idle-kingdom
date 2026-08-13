@@ -1,4 +1,5 @@
 import { getSkillProgress } from '../activity/xp'
+import { entityVisibleForSave } from '../activity/requirements'
 import type { EnchantmentRow, ProjectRow } from '../data/projectTypes'
 import type { FacilityRow, GameDatabase } from '../data/types'
 import { hasProjectKnowledge } from '../npcs/knowledge'
@@ -226,4 +227,15 @@ export function specialProductionStationsAt(
   }
 
   return stations.sort((a, b) => a.label.localeCompare(b.label))
+}
+
+/** Stations the player can see, hiding ones still gated by a quest. */
+export function specialProductionStationsVisibleAt(
+  db: GameDatabase,
+  save: PlayerSave,
+  locationId: string,
+): SpecialProductionStation[] {
+  return specialProductionStationsAt(db, locationId).filter((station) =>
+    entityVisibleForSave(db, save, 'Facility', station.facility['Facility ID']),
+  )
 }

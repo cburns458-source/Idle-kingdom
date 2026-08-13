@@ -79,3 +79,81 @@ PlayerSave applyQuestLearnRecipeProgress(GameDatabase db, PlayerSave save, Strin
   }
   return next;
 }
+
+num questFlag(PlayerSave save, String questId, String key) {
+  return getQuestProgress(save, questId).counters?[key] ?? 0;
+}
+
+bool hasQuestFlag(PlayerSave save, String questId, String key) =>
+    questFlag(save, questId, key) >= 1;
+
+bool questIsActive(PlayerSave save, String questId) {
+  return getQuestProgress(save, questId).status == 'active';
+}
+
+bool questIsActiveOrComplete(PlayerSave save, String questId) {
+  final status = getQuestProgress(save, questId).status;
+  return status == 'active' || status == 'completed';
+}
+
+PlayerSave setQuestFlag(PlayerSave save, String questId, String key) {
+  if (hasQuestFlag(save, questId, key)) return save;
+  return _bumpCounter(save, questId, key, 1);
+}
+
+/// Marks a Talk objective when the player hears that NPC's quest line.
+PlayerSave applyQuestTalkProgress(GameDatabase db, PlayerSave save, String npcId) {
+  var next = save;
+  for (final quest in asQuestRows(db)) {
+    final structured = parseStructuredObjectives(quest);
+    if (!structured.talkNpcIds.contains(npcId)) continue;
+    next = setQuestFlag(next, jsString(quest['Quest ID']), 'talk:$npcId');
+  }
+  return next;
+}
+
+/// Marks Visit objectives on arrival.
+PlayerSave applyQuestVisitProgress(GameDatabase db, PlayerSave save, String locationId) {
+  var next = save;
+  for (final quest in asQuestRows(db)) {
+    final structured = parseStructuredObjectives(quest);
+    if (!structured.visitLocationIds.contains(locationId)) continue;
+    next = setQuestFlag(next, jsString(quest['Quest ID']), 'visit:$locationId');
+  }
+  return next;
+}
+
+/// Marks Inspect objectives (bazaar, bounties, processing).
+PlayerSave applyQuestInspectProgress(GameDatabase db, PlayerSave save, String inspectId) {
+  var next = save;
+  for (final quest in asQuestRows(db)) {
+    final structured = parseStructuredObjectives(quest);
+    if (!structured.inspectIds.contains(inspectId)) continue;
+    next = setQuestFlag(next, jsString(quest['Quest ID']), 'inspect:$inspectId');
+  }
+  return next;
+}
+
+/// Auto-accepts quests whose AutoStart location matches this arrival.
+PlayerSave applyQuestAutoStart(GameDatabase db, PlayerSave save, String locationId) {
+  var next = save;
+  for (final quest in asQuestRows(db)) {
+    final structured = parseStructuredObjectives(quest);
+    if (structured.autoStartLocationId != locationId) continue;
+    final questId = jsString(quest['Quest ID']);
+    final progress = getQuestProgress(next, questId);
+    if (progress.status != 'inactive') continue;
+    if (progress.status == 'completed' && !isQuestRepeatable(quest)) continue;
+    next = next.copyWith(
+      quests: [
+        ...next.quests.where((row) => row.questId != questId),
+        QuestProgress(questId: questId, status: 'active', progress: 0),
+      ],
+    );
+  }
+  return next;
+}
+
+PlayerSave applyQuestLocationProgress(GameDatabase db, PlayerSave save, String locationId) {
+  return applyQuestVisitProgress(db, applyQuestAutoStart(db, save, locationId), locationId);
+}

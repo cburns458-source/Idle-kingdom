@@ -2,6 +2,8 @@ import 'package:collection/collection.dart';
 import 'package:ik_content/ik_content.dart';
 
 import '../js_compat.dart';
+import '../production/recipes.dart';
+import '../quests/progress.dart';
 import '../save/generated/save_models.dart';
 import 'xp.dart';
 
@@ -91,7 +93,56 @@ RequirementCheck evaluateRequirement(GameDatabase db, PlayerSave save, Requireme
     );
   }
 
+  if (type == 'Quest Access') {
+    final met = questIsActiveOrComplete(save, reference);
+    return RequirementCheck(
+      met: met,
+      detail: met ? 'Quest unlocked' : 'Requires completing or starting that quest',
+    );
+  }
+
+  if (type == 'Quest Active') {
+    final met = questIsActive(save, reference);
+    return RequirementCheck(met: met, detail: met ? 'Quest in progress' : 'Not available yet');
+  }
+
+  if (type == 'Quest Flag') {
+    final parts = reference.split(':');
+    if (parts.length < 2) {
+      return const RequirementCheck(met: false, detail: 'Quest flag is incomplete.');
+    }
+    final questId = parts.first;
+    final key = parts.sublist(1).join(':');
+    final met = hasQuestFlag(save, questId, key);
+    return RequirementCheck(met: met, detail: met ? 'Quest flag set' : 'Not available yet');
+  }
+
+  if (type == 'Item Absent') {
+    final met = inventoryCount(save, reference) <= 0;
+    return RequirementCheck(met: met, detail: met ? 'Item not held' : 'Already have that item');
+  }
+
   return const RequirementCheck(met: true, detail: 'OK');
+}
+
+bool isQuestGateRequirement(String type) {
+  return type == 'Quest Access' ||
+      type == 'Quest Flag' ||
+      type == 'Quest Active' ||
+      type == 'Item Absent';
+}
+
+/// Hide gated activities until their quest flag, access, or item condition is met.
+bool activityVisibleForSave(GameDatabase db, PlayerSave save, String activityId) {
+  return entityVisibleForSave(db, save, 'Activity', activityId);
+}
+
+bool entityVisibleForSave(GameDatabase db, PlayerSave save, String entityType, String entityId) {
+  for (final requirement in requirementsForEntity(db, entityType, entityId)) {
+    if (!isQuestGateRequirement(requirement.requirementType)) continue;
+    if (!evaluateRequirement(db, save, requirement).met) return false;
+  }
+  return true;
 }
 
 List<String> unmetHardRequirements(

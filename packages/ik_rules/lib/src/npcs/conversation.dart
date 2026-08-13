@@ -3,6 +3,7 @@ import 'package:ik_content/ik_content.dart';
 
 import '../js_compat.dart';
 import '../quests/objectives.dart';
+import '../quests/progress.dart';
 import '../quests/quests.dart';
 import '../save/generated/save_models.dart';
 import 'knowledge.dart';
@@ -21,9 +22,34 @@ const Map<String, String> _questPitchLines = <String, String>{
       'I\u2019m tired of working in the kitchen, I just saw a lot for sale down '
       'the street, I\u2019m thinking of starting the alchemy shop '
       'I\u2019ve always dreamed of\u2026',
+  'QST-0003':
+      'Please, traveler\u2026 I dropped my coin purse in the barracks. '
+      'I have nothing left. If you can spare 25 gold, I\u2019ll wait here while you look.',
+  'QST-0005':
+      'The Archmage will take an apprentice who can gather Essence. '
+      'I can grant you access to the mine beneath the tower \u2014 '
+      'bring ten Essence to the Archmage.',
+};
+
+const Map<String, Map<String, String>> _questTalkLines = <String, Map<String, String>>{
+  'QST-0003': <String, String>{
+    'NPC-0007': 'A beggar lost a purse? The guards at the barracks were laughing about some poor fool\u2026',
+    'NPC-0012':
+        'A purse? Maybe I saw something. Of course, my memory gets expensive\u2026 '
+        'or you could try taking it.',
+  },
+  'QST-0004': <String, String>{
+    'NPC-0013':
+        'Welcome to the Citadel. See the Market, use a Processing station, '
+        'and inspect the Grand Bazaar and Bounty Board, then come back to me.',
+    'NPC-0006': 'New around here? Browse all you like \u2014 no obligation to buy.',
+  },
+  'QST-0005': <String, String>{'NPC-0004': 'Ten Essence, and I will begin your studies in Arcana.'},
 };
 
 String? questPitchLine(String questId) => _questPitchLines[questId];
+
+String? questTalkLine(String questId, String npcId) => _questTalkLines[questId]?[npcId];
 
 String? skillForKnowledgeNpc(String npcId) {
   if (npcId == masterDwarfId) return smithingSkillId;
@@ -129,9 +155,19 @@ class NpcQuestBlock {
     required this.acceptLabel,
     required this.pitchLine,
     required this.lines,
+    required this.progressLines,
     required this.goldOwned,
     required this.goldRequired,
     required this.ready,
+    required this.canAccept,
+    required this.canTurnIn,
+    required this.canTalk,
+    required this.talkLabel,
+    required this.talkLine,
+    required this.canBribe,
+    required this.bribeLabel,
+    required this.canChooseCombat,
+    required this.combatLabel,
   });
 
   final String questId;
@@ -146,9 +182,19 @@ class NpcQuestBlock {
   /// The giver's own words, shown before accepting. Null accepts straight away.
   final String? pitchLine;
   final List<QuestDeliverLine> lines;
+  final List<QuestProgressLine> progressLines;
   final num goldOwned;
   final num goldRequired;
   final bool ready;
+  final bool canAccept;
+  final bool canTurnIn;
+  final bool canTalk;
+  final String talkLabel;
+  final String? talkLine;
+  final bool canBribe;
+  final String bribeLabel;
+  final bool canChooseCombat;
+  final String combatLabel;
 
   Map<String, Object?> toJson() => <String, Object?>{
     'questId': questId,
@@ -159,9 +205,19 @@ class NpcQuestBlock {
     'acceptLabel': acceptLabel,
     'pitchLine': pitchLine,
     'lines': lines.map((line) => line.toJson()).toList(),
+    'progressLines': progressLines.map((line) => line.toJson()).toList(),
     'goldOwned': goldOwned,
     'goldRequired': goldRequired,
     'ready': ready,
+    'canAccept': canAccept,
+    'canTurnIn': canTurnIn,
+    'canTalk': canTalk,
+    'talkLabel': talkLabel,
+    'talkLine': talkLine,
+    'canBribe': canBribe,
+    'bribeLabel': bribeLabel,
+    'canChooseCombat': canChooseCombat,
+    'combatLabel': combatLabel,
   };
 }
 
@@ -215,25 +271,56 @@ String _completedNote(GameDatabase db, QuestRow quest) {
   return 'Completed \u2014 $opened.';
 }
 
-NpcQuestBlock _questBlock(GameDatabase db, PlayerSave save, QuestRow quest) {
+NpcQuestBlock _questBlock(GameDatabase db, PlayerSave save, QuestRow quest, String npcId) {
   final questId = quest['Quest ID'] as String;
   final displayName = quest['Display Name'];
   final name = displayName is String ? displayName : questId;
   final objective = questObjectiveProgress(db, save, quest);
   final pitch = questPitchLine(questId);
   final summary = quest['Summary'];
+  final parsed = parseStructuredObjectives(quest);
+  final status = getQuestProgress(save, questId).status;
+  final isGiver = quest['NPC ID'] == npcId;
+  final turnInId = parsed.turnInNpcId ?? quest['NPC ID'];
+  final talked = hasQuestFlag(save, questId, 'talk:$npcId');
+  final chose =
+      hasQuestFlag(save, questId, 'choice:bribe') || hasQuestFlag(save, questId, 'choice:combat');
+  final needsTalkFirst = parsed.talkNpcIds.contains(npcId) && !talked;
+  String acceptLabel;
+  if (parsed.acceptGoldCost > 0) {
+    acceptLabel = 'Donate ${jsLocaleNumber(parsed.acceptGoldCost)} gold';
+  } else if (pitch == null) {
+    acceptLabel = 'Accept quest';
+  } else {
+    acceptLabel = 'Start quest: $name';
+  }
   return NpcQuestBlock(
     questId: questId,
     name: name,
     summary: summary is String ? summary : null,
-    status: getQuestProgress(save, questId).status,
+    status: status,
     completedNote: _completedNote(db, quest),
-    acceptLabel: pitch == null ? 'Accept quest' : 'Start quest: $name',
+    acceptLabel: acceptLabel,
     pitchLine: pitch,
     lines: objective.lines,
+    progressLines: objective.progressLines,
     goldOwned: objective.goldOwned,
     goldRequired: objective.goldRequired,
     ready: objective.ready,
+    canAccept: isGiver && status == 'inactive',
+    canTurnIn: turnInId == npcId && status == 'active',
+    canTalk: status == 'active' && parsed.talkNpcIds.contains(npcId) && !talked,
+    talkLabel: 'Talk',
+    talkLine: questTalkLine(questId, npcId),
+    canBribe:
+        status == 'active' &&
+        parsed.choiceNpcId == npcId &&
+        parsed.bribeGold > 0 &&
+        !chose &&
+        !needsTalkFirst,
+    bribeLabel: 'Bribe ${jsLocaleNumber(parsed.bribeGold)} gold',
+    canChooseCombat: status == 'active' && parsed.choiceNpcId == npcId && !chose && !needsTalkFirst,
+    combatLabel: 'Pressure the Guards',
   );
 }
 
@@ -283,7 +370,13 @@ NpcGreeting? _greetingFor(
 
 NpcConversation npcConversation(GameDatabase db, PlayerSave save, NpcRow npc) {
   final npcId = npc.raw['NPC ID'] as String;
-  final quests = questsForNpc(db, npcId).map((quest) => _questBlock(db, save, quest)).toList();
+  final quests = <NpcQuestBlock>[];
+  for (final quest in questsTouchingNpc(db, npcId)) {
+    final isGiver = quest['NPC ID'] == npcId;
+    final status = getQuestProgress(save, jsString(quest['Quest ID'])).status;
+    if (!isGiver && status != 'active') continue;
+    quests.add(_questBlock(db, save, quest, npcId));
+  }
   final displayName = npc.raw['Display Name'];
   final role = npc.raw['Role'];
   final description = npc.raw['Description'];
@@ -355,5 +448,34 @@ NpcActionResult acceptQuestFromNpc(GameDatabase db, PlayerSave save, String ques
   return NpcActionResult.ok(
     save: result.save!,
     message: 'Accepted: ${displayName is String ? displayName : 'quest'}.',
+  );
+}
+
+NpcActionResult talkWithQuestNpc(GameDatabase db, PlayerSave save, String npcId) {
+  final next = applyQuestTalkProgress(db, save, npcId);
+  return NpcActionResult.ok(save: next, message: 'You hear them out.');
+}
+
+NpcActionResult bribeForQuest(GameDatabase db, PlayerSave save, String questId) {
+  final result = bribeQuestNpc(db, save, questId);
+  if (!result.ok) return NpcActionResult.failed(result.reason!);
+  return NpcActionResult.ok(save: result.save!, message: 'The purse changes hands.');
+}
+
+NpcActionResult chooseCombatForQuest(PlayerSave save, String questId) {
+  final result = chooseQuestCombatRoute(save, questId);
+  if (!result.ok) return NpcActionResult.failed(result.reason!);
+  return NpcActionResult.ok(
+    save: result.save!,
+    message: 'The guards look nervous. Pressure them nearby.',
+  );
+}
+
+NpcActionResult assignQuestSkillXp(GameDatabase db, PlayerSave save, String skillId, num amount) {
+  final result = applyQuestBranchSkillXp(db, save, skillId, amount);
+  if (!result.ok) return NpcActionResult.failed(result.reason!);
+  return NpcActionResult.ok(
+    save: result.save!,
+    message: 'Gained ${jsLocaleNumber(amount)} ${_skillName(db, skillId)} XP.',
   );
 }

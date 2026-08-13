@@ -180,4 +180,20 @@ void main() {
 
     expect(getQuestProgress(controller.save, 'QST-0001').status, 'active');
   });
+
+  testWidgets('the Beggar at The Town asks for 25 gold', (tester) async {
+    final controller = buildController(database, seed: standing('LOC-0002', gold: 40));
+    addTearDown(controller.dispose);
+
+    await pumpPanel(
+      tester,
+      NpcPanel(controller: controller, npc: npcOf('NPC-0011'), onClose: () {}),
+    );
+    expect(find.textContaining('coin purse'), findsOne);
+    await tester.tap(find.text('Donate 25 gold'));
+    await tester.pump();
+
+    expect(getQuestProgress(controller.save, 'QST-0003').status, 'active');
+    expect(controller.save.gold, 15);
+  });
 }

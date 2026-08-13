@@ -4,15 +4,14 @@ import 'package:ik_content/ik_content.dart';
 import '../activity/transition.dart';
 import '../combat/engine.dart';
 import '../js_compat.dart';
+import '../quests/progress.dart';
 import '../save/generated/save_models.dart';
 import 'constants.dart';
 import 'submaps.dart';
 
-/// Travel time for a connection. Database values are in seconds when present.
-num travelDurationMs(TravelConnectionRow? connection) {
-  final base = connection?.raw['Base Duration'];
-  if (base is num && base.isFinite && base >= 0) return base * 1000;
-  return defaultTravelDurationMs;
+/// Travel is a menu button: destinations are instant, with no walk or mount delay.
+num travelDurationMs(TravelConnectionRow? _) {
+  return 0;
 }
 
 String getLocationMapId(LocationRow location) {
@@ -127,5 +126,6 @@ PlayerSave applyTravelArrival(
 ) {
   if (isDeathPaused(save, nowMs)) return save;
   final stopped = stopPrimaryActivityNow(db, save, nowMs);
-  return stopped.copyWith(currentLocationId: destinationLocationId);
+  final arrived = stopped.copyWith(currentLocationId: destinationLocationId);
+  return applyQuestLocationProgress(db, arrived, destinationLocationId);
 }

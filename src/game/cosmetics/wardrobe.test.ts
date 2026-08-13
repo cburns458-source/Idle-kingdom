@@ -3,7 +3,7 @@ import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { prepareDatabase } from '../data/loadDatabase'
 import { createNewSave } from '../save/saveStore'
-import { OUTFIT_COSMETIC_SLOT_ID, PET_COSMETIC_SLOT_ID } from '../save/types'
+import { OUTFIT_COSMETIC_SLOT_ID, PET_COSMETIC_SLOT_ID, TITLE_COSMETIC_SLOT_ID } from '../save/types'
 import {
   appearanceSliders,
   cosmeticUnlockNotice,
@@ -22,6 +22,7 @@ describe('wardrobe view', () => {
     expect(wardrobeSlotTabs(launch)).toEqual([
       { slotId: OUTFIT_COSMETIC_SLOT_ID, label: 'Outfit' },
       { slotId: PET_COSMETIC_SLOT_ID, label: 'Pet' },
+      { slotId: TITLE_COSMETIC_SLOT_ID, label: 'Titles' },
     ])
   })
 
@@ -39,6 +40,9 @@ describe('wardrobe view', () => {
     const slot = wardrobeSlotView(launch, save, PET_COSMETIC_SLOT_ID)
     expect(slot?.tiles).toEqual([])
     expect(slot?.emptyNote).toBe('No Pet unlocked yet.')
+    const titles = wardrobeSlotView(launch, save, TITLE_COSMETIC_SLOT_ID)
+    expect(titles?.tiles).toEqual([])
+    expect(titles?.emptyNote).toBe('No Titles unlocked yet.')
   })
 
   it('hides a cosmetic that has not been unlocked', () => {

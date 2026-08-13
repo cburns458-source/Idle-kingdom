@@ -113,6 +113,19 @@ class _LocationViewState extends State<LocationView> {
   GameController get controller => widget.controller;
 
   void _openPanel(LocationPanel panel) {
+    var save = controller.save;
+    if (panel is CitadelHubOpen) {
+      save = applyQuestInspectProgress(
+        controller.db,
+        save,
+        panel.tab == CitadelHubTab.bazaar ? 'bazaar' : 'bounties',
+      );
+    } else if (panel is WorkshopOpen || panel is StationOpen) {
+      if (save.currentLocationId == 'LOC-0030') {
+        save = applyQuestInspectProgress(controller.db, save, 'processing');
+      }
+    }
+    if (!identical(save, controller.save)) controller.commit(save);
     setState(() {
       _open = panel;
       _openAt = controller.save.currentLocationId;
@@ -381,7 +394,11 @@ class _LocationViewState extends State<LocationView> {
   }
 
   List<Widget> _activities(String locationId) {
-    final activities = controller.indexes.activitiesByLocationId[locationId] ?? const [];
+    final activities = (controller.indexes.activitiesByLocationId[locationId] ?? const [])
+        .where(
+          (activity) => activityVisibleForSave(controller.db, controller.save, activity.activityId),
+        )
+        .toList();
     if (activities.isEmpty) {
       return [const MutedText('Nothing to do here yet.')];
     }
@@ -400,7 +417,7 @@ class _LocationViewState extends State<LocationView> {
   }
 
   List<Widget> _stations(String locationId) {
-    final stations = specialProductionStationsAt(controller.db, locationId);
+    final stations = specialProductionStationsVisibleAt(controller.db, controller.save, locationId);
     if (stations.isEmpty) return const [];
     return [
       _SectionHeading('Special production'),

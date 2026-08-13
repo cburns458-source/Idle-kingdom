@@ -29,10 +29,21 @@ class StructuredQuestObjectives {
     required this.restoreFacilityIds,
     required this.constructPortalIds,
     required this.unlockTravelIds,
+    required this.talkNpcIds,
+    required this.visitLocationIds,
+    required this.inspectIds,
     required this.goldCost,
+    required this.acceptGoldCost,
+    required this.rewardGold,
+    required this.bribeGold,
+    required this.branchSkillXp,
+    required this.choiceNpcId,
+    required this.turnInNpcId,
+    required this.autoStartLocationId,
     required this.unlockLocationIds,
     required this.rewardRecipeIds,
     required this.rewardProjectNpcIds,
+    required this.rewardCosmeticIds,
   });
 
   /// One of the Bible §14.4 kinds, e.g. `gather_deliver` or `defeat`.
@@ -44,10 +55,21 @@ class StructuredQuestObjectives {
   final List<String> restoreFacilityIds;
   final List<String> constructPortalIds;
   final List<String> unlockTravelIds;
+  final List<String> talkNpcIds;
+  final List<String> visitLocationIds;
+  final List<String> inspectIds;
   final num goldCost;
+  final num acceptGoldCost;
+  final num rewardGold;
+  final num bribeGold;
+  final num branchSkillXp;
+  final String? choiceNpcId;
+  final String? turnInNpcId;
+  final String? autoStartLocationId;
   final List<String> unlockLocationIds;
   final List<String> rewardRecipeIds;
   final List<String> rewardProjectNpcIds;
+  final List<String> rewardCosmeticIds;
 
   Map<String, Object?> toJson() => <String, Object?>{
     'kind': kind,
@@ -58,10 +80,21 @@ class StructuredQuestObjectives {
     'restoreFacilityIds': restoreFacilityIds,
     'constructPortalIds': constructPortalIds,
     'unlockTravelIds': unlockTravelIds,
+    'talkNpcIds': talkNpcIds,
+    'visitLocationIds': visitLocationIds,
+    'inspectIds': inspectIds,
     'goldCost': goldCost,
+    'acceptGoldCost': acceptGoldCost,
+    'rewardGold': rewardGold,
+    'bribeGold': bribeGold,
+    'branchSkillXp': branchSkillXp,
+    'choiceNpcId': choiceNpcId,
+    'turnInNpcId': turnInNpcId,
+    'autoStartLocationId': autoStartLocationId,
     'unlockLocationIds': unlockLocationIds,
     'rewardRecipeIds': rewardRecipeIds,
     'rewardProjectNpcIds': rewardProjectNpcIds,
+    'rewardCosmeticIds': rewardCosmeticIds,
   };
 }
 
@@ -109,6 +142,20 @@ String? _noteField(String notes, String pattern) {
   return RegExp(pattern, caseSensitive: false).firstMatch(notes)?.group(1);
 }
 
+List<String> _parseTokenList(String raw) {
+  return raw
+      .split(',')
+      .map((part) => part.trim().toLowerCase())
+      .where((part) => part.isNotEmpty)
+      .toList();
+}
+
+String? _singleId(String? raw) {
+  if (raw == null) return null;
+  final ids = _parseIdList(raw);
+  return ids.isEmpty ? null : ids.first;
+}
+
 /// Parses structured objectives from quest fields + Notes.
 ///
 /// Notes extensions (semicolon-separated):
@@ -116,10 +163,21 @@ String? _noteField(String notes, String pattern) {
 ///   Defeat: ENM-x xN, ...
 ///   Process: RCP-x xN, ...
 ///   LearnRecipe: RCP-x, ...
+///   Talk: NPC-x, ...
+///   Visit: LOC-x, ...
+///   Inspect: bazaar, bounties, processing
 ///   GoldCost: N
+///   AcceptGold: N
+///   RewardGold: N
+///   BribeGold: N
+///   BranchSkillXp: N
+///   ChoiceNpc: NPC-x
+///   TurnInNpc: NPC-x
+///   AutoStart: LOC-x
 ///   UnlockLocation: LOC-x
 ///   RewardRecipe: RCP-x
 ///   RewardProjectNpc: NPC-x
+///   RewardCosmetic: COS-x
 StructuredQuestObjectives parseStructuredObjectives(QuestRow quest) {
   final notes = quest['Notes'] is String ? quest['Notes']! as String : '';
   final kind = normalizeObjectiveKind(quest['Objective Type']);
@@ -141,10 +199,21 @@ StructuredQuestObjectives parseStructuredObjectives(QuestRow quest) {
   final restoreNote = _noteField(notes, r'RestoreFacility:\s*([^;]+)');
   final portalNote = _noteField(notes, r'ConstructPortal:\s*([^;]+)');
   final travelNote = _noteField(notes, r'UnlockTravel:\s*([^;]+)');
+  final talkNote = _noteField(notes, r'Talk:\s*([^;]+)');
+  final visitNote = _noteField(notes, r'Visit:\s*([^;]+)');
+  final inspectNote = _noteField(notes, r'Inspect:\s*([^;]+)');
   final goldNote = _noteField(notes, r'GoldCost:\s*(\d+)');
+  final acceptGoldNote = _noteField(notes, r'AcceptGold:\s*(\d+)');
+  final rewardGoldNote = _noteField(notes, r'RewardGold:\s*(\d+)');
+  final bribeGoldNote = _noteField(notes, r'BribeGold:\s*(\d+)');
+  final branchXpNote = _noteField(notes, r'BranchSkillXp:\s*(\d+)');
+  final choiceNpcNote = _noteField(notes, r'ChoiceNpc:\s*([^;]+)');
+  final turnInNote = _noteField(notes, r'TurnInNpc:\s*([^;]+)');
+  final autoStartNote = _noteField(notes, r'AutoStart:\s*([^;]+)');
   final unlockNote = _noteField(notes, r'UnlockLocation(?:s)?:\s*([^;]+)');
   final rewardRecipeNote = _noteField(notes, r'RewardRecipe:\s*([^;]+)');
   final rewardNpcNote = _noteField(notes, r'RewardProjectNpc:\s*([^;]+)');
+  final rewardCosmeticNote = _noteField(notes, r'RewardCosmetic:\s*([^;]+)');
 
   /// Field fallbacks apply only when Notes carried no lines of that kind.
   void addFieldFallback(String forKind, List<QuestCounterTarget> into) {
@@ -169,10 +238,23 @@ StructuredQuestObjectives parseStructuredObjectives(QuestRow quest) {
     restoreFacilityIds: restoreNote == null ? const <String>[] : _parseIdList(restoreNote),
     constructPortalIds: portalNote == null ? const <String>[] : _parseIdList(portalNote),
     unlockTravelIds: travelNote == null ? const <String>[] : _parseIdList(travelNote),
+    talkNpcIds: talkNote == null ? const <String>[] : _parseIdList(talkNote),
+    visitLocationIds: visitNote == null ? const <String>[] : _parseIdList(visitNote),
+    inspectIds: inspectNote == null ? const <String>[] : _parseTokenList(inspectNote),
     goldCost: goldNote == null ? 0 : jsNumber(goldNote),
+    acceptGoldCost: acceptGoldNote == null ? 0 : jsNumber(acceptGoldNote),
+    rewardGold: rewardGoldNote == null ? 0 : jsNumber(rewardGoldNote),
+    bribeGold: bribeGoldNote == null ? 0 : jsNumber(bribeGoldNote),
+    branchSkillXp: branchXpNote == null ? 0 : jsNumber(branchXpNote),
+    choiceNpcId: _singleId(choiceNpcNote),
+    turnInNpcId: _singleId(turnInNote),
+    autoStartLocationId: _singleId(autoStartNote),
     unlockLocationIds: unlockNote == null ? const <String>[] : _parseIdList(unlockNote),
     rewardRecipeIds: rewardRecipeNote == null ? const <String>[] : _parseIdList(rewardRecipeNote),
     rewardProjectNpcIds: rewardNpcNote == null ? const <String>[] : _parseIdList(rewardNpcNote),
+    rewardCosmeticIds: rewardCosmeticNote == null
+        ? const <String>[]
+        : _parseIdList(rewardCosmeticNote),
   );
 }
 
@@ -291,6 +373,27 @@ QuestObjectiveStatus questObjectiveProgress(GameDatabase db, PlayerSave save, Qu
         current: knowsRecipe(save, db, recipeId) ? 1 : 0,
         required: 1,
       ),
+    for (final npcId in structured.talkNpcIds)
+      QuestProgressLine(
+        key: 'talk:$npcId',
+        label: 'Talk to ${_npcDisplayName(db, npcId)}',
+        current: counters['talk:$npcId'] ?? 0,
+        required: 1,
+      ),
+    for (final locationId in structured.visitLocationIds)
+      QuestProgressLine(
+        key: 'visit:$locationId',
+        label: 'Visit ${_locationDisplayName(db, locationId)}',
+        current: counters['visit:$locationId'] ?? 0,
+        required: 1,
+      ),
+    for (final inspectId in structured.inspectIds)
+      QuestProgressLine(
+        key: 'inspect:$inspectId',
+        label: _inspectLabel(inspectId),
+        current: counters['inspect:$inspectId'] ?? 0,
+        required: 1,
+      ),
     if (structured.goldCost > 0)
       QuestProgressLine(
         key: 'gold',
@@ -321,6 +424,27 @@ QuestObjectiveStatus questObjectiveProgress(GameDatabase db, PlayerSave save, Qu
     goldRequired: structured.goldCost,
     ready: hasWork && counterReady && !deferredIncomplete,
   );
+}
+
+String _npcDisplayName(GameDatabase db, String npcId) {
+  final displayName = db.npcs
+      .firstWhereOrNull((row) => row.raw['NPC ID'] == npcId)
+      ?.raw['Display Name'];
+  return displayName is String ? displayName : npcId;
+}
+
+String _locationDisplayName(GameDatabase db, String locationId) {
+  final displayName = db.locations
+      .firstWhereOrNull((row) => row.raw['Location ID'] == locationId)
+      ?.raw['Display Name'];
+  return displayName is String ? displayName : locationId;
+}
+
+String _inspectLabel(String inspectId) {
+  if (inspectId == 'bazaar') return 'Inspect the Grand Bazaar';
+  if (inspectId == 'bounties') return 'Inspect the Bounty Board';
+  if (inspectId == 'processing') return 'Use a Processing District station';
+  return 'Inspect $inspectId';
 }
 
 String _enemyName(GameDatabase db, String enemyId) {

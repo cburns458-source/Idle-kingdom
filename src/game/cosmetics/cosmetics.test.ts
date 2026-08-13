@@ -3,7 +3,7 @@ import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { prepareDatabase } from '../data/loadDatabase'
 import { createNewSave } from '../save/saveStore'
-import { OUTFIT_COSMETIC_SLOT_ID, PET_COSMETIC_SLOT_ID } from '../save/types'
+import { OUTFIT_COSMETIC_SLOT_ID, PET_COSMETIC_SLOT_ID, TITLE_COSMETIC_SLOT_ID } from '../save/types'
 import {
   cosmeticSlots,
   cosmeticsForSlot,
@@ -18,10 +18,10 @@ const rawDatabase = JSON.parse(
 )
 
 describe('cosmetics', () => {
-  it('lists the data-driven cosmetic slots (Outfit, Pet)', () => {
+  it('lists the data-driven cosmetic slots (Outfit, Pet, Titles)', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const slots = cosmeticSlots(launch).map((row) => row['Cosmetic Slot ID'])
-    expect(slots).toEqual([OUTFIT_COSMETIC_SLOT_ID, PET_COSMETIC_SLOT_ID])
+    expect(slots).toEqual([OUTFIT_COSMETIC_SLOT_ID, PET_COSMETIC_SLOT_ID, TITLE_COSMETIC_SLOT_ID])
   })
 
   it('starts every new save with the starter outfit unlocked and equipped, Pet empty', () => {

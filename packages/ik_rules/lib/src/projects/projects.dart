@@ -4,6 +4,7 @@ import 'package:collection/collection.dart';
 import 'package:ik_content/ik_content.dart';
 
 import '../activity/xp.dart';
+import '../activity/requirements.dart';
 import '../js_compat.dart';
 import '../npcs/knowledge.dart';
 import '../production/recipes.dart';
@@ -275,4 +276,22 @@ List<SpecialProductionStation> specialProductionStationsAt(GameDatabase db, Stri
 
   mergeSort(stations, compare: (a, b) => jsLocaleCompare(a.label, b.label));
   return stations;
+}
+
+/// Stations the player can see, hiding ones still gated by a quest.
+List<SpecialProductionStation> specialProductionStationsVisibleAt(
+  GameDatabase db,
+  PlayerSave save,
+  String locationId,
+) {
+  return specialProductionStationsAt(db, locationId)
+      .where(
+        (station) => entityVisibleForSave(
+          db,
+          save,
+          'Facility',
+          jsString(station.facility.raw['Facility ID']),
+        ),
+      )
+      .toList();
 }

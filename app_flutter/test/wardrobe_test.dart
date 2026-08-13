@@ -57,6 +57,10 @@ void main() {
 
     expect(find.text('No Pet unlocked yet.'), findsOne);
     expect(find.text("Traveler's Tunic"), findsNothing);
+
+    await tester.tap(find.text('Titles'));
+    await tester.pump();
+    expect(find.text('No Titles unlocked yet.'), findsOne);
   });
 
   testWidgets('a slider changes the look and the portrait follows', (tester) async {

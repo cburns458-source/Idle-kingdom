@@ -143,6 +143,7 @@ export const questScenarios: ParityScenario[] = [
                 message: result.message,
                 questName: result.questName,
                 rewards: result.rewards.map((reward) => reward.label),
+                pendingSkillXp: result.pendingSkillXp,
               }
             : result) as unknown as JsonValue
         },

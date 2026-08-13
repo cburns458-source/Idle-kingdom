@@ -34,6 +34,7 @@ class _NpcPanelState extends State<NpcPanel> {
   /// The dialogue on screen: the opening greeting until it is answered, and
   /// afterwards whichever pitch the player asked to hear again.
   NpcGreeting? _dialogue;
+  String? _talkLine;
   String? _error;
 
   GameController get controller => widget.controller;
@@ -99,7 +100,57 @@ class _NpcPanelState extends State<NpcPanel> {
     setState(() => _error = null);
   }
 
+  void _talk(NpcQuestBlock quest) {
+    final line = quest.talkLine;
+    if (line != null) {
+      setState(() {
+        _error = null;
+        _talkLine = line;
+      });
+      return;
+    }
+    _commitTalk();
+  }
+
+  void _commitTalk() {
+    final result = talkWithQuestNpc(controller.db, controller.save, conversation.npcId);
+    if (!result.ok) {
+      setState(() => _error = result.reason);
+      return;
+    }
+    controller.commit(result.save!);
+    controller.announce(result.message!);
+    setState(() {
+      _error = null;
+      _talkLine = null;
+    });
+  }
+
+  void _bribe(NpcQuestBlock quest) {
+    final result = bribeForQuest(controller.db, controller.save, quest.questId);
+    if (!result.ok) {
+      setState(() => _error = result.reason);
+      return;
+    }
+    controller.commit(result.save!);
+    controller.announce(result.message!);
+    setState(() => _error = null);
+  }
+
+  void _chooseCombat(NpcQuestBlock quest) {
+    final result = chooseCombatForQuest(controller.save, quest.questId);
+    if (!result.ok) {
+      setState(() => _error = result.reason);
+      return;
+    }
+    controller.commit(result.save!);
+    controller.announce(result.message!);
+    setState(() => _error = null);
+  }
+
   Future<void> _turnIn(NpcQuestBlock quest) async {
+    final beforeUnlocked = controller.save.cosmetics.unlocked.toSet();
+    final wasEmpty = beforeUnlocked.isEmpty;
     final result = completeQuest(controller.db, controller.save, quest.questId);
     if (!result.ok) {
       setState(() => _error = result.reason);
@@ -108,7 +159,16 @@ class _NpcPanelState extends State<NpcPanel> {
     controller.commit(result.save!);
     controller.announce(result.message!);
     setState(() => _error = null);
+    final granted = result.save!.cosmetics.unlocked
+        .where((id) => !beforeUnlocked.contains(id))
+        .map((id) => ShopCosmeticGrant(cosmeticId: id, isFirstEver: wasEmpty))
+        .toList();
+    controller.noteCosmeticUnlocks(granted);
     await showQuestRewards(context, questName: result.questName!, rewards: result.rewards);
+    if (!context.mounted) return;
+    if (result.pendingSkillXp > 0) {
+      await showSkillXpPicker(context, controller: controller, amount: result.pendingSkillXp);
+    }
   }
 
   @override
@@ -145,6 +205,14 @@ class _NpcPanelState extends State<NpcPanel> {
         );
       case null:
         break;
+    }
+
+    if (_talkLine case final talkLine?) {
+      return _DialogueCard(
+        name: conversation.name,
+        line: talkLine,
+        actions: [FilledButton(onPressed: _commitTalk, child: const Text('Continue'))],
+      );
     }
 
     return GamePanel(
@@ -196,6 +264,9 @@ class _NpcPanelState extends State<NpcPanel> {
               quest: quest,
               onAccept: () => _openQuest(quest),
               onTurnIn: () => _turnIn(quest),
+              onTalk: () => _talk(quest),
+              onBribe: () => _bribe(quest),
+              onChooseCombat: () => _chooseCombat(quest),
             ),
           ],
           if (_error case final error?) ...[
@@ -209,11 +280,21 @@ class _NpcPanelState extends State<NpcPanel> {
 }
 
 class _QuestBlock extends StatelessWidget {
-  const _QuestBlock({required this.quest, required this.onAccept, required this.onTurnIn});
+  const _QuestBlock({
+    required this.quest,
+    required this.onAccept,
+    required this.onTurnIn,
+    required this.onTalk,
+    required this.onBribe,
+    required this.onChooseCombat,
+  });
 
   final NpcQuestBlock quest;
   final VoidCallback onAccept;
   final VoidCallback onTurnIn;
+  final VoidCallback onTalk;
+  final VoidCallback onBribe;
+  final VoidCallback onChooseCombat;
 
   @override
   Widget build(BuildContext context) {
@@ -232,25 +313,33 @@ class _QuestBlock extends StatelessWidget {
           const SizedBox(height: 8),
           switch (quest.status) {
             'completed' => MutedText(quest.completedNote),
-            'inactive' => FilledButton(onPressed: onAccept, child: Text(quest.acceptLabel)),
+            'inactive' =>
+              quest.canAccept
+                  ? FilledButton(onPressed: onAccept, child: Text(quest.acceptLabel))
+                  : const SizedBox.shrink(),
             _ => Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                for (final line in quest.lines)
-                  MutedText(
-                    'Progress: ${formatThousands(line.owned < line.required ? line.owned : line.required)}'
-                    ' / ${formatThousands(line.required)} ${line.name}',
+                for (final line in quest.progressLines) MutedText(_progressText(line)),
+                if (quest.canTalk) ...[
+                  const SizedBox(height: 6),
+                  FilledButton(onPressed: onTalk, child: Text(quest.talkLabel)),
+                ],
+                if (quest.canBribe) ...[
+                  const SizedBox(height: 6),
+                  OutlinedButton(onPressed: onBribe, child: Text(quest.bribeLabel)),
+                ],
+                if (quest.canChooseCombat) ...[
+                  const SizedBox(height: 6),
+                  OutlinedButton(onPressed: onChooseCombat, child: Text(quest.combatLabel)),
+                ],
+                if (quest.canTurnIn) ...[
+                  const SizedBox(height: 6),
+                  FilledButton(
+                    onPressed: quest.ready ? onTurnIn : null,
+                    child: const Text('Turn in'),
                   ),
-                if (quest.goldRequired > 0)
-                  MutedText(
-                    'Gold: ${formatThousands(quest.goldOwned)} / '
-                    '${formatThousands(quest.goldRequired)}',
-                  ),
-                const SizedBox(height: 6),
-                FilledButton(
-                  onPressed: quest.ready ? onTurnIn : null,
-                  child: const Text('Turn in'),
-                ),
+                ],
               ],
             ),
           },
@@ -258,6 +347,16 @@ class _QuestBlock extends StatelessWidget {
       ),
     );
   }
+}
+
+String _progressText(QuestProgressLine line) {
+  final current = formatThousands(line.current < line.required ? line.current : line.required);
+  final required = formatThousands(line.required);
+  if (line.key == 'gold') return 'Gold: $current / $required';
+  if (line.key.startsWith('deliver:')) {
+    return 'Progress: $current / $required ${line.label.replaceFirst('Deliver ', '')}';
+  }
+  return '$current / $required ${line.label}';
 }
 
 /// A greeting, over the panel it belongs to.
@@ -332,6 +431,70 @@ Future<void> showQuestRewards(
               FilledButton(
                 onPressed: () => Navigator.of(context).pop(),
                 child: const Text('Collect'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+/// Lets the player pick which non-combat skill receives quest XP.
+Future<void> showSkillXpPicker(
+  BuildContext context, {
+  required GameController controller,
+  required num amount,
+}) {
+  final skills = selectableNonCombatSkills(controller.db);
+  return showModalBottomSheet<void>(
+    context: context,
+    backgroundColor: Colors.transparent,
+    isDismissible: false,
+    enableDrag: false,
+    builder: (context) => SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: GamePanel(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const MutedText('Choose a skill'),
+              Text(
+                '${formatThousands(amount)} XP',
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 8),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxHeight: 320),
+                child: ListView(
+                  shrinkWrap: true,
+                  children: [
+                    for (final skill in skills)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 6),
+                        child: OutlinedButton(
+                          onPressed: () {
+                            final result = assignQuestSkillXp(
+                              controller.db,
+                              controller.save,
+                              skill.skillId,
+                              amount,
+                            );
+                            if (result.ok) {
+                              controller.commit(result.save!);
+                              controller.announce(result.message!);
+                            } else {
+                              controller.report(result.reason);
+                            }
+                            Navigator.of(context).pop();
+                          },
+                          child: Text(skill.displayName),
+                        ),
+                      ),
+                  ],
+                ),
               ),
             ],
           ),

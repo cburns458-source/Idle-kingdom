@@ -121,6 +121,7 @@ void main() {
                     'message': result.message,
                     'questName': result.questName,
                     'rewards': result.rewards,
+                    'pendingSkillXp': result.pendingSkillXp,
                   }
                 : <String, Object?>{'ok': false, 'reason': result.reason},
           ),

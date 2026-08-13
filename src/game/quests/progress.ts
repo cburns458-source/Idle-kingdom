@@ -1,5 +1,5 @@
 import type { PlayerSave } from '../save/types'
-import { asQuestRows, getQuestProgress } from './quests'
+import { asQuestRows, getQuestProgress, isQuestRepeatable } from './quests'
 import { parseStructuredObjectives } from './objectives'
 import type { GameDatabase } from '../data/types'
 
@@ -63,4 +63,104 @@ export function applyQuestLearnRecipeProgress(
     next = bumpCounter(next, quest['Quest ID'], `learn:${recipeId}`, 1)
   }
   return next
+}
+
+export function questFlag(save: PlayerSave, questId: string, key: string): number {
+  return Number(getQuestProgress(save, questId).counters?.[key] ?? 0)
+}
+
+export function hasQuestFlag(save: PlayerSave, questId: string, key: string): boolean {
+  return questFlag(save, questId, key) >= 1
+}
+
+export function questIsActive(save: PlayerSave, questId: string): boolean {
+  return getQuestProgress(save, questId).status === 'active'
+}
+
+export function questIsActiveOrComplete(save: PlayerSave, questId: string): boolean {
+  const status = getQuestProgress(save, questId).status
+  return status === 'active' || status === 'completed'
+}
+
+export function setQuestFlag(save: PlayerSave, questId: string, key: string): PlayerSave {
+  if (hasQuestFlag(save, questId, key)) return save
+  return bumpCounter(save, questId, key, 1)
+}
+
+/** Marks a Talk objective when the player hears that NPC's quest line. */
+export function applyQuestTalkProgress(
+  db: GameDatabase,
+  save: PlayerSave,
+  npcId: string,
+): PlayerSave {
+  let next = save
+  for (const quest of asQuestRows(db)) {
+    const structured = parseStructuredObjectives(quest)
+    if (!structured.talkNpcIds.includes(npcId)) continue
+    next = setQuestFlag(next, quest['Quest ID'], `talk:${npcId}`)
+  }
+  return next
+}
+
+/** Marks Visit objectives on arrival. */
+export function applyQuestVisitProgress(
+  db: GameDatabase,
+  save: PlayerSave,
+  locationId: string,
+): PlayerSave {
+  let next = save
+  for (const quest of asQuestRows(db)) {
+    const structured = parseStructuredObjectives(quest)
+    if (!structured.visitLocationIds.includes(locationId)) continue
+    next = setQuestFlag(next, quest['Quest ID'], `visit:${locationId}`)
+  }
+  return next
+}
+
+/** Marks Inspect objectives (bazaar, bounties, processing). */
+export function applyQuestInspectProgress(
+  db: GameDatabase,
+  save: PlayerSave,
+  inspectId: string,
+): PlayerSave {
+  let next = save
+  for (const quest of asQuestRows(db)) {
+    const structured = parseStructuredObjectives(quest)
+    if (!structured.inspectIds.includes(inspectId)) continue
+    next = setQuestFlag(next, quest['Quest ID'], `inspect:${inspectId}`)
+  }
+  return next
+}
+
+/** Auto-accepts quests whose AutoStart location matches this arrival. */
+export function applyQuestAutoStart(
+  db: GameDatabase,
+  save: PlayerSave,
+  locationId: string,
+): PlayerSave {
+  let next = save
+  for (const quest of asQuestRows(db)) {
+    const structured = parseStructuredObjectives(quest)
+    if (structured.autoStartLocationId !== locationId) continue
+    const questId = quest['Quest ID']
+    const progress = getQuestProgress(next, questId)
+    if (progress.status !== 'inactive') continue
+    if (progress.status === 'completed' && !isQuestRepeatable(quest)) continue
+    next = {
+      ...next,
+      quests: [
+        ...next.quests.filter((row) => row.questId !== questId),
+        { questId, status: 'active', progress: 0 },
+      ],
+    }
+  }
+  return next
+}
+
+export function applyQuestLocationProgress(
+  db: GameDatabase,
+  save: PlayerSave,
+  locationId: string,
+): PlayerSave {
+  return applyQuestVisitProgress(db, applyQuestAutoStart(db, save, locationId), locationId)
 }

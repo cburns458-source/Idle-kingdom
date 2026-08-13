@@ -1,12 +1,18 @@
 import { addItemToInventory } from '../activity/rewards'
 import { applyXp } from '../activity/xp'
-import type { GameDatabase } from '../data/types'
+import { COMBAT_SKILL_ID } from '../combat/stats'
+import { cosmeticById, grantCosmetic } from '../cosmetics/cosmetics'
+import type { GameDatabase, SkillRow } from '../data/types'
 import { unlockRecipeId } from '../recipes/knowledge'
 import { removeIngredients } from '../production/inventory'
 import type { PlayerSave, QuestProgress } from '../save/types'
 import { unlockLocation } from '../world/submaps'
 import { parseStructuredObjectives, questObjectiveProgress } from './objectives'
-import { applyQuestLearnRecipeProgress } from './progress'
+import {
+  applyQuestLearnRecipeProgress,
+  hasQuestFlag,
+  setQuestFlag,
+} from './progress'
 
 export interface QuestRow {
   'Quest ID': string
@@ -40,6 +46,18 @@ export function questsForNpc(db: GameDatabase, npcId: string): QuestRow[] {
   return asQuestRows(db).filter((quest) => quest['NPC ID'] === npcId)
 }
 
+export function questsTouchingNpc(db: GameDatabase, npcId: string): QuestRow[] {
+  return asQuestRows(db).filter((quest) => {
+    if (quest['NPC ID'] === npcId) return true
+    const parsed = parseStructuredObjectives(quest)
+    return (
+      parsed.talkNpcIds.includes(npcId) ||
+      parsed.turnInNpcId === npcId ||
+      parsed.choiceNpcId === npcId
+    )
+  })
+}
+
 export function getQuestProgress(save: PlayerSave, questId: string): QuestProgress {
   return (
     save.quests.find((quest) => quest.questId === questId) ?? {
@@ -59,12 +77,16 @@ export function acceptQuest(
   db: GameDatabase,
   save: PlayerSave,
   questId: string,
+  options: { ignoreLocation?: boolean } = {},
 ): { ok: true; save: PlayerSave } | { ok: false; reason: string } {
   const quest = getQuest(db, questId)
   if (!quest) return { ok: false, reason: 'Quest not found.' }
-  const npc = db.NPCs.find((row) => row['NPC ID'] === quest['NPC ID'])
-  if (!npc || npc['Location ID'] !== save.currentLocationId) {
-    return { ok: false, reason: 'Speak with the quest giver at their location.' }
+  const parsed = parseStructuredObjectives(quest)
+  if (!options.ignoreLocation) {
+    const npc = db.NPCs.find((row) => row['NPC ID'] === quest['NPC ID'])
+    if (!npc || npc['Location ID'] !== save.currentLocationId) {
+      return { ok: false, reason: 'Speak with the quest giver at their location.' }
+    }
   }
   const progress = getQuestProgress(save, questId)
   if (progress.status === 'active') {
@@ -73,10 +95,21 @@ export function acceptQuest(
   if (progress.status === 'completed' && !isQuestRepeatable(quest)) {
     return { ok: false, reason: 'This quest is already completed.' }
   }
+  if (parsed.acceptGoldCost > 0 && save.gold < parsed.acceptGoldCost) {
+    return {
+      ok: false,
+      reason: `Need ${parsed.acceptGoldCost.toLocaleString()} gold to start this quest.`,
+    }
+  }
 
-  const nextQuests = save.quests.filter((row) => row.questId !== questId)
+  let next = save
+  if (parsed.acceptGoldCost > 0) {
+    next = { ...next, gold: next.gold - parsed.acceptGoldCost }
+  }
+
+  const nextQuests = next.quests.filter((row) => row.questId !== questId)
   nextQuests.push({ questId, status: 'active', progress: 0 })
-  return { ok: true, save: { ...save, quests: nextQuests } }
+  return { ok: true, save: { ...next, quests: nextQuests } }
 }
 
 export interface QuestRewardLine {
@@ -94,11 +127,14 @@ export function completeQuest(
       message: string
       questName: string
       rewards: QuestRewardLine[]
+      pendingSkillXp: number
     }
   | { ok: false; reason: string } {
   const quest = getQuest(db, questId)
   if (!quest) return { ok: false, reason: 'Quest not found.' }
-  const npc = db.NPCs.find((row) => row['NPC ID'] === quest['NPC ID'])
+  const parsed = parseStructuredObjectives(quest)
+  const npcId = parsed.turnInNpcId ?? quest['NPC ID']
+  const npc = db.NPCs.find((row) => row['NPC ID'] === npcId)
   if (!npc || npc['Location ID'] !== save.currentLocationId) {
     return { ok: false, reason: 'Return to the quest giver to turn this in.' }
   }
@@ -116,12 +152,14 @@ export function completeQuest(
     return { ok: false, reason: 'Accept this quest before turning it in.' }
   }
 
-  const parsed = parseStructuredObjectives(quest)
   const hasObjectives =
     parsed.delivers.length > 0 ||
     parsed.defeatTargets.length > 0 ||
     parsed.processTargets.length > 0 ||
     parsed.learnRecipeIds.length > 0 ||
+    parsed.talkNpcIds.length > 0 ||
+    parsed.visitLocationIds.length > 0 ||
+    parsed.inspectIds.length > 0 ||
     parsed.goldCost > 0
   if (!hasObjectives) {
     return { ok: false, reason: 'Quest objectives are incomplete in data.' }
@@ -157,14 +195,26 @@ export function completeQuest(
   }
 
   const rewards: QuestRewardLine[] = []
+  let pendingSkillXp = 0
+  const bribed = hasQuestFlag(save, questId, 'choice:bribe')
   const xpSkill = quest['Reward XP Skill ID']
   const xpAmount = quest['Reward XP Amount']
-  if (xpSkill && typeof xpAmount === 'number' && xpAmount > 0) {
+  if (bribed && parsed.branchSkillXp > 0) {
+    pendingSkillXp = parsed.branchSkillXp
+    rewards.push({
+      label: `Choose ${pendingSkillXp.toLocaleString()} XP in a non-combat skill`,
+    })
+  } else if (xpSkill && typeof xpAmount === 'number' && xpAmount > 0) {
     const applied = applyXp(next, db, xpSkill, xpAmount)
     next = applied.save
     const skillName =
       db.Skills.find((skill) => skill['Skill ID'] === xpSkill)?.['Display Name'] ?? 'skill'
     rewards.push({ label: `${xpAmount.toLocaleString()} ${skillName} XP` })
+  }
+
+  if (parsed.rewardGold > 0) {
+    next = { ...next, gold: next.gold + parsed.rewardGold }
+    rewards.push({ label: `${parsed.rewardGold.toLocaleString()} gold` })
   }
 
   const rewardItemId = quest['Reward Item ID']
@@ -201,15 +251,28 @@ export function completeQuest(
     }
   }
 
-  for (const npcId of parsed.rewardProjectNpcIds) {
-    if (!(next.unlockedNpcIds ?? []).includes(npcId)) {
+  for (const rewardNpcId of parsed.rewardProjectNpcIds) {
+    if (!(next.unlockedNpcIds ?? []).includes(rewardNpcId)) {
       next = {
         ...next,
-        unlockedNpcIds: [...(next.unlockedNpcIds ?? []), npcId],
+        unlockedNpcIds: [...(next.unlockedNpcIds ?? []), rewardNpcId],
       }
       const name =
-        db.NPCs.find((npc) => npc['NPC ID'] === npcId)?.['Display Name'] ?? npcId
+        db.NPCs.find((row) => row['NPC ID'] === rewardNpcId)?.['Display Name'] ?? rewardNpcId
       rewards.push({ label: `Project knowledge from ${name}` })
+    }
+  }
+
+  for (const cosmeticId of parsed.rewardCosmeticIds) {
+    const granted = grantCosmetic(next, cosmeticId)
+    next = granted.save
+    if (granted.granted) {
+      const cosmetic = cosmeticById(db, cosmeticId)
+      const itemId = cosmetic?.['Item ID']
+      const itemName = itemId
+        ? db.Items.find((item) => item['Item ID'] === itemId)?.['Display Name']
+        : undefined
+      rewards.push({ label: itemName ?? cosmeticId })
     }
   }
 
@@ -223,11 +286,74 @@ export function completeQuest(
     save: next,
     questName: quest['Display Name'],
     rewards,
+    pendingSkillXp,
     message:
       rewards.length > 0
         ? `Quest complete — ${rewards.map((reward) => reward.label).join(' and ')}.`
         : 'Quest complete.',
   }
+}
+
+/** Skills the bribe-route popup may grant, Combat excluded. */
+export function selectableNonCombatSkills(db: GameDatabase): SkillRow[] {
+  return db.Skills.filter((skill) => skill['Skill ID'] !== COMBAT_SKILL_ID)
+}
+
+export function applyQuestBranchSkillXp(
+  db: GameDatabase,
+  save: PlayerSave,
+  skillId: string,
+  amount: number,
+): { ok: true; save: PlayerSave } | { ok: false; reason: string } {
+  if (amount <= 0) return { ok: true, save }
+  if (skillId === COMBAT_SKILL_ID) {
+    return { ok: false, reason: 'Pick a skill other than Combat.' }
+  }
+  if (!db.Skills.some((skill) => skill['Skill ID'] === skillId)) {
+    return { ok: false, reason: 'Unknown skill.' }
+  }
+  return { ok: true, save: applyXp(save, db, skillId, amount).save }
+}
+
+/** Pays a quest bribe: gold out, a stolen purse in, and the bribe flag. */
+export function bribeQuestNpc(
+  db: GameDatabase,
+  save: PlayerSave,
+  questId: string,
+): { ok: true; save: PlayerSave } | { ok: false; reason: string } {
+  const quest = getQuest(db, questId)
+  if (!quest) return { ok: false, reason: 'Quest not found.' }
+  const parsed = parseStructuredObjectives(quest)
+  if (getQuestProgress(save, questId).status !== 'active') {
+    return { ok: false, reason: 'This quest is not active.' }
+  }
+  if (hasQuestFlag(save, questId, 'choice:bribe') || hasQuestFlag(save, questId, 'choice:combat')) {
+    return { ok: false, reason: 'You already chose how to handle this.' }
+  }
+  if (parsed.bribeGold <= 0) return { ok: false, reason: 'This quest has no bribe.' }
+  if (save.gold < parsed.bribeGold) {
+    return { ok: false, reason: `Need ${parsed.bribeGold.toLocaleString()} gold.` }
+  }
+  let next = { ...save, gold: save.gold - parsed.bribeGold }
+  next = setQuestFlag(next, questId, 'choice:bribe')
+  if (parsed.delivers.length > 0) {
+    const purse = parsed.delivers[0]!
+    next = addItemToInventory(next, purse.targetId, purse.quantity)
+  }
+  return { ok: true, save: next }
+}
+
+export function chooseQuestCombatRoute(
+  save: PlayerSave,
+  questId: string,
+): { ok: true; save: PlayerSave } | { ok: false; reason: string } {
+  if (getQuestProgress(save, questId).status !== 'active') {
+    return { ok: false, reason: 'This quest is not active.' }
+  }
+  if (hasQuestFlag(save, questId, 'choice:bribe') || hasQuestFlag(save, questId, 'choice:combat')) {
+    return { ok: false, reason: 'You already chose how to handle this.' }
+  }
+  return { ok: true, save: setQuestFlag(save, questId, 'choice:combat') }
 }
 
 export function questStatusLabel(

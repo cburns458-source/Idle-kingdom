@@ -1,4 +1,10 @@
 import type { GameDatabase, RequirementRow } from '../data/types'
+import { inventoryCount } from '../production/recipes'
+import {
+  hasQuestFlag,
+  questIsActive,
+  questIsActiveOrComplete,
+} from '../quests/progress'
 import type { PlayerSave } from '../save/types'
 import { getSkillProgress } from './xp'
 
@@ -90,7 +96,73 @@ export function evaluateRequirement(
     }
   }
 
+  if (type === 'Quest Access') {
+    const met = questIsActiveOrComplete(save, reference)
+    return {
+      met,
+      detail: met ? 'Quest unlocked' : 'Requires completing or starting that quest',
+    }
+  }
+
+  if (type === 'Quest Active') {
+    const met = questIsActive(save, reference)
+    return {
+      met,
+      detail: met ? 'Quest in progress' : 'Not available yet',
+    }
+  }
+
+  if (type === 'Quest Flag') {
+    const parts = reference.split(':')
+    if (parts.length < 2) {
+      return { met: false, detail: 'Quest flag is incomplete.' }
+    }
+    const questId = parts[0]!
+    const key = parts.slice(1).join(':')
+    const met = hasQuestFlag(save, questId, key)
+    return { met, detail: met ? 'Quest flag set' : 'Not available yet' }
+  }
+
+  if (type === 'Item Absent') {
+    const met = inventoryCount(save, reference) <= 0
+    return {
+      met,
+      detail: met ? 'Item not held' : 'Already have that item',
+    }
+  }
+
   return { met: true, detail: 'OK' }
+}
+
+function isQuestGateRequirement(type: string): boolean {
+  return (
+    type === 'Quest Access' ||
+    type === 'Quest Flag' ||
+    type === 'Quest Active' ||
+    type === 'Item Absent'
+  )
+}
+
+/** Hide gated activities until their quest flag, access, or item condition is met. */
+export function activityVisibleForSave(
+  db: GameDatabase,
+  save: PlayerSave,
+  activityId: string,
+): boolean {
+  return entityVisibleForSave(db, save, 'Activity', activityId)
+}
+
+export function entityVisibleForSave(
+  db: GameDatabase,
+  save: PlayerSave,
+  entityType: string,
+  entityId: string,
+): boolean {
+  for (const requirement of requirementsForEntity(db, entityType, entityId)) {
+    if (!isQuestGateRequirement(requirement['Requirement Type'])) continue
+    if (!evaluateRequirement(db, save, requirement).met) return false
+  }
+  return true
 }
 
 export function unmetHardRequirements(

@@ -16,6 +16,7 @@ export const CHARACTER_NAME_MAX_LENGTH = 24
 // Wardrobe / Cosmetics
 export const OUTFIT_COSMETIC_SLOT_ID = 'CSLOT-0001'
 export const PET_COSMETIC_SLOT_ID = 'CSLOT-0002'
+export const TITLE_COSMETIC_SLOT_ID = 'CSLOT-0003'
 export const STARTER_OUTFIT_COSMETIC_ID = 'COS-0001'
 
 /** Baseline Appearance Option IDs used until the player (or an old save) picks their own. */

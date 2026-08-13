@@ -1,6 +1,18 @@
 import type { GameDatabase, NpcRow } from '../data/types'
 import { questObjectiveProgress, parseStructuredObjectives } from '../quests/objectives'
-import { acceptQuest, getQuestProgress, questsForNpc, type QuestRow } from '../quests/quests'
+import {
+  applyQuestTalkProgress,
+  hasQuestFlag,
+} from '../quests/progress'
+import {
+  acceptQuest,
+  applyQuestBranchSkillXp,
+  bribeQuestNpc,
+  chooseQuestCombatRoute,
+  getQuestProgress,
+  questsTouchingNpc,
+  type QuestRow,
+} from '../quests/quests'
 import type { PlayerSave } from '../save/types'
 import {
   ARCHMAGE_ID,
@@ -31,10 +43,35 @@ const DEFAULT_NPC_DESCRIPTION = 'An inhabitant of Idale.'
 const QUEST_PITCH_LINES: Record<string, string> = {
   'QST-0002':
     'I’m tired of working in the kitchen, I just saw a lot for sale down the street, I’m thinking of starting the alchemy shop I’ve always dreamed of…',
+  'QST-0003':
+    'Please, traveler… I dropped my coin purse in the barracks. I have nothing left. If you can spare 25 gold, I’ll wait here while you look.',
+  'QST-0005':
+    'The Archmage will take an apprentice who can gather Essence. I can grant you access to the mine beneath the tower — bring ten Essence to the Archmage.',
+}
+
+const QUEST_TALK_LINES: Record<string, Record<string, string>> = {
+  'QST-0003': {
+    'NPC-0007':
+      'A beggar lost a purse? The guards at the barracks were laughing about some poor fool…',
+    'NPC-0012':
+      'A purse? Maybe I saw something. Of course, my memory gets expensive… or you could try taking it.',
+  },
+  'QST-0004': {
+    'NPC-0013':
+      'Welcome to the Citadel. See the Market, use a Processing station, and inspect the Grand Bazaar and Bounty Board, then come back to me.',
+    'NPC-0006': 'New around here? Browse all you like — no obligation to buy.',
+  },
+  'QST-0005': {
+    'NPC-0004': 'Ten Essence, and I will begin your studies in Arcana.',
+  },
 }
 
 export function questPitchLine(questId: string): string | null {
   return QUEST_PITCH_LINES[questId] ?? null
+}
+
+export function questTalkLine(questId: string, npcId: string): string | null {
+  return QUEST_TALK_LINES[questId]?.[npcId] ?? null
 }
 
 export function skillForKnowledgeNpc(npcId: string): string | null {
@@ -90,9 +127,19 @@ export interface NpcQuestBlock {
   /** The giver's own words, shown before accepting. Null accepts straight away. */
   pitchLine: string | null
   lines: NpcQuestObjectiveLine[]
+  progressLines: Array<{ key: string; label: string; current: number; required: number }>
   goldOwned: number
   goldRequired: number
   ready: boolean
+  canAccept: boolean
+  canTurnIn: boolean
+  canTalk: boolean
+  talkLabel: string
+  talkLine: string | null
+  canBribe: boolean
+  bribeLabel: string
+  canChooseCombat: boolean
+  combatLabel: string
 }
 
 /** Everything a client needs to draw one NPC, with no game rules left in it. */
@@ -121,22 +168,57 @@ function completedNote(db: GameDatabase, quest: QuestRow): string {
   return `Completed — ${opened}.`
 }
 
-function questBlock(db: GameDatabase, save: PlayerSave, quest: QuestRow): NpcQuestBlock {
+function questBlock(
+  db: GameDatabase,
+  save: PlayerSave,
+  quest: QuestRow,
+  npcId: string,
+): NpcQuestBlock {
   const questId = quest['Quest ID']
   const objective = questObjectiveProgress(db, save, quest)
   const pitch = questPitchLine(questId)
+  const parsed = parseStructuredObjectives(quest)
+  const status = getQuestProgress(save, questId).status
+  const isGiver = quest['NPC ID'] === npcId
+  const turnInId = parsed.turnInNpcId ?? quest['NPC ID']
+  const talked = hasQuestFlag(save, questId, `talk:${npcId}`)
+  const chose =
+    hasQuestFlag(save, questId, 'choice:bribe') || hasQuestFlag(save, questId, 'choice:combat')
+  const needsTalkFirst = parsed.talkNpcIds.includes(npcId) && !talked
+  let acceptLabel = 'Accept quest'
+  if (parsed.acceptGoldCost > 0) {
+    acceptLabel = `Donate ${parsed.acceptGoldCost.toLocaleString()} gold`
+  } else if (pitch) {
+    acceptLabel = `Start quest: ${quest['Display Name']}`
+  }
   return {
     questId,
     name: quest['Display Name'],
     summary: quest.Summary,
-    status: getQuestProgress(save, questId).status,
+    status,
     completedNote: completedNote(db, quest),
-    acceptLabel: pitch ? `Start quest: ${quest['Display Name']}` : 'Accept quest',
+    acceptLabel,
     pitchLine: pitch,
     lines: objective.lines,
+    progressLines: objective.progressLines,
     goldOwned: objective.goldOwned,
     goldRequired: objective.goldRequired,
     ready: objective.ready,
+    canAccept: isGiver && status === 'inactive',
+    canTurnIn: turnInId === npcId && status === 'active',
+    canTalk: status === 'active' && parsed.talkNpcIds.includes(npcId) && !talked,
+    talkLabel: 'Talk',
+    talkLine: questTalkLine(questId, npcId),
+    canBribe:
+      status === 'active' &&
+      parsed.choiceNpcId === npcId &&
+      parsed.bribeGold > 0 &&
+      !chose &&
+      !needsTalkFirst,
+    bribeLabel: `Bribe ${parsed.bribeGold.toLocaleString()} gold`,
+    canChooseCombat:
+      status === 'active' && parsed.choiceNpcId === npcId && !chose && !needsTalkFirst,
+    combatLabel: 'Pressure the Guards',
   }
 }
 
@@ -192,7 +274,13 @@ export function npcConversation(
   npc: NpcRow,
 ): NpcConversation {
   const npcId = npc['NPC ID']
-  const quests = questsForNpc(db, npcId).map((quest) => questBlock(db, save, quest))
+  const quests = questsTouchingNpc(db, npcId)
+    .filter((quest) => {
+      const isGiver = quest['NPC ID'] === npcId
+      const status = getQuestProgress(save, quest['Quest ID']).status
+      return isGiver || status === 'active'
+    })
+    .map((quest) => questBlock(db, save, quest, npcId))
   return {
     npcId,
     name: npc['Display Name'],
@@ -261,5 +349,51 @@ export function acceptQuestFromNpc(
     ok: true,
     save: result.save,
     message: `Accepted: ${quest?.['Display Name'] ?? 'quest'}.`,
+  }
+}
+
+export function talkWithQuestNpc(
+  db: GameDatabase,
+  save: PlayerSave,
+  npcId: string,
+): { ok: true; save: PlayerSave; message: string } | { ok: false; reason: string } {
+  return { ok: true, save: applyQuestTalkProgress(db, save, npcId), message: 'You hear them out.' }
+}
+
+export function bribeForQuest(
+  db: GameDatabase,
+  save: PlayerSave,
+  questId: string,
+): { ok: true; save: PlayerSave; message: string } | { ok: false; reason: string } {
+  const result = bribeQuestNpc(db, save, questId)
+  if (!result.ok) return result
+  return { ok: true, save: result.save, message: 'The purse changes hands.' }
+}
+
+export function chooseCombatForQuest(
+  save: PlayerSave,
+  questId: string,
+): { ok: true; save: PlayerSave; message: string } | { ok: false; reason: string } {
+  const result = chooseQuestCombatRoute(save, questId)
+  if (!result.ok) return result
+  return {
+    ok: true,
+    save: result.save,
+    message: 'The guards look nervous. Pressure them nearby.',
+  }
+}
+
+export function assignQuestSkillXp(
+  db: GameDatabase,
+  save: PlayerSave,
+  skillId: string,
+  amount: number,
+): { ok: true; save: PlayerSave; message: string } | { ok: false; reason: string } {
+  const result = applyQuestBranchSkillXp(db, save, skillId, amount)
+  if (!result.ok) return result
+  return {
+    ok: true,
+    save: result.save,
+    message: `Gained ${amount.toLocaleString()} ${skillName(db, skillId)} XP.`,
   }
 }

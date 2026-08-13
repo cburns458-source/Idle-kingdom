@@ -24,8 +24,19 @@ export interface StructuredQuestObjectives {
   restoreFacilityIds: string[]
   constructPortalIds: string[]
   unlockTravelIds: string[]
+  talkNpcIds: string[]
+  visitLocationIds: string[]
+  inspectIds: string[]
   goldCost: number
+  acceptGoldCost: number
+  rewardGold: number
+  bribeGold: number
+  branchSkillXp: number
+  choiceNpcId: string | null
+  turnInNpcId: string | null
+  autoStartLocationId: string | null
   unlockLocationIds: string[]
   rewardRecipeIds: string[]
   rewardProjectNpcIds: string[]
+  rewardCosmeticIds: string[]
 }

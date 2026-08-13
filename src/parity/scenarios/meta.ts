@@ -126,7 +126,7 @@ function withSave(kind: SaveKind, extra: Record<string, JsonValue> = {}): JsonVa
 const CRITTER_LOCATIONS = ['LOC-0001', 'LOC-0004', 'LOC-0011', 'LOC-0018', 'LOC-0002']
 const CRITTER_IDS = ['CRT-0001', 'CRT-0004', 'CRT-9999']
 const APPEARANCE_OPTIONS = ['APR-0001', 'APR-0004', 'APR-0007', 'APR-0017', 'APR-9999']
-const WARDROBE_SLOTS = ['CSLOT-0001', 'CSLOT-0002', 'CSLOT-9999']
+const WARDROBE_SLOTS = ['CSLOT-0001', 'CSLOT-0002', 'CSLOT-0003', 'CSLOT-9999']
 const WARDROBE_COSMETICS = ['COS-0001', 'COS-9999']
 
 /** Elapsed spans in hours, so the roll count and the kept remainder both vary. */

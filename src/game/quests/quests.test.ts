@@ -1,48 +1,148 @@
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
+import { activityVisibleForSave } from '../activity/requirements'
 import { addItemToInventory } from '../activity/rewards'
 import { prepareDatabase } from '../data/loadDatabase'
+import { npcConversation } from '../npcs/conversation'
+import { specialProductionStationsVisibleAt } from '../projects/projects'
+import { isCosmeticUnlocked } from '../cosmetics/cosmetics'
 import { createNewSave } from '../save/saveStore'
-import { acceptQuest, completeQuest } from './quests'
-import { locationsForMapView } from '../world/travel'
+import { applyQuestInspectProgress, applyQuestTalkProgress, hasQuestFlag } from './progress'
+import {
+  acceptQuest,
+  applyQuestBranchSkillXp,
+  bribeQuestNpc,
+  chooseQuestCombatRoute,
+  completeQuest,
+  getQuestProgress,
+} from './quests'
+import { applyTravelArrival } from '../world/travel'
 
 const rawDatabase = JSON.parse(
   readFileSync(resolve(process.cwd(), 'content/data/game-database.json'), 'utf8'),
 )
 
-describe('quest multi-deliver and unlocks', () => {
-  it('completes Help the aspiring apothecary with items, gold, and location unlock', () => {
+describe('quest tours', () => {
+  it('charges 25 gold, recovers the purse by bribe, and grants the hood plus skill XP', () => {
     const { launch } = prepareDatabase(rawDatabase)
-    let save = {
-      ...createNewSave(launch),
-      currentLocationId: 'LOC-0023',
-      gold: 1_500,
-    }
-    save = addItemToInventory(save, 'ITEM-0038', 5)
-    save = addItemToInventory(save, 'ITEM-0031', 5)
+    const beggar = launch.NPCs.find((row) => row['NPC ID'] === 'NPC-0011')!
+    expect(beggar['Location ID']).toBe('LOC-0002')
 
-    const accepted = acceptQuest(launch, save, 'QST-0002')
+    let save = { ...createNewSave(launch), currentLocationId: 'LOC-0002', gold: 300 }
+    const pitched = npcConversation(launch, save, beggar)
+    expect(pitched.greeting).toEqual(
+      expect.objectContaining({ kind: 'quest_pitch', questId: 'QST-0003' }),
+    )
+
+    const accepted = acceptQuest(launch, save, 'QST-0003')
     expect(accepted.ok).toBe(true)
     if (!accepted.ok) return
     save = accepted.save
+    expect(save.gold).toBe(275)
 
-    const locked = locationsForMapView(launch, 'MAP-0006', save).map((row) => row['Location ID'])
-    expect(locked).not.toContain('LOC-0026')
+    save = { ...save, currentLocationId: 'LOC-0024' }
+    save = applyQuestTalkProgress(launch, save, 'NPC-0007')
+    save = { ...save, currentLocationId: 'LOC-0017' }
+    save = applyQuestTalkProgress(launch, save, 'NPC-0012')
+    const bribed = bribeQuestNpc(launch, save, 'QST-0003')
+    expect(bribed.ok).toBe(true)
+    if (!bribed.ok) return
+    save = bribed.save
+    expect(save.gold).toBe(75)
+    expect(save.inventory.find((stack) => stack.itemId === 'ITEM-0299')?.quantity).toBe(1)
+    expect(activityVisibleForSave(launch, save, 'ACT-0034')).toBe(false)
 
-    const completed = completeQuest(launch, save, 'QST-0002')
+    save = { ...save, currentLocationId: 'LOC-0002' }
+    const completed = completeQuest(launch, save, 'QST-0003')
     expect(completed.ok).toBe(true)
     if (!completed.ok) return
-    expect(completed.save.gold).toBe(500)
-    expect(completed.save.unlockedLocationIds).toContain('LOC-0026')
-    expect(completed.save.inventory.find((stack) => stack.itemId === 'ITEM-0165')?.quantity).toBe(1)
-    expect(completed.rewards.some((reward) => /Alchemy XP/i.test(reward.label))).toBe(true)
-    expect(completed.rewards.some((reward) => /Chef'?s Hat/i.test(reward.label))).toBe(true)
-    expect(completed.rewards.some((reward) => /Apothecary/i.test(reward.label))).toBe(true)
+    expect(completed.pendingSkillXp).toBe(2500)
+    expect(completed.save.gold).toBe(575)
+    expect(isCosmeticUnlocked(completed.save, 'COS-0002')).toBe(true)
+    const mining = applyQuestBranchSkillXp(launch, completed.save, 'SKL-0002', 2500)
+    expect(mining.ok).toBe(true)
+    if (!mining.ok) return
+    expect(mining.save.skills.find((skill) => skill.skillId === 'SKL-0002')?.xp).toBeGreaterThan(0)
+  })
 
-    const unlocked = locationsForMapView(launch, 'MAP-0006', completed.save).map(
-      (row) => row['Location ID'],
-    )
-    expect(unlocked).toContain('LOC-0026')
+  it('opens Pressure the Guards only on the combat route, then grants Combat XP', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    let save = { ...createNewSave(launch), currentLocationId: 'LOC-0002', gold: 25 }
+    const accepted = acceptQuest(launch, save, 'QST-0003')
+    expect(accepted.ok).toBe(true)
+    if (!accepted.ok) return
+    save = accepted.save
+    expect(activityVisibleForSave(launch, save, 'ACT-0034')).toBe(false)
+
+    save = { ...save, currentLocationId: 'LOC-0017' }
+    save = applyQuestTalkProgress(launch, save, 'NPC-0007')
+    save = applyQuestTalkProgress(launch, save, 'NPC-0012')
+    const combat = chooseQuestCombatRoute(save, 'QST-0003')
+    expect(combat.ok).toBe(true)
+    if (!combat.ok) return
+    save = combat.save
+    expect(hasQuestFlag(save, 'QST-0003', 'choice:combat')).toBe(true)
+    expect(activityVisibleForSave(launch, save, 'ACT-0034')).toBe(true)
+
+    save = addItemToInventory(save, 'ITEM-0299', 1)
+    expect(activityVisibleForSave(launch, save, 'ACT-0034')).toBe(false)
+    save = { ...save, currentLocationId: 'LOC-0002' }
+    const completed = completeQuest(launch, save, 'QST-0003')
+    expect(completed.ok).toBe(true)
+    if (!completed.ok) return
+    expect(completed.pendingSkillXp).toBe(0)
+    expect(completed.rewards.some((reward) => /Combat XP/i.test(reward.label))).toBe(true)
+  })
+
+  it('auto-starts Visiting the Citadel on arriving at the gateway and pays 1000 gold', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    let save = createNewSave(launch)
+    save = applyTravelArrival(launch, save, 'LOC-0027', Date.parse('2026-01-01T00:00:00.000Z'))
+    expect(getQuestProgress(save, 'QST-0004').status).toBe('active')
+
+    save = applyTravelArrival(launch, save, 'LOC-0029', Date.parse('2026-01-01T00:00:01.000Z'))
+    save = applyTravelArrival(launch, save, 'LOC-0030', Date.parse('2026-01-01T00:00:02.000Z'))
+    save = applyQuestTalkProgress(launch, save, 'NPC-0013')
+    save = applyQuestTalkProgress(launch, save, 'NPC-0006')
+    save = applyQuestInspectProgress(launch, save, 'bazaar')
+    save = applyQuestInspectProgress(launch, save, 'bounties')
+    save = applyQuestInspectProgress(launch, save, 'processing')
+    save = { ...save, currentLocationId: 'LOC-0028' }
+    const completed = completeQuest(launch, save, 'QST-0004')
+    expect(completed.ok).toBe(true)
+    if (!completed.ok) return
+    expect(completed.save.gold).toBe(save.gold + 1000)
+  })
+
+  it('locks Delve and Mages quarters until Wizard Studies is accepted', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    let save = { ...createNewSave(launch), currentLocationId: 'LOC-0007' }
+    expect(activityVisibleForSave(launch, save, 'ACT-0008')).toBe(false)
+    expect(
+      specialProductionStationsVisibleAt(launch, save, 'LOC-0007').some(
+        (station) => station.facility['Facility ID'] === 'FAC-0008',
+      ),
+    ).toBe(false)
+
+    const accepted = acceptQuest(launch, save, 'QST-0005')
+    expect(accepted.ok).toBe(true)
+    if (!accepted.ok) return
+    save = accepted.save
+    expect(activityVisibleForSave(launch, save, 'ACT-0008')).toBe(true)
+    expect(
+      specialProductionStationsVisibleAt(launch, save, 'LOC-0007').some(
+        (station) => station.facility['Facility ID'] === 'FAC-0008',
+      ),
+    ).toBe(true)
+
+    save = applyQuestTalkProgress(launch, save, 'NPC-0004')
+    save = addItemToInventory(save, 'ITEM-0011', 10)
+    const completed = completeQuest(launch, save, 'QST-0005')
+    expect(completed.ok).toBe(true)
+    if (!completed.ok) return
+    expect(completed.rewards.some((reward) => /Arcana XP/i.test(reward.label))).toBe(true)
+    expect(completed.save.unlockedNpcIds).toContain('NPC-0004')
+    expect(activityVisibleForSave(launch, completed.save, 'ACT-0008')).toBe(true)
   })
 })
