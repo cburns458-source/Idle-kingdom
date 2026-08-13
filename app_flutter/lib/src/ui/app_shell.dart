@@ -52,6 +52,7 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
   String? _selectedLocationId;
   bool _wardrobeOpen = false;
   bool _nearbyOpen = false;
+  final GlobalKey _toastKey = GlobalKey();
 
   GameController get controller => widget.controller;
   MultiplayerController get multiplayer => widget.multiplayer;
@@ -188,7 +189,7 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
                       left: 12,
                       right: 12,
                       child: OverlayNotice(
-                        key: ValueKey(text),
+                        key: _toastKey,
                         text: text,
                         tone: controller.activityError != null ? Palette.danger : Palette.gold,
                         onDismissed: controller.clearMessages,

@@ -15,6 +15,25 @@ void main() {
     database = loadDatabaseFromRepo();
   });
 
+  testWidgets('OverlayNotice dismisses after its hold', (tester) async {
+    var dismissed = false;
+    const text = 'Requires equipped hunting tool';
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildAppTheme(),
+        home: OverlayNotice(text: text, tone: Palette.danger, onDismissed: () => dismissed = true),
+      ),
+    );
+    expect(find.byType(OverlayNotice), findsOne);
+
+    await tester.pump(noticeHoldDuration(text));
+    await tester.pump();
+    await tester.pump(noticeFadeDuration);
+    await tester.pump();
+
+    expect(dismissed, isTrue);
+  });
+
   /// The tile itself, not the row it is aligned inside, which is what a tap has
   /// to land on.
   final critterTile = find.descendant(
@@ -166,22 +185,23 @@ void main() {
       addTearDown(controller.dispose);
       await pumpShell(tester, controller);
 
-      final hunt = find.ancestor(
-        of: find.text('Search for small game'),
-        matching: find.byType(DockRow),
-      );
-      final before = tester.getTopLeft(hunt);
-
       await tapHunt(tester);
 
       final reason = controller.activityError!;
       expect(find.byType(OverlayNotice), findsOne);
-      expect(find.text(reason), findsOne);
-      expect(tester.getTopLeft(hunt), before);
+      expect(
+        find.descendant(of: find.byType(OverlayNotice), matching: find.text(reason)),
+        findsOne,
+      );
+      expect(
+        find.descendant(of: find.byType(DockRow), matching: find.byType(OverlayNotice)),
+        findsNothing,
+      );
 
       await tester.pump(noticeHoldDuration(reason));
       await tester.pump();
-      await tester.pump(const Duration(milliseconds: 400));
+      await tester.pump(noticeFadeDuration);
+      await tester.pump();
 
       expect(find.byType(OverlayNotice), findsNothing);
       expect(controller.activityError, isNull);

@@ -10,6 +10,8 @@ Duration noticeHoldDuration(String text) {
   return Duration(milliseconds: (2000 + t * 3000).round());
 }
 
+const Duration noticeFadeDuration = Duration(milliseconds: 400);
+
 /// A warning or status line that sits over the screen and fades itself away.
 ///
 /// It is painted in a [Stack], so it never pushes the layout around.
@@ -24,15 +26,13 @@ class OverlayNotice extends StatefulWidget {
   State<OverlayNotice> createState() => _OverlayNoticeState();
 }
 
-class _OverlayNoticeState extends State<OverlayNotice> with SingleTickerProviderStateMixin {
-  late final AnimationController _fade;
+class _OverlayNoticeState extends State<OverlayNotice> {
   Timer? _hold;
-  int _token = 0;
+  bool _opaque = true;
 
   @override
   void initState() {
     super.initState();
-    _fade = AnimationController(vsync: this, duration: const Duration(milliseconds: 400), value: 1);
     _arm();
   }
 
@@ -40,32 +40,35 @@ class _OverlayNoticeState extends State<OverlayNotice> with SingleTickerProvider
   void didUpdateWidget(covariant OverlayNotice oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.text == widget.text) return;
-    _fade.value = 1;
     _arm();
   }
 
   void _arm() {
     _hold?.cancel();
-    final token = ++_token;
-    _hold = Timer(noticeHoldDuration(widget.text), () async {
-      if (!mounted || token != _token) return;
-      await _fade.reverse();
-      if (mounted && token == _token) widget.onDismissed?.call();
+    _opaque = true;
+    _hold = Timer(noticeHoldDuration(widget.text), _beginFade);
+  }
+
+  void _beginFade() {
+    if (!mounted || !_opaque) return;
+    setState(() => _opaque = false);
+    _hold = Timer(noticeFadeDuration, () {
+      if (mounted) widget.onDismissed?.call();
     });
   }
 
   @override
   void dispose() {
     _hold?.cancel();
-    _fade.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return IgnorePointer(
-      child: FadeTransition(
-        opacity: _fade,
+      child: AnimatedOpacity(
+        opacity: _opaque ? 1 : 0,
+        duration: noticeFadeDuration,
         child: GamePanel(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           child: Text(
