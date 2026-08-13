@@ -409,10 +409,21 @@ class _ProductionStage extends StatelessWidget {
                     liveRegion: true,
                     label: popup.displayName,
                     child: ExcludeSemantics(
-                      child: ItemIcon(
+                      child: TweenAnimationBuilder<double>(
                         key: ValueKey('craft-pop-${popup.seq}'),
-                        item: popupItem,
-                        size: 38,
+                        tween: Tween<double>(begin: 0, end: 1),
+                        duration: const Duration(milliseconds: 420),
+                        curve: Curves.easeOut,
+                        builder: (context, t, child) {
+                          return Opacity(
+                            opacity: t.clamp(0, 1),
+                            child: Transform.translate(
+                              offset: Offset(0, (1 - t) * 10),
+                              child: Transform.scale(scale: 0.85 + 0.15 * t, child: child),
+                            ),
+                          );
+                        },
+                        child: ItemIcon(item: popupItem, size: 38),
                       ),
                     ),
                   ),
@@ -451,16 +462,27 @@ class _DamageFloater extends StatelessWidget {
       alignment: alignment,
       child: Transform.translate(
         offset: offset,
-        child: Text(
-          text,
-          style: TextStyle(
-            fontSize: fontSize,
-            fontWeight: FontWeight.w800,
-            color: color,
-            shadows: const [
-              Shadow(color: Color(0xD9000000), blurRadius: 2),
-              Shadow(offset: Offset(0, 2), color: Color(0x8C000000), blurRadius: 4),
-            ],
+        child: TweenAnimationBuilder<double>(
+          tween: Tween<double>(begin: 0, end: 1),
+          duration: const Duration(milliseconds: 420),
+          curve: Curves.easeOut,
+          builder: (context, t, child) {
+            return Opacity(
+              opacity: t,
+              child: Transform.translate(offset: Offset(0, (1 - t) * 8), child: child),
+            );
+          },
+          child: Text(
+            text,
+            style: TextStyle(
+              fontSize: fontSize,
+              fontWeight: FontWeight.w800,
+              color: color,
+              shadows: const [
+                Shadow(color: Color(0xD9000000), blurRadius: 2),
+                Shadow(offset: Offset(0, 2), color: Color(0x8C000000), blurRadius: 4),
+              ],
+            ),
           ),
         ),
       ),

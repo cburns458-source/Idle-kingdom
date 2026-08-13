@@ -157,21 +157,61 @@ class _LocationViewState extends State<LocationView> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
-              child: GamePanel(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      location.displayName,
-                      style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
+              padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          location.displayName,
+                          style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w700,
+                            shadows: [
+                              Shadow(offset: Offset(0, 1), blurRadius: 2, color: Color(0x8C000000)),
+                            ],
+                          ),
+                        ),
+                        if (location.dangerHostility case final danger?)
+                          Text(
+                            danger,
+                            style: const TextStyle(
+                              color: Palette.danger,
+                              fontSize: 12,
+                              shadows: [
+                                Shadow(
+                                  offset: Offset(0, 1),
+                                  blurRadius: 2,
+                                  color: Color(0x59000000),
+                                ),
+                              ],
+                            ),
+                          ),
+                      ],
                     ),
-                    if (location.description case final blurb?) MutedText(blurb),
-                    if (location.dangerHostility case final danger?)
-                      Text(danger, style: const TextStyle(color: Palette.danger, fontSize: 12)),
+                  ),
+                  _OverlayIconButton(
+                    tooltip: 'Open world map',
+                    onPressed: widget.onOpenMap,
+                    child: Image.asset(
+                      uiMapAssetPath(),
+                      width: 28,
+                      height: 28,
+                      filterQuality: FilterQuality.none,
+                    ),
+                  ),
+                  if (widget.onOpenNearby case final openNearby?) ...[
+                    const SizedBox(width: 8),
+                    _OverlayIconButton(
+                      tooltip: 'Nearby adventurers',
+                      onPressed: openNearby,
+                      child: const Icon(Icons.groups, size: 26, color: Color(0xFF2F4A24)),
+                    ),
                   ],
-                ),
+                ],
               ),
             ),
             if (controller.isRecovering && stage == null)
@@ -184,7 +224,7 @@ class _LocationViewState extends State<LocationView> {
                 padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
                 child: _Notice(text: error, tone: Palette.danger),
               ),
-            if (controller.message case final message?)
+            if (controller.message case final message? when controller.save.combatEnemyId == null)
               Padding(
                 padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
                 child: _Notice(text: message, tone: Palette.gold),
@@ -198,14 +238,19 @@ class _LocationViewState extends State<LocationView> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       Expanded(
-                        child: Stack(
-                          children: [
-                            Positioned(
-                              top: 12,
-                              right: 12,
-                              child: CritterOverlay(controller: controller),
-                            ),
-                          ],
+                        child: LayoutBuilder(
+                          builder: (context, art) {
+                            return Stack(
+                              children: [
+                                Positioned(
+                                  top: art.maxHeight * 0.12,
+                                  left: 0,
+                                  right: 0,
+                                  child: Center(child: CritterOverlay(controller: controller)),
+                                ),
+                              ],
+                            );
+                          },
                         ),
                       ),
                       if (stage != null)
@@ -227,22 +272,6 @@ class _LocationViewState extends State<LocationView> {
                               ..._shops(locationId),
                               ..._citadelBoards(locationId),
                               ..._searches(locationId),
-                              const SizedBox(height: 8),
-                              Wrap(
-                                spacing: 8,
-                                runSpacing: 8,
-                                children: [
-                                  OutlinedButton(
-                                    onPressed: widget.onOpenMap,
-                                    child: const Text('Open the map'),
-                                  ),
-                                  if (widget.onOpenNearby case final openNearby?)
-                                    OutlinedButton(
-                                      onPressed: openNearby,
-                                      child: const Text('Who is here'),
-                                    ),
-                                ],
-                              ),
                             ],
                           ),
                         ),
@@ -397,6 +426,34 @@ class _LocationViewState extends State<LocationView> {
   }
 }
 
+/// The map / nearby chips that sit on the location art, matching the old overlay.
+class _OverlayIconButton extends StatelessWidget {
+  const _OverlayIconButton({required this.tooltip, required this.onPressed, required this.child});
+
+  final String tooltip;
+  final VoidCallback onPressed;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: const Color(0xEBBADCA0),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: const BorderSide(color: Color(0xB3B4DC96)),
+        ),
+        child: InkWell(
+          onTap: onPressed,
+          borderRadius: BorderRadius.circular(16),
+          child: SizedBox(width: 56, height: 56, child: Center(child: child)),
+        ),
+      ),
+    );
+  }
+}
+
 class _SectionHeading extends StatelessWidget {
   const _SectionHeading(this.text);
 
@@ -526,7 +583,11 @@ class _ActivityCard extends StatelessWidget {
               PixelActionButton(
                 // Enabled even when the check failed: starting is what turns a
                 // missing tool into the offer to equip one, and otherwise says why.
-                label: production ? 'Recipes' : 'Start',
+                label: production
+                    ? 'Recipes'
+                    : controller.save.currentActivityId != null
+                    ? 'Replace'
+                    : 'Start',
                 onPressed: production ? onOpenWorkshop : () => controller.startActivity(activityId),
               ),
           ],

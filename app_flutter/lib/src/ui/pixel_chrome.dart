@@ -86,9 +86,12 @@ class PixelActionButton extends StatelessWidget {
       pressedStyle: pixelButtonPressedStyle,
       onPressed: onPressed,
       semanticsLabel: label,
-      child: Text(
-        label,
-        style: PixelText.mulmaru(fontSize: 11, color: stop ? Palette.parchmentText : Palette.ink),
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Text(
+          label,
+          style: PixelText.mulmaru(fontSize: 11, color: stop ? Palette.parchmentText : Palette.ink),
+        ),
       ),
     );
   }

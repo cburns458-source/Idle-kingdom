@@ -160,7 +160,6 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
             ),
           ],
         ),
-        // Sits on the location art, clear of the dock's Start chips on the right.
         // Sits on the location art, clear of the dock chips and the stage Stop.
         Align(
           alignment: const Alignment(-1, 0.05),

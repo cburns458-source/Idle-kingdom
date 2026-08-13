@@ -124,4 +124,31 @@ void main() {
     expect(controller.craftPopup!.displayName, 'Baked Potato');
     expect(find.byKey(ValueKey('craft-pop-${controller.craftPopup!.seq}')), findsOne);
   });
+
+  testWidgets('a second activity offers Replace while one is running', (tester) async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(currentLocationId: 'LOC-0009'),
+    );
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller);
+
+    expect(find.byTooltip('Open world map'), findsOne);
+
+    await tapVisible(
+      tester,
+      find.descendant(
+        of: dockRow('Gather meadow supplies'),
+        matching: find.bySemanticsLabel('Start'),
+      ),
+    );
+
+    expect(
+      find.descendant(
+        of: dockRow('Search for small game'),
+        matching: find.bySemanticsLabel('Replace'),
+      ),
+      findsOne,
+    );
+  });
 }
