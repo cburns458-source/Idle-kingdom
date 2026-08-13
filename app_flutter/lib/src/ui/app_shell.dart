@@ -12,6 +12,7 @@ import 'critter_overlay.dart';
 import 'inventory_view.dart';
 import 'location_view.dart';
 import 'log_view.dart';
+import 'menu_view.dart';
 import 'nearby_panel.dart';
 import 'new_character_sheet.dart';
 import 'skills_view.dart';
@@ -21,7 +22,7 @@ import 'travel_overlay.dart';
 import 'wardrobe_sheet.dart';
 import 'world_map_view.dart';
 
-enum GameScreen { location, map, skills, inventory, social, log }
+enum GameScreen { location, map, skills, inventory, log, leaderboards, guilds, account, menu }
 
 /// The frame the whole game lives in: HUD on top, screen in the middle, nav
 /// underneath, and the overlays that can cover all three.
@@ -150,13 +151,8 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
             BottomNav(
               screen: _screen,
               locationName: controller.location?.displayName ?? 'Unknown',
-              onSelect: (screen) {
-                if (screen == GameScreen.map) {
-                  _showMap();
-                  return;
-                }
-                setState(() => _screen = screen);
-              },
+              onSelect: (screen) => setState(() => _screen = screen),
+              onOpenMap: _showMap,
             ),
           ],
         ),
@@ -209,7 +205,7 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
           multiplayer: multiplayer,
           onOpenMap: _showMap,
           onOpenNearby: multiplayer.isSignedIn ? () => setState(() => _nearbyOpen = true) : null,
-          onOpenGuilds: () => setState(() => _screen = GameScreen.social),
+          onOpenGuilds: () => setState(() => _screen = GameScreen.guilds),
         );
       case GameScreen.map:
         return WorldMapView(
@@ -227,10 +223,28 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
         return SkillsView(controller: controller);
       case GameScreen.inventory:
         return InventoryView(controller: controller);
-      case GameScreen.social:
-        return SocialView(controller: controller, multiplayer: multiplayer);
       case GameScreen.log:
         return LogView(controller: controller);
+      case GameScreen.leaderboards:
+        return SocialView(
+          controller: controller,
+          multiplayer: multiplayer,
+          section: SocialTab.leaderboards,
+        );
+      case GameScreen.guilds:
+        return SocialView(
+          controller: controller,
+          multiplayer: multiplayer,
+          section: SocialTab.guilds,
+        );
+      case GameScreen.account:
+        return SocialView(
+          controller: controller,
+          multiplayer: multiplayer,
+          section: SocialTab.account,
+        );
+      case GameScreen.menu:
+        return MenuView(controller: controller);
     }
   }
 }

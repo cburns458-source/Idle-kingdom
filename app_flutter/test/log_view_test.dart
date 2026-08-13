@@ -12,8 +12,7 @@ void main() {
   });
 
   Future<void> openLog(WidgetTester tester) async {
-    await tester.tap(find.text('Log'));
-    await tester.pump();
+    await openChinScreen(tester, 'Log');
   }
 
   testWidgets('opens on the achievements a save has not reached', (tester) async {

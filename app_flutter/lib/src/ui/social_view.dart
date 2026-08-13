@@ -10,24 +10,28 @@ import 'social_bits.dart';
 
 enum SocialTab { leaderboards, guilds, citadel, account }
 
-/// The social screen: boards, guilds, who is in the Citadel, and the account
-/// that makes the other three work.
+/// One social destination from the chin nest: boards, guilds, the Citadel, or
+/// the account that makes the others work.
 ///
-/// Every tab reads its rows through the shared view models, so the lists here
-/// say exactly what the web client's lists say.
+/// Every section reads its rows through the shared view models, so the lists
+/// here say exactly what the web client's lists say.
 class SocialView extends StatefulWidget {
-  const SocialView({super.key, required this.controller, required this.multiplayer});
+  const SocialView({
+    super.key,
+    required this.controller,
+    required this.multiplayer,
+    required this.section,
+  });
 
   final GameController controller;
   final MultiplayerController multiplayer;
+  final SocialTab section;
 
   @override
   State<SocialView> createState() => _SocialViewState();
 }
 
 class _SocialViewState extends State<SocialView> {
-  SocialTab _tab = SocialTab.leaderboards;
-
   MultiplayerController get net => widget.multiplayer;
 
   @override
@@ -40,20 +44,20 @@ class _SocialViewState extends State<SocialView> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return ListenableBuilder(
-      listenable: net,
-      builder: (context, _) => Column(
-        children: [
-          _TabBar(tab: _tab, onSelect: (tab) => setState(() => _tab = tab)),
-          Expanded(child: _buildTab()),
-        ],
-      ),
-    );
+  void didUpdateWidget(SocialView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.section != widget.section) {
+      net.refresh(widget.controller.save);
+    }
   }
 
-  Widget _buildTab() {
-    switch (_tab) {
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(listenable: net, builder: (context, _) => _buildSection());
+  }
+
+  Widget _buildSection() {
+    switch (widget.section) {
       case SocialTab.account:
         return AccountPanel(controller: widget.controller, multiplayer: net);
       case SocialTab.guilds:
@@ -72,50 +76,6 @@ class _SocialViewState extends State<SocialView> {
         }
         return _LeaderboardTab(multiplayer: net);
     }
-  }
-}
-
-class _TabBar extends StatelessWidget {
-  const _TabBar({required this.tab, required this.onSelect});
-
-  final SocialTab tab;
-  final ValueChanged<SocialTab> onSelect;
-
-  static const Map<SocialTab, String> _labels = <SocialTab, String>{
-    SocialTab.leaderboards: 'Boards',
-    SocialTab.guilds: 'Guilds',
-    SocialTab.citadel: 'Citadel',
-    SocialTab.account: 'Account',
-  };
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
-      child: Row(
-        children: [
-          for (final entry in _labels.entries) ...[
-            Expanded(
-              child: OutlinedButton(
-                onPressed: () => onSelect(entry.key),
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 10),
-                  backgroundColor: entry.key == tab ? const Color(0x33D4AF37) : null,
-                  side: BorderSide(color: entry.key == tab ? Palette.gold : Palette.edge),
-                ),
-                child: Text(
-                  entry.value,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 13),
-                ),
-              ),
-            ),
-            if (entry.key != SocialTab.account) const SizedBox(width: 6),
-          ],
-        ],
-      ),
-    );
   }
 }
 

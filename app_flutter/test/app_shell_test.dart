@@ -69,7 +69,7 @@ void main() {
     addTearDown(controller.dispose);
     await pumpShell(tester, controller);
 
-    await tester.tap(find.byTooltip('Map'));
+    await tester.tap(find.byTooltip('Open world map'));
     await tester.pump();
     await tester.tap(find.text('The Farm'));
     await tester.pump();
@@ -119,12 +119,37 @@ void main() {
     addTearDown(controller.dispose);
     await pumpShell(tester, controller);
 
-    await tester.tap(find.text('Skills'));
-    await tester.pump();
-    expect(find.text('Combat'), findsWidgets);
-
     await tester.tap(find.text('Inventory'));
     await tester.pump();
     expect(find.textContaining('slots'), findsOne);
+
+    await tester.tap(find.text('Skills'));
+    await tester.pump();
+    expect(find.text('Combat'), findsWidgets);
+  });
+
+  testWidgets('the chin nest opens Menu, Log, Leaderboards, Guilds, and Account', (tester) async {
+    final controller = buildController(database, seed: startedCharacter(database));
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller);
+
+    expect(find.text('Inventory'), findsOne);
+    expect(find.text('Skills'), findsOne);
+    expect(find.byTooltip('Open menu nest'), findsOne);
+    expect(find.text('Log'), findsNothing);
+    expect(find.text('Social'), findsNothing);
+
+    await tester.tap(find.byTooltip('Open menu nest'));
+    await tester.pump();
+
+    expect(find.text('Menu'), findsOne);
+    expect(find.text('Log'), findsOne);
+    expect(find.text('Leaderboards'), findsOne);
+    expect(find.text('Guilds'), findsOne);
+    expect(find.text('Account'), findsOne);
+
+    await tester.tap(find.text('Log'));
+    await tester.pump();
+    expect(find.text('Skill milestones unlocked on this save.'), findsOne);
   });
 }

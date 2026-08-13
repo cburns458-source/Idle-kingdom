@@ -115,6 +115,14 @@ Future<void> pumpShell(
   );
 }
 
+/// Opens a screen that lives in the chin's hamburger nest.
+Future<void> openChinScreen(WidgetTester tester, String label) async {
+  await tester.tap(find.byTooltip('Open menu nest'));
+  await tester.pump();
+  await tester.tap(find.text(label));
+  await tester.pump();
+}
+
 /// Scrolls [button] into the location dock and taps it.
 ///
 /// Dock rows that sit on the clipped edge of the bottom band have a center
