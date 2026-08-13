@@ -4,8 +4,9 @@ import 'package:ik_rules/ik_rules.dart';
 import '../content/asset_paths.dart';
 import '../session/game_controller.dart';
 import '../theme.dart';
+import 'format.dart';
 
-/// Every skill with its level and progress to the next one.
+/// Every skill as a tile, with the totals they add up to along the bottom.
 class SkillsView extends StatelessWidget {
   const SkillsView({super.key, required this.controller});
 
@@ -14,30 +15,34 @@ class SkillsView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final save = controller.save;
-    return ListView(
-      padding: const EdgeInsets.all(12),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Row(
-          children: [
-            const Expanded(
-              child: Text('Skills', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
-            ),
-            MutedText('Total level ${totalLevel(save)}'),
-          ],
+        const Padding(
+          padding: EdgeInsets.fromLTRB(12, 12, 12, 8),
+          child: Text('Skills', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
         ),
-        const SizedBox(height: 8),
-        for (final skill in save.skills)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: _SkillRow(controller: controller, skillId: skill.skillId),
+        Expanded(
+          child: GridView.extent(
+            padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+            maxCrossAxisExtent: 96,
+            mainAxisSpacing: 7,
+            crossAxisSpacing: 7,
+            childAspectRatio: 0.86,
+            children: [
+              for (final skill in save.skills)
+                _SkillTile(controller: controller, skillId: skill.skillId),
+            ],
           ),
+        ),
+        _Totals(controller: controller),
       ],
     );
   }
 }
 
-class _SkillRow extends StatelessWidget {
-  const _SkillRow({required this.controller, required this.skillId});
+class _SkillTile extends StatelessWidget {
+  const _SkillTile({required this.controller, required this.skillId});
 
   final GameController controller;
   final String skillId;
@@ -51,33 +56,95 @@ class _SkillRow extends StatelessWidget {
     final needed = progress.toNextLevel;
     final fraction = needed <= 0 ? 1.0 : (into / needed).clamp(0, 1).toDouble();
 
-    return GamePanel(
+    return Tooltip(
+      message: progress.atCap
+          ? '${row?.displayName ?? skillId} · mastered'
+          : '${row?.displayName ?? skillId} · '
+                '${formatThousands(into)} / ${formatThousands(needed)} xp to '
+                'level ${progress.level + 1}',
+      child: GamePanel(
+        padding: const EdgeInsets.fromLTRB(5, 6, 5, 5),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Image.asset(
+              skillIconPath(row),
+              width: 30,
+              height: 30,
+              filterQuality: FilterQuality.none,
+            ),
+            const SizedBox(height: 3),
+            Flexible(
+              child: Text(
+                row?.displayName ?? skillId,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, height: 1.15),
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              progress.atCap ? 'Max' : 'Lv ${progress.level}',
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: Palette.gold,
+              ),
+            ),
+            const SizedBox(height: 3),
+            MeterBar(value: fraction, color: Palette.gold, height: 4),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// The bottom band: what every skill adds up to.
+class _Totals extends StatelessWidget {
+  const _Totals({required this.controller});
+
+  final GameController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final save = controller.save;
+    final mastered = save.skills.where((skill) {
+      return skillXpProgress(controller.db, skill.xp).atCap;
+    }).length;
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+      decoration: const BoxDecoration(
+        color: Color(0x38140D08),
+        border: Border(top: BorderSide(color: Palette.edge)),
+      ),
       child: Row(
         children: [
-          Image.asset(skillIconPath(row), width: 28, height: 28, filterQuality: FilterQuality.none),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        row?.displayName ?? skillId,
-                        style: const TextStyle(fontWeight: FontWeight.w700),
-                      ),
-                    ),
-                    Text('Level ${progress.level}'),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                MeterBar(value: fraction, color: Palette.gold, height: 6),
-                const SizedBox(height: 2),
-                MutedText(progress.atCap ? 'Mastered' : '${into.round()} / ${needed.round()} xp'),
-              ],
-            ),
-          ),
+          _Total(label: 'Total level', value: formatThousands(totalLevel(save))),
+          _Total(label: 'Total xp', value: formatThousands(totalSkillXp(save))),
+          _Total(label: 'Mastered', value: '$mastered / ${save.skills.length}'),
+        ],
+      ),
+    );
+  }
+}
+
+class _Total extends StatelessWidget {
+  const _Total({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          MutedText(label),
+          Text(value, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
         ],
       ),
     );

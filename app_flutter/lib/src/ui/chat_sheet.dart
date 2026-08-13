@@ -34,7 +34,9 @@ class _ChatLauncherState extends State<ChatLauncher> {
 
   Future<void> _openSheet() async {
     setState(() => _open = true);
-    await net.selectChatTab(net.chatTab, widget.locationId, citadelHub: widget.citadelHub);
+    if (net.isSignedIn) {
+      await net.selectChatTab(net.chatTab, widget.locationId, citadelHub: widget.citadelHub);
+    }
     if (!mounted) return;
     await showModalBottomSheet<void>(
       context: context,
@@ -51,7 +53,9 @@ class _ChatLauncherState extends State<ChatLauncher> {
     return ListenableBuilder(
       listenable: net,
       builder: (context, _) {
-        if (!net.isSignedIn || _open) return const SizedBox.shrink();
+        // The bubble is always there, signed in or not: tapping it explains how
+        // to get an account rather than leaving the corner empty.
+        if (_open) return const SizedBox.shrink();
         final badge = unreadBadgeLabel(net.unreadDms);
         return Padding(
           padding: const EdgeInsets.all(12),
@@ -129,6 +133,12 @@ class _ChatSheetState extends State<ChatSheet> {
     return ListenableBuilder(
       listenable: net,
       builder: (context, _) {
+        if (!net.isSignedIn) {
+          return const SizedBox(
+            height: 260,
+            child: SignedOutNotice(title: 'Chat', prompt: signInPrompt),
+          );
+        }
         final tabs = chatTabs(
           selected: net.chatTab,
           citadelHub: widget.citadelHub,

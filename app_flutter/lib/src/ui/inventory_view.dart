@@ -329,15 +329,22 @@ class _InventoryViewState extends State<InventoryView> {
     return ListView(
       padding: const EdgeInsets.all(12),
       children: [
-        GridView.count(
-          crossAxisCount: 4,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          mainAxisSpacing: 8,
-          crossAxisSpacing: 8,
-          children: [for (final slotId in equipmentGridOrder) _slotTile(slotId)],
+        // Four columns keep the paper-doll arrangement, but the whole doll is
+        // capped so the slots stay tile-sized instead of filling the screen.
+        Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 320),
+            child: GridView.count(
+              crossAxisCount: 4,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              mainAxisSpacing: 6,
+              crossAxisSpacing: 6,
+              children: [for (final slotId in equipmentGridOrder) _slotTile(slotId)],
+            ),
+          ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 10),
         const MutedText(
           'Equipped spells are always active, and duplicates stack. Tap worn gear to take it '
           'off, or hold a slot for what it does.',
@@ -351,12 +358,12 @@ class _InventoryViewState extends State<InventoryView> {
     final slot = db.equipmentSlots.where((row) => row.slotId == slotId).firstOrNull;
     if (stack == null) {
       return GamePanel(
-        padding: const EdgeInsets.all(4),
+        padding: const EdgeInsets.all(3),
         onTap: () => _showDetail(slotId: slotId),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            SlotGlyph(slotId: slotId, size: 30),
+            SlotGlyph(slotId: slotId, size: 26),
             const SizedBox(height: 2),
             Flexible(
               child: Text(
@@ -364,7 +371,7 @@ class _InventoryViewState extends State<InventoryView> {
                 textAlign: TextAlign.center,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: 9, color: Color(0x80F4E7C8)),
+                style: const TextStyle(fontSize: 8.5, height: 1.1, color: Color(0x80F4E7C8)),
               ),
             ),
           ],
