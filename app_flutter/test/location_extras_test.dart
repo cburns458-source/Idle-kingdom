@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:idle_kingdoms/src/ui/critter_overlay.dart';
 import 'package:idle_kingdoms/src/theme.dart';
+import 'package:idle_kingdoms/src/ui/overlay_notice.dart';
 import 'package:ik_content/ik_content.dart';
 import 'package:ik_rules/ik_rules.dart';
 
@@ -155,6 +156,35 @@ void main() {
 
       expect(find.text('Equip required tool?'), findsNothing);
       expect(controller.activityError, isNotNull);
+    });
+
+    testWidgets('a refusal floats over the dock and fades away', (tester) async {
+      final controller = buildController(
+        database,
+        seed: startedCharacter(database).copyWith(currentLocationId: 'LOC-0009'),
+      );
+      addTearDown(controller.dispose);
+      await pumpShell(tester, controller);
+
+      final hunt = find.ancestor(
+        of: find.text('Search for small game'),
+        matching: find.byType(DockRow),
+      );
+      final before = tester.getTopLeft(hunt);
+
+      await tapHunt(tester);
+
+      final reason = controller.activityError!;
+      expect(find.byType(OverlayNotice), findsOne);
+      expect(find.text(reason), findsOne);
+      expect(tester.getTopLeft(hunt), before);
+
+      await tester.pump(noticeHoldDuration(reason));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      expect(find.byType(OverlayNotice), findsNothing);
+      expect(controller.activityError, isNull);
     });
   });
 }

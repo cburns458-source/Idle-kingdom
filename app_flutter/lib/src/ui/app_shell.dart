@@ -15,6 +15,7 @@ import 'log_view.dart';
 import 'menu_view.dart';
 import 'nearby_panel.dart';
 import 'new_character_sheet.dart';
+import 'overlay_notice.dart';
 import 'skills_view.dart';
 import 'social_view.dart';
 import 'top_hud.dart';
@@ -124,6 +125,15 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
     setState(() => _wardrobeOpen = true);
   }
 
+  /// Warnings and status lines that float over the current screen.
+  ///
+  /// Combat round chatter stays off the toast while a fight is on screen.
+  String? get _toastText {
+    if (controller.activityError case final error?) return error;
+    if (controller.save.combatEnemyId != null) return null;
+    return controller.message;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -166,7 +176,27 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
                 citadelHub: _inCitadel,
               ),
             ),
-            Expanded(child: _buildScreen()),
+            Expanded(
+              child: Stack(
+                fit: StackFit.expand,
+                clipBehavior: Clip.none,
+                children: [
+                  _buildScreen(),
+                  if (_toastText case final text?)
+                    Positioned(
+                      top: 10,
+                      left: 12,
+                      right: 12,
+                      child: OverlayNotice(
+                        key: ValueKey(text),
+                        text: text,
+                        tone: controller.activityError != null ? Palette.danger : Palette.gold,
+                        onDismissed: controller.clearMessages,
+                      ),
+                    ),
+                ],
+              ),
+            ),
             BottomNav(
               screen: _screen,
               locationName: controller.location?.displayName ?? 'Unknown',

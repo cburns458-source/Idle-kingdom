@@ -38,7 +38,7 @@ class ActionStage extends StatelessWidget {
     if (save.currentActivityId == null) return const SizedBox.shrink();
     // Defeat clears the enemy and the action, so the pause gets its own skin
     // rather than falling through to a gathering scene with nothing in it.
-    if (controller.isRecovering) return _RestingStage(controller: controller);
+    if (controller.isRecovering) return _RecoveringStage(controller: controller);
     if (save.combatEnemyId != null) return _CombatStage(controller: controller);
     if (save.productionRecipeId != null || controller.craftPopup != null) {
       return _ProductionStage(controller: controller);
@@ -323,8 +323,8 @@ class _CombatStage extends StatelessWidget {
 }
 
 /// The death pause: no sprites, just the word for what the player is doing.
-class _RestingStage extends StatelessWidget {
-  const _RestingStage({required this.controller});
+class _RecoveringStage extends StatelessWidget {
+  const _RecoveringStage({required this.controller});
 
   final GameController controller;
 
@@ -335,12 +335,12 @@ class _RestingStage extends StatelessWidget {
       scene: _TwoPortraits(
         player: const _Portrait(
           assetPath: null,
-          semanticsLabel: 'Resting',
+          semanticsLabel: 'Recovering',
           alignment: Alignment.centerRight,
           placeholder: Align(
             alignment: Alignment.centerRight,
             child: Text(
-              'resting',
+              'Recovering…',
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.w700,

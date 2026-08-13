@@ -7,6 +7,7 @@ import '../theme.dart';
 import 'format.dart';
 import 'item_detail_sheet.dart';
 import 'item_icon.dart';
+import 'overlay_notice.dart';
 
 /// Paper-doll order: 4 columns × 4 rows, spells down the right-hand column.
 const List<String> equipmentGridOrder = <String>[
@@ -172,10 +173,27 @@ class _InventoryViewState extends State<InventoryView> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return Stack(
+      clipBehavior: Clip.none,
       children: [
-        _header(),
-        Expanded(child: _tab == _InventoryTab.items ? _bag() : _paperDoll()),
+        Column(
+          children: [
+            _header(),
+            Expanded(child: _tab == _InventoryTab.items ? _bag() : _paperDoll()),
+          ],
+        ),
+        if (_message case final message?)
+          Positioned(
+            top: 8,
+            left: 12,
+            right: 12,
+            child: OverlayNotice(
+              key: ValueKey(message),
+              text: message,
+              tone: Palette.danger,
+              onDismissed: () => setState(() => _message = null),
+            ),
+          ),
       ],
     );
   }
@@ -246,10 +264,6 @@ class _InventoryViewState extends State<InventoryView> {
                 child: const Text('Sell items'),
               ),
             ),
-          ],
-          if (_message case final message?) ...[
-            const SizedBox(height: 6),
-            Text(message, style: const TextStyle(fontSize: 12, color: Palette.danger)),
           ],
         ],
       ),

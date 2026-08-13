@@ -227,17 +227,6 @@ class _LocationViewState extends State<LocationView> {
                       padding: const EdgeInsets.fromLTRB(13, 8, 13, 0),
                       child: _RecoveringPanel(controller: controller),
                     ),
-                  if (controller.activityError case final error?)
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(13, 8, 13, 0),
-                      child: _Notice(text: error, tone: Palette.danger),
-                    ),
-                  if (controller.message case final message?
-                      when controller.save.combatEnemyId == null)
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(13, 8, 13, 0),
-                      child: _Notice(text: message, tone: Palette.gold),
-                    ),
                   Expanded(
                     child: LayoutBuilder(
                       builder: (context, rest) {
@@ -445,9 +434,10 @@ class _LocationViewState extends State<LocationView> {
                       '${formatDurationMs(locationSearchCooldownRemainingMs(controller.save, spot, nowMs))}.',
             actionLabel: spot.buttonLabel,
             tone: GameButtonTone.primary,
-            onPressed: canClaimLocationSearch(controller.save, spot, nowMs)
-                ? () => _search(spot.searchId)
-                : null,
+            onPressed:
+                controller.isRecovering || !canClaimLocationSearch(controller.save, spot, nowMs)
+                ? null
+                : () => _search(spot.searchId),
           ),
         ),
     ];
@@ -557,6 +547,7 @@ class _ActivityCard extends StatelessWidget {
     final check = validateActivityStart(controller.db, controller.save, activityId);
     final production = isStandardProductionActivity(controller.db, activity);
 
+    final recovering = controller.isRecovering;
     return DockRow(
       title: activity.contextualName ?? activityId,
       lines: [
@@ -578,7 +569,7 @@ class _ActivityCard extends StatelessWidget {
           ? GameButton(
               label: 'Stop',
               tone: GameButtonTone.secondary,
-              onPressed: controller.stopActivity,
+              onPressed: recovering ? null : controller.stopActivity,
             )
           : GameButton(
               // Enabled even when the check failed: starting is what turns a
@@ -588,7 +579,11 @@ class _ActivityCard extends StatelessWidget {
                   : controller.save.currentActivityId != null
                   ? 'Replace'
                   : 'Start',
-              onPressed: production ? onOpenWorkshop : () => controller.startActivity(activityId),
+              onPressed: recovering
+                  ? null
+                  : production
+                  ? onOpenWorkshop
+                  : () => controller.startActivity(activityId),
             ),
     );
   }
@@ -605,7 +600,7 @@ class _RecoveringPanel extends StatelessWidget {
       child: Row(
         children: [
           const Expanded(
-            child: Text('Recovering', style: TextStyle(fontWeight: FontWeight.w700)),
+            child: Text('Recovering…', style: TextStyle(fontWeight: FontWeight.w700)),
           ),
           Text(
             'Resuming in ${formatDurationMs(controller.deathPauseRemainingMs)}',
@@ -613,21 +608,6 @@ class _RecoveringPanel extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _Notice extends StatelessWidget {
-  const _Notice({required this.text, required this.tone});
-
-  final String text;
-  final Color tone;
-
-  @override
-  Widget build(BuildContext context) {
-    return GamePanel(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      child: Text(text, style: TextStyle(color: tone, fontSize: 13)),
     );
   }
 }

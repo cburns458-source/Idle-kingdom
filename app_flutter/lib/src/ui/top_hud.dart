@@ -153,7 +153,7 @@ class TopHud extends StatelessWidget {
                     const SizedBox(width: 8),
                     Text(
                       controller.isRecovering
-                          ? 'Dead'
+                          ? 'Recovering…'
                           : '${formatThousands(save.currentHp)}/'
                                 '${formatThousands(maxHp)}',
                       style: TextStyle(

@@ -49,7 +49,7 @@ class WorldMapView extends StatelessWidget {
             isHere: node.locationId == save.currentLocationId,
             isSelected: node.locationId == selectedLocationId,
             onTap: () => onSelect(node.locationId),
-            onDoubleTap: node.locationId == save.currentLocationId
+            onDoubleTap: controller.isRecovering || node.locationId == save.currentLocationId
                 ? null
                 : () => onTravel(node.locationId),
           ),
@@ -76,6 +76,7 @@ class WorldMapView extends StatelessWidget {
             selected: selected,
             isHere: selected?.locationId == save.currentLocationId,
             onTravel: onTravel,
+            canTravel: !controller.isRecovering,
           ),
         ),
       ],
@@ -180,11 +181,17 @@ class _MapNodeState extends State<_MapNode> {
 /// Entering a sub-map is not offered here: that belongs to the gateway's own
 /// location page, once the player has actually travelled to it.
 class _SelectionPanel extends StatelessWidget {
-  const _SelectionPanel({required this.selected, required this.isHere, required this.onTravel});
+  const _SelectionPanel({
+    required this.selected,
+    required this.isHere,
+    required this.onTravel,
+    required this.canTravel,
+  });
 
   final LocationRow? selected;
   final bool isHere;
   final ValueChanged<String> onTravel;
+  final bool canTravel;
 
   @override
   Widget build(BuildContext context) {
@@ -216,7 +223,10 @@ class _SelectionPanel extends StatelessWidget {
                 if (isHere)
                   const MutedText('You are here.')
                 else
-                  GameButton(label: 'Travel', onPressed: () => onTravel(place.locationId)),
+                  GameButton(
+                    label: 'Travel',
+                    onPressed: canTravel ? () => onTravel(place.locationId) : null,
+                  ),
               ],
             ),
     );

@@ -151,4 +151,54 @@ void main() {
       findsOne,
     );
   });
+
+  testWidgets('death pause says Recovering and greys travel and new actions', (tester) async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(
+        currentLocationId: 'LOC-0009',
+        currentActivityId: 'ACT-0012',
+        deathPauseUntil: isoFromMs(testStartMs + 30000),
+      ),
+    );
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller);
+
+    expect(find.text('Recovering…'), findsWidgets);
+    expect(find.text('resting'), findsNothing);
+    expect(find.text('Dead'), findsNothing);
+
+    expect(
+      tester.getSemantics(
+        find.descendant(
+          of: dockRow('Gather meadow supplies'),
+          matching: find.bySemanticsLabel('Stop'),
+        ),
+      ),
+      containsSemantics(label: 'Stop', isButton: true, isEnabled: false),
+    );
+    expect(
+      tester.getSemantics(
+        find.descendant(
+          of: dockRow('Search for small game'),
+          matching: find.bySemanticsLabel('Replace'),
+        ),
+      ),
+      containsSemantics(label: 'Replace', isButton: true, isEnabled: false),
+    );
+
+    await tester.tap(find.byTooltip('Open world map'));
+    await tester.pump();
+    await tester.tap(find.text('The Farm'));
+    await tester.pump();
+    expect(
+      tester.getSemantics(find.bySemanticsLabel('Travel')),
+      containsSemantics(label: 'Travel', isButton: true, isEnabled: false),
+    );
+    expect(controller.save.currentLocationId, 'LOC-0009');
+
+    await tester.tap(find.text('Inventory'));
+    await tester.pump();
+    expect(find.textContaining('slots'), findsOne);
+  });
 }

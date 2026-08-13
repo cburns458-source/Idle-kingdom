@@ -167,7 +167,9 @@ class _ProductionPickerState extends State<ProductionPicker> {
             const SizedBox(width: 8),
             Expanded(
               child: FilledButton(
-                onPressed: ceiling < 1 ? null : () => _start(recipe, quantity),
+                onPressed: ceiling < 1 || controller.isRecovering
+                    ? null
+                    : () => _start(recipe, quantity),
                 child: const Text('Start queue'),
               ),
             ),
