@@ -8,6 +8,7 @@ import { contentScenarios } from './content'
 import { coreRuleScenarios } from './coreRules'
 import { equipmentScenarios } from './equipment'
 import { metaScenarios } from './meta'
+import { npcScenarios } from './npcs'
 import { productionScenarios } from './production'
 import { projectScenarios } from './projects'
 import { questScenarios } from './quests'
@@ -37,6 +38,7 @@ export const parityScenarios: ParityScenario[] = [
   ...productionScenarios,
   ...projectScenarios,
   ...questScenarios,
+  ...npcScenarios,
   ...bountyScenarios,
   ...combatScenarios,
   ...activityScenarios,

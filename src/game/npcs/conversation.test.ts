@@ -1,0 +1,123 @@
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
+import { describe, expect, it } from 'vitest'
+import { addItemToInventory } from '../activity/rewards'
+import { prepareDatabase } from '../data/loadDatabase'
+import { createNewSave } from '../save/saveStore'
+import { completeQuest } from '../quests/quests'
+import type { PlayerSave } from '../save/types'
+import { npcConversation, learnMentorProjects, takeMerchantTip } from './conversation'
+
+const rawDatabase = JSON.parse(
+  readFileSync(resolve(process.cwd(), 'content/data/game-database.json'), 'utf8'),
+)
+const { launch } = prepareDatabase(rawDatabase)
+
+function npc(npcId: string) {
+  const row = launch.NPCs.find((candidate) => candidate['NPC ID'] === npcId)
+  if (!row) throw new Error(`missing ${npcId}`)
+  return row
+}
+
+function saveAt(locationId: string): PlayerSave {
+  return { ...createNewSave(launch), currentLocationId: locationId }
+}
+
+describe('npc conversation', () => {
+  it('offers the merchant tip once and pays it out on dismissal', () => {
+    const merchant = npc('NPC-0007')
+    const save = saveAt('LOC-0024')
+
+    const first = npcConversation(launch, save, merchant)
+    expect(first.greeting).toEqual({
+      kind: 'merchant',
+      line: 'Here’s some tips about artisanry',
+      detail: '11,000 Artisanry XP',
+    })
+    expect(first.shopId).toBe('SHP-0001')
+
+    const claimed = takeMerchantTip(launch, save, 'NPC-0007')
+    expect(claimed?.message).toBe('Learned artisanry tips (+11,000 XP).')
+    if (!claimed) return
+
+    const second = npcConversation(launch, claimed.save, merchant)
+    expect(second.greeting).toEqual({
+      kind: 'merchant',
+      line: 'I’ve already shared what I know about artisanry.',
+      detail: null,
+    })
+    expect(takeMerchantTip(launch, claimed.save, 'NPC-0007')).toBeNull()
+  })
+
+  it('greets with the merchant’s own description when they have nothing to teach', () => {
+    const conversation = npcConversation(launch, saveAt('LOC-0007'), npc('NPC-0009'))
+    expect(conversation.greeting).toEqual({
+      kind: 'merchant',
+      line: 'Sells magical items and premium-priced Essence.',
+      detail: null,
+    })
+  })
+
+  it('pitches Rose’s quest before it is accepted, then drops the pitch', () => {
+    const save = saveAt('LOC-0023')
+    const conversation = npcConversation(launch, save, npc('NPC-0005'))
+    expect(conversation.greeting).toEqual({
+      kind: 'quest_pitch',
+      questId: 'QST-0002',
+      line: expect.stringContaining('alchemy shop'),
+      acceptLabel: 'Start quest: Help the aspiring apothecary',
+    })
+
+    const quest = conversation.quests[0]!
+    expect(quest.status).toBe('inactive')
+    expect(quest.goldRequired).toBe(1_000)
+
+    let stocked = { ...save, gold: 1_500 }
+    stocked = addItemToInventory(stocked, 'ITEM-0038', 5)
+    stocked = addItemToInventory(stocked, 'ITEM-0031', 5)
+    const accepted = npcConversation(launch, { ...stocked, quests: [
+      { questId: 'QST-0002', status: 'active', progress: 0 },
+    ] }, npc('NPC-0005'))
+    expect(accepted.greeting).toBeNull()
+    expect(accepted.quests[0]!.ready).toBe(true)
+  })
+
+  it('names the location a completed quest opened', () => {
+    let save = { ...saveAt('LOC-0023'), gold: 1_500 }
+    save = addItemToInventory(save, 'ITEM-0038', 5)
+    save = addItemToInventory(save, 'ITEM-0031', 5)
+    save = { ...save, quests: [{ questId: 'QST-0002', status: 'active', progress: 0 }] }
+    const completed = completeQuest(launch, save, 'QST-0002')
+    expect(completed.ok).toBe(true)
+    if (!completed.ok) return
+
+    const conversation = npcConversation(launch, completed.save, npc('NPC-0005'))
+    expect(conversation.quests[0]!.status).toBe('completed')
+    expect(conversation.quests[0]!.completedNote).toBe(
+      "Completed — Rose's Apothecary is open on the Town Map.",
+    )
+  })
+
+  it('describes a mentor’s projects by their skill', () => {
+    const save = saveAt('LOC-0006')
+    const before = npcConversation(launch, save, npc('NPC-0003'))
+    expect(before.mentor).toEqual({
+      known: false,
+      knownNote: 'Smithing projects are unlocked.',
+      learnLabel: 'Learn Smithing projects',
+    })
+
+    const learned = learnMentorProjects(launch, save, 'NPC-0003')
+    expect(learned.ok).toBe(true)
+    if (!learned.ok) return
+    expect(learned.message).toBe('The Master Dwarf unlocks all Smithing projects.')
+    expect(npcConversation(launch, learned.save, npc('NPC-0003')).mentor?.known).toBe(true)
+  })
+
+  it('leaves plain NPCs without a greeting or mentor block', () => {
+    const conversation = npcConversation(launch, saveAt('LOC-0016'), npc('NPC-0001'))
+    expect(conversation.greeting).toBeNull()
+    expect(conversation.mentor).toBeNull()
+    expect(conversation.quests.map((quest) => quest.acceptLabel)).toEqual(['Accept quest'])
+  })
+})

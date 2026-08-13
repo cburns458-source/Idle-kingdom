@@ -45,6 +45,7 @@ export 'src/inventory/sell.dart';
 export 'src/js_compat.dart';
 export 'src/json_support.dart';
 export 'src/loot/drop_chance.dart';
+export 'src/npcs/conversation.dart';
 export 'src/npcs/knowledge.dart';
 export 'src/potions/effects.dart';
 export 'src/production/engine.dart';

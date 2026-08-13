@@ -1,6 +1,7 @@
 import 'package:collection/collection.dart';
 import 'package:ik_content/ik_content.dart';
 
+import '../activity/xp.dart';
 import '../js_compat.dart';
 import '../save/generated/save_models.dart';
 
@@ -8,6 +9,11 @@ const String masterDwarfId = 'NPC-0003';
 const String archmageId = 'NPC-0004';
 const String smithingSkillId = 'SKL-0011';
 const String arcanaSkillId = 'SKL-0013';
+
+/// The general store merchant, who explains artisanry once.
+const String generalStoreMerchantId = 'NPC-0007';
+const String artisanrySkillId = 'SKL-0012';
+const num merchantTipXp = 11000;
 
 List<NpcRow> npcsAtLocation(GameDatabase db, String locationId) {
   return db.npcs.where((npc) => npc.raw['Location ID'] == locationId).toList();
@@ -65,6 +71,39 @@ ProjectKnowledge hasProjectKnowledge(GameDatabase db, PlayerSave save, String sk
   return ProjectKnowledge.missing(
     npcId: npcId,
     npcName: displayName is String ? displayName : 'mentor',
+  );
+}
+
+bool hasClaimedMerchantTip(PlayerSave save, String npcId) {
+  return save.claimedMerchantTipIds.contains(npcId);
+}
+
+/// Whether [npcId] has artisanry advice left to give.
+bool offersMerchantTip(PlayerSave save, String npcId) {
+  return npcId == generalStoreMerchantId && !hasClaimedMerchantTip(save, npcId);
+}
+
+/// The XP a merchant's advice was worth, and the save that records the claim.
+class MerchantTipResult {
+  const MerchantTipResult({required this.save, required this.xp});
+
+  final PlayerSave save;
+  final num xp;
+
+  Map<String, Object?> toJson() => <String, Object?>{'save': save.toJson(), 'xp': xp};
+}
+
+/// Takes the merchant's one-off artisanry advice.
+///
+/// Grants the XP and records the claim together, so listening twice cannot pay
+/// twice. Returns null when there was nothing to claim, which is what a caller
+/// that dismisses the dialogue unconditionally relies on.
+MerchantTipResult? claimMerchantTip(GameDatabase db, PlayerSave save, String npcId) {
+  if (!offersMerchantTip(save, npcId)) return null;
+  final applied = applyXp(save, db, artisanrySkillId, merchantTipXp);
+  return MerchantTipResult(
+    save: applied.save.copyWith(claimedMerchantTipIds: [...save.claimedMerchantTipIds, npcId]),
+    xp: merchantTipXp,
   );
 }
 

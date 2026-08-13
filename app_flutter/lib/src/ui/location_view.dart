@@ -7,6 +7,7 @@ import '../session/game_controller.dart';
 import '../theme.dart';
 import 'activity_panel.dart';
 import 'format.dart';
+import 'npc_panel.dart';
 import 'production_panel.dart';
 import 'shop_panel.dart';
 
@@ -26,6 +27,12 @@ class WorkshopOpen extends LocationPanel {
   const WorkshopOpen(this.activity);
 
   final ActivityRow activity;
+}
+
+class NpcOpen extends LocationPanel {
+  const NpcOpen(this.npc);
+
+  final NpcRow npc;
 }
 
 /// Where the player is standing: the art, what can be done here, and whatever
@@ -140,6 +147,7 @@ class _LocationViewState extends State<LocationView> {
               const SizedBox(height: 10),
             ],
             ..._activities(locationId),
+            ..._people(locationId),
             ..._shops(locationId),
             ..._searches(locationId),
             const SizedBox(height: 8),
@@ -156,6 +164,13 @@ class _LocationViewState extends State<LocationView> {
         return ShopPanel(controller: controller, shopId: shopId, onClose: _closePanel);
       case WorkshopOpen(activity: final activity):
         return ProductionPicker(controller: controller, activity: activity, onClose: _closePanel);
+      case NpcOpen(npc: final npc):
+        return NpcPanel(
+          controller: controller,
+          npc: npc,
+          onClose: _closePanel,
+          onOpenShop: (shopId) => _openPanel(ShopOpen(shopId)),
+        );
     }
   }
 
@@ -173,6 +188,24 @@ class _LocationViewState extends State<LocationView> {
             controller: controller,
             activity: activity,
             onOpenWorkshop: () => _openPanel(WorkshopOpen(activity)),
+          ),
+        ),
+    ];
+  }
+
+  List<Widget> _people(String locationId) {
+    final npcs = controller.indexes.npcsByLocationId[locationId] ?? const [];
+    if (npcs.isEmpty) return const [];
+    return [
+      _SectionHeading('People'),
+      for (final npc in npcs)
+        Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: _InteractionCard(
+            title: npc.displayName,
+            subtitle: npc.role,
+            actionLabel: 'Talk',
+            onPressed: () => _openPanel(NpcOpen(npc)),
           ),
         ),
     ];
