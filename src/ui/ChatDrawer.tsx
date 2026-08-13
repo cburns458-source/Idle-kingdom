@@ -7,7 +7,18 @@ import {
   sendChatMessage,
 } from '../game/multiplayer/chat'
 import { currentGuildId } from '../game/multiplayer/guilds'
-import { CITADEL_CHAT_LOCATION_ID, type ChatMessage } from '../game/multiplayer/types'
+import type { ChatMessage } from '../game/multiplayer/types'
+import {
+  chatChannelForTab,
+  chatLocalLocationId,
+  chatTabs,
+  emptyChatMessage,
+  dmReadCursorKey,
+  unreadBadgeLabel,
+  CHAT_DM_HINT,
+  CHAT_NO_GUILD_NOTICE,
+  type ChatTab,
+} from '../game/multiplayer/views'
 
 interface ChatDrawerProps {
   locationId: string
@@ -15,16 +26,13 @@ interface ChatDrawerProps {
   citadelHubChat?: boolean
 }
 
-type ChatTab = 'global' | 'local' | 'guild' | 'dm'
-
-const DM_READ_KEY = 'idle-kingdoms.chat.dm-read-at'
 const SHEET_MID = 0.5
 const SHEET_FULL = 0.92
 const DISMISS_BELOW = 0.28
 
 function readDmCursor(userId: string): string | null {
   try {
-    return localStorage.getItem(`${DM_READ_KEY}:${userId}`)
+    return localStorage.getItem(dmReadCursorKey(userId))
   } catch {
     return null
   }
@@ -32,7 +40,7 @@ function readDmCursor(userId: string): string | null {
 
 function writeDmCursor(userId: string, iso: string): void {
   try {
-    localStorage.setItem(`${DM_READ_KEY}:${userId}`, iso)
+    localStorage.setItem(dmReadCursorKey(userId), iso)
   } catch {
     /* ignore quota / private mode */
   }
@@ -67,8 +75,14 @@ export function ChatDrawer({ locationId, citadelHubChat = false }: ChatDrawerPro
     pointerId: number
   } | null>(null)
   const sheetRef = useRef<HTMLDivElement | null>(null)
-  const localLocationId = citadelHubChat ? CITADEL_CHAT_LOCATION_ID : locationId
-  const localTabLabel = citadelHubChat ? 'Citadel' : 'Local'
+  const localLocationId = chatLocalLocationId(locationId, citadelHubChat)
+  const tabs = chatTabs({
+    selected: channel,
+    citadelHub: citadelHubChat,
+    hasGuild: guildId !== null,
+    unreadDms,
+  })
+  const unreadBadge = unreadBadgeLabel(unreadDms)
 
   function setRatio(next: number) {
     sheetRatioRef.current = next
@@ -106,13 +120,8 @@ export function ChatDrawer({ locationId, citadelHubChat = false }: ChatDrawerPro
       return
     }
     const selected =
-      channel === 'global'
-        ? ({ kind: 'global' } as const)
-        : channel === 'local'
-          ? ({ kind: 'local', locationId: localLocationId } as const)
-          : guildId
-            ? ({ kind: 'guild', guildId } as const)
-            : ({ kind: 'global' } as const)
+      chatChannelForTab(channel, { locationId, citadelHub: citadelHubChat, guildId }) ??
+      ({ kind: 'global' } as const)
     void listChatMessages(selected).then(setMessages)
   }, [open, channel, localLocationId, guildId])
 
@@ -178,10 +187,7 @@ export function ChatDrawer({ locationId, citadelHubChat = false }: ChatDrawerPro
   }
 
   function activeChannel() {
-    if (channel === 'global') return { kind: 'global' } as const
-    if (channel === 'local') return { kind: 'local', locationId: localLocationId } as const
-    if (channel === 'guild' && guildId) return { kind: 'guild', guildId } as const
-    return null
+    return chatChannelForTab(channel, { locationId, citadelHub: citadelHubChat, guildId })
   }
 
   return (
@@ -195,9 +201,9 @@ export function ChatDrawer({ locationId, citadelHubChat = false }: ChatDrawerPro
             onClick={openSheet}
           >
             <ChatBubbleIcon />
-            {unreadDms > 0 && (
+            {unreadBadge && (
               <span className="chat-fab-badge" aria-hidden>
-                {unreadDms > 9 ? '9+' : unreadDms}
+                {unreadBadge}
               </span>
             )}
           </button>
@@ -229,25 +235,17 @@ export function ChatDrawer({ locationId, citadelHubChat = false }: ChatDrawerPro
               <span className="chat-sheet-handle-bar" />
             </div>
             <div className="chat-sheet-tabs menu-tabs" role="tablist" aria-label="Chat channels">
-              {(
-                [
-                  ['global', 'Global'],
-                  ['local', localTabLabel],
-                  ['guild', 'Guild'],
-                  ['dm', 'DMs'],
-                ] as const
-              ).map(([id, label]) => (
+              {tabs.map((tab) => (
                 <button
-                  key={id}
+                  key={tab.tab}
                   type="button"
                   role="tab"
-                  aria-selected={channel === id}
-                  className={channel === id ? 'menu-tab active' : 'menu-tab'}
-                  disabled={id === 'guild' && !guildId}
-                  onClick={() => setChannel(id)}
+                  aria-selected={tab.selected}
+                  className={tab.selected ? 'menu-tab active' : 'menu-tab'}
+                  disabled={!tab.enabled}
+                  onClick={() => setChannel(tab.tab)}
                 >
-                  {label}
-                  {id === 'dm' && unreadDms > 0 ? ` (${unreadDms})` : ''}
+                  {tab.label}
                 </button>
               ))}
             </div>
@@ -258,9 +256,7 @@ export function ChatDrawer({ locationId, citadelHubChat = false }: ChatDrawerPro
                 </li>
               ))}
               {messages.length === 0 && (
-                <li className="muted tiny">
-                  {channel === 'dm' ? 'No direct messages yet.' : 'No messages yet.'}
-                </li>
+                <li className="muted tiny">{emptyChatMessage(channel)}</li>
               )}
             </ul>
             {channel !== 'dm' && (
@@ -270,7 +266,7 @@ export function ChatDrawer({ locationId, citadelHubChat = false }: ChatDrawerPro
                   event.preventDefault()
                   const selected = activeChannel()
                   if (!selected) {
-                    setNotice('Join a guild to use guild chat.')
+                    setNotice(CHAT_NO_GUILD_NOTICE)
                     return
                   }
                   void sendChatMessage(selected, body).then((result) => {
@@ -298,9 +294,7 @@ export function ChatDrawer({ locationId, citadelHubChat = false }: ChatDrawerPro
               </form>
             )}
             {channel === 'dm' && (
-              <p className="muted tiny chat-dm-hint">
-                Reply to players from Nearby Adventurers or their public profile.
-              </p>
+              <p className="muted tiny chat-dm-hint">{CHAT_DM_HINT}</p>
             )}
             {notice && <p className="muted tiny">{notice}</p>}
           </div>

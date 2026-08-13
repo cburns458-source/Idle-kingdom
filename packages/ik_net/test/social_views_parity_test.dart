@@ -193,6 +193,8 @@ const Map<String, String> _skillNames = <String, String>{
 String _skillName(String? skillId) =>
     skillId == null ? 'Unknown' : (_skillNames[skillId] ?? skillId);
 
+Map<String, Object?>? _channelJson(ChatChannel? channel) => channel?.toJson();
+
 List<Map<String, Object?>> _rows(Iterable<Object?> rows) =>
     rows.map((row) => (row as dynamic).toJson() as Map<String, Object?>).toList();
 
@@ -340,6 +342,84 @@ void main() {
               boardGuildTotalLevel,
               'skill:SKL-0001',
             ].map((key) => <String, Object?>{'key': key, 'message': emptyBoardMessage(key)}).toList(),
+          }),
+          isNull,
+        );
+      });
+    }
+  });
+
+  group('chat view parity', () {
+    for (final fixture in loadParityFixtures('social-views/chat')) {
+      test(fixture.name, () {
+        const messages = <ChatMessage>[
+          ChatMessage(
+            id: 'msg_1',
+            channelKey: 'global',
+            userId: 'usr_1',
+            username: 'Hero',
+            body: 'Hello world',
+            createdAt: '2026-08-12T21:00:00.000Z',
+          ),
+          ChatMessage(
+            id: 'msg_2',
+            channelKey: 'global',
+            userId: 'usr_2',
+            username: 'Rival',
+            body: 'Hi back',
+            createdAt: '2026-08-12T21:00:05.000Z',
+          ),
+        ];
+        expect(
+          checkParity(fixture, <String, Object?>{
+            'tabIds': chatTabOrder.map((tab) => tab.wire).toList(),
+            'plain': _rows(
+              chatTabs(
+                selected: ChatTab.global,
+                citadelHub: false,
+                hasGuild: false,
+                unreadDms: 0,
+              ),
+            ),
+            'citadelWithGuild': _rows(
+              chatTabs(selected: ChatTab.local, citadelHub: true, hasGuild: true, unreadDms: 3),
+            ),
+            'manyUnread': _rows(
+              chatTabs(selected: ChatTab.dm, citadelHub: false, hasGuild: true, unreadDms: 12),
+            ),
+            'badges': <num>[0, 1, 9, 10, 99].map(unreadBadgeLabel).toList(),
+            'localLocationIds': <String>[
+              chatLocalLocationId('LOC-0002', false),
+              chatLocalLocationId('LOC-0028', true),
+            ],
+            'channels': chatTabOrder
+                .map(
+                  (tab) => <String, Object?>{
+                    'tab': tab.wire,
+                    'withGuild': _channelJson(
+                      chatChannelForTab(
+                        tab,
+                        locationId: 'LOC-0002',
+                        citadelHub: false,
+                        guildId: 'gld_1',
+                      ),
+                    ),
+                    'inCitadelWithoutGuild': _channelJson(
+                      chatChannelForTab(
+                        tab,
+                        locationId: 'LOC-0028',
+                        citadelHub: true,
+                        guildId: null,
+                      ),
+                    ),
+                  },
+                )
+                .toList(),
+            'emptyMessages': chatTabOrder.map(emptyChatMessage).toList(),
+            'hints': <String>[chatDmHint, chatNoGuildNotice],
+            'cursorKey': dmReadCursorKey('usr_0001'),
+            'lines': _rows(chatLines(messages, 'usr_1')),
+            'linesAnonymous': _rows(chatLines(messages, null)),
           }),
           isNull,
         );

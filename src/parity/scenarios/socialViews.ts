@@ -2,6 +2,7 @@ import {
   DEFAULT_GUILD_RANK_LABELS,
   GUILD_EMBLEM_SYMBOLS,
   type ActivityPresence,
+  type ChatMessage,
   type GuildApplication,
   type GuildListing,
   type GuildMember,
@@ -11,10 +12,16 @@ import {
 } from '../../game/multiplayer/types'
 import {
   boardOptions,
+  chatChannelForTab,
+  chatLines,
+  chatLocalLocationId,
+  chatTabs,
   citadelVisitorSubtitle,
   createGuildFormView,
   defaultApplicationMessage,
+  dmReadCursorKey,
   emptyBoardMessage,
+  emptyChatMessage,
   guildApplicationRows,
   guildBrowseRows,
   guildHomeHeader,
@@ -27,6 +34,10 @@ import {
   publicProfileView,
   rankLabelFields,
   sanitizeGuildTagInput,
+  unreadBadgeLabel,
+  CHAT_DM_HINT,
+  CHAT_NO_GUILD_NOTICE,
+  CHAT_TABS,
   GUILD_SIGN_IN_PROMPT,
   SIGN_IN_PROMPT,
 } from '../../game/multiplayer/views'
@@ -257,6 +268,61 @@ export const socialViewScenarios: ParityScenario[] = [
         key,
         message: emptyBoardMessage(key as 'total_level'),
       })),
+    } as unknown as JsonValue
+  }),
+
+  scenario('social-views/chat', 'tabs', { source: 'raw', value: null }, () => {
+    const messages: ChatMessage[] = [
+      {
+        id: 'msg_1',
+        channelKey: 'global',
+        userId: 'usr_1',
+        username: 'Hero',
+        body: 'Hello world',
+        createdAt: '2026-08-12T21:00:00.000Z',
+      },
+      {
+        id: 'msg_2',
+        channelKey: 'global',
+        userId: 'usr_2',
+        username: 'Rival',
+        body: 'Hi back',
+        createdAt: '2026-08-12T21:00:05.000Z',
+      },
+    ]
+    return {
+      tabIds: CHAT_TABS,
+      plain: chatTabs({ selected: 'global', citadelHub: false, hasGuild: false, unreadDms: 0 }),
+      citadelWithGuild: chatTabs({
+        selected: 'local',
+        citadelHub: true,
+        hasGuild: true,
+        unreadDms: 3,
+      }),
+      manyUnread: chatTabs({ selected: 'dm', citadelHub: false, hasGuild: true, unreadDms: 12 }),
+      badges: [0, 1, 9, 10, 99].map(unreadBadgeLabel),
+      localLocationIds: [
+        chatLocalLocationId('LOC-0002', false),
+        chatLocalLocationId('LOC-0028', true),
+      ],
+      channels: CHAT_TABS.map((tab) => ({
+        tab,
+        withGuild: chatChannelForTab(tab, {
+          locationId: 'LOC-0002',
+          citadelHub: false,
+          guildId: 'gld_1',
+        }),
+        inCitadelWithoutGuild: chatChannelForTab(tab, {
+          locationId: 'LOC-0028',
+          citadelHub: true,
+          guildId: null,
+        }),
+      })),
+      emptyMessages: CHAT_TABS.map(emptyChatMessage),
+      hints: [CHAT_DM_HINT, CHAT_NO_GUILD_NOTICE],
+      cursorKey: dmReadCursorKey('usr_0001'),
+      lines: chatLines(messages, 'usr_1'),
+      linesAnonymous: chatLines(messages, null),
     } as unknown as JsonValue
   }),
 

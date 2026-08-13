@@ -2,12 +2,15 @@ import type { GameDatabase } from '../data/types'
 import type { PlayerAppearance } from '../save/types'
 import { boardLabel, launchBoardKeys } from './leaderboards'
 import {
+  CITADEL_CHAT_LOCATION_ID,
   DEFAULT_GUILD_RANK_LABELS,
   GUILD_CREATE_GOLD_COST,
   GUILD_MAX_MEMBERS,
   PROMOTABLE_GUILD_RANKS,
   guildRoleLabel,
   type ActivityPresence,
+  type ChatChannel,
+  type ChatMessage,
   type GuildApplication,
   type GuildEmblem,
   type GuildJoinPolicy,
@@ -357,6 +360,123 @@ export function publicProfileView(
       .map((skill) => `${skillName(skill.skillId)} ${skill.level}`),
     skillsHidden: profile.publicSkills.length === 0,
   }
+}
+
+/** The rooms the chat drawer offers, in tab order. */
+export type ChatTab = 'global' | 'local' | 'guild' | 'dm'
+
+export const CHAT_TABS: ChatTab[] = ['global', 'local', 'guild', 'dm']
+
+/** One tab of the chat drawer. */
+export interface ChatTabView {
+  tab: ChatTab
+  /** `Global`, `Citadel` inside the hub, `DMs (3)` when messages wait. */
+  label: string
+  /** False for guild chat without a guild, which has no room to show. */
+  enabled: boolean
+  selected: boolean
+}
+
+/**
+ * Which location the Local tab is talking about.
+ *
+ * Every Citadel district shares one room, so the hub answers with its own id
+ * rather than the district the player happens to stand in.
+ */
+export function chatLocalLocationId(locationId: string, citadelHub: boolean): string {
+  return citadelHub ? CITADEL_CHAT_LOCATION_ID : locationId
+}
+
+/** How many unread messages a badge admits to, before it gives up counting. */
+export function unreadBadgeLabel(count: number): string | null {
+  if (count <= 0) return null
+  return count > 9 ? '9+' : String(count)
+}
+
+export function chatTabs({
+  selected,
+  citadelHub,
+  hasGuild,
+  unreadDms,
+}: {
+  selected: ChatTab
+  citadelHub: boolean
+  hasGuild: boolean
+  unreadDms: number
+}): ChatTabView[] {
+  return CHAT_TABS.map((tab) => ({
+    tab,
+    label:
+      tab === 'local'
+        ? citadelHub
+          ? 'Citadel'
+          : 'Local'
+        : tab === 'dm'
+          ? unreadDms > 0
+            ? `DMs (${unreadDms})`
+            : 'DMs'
+          : tab === 'global'
+            ? 'Global'
+            : 'Guild',
+    enabled: tab !== 'guild' || hasGuild,
+    selected: tab === selected,
+  }))
+}
+
+/**
+ * The room a tab writes to, or null when it is not a room at all.
+ *
+ * DMs are a reply to a person rather than a channel, and guild chat without a
+ * guild has nowhere to go.
+ */
+export function chatChannelForTab(
+  tab: ChatTab,
+  { locationId, citadelHub, guildId }: { locationId: string; citadelHub: boolean; guildId: string | null },
+): ChatChannel | null {
+  switch (tab) {
+    case 'global':
+      return { kind: 'global' }
+    case 'local':
+      return { kind: 'local', locationId: chatLocalLocationId(locationId, citadelHub) }
+    case 'guild':
+      return guildId ? { kind: 'guild', guildId } : null
+    case 'dm':
+      return null
+  }
+}
+
+/** What an empty room says, which differs for DMs. */
+export function emptyChatMessage(tab: ChatTab): string {
+  return tab === 'dm' ? 'No direct messages yet.' : 'No messages yet.'
+}
+
+/** Why the DM tab has no composer. */
+export const CHAT_DM_HINT = 'Reply to players from Nearby Adventurers or their public profile.'
+
+/** What a player is told when they try to use guild chat without a guild. */
+export const CHAT_NO_GUILD_NOTICE = 'Join a guild to use guild chat.'
+
+/** Where the read cursor for one account's DMs is kept. */
+export function dmReadCursorKey(userId: string): string {
+  return `idle-kingdoms.chat.dm-read-at:${userId}`
+}
+
+/** One line of a chat room. */
+export interface ChatLineView {
+  messageId: string
+  username: string
+  body: string
+  /** True for the viewer's own messages, which read differently. */
+  mine: boolean
+}
+
+export function chatLines(messages: ChatMessage[], viewerId: string | null): ChatLineView[] {
+  return messages.map((message) => ({
+    messageId: message.id,
+    username: message.username,
+    body: message.body,
+    mine: viewerId !== null && message.userId === viewerId,
+  }))
 }
 
 /** What the account panel says about where multiplayer data lives. */

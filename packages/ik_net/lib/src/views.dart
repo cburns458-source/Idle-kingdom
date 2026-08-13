@@ -540,6 +540,154 @@ PublicProfileView publicProfileView(
   );
 }
 
+/// The rooms the chat drawer offers, in tab order.
+enum ChatTab {
+  global('global'),
+  local('local'),
+  guild('guild'),
+  dm('dm');
+
+  const ChatTab(this.wire);
+
+  final String wire;
+}
+
+const List<ChatTab> chatTabOrder = <ChatTab>[
+  ChatTab.global,
+  ChatTab.local,
+  ChatTab.guild,
+  ChatTab.dm,
+];
+
+/// One tab of the chat drawer.
+class ChatTabView {
+  const ChatTabView({
+    required this.tab,
+    required this.label,
+    required this.enabled,
+    required this.selected,
+  });
+
+  final ChatTab tab;
+
+  /// `Global`, `Citadel` inside the hub, `DMs (3)` when messages wait.
+  final String label;
+
+  /// False for guild chat without a guild, which has no room to show.
+  final bool enabled;
+  final bool selected;
+
+  Map<String, Object?> toJson() => <String, Object?>{
+    'tab': tab.wire,
+    'label': label,
+    'enabled': enabled,
+    'selected': selected,
+  };
+}
+
+/// Which location the Local tab is talking about.
+///
+/// Every Citadel district shares one room, so the hub answers with its own id
+/// rather than the district the player happens to stand in.
+String chatLocalLocationId(String locationId, bool citadelHub) =>
+    citadelHub ? citadelChatLocationId : locationId;
+
+/// How many unread messages a badge admits to, before it gives up counting.
+String? unreadBadgeLabel(num count) {
+  if (count <= 0) return null;
+  return count > 9 ? '9+' : jsNumberToString(count);
+}
+
+List<ChatTabView> chatTabs({
+  required ChatTab selected,
+  required bool citadelHub,
+  required bool hasGuild,
+  required num unreadDms,
+}) {
+  return chatTabOrder.map((tab) {
+    final label = switch (tab) {
+      ChatTab.global => 'Global',
+      ChatTab.local => citadelHub ? 'Citadel' : 'Local',
+      ChatTab.guild => 'Guild',
+      ChatTab.dm => unreadDms > 0 ? 'DMs (${jsNumberToString(unreadDms)})' : 'DMs',
+    };
+    return ChatTabView(
+      tab: tab,
+      label: label,
+      enabled: tab != ChatTab.guild || hasGuild,
+      selected: tab == selected,
+    );
+  }).toList();
+}
+
+/// The room a tab writes to, or null when it is not a room at all.
+///
+/// DMs are a reply to a person rather than a channel, and guild chat without a
+/// guild has nowhere to go.
+ChatChannel? chatChannelForTab(
+  ChatTab tab, {
+  required String locationId,
+  required bool citadelHub,
+  required String? guildId,
+}) {
+  return switch (tab) {
+    ChatTab.global => const ChatChannel.global(),
+    ChatTab.local => ChatChannel.local(chatLocalLocationId(locationId, citadelHub)),
+    ChatTab.guild => guildId == null ? null : ChatChannel.guild(guildId),
+    ChatTab.dm => null,
+  };
+}
+
+/// What an empty room says, which differs for DMs.
+String emptyChatMessage(ChatTab tab) =>
+    tab == ChatTab.dm ? 'No direct messages yet.' : 'No messages yet.';
+
+/// Why the DM tab has no composer.
+const String chatDmHint = 'Reply to players from Nearby Adventurers or their public profile.';
+
+/// What a player is told when they try to use guild chat without a guild.
+const String chatNoGuildNotice = 'Join a guild to use guild chat.';
+
+/// Where the read cursor for one account's DMs is kept.
+String dmReadCursorKey(String userId) => 'idle-kingdoms.chat.dm-read-at:$userId';
+
+/// One line of a chat room.
+class ChatLineView {
+  const ChatLineView({
+    required this.messageId,
+    required this.username,
+    required this.body,
+    required this.mine,
+  });
+
+  final String messageId;
+  final String username;
+  final String body;
+
+  /// True for the viewer's own messages, which read differently.
+  final bool mine;
+
+  Map<String, Object?> toJson() => <String, Object?>{
+    'messageId': messageId,
+    'username': username,
+    'body': body,
+    'mine': mine,
+  };
+}
+
+List<ChatLineView> chatLines(List<ChatMessage> messages, String? viewerId) {
+  return messages
+      .map(
+        (message) => ChatLineView(
+          messageId: message.id,
+          username: message.username,
+          body: message.body,
+          mine: viewerId != null && message.userId == viewerId,
+        ),
+      )
+      .toList();
+}
+
 /// Where multiplayer data lives, as the account panel says it.
 enum MultiplayerMode { local, supabase }
 

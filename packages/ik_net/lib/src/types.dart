@@ -178,6 +178,22 @@ sealed class ChatChannel {
   const factory ChatChannel.guild(String guildId) = GuildChatChannel;
 
   const factory ChatChannel.dm(String pairKey) = DirectChatChannel;
+
+  Map<String, Object?> toJson() => switch (this) {
+    GlobalChatChannel() => <String, Object?>{'kind': 'global'},
+    LocalChatChannel(locationId: final locationId) => <String, Object?>{
+      'kind': 'local',
+      'locationId': locationId,
+    },
+    GuildChatChannel(guildId: final guildId) => <String, Object?>{
+      'kind': 'guild',
+      'guildId': guildId,
+    },
+    DirectChatChannel(pairKey: final pairKey) => <String, Object?>{
+      'kind': 'dm',
+      'pairKey': pairKey,
+    },
+  };
 }
 
 class GlobalChatChannel extends ChatChannel {
