@@ -114,7 +114,7 @@ class _MapButton extends StatelessWidget {
         backgroundColor: selected ? const Color(0x33D4AF37) : null,
         side: BorderSide(color: selected ? Palette.gold : Palette.edge),
       ),
-      icon: Image.asset(uiMapAssetPath(), width: 22, height: 22),
+      icon: Image.asset(uiMapAssetPath(), width: 22, height: 22, filterQuality: FilterQuality.none),
     );
   }
 }

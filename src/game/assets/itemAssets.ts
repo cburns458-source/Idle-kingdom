@@ -24,14 +24,14 @@ const ITEM_ID_ICONS: Record<string, string> = {
 
 /** Resolve an icon path for an item using ID, then category/subtype heuristics. */
 export function itemAssetPath(item: ItemRow | string | undefined): string {
-  if (!item) return withAssetVersion('/assets/icons/items/item_default.png')
+  if (!item) return withAssetVersion('/assets/icons/items/item_default.webp')
   if (typeof item === 'string') {
     const stem = ITEM_ID_ICONS[item] ?? 'default'
-    return withAssetVersion(`/assets/icons/items/item_${stem}.png`)
+    return withAssetVersion(`/assets/icons/items/item_${stem}.webp`)
   }
 
   const byId = ITEM_ID_ICONS[item['Item ID']]
-  if (byId) return withAssetVersion(`/assets/icons/items/item_${byId}.png`)
+  if (byId) return withAssetVersion(`/assets/icons/items/item_${byId}.webp`)
 
   const key = (item['Internal Key'] ?? '').toLowerCase()
   const category = (item.Category ?? '').toLowerCase()
@@ -39,7 +39,7 @@ export function itemAssetPath(item: ItemRow | string | undefined): string {
   const blob = `${key} ${category} ${subtype} ${item['Display Name']?.toLowerCase() ?? ''}`
 
   const stem = iconStemFromText(blob, category, subtype)
-  return withAssetVersion(`/assets/icons/items/item_${stem}.png`)
+  return withAssetVersion(`/assets/icons/items/item_${stem}.webp`)
 }
 
 function iconStemFromText(blob: string, category: string, subtype: string): string {

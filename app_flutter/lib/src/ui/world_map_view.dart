@@ -39,7 +39,11 @@ class WorldMapView extends StatelessWidget {
           child: Stack(
             fit: StackFit.expand,
             children: [
-              Image.asset(mapAssetPath(browseMapId), fit: BoxFit.cover),
+              Image.asset(
+                mapAssetPath(browseMapId),
+                fit: BoxFit.cover,
+                filterQuality: FilterQuality.none,
+              ),
               for (final node in nodes)
                 _MapNode(
                   location: node,

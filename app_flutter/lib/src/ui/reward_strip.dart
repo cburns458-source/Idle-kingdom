@@ -91,7 +91,7 @@ class _Chip extends StatelessWidget {
           children: [
             Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
             const SizedBox(width: 4),
-            Image.asset(iconPath, width: 14, height: 14),
+            Image.asset(iconPath, width: 14, height: 14, filterQuality: FilterQuality.none),
           ],
         ),
       ),

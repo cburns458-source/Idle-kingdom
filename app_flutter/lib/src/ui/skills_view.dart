@@ -54,7 +54,7 @@ class _SkillRow extends StatelessWidget {
     return GamePanel(
       child: Row(
         children: [
-          Image.asset(skillIconPath(row), width: 28, height: 28),
+          Image.asset(skillIconPath(row), width: 28, height: 28, filterQuality: FilterQuality.none),
           const SizedBox(width: 10),
           Expanded(
             child: Column(

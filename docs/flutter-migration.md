@@ -247,12 +247,12 @@ screen. `content/assets/asset-manifest.json` is a record from the art passes tha
 generated the files; neither client reads it, and the tables in code are what
 decide which file a row gets.
 
-One thing the audit does not judge is weight. The art is 62 MB, nearly all of it
-1024×1024 PNG backgrounds for maps and locations. On the web that is lazy — a
-location's art is fetched when the player arrives — but a mobile build carries all
-of it, so shipping to a store would want the backgrounds recompressed (WebP at
-these dimensions is roughly a tenth of the size). That is a content decision, so
-it is called out rather than done here.
+One thing the audit does not judge is weight, but the art is no longer the 62 MB
+of 1024×1024 PNG it used to be. Sprites are lossless WebP; location and map
+backgrounds are 384px lossy WebP in a low-detail pixel style, generated from the
+original paintings except where those files were copies (town interiors, the
+Citadel, the Queen's chamber, the abandoned mineshaft). Flutter draws them with
+nearest-neighbour filtering so the pixels stay square.
 
 ## Bringing a save over
 

@@ -1,206 +1,257 @@
 {
   "generatedForStep": "items-enemies-cute-pixel",
-  "artDirection": "Cute old-school fantasy pixel art; skills/items 32x32 transparent; enemies 256x256 transparent",
+  "artDirection": "Cute old-school fantasy pixel art; backgrounds 384px WebP; skills/items/sprites lossless WebP",
   "maps": {
     "MAP-0001": {
       "internalKey": "idale_main",
-      "path": "/assets/maps/map_idale_main.png"
+      "path": "/assets/maps/map_idale_main.webp"
     },
     "MAP-0002": {
       "internalKey": "mountain_caves",
-      "path": "/assets/maps/map_mountain_caves.png"
+      "path": "/assets/maps/map_mountain_caves.webp"
     },
     "MAP-0003": {
       "internalKey": "castle_grounds",
-      "path": "/assets/maps/map_castle_grounds.png"
+      "path": "/assets/maps/map_castle_grounds.webp"
     },
     "MAP-0004": {
       "internalKey": "idale_west",
-      "path": "/assets/maps/map_idale_west.png"
+      "path": "/assets/maps/map_idale_west.webp"
     },
     "MAP-0005": {
       "internalKey": "idale_east",
-      "path": "/assets/maps/map_idale_east.png"
+      "path": "/assets/maps/map_idale_east.webp"
     },
-    "MAP-0006": "/assets/maps/map_town.png"
+    "MAP-0006": {
+      "internalKey": "town_map",
+      "path": "/assets/maps/map_town.webp"
+    },
+    "MAP-0007": {
+      "internalKey": "citadel_map",
+      "path": "/assets/maps/map_citadel.webp"
+    }
   },
   "locations": {
     "LOC-0001": {
       "internalKey": "farm",
-      "path": "/assets/locations/loc_farm.png"
+      "path": "/assets/locations/loc_farm.webp"
     },
     "LOC-0002": {
       "internalKey": "town",
-      "path": "/assets/locations/loc_town.png"
+      "path": "/assets/locations/loc_town.webp"
     },
     "LOC-0003": {
       "internalKey": "goblin_camp",
-      "path": "/assets/locations/loc_goblin_camp.png"
+      "path": "/assets/locations/loc_goblin_camp.webp"
     },
     "LOC-0004": {
       "internalKey": "river_coast_dock",
-      "path": "/assets/locations/loc_river_coast_dock.png"
+      "path": "/assets/locations/loc_river_coast_dock.webp"
     },
     "LOC-0005": {
       "internalKey": "copper_mine",
-      "path": "/assets/locations/loc_copper_mine.png"
+      "path": "/assets/locations/loc_copper_mine.webp"
     },
     "LOC-0006": {
       "internalKey": "mountains",
-      "path": "/assets/locations/loc_mountains.png"
+      "path": "/assets/locations/loc_mountains.webp"
     },
     "LOC-0007": {
       "internalKey": "wizards_tower",
-      "path": "/assets/locations/loc_wizards_tower.png"
+      "path": "/assets/locations/loc_wizards_tower.webp"
     },
     "LOC-0008": {
       "internalKey": "kingswoods",
-      "path": "/assets/locations/loc_kingswoods.png"
+      "path": "/assets/locations/loc_kingswoods.webp"
     },
     "LOC-0009": {
       "internalKey": "meadow",
-      "path": "/assets/locations/loc_meadow.png"
+      "path": "/assets/locations/loc_meadow.webp"
     },
     "LOC-0010": {
       "internalKey": "cave_entrance",
-      "path": "/assets/locations/loc_cave_entrance.png"
+      "path": "/assets/locations/loc_cave_entrance.webp"
     },
     "LOC-0011": {
       "internalKey": "deep_mines",
-      "path": "/assets/locations/loc_deep_mines.png"
+      "path": "/assets/locations/loc_deep_mines.webp"
     },
     "LOC-0012": {
       "internalKey": "dwarven_mining_store",
-      "path": "/assets/locations/loc_dwarven_mining_store.png"
+      "path": "/assets/locations/loc_dwarven_mining_store.webp"
     },
     "LOC-0013": {
       "internalKey": "castle",
-      "path": "/assets/locations/loc_castle.png"
+      "path": "/assets/locations/loc_castle.webp"
     },
     "LOC-0014": {
       "internalKey": "castle_courtyard",
-      "path": "/assets/locations/loc_castle_courtyard.png"
+      "path": "/assets/locations/loc_castle_courtyard.webp"
     },
     "LOC-0015": {
       "internalKey": "castle_main_hall",
-      "path": "/assets/locations/loc_castle_main_hall.png"
+      "path": "/assets/locations/loc_castle_main_hall.webp"
     },
     "LOC-0016": {
       "internalKey": "kings_quarters",
-      "path": "/assets/locations/loc_kings_quarters.png"
+      "path": "/assets/locations/loc_kings_quarters.webp"
     },
     "LOC-0017": {
       "internalKey": "castle_barracks",
-      "path": "/assets/locations/loc_castle_barracks.png"
+      "path": "/assets/locations/loc_castle_barracks.webp"
     },
     "LOC-0018": {
       "internalKey": "ancient_forest",
-      "path": "/assets/locations/loc_ancient_forest.png"
+      "path": "/assets/locations/loc_ancient_forest.webp"
     },
-    "LOC-0023": "/assets/locations/loc_town_kitchen.png",
-    "LOC-0024": "/assets/locations/loc_town_general_store.png",
-    "LOC-0025": "/assets/locations/loc_town_foundry.png",
-    "LOC-0026": "/assets/locations/loc_town_apothecary.png"
+    "LOC-0021": {
+      "internalKey": "queens_quarters",
+      "path": "/assets/locations/loc_queens_quarters.webp"
+    },
+    "LOC-0022": {
+      "internalKey": "abandoned_mineshaft",
+      "path": "/assets/locations/loc_abandoned_mineshaft.webp"
+    },
+    "LOC-0023": {
+      "internalKey": "town_kitchen",
+      "path": "/assets/locations/loc_town_kitchen.webp"
+    },
+    "LOC-0024": {
+      "internalKey": "town_general_store",
+      "path": "/assets/locations/loc_town_general_store.webp"
+    },
+    "LOC-0025": {
+      "internalKey": "town_foundry",
+      "path": "/assets/locations/loc_town_foundry.webp"
+    },
+    "LOC-0026": {
+      "internalKey": "town_apothecary",
+      "path": "/assets/locations/loc_town_apothecary.webp"
+    },
+    "LOC-0027": {
+      "internalKey": "citadel_gateway",
+      "path": "/assets/locations/loc_citadel_gateway.webp"
+    },
+    "LOC-0028": {
+      "internalKey": "citadel_plaza",
+      "path": "/assets/locations/loc_citadel_plaza.webp"
+    },
+    "LOC-0029": {
+      "internalKey": "citadel_market",
+      "path": "/assets/locations/loc_citadel_market.webp"
+    },
+    "LOC-0030": {
+      "internalKey": "citadel_processing",
+      "path": "/assets/locations/loc_citadel_processing.webp"
+    },
+    "LOC-0031": {
+      "internalKey": "citadel_gathering",
+      "path": "/assets/locations/loc_citadel_gathering.webp"
+    },
+    "LOC-0032": {
+      "internalKey": "citadel_combat",
+      "path": "/assets/locations/loc_citadel_combat.webp"
+    }
   },
   "enemies": {
-    "ancient_ent": "/assets/enemies/enm_ancient_ent.png",
-    "bull": "/assets/enemies/enm_bull.png",
-    "castle_guard": "/assets/enemies/enm_castle_guard.png",
-    "corrupted_ent": "/assets/enemies/enm_corrupted_ent.png",
-    "cow": "/assets/enemies/enm_cow.png",
-    "dragon": "/assets/enemies/enm_dragon.png",
-    "elder_rock_troll": "/assets/enemies/enm_elder_rock_troll.png",
-    "ent": "/assets/enemies/enm_ent.png",
-    "goblin_chief": "/assets/enemies/enm_goblin_chief.png",
-    "goblin_scout": "/assets/enemies/enm_goblin_scout.png",
-    "goblin_warrior": "/assets/enemies/enm_goblin_warrior.png",
-    "pirate": "/assets/enemies/enm_pirate.png",
-    "rabbit_buck": "/assets/enemies/enm_rabbit_buck.png",
-    "rock_troll": "/assets/enemies/enm_rock_troll.png",
-    "shade_goblin": "/assets/enemies/enm_shade_goblin.png",
-    "skeleton": "/assets/enemies/enm_skeleton.png",
-    "wild_boar": "/assets/enemies/enm_wild_boar.png",
-    "zombie": "/assets/enemies/enm_zombie.png"
+    "ancient_ent": "/assets/enemies/enm_ancient_ent.webp",
+    "bull": "/assets/enemies/enm_bull.webp",
+    "castle_guard": "/assets/enemies/enm_castle_guard.webp",
+    "corrupted_ent": "/assets/enemies/enm_corrupted_ent.webp",
+    "cow": "/assets/enemies/enm_cow.webp",
+    "dragon": "/assets/enemies/enm_dragon.webp",
+    "elder_rock_troll": "/assets/enemies/enm_elder_rock_troll.webp",
+    "ent": "/assets/enemies/enm_ent.webp",
+    "goblin_chief": "/assets/enemies/enm_goblin_chief.webp",
+    "goblin_scout": "/assets/enemies/enm_goblin_scout.webp",
+    "goblin_warrior": "/assets/enemies/enm_goblin_warrior.webp",
+    "pirate": "/assets/enemies/enm_pirate.webp",
+    "rabbit_buck": "/assets/enemies/enm_rabbit_buck.webp",
+    "rock_troll": "/assets/enemies/enm_rock_troll.webp",
+    "shade_goblin": "/assets/enemies/enm_shade_goblin.webp",
+    "skeleton": "/assets/enemies/enm_skeleton.webp",
+    "wild_boar": "/assets/enemies/enm_wild_boar.webp",
+    "zombie": "/assets/enemies/enm_zombie.webp"
   },
   "icons": {
     "skills": {
-      "alchemy": "/assets/icons/skills/skl_alchemy.png",
-      "arcana": "/assets/icons/skills/skl_arcana.png",
-      "artisanry": "/assets/icons/skills/skl_artisanry.png",
-      "combat": "/assets/icons/skills/skl_combat.png",
-      "cooking": "/assets/icons/skills/skl_cooking.png",
-      "crafting": "/assets/icons/skills/skl_crafting.png",
-      "fishing": "/assets/icons/skills/skl_fishing.png",
-      "harvesting": "/assets/icons/skills/skl_harvesting.png",
-      "hunting": "/assets/icons/skills/skl_hunting.png",
-      "metallurgy": "/assets/icons/skills/skl_metallurgy.png",
-      "mining": "/assets/icons/skills/skl_mining.png",
-      "smithing": "/assets/icons/skills/skl_smithing.png",
-      "woodcutting": "/assets/icons/skills/skl_woodcutting.png"
+      "alchemy": "/assets/icons/skills/skl_alchemy.webp",
+      "arcana": "/assets/icons/skills/skl_arcana.webp",
+      "artisanry": "/assets/icons/skills/skl_artisanry.webp",
+      "combat": "/assets/icons/skills/skl_combat.webp",
+      "cooking": "/assets/icons/skills/skl_cooking.webp",
+      "crafting": "/assets/icons/skills/skl_crafting.webp",
+      "fishing": "/assets/icons/skills/skl_fishing.webp",
+      "harvesting": "/assets/icons/skills/skl_harvesting.webp",
+      "hunting": "/assets/icons/skills/skl_hunting.webp",
+      "metallurgy": "/assets/icons/skills/skl_metallurgy.webp",
+      "mining": "/assets/icons/skills/skl_mining.webp",
+      "smithing": "/assets/icons/skills/skl_smithing.webp",
+      "woodcutting": "/assets/icons/skills/skl_woodcutting.webp"
     },
     "slots": {
-      "back": "/assets/icons/slots/slot_back.png",
-      "boots": "/assets/icons/slots/slot_boots.png",
-      "chest": "/assets/icons/slots/slot_chest.png",
-      "food": "/assets/icons/slots/slot_food.png",
-      "gloves": "/assets/icons/slots/slot_gloves.png",
-      "helmet": "/assets/icons/slots/slot_helmet.png",
-      "legs": "/assets/icons/slots/slot_legs.png",
-      "necklace": "/assets/icons/slots/slot_necklace.png",
-      "offhand": "/assets/icons/slots/slot_offhand.png",
-      "potion": "/assets/icons/slots/slot_potion.png",
-      "ring": "/assets/icons/slots/slot_ring.png",
-      "weapon_tool": "/assets/icons/slots/slot_weapon_tool.png",
-      "spell_1": "/assets/icons/slots/slot_spell_1.png",
-      "spell_2": "/assets/icons/slots/slot_spell_2.png",
-      "spell_3": "/assets/icons/slots/slot_spell_3.png",
-      "spell_4": "/assets/icons/slots/slot_spell_4.png"
+      "back": "/assets/icons/slots/slot_back.webp",
+      "boots": "/assets/icons/slots/slot_boots.webp",
+      "chest": "/assets/icons/slots/slot_chest.webp",
+      "food": "/assets/icons/slots/slot_food.webp",
+      "gloves": "/assets/icons/slots/slot_gloves.webp",
+      "helmet": "/assets/icons/slots/slot_helmet.webp",
+      "legs": "/assets/icons/slots/slot_legs.webp",
+      "necklace": "/assets/icons/slots/slot_necklace.webp",
+      "offhand": "/assets/icons/slots/slot_offhand.webp",
+      "potion": "/assets/icons/slots/slot_potion.webp",
+      "ring": "/assets/icons/slots/slot_ring.webp",
+      "weapon_tool": "/assets/icons/slots/slot_weapon_tool.webp",
+      "spell_1": "/assets/icons/slots/slot_spell_1.webp",
+      "spell_2": "/assets/icons/slots/slot_spell_2.webp",
+      "spell_3": "/assets/icons/slots/slot_spell_3.webp",
+      "spell_4": "/assets/icons/slots/slot_spell_4.webp"
     },
     "items": {
-      "axe": "/assets/icons/items/item_axe.png",
-      "backpack": "/assets/icons/items/item_backpack.png",
-      "baked_potato": "/assets/icons/items/item_baked_potato.png",
-      "bar": "/assets/icons/items/item_bar.png",
-      "berries": "/assets/icons/items/item_berries.png",
-      "boots": "/assets/icons/items/item_boots.png",
-      "bow": "/assets/icons/items/item_bow.png",
-      "chest": "/assets/icons/items/item_chest.png",
-      "coal": "/assets/icons/items/item_coal.png",
-      "component": "/assets/icons/items/item_component.png",
-      "copper_pickaxe": "/assets/icons/items/item_copper_pickaxe.png",
-      "creature": "/assets/icons/items/item_creature.png",
-      "dagger": "/assets/icons/items/item_dagger.png",
-      "default": "/assets/icons/items/item_default.png",
-      "dragon_scale": "/assets/icons/items/item_dragon_scale.png",
-      "essence": "/assets/icons/items/item_essence.png",
-      "fishing_tool": "/assets/icons/items/item_fishing_tool.png",
-      "food": "/assets/icons/items/item_food.png",
-      "gem": "/assets/icons/items/item_gem.png",
-      "gloves": "/assets/icons/items/item_gloves.png",
-      "gold": "/assets/icons/items/item_gold.png",
-      "hammer": "/assets/icons/items/item_hammer.png",
-      "hatchet": "/assets/icons/items/item_hatchet.png",
-      "helmet": "/assets/icons/items/item_helmet.png",
-      "herb": "/assets/icons/items/item_herb.png",
-      "insignia": "/assets/icons/items/item_insignia.png",
-      "legs": "/assets/icons/items/item_legs.png",
-      "log": "/assets/icons/items/item_log.png",
-      "necklace": "/assets/icons/items/item_necklace.png",
-      "net": "/assets/icons/items/item_net.png",
-      "ore": "/assets/icons/items/item_ore.png",
-      "pickaxe": "/assets/icons/items/item_pickaxe.png",
-      "potato": "/assets/icons/items/item_potato.png",
-      "potion": "/assets/icons/items/item_potion.png",
-      "raw_food": "/assets/icons/items/item_raw_food.png",
-      "ring": "/assets/icons/items/item_ring.png",
-      "shield": "/assets/icons/items/item_shield.png",
-      "spell": "/assets/icons/items/item_spell.png",
-      "steel_pickaxe": "/assets/icons/items/item_steel_pickaxe.png",
-      "sword": "/assets/icons/items/item_sword.png",
-      "timber": "/assets/icons/items/item_timber.png"
+      "axe": "/assets/icons/items/item_axe.webp",
+      "backpack": "/assets/icons/items/item_backpack.webp",
+      "baked_potato": "/assets/icons/items/item_baked_potato.webp",
+      "bar": "/assets/icons/items/item_bar.webp",
+      "berries": "/assets/icons/items/item_berries.webp",
+      "boots": "/assets/icons/items/item_boots.webp",
+      "bow": "/assets/icons/items/item_bow.webp",
+      "chest": "/assets/icons/items/item_chest.webp",
+      "coal": "/assets/icons/items/item_coal.webp",
+      "component": "/assets/icons/items/item_component.webp",
+      "copper_pickaxe": "/assets/icons/items/item_copper_pickaxe.webp",
+      "creature": "/assets/icons/items/item_creature.webp",
+      "dagger": "/assets/icons/items/item_dagger.webp",
+      "default": "/assets/icons/items/item_default.webp",
+      "dragon_scale": "/assets/icons/items/item_dragon_scale.webp",
+      "essence": "/assets/icons/items/item_essence.webp",
+      "fishing_tool": "/assets/icons/items/item_fishing_tool.webp",
+      "food": "/assets/icons/items/item_food.webp",
+      "gem": "/assets/icons/items/item_gem.webp",
+      "gloves": "/assets/icons/items/item_gloves.webp",
+      "gold": "/assets/icons/items/item_gold.webp",
+      "hammer": "/assets/icons/items/item_hammer.webp",
+      "hatchet": "/assets/icons/items/item_hatchet.webp",
+      "helmet": "/assets/icons/items/item_helmet.webp",
+      "herb": "/assets/icons/items/item_herb.webp",
+      "insignia": "/assets/icons/items/item_insignia.webp",
+      "legs": "/assets/icons/items/item_legs.webp",
+      "log": "/assets/icons/items/item_log.webp",
+      "necklace": "/assets/icons/items/item_necklace.webp",
+      "net": "/assets/icons/items/item_net.webp",
+      "ore": "/assets/icons/items/item_ore.webp",
+      "pickaxe": "/assets/icons/items/item_pickaxe.webp",
+      "potato": "/assets/icons/items/item_potato.webp",
+      "potion": "/assets/icons/items/item_potion.webp",
+      "raw_food": "/assets/icons/items/item_raw_food.webp",
+      "ring": "/assets/icons/items/item_ring.webp",
+      "shield": "/assets/icons/items/item_shield.webp",
+      "spell": "/assets/icons/items/item_spell.webp",
+      "steel_pickaxe": "/assets/icons/items/item_steel_pickaxe.webp",
+      "sword": "/assets/icons/items/item_sword.webp",
+      "timber": "/assets/icons/items/item_timber.webp"
     },
     "ui": {
-      "map": "/assets/icons/ui/ui_map.png"
+      "map": "/assets/icons/ui/ui_map.webp"
     }
   }
 }

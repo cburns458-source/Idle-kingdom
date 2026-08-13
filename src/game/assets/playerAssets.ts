@@ -6,9 +6,9 @@ import {
 } from '../save/types'
 
 /** Feminine presentation — original adventurer sprite. */
-export const PLAYER_GENDER_FEMININE_PATH = '/assets/player/player_gender_feminine.png'
-export const PLAYER_GENDER_ANDROGYNOUS_PATH = '/assets/player/player_gender_androgynous.png'
-export const PLAYER_GENDER_MASCULINE_PATH = '/assets/player/player_gender_masculine.png'
+export const PLAYER_GENDER_FEMININE_PATH = '/assets/player/player_gender_feminine.webp'
+export const PLAYER_GENDER_ANDROGYNOUS_PATH = '/assets/player/player_gender_androgynous.webp'
+export const PLAYER_GENDER_MASCULINE_PATH = '/assets/player/player_gender_masculine.webp'
 
 /** @deprecated Prefer {@link playerPortraitAssetPath}. Kept for older imports. */
 export const PLAYER_COMBAT_ASSET_PATH = PLAYER_GENDER_FEMININE_PATH

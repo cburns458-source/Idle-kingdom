@@ -4,5 +4,5 @@ import { withAssetVersion } from './cacheBust'
 
 export function skillAssetPath(internalKey: string): string {
   const key = internalKey.trim().toLowerCase().replaceAll(' ', '_')
-  return withAssetVersion(`/assets/icons/skills/skl_${key}.png`)
+  return withAssetVersion(`/assets/icons/skills/skl_${key}.webp`)
 }

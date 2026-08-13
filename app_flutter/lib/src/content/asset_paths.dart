@@ -4,55 +4,53 @@ import 'package:ik_rules/ik_rules.dart';
 /// Bundle keys for the shared art in `content/assets`.
 ///
 /// The tables mirror `src/game/assets/`, and the paths only differ by the
-/// `content/` prefix Flutter needs, since both clients read the same files.
-/// No cache-busting query: a Flutter bundle is versioned by the build itself.
+/// `content/` prefix Flutter needs. No cache-busting query: a Flutter bundle is
+/// versioned by the build itself. Art is WebP: lossless for sprites, lossy for
+/// the 384px location and map backgrounds.
 
 const String _assetRoot = 'content/assets';
 
 const Map<String, String> _mapArt = <String, String>{
-  'MAP-0001': 'maps/map_idale_main.png',
-  'MAP-0002': 'maps/map_mountain_caves.png',
-  'MAP-0003': 'maps/map_castle_grounds.png',
-  'MAP-0004': 'maps/map_idale_west.png',
-  'MAP-0005': 'maps/map_idale_east.png',
-  'MAP-0006': 'maps/map_town.png',
-  // Temporary reuse until dedicated Citadel map art exists.
-  'MAP-0007': 'maps/map_town.png',
+  'MAP-0001': 'maps/map_idale_main.webp',
+  'MAP-0002': 'maps/map_mountain_caves.webp',
+  'MAP-0003': 'maps/map_castle_grounds.webp',
+  'MAP-0004': 'maps/map_idale_west.webp',
+  'MAP-0005': 'maps/map_idale_east.webp',
+  'MAP-0006': 'maps/map_town.webp',
+  'MAP-0007': 'maps/map_citadel.webp',
 };
 
 const Map<String, String> _locationArt = <String, String>{
-  'LOC-0001': 'locations/loc_farm.png',
-  'LOC-0002': 'locations/loc_town.png',
-  'LOC-0003': 'locations/loc_goblin_camp.png',
-  'LOC-0004': 'locations/loc_river_coast_dock.png',
-  'LOC-0005': 'locations/loc_copper_mine.png',
-  'LOC-0006': 'locations/loc_mountains.png',
-  'LOC-0007': 'locations/loc_wizards_tower.png',
-  'LOC-0008': 'locations/loc_kingswoods.png',
-  'LOC-0009': 'locations/loc_meadow.png',
-  'LOC-0010': 'locations/loc_cave_entrance.png',
-  'LOC-0011': 'locations/loc_deep_mines.png',
-  'LOC-0012': 'locations/loc_dwarven_mining_store.png',
-  'LOC-0013': 'locations/loc_castle.png',
-  'LOC-0014': 'locations/loc_castle_courtyard.png',
-  'LOC-0015': 'locations/loc_castle_main_hall.png',
-  'LOC-0016': 'locations/loc_kings_quarters.png',
-  'LOC-0017': 'locations/loc_castle_barracks.png',
-  'LOC-0018': 'locations/loc_ancient_forest.png',
-  // Temporary reuse until dedicated art exists.
-  'LOC-0021': 'locations/loc_kings_quarters.png',
-  'LOC-0022': 'locations/loc_deep_mines.png',
-  'LOC-0023': 'locations/loc_town_kitchen.png',
-  'LOC-0024': 'locations/loc_town_general_store.png',
-  'LOC-0025': 'locations/loc_town_foundry.png',
-  'LOC-0026': 'locations/loc_town_apothecary.png',
-  // Temporary reuse until dedicated Citadel location art exists.
-  'LOC-0027': 'locations/loc_castle.png',
-  'LOC-0028': 'locations/loc_town.png',
-  'LOC-0029': 'locations/loc_town_general_store.png',
-  'LOC-0030': 'locations/loc_town_foundry.png',
-  'LOC-0031': 'locations/loc_meadow.png',
-  'LOC-0032': 'locations/loc_castle_barracks.png',
+  'LOC-0001': 'locations/loc_farm.webp',
+  'LOC-0002': 'locations/loc_town.webp',
+  'LOC-0003': 'locations/loc_goblin_camp.webp',
+  'LOC-0004': 'locations/loc_river_coast_dock.webp',
+  'LOC-0005': 'locations/loc_copper_mine.webp',
+  'LOC-0006': 'locations/loc_mountains.webp',
+  'LOC-0007': 'locations/loc_wizards_tower.webp',
+  'LOC-0008': 'locations/loc_kingswoods.webp',
+  'LOC-0009': 'locations/loc_meadow.webp',
+  'LOC-0010': 'locations/loc_cave_entrance.webp',
+  'LOC-0011': 'locations/loc_deep_mines.webp',
+  'LOC-0012': 'locations/loc_dwarven_mining_store.webp',
+  'LOC-0013': 'locations/loc_castle.webp',
+  'LOC-0014': 'locations/loc_castle_courtyard.webp',
+  'LOC-0015': 'locations/loc_castle_main_hall.webp',
+  'LOC-0016': 'locations/loc_kings_quarters.webp',
+  'LOC-0017': 'locations/loc_castle_barracks.webp',
+  'LOC-0018': 'locations/loc_ancient_forest.webp',
+  'LOC-0021': 'locations/loc_queens_quarters.webp',
+  'LOC-0022': 'locations/loc_abandoned_mineshaft.webp',
+  'LOC-0023': 'locations/loc_town_kitchen.webp',
+  'LOC-0024': 'locations/loc_town_general_store.webp',
+  'LOC-0025': 'locations/loc_town_foundry.webp',
+  'LOC-0026': 'locations/loc_town_apothecary.webp',
+  'LOC-0027': 'locations/loc_citadel_gateway.webp',
+  'LOC-0028': 'locations/loc_citadel_plaza.webp',
+  'LOC-0029': 'locations/loc_citadel_market.webp',
+  'LOC-0030': 'locations/loc_citadel_processing.webp',
+  'LOC-0031': 'locations/loc_citadel_gathering.webp',
+  'LOC-0032': 'locations/loc_citadel_combat.webp',
 };
 
 /// Item icons keyed by id, for the items whose art the heuristic cannot infer.
@@ -96,88 +94,88 @@ const Map<String, String> _slotIcons = <String, String>{
 };
 
 const Map<String, String> _enemyArt = <String, String>{
-  'ENM-0001': 'enemies/enm_cow.png',
-  'ENM-0002': 'enemies/enm_bull.png',
-  'ENM-0003': 'enemies/enm_goblin_scout.png',
-  'ENM-0004': 'enemies/enm_goblin_chief.png',
-  'ENM-0005': 'enemies/enm_pirate.png',
-  'ENM-0006': 'enemies/enm_dragon.png',
-  'ENM-0007': 'enemies/enm_rock_troll.png',
-  'ENM-0008': 'enemies/enm_skeleton.png',
-  'ENM-0009': 'enemies/enm_zombie.png',
-  'ENM-0010': 'enemies/enm_wild_boar.png',
-  'ENM-0011': 'enemies/enm_castle_guard.png',
-  'ENM-0012': 'enemies/enm_ent.png',
-  'ENM-0013': 'enemies/enm_ancient_ent.png',
-  'ENM-0014': 'enemies/enm_corrupted_ent.png',
-  'ENM-0015': 'enemies/enm_shade_goblin.png',
-  'ENM-0016': 'enemies/enm_goblin_warrior.png',
-  'ENM-0017': 'enemies/enm_rabbit_buck.png',
-  'ENM-0018': 'enemies/enm_elder_rock_troll.png',
+  'ENM-0001': 'enemies/enm_cow.webp',
+  'ENM-0002': 'enemies/enm_bull.webp',
+  'ENM-0003': 'enemies/enm_goblin_scout.webp',
+  'ENM-0004': 'enemies/enm_goblin_chief.webp',
+  'ENM-0005': 'enemies/enm_pirate.webp',
+  'ENM-0006': 'enemies/enm_dragon.webp',
+  'ENM-0007': 'enemies/enm_rock_troll.webp',
+  'ENM-0008': 'enemies/enm_skeleton.webp',
+  'ENM-0009': 'enemies/enm_zombie.webp',
+  'ENM-0010': 'enemies/enm_wild_boar.webp',
+  'ENM-0011': 'enemies/enm_castle_guard.webp',
+  'ENM-0012': 'enemies/enm_ent.webp',
+  'ENM-0013': 'enemies/enm_ancient_ent.webp',
+  'ENM-0014': 'enemies/enm_corrupted_ent.webp',
+  'ENM-0015': 'enemies/enm_shade_goblin.webp',
+  'ENM-0016': 'enemies/enm_goblin_warrior.webp',
+  'ENM-0017': 'enemies/enm_rabbit_buck.webp',
+  'ENM-0018': 'enemies/enm_elder_rock_troll.webp',
 };
 
 /// Transparent workstation art for Standard Production stations.
 const Map<String, String> _workstationArt = <String, String>{
-  'FAC-0001': 'workstations/ws_cooking_stove.png',
-  'FAC-0003': 'workstations/ws_crafting_bench.png',
-  'FAC-0004': 'workstations/ws_metallurgy_furnace.png',
-  'FAC-0006': 'workstations/ws_alchemy_apothecary.png',
+  'FAC-0001': 'workstations/ws_cooking_stove.webp',
+  'FAC-0003': 'workstations/ws_crafting_bench.webp',
+  'FAC-0004': 'workstations/ws_metallurgy_furnace.webp',
+  'FAC-0006': 'workstations/ws_alchemy_apothecary.webp',
 };
 
 /// Gathering action scene sprites keyed by Action ID.
 const Map<String, String> _actionArt = <String, String>{
-  'ACN-0013': 'actions/acn_hunt_duck.png',
-  'ACN-0014': 'actions/acn_hunt_elk.png',
-  'ACN-0015': 'actions/acn_hunt_butterfly.png',
-  'ACN-0016': 'actions/acn_hunt_rabbit.png',
-  'ACN-0017': 'actions/acn_hunt_pheasant.png',
-  'ACN-0018': 'actions/acn_mine_copper.png',
-  'ACN-0019': 'actions/acn_dig_clay.png',
-  'ACN-0020': 'actions/acn_mine_tin.png',
-  'ACN-0021': 'actions/acn_mine_coal.png',
-  'ACN-0022': 'actions/acn_mine_iron.png',
-  'ACN-0026': 'actions/acn_mine_titanium.png',
-  'ACN-0027': 'actions/acn_mine_tungsten.png',
-  'ACN-0028': 'actions/acn_delve_essence.png',
-  'ACN-0035': 'actions/acn_harvest_potato.png',
-  'ACN-0036': 'actions/acn_harvest_potato_golden.png',
-  'ACN-0046': 'actions/acn_cut_cedar.png',
-  'ACN-0047': 'actions/acn_cut_oak.png',
-  'ACN-0048': 'actions/acn_cut_poplar.png',
-  'ACN-0049': 'actions/acn_cut_maple.png',
-  'ACN-0050': 'actions/acn_cut_mahogany.png',
-  'ACN-0051': 'actions/acn_cut_ancient.png',
-  'ACN-0097': 'actions/acn_mine_silver.png',
-  'ACN-0098': 'actions/acn_mine_gold.png',
-  'ACN-0099': 'actions/acn_catch_crawfish.png',
-  'ACN-0100': 'actions/acn_catch_trout.png',
-  'ACN-0101': 'actions/acn_catch_salmon.png',
-  'ACN-0102': 'actions/acn_catch_tuna.png',
-  'ACN-0103': 'actions/acn_catch_shark.png',
-  'ACN-0104': 'actions/acn_catch_baby_giant_squid.png',
-  'ACN-0105': 'actions/acn_gather_wild_roots.png',
-  'ACN-0106': 'actions/acn_gather_fernleaf.png',
-  'ACN-0107': 'actions/acn_gather_mosstole.png',
-  'ACN-0108': 'actions/acn_gather_wild_berries.png',
-  'ACN-0109': 'actions/acn_gather_augur_weed.png',
-  'ACN-0110': 'actions/acn_gather_moonblossom.png',
-  'ACN-0111': 'actions/acn_gather_starroot.png',
-  'ACN-0112': 'actions/acn_hunt_mountain_goat.png',
-  'ACN-0113': 'actions/acn_hunt_great_stag.png',
-  'ACN-0114': 'actions/acn_hunt_moonhorn_elk.png',
-  'ACN-0162': 'actions/acn_gather_carrot.png',
-  'ACN-0163': 'actions/acn_gather_grapes.png',
-  'ACN-0164': 'actions/acn_gather_herb_1.png',
-  'ACN-0165': 'actions/acn_gather_herb_2.png',
-  'ACN-0166': 'actions/acn_mine_sapphire.png',
-  'ACN-0167': 'actions/acn_mine_emerald.png',
-  'ACN-0168': 'actions/acn_mine_ruby.png',
+  'ACN-0013': 'actions/acn_hunt_duck.webp',
+  'ACN-0014': 'actions/acn_hunt_elk.webp',
+  'ACN-0015': 'actions/acn_hunt_butterfly.webp',
+  'ACN-0016': 'actions/acn_hunt_rabbit.webp',
+  'ACN-0017': 'actions/acn_hunt_pheasant.webp',
+  'ACN-0018': 'actions/acn_mine_copper.webp',
+  'ACN-0019': 'actions/acn_dig_clay.webp',
+  'ACN-0020': 'actions/acn_mine_tin.webp',
+  'ACN-0021': 'actions/acn_mine_coal.webp',
+  'ACN-0022': 'actions/acn_mine_iron.webp',
+  'ACN-0026': 'actions/acn_mine_titanium.webp',
+  'ACN-0027': 'actions/acn_mine_tungsten.webp',
+  'ACN-0028': 'actions/acn_delve_essence.webp',
+  'ACN-0035': 'actions/acn_harvest_potato.webp',
+  'ACN-0036': 'actions/acn_harvest_potato_golden.webp',
+  'ACN-0046': 'actions/acn_cut_cedar.webp',
+  'ACN-0047': 'actions/acn_cut_oak.webp',
+  'ACN-0048': 'actions/acn_cut_poplar.webp',
+  'ACN-0049': 'actions/acn_cut_maple.webp',
+  'ACN-0050': 'actions/acn_cut_mahogany.webp',
+  'ACN-0051': 'actions/acn_cut_ancient.webp',
+  'ACN-0097': 'actions/acn_mine_silver.webp',
+  'ACN-0098': 'actions/acn_mine_gold.webp',
+  'ACN-0099': 'actions/acn_catch_crawfish.webp',
+  'ACN-0100': 'actions/acn_catch_trout.webp',
+  'ACN-0101': 'actions/acn_catch_salmon.webp',
+  'ACN-0102': 'actions/acn_catch_tuna.webp',
+  'ACN-0103': 'actions/acn_catch_shark.webp',
+  'ACN-0104': 'actions/acn_catch_baby_giant_squid.webp',
+  'ACN-0105': 'actions/acn_gather_wild_roots.webp',
+  'ACN-0106': 'actions/acn_gather_fernleaf.webp',
+  'ACN-0107': 'actions/acn_gather_mosstole.webp',
+  'ACN-0108': 'actions/acn_gather_wild_berries.webp',
+  'ACN-0109': 'actions/acn_gather_augur_weed.webp',
+  'ACN-0110': 'actions/acn_gather_moonblossom.webp',
+  'ACN-0111': 'actions/acn_gather_starroot.webp',
+  'ACN-0112': 'actions/acn_hunt_mountain_goat.webp',
+  'ACN-0113': 'actions/acn_hunt_great_stag.webp',
+  'ACN-0114': 'actions/acn_hunt_moonhorn_elk.webp',
+  'ACN-0162': 'actions/acn_gather_carrot.webp',
+  'ACN-0163': 'actions/acn_gather_grapes.webp',
+  'ACN-0164': 'actions/acn_gather_herb_1.webp',
+  'ACN-0165': 'actions/acn_gather_herb_2.webp',
+  'ACN-0166': 'actions/acn_mine_sapphire.webp',
+  'ACN-0167': 'actions/acn_mine_emerald.webp',
+  'ACN-0168': 'actions/acn_mine_ruby.webp',
 };
 
 const Map<String, String> _genderArt = <String, String>{
-  'APR-0017': 'player/player_gender_feminine.png',
-  'APR-0019': 'player/player_gender_androgynous.png',
-  'APR-0018': 'player/player_gender_masculine.png',
+  'APR-0017': 'player/player_gender_feminine.webp',
+  'APR-0019': 'player/player_gender_androgynous.webp',
+  'APR-0018': 'player/player_gender_masculine.webp',
 };
 
 /// Whether the art tables name this id rather than answering with a fallback.
@@ -193,56 +191,56 @@ bool hasEnemyArt(String enemyId) => _enemyArt.containsKey(enemyId);
 bool hasActionArt(String actionId) => _actionArt.containsKey(actionId);
 
 String mapAssetPath(String mapId) {
-  return '$_assetRoot/${_mapArt[mapId] ?? 'maps/map_idale_main.png'}';
+  return '$_assetRoot/${_mapArt[mapId] ?? 'maps/map_idale_main.webp'}';
 }
 
 String locationAssetPath(String locationId) {
-  return '$_assetRoot/${_locationArt[locationId] ?? 'locations/loc_town.png'}';
+  return '$_assetRoot/${_locationArt[locationId] ?? 'locations/loc_town.webp'}';
 }
 
 /// An item's icon, by id when one is pinned and by [itemIconStem] otherwise.
 String itemIconPath(ItemRow? item) {
-  return '$_assetRoot/icons/items/item_${itemIconStem(item)}.png';
+  return '$_assetRoot/icons/items/item_${itemIconStem(item)}.webp';
 }
 
 /// The coin, for gold amounts that are not an inventory stack.
-String goldIconPath() => '$_assetRoot/icons/items/item_gold.png';
+String goldIconPath() => '$_assetRoot/icons/items/item_gold.webp';
 
 String slotIconPath(String slotId) {
-  return '$_assetRoot/icons/slots/slot_${_slotIcons[slotId] ?? 'weapon_tool'}.png';
+  return '$_assetRoot/icons/slots/slot_${_slotIcons[slotId] ?? 'weapon_tool'}.webp';
 }
 
 String enemyAssetPath(String enemyId) {
-  return '$_assetRoot/${_enemyArt[enemyId] ?? 'enemies/enm_cow.png'}';
+  return '$_assetRoot/${_enemyArt[enemyId] ?? 'enemies/enm_cow.webp'}';
 }
 
 String workstationAssetPath(String? facilityId) {
-  const fallback = 'workstations/ws_crafting_bench.png';
+  const fallback = 'workstations/ws_crafting_bench.webp';
   return '$_assetRoot/${_workstationArt[facilityId] ?? fallback}';
 }
 
 String actionAssetPath(String actionId) {
-  return '$_assetRoot/${_actionArt[actionId] ?? 'actions/acn_harvest_potato.png'}';
+  return '$_assetRoot/${_actionArt[actionId] ?? 'actions/acn_harvest_potato.webp'}';
 }
 
-String critterAssetPath(String internalKey) => '$_assetRoot/critters/crt_$internalKey.png';
+String critterAssetPath(String internalKey) => '$_assetRoot/critters/crt_$internalKey.webp';
 
 String skillIconPath(SkillRow? skill) {
-  if (skill == null) return '$_assetRoot/icons/skills/skl_combat.png';
+  if (skill == null) return '$_assetRoot/icons/skills/skl_combat.webp';
   final key = skill.internalKey.trim().toLowerCase().replaceAll(' ', '_');
-  return '$_assetRoot/icons/skills/skl_$key.png';
+  return '$_assetRoot/icons/skills/skl_$key.webp';
 }
 
 /// The player sprite, used for the portrait and the action scenes alike.
 String playerAssetPath(PlayerAppearance? appearance) {
   final art = _genderArt[appearance?.genderPresentation] ?? _genderArt[defaultGenderPresentationId];
-  return '$_assetRoot/${art ?? 'player/player_gender_feminine.png'}';
+  return '$_assetRoot/${art ?? 'player/player_gender_feminine.webp'}';
 }
 
-String uiMapAssetPath() => '$_assetRoot/icons/ui/ui_map.png';
+String uiMapAssetPath() => '$_assetRoot/icons/ui/ui_map.webp';
 
 /// The pixel ring drawn over the HUD portrait.
-String avatarFrameAssetPath() => '$_assetRoot/player/avatar_frame_pixel.png';
+String avatarFrameAssetPath() => '$_assetRoot/player/avatar_frame_pixel.webp';
 
 /// Picks an item's icon from its id, key, category, subtype and name.
 ///

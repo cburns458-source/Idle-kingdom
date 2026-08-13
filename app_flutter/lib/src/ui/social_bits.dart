@@ -79,6 +79,7 @@ class SocialPortrait extends StatelessWidget {
         playerAssetPath(appearance),
         alignment: Alignment.topCenter,
         fit: BoxFit.cover,
+        filterQuality: FilterQuality.none,
       ),
     );
   }

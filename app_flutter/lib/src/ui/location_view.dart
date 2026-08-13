@@ -133,6 +133,7 @@ class _LocationViewState extends State<LocationView> {
           locationAssetPath(locationId),
           fit: BoxFit.cover,
           alignment: Alignment.topCenter,
+          filterQuality: FilterQuality.none,
         ),
         const DecoratedBox(
           decoration: BoxDecoration(

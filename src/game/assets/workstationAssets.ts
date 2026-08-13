@@ -3,18 +3,18 @@ import { withAssetVersion } from './cacheBust'
 /** Transparent workstation art for Standard Production stations. */
 export const WORKSTATION_ASSET_PATHS: Record<string, string> = {
   // Kitchen / Cooking
-  'FAC-0001': '/assets/workstations/ws_cooking_stove.png',
+  'FAC-0001': '/assets/workstations/ws_cooking_stove.webp',
   // Crafting Workshop
-  'FAC-0003': '/assets/workstations/ws_crafting_bench.png',
+  'FAC-0003': '/assets/workstations/ws_crafting_bench.webp',
   // Metallurgy Furnace
-  'FAC-0004': '/assets/workstations/ws_metallurgy_furnace.png',
+  'FAC-0004': '/assets/workstations/ws_metallurgy_furnace.webp',
   // Apothecary / Alchemy
-  'FAC-0006': '/assets/workstations/ws_alchemy_apothecary.png',
+  'FAC-0006': '/assets/workstations/ws_alchemy_apothecary.webp',
 }
 
 export function workstationAssetPath(facilityId: string | null | undefined): string {
-  if (!facilityId) return withAssetVersion('/assets/workstations/ws_crafting_bench.png')
+  if (!facilityId) return withAssetVersion('/assets/workstations/ws_crafting_bench.webp')
   return withAssetVersion(
-    WORKSTATION_ASSET_PATHS[facilityId] ?? '/assets/workstations/ws_crafting_bench.png',
+    WORKSTATION_ASSET_PATHS[facilityId] ?? '/assets/workstations/ws_crafting_bench.webp',
   )
 }

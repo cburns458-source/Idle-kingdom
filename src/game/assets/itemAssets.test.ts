@@ -29,12 +29,12 @@ function item(partial: {
 
 describe('itemAssetPath', () => {
   it('uses ID overrides for distinct Launch icons', () => {
-    expect(itemAssetPath('ITEM-0028')).toContain('item_berries.png')
-    expect(itemAssetPath('ITEM-0046')).toContain('item_dragon_scale.png')
-    expect(itemAssetPath('ITEM-0288')).toContain('item_insignia.png')
-    expect(itemAssetPath('ITEM-0169')).toContain('item_backpack.png')
-    expect(itemAssetPath('ITEM-0123')).toContain('item_hammer.png')
-    expect(itemAssetPath('ITEM-0103')).toContain('item_fishing_tool.png')
+    expect(itemAssetPath('ITEM-0028')).toContain('item_berries.webp')
+    expect(itemAssetPath('ITEM-0046')).toContain('item_dragon_scale.webp')
+    expect(itemAssetPath('ITEM-0288')).toContain('item_insignia.webp')
+    expect(itemAssetPath('ITEM-0169')).toContain('item_backpack.webp')
+    expect(itemAssetPath('ITEM-0123')).toContain('item_hammer.webp')
+    expect(itemAssetPath('ITEM-0103')).toContain('item_fishing_tool.webp')
   })
 
   it('maps platelegs to legs instead of chest', () => {
@@ -47,7 +47,7 @@ describe('itemAssetPath', () => {
         Subtype: 'Platelegs',
       }),
     )
-    expect(path).toContain('item_legs.png')
+    expect(path).toContain('item_legs.webp')
   })
 
   it('does not treat explorer as ore', () => {
@@ -60,7 +60,7 @@ describe('itemAssetPath', () => {
         Subtype: 'Specialist back item',
       }),
     )
-    expect(path).toContain('item_backpack.png')
+    expect(path).toContain('item_backpack.webp')
   })
 
   it('prefers jewelry shapes over gem color names', () => {
@@ -74,6 +74,6 @@ describe('itemAssetPath', () => {
           Subtype: 'Necklace',
         }),
       ),
-    ).toContain('item_necklace.png')
+    ).toContain('item_necklace.webp')
   })
 })
