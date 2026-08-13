@@ -10,12 +10,7 @@ import 'remote.dart';
 
 /// One account as an auth provider describes it.
 class RemoteAccount {
-  const RemoteAccount({
-    required this.userId,
-    this.email,
-    this.username,
-    this.accessToken,
-  });
+  const RemoteAccount({required this.userId, this.email, this.username, this.accessToken});
 
   final String userId;
 

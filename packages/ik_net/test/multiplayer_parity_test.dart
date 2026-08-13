@@ -85,11 +85,11 @@ void main() {
           checkParity(fixture, <String, Object?>{
             'boards': buildLeaderboardSnapshot(db, save).toJson(),
             'boardKeys': keys,
-            'labels': <MultiplayerBoardKey>[...keys, 'skill:SKL-9999', 'not-a-board']
-                .map(
-                  (key) => <String, Object?>{'key': key, 'label': boardLabel(db, key)},
-                )
-                .toList(),
+            'labels': <MultiplayerBoardKey>[
+              ...keys,
+              'skill:SKL-9999',
+              'not-a-board',
+            ].map((key) => <String, Object?>{'key': key, 'label': boardLabel(db, key)}).toList(),
           }),
           isNull,
         );
@@ -276,11 +276,7 @@ void main() {
             'Hi',
           );
           harness.advance(10000);
-          final stillTooSoon = harness.backend.sendChat(
-            hero,
-            const ChatChannel.global(),
-            'Third',
-          );
+          final stillTooSoon = harness.backend.sendChat(hero, const ChatChannel.global(), 'Third');
           harness.advance(20000);
           final afterCooldown = harness.backend.sendChat(
             hero,
@@ -493,11 +489,7 @@ void main() {
         final harness = BackendHarness(startMs: fixture.inputField<num>('nowMs'));
         final hero = harness.signUp('hero@example.com', 'Hero');
         final rival = harness.signUp('rival@example.com', 'Rival');
-        final posted = harness.backend.postBazaar(
-          hero,
-          bazaarPostTrade,
-          '  Selling copper ore  ',
-        );
+        final posted = harness.backend.postBazaar(hero, bazaarPostTrade, '  Selling copper ore  ');
         final tooSoon = harness.backend.postBazaar(hero, bazaarPostMessage, 'Also this');
         final empty = harness.backend.postBazaar(rival, bazaarPostMessage, '  ');
         final unknownKind = harness.backend.postBazaar(rival, 'auction', 'Bid now');
@@ -507,11 +499,7 @@ void main() {
           'Guild needs members',
         );
         harness.advance(10000);
-        final afterCooldown = harness.backend.postBazaar(
-          hero,
-          bazaarPostMessage,
-          'what the shit',
-        );
+        final afterCooldown = harness.backend.postBazaar(hero, bazaarPostMessage, 'what the shit');
         expect(
           checkParity(fixture, <String, Object?>{
             'posted': posted.toJson(),
@@ -601,10 +589,8 @@ void main() {
         final db = databaseOf(fixture);
         final save = saveOf(fixture);
         final nowIso = fixture.inputField<String>('nowIso');
-        List<RemoteRow> rowsOf(String key) => fixture
-            .inputField<List<Object?>>(key)
-            .map((value) => asJsonMap(value))
-            .toList();
+        List<RemoteRow> rowsOf(String key) =>
+            fixture.inputField<List<Object?>>(key).map((value) => asJsonMap(value)).toList();
         final saveRows = rowsOf('saveRows');
         final records = saveRows.map((row) => remoteSaveRowFrom('usr_0001', row)).toList();
         expect(
@@ -649,12 +635,7 @@ void main() {
               ' Rowan ',
               'token',
             ).toJson(),
-            'signUpWithoutToken': sessionFromSignUp(
-              'usr_0001',
-              'a@b.co',
-              'Rowan',
-              null,
-            ).toJson(),
+            'signUpWithoutToken': sessionFromSignUp('usr_0001', 'a@b.co', 'Rowan', null).toJson(),
             'signInSessions': <Object?>[
               sessionFromSignIn(
                 'usr_0001',
@@ -679,12 +660,11 @@ void main() {
               buildLeaderboardSnapshot(db, save),
               nowIso,
             ),
-            'entries': leaderboardEntriesFrom(rowsOf('boardRows'), boardTotalLevel)
-                .map((entry) => entry.toJson())
-                .toList(),
-            'chatMessages': rowsOf('chatRows')
-                .map((row) => chatMessageFrom(row).toJson())
-                .toList(),
+            'entries': leaderboardEntriesFrom(
+              rowsOf('boardRows'),
+              boardTotalLevel,
+            ).map((entry) => entry.toJson()).toList(),
+            'chatMessages': rowsOf('chatRows').map((row) => chatMessageFrom(row).toJson()).toList(),
             'functionMessages': <Object?>[
               chatMessageFromFunction(<String, Object?>{
                 'id': 'msg_1',
@@ -742,11 +722,7 @@ void _replayGuildBrowse(ParityFixture fixture) {
   final leader = harness.signUp('leader@example.com', 'Leader');
   final refusals = <Object?>[
     harness.backend
-        .createGuild(
-          leader,
-          const CreateGuildInput(name: 'Ab', tag: 'AB', emblem: _emblem),
-          100,
-        )
+        .createGuild(leader, const CreateGuildInput(name: 'Ab', tag: 'AB', emblem: _emblem), 100)
         .toJson(),
     harness.backend
         .createGuild(
@@ -814,10 +790,7 @@ void _replayGuildBrowse(ParityFixture fixture) {
       'missing': harness.backend.getGuild('gld_9999')?.toJson(),
       'members': harness.backend.guildMembers('gld_0002').map((row) => row.toJson()).toList(),
       'projects': harness.backend.guildProjects('gld_0002').map((row) => row.toJson()).toList(),
-      'challenges': harness.backend
-          .guildChallenges('gld_0002')
-          .map((row) => row.toJson())
-          .toList(),
+      'challenges': harness.backend.guildChallenges('gld_0002').map((row) => row.toJson()).toList(),
     }),
     isNull,
   );
@@ -925,10 +898,7 @@ void _replayGuildRanks(ParityFixture fixture) {
       'notInGuild': notInGuild.toJson(),
       'guild': harness.backend.getGuild(guildId)?.toJson(),
       'members': harness.backend.guildMembers(guildId).map((row) => row.toJson()).toList(),
-      'challenges': harness.backend
-          .guildChallenges(guildId)
-          .map((row) => row.toJson())
-          .toList(),
+      'challenges': harness.backend.guildChallenges(guildId).map((row) => row.toJson()).toList(),
       'leaderProfile': harness.backend.getProfile(leader.userId)?.toJson(),
       'walkInProfile': harness.backend.getProfile(walkIn.userId)?.toJson(),
     }),

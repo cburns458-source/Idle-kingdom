@@ -334,10 +334,8 @@ const Map<String, String> guildEmblemEmojiToSymbol = <String, String>{
 class GuildEmblem {
   const GuildEmblem({required this.color, required this.symbol});
 
-  factory GuildEmblem.fromJson(Map<String, Object?> json) => GuildEmblem(
-    color: json['color']! as String,
-    symbol: json['symbol']! as String,
-  );
+  factory GuildEmblem.fromJson(Map<String, Object?> json) =>
+      GuildEmblem(color: json['color']! as String, symbol: json['symbol']! as String);
 
   /// Banner fill color, as a CSS hex string the clients both understand.
   final String color;
@@ -431,10 +429,7 @@ class GuildListing {
   GuildEmblem get emblem => guild.emblem;
   GuildJoinPolicy get joinPolicy => guild.joinPolicy;
 
-  Map<String, Object?> toJson() => <String, Object?>{
-    ...guild.toJson(),
-    'memberCount': memberCount,
-  };
+  Map<String, Object?> toJson() => <String, Object?>{...guild.toJson(), 'memberCount': memberCount};
 }
 
 class GuildMember {
@@ -757,11 +752,7 @@ class PublicSkillLine {
   final num level;
   final num xp;
 
-  Map<String, Object?> toJson() => <String, Object?>{
-    'skillId': skillId,
-    'level': level,
-    'xp': xp,
-  };
+  Map<String, Object?> toJson() => <String, Object?>{'skillId': skillId, 'level': level, 'xp': xp};
 }
 
 class PublicPlayerProfile {

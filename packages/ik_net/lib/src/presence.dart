@@ -26,8 +26,7 @@ String citadelChatLocationIdOf() => citadelChatLocationId;
 
 String citadelLocationId() => citadelLocationIdValue;
 
-String citadelLocalChannelKey() =>
-    chatChannelKey(const ChatChannel.local(citadelChatLocationId));
+String citadelLocalChannelKey() => chatChannelKey(const ChatChannel.local(citadelChatLocationId));
 
 /// The two boards the Citadel keeps, each opened the way a shop is.
 enum CitadelHubTab { bounties, bazaar }

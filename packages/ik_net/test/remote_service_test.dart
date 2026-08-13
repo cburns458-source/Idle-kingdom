@@ -159,13 +159,9 @@ void main() {
     await transport.upsert(RemoteTables.profiles, <RemoteRow>[
       <String, Object?>{'user_id': 'usr_rival', 'username': 'Rival', 'guild_name': 'Iron League'},
     ]);
-    await transport.upsert(
-      RemoteTables.leaderboard,
-      <RemoteRow>[
-        <String, Object?>{'user_id': 'usr_rival', 'board_key': boardTotalLevel, 'value': 99},
-      ],
-      onConflict: remoteLeaderboardConflict,
-    );
+    await transport.upsert(RemoteTables.leaderboard, <RemoteRow>[
+      <String, Object?>{'user_id': 'usr_rival', 'board_key': boardTotalLevel, 'value': 99},
+    ], onConflict: remoteLeaderboardConflict);
 
     final board = await service.leaderboard(boardTotalLevel);
     expect(board.map((entry) => entry.username), <String>['Rival', 'Hero']);
@@ -304,7 +300,10 @@ void main() {
 
     transport.chatFunctionReply = null;
     transport.failNextWith = 'Chat cooldown active.';
-    expect((await service.sendChat(const ChatChannel.global(), 'Hi')).reason, 'Chat cooldown active.');
+    expect(
+      (await service.sendChat(const ChatChannel.global(), 'Hi')).reason,
+      'Chat cooldown active.',
+    );
   });
 
   test('answers the screens no server owns from this device', () async {

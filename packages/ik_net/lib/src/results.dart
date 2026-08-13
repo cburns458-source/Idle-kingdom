@@ -136,11 +136,7 @@ class BountyClaimResult {
   bool get ok => reason == null;
 
   Map<String, Object?> toJson() => ok
-      ? <String, Object?>{
-          'ok': true,
-          'claim': claim!.toJson(),
-          'firstCompleter': firstCompleter,
-        }
+      ? <String, Object?>{'ok': true, 'claim': claim!.toJson(), 'firstCompleter': firstCompleter}
       : <String, Object?>{'ok': false, 'reason': reason};
 }
 

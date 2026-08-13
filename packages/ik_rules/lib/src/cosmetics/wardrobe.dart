@@ -152,9 +152,10 @@ class AppearanceSlider {
 List<AppearanceSlider> appearanceSliders(GameDatabase db, PlayerAppearance appearance) {
   final sliders = <AppearanceSlider>[];
   for (final category in AppearanceCategory.values) {
-    final optionIds = appearanceOptions(db, category)
-        .map((row) => row.raw['Appearance Option ID'] as String)
-        .toList();
+    final optionIds = appearanceOptions(
+      db,
+      category,
+    ).map((row) => row.raw['Appearance Option ID'] as String).toList();
     if (optionIds.isEmpty) continue;
     final index = optionIds.indexOf(appearanceSelection(appearance, category));
     sliders.add(
@@ -198,11 +199,7 @@ class CosmeticUnlockNotice {
 const String _wardrobeHint =
     'Tap your portrait in the top-left corner anytime to open the Wardrobe and equip it.';
 
-CosmeticUnlockNotice? cosmeticUnlockNotice(
-  GameDatabase db,
-  String cosmeticId,
-  bool isFirstEver,
-) {
+CosmeticUnlockNotice? cosmeticUnlockNotice(GameDatabase db, String cosmeticId, bool isFirstEver) {
   final cosmetic = cosmeticById(db, cosmeticId);
   if (cosmetic == null) return null;
   final itemId = cosmetic.raw['Item ID'];

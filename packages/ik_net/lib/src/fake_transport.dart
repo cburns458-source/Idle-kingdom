@@ -239,11 +239,7 @@ class FakeTransport implements RemoteTransport {
   }
 
   @override
-  Future<RemoteQueryResult> insert(
-    String table,
-    RemoteRow row, {
-    required String columns,
-  }) async {
+  Future<RemoteQueryResult> insert(String table, RemoteRow row, {required String columns}) async {
     calls.add('insert:$table');
     final reason = _takeFailure('insert:$table');
     if (reason != null) return RemoteQueryResult.failed(reason);
@@ -255,7 +251,9 @@ class FakeTransport implements RemoteTransport {
     }
     final written = <String, Object?>{..._defaults(table), ...row};
     stored.add(written);
-    return RemoteQueryResult.ok(<RemoteRow>[<String, Object?>{...written}]);
+    return RemoteQueryResult.ok(<RemoteRow>[
+      <String, Object?>{...written},
+    ]);
   }
 
   /// What a unique-key violation reads as, standing in for the database's own
@@ -288,12 +286,7 @@ class FakeTransport implements RemoteTransport {
 }
 
 class FakeAccount {
-  FakeAccount({
-    required this.userId,
-    required this.email,
-    required this.password,
-    this.username,
-  });
+  FakeAccount({required this.userId, required this.email, required this.password, this.username});
 
   final String userId;
   final String email;

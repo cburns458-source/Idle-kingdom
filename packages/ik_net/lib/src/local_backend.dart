@@ -94,9 +94,7 @@ class LocalMultiplayerBackend {
     final trimmedUser = username.trim();
     final cleanUser = trimmedUser.length > 24 ? trimmedUser.substring(0, 24) : trimmedUser;
     if (!cleanEmail.contains('@') || cleanUser.length < 2 || password.length < 4) {
-      return const SessionResult.failed(
-        'Enter a valid email, username (2+), and password (4+).',
-      );
+      return const SessionResult.failed('Enter a valid email, username (2+), and password (4+).');
     }
     if (db.users.any((user) => user.email == cleanEmail)) {
       return const SessionResult.failed('An account with that email already exists.');
@@ -375,7 +373,8 @@ class LocalMultiplayerBackend {
         .toList();
     mergeSort(
       rows,
-      compare: (a, b) => jsCompareThen(jsDateParse(a.createdAt) - jsDateParse(b.createdAt), () => 0),
+      compare: (a, b) =>
+          jsCompareThen(jsDateParse(a.createdAt) - jsDateParse(b.createdAt), () => 0),
     );
     return _lastN(rows, limit);
   }
@@ -394,7 +393,8 @@ class LocalMultiplayerBackend {
         .toList();
     mergeSort(
       rows,
-      compare: (a, b) => jsCompareThen(jsDateParse(a.createdAt) - jsDateParse(b.createdAt), () => 0),
+      compare: (a, b) =>
+          jsCompareThen(jsDateParse(a.createdAt) - jsDateParse(b.createdAt), () => 0),
     );
     return _lastN(rows, limit);
   }
@@ -402,9 +402,10 @@ class LocalMultiplayerBackend {
   /// Direct messages from other players newer than [sinceIso], exclusive.
   int countUnreadDirectMessages(String viewerId, String? sinceIso) {
     final sinceMs = sinceIso != null ? jsDateParse(sinceIso) : 0;
-    return listDirectMessages(viewerId, 200)
-        .where((row) => row.userId != viewerId && jsDateParse(row.createdAt) > sinceMs)
-        .length;
+    return listDirectMessages(
+      viewerId,
+      200,
+    ).where((row) => row.userId != viewerId && jsDateParse(row.createdAt) > sinceMs).length;
   }
 
   Set<String> _silencedBy(LocalDb db, String viewerId) => <String>{
@@ -563,10 +564,7 @@ class LocalMultiplayerBackend {
     final listings = db.guilds
         .map((guild) => GuildListing(guild: guild, memberCount: _guildMemberCount(db, guild.id)))
         .toList();
-    mergeSort(
-      listings,
-      compare: (a, b) => jsLocaleCompare(a.guild.name, b.guild.name),
-    );
+    mergeSort(listings, compare: (a, b) => jsLocaleCompare(a.guild.name, b.guild.name));
     return listings;
   }
 
@@ -586,11 +584,7 @@ class LocalMultiplayerBackend {
     }).toList();
   }
 
-  ApplyToGuildResult applyToGuild(
-    MultiplayerSession session,
-    String guildId,
-    String message,
-  ) {
+  ApplyToGuildResult applyToGuild(MultiplayerSession session, String guildId, String message) {
     final db = _db();
     final guild = db.guilds.firstWhereOrNull((row) => row.id == guildId);
     if (guild == null) return const ApplyToGuildResult.failed('Guild not found.');
@@ -677,12 +671,7 @@ class LocalMultiplayerBackend {
     return const ActionResult.ok();
   }
 
-  ActionResult setMemberRole(
-    String actorId,
-    String guildId,
-    String targetUserId,
-    GuildRole role,
-  ) {
+  ActionResult setMemberRole(String actorId, String guildId, String targetUserId, GuildRole role) {
     final db = _db();
     final guild = db.guilds.firstWhereOrNull((row) => row.id == guildId);
     if (guild == null || guild.leaderId != actorId) {
@@ -699,20 +688,15 @@ class LocalMultiplayerBackend {
     }
     db.members = db.members
         .map(
-          (row) => row.guildId == guildId && row.userId == targetUserId
-              ? row.copyWith(role: role)
-              : row,
+          (row) =>
+              row.guildId == guildId && row.userId == targetUserId ? row.copyWith(role: role) : row,
         )
         .toList();
     _write(db);
     return const ActionResult.ok();
   }
 
-  ActionResult setGuildJoinPolicy(
-    String actorId,
-    String guildId,
-    GuildJoinPolicy joinPolicy,
-  ) {
+  ActionResult setGuildJoinPolicy(String actorId, String guildId, GuildJoinPolicy joinPolicy) {
     final db = _db();
     final index = db.guilds.indexWhere((row) => row.id == guildId);
     if (index < 0 || db.guilds[index].leaderId != actorId) {
@@ -874,9 +858,7 @@ class LocalMultiplayerBackend {
     if (db.friends.any((row) => row.userA == pair[0] && row.userB == pair[1])) {
       return const ActionResult.failed('Already friends.');
     }
-    if (db.friendRequests.any(
-      (row) => row.fromUserId == fromUserId && row.toUserId == toUserId,
-    )) {
+    if (db.friendRequests.any((row) => row.fromUserId == fromUserId && row.toUserId == toUserId)) {
       return const ActionResult.failed('Friend request already sent.');
     }
     final reverse = db.friendRequests.firstWhereOrNull(
@@ -929,11 +911,7 @@ class LocalMultiplayerBackend {
 
   /// Records the first completer for an hourly bounty slot. Later callers still
   /// succeed, since they can collect the personal base reward.
-  BountyClaimResult claimBounty(
-    MultiplayerSession session,
-    String hourKey,
-    String bountyId,
-  ) {
+  BountyClaimResult claimBounty(MultiplayerSession session, String hourKey, String bountyId) {
     final db = _db();
     final existing = db.bountyClaims.firstWhereOrNull(
       (row) => row.hourKey == hourKey && row.bountyId == bountyId,
@@ -959,23 +937,21 @@ class LocalMultiplayerBackend {
     final rows = _db().bazaarPosts.toList();
     mergeSort(
       rows,
-      compare: (a, b) => jsCompareThen(jsDateParse(a.createdAt) - jsDateParse(b.createdAt), () => 0),
+      compare: (a, b) =>
+          jsCompareThen(jsDateParse(a.createdAt) - jsDateParse(b.createdAt), () => 0),
     );
     return _lastN(rows, limit);
   }
 
-  BazaarPostResult postBazaar(
-    MultiplayerSession session,
-    BazaarPostKind kind,
-    String body,
-  ) {
+  BazaarPostResult postBazaar(MultiplayerSession session, BazaarPostKind kind, String body) {
     final prepared = prepareBazaarPost(kind, body);
     if (!prepared.ok) return BazaarPostResult.failed(prepared.reason!);
     final db = _db();
     final cooldownKey = '${session.userId}:bazaar';
     final last = db.lastChatAt[cooldownKey];
     if (isNotBlank(last) && _now() - jsDateParse(last) < ChatCooldownSeconds.local * 1000) {
-      final wait = ((ChatCooldownSeconds.local * 1000 - (_now() - jsDateParse(last))) / 1000).ceil();
+      final wait = ((ChatCooldownSeconds.local * 1000 - (_now() - jsDateParse(last))) / 1000)
+          .ceil();
       return BazaarPostResult.failed('Wait ${wait}s before posting again.');
     }
     final post = BazaarPost(

@@ -210,9 +210,10 @@ void main() {
         expect(
           checkParity(fixture, {
             'tabs': wardrobeSlotTabs(db).map((tab) => tab.toJson()).toList(),
-            'slots': _stringList(fixture, 'slotIds')
-                .map((slotId) => wardrobeSlotView(db, save, slotId)?.toJson())
-                .toList(),
+            'slots': _stringList(
+              fixture,
+              'slotIds',
+            ).map((slotId) => wardrobeSlotView(db, save, slotId)?.toJson()).toList(),
             'sliders': appearanceSliders(
               db,
               save.appearance,

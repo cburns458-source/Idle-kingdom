@@ -44,12 +44,7 @@ GuildListing _listing({
   GuildJoinPolicy joinPolicy = guildJoinOpen,
   int memberCount = 3,
 }) {
-  final base = _guild(
-    name: name,
-    tag: tag,
-    description: description,
-    joinPolicy: joinPolicy,
-  );
+  final base = _guild(name: name, tag: tag, description: description, joinPolicy: joinPolicy);
   return GuildListing(
     guild: GuildRecord(
       id: id,
@@ -220,14 +215,8 @@ void main() {
                 'all': _rows(guildBrowseRows(rows)),
                 'blank': guildBrowseRows(rows, '   ').map((row) => row.guildId).toList(),
                 'byName': guildBrowseRows(rows, 'oak').map((row) => row.guildId).toList(),
-                'byBracketedTag': guildBrowseRows(
-                  rows,
-                  '[irn]',
-                ).map((row) => row.guildId).toList(),
-                'byPartialName': guildBrowseRows(
-                  rows,
-                  'LEAGUE',
-                ).map((row) => row.guildId).toList(),
+                'byBracketedTag': guildBrowseRows(rows, '[irn]').map((row) => row.guildId).toList(),
+                'byPartialName': guildBrowseRows(rows, 'LEAGUE').map((row) => row.guildId).toList(),
                 'noMatch': _rows(guildBrowseRows(rows, 'zzz')),
                 'applicationMessages': <String>[
                   defaultApplicationMessage('Rowan'),
@@ -345,11 +334,10 @@ void main() {
                 ),
               ]),
             ),
-            'emptyMessages': <MultiplayerBoardKey>[
-              boardTotalLevel,
-              boardGuildTotalLevel,
-              'skill:SKL-0001',
-            ].map((key) => <String, Object?>{'key': key, 'message': emptyBoardMessage(key)}).toList(),
+            'emptyMessages':
+                <MultiplayerBoardKey>[boardTotalLevel, boardGuildTotalLevel, 'skill:SKL-0001']
+                    .map((key) => <String, Object?>{'key': key, 'message': emptyBoardMessage(key)})
+                    .toList(),
           }),
           isNull,
         );
@@ -382,12 +370,7 @@ void main() {
           checkParity(fixture, <String, Object?>{
             'tabIds': chatTabOrder.map((tab) => tab.wire).toList(),
             'plain': _rows(
-              chatTabs(
-                selected: ChatTab.global,
-                citadelHub: false,
-                hasGuild: false,
-                unreadDms: 0,
-              ),
+              chatTabs(selected: ChatTab.global, citadelHub: false, hasGuild: false, unreadDms: 0),
             ),
             'citadelWithGuild': _rows(
               chatTabs(selected: ChatTab.local, citadelHub: true, hasGuild: true, unreadDms: 3),
@@ -445,12 +428,7 @@ void main() {
                 _presence(),
                 _presence(userId: 'usr_3', guildName: 'Iron League'),
                 _presence(userId: 'usr_4', skillLevel: null),
-                _presence(
-                  userId: 'usr_5',
-                  skillId: null,
-                  skillLevel: null,
-                  guildName: 'Oak Guard',
-                ),
+                _presence(userId: 'usr_5', skillId: null, skillLevel: null, guildName: 'Oak Guard'),
                 _presence(userId: 'usr_6', skillId: 'SKL-9999', skillLevel: 0),
               ], _skillName),
             ),

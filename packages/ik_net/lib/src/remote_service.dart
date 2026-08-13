@@ -55,12 +55,7 @@ class RemoteMultiplayerService implements MultiplayerService {
     if (!result.ok || account == null) {
       return SessionResult.failed(result.reason ?? remoteSignUpFailed);
     }
-    final created = sessionFromSignUp(
-      account.userId,
-      email,
-      username,
-      account.accessToken,
-    );
+    final created = sessionFromSignUp(account.userId, email, username, account.accessToken);
     // Best effort: the row may already exist, and row-level security decides
     // whether this account may write it at all.
     await transport.upsert(RemoteTables.profiles, <RemoteRow>[profileRowForSignUp(created)]);
@@ -125,11 +120,7 @@ class RemoteMultiplayerService implements MultiplayerService {
   }
 
   @override
-  Future<CloudSyncResult> pushSave(
-    GameDatabase db,
-    PlayerSave save, {
-    bool force = false,
-  }) async {
+  Future<CloudSyncResult> pushSave(GameDatabase db, PlayerSave save, {bool force = false}) async {
     final current = session;
     if (current == null) {
       return const CloudSyncResult.failed('Sign in to sync cloud saves.');
@@ -140,10 +131,7 @@ class RemoteMultiplayerService implements MultiplayerService {
 
     final existing = force ? null : await _readSaveRow(current.userId);
     if (existing != null && isRemoteSaveNewer(existing, stamped)) {
-      return CloudSyncResult.failed(
-        remoteSaveConflict,
-        remote: existing.toCloudSaveRecordOrNull(),
-      );
+      return CloudSyncResult.failed(remoteSaveConflict, remote: existing.toCloudSaveRecordOrNull());
     }
 
     final refused = await transport.upsert(RemoteTables.saves, <RemoteRow>[
@@ -192,10 +180,7 @@ class RemoteMultiplayerService implements MultiplayerService {
     // upload goes ahead and replaces it.
     if (record == null) return pushSave(db, local, force: true);
     if (remoteSaveWins(local, record.payload)) {
-      return CloudSyncResult.failed(
-        'Cloud save is newer than the local save.',
-        remote: record,
-      );
+      return CloudSyncResult.failed('Cloud save is newer than the local save.', remote: record);
     }
     return pushSave(db, local);
   }
@@ -216,10 +201,7 @@ class RemoteMultiplayerService implements MultiplayerService {
   }
 
   @override
-  Future<List<LeaderboardEntry>> leaderboard(
-    MultiplayerBoardKey boardKey, {
-    int limit = 25,
-  }) async {
+  Future<List<LeaderboardEntry>> leaderboard(MultiplayerBoardKey boardKey, {int limit = 25}) async {
     final result = await transport.select(
       RemoteTables.leaderboard,
       columns: remoteLeaderboardColumns,
@@ -302,21 +284,16 @@ class RemoteMultiplayerService implements MultiplayerService {
       _local.decideGuildApplication(applicationId, accept);
 
   @override
-  Future<ActionResult> setGuildMemberRole(
-    String guildId,
-    String targetUserId,
-    GuildRole role,
-  ) => _local.setGuildMemberRole(guildId, targetUserId, role);
+  Future<ActionResult> setGuildMemberRole(String guildId, String targetUserId, GuildRole role) =>
+      _local.setGuildMemberRole(guildId, targetUserId, role);
 
   @override
   Future<ActionResult> setGuildJoinPolicy(String guildId, GuildJoinPolicy joinPolicy) =>
       _local.setGuildJoinPolicy(guildId, joinPolicy);
 
   @override
-  Future<ActionResult> setGuildRankLabels(
-    String guildId,
-    Map<GuildRankKey, String> rankLabels,
-  ) => _local.setGuildRankLabels(guildId, rankLabels);
+  Future<ActionResult> setGuildRankLabels(String guildId, Map<GuildRankKey, String> rankLabels) =>
+      _local.setGuildRankLabels(guildId, rankLabels);
 
   @override
   Future<ActionResult> setGuildEmblem(String guildId, GuildEmblem emblem) =>
@@ -333,15 +310,13 @@ class RemoteMultiplayerService implements MultiplayerService {
   Future<List<GuildProject>> guildProjects(String guildId) => _local.guildProjects(guildId);
 
   @override
-  Future<List<GuildChallenge>> guildChallenges(String guildId) =>
-      _local.guildChallenges(guildId);
+  Future<List<GuildChallenge>> guildChallenges(String guildId) => _local.guildChallenges(guildId);
 
   @override
   Future<String?> currentGuildId() => _local.currentGuildId();
 
   @override
-  Future<ActivityPresence?> publishPresence(PresenceInput input) =>
-      _local.publishPresence(input);
+  Future<ActivityPresence?> publishPresence(PresenceInput input) => _local.publishPresence(input);
 
   @override
   Future<void> clearPresence() => _local.clearPresence();

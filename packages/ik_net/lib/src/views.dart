@@ -139,8 +139,7 @@ class GuildHomeHeader {
 GuildHomeHeader guildHomeHeader(GuildRecord guild, int memberCount, String? viewerId) {
   return GuildHomeHeader(
     title: '[${guild.tag}] ${guild.name}',
-    subtitle:
-        '${_policyLabel(guild.joinPolicy)} · $memberCount/$guildMaxMembers members',
+    subtitle: '${_policyLabel(guild.joinPolicy)} · $memberCount/$guildMaxMembers members',
     emblem: guild.emblem,
     tag: guild.tag,
     canManage: viewerId != null && guild.leaderId == viewerId,
@@ -222,7 +221,9 @@ List<GuildRosterRow> guildRosterRows(
   final indexed = members.indexed.toList();
   indexed.sort((a, b) {
     final delta = jsDateParse(a.$2.joinedAt) - jsDateParse(b.$2.joinedAt);
-    if (delta != 0) return sort == GuildRosterSort.oldest ? delta.sign.toInt() : -delta.sign.toInt();
+    if (delta != 0) {
+      return sort == GuildRosterSort.oldest ? delta.sign.toInt() : -delta.sign.toInt();
+    }
     return a.$1 - b.$1;
   });
   return indexed.indexed.map((outer) {
@@ -366,7 +367,9 @@ class BoardOption {
 }
 
 List<BoardOption> boardOptions(GameDatabase db) {
-  return launchBoardKeys(db).map((key) => BoardOption(key: key, label: boardLabel(db, key))).toList();
+  return launchBoardKeys(db)
+      .map((key) => BoardOption(key: key, label: boardLabel(db, key)))
+      .toList();
 }
 
 /// One row of a leaderboard.

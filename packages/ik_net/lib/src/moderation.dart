@@ -9,7 +9,5 @@ final RegExp _basicProfanity = RegExp(
 /// Kept apart from any one backend because everything a player writes goes
 /// through it — chat, Bazaar notices — and a hosted backend has to mask the same
 /// words as the local one.
-String filterProfanity(String body) => body.replaceAllMapped(
-  _basicProfanity,
-  (match) => '*' * match.group(0)!.length,
-);
+String filterProfanity(String body) =>
+    body.replaceAllMapped(_basicProfanity, (match) => '*' * match.group(0)!.length);

@@ -177,11 +177,7 @@ class LocalMultiplayerService implements MultiplayerService {
   }
 
   @override
-  Future<CloudSyncResult> pushSave(
-    GameDatabase db,
-    PlayerSave save, {
-    bool force = false,
-  }) async {
+  Future<CloudSyncResult> pushSave(GameDatabase db, PlayerSave save, {bool force = false}) async {
     final current = session;
     if (current == null) {
       return const CloudSyncResult.failed('Sign in to sync cloud saves.');
@@ -232,10 +228,7 @@ class LocalMultiplayerService implements MultiplayerService {
     final remote = _backend.readCloudSave(current.userId);
     if (remote == null || forceUpload) return pushSave(db, local, force: forceUpload);
     if (remoteSaveWins(local, remote.payload)) {
-      return CloudSyncResult.failed(
-        'Cloud save is newer than the local save.',
-        remote: remote,
-      );
+      return CloudSyncResult.failed('Cloud save is newer than the local save.', remote: remote);
     }
     return pushSave(db, local);
   }
@@ -389,8 +382,7 @@ class LocalMultiplayerService implements MultiplayerService {
   }
 
   @override
-  Future<List<GuildProject>> guildProjects(String guildId) async =>
-      _backend.guildProjects(guildId);
+  Future<List<GuildProject>> guildProjects(String guildId) async => _backend.guildProjects(guildId);
 
   @override
   Future<List<GuildChallenge>> guildChallenges(String guildId) async {
@@ -446,8 +438,7 @@ class LocalMultiplayerService implements MultiplayerService {
       _withoutSelf(_backend.listPresence(locationId: citadelLocationId()), true);
 
   @override
-  Future<PublicPlayerProfile?> publicProfile(String userId) async =>
-      _backend.publicProfile(userId);
+  Future<PublicPlayerProfile?> publicProfile(String userId) async => _backend.publicProfile(userId);
 
   @override
   Future<ActionResult> sendFriendRequest(String targetUserId) async {
@@ -468,8 +459,7 @@ class LocalMultiplayerService implements MultiplayerService {
   }
 
   @override
-  Future<List<BazaarPost>> bazaarPosts({int limit = 40}) async =>
-      _backend.listBazaarPosts(limit);
+  Future<List<BazaarPost>> bazaarPosts({int limit = 40}) async => _backend.listBazaarPosts(limit);
 
   @override
   Future<BazaarPostResult> postBazaar(BazaarPostKind kind, String body) async {

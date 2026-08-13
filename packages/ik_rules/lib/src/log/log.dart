@@ -135,10 +135,7 @@ List<QuestLogRow> questLog(GameDatabase db, PlayerSave save) {
               label:
                   '${line.label}: ${jsNumberToString(math.min(line.current, line.required))}'
                   '/${jsNumberToString(line.required)}',
-              percent: math.min(
-                100,
-                (line.current / math.max(1, line.required) * 100).floor(),
-              ),
+              percent: math.min(100, (line.current / math.max(1, line.required) * 100).floor()),
             ),
           )
           .toList(),

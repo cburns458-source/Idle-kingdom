@@ -7,10 +7,8 @@ import 'types.dart';
 class UserPair {
   const UserPair({required this.userId, required this.otherUserId});
 
-  factory UserPair.fromJson(Map<String, Object?> json, String otherKey) => UserPair(
-    userId: json['userId']! as String,
-    otherUserId: json[otherKey]! as String,
-  );
+  factory UserPair.fromJson(Map<String, Object?> json, String otherKey) =>
+      UserPair(userId: json['userId']! as String, otherUserId: json[otherKey]! as String);
 
   final String userId;
   final String otherUserId;
@@ -110,11 +108,7 @@ class PlayerReport {
 }
 
 class FriendRequest {
-  const FriendRequest({
-    required this.fromUserId,
-    required this.toUserId,
-    required this.createdAt,
-  });
+  const FriendRequest({required this.fromUserId, required this.toUserId, required this.createdAt});
 
   factory FriendRequest.fromJson(Map<String, Object?> json) => FriendRequest(
     fromUserId: json['fromUserId']! as String,
@@ -136,10 +130,8 @@ class FriendRequest {
 class Friendship {
   const Friendship({required this.userA, required this.userB});
 
-  factory Friendship.fromJson(Map<String, Object?> json) => Friendship(
-    userA: json['userA']! as String,
-    userB: json['userB']! as String,
-  );
+  factory Friendship.fromJson(Map<String, Object?> json) =>
+      Friendship(userA: json['userA']! as String, userB: json['userB']! as String);
 
   final String userA;
   final String userB;

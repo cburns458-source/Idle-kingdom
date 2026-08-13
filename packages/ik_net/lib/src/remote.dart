@@ -255,10 +255,7 @@ LeaderboardEntry leaderboardEntryFrom(RemoteRow row, MultiplayerBoardKey boardKe
   );
 }
 
-List<LeaderboardEntry> leaderboardEntriesFrom(
-  List<RemoteRow> rows,
-  MultiplayerBoardKey boardKey,
-) {
+List<LeaderboardEntry> leaderboardEntriesFrom(List<RemoteRow> rows, MultiplayerBoardKey boardKey) {
   return <LeaderboardEntry>[
     for (final (index, row) in rows.indexed) leaderboardEntryFrom(row, boardKey, index),
   ];
