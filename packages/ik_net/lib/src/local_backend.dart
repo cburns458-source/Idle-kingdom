@@ -468,18 +468,14 @@ class LocalMultiplayerBackend {
       for (final row in db.friends)
         if (row.userA == userId) row.userB else if (row.userB == userId) row.userA,
     ];
-    return [
-      for (final other in others)
-        if (_contact(db, other) case final contact?) contact,
-    ];
+    return [for (final other in others) ?_contact(db, other)];
   }
 
   List<SocialContact> listIncomingFriendRequests(String userId) {
     final db = _db();
     return [
       for (final row in db.friendRequests)
-        if (row.toUserId == userId)
-          if (_contact(db, row.fromUserId) case final contact?) contact,
+        if (row.toUserId == userId) ?_contact(db, row.fromUserId),
     ];
   }
 
@@ -487,17 +483,13 @@ class LocalMultiplayerBackend {
     final db = _db();
     return [
       for (final row in db.friendRequests)
-        if (row.fromUserId == userId)
-          if (_contact(db, row.toUserId) case final contact?) contact,
+        if (row.fromUserId == userId) ?_contact(db, row.toUserId),
     ];
   }
 
   List<SocialContact> listIgnored(String userId) {
     final db = _db();
-    return [
-      for (final other in blockedIds(userId))
-        if (_contact(db, other) case final contact?) contact,
-    ];
+    return [for (final other in blockedIds(userId)) ?_contact(db, other)];
   }
 
   SocialContact? _contact(LocalDb db, String userId) {

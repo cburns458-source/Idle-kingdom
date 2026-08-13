@@ -77,6 +77,28 @@ class MultiplayerProfile {
   };
 }
 
+/// A name and portrait for a friends or ignore row.
+class SocialContact {
+  const SocialContact({
+    required this.userId,
+    required this.username,
+    required this.appearance,
+    this.guildName,
+  });
+
+  final String userId;
+  final String username;
+  final PlayerAppearance appearance;
+  final String? guildName;
+
+  Map<String, Object?> toJson() => <String, Object?>{
+    'userId': userId,
+    'username': username,
+    'appearance': appearance.toJson(),
+    'guildName': guildName,
+  };
+}
+
 /// A save as the backend holds it, with the version and stamp it was accepted at.
 class CloudSaveRecord {
   const CloudSaveRecord({
