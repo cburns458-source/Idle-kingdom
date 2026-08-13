@@ -180,6 +180,18 @@ const Map<String, String> _genderArt = <String, String>{
   'APR-0018': 'player/player_gender_masculine.png',
 };
 
+/// Whether the art tables name this id rather than answering with a fallback.
+///
+/// The fallbacks are there so an unmapped id cannot break a screen; these say
+/// whether one was needed, which is what the asset audit checks.
+bool hasMapArt(String mapId) => _mapArt.containsKey(mapId);
+
+bool hasLocationArt(String locationId) => _locationArt.containsKey(locationId);
+
+bool hasEnemyArt(String enemyId) => _enemyArt.containsKey(enemyId);
+
+bool hasActionArt(String actionId) => _actionArt.containsKey(actionId);
+
 String mapAssetPath(String mapId) {
   return '$_assetRoot/${_mapArt[mapId] ?? 'maps/map_idale_main.png'}';
 }
@@ -228,6 +240,9 @@ String playerAssetPath(PlayerAppearance? appearance) {
 }
 
 String uiMapAssetPath() => '$_assetRoot/icons/ui/ui_map.png';
+
+/// The pixel ring drawn over the HUD portrait.
+String avatarFrameAssetPath() => '$_assetRoot/player/avatar_frame_pixel.png';
 
 /// Picks an item's icon from its id, key, category, subtype and name.
 ///
