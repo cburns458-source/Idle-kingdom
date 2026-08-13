@@ -216,8 +216,10 @@ class _LocationViewState extends State<LocationView> {
                   Expanded(
                     child: LayoutBuilder(
                       builder: (context, rest) {
-                        final stageMax = rest.maxHeight * 0.52;
-                        final bandMax = rest.maxHeight * 0.5;
+                        // The two together always leave the art some room, so
+                        // the column cannot overflow on a short window.
+                        final stageMax = rest.maxHeight * 0.5;
+                        final bandMax = rest.maxHeight * 0.48;
                         return Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
