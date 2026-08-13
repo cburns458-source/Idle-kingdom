@@ -48,7 +48,7 @@ class _SaveTransferSectionState extends State<SaveTransferSection> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Replace this character?'),
-        content: Text(saveTransferBlurb),
+        content: const Text(saveImportConfirm),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),

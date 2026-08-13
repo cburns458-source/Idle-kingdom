@@ -17,6 +17,11 @@ const String saveTransferBlurb =
 
 const String saveImportHint = 'Paste a save';
 
+/// Asked before an import, because adopting one save discards the other.
+const String saveImportConfirm =
+    'The character on this device will be replaced by the one you pasted, and '
+    'this cannot be undone. Copy this save first if you want to keep it.';
+
 const String saveCopiedNotice = 'Save copied.';
 
 const String saveImportEmpty = 'Paste a save first.';
