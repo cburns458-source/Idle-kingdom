@@ -40,7 +40,12 @@ class _ChatLauncherState extends State<ChatLauncher> {
   @override
   void didUpdateWidget(covariant ChatLauncher oldWidget) {
     super.didUpdateWidget(oldWidget);
-    _entry?.markNeedsBuild();
+    if (oldWidget.locationId == widget.locationId && oldWidget.citadelHub == widget.citadelHub) {
+      return;
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _entry?.markNeedsBuild();
+    });
   }
 
   @override
