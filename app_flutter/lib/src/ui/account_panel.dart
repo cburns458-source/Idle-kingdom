@@ -30,7 +30,20 @@ class _AccountPanelState extends State<AccountPanel> {
   MultiplayerController get net => widget.multiplayer;
 
   @override
+  void initState() {
+    super.initState();
+    // The magic-link button is only offered once there is an address to send to,
+    // so the form repaints as the field fills.
+    _email.addListener(_onEmailChanged);
+  }
+
+  void _onEmailChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
   void dispose() {
+    _email.removeListener(_onEmailChanged);
     _email.dispose();
     _username.dispose();
     _password.dispose();
@@ -45,7 +58,7 @@ class _AccountPanelState extends State<AccountPanel> {
       children: [
         const Text('Account', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
         const SizedBox(height: 4),
-        MutedText(multiplayerModeLine(MultiplayerMode.local)),
+        MutedText(multiplayerModeLine(net.mode)),
         const SizedBox(height: 12),
         if (session == null) ..._signInForm() else ..._signedIn(session),
         SocialNotice(notice: net.notice),
@@ -119,6 +132,16 @@ class _AccountPanelState extends State<AccountPanel> {
               ),
         child: const Text('Create account'),
       ),
+      // Only a hosted backend can send mail, so a local build never offers it.
+      if (net.mode == MultiplayerMode.supabase) ...<Widget>[
+        const SizedBox(height: 6),
+        OutlinedButton(
+          onPressed: net.busy || _email.text.isEmpty
+              ? null
+              : () => net.sendMagicLink(_email.text),
+          child: const Text('Email magic link'),
+        ),
+      ],
     ];
   }
 }

@@ -5,6 +5,7 @@ import 'package:ik_net/ik_net.dart';
 import 'package:ik_runtime/ik_runtime.dart';
 
 import '../content/database_loader.dart';
+import '../net/supabase_transport.dart';
 import '../session/game_controller.dart';
 import '../session/multiplayer_controller.dart';
 import '../storage/prefs_store.dart';
@@ -61,7 +62,7 @@ class _BootGateState extends State<_BootGate> {
     // player keeps their account across launches without a network call.
     final multiplayer = MultiplayerController(
       database: database,
-      service: LocalMultiplayerService(storage: storage),
+      service: await _multiplayerService(storage),
       storage: storage,
       clock: clock,
     );
@@ -71,6 +72,21 @@ class _BootGateState extends State<_BootGate> {
     final booted = _BootedGame(game: game, multiplayer: multiplayer);
     _booted = booted;
     return booted;
+  }
+
+  /// The hosted backend when this build was given one, otherwise this device.
+  ///
+  /// A project that cannot be reached must not stop the game starting, so a
+  /// failed connection falls back to local play rather than throwing.
+  Future<MultiplayerService> _multiplayerService(SaveStorage storage) async {
+    final config = remoteBackendConfigFromEnvironment();
+    if (config == null) return LocalMultiplayerService(storage: storage);
+    try {
+      final transport = await SupabaseTransport.connect(config);
+      return RemoteMultiplayerService(transport: transport, storage: storage);
+    } on Object {
+      return LocalMultiplayerService(storage: storage);
+    }
   }
 
   @override

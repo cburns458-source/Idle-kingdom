@@ -63,6 +63,10 @@ class MultiplayerController extends ChangeNotifier {
   MultiplayerSession? get session => service.session;
   bool get isSignedIn => service.isSignedIn;
 
+  /// Which backend this build talks to, which the account screen says out loud.
+  MultiplayerMode get mode =>
+      service is RemoteMultiplayerService ? MultiplayerMode.supabase : MultiplayerMode.local;
+
   /// The guild the player belongs to, once a refresh has looked.
   String? get guildId => _guildId;
   GuildRecord? get guild => _guild;
@@ -134,6 +138,14 @@ class MultiplayerController extends ChangeNotifier {
       if (!result.ok) return result.reason;
       await refresh(save);
       return 'Welcome back, ${result.session!.username}.';
+    });
+  }
+
+  /// Emails a one-time sign-in link, where the backend can send one.
+  Future<void> sendMagicLink(String email) {
+    return run(() async {
+      final result = await service.sendMagicLink(email);
+      return result.ok ? 'Magic link sent.' : result.reason;
     });
   }
 
