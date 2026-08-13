@@ -323,14 +323,11 @@ export default function App() {
 
   const ready = boot.status === 'ready' ? boot : null
 
-  const overallXp = useMemo(
-    () => (ready ? totalSkillXp(ready.save) : 0),
-    [ready?.save.skills],
-  )
-  const overallLevel = useMemo(
-    () => (ready ? totalLevel(ready.save) : 0),
-    [ready?.save.skills],
-  )
+  // Both totals walk every skill, and the skill list is replaced only when xp
+  // actually lands, so keying on it skips the walk on the frames in between.
+  const skills = ready?.save.skills
+  const overallXp = useMemo(() => (skills ? totalSkillXp({ skills }) : 0), [skills])
+  const overallLevel = useMemo(() => (skills ? totalLevel({ skills }) : 0), [skills])
 
   function persistSave(next: PlayerSave): PlayerSave {
     const current = bootRef.current
