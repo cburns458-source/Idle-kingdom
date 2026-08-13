@@ -1,11 +1,10 @@
 import 'package:ik_content/ik_content.dart';
 import 'package:ik_net/ik_net.dart';
+import 'package:ik_net/testing.dart';
 import 'package:ik_parity/ik_parity.dart';
 import 'package:ik_rules/ik_rules.dart';
 import 'package:ik_runtime/ik_runtime.dart';
 import 'package:test/test.dart';
-
-import 'support/fake_transport.dart';
 
 const num _nowMs = 1786568400000;
 

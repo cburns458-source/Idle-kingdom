@@ -1,4 +1,5 @@
-import 'package:ik_net/ik_net.dart';
+import 'remote.dart';
+import 'remote_transport.dart';
 
 /// A remote backend held in memory, standing in for the hosted one.
 ///

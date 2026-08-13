@@ -8,6 +8,7 @@ import 'package:idle_kingdoms/src/session/multiplayer_controller.dart';
 import 'package:idle_kingdoms/src/ui/app_shell.dart';
 import 'package:ik_content/ik_content.dart';
 import 'package:ik_net/ik_net.dart';
+import 'package:ik_net/testing.dart';
 import 'package:ik_rules/ik_rules.dart';
 import 'package:ik_runtime/ik_runtime.dart';
 
@@ -64,6 +65,25 @@ MultiplayerController buildMultiplayer(LoadedDatabase database, {TestClock? cloc
   return MultiplayerController(
     database: database,
     service: LocalMultiplayerService(storage: storage),
+    storage: storage,
+    clock: testClock.read,
+  );
+}
+
+/// The same, over a hosted backend held in memory.
+///
+/// This is the arrangement a released build runs in when it was given a Supabase
+/// project, with the wire replaced rather than the service.
+MultiplayerController buildRemoteMultiplayer(
+  LoadedDatabase database, {
+  required FakeTransport transport,
+  TestClock? clock,
+}) {
+  final testClock = clock ?? TestClock();
+  final storage = MemorySaveStorage();
+  return MultiplayerController(
+    database: database,
+    service: RemoteMultiplayerService(transport: transport, storage: storage),
     storage: storage,
     clock: testClock.read,
   );
