@@ -305,6 +305,9 @@ flutter test              # Widget tests over a fake clock and in-memory storage
 flutter build web         # What CI builds, and what a release ships
 flutter run -d chrome     # The client, reading the shared content/
 
+# From the repo root, the same as `flutter run` against the web-server device:
+npm run dev               # Serves the Flutter client at http://localhost:5173
+
 # The same client against a Supabase project instead of the local backend:
 flutter run -d chrome \
   --dart-define=SUPABASE_URL=https://xyz.supabase.co \

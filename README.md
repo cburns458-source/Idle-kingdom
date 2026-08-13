@@ -19,6 +19,9 @@ flutter test                # Widget tests over a fake clock and in-memory stora
 flutter run -d chrome       # Play it
 flutter build web --release # Ship it
 
+# From the repo root, the same as `flutter run` against the web-server device:
+npm run dev                 # Serves the Flutter client at http://localhost:5173
+
 npm install
 npm test                    # The reference rules, and the fixture drift check
 ```
