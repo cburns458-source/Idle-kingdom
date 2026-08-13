@@ -7,6 +7,7 @@ import '../session/game_controller.dart';
 import '../theme.dart';
 import 'activity_panel.dart';
 import 'format.dart';
+import 'production_panel.dart';
 import 'shop_panel.dart';
 
 /// Whatever the player has open on top of the location, if anything.
@@ -18,6 +19,13 @@ class ShopOpen extends LocationPanel {
   const ShopOpen(this.shopId);
 
   final String shopId;
+}
+
+/// The recipe picker for a Standard Production station.
+class WorkshopOpen extends LocationPanel {
+  const WorkshopOpen(this.activity);
+
+  final ActivityRow activity;
 }
 
 /// Where the player is standing: the art, what can be done here, and whatever
@@ -146,6 +154,8 @@ class _LocationViewState extends State<LocationView> {
     switch (panel) {
       case ShopOpen(shopId: final shopId):
         return ShopPanel(controller: controller, shopId: shopId, onClose: _closePanel);
+      case WorkshopOpen(activity: final activity):
+        return ProductionPicker(controller: controller, activity: activity, onClose: _closePanel);
     }
   }
 
@@ -159,7 +169,11 @@ class _LocationViewState extends State<LocationView> {
       for (final activity in activities)
         Padding(
           padding: const EdgeInsets.only(bottom: 8),
-          child: _ActivityCard(controller: controller, activity: activity),
+          child: _ActivityCard(
+            controller: controller,
+            activity: activity,
+            onOpenWorkshop: () => _openPanel(WorkshopOpen(activity)),
+          ),
         ),
     ];
   }
@@ -257,10 +271,15 @@ class _InteractionCard extends StatelessWidget {
 }
 
 class _ActivityCard extends StatelessWidget {
-  const _ActivityCard({required this.controller, required this.activity});
+  const _ActivityCard({
+    required this.controller,
+    required this.activity,
+    required this.onOpenWorkshop,
+  });
 
   final GameController controller;
   final ActivityRow activity;
+  final VoidCallback onOpenWorkshop;
 
   @override
   Widget build(BuildContext context) {
@@ -287,10 +306,6 @@ class _ActivityCard extends StatelessWidget {
                     style: const TextStyle(color: Palette.danger, fontSize: 12),
                   ),
                 if (!check.ok) MutedText(check.reason ?? ''),
-                // Recipes are picked in the production panel, which is not
-                // ported yet, so the station is listed but not startable.
-                if (production && check.ok)
-                  const MutedText('Crafting comes with the workshop panel.'),
               ],
             ),
           ),
@@ -299,10 +314,13 @@ class _ActivityCard extends StatelessWidget {
             OutlinedButton(onPressed: controller.stopActivity, child: const Text('Stop'))
           else
             FilledButton(
-              onPressed: check.ok && !production
-                  ? () => controller.startActivity(activityId)
-                  : null,
-              child: const Text('Start'),
+              onPressed: !check.ok
+                  ? null
+                  : production
+                  ? onOpenWorkshop
+                  : () => controller.startActivity(activityId),
+              // A station asks which recipe first, so it does not start on a tap.
+              child: Text(production ? 'Recipes' : 'Start'),
             ),
         ],
       ),

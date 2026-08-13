@@ -37,7 +37,10 @@ class ActivityPanel extends StatelessWidget {
               OutlinedButton(onPressed: controller.stopActivity, child: const Text('Stop')),
             ],
           ),
-          if (action != null) MutedText(action.displayName),
+          if (save.productionRecipeId case final recipeId?)
+            MutedText(_queueLine(controller, recipeId))
+          else if (action != null)
+            MutedText(action.displayName),
           if (save.combatEnemyId != null)
             _CombatLine(controller: controller)
           else
@@ -46,6 +49,23 @@ class ActivityPanel extends StatelessWidget {
       ),
     );
   }
+}
+
+/// "Copper Bar · 3/10 · 7m 30s left" for a running craft queue.
+///
+/// The time left counts the craft in progress plus the ones still queued behind
+/// it, which is the number a player is actually waiting on.
+String _queueLine(GameController controller, String recipeId) {
+  final save = controller.save;
+  final recipe = getRecipe(controller.db, recipeId);
+  final total = save.productionQuantityTotal ?? 0;
+  final remaining = save.productionQuantityRemaining ?? 0;
+  final craftMs = save.actionDurationMs ?? 0;
+  final leftOfCurrent = craftMs * (1 - controller.actionProgress);
+  final queuedAfter = remaining > 0 ? remaining - 1 : 0;
+  final name = recipe?.displayName ?? recipeId;
+  return '$name · ${total - remaining}/$total · '
+      '${formatDurationMs(leftOfCurrent + queuedAfter * craftMs)} left';
 }
 
 class _ActionProgress extends StatelessWidget {
