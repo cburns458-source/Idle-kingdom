@@ -22,9 +22,7 @@ void main() {
     if (!boardDone) return save;
     return save.copyWith(
       bountyHourKey: board.hourKey,
-      bountyProgress: <String, num>{
-        for (final bounty in board.bounties) bounty.id: bounty.amount,
-      },
+      bountyProgress: <String, num>{for (final bounty in board.bounties) bounty.id: bounty.amount},
       bountyClaimedIds: const <String>[],
       inventory: <InventoryStack>[
         for (final bounty in board.bounties)
@@ -77,10 +75,7 @@ void main() {
   });
 
   testWidgets('a finished bounty pays out and then reads as claimed', (tester) async {
-    final controller = buildController(
-      database,
-      seed: atDistrict(citadelPlazaId, boardDone: true),
-    );
+    final controller = buildController(database, seed: atDistrict(citadelPlazaId, boardDone: true));
     addTearDown(controller.dispose);
     final net = await signedIn(buildMultiplayer(database));
     addTearDown(net.dispose);

@@ -243,19 +243,13 @@ class WardrobeUnlockPopup extends StatelessWidget {
                     ItemIcon(item: item, size: 40),
                     const SizedBox(width: 8),
                     Expanded(
-                      child: Text(
-                        notice.name,
-                        style: const TextStyle(fontWeight: FontWeight.w700),
-                      ),
+                      child: Text(notice.name, style: const TextStyle(fontWeight: FontWeight.w700)),
                     ),
                   ],
                 ),
                 const SizedBox(height: 10),
                 const Text('It has been added to your Wardrobe.'),
-                if (notice.hint case final hint?) ...[
-                  const SizedBox(height: 6),
-                  MutedText(hint),
-                ],
+                if (notice.hint case final hint?) ...[const SizedBox(height: 6), MutedText(hint)],
                 const SizedBox(height: 14),
                 Align(
                   alignment: Alignment.centerRight,

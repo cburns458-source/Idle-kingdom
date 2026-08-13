@@ -129,14 +129,8 @@ class _GuildPanelState extends State<GuildPanel> {
               value: _sort,
               underline: const SizedBox.shrink(),
               items: const <DropdownMenuItem<GuildRosterSort>>[
-                DropdownMenuItem(
-                  value: GuildRosterSort.oldest,
-                  child: Text('Join date (oldest)'),
-                ),
-                DropdownMenuItem(
-                  value: GuildRosterSort.newest,
-                  child: Text('Join date (newest)'),
-                ),
+                DropdownMenuItem(value: GuildRosterSort.oldest, child: Text('Join date (oldest)')),
+                DropdownMenuItem(value: GuildRosterSort.newest, child: Text('Join date (newest)')),
               ],
               onChanged: (sort) {
                 if (sort != null) setState(() => _sort = sort);
@@ -342,7 +336,10 @@ class _Swatch extends StatelessWidget {
         decoration: BoxDecoration(
           color: Color(0xFF000000 | (int.tryParse(color.replaceFirst('#', ''), radix: 16) ?? 0)),
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: selected ? Palette.gold : Palette.edge, width: selected ? 2 : 1),
+          border: Border.all(
+            color: selected ? Palette.gold : Palette.edge,
+            width: selected ? 2 : 1,
+          ),
         ),
       ),
     );
@@ -368,7 +365,10 @@ class _SymbolButton extends StatelessWidget {
         decoration: BoxDecoration(
           color: const Color(0x33120C08),
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: selected ? Palette.gold : Palette.edge, width: selected ? 2 : 1),
+          border: Border.all(
+            color: selected ? Palette.gold : Palette.edge,
+            width: selected ? 2 : 1,
+          ),
         ),
         child: GuildEmblemMark(symbol: symbol),
       ),
@@ -414,10 +414,7 @@ class _CreateGuildSheetState extends State<_CreateGuildSheet> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Create guild',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-            ),
+            const Text('Create guild', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
             const SizedBox(height: 4),
             MutedText(form.costLine),
             const SizedBox(height: 12),
@@ -448,9 +445,8 @@ class _CreateGuildSheetState extends State<_CreateGuildSheet> {
             const SizedBox(height: 12),
             FilledButton(
               onPressed: form.canAfford
-                  ? () => Navigator.of(context).pop(
-                      CreateGuildInput(name: _name.text, tag: _tag.text, emblem: _emblem),
-                    )
+                  ? () => Navigator.of(context)
+                        .pop(CreateGuildInput(name: _name.text, tag: _tag.text, emblem: _emblem))
                   : null,
               child: Text(form.submitLabel),
             ),
@@ -463,11 +459,7 @@ class _CreateGuildSheetState extends State<_CreateGuildSheet> {
 
 /// What the settings sheet hands back, so the controller saves it in one go.
 class _GuildSettings {
-  const _GuildSettings({
-    required this.joinPolicy,
-    required this.emblem,
-    required this.rankLabels,
-  });
+  const _GuildSettings({required this.joinPolicy, required this.emblem, required this.rankLabels});
 
   final GuildJoinPolicy joinPolicy;
   final GuildEmblem emblem;
@@ -486,10 +478,11 @@ class _GuildSettingsSheet extends StatefulWidget {
 class _GuildSettingsSheetState extends State<_GuildSettingsSheet> {
   late GuildJoinPolicy _policy = widget.guild.joinPolicy;
   late GuildEmblem _emblem = widget.guild.emblem;
-  late final Map<GuildRankKey, TextEditingController> _labels = <GuildRankKey, TextEditingController>{
-    for (final field in rankLabelFields(widget.guild))
-      field.role: TextEditingController(text: field.value),
-  };
+  late final Map<GuildRankKey, TextEditingController> _labels =
+      <GuildRankKey, TextEditingController>{
+        for (final field in rankLabelFields(widget.guild))
+          field.role: TextEditingController(text: field.value),
+      };
 
   @override
   void dispose() {

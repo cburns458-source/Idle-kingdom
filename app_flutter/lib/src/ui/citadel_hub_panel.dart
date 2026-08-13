@@ -108,11 +108,7 @@ class _CitadelHubPanelState extends State<CitadelHubPanel> {
         if (!net.isSignedIn) ...[const MutedText(bountySignInNotice), const SizedBox(height: 8)],
         for (final (index, row) in rows.indexed) ...[
           if (index > 0) const SizedBox(height: 8),
-          _BountyCard(
-            row: row,
-            busy: net.busy,
-            onTurnIn: () => _turnIn(board.bounties[index]),
-          ),
+          _BountyCard(row: row, busy: net.busy, onTurnIn: () => _turnIn(board.bounties[index])),
         ],
         if (net.notice case final notice?) ...[
           const SizedBox(height: 8),
@@ -155,11 +151,7 @@ class _CitadelHubPanelState extends State<CitadelHubPanel> {
     );
   }
 
-  Widget _frame({
-    required String title,
-    required String subtitle,
-    required List<Widget> children,
-  }) {
+  Widget _frame({required String title, required String subtitle, required List<Widget> children}) {
     return GamePanel(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -171,10 +163,7 @@ class _CitadelHubPanelState extends State<CitadelHubPanel> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      title,
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-                    ),
+                    Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
                     MutedText(subtitle),
                   ],
                 ),

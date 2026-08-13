@@ -26,10 +26,7 @@ class SupabaseTransport implements RemoteTransport {
   static Future<SupabaseTransport> connect(RemoteBackendConfig config) async {
     // Supabase renamed the client-side key from "anon" to "publishable"; it is
     // the same value the web client passes as its anon key.
-    final supabase = await Supabase.initialize(
-      url: config.url,
-      publishableKey: config.anonKey,
-    );
+    final supabase = await Supabase.initialize(url: config.url, publishableKey: config.anonKey);
     return SupabaseTransport(supabase.client);
   }
 
@@ -126,9 +123,7 @@ class SupabaseTransport implements RemoteTransport {
       // query is only narrowed once the loop above is done.
       final ordered = orderBy == null ? filter : filter.order(orderBy, ascending: ascending);
       final rows = await (limit == null ? ordered : ordered.limit(limit));
-      return RemoteQueryResult.ok(
-        rows.map((row) => Map<String, Object?>.from(row)).toList(),
-      );
+      return RemoteQueryResult.ok(rows.map((row) => Map<String, Object?>.from(row)).toList());
     } on PostgrestException catch (error) {
       return RemoteQueryResult.failed(error.message);
     } on Object catch (error) {
@@ -150,11 +145,7 @@ class SupabaseTransport implements RemoteTransport {
   }
 
   @override
-  Future<RemoteQueryResult> insert(
-    String table,
-    RemoteRow row, {
-    required String columns,
-  }) async {
+  Future<RemoteQueryResult> insert(String table, RemoteRow row, {required String columns}) async {
     try {
       final written = await client.from(table).insert(row).select(columns);
       return RemoteQueryResult.ok(
@@ -172,9 +163,7 @@ class SupabaseTransport implements RemoteTransport {
     try {
       final response = await client.functions.invoke(function, body: body);
       final data = response.data;
-      return RemoteInvokeResult.ok(
-        data is Map ? Map<String, Object?>.from(data) : null,
-      );
+      return RemoteInvokeResult.ok(data is Map ? Map<String, Object?>.from(data) : null);
     } on FunctionException catch (error) {
       return RemoteInvokeResult.failed('${error.details ?? error.reasonPhrase}');
     } on Object catch (error) {

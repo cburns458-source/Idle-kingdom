@@ -186,9 +186,7 @@ class _CitadelTab extends StatelessWidget {
       children: [
         Text(summary.note),
         const SizedBox(height: 4),
-        MutedText(
-          'Plaza presence: ${summary.visitorCount} · Chat channel: ${summary.chatChannel}',
-        ),
+        MutedText('Plaza presence: ${summary.visitorCount} · Chat channel: ${summary.chatChannel}'),
         const SizedBox(height: 10),
         if (visitors.isEmpty)
           const MutedText(

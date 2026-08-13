@@ -312,9 +312,7 @@ class MultiplayerController extends ChangeNotifier {
       citadelHub: citadelHub,
       guildId: _guildId,
     );
-    _messages = channel == null
-        ? const <ChatMessage>[]
-        : await service.listChat(channel);
+    _messages = channel == null ? const <ChatMessage>[] : await service.listChat(channel);
     notifyListeners();
   }
 
@@ -340,10 +338,7 @@ class MultiplayerController extends ChangeNotifier {
     return run(() async {
       final me = session?.userId;
       if (me == null) return 'Sign in to chat.';
-      final result = await service.sendChat(
-        ChatChannel.dm(dmPairKey(me, userId)),
-        body,
-      );
+      final result = await service.sendChat(ChatChannel.dm(dmPairKey(me, userId)), body);
       return result.ok ? 'Message sent.' : result.reason;
     });
   }
@@ -351,7 +346,11 @@ class MultiplayerController extends ChangeNotifier {
   // --- Guilds ---------------------------------------------------------------
 
   /// Creates a guild and reports what it cost, so the caller can spend it.
-  Future<void> createGuild(CreateGuildInput input, PlayerSave save, void Function(num goldCost) onPaid) {
+  Future<void> createGuild(
+    CreateGuildInput input,
+    PlayerSave save,
+    void Function(num goldCost) onPaid,
+  ) {
     return run(() async {
       final result = await service.createGuild(input, save.gold);
       if (!result.ok) return result.reason;
@@ -416,9 +415,7 @@ class MultiplayerController extends ChangeNotifier {
 
   /// Reads the hour's first turn-ins, so the board can name who beat the player.
   Future<void> refreshBountyClaims(String hourKey) async {
-    _bountyClaims = isSignedIn
-        ? await service.bountyClaims(hourKey)
-        : const <BountyClaimRecord>[];
+    _bountyClaims = isSignedIn ? await service.bountyClaims(hourKey) : const <BountyClaimRecord>[];
     notifyListeners();
   }
 

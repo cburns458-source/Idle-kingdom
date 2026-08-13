@@ -10,7 +10,12 @@ import 'social_bits.dart';
 /// Chat never covers the whole screen: the game keeps running behind it, and the
 /// button carries the unread count so a closed sheet still says something.
 class ChatLauncher extends StatefulWidget {
-  const ChatLauncher({super.key, required this.multiplayer, required this.locationId, this.citadelHub = false});
+  const ChatLauncher({
+    super.key,
+    required this.multiplayer,
+    required this.locationId,
+    this.citadelHub = false,
+  });
 
   final MultiplayerController multiplayer;
   final String locationId;
@@ -35,11 +40,8 @@ class _ChatLauncherState extends State<ChatLauncher> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Palette.parchmentDeep,
-      builder: (context) => ChatSheet(
-        multiplayer: net,
-        locationId: widget.locationId,
-        citadelHub: widget.citadelHub,
-      ),
+      builder: (context) =>
+          ChatSheet(multiplayer: net, locationId: widget.locationId, citadelHub: widget.citadelHub),
     );
     if (mounted) setState(() => _open = false);
   }
@@ -134,8 +136,7 @@ class _ChatSheetState extends State<ChatSheet> {
           unreadDms: net.unreadDms,
         );
         final lines = chatLines(net.messages, net.session?.userId);
-        return Padding
-        (
+        return Padding(
           padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
           child: SizedBox(
             height: 420,
@@ -207,10 +208,7 @@ class _ChatSheetState extends State<ChatSheet> {
                 ),
                 SocialNotice(notice: net.notice),
                 if (net.chatTab == ChatTab.dm)
-                  const Padding(
-                    padding: EdgeInsets.all(12),
-                    child: MutedText(chatDmHint),
-                  )
+                  const Padding(padding: EdgeInsets.all(12), child: MutedText(chatDmHint))
                 else
                   Padding(
                     padding: const EdgeInsets.all(12),
@@ -228,10 +226,7 @@ class _ChatSheetState extends State<ChatSheet> {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        FilledButton(
-                          onPressed: net.busy ? null : _send,
-                          child: const Text('Send'),
-                        ),
+                        FilledButton(onPressed: net.busy ? null : _send, child: const Text('Send')),
                       ],
                     ),
                   ),

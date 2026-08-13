@@ -46,11 +46,7 @@ class _NewCharacterSheetState extends State<NewCharacterSheet> {
       setState(() => _error = 'Choose a race to continue.');
       return;
     }
-    final failure = widget.controller.createCharacter(
-      _name.text,
-      raceId,
-      appearance: _appearance,
-    );
+    final failure = widget.controller.createCharacter(_name.text, raceId, appearance: _appearance);
     setState(() => _error = failure);
   }
 

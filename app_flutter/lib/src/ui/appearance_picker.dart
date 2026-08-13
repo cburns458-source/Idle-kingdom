@@ -26,10 +26,7 @@ class AppearancePicker extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         for (final slider in appearanceSliders(db, appearance))
-          _SliderRow(
-            slider: slider,
-            onSelect: (optionId) => onSelect(slider.category, optionId),
-          ),
+          _SliderRow(slider: slider, onSelect: (optionId) => onSelect(slider.category, optionId)),
       ],
     );
   }

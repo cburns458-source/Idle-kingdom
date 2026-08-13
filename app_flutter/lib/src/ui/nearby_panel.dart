@@ -188,10 +188,7 @@ class _NearbyPanelState extends State<NearbyPanel> {
                 child: TextField(
                   controller: _dm,
                   maxLength: 240,
-                  decoration: const InputDecoration(
-                    labelText: 'Direct message',
-                    counterText: '',
-                  ),
+                  decoration: const InputDecoration(labelText: 'Direct message', counterText: ''),
                 ),
               ),
               const SizedBox(width: 8),

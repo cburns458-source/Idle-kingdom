@@ -47,8 +47,7 @@ class _LogViewState extends State<LogView> {
           scrollDirection: Axis.horizontal,
           child: SegmentedButton<_LogTab>(
             segments: [
-              for (final tab in _LogTab.values)
-                ButtonSegment(value: tab, label: Text(tab.label)),
+              for (final tab in _LogTab.values) ButtonSegment(value: tab, label: Text(tab.label)),
             ],
             selected: {_tab},
             showSelectedIcon: false,
@@ -165,10 +164,7 @@ class _LogRow extends StatelessWidget {
               ],
             ),
           ),
-          if (trailing case final trailing?) ...[
-            const SizedBox(width: 8),
-            MutedText(trailing),
-          ],
+          if (trailing case final trailing?) ...[const SizedBox(width: 8), MutedText(trailing)],
         ],
       ),
     );
