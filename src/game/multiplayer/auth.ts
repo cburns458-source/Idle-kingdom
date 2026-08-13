@@ -34,6 +34,17 @@ export function getSession(): MultiplayerSession | null {
   return readStoredSession()
 }
 
+/**
+ * Records a session Supabase authenticated, and gives it a local profile.
+ *
+ * Guilds, presence, and public profiles are still answered from this device, and
+ * all of them hang off a profile row, so a remote account needs one here too.
+ */
+function adoptSession(session: MultiplayerSession): void {
+  writeStoredSession(session)
+  getLocalBackend().registerProfile(session.userId, session.username)
+}
+
 export function isSignedIn(): boolean {
   return getSession() != null
 }
@@ -67,7 +78,7 @@ export async function signUpWithPassword(
   )
   // Best-effort profile row (RLS policies in SQL migration).
   await client.from(REMOTE_TABLES.profiles).upsert(profileRowForSignUp(session))
-  writeStoredSession(session)
+  adoptSession(session)
   return { ok: true, session }
 }
 
@@ -98,7 +109,7 @@ export async function signInWithPassword(
     typeof metadataUsername === 'string' ? metadataUsername : null,
     data.session?.access_token ?? null,
   )
-  writeStoredSession(session)
+  adoptSession(session)
   return { ok: true, session }
 }
 

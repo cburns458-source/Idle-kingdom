@@ -173,6 +173,32 @@ export function chatMessageFrom(row: RemoteRow): ChatMessage {
 }
 
 /**
+ * The message the send-chat function answered with.
+ *
+ * A function may hand back the row it inserted or the message it made of it, so
+ * both spellings of each field are accepted rather than trusting one.
+ */
+export function chatMessageFromFunction(data: RemoteRow | null): ChatMessage | null {
+  if (!data) return null
+  const id = str(data.id)
+  if (!id) return null
+  return {
+    id,
+    channelKey: str(data.channelKey ?? data.channel_key),
+    userId: str(data.userId ?? data.user_id),
+    username: str(data.username),
+    body: str(data.body),
+    createdAt: str(data.createdAt ?? data.created_at),
+  }
+}
+
+/** What a send is refused with when the function answered with nothing usable. */
+export const REMOTE_CHAT_SEND_FAILED = 'The chat message was not accepted.'
+
+/** Why an upload stops: the account has a newer save than the one being sent. */
+export const REMOTE_SAVE_CONFLICT = 'A newer cloud save exists.'
+
+/**
  * A leaderboard row joined with its profile.
  *
  * The rank is the position the ordered read put it in, since the table stores

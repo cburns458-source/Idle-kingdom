@@ -350,6 +350,11 @@ export const multiplayerScenarios: ParityScenario[] = [
     const missing = harness.backend.upsertProfile('usr_9999', {
       username: 'Ghost',
     })
+    // An account a remote backend authenticated, which has no row here yet.
+    const adopted = harness.backend.registerProfile('usr_remote', 'Rowan')
+    // Signing in again must not undo what the first row learned.
+    harness.backend.upsertProfile('usr_remote', { privacyPublicSkills: false })
+    const readopted = harness.backend.registerProfile('usr_remote', 'Renamed')
     return {
       refusals,
       created,
@@ -360,6 +365,8 @@ export const multiplayerScenarios: ParityScenario[] = [
       profile,
       renamed,
       missing,
+      adopted,
+      readopted,
       doc: harness.doc(),
     } as unknown as JsonValue
   }),
@@ -392,11 +399,19 @@ export const multiplayerScenarios: ParityScenario[] = [
         ...save,
         updatedAt: '',
       })
+      // The player answering the conflict prompt: the older save wins because
+      // they said so.
+      const forced = harness.backend.writeCloudSave(
+        session.userId,
+        { ...older, gold: 11 },
+        { force: true },
+      )
       return {
         first,
         conflict,
         bumped,
         unstamped,
+        forced,
         read: harness.backend.readCloudSave(session.userId),
         missing: harness.backend.readCloudSave('usr_9999'),
       } as unknown as JsonValue

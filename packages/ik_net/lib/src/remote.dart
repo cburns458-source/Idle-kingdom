@@ -152,6 +152,16 @@ class RemoteSaveRow {
     payload: PlayerSave.fromJson(payload),
   );
 
+  /// The same, but null rather than a throw when a row this build cannot read
+  /// turns up — an older or newer client may have written it.
+  CloudSaveRecord? toCloudSaveRecordOrNull() {
+    try {
+      return toCloudSaveRecord();
+    } on Object {
+      return null;
+    }
+  }
+
   Map<String, Object?> toJson() => <String, Object?>{
     'userId': userId,
     'saveVersion': saveVersion,
@@ -188,6 +198,30 @@ ChatMessage chatMessageFrom(RemoteRow row) => ChatMessage(
   body: _str(row['body']),
   createdAt: _str(row['created_at']),
 );
+
+/// The message the send-chat function answered with.
+///
+/// A function may hand back the row it inserted or the message it made of it, so
+/// both spellings of each field are accepted rather than trusting one.
+ChatMessage? chatMessageFromFunction(RemoteRow? data) {
+  if (data == null) return null;
+  final id = _str(data['id']);
+  if (id.isEmpty) return null;
+  return ChatMessage(
+    id: id,
+    channelKey: _str(data['channelKey'] ?? data['channel_key']),
+    userId: _str(data['userId'] ?? data['user_id']),
+    username: _str(data['username']),
+    body: _str(data['body']),
+    createdAt: _str(data['createdAt'] ?? data['created_at']),
+  );
+}
+
+/// What a send is refused with when the function answered with nothing usable.
+const String remoteChatSendFailed = 'The chat message was not accepted.';
+
+/// Why an upload stops: the account has a newer save than the one being sent.
+const String remoteSaveConflict = 'A newer cloud save exists.';
 
 /// A leaderboard row joined with its profile.
 ///

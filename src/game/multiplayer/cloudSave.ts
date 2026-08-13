@@ -10,6 +10,7 @@ import {
   isRemoteSaveNewer,
   REMOTE_NOT_CONFIGURED,
   REMOTE_SAVE_COLUMNS,
+  REMOTE_SAVE_CONFLICT,
   REMOTE_TABLES,
   saveRowFor,
 } from './remote'
@@ -32,9 +33,16 @@ export function softValidateSave(save: PlayerSave): { ok: true } | { ok: false; 
   return { ok: true }
 }
 
+/**
+ * Uploads [save] as the account's cloud copy.
+ *
+ * `force` is the player choosing this save over the one already stored, having
+ * been shown that the other is newer.
+ */
 export async function pushCloudSave(
   db: GameDatabase,
   save: PlayerSave,
+  options?: { force?: boolean },
 ): Promise<CloudSyncResult> {
   const session = getSession()
   if (!session) return { ok: false, reason: 'Sign in to sync cloud saves.' }
@@ -43,7 +51,9 @@ export async function pushCloudSave(
   if (!validation.ok) return validation
 
   if (multiplayerMode() === 'local') {
-    const result = getLocalBackend().writeCloudSave(session.userId, stamped)
+    const result = getLocalBackend().writeCloudSave(session.userId, stamped, {
+      force: options?.force,
+    })
     if (!result.ok) return { ok: false, reason: result.reason, remote: result.remote }
     getLocalBackend().submitLeaderboardSnapshot(db, session.userId, stamped)
     getLocalBackend().upsertProfile(session.userId, {
@@ -61,8 +71,8 @@ export async function pushCloudSave(
     .eq('user_id', session.userId)
     .maybeSingle()
   const remote = cloudSaveRecordFrom(session.userId, existing)
-  if (remote && isRemoteSaveNewer(remote, stamped)) {
-    return { ok: false, reason: 'A newer cloud save exists.', remote }
+  if (!options?.force && remote && isRemoteSaveNewer(remote, stamped)) {
+    return { ok: false, reason: REMOTE_SAVE_CONFLICT, remote }
   }
   const { error } = await client
     .from(REMOTE_TABLES.saves)
@@ -127,14 +137,14 @@ export async function syncCloudSaveOnSafePoint(
         )
 
   if (!remoteResult.ok || options?.forceUpload) {
-    return pushCloudSave(db, local)
+    return pushCloudSave(db, local, { force: options?.forceUpload })
   }
 
   const remote = remoteResult.save
   const remoteNewer =
     Date.parse(remote.updatedAt) > Date.parse(local.updatedAt) ||
     remote.saveVersion > local.saveVersion
-  if (remoteNewer && !options?.forceUpload) {
+  if (remoteNewer) {
     return {
       ok: false,
       reason: 'Cloud save is newer than the local save.',

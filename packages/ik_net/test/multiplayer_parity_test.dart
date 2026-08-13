@@ -122,6 +122,9 @@ void main() {
           privacyPublicSkills: false,
         );
         final missing = harness.backend.upsertProfile('usr_9999', username: 'Ghost');
+        final adopted = harness.backend.registerProfile('usr_remote', 'Rowan');
+        harness.backend.upsertProfile('usr_remote', privacyPublicSkills: false);
+        final readopted = harness.backend.registerProfile('usr_remote', 'Renamed');
         expect(
           checkParity(fixture, <String, Object?>{
             'refusals': _json(refusals),
@@ -133,6 +136,8 @@ void main() {
             'profile': profile?.toJson(),
             'renamed': renamed?.toJson(),
             'missing': missing?.toJson(),
+            'adopted': adopted.toJson(),
+            'readopted': readopted.toJson(),
             'doc': harness.doc(),
           }),
           isNull,
@@ -186,12 +191,18 @@ void main() {
           session.userId,
           save.copyWith(updatedAt: ''),
         );
+        final forced = harness.backend.writeCloudSave(
+          session.userId,
+          older.copyWith(gold: 11),
+          force: true,
+        );
         expect(
           checkParity(fixture, <String, Object?>{
             'first': first.toJson(),
             'conflict': conflict.toJson(),
             'bumped': bumped.toJson(),
             'unstamped': unstamped.toJson(),
+            'forced': forced.toJson(),
             'read': harness.backend.readCloudSave(session.userId)?.toJson(),
             'missing': harness.backend.readCloudSave('usr_9999')?.toJson(),
           }),

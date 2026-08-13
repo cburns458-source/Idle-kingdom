@@ -2,8 +2,10 @@ import { getSession } from './auth'
 import { getLocalBackend, getSupabaseClient, multiplayerMode } from './client'
 import {
   chatMessageFrom,
+  chatMessageFromFunction,
   REMOTE_CHAT_COLUMNS,
   REMOTE_CHAT_LIMIT,
+  REMOTE_CHAT_SEND_FAILED,
   REMOTE_NOT_CONFIGURED,
   REMOTE_SEND_CHAT_FUNCTION,
   REMOTE_TABLES,
@@ -27,7 +29,9 @@ export async function sendChatMessage(
     body: { channelKey: chatChannelKey(channel), body },
   })
   if (error) return { ok: false, reason: error.message }
-  return { ok: true, message: data as ChatMessage }
+  const message = chatMessageFromFunction(data)
+  if (!message) return { ok: false, reason: REMOTE_CHAT_SEND_FAILED }
+  return { ok: true, message }
 }
 
 export async function listChatMessages(channel: ChatChannel): Promise<ChatMessage[]> {

@@ -6,6 +6,7 @@ import 'bazaar.dart';
 import 'cloud_save.dart';
 import 'local_backend.dart';
 import 'presence.dart';
+import 'remote.dart';
 import 'results.dart';
 import 'session_store.dart';
 import 'types.dart';
@@ -25,13 +26,20 @@ abstract interface class MultiplayerService {
 
   Future<SessionResult> signIn(String email, String password);
 
+  /// Emails a one-time sign-in link, where the backend can send one.
+  Future<ActionResult> sendMagicLink(String email);
+
   Future<void> signOut();
 
   Future<MultiplayerProfile?> profile(String userId);
 
   Future<MultiplayerProfile?> setPrivacyPublicSkills(bool value);
 
-  Future<CloudSyncResult> pushSave(GameDatabase db, PlayerSave save);
+  /// Uploads [save] as the account's cloud copy.
+  ///
+  /// [force] is the player choosing this save over the stored one, having been
+  /// shown that the other is newer.
+  Future<CloudSyncResult> pushSave(GameDatabase db, PlayerSave save, {bool force = false});
 
   Future<CloudSyncResult> pullSave();
 
@@ -150,6 +158,11 @@ class LocalMultiplayerService implements MultiplayerService {
     return result;
   }
 
+  /// Nothing to send to: an account here only exists on this device.
+  @override
+  Future<ActionResult> sendMagicLink(String email) async =>
+      const ActionResult.failed(remoteMagicLinkUnavailable);
+
   @override
   Future<void> signOut() async => _sessions.write(null);
 
@@ -164,7 +177,11 @@ class LocalMultiplayerService implements MultiplayerService {
   }
 
   @override
-  Future<CloudSyncResult> pushSave(GameDatabase db, PlayerSave save) async {
+  Future<CloudSyncResult> pushSave(
+    GameDatabase db,
+    PlayerSave save, {
+    bool force = false,
+  }) async {
     final current = session;
     if (current == null) {
       return const CloudSyncResult.failed('Sign in to sync cloud saves.');
@@ -173,7 +190,7 @@ class LocalMultiplayerService implements MultiplayerService {
     final validation = softValidateSave(stamped);
     if (!validation.ok) return CloudSyncResult.failed(validation.reason!);
 
-    final written = _backend.writeCloudSave(current.userId, stamped);
+    final written = _backend.writeCloudSave(current.userId, stamped, force: force);
     if (!written.ok) {
       return CloudSyncResult.failed(written.reason!, remote: written.remote);
     }
@@ -213,7 +230,7 @@ class LocalMultiplayerService implements MultiplayerService {
     final current = session;
     if (current == null) return CloudSyncResult.ok(local, CloudSyncSource.unchanged);
     final remote = _backend.readCloudSave(current.userId);
-    if (remote == null || forceUpload) return pushSave(db, local);
+    if (remote == null || forceUpload) return pushSave(db, local, force: forceUpload);
     if (remoteSaveWins(local, remote.payload)) {
       return CloudSyncResult.failed(
         'Cloud save is newer than the local save.',

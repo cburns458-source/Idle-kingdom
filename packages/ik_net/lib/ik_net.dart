@@ -15,6 +15,8 @@ export 'src/local_backend.dart';
 export 'src/local_db.dart';
 export 'src/presence.dart';
 export 'src/remote.dart';
+export 'src/remote_service.dart';
+export 'src/remote_transport.dart';
 export 'src/results.dart';
 export 'src/service.dart';
 export 'src/session_store.dart';

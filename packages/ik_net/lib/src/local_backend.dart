@@ -161,6 +161,30 @@ class LocalMultiplayerBackend {
   MultiplayerProfile? getProfile(String userId) =>
       _db().profiles.firstWhereOrNull((row) => row.userId == userId);
 
+  /// Gives an account authenticated elsewhere a profile row here.
+  ///
+  /// The screens this backend still owns — guilds, presence, public profiles —
+  /// all hang off a profile, so an account that signed in against a remote
+  /// backend needs one before it can join anything. Returns the row already
+  /// present, so signing in twice does not reset a name or a guild.
+  MultiplayerProfile registerProfile(String userId, String username) {
+    final existing = getProfile(userId);
+    if (existing != null) return existing;
+    final db = _db();
+    final profile = MultiplayerProfile(
+      userId: userId,
+      username: username,
+      appearance: defaultPlayerAppearance,
+      guildId: null,
+      guildName: null,
+      privacyPublicSkills: true,
+      updatedAt: _nowIso(),
+    );
+    db.profiles.add(profile);
+    _write(db);
+    return profile;
+  }
+
   MultiplayerProfile? upsertProfile(
     String userId, {
     PlayerAppearance? appearance,
@@ -185,10 +209,16 @@ class LocalMultiplayerBackend {
   CloudSaveRecord? readCloudSave(String userId) =>
       _db().saves.firstWhereOrNull((row) => row.userId == userId);
 
-  CloudSaveWriteResult writeCloudSave(String userId, PlayerSave save) {
+  /// Stores [save] as the account's cloud copy.
+  ///
+  /// A newer stored copy stops the write, so a stale device cannot quietly erase
+  /// progress made elsewhere. [force] is the player answering that prompt: they
+  /// have been shown the other save and chosen this one.
+  CloudSaveWriteResult writeCloudSave(String userId, PlayerSave save, {bool force = false}) {
     final db = _db();
     final existing = db.saves.firstWhereOrNull((row) => row.userId == userId);
-    if (existing != null &&
+    if (!force &&
+        existing != null &&
         jsDateParse(existing.updatedAt) > jsDateParse(save.updatedAt) &&
         existing.saveVersion >= save.saveVersion) {
       return CloudSaveWriteResult.failed(

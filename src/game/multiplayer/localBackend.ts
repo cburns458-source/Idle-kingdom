@@ -308,6 +308,32 @@ export class LocalMultiplayerBackend {
     return this.db().profiles.find((row) => row.userId === userId) ?? null
   }
 
+  /**
+   * Gives an account authenticated elsewhere a profile row here.
+   *
+   * The features this backend still owns — guilds, presence, public profiles —
+   * all hang off a profile, so an account that signed in against Supabase needs
+   * one before it can join anything. Returns the row already present, so signing
+   * in twice does not reset a name or a guild.
+   */
+  registerProfile(userId: string, username: string): MultiplayerProfile {
+    const existing = this.getProfile(userId)
+    if (existing) return existing
+    const db = this.db()
+    const profile: MultiplayerProfile = {
+      userId,
+      username,
+      appearance: defaultAppearance(),
+      guildId: null,
+      guildName: null,
+      privacyPublicSkills: true,
+      updatedAt: this.nowIso(),
+    }
+    db.profiles.push(profile)
+    this.write(db)
+    return profile
+  }
+
   upsertProfile(
     userId: string,
     patch: Partial<Pick<MultiplayerProfile, 'appearance' | 'privacyPublicSkills' | 'username'>>,
@@ -328,15 +354,24 @@ export class LocalMultiplayerBackend {
     return this.db().saves.find((row) => row.userId === userId) ?? null
   }
 
+  /**
+   * Stores [save] as the account's cloud copy.
+   *
+   * A newer stored copy stops the write, so a stale device cannot quietly erase
+   * progress made elsewhere. `force` is the player answering that prompt: they
+   * have been shown the other save and chosen this one.
+   */
   writeCloudSave(
     userId: string,
     save: PlayerSave,
+    options?: { force?: boolean },
   ):
     | { ok: true; record: CloudSaveRecord }
     | { ok: false; reason: string; remote?: CloudSaveRecord } {
     const db = this.db()
     const existing = db.saves.find((row) => row.userId === userId)
     if (
+      !options?.force &&
       existing &&
       Date.parse(existing.updatedAt) > Date.parse(save.updatedAt) &&
       existing.saveVersion >= save.saveVersion
