@@ -14,12 +14,17 @@ class AwaySummarySheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final lines = <String>[
-      if (summary.gatheringActions > 0) '${summary.gatheringActions} actions completed',
-      if (summary.craftsCompleted > 0) '${summary.craftsCompleted} items crafted',
-      if (summary.combatVictories > 0) '${summary.combatVictories} enemies defeated',
-      if (summary.combatDeaths > 0) '${summary.combatDeaths} defeats',
-      if (summary.crittersSpawned > 0) '${summary.crittersSpawned} critters appeared',
+      if (summary.gatheringActions > 0)
+        '${formatThousands(summary.gatheringActions)} actions completed',
+      if (summary.craftsCompleted > 0) '${formatThousands(summary.craftsCompleted)} items crafted',
+      if (summary.combatVictories > 0)
+        '${formatThousands(summary.combatVictories)} enemies defeated',
+      if (summary.combatDeaths > 0) '${formatThousands(summary.combatDeaths)} defeats',
+      if (summary.crittersSpawned > 0)
+        '${formatThousands(summary.crittersSpawned)} critters appeared',
     ];
+    // A long absence writes a line per craft; the rules merge them per item.
+    final messages = consolidateAwayMessages(summary.messages);
 
     return ColoredBox(
       color: const Color(0xCC120C08),
@@ -39,7 +44,7 @@ class AwaySummarySheet extends StatelessWidget {
                 MutedText('${formatDurationMs(summary.effectiveElapsedMs)} of progress'),
                 const SizedBox(height: 10),
                 for (final line in lines) Text('• $line'),
-                for (final message in summary.messages)
+                for (final message in messages)
                   Padding(padding: const EdgeInsets.only(top: 6), child: MutedText(message)),
                 const SizedBox(height: 14),
                 Align(

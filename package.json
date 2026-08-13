@@ -4,29 +4,17 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
     "lint": "oxlint",
     "typecheck": "tsc -b --force",
-    "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
     "parity:record": "PARITY_RECORD=1 vitest run src/parity/record.test.ts",
     "gen:dart": "node --experimental-strip-types tools/gen_dart_models.ts",
     "gen:dart:check": "node --experimental-strip-types tools/gen_dart_models.ts --check"
   },
-  "dependencies": {
-    "@supabase/supabase-js": "^2.112.3",
-    "react": "^19.2.8",
-    "react-dom": "^19.2.8"
-  },
   "devDependencies": {
-    "@testing-library/jest-dom": "^7.0.0",
-    "@testing-library/react": "^16.3.2",
+    "@supabase/supabase-js": "^2.112.3",
     "@types/node": "^24.13.3",
-    "@types/react": "^19.2.17",
-    "@types/react-dom": "^19.2.3",
-    "@vitejs/plugin-react": "^6.0.4",
     "jsdom": "^29.1.1",
     "oxlint": "^1.75.0",
     "typescript": "~6.0.2",

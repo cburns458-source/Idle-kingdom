@@ -1,15 +1,15 @@
 # Flutter/Dart migration
 
-The React app in `src/` and the Flutter client in `app_flutter/` (over the Dart
-packages in `packages/`) coexist during the migration. Both read the same content
-from `content/`, and the Dart rules are validated against the TypeScript rules by
-a fixture-replay harness rather than by hand.
+The game is the Flutter client in `app_flutter/`, over the Dart packages in
+`packages/`. The React app it replaced has been retired; what is left under
+`src/` is the TypeScript rules the Dart port was recorded from, kept as the
+parity reference, plus the harness that records them.
 
 ## Layout
 
 | Path | Role |
 | --- | --- |
-| `content/data`, `content/assets` | Canonical game data and art. Served by Vite (`publicDir: 'content'`) and bundled by Flutter. |
+| `content/data`, `content/assets` | Canonical game data and art. Bundled by Flutter, read from disk by the reference tests. |
 | `packages/ik_content` | Dart row models, database loading, validation, lookup indexes. |
 | `packages/ik_rules` | Pure Dart port of `src/game`. No IO, no Flutter, no ambient clock or RNG. |
 | `packages/ik_runtime` | Headless session: owns the save, advances ticks, defines the storage port. |
@@ -17,7 +17,24 @@ a fixture-replay harness rather than by hand.
 | `packages/ik_parity` | Test-only harness: canonical JSON, fixture replay, package purity guards. |
 | `app_flutter` | The Flutter client. UI only: no rules, no derived numbers. |
 | `parity/fixtures` | Committed scenario recordings produced from the TypeScript rules. |
+| `src/game` | The reference rules. Not shipped and not run by any client. |
 | `src/parity` | Scenario registry and the recorder/drift test. |
+
+## What is left of `src/`
+
+The React client is gone: no `index.html`, no `src/ui`, no React dependencies,
+and `vitest.config.ts` in place of a Vite app config. `src/game` stays because
+the fixtures under `parity/fixtures` are recorded from it, and `npm test`
+re-derives every one of them, which is what turns "the Dart port matches" into
+something a machine checks. It is also still the schema source for
+`npm run gen:dart`.
+
+That makes `src/game` a reference, not a second implementation: a rule change
+belongs in Dart, and the TypeScript is only touched when a fixture has to be
+re-recorded to describe the new behavior. New rules that never existed in
+TypeScript — `consolidateAwayMessages`, `importSaveText` — live in Dart alone,
+with ordinary unit tests instead of fixtures. Once the fixtures are no longer
+worth re-recording, `src/` and the npm toolchain can go entirely.
 
 ## Schema codegen
 
@@ -54,7 +71,7 @@ npm run parity:record
 3. Port the module to Dart and replay the fixtures:
 
 ```bash
-dart test packages/ik_rules packages/ik_runtime
+dart test packages
 ```
 
 `npm test` re-derives every fixture and fails on drift, so a TypeScript change
@@ -91,7 +108,7 @@ These exist because the two languages disagree in ways that are easy to miss:
 | Multiplayer: local backend, hosted backend, social view models | Done |
 | Flutter shell (theme, HUD, nav, location, map, skills, inventory) | Done |
 | Remaining Flutter panels (shops, equipment, quests, bounties, wardrobe, …) | Done |
-| Asset pipeline, save import, retiring the React app | In progress |
+| Asset audit, save transfer, retiring the React app | Done |
 
 ## Save handling
 
@@ -176,10 +193,9 @@ Two decisions are worth stating because they are player-visible:
 ## The Flutter client
 
 `app_flutter` is a member of the same pub workspace as the packages, so it uses
-`ik_content`, `ik_rules`, and `ik_runtime` by path with no publishing step.
-`app_flutter/content` is a symlink to the repo's `content/`, which is how one copy
-of the data and art reaches both clients; Flutter needs each asset directory
-listed in `pubspec.yaml` individually, as the list is not recursive.
+`ik_content`, `ik_rules`, `ik_runtime`, and `ik_net` by path with no publishing
+step. `app_flutter/content` is a symlink to the repo's `content/`, which is how
+the data and the art reach the bundle without a second copy.
 
 The layer that exists only here is `GameController`, a `ChangeNotifier` wrapped
 around `GameSession`. It holds what is true of a screen and nothing else — the
@@ -211,10 +227,48 @@ which is enough to play: create a character, start and stop an activity, travel,
 and watch an action pay out. The social screens are tested the same way, over the
 local backend or a transport held in memory, so no test needs a project.
 
+## Art, and the audit that keeps it whole
+
+Every path the client asks for is derived — an item's icon from its id, key,
+category, and name; a location's background from its id — so a missing file is
+invisible until the screen that needs it opens on a device. `asset_audit_test`
+therefore walks the database and looks: every item, skill, slot, map, location,
+enemy, gathering action, station, critter, and appearance choice must resolve to
+a file that exists, and every id must be *named* by its art table rather than
+answered with a fallback. It also parses the `assets:` list out of
+`pubspec.yaml`, because Flutter's list is not recursive: a new art directory that
+is not declared there simply will not be in the bundle, and nothing else would
+say so.
+
+The two exceptions are deliberate. A horizon gateway (`LOC-0019`, `LOC-0020`) is
+browsed on the world map and never entered, so it has no background of its own,
+and the fallbacks stay in the tables so an id nobody has drawn yet cannot crash a
+screen.
+
+## Bringing a save over
+
+A save is text, and the text is the save JSON itself — byte for byte what storage
+holds — which is what makes leaving the old client cheap. `exportSaveText` and
+`importSaveText` (in `ik_runtime`) are the whole feature, and the account screen
+offers them as *Copy save* and *Import save*, available signed in or not: the
+cloud save above needs a backend, and this needs nothing.
+
+Importing replaces the character on the device, so it asks first, and it goes
+through `GameController.commit` like any other rules result rather than writing
+storage itself. A pasted save is migrated on the way in, so a save from any older
+version is readable.
+
+The web build also adopts a save the React client left behind, once, when this
+device has none of its own. `shared_preferences` namespaces its keys, so the old
+value sits beside the new one instead of being found by it; `readLegacyBrowserSave`
+reads the bare key through a conditional import that is a stub off the web, and
+`adoptForeignSave` refuses to overwrite a character already being played here.
+The old value is left in place afterwards, costing nothing and losing nothing.
+
 ## Commands
 
 ```bash
-npm test                  # React app tests + parity fixture drift check
+npm test                  # The reference rules + parity fixture drift check
 npm run parity:record     # Re-record fixtures from the TypeScript rules
 npm run gen:dart          # Regenerate Dart row models from the TypeScript types
 dart pub get              # Resolve the pub workspace
@@ -224,6 +278,7 @@ dart test packages        # Every Dart package, including parity replay
 
 cd app_flutter
 flutter test              # Widget tests over a fake clock and in-memory storage
+flutter build web         # What CI builds, and what a release ships
 flutter run -d chrome     # The client, reading the shared content/
 
 # The same client against a Supabase project instead of the local backend:

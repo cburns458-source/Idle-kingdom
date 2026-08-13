@@ -6,8 +6,8 @@ on:
   pull_request:
 
 jobs:
-  web:
-    name: React app (lint, tests, parity fixtures)
+  reference:
+    name: TypeScript rules reference (lint, typecheck, parity fixtures)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -37,10 +37,10 @@ jobs:
       - run: dart pub get
       - run: dart analyze
       - run: dart format --output=none --set-exit-if-changed packages app_flutter/lib app_flutter/test
-      - run: dart test packages/ik_parity packages/ik_rules packages/ik_content packages/ik_runtime
+      - run: dart test packages
 
   flutter:
-    name: Flutter client (analyze, widget tests)
+    name: Flutter client (analyze, widget tests, web build)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -54,4 +54,8 @@ jobs:
       - run: flutter analyze
         working-directory: app_flutter
       - run: flutter test
+        working-directory: app_flutter
+      # The client is the game now, and web is how it is played, so a broken
+      # build is a broken release rather than a broken branch.
+      - run: flutter build web --release
         working-directory: app_flutter
