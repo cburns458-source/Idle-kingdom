@@ -41,6 +41,9 @@ class MultiplayerController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// How often presence is republished so the player stays on nearby lists.
+  static const Duration presenceInterval = Duration(seconds: 15);
+
   /// How often the unread count and the visitor lists are refreshed.
   static const Duration pollInterval = Duration(seconds: 4);
 
