@@ -12,7 +12,8 @@ a fixture-replay harness rather than by hand.
 | `content/data`, `content/assets` | Canonical game data and art. Served by Vite (`publicDir: 'content'`) and bundled by Flutter. |
 | `packages/ik_content` | Dart row models, database loading, validation, lookup indexes. |
 | `packages/ik_rules` | Pure Dart port of `src/game`. No IO, no Flutter, no ambient clock or RNG. |
-| `packages/ik_runtime` | Headless session: owns the save, advances ticks, defines storage and multiplayer ports. |
+| `packages/ik_runtime` | Headless session: owns the save, advances ticks, defines the storage port. |
+| `packages/ik_net` | Port of `src/game/multiplayer`: the local backend, the remote one, and the view models the social screens read. No transport. |
 | `packages/ik_parity` | Test-only harness: canonical JSON, fixture replay, package purity guards. |
 | `app_flutter` | The Flutter client. UI only: no rules, no derived numbers. |
 | `parity/fixtures` | Committed scenario recordings produced from the TypeScript rules. |
@@ -87,9 +88,10 @@ These exist because the two languages disagree in ways that are easy to miss:
 | Combat, loot, potions, spells, critters, quests, achievements, cosmetics, world, bounties | Done |
 | Save, migrations, unattended progress | Done |
 | Headless session runtime (tick, events, travel, storage port) | Done |
-| Bazaar and multiplayer backends | Not started |
+| Multiplayer: local backend, hosted backend, social view models | Done |
 | Flutter shell (theme, HUD, nav, location, map, skills, inventory) | Done |
-| Remaining Flutter panels (shops, equipment, quests, bounties, wardrobe, …) | In progress |
+| Remaining Flutter panels (shops, equipment, quests, bounties, wardrobe, …) | Done |
+| Asset pipeline, save import, retiring the React app | In progress |
 
 ## Save handling
 
@@ -139,6 +141,38 @@ owns the save, boots it, ticks it, applies whatever a rules call returned, and
 runs travel. Intents stay the rules functions themselves; the session is just
 where their result lands, so nothing can skip the write pipeline.
 
+## Multiplayer
+
+`ik_net` is the port of `src/game/multiplayer`, and it holds no sockets. Both
+backends sit behind one `MultiplayerService`:
+
+- **Local** keeps accounts, guilds, chat, presence, claims, and posts in a single
+  JSON document in the same store as the save, so the social screens are playable
+  and testable with no project configured.
+- **Hosted** talks to Supabase through `RemoteTransport`, a narrow port the
+  Flutter client implements over `supabase_flutter`. Keeping the rows, column
+  names, and refusal messages in `remote.dart` (shared with `remote.ts`) means
+  the two clients write the same tables, and a purity test keeps the package free
+  of transport imports.
+
+What a social screen shows is a view model, not a widget's own reading of a
+record: `views.ts` and `views.dart` derive the guild browser rows, the roster and
+its rank options, the leaderboard rows, the nearby list, the public profile, and
+the chat tabs, and the same fixtures replay in both languages. Guild emblems are
+one SVG path table (`emblems.dart`), so a banner drawn in Flutter matches the one
+drawn in the browser.
+
+Two decisions are worth stating because they are player-visible:
+
+- **Chat is local everywhere.** A channel is the location the player is standing
+  in, whichever map or sub-map that is; the Citadel has no channel of its own.
+  Global, guild, and direct tabs are the other three, and the unread count is a
+  read cursor stored per account next to the save.
+- **The Citadel Plaza is one panel with tabs.** Hourly bounties and the Grand
+  Bazaar are boards opened from the Plaza the way a shop is, not separate
+  screens. The hour's first turn-in is settled by whichever backend is in play —
+  `turnInBounty` asks for the claim before it pays, so the race has one winner.
+
 ## The Flutter client
 
 `app_flutter` is a member of the same pub workspace as the packages, so it uses
@@ -165,9 +199,17 @@ either is invisible until the two clients disagree:
   `DateTime.now()`, so a widget test drives the game by moving a fake clock
   instead of waiting on real frames.
 
+`MultiplayerController` is the same idea for the social half: it holds who is
+signed in, the guild in hand, the board last read, and who is nearby, and runs
+presence and the unread count on timers that stop with the controller. Which
+backend it wraps is decided once at boot — a build given Supabase credentials
+gets the hosted service, anything else (or a project that cannot be reached) gets
+the local one, because failing to connect must not stop the game starting.
+
 Widget tests build the shell over a `MemorySaveStorage` and a controllable clock,
 which is enough to play: create a character, start and stop an activity, travel,
-and watch an action pay out.
+and watch an action pay out. The social screens are tested the same way, over the
+local backend or a transport held in memory, so no test needs a project.
 
 ## Commands
 
@@ -183,4 +225,9 @@ dart test packages        # Every Dart package, including parity replay
 cd app_flutter
 flutter test              # Widget tests over a fake clock and in-memory storage
 flutter run -d chrome     # The client, reading the shared content/
+
+# The same client against a Supabase project instead of the local backend:
+flutter run -d chrome \
+  --dart-define=SUPABASE_URL=https://xyz.supabase.co \
+  --dart-define=SUPABASE_ANON_KEY=…
 ```
