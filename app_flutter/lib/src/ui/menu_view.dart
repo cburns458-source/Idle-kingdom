@@ -138,12 +138,22 @@ class _MenuViewState extends State<MenuView> {
           listenable: widget.multiplayer,
           builder: (context, _) {
             return GamePanel(
-              child: SwitchListTile(
-                contentPadding: EdgeInsets.zero,
-                title: const Text('Filter chat'),
-                subtitle: const Text('Hide profanity in chat. Messages are still stored as typed.'),
-                value: widget.multiplayer.filterChatProfanity,
-                onChanged: widget.multiplayer.setFilterChatProfanity,
+              child: Row(
+                children: [
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Filter chat', style: TextStyle(fontWeight: FontWeight.w700)),
+                        MutedText('Hide profanity in chat. Messages are still stored as typed.'),
+                      ],
+                    ),
+                  ),
+                  Switch(
+                    value: widget.multiplayer.filterChatProfanity,
+                    onChanged: widget.multiplayer.setFilterChatProfanity,
+                  ),
+                ],
               ),
             );
           },

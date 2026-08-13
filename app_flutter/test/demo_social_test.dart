@@ -98,11 +98,17 @@ void main() {
 
     await tester.tap(find.byTooltip('Open chat'));
     await tester.pump();
-    await tester.pump();
+    await tester.pumpAndSettle();
 
     expect(find.text('Private'), findsOne);
     expect(find.text('Guest'), findsWidgets);
-    expect(find.textContaining('[WCH] Mira'), findsOne);
+    expect(
+      find.byWidgetPredicate((widget) {
+        if (widget is! RichText) return false;
+        return widget.text.toPlainText().contains('[WCH] Mira');
+      }),
+      findsOne,
+    );
   });
 
   testWidgets('Account lists friends and ignored players', (tester) async {
