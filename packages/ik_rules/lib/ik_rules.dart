@@ -29,6 +29,7 @@ export 'src/bounties/views.dart';
 export 'src/combat/engine.dart';
 export 'src/combat/food.dart';
 export 'src/combat/stats.dart';
+export 'src/combat/summary.dart';
 export 'src/config.dart';
 export 'src/cosmetics/appearance.dart';
 export 'src/cosmetics/cosmetics.dart';

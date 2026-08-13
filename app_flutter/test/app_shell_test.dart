@@ -176,4 +176,20 @@ void main() {
     await tester.pump();
     expect(find.text('Skill milestones unlocked on this save.'), findsOne);
   });
+
+  testWidgets('chat opens from the HUD as a dropdown', (tester) async {
+    final controller = buildController(database, seed: startedCharacter(database));
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller);
+
+    expect(find.byType(FloatingActionButton), findsNothing);
+    expect(find.byTooltip('Open chat'), findsOne);
+
+    await tester.tap(find.byTooltip('Open chat'));
+    await tester.pump();
+
+    expect(find.text('Chat'), findsOne);
+    expect(find.text('Sign in from Menu → Account to use multiplayer features.'), findsOne);
+    expect(find.byTooltip('Close chat'), findsOne);
+  });
 }

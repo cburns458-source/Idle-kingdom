@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:idle_kingdoms/src/ui/inventory_view.dart';
 import 'package:ik_content/ik_content.dart';
@@ -106,5 +107,79 @@ void main() {
 
     expect(find.text('×5'), findsOne);
     expect(find.textContaining('value each'), findsOne);
+  });
+
+  testWidgets('combat stats live on the equipment page, not the bag', (tester) async {
+    final controller = buildController(database, seed: startedCharacter(database));
+    addTearDown(controller.dispose);
+
+    await pumpPanel(tester, InventoryView(controller: controller));
+    expect(find.text('Damage'), findsNothing);
+    expect(find.text('Show sources'), findsNothing);
+
+    await tester.tap(find.text('Equipment'));
+    await tester.pump();
+
+    expect(find.text('Damage'), findsOne);
+    expect(find.text('Health'), findsOne);
+    expect(find.text('DR'), findsOne);
+    expect(find.text('No active bonuses.'), findsOne);
+
+    await tester.tap(find.text('Show sources'));
+    await tester.pump();
+    expect(find.text('Hide sources'), findsOne);
+    expect(find.text('Damage reduction'), findsOne);
+    expect(find.text('Total'), findsWidgets);
+  });
+
+  testWidgets('equipment page lists potion and race bonuses', (tester) async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(
+        raceId: 'RACE-0003',
+        activePotionEffect: const ActivePotionEffect(
+          scope: 'one_combat_encounter',
+          itemId: 'ITEM-0072',
+          damageBonusPercent: 10,
+        ),
+      ),
+    );
+    addTearDown(controller.dispose);
+
+    await pumpPanel(tester, InventoryView(controller: controller));
+    await tester.tap(find.text('Equipment'));
+    await tester.pump();
+
+    expect(find.text('No active bonuses.'), findsNothing);
+    expect(find.textContaining('High Elf'), findsOne);
+    expect(find.textContaining('Strength Potion'), findsOne);
+  });
+
+  testWidgets('the favorite heart sits at the top-right of an item tile', (tester) async {
+    final seed = unequippedCharacter().copyWith(
+      inventory: [
+        const InventoryStack(
+          itemId: 'ITEM-0002',
+          quantity: 1,
+          enchantmentId: 'ENCH-0003',
+          favorite: true,
+        ),
+      ],
+    );
+    final controller = buildController(database, seed: seed);
+    addTearDown(controller.dispose);
+
+    await pumpPanel(tester, InventoryView(controller: controller));
+
+    final tile = tester.getRect(
+      find.ancestor(of: find.text('Clay'), matching: find.byType(InkWell)),
+    );
+    final heart = tester.getRect(find.byTooltip('Unfavorite'));
+    expect(heart.right, closeTo(tile.right, 12));
+    expect(heart.top, closeTo(tile.top, 12));
+
+    final star = tester.getRect(find.text('★'));
+    expect(star.right, lessThanOrEqualTo(heart.right));
+    expect(star.top, closeTo(tile.top, 12));
   });
 }

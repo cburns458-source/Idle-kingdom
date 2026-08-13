@@ -43,6 +43,7 @@ class InventoryView extends StatefulWidget {
 class _InventoryViewState extends State<InventoryView> {
   _InventoryTab _tab = _InventoryTab.items;
   String? _message;
+  bool _showSources = false;
 
   /// Non-null while picking stacks to sell; the set is the chosen indexes.
   Set<int>? _selling;
@@ -180,9 +181,6 @@ class _InventoryViewState extends State<InventoryView> {
   }
 
   Widget _header() {
-    final damage = playerDamageRange(db, save);
-    final offhand = playerOffhandDamageRange(db, save);
-    final maxHp = playerMaxHp(db, save);
     final selling = _selling;
 
     return Padding(
@@ -202,19 +200,6 @@ class _InventoryViewState extends State<InventoryView> {
             ],
           ),
           const SizedBox(height: 8),
-          Row(
-            children: [
-              _Stat(
-                label: 'Damage',
-                value: offhand == null
-                    ? '${damage.min}–${damage.max}'
-                    : '${damage.min}–${damage.max} · OH ${offhand.min}–${offhand.max}',
-              ),
-              _Stat(label: 'Health', value: '${save.currentHp}/$maxHp'),
-              _Stat(label: 'DR', value: '${playerDamageReduction(db, save)}'),
-            ],
-          ),
-          const SizedBox(height: 8),
           SegmentedButton<_InventoryTab>(
             segments: const [
               ButtonSegment(value: _InventoryTab.items, label: Text('Items')),
@@ -226,6 +211,7 @@ class _InventoryViewState extends State<InventoryView> {
               _tab = selection.first;
               _selling = null;
               _message = null;
+              if (_tab != _InventoryTab.equipment) _showSources = false;
             }),
           ),
           if (selling != null) ...[
@@ -329,6 +315,8 @@ class _InventoryViewState extends State<InventoryView> {
     return ListView(
       padding: const EdgeInsets.all(12),
       children: [
+        _combatStats(),
+        const SizedBox(height: 10),
         // Four columns keep the paper-doll arrangement, but the whole doll is
         // capped so the slots stay tile-sized instead of filling the screen.
         Center(
@@ -389,6 +377,90 @@ class _InventoryViewState extends State<InventoryView> {
       onTap: () => _unequip(slotId),
       onLongPress: () => _showDetail(equipped: stack, slotId: slotId),
       onToggleFavorite: null,
+    );
+  }
+
+  Widget _combatStats() {
+    final summary = playerCombatStatSummary(db, save);
+    final damage = summary.damage;
+    final offhand = summary.offhandDamage;
+    return GamePanel(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              _Stat(
+                label: 'Damage',
+                value: offhand == null
+                    ? '${damage.min}–${damage.max}'
+                    : '${damage.min}–${damage.max} · OH ${offhand.min}–${offhand.max}',
+              ),
+              _Stat(label: 'Health', value: '${summary.maxHp}'),
+              _Stat(label: 'DR', value: '${summary.damageReduction}'),
+            ],
+          ),
+          const SizedBox(height: 10),
+          const Text('Active bonuses', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+          if (summary.activeBonuses.isEmpty)
+            const Padding(padding: EdgeInsets.only(top: 4), child: MutedText('No active bonuses.'))
+          else
+            for (final bonus in summary.activeBonuses)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text.rich(
+                  TextSpan(
+                    children: [
+                      TextSpan(
+                        text: bonus.name,
+                        style: const TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                      TextSpan(text: ' — ${bonus.effect}'),
+                    ],
+                  ),
+                  style: const TextStyle(fontSize: 12, height: 1.3),
+                ),
+              ),
+          const SizedBox(height: 8),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: OutlinedButton(
+              onPressed: () => setState(() => _showSources = !_showSources),
+              child: Text(_showSources ? 'Hide sources' : 'Show sources'),
+            ),
+          ),
+          if (_showSources) ...[
+            _breakdownSection('Damage', summary.damageBreakdown),
+            _breakdownSection('Health', summary.healthBreakdown),
+            _breakdownSection('Damage reduction', summary.reductionBreakdown),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _breakdownSection(String title, List<CombatStatContribution> lines) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(title, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+          for (final line in lines)
+            Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Row(
+                children: [
+                  Expanded(child: MutedText(line.label)),
+                  Text(
+                    line.detail,
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
     );
   }
 }
@@ -485,31 +557,38 @@ class _ItemTile extends StatelessWidget {
                   style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
                 ),
               ),
-            if (enchanted)
+            if (selected)
               const Positioned(
                 left: 0,
                 top: 0,
-                child: Text('★', style: TextStyle(fontSize: 11, color: Palette.softGreen)),
-              ),
-            if (selected)
-              const Positioned(
-                right: 0,
-                top: 0,
                 child: Icon(Icons.check, size: 14, color: Palette.gold),
               ),
-            if (onToggleFavorite != null && !selecting)
+            if (enchanted || (onToggleFavorite != null && !selecting))
               Positioned(
-                left: -6,
-                bottom: -6,
-                child: IconButton(
-                  onPressed: onToggleFavorite,
-                  visualDensity: VisualDensity.compact,
-                  iconSize: 14,
-                  tooltip: favorite ? 'Unfavorite' : 'Favorite',
-                  icon: Icon(
-                    favorite ? Icons.favorite : Icons.favorite_border,
-                    color: favorite ? Palette.gold : const Color(0x80F4E7C8),
-                  ),
+                right: 0,
+                top: 0,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (enchanted)
+                      const Text('★', style: TextStyle(fontSize: 11, color: Palette.softGreen)),
+                    if (onToggleFavorite != null && !selecting)
+                      GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: onToggleFavorite,
+                        child: Tooltip(
+                          message: favorite ? 'Unfavorite' : 'Favorite',
+                          child: Padding(
+                            padding: const EdgeInsets.all(4),
+                            child: Icon(
+                              favorite ? Icons.favorite : Icons.favorite_border,
+                              size: 14,
+                              color: favorite ? Palette.gold : const Color(0x80F4E7C8),
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
               ),
           ],

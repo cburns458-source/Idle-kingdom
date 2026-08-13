@@ -158,7 +158,14 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
       children: [
         Column(
           children: [
-            TopHud(controller: controller),
+            TopHud(
+              controller: controller,
+              trailing: ChatLauncher(
+                multiplayer: multiplayer,
+                locationId: save.currentLocationId,
+                citadelHub: _inCitadel,
+              ),
+            ),
             Expanded(child: _buildScreen()),
             BottomNav(
               screen: _screen,
@@ -175,16 +182,6 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
             appearance: save.appearance,
             hint: !save.hasSeenWardrobeIntro && save.cosmetics.unlocked.isNotEmpty,
             onTap: _openWardrobe,
-          ),
-        ),
-        // Floats over the bottom-right of the screen, just above the chin.
-        Positioned(
-          right: 6,
-          bottom: 60,
-          child: ChatLauncher(
-            multiplayer: multiplayer,
-            locationId: save.currentLocationId,
-            citadelHub: _inCitadel,
           ),
         ),
         if (_nearbyOpen)

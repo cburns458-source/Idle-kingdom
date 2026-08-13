@@ -24,9 +24,12 @@ class _HudStatus {
 /// The portrait is painted by [HudPortrait] in the shell stack so the frame can
 /// hang below this bar without stretching it.
 class TopHud extends StatelessWidget {
-  const TopHud({super.key, required this.controller});
+  const TopHud({super.key, required this.controller, this.trailing});
 
   final GameController controller;
+
+  /// Sits on the far right of the bar — currently the chat toggle.
+  final Widget? trailing;
 
   /// A running craft queue reads as the item and how much of the order is left;
   /// anything else reads as the activity, its action, and how long it has run.
@@ -121,7 +124,7 @@ class TopHud extends StatelessWidget {
                     if (status != null) ...[
                       const SizedBox(width: 8),
                       ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 140),
+                        constraints: BoxConstraints(maxWidth: trailing == null ? 140 : 110),
                         child: _ActivityReadout(status: status),
                       ),
                     ],
@@ -182,6 +185,7 @@ class TopHud extends StatelessWidget {
               ],
             ),
           ),
+          if (trailing != null) ...[const SizedBox(width: 8), trailing!],
         ],
       ),
     );
