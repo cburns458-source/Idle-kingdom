@@ -37,11 +37,7 @@ class TopHud extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _AvatarButton(
-                appearance: save.appearance,
-                hint: hint,
-                onTap: onOpenWardrobe,
-              ),
+              _AvatarButton(appearance: save.appearance, hint: hint, onTap: onOpenWardrobe),
               const SizedBox(width: 8),
               Expanded(
                 child: Column(
@@ -98,8 +94,20 @@ class TopHud extends StatelessWidget {
 }
 
 /// The framed portrait that opens the wardrobe.
+///
+/// The ring is the shared pixel frame rather than a painted border, and the
+/// sprite is zoomed on its head, so the portrait reads as a face at HUD size.
 class _AvatarButton extends StatelessWidget {
   const _AvatarButton({required this.appearance, required this.hint, required this.onTap});
+
+  /// The whole control, frame included.
+  static const double _size = 56;
+
+  /// How far inside the frame's rim the portrait sits.
+  static const double _rim = _size * 0.08;
+
+  /// Enough of the sprite's height to fill the circle with its head.
+  static const double _headZoom = 1.7;
 
   final PlayerAppearance appearance;
 
@@ -112,22 +120,41 @@ class _AvatarButton extends StatelessWidget {
     return Semantics(
       button: true,
       label: 'Open wardrobe',
-      child: InkWell(
+      child: GestureDetector(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(10),
-        child: Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: hint ? Palette.gold : Palette.edge, width: hint ? 2 : 1),
-          ),
-          clipBehavior: Clip.antiAlias,
-          child: Image.asset(
-            playerAssetPath(appearance),
-            filterQuality: FilterQuality.none,
-            alignment: Alignment.topCenter,
-            fit: BoxFit.cover,
+        child: SizedBox.square(
+          dimension: _size,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(_rim),
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: const Color(0xFF9EC8E8),
+                    boxShadow: hint
+                        ? const [BoxShadow(color: Palette.gold, blurRadius: 8, spreadRadius: 1)]
+                        : null,
+                  ),
+                  child: ClipOval(
+                    child: Transform.scale(
+                      scale: _headZoom,
+                      alignment: Alignment.topCenter,
+                      child: Image.asset(
+                        playerAssetPath(appearance),
+                        filterQuality: FilterQuality.none,
+                        alignment: Alignment.topCenter,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              IgnorePointer(
+                child: Image.asset(avatarFrameAssetPath(), filterQuality: FilterQuality.none),
+              ),
+            ],
           ),
         ),
       ),
