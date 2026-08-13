@@ -4,6 +4,7 @@ import 'package:ik_net/ik_net.dart';
 import '../session/game_controller.dart';
 import '../session/multiplayer_controller.dart';
 import '../theme.dart';
+import 'save_transfer_section.dart';
 import 'social_bits.dart';
 
 /// Signing in, syncing, and signing out.
@@ -62,6 +63,8 @@ class _AccountPanelState extends State<AccountPanel> {
         const SizedBox(height: 12),
         if (session == null) ..._signInForm() else ..._signedIn(session),
         SocialNotice(notice: net.notice),
+        const SizedBox(height: 20),
+        SaveTransferSection(controller: widget.controller),
       ],
     );
   }
@@ -80,9 +83,7 @@ class _AccountPanelState extends State<AccountPanel> {
       ),
       const SizedBox(height: 6),
       OutlinedButton(
-        onPressed: net.busy
-            ? null
-            : () => net.pullSave((save) => widget.controller.commit(save)),
+        onPressed: net.busy ? null : () => net.pullSave((save) => widget.controller.commit(save)),
         child: const Text('Load cloud save'),
       ),
       const SizedBox(height: 6),
@@ -136,9 +137,7 @@ class _AccountPanelState extends State<AccountPanel> {
       if (net.mode == MultiplayerMode.supabase) ...<Widget>[
         const SizedBox(height: 6),
         OutlinedButton(
-          onPressed: net.busy || _email.text.isEmpty
-              ? null
-              : () => net.sendMagicLink(_email.text),
+          onPressed: net.busy || _email.text.isEmpty ? null : () => net.sendMagicLink(_email.text),
           child: const Text('Email magic link'),
         ),
       ],

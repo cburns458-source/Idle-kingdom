@@ -2,13 +2,16 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:ik_net/ik_net.dart';
+import 'package:ik_rules/ik_rules.dart';
 import 'package:ik_runtime/ik_runtime.dart';
 
 import '../content/database_loader.dart';
 import '../net/supabase_transport.dart';
 import '../session/game_controller.dart';
 import '../session/multiplayer_controller.dart';
+import '../storage/legacy_browser_save.dart';
 import '../storage/prefs_store.dart';
+import '../storage/save_adoption.dart';
 import '../theme.dart';
 import 'app_shell.dart';
 
@@ -50,6 +53,9 @@ class _BootGateState extends State<_BootGate> {
     final database = await loadBundledDatabase();
     final storage = await PrefsStore.open();
     num clock() => DateTime.now().millisecondsSinceEpoch;
+    // A player opening this client where the React one was served keeps their
+    // character without having to move it by hand.
+    adoptForeignSave(storage, readLegacyBrowserSave(saveStorageKey), clock());
     final session = GameSession(
       db: database.launch,
       repository: SaveRepository(storage: storage, clock: clock),
