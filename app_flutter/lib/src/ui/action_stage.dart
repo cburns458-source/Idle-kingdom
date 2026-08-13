@@ -407,10 +407,12 @@ class _ProductionStage extends StatelessWidget {
                   child: Semantics(
                     liveRegion: true,
                     label: popup.displayName,
-                    child: ItemIcon(
-                      key: ValueKey('craft-pop-${popup.seq}'),
-                      item: popupItem,
-                      size: 38,
+                    child: ExcludeSemantics(
+                      child: ItemIcon(
+                        key: ValueKey('craft-pop-${popup.seq}'),
+                        item: popupItem,
+                        size: 38,
+                      ),
                     ),
                   ),
                 ),

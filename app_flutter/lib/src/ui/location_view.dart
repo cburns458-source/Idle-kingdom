@@ -127,9 +127,6 @@ class _LocationViewState extends State<LocationView> {
       _openAt = null;
     }
 
-    final screenHeight = MediaQuery.sizeOf(context).height;
-    final stageMax = screenHeight * 0.48;
-    final bandMax = screenHeight * 0.33;
     final running = controller.save.currentActivityId != null;
     final stage = _open != null
         ? _buildPanel(_open!)
@@ -193,45 +190,65 @@ class _LocationViewState extends State<LocationView> {
                 child: _Notice(text: message, tone: Palette.gold),
               ),
             Expanded(
-              child: Stack(
-                children: [
-                  Positioned(top: 12, right: 12, child: CritterOverlay(controller: controller)),
-                ],
-              ),
-            ),
-            if (stage != null)
-              ConstrainedBox(
-                constraints: BoxConstraints(maxHeight: stageMax),
-                child: SingleChildScrollView(child: stage),
-              ),
-            ConstrainedBox(
-              constraints: BoxConstraints(maxHeight: bandMax),
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    ..._activities(locationId),
-                    ..._stations(locationId),
-                    ..._people(locationId),
-                    ..._shops(locationId),
-                    ..._citadelBoards(locationId),
-                    ..._searches(locationId),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        OutlinedButton(
-                          onPressed: widget.onOpenMap,
-                          child: const Text('Open the map'),
+              child: LayoutBuilder(
+                builder: (context, rest) {
+                  final stageMax = rest.maxHeight * 0.52;
+                  final bandMax = rest.maxHeight * 0.38;
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Expanded(
+                        child: Stack(
+                          children: [
+                            Positioned(
+                              top: 12,
+                              right: 12,
+                              child: CritterOverlay(controller: controller),
+                            ),
+                          ],
                         ),
-                        if (widget.onOpenNearby case final openNearby?)
-                          OutlinedButton(onPressed: openNearby, child: const Text('Who is here')),
-                      ],
-                    ),
-                  ],
-                ),
+                      ),
+                      if (stage != null)
+                        ConstrainedBox(
+                          constraints: BoxConstraints(maxHeight: stageMax),
+                          child: SingleChildScrollView(child: stage),
+                        ),
+                      ConstrainedBox(
+                        constraints: BoxConstraints(maxHeight: bandMax),
+                        child: SingleChildScrollView(
+                          padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              ..._activities(locationId),
+                              ..._stations(locationId),
+                              ..._people(locationId),
+                              ..._shops(locationId),
+                              ..._citadelBoards(locationId),
+                              ..._searches(locationId),
+                              const SizedBox(height: 8),
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: [
+                                  OutlinedButton(
+                                    onPressed: widget.onOpenMap,
+                                    child: const Text('Open the map'),
+                                  ),
+                                  if (widget.onOpenNearby case final openNearby?)
+                                    OutlinedButton(
+                                      onPressed: openNearby,
+                                      child: const Text('Who is here'),
+                                    ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                },
               ),
             ),
           ],
