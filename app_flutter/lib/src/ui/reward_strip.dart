@@ -82,7 +82,7 @@ class _Chip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
         decoration: BoxDecoration(
-          color: const Color(0x44120C08),
+          color: Palette.panel,
           borderRadius: BorderRadius.circular(999),
           border: Border.all(color: Palette.edge),
         ),

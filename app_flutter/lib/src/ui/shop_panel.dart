@@ -304,7 +304,7 @@ class _ShopPanelState extends State<ShopPanel> {
         child: Container(
           padding: const EdgeInsets.fromLTRB(3, 5, 3, 4),
           decoration: BoxDecoration(
-            color: offered != null ? const Color(0x33D4AF37) : const Color(0x6B221810),
+            color: offered != null ? const Color(0x33D4AF37) : Palette.panel,
             borderRadius: BorderRadius.circular(9),
             border: Border.all(color: offered != null ? Palette.gold : Palette.edge),
           ),

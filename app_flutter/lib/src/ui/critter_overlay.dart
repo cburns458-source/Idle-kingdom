@@ -32,7 +32,7 @@ class CritterOverlay extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
           decoration: BoxDecoration(
-            color: const Color(0xB3231710),
+            color: Palette.panel,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: Palette.gold),
           ),

@@ -19,7 +19,7 @@ class IngredientChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
       decoration: BoxDecoration(
-        color: const Color(0x44120C08),
+        color: Palette.panel,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: short ? Palette.danger : Palette.edge),
       ),

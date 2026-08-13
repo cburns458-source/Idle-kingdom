@@ -81,10 +81,12 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
     return resolveActiveMapId(controller.db, location) == citadelMapId;
   }
 
+  /// The map this location actually sits on: a district when inside a sub-map,
+  /// otherwise the world map. Gateways stay on the world map.
   String _mapIdForCurrentLocation() {
     final location = widget.controller.location;
     if (location == null) return mainMapId;
-    return resolveActiveMapId(widget.controller.db, location);
+    return getLocationMapId(location);
   }
 
   void _showMap() {
@@ -136,6 +138,7 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
               // above them, and the frame's own gradient shows through it.
               child: Material(
                 type: MaterialType.transparency,
+                clipBehavior: Clip.none,
                 child: ListenableBuilder(
                   listenable: controller,
                   builder: (context, _) => _buildFrame(context),
@@ -155,7 +158,7 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
       children: [
         Column(
           children: [
-            TopHud(controller: controller, onOpenWardrobe: _openWardrobe),
+            TopHud(controller: controller),
             Expanded(child: _buildScreen()),
             BottomNav(
               screen: _screen,
@@ -164,6 +167,15 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
               onOpenMap: _showMap,
             ),
           ],
+        ),
+        Positioned(
+          left: 8,
+          top: 2,
+          child: HudPortrait(
+            appearance: save.appearance,
+            hint: !save.hasSeenWardrobeIntro && save.cosmetics.unlocked.isNotEmpty,
+            onTap: _openWardrobe,
+          ),
         ),
         // Floats over the bottom-right of the screen, just above the chin.
         Positioned(

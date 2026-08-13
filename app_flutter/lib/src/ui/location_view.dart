@@ -16,6 +16,7 @@ import 'production_panel.dart';
 import 'project_panel.dart';
 import 'reward_strip.dart';
 import 'shop_panel.dart';
+import 'top_hud.dart';
 
 /// Whatever the player has open on top of the location, if anything.
 sealed class LocationPanel {
@@ -168,7 +169,7 @@ class _LocationViewState extends State<LocationView> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(13, 12, 13, 0),
+                    padding: const EdgeInsets.fromLTRB(HudPortrait.size, 12, 13, 0),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -176,7 +177,7 @@ class _LocationViewState extends State<LocationView> {
                         const SizedBox(width: 11),
                         Column(
                           children: [
-                            _OverlayIconButton(
+                            OverlayChipButton(
                               tooltip: 'Open world map',
                               onPressed: widget.onOpenMap,
                               child: Image.asset(
@@ -188,7 +189,7 @@ class _LocationViewState extends State<LocationView> {
                             ),
                             if (widget.onOpenNearby case final openNearby?) ...[
                               const SizedBox(height: 7),
-                              _OverlayIconButton(
+                              OverlayChipButton(
                                 tooltip: 'Nearby adventurers',
                                 onPressed: openNearby,
                                 dark: true,
@@ -203,7 +204,7 @@ class _LocationViewState extends State<LocationView> {
                   if (subMapIdForGateway(controller.db, locationId) case final subMapId?
                       when isSubMapGateway(location))
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(13, 8, 13, 0),
+                      padding: const EdgeInsets.fromLTRB(HudPortrait.size, 8, 13, 0),
                       child: Align(
                         alignment: Alignment.centerLeft,
                         child: GameButton(
@@ -277,7 +278,7 @@ class _LocationViewState extends State<LocationView> {
                               constraints: BoxConstraints(maxHeight: bandMax),
                               child: DecoratedBox(
                                 decoration: const BoxDecoration(
-                                  color: Color(0x38140D08),
+                                  color: Palette.panel,
                                   border: Border(top: BorderSide(color: Color(0x2EE8DCB4))),
                                 ),
                                 child: SingleChildScrollView(
@@ -491,44 +492,6 @@ class _LocationHead extends StatelessWidget {
             child: Text(danger, style: warningStyle),
           ),
       ],
-    );
-  }
-}
-
-/// The map / nearby chips that sit on the location art, matching the old overlay.
-class _OverlayIconButton extends StatelessWidget {
-  const _OverlayIconButton({
-    required this.tooltip,
-    required this.onPressed,
-    required this.child,
-    this.dark = false,
-  });
-
-  final String tooltip;
-  final VoidCallback onPressed;
-  final Widget child;
-
-  /// The nearby chip is brown rather than the map's parchment green.
-  final bool dark;
-
-  @override
-  Widget build(BuildContext context) {
-    return Tooltip(
-      message: tooltip,
-      child: Material(
-        color: dark ? const Color(0xEB302418) : const Color(0xEBBADCA0),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: dark ? const Color(0x8CD4AF5A) : const Color(0xB3B4DC96)),
-        ),
-        shadowColor: const Color(0x47000000),
-        elevation: 6,
-        child: InkWell(
-          onTap: onPressed,
-          borderRadius: BorderRadius.circular(16),
-          child: SizedBox(width: 60, height: 60, child: Center(child: child)),
-        ),
-      ),
     );
   }
 }

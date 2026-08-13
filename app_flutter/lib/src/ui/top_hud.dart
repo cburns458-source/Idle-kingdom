@@ -19,14 +19,14 @@ class _HudStatus {
   final String timer;
 }
 
-/// Name, race, totals, gold, HP, what is running, and the last few rewards.
+/// Name, race, totals, gold, HP, and what is running.
+///
+/// The portrait is painted by [HudPortrait] in the shell stack so the frame can
+/// hang below this bar without stretching it.
 class TopHud extends StatelessWidget {
-  const TopHud({super.key, required this.controller, required this.onOpenWardrobe});
+  const TopHud({super.key, required this.controller});
 
   final GameController controller;
-
-  /// Tapping the portrait opens the wardrobe.
-  final VoidCallback onOpenWardrobe;
 
   /// A running craft queue reads as the item and how much of the order is left;
   /// anything else reads as the activity, its action, and how long it has run.
@@ -68,130 +68,119 @@ class TopHud extends StatelessWidget {
         ? 0.0
         : (save.currentHp / maxHp).clamp(0, 1).toDouble();
     final raceName = raceDisplayName(controller.db, save.raceId);
-    // Something to wear and no wardrobe visit yet: worth pointing at.
-    final hint = !save.hasSeenWardrobeIntro && save.cosmetics.unlocked.isNotEmpty;
     final status = _status();
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(12, 6, 12, 6),
+      padding: const EdgeInsets.fromLTRB(8, 4, 10, 4),
       decoration: const BoxDecoration(
+        color: Palette.panel,
         border: Border(bottom: BorderSide(color: Palette.edge)),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _AvatarButton(appearance: save.appearance, hint: hint, onTap: onOpenWardrobe),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
+          const SizedBox(width: HudPortrait.size),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                save.characterName ?? 'Adventurer',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
-                              ),
-                              MutedText(raceName ?? 'Unsworn'),
-                              Text(
-                                'Total level: ${formatThousands(totalLevel(save))}',
-                                style: const TextStyle(
-                                  fontSize: 13.5,
-                                  fontWeight: FontWeight.w700,
-                                  color: Color(0xFFC8D7B6),
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Row(
-                                children: [
-                                  Image.asset(
-                                    goldIconPath(),
-                                    width: 14,
-                                    height: 14,
-                                    filterQuality: FilterQuality.none,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Flexible(
-                                    child: Text(
-                                      formatThousands(save.gold),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w700,
-                                        color: Color(0xFFFFF4D4),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            save.characterName ?? 'Adventurer',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              height: 1.15,
+                            ),
                           ),
-                        ),
-                        if (status != null) ...[
-                          const SizedBox(width: 8),
-                          ConstrainedBox(
-                            constraints: const BoxConstraints(maxWidth: 152),
-                            child: _ActivityReadout(status: status),
+                          Text(
+                            '${raceName ?? 'Unsworn'} · '
+                            'Lv ${formatThousands(totalLevel(save))}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFFC8D7B6),
+                              height: 1.2,
+                            ),
                           ),
                         ],
-                      ],
+                      ),
                     ),
-                    const SizedBox(height: 6),
-                    Row(
-                      children: [
-                        const Spacer(),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              Text(
-                                controller.isRecovering
-                                    ? 'Dead'
-                                    : '${formatThousands(save.currentHp)}/'
-                                          '${formatThousands(maxHp)}',
-                                textAlign: TextAlign.right,
-                                style: TextStyle(
-                                  fontSize: 12.5,
-                                  fontWeight: FontWeight.w700,
-                                  color: controller.isRecovering
-                                      ? const Color(0xFFE8A090)
-                                      : const Color(0xFFF0D78C),
-                                ),
-                              ),
-                              const SizedBox(height: 3),
-                              Semantics(
-                                label: 'Hit points',
-                                value:
-                                    '${formatThousands(save.currentHp)} / '
-                                    '${formatThousands(maxHp)}',
-                                child: PillBar(
-                                  value: hpFraction,
-                                  gradient: Meters.hudHp,
-                                  height: 9,
-                                  trackColor: const Color(0x59120C08),
-                                  borderColor: const Color(0x59D4AF37),
-                                ),
-                              ),
-                            ],
-                          ),
+                    if (status != null) ...[
+                      const SizedBox(width: 8),
+                      ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 140),
+                        child: _ActivityReadout(status: status),
+                      ),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: 3),
+                Row(
+                  children: [
+                    Image.asset(
+                      goldIconPath(),
+                      width: 13,
+                      height: 13,
+                      filterQuality: FilterQuality.none,
+                    ),
+                    const SizedBox(width: 3),
+                    Text(
+                      formatThousands(save.gold),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFFFFF4D4),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      controller.isRecovering
+                          ? 'Dead'
+                          : '${formatThousands(save.currentHp)}/'
+                                '${formatThousands(maxHp)}',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: controller.isRecovering
+                            ? const Color(0xFFE8A090)
+                            : const Color(0xFFF0D78C),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Semantics(
+                        label: 'Hit points',
+                        value:
+                            '${formatThousands(save.currentHp)} / '
+                            '${formatThousands(maxHp)}',
+                        child: PillBar(
+                          value: hpFraction,
+                          gradient: Meters.hudHp,
+                          height: 8,
+                          trackColor: Palette.ink,
+                          borderColor: const Color(0x59D4AF37),
                         ),
-                      ],
+                      ),
                     ),
                   ],
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
@@ -217,29 +206,18 @@ class _ActivityReadout extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.right,
             style: const TextStyle(
-              fontSize: 12,
+              fontSize: 11,
               fontWeight: FontWeight.w700,
               color: Color(0xFFF4EFD8),
-              height: 1.15,
+              height: 1.1,
             ),
           ),
           Text(
-            status.detail,
+            '${status.detail} · ${status.timer}',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.right,
-            style: const TextStyle(
-              fontSize: 10.5,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFFD8D0B8),
-              height: 1.15,
-            ),
-          ),
-          Text(
-            status.timer,
-            maxLines: 1,
-            textAlign: TextAlign.right,
-            style: const TextStyle(fontSize: 11.5, color: Color(0xFFC8D7B6), height: 1.15),
+            style: const TextStyle(fontSize: 10.5, color: Color(0xFFC8D7B6), height: 1.1),
           ),
         ],
       ),
@@ -249,16 +227,17 @@ class _ActivityReadout extends StatelessWidget {
 
 /// The framed portrait that opens the wardrobe.
 ///
-/// The ring is the shared pixel frame rather than a painted border, and the
-/// sprite is zoomed on its head, so the portrait reads as a face at HUD size.
-class _AvatarButton extends StatelessWidget {
-  const _AvatarButton({required this.appearance, required this.hint, required this.onTap});
+/// Sized to wrap the head shot, and painted above the location so the ring can
+/// hang below the HUD bar.
+class HudPortrait extends StatelessWidget {
+  const HudPortrait({super.key, required this.appearance, required this.hint, required this.onTap});
 
-  /// The whole control, frame included.
-  static const double _size = 96;
+  /// The whole control, frame included. Taller than the HUD so the ring drops
+  /// over the screen below.
+  static const double size = 124;
 
-  /// How far inside the frame's rim the portrait sits.
-  static const double _rim = _size * 0.08;
+  /// Inset so the head sits in the ring's hole rather than over its rim.
+  static const double _rim = 22;
 
   /// Enough of the sprite's height to fill the circle with its head.
   static const double _headZoom = 1.7;
@@ -277,7 +256,7 @@ class _AvatarButton extends StatelessWidget {
       child: GestureDetector(
         onTap: onTap,
         child: SizedBox.square(
-          dimension: _size,
+          dimension: size,
           child: Stack(
             fit: StackFit.expand,
             children: [

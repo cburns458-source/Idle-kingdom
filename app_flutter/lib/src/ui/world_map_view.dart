@@ -55,12 +55,17 @@ class WorldMapView extends StatelessWidget {
           ),
         if (browseMapId != mainMapId)
           Positioned(
-            left: 12,
+            right: 12,
             top: 12,
-            child: GameButton(
-              label: 'Back to the world map',
-              tone: GameButtonTone.secondary,
+            child: OverlayChipButton(
+              tooltip: 'Open world map',
               onPressed: () => onBrowseMap(mainMapId),
+              child: Image.asset(
+                uiMapAssetPath(),
+                width: 38,
+                height: 38,
+                filterQuality: FilterQuality.none,
+              ),
             ),
           ),
         Positioned(
@@ -125,29 +130,45 @@ class _MapNodeState extends State<_MapNode> {
     final isHere = widget.isHere;
     final isSelected = widget.isSelected;
     final position = positionForLocation(location);
+    final fill = isHere ? Palette.gold : Palette.parchmentText;
     return Align(
       // Percentages from the shared layout map onto the alignment square.
       alignment: Alignment(position.x / 50 - 1, position.y / 50 - 1),
       child: GestureDetector(
         onTap: _handleTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          decoration: BoxDecoration(
-            color: isHere ? const Color(0xDD3D2A1A) : const Color(0xAA1F1610),
-            borderRadius: BorderRadius.circular(999),
-            border: Border.all(
-              color: isSelected || isHere ? Palette.gold : Palette.edge,
-              width: isSelected ? 2 : 1,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Semantics(
+              button: true,
+              label: location.displayName,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(10, 8, 10, 4),
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: fill,
+                    border: Border.all(
+                      color: isSelected ? Palette.gold : Palette.parchment,
+                      width: isSelected || isHere ? 2 : 1,
+                    ),
+                    boxShadow: const [BoxShadow(offset: Offset(0, 1), color: Color(0x80000000))],
+                  ),
+                  child: const SizedBox.square(dimension: 14),
+                ),
+              ),
             ),
-          ),
-          child: Text(
-            location.displayName,
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: isHere ? FontWeight.w700 : FontWeight.w400,
-              color: isHere ? Palette.gold : Palette.parchmentText,
+            Text(
+              location.displayName,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: isHere ? FontWeight.w700 : FontWeight.w600,
+                color: isHere ? Palette.gold : Palette.parchmentText,
+                shadows: overlayShadow,
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );
@@ -172,7 +193,7 @@ class _SelectionPanel extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: const BoxDecoration(
-        color: Color(0xF02A1C12),
+        color: Palette.panel,
         border: Border(top: BorderSide(color: Palette.edge)),
       ),
       child: place == null

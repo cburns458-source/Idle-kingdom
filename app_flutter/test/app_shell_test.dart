@@ -79,6 +79,30 @@ void main() {
     expect(controller.save.currentLocationId, 'LOC-0001');
   });
 
+  testWidgets('the map icon opens the district, then the world map', (tester) async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(currentLocationId: 'LOC-0023'),
+    );
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller);
+
+    expect(find.text('Kitchen'), findsWidgets);
+    await tester.tap(find.byTooltip('Open world map'));
+    await tester.pump();
+
+    expect(find.text('Back to the world map'), findsNothing);
+    expect(find.text('The Farm'), findsNothing);
+    expect(find.text('Kitchen'), findsWidgets);
+    expect(find.byTooltip('Open world map'), findsOne);
+
+    await tester.tap(find.byTooltip('Open world map'));
+    await tester.pump();
+
+    expect(find.text('The Farm'), findsOne);
+    expect(find.text('Back to the world map'), findsNothing);
+  });
+
   testWidgets('the loop runs while the shell is on screen', (tester) async {
     final clock = TestClock();
     final controller = buildController(

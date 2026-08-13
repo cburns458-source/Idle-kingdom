@@ -70,7 +70,7 @@ class SocialPortrait extends StatelessWidget {
       width: size,
       height: size,
       decoration: BoxDecoration(
-        color: const Color(0x33120C08),
+        color: Palette.panel,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: Palette.edge),
       ),

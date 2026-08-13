@@ -120,7 +120,7 @@ class _QuantitySheetState extends State<_QuantitySheet> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                       decoration: BoxDecoration(
-                        color: const Color(0x99120C08),
+                        color: Palette.panel,
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(color: Palette.edge),
                       ),

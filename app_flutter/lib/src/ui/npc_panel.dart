@@ -220,7 +220,7 @@ class _QuestBlock extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: const Color(0x66231710),
+        color: Palette.panel,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Palette.edge),
       ),

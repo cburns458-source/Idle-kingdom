@@ -363,7 +363,7 @@ class _SymbolButton extends StatelessWidget {
         height: 34,
         padding: const EdgeInsets.all(6),
         decoration: BoxDecoration(
-          color: const Color(0x33120C08),
+          color: Palette.panel,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: selected ? Palette.gold : Palette.edge,

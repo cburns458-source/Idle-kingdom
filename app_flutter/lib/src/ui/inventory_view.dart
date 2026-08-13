@@ -446,7 +446,7 @@ class _ItemTile extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(4),
         decoration: BoxDecoration(
-          color: selected ? const Color(0x33D4AF37) : const Color(0x66231710),
+          color: selected ? const Color(0x33D4AF37) : Palette.panel,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: selected

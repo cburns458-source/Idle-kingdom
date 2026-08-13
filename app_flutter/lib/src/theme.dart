@@ -37,8 +37,11 @@ abstract final class Palette {
   static const frameGradient = LinearGradient(
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
-    colors: [Color(0xF05C4027), Color(0xF83D2A1A)],
+    colors: [Color(0xFF5C4027), Color(0xFF3D2A1A)],
   );
+
+  /// Opaque card fill for docks, tiles, and panels.
+  static const panel = parchmentDeep;
 }
 
 /// The bar fills, each one a three-stop gradient as the old client drew them.
@@ -216,7 +219,7 @@ class DockRow extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(11, 10, 11, 10),
       decoration: BoxDecoration(
-        color: const Color(0x6B140E0A),
+        color: Palette.panel,
         borderRadius: BorderRadius.circular(13),
         border: Border.all(color: const Color(0x2EE8DCB4)),
       ),
@@ -300,7 +303,7 @@ class GamePanel extends StatelessWidget {
     final panel = Container(
       padding: padding ?? const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0x66231710),
+        color: Palette.panel,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: Palette.edge),
       ),
@@ -339,6 +342,45 @@ class MeterBar extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// The map / nearby chips that sit on location art and the map overlay.
+class OverlayChipButton extends StatelessWidget {
+  const OverlayChipButton({
+    super.key,
+    required this.tooltip,
+    required this.onPressed,
+    required this.child,
+    this.dark = false,
+  });
+
+  final String tooltip;
+  final VoidCallback onPressed;
+  final Widget child;
+
+  /// The nearby chip is brown rather than the map's parchment green.
+  final bool dark;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: dark ? Palette.panel : const Color(0xFFBADCA0),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(color: dark ? const Color(0x8CD4AF5A) : const Color(0xB3B4DC96)),
+        ),
+        shadowColor: const Color(0x47000000),
+        elevation: 6,
+        child: InkWell(
+          onTap: onPressed,
+          borderRadius: BorderRadius.circular(16),
+          child: SizedBox(width: 60, height: 60, child: Center(child: child)),
         ),
       ),
     );
