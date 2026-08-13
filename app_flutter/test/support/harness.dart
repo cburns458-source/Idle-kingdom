@@ -60,6 +60,17 @@ Future<void> pumpShell(WidgetTester tester, GameController controller) async {
 }
 
 /// Pumps one panel on its own, for panels a player opens from a location.
-Future<void> pumpPanel(WidgetTester tester, Widget panel) async {
+///
+/// The surface is made tall because these panels are built to scroll inside the
+/// location screen, and the default 800×600 test window would leave their
+/// buttons off-screen and unhittable.
+Future<void> pumpPanel(
+  WidgetTester tester,
+  Widget panel, {
+  Size size = const Size(900, 2400),
+}) async {
+  tester.view.physicalSize = size;
+  tester.view.devicePixelRatio = 1;
+  addTearDown(tester.view.reset);
   await tester.pumpWidget(MaterialApp(home: Scaffold(body: panel)));
 }

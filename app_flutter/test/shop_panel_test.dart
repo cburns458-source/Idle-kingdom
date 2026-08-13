@@ -1,0 +1,117 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:idle_kingdoms/src/ui/shop_panel.dart';
+import 'package:ik_content/ik_content.dart';
+import 'package:ik_rules/ik_rules.dart';
+
+import 'support/harness.dart';
+
+void main() {
+  late LoadedDatabase database;
+
+  /// The town general store, which sells starter tools and buys most resources.
+  const shopId = 'SHP-0001';
+  const shopLocationId = 'LOC-0024';
+  const woodenAxeId = 'ITEM-0100';
+  const clayId = 'ITEM-0002';
+
+  setUpAll(() {
+    database = loadDatabaseFromRepo();
+  });
+
+  PlayerSave shopper({num gold = 1000, List<InventoryStack> inventory = const []}) {
+    return startedCharacter(database)
+        .copyWith(currentLocationId: shopLocationId, gold: gold, inventory: inventory);
+  }
+
+  testWidgets('buys a chosen quantity for the marked price', (tester) async {
+    final controller = buildController(database, seed: shopper());
+    addTearDown(controller.dispose);
+    final unit = playerBuyPrice(database.launch, getShop(database.launch, shopId)!, woodenAxeId)!;
+
+    await pumpPanel(tester, ShopPanel(controller: controller, shopId: shopId));
+    await tester.tap(find.text('Wooden Axe'));
+    await tester.pumpAndSettle();
+
+    // The keypad opens on 1; make it 2 and add it to the offer.
+    await tester.tap(find.widgetWithText(OutlinedButton, '2'));
+    await tester.pump();
+    await tester.tap(find.text('Add to offer'));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('buy ${unit * 2}'), findsOne);
+    await tester.tap(find.text('Confirm trade'));
+    await tester.pump();
+
+    expect(controller.save.gold, 1000 - unit * 2);
+    expect(inventoryCount(controller.save, woodenAxeId), 2);
+  });
+
+  testWidgets('sells from the bag, and a second tap withdraws the offer', (tester) async {
+    final controller = buildController(
+      database,
+      seed: shopper(gold: 0, inventory: [const InventoryStack(itemId: clayId, quantity: 4)]),
+    );
+    addTearDown(controller.dispose);
+    final unit = playerSellPrice(database.launch, getShop(database.launch, shopId)!, clayId)!;
+
+    await pumpPanel(tester, ShopPanel(controller: controller, shopId: shopId));
+    await tester.tap(find.text('Clay'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Max'));
+    await tester.pump();
+    await tester.tap(find.text('Add to offer'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('×4'), findsOne);
+
+    // Tapping the offered item again takes it back off the counter.
+    await tester.tap(find.text('Clay'));
+    await tester.pump();
+    expect(find.text('×4'), findsNothing);
+
+    // Put it back and go through with it.
+    await tester.tap(find.text('Clay'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Max'));
+    await tester.pump();
+    await tester.tap(find.text('Add to offer'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Confirm trade'));
+    await tester.pump();
+
+    expect(controller.save.gold, unit * 4);
+    expect(inventoryCount(controller.save, clayId), 0);
+  });
+
+  testWidgets('refuses a trade the purse cannot cover', (tester) async {
+    final controller = buildController(database, seed: shopper(gold: 0));
+    addTearDown(controller.dispose);
+
+    await pumpPanel(tester, ShopPanel(controller: controller, shopId: shopId));
+    await tester.tap(find.text('Wooden Axe'));
+    await tester.pumpAndSettle();
+    // With no gold the keypad offers no ceiling, but the trade still checks.
+    await tester.tap(find.text('Add to offer'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Confirm trade'));
+    await tester.pump();
+
+    expect(find.textContaining('gold'), findsWidgets);
+    expect(controller.save.gold, 0);
+    expect(inventoryCount(controller.save, woodenAxeId), 0);
+  });
+
+  testWidgets('says why a shop cannot be used', (tester) async {
+    // Standing somewhere else, so the counter is out of reach.
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(currentLocationId: 'LOC-0009'),
+    );
+    addTearDown(controller.dispose);
+
+    await pumpPanel(tester, ShopPanel(controller: controller, shopId: shopId));
+    expect(find.text('General Store'), findsOne);
+    expect(find.text('Confirm trade'), findsNothing);
+  });
+}

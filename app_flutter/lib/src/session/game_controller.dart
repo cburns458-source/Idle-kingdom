@@ -104,6 +104,18 @@ class GameController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Reports why an intent was refused, in the place activity errors appear.
+  void report(String? reason) {
+    _activityError = reason;
+    notifyListeners();
+  }
+
+  /// Says what an intent did, in the place tick messages appear.
+  void announce(String text) {
+    _message = text;
+    notifyListeners();
+  }
+
   /// [commit] for anything that changed the loadout, so max HP follows the gear.
   void commitLoadout(PlayerSave next) => commit(withRecalculatedVitals(db, next));
 

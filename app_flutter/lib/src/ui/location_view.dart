@@ -7,14 +7,62 @@ import '../session/game_controller.dart';
 import '../theme.dart';
 import 'activity_panel.dart';
 import 'format.dart';
+import 'shop_panel.dart';
+
+/// Whatever the player has open on top of the location, if anything.
+sealed class LocationPanel {
+  const LocationPanel();
+}
+
+class ShopOpen extends LocationPanel {
+  const ShopOpen(this.shopId);
+
+  final String shopId;
+}
 
 /// Where the player is standing: the art, what can be done here, and whatever
-/// is currently running.
-class LocationView extends StatelessWidget {
+/// is currently running or open.
+class LocationView extends StatefulWidget {
   const LocationView({super.key, required this.controller, required this.onOpenMap});
 
   final GameController controller;
   final VoidCallback onOpenMap;
+
+  @override
+  State<LocationView> createState() => _LocationViewState();
+}
+
+class _LocationViewState extends State<LocationView> {
+  LocationPanel? _open;
+
+  /// The location the open panel belongs to, so travelling closes it.
+  String? _openAt;
+
+  GameController get controller => widget.controller;
+
+  void _openPanel(LocationPanel panel) {
+    setState(() {
+      _open = panel;
+      _openAt = controller.save.currentLocationId;
+    });
+  }
+
+  void _closePanel() => setState(() => _open = null);
+
+  void _search(String searchId) {
+    final result = claimLocationSearch(
+      controller.db,
+      controller.save,
+      searchId,
+      controller.session.clock(),
+    );
+    if (!result.ok) {
+      controller.report(result.reason);
+      return;
+    }
+    controller.commit(result.save);
+    controller.announce('Found a ${result.itemName}!');
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +71,10 @@ class LocationView extends StatelessWidget {
       return const Center(child: Text('This place is not on any map.'));
     }
     final locationId = location.locationId;
-    final activities = controller.indexes.activitiesByLocationId[locationId] ?? const [];
+    if (_openAt != null && _openAt != locationId) {
+      _open = null;
+      _openAt = null;
+    }
 
     return Stack(
       fit: StackFit.expand,
@@ -57,10 +108,13 @@ class LocationView extends StatelessWidget {
                     style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
                   ),
                   if (location.description case final blurb?) MutedText(blurb),
+                  if (location.dangerHostility case final danger?)
+                    Text(danger, style: const TextStyle(color: Palette.danger, fontSize: 12)),
                 ],
               ),
             ),
             const SizedBox(height: 10),
+            if (_open case final panel?) ...[_buildPanel(panel), const SizedBox(height: 10)],
             if (controller.isRecovering) ...[
               _RecoveringPanel(controller: controller),
               const SizedBox(height: 10),
@@ -77,19 +131,127 @@ class LocationView extends StatelessWidget {
               _Notice(text: message, tone: Palette.gold),
               const SizedBox(height: 10),
             ],
-            if (activities.isEmpty)
-              const GamePanel(child: Text('Nothing to do here yet.'))
-            else
-              for (final activity in activities)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: _ActivityCard(controller: controller, activity: activity),
-                ),
+            ..._activities(locationId),
+            ..._shops(locationId),
+            ..._searches(locationId),
             const SizedBox(height: 8),
-            OutlinedButton(onPressed: onOpenMap, child: const Text('Open the map')),
+            OutlinedButton(onPressed: widget.onOpenMap, child: const Text('Open the map')),
           ],
         ),
       ],
+    );
+  }
+
+  Widget _buildPanel(LocationPanel panel) {
+    switch (panel) {
+      case ShopOpen(shopId: final shopId):
+        return ShopPanel(controller: controller, shopId: shopId, onClose: _closePanel);
+    }
+  }
+
+  List<Widget> _activities(String locationId) {
+    final activities = controller.indexes.activitiesByLocationId[locationId] ?? const [];
+    if (activities.isEmpty) {
+      return [const GamePanel(child: Text('Nothing to do here yet.'))];
+    }
+    return [
+      _SectionHeading('Activities'),
+      for (final activity in activities)
+        Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: _ActivityCard(controller: controller, activity: activity),
+        ),
+    ];
+  }
+
+  List<Widget> _shops(String locationId) {
+    final shops = controller.indexes.shopsByLocationId[locationId] ?? const [];
+    if (shops.isEmpty) return const [];
+    return [
+      _SectionHeading('Shops'),
+      for (final shop in shops)
+        Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: _InteractionCard(
+            title: shop.raw['Display Name'] as String? ?? shop.raw['Shop ID'] as String,
+            actionLabel: 'Shop',
+            onPressed: () => _openPanel(ShopOpen(shop.raw['Shop ID'] as String)),
+          ),
+        ),
+    ];
+  }
+
+  List<Widget> _searches(String locationId) {
+    final spots = controller.indexes.locationSearchesByLocationId[locationId] ?? const [];
+    if (spots.isEmpty) return const [];
+    final nowMs = controller.session.clock();
+    return [
+      _SectionHeading('Search'),
+      for (final spot in spots)
+        Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: _InteractionCard(
+            title: spot.displayName,
+            subtitle: canClaimLocationSearch(controller.save, spot, nowMs)
+                ? null
+                : 'Come back in '
+                      '${formatDurationMs(locationSearchCooldownRemainingMs(controller.save, spot, nowMs))}.',
+            actionLabel: spot.buttonLabel,
+            onPressed: canClaimLocationSearch(controller.save, spot, nowMs)
+                ? () => _search(spot.searchId)
+                : null,
+          ),
+        ),
+    ];
+  }
+}
+
+class _SectionHeading extends StatelessWidget {
+  const _SectionHeading(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Text(text, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+    );
+  }
+}
+
+/// A shop, a person, or a search spot: one line and one button.
+class _InteractionCard extends StatelessWidget {
+  const _InteractionCard({
+    required this.title,
+    required this.actionLabel,
+    required this.onPressed,
+    this.subtitle,
+  });
+
+  final String title;
+  final String? subtitle;
+  final String actionLabel;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return GamePanel(
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: const TextStyle(fontWeight: FontWeight.w700)),
+                if (subtitle case final line?) MutedText(line),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          OutlinedButton(onPressed: onPressed, child: Text(actionLabel)),
+        ],
+      ),
     );
   }
 }
@@ -119,6 +281,11 @@ class _ActivityCard extends StatelessWidget {
                   style: const TextStyle(fontWeight: FontWeight.w700),
                 ),
                 if (activity.description case final blurb?) MutedText(blurb),
+                if (activity.dangerWarningCombatLevel case final level?)
+                  Text(
+                    'Combat warning ~ Level $level',
+                    style: const TextStyle(color: Palette.danger, fontSize: 12),
+                  ),
                 if (!check.ok) MutedText(check.reason ?? ''),
                 // Recipes are picked in the production panel, which is not
                 // ported yet, so the station is listed but not startable.
