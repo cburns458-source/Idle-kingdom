@@ -114,4 +114,27 @@ void main() {
     expect(find.text('General Store'), findsOne);
     expect(find.text('Confirm trade'), findsNothing);
   });
+
+  testWidgets('buys Leather Gloves from the Clothier', (tester) async {
+    const clothierId = 'SHP-0006';
+    const glovesId = 'ITEM-0298';
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database)
+          .copyWith(currentLocationId: 'LOC-0029', gold: 1000, inventory: const []),
+    );
+    addTearDown(controller.dispose);
+    final unit = playerBuyPrice(database.launch, getShop(database.launch, clothierId)!, glovesId)!;
+
+    await pumpPanel(tester, ShopPanel(controller: controller, shopId: clothierId));
+    await tester.tap(find.text('Leather Gloves'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Add to offer'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Confirm trade'));
+    await tester.pump();
+
+    expect(controller.save.gold, 1000 - unit);
+    expect(inventoryCount(controller.save, glovesId), 1);
+  });
 }

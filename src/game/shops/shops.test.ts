@@ -103,4 +103,13 @@ describe('shops', () => {
     })
     expect(result.ok).toBe(false)
   })
+
+  it('stocks the Clothier with the tunic, specialist hats, and Leather Gloves', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const shop = launch.Shops.find((row) => row['Shop ID'] === 'SHP-0006')!
+    expect(shop['Location ID']).toBe('LOC-0029')
+    const stock = shopStockEntries(shop).map((entry) => entry.itemId)
+    expect(stock).toEqual(['ITEM-0296', 'ITEM-0165', 'ITEM-0166', 'ITEM-0298'])
+    expect(playerBuyPrice(launch, shop, 'ITEM-0298')).toBe(100)
+  })
 })

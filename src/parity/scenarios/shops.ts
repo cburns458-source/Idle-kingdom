@@ -143,7 +143,7 @@ function withSave(kind: SaveKind, extra: Record<string, JsonValue> = {}): JsonVa
   return { source: 'content', save: asJson(saveFor(kind)), ...extra }
 }
 
-const SHOP_IDS = ['SHP-0001', 'SHP-0002', 'SHP-0003', 'SHP-0004', 'SHP-0005', 'SHP-9999']
+const SHOP_IDS = ['SHP-0001', 'SHP-0002', 'SHP-0003', 'SHP-0004', 'SHP-0005', 'SHP-0006', 'SHP-9999']
 const PRICED_ITEMS = ['ITEM-0001', 'ITEM-0011', 'ITEM-0003', 'ITEM-0025', 'ITEM-0100', 'ITEM-9999']
 const SHOP_LOCATIONS = ['LOC-0024', 'LOC-0012', 'LOC-0007', 'LOC-0029', 'LOC-0002']
 const MENU_SKILLS = ['SKL-0002', 'SKL-0007', 'SKL-0011', 'SKL-0012', 'SKL-0013', 'SKL-9999']
