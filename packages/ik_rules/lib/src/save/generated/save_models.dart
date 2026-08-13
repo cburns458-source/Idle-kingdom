@@ -7,7 +7,7 @@
 
 import '../../json_support.dart';
 
-const int saveVersion = 22;
+const int saveVersion = 23;
 
 const String saveStorageKey = 'idle-kingdoms.demo.save';
 
@@ -536,6 +536,7 @@ class PlayerSave {
     this.raceId,
     required this.skills,
     required this.inventory,
+    required this.bank,
     required this.equipment,
     required this.gold,
     required this.quests,
@@ -588,6 +589,7 @@ class PlayerSave {
         json['inventory'],
         (Object? entry) => InventoryStack.fromJson(asJsonMap(entry)),
       ),
+      bank: listOf(json['bank'], (Object? entry) => InventoryStack.fromJson(asJsonMap(entry))),
       equipment: EquipmentLoadout.fromJson(asJsonMap(json['equipment'])),
       gold: json['gold'] as num,
       quests: listOf(json['quests'], (Object? entry) => QuestProgress.fromJson(asJsonMap(entry))),
@@ -656,6 +658,9 @@ class PlayerSave {
   final List<SkillProgress> skills;
 
   final List<InventoryStack> inventory;
+
+  /// Stash at Town, Castle, and Citadel. Same slot rules as the bag; gold stays on the player.
+  final List<InventoryStack> bank;
 
   final EquipmentLoadout equipment;
 
@@ -759,6 +764,7 @@ class PlayerSave {
       'raceId': raceId,
       'skills': skills.map((entry) => entry.toJson()).toList(),
       'inventory': inventory.map((entry) => entry.toJson()).toList(),
+      'bank': bank.map((entry) => entry.toJson()).toList(),
       'equipment': equipment.toJson(),
       'gold': gold,
       'quests': quests.map((entry) => entry.toJson()).toList(),
@@ -808,6 +814,7 @@ class PlayerSave {
     Object? raceId = _unset,
     List<SkillProgress>? skills,
     List<InventoryStack>? inventory,
+    List<InventoryStack>? bank,
     EquipmentLoadout? equipment,
     num? gold,
     List<QuestProgress>? quests,
@@ -855,6 +862,7 @@ class PlayerSave {
       raceId: raceId == _unset ? this.raceId : raceId as String?,
       skills: skills ?? this.skills,
       inventory: inventory ?? this.inventory,
+      bank: bank ?? this.bank,
       equipment: equipment ?? this.equipment,
       gold: gold ?? this.gold,
       quests: quests ?? this.quests,

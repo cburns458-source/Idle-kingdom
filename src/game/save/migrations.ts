@@ -352,6 +352,15 @@ export const SAVE_MIGRATIONS: SaveMigration[] = [
       saveVersion: 22,
     }),
   },
+  {
+    fromVersion: 22,
+    toVersion: 23,
+    migrate: (save) => ({
+      ...save,
+      bank: Array.isArray(save.bank) ? save.bank : [],
+      saveVersion: 23,
+    }),
+  },
 ]
 
 export function migrateSave(save: PlayerSave, nowMs: number = Date.now()): PlayerSave {

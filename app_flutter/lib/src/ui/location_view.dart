@@ -8,6 +8,7 @@ import '../session/game_controller.dart';
 import '../session/multiplayer_controller.dart';
 import '../theme.dart';
 import 'activity_panel.dart';
+import 'bank_panel.dart';
 import 'citadel_hub_panel.dart';
 import 'critter_overlay.dart';
 import 'format.dart';
@@ -27,6 +28,11 @@ class ShopOpen extends LocationPanel {
   const ShopOpen(this.shopId);
 
   final String shopId;
+}
+
+/// The Town / Castle / Citadel item chest.
+class BankOpen extends LocationPanel {
+  const BankOpen();
 }
 
 /// The recipe picker for a Standard Production station.
@@ -280,6 +286,7 @@ class _LocationViewState extends State<LocationView> {
                                       ..._stations(locationId),
                                       ..._people(locationId),
                                       ..._shops(locationId),
+                                      ..._bank(),
                                       ..._citadelBoards(locationId),
                                       ..._searches(locationId),
                                     ],
@@ -305,6 +312,8 @@ class _LocationViewState extends State<LocationView> {
     switch (panel) {
       case ShopOpen(shopId: final shopId):
         return ShopPanel(controller: controller, shopId: shopId, onClose: _closePanel);
+      case BankOpen():
+        return BankPanel(controller: controller, onClose: _closePanel);
       case WorkshopOpen(activity: final activity):
         return ProductionPicker(controller: controller, activity: activity, onClose: _closePanel);
       case StationOpen(station: final station):
@@ -414,6 +423,23 @@ class _LocationViewState extends State<LocationView> {
             onPressed: () => _openPanel(ShopOpen(shop.raw['Shop ID'] as String)),
           ),
         ),
+    ];
+  }
+
+  List<Widget> _bank() {
+    if (!locationHasBank(controller.location)) return const [];
+    return [
+      const _SectionHeading('Bank'),
+      Padding(
+        padding: const EdgeInsets.only(bottom: 8),
+        child: _InteractionCard(
+          title: 'Item storage',
+          subtitle: 'Gold stays on you.',
+          actionLabel: 'Open',
+          tone: GameButtonTone.primary,
+          onPressed: () => _openPanel(const BankOpen()),
+        ),
+      ),
     ];
   }
 

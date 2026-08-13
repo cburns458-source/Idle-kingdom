@@ -41,6 +41,7 @@ PlayerSave createNewSave(GameDatabase db, num nowMs) {
     raceId: null,
     skills: skills,
     inventory: const <InventoryStack>[],
+    bank: const <InventoryStack>[],
     equipment: EquipmentLoadout(slots: slots),
     gold: startingGold,
     quests: const <QuestProgress>[],

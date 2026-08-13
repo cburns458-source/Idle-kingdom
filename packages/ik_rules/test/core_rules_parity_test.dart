@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:ik_content/ik_content.dart';
 import 'package:ik_parity/ik_parity.dart';
 import 'package:ik_rules/ik_rules.dart';
@@ -79,6 +80,52 @@ void main() {
         final indexes = numListOf(fixture, 'indexes');
         final result = destroyInventoryIndexes(saveOf(fixture), indexes);
         expect(checkParity(fixture, {'save': result.toJson()}), isNull);
+      });
+    }
+  });
+
+  group('inventory bank parity', () {
+    for (final fixture in loadParityFixtures('inventory/bank')) {
+      test(fixture.name, () {
+        final action = fixture.inputField<String>('action');
+        final index = fixture.inputField<num>('index').toInt();
+        final quantity = fixture.inputField<num>('quantity');
+        final result = action == 'deposit'
+            ? depositToBank(saveOf(fixture), index, quantity)
+            : withdrawFromBank(saveOf(fixture), index, quantity);
+        expect(
+          checkParity(
+            fixture,
+            result.ok
+                ? <String, Object?>{'ok': true, 'save': result.save!.toJson()}
+                : <String, Object?>{'ok': false, 'reason': result.reason},
+          ),
+          isNull,
+        );
+      });
+    }
+  });
+
+  group('inventory bank-access parity', () {
+    for (final fixture in loadParityFixtures('inventory/bank-access')) {
+      test(fixture.name, () {
+        final db = databaseOf(fixture);
+        final ids = fixture.inputField<List<Object?>>('locationIds').cast<String>();
+        expect(
+          checkParity(fixture, {
+            'results': ids
+                .map(
+                  (id) => <String, Object?>{
+                    'id': id,
+                    'hasBank': locationHasBank(
+                      db.locations.firstWhereOrNull((row) => row.locationId == id),
+                    ),
+                  },
+                )
+                .toList(),
+          }),
+          isNull,
+        );
       });
     }
   });

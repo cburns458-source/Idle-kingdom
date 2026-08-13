@@ -1,4 +1,4 @@
-export const SAVE_VERSION = 22
+export const SAVE_VERSION = 23
 export const SAVE_STORAGE_KEY = 'idle-kingdoms.demo.save'
 export const STARTING_LOCATION_ID = 'LOC-0002'
 /** Base gold before race kit; race starters grant the real starting gold. */
@@ -162,6 +162,8 @@ export interface PlayerSave {
   raceId: string | null
   skills: SkillProgress[]
   inventory: InventoryStack[]
+  /** Stash at Town, Castle, and Citadel. Same slot rules as the bag; gold stays on the player. */
+  bank: InventoryStack[]
   equipment: EquipmentLoadout
   /** Gold amount; itemized currency uses Config currency_item_id. */
   gold: number

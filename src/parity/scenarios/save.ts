@@ -99,7 +99,7 @@ function legacySave(db: GameDatabase, version: number): LegacyJson {
 }
 
 /** Versions worth replaying: the oldest, both settings rewrites, and the newest. */
-const LEGACY_VERSIONS = [1, 3, 4, 9, 12, 16, 19, 20, 21, SAVE_VERSION]
+const LEGACY_VERSIONS = [1, 3, 4, 9, 12, 16, 19, 20, 21, 22, SAVE_VERSION]
 
 /** Names covering trimming, internal runs of whitespace, clipping, and rejection. */
 const RAW_NAMES = [

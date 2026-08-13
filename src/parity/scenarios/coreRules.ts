@@ -17,6 +17,12 @@ import {
   inventorySlotsFree,
   maxAddableQuantity,
 } from '../../game/inventory/capacity'
+import {
+  depositToBank,
+  locationHasBank,
+  withdrawFromBank,
+  type BankMoveResult,
+} from '../../game/inventory/bank'
 import { destroyInventoryIndexes } from '../../game/inventory/destroy'
 import { sortInventoryFavoritesFirst, toggleInventoryFavorite } from '../../game/inventory/favorites'
 import { totalLevel, totalSkillXp } from '../../game/skills/totals'
@@ -72,6 +78,32 @@ const DESTROY_CASES: Array<{ name: string; indexes: number[] }> = [
   { name: 'fractional-index-ignored', indexes: [2.5] },
   { name: 'empty', indexes: [] },
 ]
+
+const BANK_ACCESS_LOCATION_IDS = [
+  'LOC-0002',
+  'LOC-0013',
+  'LOC-0027',
+  'LOC-0024',
+  'LOC-0014',
+  'LOC-0028',
+  'LOC-0009',
+  'LOC-0003',
+]
+
+function bankMoveJson(result: BankMoveResult): JsonValue {
+  return result.ok
+    ? ({ ok: true, save: asJson(result.save) } as unknown as JsonValue)
+    : { ok: false, reason: result.reason }
+}
+
+function withBankMove(
+  save: PlayerSave,
+  action: 'deposit' | 'withdraw',
+  index: number,
+  quantity: number,
+): JsonValue {
+  return withSave(save, { action, index, quantity })
+}
 
 const XP_TOTALS = [0, 1, 82, 83, 174, 1_000_000, 12_345.6]
 const APPLY_XP_CASES = [
@@ -187,6 +219,163 @@ export const coreRuleScenarios: ParityScenario[] = [
       () => ({ save: asJson(destroyInventoryIndexes(saveFor('rich'), entry.indexes)) }),
     ),
   ),
+
+  scenario(
+    'inventory/bank',
+    'deposit-partial',
+    withBankMove(
+      { ...saveFor('base'), inventory: [{ itemId: 'ITEM-0002', quantity: 5 }] },
+      'deposit',
+      0,
+      3,
+    ),
+    () =>
+      bankMoveJson(
+        depositToBank(
+          { ...saveFor('base'), inventory: [{ itemId: 'ITEM-0002', quantity: 5 }] },
+          0,
+          3,
+        ),
+      ),
+  ),
+  scenario(
+    'inventory/bank',
+    'deposit-merges-existing',
+    withBankMove(
+      {
+        ...saveFor('base'),
+        inventory: [{ itemId: 'ITEM-0002', quantity: 4 }],
+        bank: [{ itemId: 'ITEM-0002', quantity: 10 }],
+      },
+      'deposit',
+      0,
+      4,
+    ),
+    () =>
+      bankMoveJson(
+        depositToBank(
+          {
+            ...saveFor('base'),
+            inventory: [{ itemId: 'ITEM-0002', quantity: 4 }],
+            bank: [{ itemId: 'ITEM-0002', quantity: 10 }],
+          },
+          0,
+          4,
+        ),
+      ),
+  ),
+  scenario(
+    'inventory/bank',
+    'withdraw-partial',
+    withBankMove(
+      {
+        ...saveFor('base'),
+        inventory: [{ itemId: 'ITEM-0002', quantity: 1 }],
+        bank: [{ itemId: 'ITEM-0002', quantity: 8 }],
+      },
+      'withdraw',
+      0,
+      3,
+    ),
+    () =>
+      bankMoveJson(
+        withdrawFromBank(
+          {
+            ...saveFor('base'),
+            inventory: [{ itemId: 'ITEM-0002', quantity: 1 }],
+            bank: [{ itemId: 'ITEM-0002', quantity: 8 }],
+          },
+          0,
+          3,
+        ),
+      ),
+  ),
+  scenario(
+    'inventory/bank',
+    'gold-stays-on-you',
+    withBankMove(
+      { ...saveFor('base'), inventory: [{ itemId: 'ITEM-0001', quantity: 25 }] },
+      'deposit',
+      0,
+      25,
+    ),
+    () =>
+      bankMoveJson(
+        depositToBank(
+          { ...saveFor('base'), inventory: [{ itemId: 'ITEM-0001', quantity: 25 }] },
+          0,
+          25,
+        ),
+      ),
+  ),
+  scenario(
+    'inventory/bank',
+    'bank-full',
+    withBankMove(
+      { ...saveFor('full'), inventory: [{ itemId: 'ITEM-0002', quantity: 1 }], bank: saveFor('full').inventory },
+      'deposit',
+      0,
+      1,
+    ),
+    () =>
+      bankMoveJson(
+        depositToBank(
+          { ...saveFor('full'), inventory: [{ itemId: 'ITEM-0002', quantity: 1 }], bank: saveFor('full').inventory },
+          0,
+          1,
+        ),
+      ),
+  ),
+  scenario(
+    'inventory/bank',
+    'bag-full-on-withdraw',
+    withBankMove(
+      { ...saveFor('full'), bank: [{ itemId: 'ITEM-0002', quantity: 1 }] },
+      'withdraw',
+      0,
+      1,
+    ),
+    () =>
+      bankMoveJson(
+        withdrawFromBank({ ...saveFor('full'), bank: [{ itemId: 'ITEM-0002', quantity: 1 }] }, 0, 1),
+      ),
+  ),
+  scenario(
+    'inventory/bank',
+    'missing-stack',
+    withBankMove(saveFor('base'), 'deposit', 99, 1),
+    () => bankMoveJson(depositToBank(saveFor('base'), 99, 1)),
+  ),
+  scenario(
+    'inventory/bank',
+    'zero-quantity',
+    withBankMove(
+      { ...saveFor('base'), inventory: [{ itemId: 'ITEM-0002', quantity: 5 }] },
+      'deposit',
+      0,
+      0,
+    ),
+    () =>
+      bankMoveJson(
+        depositToBank(
+          { ...saveFor('base'), inventory: [{ itemId: 'ITEM-0002', quantity: 5 }] },
+          0,
+          0,
+        ),
+      ),
+  ),
+  scenario('inventory/bank-access', 'named-locations', {
+    source: 'content',
+    locationIds: BANK_ACCESS_LOCATION_IDS,
+  }, () => {
+    const db = contentDatabase()
+    return {
+      results: BANK_ACCESS_LOCATION_IDS.map((id) => {
+        const location = db.Locations.find((row) => row['Location ID'] === id)
+        return { id, hasBank: locationHasBank(location) }
+      }),
+    }
+  }),
 
   ...[0, 1, 2, 4, 99, -1].map((index) =>
     scenario(

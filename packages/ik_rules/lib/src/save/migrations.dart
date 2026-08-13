@@ -342,6 +342,15 @@ final List<SaveMigration> saveMigrations = <SaveMigration>[
       return next;
     },
   ),
+  SaveMigration(
+    fromVersion: 22,
+    toVersion: 23,
+    migrate: (save, nowMs) {
+      final next = _bumped(save, 23);
+      next['bank'] = arrayOrEmpty(save, 'bank');
+      return next;
+    },
+  ),
 ];
 
 /// Thrown when a save cannot be brought to the current version.

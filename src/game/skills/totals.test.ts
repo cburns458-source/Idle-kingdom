@@ -9,6 +9,7 @@ function sampleSave(skills: Array<{ skillId: string; level: number; xp: number }
     updatedAt: '',
     skills,
     inventory: [],
+    bank: [],
     equipment: { slots: {} },
     gold: 0,
     quests: [],

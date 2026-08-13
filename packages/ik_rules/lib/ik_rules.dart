@@ -40,6 +40,7 @@ export 'src/equipment/loadout.dart';
 export 'src/equipment/tooltips.dart';
 export 'src/equipment/vitals.dart';
 export 'src/inventory/add_items.dart';
+export 'src/inventory/bank.dart';
 export 'src/inventory/capacity.dart';
 export 'src/inventory/destroy.dart';
 export 'src/inventory/favorites.dart';
