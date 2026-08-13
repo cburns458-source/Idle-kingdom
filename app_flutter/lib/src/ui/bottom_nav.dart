@@ -37,13 +37,63 @@ class BottomNav extends StatefulWidget {
 }
 
 class _BottomNavState extends State<BottomNav> {
-  bool _nestOpen = false;
+  final LayerLink _nestLink = LayerLink();
+  OverlayEntry? _nestEntry;
   DateTime? _lastLocationTap;
 
+  bool get _nestOpen => _nestEntry != null;
   bool get _nestActive => _nestOpen || _nestScreens.contains(widget.screen);
 
+  @override
+  void dispose() {
+    _nestEntry?.remove();
+    _nestEntry = null;
+    super.dispose();
+  }
+
   void _closeNest() {
-    if (_nestOpen) setState(() => _nestOpen = false);
+    _nestEntry?.remove();
+    _nestEntry = null;
+    if (mounted) setState(() {});
+  }
+
+  void _toggleNest() {
+    if (_nestOpen) {
+      _closeNest();
+      return;
+    }
+    final entry = OverlayEntry(builder: _buildNestOverlay);
+    _nestEntry = entry;
+    Overlay.of(context, rootOverlay: true).insert(entry);
+    setState(() {});
+  }
+
+  Widget _buildNestOverlay(BuildContext context) {
+    return Stack(
+      children: [
+        Positioned.fill(
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: _closeNest,
+            child: const ColoredBox(color: Color(0x00000000)),
+          ),
+        ),
+        CompositedTransformFollower(
+          link: _nestLink,
+          showWhenUnlinked: false,
+          targetAnchor: Alignment.topRight,
+          followerAnchor: Alignment.bottomRight,
+          offset: const Offset(0, -8),
+          child: _NestPopup(
+            screen: widget.screen,
+            onSelect: (screen) {
+              _closeNest();
+              widget.onSelect(screen);
+            },
+          ),
+        ),
+      ],
+    );
   }
 
   void _select(GameScreen screen) {
@@ -64,11 +114,6 @@ class _BottomNavState extends State<BottomNav> {
     _select(GameScreen.location);
   }
 
-  void _selectNest(GameScreen screen) {
-    setState(() => _nestOpen = false);
-    widget.onSelect(screen);
-  }
-
   @override
   Widget build(BuildContext context) {
     return DecoratedBox(
@@ -77,53 +122,45 @@ class _BottomNavState extends State<BottomNav> {
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-        child: Stack(
-          clipBehavior: Clip.none,
+        child: Row(
           children: [
-            Row(
-              children: [
-                Expanded(
-                  child: _NavButton(
-                    label: widget.locationName,
-                    selected: widget.screen == GameScreen.location,
-                    tooltip: '${widget.locationName} (double-tap for world map)',
-                    onTap: _onLocationTap,
-                  ),
-                ),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: _NavButton(
-                    label: 'Inventory',
-                    selected: widget.screen == GameScreen.inventory,
-                    onTap: () => _select(GameScreen.inventory),
-                  ),
-                ),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: _NavButton(
-                    label: 'Skills',
-                    selected: widget.screen == GameScreen.skills,
-                    onTap: () => _select(GameScreen.skills),
-                  ),
-                ),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: _NavButton(
-                    selected: _nestActive,
-                    tooltip: 'Open menu nest',
-                    semanticsLabel: 'Open menu nest',
-                    onTap: () => setState(() => _nestOpen = !_nestOpen),
-                    child: const Icon(Icons.menu, size: 22),
-                  ),
-                ),
-              ],
-            ),
-            if (_nestOpen)
-              Positioned(
-                right: 0,
-                bottom: 50,
-                child: _NestPopup(screen: widget.screen, onSelect: _selectNest),
+            Expanded(
+              child: _NavButton(
+                label: widget.locationName,
+                selected: widget.screen == GameScreen.location,
+                tooltip: '${widget.locationName} (double-tap for world map)',
+                onTap: _onLocationTap,
               ),
+            ),
+            const SizedBox(width: 6),
+            Expanded(
+              child: _NavButton(
+                label: 'Inventory',
+                selected: widget.screen == GameScreen.inventory,
+                onTap: () => _select(GameScreen.inventory),
+              ),
+            ),
+            const SizedBox(width: 6),
+            Expanded(
+              child: _NavButton(
+                label: 'Skills',
+                selected: widget.screen == GameScreen.skills,
+                onTap: () => _select(GameScreen.skills),
+              ),
+            ),
+            const SizedBox(width: 6),
+            Expanded(
+              child: CompositedTransformTarget(
+                link: _nestLink,
+                child: _NavButton(
+                  selected: _nestActive,
+                  tooltip: 'Open menu nest',
+                  semanticsLabel: 'Open menu nest',
+                  onTap: _toggleNest,
+                  child: const Icon(Icons.menu, size: 22),
+                ),
+              ),
+            ),
           ],
         ),
       ),
