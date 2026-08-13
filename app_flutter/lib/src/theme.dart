@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// The palette the React client uses, so both look like the same game.
+/// The palette the game is drawn in: parchment, gold, and soft green.
 abstract final class Palette {
   static const parchmentText = Color(0xFFF4E7C8);
   static const parchment = Color(0xFF5C4027);

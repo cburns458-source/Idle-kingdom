@@ -31,7 +31,7 @@ class TravelInFlight {
 /// only true of a screen — the last few reward lines, the current message, the
 /// journey being animated — and notifies listeners once per frame. Player
 /// intents call the shared rules and hand the result to [GameSession.apply], so
-/// the Flutter client stores saves through exactly the path the React one does.
+/// nothing on a screen can put a save into storage by another route.
 class GameController extends ChangeNotifier {
   GameController({required this.database, required this.session});
 

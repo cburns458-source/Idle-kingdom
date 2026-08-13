@@ -6,8 +6,8 @@ import 'types.dart';
 
 /// Where the signed-in session lives between launches.
 ///
-/// The browser build keeps it in `localStorage` under the same key, so a player
-/// who signed in on the React client stays signed in on the Flutter one.
+/// The key is the one the React client used, so a player who was signed in
+/// there is still signed in here.
 class SessionStore {
   const SessionStore(this.storage);
 

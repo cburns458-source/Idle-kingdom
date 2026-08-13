@@ -32,7 +32,7 @@ class MultiplayerController extends ChangeNotifier {
   /// Where the DM read cursors live, next to the save and the backend document.
   final SaveStorage storage;
 
-  /// How often presence is republished, matching the React client.
+  /// How often presence is republished, well inside its two-minute lifetime.
   static const Duration presenceInterval = Duration(seconds: 15);
 
   /// How often the unread count and the visitor lists are refreshed.

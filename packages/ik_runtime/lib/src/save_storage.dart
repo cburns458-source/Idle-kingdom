@@ -5,9 +5,9 @@ import 'package:ik_rules/ik_rules.dart';
 
 /// Key-value storage for the local save, implemented per platform.
 ///
-/// Mirrors the `SaveStorage` interface the React app satisfies with
-/// `localStorage`; on Flutter it is backed by `shared_preferences` (or
-/// IndexedDB on web), neither of which the runtime may import directly.
+/// The same shape as the browser's `localStorage`, which is what the React
+/// client used; under Flutter it is backed by `shared_preferences`, which the
+/// runtime may not import directly.
 abstract interface class SaveStorage {
   String? getItem(String key);
 

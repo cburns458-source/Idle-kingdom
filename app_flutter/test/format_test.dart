@@ -3,7 +3,7 @@ import 'package:idle_kingdoms/src/ui/format.dart';
 
 void main() {
   group('formatDurationSeconds', () {
-    test('reads the way the React client does', () {
+    test('reads the way the game always has', () {
       expect(formatDurationSeconds(0), '0s');
       expect(formatDurationSeconds(-5), '0s');
       expect(formatDurationSeconds(45), '45s');

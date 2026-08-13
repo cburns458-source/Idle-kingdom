@@ -7,7 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// of a tick and cannot await — so every stored string is read once at startup
 /// and kept in memory, with writes mirrored out to the platform in the
 /// background. That is the same shape as `localStorage` in the browser, which is
-/// what the React client uses, and the multiplayer backend needs it too: its
+/// what the React client used, and the multiplayer backend needs it too: its
 /// document, the session, and one read cursor per account all live here.
 class PrefsStore implements SaveStorage {
   PrefsStore._(this._prefs, this._cache);

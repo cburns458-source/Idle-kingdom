@@ -1,8 +1,7 @@
-/// Text formatting shared by the panels. Wording follows the React client so the
-/// two read identically.
+/// Text formatting shared by the panels, worded as the game always has been.
 library;
 
-/// Duration wording, matching `src/ui/formatDuration.ts`.
+/// Duration wording: `1h 2m 5s`, down to `0s`.
 String formatDurationSeconds(num totalSeconds) {
   if (!totalSeconds.isFinite || totalSeconds <= 0) return '0s';
   final whole = totalSeconds.floor();

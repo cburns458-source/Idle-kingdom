@@ -119,8 +119,8 @@ which is also what proves the chain produces something the schema can load.
 
 Storage itself is a port, not a rule. `ik_rules` owns `createNewSave`,
 `parseSave`, and `touchSave`; `ik_runtime`'s `SaveRepository` adds the read /
-write / clear cycle over a `SaveStorage` the host implements (`localStorage` in
-the React app, `shared_preferences` or IndexedDB under Flutter).
+write / clear cycle over a `SaveStorage` the host implements, which under Flutter
+is `shared_preferences`.
 
 ## The session tick
 
@@ -128,7 +128,7 @@ the React app, `shared_preferences` or IndexedDB under Flutter).
 `nowMs` — one combat round, one gathering action, one craft, a death-pause
 recovery, or the next action for an activity that has none — and returns the new
 save plus the events the client should react to. It is the only thing a client
-loop has to call: React drives it from a single animation frame callback, and the
+loop has to call — the shell drives it from a single frame callback — and the
 unattended resolver is the same rules run over a past window.
 
 Events (`SessionEvent`) are what keeps presentation out of the rules. A tick says
@@ -264,6 +264,21 @@ value sits beside the new one instead of being found by it; `readLegacyBrowserSa
 reads the bare key through a conditional import that is a stub off the web, and
 `adoptForeignSave` refuses to overwrite a character already being played here.
 The old value is left in place afterwards, costing nothing and losing nothing.
+
+## The release check
+
+Fixtures prove a rule was ported; they do not prove the game can be played. The
+release check is therefore a scripted playthrough (`packages/ik_runtime/test/
+playthrough_test.dart`) that drives a real `GameSession` over the shipped
+content: start a character, swear a race, travel, gather an action to its reward,
+fight a round to its outcome, queue and finish a craft, reach a shop, and open
+the game again to find the same save. Everything goes through the session rather
+than the rules directly, so a step that computed the right answer and forgot to
+store it fails here rather than on someone's phone.
+
+Together with the asset audit, that is the whole of what "it works" means for a
+release: the content validates, the art is all present, the loop pays out, and
+the save survives a relaunch. CI runs both, plus `flutter build web`.
 
 ## Commands
 

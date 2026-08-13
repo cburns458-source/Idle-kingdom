@@ -14,7 +14,7 @@ class TopHud extends StatelessWidget {
 
   final GameController controller;
 
-  /// Tapping the portrait opens the wardrobe, as it does in the React client.
+  /// Tapping the portrait opens the wardrobe.
   final VoidCallback onOpenWardrobe;
 
   @override
