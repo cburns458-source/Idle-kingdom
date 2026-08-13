@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:idle_kingdoms/src/ui/action_stage.dart';
-import 'package:idle_kingdoms/src/ui/pixel_chrome.dart';
+import 'package:idle_kingdoms/src/theme.dart';
 import 'package:idle_kingdoms/src/ui/production_panel.dart';
 import 'package:ik_content/ik_content.dart';
 import 'package:ik_rules/ik_rules.dart';
@@ -16,7 +16,7 @@ void main() {
   });
 
   Finder dockRow(String title) {
-    return find.ancestor(of: find.text(title), matching: find.byType(PixelFill));
+    return find.ancestor(of: find.text(title), matching: find.byType(DockRow));
   }
 
   bool assetNamed(Widget widget, String needle) {

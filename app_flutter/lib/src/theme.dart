@@ -1,7 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:pixel_ui/pixel_ui.dart';
-
-import 'ui/pixel_chrome.dart';
 
 /// The palette the game is drawn in: parchment, gold, and soft green.
 abstract final class Palette {
@@ -12,6 +9,18 @@ abstract final class Palette {
   static const softGreen = Color(0xFF8FAF7A);
   static const ink = Color(0xFF1F1610);
   static const danger = Color(0xFFC2603F);
+
+  /// Secondary body text, the old client's `.muted`.
+  static const muted = Color(0xFFCBB894);
+
+  /// Location and panel headings.
+  static const heading = Color(0xFFFFE7A8);
+
+  /// Body copy on top of location art.
+  static const overlayText = Color(0xFFF2E6C8);
+
+  /// Danger and combat warnings, the old client's `.danger-note`.
+  static const warning = Color(0xFFEFB07A);
 
   /// Hairline gold used for panel edges.
   static const edge = Color(0x73D4AF37);
@@ -31,6 +40,58 @@ abstract final class Palette {
     colors: [Color(0xF05C4027), Color(0xF83D2A1A)],
   );
 }
+
+/// The bar fills, each one a three-stop gradient as the old client drew them.
+abstract final class Meters {
+  static const playerHp = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [Color(0xFFC5E08A), Color(0xFF7FAD45), Color(0xFF5E8A2F)],
+    stops: [0, 0.55, 1],
+  );
+
+  static const enemyHp = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [Color(0xFFF0C090), Color(0xFFD4844A), Color(0xFFA85A2A)],
+    stops: [0, 0.55, 1],
+  );
+
+  static const combatRound = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [Color(0xFFD8ECFF), Color(0xFF7EB6E8), Color(0xFF4A8EC8)],
+    stops: [0, 0.55, 1],
+  );
+
+  static const action = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [Color(0xFFE8F6C8), Color(0xFF9BC85A), Color(0xFF6A9A35)],
+    stops: [0, 0.55, 1],
+  );
+
+  static const hudHp = LinearGradient(
+    begin: Alignment.centerLeft,
+    end: Alignment.centerRight,
+    colors: [Color(0xFF2F6B3A), Color(0xFF4F9A55), Color(0xFF8FCE6B)],
+    stops: [0, 0.45, 1],
+  );
+}
+
+/// Text laid over location art, which needs its own shadow to stay readable.
+const List<Shadow> overlayShadow = [
+  Shadow(offset: Offset(0, 1), blurRadius: 2, color: Color(0x8C000000)),
+];
+
+/// Combat and gathering warnings.
+const TextStyle warningStyle = TextStyle(
+  color: Palette.warning,
+  fontSize: 13,
+  fontWeight: FontWeight.w600,
+  height: 1.35,
+  shadows: overlayShadow,
+);
 
 ThemeData buildAppTheme() {
   final base = ThemeData.dark(useMaterial3: true);
@@ -65,17 +126,165 @@ ThemeData buildAppTheme() {
       ),
     ),
   );
-  // Location dock chrome reads these; the rest of the app keeps Material.
-  return pixelUiTheme(
-    base: themed,
-    pixelTheme: const PixelTheme(
-      box: PixelBoxTheme(style: pixelPanelStyle),
-      button: PixelButtonTheme(
-        normalStyle: pixelButtonStyle,
-        pressedStyle: pixelButtonPressedStyle,
-      ),
-    ),
+  return themed;
+}
+
+/// Which of the two button faces to wear: green for doing, brown for the rest.
+enum GameButtonTone { primary, secondary }
+
+/// The rounded, gold-edged button the game does everything with.
+class GameButton extends StatelessWidget {
+  const GameButton({
+    super.key,
+    required this.label,
+    required this.onPressed,
+    this.tone = GameButtonTone.primary,
+  });
+
+  final String label;
+  final VoidCallback? onPressed;
+  final GameButtonTone tone;
+
+  static const LinearGradient _primaryFill = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [Color(0xFF7F9D63), Color(0xFF5F7A45)],
   );
+
+  static const LinearGradient _secondaryFill = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [Color(0xFF6A4A30), Color(0xFF45301F)],
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    final primary = tone == GameButtonTone.primary;
+    return Semantics(
+      button: true,
+      enabled: onPressed != null,
+      label: label,
+      child: ExcludeSemantics(
+        child: Opacity(
+          opacity: onPressed == null ? 0.55 : 1,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: primary ? _primaryFill : _secondaryFill,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: primary ? const Color(0x73BEDC96) : const Color(0x73D4AF37),
+              ),
+              boxShadow: const [BoxShadow(offset: Offset(0, 2), color: Color(0x40000000))],
+            ),
+            child: InkWell(
+              onTap: onPressed,
+              borderRadius: BorderRadius.circular(14),
+              child: Container(
+                constraints: const BoxConstraints(minHeight: 44, minWidth: 90),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                alignment: Alignment.center,
+                child: Text(
+                  label,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w700,
+                    color: primary ? const Color(0xFFF4FFE8) : const Color(0xFFFFF4D4),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// One line of the location list: what is here, and the one thing you do with it.
+class DockRow extends StatelessWidget {
+  const DockRow({super.key, required this.title, required this.trailing, this.lines = const []});
+
+  final String title;
+
+  /// Warnings, requirements, and the blurb, in the order the old client read them.
+  final List<Widget> lines;
+  final Widget trailing;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(11, 10, 11, 10),
+      decoration: BoxDecoration(
+        color: const Color(0x6B140E0A),
+        borderRadius: BorderRadius.circular(13),
+        border: Border.all(color: const Color(0x2EE8DCB4)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 14.5,
+                    fontWeight: FontWeight.w700,
+                    shadows: overlayShadow,
+                  ),
+                ),
+                ...lines,
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          trailing,
+        ],
+      ),
+    );
+  }
+}
+
+/// A pill meter with a gradient fill, the shape every bar in the game uses.
+class PillBar extends StatelessWidget {
+  const PillBar({
+    super.key,
+    required this.value,
+    required this.gradient,
+    this.height = 12,
+    this.trackColor = const Color(0xB8120C08),
+    this.borderColor = const Color(0x47FFECC4),
+  });
+
+  final double value;
+  final Gradient gradient;
+  final double height;
+  final Color trackColor;
+  final Color borderColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: trackColor,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: borderColor),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(999),
+        child: SizedBox(
+          height: height,
+          child: FractionallySizedBox(
+            alignment: Alignment.centerLeft,
+            widthFactor: value.isNaN ? 0 : value.clamp(0, 1),
+            heightFactor: 1,
+            child: DecoratedBox(decoration: BoxDecoration(gradient: gradient)),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 /// The bordered, slightly translucent card every panel in the game uses.
@@ -148,7 +357,7 @@ class MutedText extends StatelessWidget {
     return Text(
       text,
       textAlign: textAlign,
-      style: const TextStyle(fontSize: 12, color: Color(0xB3F4E7C8)),
+      style: const TextStyle(fontSize: 12.5, color: Palette.muted, height: 1.35),
     );
   }
 }

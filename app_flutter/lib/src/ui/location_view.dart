@@ -12,7 +12,6 @@ import 'citadel_hub_panel.dart';
 import 'critter_overlay.dart';
 import 'format.dart';
 import 'npc_panel.dart';
-import 'pixel_chrome.dart';
 import 'production_panel.dart';
 import 'project_panel.dart';
 import 'shop_panel.dart';
@@ -134,156 +133,155 @@ class _LocationViewState extends State<LocationView> {
         ? ActivityPanel(controller: controller)
         : null;
 
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        Image.asset(
-          locationAssetPath(locationId),
-          fit: BoxFit.cover,
-          alignment: Alignment.topCenter,
-          filterQuality: FilterQuality.none,
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(10, 8, 10, 0),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(15),
+          border: Border.all(color: const Color(0x47D4AF37)),
         ),
-        const DecoratedBox(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [Color(0x33000000), Color(0xCC1F1610)],
-              stops: [0.25, 1],
-            ),
-          ),
-        ),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(14),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              Image.asset(
+                locationAssetPath(locationId),
+                fit: BoxFit.cover,
+                alignment: Alignment.topCenter,
+                filterQuality: FilterQuality.none,
+              ),
+              const DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [Color(0x6B140D08), Color(0x2E140D08), Color(0xB8140D08)],
+                    stops: [0, 0.28, 1],
+                  ),
+                ),
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Expanded(
-                    child: Column(
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(13, 12, 13, 0),
+                    child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          location.displayName,
-                          style: const TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w700,
-                            shadows: [
-                              Shadow(offset: Offset(0, 1), blurRadius: 2, color: Color(0x8C000000)),
-                            ],
-                          ),
-                        ),
-                        if (location.dangerHostility case final danger?)
-                          Text(
-                            danger,
-                            style: const TextStyle(
-                              color: Palette.danger,
-                              fontSize: 12,
-                              shadows: [
-                                Shadow(
-                                  offset: Offset(0, 1),
-                                  blurRadius: 2,
-                                  color: Color(0x59000000),
-                                ),
-                              ],
+                        Expanded(child: _LocationHead(location: location)),
+                        const SizedBox(width: 11),
+                        Column(
+                          children: [
+                            _OverlayIconButton(
+                              tooltip: 'Open world map',
+                              onPressed: widget.onOpenMap,
+                              child: Image.asset(
+                                uiMapAssetPath(),
+                                width: 38,
+                                height: 38,
+                                filterQuality: FilterQuality.none,
+                              ),
                             ),
-                          ),
+                            if (widget.onOpenNearby case final openNearby?) ...[
+                              const SizedBox(height: 7),
+                              _OverlayIconButton(
+                                tooltip: 'Nearby adventurers',
+                                onPressed: openNearby,
+                                dark: true,
+                                child: const Icon(Icons.groups, size: 32, color: Color(0xF2ECD6A8)),
+                              ),
+                            ],
+                          ],
+                        ),
                       ],
                     ),
                   ),
-                  _OverlayIconButton(
-                    tooltip: 'Open world map',
-                    onPressed: widget.onOpenMap,
-                    child: Image.asset(
-                      uiMapAssetPath(),
-                      width: 28,
-                      height: 28,
-                      filterQuality: FilterQuality.none,
+                  if (controller.isRecovering && stage == null)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(13, 8, 13, 0),
+                      child: _RecoveringPanel(controller: controller),
+                    ),
+                  if (controller.activityError case final error?)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(13, 8, 13, 0),
+                      child: _Notice(text: error, tone: Palette.danger),
+                    ),
+                  if (controller.message case final message?
+                      when controller.save.combatEnemyId == null)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(13, 8, 13, 0),
+                      child: _Notice(text: message, tone: Palette.gold),
+                    ),
+                  Expanded(
+                    child: LayoutBuilder(
+                      builder: (context, rest) {
+                        final stageMax = rest.maxHeight * 0.52;
+                        final bandMax = rest.maxHeight * 0.5;
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Expanded(
+                              child: LayoutBuilder(
+                                builder: (context, art) {
+                                  return Stack(
+                                    children: [
+                                      Positioned(
+                                        top: art.maxHeight * 0.12,
+                                        left: 0,
+                                        right: 0,
+                                        child: Center(
+                                          child: CritterOverlay(controller: controller),
+                                        ),
+                                      ),
+                                    ],
+                                  );
+                                },
+                              ),
+                            ),
+                            if (stage != null)
+                              ConstrainedBox(
+                                constraints: BoxConstraints(maxHeight: stageMax),
+                                child: SingleChildScrollView(
+                                  padding: const EdgeInsets.symmetric(horizontal: 13),
+                                  child: stage,
+                                ),
+                              ),
+                            ConstrainedBox(
+                              constraints: BoxConstraints(maxHeight: bandMax),
+                              child: DecoratedBox(
+                                decoration: const BoxDecoration(
+                                  color: Color(0x38140D08),
+                                  border: Border(top: BorderSide(color: Color(0x2EE8DCB4))),
+                                ),
+                                child: SingleChildScrollView(
+                                  clipBehavior: Clip.hardEdge,
+                                  padding: const EdgeInsets.fromLTRB(13, 8, 13, 12),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                                    children: [
+                                      ..._activities(locationId),
+                                      ..._stations(locationId),
+                                      ..._people(locationId),
+                                      ..._shops(locationId),
+                                      ..._citadelBoards(locationId),
+                                      ..._searches(locationId),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        );
+                      },
                     ),
                   ),
-                  if (widget.onOpenNearby case final openNearby?) ...[
-                    const SizedBox(width: 8),
-                    _OverlayIconButton(
-                      tooltip: 'Nearby adventurers',
-                      onPressed: openNearby,
-                      child: const Icon(Icons.groups, size: 26, color: Color(0xFF2F4A24)),
-                    ),
-                  ],
                 ],
               ),
-            ),
-            if (controller.isRecovering && stage == null)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-                child: _RecoveringPanel(controller: controller),
-              ),
-            if (controller.activityError case final error?)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-                child: _Notice(text: error, tone: Palette.danger),
-              ),
-            if (controller.message case final message? when controller.save.combatEnemyId == null)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-                child: _Notice(text: message, tone: Palette.gold),
-              ),
-            Expanded(
-              child: LayoutBuilder(
-                builder: (context, rest) {
-                  final stageMax = rest.maxHeight * 0.48;
-                  final bandMax = rest.maxHeight * 0.5;
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Expanded(
-                        child: LayoutBuilder(
-                          builder: (context, art) {
-                            return Stack(
-                              children: [
-                                Positioned(
-                                  top: art.maxHeight * 0.12,
-                                  left: 0,
-                                  right: 0,
-                                  child: Center(child: CritterOverlay(controller: controller)),
-                                ),
-                              ],
-                            );
-                          },
-                        ),
-                      ),
-                      if (stage != null)
-                        ConstrainedBox(
-                          constraints: BoxConstraints(maxHeight: stageMax),
-                          child: SingleChildScrollView(child: stage),
-                        ),
-                      ConstrainedBox(
-                        constraints: BoxConstraints(maxHeight: bandMax),
-                        child: SingleChildScrollView(
-                          clipBehavior: Clip.hardEdge,
-                          padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              ..._activities(locationId),
-                              ..._stations(locationId),
-                              ..._people(locationId),
-                              ..._shops(locationId),
-                              ..._citadelBoards(locationId),
-                              ..._searches(locationId),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  );
-                },
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ],
+      ),
     );
   }
 
@@ -324,6 +322,7 @@ class _LocationViewState extends State<LocationView> {
           child: _InteractionCard(
             title: citadelHubTabLabels[tab]!,
             actionLabel: 'Open',
+            tone: GameButtonTone.primary,
             onPressed: () => _openPanel(CitadelHubOpen(tab)),
           ),
         ),
@@ -333,7 +332,7 @@ class _LocationViewState extends State<LocationView> {
   List<Widget> _activities(String locationId) {
     final activities = controller.indexes.activitiesByLocationId[locationId] ?? const [];
     if (activities.isEmpty) {
-      return [const PixelFill(child: Text('Nothing to do here yet.'))];
+      return [const MutedText('Nothing to do here yet.')];
     }
     return [
       _SectionHeading('Activities'),
@@ -360,6 +359,7 @@ class _LocationViewState extends State<LocationView> {
           child: _InteractionCard(
             title: station.label,
             actionLabel: 'Projects',
+            tone: GameButtonTone.primary,
             onPressed: () => _openPanel(StationOpen(station)),
           ),
         ),
@@ -417,6 +417,7 @@ class _LocationViewState extends State<LocationView> {
                 : 'Come back in '
                       '${formatDurationMs(locationSearchCooldownRemainingMs(controller.save, spot, nowMs))}.',
             actionLabel: spot.buttonLabel,
+            tone: GameButtonTone.primary,
             onPressed: canClaimLocationSearch(controller.save, spot, nowMs)
                 ? () => _search(spot.searchId)
                 : null,
@@ -426,28 +427,80 @@ class _LocationViewState extends State<LocationView> {
   }
 }
 
+/// The name of the place, what it is, and what it will do to you.
+class _LocationHead extends StatelessWidget {
+  const _LocationHead({required this.location});
+
+  final LocationRow location;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          location.displayName,
+          style: const TextStyle(
+            fontSize: 21.5,
+            fontWeight: FontWeight.w700,
+            color: Palette.heading,
+            height: 1.2,
+            shadows: overlayShadow,
+          ),
+        ),
+        const SizedBox(height: 3),
+        if (location.description case final blurb?)
+          Text(
+            blurb,
+            style: const TextStyle(
+              fontSize: 14.5,
+              color: Palette.overlayText,
+              height: 1.4,
+              shadows: overlayShadow,
+            ),
+          ),
+        if (location.dangerHostility case final danger?)
+          Padding(
+            padding: const EdgeInsets.only(top: 3),
+            child: Text(danger, style: warningStyle),
+          ),
+      ],
+    );
+  }
+}
+
 /// The map / nearby chips that sit on the location art, matching the old overlay.
 class _OverlayIconButton extends StatelessWidget {
-  const _OverlayIconButton({required this.tooltip, required this.onPressed, required this.child});
+  const _OverlayIconButton({
+    required this.tooltip,
+    required this.onPressed,
+    required this.child,
+    this.dark = false,
+  });
 
   final String tooltip;
   final VoidCallback onPressed;
   final Widget child;
+
+  /// The nearby chip is brown rather than the map's parchment green.
+  final bool dark;
 
   @override
   Widget build(BuildContext context) {
     return Tooltip(
       message: tooltip,
       child: Material(
-        color: const Color(0xEBBADCA0),
+        color: dark ? const Color(0xEB302418) : const Color(0xEBBADCA0),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: Color(0xB3B4DC96)),
+          side: BorderSide(color: dark ? const Color(0x8CD4AF5A) : const Color(0xB3B4DC96)),
         ),
+        shadowColor: const Color(0x47000000),
+        elevation: 6,
         child: InkWell(
           onTap: onPressed,
           borderRadius: BorderRadius.circular(16),
-          child: SizedBox(width: 56, height: 56, child: Center(child: child)),
+          child: SizedBox(width: 60, height: 60, child: Center(child: child)),
         ),
       ),
     );
@@ -463,7 +516,10 @@ class _SectionHeading extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
-      child: Text(text, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+      child: Text(
+        text,
+        style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700, shadows: overlayShadow),
+      ),
     );
   }
 }
@@ -475,46 +531,21 @@ class _InteractionCard extends StatelessWidget {
     required this.actionLabel,
     required this.onPressed,
     this.subtitle,
+    this.tone = GameButtonTone.secondary,
   });
 
   final String title;
   final String? subtitle;
   final String actionLabel;
+  final GameButtonTone tone;
   final VoidCallback? onPressed;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: PixelFill(
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
-                  ),
-                  if (subtitle case final line?)
-                    Text(
-                      line,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 11, color: Color(0xB3F4E7C8)),
-                    ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 8),
-            PixelActionButton(label: actionLabel, onPressed: onPressed),
-          ],
-        ),
-      ),
+    return DockRow(
+      title: title,
+      lines: [if (subtitle case final line?) MutedText(line)],
+      trailing: GameButton(label: actionLabel, tone: tone, onPressed: onPressed),
     );
   }
 }
@@ -537,62 +568,39 @@ class _ActivityCard extends StatelessWidget {
     final check = validateActivityStart(controller.db, controller.save, activityId);
     final production = isStandardProductionActivity(controller.db, activity);
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: PixelFill(
-        height: 76,
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    activity.contextualName ?? activityId,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
-                  ),
-                  if (activity.dangerWarningCombatLevel case final level?)
-                    Text(
-                      'Combat warning ~ Level $level',
-                      style: const TextStyle(color: Palette.danger, fontSize: 11),
-                    )
-                  else if (!check.ok)
-                    Text(
-                      check.reason ?? '',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 11, color: Color(0xB3F4E7C8)),
-                    )
-                  else if (activity.description case final blurb?)
-                    Text(
-                      blurb,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 11, color: Color(0xB3F4E7C8)),
-                    ),
-                ],
-              ),
+    return DockRow(
+      title: activity.contextualName ?? activityId,
+      lines: [
+        if (activity.dangerWarningCombatLevel case final level?)
+          Text('Combat warning ~ Level $level', style: warningStyle),
+        if (!check.ok && !running) MutedText(check.reason ?? ''),
+        if (activity.description case final blurb?)
+          Text(
+            blurb,
+            style: const TextStyle(
+              fontSize: 13,
+              color: Palette.overlayText,
+              height: 1.35,
+              shadows: overlayShadow,
             ),
-            const SizedBox(width: 8),
-            if (running)
-              PixelActionButton(label: 'Stop', stop: true, onPressed: controller.stopActivity)
-            else
-              PixelActionButton(
-                // Enabled even when the check failed: starting is what turns a
-                // missing tool into the offer to equip one, and otherwise says why.
-                label: production
-                    ? 'Recipes'
-                    : controller.save.currentActivityId != null
-                    ? 'Replace'
-                    : 'Start',
-                onPressed: production ? onOpenWorkshop : () => controller.startActivity(activityId),
-              ),
-          ],
-        ),
-      ),
+          ),
+      ],
+      trailing: running
+          ? GameButton(
+              label: 'Stop',
+              tone: GameButtonTone.secondary,
+              onPressed: controller.stopActivity,
+            )
+          : GameButton(
+              // Enabled even when the check failed: starting is what turns a
+              // missing tool into the offer to equip one, and otherwise says why.
+              label: production
+                  ? 'Recipes'
+                  : controller.save.currentActivityId != null
+                  ? 'Replace'
+                  : 'Start',
+              onPressed: production ? onOpenWorkshop : () => controller.startActivity(activityId),
+            ),
     );
   }
 }

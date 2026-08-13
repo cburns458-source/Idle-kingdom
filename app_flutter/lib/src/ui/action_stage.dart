@@ -8,20 +8,24 @@ import '../session/game_controller.dart';
 import '../theme.dart';
 import 'format.dart';
 import 'item_icon.dart';
-import 'pixel_chrome.dart';
 
-const Color _playerHpFill = Color(0xFF7FAD45);
-const Color _enemyHpFill = Color(0xFFD4844A);
-const Color _roundFill = Color(0xFF7EB6E8);
+/// How tall a fighter, a gathering scene, or a workstation is drawn.
+const double _portraitHeight = 152;
+
+/// The bars never run the whole column width, matching the old client.
+const double _meterMaxWidth = 136;
+
 const Color _playerHitColor = Color(0xFFFF8A3D);
 const Color _critHitColor = Color(0xFFFFD166);
 const Color _offhandHitColor = Color(0xFFF0A868);
 const Color _enemyHitColor = Color(0xFFFFD0D0);
+const Color _sceneNameColor = Color(0xFFF4EFD8);
 
 /// Shared two-column stage for combat, gathering, and production.
 ///
 /// Player art is always on the left. The right side is the enemy, the gathering
-/// scene, or the workstation, matching the retired React layout.
+/// scene, or the workstation. Stopping lives on the activity row underneath, so
+/// the stage is only ever art, names, and bars.
 class ActionStage extends StatelessWidget {
   const ActionStage({super.key, required this.controller});
 
@@ -40,19 +44,9 @@ class ActionStage extends StatelessWidget {
 }
 
 class _StageShell extends StatelessWidget {
-  const _StageShell({
-    required this.semanticsLabel,
-    required this.title,
-    required this.controller,
-    required this.scene,
-    required this.footer,
-    this.subtitle,
-  });
+  const _StageShell({required this.semanticsLabel, required this.scene, required this.footer});
 
   final String semanticsLabel;
-  final String title;
-  final String? subtitle;
-  final GameController controller;
   final Widget scene;
   final Widget footer;
 
@@ -63,32 +57,10 @@ class _StageShell extends StatelessWidget {
       explicitChildNodes: true,
       label: semanticsLabel,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
+        padding: const EdgeInsets.fromLTRB(2, 4, 2, 6),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
-                      ),
-                      if (subtitle case final line?) MutedText(line),
-                    ],
-                  ),
-                ),
-                PixelActionButton(label: 'Stop', stop: true, onPressed: controller.stopActivity),
-              ],
-            ),
-            const SizedBox(height: 6),
-            scene,
-            const SizedBox(height: 8),
-            footer,
-          ],
+          children: [scene, const SizedBox(height: 7), footer],
         ),
       ),
     );
@@ -116,14 +88,14 @@ class _TwoPortraits extends StatelessWidget {
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: [player, const SizedBox(height: 6), playerCaption],
+            children: [player, const SizedBox(height: 5), playerCaption],
           ),
         ),
         const SizedBox(width: 10),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.end,
-            children: [scene, const SizedBox(height: 6), sceneCaption],
+            children: [scene, const SizedBox(height: 5), sceneCaption],
           ),
         ),
       ],
@@ -152,7 +124,7 @@ class _Portrait extends StatelessWidget {
       image: placeholder == null,
       label: semanticsLabel,
       child: SizedBox(
-        height: 152,
+        height: _portraitHeight,
         width: double.infinity,
         child: Stack(
           fit: StackFit.expand,
@@ -173,6 +145,60 @@ class _Portrait extends StatelessWidget {
   }
 }
 
+/// The name over a bar: the enemy, or whatever is being worked on.
+class _SceneName extends StatelessWidget {
+  const _SceneName(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      textAlign: TextAlign.right,
+      style: const TextStyle(
+        fontSize: 13.5,
+        fontWeight: FontWeight.w700,
+        color: _sceneNameColor,
+        height: 1.15,
+        shadows: overlayShadow,
+      ),
+    );
+  }
+}
+
+/// A health bar, kept to one side of its column the way the old client had it.
+class _Meter extends StatelessWidget {
+  const _Meter({
+    required this.label,
+    required this.value,
+    required this.gradient,
+    required this.alignment,
+    this.semanticsValue,
+  });
+
+  final String label;
+  final String? semanticsValue;
+  final double value;
+  final Gradient gradient;
+  final Alignment alignment;
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: alignment,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: _meterMaxWidth),
+        child: Semantics(
+          label: label,
+          value: semanticsValue,
+          child: PillBar(value: value, gradient: gradient, height: 11.5),
+        ),
+      ),
+    );
+  }
+}
+
 class _CombatStage extends StatelessWidget {
   const _CombatStage({required this.controller});
 
@@ -181,7 +207,6 @@ class _CombatStage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final save = controller.save;
-    final activity = controller.indexes.activitiesById[save.currentActivityId];
     final enemy = getEnemy(controller.db, save.combatEnemyId!);
     final enemyName = enemy?.displayName ?? save.combatEnemyId!;
     final enemyMaxHp = math.max(1, enemy?.maximumHp ?? 1);
@@ -193,8 +218,6 @@ class _CombatStage extends StatelessWidget {
 
     return _StageShell(
       semanticsLabel: 'Combat',
-      title: activity?.contextualName ?? save.currentActivityId!,
-      controller: controller,
       scene: _TwoPortraits(
         player: _Portrait(
           assetPath: playerAssetPath(save.appearance),
@@ -207,15 +230,27 @@ class _CombatStage extends StatelessWidget {
                   key: ValueKey('enemy-hit-$seq'),
                   text: '${round.enemyHit!.round()}',
                   color: _enemyHitColor,
-                  alignment: const Alignment(-0.15, 0.1),
+                  alignment: const Alignment(-0.16, -0.16),
                   offset: _floaterOffset(seq, 1),
                 ),
               if (controller.isRecovering)
-                Center(
-                  child: Text(
-                    'Recovering… ${_pauseSeconds(controller.deathPauseRemainingMs)}s',
-                    style: pixelCaption(color: Palette.danger, fontSize: 13),
-                    textAlign: TextAlign.center,
+                Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: const Color(0x8C140C08),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      'Recovering… ${_pauseSeconds(controller.deathPauseRemainingMs)}s',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFFE0A080),
+                      ),
+                    ),
                   ),
                 ),
             ],
@@ -226,8 +261,17 @@ class _CombatStage extends StatelessWidget {
           semanticsLabel: enemyName,
           alignment: Alignment.centerRight,
           placeholder: controller.defeatedFlash
-              ? Center(
-                  child: Text('defeated', style: pixelCaption(color: Palette.danger, fontSize: 16)),
+              ? const Center(
+                  child: Text(
+                    'defeated',
+                    style: TextStyle(
+                      fontSize: 26,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 1,
+                      color: Color(0xFFFF3B3B),
+                      shadows: overlayShadow,
+                    ),
+                  ),
                 )
               : null,
           overlay: controller.defeatedFlash
@@ -241,7 +285,7 @@ class _CombatStage extends StatelessWidget {
                             ? 'CRIT ${round.playerHit.round()}'
                             : '${round.playerHit.round()}',
                         color: round.playerCrit ? _critHitColor : _playerHitColor,
-                        alignment: const Alignment(0, -0.55),
+                        alignment: const Alignment(0, -0.64),
                         offset: _floaterOffset(seq, 2),
                       ),
                     if (round != null && (round.offhandHit ?? 0) > 0)
@@ -249,43 +293,39 @@ class _CombatStage extends StatelessWidget {
                         key: ValueKey('offhand-hit-$seq'),
                         text: '${round.offhandHit!.round()}',
                         color: _offhandHitColor,
-                        alignment: const Alignment(0, -0.1),
+                        alignment: const Alignment(0, -0.24),
                         offset: _floaterOffset(seq, 3),
-                        fontSize: 16,
+                        fontSize: 17,
                       ),
                   ],
                 ),
         ),
+        // The player side has no name, but still leaves its line so both bars
+        // sit at the same height.
         playerCaption: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 14),
-            Semantics(
+            const SizedBox(height: 16),
+            _Meter(
               label: 'Player health',
-              value: '${playerHp.round()} / ${maxHp.round()}',
-              child: PixelMeterBar(
-                value: (playerHp / maxHp).clamp(0, 1).toDouble(),
-                color: _playerHpFill,
-              ),
+              semanticsValue: '${playerHp.round()} / ${maxHp.round()}',
+              value: maxHp <= 0 ? 0 : (playerHp / maxHp).clamp(0, 1).toDouble(),
+              gradient: Meters.playerHp,
+              alignment: Alignment.centerLeft,
             ),
           ],
         ),
         sceneCaption: Column(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            Text(
-              enemyName,
-              textAlign: TextAlign.right,
-              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
-            ),
-            const SizedBox(height: 4),
-            Semantics(
+            _SceneName(enemyName),
+            const SizedBox(height: 3),
+            _Meter(
               label: '$enemyName health',
-              value: '${enemyHp.round()} / ${enemyMaxHp.round()}',
-              child: PixelMeterBar(
-                value: (enemyHp / enemyMaxHp).clamp(0, 1).toDouble(),
-                color: _enemyHpFill,
-              ),
+              semanticsValue: '${enemyHp.round()} / ${enemyMaxHp.round()}',
+              value: (enemyHp / enemyMaxHp).clamp(0, 1).toDouble(),
+              gradient: Meters.enemyHp,
+              alignment: Alignment.centerRight,
             ),
           ],
         ),
@@ -294,12 +334,45 @@ class _CombatStage extends StatelessWidget {
           ? const SizedBox.shrink()
           : Semantics(
               label: 'Round progress',
-              child: PixelMeterBar(
+              child: PillBar(
                 value: controller.combatRoundProgress,
-                color: _roundFill,
+                gradient: Meters.combatRound,
                 height: 8,
+                borderColor: const Color(0x38FFECC4),
               ),
             ),
+    );
+  }
+}
+
+/// The bar and the clock under a gathering or production scene.
+class _ActionProgress extends StatelessWidget {
+  const _ActionProgress({required this.progress, required this.durationMs});
+
+  final double progress;
+  final num durationMs;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: Semantics(
+            label: 'Action progress',
+            child: PillBar(
+              value: progress,
+              gradient: Meters.action,
+              height: 8,
+              borderColor: const Color(0x38FFECC4),
+            ),
+          ),
+        ),
+        const SizedBox(width: 9),
+        Text(
+          '${formatDurationMs(durationMs * progress)} / ${formatDurationMs(durationMs)}',
+          style: const TextStyle(fontSize: 12.5, color: _sceneNameColor, shadows: overlayShadow),
+        ),
+      ],
     );
   }
 }
@@ -312,19 +385,14 @@ class _GatheringStage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final save = controller.save;
-    final activity = controller.indexes.activitiesById[save.currentActivityId];
     final action = save.currentActionId == null
         ? null
         : controller.indexes.actionsById[save.currentActionId!];
     final actionName = action?.displayName ?? 'Preparing…';
-    final durationMs = save.actionDurationMs ?? 0;
-    final progress = controller.actionProgress;
     final slow = action != null && isBelowProficiency(save, action);
 
     return _StageShell(
       semanticsLabel: 'Gathering',
-      title: activity?.contextualName ?? save.currentActivityId!,
-      controller: controller,
       scene: _TwoPortraits(
         player: _Portrait(
           assetPath: playerAssetPath(save.appearance),
@@ -336,36 +404,28 @@ class _GatheringStage extends StatelessWidget {
           semanticsLabel: actionName,
           alignment: Alignment.centerRight,
           placeholder: action == null
-              ? Center(child: Text('…', style: pixelCaption(fontSize: 22)))
+              ? const Center(
+                  child: Text('…', style: TextStyle(fontSize: 26, color: _sceneNameColor)),
+                )
               : null,
         ),
-        playerCaption: const SizedBox(height: 14),
+        playerCaption: const SizedBox(height: 16),
         sceneCaption: Column(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            Text(
-              actionName,
-              textAlign: TextAlign.right,
-              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
-            ),
+            _SceneName(actionName),
             if (slow)
-              Text(
+              const Text(
                 'this is tough work',
-                style: pixelCaption(color: const Color(0xFFC9B896), fontSize: 11),
+                textAlign: TextAlign.right,
+                style: TextStyle(fontSize: 12.5, color: Palette.muted, shadows: overlayShadow),
               ),
           ],
         ),
       ),
-      footer: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Semantics(
-            label: 'Action progress',
-            child: PixelMeterBar(value: progress, color: Palette.softGreen),
-          ),
-          const SizedBox(height: 4),
-          MutedText('${formatDurationMs(durationMs * progress)} / ${formatDurationMs(durationMs)}'),
-        ],
+      footer: _ActionProgress(
+        progress: controller.actionProgress,
+        durationMs: save.actionDurationMs ?? 0,
       ),
     );
   }
@@ -379,18 +439,14 @@ class _ProductionStage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final save = controller.save;
-    final activity = controller.indexes.activitiesById[save.currentActivityId];
     final recipeId = save.productionRecipeId;
     final recipe = recipeId == null ? null : getRecipe(controller.db, recipeId);
     final popup = controller.craftPopup;
     final popupItem = popup == null ? null : controller.indexes.itemsById[popup.itemId];
-    final stationId = recipe?.facilityId;
+    final stationName = recipe?.displayName ?? popup?.displayName ?? 'Workstation';
 
     return _StageShell(
       semanticsLabel: 'Production',
-      title: activity?.contextualName ?? save.currentActivityId!,
-      subtitle: recipeId == null ? null : _queueLine(controller, recipeId),
-      controller: controller,
       scene: _TwoPortraits(
         player: _Portrait(
           assetPath: playerAssetPath(save.appearance),
@@ -398,13 +454,13 @@ class _ProductionStage extends StatelessWidget {
           alignment: Alignment.centerLeft,
         ),
         scene: _Portrait(
-          assetPath: workstationAssetPath(stationId),
-          semanticsLabel: recipe?.displayName ?? popup?.displayName ?? 'Workstation',
+          assetPath: workstationAssetPath(recipe?.facilityId),
+          semanticsLabel: stationName,
           alignment: Alignment.centerRight,
           overlay: popup == null
               ? null
               : Align(
-                  alignment: const Alignment(0, -0.55),
+                  alignment: const Alignment(0, -0.76),
                   child: Semantics(
                     liveRegion: true,
                     label: popup.displayName,
@@ -429,12 +485,27 @@ class _ProductionStage extends StatelessWidget {
                   ),
                 ),
         ),
-        playerCaption: const SizedBox(height: 14),
-        sceneCaption: const SizedBox(height: 14),
+        playerCaption: const SizedBox(height: 16),
+        sceneCaption: Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            _SceneName(stationName),
+            if (recipeId != null)
+              Text(
+                _queueLine(controller, recipeId),
+                textAlign: TextAlign.right,
+                style: const TextStyle(
+                  fontSize: 12.5,
+                  color: Palette.muted,
+                  shadows: overlayShadow,
+                ),
+              ),
+          ],
+        ),
       ),
-      footer: Semantics(
-        label: 'Action progress',
-        child: PixelMeterBar(value: controller.actionProgress, color: Palette.softGreen),
+      footer: _ActionProgress(
+        progress: controller.actionProgress,
+        durationMs: save.actionDurationMs ?? 0,
       ),
     );
   }
@@ -447,7 +518,7 @@ class _DamageFloater extends StatelessWidget {
     required this.color,
     required this.alignment,
     required this.offset,
-    this.fontSize = 20,
+    this.fontSize = 21.5,
   });
 
   final String text;
@@ -490,17 +561,15 @@ class _DamageFloater extends StatelessWidget {
   }
 }
 
-/// "Copper Bar · 3/10 · 7m 30s left" for a running craft queue.
+/// "3/10 · 7m 30s left" for a running craft queue.
 String _queueLine(GameController controller, String recipeId) {
   final save = controller.save;
-  final recipe = getRecipe(controller.db, recipeId);
   final total = save.productionQuantityTotal ?? 0;
   final remaining = save.productionQuantityRemaining ?? 0;
   final craftMs = save.actionDurationMs ?? 0;
   final leftOfCurrent = craftMs * (1 - controller.actionProgress);
   final queuedAfter = remaining > 0 ? remaining - 1 : 0;
-  final name = recipe?.displayName ?? recipeId;
-  return '$name · ${total - remaining}/$total · '
+  return '${total - remaining}/$total · '
       '${formatDurationMs(leftOfCurrent + queuedAfter * craftMs)} left';
 }
 

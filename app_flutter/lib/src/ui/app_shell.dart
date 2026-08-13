@@ -156,16 +156,14 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
             ),
           ],
         ),
-        // Sits on the location art, clear of the dock chips and the stage Stop.
-        Align(
-          alignment: const Alignment(-1, 0.05),
-          child: Padding(
-            padding: const EdgeInsets.only(left: 8),
-            child: ChatLauncher(
-              multiplayer: multiplayer,
-              locationId: save.currentLocationId,
-              citadelHub: _inCitadel,
-            ),
+        // Floats over the bottom-right of the screen, just above the chin.
+        Positioned(
+          right: 6,
+          bottom: 60,
+          child: ChatLauncher(
+            multiplayer: multiplayer,
+            locationId: save.currentLocationId,
+            citadelHub: _inCitadel,
           ),
         ),
         if (_nearbyOpen)

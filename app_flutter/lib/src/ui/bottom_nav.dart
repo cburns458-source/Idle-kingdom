@@ -135,17 +135,17 @@ class _BottomNavState extends State<BottomNav> {
             const SizedBox(width: 6),
             Expanded(
               child: _NavButton(
-                label: 'Inventory',
-                selected: widget.screen == GameScreen.inventory,
-                onTap: () => _select(GameScreen.inventory),
+                label: 'Skills',
+                selected: widget.screen == GameScreen.skills,
+                onTap: () => _select(GameScreen.skills),
               ),
             ),
             const SizedBox(width: 6),
             Expanded(
               child: _NavButton(
-                label: 'Skills',
-                selected: widget.screen == GameScreen.skills,
-                onTap: () => _select(GameScreen.skills),
+                label: 'Inventory',
+                selected: widget.screen == GameScreen.inventory,
+                onTap: () => _select(GameScreen.inventory),
               ),
             ),
             const SizedBox(width: 6),

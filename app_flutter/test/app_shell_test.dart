@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:idle_kingdoms/src/ui/pixel_chrome.dart';
+import 'package:idle_kingdoms/src/theme.dart';
 import 'package:idle_kingdoms/src/ui/reward_strip.dart';
 import 'package:ik_content/ik_content.dart';
 
@@ -46,7 +46,7 @@ void main() {
     // The other meadow activity needs a hunting tool, so pick this one by name.
     final gatherCard = find.ancestor(
       of: find.text('Gather meadow supplies'),
-      matching: find.byType(PixelFill),
+      matching: find.byType(DockRow),
     );
     await tapVisible(
       tester,
@@ -91,7 +91,7 @@ void main() {
 
     final gatherCard = find.ancestor(
       of: find.text('Gather meadow supplies'),
-      matching: find.byType(PixelFill),
+      matching: find.byType(DockRow),
     );
     await tapVisible(
       tester,
