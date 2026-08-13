@@ -9,6 +9,32 @@ import { CHAT_COOLDOWN_SECONDS, PRESENCE_TTL_SECONDS } from '../../game/multipla
 import { filterProfanity, LocalMultiplayerBackend } from '../../game/multiplayer/localBackend'
 import { boardLabel, launchBoardKeys } from '../../game/multiplayer/leaderboards'
 import { presenceInputFromSave } from '../../game/multiplayer/presence'
+import {
+  chatMessageFrom,
+  cloudSaveRecordFrom,
+  isRemoteSaveNewer,
+  leaderboardEntriesFrom,
+  leaderboardRowsFor,
+  profileRowForSignUp,
+  remoteEmail,
+  remoteUsername,
+  saveRowFor,
+  sessionFromSignIn,
+  sessionFromSignUp,
+  REMOTE_CHAT_COLUMNS,
+  REMOTE_CHAT_LIMIT,
+  REMOTE_LEADERBOARD_COLUMNS,
+  REMOTE_LEADERBOARD_CONFLICT,
+  REMOTE_MAGIC_LINK_UNAVAILABLE,
+  REMOTE_NOT_CONFIGURED,
+  REMOTE_SAVE_COLUMNS,
+  REMOTE_SEND_CHAT_FUNCTION,
+  REMOTE_SIGN_IN_FAILED,
+  REMOTE_SIGN_UP_FAILED,
+  REMOTE_TABLES,
+  REMOTE_USERNAME_MAX_LENGTH,
+  type RemoteRow,
+} from '../../game/multiplayer/remote'
 import { buildLeaderboardSnapshot } from '../../game/multiplayer/snapshots'
 import {
   chatChannelKey,
@@ -19,6 +45,7 @@ import {
   GUILD_EMBLEM_EMOJI_TO_SYMBOL,
   GUILD_EMBLEM_SYMBOLS,
   GUILD_MAX_MEMBERS,
+  DEFAULT_PLAYER_APPEARANCE,
   MULTIPLAYER_LOCAL_DB_KEY,
   PROMOTABLE_GUILD_RANKS,
   type ChatChannel,
@@ -157,6 +184,44 @@ const CHANNELS: ChatChannel[] = [
 ]
 
 const EMBLEM = { color: GUILD_EMBLEM_COLORS[1]!, symbol: 'tree' }
+
+/**
+ * Rows as a remote backend hands them back: a stored save newer than the local
+ * one, one older, one written by an older build, and nothing at all.
+ */
+const REMOTE_SAVE_ROWS: RemoteRow[] = [
+  { save_version: 22, updated_at: '2026-08-12T22:00:00.000Z', payload: { gold: 1 } },
+  { save_version: 22, updated_at: '2026-08-12T20:00:00.000Z', payload: { gold: 2 } },
+  { save_version: 21, updated_at: '2026-08-12T22:00:00.000Z', payload: { gold: 3 } },
+  { save_version: '23', updated_at: '2026-08-13T00:00:00.000Z', payload: { gold: 4 } },
+]
+
+/** A joined leaderboard read: a full profile, a missing one, and holes. */
+const REMOTE_BOARD_ROWS: RemoteRow[] = [
+  {
+    user_id: 'usr_0001',
+    value: 1204,
+    profiles: {
+      username: 'Hero',
+      appearance_json: DEFAULT_PLAYER_APPEARANCE,
+      guilds: { name: 'Iron League' },
+    },
+  },
+  { user_id: 'usr_0002', value: '12', profiles: null },
+  { user_id: 'usr_0003', value: 0, profiles: { username: 'Quiet', guilds: null } },
+]
+
+const REMOTE_CHAT_ROWS: RemoteRow[] = [
+  {
+    id: 7,
+    channel_key: 'global',
+    user_id: 'usr_0001',
+    username: 'Hero',
+    body: 'Hello',
+    created_at: '2026-08-12T21:00:00.000Z',
+  },
+  {},
+]
 
 /**
  * A document an older build wrote: emoji emblems, no tag, no join policy, and
@@ -851,6 +916,61 @@ export const multiplayerScenarios: ParityScenario[] = [
         self,
         accepted,
         alreadyFriends,
+      } as unknown as JsonValue
+    },
+  ),
+
+  scenario(
+    'multiplayer/remote',
+    'rows',
+    {
+      source: 'content',
+      save: asJson(pinnedSave()),
+      nowIso: '2026-08-12T21:00:00.000Z',
+      saveRows: REMOTE_SAVE_ROWS as unknown as JsonValue,
+      boardRows: REMOTE_BOARD_ROWS as unknown as JsonValue,
+      chatRows: REMOTE_CHAT_ROWS as unknown as JsonValue,
+    },
+    () => {
+      const save = pinnedSave()
+      const snapshot = buildLeaderboardSnapshot(contentDatabase(), save)
+      const records = REMOTE_SAVE_ROWS.map((row) => cloudSaveRecordFrom('usr_0001', row))
+      return {
+        names: {
+          tables: REMOTE_TABLES,
+          sendChat: REMOTE_SEND_CHAT_FUNCTION,
+          saveColumns: REMOTE_SAVE_COLUMNS,
+          chatColumns: REMOTE_CHAT_COLUMNS,
+          leaderboardColumns: REMOTE_LEADERBOARD_COLUMNS,
+          leaderboardConflict: REMOTE_LEADERBOARD_CONFLICT,
+          chatLimit: REMOTE_CHAT_LIMIT,
+          usernameMaxLength: REMOTE_USERNAME_MAX_LENGTH,
+        },
+        messages: {
+          notConfigured: REMOTE_NOT_CONFIGURED,
+          signUpFailed: REMOTE_SIGN_UP_FAILED,
+          signInFailed: REMOTE_SIGN_IN_FAILED,
+          magicLinkUnavailable: REMOTE_MAGIC_LINK_UNAVAILABLE,
+        },
+        usernames: ['  Rowan  ', 'a'.repeat(40), ''].map(remoteUsername),
+        emails: ['  HERO@Example.com ', 'plain@example.com'].map(remoteEmail),
+        signUpSession: sessionFromSignUp('usr_0001', '  HERO@Example.com ', ' Rowan ', 'token'),
+        signUpWithoutToken: sessionFromSignUp('usr_0001', 'a@b.co', 'Rowan', null),
+        signInSessions: [
+          sessionFromSignIn('usr_0001', 'hero@example.com', 'typed@x.co', 'Rowan', 'token'),
+          sessionFromSignIn('usr_0001', 'hero@example.com', 'typed@x.co', null, null),
+          sessionFromSignIn('usr_0001', null, '  TYPED@X.co ', null, null),
+        ],
+        profileRow: profileRowForSignUp(
+          sessionFromSignUp('usr_0001', 'a@b.co', 'Rowan', null),
+        ),
+        saveRow: saveRowFor('usr_0001', save),
+        cloudRecords: records,
+        newer: records.map((record) => (record ? isRemoteSaveNewer(record, save) : null)),
+        leaderboardRows: leaderboardRowsFor('usr_0001', snapshot, '2026-08-12T21:00:00.000Z'),
+        entries: leaderboardEntriesFrom(REMOTE_BOARD_ROWS, 'total_level'),
+        chatMessages: REMOTE_CHAT_ROWS.map(chatMessageFrom),
+        defaultAppearance: DEFAULT_PLAYER_APPEARANCE,
       } as unknown as JsonValue
     },
   ),

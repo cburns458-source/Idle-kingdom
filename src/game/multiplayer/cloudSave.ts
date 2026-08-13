@@ -5,6 +5,14 @@ import { SAVE_STORAGE_KEY } from '../save/types'
 import { getSession } from './auth'
 import { getLocalBackend, getSupabaseClient, multiplayerMode } from './client'
 import { submitLeaderboardFromSave } from './leaderboards'
+import {
+  cloudSaveRecordFrom,
+  isRemoteSaveNewer,
+  REMOTE_NOT_CONFIGURED,
+  REMOTE_SAVE_COLUMNS,
+  REMOTE_TABLES,
+  saveRowFor,
+} from './remote'
 import type { CloudSaveRecord } from './types'
 
 export type CloudSyncResult =
@@ -46,34 +54,19 @@ export async function pushCloudSave(
   }
 
   const client = getSupabaseClient()
-  if (!client) return { ok: false, reason: 'Supabase is not configured.' }
+  if (!client) return { ok: false, reason: REMOTE_NOT_CONFIGURED }
   const { data: existing } = await client
-    .from('player_saves')
-    .select('save_version, updated_at, payload')
+    .from(REMOTE_TABLES.saves)
+    .select(REMOTE_SAVE_COLUMNS)
     .eq('user_id', session.userId)
     .maybeSingle()
-  if (
-    existing &&
-    Date.parse(String(existing.updated_at)) > Date.parse(stamped.updatedAt) &&
-    Number(existing.save_version) >= stamped.saveVersion
-  ) {
-    return {
-      ok: false,
-      reason: 'A newer cloud save exists.',
-      remote: {
-        userId: session.userId,
-        saveVersion: Number(existing.save_version),
-        updatedAt: String(existing.updated_at),
-        payload: existing.payload as PlayerSave,
-      },
-    }
+  const remote = cloudSaveRecordFrom(session.userId, existing)
+  if (remote && isRemoteSaveNewer(remote, stamped)) {
+    return { ok: false, reason: 'A newer cloud save exists.', remote }
   }
-  const { error } = await client.from('player_saves').upsert({
-    user_id: session.userId,
-    save_version: stamped.saveVersion,
-    updated_at: stamped.updatedAt,
-    payload: stamped,
-  })
+  const { error } = await client
+    .from(REMOTE_TABLES.saves)
+    .upsert(saveRowFor(session.userId, stamped))
   if (error) return { ok: false, reason: error.message }
   await submitLeaderboardFromSave(db, stamped)
   return { ok: true, save: stamped, source: 'uploaded' }
@@ -92,15 +85,16 @@ export async function pullCloudSave(): Promise<CloudSyncResult> {
   }
 
   const client = getSupabaseClient()
-  if (!client) return { ok: false, reason: 'Supabase is not configured.' }
+  if (!client) return { ok: false, reason: REMOTE_NOT_CONFIGURED }
   const { data, error } = await client
-    .from('player_saves')
-    .select('save_version, updated_at, payload')
+    .from(REMOTE_TABLES.saves)
+    .select(REMOTE_SAVE_COLUMNS)
     .eq('user_id', session.userId)
     .maybeSingle()
   if (error) return { ok: false, reason: error.message }
-  if (!data) return { ok: false, reason: 'No cloud save for this account yet.' }
-  const payload = parseSave(data.payload)
+  const remote = cloudSaveRecordFrom(session.userId, data)
+  if (!remote) return { ok: false, reason: 'No cloud save for this account yet.' }
+  const payload = parseSave(remote.payload)
   const validation = softValidateSave(payload)
   if (!validation.ok) return validation
   return { ok: true, save: payload, source: 'downloaded' }

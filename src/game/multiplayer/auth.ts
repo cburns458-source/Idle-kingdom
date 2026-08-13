@@ -1,4 +1,15 @@
 import { getLocalBackend, getSupabaseClient, multiplayerMode } from './client'
+import {
+  profileRowForSignUp,
+  remoteUsername,
+  REMOTE_MAGIC_LINK_UNAVAILABLE,
+  REMOTE_NOT_CONFIGURED,
+  REMOTE_SIGN_IN_FAILED,
+  REMOTE_SIGN_UP_FAILED,
+  REMOTE_TABLES,
+  sessionFromSignIn,
+  sessionFromSignUp,
+} from './remote'
 import { MULTIPLAYER_SESSION_KEY, type MultiplayerSession } from './types'
 
 function readStoredSession(): MultiplayerSession | null {
@@ -39,27 +50,23 @@ export async function signUpWithPassword(
   }
 
   const client = getSupabaseClient()
-  if (!client) return { ok: false, reason: 'Supabase is not configured.' }
+  if (!client) return { ok: false, reason: REMOTE_NOT_CONFIGURED }
   const { data, error } = await client.auth.signUp({
     email: email.trim(),
     password,
-    options: { data: { username: username.trim().slice(0, 24) } },
+    options: { data: { username: remoteUsername(username) } },
   })
   if (error || !data.user) {
-    return { ok: false, reason: error?.message ?? 'Sign-up failed.' }
+    return { ok: false, reason: error?.message ?? REMOTE_SIGN_UP_FAILED }
   }
-  const session: MultiplayerSession = {
-    userId: data.user.id,
-    email: email.trim().toLowerCase(),
-    username: username.trim().slice(0, 24),
-    accessToken: data.session?.access_token ?? '',
-  }
+  const session = sessionFromSignUp(
+    data.user.id,
+    email,
+    username,
+    data.session?.access_token ?? null,
+  )
   // Best-effort profile row (RLS policies in SQL migration).
-  await client.from('profiles').upsert({
-    user_id: session.userId,
-    username: session.username,
-    privacy_public_skills: true,
-  })
+  await client.from(REMOTE_TABLES.profiles).upsert(profileRowForSignUp(session))
   writeStoredSession(session)
   return { ok: true, session }
 }
@@ -75,22 +82,22 @@ export async function signInWithPassword(
   }
 
   const client = getSupabaseClient()
-  if (!client) return { ok: false, reason: 'Supabase is not configured.' }
+  if (!client) return { ok: false, reason: REMOTE_NOT_CONFIGURED }
   const { data, error } = await client.auth.signInWithPassword({
     email: email.trim(),
     password,
   })
   if (error || !data.user) {
-    return { ok: false, reason: error?.message ?? 'Sign-in failed.' }
+    return { ok: false, reason: error?.message ?? REMOTE_SIGN_IN_FAILED }
   }
-  const username =
-    String(data.user.user_metadata?.username ?? data.user.email?.split('@')[0] ?? 'Adventurer')
-  const session: MultiplayerSession = {
-    userId: data.user.id,
-    email: data.user.email ?? email.trim().toLowerCase(),
-    username,
-    accessToken: data.session?.access_token ?? '',
-  }
+  const metadataUsername = data.user.user_metadata?.username
+  const session = sessionFromSignIn(
+    data.user.id,
+    data.user.email ?? null,
+    email,
+    typeof metadataUsername === 'string' ? metadataUsername : null,
+    data.session?.access_token ?? null,
+  )
   writeStoredSession(session)
   return { ok: true, session }
 }
@@ -99,13 +106,10 @@ export async function signInWithMagicLink(
   email: string,
 ): Promise<{ ok: true } | { ok: false; reason: string }> {
   if (multiplayerMode() === 'local') {
-    return {
-      ok: false,
-      reason: 'Magic links require Supabase. Use email/password in local demo mode.',
-    }
+    return { ok: false, reason: REMOTE_MAGIC_LINK_UNAVAILABLE }
   }
   const client = getSupabaseClient()
-  if (!client) return { ok: false, reason: 'Supabase is not configured.' }
+  if (!client) return { ok: false, reason: REMOTE_NOT_CONFIGURED }
   const { error } = await client.auth.signInWithOtp({ email: email.trim() })
   if (error) return { ok: false, reason: error.message }
   return { ok: true }

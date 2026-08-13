@@ -1,5 +1,13 @@
 import { getSession } from './auth'
 import { getLocalBackend, getSupabaseClient, multiplayerMode } from './client'
+import {
+  chatMessageFrom,
+  REMOTE_CHAT_COLUMNS,
+  REMOTE_CHAT_LIMIT,
+  REMOTE_NOT_CONFIGURED,
+  REMOTE_SEND_CHAT_FUNCTION,
+  REMOTE_TABLES,
+} from './remote'
 import { chatChannelKey, type ChatChannel, type ChatMessage } from './types'
 
 export async function sendChatMessage(
@@ -14,8 +22,8 @@ export async function sendChatMessage(
   }
 
   const client = getSupabaseClient()
-  if (!client) return { ok: false, reason: 'Supabase is not configured.' }
-  const { data, error } = await client.functions.invoke('send-chat', {
+  if (!client) return { ok: false, reason: REMOTE_NOT_CONFIGURED }
+  const { data, error } = await client.functions.invoke(REMOTE_SEND_CHAT_FUNCTION, {
     body: { channelKey: chatChannelKey(channel), body },
   })
   if (error) return { ok: false, reason: error.message }
@@ -31,20 +39,13 @@ export async function listChatMessages(channel: ChatChannel): Promise<ChatMessag
   const client = getSupabaseClient()
   if (!client) return []
   const { data, error } = await client
-    .from('chat_messages')
-    .select('id, channel_key, user_id, username, body, created_at')
+    .from(REMOTE_TABLES.chat)
+    .select(REMOTE_CHAT_COLUMNS)
     .eq('channel_key', chatChannelKey(channel))
     .order('created_at', { ascending: true })
-    .limit(50)
+    .limit(REMOTE_CHAT_LIMIT)
   if (error || !data) return []
-  return data.map((row) => ({
-    id: String(row.id),
-    channelKey: String(row.channel_key),
-    userId: String(row.user_id),
-    username: String(row.username),
-    body: String(row.body),
-    createdAt: String(row.created_at),
-  }))
+  return data.map(chatMessageFrom)
 }
 
 export async function listDirectMessages(): Promise<ChatMessage[]> {

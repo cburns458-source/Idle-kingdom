@@ -2,6 +2,14 @@ import type { GameDatabase } from '../data/types'
 import type { PlayerSave } from '../save/types'
 import { getSession } from './auth'
 import { getLocalBackend, getSupabaseClient, multiplayerMode } from './client'
+import {
+  leaderboardEntriesFrom,
+  leaderboardRowsFor,
+  REMOTE_LEADERBOARD_COLUMNS,
+  REMOTE_LEADERBOARD_CONFLICT,
+  REMOTE_NOT_CONFIGURED,
+  REMOTE_TABLES,
+} from './remote'
 import { buildLeaderboardSnapshot } from './snapshots'
 import type { LeaderboardEntry, MultiplayerBoardKey } from './types'
 
@@ -20,16 +28,11 @@ export async function submitLeaderboardFromSave(
   }
 
   const client = getSupabaseClient()
-  if (!client) return { ok: false, reason: 'Supabase is not configured.' }
+  if (!client) return { ok: false, reason: REMOTE_NOT_CONFIGURED }
   const snapshot = buildLeaderboardSnapshot(db, save)
-  const rows = snapshot.boards.map((board) => ({
-    user_id: session.userId,
-    board_key: board.boardKey,
-    value: board.value,
-    updated_at: new Date().toISOString(),
-  }))
-  const { error } = await client.from('leaderboard_snapshots').upsert(rows, {
-    onConflict: 'user_id,board_key',
+  const rows = leaderboardRowsFor(session.userId, snapshot, new Date().toISOString())
+  const { error } = await client.from(REMOTE_TABLES.leaderboard).upsert(rows, {
+    onConflict: REMOTE_LEADERBOARD_CONFLICT,
   })
   if (error) return { ok: false, reason: error.message }
   return { ok: true }
@@ -46,35 +49,13 @@ export async function fetchLeaderboard(
   const client = getSupabaseClient()
   if (!client) return []
   const { data, error } = await client
-    .from('leaderboard_snapshots')
-    .select('user_id, board_key, value, profiles(username, appearance_json, guild_id, guilds(name))')
+    .from(REMOTE_TABLES.leaderboard)
+    .select(REMOTE_LEADERBOARD_COLUMNS)
     .eq('board_key', boardKey)
     .order('value', { ascending: false })
     .limit(limit)
   if (error || !data) return []
-  return data.map((row, index) => {
-    const profile = row.profiles as {
-      username?: string
-      appearance_json?: LeaderboardEntry['appearance']
-      guilds?: { name?: string } | null
-    } | null
-    return {
-      userId: String(row.user_id),
-      username: profile?.username ?? 'Adventurer',
-      appearance: profile?.appearance_json ?? {
-        skinTone: 'APR-0001',
-        hairstyle: 'APR-0004',
-        hairColor: 'APR-0007',
-        expression: 'APR-0011',
-        beard: 'APR-0014',
-        genderPresentation: 'APR-0017',
-      },
-      guildName: profile?.guilds?.name ?? null,
-      boardKey,
-      value: Number(row.value),
-      rank: index + 1,
-    }
-  })
+  return leaderboardEntriesFrom(data, boardKey)
 }
 
 export function launchBoardKeys(db: GameDatabase): MultiplayerBoardKey[] {

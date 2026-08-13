@@ -1,4 +1,23 @@
-import type { PlayerAppearance, PlayerSave } from '../save/types'
+import {
+  DEFAULT_BEARD_ID,
+  DEFAULT_EXPRESSION_ID,
+  DEFAULT_GENDER_PRESENTATION_ID,
+  DEFAULT_HAIR_COLOR_ID,
+  DEFAULT_HAIRSTYLE_ID,
+  DEFAULT_SKIN_TONE_ID,
+  type PlayerAppearance,
+  type PlayerSave,
+} from '../save/types'
+
+/** The appearance a row falls back to when no save or profile supplied one. */
+export const DEFAULT_PLAYER_APPEARANCE: PlayerAppearance = {
+  skinTone: DEFAULT_SKIN_TONE_ID,
+  hairstyle: DEFAULT_HAIRSTYLE_ID,
+  hairColor: DEFAULT_HAIR_COLOR_ID,
+  expression: DEFAULT_EXPRESSION_ID,
+  beard: DEFAULT_BEARD_ID,
+  genderPresentation: DEFAULT_GENDER_PRESENTATION_ID,
+}
 
 export type MultiplayerBoardKey =
   | 'total_level'

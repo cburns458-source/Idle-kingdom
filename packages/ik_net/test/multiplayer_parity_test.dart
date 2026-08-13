@@ -583,6 +583,96 @@ void main() {
       });
     }
   });
+
+  group('remote row parity', () {
+    for (final fixture in loadParityFixtures('multiplayer/remote')) {
+      test(fixture.name, () {
+        final db = databaseOf(fixture);
+        final save = saveOf(fixture);
+        final nowIso = fixture.inputField<String>('nowIso');
+        List<RemoteRow> rowsOf(String key) => fixture
+            .inputField<List<Object?>>(key)
+            .map((value) => asJsonMap(value))
+            .toList();
+        final saveRows = rowsOf('saveRows');
+        final records = saveRows.map((row) => remoteSaveRowFrom('usr_0001', row)).toList();
+        expect(
+          checkParity(fixture, <String, Object?>{
+            'names': <String, Object?>{
+              'tables': <String, Object?>{
+                'profiles': RemoteTables.profiles,
+                'saves': RemoteTables.saves,
+                'leaderboard': RemoteTables.leaderboard,
+                'chat': RemoteTables.chat,
+              },
+              'sendChat': remoteSendChatFunction,
+              'saveColumns': remoteSaveColumns,
+              'chatColumns': remoteChatColumns,
+              'leaderboardColumns': remoteLeaderboardColumns,
+              'leaderboardConflict': remoteLeaderboardConflict,
+              'chatLimit': remoteChatLimit,
+              'usernameMaxLength': remoteUsernameMaxLength,
+            },
+            'messages': <String, Object?>{
+              'notConfigured': remoteNotConfigured,
+              'signUpFailed': remoteSignUpFailed,
+              'signInFailed': remoteSignInFailed,
+              'magicLinkUnavailable': remoteMagicLinkUnavailable,
+            },
+            'usernames': <String>['  Rowan  ', 'a' * 40, ''].map(remoteUsername).toList(),
+            'emails': <String>[
+              '  HERO@Example.com ',
+              'plain@example.com',
+            ].map(remoteEmail).toList(),
+            'signUpSession': sessionFromSignUp(
+              'usr_0001',
+              '  HERO@Example.com ',
+              ' Rowan ',
+              'token',
+            ).toJson(),
+            'signUpWithoutToken': sessionFromSignUp(
+              'usr_0001',
+              'a@b.co',
+              'Rowan',
+              null,
+            ).toJson(),
+            'signInSessions': <Object?>[
+              sessionFromSignIn(
+                'usr_0001',
+                'hero@example.com',
+                'typed@x.co',
+                'Rowan',
+                'token',
+              ).toJson(),
+              sessionFromSignIn('usr_0001', 'hero@example.com', 'typed@x.co', null, null).toJson(),
+              sessionFromSignIn('usr_0001', null, '  TYPED@X.co ', null, null).toJson(),
+            ],
+            'profileRow': profileRowForSignUp(
+              sessionFromSignUp('usr_0001', 'a@b.co', 'Rowan', null),
+            ),
+            'saveRow': saveRowFor('usr_0001', save),
+            'cloudRecords': records.map((record) => record?.toJson()).toList(),
+            'newer': records
+                .map((record) => record == null ? null : isRemoteSaveNewer(record, save))
+                .toList(),
+            'leaderboardRows': leaderboardRowsFor(
+              'usr_0001',
+              buildLeaderboardSnapshot(db, save),
+              nowIso,
+            ),
+            'entries': leaderboardEntriesFrom(rowsOf('boardRows'), boardTotalLevel)
+                .map((entry) => entry.toJson())
+                .toList(),
+            'chatMessages': rowsOf('chatRows')
+                .map((row) => chatMessageFrom(row).toJson())
+                .toList(),
+            'defaultAppearance': defaultPlayerAppearance.toJson(),
+          }),
+          isNull,
+        );
+      });
+    }
+  });
 }
 
 Map<String, Object?> _presenceInputJson(PresenceInput input) => <String, Object?>{
