@@ -435,7 +435,7 @@ class _LocationViewState extends State<LocationView> {
         child: _InteractionCard(
           title: 'Item storage',
           subtitle: 'Gold stays on you.',
-          actionLabel: 'Open',
+          actionLabel: 'Bank',
           tone: GameButtonTone.primary,
           onPressed: () => _openPanel(const BankOpen()),
         ),

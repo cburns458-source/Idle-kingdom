@@ -5,7 +5,7 @@ import { prepareDatabase } from '../data/loadDatabase'
 import { addItemToInventory } from '../activity/rewards'
 import { createNewSave } from '../save/saveStore'
 import { migrateSave } from '../save/migrations'
-import type { PlayerSave } from '../save/types'
+import { SAVE_VERSION, type PlayerSave } from '../save/types'
 import { tryConsumeFoodAfterVictory } from '../combat/food'
 import { gatheringDurationMs } from '../activity/gathering'
 import {
@@ -214,7 +214,8 @@ describe('equipment loadout', () => {
     } as unknown as PlayerSave
 
     const migrated = migrateSave(legacy)
-    expect(migrated.saveVersion).toBe(22)
+    expect(migrated.saveVersion).toBe(SAVE_VERSION)
+    expect(migrated.bank).toEqual([])
     expect(migrated.unlockedRecipeIds).toEqual([])
     expect(migrated.activityTransition).toBeNull()
     expect(migrated.settings.showActivityRewards).toBe(true)

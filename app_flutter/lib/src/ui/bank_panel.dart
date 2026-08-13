@@ -45,7 +45,7 @@ class _BankPanelState extends State<BankPanel> {
     final name = item?.displayName ?? stack.itemId;
     final quantity = await askQuantity(
       context,
-      subtitle: 'Deposit',
+      subtitle: 'From the bag',
       title: name,
       details: [
         'In bag: ${formatThousands(stack.quantity)}',
@@ -69,7 +69,7 @@ class _BankPanelState extends State<BankPanel> {
     final name = item?.displayName ?? stack.itemId;
     final quantity = await askQuantity(
       context,
-      subtitle: 'Withdraw',
+      subtitle: 'From the chest',
       title: name,
       details: [
         'In bank: ${formatThousands(stack.quantity)}',
