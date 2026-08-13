@@ -76,7 +76,7 @@ void main() {
     expect(find.text('Join'), findsOne);
   });
 
-  testWidgets('guest The Watch without joining, and global chat shows [WCH] Mira', (tester) async {
+  testWidgets('guest The Watch without joining the roster', (tester) async {
     final controller = buildController(database, seed: startedCharacter(database));
     final net = buildMultiplayer(database);
     addTearDown(controller.dispose);
