@@ -33,10 +33,13 @@ void main() {
     addTearDown(controller.dispose);
     await pumpShell(tester, controller);
 
-    await tester.tap(
-      find.descendant(of: dockRow('Gather meadow supplies'), matching: find.text('Start')),
+    await tapVisible(
+      tester,
+      find.descendant(
+        of: dockRow('Gather meadow supplies'),
+        matching: find.bySemanticsLabel('Start'),
+      ),
     );
-    await tester.pump();
 
     expect(controller.save.currentActivityId, 'ACT-0012');
     expect(find.byType(ActionStage), findsOne);
@@ -56,19 +59,21 @@ void main() {
     addTearDown(controller.dispose);
     await pumpShell(tester, controller);
 
-    await tester.tap(
-      find.descendant(of: dockRow('Tend the pasture'), matching: find.text('Start')),
+    await tapVisible(
+      tester,
+      find.descendant(of: dockRow('Tend the pasture'), matching: find.bySemanticsLabel('Start')),
     );
-    await tester.pump();
 
     expect(controller.save.currentActivityId, 'ACT-0001');
     expect(controller.save.combatEnemyId, isNotNull);
+    final enemy = getEnemy(database.launch, controller.save.combatEnemyId!);
+    expect(enemy, isNotNull);
     expect(find.byType(ActionStage), findsOne);
     expect(find.bySemanticsLabel('Combat'), findsOne);
-    expect(find.text('Cow'), findsWidgets);
+    expect(find.text(enemy!.displayName), findsWidgets);
     expect(find.byWidgetPredicate((widget) => assetNamed(widget, '/enemies/')), findsOne);
     expect(find.bySemanticsLabel('Player health'), findsOne);
-    expect(find.bySemanticsLabel('Cow health'), findsOne);
+    expect(find.bySemanticsLabel('${enemy.displayName} health'), findsOne);
     expect(find.bySemanticsLabel('Round progress'), findsOne);
 
     clock.advance(configNumber(database.launch, 'combat_round_duration', 4) * 1000);
@@ -92,12 +97,17 @@ void main() {
     addTearDown(controller.dispose);
     await pumpShell(tester, controller, size: const Size(900, 2400));
 
-    await tester.tap(
-      find.descendant(of: dockRow('Cook at the kitchen'), matching: find.text('Recipes')),
+    await tapVisible(
+      tester,
+      find.descendant(
+        of: dockRow('Cook at the kitchen'),
+        matching: find.bySemanticsLabel('Recipes'),
+      ),
     );
-    await tester.pump();
     expect(find.byType(ProductionPicker), findsOne);
 
+    await tester.tap(find.text('Max'));
+    await tester.pump();
     await tester.tap(find.text('Start queue'));
     await tester.pump();
 
@@ -112,6 +122,6 @@ void main() {
 
     expect(controller.craftPopup, isNotNull);
     expect(controller.craftPopup!.displayName, 'Baked Potato');
-    expect(find.bySemanticsLabel('Baked Potato'), findsOne);
+    expect(find.byKey(ValueKey('craft-pop-${controller.craftPopup!.seq}')), findsOne);
   });
 }

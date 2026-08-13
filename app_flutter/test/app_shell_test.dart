@@ -48,14 +48,15 @@ void main() {
       of: find.text('Gather meadow supplies'),
       matching: find.byType(PixelFill),
     );
-    await tester.tap(find.descendant(of: gatherCard, matching: find.text('Start')));
-    await tester.pump();
+    await tapVisible(
+      tester,
+      find.descendant(of: gatherCard, matching: find.bySemanticsLabel('Start')),
+    );
 
     expect(controller.save.currentActivityId, 'ACT-0012');
     expect(find.text('Stop'), findsWidgets);
 
-    await tester.tap(find.text('Stop').first);
-    await tester.pump();
+    await tapVisible(tester, find.bySemanticsLabel('Stop').first);
     expect(controller.save.currentActivityId, isNull);
   });
 
@@ -92,8 +93,10 @@ void main() {
       of: find.text('Gather meadow supplies'),
       matching: find.byType(PixelFill),
     );
-    await tester.tap(find.descendant(of: gatherCard, matching: find.text('Start')));
-    await tester.pump();
+    await tapVisible(
+      tester,
+      find.descendant(of: gatherCard, matching: find.bySemanticsLabel('Start')),
+    );
 
     final durationMs = controller.save.actionDurationMs!;
     expect(durationMs, greaterThan(0));

@@ -192,8 +192,8 @@ class _LocationViewState extends State<LocationView> {
             Expanded(
               child: LayoutBuilder(
                 builder: (context, rest) {
-                  final stageMax = rest.maxHeight * 0.52;
-                  final bandMax = rest.maxHeight * 0.38;
+                  final stageMax = rest.maxHeight * 0.48;
+                  final bandMax = rest.maxHeight * 0.5;
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
@@ -216,6 +216,7 @@ class _LocationViewState extends State<LocationView> {
                       ConstrainedBox(
                         constraints: BoxConstraints(maxHeight: bandMax),
                         child: SingleChildScrollView(
+                          clipBehavior: Clip.hardEdge,
                           padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,

@@ -101,8 +101,7 @@ void main() {
         of: find.text('Search for small game'),
         matching: find.byType(PixelFill),
       );
-      await tester.tap(find.descendant(of: card, matching: find.text('Start')));
-      await tester.pump();
+      await tapVisible(tester, find.descendant(of: card, matching: find.bySemanticsLabel('Start')));
     }
 
     testWidgets('offers the tool the bag already holds', (tester) async {

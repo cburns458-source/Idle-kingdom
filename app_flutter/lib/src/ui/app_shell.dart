@@ -160,11 +160,12 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
             ),
           ],
         ),
-        // The chat button sits above the nav, out of the way of the activity.
+        // Sits on the location art, clear of the dock's Start chips on the right.
+        // Sits on the location art, clear of the dock chips and the stage Stop.
         Align(
-          alignment: Alignment.bottomRight,
+          alignment: const Alignment(-1, 0.05),
           child: Padding(
-            padding: const EdgeInsets.only(bottom: 64),
+            padding: const EdgeInsets.only(left: 8),
             child: ChatLauncher(
               multiplayer: multiplayer,
               locationId: save.currentLocationId,

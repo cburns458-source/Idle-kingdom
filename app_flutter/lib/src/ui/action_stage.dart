@@ -32,7 +32,7 @@ class ActionStage extends StatelessWidget {
     final save = controller.save;
     if (save.currentActivityId == null) return const SizedBox.shrink();
     if (save.combatEnemyId != null) return _CombatStage(controller: controller);
-    if (save.productionRecipeId != null) {
+    if (save.productionRecipeId != null || controller.craftPopup != null) {
       return _ProductionStage(controller: controller);
     }
     return _GatheringStage(controller: controller);
@@ -380,15 +380,16 @@ class _ProductionStage extends StatelessWidget {
   Widget build(BuildContext context) {
     final save = controller.save;
     final activity = controller.indexes.activitiesById[save.currentActivityId];
-    final recipeId = save.productionRecipeId!;
-    final recipe = getRecipe(controller.db, recipeId);
+    final recipeId = save.productionRecipeId;
+    final recipe = recipeId == null ? null : getRecipe(controller.db, recipeId);
     final popup = controller.craftPopup;
     final popupItem = popup == null ? null : controller.indexes.itemsById[popup.itemId];
+    final stationId = recipe?.facilityId;
 
     return _StageShell(
       semanticsLabel: 'Production',
       title: activity?.contextualName ?? save.currentActivityId!,
-      subtitle: _queueLine(controller, recipeId),
+      subtitle: recipeId == null ? null : _queueLine(controller, recipeId),
       controller: controller,
       scene: _TwoPortraits(
         player: _Portrait(
@@ -397,8 +398,8 @@ class _ProductionStage extends StatelessWidget {
           alignment: Alignment.centerLeft,
         ),
         scene: _Portrait(
-          assetPath: workstationAssetPath(recipe?.facilityId),
-          semanticsLabel: recipe?.displayName ?? recipeId,
+          assetPath: workstationAssetPath(stationId),
+          semanticsLabel: recipe?.displayName ?? popup?.displayName ?? 'Workstation',
           alignment: Alignment.centerRight,
           overlay: popup == null
               ? null

@@ -115,6 +115,17 @@ Future<void> pumpShell(
   );
 }
 
+/// Scrolls [button] into the location dock and taps it.
+///
+/// Dock rows that sit on the clipped edge of the bottom band have a center
+/// that would otherwise land on the nav.
+Future<void> tapVisible(WidgetTester tester, Finder button) async {
+  await tester.ensureVisible(button);
+  await tester.pump();
+  await tester.tap(button);
+  await tester.pump();
+}
+
 /// Pumps one panel on its own, for panels a player opens from a location.
 ///
 /// The surface is made tall because these panels are built to scroll inside the
