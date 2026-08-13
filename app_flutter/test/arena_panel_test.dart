@@ -65,12 +65,12 @@ void main() {
 
     await tester.tap(find.text('Ranked'));
     await tester.pump();
+    final goldBefore = controller.save.gold;
     await tester.tap(find.text('Find match'));
     await tester.pump();
     await tester.pump();
 
     expect(find.text('Bram'), findsWidgets);
-    final goldBefore = controller.save.gold;
     if (find.text('Skip').evaluate().isNotEmpty) {
       await tester.tap(find.text('Skip'));
       await tester.pump();
@@ -79,11 +79,11 @@ void main() {
       find.text('Victory').evaluate().isNotEmpty || find.text('Defeat').evaluate().isNotEmpty,
       isTrue,
     );
-    if (controller.save.rankedPvpWins > 0) {
-      expect(controller.save.gold, goldBefore + rankedPvpWinGold);
-    } else {
-      expect(controller.save.gold, goldBefore);
-    }
     expect(controller.save.rankedPvpFightsToday, 1);
+    expect(
+      controller.save.gold,
+      goldBefore + (controller.save.rankedPvpWins > 0 ? rankedPvpWinGold : 0),
+    );
+    expect(controller.save.rankedPvpWins + controller.save.rankedPvpLosses, 1);
   });
 }

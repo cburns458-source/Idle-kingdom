@@ -1,0 +1,1 @@
+{"case":"snapshot","input":{"nowMs":1786644000000,"seed":20260813,"source":"content"},"module":"pvp/fight","output":{"last":{"outcome":"loss","themCrit":false,"themHit":30,"themHp":211,"themOffhand":null,"themThorns":0,"youCrit":false,"youHit":18,"youHp":0,"youOffhand":null,"youThorns":0},"outcome":"loss","roundCount":47,"themMaxHp":1180,"youMaxHp":1000}}

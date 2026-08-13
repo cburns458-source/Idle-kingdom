@@ -1,0 +1,1 @@
+{"case":"ranked-cap","input":{"nowMs":1786644000000,"source":"content"},"module":"pvp/matchmaking","output":{"afterFive":{"fights":5,"kd":0.25,"losses":4,"remaining":0,"wins":1},"blocked":{"ok":false,"reason":"Ranked is capped at 5 fights a day."},"nextDay":{"dayKey":"2026-08-14","fights":1},"remainingFresh":5,"startOk":{"ok":true}}}
