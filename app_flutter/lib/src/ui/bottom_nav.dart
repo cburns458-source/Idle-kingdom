@@ -4,7 +4,7 @@ import '../content/asset_paths.dart';
 import '../theme.dart';
 import 'app_shell.dart';
 
-/// The always-present nav row: where you are, the map, and the two panels.
+/// The always-present nav row: where you are, the map, and the screens.
 class BottomNav extends StatelessWidget {
   const BottomNav({
     super.key,
@@ -49,6 +49,14 @@ class BottomNav extends StatelessWidget {
               label: 'Inventory',
               selected: screen == GameScreen.inventory,
               onTap: () => onSelect(GameScreen.inventory),
+            ),
+          ),
+          const SizedBox(width: 6),
+          Expanded(
+            child: _NavButton(
+              label: 'Log',
+              selected: screen == GameScreen.log,
+              onTap: () => onSelect(GameScreen.log),
             ),
           ),
         ],

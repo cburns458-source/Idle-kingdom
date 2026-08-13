@@ -231,6 +231,24 @@ void main() {
     }
   });
 
+  group('log view parity', () {
+    for (final fixture in loadParityFixtures('log/view')) {
+      test(fixture.name, () {
+        final db = databaseOf(fixture);
+        final save = saveOf(fixture);
+        expect(
+          checkParity(fixture, {
+            'achievements': achievementLog(db, save).map((row) => row.toJson()).toList(),
+            'quests': questLog(db, save).map((row) => row.toJson()).toList(),
+            'recipes': recipeLog(db, save).map((row) => row.toJson()).toList(),
+            'critters': critterLog(save).map((row) => row.toJson()).toList(),
+          }),
+          isNull,
+        );
+      });
+    }
+  });
+
   group('progression meta parity', () {
     for (final fixture in loadParityFixtures('achievements/sync')) {
       test(fixture.name, () {

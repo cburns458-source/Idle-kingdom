@@ -29,11 +29,19 @@ import {
   getCritter,
   spawnCritterAtLocation,
 } from '../../game/critters/critters'
+import { achievementLog, critterLog, questLog, recipeLog } from '../../game/log/log'
 import { mulberry32 } from '../../game/rng/mulberry32'
 import type { PlayerSave } from '../../game/save/types'
 import { scenario, type JsonValue, type ParityScenario } from '../types'
 import { contentDatabase } from './contentDatabase'
-import { asJson, baseSave, fullBagSave, gearedSave, richSave } from './saveFixtures'
+import {
+  asJson,
+  baseSave,
+  fullBagSave,
+  gearedSave,
+  questSave,
+  richSave,
+} from './saveFixtures'
 
 const NOW_MS = Date.parse('2026-08-12T21:00:00.000Z')
 
@@ -45,6 +53,7 @@ type SaveKind =
   | 'geared'
   | 'collector'
   | 'deliverer'
+  | 'quest-runner'
   | 'full-bag'
 
 /** Critters already banked and one waiting at the Farm. */
@@ -105,6 +114,8 @@ function saveFor(kind: SaveKind): PlayerSave {
   if (kind === 'geared') return gearedSave(db)
   if (kind === 'collector') return collectorSave()
   if (kind === 'deliverer') return delivererSave()
+  // One quest done and one running with part of its delivery, for the log's bars.
+  if (kind === 'quest-runner') return questSave(db)
   return fullBagSave(db, ['ITEM-0100'])
 }
 
@@ -289,6 +300,19 @@ export const metaScenarios: ParityScenario[] = [
         notices: WARDROBE_COSMETICS.flatMap((cosmeticId) =>
           [true, false].map((isFirstEver) => cosmeticUnlockNotice(db, cosmeticId, isFirstEver)),
         ),
+      } as unknown as JsonValue
+    }),
+  ),
+
+  ...(['base', 'rich', 'collector', 'quest-runner'] as const).map((kind) =>
+    scenario('log/view', kind, withSave(kind), () => {
+      const db = contentDatabase()
+      const save = saveFor(kind)
+      return {
+        achievements: achievementLog(db, save),
+        quests: questLog(db, save),
+        recipes: recipeLog(db, save),
+        critters: critterLog(save),
       } as unknown as JsonValue
     }),
   ),
