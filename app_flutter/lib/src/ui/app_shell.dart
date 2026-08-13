@@ -286,6 +286,10 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
           controller: controller,
           multiplayer: multiplayer,
           section: SocialTab.guilds,
+          onTravelToHall: () {
+            if (!controller.travelToGuildHall()) return;
+            setState(() => _screen = GameScreen.location);
+          },
         );
       case GameScreen.account:
         return SocialView(

@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { prepareDatabase } from '../data/loadDatabase'
+import { locationHasGuildHall } from '../guild/hall'
 import { createNewSave } from '../save/saveStore'
 import {
   applyTravelArrival,
@@ -141,10 +142,15 @@ describe('travel rules', () => {
         'LOC-0030',
         'LOC-0031',
         'LOC-0032',
+        'LOC-0033',
       ]),
     )
     expect(canTravelTo(launch, 'LOC-0027', 'LOC-0028', CITADEL_MAP_ID)).toBe(true)
     expect(canTravelTo(launch, 'LOC-0028', 'LOC-0029', CITADEL_MAP_ID)).toBe(true)
+    expect(canTravelTo(launch, 'LOC-0028', 'LOC-0033', CITADEL_MAP_ID)).toBe(true)
     expect(canTravelTo(launch, 'LOC-0002', 'LOC-0027', MAIN_MAP_ID)).toBe(true)
+    const hall = launch.Locations.find((location) => location['Location ID'] === 'LOC-0033')
+    expect(locationHasGuildHall(hall)).toBe(true)
+    expect(locationHasGuildHall(gateway)).toBe(false)
   })
 })

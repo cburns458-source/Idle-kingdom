@@ -40,6 +40,7 @@ export 'src/equipment/auto_equip.dart';
 export 'src/equipment/loadout.dart';
 export 'src/equipment/tooltips.dart';
 export 'src/equipment/vitals.dart';
+export 'src/guild/hall.dart';
 export 'src/inventory/add_items.dart';
 export 'src/inventory/bank.dart';
 export 'src/inventory/capacity.dart';

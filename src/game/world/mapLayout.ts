@@ -101,6 +101,8 @@ export const CITADEL_MAP_NODE_LAYOUT: Record<string, NodePosition> = {
   'LOC-0031': { x: 28, y: 74 },
   // Combat Training Grounds
   'LOC-0032': { x: 72, y: 74 },
+  // Guild Hall
+  'LOC-0033': { x: 50, y: 58 },
 }
 
 const LAYOUTS: Record<string, Record<string, NodePosition>> = {

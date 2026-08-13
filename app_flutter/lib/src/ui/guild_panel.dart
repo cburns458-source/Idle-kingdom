@@ -9,10 +9,16 @@ import 'social_bits.dart';
 
 /// Guilds: the browser when you have none, the roster when you do.
 class GuildPanel extends StatefulWidget {
-  const GuildPanel({super.key, required this.controller, required this.multiplayer});
+  const GuildPanel({
+    super.key,
+    required this.controller,
+    required this.multiplayer,
+    this.onTravelToHall,
+  });
 
   final GameController controller;
   final MultiplayerController multiplayer;
+  final VoidCallback? onTravelToHall;
 
   @override
   State<GuildPanel> createState() => _GuildPanelState();
@@ -136,6 +142,14 @@ class _GuildPanelState extends State<GuildPanel> {
               : null,
         ),
         const SizedBox(height: 10),
+        GameButton(
+          label: save.currentLocationId == guildHallLocationId ? 'In the hall' : 'Travel to hall',
+          onPressed: widget.onTravelToHall,
+        ),
+        const Padding(
+          padding: EdgeInsets.only(top: 4, bottom: 10),
+          child: MutedText('Each guild has its own hall: storehouse, debt, and boxing ring.'),
+        ),
         if (net.guestGuild case final guest?) ...[
           SocialRow(
             title: 'Guest of [${guest.tag}] ${guest.name}',

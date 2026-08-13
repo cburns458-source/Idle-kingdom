@@ -110,6 +110,20 @@ class GameSession {
     return plan;
   }
 
+  /// Instant travel into this player's guild hall, from anywhere.
+  TravelPlan travelToGuildHall() {
+    final plan = planGuildHallTravel(db, save, clock(), random);
+    switch (plan) {
+      case TravelBlocked():
+        break;
+      case TravelInstant(arrival: final arrival):
+        apply(arrival.save);
+      case TravelTimed():
+        break;
+    }
+    return plan;
+  }
+
   /// Completes a journey the client has finished animating.
   TravelArrival arrive(String destinationId) {
     final arrival = arriveFromTravel(db, save, destinationId, clock(), random);

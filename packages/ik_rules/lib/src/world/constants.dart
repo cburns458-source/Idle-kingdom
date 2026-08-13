@@ -31,6 +31,7 @@ const String citadelMarketId = 'LOC-0029';
 const String citadelProcessingId = 'LOC-0030';
 const String citadelGatheringId = 'LOC-0031';
 const String citadelCombatId = 'LOC-0032';
+const String guildHallLocationId = 'LOC-0033';
 
 bool isFutureHorizonLocation(String locationId) {
   return locationId == westHorizonId || locationId == eastHorizonId;

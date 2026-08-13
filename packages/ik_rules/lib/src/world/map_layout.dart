@@ -98,6 +98,8 @@ const Map<String, NodePosition> citadelMapNodeLayout = <String, NodePosition>{
   'LOC-0031': NodePosition(x: 28, y: 74),
   // Combat Training Grounds
   'LOC-0032': NodePosition(x: 72, y: 74),
+  // Guild Hall
+  'LOC-0033': NodePosition(x: 50, y: 58),
 };
 
 const Map<String, Map<String, NodePosition>> _layouts = <String, Map<String, NodePosition>>{

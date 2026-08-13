@@ -135,3 +135,12 @@ TravelArrival arriveFromTravel(
 ) {
   return _arrivalOf(db, applyHostileTravelArrival(db, save, destinationId, nowMs, random));
 }
+
+/// Guild Travel: the hall is a per-guild instance, reachable from the guild
+/// screen even when the player is not standing next to it.
+TravelPlan planGuildHallTravel(GameDatabase db, PlayerSave save, num nowMs, RandomFn random) {
+  if (isDeathPaused(save, nowMs)) return const TravelBlocked();
+  return TravelInstant(
+    _arrivalOf(db, applyHostileTravelArrival(db, save, guildHallLocationId, nowMs, random)),
+  );
+}

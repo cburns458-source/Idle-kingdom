@@ -198,6 +198,10 @@ void applyDemoWorld(LocalDb db, GameDatabase gameDb, {required num nowMs, requir
     ),
   ];
 
+  if (!db.halls.any((row) => row.guildId == demoGuildId)) {
+    db.halls.add(GuildHallState.fresh(demoGuildId));
+  }
+
   db.messages = [
     ...db.messages.where((row) => !row.id.startsWith('msg_demo_')),
     ChatMessage(

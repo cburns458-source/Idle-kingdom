@@ -698,6 +698,7 @@ class LocalMultiplayerBackend {
         currentValue: 0,
       ),
     );
+    db.halls.add(GuildHallState.fresh(guild.id));
     _write(db);
     return CreateGuildResult.ok(guild, guildCreateGoldCost);
   }
@@ -1025,6 +1026,7 @@ class LocalMultiplayerBackend {
       db.guilds = db.guilds.where((row) => row.id != membership.guildId).toList();
       db.projects = db.projects.where((row) => row.guildId != membership.guildId).toList();
       db.challenges = db.challenges.where((row) => row.guildId != membership.guildId).toList();
+      db.halls = db.halls.where((row) => row.guildId != membership.guildId).toList();
       db.applications = db.applications.where((row) => row.guildId != membership.guildId).toList();
       db.guests = db.guests.where((row) => row.guildId != membership.guildId).toList();
     }
@@ -1057,6 +1059,185 @@ class LocalMultiplayerBackend {
 
   List<GuildChallenge> guildChallenges(String guildId) =>
       _db().challenges.where((row) => row.guildId == guildId).toList();
+
+  GuildHallState _ensureHall(LocalDb db, String guildId) {
+    final index = db.halls.indexWhere((row) => row.guildId == guildId);
+    if (index >= 0) return db.halls[index];
+    final hall = GuildHallState.fresh(guildId);
+    db.halls.add(hall);
+    return hall;
+  }
+
+  void _putHall(LocalDb db, GuildHallState hall) {
+    db.halls = db.halls.where((row) => row.guildId != hall.guildId).toList();
+    db.halls.add(hall);
+  }
+
+  GuildHallState? guildHall(String guildId) {
+    final db = _db();
+    if (!db.guilds.any((row) => row.id == guildId)) return null;
+    final hall = _ensureHall(db, guildId);
+    _write(db);
+    return hall;
+  }
+
+  GuildHallActionResult payGuildDebt(String userId, PlayerSave save, num amount) {
+    final db = _db();
+    final membership = db.members.firstWhereOrNull((row) => row.userId == userId);
+    if (membership == null) {
+      return const GuildHallActionResult.failed('Join a guild first.');
+    }
+    if (!canPayGuildDebt(membership.role)) {
+      return const GuildHallActionResult.failed('Recruits cannot pay the hall debt.');
+    }
+    final want = math.max(0, amount.floor());
+    if (want <= 0) return const GuildHallActionResult.failed('Choose an amount.');
+    if (save.gold < want) return const GuildHallActionResult.failed('Not enough gold.');
+    var hall = _ensureHall(db, membership.guildId);
+    if (hall.debtPaidOff || hall.debtRemaining <= 0) {
+      return GuildHallActionResult.ok(hall);
+    }
+    final alreadyPaid = hall.debtPaidOff;
+    final pay = math.min(want, hall.debtRemaining.floor());
+    final remaining = hall.debtRemaining - pay;
+    final paidOff = remaining <= 0;
+    final paidBy = <String, num>{...hall.debtPaidBy};
+    paidBy[userId] = (paidBy[userId] ?? 0) + pay;
+    hall = hall.copyWith(
+      debtRemaining: paidOff ? 0 : remaining,
+      debtPaidBy: paidBy,
+      debtPaidOff: paidOff,
+    );
+    _putHall(db, hall);
+    _write(db);
+    return GuildHallActionResult.ok(
+      hall,
+      save: save.copyWith(gold: save.gold - pay),
+      paidOffJustNow: paidOff && !alreadyPaid,
+    );
+  }
+
+  GuildHallActionResult contributeHallItem(
+    String userId,
+    PlayerSave save,
+    int inventoryIndex,
+    num quantity,
+  ) {
+    final db = _db();
+    final membership = db.members.firstWhereOrNull((row) => row.userId == userId);
+    if (membership == null) {
+      return const GuildHallActionResult.failed('Join a guild first.');
+    }
+    if (inventoryIndex < 0 || inventoryIndex >= save.inventory.length) {
+      return const GuildHallActionResult.failed('That stack is not there.');
+    }
+    final stack = save.inventory[inventoryIndex];
+    if (stackIsUnbankableGold(stack)) {
+      return const GuildHallActionResult.failed('Gold stays on you.');
+    }
+    final want = math.max(0, quantity.floor());
+    if (want <= 0) return const GuildHallActionResult.failed('Choose a quantity.');
+    final takenQty = math.min(want, stack.quantity.floor());
+    var hall = _ensureHall(db, membership.guildId);
+    final bagged = save.copyWith(inventory: hall.storehouse);
+    final added = addItemToInventoryExact(
+      bagged,
+      stack.itemId,
+      takenQty,
+      stack.enchantmentId,
+      stack.favorite ?? false,
+    );
+    if (!added.ok || added.save == null) {
+      return GuildHallActionResult.failed(added.reason ?? 'The storehouse is full.');
+    }
+    final nextInventory = [...save.inventory];
+    if (takenQty >= stack.quantity) {
+      nextInventory.removeAt(inventoryIndex);
+    } else {
+      nextInventory[inventoryIndex] = stack.copyWith(quantity: stack.quantity - takenQty);
+    }
+    final boxingWas = hall.boxingUnlocked;
+    final contributed = hall.itemsContributed + takenQty;
+    var unlocks = [...hall.unlocks];
+    if (contributed >= boxingRingUnlockItems && !unlocks.contains(boxingRingUnlockId)) {
+      unlocks.add(boxingRingUnlockId);
+    }
+    hall = hall.copyWith(
+      storehouse: added.save!.inventory,
+      itemsContributed: contributed,
+      unlocks: unlocks,
+    );
+    _putHall(db, hall);
+    _write(db);
+    return GuildHallActionResult.ok(
+      hall,
+      save: save.copyWith(inventory: nextInventory),
+      unlockedBoxing: hall.boxingUnlocked && !boxingWas,
+    );
+  }
+
+  GuildHallActionResult withdrawHallItem(
+    String userId,
+    PlayerSave save,
+    int storehouseIndex,
+    num quantity,
+  ) {
+    final db = _db();
+    final membership = db.members.firstWhereOrNull((row) => row.userId == userId);
+    if (membership == null) {
+      return const GuildHallActionResult.failed('Join a guild first.');
+    }
+    var hall = _ensureHall(db, membership.guildId);
+    if (storehouseIndex < 0 || storehouseIndex >= hall.storehouse.length) {
+      return const GuildHallActionResult.failed('That stack is not there.');
+    }
+    final stack = hall.storehouse[storehouseIndex];
+    final want = math.max(0, quantity.floor());
+    if (want <= 0) return const GuildHallActionResult.failed('Choose a quantity.');
+    final takenQty = math.min(want, stack.quantity.floor());
+    final added = addItemToInventoryExact(
+      save,
+      stack.itemId,
+      takenQty,
+      stack.enchantmentId,
+      stack.favorite ?? false,
+    );
+    if (!added.ok || added.save == null) {
+      return GuildHallActionResult.failed(added.reason ?? 'Inventory is full.');
+    }
+    final nextStore = [...hall.storehouse];
+    if (takenQty >= stack.quantity) {
+      nextStore.removeAt(storehouseIndex);
+    } else {
+      nextStore[storehouseIndex] = stack.copyWith(quantity: stack.quantity - takenQty);
+    }
+    hall = hall.copyWith(storehouse: nextStore);
+    _putHall(db, hall);
+    _write(db);
+    return GuildHallActionResult.ok(hall, save: added.save);
+  }
+
+  List<ArenaOpponent> hallBoxingOpponents(String userId) {
+    final db = _db();
+    final membership = db.members.firstWhereOrNull((row) => row.userId == userId);
+    if (membership == null) return const <ArenaOpponent>[];
+    final rows = <ArenaOpponent>[];
+    for (final member in db.members.where((row) => row.guildId == membership.guildId)) {
+      if (member.userId == userId) continue;
+      final save = db.saves.firstWhereOrNull((row) => row.userId == member.userId);
+      if (save == null) continue;
+      rows.add(
+        ArenaOpponent(
+          userId: member.userId,
+          username: member.username,
+          combatLevel: combatLevelOf(save.payload),
+          totalLevel: totalLevel(save.payload),
+          appearance: member.appearance,
+        ),
+      );
+    }
+    return rows;
+  }
 
   /// Re-totals each challenge from its members' submitted board values.
   void refreshGuildChallengeAggregates(String guildId) {

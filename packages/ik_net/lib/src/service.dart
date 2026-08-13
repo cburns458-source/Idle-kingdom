@@ -154,6 +154,24 @@ abstract interface class MultiplayerService {
 
   /// The cloud save used as a PvP snapshot. Current equipment, full HP.
   Future<PlayerSave?> readOpponentSave(String userId);
+
+  Future<GuildHallState?> guildHall(String guildId);
+
+  Future<GuildHallActionResult> payGuildDebt(PlayerSave save, num amount);
+
+  Future<GuildHallActionResult> contributeHallItem(
+    PlayerSave save,
+    int inventoryIndex,
+    num quantity,
+  );
+
+  Future<GuildHallActionResult> withdrawHallItem(
+    PlayerSave save,
+    int storehouseIndex,
+    num quantity,
+  );
+
+  Future<List<ArenaOpponent>> hallBoxingOpponents();
 }
 
 /// The single-device implementation: the local backend plus the stored session.
@@ -603,5 +621,50 @@ class LocalMultiplayerService implements MultiplayerService {
     final current = session;
     if (current != null && current.userId == userId) return null;
     return _backend.opponentSave(userId);
+  }
+
+  @override
+  Future<GuildHallState?> guildHall(String guildId) async => _backend.guildHall(guildId);
+
+  @override
+  Future<GuildHallActionResult> payGuildDebt(PlayerSave save, num amount) async {
+    final current = session;
+    if (current == null) {
+      return const GuildHallActionResult.failed('Sign in to use the guild hall.');
+    }
+    return _backend.payGuildDebt(current.userId, save, amount);
+  }
+
+  @override
+  Future<GuildHallActionResult> contributeHallItem(
+    PlayerSave save,
+    int inventoryIndex,
+    num quantity,
+  ) async {
+    final current = session;
+    if (current == null) {
+      return const GuildHallActionResult.failed('Sign in to use the guild hall.');
+    }
+    return _backend.contributeHallItem(current.userId, save, inventoryIndex, quantity);
+  }
+
+  @override
+  Future<GuildHallActionResult> withdrawHallItem(
+    PlayerSave save,
+    int storehouseIndex,
+    num quantity,
+  ) async {
+    final current = session;
+    if (current == null) {
+      return const GuildHallActionResult.failed('Sign in to use the guild hall.');
+    }
+    return _backend.withdrawHallItem(current.userId, save, storehouseIndex, quantity);
+  }
+
+  @override
+  Future<List<ArenaOpponent>> hallBoxingOpponents() async {
+    final current = session;
+    if (current == null) return const <ArenaOpponent>[];
+    return _backend.hallBoxingOpponents(current.userId);
   }
 }

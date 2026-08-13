@@ -8205,7 +8205,7 @@
       "Map Type": "Settlement sub-map",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Description": "The Citadel Hub: Plaza, Market, Processing, Gathering Outskirts, and Combat Training Grounds.",
+      "Description": "The Citadel Hub: Plaza, Market, Processing, Gathering Outskirts, Combat Training Grounds, and Guild Hall.",
       "Asset Key": "map_citadel"
     }
   ],
@@ -8689,6 +8689,21 @@
       "Danger / Hostility": "Training danger: approximately Combat Level 45.",
       "Background Asset Key": null,
       "Notes": null
+    },
+    {
+      "Location ID": "LOC-0033",
+      "Internal Key": "guild_hall",
+      "Display Name": "Guild Hall",
+      "Map ID": "MAP-0007",
+      "Location Type": "Settlement",
+      "Parent Location ID": "LOC-0027",
+      "Node ID": "NODE-0033",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Description": "Your guild's hall: a storehouse, a debt ledger, and a boxing ring. Each guild has its own instance.",
+      "Danger / Hostility": null,
+      "Background Asset Key": null,
+      "Notes": "Reached from the Guilds screen. Art reuses the Citadel plaza."
     }
   ],
   "TravelConnections": [
@@ -8883,6 +8898,18 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": "Citadel combat"
+    },
+    {
+      "Connection ID": "TRV-0017",
+      "From Location ID": "LOC-0028",
+      "To Location ID": "LOC-0033",
+      "Method": "Walk",
+      "Direction": "Two-way",
+      "Base Duration": null,
+      "Required Mount / Status": null,
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": "Plaza to Guild Hall"
     }
   ],
   "Facilities": [

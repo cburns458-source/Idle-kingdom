@@ -478,4 +478,28 @@ class RemoteMultiplayerService implements MultiplayerService {
 
   @override
   Future<PlayerSave?> readOpponentSave(String userId) => _local.readOpponentSave(userId);
+
+  @override
+  Future<GuildHallState?> guildHall(String guildId) => _local.guildHall(guildId);
+
+  @override
+  Future<GuildHallActionResult> payGuildDebt(PlayerSave save, num amount) =>
+      _local.payGuildDebt(save, amount);
+
+  @override
+  Future<GuildHallActionResult> contributeHallItem(
+    PlayerSave save,
+    int inventoryIndex,
+    num quantity,
+  ) => _local.contributeHallItem(save, inventoryIndex, quantity);
+
+  @override
+  Future<GuildHallActionResult> withdrawHallItem(
+    PlayerSave save,
+    int storehouseIndex,
+    num quantity,
+  ) => _local.withdrawHallItem(save, storehouseIndex, quantity);
+
+  @override
+  Future<List<ArenaOpponent>> hallBoxingOpponents() => _local.hallBoxingOpponents();
 }

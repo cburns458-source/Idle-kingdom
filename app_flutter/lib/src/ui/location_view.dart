@@ -11,6 +11,7 @@ import 'activity_panel.dart';
 import 'arena_panel.dart';
 import 'bank_panel.dart';
 import 'citadel_hub_panel.dart';
+import 'guild_hall_panel.dart';
 import 'critter_overlay.dart';
 import 'format.dart';
 import 'npc_panel.dart';
@@ -39,6 +40,11 @@ class BankOpen extends LocationPanel {
 /// The Citadel arena: search by name or ranked by combat level.
 class ArenaOpen extends LocationPanel {
   const ArenaOpen();
+}
+
+/// The per-guild hall: storehouse, debt, boxing ring.
+class GuildHallOpen extends LocationPanel {
+  const GuildHallOpen();
 }
 
 /// The recipe picker for a Standard Production station.
@@ -294,6 +300,7 @@ class _LocationViewState extends State<LocationView> {
                                       ..._shops(locationId),
                                       ..._bank(),
                                       ..._arena(),
+                                      ..._guildHall(),
                                       ..._citadelBoards(locationId),
                                       ..._searches(locationId),
                                     ],
@@ -323,6 +330,12 @@ class _LocationViewState extends State<LocationView> {
         return BankPanel(controller: controller, onClose: _closePanel);
       case ArenaOpen():
         return ArenaPanel(
+          controller: controller,
+          multiplayer: widget.multiplayer,
+          onClose: _closePanel,
+        );
+      case GuildHallOpen():
+        return GuildHallPanel(
           controller: controller,
           multiplayer: widget.multiplayer,
           onClose: _closePanel,
@@ -468,6 +481,23 @@ class _LocationViewState extends State<LocationView> {
           actionLabel: 'Arena',
           tone: GameButtonTone.primary,
           onPressed: () => _openPanel(const ArenaOpen()),
+        ),
+      ),
+    ];
+  }
+
+  List<Widget> _guildHall() {
+    if (!locationHasGuildHall(controller.location)) return const [];
+    return [
+      const _SectionHeading('Guild hall'),
+      Padding(
+        padding: const EdgeInsets.only(bottom: 8),
+        child: _InteractionCard(
+          title: 'Hall services',
+          subtitle: 'Storehouse, debt, and boxing ring.',
+          actionLabel: 'Hall',
+          tone: GameButtonTone.primary,
+          onPressed: () => _openPanel(const GuildHallOpen()),
         ),
       ),
     ];

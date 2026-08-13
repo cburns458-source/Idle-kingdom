@@ -121,6 +121,39 @@ class ContributeProjectResult {
       : <String, Object?>{'ok': false, 'reason': reason};
 }
 
+class GuildHallActionResult {
+  const GuildHallActionResult.ok(
+    GuildHallState this.hall, {
+    this.save,
+    this.paidOffJustNow = false,
+    this.unlockedBoxing = false,
+  }) : reason = null;
+
+  const GuildHallActionResult.failed(this.reason)
+    : hall = null,
+      save = null,
+      paidOffJustNow = false,
+      unlockedBoxing = false;
+
+  final GuildHallState? hall;
+  final PlayerSave? save;
+  final bool paidOffJustNow;
+  final bool unlockedBoxing;
+  final String? reason;
+
+  bool get ok => reason == null;
+
+  Map<String, Object?> toJson() => ok
+      ? <String, Object?>{
+          'ok': true,
+          'hall': hall!.toJson(),
+          if (save != null) 'save': save!.toJson(),
+          'paidOffJustNow': paidOffJustNow,
+          'unlockedBoxing': unlockedBoxing,
+        }
+      : <String, Object?>{'ok': false, 'reason': reason};
+}
+
 class BountyClaimResult {
   const BountyClaimResult.ok(BountyClaimRecord this.claim, {required bool this.firstCompleter})
     : reason = null;

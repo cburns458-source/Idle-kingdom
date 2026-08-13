@@ -726,6 +726,86 @@ class GuildProject {
   };
 }
 
+/// Per-guild hall: a shared item chest, a million-gold debt, and unlock flags.
+class GuildHallState {
+  const GuildHallState({
+    required this.guildId,
+    required this.debtRemaining,
+    required this.debtPaidBy,
+    required this.storehouse,
+    required this.itemsContributed,
+    required this.unlocks,
+    required this.debtPaidOff,
+  });
+
+  factory GuildHallState.fresh(String guildId) => GuildHallState(
+    guildId: guildId,
+    debtRemaining: guildHallDebtGold,
+    debtPaidBy: const <String, num>{},
+    storehouse: const <InventoryStack>[],
+    itemsContributed: 0,
+    unlocks: const <String>[],
+    debtPaidOff: false,
+  );
+
+  factory GuildHallState.fromJson(Map<String, Object?> json) => GuildHallState(
+    guildId: json['guildId']! as String,
+    debtRemaining: json['debtRemaining'] is num ? json['debtRemaining']! as num : guildHallDebtGold,
+    debtPaidBy: <String, num>{
+      if (json['debtPaidBy'] is Map)
+        for (final entry in (json['debtPaidBy']! as Map).entries)
+          if (entry.key is String && entry.value is num) entry.key as String: entry.value as num,
+    },
+    storehouse: json['storehouse'] is List
+        ? (json['storehouse']! as List)
+              .map((entry) => InventoryStack.fromJson(asJsonMap(entry)))
+              .toList()
+        : const <InventoryStack>[],
+    itemsContributed: json['itemsContributed'] is num ? json['itemsContributed']! as num : 0,
+    unlocks: json['unlocks'] is List
+        ? (json['unlocks']! as List).whereType<String>().toList()
+        : const <String>[],
+    debtPaidOff: json['debtPaidOff'] as bool? ?? false,
+  );
+
+  final String guildId;
+  final num debtRemaining;
+  final Map<String, num> debtPaidBy;
+  final List<InventoryStack> storehouse;
+  final num itemsContributed;
+  final List<String> unlocks;
+  final bool debtPaidOff;
+
+  bool get boxingUnlocked => boxingRingUnlocked(itemsContributed, unlocks);
+
+  GuildHallState copyWith({
+    num? debtRemaining,
+    Map<String, num>? debtPaidBy,
+    List<InventoryStack>? storehouse,
+    num? itemsContributed,
+    List<String>? unlocks,
+    bool? debtPaidOff,
+  }) => GuildHallState(
+    guildId: guildId,
+    debtRemaining: debtRemaining ?? this.debtRemaining,
+    debtPaidBy: debtPaidBy ?? this.debtPaidBy,
+    storehouse: storehouse ?? this.storehouse,
+    itemsContributed: itemsContributed ?? this.itemsContributed,
+    unlocks: unlocks ?? this.unlocks,
+    debtPaidOff: debtPaidOff ?? this.debtPaidOff,
+  );
+
+  Map<String, Object?> toJson() => <String, Object?>{
+    'guildId': guildId,
+    'debtRemaining': debtRemaining,
+    'debtPaidBy': <String, Object?>{...debtPaidBy},
+    'storehouse': storehouse.map((row) => row.toJson()).toList(),
+    'itemsContributed': itemsContributed,
+    'unlocks': unlocks,
+    'debtPaidOff': debtPaidOff,
+  };
+}
+
 class GuildChallenge {
   const GuildChallenge({
     required this.id,

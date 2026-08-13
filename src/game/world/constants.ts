@@ -28,6 +28,7 @@ export const CITADEL_MARKET_ID = 'LOC-0029'
 export const CITADEL_PROCESSING_ID = 'LOC-0030'
 export const CITADEL_GATHERING_ID = 'LOC-0031'
 export const CITADEL_COMBAT_ID = 'LOC-0032'
+export const GUILD_HALL_LOCATION_ID = 'LOC-0033'
 
 export function isFutureHorizonLocation(locationId: string): boolean {
   return locationId === WEST_HORIZON_ID || locationId === EAST_HORIZON_ID

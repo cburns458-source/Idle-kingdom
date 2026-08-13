@@ -21,11 +21,13 @@ class SocialView extends StatefulWidget {
     required this.controller,
     required this.multiplayer,
     required this.section,
+    this.onTravelToHall,
   });
 
   final GameController controller;
   final MultiplayerController multiplayer;
   final SocialTab section;
+  final VoidCallback? onTravelToHall;
 
   @override
   State<SocialView> createState() => _SocialViewState();
@@ -64,7 +66,11 @@ class _SocialViewState extends State<SocialView> {
         if (!net.isSignedIn) {
           return const SignedOutNotice(title: 'Guilds', prompt: guildSignInPrompt);
         }
-        return GuildPanel(controller: widget.controller, multiplayer: net);
+        return GuildPanel(
+          controller: widget.controller,
+          multiplayer: net,
+          onTravelToHall: widget.onTravelToHall,
+        );
       case SocialTab.citadel:
         if (!net.isSignedIn) {
           return const SignedOutNotice(title: 'Citadel', prompt: signInPrompt);

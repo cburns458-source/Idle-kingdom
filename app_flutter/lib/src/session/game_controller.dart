@@ -372,6 +372,22 @@ class GameController extends ChangeNotifier {
     return true;
   }
 
+  /// Travels into the player's guild hall from the Guilds screen.
+  bool travelToGuildHall() {
+    if (_travel != null) return false;
+    final plan = session.travelToGuildHall();
+    switch (plan) {
+      case TravelBlocked():
+        return false;
+      case TravelInstant(arrival: final arrival):
+        _recentRewards.clear();
+        _showArrival(arrival);
+      case TravelTimed():
+        return false;
+    }
+    return true;
+  }
+
   /// Names a new character, gives them a look, and grants their race's kit.
   ///
   /// Returns the reason it was refused, or null on success.
