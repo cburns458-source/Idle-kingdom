@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:ik_rules/ik_rules.dart';
@@ -7,6 +8,7 @@ import '../content/asset_paths.dart';
 import '../session/game_controller.dart';
 import '../theme.dart';
 import 'format.dart';
+import 'player_sprite.dart';
 
 /// What the player is busy with, read out in the corner of the HUD.
 class _HudStatus {
@@ -234,7 +236,13 @@ class _ActivityReadout extends StatelessWidget {
 /// Sized to wrap the head shot, and painted above the location so the ring can
 /// hang below the HUD bar.
 class HudPortrait extends StatelessWidget {
-  const HudPortrait({super.key, required this.appearance, required this.hint, required this.onTap});
+  const HudPortrait({
+    super.key,
+    required this.appearance,
+    this.bytes,
+    required this.hint,
+    required this.onTap,
+  });
 
   /// The whole control, frame included. Taller than the HUD so the ring drops
   /// over the screen below.
@@ -247,6 +255,9 @@ class HudPortrait extends StatelessWidget {
   static const double _headZoom = 1.7;
 
   final PlayerAppearance appearance;
+
+  /// A local PNG override, when this device has one.
+  final Uint8List? bytes;
 
   /// Rings the frame in gold until the wardrobe has been opened once.
   final bool hint;
@@ -278,8 +289,9 @@ class HudPortrait extends StatelessWidget {
                     child: Transform.scale(
                       scale: _headZoom,
                       alignment: Alignment.topCenter,
-                      child: Image.asset(
-                        playerAssetPath(appearance),
+                      child: PlayerSprite(
+                        appearance: appearance,
+                        bytes: bytes,
                         filterQuality: FilterQuality.none,
                         alignment: Alignment.topCenter,
                         fit: BoxFit.cover,

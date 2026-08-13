@@ -8,6 +8,7 @@ import 'package:ik_runtime/ik_runtime.dart';
 import '../content/database_loader.dart';
 import '../net/supabase_transport.dart';
 import '../session/game_controller.dart';
+import '../session/local_player_art.dart';
 import '../session/multiplayer_controller.dart';
 import '../storage/legacy_browser_save.dart';
 import '../storage/prefs_store.dart';
@@ -63,7 +64,11 @@ class _BootGateState extends State<_BootGate> {
       random: _systemRandom,
     );
     final boot = session.boot();
-    final game = GameController(database: database, session: session)..adoptBoot(boot);
+    final game = GameController(
+      database: database,
+      session: session,
+      localArt: LocalPlayerArt.load(storage),
+    )..adoptBoot(boot);
     // Multiplayer runs against the same store the save uses, so a signed-in
     // player keeps their account across launches without a network call.
     final multiplayer = MultiplayerController(

@@ -1,9 +1,12 @@
 import 'dart:math' as math;
+import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:ik_content/ik_content.dart';
 import 'package:ik_rules/ik_rules.dart';
 import 'package:ik_runtime/ik_runtime.dart';
+
+import 'local_player_art.dart';
 
 /// A journey in progress, which the client animates itself.
 class TravelInFlight {
@@ -44,12 +47,16 @@ class CraftPopup {
 /// intents call the shared rules and hand the result to [GameSession.apply], so
 /// nothing on a screen can put a save into storage by another route.
 class GameController extends ChangeNotifier {
-  GameController({required this.database, required this.session});
+  GameController({required this.database, required this.session, LocalPlayerArt? localArt})
+    : localArt = localArt ?? LocalPlayerArt();
 
   final LoadedDatabase database;
 
   /// The headless session: the save, the tick, and the write pipeline.
   final GameSession session;
+
+  /// Client-only PNG override for this device's player sprite.
+  final LocalPlayerArt localArt;
 
   /// How many completed actions the reward strip keeps.
   static const int _rewardHistory = 3;
@@ -119,6 +126,23 @@ class GameController extends ChangeNotifier {
   bool get isRecovering => deathPauseRemainingMs > 0;
 
   LocationRow? get location => indexes.locationsById[save.currentLocationId];
+
+  /// Bytes of the local PNG override, if this device has one.
+  Uint8List? get localPlayerPng => localArt.bytes;
+
+  /// Stores a PNG for this client only. Returns a reason when it is refused.
+  String? applyLocalPlayerPng(Uint8List bytes) {
+    final error = localArt.setPng(bytes);
+    if (error == null) notifyListeners();
+    return error;
+  }
+
+  /// Drops the PNG override so the bundled adventurer shows again.
+  void resetLocalPlayerPng() {
+    if (!localArt.hasOverride) return;
+    localArt.clear();
+    notifyListeners();
+  }
 
   /// Keeps the boot's catch-up if it actually credited something.
   ///

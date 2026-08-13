@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:ik_rules/ik_rules.dart';
@@ -117,11 +118,13 @@ class _Portrait extends StatelessWidget {
     required this.assetPath,
     required this.semanticsLabel,
     required this.alignment,
+    this.bytes,
     this.overlay,
     this.placeholder,
   });
 
   final String? assetPath;
+  final Uint8List? bytes;
   final String semanticsLabel;
   final Alignment alignment;
   final Widget? overlay;
@@ -140,12 +143,20 @@ class _Portrait extends StatelessWidget {
           children: [
             ?placeholder,
             if (placeholder == null)
-              Image.asset(
-                assetPath!,
-                fit: BoxFit.contain,
-                alignment: alignment,
-                filterQuality: FilterQuality.none,
-              ),
+              bytes != null
+                  ? Image.memory(
+                      bytes!,
+                      fit: BoxFit.contain,
+                      alignment: alignment,
+                      filterQuality: FilterQuality.none,
+                      gaplessPlayback: true,
+                    )
+                  : Image.asset(
+                      assetPath!,
+                      fit: BoxFit.contain,
+                      alignment: alignment,
+                      filterQuality: FilterQuality.none,
+                    ),
             ?overlay,
           ],
         ),
@@ -223,6 +234,7 @@ class _CombatStage extends StatelessWidget {
       scene: _TwoPortraits(
         player: _Portrait(
           assetPath: playerAssetPath(save.appearance),
+          bytes: controller.localPlayerPng,
           semanticsLabel: 'Adventurer',
           alignment: Alignment.centerRight,
           overlay: round != null && (round.enemyHit ?? 0) > 0 && !controller.defeatedFlash
@@ -420,6 +432,7 @@ class _GatheringStage extends StatelessWidget {
       scene: _TwoPortraits(
         player: _Portrait(
           assetPath: playerAssetPath(save.appearance),
+          bytes: controller.localPlayerPng,
           semanticsLabel: 'Adventurer',
           alignment: Alignment.centerRight,
         ),
@@ -470,6 +483,7 @@ class _ProductionStage extends StatelessWidget {
       scene: _TwoPortraits(
         player: _Portrait(
           assetPath: playerAssetPath(save.appearance),
+          bytes: controller.localPlayerPng,
           semanticsLabel: 'Adventurer',
           alignment: Alignment.centerRight,
         ),

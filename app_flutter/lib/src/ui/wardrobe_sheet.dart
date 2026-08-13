@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:ik_content/ik_content.dart';
 import 'package:ik_rules/ik_rules.dart';
 
-import '../content/asset_paths.dart';
 import '../session/game_controller.dart';
 import '../theme.dart';
 import 'appearance_picker.dart';
 import 'item_icon.dart';
+import 'player_sprite.dart';
 
 /// The wardrobe: the character as they look, the sliders that change it, and the
 /// cosmetics they own, one tab per slot.
@@ -85,11 +85,11 @@ class _WardrobeSheetState extends State<WardrobeSheet> {
                       children: [
                         Column(
                           children: [
-                            Image.asset(
-                              playerAssetPath(save.appearance),
+                            PlayerSprite(
+                              appearance: save.appearance,
+                              bytes: controller.localPlayerPng,
                               width: 96,
                               height: 96,
-                              filterQuality: FilterQuality.none,
                             ),
                             if (raceDisplayName(controller.db, save.raceId) case final race?)
                               MutedText(race),

@@ -211,6 +211,7 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
           top: 2,
           child: HudPortrait(
             appearance: save.appearance,
+            bytes: controller.localPlayerPng,
             hint: !save.hasSeenWardrobeIntro && save.cosmetics.unlocked.isNotEmpty,
             onTap: _openWardrobe,
           ),
