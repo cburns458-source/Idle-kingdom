@@ -25,6 +25,17 @@ class TravelInFlight {
   }
 }
 
+/// A finished craft, held so the production stage can pop the item icon.
+class CraftPopup {
+  const CraftPopup({required this.itemId, required this.displayName, required this.seq});
+
+  final String itemId;
+  final String displayName;
+
+  /// Bumps each craft so a new pop can restart even when the item repeats.
+  final int seq;
+}
+
 /// The screen-facing half of the session.
 ///
 /// The rules and the tick live in `ik_runtime`; this holds the things that are
@@ -51,6 +62,9 @@ class GameController extends ChangeNotifier {
   UnattendedResult? _awaySummary;
   CosmeticUnlockNotice? _cosmeticUnlock;
   AutoEquipProposal? _autoEquip;
+  CombatRoundEvent? _lastRound;
+  int _roundSeq = 0;
+  CraftPopup? _craftPopup;
 
   GameDatabase get db => database.launch;
   DatabaseIndexes get indexes => database.launchIndexes;
@@ -70,6 +84,35 @@ class GameController extends ChangeNotifier {
 
   /// The tool an activity wants, offered rather than demanded.
   AutoEquipProposal? get autoEquip => _autoEquip;
+
+  /// The last resolved combat round, kept so the stage can float damage.
+  CombatRoundEvent? get lastRound => _lastRound;
+
+  /// Bumps when [lastRound] is replaced, so a floater can restart its layout.
+  int get lastRoundSeq => _roundSeq;
+
+  /// The last finished craft, kept so the station can pop the item icon.
+  CraftPopup? get craftPopup => _craftPopup;
+
+  /// True after a victory until the next round replaces [lastRound].
+  bool get defeatedFlash {
+    final round = _lastRound;
+    return round != null && round.outcome == 'victory';
+  }
+
+  /// How far the current combat round has run, from 0 to 1.
+  ///
+  /// Derived from `combatRoundStartedAt` and the configured round length; the
+  /// shell's frame tick is what makes this move.
+  double get combatRoundProgress {
+    if (isRecovering || defeatedFlash) return 0;
+    final startedAt = save.combatRoundStartedAt;
+    if (startedAt == null || startedAt.isEmpty) return 0;
+    final roundMs = configNumber(db, 'combat_round_duration', 4) * 1000;
+    final started = jsDateParse(startedAt);
+    if (!started.isFinite || roundMs <= 0) return 0;
+    return ((session.clock() - started) / roundMs).clamp(0, 1).toDouble();
+  }
 
   double get actionProgress => session.actionProgress.toDouble();
   num get deathPauseRemainingMs => session.deathPauseRemaining;
@@ -165,16 +208,29 @@ class GameController extends ChangeNotifier {
         _message = text;
       case ActivityStoppedEvent(reason: final reason):
         _activityError = reason;
+        _clearStageFx();
       case InventoryFullEvent():
         _activityError = 'Inventory full — free a slot to keep crafting.';
-      case CraftCompletedEvent():
-      case CombatRoundEvent():
+      case CraftCompletedEvent(itemId: final itemId, displayName: final displayName):
+        _craftPopup = CraftPopup(
+          itemId: itemId,
+          displayName: displayName,
+          seq: (_craftPopup?.seq ?? 0) + 1,
+        );
+      case final CombatRoundEvent round:
+        _lastRound = round;
+        _roundSeq += 1;
       case EnemyDefeatedEvent():
       case PlayerDefeatedEvent():
       case RecoveredEvent():
       case CritterSpawnedEvent():
         break;
     }
+  }
+
+  void _clearStageFx() {
+    _lastRound = null;
+    _craftPopup = null;
   }
 
   void _advanceTravel() {
@@ -214,6 +270,7 @@ class GameController extends ChangeNotifier {
     _recentRewards.clear();
     _activityError = null;
     _message = null;
+    _clearStageFx();
     notifyListeners();
   }
 
@@ -261,6 +318,7 @@ class GameController extends ChangeNotifier {
     }
     session.apply(result.save!);
     _activityError = null;
+    _clearStageFx();
     notifyListeners();
   }
 

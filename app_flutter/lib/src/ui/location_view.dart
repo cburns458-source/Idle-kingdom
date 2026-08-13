@@ -12,6 +12,7 @@ import 'citadel_hub_panel.dart';
 import 'critter_overlay.dart';
 import 'format.dart';
 import 'npc_panel.dart';
+import 'pixel_chrome.dart';
 import 'production_panel.dart';
 import 'project_panel.dart';
 import 'shop_panel.dart';
@@ -126,6 +127,16 @@ class _LocationViewState extends State<LocationView> {
       _openAt = null;
     }
 
+    final screenHeight = MediaQuery.sizeOf(context).height;
+    final stageMax = screenHeight * 0.48;
+    final bandMax = screenHeight * 0.33;
+    final running = controller.save.currentActivityId != null;
+    final stage = _open != null
+        ? _buildPanel(_open!)
+        : running
+        ? ActivityPanel(controller: controller)
+        : null;
+
     return Stack(
       fit: StackFit.expand,
       children: [
@@ -145,64 +156,83 @@ class _LocationViewState extends State<LocationView> {
             ),
           ),
         ),
-        ListView(
-          padding: const EdgeInsets.all(12),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // The art behind the text is busy, so the header carries its own panel.
-            GamePanel(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+              child: GamePanel(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      location.displayName,
+                      style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
+                    ),
+                    if (location.description case final blurb?) MutedText(blurb),
+                    if (location.dangerHostility case final danger?)
+                      Text(danger, style: const TextStyle(color: Palette.danger, fontSize: 12)),
+                  ],
+                ),
+              ),
+            ),
+            if (controller.isRecovering && stage == null)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+                child: _RecoveringPanel(controller: controller),
+              ),
+            if (controller.activityError case final error?)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+                child: _Notice(text: error, tone: Palette.danger),
+              ),
+            if (controller.message case final message?)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+                child: _Notice(text: message, tone: Palette.gold),
+              ),
+            Expanded(
+              child: Stack(
                 children: [
-                  Text(
-                    location.displayName,
-                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
-                  ),
-                  if (location.description case final blurb?) MutedText(blurb),
-                  if (location.dangerHostility case final danger?)
-                    Text(danger, style: const TextStyle(color: Palette.danger, fontSize: 12)),
+                  Positioned(top: 12, right: 12, child: CritterOverlay(controller: controller)),
                 ],
               ),
             ),
-            // Inline rather than floating over the art: on a phone the art is
-            // mostly behind this list, and a tap target has to be reachable.
-            Align(
-              alignment: Alignment.centerRight,
-              child: CritterOverlay(controller: controller),
-            ),
-            const SizedBox(height: 10),
-            if (_open case final panel?) ...[_buildPanel(panel), const SizedBox(height: 10)],
-            if (controller.isRecovering) ...[
-              _RecoveringPanel(controller: controller),
-              const SizedBox(height: 10),
-            ],
-            if (controller.save.currentActivityId != null) ...[
-              ActivityPanel(controller: controller),
-              const SizedBox(height: 10),
-            ],
-            if (controller.activityError case final error?) ...[
-              _Notice(text: error, tone: Palette.danger),
-              const SizedBox(height: 10),
-            ],
-            if (controller.message case final message?) ...[
-              _Notice(text: message, tone: Palette.gold),
-              const SizedBox(height: 10),
-            ],
-            ..._activities(locationId),
-            ..._stations(locationId),
-            ..._people(locationId),
-            ..._shops(locationId),
-            ..._citadelBoards(locationId),
-            ..._searches(locationId),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                OutlinedButton(onPressed: widget.onOpenMap, child: const Text('Open the map')),
-                if (widget.onOpenNearby case final openNearby?)
-                  OutlinedButton(onPressed: openNearby, child: const Text('Who is here')),
-              ],
+            if (stage != null)
+              ConstrainedBox(
+                constraints: BoxConstraints(maxHeight: stageMax),
+                child: SingleChildScrollView(child: stage),
+              ),
+            ConstrainedBox(
+              constraints: BoxConstraints(maxHeight: bandMax),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    ..._activities(locationId),
+                    ..._stations(locationId),
+                    ..._people(locationId),
+                    ..._shops(locationId),
+                    ..._citadelBoards(locationId),
+                    ..._searches(locationId),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        OutlinedButton(
+                          onPressed: widget.onOpenMap,
+                          child: const Text('Open the map'),
+                        ),
+                        if (widget.onOpenNearby case final openNearby?)
+                          OutlinedButton(onPressed: openNearby, child: const Text('Who is here')),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
             ),
           ],
         ),
@@ -256,7 +286,7 @@ class _LocationViewState extends State<LocationView> {
   List<Widget> _activities(String locationId) {
     final activities = controller.indexes.activitiesByLocationId[locationId] ?? const [];
     if (activities.isEmpty) {
-      return [const GamePanel(child: Text('Nothing to do here yet.'))];
+      return [const PixelFill(child: Text('Nothing to do here yet.'))];
     }
     return [
       _SectionHeading('Activities'),
@@ -379,21 +409,36 @@ class _InteractionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GamePanel(
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: const TextStyle(fontWeight: FontWeight.w700)),
-                if (subtitle case final line?) MutedText(line),
-              ],
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: PixelFill(
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                  ),
+                  if (subtitle case final line?)
+                    Text(
+                      line,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: 11, color: Color(0xB3F4E7C8)),
+                    ),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(width: 8),
-          OutlinedButton(onPressed: onPressed, child: Text(actionLabel)),
-        ],
+            const SizedBox(width: 8),
+            PixelActionButton(label: actionLabel, onPressed: onPressed),
+          ],
+        ),
       ),
     );
   }
@@ -417,39 +462,57 @@ class _ActivityCard extends StatelessWidget {
     final check = validateActivityStart(controller.db, controller.save, activityId);
     final production = isStandardProductionActivity(controller.db, activity);
 
-    return GamePanel(
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  activity.contextualName ?? activityId,
-                  style: const TextStyle(fontWeight: FontWeight.w700),
-                ),
-                if (activity.description case final blurb?) MutedText(blurb),
-                if (activity.dangerWarningCombatLevel case final level?)
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: PixelFill(
+        height: 76,
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                   Text(
-                    'Combat warning ~ Level $level',
-                    style: const TextStyle(color: Palette.danger, fontSize: 12),
+                    activity.contextualName ?? activityId,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
                   ),
-                if (!check.ok) MutedText(check.reason ?? ''),
-              ],
+                  if (activity.dangerWarningCombatLevel case final level?)
+                    Text(
+                      'Combat warning ~ Level $level',
+                      style: const TextStyle(color: Palette.danger, fontSize: 11),
+                    )
+                  else if (!check.ok)
+                    Text(
+                      check.reason ?? '',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: 11, color: Color(0xB3F4E7C8)),
+                    )
+                  else if (activity.description case final blurb?)
+                    Text(
+                      blurb,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: 11, color: Color(0xB3F4E7C8)),
+                    ),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(width: 8),
-          if (running)
-            OutlinedButton(onPressed: controller.stopActivity, child: const Text('Stop'))
-          else
-            FilledButton(
-              // Enabled even when the check failed: starting is what turns a
-              // missing tool into the offer to equip one, and otherwise says why.
-              onPressed: production ? onOpenWorkshop : () => controller.startActivity(activityId),
-              // A station asks which recipe first, so it does not start on a tap.
-              child: Text(production ? 'Recipes' : 'Start'),
-            ),
-        ],
+            const SizedBox(width: 8),
+            if (running)
+              PixelActionButton(label: 'Stop', stop: true, onPressed: controller.stopActivity)
+            else
+              PixelActionButton(
+                // Enabled even when the check failed: starting is what turns a
+                // missing tool into the offer to equip one, and otherwise says why.
+                label: production ? 'Recipes' : 'Start',
+                onPressed: production ? onOpenWorkshop : () => controller.startActivity(activityId),
+              ),
+          ],
+        ),
       ),
     );
   }

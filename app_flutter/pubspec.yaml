@@ -43,6 +43,7 @@ dependencies:
   ik_net: ^0.1.0
   ik_rules: ^0.1.0
   ik_runtime: ^0.1.0
+  pixel_ui: ^0.5.1
   shared_preferences: ^2.5.3
   supabase_flutter: ^2.17.1
   web: ^1.1.1

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:idle_kingdoms/src/session/game_controller.dart';
 import 'package:idle_kingdoms/src/session/multiplayer_controller.dart';
+import 'package:idle_kingdoms/src/theme.dart';
 import 'package:idle_kingdoms/src/ui/app_shell.dart';
 import 'package:ik_content/ik_content.dart';
 import 'package:ik_net/ik_net.dart';
@@ -105,6 +106,7 @@ Future<void> pumpShell(
   }
   await tester.pumpWidget(
     MaterialApp(
+      theme: buildAppTheme(),
       home: AppShell(
         controller: controller,
         multiplayer: multiplayer ?? buildMultiplayer(controller.database),
@@ -126,5 +128,10 @@ Future<void> pumpPanel(
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
-  await tester.pumpWidget(MaterialApp(home: Scaffold(body: panel)));
+  await tester.pumpWidget(
+    MaterialApp(
+      theme: buildAppTheme(),
+      home: Scaffold(body: panel),
+    ),
+  );
 }

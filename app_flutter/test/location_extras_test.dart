@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:idle_kingdoms/src/theme.dart';
 import 'package:idle_kingdoms/src/ui/critter_overlay.dart';
+import 'package:idle_kingdoms/src/ui/pixel_chrome.dart';
 import 'package:ik_content/ik_content.dart';
 import 'package:ik_rules/ik_rules.dart';
 
@@ -99,7 +99,7 @@ void main() {
       // The hunting activity here is the one the starter kit cannot do.
       final card = find.ancestor(
         of: find.text('Search for small game'),
-        matching: find.byType(GamePanel),
+        matching: find.byType(PixelFill),
       );
       await tester.tap(find.descendant(of: card, matching: find.text('Start')));
       await tester.pump();

@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:pixel_ui/pixel_ui.dart';
+
+import 'ui/pixel_chrome.dart';
 
 /// The palette the game is drawn in: parchment, gold, and soft green.
 abstract final class Palette {
@@ -31,7 +34,7 @@ abstract final class Palette {
 
 ThemeData buildAppTheme() {
   final base = ThemeData.dark(useMaterial3: true);
-  return base.copyWith(
+  final themed = base.copyWith(
     scaffoldBackgroundColor: Palette.ink,
     colorScheme: base.colorScheme.copyWith(
       primary: Palette.gold,
@@ -59,6 +62,17 @@ ThemeData buildAppTheme() {
         foregroundColor: Palette.parchmentText,
         side: const BorderSide(color: Palette.edge),
         shape: const StadiumBorder(),
+      ),
+    ),
+  );
+  // Location dock chrome reads these; the rest of the app keeps Material.
+  return pixelUiTheme(
+    base: themed,
+    pixelTheme: const PixelTheme(
+      box: PixelBoxTheme(style: pixelPanelStyle),
+      button: PixelButtonTheme(
+        normalStyle: pixelButtonStyle,
+        pressedStyle: pixelButtonPressedStyle,
       ),
     ),
   );
