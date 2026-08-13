@@ -27,12 +27,7 @@ export function CritterOverlay({ save, locationId, onCollect }: CritterOverlayPr
       title={critter.displayName}
       onClick={() => {
         const result = collectCritter(save, locationId)
-        if (!result.ok) return
-        const message =
-          result.count > 1
-            ? `Collected ${result.critter.displayName} (×${result.count}).`
-            : `Collected ${result.critter.displayName}!`
-        onCollect(result.save, message)
+        if (result.ok) onCollect(result.save, result.message)
       }}
     >
       <span

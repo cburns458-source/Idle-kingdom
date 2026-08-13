@@ -50,6 +50,7 @@ class GameController extends ChangeNotifier {
   double _travelProgress = 0;
   UnattendedResult? _awaySummary;
   CosmeticUnlockNotice? _cosmeticUnlock;
+  AutoEquipProposal? _autoEquip;
 
   GameDatabase get db => database.launch;
   DatabaseIndexes get indexes => database.launchIndexes;
@@ -66,6 +67,9 @@ class GameController extends ChangeNotifier {
 
   /// A cosmetic that was just unlocked and has not been shown off yet.
   CosmeticUnlockNotice? get cosmeticUnlock => _cosmeticUnlock;
+
+  /// The tool an activity wants, offered rather than demanded.
+  AutoEquipProposal? get autoEquip => _autoEquip;
 
   double get actionProgress => session.actionProgress.toDouble();
   num get deathPauseRemainingMs => session.deathPauseRemaining;
@@ -185,18 +189,67 @@ class GameController extends ChangeNotifier {
   }
 
   /// Starts or replaces the primary activity at the current location.
-  void startActivity(String activityId) {
+  ///
+  /// When the only thing missing is a tool the bag already holds, this asks
+  /// rather than refuses: [autoEquip] carries the offer until it is answered.
+  void startActivity(String activityId, {bool allowAutoEquip = true}) {
     final result = requestActivityStart(db, save, activityId, session.clock(), _random);
     if (!result.ok) {
+      // Nothing is startable during a death pause, so there is nothing to offer.
+      if (allowAutoEquip && !isRecovering) {
+        final proposal = proposeAutoEquipForActivity(db, save, activityId, result.reason!);
+        if (proposal != null) {
+          _autoEquip = proposal;
+          _activityError = null;
+          notifyListeners();
+          return;
+        }
+      }
       _activityError = result.reason;
       notifyListeners();
       return;
     }
+    _autoEquip = null;
     session.apply(result.save!);
     _recentRewards.clear();
     _activityError = null;
     _message = null;
     notifyListeners();
+  }
+
+  /// Equips the offered tool and starts what wanted it.
+  ///
+  /// The second start cannot ask again: the tool is on, and if that was not
+  /// enough the player deserves the reason instead of another prompt.
+  void confirmAutoEquip() {
+    final proposal = _autoEquip;
+    if (proposal == null) return;
+    _autoEquip = null;
+    final equipped = applyAutoEquipProposal(db, save, proposal);
+    if (!equipped.ok) {
+      _activityError = equipped.reason;
+      notifyListeners();
+      return;
+    }
+    session.apply(withRecalculatedVitals(db, equipped.save!));
+    startActivity(proposal.activityId, allowAutoEquip: false);
+  }
+
+  /// Turns the offer down, leaving the refusal that prompted it on screen.
+  void declineAutoEquip() {
+    final proposal = _autoEquip;
+    if (proposal == null) return;
+    _autoEquip = null;
+    _activityError = proposal.failureReason;
+    notifyListeners();
+  }
+
+  /// Pockets whatever is loitering at the current location.
+  void collectCritterHere() {
+    final result = collectCritter(save, save.currentLocationId);
+    if (!result.ok) return;
+    commit(result.save!);
+    announce(result.message!);
   }
 
   void stopActivity() {

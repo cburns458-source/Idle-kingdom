@@ -1,4 +1,4 @@
-import type { AutoEquipProposal } from '../game/equipment/autoEquip'
+import { autoEquipPromptView, type AutoEquipProposal } from '../game/equipment/autoEquip'
 
 interface AutoEquipPromptProps {
   proposal: AutoEquipProposal
@@ -6,12 +6,8 @@ interface AutoEquipPromptProps {
   onConfirm: () => void
 }
 
-function capabilityLabel(capability: string): string {
-  return capability.replaceAll('_', ' ')
-}
-
 export function AutoEquipPrompt({ proposal, onCancel, onConfirm }: AutoEquipPromptProps) {
-  const tools = proposal.capabilities.map(capabilityLabel).join(', ')
+  const prompt = autoEquipPromptView(proposal)
 
   return (
     <div
@@ -21,18 +17,15 @@ export function AutoEquipPrompt({ proposal, onCancel, onConfirm }: AutoEquipProm
       aria-labelledby="auto-equip-title"
     >
       <div className="panel destroy-confirm-card">
-        <h2 id="auto-equip-title">Equip required tool?</h2>
-        <p className="lead">{proposal.failureReason}</p>
-        <p className="muted">
-          Equip <strong>{proposal.itemName}</strong>
-          {tools ? ` (${tools})` : ''} from your bag and start this activity?
-        </p>
+        <h2 id="auto-equip-title">{prompt.title}</h2>
+        <p className="lead">{prompt.reason}</p>
+        <p className="muted">{prompt.question}</p>
         <div className="button-row">
           <button type="button" className="btn secondary" onClick={onCancel}>
-            Not now
+            {prompt.cancelLabel}
           </button>
           <button type="button" className="btn primary" onClick={onConfirm}>
-            Equip & Start
+            {prompt.confirmLabel}
           </button>
         </div>
       </div>

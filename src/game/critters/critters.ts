@@ -119,7 +119,9 @@ export function applyActivityTimeTowardCritters(
 export function collectCritter(
   save: PlayerSave,
   locationId: string,
-): { ok: true; save: PlayerSave; critter: CritterDef; count: number } | { ok: false; reason: string } {
+):
+  | { ok: true; save: PlayerSave; critter: CritterDef; count: number; message: string }
+  | { ok: false; reason: string } {
   const spawn = activeSpawnAtLocation(save, locationId)
   if (!spawn) return { ok: false, reason: 'No Critter here.' }
   const critter = getCritter(spawn.critterId)
@@ -146,6 +148,10 @@ export function collectCritter(
     },
     critter,
     count,
+    message:
+      count > 1
+        ? `Collected ${critter.displayName} (×${count}).`
+        : `Collected ${critter.displayName}!`,
   }
 }
 

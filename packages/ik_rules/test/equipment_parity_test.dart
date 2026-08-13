@@ -125,6 +125,7 @@ void main() {
             'required': toolCapabilitiesRequiredForActivity(db, activityId),
             'missing': missingToolCapabilities(db, save, activityId),
             'proposal': proposal?.toJson(),
+            'prompt': proposal == null ? null : autoEquipPromptView(proposal).toJson(),
           }),
           isNull,
         );

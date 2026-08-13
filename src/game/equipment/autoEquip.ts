@@ -136,6 +136,28 @@ export function proposeAutoEquipForActivity(
   }
 }
 
+/** What the prompt asks, once a proposal exists. */
+export interface AutoEquipPromptView {
+  title: string
+  /** Why the activity refused to start. */
+  reason: string
+  /** `Equip a Bronze Axe (woodcutting) from your bag and start this activity?` */
+  question: string
+  cancelLabel: string
+  confirmLabel: string
+}
+
+export function autoEquipPromptView(proposal: AutoEquipProposal): AutoEquipPromptView {
+  const tools = proposal.capabilities.map((capability) => capability.replaceAll('_', ' ')).join(', ')
+  return {
+    title: 'Equip required tool?',
+    reason: proposal.failureReason,
+    question: `Equip ${proposal.itemName}${tools ? ` (${tools})` : ''} from your bag and start this activity?`,
+    cancelLabel: 'Not now',
+    confirmLabel: 'Equip & Start',
+  }
+}
+
 export function applyAutoEquipProposal(
   db: GameDatabase,
   save: PlayerSave,

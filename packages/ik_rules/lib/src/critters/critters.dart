@@ -1,5 +1,6 @@
 import 'package:collection/collection.dart';
 
+import '../js_compat.dart';
 import '../rng/mulberry32.dart';
 import '../save/generated/save_models.dart';
 import '../time.dart';
@@ -153,15 +154,26 @@ CritterTimeResult applyActivityTimeTowardCritters(
 
 /// Either the collected Critter or the reason nothing was collected.
 class CritterCollectResult {
-  const CritterCollectResult.ok({required this.save, required this.critter, required this.count})
-    : reason = null;
+  const CritterCollectResult.ok({
+    required this.save,
+    required this.critter,
+    required this.count,
+    required this.message,
+  }) : reason = null;
 
-  const CritterCollectResult.failed(this.reason) : save = null, critter = null, count = null;
+  const CritterCollectResult.failed(this.reason)
+    : save = null,
+      critter = null,
+      count = null,
+      message = null;
 
   bool get ok => reason == null;
   final PlayerSave? save;
   final CritterDef? critter;
   final num? count;
+
+  /// What was caught, as the overlay says it.
+  final String? message;
   final String? reason;
 
   Map<String, Object?> toJson() => ok
@@ -170,6 +182,7 @@ class CritterCollectResult {
           'save': save!.toJson(),
           'critter': critter!.toJson(),
           'count': count,
+          'message': message,
         }
       : <String, Object?>{'ok': false, 'reason': reason};
 }
@@ -200,6 +213,9 @@ CritterCollectResult collectCritter(PlayerSave save, String locationId) {
     ),
     critter: critter,
     count: count,
+    message: count > 1
+        ? 'Collected ${critter.displayName} (×${jsNumberToString(count)}).'
+        : 'Collected ${critter.displayName}!',
   );
 }
 

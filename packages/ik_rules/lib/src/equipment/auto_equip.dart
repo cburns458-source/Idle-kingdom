@@ -145,6 +145,50 @@ AutoEquipProposal? proposeAutoEquipForActivity(
   );
 }
 
+/// What the prompt asks, once a proposal exists.
+class AutoEquipPromptView {
+  const AutoEquipPromptView({
+    required this.title,
+    required this.reason,
+    required this.question,
+    required this.cancelLabel,
+    required this.confirmLabel,
+  });
+
+  final String title;
+
+  /// Why the activity refused to start.
+  final String reason;
+
+  /// `Equip a Bronze Axe (woodcutting) from your bag and start this activity?`
+  final String question;
+  final String cancelLabel;
+  final String confirmLabel;
+
+  Map<String, Object?> toJson() => <String, Object?>{
+    'title': title,
+    'reason': reason,
+    'question': question,
+    'cancelLabel': cancelLabel,
+    'confirmLabel': confirmLabel,
+  };
+}
+
+AutoEquipPromptView autoEquipPromptView(AutoEquipProposal proposal) {
+  final tools = proposal.capabilities
+      .map((capability) => capability.replaceAll('_', ' '))
+      .join(', ');
+  return AutoEquipPromptView(
+    title: 'Equip required tool?',
+    reason: proposal.failureReason,
+    question:
+        'Equip ${proposal.itemName}${tools.isEmpty ? '' : ' ($tools)'}'
+        ' from your bag and start this activity?',
+    cancelLabel: 'Not now',
+    confirmLabel: 'Equip & Start',
+  );
+}
+
 EquipResult applyAutoEquipProposal(GameDatabase db, PlayerSave save, AutoEquipProposal proposal) {
   return equipItemFromInventory(db, save, proposal.itemId);
 }

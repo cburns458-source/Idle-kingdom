@@ -157,6 +157,7 @@ export const metaScenarios: ParityScenario[] = [
                     save: asJson(result.save),
                     critterId: result.critter.id,
                     count: result.count,
+                    message: result.message,
                   }
                 : result),
             }

@@ -1,4 +1,5 @@
 import {
+  autoEquipPromptView,
   missingToolCapabilities,
   proposeAutoEquipForActivity,
   toolCapabilitiesRequiredForActivity,
@@ -197,6 +198,7 @@ export const equipmentScenarios: ParityScenario[] = [
             required: toolCapabilitiesRequiredForActivity(db, activityId),
             missing: missingToolCapabilities(db, save, activityId),
             proposal: proposal == null ? null : { ...proposal },
+            prompt: proposal == null ? null : autoEquipPromptView(proposal),
           } as unknown as JsonValue
         },
       ),

@@ -87,6 +87,7 @@ void main() {
                   'save': result.save!.toJson(),
                   'critterId': result.critter!.id,
                   'count': result.count,
+                  'message': result.message,
                 } else ...<String, Object?>{'ok': false, 'reason': result.reason},
               };
             }).toList(),

@@ -6,6 +6,7 @@ import '../content/asset_paths.dart';
 import '../session/game_controller.dart';
 import '../theme.dart';
 import 'activity_panel.dart';
+import 'critter_overlay.dart';
 import 'format.dart';
 import 'npc_panel.dart';
 import 'production_panel.dart';
@@ -135,6 +136,12 @@ class _LocationViewState extends State<LocationView> {
                     Text(danger, style: const TextStyle(color: Palette.danger, fontSize: 12)),
                 ],
               ),
+            ),
+            // Inline rather than floating over the art: on a phone the art is
+            // mostly behind this list, and a tap target has to be reachable.
+            Align(
+              alignment: Alignment.centerRight,
+              child: CritterOverlay(controller: controller),
             ),
             const SizedBox(height: 10),
             if (_open case final panel?) ...[_buildPanel(panel), const SizedBox(height: 10)],
@@ -375,11 +382,9 @@ class _ActivityCard extends StatelessWidget {
             OutlinedButton(onPressed: controller.stopActivity, child: const Text('Stop'))
           else
             FilledButton(
-              onPressed: !check.ok
-                  ? null
-                  : production
-                  ? onOpenWorkshop
-                  : () => controller.startActivity(activityId),
+              // Enabled even when the check failed: starting is what turns a
+              // missing tool into the offer to equip one, and otherwise says why.
+              onPressed: production ? onOpenWorkshop : () => controller.startActivity(activityId),
               // A station asks which recipe first, so it does not start on a tap.
               child: Text(production ? 'Recipes' : 'Start'),
             ),

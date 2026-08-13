@@ -6,6 +6,7 @@ import '../session/game_controller.dart';
 import '../theme.dart';
 import 'away_summary_sheet.dart';
 import 'bottom_nav.dart';
+import 'critter_overlay.dart';
 import 'inventory_view.dart';
 import 'location_view.dart';
 import 'new_character_sheet.dart';
@@ -144,6 +145,8 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
           TravelOverlay(controller: controller, journey: journey),
         if (controller.awaySummary case final summary?)
           AwaySummarySheet(summary: summary, onDismiss: controller.dismissAwaySummary),
+        if (controller.autoEquip case final proposal?)
+          AutoEquipPrompt(controller: controller, proposal: proposal),
         if (controller.cosmeticUnlock case final notice?)
           WardrobeUnlockPopup(
             notice: notice,
