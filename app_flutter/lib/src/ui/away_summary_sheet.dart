@@ -43,9 +43,22 @@ class AwaySummarySheet extends StatelessWidget {
                 ),
                 MutedText('${formatDurationMs(summary.effectiveElapsedMs)} of progress'),
                 const SizedBox(height: 10),
-                for (final line in lines) Text('• $line'),
-                for (final message in messages)
-                  Padding(padding: const EdgeInsets.only(top: 6), child: MutedText(message)),
+                // A long absence can list more than the screen holds.
+                Flexible(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        for (final line in lines) Text('• $line'),
+                        for (final message in messages)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 6),
+                            child: MutedText(message),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
                 const SizedBox(height: 14),
                 Align(
                   alignment: Alignment.centerRight,
