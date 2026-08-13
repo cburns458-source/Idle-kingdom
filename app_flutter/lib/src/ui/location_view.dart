@@ -14,6 +14,7 @@ import 'format.dart';
 import 'npc_panel.dart';
 import 'production_panel.dart';
 import 'project_panel.dart';
+import 'reward_strip.dart';
 import 'shop_panel.dart';
 
 /// Whatever the player has open on top of the location, if anything.
@@ -62,6 +63,7 @@ class LocationView extends StatefulWidget {
     required this.controller,
     required this.multiplayer,
     required this.onOpenMap,
+    required this.onOpenSubMap,
     this.onOpenNearby,
     this.onOpenGuilds,
   });
@@ -73,8 +75,9 @@ class LocationView extends StatefulWidget {
   final MultiplayerController multiplayer;
   final VoidCallback onOpenMap;
 
-  /// Null while the player is offline, which hides the button rather than
-  /// offering a list that would always be empty.
+  /// Opens the district map a gateway location leads into.
+  final ValueChanged<String> onOpenSubMap;
+
   final VoidCallback? onOpenNearby;
   final VoidCallback? onOpenGuilds;
 
@@ -197,6 +200,27 @@ class _LocationViewState extends State<LocationView> {
                       ],
                     ),
                   ),
+                  if (subMapIdForGateway(controller.db, locationId) case final subMapId?
+                      when isSubMapGateway(location))
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(13, 8, 13, 0),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: GameButton(
+                          label: enterSubMapLabel(controller.db, location) ?? 'Enter',
+                          onPressed: () => widget.onOpenSubMap(subMapId),
+                        ),
+                      ),
+                    ),
+                  // The last few payouts read over the art, under the header.
+                  if (controller.recentRewards.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(13, 6, 13, 0),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: RewardStrip(controller: controller),
+                      ),
+                    ),
                   if (controller.isRecovering && stage == null)
                     Padding(
                       padding: const EdgeInsets.fromLTRB(13, 8, 13, 0),

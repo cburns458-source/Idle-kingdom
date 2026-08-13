@@ -33,45 +33,58 @@ class WorldMapView extends StatelessWidget {
         ? null
         : controller.indexes.locationsById[selectedLocationId!];
 
-    return Column(
+    // The panel floats over the art rather than sitting under it, so opening it
+    // never resizes the map.
+    return Stack(
+      fit: StackFit.expand,
       children: [
-        Expanded(
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              Image.asset(
-                mapAssetPath(browseMapId),
-                fit: BoxFit.cover,
-                filterQuality: FilterQuality.none,
-              ),
-              for (final node in nodes)
-                _MapNode(
-                  location: node,
-                  isHere: node.locationId == save.currentLocationId,
-                  isSelected: node.locationId == selectedLocationId,
-                  onTap: () => onSelect(node.locationId),
-                ),
-            ],
-          ),
+        Image.asset(
+          mapAssetPath(browseMapId),
+          fit: BoxFit.cover,
+          filterQuality: FilterQuality.none,
         ),
-        _SelectionPanel(
-          controller: controller,
-          browseMapId: browseMapId,
-          selected: selected,
-          onBrowseMap: onBrowseMap,
-          onTravel: onTravel,
+        for (final node in nodes)
+          _MapNode(
+            location: node,
+            isHere: node.locationId == save.currentLocationId,
+            isSelected: node.locationId == selectedLocationId,
+            onTap: () => onSelect(node.locationId),
+            onDoubleTap: node.locationId == save.currentLocationId
+                ? null
+                : () => onTravel(node.locationId),
+          ),
+        if (browseMapId != mainMapId)
+          Positioned(
+            left: 12,
+            top: 12,
+            child: GameButton(
+              label: 'Back to the world map',
+              tone: GameButtonTone.secondary,
+              onPressed: () => onBrowseMap(mainMapId),
+            ),
+          ),
+        Positioned(
+          left: 0,
+          right: 0,
+          bottom: 0,
+          child: _SelectionPanel(
+            selected: selected,
+            isHere: selected?.locationId == save.currentLocationId,
+            onTravel: onTravel,
+          ),
         ),
       ],
     );
   }
 }
 
-class _MapNode extends StatelessWidget {
+class _MapNode extends StatefulWidget {
   const _MapNode({
     required this.location,
     required this.isHere,
     required this.isSelected,
     required this.onTap,
+    required this.onDoubleTap,
   });
 
   final LocationRow location;
@@ -79,14 +92,44 @@ class _MapNode extends StatelessWidget {
   final bool isSelected;
   final VoidCallback onTap;
 
+  /// A second tap travels, so a place can be reached without the panel.
+  final VoidCallback? onDoubleTap;
+
+  @override
+  State<_MapNode> createState() => _MapNodeState();
+}
+
+class _MapNodeState extends State<_MapNode> {
+  /// Timed by hand rather than with `onDoubleTap`, which would hold the first
+  /// tap back for the whole double-tap window before selecting anything.
+  static const Duration _window = Duration(milliseconds: 300);
+
+  DateTime? _lastTap;
+
+  void _handleTap() {
+    final now = DateTime.now();
+    final last = _lastTap;
+    _lastTap = now;
+    if (widget.onDoubleTap case final travel?
+        when last != null && now.difference(last) <= _window) {
+      _lastTap = null;
+      travel();
+      return;
+    }
+    widget.onTap();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final location = widget.location;
+    final isHere = widget.isHere;
+    final isSelected = widget.isSelected;
     final position = positionForLocation(location);
     return Align(
       // Percentages from the shared layout map onto the alignment square.
       alignment: Alignment(position.x / 50 - 1, position.y / 50 - 1),
       child: GestureDetector(
-        onTap: onTap,
+        onTap: _handleTap,
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           decoration: BoxDecoration(
@@ -111,74 +154,50 @@ class _MapNode extends StatelessWidget {
   }
 }
 
+/// What is at the selected place, and the one button that takes you there.
+///
+/// Entering a sub-map is not offered here: that belongs to the gateway's own
+/// location page, once the player has actually travelled to it.
 class _SelectionPanel extends StatelessWidget {
-  const _SelectionPanel({
-    required this.controller,
-    required this.browseMapId,
-    required this.selected,
-    required this.onBrowseMap,
-    required this.onTravel,
-  });
+  const _SelectionPanel({required this.selected, required this.isHere, required this.onTravel});
 
-  final GameController controller;
-  final String browseMapId;
   final LocationRow? selected;
-  final ValueChanged<String> onBrowseMap;
+  final bool isHere;
   final ValueChanged<String> onTravel;
 
   @override
   Widget build(BuildContext context) {
-    final save = controller.save;
     final place = selected;
-    final subMapId = place == null ? null : subMapIdForGateway(controller.db, place.locationId);
-    final isHere = place?.locationId == save.currentLocationId;
-
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: const BoxDecoration(
+        color: Color(0xF02A1C12),
         border: Border(top: BorderSide(color: Palette.edge)),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (browseMapId != mainMapId)
-            Align(
-              alignment: Alignment.centerLeft,
-              child: OutlinedButton(
-                onPressed: () => onBrowseMap(mainMapId),
-                child: const Text('Back to the world map'),
-              ),
-            ),
-          if (place == null)
-            const MutedText('Pick a place to see what is there.')
-          else ...[
-            Text(
-              place.displayName,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-            ),
-            if (place.description case final blurb?) MutedText(blurb),
-            const SizedBox(height: 8),
-            Row(
+      child: place == null
+          ? const MutedText('Pick a place to see what is there. Double-tap one to go.')
+          : Row(
               children: [
-                if (subMapId != null)
-                  OutlinedButton(
-                    onPressed: () => onBrowseMap(subMapId),
-                    child: Text(enterSubMapLabel(controller.db, place) ?? 'Enter'),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        place.displayName,
+                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                      ),
+                      if (place.description case final blurb?) MutedText(blurb),
+                    ],
                   ),
-                if (subMapId != null) const SizedBox(width: 8),
-                if (!isHere)
-                  FilledButton(
-                    onPressed: () => onTravel(place.locationId),
-                    child: const Text('Travel'),
-                  )
+                ),
+                const SizedBox(width: 10),
+                if (isHere)
+                  const MutedText('You are here.')
                 else
-                  const MutedText('You are here.'),
+                  GameButton(label: 'Travel', onPressed: () => onTravel(place.locationId)),
               ],
             ),
-          ],
-        ],
-      ),
     );
   }
 }

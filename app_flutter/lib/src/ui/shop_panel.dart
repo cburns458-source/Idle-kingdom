@@ -173,36 +173,44 @@ class _ShopPanelState extends State<ShopPanel> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text('Buy', style: TextStyle(fontWeight: FontWeight.w700)),
-          const SizedBox(height: 6),
-          if (stock.isEmpty)
-            const MutedText('No stock listed.')
-          else
-            _tiles([
-              for (final entry in stock)
-                _tileFor(
-                  itemId: entry.itemId,
-                  unit: playerBuyPrice(db, shop, entry.itemId),
-                  offered: _buys[entry.itemId],
-                  onTap: (unit, name) => _addBuy(shop, entry.itemId, unit, name),
+          // Stock on the left, the bag on the right, so a trade is one glance.
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: _Column(
+                  heading: 'Buy',
+                  empty: 'No stock listed.',
+                  tiles: [
+                    for (final entry in stock)
+                      _tileFor(
+                        itemId: entry.itemId,
+                        unit: playerBuyPrice(db, shop, entry.itemId),
+                        offered: _buys[entry.itemId],
+                        onTap: (unit, name) => _addBuy(shop, entry.itemId, unit, name),
+                      ),
+                  ],
                 ),
-            ]),
-          const SizedBox(height: 12),
-          const Text('Sell', style: TextStyle(fontWeight: FontWeight.w700)),
-          const SizedBox(height: 6),
-          if (sellable.isEmpty)
-            const MutedText('Nothing here that this shop will buy.')
-          else
-            _tiles([
-              for (final row in sellable)
-                _tileFor(
-                  itemId: row.itemId,
-                  unit: row.unit,
-                  owned: row.owned,
-                  offered: _sells[row.itemId],
-                  onTap: (unit, name) => _toggleSell(row.itemId, unit, name, row.owned),
+              ),
+              const SizedBox(width: 9),
+              Expanded(
+                child: _Column(
+                  heading: 'Sell',
+                  empty: 'Nothing here that this shop will buy.',
+                  tiles: [
+                    for (final row in sellable)
+                      _tileFor(
+                        itemId: row.itemId,
+                        unit: row.unit,
+                        owned: row.owned,
+                        offered: _sells[row.itemId],
+                        onTap: (unit, name) => _toggleSell(row.itemId, unit, name, row.owned),
+                      ),
+                  ],
                 ),
-            ]),
+              ),
+            ],
+          ),
           const SizedBox(height: 12),
           Text(
             'Offer — buy ${formatThousands(buyTotal)} / sell ${formatThousands(sellTotal)} · '
@@ -276,18 +284,6 @@ class _ShopPanelState extends State<ShopPanel> {
     );
   }
 
-  Widget _tiles(List<Widget> children) {
-    return GridView.count(
-      crossAxisCount: 3,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      mainAxisSpacing: 6,
-      crossAxisSpacing: 6,
-      childAspectRatio: 0.95,
-      children: children,
-    );
-  }
-
   /// One stock or sell tile. [owned] is only shown on the sell side.
   Widget _tileFor({
     required String itemId,
@@ -300,48 +296,113 @@ class _ShopPanelState extends State<ShopPanel> {
     final name = item?.displayName ?? itemId;
     final enabled = unit != null && (owned == null || owned > 0);
 
-    return InkWell(
-      onTap: enabled ? () => onTap(unit, name) : null,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.all(6),
-        decoration: BoxDecoration(
-          color: offered != null ? const Color(0x33D4AF37) : const Color(0x66231710),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: offered != null ? Palette.gold : Palette.edge),
-        ),
-        child: Opacity(
-          opacity: enabled ? 1 : 0.4,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              ItemIcon(item: item, size: 28),
-              Flexible(
-                child: Text(
-                  name,
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 10),
+    return Tooltip(
+      message: unit == null ? name : '$name · ${formatThousands(unit)} gold',
+      child: InkWell(
+        onTap: enabled ? () => onTap(unit, name) : null,
+        borderRadius: BorderRadius.circular(9),
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(3, 5, 3, 4),
+          decoration: BoxDecoration(
+            color: offered != null ? const Color(0x33D4AF37) : const Color(0x6B221810),
+            borderRadius: BorderRadius.circular(9),
+            border: Border.all(color: offered != null ? Palette.gold : Palette.edge),
+          ),
+          child: Opacity(
+            opacity: enabled ? 1 : 0.45,
+            child: Stack(
+              children: [
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    ItemIcon(item: item, size: 32),
+                    const SizedBox(height: 2),
+                    Flexible(
+                      child: Text(
+                        name,
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          height: 1.15,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      unit == null
+                          ? '—'
+                          : owned == null
+                          ? '${formatThousands(unit)}g'
+                          : '${formatThousands(unit)}g · ${formatThousands(owned)}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: 10.5, color: Palette.muted, height: 1.1),
+                    ),
+                  ],
                 ),
-              ),
-              Text(
-                unit == null
-                    ? '—'
-                    : owned == null
-                    ? '${formatThousands(unit)}g'
-                    : '${formatThousands(unit)}g · ${formatThousands(owned)}',
-                style: const TextStyle(fontSize: 10, color: Palette.gold),
-              ),
-              if (offered != null)
-                Text(
-                  '×${formatThousands(offered)}',
-                  style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700),
-                ),
-            ],
+                if (offered != null)
+                  Positioned(
+                    top: 0,
+                    right: 0,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                      decoration: BoxDecoration(
+                        color: const Color(0xE6D4AF37),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Text(
+                        '×${formatThousands(offered)}',
+                        style: const TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF1A1208),
+                          height: 1.2,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
           ),
         ),
       ),
+    );
+  }
+}
+
+/// One side of the counter: a heading over a tight, scrolling grid of items.
+class _Column extends StatelessWidget {
+  const _Column({required this.heading, required this.empty, required this.tiles});
+
+  final String heading;
+  final String empty;
+  final List<Widget> tiles;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(heading, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+        const SizedBox(height: 5),
+        if (tiles.isEmpty)
+          MutedText(empty)
+        else
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxHeight: 256),
+            child: GridView.extent(
+              maxCrossAxisExtent: 78,
+              shrinkWrap: true,
+              padding: EdgeInsets.zero,
+              mainAxisSpacing: 5,
+              crossAxisSpacing: 5,
+              childAspectRatio: 0.82,
+              children: tiles,
+            ),
+          ),
+      ],
     );
   }
 }

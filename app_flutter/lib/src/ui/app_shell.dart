@@ -95,6 +95,15 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
     });
   }
 
+  /// Opens the district map behind the gateway the player is standing on.
+  void _browseSubMap(String mapId) {
+    setState(() {
+      _browseMapId = mapId;
+      _selectedLocationId = null;
+      _screen = GameScreen.map;
+    });
+  }
+
   void _travelTo(String locationId) {
     if (!controller.travelTo(locationId, _browseMapId)) return;
     setState(() {
@@ -202,7 +211,8 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
           controller: controller,
           multiplayer: multiplayer,
           onOpenMap: _showMap,
-          onOpenNearby: multiplayer.isSignedIn ? () => setState(() => _nearbyOpen = true) : null,
+          onOpenSubMap: _browseSubMap,
+          onOpenNearby: () => setState(() => _nearbyOpen = true),
           onOpenGuilds: () => setState(() => _screen = GameScreen.guilds),
         );
       case GameScreen.map:

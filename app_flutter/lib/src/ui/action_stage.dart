@@ -12,8 +12,9 @@ import 'item_icon.dart';
 /// How tall a fighter, a gathering scene, or a workstation is drawn.
 const double _portraitHeight = 152;
 
-/// The bars never run the whole column width, matching the old client.
-const double _meterMaxWidth = 136;
+/// How wide either half of the stage can get, so the two sprites stay shoulder
+/// to shoulder in the middle of a wide window instead of drifting apart.
+const double _stageMaxWidth = 460;
 
 const Color _playerHitColor = Color(0xFFFF8A3D);
 const Color _critHitColor = Color(0xFFFFD166);
@@ -35,6 +36,9 @@ class ActionStage extends StatelessWidget {
   Widget build(BuildContext context) {
     final save = controller.save;
     if (save.currentActivityId == null) return const SizedBox.shrink();
+    // Defeat clears the enemy and the action, so the pause gets its own skin
+    // rather than falling through to a gathering scene with nothing in it.
+    if (controller.isRecovering) return _RestingStage(controller: controller);
     if (save.combatEnemyId != null) return _CombatStage(controller: controller);
     if (save.productionRecipeId != null || controller.craftPopup != null) {
       return _ProductionStage(controller: controller);
@@ -58,9 +62,14 @@ class _StageShell extends StatelessWidget {
       label: semanticsLabel,
       child: Padding(
         padding: const EdgeInsets.fromLTRB(2, 4, 2, 6),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [scene, const SizedBox(height: 7), footer],
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: _stageMaxWidth),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [scene, const SizedBox(height: 7), footer],
+            ),
+          ),
         ),
       ),
     );
@@ -167,13 +176,13 @@ class _SceneName extends StatelessWidget {
   }
 }
 
-/// A health bar, kept to one side of its column the way the old client had it.
+/// A health bar: the whole track is always drawn, and the fill is the fraction
+/// of health left, the same way the round timer reads.
 class _Meter extends StatelessWidget {
   const _Meter({
     required this.label,
     required this.value,
     required this.gradient,
-    required this.alignment,
     this.semanticsValue,
   });
 
@@ -181,20 +190,13 @@ class _Meter extends StatelessWidget {
   final String? semanticsValue;
   final double value;
   final Gradient gradient;
-  final Alignment alignment;
 
   @override
   Widget build(BuildContext context) {
-    return Align(
-      alignment: alignment,
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: _meterMaxWidth),
-        child: Semantics(
-          label: label,
-          value: semanticsValue,
-          child: PillBar(value: value, gradient: gradient, height: 11.5),
-        ),
-      ),
+    return Semantics(
+      label: label,
+      value: semanticsValue,
+      child: PillBar(value: value, gradient: gradient, height: 11.5),
     );
   }
 }
@@ -222,44 +224,21 @@ class _CombatStage extends StatelessWidget {
         player: _Portrait(
           assetPath: playerAssetPath(save.appearance),
           semanticsLabel: 'Adventurer',
-          alignment: Alignment.centerLeft,
-          overlay: Stack(
-            children: [
-              if (round != null && (round.enemyHit ?? 0) > 0 && !controller.defeatedFlash)
-                _DamageFloater(
+          alignment: Alignment.centerRight,
+          overlay: round != null && (round.enemyHit ?? 0) > 0 && !controller.defeatedFlash
+              ? _DamageFloater(
                   key: ValueKey('enemy-hit-$seq'),
                   text: '${round.enemyHit!.round()}',
                   color: _enemyHitColor,
                   alignment: const Alignment(-0.16, -0.16),
                   offset: _floaterOffset(seq, 1),
-                ),
-              if (controller.isRecovering)
-                Align(
-                  alignment: Alignment.bottomCenter,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 5),
-                    decoration: BoxDecoration(
-                      color: const Color(0x8C140C08),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      'Recovering… ${_pauseSeconds(controller.deathPauseRemainingMs)}s',
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFFE0A080),
-                      ),
-                    ),
-                  ),
-                ),
-            ],
-          ),
+                )
+              : null,
         ),
         scene: _Portrait(
           assetPath: controller.defeatedFlash ? null : enemyAssetPath(save.combatEnemyId!),
           semanticsLabel: enemyName,
-          alignment: Alignment.centerRight,
+          alignment: Alignment.centerLeft,
           placeholder: controller.defeatedFlash
               ? const Center(
                   child: Text(
@@ -311,7 +290,6 @@ class _CombatStage extends StatelessWidget {
               semanticsValue: '${playerHp.round()} / ${maxHp.round()}',
               value: maxHp <= 0 ? 0 : (playerHp / maxHp).clamp(0, 1).toDouble(),
               gradient: Meters.playerHp,
-              alignment: Alignment.centerLeft,
             ),
           ],
         ),
@@ -325,22 +303,68 @@ class _CombatStage extends StatelessWidget {
               semanticsValue: '${enemyHp.round()} / ${enemyMaxHp.round()}',
               value: (enemyHp / enemyMaxHp).clamp(0, 1).toDouble(),
               gradient: Meters.enemyHp,
-              alignment: Alignment.centerRight,
             ),
           ],
         ),
       ),
-      footer: controller.isRecovering || controller.defeatedFlash
-          ? const SizedBox.shrink()
-          : Semantics(
-              label: 'Round progress',
-              child: PillBar(
-                value: controller.combatRoundProgress,
-                gradient: Meters.combatRound,
-                height: 8,
-                borderColor: const Color(0x38FFECC4),
+      // The timer stays through the defeat flash so the bar does not vanish
+      // between one enemy and the next.
+      footer: Semantics(
+        label: 'Round progress',
+        child: PillBar(
+          value: controller.combatRoundProgress,
+          gradient: Meters.combatRound,
+          height: 8,
+          borderColor: const Color(0x38FFECC4),
+        ),
+      ),
+    );
+  }
+}
+
+/// The death pause: no sprites, just the word for what the player is doing.
+class _RestingStage extends StatelessWidget {
+  const _RestingStage({required this.controller});
+
+  final GameController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return _StageShell(
+      semanticsLabel: 'Recovering',
+      scene: _TwoPortraits(
+        player: const _Portrait(
+          assetPath: null,
+          semanticsLabel: 'Resting',
+          alignment: Alignment.centerRight,
+          placeholder: Align(
+            alignment: Alignment.centerRight,
+            child: Text(
+              'resting',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFFE0A080),
+                shadows: overlayShadow,
               ),
             ),
+          ),
+        ),
+        // Nothing fights back during the pause, so the other half stays empty.
+        scene: const SizedBox(height: _portraitHeight),
+        playerCaption: const SizedBox(height: 16),
+        sceneCaption: const SizedBox(height: 16),
+      ),
+      footer: Text(
+        'Resuming in ${formatDurationMs(controller.deathPauseRemainingMs)}',
+        textAlign: TextAlign.center,
+        style: const TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w700,
+          color: Color(0xFFE0A080),
+          shadows: overlayShadow,
+        ),
+      ),
     );
   }
 }
@@ -397,17 +421,13 @@ class _GatheringStage extends StatelessWidget {
         player: _Portrait(
           assetPath: playerAssetPath(save.appearance),
           semanticsLabel: 'Adventurer',
-          alignment: Alignment.centerLeft,
+          alignment: Alignment.centerRight,
         ),
         scene: _Portrait(
           assetPath: action == null ? null : actionAssetPath(action.actionId),
           semanticsLabel: actionName,
-          alignment: Alignment.centerRight,
-          placeholder: action == null
-              ? const Center(
-                  child: Text('…', style: TextStyle(fontSize: 26, color: _sceneNameColor)),
-                )
-              : null,
+          alignment: Alignment.centerLeft,
+          placeholder: action == null ? const SizedBox.expand() : null,
         ),
         playerCaption: const SizedBox(height: 16),
         sceneCaption: Column(
@@ -451,12 +471,12 @@ class _ProductionStage extends StatelessWidget {
         player: _Portrait(
           assetPath: playerAssetPath(save.appearance),
           semanticsLabel: 'Adventurer',
-          alignment: Alignment.centerLeft,
+          alignment: Alignment.centerRight,
         ),
         scene: _Portrait(
           assetPath: workstationAssetPath(recipe?.facilityId),
           semanticsLabel: stationName,
-          alignment: Alignment.centerRight,
+          alignment: Alignment.centerLeft,
           overlay: popup == null
               ? null
               : Align(
@@ -576,9 +596,4 @@ String _queueLine(GameController controller, String recipeId) {
 Offset _floaterOffset(int seq, int salt) {
   final mixed = seq * 31 + salt * 17;
   return Offset(((mixed % 49) - 24).toDouble(), (((mixed ~/ 7) % 37) - 18).toDouble());
-}
-
-int _pauseSeconds(num remainingMs) {
-  if (remainingMs <= 0) return 0;
-  return (remainingMs / 1000).ceil();
 }

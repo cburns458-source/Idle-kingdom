@@ -36,7 +36,7 @@ class _NearbyPanelState extends State<NearbyPanel> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) net.publishPresence(widget.controller.save);
+      if (mounted && net.isSignedIn) net.publishPresence(widget.controller.save);
     });
   }
 
@@ -104,7 +104,9 @@ class _NearbyPanelState extends State<NearbyPanel> {
           ],
         ),
         const SizedBox(height: 8),
-        if (rows.isEmpty)
+        if (!net.isSignedIn)
+          const MutedText(signInPrompt)
+        else if (rows.isEmpty)
           const MutedText('No other players on this activity right now.')
         else
           Flexible(

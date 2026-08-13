@@ -7,7 +7,6 @@ import '../content/asset_paths.dart';
 import '../session/game_controller.dart';
 import '../theme.dart';
 import 'format.dart';
-import 'reward_strip.dart';
 
 /// What the player is busy with, read out in the corner of the HUD.
 class _HudStatus {
@@ -194,10 +193,6 @@ class TopHud extends StatelessWidget {
               ),
             ],
           ),
-          if (controller.recentRewards.isNotEmpty) ...[
-            const SizedBox(height: 6),
-            RewardStrip(controller: controller),
-          ],
         ],
       ),
     );
