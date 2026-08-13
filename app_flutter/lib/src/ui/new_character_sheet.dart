@@ -1,0 +1,146 @@
+import 'package:flutter/material.dart';
+import 'package:ik_content/ik_content.dart';
+import 'package:ik_rules/ik_rules.dart';
+
+import '../session/game_controller.dart';
+import '../theme.dart';
+
+/// Name and race, the two things a save cannot be played without.
+///
+/// Appearance is deliberately left out until the wardrobe is ported; a new save
+/// already carries the default look.
+class NewCharacterSheet extends StatefulWidget {
+  const NewCharacterSheet({super.key, required this.controller});
+
+  final GameController controller;
+
+  @override
+  State<NewCharacterSheet> createState() => _NewCharacterSheetState();
+}
+
+class _NewCharacterSheetState extends State<NewCharacterSheet> {
+  final TextEditingController _name = TextEditingController();
+  String? _raceId;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _name.text = widget.controller.save.characterName ?? '';
+  }
+
+  @override
+  void dispose() {
+    _name.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    final raceId = _raceId;
+    if (raceId == null) {
+      setState(() => _error = 'Choose a race to continue.');
+      return;
+    }
+    final failure = widget.controller.createCharacter(_name.text, raceId);
+    setState(() => _error = failure);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final races = widget.controller.db.races
+        .where((race) => race.raw['Release Phase'] == 'Launch')
+        .toList();
+
+    return ColoredBox(
+      color: const Color(0xE61F1610),
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text(
+                'Name your character',
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
+              ),
+              const MutedText('Choose a name and a people for your adventurer in Idale.'),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _name,
+                maxLength: characterNameMaxLength,
+                textInputAction: TextInputAction.done,
+                onSubmitted: (_) => _submit(),
+                decoration: const InputDecoration(
+                  labelText: 'Character name',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 4),
+              Expanded(
+                child: ListView(
+                  children: [
+                    for (final race in races)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: _RaceCard(
+                          race: race,
+                          selected: race.raw['Race ID'] == _raceId,
+                          onTap: () => setState(() {
+                            _raceId = race.raw['Race ID'] as String;
+                            _error = null;
+                          }),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              if (_error case final error?)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Text(error, style: const TextStyle(color: Palette.danger)),
+                ),
+              FilledButton(onPressed: _submit, child: const Text('Begin')),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _RaceCard extends StatelessWidget {
+  const _RaceCard({required this.race, required this.selected, required this.onTap});
+
+  final RaceRow race;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GamePanel(
+      onTap: onTap,
+      child: Row(
+        children: [
+          Icon(
+            selected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
+            size: 18,
+            color: selected ? Palette.gold : Palette.edge,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  race.raw['Display Name'] as String? ?? '',
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
+                if (race.raw['Description'] case final String blurb) MutedText(blurb),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

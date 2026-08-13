@@ -36,5 +36,22 @@ jobs:
           cache: true
       - run: dart pub get
       - run: dart analyze
-      - run: dart format --output=none --set-exit-if-changed packages
+      - run: dart format --output=none --set-exit-if-changed packages app_flutter/lib app_flutter/test
       - run: dart test packages/ik_parity packages/ik_rules packages/ik_content packages/ik_runtime
+
+  flutter:
+    name: Flutter client (analyze, widget tests)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.47.0
+          channel: stable
+          cache: true
+      - run: flutter pub get
+        working-directory: app_flutter
+      - run: flutter analyze
+        working-directory: app_flutter
+      - run: flutter test
+        working-directory: app_flutter

@@ -1,7 +1,7 @@
 # Flutter/Dart migration
 
-The React app in `src/` and the Dart client in `packages/` (plus `app_flutter/`,
-added in a later phase) coexist during the migration. Both read the same content
+The React app in `src/` and the Flutter client in `app_flutter/` (over the Dart
+packages in `packages/`) coexist during the migration. Both read the same content
 from `content/`, and the Dart rules are validated against the TypeScript rules by
 a fixture-replay harness rather than by hand.
 
@@ -14,6 +14,7 @@ a fixture-replay harness rather than by hand.
 | `packages/ik_rules` | Pure Dart port of `src/game`. No IO, no Flutter, no ambient clock or RNG. |
 | `packages/ik_runtime` | Headless session: owns the save, advances ticks, defines storage and multiplayer ports. |
 | `packages/ik_parity` | Test-only harness: canonical JSON, fixture replay, package purity guards. |
+| `app_flutter` | The Flutter client. UI only: no rules, no derived numbers. |
 | `parity/fixtures` | Committed scenario recordings produced from the TypeScript rules. |
 | `src/parity` | Scenario registry and the recorder/drift test. |
 
@@ -87,7 +88,8 @@ These exist because the two languages disagree in ways that are easy to miss:
 | Save, migrations, unattended progress | Done |
 | Headless session runtime (tick, events, travel, storage port) | Done |
 | Bazaar and multiplayer backends | Not started |
-| Flutter UI | Not started |
+| Flutter shell (theme, HUD, nav, location, map, skills, inventory) | Done |
+| Remaining Flutter panels (shops, equipment, quests, bounties, wardrobe, …) | In progress |
 
 ## Save handling
 
@@ -137,6 +139,36 @@ owns the save, boots it, ticks it, applies whatever a rules call returned, and
 runs travel. Intents stay the rules functions themselves; the session is just
 where their result lands, so nothing can skip the write pipeline.
 
+## The Flutter client
+
+`app_flutter` is a member of the same pub workspace as the packages, so it uses
+`ik_content`, `ik_rules`, and `ik_runtime` by path with no publishing step.
+`app_flutter/content` is a symlink to the repo's `content/`, which is how one copy
+of the data and art reaches both clients; Flutter needs each asset directory
+listed in `pubspec.yaml` individually, as the list is not recursive.
+
+The layer that exists only here is `GameController`, a `ChangeNotifier` wrapped
+around `GameSession`. It holds what is true of a screen and nothing else — the
+last few reward lines, the current message, the journey being animated — and the
+shell drives its `tick()` from a `Ticker`, so the loop stops when the app is
+backgrounded and picks the elapsed time back up from the clock on return. Player
+intents call the shared rules (`requestActivityStart`, `assignRace`, …) and hand
+the result to `GameSession.apply`, which is the only way a save reaches storage.
+
+Two rules keep the client honest, and both are worth stating because breaking
+either is invisible until the two clients disagree:
+
+- **No derived numbers in widgets.** A widget may format and lay out; anything
+  computed comes from the packages. If a number is not available, the fix is a
+  function in `ik_rules`, not arithmetic in `build`.
+- **No ambient clock.** Time is read through `session.clock()`, never
+  `DateTime.now()`, so a widget test drives the game by moving a fake clock
+  instead of waiting on real frames.
+
+Widget tests build the shell over a `MemorySaveStorage` and a controllable clock,
+which is enough to play: create a character, start and stop an activity, travel,
+and watch an action pay out.
+
 ## Commands
 
 ```bash
@@ -147,4 +179,8 @@ dart pub get              # Resolve the pub workspace
 dart analyze              # Analyze every Dart package
 dart format packages      # Format (page width 100, set in analysis_options.yaml)
 dart test packages        # Every Dart package, including parity replay
+
+cd app_flutter
+flutter test              # Widget tests over a fake clock and in-memory storage
+flutter run -d chrome     # The client, reading the shared content/
 ```
