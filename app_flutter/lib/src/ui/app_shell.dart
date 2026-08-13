@@ -206,10 +206,12 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
       case GameScreen.location:
         return LocationView(
           controller: controller,
+          multiplayer: multiplayer,
           onOpenMap: _showMap,
           onOpenNearby: multiplayer.isSignedIn
               ? () => setState(() => _nearbyOpen = true)
               : null,
+          onOpenGuilds: () => setState(() => _screen = GameScreen.social),
         );
       case GameScreen.map:
         return WorldMapView(

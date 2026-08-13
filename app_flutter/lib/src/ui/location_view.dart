@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:ik_content/ik_content.dart';
+import 'package:ik_net/ik_net.dart';
 import 'package:ik_rules/ik_rules.dart';
 
 import '../content/asset_paths.dart';
 import '../session/game_controller.dart';
+import '../session/multiplayer_controller.dart';
 import '../theme.dart';
 import 'activity_panel.dart';
+import 'citadel_hub_panel.dart';
 import 'critter_overlay.dart';
 import 'format.dart';
 import 'npc_panel.dart';
@@ -37,6 +40,13 @@ class NpcOpen extends LocationPanel {
   final NpcRow npc;
 }
 
+/// One of the Citadel's boards: hourly bounties or the Grand Bazaar.
+class CitadelHubOpen extends LocationPanel {
+  const CitadelHubOpen(this.tab);
+
+  final CitadelHubTab tab;
+}
+
 /// The project list for a Special Production station.
 class StationOpen extends LocationPanel {
   const StationOpen(this.station);
@@ -50,16 +60,23 @@ class LocationView extends StatefulWidget {
   const LocationView({
     super.key,
     required this.controller,
+    required this.multiplayer,
     required this.onOpenMap,
     this.onOpenNearby,
+    this.onOpenGuilds,
   });
 
   final GameController controller;
+
+  /// Needed by the Citadel boards, which are the one part of a location that
+  /// other players can reach into.
+  final MultiplayerController multiplayer;
   final VoidCallback onOpenMap;
 
   /// Null while the player is offline, which hides the button rather than
   /// offering a list that would always be empty.
   final VoidCallback? onOpenNearby;
+  final VoidCallback? onOpenGuilds;
 
   @override
   State<LocationView> createState() => _LocationViewState();
@@ -174,6 +191,7 @@ class _LocationViewState extends State<LocationView> {
             ..._stations(locationId),
             ..._people(locationId),
             ..._shops(locationId),
+            ..._citadelBoards(locationId),
             ..._searches(locationId),
             const SizedBox(height: 8),
             Wrap(
@@ -206,7 +224,32 @@ class _LocationViewState extends State<LocationView> {
           onClose: _closePanel,
           onOpenShop: (shopId) => _openPanel(ShopOpen(shopId)),
         );
+      case CitadelHubOpen(tab: final tab):
+        return CitadelHubPanel(
+          tab: tab,
+          controller: controller,
+          multiplayer: widget.multiplayer,
+          onClose: _closePanel,
+          onOpenGuilds: widget.onOpenGuilds,
+        );
     }
+  }
+
+  List<Widget> _citadelBoards(String locationId) {
+    final tabs = citadelHubTabsFor(locationId);
+    if (tabs.isEmpty) return const [];
+    return [
+      _SectionHeading(citadelHubTitleFor(locationId)),
+      for (final tab in tabs)
+        Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: _InteractionCard(
+            title: citadelHubTabLabels[tab]!,
+            actionLabel: 'Open',
+            onPressed: () => _openPanel(CitadelHubOpen(tab)),
+          ),
+        ),
+    ];
   }
 
   List<Widget> _activities(String locationId) {

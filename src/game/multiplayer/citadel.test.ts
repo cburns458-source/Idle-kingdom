@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest'
+import { CITADEL_MARKET_ID, CITADEL_PLAZA_ID } from '../world/constants'
 import {
+  CITADEL_HUB_TAB_LABELS,
   citadelChatLocationId,
   citadelHubSummary,
+  citadelHubTabsFor,
+  citadelHubTitleFor,
   citadelLocalChannelKey,
   citadelLocationId,
 } from './citadel'
@@ -21,5 +25,15 @@ describe('citadel hub', () => {
     expect(summary.locationId).toBe('LOC-0028')
     expect(summary.chatChannel).toBe('local:citadel')
     expect(summary.visitorCount).toBe(3)
+  })
+
+  it('keeps one board per district', () => {
+    expect(citadelHubTabsFor(CITADEL_PLAZA_ID)).toEqual(['bounties'])
+    expect(citadelHubTabsFor(CITADEL_MARKET_ID)).toEqual(['bazaar'])
+    expect(citadelHubTabsFor('LOC-0001')).toEqual([])
+    expect(citadelHubTitleFor(CITADEL_PLAZA_ID)).toBe('Citadel Plaza')
+    expect(citadelHubTitleFor(CITADEL_MARKET_ID)).toBe('Market District')
+    expect(CITADEL_HUB_TAB_LABELS.bounties).toBe('Hourly Bounties')
+    expect(CITADEL_HUB_TAB_LABELS.bazaar).toBe('Grand Bazaar')
   })
 })

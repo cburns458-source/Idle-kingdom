@@ -2,10 +2,17 @@ import { useEffect, useMemo, useState } from 'react'
 import { listBazaarPosts, postToBazaar } from '../game/bazaar/service'
 import type { BazaarPost, BazaarPostKind } from '../game/bazaar/types'
 import {
-  bountyProgressFor,
-  isBountyReadyToClaim,
-  syncBountyHour,
-} from '../game/bounties/progress'
+  BAZAAR_BLURB,
+  BAZAAR_BODY_MAX_LENGTH,
+  BAZAAR_EMPTY_BODY,
+  BAZAAR_EMPTY_HEADING,
+  BAZAAR_PLACEHOLDER,
+  BAZAAR_POSTED_NOTICE,
+  BAZAAR_SIGN_IN_NOTICE,
+  bazaarKindOptions,
+  bazaarRows,
+} from '../game/bazaar/views'
+import { syncBountyHour } from '../game/bounties/progress'
 import {
   claimForBounty,
   currentBountyBoard,
@@ -13,23 +20,28 @@ import {
   tryClaimBounty,
 } from '../game/bounties/service'
 import type { BountyClaimRecord } from '../game/bounties/types'
+import {
+  BOUNTY_SIGN_IN_NOTICE,
+  bountyClaimedNotice,
+  bountyRotationLine,
+  bountyRowView,
+} from '../game/bounties/views'
 import type { GameDatabase } from '../game/data/types'
 import { isSignedIn } from '../game/multiplayer/auth'
+import {
+  CITADEL_HUB_TAB_LABELS,
+  type CitadelHubTab,
+} from '../game/multiplayer/citadel'
 import type { PlayerSave } from '../game/save/types'
 import { CloseButton } from './CloseButton'
 import { formatDurationSeconds } from './formatDuration'
 
-export type CitadelHubTab = 'bounties' | 'bazaar'
+export type { CitadelHubTab }
 
 interface CitadelHubLinksProps {
   tabs: CitadelHubTab[]
   title?: string
   onOpen: (tab: CitadelHubTab) => void
-}
-
-const TAB_LABELS: Record<CitadelHubTab, string> = {
-  bounties: 'Hourly Bounties',
-  bazaar: 'Grand Bazaar',
 }
 
 /** Location list entries that open hub panels the same way shops do. */
@@ -42,7 +54,7 @@ export function CitadelHubLinks({ tabs, title = 'Citadel', onOpen }: CitadelHubL
         {tabs.map((tab) => (
           <li key={tab}>
             <div>
-              <strong>{TAB_LABELS[tab]}</strong>
+              <strong>{CITADEL_HUB_TAB_LABELS[tab]}</strong>
             </div>
             <button type="button" className="btn secondary" onClick={() => onOpen(tab)}>
               Open
@@ -117,11 +129,7 @@ export function CitadelHubPanel({
     }
     onChangeSave(result.save)
     setClaims(listBountyClaims(board.hourKey))
-    flash(
-      result.firstCompleter
-        ? `First completer! +${result.goldGained} gold.`
-        : `Bounty claimed. +${result.goldGained} gold.`,
-    )
+    flash(bountyClaimedNotice(result.goldGained, result.firstCompleter))
   }
 
   function handleBazaarPost() {
@@ -132,7 +140,7 @@ export function CitadelHubPanel({
     }
     setBazaarBody('')
     setPosts(listBazaarPosts())
-    flash('Posted to the Grand Bazaar.')
+    flash(BAZAAR_POSTED_NOTICE)
   }
 
   if (tab === 'bounties') {
@@ -140,50 +148,38 @@ export function CitadelHubPanel({
       <section className="panel glass-panel shop-panel citadel-hub-panel">
         <div className="activity-panel-head">
           <div>
-            <h2>Hourly Bounties</h2>
+            <h2>{CITADEL_HUB_TAB_LABELS.bounties}</h2>
             <p className="muted tiny">
-              Rotates in {formatDurationSeconds(remainingMs / 1000)}. First turn-in earns a bonus;
-              others can still claim the base reward.
+              {bountyRotationLine(formatDurationSeconds(remainingMs / 1000))}
             </p>
           </div>
           <CloseButton onClick={onClose} />
         </div>
-        {!signedIn && (
-          <p className="muted tiny">
-            Sign in from Menu → Account to claim bounty rewards.
-          </p>
-        )}
+        {!signedIn && <p className="muted tiny">{BOUNTY_SIGN_IN_NOTICE}</p>}
         <ul className="interaction-list">
           {board.bounties.map((bounty) => {
-            const progress = bountyProgressFor(synced, bounty, nowMs)
-            const first =
+            const claim =
               claimForBounty(board.hourKey, bounty.id) ??
               claims.find((row) => row.bountyId === bounty.id) ??
               null
-            const ready = isBountyReadyToClaim(synced, bounty, nowMs)
-            const selfClaimed = (synced.bountyClaimedIds ?? []).includes(bounty.id)
+            const row = bountyRowView(synced, bounty, claim, signedIn, nowMs)
             return (
-              <li key={bounty.id}>
+              <li key={row.bountyId}>
                 <div>
-                  <strong>{bounty.title}</strong>
-                  <p className="muted tiny">{bounty.description}</p>
-                  <p className="muted tiny">
-                    {Math.min(progress, bounty.amount)} / {bounty.amount} · {bounty.rewardGold} gold
-                    {bounty.firstPlaceBonusGold > 0
-                      ? ` (+${bounty.firstPlaceBonusGold} first)`
-                      : ''}
-                  </p>
-                  {first && (
-                    <p className="muted tiny">First completer: {first.username}</p>
+                  <strong>{row.title}</strong>
+                  <p className="muted tiny">{row.description}</p>
+                  <p className="muted tiny">{row.progressLine}</p>
+                  {row.firstCompleterLine && (
+                    <p className="muted tiny">{row.firstCompleterLine}</p>
                   )}
                 </div>
                 <button
                   type="button"
                   className="btn primary"
-                  disabled={!signedIn || !ready || selfClaimed}
-                  onClick={() => handleClaim(bounty.id)}
+                  disabled={!row.canTurnIn}
+                  onClick={() => handleClaim(row.bountyId)}
                 >
-                  {selfClaimed ? 'Claimed' : ready ? 'Turn in' : 'In progress'}
+                  {row.actionLabel}
                 </button>
               </li>
             )
@@ -194,19 +190,19 @@ export function CitadelHubPanel({
     )
   }
 
+  const rows = bazaarRows(posts)
+
   return (
     <section className="panel glass-panel shop-panel citadel-hub-panel">
       <div className="activity-panel-head">
         <div>
-          <h2>Grand Bazaar</h2>
-          <p className="muted tiny">
-            Market board for messages, recruitment, and trade notices.
-          </p>
+          <h2>{CITADEL_HUB_TAB_LABELS.bazaar}</h2>
+          <p className="muted tiny">{BAZAAR_BLURB}</p>
         </div>
         <CloseButton onClick={onClose} />
       </div>
       {!signedIn ? (
-        <p className="muted tiny">Sign in to post.</p>
+        <p className="muted tiny">{BAZAAR_SIGN_IN_NOTICE}</p>
       ) : (
         <div className="citadel-bazaar-compose">
           <label className="field-label">
@@ -216,9 +212,11 @@ export function CitadelHubPanel({
               value={bazaarKind}
               onChange={(event) => setBazaarKind(event.target.value as BazaarPostKind)}
             >
-              <option value="message">Message</option>
-              <option value="recruit">Recruit</option>
-              <option value="trade">Trade</option>
+              {bazaarKindOptions().map((option) => (
+                <option key={option.kind} value={option.kind}>
+                  {option.label}
+                </option>
+              ))}
             </select>
           </label>
           <label className="field-label">
@@ -226,8 +224,8 @@ export function CitadelHubPanel({
             <input
               className="text-input"
               value={bazaarBody}
-              maxLength={240}
-              placeholder="Write a short notice…"
+              maxLength={BAZAAR_BODY_MAX_LENGTH}
+              placeholder={BAZAAR_PLACEHOLDER}
               onChange={(event) => setBazaarBody(event.target.value)}
             />
           </label>
@@ -244,21 +242,19 @@ export function CitadelHubPanel({
         </div>
       )}
       <ul className="interaction-list citadel-bazaar-list">
-        {posts.length === 0 && (
+        {rows.length === 0 && (
           <li>
             <div>
-              <strong>Quiet for now</strong>
-              <p className="muted tiny">Be the first to post.</p>
+              <strong>{BAZAAR_EMPTY_HEADING}</strong>
+              <p className="muted tiny">{BAZAAR_EMPTY_BODY}</p>
             </div>
           </li>
         )}
-        {[...posts].reverse().map((post) => (
-          <li key={post.id}>
+        {rows.map((row) => (
+          <li key={row.postId}>
             <div>
-              <strong>
-                {post.username} · {post.kind}
-              </strong>
-              <p className="muted tiny">{post.body}</p>
+              <strong>{row.heading}</strong>
+              <p className="muted tiny">{row.body}</p>
             </div>
           </li>
         ))}

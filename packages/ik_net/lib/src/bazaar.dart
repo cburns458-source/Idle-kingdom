@@ -51,3 +51,61 @@ class BazaarPost {
     'createdAt': createdAt,
   };
 }
+
+const String bazaarBlurb = 'Market board for messages, recruitment, and trade notices.';
+const String bazaarSignInNotice = 'Sign in to post.';
+const String bazaarPlaceholder = 'Write a short notice…';
+
+/// As long as a post can be, matching what the backend accepts.
+const int bazaarBodyMaxLength = 240;
+
+class BazaarKindOption {
+  const BazaarKindOption({required this.kind, required this.label});
+
+  final BazaarPostKind kind;
+  final String label;
+
+  Map<String, Object?> toJson() => <String, Object?>{'kind': kind, 'label': label};
+}
+
+List<BazaarKindOption> bazaarKindOptions() => const <BazaarKindOption>[
+  BazaarKindOption(kind: bazaarPostMessage, label: 'Message'),
+  BazaarKindOption(kind: bazaarPostRecruit, label: 'Recruit'),
+  BazaarKindOption(kind: bazaarPostTrade, label: 'Trade'),
+];
+
+/// One notice on the board.
+class BazaarRowView {
+  const BazaarRowView({required this.postId, required this.heading, required this.body});
+
+  final String postId;
+
+  /// `Rowan · trade`.
+  final String heading;
+  final String body;
+
+  Map<String, Object?> toJson() => <String, Object?>{
+    'postId': postId,
+    'heading': heading,
+    'body': body,
+  };
+}
+
+/// The board newest first.
+///
+/// The backend hands posts back oldest first, which is the order a chat log
+/// wants; a notice board reads the other way round.
+List<BazaarRowView> bazaarRows(List<BazaarPost> posts) => posts.reversed
+    .map(
+      (post) => BazaarRowView(
+        postId: post.id,
+        heading: '${post.username} · ${post.kind}',
+        body: post.body,
+      ),
+    )
+    .toList();
+
+const String bazaarEmptyHeading = 'Quiet for now';
+const String bazaarEmptyBody = 'Be the first to post.';
+
+const String bazaarPostedNotice = 'Posted to the Grand Bazaar.';

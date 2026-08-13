@@ -1,3 +1,4 @@
+import { CITADEL_MARKET_ID, CITADEL_PLAZA_ID } from '../world/constants'
 import { CITADEL_CHAT_LOCATION_ID, CITADEL_LOCATION_ID, chatChannelKey } from './types'
 import { listPeersAtLocation } from './presence'
 import type { ActivityPresence } from './types'
@@ -17,6 +18,31 @@ export function citadelLocalChannelKey(): string {
 
 export function listCitadelVisitors(): ActivityPresence[] {
   return listPeersAtLocation(CITADEL_LOCATION_ID, true)
+}
+
+/** The two boards the Citadel keeps, each opened the way a shop is. */
+export type CitadelHubTab = 'bounties' | 'bazaar'
+
+export const CITADEL_HUB_TAB_LABELS: Record<CitadelHubTab, string> = {
+  bounties: 'Hourly Bounties',
+  bazaar: 'Grand Bazaar',
+}
+
+/**
+ * Which boards stand at [locationId].
+ *
+ * The Plaza holds the notice board and the Market District holds the Bazaar, so
+ * each district has its own reason to be walked to. Anywhere else has neither.
+ */
+export function citadelHubTabsFor(locationId: string): CitadelHubTab[] {
+  if (locationId === CITADEL_PLAZA_ID || locationId === CITADEL_LOCATION_ID) return ['bounties']
+  if (locationId === CITADEL_MARKET_ID) return ['bazaar']
+  return []
+}
+
+/** The heading above those links, naming the district rather than the boards. */
+export function citadelHubTitleFor(locationId: string): string {
+  return locationId === CITADEL_MARKET_ID ? 'Market District' : 'Citadel Plaza'
 }
 
 export interface CitadelHubSummary {

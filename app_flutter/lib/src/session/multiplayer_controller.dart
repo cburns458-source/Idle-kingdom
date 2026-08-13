@@ -51,6 +51,8 @@ class MultiplayerController extends ChangeNotifier {
   List<ActivityPresence> _peers = const <ActivityPresence>[];
   List<ActivityPresence> _citadelVisitors = const <ActivityPresence>[];
   List<ChatMessage> _messages = const <ChatMessage>[];
+  List<BountyClaimRecord> _bountyClaims = const <BountyClaimRecord>[];
+  List<BazaarPost> _bazaarPosts = const <BazaarPost>[];
   ChatTab _chatTab = ChatTab.global;
   int _unreadDms = 0;
   String? _notice;
@@ -75,6 +77,10 @@ class MultiplayerController extends ChangeNotifier {
   List<ActivityPresence> get peers => _peers;
   List<ActivityPresence> get citadelVisitors => _citadelVisitors;
   List<ChatMessage> get messages => _messages;
+
+  /// Who claimed each of this hour's bounties first, as far as the last read saw.
+  List<BountyClaimRecord> get bountyClaims => _bountyClaims;
+  List<BazaarPost> get bazaarPosts => _bazaarPosts;
   ChatTab get chatTab => _chatTab;
   int get unreadDms => _unreadDms;
 
@@ -152,6 +158,8 @@ class MultiplayerController extends ChangeNotifier {
     _peers = const <ActivityPresence>[];
     _citadelVisitors = const <ActivityPresence>[];
     _messages = const <ChatMessage>[];
+    _bountyClaims = const <BountyClaimRecord>[];
+    _bazaarPosts = const <BazaarPost>[];
     _unreadDms = 0;
   }
 
@@ -389,6 +397,50 @@ class MultiplayerController extends ChangeNotifier {
       if (!ranks.ok) return ranks.reason;
       await refresh(save);
       return 'Guild settings saved.';
+    });
+  }
+
+  // --- Citadel boards -------------------------------------------------------
+
+  /// Reads the hour's first turn-ins, so the board can name who beat the player.
+  Future<void> refreshBountyClaims(String hourKey) async {
+    _bountyClaims = isSignedIn
+        ? await service.bountyClaims(hourKey)
+        : const <BountyClaimRecord>[];
+    notifyListeners();
+  }
+
+  /// Turns [bounty] in, handing the paid save to [onPaid] to commit.
+  Future<void> turnIn(
+    BountyDefinition bounty,
+    PlayerSave save,
+    num nowMs,
+    void Function(PlayerSave save) onPaid,
+  ) {
+    return run(() async {
+      final result = await turnInBounty(service, db, save, bounty, nowMs);
+      if (!result.ok) {
+        await refreshBountyClaims(hourlyBountyBoard(nowMs).hourKey);
+        return result.reason;
+      }
+      onPaid(result.save!);
+      await refreshBountyClaims(result.claim!.hourKey);
+      return bountyClaimedNotice(result.goldGained!, result.firstCompleter!);
+    });
+  }
+
+  Future<void> refreshBazaar() async {
+    _bazaarPosts = isSignedIn ? await service.bazaarPosts() : const <BazaarPost>[];
+    notifyListeners();
+  }
+
+  /// Posts to the Bazaar and shows the board again, or says why it was refused.
+  Future<void> postToBazaar(BazaarPostKind kind, String body) {
+    return run(() async {
+      final result = await service.postBazaar(kind, body);
+      if (!result.ok) return result.reason;
+      await refreshBazaar();
+      return bazaarPostedNotice;
     });
   }
 

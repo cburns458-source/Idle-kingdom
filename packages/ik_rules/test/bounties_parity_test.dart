@@ -117,4 +117,43 @@ void main() {
       });
     }
   });
+
+  group('bounty board view parity', () {
+    for (final fixture in loadParityFixtures('bounties/views')) {
+      test(fixture.name, () {
+        final nowMs = fixture.inputField<num>('nowMs');
+        final board = hourlyBountyBoard(nowMs);
+        final save = saveOf(fixture);
+        final partial = saveOf(fixture, 'partial');
+        final fresh = saveOf(fixture, 'fresh');
+        final claims = fixture
+            .inputField<List<Object?>>('claims')
+            .map((value) => BountyClaimRecord.fromJson(asJsonMap(value)))
+            .toList();
+        final labels = fixture
+            .inputField<List<Object?>>('remainingLabels')
+            .map((value) => value! as String)
+            .toList();
+        List<Object?> rowsJson(List<BountyRowView> rows) =>
+            rows.map((row) => row.toJson()).toList();
+        expect(
+          checkParity(fixture, {
+            'rows': rowsJson(bountyRows(save, board, claims, true, nowMs)),
+            'signedOutRows': rowsJson(bountyRows(save, board, claims, false, nowMs)),
+            'partialRows': rowsJson(bountyRows(partial, board, claims, true, nowMs)),
+            'freshRows': rowsJson(
+              bountyRows(fresh, board, const <BountyClaimRecord>[], true, nowMs),
+            ),
+            'rotationLines': labels.map(bountyRotationLine).toList(),
+            'claimedNotices': <String>[
+              bountyClaimedNotice(180, true),
+              bountyClaimedNotice(120, false),
+            ],
+            'signInNotice': bountySignInNotice,
+          }),
+          isNull,
+        );
+      });
+    }
+  });
 }

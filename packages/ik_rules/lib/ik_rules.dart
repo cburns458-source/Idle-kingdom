@@ -25,6 +25,7 @@ export 'src/bounties/complete.dart';
 export 'src/bounties/progress.dart';
 export 'src/bounties/rotation.dart';
 export 'src/bounties/types.dart';
+export 'src/bounties/views.dart';
 export 'src/combat/engine.dart';
 export 'src/combat/food.dart';
 export 'src/combat/stats.dart';

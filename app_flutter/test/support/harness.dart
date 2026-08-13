@@ -74,7 +74,15 @@ Future<void> pumpShell(
   WidgetTester tester,
   GameController controller, {
   MultiplayerController? multiplayer,
+  Size? size,
 }) async {
+  // The location screen is a lazy list, so a test that reaches for something far
+  // down it needs a window tall enough to have built that far.
+  if (size != null) {
+    tester.view.physicalSize = size;
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+  }
   await tester.pumpWidget(
     MaterialApp(
       home: AppShell(

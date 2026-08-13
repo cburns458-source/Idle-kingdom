@@ -15,7 +15,7 @@ import { arriveFromTravel, planTravel, type TravelArrival } from './game/session
 import type { SessionEvent } from './game/session/events'
 import { loadOrCreateSave, writeSave } from './game/save/saveStore'
 import type { PlayerSave } from './game/save/types'
-import { CITADEL_MAP_ID, CITADEL_MARKET_ID, CITADEL_PLAZA_ID, MAIN_MAP_ID } from './game/world/constants'
+import { CITADEL_MAP_ID, MAIN_MAP_ID } from './game/world/constants'
 import { claimLocationSearch } from './game/world/locationSearch'
 import {
   enterSubMapLabel,
@@ -56,9 +56,13 @@ import { CombatPanel } from './ui/CombatPanel'
 import { ChatDrawer } from './ui/ChatDrawer'
 import { AccountPanel } from './ui/AccountPanel'
 import { InventoryView } from './ui/InventoryView'
-import { CitadelHubPanel, type CitadelHubTab } from './ui/CitadelHubPanel'
+import { CitadelHubPanel } from './ui/CitadelHubPanel'
 import { LocationView } from './ui/LocationView'
-import { CITADEL_LOCATION_ID } from './game/multiplayer/types'
+import {
+  citadelHubTabsFor,
+  citadelHubTitleFor,
+  type CitadelHubTab,
+} from './game/multiplayer/citadel'
 import { LogView } from './ui/LogView'
 import { SocialView } from './ui/SocialView'
 import { getSession } from './game/multiplayer/auth'
@@ -740,30 +744,15 @@ export default function App() {
                 setActiveCitadelHub(null)
                 setActiveNpcId(npcId)
               }}
-              onOpenCitadelHub={
-                save.currentLocationId === CITADEL_PLAZA_ID ||
-                save.currentLocationId === CITADEL_MARKET_ID ||
-                save.currentLocationId === CITADEL_LOCATION_ID
-                  ? (tab) => {
-                      setSpecialStation(null)
-                      setProductionPickerActivityId(null)
-                      setActiveShopId(null)
-                      setActiveNpcId(null)
-                      setActiveCitadelHub(tab)
-                    }
-                  : undefined
-              }
-              citadelHubTabs={
-                save.currentLocationId === CITADEL_PLAZA_ID ||
-                save.currentLocationId === CITADEL_LOCATION_ID
-                  ? ['bounties']
-                  : save.currentLocationId === CITADEL_MARKET_ID
-                    ? ['bazaar']
-                    : []
-              }
-              citadelHubTitle={
-                save.currentLocationId === CITADEL_MARKET_ID ? 'Market District' : 'Citadel Plaza'
-              }
+              onOpenCitadelHub={(tab) => {
+                setSpecialStation(null)
+                setProductionPickerActivityId(null)
+                setActiveShopId(null)
+                setActiveNpcId(null)
+                setActiveCitadelHub(tab)
+              }}
+              citadelHubTabs={citadelHubTabsFor(save.currentLocationId)}
+              citadelHubTitle={citadelHubTitleFor(save.currentLocationId)}
               onOpenMap={() => {
                 setBrowseMapId(MAIN_MAP_ID)
                 setSelectedLocationId(save.currentLocationId)
