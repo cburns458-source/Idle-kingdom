@@ -49,6 +49,7 @@ class GameController extends ChangeNotifier {
   TravelInFlight? _travel;
   double _travelProgress = 0;
   UnattendedResult? _awaySummary;
+  CosmeticUnlockNotice? _cosmeticUnlock;
 
   GameDatabase get db => database.launch;
   DatabaseIndexes get indexes => database.launchIndexes;
@@ -62,6 +63,9 @@ class GameController extends ChangeNotifier {
 
   /// The catch-up from the last boot, until the player dismisses it.
   UnattendedResult? get awaySummary => _awaySummary;
+
+  /// A cosmetic that was just unlocked and has not been shown off yet.
+  CosmeticUnlockNotice? get cosmeticUnlock => _cosmeticUnlock;
 
   double get actionProgress => session.actionProgress.toDouble();
   num get deathPauseRemainingMs => session.deathPauseRemaining;
@@ -86,6 +90,22 @@ class GameController extends ChangeNotifier {
 
   void dismissAwaySummary() {
     _awaySummary = null;
+    notifyListeners();
+  }
+
+  /// Queues the unlock popup for the first of [grants].
+  ///
+  /// One purchase can unlock several cosmetics, and popups stacked over each
+  /// other read worse than one popup and a wardrobe holding the rest.
+  void noteCosmeticUnlocks(List<ShopCosmeticGrant> grants) {
+    if (grants.isEmpty) return;
+    final grant = grants.first;
+    _cosmeticUnlock = cosmeticUnlockNotice(db, grant.cosmeticId, grant.isFirstEver);
+    notifyListeners();
+  }
+
+  void dismissCosmeticUnlock() {
+    _cosmeticUnlock = null;
     notifyListeners();
   }
 
@@ -217,13 +237,14 @@ class GameController extends ChangeNotifier {
     return true;
   }
 
-  /// Names a new character and grants the chosen race's starting kit.
+  /// Names a new character, gives them a look, and grants their race's kit.
   ///
   /// Returns the reason it was refused, or null on success.
-  String? createCharacter(String name, String raceId) {
+  String? createCharacter(String name, String raceId, {PlayerAppearance? appearance}) {
     final cleaned = normalizeCharacterName(name);
     if (cleaned == null) return 'Enter a name to continue.';
-    final assigned = assignRace(db, save.copyWith(characterName: cleaned), raceId);
+    final named = save.copyWith(characterName: cleaned, appearance: appearance);
+    final assigned = assignRace(db, named, raceId);
     if (!assigned.ok) return assigned.reason;
     session.apply(assigned.save!);
     notifyListeners();

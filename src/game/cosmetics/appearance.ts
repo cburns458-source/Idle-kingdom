@@ -80,6 +80,20 @@ export function defaultAppearance(db: GameDatabase): PlayerAppearance {
   return result
 }
 
+/**
+ * One category swapped out, without a save to put it in.
+ *
+ * Unvalidated on purpose: character creation drives this from the sliders,
+ * which only offer options the tables list.
+ */
+export function withAppearanceOption(
+  appearance: PlayerAppearance,
+  category: AppearanceCategory,
+  optionId: string,
+): PlayerAppearance {
+  return { ...appearance, [category]: optionId }
+}
+
 /** Freely re-selectable at any time (skin tone, hairstyle, etc. carry no gameplay effect). */
 export function setAppearanceOption(
   db: GameDatabase,
@@ -88,8 +102,5 @@ export function setAppearanceOption(
   optionId: string,
 ): PlayerSave | null {
   if (!isValidAppearanceOption(db, category, optionId)) return null
-  return {
-    ...save,
-    appearance: { ...save.appearance, [category]: optionId },
-  }
+  return { ...save, appearance: withAppearanceOption(save.appearance, category, optionId) }
 }

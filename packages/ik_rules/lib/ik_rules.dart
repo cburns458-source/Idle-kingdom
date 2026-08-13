@@ -31,6 +31,7 @@ export 'src/combat/stats.dart';
 export 'src/config.dart';
 export 'src/cosmetics/appearance.dart';
 export 'src/cosmetics/cosmetics.dart';
+export 'src/cosmetics/wardrobe.dart';
 export 'src/critters/critters.dart';
 export 'src/equipment/auto_equip.dart';
 export 'src/equipment/loadout.dart';

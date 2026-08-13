@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { withAppearanceOption } from '../game/cosmetics/appearance'
 import type { GameDatabase } from '../game/data/types'
 import { races } from '../game/races/races'
 import type { PlayerAppearance } from '../game/save/types'
@@ -75,7 +76,7 @@ export function NewCharacterFlow({ db, initialAppearance, onComplete }: NewChara
         db={db}
         value={appearance}
         onSelect={(category, optionId) =>
-          setAppearance((current) => ({ ...current, [category]: optionId }))
+          setAppearance((current) => withAppearanceOption(current, category, optionId))
         }
       />
       <div className="button-row">

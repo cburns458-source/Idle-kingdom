@@ -10,7 +10,14 @@ import {
   defaultAppearance,
   isValidAppearanceOption,
   setAppearanceOption,
+  withAppearanceOption,
 } from '../../game/cosmetics/appearance'
+import {
+  appearanceSliders,
+  cosmeticUnlockNotice,
+  wardrobeSlotTabs,
+  wardrobeSlotView,
+} from '../../game/cosmetics/wardrobe'
 import {
   activeSpawnAtLocation,
   applyActivityTimeTowardCritters,
@@ -30,7 +37,15 @@ import { asJson, baseSave, fullBagSave, gearedSave, richSave } from './saveFixtu
 
 const NOW_MS = Date.parse('2026-08-12T21:00:00.000Z')
 
-type SaveKind = 'base' | 'rich' | 'geared' | 'collector' | 'deliverer' | 'full-bag'
+type SaveKind =
+  | 'base'
+  | 'bare'
+  | 'stale-look'
+  | 'rich'
+  | 'geared'
+  | 'collector'
+  | 'deliverer'
+  | 'full-bag'
 
 /** Critters already banked and one waiting at the Farm. */
 function collectorSave(): PlayerSave {
@@ -76,6 +91,16 @@ function delivererSave(): PlayerSave {
 function saveFor(kind: SaveKind): PlayerSave {
   const db = contentDatabase()
   if (kind === 'base') return baseSave(db)
+  // Nothing unlocked and nothing worn, which is what the wardrobe's empty state reads.
+  if (kind === 'bare') return { ...baseSave(db), cosmetics: { unlocked: [], equipped: {} } }
+  // Appearance ids the tables no longer list, so the sliders must fall back.
+  if (kind === 'stale-look') {
+    const base = baseSave(db)
+    return {
+      ...base,
+      appearance: { ...base.appearance, hairstyle: 'APR-9999', genderPresentation: 'APR-8888' },
+    }
+  }
   if (kind === 'rich') return richSave(db)
   if (kind === 'geared') return gearedSave(db)
   if (kind === 'collector') return collectorSave()
@@ -90,6 +115,8 @@ function withSave(kind: SaveKind, extra: Record<string, JsonValue> = {}): JsonVa
 const CRITTER_LOCATIONS = ['LOC-0001', 'LOC-0004', 'LOC-0011', 'LOC-0018', 'LOC-0002']
 const CRITTER_IDS = ['CRT-0001', 'CRT-0004', 'CRT-9999']
 const APPEARANCE_OPTIONS = ['APR-0001', 'APR-0004', 'APR-0007', 'APR-0017', 'APR-9999']
+const WARDROBE_SLOTS = ['CSLOT-0001', 'CSLOT-0002', 'CSLOT-9999']
+const WARDROBE_COSMETICS = ['COS-0001', 'COS-9999']
 
 /** Elapsed spans in hours, so the roll count and the kept remainder both vary. */
 const CRITTER_SPANS = [0, -1, 1_000, CRITTER_HOUR_MS, CRITTER_HOUR_MS * 5 + 500]
@@ -241,11 +268,28 @@ export const metaScenarios: ParityScenario[] = [
               category,
               optionId,
               appearance: next ? (next.appearance as unknown as JsonValue) : null,
+              // The unvalidated setter creation uses, which takes anything.
+              direct: withAppearanceOption(save.appearance, category, optionId),
             }
           }),
         ),
       } as unknown as JsonValue
     },
+  ),
+
+  ...(['base', 'bare', 'stale-look'] as const).map((kind) =>
+    scenario('cosmetics/wardrobe-view', kind, withSave(kind, { slotIds: WARDROBE_SLOTS }), () => {
+      const db = contentDatabase()
+      const save = saveFor(kind)
+      return {
+        tabs: wardrobeSlotTabs(db),
+        slots: WARDROBE_SLOTS.map((slotId) => wardrobeSlotView(db, save, slotId)),
+        sliders: appearanceSliders(db, save.appearance),
+        notices: WARDROBE_COSMETICS.flatMap((cosmeticId) =>
+          [true, false].map((isFirstEver) => cosmeticUnlockNotice(db, cosmeticId, isFirstEver)),
+        ),
+      } as unknown as JsonValue
+    }),
   ),
 
   ...(['base', 'rich', 'geared', 'collector'] as const).map((kind) =>

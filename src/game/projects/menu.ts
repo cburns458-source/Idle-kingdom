@@ -3,7 +3,7 @@ import type { GameDatabase } from '../data/types'
 import { hasProjectKnowledge } from '../npcs/knowledge'
 import { inventoryCount } from '../production/recipes'
 import type { PlayerSave } from '../save/types'
-import { isSpellItem, spellEffectEnchantmentId, spellTooltipLines } from '../spells/spells'
+import { isSpellItem, spellTooltipLines } from '../spells/spells'
 import { eligibleEnchantmentTargets, type EnchantTargetOption } from './enchantments'
 import type { ProjectCompleteResult } from './engine'
 import {

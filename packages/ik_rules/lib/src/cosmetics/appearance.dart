@@ -84,6 +84,25 @@ String appearanceSelection(PlayerAppearance appearance, AppearanceCategory categ
   };
 }
 
+/// One category swapped out, without a save to put it in.
+///
+/// Unvalidated on purpose: character creation drives this from the sliders,
+/// which only offer options the tables list.
+PlayerAppearance withAppearanceOption(
+  PlayerAppearance appearance,
+  AppearanceCategory category,
+  String optionId,
+) {
+  return switch (category) {
+    AppearanceCategory.skinTone => appearance.copyWith(skinTone: optionId),
+    AppearanceCategory.hairstyle => appearance.copyWith(hairstyle: optionId),
+    AppearanceCategory.hairColor => appearance.copyWith(hairColor: optionId),
+    AppearanceCategory.expression => appearance.copyWith(expression: optionId),
+    AppearanceCategory.beard => appearance.copyWith(beard: optionId),
+    AppearanceCategory.genderPresentation => appearance.copyWith(genderPresentation: optionId),
+  };
+}
+
 /// Re-selectable freely: appearance carries no gameplay effect. Null when the
 /// option does not belong to the category.
 PlayerSave? setAppearanceOption(
@@ -93,13 +112,5 @@ PlayerSave? setAppearanceOption(
   String optionId,
 ) {
   if (!isValidAppearanceOption(db, category, optionId)) return null;
-  final appearance = switch (category) {
-    AppearanceCategory.skinTone => save.appearance.copyWith(skinTone: optionId),
-    AppearanceCategory.hairstyle => save.appearance.copyWith(hairstyle: optionId),
-    AppearanceCategory.hairColor => save.appearance.copyWith(hairColor: optionId),
-    AppearanceCategory.expression => save.appearance.copyWith(expression: optionId),
-    AppearanceCategory.beard => save.appearance.copyWith(beard: optionId),
-    AppearanceCategory.genderPresentation => save.appearance.copyWith(genderPresentation: optionId),
-  };
-  return save.copyWith(appearance: appearance);
+  return save.copyWith(appearance: withAppearanceOption(save.appearance, category, optionId));
 }

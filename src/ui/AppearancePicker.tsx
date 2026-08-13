@@ -1,9 +1,7 @@
 import type { CSSProperties } from 'react'
-import { appearanceCategoryLabel, appearanceOptions } from '../game/cosmetics/appearance'
+import { appearanceSliders, type AppearanceSlider } from '../game/cosmetics/wardrobe'
 import type { GameDatabase } from '../game/data/types'
-import { APPEARANCE_CATEGORIES, type PlayerAppearance } from '../game/save/types'
-
-type AppearanceCategory = (typeof APPEARANCE_CATEGORIES)[number]
+import type { AppearanceCategory, PlayerAppearance } from '../game/save/types'
 
 interface AppearancePickerProps {
   db: GameDatabase
@@ -15,13 +13,11 @@ interface AppearancePickerProps {
 export function AppearancePicker({ db, value, onSelect }: AppearancePickerProps) {
   return (
     <div className="appearance-picker">
-      {APPEARANCE_CATEGORIES.map((category) => (
-        <AppearanceSlider
-          key={category}
-          db={db}
-          category={category}
-          selectedId={value[category]}
-          onSelect={(optionId) => onSelect(category, optionId)}
+      {appearanceSliders(db, value).map((slider) => (
+        <AppearanceSliderRow
+          key={slider.category}
+          slider={slider}
+          onSelect={(optionId) => onSelect(slider.category, optionId)}
         />
       ))}
     </div>
@@ -29,28 +25,20 @@ export function AppearancePicker({ db, value, onSelect }: AppearancePickerProps)
 }
 
 /** Bare slider with discrete stops — no value text or swatch, just drag/click to a stop. */
-function AppearanceSlider({
-  db,
-  category,
-  selectedId,
+function AppearanceSliderRow({
+  slider,
   onSelect,
 }: {
-  db: GameDatabase
-  category: AppearanceCategory
-  selectedId: string
+  slider: AppearanceSlider
   onSelect: (optionId: string) => void
 }) {
-  const options = appearanceOptions(db, category)
-  if (options.length === 0) return null
-
-  const maxIndex = options.length - 1
-  const index = Math.max(0, options.findIndex((option) => option['Appearance Option ID'] === selectedId))
-  const label = appearanceCategoryLabel(category)
+  const maxIndex = slider.optionIds.length - 1
+  const index = slider.selectedIndex
   const fillPercent = maxIndex > 0 ? (index / maxIndex) * 100 : 0
 
   return (
     <div className="appearance-picker-row">
-      <p className="field-label">{label}</p>
+      <p className="field-label">{slider.label}</p>
       <div className="appearance-slider-track-wrap">
         <input
           type="range"
@@ -62,15 +50,15 @@ function AppearanceSlider({
           disabled={maxIndex <= 0}
           style={{ '--slider-fill': `${fillPercent}%` } as CSSProperties}
           onChange={(event) => {
-            const next = options[Number(event.target.value)]
-            if (next) onSelect(next['Appearance Option ID'])
+            const next = slider.optionIds[Number(event.target.value)]
+            if (next) onSelect(next)
           }}
-          aria-label={label}
+          aria-label={slider.label}
         />
         <div className="appearance-slider-ticks" aria-hidden>
-          {options.map((option, tickIndex) => (
+          {slider.optionIds.map((optionId, tickIndex) => (
             <span
-              key={option['Appearance Option ID']}
+              key={optionId}
               className={`appearance-slider-tick${tickIndex <= index ? ' filled' : ''}`}
             />
           ))}

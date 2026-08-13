@@ -1,13 +1,8 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { setAppearanceOption } from '../game/cosmetics/appearance'
-import {
-  cosmeticSlots,
-  cosmeticsForSlot,
-  equipCosmetic,
-  equippedCosmeticId,
-  isCosmeticUnlocked,
-} from '../game/cosmetics/cosmetics'
+import { equipCosmetic } from '../game/cosmetics/cosmetics'
+import { wardrobeSlotTabs, wardrobeSlotView } from '../game/cosmetics/wardrobe'
 import type { GameDatabase } from '../game/data/types'
 import { raceDisplayName } from '../game/races/races'
 import type { PlayerSave } from '../game/save/types'
@@ -25,8 +20,8 @@ interface WardrobeModalProps {
 }
 
 export function WardrobeModal({ db, save, open, onClose, onChangeSave }: WardrobeModalProps) {
-  const slots = cosmeticSlots(db)
-  const [activeSlotId, setActiveSlotId] = useState(slots[0]?.['Cosmetic Slot ID'] ?? '')
+  const tabs = wardrobeSlotTabs(db)
+  const [activeSlotId, setActiveSlotId] = useState(tabs[0]?.slotId ?? '')
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -43,15 +38,12 @@ export function WardrobeModal({ db, save, open, onClose, onChangeSave }: Wardrob
 
   if (!open) return null
 
-  const activeSlot = slots.find((row) => row['Cosmetic Slot ID'] === activeSlotId) ?? slots[0]
-  const activeSlotIdResolved = activeSlot?.['Cosmetic Slot ID'] ?? ''
-  const owned = cosmeticsForSlot(db, activeSlotIdResolved).filter((row) =>
-    isCosmeticUnlocked(save, row['Cosmetic ID']),
-  )
-  const equippedId = equippedCosmeticId(save, activeSlotIdResolved)
+  const slot = wardrobeSlotView(db, save, activeSlotId)
+  const raceName = raceDisplayName(db, save.raceId)
 
   function equip(cosmeticId: string | null) {
-    const result = equipCosmetic(db, save, activeSlotIdResolved, cosmeticId)
+    if (!slot) return
+    const result = equipCosmetic(db, save, slot.slotId, cosmeticId)
     if (!result.ok) {
       setError(result.reason)
       return
@@ -84,9 +76,7 @@ export function WardrobeModal({ db, save, open, onClose, onChangeSave }: Wardrob
               alt=""
               className="wardrobe-portrait-image"
             />
-            {raceDisplayName(db, save.raceId) && (
-              <p className="wardrobe-race muted tiny">{raceDisplayName(db, save.raceId)}</p>
-            )}
+            {raceName && <p className="wardrobe-race muted tiny">{raceName}</p>}
           </div>
           <AppearancePicker
             db={db}
@@ -100,56 +90,47 @@ export function WardrobeModal({ db, save, open, onClose, onChangeSave }: Wardrob
 
         <div className="wardrobe-bottom">
           <div className="wardrobe-tabs" role="tablist" aria-label="Cosmetic slots">
-            {slots.map((slot) => {
-              const slotId = slot['Cosmetic Slot ID']
-              return (
-                <button
-                  key={slotId}
-                  type="button"
-                  role="tab"
-                  aria-selected={slotId === activeSlotIdResolved}
-                  className={`wardrobe-tab${slotId === activeSlotIdResolved ? ' active' : ''}`}
-                  onClick={() => {
-                    setActiveSlotId(slotId)
-                    setError(null)
-                  }}
-                >
-                  {slot['Display Name']}
-                </button>
-              )
-            })}
+            {tabs.map((tab) => (
+              <button
+                key={tab.slotId}
+                type="button"
+                role="tab"
+                aria-selected={tab.slotId === slot?.slotId}
+                className={`wardrobe-tab${tab.slotId === slot?.slotId ? ' active' : ''}`}
+                onClick={() => {
+                  setActiveSlotId(tab.slotId)
+                  setError(null)
+                }}
+              >
+                {tab.label}
+              </button>
+            ))}
           </div>
 
           <div className="wardrobe-cosmetic-grid" role="list">
             <button
               type="button"
               role="listitem"
-              className={`wardrobe-cosmetic-tile${equippedId == null ? ' selected' : ''}`}
+              className={`wardrobe-cosmetic-tile${slot?.equippedCosmeticId == null ? ' selected' : ''}`}
               onClick={() => equip(null)}
             >
               <span className="wardrobe-cosmetic-none">None</span>
             </button>
-            {owned.map((cosmetic) => {
-              const cosmeticId = cosmetic['Cosmetic ID']
-              const item = db.Items.find((row) => row['Item ID'] === cosmetic['Item ID'])
-              return (
-                <button
-                  key={cosmeticId}
-                  type="button"
-                  role="listitem"
-                  className={`wardrobe-cosmetic-tile${cosmeticId === equippedId ? ' selected' : ''}`}
-                  onClick={() => equip(cosmeticId)}
-                  title={item?.['Display Name'] ?? cosmeticId}
-                >
-                  <ItemIcon item={item} />
-                  <span className="wardrobe-cosmetic-name">{item?.['Display Name'] ?? cosmeticId}</span>
-                </button>
-              )
-            })}
-            {owned.length === 0 && (
-              <p className="muted tiny wardrobe-cosmetic-empty">
-                No {activeSlot?.['Display Name'] ?? 'items'} unlocked yet.
-              </p>
+            {slot?.tiles.map((tile) => (
+              <button
+                key={tile.cosmeticId}
+                type="button"
+                role="listitem"
+                className={`wardrobe-cosmetic-tile${tile.equipped ? ' selected' : ''}`}
+                onClick={() => equip(tile.cosmeticId)}
+                title={tile.name}
+              >
+                <ItemIcon item={db.Items.find((row) => row['Item ID'] === tile.itemId)} />
+                <span className="wardrobe-cosmetic-name">{tile.name}</span>
+              </button>
+            ))}
+            {slot && slot.tiles.length === 0 && (
+              <p className="muted tiny wardrobe-cosmetic-empty">{slot.emptyNote}</p>
             )}
           </div>
           {error && <p className="danger-note">{error}</p>}

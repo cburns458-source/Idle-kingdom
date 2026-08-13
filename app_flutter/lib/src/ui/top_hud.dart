@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ik_rules/ik_rules.dart';
 
+import '../content/asset_paths.dart';
 import '../session/game_controller.dart';
 import '../theme.dart';
 import 'format.dart';
@@ -9,9 +10,12 @@ import 'reward_strip.dart';
 
 /// Name, race, totals, gold, HP, and the reward lines from the last few actions.
 class TopHud extends StatelessWidget {
-  const TopHud({super.key, required this.controller});
+  const TopHud({super.key, required this.controller, required this.onOpenWardrobe});
 
   final GameController controller;
+
+  /// Tapping the portrait opens the wardrobe, as it does in the React client.
+  final VoidCallback onOpenWardrobe;
 
   @override
   Widget build(BuildContext context) {
@@ -19,6 +23,8 @@ class TopHud extends StatelessWidget {
     final maxHp = playerMaxHp(controller.db, save);
     final hpFraction = maxHp <= 0 ? 0.0 : (save.currentHp / maxHp).clamp(0, 1).toDouble();
     final raceName = raceDisplayName(controller.db, save.raceId);
+    // Something to wear and no wardrobe visit yet: worth pointing at.
+    final hint = !save.hasSeenWardrobeIntro && save.cosmetics.unlocked.isNotEmpty;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -31,6 +37,12 @@ class TopHud extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              _AvatarButton(
+                appearance: save.appearance,
+                hint: hint,
+                onTap: onOpenWardrobe,
+              ),
+              const SizedBox(width: 8),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -80,6 +92,44 @@ class TopHud extends StatelessWidget {
             RewardStrip(controller: controller),
           ],
         ],
+      ),
+    );
+  }
+}
+
+/// The framed portrait that opens the wardrobe.
+class _AvatarButton extends StatelessWidget {
+  const _AvatarButton({required this.appearance, required this.hint, required this.onTap});
+
+  final PlayerAppearance appearance;
+
+  /// Rings the frame in gold until the wardrobe has been opened once.
+  final bool hint;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: 'Open wardrobe',
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: hint ? Palette.gold : Palette.edge, width: hint ? 2 : 1),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Image.asset(
+            playerAssetPath(appearance),
+            filterQuality: FilterQuality.none,
+            alignment: Alignment.topCenter,
+            fit: BoxFit.cover,
+          ),
+        ),
       ),
     );
   }

@@ -135,6 +135,7 @@ class _ShopPanelState extends State<ShopPanel> {
       return;
     }
     controller.commitLoadout(result.save!);
+    controller.noteCosmeticUnlocks(result.cosmeticsGranted);
     setState(() {
       _error = null;
       _receipt = result.message;

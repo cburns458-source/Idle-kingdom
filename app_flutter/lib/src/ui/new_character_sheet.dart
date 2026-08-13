@@ -2,13 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:ik_content/ik_content.dart';
 import 'package:ik_rules/ik_rules.dart';
 
+import '../content/asset_paths.dart';
 import '../session/game_controller.dart';
 import '../theme.dart';
+import 'appearance_picker.dart';
 
-/// Name and race, the two things a save cannot be played without.
+/// Name, race, and a starting look.
 ///
-/// Appearance is deliberately left out until the wardrobe is ported; a new save
-/// already carries the default look.
+/// One scrolling sheet rather than the React client's three steps: a phone can
+/// show the portrait, the sliders and the races at once, and the look is
+/// changeable from the wardrobe anyway.
 class NewCharacterSheet extends StatefulWidget {
   const NewCharacterSheet({super.key, required this.controller});
 
@@ -22,11 +25,13 @@ class _NewCharacterSheetState extends State<NewCharacterSheet> {
   final TextEditingController _name = TextEditingController();
   String? _raceId;
   String? _error;
+  late PlayerAppearance _appearance;
 
   @override
   void initState() {
     super.initState();
     _name.text = widget.controller.save.characterName ?? '';
+    _appearance = widget.controller.save.appearance;
   }
 
   @override
@@ -41,7 +46,11 @@ class _NewCharacterSheetState extends State<NewCharacterSheet> {
       setState(() => _error = 'Choose a race to continue.');
       return;
     }
-    final failure = widget.controller.createCharacter(_name.text, raceId);
+    final failure = widget.controller.createCharacter(
+      _name.text,
+      raceId,
+      appearance: _appearance,
+    );
     setState(() => _error = failure);
   }
 
@@ -79,6 +88,28 @@ class _NewCharacterSheetState extends State<NewCharacterSheet> {
               Expanded(
                 child: ListView(
                   children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Image.asset(
+                          playerAssetPath(_appearance),
+                          width: 84,
+                          height: 84,
+                          filterQuality: FilterQuality.none,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: AppearancePicker(
+                            db: widget.controller.db,
+                            appearance: _appearance,
+                            onSelect: (category, optionId) => setState(() {
+                              _appearance = withAppearanceOption(_appearance, category, optionId);
+                            }),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
                     for (final race in races)
                       Padding(
                         padding: const EdgeInsets.only(bottom: 8),

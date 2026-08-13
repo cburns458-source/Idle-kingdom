@@ -192,10 +192,40 @@ void main() {
               'category': category.key,
               'optionId': optionId,
               'appearance': next?.appearance.toJson(),
+              'direct': withAppearanceOption(save.appearance, category, optionId).toJson(),
             });
           }
         }
         expect(checkParity(fixture, {'results': results}), isNull);
+      });
+    }
+  });
+
+  group('wardrobe view parity', () {
+    for (final fixture in loadParityFixtures('cosmetics/wardrobe-view')) {
+      test(fixture.name, () {
+        final db = databaseOf(fixture);
+        final save = saveOf(fixture);
+        expect(
+          checkParity(fixture, {
+            'tabs': wardrobeSlotTabs(db).map((tab) => tab.toJson()).toList(),
+            'slots': _stringList(fixture, 'slotIds')
+                .map((slotId) => wardrobeSlotView(db, save, slotId)?.toJson())
+                .toList(),
+            'sliders': appearanceSliders(
+              db,
+              save.appearance,
+            ).map((slider) => slider.toJson()).toList(),
+            'notices': _wardrobeCosmeticIds
+                .expand(
+                  (cosmeticId) => <bool>[true, false].map(
+                    (isFirstEver) => cosmeticUnlockNotice(db, cosmeticId, isFirstEver)?.toJson(),
+                  ),
+                )
+                .toList(),
+          }),
+          isNull,
+        );
       });
     }
   });
@@ -280,3 +310,5 @@ const List<String> _appearanceOptionIds = <String>[
   'APR-0017',
   'APR-9999',
 ];
+
+const List<String> _wardrobeCosmeticIds = <String>['COS-0001', 'COS-9999'];

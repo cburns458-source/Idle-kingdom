@@ -36,7 +36,7 @@ import { withRecalculatedVitals } from './game/equipment/vitals'
 import { getRecipe, isStandardProductionActivity } from './game/production/recipes'
 import { syncProgressionMeta } from './game/achievements/progress'
 import { spawnCritterAtLocation } from './game/critters/critters'
-import { cosmeticById } from './game/cosmetics/cosmetics'
+import { cosmeticUnlockNotice } from './game/cosmetics/wardrobe'
 import {
   resolveUnattendedProgress,
   stampUnattendedProgressAt,
@@ -1105,15 +1105,16 @@ export default function App() {
 
         {wardrobeUnlockPopup &&
           (() => {
-            const cosmetic = cosmeticById(database.launch, wardrobeUnlockPopup.cosmeticId)
-            const item = cosmetic
-              ? database.launch.Items.find((row) => row['Item ID'] === cosmetic['Item ID'])
-              : undefined
+            const notice = cosmeticUnlockNotice(
+              database.launch,
+              wardrobeUnlockPopup.cosmeticId,
+              wardrobeUnlockPopup.isFirstEver,
+            )
+            if (!notice) return null
             return (
               <WardrobeUnlockPopup
-                cosmeticName={item?.['Display Name'] ?? 'New Cosmetic'}
-                item={item}
-                isFirstEver={wardrobeUnlockPopup.isFirstEver}
+                notice={notice}
+                item={database.launch.Items.find((row) => row['Item ID'] === notice.itemId)}
                 onClose={() => setWardrobeUnlockPopup(null)}
               />
             )

@@ -12,6 +12,7 @@ import 'new_character_sheet.dart';
 import 'skills_view.dart';
 import 'top_hud.dart';
 import 'travel_overlay.dart';
+import 'wardrobe_sheet.dart';
 import 'world_map_view.dart';
 
 enum GameScreen { location, map, skills, inventory }
@@ -38,6 +39,7 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
   GameScreen _screen = GameScreen.location;
   late String _browseMapId = _mapIdForCurrentLocation();
   String? _selectedLocationId;
+  bool _wardrobeOpen = false;
 
   GameController get controller => widget.controller;
 
@@ -76,6 +78,15 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
     });
   }
 
+  /// Opening the wardrobe is also what retires the portrait's hint.
+  void _openWardrobe() {
+    final save = controller.save;
+    if (!save.hasSeenWardrobeIntro) {
+      controller.commit(save.copyWith(hasSeenWardrobeIntro: true));
+    }
+    setState(() => _wardrobeOpen = true);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -109,7 +120,7 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
       children: [
         Column(
           children: [
-            TopHud(controller: controller),
+            TopHud(controller: controller, onOpenWardrobe: _openWardrobe),
             Expanded(child: _buildScreen()),
             BottomNav(
               screen: _screen,
@@ -124,10 +135,21 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
             ),
           ],
         ),
+        if (_wardrobeOpen)
+          WardrobeSheet(
+            controller: controller,
+            onClose: () => setState(() => _wardrobeOpen = false),
+          ),
         if (controller.travel case final journey?)
           TravelOverlay(controller: controller, journey: journey),
         if (controller.awaySummary case final summary?)
           AwaySummarySheet(summary: summary, onDismiss: controller.dismissAwaySummary),
+        if (controller.cosmeticUnlock case final notice?)
+          WardrobeUnlockPopup(
+            notice: notice,
+            item: notice.itemId == null ? null : controller.indexes.itemsById[notice.itemId!],
+            onClose: controller.dismissCosmeticUnlock,
+          ),
         if (save.characterName == null || save.raceId == null)
           NewCharacterSheet(controller: controller),
       ],
