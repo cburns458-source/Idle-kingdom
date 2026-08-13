@@ -350,9 +350,11 @@ class _QuestBlock extends StatelessWidget {
 }
 
 String _progressText(QuestProgressLine line) {
+  if (line.key == 'gold') {
+    return 'Gold: ${formatThousands(line.current)} / ${formatThousands(line.required)}';
+  }
   final current = formatThousands(line.current < line.required ? line.current : line.required);
   final required = formatThousands(line.required);
-  if (line.key == 'gold') return 'Gold: $current / $required';
   if (line.key.startsWith('deliver:')) {
     return 'Progress: $current / $required ${line.label.replaceFirst('Deliver ', '')}';
   }

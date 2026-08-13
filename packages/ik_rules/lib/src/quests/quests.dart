@@ -210,7 +210,7 @@ QuestCompletion completeQuest(GameDatabase db, PlayerSave save, String questId) 
   }
 
   final rewards = <String>[];
-  var pendingSkillXp = 0;
+  num pendingSkillXp = 0;
   final bribed = hasQuestFlag(save, questId, 'choice:bribe');
   final xpSkill = quest['Reward XP Skill ID'];
   final xpAmount = quest['Reward XP Amount'];
