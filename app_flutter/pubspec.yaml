@@ -33,6 +33,11 @@ dependencies:
   flutter:
     sdk: flutter
 
+  # Not used by this client's own widgets. It is declared because the framework's
+  # Cupertino code reaches for these glyphs on Apple platforms, and without the
+  # font a text field's own controls would draw as empty boxes there. Icon
+  # tree-shaking keeps only the glyphs actually referenced.
+  cupertino_icons: ^1.0.9
   flutter_svg: ^2.3.0
   ik_content: ^0.1.0
   ik_net: ^0.1.0
@@ -55,9 +60,10 @@ dev_dependencies:
 flutter:
   uses-material-design: true
 
-  # `content/` is a symlink to the repo's shared content directory, the same one
-  # Vite serves to the React app, so both clients read one copy of the data and
-  # art. Flutter needs every directory listed on its own; they are not recursive.
+  # `content/` is a symlink to the repo's shared content directory, so the client
+  # and the reference tests read one copy of the data and art. Flutter needs every
+  # directory listed on its own; they are not recursive, which is why
+  # `asset_audit_test` reads this list back and checks it covers the tree.
   assets:
     - content/data/game-database.json
     - content/assets/actions/

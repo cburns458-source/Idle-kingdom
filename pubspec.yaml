@@ -1,8 +1,8 @@
 name: idle_kingdoms_workspace
 publish_to: none
 
-# Pub workspace root. The Dart/Flutter client lives alongside the React app
-# during the migration; both consume the same content/ directory.
+# Pub workspace root. The client and the rules packages share one lockfile, and
+# read their content from the same content/ directory the TypeScript rules do.
 environment:
   sdk: ^3.13.0
 

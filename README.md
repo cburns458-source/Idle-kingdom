@@ -1,7 +1,7 @@
-# Idle Kingdoms (Single-Player Demo)
+# Idle Kingdoms
 
 Offline-capable, mobile-first game built from the Game Bible and the compact JSON
-database in `content/`.
+database in `content/`. It plays on its own; signing in adds the social screens.
 
 The game is the Flutter client in `app_flutter/`, over the Dart packages in
 `packages/`. What remains under `src/` is not an app: it is the TypeScript rules
@@ -17,6 +17,7 @@ dart test packages          # Rules, runtime, multiplayer, and parity replay
 cd app_flutter
 flutter test                # Widget tests over a fake clock and in-memory storage
 flutter run -d chrome       # Play it
+flutter build web --release # Ship it
 
 npm install
 npm test                    # The reference rules, and the fixture drift check
