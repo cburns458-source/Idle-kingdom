@@ -299,6 +299,14 @@ void main() {
                 ),
                 'signInPrompts': <String>[signInPrompt, guildSignInPrompt],
                 'symbols': guildEmblemSymbols,
+                'symbolPaths': <String>[...guildEmblemSymbols, 'not-a-symbol']
+                    .map(
+                      (symbol) => <String, Object?>{
+                        'symbol': symbol,
+                        'path': guildEmblemSymbolPath(symbol),
+                      },
+                    )
+                    .toList(),
               }),
               isNull,
             );

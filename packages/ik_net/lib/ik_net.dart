@@ -9,6 +9,7 @@ library;
 export 'src/bazaar.dart';
 export 'src/cloud_save.dart';
 export 'src/config.dart';
+export 'src/emblems.dart';
 export 'src/local_backend.dart';
 export 'src/local_db.dart';
 export 'src/presence.dart';

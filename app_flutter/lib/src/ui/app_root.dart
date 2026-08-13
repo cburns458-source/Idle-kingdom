@@ -1,11 +1,13 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:ik_net/ik_net.dart';
 import 'package:ik_runtime/ik_runtime.dart';
 
 import '../content/database_loader.dart';
 import '../session/game_controller.dart';
-import '../storage/prefs_save_storage.dart';
+import '../session/multiplayer_controller.dart';
+import '../storage/prefs_store.dart';
 import '../theme.dart';
 import 'app_shell.dart';
 
@@ -31,13 +33,21 @@ class _BootGate extends StatefulWidget {
   State<_BootGate> createState() => _BootGateState();
 }
 
-class _BootGateState extends State<_BootGate> {
-  late final Future<GameController> _boot = _bootGame();
-  GameController? _controller;
+/// The game and its optional multiplayer half, both ready to use.
+class _BootedGame {
+  const _BootedGame({required this.game, required this.multiplayer});
 
-  Future<GameController> _bootGame() async {
+  final GameController game;
+  final MultiplayerController multiplayer;
+}
+
+class _BootGateState extends State<_BootGate> {
+  late final Future<_BootedGame> _boot = _bootGame();
+  _BootedGame? _booted;
+
+  Future<_BootedGame> _bootGame() async {
     final database = await loadBundledDatabase();
-    final storage = await PrefsSaveStorage.open();
+    final storage = await PrefsStore.open();
     num clock() => DateTime.now().millisecondsSinceEpoch;
     final session = GameSession(
       db: database.launch,
@@ -46,28 +56,41 @@ class _BootGateState extends State<_BootGate> {
       random: _systemRandom,
     );
     final boot = session.boot();
-    final controller = GameController(database: database, session: session)..adoptBoot(boot);
-    _controller = controller;
-    return controller;
+    final game = GameController(database: database, session: session)..adoptBoot(boot);
+    // Multiplayer runs against the same store the save uses, so a signed-in
+    // player keeps their account across launches without a network call.
+    final multiplayer = MultiplayerController(
+      database: database,
+      service: LocalMultiplayerService(storage: storage),
+      storage: storage,
+      clock: clock,
+    );
+    if (multiplayer.isSignedIn) {
+      await multiplayer.refresh(game.save);
+    }
+    final booted = _BootedGame(game: game, multiplayer: multiplayer);
+    _booted = booted;
+    return booted;
   }
 
   @override
   void dispose() {
-    _controller?.dispose();
+    _booted?.game.dispose();
+    _booted?.multiplayer.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<GameController>(
+    return FutureBuilder<_BootedGame>(
       future: _boot,
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           return _BootMessage(text: 'Could not start the game.\n${snapshot.error}');
         }
-        final controller = snapshot.data;
-        if (controller == null) return const _BootMessage(text: 'Loading the realm…');
-        return AppShell(controller: controller);
+        final booted = snapshot.data;
+        if (booted == null) return const _BootMessage(text: 'Loading the realm…');
+        return AppShell(controller: booted.game, multiplayer: booted.multiplayer);
       },
     );
   }

@@ -47,10 +47,19 @@ class StationOpen extends LocationPanel {
 /// Where the player is standing: the art, what can be done here, and whatever
 /// is currently running or open.
 class LocationView extends StatefulWidget {
-  const LocationView({super.key, required this.controller, required this.onOpenMap});
+  const LocationView({
+    super.key,
+    required this.controller,
+    required this.onOpenMap,
+    this.onOpenNearby,
+  });
 
   final GameController controller;
   final VoidCallback onOpenMap;
+
+  /// Null while the player is offline, which hides the button rather than
+  /// offering a list that would always be empty.
+  final VoidCallback? onOpenNearby;
 
   @override
   State<LocationView> createState() => _LocationViewState();
@@ -167,7 +176,15 @@ class _LocationViewState extends State<LocationView> {
             ..._shops(locationId),
             ..._searches(locationId),
             const SizedBox(height: 8),
-            OutlinedButton(onPressed: widget.onOpenMap, child: const Text('Open the map')),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                OutlinedButton(onPressed: widget.onOpenMap, child: const Text('Open the map')),
+                if (widget.onOpenNearby case final openNearby?)
+                  OutlinedButton(onPressed: openNearby, child: const Text('Who is here')),
+              ],
+            ),
           ],
         ),
       ],

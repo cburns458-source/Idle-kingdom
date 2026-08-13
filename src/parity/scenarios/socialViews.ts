@@ -1,3 +1,4 @@
+import { guildEmblemSymbolPath } from '../../game/multiplayer/emblems'
 import {
   DEFAULT_GUILD_RANK_LABELS,
   GUILD_EMBLEM_SYMBOLS,
@@ -233,6 +234,11 @@ export const socialViewScenarios: ParityScenario[] = [
       ]),
       signInPrompts: [SIGN_IN_PROMPT, GUILD_SIGN_IN_PROMPT],
       symbols: GUILD_EMBLEM_SYMBOLS,
+      // Both clients draw the banner from these, so a drifted path is a bug.
+      symbolPaths: [...GUILD_EMBLEM_SYMBOLS, 'not-a-symbol'].map((symbol) => ({
+        symbol,
+        path: guildEmblemSymbolPath(symbol),
+      })),
     } as unknown as JsonValue
   }),
 

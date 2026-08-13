@@ -4,8 +4,10 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:idle_kingdoms/src/session/game_controller.dart';
+import 'package:idle_kingdoms/src/session/multiplayer_controller.dart';
 import 'package:idle_kingdoms/src/ui/app_shell.dart';
 import 'package:ik_content/ik_content.dart';
+import 'package:ik_net/ik_net.dart';
 import 'package:ik_rules/ik_rules.dart';
 import 'package:ik_runtime/ik_runtime.dart';
 
@@ -54,9 +56,33 @@ GameController buildController(LoadedDatabase database, {PlayerSave? seed, TestC
   return GameController(database: database, session: session)..adoptBoot(boot);
 }
 
+/// A multiplayer controller over the local backend and an in-memory store, so a
+/// shell test gets the social screens without a network or a signed-in account.
+MultiplayerController buildMultiplayer(LoadedDatabase database, {TestClock? clock}) {
+  final testClock = clock ?? TestClock();
+  final storage = MemorySaveStorage();
+  return MultiplayerController(
+    database: database,
+    service: LocalMultiplayerService(storage: storage),
+    storage: storage,
+    clock: testClock.read,
+  );
+}
+
 /// Pumps the whole shell, which is how a panel is reached the way a player does.
-Future<void> pumpShell(WidgetTester tester, GameController controller) async {
-  await tester.pumpWidget(MaterialApp(home: AppShell(controller: controller)));
+Future<void> pumpShell(
+  WidgetTester tester,
+  GameController controller, {
+  MultiplayerController? multiplayer,
+}) async {
+  await tester.pumpWidget(
+    MaterialApp(
+      home: AppShell(
+        controller: controller,
+        multiplayer: multiplayer ?? buildMultiplayer(controller.database),
+      ),
+    ),
+  );
 }
 
 /// Pumps one panel on its own, for panels a player opens from a location.

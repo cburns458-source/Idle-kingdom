@@ -54,6 +54,14 @@ class BottomNav extends StatelessWidget {
           const SizedBox(width: 6),
           Expanded(
             child: _NavButton(
+              label: 'Social',
+              selected: screen == GameScreen.social,
+              onTap: () => onSelect(GameScreen.social),
+            ),
+          ),
+          const SizedBox(width: 6),
+          Expanded(
+            child: _NavButton(
               label: 'Log',
               selected: screen == GameScreen.log,
               onTap: () => onSelect(GameScreen.log),

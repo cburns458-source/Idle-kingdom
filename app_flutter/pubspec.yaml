@@ -33,7 +33,9 @@ dependencies:
   flutter:
     sdk: flutter
 
+  flutter_svg: ^2.3.0
   ik_content: ^0.1.0
+  ik_net: ^0.1.0
   ik_rules: ^0.1.0
   ik_runtime: ^0.1.0
   shared_preferences: ^2.5.3

@@ -5,6 +5,7 @@ import 'package:ik_runtime/ik_runtime.dart';
 import 'bazaar.dart';
 import 'cloud_save.dart';
 import 'local_backend.dart';
+import 'presence.dart';
 import 'results.dart';
 import 'session_store.dart';
 import 'types.dart';
@@ -99,6 +100,9 @@ abstract interface class MultiplayerService {
     String? activityId, {
     bool excludeSelf = true,
   });
+
+  /// Whoever is standing in the Citadel, which is one crowd across its districts.
+  Future<List<ActivityPresence>> citadelVisitors();
 
   Future<PublicPlayerProfile?> publicProfile(String userId);
 
@@ -419,6 +423,10 @@ class LocalMultiplayerService implements MultiplayerService {
     if (!excludeSelf || current == null) return peers;
     return peers.where((row) => row.userId != current.userId).toList();
   }
+
+  @override
+  Future<List<ActivityPresence>> citadelVisitors() async =>
+      _withoutSelf(_backend.listPresence(locationId: citadelLocationId()), true);
 
   @override
   Future<PublicPlayerProfile?> publicProfile(String userId) async =>

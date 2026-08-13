@@ -3,21 +3,25 @@ import 'package:flutter/scheduler.dart';
 import 'package:ik_rules/ik_rules.dart';
 
 import '../session/game_controller.dart';
+import '../session/multiplayer_controller.dart';
 import '../theme.dart';
 import 'away_summary_sheet.dart';
 import 'bottom_nav.dart';
+import 'chat_sheet.dart';
 import 'critter_overlay.dart';
 import 'inventory_view.dart';
 import 'location_view.dart';
 import 'log_view.dart';
+import 'nearby_panel.dart';
 import 'new_character_sheet.dart';
 import 'skills_view.dart';
+import 'social_view.dart';
 import 'top_hud.dart';
 import 'travel_overlay.dart';
 import 'wardrobe_sheet.dart';
 import 'world_map_view.dart';
 
-enum GameScreen { location, map, skills, inventory, log }
+enum GameScreen { location, map, skills, inventory, social, log }
 
 /// The frame the whole game lives in: HUD on top, screen in the middle, nav
 /// underneath, and the overlays that can cover all three.
@@ -25,9 +29,12 @@ enum GameScreen { location, map, skills, inventory, log }
 /// Portrait-first and capped in width, so a desktop browser shows the same
 /// layout a phone does rather than stretching it.
 class AppShell extends StatefulWidget {
-  const AppShell({super.key, required this.controller});
+  const AppShell({super.key, required this.controller, required this.multiplayer});
 
   final GameController controller;
+
+  /// The optional half: accounts, guilds, chat, and who else is around.
+  final MultiplayerController multiplayer;
 
   @override
   State<AppShell> createState() => _AppShellState();
@@ -42,19 +49,35 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
   late String _browseMapId = _mapIdForCurrentLocation();
   String? _selectedLocationId;
   bool _wardrobeOpen = false;
+  bool _nearbyOpen = false;
 
   GameController get controller => widget.controller;
+  MultiplayerController get multiplayer => widget.multiplayer;
 
   @override
   void initState() {
     super.initState();
     _ticker = createTicker((_) => controller.tick())..start();
+    // Presence and the unread count only matter for a signed-in player; the
+    // timers check that themselves, so starting them once here is enough.
+    multiplayer.startPolling(() => controller.save);
   }
 
   @override
   void dispose() {
     _ticker?.dispose();
+    multiplayer.stopPolling();
     super.dispose();
+  }
+
+  /// Whether Local chat should use the shared Citadel room.
+  ///
+  /// Every district of the Citadel sub-map is one room, so the test is the map
+  /// the location belongs to rather than the location itself.
+  bool get _inCitadel {
+    final location = controller.location;
+    if (location == null) return false;
+    return resolveActiveMapId(controller.db, location) == citadelMapId;
   }
 
   String _mapIdForCurrentLocation() {
@@ -137,6 +160,24 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
             ),
           ],
         ),
+        // The chat button sits above the nav, out of the way of the activity.
+        Align(
+          alignment: Alignment.bottomRight,
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 64),
+            child: ChatLauncher(
+              multiplayer: multiplayer,
+              locationId: save.currentLocationId,
+              citadelHub: _inCitadel,
+            ),
+          ),
+        ),
+        if (_nearbyOpen)
+          NearbyPanel(
+            controller: controller,
+            multiplayer: multiplayer,
+            onClose: () => setState(() => _nearbyOpen = false),
+          ),
         if (_wardrobeOpen)
           WardrobeSheet(
             controller: controller,
@@ -163,7 +204,13 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
   Widget _buildScreen() {
     switch (_screen) {
       case GameScreen.location:
-        return LocationView(controller: controller, onOpenMap: _showMap);
+        return LocationView(
+          controller: controller,
+          onOpenMap: _showMap,
+          onOpenNearby: multiplayer.isSignedIn
+              ? () => setState(() => _nearbyOpen = true)
+              : null,
+        );
       case GameScreen.map:
         return WorldMapView(
           controller: controller,
@@ -180,6 +227,8 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
         return SkillsView(controller: controller);
       case GameScreen.inventory:
         return InventoryView(controller: controller);
+      case GameScreen.social:
+        return SocialView(controller: controller, multiplayer: multiplayer);
       case GameScreen.log:
         return LogView(controller: controller);
     }
