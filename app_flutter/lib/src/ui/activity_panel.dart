@@ -3,7 +3,7 @@ import 'package:ik_rules/ik_rules.dart';
 
 import '../session/game_controller.dart';
 import '../theme.dart';
-import 'duration_text.dart';
+import 'format.dart';
 
 /// The running activity: what is being done, how far along it is, and — in a
 /// fight — who is hitting whom.
@@ -30,15 +30,14 @@ class ActivityPanel extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  activity?.raw['Contextual Name'] as String? ?? activityId,
+                  activity?.contextualName ?? activityId,
                   style: const TextStyle(fontWeight: FontWeight.w700),
                 ),
               ),
               OutlinedButton(onPressed: controller.stopActivity, child: const Text('Stop')),
             ],
           ),
-          if (action != null)
-            MutedText(action.raw['Display Name'] as String? ?? save.currentActionId!),
+          if (action != null) MutedText(action.displayName),
           if (save.combatEnemyId != null)
             _CombatLine(controller: controller)
           else
@@ -81,7 +80,7 @@ class _CombatLine extends StatelessWidget {
   Widget build(BuildContext context) {
     final save = controller.save;
     final enemy = getEnemy(controller.db, save.combatEnemyId!);
-    final enemyMaxHp = enemy == null ? 0 : jsNumberOrZero(enemy.raw['Max HP']);
+    final enemyMaxHp = enemy?.maximumHp ?? 0;
     final enemyHp = save.combatEnemyHp ?? 0;
     final fraction = enemyMaxHp <= 0 ? 0.0 : (enemyHp / enemyMaxHp).clamp(0, 1).toDouble();
 
@@ -94,7 +93,7 @@ class _CombatLine extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  enemy?.raw['Display Name'] as String? ?? save.combatEnemyId!,
+                  enemy?.displayName ?? save.combatEnemyId!,
                   style: const TextStyle(fontWeight: FontWeight.w700),
                 ),
               ),

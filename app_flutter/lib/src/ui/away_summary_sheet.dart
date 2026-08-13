@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:ik_rules/ik_rules.dart';
 
 import '../theme.dart';
-import 'duration_text.dart';
+import 'format.dart';
 
 /// What the character got up to while the game was closed.
 class AwaySummarySheet extends StatelessWidget {

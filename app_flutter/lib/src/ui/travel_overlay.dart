@@ -13,8 +13,7 @@ class TravelOverlay extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     String nameOf(String locationId) {
-      return controller.indexes.locationsById[locationId]?.raw['Display Name'] as String? ??
-          locationId;
+      return controller.indexes.locationsById[locationId]?.displayName ?? locationId;
     }
 
     return ColoredBox(

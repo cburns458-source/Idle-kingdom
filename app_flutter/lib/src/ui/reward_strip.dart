@@ -51,15 +51,11 @@ class _RewardRow extends StatelessWidget {
             tooltip: xp.skillName,
           ),
         if (bundle.goldGained > 0)
-          _Chip(
-            label: '+${bundle.goldGained}',
-            iconPath: itemIconPath('ITEM-0001'),
-            tooltip: 'Gold',
-          ),
+          _Chip(label: '+${bundle.goldGained}', iconPath: goldIconPath(), tooltip: 'Gold'),
         for (final loot in bundle.loot)
           _Chip(
             label: '${loot.quantity}',
-            iconPath: itemIconPath(loot.itemId),
+            iconPath: itemIconPath(controller.indexes.itemsById[loot.itemId]),
             tooltip: loot.displayName,
           ),
         for (final levelUp in bundle.xpRewards.where((xp) => xp.leveledUp))

@@ -48,7 +48,7 @@ class _NewCharacterSheetState extends State<NewCharacterSheet> {
   @override
   Widget build(BuildContext context) {
     final races = widget.controller.db.races
-        .where((race) => race.raw['Release Phase'] == 'Launch')
+        .where((race) => race.releasePhase == 'Launch')
         .toList();
 
     return ColoredBox(
@@ -84,9 +84,9 @@ class _NewCharacterSheetState extends State<NewCharacterSheet> {
                         padding: const EdgeInsets.only(bottom: 8),
                         child: _RaceCard(
                           race: race,
-                          selected: race.raw['Race ID'] == _raceId,
+                          selected: race.raceId == _raceId,
                           onTap: () => setState(() {
-                            _raceId = race.raw['Race ID'] as String;
+                            _raceId = race.raceId;
                             _error = null;
                           }),
                         ),
@@ -131,11 +131,8 @@ class _RaceCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  race.raw['Display Name'] as String? ?? '',
-                  style: const TextStyle(fontWeight: FontWeight.w700),
-                ),
-                if (race.raw['Description'] case final String blurb) MutedText(blurb),
+                Text(race.displayName, style: const TextStyle(fontWeight: FontWeight.w700)),
+                if (race.description case final blurb?) MutedText(blurb),
               ],
             ),
           ),

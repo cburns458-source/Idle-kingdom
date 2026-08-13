@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:ik_rules/ik_rules.dart';
 
-import '../content/asset_paths.dart';
 import '../session/game_controller.dart';
 import '../theme.dart';
+import 'format.dart';
+import 'item_icon.dart';
 import 'reward_strip.dart';
 
 /// Name, race, totals, gold, HP, and the reward lines from the last few actions.
@@ -46,21 +47,10 @@ class TopHud extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   MutedText('Total level ${totalLevel(save)}'),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Image.asset(
-                        itemIconPath('ITEM-0001'),
-                        width: 16,
-                        height: 16,
-                        filterQuality: FilterQuality.medium,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        _thousands(save.gold),
-                        style: const TextStyle(color: Palette.gold, fontWeight: FontWeight.w700),
-                      ),
-                    ],
+                  GoldAmount(
+                    amount: save.gold,
+                    size: 16,
+                    style: const TextStyle(color: Palette.gold, fontWeight: FontWeight.w700),
                   ),
                 ],
               ),
@@ -76,7 +66,7 @@ class TopHud extends StatelessWidget {
               Text(
                 controller.isRecovering
                     ? 'Dead'
-                    : '${_thousands(save.currentHp)}/${_thousands(maxHp)}',
+                    : '${formatThousands(save.currentHp)}/${formatThousands(maxHp)}',
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
@@ -93,15 +83,4 @@ class TopHud extends StatelessWidget {
       ),
     );
   }
-}
-
-/// 12345 -> "12,345", matching the React client's `toLocaleString()` output.
-String _thousands(num value) {
-  final digits = value.round().abs().toString();
-  final grouped = StringBuffer();
-  for (var index = 0; index < digits.length; index++) {
-    if (index > 0 && (digits.length - index) % 3 == 0) grouped.write(',');
-    grouped.write(digits[index]);
-  }
-  return value < 0 ? '-$grouped' : grouped.toString();
 }

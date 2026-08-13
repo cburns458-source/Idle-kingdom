@@ -43,9 +43,9 @@ class WorldMapView extends StatelessWidget {
               for (final node in nodes)
                 _MapNode(
                   location: node,
-                  isHere: node.raw['Location ID'] == save.currentLocationId,
-                  isSelected: node.raw['Location ID'] == selectedLocationId,
-                  onTap: () => onSelect(node.raw['Location ID'] as String),
+                  isHere: node.locationId == save.currentLocationId,
+                  isSelected: node.locationId == selectedLocationId,
+                  onTap: () => onSelect(node.locationId),
                 ),
             ],
           ),
@@ -94,7 +94,7 @@ class _MapNode extends StatelessWidget {
             ),
           ),
           child: Text(
-            location.raw['Display Name'] as String? ?? '',
+            location.displayName,
             style: TextStyle(
               fontSize: 11,
               fontWeight: isHere ? FontWeight.w700 : FontWeight.w400,
@@ -125,10 +125,9 @@ class _SelectionPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final save = controller.save;
-    final subMapId = selected == null
-        ? null
-        : subMapIdForGateway(controller.db, selected!.raw['Location ID'] as String);
-    final isHere = selected?.raw['Location ID'] == save.currentLocationId;
+    final place = selected;
+    final subMapId = place == null ? null : subMapIdForGateway(controller.db, place.locationId);
+    final isHere = place?.locationId == save.currentLocationId;
 
     return Container(
       width: double.infinity,
@@ -147,26 +146,26 @@ class _SelectionPanel extends StatelessWidget {
                 child: const Text('Back to the world map'),
               ),
             ),
-          if (selected == null)
+          if (place == null)
             const MutedText('Pick a place to see what is there.')
           else ...[
             Text(
-              selected!.raw['Display Name'] as String? ?? '',
+              place.displayName,
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
             ),
-            if (selected!.raw['Description'] case final String blurb) MutedText(blurb),
+            if (place.description case final blurb?) MutedText(blurb),
             const SizedBox(height: 8),
             Row(
               children: [
                 if (subMapId != null)
                   OutlinedButton(
                     onPressed: () => onBrowseMap(subMapId),
-                    child: Text(enterSubMapLabel(controller.db, selected!) ?? 'Enter'),
+                    child: Text(enterSubMapLabel(controller.db, place) ?? 'Enter'),
                   ),
                 if (subMapId != null) const SizedBox(width: 8),
                 if (!isHere)
                   FilledButton(
-                    onPressed: () => onTravel(selected!.raw['Location ID'] as String),
+                    onPressed: () => onTravel(place.locationId),
                     child: const Text('Travel'),
                   )
                 else

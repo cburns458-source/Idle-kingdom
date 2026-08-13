@@ -64,7 +64,7 @@ class _SkillRow extends StatelessWidget {
                   children: [
                     Expanded(
                       child: Text(
-                        row?.raw['Display Name'] as String? ?? skillId,
+                        row?.displayName ?? skillId,
                         style: const TextStyle(fontWeight: FontWeight.w700),
                       ),
                     ),

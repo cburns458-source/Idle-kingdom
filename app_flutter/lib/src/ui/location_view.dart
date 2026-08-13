@@ -6,7 +6,7 @@ import '../content/asset_paths.dart';
 import '../session/game_controller.dart';
 import '../theme.dart';
 import 'activity_panel.dart';
-import 'duration_text.dart';
+import 'format.dart';
 
 /// Where the player is standing: the art, what can be done here, and whatever
 /// is currently running.
@@ -22,7 +22,7 @@ class LocationView extends StatelessWidget {
     if (location == null) {
       return const Center(child: Text('This place is not on any map.'));
     }
-    final locationId = location.raw['Location ID'] as String;
+    final locationId = location.locationId;
     final activities = controller.indexes.activitiesByLocationId[locationId] ?? const [];
 
     return Stack(
@@ -53,10 +53,10 @@ class LocationView extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    location.raw['Display Name'] as String? ?? locationId,
+                    location.displayName,
                     style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
                   ),
-                  if (location.raw['Description'] case final String blurb) MutedText(blurb),
+                  if (location.description case final blurb?) MutedText(blurb),
                 ],
               ),
             ),
@@ -102,7 +102,7 @@ class _ActivityCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final activityId = activity.raw['Activity ID'] as String;
+    final activityId = activity.activityId;
     final running = controller.save.currentActivityId == activityId;
     final check = validateActivityStart(controller.db, controller.save, activityId);
     final production = isStandardProductionActivity(controller.db, activity);
@@ -115,10 +115,10 @@ class _ActivityCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  activity.raw['Contextual Name'] as String? ?? activityId,
+                  activity.contextualName ?? activityId,
                   style: const TextStyle(fontWeight: FontWeight.w700),
                 ),
-                if (activity.raw['Description'] case final String blurb) MutedText(blurb),
+                if (activity.description case final blurb?) MutedText(blurb),
                 if (!check.ok) MutedText(check.reason ?? ''),
                 // Recipes are picked in the production panel, which is not
                 // ported yet, so the station is listed but not startable.

@@ -113,7 +113,7 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
             Expanded(child: _buildScreen()),
             BottomNav(
               screen: _screen,
-              locationName: controller.location?.raw['Display Name'] as String? ?? 'Unknown',
+              locationName: controller.location?.displayName ?? 'Unknown',
               onSelect: (screen) {
                 if (screen == GameScreen.map) {
                   _showMap();

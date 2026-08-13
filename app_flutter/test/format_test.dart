@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:idle_kingdoms/src/ui/duration_text.dart';
+import 'package:idle_kingdoms/src/ui/format.dart';
 
 void main() {
   group('formatDurationSeconds', () {

@@ -95,6 +95,18 @@ class GameController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Stores the save a panel's intent produced, and repaints.
+  ///
+  /// Panels call the shared rules themselves and pass the result here, which is
+  /// the only way a save reaches storage.
+  void commit(PlayerSave next) {
+    session.apply(next);
+    notifyListeners();
+  }
+
+  /// [commit] for anything that changed the loadout, so max HP follows the gear.
+  void commitLoadout(PlayerSave next) => commit(withRecalculatedVitals(db, next));
+
   /// Advances the game by one frame. The shell drives this from a ticker, so it
   /// stops when the app is backgrounded and picks up from the clock on return.
   void tick() {

@@ -1,39 +1,10 @@
-import 'dart:convert';
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:idle_kingdoms/src/session/game_controller.dart';
 import 'package:idle_kingdoms/src/theme.dart';
 import 'package:idle_kingdoms/src/ui/reward_strip.dart';
-import 'package:idle_kingdoms/src/ui/app_shell.dart';
 import 'package:ik_content/ik_content.dart';
-import 'package:ik_rules/ik_rules.dart';
-import 'package:ik_runtime/ik_runtime.dart';
 
-/// The shared content, read from the repo rather than the bundle so the test
-/// does not depend on asset loading.
-LoadedDatabase loadDatabaseFromRepo() {
-  final file = File('../content/data/game-database.json');
-  return prepareDatabase(jsonDecode(file.readAsStringSync()));
-}
-
-/// A clock the test moves by hand, standing in for the host's wall clock.
-class _TestClock {
-  num _nowMs = DateTime.utc(2026, 1, 1).millisecondsSinceEpoch;
-
-  num read() => _nowMs;
-
-  void advance(num ms) => _nowMs += ms;
-}
-
-/// A named human with the starter kit, which is what the activity requirements
-/// expect: gathering needs the tools the race grants.
-PlayerSave startedCharacter(LoadedDatabase database) {
-  final base = createNewSave(database.launch, DateTime.utc(2026, 1, 1).millisecondsSinceEpoch);
-  final assigned = assignRace(database.launch, base.copyWith(characterName: 'Tester'), 'RACE-0001');
-  return assigned.save!;
-}
+import 'support/harness.dart';
 
 void main() {
   late LoadedDatabase database;
@@ -42,25 +13,10 @@ void main() {
     database = loadDatabaseFromRepo();
   });
 
-  /// A controller over an empty save slot, reading [clock] instead of the host's.
-  GameController buildController({PlayerSave? seed, _TestClock? clock}) {
-    final testClock = clock ?? _TestClock();
-    final repository = SaveRepository(storage: MemorySaveStorage(), clock: testClock.read);
-    if (seed != null) repository.write(seed);
-    final session = GameSession(
-      db: database.launch,
-      repository: repository,
-      clock: testClock.read,
-      random: () => 0,
-    );
-    final boot = session.boot();
-    return GameController(database: database, session: session)..adoptBoot(boot);
-  }
-
   testWidgets('a new save is met with the character sheet', (tester) async {
-    final controller = buildController();
+    final controller = buildController(database);
     addTearDown(controller.dispose);
-    await tester.pumpWidget(MaterialApp(home: AppShell(controller: controller)));
+    await pumpShell(tester, controller);
 
     expect(find.text('Name your character'), findsOne);
     // Nothing to report on a first run.
@@ -80,10 +36,11 @@ void main() {
   testWidgets('the location screen starts and stops an activity', (tester) async {
     // Standing in the meadow, which has a plain gathering activity.
     final controller = buildController(
+      database,
       seed: startedCharacter(database).copyWith(currentLocationId: 'LOC-0009'),
     );
     addTearDown(controller.dispose);
-    await tester.pumpWidget(MaterialApp(home: AppShell(controller: controller)));
+    await pumpShell(tester, controller);
 
     expect(find.text('Meadow'), findsWidgets);
     // The other meadow activity needs a hunting tool, so pick this one by name.
@@ -105,10 +62,11 @@ void main() {
   testWidgets('the map travels to a chosen location', (tester) async {
     // From the meadow, because the town is a gateway and opens its district map.
     final controller = buildController(
+      database,
       seed: startedCharacter(database).copyWith(currentLocationId: 'LOC-0009'),
     );
     addTearDown(controller.dispose);
-    await tester.pumpWidget(MaterialApp(home: AppShell(controller: controller)));
+    await pumpShell(tester, controller);
 
     await tester.tap(find.byTooltip('Map'));
     await tester.pump();
@@ -121,13 +79,14 @@ void main() {
   });
 
   testWidgets('the loop runs while the shell is on screen', (tester) async {
-    final clock = _TestClock();
+    final clock = TestClock();
     final controller = buildController(
+      database,
       seed: startedCharacter(database).copyWith(currentLocationId: 'LOC-0009'),
       clock: clock,
     );
     addTearDown(controller.dispose);
-    await tester.pumpWidget(MaterialApp(home: AppShell(controller: controller)));
+    await pumpShell(tester, controller);
 
     final gatherCard = find.ancestor(
       of: find.text('Gather meadow supplies'),
@@ -153,9 +112,9 @@ void main() {
   });
 
   testWidgets('skills and inventory render', (tester) async {
-    final controller = buildController(seed: startedCharacter(database));
+    final controller = buildController(database, seed: startedCharacter(database));
     addTearDown(controller.dispose);
-    await tester.pumpWidget(MaterialApp(home: AppShell(controller: controller)));
+    await pumpShell(tester, controller);
 
     await tester.tap(find.text('Skills'));
     await tester.pump();
