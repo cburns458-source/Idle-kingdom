@@ -46,6 +46,14 @@ class BountyClaimRecord {
     required this.claimedAt,
   });
 
+  factory BountyClaimRecord.fromJson(Map<String, Object?> json) => BountyClaimRecord(
+    hourKey: json['hourKey']! as String,
+    bountyId: json['bountyId']! as String,
+    userId: json['userId']! as String,
+    username: json['username']! as String,
+    claimedAt: json['claimedAt']! as String,
+  );
+
   final String hourKey;
   final String bountyId;
   final String userId;

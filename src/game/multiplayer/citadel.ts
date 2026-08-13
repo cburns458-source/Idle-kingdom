@@ -19,16 +19,19 @@ export function listCitadelVisitors(): ActivityPresence[] {
   return listPeersAtLocation(CITADEL_LOCATION_ID, true)
 }
 
-export function citadelHubSummary(): {
+export interface CitadelHubSummary {
   locationId: string
   chatChannel: string
   visitorCount: number
   note: string
-} {
+}
+
+/** What the Citadel tab shows above its visitor list. */
+export function citadelHubSummary(visitorCount: number): CitadelHubSummary {
   return {
     locationId: CITADEL_LOCATION_ID,
     chatChannel: citadelLocalChannelKey(),
-    visitorCount: listCitadelVisitors().length,
+    visitorCount,
     note: 'Shared Citadel hub. Local chat is one room across every Citadel district.',
   }
 }

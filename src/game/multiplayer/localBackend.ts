@@ -71,10 +71,6 @@ interface LocalDb {
   bazaarPosts: BazaarPost[]
 }
 
-function nowIso(): string {
-  return new Date().toISOString()
-}
-
 function defaultAppearance(): PlayerAppearance {
   return {
     skinTone: DEFAULT_SKIN_TONE_ID,
@@ -199,21 +195,34 @@ function saveDb(db: LocalDb, storage: Storage = localStorage): void {
   storage.setItem(MULTIPLAYER_LOCAL_DB_KEY, JSON.stringify(db))
 }
 
-function newId(prefix: string): string {
-  return `${prefix}_${Math.random().toString(36).slice(2, 10)}_${Date.now().toString(36)}`
-}
-
 const BASIC_PROFANITY = /\b(fuck|shit|asshole|cunt|nigger|faggot)\b/gi
 
 export function filterProfanity(body: string): string {
   return body.replace(BASIC_PROFANITY, (match) => '*'.repeat(match.length))
 }
 
+/**
+ * The host facilities the backend would otherwise reach for directly. Supplied
+ * so a test — and the Dart parity replay — can pin both.
+ */
+export interface LocalBackendPorts {
+  nowMs: () => number
+  newId: (prefix: string) => string
+}
+
 export class LocalMultiplayerBackend {
   private storage: Storage
+  private ports: LocalBackendPorts
 
-  constructor(storage: Storage = localStorage) {
+  constructor(storage: Storage = localStorage, ports?: Partial<LocalBackendPorts>) {
     this.storage = storage
+    this.ports = {
+      nowMs: ports?.nowMs ?? (() => Date.now()),
+      newId:
+        ports?.newId ??
+        ((prefix: string) =>
+          `${prefix}_${Math.random().toString(36).slice(2, 10)}_${Date.now().toString(36)}`),
+    }
   }
 
   private db(): LocalDb {
@@ -222,6 +231,18 @@ export class LocalMultiplayerBackend {
 
   private write(db: LocalDb): void {
     saveDb(db, this.storage)
+  }
+
+  private now(): number {
+    return this.ports.nowMs()
+  }
+
+  private nowIso(): string {
+    return new Date(this.ports.nowMs()).toISOString()
+  }
+
+  private newId(prefix: string): string {
+    return this.ports.newId(prefix)
   }
 
   signUp(
@@ -241,7 +262,7 @@ export class LocalMultiplayerBackend {
     if (db.users.some((user) => user.username.toLowerCase() === cleanUser.toLowerCase())) {
       return { ok: false, reason: 'That username is taken.' }
     }
-    const userId = newId('usr')
+    const userId = this.newId('usr')
     db.users.push({ userId, email: cleanEmail, username: cleanUser, password })
     db.profiles.push({
       userId,
@@ -250,7 +271,7 @@ export class LocalMultiplayerBackend {
       guildId: null,
       guildName: null,
       privacyPublicSkills: true,
-      updatedAt: nowIso(),
+      updatedAt: this.nowIso(),
     })
     this.write(db)
     return {
@@ -297,7 +318,7 @@ export class LocalMultiplayerBackend {
     db.profiles[index] = {
       ...db.profiles[index]!,
       ...patch,
-      updatedAt: nowIso(),
+      updatedAt: this.nowIso(),
     }
     this.write(db)
     return db.profiles[index]!
@@ -329,7 +350,7 @@ export class LocalMultiplayerBackend {
     const record: CloudSaveRecord = {
       userId,
       saveVersion: save.saveVersion,
-      updatedAt: save.updatedAt || nowIso(),
+      updatedAt: save.updatedAt || this.nowIso(),
       payload: save,
     }
     db.saves = db.saves.filter((row) => row.userId !== userId)
@@ -343,7 +364,7 @@ export class LocalMultiplayerBackend {
     if (!profile) return
     const snapshot = buildLeaderboardSnapshot(dbGame, save)
     const local = this.db()
-    const updatedAt = nowIso()
+    const updatedAt = this.nowIso()
     for (const board of snapshot.boards) {
       local.leaderboards = local.leaderboards.filter(
         (row) => !(row.userId === userId && row.boardKey === board.boardKey),
@@ -432,8 +453,8 @@ export class LocalMultiplayerBackend {
     const db = this.db()
     const stampKey = `${session.userId}:${key}`
     const last = db.lastChatAt[stampKey]
-    if (last && Date.now() - Date.parse(last) < cooldown * 1000) {
-      const wait = Math.ceil((cooldown * 1000 - (Date.now() - Date.parse(last))) / 1000)
+    if (last && this.now() - Date.parse(last) < cooldown * 1000) {
+      const wait = Math.ceil((cooldown * 1000 - (this.now() - Date.parse(last))) / 1000)
       return { ok: false, reason: `Wait ${wait}s before chatting again.` }
     }
     if (channel.kind === 'guild') {
@@ -443,12 +464,12 @@ export class LocalMultiplayerBackend {
       if (!member) return { ok: false, reason: 'Join the guild to use guild chat.' }
     }
     const message: ChatMessage = {
-      id: newId('msg'),
+      id: this.newId('msg'),
       channelKey: key,
       userId: session.userId,
       username: session.username,
       body: filterProfanity(trimmed),
-      createdAt: nowIso(),
+      createdAt: this.nowIso(),
     }
     db.messages.push(message)
     db.lastChatAt[stampKey] = message.createdAt
@@ -522,11 +543,11 @@ export class LocalMultiplayerBackend {
   reportUser(reporterId: string, targetUserId: string, reason: string): void {
     const db = this.db()
     db.reports.push({
-      id: newId('rpt'),
+      id: this.newId('rpt'),
       reporterId,
       targetUserId,
       reason: reason.trim().slice(0, 200) || 'Unspecified',
-      createdAt: nowIso(),
+      createdAt: this.nowIso(),
     })
     this.write(db)
   }
@@ -574,7 +595,7 @@ export class LocalMultiplayerBackend {
     }
     const snapshot = this.memberSnapshot(db, session.userId, session.username)
     const guild: GuildRecord = {
-      id: newId('gld'),
+      id: this.newId('gld'),
       name: clean,
       tag,
       description: (input.description ?? '').trim().slice(0, 160),
@@ -582,7 +603,7 @@ export class LocalMultiplayerBackend {
       leaderId: session.userId,
       joinPolicy: 'open',
       rankLabels: { ...DEFAULT_GUILD_RANK_LABELS },
-      createdAt: nowIso(),
+      createdAt: this.nowIso(),
     }
     db.guilds.push(guild)
     db.members.push({
@@ -590,17 +611,17 @@ export class LocalMultiplayerBackend {
       userId: session.userId,
       username: snapshot.username,
       role: 'leader',
-      joinedAt: nowIso(),
+      joinedAt: this.nowIso(),
       appearance: snapshot.appearance,
       totalLevel: snapshot.totalLevel,
     })
     db.profiles = db.profiles.map((row) =>
       row.userId === session.userId
-        ? { ...row, guildId: guild.id, guildName: guild.name, updatedAt: nowIso() }
+        ? { ...row, guildId: guild.id, guildName: guild.name, updatedAt: this.nowIso() }
         : row,
     )
     db.projects.push({
-      id: newId('gprj'),
+      id: this.newId('gprj'),
       guildId: guild.id,
       name: 'Guild Storehouse',
       description: 'Pool resources for cosmetic recognition.',
@@ -609,7 +630,7 @@ export class LocalMultiplayerBackend {
       rewardLabel: 'Guild banner cosmetic (recognition)',
     })
     db.challenges.push({
-      id: newId('gch'),
+      id: this.newId('gch'),
       guildId: guild.id,
       name: 'Weekly Monster Hunt',
       boardKey: 'monsters_killed',
@@ -671,13 +692,13 @@ export class LocalMultiplayerBackend {
         userId: session.userId,
         username: snapshot.username,
         role: 'recruit',
-        joinedAt: nowIso(),
+        joinedAt: this.nowIso(),
         appearance: snapshot.appearance,
         totalLevel: snapshot.totalLevel,
       })
       db.profiles = db.profiles.map((row) =>
         row.userId === session.userId
-          ? { ...row, guildId: guild.id, guildName: guild.name, updatedAt: nowIso() }
+          ? { ...row, guildId: guild.id, guildName: guild.name, updatedAt: this.nowIso() }
           : row,
       )
       db.applications = db.applications.filter(
@@ -692,12 +713,12 @@ export class LocalMultiplayerBackend {
       return { ok: false, reason: 'Application already pending.' }
     }
     db.applications.push({
-      id: newId('app'),
+      id: this.newId('app'),
       guildId,
       userId: session.userId,
       username: session.username,
       message: message.trim().slice(0, 120),
-      createdAt: nowIso(),
+      createdAt: this.nowIso(),
     })
     this.write(db)
     return { ok: true, joined: false }
@@ -735,13 +756,13 @@ export class LocalMultiplayerBackend {
         userId: application.userId,
         username: snapshot.username,
         role: 'recruit',
-        joinedAt: nowIso(),
+        joinedAt: this.nowIso(),
         appearance: snapshot.appearance,
         totalLevel: snapshot.totalLevel,
       })
       db.profiles = db.profiles.map((row) =>
         row.userId === application.userId
-          ? { ...row, guildId: guild.id, guildName: guild.name, updatedAt: nowIso() }
+          ? { ...row, guildId: guild.id, guildName: guild.name, updatedAt: this.nowIso() }
           : row,
       )
     }
@@ -838,7 +859,7 @@ export class LocalMultiplayerBackend {
     db.members = db.members.filter((row) => row.userId !== userId)
     db.profiles = db.profiles.map((row) =>
       row.userId === userId
-        ? { ...row, guildId: null, guildName: null, updatedAt: nowIso() }
+        ? { ...row, guildId: null, guildName: null, updatedAt: this.nowIso() }
         : row,
     )
     this.write(db)
@@ -895,8 +916,8 @@ export class LocalMultiplayerBackend {
   ): ActivityPresence {
     const db = this.db()
     const profile = db.profiles.find((row) => row.userId === session.userId)
-    const updatedAt = nowIso()
-    const expiresAt = new Date(Date.now() + PRESENCE_TTL_SECONDS * 1000).toISOString()
+    const updatedAt = this.nowIso()
+    const expiresAt = new Date(this.now() + PRESENCE_TTL_SECONDS * 1000).toISOString()
     const row: ActivityPresence = {
       userId: session.userId,
       username: session.username,
@@ -912,7 +933,7 @@ export class LocalMultiplayerBackend {
       expiresAt,
     }
     db.presence = db.presence.filter(
-      (entry) => entry.userId !== session.userId && Date.parse(entry.expiresAt) > Date.now(),
+      (entry) => entry.userId !== session.userId && Date.parse(entry.expiresAt) > this.now(),
     )
     db.presence.push(row)
     this.write(db)
@@ -930,7 +951,7 @@ export class LocalMultiplayerBackend {
     activityId?: string | null
   }): ActivityPresence[] {
     const db = this.db()
-    const now = Date.now()
+    const now = this.now()
     return db.presence
       .filter((row) => Date.parse(row.expiresAt) > now)
       .filter((row) => (filter.locationId ? row.locationId === filter.locationId : true))
@@ -967,7 +988,7 @@ export class LocalMultiplayerBackend {
       this.write(db)
       return { ok: true }
     }
-    db.friendRequests.push({ fromUserId, toUserId, createdAt: nowIso() })
+    db.friendRequests.push({ fromUserId, toUserId, createdAt: this.nowIso() })
     this.write(db)
     return { ok: true }
   }
@@ -1032,7 +1053,7 @@ export class LocalMultiplayerBackend {
       bountyId,
       userId: session.userId,
       username: session.username,
-      claimedAt: nowIso(),
+      claimedAt: this.nowIso(),
     }
     db.bountyClaims.push(claim)
     this.write(db)
@@ -1059,19 +1080,19 @@ export class LocalMultiplayerBackend {
     const db = this.db()
     const cooldownKey = `${session.userId}:bazaar`
     const last = db.lastChatAt[cooldownKey]
-    if (last && Date.now() - Date.parse(last) < CHAT_COOLDOWN_SECONDS.local * 1000) {
+    if (last && this.now() - Date.parse(last) < CHAT_COOLDOWN_SECONDS.local * 1000) {
       const wait = Math.ceil(
-        (CHAT_COOLDOWN_SECONDS.local * 1000 - (Date.now() - Date.parse(last))) / 1000,
+        (CHAT_COOLDOWN_SECONDS.local * 1000 - (this.now() - Date.parse(last))) / 1000,
       )
       return { ok: false, reason: `Wait ${wait}s before posting again.` }
     }
     const post: BazaarPost = {
-      id: newId('bzr'),
+      id: this.newId('bzr'),
       kind,
       userId: session.userId,
       username: session.username,
       body: filterProfanity(trimmed),
-      createdAt: nowIso(),
+      createdAt: this.nowIso(),
     }
     db.bazaarPosts.push(post)
     if (db.bazaarPosts.length > 200) {

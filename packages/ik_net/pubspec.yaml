@@ -1,0 +1,22 @@
+name: ik_net
+description: >-
+  Multiplayer port: accounts, cloud saves, leaderboards, chat, guilds,
+  presence, bounty claims, and the Grand Bazaar, with a local backend that
+  needs nothing but a key-value store.
+publish_to: none
+version: 0.1.0
+resolution: workspace
+
+environment:
+  sdk: ^3.13.0
+
+dependencies:
+  collection: ^1.19.0
+  ik_content: ^0.1.0
+  ik_rules: ^0.1.0
+  ik_runtime: ^0.1.0
+
+dev_dependencies:
+  ik_parity: ^0.1.0
+  lints: ^6.0.0
+  test: ^1.25.0

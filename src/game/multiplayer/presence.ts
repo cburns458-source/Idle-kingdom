@@ -4,30 +4,35 @@ import { getSession } from './auth'
 import { getLocalBackend } from './client'
 import type { ActivityPresence, PublicPlayerProfile } from './types'
 
-function activitySkill(
-  save: PlayerSave,
-): { skillId: string | null; skillLevel: number | null } {
-  // Presence shows a relevant skill level when available; default Combat.
+export type PresenceInput = Omit<
+  ActivityPresence,
+  'userId' | 'username' | 'updatedAt' | 'expiresAt' | 'guildName'
+>
+
+/**
+ * What a save says about the player, before a backend stamps identity onto it.
+ *
+ * Presence advertises a skill level, and Combat is the one every character has,
+ * so it is the default; a save without it falls back to whichever skill is first.
+ */
+export function presenceInputFromSave(save: PlayerSave): PresenceInput {
   const combat = save.skills.find((skill) => skill.skillId === 'SKL-0001')
+  const skill = combat ?? save.skills[0]
   return {
-    skillId: combat?.skillId ?? save.skills[0]?.skillId ?? null,
-    skillLevel: combat?.level ?? save.skills[0]?.level ?? null,
+    appearance: save.appearance,
+    locationId: save.currentLocationId,
+    currentActivityId: save.currentActivityId,
+    skillId: skill?.skillId ?? null,
+    skillLevel: skill?.level ?? null,
+    outfitCosmeticId: save.cosmetics.equipped[OUTFIT_COSMETIC_SLOT_ID] ?? null,
+    mountCosmeticId: save.cosmetics.equipped[PET_COSMETIC_SLOT_ID] ?? null,
   }
 }
 
 export function publishActivityPresence(save: PlayerSave): ActivityPresence | null {
   const session = getSession()
   if (!session) return null
-  const skill = activitySkill(save)
-  return getLocalBackend().upsertPresence(session, {
-    appearance: save.appearance,
-    locationId: save.currentLocationId,
-    currentActivityId: save.currentActivityId,
-    skillId: skill.skillId,
-    skillLevel: skill.skillLevel,
-    outfitCosmeticId: save.cosmetics.equipped[OUTFIT_COSMETIC_SLOT_ID] ?? null,
-    mountCosmeticId: save.cosmetics.equipped[PET_COSMETIC_SLOT_ID] ?? null,
-  })
+  return getLocalBackend().upsertPresence(session, presenceInputFromSave(save))
 }
 
 export function clearActivityPresence(): void {

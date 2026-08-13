@@ -42,7 +42,7 @@ export function SocialView({ save, database, section, onChangeSave }: SocialView
 function CitadelSocialView() {
   const session = getSession()
   const [visitors, setVisitors] = useState<ActivityPresence[]>([])
-  const summary = useMemo(() => citadelHubSummary(), [visitors.length])
+  const summary = useMemo(() => citadelHubSummary(visitors.length), [visitors.length])
 
   useEffect(() => {
     if (!isSignedIn()) return

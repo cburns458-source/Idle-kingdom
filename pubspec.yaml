@@ -12,3 +12,4 @@ workspace:
   - packages/ik_rules
   - packages/ik_content
   - packages/ik_runtime
+  - packages/ik_net

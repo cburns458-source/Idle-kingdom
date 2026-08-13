@@ -17,8 +17,9 @@ describe('citadel hub', () => {
     expect(chatChannelKey({ kind: 'local', locationId: CITADEL_CHAT_LOCATION_ID })).toBe(
       'local:citadel',
     )
-    const summary = citadelHubSummary()
+    const summary = citadelHubSummary(3)
     expect(summary.locationId).toBe('LOC-0028')
     expect(summary.chatChannel).toBe('local:citadel')
+    expect(summary.visitorCount).toBe(3)
   })
 })

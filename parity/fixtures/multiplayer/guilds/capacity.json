@@ -1,0 +1,1 @@
+{"case":"capacity","input":{"maxMembers":25,"nowMs":1786568400000},"module":"multiplayer/guilds","output":{"applied":{"ok":false,"reason":"That guild is full (25 members)."},"blocked":{"ok":false,"reason":"That guild is full (25 members)."},"memberCount":25}}
