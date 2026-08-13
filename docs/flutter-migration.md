@@ -243,7 +243,16 @@ say so.
 The two exceptions are deliberate. A horizon gateway (`LOC-0019`, `LOC-0020`) is
 browsed on the world map and never entered, so it has no background of its own,
 and the fallbacks stay in the tables so an id nobody has drawn yet cannot crash a
-screen.
+screen. `content/assets/asset-manifest.json` is a record from the art passes that
+generated the files; neither client reads it, and the tables in code are what
+decide which file a row gets.
+
+One thing the audit does not judge is weight. The art is 62 MB, nearly all of it
+1024×1024 PNG backgrounds for maps and locations. On the web that is lazy — a
+location's art is fetched when the player arrives — but a mobile build carries all
+of it, so shipping to a store would want the backgrounds recompressed (WebP at
+these dimensions is roughly a tenth of the size). That is a content decision, so
+it is called out rather than done here.
 
 ## Bringing a save over
 
