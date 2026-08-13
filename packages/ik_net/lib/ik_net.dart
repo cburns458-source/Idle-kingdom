@@ -13,6 +13,7 @@ export 'src/config.dart';
 export 'src/emblems.dart';
 export 'src/local_backend.dart';
 export 'src/local_db.dart';
+export 'src/moderation.dart';
 export 'src/presence.dart';
 export 'src/remote.dart';
 export 'src/remote_service.dart';

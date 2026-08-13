@@ -4,6 +4,8 @@
 /// the backend that stores it rather than in `ik_rules`.
 library;
 
+import 'moderation.dart';
+
 typedef BazaarPostKind = String;
 
 const String bazaarPostMessage = 'message';
@@ -50,6 +52,46 @@ class BazaarPost {
     'body': body,
     'createdAt': createdAt,
   };
+}
+
+/// As long as a notice may be, which is what every backend stores.
+const int bazaarPostMaxLength = 240;
+
+const String bazaarEmptyPost = 'Message is empty.';
+const String bazaarUnknownKind = 'Unknown bazaar post kind.';
+
+/// What a notice reads as once it has been accepted, or why it was not.
+class PreparedBazaarPost {
+  const PreparedBazaarPost.ok(String this.body) : reason = null;
+
+  const PreparedBazaarPost.failed(this.reason) : body = null;
+
+  final String? body;
+  final String? reason;
+
+  bool get ok => reason == null;
+
+  Map<String, Object?> toJson() => ok
+      ? <String, Object?>{'ok': true, 'body': body}
+      : <String, Object?>{'ok': false, 'reason': reason};
+}
+
+/// Cleans [body] for the board, or says why it cannot go up.
+///
+/// Shared because both backends have to agree: a post written against the local
+/// board and the same post written against a hosted one should come out the same
+/// length, with the same words masked. The cooldown is not decided here, since
+/// that needs a clock and a record of the last post.
+PreparedBazaarPost prepareBazaarPost(BazaarPostKind kind, String body) {
+  final trimmedBody = body.trim();
+  final trimmed = trimmedBody.length > bazaarPostMaxLength
+      ? trimmedBody.substring(0, bazaarPostMaxLength)
+      : trimmedBody;
+  if (trimmed.isEmpty) return const PreparedBazaarPost.failed(bazaarEmptyPost);
+  if (!bazaarPostKinds.contains(kind)) {
+    return const PreparedBazaarPost.failed(bazaarUnknownKind);
+  }
+  return PreparedBazaarPost.ok(filterProfanity(trimmed));
 }
 
 const String bazaarBlurb = 'Market board for messages, recruitment, and trade notices.';

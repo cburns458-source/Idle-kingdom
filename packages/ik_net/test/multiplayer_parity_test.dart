@@ -615,13 +615,18 @@ void main() {
                 'saves': RemoteTables.saves,
                 'leaderboard': RemoteTables.leaderboard,
                 'chat': RemoteTables.chat,
+                'bountyClaims': RemoteTables.bountyClaims,
+                'bazaarPosts': RemoteTables.bazaarPosts,
               },
               'sendChat': remoteSendChatFunction,
               'saveColumns': remoteSaveColumns,
               'chatColumns': remoteChatColumns,
               'leaderboardColumns': remoteLeaderboardColumns,
               'leaderboardConflict': remoteLeaderboardConflict,
+              'bountyClaimColumns': remoteBountyClaimColumns,
+              'bazaarColumns': remoteBazaarColumns,
               'chatLimit': remoteChatLimit,
+              'bazaarLimit': remoteBazaarLimit,
               'usernameMaxLength': remoteUsernameMaxLength,
             },
             'messages': <String, Object?>{
@@ -629,6 +634,9 @@ void main() {
               'signUpFailed': remoteSignUpFailed,
               'signInFailed': remoteSignInFailed,
               'magicLinkUnavailable': remoteMagicLinkUnavailable,
+              'chatSendFailed': remoteChatSendFailed,
+              'bazaarPostFailed': remoteBazaarPostFailed,
+              'saveConflict': remoteSaveConflict,
             },
             'usernames': <String>['  Rowan  ', 'a' * 40, ''].map(remoteUsername).toList(),
             'emails': <String>[
@@ -677,6 +685,31 @@ void main() {
             'chatMessages': rowsOf('chatRows')
                 .map((row) => chatMessageFrom(row).toJson())
                 .toList(),
+            'functionMessages': <Object?>[
+              chatMessageFromFunction(<String, Object?>{
+                'id': 'msg_1',
+                'channelKey': 'global',
+                'userId': 'usr_0001',
+                'username': 'Hero',
+                'body': 'Hi',
+                'createdAt': nowIso,
+              })?.toJson(),
+              chatMessageFromFunction(rowsOf('chatRows').first)?.toJson(),
+              chatMessageFromFunction(<String, Object?>{'accepted': true})?.toJson(),
+              chatMessageFromFunction(null)?.toJson(),
+            ],
+            'claimRow': bountyClaimRowFor(_remoteSession, '2026-08-12T21', 'BNT-0001'),
+            'claims': rowsOf('claimRows').map((row) => bountyClaimFrom(row).toJson()).toList(),
+            'bazaarRow': bazaarPostRowFor(_remoteSession, bazaarPostTrade, 'Selling copper ore'),
+            'bazaarPosts': bazaarPostsFrom(rowsOf('bazaarRows'))
+                .map((post) => post.toJson())
+                .toList(),
+            'preparedPosts': <Object?>[
+              prepareBazaarPost(bazaarPostMessage, '  Hello there  ').toJson(),
+              prepareBazaarPost(bazaarPostMessage, '   ').toJson(),
+              prepareBazaarPost(bazaarPostTrade, 'fuck ${'a' * 400}').toJson(),
+              prepareBazaarPost('shouting', 'Hello').toJson(),
+            ],
             'defaultAppearance': defaultPlayerAppearance.toJson(),
           }),
           isNull,
@@ -685,6 +718,14 @@ void main() {
     }
   });
 }
+
+/// The account every remote row in these scenarios is written by.
+const MultiplayerSession _remoteSession = MultiplayerSession(
+  userId: 'usr_0001',
+  email: 'hero@example.com',
+  username: 'Hero',
+  accessToken: 'token',
+);
 
 Map<String, Object?> _presenceInputJson(PresenceInput input) => <String, Object?>{
   'appearance': input.appearance.toJson(),

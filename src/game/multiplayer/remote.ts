@@ -1,3 +1,5 @@
+import type { BazaarPost, BazaarPostKind } from '../bazaar/types'
+import type { BountyClaimRecord } from '../bounties/types'
 import type { PlayerSave } from '../save/types'
 import type { LeaderboardSnapshotValues } from './snapshots'
 import {
@@ -24,6 +26,8 @@ export const REMOTE_TABLES = {
   saves: 'player_saves',
   leaderboard: 'leaderboard_snapshots',
   chat: 'chat_messages',
+  bountyClaims: 'bounty_claims',
+  bazaarPosts: 'bazaar_posts',
 } as const
 
 /** The edge function that writes chat, since a client may not insert directly. */
@@ -45,6 +49,11 @@ export const REMOTE_SAVE_COLUMNS = 'save_version, updated_at, payload'
 export const REMOTE_CHAT_COLUMNS = 'id, channel_key, user_id, username, body, created_at'
 export const REMOTE_LEADERBOARD_COLUMNS =
   'user_id, board_key, value, profiles(username, appearance_json, guild_id, guilds(name))'
+export const REMOTE_BOUNTY_CLAIM_COLUMNS = 'hour_key, bounty_id, user_id, username, claimed_at'
+export const REMOTE_BAZAAR_COLUMNS = 'id, kind, user_id, username, body, created_at'
+
+/** How many Bazaar notices a read asks for. */
+export const REMOTE_BAZAAR_LIMIT = 40
 
 export type RemoteRow = Record<string, unknown>
 
@@ -195,6 +204,9 @@ export function chatMessageFromFunction(data: RemoteRow | null): ChatMessage | n
 /** What a send is refused with when the function answered with nothing usable. */
 export const REMOTE_CHAT_SEND_FAILED = 'The chat message was not accepted.'
 
+/** The same, for a Bazaar notice the board did not hand back. */
+export const REMOTE_BAZAAR_POST_FAILED = 'The notice was not accepted.'
+
 /** Why an upload stops: the account has a newer save than the one being sent. */
 export const REMOTE_SAVE_CONFLICT = 'A newer cloud save exists.'
 
@@ -230,4 +242,68 @@ export function leaderboardEntriesFrom(
   boardKey: MultiplayerBoardKey,
 ): LeaderboardEntry[] {
   return rows.map((row, index) => leaderboardEntryFrom(row, boardKey, index))
+}
+
+/**
+ * The row that claims an hourly bounty first.
+ *
+ * `(hour_key, bounty_id)` is the table's primary key, which is what decides the
+ * race: the insert that lands first is the one that stands, and a backend says
+ * so rather than a client believing it.
+ */
+export function bountyClaimRowFor(
+  session: MultiplayerSession,
+  hourKey: string,
+  bountyId: string,
+): RemoteRow {
+  return {
+    hour_key: hourKey,
+    bounty_id: bountyId,
+    user_id: session.userId,
+    username: session.username,
+  }
+}
+
+export function bountyClaimFrom(row: RemoteRow): BountyClaimRecord {
+  return {
+    hourKey: str(row.hour_key),
+    bountyId: str(row.bounty_id),
+    userId: str(row.user_id),
+    username: str(row.username),
+    claimedAt: str(row.claimed_at),
+  }
+}
+
+export function bazaarPostRowFor(
+  session: MultiplayerSession,
+  kind: BazaarPostKind,
+  body: string,
+): RemoteRow {
+  return {
+    kind,
+    user_id: session.userId,
+    username: session.username,
+    body,
+  }
+}
+
+export function bazaarPostFrom(row: RemoteRow): BazaarPost {
+  return {
+    id: str(row.id),
+    kind: str(row.kind) as BazaarPostKind,
+    userId: str(row.user_id),
+    username: str(row.username),
+    body: str(row.body),
+    createdAt: str(row.created_at),
+  }
+}
+
+/**
+ * The Bazaar newest-last, the way a chat log reads.
+ *
+ * A backend hands the newest first, because that is the only way to ask for the
+ * most recent forty, so the order is turned round once they arrive.
+ */
+export function bazaarPostsFrom(rows: RemoteRow[]): BazaarPost[] {
+  return [...rows].reverse().map(bazaarPostFrom)
 }

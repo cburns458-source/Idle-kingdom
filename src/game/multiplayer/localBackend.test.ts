@@ -3,7 +3,8 @@ import { resolve } from 'node:path'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { prepareDatabase } from '../data/loadDatabase'
 import { createNewSave } from '../save/saveStore'
-import { LocalMultiplayerBackend, filterProfanity } from './localBackend'
+import { LocalMultiplayerBackend } from './localBackend'
+import { filterProfanity } from './moderation'
 import { MULTIPLAYER_LOCAL_DB_KEY } from './types'
 
 const rawDatabase = JSON.parse(

@@ -327,11 +327,132 @@ void main() {
     expect(guild.ok, isTrue, reason: guild.reason);
     expect(await service.currentGuildId(), guild.guild!.id);
 
-    final posted = await service.postBazaar(bazaarPostTrade, 'Selling copper ore');
-    expect(posted.ok, isTrue, reason: posted.reason);
-    expect((await service.bazaarPosts()).single.body, 'Selling copper ore');
-
     // None of it went over the wire.
-    expect(transport.calls.where((call) => call.startsWith('invoke')), isEmpty);
+    expect(transport.calls.where((call) => call.startsWith('insert')), isEmpty);
+  });
+
+  test('records the first bounty turn-in of the hour and no other', () async {
+    final transport = FakeTransport();
+    final hero = await _signedIn(transport, MemorySaveStorage());
+
+    final first = await hero.claimBounty('2026-08-13T00', 'BNT-0001');
+    expect(first.ok, isTrue, reason: first.reason);
+    expect(first.firstCompleter, isTrue);
+    expect(first.claim!.username, 'Hero');
+    expect(first.claim!.claimedAt, transport.startIso);
+
+    // The same player asking again is told they already hold it.
+    final again = await hero.claimBounty('2026-08-13T00', 'BNT-0001');
+    expect(again.firstCompleter, isTrue);
+    expect(transport.tables[RemoteTables.bountyClaims], hasLength(1));
+
+    // A rival gets the claim back, naming who beat them, and still succeeds.
+    final rival = _service(transport, MemorySaveStorage());
+    await rival.signUp('rival@example.com', 'Rival', 'secret');
+    final second = await rival.claimBounty('2026-08-13T00', 'BNT-0001');
+    expect(second.ok, isTrue, reason: second.reason);
+    expect(second.firstCompleter, isFalse);
+    expect(second.claim!.username, 'Hero');
+
+    // A different bounty is its own race.
+    expect((await rival.claimBounty('2026-08-13T00', 'BNT-0002')).firstCompleter, isTrue);
+    // And so is the next hour.
+    expect((await rival.claimBounty('2026-08-13T01', 'BNT-0001')).firstCompleter, isTrue);
+  });
+
+  test('hands the winner back to whoever lost the race to the insert', () async {
+    final transport = FakeTransport();
+    final hero = await _signedIn(transport, MemorySaveStorage());
+
+    // A claim that lands after the read said the slot was free, which is what a
+    // second device doing the same thing at the same moment looks like.
+    // The read that would have found it is made to fail, so the service goes on
+    // to attempt the insert and has to cope with losing.
+    transport.tables[RemoteTables.bountyClaims]!.add(<String, Object?>{
+      'hour_key': '2026-08-13T00',
+      'bounty_id': 'BNT-0001',
+      'user_id': 'usr_rival',
+      'username': 'Rival',
+      'claimed_at': transport.startIso,
+    });
+    transport.failOnce['select:${RemoteTables.bountyClaims}'] = 'Connection reset.';
+
+    final claimed = await hero.claimBounty('2026-08-13T00', 'BNT-0001');
+    expect(claimed.ok, isTrue, reason: claimed.reason);
+    expect(claimed.firstCompleter, isFalse);
+    expect(claimed.claim!.username, 'Rival');
+  });
+
+  test('reports a claim that failed for a reason other than losing', () async {
+    final transport = FakeTransport();
+    final hero = await _signedIn(transport, MemorySaveStorage());
+
+    // Nobody holds the bounty, so the refusal is the write itself, not a rival.
+    transport.failOnce['insert:${RemoteTables.bountyClaims}'] = 'Connection closed.';
+    final refused = await hero.claimBounty('2026-08-13T00', 'BNT-0001');
+
+    expect(refused.ok, isFalse);
+    expect(refused.reason, 'Connection closed.');
+    expect(transport.tables[RemoteTables.bountyClaims], isEmpty);
+  });
+
+  test('lists the hour that was asked for, oldest first', () async {
+    final transport = FakeTransport();
+    final hero = await _signedIn(transport, MemorySaveStorage());
+
+    await hero.claimBounty('2026-08-13T00', 'BNT-0001');
+    await hero.claimBounty('2026-08-13T00', 'BNT-0002');
+    await hero.claimBounty('2026-08-13T01', 'BNT-0001');
+
+    final hour = await hero.bountyClaims('2026-08-13T00');
+    expect(hour.map((claim) => claim.bountyId), <String>['BNT-0001', 'BNT-0002']);
+    expect(await hero.bountyClaims('2026-08-12T23'), isEmpty);
+  });
+
+  test('posts a Bazaar notice and reads the board oldest first', () async {
+    final transport = FakeTransport();
+    final hero = await _signedIn(transport, MemorySaveStorage());
+
+    final posted = await hero.postBazaar(bazaarPostTrade, '  Selling copper ore  ');
+    expect(posted.ok, isTrue, reason: posted.reason);
+    expect(posted.post!.body, 'Selling copper ore');
+    expect(posted.post!.kind, bazaarPostTrade);
+    expect(posted.post!.username, 'Hero');
+    expect(posted.post!.id, isNotEmpty);
+
+    await hero.postBazaar(bazaarPostMessage, 'Anyone hiring?');
+
+    final board = await hero.bazaarPosts();
+    expect(board.map((post) => post.body), <String>['Selling copper ore', 'Anyone hiring?']);
+  });
+
+  test('refuses a Bazaar notice the shared rules reject, before the wire', () async {
+    final transport = FakeTransport();
+    final hero = await _signedIn(transport, MemorySaveStorage());
+
+    expect((await hero.postBazaar(bazaarPostMessage, '   ')).reason, bazaarEmptyPost);
+    expect((await hero.postBazaar('shouting', 'Hello')).reason, bazaarUnknownKind);
+    expect(transport.tables[RemoteTables.bazaarPosts], isEmpty);
+
+    // What it does accept is masked and cut to length the same way either backend
+    // would have done it.
+    final long = await hero.postBazaar(bazaarPostMessage, 'fuck ${'a' * 400}');
+    expect(long.post!.body.startsWith('****'), isTrue);
+    expect(long.post!.body.length, bazaarPostMaxLength);
+  });
+
+  test('needs an account before it will touch either Citadel board', () async {
+    final transport = FakeTransport();
+    final service = _service(transport, MemorySaveStorage());
+
+    expect(
+      (await service.claimBounty('2026-08-13T00', 'BNT-0001')).reason,
+      'Sign in to claim bounties.',
+    );
+    expect(
+      (await service.postBazaar(bazaarPostMessage, 'Hello')).reason,
+      'Sign in to post in the Grand Bazaar.',
+    );
+    expect(transport.calls.where((call) => call.startsWith('insert')), isEmpty);
   });
 }

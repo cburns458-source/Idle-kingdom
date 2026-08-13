@@ -10,8 +10,10 @@ import {
 } from '../save/types'
 import { totalLevel } from '../skills/totals'
 import { CHAT_COOLDOWN_SECONDS, PRESENCE_TTL_SECONDS } from './config'
+import { filterProfanity } from './moderation'
 import { buildLeaderboardSnapshot } from './snapshots'
 import type { GameDatabase } from '../data/types'
+import { prepareBazaarPost } from '../bazaar/post'
 import type { BazaarPost, BazaarPostKind } from '../bazaar/types'
 import type { BountyClaimRecord } from '../bounties/types'
 import {
@@ -193,12 +195,6 @@ function loadDb(storage: Storage = localStorage): LocalDb {
 
 function saveDb(db: LocalDb, storage: Storage = localStorage): void {
   storage.setItem(MULTIPLAYER_LOCAL_DB_KEY, JSON.stringify(db))
-}
-
-const BASIC_PROFANITY = /\b(fuck|shit|asshole|cunt|nigger|faggot)\b/gi
-
-export function filterProfanity(body: string): string {
-  return body.replace(BASIC_PROFANITY, (match) => '*'.repeat(match.length))
 }
 
 /**
@@ -1107,11 +1103,8 @@ export class LocalMultiplayerBackend {
     kind: BazaarPostKind,
     body: string,
   ): { ok: true; post: BazaarPost } | { ok: false; reason: string } {
-    const trimmed = body.trim().slice(0, 240)
-    if (!trimmed) return { ok: false, reason: 'Message is empty.' }
-    if (kind !== 'message' && kind !== 'recruit' && kind !== 'trade') {
-      return { ok: false, reason: 'Unknown bazaar post kind.' }
-    }
+    const prepared = prepareBazaarPost(kind, body)
+    if (!prepared.ok) return prepared
     const db = this.db()
     const cooldownKey = `${session.userId}:bazaar`
     const last = db.lastChatAt[cooldownKey]
@@ -1126,7 +1119,7 @@ export class LocalMultiplayerBackend {
       kind,
       userId: session.userId,
       username: session.username,
-      body: filterProfanity(trimmed),
+      body: prepared.body,
       createdAt: this.nowIso(),
     }
     db.bazaarPosts.push(post)

@@ -9,21 +9,10 @@ import 'package:ik_runtime/ik_runtime.dart';
 import 'bazaar.dart';
 import 'config.dart';
 import 'local_db.dart';
+import 'moderation.dart';
 import 'results.dart';
 import 'snapshots.dart';
 import 'types.dart';
-
-final RegExp _basicProfanity = RegExp(
-  r'\b(fuck|shit|asshole|cunt|nigger|faggot)\b',
-  caseSensitive: false,
-);
-
-/// Masks the words the shipped word list covers, leaving length intact so the
-/// reader can tell something was removed.
-String filterProfanity(String body) => body.replaceAllMapped(
-  _basicProfanity,
-  (match) => '*' * match.group(0)!.length,
-);
 
 /// The host facilities the backend would otherwise reach for directly. Supplied
 /// so a test — and the TypeScript parity fixtures — can pin both.
@@ -980,12 +969,8 @@ class LocalMultiplayerBackend {
     BazaarPostKind kind,
     String body,
   ) {
-    final trimmedBody = body.trim();
-    final trimmed = trimmedBody.length > 240 ? trimmedBody.substring(0, 240) : trimmedBody;
-    if (trimmed.isEmpty) return const BazaarPostResult.failed('Message is empty.');
-    if (!bazaarPostKinds.contains(kind)) {
-      return const BazaarPostResult.failed('Unknown bazaar post kind.');
-    }
+    final prepared = prepareBazaarPost(kind, body);
+    if (!prepared.ok) return BazaarPostResult.failed(prepared.reason!);
     final db = _db();
     final cooldownKey = '${session.userId}:bazaar';
     final last = db.lastChatAt[cooldownKey];
@@ -998,7 +983,7 @@ class LocalMultiplayerBackend {
       kind: kind,
       userId: session.userId,
       username: session.username,
-      body: filterProfanity(trimmed),
+      body: prepared.body!,
       createdAt: _nowIso(),
     );
     db.bazaarPosts.add(post);

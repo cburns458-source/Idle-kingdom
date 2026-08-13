@@ -150,6 +150,24 @@ class SupabaseTransport implements RemoteTransport {
   }
 
   @override
+  Future<RemoteQueryResult> insert(
+    String table,
+    RemoteRow row, {
+    required String columns,
+  }) async {
+    try {
+      final written = await client.from(table).insert(row).select(columns);
+      return RemoteQueryResult.ok(
+        written.map((stored) => Map<String, Object?>.from(stored)).toList(),
+      );
+    } on PostgrestException catch (error) {
+      return RemoteQueryResult.failed(error.message);
+    } on Object catch (error) {
+      return RemoteQueryResult.failed('$error');
+    }
+  }
+
+  @override
   Future<RemoteInvokeResult> invoke(String function, RemoteRow body) async {
     try {
       final response = await client.functions.invoke(function, body: body);

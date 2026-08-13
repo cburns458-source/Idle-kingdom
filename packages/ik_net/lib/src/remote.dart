@@ -8,6 +8,7 @@ library;
 
 import 'package:ik_rules/ik_rules.dart';
 
+import 'bazaar.dart';
 import 'snapshots.dart';
 import 'types.dart';
 
@@ -21,6 +22,8 @@ class RemoteTables {
   static const String saves = 'player_saves';
   static const String leaderboard = 'leaderboard_snapshots';
   static const String chat = 'chat_messages';
+  static const String bountyClaims = 'bounty_claims';
+  static const String bazaarPosts = 'bazaar_posts';
 }
 
 /// The edge function that writes chat, since a client may not insert directly.
@@ -42,6 +45,11 @@ const String remoteSaveColumns = 'save_version, updated_at, payload';
 const String remoteChatColumns = 'id, channel_key, user_id, username, body, created_at';
 const String remoteLeaderboardColumns =
     'user_id, board_key, value, profiles(username, appearance_json, guild_id, guilds(name))';
+const String remoteBountyClaimColumns = 'hour_key, bounty_id, user_id, username, claimed_at';
+const String remoteBazaarColumns = 'id, kind, user_id, username, body, created_at';
+
+/// How many Bazaar notices a read asks for.
+const int remoteBazaarLimit = 40;
 
 /// The conflict target that makes a submit an update rather than a duplicate.
 const String remoteLeaderboardConflict = 'user_id,board_key';
@@ -220,6 +228,9 @@ ChatMessage? chatMessageFromFunction(RemoteRow? data) {
 /// What a send is refused with when the function answered with nothing usable.
 const String remoteChatSendFailed = 'The chat message was not accepted.';
 
+/// The same, for a Bazaar notice the board did not hand back.
+const String remoteBazaarPostFailed = 'The notice was not accepted.';
+
 /// Why an upload stops: the account has a newer save than the one being sent.
 const String remoteSaveConflict = 'A newer cloud save exists.';
 
@@ -252,3 +263,48 @@ List<LeaderboardEntry> leaderboardEntriesFrom(
     for (final (index, row) in rows.indexed) leaderboardEntryFrom(row, boardKey, index),
   ];
 }
+
+/// The row that claims an hourly bounty first.
+///
+/// `(hour_key, bounty_id)` is the table's primary key, which is what decides the
+/// race: the insert that lands first is the one that stands, and a backend says
+/// so rather than a client believing it.
+RemoteRow bountyClaimRowFor(MultiplayerSession session, String hourKey, String bountyId) =>
+    <String, Object?>{
+      'hour_key': hourKey,
+      'bounty_id': bountyId,
+      'user_id': session.userId,
+      'username': session.username,
+    };
+
+BountyClaimRecord bountyClaimFrom(RemoteRow row) => BountyClaimRecord(
+  hourKey: _str(row['hour_key']),
+  bountyId: _str(row['bounty_id']),
+  userId: _str(row['user_id']),
+  username: _str(row['username']),
+  claimedAt: _str(row['claimed_at']),
+);
+
+RemoteRow bazaarPostRowFor(MultiplayerSession session, BazaarPostKind kind, String body) =>
+    <String, Object?>{
+      'kind': kind,
+      'user_id': session.userId,
+      'username': session.username,
+      'body': body,
+    };
+
+BazaarPost bazaarPostFrom(RemoteRow row) => BazaarPost(
+  id: _str(row['id']),
+  kind: _str(row['kind']),
+  userId: _str(row['user_id']),
+  username: _str(row['username']),
+  body: _str(row['body']),
+  createdAt: _str(row['created_at']),
+);
+
+/// The Bazaar newest-last, the way a chat log reads.
+///
+/// A backend hands the newest first, because that is the only way to ask for the
+/// most recent forty, so the order is turned round once they arrive.
+List<BazaarPost> bazaarPostsFrom(List<RemoteRow> rows) =>
+    rows.reversed.map(bazaarPostFrom).toList();

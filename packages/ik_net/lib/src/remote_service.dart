@@ -368,16 +368,94 @@ class RemoteMultiplayerService implements MultiplayerService {
       _local.sendFriendRequest(targetUserId);
 
   @override
-  Future<List<BountyClaimRecord>> bountyClaims(String hourKey) => _local.bountyClaims(hourKey);
+  Future<List<BountyClaimRecord>> bountyClaims(String hourKey) async {
+    final result = await transport.select(
+      RemoteTables.bountyClaims,
+      columns: remoteBountyClaimColumns,
+      equals: <String, Object?>{'hour_key': hourKey},
+      orderBy: 'claimed_at',
+    );
+    if (!result.ok) return const <BountyClaimRecord>[];
+    return result.rows!.map(bountyClaimFrom).toList();
+  }
+
+  /// The claim already recorded for this bounty, if somebody got there first.
+  Future<BountyClaimRecord?> _existingClaim(String hourKey, String bountyId) async {
+    final result = await transport.select(
+      RemoteTables.bountyClaims,
+      columns: remoteBountyClaimColumns,
+      equals: <String, Object?>{'hour_key': hourKey, 'bounty_id': bountyId},
+      limit: 1,
+    );
+    final row = result.ok ? result.single : null;
+    return row == null ? null : bountyClaimFrom(row);
+  }
+
+  /// Claims an hourly bounty, letting the backend decide who was first.
+  ///
+  /// This is the one thing the local backend cannot answer honestly, because on
+  /// one device everybody is always first. The table's primary key settles it:
+  /// the insert either lands, or is refused because somebody else won, and the
+  /// loser is handed the winner's claim so the board can name them. Either way
+  /// the turn-in succeeds — the base reward is not a race.
+  @override
+  Future<BountyClaimResult> claimBounty(String hourKey, String bountyId) async {
+    final current = session;
+    if (current == null) {
+      return const BountyClaimResult.failed('Sign in to claim bounties.');
+    }
+    final already = await _existingClaim(hourKey, bountyId);
+    if (already != null) {
+      return BountyClaimResult.ok(already, firstCompleter: already.userId == current.userId);
+    }
+
+    final written = await transport.insert(
+      RemoteTables.bountyClaims,
+      bountyClaimRowFor(current, hourKey, bountyId),
+      columns: remoteBountyClaimColumns,
+    );
+    if (written.ok && written.single != null) {
+      return BountyClaimResult.ok(bountyClaimFrom(written.single!), firstCompleter: true);
+    }
+
+    // Refused: either somebody claimed it between the read and the write, or the
+    // write itself failed. A claim now on the table means the former.
+    final winner = await _existingClaim(hourKey, bountyId);
+    if (winner == null) return BountyClaimResult.failed(written.reason!);
+    return BountyClaimResult.ok(winner, firstCompleter: winner.userId == current.userId);
+  }
 
   @override
-  Future<BountyClaimResult> claimBounty(String hourKey, String bountyId) =>
-      _local.claimBounty(hourKey, bountyId);
+  Future<List<BazaarPost>> bazaarPosts({int limit = remoteBazaarLimit}) async {
+    final result = await transport.select(
+      RemoteTables.bazaarPosts,
+      columns: remoteBazaarColumns,
+      orderBy: 'created_at',
+      ascending: false,
+      limit: limit,
+    );
+    if (!result.ok) return const <BazaarPost>[];
+    return bazaarPostsFrom(result.rows!);
+  }
 
   @override
-  Future<List<BazaarPost>> bazaarPosts({int limit = 40}) => _local.bazaarPosts(limit: limit);
+  Future<BazaarPostResult> postBazaar(BazaarPostKind kind, String body) async {
+    final current = session;
+    if (current == null) {
+      return const BazaarPostResult.failed('Sign in to post in the Grand Bazaar.');
+    }
+    final prepared = prepareBazaarPost(kind, body);
+    if (!prepared.ok) return BazaarPostResult.failed(prepared.reason!);
 
-  @override
-  Future<BazaarPostResult> postBazaar(BazaarPostKind kind, String body) =>
-      _local.postBazaar(kind, body);
+    final written = await transport.insert(
+      RemoteTables.bazaarPosts,
+      bazaarPostRowFor(current, kind, prepared.body!),
+      columns: remoteBazaarColumns,
+    );
+    final row = written.ok ? written.single : null;
+    if (row == null) {
+      return BazaarPostResult.failed(written.reason ?? remoteBazaarPostFailed);
+    }
+    return BazaarPostResult.ok(bazaarPostFrom(row));
+  }
 }

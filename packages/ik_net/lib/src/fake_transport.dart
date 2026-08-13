@@ -8,16 +8,30 @@ import 'remote_transport.dart';
 /// a leaderboard row to its profile — because those are the assumptions that
 /// would otherwise only be checked against a live project.
 class FakeTransport implements RemoteTransport {
-  FakeTransport({this.nowIso = '2026-08-13T00:00:00.000Z'});
+  FakeTransport({this.startIso = '2026-08-13T00:00:00.000Z'});
 
-  /// The instant the send-chat function stamps a message with.
-  final String nowIso;
+  /// The instant the first stamped row is written at.
+  final String startIso;
+
+  /// A fresh timestamp, a second later each time.
+  ///
+  /// Rows a real table stamps for itself are microseconds apart, which is what
+  /// makes `order by created_at` mean anything; identical stamps would leave the
+  /// order of a board undefined and a test passing by luck.
+  String stamp() {
+    final at = DateTime.parse(startIso).add(Duration(seconds: _stamps++));
+    return at.toUtc().toIso8601String();
+  }
+
+  int _stamps = 0;
 
   final Map<String, List<RemoteRow>> tables = <String, List<RemoteRow>>{
     RemoteTables.profiles: <RemoteRow>[],
     RemoteTables.saves: <RemoteRow>[],
     RemoteTables.leaderboard: <RemoteRow>[],
     RemoteTables.chat: <RemoteRow>[],
+    RemoteTables.bountyClaims: <RemoteRow>[],
+    RemoteTables.bazaarPosts: <RemoteRow>[],
   };
 
   /// Accounts by email, as an auth provider would hold them.
@@ -48,8 +62,12 @@ class FakeTransport implements RemoteTransport {
   /// Emails a magic link was requested for.
   final List<String> magicLinks = <String>[];
 
-  /// The reason the next write or read should fail with, used once.
+  /// The reason the next call of any kind should fail with, used once.
   String? failNextWith;
+
+  /// Reasons keyed by the call they refuse, such as `insert:bazaar_posts`, each
+  /// used once. For making one step of a sequence fail rather than the next one.
+  final Map<String, String> failOnce = <String, String>{};
 
   /// Set to answer the send-chat function with something unusable.
   RemoteRow? chatFunctionReply;
@@ -60,7 +78,9 @@ class FakeTransport implements RemoteTransport {
 
   String _nextId(String prefix) => '${prefix}_${(_ids += 1).toString().padLeft(4, '0')}';
 
-  String? _takeFailure() {
+  String? _takeFailure(String call) {
+    final named = failOnce.remove(call);
+    if (named != null) return named;
     final reason = failNextWith;
     failNextWith = null;
     return reason;
@@ -72,6 +92,15 @@ class FakeTransport implements RemoteTransport {
     RemoteTables.saves: <String>['user_id'],
     RemoteTables.leaderboard: <String>['user_id', 'board_key'],
     RemoteTables.chat: <String>['id'],
+    RemoteTables.bountyClaims: <String>['hour_key', 'bounty_id'],
+    RemoteTables.bazaarPosts: <String>['id'],
+  };
+
+  /// The columns a table fills in for itself, the way a default does.
+  RemoteRow _defaults(String table) => switch (table) {
+    RemoteTables.bountyClaims => <String, Object?>{'claimed_at': stamp()},
+    RemoteTables.bazaarPosts => <String, Object?>{'id': _nextId('bzr'), 'created_at': stamp()},
+    _ => const <String, Object?>{},
   };
 
   @override
@@ -126,7 +155,7 @@ class FakeTransport implements RemoteTransport {
   @override
   Future<String?> sendMagicLink(String email) async {
     calls.add('magicLink:$email');
-    final reason = _takeFailure();
+    final reason = _takeFailure('magicLink:$email');
     if (reason != null) return reason;
     magicLinks.add(email);
     return null;
@@ -149,7 +178,7 @@ class FakeTransport implements RemoteTransport {
     int? limit,
   }) async {
     calls.add('select:$table');
-    final reason = _takeFailure();
+    final reason = _takeFailure('select:$table');
     if (reason != null) return RemoteQueryResult.failed(reason);
 
     var rows = (tables[table] ?? const <RemoteRow>[])
@@ -193,7 +222,7 @@ class FakeTransport implements RemoteTransport {
   @override
   Future<String?> upsert(String table, List<RemoteRow> rows, {String? onConflict}) async {
     calls.add('upsert:$table');
-    final reason = _takeFailure();
+    final reason = _takeFailure('upsert:$table');
     if (reason != null) return reason;
 
     final key = onConflict?.split(',').map((part) => part.trim()).toList() ?? _keys[table]!;
@@ -210,9 +239,33 @@ class FakeTransport implements RemoteTransport {
   }
 
   @override
+  Future<RemoteQueryResult> insert(
+    String table,
+    RemoteRow row, {
+    required String columns,
+  }) async {
+    calls.add('insert:$table');
+    final reason = _takeFailure('insert:$table');
+    if (reason != null) return RemoteQueryResult.failed(reason);
+
+    final key = _keys[table]!;
+    final stored = tables.putIfAbsent(table, () => <RemoteRow>[]);
+    if (stored.any((existing) => key.every((k) => existing[k] == row[k]))) {
+      return RemoteQueryResult.failed(duplicateKeyRefusal);
+    }
+    final written = <String, Object?>{..._defaults(table), ...row};
+    stored.add(written);
+    return RemoteQueryResult.ok(<RemoteRow>[<String, Object?>{...written}]);
+  }
+
+  /// What a unique-key violation reads as, standing in for the database's own
+  /// wording, which a caller must not depend on.
+  static const String duplicateKeyRefusal = 'duplicate key value violates unique constraint';
+
+  @override
   Future<RemoteInvokeResult> invoke(String function, RemoteRow body) async {
     calls.add('invoke:$function');
-    final reason = _takeFailure();
+    final reason = _takeFailure('invoke:$function');
     if (reason != null) return RemoteInvokeResult.failed(reason);
     if (function != remoteSendChatFunction) {
       return RemoteInvokeResult.failed('No such function: $function');
@@ -227,7 +280,7 @@ class FakeTransport implements RemoteTransport {
       'user_id': sender.userId,
       'username': sender.username ?? 'Adventurer',
       'body': body['body'],
-      'created_at': nowIso,
+      'created_at': stamp(),
     };
     tables[RemoteTables.chat]!.add(row);
     return RemoteInvokeResult.ok(<String, Object?>{...row});

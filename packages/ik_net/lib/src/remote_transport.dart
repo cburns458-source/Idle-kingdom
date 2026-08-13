@@ -95,6 +95,13 @@ abstract interface class RemoteTransport {
   /// Returns null on success, or the reason it was refused.
   Future<String?> upsert(String table, List<RemoteRow> rows, {String? onConflict});
 
+  /// Adds [row], failing rather than replacing when it is already there.
+  ///
+  /// This is how a first-come-first-served race is settled: whoever loses is
+  /// told so by the refusal, instead of quietly overwriting the winner. The
+  /// stored row is returned so the caller can show what actually landed.
+  Future<RemoteQueryResult> insert(String table, RemoteRow row, {required String columns});
+
   Future<RemoteInvokeResult> invoke(String function, RemoteRow body);
 }
 

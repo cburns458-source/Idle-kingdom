@@ -6,11 +6,19 @@ import {
 } from '../../game/multiplayer/citadel'
 import { softValidateSave } from '../../game/multiplayer/cloudSave'
 import { CHAT_COOLDOWN_SECONDS, PRESENCE_TTL_SECONDS } from '../../game/multiplayer/config'
-import { filterProfanity, LocalMultiplayerBackend } from '../../game/multiplayer/localBackend'
+import { LocalMultiplayerBackend } from '../../game/multiplayer/localBackend'
+import { filterProfanity } from '../../game/multiplayer/moderation'
 import { boardLabel, launchBoardKeys } from '../../game/multiplayer/leaderboards'
+import { prepareBazaarPost } from '../../game/bazaar/post'
+import type { BazaarPostKind } from '../../game/bazaar/types'
 import { presenceInputFromSave } from '../../game/multiplayer/presence'
 import {
+  bazaarPostRowFor,
+  bazaarPostsFrom,
+  bountyClaimFrom,
+  bountyClaimRowFor,
   chatMessageFrom,
+  chatMessageFromFunction,
   cloudSaveRecordFrom,
   isRemoteSaveNewer,
   leaderboardEntriesFrom,
@@ -21,13 +29,19 @@ import {
   saveRowFor,
   sessionFromSignIn,
   sessionFromSignUp,
+  REMOTE_BAZAAR_COLUMNS,
+  REMOTE_BAZAAR_LIMIT,
+  REMOTE_BAZAAR_POST_FAILED,
+  REMOTE_BOUNTY_CLAIM_COLUMNS,
   REMOTE_CHAT_COLUMNS,
   REMOTE_CHAT_LIMIT,
+  REMOTE_CHAT_SEND_FAILED,
   REMOTE_LEADERBOARD_COLUMNS,
   REMOTE_LEADERBOARD_CONFLICT,
   REMOTE_MAGIC_LINK_UNAVAILABLE,
   REMOTE_NOT_CONFIGURED,
   REMOTE_SAVE_COLUMNS,
+  REMOTE_SAVE_CONFLICT,
   REMOTE_SEND_CHAT_FUNCTION,
   REMOTE_SIGN_IN_FAILED,
   REMOTE_SIGN_UP_FAILED,
@@ -221,6 +235,44 @@ const REMOTE_CHAT_ROWS: RemoteRow[] = [
     created_at: '2026-08-12T21:00:00.000Z',
   },
   {},
+]
+
+/** The account every remote row in these scenarios is written by. */
+const REMOTE_SESSION: MultiplayerSession = {
+  userId: 'usr_0001',
+  email: 'hero@example.com',
+  username: 'Hero',
+  accessToken: 'token',
+}
+
+const REMOTE_CLAIM_ROWS: RemoteRow[] = [
+  {
+    hour_key: '2026-08-12T21',
+    bounty_id: 'BNT-0001',
+    user_id: 'usr_0001',
+    username: 'Hero',
+    claimed_at: '2026-08-12T21:00:05.000Z',
+  },
+  {},
+]
+
+const REMOTE_BAZAAR_ROWS: RemoteRow[] = [
+  {
+    id: 'bzr_2',
+    kind: 'trade',
+    user_id: 'usr_0002',
+    username: 'Rival',
+    body: 'Selling ore',
+    created_at: '2026-08-12T21:00:02.000Z',
+  },
+  {
+    id: 'bzr_1',
+    kind: 'message',
+    user_id: 'usr_0001',
+    username: 'Hero',
+    body: 'Hello',
+    created_at: '2026-08-12T21:00:01.000Z',
+  },
 ]
 
 /**
@@ -945,6 +997,8 @@ export const multiplayerScenarios: ParityScenario[] = [
       saveRows: REMOTE_SAVE_ROWS as unknown as JsonValue,
       boardRows: REMOTE_BOARD_ROWS as unknown as JsonValue,
       chatRows: REMOTE_CHAT_ROWS as unknown as JsonValue,
+      claimRows: REMOTE_CLAIM_ROWS as unknown as JsonValue,
+      bazaarRows: REMOTE_BAZAAR_ROWS as unknown as JsonValue,
     },
     () => {
       const save = pinnedSave()
@@ -958,7 +1012,10 @@ export const multiplayerScenarios: ParityScenario[] = [
           chatColumns: REMOTE_CHAT_COLUMNS,
           leaderboardColumns: REMOTE_LEADERBOARD_COLUMNS,
           leaderboardConflict: REMOTE_LEADERBOARD_CONFLICT,
+          bountyClaimColumns: REMOTE_BOUNTY_CLAIM_COLUMNS,
+          bazaarColumns: REMOTE_BAZAAR_COLUMNS,
           chatLimit: REMOTE_CHAT_LIMIT,
+          bazaarLimit: REMOTE_BAZAAR_LIMIT,
           usernameMaxLength: REMOTE_USERNAME_MAX_LENGTH,
         },
         messages: {
@@ -966,6 +1023,9 @@ export const multiplayerScenarios: ParityScenario[] = [
           signUpFailed: REMOTE_SIGN_UP_FAILED,
           signInFailed: REMOTE_SIGN_IN_FAILED,
           magicLinkUnavailable: REMOTE_MAGIC_LINK_UNAVAILABLE,
+          chatSendFailed: REMOTE_CHAT_SEND_FAILED,
+          bazaarPostFailed: REMOTE_BAZAAR_POST_FAILED,
+          saveConflict: REMOTE_SAVE_CONFLICT,
         },
         usernames: ['  Rowan  ', 'a'.repeat(40), ''].map(remoteUsername),
         emails: ['  HERO@Example.com ', 'plain@example.com'].map(remoteEmail),
@@ -985,6 +1045,29 @@ export const multiplayerScenarios: ParityScenario[] = [
         leaderboardRows: leaderboardRowsFor('usr_0001', snapshot, '2026-08-12T21:00:00.000Z'),
         entries: leaderboardEntriesFrom(REMOTE_BOARD_ROWS, 'total_level'),
         chatMessages: REMOTE_CHAT_ROWS.map(chatMessageFrom),
+        functionMessages: [
+          chatMessageFromFunction({
+            id: 'msg_1',
+            channelKey: 'global',
+            userId: 'usr_0001',
+            username: 'Hero',
+            body: 'Hi',
+            createdAt: '2026-08-12T21:00:00.000Z',
+          }),
+          chatMessageFromFunction(REMOTE_CHAT_ROWS[0]!),
+          chatMessageFromFunction({ accepted: true }),
+          chatMessageFromFunction(null),
+        ],
+        claimRow: bountyClaimRowFor(REMOTE_SESSION, '2026-08-12T21', 'BNT-0001'),
+        claims: REMOTE_CLAIM_ROWS.map(bountyClaimFrom),
+        bazaarRow: bazaarPostRowFor(REMOTE_SESSION, 'trade', 'Selling copper ore'),
+        bazaarPosts: bazaarPostsFrom(REMOTE_BAZAAR_ROWS),
+        preparedPosts: [
+          prepareBazaarPost('message', '  Hello there  '),
+          prepareBazaarPost('message', '   '),
+          prepareBazaarPost('trade', `fuck ${'a'.repeat(400)}`),
+          prepareBazaarPost('shouting' as BazaarPostKind, 'Hello'),
+        ],
         defaultAppearance: DEFAULT_PLAYER_APPEARANCE,
       } as unknown as JsonValue
     },
