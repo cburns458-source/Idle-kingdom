@@ -63,9 +63,11 @@ GameController buildController(LoadedDatabase database, {PlayerSave? seed, TestC
 MultiplayerController buildMultiplayer(LoadedDatabase database, {TestClock? clock}) {
   final testClock = clock ?? TestClock();
   final storage = MemorySaveStorage();
+  final service = LocalMultiplayerService(storage: storage);
+  service.ensureDemoWorld(database.launch);
   return MultiplayerController(
     database: database,
-    service: LocalMultiplayerService(storage: storage),
+    service: service,
     storage: storage,
     clock: testClock.read,
   );
@@ -82,9 +84,11 @@ MultiplayerController buildRemoteMultiplayer(
 }) {
   final testClock = clock ?? TestClock();
   final storage = MemorySaveStorage();
+  final service = RemoteMultiplayerService(transport: transport, storage: storage);
+  service.local.ensureDemoWorld(database.launch);
   return MultiplayerController(
     database: database,
-    service: RemoteMultiplayerService(transport: transport, storage: storage),
+    service: service,
     storage: storage,
     clock: testClock.read,
   );

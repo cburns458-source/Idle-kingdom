@@ -64,6 +64,22 @@ abstract interface class MultiplayerService {
 
   Future<void> reportPlayer(String targetUserId, String reason);
 
+  Future<ActionResult> sendFriendRequest(String targetUserId);
+
+  Future<ActionResult> removeFriend(String targetUserId);
+
+  Future<void> ignorePlayer(String targetUserId);
+
+  Future<void> unignorePlayer(String targetUserId);
+
+  Future<List<SocialContact>> friends();
+
+  Future<List<SocialContact>> incomingFriendRequests();
+
+  Future<List<SocialContact>> outgoingFriendRequests();
+
+  Future<List<SocialContact>> ignoredPlayers();
+
   Future<CreateGuildResult> createGuild(CreateGuildInput input, num goldAvailable);
 
   Future<List<GuildListing>> listGuilds();
@@ -113,8 +129,6 @@ abstract interface class MultiplayerService {
   Future<List<ActivityPresence>> citadelVisitors();
 
   Future<PublicPlayerProfile?> publicProfile(String userId);
-
-  Future<ActionResult> sendFriendRequest(String targetUserId);
 
   Future<List<BountyClaimRecord>> bountyClaims(String hourKey);
 
@@ -299,6 +313,65 @@ class LocalMultiplayerService implements MultiplayerService {
   }
 
   @override
+  Future<ActionResult> sendFriendRequest(String targetUserId) async {
+    final current = session;
+    if (current == null) return const ActionResult.failed('Sign in required.');
+    return _backend.sendFriendRequest(current.userId, targetUserId);
+  }
+
+  @override
+  Future<ActionResult> removeFriend(String targetUserId) async {
+    final current = session;
+    if (current == null) return const ActionResult.failed('Sign in required.');
+    return _backend.removeFriend(current.userId, targetUserId);
+  }
+
+  @override
+  Future<void> ignorePlayer(String targetUserId) async {
+    final current = session;
+    if (current == null) return;
+    _backend.blockUser(current.userId, targetUserId);
+  }
+
+  @override
+  Future<void> unignorePlayer(String targetUserId) async {
+    final current = session;
+    if (current == null) return;
+    _backend.unblockUser(current.userId, targetUserId);
+  }
+
+  @override
+  Future<List<SocialContact>> friends() async {
+    final current = session;
+    if (current == null) return const <SocialContact>[];
+    return _backend.listFriends(current.userId);
+  }
+
+  @override
+  Future<List<SocialContact>> incomingFriendRequests() async {
+    final current = session;
+    if (current == null) return const <SocialContact>[];
+    return _backend.listIncomingFriendRequests(current.userId);
+  }
+
+  @override
+  Future<List<SocialContact>> outgoingFriendRequests() async {
+    final current = session;
+    if (current == null) return const <SocialContact>[];
+    return _backend.listOutgoingFriendRequests(current.userId);
+  }
+
+  @override
+  Future<List<SocialContact>> ignoredPlayers() async {
+    final current = session;
+    if (current == null) return const <SocialContact>[];
+    return _backend.listIgnored(current.userId);
+  }
+
+  /// Puts the static demo guild on this device. Safe to call on every boot.
+  void ensureDemoWorld(GameDatabase db) => _backend.ensureDemoWorld(db);
+
+  @override
   Future<CreateGuildResult> createGuild(CreateGuildInput input, num goldAvailable) async {
     final current = session;
     if (current == null) return const CreateGuildResult.failed('Sign in to create a guild.');
@@ -415,37 +488,34 @@ class LocalMultiplayerService implements MultiplayerService {
   Future<List<ActivityPresence>> peersAtLocation(
     String locationId, {
     bool excludeSelf = true,
-  }) async => _withoutSelf(_backend.listPresence(locationId: locationId), excludeSelf);
+  }) async => _visiblePeers(_backend.listPresence(locationId: locationId), excludeSelf);
 
   @override
   Future<List<ActivityPresence>> peersAtActivity(
     String locationId,
     String? activityId, {
     bool excludeSelf = true,
-  }) async => _withoutSelf(
+  }) async => _visiblePeers(
     _backend.listPresence(locationId: locationId, activityId: activityId),
     excludeSelf,
   );
 
-  List<ActivityPresence> _withoutSelf(List<ActivityPresence> peers, bool excludeSelf) {
+  List<ActivityPresence> _visiblePeers(List<ActivityPresence> peers, bool excludeSelf) {
     final current = session;
-    if (!excludeSelf || current == null) return peers;
-    return peers.where((row) => row.userId != current.userId).toList();
+    if (current == null) return excludeSelf ? const <ActivityPresence>[] : peers;
+    final hidden = _backend.blockedIds(current.userId);
+    return peers
+        .where((row) => !hidden.contains(row.userId))
+        .where((row) => !excludeSelf || row.userId != current.userId)
+        .toList();
   }
 
   @override
   Future<List<ActivityPresence>> citadelVisitors() async =>
-      _withoutSelf(_backend.listPresence(locationId: citadelLocationId()), true);
+      _visiblePeers(_backend.listPresence(locationId: citadelLocationId()), true);
 
   @override
   Future<PublicPlayerProfile?> publicProfile(String userId) async => _backend.publicProfile(userId);
-
-  @override
-  Future<ActionResult> sendFriendRequest(String targetUserId) async {
-    final current = session;
-    if (current == null) return const ActionResult.failed('Sign in required.');
-    return _backend.sendFriendRequest(current.userId, targetUserId);
-  }
 
   @override
   Future<List<BountyClaimRecord>> bountyClaims(String hourKey) async =>

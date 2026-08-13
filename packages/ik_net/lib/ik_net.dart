@@ -10,6 +10,7 @@ export 'src/bazaar.dart';
 export 'src/bounty_turn_in.dart';
 export 'src/cloud_save.dart';
 export 'src/config.dart';
+export 'src/demo_world.dart';
 export 'src/emblems.dart';
 export 'src/local_backend.dart';
 export 'src/local_db.dart';

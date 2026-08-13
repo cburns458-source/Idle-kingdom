@@ -139,6 +139,28 @@ class Friendship {
   Map<String, Object?> toJson() => <String, Object?>{'userA': userA, 'userB': userB};
 }
 
+/// A name and portrait for a friends or ignore row.
+class SocialContact {
+  const SocialContact({
+    required this.userId,
+    required this.username,
+    required this.appearance,
+    this.guildName,
+  });
+
+  final String userId;
+  final String username;
+  final PlayerAppearance appearance;
+  final String? guildName;
+
+  Map<String, Object?> toJson() => <String, Object?>{
+    'userId': userId,
+    'username': username,
+    'appearance': appearance.toJson(),
+    'guildName': guildName,
+  };
+}
+
 /// Everything the local backend keeps, held as one JSON document under a single
 /// storage key, the way the browser build keeps it in `localStorage`.
 class LocalDb {

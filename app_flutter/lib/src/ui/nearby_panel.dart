@@ -6,7 +6,7 @@ import '../session/multiplayer_controller.dart';
 import '../theme.dart';
 import 'social_bits.dart';
 
-/// Who else is working the activity the player is on.
+/// Who else is at this location.
 ///
 /// A sheet rather than a screen, because looking at the neighbours must not
 /// interrupt the primary activity.
@@ -107,7 +107,7 @@ class _NearbyPanelState extends State<NearbyPanel> {
         if (!net.isSignedIn)
           const MutedText(signInPrompt)
         else if (rows.isEmpty)
-          const MutedText('No other players on this activity right now.')
+          const MutedText('No other players here right now.')
         else
           Flexible(
             child: ListView.separated(
@@ -117,9 +117,13 @@ class _NearbyPanelState extends State<NearbyPanel> {
               itemBuilder: (context, index) {
                 final row = rows[index];
                 final peer = net.peers[index];
+                final activity = peer.currentActivityId == null
+                    ? null
+                    : widget.controller.indexes.activitiesById[peer.currentActivityId!];
+                final activityName = activity?.contextualName ?? activity?.displayName;
                 return SocialRow(
                   title: row.username,
-                  subtitle: row.subtitle,
+                  subtitle: activityName == null ? row.subtitle : '$activityName · ${row.subtitle}',
                   leading: SocialPortrait(appearance: peer.appearance),
                   onTap: () async {
                     final profile = await net.publicProfile(row.userId);
@@ -179,10 +183,7 @@ class _NearbyPanelState extends State<NearbyPanel> {
             ),
           ],
           const SizedBox(height: 10),
-          OutlinedButton(
-            onPressed: net.busy ? null : () => net.sendFriendRequest(view.userId),
-            child: const Text('Friend request'),
-          ),
+          ..._profileActions(view.userId),
           const SizedBox(height: 8),
           Row(
             children: [
@@ -209,5 +210,35 @@ class _NearbyPanelState extends State<NearbyPanel> {
         ],
       ),
     );
+  }
+
+  List<Widget> _profileActions(String userId) {
+    if (net.isIgnored(userId)) {
+      return <Widget>[
+        OutlinedButton(
+          onPressed: net.busy ? null : () => net.unignorePlayer(userId),
+          child: const Text('Unignore'),
+        ),
+      ];
+    }
+    return <Widget>[
+      if (net.isFriend(userId))
+        OutlinedButton(
+          onPressed: net.busy ? null : () => net.removeFriend(userId),
+          child: const Text('Remove friend'),
+        )
+      else if (net.hasOutgoingRequestTo(userId))
+        const MutedText('Friend request sent.')
+      else
+        OutlinedButton(
+          onPressed: net.busy ? null : () => net.sendFriendRequest(userId),
+          child: Text(net.hasIncomingRequestFrom(userId) ? 'Accept friend' : 'Friend request'),
+        ),
+      const SizedBox(height: 8),
+      OutlinedButton(
+        onPressed: net.busy ? null : () => net.ignorePlayer(userId),
+        child: const Text('Ignore'),
+      ),
+    ];
   }
 }

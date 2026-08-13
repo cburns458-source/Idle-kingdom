@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:ik_content/ik_content.dart';
 import 'package:ik_net/ik_net.dart';
 import 'package:ik_rules/ik_rules.dart';
 import 'package:ik_runtime/ik_runtime.dart';
@@ -71,9 +72,11 @@ class _BootGateState extends State<_BootGate> {
     )..adoptBoot(boot);
     // Multiplayer runs against the same store the save uses, so a signed-in
     // player keeps their account across launches without a network call.
+    final service = await _multiplayerService(storage);
+    _ensureDemoWorld(service, database.launch);
     final multiplayer = MultiplayerController(
       database: database,
-      service: await _multiplayerService(storage),
+      service: service,
       storage: storage,
       clock: clock,
     );
@@ -97,6 +100,14 @@ class _BootGateState extends State<_BootGate> {
       return RemoteMultiplayerService(transport: transport, storage: storage);
     } on Object {
       return LocalMultiplayerService(storage: storage);
+    }
+  }
+
+  void _ensureDemoWorld(MultiplayerService service, GameDatabase db) {
+    if (service is LocalMultiplayerService) {
+      service.ensureDemoWorld(db);
+    } else if (service is RemoteMultiplayerService) {
+      service.local.ensureDemoWorld(db);
     }
   }
 

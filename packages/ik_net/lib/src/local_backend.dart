@@ -8,6 +8,7 @@ import 'package:ik_runtime/ik_runtime.dart';
 
 import 'bazaar.dart';
 import 'config.dart';
+import 'demo_world.dart';
 import 'local_db.dart';
 import 'moderation.dart';
 import 'results.dart';
@@ -429,7 +430,99 @@ class LocalMultiplayerBackend {
     final db = _db();
     if (db.blocks.any((row) => row.userId == userId && row.otherUserId == blockedUserId)) return;
     db.blocks.add(UserPair(userId: userId, otherUserId: blockedUserId));
+    _dropRelationship(db, userId, blockedUserId);
     _write(db);
+  }
+
+  void unblockUser(String userId, String blockedUserId) {
+    final db = _db();
+    db.blocks = db.blocks
+        .where((row) => !(row.userId == userId && row.otherUserId == blockedUserId))
+        .toList();
+    _write(db);
+  }
+
+  Set<String> blockedIds(String userId) => <String>{
+    for (final row in _db().blocks)
+      if (row.userId == userId) row.otherUserId,
+  };
+
+  ActionResult removeFriend(String userId, String otherUserId) {
+    if (userId == otherUserId) return const ActionResult.failed('Cannot unfriend yourself.');
+    final db = _db();
+    final pair = <String>[userId, otherUserId]..sort();
+    final before = db.friends.length;
+    db.friends = db.friends
+        .where((row) => !(row.userA == pair[0] && row.userB == pair[1]))
+        .toList();
+    if (db.friends.length == before) {
+      return const ActionResult.failed('Not friends.');
+    }
+    _write(db);
+    return const ActionResult.ok();
+  }
+
+  List<SocialContact> listFriends(String userId) {
+    final db = _db();
+    final others = <String>[
+      for (final row in db.friends)
+        if (row.userA == userId) row.userB else if (row.userB == userId) row.userA,
+    ];
+    return [
+      for (final other in others)
+        if (_contact(db, other) case final contact?) contact,
+    ];
+  }
+
+  List<SocialContact> listIncomingFriendRequests(String userId) {
+    final db = _db();
+    return [
+      for (final row in db.friendRequests)
+        if (row.toUserId == userId)
+          if (_contact(db, row.fromUserId) case final contact?) contact,
+    ];
+  }
+
+  List<SocialContact> listOutgoingFriendRequests(String userId) {
+    final db = _db();
+    return [
+      for (final row in db.friendRequests)
+        if (row.fromUserId == userId)
+          if (_contact(db, row.toUserId) case final contact?) contact,
+    ];
+  }
+
+  List<SocialContact> listIgnored(String userId) {
+    final db = _db();
+    return [
+      for (final other in blockedIds(userId))
+        if (_contact(db, other) case final contact?) contact,
+    ];
+  }
+
+  SocialContact? _contact(LocalDb db, String userId) {
+    final profile = db.profiles.firstWhereOrNull((row) => row.userId == userId);
+    if (profile == null) return null;
+    return SocialContact(
+      userId: profile.userId,
+      username: profile.username,
+      appearance: profile.appearance,
+      guildName: profile.guildName,
+    );
+  }
+
+  void _dropRelationship(LocalDb db, String userId, String otherUserId) {
+    final pair = <String>[userId, otherUserId]..sort();
+    db.friends = db.friends
+        .where((row) => !(row.userA == pair[0] && row.userB == pair[1]))
+        .toList();
+    db.friendRequests = db.friendRequests
+        .where(
+          (row) =>
+              !((row.fromUserId == userId && row.toUserId == otherUserId) ||
+                  (row.fromUserId == otherUserId && row.toUserId == userId)),
+        )
+        .toList();
   }
 
   void reportUser(String reporterId, String targetUserId, String reason) {
@@ -827,7 +920,11 @@ class LocalMultiplayerBackend {
       expiresAt: expiresAt,
     );
     db.presence = db.presence
-        .where((entry) => entry.userId != session.userId && jsDateParse(entry.expiresAt) > _now())
+        .where(
+          (entry) =>
+              entry.userId != session.userId &&
+              (isDemoPlayerId(entry.userId) || jsDateParse(entry.expiresAt) > _now()),
+        )
         .toList();
     db.presence.add(row);
     _write(db);
@@ -845,7 +942,7 @@ class LocalMultiplayerBackend {
     final db = _db();
     final now = _now();
     return db.presence
-        .where((row) => jsDateParse(row.expiresAt) > now)
+        .where((row) => isDemoPlayerId(row.userId) || jsDateParse(row.expiresAt) > now)
         .where((row) => locationId == null || row.locationId == locationId)
         .where((row) => activityId == null || row.currentActivityId == activityId)
         .toList();
@@ -854,6 +951,13 @@ class LocalMultiplayerBackend {
   ActionResult sendFriendRequest(String fromUserId, String toUserId) {
     if (fromUserId == toUserId) return const ActionResult.failed('Cannot friend yourself.');
     final db = _db();
+    if (db.blocks.any(
+      (row) =>
+          (row.userId == fromUserId && row.otherUserId == toUserId) ||
+          (row.userId == toUserId && row.otherUserId == fromUserId),
+    )) {
+      return const ActionResult.failed('That player is ignored.');
+    }
     final pair = <String>[fromUserId, toUserId]..sort();
     if (db.friends.any((row) => row.userA == pair[0] && row.userB == pair[1])) {
       return const ActionResult.failed('Already friends.');
@@ -969,5 +1073,12 @@ class LocalMultiplayerBackend {
     db.lastChatAt[cooldownKey] = post.createdAt;
     _write(db);
     return BazaarPostResult.ok(post);
+  }
+
+  /// Puts The Watch and its three static members on this device.
+  void ensureDemoWorld(GameDatabase gameDb) {
+    final db = _db();
+    applyDemoWorld(db, gameDb, nowMs: _now(), nowIso: _nowIso());
+    _write(db);
   }
 }

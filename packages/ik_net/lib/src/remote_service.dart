@@ -343,6 +343,27 @@ class RemoteMultiplayerService implements MultiplayerService {
       _local.sendFriendRequest(targetUserId);
 
   @override
+  Future<ActionResult> removeFriend(String targetUserId) => _local.removeFriend(targetUserId);
+
+  @override
+  Future<void> ignorePlayer(String targetUserId) => _local.ignorePlayer(targetUserId);
+
+  @override
+  Future<void> unignorePlayer(String targetUserId) => _local.unignorePlayer(targetUserId);
+
+  @override
+  Future<List<SocialContact>> friends() => _local.friends();
+
+  @override
+  Future<List<SocialContact>> incomingFriendRequests() => _local.incomingFriendRequests();
+
+  @override
+  Future<List<SocialContact>> outgoingFriendRequests() => _local.outgoingFriendRequests();
+
+  @override
+  Future<List<SocialContact>> ignoredPlayers() => _local.ignoredPlayers();
+
+  @override
   Future<List<BountyClaimRecord>> bountyClaims(String hourKey) async {
     final result = await transport.select(
       RemoteTables.bountyClaims,

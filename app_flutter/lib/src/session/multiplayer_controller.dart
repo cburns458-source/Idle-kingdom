@@ -50,6 +50,10 @@ class MultiplayerController extends ChangeNotifier {
   List<LeaderboardEntry> _board = const <LeaderboardEntry>[];
   List<ActivityPresence> _peers = const <ActivityPresence>[];
   List<ActivityPresence> _citadelVisitors = const <ActivityPresence>[];
+  List<SocialContact> _friends = const <SocialContact>[];
+  List<SocialContact> _incomingFriendRequests = const <SocialContact>[];
+  List<SocialContact> _outgoingFriendRequests = const <SocialContact>[];
+  List<SocialContact> _ignored = const <SocialContact>[];
   List<ChatMessage> _messages = const <ChatMessage>[];
   List<BountyClaimRecord> _bountyClaims = const <BountyClaimRecord>[];
   List<BazaarPost> _bazaarPosts = const <BazaarPost>[];
@@ -80,6 +84,10 @@ class MultiplayerController extends ChangeNotifier {
   List<LeaderboardEntry> get board => _board;
   List<ActivityPresence> get peers => _peers;
   List<ActivityPresence> get citadelVisitors => _citadelVisitors;
+  List<SocialContact> get friends => _friends;
+  List<SocialContact> get incomingFriendRequests => _incomingFriendRequests;
+  List<SocialContact> get outgoingFriendRequests => _outgoingFriendRequests;
+  List<SocialContact> get ignoredPlayers => _ignored;
   List<ChatMessage> get messages => _messages;
 
   /// Who claimed each of this hour's bounties first, as far as the last read saw.
@@ -169,6 +177,10 @@ class MultiplayerController extends ChangeNotifier {
     _board = const <LeaderboardEntry>[];
     _peers = const <ActivityPresence>[];
     _citadelVisitors = const <ActivityPresence>[];
+    _friends = const <SocialContact>[];
+    _incomingFriendRequests = const <SocialContact>[];
+    _outgoingFriendRequests = const <SocialContact>[];
+    _ignored = const <SocialContact>[];
     _messages = const <ChatMessage>[];
     _bountyClaims = const <BountyClaimRecord>[];
     _bazaarPosts = const <BazaarPost>[];
@@ -219,6 +231,7 @@ class MultiplayerController extends ChangeNotifier {
     _board = await service.leaderboard(_boardKey);
     _citadelVisitors = await service.citadelVisitors();
     _unreadDms = await service.countUnreadDirectMessages(_dmCursor());
+    await _loadSocialLists();
     notifyListeners();
   }
 
@@ -246,7 +259,7 @@ class MultiplayerController extends ChangeNotifier {
     if (!isSignedIn) return;
     _unreadDms = await service.countUnreadDirectMessages(_dmCursor());
     _citadelVisitors = await service.citadelVisitors();
-    _peers = await service.peersAtActivity(save.currentLocationId, save.currentActivityId);
+    _peers = await service.peersAtLocation(save.currentLocationId);
     notifyListeners();
   }
 
@@ -256,16 +269,61 @@ class MultiplayerController extends ChangeNotifier {
   Future<void> publishPresence(PlayerSave save) async {
     if (!isSignedIn) return;
     await service.publishPresence(presenceFromSave(save));
-    _peers = await service.peersAtActivity(save.currentLocationId, save.currentActivityId);
+    _peers = await service.peersAtLocation(save.currentLocationId);
+    await _loadSocialLists();
     notifyListeners();
   }
 
   Future<PublicPlayerProfile?> publicProfile(String userId) => service.publicProfile(userId);
 
+  bool isFriend(String userId) => _friends.any((row) => row.userId == userId);
+
+  bool hasIncomingRequestFrom(String userId) =>
+      _incomingFriendRequests.any((row) => row.userId == userId);
+
+  bool hasOutgoingRequestTo(String userId) =>
+      _outgoingFriendRequests.any((row) => row.userId == userId);
+
+  bool isIgnored(String userId) => _ignored.any((row) => row.userId == userId);
+
+  Future<void> _loadSocialLists() async {
+    _friends = await service.friends();
+    _incomingFriendRequests = await service.incomingFriendRequests();
+    _outgoingFriendRequests = await service.outgoingFriendRequests();
+    _ignored = await service.ignoredPlayers();
+  }
+
   Future<void> sendFriendRequest(String userId) {
     return run(() async {
       final result = await service.sendFriendRequest(userId);
-      return result.ok ? 'Friend request sent.' : result.reason;
+      await _loadSocialLists();
+      if (!result.ok) return result.reason;
+      return isFriend(userId) ? 'You are now friends.' : 'Friend request sent.';
+    });
+  }
+
+  Future<void> removeFriend(String userId) {
+    return run(() async {
+      final result = await service.removeFriend(userId);
+      await _loadSocialLists();
+      return result.ok ? 'Removed from friends.' : result.reason;
+    });
+  }
+
+  Future<void> ignorePlayer(String userId) {
+    return run(() async {
+      await service.ignorePlayer(userId);
+      await _loadSocialLists();
+      _peers = _peers.where((row) => row.userId != userId).toList();
+      return 'Ignored.';
+    });
+  }
+
+  Future<void> unignorePlayer(String userId) {
+    return run(() async {
+      await service.unignorePlayer(userId);
+      await _loadSocialLists();
+      return 'No longer ignored.';
     });
   }
 
