@@ -361,6 +361,18 @@ export const SAVE_MIGRATIONS: SaveMigration[] = [
       saveVersion: 23,
     }),
   },
+  {
+    fromVersion: 23,
+    toVersion: 24,
+    migrate: (save) => ({
+      ...save,
+      rankedPvpDayKey: typeof save.rankedPvpDayKey === 'string' ? save.rankedPvpDayKey : null,
+      rankedPvpFightsToday: Number(save.rankedPvpFightsToday) || 0,
+      rankedPvpWins: Number(save.rankedPvpWins) || 0,
+      rankedPvpLosses: Number(save.rankedPvpLosses) || 0,
+      saveVersion: 24,
+    }),
+  },
 ]
 
 export function migrateSave(save: PlayerSave, nowMs: number = Date.now()): PlayerSave {

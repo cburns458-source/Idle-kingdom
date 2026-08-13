@@ -27,6 +27,7 @@ export type MultiplayerBoardKey =
   | 'monsters_killed'
   | 'critters_collected'
   | 'bounties_completed'
+  | 'pvp_kd'
   | `skill:${string}`
 
 export interface MultiplayerProfile {

@@ -70,6 +70,7 @@ export function launchBoardKeys(db: GameDatabase): MultiplayerBoardKey[] {
     'monsters_killed',
     'critters_collected',
     'bounties_completed',
+    'pvp_kd',
     ...skills,
   ]
 }

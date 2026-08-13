@@ -351,6 +351,18 @@ final List<SaveMigration> saveMigrations = <SaveMigration>[
       return next;
     },
   ),
+  SaveMigration(
+    fromVersion: 23,
+    toVersion: 24,
+    migrate: (save, nowMs) {
+      final next = _bumped(save, 24);
+      next['rankedPvpDayKey'] = stringOrNull(save['rankedPvpDayKey']);
+      next['rankedPvpFightsToday'] = jsNumber(save['rankedPvpFightsToday'] ?? 0);
+      next['rankedPvpWins'] = jsNumber(save['rankedPvpWins'] ?? 0);
+      next['rankedPvpLosses'] = jsNumber(save['rankedPvpLosses'] ?? 0);
+      return next;
+    },
+  ),
 ];
 
 /// Thrown when a save cannot be brought to the current version.

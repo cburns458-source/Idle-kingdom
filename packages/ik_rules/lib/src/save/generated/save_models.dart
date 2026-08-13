@@ -7,7 +7,7 @@
 
 import '../../json_support.dart';
 
-const int saveVersion = 23;
+const int saveVersion = 24;
 
 const String saveStorageKey = 'idle-kingdoms.demo.save';
 
@@ -548,6 +548,10 @@ class PlayerSave {
     this.bountyHourKey,
     required this.bountyProgress,
     required this.bountyClaimedIds,
+    this.rankedPvpDayKey,
+    required this.rankedPvpFightsToday,
+    required this.rankedPvpWins,
+    required this.rankedPvpLosses,
     required this.claimedMerchantTipIds,
     required this.critterCollections,
     required this.activeCritterSpawns,
@@ -604,6 +608,10 @@ class PlayerSave {
       bountyHourKey: json['bountyHourKey'] as String?,
       bountyProgress: mapOf(json['bountyProgress'], (Object? value) => value as num),
       bountyClaimedIds: listOf(json['bountyClaimedIds'], (Object? entry) => entry as String),
+      rankedPvpDayKey: json['rankedPvpDayKey'] as String?,
+      rankedPvpFightsToday: json['rankedPvpFightsToday'] as num,
+      rankedPvpWins: json['rankedPvpWins'] as num,
+      rankedPvpLosses: json['rankedPvpLosses'] as num,
       claimedMerchantTipIds: listOf(
         json['claimedMerchantTipIds'],
         (Object? entry) => entry as String,
@@ -691,6 +699,18 @@ class PlayerSave {
   /// Bounty IDs claimed by this character during the current hour.
   final List<String> bountyClaimedIds;
 
+  /// UTC date key (`YYYY-MM-DD`) for the ranked PvP daily fight cap.
+  final String? rankedPvpDayKey;
+
+  /// Ranked arena fights already used during [rankedPvpDayKey].
+  final num rankedPvpFightsToday;
+
+  /// Ranked arena wins, which feed the PvP K/D leaderboard.
+  final num rankedPvpWins;
+
+  /// Ranked arena losses.
+  final num rankedPvpLosses;
+
   /// Merchant tip rewards already claimed (one-time dialogue grants).
   final List<String> claimedMerchantTipIds;
 
@@ -776,6 +796,10 @@ class PlayerSave {
       'bountyHourKey': bountyHourKey,
       'bountyProgress': bountyProgress,
       'bountyClaimedIds': bountyClaimedIds,
+      'rankedPvpDayKey': rankedPvpDayKey,
+      'rankedPvpFightsToday': rankedPvpFightsToday,
+      'rankedPvpWins': rankedPvpWins,
+      'rankedPvpLosses': rankedPvpLosses,
       'claimedMerchantTipIds': claimedMerchantTipIds,
       'critterCollections': critterCollections.map((entry) => entry.toJson()).toList(),
       'activeCritterSpawns': activeCritterSpawns.map((entry) => entry.toJson()).toList(),
@@ -826,6 +850,10 @@ class PlayerSave {
     Object? bountyHourKey = _unset,
     Map<String, num>? bountyProgress,
     List<String>? bountyClaimedIds,
+    Object? rankedPvpDayKey = _unset,
+    num? rankedPvpFightsToday,
+    num? rankedPvpWins,
+    num? rankedPvpLosses,
     List<String>? claimedMerchantTipIds,
     List<CritterCollectionEntry>? critterCollections,
     List<CritterSpawn>? activeCritterSpawns,
@@ -874,6 +902,12 @@ class PlayerSave {
       bountyHourKey: bountyHourKey == _unset ? this.bountyHourKey : bountyHourKey as String?,
       bountyProgress: bountyProgress ?? this.bountyProgress,
       bountyClaimedIds: bountyClaimedIds ?? this.bountyClaimedIds,
+      rankedPvpDayKey: rankedPvpDayKey == _unset
+          ? this.rankedPvpDayKey
+          : rankedPvpDayKey as String?,
+      rankedPvpFightsToday: rankedPvpFightsToday ?? this.rankedPvpFightsToday,
+      rankedPvpWins: rankedPvpWins ?? this.rankedPvpWins,
+      rankedPvpLosses: rankedPvpLosses ?? this.rankedPvpLosses,
       claimedMerchantTipIds: claimedMerchantTipIds ?? this.claimedMerchantTipIds,
       critterCollections: critterCollections ?? this.critterCollections,
       activeCritterSpawns: activeCritterSpawns ?? this.activeCritterSpawns,

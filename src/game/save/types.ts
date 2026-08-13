@@ -1,4 +1,4 @@
-export const SAVE_VERSION = 23
+export const SAVE_VERSION = 24
 export const SAVE_STORAGE_KEY = 'idle-kingdoms.demo.save'
 export const STARTING_LOCATION_ID = 'LOC-0002'
 /** Base gold before race kit; race starters grant the real starting gold. */
@@ -182,6 +182,14 @@ export interface PlayerSave {
   bountyProgress: Record<string, number>
   /** Bounty IDs claimed by this character during the current hour. */
   bountyClaimedIds: string[]
+  /** UTC date key (`YYYY-MM-DD`) for the ranked PvP daily fight cap. */
+  rankedPvpDayKey: string | null
+  /** Ranked arena fights already used during [rankedPvpDayKey]. */
+  rankedPvpFightsToday: number
+  /** Ranked arena wins, which feed the PvP K/D leaderboard. */
+  rankedPvpWins: number
+  /** Ranked arena losses. */
+  rankedPvpLosses: number
   /** Merchant tip rewards already claimed (one-time dialogue grants). */
   claimedMerchantTipIds: string[]
   /** Critter collection counts (unlocked entries in the Log). */

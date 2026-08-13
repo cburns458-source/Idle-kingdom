@@ -226,6 +226,39 @@ class LocalMultiplayerBackend {
     return CloudSaveWriteResult.ok(record);
   }
 
+  /// Every stored character except [excludeUserId], which is the signed-in player.
+  List<ArenaOpponent> listArenaOpponents({String? excludeUserId}) {
+    final db = _db();
+    final rows = <ArenaOpponent>[];
+    for (final save in db.saves) {
+      if (excludeUserId != null && save.userId == excludeUserId) continue;
+      final profile = db.profiles.firstWhereOrNull((row) => row.userId == save.userId);
+      final username = isNotBlank(profile?.username)
+          ? profile!.username
+          : (isNotBlank(save.payload.characterName) ? save.payload.characterName! : save.userId);
+      rows.add(
+        ArenaOpponent(
+          userId: save.userId,
+          username: username,
+          combatLevel: combatLevelOf(save.payload),
+          totalLevel: totalLevel(save.payload),
+          appearance: profile?.appearance ?? save.payload.appearance,
+        ),
+      );
+    }
+    rows.sort((a, b) {
+      final byName = a.username.compareTo(b.username);
+      return byName != 0 ? byName : a.userId.compareTo(b.userId);
+    });
+    return rows;
+  }
+
+  PlayerSave? opponentSave(String userId) {
+    final record = readCloudSave(userId);
+    if (record == null) return null;
+    return parseSave(record.payload.toJson(), _now());
+  }
+
   // --- Leaderboards ---------------------------------------------------------
 
   void submitLeaderboardSnapshot(GameDatabase gameDb, String userId, PlayerSave save) {

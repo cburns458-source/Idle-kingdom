@@ -31,6 +31,8 @@ describe('leaderboard snapshot builder', () => {
     expect(keys).toContain('monsters_killed')
     expect(keys).toContain('critters_collected')
     expect(keys).toContain('bounties_completed')
+    expect(keys).toContain('pvp_kd')
+    expect(snapshot.boards.find((board) => board.boardKey === 'pvp_kd')?.value).toBe(0)
     expect(snapshot.boards.find((board) => board.boardKey === 'critters_collected')?.value).toBe(2)
     expect(snapshot.boards.find((board) => board.boardKey === 'bounties_completed')?.value).toBe(1)
     const launchSkills = launch.Skills.filter((skill) => skill['Release Phase'] === 'Launch')

@@ -1,5 +1,6 @@
 import type { GameDatabase } from '../data/types'
 import type { PlayerSave } from '../save/types'
+import { rankedPvpKd } from '../pvp/matchmaking'
 import { totalLevel, totalSkillXp } from '../skills/totals'
 import type { MultiplayerBoardKey } from './types'
 
@@ -26,6 +27,10 @@ export function buildLeaderboardSnapshot(
       boardKey: 'bounties_completed',
       value: Number(save.statistics.values.bounties_completed ?? 0),
     },
+    {
+      boardKey: 'pvp_kd',
+      value: rankedPvpKd(save.rankedPvpWins ?? 0, save.rankedPvpLosses ?? 0),
+    },
   ]
 
   for (const skill of db.Skills.filter((row) => row['Release Phase'] === 'Launch')) {
@@ -48,6 +53,7 @@ export function boardLabel(db: GameDatabase, boardKey: MultiplayerBoardKey): str
   if (boardKey === 'monsters_killed') return 'Monsters Killed'
   if (boardKey === 'critters_collected') return 'Critters Collected'
   if (boardKey === 'bounties_completed') return 'Bounties Completed'
+  if (boardKey === 'pvp_kd') return 'PvP K/D'
   if (boardKey.startsWith('skill:')) {
     const skillId = boardKey.slice('skill:'.length)
     return db.Skills.find((skill) => skill['Skill ID'] === skillId)?.['Display Name'] ?? skillId

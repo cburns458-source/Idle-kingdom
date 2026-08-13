@@ -8,6 +8,7 @@ import '../session/game_controller.dart';
 import '../session/multiplayer_controller.dart';
 import '../theme.dart';
 import 'activity_panel.dart';
+import 'arena_panel.dart';
 import 'bank_panel.dart';
 import 'citadel_hub_panel.dart';
 import 'critter_overlay.dart';
@@ -33,6 +34,11 @@ class ShopOpen extends LocationPanel {
 /// The Town / Castle / Citadel item chest.
 class BankOpen extends LocationPanel {
   const BankOpen();
+}
+
+/// The Citadel arena: search by name or ranked by combat level.
+class ArenaOpen extends LocationPanel {
+  const ArenaOpen();
 }
 
 /// The recipe picker for a Standard Production station.
@@ -287,6 +293,7 @@ class _LocationViewState extends State<LocationView> {
                                       ..._people(locationId),
                                       ..._shops(locationId),
                                       ..._bank(),
+                                      ..._arena(),
                                       ..._citadelBoards(locationId),
                                       ..._searches(locationId),
                                     ],
@@ -314,6 +321,12 @@ class _LocationViewState extends State<LocationView> {
         return ShopPanel(controller: controller, shopId: shopId, onClose: _closePanel);
       case BankOpen():
         return BankPanel(controller: controller, onClose: _closePanel);
+      case ArenaOpen():
+        return ArenaPanel(
+          controller: controller,
+          multiplayer: widget.multiplayer,
+          onClose: _closePanel,
+        );
       case WorkshopOpen(activity: final activity):
         return ProductionPicker(controller: controller, activity: activity, onClose: _closePanel);
       case StationOpen(station: final station):
@@ -438,6 +451,23 @@ class _LocationViewState extends State<LocationView> {
           actionLabel: 'Bank',
           tone: GameButtonTone.primary,
           onPressed: () => _openPanel(const BankOpen()),
+        ),
+      ),
+    ];
+  }
+
+  List<Widget> _arena() {
+    if (!locationHasArena(controller.location)) return const [];
+    return [
+      const _SectionHeading('Arena'),
+      Padding(
+        padding: const EdgeInsets.only(bottom: 8),
+        child: _InteractionCard(
+          title: 'Player fights',
+          subtitle: 'Search by name, or ranked by combat level.',
+          actionLabel: 'Arena',
+          tone: GameButtonTone.primary,
+          onPressed: () => _openPanel(const ArenaOpen()),
         ),
       ),
     ];

@@ -472,4 +472,10 @@ class RemoteMultiplayerService implements MultiplayerService {
     }
     return BazaarPostResult.ok(bazaarPostFrom(row));
   }
+
+  @override
+  Future<List<ArenaOpponent>> listArenaOpponents() => _local.listArenaOpponents();
+
+  @override
+  Future<PlayerSave?> readOpponentSave(String userId) => _local.readOpponentSave(userId);
 }

@@ -49,6 +49,10 @@ LeaderboardSnapshotValues buildLeaderboardSnapshot(GameDatabase db, PlayerSave s
       boardKey: boardBountiesCompleted,
       value: jsNumber(save.statistics.values['bounties_completed'] ?? 0),
     ),
+    LeaderboardBoardValue(
+      boardKey: boardPvpKd,
+      value: rankedPvpKd(save.rankedPvpWins, save.rankedPvpLosses),
+    ),
   ];
 
   for (final skill in db.skills.where((row) => row.raw['Release Phase'] == 'Launch')) {
@@ -74,6 +78,7 @@ String boardLabel(GameDatabase db, MultiplayerBoardKey boardKey) {
   if (boardKey == boardMonstersKilled) return 'Monsters Killed';
   if (boardKey == boardCrittersCollected) return 'Critters Collected';
   if (boardKey == boardBountiesCompleted) return 'Bounties Completed';
+  if (boardKey == boardPvpKd) return 'PvP K/D';
   if (boardKey.startsWith(skillBoardPrefix)) {
     final skillId = boardKey.substring(skillBoardPrefix.length);
     final skill = db.skills.where((row) => row.raw['Skill ID'] == skillId).firstOrNull;
@@ -92,6 +97,7 @@ List<MultiplayerBoardKey> launchBoardKeys(GameDatabase db) => <MultiplayerBoardK
   boardMonstersKilled,
   boardCrittersCollected,
   boardBountiesCompleted,
+  boardPvpKd,
   for (final skill in db.skills.where((row) => row.raw['Release Phase'] == 'Launch'))
     skillBoardKey(skill.raw['Skill ID']! as String),
 ];

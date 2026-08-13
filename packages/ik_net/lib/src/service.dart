@@ -147,6 +147,13 @@ abstract interface class MultiplayerService {
   Future<List<BazaarPost>> bazaarPosts({int limit = 40});
 
   Future<BazaarPostResult> postBazaar(BazaarPostKind kind, String body);
+
+  /// Every stored player except the signed-in account. Search and ranked both
+  /// start from this list — any character on the game, not only who is online.
+  Future<List<ArenaOpponent>> listArenaOpponents();
+
+  /// The cloud save used as a PvP snapshot. Current equipment, full HP.
+  Future<PlayerSave?> readOpponentSave(String userId);
 }
 
 /// The single-device implementation: the local backend plus the stored session.
@@ -583,5 +590,18 @@ class LocalMultiplayerService implements MultiplayerService {
       return const BazaarPostResult.failed('Sign in to post in the Grand Bazaar.');
     }
     return _backend.postBazaar(current, kind, body);
+  }
+
+  @override
+  Future<List<ArenaOpponent>> listArenaOpponents() async {
+    final current = session;
+    return _backend.listArenaOpponents(excludeUserId: current?.userId);
+  }
+
+  @override
+  Future<PlayerSave?> readOpponentSave(String userId) async {
+    final current = session;
+    if (current != null && current.userId == userId) return null;
+    return _backend.opponentSave(userId);
   }
 }

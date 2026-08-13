@@ -13,6 +13,7 @@ const String boardGoldEarned = 'gold_earned';
 const String boardMonstersKilled = 'monsters_killed';
 const String boardCrittersCollected = 'critters_collected';
 const String boardBountiesCompleted = 'bounties_completed';
+const String boardPvpKd = 'pvp_kd';
 
 const String skillBoardPrefix = 'skill:';
 
