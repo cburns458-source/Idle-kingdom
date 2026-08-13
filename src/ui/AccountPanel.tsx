@@ -10,6 +10,7 @@ import {
 import { multiplayerMode } from '../game/multiplayer/client'
 import { pullCloudSave, pushCloudSave } from '../game/multiplayer/cloudSave'
 import { clearActivityPresence } from '../game/multiplayer/presence'
+import { multiplayerModeLine } from '../game/multiplayer/views'
 import type { PlayerSave } from '../game/save/types'
 import { writeSave } from '../game/save/saveStore'
 
@@ -53,10 +54,7 @@ export function AccountPanel({
   return (
     <div className="menu-demo-block account-panel">
       <p className="muted tiny">Account</p>
-      <p className="muted tiny">
-        Optional multiplayer ({mode === 'local' ? 'local demo backend' : 'Supabase'}). Offline play
-        stays intact.
-      </p>
+      <p className="muted tiny">{multiplayerModeLine(mode)}</p>
       {session ? (
         <>
           <p className="lead">Signed in as {session.username}</p>

@@ -127,6 +127,4 @@ export function currentGuildId(): string | null {
   return getLocalBackend().getProfile(session.userId)?.guildId ?? null
 }
 
-export function guildRoleLabel(guild: GuildRecord, role: GuildRole): string {
-  return guild.rankLabels[role] ?? role
-}
+export { guildRoleLabel } from './types'

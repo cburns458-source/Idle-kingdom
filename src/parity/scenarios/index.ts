@@ -10,6 +10,7 @@ import { equipmentScenarios } from './equipment'
 import { metaScenarios } from './meta'
 import { multiplayerScenarios } from './multiplayer'
 import { npcScenarios } from './npcs'
+import { socialViewScenarios } from './socialViews'
 import { productionScenarios } from './production'
 import { projectScenarios } from './projects'
 import { questScenarios } from './quests'
@@ -50,6 +51,7 @@ export const parityScenarios: ParityScenario[] = [
   ...unattendedScenarios,
   ...sessionScenarios,
   ...multiplayerScenarios,
+  ...socialViewScenarios,
 ]
 
 export function assertUniqueScenarioNames(scenarios: ParityScenario[]): void {

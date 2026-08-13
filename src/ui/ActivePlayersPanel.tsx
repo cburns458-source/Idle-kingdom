@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { playerPortraitAssetPath } from '../game/assets/playerAssets'
 import { getSession, isSignedIn } from '../game/multiplayer/auth'
 import { listChatMessages, sendChatMessage } from '../game/multiplayer/chat'
@@ -10,6 +10,7 @@ import {
 } from '../game/multiplayer/presence'
 import { dmPairKey } from '../game/multiplayer/types'
 import type { ActivityPresence, PublicPlayerProfile } from '../game/multiplayer/types'
+import { peerRows, publicProfileView } from '../game/multiplayer/views'
 import type { PlayerSave } from '../game/save/types'
 
 interface ActivePlayersPanelProps {
@@ -59,6 +60,12 @@ export function ActivePlayersPanel({
     }
   }, [open])
 
+  const rows = useMemo(() => peerRows(peers, skillNameForId), [peers, skillNameForId])
+  const profileView = useMemo(
+    () => (profile ? publicProfileView(profile, skillNameForId) : null),
+    [profile, skillNameForId],
+  )
+
   if (!isSignedIn() || !open) return null
 
   return (
@@ -76,28 +83,25 @@ export function ActivePlayersPanel({
             Close
           </button>
         </div>
-        {peers.length === 0 ? (
+        {rows.length === 0 ? (
           <p className="muted tiny">No other players on this activity right now.</p>
         ) : (
           <ul>
-            {peers.map((peer) => (
-              <li key={peer.userId}>
+            {rows.map((row) => (
+              <li key={row.userId}>
                 <button
                   type="button"
                   className="active-player-row"
-                  onClick={() => setProfile(getPublicProfile(peer.userId))}
+                  onClick={() => setProfile(getPublicProfile(row.userId))}
                 >
                   <span
                     className="social-portrait"
-                    style={{ backgroundImage: `url(${playerPortraitAssetPath(peer.appearance)})` }}
+                    style={{ backgroundImage: `url(${playerPortraitAssetPath(row.appearance)})` }}
                     aria-hidden
                   />
                   <span className="quest-log-copy">
-                    <strong>{peer.username}</strong>
-                    <span className="muted tiny">
-                      {skillNameForId(peer.skillId)} {peer.skillLevel ?? '—'}
-                      {peer.guildName ? ` · ${peer.guildName}` : ''}
-                    </span>
+                    <strong>{row.username}</strong>
+                    <span className="muted tiny">{row.subtitle}</span>
                   </span>
                 </button>
               </li>
@@ -105,7 +109,7 @@ export function ActivePlayersPanel({
           </ul>
         )}
 
-        {profile && session && (
+        {profileView && session && (
           <div className="public-profile-sheet" role="dialog" aria-label="Public profile">
             <button type="button" className="linkish" onClick={() => setProfile(null)}>
               Close profile
@@ -113,24 +117,20 @@ export function ActivePlayersPanel({
             <div className="public-profile-header">
               <span
                 className="social-portrait large"
-                style={{ backgroundImage: `url(${playerPortraitAssetPath(profile.appearance)})` }}
+                style={{
+                  backgroundImage: `url(${playerPortraitAssetPath(profileView.appearance)})`,
+                }}
                 aria-hidden
               />
               <div>
-                <strong>{profile.username}</strong>
-                <p className="muted tiny">
-                  Total level {profile.totalLevel}
-                  {profile.guildName ? ` · ${profile.guildName}` : ''} ·{' '}
-                  {profile.achievementsUnlocked} achievements
-                </p>
+                <strong>{profileView.username}</strong>
+                <p className="muted tiny">{profileView.summaryLine}</p>
               </div>
             </div>
-            {profile.publicSkills.length > 0 && (
+            {!profileView.skillsHidden && (
               <ul className="muted tiny public-skill-list">
-                {profile.publicSkills.slice(0, 8).map((skill) => (
-                  <li key={skill.skillId}>
-                    {skillNameForId(skill.skillId)} {skill.level}
-                  </li>
+                {profileView.skillLines.map((line) => (
+                  <li key={line}>{line}</li>
                 ))}
               </ul>
             )}
@@ -138,7 +138,7 @@ export function ActivePlayersPanel({
               type="button"
               className="btn secondary"
               onClick={() => {
-                const result = sendFriendRequest(profile.userId)
+                const result = sendFriendRequest(profileView.userId)
                 setDmNotice(result.ok ? 'Friend request sent.' : result.reason)
               }}
             >
@@ -147,7 +147,7 @@ export function ActivePlayersPanel({
             <form
               onSubmit={(event) => {
                 event.preventDefault()
-                const pairKey = dmPairKey(session.userId, profile.userId)
+                const pairKey = dmPairKey(session.userId, profileView.userId)
                 void sendChatMessage({ kind: 'dm', pairKey }, dmBody).then(async (result) => {
                   if (!result.ok) {
                     setDmNotice(result.reason)

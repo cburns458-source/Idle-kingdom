@@ -145,6 +145,14 @@ export interface GuildRecord {
   createdAt: string
 }
 
+/** A guild as the browser lists it, with how full it is. */
+export type GuildListing = GuildRecord & { memberCount: number }
+
+/** This guild's own name for [role], falling back to the role's key. */
+export function guildRoleLabel(guild: GuildRecord, role: GuildRole): string {
+  return guild.rankLabels[role] ?? role
+}
+
 export interface GuildMember {
   guildId: string
   userId: string

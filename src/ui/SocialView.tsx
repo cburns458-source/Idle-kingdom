@@ -3,12 +3,16 @@ import { playerPortraitAssetPath } from '../game/assets/playerAssets'
 import type { LoadedDatabase } from '../game/data/loadDatabase'
 import { getSession, isSignedIn } from '../game/multiplayer/auth'
 import { citadelHubSummary, listCitadelVisitors } from '../game/multiplayer/citadel'
+import { fetchLeaderboard } from '../game/multiplayer/leaderboards'
+import type { ActivityPresence, MultiplayerBoardKey } from '../game/multiplayer/types'
 import {
-  boardLabel,
-  fetchLeaderboard,
-  launchBoardKeys,
-} from '../game/multiplayer/leaderboards'
-import type { ActivityPresence, LeaderboardEntry, MultiplayerBoardKey } from '../game/multiplayer/types'
+  boardOptions,
+  citadelVisitorSubtitle,
+  emptyBoardMessage,
+  leaderboardRows,
+  SIGN_IN_PROMPT,
+  type LeaderboardRowView,
+} from '../game/multiplayer/views'
 import type { PlayerSave } from '../game/save/types'
 import { GuildEmblemBadge } from './guildEmblemIcons'
 import { GuildView } from './GuildView'
@@ -24,19 +28,23 @@ interface SocialViewProps {
 
 export function SocialView({ save, database, section, onChangeSave }: SocialViewProps) {
   if (section === 'guilds') {
-    return (
-      <GuildView
-        save={save}
-        onChangeSave={onChangeSave ?? (() => undefined)}
-      />
-    )
+    return <GuildView save={save} onChangeSave={onChangeSave ?? (() => undefined)} />
   }
 
   if (section === 'citadel') {
     return <CitadelSocialView />
   }
 
-  return <LeaderboardsView save={save} database={database} />
+  return <LeaderboardsView database={database} />
+}
+
+function SignInPrompt({ title }: { title: string }) {
+  return (
+    <section className="panel menu-panel">
+      <h1>{title}</h1>
+      <p className="lead">{SIGN_IN_PROMPT}</p>
+    </section>
+  )
 }
 
 function CitadelSocialView() {
@@ -54,14 +62,7 @@ function CitadelSocialView() {
     return () => window.clearInterval(timer)
   }, [])
 
-  if (!session) {
-    return (
-      <section className="panel menu-panel">
-        <h1>Citadel</h1>
-        <p className="lead">Sign in from Menu → Account to use multiplayer features.</p>
-      </section>
-    )
-  }
+  if (!session) return <SignInPrompt title="Citadel" />
 
   return (
     <section className="panel menu-panel social-panel">
@@ -82,15 +83,14 @@ function CitadelSocialView() {
               />
               <div className="guild-member-copy">
                 <strong>{visitor.username}</strong>
-                <span className="muted tiny">
-                  {visitor.guildName ?? 'No guild'}
-                  {visitor.skillLevel != null ? ` · Lv ${visitor.skillLevel}` : ''}
-                </span>
+                <span className="muted tiny">{citadelVisitorSubtitle(visitor)}</span>
               </div>
             </li>
           ))}
           {visitors.length === 0 && (
-            <li className="muted tiny">No visitors on the Plaza right now. Travel to The Citadel to meet others.</li>
+            <li className="muted tiny">
+              No visitors on the Plaza right now. Travel to The Citadel to meet others.
+            </li>
           )}
         </ul>
       </div>
@@ -98,31 +98,18 @@ function CitadelSocialView() {
   )
 }
 
-function LeaderboardsView({
-  save: _save,
-  database,
-}: {
-  save: PlayerSave
-  database: LoadedDatabase
-}) {
+function LeaderboardsView({ database }: { database: LoadedDatabase }) {
   const session = getSession()
-  const boardKeys = useMemo(() => launchBoardKeys(database.launch), [database.launch])
+  const boards = useMemo(() => boardOptions(database.launch), [database.launch])
   const [boardKey, setBoardKey] = useState<MultiplayerBoardKey>('total_level')
-  const [entries, setEntries] = useState<LeaderboardEntry[]>([])
+  const [rows, setRows] = useState<LeaderboardRowView[]>([])
 
   useEffect(() => {
     if (!isSignedIn()) return
-    void fetchLeaderboard(boardKey).then(setEntries)
+    void fetchLeaderboard(boardKey).then((entries) => setRows(leaderboardRows(entries)))
   }, [boardKey])
 
-  if (!session) {
-    return (
-      <section className="panel menu-panel">
-        <h1>Leaderboards</h1>
-        <p className="lead">Sign in from Menu → Account to use multiplayer features.</p>
-      </section>
-    )
-  }
+  if (!session) return <SignInPrompt title="Leaderboards" />
 
   return (
     <section className="panel menu-panel social-panel">
@@ -136,46 +123,34 @@ function LeaderboardsView({
             value={boardKey}
             onChange={(event) => setBoardKey(event.target.value as MultiplayerBoardKey)}
           >
-            {boardKeys.map((key) => (
-              <option key={key} value={key}>
-                {boardLabel(database.launch, key)}
+            {boards.map((board) => (
+              <option key={board.key} value={board.key}>
+                {board.label}
               </option>
             ))}
           </select>
         </label>
         <ul className="leaderboard-list">
-          {entries.map((entry) => (
-            <li key={`${entry.boardKey}-${entry.userId}`} className="leaderboard-row">
-              <span className="guild-member-index">{entry.rank}</span>
-              {entry.entryKind === 'guild' && entry.emblem ? (
-                <GuildEmblemBadge emblem={entry.emblem} />
+          {rows.map((row) => (
+            <li key={`${boardKey}-${row.entryId}`} className="leaderboard-row">
+              <span className="guild-member-index">{row.rank}</span>
+              {row.emblem ? (
+                <GuildEmblemBadge emblem={row.emblem} />
               ) : (
                 <span
                   className="social-portrait"
-                  style={{ backgroundImage: `url(${playerPortraitAssetPath(entry.appearance)})` }}
+                  style={{ backgroundImage: `url(${playerPortraitAssetPath(row.appearance)})` }}
                   aria-hidden
                 />
               )}
               <div className="guild-member-copy">
-                <strong>{entry.username}</strong>
-                <span className="muted tiny">
-                  {entry.entryKind === 'guild'
-                    ? entry.guildName ?? 'Guild'
-                    : entry.guildName
-                      ? entry.guildName
-                      : 'No guild'}
-                </span>
+                <strong>{row.username}</strong>
+                <span className="muted tiny">{row.subtitle}</span>
               </div>
-              <span className="guild-member-level">{entry.value.toLocaleString()}</span>
+              <span className="guild-member-level">{row.valueLabel}</span>
             </li>
           ))}
-          {entries.length === 0 && (
-            <li className="muted tiny">
-              {boardKey === 'guild_total_level'
-                ? 'No guilds yet — create or join one from the Guilds tab.'
-                : 'No scores yet — sync a cloud save to submit.'}
-            </li>
-          )}
+          {rows.length === 0 && <li className="muted tiny">{emptyBoardMessage(boardKey)}</li>}
         </ul>
       </div>
     </section>

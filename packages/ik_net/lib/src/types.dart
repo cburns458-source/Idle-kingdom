@@ -408,6 +408,13 @@ class GuildListing {
   final GuildRecord guild;
   final int memberCount;
 
+  String get id => guild.id;
+  String get name => guild.name;
+  String get tag => guild.tag;
+  String get description => guild.description;
+  GuildEmblem get emblem => guild.emblem;
+  GuildJoinPolicy get joinPolicy => guild.joinPolicy;
+
   Map<String, Object?> toJson() => <String, Object?>{
     ...guild.toJson(),
     'memberCount': memberCount,

@@ -17,3 +17,4 @@ export 'src/service.dart';
 export 'src/session_store.dart';
 export 'src/snapshots.dart';
 export 'src/types.dart';
+export 'src/views.dart';
