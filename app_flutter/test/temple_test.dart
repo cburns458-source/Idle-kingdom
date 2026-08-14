@@ -42,7 +42,13 @@ void main() {
     expect(slotItemId(controller.save, offhandSlotId), 'ITEM-0145');
     expect(controller.save.currentActivityId, isNull);
     expect(find.byType(AlertDialog), findsOne);
-    expect(find.text('The monks restore you to full health.'), findsOne);
+    expect(
+      find.descendant(
+        of: find.byType(AlertDialog),
+        matching: find.text('The monks restore you to full health.'),
+      ),
+      findsOne,
+    );
 
     await tester.tap(find.text('OK'));
     await tester.pump();
