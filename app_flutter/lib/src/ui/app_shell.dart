@@ -43,7 +43,7 @@ class AppShell extends StatefulWidget {
   State<AppShell> createState() => _AppShellState();
 }
 
-class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin {
+class _AppShellState extends State<AppShell> with TickerProviderStateMixin {
   /// Drives the game loop. Coming from the widget means it stops when the app is
   /// backgrounded; the next tick picks the elapsed time back up from the clock.
   Ticker? _ticker;
@@ -64,7 +64,10 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
   @override
   void initState() {
     super.initState();
-    _ticker = createTicker((_) => controller.tick())..start();
+    _ticker = createTicker((_) {
+      if (!mounted) return;
+      controller.tick();
+    })..start();
     // Presence and the unread count only matter for a signed-in player; the
     // timers check that themselves, so starting them once here is enough.
     multiplayer.startPolling(() => controller.save);
