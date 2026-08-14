@@ -127,7 +127,12 @@ class _BootGateState extends State<_BootGate> {
           return _BootMessage(text: 'Could not start the game.\n${snapshot.error}');
         }
         final booted = snapshot.data;
-        if (booted == null) return const _BootMessage(text: 'Loading the realm…');
+        if (booted == null) {
+          return const DecoratedBox(
+            decoration: BoxDecoration(gradient: Palette.shellGradient),
+            child: Center(child: CircularProgressIndicator()),
+          );
+        }
         return AppShell(controller: booted.game, multiplayer: booted.multiplayer);
       },
     );

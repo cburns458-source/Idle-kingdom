@@ -281,12 +281,7 @@ List<CombatStatContribution> _damageBreakdown(GameDatabase db, PlayerSave save) 
 }
 
 List<CombatStatContribution> _healthBreakdown(GameDatabase db, PlayerSave save) {
-  final lines = <CombatStatContribution>[
-    CombatStatContribution(
-      label: 'Base',
-      detail: jsNumberToString(configNumber(db, 'starting_max_hp', 1000)),
-    ),
-  ];
+  final lines = <CombatStatContribution>[];
 
   for (final stack in save.equipment.slots.values) {
     if (stack == null || isBlank(stack.itemId)) continue;

@@ -42,6 +42,7 @@ PlayerSave createNewSave(GameDatabase db, num nowMs) {
     skills: skills,
     inventory: const <InventoryStack>[],
     bank: const <InventoryStack>[],
+    favoriteActivityByLocationId: const <String, String>{},
     equipment: EquipmentLoadout(slots: slots),
     gold: startingGold,
     quests: const <QuestProgress>[],

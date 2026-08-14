@@ -23,7 +23,7 @@ class NewCharacterSheet extends StatefulWidget {
 
 class _NewCharacterSheetState extends State<NewCharacterSheet> {
   final TextEditingController _name = TextEditingController();
-  String? _raceId;
+  String _raceId = 'RACE-0001';
   String? _error;
   late PlayerAppearance _appearance;
 
@@ -41,12 +41,7 @@ class _NewCharacterSheetState extends State<NewCharacterSheet> {
   }
 
   void _submit() {
-    final raceId = _raceId;
-    if (raceId == null) {
-      setState(() => _error = 'Choose a race to continue.');
-      return;
-    }
-    final failure = widget.controller.createCharacter(_name.text, raceId, appearance: _appearance);
+    final failure = widget.controller.createCharacter(_name.text, _raceId, appearance: _appearance);
     setState(() => _error = failure);
   }
 
@@ -57,7 +52,7 @@ class _NewCharacterSheetState extends State<NewCharacterSheet> {
         .toList();
 
     return ColoredBox(
-      color: const Color(0xE61F1610),
+      color: Palette.ink,
       child: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -89,8 +84,8 @@ class _NewCharacterSheetState extends State<NewCharacterSheet> {
                       children: [
                         Image.asset(
                           playerAssetPath(_appearance),
-                          width: 84,
-                          height: 84,
+                          width: 96,
+                          height: 96,
                           filterQuality: FilterQuality.none,
                         ),
                         const SizedBox(width: 12),

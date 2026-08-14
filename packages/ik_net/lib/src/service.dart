@@ -138,6 +138,9 @@ abstract interface class MultiplayerService {
   /// Whoever is standing in the Citadel, which is one crowd across its districts.
   Future<List<ActivityPresence>> citadelVisitors();
 
+  /// Presence rows for last-online, including expired so a roster can say when.
+  Future<List<ActivityPresence>> presenceRecords();
+
   Future<PublicPlayerProfile?> publicProfile(String userId);
 
   Future<List<BountyClaimRecord>> bountyClaims(String hourKey);
@@ -583,6 +586,10 @@ class LocalMultiplayerService implements MultiplayerService {
   @override
   Future<List<ActivityPresence>> citadelVisitors() async =>
       _visiblePeers(_backend.listPresence(locationId: citadelLocationId()), true);
+
+  @override
+  Future<List<ActivityPresence>> presenceRecords() async =>
+      _backend.listPresence(includeExpired: true);
 
   @override
   Future<PublicPlayerProfile?> publicProfile(String userId) async => _backend.publicProfile(userId);

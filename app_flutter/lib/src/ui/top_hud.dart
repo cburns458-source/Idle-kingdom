@@ -26,12 +26,9 @@ class _HudStatus {
 /// The portrait is painted by [HudPortrait] in the shell stack so the frame can
 /// hang below this bar without stretching it.
 class TopHud extends StatelessWidget {
-  const TopHud({super.key, required this.controller, this.trailing});
+  const TopHud({super.key, required this.controller});
 
   final GameController controller;
-
-  /// Sits on the far right of the bar — currently the chat toggle.
-  final Widget? trailing;
 
   /// A running craft queue reads as the item and how much of the order is left;
   /// anything else reads as the activity, its action, and how long it has run.
@@ -84,8 +81,8 @@ class TopHud extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          const SizedBox(width: HudPortrait.size),
-          const SizedBox(width: 8),
+          const SizedBox(width: HudPortrait.textInset),
+          const SizedBox(width: 6),
           Expanded(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -126,7 +123,7 @@ class TopHud extends StatelessWidget {
                     if (status != null) ...[
                       const SizedBox(width: 8),
                       ConstrainedBox(
-                        constraints: BoxConstraints(maxWidth: trailing == null ? 140 : 110),
+                        constraints: const BoxConstraints(maxWidth: 140),
                         child: _ActivityReadout(status: status),
                       ),
                     ],
@@ -187,7 +184,6 @@ class TopHud extends StatelessWidget {
               ],
             ),
           ),
-          if (trailing != null) ...[const SizedBox(width: 8), trailing!],
         ],
       ),
     );
@@ -246,10 +242,14 @@ class HudPortrait extends StatelessWidget {
 
   /// The whole control, frame included. Taller than the HUD so the ring drops
   /// over the screen below.
-  static const double size = 124;
+  static const double size = 148;
+
+  /// How far the HUD name sits from the left so it starts beside the circle,
+  /// not after the whole frame.
+  static const double textInset = 96;
 
   /// Inset so the head sits in the ring's hole rather than over its rim.
-  static const double _rim = 22;
+  static const double _rim = 18;
 
   /// Enough of the sprite's height to fill the circle with its head.
   static const double _headZoom = 1.7;

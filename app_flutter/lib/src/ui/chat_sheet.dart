@@ -9,7 +9,7 @@ import '../session/multiplayer_controller.dart';
 import '../theme.dart';
 import 'social_bits.dart';
 
-/// The HUD chat button, and the panel that drops from it.
+/// The shell chat button, and the panel that grows up from it.
 ///
 /// Chat never covers the whole screen: the game keeps running behind it, and the
 /// button carries the unread count so a closed panel still says something.
@@ -96,9 +96,9 @@ class _ChatLauncherState extends State<ChatLauncher> {
         CompositedTransformFollower(
           link: _link,
           showWhenUnlinked: false,
-          targetAnchor: Alignment.bottomRight,
-          followerAnchor: Alignment.topRight,
-          offset: const Offset(0, 8),
+          targetAnchor: Alignment.topRight,
+          followerAnchor: Alignment.bottomRight,
+          offset: const Offset(0, -8),
           child: Material(
             color: Palette.parchmentDeep,
             elevation: 12,

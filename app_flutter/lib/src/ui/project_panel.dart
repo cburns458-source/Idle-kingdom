@@ -24,7 +24,6 @@ class ProjectPicker extends StatefulWidget {
 }
 
 class _ProjectPickerState extends State<ProjectPicker> {
-  String _search = '';
   String? _projectId;
   String? _enchantTargetId;
   num _quantity = 1;
@@ -85,10 +84,9 @@ class _ProjectPickerState extends State<ProjectPicker> {
   @override
   Widget build(BuildContext context) {
     final all = projectMenuList(controller.db, controller.save, facilityId, skillId);
-    final listed = projectMenuList(controller.db, controller.save, facilityId, skillId, _search);
-    final selectedId = listed.any((row) => row.projectId == _projectId)
+    final selectedId = all.any((row) => row.projectId == _projectId)
         ? _projectId
-        : (listed.isEmpty ? null : listed.first.projectId);
+        : (all.isEmpty ? null : all.first.projectId);
     final detail = selectedId == null
         ? null
         : projectDetail(controller.db, controller.save, selectedId);
@@ -117,26 +115,24 @@ class _ProjectPickerState extends State<ProjectPicker> {
           if (all.isEmpty)
             const MutedText('No projects are defined for this station yet.')
           else ...[
-            TextField(
-              decoration: const InputDecoration(
-                labelText: 'Search projects',
-                border: OutlineInputBorder(),
-                isDense: true,
-              ),
-              textInputAction: TextInputAction.search,
-              onChanged: (value) => setState(() => _search = value),
+            DropdownButtonFormField<String>(
+              initialValue: selectedId,
+              isExpanded: true,
+              decoration: const InputDecoration(labelText: 'Project', border: OutlineInputBorder()),
+              items: [
+                for (final row in all)
+                  DropdownMenuItem(
+                    value: row.projectId,
+                    child: Text(
+                      row.locked ? '${row.label} (locked)' : row.label,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+              ],
+              onChanged: (value) {
+                if (value != null) _select(value);
+              },
             ),
-            const SizedBox(height: 8),
-            MutedText(
-              _search.trim().isEmpty
-                  ? pluralize(listed.length, 'project')
-                  : '${listed.length} of ${all.length} projects',
-            ),
-            const SizedBox(height: 6),
-            if (listed.isEmpty)
-              const MutedText('No projects match that search.')
-            else
-              _ProjectList(items: listed, selectedId: selectedId, onSelect: _select),
             if (detail != null) ...[
               const SizedBox(height: 10),
               _ProjectDetails(controller: controller, detail: detail),
@@ -245,57 +241,6 @@ class _ProjectPickerState extends State<ProjectPicker> {
         const SizedBox(height: 8),
         FilledButton(onPressed: () => _complete(detail, 1), child: const Text('Complete project')),
       ],
-    );
-  }
-}
-
-/// The station's projects, scrollable so a long list cannot push out the detail.
-class _ProjectList extends StatelessWidget {
-  const _ProjectList({required this.items, required this.selectedId, required this.onSelect});
-
-  final List<ProjectListItem> items;
-  final String? selectedId;
-  final void Function(String projectId) onSelect;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      constraints: const BoxConstraints(maxHeight: 220),
-      decoration: BoxDecoration(
-        color: Palette.panel,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Palette.edge),
-      ),
-      child: ListView.builder(
-        shrinkWrap: true,
-        padding: const EdgeInsets.symmetric(vertical: 4),
-        itemCount: items.length,
-        itemBuilder: (context, index) {
-          final item = items[index];
-          final chosen = item.projectId == selectedId;
-          return InkWell(
-            onTap: () => onSelect(item.projectId),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-              color: chosen ? const Color(0x33D4AF37) : null,
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      item.label,
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: chosen ? FontWeight.w700 : FontWeight.w400,
-                      ),
-                    ),
-                  ),
-                  if (item.locked) const MutedText('locked'),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
     );
   }
 }

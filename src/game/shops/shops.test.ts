@@ -9,6 +9,7 @@ import {
   playerBuyPrice,
   playerSellPrice,
   shopStockEntries,
+  shopStockForPlayer,
 } from './shops'
 import { confirmShopOffer } from './transactions'
 
@@ -111,5 +112,9 @@ describe('shops', () => {
     const stock = shopStockEntries(shop).map((entry) => entry.itemId)
     expect(stock).toEqual(['ITEM-0296', 'ITEM-0165', 'ITEM-0166', 'ITEM-0298'])
     expect(playerBuyPrice(launch, shop, 'ITEM-0298')).toBe(100)
+    const fresh = createNewSave(launch)
+    expect(shopStockForPlayer(launch, fresh, shop).map((entry) => entry.itemId)).not.toContain(
+      'ITEM-0296',
+    )
   })
 })

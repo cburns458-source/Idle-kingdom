@@ -23,7 +23,7 @@ const Map<String, String> _questPitchLines = <String, String>{
       'the street, I\u2019m thinking of starting the alchemy shop '
       'I\u2019ve always dreamed of\u2026',
   'QST-0003':
-      'Please, traveler\u2026 I dropped my coin purse in the barracks. '
+      'Please, traveler\u2026 guards took my coin purse. '
       'I have nothing left. If you can spare 25 gold, I\u2019ll wait here while you look.',
   'QST-0005':
       'The Archmage will take an apprentice who can gather Essence. '

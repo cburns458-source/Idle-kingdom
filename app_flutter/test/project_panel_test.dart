@@ -58,8 +58,10 @@ void main() {
     );
     expect(find.text('Smithing forge'), findsOne);
 
-    await tester.tap(find.textContaining('Copper Axe → Copper Axe').first);
-    await tester.pump();
+    await tester.tap(find.byType(DropdownButtonFormField<String>));
+    await tester.pumpAndSettle();
+    await tester.tap(find.textContaining('Copper Axe → Copper Axe').last);
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Complete project'));
     await tester.pumpAndSettle();
 
@@ -85,8 +87,10 @@ void main() {
       tester,
       ProjectPicker(controller: controller, station: stationFor(forgeLocationId, 'SKL-0011')),
     );
-    await tester.tap(find.textContaining('Copper Axe → Copper Axe').first);
-    await tester.pump();
+    await tester.tap(find.byType(DropdownButtonFormField<String>));
+    await tester.pumpAndSettle();
+    await tester.tap(find.textContaining('Copper Axe → Copper Axe').last);
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Max'));
     await tester.pump();
     await tester.tap(find.text('Complete project'));
@@ -96,7 +100,7 @@ void main() {
     expect(find.textContaining('Crafted $maxQuantity times'), findsOne);
   });
 
-  testWidgets('searching narrows the list, and a miss says so', (tester) async {
+  testWidgets('lists projects in a dropdown', (tester) async {
     final controller = buildController(database, seed: smith());
     addTearDown(controller.dispose);
 
@@ -104,13 +108,10 @@ void main() {
       tester,
       ProjectPicker(controller: controller, station: stationFor(forgeLocationId, 'SKL-0011')),
     );
-    await tester.enterText(find.byType(TextField), 'copper axe');
-    await tester.pump();
-    expect(find.textContaining('Copper Axe → Copper Axe'), findsOne);
-
-    await tester.enterText(find.byType(TextField), 'zzz');
-    await tester.pump();
-    expect(find.text('No projects match that search.'), findsOne);
+    expect(find.byType(DropdownButtonFormField<String>), findsOne);
+    await tester.tap(find.byType(DropdownButtonFormField<String>));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Copper Axe → Copper Axe'), findsWidgets);
   });
 
   testWidgets('says which mentor unlocks a station', (tester) async {
@@ -157,8 +158,10 @@ void main() {
       tester,
       ProjectPicker(controller: controller, station: stationFor(mageLocationId, 'SKL-0013')),
     );
-    await tester.tap(find.textContaining('Minor Combat Enchantment').first);
-    await tester.pump();
+    await tester.tap(find.byType(DropdownButtonFormField<String>).first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.textContaining('Minor Combat Enchantment').last);
+    await tester.pumpAndSettle();
     expect(find.text('Item to enchant'), findsOne);
 
     await tester.tap(find.text('Complete project'));

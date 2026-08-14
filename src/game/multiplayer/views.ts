@@ -1,3 +1,4 @@
+import { PRESENCE_TTL_SECONDS } from './config'
 import type { GameDatabase } from '../data/types'
 import type { PlayerAppearance } from '../save/types'
 import { filterProfanity } from './moderation'
@@ -152,6 +153,42 @@ export interface GuildRosterRow {
   appearance: PlayerAppearance
   /** True when the viewer can change this member's rank. */
   manageable: boolean
+  /** Presence `updatedAt`, or null when this member has never been seen. */
+  lastOnlineAt: string | null
+  isOnline: boolean
+  /** `Online`, a relative time, or `Unknown`. */
+  lastOnlineLabel: string
+}
+
+/** Presence age → the roster's last-online line. */
+export function rosterLastOnline(
+  updatedAt: string | null | undefined,
+  nowMs: number,
+): { lastOnlineAt: string | null; isOnline: boolean; lastOnlineLabel: string } {
+  if (!updatedAt) {
+    return { lastOnlineAt: null, isOnline: false, lastOnlineLabel: 'Unknown' }
+  }
+  const then = Date.parse(updatedAt)
+  if (!Number.isFinite(then)) {
+    return { lastOnlineAt: null, isOnline: false, lastOnlineLabel: 'Unknown' }
+  }
+  const age = nowMs - then
+  if (age >= 0 && age < PRESENCE_TTL_SECONDS * 1000) {
+    return { lastOnlineAt: updatedAt, isOnline: true, lastOnlineLabel: 'Online' }
+  }
+  const minutes = Math.floor(age / 60_000)
+  if (minutes < 1) {
+    return { lastOnlineAt: updatedAt, isOnline: false, lastOnlineLabel: 'Just now' }
+  }
+  if (minutes < 60) {
+    return { lastOnlineAt: updatedAt, isOnline: false, lastOnlineLabel: `${minutes}m ago` }
+  }
+  const hours = Math.floor(minutes / 60)
+  if (hours < 24) {
+    return { lastOnlineAt: updatedAt, isOnline: false, lastOnlineLabel: `${hours}h ago` }
+  }
+  const days = Math.floor(hours / 24)
+  return { lastOnlineAt: updatedAt, isOnline: false, lastOnlineLabel: `${days}d ago` }
 }
 
 /**
@@ -165,8 +202,11 @@ export function guildRosterRows(
   members: GuildMember[],
   sort: GuildRosterSort,
   viewerId: string | null,
+  presence: ActivityPresence[] = [],
+  nowMs = 0,
 ): GuildRosterRow[] {
   const canManage = viewerId !== null && guild.leaderId === viewerId
+  const seen = new Map(presence.map((row) => [row.userId, row.updatedAt]))
   const sorted = members
     .map((member, index) => ({ member, index }))
     .sort((a, b) => {
@@ -174,16 +214,22 @@ export function guildRosterRows(
       if (delta !== 0) return sort === 'oldest' ? delta : -delta
       return a.index - b.index
     })
-  return sorted.map(({ member }, index) => ({
-    userId: member.userId,
-    position: index + 1,
-    username: member.username,
-    rankLabel: guildRoleLabel(guild, member.role),
-    role: member.role,
-    totalLevel: member.totalLevel,
-    appearance: member.appearance,
-    manageable: canManage && member.role !== 'leader',
-  }))
+  return sorted.map(({ member }, index) => {
+    const online = rosterLastOnline(seen.get(member.userId), nowMs)
+    return {
+      userId: member.userId,
+      position: index + 1,
+      username: member.username,
+      rankLabel: guildRoleLabel(guild, member.role),
+      role: member.role,
+      totalLevel: member.totalLevel,
+      appearance: member.appearance,
+      manageable: canManage && member.role !== 'leader',
+      lastOnlineAt: online.lastOnlineAt,
+      isOnline: online.isOnline,
+      lastOnlineLabel: online.lastOnlineLabel,
+    }
+  })
 }
 
 /** One pending application, as the leader reads it. */

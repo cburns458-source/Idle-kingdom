@@ -129,6 +129,8 @@ List<QuestLogRow> questLog(GameDatabase db, PlayerSave save) {
       statusLabel: questStatusLabel(status),
       completed: status == 'completed',
       objectives: objectives
+          .where((line) => line.current < line.required)
+          .take(1)
           .map(
             (line) => QuestLogObjective(
               key: line.key,

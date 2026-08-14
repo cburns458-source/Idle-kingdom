@@ -6,17 +6,12 @@ import 'add_items.dart';
 import 'capacity.dart';
 import 'gold.dart';
 
-/// World-map gateways into Town, Castle, and the Citadel.
-const List<String> bankGatewayLocationIds = <String>['LOC-0002', 'LOC-0013', 'LOC-0027'];
-
-/// Town, Castle, and Citadel sub-maps.
-const List<String> bankMapIds = <String>['MAP-0006', 'MAP-0003', 'MAP-0007'];
+/// Dedicated bank nodes on the Town and Citadel maps.
+const List<String> bankLocationIds = <String>['LOC-0034', 'LOC-0035'];
 
 bool locationHasBank(LocationRow? location) {
   if (location == null) return false;
-  final mapId = location.mapId;
-  return bankGatewayLocationIds.contains(location.locationId) ||
-      (mapId != null && mapId.isNotEmpty && bankMapIds.contains(mapId));
+  return bankLocationIds.contains(location.locationId);
 }
 
 List<InventoryStack> bankStacks(PlayerSave save) => save.bank;
@@ -97,7 +92,7 @@ BankMoveResult _moveStack({
   if (taken == null) return const BankMoveResult.failed('That stack is not there.');
   final piece = taken.taken;
   if (stackIsUnbankableGold(piece)) {
-    return const BankMoveResult.failed('Gold stays on you.');
+    return const BankMoveResult.failed('Gold cannot be deposited.');
   }
   final favorite = piece.favorite == true;
   final target = toBank

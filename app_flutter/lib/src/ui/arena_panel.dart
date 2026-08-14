@@ -4,15 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:ik_net/ik_net.dart';
 import 'package:ik_rules/ik_rules.dart';
 
-import '../content/asset_paths.dart';
 import '../session/game_controller.dart';
 import '../session/multiplayer_controller.dart';
 import '../theme.dart';
+import 'action_stage.dart';
 import 'format.dart';
 import 'item_icon.dart';
-
-/// How long each recorded PvP round stays on screen. Live PvE rounds are slower.
-const Duration _pvpPlaybackTick = Duration(milliseconds: 200);
 
 enum _ArenaTab { search, ranked }
 
@@ -37,27 +34,49 @@ class _ArenaPanelState extends State<ArenaPanel> {
   bool _loading = true;
   String? _error;
   ArenaOpponent? _opponent;
-  PvpFightResult? _fight;
-  int _roundIndex = 0;
-  bool _showResult = false;
-  Timer? _playback;
+  PlayerSave? _you;
+  PlayerSave? _them;
+  num _youHp = 0;
+  num _themHp = 0;
+  num _youMaxHp = 0;
+  num _themMaxHp = 0;
+  num _roundStartedAt = 0;
+  PvpRoundResult? _round;
+  int _roundSeq = 0;
+  String? _outcome;
   bool _rankedFight = false;
+  bool _rankedApplied = false;
 
   GameController get controller => widget.controller;
   MultiplayerController get multiplayer => widget.multiplayer;
   PlayerSave get save => controller.save;
+  bool get _fighting => _you != null && _them != null;
+
+  num get _roundMs => configNumber(controller.db, 'combat_round_duration', 4) * 1000;
+
+  double get _roundProgress {
+    if (!_fighting || _outcome != null) return _outcome == null ? 0 : 1;
+    final elapsed = controller.session.clock() - _roundStartedAt;
+    return _roundMs <= 0 ? 1 : (elapsed / _roundMs).clamp(0, 1).toDouble();
+  }
 
   @override
   void initState() {
     super.initState();
+    controller.addListener(_onTick);
     _loadOpponents();
   }
 
   @override
   void dispose() {
-    _playback?.cancel();
+    controller.removeListener(_onTick);
     _search.dispose();
     super.dispose();
+  }
+
+  void _onTick() {
+    if (!_fighting || _outcome != null || !mounted) return;
+    _advanceRounds(until: controller.session.clock());
   }
 
   Future<void> _loadOpponents() async {
@@ -82,44 +101,29 @@ class _ArenaPanelState extends State<ArenaPanel> {
         return;
       }
     }
-    final them = await multiplayer.service.readOpponentSave(opponent.userId);
+    final themSave = await multiplayer.service.readOpponentSave(opponent.userId);
     if (!mounted) return;
-    if (them == null) {
+    if (themSave == null) {
       setState(() => _error = 'That player has no character to fight.');
       return;
     }
-    final fight = simulatePvpFight(controller.db, save, them, controller.session.random);
-    if (ranked) {
-      final next = applyRankedPvpResult(save, fight.outcome == 'win', controller.session.clock());
-      controller.commit(next);
-      unawaited(multiplayer.service.submitLeaderboard(controller.db, next));
-    }
-    _playback?.cancel();
+    final you = preparePvpFighter(controller.db, save);
+    final them = preparePvpFighter(controller.db, themSave);
     setState(() {
       _error = null;
       _opponent = opponent;
-      _fight = fight;
+      _you = you;
+      _them = them;
+      _youHp = you.currentHp;
+      _themHp = them.currentHp;
+      _youMaxHp = you.currentHp;
+      _themMaxHp = them.currentHp;
+      _roundStartedAt = controller.session.clock();
+      _round = null;
+      _roundSeq = 0;
+      _outcome = null;
       _rankedFight = ranked;
-      _roundIndex = 0;
-      _showResult = fight.rounds.isEmpty;
-    });
-    if (fight.rounds.length <= 1) {
-      setState(() => _showResult = true);
-      return;
-    }
-    _playback = Timer.periodic(_pvpPlaybackTick, (timer) {
-      if (!mounted) {
-        timer.cancel();
-        return;
-      }
-      setState(() {
-        if (_roundIndex >= fight.rounds.length - 1) {
-          timer.cancel();
-          _showResult = true;
-        } else {
-          _roundIndex++;
-        }
-      });
+      _rankedApplied = false;
     });
   }
 
@@ -132,24 +136,66 @@ class _ArenaPanelState extends State<ArenaPanel> {
     await _fightOpponent(pick, ranked: true);
   }
 
-  void _skipPlayback() {
-    _playback?.cancel();
+  void _advanceRounds({required num until, bool skip = false}) {
+    final you = _you;
+    final them = _them;
+    if (you == null || them == null || _outcome != null) return;
+    final roundMs = _roundMs;
+    var youHp = _youHp;
+    var themHp = _themHp;
+    var startedAt = _roundStartedAt;
+    var seq = _roundSeq;
+    PvpRoundResult? last = _round;
+    String? outcome;
+    while (outcome == null && seq < 2000 && (skip || until - startedAt >= roundMs)) {
+      final round = resolvePvpRound(
+        controller.db,
+        you,
+        them,
+        youHp,
+        themHp,
+        controller.session.random,
+      );
+      last = round;
+      youHp = round.youHp;
+      themHp = round.themHp;
+      seq += 1;
+      if (!skip) startedAt += roundMs;
+      if (round.outcome != 'ongoing') outcome = round.outcome;
+    }
+    if (seq >= 2000 && outcome == null) outcome = 'loss';
+    if (!mounted) return;
     setState(() {
-      final fight = _fight;
-      if (fight != null && fight.rounds.isNotEmpty) {
-        _roundIndex = fight.rounds.length - 1;
-      }
-      _showResult = true;
+      _youHp = youHp;
+      _themHp = themHp;
+      _round = last;
+      _roundSeq = seq;
+      _roundStartedAt = startedAt;
+      _outcome = outcome;
     });
+    if (outcome != null) _applyRanked(outcome);
+  }
+
+  void _applyRanked(String outcome) {
+    if (!_rankedFight || _rankedApplied) return;
+    _rankedApplied = true;
+    final next = applyRankedPvpResult(save, outcome == 'win', controller.session.clock());
+    controller.commit(next);
+    unawaited(multiplayer.service.submitLeaderboard(controller.db, next));
+  }
+
+  void _skipFight() {
+    _advanceRounds(until: controller.session.clock(), skip: true);
   }
 
   void _clearFight() {
-    _playback?.cancel();
     setState(() {
-      _fight = null;
+      _you = null;
+      _them = null;
       _opponent = null;
-      _showResult = false;
-      _roundIndex = 0;
+      _round = null;
+      _roundSeq = 0;
+      _outcome = null;
       _error = null;
     });
   }
@@ -183,7 +229,7 @@ class _ArenaPanelState extends State<ArenaPanel> {
             Text(error, style: warningStyle),
           ],
           const SizedBox(height: 10),
-          if (_fight != null) _fightView() else _lobby(),
+          if (_fighting) _fightView() else _lobby(),
         ],
       ),
     );
@@ -277,41 +323,40 @@ class _ArenaPanelState extends State<ArenaPanel> {
   }
 
   Widget _fightView() {
-    final fight = _fight!;
     final opponent = _opponent!;
-    final round = fight.rounds.isEmpty
-        ? null
-        : fight.rounds[_roundIndex.clamp(0, fight.rounds.length - 1)];
-    final youHp = round?.youHp ?? fight.youMaxHp;
-    final themHp = round?.themHp ?? fight.themMaxHp;
+    final finished = _outcome != null;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _PvpStage(
+        PvpActionStage(
           youName: save.characterName ?? 'You',
           themName: opponent.username,
           youAppearance: save.appearance,
           themAppearance: opponent.appearance ?? save.appearance,
-          youHp: youHp,
-          youMaxHp: fight.youMaxHp,
-          themHp: themHp,
-          themMaxHp: fight.themMaxHp,
-          round: round,
+          youBytes: controller.localPlayerPng,
+          youHp: _youHp,
+          youMaxHp: _youMaxHp,
+          themHp: _themHp,
+          themMaxHp: _themMaxHp,
+          roundProgress: _roundProgress,
+          round: _round,
+          roundSeq: _roundSeq,
+          finished: finished,
         ),
         const SizedBox(height: 8),
-        if (!_showResult)
-          GameButton(label: 'Skip', tone: GameButtonTone.secondary, onPressed: _skipPlayback)
+        if (!finished)
+          GameButton(label: 'Skip', tone: GameButtonTone.secondary, onPressed: _skipFight)
         else ...[
           Text(
-            fight.outcome == 'win' ? 'Victory' : 'Defeat',
+            _outcome == 'win' ? 'Victory' : 'Defeat',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.w800,
-              color: fight.outcome == 'win' ? const Color(0xFFB6E38A) : const Color(0xFFFF8A8A),
+              color: _outcome == 'win' ? const Color(0xFFB6E38A) : const Color(0xFFFF8A8A),
             ),
           ),
-          if (_rankedFight && fight.outcome == 'win')
+          if (_rankedFight && _outcome == 'win')
             const Padding(
               padding: EdgeInsets.only(top: 4),
               child: MutedText('Ranked purse: 1,000 gold.', textAlign: TextAlign.center),
@@ -329,97 +374,6 @@ class _ArenaPanelState extends State<ArenaPanel> {
           const SizedBox(height: 8),
           GameButton(label: 'Back', onPressed: _clearFight),
         ],
-      ],
-    );
-  }
-}
-
-class _PvpStage extends StatelessWidget {
-  const _PvpStage({
-    required this.youName,
-    required this.themName,
-    required this.youAppearance,
-    required this.themAppearance,
-    required this.youHp,
-    required this.youMaxHp,
-    required this.themHp,
-    required this.themMaxHp,
-    required this.round,
-  });
-
-  final String youName;
-  final String themName;
-  final PlayerAppearance youAppearance;
-  final PlayerAppearance themAppearance;
-  final num youHp;
-  final num youMaxHp;
-  final num themHp;
-  final num themMaxHp;
-  final PvpRoundResult? round;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: Column(
-                children: [
-                  Image.asset(
-                    playerAssetPath(youAppearance),
-                    height: 110,
-                    fit: BoxFit.contain,
-                    alignment: Alignment.centerRight,
-                    filterQuality: FilterQuality.none,
-                  ),
-                  Text(youName, style: const TextStyle(fontWeight: FontWeight.w700)),
-                  if (round != null && (round!.themHit ?? 0) > 0)
-                    Text(
-                      '-${round!.themHit!.round()}',
-                      style: const TextStyle(color: Color(0xFFFFD0D0), fontWeight: FontWeight.w700),
-                    ),
-                  PillBar(
-                    value: youMaxHp <= 0 ? 0 : (youHp / youMaxHp).clamp(0, 1).toDouble(),
-                    gradient: Meters.playerHp,
-                    height: 11.5,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                children: [
-                  Image.asset(
-                    playerAssetPath(themAppearance),
-                    height: 110,
-                    fit: BoxFit.contain,
-                    alignment: Alignment.centerLeft,
-                    filterQuality: FilterQuality.none,
-                  ),
-                  Text(themName, style: const TextStyle(fontWeight: FontWeight.w700)),
-                  if (round != null && round!.youHit > 0)
-                    Text(
-                      round!.youCrit
-                          ? 'CRIT ${round!.youHit.round()}'
-                          : '-${round!.youHit.round()}',
-                      style: TextStyle(
-                        color: round!.youCrit ? const Color(0xFFFFD166) : const Color(0xFFFF8A3D),
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  PillBar(
-                    value: themMaxHp <= 0 ? 0 : (themHp / themMaxHp).clamp(0, 1).toDouble(),
-                    gradient: Meters.enemyHp,
-                    height: 11.5,
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
       ],
     );
   }

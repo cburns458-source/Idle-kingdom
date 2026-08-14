@@ -18,6 +18,10 @@ export function cosmeticById(db: GameDatabase, cosmeticId: string): CosmeticRow 
   return db.Cosmetics.find((row) => row['Cosmetic ID'] === cosmeticId)
 }
 
+export function cosmeticByItemId(db: GameDatabase, itemId: string): CosmeticRow | undefined {
+  return db.Cosmetics.find((row) => row['Item ID'] === itemId)
+}
+
 function cosmeticsState(save: PlayerSave): CosmeticsState {
   return save.cosmetics ?? { unlocked: [], equipped: {} }
 }

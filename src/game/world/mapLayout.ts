@@ -86,6 +86,8 @@ export const TOWN_MAP_NODE_LAYOUT: Record<string, NodePosition> = {
   'LOC-0025': { x: 30, y: 72 },
   // Rose's Apothecary (unlocks after quest)
   'LOC-0026': { x: 70, y: 72 },
+  // Town Bank
+  'LOC-0034': { x: 50, y: 55 },
 }
 
 export const CITADEL_MAP_NODE_LAYOUT: Record<string, NodePosition> = {
@@ -103,6 +105,8 @@ export const CITADEL_MAP_NODE_LAYOUT: Record<string, NodePosition> = {
   'LOC-0032': { x: 72, y: 74 },
   // Guild Hall
   'LOC-0033': { x: 50, y: 58 },
+  // Citadel Bank
+  'LOC-0035': { x: 50, y: 26 },
 }
 
 const LAYOUTS: Record<string, Record<string, NodePosition>> = {

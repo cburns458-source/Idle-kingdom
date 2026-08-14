@@ -10,13 +10,13 @@ LocationRow _loc(String id, [String? mapId]) {
 }
 
 void main() {
-  test('Town, Castle, and Citadel have a bank', () {
-    expect(locationHasBank(_loc('LOC-0002')), isTrue);
-    expect(locationHasBank(_loc('LOC-0013')), isTrue);
-    expect(locationHasBank(_loc('LOC-0027')), isTrue);
-    expect(locationHasBank(_loc('LOC-0024', 'MAP-0006')), isTrue);
-    expect(locationHasBank(_loc('LOC-0014', 'MAP-0003')), isTrue);
-    expect(locationHasBank(_loc('LOC-0028', 'MAP-0007')), isTrue);
+  test('only the Town Bank and Citadel Bank nodes have a bank', () {
+    expect(locationHasBank(_loc('LOC-0034', 'MAP-0006')), isTrue);
+    expect(locationHasBank(_loc('LOC-0035', 'MAP-0007')), isTrue);
+    expect(locationHasBank(_loc('LOC-0002')), isFalse);
+    expect(locationHasBank(_loc('LOC-0013')), isFalse);
+    expect(locationHasBank(_loc('LOC-0027')), isFalse);
+    expect(locationHasBank(_loc('LOC-0024', 'MAP-0006')), isFalse);
     expect(locationHasBank(_loc('LOC-0009', 'MAP-0001')), isFalse);
     expect(locationHasBank(null), isFalse);
   });
@@ -40,7 +40,7 @@ void main() {
       10,
     );
     expect(gold.ok, isFalse);
-    expect(gold.reason, 'Gold stays on you.');
+    expect(gold.reason, 'Gold cannot be deposited.');
 
     final withdrawn = withdrawFromBank(save, 0, 2);
     expect(withdrawn.ok, isTrue);

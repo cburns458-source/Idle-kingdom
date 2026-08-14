@@ -16,6 +16,8 @@ class WorldMapView extends StatelessWidget {
     required this.onSelect,
     required this.onBrowseMap,
     required this.onTravel,
+    this.onOpenHere,
+    this.hiddenLocationIds = const <String>[],
   });
 
   final GameController controller;
@@ -25,10 +27,21 @@ class WorldMapView extends StatelessWidget {
   final ValueChanged<String> onBrowseMap;
   final ValueChanged<String> onTravel;
 
+  /// Opens the location page for the node the player is already standing on.
+  final VoidCallback? onOpenHere;
+
+  /// Nodes to omit — the Guild Hall until the player has joined a guild.
+  final List<String> hiddenLocationIds;
+
   @override
   Widget build(BuildContext context) {
     final save = controller.save;
-    final nodes = locationsForMapView(controller.db, browseMapId, save.unlockedLocationIds);
+    final nodes = locationsForMapView(
+      controller.db,
+      browseMapId,
+      save.unlockedLocationIds,
+      hiddenLocationIds,
+    );
     final selected = selectedLocationId == null
         ? null
         : controller.indexes.locationsById[selectedLocationId!];
@@ -49,8 +62,10 @@ class WorldMapView extends StatelessWidget {
             isHere: node.locationId == save.currentLocationId,
             isSelected: node.locationId == selectedLocationId,
             onTap: () => onSelect(node.locationId),
-            onDoubleTap: controller.isRecovering || node.locationId == save.currentLocationId
+            onDoubleTap: controller.isRecovering
                 ? null
+                : node.locationId == save.currentLocationId
+                ? onOpenHere
                 : () => onTravel(node.locationId),
           ),
         if (browseMapId != mainMapId)

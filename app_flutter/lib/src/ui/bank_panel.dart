@@ -8,7 +8,7 @@ import 'format.dart';
 import 'item_icon.dart';
 import 'quantity_sheet.dart';
 
-/// Town / Castle / Citadel chest: bag on the left, stored stacks on the right.
+/// Town and Citadel vault: stored stacks on the left, bag on the right.
 class BankPanel extends StatefulWidget {
   const BankPanel({super.key, required this.controller, this.onClose});
 
@@ -125,8 +125,6 @@ class _BankPanelState extends State<BankPanel> {
             'Bag ${formatThousands(save.inventory.length)}/$inventorySlotLimit · '
             'Bank ${formatThousands(bankStacks(save).length)}/$inventorySlotLimit',
           ),
-          const SizedBox(height: 4),
-          const MutedText('Gold stays on you.'),
           const SizedBox(height: 8),
           TextField(
             controller: _search,
@@ -139,25 +137,6 @@ class _BankPanelState extends State<BankPanel> {
             children: [
               Expanded(
                 child: _Column(
-                  heading: 'Bag',
-                  empty: save.inventory.isEmpty
-                      ? 'The bag is empty.'
-                      : bag.isEmpty && save.inventory.every(stackIsUnbankableGold)
-                      ? 'Gold stays on you.'
-                      : 'Nothing in the bag matches.',
-                  tiles: [
-                    for (final row in bag)
-                      _tileFor(
-                        key: ValueKey('bag-${row.index}'),
-                        stack: row.stack,
-                        onTap: () => _deposit(row.index, row.stack),
-                      ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 9),
-              Expanded(
-                child: _Column(
                   heading: 'Bank',
                   empty: bankStacks(save).isEmpty
                       ? 'The chest is empty.'
@@ -168,6 +147,25 @@ class _BankPanelState extends State<BankPanel> {
                         key: ValueKey('bank-${row.index}'),
                         stack: row.stack,
                         onTap: () => _withdraw(row.index, row.stack),
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 9),
+              Expanded(
+                child: _Column(
+                  heading: 'Bag',
+                  empty: save.inventory.isEmpty
+                      ? 'The bag is empty.'
+                      : bag.isEmpty && save.inventory.every(stackIsUnbankableGold)
+                      ? 'Nothing in the bag to deposit.'
+                      : 'Nothing in the bag matches.',
+                  tiles: [
+                    for (final row in bag)
+                      _tileFor(
+                        key: ValueKey('bag-${row.index}'),
+                        stack: row.stack,
+                        onTap: () => _deposit(row.index, row.stack),
                       ),
                   ],
                 ),

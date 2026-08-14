@@ -64,6 +64,7 @@ List<LocationRow> locationsForMapView(
   GameDatabase db,
   String mapId, [
   List<String> unlockedLocationIds = const <String>[],
+  List<String> hiddenLocationIds = const <String>[],
 ]) {
   if (mapId == mainMapId) {
     return db.locations.where((location) => location.raw['Map ID'] == mainMapId).toList();
@@ -79,7 +80,9 @@ List<LocationRow> locationsForMapView(
   final merged = <String, LocationRow>{};
   for (final location in db.locations.where((row) => row.raw['Map ID'] == mapId)) {
     if (!isLocationUnlocked(unlockedLocationIds, location)) continue;
-    merged[jsString(location.raw['Location ID'])] = location;
+    final id = jsString(location.raw['Location ID']);
+    if (hiddenLocationIds.contains(id)) continue;
+    merged[id] = location;
   }
   if (gateway != null) merged[jsString(gateway.raw['Location ID'])] = gateway;
   return merged.values.toList();

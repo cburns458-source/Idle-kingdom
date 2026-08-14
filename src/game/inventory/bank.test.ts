@@ -19,14 +19,14 @@ const rawDatabase = JSON.parse(
 describe('bank storage', () => {
   const { launch, launchIndexes } = prepareDatabase(rawDatabase)
 
-  it('is at Town, Castle, and Citadel — including their districts', () => {
+  it('is only at the Town Bank and Citadel Bank nodes', () => {
     const byId = launchIndexes.locationsById
-    expect(locationHasBank(byId.get('LOC-0002'))).toBe(true)
-    expect(locationHasBank(byId.get('LOC-0013'))).toBe(true)
-    expect(locationHasBank(byId.get('LOC-0027'))).toBe(true)
-    expect(locationHasBank(byId.get('LOC-0024'))).toBe(true)
-    expect(locationHasBank(byId.get('LOC-0014'))).toBe(true)
-    expect(locationHasBank(byId.get('LOC-0028'))).toBe(true)
+    expect(locationHasBank(byId.get('LOC-0034'))).toBe(true)
+    expect(locationHasBank(byId.get('LOC-0035'))).toBe(true)
+    expect(locationHasBank(byId.get('LOC-0002'))).toBe(false)
+    expect(locationHasBank(byId.get('LOC-0013'))).toBe(false)
+    expect(locationHasBank(byId.get('LOC-0027'))).toBe(false)
+    expect(locationHasBank(byId.get('LOC-0024'))).toBe(false)
     expect(locationHasBank(byId.get('LOC-0009'))).toBe(false)
     expect(locationHasBank(undefined)).toBe(false)
   })
@@ -53,7 +53,7 @@ describe('bank storage', () => {
     )
     expect(gold.ok).toBe(false)
     if (gold.ok) return
-    expect(gold.reason).toBe('Gold stays on you.')
+    expect(gold.reason).toBe('Gold cannot be deposited.')
     expect(stackIsUnbankableGold({ itemId: GOLD_ITEM_ID })).toBe(true)
 
     const withdrawn = withdrawFromBank(save, 0, 2)

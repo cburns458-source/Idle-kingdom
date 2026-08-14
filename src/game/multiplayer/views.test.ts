@@ -204,6 +204,27 @@ describe('guild home views', () => {
     expect(rows.map((row) => row.username)).toEqual(['First', 'Second'])
   })
 
+  it('labels last-online from presence age', () => {
+    const now = Date.parse('2026-08-12T21:00:00.000Z')
+    const rows = guildRosterRows(
+      guild(),
+      [
+        member({ userId: 'usr_1', username: 'On' }),
+        member({ userId: 'usr_2', username: 'Hour' }),
+        member({ userId: 'usr_3', username: 'Never' }),
+      ],
+      'oldest',
+      'usr_1',
+      [
+        presence({ userId: 'usr_1', updatedAt: '2026-08-12T20:59:10.000Z' }),
+        presence({ userId: 'usr_2', updatedAt: '2026-08-12T20:00:00.000Z' }),
+      ],
+      now,
+    )
+    expect(rows.map((row) => row.lastOnlineLabel)).toEqual(['Online', '1h ago', 'Unknown'])
+    expect(rows.map((row) => row.isOnline)).toEqual([true, false, false])
+  })
+
   it('uses the rank names the guild chose', () => {
     const renamed = guild({
       rankLabels: { ...DEFAULT_GUILD_RANK_LABELS, officer: 'Captain', member: 'Blade' },

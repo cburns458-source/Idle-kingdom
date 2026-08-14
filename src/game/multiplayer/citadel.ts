@@ -25,7 +25,7 @@ export type CitadelHubTab = 'bounties' | 'bazaar'
 
 export const CITADEL_HUB_TAB_LABELS: Record<CitadelHubTab, string> = {
   bounties: 'Hourly Bounties',
-  bazaar: 'Grand Bazaar',
+  bazaar: 'Message board',
 }
 
 /**
@@ -42,7 +42,7 @@ export function citadelHubTabsFor(locationId: string): CitadelHubTab[] {
 
 /** The heading above those links, naming the district rather than the boards. */
 export function citadelHubTitleFor(locationId: string): string {
-  return locationId === CITADEL_MARKET_ID ? 'Market District' : 'Citadel Plaza'
+  return locationId === CITADEL_MARKET_ID ? 'Message board' : 'Citadel Plaza'
 }
 
 export interface CitadelHubSummary {

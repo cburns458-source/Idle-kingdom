@@ -11,6 +11,12 @@ import {
   getActivity,
   validateActivityStart,
 } from './engine'
+import {
+  forcedHostileActivity,
+  HOSTILE_ACTIVITY_LOCK_REASON,
+  HOSTILE_ACTIVITY_START_REASON,
+  locationIsHostileFor,
+} from '../world/hostility'
 
 export function clearActivityTransition(save: PlayerSave): PlayerSave {
   if (!save.activityTransition) return save
@@ -83,6 +89,17 @@ function startProductionNow(
   return queued.save
 }
 
+function hostileStartBlocked(
+  db: GameDatabase,
+  save: PlayerSave,
+  activityId: string,
+): string | null {
+  if (!locationIsHostileFor(db, save)) return null
+  const threatened = forcedHostileActivity(db, save, save.currentLocationId)
+  if (threatened && threatened['Activity ID'] === activityId) return null
+  return HOSTILE_ACTIVITY_START_REASON
+}
+
 /** Start or replace a pool activity immediately. Death pause still blocks. */
 export function requestActivityStart(
   db: GameDatabase,
@@ -94,6 +111,8 @@ export function requestActivityStart(
   if (isDeathPaused(save, nowMs)) {
     return { ok: false, reason: 'Cannot change activities while recovering from defeat.' }
   }
+  const hostile = hostileStartBlocked(db, save, activityId)
+  if (hostile) return { ok: false, reason: hostile }
 
   const validation = validateActivityStart(db, save, activityId)
   if (!validation.ok) return validation
@@ -126,6 +145,9 @@ export function requestProductionStart(
   if (isDeathPaused(save, nowMs)) {
     return { ok: false, reason: 'Cannot change activities while recovering from defeat.' }
   }
+  if (locationIsHostileFor(db, save)) {
+    return { ok: false, reason: HOSTILE_ACTIVITY_START_REASON }
+  }
 
   const validation = validateActivityStart(db, save, activityId)
   if (!validation.ok) return validation
@@ -148,6 +170,9 @@ export function requestActivityStop(
 ): { ok: true; save: PlayerSave } | { ok: false; reason: string } {
   if (isDeathPaused(save, nowMs)) {
     return { ok: false, reason: 'Cannot change activities while recovering from defeat.' }
+  }
+  if (locationIsHostileFor(db, save)) {
+    return { ok: false, reason: HOSTILE_ACTIVITY_LOCK_REASON }
   }
   if (!hasRunningPrimaryActivity(save) && !save.activityTransition) {
     return { ok: false, reason: 'No activity is running.' }

@@ -1,6 +1,7 @@
 import 'package:ik_content/ik_content.dart';
 import 'package:ik_rules/ik_rules.dart';
 
+import 'config.dart';
 import 'moderation.dart';
 import 'snapshots.dart';
 import 'types.dart';
@@ -185,6 +186,9 @@ class GuildRosterRow {
     required this.totalLevel,
     required this.appearance,
     required this.manageable,
+    this.lastOnlineAt,
+    this.isOnline = false,
+    this.lastOnlineLabel = 'Unknown',
   });
 
   final String userId;
@@ -202,6 +206,13 @@ class GuildRosterRow {
   /// True when the viewer can change this member's rank.
   final bool manageable;
 
+  /// Presence `updatedAt`, or null when this member has never been seen.
+  final String? lastOnlineAt;
+  final bool isOnline;
+
+  /// `Online`, a relative time, or `Unknown`.
+  final String lastOnlineLabel;
+
   Map<String, Object?> toJson() => <String, Object?>{
     'userId': userId,
     'position': position,
@@ -211,7 +222,41 @@ class GuildRosterRow {
     'totalLevel': totalLevel,
     'appearance': appearance.toJson(),
     'manageable': manageable,
+    'lastOnlineAt': lastOnlineAt,
+    'isOnline': isOnline,
+    'lastOnlineLabel': lastOnlineLabel,
   };
+}
+
+/// Presence age → the roster's last-online line.
+({String? lastOnlineAt, bool isOnline, String lastOnlineLabel}) rosterLastOnline(
+  String? updatedAt,
+  num nowMs,
+) {
+  if (updatedAt == null || updatedAt.isEmpty) {
+    return (lastOnlineAt: null, isOnline: false, lastOnlineLabel: 'Unknown');
+  }
+  final then = jsDateParse(updatedAt);
+  if (!then.isFinite) {
+    return (lastOnlineAt: null, isOnline: false, lastOnlineLabel: 'Unknown');
+  }
+  final age = nowMs - then;
+  if (age >= 0 && age < presenceTtlSeconds * 1000) {
+    return (lastOnlineAt: updatedAt, isOnline: true, lastOnlineLabel: 'Online');
+  }
+  final minutes = (age / 60000).floor();
+  if (minutes < 1) {
+    return (lastOnlineAt: updatedAt, isOnline: false, lastOnlineLabel: 'Just now');
+  }
+  if (minutes < 60) {
+    return (lastOnlineAt: updatedAt, isOnline: false, lastOnlineLabel: '${minutes}m ago');
+  }
+  final hours = (minutes / 60).floor();
+  if (hours < 24) {
+    return (lastOnlineAt: updatedAt, isOnline: false, lastOnlineLabel: '${hours}h ago');
+  }
+  final days = (hours / 24).floor();
+  return (lastOnlineAt: updatedAt, isOnline: false, lastOnlineLabel: '${days}d ago');
 }
 
 /// The roster in join order.
@@ -222,9 +267,15 @@ List<GuildRosterRow> guildRosterRows(
   GuildRecord guild,
   List<GuildMember> members,
   GuildRosterSort sort,
-  String? viewerId,
-) {
+  String? viewerId, {
+  List<ActivityPresence> presence = const <ActivityPresence>[],
+  num? nowMs,
+}) {
   final canManage = viewerId != null && guild.leaderId == viewerId;
+  final clock = nowMs ?? 0;
+  final seen = <String, String>{
+    for (final row in presence) row.userId: row.updatedAt,
+  };
   final indexed = members.indexed.toList();
   indexed.sort((a, b) {
     final delta = jsDateParse(a.$2.joinedAt) - jsDateParse(b.$2.joinedAt);
@@ -235,6 +286,7 @@ List<GuildRosterRow> guildRosterRows(
   });
   return indexed.indexed.map((outer) {
     final member = outer.$2.$2;
+    final online = rosterLastOnline(seen[member.userId], clock);
     return GuildRosterRow(
       userId: member.userId,
       position: outer.$1 + 1,
@@ -244,6 +296,9 @@ List<GuildRosterRow> guildRosterRows(
       totalLevel: member.totalLevel,
       appearance: member.appearance,
       manageable: canManage && member.role != guildRoleLeader,
+      lastOnlineAt: online.lastOnlineAt,
+      isOnline: online.isOnline,
+      lastOnlineLabel: online.lastOnlineLabel,
     );
   }).toList();
 }

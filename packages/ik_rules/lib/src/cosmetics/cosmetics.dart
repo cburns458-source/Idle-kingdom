@@ -18,6 +18,10 @@ CosmeticRow? cosmeticById(GameDatabase db, String cosmeticId) {
   return db.cosmetics.firstWhereOrNull((row) => row.raw['Cosmetic ID'] == cosmeticId);
 }
 
+CosmeticRow? cosmeticByItemId(GameDatabase db, String itemId) {
+  return db.cosmetics.firstWhereOrNull((row) => row.raw['Item ID'] == itemId);
+}
+
 bool isCosmeticUnlocked(PlayerSave save, String cosmeticId) {
   return save.cosmetics.unlocked.contains(cosmeticId);
 }

@@ -55,6 +55,7 @@ export function createNewSave(db: GameDatabase, nowMs: number = Date.now()): Pla
     // Race-specific starter kits are granted when the player picks a race.
     inventory: [],
     bank: [],
+    favoriteActivityByLocationId: {},
     equipment: { slots },
     gold: STARTING_GOLD,
     quests: [],

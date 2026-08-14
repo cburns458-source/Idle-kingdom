@@ -1299,11 +1299,20 @@ class LocalMultiplayerBackend {
   }
 
   /// Live presence rows, optionally narrowed to one location and activity.
-  List<ActivityPresence> listPresence({String? locationId, String? activityId}) {
+  List<ActivityPresence> listPresence({
+    String? locationId,
+    String? activityId,
+    bool includeExpired = false,
+  }) {
     final db = _db();
     final now = _now();
     return db.presence
-        .where((row) => isDemoPlayerId(row.userId) || jsDateParse(row.expiresAt) > now)
+        .where(
+          (row) =>
+              includeExpired ||
+              isDemoPlayerId(row.userId) ||
+              jsDateParse(row.expiresAt) > now,
+        )
         .where((row) => locationId == null || row.locationId == locationId)
         .where((row) => activityId == null || row.currentActivityId == activityId)
         .toList();

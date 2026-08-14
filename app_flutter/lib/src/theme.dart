@@ -206,9 +206,18 @@ class GameButton extends StatelessWidget {
 
 /// One line of the location list: what is here, and the one thing you do with it.
 class DockRow extends StatelessWidget {
-  const DockRow({super.key, required this.title, required this.trailing, this.lines = const []});
+  const DockRow({
+    super.key,
+    required this.title,
+    required this.trailing,
+    this.leading,
+    this.lines = const [],
+  });
 
   final String title;
+
+  /// Optional control before the title — the favorite star on an activity.
+  final Widget? leading;
 
   /// Warnings, requirements, and the blurb, in the order the old client read them.
   final List<Widget> lines;
@@ -225,6 +234,7 @@ class DockRow extends StatelessWidget {
       ),
       child: Row(
         children: [
+          if (leading case final star?) ...[star, const SizedBox(width: 6)],
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

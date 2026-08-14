@@ -44,6 +44,8 @@ export const LOCATION_ASSET_PATHS: Record<string, string> = {
   'LOC-0031': '/assets/locations/loc_citadel_gathering.webp',
   'LOC-0032': '/assets/locations/loc_citadel_combat.webp',
   'LOC-0033': '/assets/locations/loc_citadel_plaza.webp',
+  'LOC-0034': '/assets/locations/loc_town_general_store.webp',
+  'LOC-0035': '/assets/locations/loc_citadel_plaza.webp',
 }
 
 export function mapAssetPath(mapId: string): string {

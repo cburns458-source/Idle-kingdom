@@ -44,7 +44,7 @@ class _NpcPanelState extends State<NpcPanel> {
   @override
   void initState() {
     super.initState();
-    _dialogue = conversation.greeting;
+    // Topics stay on screen; a greeting is a line, not a trap that closes the panel.
   }
 
   /// Takes the merchant's advice, if they had any left, and leaves.
@@ -54,8 +54,11 @@ class _NpcPanelState extends State<NpcPanel> {
       controller.commit(claimed.save!);
       controller.announce(claimed.message!);
     }
-    widget.onClose();
-    if (thenOpenShop != null) widget.onOpenShop?.call(thenOpenShop);
+    setState(() => _dialogue = null);
+    if (thenOpenShop != null) {
+      widget.onClose();
+      widget.onOpenShop?.call(thenOpenShop);
+    }
   }
 
   void _accept(String questId) {

@@ -165,7 +165,7 @@ class _ShopPanelState extends State<ShopPanel> {
     final buyTotal = _total(_buys, (id) => playerBuyPrice(db, shop, id));
     final sellTotal = _total(_sells, (id) => playerSellPrice(db, shop, id));
     final net = sellTotal - buyTotal;
-    final stock = shopStockEntries(shop);
+    final stock = shopStockForPlayer(db, save, shop);
     final sellable = _sellable(shop);
 
     return _frame(

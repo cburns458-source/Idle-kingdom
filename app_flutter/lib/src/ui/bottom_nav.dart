@@ -3,8 +3,6 @@ import 'package:flutter/material.dart';
 import '../theme.dart';
 import 'app_shell.dart';
 
-const Duration _doubleTapWindow = Duration(milliseconds: 300);
-
 const List<(GameScreen, String)> _nestItems = [
   (GameScreen.menu, 'Menu'),
   (GameScreen.log, 'Log'),
@@ -22,15 +20,11 @@ class BottomNav extends StatefulWidget {
     required this.screen,
     required this.locationName,
     required this.onSelect,
-    required this.onOpenMap,
   });
 
   final GameScreen screen;
   final String locationName;
   final ValueChanged<GameScreen> onSelect;
-
-  /// A second tap on the location name, matching the old double-tap-for-map.
-  final VoidCallback onOpenMap;
 
   @override
   State<BottomNav> createState() => _BottomNavState();
@@ -39,7 +33,6 @@ class BottomNav extends StatefulWidget {
 class _BottomNavState extends State<BottomNav> {
   final LayerLink _nestLink = LayerLink();
   OverlayEntry? _nestEntry;
-  DateTime? _lastLocationTap;
 
   bool get _nestOpen => _nestEntry != null;
   bool get _nestActive => _nestOpen || _nestScreens.contains(widget.screen);
@@ -88,7 +81,7 @@ class _BottomNavState extends State<BottomNav> {
             screen: widget.screen,
             onSelect: (screen) {
               _closeNest();
-              widget.onSelect(screen);
+              _selectTab(screen);
             },
           ),
         ),
@@ -96,63 +89,55 @@ class _BottomNavState extends State<BottomNav> {
     );
   }
 
-  void _select(GameScreen screen) {
+  void _selectTab(GameScreen screen) {
     _closeNest();
-    widget.onSelect(screen);
-  }
-
-  void _onLocationTap() {
-    final now = DateTime.now();
-    final last = _lastLocationTap;
-    if (last != null && now.difference(last) <= _doubleTapWindow) {
-      _lastLocationTap = null;
-      _closeNest();
-      widget.onOpenMap();
+    if (widget.screen == screen) {
+      widget.onSelect(GameScreen.location);
       return;
     }
-    _lastLocationTap = now;
-    _select(GameScreen.location);
+    widget.onSelect(screen);
   }
 
   @override
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: const BoxDecoration(
+        color: Palette.panel,
         border: Border(top: BorderSide(color: Palette.edge)),
       ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      child: SizedBox(
+        height: 48,
         child: Row(
           children: [
             Expanded(
-              child: _NavButton(
+              child: _NavSection(
                 label: widget.locationName,
                 selected: widget.screen == GameScreen.location,
-                tooltip: '${widget.locationName} (double-tap for world map)',
-                onTap: _onLocationTap,
+                tooltip: widget.locationName,
+                onTap: () => _selectTab(GameScreen.location),
               ),
             ),
-            const SizedBox(width: 6),
+            const VerticalDivider(width: 1, color: Palette.edge),
             Expanded(
-              child: _NavButton(
+              child: _NavSection(
                 label: 'Skills',
                 selected: widget.screen == GameScreen.skills,
-                onTap: () => _select(GameScreen.skills),
+                onTap: () => _selectTab(GameScreen.skills),
               ),
             ),
-            const SizedBox(width: 6),
+            const VerticalDivider(width: 1, color: Palette.edge),
             Expanded(
-              child: _NavButton(
+              child: _NavSection(
                 label: 'Inventory',
                 selected: widget.screen == GameScreen.inventory,
-                onTap: () => _select(GameScreen.inventory),
+                onTap: () => _selectTab(GameScreen.inventory),
               ),
             ),
-            const SizedBox(width: 6),
+            const VerticalDivider(width: 1, color: Palette.edge),
             Expanded(
               child: CompositedTransformTarget(
                 link: _nestLink,
-                child: _NavButton(
+                child: _NavSection(
                   selected: _nestActive,
                   tooltip: 'Open menu nest',
                   semanticsLabel: 'Open menu nest',
@@ -199,7 +184,7 @@ class _NestPopup extends StatelessWidget {
                 for (final item in _nestItems)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 4),
-                    child: _NavButton(
+                    child: _NavSection(
                       label: item.$2,
                       selected: screen == item.$1,
                       alignStart: true,
@@ -215,8 +200,8 @@ class _NestPopup extends StatelessWidget {
   }
 }
 
-class _NavButton extends StatelessWidget {
-  const _NavButton({
+class _NavSection extends StatelessWidget {
+  const _NavSection({
     required this.onTap,
     this.label,
     this.child,
@@ -236,31 +221,54 @@ class _NavButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final button = OutlinedButton(
-      onPressed: onTap,
-      style: OutlinedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-        minimumSize: const Size.fromHeight(42),
-        backgroundColor: selected ? const Color(0xD9546E3E) : const Color(0x8C281C12),
-        foregroundColor: selected ? const Color(0xFFF4FFE8) : Palette.parchmentText,
-        side: BorderSide(color: selected ? const Color(0x66BEDC96) : Palette.edge),
-        alignment: alignStart ? Alignment.centerLeft : Alignment.center,
-      ),
-      child:
-          child ??
-          Text(
-            label!,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+    final content =
+        child ??
+        Text(
+          label!,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          textAlign: alignStart ? TextAlign.left : TextAlign.center,
+          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+        );
+    final button = Material(
+      color: selected ? const Color(0xD9546E3E) : Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        child: SizedBox.expand(
+          child: Align(
+            alignment: alignStart ? Alignment.centerLeft : Alignment.center,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: content,
+            ),
           ),
+        ),
+      ),
     );
+    final sized = alignStart
+        ? SizedBox(
+            height: 42,
+            child: Material(
+              color: selected ? const Color(0xD9546E3E) : const Color(0x8C281C12),
+              child: InkWell(
+                onTap: onTap,
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: content,
+                  ),
+                ),
+              ),
+            ),
+          )
+        : button;
     final labeled = semanticsLabel == null
-        ? button
+        ? sized
         : Semantics(
             button: true,
             label: semanticsLabel,
-            child: ExcludeSemantics(child: button),
+            child: ExcludeSemantics(child: sized),
           );
     if (tooltip == null) return labeled;
     return Tooltip(message: tooltip!, child: labeled);

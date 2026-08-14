@@ -93,7 +93,7 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
 
   void _showMap() {
     setState(() {
-      _browseMapId = _mapIdForCurrentLocation();
+      _browseMapId = mainMapId;
       _selectedLocationId = controller.save.currentLocationId;
       _screen = GameScreen.map;
     });
@@ -169,15 +169,7 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
       children: [
         Column(
           children: [
-            TopHud(
-              controller: controller,
-              trailing: ChatLauncher(
-                controller: controller,
-                multiplayer: multiplayer,
-                locationId: save.currentLocationId,
-                citadelHub: _inCitadel,
-              ),
-            ),
+            TopHud(controller: controller),
             Expanded(
               child: Stack(
                 fit: StackFit.expand,
@@ -203,9 +195,18 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
               screen: _screen,
               locationName: controller.location?.displayName ?? 'Unknown',
               onSelect: (screen) => setState(() => _screen = screen),
-              onOpenMap: _showMap,
             ),
           ],
+        ),
+        Positioned(
+          right: 12,
+          bottom: 62,
+          child: ChatLauncher(
+            controller: controller,
+            multiplayer: multiplayer,
+            locationId: save.currentLocationId,
+            citadelHub: _inCitadel,
+          ),
         ),
         Positioned(
           left: 8,
@@ -268,6 +269,8 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
             _selectedLocationId = null;
           }),
           onTravel: _travelTo,
+          onOpenHere: () => setState(() => _screen = GameScreen.location),
+          hiddenLocationIds: multiplayer.guildId == null ? const <String>[guildHallLocationId] : const <String>[],
         );
       case GameScreen.skills:
         return SkillsView(controller: controller);

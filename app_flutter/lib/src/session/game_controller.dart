@@ -333,6 +333,10 @@ class GameController extends ChangeNotifier {
     announce(result.message!);
   }
 
+  void toggleFavorite(String activityId) {
+    commit(toggleFavoriteActivity(save, save.currentLocationId, activityId));
+  }
+
   void stopActivity() {
     final result = requestActivityStop(db, save, session.clock());
     if (!result.ok) {

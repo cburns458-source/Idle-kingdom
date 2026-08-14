@@ -24,6 +24,7 @@ const String townKitchenId = 'LOC-0023';
 const String townGeneralStoreId = 'LOC-0024';
 const String townFoundryId = 'LOC-0025';
 const String townApothecaryId = 'LOC-0026';
+const String townBankId = 'LOC-0034';
 
 /// Citadel hub nodes (MAP-0007).
 const String citadelPlazaId = 'LOC-0028';
@@ -32,6 +33,7 @@ const String citadelProcessingId = 'LOC-0030';
 const String citadelGatheringId = 'LOC-0031';
 const String citadelCombatId = 'LOC-0032';
 const String guildHallLocationId = 'LOC-0033';
+const String citadelBankId = 'LOC-0035';
 
 bool isFutureHorizonLocation(String locationId) {
   return locationId == westHorizonId || locationId == eastHorizonId;

@@ -61,7 +61,7 @@ void main() {
     expect(summary.damageBreakdown.map((line) => line.label), contains('Strength Potion'));
     expect(summary.damageBreakdown.lastWhere((line) => line.label == 'Total').detail, '165–297');
 
-    expect(summary.healthBreakdown.map((line) => line.label), contains('Base'));
+    expect(summary.healthBreakdown.map((line) => line.label), isNot(contains('Base')));
     expect(summary.healthBreakdown.map((line) => line.label), contains('Steel Helmet'));
     expect(summary.healthBreakdown.map((line) => line.label), contains('High Elf'));
     expect(summary.healthBreakdown.last.detail, '1647');

@@ -48,6 +48,11 @@ void main() {
           return <String, Object?>{
             'shopId': shop.shopId,
             'stock': stock.map((entry) => entry.toJson()).toList(),
+            'visibleStock': shopStockForPlayer(
+              db,
+              createNewSave(db, 0),
+              shop,
+            ).map((entry) => entry.toJson()).toList(),
             'buyPrices': priced.map((itemId) => playerBuyPrice(db, shop, itemId)).toList(),
             'sellPrices': priced.map((itemId) => playerSellPrice(db, shop, itemId)).toList(),
             'sellsFirstStock': shopSellsItem(

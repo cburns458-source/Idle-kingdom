@@ -3,6 +3,7 @@ import 'package:ik_content/ik_content.dart';
 
 import '../activity/requirements.dart';
 import '../activity/xp.dart';
+import '../cosmetics/cosmetics.dart';
 import '../js_compat.dart';
 import '../save/generated/save_models.dart';
 
@@ -142,4 +143,14 @@ num? playerSellPrice(GameDatabase db, ShopRow shop, String itemId) {
 
 bool shopSellsItem(ShopRow shop, String itemId) {
   return shopStockEntries(shop).any((entry) => entry.itemId == itemId);
+}
+
+/// Stock the player can still buy — owned cosmetics stay off the counter.
+List<ShopStockEntry> shopStockForPlayer(GameDatabase db, PlayerSave save, ShopRow shop) {
+  return shopStockEntries(shop).where((entry) {
+    final cosmetic = cosmeticByItemId(db, entry.itemId);
+    if (cosmetic == null) return true;
+    final cosmeticId = cosmetic.raw['Cosmetic ID'];
+    return cosmeticId is! String || !isCosmeticUnlocked(save, cosmeticId);
+  }).toList();
 }

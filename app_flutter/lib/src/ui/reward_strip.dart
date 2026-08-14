@@ -79,21 +79,13 @@ class _Chip extends StatelessWidget {
   Widget build(BuildContext context) {
     return Tooltip(
       message: tooltip,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-        decoration: BoxDecoration(
-          color: Palette.panel,
-          borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: Palette.edge),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
-            const SizedBox(width: 4),
-            Image.asset(iconPath, width: 14, height: 14, filterQuality: FilterQuality.none),
-          ],
-        ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+          const SizedBox(width: 4),
+          Image.asset(iconPath, width: 14, height: 14, filterQuality: FilterQuality.none),
+        ],
       ),
     );
   }

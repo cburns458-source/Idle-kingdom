@@ -2,6 +2,7 @@ import 'package:collection/collection.dart';
 import 'package:ik_content/ik_content.dart';
 
 import '../activity/engine.dart';
+import '../activity/favorites.dart';
 import '../activity/transition.dart';
 import '../activity/xp.dart';
 import '../combat/stats.dart';
@@ -30,6 +31,16 @@ List<ActivityRow> hostileActivitiesAt(GameDatabase db, String locationId) {
   );
   return rows;
 }
+
+/// The player is under-level for a danger-warning activity here.
+bool locationIsHostileFor(GameDatabase db, PlayerSave save, [String? locationId]) {
+  return forcedHostileActivity(db, save, locationId ?? save.currentLocationId) != null;
+}
+
+const String hostileActivityLockReason =
+    'Leave this area to stop. Hostile combat cannot be cancelled.';
+const String hostileActivityStartReason =
+    'Cannot start another action in a hostile area. Leave to escape.';
 
 /// The hostile activity at this location the player is under-level for, if any.
 ActivityRow? forcedHostileActivity(GameDatabase db, PlayerSave save, String locationId) {
@@ -80,7 +91,7 @@ HostileTravelArrivalResult applyHostileTravelArrival(
   final threatened = forcedHostileActivity(db, next, destinationLocationId);
   if (threatened == null) {
     return HostileTravelArrivalResult(
-      save: next,
+      save: _startFavoriteActivity(db, next, destinationLocationId, nowMs, random),
       forcedActivityId: null,
       forceBlockedReason: null,
       threatenedActivityId: null,
@@ -107,6 +118,21 @@ HostileTravelArrivalResult applyHostileTravelArrival(
     forceBlockedReason: null,
     threatenedActivityId: activityId,
   );
+}
+
+PlayerSave _startFavoriteActivity(
+  GameDatabase db,
+  PlayerSave save,
+  String locationId,
+  num nowMs,
+  RandomFn random,
+) {
+  final favoriteId = favoriteActivityAt(save, locationId);
+  if (favoriteId == null) return save;
+  final validation = validateActivityStart(db, save, favoriteId);
+  if (!validation.ok) return save;
+  final started = beginActivitySave(save, favoriteId, isoFromMs(nowMs));
+  return generateNextAction(db, started, favoriteId, random, nowMs)?.save ?? started;
 }
 
 String? hostileForceMessage(GameDatabase db, HostileTravelArrivalResult result) {

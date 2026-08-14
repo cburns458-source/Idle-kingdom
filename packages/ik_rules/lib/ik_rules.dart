@@ -11,6 +11,7 @@ library;
 export 'src/achievements/progress.dart';
 export 'src/activity/bonus_xp.dart';
 export 'src/activity/engine.dart';
+export 'src/activity/favorites.dart';
 export 'src/activity/gathering.dart';
 export 'src/activity/pools.dart';
 export 'src/activity/requirements.dart';

@@ -354,6 +354,9 @@ class RemoteMultiplayerService implements MultiplayerService {
   Future<List<ActivityPresence>> citadelVisitors() => _local.citadelVisitors();
 
   @override
+  Future<List<ActivityPresence>> presenceRecords() => _local.presenceRecords();
+
+  @override
   Future<PublicPlayerProfile?> publicProfile(String userId) => _local.publicProfile(userId);
 
   @override

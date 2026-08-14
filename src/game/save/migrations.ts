@@ -373,6 +373,18 @@ export const SAVE_MIGRATIONS: SaveMigration[] = [
       saveVersion: 24,
     }),
   },
+  {
+    fromVersion: 24,
+    toVersion: 25,
+    migrate: (save) => ({
+      ...save,
+      favoriteActivityByLocationId:
+        save.favoriteActivityByLocationId && typeof save.favoriteActivityByLocationId === 'object'
+          ? save.favoriteActivityByLocationId
+          : {},
+      saveVersion: 25,
+    }),
+  },
 ]
 
 export function migrateSave(save: PlayerSave, nowMs: number = Date.now()): PlayerSave {

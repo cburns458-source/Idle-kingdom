@@ -160,6 +160,13 @@ const ROSTER: GuildMember[] = [
   member({ userId: 'usr_4', username: 'Twin', joinedAt: SAME_MOMENT, role: 'recruit' }),
 ]
 
+const ROSTER_NOW = Date.parse('2026-08-12T21:00:00.000Z')
+const ROSTER_PRESENCE: ActivityPresence[] = [
+  presence({ userId: 'usr_1', updatedAt: '2026-08-12T20:59:10.000Z' }),
+  presence({ userId: 'usr_2', updatedAt: '2026-08-12T20:00:00.000Z' }),
+  presence({ userId: 'usr_4', updatedAt: '2026-08-12T20:59:50.000Z' }),
+]
+
 const PROFILE: PublicPlayerProfile = {
   userId: 'usr_2',
   username: 'Rival',
@@ -220,12 +227,21 @@ export const socialViewScenarios: ParityScenario[] = [
       leaderHeader: guildHomeHeader(guild(), 4, 'usr_1'),
       memberHeader: guildHomeHeader(guild({ joinPolicy: 'closed' }), 4, 'usr_2'),
       anonymousHeader: guildHomeHeader(guild(), 0, null),
-      oldest: guildRosterRows(guild(), ROSTER, 'oldest', 'usr_1'),
-      newest: guildRosterRows(guild(), ROSTER, 'newest', 'usr_1').map((row) => row.username),
-      asMember: guildRosterRows(guild(), ROSTER, 'oldest', 'usr_2').map((row) => row.manageable),
-      renamedRoster: guildRosterRows(renamed, ROSTER, 'oldest', 'usr_1').map(
-        (row) => row.rankLabel,
+      oldest: guildRosterRows(guild(), ROSTER, 'oldest', 'usr_1', ROSTER_PRESENCE, ROSTER_NOW),
+      newest: guildRosterRows(guild(), ROSTER, 'newest', 'usr_1', ROSTER_PRESENCE, ROSTER_NOW).map(
+        (row) => row.username,
       ),
+      asMember: guildRosterRows(guild(), ROSTER, 'oldest', 'usr_2', ROSTER_PRESENCE, ROSTER_NOW).map(
+        (row) => row.manageable,
+      ),
+      renamedRoster: guildRosterRows(
+        renamed,
+        ROSTER,
+        'oldest',
+        'usr_1',
+        ROSTER_PRESENCE,
+        ROSTER_NOW,
+      ).map((row) => row.rankLabel),
       rankOptions: guildRankOptions(renamed),
       rankFields: rankLabelFields(renamed),
       leavePrompt: leaveGuildPrompt(guild()),

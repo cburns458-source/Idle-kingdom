@@ -20,18 +20,20 @@ Future<int?> askQuantity(
   int min = 1,
   int? max,
 }) {
-  return showModalBottomSheet<int>(
+  return showDialog<int>(
     context: context,
-    backgroundColor: Colors.transparent,
-    isScrollControlled: true,
-    builder: (context) => _QuantitySheet(
-      title: title,
-      subtitle: subtitle,
-      details: details,
-      confirmLabel: confirmLabel,
-      initialValue: initialValue,
-      min: min,
-      max: max,
+    builder: (context) => Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+      child: _QuantitySheet(
+        title: title,
+        subtitle: subtitle,
+        details: details,
+        confirmLabel: confirmLabel,
+        initialValue: initialValue,
+        min: min,
+        max: max,
+      ),
     ),
   );
 }

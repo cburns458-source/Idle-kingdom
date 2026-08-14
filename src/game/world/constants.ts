@@ -21,6 +21,7 @@ export const TOWN_KITCHEN_ID = 'LOC-0023'
 export const TOWN_GENERAL_STORE_ID = 'LOC-0024'
 export const TOWN_FOUNDRY_ID = 'LOC-0025'
 export const TOWN_APOTHECARY_ID = 'LOC-0026'
+export const TOWN_BANK_ID = 'LOC-0034'
 
 /** Citadel hub nodes (MAP-0007). */
 export const CITADEL_PLAZA_ID = 'LOC-0028'
@@ -29,6 +30,7 @@ export const CITADEL_PROCESSING_ID = 'LOC-0030'
 export const CITADEL_GATHERING_ID = 'LOC-0031'
 export const CITADEL_COMBAT_ID = 'LOC-0032'
 export const GUILD_HALL_LOCATION_ID = 'LOC-0033'
+export const CITADEL_BANK_ID = 'LOC-0035'
 
 export function isFutureHorizonLocation(locationId: string): boolean {
   return locationId === WEST_HORIZON_ID || locationId === EAST_HORIZON_ID

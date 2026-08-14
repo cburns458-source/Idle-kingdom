@@ -8,6 +8,7 @@ import '../rng/mulberry32.dart';
 import '../save/generated/save_models.dart';
 import '../time.dart';
 import 'engine.dart';
+import '../world/hostility.dart';
 
 PlayerSave clearActivityTransition(PlayerSave save) {
   if (save.activityTransition == null) return save;
@@ -76,6 +77,15 @@ ProductionQueueResult _startProductionNow(
   return beginProductionQueue(db, started, activityId, recipeId, quantity, nowMs);
 }
 
+String? _hostileStartBlocked(GameDatabase db, PlayerSave save, String activityId) {
+  if (!locationIsHostileFor(db, save)) return null;
+  final threatened = forcedHostileActivity(db, save, save.currentLocationId);
+  if (threatened != null && jsString(threatened.raw['Activity ID']) == activityId) {
+    return null;
+  }
+  return hostileActivityStartReason;
+}
+
 /// Starts or replaces a pool activity immediately. Death pause still blocks.
 ActivityChangeResult requestActivityStart(
   GameDatabase db,
@@ -89,6 +99,8 @@ ActivityChangeResult requestActivityStart(
       'Cannot change activities while recovering from defeat.',
     );
   }
+  final hostile = _hostileStartBlocked(db, save, activityId);
+  if (hostile != null) return ActivityChangeResult.failed(hostile);
 
   final validation = validateActivityStart(db, save, activityId);
   if (!validation.ok) return ActivityChangeResult.failed(validation.reason);
@@ -121,6 +133,9 @@ ActivityChangeResult requestProductionStart(
       'Cannot change activities while recovering from defeat.',
     );
   }
+  if (locationIsHostileFor(db, save)) {
+    return const ActivityChangeResult.failed(hostileActivityStartReason);
+  }
 
   final validation = validateActivityStart(db, save, activityId);
   if (!validation.ok) return ActivityChangeResult.failed(validation.reason);
@@ -141,6 +156,9 @@ ActivityChangeResult requestActivityStop(GameDatabase db, PlayerSave save, num n
     return const ActivityChangeResult.failed(
       'Cannot change activities while recovering from defeat.',
     );
+  }
+  if (locationIsHostileFor(db, save)) {
+    return const ActivityChangeResult.failed(hostileActivityLockReason);
   }
   if (!hasRunningPrimaryActivity(save) && save.activityTransition == null) {
     return const ActivityChangeResult.failed('No activity is running.');

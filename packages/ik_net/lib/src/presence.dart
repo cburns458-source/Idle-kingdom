@@ -33,7 +33,7 @@ enum CitadelHubTab { bounties, bazaar }
 
 const Map<CitadelHubTab, String> citadelHubTabLabels = <CitadelHubTab, String>{
   CitadelHubTab.bounties: 'Hourly Bounties',
-  CitadelHubTab.bazaar: 'Grand Bazaar',
+  CitadelHubTab.bazaar: 'Message board',
 };
 
 /// Which boards stand at [locationId].
@@ -50,7 +50,7 @@ List<CitadelHubTab> citadelHubTabsFor(String locationId) {
 
 /// The heading above those links, naming the district rather than the boards.
 String citadelHubTitleFor(String locationId) =>
-    locationId == citadelMarketId ? 'Market District' : 'Citadel Plaza';
+    locationId == citadelMarketId ? 'Message board' : 'Citadel Plaza';
 
 /// What the Citadel tab shows above its visitor list.
 class CitadelHubSummary {

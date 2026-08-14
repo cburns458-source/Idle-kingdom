@@ -7,6 +7,7 @@ import {
   applyHostileTravelArrival,
   forcedHostileActivity,
   hostileForceMessage,
+  locationIsHostileFor,
 } from './hostility'
 
 const rawDatabase = JSON.parse(
@@ -42,6 +43,16 @@ describe('hostile travel forcing', () => {
     expect(arrived.save.currentActivityId).toBeNull()
   })
 
+  it('does not treat the Wizard Tower as hostile', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const save = createNewSave(launch)
+    expect(forcedHostileActivity(launch, save, 'LOC-0007')).toBeNull()
+    expect(locationIsHostileFor(launch, save, 'LOC-0007')).toBe(false)
+    const arrived = applyHostileTravelArrival(launch, save, 'LOC-0007')
+    expect(arrived.forcedActivityId).toBeNull()
+    expect(arrived.save.currentActivityId).toBeNull()
+  })
+
   it('does not force combat when traveling to a safe location', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const save = createNewSave(launch)
@@ -64,5 +75,17 @@ describe('hostile travel forcing', () => {
     expect(arrived.save.currentLocationId).toBe('LOC-0002')
     expect(arrived.save.currentActivityId).toBeNull()
     expect(arrived.save.activityTransition).toBeNull()
+  })
+
+  it('auto-starts a favorite activity on a safe arrival', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const now = Date.parse('2026-01-01T00:00:00.000Z')
+    const save = {
+      ...createNewSave(launch),
+      favoriteActivityByLocationId: { 'LOC-0009': 'ACT-0012' },
+    }
+    const arrived = applyHostileTravelArrival(launch, save, 'LOC-0009', now)
+    expect(arrived.forcedActivityId).toBeNull()
+    expect(arrived.save.currentActivityId).toBe('ACT-0012')
   })
 })

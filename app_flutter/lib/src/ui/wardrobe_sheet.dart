@@ -55,7 +55,7 @@ class _WardrobeSheetState extends State<WardrobeSheet> {
     final slot = wardrobeSlotView(controller.db, save, _slotId);
 
     return ColoredBox(
-      color: const Color(0xE6120C08),
+      color: Palette.ink,
       child: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(12),

@@ -48,6 +48,124 @@ class ActionStage extends StatelessWidget {
   }
 }
 
+/// Arena PvP, drawn with the same portraits, HUD bars, round meter, and floaters
+/// as a PvE fight. The caller drives live 4s rounds.
+class PvpActionStage extends StatelessWidget {
+  const PvpActionStage({
+    super.key,
+    required this.youName,
+    required this.themName,
+    required this.youAppearance,
+    required this.themAppearance,
+    this.youBytes,
+    required this.youHp,
+    required this.youMaxHp,
+    required this.themHp,
+    required this.themMaxHp,
+    required this.roundProgress,
+    this.round,
+    this.roundSeq = 0,
+    this.finished = false,
+  });
+
+  final String youName;
+  final String themName;
+  final PlayerAppearance youAppearance;
+  final PlayerAppearance themAppearance;
+  final Uint8List? youBytes;
+  final num youHp;
+  final num youMaxHp;
+  final num themHp;
+  final num themMaxHp;
+  final double roundProgress;
+  final PvpRoundResult? round;
+  final int roundSeq;
+  final bool finished;
+
+  @override
+  Widget build(BuildContext context) {
+    final youHit = round?.themHit ?? 0;
+    final themHit = round?.youHit ?? 0;
+    final themOffhand = round?.youOffhand ?? 0;
+    return _StageShell(
+      semanticsLabel: 'Arena combat',
+      scene: _TwoPortraits(
+        player: _Portrait(
+          assetPath: playerAssetPath(youAppearance),
+          bytes: youBytes,
+          semanticsLabel: youName,
+          alignment: Alignment.centerRight,
+          overlay: !finished && youHit > 0
+              ? _DamageFloater(
+                  key: ValueKey('pvp-them-hit-$roundSeq'),
+                  text: '${youHit.round()}',
+                  color: _enemyHitColor,
+                  alignment: const Alignment(-0.16, -0.16),
+                  offset: _floaterOffset(roundSeq, 1),
+                )
+              : null,
+        ),
+        scene: _Portrait(
+          assetPath: playerAssetPath(themAppearance),
+          semanticsLabel: themName,
+          alignment: Alignment.centerLeft,
+          overlay: finished
+              ? null
+              : Stack(
+                  children: [
+                    if (themHit > 0)
+                      _DamageFloater(
+                        key: ValueKey('pvp-you-hit-$roundSeq'),
+                        text: round!.youCrit ? 'CRIT ${themHit.round()}' : '${themHit.round()}',
+                        color: round!.youCrit ? _critHitColor : _playerHitColor,
+                        alignment: const Alignment(0, -0.64),
+                        offset: _floaterOffset(roundSeq, 2),
+                      ),
+                    if (themOffhand > 0)
+                      _DamageFloater(
+                        key: ValueKey('pvp-you-offhand-$roundSeq'),
+                        text: '${themOffhand.round()}',
+                        color: _offhandHitColor,
+                        alignment: const Alignment(0, -0.24),
+                        offset: _floaterOffset(roundSeq, 3),
+                        fontSize: 17,
+                      ),
+                  ],
+                ),
+        ),
+        playerCaption: _FighterCaption(
+          name: youName,
+          alignEnd: false,
+          meter: _Meter(
+            label: 'Player health',
+            semanticsValue: '${youHp.round()} / ${youMaxHp.round()}',
+            value: youMaxHp <= 0 ? 0 : (youHp / youMaxHp).clamp(0, 1).toDouble(),
+            gradient: Meters.hudHp,
+          ),
+        ),
+        sceneCaption: _FighterCaption(
+          name: themName,
+          alignEnd: true,
+          meter: _Meter(
+            label: '$themName health',
+            semanticsValue: '${themHp.round()} / ${themMaxHp.round()}',
+            value: themMaxHp <= 0 ? 0 : (themHp / themMaxHp).clamp(0, 1).toDouble(),
+            gradient: Meters.hudHp,
+          ),
+        ),
+      ),
+      footer: Semantics(
+        label: 'Round progress',
+        child: PillBar(
+          value: finished ? 1 : roundProgress.clamp(0, 1),
+          gradient: Meters.combatRound,
+          height: 8,
+        ),
+      ),
+    );
+  }
+}
+
 class _StageShell extends StatelessWidget {
   const _StageShell({required this.semanticsLabel, required this.scene, required this.footer});
 
@@ -167,15 +285,18 @@ class _Portrait extends StatelessWidget {
 
 /// The name over a bar: the enemy, or whatever is being worked on.
 class _SceneName extends StatelessWidget {
-  const _SceneName(this.text);
+  const _SceneName(this.text, {this.alignEnd = true});
 
   final String text;
+  final bool alignEnd;
 
   @override
   Widget build(BuildContext context) {
     return Text(
       text,
-      textAlign: TextAlign.right,
+      textAlign: alignEnd ? TextAlign.right : TextAlign.left,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
       style: const TextStyle(
         fontSize: 13.5,
         fontWeight: FontWeight.w700,
@@ -187,8 +308,8 @@ class _SceneName extends StatelessWidget {
   }
 }
 
-/// A health bar: the whole track is always drawn, and the fill is the fraction
-/// of health left, the same way the round timer reads.
+/// A health bar drawn like the HUD: the outline stays full width and the fill
+/// shrinks as HP drops.
 class _Meter extends StatelessWidget {
   const _Meter({
     required this.label,
@@ -207,7 +328,38 @@ class _Meter extends StatelessWidget {
     return Semantics(
       label: label,
       value: semanticsValue,
-      child: PillBar(value: value, gradient: gradient, height: 11.5),
+      child: PillBar(
+        value: value,
+        gradient: gradient,
+        height: 8,
+        trackColor: Palette.ink,
+        borderColor: const Color(0x59D4AF37),
+      ),
+    );
+  }
+}
+
+/// Name + HP so both fighters' bars sit on the same row.
+class _FighterCaption extends StatelessWidget {
+  const _FighterCaption({
+    required this.name,
+    required this.alignEnd,
+    required this.meter,
+  });
+
+  final String name;
+  final bool alignEnd;
+  final Widget meter;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: alignEnd ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+      children: [
+        _SceneName(name, alignEnd: alignEnd),
+        const SizedBox(height: 3),
+        meter,
+      ],
     );
   }
 }
@@ -291,32 +443,25 @@ class _CombatStage extends StatelessWidget {
                   ],
                 ),
         ),
-        // The player side has no name, but still leaves its line so both bars
-        // sit at the same height.
-        playerCaption: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 16),
-            _Meter(
-              label: 'Player health',
-              semanticsValue: '${playerHp.round()} / ${maxHp.round()}',
-              value: maxHp <= 0 ? 0 : (playerHp / maxHp).clamp(0, 1).toDouble(),
-              gradient: Meters.playerHp,
-            ),
-          ],
+        playerCaption: _FighterCaption(
+          name: save.characterName ?? 'Adventurer',
+          alignEnd: false,
+          meter: _Meter(
+            label: 'Player health',
+            semanticsValue: '${playerHp.round()} / ${maxHp.round()}',
+            value: maxHp <= 0 ? 0 : (playerHp / maxHp).clamp(0, 1).toDouble(),
+            gradient: Meters.hudHp,
+          ),
         ),
-        sceneCaption: Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            _SceneName(enemyName),
-            const SizedBox(height: 3),
-            _Meter(
-              label: '$enemyName health',
-              semanticsValue: '${enemyHp.round()} / ${enemyMaxHp.round()}',
-              value: (enemyHp / enemyMaxHp).clamp(0, 1).toDouble(),
-              gradient: Meters.enemyHp,
-            ),
-          ],
+        sceneCaption: _FighterCaption(
+          name: enemyName,
+          alignEnd: true,
+          meter: _Meter(
+            label: '$enemyName health',
+            semanticsValue: '${enemyHp.round()} / ${enemyMaxHp.round()}',
+            value: (enemyHp / enemyMaxHp).clamp(0, 1).toDouble(),
+            gradient: Meters.hudHp,
+          ),
         ),
       ),
       // The timer stays through the defeat flash so the bar does not vanish

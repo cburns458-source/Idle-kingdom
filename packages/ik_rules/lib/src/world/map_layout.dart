@@ -83,6 +83,8 @@ const Map<String, NodePosition> townMapNodeLayout = <String, NodePosition>{
   'LOC-0025': NodePosition(x: 30, y: 72),
   // Rose's Apothecary (unlocks after quest)
   'LOC-0026': NodePosition(x: 70, y: 72),
+  // Town Bank
+  'LOC-0034': NodePosition(x: 50, y: 55),
 };
 
 const Map<String, NodePosition> citadelMapNodeLayout = <String, NodePosition>{
@@ -100,6 +102,8 @@ const Map<String, NodePosition> citadelMapNodeLayout = <String, NodePosition>{
   'LOC-0032': NodePosition(x: 72, y: 74),
   // Guild Hall
   'LOC-0033': NodePosition(x: 50, y: 58),
+  // Citadel Bank
+  'LOC-0035': NodePosition(x: 50, y: 26),
 };
 
 const Map<String, Map<String, NodePosition>> _layouts = <String, Map<String, NodePosition>>{

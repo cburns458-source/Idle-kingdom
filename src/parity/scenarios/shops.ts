@@ -17,6 +17,7 @@ import {
   playerSellPrice,
   shopSellsItem,
   shopStockEntries,
+  shopStockForPlayer,
   shopsAtLocation,
 } from '../../game/shops/shops'
 import { confirmShopOffer, type ShopOffer } from '../../game/shops/transactions'
@@ -335,6 +336,7 @@ export const shopScenarios: ParityScenario[] = [
       shops: db.Shops.map((shop) => ({
         shopId: shop['Shop ID'],
         stock: shopStockEntries(shop),
+        visibleStock: shopStockForPlayer(db, baseSave(db), shop),
         buyPrices: PRICED_ITEMS.map((itemId) => playerBuyPrice(db, shop, itemId)),
         sellPrices: PRICED_ITEMS.map((itemId) => playerSellPrice(db, shop, itemId)),
         sellsFirstStock: shopSellsItem(shop, shopStockEntries(shop)[0]?.itemId ?? 'ITEM-9999'),

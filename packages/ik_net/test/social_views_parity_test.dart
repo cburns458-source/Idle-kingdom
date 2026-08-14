@@ -84,6 +84,7 @@ ActivityPresence _presence({
   String? skillId = 'SKL-0001',
   num? skillLevel = 7,
   String? guildName,
+  String updatedAt = '2026-08-12T21:00:00.000Z',
 }) {
   return ActivityPresence(
     userId: userId,
@@ -96,10 +97,18 @@ ActivityPresence _presence({
     guildName: guildName,
     outfitCosmeticId: null,
     mountCosmeticId: null,
-    updatedAt: '2026-08-12T21:00:00.000Z',
+    updatedAt: updatedAt,
     expiresAt: '2026-08-12T21:02:00.000Z',
   );
 }
+
+const num _rosterNow = 1786568400000; // 2026-08-12T21:00:00.000Z
+
+final List<ActivityPresence> _rosterPresence = <ActivityPresence>[
+  _presence(userId: 'usr_1', updatedAt: '2026-08-12T20:59:10.000Z'),
+  _presence(userId: 'usr_2', updatedAt: '2026-08-12T20:00:00.000Z'),
+  _presence(userId: 'usr_4', updatedAt: '2026-08-12T20:59:50.000Z'),
+];
 
 LeaderboardEntry _entry({
   MultiplayerBoardKey boardKey = boardTotalLevel,
@@ -259,25 +268,38 @@ void main() {
                 ).toJson(),
                 'anonymousHeader': guildHomeHeader(_guild(), 0, null).toJson(),
                 'oldest': _rows(
-                  guildRosterRows(_guild(), _roster, GuildRosterSort.oldest, 'usr_1'),
+                  guildRosterRows(
+                    _guild(),
+                    _roster,
+                    GuildRosterSort.oldest,
+                    'usr_1',
+                    presence: _rosterPresence,
+                    nowMs: _rosterNow,
+                  ),
                 ),
                 'newest': guildRosterRows(
                   _guild(),
                   _roster,
                   GuildRosterSort.newest,
                   'usr_1',
+                  presence: _rosterPresence,
+                  nowMs: _rosterNow,
                 ).map((row) => row.username).toList(),
                 'asMember': guildRosterRows(
                   _guild(),
                   _roster,
                   GuildRosterSort.oldest,
                   'usr_2',
+                  presence: _rosterPresence,
+                  nowMs: _rosterNow,
                 ).map((row) => row.manageable).toList(),
                 'renamedRoster': guildRosterRows(
                   renamed,
                   _roster,
                   GuildRosterSort.oldest,
                   'usr_1',
+                  presence: _rosterPresence,
+                  nowMs: _rosterNow,
                 ).map((row) => row.rankLabel).toList(),
                 'rankOptions': _rows(guildRankOptions(renamed)),
                 'rankFields': _rows(rankLabelFields(renamed)),

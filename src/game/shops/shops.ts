@@ -1,5 +1,6 @@
 import { getSkillProgress } from '../activity/xp'
 import { requirementsForEntity, unmetHardRequirements } from '../activity/requirements'
+import { cosmeticByItemId, isCosmeticUnlocked } from '../cosmetics/cosmetics'
 import type { GameDatabase, ItemRow, ShopRow } from '../data/types'
 import type { PlayerSave } from '../save/types'
 
@@ -124,4 +125,13 @@ export function playerSellPrice(
 
 export function shopSellsItem(shop: ShopRow, itemId: string): boolean {
   return shopStockEntries(shop).some((entry) => entry.itemId === itemId)
+}
+
+/** Stock the player can still buy — owned cosmetics stay off the counter. */
+export function shopStockForPlayer(db: GameDatabase, save: PlayerSave, shop: ShopRow): ShopStockEntry[] {
+  return shopStockEntries(shop).filter((entry) => {
+    const cosmetic = cosmeticByItemId(db, entry.itemId)
+    if (!cosmetic) return true
+    return !isCosmeticUnlocked(save, cosmetic['Cosmetic ID'])
+  })
 }

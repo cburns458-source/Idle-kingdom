@@ -363,6 +363,15 @@ final List<SaveMigration> saveMigrations = <SaveMigration>[
       return next;
     },
   ),
+  SaveMigration(
+    fromVersion: 24,
+    toVersion: 25,
+    migrate: (save, nowMs) {
+      final next = _bumped(save, 25);
+      next['favoriteActivityByLocationId'] = objectOrEmpty(save, 'favoriteActivityByLocationId');
+      return next;
+    },
+  ),
 ];
 
 /// Thrown when a save cannot be brought to the current version.

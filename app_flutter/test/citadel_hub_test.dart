@@ -52,8 +52,8 @@ void main() {
     addTearDown(controller.dispose);
     await pumpShell(tester, controller, size: const Size(900, 2400));
 
-    expect(find.text('Market District'), findsWidgets);
-    expect(find.text('Grand Bazaar'), findsOne);
+    expect(find.text('Message board'), findsWidgets);
+    expect(find.text('Grand Bazaar'), findsWidgets);
     expect(find.text('Hourly Bounties'), findsNothing);
   });
 

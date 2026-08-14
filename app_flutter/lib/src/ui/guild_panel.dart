@@ -123,7 +123,14 @@ class _GuildPanelState extends State<GuildPanel> {
 
   Widget _buildHome(GuildRecord guild) {
     final header = guildHomeHeader(guild, net.members.length, net.session?.userId);
-    final rows = guildRosterRows(guild, net.members, _sort, net.session?.userId);
+    final rows = guildRosterRows(
+      guild,
+      net.members,
+      _sort,
+      net.session?.userId,
+      presence: net.presence,
+      nowMs: widget.controller.session.clock(),
+    );
     final options = guildRankOptions(guild);
     final applications = guildApplicationRows(net.applications);
     return ListView(
@@ -187,7 +194,7 @@ class _GuildPanelState extends State<GuildPanel> {
         for (final row in rows) ...[
           SocialRow(
             title: '${row.position}. ${row.username}',
-            subtitle: row.rankLabel,
+            subtitle: '${row.rankLabel} · ${row.lastOnlineLabel}',
             leading: SocialPortrait(appearance: row.appearance),
             trailing: row.manageable
                 ? _RankPicker(

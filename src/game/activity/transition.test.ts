@@ -109,6 +109,23 @@ describe('immediate activity changes (no change cooldown)', () => {
     expect(arrived.save.activityTransition).toBeNull()
   })
 
+  it('blocks stop and other starts in a hostile area', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const now = Date.parse('2026-01-01T00:00:00.000Z')
+    const arrived = applyHostileTravelArrival(launch, createNewSave(launch), 'LOC-0003', now)
+    expect(arrived.forcedActivityId).toBe('ACT-0002')
+    const save = arrived.save
+
+    const stop = requestActivityStop(launch, save, now + 1_000)
+    expect(stop.ok).toBe(false)
+    if (!stop.ok) expect(stop.reason).toMatch(/Leave this area/i)
+    expect(save.currentActivityId).toBe('ACT-0002')
+
+    const other = requestActivityStart(launch, save, 'ACT-0012', now + 1_000)
+    expect(other.ok).toBe(false)
+    if (!other.ok) expect(other.reason).toMatch(/hostile area/i)
+  })
+
   it('Start queue replaces a running activity immediately', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const now = Date.parse('2026-01-01T00:00:00.000Z')

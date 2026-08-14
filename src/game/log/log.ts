@@ -71,11 +71,14 @@ export function questLog(db: GameDatabase, save: PlayerSave): QuestLogRow[] {
       detail: `${quest.Summary ?? 'No summary.'} · ${npcName}`,
       statusLabel: questStatusLabel(status),
       completed: status === 'completed',
-      objectives: objectives.map((line) => ({
-        key: line.key,
-        label: `${line.label}: ${Math.min(line.current, line.required)}/${line.required}`,
-        percent: Math.min(100, Math.floor((line.current / Math.max(1, line.required)) * 100)),
-      })),
+      objectives: objectives
+        .filter((line) => line.current < line.required)
+        .slice(0, 1)
+        .map((line) => ({
+          key: line.key,
+          label: `${line.label}: ${Math.min(line.current, line.required)}/${line.required}`,
+          percent: Math.min(100, Math.floor((line.current / Math.max(1, line.required)) * 100)),
+        })),
     }
   })
 }

@@ -110,6 +110,9 @@ class _LocationViewState extends State<LocationView> {
   /// The location the open panel belongs to, so travelling closes it.
   String? _openAt;
 
+  /// The activity/NPC/shop band stays short until the player asks for more.
+  bool _bandExpanded = false;
+
   GameController get controller => widget.controller;
 
   void _openPanel(LocationPanel panel) {
@@ -162,11 +165,15 @@ class _LocationViewState extends State<LocationView> {
     }
 
     final running = controller.save.currentActivityId != null;
-    final stage = _open != null
-        ? _buildPanel(_open!)
-        : running
+    final openPanel = _open;
+    // A running action keeps the stage. An open shop/NPC/workshop shares the
+    // band instead of covering the fight or gather UI.
+    final stage = running
         ? ActivityPanel(controller: controller)
+        : openPanel != null
+        ? _buildPanel(openPanel)
         : null;
+    final bandPanel = running && openPanel != null ? _buildPanel(openPanel) : null;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(10, 8, 10, 0),
@@ -264,7 +271,10 @@ class _LocationViewState extends State<LocationView> {
                         // The two together always leave the art some room, so
                         // the column cannot overflow on a short window.
                         final stageMax = rest.maxHeight * 0.5;
-                        final bandMax = rest.maxHeight * 0.48;
+                        const collapsedBand = 176.0;
+                        final bandMax = _bandExpanded
+                            ? rest.maxHeight * 0.86
+                            : collapsedBand;
                         return Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
@@ -294,30 +304,55 @@ class _LocationViewState extends State<LocationView> {
                                   child: stage,
                                 ),
                               ),
-                            ConstrainedBox(
-                              constraints: BoxConstraints(maxHeight: bandMax),
+                            SizedBox(
+                              height: bandMax,
                               child: DecoratedBox(
                                 decoration: const BoxDecoration(
                                   color: Palette.panel,
                                   border: Border(top: BorderSide(color: Color(0x2EE8DCB4))),
                                 ),
-                                child: SingleChildScrollView(
-                                  clipBehavior: Clip.hardEdge,
-                                  padding: const EdgeInsets.fromLTRB(13, 8, 13, 12),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                                    children: [
-                                      ..._activities(locationId),
-                                      ..._stations(locationId),
-                                      ..._people(locationId),
-                                      ..._shops(locationId),
-                                      ..._bank(),
-                                      ..._arena(),
-                                      ..._guildHall(),
-                                      ..._citadelBoards(locationId),
-                                      ..._searches(locationId),
-                                    ],
-                                  ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                                  children: [
+                                    Align(
+                                      alignment: Alignment.centerRight,
+                                      child: IconButton(
+                                        tooltip: _bandExpanded ? 'Collapse list' : 'Expand list',
+                                        onPressed: () =>
+                                            setState(() => _bandExpanded = !_bandExpanded),
+                                        icon: Icon(
+                                          _bandExpanded
+                                              ? Icons.expand_more
+                                              : Icons.expand_less,
+                                          size: 20,
+                                        ),
+                                      ),
+                                    ),
+                                    Expanded(
+                                      child: SingleChildScrollView(
+                                        clipBehavior: Clip.hardEdge,
+                                        padding: const EdgeInsets.fromLTRB(13, 0, 13, 12),
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                                          children: [
+                                            if (bandPanel != null) ...[
+                                              bandPanel,
+                                              const SizedBox(height: 10),
+                                            ],
+                                            ..._activities(locationId),
+                                            ..._stations(locationId),
+                                            ..._people(locationId),
+                                            ..._shops(locationId),
+                                            ..._bank(),
+                                            ..._arena(),
+                                            ..._guildHall(),
+                                            ..._citadelBoards(locationId),
+                                            ..._searches(locationId),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ),
@@ -385,7 +420,7 @@ class _LocationViewState extends State<LocationView> {
           padding: const EdgeInsets.only(bottom: 8),
           child: _InteractionCard(
             title: citadelHubTabLabels[tab]!,
-            actionLabel: 'Open',
+            actionLabel: tab == CitadelHubTab.bazaar ? 'Post' : 'Open',
             tone: GameButtonTone.primary,
             onPressed: () => _openPanel(CitadelHubOpen(tab)),
           ),
@@ -477,7 +512,7 @@ class _LocationViewState extends State<LocationView> {
         padding: const EdgeInsets.only(bottom: 8),
         child: _InteractionCard(
           title: 'Item storage',
-          subtitle: 'Gold stays on you.',
+          subtitle: 'Deposit and withdraw items.',
           actionLabel: 'Bank',
           tone: GameButtonTone.primary,
           onPressed: () => _openPanel(const BankOpen()),
@@ -504,7 +539,10 @@ class _LocationViewState extends State<LocationView> {
   }
 
   List<Widget> _guildHall() {
-    if (!locationHasGuildHall(controller.location)) return const [];
+    if (!locationHasGuildHall(controller.location) ||
+        widget.multiplayer.guildId == null) {
+      return const [];
+    }
     return [
       const _SectionHeading('Guild hall'),
       Padding(
@@ -651,11 +689,26 @@ class _ActivityCard extends StatelessWidget {
     final production = isStandardProductionActivity(controller.db, activity);
 
     final recovering = controller.isRecovering;
+    final hostileLock = locationIsHostileFor(controller.db, controller.save);
+    final favorited = favoriteActivityAt(controller.save) == activityId;
     return DockRow(
+      leading: IconButton(
+        visualDensity: VisualDensity.compact,
+        padding: EdgeInsets.zero,
+        constraints: const BoxConstraints.tightFor(width: 28, height: 28),
+        tooltip: favorited ? 'Clear favorite' : 'Favorite this activity',
+        onPressed: () => controller.toggleFavorite(activityId),
+        icon: Icon(
+          favorited ? Icons.star : Icons.star_border,
+          size: 20,
+          color: favorited ? Palette.gold : Palette.muted,
+        ),
+      ),
       title: activity.contextualName ?? activityId,
       lines: [
         if (activity.dangerWarningCombatLevel case final level?)
           Text('Combat warning ~ Level $level', style: warningStyle),
+        if (hostileLock && running) MutedText(hostileActivityLockReason),
         if (!check.ok && !running) MutedText(check.reason ?? ''),
         if (activity.description case final blurb?)
           Text(
@@ -672,7 +725,7 @@ class _ActivityCard extends StatelessWidget {
           ? GameButton(
               label: 'Stop',
               tone: GameButtonTone.secondary,
-              onPressed: recovering ? null : controller.stopActivity,
+              onPressed: recovering || hostileLock ? null : controller.stopActivity,
             )
           : GameButton(
               // Enabled even when the check failed: starting is what turns a

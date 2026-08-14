@@ -4,20 +4,12 @@ import { addItemToInventoryExact } from '../activity/rewards'
 import { canFitItemQuantity, inventorySlotsFree, INVENTORY_SLOT_LIMIT } from './capacity'
 import { isGoldCurrencyItem } from './gold'
 
-/** World-map gateways into Town, Castle, and the Citadel. */
-export const BANK_GATEWAY_LOCATION_IDS = ['LOC-0002', 'LOC-0013', 'LOC-0027'] as const
-
-/** Town, Castle, and Citadel sub-maps. */
-export const BANK_MAP_IDS = ['MAP-0006', 'MAP-0003', 'MAP-0007'] as const
+/** Dedicated bank nodes on the Town and Citadel maps. */
+export const BANK_LOCATION_IDS = ['LOC-0034', 'LOC-0035'] as const
 
 export function locationHasBank(location: LocationRow | undefined | null): boolean {
   if (!location) return false
-  const id = location['Location ID']
-  const mapId = location['Map ID']
-  return (
-    (BANK_GATEWAY_LOCATION_IDS as readonly string[]).includes(id) ||
-    (typeof mapId === 'string' && (BANK_MAP_IDS as readonly string[]).includes(mapId))
-  )
+  return (BANK_LOCATION_IDS as readonly string[]).includes(location['Location ID'])
 }
 
 export function bankStacks(save: Pick<PlayerSave, 'bank'>): InventoryStack[] {
@@ -87,7 +79,7 @@ function moveStack(
   if ('reason' in taken) return { ok: false, reason: taken.reason }
   const piece = taken.taken
   if (stackIsUnbankableGold(piece)) {
-    return { ok: false, reason: 'Gold stays on you.' }
+    return { ok: false, reason: 'Gold cannot be deposited.' }
   }
   const destination = toIsBank
     ? { ...save, inventory: taken.stacks, bank: bankStacks(save) }

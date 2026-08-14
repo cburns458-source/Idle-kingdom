@@ -61,6 +61,7 @@ class MultiplayerController extends ChangeNotifier {
   List<LeaderboardEntry> _board = const <LeaderboardEntry>[];
   List<ActivityPresence> _peers = const <ActivityPresence>[];
   List<ActivityPresence> _citadelVisitors = const <ActivityPresence>[];
+  List<ActivityPresence> _presence = const <ActivityPresence>[];
   List<SocialContact> _friends = const <SocialContact>[];
   List<SocialContact> _incomingFriendRequests = const <SocialContact>[];
   List<SocialContact> _outgoingFriendRequests = const <SocialContact>[];
@@ -97,6 +98,7 @@ class MultiplayerController extends ChangeNotifier {
   List<LeaderboardEntry> get board => _board;
   List<ActivityPresence> get peers => _peers;
   List<ActivityPresence> get citadelVisitors => _citadelVisitors;
+  List<ActivityPresence> get presence => _presence;
   List<SocialContact> get friends => _friends;
   List<SocialContact> get incomingFriendRequests => _incomingFriendRequests;
   List<SocialContact> get outgoingFriendRequests => _outgoingFriendRequests;
@@ -192,6 +194,7 @@ class MultiplayerController extends ChangeNotifier {
     _board = const <LeaderboardEntry>[];
     _peers = const <ActivityPresence>[];
     _citadelVisitors = const <ActivityPresence>[];
+    _presence = const <ActivityPresence>[];
     _friends = const <SocialContact>[];
     _incomingFriendRequests = const <SocialContact>[];
     _outgoingFriendRequests = const <SocialContact>[];
@@ -247,6 +250,7 @@ class MultiplayerController extends ChangeNotifier {
     _guestGuild = guestId == null ? null : await service.guild(guestId);
     _board = await service.leaderboard(_boardKey);
     _citadelVisitors = await service.citadelVisitors();
+    _presence = await service.presenceRecords();
     _unreadDms = await service.countUnreadDirectMessages(_dmCursor());
     await _loadSocialLists();
     notifyListeners();
@@ -276,6 +280,7 @@ class MultiplayerController extends ChangeNotifier {
     if (!isSignedIn) return;
     _unreadDms = await service.countUnreadDirectMessages(_dmCursor());
     _citadelVisitors = await service.citadelVisitors();
+    _presence = await service.presenceRecords();
     _peers = await service.peersAtLocation(save.currentLocationId);
     notifyListeners();
   }

@@ -44,7 +44,7 @@ const QUEST_PITCH_LINES: Record<string, string> = {
   'QST-0002':
     'I’m tired of working in the kitchen, I just saw a lot for sale down the street, I’m thinking of starting the alchemy shop I’ve always dreamed of…',
   'QST-0003':
-    'Please, traveler… I dropped my coin purse in the barracks. I have nothing left. If you can spare 25 gold, I’ll wait here while you look.',
+    'Please, traveler… guards took my coin purse. I have nothing left. If you can spare 25 gold, I’ll wait here while you look.',
   'QST-0005':
     'The Archmage will take an apprentice who can gather Essence. I can grant you access to the mine beneath the tower — bring ten Essence to the Archmage.',
 }

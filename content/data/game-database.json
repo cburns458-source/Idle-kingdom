@@ -8665,7 +8665,7 @@
     {
       "Location ID": "LOC-0029",
       "Internal Key": "citadel_market",
-      "Display Name": "Market District",
+      "Display Name": "Grand Bazaar",
       "Map ID": "MAP-0007",
       "Location Type": "Shop District",
       "Parent Location ID": "LOC-0027",
@@ -8736,6 +8736,36 @@
       "Danger / Hostility": null,
       "Background Asset Key": null,
       "Notes": "Reached from the Guilds screen. Art reuses the Citadel plaza."
+    },
+    {
+      "Location ID": "LOC-0034",
+      "Internal Key": "town_bank",
+      "Display Name": "Town Bank",
+      "Map ID": "MAP-0006",
+      "Location Type": "Settlement",
+      "Parent Location ID": "LOC-0002",
+      "Node ID": "NODE-0034",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Description": "A vault for items you do not want to carry.",
+      "Danger / Hostility": null,
+      "Background Asset Key": null,
+      "Notes": "Art reuses the General Store until a bank interior is drawn."
+    },
+    {
+      "Location ID": "LOC-0035",
+      "Internal Key": "citadel_bank",
+      "Display Name": "Citadel Bank",
+      "Map ID": "MAP-0007",
+      "Location Type": "Settlement",
+      "Parent Location ID": "LOC-0027",
+      "Node ID": "NODE-0035",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Description": "The Citadel vault for gear you do not want to carry.",
+      "Danger / Hostility": null,
+      "Background Asset Key": null,
+      "Notes": "Art reuses the Citadel plaza until a bank interior is drawn."
     }
   ],
   "TravelConnections": [
@@ -8942,6 +8972,30 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": "Plaza to Guild Hall"
+    },
+    {
+      "Connection ID": "TRV-0018",
+      "From Location ID": "LOC-0002",
+      "To Location ID": "LOC-0034",
+      "Method": "Walk",
+      "Direction": "Two-way",
+      "Base Duration": null,
+      "Required Mount / Status": null,
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": "Town square to Town Bank"
+    },
+    {
+      "Connection ID": "TRV-0019",
+      "From Location ID": "LOC-0028",
+      "To Location ID": "LOC-0035",
+      "Method": "Walk",
+      "Direction": "Two-way",
+      "Base Duration": null,
+      "Required Mount / Status": null,
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": "Plaza to Citadel Bank"
     }
   ],
   "Facilities": [
@@ -9223,7 +9277,7 @@
       "Contextual Name": "Challenge the undead",
       "Location ID": "LOC-0007",
       "Description": "Skeleton and Zombie Combat Actions.",
-      "Danger Warning Combat Level": 28,
+      "Danger Warning Combat Level": null,
       "Pool ID": "POOL-0007",
       "Pool Internal Key": "undead_pool",
       "Status": "Planned",
@@ -22162,10 +22216,10 @@
       "Internal Key": "the_missing_purse",
       "Display Name": "The Missing Purse",
       "NPC ID": "NPC-0011",
-      "Summary": "Donate 25 gold, ask around town, then recover the beggar's stolen purse from the barracks.",
+      "Summary": "Donate 25 gold, then recover the beggar's stolen purse from the guards.",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": "Talk: NPC-0007, NPC-0012; Deliver: ITEM-0299 x1; AcceptGold: 25; RewardGold: 500; RewardCosmetic: COS-0002; BribeGold: 200; ChoiceNpc: NPC-0012; BranchSkillXp: 2500",
+      "Notes": "Talk: NPC-0012; Deliver: ITEM-0299 x1; AcceptGold: 25; RewardGold: 500; RewardCosmetic: COS-0002; BribeGold: 200; ChoiceNpc: NPC-0012; BranchSkillXp: 2500",
       "Objective Type": "Gather / Deliver",
       "Objective Target ID": "ITEM-0299",
       "Required Quantity": 1,

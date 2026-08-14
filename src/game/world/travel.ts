@@ -79,6 +79,7 @@ export function locationsForMapView(
   db: GameDatabase,
   mapId: string,
   save?: Pick<PlayerSave, 'unlockedLocationIds'> | null,
+  hiddenLocationIds: readonly string[] = [],
 ): LocationRow[] {
   if (mapId === MAIN_MAP_ID) {
     return db.Locations.filter((location) => location['Map ID'] === MAIN_MAP_ID)
@@ -97,6 +98,7 @@ export function locationsForMapView(
   const merged = new Map<string, LocationRow>()
   for (const location of onMap) {
     if (!isLocationUnlocked(unlockState, location)) continue
+    if (hiddenLocationIds.includes(location['Location ID'])) continue
     merged.set(location['Location ID'], location)
   }
   if (gateway) merged.set(gateway['Location ID'], gateway)

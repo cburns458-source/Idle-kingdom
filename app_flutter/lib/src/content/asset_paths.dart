@@ -52,6 +52,8 @@ const Map<String, String> _locationArt = <String, String>{
   'LOC-0031': 'locations/loc_citadel_gathering.webp',
   'LOC-0032': 'locations/loc_citadel_combat.webp',
   'LOC-0033': 'locations/loc_citadel_plaza.webp',
+  'LOC-0034': 'locations/loc_town_general_store.webp',
+  'LOC-0035': 'locations/loc_citadel_plaza.webp',
 };
 
 /// Item icons keyed by id, for the items whose art the heuristic cannot infer.

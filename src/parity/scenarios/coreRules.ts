@@ -80,6 +80,8 @@ const DESTROY_CASES: Array<{ name: string; indexes: number[] }> = [
 ]
 
 const BANK_ACCESS_LOCATION_IDS = [
+  'LOC-0034',
+  'LOC-0035',
   'LOC-0002',
   'LOC-0013',
   'LOC-0027',

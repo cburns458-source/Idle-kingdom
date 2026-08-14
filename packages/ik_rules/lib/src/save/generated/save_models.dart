@@ -7,7 +7,7 @@
 
 import '../../json_support.dart';
 
-const int saveVersion = 24;
+const int saveVersion = 25;
 
 const String saveStorageKey = 'idle-kingdoms.demo.save';
 
@@ -539,6 +539,7 @@ class PlayerSave {
     required this.skills,
     required this.inventory,
     required this.bank,
+    required this.favoriteActivityByLocationId,
     required this.equipment,
     required this.gold,
     required this.quests,
@@ -596,6 +597,10 @@ class PlayerSave {
         (Object? entry) => InventoryStack.fromJson(asJsonMap(entry)),
       ),
       bank: listOf(json['bank'], (Object? entry) => InventoryStack.fromJson(asJsonMap(entry))),
+      favoriteActivityByLocationId: mapOf(
+        json['favoriteActivityByLocationId'],
+        (Object? value) => value as String,
+      ),
       equipment: EquipmentLoadout.fromJson(asJsonMap(json['equipment'])),
       gold: json['gold'] as num,
       quests: listOf(json['quests'], (Object? entry) => QuestProgress.fromJson(asJsonMap(entry))),
@@ -669,8 +674,11 @@ class PlayerSave {
 
   final List<InventoryStack> inventory;
 
-  /// Stash at Town, Castle, and Citadel. Same slot rules as the bag; gold stays on the player.
+  /// Stash at the Town Bank and Citadel Bank. Same slot rules as the bag.
   final List<InventoryStack> bank;
+
+  /// One starred activity per location, auto-started on arrival.
+  final Map<String, String> favoriteActivityByLocationId;
 
   final EquipmentLoadout equipment;
 
@@ -787,6 +795,7 @@ class PlayerSave {
       'skills': skills.map((entry) => entry.toJson()).toList(),
       'inventory': inventory.map((entry) => entry.toJson()).toList(),
       'bank': bank.map((entry) => entry.toJson()).toList(),
+      'favoriteActivityByLocationId': favoriteActivityByLocationId,
       'equipment': equipment.toJson(),
       'gold': gold,
       'quests': quests.map((entry) => entry.toJson()).toList(),
@@ -841,6 +850,7 @@ class PlayerSave {
     List<SkillProgress>? skills,
     List<InventoryStack>? inventory,
     List<InventoryStack>? bank,
+    Map<String, String>? favoriteActivityByLocationId,
     EquipmentLoadout? equipment,
     num? gold,
     List<QuestProgress>? quests,
@@ -893,6 +903,8 @@ class PlayerSave {
       skills: skills ?? this.skills,
       inventory: inventory ?? this.inventory,
       bank: bank ?? this.bank,
+      favoriteActivityByLocationId:
+          favoriteActivityByLocationId ?? this.favoriteActivityByLocationId,
       equipment: equipment ?? this.equipment,
       gold: gold ?? this.gold,
       quests: quests ?? this.quests,
