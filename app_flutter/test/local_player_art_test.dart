@@ -66,7 +66,7 @@ void main() {
     expect(storage.getItem(LocalPlayerArt.storageKey), isNotEmpty);
   });
 
-  testWidgets('Menu offers a PNG override that the HUD portrait uses', (tester) async {
+  testWidgets('Settings offers a PNG override that the HUD portrait uses', (tester) async {
     final controller = buildController(database, seed: startedCharacter(database));
     addTearDown(controller.dispose);
     await pumpShell(tester, controller);

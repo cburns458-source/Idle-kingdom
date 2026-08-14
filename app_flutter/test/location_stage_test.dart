@@ -264,14 +264,14 @@ void main() {
 
     expect(controller.lastRound?.outcome, 'defeat');
     expect(controller.showingDeathHold, isTrue);
-    expect(find.text('Recovering…'), findsNothing);
     expect(find.bySemanticsLabel('Combat'), findsOne);
+    expect(find.bySemanticsLabel('Recovering'), findsNothing);
     expect(find.textContaining('${controller.lastRound!.playerHit.round()}'), findsWidgets);
 
     clock.advance(GameController.combatBlowHoldMs);
     await tester.pump();
     expect(controller.showingDeathHold, isFalse);
-    expect(find.text('Recovering…'), findsWidgets);
+    expect(find.bySemanticsLabel('Recovering'), findsOne);
     expect(find.bySemanticsLabel('Resume progress'), findsWidgets);
   });
 }
