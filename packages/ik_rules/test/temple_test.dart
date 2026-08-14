@@ -23,18 +23,17 @@ void main() {
     db = _db();
   });
 
-  test('Temple is a main-map Launch node with both activities', () {
+  test('Temple is a main-map Launch node with monk training and a blessing', () {
     final location = db.locations.firstWhere((row) => row.locationId == 'LOC-0036');
     expect(location.raw['Display Name'], 'Temple');
     expect(location.raw['Map ID'], mainMapId);
     expect(layoutForMap(mainMapId).containsKey('LOC-0036'), isTrue);
     expect(canTravelTo(db, 'LOC-0002', 'LOC-0036', mainMapId), isTrue);
+    expect(locationHasBlessing(location), isTrue);
 
     final activities = db.activities.where((row) => row.raw['Location ID'] == 'LOC-0036');
-    expect(activities.map((row) => row.raw['Contextual Name']), [
-      'Train with the monks',
-      'Be blessed',
-    ]);
+    expect(activities.map((row) => row.raw['Contextual Name']), ['Train with the monks']);
+    expect(db.activities.any((row) => row.activityId == 'ACT-0036'), isFalse);
   });
 
   test('the Monk is a level-10 unarmed training fight with no loot', () {
@@ -76,21 +75,32 @@ void main() {
     expect(save.inventory.any((stack) => stack.itemId == 'ITEM-0145'), isTrue);
   });
 
-  test('Be blessed unequips hands, restores full health, and does not stay running', () {
+  test('blessing restores full health without unequipping or starting an activity', () {
     var save = _withHands(
       _atTemple(db, hp: 250),
       weaponId: 'ITEM-0100',
       offhandId: 'ITEM-0145',
     );
 
-    final blessed = requestActivityStart(db, save, 'ACT-0036', 0, () => 0);
+    final blessed = requestBlessing(db, save, 0);
     expect(blessed.ok, isTrue);
+    expect(blessed.alreadyFull, isFalse);
+    expect(blessed.message, 'The monks restore you to full health.');
     save = blessed.save!;
-    expect(slotItemId(save, weaponToolSlotId), isNull);
-    expect(slotItemId(save, offhandSlotId), isNull);
+    expect(slotItemId(save, weaponToolSlotId), 'ITEM-0100');
+    expect(slotItemId(save, offhandSlotId), 'ITEM-0145');
     expect(save.currentHp, playerMaxHp(db, save));
     expect(save.currentActivityId, isNull);
     expect(save.currentActionId, isNull);
+  });
+
+  test('blessing reports when health is already full', () {
+    final save = createNewSave(db, 0).copyWith(currentLocationId: 'LOC-0036');
+    final blessed = requestBlessing(db, save, 0);
+    expect(blessed.ok, isTrue);
+    expect(blessed.alreadyFull, isTrue);
+    expect(blessed.message, 'You are already at full health.');
+    expect(blessed.save!.currentHp, playerMaxHp(db, blessed.save!));
   });
 
   test('Temple combat is not a forced-hostile arrival', () {

@@ -341,6 +341,7 @@ class _LocationViewState extends State<LocationView> {
                                               const SizedBox(height: 10),
                                             ],
                                             ..._activities(locationId),
+                                            ..._blessing(),
                                             ..._stations(locationId),
                                             ..._people(locationId),
                                             ..._shops(locationId),
@@ -450,6 +451,36 @@ class _LocationViewState extends State<LocationView> {
           ),
         ),
     ];
+  }
+
+  List<Widget> _blessing() {
+    if (!locationHasBlessing(controller.location)) return const [];
+    return [
+      const _SectionHeading('Blessing'),
+      Padding(
+        padding: const EdgeInsets.only(bottom: 8),
+        child: _InteractionCard(
+          title: 'Be blessed',
+          subtitle: 'The monks restore you to full health.',
+          actionLabel: 'Bless',
+          tone: GameButtonTone.primary,
+          onPressed: controller.isRecovering ? null : _bless,
+        ),
+      ),
+    ];
+  }
+
+  Future<void> _bless() async {
+    final result = controller.receiveBlessing();
+    if (!result.ok || !mounted) return;
+    await showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Be blessed'),
+        content: Text(result.message),
+        actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('OK'))],
+      ),
+    );
   }
 
   List<Widget> _stations(String locationId) {

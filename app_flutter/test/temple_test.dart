@@ -17,7 +17,7 @@ void main() {
     return find.ancestor(of: find.text(title), matching: find.byType(DockRow));
   }
 
-  testWidgets('Temple lists both activities and blesses after unequipping', (tester) async {
+  testWidgets('Temple lists monk training and a blessing popup', (tester) async {
     var seed = startedCharacter(database).copyWith(currentLocationId: 'LOC-0036', currentHp: 200);
     seed = equipStackToSlot(seed, weaponToolSlotId, 'ITEM-0100', 1);
     seed = equipStackToSlot(seed, offhandSlotId, 'ITEM-0145', 1);
@@ -27,18 +27,26 @@ void main() {
 
     expect(find.text('Temple'), findsWidgets);
     expect(find.text('Train with the monks'), findsOne);
+    expect(find.text('Blessing'), findsOne);
     expect(find.text('Be blessed'), findsOne);
+    expect(find.bySemanticsLabel('Bless'), findsOne);
 
     await tapVisible(
       tester,
-      find.descendant(of: dockRow('Be blessed'), matching: find.bySemanticsLabel('Start')),
+      find.descendant(of: dockRow('Be blessed'), matching: find.bySemanticsLabel('Bless')),
     );
+    await tester.pumpAndSettle();
 
     expect(controller.save.currentHp, playerMaxHp(database.launch, controller.save));
-    expect(slotItemId(controller.save, weaponToolSlotId), isNull);
-    expect(slotItemId(controller.save, offhandSlotId), isNull);
+    expect(slotItemId(controller.save, weaponToolSlotId), 'ITEM-0100');
+    expect(slotItemId(controller.save, offhandSlotId), 'ITEM-0145');
     expect(controller.save.currentActivityId, isNull);
-    expect(controller.message, 'You are blessed.');
+    expect(find.byType(AlertDialog), findsOne);
+    expect(find.text('The monks restore you to full health.'), findsOne);
+
+    await tester.tap(find.text('OK'));
+    await tester.pumpAndSettle();
+    expect(find.byType(AlertDialog), findsNothing);
   });
 
   testWidgets('Train with the monks starts an unarmed Monk fight', (tester) async {

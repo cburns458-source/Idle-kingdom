@@ -23,11 +23,6 @@ ActivityRow? getActivity(GameDatabase db, String activityId) {
   return db.activities.firstWhereOrNull((row) => row.raw['Activity ID'] == activityId);
 }
 
-/// Instant full-heal at the Temple. No pool, no running activity.
-bool isBlessingActivity(ActivityRow? activity) {
-  return activity?.raw['Internal Key'] == 'be_blessed';
-}
-
 ActivityStartResult validateActivityStart(GameDatabase db, PlayerSave save, String activityId) {
   final activity = getActivity(db, activityId);
   if (activity == null) return const ActivityStartResult.failed('Unknown activity.');
@@ -51,10 +46,6 @@ ActivityStartResult validateActivityStart(GameDatabase db, PlayerSave save, Stri
         'No known recipes are available at this station yet.',
       );
     }
-    return const ActivityStartResult.ok();
-  }
-
-  if (isBlessingActivity(activity)) {
     return const ActivityStartResult.ok();
   }
 

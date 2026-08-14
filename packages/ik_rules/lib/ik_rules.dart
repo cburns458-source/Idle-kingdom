@@ -88,6 +88,7 @@ export 'src/tags.dart';
 export 'src/time.dart';
 export 'src/unattended/resolve.dart';
 export 'src/unattended/summary.dart';
+export 'src/world/blessing.dart';
 export 'src/world/constants.dart';
 export 'src/world/hostility.dart';
 export 'src/world/location_search.dart';

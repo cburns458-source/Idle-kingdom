@@ -5,13 +5,11 @@ import type { RandomFn } from './pools'
 import { cancelProductionActivity, beginProductionQueue } from '../production/engine'
 import { isStandardProductionActivity } from '../production/recipes'
 import { unequipSlot } from '../equipment/loadout'
-import { withRecalculatedVitals } from '../equipment/vitals'
 import {
   beginActivitySave,
   clearActivitySave,
   generateNextAction,
   getActivity,
-  isBlessingActivity,
   validateActivityStart,
 } from './engine'
 import { requirementsForEntity } from './requirements'
@@ -124,11 +122,6 @@ export function unequipEmptySlotRequirements(
   return { ok: true, save: next }
 }
 
-function restoreFullHealth(db: GameDatabase, save: PlayerSave): PlayerSave {
-  const next = withRecalculatedVitals(db, save)
-  return { ...next, currentHp: next.maxHp }
-}
-
 /** Start or replace a pool activity immediately. Death pause still blocks. */
 export function requestActivityStart(
   db: GameDatabase,
@@ -160,10 +153,6 @@ export function requestActivityStart(
 
   if (hasRunningPrimaryActivity(next) || next.activityTransition) {
     next = stopPrimaryActivityNow(db, next, nowMs)
-  }
-
-  if (isBlessingActivity(getActivity(db, activityId))) {
-    return { ok: true, save: restoreFullHealth(db, next) }
   }
 
   return { ok: true, save: startPoolActivityNow(db, next, activityId, nowMs, random) }

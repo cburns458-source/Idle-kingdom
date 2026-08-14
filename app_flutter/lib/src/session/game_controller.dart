@@ -413,11 +413,22 @@ class GameController extends ChangeNotifier {
     _recentRewards.clear();
     _activityError = null;
     _message = null;
-    if (isBlessingActivity(getActivity(db, activityId))) {
-      announce('You are blessed.');
-    }
     _clearStageFx();
     notifyListeners();
+  }
+
+  /// Instant Temple heal. The location screen shows the result as a popup.
+  BlessResult receiveBlessing() {
+    final result = requestBlessing(db, save, session.clock());
+    if (!result.ok) {
+      _activityError = result.reason;
+      notifyListeners();
+      return result;
+    }
+    session.apply(result.save!);
+    _activityError = null;
+    notifyListeners();
+    return result;
   }
 
   /// Equips the offered tool and starts what wanted it.

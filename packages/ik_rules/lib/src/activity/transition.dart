@@ -2,7 +2,6 @@ import 'package:ik_content/ik_content.dart';
 
 import '../combat/engine.dart';
 import '../equipment/loadout.dart';
-import '../equipment/vitals.dart';
 import '../js_compat.dart';
 import '../production/engine.dart';
 import '../production/recipes.dart';
@@ -106,11 +105,6 @@ EquipResult unequipEmptySlotRequirements(GameDatabase db, PlayerSave save, Strin
   return EquipResult.ok(next);
 }
 
-PlayerSave _restoreFullHealth(GameDatabase db, PlayerSave save) {
-  final next = withRecalculatedVitals(db, save);
-  return next.copyWith(currentHp: next.maxHp);
-}
-
 /// Starts or replaces a pool activity immediately. Death pause still blocks.
 ActivityChangeResult requestActivityStart(
   GameDatabase db,
@@ -142,10 +136,6 @@ ActivityChangeResult requestActivityStart(
 
   if (hasRunningPrimaryActivity(next) || next.activityTransition != null) {
     next = stopPrimaryActivityNow(db, next, nowMs);
-  }
-
-  if (isBlessingActivity(getActivity(db, activityId))) {
-    return ActivityChangeResult.ok(_restoreFullHealth(db, next));
   }
 
   return ActivityChangeResult.ok(_startPoolActivityNow(db, next, activityId, nowMs, random));

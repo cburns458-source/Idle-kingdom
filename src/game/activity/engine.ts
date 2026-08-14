@@ -31,11 +31,6 @@ export function getActivity(db: GameDatabase, activityId: string): ActivityRow |
   return db.Activities.find((row) => row['Activity ID'] === activityId)
 }
 
-/** Instant full-heal at the Temple. No pool, no running activity. */
-export function isBlessingActivity(activity: ActivityRow | undefined): boolean {
-  return activity?.['Internal Key'] === 'be_blessed'
-}
-
 export function validateActivityStart(
   db: GameDatabase,
   save: PlayerSave,
@@ -59,10 +54,6 @@ export function validateActivityStart(
     if (recipesForActivity(db, save, activityId).length === 0) {
       return { ok: false, reason: 'No known recipes are available at this station yet.' }
     }
-    return { ok: true }
-  }
-
-  if (isBlessingActivity(activity)) {
     return { ok: true }
   }
 

@@ -8780,7 +8780,7 @@
       "Description": "A quiet temple where monks train the unarmed and offer blessings.",
       "Danger / Hostility": null,
       "Background Asset Key": null,
-      "Notes": "Main-map node. Activities require empty Weapon or Tool and Off-hand slots."
+      "Notes": "Main-map node. Monk training requires empty Weapon or Tool and Off-hand. Blessing is a location action, not an activity."
     }
   ],
   "TravelConnections": [
@@ -9662,19 +9662,6 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": "Requires empty Weapon or Tool and Off-hand. Unequips those slots on start."
-    },
-    {
-      "Activity ID": "ACT-0036",
-      "Internal Key": "be_blessed",
-      "Contextual Name": "Be blessed",
-      "Location ID": "LOC-0036",
-      "Description": "The monks restore the player to full health.",
-      "Danger Warning Combat Level": null,
-      "Pool ID": null,
-      "Pool Internal Key": null,
-      "Status": "Planned",
-      "Release Phase": "Launch",
-      "Notes": "Instant heal. Requires empty Weapon or Tool and Off-hand. Unequips those slots on start."
     }
   ],
   "PoolEntries": [
@@ -13806,32 +13793,6 @@
       "Required Value": null,
       "Status": "Planned",
       "Notes": "Train with the monks — empty Shield or Off-hand."
-    },
-    {
-      "Requirement ID": "REQ-0106",
-      "Entity Type": "Activity",
-      "Entity ID": "ACT-0036",
-      "Requirement Group": "A",
-      "Group Logic": "AND",
-      "Requirement Type": "Empty Slot",
-      "Reference ID / Value": "SLOT-0001",
-      "Operator": null,
-      "Required Value": null,
-      "Status": "Planned",
-      "Notes": "Be blessed — empty Weapon or Tool."
-    },
-    {
-      "Requirement ID": "REQ-0107",
-      "Entity Type": "Activity",
-      "Entity ID": "ACT-0036",
-      "Requirement Group": "A",
-      "Group Logic": "AND",
-      "Requirement Type": "Empty Slot",
-      "Reference ID / Value": "SLOT-0002",
-      "Operator": null,
-      "Required Value": null,
-      "Status": "Planned",
-      "Notes": "Be blessed — empty Shield or Off-hand."
     }
   ],
   "Enemies": [
