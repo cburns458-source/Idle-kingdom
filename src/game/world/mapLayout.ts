@@ -22,6 +22,8 @@ export const MAIN_MAP_NODE_LAYOUT: Record<string, NodePosition> = {
   'LOC-0013': { x: 24, y: 24 },
   // Ancient Forest north of the castle
   'LOC-0018': { x: 22, y: 10 },
+  // Temple on the ridge between castle and mountains
+  'LOC-0036': { x: 36, y: 20 },
   // Mountain peaks / ridge (nudged right)
   'LOC-0006': { x: 62, y: 16 },
   // Cave mouth in the mountains

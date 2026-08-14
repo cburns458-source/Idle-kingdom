@@ -19,6 +19,8 @@ const Map<String, NodePosition> mainMapNodeLayout = <String, NodePosition>{
   'LOC-0013': NodePosition(x: 24, y: 24),
   // Ancient Forest north of the castle
   'LOC-0018': NodePosition(x: 22, y: 10),
+  // Temple on the ridge between castle and mountains
+  'LOC-0036': NodePosition(x: 36, y: 20),
   // Mountain peaks / ridge (nudged right)
   'LOC-0006': NodePosition(x: 62, y: 16),
   // Cave mouth in the mountains

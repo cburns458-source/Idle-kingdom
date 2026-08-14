@@ -413,6 +413,9 @@ class GameController extends ChangeNotifier {
     _recentRewards.clear();
     _activityError = null;
     _message = null;
+    if (isBlessingActivity(getActivity(db, activityId))) {
+      announce('You are blessed.');
+    }
     _clearStageFx();
     notifyListeners();
   }

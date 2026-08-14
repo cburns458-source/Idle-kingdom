@@ -61,6 +61,19 @@ RequirementCheck evaluateRequirement(GameDatabase db, PlayerSave save, Requireme
     );
   }
 
+  if (type == 'Empty Slot') {
+    final stack = save.equipment.slots[reference];
+    final empty = stack == null || isBlank(stack.itemId) || stack.quantity <= 0;
+    final slotName = db.equipmentSlots
+        .firstWhereOrNull((row) => row.raw['Slot ID'] == reference)
+        ?.raw['Display Name'];
+    final name = slotName is String && slotName.isNotEmpty ? slotName : reference;
+    return RequirementCheck(
+      met: empty,
+      detail: empty ? 'No $name equipped' : 'Requires no equipped $name',
+    );
+  }
+
   if (type == 'Station') {
     final facility = db.facilities.firstWhereOrNull((row) => row.raw['Facility ID'] == reference);
     final atLocation = facility?.raw['Location ID'] == save.currentLocationId;

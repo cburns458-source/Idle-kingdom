@@ -62,6 +62,17 @@ export function evaluateRequirement(
     }
   }
 
+  if (type === 'Empty Slot') {
+    const stack = save.equipment.slots[reference]
+    const empty = !stack?.itemId || stack.quantity <= 0
+    const slotName = db.EquipmentSlots.find((row) => row['Slot ID'] === reference)?.['Display Name']
+    const name = slotName || reference
+    return {
+      met: empty,
+      detail: empty ? `No ${name} equipped` : `Requires no equipped ${name}`,
+    }
+  }
+
   if (type === 'Station') {
     const facility = db.Facilities.find((row) => row['Facility ID'] === reference)
     const atLocation = facility?.['Location ID'] === save.currentLocationId

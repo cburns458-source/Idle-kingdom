@@ -48,6 +48,7 @@ describe('travel rules', () => {
     const nodes = locationsForMapView(launch, MAIN_MAP_ID)
     expect(nodes.some((location) => location['Location ID'] === 'LOC-0002')).toBe(true)
     expect(nodes.some((location) => location['Location ID'] === 'LOC-0018')).toBe(true)
+    expect(nodes.some((location) => location['Location ID'] === 'LOC-0036')).toBe(true)
     expect(nodes.some((location) => location['Location ID'] === 'LOC-0019')).toBe(true)
     expect(nodes.some((location) => location['Location ID'] === 'LOC-0020')).toBe(true)
   })
@@ -56,6 +57,12 @@ describe('travel rules', () => {
     const { launch } = prepareDatabase(rawDatabase)
     expect(canTravelTo(launch, 'LOC-0002', 'LOC-0018', MAIN_MAP_ID)).toBe(true)
     expect(canTravelTo(launch, 'LOC-0013', 'LOC-0018', MAIN_MAP_ID)).toBe(true)
+  })
+
+  it('allows travel to the Temple from the overworld', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    expect(canTravelTo(launch, 'LOC-0002', 'LOC-0036', MAIN_MAP_ID)).toBe(true)
+    expect(canTravelTo(launch, 'LOC-0013', 'LOC-0036', MAIN_MAP_ID)).toBe(true)
   })
 
   it('treats west/east horizons as browse-only future gateways', () => {

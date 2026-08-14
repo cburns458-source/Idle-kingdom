@@ -4,13 +4,17 @@ import { isDeathPaused } from '../combat/engine'
 import type { RandomFn } from './pools'
 import { cancelProductionActivity, beginProductionQueue } from '../production/engine'
 import { isStandardProductionActivity } from '../production/recipes'
+import { unequipSlot } from '../equipment/loadout'
+import { withRecalculatedVitals } from '../equipment/vitals'
 import {
   beginActivitySave,
   clearActivitySave,
   generateNextAction,
   getActivity,
+  isBlessingActivity,
   validateActivityStart,
 } from './engine'
+import { requirementsForEntity } from './requirements'
 import {
   forcedHostileActivity,
   HOSTILE_ACTIVITY_LOCK_REASON,
@@ -100,6 +104,31 @@ function hostileStartBlocked(
   return HOSTILE_ACTIVITY_START_REASON
 }
 
+/** Unequip slots an activity requires empty before start validation. */
+export function unequipEmptySlotRequirements(
+  db: GameDatabase,
+  save: PlayerSave,
+  activityId: string,
+): { ok: true; save: PlayerSave } | { ok: false; reason: string } {
+  let next = save
+  for (const requirement of requirementsForEntity(db, 'Activity', activityId)) {
+    if (requirement['Requirement Type'] !== 'Empty Slot') continue
+    const slotId = String(requirement['Reference ID / Value'] ?? '')
+    if (!slotId) continue
+    const equipped = next.equipment.slots[slotId]
+    if (!equipped?.itemId || equipped.quantity <= 0) continue
+    const result = unequipSlot(next, slotId)
+    if (!result.ok) return result
+    next = result.save
+  }
+  return { ok: true, save: next }
+}
+
+function restoreFullHealth(db: GameDatabase, save: PlayerSave): PlayerSave {
+  const next = withRecalculatedVitals(db, save)
+  return { ...next, currentHp: next.maxHp }
+}
+
 /** Start or replace a pool activity immediately. Death pause still blocks. */
 export function requestActivityStart(
   db: GameDatabase,
@@ -114,20 +143,27 @@ export function requestActivityStart(
   const hostile = hostileStartBlocked(db, save, activityId)
   if (hostile) return { ok: false, reason: hostile }
 
-  const validation = validateActivityStart(db, save, activityId)
+  const unequipped = unequipEmptySlotRequirements(db, save, activityId)
+  if (!unequipped.ok) return unequipped
+  let next = unequipped.save
+
+  const validation = validateActivityStart(db, next, activityId)
   if (!validation.ok) return validation
 
   if (
-    save.currentActivityId === activityId &&
-    !save.productionRecipeId &&
-    !save.activityTransition
+    next.currentActivityId === activityId &&
+    !next.productionRecipeId &&
+    !next.activityTransition
   ) {
-    return { ok: true, save: clearActivityTransition(save) }
+    return { ok: true, save: clearActivityTransition(next) }
   }
 
-  let next = save
-  if (hasRunningPrimaryActivity(save) || save.activityTransition) {
-    next = stopPrimaryActivityNow(db, save, nowMs)
+  if (hasRunningPrimaryActivity(next) || next.activityTransition) {
+    next = stopPrimaryActivityNow(db, next, nowMs)
+  }
+
+  if (isBlessingActivity(getActivity(db, activityId))) {
+    return { ok: true, save: restoreFullHealth(db, next) }
   }
 
   return { ok: true, save: startPoolActivityNow(db, next, activityId, nowMs, random) }

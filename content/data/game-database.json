@@ -8766,6 +8766,21 @@
       "Danger / Hostility": null,
       "Background Asset Key": null,
       "Notes": "Art reuses the Citadel plaza until a bank interior is drawn."
+    },
+    {
+      "Location ID": "LOC-0036",
+      "Internal Key": "temple",
+      "Display Name": "Temple",
+      "Map ID": "MAP-0001",
+      "Location Type": "Region",
+      "Parent Location ID": null,
+      "Node ID": "NODE-0036",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Description": "A quiet temple where monks train the unarmed and offer blessings.",
+      "Danger / Hostility": null,
+      "Background Asset Key": null,
+      "Notes": "Main-map node. Activities require empty Weapon or Tool and Off-hand slots."
     }
   ],
   "TravelConnections": [
@@ -9634,6 +9649,32 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": "Temporary QST-0003 combat route. Do not reuse ACT-0015."
+    },
+    {
+      "Activity ID": "ACT-0035",
+      "Internal Key": "train_with_the_monks",
+      "Contextual Name": "Train with the monks",
+      "Location ID": "LOC-0036",
+      "Description": "Unarmed Combat training against a Monk.",
+      "Danger Warning Combat Level": null,
+      "Pool ID": "POOL-0026",
+      "Pool Internal Key": "temple_monks",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": "Requires empty Weapon or Tool and Off-hand. Unequips those slots on start."
+    },
+    {
+      "Activity ID": "ACT-0036",
+      "Internal Key": "be_blessed",
+      "Contextual Name": "Be blessed",
+      "Location ID": "LOC-0036",
+      "Description": "The monks restore the player to full health.",
+      "Danger Warning Combat Level": null,
+      "Pool ID": null,
+      "Pool Internal Key": null,
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": "Instant heal. Requires empty Weapon or Tool and Off-hand. Unequips those slots on start."
     }
   ],
   "PoolEntries": [
@@ -10140,6 +10181,14 @@
       "Weight": 100,
       "Status": "Planned",
       "Notes": "QST-0003 Pressure the Guards — nervous guard only."
+    },
+    {
+      "Pool Entry ID": "PEN-0064",
+      "Pool ID": "POOL-0026",
+      "Action ID": "ACN-0172",
+      "Weight": 100,
+      "Status": "Planned",
+      "Notes": "Temple — Monk only."
     }
   ],
   "Actions": [
@@ -12422,6 +12471,26 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": "Temporary QST-0003 combat route versus Nervous Guard."
+    },
+    {
+      "Action ID": "ACN-0172",
+      "Internal Key": "fight_monk",
+      "Display Name": "Monk",
+      "Category": "Combat",
+      "Relevant Skill ID": "SKL-0001",
+      "Target Type": "Enemy",
+      "Target ID": "ENM-0020",
+      "Proficiency Level": null,
+      "Base Duration Seconds": null,
+      "XP Reward": 5000,
+      "Guaranteed Gold": null,
+      "Drop Chance": 0,
+      "Reward Table ID": null,
+      "Secondary Drop Chance": null,
+      "Secondary Reward Table ID": null,
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": "Temple unarmed training. No item drops."
     }
   ],
   "Requirements": [
@@ -13711,6 +13780,58 @@
       "Required Value": null,
       "Status": "Planned",
       "Notes": "Mages quarters stay locked until Wizard Studies is accepted or completed."
+    },
+    {
+      "Requirement ID": "REQ-0104",
+      "Entity Type": "Activity",
+      "Entity ID": "ACT-0035",
+      "Requirement Group": "A",
+      "Group Logic": "AND",
+      "Requirement Type": "Empty Slot",
+      "Reference ID / Value": "SLOT-0001",
+      "Operator": null,
+      "Required Value": null,
+      "Status": "Planned",
+      "Notes": "Train with the monks — empty Weapon or Tool."
+    },
+    {
+      "Requirement ID": "REQ-0105",
+      "Entity Type": "Activity",
+      "Entity ID": "ACT-0035",
+      "Requirement Group": "A",
+      "Group Logic": "AND",
+      "Requirement Type": "Empty Slot",
+      "Reference ID / Value": "SLOT-0002",
+      "Operator": null,
+      "Required Value": null,
+      "Status": "Planned",
+      "Notes": "Train with the monks — empty Shield or Off-hand."
+    },
+    {
+      "Requirement ID": "REQ-0106",
+      "Entity Type": "Activity",
+      "Entity ID": "ACT-0036",
+      "Requirement Group": "A",
+      "Group Logic": "AND",
+      "Requirement Type": "Empty Slot",
+      "Reference ID / Value": "SLOT-0001",
+      "Operator": null,
+      "Required Value": null,
+      "Status": "Planned",
+      "Notes": "Be blessed — empty Weapon or Tool."
+    },
+    {
+      "Requirement ID": "REQ-0107",
+      "Entity Type": "Activity",
+      "Entity ID": "ACT-0036",
+      "Requirement Group": "A",
+      "Group Logic": "AND",
+      "Requirement Type": "Empty Slot",
+      "Reference ID / Value": "SLOT-0002",
+      "Operator": null,
+      "Required Value": null,
+      "Status": "Planned",
+      "Notes": "Be blessed — empty Shield or Off-hand."
     }
   ],
   "Enemies": [
@@ -14074,6 +14195,25 @@
       "Release Phase": "Launch",
       "Sprite Asset Key": null,
       "Notes": "Temporary QST-0003 opponent. Weaker than Castle Guard."
+    },
+    {
+      "Enemy ID": "ENM-0020",
+      "Internal Key": "monk",
+      "Display Name": "Monk",
+      "Location ID": "LOC-0036",
+      "Combat Level": 10,
+      "Maximum HP": 500,
+      "Min Damage": 11,
+      "Max Damage": 33,
+      "Combat XP": 5000,
+      "Minimum Gold": 0,
+      "Maximum Gold": 0,
+      "Drop Chance": 0,
+      "Reward Table ID": null,
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Sprite Asset Key": null,
+      "Notes": "Temple training opponent. No item drops."
     }
   ],
   "RewardEntries": [

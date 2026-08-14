@@ -1,6 +1,8 @@
 import 'package:ik_content/ik_content.dart';
 
 import '../combat/engine.dart';
+import '../equipment/loadout.dart';
+import '../equipment/vitals.dart';
 import '../js_compat.dart';
 import '../production/engine.dart';
 import '../production/recipes.dart';
@@ -8,6 +10,7 @@ import '../rng/mulberry32.dart';
 import '../save/generated/save_models.dart';
 import '../time.dart';
 import 'engine.dart';
+import 'requirements.dart';
 import '../world/hostility.dart';
 
 PlayerSave clearActivityTransition(PlayerSave save) {
@@ -86,6 +89,28 @@ String? _hostileStartBlocked(GameDatabase db, PlayerSave save, String activityId
   return hostileActivityStartReason;
 }
 
+/// Unequips slots an activity requires empty, the same way a missing skill
+/// requirement is resolved before start rather than left as a hard block.
+EquipResult unequipEmptySlotRequirements(GameDatabase db, PlayerSave save, String activityId) {
+  var next = save;
+  for (final requirement in requirementsForEntity(db, 'Activity', activityId)) {
+    if (requirement.requirementType != 'Empty Slot') continue;
+    final slotId = jsString(requirement.referenceIdValue ?? '');
+    if (slotId.isEmpty) continue;
+    final equipped = slotStack(next, slotId);
+    if (equipped == null || isBlank(equipped.itemId) || equipped.quantity <= 0) continue;
+    final result = unequipSlot(next, slotId);
+    if (!result.ok) return result;
+    next = result.save!;
+  }
+  return EquipResult.ok(next);
+}
+
+PlayerSave _restoreFullHealth(GameDatabase db, PlayerSave save) {
+  final next = withRecalculatedVitals(db, save);
+  return next.copyWith(currentHp: next.maxHp);
+}
+
 /// Starts or replaces a pool activity immediately. Death pause still blocks.
 ActivityChangeResult requestActivityStart(
   GameDatabase db,
@@ -102,18 +127,25 @@ ActivityChangeResult requestActivityStart(
   final hostile = _hostileStartBlocked(db, save, activityId);
   if (hostile != null) return ActivityChangeResult.failed(hostile);
 
-  final validation = validateActivityStart(db, save, activityId);
+  final unequipped = unequipEmptySlotRequirements(db, save, activityId);
+  if (!unequipped.ok) return ActivityChangeResult.failed(unequipped.reason);
+  var next = unequipped.save!;
+
+  final validation = validateActivityStart(db, next, activityId);
   if (!validation.ok) return ActivityChangeResult.failed(validation.reason);
 
-  if (save.currentActivityId == activityId &&
-      isBlank(save.productionRecipeId) &&
-      save.activityTransition == null) {
-    return ActivityChangeResult.ok(clearActivityTransition(save));
+  if (next.currentActivityId == activityId &&
+      isBlank(next.productionRecipeId) &&
+      next.activityTransition == null) {
+    return ActivityChangeResult.ok(clearActivityTransition(next));
   }
 
-  var next = save;
-  if (hasRunningPrimaryActivity(save) || save.activityTransition != null) {
-    next = stopPrimaryActivityNow(db, save, nowMs);
+  if (hasRunningPrimaryActivity(next) || next.activityTransition != null) {
+    next = stopPrimaryActivityNow(db, next, nowMs);
+  }
+
+  if (isBlessingActivity(getActivity(db, activityId))) {
+    return ActivityChangeResult.ok(_restoreFullHealth(db, next));
   }
 
   return ActivityChangeResult.ok(_startPoolActivityNow(db, next, activityId, nowMs, random));
