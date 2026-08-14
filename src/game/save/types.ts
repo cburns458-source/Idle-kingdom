@@ -1,4 +1,4 @@
-export const SAVE_VERSION = 25
+export const SAVE_VERSION = 26
 export const SAVE_STORAGE_KEY = 'idle-kingdoms.demo.save'
 export const STARTING_LOCATION_ID = 'LOC-0002'
 /** Base gold before race kit; race starters grant the real starting gold. */
@@ -167,6 +167,8 @@ export interface PlayerSave {
   bank: InventoryStack[]
   /** One starred activity per location, auto-started on arrival. */
   favoriteActivityByLocationId: Record<string, string>
+  /** Last unfinished pool action per activity, reused if that activity starts again. */
+  heldActionByActivityId: Record<string, string>
   equipment: EquipmentLoadout
   /** Gold amount; itemized currency uses Config currency_item_id. */
   gold: number

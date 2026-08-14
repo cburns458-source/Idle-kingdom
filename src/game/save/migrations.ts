@@ -385,6 +385,18 @@ export const SAVE_MIGRATIONS: SaveMigration[] = [
       saveVersion: 25,
     }),
   },
+  {
+    fromVersion: 25,
+    toVersion: 26,
+    migrate: (save) => ({
+      ...save,
+      heldActionByActivityId:
+        save.heldActionByActivityId && typeof save.heldActionByActivityId === 'object'
+          ? save.heldActionByActivityId
+          : {},
+      saveVersion: 26,
+    }),
+  },
 ]
 
 export function migrateSave(save: PlayerSave, nowMs: number = Date.now()): PlayerSave {

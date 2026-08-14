@@ -1,3 +1,4 @@
+import { withoutHeldAction } from '../activity/heldAction'
 import { configNumber } from '../activity/gathering'
 import { resolveActionRewards } from '../activity/rewards'
 import { applyXp } from '../activity/xp'
@@ -208,6 +209,7 @@ export function applyCombatVictory(
   next = clearCombatSave(food.save)
   next = applyQuestDefeatProgress(db, next, enemy['Enemy ID'], 1)
   next = applyBountyDefeatProgress(next, enemy['Enemy ID'], 1, nowMs)
+  next = withoutHeldAction(next, save.currentActivityId)
 
   return {
     save: next,
@@ -227,15 +229,18 @@ export function applyCombatDefeat(
 ): PlayerSave {
   const pauseSec = configNumber(db, 'death_pause', 30)
   const maxHp = playerMaxHp(db, save)
-  return clearCombatSave({
-    ...save,
-    maxHp,
-    currentHp: maxHp,
-    deathPauseUntil: new Date(nowMs + pauseSec * 1000).toISOString(),
-    currentActionId: null,
-    actionStartedAt: null,
-    actionDurationMs: null,
-  })
+  return withoutHeldAction(
+    clearCombatSave({
+      ...save,
+      maxHp,
+      currentHp: maxHp,
+      deathPauseUntil: new Date(nowMs + pauseSec * 1000).toISOString(),
+      currentActionId: null,
+      actionStartedAt: null,
+      actionDurationMs: null,
+    }),
+    save.currentActivityId,
+  )
 }
 
 export function isDeathPaused(save: PlayerSave, nowMs: number = Date.now()): boolean {

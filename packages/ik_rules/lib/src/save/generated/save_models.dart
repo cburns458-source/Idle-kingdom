@@ -7,7 +7,7 @@
 
 import '../../json_support.dart';
 
-const int saveVersion = 25;
+const int saveVersion = 26;
 
 const String saveStorageKey = 'idle-kingdoms.demo.save';
 
@@ -540,6 +540,7 @@ class PlayerSave {
     required this.inventory,
     required this.bank,
     required this.favoriteActivityByLocationId,
+    required this.heldActionByActivityId,
     required this.equipment,
     required this.gold,
     required this.quests,
@@ -599,6 +600,10 @@ class PlayerSave {
       bank: listOf(json['bank'], (Object? entry) => InventoryStack.fromJson(asJsonMap(entry))),
       favoriteActivityByLocationId: mapOf(
         json['favoriteActivityByLocationId'],
+        (Object? value) => value as String,
+      ),
+      heldActionByActivityId: mapOf(
+        json['heldActionByActivityId'],
         (Object? value) => value as String,
       ),
       equipment: EquipmentLoadout.fromJson(asJsonMap(json['equipment'])),
@@ -679,6 +684,9 @@ class PlayerSave {
 
   /// One starred activity per location, auto-started on arrival.
   final Map<String, String> favoriteActivityByLocationId;
+
+  /// Last unfinished pool action per activity, reused if that activity starts again.
+  final Map<String, String> heldActionByActivityId;
 
   final EquipmentLoadout equipment;
 
@@ -796,6 +804,7 @@ class PlayerSave {
       'inventory': inventory.map((entry) => entry.toJson()).toList(),
       'bank': bank.map((entry) => entry.toJson()).toList(),
       'favoriteActivityByLocationId': favoriteActivityByLocationId,
+      'heldActionByActivityId': heldActionByActivityId,
       'equipment': equipment.toJson(),
       'gold': gold,
       'quests': quests.map((entry) => entry.toJson()).toList(),
@@ -851,6 +860,7 @@ class PlayerSave {
     List<InventoryStack>? inventory,
     List<InventoryStack>? bank,
     Map<String, String>? favoriteActivityByLocationId,
+    Map<String, String>? heldActionByActivityId,
     EquipmentLoadout? equipment,
     num? gold,
     List<QuestProgress>? quests,
@@ -905,6 +915,7 @@ class PlayerSave {
       bank: bank ?? this.bank,
       favoriteActivityByLocationId:
           favoriteActivityByLocationId ?? this.favoriteActivityByLocationId,
+      heldActionByActivityId: heldActionByActivityId ?? this.heldActionByActivityId,
       equipment: equipment ?? this.equipment,
       gold: gold ?? this.gold,
       quests: quests ?? this.quests,

@@ -13,6 +13,7 @@ export 'src/activity/bonus_xp.dart';
 export 'src/activity/engine.dart';
 export 'src/activity/favorites.dart';
 export 'src/activity/gathering.dart';
+export 'src/activity/held_action.dart';
 export 'src/activity/pools.dart';
 export 'src/activity/requirements.dart';
 export 'src/activity/reward_summary.dart';

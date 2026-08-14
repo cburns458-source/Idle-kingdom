@@ -56,6 +56,7 @@ export function createNewSave(db: GameDatabase, nowMs: number = Date.now()): Pla
     inventory: [],
     bank: [],
     favoriteActivityByLocationId: {},
+    heldActionByActivityId: {},
     equipment: { slots },
     gold: STARTING_GOLD,
     quests: [],

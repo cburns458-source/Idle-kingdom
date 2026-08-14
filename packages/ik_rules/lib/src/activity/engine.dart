@@ -12,6 +12,7 @@ import '../save/generated/save_models.dart';
 import '../time.dart';
 import 'bonus_xp.dart';
 import 'gathering.dart';
+import 'held_action.dart';
 import 'pools.dart';
 import 'requirements.dart';
 import 'reward_summary.dart';
@@ -125,8 +126,16 @@ GeneratedAction? generateNextAction(
 ) {
   final poolId = getActivity(db, activityId)?.raw['Pool ID'];
   if (poolId is! String || poolId.isEmpty) return null;
-  final action = pickWeightedAction(eligiblePoolEntries(db, poolId), random);
+
+  final heldId = heldActionIdFor(save, activityId);
+  ActionRow? action;
+  if (heldId != null) {
+    action = db.actions.firstWhereOrNull((row) => row.raw['Action ID'] == heldId);
+    if (action != null && !isSelectableAction(action)) action = null;
+  }
+  action ??= pickWeightedAction(eligiblePoolEntries(db, poolId), random);
   if (action == null) return null;
+  final actionId = jsString(action.raw['Action ID']);
 
   final startedAt = isoFromMs(nowMs);
 
@@ -140,7 +149,11 @@ GeneratedAction? generateNextAction(
     return GeneratedAction(
       action: action,
       state: null,
-      save: beginCombatSave(db, withActivity, action, enemy, startedAt),
+      save: withHeldAction(
+        beginCombatSave(db, withActivity, action, enemy, startedAt),
+        activityId,
+        actionId,
+      ),
     );
   }
 
@@ -148,7 +161,7 @@ GeneratedAction? generateNextAction(
   final next = clearCombatSave(
     save.copyWith(
       currentActivityId: activityId,
-      currentActionId: action.raw['Action ID'] as String?,
+      currentActionId: actionId,
       actionStartedAt: startedAt,
       actionDurationMs: durationMs,
     ),
@@ -156,11 +169,11 @@ GeneratedAction? generateNextAction(
   return GeneratedAction(
     action: action,
     state: ActiveActionState(
-      actionId: jsString(action.raw['Action ID']),
+      actionId: actionId,
       startedAtMs: nowMs,
       durationMs: durationMs,
     ),
-    save: tryConsumePotionForScope(db, next, 'one_action').save,
+    save: withHeldAction(tryConsumePotionForScope(db, next, 'one_action').save, activityId, actionId),
   );
 }
 
@@ -214,7 +227,7 @@ GatheringCompletion completeGatheringAction(
   if (bowBonus != null) applyBonusXp(bowBonus.skillId, bowBonus.xp);
 
   return GatheringCompletion(
-    save: next,
+    save: withoutHeldAction(next, save.currentActivityId),
     result: ActionCompletionResult(
       actionId: jsString(action.raw['Action ID']),
       actionName: jsString(action.raw['Display Name']),

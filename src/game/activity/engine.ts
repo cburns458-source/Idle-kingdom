@@ -11,7 +11,8 @@ import type { PlayerSave } from '../save/types'
 import { clearActivePotionEffect, tryConsumePotionForScope } from '../potions/effects'
 import { applyRaceSkillXp } from '../races/races'
 import { gatheringDurationMs, gatheringXpReward } from './gathering'
-import { eligiblePoolEntries, pickWeightedAction, type RandomFn } from './pools'
+import { heldActionIdFor, withHeldAction, withoutHeldAction } from './heldAction'
+import { eligiblePoolEntries, isSelectableAction, pickWeightedAction, type RandomFn } from './pools'
 import {
   requirementsForEntity,
   unmetHardRequirements,
@@ -131,9 +132,13 @@ export function generateNextAction(
 ): { save: PlayerSave; action: ActionRow; state: ActiveActionState | null } | null {
   const activity = getActivity(db, activityId)
   if (!activity?.['Pool ID']) return null
-  const eligible = eligiblePoolEntries(db, activity['Pool ID'])
-  const action = pickWeightedAction(eligible, random)
+
+  const heldId = heldActionIdFor(save, activityId)
+  let action = heldId ? db.Actions.find((row) => row['Action ID'] === heldId) : undefined
+  if (action && !isSelectableAction(action)) action = undefined
+  action ??= pickWeightedAction(eligiblePoolEntries(db, activity['Pool ID']), random)
   if (!action) return null
+  const actionId = action['Action ID']
 
   const startedAt = new Date(nowMs).toISOString()
 
@@ -148,7 +153,7 @@ export function generateNextAction(
     return {
       action,
       state: null,
-      save: beginCombatSave(db, withActivity, action, enemy, startedAt),
+      save: withHeldAction(beginCombatSave(db, withActivity, action, enemy, startedAt), activityId, actionId),
     }
   }
 
@@ -156,7 +161,7 @@ export function generateNextAction(
   let next = clearCombatSave({
     ...save,
     currentActivityId: activityId,
-    currentActionId: action['Action ID'],
+    currentActionId: actionId,
     actionStartedAt: startedAt,
     actionDurationMs: durationMs,
   })
@@ -165,11 +170,11 @@ export function generateNextAction(
   return {
     action,
     state: {
-      actionId: action['Action ID'],
+      actionId,
       startedAtMs: nowMs,
       durationMs,
     },
-    save: next,
+    save: withHeldAction(next, activityId, actionId),
   }
 }
 
@@ -229,7 +234,7 @@ export function completeGatheringAction(
   }
 
   return {
-    save: next,
+    save: withoutHeldAction(next, save.currentActivityId),
     result: {
       actionId: action['Action ID'],
       actionName: action['Display Name'],

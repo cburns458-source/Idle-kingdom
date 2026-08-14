@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:collection/collection.dart';
 import 'package:ik_content/ik_content.dart';
 
+import '../activity/held_action.dart';
 import '../activity/rewards.dart';
 import '../activity/xp.dart';
 import '../bounties/progress.dart';
@@ -242,6 +243,7 @@ CombatVictoryResult applyCombatVictory(
   next = clearCombatSave(food.save);
   next = applyQuestDefeatProgress(db, next, jsString(enemy.raw['Enemy ID']), 1);
   next = applyBountyDefeatProgress(next, jsString(enemy.raw['Enemy ID']), 1, nowMs);
+  next = withoutHeldAction(next, save.currentActivityId);
 
   return CombatVictoryResult(
     save: next,
@@ -257,15 +259,18 @@ CombatVictoryResult applyCombatVictory(
 PlayerSave applyCombatDefeat(GameDatabase db, PlayerSave save, num nowMs) {
   final pauseSec = configNumber(db, 'death_pause', 30);
   final maxHp = playerMaxHp(db, save);
-  return clearCombatSave(
-    save.copyWith(
-      maxHp: maxHp,
-      currentHp: maxHp,
-      deathPauseUntil: isoFromMs(nowMs + pauseSec * 1000),
-      currentActionId: null,
-      actionStartedAt: null,
-      actionDurationMs: null,
+  return withoutHeldAction(
+    clearCombatSave(
+      save.copyWith(
+        maxHp: maxHp,
+        currentHp: maxHp,
+        deathPauseUntil: isoFromMs(nowMs + pauseSec * 1000),
+        currentActionId: null,
+        actionStartedAt: null,
+        actionDurationMs: null,
+      ),
     ),
+    save.currentActivityId,
   );
 }
 
