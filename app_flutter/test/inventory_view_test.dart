@@ -128,6 +128,8 @@ void main() {
     await tester.tap(find.text('Show sources'));
     await tester.pump();
     expect(find.text('Hide sources'), findsOne);
+    expect(find.text('Main-hand'), findsOne);
+    expect(find.text('Unarmed'), findsOne);
     expect(find.text('Damage reduction'), findsOne);
     expect(find.text('Total'), findsWidgets);
   });

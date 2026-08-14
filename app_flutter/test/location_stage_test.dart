@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:idle_kingdoms/src/session/game_controller.dart';
 import 'package:idle_kingdoms/src/ui/action_stage.dart';
 import 'package:idle_kingdoms/src/theme.dart';
 import 'package:idle_kingdoms/src/ui/production_panel.dart';
@@ -165,6 +166,8 @@ void main() {
     await pumpShell(tester, controller);
 
     expect(find.text('Recovering…'), findsWidgets);
+    expect(find.bySemanticsLabel('Resume progress'), findsWidgets);
+    expect(find.textContaining('Resuming in'), findsNothing);
     expect(find.text('resting'), findsNothing);
     expect(find.text('Dead'), findsNothing);
 
@@ -200,5 +203,75 @@ void main() {
     await tester.tap(find.text('Inventory'));
     await tester.pump();
     expect(find.textContaining('slots'), findsOne);
+  });
+
+  testWidgets('a killing blow keeps sprites and damage up, then shows defeated', (tester) async {
+    final clock = TestClock();
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(currentLocationId: 'LOC-0001'),
+      clock: clock,
+    );
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller);
+
+    await tapVisible(
+      tester,
+      find.descendant(of: dockRow('Tend the pasture'), matching: find.bySemanticsLabel('Start')),
+    );
+    expect(controller.save.combatEnemyId, isNotNull);
+
+    controller.commit(controller.save.copyWith(combatEnemyHp: 1));
+    clock.advance(configNumber(database.launch, 'combat_round_duration', 4) * 1000);
+    await tester.pump();
+
+    expect(controller.lastRound?.outcome, 'victory');
+    expect(controller.combatBlowHold, isTrue);
+    expect(find.text('defeated'), findsNothing);
+    expect(find.textContaining('${controller.lastRound!.playerHit.round()}'), findsWidgets);
+    expect(find.byWidgetPredicate((widget) => assetNamed(widget, '/enemies/')), findsOne);
+
+    clock.advance(GameController.combatBlowHoldMs);
+    await tester.pump();
+    expect(controller.defeatedFlash, isTrue);
+    expect(find.text('defeated'), findsOne);
+
+    clock.advance(GameController.combatDefeatedBannerMs);
+    await tester.pump();
+    expect(controller.defeatedFlash, isFalse);
+    expect(find.text('defeated'), findsNothing);
+  });
+
+  testWidgets('a death blow keeps sprites up, then says Recovering', (tester) async {
+    final clock = TestClock();
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(currentLocationId: 'LOC-0001', currentHp: 1),
+      clock: clock,
+    );
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller);
+
+    await tapVisible(
+      tester,
+      find.descendant(of: dockRow('Tend the pasture'), matching: find.bySemanticsLabel('Start')),
+    );
+    expect(controller.save.combatEnemyId, isNotNull);
+
+    controller.commit(controller.save.copyWith(currentHp: 1, combatEnemyHp: 50000));
+    clock.advance(configNumber(database.launch, 'combat_round_duration', 4) * 1000);
+    await tester.pump();
+
+    expect(controller.lastRound?.outcome, 'defeat');
+    expect(controller.showingDeathHold, isTrue);
+    expect(find.text('Recovering…'), findsNothing);
+    expect(find.bySemanticsLabel('Combat'), findsOne);
+    expect(find.textContaining('${controller.lastRound!.playerHit.round()}'), findsWidgets);
+
+    clock.advance(GameController.combatBlowHoldMs);
+    await tester.pump();
+    expect(controller.showingDeathHold, isFalse);
+    expect(find.text('Recovering…'), findsWidgets);
+    expect(find.bySemanticsLabel('Resume progress'), findsWidgets);
   });
 }

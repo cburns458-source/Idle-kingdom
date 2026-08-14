@@ -144,21 +144,21 @@ void main() {
     expect(find.text('Combat'), findsWidgets);
   });
 
-  testWidgets('the chin nest opens Menu, Log, Leaderboards, Guilds, and Account', (tester) async {
+  testWidgets('the chin nest opens Settings, Log, Leaderboards, Guilds, and Account', (tester) async {
     final controller = buildController(database, seed: startedCharacter(database));
     addTearDown(controller.dispose);
     await pumpShell(tester, controller);
 
     expect(find.text('Inventory'), findsOne);
     expect(find.text('Skills'), findsOne);
-    expect(find.byTooltip('Open menu nest'), findsOne);
+    expect(find.byTooltip('Open menu'), findsOne);
     expect(find.text('Log'), findsNothing);
     expect(find.text('Social'), findsNothing);
 
-    await tester.tap(find.byTooltip('Open menu nest'));
+    await tester.tap(find.byTooltip('Open menu'));
     await tester.pump();
 
-    expect(find.text('Menu'), findsOne);
+    expect(find.text('Settings'), findsOne);
     expect(find.text('Log'), findsOne);
     expect(find.text('Leaderboards'), findsOne);
     expect(find.text('Guilds'), findsOne);

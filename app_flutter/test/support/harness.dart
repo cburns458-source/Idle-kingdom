@@ -121,7 +121,7 @@ Future<void> pumpShell(
 
 /// Opens a screen that lives in the chin's hamburger nest.
 Future<void> openChinScreen(WidgetTester tester, String label) async {
-  await tester.tap(find.byTooltip('Open menu nest'));
+  await tester.tap(find.byTooltip('Open menu'));
   await tester.pump();
   await tester.tap(find.text(label));
   await tester.pump();

@@ -54,12 +54,21 @@ void main() {
   test('breakdown names the inputs that feed each total', () {
     final summary = playerCombatStatSummary(db, save);
 
-    expect(summary.damageBreakdown.map((line) => line.label), contains('Steel Sword'));
-    expect(summary.damageBreakdown.map((line) => line.label), contains('Enchantments'));
-    expect(summary.damageBreakdown.map((line) => line.label), contains('Combat Level 25'));
-    expect(summary.damageBreakdown.map((line) => line.label), contains('Strength Spell'));
-    expect(summary.damageBreakdown.map((line) => line.label), contains('Strength Potion'));
-    expect(summary.damageBreakdown.lastWhere((line) => line.label == 'Total').detail, '165–297');
+    expect(summary.mainhandBreakdown.map((line) => line.label), contains('Unarmed'));
+    expect(summary.mainhandBreakdown.map((line) => line.label), contains('Steel Sword'));
+    expect(summary.mainhandBreakdown.map((line) => line.label), contains('Enchantments'));
+    expect(summary.mainhandBreakdown.map((line) => line.label), contains('Combat Level 25'));
+    expect(summary.mainhandBreakdown.map((line) => line.label), contains('Strength Spell'));
+    expect(summary.mainhandBreakdown.map((line) => line.label), contains('Strength Potion'));
+    expect(summary.mainhandBreakdown.lastWhere((line) => line.label == 'Total').detail, '165–297');
+
+    final offhand = playerOffhandDamageRange(db, save);
+    if (offhand != null) {
+      expect(summary.offhandBreakdown.map((line) => line.label), contains('Combat Level 25'));
+      expect(summary.offhandBreakdown.last.label, 'Total');
+    } else {
+      expect(summary.offhandBreakdown, isEmpty);
+    }
 
     expect(summary.healthBreakdown.map((line) => line.label), isNot(contains('Base')));
     expect(summary.healthBreakdown.map((line) => line.label), contains('Steel Helmet'));
@@ -68,5 +77,14 @@ void main() {
 
     expect(summary.reductionBreakdown.map((line) => line.label), contains('Steel Helmet'));
     expect(summary.reductionBreakdown.last.detail, '1');
+  });
+
+  test('an unarmed save still lists Unarmed as a main-hand source', () {
+    final fixture = loadParityFixtures('combat/stats').firstWhere((row) => row.name == 'base');
+    final summary = playerCombatStatSummary(databaseOf(fixture), saveOf(fixture));
+
+    expect(summary.mainhandBreakdown.map((line) => line.label), contains('Unarmed'));
+    expect(summary.mainhandBreakdown.last.label, 'Total');
+    expect(summary.offhandBreakdown, isEmpty);
   });
 }

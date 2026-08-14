@@ -156,8 +156,9 @@ void main() {
     addTearDown(controller.dispose);
 
     await pumpPanel(tester, NpcPanel(controller: controller, npc: npcOf(roseId), onClose: () {}));
-    expect(find.textContaining("Progress: 5 / 5 Rabbit's Foot"), findsOne);
-    expect(find.text('Gold: 1,500 / 1,000'), findsOne);
+    expect(find.text('move on now'), findsOne);
+    expect(find.textContaining("Progress: 5 / 5 Rabbit's Foot"), findsNothing);
+    expect(find.text('Gold: 1,500 / 1,000'), findsNothing);
 
     await tester.tap(find.text('Turn in'));
     await tester.pumpAndSettle();
@@ -185,6 +186,7 @@ void main() {
     await tester.pump();
 
     expect(getQuestProgress(controller.save, 'QST-0001').status, 'active');
+    expect(find.text('move on now'), findsOne);
   });
 
   testWidgets('the Beggar at The Town asks for 25 gold', (tester) async {

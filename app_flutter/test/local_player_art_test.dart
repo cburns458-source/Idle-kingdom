@@ -70,7 +70,7 @@ void main() {
     final controller = buildController(database, seed: startedCharacter(database));
     addTearDown(controller.dispose);
     await pumpShell(tester, controller);
-    await openChinScreen(tester, 'Menu');
+    await openChinScreen(tester, 'Settings');
 
     expect(find.text('Player sprite'), findsOne);
     expect(find.bySemanticsLabel('Use my PNG'), findsOne);

@@ -28,6 +28,25 @@ class TravelInFlight {
   }
 }
 
+/// The last killing blow, kept so the stage can hold sprites before swapping.
+class CombatOutcomeHold {
+  const CombatOutcomeHold({
+    required this.enemyId,
+    required this.outcome,
+    required this.startedAtMs,
+    required this.playerHp,
+    required this.enemyHp,
+  });
+
+  final String enemyId;
+
+  /// `victory` or `defeat`.
+  final String outcome;
+  final num startedAtMs;
+  final num playerHp;
+  final num enemyHp;
+}
+
 /// A finished craft, held so the production stage can pop the item icon.
 class CraftPopup {
   const CraftPopup({required this.itemId, required this.displayName, required this.seq});
@@ -72,6 +91,8 @@ class GameController extends ChangeNotifier {
   CombatRoundEvent? _lastRound;
   int _roundSeq = 0;
   CraftPopup? _craftPopup;
+  CombatOutcomeHold? _outcomeHold;
+  num? _liveEnemyHp;
 
   GameDatabase get db => database.launch;
   DatabaseIndexes get indexes => database.launchIndexes;
@@ -101,10 +122,66 @@ class GameController extends ChangeNotifier {
   /// The last finished craft, kept so the station can pop the item icon.
   CraftPopup? get craftPopup => _craftPopup;
 
-  /// True after a victory until the next round replaces [lastRound].
+  /// How long the killing blow stays on screen before "defeated" or Recovering.
+  static const int combatBlowHoldMs = 500;
+
+  /// How long "defeated" stays up after the blow hold. Total ~1s between kills.
+  static const int combatDefeatedBannerMs = 500;
+
+  num get _holdElapsedMs {
+    final hold = _outcomeHold;
+    if (hold == null) return double.infinity;
+    return session.clock() - hold.startedAtMs;
+  }
+
+  /// True for the first half-second after a killing blow, while sprites stay up.
+  bool get combatBlowHold {
+    final hold = _outcomeHold;
+    if (hold == null) return false;
+    return _holdElapsedMs < combatBlowHoldMs;
+  }
+
+  /// True after the blow hold, while the "defeated" banner is up.
   bool get defeatedFlash {
+    final hold = _outcomeHold;
+    if (hold == null || hold.outcome != 'victory') return false;
+    final elapsed = _holdElapsedMs;
+    return elapsed >= combatBlowHoldMs && elapsed < combatBlowHoldMs + combatDefeatedBannerMs;
+  }
+
+  /// True while a death blow is still on screen, before Recovering replaces it.
+  bool get showingDeathHold {
+    final hold = _outcomeHold;
+    return hold != null && hold.outcome == 'defeat' && combatBlowHold;
+  }
+
+  /// Recovering UI waits out the death-blow hold so the last hit is visible.
+  bool get showRecoveringStage => isRecovering && !showingDeathHold;
+
+  /// Enemy to draw during a hold or banner; otherwise the live save's foe.
+  String? get stagedEnemyId {
+    if (combatBlowHold || defeatedFlash) {
+      return _outcomeHold?.enemyId ?? lastRound?.enemyId;
+    }
+    return save.combatEnemyId;
+  }
+
+  num get stagedPlayerHp {
+    if (showingDeathHold) return _outcomeHold?.playerHp ?? 0;
+    return save.currentHp;
+  }
+
+  num get stagedEnemyHp {
+    if (combatBlowHold || defeatedFlash) return _outcomeHold?.enemyHp ?? 0;
+    return save.combatEnemyHp ?? 0;
+  }
+
+  /// Damage floaters stay up through the blow hold, then drop for the banner.
+  bool get showLastRoundFloaters {
     final round = _lastRound;
-    return round != null && round.outcome == 'victory';
+    if (round == null) return false;
+    if (round.outcome == 'victory' || round.outcome == 'defeat') return combatBlowHold;
+    return true;
   }
 
   /// How far the current combat round has run, from 0 to 1.
@@ -112,13 +189,21 @@ class GameController extends ChangeNotifier {
   /// Derived from `combatRoundStartedAt` and the configured round length; the
   /// shell's frame tick is what makes this move.
   double get combatRoundProgress {
-    if (isRecovering || defeatedFlash) return 0;
+    if (isRecovering || combatBlowHold || defeatedFlash) return 0;
     final startedAt = save.combatRoundStartedAt;
     if (startedAt == null || startedAt.isEmpty) return 0;
     final roundMs = configNumber(db, 'combat_round_duration', 4) * 1000;
     final started = jsDateParse(startedAt);
     if (!started.isFinite || roundMs <= 0) return 0;
     return ((session.clock() - started) / roundMs).clamp(0, 1).toDouble();
+  }
+
+  /// How far the death pause has run, from 0 to 1, matching the round bar.
+  double get deathPauseProgress {
+    final remaining = deathPauseRemainingMs;
+    final total = configNumber(db, 'death_pause', 30) * 1000;
+    if (total <= 0) return 1;
+    return ((total - remaining) / total).clamp(0, 1).toDouble();
   }
 
   double get actionProgress => session.actionProgress.toDouble();
@@ -213,6 +298,9 @@ class GameController extends ChangeNotifier {
   /// Advances the game by one frame. The shell drives this from a ticker, so it
   /// stops when the app is backgrounded and picks up from the clock on return.
   void tick() {
+    if (save.combatEnemyId != null) {
+      _liveEnemyHp = save.combatEnemyHp;
+    }
     final result = session.tick();
     for (final event in result.events) {
       _applyEvent(event);
@@ -244,6 +332,17 @@ class GameController extends ChangeNotifier {
       case final CombatRoundEvent round:
         _lastRound = round;
         _roundSeq += 1;
+        if (round.outcome == 'victory' || round.outcome == 'defeat') {
+          _outcomeHold = CombatOutcomeHold(
+            enemyId: round.enemyId,
+            outcome: round.outcome,
+            startedAtMs: session.clock(),
+            playerHp: round.outcome == 'defeat' ? 0 : save.currentHp,
+            enemyHp: round.outcome == 'victory' ? 0 : (_liveEnemyHp ?? 0),
+          );
+        } else {
+          _outcomeHold = null;
+        }
       case EnemyDefeatedEvent():
       case PlayerDefeatedEvent():
       case RecoveredEvent():
@@ -255,6 +354,8 @@ class GameController extends ChangeNotifier {
   void _clearStageFx() {
     _lastRound = null;
     _craftPopup = null;
+    _outcomeHold = null;
+    _liveEnemyHp = null;
   }
 
   void _advanceTravel() {

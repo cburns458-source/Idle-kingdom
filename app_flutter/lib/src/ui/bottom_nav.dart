@@ -4,7 +4,7 @@ import '../theme.dart';
 import 'app_shell.dart';
 
 const List<(GameScreen, String)> _nestItems = [
-  (GameScreen.menu, 'Menu'),
+  (GameScreen.menu, 'Settings'),
   (GameScreen.log, 'Log'),
   (GameScreen.leaderboards, 'Leaderboards'),
   (GameScreen.guilds, 'Guilds'),
@@ -139,8 +139,8 @@ class _BottomNavState extends State<BottomNav> {
                 link: _nestLink,
                 child: _NavSection(
                   selected: _nestActive,
-                  tooltip: 'Open menu nest',
-                  semanticsLabel: 'Open menu nest',
+                  tooltip: 'Open menu',
+                  semanticsLabel: 'Open menu',
                   onTap: _toggleNest,
                   child: const Icon(Icons.menu, size: 22),
                 ),

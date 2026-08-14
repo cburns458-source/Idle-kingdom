@@ -42,7 +42,8 @@ class CombatStatSummary {
     required this.maxHp,
     required this.damageReduction,
     required this.activeBonuses,
-    required this.damageBreakdown,
+    required this.mainhandBreakdown,
+    required this.offhandBreakdown,
     required this.healthBreakdown,
     required this.reductionBreakdown,
   });
@@ -52,7 +53,8 @@ class CombatStatSummary {
   final num maxHp;
   final num damageReduction;
   final List<CombatBonusLine> activeBonuses;
-  final List<CombatStatContribution> damageBreakdown;
+  final List<CombatStatContribution> mainhandBreakdown;
+  final List<CombatStatContribution> offhandBreakdown;
   final List<CombatStatContribution> healthBreakdown;
   final List<CombatStatContribution> reductionBreakdown;
 }
@@ -65,7 +67,8 @@ CombatStatSummary playerCombatStatSummary(GameDatabase db, PlayerSave save) {
     maxHp: playerMaxHp(db, save),
     damageReduction: playerDamageReduction(db, save),
     activeBonuses: _activeBonuses(db, save),
-    damageBreakdown: _damageBreakdown(db, save),
+    mainhandBreakdown: _mainhandBreakdown(db, save),
+    offhandBreakdown: _offhandBreakdown(db, save),
     healthBreakdown: _healthBreakdown(db, save),
     reductionBreakdown: _reductionBreakdown(db, save),
   );
@@ -207,15 +210,8 @@ String _potionEffect(ActivePotionEffect potion) {
   return '${parts.join(', ')} ($scope)';
 }
 
-List<CombatStatContribution> _damageBreakdown(GameDatabase db, PlayerSave save) {
+List<CombatStatContribution> _damageMultiplierLines(GameDatabase db, PlayerSave save) {
   final lines = <CombatStatContribution>[];
-  final weaponId = save.equipment.slots[weaponToolSlotId]?.itemId;
-  final weapon = _weaponBase(db, weaponId);
-  if (weapon != null && isNotBlank(weaponId)) {
-    lines.add(CombatStatContribution(label: _itemName(db, weaponId!), detail: _rangeLabel(weapon)));
-  } else {
-    lines.add(CombatStatContribution(label: 'Unarmed', detail: _rangeLabel(_unarmedBase(db))));
-  }
 
   final enchantBonus = equippedEnchantmentDamageBonus(db, save);
   if (enchantBonus != 0) {
@@ -259,24 +255,37 @@ List<CombatStatContribution> _damageBreakdown(GameDatabase db, PlayerSave save) 
     );
   }
 
-  final total = playerDamageRange(db, save);
-  lines.add(CombatStatContribution(label: 'Total', detail: _rangeLabel(total)));
+  return lines;
+}
 
-  final offhand = playerOffhandDamageRange(db, save);
-  if (offhand != null) {
-    final offhandId = save.equipment.slots[offhandSlotId]?.itemId;
-    final offhandBase = _weaponBase(db, offhandId);
-    if (offhandBase != null && isNotBlank(offhandId)) {
-      lines.add(
-        CombatStatContribution(
-          label: '${_itemName(db, offhandId!)} (off-hand)',
-          detail: _rangeLabel(offhandBase),
-        ),
-      );
-    }
-    lines.add(CombatStatContribution(label: 'Off-hand total', detail: _rangeLabel(offhand)));
+List<CombatStatContribution> _mainhandBreakdown(GameDatabase db, PlayerSave save) {
+  final lines = <CombatStatContribution>[
+    CombatStatContribution(label: 'Unarmed', detail: _rangeLabel(_unarmedBase(db))),
+  ];
+  final weaponId = save.equipment.slots[weaponToolSlotId]?.itemId;
+  final weapon = _weaponBase(db, weaponId);
+  if (weapon != null && isNotBlank(weaponId)) {
+    lines.add(CombatStatContribution(label: _itemName(db, weaponId!), detail: _rangeLabel(weapon)));
   }
+  lines.addAll(_damageMultiplierLines(db, save));
+  lines.add(CombatStatContribution(label: 'Total', detail: _rangeLabel(playerDamageRange(db, save))));
+  return lines;
+}
 
+List<CombatStatContribution> _offhandBreakdown(GameDatabase db, PlayerSave save) {
+  final offhand = playerOffhandDamageRange(db, save);
+  if (offhand == null) return const [];
+
+  final lines = <CombatStatContribution>[];
+  final offhandId = save.equipment.slots[offhandSlotId]?.itemId;
+  final offhandBase = _weaponBase(db, offhandId);
+  if (offhandBase != null && isNotBlank(offhandId)) {
+    lines.add(
+      CombatStatContribution(label: _itemName(db, offhandId!), detail: _rangeLabel(offhandBase)),
+    );
+  }
+  lines.addAll(_damageMultiplierLines(db, save));
+  lines.add(CombatStatContribution(label: 'Total', detail: _rangeLabel(offhand)));
   return lines;
 }
 

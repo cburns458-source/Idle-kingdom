@@ -444,7 +444,9 @@ class _InventoryViewState extends State<InventoryView> {
             ),
           ),
           if (_showSources) ...[
-            _breakdownSection('Damage', summary.damageBreakdown),
+            _breakdownSection('Main-hand', summary.mainhandBreakdown),
+            if (summary.offhandBreakdown.isNotEmpty)
+              _breakdownSection('Off-hand', summary.offhandBreakdown),
             _breakdownSection('Health', summary.healthBreakdown),
             _breakdownSection('Damage reduction', summary.reductionBreakdown),
           ],

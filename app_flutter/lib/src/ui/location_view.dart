@@ -260,7 +260,7 @@ class _LocationViewState extends State<LocationView> {
                         child: RewardStrip(controller: controller),
                       ),
                     ),
-                  if (controller.isRecovering && stage == null)
+                  if (controller.showRecoveringStage && stage == null)
                     Padding(
                       padding: const EdgeInsets.fromLTRB(13, 8, 13, 0),
                       child: _RecoveringPanel(controller: controller),
@@ -760,9 +760,17 @@ class _RecoveringPanel extends StatelessWidget {
           const Expanded(
             child: Text('Recovering…', style: TextStyle(fontWeight: FontWeight.w700)),
           ),
-          Text(
-            'Resuming in ${formatDurationMs(controller.deathPauseRemainingMs)}',
-            style: const TextStyle(color: Palette.danger),
+          SizedBox(
+            width: 96,
+            child: Semantics(
+              label: 'Resume progress',
+              child: PillBar(
+                value: controller.deathPauseProgress,
+                gradient: Meters.combatRound,
+                height: 8,
+                borderColor: const Color(0x38FFECC4),
+              ),
+            ),
           ),
         ],
       ),

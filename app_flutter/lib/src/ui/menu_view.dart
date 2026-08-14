@@ -75,7 +75,7 @@ class _MenuViewState extends State<MenuView> {
     return ListView(
       padding: const EdgeInsets.all(12),
       children: [
-        const Text('Menu', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
+        const Text('Settings', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
         const SizedBox(height: 4),
         const MutedText('Settings and save tools.'),
         const SizedBox(height: 16),

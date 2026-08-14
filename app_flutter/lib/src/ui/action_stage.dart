@@ -37,10 +37,14 @@ class ActionStage extends StatelessWidget {
   Widget build(BuildContext context) {
     final save = controller.save;
     if (save.currentActivityId == null) return const SizedBox.shrink();
-    // Defeat clears the enemy and the action, so the pause gets its own skin
-    // rather than falling through to a gathering scene with nothing in it.
-    if (controller.isRecovering) return _RecoveringStage(controller: controller);
-    if (save.combatEnemyId != null) return _CombatStage(controller: controller);
+    // A death blow keeps the last fight on screen for a beat, then Recovering
+    // takes over. Victory uses the same hold, then a short "defeated" banner.
+    if (controller.showRecoveringStage) return _RecoveringStage(controller: controller);
+    if (save.combatEnemyId != null ||
+        controller.combatBlowHold ||
+        controller.defeatedFlash) {
+      return _CombatStage(controller: controller);
+    }
     if (save.productionRecipeId != null || controller.craftPopup != null) {
       return _ProductionStage(controller: controller);
     }
@@ -372,14 +376,16 @@ class _CombatStage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final save = controller.save;
-    final enemy = getEnemy(controller.db, save.combatEnemyId!);
-    final enemyName = enemy?.displayName ?? save.combatEnemyId!;
+    final enemyId = controller.stagedEnemyId ?? save.combatEnemyId;
+    final enemy = enemyId == null ? null : getEnemy(controller.db, enemyId);
+    final enemyName = enemy?.displayName ?? enemyId ?? 'Enemy';
     final enemyMaxHp = math.max(1, enemy?.maximumHp ?? 1);
-    final enemyHp = controller.defeatedFlash ? 0 : (save.combatEnemyHp ?? 0);
+    final enemyHp = controller.stagedEnemyHp;
     final maxHp = playerMaxHp(controller.db, save);
-    final playerHp = save.currentHp;
+    final playerHp = controller.stagedPlayerHp;
     final round = controller.lastRound;
     final seq = controller.lastRoundSeq;
+    final showFloaters = controller.showLastRoundFloaters;
 
     return _StageShell(
       semanticsLabel: 'Combat',
@@ -389,7 +395,7 @@ class _CombatStage extends StatelessWidget {
           bytes: controller.localPlayerPng,
           semanticsLabel: 'Adventurer',
           alignment: Alignment.centerRight,
-          overlay: round != null && (round.enemyHit ?? 0) > 0 && !controller.defeatedFlash
+          overlay: showFloaters && round != null && (round.enemyHit ?? 0) > 0
               ? _DamageFloater(
                   key: ValueKey('enemy-hit-$seq'),
                   text: '${round.enemyHit!.round()}',
@@ -400,7 +406,7 @@ class _CombatStage extends StatelessWidget {
               : null,
         ),
         scene: _Portrait(
-          assetPath: controller.defeatedFlash ? null : enemyAssetPath(save.combatEnemyId!),
+          assetPath: controller.defeatedFlash || enemyId == null ? null : enemyAssetPath(enemyId),
           semanticsLabel: enemyName,
           alignment: Alignment.centerLeft,
           placeholder: controller.defeatedFlash
@@ -417,7 +423,7 @@ class _CombatStage extends StatelessWidget {
                   ),
                 )
               : null,
-          overlay: controller.defeatedFlash
+          overlay: !showFloaters
               ? null
               : Stack(
                   children: [
@@ -512,14 +518,13 @@ class _RecoveringStage extends StatelessWidget {
         playerCaption: const SizedBox(height: 16),
         sceneCaption: const SizedBox(height: 16),
       ),
-      footer: Text(
-        'Resuming in ${formatDurationMs(controller.deathPauseRemainingMs)}',
-        textAlign: TextAlign.center,
-        style: const TextStyle(
-          fontSize: 13,
-          fontWeight: FontWeight.w700,
-          color: Color(0xFFE0A080),
-          shadows: overlayShadow,
+      footer: Semantics(
+        label: 'Resume progress',
+        child: PillBar(
+          value: controller.deathPauseProgress,
+          gradient: Meters.combatRound,
+          height: 8,
+          borderColor: const Color(0x38FFECC4),
         ),
       ),
     );

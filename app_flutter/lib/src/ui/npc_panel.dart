@@ -333,7 +333,10 @@ class _QuestBlock extends StatelessWidget {
             _ => Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                for (final line in quest.progressLines) MutedText(_progressText(line)),
+                if (quest.canTalk || quest.canBribe || quest.canChooseCombat)
+                  const SizedBox.shrink()
+                else
+                  const MutedText('move on now'),
                 if (quest.canTalk) ...[
                   const SizedBox(height: 6),
                   FilledButton(onPressed: onTalk, child: Text(quest.talkLabel)),
@@ -360,18 +363,6 @@ class _QuestBlock extends StatelessWidget {
       ),
     );
   }
-}
-
-String _progressText(QuestProgressLine line) {
-  if (line.key == 'gold') {
-    return 'Gold: ${formatThousands(line.current)} / ${formatThousands(line.required)}';
-  }
-  final current = formatThousands(line.current < line.required ? line.current : line.required);
-  final required = formatThousands(line.required);
-  if (line.key.startsWith('deliver:')) {
-    return 'Progress: $current / $required ${line.label.replaceFirst('Deliver ', '')}';
-  }
-  return '$current / $required ${line.label}';
 }
 
 /// A greeting, over the panel it belongs to.
