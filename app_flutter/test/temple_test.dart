@@ -35,7 +35,7 @@ void main() {
       tester,
       find.descendant(of: dockRow('Be blessed'), matching: find.bySemanticsLabel('Bless')),
     );
-    await tester.pumpAndSettle();
+    await tester.pump();
 
     expect(controller.save.currentHp, playerMaxHp(database.launch, controller.save));
     expect(slotItemId(controller.save, weaponToolSlotId), 'ITEM-0100');
@@ -45,7 +45,7 @@ void main() {
     expect(find.text('The monks restore you to full health.'), findsOne);
 
     await tester.tap(find.text('OK'));
-    await tester.pumpAndSettle();
+    await tester.pump();
     expect(find.byType(AlertDialog), findsNothing);
   });
 
