@@ -57,8 +57,6 @@ Future<BountyTurnInResult> turnInBounty(
   final firstCompleter = (claimed.firstCompleter ?? false) && claim.userId == session.userId;
   final rewarded = applyBountyReward(prepared.save!, bounty, firstCompleter);
 
-  await service.submitLeaderboard(db, rewarded.save);
-
   return BountyTurnInResult.ok(
     save: rewarded.save,
     claim: claim,

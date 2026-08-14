@@ -130,14 +130,17 @@ void main() {
     expect(pulled.source, CloudSyncSource.downloaded);
   });
 
-  test('submits every board the save is worth alongside the upload', () async {
+  test('submits every board the save is worth only when asked', () async {
     final transport = FakeTransport();
     final storage = MemorySaveStorage();
     final service = await _signedIn(transport, storage);
     final db = _database();
+    final save = createNewSave(db, _nowMs).copyWith(characterName: 'Hero');
 
-    await service.pushSave(db, createNewSave(db, _nowMs).copyWith(characterName: 'Hero'));
+    await service.pushSave(db, save);
+    expect(transport.tables[RemoteTables.leaderboard], isEmpty);
 
+    await service.submitLeaderboard(db, save);
     final rows = transport.tables[RemoteTables.leaderboard]!;
     expect(rows, isNotEmpty);
     expect(rows.every((row) => row['updated_at'] == isoFromMs(_nowMs)), isTrue);
@@ -153,7 +156,9 @@ void main() {
     final storage = MemorySaveStorage();
     final service = await _signedIn(transport, storage);
     final db = _database();
-    await service.pushSave(db, createNewSave(db, _nowMs).copyWith(characterName: 'Hero'));
+    final save = createNewSave(db, _nowMs).copyWith(characterName: 'Hero');
+    await service.pushSave(db, save);
+    await service.submitLeaderboard(db, save);
 
     // A rival's row, written straight to the table the way another client would.
     await transport.upsert(RemoteTables.profiles, <RemoteRow>[

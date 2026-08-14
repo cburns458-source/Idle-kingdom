@@ -8,7 +8,7 @@ export interface LeaderboardSnapshotValues {
   boards: Array<{ boardKey: MultiplayerBoardKey; value: number }>
 }
 
-/** Build leaderboard snapshot values from a local save (submitted on logout / safe sync). */
+/** Build leaderboard snapshot values from a local save (submitted on a ranking update). */
 export function buildLeaderboardSnapshot(
   db: GameDatabase,
   save: PlayerSave,

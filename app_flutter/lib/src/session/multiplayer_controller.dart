@@ -151,6 +151,7 @@ class MultiplayerController extends ChangeNotifier {
       // first sync is an upload rather than a fight over which one is newer.
       await service.pushSave(db, save);
       await refresh(save);
+      await maybeAutoSubmitRanking(save);
       return 'Account created for ${result.session!.username}.';
     });
   }
@@ -160,6 +161,7 @@ class MultiplayerController extends ChangeNotifier {
       final result = await service.signIn(email, password);
       if (!result.ok) return result.reason;
       await refresh(save);
+      await maybeAutoSubmitRanking(save);
       return 'Welcome back, ${result.session!.username}.';
     });
   }
@@ -350,6 +352,57 @@ class MultiplayerController extends ChangeNotifier {
   }
 
   // --- Leaderboards ---------------------------------------------------------
+
+  num? get lastRankingSubmitAt {
+    final userId = session?.userId;
+    if (userId == null) return null;
+    return parseRankingSubmitAt(storage.getItem(rankingUpdateStorageKey(userId)));
+  }
+
+  bool get canPressUpdateRanking => isSignedIn && canUpdateRanking(lastRankingSubmitAt, clock());
+
+  String get rankingUpdateHintText => rankingUpdateHint(lastRankingSubmitAt, clock());
+
+  void _storeRankingSubmitAt(num nowMs) {
+    final userId = session?.userId;
+    if (userId == null) return;
+    storage.setItem(rankingUpdateStorageKey(userId), nowMs.toString());
+  }
+
+  /// Quiet once-a-day submit. No notice: the player did not press anything.
+  Future<void> maybeAutoSubmitRanking(PlayerSave save) async {
+    if (!isSignedIn) return;
+    final now = clock();
+    if (!shouldAutoSubmitRanking(lastRankingSubmitAt, now)) return;
+    final result = await service.submitLeaderboard(db, save);
+    if (!result.ok) return;
+    _storeRankingSubmitAt(now);
+    _board = await service.leaderboard(_boardKey);
+    notifyListeners();
+  }
+
+  /// Opens the boards and submits once if this UTC day has not been posted yet.
+  Future<void> openLeaderboards(PlayerSave save) async {
+    await refresh(save);
+    await maybeAutoSubmitRanking(save);
+  }
+
+  /// Player-pressed ranking update, limited to once an hour.
+  Future<void> updateRanking(PlayerSave save) {
+    return run(() async {
+      if (!isSignedIn) return 'Sign in to update your ranking.';
+      final now = clock();
+      final last = lastRankingSubmitAt;
+      if (!canUpdateRanking(last, now)) {
+        return rankingCooldownMessage(rankingCooldownRemainingMs(last!, now));
+      }
+      final result = await service.submitLeaderboard(db, save);
+      if (!result.ok) return result.reason;
+      _storeRankingSubmitAt(now);
+      _board = await service.leaderboard(_boardKey);
+      return rankingUpdatedNotice;
+    });
+  }
 
   Future<void> selectBoard(MultiplayerBoardKey key) async {
     _boardKey = key;

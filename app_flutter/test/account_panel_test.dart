@@ -85,6 +85,7 @@ void main() {
     expect(find.textContaining('Account created for'), findsOne);
     expect(find.text('Signed in as Tester'), findsOne);
     expect(transport.tables[RemoteTables.saves], hasLength(1));
+    // First sign-in of the day posts the boards once. The save upload itself does not.
     expect(transport.tables[RemoteTables.leaderboard], isNotEmpty);
   });
 
@@ -104,11 +105,13 @@ void main() {
     final net = buildRemoteMultiplayer(database, transport: transport);
     await pumpAccount(tester, net);
     await submit(tester, 'Create account');
+    final boardCount = transport.tables[RemoteTables.leaderboard]!.length;
 
     await tester.tap(find.text('Sync cloud save'));
     await tester.pump();
     await tester.pump();
     expect(find.text('Cloud save uploaded.'), findsOne);
+    expect(transport.tables[RemoteTables.leaderboard], hasLength(boardCount));
 
     await tester.tap(find.text('Load cloud save'));
     await tester.pump();

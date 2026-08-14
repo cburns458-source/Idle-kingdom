@@ -41,7 +41,7 @@ class _SocialViewState extends State<SocialView> {
     super.initState();
     // Opening the screen is the moment to look: nothing polls while it is shut.
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) net.refresh(widget.controller.save);
+      if (mounted) _loadSection();
     });
   }
 
@@ -49,8 +49,15 @@ class _SocialViewState extends State<SocialView> {
   void didUpdateWidget(SocialView oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.section != widget.section) {
-      net.refresh(widget.controller.save);
+      _loadSection();
     }
+  }
+
+  Future<void> _loadSection() {
+    if (widget.section == SocialTab.leaderboards) {
+      return net.openLeaderboards(widget.controller.save);
+    }
+    return net.refresh(widget.controller.save);
   }
 
   @override
@@ -80,14 +87,15 @@ class _SocialViewState extends State<SocialView> {
         if (!net.isSignedIn) {
           return const SignedOutNotice(title: 'Leaderboards', prompt: signInPrompt);
         }
-        return _LeaderboardTab(multiplayer: net);
+        return _LeaderboardTab(controller: widget.controller, multiplayer: net);
     }
   }
 }
 
 class _LeaderboardTab extends StatelessWidget {
-  const _LeaderboardTab({required this.multiplayer});
+  const _LeaderboardTab({required this.controller, required this.multiplayer});
 
+  final GameController controller;
   final MultiplayerController multiplayer;
 
   @override
@@ -112,6 +120,16 @@ class _LeaderboardTab extends StatelessWidget {
             if (key != null) multiplayer.selectBoard(key);
           },
         ),
+        const SizedBox(height: 10),
+        GameButton(
+          label: 'Update my ranking',
+          onPressed: multiplayer.busy || !multiplayer.canPressUpdateRanking
+              ? null
+              : () => multiplayer.updateRanking(controller.save),
+        ),
+        const SizedBox(height: 6),
+        MutedText(multiplayer.rankingUpdateHintText),
+        SocialNotice(notice: multiplayer.notice),
         const SizedBox(height: 10),
         if (rows.isEmpty)
           MutedText(emptyBoardMessage(multiplayer.boardKey))

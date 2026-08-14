@@ -4,7 +4,6 @@ import { parseSave, type SaveStorage, writeSave } from '../save/saveStore'
 import { SAVE_STORAGE_KEY } from '../save/types'
 import { getSession } from './auth'
 import { getLocalBackend, getSupabaseClient, multiplayerMode } from './client'
-import { submitLeaderboardFromSave } from './leaderboards'
 import {
   cloudSaveRecordFrom,
   isRemoteSaveNewer,
@@ -55,7 +54,6 @@ export async function pushCloudSave(
       force: options?.force,
     })
     if (!result.ok) return { ok: false, reason: result.reason, remote: result.remote }
-    getLocalBackend().submitLeaderboardSnapshot(db, session.userId, stamped)
     getLocalBackend().upsertProfile(session.userId, {
       appearance: stamped.appearance,
       username: stamped.characterName || session.username,
@@ -78,7 +76,6 @@ export async function pushCloudSave(
     .from(REMOTE_TABLES.saves)
     .upsert(saveRowFor(session.userId, stamped))
   if (error) return { ok: false, reason: error.message }
-  await submitLeaderboardFromSave(db, stamped)
   return { ok: true, save: stamped, source: 'uploaded' }
 }
 

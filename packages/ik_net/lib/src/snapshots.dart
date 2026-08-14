@@ -26,7 +26,7 @@ class LeaderboardSnapshotValues {
   };
 }
 
-/// Every board value a save implies, submitted on logout or a safe sync.
+/// Every board value a save implies, submitted on a ranking update.
 LeaderboardSnapshotValues buildLeaderboardSnapshot(GameDatabase db, PlayerSave save) {
   num crittersCollected = 0;
   for (final row in save.critterCollections) {

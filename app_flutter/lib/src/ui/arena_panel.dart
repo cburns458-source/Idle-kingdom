@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:ik_net/ik_net.dart';
 import 'package:ik_rules/ik_rules.dart';
@@ -181,7 +179,6 @@ class _ArenaPanelState extends State<ArenaPanel> {
     _rankedApplied = true;
     final next = applyRankedPvpResult(save, outcome == 'win', controller.session.clock());
     controller.commit(next);
-    unawaited(multiplayer.service.submitLeaderboard(controller.db, next));
   }
 
   void _skipFight() {

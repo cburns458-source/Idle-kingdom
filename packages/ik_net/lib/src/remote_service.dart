@@ -139,7 +139,6 @@ class RemoteMultiplayerService implements MultiplayerService {
     ]);
     if (refused != null) return CloudSyncResult.failed(refused);
 
-    await submitLeaderboard(db, stamped);
     return CloudSyncResult.ok(stamped, CloudSyncSource.uploaded);
   }
 

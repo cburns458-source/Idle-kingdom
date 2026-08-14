@@ -81,11 +81,13 @@ void main() {
     expect(pulled.ok, isTrue);
     expect(pulled.save!.gold, 250);
 
-    // Pushing also refreshes the profile and submits the boards.
+    // Pushing refreshes the profile. Boards stay untouched until a ranking update.
     final profile = await service.profile(service.session!.userId);
     expect(profile?.username, 'Hero');
-    final board = await service.leaderboard(boardTotalLevel);
-    expect(board.single.username, 'Hero');
+    expect(await service.leaderboard(boardTotalLevel), isEmpty);
+
+    await service.submitLeaderboard(db, pushed.save!);
+    expect((await service.leaderboard(boardTotalLevel)).single.username, 'Hero');
   });
 
   test('stops a sync when the stored save is newer', () async {

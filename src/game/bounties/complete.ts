@@ -1,7 +1,6 @@
 import type { GameDatabase } from '../data/types'
 import { getSession, isSignedIn } from '../multiplayer/auth'
 import { getLocalBackend } from '../multiplayer/client'
-import { submitLeaderboardFromSave } from '../multiplayer/leaderboards'
 import { inventoryCount } from '../production/recipes'
 import type { PlayerSave } from '../save/types'
 import { isBountyReadyToClaim, syncBountyHour } from './progress'
@@ -107,7 +106,7 @@ export type BountyTurnInResult =
 
 /** Plaza notice-board turn-in, against the signed-in player's backend. */
 export function turnInBounty(
-  db: GameDatabase,
+  _db: GameDatabase,
   save: PlayerSave,
   bounty: BountyDefinition,
   nowMs: number = Date.now(),
@@ -126,8 +125,6 @@ export function turnInBounty(
   const firstCompleter =
     claimResult.firstCompleter && claimResult.claim.userId === session.userId
   const rewarded = applyBountyReward(prepared.save, bounty, firstCompleter)
-
-  void submitLeaderboardFromSave(db, rewarded.save)
 
   return {
     ok: true,

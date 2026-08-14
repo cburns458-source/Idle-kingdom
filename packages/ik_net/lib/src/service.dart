@@ -242,7 +242,6 @@ class LocalMultiplayerService implements MultiplayerService {
     if (!written.ok) {
       return CloudSyncResult.failed(written.reason!, remote: written.remote);
     }
-    _backend.submitLeaderboardSnapshot(db, current.userId, stamped);
     _backend.upsertProfile(
       current.userId,
       appearance: stamped.appearance,
