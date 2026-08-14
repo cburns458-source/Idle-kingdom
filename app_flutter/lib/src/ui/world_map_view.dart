@@ -1,10 +1,14 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:ik_content/ik_content.dart';
 import 'package:ik_rules/ik_rules.dart';
 
 import '../content/asset_paths.dart';
 import '../session/game_controller.dart';
+import '../session/map_walk.dart';
 import '../theme.dart';
+import 'player_sprite.dart';
 
 /// The map: nodes over the map art, and a panel for whichever one is selected.
 class WorldMapView extends StatelessWidget {
@@ -18,6 +22,9 @@ class WorldMapView extends StatelessWidget {
     required this.onTravel,
     this.onOpenHere,
     this.hiddenLocationIds = const <String>[],
+    this.walkFromId,
+    this.walkToId,
+    this.walkProgress,
   });
 
   final GameController controller;
@@ -33,6 +40,15 @@ class WorldMapView extends StatelessWidget {
   /// Nodes to omit — the Guild Hall until the player has joined a guild.
   final List<String> hiddenLocationIds;
 
+  /// The node the walking sprite left, when a map walk is in flight.
+  final String? walkFromId;
+
+  /// The node the walking sprite is heading to.
+  final String? walkToId;
+
+  /// 0–1 along the walk. Null when nobody is walking.
+  final double? walkProgress;
+
   @override
   Widget build(BuildContext context) {
     final save = controller.save;
@@ -45,6 +61,9 @@ class WorldMapView extends StatelessWidget {
     final selected = selectedLocationId == null
         ? null
         : controller.indexes.locationsById[selectedLocationId!];
+    final walking = walkProgress != null && walkFromId != null && walkToId != null;
+    final fromRow = walkFromId == null ? null : controller.indexes.locationsById[walkFromId!];
+    final toRow = walkToId == null ? null : controller.indexes.locationsById[walkToId!];
 
     // The panel floats over the art rather than sitting under it, so opening it
     // never resizes the map.
@@ -59,14 +78,22 @@ class WorldMapView extends StatelessWidget {
         for (final node in nodes)
           _MapNode(
             location: node,
-            isHere: node.locationId == save.currentLocationId,
+            isHere: !walking && node.locationId == save.currentLocationId,
             isSelected: node.locationId == selectedLocationId,
             onTap: () => onSelect(node.locationId),
-            onDoubleTap: controller.isRecovering
+            onDoubleTap: controller.isRecovering || walking
                 ? null
                 : node.locationId == save.currentLocationId
                 ? onOpenHere
                 : () => onTravel(node.locationId),
+          ),
+        if (walking)
+          _MapWalker(
+            from: positionOnBrowseMap(walkFromId!, browseMapId, fromRow),
+            to: positionOnBrowseMap(walkToId!, browseMapId, toRow),
+            progress: walkProgress!,
+            appearance: save.appearance,
+            bytes: controller.localPlayerPng,
           ),
         if (browseMapId != mainMapId)
           Positioned(
@@ -91,10 +118,42 @@ class WorldMapView extends StatelessWidget {
             selected: selected,
             isHere: selected?.locationId == save.currentLocationId,
             onTravel: onTravel,
-            canTravel: !controller.isRecovering,
+            canTravel: !controller.isRecovering && !walking,
           ),
         ),
       ],
+    );
+  }
+}
+
+/// A shrunk player sprite that walks from one node to another.
+class _MapWalker extends StatelessWidget {
+  const _MapWalker({
+    required this.from,
+    required this.to,
+    required this.progress,
+    required this.appearance,
+    this.bytes,
+  });
+
+  final NodePosition from;
+  final NodePosition to;
+  final double progress;
+  final PlayerAppearance appearance;
+  final Uint8List? bytes;
+
+  @override
+  Widget build(BuildContext context) {
+    final alignment = Alignment.lerp(alignmentOf(from), alignmentOf(to), progress)!;
+    return Align(
+      alignment: alignment,
+      child: Semantics(
+        label: 'Travelling',
+        child: Transform.rotate(
+          angle: mapWalkWobbleRadians(progress),
+          child: PlayerSprite(appearance: appearance, bytes: bytes, width: 28, height: 28),
+        ),
+      ),
     );
   }
 }

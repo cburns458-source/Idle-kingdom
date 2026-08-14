@@ -7,6 +7,7 @@ import 'package:ik_rules/ik_rules.dart';
 import 'package:ik_runtime/ik_runtime.dart';
 
 import 'local_player_art.dart';
+import 'map_travel_pref.dart';
 
 /// A journey in progress, which the client animates itself.
 class TravelInFlight {
@@ -66,8 +67,13 @@ class CraftPopup {
 /// intents call the shared rules and hand the result to [GameSession.apply], so
 /// nothing on a screen can put a save into storage by another route.
 class GameController extends ChangeNotifier {
-  GameController({required this.database, required this.session, LocalPlayerArt? localArt})
-    : localArt = localArt ?? LocalPlayerArt();
+  GameController({
+    required this.database,
+    required this.session,
+    LocalPlayerArt? localArt,
+    MapTravelPref? mapTravel,
+  }) : localArt = localArt ?? LocalPlayerArt(),
+       mapTravel = mapTravel ?? MapTravelPref();
 
   final LoadedDatabase database;
 
@@ -76,6 +82,9 @@ class GameController extends ChangeNotifier {
 
   /// Client-only PNG override for this device's player sprite.
   final LocalPlayerArt localArt;
+
+  /// Client-only toggle for the map-node travel tween.
+  final MapTravelPref mapTravel;
 
   /// How many completed actions the reward strip keeps.
   static const int _rewardHistory = 3;
@@ -214,6 +223,15 @@ class GameController extends ChangeNotifier {
 
   /// Bytes of the local PNG override, if this device has one.
   Uint8List? get localPlayerPng => localArt.bytes;
+
+  /// Whether the map plays a short walk before the player arrives.
+  bool get mapTravelAnimation => mapTravel.enabled;
+
+  void setMapTravelAnimation(bool value) {
+    if (mapTravel.enabled == value) return;
+    mapTravel.setEnabled(value);
+    notifyListeners();
+  }
 
   /// Stores a PNG for this client only. Returns a reason when it is refused.
   String? applyLocalPlayerPng(Uint8List bytes) {

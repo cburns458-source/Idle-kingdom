@@ -66,6 +66,7 @@ void main() {
       database,
       seed: startedCharacter(database).copyWith(currentLocationId: 'LOC-0009'),
     );
+    controller.setMapTravelAnimation(false);
     addTearDown(controller.dispose);
     await pumpShell(tester, controller);
 
@@ -77,6 +78,51 @@ void main() {
     await tester.pump();
 
     expect(controller.save.currentLocationId, 'LOC-0001');
+  });
+
+  testWidgets('map travel walks a sprite, then arrives', (tester) async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(currentLocationId: 'LOC-0009'),
+    );
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller);
+
+    await tester.tap(find.byTooltip('Open world map'));
+    await tester.pump();
+    await tester.tap(find.text('The Farm'));
+    await tester.pump();
+    await tester.tap(find.text('Travel'));
+    await tester.pump();
+
+    expect(controller.save.currentLocationId, 'LOC-0009');
+    expect(find.bySemanticsLabel('Travelling'), findsOne);
+
+    await tester.pump(const Duration(seconds: 4));
+    expect(controller.save.currentLocationId, 'LOC-0001');
+    expect(find.text('The Farm'), findsWidgets);
+  });
+
+  testWidgets('leaving the map mid-walk cancels travel', (tester) async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(currentLocationId: 'LOC-0009'),
+    );
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller);
+
+    await tester.tap(find.byTooltip('Open world map'));
+    await tester.pump();
+    await tester.tap(find.text('The Farm'));
+    await tester.pump();
+    await tester.tap(find.text('Travel'));
+    await tester.pump();
+    expect(find.bySemanticsLabel('Travelling'), findsOne);
+
+    await tester.tap(find.text('Inventory'));
+    await tester.pump();
+    expect(controller.save.currentLocationId, 'LOC-0009');
+    expect(find.bySemanticsLabel('Travelling'), findsNothing);
   });
 
   testWidgets('the map icon always opens the world map', (tester) async {
@@ -144,7 +190,9 @@ void main() {
     expect(find.text('Combat'), findsWidgets);
   });
 
-  testWidgets('the chin nest opens Settings, Log, Leaderboards, Guilds, and Account', (tester) async {
+  testWidgets('the chin nest opens Settings, Log, Leaderboards, Guilds, and Account', (
+    tester,
+  ) async {
     final controller = buildController(database, seed: startedCharacter(database));
     addTearDown(controller.dispose);
     await pumpShell(tester, controller);
@@ -167,6 +215,19 @@ void main() {
     await tester.tap(find.text('Log'));
     await tester.pump();
     expect(find.text('Skill milestones unlocked on this save.'), findsOne);
+  });
+
+  testWidgets('Settings can turn off the map travel walk', (tester) async {
+    final controller = buildController(database, seed: startedCharacter(database));
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller);
+
+    expect(controller.mapTravelAnimation, isTrue);
+    await openChinScreen(tester, 'Settings');
+    expect(find.text('Map travel animation'), findsOne);
+    await tester.tap(find.byType(Switch).first);
+    await tester.pump();
+    expect(controller.mapTravelAnimation, isFalse);
   });
 
   testWidgets('chat opens upward from the bottom-right', (tester) async {

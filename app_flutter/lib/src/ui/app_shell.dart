@@ -3,6 +3,7 @@ import 'package:flutter/scheduler.dart';
 import 'package:ik_rules/ik_rules.dart';
 
 import '../session/game_controller.dart';
+import '../session/map_walk.dart';
 import '../session/multiplayer_controller.dart';
 import '../theme.dart';
 import 'away_summary_sheet.dart';
@@ -53,6 +54,9 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
   bool _wardrobeOpen = false;
   bool _nearbyOpen = false;
   final GlobalKey _toastKey = GlobalKey();
+  AnimationController? _mapWalk;
+  String? _walkFromId;
+  String? _walkToId;
 
   GameController get controller => widget.controller;
   MultiplayerController get multiplayer => widget.multiplayer;
@@ -69,8 +73,16 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
   @override
   void dispose() {
     _ticker?.dispose();
+    _mapWalk?.dispose();
     multiplayer.stopPolling();
     super.dispose();
+  }
+
+  void _cancelMapWalk() {
+    _mapWalk?.dispose();
+    _mapWalk = null;
+    _walkFromId = null;
+    _walkToId = null;
   }
 
   /// Whether Local chat should use the shared Citadel room.
@@ -92,6 +104,7 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
   }
 
   void _showMap() {
+    _cancelMapWalk();
     setState(() {
       _browseMapId = mainMapId;
       _selectedLocationId = controller.save.currentLocationId;
@@ -101,6 +114,7 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
 
   /// Opens the district map behind the gateway the player is standing on.
   void _browseSubMap(String mapId) {
+    _cancelMapWalk();
     setState(() {
       _browseMapId = mapId;
       _selectedLocationId = null;
@@ -108,13 +122,77 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
     });
   }
 
-  void _travelTo(String locationId) {
+  void _selectScreen(GameScreen screen) {
+    if (_screen == GameScreen.map && screen != GameScreen.map) {
+      _cancelMapWalk();
+    }
+    setState(() => _screen = screen);
+  }
+
+  void _browseMap(String mapId) {
+    _cancelMapWalk();
+    setState(() {
+      _browseMapId = mapId;
+      _selectedLocationId = null;
+    });
+  }
+
+  void _arrive(String locationId) {
+    _cancelMapWalk();
     if (!controller.travelTo(locationId, _browseMapId)) return;
     setState(() {
       _browseMapId = _mapIdForCurrentLocation();
       _selectedLocationId = null;
       _screen = GameScreen.location;
     });
+  }
+
+  void _travelTo(String locationId) {
+    if (controller.isRecovering) return;
+    if (!canTravelTo(
+      controller.db,
+      controller.save.currentLocationId,
+      locationId,
+      _browseMapId,
+      controller.save.unlockedLocationIds,
+    )) {
+      return;
+    }
+    if (!controller.mapTravelAnimation) {
+      _arrive(locationId);
+      return;
+    }
+
+    final fromId = mapWalkStartLocationId(
+      controller.db,
+      controller.save.currentLocationId,
+      _browseMapId,
+    );
+    final from = controller.indexes.locationsById[fromId];
+    final to = controller.indexes.locationsById[locationId];
+    final durationMs = mapWalkDurationMs(
+      positionOnBrowseMap(fromId, _browseMapId, from),
+      positionOnBrowseMap(locationId, _browseMapId, to),
+    );
+
+    _mapWalk?.dispose();
+    _walkFromId = fromId;
+    _walkToId = locationId;
+    _mapWalk =
+        AnimationController(
+            vsync: this,
+            duration: Duration(milliseconds: durationMs.round()),
+          )
+          ..addListener(() {
+            if (mounted) setState(() {});
+          })
+          ..addStatusListener((status) {
+            if (status == AnimationStatus.completed && _walkToId == locationId) {
+              _arrive(locationId);
+            }
+          })
+          ..forward();
+    setState(() {});
   }
 
   /// Opening the wardrobe is also what retires the portrait's hint.
@@ -194,7 +272,7 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
             BottomNav(
               screen: _screen,
               locationName: controller.location?.displayName ?? 'Unknown',
-              onSelect: (screen) => setState(() => _screen = screen),
+              onSelect: _selectScreen,
             ),
           ],
         ),
@@ -264,13 +342,18 @@ class _AppShellState extends State<AppShell> with SingleTickerProviderStateMixin
           browseMapId: _browseMapId,
           selectedLocationId: _selectedLocationId,
           onSelect: (locationId) => setState(() => _selectedLocationId = locationId),
-          onBrowseMap: (mapId) => setState(() {
-            _browseMapId = mapId;
-            _selectedLocationId = null;
-          }),
+          onBrowseMap: _browseMap,
           onTravel: _travelTo,
-          onOpenHere: () => setState(() => _screen = GameScreen.location),
-          hiddenLocationIds: multiplayer.guildId == null ? const <String>[guildHallLocationId] : const <String>[],
+          onOpenHere: () {
+            _cancelMapWalk();
+            setState(() => _screen = GameScreen.location);
+          },
+          hiddenLocationIds: multiplayer.guildId == null
+              ? const <String>[guildHallLocationId]
+              : const <String>[],
+          walkFromId: _walkFromId,
+          walkToId: _walkToId,
+          walkProgress: _mapWalk?.value,
         );
       case GameScreen.skills:
         return SkillsView(controller: controller);

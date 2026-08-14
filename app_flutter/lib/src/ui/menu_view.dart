@@ -134,6 +134,26 @@ class _MenuViewState extends State<MenuView> {
           ),
         ),
         const SizedBox(height: 16),
+        GamePanel(
+          child: Row(
+            children: [
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Map travel animation', style: TextStyle(fontWeight: FontWeight.w700)),
+                    MutedText('Walk a small sprite to the destination before arriving.'),
+                  ],
+                ),
+              ),
+              Switch(
+                value: controller.mapTravelAnimation,
+                onChanged: controller.setMapTravelAnimation,
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
         ListenableBuilder(
           listenable: widget.multiplayer,
           builder: (context, _) {
