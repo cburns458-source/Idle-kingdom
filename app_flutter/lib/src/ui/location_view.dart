@@ -270,11 +270,12 @@ class _LocationViewState extends State<LocationView> {
                       builder: (context, rest) {
                         // The two together always leave the art some room, so
                         // the column cannot overflow on a short window.
-                        final stageMax = rest.maxHeight * 0.5;
-                        const collapsedBand = 176.0;
-                        final bandMax = _bandExpanded
-                            ? rest.maxHeight * 0.86
-                            : collapsedBand;
+                        const collapsedBand = 220.0;
+                        final bandMax = ( _bandExpanded
+                                ? rest.maxHeight * 0.86
+                                : collapsedBand)
+                            .clamp(72.0, rest.maxHeight * (stage != null ? 0.42 : 0.55));
+                        final stageMax = (rest.maxHeight - bandMax).clamp(0.0, rest.maxHeight);
                         return Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
@@ -315,7 +316,7 @@ class _LocationViewState extends State<LocationView> {
                                   crossAxisAlignment: CrossAxisAlignment.stretch,
                                   children: [
                                     Align(
-                                      alignment: Alignment.centerRight,
+                                      alignment: Alignment.centerLeft,
                                       child: IconButton(
                                         tooltip: _bandExpanded ? 'Collapse list' : 'Expand list',
                                         onPressed: () =>
@@ -331,7 +332,7 @@ class _LocationViewState extends State<LocationView> {
                                     Expanded(
                                       child: SingleChildScrollView(
                                         clipBehavior: Clip.hardEdge,
-                                        padding: const EdgeInsets.fromLTRB(13, 0, 13, 12),
+                                        padding: const EdgeInsets.fromLTRB(13, 0, 52, 12),
                                         child: Column(
                                           crossAxisAlignment: CrossAxisAlignment.stretch,
                                           children: [
@@ -539,8 +540,9 @@ class _LocationViewState extends State<LocationView> {
   }
 
   List<Widget> _guildHall() {
-    if (!locationHasGuildHall(controller.location) ||
-        widget.multiplayer.guildId == null) {
+    if (!locationHasGuildHall(controller.location)) return const [];
+    if (widget.multiplayer.guildId == null &&
+        controller.save.currentLocationId != guildHallLocationId) {
       return const [];
     }
     return [

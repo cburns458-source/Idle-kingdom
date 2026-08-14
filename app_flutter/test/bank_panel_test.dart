@@ -76,7 +76,10 @@ void main() {
   });
 
   testWidgets('offers the bank at Town and hides it in the Meadow', (tester) async {
-    final town = buildController(database, seed: startedCharacter(database));
+    final town = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(currentLocationId: townBankId),
+    );
     addTearDown(town.dispose);
     await pumpPanel(
       tester,

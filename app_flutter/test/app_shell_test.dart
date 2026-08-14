@@ -79,7 +79,7 @@ void main() {
     expect(controller.save.currentLocationId, 'LOC-0001');
   });
 
-  testWidgets('the map icon opens the district, then the world map', (tester) async {
+  testWidgets('the map icon always opens the world map', (tester) async {
     final controller = buildController(
       database,
       seed: startedCharacter(database).copyWith(currentLocationId: 'LOC-0023'),
@@ -88,14 +88,6 @@ void main() {
     await pumpShell(tester, controller);
 
     expect(find.text('Kitchen'), findsWidgets);
-    await tester.tap(find.byTooltip('Open world map'));
-    await tester.pump();
-
-    expect(find.text('Back to the world map'), findsNothing);
-    expect(find.text('The Farm'), findsNothing);
-    expect(find.text('Kitchen'), findsWidgets);
-    expect(find.byTooltip('Open world map'), findsOne);
-
     await tester.tap(find.byTooltip('Open world map'));
     await tester.pump();
 
@@ -177,7 +169,7 @@ void main() {
     expect(find.text('Skill milestones unlocked on this save.'), findsOne);
   });
 
-  testWidgets('chat opens from the HUD as a dropdown', (tester) async {
+  testWidgets('chat opens upward from the bottom-right', (tester) async {
     final controller = buildController(database, seed: startedCharacter(database));
     addTearDown(controller.dispose);
     await pumpShell(tester, controller);

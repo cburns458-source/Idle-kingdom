@@ -62,8 +62,8 @@ void main() {
     addTearDown(controller.dispose);
     await pumpShell(tester, controller, size: const Size(900, 2400));
 
-    await tester.tap(find.text('Open'));
-    await tester.pump();
+    await tapVisible(tester, find.byTooltip('Expand list'));
+    await tapVisible(tester, find.text('Open'));
 
     expect(find.text(bountySignInNotice), findsOne);
     expect(find.textContaining('Rotates in '), findsOne);
@@ -81,8 +81,8 @@ void main() {
     addTearDown(net.dispose);
     await pumpShell(tester, controller, multiplayer: net, size: const Size(900, 2400));
 
-    await tester.tap(find.text('Open'));
-    await tester.pump();
+    await tapVisible(tester, find.byTooltip('Expand list'));
+    await tapVisible(tester, find.text('Open'));
     await tester.pump();
 
     expect(find.text('Turn in'), findsWidgets);
@@ -104,14 +104,14 @@ void main() {
     addTearDown(net.dispose);
     await pumpShell(tester, controller, multiplayer: net, size: const Size(900, 2400));
 
-    await tester.tap(find.text('Open'));
-    await tester.pump();
+    await tapVisible(tester, find.byTooltip('Expand list'));
+    await tapVisible(tester, find.text('Post').first);
     await tester.pump();
 
     expect(find.text(bazaarEmptyHeading), findsOne);
 
     await tester.enterText(find.byType(TextField), 'Selling copper ore');
-    await tester.tap(find.text('Post'));
+    await tester.tap(find.widgetWithText(FilledButton, 'Post'));
     await tester.pump();
     await tester.pump();
 

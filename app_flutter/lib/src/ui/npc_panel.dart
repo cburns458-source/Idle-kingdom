@@ -244,6 +244,19 @@ class _NpcPanelState extends State<NpcPanel> {
             ],
           ),
           Text(conversation.description),
+          if (conversation.greeting case final greeting?) ...[
+            const SizedBox(height: 10),
+            Text(switch (greeting) {
+              MerchantGreeting(:final line) => line,
+              QuestPitchGreeting(:final line) => line,
+            }),
+            if (greeting case MerchantGreeting(:final detail) when detail != null) MutedText(detail),
+            const SizedBox(height: 8),
+            OutlinedButton(
+              onPressed: () => setState(() => _dialogue = greeting),
+              child: const Text('Talk'),
+            ),
+          ],
           if (conversation.mentor case final mentor?) ...[
             const SizedBox(height: 10),
             if (mentor.known)
@@ -254,10 +267,7 @@ class _NpcPanelState extends State<NpcPanel> {
           if (conversation.isMerchant && conversation.shopId != null) ...[
             const SizedBox(height: 10),
             OutlinedButton(
-              onPressed: () {
-                widget.onClose();
-                widget.onOpenShop?.call(conversation.shopId!);
-              },
+              onPressed: () => _dismissMerchant(thenOpenShop: conversation.shopId),
               child: const Text('Browse the shop'),
             ),
           ],

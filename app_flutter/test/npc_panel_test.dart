@@ -49,10 +49,12 @@ void main() {
     expect(find.textContaining('tips about artisanry'), findsOne);
     expect(find.text('11,000 Artisanry XP'), findsOne);
 
+    await tester.tap(find.text('Talk'));
+    await tester.pump();
     await tester.tap(find.text('Continue'));
     await tester.pump();
 
-    expect(closed, 1);
+    expect(closed, 0);
     expect(controller.save.claimedMerchantTipIds, [merchantId]);
     expect(getSkillProgress(controller.save, 'SKL-0012').level, greaterThan(1));
 
@@ -69,6 +71,8 @@ void main() {
       ),
     );
     expect(find.textContaining('already shared'), findsOne);
+    await tester.tap(find.text('Talk'));
+    await tester.pump();
     await tester.tap(find.text('Continue'));
     await tester.pump();
     expect(getSkillProgress(controller.save, 'SKL-0012').xp, xpAfterFirst);
@@ -117,6 +121,8 @@ void main() {
     addTearDown(controller.dispose);
 
     await pumpPanel(tester, NpcPanel(controller: controller, npc: npcOf(roseId), onClose: () {}));
+    await tester.tap(find.text('Start quest: Help the aspiring apothecary'));
+    await tester.pump();
     expect(find.textContaining('alchemy shop'), findsOne);
 
     await tester.tap(find.text('Not now'));
@@ -189,6 +195,8 @@ void main() {
       tester,
       NpcPanel(controller: controller, npc: npcOf('NPC-0011'), onClose: () {}),
     );
+    await tester.tap(find.text('Donate 25 gold'));
+    await tester.pump();
     expect(find.textContaining('coin purse'), findsOne);
     await tester.tap(find.text('Donate 25 gold'));
     await tester.pump();
