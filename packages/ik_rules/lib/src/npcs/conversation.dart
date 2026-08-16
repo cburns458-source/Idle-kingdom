@@ -153,6 +153,7 @@ class NpcQuestBlock {
     required this.status,
     required this.completedNote,
     required this.acceptLabel,
+    required this.donateLabel,
     required this.pitchLine,
     required this.lines,
     required this.progressLines,
@@ -160,6 +161,8 @@ class NpcQuestBlock {
     required this.goldRequired,
     required this.ready,
     required this.canAccept,
+    required this.canDonate,
+    required this.donated,
     required this.canTurnIn,
     required this.canTalk,
     required this.talkLabel,
@@ -178,6 +181,7 @@ class NpcQuestBlock {
   /// Replaces the objective list once the quest is done.
   final String completedNote;
   final String acceptLabel;
+  final String donateLabel;
 
   /// The giver's own words, shown before accepting. Null accepts straight away.
   final String? pitchLine;
@@ -187,6 +191,8 @@ class NpcQuestBlock {
   final num goldRequired;
   final bool ready;
   final bool canAccept;
+  final bool canDonate;
+  final bool donated;
   final bool canTurnIn;
   final bool canTalk;
   final String talkLabel;
@@ -203,6 +209,7 @@ class NpcQuestBlock {
     'status': status,
     'completedNote': completedNote,
     'acceptLabel': acceptLabel,
+    'donateLabel': donateLabel,
     'pitchLine': pitchLine,
     'lines': lines.map((line) => line.toJson()).toList(),
     'progressLines': progressLines.map((line) => line.toJson()).toList(),
@@ -210,6 +217,8 @@ class NpcQuestBlock {
     'goldRequired': goldRequired,
     'ready': ready,
     'canAccept': canAccept,
+    'canDonate': canDonate,
+    'donated': donated,
     'canTurnIn': canTurnIn,
     'canTalk': canTalk,
     'talkLabel': talkLabel,
@@ -286,9 +295,11 @@ NpcQuestBlock _questBlock(GameDatabase db, PlayerSave save, QuestRow quest, Stri
   final chose =
       hasQuestFlag(save, questId, 'choice:bribe') || hasQuestFlag(save, questId, 'choice:combat');
   final needsTalkFirst = parsed.talkNpcIds.contains(npcId) && !talked;
+  final donated = hasQuestFlag(save, questId, acceptGoldFlag);
+  final needsDonate = parsed.acceptGoldCost > 0 && !donated;
   String acceptLabel;
   if (parsed.acceptGoldCost > 0) {
-    acceptLabel = 'Donate ${jsLocaleNumber(parsed.acceptGoldCost)} gold';
+    acceptLabel = 'Start the quest $name?';
   } else if (pitch == null) {
     acceptLabel = 'Accept quest';
   } else {
@@ -301,13 +312,16 @@ NpcQuestBlock _questBlock(GameDatabase db, PlayerSave save, QuestRow quest, Stri
     status: status,
     completedNote: _completedNote(db, quest),
     acceptLabel: acceptLabel,
+    donateLabel: 'Donate ${jsLocaleNumber(parsed.acceptGoldCost)} gold',
     pitchLine: pitch,
     lines: objective.lines,
     progressLines: objective.progressLines,
     goldOwned: objective.goldOwned,
     goldRequired: objective.goldRequired,
     ready: objective.ready,
-    canAccept: isGiver && status == 'inactive',
+    canAccept: isGiver && status == 'inactive' && !needsDonate,
+    canDonate: isGiver && status == 'inactive' && needsDonate,
+    donated: donated,
     canTurnIn: turnInId == npcId && status == 'active',
     canTalk: status == 'active' && parsed.talkNpcIds.contains(npcId) && !talked,
     talkLabel: 'Talk',
@@ -365,7 +379,11 @@ NpcGreeting? _greetingFor(
   );
   final line = pitched?.pitchLine;
   if (pitched == null || line == null) return null;
-  return QuestPitchGreeting(questId: pitched.questId, line: line, acceptLabel: pitched.acceptLabel);
+  return QuestPitchGreeting(
+    questId: pitched.questId,
+    line: line,
+    acceptLabel: pitched.canDonate ? pitched.donateLabel : pitched.acceptLabel,
+  );
 }
 
 NpcConversation npcConversation(GameDatabase db, PlayerSave save, NpcRow npc) {
@@ -448,6 +466,18 @@ NpcActionResult acceptQuestFromNpc(GameDatabase db, PlayerSave save, String ques
   return NpcActionResult.ok(
     save: result.save!,
     message: 'Accepted: ${displayName is String ? displayName : 'quest'}.',
+  );
+}
+
+/// Pays AcceptGold without starting the quest.
+NpcActionResult donateForQuestFromNpc(GameDatabase db, PlayerSave save, String questId) {
+  final result = donateForQuest(db, save, questId);
+  if (!result.ok) return NpcActionResult.failed(result.reason!);
+  final quest = getQuest(db, questId);
+  final cost = parseStructuredObjectives(quest ?? const <String, Object?>{}).acceptGoldCost;
+  return NpcActionResult.ok(
+    save: result.save!,
+    message: 'Donated ${jsLocaleNumber(cost)} gold.',
   );
 }
 

@@ -6,9 +6,12 @@ import {
 } from '../quests/progress'
 import {
   acceptQuest,
+  ACCEPT_GOLD_FLAG,
   applyQuestBranchSkillXp,
   bribeQuestNpc,
   chooseQuestCombatRoute,
+  donateForQuest,
+  getQuest,
   getQuestProgress,
   questsTouchingNpc,
   type QuestRow,
@@ -124,6 +127,7 @@ export interface NpcQuestBlock {
   /** Replaces the objective list once the quest is done. */
   completedNote: string
   acceptLabel: string
+  donateLabel: string
   /** The giver's own words, shown before accepting. Null accepts straight away. */
   pitchLine: string | null
   lines: NpcQuestObjectiveLine[]
@@ -132,6 +136,8 @@ export interface NpcQuestBlock {
   goldRequired: number
   ready: boolean
   canAccept: boolean
+  canDonate: boolean
+  donated: boolean
   canTurnIn: boolean
   canTalk: boolean
   talkLabel: string
@@ -185,9 +191,11 @@ function questBlock(
   const chose =
     hasQuestFlag(save, questId, 'choice:bribe') || hasQuestFlag(save, questId, 'choice:combat')
   const needsTalkFirst = parsed.talkNpcIds.includes(npcId) && !talked
+  const donated = hasQuestFlag(save, questId, ACCEPT_GOLD_FLAG)
+  const needsDonate = parsed.acceptGoldCost > 0 && !donated
   let acceptLabel = 'Accept quest'
   if (parsed.acceptGoldCost > 0) {
-    acceptLabel = `Donate ${parsed.acceptGoldCost.toLocaleString()} gold`
+    acceptLabel = `Start the quest ${quest['Display Name']}?`
   } else if (pitch) {
     acceptLabel = `Start quest: ${quest['Display Name']}`
   }
@@ -198,13 +206,16 @@ function questBlock(
     status,
     completedNote: completedNote(db, quest),
     acceptLabel,
+    donateLabel: `Donate ${parsed.acceptGoldCost.toLocaleString()} gold`,
     pitchLine: pitch,
     lines: objective.lines,
     progressLines: objective.progressLines,
     goldOwned: objective.goldOwned,
     goldRequired: objective.goldRequired,
     ready: objective.ready,
-    canAccept: isGiver && status === 'inactive',
+    canAccept: isGiver && status === 'inactive' && !needsDonate,
+    canDonate: isGiver && status === 'inactive' && needsDonate,
+    donated,
     canTurnIn: turnInId === npcId && status === 'active',
     canTalk: status === 'active' && parsed.talkNpcIds.includes(npcId) && !talked,
     talkLabel: 'Talk',
@@ -264,7 +275,7 @@ function greetingFor(
     kind: 'quest_pitch',
     questId: pitched.questId,
     line: pitched.pitchLine,
-    acceptLabel: pitched.acceptLabel,
+    acceptLabel: pitched.canDonate ? pitched.donateLabel : pitched.acceptLabel,
   }
 }
 
@@ -349,6 +360,23 @@ export function acceptQuestFromNpc(
     ok: true,
     save: result.save,
     message: `Accepted: ${quest?.['Display Name'] ?? 'quest'}.`,
+  }
+}
+
+/** Pays AcceptGold without starting the quest. */
+export function donateForQuestFromNpc(
+  db: GameDatabase,
+  save: PlayerSave,
+  questId: string,
+): { ok: true; save: PlayerSave; message: string } | { ok: false; reason: string } {
+  const result = donateForQuest(db, save, questId)
+  if (!result.ok) return result
+  const quest = getQuest(db, questId)
+  const cost = parseStructuredObjectives(quest ?? { 'Quest ID': questId }).acceptGoldCost
+  return {
+    ok: true,
+    save: result.save,
+    message: `Donated ${cost.toLocaleString()} gold.`,
   }
 }
 

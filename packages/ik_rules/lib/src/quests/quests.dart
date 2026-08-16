@@ -14,6 +14,9 @@ import '../world/submaps.dart';
 import 'objectives.dart';
 import 'progress.dart';
 
+/// Set when the player pays AcceptGold without starting the quest yet.
+const String acceptGoldFlag = 'accept-gold';
+
 /// Quests live in an untyped content table, so rows stay raw maps here.
 typedef QuestRow = Map<String, Object?>;
 
@@ -82,25 +85,68 @@ QuestActionResult acceptQuest(
   if (progress.status == 'completed' && !isQuestRepeatable(quest)) {
     return const QuestActionResult.failed('This quest is already completed.');
   }
-  if (parsed.acceptGoldCost > 0 && save.gold < parsed.acceptGoldCost) {
+  if (parsed.acceptGoldCost > 0 && !hasQuestFlag(save, questId, acceptGoldFlag)) {
     return QuestActionResult.failed(
-      'Need ${jsLocaleNumber(parsed.acceptGoldCost)} gold to start this quest.',
+      'Donate ${jsLocaleNumber(parsed.acceptGoldCost)} gold before starting this quest.',
     );
   }
 
-  var next = save;
-  if (parsed.acceptGoldCost > 0) {
-    next = next.copyWith(gold: next.gold - parsed.acceptGoldCost);
-  }
-
   return QuestActionResult.ok(
-    next.copyWith(
+    save.copyWith(
       quests: [
-        ...next.quests.where((row) => row.questId != questId),
-        QuestProgress(questId: questId, status: 'active', progress: 0),
+        ...save.quests.where((row) => row.questId != questId),
+        QuestProgress(
+          questId: questId,
+          status: 'active',
+          progress: 0,
+          counters: getQuestProgress(save, questId).counters,
+        ),
       ],
     ),
   );
+}
+
+/// Pays AcceptGold and remembers it. Does not start the quest.
+QuestActionResult donateForQuest(
+  GameDatabase db,
+  PlayerSave save,
+  String questId, {
+  bool ignoreLocation = false,
+}) {
+  final quest = getQuest(db, questId);
+  if (quest == null) return const QuestActionResult.failed('Quest not found.');
+  final parsed = parseStructuredObjectives(quest);
+  if (parsed.acceptGoldCost <= 0) {
+    return const QuestActionResult.failed('This quest does not ask for gold.');
+  }
+  if (!ignoreLocation) {
+    final npc = db.npcs.firstWhereOrNull((row) => row.raw['NPC ID'] == quest['NPC ID']);
+    if (npc == null || npc.raw['Location ID'] != save.currentLocationId) {
+      return const QuestActionResult.failed('Speak with the quest giver at their location.');
+    }
+  }
+  final progress = getQuestProgress(save, questId);
+  if (progress.status == 'active') {
+    return const QuestActionResult.failed('This quest is already active.');
+  }
+  if (progress.status == 'completed' && !isQuestRepeatable(quest)) {
+    return const QuestActionResult.failed('This quest is already completed.');
+  }
+  if (hasQuestFlag(save, questId, acceptGoldFlag)) {
+    return const QuestActionResult.failed('You already donated.');
+  }
+  if (save.gold < parsed.acceptGoldCost) {
+    return QuestActionResult.failed(
+      'Need ${jsLocaleNumber(parsed.acceptGoldCost)} gold to donate.',
+    );
+  }
+
+  final next = recordQuestFlag(
+    save.copyWith(gold: save.gold - parsed.acceptGoldCost),
+    questId,
+    acceptGoldFlag,
+  );
+  return QuestActionResult.ok(next);
 }
 
 class QuestCompletion {

@@ -11,8 +11,12 @@ import { parseStructuredObjectives, questObjectiveProgress } from './objectives'
 import {
   applyQuestLearnRecipeProgress,
   hasQuestFlag,
+  recordQuestFlag,
   setQuestFlag,
 } from './progress'
+
+/** Set when the player pays AcceptGold without starting the quest yet. */
+export const ACCEPT_GOLD_FLAG = 'accept-gold'
 
 export interface QuestRow {
   'Quest ID': string
@@ -95,21 +99,67 @@ export function acceptQuest(
   if (progress.status === 'completed' && !isQuestRepeatable(quest)) {
     return { ok: false, reason: 'This quest is already completed.' }
   }
-  if (parsed.acceptGoldCost > 0 && save.gold < parsed.acceptGoldCost) {
+  if (parsed.acceptGoldCost > 0 && !hasQuestFlag(save, questId, ACCEPT_GOLD_FLAG)) {
     return {
       ok: false,
-      reason: `Need ${parsed.acceptGoldCost.toLocaleString()} gold to start this quest.`,
+      reason: `Donate ${parsed.acceptGoldCost.toLocaleString()} gold before starting this quest.`,
     }
   }
 
-  let next = save
-  if (parsed.acceptGoldCost > 0) {
-    next = { ...next, gold: next.gold - parsed.acceptGoldCost }
+  const nextQuests = save.quests.filter((row) => row.questId !== questId)
+  nextQuests.push({
+    questId,
+    status: 'active',
+    progress: 0,
+    counters: getQuestProgress(save, questId).counters,
+  })
+  return { ok: true, save: { ...save, quests: nextQuests } }
+}
+
+/** Pays AcceptGold and remembers it. Does not start the quest. */
+export function donateForQuest(
+  db: GameDatabase,
+  save: PlayerSave,
+  questId: string,
+  options: { ignoreLocation?: boolean } = {},
+): { ok: true; save: PlayerSave } | { ok: false; reason: string } {
+  const quest = getQuest(db, questId)
+  if (!quest) return { ok: false, reason: 'Quest not found.' }
+  const parsed = parseStructuredObjectives(quest)
+  if (parsed.acceptGoldCost <= 0) {
+    return { ok: false, reason: 'This quest does not ask for gold.' }
+  }
+  if (!options.ignoreLocation) {
+    const npc = db.NPCs.find((row) => row['NPC ID'] === quest['NPC ID'])
+    if (!npc || npc['Location ID'] !== save.currentLocationId) {
+      return { ok: false, reason: 'Speak with the quest giver at their location.' }
+    }
+  }
+  const progress = getQuestProgress(save, questId)
+  if (progress.status === 'active') {
+    return { ok: false, reason: 'This quest is already active.' }
+  }
+  if (progress.status === 'completed' && !isQuestRepeatable(quest)) {
+    return { ok: false, reason: 'This quest is already completed.' }
+  }
+  if (hasQuestFlag(save, questId, ACCEPT_GOLD_FLAG)) {
+    return { ok: false, reason: 'You already donated.' }
+  }
+  if (save.gold < parsed.acceptGoldCost) {
+    return {
+      ok: false,
+      reason: `Need ${parsed.acceptGoldCost.toLocaleString()} gold to donate.`,
+    }
   }
 
-  const nextQuests = next.quests.filter((row) => row.questId !== questId)
-  nextQuests.push({ questId, status: 'active', progress: 0 })
-  return { ok: true, save: { ...next, quests: nextQuests } }
+  return {
+    ok: true,
+    save: recordQuestFlag(
+      { ...save, gold: save.gold - parsed.acceptGoldCost },
+      questId,
+      ACCEPT_GOLD_FLAG,
+    ),
+  }
 }
 
 export interface QuestRewardLine {

@@ -4,6 +4,7 @@ import 'package:ik_rules/ik_rules.dart';
 import '../content/asset_paths.dart';
 import '../session/game_controller.dart';
 import '../theme.dart';
+import 'game_image.dart';
 
 /// The critter waiting at this location, tappable on top of the art.
 ///
@@ -39,12 +40,7 @@ class CritterOverlay extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Image.asset(
-                critterAssetPath(critter.internalKey),
-                width: 40,
-                height: 40,
-                filterQuality: FilterQuality.none,
-              ),
+              GameImage(critterAssetPath(critter.internalKey), width: 40, height: 40),
               Text(
                 critter.displayName,
                 style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),

@@ -207,4 +207,39 @@ void main() {
       expect(controller.activityError, isNull);
     });
   });
+
+  testWidgets('the town district labels the gateway Town Gate', (tester) async {
+    final controller = buildController(database, seed: startedCharacter(database));
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller);
+
+    await tester.tap(find.text('Enter Town'));
+    await tester.pump();
+
+    expect(find.text('Town Gate'), findsWidgets);
+  });
+
+  testWidgets('expanding the option list does not carry to the next location', (tester) async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(currentLocationId: 'LOC-0009'),
+    );
+    controller.setMapTravelAnimation(false);
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller);
+
+    await tapVisible(tester, find.byTooltip('Expand list'));
+    expect(find.byTooltip('Collapse list'), findsOne);
+
+    await tester.tap(find.byTooltip('Open world map'));
+    await tester.pump();
+    await tester.tap(find.text('The Farm'));
+    await tester.pump();
+    await tester.tap(find.text('Travel'));
+    await tester.pump();
+
+    expect(controller.save.currentLocationId, 'LOC-0001');
+    expect(find.byTooltip('Expand list'), findsOne);
+    expect(find.byTooltip('Collapse list'), findsNothing);
+  });
 }

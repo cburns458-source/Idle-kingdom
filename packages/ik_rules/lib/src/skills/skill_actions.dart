@@ -2,6 +2,7 @@ import 'package:collection/collection.dart';
 import 'package:ik_content/ik_content.dart';
 
 import '../js_compat.dart';
+import '../npcs/knowledge.dart';
 import '../projects/projects.dart';
 
 /// One row of a skill menu: what it makes and the level it needs.
@@ -86,6 +87,44 @@ List<SkillMenuListItem> projectsForSkill(GameDatabase db, String skillId) {
 /// Combined skill menu rows: actions first, then projects.
 List<SkillMenuListItem> skillMenuEntries(GameDatabase db, String skillId) {
   return <SkillMenuListItem>[...actionsForSkill(db, skillId), ...projectsForSkill(db, skillId)];
+}
+
+/// `{level}. {name}` for a skill-menu row.
+String skillMenuLine(SkillMenuListItem item) {
+  final level = item.level;
+  if (level == null) return item.displayName;
+  final number = level == level.roundToDouble() ? level.toInt() : level;
+  return '$number. ${item.displayName}';
+}
+
+/// Rows shown on a skill tile: smithing is grouped by material, others are listed.
+List<SkillMenuListItem> skillMenuDisplayEntries(GameDatabase db, String skillId) {
+  if (skillId != smithingSkillId) return skillMenuEntries(db, skillId);
+  final items = <SkillMenuListItem>[...actionsForSkill(db, skillId)];
+  final seen = <String>{};
+  for (final project in projectsForSkill(db, skillId)) {
+    final material = _smithingMaterial(project.displayName);
+    if (material == null) {
+      items.add(project);
+      continue;
+    }
+    final key = '${project.level ?? ''}|$material';
+    if (!seen.add(key)) continue;
+    items.add(
+      SkillMenuListItem(
+        id: key,
+        displayName: '$material items',
+        level: project.level,
+      ),
+    );
+  }
+  return items;
+}
+
+String? _smithingMaterial(String name) {
+  final parts = name.trim().split(RegExp(r'\s+'));
+  if (parts.length < 2) return null;
+  return parts.first;
 }
 
 String projectOutputName(GameDatabase db, ProjectRow project) {

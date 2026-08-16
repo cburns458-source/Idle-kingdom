@@ -8,6 +8,7 @@ import '../content/asset_paths.dart';
 import '../session/game_controller.dart';
 import '../theme.dart';
 import 'format.dart';
+import 'game_image.dart';
 import 'player_sprite.dart';
 
 /// What the player is busy with, read out in the corner of the HUD.
@@ -22,13 +23,11 @@ class _HudStatus {
 }
 
 /// Name, race, totals, gold, HP, and what is running.
-///
-/// The portrait is painted by [HudPortrait] in the shell stack so the frame can
-/// hang below this bar without stretching it.
 class TopHud extends StatelessWidget {
-  const TopHud({super.key, required this.controller});
+  const TopHud({super.key, required this.controller, required this.onOpenWardrobe});
 
   final GameController controller;
+  final VoidCallback onOpenWardrobe;
 
   /// A running craft queue reads as the item and how much of the order is left;
   /// anything else reads as the activity, its action, and how long it has run.
@@ -81,8 +80,13 @@ class TopHud extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          const SizedBox(width: HudPortrait.textInset),
-          const SizedBox(width: 6),
+          HudPortrait(
+            appearance: save.appearance,
+            bytes: controller.localPlayerPng,
+            hint: !save.hasSeenWardrobeIntro && save.cosmetics.unlocked.isNotEmpty,
+            onTap: onOpenWardrobe,
+          ),
+          const SizedBox(width: 8),
           Expanded(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -132,12 +136,7 @@ class TopHud extends StatelessWidget {
                 const SizedBox(height: 3),
                 Row(
                   children: [
-                    Image.asset(
-                      goldIconPath(),
-                      width: 13,
-                      height: 13,
-                      filterQuality: FilterQuality.none,
-                    ),
+                    GameImage(goldIconPath(), width: 13, height: 13),
                     const SizedBox(width: 3),
                     Text(
                       formatThousands(save.gold),
@@ -227,10 +226,7 @@ class _ActivityReadout extends StatelessWidget {
   }
 }
 
-/// The framed portrait that opens the wardrobe.
-///
-/// Sized to wrap the head shot, and painted above the location so the ring can
-/// hang below the HUD bar.
+/// The circular portrait that opens the wardrobe, sized to sit inside the HUD.
 class HudPortrait extends StatelessWidget {
   const HudPortrait({
     super.key,
@@ -240,16 +236,7 @@ class HudPortrait extends StatelessWidget {
     required this.onTap,
   });
 
-  /// The whole control, frame included. Taller than the HUD so the ring drops
-  /// over the screen below.
-  static const double size = 148;
-
-  /// How far the HUD name sits from the left so it starts beside the circle,
-  /// not after the whole frame.
-  static const double textInset = 96;
-
-  /// Inset so the head sits in the ring's hole rather than over its rim.
-  static const double _rim = 18;
+  static const double size = 44;
 
   /// Enough of the sprite's height to fill the circle with its head.
   static const double _headZoom = 1.7;
@@ -272,38 +259,27 @@ class HudPortrait extends StatelessWidget {
         onTap: onTap,
         child: SizedBox.square(
           dimension: size,
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(_rim),
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: const Color(0xFF9EC8E8),
-                    boxShadow: hint
-                        ? const [BoxShadow(color: Palette.gold, blurRadius: 8, spreadRadius: 1)]
-                        : null,
-                  ),
-                  child: ClipOval(
-                    child: Transform.scale(
-                      scale: _headZoom,
-                      alignment: Alignment.topCenter,
-                      child: PlayerSprite(
-                        appearance: appearance,
-                        bytes: bytes,
-                        filterQuality: FilterQuality.none,
-                        alignment: Alignment.topCenter,
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                  ),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: const Color(0xFF9EC8E8),
+              boxShadow: hint
+                  ? const [BoxShadow(color: Palette.gold, blurRadius: 8, spreadRadius: 1)]
+                  : null,
+            ),
+            child: ClipOval(
+              child: Transform.scale(
+                scale: _headZoom,
+                alignment: Alignment.topCenter,
+                child: PlayerSprite(
+                  appearance: appearance,
+                  bytes: bytes,
+                  filterQuality: FilterQuality.none,
+                  alignment: Alignment.topCenter,
+                  fit: BoxFit.cover,
                 ),
               ),
-              IgnorePointer(
-                child: Image.asset(avatarFrameAssetPath(), filterQuality: FilterQuality.none),
-              ),
-            ],
+            ),
           ),
         ),
       ),

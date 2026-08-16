@@ -1,5 +1,6 @@
 import type { ProjectRow } from '../data/projectTypes'
 import type { ActionRow, GameDatabase } from '../data/types'
+import { SMITHING_SKILL_ID } from '../npcs/knowledge'
 import {
   getEnchantment,
   isCompleteProject,
@@ -71,6 +72,42 @@ export function projectsForSkill(db: GameDatabase, skillId: string): SkillMenuLi
 /** Combined skill menu rows: actions first, then projects. */
 export function skillMenuEntries(db: GameDatabase, skillId: string): SkillMenuListItem[] {
   return [...actionsForSkill(db, skillId), ...projectsForSkill(db, skillId)]
+}
+
+/** `{level}. {name}` for a skill-menu row. */
+export function skillMenuLine(item: SkillMenuListItem): string {
+  if (item.level == null) return item.displayName
+  const number = Number.isInteger(item.level) ? item.level : item.level
+  return `${number}. ${item.displayName}`
+}
+
+/** Rows shown on a skill tile: smithing is grouped by material, others are listed. */
+export function skillMenuDisplayEntries(db: GameDatabase, skillId: string): SkillMenuListItem[] {
+  if (skillId !== SMITHING_SKILL_ID) return skillMenuEntries(db, skillId)
+  const items: SkillMenuListItem[] = [...actionsForSkill(db, skillId)]
+  const seen = new Set<string>()
+  for (const project of projectsForSkill(db, skillId)) {
+    const material = smithingMaterial(project.displayName)
+    if (!material) {
+      items.push(project)
+      continue
+    }
+    const key = `${project.level ?? ''}|${material}`
+    if (seen.has(key)) continue
+    seen.add(key)
+    items.push({
+      id: key,
+      displayName: `${material} items`,
+      level: project.level,
+    })
+  }
+  return items
+}
+
+function smithingMaterial(name: string): string | null {
+  const parts = name.trim().split(/\s+/)
+  if (parts.length < 2) return null
+  return parts[0] ?? null
 }
 
 export function projectOutputName(db: GameDatabase, project: ProjectRow): string {

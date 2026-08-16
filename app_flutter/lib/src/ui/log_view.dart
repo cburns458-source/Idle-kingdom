@@ -5,6 +5,7 @@ import '../content/asset_paths.dart';
 import '../session/game_controller.dart';
 import '../theme.dart';
 import 'format.dart';
+import 'game_image.dart';
 
 enum _LogTab {
   achievements('Achievements', 'Skill milestones unlocked on this save.'),
@@ -38,80 +39,94 @@ class _LogViewState extends State<LogView> {
     final db = controller.db;
     final save = controller.save;
 
-    return ListView(
-      padding: const EdgeInsets.all(12),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Text('Log', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            for (final tab in _LogTab.values)
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 2),
-                  child: TextButton(
-                    onPressed: () => setState(() => _tab = tab),
-                    style: TextButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-                      backgroundColor: _tab == tab ? const Color(0xD9546E3E) : Colors.transparent,
-                      foregroundColor: _tab == tab ? const Color(0xFFF4FFE8) : Palette.parchmentText,
-                    ),
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: Text(
-                        tab.label,
-                        maxLines: 2,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, height: 1.15),
+        const Padding(
+          padding: EdgeInsets.fromLTRB(12, 12, 12, 0),
+          child: Text('Log', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+          child: Row(
+            children: [
+              for (final tab in _LogTab.values)
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 2),
+                    child: TextButton(
+                      onPressed: () => setState(() => _tab = tab),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                        backgroundColor: _tab == tab ? const Color(0xD9546E3E) : Colors.transparent,
+                        foregroundColor: _tab == tab
+                            ? const Color(0xFFF4FFE8)
+                            : Palette.parchmentText,
+                      ),
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          tab.label,
+                          maxLines: 2,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            height: 1.15,
+                          ),
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
-          ],
+            ],
+          ),
         ),
-        const SizedBox(height: 8),
-        MutedText(_tab.lead),
-        const SizedBox(height: 8),
-        switch (_tab) {
-          _LogTab.achievements => _Rows([
-            for (final row in achievementLog(db, save))
-              _LogRow(title: row.name, detail: row.note, highlight: row.unlocked),
-          ]),
-          _LogTab.quests => _Rows([
-            for (final row in questLog(db, save))
-              _LogRow(
-                title: row.name,
-                detail: row.detail,
-                trailing: row.statusLabel,
-                highlight: row.completed,
-                below: [
-                  for (final objective in row.objectives) _ObjectiveBar(objective: objective),
-                ],
-              ),
-          ]),
-          _LogTab.recipes => _Rows([
-            for (final row in recipeLog(db, save))
-              _LogRow(title: row.title, detail: row.detail, highlight: row.known),
-          ]),
-          _LogTab.critters => _Rows([
-            for (final row in critterLog(save))
-              _LogRow(
-                title: row.name,
-                detail: row.description,
-                trailing: row.count > 1 ? '×${formatThousands(row.count)}' : null,
-                highlight: row.found,
-                leading: row.found
-                    ? Image.asset(
-                        critterAssetPath(row.internalKey),
-                        width: 28,
-                        height: 28,
-                        filterQuality: FilterQuality.none,
-                      )
-                    : const Icon(Icons.help_outline, size: 24, color: Palette.edge),
-              ),
-          ]),
-        },
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+          child: MutedText(_tab.lead),
+        ),
+        Expanded(
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+            children: [
+              switch (_tab) {
+                _LogTab.achievements => _Rows([
+                  for (final row in achievementLog(db, save))
+                    _LogRow(title: row.name, detail: row.note, highlight: row.unlocked),
+                ]),
+                _LogTab.quests => _Rows([
+                  for (final row in questLog(db, save))
+                    _LogRow(
+                      title: row.name,
+                      detail: row.detail,
+                      trailing: row.statusLabel,
+                      highlight: row.completed,
+                      below: [
+                        for (final objective in row.objectives) _ObjectiveBar(objective: objective),
+                      ],
+                    ),
+                ]),
+                _LogTab.recipes => _Rows([
+                  for (final row in recipeLog(db, save))
+                    _LogRow(title: row.title, detail: row.detail, highlight: row.known),
+                ]),
+                _LogTab.critters => _Rows([
+                  for (final row in critterLog(save))
+                    _LogRow(
+                      title: row.name,
+                      detail: row.description,
+                      trailing: row.count > 1 ? '×${formatThousands(row.count)}' : null,
+                      highlight: row.found,
+                      leading: row.found
+                          ? GameImage(critterAssetPath(row.internalKey), width: 28, height: 28)
+                          : const Icon(Icons.help_outline, size: 24, color: Palette.edge),
+                    ),
+                ]),
+              },
+            ],
+          ),
+        ),
       ],
     );
   }

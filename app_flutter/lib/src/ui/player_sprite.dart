@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:ik_rules/ik_rules.dart';
 
 import '../content/asset_paths.dart';
+import 'game_image.dart';
 
 /// The local player figure: a custom PNG when this device has one, else the
 /// bundled gender-presentation sprite.
@@ -40,7 +41,7 @@ class PlayerSprite extends StatelessWidget {
         gaplessPlayback: true,
       );
     }
-    return Image.asset(
+    return GameImage(
       playerAssetPath(appearance),
       width: width,
       height: height,

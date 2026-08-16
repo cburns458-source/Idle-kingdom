@@ -8,7 +8,15 @@ import '../content/asset_paths.dart';
 import '../session/game_controller.dart';
 import '../session/map_walk.dart';
 import '../theme.dart';
+import 'game_image.dart';
 import 'player_sprite.dart';
+
+String _mapNodeLabel(LocationRow location, String browseMapId) {
+  if (browseMapId == townMapId && location.locationId == townGatewayId) {
+    return 'Town Gate';
+  }
+  return location.displayName;
+}
 
 /// The map: nodes over the map art, and a panel for whichever one is selected.
 class WorldMapView extends StatelessWidget {
@@ -70,14 +78,11 @@ class WorldMapView extends StatelessWidget {
     return Stack(
       fit: StackFit.expand,
       children: [
-        Image.asset(
-          mapAssetPath(browseMapId),
-          fit: BoxFit.cover,
-          filterQuality: FilterQuality.none,
-        ),
+        GameImage(mapAssetPath(browseMapId), fit: BoxFit.cover),
         for (final node in nodes)
           _MapNode(
             location: node,
+            browseMapId: browseMapId,
             isHere: !walking && node.locationId == save.currentLocationId,
             isSelected: node.locationId == selectedLocationId,
             onTap: () => onSelect(node.locationId),
@@ -102,12 +107,7 @@ class WorldMapView extends StatelessWidget {
             child: OverlayChipButton(
               tooltip: 'Open world map',
               onPressed: () => onBrowseMap(mainMapId),
-              child: Image.asset(
-                uiMapAssetPath(),
-                width: 38,
-                height: 38,
-                filterQuality: FilterQuality.none,
-              ),
+              child: GameImage(uiMapAssetPath(), width: 38, height: 38),
             ),
           ),
         Positioned(
@@ -116,6 +116,7 @@ class WorldMapView extends StatelessWidget {
           bottom: 0,
           child: _SelectionPanel(
             selected: selected,
+            browseMapId: browseMapId,
             isHere: selected?.locationId == save.currentLocationId,
             onTravel: onTravel,
             canTravel: !controller.isRecovering && !walking,
@@ -161,6 +162,7 @@ class _MapWalker extends StatelessWidget {
 class _MapNode extends StatefulWidget {
   const _MapNode({
     required this.location,
+    required this.browseMapId,
     required this.isHere,
     required this.isSelected,
     required this.onTap,
@@ -168,6 +170,7 @@ class _MapNode extends StatefulWidget {
   });
 
   final LocationRow location;
+  final String browseMapId;
   final bool isHere;
   final bool isSelected;
   final VoidCallback onTap;
@@ -204,6 +207,7 @@ class _MapNodeState extends State<_MapNode> {
     final location = widget.location;
     final isHere = widget.isHere;
     final isSelected = widget.isSelected;
+    final label = _mapNodeLabel(location, widget.browseMapId);
     final position = positionForLocation(location);
     final fill = isHere ? Palette.gold : Palette.parchmentText;
     return Align(
@@ -216,7 +220,7 @@ class _MapNodeState extends State<_MapNode> {
           children: [
             Semantics(
               button: true,
-              label: location.displayName,
+              label: label,
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(10, 8, 10, 4),
                 child: DecoratedBox(
@@ -234,7 +238,7 @@ class _MapNodeState extends State<_MapNode> {
               ),
             ),
             Text(
-              location.displayName,
+              label,
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 11,
@@ -257,12 +261,14 @@ class _MapNodeState extends State<_MapNode> {
 class _SelectionPanel extends StatelessWidget {
   const _SelectionPanel({
     required this.selected,
+    required this.browseMapId,
     required this.isHere,
     required this.onTravel,
     required this.canTravel,
   });
 
   final LocationRow? selected;
+  final String browseMapId;
   final bool isHere;
   final ValueChanged<String> onTravel;
   final bool canTravel;
@@ -286,7 +292,7 @@ class _SelectionPanel extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        place.displayName,
+                        _mapNodeLabel(place, browseMapId),
                         style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
                       ),
                       if (place.description case final blurb?) MutedText(blurb),

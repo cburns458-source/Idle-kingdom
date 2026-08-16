@@ -5,6 +5,7 @@ import 'package:ik_rules/ik_rules.dart';
 
 import '../content/asset_paths.dart';
 import '../theme.dart';
+import 'game_image.dart';
 
 /// A guild banner: the chosen color with the chosen mark on it.
 ///
@@ -75,7 +76,7 @@ class SocialPortrait extends StatelessWidget {
         border: Border.all(color: Palette.edge),
       ),
       clipBehavior: Clip.antiAlias,
-      child: Image.asset(
+      child: GameImage(
         playerAssetPath(appearance),
         alignment: Alignment.topCenter,
         fit: BoxFit.cover,

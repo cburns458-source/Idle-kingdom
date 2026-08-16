@@ -87,6 +87,24 @@ export function setQuestFlag(save: PlayerSave, questId: string, key: string): Pl
   return bumpCounter(save, questId, key, 1)
 }
 
+/**
+ * Records a flag even when the quest is still inactive.
+ *
+ * Donate-before-start needs this: bumpCounter only writes active quests.
+ */
+export function recordQuestFlag(save: PlayerSave, questId: string, key: string): PlayerSave {
+  if (hasQuestFlag(save, questId, key)) return save
+  const progress = getQuestProgress(save, questId)
+  const counters = { ...(progress.counters ?? {}), [key]: 1 }
+  const nextQuests = save.quests.filter((row) => row.questId !== questId)
+  nextQuests.push({
+    ...progress,
+    counters,
+    progress: Object.values(counters).reduce((sum, value) => sum + Number(value), 0),
+  })
+  return { ...save, quests: nextQuests }
+}
+
 /** Marks a Talk objective when the player hears that NPC's quest line. */
 export function applyQuestTalkProgress(
   db: GameDatabase,

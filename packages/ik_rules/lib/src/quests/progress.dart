@@ -101,6 +101,26 @@ PlayerSave setQuestFlag(PlayerSave save, String questId, String key) {
   return _bumpCounter(save, questId, key, 1);
 }
 
+/// Records a flag even when the quest is still inactive.
+///
+/// Donate-before-start needs this: [_bumpCounter] only writes active quests.
+PlayerSave recordQuestFlag(PlayerSave save, String questId, String key) {
+  if (hasQuestFlag(save, questId, key)) return save;
+  final progress = getQuestProgress(save, questId);
+  final counters = <String, num>{...?progress.counters, key: 1};
+  return save.copyWith(
+    quests: [
+      ...save.quests.where((row) => row.questId != questId),
+      QuestProgress(
+        questId: questId,
+        status: progress.status,
+        counters: counters,
+        progress: counters.values.fold<num>(0, (sum, value) => sum + value),
+      ),
+    ],
+  );
+}
+
 /// Marks a Talk objective when the player hears that NPC's quest line.
 PlayerSave applyQuestTalkProgress(GameDatabase db, PlayerSave save, String npcId) {
   var next = save;

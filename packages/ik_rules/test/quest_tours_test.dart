@@ -24,6 +24,12 @@ void main() {
 
   test('the Missing Purse bribe grants the hood and a skill pick', () {
     var save = _save(db, locationId: 'LOC-0002', gold: 300);
+    expect(acceptQuest(db, save, 'QST-0003').ok, isFalse);
+    final donated = donateForQuest(db, save, 'QST-0003');
+    expect(donated.ok, isTrue);
+    save = donated.save!;
+    expect(save.gold, 275);
+    expect(getQuestProgress(save, 'QST-0003').status, 'inactive');
     final accepted = acceptQuest(db, save, 'QST-0003');
     expect(accepted.ok, isTrue);
     save = accepted.save!;

@@ -5,6 +5,7 @@ import '../content/asset_paths.dart';
 import '../session/game_controller.dart';
 import '../theme.dart';
 import 'format.dart';
+import 'game_image.dart';
 
 /// Every skill as a tile, with the totals they add up to along the bottom.
 class SkillsView extends StatelessWidget {
@@ -64,15 +65,12 @@ class _SkillTile extends StatelessWidget {
                 'level ${progress.level + 1}',
       child: GamePanel(
         padding: const EdgeInsets.fromLTRB(5, 6, 5, 5),
-        child: Column(
+        child: InkWell(
+          onTap: () => _openSkillMenu(context, controller, skillId, row?.displayName ?? skillId),
+          child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Image.asset(
-              skillIconPath(row),
-              width: 30,
-              height: 30,
-              filterQuality: FilterQuality.none,
-            ),
+            GameImage(skillIconPath(row), width: 30, height: 30),
             const SizedBox(height: 3),
             Flexible(
               child: Text(
@@ -96,9 +94,54 @@ class _SkillTile extends StatelessWidget {
             MeterBar(value: fraction, color: Palette.gold, height: 4),
           ],
         ),
+        ),
       ),
     );
   }
+}
+
+void _openSkillMenu(
+  BuildContext context,
+  GameController controller,
+  String skillId,
+  String skillName,
+) {
+  final entries = skillMenuDisplayEntries(controller.db, skillId);
+  showModalBottomSheet<void>(
+    context: context,
+    backgroundColor: Colors.transparent,
+    builder: (context) => SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: GamePanel(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(skillName, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+              const SizedBox(height: 8),
+              if (entries.isEmpty)
+                const MutedText('Nothing listed for this skill yet.')
+              else
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 360),
+                  child: ListView(
+                    shrinkWrap: true,
+                    children: [
+                      for (final entry in entries)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 6),
+                          child: Text(skillMenuLine(entry)),
+                        ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
 }
 
 /// The bottom band: what every skill adds up to.

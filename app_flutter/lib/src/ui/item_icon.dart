@@ -3,6 +3,7 @@ import 'package:ik_content/ik_content.dart';
 
 import '../content/asset_paths.dart';
 import 'format.dart';
+import 'game_image.dart';
 
 /// An item's art, at whatever size the tile it sits in wants.
 ///
@@ -16,12 +17,7 @@ class ItemIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Image.asset(
-      itemIconPath(item),
-      width: size,
-      height: size,
-      filterQuality: FilterQuality.none,
-    );
+    return GameImage(itemIconPath(item), width: size, height: size);
   }
 }
 
@@ -36,12 +32,7 @@ class SlotGlyph extends StatelessWidget {
   Widget build(BuildContext context) {
     return Opacity(
       opacity: 0.45,
-      child: Image.asset(
-        slotIconPath(slotId),
-        width: size,
-        height: size,
-        filterQuality: FilterQuality.none,
-      ),
+      child: GameImage(slotIconPath(slotId), width: size, height: size),
     );
   }
 }
@@ -61,7 +52,7 @@ class GoldAmount extends StatelessWidget {
       children: [
         Text(formatThousands(amount), style: style ?? const TextStyle(fontWeight: FontWeight.w700)),
         const SizedBox(width: 4),
-        Image.asset(goldIconPath(), width: size, height: size, filterQuality: FilterQuality.none),
+        GameImage(goldIconPath(), width: size, height: size),
       ],
     );
   }

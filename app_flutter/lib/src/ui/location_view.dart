@@ -14,12 +14,12 @@ import 'citadel_hub_panel.dart';
 import 'guild_hall_panel.dart';
 import 'critter_overlay.dart';
 import 'format.dart';
+import 'game_image.dart';
 import 'npc_panel.dart';
 import 'production_panel.dart';
 import 'project_panel.dart';
 import 'reward_strip.dart';
 import 'shop_panel.dart';
-import 'top_hud.dart';
 
 /// Whatever the player has open on top of the location, if anything.
 sealed class LocationPanel {
@@ -113,6 +113,11 @@ class _LocationViewState extends State<LocationView> {
   /// The activity/NPC/shop band stays short until the player asks for more.
   bool _bandExpanded = false;
 
+  /// The location the expand state belongs to, so travel collapses it.
+  String? _bandAt;
+
+  static const double _collapsedBand = 176;
+
   GameController get controller => widget.controller;
 
   void _openPanel(LocationPanel panel) {
@@ -163,6 +168,10 @@ class _LocationViewState extends State<LocationView> {
       _open = null;
       _openAt = null;
     }
+    if (_bandAt != locationId) {
+      _bandAt = locationId;
+      _bandExpanded = false;
+    }
 
     final running = controller.save.currentActivityId != null;
     final openPanel = _open;
@@ -184,188 +193,140 @@ class _LocationViewState extends State<LocationView> {
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(14),
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              Image.asset(
-                locationAssetPath(locationId),
-                fit: BoxFit.cover,
-                alignment: Alignment.topCenter,
-                filterQuality: FilterQuality.none,
-              ),
-              const DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [Color(0x6B140D08), Color(0x2E140D08), Color(0xB8140D08)],
-                    stops: [0, 0.28, 1],
-                  ),
-                ),
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+          child: LayoutBuilder(
+            builder: (context, card) {
+              final bandTop = _bandExpanded ? 8.0 : card.maxHeight - _collapsedBand - 8;
+              return Stack(
+                fit: StackFit.expand,
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(HudPortrait.size, 12, 13, 0),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(child: _LocationHead(location: location)),
-                        const SizedBox(width: 11),
-                        Column(
-                          children: [
-                            OverlayChipButton(
-                              tooltip: 'Open world map',
-                              onPressed: widget.onOpenMap,
-                              child: Image.asset(
-                                uiMapAssetPath(),
-                                width: 38,
-                                height: 38,
-                                filterQuality: FilterQuality.none,
-                              ),
-                            ),
-                            if (widget.onOpenNearby case final openNearby?) ...[
-                              const SizedBox(height: 7),
-                              OverlayChipButton(
-                                tooltip: 'Nearby adventurers',
-                                onPressed: openNearby,
-                                dark: true,
-                                child: const Icon(Icons.groups, size: 32, color: Color(0xF2ECD6A8)),
-                              ),
-                            ],
-                          ],
-                        ),
-                      ],
+                  GameImage(
+                    locationAssetPath(locationId),
+                    fit: BoxFit.cover,
+                    alignment: Alignment.topCenter,
+                  ),
+                  const DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [Color(0x6B140D08), Color(0x2E140D08), Color(0xB8140D08)],
+                        stops: [0, 0.28, 1],
+                      ),
                     ),
                   ),
-                  if (subMapIdForGateway(controller.db, locationId) case final subMapId?
-                      when isSubMapGateway(location))
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(HudPortrait.size, 8, 13, 0),
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: GameButton(
-                          label: enterSubMapLabel(controller.db, location) ?? 'Enter',
-                          onPressed: () => widget.onOpenSubMap(subMapId),
-                        ),
-                      ),
-                    ),
-                  // The last few payouts read over the art, under the header.
-                  if (controller.recentRewards.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(13, 6, 13, 0),
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: RewardStrip(controller: controller),
-                      ),
-                    ),
-                  if (controller.showRecoveringStage && stage == null)
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(13, 8, 13, 0),
-                      child: _RecoveringPanel(controller: controller),
-                    ),
-                  Expanded(
-                    child: LayoutBuilder(
-                      builder: (context, rest) {
-                        // The two together always leave the art some room, so
-                        // the column cannot overflow on a short window.
-                        const collapsedBand = 220.0;
-                        final bandMax = ( _bandExpanded
-                                ? rest.maxHeight * 0.86
-                                : collapsedBand)
-                            .clamp(72.0, rest.maxHeight * (stage != null ? 0.42 : 0.55));
-                        final stageMax = (rest.maxHeight - bandMax).clamp(0.0, rest.maxHeight);
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(13, 12, 13, 0),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Expanded(
-                              child: LayoutBuilder(
-                                builder: (context, art) {
-                                  return Stack(
-                                    children: [
-                                      Positioned(
-                                        top: art.maxHeight * 0.12,
-                                        left: 0,
-                                        right: 0,
-                                        child: Center(
-                                          child: CritterOverlay(controller: controller),
-                                        ),
-                                      ),
-                                    ],
-                                  );
-                                },
-                              ),
-                            ),
-                            if (stage != null)
-                              ConstrainedBox(
-                                constraints: BoxConstraints(maxHeight: stageMax),
-                                child: SingleChildScrollView(
-                                  padding: const EdgeInsets.symmetric(horizontal: 13),
-                                  child: stage,
+                            Expanded(child: _LocationHead(location: location)),
+                            const SizedBox(width: 11),
+                            Column(
+                              children: [
+                                OverlayChipButton(
+                                  tooltip: 'Open world map',
+                                  onPressed: widget.onOpenMap,
+                                  child: GameImage(uiMapAssetPath(), width: 38, height: 38),
                                 ),
-                              ),
-                            SizedBox(
-                              height: bandMax,
-                              child: DecoratedBox(
-                                decoration: const BoxDecoration(
-                                  color: Palette.panel,
-                                  border: Border(top: BorderSide(color: Color(0x2EE8DCB4))),
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                                  children: [
-                                    Align(
-                                      alignment: Alignment.centerLeft,
-                                      child: IconButton(
-                                        tooltip: _bandExpanded ? 'Collapse list' : 'Expand list',
-                                        onPressed: () =>
-                                            setState(() => _bandExpanded = !_bandExpanded),
-                                        icon: Icon(
-                                          _bandExpanded
-                                              ? Icons.expand_more
-                                              : Icons.expand_less,
-                                          size: 20,
-                                        ),
-                                      ),
+                                if (widget.onOpenNearby case final openNearby?) ...[
+                                  const SizedBox(height: 7),
+                                  OverlayChipButton(
+                                    tooltip: 'Nearby adventurers',
+                                    onPressed: openNearby,
+                                    dark: true,
+                                    child: const Icon(
+                                      Icons.groups,
+                                      size: 32,
+                                      color: Color(0xF2ECD6A8),
                                     ),
-                                    Expanded(
-                                      child: SingleChildScrollView(
-                                        clipBehavior: Clip.hardEdge,
-                                        padding: const EdgeInsets.fromLTRB(13, 0, 52, 12),
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                                          children: [
-                                            if (bandPanel != null) ...[
-                                              bandPanel,
-                                              const SizedBox(height: 10),
-                                            ],
-                                            ..._activities(locationId),
-                                            ..._blessing(),
-                                            ..._stations(locationId),
-                                            ..._people(locationId),
-                                            ..._shops(locationId),
-                                            ..._bank(),
-                                            ..._arena(),
-                                            ..._guildHall(),
-                                            ..._citadelBoards(locationId),
-                                            ..._searches(locationId),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
+                                  ),
+                                ],
+                              ],
                             ),
                           ],
-                        );
-                      },
+                        ),
+                      ),
+                      if (subMapIdForGateway(controller.db, locationId) case final subMapId?
+                          when isSubMapGateway(location))
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(13, 8, 13, 0),
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: GameButton(
+                              label: enterSubMapLabel(controller.db, location) ?? 'Enter',
+                              onPressed: () => widget.onOpenSubMap(subMapId),
+                            ),
+                          ),
+                        ),
+                      if (controller.showRecoveringStage && stage == null)
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(13, 8, 13, 0),
+                          child: _RecoveringPanel(controller: controller),
+                        ),
+                      Expanded(
+                        child: Stack(
+                          children: [
+                            if (stage != null)
+                              Positioned(
+                                top: 0,
+                                left: 13,
+                                right: 13,
+                                bottom: _collapsedBand + 16,
+                                child: SingleChildScrollView(child: stage),
+                              ),
+                            if (controller.recentRewards.isNotEmpty)
+                              Positioned(
+                                top: 6,
+                                left: 13,
+                                right: 13,
+                                child: Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: RewardStrip(controller: controller),
+                                ),
+                              ),
+                            Positioned(
+                              top: 24,
+                              left: 0,
+                              right: 0,
+                              child: Center(child: CritterOverlay(controller: controller)),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  Positioned(
+                    left: 10,
+                    right: 10,
+                    bottom: 8,
+                    top: bandTop,
+                    child: _FloatingOptionBand(
+                      expanded: _bandExpanded,
+                      onToggle: () => setState(() => _bandExpanded = !_bandExpanded),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          if (bandPanel != null) ...[bandPanel, const SizedBox(height: 10)],
+                          ..._activities(locationId),
+                          ..._blessing(),
+                          ..._stations(locationId),
+                          ..._people(locationId),
+                          ..._shops(locationId),
+                          ..._bank(),
+                          ..._arena(),
+                          ..._guildHall(),
+                          ..._citadelBoards(locationId),
+                          ..._searches(locationId),
+                        ],
+                      ),
                     ),
                   ),
                 ],
-              ),
-            ],
+              );
+            },
           ),
         ),
       ),
@@ -511,7 +472,7 @@ class _LocationViewState extends State<LocationView> {
           padding: const EdgeInsets.only(bottom: 8),
           child: _InteractionCard(
             title: npc.displayName,
-            subtitle: npc.role,
+            subtitle: npc.role?.toLowerCase() == 'quest giver' ? null : npc.role,
             actionLabel: 'Talk',
             onPressed: () => _openPanel(NpcOpen(npc)),
           ),
@@ -615,6 +576,50 @@ class _LocationViewState extends State<LocationView> {
           ),
         ),
     ];
+  }
+}
+
+/// Inset option list that floats over the location art.
+class _FloatingOptionBand extends StatelessWidget {
+  const _FloatingOptionBand({
+    required this.expanded,
+    required this.onToggle,
+    required this.child,
+  });
+
+  final bool expanded;
+  final VoidCallback onToggle;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: const Color(0xF0140D08),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0x47D4AF37)),
+      ),
+      child: Stack(
+        children: [
+          Positioned.fill(
+            child: SingleChildScrollView(
+              clipBehavior: Clip.hardEdge,
+              padding: const EdgeInsets.fromLTRB(12, 8, 40, 10),
+              child: child,
+            ),
+          ),
+          Positioned(
+            top: 0,
+            right: 0,
+            child: IconButton(
+              tooltip: expanded ? 'Collapse list' : 'Expand list',
+              onPressed: onToggle,
+              icon: Icon(expanded ? Icons.expand_more : Icons.expand_less, size: 20),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 

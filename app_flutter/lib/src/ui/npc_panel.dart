@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:ik_content/ik_content.dart';
 import 'package:ik_rules/ik_rules.dart';
@@ -63,6 +64,20 @@ class _NpcPanelState extends State<NpcPanel> {
 
   void _accept(String questId) {
     final result = acceptQuestFromNpc(controller.db, controller.save, questId);
+    if (!result.ok) {
+      setState(() => _error = result.reason);
+      return;
+    }
+    controller.commit(result.save!);
+    controller.announce(result.message!);
+    setState(() {
+      _error = null;
+      _dialogue = null;
+    });
+  }
+
+  void _donate(String questId) {
+    final result = donateForQuestFromNpc(controller.db, controller.save, questId);
     if (!result.ok) {
       setState(() => _error = result.reason);
       return;
@@ -194,6 +209,7 @@ class _NpcPanelState extends State<NpcPanel> {
           ],
         );
       case QuestPitchGreeting(questId: final questId, line: final line, acceptLabel: final label):
+        final quest = conversation.quests.where((row) => row.questId == questId).firstOrNull;
         return _DialogueCard(
           name: conversation.name,
           line: line,
@@ -203,7 +219,10 @@ class _NpcPanelState extends State<NpcPanel> {
               onPressed: () => setState(() => _dialogue = null),
               child: const Text('Not now'),
             ),
-            FilledButton(onPressed: () => _accept(questId), child: Text(label)),
+            FilledButton(
+              onPressed: () => (quest?.canDonate ?? false) ? _donate(questId) : _accept(questId),
+              child: Text(label),
+            ),
           ],
         );
       case null:
@@ -232,7 +251,9 @@ class _NpcPanelState extends State<NpcPanel> {
                       conversation.name,
                       style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
                     ),
-                    if (conversation.role case final role?) MutedText(role),
+                    if (conversation.role case final role?
+                        when role.toLowerCase() != 'quest giver')
+                      MutedText(role),
                   ],
                 ),
               ),
@@ -276,6 +297,7 @@ class _NpcPanelState extends State<NpcPanel> {
             _QuestBlock(
               quest: quest,
               onAccept: () => _openQuest(quest),
+              onDonate: () => _donate(quest.questId),
               onTurnIn: () => _turnIn(quest),
               onTalk: () => _talk(quest),
               onBribe: () => _bribe(quest),
@@ -296,6 +318,7 @@ class _QuestBlock extends StatelessWidget {
   const _QuestBlock({
     required this.quest,
     required this.onAccept,
+    required this.onDonate,
     required this.onTurnIn,
     required this.onTalk,
     required this.onBribe,
@@ -304,6 +327,7 @@ class _QuestBlock extends StatelessWidget {
 
   final NpcQuestBlock quest;
   final VoidCallback onAccept;
+  final VoidCallback onDonate;
   final VoidCallback onTurnIn;
   final VoidCallback onTalk;
   final VoidCallback onBribe;
@@ -326,10 +350,17 @@ class _QuestBlock extends StatelessWidget {
           const SizedBox(height: 8),
           switch (quest.status) {
             'completed' => MutedText(quest.completedNote),
-            'inactive' =>
-              quest.canAccept
-                  ? FilledButton(onPressed: onAccept, child: Text(quest.acceptLabel))
-                  : const SizedBox.shrink(),
+            'inactive' => Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (quest.canDonate) ...[
+                  OutlinedButton(onPressed: onDonate, child: Text(quest.donateLabel)),
+                  const SizedBox(height: 6),
+                ],
+                if (quest.canAccept)
+                  FilledButton(onPressed: onAccept, child: Text(quest.acceptLabel)),
+              ],
+            ),
             _ => Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [

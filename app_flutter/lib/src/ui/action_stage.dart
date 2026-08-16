@@ -8,6 +8,7 @@ import '../content/asset_paths.dart';
 import '../session/game_controller.dart';
 import '../theme.dart';
 import 'format.dart';
+import 'game_image.dart';
 import 'item_icon.dart';
 
 /// How tall a fighter, a gathering scene, or a workstation is drawn.
@@ -273,11 +274,10 @@ class _Portrait extends StatelessWidget {
                       filterQuality: FilterQuality.none,
                       gaplessPlayback: true,
                     )
-                  : Image.asset(
+                  : GameImage(
                       assetPath!,
                       fit: BoxFit.contain,
                       alignment: alignment,
-                      filterQuality: FilterQuality.none,
                     ),
             ?overlay,
           ],

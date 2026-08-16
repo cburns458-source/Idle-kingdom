@@ -4,6 +4,7 @@ import 'package:ik_rules/ik_rules.dart';
 import '../content/asset_paths.dart';
 import '../session/game_controller.dart';
 import '../theme.dart';
+import 'game_image.dart';
 
 /// The last few completed actions, one row each: xp, gold, then loot.
 class RewardStrip extends StatelessWidget {
@@ -84,7 +85,7 @@ class _Chip extends StatelessWidget {
         children: [
           Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
           const SizedBox(width: 4),
-          Image.asset(iconPath, width: 14, height: 14, filterQuality: FilterQuality.none),
+          GameImage(iconPath, width: 14, height: 14),
         ],
       ),
     );

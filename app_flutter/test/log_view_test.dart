@@ -80,4 +80,18 @@ void main() {
     expect(find.text('×4'), findsOne);
     expect(find.text('Unknown'), findsWidgets);
   });
+
+  testWidgets('log tabs stay on screen while the list scrolls', (tester) async {
+    final controller = buildController(database, seed: startedCharacter(database));
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller);
+    await openLog(tester);
+
+    await tester.drag(find.byType(ListView), const Offset(0, -400));
+    await tester.pump();
+
+    expect(find.text('Log'), findsOne);
+    expect(find.text('Achievements'), findsOne);
+    expect(find.text('Quests'), findsOne);
+  });
 }

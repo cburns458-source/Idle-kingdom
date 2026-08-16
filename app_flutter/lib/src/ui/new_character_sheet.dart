@@ -6,6 +6,7 @@ import '../content/asset_paths.dart';
 import '../session/game_controller.dart';
 import '../theme.dart';
 import 'appearance_picker.dart';
+import 'game_image.dart';
 
 /// Name, race, and a starting look.
 ///
@@ -82,12 +83,7 @@ class _NewCharacterSheetState extends State<NewCharacterSheet> {
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Image.asset(
-                          playerAssetPath(_appearance),
-                          width: 96,
-                          height: 96,
-                          filterQuality: FilterQuality.none,
-                        ),
+                        GameImage(playerAssetPath(_appearance), width: 96, height: 96),
                         const SizedBox(width: 12),
                         Expanded(
                           child: AppearancePicker(

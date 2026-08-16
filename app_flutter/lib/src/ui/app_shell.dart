@@ -250,7 +250,7 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin {
       children: [
         Column(
           children: [
-            TopHud(controller: controller),
+            TopHud(controller: controller, onOpenWardrobe: _openWardrobe),
             Expanded(
               child: Stack(
                 fit: StackFit.expand,
@@ -287,16 +287,6 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin {
             multiplayer: multiplayer,
             locationId: save.currentLocationId,
             citadelHub: _inCitadel,
-          ),
-        ),
-        Positioned(
-          left: 8,
-          top: 2,
-          child: HudPortrait(
-            appearance: save.appearance,
-            bytes: controller.localPlayerPng,
-            hint: !save.hasSeenWardrobeIntro && save.cosmetics.unlocked.isNotEmpty,
-            onTap: _openWardrobe,
           ),
         ),
         if (_nearbyOpen)

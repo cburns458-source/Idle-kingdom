@@ -197,10 +197,28 @@ void main() {
       tester,
       NpcPanel(controller: controller, npc: npcOf('NPC-0011'), onClose: () {}),
     );
+    expect(find.text('Quest Giver'), findsNothing);
     await tester.tap(find.text('Donate 25 gold'));
     await tester.pump();
-    expect(find.textContaining('coin purse'), findsOne);
-    await tester.tap(find.text('Donate 25 gold'));
+
+    expect(getQuestProgress(controller.save, 'QST-0003').status, 'inactive');
+    expect(controller.save.gold, 15);
+    expect(find.text('Start the quest The Missing Purse?'), findsOne);
+
+    await pumpPanel(
+      tester,
+      NpcPanel(
+        key: const ValueKey('after donate'),
+        controller: controller,
+        npc: npcOf('NPC-0011'),
+        onClose: () {},
+      ),
+    );
+    expect(find.text('Donate 25 gold'), findsNothing);
+    expect(find.text('Start the quest The Missing Purse?'), findsWidgets);
+    await tester.tap(find.text('Start the quest The Missing Purse?').last);
+    await tester.pump();
+    await tester.tap(find.text('Start the quest The Missing Purse?'));
     await tester.pump();
 
     expect(getQuestProgress(controller.save, 'QST-0003').status, 'active');

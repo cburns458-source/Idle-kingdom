@@ -15,6 +15,7 @@ import {
   bribeQuestNpc,
   chooseQuestCombatRoute,
   completeQuest,
+  donateForQuest,
   getQuestProgress,
 } from './quests'
 import { applyTravelArrival } from '../world/travel'
@@ -35,6 +36,13 @@ describe('quest tours', () => {
       expect.objectContaining({ kind: 'quest_pitch', questId: 'QST-0003' }),
     )
 
+    expect(acceptQuest(launch, save, 'QST-0003').ok).toBe(false)
+    const donated = donateForQuest(launch, save, 'QST-0003')
+    expect(donated.ok).toBe(true)
+    if (!donated.ok) return
+    save = donated.save
+    expect(save.gold).toBe(275)
+    expect(getQuestProgress(save, 'QST-0003').status).toBe('inactive')
     const accepted = acceptQuest(launch, save, 'QST-0003')
     expect(accepted.ok).toBe(true)
     if (!accepted.ok) return
@@ -69,6 +77,10 @@ describe('quest tours', () => {
   it('opens Pressure the Guards only on the combat route, then grants Combat XP', () => {
     const { launch } = prepareDatabase(rawDatabase)
     let save = { ...createNewSave(launch), currentLocationId: 'LOC-0002', gold: 25 }
+    const donated = donateForQuest(launch, save, 'QST-0003')
+    expect(donated.ok).toBe(true)
+    if (!donated.ok) return
+    save = donated.save
     const accepted = acceptQuest(launch, save, 'QST-0003')
     expect(accepted.ok).toBe(true)
     if (!accepted.ok) return

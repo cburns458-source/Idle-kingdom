@@ -2,7 +2,13 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { prepareDatabase } from '../data/loadDatabase'
-import { actionsForSkill, projectsForSkill, skillMenuEntries } from './skillActions'
+import {
+  actionsForSkill,
+  projectsForSkill,
+  skillMenuDisplayEntries,
+  skillMenuEntries,
+  skillMenuLine,
+} from './skillActions'
 
 const rawDatabase = JSON.parse(
   readFileSync(resolve(process.cwd(), 'content/data/game-database.json'), 'utf8'),
@@ -45,5 +51,19 @@ describe('skill menu entries', () => {
     expect(items.some((item) => item.displayName === 'Strength Spell')).toBe(true)
     expect(items.some((item) => item.displayName === 'Minor Gathering Enchantment')).toBe(true)
     expect(items.find((item) => item.displayName === 'Minor Gathering Enchantment')?.level).toBe(20)
+  })
+
+  it('groups smithing by material and numbers every menu row', () {
+    const { launch } = prepareDatabase(rawDatabase)
+    const mining = skillMenuDisplayEntries(launch, 'SKL-0002')
+    expect(mining.some((item) => skillMenuLine(item).includes('Mine copper ore'))).toBe(true)
+    expect(skillMenuLine(mining[0]!)).toMatch(/^\d+\. /)
+
+    const smithing = skillMenuDisplayEntries(launch, 'SKL-0011')
+    expect(smithing.some((item) => item.displayName === 'Tungsten items' && item.level === 70)).toBe(
+      true,
+    )
+    expect(smithing.some((item) => item.displayName === 'Tungsten Sword')).toBe(false)
+    expect(projectsForSkill(launch, 'SKL-0011').length).toBeGreaterThan(smithing.length)
   })
 })
