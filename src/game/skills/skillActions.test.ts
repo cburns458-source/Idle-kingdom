@@ -53,7 +53,7 @@ describe('skill menu entries', () => {
     expect(items.find((item) => item.displayName === 'Minor Gathering Enchantment')?.level).toBe(20)
   })
 
-  it('groups smithing by material and numbers every menu row', () {
+  it('groups smithing by material and numbers every menu row', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const mining = skillMenuDisplayEntries(launch, 'SKL-0002')
     expect(mining.some((item) => skillMenuLine(item).includes('Mine copper ore'))).toBe(true)

@@ -114,29 +114,28 @@ void _openSkillMenu(
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: GamePanel(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(skillName, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
-              const SizedBox(height: 8),
-              if (entries.isEmpty)
-                const MutedText('Nothing listed for this skill yet.')
-              else
-                ConstrainedBox(
-                  constraints: const BoxConstraints(maxHeight: 360),
-                  child: ListView(
-                    shrinkWrap: true,
-                    children: [
-                      for (final entry in entries)
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 6),
-                          child: Text(skillMenuLine(entry)),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.55),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(skillName, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+                const SizedBox(height: 8),
+                Expanded(
+                  child: entries.isEmpty
+                      ? const MutedText('Nothing listed for this skill yet.')
+                      : ListView(
+                          children: [
+                            for (final entry in entries)
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 6),
+                                child: Text(skillMenuLine(entry)),
+                              ),
+                          ],
                         ),
-                    ],
-                  ),
                 ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

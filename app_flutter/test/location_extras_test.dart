@@ -231,11 +231,7 @@ void main() {
     await tapVisible(tester, find.byTooltip('Expand list'));
     expect(find.byTooltip('Collapse list'), findsOne);
 
-    await tester.tap(find.byTooltip('Open world map'));
-    await tester.pump();
-    await tester.tap(find.text('The Farm'));
-    await tester.pump();
-    await tester.tap(find.text('Travel'));
+    controller.commit(controller.save.copyWith(currentLocationId: 'LOC-0001'));
     await tester.pump();
 
     expect(controller.save.currentLocationId, 'LOC-0001');

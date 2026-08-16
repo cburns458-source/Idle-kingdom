@@ -137,6 +137,7 @@ class _LocationViewState extends State<LocationView> {
     setState(() {
       _open = panel;
       _openAt = controller.save.currentLocationId;
+      _bandExpanded = false;
     });
   }
 
