@@ -166,7 +166,9 @@ void main() {
       contains('The Watch holds the meadow road.'),
     );
 
-    await tester.tap(find.byTooltip('Close chat'));
+    await tester.tapAt(const Offset(20, 20));
+    await tester.pump();
+    await tester.tap(find.byTooltip('Meadow'));
     await tester.pump();
     await tester.tap(find.byTooltip('Nearby adventurers'));
     await tester.pump();
