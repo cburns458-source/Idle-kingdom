@@ -1,6 +1,7 @@
 import 'package:collection/collection.dart';
 import 'package:ik_content/ik_content.dart';
 
+import '../config.dart';
 import '../js_compat.dart';
 import '../quests/objectives.dart';
 import '../quests/progress.dart';
@@ -8,48 +9,33 @@ import '../quests/quests.dart';
 import '../save/generated/save_models.dart';
 import 'knowledge.dart';
 
-/// Copy the clients share, so a line only ever has to be reworded once.
-const String merchantTipLine = 'Here\u2019s some tips about artisanry';
-const String merchantTipSpentLine = 'I\u2019ve already shared what I know about artisanry.';
-const String _defaultMerchantLine = 'Welcome to my shop.';
-const String _defaultNpcDescription = 'An inhabitant of Idale.';
+const String _fallbackMerchantTip = 'Here\u2019s some tips about artisanry';
+const String _fallbackMerchantTipSpent = 'I\u2019ve already shared what I know about artisanry.';
+const String _fallbackMerchantLine = 'Welcome to my shop.';
+const String _fallbackNpcDescription = 'An inhabitant of Idale.';
+const String _fallbackQuestActivePrompt = 'What else do you need?';
+
+String merchantTipLine(GameDatabase db) =>
+    configString(db, 'copy.merchant_tip', _fallbackMerchantTip);
+
+String merchantTipSpentLine(GameDatabase db) =>
+    configString(db, 'copy.merchant_tip_spent', _fallbackMerchantTipSpent);
 
 /// Quests the giver pitches in their own words before the quest list is shown.
 ///
 /// A quest without a pitch is simply accepted from the list.
-const Map<String, String> _questPitchLines = <String, String>{
-  'QST-0002':
-      'I\u2019m tired of working in the kitchen, I just saw a lot for sale down '
-      'the street, I\u2019m thinking of starting the alchemy shop '
-      'I\u2019ve always dreamed of\u2026',
-  'QST-0003':
-      'Please, traveler\u2026 guards took my coin purse. '
-      'I have nothing left. If you can spare 25 gold, I\u2019ll wait here while you look.',
-  'QST-0005':
-      'The Archmage will take an apprentice who can gather Essence. '
-      'I can grant you access to the mine beneath the tower \u2014 '
-      'bring ten Essence to the Archmage.',
-};
+String? questPitchLine(GameDatabase db, String questId) {
+  final pitch = db.quests
+      .firstWhereOrNull((row) => row['Quest ID'] == questId)?['Pitch'];
+  return pitch is String && pitch.isNotEmpty ? pitch : null;
+}
 
-const Map<String, Map<String, String>> _questTalkLines = <String, Map<String, String>>{
-  'QST-0003': <String, String>{
-    'NPC-0007': 'A beggar lost a purse? The guards at the barracks were laughing about some poor fool\u2026',
-    'NPC-0012':
-        'A purse? Maybe I saw something. Of course, my memory gets expensive\u2026 '
-        'or you could try taking it.',
-  },
-  'QST-0004': <String, String>{
-    'NPC-0013':
-        'Welcome to the Citadel. See the Market, use a Processing station, '
-        'and inspect the Grand Bazaar and Bounty Board, then come back to me.',
-    'NPC-0006': 'New around here? Browse all you like \u2014 no obligation to buy.',
-  },
-  'QST-0005': <String, String>{'NPC-0004': 'Ten Essence, and I will begin your studies in Arcana.'},
-};
-
-String? questPitchLine(String questId) => _questPitchLines[questId];
-
-String? questTalkLine(String questId, String npcId) => _questTalkLines[questId]?[npcId];
+String? questTalkLine(GameDatabase db, String questId, String npcId) {
+  final line = db.questDialogue
+      .firstWhereOrNull((row) => row.questId == questId && row.npcId == npcId)
+      ?.line;
+  return line != null && line.isNotEmpty ? line : null;
+}
 
 String? skillForKnowledgeNpc(String npcId) {
   if (npcId == masterDwarfId) return smithingSkillId;
@@ -171,6 +157,7 @@ class NpcQuestBlock {
     required this.bribeLabel,
     required this.canChooseCombat,
     required this.combatLabel,
+    required this.idlePrompt,
   });
 
   final String questId;
@@ -202,6 +189,9 @@ class NpcQuestBlock {
   final bool canChooseCombat;
   final String combatLabel;
 
+  /// Shown while the quest is active and no Talk / Bribe / Combat button is up.
+  final String idlePrompt;
+
   Map<String, Object?> toJson() => <String, Object?>{
     'questId': questId,
     'name': name,
@@ -227,6 +217,7 @@ class NpcQuestBlock {
     'bribeLabel': bribeLabel,
     'canChooseCombat': canChooseCombat,
     'combatLabel': combatLabel,
+    'idlePrompt': idlePrompt,
   };
 }
 
@@ -285,7 +276,7 @@ NpcQuestBlock _questBlock(GameDatabase db, PlayerSave save, QuestRow quest, Stri
   final displayName = quest['Display Name'];
   final name = displayName is String ? displayName : questId;
   final objective = questObjectiveProgress(db, save, quest);
-  final pitch = questPitchLine(questId);
+  final pitch = questPitchLine(db, questId);
   final summary = quest['Summary'];
   final parsed = parseStructuredObjectives(quest);
   final status = getQuestProgress(save, questId).status;
@@ -325,7 +316,8 @@ NpcQuestBlock _questBlock(GameDatabase db, PlayerSave save, QuestRow quest, Stri
     canTurnIn: turnInId == npcId && status == 'active',
     canTalk: status == 'active' && parsed.talkNpcIds.contains(npcId) && !talked,
     talkLabel: 'Talk',
-    talkLine: questTalkLine(questId, npcId),
+    talkLine: questTalkLine(db, questId, npcId),
+    idlePrompt: configString(db, 'copy.quest_active_prompt', _fallbackQuestActivePrompt),
     canBribe:
         status == 'active' &&
         parsed.choiceNpcId == npcId &&
@@ -359,17 +351,17 @@ NpcGreeting? _greetingFor(
   if (lowerOrEmpty(npc.raw['Role']) == 'merchant') {
     if (offersMerchantTip(save, npcId)) {
       return MerchantGreeting(
-        line: merchantTipLine,
+        line: merchantTipLine(db),
         detail: '${jsLocaleNumber(merchantTipXp)} ${_skillName(db, artisanrySkillId)} XP',
       );
     }
     final description = npc.raw['Description'];
     return MerchantGreeting(
       line: npcId == generalStoreMerchantId
-          ? merchantTipSpentLine
+          ? merchantTipSpentLine(db)
           : description is String
           ? description
-          : _defaultMerchantLine,
+          : configString(db, 'copy.default_merchant_line', _fallbackMerchantLine),
       detail: null,
     );
   }
@@ -402,7 +394,9 @@ NpcConversation npcConversation(GameDatabase db, PlayerSave save, NpcRow npc) {
     npcId: npcId,
     name: displayName is String ? displayName : npcId,
     role: role is String ? role : null,
-    description: description is String ? description : _defaultNpcDescription,
+    description: description is String
+        ? description
+        : configString(db, 'copy.default_npc_description', _fallbackNpcDescription),
     isMerchant: lowerOrEmpty(role) == 'merchant',
     shopId: shopIdForMerchant(db, npc),
     greeting: _greetingFor(db, save, npc, quests),

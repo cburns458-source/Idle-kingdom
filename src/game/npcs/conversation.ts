@@ -17,6 +17,7 @@ import {
   type QuestRow,
 } from '../quests/quests'
 import type { PlayerSave } from '../save/types'
+import { configString } from '../activity/gathering'
 import {
   ARCHMAGE_ID,
   ARCANA_SKILL_ID,
@@ -32,49 +33,36 @@ import {
   unlockNpcKnowledge,
 } from './knowledge'
 
-/** Copy the clients share, so a line only ever has to be reworded once. */
-export const MERCHANT_TIP_LINE = 'Here’s some tips about artisanry'
-export const MERCHANT_TIP_SPENT_LINE = 'I’ve already shared what I know about artisanry.'
-const DEFAULT_MERCHANT_LINE = 'Welcome to my shop.'
-const DEFAULT_NPC_DESCRIPTION = 'An inhabitant of Idale.'
+const FALLBACK_MERCHANT_TIP = 'Here’s some tips about artisanry'
+const FALLBACK_MERCHANT_TIP_SPENT = 'I’ve already shared what I know about artisanry.'
+const FALLBACK_MERCHANT_LINE = 'Welcome to my shop.'
+const FALLBACK_NPC_DESCRIPTION = 'An inhabitant of Idale.'
+const FALLBACK_QUEST_ACTIVE_PROMPT = 'What else do you need?'
+
+export function merchantTipLine(db: GameDatabase): string {
+  return configString(db, 'copy.merchant_tip', FALLBACK_MERCHANT_TIP)
+}
+
+export function merchantTipSpentLine(db: GameDatabase): string {
+  return configString(db, 'copy.merchant_tip_spent', FALLBACK_MERCHANT_TIP_SPENT)
+}
 
 /**
  * Quests the giver pitches in their own words before the quest list is shown.
  *
  * A quest without a pitch is simply accepted from the list.
  */
-const QUEST_PITCH_LINES: Record<string, string> = {
-  'QST-0002':
-    'I’m tired of working in the kitchen, I just saw a lot for sale down the street, I’m thinking of starting the alchemy shop I’ve always dreamed of…',
-  'QST-0003':
-    'Please, traveler… guards took my coin purse. I have nothing left. If you can spare 25 gold, I’ll wait here while you look.',
-  'QST-0005':
-    'The Archmage will take an apprentice who can gather Essence. I can grant you access to the mine beneath the tower — bring ten Essence to the Archmage.',
+export function questPitchLine(db: GameDatabase, questId: string): string | null {
+  const quest = db.Quests.find((row) => row['Quest ID'] === questId)
+  const pitch = quest?.['Pitch']
+  return typeof pitch === 'string' && pitch.length > 0 ? pitch : null
 }
 
-const QUEST_TALK_LINES: Record<string, Record<string, string>> = {
-  'QST-0003': {
-    'NPC-0007':
-      'A beggar lost a purse? The guards at the barracks were laughing about some poor fool…',
-    'NPC-0012':
-      'A purse? Maybe I saw something. Of course, my memory gets expensive… or you could try taking it.',
-  },
-  'QST-0004': {
-    'NPC-0013':
-      'Welcome to the Citadel. See the Market, use a Processing station, and inspect the Grand Bazaar and Bounty Board, then come back to me.',
-    'NPC-0006': 'New around here? Browse all you like — no obligation to buy.',
-  },
-  'QST-0005': {
-    'NPC-0004': 'Ten Essence, and I will begin your studies in Arcana.',
-  },
-}
-
-export function questPitchLine(questId: string): string | null {
-  return QUEST_PITCH_LINES[questId] ?? null
-}
-
-export function questTalkLine(questId: string, npcId: string): string | null {
-  return QUEST_TALK_LINES[questId]?.[npcId] ?? null
+export function questTalkLine(db: GameDatabase, questId: string, npcId: string): string | null {
+  const line = (db.QuestDialogue ?? []).find(
+    (row) => row['Quest ID'] === questId && row['NPC ID'] === npcId,
+  )?.Line
+  return line && line.length > 0 ? line : null
 }
 
 export function skillForKnowledgeNpc(npcId: string): string | null {
@@ -146,6 +134,8 @@ export interface NpcQuestBlock {
   bribeLabel: string
   canChooseCombat: boolean
   combatLabel: string
+  /** Shown while the quest is active and no Talk / Bribe / Combat button is up. */
+  idlePrompt: string
 }
 
 /** Everything a client needs to draw one NPC, with no game rules left in it. */
@@ -182,7 +172,7 @@ function questBlock(
 ): NpcQuestBlock {
   const questId = quest['Quest ID']
   const objective = questObjectiveProgress(db, save, quest)
-  const pitch = questPitchLine(questId)
+  const pitch = questPitchLine(db, questId)
   const parsed = parseStructuredObjectives(quest)
   const status = getQuestProgress(save, questId).status
   const isGiver = quest['NPC ID'] === npcId
@@ -219,7 +209,8 @@ function questBlock(
     canTurnIn: turnInId === npcId && status === 'active',
     canTalk: status === 'active' && parsed.talkNpcIds.includes(npcId) && !talked,
     talkLabel: 'Talk',
-    talkLine: questTalkLine(questId, npcId),
+    talkLine: questTalkLine(db, questId, npcId),
+    idlePrompt: configString(db, 'copy.quest_active_prompt', FALLBACK_QUEST_ACTIVE_PROMPT),
     canBribe:
       status === 'active' &&
       parsed.choiceNpcId === npcId &&
@@ -255,14 +246,16 @@ function greetingFor(
     if (offersMerchantTip(save, npcId)) {
       return {
         kind: 'merchant',
-        line: MERCHANT_TIP_LINE,
+        line: merchantTipLine(db),
         detail: `${MERCHANT_TIP_XP.toLocaleString()} ${skillName(db, ARTISANRY_SKILL_ID)} XP`,
       }
     }
     const spent = npcId === GENERAL_STORE_MERCHANT_ID
     return {
       kind: 'merchant',
-      line: spent ? MERCHANT_TIP_SPENT_LINE : (npc.Description ?? DEFAULT_MERCHANT_LINE),
+      line: spent
+        ? merchantTipSpentLine(db)
+        : (npc.Description ?? configString(db, 'copy.default_merchant_line', FALLBACK_MERCHANT_LINE)),
       detail: null,
     }
   }
@@ -296,7 +289,8 @@ export function npcConversation(
     npcId,
     name: npc['Display Name'],
     role: npc.Role ?? null,
-    description: npc.Description ?? DEFAULT_NPC_DESCRIPTION,
+    description:
+      npc.Description ?? configString(db, 'copy.default_npc_description', FALLBACK_NPC_DESCRIPTION),
     isMerchant: (npc.Role ?? '').toLowerCase() === 'merchant',
     shopId: shopIdForMerchant(db, npc),
     greeting: greetingFor(db, save, npc, quests),

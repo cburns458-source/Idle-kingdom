@@ -115,6 +115,9 @@ describe('quest tours', () => {
 
     save = applyTravelArrival(launch, save, 'LOC-0029', Date.parse('2026-01-01T00:00:01.000Z'))
     save = applyTravelArrival(launch, save, 'LOC-0030', Date.parse('2026-01-01T00:00:02.000Z'))
+    save = applyTravelArrival(launch, save, 'LOC-0035', Date.parse('2026-01-01T00:00:03.000Z'))
+    save = applyTravelArrival(launch, save, 'LOC-0028', Date.parse('2026-01-01T00:00:04.000Z'))
+    save = applyTravelArrival(launch, save, 'LOC-0033', Date.parse('2026-01-01T00:00:05.000Z'))
     save = applyQuestTalkProgress(launch, save, 'NPC-0013')
     save = applyQuestTalkProgress(launch, save, 'NPC-0006')
     save = applyQuestInspectProgress(launch, save, 'bazaar')

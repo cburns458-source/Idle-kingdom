@@ -9,6 +9,11 @@ export function configNumber(db: GameDatabase, key: string, fallback: number): n
   return typeof value === 'number' && Number.isFinite(value) ? value : fallback
 }
 
+export function configString(db: GameDatabase, key: string, fallback: string): string {
+  const value = db.Config.find((row) => row.Key === key)?.Value
+  return typeof value === 'string' && value.length > 0 ? value : fallback
+}
+
 export function gatheringDurationMs(
   db: GameDatabase,
   save: PlayerSave,

@@ -91,6 +91,10 @@ export interface LocationRow {
   Description: string | null
   'Danger / Hostility': string | null
   'Background Asset Key': string | null
+  /** Label used when this location is the gateway node on a child sub-map. */
+  'Map Node Name': string | null
+  /** Semicolon-separated Map IDs that must not show this location. */
+  'Hidden On Map IDs': string | null
   Notes: string | null
 }
 
@@ -202,6 +206,16 @@ export interface RewardEntryRow {
   'Skill ID': string | null
   'XP Amount': number | null
   Status: RecordStatus
+  Notes: string | null
+}
+
+export interface QuestDialogueRow {
+  'Dialogue ID': string
+  'Quest ID': string
+  'NPC ID': string
+  Line: string
+  Status: RecordStatus
+  'Release Phase': ReleasePhase
   Notes: string | null
 }
 
@@ -353,6 +367,7 @@ export interface GameDatabase {
   NPCs: NpcRow[]
   Shops: ShopRow[]
   Quests: Record<string, unknown>[]
+  QuestDialogue: QuestDialogueRow[]
   Achievements: Record<string, unknown>[]
   CosmeticSlots: CosmeticSlotRow[]
   Cosmetics: CosmeticRow[]
@@ -387,6 +402,7 @@ export const DATABASE_TABLES = [
   'NPCs',
   'Shops',
   'Quests',
+  'QuestDialogue',
   'Achievements',
   'CosmeticSlots',
   'Cosmetics',

@@ -48,7 +48,7 @@ export const npcScenarios: ParityScenario[] = [
           const npc = db.NPCs.find((row) => row['NPC ID'] === npcId)!
           return npcConversation(db, save, npc)
         }),
-        pitchLines: PITCH_QUESTS.map((questId) => questPitchLine(questId)),
+        pitchLines: PITCH_QUESTS.map((questId) => questPitchLine(db, questId)),
         mentorSkills: MENTOR_NPCS.map((npcId) => skillForKnowledgeNpc(npcId)),
       } as unknown as JsonValue
     }),

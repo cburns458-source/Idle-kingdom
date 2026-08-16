@@ -9,3 +9,9 @@ num configNumber(GameDatabase db, String key, num fallback) {
   final value = db.config.firstWhereOrNull((row) => row.raw['Key'] == key)?.raw['Value'];
   return value is num && value.isFinite ? value : fallback;
 }
+
+/// A string Config value, falling back when the row is missing or blank.
+String configString(GameDatabase db, String key, String fallback) {
+  final value = db.config.firstWhereOrNull((row) => row.raw['Key'] == key)?.raw['Value'];
+  return value is String && value.isNotEmpty ? value : fallback;
+}

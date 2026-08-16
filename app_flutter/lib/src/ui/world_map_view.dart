@@ -11,13 +11,6 @@ import '../theme.dart';
 import 'game_image.dart';
 import 'player_sprite.dart';
 
-String _mapNodeLabel(LocationRow location, String browseMapId) {
-  if (browseMapId == townMapId && location.locationId == townGatewayId) {
-    return 'Town Gate';
-  }
-  return location.displayName;
-}
-
 /// The map: nodes over the map art, and a panel for whichever one is selected.
 class WorldMapView extends StatelessWidget {
   const WorldMapView({
@@ -207,7 +200,7 @@ class _MapNodeState extends State<_MapNode> {
     final location = widget.location;
     final isHere = widget.isHere;
     final isSelected = widget.isSelected;
-    final label = _mapNodeLabel(location, widget.browseMapId);
+    final label = mapNodeLabel(location, widget.browseMapId);
     final position = positionForLocation(location);
     final fill = isHere ? Palette.gold : Palette.parchmentText;
     return Align(
@@ -292,7 +285,7 @@ class _SelectionPanel extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        _mapNodeLabel(place, browseMapId),
+                        mapNodeLabel(place, browseMapId),
                         style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
                       ),
                       if (place.description case final blurb?) MutedText(blurb),

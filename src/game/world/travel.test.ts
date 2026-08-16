@@ -17,7 +17,12 @@ import {
   CASTLE_MAP_ID,
   CAVE_MAP_ID,
   CITADEL_MAP_ID,
+  CITADEL_GATEWAY_ID,
+  CASTLE_GATEWAY_ID,
+  TOWN_GATEWAY_ID,
+  TOWN_MAP_ID,
 } from './constants'
+import { mapNodeLabel } from './mapLabel'
 
 const rawDatabase = JSON.parse(
   readFileSync(resolve(process.cwd(), 'content/data/game-database.json'), 'utf8'),
@@ -49,8 +54,8 @@ describe('travel rules', () => {
     expect(nodes.some((location) => location['Location ID'] === 'LOC-0002')).toBe(true)
     expect(nodes.some((location) => location['Location ID'] === 'LOC-0018')).toBe(true)
     expect(nodes.some((location) => location['Location ID'] === 'LOC-0036')).toBe(true)
-    expect(nodes.some((location) => location['Location ID'] === 'LOC-0019')).toBe(true)
-    expect(nodes.some((location) => location['Location ID'] === 'LOC-0020')).toBe(true)
+    expect(nodes.some((location) => location['Location ID'] === 'LOC-0019')).toBe(false)
+    expect(nodes.some((location) => location['Location ID'] === 'LOC-0020')).toBe(false)
   })
 
   it('allows travel to Ancient Forest from the overworld', () => {
@@ -65,7 +70,7 @@ describe('travel rules', () => {
     expect(canTravelTo(launch, 'LOC-0013', 'LOC-0036', MAIN_MAP_ID)).toBe(true)
   })
 
-  it('treats west/east horizons as browse-only future gateways', () => {
+  it('keeps west and east region maps empty after removing horizon gateways', () => {
     const { launch } = prepareDatabase(rawDatabase)
     expect(canTravelTo(launch, 'LOC-0002', 'LOC-0019', MAIN_MAP_ID)).toBe(false)
     expect(canTravelTo(launch, 'LOC-0002', 'LOC-0020', MAIN_MAP_ID)).toBe(false)
@@ -146,7 +151,6 @@ describe('travel rules', () => {
     const nodes = locationsForMapView(launch, CITADEL_MAP_ID).map((row) => row['Location ID'])
     expect(nodes).toEqual(
       expect.arrayContaining([
-        'LOC-0027',
         'LOC-0028',
         'LOC-0029',
         'LOC-0030',
@@ -155,6 +159,7 @@ describe('travel rules', () => {
         'LOC-0033',
       ]),
     )
+    expect(nodes).not.toContain('LOC-0027')
     expect(canTravelTo(launch, 'LOC-0027', 'LOC-0028', CITADEL_MAP_ID)).toBe(true)
     expect(canTravelTo(launch, 'LOC-0028', 'LOC-0029', CITADEL_MAP_ID)).toBe(true)
     expect(canTravelTo(launch, 'LOC-0028', 'LOC-0033', CITADEL_MAP_ID)).toBe(true)
@@ -162,5 +167,20 @@ describe('travel rules', () => {
     const hall = launch.Locations.find((location) => location['Location ID'] === 'LOC-0033')
     expect(locationHasGuildHall(hall)).toBe(true)
     expect(locationHasGuildHall(gateway)).toBe(false)
+  })
+
+  it('labels town and castle gateways on their submaps', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const town = launch.Locations.find((row) => row['Location ID'] === TOWN_GATEWAY_ID)!
+    const castle = launch.Locations.find((row) => row['Location ID'] === CASTLE_GATEWAY_ID)!
+    expect(mapNodeLabel(town, TOWN_MAP_ID)).toBe('Town Gate')
+    expect(mapNodeLabel(town, MAIN_MAP_ID)).toBe('The Town')
+    expect(mapNodeLabel(castle, CASTLE_MAP_ID)).toBe('Castle Gate')
+    expect(mapNodeLabel(castle, MAIN_MAP_ID)).toBe('Castle')
+    expect(
+      locationsForMapView(launch, CITADEL_MAP_ID).some(
+        (row) => row['Location ID'] === CITADEL_GATEWAY_ID,
+      ),
+    ).toBe(false)
   })
 })

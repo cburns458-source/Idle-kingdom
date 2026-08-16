@@ -341,6 +341,12 @@ class LocationRow extends DbRow {
 
   String? get backgroundAssetKey => stringOrNull('Background Asset Key');
 
+  /// Label used when this location is the gateway node on a child sub-map.
+  String? get mapNodeName => stringOrNull('Map Node Name');
+
+  /// Semicolon-separated Map IDs that must not show this location.
+  String? get hiddenOnMapIDs => stringOrNull('Hidden On Map IDs');
+
   String? get notes => stringOrNull('Notes');
 }
 
@@ -487,6 +493,24 @@ class ProjectRow extends DbRow {
   String? get requiredSkill3Id => stringOrNull('Required Skill 3 ID');
 
   num? get requiredSkill3Level => numberOrNull('Required Skill 3 Level');
+}
+
+class QuestDialogueRow extends DbRow {
+  const QuestDialogueRow(super.raw);
+
+  String get dialogueId => stringValue('Dialogue ID');
+
+  String get questId => stringValue('Quest ID');
+
+  String get npcId => stringValue('NPC ID');
+
+  String get line => stringValue('Line');
+
+  String get status => stringValue('Status');
+
+  String get releasePhase => stringValue('Release Phase');
+
+  String? get notes => stringOrNull('Notes');
 }
 
 class RaceBonusRow extends DbRow {
@@ -755,6 +779,7 @@ const List<String> databaseTables = <String>[
   'NPCs',
   'Shops',
   'Quests',
+  'QuestDialogue',
   'Achievements',
   'CosmeticSlots',
   'Cosmetics',
@@ -831,6 +856,12 @@ class GameDatabase {
   late final List<ShopRow> shops = typedRows(raw, 'Shops', ShopRow.new);
 
   late final List<Map<String, Object?>> quests = untypedRows(raw, 'Quests');
+
+  late final List<QuestDialogueRow> questDialogue = typedRows(
+    raw,
+    'QuestDialogue',
+    QuestDialogueRow.new,
+  );
 
   late final List<Map<String, Object?>> achievements = untypedRows(raw, 'Achievements');
 

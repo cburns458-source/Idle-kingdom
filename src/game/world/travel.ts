@@ -4,6 +4,7 @@ import type { GameDatabase, LocationRow, TravelConnectionRow } from '../data/typ
 import { applyQuestLocationProgress } from '../quests/progress'
 import type { PlayerSave } from '../save/types'
 import { MAIN_MAP_ID, isFutureHorizonLocation } from './constants'
+import { locationHiddenOnMap } from './mapLabel'
 import {
   gatewayLocationIdForSubMap,
   isBrowsableEmptyMap,
@@ -82,7 +83,9 @@ export function locationsForMapView(
   hiddenLocationIds: readonly string[] = [],
 ): LocationRow[] {
   if (mapId === MAIN_MAP_ID) {
-    return db.Locations.filter((location) => location['Map ID'] === MAIN_MAP_ID)
+    return db.Locations.filter(
+      (location) => location['Map ID'] === MAIN_MAP_ID && !locationHiddenOnMap(location, mapId),
+    )
   }
 
   if (isBrowsableEmptyMap(mapId)) {
@@ -99,9 +102,12 @@ export function locationsForMapView(
   for (const location of onMap) {
     if (!isLocationUnlocked(unlockState, location)) continue
     if (hiddenLocationIds.includes(location['Location ID'])) continue
+    if (locationHiddenOnMap(location, mapId)) continue
     merged.set(location['Location ID'], location)
   }
-  if (gateway) merged.set(gateway['Location ID'], gateway)
+  if (gateway && !locationHiddenOnMap(gateway, mapId)) {
+    merged.set(gateway['Location ID'], gateway)
+  }
   return [...merged.values()]
 }
 

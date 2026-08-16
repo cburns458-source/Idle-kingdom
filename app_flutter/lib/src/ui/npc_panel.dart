@@ -367,7 +367,7 @@ class _QuestBlock extends StatelessWidget {
                 if (quest.canTalk || quest.canBribe || quest.canChooseCombat)
                   const SizedBox.shrink()
                 else
-                  const MutedText('move on now'),
+                  MutedText(quest.idlePrompt),
                 if (quest.canTalk) ...[
                   const SizedBox(height: 6),
                   FilledButton(onPressed: onTalk, child: Text(quest.talkLabel)),

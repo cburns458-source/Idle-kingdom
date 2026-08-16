@@ -41,9 +41,6 @@ const Map<String, NodePosition> mainMapNodeLayout = <String, NodePosition>{
   'LOC-0001': NodePosition(x: 76, y: 66),
   // Harbor / dock at river mouth (raised)
   'LOC-0004': NodePosition(x: 50, y: 68),
-  // Future west / east horizon gateways
-  'LOC-0019': NodePosition(x: 4, y: 50),
-  'LOC-0020': NodePosition(x: 96, y: 50),
   // Citadel Hub gateway (between Town and Goblin Camp)
   'LOC-0027': NodePosition(x: 50, y: 46),
 };

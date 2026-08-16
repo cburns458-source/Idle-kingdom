@@ -422,9 +422,9 @@ class _LocationViewState extends State<LocationView> {
       Padding(
         padding: const EdgeInsets.only(bottom: 8),
         child: _InteractionCard(
-          title: 'Be blessed',
-          subtitle: 'The monks restore you to full health.',
-          actionLabel: 'Bless',
+          title: amenityCopy(controller.db, 'blessing').title,
+          subtitle: amenityCopy(controller.db, 'blessing').subtitle,
+          actionLabel: amenityCopy(controller.db, 'blessing').actionLabel,
           tone: GameButtonTone.primary,
           onPressed: controller.isRecovering ? null : _bless,
         ),
@@ -438,7 +438,7 @@ class _LocationViewState extends State<LocationView> {
     await showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Be blessed'),
+        title: Text(amenityCopy(controller.db, 'blessing').title),
         content: Text(result.message),
         actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('OK'))],
       ),
@@ -505,9 +505,9 @@ class _LocationViewState extends State<LocationView> {
       Padding(
         padding: const EdgeInsets.only(bottom: 8),
         child: _InteractionCard(
-          title: 'Item storage',
-          subtitle: 'Deposit and withdraw items.',
-          actionLabel: 'Bank',
+          title: amenityCopy(controller.db, 'bank').title,
+          subtitle: amenityCopy(controller.db, 'bank').subtitle,
+          actionLabel: amenityCopy(controller.db, 'bank').actionLabel,
           tone: GameButtonTone.primary,
           onPressed: () => _openPanel(const BankOpen()),
         ),
@@ -522,9 +522,9 @@ class _LocationViewState extends State<LocationView> {
       Padding(
         padding: const EdgeInsets.only(bottom: 8),
         child: _InteractionCard(
-          title: 'Player fights',
-          subtitle: 'Search by name, or ranked by combat level.',
-          actionLabel: 'Arena',
+          title: amenityCopy(controller.db, 'arena').title,
+          subtitle: amenityCopy(controller.db, 'arena').subtitle,
+          actionLabel: amenityCopy(controller.db, 'arena').actionLabel,
           tone: GameButtonTone.primary,
           onPressed: () => _openPanel(const ArenaOpen()),
         ),
@@ -543,9 +543,9 @@ class _LocationViewState extends State<LocationView> {
       Padding(
         padding: const EdgeInsets.only(bottom: 8),
         child: _InteractionCard(
-          title: 'Hall services',
-          subtitle: 'Storehouse, debt, and boxing ring.',
-          actionLabel: 'Hall',
+          title: amenityCopy(controller.db, 'hall').title,
+          subtitle: amenityCopy(controller.db, 'hall').subtitle,
+          actionLabel: amenityCopy(controller.db, 'hall').actionLabel,
           tone: GameButtonTone.primary,
           onPressed: () => _openPanel(const GuildHallOpen()),
         ),

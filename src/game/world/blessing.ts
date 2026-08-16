@@ -1,3 +1,4 @@
+import { configString } from '../activity/gathering'
 import type { GameDatabase, LocationRow } from '../data/types'
 import { isDeathPaused } from '../combat/engine'
 import { withRecalculatedVitals } from '../equipment/vitals'
@@ -13,8 +14,10 @@ export type BlessResult =
   | { ok: true; save: PlayerSave; alreadyFull: boolean; message: string; reason?: undefined }
   | { ok: false; save?: undefined; alreadyFull: false; message?: undefined; reason: string }
 
-function blessingMessage(alreadyFull: boolean): string {
-  return alreadyFull ? 'You are already at full health.' : 'The monks restore you to full health.'
+function blessingMessage(db: GameDatabase, alreadyFull: boolean): string {
+  return alreadyFull
+    ? configString(db, 'copy.amenity.blessing.already_full', 'You are already at full health.')
+    : configString(db, 'copy.amenity.blessing.restored', 'The monks restore you to full health.')
 }
 
 /** Instant Temple heal. Does not start an activity or change equipment. */
@@ -28,17 +31,21 @@ export function requestBlessing(db: GameDatabase, save: PlayerSave, nowMs: numbe
   }
   const location = db.Locations.find((row) => row['Location ID'] === save.currentLocationId)
   if (!locationHasBlessing(location)) {
-    return { ok: false, alreadyFull: false, reason: 'The monks are not here.' }
+    return {
+      ok: false,
+      alreadyFull: false,
+      reason: configString(db, 'copy.amenity.blessing.not_here', 'The monks are not here.'),
+    }
   }
 
   const next = withRecalculatedVitals(db, save)
   if (next.currentHp >= next.maxHp) {
-    return { ok: true, save: next, alreadyFull: true, message: blessingMessage(true) }
+    return { ok: true, save: next, alreadyFull: true, message: blessingMessage(db, true) }
   }
   return {
     ok: true,
     save: { ...next, currentHp: next.maxHp },
     alreadyFull: false,
-    message: blessingMessage(false),
+    message: blessingMessage(db, false),
   }
 }

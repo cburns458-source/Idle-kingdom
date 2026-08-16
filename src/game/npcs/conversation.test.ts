@@ -120,4 +120,28 @@ describe('npc conversation', () => {
     expect(conversation.mentor).toBeNull()
     expect(conversation.quests.map((quest) => quest.acceptLabel)).toEqual(['Accept quest'])
   })
+
+  it('reads quest pitches and talk lines from the database', () => {
+    const beggar = npcConversation(launch, saveAt('LOC-0002'), npc('NPC-0011'))
+    expect(beggar.greeting).toEqual({
+      kind: 'quest_pitch',
+      questId: 'QST-0003',
+      line: 'Please, traveler… someone took my coin purse in the night, I have nothing left.',
+      acceptLabel: 'Donate 25 gold',
+    })
+
+    const shopkeeper = npcConversation(launch, saveAt('LOC-0007'), npc('NPC-0009'))
+    expect(shopkeeper.quests[0]!.pitchLine).toContain('mine below the tower')
+
+    const archmage = npcConversation(
+      launch,
+      {
+        ...saveAt('LOC-0007'),
+        quests: [{ questId: 'QST-0005', status: 'active', progress: 0 }],
+      },
+      npc('NPC-0004'),
+    )
+    expect(archmage.quests[0]!.talkLine).toBe('Well done.')
+    expect(archmage.quests[0]!.idlePrompt).toBe('What else do you need?')
+  })
 })

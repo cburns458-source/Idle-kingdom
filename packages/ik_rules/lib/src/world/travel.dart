@@ -7,6 +7,7 @@ import '../js_compat.dart';
 import '../quests/progress.dart';
 import '../save/generated/save_models.dart';
 import 'constants.dart';
+import 'map_label.dart';
 import 'submaps.dart';
 
 /// Travel is a menu button: destinations are instant, with no walk or mount delay.
@@ -67,7 +68,12 @@ List<LocationRow> locationsForMapView(
   List<String> hiddenLocationIds = const <String>[],
 ]) {
   if (mapId == mainMapId) {
-    return db.locations.where((location) => location.raw['Map ID'] == mainMapId).toList();
+    return db.locations
+        .where(
+          (location) =>
+              location.raw['Map ID'] == mainMapId && !locationHiddenOnMap(location, mapId),
+        )
+        .toList();
   }
 
   if (isBrowsableEmptyMap(mapId)) return <LocationRow>[];
@@ -82,9 +88,12 @@ List<LocationRow> locationsForMapView(
     if (!isLocationUnlocked(unlockedLocationIds, location)) continue;
     final id = jsString(location.raw['Location ID']);
     if (hiddenLocationIds.contains(id)) continue;
+    if (locationHiddenOnMap(location, mapId)) continue;
     merged[id] = location;
   }
-  if (gateway != null) merged[jsString(gateway.raw['Location ID'])] = gateway;
+  if (gateway != null && !locationHiddenOnMap(gateway, mapId)) {
+    merged[jsString(gateway.raw['Location ID'])] = gateway;
+  }
   return merged.values.toList();
 }
 

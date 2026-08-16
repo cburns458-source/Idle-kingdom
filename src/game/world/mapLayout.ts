@@ -44,9 +44,6 @@ export const MAIN_MAP_NODE_LAYOUT: Record<string, NodePosition> = {
   'LOC-0001': { x: 76, y: 66 },
   // Harbor / dock at river mouth (raised)
   'LOC-0004': { x: 50, y: 68 },
-  // Future west / east horizon gateways
-  'LOC-0019': { x: 4, y: 50 },
-  'LOC-0020': { x: 96, y: 50 },
   // Citadel Hub gateway (between Town and Goblin Camp)
   'LOC-0027': { x: 50, y: 46 },
 }

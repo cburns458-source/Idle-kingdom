@@ -119,6 +119,126 @@
       "Value": 3600,
       "Unit": "seconds",
       "Notes": "Deprecated — equipped spells are always active. Kept for older clients; unused by current runtime."
+    },
+    {
+      "Key": "copy.merchant_tip",
+      "Value": "Here’s some tips about artisanry",
+      "Unit": null,
+      "Notes": "General-store merchant tip, first time."
+    },
+    {
+      "Key": "copy.merchant_tip_spent",
+      "Value": "I’ve already shared what I know about artisanry.",
+      "Unit": null,
+      "Notes": "General-store merchant tip after it has been claimed."
+    },
+    {
+      "Key": "copy.default_merchant_line",
+      "Value": "Welcome to my shop.",
+      "Unit": null,
+      "Notes": "Fallback merchant greeting when the NPC has no description."
+    },
+    {
+      "Key": "copy.default_npc_description",
+      "Value": "An inhabitant of Idale.",
+      "Unit": null,
+      "Notes": "Fallback NPC description."
+    },
+    {
+      "Key": "copy.quest_active_prompt",
+      "Value": "What else do you need?",
+      "Unit": null,
+      "Notes": "Shown on an active quest when there is no Talk, Bribe, or Combat button."
+    },
+    {
+      "Key": "copy.amenity.blessing.title",
+      "Value": "Be blessed",
+      "Unit": null,
+      "Notes": null
+    },
+    {
+      "Key": "copy.amenity.blessing.subtitle",
+      "Value": "The monks restore you to full health.",
+      "Unit": null,
+      "Notes": null
+    },
+    {
+      "Key": "copy.amenity.blessing.action",
+      "Value": "Bless",
+      "Unit": null,
+      "Notes": null
+    },
+    {
+      "Key": "copy.amenity.blessing.restored",
+      "Value": "The monks restore you to full health.",
+      "Unit": null,
+      "Notes": null
+    },
+    {
+      "Key": "copy.amenity.blessing.already_full",
+      "Value": "You are already at full health.",
+      "Unit": null,
+      "Notes": null
+    },
+    {
+      "Key": "copy.amenity.blessing.not_here",
+      "Value": "The monks are not here.",
+      "Unit": null,
+      "Notes": null
+    },
+    {
+      "Key": "copy.amenity.bank.title",
+      "Value": "Item storage",
+      "Unit": null,
+      "Notes": null
+    },
+    {
+      "Key": "copy.amenity.bank.subtitle",
+      "Value": "Deposit and withdraw items.",
+      "Unit": null,
+      "Notes": null
+    },
+    {
+      "Key": "copy.amenity.bank.action",
+      "Value": "Bank",
+      "Unit": null,
+      "Notes": null
+    },
+    {
+      "Key": "copy.amenity.arena.title",
+      "Value": "Player fights",
+      "Unit": null,
+      "Notes": null
+    },
+    {
+      "Key": "copy.amenity.arena.subtitle",
+      "Value": "Search by name, or ranked by combat level.",
+      "Unit": null,
+      "Notes": null
+    },
+    {
+      "Key": "copy.amenity.arena.action",
+      "Value": "Arena",
+      "Unit": null,
+      "Notes": null
+    },
+    {
+      "Key": "copy.amenity.hall.title",
+      "Value": "Hall services",
+      "Unit": null,
+      "Notes": null
+    },
+    {
+      "Key": "copy.amenity.hall.subtitle",
+      "Value": "Storehouse, debt, and boxing ring.",
+      "Unit": null,
+      "Notes": null
+    },
+    {
+      "Key": "copy.amenity.hall.action",
+      "Value": "Hall",
+      "Unit": null,
+      "Notes": null
     }
   ],
   "Skills": [
@@ -8255,6 +8375,8 @@
       "Description": "Pasture-focused starting area with Cow and Bull encounters.",
       "Danger / Hostility": null,
       "Background Asset Key": null,
+      "Map Node Name": null,
+      "Hidden On Map IDs": null,
       "Notes": null
     },
     {
@@ -8270,6 +8392,8 @@
       "Description": "Gateway into the Town Map. Districts hold kitchens, shops, and workshops.",
       "Danger / Hostility": null,
       "Background Asset Key": null,
+      "Map Node Name": "Town Gate",
+      "Hidden On Map IDs": null,
       "Notes": "Sub-map gateway for MAP-0006."
     },
     {
@@ -8285,6 +8409,8 @@
       "Description": "Hostile Goblin area beside the river with combat and fishing.",
       "Danger / Hostility": "Danger warning: approximately Combat Level 10.",
       "Background Asset Key": null,
+      "Map Node Name": null,
+      "Hidden On Map IDs": null,
       "Notes": null
     },
     {
@@ -8300,6 +8426,8 @@
       "Description": "Fishing, transportation, coastal NPCs, pirates, and possible future settlement.",
       "Danger / Hostility": "Pirate encounters can occur.",
       "Background Asset Key": null,
+      "Map Node Name": null,
+      "Hidden On Map IDs": null,
       "Notes": null
     },
     {
@@ -8315,6 +8443,8 @@
       "Description": "Early Mining area focused on Copper Ore with Clay, Tin Ore, Coal, and possible gems.",
       "Danger / Hostility": null,
       "Background Asset Key": null,
+      "Map Node Name": null,
+      "Hidden On Map IDs": null,
       "Notes": null
     },
     {
@@ -8330,6 +8460,8 @@
       "Description": "Mountain slopes with Mining, Rock Trolls, and access to the caves.",
       "Danger / Hostility": "Rock Troll encounters can occur.",
       "Background Asset Key": null,
+      "Map Node Name": null,
+      "Hidden On Map IDs": null,
       "Notes": null
     },
     {
@@ -8345,6 +8477,8 @@
       "Description": "Undead combat, Essence mining, Wizard's Shop, Arcana, and magical NPCs.",
       "Danger / Hostility": "Contains Skeleton and Zombie Combat Actions.",
       "Background Asset Key": null,
+      "Map Node Name": null,
+      "Hidden On Map IDs": null,
       "Notes": null
     },
     {
@@ -8360,6 +8494,8 @@
       "Description": "Woodland with Hunting, Harvesting, and mixed Combat encounters.",
       "Danger / Hostility": null,
       "Background Asset Key": null,
+      "Map Node Name": null,
+      "Hidden On Map IDs": null,
       "Notes": null
     },
     {
@@ -8375,6 +8511,8 @@
       "Description": "Small-game Hunting and Harvesting area.",
       "Danger / Hostility": null,
       "Background Asset Key": null,
+      "Map Node Name": null,
+      "Hidden On Map IDs": null,
       "Notes": null
     },
     {
@@ -8390,6 +8528,8 @@
       "Description": "A shadowed mouth in the mountain stone, cool air rising from the depths below.",
       "Danger / Hostility": null,
       "Background Asset Key": null,
+      "Map Node Name": null,
+      "Hidden On Map IDs": null,
       "Notes": null
     },
     {
@@ -8405,6 +8545,8 @@
       "Description": "Iron, Coal, rare gems, and additional progression ores.",
       "Danger / Hostility": null,
       "Background Asset Key": null,
+      "Map Node Name": null,
+      "Hidden On Map IDs": null,
       "Notes": null
     },
     {
@@ -8420,6 +8562,8 @@
       "Description": "Specialist mining shop with improved ore prices and access requirements.",
       "Danger / Hostility": null,
       "Background Asset Key": null,
+      "Map Node Name": null,
+      "Hidden On Map IDs": null,
       "Notes": null
     },
     {
@@ -8435,6 +8579,8 @@
       "Description": "The king's fortress rises above the grounds, banners stirring over stone walls.",
       "Danger / Hostility": null,
       "Background Asset Key": null,
+      "Map Node Name": "Castle Gate",
+      "Hidden On Map IDs": null,
       "Notes": null
     },
     {
@@ -8450,6 +8596,8 @@
       "Description": "Butterfly Hunting and herb Harvesting.",
       "Danger / Hostility": null,
       "Background Asset Key": null,
+      "Map Node Name": null,
+      "Hidden On Map IDs": null,
       "Notes": null
     },
     {
@@ -8465,6 +8613,8 @@
       "Description": "Kitchen access and future NPC functions.",
       "Danger / Hostility": null,
       "Background Asset Key": null,
+      "Map Node Name": null,
+      "Hidden On Map IDs": null,
       "Notes": null
     },
     {
@@ -8480,6 +8630,8 @@
       "Description": "Material-gathering quests from the King.",
       "Danger / Hostility": null,
       "Background Asset Key": null,
+      "Map Node Name": null,
+      "Hidden On Map IDs": null,
       "Notes": null
     },
     {
@@ -8495,6 +8647,8 @@
       "Description": "Guard Combat Activity.",
       "Danger / Hostility": null,
       "Background Asset Key": null,
+      "Map Node Name": null,
+      "Hidden On Map IDs": null,
       "Notes": null
     },
     {
@@ -8510,37 +8664,9 @@
       "Description": "High-level woodland with one axe-compatible Activity containing an Ancient Tree and three Ent encounters.",
       "Danger / Hostility": "Includes Ent Combat encounters.",
       "Background Asset Key": null,
+      "Map Node Name": null,
+      "Hidden On Map IDs": null,
       "Notes": "Activity Pool: Ancient Tree, Ent, Ancient Ent, Corrupted Ent."
-    },
-    {
-      "Location ID": "LOC-0019",
-      "Internal Key": "west_horizon",
-      "Display Name": "…",
-      "Map ID": "MAP-0001",
-      "Location Type": "Future Gateway",
-      "Parent Location ID": null,
-      "Node ID": "NODE-0019",
-      "Status": "Planned",
-      "Release Phase": "Launch",
-      "Description": "Uncharted lands stretch beyond the western edge of Idale.",
-      "Danger / Hostility": null,
-      "Background Asset Key": null,
-      "Notes": "Future-content gateway to Western Idale (MAP-0004). Not a travel destination."
-    },
-    {
-      "Location ID": "LOC-0020",
-      "Internal Key": "east_horizon",
-      "Display Name": "…",
-      "Map ID": "MAP-0001",
-      "Location Type": "Future Gateway",
-      "Parent Location ID": null,
-      "Node ID": "NODE-0020",
-      "Status": "Planned",
-      "Release Phase": "Launch",
-      "Description": "Uncharted lands stretch beyond the eastern edge of Idale.",
-      "Danger / Hostility": null,
-      "Background Asset Key": null,
-      "Notes": "Future-content gateway to Eastern Idale (MAP-0005). Not a travel destination."
     },
     {
       "Location ID": "LOC-0021",
@@ -8555,6 +8681,8 @@
       "Description": "Hostile royal chamber. The Queen and her dragon await.",
       "Danger / Hostility": "A dragon guards the Queen.",
       "Background Asset Key": null,
+      "Map Node Name": null,
+      "Hidden On Map IDs": null,
       "Notes": null
     },
     {
@@ -8570,6 +8698,8 @@
       "Description": "A forgotten shaft rich with rare ores.",
       "Danger / Hostility": null,
       "Background Asset Key": null,
+      "Map Node Name": null,
+      "Hidden On Map IDs": null,
       "Notes": null
     },
     {
@@ -8585,6 +8715,8 @@
       "Description": "Busy kitchen hearths where meals are prepared for the settlement.",
       "Danger / Hostility": null,
       "Background Asset Key": null,
+      "Map Node Name": null,
+      "Hidden On Map IDs": null,
       "Notes": null
     },
     {
@@ -8600,6 +8732,8 @@
       "Description": "A cluttered storefront selling everyday tools and buying ordinary goods.",
       "Danger / Hostility": null,
       "Background Asset Key": null,
+      "Map Node Name": null,
+      "Hidden On Map IDs": null,
       "Notes": null
     },
     {
@@ -8615,6 +8749,8 @@
       "Description": "Forges, furnaces, and workbenches for metalwork, crafting, and artisan projects.",
       "Danger / Hostility": null,
       "Background Asset Key": null,
+      "Map Node Name": null,
+      "Hidden On Map IDs": null,
       "Notes": null
     },
     {
@@ -8630,6 +8766,8 @@
       "Description": "Rose's dream shop for brewing potions, opened with a little help.",
       "Danger / Hostility": null,
       "Background Asset Key": null,
+      "Map Node Name": null,
+      "Hidden On Map IDs": null,
       "Notes": "requires_unlock; Unlocked by QST-0002 Help the aspiring apothecary."
     },
     {
@@ -8645,6 +8783,8 @@
       "Description": "Gateway into the Citadel Hub. A shared plaza for bounties, markets, and gathering grounds.",
       "Danger / Hostility": null,
       "Background Asset Key": null,
+      "Map Node Name": null,
+      "Hidden On Map IDs": "MAP-0007",
       "Notes": "Sub-map gateway for MAP-0007."
     },
     {
@@ -8660,6 +8800,8 @@
       "Description": "Central plaza for bounties, the Grand Bazaar board, and meeting other adventurers.",
       "Danger / Hostility": null,
       "Background Asset Key": null,
+      "Map Node Name": null,
+      "Hidden On Map IDs": null,
       "Notes": null
     },
     {
@@ -8675,6 +8817,8 @@
       "Description": "Busy stalls stocking tools, supplies, and specialty goods.",
       "Danger / Hostility": null,
       "Background Asset Key": null,
+      "Map Node Name": null,
+      "Hidden On Map IDs": null,
       "Notes": null
     },
     {
@@ -8690,6 +8834,8 @@
       "Description": "Shared kitchens, workshops, and forges for crafting and refining.",
       "Danger / Hostility": null,
       "Background Asset Key": null,
+      "Map Node Name": null,
+      "Hidden On Map IDs": null,
       "Notes": null
     },
     {
@@ -8705,6 +8851,8 @@
       "Description": "Cedar stands on the citadel fringe for woodcutting.",
       "Danger / Hostility": null,
       "Background Asset Key": null,
+      "Map Node Name": null,
+      "Hidden On Map IDs": null,
       "Notes": null
     },
     {
@@ -8720,6 +8868,8 @@
       "Description": "Training grounds for Castle Guard combat practice.",
       "Danger / Hostility": "Training danger: approximately Combat Level 45.",
       "Background Asset Key": null,
+      "Map Node Name": null,
+      "Hidden On Map IDs": null,
       "Notes": null
     },
     {
@@ -8735,6 +8885,8 @@
       "Description": "Your guild's hall: a storehouse, a debt ledger, and a boxing ring. Each guild has its own instance.",
       "Danger / Hostility": null,
       "Background Asset Key": null,
+      "Map Node Name": null,
+      "Hidden On Map IDs": null,
       "Notes": "Reached from the Guilds screen. Art reuses the Citadel plaza."
     },
     {
@@ -8750,6 +8902,8 @@
       "Description": "A vault for items you do not want to carry.",
       "Danger / Hostility": null,
       "Background Asset Key": null,
+      "Map Node Name": null,
+      "Hidden On Map IDs": null,
       "Notes": "Art reuses the General Store until a bank interior is drawn."
     },
     {
@@ -8765,6 +8919,8 @@
       "Description": "The Citadel vault for gear you do not want to carry.",
       "Danger / Hostility": null,
       "Background Asset Key": null,
+      "Map Node Name": null,
+      "Hidden On Map IDs": null,
       "Notes": "Art reuses the Citadel plaza until a bank interior is drawn."
     },
     {
@@ -8780,6 +8936,8 @@
       "Description": "A quiet temple where monks train the unarmed and offer blessings.",
       "Danger / Hostility": null,
       "Background Asset Key": null,
+      "Map Node Name": null,
+      "Hidden On Map IDs": null,
       "Notes": "Main-map node. Monk training requires empty Weapon or Tool and Off-hand. Blessing is a location action, not an activity."
     }
   ],
@@ -22280,6 +22438,7 @@
       "Display Name": "The Grand Feast",
       "NPC ID": "NPC-0001",
       "Summary": "Bring the king 10 baked potatoes for the feast.",
+      "Pitch": null,
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": "Non-repeatable Launch quest.",
@@ -22299,6 +22458,7 @@
       "Display Name": "Help the aspiring apothecary",
       "NPC ID": "NPC-0005",
       "Summary": "Help Rose gather supplies to open her apothecary: 5 Rabbit’s Feet, 5 Fernleaf, and 1,000 gold.",
+      "Pitch": "I’m tired of working in the kitchen, I just saw a lot for sale down the street, I’m thinking of starting the alchemy shop I’ve always dreamed of…",
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": "Deliver: ITEM-0038 x5, ITEM-0031 x5; GoldCost: 1000; UnlockLocation: LOC-0026",
@@ -22318,6 +22478,7 @@
       "Display Name": "The Missing Purse",
       "NPC ID": "NPC-0011",
       "Summary": "Donate 25 gold, then recover the beggar's stolen purse from the guards.",
+      "Pitch": "Please, traveler… someone took my coin purse in the night, I have nothing left.",
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": "Talk: NPC-0012; Deliver: ITEM-0299 x1; AcceptGold: 25; RewardGold: 500; RewardCosmetic: COS-0002; BribeGold: 200; ChoiceNpc: NPC-0012; BranchSkillXp: 2500",
@@ -22336,10 +22497,11 @@
       "Internal Key": "visiting_the_citadel",
       "Display Name": "Visiting the Citadel",
       "NPC ID": "NPC-0013",
-      "Summary": "Tour the Citadel: talk to the guide and market master, visit the Market and Processing Districts, and inspect the boards.",
+      "Summary": "Tour the Citadel: talk to the guide and market master, visit the Market, Processing District, Bank, Arena, and Guild Hall, and inspect the boards.",
+      "Pitch": null,
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": "Talk: NPC-0013, NPC-0006; Visit: LOC-0029, LOC-0030; Inspect: bazaar, bounties, processing; RewardGold: 1000; AutoStart: LOC-0027",
+      "Notes": "Talk: NPC-0013, NPC-0006; Visit: LOC-0029, LOC-0030, LOC-0035, LOC-0028, LOC-0033; Inspect: bazaar, bounties, processing; RewardGold: 1000; AutoStart: LOC-0027",
       "Objective Type": "Gather / Deliver",
       "Objective Target ID": null,
       "Required Quantity": null,
@@ -22356,6 +22518,7 @@
       "Display Name": "Wizard Studies",
       "NPC ID": "NPC-0009",
       "Summary": "Accept the shopkeeper's offer, gather 10 Essence, and turn them in to the Archmage.",
+      "Pitch": "The Archmage is looking for a new apprentice, if you can go down to the mine below the tower and bring him ten essence, he can help you get started with your studies.",
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": "Talk: NPC-0004; Deliver: ITEM-0011 x10; TurnInNpc: NPC-0004; RewardProjectNpc: NPC-0004",
@@ -22368,6 +22531,53 @@
       "Reward Item ID": null,
       "Reward Item Quantity": null,
       "Possible Rewards": "11,000 Arcana XP; Archmage project knowledge; unlocks Delve for essence"
+    }
+  ],
+  "QuestDialogue": [
+    {
+      "Dialogue ID": "QDL-0001",
+      "Quest ID": "QST-0003",
+      "NPC ID": "NPC-0007",
+      "Line": "A beggar lost a purse? The guards at the barracks were laughing about some poor fool…",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": null
+    },
+    {
+      "Dialogue ID": "QDL-0002",
+      "Quest ID": "QST-0003",
+      "NPC ID": "NPC-0012",
+      "Line": "A purse? Maybe I saw something. Of course, my memory gets expensive… or you could try taking it.",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": null
+    },
+    {
+      "Dialogue ID": "QDL-0003",
+      "Quest ID": "QST-0004",
+      "NPC ID": "NPC-0013",
+      "Line": "Welcome to the Citadel. Visit the Market, Processing District, Bank, Arena, and Guild Hall. Inspect the Grand Bazaar and Bounty Board, then come back to me.",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": null
+    },
+    {
+      "Dialogue ID": "QDL-0004",
+      "Quest ID": "QST-0004",
+      "NPC ID": "NPC-0006",
+      "Line": "New around here? Browse all you like — no obligation to buy.",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": null
+    },
+    {
+      "Dialogue ID": "QDL-0005",
+      "Quest ID": "QST-0005",
+      "NPC ID": "NPC-0004",
+      "Line": "Well done.",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": null
     }
   ],
   "Achievements": [
