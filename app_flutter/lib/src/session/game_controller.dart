@@ -525,6 +525,100 @@ class GameController extends ChangeNotifier {
     return true;
   }
 
+  /// Forces the habitat Critter to appear at the current location.
+  String? debugSpawnCritter() {
+    final result = spawnCritterAtLocation(save, save.currentLocationId, session.clock());
+    if (!result.ok) return result.reason;
+    commit(result.save!);
+    return '${result.critter!.displayName} appeared.';
+  }
+
+  /// Swaps race after the first pick. Does not re-grant a starter kit.
+  String? debugChangeRace(String raceId) {
+    final result = assignRace(db, save, raceId);
+    if (!result.ok) return result.reason;
+    commit(result.save!);
+    return 'Race is now ${raceDisplayName(db, raceId) ?? raceId}.';
+  }
+
+  /// Adds [quantity] of [itemId], as many as the bag will take.
+  String? debugGrantItem(String itemId, num quantity) {
+    final name = indexes.itemsById[itemId]?.displayName ?? itemId;
+    final before = _ownedQuantity(save, itemId);
+    final next = addItemToInventory(save, itemId, quantity);
+    final added = _ownedQuantity(next, itemId) - before;
+    if (added <= 0) return 'Could not add $name.';
+    commit(next);
+    return 'Added $added $name.';
+  }
+
+  /// Raises [skillId] by [levels], stopping at the XP curve cap.
+  String? debugAddSkillLevels(String skillId, num levels) {
+    if (levels <= 0) return 'Pick how many levels to add.';
+    final name = indexes.skillsById[skillId]?.displayName ?? skillId;
+    final current = getSkillProgress(save, skillId);
+    final target = current.level + levels;
+    final result = raiseSkillToMinimumLevel(save, db, skillId, target);
+    if (!result.raised) {
+      return current.level >= _maxSkillLevel
+          ? '$name is already at the level cap.'
+          : 'Could not raise $name.';
+    }
+    commit(result.save);
+    final next = getSkillProgress(result.save, skillId);
+    return '$name is now level ${next.level}.';
+  }
+
+  /// Lowers [skillId] by [levels], stopping at 1.
+  String? debugRemoveSkillLevels(String skillId, num levels) {
+    if (levels <= 0) return 'Pick how many levels to remove.';
+    final name = indexes.skillsById[skillId]?.displayName ?? skillId;
+    final current = getSkillProgress(save, skillId);
+    if (current.level <= 1) return '$name is already at level 1.';
+    final target = current.level - levels < 1 ? 1 : current.level - levels;
+    commit(_withSkillLevel(save, skillId, target));
+    return '$name is now level $target.';
+  }
+
+  /// Sets every skill back to level 1.
+  String? debugResetAllSkills() {
+    var next = save;
+    for (final skill in save.skills) {
+      next = _withSkillLevel(next, skill.skillId, 1);
+    }
+    commit(next);
+    return 'Every skill is back at level 1.';
+  }
+
+  num get _maxSkillLevel => db.xpCurve.isEmpty ? 1 : db.xpCurve.last.level;
+
+  PlayerSave _withSkillLevel(PlayerSave current, String skillId, num level) {
+    final target = level < 1 ? 1 : level;
+    num xp = 0;
+    for (final row in db.xpCurve) {
+      if (row.level == target) {
+        xp = row.totalXpAtLevel;
+        break;
+      }
+    }
+    final skills = [...current.skills];
+    final index = skills.indexWhere((skill) => skill.skillId == skillId);
+    final progress = SkillProgress(skillId: skillId, level: target, xp: xp);
+    if (index < 0) {
+      skills.add(progress);
+    } else {
+      skills[index] = progress;
+    }
+    return current.copyWith(skills: skills);
+  }
+
+  static num _ownedQuantity(PlayerSave current, String itemId) {
+    return current.inventory.fold<num>(
+      0,
+      (sum, stack) => stack.itemId == itemId ? sum + stack.quantity : sum,
+    );
+  }
+
   /// Names a new character, gives them a look, and grants their race's kit.
   ///
   /// Returns the reason it was refused, or null on success.

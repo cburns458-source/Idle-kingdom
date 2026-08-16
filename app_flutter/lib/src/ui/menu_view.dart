@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:ik_content/ik_content.dart';
 import 'package:ik_rules/ik_rules.dart';
 
 import '../session/game_controller.dart';
@@ -30,8 +33,23 @@ class _MenuViewState extends State<MenuView> {
   String? _artNotice;
   bool _artError = false;
   bool _picking = false;
+  String? _toolNotice;
+  late String _raceId;
+  late String _skillId;
+  String _itemId = 'ITEM-0025';
 
   GameController get controller => widget.controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _raceId = controller.save.raceId ?? races(controller.db).first.raceId;
+    _skillId = controller.db.skills.first.skillId;
+  }
+
+  void _runTool(String? Function() action) {
+    setState(() => _toolNotice = action());
+  }
 
   Future<void> _usePng() async {
     if (_picking) return;
@@ -157,30 +175,176 @@ class _MenuViewState extends State<MenuView> {
         ListenableBuilder(
           listenable: widget.multiplayer,
           builder: (context, _) {
-            return GamePanel(
-              child: Row(
-                children: [
-                  const Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Filter chat', style: TextStyle(fontWeight: FontWeight.w700)),
-                        MutedText('Hide profanity in chat. Messages are still stored as typed.'),
-                      ],
-                    ),
+            return Column(
+              children: [
+                GamePanel(
+                  child: Row(
+                    children: [
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Filter chat', style: TextStyle(fontWeight: FontWeight.w700)),
+                            MutedText('Hide profanity in chat. Messages are still stored as typed.'),
+                          ],
+                        ),
+                      ),
+                      Switch(
+                        value: widget.multiplayer.filterChatProfanity,
+                        onChanged: widget.multiplayer.setFilterChatProfanity,
+                      ),
+                    ],
                   ),
-                  Switch(
-                    value: widget.multiplayer.filterChatProfanity,
-                    onChanged: widget.multiplayer.setFilterChatProfanity,
+                ),
+                const SizedBox(height: 16),
+                GamePanel(
+                  child: Row(
+                    children: [
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Browse social pages',
+                              style: TextStyle(fontWeight: FontWeight.w700),
+                            ),
+                            MutedText(
+                              'Open Leaderboards, Guilds, Chat, and Nearby without an account. '
+                              'Joining, posting, and sending still need a sign-in.',
+                            ),
+                          ],
+                        ),
+                      ),
+                      Switch(
+                        value: widget.multiplayer.canBrowseSocial,
+                        onChanged: (value) {
+                          widget.multiplayer.setBrowseSocialUnsigned(value);
+                          if (value) unawaited(widget.multiplayer.refresh(controller.save));
+                        },
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              ],
             );
           },
         ),
         const SizedBox(height: 16),
+        _buildTestingTools(),
+        const SizedBox(height: 16),
         SaveTransferSection(controller: controller),
       ],
+    );
+  }
+
+  Widget _buildTestingTools() {
+    final raceRows = races(controller.db);
+    final skillRows = [...controller.db.skills]
+      ..sort((a, b) => a.displayName.compareTo(b.displayName));
+    final itemRows = [...controller.db.items]
+      ..sort((a, b) => a.displayName.compareTo(b.displayName));
+    final selectedSkill = getSkillProgress(controller.save, _skillId);
+    return GamePanel(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text('Testing tools', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+          const MutedText('Local debug grants. They are not a live economy.'),
+          const SizedBox(height: 10),
+          GameButton(label: 'Spawn critter', onPressed: () => _runTool(controller.debugSpawnCritter)),
+          const SizedBox(height: 12),
+          DropdownButtonFormField<String>(
+            initialValue: raceRows.any((row) => row.raceId == _raceId) ? _raceId : null,
+            decoration: const InputDecoration(labelText: 'Race'),
+            items: [
+              for (final row in raceRows)
+                DropdownMenuItem<String>(value: row.raceId, child: Text(row.displayName)),
+            ],
+            onChanged: (value) {
+              if (value != null) setState(() => _raceId = value);
+            },
+          ),
+          const SizedBox(height: 8),
+          GameButton(
+            label: 'Change race',
+            onPressed: () => _runTool(() => controller.debugChangeRace(_raceId)),
+          ),
+          const SizedBox(height: 12),
+          Autocomplete<ItemRow>(
+            displayStringForOption: (item) => item.displayName,
+            optionsBuilder: (text) {
+              final query = text.text.trim().toLowerCase();
+              if (query.isEmpty) return itemRows.take(40);
+              return itemRows.where((item) => item.displayName.toLowerCase().contains(query));
+            },
+            onSelected: (item) => setState(() => _itemId = item.itemId),
+            fieldViewBuilder: (context, textController, focusNode, onFieldSubmitted) {
+              return TextField(
+                controller: textController,
+                focusNode: focusNode,
+                decoration: const InputDecoration(labelText: 'Item', hintText: 'Search…'),
+                onSubmitted: (_) => onFieldSubmitted(),
+              );
+            },
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final qty in const [1, 10, 100])
+                GameButton(
+                  label: 'Add $qty',
+                  onPressed: () => _runTool(() => controller.debugGrantItem(_itemId, qty)),
+                ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          DropdownButtonFormField<String>(
+            initialValue: skillRows.any((row) => row.skillId == _skillId) ? _skillId : null,
+            decoration: InputDecoration(
+              labelText: 'Skill',
+              helperText: 'Current level ${selectedSkill.level}',
+            ),
+            items: [
+              for (final row in skillRows)
+                DropdownMenuItem<String>(value: row.skillId, child: Text(row.displayName)),
+            ],
+            onChanged: (value) {
+              if (value != null) setState(() => _skillId = value);
+            },
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              GameButton(
+                label: 'Add 1 level',
+                onPressed: () => _runTool(() => controller.debugAddSkillLevels(_skillId, 1)),
+              ),
+              GameButton(
+                label: 'Add 10 levels',
+                onPressed: () => _runTool(() => controller.debugAddSkillLevels(_skillId, 10)),
+              ),
+              GameButton(
+                label: 'Remove 1 level',
+                tone: GameButtonTone.secondary,
+                onPressed: () => _runTool(() => controller.debugRemoveSkillLevels(_skillId, 1)),
+              ),
+              GameButton(
+                label: 'Reset all skills',
+                tone: GameButtonTone.secondary,
+                onPressed: () => _runTool(controller.debugResetAllSkills),
+              ),
+            ],
+          ),
+          if (_toolNotice case final notice?) ...[
+            const SizedBox(height: 8),
+            Text(notice, style: const TextStyle(color: Palette.gold, fontSize: 12)),
+          ],
+        ],
+      ),
     );
   }
 }

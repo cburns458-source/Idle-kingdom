@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:ik_net/ik_net.dart';
 
@@ -36,7 +38,12 @@ class _NearbyPanelState extends State<NearbyPanel> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted && net.isSignedIn) net.publishPresence(widget.controller.save);
+      if (!mounted) return;
+      if (net.isSignedIn) {
+        unawaited(net.publishPresence(widget.controller.save));
+      } else if (net.canBrowseSocial) {
+        unawaited(net.refresh(widget.controller.save));
+      }
     });
   }
 
@@ -104,7 +111,7 @@ class _NearbyPanelState extends State<NearbyPanel> {
           ],
         ),
         const SizedBox(height: 8),
-        if (!net.isSignedIn)
+        if (!net.canSeeSocialPages)
           const MutedText(signInPrompt)
         else if (rows.isEmpty)
           const MutedText('No other players here right now.')

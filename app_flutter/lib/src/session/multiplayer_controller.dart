@@ -34,10 +34,24 @@ class MultiplayerController extends ChangeNotifier {
 
   static const String chatFilterStorageKey = 'idle-kingdoms.client.filter-chat-profanity';
 
+  static const String browseSocialStorageKey = 'idle-kingdoms.client.browse-social-unsigned';
+
   bool get filterChatProfanity => storage.getItem(chatFilterStorageKey) == '1';
 
   void setFilterChatProfanity(bool value) {
     storage.setItem(chatFilterStorageKey, value ? '1' : '0');
+    notifyListeners();
+  }
+
+  /// When on, Guilds, Leaderboards, Chat, and Nearby open without an account.
+  bool get canBrowseSocial => storage.getItem(browseSocialStorageKey) == '1';
+
+  /// True when a social page should render its lists instead of a sign-in wall.
+  bool get canSeeSocialPages => isSignedIn || canBrowseSocial;
+
+  void setBrowseSocialUnsigned(bool value) {
+    storage.setItem(browseSocialStorageKey, value ? '1' : '0');
+    if (!value && !isSignedIn) _resetSignedOutState();
     notifyListeners();
   }
 
@@ -230,8 +244,17 @@ class MultiplayerController extends ChangeNotifier {
 
   /// Reads everything a social screen shows, in one pass.
   Future<void> refresh(PlayerSave save) async {
-    if (!isSignedIn) {
+    if (!isSignedIn && !canBrowseSocial) {
       _resetSignedOutState();
+      notifyListeners();
+      return;
+    }
+    if (!isSignedIn) {
+      _listings = await service.listGuilds();
+      _board = await service.leaderboard(_boardKey);
+      _citadelVisitors = await service.citadelVisitors();
+      _presence = await service.presenceRecords();
+      _peers = await service.peersAtLocation(save.currentLocationId);
       notifyListeners();
       return;
     }
@@ -406,7 +429,7 @@ class MultiplayerController extends ChangeNotifier {
 
   Future<void> selectBoard(MultiplayerBoardKey key) async {
     _boardKey = key;
-    _board = isSignedIn ? await service.leaderboard(key) : const <LeaderboardEntry>[];
+    _board = canSeeSocialPages ? await service.leaderboard(key) : const <LeaderboardEntry>[];
     notifyListeners();
   }
 
@@ -428,7 +451,12 @@ class MultiplayerController extends ChangeNotifier {
   /// Opens a chat tab and loads what it holds.
   Future<void> selectChatTab(ChatTab tab, String locationId, {bool citadelHub = false}) async {
     _chatTab = tab;
-    if (!isSignedIn) {
+    if (!canSeeSocialPages) {
+      _messages = const <ChatMessage>[];
+      notifyListeners();
+      return;
+    }
+    if (!isSignedIn && tab == ChatTab.dm) {
       _messages = const <ChatMessage>[];
       notifyListeners();
       return;

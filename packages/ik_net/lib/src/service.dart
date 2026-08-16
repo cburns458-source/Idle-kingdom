@@ -310,8 +310,7 @@ class LocalMultiplayerService implements MultiplayerService {
   @override
   Future<List<ChatMessage>> listChat(ChatChannel channel) async {
     final current = session;
-    if (current == null) return const <ChatMessage>[];
-    return _backend.listChat(channel, current.userId);
+    return _backend.listChat(channel, current?.userId ?? '');
   }
 
   @override
@@ -574,7 +573,7 @@ class LocalMultiplayerService implements MultiplayerService {
 
   List<ActivityPresence> _visiblePeers(List<ActivityPresence> peers, bool excludeSelf) {
     final current = session;
-    if (current == null) return excludeSelf ? const <ActivityPresence>[] : peers;
+    if (current == null) return peers;
     final hidden = _backend.blockedIds(current.userId);
     return peers
         .where((row) => !hidden.contains(row.userId))

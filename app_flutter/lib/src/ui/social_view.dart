@@ -70,7 +70,7 @@ class _SocialViewState extends State<SocialView> {
       case SocialTab.account:
         return AccountPanel(controller: widget.controller, multiplayer: net);
       case SocialTab.guilds:
-        if (!net.isSignedIn) {
+        if (!net.canSeeSocialPages) {
           return const SignedOutNotice(title: 'Guilds', prompt: guildSignInPrompt);
         }
         return GuildPanel(
@@ -79,12 +79,12 @@ class _SocialViewState extends State<SocialView> {
           onTravelToHall: widget.onTravelToHall,
         );
       case SocialTab.citadel:
-        if (!net.isSignedIn) {
+        if (!net.canSeeSocialPages) {
           return const SignedOutNotice(title: 'Citadel', prompt: signInPrompt);
         }
         return _CitadelTab(multiplayer: net);
       case SocialTab.leaderboards:
-        if (!net.isSignedIn) {
+        if (!net.canSeeSocialPages) {
           return const SignedOutNotice(title: 'Leaderboards', prompt: signInPrompt);
         }
         return _LeaderboardTab(controller: widget.controller, multiplayer: net);

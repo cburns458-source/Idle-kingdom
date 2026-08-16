@@ -70,7 +70,7 @@ class _ChatLauncherState extends State<ChatLauncher> {
       _close();
       return;
     }
-    if (net.isSignedIn) {
+    if (net.canSeeSocialPages) {
       await net.selectChatTab(net.chatTab, widget.locationId, citadelHub: widget.citadelHub);
     }
     if (!mounted || _open) return;
@@ -226,7 +226,7 @@ class _ChatSheetState extends State<ChatSheet> {
     return ListenableBuilder(
       listenable: net,
       builder: (context, _) {
-        if (!net.isSignedIn) {
+        if (!net.canSeeSocialPages) {
           return const SignedOutNotice(title: 'Chat', prompt: signInPrompt);
         }
         final tabs = chatTabs(
@@ -345,7 +345,10 @@ class _ChatSheetState extends State<ChatSheet> {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      FilledButton(onPressed: net.busy ? null : _send, child: const Text('Send')),
+                      FilledButton(
+                        onPressed: net.busy || !net.isSignedIn ? null : _send,
+                        child: const Text('Send'),
+                      ),
                     ],
                   ),
                 ),
