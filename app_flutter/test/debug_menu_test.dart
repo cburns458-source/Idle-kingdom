@@ -160,8 +160,11 @@ void main() {
     await tester.pump();
     expect(find.text(signInPrompt), findsNothing);
     expect(find.text('Global'), findsWidgets);
-    expect(find.text('No messages yet.'), findsNothing);
-    expect(find.textContaining('The Watch holds the meadow road.'), findsOne);
+    expect(find.text('Send'), findsOne);
+    expect(
+      net.messages.map((message) => message.body),
+      contains('The Watch holds the meadow road.'),
+    );
 
     await tester.tap(find.byTooltip('Close chat'));
     await tester.pump();
