@@ -160,7 +160,8 @@ void main() {
     await tester.pump();
     expect(find.text(signInPrompt), findsNothing);
     expect(find.text('Global'), findsWidgets);
-    expect(find.text('The Watch holds the meadow road.'), findsOne);
+    expect(find.text('No messages yet.'), findsNothing);
+    expect(find.textContaining('The Watch holds the meadow road.'), findsOne);
 
     await tester.tap(find.byTooltip('Close chat'));
     await tester.pump();
