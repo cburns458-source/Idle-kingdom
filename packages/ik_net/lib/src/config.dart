@@ -19,9 +19,26 @@ class RemoteBackendConfig {
 
   /// Both halves have to be present; a URL without a key cannot sign anyone in.
   static RemoteBackendConfig? from({String? url, String? anonKey}) {
-    final cleanUrl = (url ?? '').trim();
+    final cleanUrl = normalizeRemoteBackendUrl(url);
     final cleanKey = (anonKey ?? '').trim();
     if (cleanUrl.isEmpty || cleanKey.isEmpty) return null;
     return RemoteBackendConfig(url: cleanUrl, anonKey: cleanKey);
   }
+}
+
+/// Project origin only. Dashboard "API URL" values that include `/rest/v1` or
+/// `/auth/v1` make every client call a doubled path and Auth returns
+/// "Invalid path specified in request URL".
+String normalizeRemoteBackendUrl(String? url) {
+  var clean = (url ?? '').trim();
+  if (clean.endsWith('/')) clean = clean.substring(0, clean.length - 1);
+  const suffixes = <String>['/rest/v1', '/auth/v1', '/functions/v1', '/storage/v1'];
+  for (final suffix in suffixes) {
+    if (clean.toLowerCase().endsWith(suffix)) {
+      clean = clean.substring(0, clean.length - suffix.length);
+      if (clean.endsWith('/')) clean = clean.substring(0, clean.length - 1);
+      break;
+    }
+  }
+  return clean;
 }

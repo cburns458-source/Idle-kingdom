@@ -55,9 +55,9 @@ class SupabaseTransport implements RemoteTransport {
         ),
       );
     } on AuthException catch (error) {
-      return RemoteAuthResult.failed(error.message);
+      return RemoteAuthResult.failed(friendlyRemoteError(error.message));
     } on Object catch (error) {
-      return RemoteAuthResult.failed('$error');
+      return RemoteAuthResult.failed(friendlyRemoteError('$error'));
     }
   }
 
@@ -77,9 +77,9 @@ class SupabaseTransport implements RemoteTransport {
         ),
       );
     } on AuthException catch (error) {
-      return RemoteAuthResult.failed(error.message);
+      return RemoteAuthResult.failed(friendlyRemoteError(error.message));
     } on Object catch (error) {
-      return RemoteAuthResult.failed('$error');
+      return RemoteAuthResult.failed(friendlyRemoteError('$error'));
     }
   }
 
@@ -89,9 +89,9 @@ class SupabaseTransport implements RemoteTransport {
       await client.auth.signInWithOtp(email: email);
       return null;
     } on AuthException catch (error) {
-      return error.message;
+      return friendlyRemoteError(error.message);
     } on Object catch (error) {
-      return '$error';
+      return friendlyRemoteError('$error');
     }
   }
 

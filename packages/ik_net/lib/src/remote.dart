@@ -32,6 +32,16 @@ const String remoteSendChatFunction = 'send-chat';
 const String remoteNotConfigured = 'Supabase is not configured.';
 const String remoteSignUpFailed = 'Sign-up failed.';
 const String remoteSignInFailed = 'Sign-in failed.';
+const String remoteInvalidBackendUrl =
+    'The Supabase project URL is wrong. Use https://YOUR_PROJECT.supabase.co with no /rest/v1.';
+
+/// Maps PostgREST/Auth path errors to a fix the operator can act on.
+String friendlyRemoteError(String message) {
+  if (message.toLowerCase().contains('invalid path specified')) {
+    return remoteInvalidBackendUrl;
+  }
+  return message;
+}
 const String remoteMagicLinkUnavailable =
     'Magic links require Supabase. Use email/password in local demo mode.';
 
