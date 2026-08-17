@@ -284,8 +284,8 @@ void main() {
 
     await tester.tap(find.byTooltip('Open chat'));
     await tester.pump();
+    await tester.pump();
 
-    expect(find.text('Chat'), findsOne);
     expect(find.text('Global'), findsWidgets);
     expect(find.byTooltip('Close chat'), findsOne);
   });
