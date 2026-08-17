@@ -111,7 +111,9 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin {
   @override
   void dispose() {
     multiplayer.removeListener(_onMultiplayerChanged);
+    _ticker?.stop();
     _ticker?.dispose();
+    _ticker = null;
     _mapWalk?.dispose();
     multiplayer.stopPolling();
     super.dispose();

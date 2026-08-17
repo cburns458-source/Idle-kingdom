@@ -168,13 +168,12 @@ Future<void> pumpShell(
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
   }
+  final net = multiplayer ?? buildMultiplayer(controller.database);
+  if (multiplayer == null) addTearDown(net.dispose);
   await tester.pumpWidget(
     MaterialApp(
       theme: buildAppTheme(),
-      home: AppShell(
-        controller: controller,
-        multiplayer: multiplayer ?? buildMultiplayer(controller.database),
-      ),
+      home: AppShell(controller: controller, multiplayer: net),
     ),
   );
 }

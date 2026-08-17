@@ -57,21 +57,16 @@ void main() {
     expect(find.text('Hourly Bounties'), findsNothing);
   });
 
-  testWidgets('the bounty board tells a signed-out player where to sign in', (tester) async {
+  testWidgets('an unsigned player cannot open the bounty board', (tester) async {
     final controller = buildController(database, seed: atDistrict(citadelPlazaId));
+    final net = buildMultiplayer(database, signedIn: false);
     addTearDown(controller.dispose);
-    await pumpShell(tester, controller, size: const Size(900, 2400));
+    addTearDown(net.dispose);
+    await pumpShell(tester, controller, multiplayer: net, size: const Size(900, 2400));
 
-    await tapVisible(tester, find.byTooltip('Expand list'));
-    await tapVisible(tester, find.text('Open'));
-
-    expect(find.text(bountySignInNotice), findsOne);
-    expect(find.textContaining('Rotates in '), findsOne);
-    // Nothing is claimable without a backend to record who was first.
-    expect(
-      tester.widgetList<FilledButton>(find.byType(FilledButton)).every((b) => b.onPressed == null),
-      isTrue,
-    );
+    expect(find.text('Sign in to play'), findsOne);
+    expect(find.text('Hourly Bounties'), findsNothing);
+    expect(find.text(bountySignInNotice), findsNothing);
   });
 
   testWidgets('a finished bounty pays out and then reads as claimed', (tester) async {
