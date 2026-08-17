@@ -1,0 +1,6 @@
+name = "restoria-idlerpg"
+compatibility_date = "2026-08-17"
+
+[assets]
+directory = "./app_flutter/build/web"
+not_found_handling = "single-page-application"
