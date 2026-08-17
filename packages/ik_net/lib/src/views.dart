@@ -273,9 +273,7 @@ List<GuildRosterRow> guildRosterRows(
 }) {
   final canManage = viewerId != null && guild.leaderId == viewerId;
   final clock = nowMs ?? 0;
-  final seen = <String, String>{
-    for (final row in presence) row.userId: row.updatedAt,
-  };
+  final seen = <String, String>{for (final row in presence) row.userId: row.updatedAt};
   final indexed = members.indexed.toList();
   indexed.sort((a, b) {
     final delta = jsDateParse(a.$2.joinedAt) - jsDateParse(b.$2.joinedAt);
@@ -797,11 +795,17 @@ enum MultiplayerMode { local, supabase }
 
 String multiplayerModeLine(MultiplayerMode mode) {
   final backend = mode == MultiplayerMode.local ? 'local demo backend' : 'Supabase';
-  return 'Optional multiplayer ($backend). Offline play stays intact.';
+  return 'Accounts use the $backend. Sign in to play and sync progress.';
+}
+
+/// What the entry gate says before character creation.
+String authGateIntro(MultiplayerMode mode) {
+  final backend = mode == MultiplayerMode.local ? 'local demo backend' : 'Supabase';
+  return 'Create an account with your email to begin. Character creation comes next. Accounts use the $backend.';
 }
 
 /// The line every signed-out multiplayer panel shows instead of content.
-const String signInPrompt = 'Sign in from Menu → Account to use multiplayer features.';
+const String signInPrompt = 'Sign in to use multiplayer features.';
 
 /// Guilds word the same prompt around guilds, since that is the tab in hand.
-const String guildSignInPrompt = 'Sign in from Menu → Account to use guilds.';
+const String guildSignInPrompt = 'Sign in to use guilds.';

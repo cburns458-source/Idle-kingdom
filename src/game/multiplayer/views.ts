@@ -581,11 +581,11 @@ export function chatLineUsername(message: ChatMessage): string {
 /** What the account panel says about where multiplayer data lives. */
 export function multiplayerModeLine(mode: 'local' | 'supabase'): string {
   const backend = mode === 'local' ? 'local demo backend' : 'Supabase'
-  return `Optional multiplayer (${backend}). Offline play stays intact.`
+  return `Accounts use the ${backend}. Sign in to play and sync progress.`
 }
 
 /** The line every signed-out multiplayer panel shows instead of content. */
-export const SIGN_IN_PROMPT = 'Sign in from Menu → Account to use multiplayer features.'
+export const SIGN_IN_PROMPT = 'Sign in to use multiplayer features.'
 
 /** Guilds word the same prompt around guilds, since that is the tab in hand. */
-export const GUILD_SIGN_IN_PROMPT = 'Sign in from Menu → Account to use guilds.'
+export const GUILD_SIGN_IN_PROMPT = 'Sign in to use guilds.'

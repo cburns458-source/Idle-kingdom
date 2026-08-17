@@ -46,10 +46,11 @@ void main() {
   }
 
   testWidgets('a local build says so and offers no magic link', (tester) async {
-    final net = buildMultiplayer(database);
+    final net = buildMultiplayer(database, signedIn: false);
     await pumpAccount(tester, net);
 
     expect(find.text(multiplayerModeLine(MultiplayerMode.local)), findsOne);
+    expect(find.text('Create account'), findsOne);
     expect(find.text('Email magic link'), findsNothing);
   });
 

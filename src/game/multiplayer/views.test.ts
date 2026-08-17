@@ -383,10 +383,10 @@ describe('presence views', () => {
 describe('account views', () => {
   it('names the backend the player is talking to', () => {
     expect(multiplayerModeLine('local')).toBe(
-      'Optional multiplayer (local demo backend). Offline play stays intact.',
+      'Accounts use the local demo backend. Sign in to play and sync progress.',
     )
     expect(multiplayerModeLine('supabase')).toBe(
-      'Optional multiplayer (Supabase). Offline play stays intact.',
+      'Accounts use the Supabase. Sign in to play and sync progress.',
     )
   })
 })

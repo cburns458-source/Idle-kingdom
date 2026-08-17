@@ -34,6 +34,22 @@ class TestClock {
   void advance(num ms) => _nowMs += ms;
 }
 
+/// Email, username, and password for a local test account.
+class TestAccount {
+  const TestAccount({required this.email, required this.username, required this.password});
+
+  final String email;
+  final String username;
+  final String password;
+}
+
+/// The account every signed-in shell test uses unless it asks for another.
+const TestAccount testAccount = TestAccount(
+  email: 'test@example.com',
+  username: 'Tester',
+  password: 'secret',
+);
+
 /// A named human with the starter kit, which is what activity requirements
 /// expect: gathering needs the tools the race grants.
 PlayerSave startedCharacter(LoadedDatabase database) {
@@ -58,19 +74,63 @@ GameController buildController(LoadedDatabase database, {PlayerSave? seed, TestC
   return GameController(database: database, session: session)..adoptBoot(boot);
 }
 
-/// A multiplayer controller over the local backend and an in-memory store, so a
-/// shell test gets the social screens without a network or a signed-in account.
-MultiplayerController buildMultiplayer(LoadedDatabase database, {TestClock? clock}) {
+/// Registers [account] on the local backend. Does not sign them in.
+void registerTestAccount(LocalMultiplayerService service, {TestAccount account = testAccount}) {
+  final result = service.backend.signUp(account.email, account.username, account.password);
+  if (!result.ok) {
+    throw StateError(result.reason ?? 'Could not register ${account.email}.');
+  }
+}
+
+/// Writes [account]'s session into [storage] after the account already exists.
+void restoreTestSession(
+  LocalMultiplayerService service,
+  SaveStorage storage, {
+  TestAccount account = testAccount,
+}) {
+  final result = service.backend.signIn(account.email, account.password);
+  if (!result.ok) {
+    throw StateError(result.reason ?? 'Could not sign in ${account.email}.');
+  }
+  SessionStore(storage).write(result.session);
+}
+
+/// A multiplayer controller over the local backend and an in-memory store.
+///
+/// [testAccount] is always registered first. [signedIn] then restores that
+/// session so shell tests play as an existing player, not a guest.
+MultiplayerController buildMultiplayer(
+  LoadedDatabase database, {
+  TestClock? clock,
+  bool signedIn = true,
+  TestAccount account = testAccount,
+}) {
   final testClock = clock ?? TestClock();
   final storage = MemorySaveStorage();
   final service = LocalMultiplayerService(storage: storage);
   service.ensureDemoWorld(database.launch);
+  registerTestAccount(service, account: account);
+  if (signedIn) {
+    restoreTestSession(service, storage, account: account);
+  }
   return MultiplayerController(
     database: database,
     service: service,
     storage: storage,
     clock: testClock.read,
   );
+}
+
+/// Signs the already-registered [account] in through the controller, not the form.
+Future<void> signInRegisteredAccount(
+  MultiplayerController multiplayer,
+  PlayerSave save, {
+  TestAccount account = testAccount,
+}) async {
+  await multiplayer.signIn(account.email, account.password, save);
+  if (!multiplayer.isSignedIn) {
+    throw StateError(multiplayer.notice ?? 'Sign-in of ${account.email} failed.');
+  }
 }
 
 /// The same, over a hosted backend held in memory.

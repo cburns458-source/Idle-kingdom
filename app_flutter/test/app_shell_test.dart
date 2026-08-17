@@ -13,16 +13,26 @@ void main() {
     database = loadDatabaseFromRepo();
   });
 
-  testWidgets('a new save is met with the character sheet', (tester) async {
+  testWidgets('a new save asks for an account, then character creation', (tester) async {
     final controller = buildController(database);
+    final net = buildMultiplayer(database, signedIn: false);
     addTearDown(controller.dispose);
-    await pumpShell(tester, controller);
+    addTearDown(net.dispose);
+    await pumpShell(tester, controller, multiplayer: net);
 
+    expect(find.text('Sign in to play'), findsOne);
+    expect(find.text('Name your character'), findsNothing);
+    expect(find.text('Meadow'), findsNothing);
+
+    await signInRegisteredAccount(net, controller.save);
+    await tester.pump();
+
+    expect(find.text('Sign in to play'), findsNothing);
     expect(find.text('Name your character'), findsOne);
     // Nothing to report on a first run.
     expect(find.text('While you were away'), findsNothing);
 
-    await tester.enterText(find.byType(TextField), 'Tester');
+    await tester.enterText(find.widgetWithText(TextField, 'Character name'), 'Tester');
     await tester.tap(find.text('Human'));
     await tester.pump();
     await tester.tap(find.text('Begin'));
@@ -31,6 +41,40 @@ void main() {
     expect(find.text('Name your character'), findsNothing);
     expect(controller.save.characterName, 'Tester');
     expect(controller.save.raceId, isNotNull);
+  });
+
+  testWidgets('an unsigned player cannot reach the location screen', (tester) async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(currentLocationId: 'LOC-0009'),
+    );
+    final net = buildMultiplayer(database, signedIn: false);
+    addTearDown(controller.dispose);
+    addTearDown(net.dispose);
+    await pumpShell(tester, controller, multiplayer: net);
+
+    expect(find.text('Sign in to play'), findsOne);
+    expect(find.text('Gather meadow supplies'), findsNothing);
+    expect(find.byTooltip('Open world map'), findsNothing);
+    expect(controller.save.currentActivityId, isNull);
+  });
+
+  testWidgets('signing out returns to the auth gate', (tester) async {
+    final controller = buildController(database, seed: startedCharacter(database));
+    final net = buildMultiplayer(database);
+    addTearDown(controller.dispose);
+    addTearDown(net.dispose);
+    await pumpShell(tester, controller, multiplayer: net);
+
+    expect(find.text('Sign in to play'), findsNothing);
+    await openChinScreen(tester, 'Account');
+    await tester.tap(find.text('Sign out'));
+    await tester.pump();
+    await tester.pump();
+
+    expect(net.isSignedIn, isFalse);
+    expect(find.text('Sign in to play'), findsOne);
+    expect(find.text('Gather meadow supplies'), findsNothing);
   });
 
   testWidgets('the location screen starts and stops an activity', (tester) async {
@@ -242,7 +286,7 @@ void main() {
     await tester.pump();
 
     expect(find.text('Chat'), findsOne);
-    expect(find.text('Sign in from Menu → Account to use multiplayer features.'), findsOne);
+    expect(find.text('Global'), findsWidgets);
     expect(find.byTooltip('Close chat'), findsOne);
   });
 }

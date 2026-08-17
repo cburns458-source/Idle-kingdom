@@ -6,6 +6,7 @@ import '../session/game_controller.dart';
 import '../session/map_walk.dart';
 import '../session/multiplayer_controller.dart';
 import '../theme.dart';
+import 'auth_gate_sheet.dart';
 import 'away_summary_sheet.dart';
 import 'bottom_nav.dart';
 import 'chat_sheet.dart';
@@ -61,20 +62,47 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin {
   GameController get controller => widget.controller;
   MultiplayerController get multiplayer => widget.multiplayer;
 
+  bool get _needsAuth => !multiplayer.isSignedIn;
+
+  bool get _needsCharacter {
+    final save = controller.save;
+    return save.characterName == null || save.raceId == null;
+  }
+
+  /// The game loop and HUD only run once the player is signed in and named.
+  bool get _canPlay => !_needsAuth && !_needsCharacter;
+
   @override
   void initState() {
     super.initState();
+    multiplayer.addListener(_onMultiplayerChanged);
     _ticker = createTicker((_) {
-      if (!mounted) return;
+      if (!mounted || !_canPlay) return;
       controller.tick();
-    })..start();
-    // Presence and the unread count only matter for a signed-in player; the
-    // timers check that themselves, so starting them once here is enough.
-    multiplayer.startPolling(() => controller.save);
+    });
+    _syncPlayLoop();
+  }
+
+  void _onMultiplayerChanged() {
+    if (!mounted) return;
+    _syncPlayLoop();
+    setState(() {});
+  }
+
+  /// Presence and the game clock stay off until the player is signed in and named.
+  void _syncPlayLoop() {
+    if (_canPlay) {
+      if (!(_ticker?.isActive ?? false)) _ticker?.start();
+      multiplayer.startPolling(() => controller.save);
+    } else {
+      _ticker?.stop();
+      multiplayer.stopPolling();
+    }
   }
 
   @override
   void dispose() {
+    multiplayer.removeListener(_onMultiplayerChanged);
     _ticker?.dispose();
     _mapWalk?.dispose();
     multiplayer.stopPolling();
@@ -232,7 +260,7 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin {
                 type: MaterialType.transparency,
                 clipBehavior: Clip.none,
                 child: ListenableBuilder(
-                  listenable: controller,
+                  listenable: Listenable.merge(<Listenable>[controller, multiplayer]),
                   builder: (context, _) => _buildFrame(context),
                 ),
               ),
@@ -244,6 +272,12 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin {
   }
 
   Widget _buildFrame(BuildContext context) {
+    if (_needsAuth) {
+      return AuthGateSheet(controller: controller, multiplayer: multiplayer);
+    }
+    if (_needsCharacter) {
+      return NewCharacterSheet(controller: controller);
+    }
     final save = controller.save;
     return Stack(
       fit: StackFit.expand,
@@ -312,8 +346,6 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin {
             item: notice.itemId == null ? null : controller.indexes.itemsById[notice.itemId!],
             onClose: controller.dismissCosmeticUnlock,
           ),
-        if (save.characterName == null || save.raceId == null)
-          NewCharacterSheet(controller: controller),
       ],
     );
   }

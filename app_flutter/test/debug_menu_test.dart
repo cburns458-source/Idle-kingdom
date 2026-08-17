@@ -105,39 +105,18 @@ void main() {
     expect(getSkillProgress(controller.save, combatSkillId).level, 2);
   });
 
-  testWidgets('Leaderboards stay behind a sign-in wall until browse is turned on', (tester) async {
+  testWidgets('Leaderboards open for a signed-in player', (tester) async {
     final controller = buildController(database, seed: startedCharacter(database));
-    final net = buildMultiplayer(database);
     addTearDown(controller.dispose);
-    addTearDown(net.dispose);
-    await pumpShell(tester, controller, multiplayer: net, size: const Size(900, 2400));
+    await pumpShell(tester, controller, size: const Size(900, 2400));
 
     await openChinScreen(tester, 'Leaderboards');
-    expect(find.text(signInPrompt), findsOne);
-    expect(find.text('Board'), findsNothing);
-
-    await openChinScreen(tester, 'Settings');
-    await tester.scrollUntilVisible(
-      find.text('Browse social pages'),
-      300,
-      scrollable: find.byType(Scrollable).first,
-    );
-    await tester.pump();
-    await tester.tap(find.byType(Switch).at(2));
-    await tester.pump();
-    await tester.pump();
-
-    expect(net.canBrowseSocial, isTrue);
-    await openChinScreen(tester, 'Leaderboards');
-    await tester.pump();
     expect(find.text(signInPrompt), findsNothing);
     expect(find.text('Board'), findsOne);
     expect(find.bySemanticsLabel('Update my ranking'), findsOne);
   });
 
-  testWidgets('browse social pages shows guilds, chat, and nearby without an account', (
-    tester,
-  ) async {
+  testWidgets('browse social pages shows guilds, chat, and nearby while signed in', (tester) async {
     final controller = buildController(
       database,
       seed: startedCharacter(database).copyWith(currentLocationId: demoMiraLocationId),
