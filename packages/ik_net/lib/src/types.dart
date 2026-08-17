@@ -939,6 +939,7 @@ class MultiplayerSession {
     required this.email,
     required this.username,
     required this.accessToken,
+    this.playSessionId,
   });
 
   factory MultiplayerSession.fromJson(Map<String, Object?> json) => MultiplayerSession(
@@ -946,6 +947,7 @@ class MultiplayerSession {
     email: json['email']! as String,
     username: json['username']! as String,
     accessToken: json['accessToken'] as String? ?? '',
+    playSessionId: json['playSessionId'] as String?,
   );
 
   final String userId;
@@ -953,11 +955,23 @@ class MultiplayerSession {
   final String username;
   final String accessToken;
 
+  /// Which device currently holds the account. A new sign-in replaces it.
+  final String? playSessionId;
+
+  MultiplayerSession copyWith({String? playSessionId}) => MultiplayerSession(
+    userId: userId,
+    email: email,
+    username: username,
+    accessToken: accessToken,
+    playSessionId: playSessionId ?? this.playSessionId,
+  );
+
   Map<String, Object?> toJson() => <String, Object?>{
     'userId': userId,
     'email': email,
     'username': username,
     'accessToken': accessToken,
+    if (playSessionId != null) 'playSessionId': playSessionId,
   };
 }
 

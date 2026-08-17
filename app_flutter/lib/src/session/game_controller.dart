@@ -262,6 +262,21 @@ class GameController extends ChangeNotifier {
     _awaySummary = boot.created || credited <= 0 ? null : away;
   }
 
+  /// Loads the account save, including catch-up for time away.
+  void adoptAccountSave(PlayerSave incoming) {
+    adoptBoot(session.adoptAccount(incoming));
+    notifyListeners();
+  }
+
+  /// Drops the character after sign-out or a kick from another device.
+  void resetUnsigned() {
+    session.resetUnsigned();
+    _awaySummary = null;
+    _message = null;
+    _activityError = null;
+    notifyListeners();
+  }
+
   void dismissAwaySummary() {
     _awaySummary = null;
     notifyListeners();

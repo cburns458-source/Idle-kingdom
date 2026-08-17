@@ -61,6 +61,9 @@ class MultiplayerController extends ChangeNotifier {
   /// How often the unread count and the visitor lists are refreshed.
   static const Duration pollInterval = Duration(seconds: 4);
 
+  /// How long play can sit in memory before it is written to the account.
+  static const Duration accountSaveDebounce = Duration(seconds: 8);
+
   Timer? _presenceTimer;
   Timer? _pollTimer;
 
@@ -87,6 +90,19 @@ class MultiplayerController extends ChangeNotifier {
   int _unreadDms = 0;
   String? _notice;
   bool _busy = false;
+  bool _suppressUploads = false;
+  PlayerSave? _pendingAccountSave;
+  Timer? _accountSaveTimer;
+
+  /// A named save this device still holds from before accounts owned the save.
+  /// Used once if the account has no playable row yet, then forgotten.
+  PlayerSave? pendingLeftover;
+
+  /// Called after sign-out or a kick so the shell can drop the character.
+  VoidCallback? onAccountCleared;
+
+  /// Called once the account has a playable save, so a leftover device file can go.
+  VoidCallback? onAccountSaveReady;
 
   GameDatabase get db => database.launch;
 
@@ -133,6 +149,7 @@ class MultiplayerController extends ChangeNotifier {
 
   @override
   void dispose() {
+    _accountSaveTimer?.cancel();
     stopPolling();
     super.dispose();
   }
@@ -157,25 +174,37 @@ class MultiplayerController extends ChangeNotifier {
 
   // --- Accounts -------------------------------------------------------------
 
-  Future<void> signUp(String email, String username, String password, PlayerSave save) {
+  Future<void> signUp(
+    String email,
+    String username,
+    String password,
+    PlayerSave localHint, {
+    required void Function(PlayerSave save) adopt,
+  }) {
     return run(() async {
       final result = await service.signUp(email, username, password);
       if (!result.ok) return result.reason;
-      // A brand new account starts from the save already on the device, so the
-      // first sync is an upload rather than a fight over which one is newer.
-      await service.pushSave(db, save);
-      await refresh(save);
-      await maybeAutoSubmitRanking(save);
+      await service.claimPlaySession();
+      final playable = await _adoptAccountSave(localHint, adopt);
+      await refresh(playable ?? localHint);
+      if (playable != null) await maybeAutoSubmitRanking(playable);
       return 'Account created for ${result.session!.username}.';
     });
   }
 
-  Future<void> signIn(String email, String password, PlayerSave save) {
+  Future<void> signIn(
+    String email,
+    String password,
+    PlayerSave localHint, {
+    required void Function(PlayerSave save) adopt,
+  }) {
     return run(() async {
       final result = await service.signIn(email, password);
       if (!result.ok) return result.reason;
-      await refresh(save);
-      await maybeAutoSubmitRanking(save);
+      await service.claimPlaySession();
+      final playable = await _adoptAccountSave(localHint, adopt);
+      await refresh(playable ?? localHint);
+      if (playable != null) await maybeAutoSubmitRanking(playable);
       return 'Welcome back, ${result.session!.username}.';
     });
   }
@@ -188,14 +217,33 @@ class MultiplayerController extends ChangeNotifier {
     });
   }
 
-  /// Signs out, after one last upload so nothing earned is left behind.
+  /// Signs out after writing the account save, then drops the character here.
   Future<void> signOut(PlayerSave save) {
     return run(() async {
-      await service.pushSave(db, save);
+      await flushAccountSave(save);
       await service.clearPresence();
       await service.signOut();
-      _resetSignedOutState();
-      return 'Signed out. Local save remains on this device.';
+      _clearAccountLocally();
+      return 'Signed out.';
+    });
+  }
+
+  /// Rejoins an already-stored session: keep the seat if we still hold it,
+  /// otherwise this device is kicked.
+  Future<void> resumeAccount(PlayerSave localHint, {required void Function(PlayerSave save) adopt}) {
+    return run(() async {
+      if (!isSignedIn) return null;
+      final mine = session?.playSessionId;
+      final active = await service.activePlaySessionId();
+      if (mine != null && active != null && mine != active) {
+        await _kickFromOtherDevice();
+        return remoteSignedInElsewhere;
+      }
+      await service.claimPlaySession();
+      final playable = await _adoptAccountSave(localHint, adopt);
+      await refresh(playable ?? localHint);
+      if (playable != null) await maybeAutoSubmitRanking(playable);
+      return null;
     });
   }
 
@@ -221,23 +269,87 @@ class MultiplayerController extends ChangeNotifier {
     _unreadDms = 0;
   }
 
-  // --- Cloud saves ----------------------------------------------------------
+  // --- Account saves --------------------------------------------------------
 
-  Future<void> pushSave(PlayerSave save) {
-    return run(() async {
-      final result = await service.pushSave(db, save);
-      return result.ok ? 'Cloud save uploaded.' : result.reason;
+  static bool isPlayableSave(PlayerSave? save) {
+    if (save == null) return false;
+    final name = save.characterName?.trim() ?? '';
+    return name.isNotEmpty && save.raceId != null;
+  }
+
+  PlayerSave? _bestLeftover(PlayerSave localHint) {
+    if (isPlayableSave(pendingLeftover)) return pendingLeftover;
+    if (isPlayableSave(localHint)) return localHint;
+    return null;
+  }
+
+  /// Loads the account row, or promotes a leftover named save onto the account.
+  Future<PlayerSave?> _adoptAccountSave(
+    PlayerSave localHint,
+    void Function(PlayerSave save) adopt,
+  ) async {
+    final pulled = await service.pullSave();
+    if (pulled.ok && isPlayableSave(pulled.save)) {
+      adopt(pulled.save!);
+      pendingLeftover = null;
+      onAccountSaveReady?.call();
+      return pulled.save;
+    }
+    final leftover = _bestLeftover(localHint);
+    if (leftover != null) {
+      if (!identical(leftover, localHint)) adopt(leftover);
+      await service.pushSave(db, leftover, force: true);
+      pendingLeftover = null;
+      onAccountSaveReady?.call();
+      return leftover;
+    }
+    return null;
+  }
+
+  /// Queues the live save for the account. Unnamed stubs are not written.
+  void scheduleAccountSave(PlayerSave save) {
+    if (!isSignedIn || _suppressUploads || !isPlayableSave(save)) return;
+    _pendingAccountSave = save;
+    _accountSaveTimer?.cancel();
+    _accountSaveTimer = Timer(accountSaveDebounce, () {
+      unawaited(flushAccountSave());
     });
   }
 
-  /// Pulls the cloud save and hands it to [onLoaded] to store and adopt.
-  Future<void> pullSave(void Function(PlayerSave save) onLoaded) {
-    return run(() async {
-      final result = await service.pullSave();
-      if (!result.ok) return result.reason;
-      onLoaded(result.save!);
-      return 'Cloud save loaded onto this device.';
-    });
+  /// Writes the pending (or given) save to the account now.
+  Future<void> flushAccountSave([PlayerSave? save]) async {
+    _accountSaveTimer?.cancel();
+    _accountSaveTimer = null;
+    final outgoing = save ?? _pendingAccountSave;
+    _pendingAccountSave = null;
+    if (!isSignedIn || _suppressUploads || !isPlayableSave(outgoing)) return;
+    await service.pushSave(db, outgoing!, force: true);
+  }
+
+  /// Publishes a just-created character immediately.
+  Future<void> publishAccountSave(PlayerSave save) => flushAccountSave(save);
+
+  void _clearAccountLocally() {
+    _suppressUploads = true;
+    _accountSaveTimer?.cancel();
+    _accountSaveTimer = null;
+    _pendingAccountSave = null;
+    pendingLeftover = null;
+    stopPolling();
+    _resetSignedOutState();
+    onAccountCleared?.call();
+    _suppressUploads = false;
+  }
+
+  Future<void> _kickFromOtherDevice() async {
+    _suppressUploads = true;
+    _accountSaveTimer?.cancel();
+    _accountSaveTimer = null;
+    _pendingAccountSave = null;
+    await service.clearPresence();
+    await service.signOut();
+    _clearAccountLocally();
+    _notice = remoteSignedInElsewhere;
   }
 
   // --- Refresh --------------------------------------------------------------
@@ -303,11 +415,22 @@ class MultiplayerController extends ChangeNotifier {
 
   Future<void> _poll(PlayerSave save) async {
     if (!isSignedIn) return;
+    if (await _wasKicked()) return;
     _unreadDms = await service.countUnreadDirectMessages(_dmCursor());
     _citadelVisitors = await service.citadelVisitors();
     _presence = await service.presenceRecords();
     _peers = await service.peersAtLocation(save.currentLocationId);
     notifyListeners();
+  }
+
+  Future<bool> _wasKicked() async {
+    final mine = session?.playSessionId;
+    if (mine == null) return false;
+    final active = await service.activePlaySessionId();
+    if (active == null || active == mine) return false;
+    await _kickFromOtherDevice();
+    notifyListeners();
+    return true;
   }
 
   // --- Presence -------------------------------------------------------------

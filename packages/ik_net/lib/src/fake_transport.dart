@@ -225,6 +225,11 @@ class FakeTransport implements RemoteTransport {
     final reason = _takeFailure('upsert:$table');
     if (reason != null) return reason;
 
+    if (table == RemoteTables.saves) {
+      final blocked = _playSessionRefusal(rows);
+      if (blocked != null) return blocked;
+    }
+
     final key = onConflict?.split(',').map((part) => part.trim()).toList() ?? _keys[table]!;
     final stored = tables.putIfAbsent(table, () => <RemoteRow>[]);
     for (final row in rows) {
@@ -254,6 +259,24 @@ class FakeTransport implements RemoteTransport {
     return RemoteQueryResult.ok(<RemoteRow>[
       <String, Object?>{...written},
     ]);
+  }
+
+  /// Matches the SQL trigger: a kicked device may not write the account save.
+  String? _playSessionRefusal(List<RemoteRow> rows) {
+    for (final row in rows) {
+      final userId = row['user_id'];
+      RemoteRow? profile;
+      for (final candidate in tables[RemoteTables.profiles]!) {
+        if (candidate['user_id'] == userId) {
+          profile = candidate;
+          break;
+        }
+      }
+      final active = profile?[remotePlaySessionColumn];
+      if (active is! String || active.isEmpty) continue;
+      if (row['play_session_id'] != active) return remoteSignedInElsewhere;
+    }
+    return null;
   }
 
   /// What a unique-key violation reads as, standing in for the database's own

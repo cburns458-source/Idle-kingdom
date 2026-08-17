@@ -6,6 +6,8 @@
 /// on an HTTP library.
 library;
 
+import 'dart:math';
+
 import 'package:ik_rules/ik_rules.dart';
 
 import 'bazaar.dart';
@@ -109,6 +111,20 @@ MultiplayerSession sessionFromSignIn(
   );
 }
 
+/// A UUID v4 the account stores as the device that may play.
+String newPlaySessionId([Random? random]) {
+  final rng = random ?? Random.secure();
+  final bytes = List<int>.generate(16, (_) => rng.nextInt(256));
+  bytes[6] = (bytes[6] & 0x0f) | 0x40;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+  String hex(int index) => bytes[index].toRadixString(16).padLeft(2, '0');
+  return '${hex(0)}${hex(1)}${hex(2)}${hex(3)}-'
+      '${hex(4)}${hex(5)}-'
+      '${hex(6)}${hex(7)}-'
+      '${hex(8)}${hex(9)}-'
+      '${hex(10)}${hex(11)}${hex(12)}${hex(13)}${hex(14)}${hex(15)}';
+}
+
 /// The profile row a new account starts with.
 RemoteRow profileRowForSignUp(MultiplayerSession session) => <String, Object?>{
   'user_id': session.userId,
@@ -116,11 +132,19 @@ RemoteRow profileRowForSignUp(MultiplayerSession session) => <String, Object?>{
   'privacy_public_skills': true,
 };
 
-RemoteRow saveRowFor(String userId, PlayerSave save) => <String, Object?>{
+/// Claims this device as the only one allowed to play the account.
+RemoteRow profilePlaySessionRow(MultiplayerSession session) => <String, Object?>{
+  'user_id': session.userId,
+  'username': session.username,
+  'active_play_session_id': session.playSessionId,
+};
+
+RemoteRow saveRowFor(String userId, PlayerSave save, {String? playSessionId}) => <String, Object?>{
   'user_id': userId,
   'save_version': save.saveVersion,
   'updated_at': save.updatedAt,
   'payload': save.toJson(),
+  if (playSessionId != null) 'play_session_id': playSessionId,
 };
 
 /// The leaderboard rows one save is worth, all stamped with the same instant.
@@ -243,6 +267,8 @@ const String remoteBazaarPostFailed = 'The notice was not accepted.';
 
 /// Why an upload stops: the account has a newer save than the one being sent.
 const String remoteSaveConflict = 'A newer cloud save exists.';
+const String remoteSignedInElsewhere = 'Signed in on another device.';
+const String remotePlaySessionColumn = 'active_play_session_id';
 
 /// A leaderboard row joined with its profile.
 ///

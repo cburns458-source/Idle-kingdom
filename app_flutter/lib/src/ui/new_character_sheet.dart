@@ -14,9 +14,12 @@ import 'game_image.dart';
 /// show the portrait, the sliders and the races at once, and the look is
 /// changeable from the wardrobe anyway.
 class NewCharacterSheet extends StatefulWidget {
-  const NewCharacterSheet({super.key, required this.controller});
+  const NewCharacterSheet({super.key, required this.controller, this.onCreated});
 
   final GameController controller;
+
+  /// Writes the new character to the account as soon as it exists.
+  final VoidCallback? onCreated;
 
   @override
   State<NewCharacterSheet> createState() => _NewCharacterSheetState();
@@ -44,6 +47,7 @@ class _NewCharacterSheetState extends State<NewCharacterSheet> {
   void _submit() {
     final failure = widget.controller.createCharacter(_name.text, _raceId, appearance: _appearance);
     setState(() => _error = failure);
+    if (failure == null) widget.onCreated?.call();
   }
 
   @override

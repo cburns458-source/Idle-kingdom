@@ -63,9 +63,13 @@ class SaveRepository {
   /// Wall clock in milliseconds; a test pins it instead of reading the host.
   final num Function() clock;
 
+  /// Called after each write, so a signed-in client can mirror the account row.
+  void Function(PlayerSave save)? onWrite;
+
   PlayerSave write(PlayerSave save) {
     final next = touchSave(save, clock());
     storage.setItem(saveStorageKey, jsonEncode(next.toJson()));
+    onWrite?.call(next);
     return next;
   }
 

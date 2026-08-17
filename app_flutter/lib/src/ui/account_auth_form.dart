@@ -82,7 +82,12 @@ class _AccountAuthFormState extends State<AccountAuthForm> {
             FilledButton(
               onPressed: net.busy
                   ? null
-                  : () => net.signIn(_email.text, _password.text, widget.controller.save),
+                  : () => net.signIn(
+                      _email.text,
+                      _password.text,
+                      widget.controller.save,
+                      adopt: widget.controller.adoptAccountSave,
+                    ),
               child: const Text('Sign in'),
             ),
             const SizedBox(height: 6),
@@ -94,6 +99,7 @@ class _AccountAuthFormState extends State<AccountAuthForm> {
                       _username.text.isEmpty ? 'Adventurer' : _username.text,
                       _password.text,
                       widget.controller.save,
+                      adopt: widget.controller.adoptAccountSave,
                     ),
               child: const Text('Create account'),
             ),

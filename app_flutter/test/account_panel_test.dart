@@ -76,7 +76,7 @@ void main() {
     expect(find.text('Magic link sent.'), findsOne);
   });
 
-  testWidgets('creating an account against the backend uploads the save with it', (tester) async {
+  testWidgets('creating an account against the backend uploads a named leftover', (tester) async {
     final transport = FakeTransport();
     final net = buildRemoteMultiplayer(database, transport: transport);
     await pumpAccount(tester, net);
@@ -101,66 +101,7 @@ void main() {
     expect(find.text('Sign in'), findsOne);
   });
 
-  testWidgets('syncing and loading a cloud save both go over the wire', (tester) async {
-    final transport = FakeTransport();
-    final net = buildRemoteMultiplayer(database, transport: transport);
-    await pumpAccount(tester, net);
-    await submit(tester, 'Create account');
-    final boardCount = transport.tables[RemoteTables.leaderboard]!.length;
-
-    await tester.tap(find.text('Sync cloud save'));
-    await tester.pump();
-    await tester.pump();
-    expect(find.text('Cloud save uploaded.'), findsOne);
-    expect(transport.tables[RemoteTables.leaderboard], hasLength(boardCount));
-
-    await tester.tap(find.text('Load cloud save'));
-    await tester.pump();
-    await tester.pump();
-    expect(find.text('Cloud save loaded onto this device.'), findsOne);
-  });
-
-  testWidgets('a pasted save replaces the character once it is confirmed', (tester) async {
-    final net = buildMultiplayer(database);
-    final game = buildController(database, seed: startedCharacter(database));
-    addTearDown(game.dispose);
-    addTearDown(net.dispose);
-    await pumpPanel(tester, AccountPanel(controller: game, multiplayer: net));
-
-    final incoming = startedCharacter(database).copyWith(characterName: 'Rowan', gold: 999);
-    await tester.enterText(
-      find.widgetWithText(TextField, saveImportHint),
-      exportSaveText(incoming),
-    );
-    await tester.tap(find.text('Import save'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Replace this character?'), findsOne);
-    await tester.tap(find.widgetWithText(FilledButton, 'Import'));
-    await tester.pumpAndSettle();
-
-    expect(game.save.characterName, 'Rowan');
-    expect(game.save.gold, 999);
-    expect(find.text('Now playing Rowan.'), findsOne);
-  });
-
-  testWidgets('nonsense in the paste field is refused before anything is asked', (tester) async {
-    final net = buildMultiplayer(database);
-    final game = buildController(database, seed: startedCharacter(database));
-    addTearDown(game.dispose);
-    addTearDown(net.dispose);
-    await pumpPanel(tester, AccountPanel(controller: game, multiplayer: net));
-
-    await tester.enterText(find.widgetWithText(TextField, saveImportHint), 'not a save');
-    await tester.tap(find.text('Import save'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Replace this character?'), findsNothing);
-    expect(find.text(saveImportUnreadable), findsOne);
-    expect(game.save.characterName, 'Tester');
-  });
-
-  testWidgets('signing out leaves the local save alone', (tester) async {
+  testWidgets('signing out returns to the sign-in form', (tester) async {
     final transport = FakeTransport();
     final net = buildRemoteMultiplayer(database, transport: transport);
     await pumpAccount(tester, net);
@@ -170,7 +111,7 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    expect(find.text('Signed out. Local save remains on this device.'), findsOne);
+    expect(find.text('Signed out.'), findsOne);
     expect(transport.signedOut, isTrue);
     expect(find.widgetWithText(TextField, 'Email'), findsOne);
   });

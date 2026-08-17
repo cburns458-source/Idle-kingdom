@@ -44,7 +44,7 @@ class AppShell extends StatefulWidget {
   State<AppShell> createState() => _AppShellState();
 }
 
-class _AppShellState extends State<AppShell> with TickerProviderStateMixin {
+class _AppShellState extends State<AppShell> with TickerProviderStateMixin, WidgetsBindingObserver {
   /// Drives the game loop. Coming from the widget means it stops when the app is
   /// backgrounded; the next tick picks the elapsed time back up from the clock.
   Ticker? _ticker;
@@ -75,6 +75,8 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    multiplayer.onAccountCleared ??= controller.resetUnsigned;
     multiplayer.addListener(_onMultiplayerChanged);
     _ticker = createTicker((_) {
       if (!mounted || !_canPlay) return;
@@ -109,7 +111,18 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin {
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.hidden ||
+        state == AppLifecycleState.inactive) {
+      multiplayer.flushAccountSave(controller.save);
+    }
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    multiplayer.flushAccountSave(controller.save);
     multiplayer.removeListener(_onMultiplayerChanged);
     _ticker?.stop();
     _ticker?.dispose();
@@ -286,7 +299,10 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin {
       return AuthGateSheet(controller: controller, multiplayer: multiplayer);
     }
     if (_needsCharacter) {
-      return NewCharacterSheet(controller: controller);
+      return NewCharacterSheet(
+        controller: controller,
+        onCreated: () => multiplayer.publishAccountSave(controller.save),
+      );
     }
     final save = controller.save;
     return Stack(

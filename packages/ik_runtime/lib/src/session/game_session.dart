@@ -68,6 +68,20 @@ class GameSession {
     return SessionBoot(save: save, created: loaded.created, unattended: unattended);
   }
 
+  /// Replaces the in-memory save with the account's row and credits time away.
+  SessionBoot adoptAccount(PlayerSave incoming) {
+    final nowMs = clock();
+    final unattended = resolveUnattendedProgress(db, incoming, nowMs, random);
+    final synced = syncProgressionMeta(db, unattended.save, nowMs);
+    _save = repository.write(synced);
+    return SessionBoot(save: save, created: false, unattended: unattended);
+  }
+
+  /// Clears the playable character after sign-out or a kick.
+  void resetUnsigned() {
+    _save = repository.write(createNewSave(db, clock()));
+  }
+
   /// Advances whatever is due, storing the save only when something happened.
   ///
   /// A client calls this as often as it likes — once a frame, or on a timer —

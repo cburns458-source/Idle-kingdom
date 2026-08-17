@@ -31,6 +31,13 @@ abstract interface class MultiplayerService {
 
   Future<void> signOut();
 
+  /// Marks this device as the only one allowed to play. A later sign-in
+  /// elsewhere replaces the id and kicks this device.
+  Future<ActionResult> claimPlaySession();
+
+  /// The account's active play session, or null when none is stored.
+  Future<String?> activePlaySessionId();
+
   Future<MultiplayerProfile?> profile(String userId);
 
   Future<MultiplayerProfile?> setPrivacyPublicSkills(bool value);
@@ -219,6 +226,23 @@ class LocalMultiplayerService implements MultiplayerService {
   Future<void> signOut() async => _sessions.write(null);
 
   @override
+  Future<ActionResult> claimPlaySession() async {
+    final current = session;
+    if (current == null) return const ActionResult.failed('Sign in to play.');
+    final next = current.copyWith(playSessionId: current.playSessionId ?? newPlaySessionId());
+    _sessions.write(next);
+    _backend.claimPlaySession(next.userId, next.playSessionId!);
+    return const ActionResult.ok();
+  }
+
+  @override
+  Future<String?> activePlaySessionId() async {
+    final current = session;
+    if (current == null) return null;
+    return _backend.activePlaySessionId(current.userId);
+  }
+
+  @override
   Future<MultiplayerProfile?> profile(String userId) async => _backend.getProfile(userId);
 
   @override
@@ -237,6 +261,8 @@ class LocalMultiplayerService implements MultiplayerService {
     final stamped = save.copyWith(updatedAt: isoFromMs(_backend.ports.nowMs()));
     final validation = softValidateSave(stamped);
     if (!validation.ok) return CloudSyncResult.failed(validation.reason!);
+    final refusedSession = _backend.playSessionRefusal(current.userId, current.playSessionId);
+    if (refusedSession != null) return CloudSyncResult.failed(refusedSession);
 
     final written = _backend.writeCloudSave(current.userId, stamped, force: force);
     if (!written.ok) {

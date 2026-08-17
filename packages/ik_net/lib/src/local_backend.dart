@@ -11,6 +11,7 @@ import 'config.dart';
 import 'demo_world.dart';
 import 'local_db.dart';
 import 'moderation.dart';
+import 'remote.dart';
 import 'results.dart';
 import 'snapshots.dart';
 import 'types.dart';
@@ -148,6 +149,21 @@ class LocalMultiplayerBackend {
 
   MultiplayerProfile? getProfile(String userId) =>
       _db().profiles.firstWhereOrNull((row) => row.userId == userId);
+
+  void claimPlaySession(String userId, String sessionId) {
+    final db = _db();
+    db.playSessions[userId] = sessionId;
+    _write(db);
+  }
+
+  String? activePlaySessionId(String userId) => _db().playSessions[userId];
+
+  /// Null when this device may write; a reason when another device holds the seat.
+  String? playSessionRefusal(String userId, String? playSessionId) {
+    final active = activePlaySessionId(userId);
+    if (active == null || playSessionId == active) return null;
+    return remoteSignedInElsewhere;
+  }
 
   /// Gives an account authenticated elsewhere a profile row here.
   ///

@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:idle_kingdoms/src/session/multiplayer_controller.dart';
 import 'package:idle_kingdoms/src/theme.dart';
 import 'package:idle_kingdoms/src/ui/reward_strip.dart';
 import 'package:ik_content/ik_content.dart';
+import 'package:ik_net/ik_net.dart';
+import 'package:ik_net/testing.dart';
 
 import 'support/harness.dart';
 
@@ -59,6 +62,31 @@ void main() {
     expect(controller.save.currentActivityId, isNull);
   });
 
+  testWidgets('signing in loads the account save and skips character creation', (tester) async {
+    final transport = FakeTransport();
+    final writer = buildRemoteMultiplayer(database, transport: transport);
+    addTearDown(writer.dispose);
+    final stored = startedCharacter(database).copyWith(characterName: 'Vari', gold: 777);
+    await writer.signUp('vari@example.com', 'Vari', 'secret', stored, adopt: (_) {});
+
+    final controller = buildController(database);
+    final net = buildRemoteMultiplayer(database, transport: transport);
+    addTearDown(controller.dispose);
+    addTearDown(net.dispose);
+    await pumpShell(tester, controller, multiplayer: net);
+
+    await tester.enterText(find.byKey(const Key('auth-email')), 'vari@example.com');
+    await tester.enterText(find.byKey(const Key('auth-password')), 'secret');
+    await tester.tap(find.text('Sign in'));
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('Sign in to play'), findsNothing);
+    expect(find.text('Name your character'), findsNothing);
+    expect(controller.save.characterName, 'Vari');
+    expect(controller.save.gold, 777);
+  });
+
   testWidgets('signing out returns to the auth gate', (tester) async {
     final controller = buildController(database, seed: startedCharacter(database));
     final net = buildMultiplayer(database);
@@ -75,6 +103,42 @@ void main() {
     expect(net.isSignedIn, isFalse);
     expect(find.text('Sign in to play'), findsOne);
     expect(find.text('Gather meadow supplies'), findsNothing);
+    expect(controller.save.characterName, isNull);
+  });
+
+  testWidgets('signing in on a second device kicks the first', (tester) async {
+    final transport = FakeTransport();
+    final stored = startedCharacter(database).copyWith(characterName: 'Vari', gold: 50);
+
+    final firstGame = buildController(database, seed: stored);
+    final firstNet = buildRemoteMultiplayer(database, transport: transport);
+    firstNet.onAccountCleared = firstGame.resetUnsigned;
+    addTearDown(firstGame.dispose);
+    addTearDown(firstNet.dispose);
+    await firstNet.signUp('vari@example.com', 'Vari', 'secret', stored, adopt: firstGame.adoptAccountSave);
+    firstNet.startPolling(() => firstGame.save);
+
+    final secondGame = buildController(database);
+    final secondNet = buildRemoteMultiplayer(database, transport: transport);
+    addTearDown(secondGame.dispose);
+    addTearDown(secondNet.dispose);
+    await secondNet.signIn(
+      'vari@example.com',
+      'secret',
+      secondGame.save,
+      adopt: secondGame.adoptAccountSave,
+    );
+
+    await tester.pump(MultiplayerController.pollInterval);
+    await tester.pump();
+
+    expect(firstNet.isSignedIn, isFalse);
+    expect(firstNet.notice, remoteSignedInElsewhere);
+    expect(firstGame.save.characterName, isNull);
+    expect(secondNet.isSignedIn, isTrue);
+    expect(secondGame.save.characterName, 'Vari');
+    firstNet.stopPolling();
+    secondNet.stopPolling();
   });
 
   testWidgets('the location screen starts and stops an activity', (tester) async {

@@ -19,7 +19,7 @@ void main() {
     addTearDown(net.dispose);
     final save = startedCharacter(database);
 
-    await net.signUp('hero@example.com', 'Hero', 'secret', save);
+    await net.signUp('hero@example.com', 'Hero', 'secret', save, adopt: (_) {});
 
     expect(net.board, isNotEmpty);
     expect(net.canPressUpdateRanking, isFalse);
@@ -39,7 +39,7 @@ void main() {
     final net = buildMultiplayer(database, clock: clock);
     addTearDown(net.dispose);
     final save = startedCharacter(database);
-    await net.signUp('hero@example.com', 'Hero', 'secret', save);
+    await net.signUp('hero@example.com', 'Hero', 'secret', save, adopt: (_) {});
     net.storage.removeItem(rankingUpdateStorageKey(net.session!.userId));
     expect(net.lastRankingSubmitAt, isNull);
 
@@ -53,7 +53,7 @@ void main() {
     final net = buildMultiplayer(database, clock: clock);
     addTearDown(net.dispose);
     final save = startedCharacter(database);
-    await net.signUp('hero@example.com', 'Hero', 'secret', save);
+    await net.signUp('hero@example.com', 'Hero', 'secret', save, adopt: (_) {});
 
     clock.advance(24 * 60 * 60 * 1000);
     await net.maybeAutoSubmitRanking(save);
@@ -65,7 +65,7 @@ void main() {
     final net = buildMultiplayer(database, clock: clock);
     addTearDown(net.dispose);
     final save = startedCharacter(database);
-    await net.signUp('hero@example.com', 'Hero', 'secret', save);
+    await net.signUp('hero@example.com', 'Hero', 'secret', save, adopt: (_) {});
 
     final game = buildController(database, seed: save, clock: clock);
     addTearDown(game.dispose);

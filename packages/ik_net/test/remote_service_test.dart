@@ -253,6 +253,32 @@ void main() {
     expect((await service.pullSave()).reason, 'No cloud save for this account yet.');
   });
 
+  test('a second sign-in takes the seat and the first cannot write', () async {
+    final transport = FakeTransport();
+    final first = await _signedIn(transport, MemorySaveStorage());
+    expect((await first.claimPlaySession()).ok, isTrue);
+    expect(first.session!.playSessionId, isNotNull);
+
+    final db = _database();
+    final save = createNewSave(db, _nowMs).copyWith(characterName: 'Hero', gold: 10);
+    expect((await first.pushSave(db, save, force: true)).ok, isTrue);
+
+    final second = _service(transport, MemorySaveStorage());
+    final signed = await second.signIn('hero@example.com', 'secret');
+    expect(signed.ok, isTrue, reason: signed.reason);
+    expect((await second.claimPlaySession()).ok, isTrue);
+    expect(second.session!.playSessionId, isNot(first.session!.playSessionId));
+    expect(await first.activePlaySessionId(), second.session!.playSessionId);
+
+    final refused = await first.pushSave(db, save.copyWith(gold: 99), force: true);
+    expect(refused.ok, isFalse);
+    expect(refused.reason, remoteSignedInElsewhere);
+
+    final pulled = await second.pullSave();
+    expect(pulled.ok, isTrue, reason: pulled.reason);
+    expect(pulled.save!.gold, 10);
+  });
+
   test('needs an account before it will sync anything', () async {
     final transport = FakeTransport();
     final service = _service(transport, MemorySaveStorage());

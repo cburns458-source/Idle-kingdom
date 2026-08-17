@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -56,12 +57,14 @@ class _BootGateState extends State<_BootGate> {
     final database = await loadBundledDatabase();
     final storage = await PrefsStore.open();
     num clock() => DateTime.now().millisecondsSinceEpoch;
-    // A player opening this client where the React one was served keeps their
-    // character without having to move it by hand.
+    // A leftover device file is offered once if the account has no character.
     adoptForeignSave(storage, readLegacyBrowserSave(saveStorageKey), clock());
+    final leftover = _namedLeftover(storage, clock());
+    // The playable save lives in memory. The account row is the source of truth.
+    final repository = SaveRepository(storage: MemorySaveStorage(), clock: clock);
     final session = GameSession(
       db: database.launch,
-      repository: SaveRepository(storage: storage, clock: clock),
+      repository: repository,
       clock: clock,
       random: _systemRandom,
     );
@@ -72,8 +75,6 @@ class _BootGateState extends State<_BootGate> {
       localArt: LocalPlayerArt.load(storage),
       mapTravel: MapTravelPref.load(storage),
     )..adoptBoot(boot);
-    // Multiplayer runs against the same store the save uses, so a signed-in
-    // player keeps their account across launches without a network call.
     final service = await _multiplayerService(storage);
     _ensureDemoWorld(service, database.launch);
     final multiplayer = MultiplayerController(
@@ -82,8 +83,12 @@ class _BootGateState extends State<_BootGate> {
       storage: storage,
       clock: clock,
     );
+    multiplayer.pendingLeftover = leftover;
+    multiplayer.onAccountCleared = game.resetUnsigned;
+    multiplayer.onAccountSaveReady = () => storage.removeItem(saveStorageKey);
+    repository.onWrite = multiplayer.scheduleAccountSave;
     if (multiplayer.isSignedIn) {
-      await multiplayer.refresh(game.save);
+      await multiplayer.resumeAccount(game.save, adopt: game.adoptAccountSave);
     }
     final booted = _BootedGame(game: game, multiplayer: multiplayer);
     _booted = booted;
@@ -157,6 +162,19 @@ class _BootMessage extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+PlayerSave? _namedLeftover(SaveStorage storage, num nowMs) {
+  final raw = storage.getItem(saveStorageKey);
+  if (raw == null || raw.isEmpty) return null;
+  try {
+    final save = parseSave(jsonDecode(raw), nowMs);
+    final name = save.characterName?.trim() ?? '';
+    if (name.isEmpty || save.raceId == null) return null;
+    return save;
+  } on Object {
+    return null;
   }
 }
 

@@ -31,6 +31,7 @@ class RemoteMultiplayerService implements MultiplayerService {
   final RemoteTransport transport;
   final SessionStore _sessions;
   final LocalMultiplayerService _local;
+  bool _seatClaimedOnServer = false;
 
   /// The device-local half, exposed for the same reasons the local service
   /// exposes its backend: seeding a demo world, and tests.
@@ -101,6 +102,37 @@ class RemoteMultiplayerService implements MultiplayerService {
   }
 
   @override
+  Future<ActionResult> claimPlaySession() async {
+    final current = session;
+    if (current == null) return const ActionResult.failed('Sign in to play.');
+    final next = current.copyWith(playSessionId: current.playSessionId ?? newPlaySessionId());
+    _sessions.write(next);
+    final refused = await transport.upsert(RemoteTables.profiles, <RemoteRow>[
+      profilePlaySessionRow(next),
+    ]);
+    // The column is missing until the play-session migration is applied; play
+    // still works, but this device cannot kick or be kicked.
+    _seatClaimedOnServer = refused == null;
+    return const ActionResult.ok();
+  }
+
+  @override
+  Future<String?> activePlaySessionId() async {
+    final current = session;
+    if (current == null) return null;
+    final result = await transport.select(
+      RemoteTables.profiles,
+      columns: 'user_id, $remotePlaySessionColumn',
+      equals: <String, Object?>{'user_id': current.userId},
+      limit: 1,
+    );
+    if (!result.ok) return null;
+    final row = result.single;
+    final value = row?[remotePlaySessionColumn];
+    return value is String && value.isNotEmpty ? value : null;
+  }
+
+  @override
   Future<MultiplayerProfile?> profile(String userId) => _local.profile(userId);
 
   @override
@@ -135,7 +167,11 @@ class RemoteMultiplayerService implements MultiplayerService {
     }
 
     final refused = await transport.upsert(RemoteTables.saves, <RemoteRow>[
-      saveRowFor(current.userId, stamped),
+      saveRowFor(
+        current.userId,
+        stamped,
+        playSessionId: _seatClaimedOnServer ? current.playSessionId : null,
+      ),
     ]);
     if (refused != null) return CloudSyncResult.failed(refused);
 

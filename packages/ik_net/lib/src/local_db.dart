@@ -176,6 +176,7 @@ class LocalDb {
     required this.bazaarPosts,
     required this.guests,
     required this.halls,
+    required this.playSessions,
   });
 
   LocalDb.empty()
@@ -199,7 +200,8 @@ class LocalDb {
       bountyClaims = <BountyClaimRecord>[],
       bazaarPosts = <BazaarPost>[],
       guests = <GuildGuest>[],
-      halls = <GuildHallState>[];
+      halls = <GuildHallState>[],
+      playSessions = <String, String>{};
 
   /// Reads whatever a previous version wrote, filling in anything it lacks.
   factory LocalDb.fromJson(Object? raw) {
@@ -239,6 +241,13 @@ class LocalDb {
     db.bazaarPosts.addAll(rows('bazaarPosts').map(BazaarPost.fromJson));
     db.guests.addAll(rows('guests').map(GuildGuest.fromJson));
     db.halls.addAll(rows('halls').map(GuildHallState.fromJson));
+    final sessions = raw['playSessions'];
+    if (sessions is Map<String, Object?>) {
+      for (final entry in sessions.entries) {
+        final value = entry.value;
+        if (value is String) db.playSessions[entry.key] = value;
+      }
+    }
     return db;
   }
 
@@ -263,6 +272,7 @@ class LocalDb {
   List<BazaarPost> bazaarPosts;
   List<GuildGuest> guests;
   List<GuildHallState> halls;
+  Map<String, String> playSessions;
 
   Map<String, Object?> toJson() => <String, Object?>{
     'users': users.map((row) => row.toJson()).toList(),
@@ -286,6 +296,7 @@ class LocalDb {
     'bazaarPosts': bazaarPosts.map((row) => row.toJson()).toList(),
     if (guests.isNotEmpty) 'guests': guests.map((row) => row.toJson()).toList(),
     if (halls.isNotEmpty) 'halls': halls.map((row) => row.toJson()).toList(),
+    if (playSessions.isNotEmpty) 'playSessions': <String, Object?>{...playSessions},
   };
 }
 

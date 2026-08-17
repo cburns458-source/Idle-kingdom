@@ -5,13 +5,12 @@ import '../session/game_controller.dart';
 import '../session/multiplayer_controller.dart';
 import '../theme.dart';
 import 'account_auth_form.dart';
-import 'save_transfer_section.dart';
 import 'social_bits.dart';
 
-/// Signing in, syncing, and signing out.
+/// Signing in and signing out.
 ///
 /// New players sign in on the entry gate before character creation; this panel
-/// is for returning players to sync, sign out, and manage friends.
+/// is for returning players to sign out and manage friends.
 class AccountPanel extends StatefulWidget {
   const AccountPanel({super.key, required this.controller, required this.multiplayer});
 
@@ -44,8 +43,6 @@ class _AccountPanelState extends State<AccountPanel> {
         else
           ..._signedIn(session),
         SocialNotice(notice: net.notice),
-        const SizedBox(height: 20),
-        SaveTransferSection(controller: widget.controller),
       ],
     );
   }
@@ -58,16 +55,6 @@ class _AccountPanelState extends State<AccountPanel> {
       ),
       MutedText(session.email),
       const SizedBox(height: 12),
-      OutlinedButton(
-        onPressed: net.busy ? null : () => net.pushSave(widget.controller.save),
-        child: const Text('Sync cloud save'),
-      ),
-      const SizedBox(height: 6),
-      OutlinedButton(
-        onPressed: net.busy ? null : () => net.pullSave((save) => widget.controller.commit(save)),
-        child: const Text('Load cloud save'),
-      ),
-      const SizedBox(height: 6),
       OutlinedButton(
         onPressed: net.busy ? null : () => net.signOut(widget.controller.save),
         child: const Text('Sign out'),
