@@ -89,13 +89,21 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin {
     setState(() {});
   }
 
+  bool _polling = false;
+
   /// Presence and the game clock stay off until the player is signed in and named.
   void _syncPlayLoop() {
     if (_canPlay) {
       if (!(_ticker?.isActive ?? false)) _ticker?.start();
-      multiplayer.startPolling(() => controller.save);
     } else {
       _ticker?.stop();
+    }
+    final shouldPoll = multiplayer.isSignedIn;
+    if (shouldPoll && !_polling) {
+      _polling = true;
+      multiplayer.startPolling(() => controller.save);
+    } else if (!shouldPoll && _polling) {
+      _polling = false;
       multiplayer.stopPolling();
     }
   }

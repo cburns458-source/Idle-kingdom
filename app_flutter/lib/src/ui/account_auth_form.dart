@@ -3,7 +3,6 @@ import 'package:ik_net/ik_net.dart';
 
 import '../session/game_controller.dart';
 import '../session/multiplayer_controller.dart';
-import 'social_bits.dart';
 
 /// Email sign-in and sign-up fields shared by the entry gate and Account tab.
 class AccountAuthForm extends StatefulWidget {
@@ -107,7 +106,6 @@ class _AccountAuthFormState extends State<AccountAuthForm> {
                 child: const Text('Email magic link'),
               ),
             ],
-            SocialNotice(notice: net.notice),
           ],
         );
       },

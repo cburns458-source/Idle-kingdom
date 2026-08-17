@@ -43,6 +43,7 @@ class _AccountPanelState extends State<AccountPanel> {
           )
         else
           ..._signedIn(session),
+        SocialNotice(notice: net.notice),
         const SizedBox(height: 20),
         SaveTransferSection(controller: widget.controller),
       ],
