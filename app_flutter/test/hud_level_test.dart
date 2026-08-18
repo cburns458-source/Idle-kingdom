@@ -82,7 +82,9 @@ void main() {
     final hpLabel =
         '${formatThousands(controller.save.currentHp)}/'
         '${formatThousands(playerMaxHp(controller.db, controller.save))}';
-    final activity = tester.getRect(find.text('Gather meadow supplies'));
+    final activity = tester.getRect(
+      find.descendant(of: find.byType(TopHud), matching: find.text('Gather meadow supplies')),
+    );
     final hp = tester.getRect(find.text(hpLabel));
     final bar = tester.getRect(
       find.descendant(of: find.byType(TopHud), matching: find.byType(PillBar)),
