@@ -277,7 +277,6 @@ class ChatMessage {
     required this.body,
     required this.createdAt,
     this.guildTag,
-    this.rankLabel,
     this.rankIcon,
     this.guest = false,
   });
@@ -290,7 +289,6 @@ class ChatMessage {
     body: json['body']! as String,
     createdAt: json['createdAt']! as String,
     guildTag: json['guildTag'] as String?,
-    rankLabel: json['rankLabel'] as String?,
     rankIcon: json['rankIcon'] as String?,
     guest: json['guest'] as bool? ?? false,
   );
@@ -304,9 +302,6 @@ class ChatMessage {
 
   /// Member guild tag, shown as `[TAG]` in global and local rooms.
   final String? guildTag;
-
-  /// Guild-chat rank name, from the guild's own labels at send time.
-  final String? rankLabel;
 
   /// Guild-chat rank mark, from the guild's icon theme at send time.
   final String? rankIcon;
@@ -322,7 +317,6 @@ class ChatMessage {
     'body': body,
     'createdAt': createdAt,
     if (guildTag != null) 'guildTag': guildTag,
-    if (rankLabel != null) 'rankLabel': rankLabel,
     if (rankIcon != null) 'rankIcon': rankIcon,
     if (guest) 'guest': true,
   };

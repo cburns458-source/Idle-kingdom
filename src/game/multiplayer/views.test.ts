@@ -460,11 +460,10 @@ describe('chat line names', () => {
       chatLineUsername(
         chatMessage({
           channelKey: 'guild:gld_1',
-          rankLabel: 'Leader',
           rankIcon: '★',
         }),
       ),
-    ).toBe('★ Leader Vari')
+    ).toBe('★ Vari')
     expect(
       chatLineUsername(chatMessage({ channelKey: 'guild:gld_1', username: 'Wanderer', guest: true })),
     ).toBe(`${GUILD_GUEST_CHAT_ICON} Wanderer`)

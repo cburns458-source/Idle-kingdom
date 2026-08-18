@@ -8,13 +8,6 @@ const COOLDOWN_SECONDS: Record<string, number> = {
   dm: 2,
 }
 const SLURS = /\b(nigger|faggot)\b/i
-const DEFAULT_RANK_LABELS: Record<string, string> = {
-  leader: 'Leader',
-  officer: 'Officer',
-  veteran: 'Veteran',
-  member: 'Member',
-  recruit: 'Recruit',
-}
 
 type SendBody = {
   channelKey?: unknown
@@ -76,14 +69,13 @@ Deno.serve(async (req) => {
     .maybeSingle()
 
   let guildTag: string | null = null
-  let rankLabel: string | null = null
   let rankIcon: string | null = null
   let guest = false
 
   if (membership?.guild_id) {
     const { data: guild } = await admin
       .from('guilds')
-      .select('tag, rank_labels, rank_icon_theme')
+      .select('tag, rank_icon_theme')
       .eq('id', membership.guild_id)
       .maybeSingle()
     if (typeof guild?.tag === 'string' && guild.tag.trim()) {
@@ -91,9 +83,6 @@ Deno.serve(async (req) => {
     }
     if (kind === 'guild' && membership.guild_id === channelKey.slice('guild:'.length)) {
       const role = typeof membership.role === 'string' ? membership.role : 'recruit'
-      const labels = (guild?.rank_labels ?? {}) as Record<string, unknown>
-      const named = typeof labels[role] === 'string' ? String(labels[role]).trim() : ''
-      rankLabel = named || DEFAULT_RANK_LABELS[role] || 'Recruit'
       rankIcon = guildRankIcon(String(guild?.rank_icon_theme ?? 'stripes'), role)
     }
   }
@@ -138,13 +127,10 @@ Deno.serve(async (req) => {
       username,
       body: trimmed,
       guild_tag: guildTag,
-      rank_label: rankLabel,
       rank_icon: rankIcon,
       guest,
     })
-    .select(
-      'id, channel_key, user_id, username, body, created_at, guild_tag, rank_label, rank_icon, guest',
-    )
+    .select('id, channel_key, user_id, username, body, created_at, guild_tag, rank_icon, guest')
     .single()
   if (insertError || !inserted) {
     return json({ error: insertError?.message ?? 'The chat message was not accepted.' }, 400)

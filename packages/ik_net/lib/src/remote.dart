@@ -70,7 +70,7 @@ const int remoteUsernameMaxLength = 24;
 const String remoteSaveColumns = 'save_version, updated_at, payload';
 const String remoteChatColumns =
     'id, channel_key, user_id, username, body, created_at, '
-    'guild_tag, rank_label, rank_icon, guest';
+    'guild_tag, rank_icon, guest';
 const String remoteLeaderboardColumns =
     'user_id, board_key, value, value_secondary, '
     'profiles(username, appearance_json, guild_id, guilds(name))';
@@ -263,7 +263,6 @@ ChatMessage chatMessageFrom(RemoteRow row) => ChatMessage(
   body: _str(row['body']),
   createdAt: _str(row['created_at']),
   guildTag: _optStr(row['guild_tag'] ?? row['guildTag']),
-  rankLabel: _optStr(row['rank_label'] ?? row['rankLabel']),
   rankIcon: _optStr(row['rank_icon'] ?? row['rankIcon']),
   guest: row['guest'] == true,
 );
@@ -284,7 +283,6 @@ ChatMessage? chatMessageFromFunction(RemoteRow? data) {
     'body': data['body'],
     'created_at': data['createdAt'] ?? data['created_at'],
     'guild_tag': data['guildTag'] ?? data['guild_tag'],
-    'rank_label': data['rankLabel'] ?? data['rank_label'],
     'rank_icon': data['rankIcon'] ?? data['rank_icon'],
     'guest': data['guest'],
   });

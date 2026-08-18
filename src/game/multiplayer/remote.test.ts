@@ -266,7 +266,6 @@ describe('remote chat', () => {
         body: 'Hold',
         created_at: '2026-08-12T21:00:01.000Z',
         guild_tag: 'DEV',
-        rank_label: 'Leader',
         rank_icon: '★',
         guest: true,
       }),
@@ -278,7 +277,6 @@ describe('remote chat', () => {
       body: 'Hold',
       createdAt: '2026-08-12T21:00:01.000Z',
       guildTag: 'DEV',
-      rankLabel: 'Leader',
       rankIcon: '★',
       guest: true,
     })

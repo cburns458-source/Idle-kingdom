@@ -246,7 +246,6 @@ void applyDemoWorld(LocalDb db, GameDatabase gameDb, {required num nowMs, requir
       body: 'The Watch holds the meadow road.',
       createdAt: nowIso,
       guildTag: demoGuildTag,
-      rankLabel: 'Leader',
       rankIcon: guildRankIcon(guildRankIconThemeStripes, guildRoleLeader),
     ),
     ChatMessage(
@@ -257,7 +256,6 @@ void applyDemoWorld(LocalDb db, GameDatabase gameDb, {required num nowMs, requir
       body: 'Plenty of flax this morning.',
       createdAt: nowIso,
       guildTag: demoGuildTag,
-      rankLabel: 'Leader',
       rankIcon: guildRankIcon(guildRankIconThemeStripes, guildRoleLeader),
     ),
   ];

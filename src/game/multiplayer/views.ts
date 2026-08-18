@@ -611,10 +611,7 @@ export function chatLineUsername(message: ChatMessage): string {
   if (message.channelKey.startsWith('guild:')) {
     if (message.guest) return `${GUILD_GUEST_CHAT_ICON} ${message.username}`
     const icon = message.rankIcon
-    const rank = message.rankLabel
-    if (icon && rank) return `${icon} ${rank} ${message.username}`
     if (icon) return `${icon} ${message.username}`
-    if (rank) return `${rank} ${message.username}`
     return message.username
   }
   const tag = message.guildTag

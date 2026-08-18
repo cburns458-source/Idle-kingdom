@@ -549,7 +549,6 @@ export class LocalMultiplayerBackend {
       return { ok: false, reason: 'Join the guild to use guild chat.' }
     }
     const memberGuild = this.guildForMember(db, session.userId)
-    let rankLabel: string | undefined
     let rankIcon: string | undefined
     let guest = false
     if (channel.kind === 'guild') {
@@ -558,7 +557,6 @@ export class LocalMultiplayerBackend {
       )
       if (member) {
         const guild = db.guilds.find((row) => row.id === channel.guildId)
-        rankLabel = guild?.rankLabels[member.role] ?? DEFAULT_GUILD_RANK_LABELS[member.role]
         rankIcon = guildRankIcon(guild?.rankIconTheme ?? GUILD_RANK_ICON_THEME_STRIPES, member.role)
       } else {
         guest = true
@@ -573,7 +571,6 @@ export class LocalMultiplayerBackend {
       createdAt: this.nowIso(),
     }
     if (memberGuild?.tag) message.guildTag = memberGuild.tag
-    if (rankLabel) message.rankLabel = rankLabel
     if (rankIcon) message.rankIcon = rankIcon
     if (guest) message.guest = true
     db.messages.push(message)

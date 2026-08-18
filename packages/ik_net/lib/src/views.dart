@@ -814,10 +814,7 @@ String chatLineUsername(ChatMessage message) {
   if (message.channelKey.startsWith('guild:')) {
     if (message.guest) return '$guildGuestChatIcon ${message.username}';
     final icon = message.rankIcon;
-    final rank = message.rankLabel;
-    if (icon != null && rank != null) return '$icon $rank ${message.username}';
     if (icon != null) return '$icon ${message.username}';
-    if (rank != null) return '$rank ${message.username}';
     return message.username;
   }
   final tag = message.guildTag;

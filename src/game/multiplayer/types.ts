@@ -101,7 +101,6 @@ export interface ChatMessage {
   body: string
   createdAt: string
   guildTag?: string
-  rankLabel?: string
   rankIcon?: string
   guest?: boolean
 }

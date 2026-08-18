@@ -356,7 +356,6 @@ export const socialViewScenarios: ParityScenario[] = [
       username: 'Mira',
       body: 'Hold the gate.',
       createdAt: '2026-08-12T21:00:12.000Z',
-      rankLabel: 'Leader',
       rankIcon: '★',
     }
     const guest: ChatMessage = {

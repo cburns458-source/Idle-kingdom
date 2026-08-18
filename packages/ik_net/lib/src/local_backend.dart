@@ -412,7 +412,6 @@ class LocalMultiplayerBackend {
       return const ChatSendResult.failed('Join the guild to use guild chat.');
     }
     final memberGuild = _guildForMember(db, session.userId);
-    String? rankLabel;
     String? rankIcon;
     var guest = false;
     if (channel is GuildChatChannel) {
@@ -421,7 +420,6 @@ class LocalMultiplayerBackend {
       );
       if (member != null) {
         final guild = db.guilds.firstWhereOrNull((row) => row.id == channel.guildId);
-        rankLabel = guild?.rankLabels[member.role] ?? defaultGuildRankLabels[member.role];
         rankIcon = guildRankIcon(guild?.rankIconTheme ?? guildRankIconThemeStripes, member.role);
       } else {
         guest = true;
@@ -435,7 +433,6 @@ class LocalMultiplayerBackend {
       body: trimmed,
       createdAt: _nowIso(),
       guildTag: memberGuild?.tag,
-      rankLabel: rankLabel,
       rankIcon: rankIcon,
       guest: guest,
     );
