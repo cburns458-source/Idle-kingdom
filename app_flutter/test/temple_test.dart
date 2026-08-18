@@ -75,4 +75,25 @@ void main() {
     expect(slotItemId(controller.save, weaponToolSlotId), isNull);
     expect(find.text('Monk'), findsWidgets);
   });
+
+  testWidgets('the monks refuse to let anything into either hand', (tester) async {
+    var seed = startedCharacter(database).copyWith(currentLocationId: 'LOC-0036');
+    // A wooden sword and shield, both of which a level-1 character can wear.
+    seed = addItemToInventory(seed, 'ITEM-0124', 1);
+    seed = addItemToInventory(seed, 'ITEM-0145', 1);
+    final controller = buildController(database, seed: seed);
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller, size: const Size(900, 2400));
+
+    for (final itemId in <String>['ITEM-0124', 'ITEM-0145']) {
+      final refusal = equipItemFromInventory(database.launch, controller.save, itemId);
+      expect(refusal.ok, isFalse, reason: '$itemId should be refused at the Temple');
+      expect(refusal.reason, 'The monks keep your hands empty at the Temple.');
+    }
+
+    // The same gear goes on fine once the player is off the Temple's ground.
+    final away = controller.save.copyWith(currentLocationId: 'LOC-0002');
+    expect(equipItemFromInventory(database.launch, away, 'ITEM-0124').ok, isTrue);
+    expect(equipItemFromInventory(database.launch, away, 'ITEM-0145').ok, isTrue);
+  });
 }

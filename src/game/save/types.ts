@@ -1,4 +1,4 @@
-export const SAVE_VERSION = 26
+export const SAVE_VERSION = 27
 export const SAVE_STORAGE_KEY = 'idle-kingdoms.demo.save'
 export const STARTING_LOCATION_ID = 'LOC-0002'
 /** Base gold before race kit; race starters grant the real starting gold. */
@@ -224,6 +224,12 @@ export interface PlayerSave {
   /** Potion consumed for the current gathering action, craft, or combat encounter. */
   activePotionEffect: ActivePotionEffect | null
   deathPauseUntil: string | null
+  /**
+   * Whether this character has ever been beaten in the world. Arena losses do
+   * not count. Once true it stays true, which is what makes the Undying title
+   * worth holding.
+   */
+  hasEverDied: boolean
   productionRecipeId: string | null
   productionQuantityTotal: number | null
   productionQuantityRemaining: number | null

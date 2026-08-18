@@ -4,6 +4,7 @@ import { addItemToInventory } from '../activity/rewards'
 import { getSkillProgress } from '../activity/xp'
 import { canFitItemQuantity } from '../inventory/capacity'
 import { firstEmptySpellSlot, isSpellEquipment, isSpellSlotId } from '../spells/spells'
+import { TEMPLE_LOCATION_ID } from '../world/blessing'
 
 export const FOOD_SLOT_ID = 'SLOT-0011'
 export const POTION_SLOT_ID = 'SLOT-0012'
@@ -126,6 +127,19 @@ export function equipmentRequirementFailure(
 }
 
 /**
+ * Why the Temple will not let this slot be filled, or null anywhere else.
+ *
+ * The monks train bare-handed, so nothing goes in either hand while the player
+ * stands on their ground. Gear worn on arrival is left alone: only reaching for
+ * something new is refused.
+ */
+export function templeHandsRefusal(save: PlayerSave, slotId: string): string | null {
+  if (save.currentLocationId !== TEMPLE_LOCATION_ID) return null
+  if (slotId !== WEAPON_TOOL_SLOT_ID && slotId !== OFFHAND_SLOT_ID) return null
+  return 'The monks keep your hands empty at the Temple.'
+}
+
+/**
  * Unequip a slot, returning any equipped stack to inventory.
  * Blocked (not performed) when the bag has no room for the returned item, so
  * gear is never silently destroyed.
@@ -188,6 +202,14 @@ export function equipInventoryIndex(
   const equipment = db.Equipment.find((row) => row['Item ID'] === itemId)
   if (!equipment?.['Slot ID']) {
     return { ok: false, reason: 'That item cannot be equipped.' }
+  }
+
+  // Ahead of the skill requirement: standing at the Temple is the reason that
+  // matters, and it applies to gear the player is otherwise qualified for.
+  // A dagger rerouted to the off-hand is covered too, since both hands are shut.
+  const templeRefusal = templeHandsRefusal(save, equipment['Slot ID'])
+  if (templeRefusal) {
+    return { ok: false, reason: templeRefusal }
   }
 
   const requirementFailure = equipmentRequirementFailure(db, save, equipment)

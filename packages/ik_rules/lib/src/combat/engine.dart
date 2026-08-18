@@ -265,6 +265,7 @@ PlayerSave applyCombatDefeat(GameDatabase db, PlayerSave save, num nowMs) {
         maxHp: maxHp,
         currentHp: maxHp,
         deathPauseUntil: isoFromMs(nowMs + pauseSec * 1000),
+        hasEverDied: true,
         currentActionId: null,
         actionStartedAt: null,
         actionDurationMs: null,

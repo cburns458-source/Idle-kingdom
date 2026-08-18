@@ -1,4 +1,4 @@
-import { asAchievementRows } from '../achievements/progress'
+import { REVOCABLE_ACHIEVEMENT_CATEGORY, asAchievementRows } from '../achievements/progress'
 import { CRITTER_DEFS, collectionCount } from '../critters/critters'
 import type { GameDatabase } from '../data/types'
 import { questObjectiveProgress } from '../quests/objectives'
@@ -21,6 +21,17 @@ export function achievementLog(db: GameDatabase, save: PlayerSave): AchievementL
     const unlocked = save.achievements.some(
       (row) => row.achievementId === achievementId && row.unlocked,
     )
+    if (achievement.Category === REVOCABLE_ACHIEVEMENT_CATEGORY) {
+      const held = CRITTER_DEFS.filter((critter) => collectionCount(save, critter.id) > 0).length
+      return {
+        achievementId,
+        name: achievement['Display Name'],
+        note: unlocked
+          ? 'Unlocked'
+          : `Collect one of every critter (${held}/${CRITTER_DEFS.length})`,
+        unlocked,
+      }
+    }
     const skillName =
       db.Skills.find((skill) => skill['Skill ID'] === achievement['Target Skill ID'])?.[
         'Display Name'
@@ -142,4 +153,58 @@ export function critterLog(save: PlayerSave): CritterLogRow[] {
       found,
     }
   })
+}
+
+/** How far through one page of the Log a save has got. */
+export interface LogSectionCompletion {
+  /** `achievements`, `quests`, `recipes`, or `critters`. */
+  section: string
+  done: number
+  total: number
+  /** Whole percent, so a page that is nearly done does not read as finished. */
+  percent: number
+  /** `3/13 · 23%`, the way the Log tabs say it. */
+  label: string
+}
+
+/** Every page of the Log, plus the whole thing counted together. */
+export interface LogCompletion {
+  sections: LogSectionCompletion[]
+  /**
+   * Every entry of every page, so one big page cannot be outvoted by a small
+   * one. Its `section` reads `total`.
+   */
+  overall: LogSectionCompletion
+}
+
+function completion(section: string, done: number, total: number): LogSectionCompletion {
+  const percent = total <= 0 ? 0 : Math.floor((done * 100) / total)
+  return { section, done, total, percent, label: `${done}/${total} · ${percent}%` }
+}
+
+export function logCompletion(db: GameDatabase, save: PlayerSave): LogCompletion {
+  const achievements = achievementLog(db, save)
+  const quests = questLog(db, save)
+  const recipes = recipeLog(db, save)
+  const critters = critterLog(save)
+
+  const sections = [
+    completion(
+      'achievements',
+      achievements.filter((row) => row.unlocked).length,
+      achievements.length,
+    ),
+    completion('quests', quests.filter((row) => row.completed).length, quests.length),
+    completion('recipes', recipes.filter((row) => row.known).length, recipes.length),
+    completion('critters', critters.filter((row) => row.found).length, critters.length),
+  ]
+
+  return {
+    sections,
+    overall: completion(
+      'total',
+      sections.reduce((sum, row) => sum + row.done, 0),
+      sections.reduce((sum, row) => sum + row.total, 0),
+    ),
+  }
 }

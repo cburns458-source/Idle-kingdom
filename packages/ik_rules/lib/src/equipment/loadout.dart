@@ -9,6 +9,7 @@ import '../inventory/capacity.dart';
 import '../js_compat.dart';
 import '../save/generated/save_models.dart';
 import '../spells/spells.dart';
+import '../world/blessing.dart';
 
 const String foodSlotId = 'SLOT-0011';
 const String potionSlotId = 'SLOT-0012';
@@ -122,6 +123,17 @@ String? equipmentRequirementFailure(GameDatabase db, PlayerSave save, EquipmentR
       );
 }
 
+/// Why the Temple will not let this slot be filled, or null anywhere else.
+///
+/// The monks train bare-handed, so nothing goes in either hand while the player
+/// stands on their ground. Gear worn on arrival is left alone: only reaching for
+/// something new is refused.
+String? templeHandsRefusal(PlayerSave save, String slotId) {
+  if (save.currentLocationId != templeLocationId) return null;
+  if (slotId != weaponToolSlotId && slotId != offhandSlotId) return null;
+  return 'The monks keep your hands empty at the Temple.';
+}
+
 /// Unequips a slot, returning any equipped stack to inventory.
 ///
 /// Blocked (not performed) when the bag has no room for the returned item, so
@@ -175,6 +187,14 @@ EquipResult equipInventoryIndex(GameDatabase db, PlayerSave save, num index) {
   final equipmentSlotId = equipment?.raw['Slot ID'];
   if (equipment == null || equipmentSlotId is! String || equipmentSlotId.isEmpty) {
     return const EquipResult.failed('That item cannot be equipped.');
+  }
+
+  // Ahead of the skill requirement: standing at the Temple is the reason that
+  // matters, and it applies to gear the player is otherwise qualified for.
+  // A dagger rerouted to the off-hand is covered too, since both hands are shut.
+  final templeRefusal = templeHandsRefusal(save, equipmentSlotId);
+  if (templeRefusal != null) {
+    return EquipResult.failed(templeRefusal);
   }
 
   final requirementFailure = equipmentRequirementFailure(db, save, equipment);

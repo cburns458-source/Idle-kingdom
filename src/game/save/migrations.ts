@@ -397,6 +397,17 @@ export const SAVE_MIGRATIONS: SaveMigration[] = [
       saveVersion: 26,
     }),
   },
+  {
+    fromVersion: 26,
+    toVersion: 27,
+    // Characters that already exist keep the title: nothing recorded their
+    // deaths before now, so the kindest reading is that they have not died.
+    migrate: (save) => ({
+      ...save,
+      hasEverDied: save.hasEverDied === true,
+      saveVersion: 27,
+    }),
+  },
 ]
 
 export function migrateSave(save: PlayerSave, nowMs: number = Date.now()): PlayerSave {

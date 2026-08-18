@@ -77,6 +77,7 @@ export 'src/save/character_name.dart';
 export 'src/save/generated/save_models.dart';
 export 'src/save/json_save.dart';
 export 'src/save/migrations.dart';
+export 'src/save/player_title.dart';
 export 'src/save/save_store.dart';
 export 'src/save/starting_gear.dart';
 export 'src/shops/quantity.dart';

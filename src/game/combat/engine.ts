@@ -235,6 +235,7 @@ export function applyCombatDefeat(
       maxHp,
       currentHp: maxHp,
       deathPauseUntil: new Date(nowMs + pauseSec * 1000).toISOString(),
+      hasEverDied: true,
       currentActionId: null,
       actionStartedAt: null,
       actionDurationMs: null,

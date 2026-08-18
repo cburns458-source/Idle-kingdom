@@ -104,7 +104,7 @@ class _MenuViewState extends State<MenuView> {
               const MutedText('Character'),
               const SizedBox(height: 4),
               Text(
-                save.characterName ?? 'Unnamed',
+                displayNameForSave(save, 'Unnamed'),
                 style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
               ),
               MutedText('Race: ${raceName ?? 'Unchosen'}'),

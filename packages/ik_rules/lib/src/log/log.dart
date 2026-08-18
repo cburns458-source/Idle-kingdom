@@ -41,6 +41,18 @@ List<AchievementLogRow> achievementLog(GameDatabase db, PlayerSave save) {
     final unlocked = save.achievements.any(
       (row) => row.achievementId == achievementId && row.unlocked,
     );
+    if (achievement['Category'] == revocableAchievementCategory) {
+      final held = critterDefs.where((critter) => collectionCount(save, critter.id) > 0).length;
+      return AchievementLogRow(
+        achievementId: achievementId,
+        name: jsString(achievement['Display Name']),
+        note: unlocked
+            ? 'Unlocked'
+            : 'Collect one of every critter '
+                  '(${jsNumberToString(held)}/${jsNumberToString(critterDefs.length)})',
+        unlocked: unlocked,
+      );
+    }
     final skill = db.skills.firstWhereOrNull(
       (row) => row.raw['Skill ID'] == achievement['Target Skill ID'],
     );
@@ -225,6 +237,89 @@ class CritterLogRow {
     'count': count,
     'found': found,
   };
+}
+
+/// How far through one page of the Log a save has got.
+class LogSectionCompletion {
+  const LogSectionCompletion({required this.section, required this.done, required this.total});
+
+  /// `achievements`, `quests`, `recipes`, or `critters`.
+  final String section;
+  final num done;
+  final num total;
+
+  /// Whole percent, so a page that is nearly done does not read as finished.
+  num get percent => total <= 0 ? 0 : (done * 100 / total).floor();
+
+  /// `3/13 · 23%`, the way the Log tabs say it.
+  String get label => '${jsNumberToString(done)}/${jsNumberToString(total)} · '
+      '${jsNumberToString(percent)}%';
+
+  Map<String, Object?> toJson() => <String, Object?>{
+    'section': section,
+    'done': done,
+    'total': total,
+    'percent': percent,
+    'label': label,
+  };
+}
+
+/// Every page of the Log, plus the whole thing counted together.
+class LogCompletion {
+  const LogCompletion({required this.sections, required this.overall});
+
+  final List<LogSectionCompletion> sections;
+
+  /// Every entry of every page, so one big page cannot be outvoted by a small
+  /// one. Its `section` reads `total`.
+  final LogSectionCompletion overall;
+
+  LogSectionCompletion? section(String name) =>
+      sections.firstWhereOrNull((row) => row.section == name);
+
+  Map<String, Object?> toJson() => <String, Object?>{
+    'sections': sections.map((row) => row.toJson()).toList(),
+    'overall': overall.toJson(),
+  };
+}
+
+LogCompletion logCompletion(GameDatabase db, PlayerSave save) {
+  final achievements = achievementLog(db, save);
+  final quests = questLog(db, save);
+  final recipes = recipeLog(db, save);
+  final critters = critterLog(save);
+
+  final sections = <LogSectionCompletion>[
+    LogSectionCompletion(
+      section: 'achievements',
+      done: achievements.where((row) => row.unlocked).length,
+      total: achievements.length,
+    ),
+    LogSectionCompletion(
+      section: 'quests',
+      done: quests.where((row) => row.completed).length,
+      total: quests.length,
+    ),
+    LogSectionCompletion(
+      section: 'recipes',
+      done: recipes.where((row) => row.known).length,
+      total: recipes.length,
+    ),
+    LogSectionCompletion(
+      section: 'critters',
+      done: critters.where((row) => row.found).length,
+      total: critters.length,
+    ),
+  ];
+
+  return LogCompletion(
+    sections: sections,
+    overall: LogSectionCompletion(
+      section: 'total',
+      done: sections.fold<num>(0, (sum, row) => sum + row.done),
+      total: sections.fold<num>(0, (sum, row) => sum + row.total),
+    ),
+  );
 }
 
 List<CritterLogRow> critterLog(PlayerSave save) {

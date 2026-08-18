@@ -7,7 +7,7 @@
 
 import '../../json_support.dart';
 
-const int saveVersion = 26;
+const int saveVersion = 27;
 
 const String saveStorageKey = 'idle-kingdoms.demo.save';
 
@@ -576,6 +576,7 @@ class PlayerSave {
     this.combatRoundStartedAt,
     this.activePotionEffect,
     this.deathPauseUntil,
+    required this.hasEverDied,
     this.productionRecipeId,
     this.productionQuantityTotal,
     this.productionQuantityRemaining,
@@ -653,6 +654,7 @@ class PlayerSave {
       combatRoundStartedAt: json['combatRoundStartedAt'] as String?,
       activePotionEffect: mapOrNull(json['activePotionEffect'], ActivePotionEffect.fromJson),
       deathPauseUntil: json['deathPauseUntil'] as String?,
+      hasEverDied: json['hasEverDied'] as bool,
       productionRecipeId: json['productionRecipeId'] as String?,
       productionQuantityTotal: json['productionQuantityTotal'] as num?,
       productionQuantityRemaining: json['productionQuantityRemaining'] as num?,
@@ -778,6 +780,11 @@ class PlayerSave {
 
   final String? deathPauseUntil;
 
+  /// Whether this character has ever been beaten in the world. Arena losses do
+  /// not count. Once true it stays true, which is what makes the Undying title
+  /// worth holding.
+  final bool hasEverDied;
+
   final String? productionRecipeId;
 
   final num? productionQuantityTotal;
@@ -840,6 +847,7 @@ class PlayerSave {
       'combatRoundStartedAt': combatRoundStartedAt,
       'activePotionEffect': activePotionEffect?.toJson(),
       'deathPauseUntil': deathPauseUntil,
+      'hasEverDied': hasEverDied,
       'productionRecipeId': productionRecipeId,
       'productionQuantityTotal': productionQuantityTotal,
       'productionQuantityRemaining': productionQuantityRemaining,
@@ -896,6 +904,7 @@ class PlayerSave {
     Object? combatRoundStartedAt = _unset,
     Object? activePotionEffect = _unset,
     Object? deathPauseUntil = _unset,
+    bool? hasEverDied,
     Object? productionRecipeId = _unset,
     Object? productionQuantityTotal = _unset,
     Object? productionQuantityRemaining = _unset,
@@ -969,6 +978,7 @@ class PlayerSave {
       deathPauseUntil: deathPauseUntil == _unset
           ? this.deathPauseUntil
           : deathPauseUntil as String?,
+      hasEverDied: hasEverDied ?? this.hasEverDied,
       productionRecipeId: productionRecipeId == _unset
           ? this.productionRecipeId
           : productionRecipeId as String?,

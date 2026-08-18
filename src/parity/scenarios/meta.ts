@@ -1,4 +1,4 @@
-import { syncProgressionMeta } from '../../game/achievements/progress'
+import { hasEveryCritter, syncProgressionMeta } from '../../game/achievements/progress'
 import { applyBountyReward, prepareBountyTurnIn } from '../../game/bounties/complete'
 import { hourlyBountyBoard } from '../../game/bounties/rotation'
 import type { BountyDefinition } from '../../game/bounties/types'
@@ -29,8 +29,9 @@ import {
   getCritter,
   spawnCritterAtLocation,
 } from '../../game/critters/critters'
-import { achievementLog, critterLog, questLog, recipeLog } from '../../game/log/log'
+import { achievementLog, critterLog, logCompletion, questLog, recipeLog } from '../../game/log/log'
 import { mulberry32 } from '../../game/rng/mulberry32'
+import { displayNameForSave, nameWithTitle, titleForSave } from '../../game/save/playerTitle'
 import type { PlayerSave } from '../../game/save/types'
 import { scenario, type JsonValue, type ParityScenario } from '../types'
 import { contentDatabase } from './contentDatabase'
@@ -52,6 +53,7 @@ type SaveKind =
   | 'rich'
   | 'geared'
   | 'collector'
+  | 'completionist'
   | 'deliverer'
   | 'quest-runner'
   | 'full-bag'
@@ -72,6 +74,15 @@ function collectorSave(): PlayerSave {
       { locationId: 'LOC-0004', critterId: 'CRT-9999', appearedAt: '2026-08-12T20:00:00.000Z' },
     ],
     critterProgressMs: { 'LOC-0001': CRITTER_HOUR_MS - 1_000, 'LOC-0004': 0 },
+  }
+}
+
+/** One of every critter banked, which is what Critter Collector asks for. */
+function completionistSave(): PlayerSave {
+  return {
+    ...baseSave(contentDatabase()),
+    characterName: 'Completionist',
+    critterCollections: CRITTER_DEFS.map((critter) => ({ critterId: critter.id, count: 1 })),
   }
 }
 
@@ -113,6 +124,7 @@ function saveFor(kind: SaveKind): PlayerSave {
   if (kind === 'rich') return richSave(db)
   if (kind === 'geared') return gearedSave(db)
   if (kind === 'collector') return collectorSave()
+  if (kind === 'completionist') return completionistSave()
   if (kind === 'deliverer') return delivererSave()
   // One quest done and one running with part of its delivery, for the log's bars.
   if (kind === 'quest-runner') return questSave(db)
@@ -304,7 +316,7 @@ export const metaScenarios: ParityScenario[] = [
     }),
   ),
 
-  ...(['base', 'rich', 'collector', 'quest-runner'] as const).map((kind) =>
+  ...(['base', 'rich', 'collector', 'completionist', 'quest-runner'] as const).map((kind) =>
     scenario('log/view', kind, withSave(kind), () => {
       const db = contentDatabase()
       const save = saveFor(kind)
@@ -313,11 +325,12 @@ export const metaScenarios: ParityScenario[] = [
         quests: questLog(db, save),
         recipes: recipeLog(db, save),
         critters: critterLog(save),
+        completion: logCompletion(db, save) as unknown as JsonValue,
       } as unknown as JsonValue
     }),
   ),
 
-  ...(['base', 'rich', 'geared', 'collector'] as const).map((kind) =>
+  ...(['base', 'rich', 'geared', 'collector', 'completionist'] as const).map((kind) =>
     scenario('achievements/sync', kind, withSave(kind), () => {
       const db = contentDatabase()
       const once = syncProgressionMeta(db, saveFor(kind), NOW_MS)
@@ -326,6 +339,42 @@ export const metaScenarios: ParityScenario[] = [
         once: asJson(once),
         // Re-running keeps the first unlock timestamps, so it must be idempotent.
         twice: asJson(twice),
+        collectsEverything: hasEveryCritter(saveFor(kind)),
+      } as unknown as JsonValue
+    }),
+  ),
+
+  scenario('achievements/revoke', 'new-critter-arrives', withSave('completionist'), () => {
+    const db = contentDatabase()
+    // A save that held the title, then the world grew a critter it cannot have.
+    const held = syncProgressionMeta(db, completionistSave(), NOW_MS)
+    const widened: PlayerSave = {
+      ...held,
+      critterCollections: held.critterCollections.slice(1),
+    }
+    return {
+      held: held.achievements as unknown as JsonValue,
+      afterNewCritter: syncProgressionMeta(db, widened, NOW_MS + 60_000)
+        .achievements as unknown as JsonValue,
+      // Catching up gets it back, so losing it is never permanent.
+      regained: syncProgressionMeta(db, completionistSave(), NOW_MS + 120_000)
+        .achievements as unknown as JsonValue,
+    } as unknown as JsonValue
+  }),
+
+  ...(['base', 'rich', 'completionist'] as const).map((kind) =>
+    scenario('save/title', kind, withSave(kind), () => {
+      const save = saveFor(kind)
+      const died: PlayerSave = { ...save, hasEverDied: true }
+      const nameless: PlayerSave = { ...save, characterName: null }
+      return {
+        living: titleForSave(save) as unknown as JsonValue,
+        died: titleForSave(died) as unknown as JsonValue,
+        displayLiving: displayNameForSave(save, 'Adventurer'),
+        displayDied: displayNameForSave(died, 'Adventurer'),
+        displayNameless: displayNameForSave(nameless, 'Adventurer'),
+        prefixed: nameWithTitle('Rowan', { text: 'Sir', placement: 'prefix' }),
+        untitled: nameWithTitle('Rowan', null),
       } as unknown as JsonValue
     }),
   ),

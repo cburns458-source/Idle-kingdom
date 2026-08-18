@@ -8,15 +8,18 @@ import 'format.dart';
 import 'game_image.dart';
 
 enum _LogTab {
-  achievements('Achievements', 'Skill milestones unlocked on this save.'),
-  quests('Quests', 'Quest log for this save.'),
-  recipes('Recipe Book', 'Known recipes and special projects for this save.'),
-  critters('Critters', 'Critters found while working their habitats.');
+  achievements('Achievements', 'Skill milestones unlocked on this save.', 'achievements'),
+  quests('Quests', 'Quest log for this save.', 'quests'),
+  recipes('Recipe Book', 'Known recipes and special projects for this save.', 'recipes'),
+  critters('Critters', 'Critters found while working their habitats.', 'critters');
 
-  const _LogTab(this.label, this.lead);
+  const _LogTab(this.label, this.lead, this.section);
 
   final String label;
   final String lead;
+
+  /// Which section of [logCompletion] counts this page.
+  final String section;
 }
 
 /// What this save has done: milestones, quests, recipes learned, critters met.
@@ -38,13 +41,29 @@ class _LogViewState extends State<LogView> {
   Widget build(BuildContext context) {
     final db = controller.db;
     final save = controller.save;
+    final completion = logCompletion(db, save);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Padding(
-          padding: EdgeInsets.fromLTRB(12, 12, 12, 0),
-          child: Text('Log', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              const Text('Log', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
+              Text(
+                '${jsNumberToString(completion.overall.percent)}% complete',
+                style: const TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w700,
+                  color: Palette.gold,
+                ),
+              ),
+            ],
+          ),
         ),
         Padding(
           padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
@@ -84,7 +103,22 @@ class _LogViewState extends State<LogView> {
         ),
         Padding(
           padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
-          child: MutedText(_tab.lead),
+          child: Row(
+            children: [
+              Expanded(child: MutedText(_tab.lead)),
+              if (completion.section(_tab.section) case final section?) ...[
+                const SizedBox(width: 8),
+                Text(
+                  section.label,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: Palette.gold,
+                  ),
+                ),
+              ],
+            ],
+          ),
         ),
         Expanded(
           child: ListView(

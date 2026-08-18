@@ -95,6 +95,35 @@ void main() {
     }
   });
 
+  group('temple hands parity', () {
+    for (final fixture in loadParityFixtures('equipment/temple-hands')) {
+      test(fixture.name, () {
+        final db = databaseOf(fixture);
+        final away = saveOf(fixture);
+        final atTemple = away.copyWith(
+          currentLocationId: 'LOC-0036',
+          inventory: <InventoryStack>[
+            ...away.inventory,
+            const InventoryStack(itemId: 'ITEM-0114', quantity: 1),
+            const InventoryStack(itemId: 'ITEM-0145', quantity: 1),
+            const InventoryStack(itemId: 'ITEM-0100', quantity: 1),
+          ],
+        );
+        const slots = <String>['SLOT-0001', 'SLOT-0002', 'SLOT-0003', 'SLOT-0011'];
+        expect(
+          checkParity(fixture, {
+            'atTemple': slots.map((slotId) => templeHandsRefusal(atTemple, slotId)).toList(),
+            'elsewhere': slots.map((slotId) => templeHandsRefusal(away, slotId)).toList(),
+            'sword': _resultJson(equipItemFromInventory(db, atTemple, 'ITEM-0114')),
+            'shield': _resultJson(equipItemFromInventory(db, atTemple, 'ITEM-0145')),
+            'dagger': _resultJson(equipItemFromInventory(db, atTemple, 'ITEM-0100')),
+          }),
+          isNull,
+        );
+      });
+    }
+  });
+
   group('equipment summary parity', () {
     for (final fixture in loadParityFixtures('equipment/summary')) {
       test(fixture.name, () {

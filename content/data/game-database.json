@@ -22791,6 +22791,18 @@
       "Target Skill ID": "SKL-0013",
       "Required Level": 50,
       "Notes": "Unlocks when Arcana reaches level 50."
+    },
+    {
+      "Achievement ID": "ACH-0015",
+      "Internal Key": "critter_collector",
+      "Display Name": "Critter Collector",
+      "Category": "Collections",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Reward": null,
+      "Target Skill ID": null,
+      "Required Level": null,
+      "Notes": "Unlocks while one of every critter is in the collection. Lost when a new critter is added."
     }
   ],
   "CosmeticSlots": [

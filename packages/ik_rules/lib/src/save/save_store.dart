@@ -96,6 +96,7 @@ PlayerSave createNewSave(GameDatabase db, num nowMs) {
     combatRoundStartedAt: null,
     activePotionEffect: null,
     deathPauseUntil: null,
+    hasEverDied: false,
     productionRecipeId: null,
     productionQuantityTotal: null,
     productionQuantityRemaining: null,

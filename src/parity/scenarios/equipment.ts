@@ -13,6 +13,7 @@ import {
   isDaggerItem,
   isStackableConsumableSlot,
   slotItemId,
+  templeHandsRefusal,
   unequipSlot,
   type EquipResult,
 } from '../../game/equipment/loadout'
@@ -170,6 +171,34 @@ export const equipmentScenarios: ParityScenario[] = [
     found: equipmentForItemId(contentDatabase(), 'ITEM-9999') != null,
     tooltip: equipmentTooltipStatLines(undefined),
   })),
+
+  scenario('equipment/temple-hands', 'both-hands-refused', withSave('geared'), () => {
+    const db = contentDatabase()
+    const away = saveFor('geared')
+    const atTemple: PlayerSave = {
+      ...away,
+      currentLocationId: 'LOC-0036',
+      // A sword, a shield, and a dagger in the bag, so each hand is really tried.
+      inventory: [
+        ...away.inventory,
+        { itemId: 'ITEM-0114', quantity: 1 },
+        { itemId: 'ITEM-0145', quantity: 1 },
+        { itemId: 'ITEM-0100', quantity: 1 },
+      ],
+    }
+    const slots = ['SLOT-0001', 'SLOT-0002', 'SLOT-0003', 'SLOT-0011']
+    return {
+      // Refused in either hand at the Temple, allowed everywhere else, and the
+      // other slots are never in question.
+      atTemple: slots.map((slotId) => templeHandsRefusal(atTemple, slotId)),
+      elsewhere: slots.map((slotId) => templeHandsRefusal(away, slotId)),
+      // A sword and a shield, through the real equip path.
+      sword: resultJson(equipItemFromInventory(db, atTemple, 'ITEM-0114')),
+      shield: resultJson(equipItemFromInventory(db, atTemple, 'ITEM-0145')),
+      // A dagger reroutes itself to the off-hand, so it must be refused too.
+      dagger: resultJson(equipItemFromInventory(db, atTemple, 'ITEM-0100')),
+    } as unknown as JsonValue
+  }),
 
   ...(['base', 'rich', 'geared'] as const).map((kind) =>
     scenario('equipment/summary', kind, withSave(kind), () => {

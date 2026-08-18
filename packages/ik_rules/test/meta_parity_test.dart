@@ -243,6 +243,7 @@ void main() {
             'quests': questLog(db, save).map((row) => row.toJson()).toList(),
             'recipes': recipeLog(db, save).map((row) => row.toJson()).toList(),
             'critters': critterLog(save).map((row) => row.toJson()).toList(),
+            'completion': logCompletion(db, save).toJson(),
           }),
           isNull,
         );
@@ -255,11 +256,64 @@ void main() {
       test(fixture.name, () {
         final db = databaseOf(fixture);
         final nowMs = fixture.inputField<num>('nowMs');
-        final once = syncProgressionMeta(db, saveOf(fixture), nowMs);
+        final save = saveOf(fixture);
+        final once = syncProgressionMeta(db, save, nowMs);
         expect(
           checkParity(fixture, {
             'once': once.toJson(),
             'twice': syncProgressionMeta(db, once, nowMs + 60000).toJson(),
+            'collectsEverything': hasEveryCritter(save),
+          }),
+          isNull,
+        );
+      });
+    }
+  });
+
+  group('achievement revocation parity', () {
+    for (final fixture in loadParityFixtures('achievements/revoke')) {
+      test(fixture.name, () {
+        final db = databaseOf(fixture);
+        final nowMs = fixture.inputField<num>('nowMs');
+        final complete = saveOf(fixture);
+        final held = syncProgressionMeta(db, complete, nowMs);
+        final widened = held.copyWith(
+          critterCollections: held.critterCollections.sublist(1),
+        );
+        expect(
+          checkParity(fixture, {
+            'held': held.achievements.map((row) => row.toJson()).toList(),
+            'afterNewCritter': syncProgressionMeta(db, widened, nowMs + 60000).achievements
+                .map((row) => row.toJson())
+                .toList(),
+            'regained': syncProgressionMeta(db, complete, nowMs + 120000).achievements
+                .map((row) => row.toJson())
+                .toList(),
+          }),
+          isNull,
+        );
+      });
+    }
+  });
+
+  group('player title parity', () {
+    for (final fixture in loadParityFixtures('save/title')) {
+      test(fixture.name, () {
+        final save = saveOf(fixture);
+        final died = save.copyWith(hasEverDied: true);
+        final nameless = save.copyWith(characterName: null);
+        expect(
+          checkParity(fixture, {
+            'living': titleForSave(save)?.toJson(),
+            'died': titleForSave(died)?.toJson(),
+            'displayLiving': displayNameForSave(save, 'Adventurer'),
+            'displayDied': displayNameForSave(died, 'Adventurer'),
+            'displayNameless': displayNameForSave(nameless, 'Adventurer'),
+            'prefixed': nameWithTitle(
+              'Rowan',
+              const PlayerTitle(text: 'Sir', placement: TitlePlacement.prefix),
+            ),
+            'untitled': nameWithTitle('Rowan', null),
           }),
           isNull,
         );

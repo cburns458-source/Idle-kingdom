@@ -381,6 +381,17 @@ final List<SaveMigration> saveMigrations = <SaveMigration>[
       return next;
     },
   ),
+  SaveMigration(
+    fromVersion: 26,
+    toVersion: 27,
+    // Characters that already exist keep the title: nothing recorded their
+    // deaths before now, so the kindest reading is that they have not died.
+    migrate: (save, nowMs) {
+      final next = _bumped(save, 27);
+      next['hasEverDied'] = save['hasEverDied'] == true;
+      return next;
+    },
+  ),
 ];
 
 /// Thrown when a save cannot be brought to the current version.
