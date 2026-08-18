@@ -126,19 +126,21 @@ class GuildHallActionResult {
     GuildHallState this.hall, {
     this.save,
     this.paidOffJustNow = false,
-    this.unlockedBoxing = false,
+    this.tiersFinishedNow = const <String>[],
   }) : reason = null;
 
   const GuildHallActionResult.failed(this.reason)
     : hall = null,
       save = null,
       paidOffJustNow = false,
-      unlockedBoxing = false;
+      tiersFinishedNow = const <String>[];
 
   final GuildHallState? hall;
   final PlayerSave? save;
   final bool paidOffJustNow;
-  final bool unlockedBoxing;
+
+  /// Tier ids this donation finished, so the screen can say what just opened.
+  final List<String> tiersFinishedNow;
   final String? reason;
 
   bool get ok => reason == null;
@@ -149,7 +151,7 @@ class GuildHallActionResult {
           'hall': hall!.toJson(),
           if (save != null) 'save': save!.toJson(),
           'paidOffJustNow': paidOffJustNow,
-          'unlockedBoxing': unlockedBoxing,
+          'tiersFinishedNow': tiersFinishedNow,
         }
       : <String, Object?>{'ok': false, 'reason': reason};
 }

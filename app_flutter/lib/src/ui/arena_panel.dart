@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:ik_net/ik_net.dart';
 import 'package:ik_rules/ik_rules.dart';
 
 import '../session/game_controller.dart';

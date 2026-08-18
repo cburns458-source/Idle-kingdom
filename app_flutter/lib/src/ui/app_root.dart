@@ -110,12 +110,13 @@ class _BootGateState extends State<_BootGate> {
     }
   }
 
+  /// Seeds the practice guild and its three characters, on this device only.
+  ///
+  /// A build with a real backend gets none of it: those accounts exist so the
+  /// social screens have something in them offline, and on a live game they are
+  /// strangers nobody can sign in as.
   void _ensureDemoWorld(MultiplayerService service, GameDatabase db) {
-    if (service is LocalMultiplayerService) {
-      service.ensureDemoWorld(db);
-    } else if (service is RemoteMultiplayerService) {
-      service.local.ensureDemoWorld(db);
-    }
+    if (service is LocalMultiplayerService) service.ensureDemoWorld(db);
   }
 
   @override

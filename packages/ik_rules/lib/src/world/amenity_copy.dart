@@ -33,7 +33,7 @@ String _fallbackSubtitle(String kind) {
     'blessing' => 'The monks restore you to full health.',
     'bank' => 'Deposit and withdraw items.',
     'arena' => 'Search by name, or ranked by combat level.',
-    'hall' => 'Storehouse, debt, and boxing ring.',
+    'hall' => 'Store house and debt.',
     _ => '',
   };
 }

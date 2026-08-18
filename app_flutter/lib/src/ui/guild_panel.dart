@@ -155,7 +155,7 @@ class _GuildPanelState extends State<GuildPanel> {
         ),
         const Padding(
           padding: EdgeInsets.only(top: 4, bottom: 10),
-          child: MutedText('Each guild has its own hall: storehouse, debt, and boxing ring.'),
+          child: MutedText('Each guild has its own hall: a store house and a debt to work off.'),
         ),
         if (net.guestGuild case final guest?) ...[
           SocialRow(

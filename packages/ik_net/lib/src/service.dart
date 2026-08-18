@@ -169,15 +169,11 @@ abstract interface class MultiplayerService {
 
   Future<GuildHallActionResult> payGuildDebt(PlayerSave save, num amount);
 
+  /// Puts an item into the storehouse, which is also how a tier gets paid for.
+  /// Nothing comes back out, so there is no matching withdraw.
   Future<GuildHallActionResult> contributeHallItem(
     PlayerSave save,
     int inventoryIndex,
-    num quantity,
-  );
-
-  Future<GuildHallActionResult> withdrawHallItem(
-    PlayerSave save,
-    int storehouseIndex,
     num quantity,
   );
 
@@ -677,19 +673,6 @@ class LocalMultiplayerService implements MultiplayerService {
       return const GuildHallActionResult.failed('Sign in to use the guild hall.');
     }
     return _backend.contributeHallItem(current.userId, save, inventoryIndex, quantity);
-  }
-
-  @override
-  Future<GuildHallActionResult> withdrawHallItem(
-    PlayerSave save,
-    int storehouseIndex,
-    num quantity,
-  ) async {
-    final current = session;
-    if (current == null) {
-      return const GuildHallActionResult.failed('Sign in to use the guild hall.');
-    }
-    return _backend.withdrawHallItem(current.userId, save, storehouseIndex, quantity);
   }
 
   @override

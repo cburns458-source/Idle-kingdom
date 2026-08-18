@@ -532,12 +532,5 @@ class RemoteMultiplayerService implements MultiplayerService {
   ) => _local.contributeHallItem(save, inventoryIndex, quantity);
 
   @override
-  Future<GuildHallActionResult> withdrawHallItem(
-    PlayerSave save,
-    int storehouseIndex,
-    num quantity,
-  ) => _local.withdrawHallItem(save, storehouseIndex, quantity);
-
-  @override
   Future<List<ArenaOpponent>> hallBoxingOpponents() => _local.hallBoxingOpponents();
 }

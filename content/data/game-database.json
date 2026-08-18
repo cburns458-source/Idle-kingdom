@@ -230,7 +230,7 @@
     },
     {
       "Key": "copy.amenity.hall.subtitle",
-      "Value": "Storehouse, debt, and boxing ring.",
+      "Value": "Store house and debt.",
       "Unit": null,
       "Notes": null
     },
@@ -8882,7 +8882,7 @@
       "Node ID": "NODE-0033",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Description": "Your guild's hall: a storehouse, a debt ledger, and a boxing ring. Each guild has its own instance.",
+      "Description": "Your guild's hall: a store house and a debt ledger. Donate to build it out. Each guild has its own instance.",
       "Danger / Hostility": null,
       "Background Asset Key": null,
       "Map Node Name": null,

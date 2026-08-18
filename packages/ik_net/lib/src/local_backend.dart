@@ -1163,65 +1163,16 @@ class LocalMultiplayerBackend {
     } else {
       nextInventory[inventoryIndex] = stack.copyWith(quantity: stack.quantity - takenQty);
     }
-    final boxingWas = hall.boxingUnlocked;
-    final contributed = hall.itemsContributed + takenQty;
-    var unlocks = [...hall.unlocks];
-    if (contributed >= boxingRingUnlockItems && !unlocks.contains(boxingRingUnlockId)) {
-      unlocks.add(boxingRingUnlockId);
-    }
-    hall = hall.copyWith(
-      storehouse: added.save!.inventory,
-      itemsContributed: contributed,
-      unlocks: unlocks,
-    );
+    // A deposit pays for whatever tier it just completed, materials and all.
+    final settled = settleGuildHallTiers(added.save!.inventory, hall.completedTiers);
+    hall = hall.copyWith(storehouse: settled.storehouse, completedTiers: settled.completedTiers);
     _putHall(db, hall);
     _write(db);
     return GuildHallActionResult.ok(
       hall,
       save: save.copyWith(inventory: nextInventory),
-      unlockedBoxing: hall.boxingUnlocked && !boxingWas,
+      tiersFinishedNow: settled.finishedNow.map((tier) => tier.id).toList(),
     );
-  }
-
-  GuildHallActionResult withdrawHallItem(
-    String userId,
-    PlayerSave save,
-    int storehouseIndex,
-    num quantity,
-  ) {
-    final db = _db();
-    final membership = db.members.firstWhereOrNull((row) => row.userId == userId);
-    if (membership == null) {
-      return const GuildHallActionResult.failed('Join a guild first.');
-    }
-    var hall = _ensureHall(db, membership.guildId);
-    if (storehouseIndex < 0 || storehouseIndex >= hall.storehouse.length) {
-      return const GuildHallActionResult.failed('That stack is not there.');
-    }
-    final stack = hall.storehouse[storehouseIndex];
-    final want = math.max(0, quantity.floor());
-    if (want <= 0) return const GuildHallActionResult.failed('Choose a quantity.');
-    final takenQty = math.min(want, stack.quantity.floor());
-    final added = addItemToInventoryExact(
-      save,
-      stack.itemId,
-      takenQty,
-      stack.enchantmentId,
-      stack.favorite ?? false,
-    );
-    if (!added.ok || added.save == null) {
-      return GuildHallActionResult.failed(added.reason ?? 'Inventory is full.');
-    }
-    final nextStore = [...hall.storehouse];
-    if (takenQty >= stack.quantity) {
-      nextStore.removeAt(storehouseIndex);
-    } else {
-      nextStore[storehouseIndex] = stack.copyWith(quantity: stack.quantity - takenQty);
-    }
-    hall = hall.copyWith(storehouse: nextStore);
-    _putHall(db, hall);
-    _write(db);
-    return GuildHallActionResult.ok(hall, save: added.save);
   }
 
   List<ArenaOpponent> hallBoxingOpponents(String userId) {

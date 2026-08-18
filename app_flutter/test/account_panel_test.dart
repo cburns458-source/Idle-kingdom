@@ -5,7 +5,6 @@ import 'package:idle_kingdoms/src/ui/account_panel.dart';
 import 'package:ik_content/ik_content.dart';
 import 'package:ik_net/ik_net.dart';
 import 'package:ik_net/testing.dart';
-import 'package:ik_runtime/ik_runtime.dart';
 
 import 'support/harness.dart';
 

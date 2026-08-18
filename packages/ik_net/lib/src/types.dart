@@ -753,15 +753,18 @@ class GuildProject {
   };
 }
 
-/// Per-guild hall: a shared item chest, a million-gold debt, and unlock flags.
+/// Per-guild hall: a shared item chest, a million-gold debt, and how far the
+/// guild has built.
+///
+/// The storehouse doubles as the donation ledger. A finished tier spends the
+/// materials it asked for, which is why nothing comes back out of it.
 class GuildHallState {
   const GuildHallState({
     required this.guildId,
     required this.debtRemaining,
     required this.debtPaidBy,
     required this.storehouse,
-    required this.itemsContributed,
-    required this.unlocks,
+    required this.completedTiers,
     required this.debtPaidOff,
   });
 
@@ -770,8 +773,7 @@ class GuildHallState {
     debtRemaining: guildHallDebtGold,
     debtPaidBy: const <String, num>{},
     storehouse: const <InventoryStack>[],
-    itemsContributed: 0,
-    unlocks: const <String>[],
+    completedTiers: const <String>[],
     debtPaidOff: false,
   );
 
@@ -788,9 +790,8 @@ class GuildHallState {
               .map((entry) => InventoryStack.fromJson(asJsonMap(entry)))
               .toList()
         : const <InventoryStack>[],
-    itemsContributed: json['itemsContributed'] is num ? json['itemsContributed']! as num : 0,
-    unlocks: json['unlocks'] is List
-        ? (json['unlocks']! as List).whereType<String>().toList()
+    completedTiers: json['completedTiers'] is List
+        ? (json['completedTiers']! as List).whereType<String>().toList()
         : const <String>[],
     debtPaidOff: json['debtPaidOff'] as bool? ?? false,
   );
@@ -799,26 +800,26 @@ class GuildHallState {
   final num debtRemaining;
   final Map<String, num> debtPaidBy;
   final List<InventoryStack> storehouse;
-  final num itemsContributed;
-  final List<String> unlocks;
+
+  /// Tier ids the guild has finished, in the order it finished them.
+  final List<String> completedTiers;
   final bool debtPaidOff;
 
-  bool get boxingUnlocked => boxingRingUnlocked(itemsContributed, unlocks);
+  bool get bankUnlocked => guildHallBankUnlocked(completedTiers);
+  bool get boxingUnlocked => guildHallBoxingUnlocked(completedTiers);
 
   GuildHallState copyWith({
     num? debtRemaining,
     Map<String, num>? debtPaidBy,
     List<InventoryStack>? storehouse,
-    num? itemsContributed,
-    List<String>? unlocks,
+    List<String>? completedTiers,
     bool? debtPaidOff,
   }) => GuildHallState(
     guildId: guildId,
     debtRemaining: debtRemaining ?? this.debtRemaining,
     debtPaidBy: debtPaidBy ?? this.debtPaidBy,
     storehouse: storehouse ?? this.storehouse,
-    itemsContributed: itemsContributed ?? this.itemsContributed,
-    unlocks: unlocks ?? this.unlocks,
+    completedTiers: completedTiers ?? this.completedTiers,
     debtPaidOff: debtPaidOff ?? this.debtPaidOff,
   );
 
@@ -827,8 +828,7 @@ class GuildHallState {
     'debtRemaining': debtRemaining,
     'debtPaidBy': <String, Object?>{...debtPaidBy},
     'storehouse': storehouse.map((row) => row.toJson()).toList(),
-    'itemsContributed': itemsContributed,
-    'unlocks': unlocks,
+    'completedTiers': completedTiers,
     'debtPaidOff': debtPaidOff,
   };
 }

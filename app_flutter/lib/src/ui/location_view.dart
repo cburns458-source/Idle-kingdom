@@ -42,7 +42,7 @@ class ArenaOpen extends LocationPanel {
   const ArenaOpen();
 }
 
-/// The per-guild hall: storehouse, debt, boxing ring.
+/// The per-guild hall: the store house it is built out of, and its debt.
 class GuildHallOpen extends LocationPanel {
   const GuildHallOpen();
 }
@@ -354,6 +354,7 @@ class _LocationViewState extends State<LocationView> {
           controller: controller,
           multiplayer: widget.multiplayer,
           onClose: _closePanel,
+          onOpenBank: () => _openPanel(const BankOpen()),
         );
       case WorkshopOpen(activity: final activity):
         return ProductionPicker(controller: controller, activity: activity, onClose: _closePanel);
