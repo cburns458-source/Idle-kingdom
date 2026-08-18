@@ -72,6 +72,9 @@ abstract interface class RemoteTransport {
 
   Future<RemoteAuthResult> signIn({required String email, required String password});
 
+  /// Writes [username] onto the signed-in account's auth metadata.
+  Future<String?> updateAuthUsername(String username);
+
   /// Sends a one-time sign-in link. Returns null when it went out.
   Future<String?> sendMagicLink(String email);
 

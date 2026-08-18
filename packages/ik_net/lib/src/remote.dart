@@ -90,6 +90,17 @@ String remoteUsername(String raw) {
       : trimmed.substring(0, remoteUsernameMaxLength);
 }
 
+/// A unique stand-in until character creation names the account.
+const String pendingAccountUsernamePrefix = 'pending_';
+
+String pendingAccountUsername(String userId) {
+  final compact = userId.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '');
+  final body = compact.length <= 16 ? compact : compact.substring(compact.length - 16);
+  return '$pendingAccountUsernamePrefix$body';
+}
+
+bool isPendingAccountUsername(String username) => username.startsWith(pendingAccountUsernamePrefix);
+
 String remoteEmail(String raw) => raw.trim().toLowerCase();
 
 /// The session a fresh sign-up produces, from what the auth call returned.

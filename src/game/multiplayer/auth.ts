@@ -1,5 +1,7 @@
 import { getLocalBackend, getSupabaseClient, multiplayerMode } from './client'
 import {
+  isPendingAccountUsername,
+  pendingAccountUsername,
   profileRowForSignUp,
   remoteUsername,
   REMOTE_MAGIC_LINK_UNAVAILABLE,
@@ -70,10 +72,12 @@ export async function signUpWithPassword(
   if (error || !data.user) {
     return { ok: false, reason: error?.message ?? REMOTE_SIGN_UP_FAILED }
   }
+  const chosen =
+    username.trim().length >= 2 ? remoteUsername(username) : pendingAccountUsername(data.user.id)
   const session = sessionFromSignUp(
     data.user.id,
     email,
-    username,
+    chosen,
     data.session?.access_token ?? null,
   )
   // Best-effort profile row (RLS policies in SQL migration).
@@ -101,16 +105,61 @@ export async function signInWithPassword(
   if (error || !data.user) {
     return { ok: false, reason: error?.message ?? REMOTE_SIGN_IN_FAILED }
   }
+  const { data: profile } = await client
+    .from(REMOTE_TABLES.profiles)
+    .select('username')
+    .eq('user_id', data.user.id)
+    .limit(1)
+    .maybeSingle()
+  const profileUsername = typeof profile?.username === 'string' ? profile.username : null
   const metadataUsername = data.user.user_metadata?.username
   const session = sessionFromSignIn(
     data.user.id,
     data.user.email ?? null,
     email,
-    typeof metadataUsername === 'string' ? metadataUsername : null,
+    profileUsername || (typeof metadataUsername === 'string' ? metadataUsername : null),
     data.session?.access_token ?? null,
   )
   adoptSession(session)
   return { ok: true, session }
+}
+
+/** Names the account from the first character name. Later names do not replace it. */
+export async function claimAccountUsername(
+  name: string,
+): Promise<{ ok: true } | { ok: false; reason: string }> {
+  const session = getSession()
+  if (!session) return { ok: false, reason: 'Sign in required.' }
+  const cleaned = remoteUsername(name)
+  if (cleaned.length < 2) return { ok: false, reason: 'Enter a name to continue.' }
+  if (session.username.toLowerCase() === cleaned.toLowerCase()) return { ok: true }
+  if (!isPendingAccountUsername(session.username)) return { ok: true }
+
+  if (multiplayerMode() === 'local') {
+    const result = getLocalBackend().claimAccountUsername(session.userId, name)
+    if (result.ok) writeStoredSession({ ...session, username: cleaned })
+    return result
+  }
+
+  const client = getSupabaseClient()
+  if (!client) return { ok: false, reason: REMOTE_NOT_CONFIGURED }
+  const taken = await client
+    .from(REMOTE_TABLES.profiles)
+    .select('user_id, username')
+    .eq('username', cleaned)
+    .limit(1)
+    .maybeSingle()
+  if (taken.data && `${taken.data.user_id}` !== session.userId) {
+    return { ok: false, reason: 'That name is taken.' }
+  }
+  const { error } = await client
+    .from(REMOTE_TABLES.profiles)
+    .upsert({ user_id: session.userId, username: cleaned }, { onConflict: 'user_id' })
+  if (error) return { ok: false, reason: error.message }
+  await client.auth.updateUser({ data: { username: cleaned } })
+  getLocalBackend().upsertProfile(session.userId, { username: cleaned })
+  adoptSession({ ...session, username: cleaned })
+  return { ok: true }
 }
 
 export async function signInWithMagicLink(

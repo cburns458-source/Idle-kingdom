@@ -44,6 +44,61 @@ void main() {
     expect(find.text('Name your character'), findsNothing);
     expect(controller.save.characterName, 'Tester');
     expect(controller.save.raceId, isNotNull);
+    expect(net.session?.username, 'Tester');
+  });
+
+  testWidgets('creating an account names the username at character creation', (tester) async {
+    final controller = buildController(database);
+    final net = buildMultiplayer(database, signedIn: false);
+    addTearDown(controller.dispose);
+    addTearDown(net.dispose);
+    await pumpShell(tester, controller, multiplayer: net);
+
+    await tester.enterText(find.byKey(const Key('auth-email')), 'hero@example.com');
+    await tester.enterText(find.byKey(const Key('auth-password')), 'secret');
+    await tester.tap(find.text('Create account'));
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('Account created.'), findsOne);
+    expect(find.text('Name your character'), findsOne);
+    expect(find.widgetWithText(TextField, 'Username'), findsNothing);
+    expect(isPendingAccountUsername(net.session!.username), isTrue);
+
+    await tester.enterText(find.widgetWithText(TextField, 'Character name'), 'Rowan');
+    await tester.tap(find.text('Human'));
+    await tester.pump();
+    await tester.tap(find.text('Begin'));
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('Name your character'), findsNothing);
+    expect(controller.save.characterName, 'Rowan');
+    expect(net.session?.username, 'Rowan');
+  });
+
+  testWidgets('a taken character name stays on the create sheet', (tester) async {
+    final controller = buildController(database);
+    final net = buildMultiplayer(database, signedIn: false);
+    addTearDown(controller.dispose);
+    addTearDown(net.dispose);
+    await pumpShell(tester, controller, multiplayer: net);
+
+    await tester.enterText(find.byKey(const Key('auth-email')), 'hero@example.com');
+    await tester.enterText(find.byKey(const Key('auth-password')), 'secret');
+    await tester.tap(find.text('Create account'));
+    await tester.pump();
+    await tester.pump();
+
+    await tester.enterText(find.widgetWithText(TextField, 'Character name'), 'Tester');
+    await tester.tap(find.text('Begin'));
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('That name is taken.'), findsOne);
+    expect(find.text('Name your character'), findsOne);
+    expect(controller.save.characterName, isNull);
+    expect(isPendingAccountUsername(net.session!.username), isTrue);
   });
 
   testWidgets('an unsigned player cannot reach the location screen', (tester) async {

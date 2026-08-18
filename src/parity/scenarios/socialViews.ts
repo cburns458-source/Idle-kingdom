@@ -30,6 +30,7 @@ import {
   guildRosterRows,
   leaderboardRows,
   leaveGuildPrompt,
+  authGateIntro,
   multiplayerModeLine,
   peerRows,
   publicProfileView,
@@ -444,6 +445,7 @@ export const socialViewScenarios: ParityScenario[] = [
         skillName,
       ),
       modeLines: [multiplayerModeLine('local'), multiplayerModeLine('supabase')],
+      gateIntros: [authGateIntro('local'), authGateIntro('supabase')],
     } as unknown as JsonValue
   }),
 ]

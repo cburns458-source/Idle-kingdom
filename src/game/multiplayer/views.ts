@@ -625,6 +625,12 @@ export function multiplayerModeLine(mode: 'local' | 'supabase'): string {
   return `Accounts use the ${backend}. Sign in to play and sync progress.`
 }
 
+/** What the entry gate says before character creation. */
+export function authGateIntro(mode: 'local' | 'supabase'): string {
+  const backend = mode === 'local' ? 'local demo backend' : 'Supabase'
+  return `Create an account with your email and password. Name your adventurer next. Accounts use the ${backend}.`
+}
+
 /** The line every signed-out multiplayer panel shows instead of content. */
 export const SIGN_IN_PROMPT = 'Sign in to use multiplayer features.'
 

@@ -14,6 +14,7 @@ import {
   guildRosterRows,
   leaderboardRows,
   leaveGuildPrompt,
+  authGateIntro,
   multiplayerModeLine,
   peerRows,
   publicProfileView,
@@ -431,6 +432,12 @@ describe('account views', () => {
     )
     expect(multiplayerModeLine('supabase')).toBe(
       'Accounts use the Supabase. Sign in to play and sync progress.',
+    )
+  })
+
+  it('tells a new player they name the adventurer after the account', () => {
+    expect(authGateIntro('local')).toBe(
+      'Create an account with your email and password. Name your adventurer next. Accounts use the local demo backend.',
     )
   })
 })

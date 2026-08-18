@@ -35,11 +35,7 @@ class _AccountPanelState extends State<AccountPanel> {
         MutedText(multiplayerModeLine(net.mode)),
         const SizedBox(height: 12),
         if (session == null)
-          AccountAuthForm(
-            controller: widget.controller,
-            multiplayer: net,
-            usernameSeed: widget.controller.save.characterName ?? '',
-          )
+          AccountAuthForm(controller: widget.controller, multiplayer: net)
         else
           ..._signedIn(session),
         SocialNotice(notice: net.notice),

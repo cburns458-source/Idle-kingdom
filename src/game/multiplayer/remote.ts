@@ -65,6 +65,19 @@ export function remoteUsername(raw: string): string {
   return raw.trim().slice(0, REMOTE_USERNAME_MAX_LENGTH)
 }
 
+/** A unique stand-in until character creation names the account. */
+export const PENDING_ACCOUNT_USERNAME_PREFIX = 'pending_'
+
+export function pendingAccountUsername(userId: string): string {
+  const compact = userId.replace(/[^a-zA-Z0-9]/g, '')
+  const body = compact.length <= 16 ? compact : compact.slice(-16)
+  return `${PENDING_ACCOUNT_USERNAME_PREFIX}${body}`
+}
+
+export function isPendingAccountUsername(username: string): boolean {
+  return username.startsWith(PENDING_ACCOUNT_USERNAME_PREFIX)
+}
+
 export function remoteEmail(raw: string): string {
   return raw.trim().toLowerCase()
 }

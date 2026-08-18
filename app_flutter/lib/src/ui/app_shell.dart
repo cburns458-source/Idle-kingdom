@@ -301,6 +301,7 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
     if (_needsCharacter) {
       return NewCharacterSheet(
         controller: controller,
+        multiplayer: multiplayer,
         onCreated: () => multiplayer.publishAccountSave(controller.save),
       );
     }

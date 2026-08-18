@@ -2,9 +2,11 @@ import { describe, expect, it } from 'vitest'
 import {
   chatMessageFrom,
   cloudSaveRecordFrom,
+  isPendingAccountUsername,
   isRemoteSaveNewer,
   leaderboardEntriesFrom,
   leaderboardRowsFor,
+  pendingAccountUsername,
   profileRowForSignUp,
   remoteEmail,
   remoteUsername,
@@ -29,6 +31,12 @@ describe('remote identity', () => {
   it('trims and caps what a username may be', () => {
     expect(remoteUsername('  Rowan  ')).toBe('Rowan')
     expect(remoteUsername('a'.repeat(40))).toHaveLength(24)
+  })
+
+  it('builds a pending account name from the user id', () => {
+    expect(pendingAccountUsername('usr_0001')).toBe('pending_usr0001')
+    expect(isPendingAccountUsername('pending_usr0001')).toBe(true)
+    expect(isPendingAccountUsername('Hero')).toBe(false)
   })
 
   it('folds an email to one form so two spellings are one account', () => {

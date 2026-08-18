@@ -194,10 +194,28 @@ class MultiplayerController extends ChangeNotifier {
       if (!result.ok) return result.reason;
       await service.claimPlaySession();
       final playable = await _adoptAccountSave(localHint, adopt);
+      String? claimReason;
+      final leftoverName = playable?.characterName?.trim() ?? '';
+      if (leftoverName.isNotEmpty) {
+        final claimed = await service.claimAccountUsername(leftoverName);
+        if (!claimed.ok) claimReason = claimed.reason;
+      }
       await refresh(playable ?? localHint);
       if (playable != null) await maybeAutoSubmitRanking(playable);
-      return 'Account created for ${result.session!.username}.';
+      if (claimReason != null) return claimReason;
+      final accountName = service.session?.username;
+      if (accountName != null && !isPendingAccountUsername(accountName)) {
+        return 'Account created for $accountName.';
+      }
+      return 'Account created.';
     });
+  }
+
+  /// Sets the account name from the first character name. Later names stay put.
+  Future<String?> claimAccountUsername(String name) async {
+    final result = await service.claimAccountUsername(name);
+    notifyListeners();
+    return result.ok ? null : result.reason;
   }
 
   Future<void> signIn(

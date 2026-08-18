@@ -578,6 +578,10 @@ void main() {
               multiplayerModeLine(MultiplayerMode.local),
               multiplayerModeLine(MultiplayerMode.supabase),
             ],
+            'gateIntros': <String>[
+              authGateIntro(MultiplayerMode.local),
+              authGateIntro(MultiplayerMode.supabase),
+            ],
           }),
           isNull,
         );

@@ -8,6 +8,7 @@ import {
   type PlayerAppearance,
   type PlayerSave,
 } from '../save/types'
+import { pendingAccountUsername, isPendingAccountUsername, remoteUsername } from './remote'
 import { totalLevel } from '../skills/totals'
 import { CHAT_COOLDOWN_SECONDS, PRESENCE_TTL_SECONDS } from './config'
 import { containsSlur, CHAT_DISABLED_NOTICE } from './moderation'
@@ -272,17 +273,23 @@ export class LocalMultiplayerBackend {
   ): { ok: true; session: MultiplayerSession } | { ok: false; reason: string } {
     const db = this.db()
     const cleanEmail = email.trim().toLowerCase()
-    const cleanUser = username.trim().slice(0, 24)
-    if (!cleanEmail.includes('@') || cleanUser.length < 2 || password.length < 4) {
+    const trimmedUser = username.trim()
+    if (
+      !cleanEmail.includes('@') ||
+      password.length < 4 ||
+      (trimmedUser.length > 0 && trimmedUser.length < 2)
+    ) {
       return { ok: false, reason: 'Enter a valid email, username (2+), and password (4+).' }
     }
     if (db.users.some((user) => user.email === cleanEmail)) {
       return { ok: false, reason: 'An account with that email already exists.' }
     }
+    const userId = this.newId('usr')
+    const cleanUser =
+      trimmedUser.length >= 2 ? trimmedUser.slice(0, 24) : pendingAccountUsername(userId)
     if (db.users.some((user) => user.username.toLowerCase() === cleanUser.toLowerCase())) {
       return { ok: false, reason: 'That username is taken.' }
     }
-    const userId = this.newId('usr')
     db.users.push({ userId, email: cleanEmail, username: cleanUser, password })
     db.profiles.push({
       userId,
@@ -322,6 +329,35 @@ export class LocalMultiplayerBackend {
         accessToken: `local:${user.userId}`,
       },
     }
+  }
+
+  /** Names the account from the first character name. Later names do not replace it. */
+  claimAccountUsername(
+    userId: string,
+    name: string,
+  ): { ok: true } | { ok: false; reason: string } {
+    const cleaned = remoteUsername(name)
+    if (cleaned.length < 2) return { ok: false, reason: 'Enter a name to continue.' }
+    const db = this.db()
+    const account = db.users.find((row) => row.userId === userId)
+    if (!account) return { ok: false, reason: 'Sign in required.' }
+    if (account.username.toLowerCase() === cleaned.toLowerCase()) return { ok: true }
+    if (!isPendingAccountUsername(account.username)) return { ok: true }
+    if (
+      db.users.some(
+        (row) => row.userId !== userId && row.username.toLowerCase() === cleaned.toLowerCase(),
+      )
+    ) {
+      return { ok: false, reason: 'That name is taken.' }
+    }
+    account.username = cleaned
+    const profile = db.profiles.find((row) => row.userId === userId)
+    if (profile) {
+      profile.username = cleaned
+      profile.updatedAt = this.nowIso()
+    }
+    this.write(db)
+    return { ok: true }
   }
 
   getProfile(userId: string): MultiplayerProfile | null {

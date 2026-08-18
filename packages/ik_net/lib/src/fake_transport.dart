@@ -181,6 +181,15 @@ class FakeTransport implements RemoteTransport {
   }
 
   @override
+  Future<String?> updateAuthUsername(String username) async {
+    calls.add('updateAuthUsername:$username');
+    final account = _current;
+    if (account == null) return 'Sign in required.';
+    account.username = username;
+    return null;
+  }
+
+  @override
   Future<String?> sendMagicLink(String email) async {
     calls.add('magicLink:$email');
     final reason = _takeFailure('magicLink:$email');
@@ -381,5 +390,5 @@ class FakeAccount {
   final String password;
 
   /// Null for an account created outside the game, which carries no name.
-  final String? username;
+  String? username;
 }

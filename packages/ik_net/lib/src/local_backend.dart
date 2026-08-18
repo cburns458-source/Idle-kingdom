@@ -95,17 +95,21 @@ class LocalMultiplayerBackend {
     final db = _db();
     final cleanEmail = email.trim().toLowerCase();
     final trimmedUser = username.trim();
-    final cleanUser = trimmedUser.length > 24 ? trimmedUser.substring(0, 24) : trimmedUser;
-    if (!cleanEmail.contains('@') || cleanUser.length < 2 || password.length < 4) {
+    if (!cleanEmail.contains('@') ||
+        password.length < 4 ||
+        (trimmedUser.isNotEmpty && trimmedUser.length < 2)) {
       return const SessionResult.failed('Enter a valid email, username (2+), and password (4+).');
     }
     if (db.users.any((user) => user.email == cleanEmail)) {
       return const SessionResult.failed('An account with that email already exists.');
     }
+    final userId = _newId('usr');
+    final cleanUser = trimmedUser.length >= 2
+        ? (trimmedUser.length > 24 ? trimmedUser.substring(0, 24) : trimmedUser)
+        : pendingAccountUsername(userId);
     if (db.users.any((user) => user.username.toLowerCase() == cleanUser.toLowerCase())) {
       return const SessionResult.failed('That username is taken.');
     }
-    final userId = _newId('usr');
     db.users.add(
       LocalAccount(userId: userId, email: cleanEmail, username: cleanUser, password: password),
     );
@@ -129,6 +133,35 @@ class LocalMultiplayerBackend {
         accessToken: 'local:$userId',
       ),
     );
+  }
+
+  /// Names the account from the first character name. Later names do not replace it.
+  ActionResult claimAccountUsername(String userId, String name) {
+    final cleaned = remoteUsername(name);
+    if (cleaned.length < 2) {
+      return const ActionResult.failed('Enter a name to continue.');
+    }
+    final db = _db();
+    final accountIndex = db.users.indexWhere((row) => row.userId == userId);
+    if (accountIndex < 0) return const ActionResult.failed('Sign in required.');
+    final current = db.users[accountIndex].username;
+    if (current.toLowerCase() == cleaned.toLowerCase()) return const ActionResult.ok();
+    if (!isPendingAccountUsername(current)) return const ActionResult.ok();
+    if (db.users.any(
+      (row) => row.userId != userId && row.username.toLowerCase() == cleaned.toLowerCase(),
+    )) {
+      return const ActionResult.failed('That name is taken.');
+    }
+    db.users[accountIndex] = db.users[accountIndex].copyWith(username: cleaned);
+    final profileIndex = db.profiles.indexWhere((row) => row.userId == userId);
+    if (profileIndex >= 0) {
+      db.profiles[profileIndex] = db.profiles[profileIndex].copyWith(
+        username: cleaned,
+        updatedAt: _nowIso(),
+      );
+    }
+    _write(db);
+    return const ActionResult.ok();
   }
 
   SessionResult signIn(String email, String password) {

@@ -84,6 +84,18 @@ class SupabaseTransport implements RemoteTransport {
   }
 
   @override
+  Future<String?> updateAuthUsername(String username) async {
+    try {
+      await client.auth.updateUser(UserAttributes(data: <String, Object?>{'username': username}));
+      return null;
+    } on AuthException catch (error) {
+      return friendlyRemoteError(error.message);
+    } on Object catch (error) {
+      return friendlyRemoteError('$error');
+    }
+  }
+
+  @override
   Future<String?> sendMagicLink(String email) async {
     try {
       await client.auth.signInWithOtp(email: email);

@@ -4,6 +4,7 @@ import 'package:ik_rules/ik_rules.dart';
 
 import '../content/asset_paths.dart';
 import '../session/game_controller.dart';
+import '../session/multiplayer_controller.dart';
 import '../theme.dart';
 import 'appearance_picker.dart';
 import 'game_image.dart';
@@ -12,11 +13,18 @@ import 'game_image.dart';
 ///
 /// One scrolling sheet rather than the React client's three steps: a phone can
 /// show the portrait, the sliders and the races at once, and the look is
-/// changeable from the wardrobe anyway.
+/// changeable from the wardrobe anyway. The first name also becomes the
+/// account name other players see.
 class NewCharacterSheet extends StatefulWidget {
-  const NewCharacterSheet({super.key, required this.controller, this.onCreated});
+  const NewCharacterSheet({
+    super.key,
+    required this.controller,
+    required this.multiplayer,
+    this.onCreated,
+  });
 
   final GameController controller;
+  final MultiplayerController multiplayer;
 
   /// Writes the new character to the account as soon as it exists.
   final VoidCallback? onCreated;
@@ -29,6 +37,7 @@ class _NewCharacterSheetState extends State<NewCharacterSheet> {
   final TextEditingController _name = TextEditingController();
   String _raceId = 'RACE-0001';
   String? _error;
+  bool _submitting = false;
   late PlayerAppearance _appearance;
 
   @override
@@ -44,9 +53,31 @@ class _NewCharacterSheetState extends State<NewCharacterSheet> {
     super.dispose();
   }
 
-  void _submit() {
-    final failure = widget.controller.createCharacter(_name.text, _raceId, appearance: _appearance);
-    setState(() => _error = failure);
+  Future<void> _submit() async {
+    if (_submitting) return;
+    final cleaned = normalizeCharacterName(_name.text);
+    if (cleaned == null) {
+      setState(() => _error = 'Enter a name to continue.');
+      return;
+    }
+    setState(() {
+      _submitting = true;
+      _error = null;
+    });
+    final claimed = await widget.multiplayer.claimAccountUsername(cleaned);
+    if (!mounted) return;
+    if (claimed != null) {
+      setState(() {
+        _error = claimed;
+        _submitting = false;
+      });
+      return;
+    }
+    final failure = widget.controller.createCharacter(cleaned, _raceId, appearance: _appearance);
+    setState(() {
+      _error = failure;
+      _submitting = false;
+    });
     if (failure == null) widget.onCreated?.call();
   }
 
@@ -68,7 +99,9 @@ class _NewCharacterSheetState extends State<NewCharacterSheet> {
                 'Name your character',
                 style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
               ),
-              const MutedText('Choose a name and a people for your adventurer in Restoria.'),
+              const MutedText(
+                'Choose a name and a people. Other players will know you by this name.',
+              ),
               const SizedBox(height: 12),
               TextField(
                 controller: _name,
@@ -145,7 +178,7 @@ class _NewCharacterSheetState extends State<NewCharacterSheet> {
                   padding: const EdgeInsets.only(bottom: 8),
                   child: Text(error, style: const TextStyle(color: Palette.danger)),
                 ),
-              FilledButton(onPressed: _submit, child: const Text('Begin')),
+              FilledButton(onPressed: _submitting ? null : _submit, child: const Text('Begin')),
             ],
           ),
         ),

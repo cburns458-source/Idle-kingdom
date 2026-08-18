@@ -92,7 +92,10 @@ class RemoteMultiplayerService implements MultiplayerService {
     if (!result.ok || account == null) {
       return SessionResult.failed(result.reason ?? remoteSignUpFailed);
     }
-    final created = sessionFromSignUp(account.userId, email, username, account.accessToken);
+    final chosen = username.trim().length >= 2
+        ? remoteUsername(username)
+        : pendingAccountUsername(account.userId);
+    final created = sessionFromSignUp(account.userId, email, chosen, account.accessToken);
     // Best effort: the row may already exist, and row-level security decides
     // whether this account may write it at all.
     await transport.upsert(RemoteTables.profiles, <RemoteRow>[profileRowForSignUp(created)]);
@@ -114,8 +117,54 @@ class RemoteMultiplayerService implements MultiplayerService {
       account.username,
       account.accessToken,
     );
-    _adopt(signed);
-    return SessionResult.ok(signed);
+    final named = await _profileUsername(account.userId);
+    final adopted = named == null || named.isEmpty ? signed : signed.copyWith(username: named);
+    _adopt(adopted);
+    return SessionResult.ok(adopted);
+  }
+
+  @override
+  Future<ActionResult> claimAccountUsername(String name) async {
+    final current = session;
+    if (current == null) return const ActionResult.failed('Sign in required.');
+    final cleaned = remoteUsername(name);
+    if (cleaned.length < 2) return const ActionResult.failed('Enter a name to continue.');
+    if (current.username.toLowerCase() == cleaned.toLowerCase()) {
+      return const ActionResult.ok();
+    }
+    if (!isPendingAccountUsername(current.username)) {
+      return const ActionResult.ok();
+    }
+    final taken = await transport.select(
+      RemoteTables.profiles,
+      columns: 'user_id, username',
+      equals: <String, Object?>{'username': cleaned},
+      limit: 1,
+    );
+    if (taken.ok && taken.single != null && '${taken.single!['user_id']}' != current.userId) {
+      return const ActionResult.failed('That name is taken.');
+    }
+    final refused = await transport.upsert(RemoteTables.profiles, <RemoteRow>[
+      <String, Object?>{'user_id': current.userId, 'username': cleaned},
+    ], onConflict: 'user_id');
+    if (refused != null) return ActionResult.failed(refused);
+    await transport.updateAuthUsername(cleaned);
+    _local.backend.upsertProfile(current.userId, username: cleaned);
+    final next = current.copyWith(username: cleaned);
+    _adopt(next);
+    return const ActionResult.ok();
+  }
+
+  Future<String?> _profileUsername(String userId) async {
+    final result = await transport.select(
+      RemoteTables.profiles,
+      columns: 'user_id, username',
+      equals: <String, Object?>{'user_id': userId},
+      limit: 1,
+    );
+    if (!result.ok || result.single == null) return null;
+    final name = result.single!['username'];
+    return name is String && name.isNotEmpty ? name : null;
   }
 
   /// Records the session and gives it a local profile, which the screens this

@@ -6,6 +6,7 @@ import { prepareDatabase } from '../data/loadDatabase'
 import { createNewSave } from '../save/saveStore'
 import { LocalMultiplayerBackend } from './localBackend'
 import { filterProfanity } from './moderation'
+import { isPendingAccountUsername } from './remote'
 import { MULTIPLAYER_LOCAL_DB_KEY } from './types'
 
 const rawDatabase = JSON.parse(
@@ -71,6 +72,32 @@ describe('local multiplayer backend', () => {
         activityId: 'ACT-0001',
       }),
     ).toHaveLength(1)
+  })
+
+  it('signs up without a username, then names the account from the first character', () => {
+    const backend = new LocalMultiplayerBackend()
+    const created = backend.signUp('hero@example.com', '', 'secret')
+    expect(created.ok).toBe(true)
+    if (!created.ok) return
+    expect(isPendingAccountUsername(created.session.username)).toBe(true)
+    expect(backend.signUp('alt@example.com', 'H', 'secret').ok).toBe(false)
+    expect(backend.claimAccountUsername(created.session.userId, 'A')).toEqual({
+      ok: false,
+      reason: 'Enter a name to continue.',
+    })
+    expect(backend.claimAccountUsername(created.session.userId, 'Hero')).toEqual({ ok: true })
+    expect(backend.getProfile(created.session.userId)?.username).toBe('Hero')
+    expect(backend.claimAccountUsername(created.session.userId, 'Later')).toEqual({ ok: true })
+    expect(backend.getProfile(created.session.userId)?.username).toBe('Hero')
+
+    const rival = backend.signUp('rival@example.com', '', 'secret')
+    expect(rival.ok).toBe(true)
+    if (!rival.ok) return
+    expect(backend.claimAccountUsername(rival.session.userId, 'Hero')).toEqual({
+      ok: false,
+      reason: 'That name is taken.',
+    })
+    expect(isPendingAccountUsername(rival.session.username)).toBe(true)
   })
 
   it('filters basic profanity', () => {

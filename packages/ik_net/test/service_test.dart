@@ -47,6 +47,28 @@ void main() {
     expect(_service(storage).isSignedIn, isFalse);
   });
 
+  test('signs up without a username, then names the account from the first character', () async {
+    final storage = MemorySaveStorage();
+    final service = _service(storage);
+    final created = await service.signUp('hero@example.com', '', 'secret');
+    expect(created.ok, isTrue);
+    expect(isPendingAccountUsername(service.session!.username), isTrue);
+
+    expect((await service.signUp('alt@example.com', 'H', 'secret')).reason, contains('username'));
+    expect((await service.claimAccountUsername('A')).reason, 'Enter a name to continue.');
+    expect((await service.claimAccountUsername('Hero')).ok, isTrue);
+    expect(service.session?.username, 'Hero');
+    expect((await service.profile(service.session!.userId))?.username, 'Hero');
+
+    expect((await service.claimAccountUsername('Later')).ok, isTrue);
+    expect(service.session?.username, 'Hero');
+
+    final rival = _service(storage, idOffset: 100);
+    await rival.signUp('rival@example.com', '', 'secret');
+    expect((await rival.claimAccountUsername('Hero')).reason, 'That name is taken.');
+    expect(isPendingAccountUsername(rival.session!.username), isTrue);
+  });
+
   test('refuses everything that needs an account', () async {
     final service = _service(MemorySaveStorage());
     final db = _database();

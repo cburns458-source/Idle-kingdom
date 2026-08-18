@@ -833,7 +833,7 @@ String multiplayerModeLine(MultiplayerMode mode) {
 /// What the entry gate says before character creation.
 String authGateIntro(MultiplayerMode mode) {
   final backend = mode == MultiplayerMode.local ? 'local demo backend' : 'Supabase';
-  return 'Create an account with your email to begin. Character creation comes next. Accounts use the $backend.';
+  return 'Create an account with your email and password. Name your adventurer next. Accounts use the $backend.';
 }
 
 /// The line every signed-out multiplayer panel shows instead of content.

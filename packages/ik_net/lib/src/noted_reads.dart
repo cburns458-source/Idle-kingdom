@@ -64,6 +64,9 @@ class NotedReads implements RemoteTransport {
       inner.signIn(email: email, password: password);
 
   @override
+  Future<String?> updateAuthUsername(String username) => inner.updateAuthUsername(username);
+
+  @override
   Future<String?> sendMagicLink(String email) => inner.sendMagicLink(email);
 
   @override

@@ -50,6 +50,7 @@ void main() {
 
     expect(find.text(multiplayerModeLine(MultiplayerMode.local)), findsOne);
     expect(find.text('Create account'), findsOne);
+    expect(find.widgetWithText(TextField, 'Username'), findsNothing);
     expect(find.text('Email magic link'), findsNothing);
   });
 

@@ -42,10 +42,10 @@ class LocalAccount {
   final String password;
   final bool chatBanned;
 
-  LocalAccount copyWith({bool? chatBanned}) => LocalAccount(
+  LocalAccount copyWith({String? username, bool? chatBanned}) => LocalAccount(
     userId: userId,
     email: email,
-    username: username,
+    username: username ?? this.username,
     password: password,
     chatBanned: chatBanned ?? this.chatBanned,
   );

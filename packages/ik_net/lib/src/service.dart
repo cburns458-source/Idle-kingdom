@@ -26,6 +26,9 @@ abstract interface class MultiplayerService {
 
   Future<SessionResult> signIn(String email, String password);
 
+  /// Sets the account name from the first character name. Later names stay put.
+  Future<ActionResult> claimAccountUsername(String name);
+
   /// Emails a one-time sign-in link, where the backend can send one.
   Future<ActionResult> sendMagicLink(String email);
 
@@ -216,6 +219,20 @@ class LocalMultiplayerService implements MultiplayerService {
   Future<SessionResult> signUp(String email, String username, String password) async {
     final result = _backend.signUp(email, username, password);
     if (result.ok) _sessions.write(result.session);
+    return result;
+  }
+
+  @override
+  Future<ActionResult> claimAccountUsername(String name) async {
+    final current = session;
+    if (current == null) return const ActionResult.failed('Sign in required.');
+    final result = _backend.claimAccountUsername(current.userId, name);
+    if (!result.ok) return result;
+    final cleaned = remoteUsername(name);
+    if (isPendingAccountUsername(current.username) ||
+        current.username.toLowerCase() == cleaned.toLowerCase()) {
+      _sessions.write(current.copyWith(username: cleaned));
+    }
     return result;
   }
 

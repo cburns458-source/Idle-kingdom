@@ -993,10 +993,10 @@ class MultiplayerSession {
   /// Which device currently holds the account. A new sign-in replaces it.
   final String? playSessionId;
 
-  MultiplayerSession copyWith({String? playSessionId}) => MultiplayerSession(
+  MultiplayerSession copyWith({String? username, String? playSessionId}) => MultiplayerSession(
     userId: userId,
     email: email,
-    username: username,
+    username: username ?? this.username,
     accessToken: accessToken,
     playSessionId: playSessionId ?? this.playSessionId,
   );

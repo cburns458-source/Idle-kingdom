@@ -54,6 +54,28 @@ void main() {
     expect(_service(transport, storage).session?.userId, service.session!.userId);
   });
 
+  test('assigns a pending name on sign-up, then claims the first character name', () async {
+    final transport = FakeTransport();
+    final first = _service(transport, MemorySaveStorage());
+    final created = await first.signUp('hero@example.com', '', 'secret');
+    expect(created.ok, isTrue);
+    expect(isPendingAccountUsername(first.session!.username), isTrue);
+    expect(transport.tables[RemoteTables.profiles]!.single['username'], first.session!.username);
+
+    expect((await first.claimAccountUsername('Hero')).ok, isTrue);
+    expect(first.session?.username, 'Hero');
+    expect(transport.tables[RemoteTables.profiles]!.single['username'], 'Hero');
+    expect(transport.calls, contains('updateAuthUsername:Hero'));
+
+    expect((await first.claimAccountUsername('Later')).ok, isTrue);
+    expect(first.session?.username, 'Hero');
+
+    final rival = _service(transport, MemorySaveStorage());
+    await rival.signUp('rival@example.com', '', 'secret');
+    expect((await rival.claimAccountUsername('Hero')).reason, 'That name is taken.');
+    expect(isPendingAccountUsername(rival.session!.username), isTrue);
+  });
+
   test('trims and shortens a name before the account carries it', () async {
     final transport = FakeTransport();
     final service = _service(transport, MemorySaveStorage());
