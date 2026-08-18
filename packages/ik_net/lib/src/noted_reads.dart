@@ -86,5 +86,6 @@ class NotedReads implements RemoteTransport {
       inner.delete(table, equals: equals);
 
   @override
-  Future<RemoteInvokeResult> invoke(String function, RemoteRow body) => inner.invoke(function, body);
+  Future<RemoteInvokeResult> invoke(String function, RemoteRow body) =>
+      inner.invoke(function, body);
 }

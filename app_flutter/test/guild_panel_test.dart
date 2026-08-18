@@ -24,8 +24,7 @@ void main() {
 
   /// The same text can be on the sheet and on the panel behind it, so an
   /// assertion about what the player is looking at says which one it means.
-  Finder onTheSheet(Finder text) =>
-      find.descendant(of: find.byType(BottomSheet), matching: text);
+  Finder onTheSheet(Finder text) => find.descendant(of: find.byType(BottomSheet), matching: text);
 
   /// Fills the create sheet in and presses its button.
   Future<void> fillAndSubmit(
