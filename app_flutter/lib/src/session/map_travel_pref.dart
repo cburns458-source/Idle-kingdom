@@ -1,8 +1,9 @@
 import 'package:ik_runtime/ik_runtime.dart';
 
-/// Client-only toggle for the map-node travel tween. Default is on.
+/// Client-only toggle for the map-node travel tween. Default is off, so travel
+/// is instant until a player opts into watching the walk.
 class MapTravelPref {
-  MapTravelPref({this.storage, bool? enabled}) : _enabled = enabled ?? true;
+  MapTravelPref({this.storage, bool? enabled}) : _enabled = enabled ?? false;
 
   /// Not [saveStorageKey], so an export or a cloud write cannot pick this up.
   static const String storageKey = 'idle-kingdoms.client.map-travel-animation';
@@ -14,7 +15,7 @@ class MapTravelPref {
 
   factory MapTravelPref.load(SaveStorage? storage) {
     final stored = storage?.getItem(storageKey);
-    return MapTravelPref(storage: storage, enabled: stored != '0');
+    return MapTravelPref(storage: storage, enabled: stored == '1');
   }
 
   void setEnabled(bool value) {

@@ -15,6 +15,37 @@ void main() {
     database = loadDatabaseFromRepo();
   });
 
+  testWidgets('a location and its activities show no blurbs', (tester) async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(currentLocationId: 'LOC-0009'),
+    );
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller);
+
+    expect(find.text('Meadow'), findsWidgets);
+    expect(find.text('Gather meadow supplies'), findsWidgets);
+    expect(find.text('Small-game Hunting and Harvesting area.'), findsNothing);
+    expect(find.text('Wild Roots and Fernleaf Harvesting.'), findsNothing);
+  });
+
+  testWidgets('the map panel names a place without describing it', (tester) async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(currentLocationId: 'LOC-0009'),
+    );
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller);
+
+    await tester.tap(find.byTooltip('Open world map'));
+    await tester.pump();
+    await tester.tap(find.text('The Farm'));
+    await tester.pump();
+
+    expect(find.text('The Farm'), findsWidgets);
+    expect(find.text('Pasture-focused starting area with Cow and Bull encounters.'), findsNothing);
+  });
+
   testWidgets('OverlayNotice dismisses after its hold', (tester) async {
     var dismissed = false;
     const text = 'Requires equipped hunting tool';

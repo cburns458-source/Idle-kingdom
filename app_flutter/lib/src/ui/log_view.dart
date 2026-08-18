@@ -93,7 +93,12 @@ class _LogViewState extends State<LogView> {
               switch (_tab) {
                 _LogTab.achievements => _Rows([
                   for (final row in achievementLog(db, save))
-                    _LogRow(title: row.name, detail: row.note, highlight: row.unlocked),
+                    _LogRow(
+                      title: row.name,
+                      detail: row.note,
+                      highlight: row.unlocked,
+                      dimmed: !row.unlocked,
+                    ),
                 ]),
                 _LogTab.quests => _Rows([
                   for (final row in questLog(db, save))
@@ -156,6 +161,7 @@ class _LogRow extends StatelessWidget {
     this.leading,
     this.below = const [],
     this.highlight = false,
+    this.dimmed = false,
   });
 
   final String title;
@@ -171,8 +177,16 @@ class _LogRow extends StatelessWidget {
   /// Gold title for anything the save has actually reached.
   final bool highlight;
 
+  /// Greys the whole row out, for something not earned yet.
+  final bool dimmed;
+
   @override
   Widget build(BuildContext context) {
+    final row = _body();
+    return dimmed ? Opacity(opacity: 0.45, child: row) : row;
+  }
+
+  Widget _body() {
     return GamePanel(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       child: Row(

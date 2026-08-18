@@ -194,6 +194,7 @@ void main() {
       seed: startedCharacter(database).copyWith(currentLocationId: 'LOC-0009'),
     );
     addTearDown(controller.dispose);
+    controller.setMapTravelAnimation(true);
     await pumpShell(tester, controller);
 
     await tester.tap(find.byTooltip('Open world map'));
@@ -217,6 +218,7 @@ void main() {
       seed: startedCharacter(database).copyWith(currentLocationId: 'LOC-0009'),
     );
     addTearDown(controller.dispose);
+    controller.setMapTravelAnimation(true);
     await pumpShell(tester, controller);
 
     await tester.tap(find.byTooltip('Open world map'));
@@ -325,17 +327,17 @@ void main() {
     expect(find.text('Skill milestones unlocked on this save.'), findsOne);
   });
 
-  testWidgets('Settings can turn off the map travel walk', (tester) async {
+  testWidgets('the map travel walk is off until Settings turns it on', (tester) async {
     final controller = buildController(database, seed: startedCharacter(database));
     addTearDown(controller.dispose);
     await pumpShell(tester, controller);
 
-    expect(controller.mapTravelAnimation, isTrue);
+    expect(controller.mapTravelAnimation, isFalse);
     await openChinScreen(tester, 'Settings');
     expect(find.text('Map travel animation'), findsOne);
     await tester.tap(find.byType(Switch).first);
     await tester.pump();
-    expect(controller.mapTravelAnimation, isFalse);
+    expect(controller.mapTravelAnimation, isTrue);
   });
 
   testWidgets('chat opens upward from the bottom-right', (tester) async {

@@ -288,7 +288,6 @@ class _SelectionPanel extends StatelessWidget {
                         mapNodeLabel(place, browseMapId),
                         style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
                       ),
-                      if (place.description case final blurb?) MutedText(blurb),
                     ],
                   ),
                 ),

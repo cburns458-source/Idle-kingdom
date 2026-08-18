@@ -27,6 +27,24 @@ void main() {
     expect(find.textContaining('Reach '), findsWidgets);
   });
 
+  testWidgets('an achievement stays greyed out until it is earned', (tester) async {
+    final save = startedCharacter(database);
+    final raised = raiseSkillToMinimumLevel(save, database.launch, 'SKL-0002', 50);
+    final controller = buildController(database, seed: raised.save);
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller);
+
+    await openLog(tester);
+
+    Finder rowFor(String title) => find.ancestor(
+      of: find.text(title),
+      matching: find.byType(Opacity),
+    );
+
+    expect(rowFor('Mining Level 50'), findsNothing);
+    expect(tester.widget<Opacity>(rowFor('Combat Level 50').first).opacity, lessThan(1));
+  });
+
   testWidgets('shows an active quest with its objectives', (tester) async {
     final controller = buildController(
       database,

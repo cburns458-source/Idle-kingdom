@@ -4,9 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:ik_content/ik_content.dart';
 import 'package:ik_rules/ik_rules.dart';
 
-/// Shortest walk: one second. Longest walk: three seconds.
-const num mapWalkMinMs = 1000;
-const num mapWalkMaxMs = 3000;
+/// Shortest walk: half a second. Longest walk: a second and a half.
+const num mapWalkMinMs = 500;
+const num mapWalkMaxMs = 1500;
 
 /// Layout distance treated as a full-length crossing of the map.
 const num mapWalkFarDistance = 100;
@@ -48,7 +48,7 @@ Alignment alignmentOf(NodePosition position) {
   return Alignment(position.x / 50 - 1, position.y / 50 - 1);
 }
 
-/// 1–3 seconds from how far apart the two nodes sit on the layout.
+/// Half a second to a second and a half, from how far apart the two nodes sit.
 num mapWalkDurationMs(NodePosition from, NodePosition to) {
   final dx = (to.x - from.x).toDouble();
   final dy = (to.y - from.y).toDouble();
@@ -59,5 +59,5 @@ num mapWalkDurationMs(NodePosition from, NodePosition to) {
 
 /// A few wobbles left and right while the sprite walks, in radians.
 double mapWalkWobbleRadians(double progress) {
-  return math.sin(progress * math.pi * 6) * 0.28;
+  return math.sin(progress * math.pi * 12) * 0.28;
 }

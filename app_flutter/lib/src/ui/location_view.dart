@@ -275,8 +275,11 @@ class _LocationViewState extends State<LocationView> {
                                 top: 0,
                                 left: 13,
                                 right: 13,
-                                bottom: _collapsedBand + 16,
-                                child: SingleChildScrollView(child: stage),
+                                bottom: _collapsedBand + 8,
+                                child: Align(
+                                  alignment: Alignment.bottomCenter,
+                                  child: SingleChildScrollView(child: stage),
+                                ),
                               ),
                             if (controller.recentRewards.isNotEmpty)
                               Positioned(
@@ -646,16 +649,6 @@ class _LocationHead extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 3),
-        if (location.description case final blurb?)
-          Text(
-            blurb,
-            style: const TextStyle(
-              fontSize: 14.5,
-              color: Palette.overlayText,
-              height: 1.4,
-              shadows: overlayShadow,
-            ),
-          ),
         if (location.dangerHostility case final danger?)
           Padding(
             padding: const EdgeInsets.only(top: 3),
@@ -749,16 +742,6 @@ class _ActivityCard extends StatelessWidget {
           Text('Combat warning ~ Level $level', style: warningStyle),
         if (hostileLock && running) MutedText(hostileActivityLockReason),
         if (!check.ok && !running) MutedText(check.reason ?? ''),
-        if (activity.description case final blurb?)
-          Text(
-            blurb,
-            style: const TextStyle(
-              fontSize: 13,
-              color: Palette.overlayText,
-              height: 1.35,
-              shadows: overlayShadow,
-            ),
-          ),
       ],
       trailing: running
           ? GameButton(
