@@ -6,7 +6,7 @@ import 'package:test/test.dart';
 import 'support/fixtures.dart';
 
 LocationRow _loc(String id, [String? mapId]) {
-  return LocationRow({'Location ID': id, if (mapId != null) 'Map ID': mapId});
+  return LocationRow({'Location ID': id, 'Map ID': ?mapId});
 }
 
 void main() {

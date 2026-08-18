@@ -178,7 +178,7 @@ void main() {
           matching: find.bySemanticsLabel('Stop'),
         ),
       ),
-      containsSemantics(label: 'Stop', isButton: true, isEnabled: false),
+      isSemantics(label: 'Stop', isButton: true, isEnabled: false),
     );
     expect(
       tester.getSemantics(
@@ -187,7 +187,7 @@ void main() {
           matching: find.bySemanticsLabel('Replace'),
         ),
       ),
-      containsSemantics(label: 'Replace', isButton: true, isEnabled: false),
+      isSemantics(label: 'Replace', isButton: true, isEnabled: false),
     );
 
     await tester.tap(find.byTooltip('Open world map'));
@@ -196,7 +196,7 @@ void main() {
     await tester.pump();
     expect(
       tester.getSemantics(find.bySemanticsLabel('Travel')),
-      containsSemantics(label: 'Travel', isButton: true, isEnabled: false),
+      isSemantics(label: 'Travel', isButton: true, isEnabled: false),
     );
     expect(controller.save.currentLocationId, 'LOC-0009');
 

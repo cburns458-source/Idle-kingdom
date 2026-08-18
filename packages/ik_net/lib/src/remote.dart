@@ -146,7 +146,7 @@ RemoteRow saveRowFor(String userId, PlayerSave save, {String? playSessionId}) =>
   'save_version': save.saveVersion,
   'updated_at': save.updatedAt,
   'payload': save.toJson(),
-  if (playSessionId != null) 'play_session_id': playSessionId,
+  'play_session_id': ?playSessionId,
 };
 
 /// The leaderboard rows one save is worth, all stamped with the same instant.

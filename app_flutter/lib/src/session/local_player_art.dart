@@ -8,7 +8,7 @@ import 'package:ik_runtime/ik_runtime.dart';
 /// Other players keep seeing the bundled gender-presentation art. This device
 /// stores the PNG beside the save, under a key the rules never read.
 class LocalPlayerArt {
-  LocalPlayerArt({this.storage, Uint8List? bytes}) : _bytes = bytes;
+  LocalPlayerArt({this.storage, this._bytes});
 
   /// Not [saveStorageKey], so an export or a cloud write cannot pick this up.
   static const String storageKey = 'idle-kingdoms.client.local-player-png';

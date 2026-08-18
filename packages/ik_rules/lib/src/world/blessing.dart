@@ -13,14 +13,9 @@ bool locationHasBlessing(LocationRow? location) {
 }
 
 class BlessResult {
-  const BlessResult.ok(this.save, {required this.alreadyFull, String? message})
-    : reason = null,
-      _message = message;
+  const BlessResult.ok(this.save, {required this.alreadyFull, this._message}) : reason = null;
 
-  const BlessResult.failed(this.reason, {String? message})
-    : save = null,
-      alreadyFull = false,
-      _message = message;
+  const BlessResult.failed(this.reason, {this._message}) : save = null, alreadyFull = false;
 
   final PlayerSave? save;
   final String? reason;

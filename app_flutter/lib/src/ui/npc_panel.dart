@@ -1,4 +1,3 @@
-import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:ik_content/ik_content.dart';
 import 'package:ik_rules/ik_rules.dart';
@@ -183,7 +182,7 @@ class _NpcPanelState extends State<NpcPanel> {
         .toList();
     controller.noteCosmeticUnlocks(granted);
     await showQuestRewards(context, questName: result.questName!, rewards: result.rewards);
-    if (!context.mounted) return;
+    if (!mounted) return;
     if (result.pendingSkillXp > 0) {
       await showSkillXpPicker(context, controller: controller, amount: result.pendingSkillXp);
     }
