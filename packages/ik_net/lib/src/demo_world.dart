@@ -34,6 +34,40 @@ const Set<String> demoPlayerIds = <String>{demoMiraId, demoBramId, demoKaelId};
 
 bool isDemoPlayerId(String userId) => demoPlayerIds.contains(userId);
 
+/// Takes The Watch and its three characters back off this device.
+///
+/// A build with a real backend calls this on boot, because a device that once
+/// ran an offline build still has the practice guild sitting in its storage,
+/// and beside real players it reads as a test account nobody can reach.
+void removeDemoWorld(LocalDb db) {
+  db.users = db.users.where((row) => !isDemoPlayerId(row.userId)).toList();
+  db.profiles = db.profiles.where((row) => !isDemoPlayerId(row.userId)).toList();
+  db.saves = db.saves.where((row) => !isDemoPlayerId(row.userId)).toList();
+  db.leaderboards = db.leaderboards.where((row) => !isDemoPlayerId(row.userId)).toList();
+  db.presence = db.presence.where((row) => !isDemoPlayerId(row.userId)).toList();
+  db.messages = db.messages.where((row) => !row.id.startsWith('msg_demo_')).toList();
+  db.friends = db.friends
+      .where((row) => !isDemoPlayerId(row.userA) && !isDemoPlayerId(row.userB))
+      .toList();
+  db.friendRequests = db.friendRequests
+      .where((row) => !isDemoPlayerId(row.fromUserId) && !isDemoPlayerId(row.toUserId))
+      .toList();
+  db.blocks = db.blocks
+      .where((row) => !isDemoPlayerId(row.userId) && !isDemoPlayerId(row.otherUserId))
+      .toList();
+  db.mutes = db.mutes
+      .where((row) => !isDemoPlayerId(row.userId) && !isDemoPlayerId(row.otherUserId))
+      .toList();
+
+  db.guilds = db.guilds.where((row) => row.id != demoGuildId).toList();
+  db.members = db.members.where((row) => row.guildId != demoGuildId).toList();
+  db.applications = db.applications.where((row) => row.guildId != demoGuildId).toList();
+  db.projects = db.projects.where((row) => row.guildId != demoGuildId).toList();
+  db.challenges = db.challenges.where((row) => row.guildId != demoGuildId).toList();
+  db.guests = db.guests.where((row) => row.guildId != demoGuildId).toList();
+  db.halls = db.halls.where((row) => row.guildId != demoGuildId).toList();
+}
+
 /// Seeds The Watch and its three members, and refreshes their presence.
 ///
 /// Idempotent: a second call does not duplicate rows, and extra members who

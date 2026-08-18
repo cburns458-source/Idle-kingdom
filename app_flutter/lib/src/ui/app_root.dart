@@ -114,9 +114,14 @@ class _BootGateState extends State<_BootGate> {
   ///
   /// A build with a real backend gets none of it: those accounts exist so the
   /// social screens have something in them offline, and on a live game they are
-  /// strangers nobody can sign in as.
+  /// strangers nobody can sign in as. A device that played an offline build
+  /// before has them in storage already, so a live build sweeps them out.
   void _ensureDemoWorld(MultiplayerService service, GameDatabase db) {
-    if (service is LocalMultiplayerService) service.ensureDemoWorld(db);
+    if (service is LocalMultiplayerService) {
+      service.ensureDemoWorld(db);
+    } else if (service is RemoteMultiplayerService) {
+      service.local.clearDemoWorld();
+    }
   }
 
   @override

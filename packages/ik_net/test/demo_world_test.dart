@@ -52,6 +52,25 @@ void main() {
     expect(store.listPresence(locationId: demoMiraLocationId), hasLength(1));
   });
 
+  test('clearing the demo world leaves a real player untouched', () {
+    final store = backend();
+    store.ensureDemoWorld(database);
+    final hero = store.signUp('hero@example.com', 'Hero', 'secret').session!;
+    expect(store.applyToGuild(hero, demoGuildId, '').joined, isTrue);
+
+    store.clearDemoWorld();
+
+    expect(store.listGuilds(), isEmpty);
+    expect(store.guildMembers(demoGuildId), isEmpty);
+    expect(store.listPresence(includeExpired: true), isEmpty);
+    expect(store.listChat(const ChatChannel.global(), hero.userId), isEmpty);
+    expect(store.getProfile(demoMiraId), isNull);
+    expect(store.getProfile(hero.userId)?.username, 'Hero');
+
+    store.clearDemoWorld();
+    expect(store.getProfile(hero.userId)?.username, 'Hero');
+  });
+
   test('a player can join The Watch and leave it', () {
     final store = backend();
     store.ensureDemoWorld(database);

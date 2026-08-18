@@ -429,6 +429,9 @@ class LocalMultiplayerService implements MultiplayerService {
   /// Puts the static demo guild on this device. Safe to call on every boot.
   void ensureDemoWorld(GameDatabase db) => _backend.ensureDemoWorld(db);
 
+  /// Takes the demo guild back off this device. Safe to call on every boot.
+  void clearDemoWorld() => _backend.clearDemoWorld();
+
   @override
   Future<CreateGuildResult> createGuild(CreateGuildInput input, num goldAvailable) async {
     final current = session;

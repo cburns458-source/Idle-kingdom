@@ -1406,4 +1406,11 @@ class LocalMultiplayerBackend {
     applyDemoWorld(db, gameDb, nowMs: _now(), nowIso: _nowIso());
     _write(db);
   }
+
+  /// Clears whatever an earlier offline build seeded here.
+  void clearDemoWorld() {
+    final db = _db();
+    removeDemoWorld(db);
+    _write(db);
+  }
 }
