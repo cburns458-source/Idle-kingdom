@@ -49,8 +49,7 @@ export const REMOTE_USERNAME_MAX_LENGTH = 24
 
 export const REMOTE_SAVE_COLUMNS = 'save_version, updated_at, payload'
 export const REMOTE_CHAT_COLUMNS =
-  'id, channel_key, user_id, username, body, created_at, ' +
-  'guild_tag, rank_label, rank_icon, guest'
+  'id, channel_key, user_id, username, body, created_at, guild_tag, rank_label, rank_icon, guest'
 export const REMOTE_LEADERBOARD_COLUMNS =
   'user_id, board_key, value, value_secondary, ' +
   'profiles(username, appearance_json, guild_id, guilds(name))'
