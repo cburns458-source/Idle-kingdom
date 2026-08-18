@@ -208,6 +208,25 @@ comment on table public.guild_halls is
 -- Names and tags are already unique: name from 001, tag from 002. That is what
 -- lets the client hand a race for a name to the database and report the loser.
 
-create index if not exists guild_members_user_idx on public.guild_members (user_id);
-create index if not exists guild_guests_user_idx on public.guild_guests (user_id);
+-- One guild each, and one guild being visited each, as a rule of the table
+-- rather than a rule the client remembers. Skipped rather than failed if a row
+-- written before this file says otherwise, so the migration always applies.
+do $$
+begin
+  if not exists (select 1 from pg_constraint where conname = 'guild_members_one_guild')
+     and not exists (
+       select 1 from public.guild_members group by user_id having count(*) > 1
+     ) then
+    alter table public.guild_members add constraint guild_members_one_guild unique (user_id);
+  end if;
+
+  if not exists (select 1 from pg_constraint where conname = 'guild_guests_one_guild')
+     and not exists (
+       select 1 from public.guild_guests group by user_id having count(*) > 1
+     ) then
+    alter table public.guild_guests add constraint guild_guests_one_guild unique (user_id);
+  end if;
+end $$;
+
+create index if not exists guild_guests_guild_idx on public.guild_guests (guild_id);
 create index if not exists guild_applications_guild_idx on public.guild_applications (guild_id);

@@ -654,12 +654,7 @@ class LocalMultiplayerBackend {
       return const CreateGuildResult.failed('That guild tag is taken.');
     }
     final snapshot = _memberSnapshot(db, session.userId, session.username);
-    final guild = guildFromCreateInput(
-      session.userId,
-      input,
-      _nowIso(),
-      id: _newId('gld'),
-    );
+    final guild = guildFromCreateInput(session.userId, input, _nowIso(), id: _newId('gld'));
     db.guilds.add(guild);
     db.members.add(
       GuildMember(
@@ -697,6 +692,20 @@ class LocalMultiplayerBackend {
     db.halls.add(GuildHallState.fresh(guild.id));
     _write(db);
     return CreateGuildResult.ok(guild, guildCreateGoldCost);
+  }
+
+  /// Records which guild [userId] is in, without owning the membership.
+  ///
+  /// A hosted build keeps the roster on the server, but the screens that never
+  /// left the device — the nearby list, a friend row — read the guild name from
+  /// the profile here, so it is kept in step.
+  void noteGuild(String userId, GuildRecord? guild) {
+    final db = _db();
+    final profile = db.profiles.firstWhereOrNull((row) => row.userId == userId);
+    if (profile == null) return;
+    if (profile.guildId == guild?.id && profile.guildName == guild?.name) return;
+    db.profiles = _withGuild(db.profiles, userId, guild);
+    _write(db);
   }
 
   List<MultiplayerProfile> _withGuild(

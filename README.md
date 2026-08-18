@@ -33,3 +33,7 @@ npm test                    # The reference rules, and the fixture drift check
 - Loads `content/data/game-database.json`, the same copy both halves read.
 - Signing in loads the account's save, and signs the other device out.
 - The save is written back on its own; there is no sync button to press.
+- Guilds are shared: a roster, its requests, and its hall are rows every member
+  reads, not a copy on one phone. A build with no Supabase project keeps them on
+  the device instead, which is what makes offline play and the tests work.
+- `supabase/migrations/` is applied in order. Guilds need through `008`.

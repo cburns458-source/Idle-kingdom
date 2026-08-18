@@ -101,11 +101,7 @@ abstract interface class RemoteTransport {
   ///
   /// Separate from [upsert] because an update is the only write a guild's own
   /// officers are allowed: a row they may edit is not a row they may create.
-  Future<String?> update(
-    String table,
-    RemoteRow row, {
-    required Map<String, Object?> equals,
-  });
+  Future<String?> update(String table, RemoteRow row, {required Map<String, Object?> equals});
 
   /// Removes every row matching [equals]. Returns null when it went through.
   ///

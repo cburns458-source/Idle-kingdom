@@ -328,15 +328,26 @@ class RemoteMultiplayerService implements MultiplayerService {
   @override
   Future<CreateGuildResult> createGuild(CreateGuildInput input, num goldAvailable) async {
     final result = await _guilds.createGuild(input, goldAvailable);
-    if (result.ok) _guildIdSeen = result.guild!.id;
+    if (result.ok) _noteGuild(result.guild);
     return result;
+  }
+
+  /// Keeps this device's note of which guild the player is in current.
+  void _noteGuild(GuildRecord? guild) {
+    _guildIdSeen = guild?.id;
+    final current = session;
+    if (current != null) _local.backend.noteGuild(current.userId, guild);
   }
 
   @override
   Future<List<GuildListing>> listGuilds() => _guilds.listGuilds();
 
   @override
-  Future<GuildRecord?> guild(String guildId) => _guilds.guildById(guildId);
+  Future<GuildRecord?> guild(String guildId) async {
+    final record = await _guilds.guildById(guildId);
+    if (record != null && record.id == _guildIdSeen) _noteGuild(record);
+    return record;
+  }
 
   @override
   Future<List<GuildMember>> guildMembers(String guildId) => _guilds.guildMembers(guildId);
@@ -390,7 +401,7 @@ class RemoteMultiplayerService implements MultiplayerService {
   @override
   Future<ActionResult> leaveGuild() async {
     final result = await _guilds.leaveGuild();
-    if (result.ok) _guildIdSeen = null;
+    if (result.ok) _noteGuild(null);
     return result;
   }
 
@@ -408,6 +419,7 @@ class RemoteMultiplayerService implements MultiplayerService {
   Future<String?> currentGuildId() async {
     final guildId = await _guilds.currentGuildId();
     _guildIdSeen = guildId;
+    if (guildId == null) _noteGuild(null);
     return guildId;
   }
 

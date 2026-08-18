@@ -17,11 +17,10 @@ void main() {
   });
 
   /// The panel as the social screen mounts it, repainting when the net moves.
-  Widget guildScreen(MultiplayerController net, GameController controller) =>
-      ListenableBuilder(
-        listenable: net,
-        builder: (context, _) => GuildPanel(controller: controller, multiplayer: net),
-      );
+  Widget guildScreen(MultiplayerController net, GameController controller) => ListenableBuilder(
+    listenable: net,
+    builder: (context, _) => GuildPanel(controller: controller, multiplayer: net),
+  );
 
   /// Fills the create sheet in and presses its button.
   Future<void> fillAndSubmit(

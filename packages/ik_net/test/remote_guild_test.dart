@@ -83,7 +83,11 @@ void main() {
 
     // A different name with the same tag loses the same way.
     final sameTag = await second.createGuild(
-      const CreateGuildInput(name: 'Iron Brotherhood', tag: 'IRN', emblem: GuildEmblem(color: '#3d5a80', symbol: 'shield')),
+      const CreateGuildInput(
+        name: 'Iron Brotherhood',
+        tag: 'IRN',
+        emblem: GuildEmblem(color: '#3d5a80', symbol: 'shield'),
+      ),
       guildCreateGoldCost,
     );
     expect(sameTag.reason, remoteGuildNameTaken);
@@ -97,14 +101,22 @@ void main() {
     expect(poor.reason, contains('costs'));
     expect(
       (await leader.createGuild(
-        const CreateGuildInput(name: 'Ok', tag: 'OKY', emblem: GuildEmblem(color: '#3d5a80', symbol: 'shield')),
+        const CreateGuildInput(
+          name: 'Ok',
+          tag: 'OKY',
+          emblem: GuildEmblem(color: '#3d5a80', symbol: 'shield'),
+        ),
         guildCreateGoldCost,
       )).reason,
       'Guild name needs at least 3 characters.',
     );
     expect(
       (await leader.createGuild(
-        const CreateGuildInput(name: 'Long Enough', tag: 'X', emblem: GuildEmblem(color: '#3d5a80', symbol: 'shield')),
+        const CreateGuildInput(
+          name: 'Long Enough',
+          tag: 'X',
+          emblem: GuildEmblem(color: '#3d5a80', symbol: 'shield'),
+        ),
         guildCreateGoldCost,
       )).reason,
       'Guild tag must be 2–4 letters.',
@@ -112,7 +124,11 @@ void main() {
 
     expect((await leader.createGuild(_ironLeague, guildCreateGoldCost)).ok, isTrue);
     final twice = await leader.createGuild(
-      const CreateGuildInput(name: 'Second Home', tag: 'SND', emblem: GuildEmblem(color: '#3d5a80', symbol: 'shield')),
+      const CreateGuildInput(
+        name: 'Second Home',
+        tag: 'SND',
+        emblem: GuildEmblem(color: '#3d5a80', symbol: 'shield'),
+      ),
       guildCreateGoldCost,
     );
     expect(twice.reason, 'Leave your current guild before creating another.');
@@ -247,11 +263,7 @@ void main() {
 
     // A recruit cannot pay the debt, so the leader promotes them first.
     expect(
-      (await leader.setGuildMemberRole(
-        guildId,
-        member.session!.userId,
-        guildRoleMember,
-      )).ok,
+      (await leader.setGuildMemberRole(guildId, member.session!.userId, guildRoleMember)).ok,
       isTrue,
     );
     final payer = createNewSave(database, _nowMs).copyWith(gold: 400);
@@ -328,6 +340,26 @@ void main() {
     final roster = await leader.guildMembers(guildId);
     expect(roster.single.username, 'Rowan of Oak');
     expect(roster.single.totalLevel, totalLevel(save));
+  });
+
+  test('the nearby list still names the guild a player joined on the server', () async {
+    final transport = FakeTransport();
+    final leader = await _player(transport, 'leader@example.com', 'Leader');
+    final database = _database();
+    final save = createNewSave(database, _nowMs).copyWith(currentLocationId: 'LOC-0028');
+
+    final created = await leader.createGuild(_ironLeague, guildCreateGoldCost);
+    // Reading the guild is what a refresh does, and what tells this device
+    // which banner to draw next to the player on a local-only screen.
+    await leader.guild(created.guild!.id);
+    await leader.publishPresence(presenceFromSave(save));
+
+    final nearby = await leader.peersAtLocation('LOC-0028', excludeSelf: false);
+    expect(nearby.single.guildName, 'Iron League');
+
+    expect((await leader.leaveGuild()).ok, isTrue);
+    await leader.publishPresence(presenceFromSave(save));
+    expect((await leader.peersAtLocation('LOC-0028', excludeSelf: false)).single.guildName, isNull);
   });
 
   test('a refused write is reported rather than swallowed', () async {

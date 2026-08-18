@@ -165,12 +165,22 @@ backends sit behind one `MultiplayerService`:
 
 - **Local** keeps accounts, guilds, chat, presence, claims, and posts in a single
   JSON document in the same store as the save, so the social screens are playable
-  and testable with no project configured.
+  and testable with no project configured. It is also the reference for what the
+  hosted backend has to agree with.
 - **Hosted** talks to Supabase through `RemoteTransport`, a narrow port the
   Flutter client implements over `supabase_flutter`. Keeping the rows, column
   names, and refusal messages in `remote.dart` (shared with `remote.ts`) means
   the two clients write the same tables, and a purity test keeps the package free
-  of transport imports.
+  of transport imports. Accounts, saves, boards, chat, and guilds go over the
+  wire; presence, the Bazaar, bounty claims, and sparring partners stay on the
+  device, the last because a fight reads another player's save and row-level
+  security will not hand that over.
+
+What a guild *means* is in `guild_rules.dart`, which both backends read: how a
+name and tag are cleaned, why founding one is refused, what a rank change may
+do, and what a donation pays for. The difference between them is only where the
+answer is kept, and who settles a race — one device checks the table it owns, and
+the server lets a unique index decide who got the name.
 
 What a social screen shows is a view model, not a widget's own reading of a
 record: `views.ts` and `views.dart` derive the guild browser rows, the roster and

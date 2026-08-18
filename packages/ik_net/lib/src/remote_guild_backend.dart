@@ -498,18 +498,14 @@ class RemoteGuildBackend {
   }
 
   Future<ActionResult> setGuildJoinPolicy(String guildId, GuildJoinPolicy joinPolicy) =>
-      _setGuildColumn(
-        guildId,
-        <String, Object?>{'join_policy': joinPolicy},
-        refusal: 'Only the leader can change join settings.',
-      );
+      _setGuildColumn(guildId, <String, Object?>{
+        'join_policy': joinPolicy,
+      }, refusal: 'Only the leader can change join settings.');
 
   Future<ActionResult> setGuildGuestAutoAccept(String guildId, bool guestAutoAccept) =>
-      _setGuildColumn(
-        guildId,
-        <String, Object?>{'guest_auto_accept': guestAutoAccept},
-        refusal: 'Only the leader can change join settings.',
-      );
+      _setGuildColumn(guildId, <String, Object?>{
+        'guest_auto_accept': guestAutoAccept,
+      }, refusal: 'Only the leader can change join settings.');
 
   Future<ActionResult> setGuildRankIconTheme(String guildId, String theme) => _setGuildColumn(
     guildId,
@@ -522,16 +518,9 @@ class RemoteGuildBackend {
     Map<GuildRankKey, String> rankLabels,
   ) async {
     final guild = await guildById(guildId);
-    return _setGuildColumn(
-      guildId,
-      <String, Object?>{
-        'rank_labels': normalizeRankLabels(<String, Object?>{
-          ...?guild?.rankLabels,
-          ...rankLabels,
-        }),
-      },
-      refusal: 'Only the leader can rename ranks.',
-    );
+    return _setGuildColumn(guildId, <String, Object?>{
+      'rank_labels': normalizeRankLabels(<String, Object?>{...?guild?.rankLabels, ...rankLabels}),
+    }, refusal: 'Only the leader can rename ranks.');
   }
 
   Future<ActionResult> setGuildEmblem(String guildId, GuildEmblem emblem) => _setGuildColumn(
@@ -694,11 +683,7 @@ class RemoteGuildBackend {
   Future<void> _clearRequests(String guildId, String userId, {bool? guest}) async {
     await transport.delete(
       RemoteTables.guildApplications,
-      equals: <String, Object?>{
-        'guild_id': guildId,
-        'user_id': userId,
-        'guest': ?guest,
-      },
+      equals: <String, Object?>{'guild_id': guildId, 'user_id': userId, 'guest': ?guest},
     );
     if (guest == true) return;
     await transport.delete(

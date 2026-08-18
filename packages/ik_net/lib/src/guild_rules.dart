@@ -27,8 +27,7 @@ String guildNameFromInput(String raw) => _cut(raw.trim(), guildNameMaxLength);
 String guildTagFromInput(String raw) =>
     _cut(raw.replaceAll(RegExp('[^a-zA-Z]'), '').toUpperCase(), 4);
 
-String guildApplicationMessage(String raw) =>
-    _cut(raw.trim(), guildApplicationMessageMaxLength);
+String guildApplicationMessage(String raw) => _cut(raw.trim(), guildApplicationMessageMaxLength);
 
 /// Why a guild cannot be founded from a name, a tag, and a purse.
 ///
@@ -105,11 +104,7 @@ GuildHallActionResult payGuildHallDebt(
   final paidBy = <String, num>{...hall.debtPaidBy};
   paidBy[userId] = (paidBy[userId] ?? 0) + pay;
   return GuildHallActionResult.ok(
-    hall.copyWith(
-      debtRemaining: paidOff ? 0 : remaining,
-      debtPaidBy: paidBy,
-      debtPaidOff: paidOff,
-    ),
+    hall.copyWith(debtRemaining: paidOff ? 0 : remaining, debtPaidBy: paidBy, debtPaidOff: paidOff),
     save: save.copyWith(gold: save.gold - pay),
     paidOffJustNow: paidOff,
   );
