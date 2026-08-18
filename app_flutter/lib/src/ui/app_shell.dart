@@ -311,7 +311,7 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
       children: [
         Column(
           children: [
-            TopHud(controller: controller, onOpenWardrobe: _openWardrobe),
+            TopHud(controller: controller, multiplayer: multiplayer, onOpenWardrobe: _openWardrobe),
             Expanded(
               child: Stack(
                 fit: StackFit.expand,
@@ -340,16 +340,17 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
             ),
           ],
         ),
-        Positioned(
-          right: 12,
-          bottom: 62,
-          child: ChatLauncher(
-            controller: controller,
-            multiplayer: multiplayer,
-            locationId: save.currentLocationId,
-            citadelHub: _inCitadel,
+        if (!multiplayer.hideChatBubble)
+          Positioned(
+            right: 12,
+            bottom: 62,
+            child: ChatLauncher(
+              controller: controller,
+              multiplayer: multiplayer,
+              locationId: save.currentLocationId,
+              citadelHub: _inCitadel,
+            ),
           ),
-        ),
         if (_nearbyOpen)
           NearbyPanel(
             controller: controller,

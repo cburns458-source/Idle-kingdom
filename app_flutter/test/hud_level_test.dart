@@ -1,7 +1,11 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:idle_kingdoms/src/session/hud_level_pref.dart';
+import 'package:idle_kingdoms/src/theme.dart';
 import 'package:idle_kingdoms/src/ui/format.dart';
+import 'package:idle_kingdoms/src/ui/top_hud.dart';
 import 'package:ik_content/ik_content.dart';
+import 'package:ik_net/ik_net.dart';
 import 'package:ik_rules/ik_rules.dart';
 import 'package:ik_runtime/ik_runtime.dart';
 
@@ -51,5 +55,63 @@ void main() {
 
     expect(controller.hudShowTotalXp, isFalse);
     expect(find.textContaining(level), findsOne);
+    expect(find.text('Human'), findsOne);
+    expect(
+      find.text(
+        '${formatThousands(controller.save.currentHp)}/'
+        '${formatThousands(playerMaxHp(controller.db, controller.save))}',
+      ),
+      findsOne,
+    );
+    final bar = tester.getSize(
+      find.descendant(of: find.byType(TopHud), matching: find.byType(PillBar)),
+    );
+    expect(bar.width, 88);
+  });
+
+  testWidgets('the HUD guild tag stays off until Settings turns it on', (tester) async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(gold: guildCreateGoldCost),
+    );
+    final net = buildMultiplayer(database);
+    addTearDown(controller.dispose);
+    addTearDown(net.dispose);
+    final created = await net.service.createGuild(
+      const CreateGuildInput(
+        name: 'Developers',
+        tag: 'DEV',
+        emblem: GuildEmblem(color: '#3d5a80', symbol: 'shield'),
+      ),
+      guildCreateGoldCost,
+    );
+    expect(created.ok, isTrue, reason: created.reason);
+    await net.refresh(controller.save);
+    expect(net.guild?.tag, 'DEV');
+
+    await pumpShell(tester, controller, multiplayer: net);
+    expect(find.text('Tester'), findsWidgets);
+    expect(find.textContaining('[DEV]'), findsNothing);
+
+    net.setShowHudGuildTag(true);
+    await tester.pump();
+    expect(find.text('[DEV] Tester'), findsOne);
+  });
+
+  testWidgets('hiding the chat bubble removes the corner button', (tester) async {
+    final controller = buildController(database, seed: startedCharacter(database));
+    final net = buildMultiplayer(database);
+    addTearDown(controller.dispose);
+    addTearDown(net.dispose);
+    await pumpShell(tester, controller, multiplayer: net);
+
+    expect(find.byTooltip('Open chat'), findsOne);
+    net.setHideChatBubble(true);
+    await tester.pump();
+    expect(find.byTooltip('Open chat'), findsNothing);
+
+    net.setHideChatBubble(false);
+    await tester.pump();
+    expect(find.byTooltip('Open chat'), findsOne);
   });
 }

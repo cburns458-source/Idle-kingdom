@@ -69,8 +69,14 @@ void main() {
   testWidgets('Settings offers a PNG override that the HUD portrait uses', (tester) async {
     final controller = buildController(database, seed: startedCharacter(database));
     addTearDown(controller.dispose);
-    await pumpShell(tester, controller);
+    await pumpShell(tester, controller, size: const Size(900, 2400));
     await openChinScreen(tester, 'Settings');
+    await tester.scrollUntilVisible(
+      find.text('Player sprite'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pump();
 
     expect(find.text('Player sprite'), findsOne);
     expect(find.bySemanticsLabel('Use my PNG'), findsOne);

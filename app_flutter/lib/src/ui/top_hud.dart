@@ -6,6 +6,7 @@ import 'package:ik_rules/ik_rules.dart';
 
 import '../content/asset_paths.dart';
 import '../session/game_controller.dart';
+import '../session/multiplayer_controller.dart';
 import '../theme.dart';
 import 'format.dart';
 import 'game_image.dart';
@@ -22,11 +23,21 @@ class _HudStatus {
   final String timer;
 }
 
+/// How wide the HUD hit-point track is. Short of the gold row so the count
+/// above it is the thing the eye reads first.
+const double _hudHpBarWidth = 88;
+
 /// Name, race, totals, gold, HP, and what is running.
 class TopHud extends StatelessWidget {
-  const TopHud({super.key, required this.controller, required this.onOpenWardrobe});
+  const TopHud({
+    super.key,
+    required this.controller,
+    required this.multiplayer,
+    required this.onOpenWardrobe,
+  });
 
   final GameController controller;
+  final MultiplayerController multiplayer;
   final VoidCallback onOpenWardrobe;
 
   /// A running craft queue reads as the item and how much of the order is left;
@@ -68,8 +79,14 @@ class TopHud extends StatelessWidget {
     final hpFraction = controller.isRecovering || maxHp <= 0
         ? 0.0
         : (save.currentHp / maxHp).clamp(0, 1).toDouble();
-    final raceName = raceDisplayName(controller.db, save.raceId);
+    final raceName = raceDisplayName(controller.db, save.raceId) ?? 'Unsworn';
     final status = _status();
+    final characterName = displayNameForSave(save, 'Adventurer');
+    final tag = multiplayer.showHudGuildTag ? multiplayer.guild?.tag : null;
+    final title = tag != null && tag.isNotEmpty ? '[$tag] $characterName' : characterName;
+    final totalsLabel = controller.hudShowTotalXp
+        ? 'XP ${formatThousands(totalSkillXp(save))}'
+        : 'Lv ${formatThousands(totalLevel(save))}';
 
     return Container(
       padding: const EdgeInsets.fromLTRB(8, 4, 10, 4),
@@ -104,7 +121,7 @@ class TopHud extends StatelessWidget {
                             fit: BoxFit.scaleDown,
                             alignment: Alignment.centerLeft,
                             child: Text(
-                              displayNameForSave(save, 'Adventurer'),
+                              title,
                               maxLines: 1,
                               style: const TextStyle(
                                 fontSize: 16,
@@ -113,15 +130,22 @@ class TopHud extends StatelessWidget {
                               ),
                             ),
                           ),
+                          Text(
+                            raceName,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFFC8D7B6),
+                              height: 1.2,
+                            ),
+                          ),
                           GestureDetector(
                             onTap: controller.toggleHudShowTotalXp,
                             behavior: HitTestBehavior.opaque,
                             child: Text(
-                              controller.hudShowTotalXp
-                                  ? '${raceName ?? 'Unsworn'} · '
-                                        'XP ${formatThousands(totalSkillXp(save))}'
-                                  : '${raceName ?? 'Unsworn'} · '
-                                        'Lv ${formatThousands(totalLevel(save))}',
+                              totalsLabel,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
@@ -159,37 +183,41 @@ class TopHud extends StatelessWidget {
                         color: Color(0xFFFFF4D4),
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    Text(
-                      controller.isRecovering
-                          ? 'Recovering…'
-                          : '${formatThousands(save.currentHp)}/'
-                                '${formatThousands(maxHp)}',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: controller.isRecovering
-                            ? const Color(0xFFE8A090)
-                            : const Color(0xFFF0D78C),
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: Semantics(
-                        label: 'Hit points',
-                        value:
-                            '${formatThousands(save.currentHp)} / '
-                            '${formatThousands(maxHp)}',
-                        child: PillBar(
-                          value: hpFraction,
-                          gradient: Meters.hudHp,
-                          height: 8,
-                          trackColor: Palette.ink,
-                          borderColor: const Color(0x59D4AF37),
-                        ),
-                      ),
-                    ),
                   ],
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  controller.isRecovering
+                      ? 'Recovering…'
+                      : '${formatThousands(save.currentHp)}/'
+                            '${formatThousands(maxHp)}',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: controller.isRecovering
+                        ? const Color(0xFFE8A090)
+                        : const Color(0xFFF0D78C),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: SizedBox(
+                    width: _hudHpBarWidth,
+                    child: Semantics(
+                      label: 'Hit points',
+                      value:
+                          '${formatThousands(save.currentHp)} / '
+                          '${formatThousands(maxHp)}',
+                      child: PillBar(
+                        value: hpFraction,
+                        gradient: Meters.hudHp,
+                        height: 8,
+                        trackColor: Palette.ink,
+                        borderColor: const Color(0x59D4AF37),
+                      ),
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -237,7 +265,7 @@ class _ActivityReadout extends StatelessWidget {
   }
 }
 
-/// The circular portrait that opens the wardrobe, sized to sit inside the HUD.
+/// The square portrait that opens the wardrobe, sized to sit inside the HUD.
 class HudPortrait extends StatelessWidget {
   const HudPortrait({
     super.key,
@@ -249,7 +277,9 @@ class HudPortrait extends StatelessWidget {
 
   static const double size = 44;
 
-  /// Enough of the sprite's height to fill the circle with its head.
+  static const double _cornerRadius = 6;
+
+  /// Enough of the sprite's height to fill the window with its head.
   static const double _headZoom = 1.7;
 
   final PlayerAppearance appearance;
@@ -263,6 +293,7 @@ class HudPortrait extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final radius = BorderRadius.circular(_cornerRadius);
     return Semantics(
       button: true,
       label: 'Open wardrobe',
@@ -272,13 +303,14 @@ class HudPortrait extends StatelessWidget {
           dimension: size,
           child: DecoratedBox(
             decoration: BoxDecoration(
-              shape: BoxShape.circle,
+              borderRadius: radius,
               color: const Color(0xFF9EC8E8),
               boxShadow: hint
                   ? const [BoxShadow(color: Palette.gold, blurRadius: 8, spreadRadius: 1)]
                   : null,
             ),
-            child: ClipOval(
+            child: ClipRRect(
+              borderRadius: radius,
               child: Transform.scale(
                 scale: _headZoom,
                 alignment: Alignment.topCenter,

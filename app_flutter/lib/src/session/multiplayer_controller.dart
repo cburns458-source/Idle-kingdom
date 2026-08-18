@@ -36,10 +36,30 @@ class MultiplayerController extends ChangeNotifier {
 
   static const String browseSocialStorageKey = 'idle-kingdoms.client.browse-social-unsigned';
 
+  static const String hudGuildTagStorageKey = 'idle-kingdoms.client.hud-show-guild-tag';
+
+  static const String hideChatBubbleStorageKey = 'idle-kingdoms.client.hide-chat-bubble';
+
   bool get filterChatProfanity => storage.getItem(chatFilterStorageKey) != '0';
 
   void setFilterChatProfanity(bool value) {
     storage.setItem(chatFilterStorageKey, value ? '1' : '0');
+    notifyListeners();
+  }
+
+  /// When on, the HUD prefixes the character name with `[TAG]`.
+  bool get showHudGuildTag => storage.getItem(hudGuildTagStorageKey) == '1';
+
+  void setShowHudGuildTag(bool value) {
+    storage.setItem(hudGuildTagStorageKey, value ? '1' : '0');
+    notifyListeners();
+  }
+
+  /// When on, the corner chat button is hidden.
+  bool get hideChatBubble => storage.getItem(hideChatBubbleStorageKey) == '1';
+
+  void setHideChatBubble(bool value) {
+    storage.setItem(hideChatBubbleStorageKey, value ? '1' : '0');
     notifyListeners();
   }
 

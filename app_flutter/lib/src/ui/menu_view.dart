@@ -13,7 +13,7 @@ import 'player_sprite.dart';
 const String _playerArtHeading = 'Player sprite';
 const String _playerArtBlurb =
     'Use a PNG on this device only. Other players still see the default adventurer. '
-    'Full-body sprites crop to the head in the HUD ring.';
+    'Full-body sprites crop to the head in the HUD window.';
 const String _playerArtApplied = 'Using your PNG on this device.';
 const String _playerArtReset = 'Back to the default adventurer.';
 
@@ -112,46 +112,6 @@ class _MenuViewState extends State<MenuView> {
         ),
         const SizedBox(height: 16),
         GamePanel(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Text(
-                _playerArtHeading,
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-              ),
-              const MutedText(_playerArtBlurb),
-              if (hasOverride) ...[
-                const SizedBox(height: 10),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: PlayerSprite(
-                    appearance: save.appearance,
-                    bytes: controller.localPlayerPng,
-                    width: 72,
-                    height: 72,
-                  ),
-                ),
-              ],
-              const SizedBox(height: 10),
-              GameButton(label: 'Use my PNG', onPressed: _picking ? null : _usePng),
-              const SizedBox(height: 8),
-              GameButton(
-                label: 'Reset to default',
-                tone: GameButtonTone.secondary,
-                onPressed: hasOverride ? _reset : null,
-              ),
-              if (_artNotice case final notice?) ...[
-                const SizedBox(height: 8),
-                Text(
-                  notice,
-                  style: TextStyle(color: _artError ? Palette.warning : Palette.gold, fontSize: 12),
-                ),
-              ],
-            ],
-          ),
-        ),
-        const SizedBox(height: 16),
-        GamePanel(
           child: Row(
             children: [
               const Expanded(
@@ -197,13 +157,97 @@ class _MenuViewState extends State<MenuView> {
                     ],
                   ),
                 ),
+                const SizedBox(height: 16),
+                GamePanel(
+                  child: Row(
+                    children: [
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Guild tag on HUD', style: TextStyle(fontWeight: FontWeight.w700)),
+                            MutedText('Show your guild tag, like [DEV], before your name.'),
+                          ],
+                        ),
+                      ),
+                      Switch(
+                        value: widget.multiplayer.showHudGuildTag,
+                        onChanged: widget.multiplayer.setShowHudGuildTag,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                GamePanel(
+                  child: Row(
+                    children: [
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Hide chat bubble', style: TextStyle(fontWeight: FontWeight.w700)),
+                            MutedText('Hide the chat button in the corner of the game.'),
+                          ],
+                        ),
+                      ),
+                      Switch(
+                        value: widget.multiplayer.hideChatBubble,
+                        onChanged: widget.multiplayer.setHideChatBubble,
+                      ),
+                    ],
+                  ),
+                ),
               ],
             );
           },
         ),
         const SizedBox(height: 16),
         _buildTestingTools(),
+        const SizedBox(height: 16),
+        _buildPlayerSprite(save, hasOverride),
       ],
+    );
+  }
+
+  Widget _buildPlayerSprite(PlayerSave save, bool hasOverride) {
+    return GamePanel(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text(
+            _playerArtHeading,
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+          ),
+          const MutedText(_playerArtBlurb),
+          if (hasOverride) ...[
+            const SizedBox(height: 10),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: PlayerSprite(
+                appearance: save.appearance,
+                bytes: controller.localPlayerPng,
+                width: 72,
+                height: 72,
+              ),
+            ),
+          ],
+          const SizedBox(height: 10),
+          GameButton(label: 'Use my PNG', onPressed: _picking ? null : _usePng),
+          const SizedBox(height: 8),
+          GameButton(
+            label: 'Reset to default',
+            tone: GameButtonTone.secondary,
+            onPressed: hasOverride ? _reset : null,
+          ),
+          if (_artNotice case final notice?) ...[
+            const SizedBox(height: 8),
+            Text(
+              notice,
+              style: TextStyle(color: _artError ? Palette.warning : Palette.gold, fontSize: 12),
+            ),
+          ],
+        ],
+      ),
     );
   }
 

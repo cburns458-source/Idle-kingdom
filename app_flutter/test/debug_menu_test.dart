@@ -71,6 +71,8 @@ void main() {
     );
     await tester.pump();
     expect(find.text('Filter chat'), findsOne);
+    expect(find.text('Guild tag on HUD'), findsOne);
+    expect(find.text('Hide chat bubble'), findsOne);
     expect(find.text('Browse social pages'), findsNothing);
     expect(find.text('Move this save'), findsNothing);
 
@@ -88,6 +90,14 @@ void main() {
     expect(find.bySemanticsLabel('Add 1 level'), findsOne);
     expect(find.bySemanticsLabel('Remove 1 level'), findsOne);
     expect(find.bySemanticsLabel('Reset all skills'), findsOne);
+
+    await tester.scrollUntilVisible(
+      find.text('Player sprite'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pump();
+    expect(find.text('Player sprite'), findsOne);
   });
 
   testWidgets('Settings testing buttons change the save', (tester) async {
