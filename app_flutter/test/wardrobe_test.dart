@@ -73,6 +73,8 @@ void main() {
 
     final before = controller.save.appearance.skinTone;
     // Drag the first slider (skin tone) to its far end.
+    await tester.ensureVisible(find.byType(Slider).first);
+    await tester.pump();
     await tester.drag(find.byType(Slider).first, const Offset(500, 0));
     await tester.pump();
 
@@ -99,7 +101,11 @@ void main() {
 
     await tester.enterText(find.byType(TextField), 'Tester');
     // Gender presentation is the last slider, and the only one the art follows.
+    await tester.ensureVisible(find.byType(Slider).last);
+    await tester.pump();
     await tester.drag(find.byType(Slider).last, const Offset(500, 0));
+    await tester.pump();
+    await tester.ensureVisible(find.text('Human'));
     await tester.pump();
     await tester.tap(find.text('Human'));
     await tester.pump();
@@ -116,11 +122,16 @@ void main() {
     await pumpShell(tester, controller);
     await openWardrobe(tester);
 
-    final size = tester.getSize(
-      find.descendant(of: find.byType(WardrobeSheet), matching: find.byType(PlayerSprite)),
+    final portrait = find.descendant(
+      of: find.byType(WardrobeSheet),
+      matching: find.byType(PlayerSprite),
     );
+    final size = tester.getSize(portrait);
     expect(size.width, greaterThan(96));
     expect(size.height, greaterThan(96));
+
+    // Cosmetics sit under the portrait-and-slider row, not beside the art.
+    expect(tester.getTopLeft(find.text('None')).dy, greaterThan(tester.getBottomLeft(portrait).dy));
   });
 
   testWidgets('buying a cosmetic pops the unlock and adds it to the wardrobe', (tester) async {
@@ -159,6 +170,7 @@ void main() {
     expect(find.text('You found a Cosmetic!'), findsNothing);
 
     await openWardrobe(tester);
+    await tester.ensureVisible(find.text("Traveler's Tunic"));
     expect(find.text("Traveler's Tunic"), findsOne);
   });
 }

@@ -77,87 +77,99 @@ class _WardrobeSheetState extends State<WardrobeSheet> {
                   ),
                 ],
               ),
-              Expanded(
+              Flexible(
                 child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Expanded(
-                      child: Column(
-                        children: [
-                          Expanded(
-                            child: LayoutBuilder(
-                              builder: (context, constraints) => PlayerSprite(
-                                appearance: save.appearance,
-                                bytes: controller.localPlayerPng,
-                                width: constraints.maxWidth,
-                                height: constraints.maxHeight,
-                                fit: BoxFit.contain,
-                              ),
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          final race = raceDisplayName(controller.db, save.raceId);
+                          final label = race == null ? 0.0 : 18.0;
+                          final side = constraints.maxWidth < constraints.maxHeight - label
+                              ? constraints.maxWidth
+                              : constraints.maxHeight - label;
+                          return Align(
+                            alignment: Alignment.topCenter,
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                SizedBox(
+                                  width: side,
+                                  height: side,
+                                  child: PlayerSprite(
+                                    appearance: save.appearance,
+                                    bytes: controller.localPlayerPng,
+                                    fit: BoxFit.contain,
+                                    alignment: Alignment.topCenter,
+                                  ),
+                                ),
+                                if (race != null) MutedText(race),
+                              ],
                             ),
-                          ),
-                          if (raceDisplayName(controller.db, save.raceId) case final race?)
-                            MutedText(race),
-                        ],
+                          );
+                        },
                       ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: ListView(
-                        children: [
-                          AppearancePicker(
-                            db: controller.db,
-                            appearance: save.appearance,
-                            onSelect: _setAppearance,
-                          ),
-                          const SizedBox(height: 12),
-                          if (tabs.length > 1)
-                            SegmentedButton<String>(
-                              segments: [
-                                for (final tab in tabs)
-                                  ButtonSegment(value: tab.slotId, label: Text(tab.label)),
-                              ],
-                              selected: {slot?.slotId ?? _slotId},
-                              showSelectedIcon: false,
-                              onSelectionChanged: (selection) => setState(() {
-                                _slotId = selection.first;
-                                _error = null;
-                              }),
-                            ),
-                          if (slot case final slot?) ...[
-                            const SizedBox(height: 12),
-                            Wrap(
-                              spacing: 8,
-                              runSpacing: 8,
-                              children: [
-                                _CosmeticTile(
-                                  label: 'None',
-                                  selected: slot.equippedCosmeticId == null,
-                                  onTap: () => _equip(slot.slotId, null),
-                                ),
-                                for (final tile in slot.tiles)
-                                  _CosmeticTile(
-                                    label: tile.name,
-                                    selected: tile.equipped,
-                                    item: controller.indexes.itemsById[tile.itemId],
-                                    onTap: () => _equip(slot.slotId, tile.cosmeticId),
-                                  ),
-                              ],
-                            ),
-                            if (slot.tiles.isEmpty) ...[
-                              const SizedBox(height: 8),
-                              MutedText(slot.emptyNote),
-                            ],
-                          ],
-                          if (_error case final error?) ...[
-                            const SizedBox(height: 8),
-                            Text(
-                              error,
-                              style: const TextStyle(color: Palette.danger, fontSize: 12),
-                            ),
-                          ],
-                        ],
+                      child: SingleChildScrollView(
+                        child: AppearancePicker(
+                          db: controller.db,
+                          appearance: save.appearance,
+                          onSelect: _setAppearance,
+                        ),
                       ),
                     ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              Expanded(
+                child: ListView(
+                  children: [
+                    if (tabs.length > 1)
+                      SegmentedButton<String>(
+                        segments: [
+                          for (final tab in tabs)
+                            ButtonSegment(value: tab.slotId, label: Text(tab.label)),
+                        ],
+                        selected: {slot?.slotId ?? _slotId},
+                        showSelectedIcon: false,
+                        onSelectionChanged: (selection) => setState(() {
+                          _slotId = selection.first;
+                          _error = null;
+                        }),
+                      ),
+                    if (slot case final slot?) ...[
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          _CosmeticTile(
+                            label: 'None',
+                            selected: slot.equippedCosmeticId == null,
+                            onTap: () => _equip(slot.slotId, null),
+                          ),
+                          for (final tile in slot.tiles)
+                            _CosmeticTile(
+                              label: tile.name,
+                              selected: tile.equipped,
+                              item: controller.indexes.itemsById[tile.itemId],
+                              onTap: () => _equip(slot.slotId, tile.cosmeticId),
+                            ),
+                        ],
+                      ),
+                      if (slot.tiles.isEmpty) ...[
+                        const SizedBox(height: 8),
+                        MutedText(slot.emptyNote),
+                      ],
+                    ],
+                    if (_error case final error?) ...[
+                      const SizedBox(height: 8),
+                      Text(error, style: const TextStyle(color: Palette.danger, fontSize: 12)),
+                    ],
                   ],
                 ),
               ),
