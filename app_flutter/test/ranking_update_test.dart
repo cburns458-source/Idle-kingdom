@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:idle_kingdoms/src/ui/social_view.dart';
 import 'package:ik_content/ik_content.dart';
 import 'package:ik_net/ik_net.dart';
+import 'package:ik_net/testing.dart';
 
 import 'support/harness.dart';
 
@@ -84,5 +85,52 @@ void main() {
 
     expect(find.bySemanticsLabel('Update my ranking'), findsOne);
     expect(find.text('You can update your ranking again in 1 hour.'), findsOne);
+  });
+
+  testWidgets('a board names the signed-in character without a sync step', (tester) async {
+    final clock = TestClock();
+    final transport = FakeTransport();
+    final net = buildRemoteMultiplayer(database, transport: transport, clock: clock);
+    addTearDown(net.dispose);
+    final save = startedCharacter(database).copyWith(characterName: 'Vari');
+    await net.signUp('vari@example.com', 'Vari', 'secret', save, adopt: (_) {});
+
+    final game = buildController(database, seed: save, clock: clock);
+    addTearDown(game.dispose);
+    await pumpPanel(
+      tester,
+      ListenableBuilder(
+        listenable: net,
+        builder: (context, _) =>
+            SocialView(controller: game, multiplayer: net, section: SocialTab.leaderboards),
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('Vari'), findsWidgets);
+    expect(find.text(emptyBoardMessage(net.boardKey)), findsNothing);
+  });
+
+  testWidgets('an empty board no longer asks the player to sync', (tester) async {
+    final clock = TestClock();
+    final net = buildMultiplayer(database, clock: clock, signedIn: false);
+    addTearDown(net.dispose);
+    net.setBrowseSocialUnsigned(true);
+
+    final game = buildController(database, clock: clock);
+    addTearDown(game.dispose);
+    await pumpPanel(
+      tester,
+      ListenableBuilder(
+        listenable: net,
+        builder: (context, _) =>
+            SocialView(controller: game, multiplayer: net, section: SocialTab.leaderboards),
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('No scores on this board yet.'), findsOne);
   });
 }
