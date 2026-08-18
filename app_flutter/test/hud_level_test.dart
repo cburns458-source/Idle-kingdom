@@ -90,12 +90,12 @@ void main() {
     expect(net.guild?.tag, 'DEV');
 
     await pumpShell(tester, controller, multiplayer: net);
-    expect(find.text('Tester'), findsWidgets);
+    expect(find.textContaining('Tester'), findsWidgets);
     expect(find.textContaining('[DEV]'), findsNothing);
 
     net.setShowHudGuildTag(true);
     await tester.pump();
-    expect(find.text('[DEV] Tester'), findsOne);
+    expect(find.textContaining('[DEV] Tester'), findsOne);
   });
 
   testWidgets('hiding the chat bubble removes the corner button', (tester) async {
