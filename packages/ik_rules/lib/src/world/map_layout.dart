@@ -46,14 +46,14 @@ const Map<String, NodePosition> mainMapNodeLayout = <String, NodePosition>{
 };
 
 const Map<String, NodePosition> caveMapNodeLayout = <String, NodePosition>{
-  // Sunlit exit at top
+  // Sunlit cave mouth looking out to the mountains
   'LOC-0010': NodePosition(x: 50, y: 10),
-  // Lantern-lit shop counter (Dwarven Mining Store)
-  'LOC-0012': NodePosition(x: 22, y: 30),
-  // Active mine shaft / ore chambers
-  'LOC-0011': NodePosition(x: 68, y: 58),
-  // Abandoned Mineshaft (bottom-left)
-  'LOC-0022': NodePosition(x: 22, y: 78),
+  // Dwarven shop counter, lanterns and gem crates
+  'LOC-0012': NodePosition(x: 22, y: 28),
+  // Working shaft with ore cart and tracks
+  'LOC-0011': NodePosition(x: 72, y: 50),
+  // Abandoned shaft with empty cart and crystals
+  'LOC-0022': NodePosition(x: 28, y: 74),
 };
 
 const Map<String, NodePosition> castleMapNodeLayout = <String, NodePosition>{

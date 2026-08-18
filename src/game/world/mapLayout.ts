@@ -15,7 +15,7 @@ export interface NodePosition {
 /**
  * UI node placement aligned to landmarks in the generated map art.
  * Coordinates are percent of the map image (not balance data).
- * The overworld, Town, and Castle are 9:16 portrait plates so they match the phone column.
+ * The overworld, Town, Castle, and Cave are 9:16 portrait plates so they match the phone column.
  */
 export const MAIN_MAP_NODE_LAYOUT: Record<string, NodePosition> = {
   // NW castle with red roofs
@@ -49,14 +49,14 @@ export const MAIN_MAP_NODE_LAYOUT: Record<string, NodePosition> = {
 }
 
 export const CAVE_MAP_NODE_LAYOUT: Record<string, NodePosition> = {
-  // Sunlit exit at top
+  // Sunlit cave mouth looking out to the mountains
   'LOC-0010': { x: 50, y: 10 },
-  // Lantern-lit shop counter (Dwarven Mining Store)
-  'LOC-0012': { x: 22, y: 30 },
-  // Active mine shaft / ore chambers
-  'LOC-0011': { x: 68, y: 58 },
-  // Abandoned Mineshaft (bottom-left)
-  'LOC-0022': { x: 22, y: 78 },
+  // Dwarven shop counter, lanterns and gem crates
+  'LOC-0012': { x: 22, y: 28 },
+  // Working shaft with ore cart and tracks
+  'LOC-0011': { x: 72, y: 50 },
+  // Abandoned shaft with empty cart and crystals
+  'LOC-0022': { x: 28, y: 74 },
 }
 
 export const CASTLE_MAP_NODE_LAYOUT: Record<string, NodePosition> = {

@@ -63,12 +63,16 @@ void main() {
     );
   });
 
-  test('the overworld, town, and castle use portrait plates; other districts stay square', () {
-    expect(artAspectRatioForMap(mainMapId), mainMapArtAspectRatio);
-    expect(artAspectRatioForMap(townMapId), mainMapArtAspectRatio);
-    expect(artAspectRatioForMap(castleMapId), mainMapArtAspectRatio);
-    expect(artAspectRatioForMap(caveMapId), mapArtAspectRatio);
-  });
+  test(
+    'the overworld, town, castle, and cave use portrait plates; other districts stay square',
+    () {
+      expect(artAspectRatioForMap(mainMapId), mainMapArtAspectRatio);
+      expect(artAspectRatioForMap(townMapId), mainMapArtAspectRatio);
+      expect(artAspectRatioForMap(castleMapId), mainMapArtAspectRatio);
+      expect(artAspectRatioForMap(caveMapId), mainMapArtAspectRatio);
+      expect(artAspectRatioForMap(citadelMapId), mapArtAspectRatio);
+    },
+  );
 
   test('an unmeasured box does not throw', () {
     expect(mapArtRect(Size.zero), const Rect.fromLTWH(0, 0, 0, 0));
