@@ -13,7 +13,7 @@ class NodePosition {
   Map<String, Object?> toJson() => <String, Object?>{'x': x, 'y': y};
 }
 
-/// The main map is a 9:16 plate; nodes sit on landmarks in the generated art.
+/// The overworld is a 9:16 plate; nodes sit on landmarks in the generated art.
 const Map<String, NodePosition> mainMapNodeLayout = <String, NodePosition>{
   // NW castle with red roofs
   'LOC-0013': NodePosition(x: 26, y: 33),
@@ -57,18 +57,18 @@ const Map<String, NodePosition> caveMapNodeLayout = <String, NodePosition>{
 };
 
 const Map<String, NodePosition> castleMapNodeLayout = <String, NodePosition>{
-  // Queen's Quarters (top-left)
-  'LOC-0021': NodePosition(x: 22, y: 14),
-  // Grand blue-roof palace (Main Hall)
-  'LOC-0015': NodePosition(x: 50, y: 18),
-  // Private chamber with bed / shelves (King's Quarters)
-  'LOC-0016': NodePosition(x: 78, y: 24),
+  // Queen's tower with the perched dragon
+  'LOC-0021': NodePosition(x: 20, y: 30),
+  // Red-roof keep / Main Hall
+  'LOC-0015': NodePosition(x: 50, y: 34),
+  // King's wing with lion banners and balcony
+  'LOC-0016': NodePosition(x: 74, y: 34),
   // Training yard with dummies (Barracks)
-  'LOC-0017': NodePosition(x: 78, y: 70),
-  // Gatehouse / courtyard entrance
-  'LOC-0014': NodePosition(x: 50, y: 78),
-  // Castle gateway marker at the outer gate
-  'LOC-0013': NodePosition(x: 50, y: 90),
+  'LOC-0017': NodePosition(x: 76, y: 64),
+  // Courtyard fountain
+  'LOC-0014': NodePosition(x: 50, y: 55),
+  // Castle gateway at the outer gatehouse
+  'LOC-0013': NodePosition(x: 50, y: 78),
 };
 
 const Map<String, NodePosition> townMapNodeLayout = <String, NodePosition>{

@@ -5,12 +5,14 @@ import 'package:ik_rules/ik_rules.dart';
 /// District maps that have not been redrawn still ship square.
 const double mapArtAspectRatio = 1;
 
-/// Portrait plates match the phone column. Used by the overworld and Town.
+/// Portrait plates match the phone column. Used by the overworld, Town, and Castle.
 const double mainMapArtAspectRatio = 9 / 16;
 
 /// Cover-fit aspect for [mapId]'s background. Nodes are percentages of that art.
 double artAspectRatioForMap(String mapId) {
-  return mapId == mainMapId || mapId == townMapId ? mainMapArtAspectRatio : mapArtAspectRatio;
+  return mapId == mainMapId || mapId == townMapId || mapId == castleMapId
+      ? mainMapArtAspectRatio
+      : mapArtAspectRatio;
 }
 
 /// Where the map art actually lands inside [box] once [BoxFit.cover] has had

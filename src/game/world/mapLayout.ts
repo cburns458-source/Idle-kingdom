@@ -15,7 +15,7 @@ export interface NodePosition {
 /**
  * UI node placement aligned to landmarks in the generated map art.
  * Coordinates are percent of the map image (not balance data).
- * Main map is a 9:16 portrait plate so it matches the phone column.
+ * The overworld, Town, and Castle are 9:16 portrait plates so they match the phone column.
  */
 export const MAIN_MAP_NODE_LAYOUT: Record<string, NodePosition> = {
   // NW castle with red roofs
@@ -60,18 +60,18 @@ export const CAVE_MAP_NODE_LAYOUT: Record<string, NodePosition> = {
 }
 
 export const CASTLE_MAP_NODE_LAYOUT: Record<string, NodePosition> = {
-  // Queen's Quarters (top-left)
-  'LOC-0021': { x: 22, y: 14 },
-  // Grand blue-roof palace (Main Hall)
-  'LOC-0015': { x: 50, y: 18 },
-  // Private chamber with bed / shelves (King's Quarters)
-  'LOC-0016': { x: 78, y: 24 },
+  // Queen's tower with the perched dragon
+  'LOC-0021': { x: 20, y: 30 },
+  // Red-roof keep / Main Hall
+  'LOC-0015': { x: 50, y: 34 },
+  // King's wing with lion banners and balcony
+  'LOC-0016': { x: 74, y: 34 },
   // Training yard with dummies (Barracks)
-  'LOC-0017': { x: 78, y: 70 },
-  // Gatehouse / courtyard entrance
-  'LOC-0014': { x: 50, y: 78 },
-  // Castle gateway marker at the outer gate
-  'LOC-0013': { x: 50, y: 90 },
+  'LOC-0017': { x: 76, y: 64 },
+  // Courtyard fountain
+  'LOC-0014': { x: 50, y: 55 },
+  // Castle gateway at the outer gatehouse
+  'LOC-0013': { x: 50, y: 78 },
 }
 
 export const TOWN_MAP_NODE_LAYOUT: Record<string, NodePosition> = {
