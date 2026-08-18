@@ -63,9 +63,10 @@ void main() {
     );
   });
 
-  test('the main map uses a portrait plate and districts stay square', () {
+  test('the overworld and town use portrait plates; other districts stay square', () {
     expect(artAspectRatioForMap(mainMapId), mainMapArtAspectRatio);
-    expect(artAspectRatioForMap(townMapId), mapArtAspectRatio);
+    expect(artAspectRatioForMap(townMapId), mainMapArtAspectRatio);
+    expect(artAspectRatioForMap(caveMapId), mapArtAspectRatio);
   });
 
   test('an unmeasured box does not throw', () {

@@ -260,11 +260,15 @@ void main() {
     await tester.tap(find.text('Enter Town'));
     await tester.pump();
 
-    // The gateway sits at (50, 12) on the town map but (30, 48) on the world
+    // The gateway sits at (50, 21) on the town map but (28, 50) on the world
     // map, so reading the wrong layout would drop it into the middle-left.
     final map = tester.getRect(find.byType(WorldMapView));
     final gate = tester.getCenter(find.text('Town Gate').first);
-    final expected = mapArtOffset(layoutForMap(townMapId)['LOC-0002']!, map.size);
+    final expected = mapArtOffset(
+      layoutForMap(townMapId)['LOC-0002']!,
+      map.size,
+      aspectRatio: artAspectRatioForMap(townMapId),
+    );
 
     expect(gate.dx, closeTo(map.left + expected.dx, 1));
     expect(gate.dy, lessThan(map.top + map.height / 2));

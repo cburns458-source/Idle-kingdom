@@ -72,18 +72,18 @@ const Map<String, NodePosition> castleMapNodeLayout = <String, NodePosition>{
 };
 
 const Map<String, NodePosition> townMapNodeLayout = <String, NodePosition>{
-  // Town gateway / square (top)
-  'LOC-0002': NodePosition(x: 50, y: 12),
+  // Town gateway / fountain square (top)
+  'LOC-0002': NodePosition(x: 50, y: 21),
   // Kitchen
-  'LOC-0023': NodePosition(x: 22, y: 38),
+  'LOC-0023': NodePosition(x: 24, y: 38),
   // General Store
-  'LOC-0024': NodePosition(x: 78, y: 38),
+  'LOC-0024': NodePosition(x: 76, y: 38),
   // The Foundry
-  'LOC-0025': NodePosition(x: 30, y: 72),
+  'LOC-0025': NodePosition(x: 28, y: 67),
   // Rose's Apothecary (unlocks after quest)
-  'LOC-0026': NodePosition(x: 70, y: 72),
+  'LOC-0026': NodePosition(x: 72, y: 67),
   // Town Bank
-  'LOC-0034': NodePosition(x: 50, y: 55),
+  'LOC-0034': NodePosition(x: 50, y: 48),
 };
 
 const Map<String, NodePosition> citadelMapNodeLayout = <String, NodePosition>{

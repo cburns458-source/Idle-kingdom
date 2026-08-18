@@ -2,15 +2,15 @@ import 'dart:ui';
 
 import 'package:ik_rules/ik_rules.dart';
 
-/// District maps still ship square until they are redrawn.
+/// District maps that have not been redrawn still ship square.
 const double mapArtAspectRatio = 1;
 
-/// The main overworld is a portrait plate so it matches the phone column.
+/// Portrait plates match the phone column. Used by the overworld and Town.
 const double mainMapArtAspectRatio = 9 / 16;
 
 /// Cover-fit aspect for [mapId]'s background. Nodes are percentages of that art.
 double artAspectRatioForMap(String mapId) {
-  return mapId == mainMapId ? mainMapArtAspectRatio : mapArtAspectRatio;
+  return mapId == mainMapId || mapId == townMapId ? mainMapArtAspectRatio : mapArtAspectRatio;
 }
 
 /// Where the map art actually lands inside [box] once [BoxFit.cover] has had
