@@ -117,7 +117,7 @@ class _LeaderboardTab extends StatelessWidget {
               )
               .toList(),
           onChanged: (key) {
-            if (key != null) multiplayer.selectBoard(key);
+            if (key != null) multiplayer.selectBoard(key, controller.save);
           },
         ),
         const SizedBox(height: 10),

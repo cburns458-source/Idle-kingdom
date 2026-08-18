@@ -324,6 +324,7 @@ class MultiplayerController extends ChangeNotifier {
     _pendingAccountSave = null;
     if (!isSignedIn || _suppressUploads || !isPlayableSave(outgoing)) return;
     await service.pushSave(db, outgoing!, force: true);
+    await maybeAutoSubmitRanking(outgoing);
   }
 
   /// Publishes a just-created character immediately.
@@ -363,7 +364,7 @@ class MultiplayerController extends ChangeNotifier {
     }
     if (!isSignedIn) {
       _listings = await service.listGuilds();
-      _board = await service.leaderboard(_boardKey);
+      _board = await _readBoard(save);
       _citadelVisitors = await service.citadelVisitors();
       _presence = await service.presenceRecords();
       _peers = await service.peersAtLocation(save.currentLocationId);
@@ -385,7 +386,7 @@ class MultiplayerController extends ChangeNotifier {
     }
     final guestId = _guestGuildId;
     _guestGuild = guestId == null ? null : await service.guild(guestId);
-    _board = await service.leaderboard(_boardKey);
+    _board = await _readBoard(save);
     _citadelVisitors = await service.citadelVisitors();
     _presence = await service.presenceRecords();
     _unreadDms = await service.countUnreadDirectMessages(_dmCursor());
@@ -515,19 +516,22 @@ class MultiplayerController extends ChangeNotifier {
     storage.setItem(rankingUpdateStorageKey(userId), nowMs.toString());
   }
 
-  /// Quiet once-a-day submit. No notice: the player did not press anything.
+  /// Quiet submit as the account saves, at the same rate the button allows.
+  ///
+  /// No notice: the player did not press anything, and a board that cannot be
+  /// posted to is not something they can act on.
   Future<void> maybeAutoSubmitRanking(PlayerSave save) async {
-    if (!isSignedIn) return;
+    if (!isSignedIn || !isPlayableSave(save)) return;
     final now = clock();
-    if (!shouldAutoSubmitRanking(lastRankingSubmitAt, now)) return;
+    if (!canUpdateRanking(lastRankingSubmitAt, now)) return;
     final result = await service.submitLeaderboard(db, save);
     if (!result.ok) return;
     _storeRankingSubmitAt(now);
-    _board = await service.leaderboard(_boardKey);
+    _board = await _readBoard(save);
     notifyListeners();
   }
 
-  /// Opens the boards and submits once if this UTC day has not been posted yet.
+  /// Opens the boards, posting this account's totals if the hour is up.
   Future<void> openLeaderboards(PlayerSave save) async {
     await refresh(save);
     await maybeAutoSubmitRanking(save);
@@ -545,15 +549,35 @@ class MultiplayerController extends ChangeNotifier {
       final result = await service.submitLeaderboard(db, save);
       if (!result.ok) return result.reason;
       _storeRankingSubmitAt(now);
-      _board = await service.leaderboard(_boardKey);
+      _board = await _readBoard(save);
       return rankingUpdatedNotice;
     });
   }
 
-  Future<void> selectBoard(MultiplayerBoardKey key) async {
+  Future<void> selectBoard(MultiplayerBoardKey key, PlayerSave save) async {
     _boardKey = key;
-    _board = canSeeSocialPages ? await service.leaderboard(key) : const <LeaderboardEntry>[];
+    _board = canSeeSocialPages ? await _readBoard(save) : const <LeaderboardEntry>[];
     notifyListeners();
+  }
+
+  /// The stored board with this account's live score folded in.
+  ///
+  /// The table is a snapshot, so without this the player's own row would only
+  /// appear after the next submit landed.
+  Future<List<LeaderboardEntry>> _readBoard(PlayerSave save) async {
+    final stored = await service.leaderboard(_boardKey);
+    final current = session;
+    if (current == null || !isPlayableSave(save)) return stored;
+    return mergeLiveLeaderboardScore(
+      stored: stored,
+      boardKey: _boardKey,
+      db: db,
+      save: save,
+      userId: current.userId,
+      username: isNotBlank(save.characterName) ? save.characterName! : current.username,
+      appearance: save.appearance,
+      guildName: _guild?.name,
+    );
   }
 
   // --- Chat -----------------------------------------------------------------

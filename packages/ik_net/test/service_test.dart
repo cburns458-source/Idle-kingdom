@@ -150,4 +150,84 @@ void main() {
     expect((await service.leaveGuild()).ok, isTrue);
     expect(await service.currentGuildId(), isNull);
   });
+
+  test('folds the account score into a board that has no row for it yet', () {
+    final db = _database();
+    final save = createNewSave(db, _nowMs).copyWith(characterName: 'Vari');
+    final board = skillBoardKey('SKL-0004');
+
+    final filled = mergeLiveLeaderboardScore(
+      stored: const <LeaderboardEntry>[],
+      boardKey: board,
+      db: db,
+      save: save,
+      userId: 'usr_1',
+      username: 'Vari',
+      appearance: save.appearance,
+    );
+    expect(filled.single.username, 'Vari');
+    expect(filled.single.rank, 1);
+    expect(filled.single.boardKey, board);
+  });
+
+  test('the live score replaces a stale stored row and takes its place in order', () {
+    final db = _database();
+    final save = createNewSave(db, _nowMs).copyWith(characterName: 'Vari');
+    final board = skillBoardKey('SKL-0004');
+    final stale = LeaderboardEntry(
+      userId: 'usr_1',
+      username: 'Vari',
+      appearance: save.appearance,
+      guildName: null,
+      boardKey: board,
+      value: 0,
+      rank: 2,
+    );
+    final rival = LeaderboardEntry(
+      userId: 'usr_2',
+      username: 'Rival',
+      appearance: save.appearance,
+      guildName: null,
+      boardKey: board,
+      value: 1,
+      rank: 1,
+    );
+
+    final merged = mergeLiveLeaderboardScore(
+      stored: <LeaderboardEntry>[rival, stale],
+      boardKey: board,
+      db: db,
+      save: save.copyWith(
+        skills: <SkillProgress>[
+          for (final skill in save.skills)
+            skill.skillId == 'SKL-0004' ? skill.copyWith(level: 40) : skill,
+        ],
+      ),
+      userId: 'usr_1',
+      username: 'Vari',
+      appearance: save.appearance,
+    );
+
+    expect(merged.map((entry) => entry.username), <String>['Vari', 'Rival']);
+    expect(merged.first.value, 40);
+    expect(merged.first.rank, 1);
+    expect(merged.where((entry) => entry.userId == 'usr_1'), hasLength(1));
+  });
+
+  test('leaves a guild board to the backend, whose value is the whole roster', () {
+    final db = _database();
+    final save = createNewSave(db, _nowMs).copyWith(characterName: 'Vari');
+    expect(
+      mergeLiveLeaderboardScore(
+        stored: const <LeaderboardEntry>[],
+        boardKey: boardGuildTotalLevel,
+        db: db,
+        save: save,
+        userId: 'usr_1',
+        username: 'Vari',
+        appearance: save.appearance,
+      ),
+      isEmpty,
+    );
+  });
 }

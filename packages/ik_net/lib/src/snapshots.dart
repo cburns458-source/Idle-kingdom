@@ -88,6 +88,47 @@ String boardLabel(GameDatabase db, MultiplayerBoardKey boardKey) {
   return boardKey;
 }
 
+/// Puts the signed-in account's live score on the board, replacing whatever row
+/// was stored for it.
+///
+/// A board is a snapshot table, so the account's own standing would otherwise
+/// wait for the next submit to appear. Guild boards are left alone: their value
+/// is the whole roster, which only the backend can total.
+List<LeaderboardEntry> mergeLiveLeaderboardScore({
+  required List<LeaderboardEntry> stored,
+  required MultiplayerBoardKey boardKey,
+  required GameDatabase db,
+  required PlayerSave save,
+  required String userId,
+  required String username,
+  required PlayerAppearance appearance,
+  String? guildName,
+}) {
+  if (boardKey == boardGuildTotalLevel) return stored;
+  final mine = buildLeaderboardSnapshot(db, save).boards
+      .firstWhereOrNull((board) => board.boardKey == boardKey);
+  if (mine == null) return stored;
+
+  final merged = <LeaderboardEntry>[
+    ...stored.where((entry) => entry.userId != userId),
+    LeaderboardEntry(
+      userId: userId,
+      username: username,
+      appearance: appearance,
+      guildName: guildName,
+      boardKey: boardKey,
+      value: mine.value,
+      rank: 0,
+    ),
+  ];
+  mergeSort(
+    merged,
+    compare: (a, b) =>
+        jsCompareThen(b.value - a.value, () => jsLocaleCompare(a.username, b.username)),
+  );
+  return merged.indexed.map((entry) => entry.$2.withRank(entry.$1 + 1)).toList();
+}
+
 /// The boards a launch build shows, in the order the picker lists them.
 List<MultiplayerBoardKey> launchBoardKeys(GameDatabase db) => <MultiplayerBoardKey>[
   boardTotalLevel,

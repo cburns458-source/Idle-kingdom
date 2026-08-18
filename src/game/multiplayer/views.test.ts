@@ -327,7 +327,7 @@ describe('leaderboard views', () => {
   })
 
   it('points an empty board at the way to fill it', () => {
-    expect(emptyBoardMessage('total_level')).toBe('No scores yet — sync a cloud save to submit.')
+    expect(emptyBoardMessage('total_level')).toBe('No scores on this board yet.')
     expect(emptyBoardMessage('guild_total_level')).toBe(
       'No guilds yet — create or join one from the Guilds tab.',
     )

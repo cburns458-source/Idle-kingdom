@@ -352,7 +352,7 @@ export function leaderboardRows(entries: LeaderboardEntry[]): LeaderboardRowView
 export function emptyBoardMessage(boardKey: MultiplayerBoardKey): string {
   return boardKey === 'guild_total_level'
     ? 'No guilds yet — create or join one from the Guilds tab.'
-    : 'No scores yet — sync a cloud save to submit.'
+    : 'No scores on this board yet.'
 }
 
 /** One player standing in a shared space, or working the same activity. */

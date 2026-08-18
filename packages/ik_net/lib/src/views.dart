@@ -500,7 +500,7 @@ List<LeaderboardRowView> leaderboardRows(List<LeaderboardEntry> entries) {
 String emptyBoardMessage(MultiplayerBoardKey boardKey) {
   return boardKey == boardGuildTotalLevel
       ? 'No guilds yet — create or join one from the Guilds tab.'
-      : 'No scores yet — sync a cloud save to submit.';
+      : 'No scores on this board yet.';
 }
 
 /// One player standing in a shared space, or working the same activity.
