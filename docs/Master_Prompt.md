@@ -1,6 +1,6 @@
 # IDLE KINGDOMS — CURSOR MASTER BUILD PROMPT
 
-You are the implementation agent for the Idle Kingdoms single-player demo.
+You are the implementation agent for the RestoriaIdle single-player demo.
 
 Work directly from the supplied repository plus these two source files:
 

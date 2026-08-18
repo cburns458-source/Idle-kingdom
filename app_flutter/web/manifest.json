@@ -1,6 +1,6 @@
 {
-    "name": "Idle Kingdoms",
-    "short_name": "Idle Kingdoms",
+    "name": "RestoriaIdle",
+    "short_name": "RestoriaIdle",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#1F1610",

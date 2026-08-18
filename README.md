@@ -1,7 +1,8 @@
-# Idle Kingdoms
+# RestoriaIdle
 
-Offline-capable, mobile-first game built from the Game Bible and the compact JSON
-database in `content/`. It plays on its own; signing in adds the social screens.
+Mobile-first game set in Restoria, built from the Game Bible and the compact JSON
+database in `content/`. One account carries one character, on whichever device it
+is signed in on.
 
 The game is the Flutter client in `app_flutter/`, over the Dart packages in
 `packages/`. What remains under `src/` is not an app: it is the TypeScript rules
@@ -28,8 +29,7 @@ npm test                    # The reference rules, and the fixture drift check
 
 ## Notes
 
-- Launches straight into the game: no login, and no account needed to play.
+- Sign-in comes first: the character belongs to the account, not to the phone.
 - Loads `content/data/game-database.json`, the same copy both halves read.
-- Creates and reloads one local save automatically.
-- Accounts, cloud saves, and the social screens are optional, and hidden until
-  someone signs in.
+- Signing in loads the account's save, and signs the other device out.
+- The save is written back on its own; there is no sync button to press.

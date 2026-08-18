@@ -28,7 +28,7 @@ const String saveImportEmpty = 'Paste a save first.';
 
 /// Said for anything unreadable, because the reason is never actionable: a
 /// player who pasted the wrong thing needs to paste the right thing.
-const String saveImportUnreadable = 'That is not an Idle Kingdoms save.';
+const String saveImportUnreadable = 'That is not a RestoriaIdle save.';
 
 /// What to say once an imported save is the one being played.
 String saveImportedNotice(PlayerSave save) {

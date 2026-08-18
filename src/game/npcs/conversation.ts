@@ -36,7 +36,7 @@ import {
 const FALLBACK_MERCHANT_TIP = 'Here’s some tips about artisanry'
 const FALLBACK_MERCHANT_TIP_SPENT = 'I’ve already shared what I know about artisanry.'
 const FALLBACK_MERCHANT_LINE = 'Welcome to my shop.'
-const FALLBACK_NPC_DESCRIPTION = 'An inhabitant of Idale.'
+const FALLBACK_NPC_DESCRIPTION = 'An inhabitant of Restoria.'
 const FALLBACK_QUEST_ACTIVE_PROMPT = 'What else do you need?'
 
 export function merchantTipLine(db: GameDatabase): string {

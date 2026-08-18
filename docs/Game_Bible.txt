@@ -1,9 +1,9 @@
-IDLE KINGDOMS
+RESTORIAIDLE
 SINGLE-PLAYER DEMO GAME BIBLE
 
 Document status: Current source of truth for the single-player demo
-Game title: Idle Kingdoms (placeholder)
-World name: Idale (placeholder)
+Game title: RestoriaIdle
+World name: Restoria
 
 PURPOSE
 This document defines the playable offline-capable web demo. It contains the current gameplay, content, progression, art, interface, save, and data rules needed for the demo. Numerical balance values should remain data-driven unless explicitly fixed here.
@@ -13,7 +13,7 @@ This document defines the playable offline-capable web demo. It contains the cur
 ======================================================================
 
 1.1 HIGH CONCEPT
-Idle Kingdoms is a portrait-oriented 2D idle fantasy RPG set in the open world of Idale. The player explores a visible world map, selects location-based Activities, and progresses through Combat, Gathering, Standard Production, and Special Production. The game supports active play and up to 24 hours of unattended progression.
+RestoriaIdle is a portrait-oriented 2D idle fantasy RPG set in the open world of Restoria. The player explores a visible world map, selects location-based Activities, and progresses through Combat, Gathering, Standard Production, and Special Production. The game supports active play and up to 24 hours of unattended progression.
 
 Core loop:
 Explore -> Gather or Fight -> Process -> Create -> Improve -> Explore further
@@ -89,7 +89,7 @@ Damage Range: The minimum and maximum damage an entity can deal with one attack.
 ======================================================================
 
 4.1 WORLD MAP
-Idale is presented as a selectable map. Current geography includes:
+Restoria is presented as a selectable map. Current geography includes:
 - A river through the world.
 - The Farm, Town, and Goblin Encampment near the river.
 - Three river crossings.

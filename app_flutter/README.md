@@ -1,4 +1,4 @@
-# Idle Kingdoms — Flutter client
+# RestoriaIdle — Flutter client
 
 The Flutter front end for the game whose rules live in `../packages`. This package
 holds UI only: widgets format and lay out, and every number they show comes from

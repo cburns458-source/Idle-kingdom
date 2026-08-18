@@ -12,7 +12,7 @@ import 'knowledge.dart';
 const String _fallbackMerchantTip = 'Here\u2019s some tips about artisanry';
 const String _fallbackMerchantTipSpent = 'I\u2019ve already shared what I know about artisanry.';
 const String _fallbackMerchantLine = 'Welcome to my shop.';
-const String _fallbackNpcDescription = 'An inhabitant of Idale.';
+const String _fallbackNpcDescription = 'An inhabitant of Restoria.';
 const String _fallbackQuestActivePrompt = 'What else do you need?';
 
 String merchantTipLine(GameDatabase db) =>

@@ -140,7 +140,7 @@
     },
     {
       "Key": "copy.default_npc_description",
-      "Value": "An inhabitant of Idale.",
+      "Value": "An inhabitant of Restoria.",
       "Unit": null,
       "Notes": "Fallback NPC description."
     },
@@ -8293,7 +8293,7 @@
     {
       "Map ID": "MAP-0001",
       "Internal Key": "idale_main",
-      "Display Name": "Idale Main Map",
+      "Display Name": "Restoria Main Map",
       "Map Type": "Main world",
       "Status": "Confirmed",
       "Release Phase": "Launch",
@@ -8323,21 +8323,21 @@
     {
       "Map ID": "MAP-0004",
       "Internal Key": "idale_west",
-      "Display Name": "Western Idale",
+      "Display Name": "Western Restoria",
       "Map Type": "Future region",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Description": "Uncharted lands west of the main Idale map. Reserved for future content.",
+      "Description": "Uncharted lands west of the main Restoria map. Reserved for future content.",
       "Asset Key": "map_idale_west"
     },
     {
       "Map ID": "MAP-0005",
       "Internal Key": "idale_east",
-      "Display Name": "Eastern Idale",
+      "Display Name": "Eastern Restoria",
       "Map Type": "Future region",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Description": "Uncharted lands east of the main Idale map. Reserved for future content.",
+      "Description": "Uncharted lands east of the main Restoria map. Reserved for future content.",
       "Asset Key": "map_idale_east"
     },
     {

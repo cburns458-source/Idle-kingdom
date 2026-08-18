@@ -1,5 +1,5 @@
 name: ik_rules
-description: Pure Dart port of the Idle Kingdoms game rules. No IO, no Flutter.
+description: Pure Dart port of the RestoriaIdle game rules. No IO, no Flutter.
 publish_to: none
 version: 0.1.0
 resolution: workspace

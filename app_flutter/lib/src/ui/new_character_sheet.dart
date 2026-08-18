@@ -68,7 +68,7 @@ class _NewCharacterSheetState extends State<NewCharacterSheet> {
                 'Name your character',
                 style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
               ),
-              const MutedText('Choose a name and a people for your adventurer in Idale.'),
+              const MutedText('Choose a name and a people for your adventurer in Restoria.'),
               const SizedBox(height: 12),
               TextField(
                 controller: _name,

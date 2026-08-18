@@ -25,7 +25,7 @@ class IdleKingdomsApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Idle Kingdoms',
+      title: 'RestoriaIdle',
       debugShowCheckedModeBanner: false,
       theme: buildAppTheme(),
       home: const _BootGate(),
