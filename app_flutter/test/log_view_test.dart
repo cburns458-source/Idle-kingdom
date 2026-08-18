@@ -114,16 +114,14 @@ void main() {
     expect(find.textContaining('Deliver '), findsWidgets);
   });
 
-  testWidgets('withholds a recipe the player has not been taught', (tester) async {
+  testWidgets('the Log no longer carries a recipe book page', (tester) async {
     final controller = buildController(database, seed: startedCharacter(database));
     addTearDown(controller.dispose);
     await pumpShell(tester, controller);
     await openLog(tester);
 
-    await tester.tap(find.text('Recipe Book'));
-    await tester.pump();
-
-    expect(find.text('Unknown recipe'), findsWidgets);
+    expect(find.text('Recipe Book'), findsNothing);
+    expect(logCompletion(database.launch, controller.save).section('recipes'), isNull);
   });
 
   testWidgets('names a critter only once it has been caught', (tester) async {
@@ -159,5 +157,6 @@ void main() {
     expect(find.text('Log'), findsOne);
     expect(find.text('Achievements'), findsOne);
     expect(find.text('Quests'), findsOne);
+    expect(find.text('Recipe Book'), findsNothing);
   });
 }

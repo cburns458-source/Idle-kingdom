@@ -114,6 +114,26 @@ void main() {
     expect(find.textContaining('Copper Axe → Copper Axe'), findsWidgets);
   });
 
+  testWidgets('the recipe book lists locked projects the dropdown hides', (tester) async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(currentLocationId: forgeLocationId),
+    );
+    addTearDown(controller.dispose);
+
+    await pumpPanel(
+      tester,
+      ProjectPicker(controller: controller, station: stationFor(forgeLocationId, 'SKL-0011')),
+    );
+    expect(find.byType(DropdownButtonFormField<String>), findsNothing);
+    expect(find.textContaining('speak with the Master Dwarf'), findsOne);
+
+    await tester.tap(find.text('Recipe book'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Unknown recipe'), findsWidgets);
+    expect(find.text('Complete project'), findsNothing);
+  });
+
   testWidgets('says which mentor unlocks a station', (tester) async {
     final controller = buildController(
       database,

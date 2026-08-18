@@ -679,7 +679,7 @@ class _ProductionStage extends StatelessWidget {
   }
 }
 
-class _DamageFloater extends StatelessWidget {
+class _DamageFloater extends StatefulWidget {
   const _DamageFloater({
     super.key,
     required this.text,
@@ -696,27 +696,47 @@ class _DamageFloater extends StatelessWidget {
   final double fontSize;
 
   @override
+  State<_DamageFloater> createState() => _DamageFloaterState();
+}
+
+class _DamageFloaterState extends State<_DamageFloater> with SingleTickerProviderStateMixin {
+  late final AnimationController _life;
+  late final Animation<double> _opacity;
+
+  @override
+  void initState() {
+    super.initState();
+    _life = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: GameController.combatFloaterHoldMs),
+    )..forward();
+    _opacity = TweenSequence<double>([
+      TweenSequenceItem<double>(tween: Tween<double>(begin: 0, end: 1), weight: 20),
+      TweenSequenceItem<double>(tween: ConstantTween<double>(1), weight: 60),
+      TweenSequenceItem<double>(tween: Tween<double>(begin: 1, end: 0), weight: 20),
+    ]).animate(CurvedAnimation(parent: _life, curve: Curves.easeOut));
+  }
+
+  @override
+  void dispose() {
+    _life.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Align(
-      alignment: alignment,
+      alignment: widget.alignment,
       child: Transform.translate(
-        offset: offset,
-        child: TweenAnimationBuilder<double>(
-          tween: Tween<double>(begin: 0, end: 1),
-          duration: const Duration(milliseconds: 420),
-          curve: Curves.easeOut,
-          builder: (context, t, child) {
-            return Opacity(
-              opacity: t,
-              child: Transform.translate(offset: Offset(0, (1 - t) * 8), child: child),
-            );
-          },
+        offset: widget.offset,
+        child: FadeTransition(
+          opacity: _opacity,
           child: Text(
-            text,
+            widget.text,
             style: TextStyle(
-              fontSize: fontSize,
+              fontSize: widget.fontSize,
               fontWeight: FontWeight.w800,
-              color: color,
+              color: widget.color,
               shadows: const [
                 Shadow(color: Color(0xD9000000), blurRadius: 2),
                 Shadow(offset: Offset(0, 2), color: Color(0x8C000000), blurRadius: 4),

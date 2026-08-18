@@ -10,7 +10,6 @@ import 'game_image.dart';
 enum _LogTab {
   achievements('Achievements', 'Skill milestones unlocked on this save.', 'achievements'),
   quests('Quests', 'Quest log for this save.', 'quests'),
-  recipes('Recipe Book', 'Known recipes and special projects for this save.', 'recipes'),
   critters('Critters', 'Critters found while working their habitats.', 'critters');
 
   const _LogTab(this.label, this.lead, this.section);
@@ -22,7 +21,7 @@ enum _LogTab {
   final String section;
 }
 
-/// What this save has done: milestones, quests, recipes learned, critters met.
+/// What this save has done: milestones, quests, and critters met.
 class LogView extends StatefulWidget {
   const LogView({super.key, required this.controller});
 
@@ -145,10 +144,6 @@ class _LogViewState extends State<LogView> {
                         for (final objective in row.objectives) _ObjectiveBar(objective: objective),
                       ],
                     ),
-                ]),
-                _LogTab.recipes => _Rows([
-                  for (final row in recipeLog(db, save))
-                    _LogRow(title: row.title, detail: row.detail, highlight: row.known),
                 ]),
                 _LogTab.critters => _Rows([
                   for (final row in critterLog(save))

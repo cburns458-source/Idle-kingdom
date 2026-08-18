@@ -4,6 +4,7 @@ import 'package:ik_content/ik_content.dart';
 import '../js_compat.dart';
 import '../npcs/knowledge.dart';
 import '../production/recipes.dart';
+import '../recipes/knowledge.dart';
 import '../save/generated/save_models.dart';
 import '../spells/spells.dart';
 import 'enchantments.dart';
@@ -65,10 +66,23 @@ bool projectMatchesQuery(GameDatabase db, ProjectRow project, String query) {
   return candidates.any((value) => value != null && value.toLowerCase().contains(needle));
 }
 
+/// Whether this project can be completed right now: level, mentor, materials,
+/// gold, and (for an enchantment) a valid target.
+bool canMakeProject(GameDatabase db, PlayerSave save, ProjectRow project) {
+  if (!meetsProjectSkills(save, project) || !meetsProjectKnowledge(db, save, project)) {
+    return false;
+  }
+  if (maxProjectQuantity(save, project) < 1) return false;
+  final outputId = jsString(project.raw['Output Item / Target ID']);
+  if (!isEnchantmentOutput(outputId)) return true;
+  final enchantment = getEnchantment(db, outputId);
+  return enchantment != null && eligibleEnchantmentTargets(db, save, enchantment).isNotEmpty;
+}
+
 /// The projects a station offers, in menu order, narrowed by [query].
 ///
 /// Locked rows stay in the list: seeing what the next mentor or level unlocks is
-/// the point of the list.
+/// the point of the book. The start dropdown uses [readyProjectMenuList].
 List<ProjectListItem> projectMenuList(
   GameDatabase db,
   PlayerSave save,
@@ -82,19 +96,49 @@ List<ProjectListItem> projectMenuList(
         (project) => ProjectListItem(
           projectId: jsString(project.raw['Project ID']),
           label: _listLabel(db, project),
-          locked: !meetsProjectSkills(save, project) || !meetsProjectKnowledge(db, save, project),
+          locked: !canMakeProject(db, save, project),
         ),
       )
       .toList();
 }
 
+/// Projects this station can complete right now.
+List<ProjectListItem> readyProjectMenuList(
+  GameDatabase db,
+  PlayerSave save,
+  String facilityId,
+  String skillId, [
+  String query = '',
+]) {
+  return projectMenuList(db, save, facilityId, skillId, query).where((row) => !row.locked).toList();
+}
+
+/// Every project at this station, including locked ones, as recipe-book rows.
+List<RecipeBookEntry> recipeBookForProjectStation(
+  PlayerSave save,
+  GameDatabase db,
+  String facilityId,
+  String skillId,
+) {
+  final ids = projectsForFacility(
+    db,
+    facilityId,
+    skillId,
+  ).map((project) => jsString(project.raw['Project ID'])).toSet();
+  return listRecipeBookEntries(
+    save,
+    db,
+  ).where((entry) => entry.kind == 'project' && ids.contains(entry.id)).toList();
+}
+
 /// The project a station opens on: the first one that can actually be made.
 String? defaultProjectId(GameDatabase db, PlayerSave save, String facilityId, String skillId) {
   final projects = projectsForFacility(db, facilityId, skillId);
-  final ready = projects.firstWhereOrNull(
+  final ready = projects.firstWhereOrNull((project) => canMakeProject(db, save, project));
+  final unlocked = projects.firstWhereOrNull(
     (project) => meetsProjectSkills(save, project) && meetsProjectKnowledge(db, save, project),
   );
-  final chosen = ready ?? projects.firstOrNull;
+  final chosen = ready ?? unlocked ?? projects.firstOrNull;
   return chosen == null ? null : jsString(chosen.raw['Project ID']);
 }
 

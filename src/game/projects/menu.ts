@@ -2,6 +2,7 @@ import type { ProjectRow } from '../data/projectTypes'
 import type { GameDatabase } from '../data/types'
 import { hasProjectKnowledge } from '../npcs/knowledge'
 import { inventoryCount } from '../production/recipes'
+import { listRecipeBookEntries, type RecipeBookEntry } from '../recipes/knowledge'
 import type { PlayerSave } from '../save/types'
 import { isSpellItem, spellTooltipLines } from '../spells/spells'
 import { eligibleEnchantmentTargets, type EnchantTargetOption } from './enchantments'
@@ -57,10 +58,25 @@ export function projectMatchesQuery(db: GameDatabase, project: ProjectRow, query
 }
 
 /**
+ * Whether this project can be completed right now: level, mentor, materials,
+ * gold, and (for an enchantment) a valid target.
+ */
+export function canMakeProject(db: GameDatabase, save: PlayerSave, project: ProjectRow): boolean {
+  if (!meetsProjectSkills(save, project) || !meetsProjectKnowledge(db, save, project)) {
+    return false
+  }
+  if (maxProjectQuantity(save, project) < 1) return false
+  const outputId = project['Output Item / Target ID']
+  if (!isEnchantmentOutput(outputId)) return true
+  const enchantment = getEnchantment(db, outputId)
+  return enchantment != null && eligibleEnchantmentTargets(db, save, enchantment).length > 0
+}
+
+/**
  * The projects a station offers, in menu order, narrowed by [query].
  *
  * Locked rows stay in the list: seeing what the next mentor or level unlocks is
- * the point of the list.
+ * the point of the book. The start dropdown uses [readyProjectMenuList].
  */
 export function projectMenuList(
   db: GameDatabase,
@@ -74,8 +90,34 @@ export function projectMenuList(
     .map((project) => ({
       projectId: project['Project ID'],
       label: listLabel(db, project),
-      locked: !meetsProjectSkills(save, project) || !meetsProjectKnowledge(db, save, project),
+      locked: !canMakeProject(db, save, project),
     }))
+}
+
+/** Projects this station can complete right now. */
+export function readyProjectMenuList(
+  db: GameDatabase,
+  save: PlayerSave,
+  facilityId: string,
+  skillId: string,
+  query = '',
+): ProjectListItem[] {
+  return projectMenuList(db, save, facilityId, skillId, query).filter((row) => !row.locked)
+}
+
+/** Every project at this station, including locked ones, as recipe-book rows. */
+export function recipeBookForProjectStation(
+  save: PlayerSave,
+  db: GameDatabase,
+  facilityId: string,
+  skillId: string,
+): RecipeBookEntry[] {
+  const ids = new Set(
+    projectsForFacility(db, facilityId, skillId).map((project) => project['Project ID']),
+  )
+  return listRecipeBookEntries(save, db).filter(
+    (entry) => entry.kind === 'project' && ids.has(entry.id),
+  )
 }
 
 /** The project a station opens on: the first one that can actually be made. */
@@ -86,10 +128,11 @@ export function defaultProjectId(
   skillId: string,
 ): string | null {
   const projects = projectsForFacility(db, facilityId, skillId)
-  const ready = projects.find(
+  const ready = projects.find((project) => canMakeProject(db, save, project))
+  const unlocked = projects.find(
     (project) => meetsProjectSkills(save, project) && meetsProjectKnowledge(db, save, project),
   )
-  return ready?.['Project ID'] ?? projects[0]?.['Project ID'] ?? null
+  return ready?.['Project ID'] ?? unlocked?.['Project ID'] ?? projects[0]?.['Project ID'] ?? null
 }
 
 export interface ProjectIngredientLine {

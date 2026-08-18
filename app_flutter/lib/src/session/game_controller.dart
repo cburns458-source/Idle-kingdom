@@ -122,6 +122,7 @@ class GameController extends ChangeNotifier {
   CosmeticUnlockNotice? _cosmeticUnlock;
   AutoEquipProposal? _autoEquip;
   CombatRoundEvent? _lastRound;
+  num? _lastRoundAtMs;
   int _roundSeq = 0;
   CraftPopup? _craftPopup;
   HealPopup? _healPopup;
@@ -153,13 +154,19 @@ class GameController extends ChangeNotifier {
   /// Bumps when [lastRound] is replaced, so a floater can restart its layout.
   int get lastRoundSeq => _roundSeq;
 
+  /// How long craft, heal, and damage pops stay on the stage.
+  static const int stagePopupHoldMs = 1000;
+
   /// How long a finished craft's item icon stays over the workstation.
-  static const int craftPopupHoldMs = 2000;
+  static const int craftPopupHoldMs = stagePopupHoldMs;
 
   /// How long the green heal pop stays after a victory eat.
-  static const int healPopupHoldMs = 2000;
+  static const int healPopupHoldMs = stagePopupHoldMs;
 
-  /// The last finished craft, or null once its two seconds are up.
+  /// How long player and enemy hit numbers stay up.
+  static const int combatFloaterHoldMs = stagePopupHoldMs;
+
+  /// The last finished craft, or null once its second is up.
   CraftPopup? get craftPopup {
     final popup = _craftPopup;
     if (popup == null) return null;
@@ -167,7 +174,7 @@ class GameController extends ChangeNotifier {
     return popup;
   }
 
-  /// The last victory eat, or null once its two seconds are up.
+  /// The last victory eat, or null once its second is up.
   HealPopup? get healPopup {
     final popup = _healPopup;
     if (popup == null) return null;
@@ -229,12 +236,12 @@ class GameController extends ChangeNotifier {
     return save.combatEnemyHp ?? 0;
   }
 
-  /// Damage floaters stay up through the blow hold, then drop for the banner.
+  /// Damage numbers stay for one second, then drop.
   bool get showLastRoundFloaters {
     final round = _lastRound;
-    if (round == null) return false;
-    if (round.outcome == 'victory' || round.outcome == 'defeat') return combatBlowHold;
-    return true;
+    final shownAt = _lastRoundAtMs;
+    if (round == null || shownAt == null) return false;
+    return session.clock() - shownAt < combatFloaterHoldMs;
   }
 
   /// How far the current combat round has run, from 0 to 1.
@@ -424,6 +431,7 @@ class GameController extends ChangeNotifier {
         );
       case final CombatRoundEvent round:
         _lastRound = round;
+        _lastRoundAtMs = session.clock();
         _roundSeq += 1;
         if (round.outcome == 'victory' || round.outcome == 'defeat') {
           _outcomeHold = CombatOutcomeHold(
@@ -446,6 +454,7 @@ class GameController extends ChangeNotifier {
 
   void _clearStageFx() {
     _lastRound = null;
+    _lastRoundAtMs = null;
     _craftPopup = null;
     _healPopup = null;
     _outcomeHold = null;

@@ -116,6 +116,17 @@ export function recipesForActivity(
   ).sort((a, b) => a['Proficiency Level'] - b['Proficiency Level'])
 }
 
+/** Known recipes at this station that the bag can actually make once. */
+export function readyRecipesForActivity(
+  db: GameDatabase,
+  save: PlayerSave,
+  activityId: string,
+): RecipeRow[] {
+  return recipesForActivity(db, save, activityId).filter(
+    (recipe) => maxCraftsFromMaterials(save, recipe) >= 1,
+  )
+}
+
 export function getRecipe(db: GameDatabase, recipeId: string): RecipeRow | undefined {
   return db.Recipes.find((recipe) => recipe['Recipe ID'] === recipeId)
 }

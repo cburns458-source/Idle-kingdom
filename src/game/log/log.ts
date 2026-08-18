@@ -3,7 +3,7 @@ import { CRITTER_DEFS, collectionCount } from '../critters/critters'
 import type { GameDatabase } from '../data/types'
 import { questObjectiveProgress } from '../quests/objectives'
 import { asQuestRows, getQuestProgress, questStatusLabel } from '../quests/quests'
-import { listRecipeBookEntries } from '../recipes/knowledge'
+import { listRecipeBookEntries, type RecipeBookEntry } from '../recipes/knowledge'
 import type { PlayerSave } from '../save/types'
 
 /** One skill milestone, and whether this save has reached it. */
@@ -103,29 +103,35 @@ export interface RecipeLogRow {
   known: boolean
 }
 
-export function recipeLog(db: GameDatabase, save: PlayerSave): RecipeLogRow[] {
-  return listRecipeBookEntries(save, db).map((entry) => {
-    const kind = entry.kind === 'project' ? 'Project' : 'Recipe'
-    if (entry.known) {
-      return {
-        key: `${entry.kind}-${entry.id}`,
-        title: entry.name,
-        detail:
-          `${kind} · ${entry.skill} ${entry.proficiency} · ` +
-          `${entry.station} (${entry.location}) · ${entry.materials} → ${entry.output}`,
-        known: true,
-      }
-    }
-    // A mentor-taught recipe is not even named until somebody teaches it.
+export function recipeLogRowFromEntry(entry: RecipeBookEntry): RecipeLogRow {
+  const kind = entry.kind === 'project' ? 'Project' : 'Recipe'
+  if (entry.known) {
     return {
       key: `${entry.kind}-${entry.id}`,
-      title: entry.hintUnknown ? 'Unknown recipe' : `Locked · ${entry.skill} ${entry.proficiency}`,
-      detail: entry.hintUnknown
-        ? entry.knowledgeSource
-        : `Unlocks at ${entry.skill} level ${entry.proficiency}`,
-      known: false,
+      title: entry.name,
+      detail:
+        `${kind} · ${entry.skill} ${entry.proficiency} · ` +
+        `${entry.station} (${entry.location}) · ${entry.materials} → ${entry.output}`,
+      known: true,
     }
-  })
+  }
+  // A mentor-taught recipe is not even named until somebody teaches it.
+  return {
+    key: `${entry.kind}-${entry.id}`,
+    title: entry.hintUnknown ? 'Unknown recipe' : `Locked · ${entry.skill} ${entry.proficiency}`,
+    detail: entry.hintUnknown
+      ? entry.knowledgeSource
+      : `Unlocks at ${entry.skill} level ${entry.proficiency}`,
+    known: false,
+  }
+}
+
+export function recipeLog(db: GameDatabase, save: PlayerSave): RecipeLogRow[] {
+  return listRecipeBookEntries(save, db).map(recipeLogRowFromEntry)
+}
+
+export function recipeLogForEntries(entries: RecipeBookEntry[]): RecipeLogRow[] {
+  return entries.map(recipeLogRowFromEntry)
 }
 
 /** One page of the critter collection, blank until one has been caught. */
@@ -157,7 +163,7 @@ export function critterLog(save: PlayerSave): CritterLogRow[] {
 
 /** How far through one page of the Log a save has got. */
 export interface LogSectionCompletion {
-  /** `achievements`, `quests`, `recipes`, or `critters`. */
+  /** `achievements`, `quests`, or `critters`. */
   section: string
   done: number
   total: number
@@ -185,7 +191,6 @@ function completion(section: string, done: number, total: number): LogSectionCom
 export function logCompletion(db: GameDatabase, save: PlayerSave): LogCompletion {
   const achievements = achievementLog(db, save)
   const quests = questLog(db, save)
-  const recipes = recipeLog(db, save)
   const critters = critterLog(save)
 
   const sections = [
@@ -195,7 +200,6 @@ export function logCompletion(db: GameDatabase, save: PlayerSave): LogCompletion
       achievements.length,
     ),
     completion('quests', quests.filter((row) => row.completed).length, quests.length),
-    completion('recipes', recipes.filter((row) => row.known).length, recipes.length),
     completion('critters', critters.filter((row) => row.found).length, critters.length),
   ]
 

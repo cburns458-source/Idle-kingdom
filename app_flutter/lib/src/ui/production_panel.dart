@@ -8,6 +8,7 @@ import 'format.dart';
 import 'ingredient_chip.dart';
 import 'item_icon.dart';
 import 'quantity_sheet.dart';
+import 'recipe_book_sheet.dart';
 
 /// The workshop counter: choose a recipe, choose how many, start the queue.
 ///
@@ -56,9 +57,18 @@ class _ProductionPickerState extends State<ProductionPicker> {
     widget.onClose?.call();
   }
 
+  void _openBook() {
+    showStationRecipeBook(
+      context,
+      title: widget.activity.contextualName ?? widget.activity.internalKey,
+      rows: recipeLogForEntries(recipeBookForActivity(save, db, widget.activity.activityId)),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final recipes = recipesForActivity(db, save, widget.activity.activityId);
+    final known = recipesForActivity(db, save, widget.activity.activityId);
+    final recipes = readyRecipesForActivity(db, save, widget.activity.activityId);
     final recipe =
         recipes.where((row) => row.recipeId == _recipeId).firstOrNull ?? recipes.firstOrNull;
 
@@ -74,6 +84,7 @@ class _ProductionPickerState extends State<ProductionPicker> {
                   style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
                 ),
               ),
+              TextButton(onPressed: _openBook, child: const Text('Recipe book')),
               if (widget.onClose != null)
                 IconButton(
                   onPressed: widget.onClose,
@@ -84,8 +95,10 @@ class _ProductionPickerState extends State<ProductionPicker> {
           ),
           const SizedBox(height: 8),
           if (recipe == null)
-            const MutedText(
-              'No recipes yet. Raise the skill, or learn one from a book or a person.',
+            MutedText(
+              known.isEmpty
+                  ? 'No recipes yet. Raise the skill, or learn one from a book or a person.'
+                  : 'No recipes you can make right now. Open the recipe book to see what you need.',
             )
           else ...[
             DropdownButtonFormField<String>(

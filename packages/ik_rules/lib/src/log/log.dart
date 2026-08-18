@@ -181,30 +181,36 @@ class RecipeLogRow {
   };
 }
 
-List<RecipeLogRow> recipeLog(GameDatabase db, PlayerSave save) {
-  return listRecipeBookEntries(save, db).map((entry) {
-    final kind = entry.kind == 'project' ? 'Project' : 'Recipe';
-    final proficiency = jsNumberToString(entry.proficiency);
-    if (entry.known) {
-      return RecipeLogRow(
-        key: '${entry.kind}-${entry.id}',
-        title: entry.name,
-        detail:
-            '$kind · ${entry.skill} $proficiency · '
-            '${entry.station} (${entry.location}) · ${entry.materials} → ${entry.output}',
-        known: true,
-      );
-    }
-    // A mentor-taught recipe is not even named until somebody teaches it.
+RecipeLogRow recipeLogRowFromEntry(RecipeBookEntry entry) {
+  final kind = entry.kind == 'project' ? 'Project' : 'Recipe';
+  final proficiency = jsNumberToString(entry.proficiency);
+  if (entry.known) {
     return RecipeLogRow(
       key: '${entry.kind}-${entry.id}',
-      title: entry.hintUnknown ? 'Unknown recipe' : 'Locked · ${entry.skill} $proficiency',
-      detail: entry.hintUnknown
-          ? entry.knowledgeSource
-          : 'Unlocks at ${entry.skill} level $proficiency',
-      known: false,
+      title: entry.name,
+      detail:
+          '$kind · ${entry.skill} $proficiency · '
+          '${entry.station} (${entry.location}) · ${entry.materials} → ${entry.output}',
+      known: true,
     );
-  }).toList();
+  }
+  // A mentor-taught recipe is not even named until somebody teaches it.
+  return RecipeLogRow(
+    key: '${entry.kind}-${entry.id}',
+    title: entry.hintUnknown ? 'Unknown recipe' : 'Locked · ${entry.skill} $proficiency',
+    detail: entry.hintUnknown
+        ? entry.knowledgeSource
+        : 'Unlocks at ${entry.skill} level $proficiency',
+    known: false,
+  );
+}
+
+List<RecipeLogRow> recipeLog(GameDatabase db, PlayerSave save) {
+  return listRecipeBookEntries(save, db).map(recipeLogRowFromEntry).toList();
+}
+
+List<RecipeLogRow> recipeLogForEntries(List<RecipeBookEntry> entries) {
+  return entries.map(recipeLogRowFromEntry).toList();
 }
 
 /// One page of the critter collection, blank until one has been caught.
@@ -243,7 +249,7 @@ class CritterLogRow {
 class LogSectionCompletion {
   const LogSectionCompletion({required this.section, required this.done, required this.total});
 
-  /// `achievements`, `quests`, `recipes`, or `critters`.
+  /// `achievements`, `quests`, or `critters`.
   final String section;
   final num done;
   final num total;
@@ -287,7 +293,6 @@ class LogCompletion {
 LogCompletion logCompletion(GameDatabase db, PlayerSave save) {
   final achievements = achievementLog(db, save);
   final quests = questLog(db, save);
-  final recipes = recipeLog(db, save);
   final critters = critterLog(save);
 
   final sections = <LogSectionCompletion>[
@@ -300,11 +305,6 @@ LogCompletion logCompletion(GameDatabase db, PlayerSave save) {
       section: 'quests',
       done: quests.where((row) => row.completed).length,
       total: quests.length,
-    ),
-    LogSectionCompletion(
-      section: 'recipes',
-      done: recipes.where((row) => row.known).length,
-      total: recipes.length,
     ),
     LogSectionCompletion(
       section: 'critters',

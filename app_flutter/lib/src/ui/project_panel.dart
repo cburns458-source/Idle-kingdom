@@ -7,6 +7,7 @@ import 'format.dart';
 import 'ingredient_chip.dart';
 import 'item_icon.dart';
 import 'quantity_sheet.dart';
+import 'recipe_book_sheet.dart';
 
 /// A Special Production station: pick a project, then complete it on the spot.
 ///
@@ -74,6 +75,16 @@ class _ProjectPickerState extends State<ProjectPicker> {
     await showProjectReceipt(context, receipt: receipt);
   }
 
+  void _openBook() {
+    showStationRecipeBook(
+      context,
+      title: widget.station.label,
+      rows: recipeLogForEntries(
+        recipeBookForProjectStation(controller.save, controller.db, facilityId, skillId),
+      ),
+    );
+  }
+
   String? _preferredTargetId(ProjectDetail detail) {
     for (final target in detail.enchantTargets) {
       if (target.preferred) return target.id;
@@ -81,9 +92,20 @@ class _ProjectPickerState extends State<ProjectPicker> {
     return detail.enchantTargets.isEmpty ? null : detail.enchantTargets.first.id;
   }
 
+  String _emptyCopy(List<ProjectListItem> defined) {
+    if (defined.isEmpty) return 'No projects are defined for this station yet.';
+    final knowledge = hasProjectKnowledge(controller.db, controller.save, skillId);
+    if (!knowledge.ok) {
+      return 'Locked — speak with the ${knowledge.npcName ?? 'mentor'} to unlock '
+          '${widget.station.skillName} projects.';
+    }
+    return 'No projects you can make right now. Open the recipe book to see what you need.';
+  }
+
   @override
   Widget build(BuildContext context) {
-    final all = projectMenuList(controller.db, controller.save, facilityId, skillId);
+    final defined = projectMenuList(controller.db, controller.save, facilityId, skillId);
+    final all = readyProjectMenuList(controller.db, controller.save, facilityId, skillId);
     final selectedId = all.any((row) => row.projectId == _projectId)
         ? _projectId
         : (all.isEmpty ? null : all.first.projectId);
@@ -103,6 +125,7 @@ class _ProjectPickerState extends State<ProjectPicker> {
                   style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
                 ),
               ),
+              TextButton(onPressed: _openBook, child: const Text('Recipe book')),
               if (widget.onClose != null)
                 IconButton(
                   onPressed: widget.onClose,
@@ -113,7 +136,7 @@ class _ProjectPickerState extends State<ProjectPicker> {
           ),
           const SizedBox(height: 8),
           if (all.isEmpty)
-            const MutedText('No projects are defined for this station yet.')
+            MutedText(_emptyCopy(defined))
           else ...[
             DropdownButtonFormField<String>(
               initialValue: selectedId,

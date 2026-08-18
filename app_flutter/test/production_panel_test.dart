@@ -13,6 +13,7 @@ void main() {
   const kitchenActivityId = 'ACT-0017';
   const kitchenLocationId = 'LOC-0023';
   const rawPotatoId = 'ITEM-0025';
+  const rawCrawfishId = 'ITEM-0047';
   const bakedPotatoRecipeId = 'RCP-0001';
 
   setUpAll(() {
@@ -48,20 +49,31 @@ void main() {
     expect(controller.save.currentActivityId, kitchenActivityId);
   });
 
-  testWidgets('shows an ingredient the bag is short of', (tester) async {
+  testWidgets('hides recipes the bag cannot make and keeps them in the book', (tester) async {
     final controller = buildController(database, seed: cook(potatoes: 0));
     addTearDown(controller.dispose);
 
     await pumpPanel(tester, ProductionPicker(controller: controller, activity: kitchen()));
 
-    expect(find.text('0/1'), findsOne);
-    // Nothing to work with, so the queue cannot be started.
-    final start = tester.widget<FilledButton>(find.widgetWithText(FilledButton, 'Start queue'));
-    expect(start.onPressed, isNull);
+    expect(find.text('Start queue'), findsNothing);
+    expect(find.textContaining('No recipes you can make right now'), findsOne);
+
+    await tester.tap(find.text('Recipe book'));
+    await tester.pumpAndSettle();
+    expect(find.text('Baked Potato'), findsWidgets);
+    expect(find.textContaining('Locked · '), findsWidgets);
   });
 
   testWidgets('starts the quantity over when the recipe changes', (tester) async {
-    final controller = buildController(database, seed: cook());
+    final controller = buildController(
+      database,
+      seed: cook().copyWith(
+        inventory: const [
+          InventoryStack(itemId: rawPotatoId, quantity: 10),
+          InventoryStack(itemId: rawCrawfishId, quantity: 4),
+        ],
+      ),
+    );
     addTearDown(controller.dispose);
 
     await pumpPanel(tester, ProductionPicker(controller: controller, activity: kitchen()));

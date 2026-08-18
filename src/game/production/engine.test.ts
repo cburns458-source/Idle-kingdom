@@ -10,7 +10,13 @@ import {
   completeProductionCraft,
   resolveProductionProgress,
 } from './engine'
-import { canKnowRecipe, getRecipe, isCompleteRecipe, recipesForActivity } from './recipes'
+import {
+  canKnowRecipe,
+  getRecipe,
+  isCompleteRecipe,
+  readyRecipesForActivity,
+  recipesForActivity,
+} from './recipes'
 
 const rawDatabase = JSON.parse(
   readFileSync(resolve(process.cwd(), 'content/data/game-database.json'), 'utf8'),
@@ -31,6 +37,12 @@ describe('standard production', () => {
 
     const recipes = recipesForActivity(launch, save, 'ACT-0017')
     expect(recipes.some((recipe) => recipe['Recipe ID'] === 'RCP-0001')).toBe(true)
+    expect(
+      readyRecipesForActivity(launch, save, 'ACT-0017').some(
+        (recipe) => recipe['Recipe ID'] === 'RCP-0001',
+      ),
+    ).toBe(true)
+    expect(readyRecipesForActivity(launch, createNewSave(launch), 'ACT-0017')).toHaveLength(0)
 
     const queued = beginProductionQueue(launch, save, 'ACT-0017', 'RCP-0001', 3)
     expect(queued.ok).toBe(true)

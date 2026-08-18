@@ -78,11 +78,18 @@ void main() {
     expect(find.bySemanticsLabel('Round progress'), findsOne);
 
     clock.advance(configNumber(database.launch, 'combat_round_duration', 4) * 1000);
+    controller.tick();
     await tester.pump();
 
     expect(controller.lastRound, isNotNull);
     expect(controller.lastRound!.playerHit, greaterThan(0));
+    expect(controller.showLastRoundFloaters, isTrue);
     expect(find.textContaining('${controller.lastRound!.playerHit.round()}'), findsWidgets);
+
+    clock.advance(GameController.combatFloaterHoldMs);
+    controller.tick();
+    await tester.pump();
+    expect(controller.showLastRoundFloaters, isFalse);
   });
 
   testWidgets('a finished craft pops the item over the workstation', (tester) async {

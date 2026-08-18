@@ -130,6 +130,26 @@ List<RecipeRow> recipesForActivity(GameDatabase db, PlayerSave save, String acti
   return matching;
 }
 
+/// Known recipes at this station that the bag can actually make once.
+List<RecipeRow> readyRecipesForActivity(GameDatabase db, PlayerSave save, String activityId) {
+  return recipesForActivity(
+    db,
+    save,
+    activityId,
+  ).where((recipe) => maxCraftsFromMaterials(save, recipe) >= 1).toList();
+}
+
+/// Every recipe at this station, including locked and unknown ones.
+List<RecipeBookEntry> recipeBookForActivity(PlayerSave save, GameDatabase db, String activityId) {
+  final facilityId = facilityIdForActivity(db, activityId);
+  if (facilityId == null) return const <RecipeBookEntry>[];
+  return listRecipeBookEntries(save, db).where((entry) {
+    if (entry.kind != 'recipe') return false;
+    final recipe = getRecipe(db, entry.id);
+    return recipe != null && recipeMatchesFacility(jsString(recipe.raw['Facility ID']), facilityId);
+  }).toList();
+}
+
 RecipeRow? getRecipe(GameDatabase db, String recipeId) {
   return db.recipes.firstWhereOrNull((recipe) => recipe.raw['Recipe ID'] == recipeId);
 }

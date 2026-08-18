@@ -2,7 +2,12 @@ import type { RecipeRow } from '../data/recipeTypes'
 import type { GameDatabase } from '../data/types'
 import { getSkillProgress } from '../activity/xp'
 import { hasProjectKnowledge } from '../npcs/knowledge'
-import { getRecipe, isCompleteRecipe } from '../production/recipes'
+import {
+  facilityIdForActivity,
+  getRecipe,
+  isCompleteRecipe,
+  recipeMatchesFacility,
+} from '../production/recipes'
 import { getProject, isCompleteProject } from '../projects/projects'
 import type { PlayerSave } from '../save/types'
 
@@ -178,6 +183,21 @@ export function listRecipeBookEntries(save: PlayerSave, db: GameDatabase): Recip
     if (a.known !== b.known) return a.known ? -1 : 1
     if (a.kind !== b.kind) return a.kind === 'recipe' ? -1 : 1
     return a.name.localeCompare(b.name)
+  })
+}
+
+/** Every recipe at this station, including locked and unknown ones. */
+export function recipeBookForActivity(
+  save: PlayerSave,
+  db: GameDatabase,
+  activityId: string,
+): RecipeBookEntry[] {
+  const facilityId = facilityIdForActivity(db, activityId)
+  if (!facilityId) return []
+  return listRecipeBookEntries(save, db).filter((entry) => {
+    if (entry.kind !== 'recipe') return false
+    const recipe = getRecipe(db, entry.id)
+    return recipe != null && recipeMatchesFacility(recipe['Facility ID'], facilityId)
   })
 }
 
