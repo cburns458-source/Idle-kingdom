@@ -85,12 +85,14 @@ class WorldMapView extends StatelessWidget {
         LayoutBuilder(
           builder: (context, constraints) {
             final box = constraints.biggest;
+            final artAspect = artAspectRatioForMap(browseMapId);
             return Stack(
               children: [
                 for (final node in nodes)
                   _PinnedToArt(
                     position: positionOnBrowseMap(node.locationId, browseMapId, node),
                     box: box,
+                    aspectRatio: artAspect,
                     anchorFromTop: mapNodeDotCenter,
                     child: _MapNode(
                       location: node,
@@ -113,6 +115,7 @@ class WorldMapView extends StatelessWidget {
                       walkProgress!,
                     ),
                     box: box,
+                    aspectRatio: artAspect,
                     anchorFromTop: mapWalkerSize / 2,
                     child: _MapWalker(
                       progress: walkProgress!,
@@ -159,12 +162,14 @@ class _PinnedToArt extends StatelessWidget {
   const _PinnedToArt({
     required this.position,
     required this.box,
+    required this.aspectRatio,
     required this.anchorFromTop,
     required this.child,
   });
 
   final NodePosition position;
   final Size box;
+  final double aspectRatio;
 
   /// How far down [child] the coordinate should land. A node label hangs below
   /// its dot, so centring the whole widget would leave the dot sitting high.
@@ -174,7 +179,7 @@ class _PinnedToArt extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final point = mapArtOffset(position, box);
+    final point = mapArtOffset(position, box, aspectRatio: aspectRatio);
     return Positioned(
       left: point.dx,
       top: point.dy - anchorFromTop,

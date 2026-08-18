@@ -13,35 +13,35 @@ class NodePosition {
   Map<String, Object?> toJson() => <String, Object?>{'x': x, 'y': y};
 }
 
-/// The main map is a square plate; nodes sit on landmarks in the generated art.
+/// The main map is a 9:16 plate; nodes sit on landmarks in the generated art.
 const Map<String, NodePosition> mainMapNodeLayout = <String, NodePosition>{
-  // NW castle with blue roofs
-  'LOC-0013': NodePosition(x: 24, y: 24),
+  // NW castle with red roofs
+  'LOC-0013': NodePosition(x: 26, y: 33),
   // Ancient Forest north of the castle
-  'LOC-0018': NodePosition(x: 22, y: 10),
+  'LOC-0018': NodePosition(x: 22, y: 23),
   // Temple on the ridge between castle and mountains
-  'LOC-0036': NodePosition(x: 42, y: 16),
+  'LOC-0036': NodePosition(x: 45, y: 25),
   // Mountain peaks / ridge
-  'LOC-0006': NodePosition(x: 62, y: 16),
+  'LOC-0006': NodePosition(x: 68, y: 21),
   // Cave mouth at the foot of the mountains
-  'LOC-0010': NodePosition(x: 60, y: 26),
+  'LOC-0010': NodePosition(x: 58, y: 36),
   // Wizard tower with blue roof (NE)
-  'LOC-0007': NodePosition(x: 82, y: 24),
+  'LOC-0007': NodePosition(x: 84, y: 28),
   // West kingswoods forest
-  'LOC-0008': NodePosition(x: 14, y: 34),
+  'LOC-0008': NodePosition(x: 16, y: 40),
   // Central village / town square (gateway into Town Map)
-  'LOC-0002': NodePosition(x: 30, y: 48),
+  'LOC-0002': NodePosition(x: 28, y: 50),
   // Fortified camp (Goblin Camp)
-  'LOC-0003': NodePosition(x: 72, y: 48),
+  'LOC-0003': NodePosition(x: 74, y: 45),
   // Meadow
-  'LOC-0009': NodePosition(x: 16, y: 58),
+  'LOC-0009': NodePosition(x: 20, y: 57),
   // Mine entrance with ore carts
-  'LOC-0005': NodePosition(x: 30, y: 72),
+  'LOC-0005': NodePosition(x: 30, y: 64),
   // Farm fields / windmill
-  'LOC-0001': NodePosition(x: 74, y: 70),
+  'LOC-0001': NodePosition(x: 76, y: 65),
   // Harbor / dock at river mouth
-  'LOC-0004': NodePosition(x: 55, y: 76),
-  // Citadel Hub gateway at the river fork
+  'LOC-0004': NodePosition(x: 54, y: 70),
+  // Road to the Citadel — horse and carriage at the river fork
   'LOC-0027': NodePosition(x: 48, y: 42),
 };
 

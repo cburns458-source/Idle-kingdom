@@ -24,12 +24,12 @@ void main() {
     expect(mapWalkStartLocationId(database.launch, 'LOC-0028', mainMapId), citadelGatewayId);
   });
 
-  test('the art keeps its shape on a square viewport', () {
+  test('square district art fills a square viewport', () {
     final rect = mapArtRect(const Size(300, 300));
     expect(rect, const Rect.fromLTWH(0, 0, 300, 300));
   });
 
-  test('a tall viewport crops the art sideways, and nodes follow the crop', () {
+  test('a tall viewport crops square art sideways, and nodes follow the crop', () {
     const box = Size(300, 500);
     final rect = mapArtRect(box);
 
@@ -45,12 +45,27 @@ void main() {
     expect(mapArtOffset(const NodePosition(x: 0, y: 0), box), const Offset(-100, 0));
   });
 
-  test('a wide viewport crops the art top and bottom', () {
+  test('a wide viewport crops square art top and bottom', () {
     const box = Size(500, 300);
     final rect = mapArtRect(box);
     expect(rect.width, 500);
     expect(rect.top, -100);
     expect(mapArtOffset(const NodePosition(x: 50, y: 50), box), const Offset(250, 150));
+  });
+
+  test('portrait main-map art fills a 9:16 phone column', () {
+    const box = Size(360, 640);
+    final rect = mapArtRect(box, aspectRatio: mainMapArtAspectRatio);
+    expect(rect, const Rect.fromLTWH(0, 0, 360, 640));
+    expect(
+      mapArtOffset(const NodePosition(x: 50, y: 50), box, aspectRatio: mainMapArtAspectRatio),
+      const Offset(180, 320),
+    );
+  });
+
+  test('the main map uses a portrait plate and districts stay square', () {
+    expect(artAspectRatioForMap(mainMapId), mainMapArtAspectRatio);
+    expect(artAspectRatioForMap(townMapId), mapArtAspectRatio);
   });
 
   test('an unmeasured box does not throw', () {

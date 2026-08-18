@@ -2,8 +2,16 @@ import 'dart:ui';
 
 import 'package:ik_rules/ik_rules.dart';
 
-/// Every map background ships square, so the art covers a square area.
+/// District maps still ship square until they are redrawn.
 const double mapArtAspectRatio = 1;
+
+/// The main overworld is a portrait plate so it matches the phone column.
+const double mainMapArtAspectRatio = 9 / 16;
+
+/// Cover-fit aspect for [mapId]'s background. Nodes are percentages of that art.
+double artAspectRatioForMap(String mapId) {
+  return mapId == mainMapId ? mainMapArtAspectRatio : mapArtAspectRatio;
+}
 
 /// Where the map art actually lands inside [box] once [BoxFit.cover] has had
 /// its way with it.
