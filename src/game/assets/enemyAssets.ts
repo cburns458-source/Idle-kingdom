@@ -23,6 +23,7 @@ export const ENEMY_ASSET_PATHS: Record<string, string> = {
   'ENM-0018': '/assets/enemies/enm_elder_rock_troll.webp',
   'ENM-0019': '/assets/enemies/enm_castle_guard.webp',
   'ENM-0020': '/assets/enemies/enm_castle_guard.webp',
+  'ENM-0021': '/assets/enemies/enm_seagull.webp',
 }
 
 export function enemyAssetPath(enemyId: string): string {

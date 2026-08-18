@@ -9907,7 +9907,7 @@
       "Pool Entry ID": "PEN-0011",
       "Pool ID": "POOL-0004",
       "Action ID": "ACN-0100",
-      "Weight": 45,
+      "Weight": 43,
       "Status": "Planned",
       "Notes": null
     },
@@ -9915,7 +9915,7 @@
       "Pool Entry ID": "PEN-0012",
       "Pool ID": "POOL-0004",
       "Action ID": "ACN-0101",
-      "Weight": 30,
+      "Weight": 28,
       "Status": "Planned",
       "Notes": null
     },
@@ -9923,7 +9923,7 @@
       "Pool Entry ID": "PEN-0013",
       "Pool ID": "POOL-0004",
       "Action ID": "ACN-0102",
-      "Weight": 20,
+      "Weight": 19,
       "Status": "Planned",
       "Notes": null
     },
@@ -10219,9 +10219,25 @@
       "Pool Entry ID": "PEN-0049",
       "Pool ID": "POOL-0018",
       "Action ID": "ACN-0091",
-      "Weight": 100,
+      "Weight": 80,
       "Status": "Planned",
       "Notes": null
+    },
+    {
+      "Pool Entry ID": "PEN-0065",
+      "Pool ID": "POOL-0018",
+      "Action ID": "ACN-0173",
+      "Weight": 20,
+      "Status": "Planned",
+      "Notes": "A seagull turns up instead of the pirates one roll in five."
+    },
+    {
+      "Pool Entry ID": "PEN-0066",
+      "Pool ID": "POOL-0004",
+      "Action ID": "ACN-0173",
+      "Weight": 5,
+      "Status": "Planned",
+      "Notes": "A seagull turns up instead of a catch one roll in twenty."
     },
     {
       "Pool Entry ID": "PEN-0050",
@@ -12636,6 +12652,26 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": "Temple unarmed training. No item drops."
+    },
+    {
+      "Action ID": "ACN-0173",
+      "Internal Key": "fight_seagull",
+      "Display Name": "Fight seagull",
+      "Category": "Combat",
+      "Relevant Skill ID": "SKL-0001",
+      "Target Type": "Enemy",
+      "Target ID": "ENM-0021",
+      "Proficiency Level": null,
+      "Base Duration Seconds": null,
+      "XP Reward": 900,
+      "Guaranteed Gold": null,
+      "Drop Chance": 0,
+      "Reward Table ID": null,
+      "Secondary Drop Chance": null,
+      "Secondary Reward Table ID": null,
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": "Combat is resolved in four-second rounds; Enemy record owns HP, damage, and guaranteed Gold."
     }
   ],
   "Requirements": [
@@ -14333,6 +14369,25 @@
       "Release Phase": "Launch",
       "Sprite Asset Key": null,
       "Notes": "Temple training opponent. No item drops."
+    },
+    {
+      "Enemy ID": "ENM-0021",
+      "Internal Key": "seagull",
+      "Display Name": "Seagull",
+      "Location ID": "LOC-0004",
+      "Combat Level": 2,
+      "Maximum HP": 100,
+      "Min Damage": 20,
+      "Max Damage": 40,
+      "Combat XP": 900,
+      "Minimum Gold": 0,
+      "Maximum Gold": 0,
+      "Drop Chance": 0,
+      "Reward Table ID": null,
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Sprite Asset Key": null,
+      "Notes": "Dock nuisance. Interrupts the pirates and the fishing. No item drops."
     }
   ],
   "RewardEntries": [

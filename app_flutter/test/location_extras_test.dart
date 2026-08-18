@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:idle_kingdoms/src/session/map_geometry.dart';
 import 'package:idle_kingdoms/src/ui/critter_overlay.dart';
 import 'package:idle_kingdoms/src/theme.dart';
 import 'package:idle_kingdoms/src/ui/overlay_notice.dart';
+import 'package:idle_kingdoms/src/ui/world_map_view.dart';
 import 'package:ik_content/ik_content.dart';
 import 'package:ik_rules/ik_rules.dart';
 
@@ -248,6 +250,27 @@ void main() {
     await tester.pump();
 
     expect(find.text('Town Gate'), findsWidgets);
+  });
+
+  testWidgets('a sub-map node reads its position from the map on screen', (tester) async {
+    final controller = buildController(database, seed: startedCharacter(database));
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller);
+
+    await tester.tap(find.text('Enter Town'));
+    await tester.pump();
+
+    // The gateway sits at (50, 12) on the town map but (30, 48) on the world
+    // map, so reading the wrong layout would drop it into the middle-left.
+    final map = tester.getRect(find.byType(WorldMapView));
+    final gate = tester.getCenter(find.text('Town Gate').first);
+    final expected = mapArtOffset(
+      layoutForMap(townMapId)['LOC-0002']!,
+      map.size,
+    );
+
+    expect(gate.dx, closeTo(map.left + expected.dx, 1));
+    expect(gate.dy, lessThan(map.top + map.height / 2));
   });
 
   testWidgets('expanding the option list does not carry to the next location', (tester) async {

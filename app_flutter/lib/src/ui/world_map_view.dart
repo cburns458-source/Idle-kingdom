@@ -6,10 +6,18 @@ import 'package:ik_rules/ik_rules.dart';
 
 import '../content/asset_paths.dart';
 import '../session/game_controller.dart';
+import '../session/map_geometry.dart';
 import '../session/map_walk.dart';
 import '../theme.dart';
 import 'game_image.dart';
 import 'player_sprite.dart';
+
+/// How far below the top of a node widget its dot centre sits: the 8px of top
+/// padding plus half of the 14px dot.
+const double mapNodeDotCenter = 15;
+
+/// Side of the walking sprite.
+const double mapWalkerSize = 28;
 
 /// The map: nodes over the map art, and a panel for whichever one is selected.
 class WorldMapView extends StatelessWidget {
@@ -72,27 +80,50 @@ class WorldMapView extends StatelessWidget {
       fit: StackFit.expand,
       children: [
         GameImage(mapAssetPath(browseMapId), fit: BoxFit.cover),
-        for (final node in nodes)
-          _MapNode(
-            location: node,
-            browseMapId: browseMapId,
-            isHere: !walking && node.locationId == save.currentLocationId,
-            isSelected: node.locationId == selectedLocationId,
-            onTap: () => onSelect(node.locationId),
-            onDoubleTap: controller.isRecovering || walking
-                ? null
-                : node.locationId == save.currentLocationId
-                ? onOpenHere
-                : () => onTravel(node.locationId),
-          ),
-        if (walking)
-          _MapWalker(
-            from: positionOnBrowseMap(walkFromId!, browseMapId, fromRow),
-            to: positionOnBrowseMap(walkToId!, browseMapId, toRow),
-            progress: walkProgress!,
-            appearance: save.appearance,
-            bytes: controller.localPlayerPng,
-          ),
+        // Nodes are pinned to the art rather than to this widget, so they stay
+        // on their landmarks whatever shape the viewport is.
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final box = constraints.biggest;
+            return Stack(
+              children: [
+                for (final node in nodes)
+                  _PinnedToArt(
+                    position: positionOnBrowseMap(node.locationId, browseMapId, node),
+                    box: box,
+                    anchorFromTop: mapNodeDotCenter,
+                    child: _MapNode(
+                      location: node,
+                      browseMapId: browseMapId,
+                      isHere: !walking && node.locationId == save.currentLocationId,
+                      isSelected: node.locationId == selectedLocationId,
+                      onTap: () => onSelect(node.locationId),
+                      onDoubleTap: controller.isRecovering || walking
+                          ? null
+                          : node.locationId == save.currentLocationId
+                          ? onOpenHere
+                          : () => onTravel(node.locationId),
+                    ),
+                  ),
+                if (walking)
+                  _PinnedToArt(
+                    position: lerpNodePosition(
+                      positionOnBrowseMap(walkFromId!, browseMapId, fromRow),
+                      positionOnBrowseMap(walkToId!, browseMapId, toRow),
+                      walkProgress!,
+                    ),
+                    box: box,
+                    anchorFromTop: mapWalkerSize / 2,
+                    child: _MapWalker(
+                      progress: walkProgress!,
+                      appearance: save.appearance,
+                      bytes: controller.localPlayerPng,
+                    ),
+                  ),
+              ],
+            );
+          },
+        ),
         if (browseMapId != mainMapId)
           Positioned(
             right: 12,
@@ -120,32 +151,60 @@ class WorldMapView extends StatelessWidget {
   }
 }
 
-/// A shrunk player sprite that walks from one node to another.
-class _MapWalker extends StatelessWidget {
-  const _MapWalker({
-    required this.from,
-    required this.to,
-    required this.progress,
-    required this.appearance,
-    this.bytes,
+/// Holds [child] over the point on the map art that [position] names.
+///
+/// The art is drawn with [BoxFit.cover], so the widget box and the art are not
+/// the same rectangle. Pinning to the art is what keeps a node on its landmark.
+class _PinnedToArt extends StatelessWidget {
+  const _PinnedToArt({
+    required this.position,
+    required this.box,
+    required this.anchorFromTop,
+    required this.child,
   });
 
-  final NodePosition from;
-  final NodePosition to;
+  final NodePosition position;
+  final Size box;
+
+  /// How far down [child] the coordinate should land. A node label hangs below
+  /// its dot, so centring the whole widget would leave the dot sitting high.
+  final double anchorFromTop;
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final point = mapArtOffset(position, box);
+    return Positioned(
+      left: point.dx,
+      top: point.dy - anchorFromTop,
+      child: FractionalTranslation(
+        translation: const Offset(-0.5, 0),
+        child: child,
+      ),
+    );
+  }
+}
+
+/// A shrunk player sprite, wobbling as it walks.
+class _MapWalker extends StatelessWidget {
+  const _MapWalker({required this.progress, required this.appearance, this.bytes});
+
   final double progress;
   final PlayerAppearance appearance;
   final Uint8List? bytes;
 
   @override
   Widget build(BuildContext context) {
-    final alignment = Alignment.lerp(alignmentOf(from), alignmentOf(to), progress)!;
-    return Align(
-      alignment: alignment,
-      child: Semantics(
-        label: 'Travelling',
-        child: Transform.rotate(
-          angle: mapWalkWobbleRadians(progress),
-          child: PlayerSprite(appearance: appearance, bytes: bytes, width: 28, height: 28),
+    return Semantics(
+      label: 'Travelling',
+      child: Transform.rotate(
+        angle: mapWalkWobbleRadians(progress),
+        child: PlayerSprite(
+          appearance: appearance,
+          bytes: bytes,
+          width: mapWalkerSize,
+          height: mapWalkerSize,
         ),
       ),
     );
@@ -201,47 +260,42 @@ class _MapNodeState extends State<_MapNode> {
     final isHere = widget.isHere;
     final isSelected = widget.isSelected;
     final label = mapNodeLabel(location, widget.browseMapId);
-    final position = positionForLocation(location);
     final fill = isHere ? Palette.gold : Palette.parchmentText;
-    return Align(
-      // Percentages from the shared layout map onto the alignment square.
-      alignment: Alignment(position.x / 50 - 1, position.y / 50 - 1),
-      child: GestureDetector(
-        onTap: _handleTap,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Semantics(
-              button: true,
-              label: label,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(10, 8, 10, 4),
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: fill,
-                    border: Border.all(
-                      color: isSelected ? Palette.gold : Palette.parchment,
-                      width: isSelected || isHere ? 2 : 1,
-                    ),
-                    boxShadow: const [BoxShadow(offset: Offset(0, 1), color: Color(0x80000000))],
+    return GestureDetector(
+      onTap: _handleTap,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Semantics(
+            button: true,
+            label: label,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(10, 8, 10, 4),
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: fill,
+                  border: Border.all(
+                    color: isSelected ? Palette.gold : Palette.parchment,
+                    width: isSelected || isHere ? 2 : 1,
                   ),
-                  child: const SizedBox.square(dimension: 14),
+                  boxShadow: const [BoxShadow(offset: Offset(0, 1), color: Color(0x80000000))],
                 ),
+                child: const SizedBox.square(dimension: 14),
               ),
             ),
-            Text(
-              label,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: isHere ? FontWeight.w700 : FontWeight.w600,
-                color: isHere ? Palette.gold : Palette.parchmentText,
-                shadows: overlayShadow,
-              ),
+          ),
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: isHere ? FontWeight.w700 : FontWeight.w600,
+              color: isHere ? Palette.gold : Palette.parchmentText,
+              shadows: overlayShadow,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
