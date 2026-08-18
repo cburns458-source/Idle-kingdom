@@ -372,4 +372,16 @@ void main() {
     expect(refused.reason, 'permission denied for table guilds');
     expect(await leader.listGuilds(), isEmpty);
   });
+
+  test('a founding that cannot seat its leader leaves no empty guild', () async {
+    final transport = FakeTransport();
+    final leader = await _player(transport, 'leader@example.com', 'Leader');
+
+    transport.failOnce['insert:${RemoteTables.guildMembers}'] = 'permission denied';
+    expect((await leader.createGuild(_ironLeague, guildCreateGoldCost)).ok, isFalse);
+    expect(transport.tables[RemoteTables.guilds], isEmpty, reason: 'the name is free again');
+
+    // Which means the same name works on the next try.
+    expect((await leader.createGuild(_ironLeague, guildCreateGoldCost)).ok, isTrue);
+  });
 }

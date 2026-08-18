@@ -365,7 +365,24 @@ class MultiplayerController extends ChangeNotifier {
   // --- Refresh --------------------------------------------------------------
 
   /// Reads everything a social screen shows, in one pass.
+  ///
+  /// A read that fails reports itself and repaints with whatever did arrive. A
+  /// screen with nothing on it and nothing to say looks like a broken game.
   Future<void> refresh(PlayerSave save) async {
+    try {
+      await _refresh(save);
+      final problem = service.takeReadProblem();
+      if (problem != null) {
+        _notice = problem;
+        notifyListeners();
+      }
+    } on Object catch (error) {
+      _notice = unexpectedSocialError(error);
+      notifyListeners();
+    }
+  }
+
+  Future<void> _refresh(PlayerSave save) async {
     if (!isSignedIn && !canBrowseSocial) {
       _resetSignedOutState();
       notifyListeners();

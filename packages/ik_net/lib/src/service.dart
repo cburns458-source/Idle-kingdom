@@ -178,6 +178,13 @@ abstract interface class MultiplayerService {
   );
 
   Future<List<ArenaOpponent>> hallBoxingOpponents();
+
+  /// Why the most recent read was refused, cleared by the taking.
+  ///
+  /// A read answers with what arrived, so a screen short of one list still draws
+  /// the rest. This is how it then says why that list is short, instead of
+  /// showing an empty panel that looks like a game with nothing in it.
+  String? takeReadProblem();
 }
 
 /// The single-device implementation: the local backend plus the stored session.
@@ -198,6 +205,10 @@ class LocalMultiplayerService implements MultiplayerService {
 
   @override
   bool get isSignedIn => _sessions.isSignedIn;
+
+  /// A table on this device is always there to be read.
+  @override
+  String? takeReadProblem() => null;
 
   @override
   Future<SessionResult> signUp(String email, String username, String password) async {

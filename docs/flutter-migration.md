@@ -182,6 +182,12 @@ do, and what a donation pays for. The difference between them is only where the
 answer is kept, and who settles a race — one device checks the table it owns, and
 the server lets a unique index decide who got the name.
 
+A social read answers with what arrived, so a screen short of one list still
+draws the others. `NotedReads` wraps the transport and keeps the reason the first
+read was refused, which `refresh` shows once. Without it a project missing a
+migration is indistinguishable from a quiet game: an empty roster, an empty
+board, and no button that appears to do anything.
+
 What a social screen shows is a view model, not a widget's own reading of a
 record: `views.ts` and `views.dart` derive the guild browser rows, the roster and
 its rank options, the leaderboard rows, the nearby list, the public profile, and

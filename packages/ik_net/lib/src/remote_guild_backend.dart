@@ -202,7 +202,12 @@ class RemoteGuildBackend {
       ),
       columns: remoteGuildMemberColumns,
     );
-    if (!seated.ok) return CreateGuildResult.failed(seated.reason!);
+    if (!seated.ok) {
+      // A guild with nobody in it would hold its name against everyone else,
+      // and its founder could not even leave it, so it goes back.
+      await transport.delete(RemoteTables.guilds, equals: <String, Object?>{'id': guild.id});
+      return CreateGuildResult.failed(seated.reason!);
+    }
 
     await _noteOwnGuild(current.userId, guild.id);
     await transport.upsert(RemoteTables.guildHalls, <RemoteRow>[

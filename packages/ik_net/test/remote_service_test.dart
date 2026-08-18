@@ -186,6 +186,33 @@ void main() {
     expect(await service.leaderboard(boardTotalLevel), isEmpty);
   });
 
+  test('a read that was refused is remembered, so a bare screen can say why', () async {
+    final transport = FakeTransport();
+    final storage = MemorySaveStorage();
+    final service = await _signedIn(transport, storage);
+
+    expect(service.takeReadProblem(), isNull, reason: 'nothing has gone wrong yet');
+
+    // A column this build reads and the project has not got is what a skipped
+    // migration looks like from the client.
+    transport.failNextWith = 'column leaderboard_snapshots.value_secondary does not exist';
+    expect(await service.leaderboard(boardTotalLevel), isEmpty);
+
+    expect(service.takeReadProblem(), contains('value_secondary'));
+    expect(service.takeReadProblem(), isNull, reason: 'reported once, not on every pass after');
+  });
+
+  test('a refused read explains a wrong project URL the way sign-in does', () async {
+    final transport = FakeTransport();
+    final storage = MemorySaveStorage();
+    final service = await _signedIn(transport, storage);
+
+    transport.failNextWith = 'Invalid path specified in request URL';
+    expect(await service.listGuilds(), isEmpty);
+
+    expect(service.takeReadProblem(), remoteInvalidBackendUrl);
+  });
+
   test('refuses an upload the account has a newer save than', () async {
     final transport = FakeTransport();
     final storage = MemorySaveStorage();

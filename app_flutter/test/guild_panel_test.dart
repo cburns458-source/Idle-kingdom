@@ -126,4 +126,20 @@ void main() {
     expect(net.notice, contains('the wire went dead'));
     expect(net.busy, isFalse, reason: 'a thrown action still lets go of the buttons');
   });
+
+  testWidgets('a social screen that cannot read says so', (tester) async {
+    final transport = FakeTransport();
+    final controller = buildController(database, seed: startedCharacter(database));
+    addTearDown(controller.dispose);
+    final net = buildRemoteMultiplayer(database, transport: transport);
+    addTearDown(net.dispose);
+    expect((await net.service.signUp('leader@example.com', 'Leader', 'secret')).ok, isTrue);
+
+    // A project missing the column this build reads is what a skipped migration
+    // looks like from here.
+    transport.failNextWith = 'column leaderboard_snapshots.value_secondary does not exist';
+    await net.refresh(controller.save);
+
+    expect(net.notice, contains('value_secondary'));
+  });
 }

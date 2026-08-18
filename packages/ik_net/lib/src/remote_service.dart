@@ -5,6 +5,7 @@ import 'package:ik_runtime/ik_runtime.dart';
 import 'bazaar.dart';
 import 'cloud_save.dart';
 import 'local_backend.dart';
+import 'noted_reads.dart';
 import 'remote.dart';
 import 'remote_guild_backend.dart';
 import 'remote_transport.dart';
@@ -23,20 +24,28 @@ import 'types.dart';
 /// save that row-level security rightly will not hand over.
 class RemoteMultiplayerService implements MultiplayerService {
   RemoteMultiplayerService({
-    required this.transport,
+    required RemoteTransport transport,
     required SaveStorage storage,
     LocalBackendPorts? ports,
-  }) : _sessions = SessionStore(storage),
+  }) : _reads = NotedReads(transport),
+       _sessions = SessionStore(storage),
        _local = LocalMultiplayerService(storage: storage, ports: ports) {
     _guilds = RemoteGuildBackend(
-      transport: transport,
+      transport: this.transport,
       sessionOf: () => session,
       factsOf: _ownMemberFacts,
       nowIso: () => isoFromMs(_nowMs()),
     );
   }
 
-  final RemoteTransport transport;
+  final NotedReads _reads;
+
+  /// The wire, wrapped so a refused read is noticed rather than read as empty.
+  RemoteTransport get transport => _reads;
+
+  @override
+  String? takeReadProblem() => _reads.take();
+
   final SessionStore _sessions;
   final LocalMultiplayerService _local;
   late final RemoteGuildBackend _guilds;
