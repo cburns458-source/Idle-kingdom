@@ -230,4 +230,102 @@ void main() {
       isEmpty,
     );
   });
+
+  test('the total level board carries experience under the level', () {
+    final db = _database();
+    final save = createNewSave(db, _nowMs).copyWith(characterName: 'Vari');
+    final earned = save.copyWith(
+      skills: <SkillProgress>[
+        for (final skill in save.skills)
+          skill.skillId == 'SKL-0004' ? skill.copyWith(level: 40, xp: 120000) : skill,
+      ],
+    );
+
+    final merged = mergeLiveLeaderboardScore(
+      stored: const <LeaderboardEntry>[],
+      boardKey: boardTotalLevel,
+      db: db,
+      save: earned,
+      userId: 'usr_1',
+      username: 'Vari',
+      appearance: save.appearance,
+    );
+
+    expect(merged.single.value, totalLevel(earned));
+    expect(merged.single.secondaryValue, totalSkillXp(earned));
+  });
+
+  test('a fighter is taken off the pacifist board, and a peaceful player stays on', () {
+    final db = _database();
+    final save = createNewSave(db, _nowMs).copyWith(characterName: 'Vari');
+
+    final peaceful = mergeLiveLeaderboardScore(
+      stored: const <LeaderboardEntry>[],
+      boardKey: boardPacifistTotalLevel,
+      db: db,
+      save: save,
+      userId: 'usr_1',
+      username: 'Vari',
+      appearance: save.appearance,
+    );
+    expect(peaceful.single.value, totalLevel(save));
+
+    final fighter = save.copyWith(
+      skills: <SkillProgress>[
+        for (final skill in save.skills)
+          skill.skillId == combatSkillId ? skill.copyWith(level: 2) : skill,
+      ],
+    );
+    final stale = LeaderboardEntry(
+      userId: 'usr_1',
+      username: 'Vari',
+      appearance: save.appearance,
+      guildName: null,
+      boardKey: boardPacifistTotalLevel,
+      value: 13,
+      rank: 1,
+    );
+
+    // The row it wrote while still peaceful goes with it.
+    expect(
+      mergeLiveLeaderboardScore(
+        stored: <LeaderboardEntry>[stale],
+        boardKey: boardPacifistTotalLevel,
+        db: db,
+        save: fighter,
+        userId: 'usr_1',
+        username: 'Vari',
+        appearance: save.appearance,
+      ),
+      isEmpty,
+    );
+  });
+
+  test('submitting a ranking puts a peaceful player on both total boards', () async {
+    final storage = MemorySaveStorage();
+    final service = _service(storage);
+    await service.signUp('vari@example.com', 'Vari', 'secret');
+    final db = _database();
+    final save = createNewSave(db, _nowMs).copyWith(characterName: 'Vari');
+
+    await service.submitLeaderboard(db, save);
+
+    final total = await service.leaderboard(boardTotalLevel);
+    expect(total.single.value, totalLevel(save));
+    expect(total.single.secondaryValue, totalSkillXp(save));
+
+    final pacifist = await service.leaderboard(boardPacifistTotalLevel);
+    expect(pacifist.single.value, totalLevel(save));
+
+    final fighter = save.copyWith(
+      skills: <SkillProgress>[
+        for (final skill in save.skills)
+          skill.skillId == combatSkillId ? skill.copyWith(level: 2) : skill,
+      ],
+    );
+    await service.submitLeaderboard(db, fighter);
+
+    expect(await service.leaderboard(boardPacifistTotalLevel), isEmpty);
+    expect((await service.leaderboard(boardTotalLevel)).single.value, totalLevel(fighter));
+  });
 }

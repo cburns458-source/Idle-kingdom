@@ -65,6 +65,7 @@ class LeaderboardRow {
     required this.boardKey,
     required this.value,
     required this.updatedAt,
+    this.secondaryValue = 0,
   });
 
   factory LeaderboardRow.fromJson(Map<String, Object?> json) => LeaderboardRow(
@@ -72,6 +73,7 @@ class LeaderboardRow {
     boardKey: json['boardKey']! as String,
     value: json['value']! as num,
     updatedAt: json['updatedAt']! as String,
+    secondaryValue: (json['secondaryValue'] as num?) ?? 0,
   );
 
   final String userId;
@@ -79,11 +81,15 @@ class LeaderboardRow {
   final num value;
   final String updatedAt;
 
+  /// The second number a combined board shows. Zero on single-value boards.
+  final num secondaryValue;
+
   Map<String, Object?> toJson() => <String, Object?>{
     'userId': userId,
     'boardKey': boardKey,
     'value': value,
     'updatedAt': updatedAt,
+    'secondaryValue': secondaryValue,
   };
 }
 

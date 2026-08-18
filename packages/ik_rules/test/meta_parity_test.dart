@@ -277,18 +277,20 @@ void main() {
         final nowMs = fixture.inputField<num>('nowMs');
         final complete = saveOf(fixture);
         final held = syncProgressionMeta(db, complete, nowMs);
-        final widened = held.copyWith(
-          critterCollections: held.critterCollections.sublist(1),
-        );
+        final widened = held.copyWith(critterCollections: held.critterCollections.sublist(1));
         expect(
           checkParity(fixture, {
             'held': held.achievements.map((row) => row.toJson()).toList(),
-            'afterNewCritter': syncProgressionMeta(db, widened, nowMs + 60000).achievements
-                .map((row) => row.toJson())
-                .toList(),
-            'regained': syncProgressionMeta(db, complete, nowMs + 120000).achievements
-                .map((row) => row.toJson())
-                .toList(),
+            'afterNewCritter': syncProgressionMeta(
+              db,
+              widened,
+              nowMs + 60000,
+            ).achievements.map((row) => row.toJson()).toList(),
+            'regained': syncProgressionMeta(
+              db,
+              complete,
+              nowMs + 120000,
+            ).achievements.map((row) => row.toJson()).toList(),
           }),
           isNull,
         );

@@ -25,8 +25,7 @@ String merchantTipSpentLine(GameDatabase db) =>
 ///
 /// A quest without a pitch is simply accepted from the list.
 String? questPitchLine(GameDatabase db, String questId) {
-  final pitch = db.quests
-      .firstWhereOrNull((row) => row['Quest ID'] == questId)?['Pitch'];
+  final pitch = db.quests.firstWhereOrNull((row) => row['Quest ID'] == questId)?['Pitch'];
   return pitch is String && pitch.isNotEmpty ? pitch : null;
 }
 
@@ -469,10 +468,7 @@ NpcActionResult donateForQuestFromNpc(GameDatabase db, PlayerSave save, String q
   if (!result.ok) return NpcActionResult.failed(result.reason!);
   final quest = getQuest(db, questId);
   final cost = parseStructuredObjectives(quest ?? const <String, Object?>{}).acceptGoldCost;
-  return NpcActionResult.ok(
-    save: result.save!,
-    message: 'Donated ${jsLocaleNumber(cost)} gold.',
-  );
+  return NpcActionResult.ok(save: result.save!, message: 'Donated ${jsLocaleNumber(cost)} gold.');
 }
 
 NpcActionResult talkWithQuestNpc(GameDatabase db, PlayerSave save, String npcId) {

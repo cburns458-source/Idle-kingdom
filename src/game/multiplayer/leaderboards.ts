@@ -58,6 +58,11 @@ export async function fetchLeaderboard(
   return leaderboardEntriesFrom(data, boardKey)
 }
 
+/**
+ * The boards a launch build shows, in the order the picker lists them.
+ *
+ * Total XP has no board of its own: it rides along on Total Level & XP.
+ */
 export function launchBoardKeys(db: GameDatabase): MultiplayerBoardKey[] {
   const skills = db.Skills.filter((skill) => skill['Release Phase'] === 'Launch').map(
     (skill) => `skill:${skill['Skill ID']}` as MultiplayerBoardKey,
@@ -65,7 +70,7 @@ export function launchBoardKeys(db: GameDatabase): MultiplayerBoardKey[] {
   return [
     'total_level',
     'guild_total_level',
-    'total_experience',
+    'total_level_combat_1',
     'gold_earned',
     'monsters_killed',
     'critters_collected',

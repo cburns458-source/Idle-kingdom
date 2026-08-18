@@ -292,6 +292,7 @@ class LocalMultiplayerBackend {
           boardKey: board.boardKey,
           value: board.value,
           updatedAt: updatedAt,
+          secondaryValue: board.secondaryValue ?? 0,
         ),
       );
     }
@@ -334,26 +335,10 @@ class LocalMultiplayerBackend {
           emblem: guild.emblem,
         );
       }).toList();
-      mergeSort(
-        scored,
-        compare: (a, b) =>
-            jsCompareThen(b.value - a.value, () => jsLocaleCompare(a.username, b.username)),
-      );
-      return scored
-          .take(limit)
-          .toList()
-          .indexed
-          .map((entry) => entry.$2.withRank(entry.$1 + 1))
-          .toList();
+      return rankLeaderboardEntries(scored).take(limit).toList();
     }
     final rows = db.leaderboards.where((row) => row.boardKey == boardKey).toList();
-    mergeSort(
-      rows,
-      compare: (a, b) =>
-          jsCompareThen(b.value - a.value, () => jsLocaleCompare(a.userId, b.userId)),
-    );
-    return rows.take(limit).toList().indexed.map((entry) {
-      final row = entry.$2;
+    final entries = rows.map((row) {
       final profile = db.profiles.firstWhereOrNull((candidate) => candidate.userId == row.userId);
       return LeaderboardEntry(
         userId: row.userId,
@@ -362,11 +347,17 @@ class LocalMultiplayerBackend {
         guildName: profile?.guildName,
         boardKey: boardKey,
         value: row.value,
-        rank: entry.$1 + 1,
+        rank: 0,
+        secondaryValue: boardCarriesExperience(boardKey) ? row.secondaryValue : null,
         entryKind: LeaderboardEntryKind.player,
         emblem: null,
       );
-    }).toList();
+    });
+    // A zero on a qualify-or-not board means the player is not on it at all.
+    final standing = boardHidesZeroes(boardKey)
+        ? entries.where((entry) => entry.value > 0).toList()
+        : entries.toList();
+    return rankLeaderboardEntries(standing).take(limit).toList();
   }
 
   int _guildMemberCount(LocalDb db, String guildId) =>
@@ -1324,10 +1315,7 @@ class LocalMultiplayerBackend {
     final now = _now();
     return db.presence
         .where(
-          (row) =>
-              includeExpired ||
-              isDemoPlayerId(row.userId) ||
-              jsDateParse(row.expiresAt) > now,
+          (row) => includeExpired || isDemoPlayerId(row.userId) || jsDateParse(row.expiresAt) > now,
         )
         .where((row) => locationId == null || row.locationId == locationId)
         .where((row) => activityId == null || row.currentActivityId == activityId)

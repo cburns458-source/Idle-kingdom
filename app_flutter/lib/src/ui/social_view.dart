@@ -143,7 +143,14 @@ class _LeaderboardTab extends StatelessWidget {
                   : GuildEmblemBadge(emblem: row.emblem!),
               trailing: Row(
                 children: [
-                  Text(row.valueLabel, style: const TextStyle(fontWeight: FontWeight.w700)),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(row.valueLabel, style: const TextStyle(fontWeight: FontWeight.w700)),
+                      if (row.secondaryLabel != null) MutedText(row.secondaryLabel!),
+                    ],
+                  ),
                   const SizedBox(width: 6),
                   MutedText('#${row.rank}'),
                 ],

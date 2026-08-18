@@ -585,11 +585,7 @@ class _LocationViewState extends State<LocationView> {
 
 /// Inset option list that floats over the location art.
 class _FloatingOptionBand extends StatelessWidget {
-  const _FloatingOptionBand({
-    required this.expanded,
-    required this.onToggle,
-    required this.child,
-  });
+  const _FloatingOptionBand({required this.expanded, required this.onToggle, required this.child});
 
   final bool expanded;
   final VoidCallback onToggle;

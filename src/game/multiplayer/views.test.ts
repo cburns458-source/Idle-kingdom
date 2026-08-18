@@ -299,8 +299,21 @@ describe('leaderboard views', () => {
   it('offers every launch board with its label', () => {
     const db = prepareDatabase(rawDatabase).launch
     const options = boardOptions(db)
-    expect(options[0]).toEqual({ key: 'total_level', label: 'Total Level' })
+    expect(options[0]).toEqual({ key: 'total_level', label: 'Total Level & XP' })
     expect(options.some((option) => option.key === 'guild_total_level')).toBe(true)
+    expect(options.some((option) => option.key === 'total_level_combat_1')).toBe(true)
+    // The old XP-only board is gone; its number now rides on Total Level & XP.
+    expect(options.some((option) => option.key === 'total_experience')).toBe(false)
+  })
+
+  it('writes experience under the level on a combined board', () => {
+    const rows = leaderboardRows([
+      entry({ value: 1204, secondaryValue: 9_500_000 }),
+      entry({ rank: 2, userId: 'usr_2', username: 'Rival', value: 12 }),
+    ])
+    expect(rows[0].valueLabel).toBe('1,204')
+    expect(rows[0].secondaryLabel).toBe('9,500,000 xp')
+    expect(rows[1].secondaryLabel).toBeUndefined()
   })
 
   it('groups values and names the guild column', () => {
@@ -330,6 +343,9 @@ describe('leaderboard views', () => {
     expect(emptyBoardMessage('total_level')).toBe('No scores on this board yet.')
     expect(emptyBoardMessage('guild_total_level')).toBe(
       'No guilds yet — create or join one from the Guilds tab.',
+    )
+    expect(emptyBoardMessage('total_level_combat_1')).toBe(
+      'No scores on this board yet. Keep Combat at level 1 to stand on it.',
     )
   })
 })

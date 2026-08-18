@@ -449,6 +449,7 @@ class LeaderboardRowView {
     required this.emblem,
     required this.appearance,
     required this.isGuild,
+    this.secondaryLabel,
   });
 
   final num rank;
@@ -460,8 +461,13 @@ class LeaderboardRowView {
   /// The guild a player belongs to, or how full a guild is.
   final String subtitle;
 
-  /// `1,204`, grouped the way the rest of the UI groups numbers.
+  /// `1,204`, grouped the way the rest of the UI groups numbers. On a combined
+  /// board this is the level, with the experience in [secondaryLabel].
   final String valueLabel;
+
+  /// `12,300,000 xp` under the level, on a board that shows both. Null when the
+  /// board ranks by one thing.
+  final String? secondaryLabel;
 
   /// Set for a guild row, whose badge stands in for a portrait.
   final GuildEmblem? emblem;
@@ -474,6 +480,7 @@ class LeaderboardRowView {
     'username': username,
     'subtitle': subtitle,
     'valueLabel': valueLabel,
+    if (secondaryLabel != null) 'secondaryLabel': secondaryLabel,
     'emblem': emblem?.toJson(),
     'appearance': appearance.toJson(),
     'isGuild': isGuild,
@@ -483,12 +490,14 @@ class LeaderboardRowView {
 List<LeaderboardRowView> leaderboardRows(List<LeaderboardEntry> entries) {
   return entries.map((entry) {
     final isGuild = entry.entryKind == LeaderboardEntryKind.guild;
+    final experience = entry.secondaryValue;
     return LeaderboardRowView(
       rank: entry.rank,
       entryId: entry.userId,
       username: entry.username,
       subtitle: isGuild ? (entry.guildName ?? 'Guild') : (entry.guildName ?? 'No guild'),
       valueLabel: jsLocaleNumber(entry.value),
+      secondaryLabel: experience == null ? null : '${jsLocaleNumber(experience)} xp',
       emblem: isGuild ? entry.emblem : null,
       appearance: entry.appearance,
       isGuild: isGuild,
@@ -498,6 +507,9 @@ List<LeaderboardRowView> leaderboardRows(List<LeaderboardEntry> entries) {
 
 /// What an empty board says, which differs for guilds.
 String emptyBoardMessage(MultiplayerBoardKey boardKey) {
+  if (boardKey == boardPacifistTotalLevel) {
+    return 'No scores on this board yet. Keep Combat at level 1 to stand on it.';
+  }
   return boardKey == boardGuildTotalLevel
       ? 'No guilds yet — create or join one from the Guilds tab.'
       : 'No scores on this board yet.';

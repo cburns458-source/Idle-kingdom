@@ -68,32 +68,32 @@ class _SkillTile extends StatelessWidget {
         child: InkWell(
           onTap: () => _openSkillMenu(context, controller, skillId, row?.displayName ?? skillId),
           child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            GameImage(skillIconPath(row), width: 30, height: 30),
-            const SizedBox(height: 3),
-            Flexible(
-              child: Text(
-                row?.displayName ?? skillId,
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, height: 1.15),
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              GameImage(skillIconPath(row), width: 30, height: 30),
+              const SizedBox(height: 3),
+              Flexible(
+                child: Text(
+                  row?.displayName ?? skillId,
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, height: 1.15),
+                ),
               ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              progress.atCap ? 'Max' : 'Lv ${progress.level}',
-              style: const TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: Palette.gold,
+              const SizedBox(height: 2),
+              Text(
+                progress.atCap ? 'Max' : 'Lv ${progress.level}',
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: Palette.gold,
+                ),
               ),
-            ),
-            const SizedBox(height: 3),
-            MeterBar(value: fraction, color: Palette.gold, height: 4),
-          ],
-        ),
+              const SizedBox(height: 3),
+              MeterBar(value: fraction, color: Palette.gold, height: 4),
+            ],
+          ),
         ),
       ),
     );

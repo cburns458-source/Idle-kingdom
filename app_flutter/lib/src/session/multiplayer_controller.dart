@@ -230,7 +230,10 @@ class MultiplayerController extends ChangeNotifier {
 
   /// Rejoins an already-stored session: keep the seat if we still hold it,
   /// otherwise this device is kicked.
-  Future<void> resumeAccount(PlayerSave localHint, {required void Function(PlayerSave save) adopt}) {
+  Future<void> resumeAccount(
+    PlayerSave localHint, {
+    required void Function(PlayerSave save) adopt,
+  }) {
     return run(() async {
       if (!isSignedIn) return null;
       final mine = session?.playSessionId;

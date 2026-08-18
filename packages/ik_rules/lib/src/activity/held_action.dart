@@ -11,10 +11,7 @@ String? heldActionIdFor(PlayerSave save, String? activityId) {
 /// Remembers [actionId] for [activityId] until that action finishes.
 PlayerSave withHeldAction(PlayerSave save, String activityId, String actionId) {
   return save.copyWith(
-    heldActionByActivityId: <String, String>{
-      ...save.heldActionByActivityId,
-      activityId: actionId,
-    },
+    heldActionByActivityId: <String, String>{...save.heldActionByActivityId, activityId: actionId},
   );
 }
 

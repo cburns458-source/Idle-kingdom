@@ -117,6 +117,7 @@ LeaderboardEntry _entry({
   String userId = 'usr_1',
   String username = 'Hero',
   num value = 1204,
+  num? secondaryValue,
   String? guildName,
   GuildEmblem? emblem,
 }) {
@@ -128,6 +129,7 @@ LeaderboardEntry _entry({
     boardKey: boardKey,
     value: value,
     rank: rank,
+    secondaryValue: secondaryValue,
     entryKind: entryKind,
     emblem: emblem,
   );
@@ -339,7 +341,7 @@ void main() {
             'boards': _rows(boardOptions(db)),
             'rows': _rows(
               leaderboardRows(<LeaderboardEntry>[
-                _entry(guildName: 'Iron League'),
+                _entry(secondaryValue: 9500000, guildName: 'Iron League'),
                 _entry(rank: 2, userId: 'usr_2', username: 'Rival', value: 12),
                 _entry(
                   boardKey: boardGuildTotalLevel,
@@ -361,7 +363,12 @@ void main() {
               ]),
             ),
             'emptyMessages':
-                <MultiplayerBoardKey>[boardTotalLevel, boardGuildTotalLevel, 'skill:SKL-0001']
+                <MultiplayerBoardKey>[
+                      boardTotalLevel,
+                      boardGuildTotalLevel,
+                      boardPacifistTotalLevel,
+                      'skill:SKL-0001',
+                    ]
                     .map((key) => <String, Object?>{'key': key, 'message': emptyBoardMessage(key)})
                     .toList(),
           }),

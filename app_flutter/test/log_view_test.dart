@@ -36,10 +36,8 @@ void main() {
 
     await openLog(tester);
 
-    Finder rowFor(String title) => find.ancestor(
-      of: find.text(title),
-      matching: find.byType(Opacity),
-    );
+    Finder rowFor(String title) =>
+        find.ancestor(of: find.text(title), matching: find.byType(Opacity));
 
     expect(rowFor('Mining Level 50'), findsNothing);
     expect(tester.widget<Opacity>(rowFor('Combat Level 50').first).opacity, lessThan(1));

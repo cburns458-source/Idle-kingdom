@@ -4,6 +4,7 @@ import 'package:idle_kingdoms/src/ui/social_view.dart';
 import 'package:ik_content/ik_content.dart';
 import 'package:ik_net/ik_net.dart';
 import 'package:ik_net/testing.dart';
+import 'package:ik_rules/ik_rules.dart';
 
 import 'support/harness.dart';
 
@@ -74,11 +75,8 @@ void main() {
       tester,
       ListenableBuilder(
         listenable: net,
-        builder: (context, _) => SocialView(
-          controller: game,
-          multiplayer: net,
-          section: SocialTab.leaderboards,
-        ),
+        builder: (context, _) =>
+            SocialView(controller: game, multiplayer: net, section: SocialTab.leaderboards),
       ),
     );
     await tester.pump();
@@ -110,6 +108,32 @@ void main() {
 
     expect(find.text('Vari'), findsWidgets);
     expect(find.text(emptyBoardMessage(net.boardKey)), findsNothing);
+  });
+
+  testWidgets('the total level board writes the experience under the level', (tester) async {
+    final clock = TestClock();
+    final net = buildMultiplayer(database, clock: clock);
+    addTearDown(net.dispose);
+    final save = startedCharacter(database).copyWith(characterName: 'Vari');
+    await net.signUp('vari@example.com', 'Vari', 'secret', save, adopt: (_) {});
+
+    final game = buildController(database, seed: save, clock: clock);
+    addTearDown(game.dispose);
+    await pumpPanel(
+      tester,
+      ListenableBuilder(
+        listenable: net,
+        builder: (context, _) =>
+            SocialView(controller: game, multiplayer: net, section: SocialTab.leaderboards),
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    expect(net.boardKey, boardTotalLevel);
+    expect(find.text(boardLabel(database.launch, boardTotalLevel)), findsWidgets);
+    expect(find.text('${totalLevel(save)}'), findsWidgets);
+    expect(find.text('${totalSkillXp(save)} xp'), findsOne);
   });
 
   testWidgets('an empty board no longer asks the player to sync', (tester) async {

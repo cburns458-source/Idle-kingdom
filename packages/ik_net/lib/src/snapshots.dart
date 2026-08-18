@@ -8,12 +8,19 @@ import 'types.dart';
 
 /// One board and the value the player currently holds on it.
 class LeaderboardBoardValue {
-  const LeaderboardBoardValue({required this.boardKey, required this.value});
+  const LeaderboardBoardValue({required this.boardKey, required this.value, this.secondaryValue});
 
   final MultiplayerBoardKey boardKey;
   final num value;
 
-  Map<String, Object?> toJson() => <String, Object?>{'boardKey': boardKey, 'value': value};
+  /// The second number a combined board shows, and the tie-break on the first.
+  final num? secondaryValue;
+
+  Map<String, Object?> toJson() => <String, Object?>{
+    'boardKey': boardKey,
+    'value': value,
+    if (secondaryValue != null) 'secondaryValue': secondaryValue,
+  };
 }
 
 class LeaderboardSnapshotValues {
@@ -33,9 +40,19 @@ LeaderboardSnapshotValues buildLeaderboardSnapshot(GameDatabase db, PlayerSave s
     crittersCollected += math.max(0, row.count);
   }
 
+  final level = totalLevel(save);
+  final xp = totalSkillXp(save);
+  final pacifist = isPacifistSave(save);
+
   final boards = <LeaderboardBoardValue>[
-    LeaderboardBoardValue(boardKey: boardTotalLevel, value: totalLevel(save)),
-    LeaderboardBoardValue(boardKey: boardTotalExperience, value: totalSkillXp(save)),
+    LeaderboardBoardValue(boardKey: boardTotalLevel, value: level, secondaryValue: xp),
+    // Zero keeps a fighter off the board without needing a delete: the read
+    // drops zero rows, and one is written again the moment they qualify.
+    LeaderboardBoardValue(
+      boardKey: boardPacifistTotalLevel,
+      value: pacifist ? level : 0,
+      secondaryValue: pacifist ? xp : 0,
+    ),
     LeaderboardBoardValue(
       boardKey: boardGoldEarned,
       value: jsNumber(save.statistics.values['gold_earned'] ?? 0),
@@ -71,8 +88,9 @@ LeaderboardSnapshotValues buildLeaderboardSnapshot(GameDatabase db, PlayerSave s
 }
 
 String boardLabel(GameDatabase db, MultiplayerBoardKey boardKey) {
-  if (boardKey == boardTotalLevel) return 'Total Level';
+  if (boardKey == boardTotalLevel) return 'Total Level & XP';
   if (boardKey == boardGuildTotalLevel) return 'Guild Total Level';
+  if (boardKey == boardPacifistTotalLevel) return 'Pacifist Total Level';
   if (boardKey == boardTotalExperience) return 'Total XP';
   if (boardKey == boardGoldEarned) return 'Gold Earned';
   if (boardKey == boardMonstersKilled) return 'Monsters Killed';
@@ -105,9 +123,16 @@ List<LeaderboardEntry> mergeLiveLeaderboardScore({
   String? guildName,
 }) {
   if (boardKey == boardGuildTotalLevel) return stored;
-  final mine = buildLeaderboardSnapshot(db, save).boards
-      .firstWhereOrNull((board) => board.boardKey == boardKey);
+  final mine = buildLeaderboardSnapshot(
+    db,
+    save,
+  ).boards.firstWhereOrNull((board) => board.boardKey == boardKey);
   if (mine == null) return stored;
+
+  // A board the player does not qualify for shows them nothing of their own.
+  if (boardHidesZeroes(boardKey) && mine.value <= 0) {
+    return stored.where((entry) => entry.userId != userId).toList();
+  }
 
   final merged = <LeaderboardEntry>[
     ...stored.where((entry) => entry.userId != userId),
@@ -119,21 +144,38 @@ List<LeaderboardEntry> mergeLiveLeaderboardScore({
       boardKey: boardKey,
       value: mine.value,
       rank: 0,
+      secondaryValue: mine.secondaryValue,
     ),
   ];
+  return rankLeaderboardEntries(merged);
+}
+
+/// Orders a board and stamps places on it.
+///
+/// Highest value first, then the second number where a board carries one, then
+/// name, so two players on the same total level are split by experience.
+List<LeaderboardEntry> rankLeaderboardEntries(List<LeaderboardEntry> entries) {
+  final ordered = <LeaderboardEntry>[...entries];
   mergeSort(
-    merged,
-    compare: (a, b) =>
-        jsCompareThen(b.value - a.value, () => jsLocaleCompare(a.username, b.username)),
+    ordered,
+    compare: (a, b) => jsCompareThen(
+      b.value - a.value,
+      () => jsCompareThen(
+        (b.secondaryValue ?? 0) - (a.secondaryValue ?? 0),
+        () => jsLocaleCompare(a.username, b.username),
+      ),
+    ),
   );
-  return merged.indexed.map((entry) => entry.$2.withRank(entry.$1 + 1)).toList();
+  return ordered.indexed.map((entry) => entry.$2.withRank(entry.$1 + 1)).toList();
 }
 
 /// The boards a launch build shows, in the order the picker lists them.
+///
+/// Total XP has no board of its own: it rides along on Total Level & XP.
 List<MultiplayerBoardKey> launchBoardKeys(GameDatabase db) => <MultiplayerBoardKey>[
   boardTotalLevel,
   boardGuildTotalLevel,
-  boardTotalExperience,
+  boardPacifistTotalLevel,
   boardGoldEarned,
   boardMonstersKilled,
   boardCrittersCollected,

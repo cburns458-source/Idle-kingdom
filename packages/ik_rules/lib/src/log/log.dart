@@ -252,7 +252,8 @@ class LogSectionCompletion {
   num get percent => total <= 0 ? 0 : (done * 100 / total).floor();
 
   /// `3/13 · 23%`, the way the Log tabs say it.
-  String get label => '${jsNumberToString(done)}/${jsNumberToString(total)} · '
+  String get label =>
+      '${jsNumberToString(done)}/${jsNumberToString(total)} · '
       '${jsNumberToString(percent)}%';
 
   Map<String, Object?> toJson() => <String, Object?>{

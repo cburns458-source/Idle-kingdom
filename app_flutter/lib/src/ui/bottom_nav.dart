@@ -237,10 +237,7 @@ class _NavSection extends StatelessWidget {
         child: SizedBox.expand(
           child: Align(
             alignment: alignStart ? Alignment.centerLeft : Alignment.center,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              child: content,
-            ),
+            child: Padding(padding: const EdgeInsets.symmetric(horizontal: 8), child: content),
           ),
         ),
       ),

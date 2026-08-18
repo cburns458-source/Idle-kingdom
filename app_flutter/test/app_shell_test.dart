@@ -115,7 +115,13 @@ void main() {
     firstNet.onAccountCleared = firstGame.resetUnsigned;
     addTearDown(firstGame.dispose);
     addTearDown(firstNet.dispose);
-    await firstNet.signUp('vari@example.com', 'Vari', 'secret', stored, adopt: firstGame.adoptAccountSave);
+    await firstNet.signUp(
+      'vari@example.com',
+      'Vari',
+      'secret',
+      stored,
+      adopt: firstGame.adoptAccountSave,
+    );
     firstNet.startPolling(() => firstGame.save);
 
     final secondGame = buildController(database);

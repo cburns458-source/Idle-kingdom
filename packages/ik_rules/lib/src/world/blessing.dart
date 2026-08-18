@@ -39,9 +39,7 @@ BlessResult requestBlessing(GameDatabase db, PlayerSave save, num nowMs) {
   if (isDeathPaused(save, nowMs)) {
     return const BlessResult.failed('Cannot receive a blessing while recovering from defeat.');
   }
-  final location = db.locations.firstWhereOrNull(
-    (row) => row.locationId == save.currentLocationId,
-  );
+  final location = db.locations.firstWhereOrNull((row) => row.locationId == save.currentLocationId);
   if (!locationHasBlessing(location)) {
     return BlessResult.failed(
       configString(db, 'copy.amenity.blessing.not_here', 'The monks are not here.'),

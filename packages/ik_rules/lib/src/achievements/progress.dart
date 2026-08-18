@@ -38,10 +38,7 @@ List<AchievementProgress> _upsertAchievement(
   ];
 }
 
-List<AchievementProgress> _revokeAchievement(
-  List<AchievementProgress> list,
-  String achievementId,
-) {
+List<AchievementProgress> _revokeAchievement(List<AchievementProgress> list, String achievementId) {
   final existing = list.firstWhereOrNull((row) => row.achievementId == achievementId);
   if (existing == null) return list;
   return list.where((row) => row.achievementId != achievementId).toList();

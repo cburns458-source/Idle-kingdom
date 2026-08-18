@@ -110,13 +110,7 @@ List<SkillMenuListItem> skillMenuDisplayEntries(GameDatabase db, String skillId)
     }
     final key = '${project.level ?? ''}|$material';
     if (!seen.add(key)) continue;
-    items.add(
-      SkillMenuListItem(
-        id: key,
-        displayName: '$material items',
-        level: project.level,
-      ),
-    );
+    items.add(SkillMenuListItem(id: key, displayName: '$material items', level: project.level));
   }
   return items;
 }

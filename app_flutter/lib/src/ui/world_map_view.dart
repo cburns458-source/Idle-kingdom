@@ -178,10 +178,7 @@ class _PinnedToArt extends StatelessWidget {
     return Positioned(
       left: point.dx,
       top: point.dy - anchorFromTop,
-      child: FractionalTranslation(
-        translation: const Offset(-0.5, 0),
-        child: child,
-      ),
+      child: FractionalTranslation(translation: const Offset(-0.5, 0), child: child),
     );
   }
 }

@@ -185,7 +185,9 @@ class _MenuViewState extends State<MenuView> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text('Filter chat', style: TextStyle(fontWeight: FontWeight.w700)),
-                            MutedText('Hide profanity in chat. Messages are still stored as typed.'),
+                            MutedText(
+                              'Hide profanity in chat. Messages are still stored as typed.',
+                            ),
                           ],
                         ),
                       ),
@@ -251,7 +253,10 @@ class _MenuViewState extends State<MenuView> {
           const Text('Testing tools', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
           const MutedText('Local debug grants. They are not a live economy.'),
           const SizedBox(height: 10),
-          GameButton(label: 'Spawn critter', onPressed: () => _runTool(controller.debugSpawnCritter)),
+          GameButton(
+            label: 'Spawn critter',
+            onPressed: () => _runTool(controller.debugSpawnCritter),
+          ),
           const SizedBox(height: 12),
           DropdownButtonFormField<String>(
             initialValue: raceRows.any((row) => row.raceId == _raceId) ? _raceId : null,

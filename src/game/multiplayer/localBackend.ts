@@ -11,12 +11,14 @@ import {
 import { totalLevel } from '../skills/totals'
 import { CHAT_COOLDOWN_SECONDS, PRESENCE_TTL_SECONDS } from './config'
 import { containsSlur, CHAT_DISABLED_NOTICE } from './moderation'
-import { buildLeaderboardSnapshot } from './snapshots'
+import { buildLeaderboardSnapshot, rankLeaderboardEntries } from './snapshots'
 import type { GameDatabase } from '../data/types'
 import { prepareBazaarPost } from '../bazaar/post'
 import type { BazaarPost, BazaarPostKind } from '../bazaar/types'
 import type { BountyClaimRecord } from '../bounties/types'
 import {
+  boardCarriesExperience,
+  boardHidesZeroes,
   chatChannelKey,
   DEFAULT_GUILD_RANK_LABELS,
   GUILD_CREATE_GOLD_COST,
@@ -64,6 +66,8 @@ interface LocalDb {
     userId: string
     boardKey: MultiplayerBoardKey
     value: number
+    /** The second number a combined board shows. Zero on single-value boards. */
+    secondaryValue?: number
     updatedAt: string
   }>
   messages: ChatMessage[]
@@ -418,6 +422,7 @@ export class LocalMultiplayerBackend {
         userId,
         boardKey: board.boardKey,
         value: board.value,
+        secondaryValue: board.secondaryValue ?? 0,
         updatedAt,
       })
     }
@@ -451,28 +456,32 @@ export class LocalMultiplayerBackend {
             emblem: guild.emblem,
           }
         })
-        .sort((a, b) => b.value - a.value || a.username.localeCompare(b.username))
-        .slice(0, limit)
-      return scored.map((row, index) => ({ ...row, rank: index + 1 }))
+      return rankLeaderboardEntries(scored).slice(0, limit)
     }
-    const rows = db.leaderboards
+    const entries = db.leaderboards
       .filter((row) => row.boardKey === boardKey)
-      .sort((a, b) => b.value - a.value || a.userId.localeCompare(b.userId))
-      .slice(0, limit)
-    return rows.map((row, index) => {
-      const profile = db.profiles.find((entry) => entry.userId === row.userId)
-      return {
-        userId: row.userId,
-        username: profile?.username ?? 'Adventurer',
-        appearance: profile?.appearance ?? defaultAppearance(),
-        guildName: profile?.guildName ?? null,
-        boardKey,
-        value: row.value,
-        rank: index + 1,
-        entryKind: 'player' as const,
-        emblem: null,
-      }
-    })
+      .map((row) => {
+        const profile = db.profiles.find((entry) => entry.userId === row.userId)
+        return {
+          userId: row.userId,
+          username: profile?.username ?? 'Adventurer',
+          appearance: profile?.appearance ?? defaultAppearance(),
+          guildName: profile?.guildName ?? null,
+          boardKey,
+          value: row.value,
+          rank: 0,
+          ...(boardCarriesExperience(boardKey)
+            ? { secondaryValue: row.secondaryValue ?? 0 }
+            : {}),
+          entryKind: 'player' as const,
+          emblem: null,
+        }
+      })
+    // A zero on a qualify-or-not board means the player is not on it at all.
+    const standing = boardHidesZeroes(boardKey)
+      ? entries.filter((entry) => entry.value > 0)
+      : entries
+    return rankLeaderboardEntries(standing).slice(0, limit)
   }
 
   private guildMemberCount(db: LocalDb, guildId: string): number {

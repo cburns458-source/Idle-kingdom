@@ -6,9 +6,18 @@ import 'package:ik_rules/ik_rules.dart';
 /// than an enum, exactly as the TypeScript template literal type does.
 typedef MultiplayerBoardKey = String;
 
+/// Ranks by total level and carries total XP alongside it, so one board answers
+/// both questions and ties break on experience.
 const String boardTotalLevel = 'total_level';
 const String boardGuildTotalLevel = 'guild_total_level';
+
+/// Kept so rows written before the boards were combined still read back. No
+/// longer offered in the picker.
 const String boardTotalExperience = 'total_experience';
+
+/// Total level among players who have never raised Combat past level 1.
+const String boardPacifistTotalLevel = 'total_level_combat_1';
+
 const String boardGoldEarned = 'gold_earned';
 const String boardMonstersKilled = 'monsters_killed';
 const String boardCrittersCollected = 'critters_collected';
@@ -18,6 +27,17 @@ const String boardPvpKd = 'pvp_kd';
 const String skillBoardPrefix = 'skill:';
 
 MultiplayerBoardKey skillBoardKey(String skillId) => '$skillBoardPrefix$skillId';
+
+/// Boards that carry a second number: total level ranks, total XP rides along.
+///
+/// The guild board is not one of them: its value is a whole roster totalled by
+/// the backend, and it was never two boards to begin with.
+bool boardCarriesExperience(MultiplayerBoardKey boardKey) =>
+    boardKey == boardTotalLevel || boardKey == boardPacifistTotalLevel;
+
+/// A board only some players stand on, where a zero means "does not qualify"
+/// rather than a real score of nothing.
+bool boardHidesZeroes(MultiplayerBoardKey boardKey) => boardKey == boardPacifistTotalLevel;
 
 /// The account row every social surface reads names and portraits from.
 class MultiplayerProfile {
@@ -148,6 +168,7 @@ class LeaderboardEntry {
     required this.boardKey,
     required this.value,
     required this.rank,
+    this.secondaryValue,
     this.entryKind,
     this.emblem,
   });
@@ -159,6 +180,10 @@ class LeaderboardEntry {
   final MultiplayerBoardKey boardKey;
   final num value;
   final num rank;
+
+  /// The second number a combined board shows: total XP under a total level.
+  /// Null on boards that rank by one thing.
+  final num? secondaryValue;
 
   /// Set for guild boards, where a row is a guild rather than a player.
   final LeaderboardEntryKind? entryKind;
@@ -172,6 +197,7 @@ class LeaderboardEntry {
     boardKey: boardKey,
     value: value,
     rank: next,
+    secondaryValue: secondaryValue,
     entryKind: entryKind,
     emblem: emblem,
   );
@@ -184,6 +210,7 @@ class LeaderboardEntry {
     'boardKey': boardKey,
     'value': value,
     'rank': rank,
+    if (secondaryValue != null) 'secondaryValue': secondaryValue,
     if (entryKind != null) 'entryKind': entryKind!.wire,
     if (emblem != null || entryKind != null) 'emblem': emblem?.toJson(),
   };

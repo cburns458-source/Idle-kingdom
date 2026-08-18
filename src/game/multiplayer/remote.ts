@@ -3,6 +3,8 @@ import type { BountyClaimRecord } from '../bounties/types'
 import type { PlayerSave } from '../save/types'
 import type { LeaderboardSnapshotValues } from './snapshots'
 import {
+  boardCarriesExperience,
+  boardHidesZeroes,
   DEFAULT_PLAYER_APPEARANCE,
   type ChatMessage,
   type CloudSaveRecord,
@@ -48,7 +50,8 @@ export const REMOTE_USERNAME_MAX_LENGTH = 24
 export const REMOTE_SAVE_COLUMNS = 'save_version, updated_at, payload'
 export const REMOTE_CHAT_COLUMNS = 'id, channel_key, user_id, username, body, created_at'
 export const REMOTE_LEADERBOARD_COLUMNS =
-  'user_id, board_key, value, profiles(username, appearance_json, guild_id, guilds(name))'
+  'user_id, board_key, value, value_secondary, ' +
+  'profiles(username, appearance_json, guild_id, guilds(name))'
 export const REMOTE_BOUNTY_CLAIM_COLUMNS = 'hour_key, bounty_id, user_id, username, claimed_at'
 export const REMOTE_BAZAAR_COLUMNS = 'id, kind, user_id, username, body, created_at'
 
@@ -131,6 +134,7 @@ export function leaderboardRowsFor(
     user_id: userId,
     board_key: board.boardKey,
     value: board.value,
+    value_secondary: board.secondaryValue ?? 0,
     updated_at: nowIso,
   }))
 }
@@ -234,6 +238,9 @@ export function leaderboardEntryFrom(
     boardKey,
     value: num(row.value),
     rank: index + 1,
+    ...(boardCarriesExperience(boardKey)
+      ? { secondaryValue: num(row.value_secondary) }
+      : {}),
   }
 }
 
@@ -241,7 +248,12 @@ export function leaderboardEntriesFrom(
   rows: RemoteRow[],
   boardKey: MultiplayerBoardKey,
 ): LeaderboardEntry[] {
-  return rows.map((row, index) => leaderboardEntryFrom(row, boardKey, index))
+  const entries = rows.map((row, index) => leaderboardEntryFrom(row, boardKey, index))
+  // A zero on a qualify-or-not board means the player is not on it at all.
+  if (!boardHidesZeroes(boardKey)) return entries
+  return entries
+    .filter((entry) => entry.value > 0)
+    .map((entry, index) => ({ ...entry, rank: index + 1 }))
 }
 
 /**

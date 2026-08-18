@@ -266,7 +266,7 @@ export const socialViewScenarios: ParityScenario[] = [
     return {
       boards: boardOptions(db),
       rows: leaderboardRows([
-        entry({ value: 1204, guildName: 'Iron League' }),
+        entry({ value: 1204, secondaryValue: 9_500_000, guildName: 'Iron League' }),
         entry({ rank: 2, userId: 'usr_2', username: 'Rival', value: 12 }),
         entry({
           rank: 1,
@@ -289,7 +289,12 @@ export const socialViewScenarios: ParityScenario[] = [
           emblem: null,
         }),
       ]),
-      emptyMessages: ['total_level', 'guild_total_level', 'skill:SKL-0001'].map((key) => ({
+      emptyMessages: [
+        'total_level',
+        'guild_total_level',
+        'total_level_combat_1',
+        'skill:SKL-0001',
+      ].map((key) => ({
         key,
         message: emptyBoardMessage(key as 'total_level'),
       })),

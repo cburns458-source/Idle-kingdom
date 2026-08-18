@@ -16,26 +16,18 @@ class PlayerTitle {
   final String text;
   final TitlePlacement placement;
 
-  Map<String, Object?> toJson() => <String, Object?>{
-    'text': text,
-    'placement': placement.wire,
-  };
+  Map<String, Object?> toJson() => <String, Object?>{'text': text, 'placement': placement.wire};
 }
 
 /// Held from the first step until the first defeat.
-const PlayerTitle undyingTitle = PlayerTitle(
-  text: 'The Undying',
-  placement: TitlePlacement.suffix,
-);
+const PlayerTitle undyingTitle = PlayerTitle(text: 'The Undying', placement: TitlePlacement.suffix);
 
 /// The title a save has earned, or null when it holds none.
 PlayerTitle? titleForSave(PlayerSave save) => save.hasEverDied ? null : undyingTitle;
 
 String nameWithTitle(String name, PlayerTitle? title) {
   if (title == null) return name;
-  return title.placement == TitlePlacement.prefix
-      ? '${title.text} $name'
-      : '$name ${title.text}';
+  return title.placement == TitlePlacement.prefix ? '${title.text} $name' : '$name ${title.text}';
 }
 
 /// How a character is introduced: their name, with whatever title they hold.

@@ -268,7 +268,9 @@ List<CombatStatContribution> _mainhandBreakdown(GameDatabase db, PlayerSave save
     lines.add(CombatStatContribution(label: _itemName(db, weaponId!), detail: _rangeLabel(weapon)));
   }
   lines.addAll(_damageMultiplierLines(db, save));
-  lines.add(CombatStatContribution(label: 'Total', detail: _rangeLabel(playerDamageRange(db, save))));
+  lines.add(
+    CombatStatContribution(label: 'Total', detail: _rangeLabel(playerDamageRange(db, save))),
+  );
   return lines;
 }
 

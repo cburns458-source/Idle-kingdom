@@ -168,12 +168,12 @@ GeneratedAction? generateNextAction(
   );
   return GeneratedAction(
     action: action,
-    state: ActiveActionState(
-      actionId: actionId,
-      startedAtMs: nowMs,
-      durationMs: durationMs,
+    state: ActiveActionState(actionId: actionId, startedAtMs: nowMs, durationMs: durationMs),
+    save: withHeldAction(
+      tryConsumePotionForScope(db, next, 'one_action').save,
+      activityId,
+      actionId,
     ),
-    save: withHeldAction(tryConsumePotionForScope(db, next, 'one_action').save, activityId, actionId),
   );
 }
 

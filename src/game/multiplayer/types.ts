@@ -20,15 +20,37 @@ export const DEFAULT_PLAYER_APPEARANCE: PlayerAppearance = {
 }
 
 export type MultiplayerBoardKey =
+  /** Ranks by total level and carries total XP alongside it. */
   | 'total_level'
   | 'guild_total_level'
+  /** Written before the boards were combined. No longer offered in the picker. */
   | 'total_experience'
+  /** Total level among players who have never raised Combat past level 1. */
+  | 'total_level_combat_1'
   | 'gold_earned'
   | 'monsters_killed'
   | 'critters_collected'
   | 'bounties_completed'
   | 'pvp_kd'
   | `skill:${string}`
+
+/**
+ * Boards that carry a second number: total level ranks, total XP rides along.
+ *
+ * The guild board is not one of them: its value is a whole roster totalled by
+ * the backend, and it was never two boards to begin with.
+ */
+export function boardCarriesExperience(boardKey: MultiplayerBoardKey): boolean {
+  return boardKey === 'total_level' || boardKey === 'total_level_combat_1'
+}
+
+/**
+ * A board only some players stand on, where a zero means "does not qualify"
+ * rather than a real score of nothing.
+ */
+export function boardHidesZeroes(boardKey: MultiplayerBoardKey): boolean {
+  return boardKey === 'total_level_combat_1'
+}
 
 export interface MultiplayerProfile {
   userId: string
@@ -55,6 +77,11 @@ export interface LeaderboardEntry {
   boardKey: MultiplayerBoardKey
   value: number
   rank: number
+  /**
+   * The second number a combined board shows: total XP under a total level.
+   * Absent on boards that rank by one thing.
+   */
+  secondaryValue?: number
   /** Present for guild boards (e.g. guild_total_level). */
   entryKind?: 'player' | 'guild'
   emblem?: GuildEmblem | null

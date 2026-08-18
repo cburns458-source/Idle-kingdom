@@ -44,6 +44,7 @@ String friendlyRemoteError(String message) {
   }
   return message;
 }
+
 const String remoteMagicLinkUnavailable =
     'Magic links require Supabase. Use email/password in local demo mode.';
 
@@ -56,7 +57,8 @@ const int remoteUsernameMaxLength = 24;
 const String remoteSaveColumns = 'save_version, updated_at, payload';
 const String remoteChatColumns = 'id, channel_key, user_id, username, body, created_at';
 const String remoteLeaderboardColumns =
-    'user_id, board_key, value, profiles(username, appearance_json, guild_id, guilds(name))';
+    'user_id, board_key, value, value_secondary, '
+    'profiles(username, appearance_json, guild_id, guilds(name))';
 const String remoteBountyClaimColumns = 'hour_key, bounty_id, user_id, username, claimed_at';
 const String remoteBazaarColumns = 'id, kind, user_id, username, body, created_at';
 
@@ -159,6 +161,7 @@ List<RemoteRow> leaderboardRowsFor(
           'user_id': userId,
           'board_key': board.boardKey,
           'value': board.value,
+          'value_secondary': board.secondaryValue ?? 0,
           'updated_at': nowIso,
         },
       )
@@ -288,13 +291,21 @@ LeaderboardEntry leaderboardEntryFrom(RemoteRow row, MultiplayerBoardKey boardKe
     boardKey: boardKey,
     value: _num(row['value']),
     rank: index + 1,
+    secondaryValue: boardCarriesExperience(boardKey) ? _num(row['value_secondary']) : null,
   );
 }
 
 List<LeaderboardEntry> leaderboardEntriesFrom(List<RemoteRow> rows, MultiplayerBoardKey boardKey) {
-  return <LeaderboardEntry>[
+  final entries = <LeaderboardEntry>[
     for (final (index, row) in rows.indexed) leaderboardEntryFrom(row, boardKey, index),
   ];
+  // A zero on a qualify-or-not board means the player is not on it at all.
+  if (!boardHidesZeroes(boardKey)) return entries;
+  return entries
+      .where((entry) => entry.value > 0)
+      .indexed
+      .map((entry) => entry.$2.withRank(entry.$1 + 1))
+      .toList();
 }
 
 /// The row that claims an hourly bounty first.

@@ -3,10 +3,7 @@ import 'package:test/test.dart';
 
 void main() {
   test('keeps a project origin unchanged', () {
-    expect(
-      normalizeRemoteBackendUrl('https://abcd.supabase.co'),
-      'https://abcd.supabase.co',
-    );
+    expect(normalizeRemoteBackendUrl('https://abcd.supabase.co'), 'https://abcd.supabase.co');
   });
 
   test('strips the REST and Auth suffixes the dashboard copies', () {
@@ -33,10 +30,7 @@ void main() {
   });
 
   test('explains the PostgREST invalid-path error', () {
-    expect(
-      friendlyRemoteError('Invalid path specified in request URL'),
-      remoteInvalidBackendUrl,
-    );
+    expect(friendlyRemoteError('Invalid path specified in request URL'), remoteInvalidBackendUrl);
     expect(friendlyRemoteError('Invalid login credentials'), 'Invalid login credentials');
   });
 

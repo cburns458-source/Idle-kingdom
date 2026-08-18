@@ -324,8 +324,16 @@ export interface LeaderboardRowView {
   username: string
   /** The guild a player belongs to, or how full a guild is. */
   subtitle: string
-  /** `1,204`, grouped the way the rest of the UI groups numbers. */
+  /**
+   * `1,204`, grouped the way the rest of the UI groups numbers. On a combined
+   * board this is the level, with the experience in `secondaryLabel`.
+   */
   valueLabel: string
+  /**
+   * `12,300,000 xp` under the level, on a board that shows both. Absent when
+   * the board ranks by one thing.
+   */
+  secondaryLabel?: string
   /** Set for a guild row, whose badge stands in for a portrait. */
   emblem: GuildEmblem | null
   appearance: PlayerAppearance
@@ -335,12 +343,14 @@ export interface LeaderboardRowView {
 export function leaderboardRows(entries: LeaderboardEntry[]): LeaderboardRowView[] {
   return entries.map((entry) => {
     const isGuild = entry.entryKind === 'guild'
+    const experience = entry.secondaryValue
     return {
       rank: entry.rank,
       entryId: entry.userId,
       username: entry.username,
       subtitle: isGuild ? (entry.guildName ?? 'Guild') : (entry.guildName ?? 'No guild'),
       valueLabel: entry.value.toLocaleString(),
+      ...(experience == null ? {} : { secondaryLabel: `${experience.toLocaleString()} xp` }),
       emblem: isGuild ? (entry.emblem ?? null) : null,
       appearance: entry.appearance,
       isGuild,
@@ -350,6 +360,9 @@ export function leaderboardRows(entries: LeaderboardEntry[]): LeaderboardRowView
 
 /** What an empty board says, which differs for guilds. */
 export function emptyBoardMessage(boardKey: MultiplayerBoardKey): string {
+  if (boardKey === 'total_level_combat_1') {
+    return 'No scores on this board yet. Keep Combat at level 1 to stand on it.'
+  }
   return boardKey === 'guild_total_level'
     ? 'No guilds yet — create or join one from the Guilds tab.'
     : 'No scores on this board yet.'

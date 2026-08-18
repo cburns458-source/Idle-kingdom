@@ -3,7 +3,10 @@ import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { prepareDatabase } from '../data/loadDatabase'
 import { createNewSave } from '../save/saveStore'
-import { buildLeaderboardSnapshot, boardLabel } from './snapshots'
+import { COMBAT_SKILL_ID } from '../combat/stats'
+import { totalLevel, totalSkillXp } from '../skills/totals'
+import { buildLeaderboardSnapshot, boardLabel, rankLeaderboardEntries } from './snapshots'
+import { DEFAULT_PLAYER_APPEARANCE, type LeaderboardEntry } from './types'
 
 const rawDatabase = JSON.parse(
   readFileSync(resolve(process.cwd(), 'content/data/game-database.json'), 'utf8'),
@@ -26,7 +29,9 @@ describe('leaderboard snapshot builder', () => {
     const snapshot = buildLeaderboardSnapshot(launch, save)
     const keys = snapshot.boards.map((board) => board.boardKey)
     expect(keys).toContain('total_level')
-    expect(keys).toContain('total_experience')
+    expect(keys).toContain('total_level_combat_1')
+    // Total XP rides along on the total level board instead of holding its own.
+    expect(keys).not.toContain('total_experience')
     expect(keys).toContain('gold_earned')
     expect(keys).toContain('monsters_killed')
     expect(keys).toContain('critters_collected')
@@ -40,7 +45,69 @@ describe('leaderboard snapshot builder', () => {
     for (const skill of launchSkills) {
       expect(keys).toContain(`skill:${skill['Skill ID']}`)
     }
-    expect(boardLabel(launch, 'total_level')).toBe('Total Level')
+    expect(boardLabel(launch, 'total_level')).toBe('Total Level & XP')
+    expect(boardLabel(launch, 'total_level_combat_1')).toBe('Pacifist Total Level')
     expect(boardLabel(launch, 'guild_total_level')).toBe('Guild Total Level')
+  })
+
+  it('carries total XP alongside the total level', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const save = createNewSave(launch)
+    const snapshot = buildLeaderboardSnapshot(launch, save)
+
+    const total = snapshot.boards.find((board) => board.boardKey === 'total_level')
+    expect(total?.value).toBe(totalLevel(save))
+    expect(total?.secondaryValue).toBe(totalSkillXp(save))
+  })
+
+  it('stands a fresh character on the pacifist board and a fighter off it', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const save = createNewSave(launch)
+
+    const pacifist = buildLeaderboardSnapshot(launch, save).boards.find(
+      (board) => board.boardKey === 'total_level_combat_1',
+    )
+    expect(pacifist?.value).toBe(totalLevel(save))
+    expect(pacifist?.secondaryValue).toBe(totalSkillXp(save))
+
+    const fighter = {
+      ...save,
+      skills: save.skills.map((skill) =>
+        skill.skillId === COMBAT_SKILL_ID ? { ...skill, level: 2 } : skill,
+      ),
+    }
+    const off = buildLeaderboardSnapshot(launch, fighter).boards.find(
+      (board) => board.boardKey === 'total_level_combat_1',
+    )
+    // A zero reads as "not on this board" rather than a score of nothing.
+    expect(off?.value).toBe(0)
+    expect(off?.secondaryValue).toBe(0)
+  })
+
+  it('splits a tie on total level by experience', () => {
+    const entries: LeaderboardEntry[] = [
+      {
+        userId: 'usr-1',
+        username: 'Ada',
+        appearance: DEFAULT_PLAYER_APPEARANCE,
+        guildName: null,
+        boardKey: 'total_level',
+        value: 20,
+        secondaryValue: 400,
+        rank: 0,
+      },
+      {
+        userId: 'usr-2',
+        username: 'Bea',
+        appearance: DEFAULT_PLAYER_APPEARANCE,
+        guildName: null,
+        boardKey: 'total_level',
+        value: 20,
+        secondaryValue: 900,
+        rank: 0,
+      },
+    ]
+
+    expect(rankLeaderboardEntries(entries).map((entry) => entry.username)).toEqual(['Bea', 'Ada'])
   })
 })

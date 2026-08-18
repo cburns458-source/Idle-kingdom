@@ -123,7 +123,12 @@ describe('remote leaderboards', () => {
   it('stamps every board of one submit with the same instant', () => {
     const rows = leaderboardRowsFor(
       'usr-1',
-      { boards: [{ boardKey: 'total_level', value: 42 }, { boardKey: 'gold_earned', value: 7 }] },
+      {
+        boards: [
+          { boardKey: 'total_level', value: 42, secondaryValue: 1204 },
+          { boardKey: 'gold_earned', value: 7 },
+        ],
+      },
       '2026-08-12T21:00:00.000Z',
     )
     expect(rows).toEqual([
@@ -131,15 +136,65 @@ describe('remote leaderboards', () => {
         user_id: 'usr-1',
         board_key: 'total_level',
         value: 42,
+        value_secondary: 1204,
         updated_at: '2026-08-12T21:00:00.000Z',
       },
       {
         user_id: 'usr-1',
         board_key: 'gold_earned',
         value: 7,
+        value_secondary: 0,
         updated_at: '2026-08-12T21:00:00.000Z',
       },
     ])
+  })
+
+  it('reads experience back on a combined board and drops it elsewhere', () => {
+    const row = {
+      user_id: 'usr-1',
+      value: '42',
+      value_secondary: '1204',
+      profiles: {
+        username: 'Hero',
+        appearance_json: DEFAULT_PLAYER_APPEARANCE,
+        guild_id: null,
+        guilds: null,
+      },
+    }
+
+    expect(leaderboardEntriesFrom([row], 'total_level')[0].secondaryValue).toBe(1204)
+    expect(leaderboardEntriesFrom([row], 'gold_earned')[0].secondaryValue).toBeUndefined()
+  })
+
+  it('leaves a fighter off the pacifist board', () => {
+    const rows = [
+      {
+        user_id: 'usr-1',
+        value: '42',
+        value_secondary: '1204',
+        profiles: {
+          username: 'Hero',
+          appearance_json: DEFAULT_PLAYER_APPEARANCE,
+          guild_id: null,
+          guilds: null,
+        },
+      },
+      {
+        user_id: 'usr-2',
+        value: '0',
+        value_secondary: '0',
+        profiles: {
+          username: 'Brawler',
+          appearance_json: DEFAULT_PLAYER_APPEARANCE,
+          guild_id: null,
+          guilds: null,
+        },
+      },
+    ]
+
+    const entries = leaderboardEntriesFrom(rows, 'total_level_combat_1')
+    expect(entries.map((entry) => entry.username)).toEqual(['Hero'])
+    expect(entries[0].rank).toBe(1)
   })
 
   it('ranks rows by the order the read returned them', () => {

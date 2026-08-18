@@ -251,8 +251,7 @@ class _NpcPanelState extends State<NpcPanel> {
                       conversation.name,
                       style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
                     ),
-                    if (conversation.role case final role?
-                        when role.toLowerCase() != 'quest giver')
+                    if (conversation.role case final role? when role.toLowerCase() != 'quest giver')
                       MutedText(role),
                   ],
                 ),
@@ -271,7 +270,8 @@ class _NpcPanelState extends State<NpcPanel> {
               MerchantGreeting(:final line) => line,
               QuestPitchGreeting(:final line) => line,
             }),
-            if (greeting case MerchantGreeting(:final detail) when detail != null) MutedText(detail),
+            if (greeting case MerchantGreeting(:final detail) when detail != null)
+              MutedText(detail),
             const SizedBox(height: 8),
             OutlinedButton(
               onPressed: () => setState(() => _dialogue = greeting),

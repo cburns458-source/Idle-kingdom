@@ -22,10 +22,7 @@ Rect mapArtRect(Size box, {double aspectRatio = mapArtAspectRatio}) {
 
 /// Part-way from [from] to [to], for a sprite mid-walk.
 NodePosition lerpNodePosition(NodePosition from, NodePosition to, double t) {
-  return NodePosition(
-    x: from.x + (to.x - from.x) * t,
-    y: from.y + (to.y - from.y) * t,
-  );
+  return NodePosition(x: from.x + (to.x - from.x) * t, y: from.y + (to.y - from.y) * t);
 }
 
 /// The point on the art a node sits on, in [box] coordinates.

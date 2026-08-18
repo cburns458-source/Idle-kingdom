@@ -54,11 +54,7 @@ void main() {
   });
 
   test('starting monk training unequips weapon and off-hand, then fights unarmed', () {
-    var save = _withHands(
-      _atTemple(db),
-      weaponId: 'ITEM-0100',
-      offhandId: 'ITEM-0145',
-    );
+    var save = _withHands(_atTemple(db), weaponId: 'ITEM-0100', offhandId: 'ITEM-0145');
     expect(slotItemId(save, weaponToolSlotId), 'ITEM-0100');
     expect(slotItemId(save, offhandSlotId), 'ITEM-0145');
 
@@ -76,11 +72,7 @@ void main() {
   });
 
   test('blessing restores full health without unequipping or starting an activity', () {
-    var save = _withHands(
-      _atTemple(db, hp: 250),
-      weaponId: 'ITEM-0100',
-      offhandId: 'ITEM-0145',
-    );
+    var save = _withHands(_atTemple(db, hp: 250), weaponId: 'ITEM-0100', offhandId: 'ITEM-0145');
 
     final blessed = requestBlessing(db, save, 0);
     expect(blessed.ok, isTrue);

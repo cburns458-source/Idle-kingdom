@@ -41,9 +41,7 @@ class ActionStage extends StatelessWidget {
     // A death blow keeps the last fight on screen for a beat, then Recovering
     // takes over. Victory uses the same hold, then a short "defeated" banner.
     if (controller.showRecoveringStage) return _RecoveringStage(controller: controller);
-    if (save.combatEnemyId != null ||
-        controller.combatBlowHold ||
-        controller.defeatedFlash) {
+    if (save.combatEnemyId != null || controller.combatBlowHold || controller.defeatedFlash) {
       return _CombatStage(controller: controller);
     }
     if (save.productionRecipeId != null || controller.craftPopup != null) {
@@ -274,11 +272,7 @@ class _Portrait extends StatelessWidget {
                       filterQuality: FilterQuality.none,
                       gaplessPlayback: true,
                     )
-                  : GameImage(
-                      assetPath!,
-                      fit: BoxFit.contain,
-                      alignment: alignment,
-                    ),
+                  : GameImage(assetPath!, fit: BoxFit.contain, alignment: alignment),
             ?overlay,
           ],
         ),
@@ -345,11 +339,7 @@ class _Meter extends StatelessWidget {
 
 /// Name + HP so both fighters' bars sit on the same row.
 class _FighterCaption extends StatelessWidget {
-  const _FighterCaption({
-    required this.name,
-    required this.alignEnd,
-    required this.meter,
-  });
+  const _FighterCaption({required this.name, required this.alignEnd, required this.meter});
 
   final String name;
   final bool alignEnd;
