@@ -13,20 +13,20 @@ class NodePosition {
   Map<String, Object?> toJson() => <String, Object?>{'x': x, 'y': y};
 }
 
-/// The main map is an expanded canvas generated from the original square art.
+/// The main map is a square plate; nodes sit on landmarks in the generated art.
 const Map<String, NodePosition> mainMapNodeLayout = <String, NodePosition>{
   // NW castle with blue roofs
   'LOC-0013': NodePosition(x: 24, y: 24),
   // Ancient Forest north of the castle
   'LOC-0018': NodePosition(x: 22, y: 10),
   // Temple on the ridge between castle and mountains
-  'LOC-0036': NodePosition(x: 36, y: 20),
-  // Mountain peaks / ridge (nudged right)
+  'LOC-0036': NodePosition(x: 42, y: 16),
+  // Mountain peaks / ridge
   'LOC-0006': NodePosition(x: 62, y: 16),
-  // Cave mouth in the mountains
-  'LOC-0010': NodePosition(x: 52, y: 36),
-  // Wizard tower with blue magic (NE, lowered)
-  'LOC-0007': NodePosition(x: 78, y: 34),
+  // Cave mouth at the foot of the mountains
+  'LOC-0010': NodePosition(x: 60, y: 26),
+  // Wizard tower with blue roof (NE)
+  'LOC-0007': NodePosition(x: 82, y: 24),
   // West kingswoods forest
   'LOC-0008': NodePosition(x: 14, y: 34),
   // Central village / town square (gateway into Town Map)
@@ -35,14 +35,14 @@ const Map<String, NodePosition> mainMapNodeLayout = <String, NodePosition>{
   'LOC-0003': NodePosition(x: 72, y: 48),
   // Meadow
   'LOC-0009': NodePosition(x: 16, y: 58),
-  // Mine entrance with ore piles
-  'LOC-0005': NodePosition(x: 24, y: 70),
+  // Mine entrance with ore carts
+  'LOC-0005': NodePosition(x: 30, y: 72),
   // Farm fields / windmill
-  'LOC-0001': NodePosition(x: 76, y: 66),
-  // Harbor / dock at river mouth (raised)
-  'LOC-0004': NodePosition(x: 50, y: 68),
-  // Citadel Hub gateway (between Town and Goblin Camp)
-  'LOC-0027': NodePosition(x: 50, y: 46),
+  'LOC-0001': NodePosition(x: 74, y: 70),
+  // Harbor / dock at river mouth
+  'LOC-0004': NodePosition(x: 55, y: 76),
+  // Citadel Hub gateway at the river fork
+  'LOC-0027': NodePosition(x: 48, y: 42),
 };
 
 const Map<String, NodePosition> caveMapNodeLayout = <String, NodePosition>{

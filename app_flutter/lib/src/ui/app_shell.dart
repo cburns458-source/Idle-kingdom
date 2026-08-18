@@ -18,6 +18,7 @@ import 'menu_view.dart';
 import 'nearby_panel.dart';
 import 'new_character_sheet.dart';
 import 'overlay_notice.dart';
+import 'playable_frame.dart';
 import 'skills_view.dart';
 import 'social_view.dart';
 import 'top_hud.dart';
@@ -272,23 +273,29 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
     return Container(
       decoration: const BoxDecoration(gradient: Palette.shellGradient),
       child: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 720),
-            child: DecoratedBox(
-              decoration: const BoxDecoration(gradient: Palette.frameGradient),
-              // Material widgets (text fields, ink, tooltips) need one of these
-              // above them, and the frame's own gradient shows through it.
-              child: Material(
-                type: MaterialType.transparency,
-                clipBehavior: Clip.none,
-                child: ListenableBuilder(
-                  listenable: Listenable.merge(<Listenable>[controller, multiplayer]),
-                  builder: (context, _) => _buildFrame(context),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final frame = playableFrameSize(constraints.biggest);
+            return Center(
+              child: SizedBox(
+                width: frame.width,
+                height: frame.height,
+                child: DecoratedBox(
+                  decoration: const BoxDecoration(gradient: Palette.frameGradient),
+                  // Material widgets (text fields, ink, tooltips) need one of these
+                  // above them, and the frame's own gradient shows through it.
+                  child: Material(
+                    type: MaterialType.transparency,
+                    clipBehavior: Clip.none,
+                    child: ListenableBuilder(
+                      listenable: Listenable.merge(<Listenable>[controller, multiplayer]),
+                      builder: (context, _) => _buildFrame(context),
+                    ),
+                  ),
                 ),
               ),
-            ),
-          ),
+            );
+          },
         ),
       ),
     );

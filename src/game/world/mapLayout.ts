@@ -23,13 +23,13 @@ export const MAIN_MAP_NODE_LAYOUT: Record<string, NodePosition> = {
   // Ancient Forest north of the castle
   'LOC-0018': { x: 22, y: 10 },
   // Temple on the ridge between castle and mountains
-  'LOC-0036': { x: 36, y: 20 },
-  // Mountain peaks / ridge (nudged right)
+  'LOC-0036': { x: 42, y: 16 },
+  // Mountain peaks / ridge
   'LOC-0006': { x: 62, y: 16 },
-  // Cave mouth in the mountains
-  'LOC-0010': { x: 52, y: 36 },
-  // Wizard tower with blue magic (NE, lowered)
-  'LOC-0007': { x: 78, y: 34 },
+  // Cave mouth at the foot of the mountains
+  'LOC-0010': { x: 60, y: 26 },
+  // Wizard tower with blue roof (NE)
+  'LOC-0007': { x: 82, y: 24 },
   // West kingswoods forest
   'LOC-0008': { x: 14, y: 34 },
   // Central village / town square (gateway into Town Map)
@@ -38,14 +38,14 @@ export const MAIN_MAP_NODE_LAYOUT: Record<string, NodePosition> = {
   'LOC-0003': { x: 72, y: 48 },
   // Meadow
   'LOC-0009': { x: 16, y: 58 },
-  // Mine entrance with ore piles
-  'LOC-0005': { x: 24, y: 70 },
+  // Mine entrance with ore carts
+  'LOC-0005': { x: 30, y: 72 },
   // Farm fields / windmill
-  'LOC-0001': { x: 76, y: 66 },
-  // Harbor / dock at river mouth (raised)
-  'LOC-0004': { x: 50, y: 68 },
-  // Citadel Hub gateway (between Town and Goblin Camp)
-  'LOC-0027': { x: 50, y: 46 },
+  'LOC-0001': { x: 74, y: 70 },
+  // Harbor / dock at river mouth
+  'LOC-0004': { x: 55, y: 76 },
+  // Citadel Hub gateway at the river fork
+  'LOC-0027': { x: 48, y: 42 },
 }
 
 export const CAVE_MAP_NODE_LAYOUT: Record<string, NodePosition> = {
