@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:idle_kingdoms/src/session/game_controller.dart';
 import 'package:idle_kingdoms/src/session/multiplayer_controller.dart';
+import 'package:idle_kingdoms/src/session/tester_access.dart';
 import 'package:idle_kingdoms/src/theme.dart';
 import 'package:idle_kingdoms/src/ui/app_shell.dart';
 import 'package:ik_content/ik_content.dart';
@@ -103,6 +104,7 @@ MultiplayerController buildMultiplayer(
   LoadedDatabase database, {
   TestClock? clock,
   bool signedIn = true,
+  bool testerAccess = true,
   TestAccount account = testAccount,
 }) {
   final testClock = clock ?? TestClock();
@@ -113,12 +115,14 @@ MultiplayerController buildMultiplayer(
   if (signedIn) {
     restoreTestSession(service, storage, account: account);
   }
-  return MultiplayerController(
+  final net = MultiplayerController(
     database: database,
     service: service,
     storage: storage,
     clock: testClock.read,
   );
+  if (testerAccess) net.unlockTesterAccess(testerPasskey);
+  return net;
 }
 
 /// Signs the already-registered [account] in through the controller, not the form.
@@ -141,17 +145,20 @@ MultiplayerController buildRemoteMultiplayer(
   LoadedDatabase database, {
   required FakeTransport transport,
   TestClock? clock,
+  bool testerAccess = true,
 }) {
   final testClock = clock ?? TestClock();
   final storage = MemorySaveStorage();
   final service = RemoteMultiplayerService(transport: transport, storage: storage);
   service.local.ensureDemoWorld(database.launch);
-  return MultiplayerController(
+  final net = MultiplayerController(
     database: database,
     service: service,
     storage: storage,
     clock: testClock.read,
   );
+  if (testerAccess) net.unlockTesterAccess(testerPasskey);
+  return net;
 }
 
 /// Pumps the whole shell, which is how a panel is reached the way a player does.

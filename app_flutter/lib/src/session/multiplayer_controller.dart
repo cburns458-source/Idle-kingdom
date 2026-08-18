@@ -6,6 +6,8 @@ import 'package:ik_net/ik_net.dart';
 import 'package:ik_rules/ik_rules.dart';
 import 'package:ik_runtime/ik_runtime.dart';
 
+import 'tester_access.dart';
+
 /// The screen-facing half of multiplayer.
 ///
 /// Everything that decides anything lives in `ik_net`; this holds what a screen
@@ -61,6 +63,18 @@ class MultiplayerController extends ChangeNotifier {
   void setHideChatBubble(bool value) {
     storage.setItem(hideChatBubbleStorageKey, value ? '1' : '0');
     notifyListeners();
+  }
+
+  /// True when this device may see sign-in. An empty [testerPasskey] leaves
+  /// the gate off.
+  bool get hasTesterAccess => !testerPasskeyRequired(storage.getItem(testerAccessStorageKey));
+
+  /// Accepts the shared tester key and remembers it on this device.
+  bool unlockTesterAccess(String raw) {
+    if (!matchesTesterPasskey(raw)) return false;
+    storage.setItem(testerAccessStorageKey, testerPasskey);
+    notifyListeners();
+    return true;
   }
 
   /// When on, Guilds, Leaderboards, Chat, and Nearby open without an account.

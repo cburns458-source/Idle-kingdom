@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:idle_kingdoms/src/session/multiplayer_controller.dart';
+import 'package:idle_kingdoms/src/session/tester_access.dart';
 import 'package:idle_kingdoms/src/theme.dart';
 import 'package:idle_kingdoms/src/ui/reward_strip.dart';
 import 'package:ik_content/ik_content.dart';
@@ -16,6 +17,13 @@ void main() {
     database = loadDatabaseFromRepo();
   });
 
+  test('the tester passkey is case-insensitive and remembered as the current key', () {
+    expect(testerPasskeyRequired(null), isTrue);
+    expect(testerPasskeyRequired(testerPasskey), isFalse);
+    expect(matchesTesterPasskey('  RESTORIA-TESTERS  '), isTrue);
+    expect(matchesTesterPasskey('nope'), isFalse);
+  });
+
   testWidgets('a new save asks for an account, then character creation', (tester) async {
     final controller = buildController(database);
     final net = buildMultiplayer(database, signedIn: false);
@@ -24,6 +32,7 @@ void main() {
     await pumpShell(tester, controller, multiplayer: net);
 
     expect(find.text('Sign in to play'), findsOne);
+    expect(find.text('Test launch'), findsNothing);
     expect(find.text('Name your character'), findsNothing);
     expect(find.text('Meadow'), findsNothing);
 
@@ -98,6 +107,33 @@ void main() {
     expect(find.text('Name your character'), findsOne);
     expect(controller.save.characterName, isNull);
     expect(isPendingAccountUsername(net.session!.username), isTrue);
+  });
+
+  testWidgets('the tester passkey opens sign-in and stays on this device', (tester) async {
+    final controller = buildController(database);
+    final net = buildMultiplayer(database, signedIn: false, testerAccess: false);
+    addTearDown(controller.dispose);
+    addTearDown(net.dispose);
+    await pumpShell(tester, controller, multiplayer: net);
+
+    expect(find.text('Test launch'), findsOne);
+    expect(find.text('Sign in to play'), findsNothing);
+    expect(find.byKey(const Key('auth-email')), findsNothing);
+
+    await tester.enterText(find.byKey(const Key('tester-passkey')), 'wrong-key');
+    await tester.tap(find.text('Continue'));
+    await tester.pump();
+    expect(find.text('That passkey is not right.'), findsOne);
+    expect(find.text('Sign in to play'), findsNothing);
+
+    await tester.enterText(find.byKey(const Key('tester-passkey')), testerPasskey);
+    await tester.tap(find.text('Continue'));
+    await tester.pump();
+
+    expect(find.text('Test launch'), findsNothing);
+    expect(find.text('Sign in to play'), findsOne);
+    expect(find.byKey(const Key('auth-email')), findsOne);
+    expect(net.hasTesterAccess, isTrue);
   });
 
   testWidgets('an unsigned player cannot reach the location screen', (tester) async {

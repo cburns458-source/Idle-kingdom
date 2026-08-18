@@ -9,8 +9,8 @@ import 'social_bits.dart';
 
 /// Blocks the game until the player signs in with email.
 ///
-/// Character creation comes after this sheet, once [MultiplayerController.isSignedIn]
-/// is true.
+/// During the closed test, a shared passkey is asked first. Character creation
+/// comes after this sheet, once [MultiplayerController.isSignedIn] is true.
 class AuthGateSheet extends StatelessWidget {
   const AuthGateSheet({super.key, required this.controller, required this.multiplayer});
 
@@ -24,21 +24,83 @@ class AuthGateSheet extends StatelessWidget {
       child: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16),
-          child: ListView(
-            children: [
-              const Text(
-                'Sign in to play',
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
-              ),
-              const SizedBox(height: 4),
-              MutedText(authGateIntro(multiplayer.mode)),
-              const SizedBox(height: 16),
-              AccountAuthForm(controller: controller, multiplayer: multiplayer),
-              SocialNotice(notice: multiplayer.notice),
-            ],
+          child: ListenableBuilder(
+            listenable: multiplayer,
+            builder: (context, _) {
+              return ListView(
+                children: [
+                  if (!multiplayer.hasTesterAccess)
+                    _TesterPasskeyForm(multiplayer: multiplayer)
+                  else ...[
+                    const Text(
+                      'Sign in to play',
+                      style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
+                    ),
+                    const SizedBox(height: 4),
+                    MutedText(authGateIntro(multiplayer.mode)),
+                    const SizedBox(height: 16),
+                    AccountAuthForm(controller: controller, multiplayer: multiplayer),
+                    SocialNotice(notice: multiplayer.notice),
+                  ],
+                ],
+              );
+            },
           ),
         ),
       ),
+    );
+  }
+}
+
+class _TesterPasskeyForm extends StatefulWidget {
+  const _TesterPasskeyForm({required this.multiplayer});
+
+  final MultiplayerController multiplayer;
+
+  @override
+  State<_TesterPasskeyForm> createState() => _TesterPasskeyFormState();
+}
+
+class _TesterPasskeyFormState extends State<_TesterPasskeyForm> {
+  final TextEditingController _passkey = TextEditingController();
+  String? _error;
+
+  @override
+  void dispose() {
+    _passkey.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    final ok = widget.multiplayer.unlockTesterAccess(_passkey.text);
+    if (ok) return;
+    setState(() => _error = 'That passkey is not right.');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const Text('Test launch', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700)),
+        const SizedBox(height: 4),
+        const MutedText('Enter the tester passkey to create an account or sign in.'),
+        const SizedBox(height: 16),
+        TextField(
+          key: const Key('tester-passkey'),
+          controller: _passkey,
+          obscureText: true,
+          textInputAction: TextInputAction.done,
+          onSubmitted: (_) => _submit(),
+          decoration: const InputDecoration(labelText: 'Passkey'),
+        ),
+        if (_error case final error?) ...[
+          const SizedBox(height: 8),
+          Text(error, style: const TextStyle(color: Palette.danger)),
+        ],
+        const SizedBox(height: 12),
+        FilledButton(onPressed: _submit, child: const Text('Continue')),
+      ],
     );
   }
 }
