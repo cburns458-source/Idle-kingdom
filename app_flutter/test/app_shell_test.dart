@@ -109,6 +109,20 @@ void main() {
     expect(isPendingAccountUsername(net.session!.username), isTrue);
   });
 
+  testWidgets('a typed URL on a fresh device asks for the tester passkey', (tester) async {
+    final controller = buildController(database);
+    final net = buildMultiplayer(database, signedIn: false, testerAccess: false);
+    addTearDown(controller.dispose);
+    addTearDown(net.dispose);
+    await pumpShell(tester, controller, multiplayer: net);
+
+    expect(find.text('Test launch'), findsOne);
+    expect(find.text('Enter the tester passkey to create an account or sign in.'), findsOne);
+    expect(find.byKey(const Key('tester-passkey')), findsOne);
+    expect(find.text('Sign in to play'), findsNothing);
+    expect(find.byKey(const Key('auth-email')), findsNothing);
+  });
+
   testWidgets('the tester passkey opens sign-in and stays on this device', (tester) async {
     final controller = buildController(database);
     final net = buildMultiplayer(database, signedIn: false, testerAccess: false);

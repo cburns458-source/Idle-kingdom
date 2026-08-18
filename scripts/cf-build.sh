@@ -28,7 +28,7 @@ flutter --version
 
 cd "$ROOT/app_flutter"
 flutter pub get
-flutter build web --release \
+flutter build web --release --pwa-strategy=none \
   --dart-define="SUPABASE_URL=$SUPABASE_URL" \
   --dart-define="SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY"
 
@@ -37,6 +37,11 @@ if [[ ! -f "$OUT/index.html" ]]; then
   ls -la "$ROOT/app_flutter/build" >&2 || true
   exit 1
 fi
+
+# `pwa-strategy=none` must not leave testers on the old caching worker. Put
+# the unregistering script at the same URL the previous build registered.
+cp "$ROOT/app_flutter/web/flutter_service_worker.js" "$OUT/flutter_service_worker.js"
+cp "$ROOT/app_flutter/web/_headers" "$OUT/_headers"
 
 echo "Web build ready at $OUT"
 ls -la "$OUT"

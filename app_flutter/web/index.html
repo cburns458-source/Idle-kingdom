@@ -35,13 +35,26 @@
 </head>
 <body style="margin: 0; background: #1F1610">
   <!--
-    You can customize the "flutter_bootstrap.js" script.
-    This is useful to provide a custom configuration to the Flutter loader
-    or to give the user feedback during the initialization process.
-
-    For more details:
-    * https://docs.flutter.dev/platform-integration/web/initialization
+    Earlier Flutter web builds registered a service worker that kept serving
+    the old "Sign in to play" bundle after test-launch updated. Drop it before
+    the new client loads so a typed URL reaches the current gate.
   -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function (registrations) {
+        for (var i = 0; i < registrations.length; i++) {
+          registrations[i].unregister();
+        }
+      });
+    }
+    if (window.caches) {
+      caches.keys().then(function (keys) {
+        for (var i = 0; i < keys.length; i++) {
+          caches.delete(keys[i]);
+        }
+      });
+    }
+  </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

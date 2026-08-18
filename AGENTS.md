@@ -25,7 +25,7 @@ npm run lint
 npm run typecheck
 npm run gen:dart:check   # the Dart row models against src/game/data/types.ts
 npm test                 # also replays the committed parity fixtures
-cd app_flutter && flutter analyze && flutter test && flutter build web --release
+cd app_flutter && flutter analyze && flutter test && flutter build web --release --pwa-strategy=none
 ```
 
 The formatter is the gate most easily forgotten and it fails the build on its
