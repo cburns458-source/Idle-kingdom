@@ -1,4 +1,3 @@
-import type { GameDatabase } from '../data/types'
 import type { PlayerSave } from '../save/types'
 import { parseSave, type SaveStorage, writeSave } from '../save/saveStore'
 import { SAVE_STORAGE_KEY } from '../save/types'
@@ -39,7 +38,6 @@ export function softValidateSave(save: PlayerSave): { ok: true } | { ok: false; 
  * been shown that the other is newer.
  */
 export async function pushCloudSave(
-  db: GameDatabase,
   save: PlayerSave,
   options?: { force?: boolean },
 ): Promise<CloudSyncResult> {
@@ -112,7 +110,6 @@ export async function pullCloudSave(): Promise<CloudSyncResult> {
  * Returns the save that should remain active locally after sync.
  */
 export async function syncCloudSaveOnSafePoint(
-  db: GameDatabase,
   local: PlayerSave,
   options?: { forceUpload?: boolean },
 ): Promise<CloudSyncResult> {
@@ -134,7 +131,7 @@ export async function syncCloudSaveOnSafePoint(
         )
 
   if (!remoteResult.ok || options?.forceUpload) {
-    return pushCloudSave(db, local, { force: options?.forceUpload })
+    return pushCloudSave(local, { force: options?.forceUpload })
   }
 
   const remote = remoteResult.save
@@ -156,12 +153,11 @@ export async function syncCloudSaveOnSafePoint(
             },
     }
   }
-  return pushCloudSave(db, local)
+  return pushCloudSave(local)
 }
 
 /** Remote SaveStorage that writes localStorage and mirrors to cloud when signed in. */
 export function createHybridSaveStorage(
-  db: GameDatabase,
   onRemoteWarning?: (message: string) => void,
 ): SaveStorage {
   return {
@@ -173,7 +169,7 @@ export function createHybridSaveStorage(
       if (key !== SAVE_STORAGE_KEY || !getSession()) return
       try {
         const save = parseSave(JSON.parse(value))
-        void pushCloudSave(db, save).then((result) => {
+        void pushCloudSave(save).then((result) => {
           if (!result.ok) onRemoteWarning?.(result.reason)
         })
       } catch {
@@ -187,7 +183,6 @@ export function createHybridSaveStorage(
 }
 
 export function persistLocalAndMaybeCloud(
-  _db: GameDatabase,
   save: PlayerSave,
   storage: SaveStorage = localStorage,
 ): PlayerSave {

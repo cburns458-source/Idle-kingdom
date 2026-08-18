@@ -136,7 +136,7 @@ export function generateNextAction(
   const heldId = heldActionIdFor(save, activityId)
   let action = heldId ? db.Actions.find((row) => row['Action ID'] === heldId) : undefined
   if (action && !isSelectableAction(action)) action = undefined
-  action ??= pickWeightedAction(eligiblePoolEntries(db, activity['Pool ID']), random)
+  action ??= pickWeightedAction(eligiblePoolEntries(db, activity['Pool ID']), random) ?? undefined
   if (!action) return null
   const actionId = action['Action ID']
 

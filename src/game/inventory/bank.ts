@@ -104,7 +104,7 @@ function moveStack(
       piece.enchantmentId ?? null,
       Boolean(piece.favorite),
     )
-    if (!added.ok || !added.save) return { ok: false, reason: added.reason ?? fullMessage }
+    if (!added.ok) return { ok: false, reason: added.reason }
     return { ok: true, save: restoreBag({ ...save, inventory: taken.stacks }, added.save) }
   }
   const added = addItemToInventoryExact(
@@ -114,7 +114,7 @@ function moveStack(
     piece.enchantmentId ?? null,
     Boolean(piece.favorite),
   )
-  if (!added.ok || !added.save) return { ok: false, reason: added.reason ?? fullMessage }
+  if (!added.ok) return { ok: false, reason: added.reason }
   return { ok: true, save: { ...added.save, bank: taken.stacks } }
 }
 

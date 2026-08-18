@@ -9,6 +9,7 @@ import {
   REMOTE_LEADERBOARD_CONFLICT,
   REMOTE_NOT_CONFIGURED,
   REMOTE_TABLES,
+  type RemoteRow,
 } from './remote'
 import { buildLeaderboardSnapshot } from './snapshots'
 import type { LeaderboardEntry, MultiplayerBoardKey } from './types'
@@ -55,7 +56,8 @@ export async function fetchLeaderboard(
     .order('value', { ascending: false })
     .limit(limit)
   if (error || !data) return []
-  return leaderboardEntriesFrom(data, boardKey)
+  // The embedded profiles join is beyond what the client types can describe.
+  return leaderboardEntriesFrom(data as unknown as RemoteRow[], boardKey)
 }
 
 /**

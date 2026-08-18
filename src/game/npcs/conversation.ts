@@ -366,7 +366,7 @@ export function donateForQuestFromNpc(
   const result = donateForQuest(db, save, questId)
   if (!result.ok) return result
   const quest = getQuest(db, questId)
-  const cost = parseStructuredObjectives(quest ?? { 'Quest ID': questId }).acceptGoldCost
+  const cost = quest ? parseStructuredObjectives(quest).acceptGoldCost : 0
   return {
     ok: true,
     save: result.save,

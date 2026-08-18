@@ -1,5 +1,5 @@
 import type { PlayerSave } from '../save/types'
-import { asQuestRows, getQuestProgress, isQuestRepeatable } from './quests'
+import { asQuestRows, getQuestProgress } from './quests'
 import { parseStructuredObjectives } from './objectives'
 import type { GameDatabase } from '../data/types'
 
@@ -162,8 +162,8 @@ export function applyQuestAutoStart(
     if (structured.autoStartLocationId !== locationId) continue
     const questId = quest['Quest ID']
     const progress = getQuestProgress(next, questId)
+    // Only a quest never taken up auto-starts, repeatable or not.
     if (progress.status !== 'inactive') continue
-    if (progress.status === 'completed' && !isQuestRepeatable(quest)) continue
     next = {
       ...next,
       quests: [
