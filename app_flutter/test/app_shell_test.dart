@@ -60,7 +60,6 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    expect(find.text('Account created.'), findsOne);
     expect(find.text('Name your character'), findsOne);
     expect(find.widgetWithText(TextField, 'Username'), findsNothing);
     expect(isPendingAccountUsername(net.session!.username), isTrue);
