@@ -260,7 +260,7 @@ void main() {
     await tester.tap(find.text('Enter Town'));
     await tester.pump();
 
-    // The gateway sits at (50, 21) on the town map but (28, 50) on the world
+    // The gateway sits at (40, 20) on the town map but (28, 50) on the world
     // map, so reading the wrong layout would drop it into the middle-left.
     final map = tester.getRect(find.byType(WorldMapView));
     final gate = tester.getCenter(find.text('Town Gate').first);

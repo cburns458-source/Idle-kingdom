@@ -75,18 +75,18 @@ export const CASTLE_MAP_NODE_LAYOUT: Record<string, NodePosition> = {
 }
 
 export const TOWN_MAP_NODE_LAYOUT: Record<string, NodePosition> = {
-  // Town gateway / fountain square (top)
-  'LOC-0002': { x: 50, y: 21 },
-  // Kitchen
-  'LOC-0023': { x: 24, y: 38 },
-  // General Store
-  'LOC-0024': { x: 76, y: 38 },
-  // The Foundry
-  'LOC-0025': { x: 28, y: 67 },
-  // Rose's Apothecary (unlocks after quest)
-  'LOC-0026': { x: 72, y: 67 },
-  // Town Bank
-  'LOC-0034': { x: 50, y: 48 },
+  // Town gateway, offset in the northern cluster
+  'LOC-0002': { x: 40, y: 20 },
+  // Kitchen, west street
+  'LOC-0023': { x: 28, y: 47 },
+  // General Store, east stall
+  'LOC-0024': { x: 80, y: 47 },
+  // The Foundry, lower-left workshops
+  'LOC-0025': { x: 30, y: 70 },
+  // Rose's Apothecary, lower-right rose cottage
+  'LOC-0026': { x: 78, y: 74 },
+  // Town Bank, columned hall in the tangle
+  'LOC-0034': { x: 48, y: 60 },
 }
 
 export const CITADEL_MAP_NODE_LAYOUT: Record<string, NodePosition> = {
