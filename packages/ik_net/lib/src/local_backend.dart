@@ -9,6 +9,7 @@ import 'package:ik_runtime/ik_runtime.dart';
 import 'bazaar.dart';
 import 'config.dart';
 import 'demo_world.dart';
+import 'guild_rules.dart';
 import 'local_db.dart';
 import 'moderation.dart';
 import 'remote.dart';
@@ -628,26 +629,20 @@ class LocalMultiplayerBackend {
     );
   }
 
+  /// Founds a guild on this device.
+  ///
+  /// The name and tag are checked against the table first, which is all a single
+  /// device can do. The server settles the same question with a unique index,
+  /// because two players can ask for one name at the same moment.
   CreateGuildResult createGuild(
     MultiplayerSession session,
     CreateGuildInput input,
     num goldAvailable,
   ) {
-    final trimmedName = input.name.trim();
-    final clean = trimmedName.length > 28 ? trimmedName.substring(0, 28) : trimmedName;
-    final letters = input.tag.replaceAll(RegExp('[^a-zA-Z]'), '').toUpperCase();
-    final tag = letters.length > 4 ? letters.substring(0, 4) : letters;
-    if (clean.length < 3) {
-      return const CreateGuildResult.failed('Guild name needs at least 3 characters.');
-    }
-    if (tag.length < 2 || tag.length > 4) {
-      return const CreateGuildResult.failed('Guild tag must be 2–4 letters.');
-    }
-    if (goldAvailable < guildCreateGoldCost) {
-      return CreateGuildResult.failed(
-        'Creating a guild costs ${jsNumberToString(guildCreateGoldCost)} gold.',
-      );
-    }
+    final refusal = createGuildRefusal(input, goldAvailable);
+    if (refusal != null) return CreateGuildResult.failed(refusal);
+    final clean = guildNameFromInput(input.name);
+    final tag = guildTagFromInput(input.tag);
     final db = _db();
     if (db.members.any((row) => row.userId == session.userId)) {
       return const CreateGuildResult.failed('Leave your current guild before creating another.');
@@ -659,17 +654,11 @@ class LocalMultiplayerBackend {
       return const CreateGuildResult.failed('That guild tag is taken.');
     }
     final snapshot = _memberSnapshot(db, session.userId, session.username);
-    final description = (input.description ?? '').trim();
-    final guild = GuildRecord(
+    final guild = guildFromCreateInput(
+      session.userId,
+      input,
+      _nowIso(),
       id: _newId('gld'),
-      name: clean,
-      tag: tag,
-      description: description.length > 160 ? description.substring(0, 160) : description,
-      emblem: normalizeEmblem(input.emblem),
-      leaderId: session.userId,
-      joinPolicy: guildJoinOpen,
-      rankLabels: <GuildRankKey, String>{...defaultGuildRankLabels},
-      createdAt: _nowIso(),
     );
     db.guilds.add(guild);
     db.members.add(
@@ -688,20 +677,20 @@ class LocalMultiplayerBackend {
       GuildProject(
         id: _newId('gprj'),
         guildId: guild.id,
-        name: 'Guild Storehouse',
-        description: 'Pool resources for cosmetic recognition.',
-        goalAmount: 1000,
+        name: guildStorehouseProjectName,
+        description: guildStorehouseProjectDescription,
+        goalAmount: guildStorehouseProjectGoal,
         contributed: 0,
-        rewardLabel: 'Guild banner cosmetic (recognition)',
+        rewardLabel: guildStorehouseProjectReward,
       ),
     );
     db.challenges.add(
       GuildChallenge(
         id: _newId('gch'),
         guildId: guild.id,
-        name: 'Weekly Monster Hunt',
+        name: guildMonsterChallengeName,
         boardKey: boardMonstersKilled,
-        goalValue: 100,
+        goalValue: guildMonsterChallengeGoal,
         currentValue: 0,
       ),
     );
@@ -935,15 +924,8 @@ class LocalMultiplayerBackend {
     if (guild == null || guild.leaderId != actorId) {
       return const ActionResult.failed('Only the leader can change roles.');
     }
-    if (role == guildRoleLeader) {
-      return const ActionResult.failed('Transfer leadership is not available yet.');
-    }
-    if (targetUserId == guild.leaderId) {
-      return const ActionResult.failed('Cannot change the leader rank this way.');
-    }
-    if (!promotableGuildRanks.contains(role)) {
-      return const ActionResult.failed('Invalid rank.');
-    }
+    final refusal = memberRoleRefusal(guild, targetUserId, role);
+    if (refusal != null) return ActionResult.failed(refusal);
     db.members = db.members
         .map(
           (row) =>
@@ -1051,11 +1033,7 @@ class LocalMultiplayerBackend {
       (row) => row.id == projectId && row.guildId == membership.guildId,
     );
     if (index < 0) return const ContributeProjectResult.failed('Project not found.');
-    final project = db.projects[index];
-    final add = math.max(1, amount.floor());
-    final next = project.copyWith(
-      contributed: math.min(project.goalAmount, project.contributed + add),
-    );
+    final next = contributedProject(db.projects[index], amount);
     db.projects[index] = next;
     _write(db);
     return ContributeProjectResult.ok(next);
@@ -1097,31 +1075,11 @@ class LocalMultiplayerBackend {
     if (!canPayGuildDebt(membership.role)) {
       return const GuildHallActionResult.failed('Recruits cannot pay the hall debt.');
     }
-    final want = math.max(0, amount.floor());
-    if (want <= 0) return const GuildHallActionResult.failed('Choose an amount.');
-    if (save.gold < want) return const GuildHallActionResult.failed('Not enough gold.');
-    var hall = _ensureHall(db, membership.guildId);
-    if (hall.debtPaidOff || hall.debtRemaining <= 0) {
-      return GuildHallActionResult.ok(hall);
-    }
-    final alreadyPaid = hall.debtPaidOff;
-    final pay = math.min(want, hall.debtRemaining.floor());
-    final remaining = hall.debtRemaining - pay;
-    final paidOff = remaining <= 0;
-    final paidBy = <String, num>{...hall.debtPaidBy};
-    paidBy[userId] = (paidBy[userId] ?? 0) + pay;
-    hall = hall.copyWith(
-      debtRemaining: paidOff ? 0 : remaining,
-      debtPaidBy: paidBy,
-      debtPaidOff: paidOff,
-    );
-    _putHall(db, hall);
+    final paid = payGuildHallDebt(_ensureHall(db, membership.guildId), userId, save, amount);
+    if (!paid.ok) return paid;
+    _putHall(db, paid.hall!);
     _write(db);
-    return GuildHallActionResult.ok(
-      hall,
-      save: save.copyWith(gold: save.gold - pay),
-      paidOffJustNow: paidOff && !alreadyPaid,
-    );
+    return paid;
   }
 
   GuildHallActionResult contributeHallItem(
@@ -1135,44 +1093,16 @@ class LocalMultiplayerBackend {
     if (membership == null) {
       return const GuildHallActionResult.failed('Join a guild first.');
     }
-    if (inventoryIndex < 0 || inventoryIndex >= save.inventory.length) {
-      return const GuildHallActionResult.failed('That stack is not there.');
-    }
-    final stack = save.inventory[inventoryIndex];
-    if (stackIsUnbankableGold(stack)) {
-      return const GuildHallActionResult.failed('Gold stays on you.');
-    }
-    final want = math.max(0, quantity.floor());
-    if (want <= 0) return const GuildHallActionResult.failed('Choose a quantity.');
-    final takenQty = math.min(want, stack.quantity.floor());
-    var hall = _ensureHall(db, membership.guildId);
-    final bagged = save.copyWith(inventory: hall.storehouse);
-    final added = addItemToInventoryExact(
-      bagged,
-      stack.itemId,
-      takenQty,
-      stack.enchantmentId,
-      stack.favorite ?? false,
+    final given = donateToGuildHall(
+      _ensureHall(db, membership.guildId),
+      save,
+      inventoryIndex,
+      quantity,
     );
-    if (!added.ok || added.save == null) {
-      return GuildHallActionResult.failed(added.reason ?? 'The storehouse is full.');
-    }
-    final nextInventory = [...save.inventory];
-    if (takenQty >= stack.quantity) {
-      nextInventory.removeAt(inventoryIndex);
-    } else {
-      nextInventory[inventoryIndex] = stack.copyWith(quantity: stack.quantity - takenQty);
-    }
-    // A deposit pays for whatever tier it just completed, materials and all.
-    final settled = settleGuildHallTiers(added.save!.inventory, hall.completedTiers);
-    hall = hall.copyWith(storehouse: settled.storehouse, completedTiers: settled.completedTiers);
-    _putHall(db, hall);
+    if (!given.ok) return given;
+    _putHall(db, given.hall!);
     _write(db);
-    return GuildHallActionResult.ok(
-      hall,
-      save: save.copyWith(inventory: nextInventory),
-      tiersFinishedNow: settled.finishedNow.map((tier) => tier.id).toList(),
-    );
+    return given;
   }
 
   List<ArenaOpponent> hallBoxingOpponents(String userId) {

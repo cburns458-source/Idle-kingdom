@@ -26,6 +26,13 @@ class RemoteTables {
   static const String chat = 'chat_messages';
   static const String bountyClaims = 'bounty_claims';
   static const String bazaarPosts = 'bazaar_posts';
+  static const String guilds = 'guilds';
+  static const String guildMembers = 'guild_members';
+  static const String guildApplications = 'guild_applications';
+  static const String guildGuests = 'guild_guests';
+  static const String guildHalls = 'guild_halls';
+  static const String guildProjects = 'guild_projects';
+  static const String guildChallenges = 'guild_challenges';
 }
 
 /// The edge function that writes chat, since a client may not insert directly.
@@ -44,6 +51,12 @@ String friendlyRemoteError(String message) {
   }
   return message;
 }
+
+/// What a screen says when an action threw instead of refusing.
+///
+/// A refusal has a reason to show. An error has none, and silence reads as a
+/// button that does nothing, so the error itself is what gets shown.
+String unexpectedSocialError(Object error) => friendlyRemoteError('Something went wrong: $error');
 
 const String remoteMagicLinkUnavailable =
     'Magic links require Supabase. Use email/password in local demo mode.';

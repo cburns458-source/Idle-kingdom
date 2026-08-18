@@ -32,6 +32,13 @@ class FakeTransport implements RemoteTransport {
     RemoteTables.chat: <RemoteRow>[],
     RemoteTables.bountyClaims: <RemoteRow>[],
     RemoteTables.bazaarPosts: <RemoteRow>[],
+    RemoteTables.guilds: <RemoteRow>[],
+    RemoteTables.guildMembers: <RemoteRow>[],
+    RemoteTables.guildApplications: <RemoteRow>[],
+    RemoteTables.guildGuests: <RemoteRow>[],
+    RemoteTables.guildHalls: <RemoteRow>[],
+    RemoteTables.guildProjects: <RemoteRow>[],
+    RemoteTables.guildChallenges: <RemoteRow>[],
   };
 
   /// Accounts by email, as an auth provider would hold them.
@@ -94,12 +101,33 @@ class FakeTransport implements RemoteTransport {
     RemoteTables.chat: <String>['id'],
     RemoteTables.bountyClaims: <String>['hour_key', 'bounty_id'],
     RemoteTables.bazaarPosts: <String>['id'],
+    RemoteTables.guilds: <String>['id'],
+    RemoteTables.guildMembers: <String>['guild_id', 'user_id'],
+    RemoteTables.guildApplications: <String>['guild_id', 'user_id'],
+    RemoteTables.guildGuests: <String>['guild_id', 'user_id'],
+    RemoteTables.guildHalls: <String>['guild_id'],
+    RemoteTables.guildProjects: <String>['id'],
+    RemoteTables.guildChallenges: <String>['id'],
+  };
+
+  /// Columns a table holds unique beyond its key, so an insert can lose a race.
+  static const Map<String, List<String>> _unique = <String, List<String>>{
+    RemoteTables.guilds: <String>['name', 'tag'],
   };
 
   /// The columns a table fills in for itself, the way a default does.
   RemoteRow _defaults(String table) => switch (table) {
     RemoteTables.bountyClaims => <String, Object?>{'claimed_at': stamp()},
     RemoteTables.bazaarPosts => <String, Object?>{'id': _nextId('bzr'), 'created_at': stamp()},
+    RemoteTables.guilds => <String, Object?>{'id': _nextId('gld'), 'created_at': stamp()},
+    RemoteTables.guildMembers => <String, Object?>{'joined_at': stamp()},
+    RemoteTables.guildApplications => <String, Object?>{
+      'id': _nextId('app'),
+      'created_at': stamp(),
+    },
+    RemoteTables.guildGuests => <String, Object?>{'joined_at': stamp()},
+    RemoteTables.guildProjects => <String, Object?>{'id': _nextId('gprj')},
+    RemoteTables.guildChallenges => <String, Object?>{'id': _nextId('gch')},
     _ => const <String, Object?>{},
   };
 
@@ -251,14 +279,51 @@ class FakeTransport implements RemoteTransport {
 
     final key = _keys[table]!;
     final stored = tables.putIfAbsent(table, () => <RemoteRow>[]);
-    if (stored.any((existing) => key.every((k) => existing[k] == row[k]))) {
+    final written = <String, Object?>{..._defaults(table), ...row};
+    if (stored.any((existing) => key.every((k) => existing[k] == written[k]))) {
       return RemoteQueryResult.failed(duplicateKeyRefusal);
     }
-    final written = <String, Object?>{..._defaults(table), ...row};
+    for (final column in _unique[table] ?? const <String>[]) {
+      if (!written.containsKey(column)) continue;
+      if (stored.any((existing) => existing[column] == written[column])) {
+        return RemoteQueryResult.failed(duplicateKeyRefusal);
+      }
+    }
     stored.add(written);
     return RemoteQueryResult.ok(<RemoteRow>[
       <String, Object?>{...written},
     ]);
+  }
+
+  @override
+  Future<String?> update(
+    String table,
+    RemoteRow row, {
+    required Map<String, Object?> equals,
+  }) async {
+    calls.add('update:$table');
+    final reason = _takeFailure('update:$table');
+    if (reason != null) return reason;
+    if (equals.isEmpty) return 'An update needs a filter.';
+
+    final stored = tables.putIfAbsent(table, () => <RemoteRow>[]);
+    for (var i = 0; i < stored.length; i++) {
+      if (!equals.entries.every((filter) => stored[i][filter.key] == filter.value)) continue;
+      stored[i] = <String, Object?>{...stored[i], ...row};
+    }
+    return null;
+  }
+
+  @override
+  Future<String?> delete(String table, {required Map<String, Object?> equals}) async {
+    calls.add('delete:$table');
+    final reason = _takeFailure('delete:$table');
+    if (reason != null) return reason;
+    if (equals.isEmpty) return 'A delete needs a filter.';
+
+    final stored = tables.putIfAbsent(table, () => <RemoteRow>[]);
+    stored.removeWhere((row) => equals.entries.every((filter) => row[filter.key] == filter.value));
+    return null;
   }
 
   /// Matches the SQL trigger: a kicked device may not write the account save.

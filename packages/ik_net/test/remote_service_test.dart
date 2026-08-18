@@ -346,19 +346,9 @@ void main() {
     expect(await service.publishPresence(presenceFromSave(save)), isNotNull);
     expect(await service.peersAtLocation('LOC-0028', excludeSelf: false), hasLength(1));
 
-    final guild = await service.createGuild(
-      const CreateGuildInput(
-        name: 'Iron League',
-        tag: 'IRN',
-        emblem: GuildEmblem(color: '#3d5a80', symbol: 'shield'),
-      ),
-      guildCreateGoldCost,
-    );
-    expect(guild.ok, isTrue, reason: guild.reason);
-    expect(await service.currentGuildId(), guild.guild!.id);
-
-    // None of it went over the wire.
+    // Presence never leaves the device: nothing was written to a table for it.
     expect(transport.calls.where((call) => call.startsWith('insert')), isEmpty);
+    expect(transport.calls.where((call) => call.startsWith('upsert:activity')), isEmpty);
   });
 
   test('records the first bounty turn-in of the hour and no other', () async {

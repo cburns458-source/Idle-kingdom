@@ -97,6 +97,22 @@ abstract interface class RemoteTransport {
   /// stored row is returned so the caller can show what actually landed.
   Future<RemoteQueryResult> insert(String table, RemoteRow row, {required String columns});
 
+  /// Changes the columns in [row] on every row matching [equals].
+  ///
+  /// Separate from [upsert] because an update is the only write a guild's own
+  /// officers are allowed: a row they may edit is not a row they may create.
+  Future<String?> update(
+    String table,
+    RemoteRow row, {
+    required Map<String, Object?> equals,
+  });
+
+  /// Removes every row matching [equals]. Returns null when it went through.
+  ///
+  /// Never called without a filter: leaving a guild deletes one roster row, not
+  /// a roster.
+  Future<String?> delete(String table, {required Map<String, Object?> equals});
+
   Future<RemoteInvokeResult> invoke(String function, RemoteRow body);
 }
 

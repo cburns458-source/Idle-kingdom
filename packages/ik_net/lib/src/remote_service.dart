@@ -6,6 +6,7 @@ import 'bazaar.dart';
 import 'cloud_save.dart';
 import 'local_backend.dart';
 import 'remote.dart';
+import 'remote_guild_backend.dart';
 import 'remote_transport.dart';
 import 'results.dart';
 import 'service.dart';
@@ -15,23 +16,49 @@ import 'types.dart';
 
 /// The hosted backend, reached over a [RemoteTransport].
 ///
-/// Only what a server actually owns goes over the wire: accounts, cloud saves,
-/// leaderboards, and chat. Guilds, presence, bounty claims, and the Bazaar are
-/// still answered by the local backend, which is the same division the web
-/// client makes — those tables have no migrations yet, and a screen that half
-/// works is worse than one that plainly runs on this device.
+/// What a server owns goes over the wire: accounts, cloud saves, leaderboards,
+/// chat, and guilds — rosters, requests, guests, and each guild's hall. What is
+/// left on the device is what only the device can answer: presence, the Bazaar,
+/// bounty claims, and sparring partners, which need to read another player's
+/// save that row-level security rightly will not hand over.
 class RemoteMultiplayerService implements MultiplayerService {
   RemoteMultiplayerService({
     required this.transport,
     required SaveStorage storage,
     LocalBackendPorts? ports,
   }) : _sessions = SessionStore(storage),
-       _local = LocalMultiplayerService(storage: storage, ports: ports);
+       _local = LocalMultiplayerService(storage: storage, ports: ports) {
+    _guilds = RemoteGuildBackend(
+      transport: transport,
+      sessionOf: () => session,
+      factsOf: _ownMemberFacts,
+      nowIso: () => isoFromMs(_nowMs()),
+    );
+  }
 
   final RemoteTransport transport;
   final SessionStore _sessions;
   final LocalMultiplayerService _local;
+  late final RemoteGuildBackend _guilds;
   bool _seatClaimedOnServer = false;
+
+  /// The guild this account was last seen in, so a ranking update can refresh
+  /// its own roster row without a read to find out where to write it.
+  String? _guildIdSeen;
+
+  /// This player's roster facts, taken from the save the account already has.
+  Future<GuildMemberFacts> _ownMemberFacts() async {
+    final current = session;
+    if (current == null) {
+      return const GuildMemberFacts(
+        username: 'Adventurer',
+        appearance: defaultPlayerAppearance,
+        totalLevel: 1,
+      );
+    }
+    final row = await _readSaveRow(current.userId);
+    return guildMemberFactsFrom(current, row?.toCloudSaveRecordOrNull()?.payload);
+  }
 
   /// The device-local half, exposed for the same reasons the local service
   /// exposes its backend: seeding a demo world, and tests.
@@ -232,6 +259,11 @@ class RemoteMultiplayerService implements MultiplayerService {
       leaderboardRowsFor(current.userId, snapshot, isoFromMs(_nowMs())),
       onConflict: remoteLeaderboardConflict,
     );
+    // A roster lists each member's name, look, and level, and only that member
+    // may write their own row, so the submit that refreshes the boards refreshes
+    // the roster too.
+    final guildId = _guildIdSeen;
+    if (guildId != null) await _guilds.refreshOwnMemberRow(guildId, current, save);
     return refused == null ? const ActionResult.ok() : ActionResult.failed(refused);
   }
 
@@ -294,79 +326,90 @@ class RemoteMultiplayerService implements MultiplayerService {
       _local.reportPlayer(targetUserId, reason);
 
   @override
-  Future<CreateGuildResult> createGuild(CreateGuildInput input, num goldAvailable) =>
-      _local.createGuild(input, goldAvailable);
+  Future<CreateGuildResult> createGuild(CreateGuildInput input, num goldAvailable) async {
+    final result = await _guilds.createGuild(input, goldAvailable);
+    if (result.ok) _guildIdSeen = result.guild!.id;
+    return result;
+  }
 
   @override
-  Future<List<GuildListing>> listGuilds() => _local.listGuilds();
+  Future<List<GuildListing>> listGuilds() => _guilds.listGuilds();
 
   @override
-  Future<GuildRecord?> guild(String guildId) => _local.guild(guildId);
+  Future<GuildRecord?> guild(String guildId) => _guilds.guildById(guildId);
 
   @override
-  Future<List<GuildMember>> guildMembers(String guildId) => _local.guildMembers(guildId);
+  Future<List<GuildMember>> guildMembers(String guildId) => _guilds.guildMembers(guildId);
 
   @override
   Future<ApplyToGuildResult> applyToGuild(String guildId, String message) =>
-      _local.applyToGuild(guildId, message);
+      _guilds.applyToGuild(guildId, message);
 
   @override
   Future<ApplyToGuildResult> joinAsGuest(String guildId, String message) =>
-      _local.joinAsGuest(guildId, message);
+      _guilds.joinAsGuest(guildId, message);
 
   @override
-  Future<ActionResult> leaveGuest() => _local.leaveGuest();
+  Future<ActionResult> leaveGuest() => _guilds.leaveGuest();
 
   @override
-  Future<String?> currentGuestGuildId() => _local.currentGuestGuildId();
+  Future<String?> currentGuestGuildId() => _guilds.currentGuestGuildId();
 
   @override
   Future<List<GuildApplication>> guildApplications(String guildId) =>
-      _local.guildApplications(guildId);
+      _guilds.guildApplications(guildId);
 
   @override
   Future<ActionResult> decideGuildApplication(String applicationId, bool accept) =>
-      _local.decideGuildApplication(applicationId, accept);
+      _guilds.decideGuildApplication(applicationId, accept);
 
   @override
   Future<ActionResult> setGuildMemberRole(String guildId, String targetUserId, GuildRole role) =>
-      _local.setGuildMemberRole(guildId, targetUserId, role);
+      _guilds.setGuildMemberRole(guildId, targetUserId, role);
 
   @override
   Future<ActionResult> setGuildJoinPolicy(String guildId, GuildJoinPolicy joinPolicy) =>
-      _local.setGuildJoinPolicy(guildId, joinPolicy);
+      _guilds.setGuildJoinPolicy(guildId, joinPolicy);
 
   @override
   Future<ActionResult> setGuildGuestAutoAccept(String guildId, bool guestAutoAccept) =>
-      _local.setGuildGuestAutoAccept(guildId, guestAutoAccept);
+      _guilds.setGuildGuestAutoAccept(guildId, guestAutoAccept);
 
   @override
   Future<ActionResult> setGuildRankIconTheme(String guildId, String theme) =>
-      _local.setGuildRankIconTheme(guildId, theme);
+      _guilds.setGuildRankIconTheme(guildId, theme);
 
   @override
   Future<ActionResult> setGuildRankLabels(String guildId, Map<GuildRankKey, String> rankLabels) =>
-      _local.setGuildRankLabels(guildId, rankLabels);
+      _guilds.setGuildRankLabels(guildId, rankLabels);
 
   @override
   Future<ActionResult> setGuildEmblem(String guildId, GuildEmblem emblem) =>
-      _local.setGuildEmblem(guildId, emblem);
+      _guilds.setGuildEmblem(guildId, emblem);
 
   @override
-  Future<ActionResult> leaveGuild() => _local.leaveGuild();
+  Future<ActionResult> leaveGuild() async {
+    final result = await _guilds.leaveGuild();
+    if (result.ok) _guildIdSeen = null;
+    return result;
+  }
 
   @override
   Future<ContributeProjectResult> contributeGuildProject(String projectId, num amount) =>
-      _local.contributeGuildProject(projectId, amount);
+      _guilds.contributeGuildProject(projectId, amount);
 
   @override
-  Future<List<GuildProject>> guildProjects(String guildId) => _local.guildProjects(guildId);
+  Future<List<GuildProject>> guildProjects(String guildId) => _guilds.guildProjects(guildId);
 
   @override
-  Future<List<GuildChallenge>> guildChallenges(String guildId) => _local.guildChallenges(guildId);
+  Future<List<GuildChallenge>> guildChallenges(String guildId) => _guilds.guildChallenges(guildId);
 
   @override
-  Future<String?> currentGuildId() => _local.currentGuildId();
+  Future<String?> currentGuildId() async {
+    final guildId = await _guilds.currentGuildId();
+    _guildIdSeen = guildId;
+    return guildId;
+  }
 
   @override
   Future<ActivityPresence?> publishPresence(PresenceInput input) => _local.publishPresence(input);
@@ -518,19 +561,25 @@ class RemoteMultiplayerService implements MultiplayerService {
   Future<PlayerSave?> readOpponentSave(String userId) => _local.readOpponentSave(userId);
 
   @override
-  Future<GuildHallState?> guildHall(String guildId) => _local.guildHall(guildId);
+  Future<GuildHallState?> guildHall(String guildId) => _guilds.guildHall(guildId);
 
   @override
   Future<GuildHallActionResult> payGuildDebt(PlayerSave save, num amount) =>
-      _local.payGuildDebt(save, amount);
+      _guilds.payGuildDebt(save, amount);
 
   @override
   Future<GuildHallActionResult> contributeHallItem(
     PlayerSave save,
     int inventoryIndex,
     num quantity,
-  ) => _local.contributeHallItem(save, inventoryIndex, quantity);
+  ) => _guilds.contributeHallItem(save, inventoryIndex, quantity);
 
+  /// Sparring partners in the hall, which stay on the device.
+  ///
+  /// A fight needs the other player's save, and an account's save is readable
+  /// only by that account. Opening it up to a guild would mean handing every
+  /// member's whole game to anyone who joined, so the boxing ring spars with
+  /// whoever this device knows, as the arena does.
   @override
   Future<List<ArenaOpponent>> hallBoxingOpponents() => _local.hallBoxingOpponents();
 }

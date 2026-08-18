@@ -159,6 +159,45 @@ class SupabaseTransport implements RemoteTransport {
   }
 
   @override
+  Future<String?> update(
+    String table,
+    RemoteRow row, {
+    required Map<String, Object?> equals,
+  }) async {
+    if (equals.isEmpty) return 'An update needs a filter.';
+    if (row.isEmpty) return null;
+    try {
+      var filter = client.from(table).update(row);
+      for (final entry in equals.entries) {
+        filter = filter.eq(entry.key, entry.value as Object);
+      }
+      await filter;
+      return null;
+    } on PostgrestException catch (error) {
+      return error.message;
+    } on Object catch (error) {
+      return '$error';
+    }
+  }
+
+  @override
+  Future<String?> delete(String table, {required Map<String, Object?> equals}) async {
+    if (equals.isEmpty) return 'A delete needs a filter.';
+    try {
+      var filter = client.from(table).delete();
+      for (final entry in equals.entries) {
+        filter = filter.eq(entry.key, entry.value as Object);
+      }
+      await filter;
+      return null;
+    } on PostgrestException catch (error) {
+      return error.message;
+    } on Object catch (error) {
+      return '$error';
+    }
+  }
+
+  @override
   Future<RemoteInvokeResult> invoke(String function, RemoteRow body) async {
     try {
       final response = await client.functions.invoke(function, body: body);

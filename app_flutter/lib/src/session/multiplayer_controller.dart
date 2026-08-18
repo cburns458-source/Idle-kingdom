@@ -160,12 +160,18 @@ class MultiplayerController extends ChangeNotifier {
   }
 
   /// Runs [action], reporting whatever it says and repainting either way.
+  ///
+  /// A thrown error is reported too. Without this a dropped connection or a
+  /// backend that refuses in a way no result covers would leave the button
+  /// pressed and the screen unchanged, which reads as the game ignoring you.
   Future<void> run(Future<String?> Function() action) async {
     if (_busy) return;
     _busy = true;
     notifyListeners();
     try {
       _notice = await action();
+    } on Object catch (error) {
+      _notice = unexpectedSocialError(error);
     } finally {
       _busy = false;
       notifyListeners();
