@@ -22,6 +22,11 @@ void main() {
     builder: (context, _) => GuildPanel(controller: controller, multiplayer: net),
   );
 
+  /// The same text can be on the sheet and on the panel behind it, so an
+  /// assertion about what the player is looking at says which one it means.
+  Finder onTheSheet(Finder text) =>
+      find.descendant(of: find.byType(BottomSheet), matching: text);
+
   /// Fills the create sheet in and presses its button.
   Future<void> fillAndSubmit(
     WidgetTester tester, {
@@ -64,7 +69,7 @@ void main() {
     expect(find.text('[IRN] Iron League'), findsOne);
   });
 
-  testWidgets('a dead create button says what it is waiting for', (tester) async {
+  testWidgets('the create sheet says what it is still waiting for', (tester) async {
     final transport = FakeTransport();
     final controller = buildController(
       database,
@@ -80,7 +85,7 @@ void main() {
     await tester.tap(find.textContaining('Create guild ('));
     await tester.pumpAndSettle();
 
-    // Nothing typed yet: the button names the first thing missing.
+    // Nothing typed yet: the sheet names the first thing missing.
     expect(find.text('Guild name needs at least 3 characters.'), findsOne);
 
     await tester.enterText(find.widgetWithText(TextField, 'Name'), 'Iron League');
@@ -92,7 +97,36 @@ void main() {
     expect(find.text('Creating a guild costs $guildCreateGoldCost gold.'), findsOne);
   });
 
-  testWidgets('a backend that refuses the write says so instead of nothing', (tester) async {
+  testWidgets('the create button presses even when the form is not ready', (tester) async {
+    final transport = FakeTransport();
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(gold: 0),
+    );
+    addTearDown(controller.dispose);
+    final net = buildRemoteMultiplayer(database, transport: transport);
+    addTearDown(net.dispose);
+    expect((await net.service.signUp('broke@example.com', 'Broke', 'secret')).ok, isTrue);
+    await net.refresh(controller.save);
+
+    await pumpPanel(tester, guildScreen(net, controller));
+    await tester.tap(find.textContaining('Create guild ('));
+    await tester.pumpAndSettle();
+
+    final button = find.widgetWithText(FilledButton, 'Create for $guildCreateGoldCost gold');
+    expect(tester.widget<FilledButton>(button).onPressed, isNotNull, reason: 'never a dead button');
+
+    await tester.tap(button);
+    await tester.pumpAndSettle();
+
+    // Pressed with nothing filled in: the reason is on the sheet, and the sheet
+    // is still there with the emblem the player picked.
+    expect(onTheSheet(find.text('Guild name needs at least 3 characters.')), findsOne);
+    expect(find.widgetWithText(TextField, 'Name'), findsOne);
+    expect(net.guild, isNull);
+  });
+
+  testWidgets('a refused create keeps the sheet open with the reason on it', (tester) async {
     final transport = FakeTransport();
     final controller = buildController(
       database,
@@ -110,9 +144,18 @@ void main() {
     await pumpPanel(tester, guildScreen(net, controller));
     await fillAndSubmit(tester, name: 'Iron League', tag: 'irn');
 
-    expect(net.guild, isNull);
-    expect(find.textContaining('row-level security'), findsOne);
+    // The reason is in front of the player rather than at the end of a list
+    // behind the sheet, and the name they typed is still there to try again.
+    expect(onTheSheet(find.textContaining('row-level security')), findsOne);
+    expect(find.widgetWithText(TextField, 'Name'), findsOne);
     expect(controller.save.gold, guildCreateGoldCost, reason: 'a refused guild is not paid for');
+
+    // Trying again with the backend no longer refusing works.
+    await tester.tap(find.widgetWithText(FilledButton, 'Create for $guildCreateGoldCost gold'));
+    await tester.pumpAndSettle();
+
+    expect(net.guild?.name, 'Iron League');
+    expect(find.widgetWithText(TextField, 'Name'), findsNothing, reason: 'the sheet closed');
   });
 
   testWidgets('an action that throws is reported, not swallowed', (tester) async {

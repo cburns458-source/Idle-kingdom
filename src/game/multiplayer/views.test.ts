@@ -150,7 +150,12 @@ describe('guild browser views', () => {
     expect(poor.costLine).toBe('Costs 25 gold · you have 10')
     expect(poor.tagPreview).toBe('[IR]')
     expect(poor.canAfford).toBe(false)
-    expect(poor.submitLabel).toBe('Not enough gold')
+    // The button names the deed either way; the purse is answered by the
+    // refusal, so a player is never left pressing their own error message.
+    expect(poor.submitLabel).toBe('Create for 25 gold')
+    expect(createGuildFormView(10, 'ir', 'Iron League').refusal).toBe(
+      'Creating a guild costs 25 gold.',
+    )
 
     const rich = createGuildFormView(1200, '')
     expect(rich.costLine).toBe('Costs 25 gold · you have 1,200')

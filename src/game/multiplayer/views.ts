@@ -266,7 +266,13 @@ export interface CreateGuildFormView {
   /** `[IRN]`, or `[??]` before anything is typed. */
   tagPreview: string
   canAfford: boolean
-  /** `Create for 25 gold`, or why the button is off. */
+  /**
+   * `Create for 25 gold`. What the button does, never why it will not.
+   *
+   * A button labelled with its own complaint is still a button that appears to
+   * do nothing when pressed, so the complaint goes in `refusal` and is shown
+   * beside it.
+   */
   submitLabel: string
   /**
    * Why the form cannot be sent yet, or null when it can.
@@ -293,7 +299,7 @@ export function createGuildFormView(
     costLine: `Costs ${GUILD_CREATE_GOLD_COST} gold · you have ${gold.toLocaleString()}`,
     tagPreview: `[${sanitizeGuildTagInput(tag) || '??'}]`,
     canAfford,
-    submitLabel: canAfford ? `Create for ${GUILD_CREATE_GOLD_COST} gold` : 'Not enough gold',
+    submitLabel: `Create for ${GUILD_CREATE_GOLD_COST} gold`,
     refusal: createGuildRefusalFor(name, tag, gold),
   }
 }

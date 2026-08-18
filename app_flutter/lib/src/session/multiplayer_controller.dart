@@ -684,18 +684,31 @@ class MultiplayerController extends ChangeNotifier {
   // --- Guilds ---------------------------------------------------------------
 
   /// Creates a guild and reports what it cost, so the caller can spend it.
-  Future<void> createGuild(
+  /// Founds a guild, answering with the reason it did not happen.
+  ///
+  /// The reason comes back rather than only landing in [notice], so the form
+  /// that was refused can say so itself instead of closing and hoping the
+  /// player finds the message it left behind.
+  ///
+  /// A guild that was written counts as founded even if the read after it
+  /// failed: the guild is real, and the failed read has its own notice.
+  Future<String?> createGuild(
     CreateGuildInput input,
     PlayerSave save,
     void Function(num goldCost) onPaid,
-  ) {
-    return run(() async {
+  ) async {
+    if (_busy) return 'One thing at a time — the last request is still going.';
+    var founded = false;
+    await run(() async {
       final result = await service.createGuild(input, save.gold);
       if (!result.ok) return result.reason;
       onPaid(result.goldCost!);
+      founded = true;
       await refresh(save);
       return 'Guild created.';
     });
+    if (founded) return null;
+    return _notice ?? 'The guild was not created. Try again.';
   }
 
   Future<void> applyToGuild(String guildId, String message, PlayerSave save) {

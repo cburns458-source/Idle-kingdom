@@ -58,6 +58,9 @@ class _GuildPanelState extends State<GuildPanel> {
           decoration: const InputDecoration(labelText: 'Search guilds', hintText: 'Name or tag…'),
           onChanged: (_) => setState(() {}),
         ),
+        // Near the top, because a list of guilds is as long as the game is old
+        // and a message under it is a message nobody reads.
+        SocialNotice(notice: net.notice),
         const SizedBox(height: 10),
         if (net.guestGuild case final guest?) ...[
           SocialRow(
@@ -101,20 +104,27 @@ class _GuildPanelState extends State<GuildPanel> {
           onPressed: net.busy ? null : _openCreateSheet,
           child: Text('Create guild (${form.goldCost} gold)'),
         ),
-        SocialNotice(notice: net.notice),
       ],
     );
   }
 
-  Future<void> _openCreateSheet() async {
-    final input = await showModalBottomSheet<CreateGuildInput>(
+  Future<void> _openCreateSheet() {
+    return showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Palette.parchmentDeep,
-      builder: (context) => _CreateGuildSheet(gold: save.gold),
+      builder: (context) => _CreateGuildSheet(gold: save.gold, onSubmit: _foundGuild),
     );
-    if (input == null || !mounted) return;
-    await net.createGuild(input, save, (goldCost) {
+  }
+
+  /// Founds the guild, answering the sheet with the reason it did not happen.
+  ///
+  /// The sheet asks for this rather than handing an input back and closing,
+  /// because a refusal belongs next to the form that caused it: closing first
+  /// throws away what was typed and leaves the reason at the far end of a list
+  /// nobody scrolls to.
+  Future<String?> _foundGuild(CreateGuildInput input) {
+    return net.createGuild(input, save, (goldCost) {
       widget.controller.commit(save.copyWith(gold: (save.gold - goldCost).clamp(0, save.gold)));
     });
   }
@@ -148,6 +158,7 @@ class _GuildPanelState extends State<GuildPanel> {
                 )
               : null,
         ),
+        SocialNotice(notice: net.notice),
         const SizedBox(height: 10),
         GameButton(
           label: save.currentLocationId == guildHallLocationId ? 'In the hall' : 'Travel to hall',
@@ -269,7 +280,6 @@ class _GuildPanelState extends State<GuildPanel> {
             ],
           ),
         ],
-        SocialNotice(notice: net.notice),
       ],
     );
   }
@@ -488,9 +498,12 @@ class _SymbolButton extends StatelessWidget {
 }
 
 class _CreateGuildSheet extends StatefulWidget {
-  const _CreateGuildSheet({required this.gold});
+  const _CreateGuildSheet({required this.gold, required this.onSubmit});
 
   final num gold;
+
+  /// Founds the guild, answering with why it did not happen.
+  final Future<String?> Function(CreateGuildInput input) onSubmit;
 
   @override
   State<_CreateGuildSheet> createState() => _CreateGuildSheetState();
@@ -503,12 +516,35 @@ class _CreateGuildSheetState extends State<_CreateGuildSheet> {
     color: guildEmblemColors.first,
     symbol: guildEmblemSymbols.first,
   );
+  bool _sending = false;
+
+  /// What the last press was told, which outranks what the form guessed.
+  String? _refused;
 
   @override
   void dispose() {
     _name.dispose();
     _tag.dispose();
     super.dispose();
+  }
+
+  Future<void> _submit() async {
+    setState(() {
+      _sending = true;
+      _refused = null;
+    });
+    final refused = await widget.onSubmit(
+      CreateGuildInput(name: _name.text, tag: _tag.text, emblem: _emblem),
+    );
+    if (!mounted) return;
+    if (refused == null) {
+      Navigator.of(context).pop();
+      return;
+    }
+    setState(() {
+      _sending = false;
+      _refused = refused;
+    });
   }
 
   @override
@@ -555,14 +591,17 @@ class _CreateGuildSheetState extends State<_CreateGuildSheet> {
             const SizedBox(height: 8),
             _EmblemEditor(emblem: _emblem, onChanged: (next) => setState(() => _emblem = next)),
             const SizedBox(height: 12),
-            // The button names what is still missing rather than sitting there
-            // greyed out, which reads as a button that does nothing.
+            // Whatever is missing is said here, above a button that always
+            // presses. A greyed-out button reads as a game that is broken, and
+            // one labelled with its own complaint still does nothing when
+            // pressed, so the complaint gets its own line.
+            if (_refused ?? form.refusal case final reason?) ...[
+              Text(reason, style: const TextStyle(color: Palette.danger)),
+              const SizedBox(height: 6),
+            ],
             FilledButton(
-              onPressed: form.canSubmit
-                  ? () => Navigator.of(context)
-                        .pop(CreateGuildInput(name: _name.text, tag: _tag.text, emblem: _emblem))
-                  : null,
-              child: Text(form.refusal ?? form.submitLabel),
+              onPressed: _sending ? null : _submit,
+              child: Text(_sending ? 'Creating…' : form.submitLabel),
             ),
           ],
         ),

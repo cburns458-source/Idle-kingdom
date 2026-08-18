@@ -359,7 +359,11 @@ class CreateGuildFormView {
   final String tagPreview;
   final bool canAfford;
 
-  /// `Create for 25 gold`, or why the button is off.
+  /// `Create for 25 gold`. What the button does, never why it will not.
+  ///
+  /// A button labelled with its own complaint is still a button that appears to
+  /// do nothing when pressed, so the complaint goes in [refusal] and is shown
+  /// beside it.
   final String submitLabel;
 
   /// Why the form cannot be sent yet, or null when it can.
@@ -397,7 +401,7 @@ CreateGuildFormView createGuildFormView(num gold, String tag, {String name = ''}
     costLine: 'Costs $guildCreateGoldCost gold · you have ${jsLocaleNumber(gold)}',
     tagPreview: '[${preview.isEmpty ? '??' : preview}]',
     canAfford: canAfford,
-    submitLabel: canAfford ? 'Create for $guildCreateGoldCost gold' : 'Not enough gold',
+    submitLabel: 'Create for $guildCreateGoldCost gold',
     refusal: createGuildRefusalFor(name: name, tag: tag, goldAvailable: gold),
   );
 }
