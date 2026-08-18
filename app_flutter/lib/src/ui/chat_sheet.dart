@@ -312,7 +312,7 @@ class _ChatSheetState extends State<ChatSheet> {
                                 style: const TextStyle(fontSize: 13, color: Palette.parchmentText),
                                 children: [
                                   TextSpan(
-                                    text: '${line.username} ',
+                                    text: '${line.username}: ',
                                     style: TextStyle(
                                       fontWeight: FontWeight.w700,
                                       color: line.mine ? Palette.gold : Palette.parchmentText,

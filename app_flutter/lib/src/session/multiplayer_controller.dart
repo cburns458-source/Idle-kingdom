@@ -36,7 +36,7 @@ class MultiplayerController extends ChangeNotifier {
 
   static const String browseSocialStorageKey = 'idle-kingdoms.client.browse-social-unsigned';
 
-  bool get filterChatProfanity => storage.getItem(chatFilterStorageKey) == '1';
+  bool get filterChatProfanity => storage.getItem(chatFilterStorageKey) != '0';
 
   void setFilterChatProfanity(bool value) {
     storage.setItem(chatFilterStorageKey, value ? '1' : '0');
@@ -72,6 +72,7 @@ class MultiplayerController extends ChangeNotifier {
   String? _guestGuildId;
   GuildRecord? _guestGuild;
   List<GuildMember> _members = const <GuildMember>[];
+  List<GuildGuest> _guests = const <GuildGuest>[];
   List<GuildApplication> _applications = const <GuildApplication>[];
   List<GuildListing> _listings = const <GuildListing>[];
   MultiplayerBoardKey _boardKey = boardTotalLevel;
@@ -119,6 +120,7 @@ class MultiplayerController extends ChangeNotifier {
   String? get guestGuildId => _guestGuildId;
   GuildRecord? get guestGuild => _guestGuild;
   List<GuildMember> get members => _members;
+  List<GuildGuest> get guests => _guests;
   List<GuildApplication> get applications => _applications;
 
   /// Every guild there is, for the browser and for guesting from chat.
@@ -262,6 +264,7 @@ class MultiplayerController extends ChangeNotifier {
     _guestGuildId = null;
     _guestGuild = null;
     _members = const <GuildMember>[];
+    _guests = const <GuildGuest>[];
     _applications = const <GuildApplication>[];
     _listings = const <GuildListing>[];
     _board = const <LeaderboardEntry>[];
@@ -404,10 +407,12 @@ class MultiplayerController extends ChangeNotifier {
     if (guildId == null) {
       _guild = null;
       _members = const <GuildMember>[];
+      _guests = const <GuildGuest>[];
       _applications = const <GuildApplication>[];
     } else {
       _guild = await service.guild(guildId);
       _members = await service.guildMembers(guildId);
+      _guests = await service.guildGuests(guildId);
       _applications = await service.guildApplications(guildId);
     }
     final guestId = _guestGuildId;

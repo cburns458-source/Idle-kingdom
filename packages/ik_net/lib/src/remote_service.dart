@@ -362,6 +362,9 @@ class RemoteMultiplayerService implements MultiplayerService {
   Future<List<GuildMember>> guildMembers(String guildId) => _guilds.guildMembers(guildId);
 
   @override
+  Future<List<GuildGuest>> guildGuests(String guildId) => _guilds.guildGuests(guildId);
+
+  @override
   Future<ApplyToGuildResult> applyToGuild(String guildId, String message) =>
       _guilds.applyToGuild(guildId, message);
 

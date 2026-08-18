@@ -374,6 +374,20 @@ const List<String> guildRankIconThemes = <String>[
 String normalizeRankIconTheme(String? raw) =>
     raw == guildRankIconThemeCrowns ? guildRankIconThemeCrowns : guildRankIconThemeStripes;
 
+/// Guest speakers use this in guild chat, in place of a rank mark.
+const String guildGuestChatIcon = '☺';
+
+/// Leader first, then officer, veteran, member, recruit.
+int guildRankSortIndex(String role) {
+  return switch (normalizeRole(role)) {
+    guildRoleLeader => 0,
+    guildRoleOfficer => 1,
+    guildRoleVeteran => 2,
+    guildRoleMember => 3,
+    _ => 4,
+  };
+}
+
 /// The mark that sits in front of a name in guild chat.
 String guildRankIcon(String theme, String role) {
   if (normalizeRankIconTheme(theme) == guildRankIconThemeCrowns) {

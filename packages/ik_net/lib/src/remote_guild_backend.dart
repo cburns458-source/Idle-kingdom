@@ -103,6 +103,17 @@ class RemoteGuildBackend {
     return guildMembersFrom(result.rows!);
   }
 
+  Future<List<GuildGuest>> guildGuests(String guildId) async {
+    final result = await transport.select(
+      RemoteTables.guildGuests,
+      columns: remoteGuildGuestColumns,
+      equals: <String, Object?>{'guild_id': guildId},
+      orderBy: 'joined_at',
+    );
+    if (!result.ok) return const <GuildGuest>[];
+    return result.rows!.map(guildGuestFrom).toList();
+  }
+
   /// The roster row for [userId], or null when they are in no guild.
   Future<GuildMember?> _membershipOf(String userId) async {
     final result = await transport.select(

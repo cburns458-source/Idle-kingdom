@@ -5,6 +5,7 @@ import type {
   GuildApplication,
   GuildChallenge,
   GuildEmblem,
+  GuildGuest,
   GuildJoinPolicy,
   GuildMember,
   GuildProject,
@@ -36,6 +37,10 @@ export async function getGuild(guildId: string): Promise<GuildRecord | null> {
 
 export async function listGuildMembers(guildId: string): Promise<GuildMember[]> {
   return getLocalBackend().guildMembers(guildId)
+}
+
+export async function listGuildGuests(guildId: string): Promise<GuildGuest[]> {
+  return getLocalBackend().guildGuests(guildId)
 }
 
 export async function applyToGuild(

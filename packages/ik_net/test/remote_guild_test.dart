@@ -208,6 +208,7 @@ void main() {
     expect(await visitor.currentGuestGuildId(), guildId);
     expect(await visitor.currentGuildId(), isNull);
     expect(await leader.guildMembers(guildId), hasLength(1));
+    expect((await leader.guildGuests(guildId)).map((row) => row.username), ['Visitor']);
 
     expect((await visitor.joinAsGuest(guildId, '')).reason, 'Already a guest of that guild.');
     expect((await visitor.leaveGuest()).ok, isTrue);

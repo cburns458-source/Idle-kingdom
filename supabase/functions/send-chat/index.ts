@@ -8,6 +8,13 @@ const COOLDOWN_SECONDS: Record<string, number> = {
   dm: 2,
 }
 const SLURS = /\b(nigger|faggot)\b/i
+const DEFAULT_RANK_LABELS: Record<string, string> = {
+  leader: 'Leader',
+  officer: 'Officer',
+  veteran: 'Veteran',
+  member: 'Member',
+  recruit: 'Recruit',
+}
 
 type SendBody = {
   channelKey?: unknown
@@ -62,16 +69,49 @@ Deno.serve(async (req) => {
   const admin = createClient(supabaseUrl, serviceKey)
   const username = await resolveUsername(admin, user.id, user.user_metadata)
 
+  const { data: membership } = await admin
+    .from('guild_members')
+    .select('guild_id, role')
+    .eq('user_id', user.id)
+    .maybeSingle()
+
+  let guildTag: string | null = null
+  let rankLabel: string | null = null
+  let rankIcon: string | null = null
+  let guest = false
+
+  if (membership?.guild_id) {
+    const { data: guild } = await admin
+      .from('guilds')
+      .select('tag, rank_labels, rank_icon_theme')
+      .eq('id', membership.guild_id)
+      .maybeSingle()
+    if (typeof guild?.tag === 'string' && guild.tag.trim()) {
+      guildTag = guild.tag.trim()
+    }
+    if (kind === 'guild' && membership.guild_id === channelKey.slice('guild:'.length)) {
+      const role = typeof membership.role === 'string' ? membership.role : 'recruit'
+      const labels = (guild?.rank_labels ?? {}) as Record<string, unknown>
+      const named = typeof labels[role] === 'string' ? String(labels[role]).trim() : ''
+      rankLabel = named || DEFAULT_RANK_LABELS[role] || 'Recruit'
+      rankIcon = guildRankIcon(String(guild?.rank_icon_theme ?? 'stripes'), role)
+    }
+  }
+
   if (kind === 'guild') {
     const guildId = channelKey.slice('guild:'.length)
-    const { data: member } = await admin
-      .from('guild_members')
-      .select('user_id')
-      .eq('guild_id', guildId)
-      .eq('user_id', user.id)
-      .maybeSingle()
-    if (!member) {
-      return json({ error: 'Join the guild to use guild chat.' }, 400)
+    const isMember = membership?.guild_id === guildId
+    if (!isMember) {
+      const { data: guestRow } = await admin
+        .from('guild_guests')
+        .select('user_id')
+        .eq('guild_id', guildId)
+        .eq('user_id', user.id)
+        .maybeSingle()
+      if (!guestRow) {
+        return json({ error: 'Join the guild to use guild chat.' }, 400)
+      }
+      guest = true
     }
   }
 
@@ -97,8 +137,14 @@ Deno.serve(async (req) => {
       user_id: user.id,
       username,
       body: trimmed,
+      guild_tag: guildTag,
+      rank_label: rankLabel,
+      rank_icon: rankIcon,
+      guest,
     })
-    .select('id, channel_key, user_id, username, body, created_at')
+    .select(
+      'id, channel_key, user_id, username, body, created_at, guild_tag, rank_label, rank_icon, guest',
+    )
     .single()
   if (insertError || !inserted) {
     return json({ error: insertError?.message ?? 'The chat message was not accepted.' }, 400)
@@ -112,6 +158,21 @@ Deno.serve(async (req) => {
 
   return json(inserted, 200)
 })
+
+function guildRankIcon(theme: string, role: string): string {
+  if (theme === 'crowns') {
+    if (role === 'leader') return '♔'
+    if (role === 'officer') return '◆'
+    if (role === 'veteran') return '●'
+    if (role === 'member') return '•'
+    return '·'
+  }
+  if (role === 'leader') return '★'
+  if (role === 'officer') return '▍▍▍▍'
+  if (role === 'veteran') return '▍▍▍'
+  if (role === 'member') return '▍▍'
+  return '▍'
+}
 
 function channelKind(key: string): string | null {
   if (key === 'global') return 'global'

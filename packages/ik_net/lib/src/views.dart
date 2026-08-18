@@ -19,8 +19,8 @@ const List<GuildRankKey> editableRankKeys = <GuildRankKey>[
   guildRoleRecruit,
 ];
 
-/// Which end of the join order a roster starts from.
-enum GuildRosterSort { oldest, newest }
+/// How the guild roster is ordered.
+enum GuildRosterSort { oldest, newest, totalLevel, guildRank }
 
 String _policyLabel(GuildJoinPolicy policy) =>
     policy == guildJoinOpen ? 'Accept applications' : 'Closed';
@@ -260,10 +260,10 @@ class GuildRosterRow {
   return (lastOnlineAt: updatedAt, isOnline: false, lastOnlineLabel: '${days}d ago');
 }
 
-/// The roster in join order.
+/// The roster, ordered by join date, total level, or guild rank.
 ///
 /// Ties keep the order the backend returned, which is itself join order, so two
-/// members who joined in the same second do not swap places between refreshes.
+/// members who match on the sort key do not swap places between refreshes.
 List<GuildRosterRow> guildRosterRows(
   GuildRecord guild,
   List<GuildMember> members,
@@ -277,10 +277,15 @@ List<GuildRosterRow> guildRosterRows(
   final seen = <String, String>{for (final row in presence) row.userId: row.updatedAt};
   final indexed = members.indexed.toList();
   indexed.sort((a, b) {
-    final delta = jsDateParse(a.$2.joinedAt) - jsDateParse(b.$2.joinedAt);
-    if (delta != 0) {
-      return sort == GuildRosterSort.oldest ? delta.sign.toInt() : -delta.sign.toInt();
-    }
+    final cmp = switch (sort) {
+      GuildRosterSort.oldest =>
+        (jsDateParse(a.$2.joinedAt) - jsDateParse(b.$2.joinedAt)).sign.toInt(),
+      GuildRosterSort.newest =>
+        (jsDateParse(b.$2.joinedAt) - jsDateParse(a.$2.joinedAt)).sign.toInt(),
+      GuildRosterSort.totalLevel => (b.$2.totalLevel - a.$2.totalLevel).sign.toInt(),
+      GuildRosterSort.guildRank => guildRankSortIndex(a.$2.role) - guildRankSortIndex(b.$2.role),
+    };
+    if (cmp != 0) return cmp;
     return a.$1 - b.$1;
   });
   return indexed.indexed.map((outer) {
@@ -804,13 +809,14 @@ List<ChatLineView> chatLines(
       .toList();
 }
 
-/// `[TAG] Hero` in global/local, rank or Guest in guild rooms.
+/// `[TAG] Hero` in global/local, rank mark or guest smiley in guild rooms.
 String chatLineUsername(ChatMessage message) {
   if (message.channelKey.startsWith('guild:')) {
-    if (message.guest) return 'Guest ${message.username}';
+    if (message.guest) return '$guildGuestChatIcon ${message.username}';
     final icon = message.rankIcon;
     final rank = message.rankLabel;
     if (icon != null && rank != null) return '$icon $rank ${message.username}';
+    if (icon != null) return '$icon ${message.username}';
     if (rank != null) return '$rank ${message.username}';
     return message.username;
   }

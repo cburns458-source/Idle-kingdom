@@ -10,6 +10,8 @@ import {
   GUILD_CREATE_GOLD_COST,
   GUILD_MAX_MEMBERS,
   PROMOTABLE_GUILD_RANKS,
+  GUILD_GUEST_CHAT_ICON,
+  guildRankSortIndex,
   guildRoleLabel,
   type ActivityPresence,
   type ChatChannel,
@@ -33,7 +35,7 @@ export const PUBLIC_PROFILE_SKILL_LIMIT = 8
 /** The ranks a guild leader can rename, Leader included. */
 export const EDITABLE_RANK_KEYS = Object.keys(DEFAULT_GUILD_RANK_LABELS) as GuildRankKey[]
 
-export type GuildRosterSort = 'oldest' | 'newest'
+export type GuildRosterSort = 'oldest' | 'newest' | 'totalLevel' | 'guildRank'
 
 function policyLabel(policy: GuildJoinPolicy): string {
   return policy === 'open' ? 'Accept applications' : 'Closed'
@@ -193,10 +195,10 @@ export function rosterLastOnline(
 }
 
 /**
- * The roster in join order.
+ * The roster, ordered by join date, total level, or guild rank.
  *
  * Ties keep the order the backend returned, which is itself join order, so two
- * members who joined in the same second do not swap places between refreshes.
+ * members who match on the sort key do not swap places between refreshes.
  */
 export function guildRosterRows(
   guild: GuildRecord,
@@ -211,8 +213,17 @@ export function guildRosterRows(
   const sorted = members
     .map((member, index) => ({ member, index }))
     .sort((a, b) => {
-      const delta = Date.parse(a.member.joinedAt) - Date.parse(b.member.joinedAt)
-      if (delta !== 0) return sort === 'oldest' ? delta : -delta
+      let cmp = 0
+      if (sort === 'oldest') {
+        cmp = Date.parse(a.member.joinedAt) - Date.parse(b.member.joinedAt)
+      } else if (sort === 'newest') {
+        cmp = Date.parse(b.member.joinedAt) - Date.parse(a.member.joinedAt)
+      } else if (sort === 'totalLevel') {
+        cmp = b.member.totalLevel - a.member.totalLevel
+      } else {
+        cmp = guildRankSortIndex(a.member.role) - guildRankSortIndex(b.member.role)
+      }
+      if (cmp !== 0) return cmp
       return a.index - b.index
     })
   return sorted.map(({ member }, index) => {
@@ -595,13 +606,14 @@ export function chatLines(
   }))
 }
 
-/** `[TAG] Hero` in global/local, rank or Guest in guild rooms. */
+/** `[TAG] Hero` in global/local, rank mark or guest smiley in guild rooms. */
 export function chatLineUsername(message: ChatMessage): string {
   if (message.channelKey.startsWith('guild:')) {
-    if (message.guest) return `Guest ${message.username}`
+    if (message.guest) return `${GUILD_GUEST_CHAT_ICON} ${message.username}`
     const icon = message.rankIcon
     const rank = message.rankLabel
     if (icon && rank) return `${icon} ${rank} ${message.username}`
+    if (icon) return `${icon} ${message.username}`
     if (rank) return `${rank} ${message.username}`
     return message.username
   }

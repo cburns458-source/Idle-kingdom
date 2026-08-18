@@ -138,6 +138,18 @@ export function normalizeRankIconTheme(raw: unknown): string {
     : GUILD_RANK_ICON_THEME_STRIPES
 }
 
+/** Guest speakers use this in guild chat, in place of a rank mark. */
+export const GUILD_GUEST_CHAT_ICON = '☺'
+
+/** Leader first, then officer, veteran, member, recruit. */
+export function guildRankSortIndex(role: string): number {
+  if (role === 'leader') return 0
+  if (role === 'officer') return 1
+  if (role === 'veteran') return 2
+  if (role === 'member') return 3
+  return 4
+}
+
 export function guildRankIcon(theme: string, role: string): string {
   if (normalizeRankIconTheme(theme) === GUILD_RANK_ICON_THEME_CROWNS) {
     if (role === 'leader') return '♔'

@@ -50,20 +50,36 @@ void main() {
     expect(controller.save.skills.every((skill) => skill.level == 1 && skill.xp == 0), isTrue);
   });
 
-  testWidgets('Settings shows the testing tools and the social browse switch', (tester) async {
+  test('chat filter starts on and can be turned off', () {
+    final net = buildMultiplayer(database);
+    addTearDown(net.dispose);
+    expect(net.filterChatProfanity, isTrue);
+    net.setFilterChatProfanity(false);
+    expect(net.filterChatProfanity, isFalse);
+  });
+
+  testWidgets('Settings shows the testing tools and the chat filter', (tester) async {
     final controller = buildController(database, seed: startedCharacter(database));
     addTearDown(controller.dispose);
     await pumpShell(tester, controller, size: const Size(900, 2400));
 
     await openChinScreen(tester, 'Settings');
     await tester.scrollUntilVisible(
+      find.text('Filter chat'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pump();
+    expect(find.text('Filter chat'), findsOne);
+    expect(find.text('Browse social pages'), findsNothing);
+    expect(find.text('Move this save'), findsNothing);
+
+    await tester.scrollUntilVisible(
       find.text('Testing tools'),
       300,
       scrollable: find.byType(Scrollable).first,
     );
     await tester.pump();
-
-    expect(find.text('Browse social pages'), findsOne);
     expect(find.bySemanticsLabel('Spawn critter'), findsOne);
     expect(find.bySemanticsLabel('Change race'), findsOne);
     expect(find.bySemanticsLabel('Add 1'), findsOne);

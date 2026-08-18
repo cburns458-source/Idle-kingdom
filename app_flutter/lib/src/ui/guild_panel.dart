@@ -194,6 +194,8 @@ class _GuildPanelState extends State<GuildPanel> {
               items: const <DropdownMenuItem<GuildRosterSort>>[
                 DropdownMenuItem(value: GuildRosterSort.oldest, child: Text('Join date (oldest)')),
                 DropdownMenuItem(value: GuildRosterSort.newest, child: Text('Join date (newest)')),
+                DropdownMenuItem(value: GuildRosterSort.totalLevel, child: Text('Total level')),
+                DropdownMenuItem(value: GuildRosterSort.guildRank, child: Text('Guild rank')),
               ],
               onChanged: (sort) {
                 if (sort != null) setState(() => _sort = sort);
@@ -216,6 +218,19 @@ class _GuildPanelState extends State<GuildPanel> {
                 : Text('${row.totalLevel}', style: const TextStyle(fontWeight: FontWeight.w700)),
           ),
           const SizedBox(height: 6),
+        ],
+        if (net.guests.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          const Text('Guests', style: TextStyle(fontWeight: FontWeight.w700)),
+          const SizedBox(height: 6),
+          for (final guest in net.guests) ...[
+            SocialRow(
+              title: guest.username,
+              subtitle: 'Chat only — not on the roster.',
+              leading: SocialPortrait(appearance: guest.appearance),
+            ),
+            const SizedBox(height: 6),
+          ],
         ],
         if (header.canManage && applications.isNotEmpty) ...[
           const SizedBox(height: 8),

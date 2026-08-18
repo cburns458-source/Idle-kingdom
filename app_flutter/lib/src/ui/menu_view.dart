@@ -9,7 +9,6 @@ import '../session/multiplayer_controller.dart';
 import '../session/pick_local_png.dart';
 import '../theme.dart';
 import 'player_sprite.dart';
-import 'save_transfer_section.dart';
 
 const String _playerArtHeading = 'Player sprite';
 const String _playerArtBlurb =
@@ -198,43 +197,12 @@ class _MenuViewState extends State<MenuView> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 16),
-                GamePanel(
-                  child: Row(
-                    children: [
-                      const Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Browse social pages',
-                              style: TextStyle(fontWeight: FontWeight.w700),
-                            ),
-                            MutedText(
-                              'Open Leaderboards, Guilds, Chat, and Nearby without an account. '
-                              'Joining, posting, and sending still need a sign-in.',
-                            ),
-                          ],
-                        ),
-                      ),
-                      Switch(
-                        value: widget.multiplayer.canBrowseSocial,
-                        onChanged: (value) {
-                          widget.multiplayer.setBrowseSocialUnsigned(value);
-                          if (value) unawaited(widget.multiplayer.refresh(controller.save));
-                        },
-                      ),
-                    ],
-                  ),
-                ),
               ],
             );
           },
         ),
         const SizedBox(height: 16),
         _buildTestingTools(),
-        const SizedBox(height: 16),
-        SaveTransferSection(controller: controller),
       ],
     );
   }

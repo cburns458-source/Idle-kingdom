@@ -68,7 +68,9 @@ const int remoteChatLimit = 50;
 const int remoteUsernameMaxLength = 24;
 
 const String remoteSaveColumns = 'save_version, updated_at, payload';
-const String remoteChatColumns = 'id, channel_key, user_id, username, body, created_at';
+const String remoteChatColumns =
+    'id, channel_key, user_id, username, body, created_at, '
+    'guild_tag, rank_label, rank_icon, guest';
 const String remoteLeaderboardColumns =
     'user_id, board_key, value, value_secondary, '
     'profiles(username, appearance_json, guild_id, guilds(name))';
@@ -183,6 +185,11 @@ List<RemoteRow> leaderboardRowsFor(
 
 String _str(Object? value) => value == null ? '' : jsString(value);
 
+String? _optStr(Object? value) {
+  final text = _str(value);
+  return text.isEmpty ? null : text;
+}
+
 num _num(Object? value) => jsNumber(value ?? 0);
 
 /// A stored save as the row carried it.
@@ -255,6 +262,10 @@ ChatMessage chatMessageFrom(RemoteRow row) => ChatMessage(
   username: _str(row['username']),
   body: _str(row['body']),
   createdAt: _str(row['created_at']),
+  guildTag: _optStr(row['guild_tag'] ?? row['guildTag']),
+  rankLabel: _optStr(row['rank_label'] ?? row['rankLabel']),
+  rankIcon: _optStr(row['rank_icon'] ?? row['rankIcon']),
+  guest: row['guest'] == true,
 );
 
 /// The message the send-chat function answered with.
@@ -265,14 +276,18 @@ ChatMessage? chatMessageFromFunction(RemoteRow? data) {
   if (data == null) return null;
   final id = _str(data['id']);
   if (id.isEmpty) return null;
-  return ChatMessage(
-    id: id,
-    channelKey: _str(data['channelKey'] ?? data['channel_key']),
-    userId: _str(data['userId'] ?? data['user_id']),
-    username: _str(data['username']),
-    body: _str(data['body']),
-    createdAt: _str(data['createdAt'] ?? data['created_at']),
-  );
+  return chatMessageFrom(<String, Object?>{
+    'id': id,
+    'channel_key': data['channelKey'] ?? data['channel_key'],
+    'user_id': data['userId'] ?? data['user_id'],
+    'username': data['username'],
+    'body': data['body'],
+    'created_at': data['createdAt'] ?? data['created_at'],
+    'guild_tag': data['guildTag'] ?? data['guild_tag'],
+    'rank_label': data['rankLabel'] ?? data['rank_label'],
+    'rank_icon': data['rankIcon'] ?? data['rank_icon'],
+    'guest': data['guest'],
+  });
 }
 
 /// What a send is refused with when the function answered with nothing usable.

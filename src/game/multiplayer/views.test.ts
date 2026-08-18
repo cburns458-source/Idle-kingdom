@@ -10,6 +10,7 @@ import {
   guildBrowseRows,
   guildHomeHeader,
   guildRankOptions,
+  chatLineUsername,
   guildRosterRows,
   leaderboardRows,
   leaveGuildPrompt,
@@ -21,13 +22,14 @@ import {
 } from './views'
 import type {
   ActivityPresence,
+  ChatMessage,
   GuildListing,
   GuildMember,
   GuildRecord,
   LeaderboardEntry,
   PublicPlayerProfile,
 } from './types'
-import { DEFAULT_GUILD_RANK_LABELS } from './types'
+import { DEFAULT_GUILD_RANK_LABELS, GUILD_GUEST_CHAT_ICON } from './types'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { prepareDatabase } from '../data/loadDatabase'
@@ -193,6 +195,27 @@ describe('guild home views', () => {
 
     const newest = guildRosterRows(guild(), members, 'newest', 'usr_1')
     expect(newest.map((row) => row.username)).toEqual(['Late', 'Early', 'Leader'])
+  })
+
+  it('sorts the roster by total level and guild rank', () => {
+    const members = [
+      member({ userId: 'usr_1', username: 'Leader', role: 'leader', totalLevel: 90 }),
+      member({ userId: 'usr_3', username: 'Late', role: 'member', totalLevel: 20 }),
+      member({ userId: 'usr_2', username: 'Early', role: 'officer', totalLevel: 42 }),
+      member({ userId: 'usr_4', username: 'Twin', role: 'recruit', totalLevel: 42 }),
+    ]
+    expect(guildRosterRows(guild(), members, 'totalLevel', 'usr_1').map((row) => row.username)).toEqual([
+      'Leader',
+      'Early',
+      'Twin',
+      'Late',
+    ])
+    expect(guildRosterRows(guild(), members, 'guildRank', 'usr_1').map((row) => row.username)).toEqual([
+      'Leader',
+      'Early',
+      'Late',
+      'Twin',
+    ])
   })
 
   it('keeps backend order when two members joined at the same moment', () => {
@@ -409,5 +432,41 @@ describe('account views', () => {
     expect(multiplayerModeLine('supabase')).toBe(
       'Accounts use the Supabase. Sign in to play and sync progress.',
     )
+  })
+})
+
+function chatMessage(overrides: Partial<ChatMessage> = {}): ChatMessage {
+  return {
+    id: 'msg_1',
+    channelKey: 'global',
+    userId: 'usr_1',
+    username: 'Vari',
+    body: 'Hello',
+    createdAt: '2026-08-12T21:00:00.000Z',
+    ...overrides,
+  }
+}
+
+describe('chat line names', () => {
+  it('puts the guild tag before the name in global and local rooms', () => {
+    expect(chatLineUsername(chatMessage({ guildTag: 'DEV' }))).toBe('[DEV] Vari')
+    expect(chatLineUsername(chatMessage({ channelKey: 'local:LOC-0001', guildTag: 'DEV' }))).toBe(
+      '[DEV] Vari',
+    )
+  })
+
+  it('puts the rank mark before the name in guild rooms, and a smiley for guests', () => {
+    expect(
+      chatLineUsername(
+        chatMessage({
+          channelKey: 'guild:gld_1',
+          rankLabel: 'Leader',
+          rankIcon: '★',
+        }),
+      ),
+    ).toBe('★ Leader Vari')
+    expect(
+      chatLineUsername(chatMessage({ channelKey: 'guild:gld_1', username: 'Wanderer', guest: true })),
+    ).toBe(`${GUILD_GUEST_CHAT_ICON} Wanderer`)
   })
 })

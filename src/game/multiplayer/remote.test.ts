@@ -255,4 +255,32 @@ describe('remote chat', () => {
       createdAt: '',
     })
   })
+
+  it('reads guild tag, rank, and guest flags when the row has them', () => {
+    expect(
+      chatMessageFrom({
+        id: 'msg_2',
+        channel_key: 'guild:gld_1',
+        user_id: 'usr-2',
+        username: 'Mira',
+        body: 'Hold',
+        created_at: '2026-08-12T21:00:01.000Z',
+        guild_tag: 'DEV',
+        rank_label: 'Leader',
+        rank_icon: '★',
+        guest: true,
+      }),
+    ).toEqual({
+      id: 'msg_2',
+      channelKey: 'guild:gld_1',
+      userId: 'usr-2',
+      username: 'Mira',
+      body: 'Hold',
+      createdAt: '2026-08-12T21:00:01.000Z',
+      guildTag: 'DEV',
+      rankLabel: 'Leader',
+      rankIcon: '★',
+      guest: true,
+    })
+  })
 })

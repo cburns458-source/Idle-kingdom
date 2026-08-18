@@ -288,6 +288,22 @@ void main() {
                   presence: _rosterPresence,
                   nowMs: _rosterNow,
                 ).map((row) => row.username).toList(),
+                'byLevel': guildRosterRows(
+                  _guild(),
+                  _roster,
+                  GuildRosterSort.totalLevel,
+                  'usr_1',
+                  presence: _rosterPresence,
+                  nowMs: _rosterNow,
+                ).map((row) => row.username).toList(),
+                'byRank': guildRosterRows(
+                  _guild(),
+                  _roster,
+                  GuildRosterSort.guildRank,
+                  'usr_1',
+                  presence: _rosterPresence,
+                  nowMs: _rosterNow,
+                ).map((row) => row.username).toList(),
                 'asMember': guildRosterRows(
                   _guild(),
                   _roster,

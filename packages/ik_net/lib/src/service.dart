@@ -95,6 +95,8 @@ abstract interface class MultiplayerService {
 
   Future<List<GuildMember>> guildMembers(String guildId);
 
+  Future<List<GuildGuest>> guildGuests(String guildId);
+
   Future<ApplyToGuildResult> applyToGuild(String guildId, String message);
 
   Future<ApplyToGuildResult> joinAsGuest(String guildId, String message);
@@ -458,6 +460,9 @@ class LocalMultiplayerService implements MultiplayerService {
 
   @override
   Future<List<GuildMember>> guildMembers(String guildId) async => _backend.guildMembers(guildId);
+
+  @override
+  Future<List<GuildGuest>> guildGuests(String guildId) async => _backend.guildGuests(guildId);
 
   @override
   Future<ApplyToGuildResult> applyToGuild(String guildId, String message) async {

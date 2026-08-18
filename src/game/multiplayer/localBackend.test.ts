@@ -123,6 +123,7 @@ describe('local multiplayer backend', () => {
     if (!joined.ok) return
     expect(joined.joined).toBe(true)
     expect(backend.guildMembers(created.guild.id)).toHaveLength(1)
+    expect(backend.guildGuests(created.guild.id).map((row) => row.username)).toEqual(['Wanderer'])
     expect(backend.currentGuestGuildId(guest.session.userId)).toBe(created.guild.id)
     const chat = backend.sendChat(guest.session, { kind: 'guild', guildId: created.guild.id }, 'Hello')
     expect(chat.ok).toBe(true)

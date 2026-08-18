@@ -11,6 +11,7 @@ import '../content/database_loader.dart';
 import '../net/supabase_transport.dart';
 import '../session/game_controller.dart';
 import '../session/local_player_art.dart';
+import '../session/hud_level_pref.dart';
 import '../session/map_travel_pref.dart';
 import '../session/multiplayer_controller.dart';
 import '../storage/legacy_browser_save.dart';
@@ -74,6 +75,7 @@ class _BootGateState extends State<_BootGate> {
       session: session,
       localArt: LocalPlayerArt.load(storage),
       mapTravel: MapTravelPref.load(storage),
+      hudLevel: HudLevelPref.load(storage),
     )..adoptBoot(boot);
     final service = await _multiplayerService(storage);
     _ensureDemoWorld(service, database.launch);

@@ -259,13 +259,13 @@ List<CombatStatContribution> _damageMultiplierLines(GameDatabase db, PlayerSave 
 }
 
 List<CombatStatContribution> _mainhandBreakdown(GameDatabase db, PlayerSave save) {
-  final lines = <CombatStatContribution>[
-    CombatStatContribution(label: 'Unarmed', detail: _rangeLabel(_unarmedBase(db))),
-  ];
+  final lines = <CombatStatContribution>[];
   final weaponId = save.equipment.slots[weaponToolSlotId]?.itemId;
   final weapon = _weaponBase(db, weaponId);
   if (weapon != null && isNotBlank(weaponId)) {
     lines.add(CombatStatContribution(label: _itemName(db, weaponId!), detail: _rangeLabel(weapon)));
+  } else {
+    lines.add(CombatStatContribution(label: 'Unarmed', detail: _rangeLabel(_unarmedBase(db))));
   }
   lines.addAll(_damageMultiplierLines(db, save));
   lines.add(

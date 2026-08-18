@@ -48,7 +48,9 @@ export const REMOTE_CHAT_LIMIT = 50
 export const REMOTE_USERNAME_MAX_LENGTH = 24
 
 export const REMOTE_SAVE_COLUMNS = 'save_version, updated_at, payload'
-export const REMOTE_CHAT_COLUMNS = 'id, channel_key, user_id, username, body, created_at'
+export const REMOTE_CHAT_COLUMNS =
+  'id, channel_key, user_id, username, body, created_at, ' +
+  'guild_tag, rank_label, rank_icon, guest'
 export const REMOTE_LEADERBOARD_COLUMNS =
   'user_id, board_key, value, value_secondary, ' +
   'profiles(username, appearance_json, guild_id, guilds(name))'
@@ -175,7 +177,7 @@ export function isRemoteSaveNewer(remote: CloudSaveRecord, local: PlayerSave): b
 }
 
 export function chatMessageFrom(row: RemoteRow): ChatMessage {
-  return {
+  const message: ChatMessage = {
     id: str(row.id),
     channelKey: str(row.channel_key),
     userId: str(row.user_id),
@@ -183,6 +185,14 @@ export function chatMessageFrom(row: RemoteRow): ChatMessage {
     body: str(row.body),
     createdAt: str(row.created_at),
   }
+  const guildTag = str(row.guild_tag ?? row.guildTag)
+  const rankLabel = str(row.rank_label ?? row.rankLabel)
+  const rankIcon = str(row.rank_icon ?? row.rankIcon)
+  if (guildTag) message.guildTag = guildTag
+  if (rankLabel) message.rankLabel = rankLabel
+  if (rankIcon) message.rankIcon = rankIcon
+  if (row.guest === true) message.guest = true
+  return message
 }
 
 /**
@@ -195,14 +205,18 @@ export function chatMessageFromFunction(data: RemoteRow | null): ChatMessage | n
   if (!data) return null
   const id = str(data.id)
   if (!id) return null
-  return {
+  return chatMessageFrom({
     id,
-    channelKey: str(data.channelKey ?? data.channel_key),
-    userId: str(data.userId ?? data.user_id),
-    username: str(data.username),
-    body: str(data.body),
-    createdAt: str(data.createdAt ?? data.created_at),
-  }
+    channel_key: data.channelKey ?? data.channel_key,
+    user_id: data.userId ?? data.user_id,
+    username: data.username,
+    body: data.body,
+    created_at: data.createdAt ?? data.created_at,
+    guild_tag: data.guildTag ?? data.guild_tag,
+    rank_label: data.rankLabel ?? data.rank_label,
+    rank_icon: data.rankIcon ?? data.rank_icon,
+    guest: data.guest,
+  })
 }
 
 /** What a send is refused with when the function answered with nothing usable. */

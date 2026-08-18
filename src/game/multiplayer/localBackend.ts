@@ -755,6 +755,10 @@ export class LocalMultiplayerBackend {
     return this.db().guilds.find((row) => row.id === guildId) ?? null
   }
 
+  guildGuests(guildId: string): GuildGuest[] {
+    return this.guestsOf(this.db()).filter((row) => row.guildId === guildId)
+  }
+
   guildMembers(guildId: string): GuildMember[] {
     const db = this.db()
     return db.members

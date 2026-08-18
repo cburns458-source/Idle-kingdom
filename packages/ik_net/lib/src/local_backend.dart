@@ -734,6 +734,10 @@ class LocalMultiplayerBackend {
   GuildRecord? getGuild(String guildId) =>
       _db().guilds.firstWhereOrNull((row) => row.id == guildId);
 
+  List<GuildGuest> guildGuests(String guildId) {
+    return _db().guests.where((row) => row.guildId == guildId).toList();
+  }
+
   List<GuildMember> guildMembers(String guildId) {
     final db = _db();
     return db.members.where((row) => row.guildId == guildId).map((row) {

@@ -113,16 +113,23 @@ class TopHud extends StatelessWidget {
                               ),
                             ),
                           ),
-                          Text(
-                            '${raceName ?? 'Unsworn'} · '
-                            'Lv ${formatThousands(totalLevel(save))}',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFFC8D7B6),
-                              height: 1.2,
+                          GestureDetector(
+                            onTap: controller.toggleHudShowTotalXp,
+                            behavior: HitTestBehavior.opaque,
+                            child: Text(
+                              controller.hudShowTotalXp
+                                  ? '${raceName ?? 'Unsworn'} · '
+                                        'XP ${formatThousands(totalSkillXp(save))}'
+                                  : '${raceName ?? 'Unsworn'} · '
+                                        'Lv ${formatThousands(totalLevel(save))}',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFFC8D7B6),
+                                height: 1.2,
+                              ),
                             ),
                           ),
                         ],

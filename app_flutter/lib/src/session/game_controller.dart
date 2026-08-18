@@ -5,6 +5,7 @@ import 'package:ik_content/ik_content.dart';
 import 'package:ik_rules/ik_rules.dart';
 import 'package:ik_runtime/ik_runtime.dart';
 
+import 'hud_level_pref.dart';
 import 'local_player_art.dart';
 import 'map_travel_pref.dart';
 
@@ -90,8 +91,10 @@ class GameController extends ChangeNotifier {
     required this.session,
     LocalPlayerArt? localArt,
     MapTravelPref? mapTravel,
+    HudLevelPref? hudLevel,
   }) : localArt = localArt ?? LocalPlayerArt(),
-       mapTravel = mapTravel ?? MapTravelPref();
+       mapTravel = mapTravel ?? MapTravelPref(),
+       hudLevel = hudLevel ?? HudLevelPref();
 
   final LoadedDatabase database;
 
@@ -103,6 +106,9 @@ class GameController extends ChangeNotifier {
 
   /// Client-only toggle for the map-node travel tween.
   final MapTravelPref mapTravel;
+
+  /// Client-only HUD toggle between total level and total XP.
+  final HudLevelPref hudLevel;
 
   /// How many completed actions the reward strip keeps.
   static const int _rewardHistory = 3;
@@ -268,6 +274,14 @@ class GameController extends ChangeNotifier {
   void setMapTravelAnimation(bool value) {
     if (mapTravel.enabled == value) return;
     mapTravel.setEnabled(value);
+    notifyListeners();
+  }
+
+  /// Whether the HUD identity line shows total XP instead of total level.
+  bool get hudShowTotalXp => hudLevel.showTotalXp;
+
+  void toggleHudShowTotalXp() {
+    hudLevel.toggle();
     notifyListeners();
   }
 

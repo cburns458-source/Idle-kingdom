@@ -54,7 +54,7 @@ void main() {
   test('breakdown names the inputs that feed each total', () {
     final summary = playerCombatStatSummary(db, save);
 
-    expect(summary.mainhandBreakdown.map((line) => line.label), contains('Unarmed'));
+    expect(summary.mainhandBreakdown.map((line) => line.label), isNot(contains('Unarmed')));
     expect(summary.mainhandBreakdown.map((line) => line.label), contains('Steel Sword'));
     expect(summary.mainhandBreakdown.map((line) => line.label), contains('Enchantments'));
     expect(summary.mainhandBreakdown.map((line) => line.label), contains('Combat Level 25'));

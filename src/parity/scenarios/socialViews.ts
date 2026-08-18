@@ -232,6 +232,17 @@ export const socialViewScenarios: ParityScenario[] = [
       newest: guildRosterRows(guild(), ROSTER, 'newest', 'usr_1', ROSTER_PRESENCE, ROSTER_NOW).map(
         (row) => row.username,
       ),
+      byLevel: guildRosterRows(
+        guild(),
+        ROSTER,
+        'totalLevel',
+        'usr_1',
+        ROSTER_PRESENCE,
+        ROSTER_NOW,
+      ).map((row) => row.username),
+      byRank: guildRosterRows(guild(), ROSTER, 'guildRank', 'usr_1', ROSTER_PRESENCE, ROSTER_NOW).map(
+        (row) => row.username,
+      ),
       asMember: guildRosterRows(guild(), ROSTER, 'oldest', 'usr_2', ROSTER_PRESENCE, ROSTER_NOW).map(
         (row) => row.manageable,
       ),
