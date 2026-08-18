@@ -29,9 +29,11 @@ alter table public.guild_halls enable row level security;
 
 -- A hall is guild business: anyone signed in can look one up, and only the
 -- guild's own members can change it.
+drop policy if exists "guild halls readable" on public.guild_halls;
 create policy "guild halls readable" on public.guild_halls
   for select using (true);
 
+drop policy if exists "guild halls writable by members" on public.guild_halls;
 create policy "guild halls writable by members" on public.guild_halls
   for all
   using (
