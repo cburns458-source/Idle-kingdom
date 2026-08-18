@@ -83,19 +83,23 @@ class AutoEquipPrompt extends StatelessWidget {
                 const SizedBox(height: 6),
                 MutedText(prompt.question),
                 const SizedBox(height: 14),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    OutlinedButton(
-                      onPressed: controller.declineAutoEquip,
-                      child: Text(prompt.cancelLabel),
-                    ),
-                    const SizedBox(width: 8),
-                    FilledButton(
-                      onPressed: controller.confirmAutoEquip,
-                      child: Text(prompt.confirmLabel),
-                    ),
-                  ],
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Wrap(
+                    alignment: WrapAlignment.end,
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      OutlinedButton(
+                        onPressed: controller.declineAutoEquip,
+                        child: Text(prompt.cancelLabel),
+                      ),
+                      FilledButton(
+                        onPressed: controller.confirmAutoEquip,
+                        child: Text(prompt.confirmLabel),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
