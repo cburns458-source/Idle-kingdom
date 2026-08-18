@@ -513,7 +513,7 @@ class _CreateGuildSheetState extends State<_CreateGuildSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final form = createGuildFormView(widget.gold, _tag.text);
+    final form = createGuildFormView(widget.gold, _tag.text, name: _name.text);
     return Padding(
       padding: EdgeInsets.only(
         left: 16,
@@ -550,16 +550,19 @@ class _CreateGuildSheetState extends State<_CreateGuildSheet> {
               controller: _name,
               maxLength: 28,
               decoration: const InputDecoration(labelText: 'Name'),
+              onChanged: (_) => setState(() {}),
             ),
             const SizedBox(height: 8),
             _EmblemEditor(emblem: _emblem, onChanged: (next) => setState(() => _emblem = next)),
             const SizedBox(height: 12),
+            // The button names what is still missing rather than sitting there
+            // greyed out, which reads as a button that does nothing.
             FilledButton(
-              onPressed: form.canAfford
+              onPressed: form.canSubmit
                   ? () => Navigator.of(context)
                         .pop(CreateGuildInput(name: _name.text, tag: _tag.text, emblem: _emblem))
                   : null,
-              child: Text(form.submitLabel),
+              child: Text(form.refusal ?? form.submitLabel),
             ),
           ],
         ),

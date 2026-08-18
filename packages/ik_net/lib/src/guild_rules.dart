@@ -30,18 +30,27 @@ String guildTagFromInput(String raw) =>
 String guildApplicationMessage(String raw) =>
     _cut(raw.trim(), guildApplicationMessageMaxLength);
 
-/// Why a guild cannot be founded, or null when it can.
-String? createGuildRefusal(CreateGuildInput input, num goldAvailable) {
-  if (guildNameFromInput(input.name).length < 3) {
-    return 'Guild name needs at least 3 characters.';
-  }
-  final tag = guildTagFromInput(input.tag);
-  if (tag.length < 2 || tag.length > 4) return 'Guild tag must be 2–4 letters.';
+/// Why a guild cannot be founded from a name, a tag, and a purse.
+///
+/// The form asks this of every keystroke so it can say what is missing, and the
+/// backend asks it again before writing anything.
+String? createGuildRefusalFor({
+  required String name,
+  required String tag,
+  required num goldAvailable,
+}) {
+  if (guildNameFromInput(name).length < 3) return 'Guild name needs at least 3 characters.';
+  final cleanTag = guildTagFromInput(tag);
+  if (cleanTag.length < 2 || cleanTag.length > 4) return 'Guild tag must be 2–4 letters.';
   if (goldAvailable < guildCreateGoldCost) {
     return 'Creating a guild costs ${jsNumberToString(guildCreateGoldCost)} gold.';
   }
   return null;
 }
+
+/// Why a guild cannot be founded, or null when it can.
+String? createGuildRefusal(CreateGuildInput input, num goldAvailable) =>
+    createGuildRefusalFor(name: input.name, tag: input.tag, goldAvailable: goldAvailable);
 
 /// The guild a founder asked for, cleaned up and with no id yet.
 ///

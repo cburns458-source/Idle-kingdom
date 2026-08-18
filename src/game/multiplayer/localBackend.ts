@@ -14,6 +14,12 @@ import { containsSlur, CHAT_DISABLED_NOTICE } from './moderation'
 import { buildLeaderboardSnapshot, rankLeaderboardEntries } from './snapshots'
 import type { GameDatabase } from '../data/types'
 import { prepareBazaarPost } from '../bazaar/post'
+import {
+  createGuildRefusal,
+  guildDescriptionFromInput,
+  guildNameFromInput,
+  guildTagFromInput,
+} from '../guild/rules'
 import type { BazaarPost, BazaarPostKind } from '../bazaar/types'
 import type { BountyClaimRecord } from '../bounties/types'
 import {
@@ -673,15 +679,10 @@ export class LocalMultiplayerBackend {
   ):
     | { ok: true; guild: GuildRecord; goldCost: number }
     | { ok: false; reason: string } {
-    const clean = input.name.trim().slice(0, 28)
-    const tag = input.tag.replace(/[^a-zA-Z]/g, '').toUpperCase().slice(0, 4)
-    if (clean.length < 3) return { ok: false, reason: 'Guild name needs at least 3 characters.' }
-    if (tag.length < 2 || tag.length > 4) {
-      return { ok: false, reason: 'Guild tag must be 2–4 letters.' }
-    }
-    if (goldAvailable < GUILD_CREATE_GOLD_COST) {
-      return { ok: false, reason: `Creating a guild costs ${GUILD_CREATE_GOLD_COST} gold.` }
-    }
+    const refusal = createGuildRefusal(input, goldAvailable)
+    if (refusal) return { ok: false, reason: refusal }
+    const clean = guildNameFromInput(input.name)
+    const tag = guildTagFromInput(input.tag)
     const db = this.db()
     if (db.members.some((row) => row.userId === session.userId)) {
       return { ok: false, reason: 'Leave your current guild before creating another.' }
@@ -697,7 +698,7 @@ export class LocalMultiplayerBackend {
       id: this.newId('gld'),
       name: clean,
       tag,
-      description: (input.description ?? '').trim().slice(0, 160),
+      description: guildDescriptionFromInput(input.description),
       emblem: normalizeEmblem(input.emblem),
       leaderId: session.userId,
       joinPolicy: 'open',

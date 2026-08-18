@@ -244,10 +244,11 @@ void main() {
           case 'create-form':
             expect(
               checkParity(fixture, <String, Object?>{
-                'poor': createGuildFormView(10, 'ir').toJson(),
+                'poor': createGuildFormView(10, 'ir', name: 'Iron League').toJson(),
                 'rich': createGuildFormView(1200, '').toJson(),
-                'exact': createGuildFormView(25, 'iron5').toJson(),
-                'million': createGuildFormView(1234567, 'a-b c!').toJson(),
+                'exact': createGuildFormView(25, 'iron5', name: 'Iron League').toJson(),
+                'million': createGuildFormView(1234567, 'a-b c!', name: 'Ab').toJson(),
+                'named': createGuildFormView(1200, 'irn', name: 'Iron League').toJson(),
                 'sanitized': <String>[
                   'ir n2!',
                   'abcdefg',

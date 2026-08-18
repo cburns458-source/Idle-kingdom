@@ -213,10 +213,11 @@ export const socialViewScenarios: ParityScenario[] = [
 
   scenario('social-views/guilds', 'create-form', { source: 'raw', value: null }, () => {
     return {
-      poor: createGuildFormView(10, 'ir'),
+      poor: createGuildFormView(10, 'ir', 'Iron League'),
       rich: createGuildFormView(1200, ''),
-      exact: createGuildFormView(25, 'iron5'),
-      million: createGuildFormView(1234567, 'a-b c!'),
+      exact: createGuildFormView(25, 'iron5', 'Iron League'),
+      million: createGuildFormView(1234567, 'a-b c!', 'Ab'),
+      named: createGuildFormView(1200, 'irn', 'Iron League'),
       sanitized: ['ir n2!', 'abcdefg', '', '1234', 'Ok'].map(sanitizeGuildTagInput),
     } as unknown as JsonValue
   }),

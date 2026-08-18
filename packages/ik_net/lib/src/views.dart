@@ -2,6 +2,7 @@ import 'package:ik_content/ik_content.dart';
 import 'package:ik_rules/ik_rules.dart';
 
 import 'config.dart';
+import 'guild_rules.dart';
 import 'moderation.dart';
 import 'snapshots.dart';
 import 'types.dart';
@@ -346,6 +347,7 @@ class CreateGuildFormView {
     required this.tagPreview,
     required this.canAfford,
     required this.submitLabel,
+    this.refusal,
   });
 
   final num goldCost;
@@ -360,12 +362,22 @@ class CreateGuildFormView {
   /// `Create for 25 gold`, or why the button is off.
   final String submitLabel;
 
+  /// Why the form cannot be sent yet, or null when it can.
+  ///
+  /// A form that will be refused should say so where the player is looking,
+  /// rather than leaving them with a button that does nothing when pressed.
+  final String? refusal;
+
+  /// True when pressing the button is worth doing.
+  bool get canSubmit => refusal == null;
+
   Map<String, Object?> toJson() => <String, Object?>{
     'goldCost': goldCost,
     'costLine': costLine,
     'tagPreview': tagPreview,
     'canAfford': canAfford,
     'submitLabel': submitLabel,
+    'refusal': refusal,
   };
 }
 
@@ -377,7 +389,7 @@ String sanitizeGuildTagInput(String raw) {
   return letters.length <= 4 ? letters : letters.substring(0, 4);
 }
 
-CreateGuildFormView createGuildFormView(num gold, String tag) {
+CreateGuildFormView createGuildFormView(num gold, String tag, {String name = ''}) {
   final canAfford = gold >= guildCreateGoldCost;
   final preview = sanitizeGuildTagInput(tag);
   return CreateGuildFormView(
@@ -386,6 +398,7 @@ CreateGuildFormView createGuildFormView(num gold, String tag) {
     tagPreview: '[${preview.isEmpty ? '??' : preview}]',
     canAfford: canAfford,
     submitLabel: canAfford ? 'Create for $guildCreateGoldCost gold' : 'Not enough gold',
+    refusal: createGuildRefusalFor(name: name, tag: tag, goldAvailable: gold),
   );
 }
 

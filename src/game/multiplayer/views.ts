@@ -1,6 +1,7 @@
 import { PRESENCE_TTL_SECONDS } from './config'
 import type { GameDatabase } from '../data/types'
 import type { PlayerAppearance } from '../save/types'
+import { createGuildRefusalFor } from '../guild/rules'
 import { filterProfanity } from './moderation'
 import { boardLabel, launchBoardKeys } from './leaderboards'
 import {
@@ -267,6 +268,13 @@ export interface CreateGuildFormView {
   canAfford: boolean
   /** `Create for 25 gold`, or why the button is off. */
   submitLabel: string
+  /**
+   * Why the form cannot be sent yet, or null when it can.
+   *
+   * A form that will be refused should say so where the player is looking,
+   * rather than leaving them with a button that does nothing when pressed.
+   */
+  refusal: string | null
 }
 
 /** Keeps a tag to the letters a tag may contain, as the player types. */
@@ -274,7 +282,11 @@ export function sanitizeGuildTagInput(raw: string): string {
   return raw.replace(/[^a-zA-Z]/g, '').toUpperCase().slice(0, 4)
 }
 
-export function createGuildFormView(gold: number, tag: string): CreateGuildFormView {
+export function createGuildFormView(
+  gold: number,
+  tag: string,
+  name = '',
+): CreateGuildFormView {
   const canAfford = gold >= GUILD_CREATE_GOLD_COST
   return {
     goldCost: GUILD_CREATE_GOLD_COST,
@@ -282,6 +294,7 @@ export function createGuildFormView(gold: number, tag: string): CreateGuildFormV
     tagPreview: `[${sanitizeGuildTagInput(tag) || '??'}]`,
     canAfford,
     submitLabel: canAfford ? `Create for ${GUILD_CREATE_GOLD_COST} gold` : 'Not enough gold',
+    refusal: createGuildRefusalFor(name, tag, gold),
   }
 }
 
