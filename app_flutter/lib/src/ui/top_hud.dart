@@ -23,8 +23,7 @@ class _HudStatus {
   final String timer;
 }
 
-/// How wide the HUD hit-point track is. Short of the gold row so the count
-/// above it is the thing the eye reads first.
+/// How wide the HUD hit-point track is. Short, and parked under the activity.
 const double _hudHpBarWidth = 88;
 
 /// Name, race, totals, gold, HP, and what is running.
@@ -156,68 +155,71 @@ class TopHud extends StatelessWidget {
                               ),
                             ),
                           ),
+                          const SizedBox(height: 3),
+                          Row(
+                            children: [
+                              GameImage(goldIconPath(), width: 13, height: 13),
+                              const SizedBox(width: 3),
+                              Text(
+                                formatThousands(save.gold),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFFFFF4D4),
+                                ),
+                              ),
+                            ],
+                          ),
                         ],
                       ),
                     ),
-                    if (status != null) ...[
-                      const SizedBox(width: 8),
-                      ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 140),
-                        child: _ActivityReadout(status: status),
-                      ),
-                    ],
-                  ],
-                ),
-                const SizedBox(height: 3),
-                Row(
-                  children: [
-                    GameImage(goldIconPath(), width: 13, height: 13),
-                    const SizedBox(width: 3),
-                    Text(
-                      formatThousands(save.gold),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFFFFF4D4),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  controller.isRecovering
-                      ? 'Recovering…'
-                      : '${formatThousands(save.currentHp)}/'
-                            '${formatThousands(maxHp)}',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: controller.isRecovering
-                        ? const Color(0xFFE8A090)
-                        : const Color(0xFFF0D78C),
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: SizedBox(
-                    width: _hudHpBarWidth,
-                    child: Semantics(
-                      label: 'Hit points',
-                      value:
-                          '${formatThousands(save.currentHp)} / '
-                          '${formatThousands(maxHp)}',
-                      child: PillBar(
-                        value: hpFraction,
-                        gradient: Meters.hudHp,
-                        height: 8,
-                        trackColor: Palette.ink,
-                        borderColor: const Color(0x59D4AF37),
+                    const SizedBox(width: 8),
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 140),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          if (status != null) ...[
+                            _ActivityReadout(status: status),
+                            const SizedBox(height: 3),
+                          ],
+                          Text(
+                            controller.isRecovering
+                                ? 'Recovering…'
+                                : '${formatThousands(save.currentHp)}/'
+                                      '${formatThousands(maxHp)}',
+                            textAlign: TextAlign.right,
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: controller.isRecovering
+                                  ? const Color(0xFFE8A090)
+                                  : const Color(0xFFF0D78C),
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          SizedBox(
+                            width: _hudHpBarWidth,
+                            child: Semantics(
+                              label: 'Hit points',
+                              value:
+                                  '${formatThousands(save.currentHp)} / '
+                                  '${formatThousands(maxHp)}',
+                              child: PillBar(
+                                value: hpFraction,
+                                gradient: Meters.hudHp,
+                                height: 8,
+                                trackColor: Palette.ink,
+                                borderColor: const Color(0x59D4AF37),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ),
+                  ],
                 ),
               ],
             ),

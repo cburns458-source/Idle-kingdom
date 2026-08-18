@@ -55,17 +55,42 @@ void main() {
     expect(controller.hudShowTotalXp, isFalse);
     expect(find.textContaining(level), findsOne);
     expect(find.text('Human'), findsOne);
-    expect(
-      find.text(
+    final hpLabel =
         '${formatThousands(controller.save.currentHp)}/'
-        '${formatThousands(playerMaxHp(controller.db, controller.save))}',
-      ),
-      findsOne,
-    );
-    final bar = tester.getSize(
+        '${formatThousands(playerMaxHp(controller.db, controller.save))}';
+    expect(find.text(hpLabel), findsOne);
+    final hud = tester.getRect(find.byType(TopHud));
+    final hp = tester.getRect(find.text(hpLabel));
+    final bar = tester.getRect(
       find.descendant(of: find.byType(TopHud), matching: find.byType(PillBar)),
     );
     expect(bar.width, 88);
+    expect(hp.right, closeTo(hud.right, 16));
+    expect(bar.right, closeTo(hud.right, 16));
+    expect(bar.top, greaterThan(hp.bottom - 1));
+  });
+
+  testWidgets('hit points sit under the activity, on the right', (tester) async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(currentLocationId: 'LOC-0009'),
+    );
+    addTearDown(controller.dispose);
+    controller.startActivity('ACT-0012');
+    await pumpShell(tester, controller);
+
+    final hpLabel =
+        '${formatThousands(controller.save.currentHp)}/'
+        '${formatThousands(playerMaxHp(controller.db, controller.save))}';
+    final activity = tester.getRect(find.text('Gather meadow supplies'));
+    final hp = tester.getRect(find.text(hpLabel));
+    final bar = tester.getRect(
+      find.descendant(of: find.byType(TopHud), matching: find.byType(PillBar)),
+    );
+    expect(hp.top, greaterThan(activity.bottom - 2));
+    expect(hp.right, closeTo(activity.right, 8));
+    expect(bar.top, greaterThan(hp.bottom - 1));
+    expect(bar.right, closeTo(activity.right, 8));
   });
 
   testWidgets('the HUD guild tag stays off until Settings turns it on', (tester) async {
