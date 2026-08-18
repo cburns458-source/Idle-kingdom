@@ -49,12 +49,31 @@ class CombatOutcomeHold {
 
 /// A finished craft, held so the production stage can pop the item icon.
 class CraftPopup {
-  const CraftPopup({required this.itemId, required this.displayName, required this.seq});
+  const CraftPopup({
+    required this.itemId,
+    required this.displayName,
+    required this.seq,
+    required this.shownAtMs,
+  });
 
   final String itemId;
   final String displayName;
 
   /// Bumps each craft so a new pop can restart even when the item repeats.
+  final int seq;
+
+  /// When the pop appeared, so it can leave on its own.
+  final num shownAtMs;
+}
+
+/// Food eaten after a win, held so the stage can float the heal.
+class HealPopup {
+  const HealPopup({required this.amount, required this.shownAtMs, required this.seq});
+
+  final num amount;
+  final num shownAtMs;
+
+  /// Bumps each eat so a new pop can restart even when the amount repeats.
   final int seq;
 }
 
@@ -99,6 +118,7 @@ class GameController extends ChangeNotifier {
   CombatRoundEvent? _lastRound;
   int _roundSeq = 0;
   CraftPopup? _craftPopup;
+  HealPopup? _healPopup;
   CombatOutcomeHold? _outcomeHold;
   num? _liveEnemyHp;
 
@@ -127,8 +147,27 @@ class GameController extends ChangeNotifier {
   /// Bumps when [lastRound] is replaced, so a floater can restart its layout.
   int get lastRoundSeq => _roundSeq;
 
-  /// The last finished craft, kept so the station can pop the item icon.
-  CraftPopup? get craftPopup => _craftPopup;
+  /// How long a finished craft's item icon stays over the workstation.
+  static const int craftPopupHoldMs = 2000;
+
+  /// How long the green heal pop stays after a victory eat.
+  static const int healPopupHoldMs = 2000;
+
+  /// The last finished craft, or null once its two seconds are up.
+  CraftPopup? get craftPopup {
+    final popup = _craftPopup;
+    if (popup == null) return null;
+    if (session.clock() - popup.shownAtMs >= craftPopupHoldMs) return null;
+    return popup;
+  }
+
+  /// The last victory eat, or null once its two seconds are up.
+  HealPopup? get healPopup {
+    final popup = _healPopup;
+    if (popup == null) return null;
+    if (session.clock() - popup.shownAtMs >= healPopupHoldMs) return null;
+    return popup;
+  }
 
   /// How long the killing blow stays on screen before "defeated" or Recovering.
   static const int combatBlowHoldMs = 500;
@@ -337,6 +376,7 @@ class GameController extends ChangeNotifier {
     for (final event in result.events) {
       _applyEvent(event);
     }
+    _expireStageFx();
     _advanceTravel();
     // A frame always repaints: the progress bars and timers are read from the
     // clock, so they move even on the ticks where nothing was due.
@@ -360,6 +400,13 @@ class GameController extends ChangeNotifier {
           itemId: itemId,
           displayName: displayName,
           seq: (_craftPopup?.seq ?? 0) + 1,
+          shownAtMs: session.clock(),
+        );
+      case FoodHealedEvent(healed: final healed):
+        _healPopup = HealPopup(
+          amount: healed,
+          shownAtMs: session.clock(),
+          seq: (_healPopup?.seq ?? 0) + 1,
         );
       case final CombatRoundEvent round:
         _lastRound = round;
@@ -386,8 +433,19 @@ class GameController extends ChangeNotifier {
   void _clearStageFx() {
     _lastRound = null;
     _craftPopup = null;
+    _healPopup = null;
     _outcomeHold = null;
     _liveEnemyHp = null;
+  }
+
+  void _expireStageFx() {
+    final now = session.clock();
+    if (_craftPopup != null && now - _craftPopup!.shownAtMs >= craftPopupHoldMs) {
+      _craftPopup = null;
+    }
+    if (_healPopup != null && now - _healPopup!.shownAtMs >= healPopupHoldMs) {
+      _healPopup = null;
+    }
   }
 
   void _advanceTravel() {

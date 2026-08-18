@@ -96,6 +96,24 @@ export function nextGuildHallTier(completedTiers: string[]): GuildHallTier | nul
   return GUILD_HALL_TIERS.find((tier) => !completedTiers.includes(tier.id)) ?? null
 }
 
+/**
+ * How many of `itemId` the next unfinished step will still take.
+ *
+ * Zero when the hall is finished, when the item is not on that step, or when
+ * the storehouse already holds enough. A donation uses this as a cap so extra
+ * stays in the bag.
+ */
+export function guildHallDonationCap(
+  completedTiers: string[],
+  storehouse: InventoryStack[],
+  itemId: string,
+): number {
+  const tier = nextGuildHallTier(completedTiers)
+  if (!tier) return 0
+  const need = guildHallTierNeeds(tier, storehouse).find((row) => row.itemId === itemId)
+  return need ? need.needed - need.counted : 0
+}
+
 /** How far the storehouse gets a tier, material by material. */
 export function guildHallTierNeeds(
   tier: GuildHallTier,

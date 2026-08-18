@@ -109,10 +109,9 @@ void main() {
     final fibre = backend.contributeHallItem(leader.userId, save, 0, 140);
     expect(fibre.ok, isTrue);
     expect(fibre.tiersFinishedNow, <String>[guildHallTierBuild]);
-    // The build spent what it asked for; the 40 spare fibre is still in there.
-    expect(fibre.hall!.storehouse.map((stack) => (stack.itemId, stack.quantity)), <(String, num)>[
-      ('ITEM-0095', 40),
-    ]);
+    // The step took what it still needed; the extra 40 fibre stayed in the bag.
+    expect(fibre.hall!.storehouse, isEmpty);
+    expect(fibre.save!.inventory.single.quantity, 40);
     // The hall itself opens nothing: the bank and the ring come later.
     expect(fibre.hall!.bankUnlocked, isFalse);
     expect(fibre.hall!.boxingUnlocked, isFalse);
@@ -145,11 +144,20 @@ void main() {
     save = save.copyWith(gold: save.gold - created.goldCost!);
 
     GuildHallActionResult? last;
-    // Always the first stack: each donation empties one and shortens the bag.
-    while (save.inventory.isNotEmpty) {
-      final stack = save.inventory.first;
-      last = backend.contributeHallItem(leader.userId, save, 0, stack.quantity);
-      expect(last.ok, isTrue);
+    var hall = backend.guildHall(created.guild!.id)!;
+    while (true) {
+      hall = last?.hall ?? hall;
+      final index = save.inventory.indexWhere(
+        (stack) => guildHallDonationCap(hall.completedTiers, hall.storehouse, stack.itemId) > 0,
+      );
+      if (index < 0) break;
+      final cap = guildHallDonationCap(
+        hall.completedTiers,
+        hall.storehouse,
+        save.inventory[index].itemId,
+      );
+      last = backend.contributeHallItem(leader.userId, save, index, cap);
+      expect(last.ok, isTrue, reason: last.reason);
       save = last.save!;
     }
 
@@ -161,5 +169,30 @@ void main() {
     expect(last.hall!.bankUnlocked, isTrue);
     expect(last.hall!.boxingUnlocked, isTrue);
     expect(last.hall!.storehouse, isEmpty);
+  });
+
+  test('a stack the next step does not want stays in the bag', () {
+    final backend = LocalMultiplayerBackend(storage: MemorySaveStorage());
+    final leader = backend.signUp('leader@example.com', 'Leader', 'secret').session!;
+    final save = createNewSave(database, 1).copyWith(
+      gold: guildCreateGoldCost + 10,
+      inventory: const [InventoryStack(itemId: 'ITEM-0031', quantity: 8)],
+    );
+    backend.writeCloudSave(leader.userId, save);
+    backend.createGuild(
+      leader,
+      const CreateGuildInput(
+        name: 'Oak',
+        tag: 'OAK',
+        description: '',
+        emblem: GuildEmblem(color: '#2f6b3a', symbol: 'tree'),
+      ),
+      save.gold,
+    );
+
+    final refused = backend.contributeHallItem(leader.userId, save, 0, 8);
+    expect(refused.ok, isFalse);
+    expect(refused.reason, guildHallUnneededRefusal);
+    expect(save.inventory.single.quantity, 8);
   });
 }

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:idle_kingdoms/src/ui/player_sprite.dart';
+import 'package:idle_kingdoms/src/ui/wardrobe_sheet.dart';
 import 'package:ik_content/ik_content.dart';
 import 'package:ik_rules/ik_rules.dart';
 
@@ -106,6 +108,19 @@ void main() {
 
     expect(controller.save.characterName, 'Tester');
     expect(controller.save.appearance.genderPresentation, 'APR-0018');
+  });
+
+  testWidgets('the wardrobe portrait fills the left half', (tester) async {
+    final controller = buildController(database, seed: startedCharacter(database));
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller);
+    await openWardrobe(tester);
+
+    final size = tester.getSize(
+      find.descendant(of: find.byType(WardrobeSheet), matching: find.byType(PlayerSprite)),
+    );
+    expect(size.width, greaterThan(96));
+    expect(size.height, greaterThan(96));
   });
 
   testWidgets('buying a cosmetic pops the unlock and adds it to the wardrobe', (tester) async {

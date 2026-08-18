@@ -260,6 +260,9 @@ class DockRow extends StatelessWidget {
 }
 
 /// A pill meter with a gradient fill, the shape every bar in the game uses.
+///
+/// The track is always the full width it was given. Only the fill shrinks, so
+/// half health reads as a half-full bar rather than a shorter one.
 class PillBar extends StatelessWidget {
   const PillBar({
     super.key,
@@ -278,19 +281,21 @@ class PillBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: trackColor,
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: borderColor),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(999),
-        child: SizedBox(
-          height: height,
+    final fill = value.isNaN ? 0.0 : value.clamp(0.0, 1.0);
+    return SizedBox(
+      width: double.infinity,
+      height: height,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: trackColor,
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(color: borderColor),
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(999),
           child: FractionallySizedBox(
             alignment: Alignment.centerLeft,
-            widthFactor: value.isNaN ? 0 : value.clamp(0, 1),
+            widthFactor: fill,
             heightFactor: 1,
             child: DecoratedBox(decoration: BoxDecoration(gradient: gradient)),
           ),

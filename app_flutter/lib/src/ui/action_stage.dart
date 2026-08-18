@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:ik_rules/ik_rules.dart';
+import 'package:ik_runtime/ik_runtime.dart';
 
 import '../content/asset_paths.dart';
 import '../session/game_controller.dart';
@@ -22,6 +23,7 @@ const Color _playerHitColor = Color(0xFFFF8A3D);
 const Color _critHitColor = Color(0xFFFFD166);
 const Color _offhandHitColor = Color(0xFFF0A868);
 const Color _enemyHitColor = Color(0xFFFFD0D0);
+const Color _healColor = Color(0xFF7CFF9E);
 const Color _sceneNameColor = Color(0xFFF4EFD8);
 
 /// Shared two-column stage for combat, gathering, and production.
@@ -218,14 +220,14 @@ class _TwoPortraits extends StatelessWidget {
       children: [
         Expanded(
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [player, const SizedBox(height: 5), playerCaption],
           ),
         ),
         const SizedBox(width: 10),
         Expanded(
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [scene, const SizedBox(height: 5), sceneCaption],
           ),
         ),
@@ -385,15 +387,7 @@ class _CombatStage extends StatelessWidget {
           bytes: controller.localPlayerPng,
           semanticsLabel: 'Adventurer',
           alignment: Alignment.centerRight,
-          overlay: showFloaters && round != null && (round.enemyHit ?? 0) > 0
-              ? _DamageFloater(
-                  key: ValueKey('enemy-hit-$seq'),
-                  text: '${round.enemyHit!.round()}',
-                  color: _enemyHitColor,
-                  alignment: const Alignment(-0.16, -0.16),
-                  offset: _floaterOffset(seq, 1),
-                )
-              : null,
+          overlay: _playerFloaters(round, seq, showFloaters, controller.healPopup),
         ),
         scene: _Portrait(
           assetPath: controller.defeatedFlash || enemyId == null ? null : enemyAssetPath(enemyId),
@@ -745,6 +739,32 @@ String _queueLine(GameController controller, String recipeId) {
   final queuedAfter = remaining > 0 ? remaining - 1 : 0;
   return '${total - remaining}/$total · '
       '${formatDurationMs(leftOfCurrent + queuedAfter * craftMs)} left';
+}
+
+/// Hits taken and food eaten, stacked so a heal after a win still shows.
+Widget? _playerFloaters(CombatRoundEvent? round, int seq, bool showHits, HealPopup? heal) {
+  final hit = showHits && round != null && (round.enemyHit ?? 0) > 0;
+  if (!hit && heal == null) return null;
+  return Stack(
+    children: [
+      if (hit)
+        _DamageFloater(
+          key: ValueKey('enemy-hit-$seq'),
+          text: '${round.enemyHit!.round()}',
+          color: _enemyHitColor,
+          alignment: const Alignment(-0.16, -0.16),
+          offset: _floaterOffset(seq, 1),
+        ),
+      if (heal != null)
+        _DamageFloater(
+          key: ValueKey('heal-${heal.seq}'),
+          text: '+${heal.amount.round()}',
+          color: _healColor,
+          alignment: const Alignment(-0.08, -0.72),
+          offset: _floaterOffset(heal.seq, 5),
+        ),
+    ],
+  );
 }
 
 Offset _floaterOffset(int seq, int salt) {

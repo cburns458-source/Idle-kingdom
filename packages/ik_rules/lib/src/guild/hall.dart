@@ -105,6 +105,24 @@ const List<GuildHallTier> guildHallTiers = <GuildHallTier>[
   ),
 ];
 
+/// How many of [itemId] the next unfinished step will still take.
+///
+/// Zero when the hall is finished, when the item is not on that step, or when
+/// the storehouse already holds enough. A donation uses this as a cap so extra
+/// stays in the bag.
+num guildHallDonationCap(
+  List<String> completedTiers,
+  List<InventoryStack> storehouse,
+  String itemId,
+) {
+  final tier = nextGuildHallTier(completedTiers);
+  if (tier == null) return 0;
+  for (final need in guildHallTierNeeds(tier, storehouse)) {
+    if (need.itemId == itemId) return need.needed - need.counted;
+  }
+  return 0;
+}
+
 /// The tier a guild is working on, or null once the hall is finished.
 GuildHallTier? nextGuildHallTier(List<String> completedTiers) {
   for (final tier in guildHallTiers) {

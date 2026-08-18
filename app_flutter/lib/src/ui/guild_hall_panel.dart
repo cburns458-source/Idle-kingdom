@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:ik_net/ik_net.dart';
 import 'package:ik_rules/ik_rules.dart';
@@ -120,12 +122,23 @@ class _GuildHallPanelState extends State<GuildHallPanel> {
   }
 
   Future<void> _deposit(int index, InventoryStack stack) async {
+    final hall = _hall;
+    if (hall == null) return;
+    final remaining = guildHallDonationCap(hall.completedTiers, hall.storehouse, stack.itemId);
+    if (remaining <= 0) {
+      setState(
+        () => _error = nextGuildHallTier(hall.completedTiers) == null
+            ? guildHallFinishedRefusal
+            : guildHallUnneededRefusal,
+      );
+      return;
+    }
     final quantity = await askQuantity(
       context,
       title: _itemName(stack),
       subtitle: 'Into the guild storehouse',
       confirmLabel: 'Contribute',
-      max: stack.quantity.floor(),
+      max: math.min(stack.quantity.floor(), remaining.floor()),
     );
     if (quantity == null || !mounted) return;
     await _apply(await net.service.contributeHallItem(save, index, quantity));
@@ -246,7 +259,10 @@ class _GuildHallPanelState extends State<GuildHallPanel> {
               child: DockRow(
                 title: _itemName(entry.$2),
                 lines: [MutedText('×${formatThousands(entry.$2.quantity)}')],
-                trailing: GameButton(label: 'In', onPressed: () => _deposit(entry.$1, entry.$2)),
+                trailing:
+                    guildHallDonationCap(hall.completedTiers, hall.storehouse, entry.$2.itemId) > 0
+                    ? GameButton(label: 'In', onPressed: () => _deposit(entry.$1, entry.$2))
+                    : const SizedBox.shrink(),
               ),
             ),
         const SizedBox(height: 8),
@@ -270,7 +286,7 @@ class _GuildHallPanelState extends State<GuildHallPanel> {
   Widget _tierCard(GuildHallState hall) {
     final tier = nextGuildHallTier(hall.completedTiers);
     if (tier == null) {
-      return const MutedText('The hall is finished. What goes in now simply stays.');
+      return const MutedText('The hall is finished.');
     }
     final needs = guildHallTierNeeds(tier, hall.storehouse);
     return Column(

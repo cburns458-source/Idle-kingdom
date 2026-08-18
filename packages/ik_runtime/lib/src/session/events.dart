@@ -121,6 +121,24 @@ class CombatRoundEvent extends SessionEvent {
   };
 }
 
+/// Food was eaten after a win, for the green heal pop.
+class FoodHealedEvent extends SessionEvent {
+  const FoodHealedEvent({required this.healed, required this.foodName});
+
+  final num healed;
+  final String foodName;
+
+  @override
+  String get kind => 'food-healed';
+
+  @override
+  Map<String, Object?> toJson() => <String, Object?>{
+    'kind': kind,
+    'healed': healed,
+    'foodName': foodName,
+  };
+}
+
 class EnemyDefeatedEvent extends SessionEvent {
   const EnemyDefeatedEvent({required this.enemyId, required this.enemyName});
 

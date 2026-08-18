@@ -19,6 +19,9 @@ const int guildApplicationMessageMaxLength = 120;
 const int guildNameMaxLength = 28;
 const int guildDescriptionMaxLength = 160;
 
+const String guildHallFinishedRefusal = 'The hall is finished.';
+const String guildHallUnneededRefusal = 'The storehouse only takes what this step still needs.';
+
 String _cut(String raw, int length) => raw.length > length ? raw.substring(0, length) : raw;
 
 String guildNameFromInput(String raw) => _cut(raw.trim(), guildNameMaxLength);
@@ -130,7 +133,16 @@ GuildHallActionResult donateToGuildHall(
   final want = math.max(0, quantity.floor());
   if (want <= 0) return const GuildHallActionResult.failed('Choose a quantity.');
 
-  final takenQty = math.min(want, stack.quantity.floor());
+  final remaining = guildHallDonationCap(hall.completedTiers, hall.storehouse, stack.itemId);
+  if (remaining <= 0) {
+    return GuildHallActionResult.failed(
+      nextGuildHallTier(hall.completedTiers) == null
+          ? guildHallFinishedRefusal
+          : guildHallUnneededRefusal,
+    );
+  }
+
+  final takenQty = math.min(want, math.min(stack.quantity.floor(), remaining.floor()));
   final added = addItemToInventoryExact(
     save.copyWith(inventory: hall.storehouse),
     stack.itemId,

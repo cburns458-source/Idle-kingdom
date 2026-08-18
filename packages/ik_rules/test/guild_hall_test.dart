@@ -125,6 +125,21 @@ void main() {
     expect(settled.storehouse, hasLength(2));
   });
 
+  test('the next step names how much of an item it will still take', () {
+    const store = <InventoryStack>[InventoryStack(itemId: 'ITEM-0015', quantity: 400)];
+    expect(guildHallDonationCap(const <String>[], store, 'ITEM-0015'), 600);
+    expect(guildHallDonationCap(const <String>[], store, 'ITEM-0095'), 100);
+    expect(guildHallDonationCap(const <String>[], store, 'ITEM-0031'), 0);
+    expect(
+      guildHallDonationCap(
+        const <String>[guildHallTierBuild, guildHallTierBank, guildHallTierBoxing],
+        const <InventoryStack>[],
+        'ITEM-0015',
+      ),
+      0,
+    );
+  });
+
   test('only the guild hall location offers hall services', () {
     expect(locationHasGuildHall(_loc(guildHallLocationId)), isTrue);
     expect(locationHasGuildHall(_loc(citadelPlazaId)), isFalse);

@@ -202,6 +202,9 @@ void _resolveDueCombatRound(
             : 'Defeated $enemyName',
       ),
     );
+    if (victory.foodConsumed && victory.foodHealed > 0) {
+      out.emit(FoodHealedEvent(healed: victory.foodHealed, foodName: jsString(victory.foodName)));
+    }
     out.emit(EnemyDefeatedEvent(enemyId: enemyId, enemyName: enemyName));
     _continueActivity(
       db,

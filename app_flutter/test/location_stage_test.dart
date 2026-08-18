@@ -124,6 +124,53 @@ void main() {
     expect(controller.craftPopup, isNotNull);
     expect(controller.craftPopup!.displayName, 'Baked Potato');
     expect(find.byKey(ValueKey('craft-pop-${controller.craftPopup!.seq}')), findsOne);
+
+    clock.advance(GameController.craftPopupHoldMs);
+    controller.tick();
+    await tester.pump();
+    expect(controller.craftPopup, isNull);
+    expect(find.byKey(const ValueKey('craft-pop-1')), findsNothing);
+  });
+
+  testWidgets('a victory eat floats the heal over the player', (tester) async {
+    final clock = TestClock();
+    final base = startedCharacter(database);
+    final controller = buildController(
+      database,
+      seed: base.copyWith(
+        currentLocationId: 'LOC-0001',
+        currentHp: 20,
+        equipment: EquipmentLoadout(
+          slots: {
+            ...base.equipment.slots,
+            foodSlotId: const EquippedStack(itemId: 'ITEM-0058', quantity: 3),
+          },
+        ),
+      ),
+      clock: clock,
+    );
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller);
+
+    await tapVisible(
+      tester,
+      find.descendant(of: dockRow('Tend the pasture'), matching: find.bySemanticsLabel('Start')),
+    );
+
+    final roundMs = configNumber(database.launch, 'combat_round_duration', 4) * 1000;
+    for (var i = 0; i < 40 && controller.healPopup == null; i++) {
+      clock.advance(roundMs);
+      controller.tick();
+      await tester.pump();
+    }
+
+    expect(controller.healPopup, isNotNull);
+    expect(find.text('+${controller.healPopup!.amount.round()}'), findsOne);
+
+    clock.advance(GameController.healPopupHoldMs);
+    controller.tick();
+    await tester.pump();
+    expect(controller.healPopup, isNull);
   });
 
   testWidgets('a second activity offers Replace while one is running', (tester) async {

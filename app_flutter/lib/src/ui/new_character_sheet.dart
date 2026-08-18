@@ -82,37 +82,47 @@ class _NewCharacterSheetState extends State<NewCharacterSheet> {
               ),
               const SizedBox(height: 4),
               Expanded(
-                child: ListView(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        GameImage(playerAssetPath(_appearance), width: 96, height: 96),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: AppearancePicker(
+                    Expanded(
+                      child: LayoutBuilder(
+                        builder: (context, constraints) => GameImage(
+                          playerAssetPath(_appearance),
+                          width: constraints.maxWidth,
+                          height: constraints.maxHeight,
+                          fit: BoxFit.contain,
+                          alignment: Alignment.center,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ListView(
+                        children: [
+                          AppearancePicker(
                             db: widget.controller.db,
                             appearance: _appearance,
                             onSelect: (category, optionId) => setState(() {
                               _appearance = withAppearanceOption(_appearance, category, optionId);
                             }),
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    for (final race in races)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 8),
-                        child: _RaceCard(
-                          race: race,
-                          selected: race.raceId == _raceId,
-                          onTap: () => setState(() {
-                            _raceId = race.raceId;
-                            _error = null;
-                          }),
-                        ),
+                          const SizedBox(height: 8),
+                          for (final race in races)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: _RaceCard(
+                                race: race,
+                                selected: race.raceId == _raceId,
+                                onTap: () => setState(() {
+                                  _raceId = race.raceId;
+                                  _error = null;
+                                }),
+                              ),
+                            ),
+                        ],
                       ),
+                    ),
                   ],
                 ),
               ),

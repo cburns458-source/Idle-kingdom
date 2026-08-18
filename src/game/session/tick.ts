@@ -219,6 +219,13 @@ function resolveDueCombatRound(
             ? `Critical hit! Defeated ${enemy['Display Name']}`
             : `Defeated ${enemy['Display Name']}`,
     })
+    if (victory.foodConsumed && victory.foodHealed > 0) {
+      out.emit({
+        kind: 'food-healed',
+        healed: victory.foodHealed,
+        foodName: String(victory.foodName ?? ''),
+      })
+    }
     out.emit({
       kind: 'enemy-defeated',
       enemyId: enemy['Enemy ID'],

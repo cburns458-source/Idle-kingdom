@@ -26,6 +26,8 @@ export type SessionEvent =
       thornsHit: number
       outcome: 'ongoing' | 'victory' | 'defeat'
     }
+  /** Food was eaten after a win, for the green heal pop. */
+  | { kind: 'food-healed'; healed: number; foodName: string }
   | { kind: 'enemy-defeated'; enemyId: string; enemyName: string }
   | { kind: 'player-defeated'; enemyId: string; enemyName: string }
   /** A death pause elapsed and the activity picked back up. */

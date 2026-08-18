@@ -139,6 +139,25 @@ void main() {
     expect(find.text('Out'), findsNothing);
   });
 
+  testWidgets('the store house hides In on a stack the next step does not want', (tester) async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(
+        currentLocationId: guildHallLocationId,
+        inventory: const [InventoryStack(itemId: 'ITEM-0031', quantity: 4)],
+      ),
+    );
+    addTearDown(controller.dispose);
+    final net = await _leaderOfANewGuild(database, controller.save);
+    addTearDown(net.dispose);
+
+    await pumpPanel(tester, GuildHallPanel(controller: controller, multiplayer: net));
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('In'), findsNothing);
+  });
+
   testWidgets('a finished counting room adds a Bank that opens the bank screen', (tester) async {
     final controller = buildController(
       database,

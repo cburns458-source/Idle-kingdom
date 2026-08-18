@@ -8,6 +8,7 @@ import {
   GUILD_HALL_TIER_BUILD,
   guildHallBankUnlocked,
   guildHallBoxingUnlocked,
+  guildHallDonationCap,
   guildHallTierMet,
   guildHallTierNeeds,
   nextGuildHallTier,
@@ -101,5 +102,19 @@ describe('guild hall tiers', () => {
     ])
     expect(settled.finishedNow).toEqual([])
     expect(settled.storehouse).toHaveLength(2)
+  })
+
+  it('the next step names how much of an item it will still take', () => {
+    const store = [stack('ITEM-0015', 400)]
+    expect(guildHallDonationCap([], store, 'ITEM-0015')).toBe(600)
+    expect(guildHallDonationCap([], store, 'ITEM-0095')).toBe(100)
+    expect(guildHallDonationCap([], store, 'ITEM-0031')).toBe(0)
+    expect(
+      guildHallDonationCap(
+        [GUILD_HALL_TIER_BUILD, GUILD_HALL_TIER_BANK, GUILD_HALL_TIER_BOXING],
+        [],
+        'ITEM-0015',
+      ),
+    ).toBe(0)
   })
 })
