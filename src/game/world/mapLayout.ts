@@ -50,13 +50,13 @@ export const MAIN_MAP_NODE_LAYOUT: Record<string, NodePosition> = {
 
 export const CAVE_MAP_NODE_LAYOUT: Record<string, NodePosition> = {
   // Sunlit cave mouth looking out to the mountains
-  'LOC-0010': { x: 50, y: 10 },
+  'LOC-0010': { x: 55, y: 10 },
   // Dwarven shop counter, lanterns and gem crates
-  'LOC-0012': { x: 22, y: 28 },
-  // Working shaft with ore cart and tracks
-  'LOC-0011': { x: 72, y: 50 },
-  // Abandoned shaft with empty cart and crystals
-  'LOC-0022': { x: 28, y: 74 },
+  'LOC-0012': { x: 22, y: 22 },
+  // Working shaft with ore carts and tracks
+  'LOC-0011': { x: 70, y: 40 },
+  // Abandoned crystal tunnels
+  'LOC-0022': { x: 30, y: 78 },
 }
 
 export const CASTLE_MAP_NODE_LAYOUT: Record<string, NodePosition> = {
