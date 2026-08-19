@@ -64,13 +64,15 @@ void main() {
   });
 
   test(
-    'the overworld, town, castle, and cave use portrait plates; other districts stay square',
+    'the overworld, town, castle, cave, and citadel use portrait plates; west and east stay square',
     () {
       expect(artAspectRatioForMap(mainMapId), mainMapArtAspectRatio);
       expect(artAspectRatioForMap(townMapId), mainMapArtAspectRatio);
       expect(artAspectRatioForMap(castleMapId), mainMapArtAspectRatio);
       expect(artAspectRatioForMap(caveMapId), mainMapArtAspectRatio);
-      expect(artAspectRatioForMap(citadelMapId), mapArtAspectRatio);
+      expect(artAspectRatioForMap(citadelMapId), mainMapArtAspectRatio);
+      expect(artAspectRatioForMap(westMapId), mapArtAspectRatio);
+      expect(artAspectRatioForMap(eastMapId), mapArtAspectRatio);
     },
   );
 

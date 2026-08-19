@@ -10,7 +10,11 @@ const double mainMapArtAspectRatio = 9 / 16;
 
 /// Cover-fit aspect for [mapId]'s background. Nodes are percentages of that art.
 double artAspectRatioForMap(String mapId) {
-  return mapId == mainMapId || mapId == townMapId || mapId == castleMapId || mapId == caveMapId
+  return mapId == mainMapId ||
+          mapId == townMapId ||
+          mapId == castleMapId ||
+          mapId == caveMapId ||
+          mapId == citadelMapId
       ? mainMapArtAspectRatio
       : mapArtAspectRatio;
 }

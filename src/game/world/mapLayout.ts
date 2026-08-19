@@ -15,7 +15,7 @@ export interface NodePosition {
 /**
  * UI node placement aligned to landmarks in the generated map art.
  * Coordinates are percent of the map image (not balance data).
- * The overworld, Town, Castle, and Cave are 9:16 portrait plates so they match the phone column.
+ * The overworld, Town, Castle, Cave, and Citadel are 9:16 portrait plates so they match the phone column.
  */
 export const MAIN_MAP_NODE_LAYOUT: Record<string, NodePosition> = {
   // NW castle with red roofs
@@ -50,13 +50,13 @@ export const MAIN_MAP_NODE_LAYOUT: Record<string, NodePosition> = {
 
 export const CAVE_MAP_NODE_LAYOUT: Record<string, NodePosition> = {
   // Sunlit cave mouth looking out to the pines
-  'LOC-0010': { x: 50, y: 8 },
+  'LOC-0010': { x: 34, y: 8 },
   // Built dwarven shop with gem counter
-  'LOC-0012': { x: 18, y: 16 },
+  'LOC-0012': { x: 73, y: 44 },
   // Working mine cart and ore
-  'LOC-0011': { x: 70, y: 40 },
+  'LOC-0011': { x: 78, y: 78 },
   // Abandoned webbed shaft
-  'LOC-0022': { x: 20, y: 72 },
+  'LOC-0022': { x: 20, y: 76 },
 }
 
 export const CASTLE_MAP_NODE_LAYOUT: Record<string, NodePosition> = {
@@ -90,22 +90,22 @@ export const TOWN_MAP_NODE_LAYOUT: Record<string, NodePosition> = {
 }
 
 export const CITADEL_MAP_NODE_LAYOUT: Record<string, NodePosition> = {
-  // Citadel gateway / exit (top)
-  'LOC-0027': { x: 50, y: 10 },
+  // Citadel gateway / exit (north gate, hidden on this submap)
+  'LOC-0027': { x: 50, y: 18 },
   // Plaza hub
-  'LOC-0028': { x: 50, y: 40 },
+  'LOC-0028': { x: 50, y: 44 },
   // Market District
-  'LOC-0029': { x: 20, y: 38 },
+  'LOC-0029': { x: 26, y: 42 },
   // Processing District
-  'LOC-0030': { x: 80, y: 38 },
+  'LOC-0030': { x: 72, y: 41 },
   // Gathering Outskirts
-  'LOC-0031': { x: 28, y: 74 },
+  'LOC-0031': { x: 26, y: 72 },
   // Combat Training Grounds
-  'LOC-0032': { x: 72, y: 74 },
+  'LOC-0032': { x: 70, y: 74 },
   // Guild Hall
   'LOC-0033': { x: 50, y: 58 },
   // Citadel Bank
-  'LOC-0035': { x: 50, y: 26 },
+  'LOC-0035': { x: 50, y: 30 },
 }
 
 const LAYOUTS: Record<string, Record<string, NodePosition>> = {

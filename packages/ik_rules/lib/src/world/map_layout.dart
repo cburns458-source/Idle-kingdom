@@ -47,13 +47,13 @@ const Map<String, NodePosition> mainMapNodeLayout = <String, NodePosition>{
 
 const Map<String, NodePosition> caveMapNodeLayout = <String, NodePosition>{
   // Sunlit cave mouth looking out to the pines
-  'LOC-0010': NodePosition(x: 50, y: 8),
+  'LOC-0010': NodePosition(x: 34, y: 8),
   // Built dwarven shop with gem counter
-  'LOC-0012': NodePosition(x: 18, y: 16),
+  'LOC-0012': NodePosition(x: 73, y: 44),
   // Working mine cart and ore
-  'LOC-0011': NodePosition(x: 70, y: 40),
+  'LOC-0011': NodePosition(x: 78, y: 78),
   // Abandoned webbed shaft
-  'LOC-0022': NodePosition(x: 20, y: 72),
+  'LOC-0022': NodePosition(x: 20, y: 76),
 };
 
 const Map<String, NodePosition> castleMapNodeLayout = <String, NodePosition>{
@@ -87,22 +87,22 @@ const Map<String, NodePosition> townMapNodeLayout = <String, NodePosition>{
 };
 
 const Map<String, NodePosition> citadelMapNodeLayout = <String, NodePosition>{
-  // Citadel gateway / exit (top)
-  'LOC-0027': NodePosition(x: 50, y: 10),
+  // Citadel gateway / exit (north gate, hidden on this submap)
+  'LOC-0027': NodePosition(x: 50, y: 18),
   // Plaza hub
-  'LOC-0028': NodePosition(x: 50, y: 40),
+  'LOC-0028': NodePosition(x: 50, y: 44),
   // Market District
-  'LOC-0029': NodePosition(x: 20, y: 38),
+  'LOC-0029': NodePosition(x: 26, y: 42),
   // Processing District
-  'LOC-0030': NodePosition(x: 80, y: 38),
+  'LOC-0030': NodePosition(x: 72, y: 41),
   // Gathering Outskirts
-  'LOC-0031': NodePosition(x: 28, y: 74),
+  'LOC-0031': NodePosition(x: 26, y: 72),
   // Combat Training Grounds
-  'LOC-0032': NodePosition(x: 72, y: 74),
+  'LOC-0032': NodePosition(x: 70, y: 74),
   // Guild Hall
   'LOC-0033': NodePosition(x: 50, y: 58),
   // Citadel Bank
-  'LOC-0035': NodePosition(x: 50, y: 26),
+  'LOC-0035': NodePosition(x: 50, y: 30),
 };
 
 const Map<String, Map<String, NodePosition>> _layouts = <String, Map<String, NodePosition>>{
