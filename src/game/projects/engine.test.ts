@@ -121,7 +121,7 @@ describe('special production', () => {
 
     expect(result.save.inventory.find((stack) => stack.itemId === 'ITEM-0132')?.quantity).toBe(1)
     expect(result.save.inventory.find((stack) => stack.itemId === 'ITEM-0074')).toBeUndefined()
-    expect(result.save.skills.find((skill) => skill.skillId === 'SKL-0011')?.xp).toBe(1200)
+    expect(result.save.skills.find((skill) => skill.skillId === 'SKL-0011')?.xp).toBe(600)
     expect(result.save.currentActivityId).toBeNull()
   })
 

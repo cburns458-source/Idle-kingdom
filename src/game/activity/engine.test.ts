@@ -31,9 +31,9 @@ describe('primary activity engine', () => {
     expect(generated?.action['Action ID']).toBe('ACN-0105')
 
     const completed = completeGatheringAction(launch, generated!.save, generated!.action, () => 0)
-    expect(completed.result.xpGained).toBe(200)
+    expect(completed.result.xpGained).toBe(100)
     expect(completed.save.inventory.some((stack) => stack.itemId === 'ITEM-0030')).toBe(true)
-    expect(completed.save.skills.find((skill) => skill.skillId === 'SKL-0004')?.xp).toBe(200)
+    expect(completed.save.skills.find((skill) => skill.skillId === 'SKL-0004')?.xp).toBe(100)
   })
 
   it('grants bonus Combat XP for a bow-based Hunting Action when a bow is equipped', () => {
@@ -43,7 +43,7 @@ describe('primary activity engine', () => {
 
     // No bow equipped: no Combat XP bonus.
     const withoutBow = completeGatheringAction(launch, save, huntButterfly, () => 0)
-    expect(withoutBow.result.xpGained).toBe(500)
+    expect(withoutBow.result.xpGained).toBe(250)
     expect(withoutBow.result.bonusXp).toEqual([])
     expect(
       withoutBow.save.skills.find((skill) => skill.skillId === 'SKL-0001')?.xp ?? 0,
@@ -59,11 +59,11 @@ describe('primary activity engine', () => {
       },
     }
     const withBow = completeGatheringAction(launch, save, huntButterfly, () => 0)
-    expect(withBow.result.xpGained).toBe(500)
-    expect(withBow.result.bonusXp).toEqual([{ skillId: 'SKL-0001', xp: 50 }])
-    expect(withBow.save.skills.find((skill) => skill.skillId === 'SKL-0001')?.xp).toBe(50)
+    expect(withBow.result.xpGained).toBe(250)
+    expect(withBow.result.bonusXp).toEqual([{ skillId: 'SKL-0001', xp: 25 }])
+    expect(withBow.save.skills.find((skill) => skill.skillId === 'SKL-0001')?.xp).toBe(25)
     const combatReward = withBow.result.xpRewards.find((reward) => reward.skillId === 'SKL-0001')
-    expect(combatReward?.xp).toBe(50)
+    expect(combatReward?.xp).toBe(25)
   })
 
   it('grants no bow Combat XP bonus for non-Hunting gathering, even with a bow equipped', () => {
@@ -97,7 +97,7 @@ describe('primary activity engine', () => {
     expect(action).toBeTruthy()
 
     const completed = completeGatheringAction(launch, save, action!, () => 0)
-    expect(completed.result.xpGained).toBe(700)
+    expect(completed.result.xpGained).toBe(350)
     expect(completed.result.bonusXp).toEqual([{ skillId: 'SKL-0013', xp: 100 }])
     expect(completed.result.xpRewards.map((reward) => reward.skillId)).toEqual([
       'SKL-0002',
@@ -109,7 +109,7 @@ describe('primary activity engine', () => {
       xp: 100,
       leveledUp: false,
     })
-    expect(completed.save.skills.find((skill) => skill.skillId === 'SKL-0002')?.xp).toBe(3713 + 700)
+    expect(completed.save.skills.find((skill) => skill.skillId === 'SKL-0002')?.xp).toBe(3713 + 350)
     expect(completed.save.skills.find((skill) => skill.skillId === 'SKL-0013')?.xp).toBe(100)
   })
 
@@ -129,12 +129,12 @@ describe('primary activity engine', () => {
     const save = createNewSave(launch)
     const potato = launch.Actions.find((action) => action['Action ID'] === 'ACN-0035')!
     expect(potato['Proficiency Level']).toBe(10)
-    expect(gatheringDurationMs(launch, save, potato)).toBe(240_000)
-    expect(gatheringXpReward(launch, save, potato)).toBe(650)
+    expect(gatheringDurationMs(launch, save, potato)).toBe(120_000)
+    expect(gatheringXpReward(launch, save, potato)).toBe(325)
 
     const completed = completeGatheringAction(launch, save, potato, () => 0)
-    expect(completed.result.xpGained).toBe(650)
-    expect(completed.save.skills.find((skill) => skill.skillId === 'SKL-0004')?.xp).toBe(650)
+    expect(completed.result.xpGained).toBe(325)
+    expect(completed.save.skills.find((skill) => skill.skillId === 'SKL-0004')?.xp).toBe(325)
   })
 
   it('halves Delve for Essence XP and Arcana bonus below mining proficiency', () => {
@@ -144,9 +144,9 @@ describe('primary activity engine', () => {
     expect(action['Proficiency Level']).toBe(5)
 
     const completed = completeGatheringAction(launch, save, action, () => 0)
-    expect(completed.result.xpGained).toBe(350)
+    expect(completed.result.xpGained).toBe(175)
     expect(completed.result.bonusXp).toEqual([{ skillId: 'SKL-0013', xp: 50 }])
-    expect(completed.save.skills.find((skill) => skill.skillId === 'SKL-0002')?.xp).toBe(350)
+    expect(completed.save.skills.find((skill) => skill.skillId === 'SKL-0002')?.xp).toBe(175)
     expect(completed.save.skills.find((skill) => skill.skillId === 'SKL-0013')?.xp).toBe(50)
   })
 

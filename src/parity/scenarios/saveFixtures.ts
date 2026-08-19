@@ -165,7 +165,7 @@ export function queuedProductionSave(db: GameDatabase): PlayerSave {
     productionQuantityRemaining: 3,
     currentActionId: 'ACN-0115',
     actionStartedAt: FIXED_TIMESTAMP,
-    actionDurationMs: 20_000,
+    actionDurationMs: 10_000,
   }
 }
 

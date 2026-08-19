@@ -220,8 +220,8 @@ export const productionScenarios: ParityScenario[] = [
     ),
   ),
 
-  scenario('production/craft', 'mid-queue', withSave('queued', { nowMs: NOW_MS + 20_000 }), () => {
-    const completed = completeProductionCraft(contentDatabase(), saveFor('queued'), NOW_MS + 20_000)
+  scenario('production/craft', 'mid-queue', withSave('queued', { nowMs: NOW_MS + 10_000 }), () => {
+    const completed = completeProductionCraft(contentDatabase(), saveFor('queued'), NOW_MS + 10_000)
     return (completed == null
       ? null
       : {

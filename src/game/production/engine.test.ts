@@ -109,7 +109,7 @@ describe('standard production', () => {
     ])
     expect(finished.reward.xpRewards).toHaveLength(1)
     expect(finished.reward.xpRewards[0]?.skillId).toBe('SKL-0007')
-    expect(finished.reward.xpRewards[0]?.xp).toBe(500)
+    expect(finished.reward.xpRewards[0]?.xp).toBe(250)
     expect(finished.reward.goldGained).toBe(0)
   })
 
@@ -138,7 +138,7 @@ describe('standard production', () => {
     expect(resolved.save.productionRecipeId).toBeNull()
     expect(resolved.save.inventory.find((stack) => stack.itemId === 'ITEM-0058')?.quantity).toBe(2)
     const cooking = resolved.save.skills.find((skill) => skill.skillId === 'SKL-0007')
-    expect(cooking?.xp).toBe(1_000)
+    expect(cooking?.xp).toBe(500)
     expect(resolved.messages).toEqual([
       expect.stringMatching(/^Crafted 2 Baked Potato \(\+\d+ XP\)$/),
     ])
