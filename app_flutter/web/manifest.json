@@ -5,7 +5,7 @@
     "display": "standalone",
     "background_color": "#1F1610",
     "theme_color": "#1F1610",
-    "description": "A cozy, offline-capable idle RPG.",
+    "description": "An idle RPG.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

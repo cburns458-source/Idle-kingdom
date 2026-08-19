@@ -6,7 +6,7 @@ Game title: RestoriaIdle
 World name: Restoria
 
 PURPOSE
-This document defines the playable offline-capable web demo. It contains the current gameplay, content, progression, art, interface, save, and data rules needed for the demo. Numerical balance values should remain data-driven unless explicitly fixed here.
+This document defines the playable idle RPG web demo. It contains the current gameplay, content, progression, art, interface, save, and data rules needed for the demo. Numerical balance values should remain data-driven unless explicitly fixed here.
 
 ======================================================================
 1. GAME OVERVIEW
