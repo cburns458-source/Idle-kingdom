@@ -8,6 +8,7 @@ function item(partial: {
   'Internal Key'?: string
   Category?: string | null
   Subtype?: string | null
+  'Icon Asset Key'?: string | null
 }): ItemRow {
   return {
     'Item ID': partial['Item ID'],
@@ -20,7 +21,7 @@ function item(partial: {
     'Associated Skill ID': null,
     'Equipment Slot ID': null,
     'Base Sell Value': null,
-    'Icon Asset Key': null,
+    'Icon Asset Key': partial['Icon Asset Key'] ?? null,
     Description: null,
     'Functional / Source Tags': null,
     Notes: null,
@@ -28,6 +29,18 @@ function item(partial: {
 }
 
 describe('itemAssetPath', () => {
+  it('uses Icon Asset Key before the name heuristic', () => {
+    expect(
+      itemAssetPath(
+        item({
+          'Item ID': 'ITEM-0003',
+          'Display Name': 'Copper Ore',
+          'Icon Asset Key': 'copper_ore',
+        }),
+      ),
+    ).toContain('item_copper_ore.webp')
+  })
+
   it('uses ID overrides for distinct Launch icons', () => {
     expect(itemAssetPath('ITEM-0028')).toContain('item_berries.webp')
     expect(itemAssetPath('ITEM-0046')).toContain('item_dragon_scale.webp')

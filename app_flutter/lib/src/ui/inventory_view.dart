@@ -502,6 +502,7 @@ class _Stat extends StatelessWidget {
 }
 
 /// One bag or slot tile: art, count, and the marks for enchanted and favorite.
+/// The name lives on a tooltip so the icon can fill the cell.
 class _ItemTile extends StatelessWidget {
   const _ItemTile({
     required this.item,
@@ -527,87 +528,75 @@ class _ItemTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      onLongPress: onLongPress,
-      borderRadius: BorderRadius.circular(14),
-      child: Container(
-        padding: const EdgeInsets.all(4),
-        decoration: BoxDecoration(
-          color: selected ? const Color(0x33D4AF37) : Palette.panel,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: selected
-                ? Palette.gold
-                : enchanted
-                ? Palette.softGreen
-                : Palette.edge,
-            width: selected ? 2 : 1,
-          ),
-        ),
-        child: Stack(
-          children: [
-            Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  ItemIcon(item: item, size: 30),
-                  Flexible(
-                    child: Text(
-                      item?.displayName ?? '?',
-                      textAlign: TextAlign.center,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 9, color: Color(0xB3F4E7C8)),
-                    ),
-                  ),
-                ],
-              ),
+    final name = item?.displayName ?? '?';
+    return Tooltip(
+      message: name,
+      onTriggered: onLongPress,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            color: selected ? const Color(0x33D4AF37) : Palette.panel,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: selected
+                  ? Palette.gold
+                  : enchanted
+                  ? Palette.softGreen
+                  : Palette.edge,
+              width: selected ? 2 : 1,
             ),
-            if (!enchanted && quantity > 1)
-              Positioned(
-                right: 0,
-                bottom: 0,
-                child: Text(
-                  '${quantity.round()}',
-                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
+          ),
+          child: Stack(
+            children: [
+              Center(child: ItemIcon(item: item, size: 36)),
+              if (!enchanted && quantity > 1)
+                Positioned(
+                  right: 0,
+                  bottom: 0,
+                  child: Text(
+                    '${quantity.round()}',
+                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
+                  ),
                 ),
-              ),
-            if (selected)
-              const Positioned(
-                left: 0,
-                top: 0,
-                child: Icon(Icons.check, size: 14, color: Palette.gold),
-              ),
-            if (enchanted || (onToggleFavorite != null && !selecting))
-              Positioned(
-                right: 0,
-                top: 0,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (enchanted)
-                      const Text('★', style: TextStyle(fontSize: 11, color: Palette.softGreen)),
-                    if (onToggleFavorite != null && !selecting)
-                      GestureDetector(
-                        behavior: HitTestBehavior.opaque,
-                        onTap: onToggleFavorite,
-                        child: Tooltip(
-                          message: favorite ? 'Unfavorite' : 'Favorite',
-                          child: Padding(
-                            padding: const EdgeInsets.all(4),
-                            child: Icon(
-                              favorite ? Icons.favorite : Icons.favorite_border,
-                              size: 14,
-                              color: favorite ? Palette.gold : const Color(0x80F4E7C8),
+              if (selected)
+                const Positioned(
+                  left: 0,
+                  top: 0,
+                  child: Icon(Icons.check, size: 14, color: Palette.gold),
+                ),
+              if (enchanted || (onToggleFavorite != null && !selecting))
+                Positioned(
+                  right: 0,
+                  top: 0,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (enchanted)
+                        const Text('★', style: TextStyle(fontSize: 11, color: Palette.softGreen)),
+                      if (onToggleFavorite != null && !selecting)
+                        GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onTap: onToggleFavorite,
+                          child: Tooltip(
+                            message: favorite ? 'Unfavorite' : 'Favorite',
+                            child: Padding(
+                              padding: const EdgeInsets.all(4),
+                              child: Icon(
+                                favorite ? Icons.favorite : Icons.favorite_border,
+                                size: 14,
+                                color: favorite ? Palette.gold : const Color(0x80F4E7C8),
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-          ],
+            ],
+          ),
         ),
       ),
     );

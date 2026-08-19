@@ -32,7 +32,7 @@ void main() {
     addTearDown(controller.dispose);
 
     await pumpPanel(tester, BankPanel(controller: controller));
-    await tester.tap(find.text('Clay'));
+    await tester.tap(find.byTooltip('Clay'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Max'));
     await tester.pump();
@@ -43,7 +43,7 @@ void main() {
     expect(controller.save.bank.single.itemId, clayId);
     expect(controller.save.bank.single.quantity, 5);
 
-    await tester.tap(find.text('Clay'));
+    await tester.tap(find.byTooltip('Clay'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Max'));
     await tester.pump();
@@ -65,14 +65,14 @@ void main() {
     addTearDown(controller.dispose);
 
     await pumpPanel(tester, BankPanel(controller: controller));
-    expect(find.text('Clay'), findsOne);
-    expect(find.text('Copper Ore'), findsOne);
+    expect(find.byTooltip('Clay'), findsOne);
+    expect(find.byTooltip('Copper Ore'), findsOne);
 
     await tester.enterText(find.byType(TextField), 'copper');
     await tester.pump();
 
-    expect(find.text('Clay'), findsNothing);
-    expect(find.text('Copper Ore'), findsOne);
+    expect(find.byTooltip('Clay'), findsNothing);
+    expect(find.byTooltip('Copper Ore'), findsOne);
   });
 
   testWidgets('offers the bank at Town and hides it in the Meadow', (tester) async {

@@ -23,7 +23,7 @@ class _HudStatus {
   final String timer;
 }
 
-/// How wide the HUD hit-point track is. Short, and parked under the activity.
+/// How wide the HUD hit-point track is. Short, and parked on the HUD's bottom edge.
 const double _hudHpBarWidth = 88;
 
 /// Name, race, totals, gold, HP, and what is running.
@@ -104,47 +104,36 @@ class TopHud extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           Expanded(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Shrinks rather than clips, so a title is never cut in half.
-                          FittedBox(
-                            fit: BoxFit.scaleDown,
-                            alignment: Alignment.centerLeft,
-                            child: Text(
-                              title,
-                              maxLines: 1,
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                                height: 1.15,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: HudPortrait.size),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Shrinks rather than clips, so a title is never cut in half.
+                            FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                title,
+                                maxLines: 1,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                  height: 1.15,
+                                ),
                               ),
                             ),
-                          ),
-                          Text(
-                            raceName,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFFC8D7B6),
-                              height: 1.2,
-                            ),
-                          ),
-                          GestureDetector(
-                            onTap: controller.toggleHudShowTotalXp,
-                            behavior: HitTestBehavior.opaque,
-                            child: Text(
-                              totalsLabel,
+                            Text(
+                              raceName,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
@@ -154,37 +143,55 @@ class TopHud extends StatelessWidget {
                                 height: 1.2,
                               ),
                             ),
-                          ),
-                          const SizedBox(height: 3),
-                          Row(
-                            children: [
-                              GameImage(goldIconPath(), width: 13, height: 13),
-                              const SizedBox(width: 3),
-                              Text(
-                                formatThousands(save.gold),
+                            GestureDetector(
+                              onTap: controller.toggleHudShowTotalXp,
+                              behavior: HitTestBehavior.opaque,
+                              child: Text(
+                                totalsLabel,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700,
-                                  color: Color(0xFFFFF4D4),
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFFC8D7B6),
+                                  height: 1.2,
                                 ),
                               ),
-                            ],
-                          ),
-                        ],
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 140),
-                      child: Column(
+                      if (status != null) ...[
+                        const SizedBox(width: 8),
+                        ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 140),
+                          child: _ActivityReadout(status: status),
+                        ),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(height: 3),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      GameImage(goldIconPath(), width: 13, height: 13),
+                      const SizedBox(width: 3),
+                      Expanded(
+                        child: Text(
+                          formatThousands(save.gold),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFFFFF4D4),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Column(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          if (status != null) ...[
-                            _ActivityReadout(status: status),
-                            const SizedBox(height: 3),
-                          ],
                           Text(
                             controller.isRecovering
                                 ? 'Recovering…'
@@ -218,10 +225,10 @@ class TopHud extends StatelessWidget {
                           ),
                         ],
                       ),
-                    ),
-                  ],
-                ),
-              ],
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         ],
@@ -277,12 +284,12 @@ class HudPortrait extends StatelessWidget {
     required this.onTap,
   });
 
-  static const double size = 44;
+  static const double size = 68;
 
   static const double _cornerRadius = 6;
 
-  /// Enough of the sprite's height to fill the window with its head.
-  static const double _headZoom = 1.7;
+  /// Enough of the bundled sprite's height to fill the window with its head.
+  static const double _headZoom = 1.55;
 
   final PlayerAppearance appearance;
 
@@ -313,17 +320,25 @@ class HudPortrait extends StatelessWidget {
             ),
             child: ClipRRect(
               borderRadius: radius,
-              child: Transform.scale(
-                scale: _headZoom,
-                alignment: Alignment.topCenter,
-                child: PlayerSprite(
-                  appearance: appearance,
-                  bytes: bytes,
-                  filterQuality: FilterQuality.none,
-                  alignment: Alignment.topCenter,
-                  fit: BoxFit.cover,
-                ),
-              ),
+              child: bytes != null
+                  ? PlayerSprite(
+                      appearance: appearance,
+                      bytes: bytes,
+                      filterQuality: FilterQuality.none,
+                      alignment: Alignment.center,
+                      fit: BoxFit.cover,
+                    )
+                  : Transform.scale(
+                      scale: _headZoom,
+                      alignment: Alignment.topCenter,
+                      child: PlayerSprite(
+                        appearance: appearance,
+                        bytes: bytes,
+                        filterQuality: FilterQuality.none,
+                        alignment: Alignment.topCenter,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
             ),
           ),
         ),

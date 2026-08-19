@@ -9,6 +9,7 @@ ItemRow item({
   String internalKey = '',
   String? category,
   String? subtype,
+  String? iconAssetKey,
 }) {
   return ItemRow(<String, Object?>{
     'Item ID': itemId,
@@ -16,11 +17,21 @@ ItemRow item({
     'Display Name': displayName,
     'Category': category,
     'Subtype': subtype,
+    'Icon Asset Key': iconAssetKey,
   });
 }
 
 void main() {
   group('itemIconStem', () {
+    test('uses the row icon key before the heuristic', () {
+      expect(
+        itemIconStem(
+          item(itemId: 'ITEM-0003', displayName: 'Copper Ore', iconAssetKey: 'copper_ore'),
+        ),
+        'copper_ore',
+      );
+    });
+
     test('uses the pinned id before the heuristic', () {
       // Berries would otherwise fall through to the generic raw-food icon.
       expect(itemIconStem(item(itemId: 'ITEM-0028', displayName: 'Wild Berries')), 'berries');

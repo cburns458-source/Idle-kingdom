@@ -68,6 +68,11 @@ void main() {
     expect(hp.right, closeTo(hud.right, 16));
     expect(bar.right, closeTo(hud.right, 16));
     expect(bar.top, greaterThan(hp.bottom - 1));
+    expect(bar.bottom, closeTo(hud.bottom, 12));
+    final portrait = tester.getRect(find.byType(HudPortrait));
+    expect(portrait.width, HudPortrait.size);
+    expect(portrait.height, HudPortrait.size);
+    expect(portrait.bottom, closeTo(hud.bottom, 12));
   });
 
   testWidgets('hit points sit under the activity, on the right', (tester) async {
@@ -82,6 +87,7 @@ void main() {
     final hpLabel =
         '${formatThousands(controller.save.currentHp)}/'
         '${formatThousands(playerMaxHp(controller.db, controller.save))}';
+    final hud = tester.getRect(find.byType(TopHud));
     final activity = tester.getRect(
       find.descendant(of: find.byType(TopHud), matching: find.text('Gather meadow supplies')),
     );
@@ -93,6 +99,7 @@ void main() {
     expect(hp.right, closeTo(activity.right, 8));
     expect(bar.top, greaterThan(hp.bottom - 1));
     expect(bar.right, closeTo(activity.right, 8));
+    expect(bar.bottom, closeTo(hud.bottom, 12));
   });
 
   testWidgets('the HUD guild tag stays off until Settings turns it on', (tester) async {

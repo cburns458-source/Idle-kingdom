@@ -184,7 +184,7 @@ class _BankPanelState extends State<BankPanel> {
     final item = controller.indexes.itemsById[stack.itemId];
     final name = item?.displayName ?? stack.itemId;
     return Tooltip(
-      message: '$name · ${formatThousands(stack.quantity)}',
+      message: name,
       child: InkWell(
         key: key,
         onTap: onTap,
@@ -199,17 +199,8 @@ class _BankPanelState extends State<BankPanel> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              ItemIcon(item: item, size: 32),
+              ItemIcon(item: item, size: 36),
               const SizedBox(height: 2),
-              Flexible(
-                child: Text(
-                  name,
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, height: 1.15),
-                ),
-              ),
               Text(
                 '×${formatThousands(stack.quantity)}',
                 maxLines: 1,
@@ -249,7 +240,7 @@ class _Column extends StatelessWidget {
               padding: EdgeInsets.zero,
               mainAxisSpacing: 5,
               crossAxisSpacing: 5,
-              childAspectRatio: 0.82,
+              childAspectRatio: 1,
               children: tiles,
             ),
           ),

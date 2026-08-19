@@ -36,6 +36,7 @@ void main() {
     await pumpPanel(tester, ProductionPicker(controller: controller, activity: kitchen()));
 
     expect(find.textContaining('Baked Potato'), findsWidgets);
+    expect(find.byTooltip('Potato'), findsOne);
     // Ten potatoes in the bag, so ten crafts of one potato each.
     expect(find.textContaining('materials 10'), findsOne);
 

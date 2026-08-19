@@ -36,7 +36,7 @@ void main() {
     final name = database.launchIndexes.itemsById[gear.itemId]!.displayName;
 
     await pumpPanel(tester, InventoryView(controller: controller));
-    await tester.tap(find.text(name).first);
+    await tester.tap(find.byTooltip(name).first);
     await tester.pump();
 
     expect(controller.save.equipment.slots[slotId]?.itemId, gear.itemId);
@@ -44,7 +44,7 @@ void main() {
     // The paper doll shows it, and tapping it there puts it back in the bag.
     await tester.tap(find.text('Equipment'));
     await tester.pump();
-    await tester.tap(find.text(name).first);
+    await tester.tap(find.byTooltip(name).first);
     await tester.pump();
 
     expect(controller.save.equipment.slots[slotId], isNull);
@@ -63,7 +63,7 @@ void main() {
     await pumpPanel(tester, InventoryView(controller: controller));
     await tester.tap(find.text('Sell items'));
     await tester.pump();
-    await tester.tap(find.text('Clay').first);
+    await tester.tap(find.byTooltip('Clay').first);
     await tester.pump();
 
     expect(find.textContaining('Sell selected'), findsOne);
@@ -86,7 +86,7 @@ void main() {
     await pumpPanel(tester, InventoryView(controller: controller));
     await tester.tap(find.text('Sell items'));
     await tester.pump();
-    await tester.tap(find.text('Clay').first);
+    await tester.tap(find.byTooltip('Clay').first);
     await tester.pump();
 
     expect(find.text('Favorited items cannot be sold. Unfavorite them first.'), findsOne);
@@ -102,7 +102,7 @@ void main() {
     addTearDown(controller.dispose);
 
     await pumpPanel(tester, InventoryView(controller: controller));
-    await tester.longPress(find.text('Clay').first);
+    await tester.longPress(find.byTooltip('Clay'));
     await tester.pumpAndSettle();
 
     expect(find.text('×5'), findsOne);
@@ -173,9 +173,7 @@ void main() {
 
     await pumpPanel(tester, InventoryView(controller: controller));
 
-    final tile = tester.getRect(
-      find.ancestor(of: find.text('Clay'), matching: find.byType(InkWell)),
-    );
+    final tile = tester.getRect(find.byTooltip('Clay'));
     final heart = tester.getRect(find.byTooltip('Unfavorite'));
     expect(heart.right, closeTo(tile.right, 12));
     expect(heart.top, closeTo(tile.top, 12));

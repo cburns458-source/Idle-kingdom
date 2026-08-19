@@ -249,13 +249,15 @@ String uiMapAssetPath() => '$_assetRoot/icons/ui/ui_map.webp';
 /// The pixel ring drawn over the HUD portrait.
 String avatarFrameAssetPath() => '$_assetRoot/player/avatar_frame_pixel.webp';
 
-/// Picks an item's icon from its id, key, category, subtype and name.
+/// Picks an item's icon from its row key, then id, then category and name.
 ///
 /// A port of `iconStemFromText` in `src/game/assets/itemAssets.ts`, order
 /// included: the tests there pin cases the order decides, like "platelegs"
 /// resolving as legs rather than as a chest plate.
 String itemIconStem(ItemRow? item) {
   if (item == null) return 'default';
+  final fromRow = item.iconAssetKey?.trim();
+  if (fromRow != null && fromRow.isNotEmpty) return fromRow;
   final pinned = _itemIcons[item.itemId];
   if (pinned != null) return pinned;
 

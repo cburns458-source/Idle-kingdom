@@ -22,13 +22,16 @@ const ITEM_ID_ICONS: Record<string, string> = {
   'ITEM-0296': 'cosmetic_outfit_travelers_tunic',
 }
 
-/** Resolve an icon path for an item using ID, then category/subtype heuristics. */
+/** Resolve an icon path: row key, then pinned id, then category/subtype heuristics. */
 export function itemAssetPath(item: ItemRow | string | undefined): string {
   if (!item) return withAssetVersion('/assets/icons/items/item_default.webp')
   if (typeof item === 'string') {
     const stem = ITEM_ID_ICONS[item] ?? 'default'
     return withAssetVersion(`/assets/icons/items/item_${stem}.webp`)
   }
+
+  const fromRow = item['Icon Asset Key']?.trim()
+  if (fromRow) return withAssetVersion(`/assets/icons/items/item_${fromRow}.webp`)
 
   const byId = ITEM_ID_ICONS[item['Item ID']]
   if (byId) return withAssetVersion(`/assets/icons/items/item_${byId}.webp`)

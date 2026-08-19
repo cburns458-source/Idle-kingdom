@@ -297,7 +297,7 @@ class _ShopPanelState extends State<ShopPanel> {
     final enabled = unit != null && (owned == null || owned > 0);
 
     return Tooltip(
-      message: unit == null ? name : '$name · ${formatThousands(unit)} gold',
+      message: name,
       child: InkWell(
         onTap: enabled ? () => onTap(unit, name) : null,
         borderRadius: BorderRadius.circular(9),
@@ -315,21 +315,8 @@ class _ShopPanelState extends State<ShopPanel> {
                 Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    ItemIcon(item: item, size: 32),
+                    ItemIcon(item: item, size: 36),
                     const SizedBox(height: 2),
-                    Flexible(
-                      child: Text(
-                        name,
-                        textAlign: TextAlign.center,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          height: 1.15,
-                        ),
-                      ),
-                    ),
                     Text(
                       unit == null
                           ? '—'
@@ -398,7 +385,7 @@ class _Column extends StatelessWidget {
               padding: EdgeInsets.zero,
               mainAxisSpacing: 5,
               crossAxisSpacing: 5,
-              childAspectRatio: 0.82,
+              childAspectRatio: 1,
               children: tiles,
             ),
           ),
