@@ -5,6 +5,7 @@ import 'package:ik_rules/ik_rules.dart';
 import '../session/game_controller.dart';
 import '../session/multiplayer_controller.dart';
 import '../theme.dart';
+import 'player_profile_sheet.dart';
 import 'social_bits.dart';
 
 /// Guilds: the browser when you have none, the roster when you do.
@@ -50,6 +51,7 @@ class _GuildPanelState extends State<GuildPanel> {
   Widget _buildBrowser() {
     final rows = guildBrowseRows(net.listings, _search.text);
     final form = createGuildFormView(save.gold, '');
+    final listingById = <String, GuildListing>{for (final row in net.listings) row.id: row};
     return ListView(
       padding: const EdgeInsets.all(12),
       children: [
@@ -81,21 +83,15 @@ class _GuildPanelState extends State<GuildPanel> {
               title: row.title,
               subtitle: row.subtitle,
               leading: GuildEmblemBadge(emblem: row.emblem),
-              trailing: _GuildBrowseActions(
-                row: row,
-                busy: net.busy,
-                showGuest: net.guestGuildId != row.guildId,
-                onJoin: () => net.applyToGuild(
-                  row.guildId,
-                  defaultApplicationMessage(save.characterName),
-                  save,
-                ),
-                onGuest: () => net.joinAsGuest(
-                  row.guildId,
-                  defaultApplicationMessage(save.characterName),
-                  save,
-                ),
-              ),
+              onTap: () {
+                final listing = listingById[row.guildId];
+                if (listing == null) return;
+                _openGuildDetail(
+                  listing.guild,
+                  mode: _GuildDetailMode.joinOrGuest,
+                  browseRow: row,
+                );
+              },
             ),
             const SizedBox(height: 6),
           ],
@@ -105,6 +101,35 @@ class _GuildPanelState extends State<GuildPanel> {
           child: Text('Create guild (${form.goldCost} gold)'),
         ),
       ],
+    );
+  }
+
+  void _openGuildDetail(
+    GuildRecord guild, {
+    required _GuildDetailMode mode,
+    GuildBrowseRow? browseRow,
+  }) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (context) => _GuildDetailPage(
+          controller: widget.controller,
+          multiplayer: net,
+          guild: guild,
+          mode: mode,
+          browseRow: browseRow,
+        ),
+      ),
+    );
+  }
+
+  void _openOtherGuilds() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (context) => _OtherGuildsPage(
+          controller: widget.controller,
+          multiplayer: net,
+        ),
+      ),
     );
   }
 
@@ -150,6 +175,7 @@ class _GuildPanelState extends State<GuildPanel> {
           title: header.title,
           subtitle: header.subtitle,
           leading: GuildEmblemBadge(emblem: header.emblem, size: 40),
+          onTap: () => _openGuildDetail(guild, mode: _GuildDetailMode.own),
           trailing: header.canManage
               ? IconButton(
                   onPressed: () => _openSettingsSheet(guild),
@@ -179,61 +205,7 @@ class _GuildPanelState extends State<GuildPanel> {
           ),
           const SizedBox(height: 10),
         ],
-        const Text('Other guilds', style: TextStyle(fontWeight: FontWeight.w700)),
-        const SizedBox(height: 6),
-        ..._otherGuildRows(guild.id),
-        const SizedBox(height: 10),
-        Row(
-          children: [
-            const Expanded(
-              child: Text('Members', style: TextStyle(fontWeight: FontWeight.w700)),
-            ),
-            DropdownButton<GuildRosterSort>(
-              value: _sort,
-              underline: const SizedBox.shrink(),
-              items: const <DropdownMenuItem<GuildRosterSort>>[
-                DropdownMenuItem(value: GuildRosterSort.oldest, child: Text('Join date (oldest)')),
-                DropdownMenuItem(value: GuildRosterSort.newest, child: Text('Join date (newest)')),
-                DropdownMenuItem(value: GuildRosterSort.totalLevel, child: Text('Total level')),
-                DropdownMenuItem(value: GuildRosterSort.guildRank, child: Text('Guild rank')),
-              ],
-              onChanged: (sort) {
-                if (sort != null) setState(() => _sort = sort);
-              },
-            ),
-          ],
-        ),
-        const SizedBox(height: 6),
-        for (final row in rows) ...[
-          SocialRow(
-            title: '${row.position}. ${row.username}',
-            subtitle: '${row.rankLabel} · ${row.lastOnlineLabel}',
-            leading: SocialPortrait(appearance: row.appearance),
-            trailing: row.manageable
-                ? _RankPicker(
-                    role: row.role,
-                    options: options,
-                    onChanged: (role) => net.setMemberRole(row.userId, role, save),
-                  )
-                : Text('${row.totalLevel}', style: const TextStyle(fontWeight: FontWeight.w700)),
-          ),
-          const SizedBox(height: 6),
-        ],
-        if (net.guests.isNotEmpty) ...[
-          const SizedBox(height: 8),
-          const Text('Guests', style: TextStyle(fontWeight: FontWeight.w700)),
-          const SizedBox(height: 6),
-          for (final guest in net.guests) ...[
-            SocialRow(
-              title: guest.username,
-              subtitle: 'Chat only — not on the roster.',
-              leading: SocialPortrait(appearance: guest.appearance),
-            ),
-            const SizedBox(height: 6),
-          ],
-        ],
         if (header.canManage && applications.isNotEmpty) ...[
-          const SizedBox(height: 8),
           const Text('Pending applications', style: TextStyle(fontWeight: FontWeight.w700)),
           const SizedBox(height: 6),
           for (final row in applications) ...[
@@ -261,7 +233,84 @@ class _GuildPanelState extends State<GuildPanel> {
             ),
             const SizedBox(height: 6),
           ],
+          const SizedBox(height: 10),
         ],
+        Row(
+          children: [
+            const Expanded(
+              child: Text('Members', style: TextStyle(fontWeight: FontWeight.w700)),
+            ),
+            DropdownButton<GuildRosterSort>(
+              value: _sort,
+              underline: const SizedBox.shrink(),
+              items: const <DropdownMenuItem<GuildRosterSort>>[
+                DropdownMenuItem(value: GuildRosterSort.oldest, child: Text('Join date (oldest)')),
+                DropdownMenuItem(value: GuildRosterSort.newest, child: Text('Join date (newest)')),
+                DropdownMenuItem(value: GuildRosterSort.totalLevel, child: Text('Total level')),
+                DropdownMenuItem(value: GuildRosterSort.guildRank, child: Text('Guild rank')),
+              ],
+              onChanged: (sort) {
+                if (sort != null) setState(() => _sort = sort);
+              },
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        for (final row in rows) ...[
+          SocialRow(
+            title: '${row.position}. ${row.username}',
+            subtitle: '${row.rankLabel} · ${row.lastOnlineLabel}',
+            leading: SocialPortrait(appearance: row.appearance),
+            onTap: () => openPlayerProfile(
+              context,
+              controller: widget.controller,
+              multiplayer: net,
+              userId: row.userId,
+            ),
+            trailing: row.manageable
+                ? _RankPicker(
+                    role: row.role,
+                    options: options,
+                    onChanged: (role) => net.setMemberRole(row.userId, role, save),
+                  )
+                : Text('${row.totalLevel}', style: const TextStyle(fontWeight: FontWeight.w700)),
+          ),
+          const SizedBox(height: 6),
+        ],
+        if (net.guests.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          const Row(
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Text('Guests', style: TextStyle(fontWeight: FontWeight.w700)),
+              SizedBox(width: 8),
+              Expanded(
+                child: MutedText('Chat only — not in roster'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          for (final guest in net.guests) ...[
+            SocialRow(
+              title: guest.username,
+              subtitle: '',
+              leading: SocialPortrait(appearance: guest.appearance),
+              onTap: () => openPlayerProfile(
+                context,
+                controller: widget.controller,
+                multiplayer: net,
+                userId: guest.userId,
+              ),
+            ),
+            const SizedBox(height: 6),
+          ],
+        ],
+        const SizedBox(height: 10),
+        FilledButton(
+          onPressed: _openOtherGuilds,
+          child: const Text('Other guilds'),
+        ),
         const SizedBox(height: 10),
         if (!_confirmingLeave)
           OutlinedButton(
@@ -317,60 +366,343 @@ class _GuildPanelState extends State<GuildPanel> {
     );
   }
 
-  List<Widget> _otherGuildRows(String ownGuildId) {
-    final skip = <String>{ownGuildId, if (net.guestGuildId != null) net.guestGuildId!};
-    final rows = guildBrowseRows(net.listings.where((row) => !skip.contains(row.id)).toList());
-    if (rows.isEmpty) {
-      return const <Widget>[MutedText('No other guilds yet.')];
-    }
-    return [
-      for (final row in rows) ...[
-        SocialRow(
-          title: row.title,
-          subtitle: row.subtitle,
-          leading: GuildEmblemBadge(emblem: row.emblem),
-          trailing: OutlinedButton(
-            onPressed: net.busy
-                ? null
-                : () => net.joinAsGuest(
-                    row.guildId,
-                    defaultApplicationMessage(save.characterName),
-                    save,
-                  ),
-            child: Text(row.guestLabel),
-          ),
-        ),
-        const SizedBox(height: 6),
-      ],
-    ];
-  }
 }
 
-class _GuildBrowseActions extends StatelessWidget {
-  const _GuildBrowseActions({
-    required this.row,
-    required this.busy,
-    required this.onJoin,
-    required this.onGuest,
-    this.showGuest = true,
-  });
+/// How a guild detail page treats Join / Guest actions.
+enum _GuildDetailMode { own, joinOrGuest, guestOnly }
 
-  final GuildBrowseRow row;
-  final bool busy;
-  final VoidCallback onJoin;
-  final VoidCallback onGuest;
-  final bool showGuest;
+/// Full-screen list of other guilds (Guest only) while already in a guild.
+class _OtherGuildsPage extends StatefulWidget {
+  const _OtherGuildsPage({required this.controller, required this.multiplayer});
+
+  final GameController controller;
+  final MultiplayerController multiplayer;
+
+  @override
+  State<_OtherGuildsPage> createState() => _OtherGuildsPageState();
+}
+
+class _OtherGuildsPageState extends State<_OtherGuildsPage> {
+  final TextEditingController _search = TextEditingController();
+
+  MultiplayerController get net => widget.multiplayer;
+  PlayerSave get save => widget.controller.save;
+
+  @override
+  void dispose() {
+    _search.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        OutlinedButton(onPressed: row.full || busy ? null : onJoin, child: Text(row.actionLabel)),
-        if (showGuest)
-          OutlinedButton(onPressed: busy ? null : onGuest, child: Text(row.guestLabel)),
-      ],
+    return ListenableBuilder(
+      listenable: net,
+      builder: (context, _) {
+        final ownId = net.guildId;
+        final skip = <String>{
+          if (ownId != null) ownId,
+          if (net.guestGuildId != null) net.guestGuildId!,
+        };
+        final listings = net.listings.where((row) => !skip.contains(row.id)).toList();
+        final rows = guildBrowseRows(listings, _search.text);
+        final listingById = <String, GuildListing>{for (final row in listings) row.id: row};
+        return Scaffold(
+          backgroundColor: Palette.parchmentDeep,
+          appBar: AppBar(
+            backgroundColor: Palette.parchmentDeep,
+            title: const Text('Other guilds'),
+          ),
+          body: ListView(
+            padding: const EdgeInsets.all(12),
+            children: [
+              TextField(
+                controller: _search,
+                decoration: const InputDecoration(
+                  labelText: 'Search guilds',
+                  hintText: 'Name or tag…',
+                ),
+                onChanged: (_) => setState(() {}),
+              ),
+              SocialNotice(notice: net.notice),
+              const SizedBox(height: 10),
+              if (rows.isEmpty)
+                const MutedText('No other guilds yet.')
+              else
+                for (final row in rows) ...[
+                  SocialRow(
+                    title: row.title,
+                    subtitle: row.subtitle,
+                    leading: GuildEmblemBadge(emblem: row.emblem),
+                    trailing: OutlinedButton(
+                      onPressed: net.busy
+                          ? null
+                          : () => net.joinAsGuest(
+                              row.guildId,
+                              defaultApplicationMessage(save.characterName),
+                              save,
+                            ),
+                      child: Text(row.guestLabel),
+                    ),
+                    onTap: () {
+                      final listing = listingById[row.guildId];
+                      if (listing == null) return;
+                      Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (context) => _GuildDetailPage(
+                            controller: widget.controller,
+                            multiplayer: net,
+                            guild: listing.guild,
+                            mode: _GuildDetailMode.guestOnly,
+                            browseRow: row,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 6),
+                ],
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// Members and guests for one guild, with optional Join / Guest actions.
+class _GuildDetailPage extends StatefulWidget {
+  const _GuildDetailPage({
+    required this.controller,
+    required this.multiplayer,
+    required this.guild,
+    required this.mode,
+    this.browseRow,
+  });
+
+  final GameController controller;
+  final MultiplayerController multiplayer;
+  final GuildRecord guild;
+  final _GuildDetailMode mode;
+  final GuildBrowseRow? browseRow;
+
+  @override
+  State<_GuildDetailPage> createState() => _GuildDetailPageState();
+}
+
+class _GuildDetailPageState extends State<_GuildDetailPage> {
+  GuildRosterSort _sort = GuildRosterSort.oldest;
+  List<GuildMember>? _members;
+  List<GuildGuest>? _guests;
+  String? _error;
+  bool _loading = true;
+
+  MultiplayerController get net => widget.multiplayer;
+  PlayerSave get save => widget.controller.save;
+  GuildRecord get guild => widget.guild;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final members = await net.service.guildMembers(guild.id);
+      final guests = await net.service.guildGuests(guild.id);
+      if (!mounted) return;
+      setState(() {
+        _members = members;
+        _guests = guests;
+        _loading = false;
+        _error = null;
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _error = error.toString();
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: net,
+      builder: (context, _) {
+        final members = widget.mode == _GuildDetailMode.own ? net.members : _members;
+        final guests = widget.mode == _GuildDetailMode.own ? net.guests : _guests;
+        final header = guildHomeHeader(
+          guild,
+          members?.length ?? 0,
+          net.session?.userId,
+        );
+        final rows = members == null
+            ? const <GuildRosterRow>[]
+            : guildRosterRows(
+                guild,
+                members,
+                _sort,
+                widget.mode == _GuildDetailMode.own ? net.session?.userId : null,
+                presence: widget.mode == _GuildDetailMode.own ? net.presence : const [],
+                nowMs: widget.controller.session.clock(),
+              );
+        final browse = widget.browseRow;
+        return Scaffold(
+          backgroundColor: Palette.parchmentDeep,
+          appBar: AppBar(
+            backgroundColor: Palette.parchmentDeep,
+            title: Text(header.title),
+          ),
+          body: _loading && widget.mode != _GuildDetailMode.own
+              ? const Center(child: CircularProgressIndicator())
+              : ListView(
+                  padding: const EdgeInsets.all(12),
+                  children: [
+                    SocialRow(
+                      title: header.title,
+                      subtitle: header.subtitle,
+                      leading: GuildEmblemBadge(emblem: header.emblem, size: 40),
+                    ),
+                    if (_error case final error?) ...[
+                      const SizedBox(height: 8),
+                      Text(error, style: const TextStyle(color: Palette.danger)),
+                    ],
+                    if (browse != null && widget.mode != _GuildDetailMode.own) ...[
+                      const SizedBox(height: 10),
+                      if (widget.mode == _GuildDetailMode.joinOrGuest)
+                        Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton(
+                                onPressed: browse.full || net.busy
+                                    ? null
+                                    : () => net.applyToGuild(
+                                        browse.guildId,
+                                        defaultApplicationMessage(save.characterName),
+                                        save,
+                                      ),
+                                child: Text(browse.actionLabel),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: OutlinedButton(
+                                onPressed: net.busy || net.guestGuildId == browse.guildId
+                                    ? null
+                                    : () => net.joinAsGuest(
+                                        browse.guildId,
+                                        defaultApplicationMessage(save.characterName),
+                                        save,
+                                      ),
+                                child: Text(browse.guestLabel),
+                              ),
+                            ),
+                          ],
+                        )
+                      else
+                        OutlinedButton(
+                          onPressed: net.busy || net.guestGuildId == browse.guildId
+                              ? null
+                              : () => net.joinAsGuest(
+                                  browse.guildId,
+                                  defaultApplicationMessage(save.characterName),
+                                  save,
+                                ),
+                          child: Text(browse.guestLabel),
+                        ),
+                    ],
+                    SocialNotice(notice: net.notice),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        const Expanded(
+                          child: Text('Members', style: TextStyle(fontWeight: FontWeight.w700)),
+                        ),
+                        DropdownButton<GuildRosterSort>(
+                          value: _sort,
+                          underline: const SizedBox.shrink(),
+                          items: const <DropdownMenuItem<GuildRosterSort>>[
+                            DropdownMenuItem(
+                              value: GuildRosterSort.oldest,
+                              child: Text('Join date (oldest)'),
+                            ),
+                            DropdownMenuItem(
+                              value: GuildRosterSort.newest,
+                              child: Text('Join date (newest)'),
+                            ),
+                            DropdownMenuItem(
+                              value: GuildRosterSort.totalLevel,
+                              child: Text('Total level'),
+                            ),
+                            DropdownMenuItem(
+                              value: GuildRosterSort.guildRank,
+                              child: Text('Guild rank'),
+                            ),
+                          ],
+                          onChanged: (sort) {
+                            if (sort != null) setState(() => _sort = sort);
+                          },
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    if (rows.isEmpty)
+                      const MutedText('No members yet.')
+                    else
+                      for (final row in rows) ...[
+                        SocialRow(
+                          title: '${row.position}. ${row.username}',
+                          subtitle: '${row.rankLabel} · ${row.lastOnlineLabel}',
+                          leading: SocialPortrait(appearance: row.appearance),
+                          onTap: () => openPlayerProfile(
+                            context,
+                            controller: widget.controller,
+                            multiplayer: net,
+                            userId: row.userId,
+                          ),
+                          trailing: Text(
+                            '${row.totalLevel}',
+                            style: const TextStyle(fontWeight: FontWeight.w700),
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                      ],
+                    if (guests != null && guests.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      const Row(
+                        crossAxisAlignment: CrossAxisAlignment.baseline,
+                        textBaseline: TextBaseline.alphabetic,
+                        children: [
+                          Text('Guests', style: TextStyle(fontWeight: FontWeight.w700)),
+                          SizedBox(width: 8),
+                          Expanded(
+                            child: MutedText('Chat only — not in roster'),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      for (final guest in guests) ...[
+                        SocialRow(
+                          title: guest.username,
+                          subtitle: '',
+                          leading: SocialPortrait(appearance: guest.appearance),
+                          onTap: () => openPlayerProfile(
+                            context,
+                            controller: widget.controller,
+                            multiplayer: net,
+                            userId: guest.userId,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                      ],
+                    ],
+                  ],
+                ),
+        );
+      },
     );
   }
 }

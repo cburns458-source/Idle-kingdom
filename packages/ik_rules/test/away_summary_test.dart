@@ -30,7 +30,7 @@ void main() {
     );
   });
 
-  test('leaves everything that is not a craft line alone', () {
+  test('leaves a unique non-craft line alone', () {
     final messages = <String>[
       'Gathered through 312 actions while away.',
       '…and 16 more crafts.',
@@ -38,5 +38,20 @@ void main() {
     ];
     expect(consolidateAwayMessages(messages), messages);
     expect(consolidateAwayMessages(const <String>[]), isEmpty);
+  });
+
+  test('collapses identical non-craft lines with a repeat count', () {
+    expect(
+      consolidateAwayMessages(<String>[
+        'Defeated by Cow while away.',
+        'Won 2 fights while away.',
+        'Defeated by Cow while away.',
+        'Defeated by Cow while away.',
+      ]),
+      <String>[
+        'Defeated by Cow while away. … 3 times.',
+        'Won 2 fights while away.',
+      ],
+    );
   });
 }

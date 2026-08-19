@@ -772,22 +772,30 @@ String dmReadCursorKey(String userId) => 'idle-kingdoms.chat.dm-read-at:$userId'
 class ChatLineView {
   const ChatLineView({
     required this.messageId,
+    required this.userId,
     required this.username,
     required this.body,
+    required this.createdAt,
     required this.mine,
   });
 
   final String messageId;
+  final String userId;
   final String username;
   final String body;
+
+  /// ISO timestamp from the wire, shown as local time in the client.
+  final String createdAt;
 
   /// True for the viewer's own messages, which read differently.
   final bool mine;
 
   Map<String, Object?> toJson() => <String, Object?>{
     'messageId': messageId,
+    'userId': userId,
     'username': username,
     'body': body,
+    'createdAt': createdAt,
     'mine': mine,
   };
 }
@@ -801,12 +809,42 @@ List<ChatLineView> chatLines(
       .map(
         (message) => ChatLineView(
           messageId: message.id,
+          userId: message.userId,
           username: chatLineUsername(message),
           body: filterProfanityEnabled ? filterProfanity(message.body) : message.body,
+          createdAt: message.createdAt,
           mine: viewerId != null && message.userId == viewerId,
         ),
       )
       .toList();
+}
+
+/// Local clock label for a chat stamp: time today, date + time otherwise.
+String formatChatTimestamp(String createdAt, {DateTime? now}) {
+  final parsed = DateTime.tryParse(createdAt);
+  if (parsed == null) return '';
+  final local = parsed.toLocal();
+  final today = (now ?? DateTime.now()).toLocal();
+  final time =
+      '${local.hour.toString().padLeft(2, '0')}:${local.minute.toString().padLeft(2, '0')}';
+  final sameDay =
+      local.year == today.year && local.month == today.month && local.day == today.day;
+  if (sameDay) return time;
+  const months = <String>[
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
+  return '${months[local.month - 1]} ${local.day} $time';
 }
 
 /// `[TAG] Hero` in global/local, rank mark or guest smiley in guild rooms.

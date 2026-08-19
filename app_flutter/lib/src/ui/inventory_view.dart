@@ -8,6 +8,7 @@ import 'format.dart';
 import 'item_detail_sheet.dart';
 import 'item_icon.dart';
 import 'overlay_notice.dart';
+import 'quantity_sheet.dart';
 
 /// Paper-doll order: 4 columns × 4 rows, spells down the right-hand column.
 const List<String> equipmentGridOrder = <String>[
@@ -46,8 +47,8 @@ class _InventoryViewState extends State<InventoryView> {
   String? _message;
   bool _showSources = false;
 
-  /// Non-null while picking stacks to sell; the set is the chosen indexes.
-  Set<int>? _selling;
+  /// Non-null while picking stacks to sell; values are chosen quantities.
+  Map<int, int>? _selling;
 
   GameController get controller => widget.controller;
   GameDatabase get db => controller.db;
@@ -86,33 +87,65 @@ class _InventoryViewState extends State<InventoryView> {
     setState(() {
       _message = null;
       // Favorites sort to the front, so any sell selection now points elsewhere.
-      if (_selling != null) _selling = <int>{};
+      if (_selling != null) _selling = <int, int>{};
     });
     controller.commitLoadout(next);
   }
 
-  void _toggleSelection(int index) {
+  Future<void> _toggleSelection(int index) async {
     final stack = save.inventory[index];
     if (isFavoriteStack(stack)) {
       setState(() => _message = 'Favorited items cannot be sold. Unfavorite them first.');
       return;
     }
+    final selling = _selling;
+    if (selling == null) return;
+    if (selling.containsKey(index)) {
+      setState(() {
+        final next = Map<int, int>.from(selling)..remove(index);
+        _selling = next;
+      });
+      return;
+    }
+    final priced = sellPriceAtLocation(db, save, stack.itemId);
+    if (priced == null) {
+      setState(() => _message = 'That item cannot be sold.');
+      return;
+    }
+    final name =
+        db.items.firstWhere((item) => item.raw['Item ID'] == stack.itemId).raw['Display Name']
+            as String? ??
+        'Item';
+    final quantity = await askQuantity(
+      context,
+      title: 'Sell $name',
+      details: <String>[
+        '${formatThousands(priced.unitPrice)} gold each',
+        '${formatThousands(stack.quantity)} in bag',
+      ],
+      confirmLabel: 'Select',
+      initialValue: stack.quantity.toInt(),
+      min: 1,
+      max: stack.quantity.toInt(),
+    );
+    if (!mounted || quantity == null) return;
     setState(() {
-      final selected = _selling!.toSet();
-      if (!selected.remove(index)) selected.add(index);
-      _selling = selected;
+      _message = null;
+      _selling = <int, int>{...selling, index: quantity};
     });
   }
 
   /// What the current selection is worth, skipping what cannot be sold.
   num get _selectedGold {
-    return _selling!.fold<num>(0, (sum, index) {
-      if (index >= save.inventory.length) return sum;
-      final stack = save.inventory[index];
+    final selling = _selling;
+    if (selling == null) return 0;
+    return selling.entries.fold<num>(0, (sum, entry) {
+      if (entry.key >= save.inventory.length) return sum;
+      final stack = save.inventory[entry.key];
       if (stack.enchantmentId != null || isFavoriteStack(stack)) return sum;
       final priced = sellPriceAtLocation(db, save, stack.itemId);
       if (priced == null) return sum;
-      return sum + priced.unitPrice * stack.quantity;
+      return sum + priced.unitPrice * entry.value;
     });
   }
 
@@ -142,11 +175,11 @@ class _InventoryViewState extends State<InventoryView> {
     );
     if (confirmed != true || !mounted) return;
 
-    final result = sellInventoryIndexes(db, save, selected);
+    final result = sellInventoryQuantities(db, save, selected);
     if (!result.ok) {
       setState(() {
         _message = result.reason;
-        _selling = <int>{};
+        _selling = <int, int>{};
       });
       return;
     }
@@ -258,7 +291,7 @@ class _InventoryViewState extends State<InventoryView> {
                 onPressed: save.inventory.isEmpty
                     ? null
                     : () => setState(() {
-                        _selling = <int>{};
+                        _selling = <int, int>{};
                         _message = null;
                       }),
                 child: const Text('Sell items'),
@@ -297,7 +330,7 @@ class _InventoryViewState extends State<InventoryView> {
               quantity: stack.quantity,
               enchanted: stack.enchantmentId != null,
               favorite: isFavoriteStack(stack),
-              selected: selling?.contains(index) ?? false,
+              selected: selling?.containsKey(index) ?? false,
               selecting: selling != null,
               onTap: () {
                 if (selling != null) {
@@ -316,7 +349,7 @@ class _InventoryViewState extends State<InventoryView> {
         const SizedBox(height: 8),
         MutedText(
           selling != null
-              ? 'Tap items to select them, then confirm. Favorited items cannot be sold. '
+              ? 'Tap items to choose how many to sell, then confirm. Favorited items cannot be sold. '
                     'Shops pay full value; selling in the field pays half.'
               : 'Tap the heart to keep an item safe from selling. Tap gear to equip it, '
                     'and hold anything for its details.',

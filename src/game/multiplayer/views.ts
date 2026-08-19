@@ -587,8 +587,11 @@ export function dmReadCursorKey(userId: string): string {
 /** One line of a chat room. */
 export interface ChatLineView {
   messageId: string
+  userId: string
   username: string
   body: string
+  /** ISO timestamp from the wire, shown as local time in the client. */
+  createdAt: string
   /** True for the viewer's own messages, which read differently. */
   mine: boolean
 }
@@ -600,10 +603,40 @@ export function chatLines(
 ): ChatLineView[] {
   return messages.map((message) => ({
     messageId: message.id,
+    userId: message.userId,
     username: chatLineUsername(message),
     body: filterProfanityEnabled ? filterProfanity(message.body) : message.body,
+    createdAt: message.createdAt,
     mine: viewerId !== null && message.userId === viewerId,
   }))
+}
+
+/** Local clock label for a chat stamp: time today, date + time otherwise. */
+export function formatChatTimestamp(createdAt: string, now: Date = new Date()): string {
+  const parsed = new Date(createdAt)
+  if (Number.isNaN(parsed.getTime())) return ''
+  const pad = (n: number) => String(n).padStart(2, '0')
+  const time = `${pad(parsed.getHours())}:${pad(parsed.getMinutes())}`
+  const sameDay =
+    parsed.getFullYear() === now.getFullYear() &&
+    parsed.getMonth() === now.getMonth() &&
+    parsed.getDate() === now.getDate()
+  if (sameDay) return time
+  const months = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ]
+  return `${months[parsed.getMonth()]} ${parsed.getDate()} ${time}`
 }
 
 /** `[TAG] Hero` in global/local, rank mark or guest smiley in guild rooms. */

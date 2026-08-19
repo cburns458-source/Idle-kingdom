@@ -62,7 +62,7 @@ void main() {
     expect(net.lastRankingSubmitAt, testStartMs + 24 * 60 * 60 * 1000);
   });
 
-  testWidgets('the leaderboard tab shows the update control', (tester) async {
+  testWidgets('the leaderboard tab has no manual update control', (tester) async {
     final clock = TestClock();
     final net = buildMultiplayer(database, clock: clock);
     addTearDown(net.dispose);
@@ -81,8 +81,8 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.bySemanticsLabel('Update my ranking'), findsOne);
-    expect(find.text('You can update your ranking again in 1 hour.'), findsOne);
+    expect(find.bySemanticsLabel('Update my ranking'), findsNothing);
+    expect(find.text('You can update your ranking again in 1 hour.'), findsNothing);
   });
 
   testWidgets('a board names the signed-in character without a sync step', (tester) async {

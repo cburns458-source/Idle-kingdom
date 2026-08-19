@@ -225,15 +225,9 @@ class _LocationViewState extends State<LocationView> {
                           children: [
                             Expanded(child: _LocationHead(location: location)),
                             const SizedBox(width: 11),
-                            Column(
+                            Row(
                               children: [
-                                OverlayChipButton(
-                                  tooltip: 'Open world map',
-                                  onPressed: widget.onOpenMap,
-                                  child: GameImage(uiMapAssetPath(), width: 38, height: 38),
-                                ),
                                 if (widget.onOpenNearby case final openNearby?) ...[
-                                  const SizedBox(height: 7),
                                   OverlayChipButton(
                                     tooltip: 'Nearby adventurers',
                                     onPressed: openNearby,
@@ -244,7 +238,13 @@ class _LocationViewState extends State<LocationView> {
                                       color: Color(0xF2ECD6A8),
                                     ),
                                   ),
+                                  const SizedBox(width: 7),
                                 ],
+                                OverlayChipButton(
+                                  tooltip: 'Open world map',
+                                  onPressed: widget.onOpenMap,
+                                  child: GameImage(uiMapAssetPath(), width: 38, height: 38),
+                                ),
                               ],
                             ),
                           ],

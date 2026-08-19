@@ -85,10 +85,23 @@ class SellInventoryResult {
 
 /// Sells whole bag stacks at the current location's price.
 SellInventoryResult sellInventoryIndexes(GameDatabase db, PlayerSave save, Iterable<num> indexes) {
-  final unique = <int>{
+  return sellInventoryQuantities(db, save, {
     for (final index in indexes)
-      if (jsIsInteger(index) && index >= 0 && index < save.inventory.length) index.toInt(),
-  }.toList()..sort((a, b) => b - a);
+      if (jsIsInteger(index) && index >= 0 && index < save.inventory.length)
+        index.toInt(): save.inventory[index.toInt()].quantity,
+  });
+}
+
+/// Sells a chosen quantity from each selected bag stack.
+SellInventoryResult sellInventoryQuantities(
+  GameDatabase db,
+  PlayerSave save,
+  Map<int, num> quantitiesByIndex,
+) {
+  final unique = quantitiesByIndex.keys
+      .where((index) => index >= 0 && index < save.inventory.length)
+      .toList()
+    ..sort((a, b) => b - a);
 
   if (unique.isEmpty) {
     return const SellInventoryResult.failed('Select at least one item to sell.');
@@ -96,10 +109,18 @@ SellInventoryResult sellInventoryIndexes(GameDatabase db, PlayerSave save, Itera
 
   num goldEarned = 0;
   var stacksSold = 0;
-  final remove = <int>{};
+  final inventory = [...save.inventory];
 
   for (final index in unique) {
-    final stack = save.inventory[index];
+    final stack = inventory[index];
+    final want = quantitiesByIndex[index] ?? 0;
+    if (!jsIsInteger(want) || want < 1) {
+      return const SellInventoryResult.failed('Choose how many to sell.');
+    }
+    final quantity = want.toInt();
+    if (quantity > stack.quantity) {
+      return const SellInventoryResult.failed('You do not have that many to sell.');
+    }
     if (isFavoriteStack(stack)) {
       return const SellInventoryResult.failed(
         'Favorited items cannot be sold. Unfavorite them first.',
@@ -115,15 +136,15 @@ SellInventoryResult sellInventoryIndexes(GameDatabase db, PlayerSave save, Itera
           ?.raw['Display Name'];
       return SellInventoryResult.failed('${name is String ? name : 'That item'} cannot be sold.');
     }
-    goldEarned += priced.unitPrice * stack.quantity;
+    goldEarned += priced.unitPrice * quantity;
     stacksSold += 1;
-    remove.add(index);
+    if (quantity >= stack.quantity) {
+      inventory.removeAt(index);
+    } else {
+      inventory[index] = stack.copyWith(quantity: stack.quantity - quantity);
+    }
   }
 
-  final inventory = save.inventory.indexed
-      .where((entry) => !remove.contains(entry.$1))
-      .map((entry) => entry.$2)
-      .toList();
   final next = save.copyWith(
     inventory: inventory,
     gold: save.gold + goldEarned,
