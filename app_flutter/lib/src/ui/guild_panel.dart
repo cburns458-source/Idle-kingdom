@@ -86,11 +86,7 @@ class _GuildPanelState extends State<GuildPanel> {
               onTap: () {
                 final listing = listingById[row.guildId];
                 if (listing == null) return;
-                _openGuildDetail(
-                  listing.guild,
-                  mode: _GuildDetailMode.joinOrGuest,
-                  browseRow: row,
-                );
+                _openGuildDetail(listing.guild, mode: _GuildDetailMode.joinOrGuest, browseRow: row);
               },
             ),
             const SizedBox(height: 6),
@@ -125,10 +121,7 @@ class _GuildPanelState extends State<GuildPanel> {
   void _openOtherGuilds() {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (context) => _OtherGuildsPage(
-          controller: widget.controller,
-          multiplayer: net,
-        ),
+        builder: (context) => _OtherGuildsPage(controller: widget.controller, multiplayer: net),
       ),
     );
   }
@@ -285,9 +278,7 @@ class _GuildPanelState extends State<GuildPanel> {
             children: [
               Text('Guests', style: TextStyle(fontWeight: FontWeight.w700)),
               SizedBox(width: 8),
-              Expanded(
-                child: MutedText('Chat only — not in roster'),
-              ),
+              Expanded(child: MutedText('Chat only — not in roster')),
             ],
           ),
           const SizedBox(height: 6),
@@ -307,10 +298,7 @@ class _GuildPanelState extends State<GuildPanel> {
           ],
         ],
         const SizedBox(height: 10),
-        FilledButton(
-          onPressed: _openOtherGuilds,
-          child: const Text('Other guilds'),
-        ),
+        FilledButton(onPressed: _openOtherGuilds, child: const Text('Other guilds')),
         const SizedBox(height: 10),
         if (!_confirmingLeave)
           OutlinedButton(
@@ -365,7 +353,6 @@ class _GuildPanelState extends State<GuildPanel> {
       save: save,
     );
   }
-
 }
 
 /// How a guild detail page treats Join / Guest actions.
@@ -400,19 +387,13 @@ class _OtherGuildsPageState extends State<_OtherGuildsPage> {
       listenable: net,
       builder: (context, _) {
         final ownId = net.guildId;
-        final skip = <String>{
-          if (ownId != null) ownId,
-          if (net.guestGuildId != null) net.guestGuildId!,
-        };
+        final skip = <String>{?ownId, if (net.guestGuildId != null) net.guestGuildId!};
         final listings = net.listings.where((row) => !skip.contains(row.id)).toList();
         final rows = guildBrowseRows(listings, _search.text);
         final listingById = <String, GuildListing>{for (final row in listings) row.id: row};
         return Scaffold(
           backgroundColor: Palette.parchmentDeep,
-          appBar: AppBar(
-            backgroundColor: Palette.parchmentDeep,
-            title: const Text('Other guilds'),
-          ),
+          appBar: AppBar(backgroundColor: Palette.parchmentDeep, title: const Text('Other guilds')),
           body: ListView(
             padding: const EdgeInsets.all(12),
             children: [
@@ -534,11 +515,7 @@ class _GuildDetailPageState extends State<_GuildDetailPage> {
       builder: (context, _) {
         final members = widget.mode == _GuildDetailMode.own ? net.members : _members;
         final guests = widget.mode == _GuildDetailMode.own ? net.guests : _guests;
-        final header = guildHomeHeader(
-          guild,
-          members?.length ?? 0,
-          net.session?.userId,
-        );
+        final header = guildHomeHeader(guild, members?.length ?? 0, net.session?.userId);
         final rows = members == null
             ? const <GuildRosterRow>[]
             : guildRosterRows(
@@ -552,10 +529,7 @@ class _GuildDetailPageState extends State<_GuildDetailPage> {
         final browse = widget.browseRow;
         return Scaffold(
           backgroundColor: Palette.parchmentDeep,
-          appBar: AppBar(
-            backgroundColor: Palette.parchmentDeep,
-            title: Text(header.title),
-          ),
+          appBar: AppBar(backgroundColor: Palette.parchmentDeep, title: Text(header.title)),
           body: _loading && widget.mode != _GuildDetailMode.own
               ? const Center(child: CircularProgressIndicator())
               : ListView(
@@ -678,9 +652,7 @@ class _GuildDetailPageState extends State<_GuildDetailPage> {
                         children: [
                           Text('Guests', style: TextStyle(fontWeight: FontWeight.w700)),
                           SizedBox(width: 8),
-                          Expanded(
-                            child: MutedText('Chat only — not in roster'),
-                          ),
+                          Expanded(child: MutedText('Chat only — not in roster')),
                         ],
                       ),
                       const SizedBox(height: 6),

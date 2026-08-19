@@ -827,8 +827,7 @@ String formatChatTimestamp(String createdAt, {DateTime? now}) {
   final today = (now ?? DateTime.now()).toLocal();
   final time =
       '${local.hour.toString().padLeft(2, '0')}:${local.minute.toString().padLeft(2, '0')}';
-  final sameDay =
-      local.year == today.year && local.month == today.month && local.day == today.day;
+  final sameDay = local.year == today.year && local.month == today.month && local.day == today.day;
   if (sameDay) return time;
   const months = <String>[
     'Jan',

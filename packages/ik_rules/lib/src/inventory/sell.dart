@@ -98,10 +98,9 @@ SellInventoryResult sellInventoryQuantities(
   PlayerSave save,
   Map<int, num> quantitiesByIndex,
 ) {
-  final unique = quantitiesByIndex.keys
-      .where((index) => index >= 0 && index < save.inventory.length)
-      .toList()
-    ..sort((a, b) => b - a);
+  final unique =
+      quantitiesByIndex.keys.where((index) => index >= 0 && index < save.inventory.length).toList()
+        ..sort((a, b) => b - a);
 
   if (unique.isEmpty) {
     return const SellInventoryResult.failed('Select at least one item to sell.');

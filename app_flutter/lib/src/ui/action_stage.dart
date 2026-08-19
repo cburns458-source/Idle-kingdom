@@ -376,11 +376,7 @@ class _FighterCaption extends StatelessWidget {
           );
     return Column(
       crossAxisAlignment: alignEnd ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-      children: [
-        nameRow,
-        const SizedBox(height: 3),
-        meter,
-      ],
+      children: [nameRow, const SizedBox(height: 3), meter],
     );
   }
 }

@@ -48,10 +48,7 @@ void main() {
         'Defeated by Cow while away.',
         'Defeated by Cow while away.',
       ]),
-      <String>[
-        'Defeated by Cow while away. … 3 times.',
-        'Won 2 fights while away.',
-      ],
+      <String>['Defeated by Cow while away. … 3 times.', 'Won 2 fights while away.'],
     );
   });
 }

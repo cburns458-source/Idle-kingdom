@@ -17,11 +17,8 @@ Future<void> openPlayerProfile(
     context: context,
     isScrollControlled: true,
     backgroundColor: Palette.parchmentDeep,
-    builder: (context) => PlayerProfileSheet(
-      controller: controller,
-      multiplayer: multiplayer,
-      userId: userId,
-    ),
+    builder: (context) =>
+        PlayerProfileSheet(controller: controller, multiplayer: multiplayer, userId: userId),
   );
 }
 
