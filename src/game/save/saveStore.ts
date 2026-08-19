@@ -12,6 +12,8 @@ import {
   SAVE_STORAGE_KEY,
   SAVE_VERSION,
   STARTER_OUTFIT_COSMETIC_ID,
+  STARTER_TITLE_COSMETIC_ID,
+  TITLE_COSMETIC_SLOT_ID,
   STARTING_GOLD,
   STARTING_LOCATION_ID,
   type EquippedStack,
@@ -78,10 +80,11 @@ export function createNewSave(db: GameDatabase, nowMs: number = Date.now()): Pla
     critterProgressMs: {},
     locationSearchClaims: {},
     cosmetics: {
-      unlocked: [STARTER_OUTFIT_COSMETIC_ID],
+      unlocked: [STARTER_OUTFIT_COSMETIC_ID, STARTER_TITLE_COSMETIC_ID],
       equipped: {
         [OUTFIT_COSMETIC_SLOT_ID]: STARTER_OUTFIT_COSMETIC_ID,
         [PET_COSMETIC_SLOT_ID]: null,
+        [TITLE_COSMETIC_SLOT_ID]: STARTER_TITLE_COSMETIC_ID,
       },
     },
     appearance: {

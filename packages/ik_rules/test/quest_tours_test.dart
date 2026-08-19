@@ -81,12 +81,12 @@ void main() {
     expect(getQuestProgress(save, 'QST-0004').status, 'active');
   });
 
-  test('wardrobe lists an empty Titles slot', () {
+  test('wardrobe lists The Undying in the Titles slot', () {
     final save = createNewSave(db, 0);
     final tabs = wardrobeSlotTabs(db);
     expect(tabs.map((tab) => tab.slotId), contains('CSLOT-0003'));
     final titles = wardrobeSlotView(db, save, 'CSLOT-0003');
-    expect(titles!.tiles, isEmpty);
-    expect(titles.emptyNote, 'No Titles unlocked yet.');
+    expect(titles!.tiles.map((tile) => tile.name), ['The Undying']);
+    expect(titles.tiles.single.equipped, isTrue);
   });
 }

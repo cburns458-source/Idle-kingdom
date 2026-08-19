@@ -41,8 +41,9 @@ describe('wardrobe view', () => {
     expect(slot?.tiles).toEqual([])
     expect(slot?.emptyNote).toBe('No Pet unlocked yet.')
     const titles = wardrobeSlotView(launch, save, TITLE_COSMETIC_SLOT_ID)
-    expect(titles?.tiles).toEqual([])
-    expect(titles?.emptyNote).toBe('No Titles unlocked yet.')
+    expect(titles?.tiles).toEqual([
+      { cosmeticId: 'COS-0003', itemId: 'ITEM-0301', name: 'The Undying', equipped: true },
+    ])
   })
 
   it('hides a cosmetic that has not been unlocked', () => {

@@ -14,6 +14,7 @@ import '../projects/enchantments.dart';
 import '../quests/progress.dart';
 import '../races/races.dart';
 import '../rng/mulberry32.dart';
+import '../cosmetics/cosmetics.dart';
 import '../save/generated/save_models.dart';
 import '../time.dart';
 import 'food.dart';
@@ -261,14 +262,17 @@ PlayerSave applyCombatDefeat(GameDatabase db, PlayerSave save, num nowMs) {
   final maxHp = playerMaxHp(db, save);
   return withoutHeldAction(
     clearCombatSave(
-      save.copyWith(
-        maxHp: maxHp,
-        currentHp: maxHp,
-        deathPauseUntil: isoFromMs(nowMs + pauseSec * 1000),
-        hasEverDied: true,
-        currentActionId: null,
-        actionStartedAt: null,
-        actionDurationMs: null,
+      revokeCosmetic(
+        save.copyWith(
+          maxHp: maxHp,
+          currentHp: maxHp,
+          deathPauseUntil: isoFromMs(nowMs + pauseSec * 1000),
+          hasEverDied: true,
+          currentActionId: null,
+          actionStartedAt: null,
+          actionDurationMs: null,
+        ),
+        starterTitleCosmeticId,
       ),
     ),
     save.currentActivityId,

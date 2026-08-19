@@ -136,7 +136,7 @@ ThemeData buildAppTheme() {
 enum GameButtonTone { primary, secondary }
 
 /// The rounded, gold-edged button the game does everything with.
-class GameButton extends StatelessWidget {
+class GameButton extends StatefulWidget {
   const GameButton({
     super.key,
     required this.label,
@@ -154,25 +154,47 @@ class GameButton extends StatelessWidget {
     colors: [Color(0xFF7F9D63), Color(0xFF5F7A45)],
   );
 
+  static const LinearGradient _primaryPressed = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [Color(0xFF5A7044), Color(0xFF3F522E)],
+  );
+
   static const LinearGradient _secondaryFill = LinearGradient(
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
     colors: [Color(0xFF6A4A30), Color(0xFF45301F)],
   );
 
+  static const LinearGradient _secondaryPressed = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [Color(0xFF4A3422), Color(0xFF2F2115)],
+  );
+
+  @override
+  State<GameButton> createState() => _GameButtonState();
+}
+
+class _GameButtonState extends State<GameButton> {
+  bool _pressed = false;
+
   @override
   Widget build(BuildContext context) {
-    final primary = tone == GameButtonTone.primary;
+    final primary = widget.tone == GameButtonTone.primary;
+    final down = _pressed && widget.onPressed != null;
     return Semantics(
       button: true,
-      enabled: onPressed != null,
-      label: label,
+      enabled: widget.onPressed != null,
+      label: widget.label,
       child: ExcludeSemantics(
         child: Opacity(
-          opacity: onPressed == null ? 0.55 : 1,
+          opacity: widget.onPressed == null ? 0.55 : 1,
           child: DecoratedBox(
             decoration: BoxDecoration(
-              gradient: primary ? _primaryFill : _secondaryFill,
+              gradient: primary
+                  ? (down ? GameButton._primaryPressed : GameButton._primaryFill)
+                  : (down ? GameButton._secondaryPressed : GameButton._secondaryFill),
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
                 color: primary ? const Color(0x73BEDC96) : const Color(0x73D4AF37),
@@ -180,14 +202,20 @@ class GameButton extends StatelessWidget {
               boxShadow: const [BoxShadow(offset: Offset(0, 2), color: Color(0x40000000))],
             ),
             child: InkWell(
-              onTap: onPressed,
+              onTap: widget.onPressed,
+              onHighlightChanged: (value) {
+                if (_pressed == value) return;
+                setState(() => _pressed = value);
+              },
+              splashColor: Colors.transparent,
+              highlightColor: Colors.transparent,
               borderRadius: BorderRadius.circular(14),
               child: Container(
                 constraints: const BoxConstraints(minHeight: 44, minWidth: 90),
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 alignment: Alignment.center,
                 child: Text(
-                  label,
+                  widget.label,
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 13.5,

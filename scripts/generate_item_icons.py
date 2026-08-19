@@ -37,6 +37,7 @@ PINNED = {
     'ITEM-0288': 'insignia',
     'ITEM-0295': 'spell',
     'ITEM-0296': 'cosmetic_outfit_travelers_tunic',
+    'ITEM-0301': 'cosmetic_the_undying',
 }
 
 # Longest match first against "internal_key display_name".

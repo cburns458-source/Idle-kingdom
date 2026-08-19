@@ -392,6 +392,31 @@ final List<SaveMigration> saveMigrations = <SaveMigration>[
       return next;
     },
   ),
+  SaveMigration(
+    fromVersion: 27,
+    toVersion: 28,
+    migrate: (save, nowMs) {
+      final cosmetics = objectAt(save, 'cosmetics') ?? <String, Object?>{};
+      final unlocked = arrayOrEmpty(cosmetics, 'unlocked');
+      final equipped = objectAt(cosmetics, 'equipped') ?? <String, Object?>{};
+      final next = _bumped(save, 28);
+      if (save['hasEverDied'] == true) {
+        next['cosmetics'] = <String, Object?>{
+          'unlocked': unlocked.where((id) => id != starterTitleCosmeticId).toList(),
+          'equipped': equipped..[titleCosmeticSlotId] = null,
+        };
+        return next;
+      }
+      equipped[titleCosmeticSlotId] = equipped[titleCosmeticSlotId] ?? starterTitleCosmeticId;
+      next['cosmetics'] = <String, Object?>{
+        'unlocked': unlocked.contains(starterTitleCosmeticId)
+            ? unlocked
+            : <Object?>[...unlocked, starterTitleCosmeticId],
+        'equipped': equipped,
+      };
+      return next;
+    },
+  ),
 ];
 
 /// Thrown when a save cannot be brought to the current version.

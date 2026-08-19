@@ -72,6 +72,7 @@ void main() {
     await tester.pump();
     expect(find.text('Filter chat'), findsOne);
     expect(find.text('Guild tag on HUD'), findsOne);
+    expect(find.text('Show title on HUD'), findsOne);
     expect(find.text('Hide chat bubble'), findsOne);
     expect(find.text('Browse social pages'), findsNothing);
     expect(find.text('Move this save'), findsNothing);

@@ -80,7 +80,9 @@ class TopHud extends StatelessWidget {
         : (save.currentHp / maxHp).clamp(0, 1).toDouble();
     final raceName = raceDisplayName(controller.db, save.raceId) ?? 'Unsworn';
     final status = _status();
-    final characterName = displayNameForSave(save, 'Adventurer');
+    final characterName = controller.showTitleOnHud
+        ? displayNameForSave(save, 'Adventurer')
+        : (save.characterName ?? 'Adventurer');
     final tag = multiplayer.showHudGuildTag ? multiplayer.guild?.tag : null;
     final title = tag != null && tag.isNotEmpty ? '[$tag] $characterName' : characterName;
     final totalsLabel = controller.hudShowTotalXp

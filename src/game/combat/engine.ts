@@ -4,6 +4,8 @@ import { resolveActionRewards } from '../activity/rewards'
 import { applyXp } from '../activity/xp'
 import type { ActionRow, GameDatabase } from '../data/types'
 import type { EnemyRow } from '../data/enemyTypes'
+import { revokeCosmetic } from '../cosmetics/cosmetics'
+import { STARTER_TITLE_COSMETIC_ID } from '../save/types'
 import type { PlayerSave } from '../save/types'
 import type { LootGrant } from '../activity/types'
 import { tryConsumeFoodAfterVictory } from './food'
@@ -230,16 +232,21 @@ export function applyCombatDefeat(
   const pauseSec = configNumber(db, 'death_pause', 30)
   const maxHp = playerMaxHp(db, save)
   return withoutHeldAction(
-    clearCombatSave({
-      ...save,
-      maxHp,
-      currentHp: maxHp,
-      deathPauseUntil: new Date(nowMs + pauseSec * 1000).toISOString(),
-      hasEverDied: true,
-      currentActionId: null,
-      actionStartedAt: null,
-      actionDurationMs: null,
-    }),
+    clearCombatSave(
+      revokeCosmetic(
+        {
+          ...save,
+          maxHp,
+          currentHp: maxHp,
+          deathPauseUntil: new Date(nowMs + pauseSec * 1000).toISOString(),
+          hasEverDied: true,
+          currentActionId: null,
+          actionStartedAt: null,
+          actionDurationMs: null,
+        },
+        STARTER_TITLE_COSMETIC_ID,
+      ),
+    ),
     save.currentActivityId,
   )
 }

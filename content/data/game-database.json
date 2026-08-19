@@ -5277,6 +5277,22 @@
       "Description": "A threadbare hood, given in thanks.",
       "Functional / Source Tags": "cosmetic; outfit",
       "Notes": "Wardrobe outfit granted by QST-0003 The Missing Purse."
+    },
+    {
+      "Item ID": "ITEM-0301",
+      "Internal Key": "cosmetic_the_undying",
+      "Display Name": "The Undying",
+      "Category": "Cosmetic",
+      "Subtype": "Title",
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Associated Skill ID": null,
+      "Equipment Slot ID": null,
+      "Base Sell Value": 0,
+      "Icon Asset Key": "cosmetic_the_undying",
+      "Description": "A title worn until the first world defeat. Equip or remove it in the Wardrobe.",
+      "Functional / Source Tags": "cosmetic; title",
+      "Notes": "Starter title cosmetic, granted and equipped while the character has never died."
     }
   ],
   "Equipment": [
@@ -9397,7 +9413,7 @@
       "Internal Key": "search_riverside",
       "Contextual Name": "Search the riverside",
       "Location ID": "LOC-0003",
-      "Description": "Fishing Actions at the river.",
+      "Description": "Fishing at the river: crawfish, trout, and tuna.",
       "Danger Warning Combat Level": null,
       "Pool ID": "POOL-0003",
       "Pool Internal Key": "goblin_fishing",
@@ -9410,7 +9426,7 @@
       "Internal Key": "fish_river_coast",
       "Contextual Name": "Fish the river and coast",
       "Location ID": "LOC-0004",
-      "Description": "Fishing along river, coast, and dock areas.",
+      "Description": "Fishing along the river, coast, and dock: tuna and shark.",
       "Danger Warning Combat Level": null,
       "Pool ID": "POOL-0004",
       "Pool Internal Key": "coast_fishing",
@@ -9423,7 +9439,7 @@
       "Internal Key": "work_copper_mine",
       "Contextual Name": "Work the copper mine",
       "Location ID": "LOC-0005",
-      "Description": "Mine Copper Ore, Clay, Tin Ore, and rare Coal. Gems are independent secondary drops.",
+      "Description": "Mine Copper Ore, Clay, and Tin Ore. Gems are independent secondary drops.",
       "Danger Warning Combat Level": null,
       "Pool ID": "POOL-0005",
       "Pool Internal Key": "copper_mine_pool",
@@ -9488,7 +9504,7 @@
       "Internal Key": "gather_woodland_supplies",
       "Contextual Name": "Gather woodland supplies",
       "Location ID": "LOC-0008",
-      "Description": "Cut Cedar Trees and harvest Mosstole and Wild Berries.",
+      "Description": "Harvest Mosstole and Wild Berries.",
       "Danger Warning Combat Level": null,
       "Pool ID": "POOL-0010",
       "Pool Internal Key": "kingswoods_harvest",
@@ -9696,7 +9712,7 @@
       "Internal Key": "search_rare_wood",
       "Contextual Name": "Search for rare wood",
       "Location ID": "LOC-0008",
-      "Description": "Cut rare hardwood trees in the Kingswoods.",
+      "Description": "Search the Kingswoods for cedar and poplar.",
       "Danger Warning Combat Level": null,
       "Pool ID": "POOL-0021",
       "Pool Internal Key": "kingswoods_rare_wood",
@@ -9820,6 +9836,19 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": "Requires empty Weapon or Tool and Off-hand. Unequips those slots on start."
+    },
+    {
+      "Activity ID": "ACT-0036",
+      "Internal Key": "fish_copper_pond",
+      "Contextual Name": "Fish in the nearby pond",
+      "Location ID": "LOC-0005",
+      "Description": "Fish crawfish from the pond beside the copper mine.",
+      "Danger Warning Combat Level": null,
+      "Pool ID": "POOL-0027",
+      "Pool Internal Key": "copper_pond_fishing",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": "Single-action pool: Catch crawfish (ACN-0099)."
     }
   ],
   "PoolEntries": [
@@ -9882,64 +9911,48 @@
     {
       "Pool Entry ID": "PEN-0008",
       "Pool ID": "POOL-0003",
-      "Action ID": "ACN-0100",
-      "Weight": 65,
+      "Action ID": "ACN-0099",
+      "Weight": 50,
       "Status": "Planned",
-      "Notes": null
+      "Notes": "Crawfish, 50% of goblin riverside fishing."
     },
     {
       "Pool Entry ID": "PEN-0009",
       "Pool ID": "POOL-0003",
-      "Action ID": "ACN-0101",
+      "Action ID": "ACN-0100",
       "Weight": 30,
       "Status": "Planned",
-      "Notes": null
+      "Notes": "Trout, 30% of goblin riverside fishing."
     },
     {
       "Pool Entry ID": "PEN-0010",
       "Pool ID": "POOL-0003",
       "Action ID": "ACN-0102",
-      "Weight": 5,
+      "Weight": 20,
       "Status": "Planned",
-      "Notes": null
+      "Notes": "Tuna, 20% of goblin riverside fishing."
     },
     {
       "Pool Entry ID": "PEN-0011",
       "Pool ID": "POOL-0004",
-      "Action ID": "ACN-0100",
-      "Weight": 43,
+      "Action ID": "ACN-0102",
+      "Weight": 55,
       "Status": "Planned",
-      "Notes": null
+      "Notes": "Tuna, 55% of dock fishing."
     },
     {
       "Pool Entry ID": "PEN-0012",
       "Pool ID": "POOL-0004",
-      "Action ID": "ACN-0101",
-      "Weight": 28,
-      "Status": "Planned",
-      "Notes": null
-    },
-    {
-      "Pool Entry ID": "PEN-0013",
-      "Pool ID": "POOL-0004",
-      "Action ID": "ACN-0102",
-      "Weight": 19,
-      "Status": "Planned",
-      "Notes": null
-    },
-    {
-      "Pool Entry ID": "PEN-0014",
-      "Pool ID": "POOL-0004",
       "Action ID": "ACN-0103",
-      "Weight": 5,
+      "Weight": 45,
       "Status": "Planned",
-      "Notes": null
+      "Notes": "Shark, 45% of dock fishing."
     },
     {
       "Pool Entry ID": "PEN-0015",
       "Pool ID": "POOL-0005",
       "Action ID": "ACN-0018",
-      "Weight": 65,
+      "Weight": 50,
       "Status": "Planned",
       "Notes": null
     },
@@ -9947,7 +9960,7 @@
       "Pool Entry ID": "PEN-0016",
       "Pool ID": "POOL-0005",
       "Action ID": "ACN-0019",
-      "Weight": 20,
+      "Weight": 25,
       "Status": "Planned",
       "Notes": null
     },
@@ -9955,15 +9968,7 @@
       "Pool Entry ID": "PEN-0017",
       "Pool ID": "POOL-0005",
       "Action ID": "ACN-0020",
-      "Weight": 12,
-      "Status": "Planned",
-      "Notes": null
-    },
-    {
-      "Pool Entry ID": "PEN-0018",
-      "Pool ID": "POOL-0005",
-      "Action ID": "ACN-0021",
-      "Weight": 3,
+      "Weight": 25,
       "Status": "Planned",
       "Notes": null
     },
@@ -10048,28 +10053,20 @@
       "Notes": null
     },
     {
-      "Pool Entry ID": "PEN-0029",
-      "Pool ID": "POOL-0010",
-      "Action ID": "ACN-0046",
-      "Weight": 50,
-      "Status": "Planned",
-      "Notes": "Level 1 Woodcutting; weight 50 with wild berries at 10."
-    },
-    {
       "Pool Entry ID": "PEN-0030",
       "Pool ID": "POOL-0010",
       "Action ID": "ACN-0107",
-      "Weight": 40,
+      "Weight": 55,
       "Status": "Planned",
-      "Notes": "Replaced Augur Weed with Mosstole."
+      "Notes": "Mosstole, 55% of woodland supplies."
     },
     {
       "Pool Entry ID": "PEN-0060",
       "Pool ID": "POOL-0010",
       "Action ID": "ACN-0108",
-      "Weight": 10,
+      "Weight": 45,
       "Status": "Planned",
-      "Notes": "Wild berries; 10% of kingswoods harvest pool."
+      "Notes": "Wild berries, 45% of woodland supplies."
     },
     {
       "Pool Entry ID": "PEN-0031",
@@ -10232,14 +10229,6 @@
       "Notes": "A seagull turns up instead of the pirates one roll in five."
     },
     {
-      "Pool Entry ID": "PEN-0066",
-      "Pool ID": "POOL-0004",
-      "Action ID": "ACN-0173",
-      "Weight": 5,
-      "Status": "Planned",
-      "Notes": "A seagull turns up instead of a catch one roll in twenty."
-    },
-    {
       "Pool Entry ID": "PEN-0050",
       "Pool ID": "POOL-0019",
       "Action ID": "ACN-0092",
@@ -10266,34 +10255,18 @@
     {
       "Pool Entry ID": "PEN-0053",
       "Pool ID": "POOL-0021",
-      "Action ID": "ACN-0047",
-      "Weight": 50,
+      "Action ID": "ACN-0046",
+      "Weight": 70,
       "Status": "Planned",
-      "Notes": null
+      "Notes": "Cedar, 70% of kingswoods rare wood."
     },
     {
       "Pool Entry ID": "PEN-0054",
       "Pool ID": "POOL-0021",
       "Action ID": "ACN-0048",
-      "Weight": 20,
+      "Weight": 30,
       "Status": "Planned",
-      "Notes": null
-    },
-    {
-      "Pool Entry ID": "PEN-0055",
-      "Pool ID": "POOL-0021",
-      "Action ID": "ACN-0049",
-      "Weight": 18,
-      "Status": "Planned",
-      "Notes": null
-    },
-    {
-      "Pool Entry ID": "PEN-0056",
-      "Pool ID": "POOL-0021",
-      "Action ID": "ACN-0050",
-      "Weight": 12,
-      "Status": "Planned",
-      "Notes": null
+      "Notes": "Poplar, 30% of kingswoods rare wood."
     },
     {
       "Pool Entry ID": "PEN-0057",
@@ -10350,6 +10323,14 @@
       "Weight": 100,
       "Status": "Planned",
       "Notes": "Temple \u2014 Monk only."
+    },
+    {
+      "Pool Entry ID": "PEN-0067",
+      "Pool ID": "POOL-0027",
+      "Action ID": "ACN-0099",
+      "Weight": 100,
+      "Status": "Planned",
+      "Notes": "Pond beside the copper mine: only crawfish."
     }
   ],
   "Actions": [
@@ -13755,19 +13736,6 @@
       "Notes": null
     },
     {
-      "Requirement ID": "REQ-0088",
-      "Entity Type": "Activity",
-      "Entity ID": "ACT-0010",
-      "Requirement Group": "A",
-      "Group Logic": "AND",
-      "Requirement Type": "Tool Capability",
-      "Reference ID / Value": "woodcutting_tool",
-      "Operator": null,
-      "Required Value": null,
-      "Status": "Planned",
-      "Notes": "Player may select this Activity only when every possible Action is compatible with the equipped requirement."
-    },
-    {
       "Requirement ID": "REQ-0089",
       "Entity Type": "Activity",
       "Entity ID": "ACT-0023",
@@ -13987,6 +13955,19 @@
       "Required Value": null,
       "Status": "Planned",
       "Notes": "Train with the monks \u2014 empty Shield or Off-hand."
+    },
+    {
+      "Requirement ID": "REQ-0106",
+      "Entity Type": "Activity",
+      "Entity ID": "ACT-0036",
+      "Requirement Group": "A",
+      "Group Logic": "AND",
+      "Requirement Type": "Tool Capability",
+      "Reference ID / Value": "fishing_tool",
+      "Operator": null,
+      "Required Value": null,
+      "Status": "Planned",
+      "Notes": "Pond fishing at the copper mine needs a fishing tool."
     }
   ],
   "Enemies": [
@@ -22831,7 +22812,7 @@
       "Slot Group": "Cosmetic",
       "Status": "Confirmed",
       "Release Phase": "Launch",
-      "Notes": "Equipped title. Empty until titles are granted."
+      "Notes": "Equipped title. The Undying is granted to living characters."
     }
   ],
   "Cosmetics": [
@@ -22852,6 +22833,15 @@
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Notes": "Beggar's Hood, granted by QST-0003 The Missing Purse."
+    },
+    {
+      "Cosmetic ID": "COS-0003",
+      "Item ID": "ITEM-0301",
+      "Cosmetic Slot ID": "CSLOT-0003",
+      "Acquisition Tags": "starter",
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Notes": "The Undying. Granted and equipped for living characters; lost on the first world death."
     }
   ],
   "AppearanceOptions": [

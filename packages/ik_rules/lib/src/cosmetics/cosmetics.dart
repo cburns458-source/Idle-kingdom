@@ -78,3 +78,18 @@ EquipResult equipCosmetic(GameDatabase db, PlayerSave save, String slotId, Strin
     save.copyWith(cosmetics: current.copyWith(equipped: {...current.equipped, slotId: cosmeticId})),
   );
 }
+
+/// Drop a cosmetic from the collection and clear it from any equipped slot.
+PlayerSave revokeCosmetic(PlayerSave save, String cosmeticId) {
+  final current = save.cosmetics;
+  final equipped = Map<String, String?>.from(current.equipped);
+  for (final entry in equipped.entries.toList()) {
+    if (entry.value == cosmeticId) equipped[entry.key] = null;
+  }
+  return save.copyWith(
+    cosmetics: current.copyWith(
+      unlocked: current.unlocked.where((id) => id != cosmeticId).toList(),
+      equipped: equipped,
+    ),
+  );
+}

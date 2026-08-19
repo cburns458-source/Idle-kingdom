@@ -62,7 +62,8 @@ void main() {
 
     await tester.tap(find.text('Titles'));
     await tester.pump();
-    expect(find.text('No Titles unlocked yet.'), findsOne);
+    expect(find.text('The Undying'), findsWidgets);
+    expect(find.text('No Titles unlocked yet.'), findsNothing);
   });
 
   testWidgets('a slider changes the look and the portrait follows', (tester) async {

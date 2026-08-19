@@ -7,7 +7,7 @@
 
 import '../../json_support.dart';
 
-const int saveVersion = 27;
+const int saveVersion = 28;
 
 const String saveStorageKey = 'idle-kingdoms.demo.save';
 
@@ -39,6 +39,8 @@ const String petCosmeticSlotId = 'CSLOT-0002';
 const String titleCosmeticSlotId = 'CSLOT-0003';
 
 const String starterOutfitCosmeticId = 'COS-0001';
+
+const String starterTitleCosmeticId = 'COS-0003';
 
 /// Baseline Appearance Option IDs used until the player (or an old save) picks their own.
 const String defaultSkinToneId = 'APR-0001';

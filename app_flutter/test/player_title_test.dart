@@ -18,6 +18,11 @@ void main() {
 
     expect(controller.save.hasEverDied, isFalse);
     expect(find.text('Tester The Undying'), findsWidgets);
+
+    controller.setShowTitleOnHud(false);
+    await tester.pump();
+    expect(find.text('Tester The Undying'), findsNothing);
+    expect(find.text('Tester'), findsWidgets);
   });
 
   testWidgets('being beaten in the world costs the title for good', (tester) async {
@@ -72,5 +77,13 @@ void main() {
   test('an unnamed save is never given a title', () {
     final nameless = startedCharacter(database).copyWith(characterName: null);
     expect(displayNameForSave(nameless, 'Adventurer'), 'Adventurer');
+  });
+
+  test('unequipping The Undying hides it from the name', () {
+    final save = startedCharacter(database);
+    final unequipped = equipCosmetic(database.launch, save, titleCosmeticSlotId, null);
+    expect(unequipped.ok, isTrue);
+    expect(titleForSave(unequipped.save!), isNull);
+    expect(displayNameForSave(unequipped.save!, 'Adventurer'), 'Tester');
   });
 }

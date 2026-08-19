@@ -1,4 +1,4 @@
-export const SAVE_VERSION = 27
+export const SAVE_VERSION = 28
 export const SAVE_STORAGE_KEY = 'idle-kingdoms.demo.save'
 export const STARTING_LOCATION_ID = 'LOC-0002'
 /** Base gold before race kit; race starters grant the real starting gold. */
@@ -18,6 +18,7 @@ export const OUTFIT_COSMETIC_SLOT_ID = 'CSLOT-0001'
 export const PET_COSMETIC_SLOT_ID = 'CSLOT-0002'
 export const TITLE_COSMETIC_SLOT_ID = 'CSLOT-0003'
 export const STARTER_OUTFIT_COSMETIC_ID = 'COS-0001'
+export const STARTER_TITLE_COSMETIC_ID = 'COS-0003'
 
 /** Baseline Appearance Option IDs used until the player (or an old save) picks their own. */
 export const DEFAULT_SKIN_TONE_ID = 'APR-0001'

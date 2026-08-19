@@ -185,6 +185,31 @@ class _MenuViewState extends State<MenuView> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            Text(
+                              'Show title on HUD',
+                              style: TextStyle(fontWeight: FontWeight.w700),
+                            ),
+                            MutedText(
+                              'Show your equipped title, like The Undying, after your name.',
+                            ),
+                          ],
+                        ),
+                      ),
+                      Switch(
+                        value: controller.showTitleOnHud,
+                        onChanged: controller.setShowTitleOnHud,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                GamePanel(
+                  child: Row(
+                    children: [
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
                             Text('Hide chat bubble', style: TextStyle(fontWeight: FontWeight.w700)),
                             MutedText('Hide the chat button in the corner of the game.'),
                           ],

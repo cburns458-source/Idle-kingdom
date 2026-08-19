@@ -11,6 +11,8 @@ import {
   PET_COSMETIC_SLOT_ID,
   SAVE_VERSION,
   STARTER_OUTFIT_COSMETIC_ID,
+  STARTER_TITLE_COSMETIC_ID,
+  TITLE_COSMETIC_SLOT_ID,
 } from './types'
 
 const FOOD_SLOT_ID = 'SLOT-0011'
@@ -407,6 +409,38 @@ export const SAVE_MIGRATIONS: SaveMigration[] = [
       hasEverDied: save.hasEverDied === true,
       saveVersion: 27,
     }),
+  },
+  {
+    fromVersion: 27,
+    toVersion: 28,
+    migrate: (save) => {
+      const unlocked = Array.isArray(save.cosmetics?.unlocked) ? save.cosmetics.unlocked : []
+      const equipped = { ...save.cosmetics?.equipped }
+      if (save.hasEverDied === true) {
+        return {
+          ...save,
+          cosmetics: {
+            unlocked: unlocked.filter((id) => id !== STARTER_TITLE_COSMETIC_ID),
+            equipped: { ...equipped, [TITLE_COSMETIC_SLOT_ID]: null },
+          },
+          saveVersion: 28,
+        }
+      }
+      return {
+        ...save,
+        cosmetics: {
+          unlocked: unlocked.includes(STARTER_TITLE_COSMETIC_ID)
+            ? unlocked
+            : [...unlocked, STARTER_TITLE_COSMETIC_ID],
+          equipped: {
+            ...equipped,
+            [TITLE_COSMETIC_SLOT_ID]:
+              equipped[TITLE_COSMETIC_SLOT_ID] ?? STARTER_TITLE_COSMETIC_ID,
+          },
+        },
+        saveVersion: 28,
+      }
+    },
   },
 ]
 

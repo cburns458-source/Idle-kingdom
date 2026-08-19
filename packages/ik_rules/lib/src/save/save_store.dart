@@ -65,10 +65,11 @@ PlayerSave createNewSave(GameDatabase db, num nowMs) {
     critterProgressMs: const <String, num>{},
     locationSearchClaims: const <String, String>{},
     cosmetics: const CosmeticsState(
-      unlocked: <String>[starterOutfitCosmeticId],
+      unlocked: <String>[starterOutfitCosmeticId, starterTitleCosmeticId],
       equipped: <String, String?>{
         outfitCosmeticSlotId: starterOutfitCosmeticId,
         petCosmeticSlotId: null,
+        titleCosmeticSlotId: starterTitleCosmeticId,
       },
     ),
     appearance: const PlayerAppearance(

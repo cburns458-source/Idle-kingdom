@@ -98,3 +98,20 @@ export function equipCosmetic(
     },
   }
 }
+
+/** Drop a cosmetic from the collection and clear it from any equipped slot. */
+export function revokeCosmetic(save: PlayerSave, cosmeticId: string): PlayerSave {
+  const current = cosmeticsState(save)
+  const equipped = { ...current.equipped }
+  for (const [slotId, worn] of Object.entries(equipped)) {
+    if (worn === cosmeticId) equipped[slotId] = null
+  }
+  return {
+    ...save,
+    cosmetics: {
+      ...current,
+      unlocked: current.unlocked.filter((id) => id !== cosmeticId),
+      equipped,
+    },
+  }
+}

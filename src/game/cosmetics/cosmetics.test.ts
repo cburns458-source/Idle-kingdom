@@ -24,12 +24,14 @@ describe('cosmetics', () => {
     expect(slots).toEqual([OUTFIT_COSMETIC_SLOT_ID, PET_COSMETIC_SLOT_ID, TITLE_COSMETIC_SLOT_ID])
   })
 
-  it('starts every new save with the starter outfit unlocked and equipped, Pet empty', () => {
+  it('starts every new save with the starter outfit and Undying title', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const save = createNewSave(launch)
     expect(isCosmeticUnlocked(save, 'COS-0001')).toBe(true)
+    expect(isCosmeticUnlocked(save, 'COS-0003')).toBe(true)
     expect(equippedCosmeticId(save, OUTFIT_COSMETIC_SLOT_ID)).toBe('COS-0001')
     expect(equippedCosmeticId(save, PET_COSMETIC_SLOT_ID)).toBeNull()
+    expect(equippedCosmeticId(save, TITLE_COSMETIC_SLOT_ID)).toBe('COS-0003')
   })
 
   it('grantCosmetic is idempotent and reports the first-ever unlock', () => {

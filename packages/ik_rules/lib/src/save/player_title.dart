@@ -23,7 +23,15 @@ class PlayerTitle {
 const PlayerTitle undyingTitle = PlayerTitle(text: 'The Undying', placement: TitlePlacement.suffix);
 
 /// The title a save has earned, or null when it holds none.
-PlayerTitle? titleForSave(PlayerSave save) => save.hasEverDied ? null : undyingTitle;
+PlayerTitle? titleForSave(PlayerSave save) {
+  if (save.hasEverDied) return null;
+  final equipped = save.cosmetics.equipped;
+  if (equipped.containsKey(titleCosmeticSlotId)) {
+    return equipped[titleCosmeticSlotId] == starterTitleCosmeticId ? undyingTitle : null;
+  }
+  // Older saves never wrote the title slot; they still wear The Undying.
+  return undyingTitle;
+}
 
 String nameWithTitle(String name, PlayerTitle? title) {
   if (title == null) return name;

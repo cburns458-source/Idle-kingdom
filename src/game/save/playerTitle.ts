@@ -1,4 +1,5 @@
 import type { PlayerSave } from './types'
+import { STARTER_TITLE_COSMETIC_ID, TITLE_COSMETIC_SLOT_ID } from './types'
 
 /** Which side of the name a title is written on. */
 export type TitlePlacement = 'prefix' | 'suffix'
@@ -13,7 +14,13 @@ export const UNDYING_TITLE: PlayerTitle = { text: 'The Undying', placement: 'suf
 
 /** The title a save has earned, or null when it holds none. */
 export function titleForSave(save: PlayerSave): PlayerTitle | null {
-  return save.hasEverDied ? null : UNDYING_TITLE
+  if (save.hasEverDied) return null
+  const equipped = save.cosmetics?.equipped
+  if (equipped && Object.prototype.hasOwnProperty.call(equipped, TITLE_COSMETIC_SLOT_ID)) {
+    return equipped[TITLE_COSMETIC_SLOT_ID] === STARTER_TITLE_COSMETIC_ID ? UNDYING_TITLE : null
+  }
+  // Older saves never wrote the title slot; they still wear The Undying.
+  return UNDYING_TITLE
 }
 
 export function nameWithTitle(name: string, title: PlayerTitle | null): string {
