@@ -62,6 +62,40 @@ void main() {
     expect(entries.last.guildName, isNull);
   });
 
+  test('an empty remote appearance_json does not throw', () {
+    expect(playerAppearanceFromRemote(null).toJson(), defaultPlayerAppearance.toJson());
+    expect(
+      playerAppearanceFromRemote(<String, Object?>{}).toJson(),
+      defaultPlayerAppearance.toJson(),
+    );
+    expect(
+      playerAppearanceFromRemote(<String, Object?>{'skinTone': 'APR-0001'}).toJson(),
+      defaultPlayerAppearance.copyWith(skinTone: 'APR-0001').toJson(),
+    );
+
+    final entry = leaderboardEntryFrom(
+      <String, Object?>{
+        'user_id': 'usr_1',
+        'value': 10,
+        'profiles': <String, Object?>{'username': 'Hero', 'appearance_json': <String, Object?>{}},
+      },
+      boardTotalLevel,
+      0,
+    );
+    expect(entry.username, 'Hero');
+    expect(entry.appearance.toJson(), defaultPlayerAppearance.toJson());
+
+    final member = guildMemberFrom(<String, Object?>{
+      'guild_id': 'gld_1',
+      'user_id': 'usr_1',
+      'username': 'Hero',
+      'role': 'member',
+      'joined_at': '2026-01-01T00:00:00.000Z',
+      'appearance_json': <String, Object?>{},
+    });
+    expect(member.appearance.toJson(), defaultPlayerAppearance.toJson());
+  });
+
   test('rejects a URL that is only a suffix after trim', () {
     expect(RemoteBackendConfig.from(url: '  ', anonKey: 'key'), isNull);
     expect(

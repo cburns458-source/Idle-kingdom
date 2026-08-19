@@ -55,8 +55,13 @@ String _str(Object? value) => value == null ? '' : jsString(value);
 
 num _num(Object? value) => jsNumber(value ?? 0);
 
-Map<String, Object?> _map(Object? value) =>
-    value is Map<String, Object?> ? value : const <String, Object?>{};
+Map<String, Object?> _map(Object? value) {
+  if (value is Map<String, Object?>) return value;
+  if (value is Map) {
+    return <String, Object?>{for (final entry in value.entries) entry.key.toString(): entry.value};
+  }
+  return const <String, Object?>{};
+}
 
 List<Object?> _list(Object? value) => value is List<Object?> ? value : const <Object?>[];
 
@@ -132,7 +137,7 @@ GuildMember guildMemberFrom(RemoteRow row) => GuildMember(
   username: _str(row['username']),
   role: normalizeRole(_str(row['role'])),
   joinedAt: _str(row['joined_at']),
-  appearance: PlayerAppearance.fromJson(_map(row['appearance_json'])),
+  appearance: playerAppearanceFromRemote(row['appearance_json']),
   totalLevel: _num(row['total_level']) < 1 ? 1 : _num(row['total_level']),
 );
 
@@ -175,7 +180,7 @@ GuildGuest guildGuestFrom(RemoteRow row) => GuildGuest(
   userId: _str(row['user_id']),
   username: _str(row['username']),
   joinedAt: _str(row['joined_at']),
-  appearance: PlayerAppearance.fromJson(_map(row['appearance_json'])),
+  appearance: playerAppearanceFromRemote(row['appearance_json']),
 );
 
 RemoteRow guildProjectRowFor(GuildProject project) => <String, Object?>{

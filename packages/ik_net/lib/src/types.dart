@@ -1081,6 +1081,37 @@ const PlayerAppearance defaultPlayerAppearance = PlayerAppearance(
   genderPresentation: defaultGenderPresentationId,
 );
 
+/// A remote `appearance_json`, which may be missing, `{}`, or only partly filled.
+///
+/// Save [PlayerAppearance.fromJson] is strict because a migrated save is meant
+/// to be complete. Profile and roster rows are not: the column defaults to `{}`,
+/// and a failed `as String` there is what paints "Something went wrong" on every
+/// social screen once the leaderboard read actually returns.
+PlayerAppearance playerAppearanceFromRemote(Object? value) {
+  if (value == null) return defaultPlayerAppearance;
+  final Map<Object?, Object?> raw;
+  if (value is Map<Object?, Object?>) {
+    raw = value;
+  } else if (value is Map) {
+    raw = Map<Object?, Object?>.from(value);
+  } else {
+    return defaultPlayerAppearance;
+  }
+  String? opt(String key) {
+    final field = raw[key];
+    return field is String && field.isNotEmpty ? field : null;
+  }
+
+  return defaultPlayerAppearance.copyWith(
+    skinTone: opt('skinTone'),
+    hairstyle: opt('hairstyle'),
+    hairColor: opt('hairColor'),
+    expression: opt('expression'),
+    beard: opt('beard'),
+    genderPresentation: opt('genderPresentation'),
+  );
+}
+
 /// A stored symbol, an emoji from an older save, or anything unrecognized,
 /// resolved to one of the icons the clients can actually draw.
 String normalizeSymbol(Object? raw) {

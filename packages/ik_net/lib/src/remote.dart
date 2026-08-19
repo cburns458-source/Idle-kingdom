@@ -339,21 +339,28 @@ const String remotePlaySessionColumn = 'active_play_session_id';
 /// The rank is the position the ordered read put it in, since the table stores
 /// values rather than places.
 LeaderboardEntry leaderboardEntryFrom(RemoteRow row, MultiplayerBoardKey boardKey, int index) {
-  final profile = row['profiles'] as Map<String, Object?>?;
-  final appearance = profile?['appearance_json'] as Map<String, Object?>?;
-  final guild = profile?['guilds'] as Map<String, Object?>?;
+  final profile = _asRemoteMap(row['profiles']);
+  final guild = _asRemoteMap(profile?['guilds']);
+  final username = _str(profile?['username']);
   return LeaderboardEntry(
     userId: _str(row['user_id']),
-    username: (profile?['username'] as String?) ?? 'Adventurer',
-    appearance: appearance == null
-        ? defaultPlayerAppearance
-        : PlayerAppearance.fromJson(appearance),
-    guildName: guild?['name'] as String?,
+    username: username.isEmpty ? 'Adventurer' : username,
+    appearance: playerAppearanceFromRemote(profile?['appearance_json']),
+    guildName: _optStr(guild?['name']),
     boardKey: boardKey,
     value: _num(row['value']),
     rank: index + 1,
     secondaryValue: boardCarriesExperience(boardKey) ? _num(row['value_secondary']) : null,
   );
+}
+
+Map<String, Object?>? _asRemoteMap(Object? value) {
+  if (value == null) return null;
+  if (value is Map<String, Object?>) return value;
+  if (value is Map) {
+    return <String, Object?>{for (final entry in value.entries) entry.key.toString(): entry.value};
+  }
+  return null;
 }
 
 /// Folds profile and guild rows onto a board that was read without an embed.
