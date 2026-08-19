@@ -55,6 +55,14 @@ class _NewCharacterSheetState extends State<NewCharacterSheet> {
 
   Future<void> _submit() async {
     if (_submitting) return;
+    if (widget.multiplayer.mustRestoreCloudSaveBeforeCreate) {
+      setState(
+        () => _error =
+            widget.multiplayer.accountLoadProblem ??
+            'Your saved character could not be loaded. Reload the page before creating a new one.',
+      );
+      return;
+    }
     final cleaned = normalizeCharacterName(_name.text);
     if (cleaned == null) {
       setState(() => _error = 'Enter a name to continue.');

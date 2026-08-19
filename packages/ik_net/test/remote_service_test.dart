@@ -278,6 +278,17 @@ void main() {
     expect(service.takeReadProblem(), contains('leaderboard_entries'));
   });
 
+  test('a refused cloud save read is not reported as an empty account', () async {
+    final transport = FakeTransport();
+    final storage = MemorySaveStorage();
+    final service = await _signedIn(transport, storage);
+
+    transport.failNextWith = 'Connection closed.';
+    final pulled = await service.pullSave();
+    expect(pulled.ok, isFalse);
+    expect(pulled.reason, 'Connection closed.');
+  });
+
   test('a refused read explains a wrong project URL the way sign-in does', () async {
     final transport = FakeTransport();
     final storage = MemorySaveStorage();

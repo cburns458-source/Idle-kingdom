@@ -133,6 +133,9 @@ class MultiplayerController extends ChangeNotifier {
   /// Used once if the account has no playable row yet, then forgotten.
   PlayerSave? pendingLeftover;
 
+  /// Why the account row did not load on resume, when it was not simply empty.
+  String? _cloudLoadProblem;
+
   /// Called after sign-out or a kick so the shell can drop the character.
   VoidCallback? onAccountCleared;
 
@@ -183,6 +186,12 @@ class MultiplayerController extends ChangeNotifier {
   /// True while a call is in flight, so buttons can stop taking presses.
   bool get busy => _busy;
 
+  /// Set when a signed-in resume could not load the account save.
+  String? get accountLoadProblem => _cloudLoadProblem;
+
+  /// True when creating a fresh character would ignore a cloud row that failed to load.
+  bool get mustRestoreCloudSaveBeforeCreate => isSignedIn && _cloudLoadProblem != null;
+
   @override
   void dispose() {
     _accountSaveTimer?.cancel();
@@ -228,6 +237,9 @@ class MultiplayerController extends ChangeNotifier {
       if (!result.ok) return result.reason;
       await service.claimPlaySession();
       final playable = await _adoptAccountSave(localHint, adopt);
+      if (playable == null && _cloudLoadProblem != null) {
+        _notice = _cloudLoadProblem;
+      }
       String? claimReason;
       final leftoverName = playable?.characterName?.trim() ?? '';
       if (leftoverName.isNotEmpty) {
@@ -263,6 +275,9 @@ class MultiplayerController extends ChangeNotifier {
       if (!result.ok) return result.reason;
       await service.claimPlaySession();
       final playable = await _adoptAccountSave(localHint, adopt);
+      if (playable == null && _cloudLoadProblem != null) {
+        _notice = _cloudLoadProblem;
+      }
       await refresh(playable ?? localHint);
       if (playable != null) await maybeAutoSubmitRanking(playable);
       return 'Welcome back, ${result.session!.username}.';
@@ -304,6 +319,9 @@ class MultiplayerController extends ChangeNotifier {
       }
       await service.claimPlaySession();
       final playable = await _adoptAccountSave(localHint, adopt);
+      if (playable == null && _cloudLoadProblem != null) {
+        _notice = _cloudLoadProblem;
+      }
       await refresh(playable ?? localHint);
       if (playable != null) await maybeAutoSubmitRanking(playable);
       return null;
@@ -335,15 +353,21 @@ class MultiplayerController extends ChangeNotifier {
 
   // --- Account saves --------------------------------------------------------
 
+  static bool hasNamedCharacter(PlayerSave? save) {
+    if (save == null) return false;
+    return save.characterName?.trim().isNotEmpty ?? false;
+  }
+
   static bool isPlayableSave(PlayerSave? save) {
     if (save == null) return false;
-    final name = save.characterName?.trim() ?? '';
-    return name.isNotEmpty && save.raceId != null;
+    return hasNamedCharacter(save) && save.raceId != null;
   }
 
   PlayerSave? _bestLeftover(PlayerSave localHint) {
     if (isPlayableSave(pendingLeftover)) return pendingLeftover;
+    if (hasNamedCharacter(pendingLeftover)) return pendingLeftover;
     if (isPlayableSave(localHint)) return localHint;
+    if (hasNamedCharacter(localHint)) return localHint;
     return null;
   }
 
@@ -352,17 +376,25 @@ class MultiplayerController extends ChangeNotifier {
     PlayerSave localHint,
     void Function(PlayerSave save) adopt,
   ) async {
+    _cloudLoadProblem = null;
     final pulled = await service.pullSave();
-    if (pulled.ok && isPlayableSave(pulled.save)) {
+    if (pulled.ok && hasNamedCharacter(pulled.save)) {
       adopt(pulled.save!);
       pendingLeftover = null;
       onAccountSaveReady?.call();
       return pulled.save;
     }
+    if (!pulled.ok &&
+        pulled.reason != null &&
+        pulled.reason != 'No cloud save for this account yet.') {
+      _cloudLoadProblem = pulled.reason;
+    }
     final leftover = _bestLeftover(localHint);
     if (leftover != null) {
       if (!identical(leftover, localHint)) adopt(leftover);
-      await service.pushSave(db, leftover, force: true);
+      if (isPlayableSave(leftover)) {
+        await service.pushSave(db, leftover, force: true);
+      }
       pendingLeftover = null;
       onAccountSaveReady?.call();
       return leftover;
@@ -392,7 +424,20 @@ class MultiplayerController extends ChangeNotifier {
   }
 
   /// Publishes a just-created character immediately.
-  Future<void> publishAccountSave(PlayerSave save) => flushAccountSave(save);
+  Future<void> publishAccountSave(PlayerSave save) async {
+    if (!isPlayableSave(save)) return;
+    final cloud = await service.pullSave();
+    if (cloud.ok && hasNamedCharacter(cloud.save)) {
+      final existing = cloud.save!;
+      if (existing.gold > save.gold + 10 ||
+          (existing.raceId != null && existing.raceId != save.raceId)) {
+        _notice = 'This account already has a saved character. Reload the page to restore it.';
+        notifyListeners();
+        return;
+      }
+    }
+    await flushAccountSave(save);
+  }
 
   void _clearAccountLocally() {
     _suppressUploads = true;
@@ -400,6 +445,7 @@ class MultiplayerController extends ChangeNotifier {
     _accountSaveTimer = null;
     _pendingAccountSave = null;
     pendingLeftover = null;
+    _cloudLoadProblem = null;
     stopPolling();
     _resetSignedOutState();
     onAccountCleared?.call();

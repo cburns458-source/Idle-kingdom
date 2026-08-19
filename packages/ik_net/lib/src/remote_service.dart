@@ -224,16 +224,24 @@ class RemoteMultiplayerService implements MultiplayerService {
   Future<MultiplayerProfile?> setPrivacyPublicSkills(bool value) =>
       _local.setPrivacyPublicSkills(value);
 
-  /// The account's stored save row, or null when it has none.
+  /// The account's stored save row, or null when it has none or the read failed.
   Future<RemoteSaveRow?> _readSaveRow(String userId) async {
+    final loaded = await _querySaveRow(userId);
+    return loaded.row;
+  }
+
+  /// Distinguishes a missing row from a refused read so pull can say which.
+  Future<({RemoteSaveRow? row, String? readError})> _querySaveRow(String userId) async {
     final result = await transport.select(
       RemoteTables.saves,
       columns: remoteSaveColumns,
       equals: <String, Object?>{'user_id': userId},
       limit: 1,
     );
-    if (!result.ok) return null;
-    return remoteSaveRowFrom(userId, result.single);
+    if (!result.ok) {
+      return (row: null, readError: result.reason ?? 'Could not read cloud save.');
+    }
+    return (row: remoteSaveRowFrom(userId, result.single), readError: null);
   }
 
   @override
@@ -269,7 +277,11 @@ class RemoteMultiplayerService implements MultiplayerService {
     if (current == null) {
       return const CloudSyncResult.failed('Sign in to load cloud saves.');
     }
-    final row = await _readSaveRow(current.userId);
+    final loaded = await _querySaveRow(current.userId);
+    if (loaded.readError != null) {
+      return CloudSyncResult.failed(friendlyRemoteError(loaded.readError!));
+    }
+    final row = loaded.row;
     if (row == null) {
       return const CloudSyncResult.failed('No cloud save for this account yet.');
     }

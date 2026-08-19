@@ -7,6 +7,7 @@ import 'package:idle_kingdoms/src/ui/reward_strip.dart';
 import 'package:ik_content/ik_content.dart';
 import 'package:ik_net/ik_net.dart';
 import 'package:ik_net/testing.dart';
+import 'package:ik_runtime/ik_runtime.dart';
 
 import 'support/harness.dart';
 
@@ -22,6 +23,36 @@ void main() {
     expect(testerPasskeyRequired(testerPasskey), isFalse);
     expect(matchesTesterPasskey('  RESTORIA-TESTERS  '), isTrue);
     expect(matchesTesterPasskey('nope'), isFalse);
+  });
+
+  test('resume adopts a named cloud save that still needs a race', () async {
+    final transport = FakeTransport();
+    final storage = MemorySaveStorage();
+    final service = RemoteMultiplayerService(transport: transport, storage: storage);
+    final signed = await service.signUp('vari@example.com', 'Vari', 'secret');
+    expect(signed.ok, isTrue, reason: signed.reason);
+
+    final cloud = startedCharacter(database)
+        .copyWith(characterName: 'Vari', gold: 777, raceId: null);
+    await transport.upsert(RemoteTables.saves, <RemoteRow>[
+      saveRowFor(service.session!.userId, cloud),
+    ]);
+
+    final controller = buildController(database);
+    addTearDown(controller.dispose);
+    final net = MultiplayerController(
+      database: database,
+      service: service,
+      storage: storage,
+      clock: () => testStartMs,
+    );
+    addTearDown(net.dispose);
+    await net.resumeAccount(controller.save, adopt: controller.adoptAccountSave);
+
+    expect(controller.save.characterName, 'Vari');
+    expect(controller.save.gold, 777);
+    expect(controller.save.raceId, isNull);
+    expect(net.mustRestoreCloudSaveBeforeCreate, isFalse);
   });
 
   testWidgets('a new save asks for an account, then character creation', (tester) async {
