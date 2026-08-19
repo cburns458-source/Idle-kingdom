@@ -1,14 +1,7 @@
--- Leaderboard reads ask PostgREST to embed profiles(...), which only works when
--- a foreign key exists between leaderboard_snapshots and profiles. The original
--- table referenced auth.users, so the schema cache had no such relationship and
--- every social refresh surfaced:
---   Could not find a relationship between 'leaderboard_snapshots' and 'profiles'
--- in the schema cache.
-
-delete from public.leaderboard_snapshots ls
-where not exists (
-  select 1 from public.profiles p where p.user_id = ls.user_id
-);
+-- Optional FK so a direct embed of profiles on leaderboard_snapshots can work.
+-- Existing snapshot rows without a profile are left in place (NOT VALID).
+-- The client reads public.leaderboard_entries (012), which left-joins profiles
+-- and therefore still lists those rows.
 
 do $$
 begin
@@ -18,7 +11,8 @@ begin
   ) then
     alter table public.leaderboard_snapshots
       add constraint leaderboard_snapshots_user_id_profiles_fkey
-      foreign key (user_id) references public.profiles (user_id) on delete cascade;
+      foreign key (user_id) references public.profiles (user_id) on delete cascade
+      not valid;
   end if;
 end $$;
 

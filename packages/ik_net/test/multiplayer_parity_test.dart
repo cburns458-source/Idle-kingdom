@@ -600,6 +600,7 @@ void main() {
                 'profiles': RemoteTables.profiles,
                 'saves': RemoteTables.saves,
                 'leaderboard': RemoteTables.leaderboard,
+                'leaderboardEntries': RemoteTables.leaderboardEntries,
                 'chat': RemoteTables.chat,
                 'bountyClaims': RemoteTables.bountyClaims,
                 'bazaarPosts': RemoteTables.bazaarPosts,

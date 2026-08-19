@@ -1,5 +1,6 @@
 import 'remote.dart';
 import 'remote_transport.dart';
+import 'types.dart';
 
 /// A remote backend held in memory, standing in for the hosted one.
 ///
@@ -218,12 +219,13 @@ class FakeTransport implements RemoteTransport {
     final reason = _takeFailure('select:$table');
     if (reason != null) return RemoteQueryResult.failed(reason);
 
-    var rows = (tables[table] ?? const <RemoteRow>[])
+    final storedTable = table == RemoteTables.leaderboardEntries ? RemoteTables.leaderboard : table;
+    var rows = (tables[storedTable] ?? const <RemoteRow>[])
         .where((row) => equals.entries.every((filter) => row[filter.key] == filter.value))
         .map((row) => <String, Object?>{...row})
         .toList();
 
-    if (columns.contains('profiles(')) {
+    if (columns.contains('profiles')) {
       for (final row in rows) {
         row['profiles'] = _profileJoin(row['user_id']);
       }
@@ -236,19 +238,41 @@ class FakeTransport implements RemoteTransport {
   }
 
   /// The profile a leaderboard read joins in, with its guild name folded in.
-  RemoteRow? _profileJoin(Object? userId) {
+  ///
+  /// Matches `leaderboard_entries`: a missing profile still yields a row named
+  /// Adventurer, so other players are not dropped off the board.
+  RemoteRow _profileJoin(Object? userId) {
     for (final profile in tables[RemoteTables.profiles]!) {
       if (profile['user_id'] != userId) continue;
+      Object? guildName = profile['guild_name'];
+      final guildId = profile['guild_id'];
+      if (guildName == null && guildId != null) {
+        for (final guild in tables[RemoteTables.guilds]!) {
+          if (guild['id'] == guildId) {
+            guildName = guild['name'];
+            break;
+          }
+        }
+      }
+      final username = profile['username'];
       return <String, Object?>{
-        'username': profile['username'],
-        'appearance_json': profile['appearance_json'],
-        'guild_id': profile['guild_id'],
-        'guilds': profile['guild_name'] == null
-            ? null
-            : <String, Object?>{'name': profile['guild_name']},
+        'username': username is String && username.isNotEmpty ? username : 'Adventurer',
+        'appearance_json': _appearanceJson(profile['appearance_json']),
+        'guild_id': guildId,
+        'guilds': guildName == null ? null : <String, Object?>{'name': guildName},
       };
     }
-    return null;
+    return <String, Object?>{
+      'username': 'Adventurer',
+      'appearance_json': defaultPlayerAppearance.toJson(),
+      'guild_id': null,
+      'guilds': null,
+    };
+  }
+
+  Object _appearanceJson(Object? value) {
+    if (value is Map && value.isNotEmpty) return value;
+    return defaultPlayerAppearance.toJson();
   }
 
   static int _compare(Object? a, Object? b) {

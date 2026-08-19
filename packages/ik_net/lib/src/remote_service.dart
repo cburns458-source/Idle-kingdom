@@ -317,6 +317,13 @@ class RemoteMultiplayerService implements MultiplayerService {
       leaderboardRowsFor(current.userId, snapshot, isoFromMs(_nowMs())),
       onConflict: remoteLeaderboardConflict,
     );
+    await transport.upsert(RemoteTables.profiles, <RemoteRow>[
+      <String, Object?>{
+        'user_id': current.userId,
+        'username': current.username,
+        'appearance_json': save.appearance.toJson(),
+      },
+    ], onConflict: 'user_id');
     // A roster lists each member's name, look, and level, and only that member
     // may write their own row, so the submit that refreshes the boards refreshes
     // the roster too.
@@ -328,55 +335,15 @@ class RemoteMultiplayerService implements MultiplayerService {
   @override
   Future<List<LeaderboardEntry>> leaderboard(MultiplayerBoardKey boardKey, {int limit = 25}) async {
     final result = await transport.select(
-      RemoteTables.leaderboard,
+      RemoteTables.leaderboardEntries,
       columns: remoteLeaderboardColumns,
       equals: <String, Object?>{'board_key': boardKey},
       orderBy: 'value',
       ascending: false,
       limit: limit,
     );
-    if (result.ok) return leaderboardEntriesFrom(result.rows!, boardKey);
-    if (!isMissingLeaderboardProfileRelationship(result.reason)) {
-      return const <LeaderboardEntry>[];
-    }
-    // The embed needs a FK the hosted project may not have applied yet. Drop only
-    // this schema-cache notice so Guilds and Chat stay readable, then join names.
-    _reads.clearIf(
-      (held) =>
-          isMissingLeaderboardProfileRelationship(held) || held == remoteLeaderboardJoinUnavailable,
-    );
-    return _leaderboardWithManualJoin(boardKey, limit);
-  }
-
-  Future<List<LeaderboardEntry>> _leaderboardWithManualJoin(
-    MultiplayerBoardKey boardKey,
-    int limit,
-  ) async {
-    final board = await transport.select(
-      RemoteTables.leaderboard,
-      columns: remoteLeaderboardValueColumns,
-      equals: <String, Object?>{'board_key': boardKey},
-      orderBy: 'value',
-      ascending: false,
-      limit: limit,
-    );
-    if (!board.ok) return const <LeaderboardEntry>[];
-    final profiles = await transport.select(
-      RemoteTables.profiles,
-      columns: remoteLeaderboardProfileColumns,
-    );
-    final guilds = await transport.select(
-      RemoteTables.guilds,
-      columns: remoteLeaderboardGuildColumns,
-    );
-    return leaderboardEntriesFrom(
-      attachLeaderboardProfileJoins(
-        boardRows: board.rows!,
-        profiles: profiles.rows ?? const <RemoteRow>[],
-        guilds: guilds.rows ?? const <RemoteRow>[],
-      ),
-      boardKey,
-    );
+    if (!result.ok) return const <LeaderboardEntry>[];
+    return leaderboardEntriesFrom(result.rows!, boardKey);
   }
 
   @override

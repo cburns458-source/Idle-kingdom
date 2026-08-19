@@ -185,17 +185,26 @@ void main() {
     expect(net.notice, contains('value_secondary'));
   });
 
-  testWidgets('a missing leaderboard embed does not cover Guilds and Chat', (tester) async {
+  testWidgets('the board lists other players and the signed-in one', (tester) async {
     final transport = FakeTransport();
     final controller = buildController(database, seed: startedCharacter(database));
     addTearDown(controller.dispose);
     final net = buildRemoteMultiplayer(database, transport: transport);
     addTearDown(net.dispose);
     expect((await net.service.signUp('leader@example.com', 'Leader', 'secret')).ok, isTrue);
+    await net.service.submitLeaderboard(database.launch, controller.save);
 
-    transport.failOnce['select:${RemoteTables.leaderboard}'] = "Could not find a relationship between 'leaderboard_snapshots' and 'profiles' in the schema cache";
+    await transport.upsert(RemoteTables.profiles, <RemoteRow>[
+      <String, Object?>{'user_id': 'usr_rival', 'username': 'Rival'},
+    ]);
+    await transport.upsert(RemoteTables.leaderboard, <RemoteRow>[
+      <String, Object?>{'user_id': 'usr_rival', 'board_key': boardTotalLevel, 'value': 99},
+    ], onConflict: remoteLeaderboardConflict);
+
     await net.refresh(controller.save);
 
     expect(net.notice, isNull);
+    expect(net.board.map((entry) => entry.username), contains('Rival'));
+    expect(net.board.any((entry) => entry.userId == net.session?.userId), isTrue);
   });
 }

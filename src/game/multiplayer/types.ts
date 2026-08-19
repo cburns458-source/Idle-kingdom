@@ -19,6 +19,25 @@ export const DEFAULT_PLAYER_APPEARANCE: PlayerAppearance = {
   genderPresentation: DEFAULT_GENDER_PRESENTATION_ID,
 }
 
+/** A remote `appearance_json`, which may be missing, `{}`, or only partly filled. */
+export function playerAppearanceFromRemote(value: unknown): PlayerAppearance {
+  if (!value || typeof value !== 'object') return DEFAULT_PLAYER_APPEARANCE
+  const raw = value as Record<string, unknown>
+  const opt = (key: string): string | undefined => {
+    const field = raw[key]
+    return typeof field === 'string' && field.length > 0 ? field : undefined
+  }
+  return {
+    skinTone: opt('skinTone') ?? DEFAULT_PLAYER_APPEARANCE.skinTone,
+    hairstyle: opt('hairstyle') ?? DEFAULT_PLAYER_APPEARANCE.hairstyle,
+    hairColor: opt('hairColor') ?? DEFAULT_PLAYER_APPEARANCE.hairColor,
+    expression: opt('expression') ?? DEFAULT_PLAYER_APPEARANCE.expression,
+    beard: opt('beard') ?? DEFAULT_PLAYER_APPEARANCE.beard,
+    genderPresentation:
+      opt('genderPresentation') ?? DEFAULT_PLAYER_APPEARANCE.genderPresentation,
+  }
+}
+
 export type MultiplayerBoardKey =
   /** Ranks by total level and carries total XP alongside it. */
   | 'total_level'

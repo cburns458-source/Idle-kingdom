@@ -5,7 +5,7 @@ import type { LeaderboardSnapshotValues } from './snapshots'
 import {
   boardCarriesExperience,
   boardHidesZeroes,
-  DEFAULT_PLAYER_APPEARANCE,
+  playerAppearanceFromRemote,
   type ChatMessage,
   type CloudSaveRecord,
   type LeaderboardEntry,
@@ -27,6 +27,7 @@ export const REMOTE_TABLES = {
   profiles: 'profiles',
   saves: 'player_saves',
   leaderboard: 'leaderboard_snapshots',
+  leaderboardEntries: 'leaderboard_entries',
   chat: 'chat_messages',
   bountyClaims: 'bounty_claims',
   bazaarPosts: 'bazaar_posts',
@@ -51,11 +52,7 @@ export const REMOTE_SAVE_COLUMNS = 'save_version, updated_at, payload'
 export const REMOTE_CHAT_COLUMNS =
   'id, channel_key, user_id, username, body, created_at, guild_tag, rank_icon, guest'
 export const REMOTE_LEADERBOARD_COLUMNS =
-  'user_id, board_key, value, value_secondary, ' +
-  'profiles(username, appearance_json, guild_id, guilds(name))'
-export const REMOTE_LEADERBOARD_VALUE_COLUMNS = 'user_id, board_key, value, value_secondary'
-export const REMOTE_LEADERBOARD_PROFILE_COLUMNS = 'user_id, username, appearance_json, guild_id'
-export const REMOTE_LEADERBOARD_GUILD_COLUMNS = 'id, name'
+  'user_id, board_key, value, value_secondary, profiles'
 export const REMOTE_BOUNTY_CLAIM_COLUMNS = 'hour_key, bounty_id, user_id, username, claimed_at'
 export const REMOTE_BAZAAR_COLUMNS = 'id, kind, user_id, username, body, created_at'
 
@@ -244,7 +241,8 @@ export const REMOTE_SAVE_CONFLICT = 'A newer cloud save exists.'
  * A leaderboard row joined with its profile.
  *
  * The rank is the position the ordered read put it in, since the table stores
- * values rather than places.
+ * values rather than places. `profiles` is a jsonb column on
+ * `leaderboard_entries`, not a PostgREST embed.
  */
 export function leaderboardEntryFrom(
   row: RemoteRow,
@@ -253,13 +251,14 @@ export function leaderboardEntryFrom(
 ): LeaderboardEntry {
   const profile = (row.profiles ?? null) as {
     username?: string
-    appearance_json?: LeaderboardEntry['appearance']
+    appearance_json?: unknown
     guilds?: { name?: string } | null
   } | null
+  const username = profile?.username?.trim() ?? ''
   return {
     userId: str(row.user_id),
-    username: profile?.username ?? 'Adventurer',
-    appearance: profile?.appearance_json ?? DEFAULT_PLAYER_APPEARANCE,
+    username: username.length === 0 ? 'Adventurer' : username,
+    appearance: playerAppearanceFromRemote(profile?.appearance_json),
     guildName: profile?.guilds?.name ?? null,
     boardKey,
     value: num(row.value),
@@ -267,45 +266,6 @@ export function leaderboardEntryFrom(
     ...(boardCarriesExperience(boardKey)
       ? { secondaryValue: num(row.value_secondary) }
       : {}),
-  }
-}
-
-export function isMissingLeaderboardProfileRelationship(reason: string | null | undefined): boolean {
-  if (!reason) return false
-  const lower = reason.toLowerCase()
-  return (
-    lower.includes('relationship') &&
-    lower.includes('leaderboard_snapshots') &&
-    lower.includes('profiles')
-  )
-}
-
-export function attachLeaderboardProfileJoins(
-  boardRows: RemoteRow[],
-  profiles: RemoteRow[],
-  guilds: RemoteRow[],
-): RemoteRow[] {
-  const guildById = new Map(guilds.map((guild) => [str(guild.id), guild]))
-  const profileByUser = new Map(profiles.map((profile) => [str(profile.user_id), profile]))
-  return boardRows.map((row) => ({
-    ...row,
-    profiles: manualLeaderboardProfile(profileByUser.get(str(row.user_id)) ?? null, guildById),
-  }))
-}
-
-function manualLeaderboardProfile(
-  profile: RemoteRow | null,
-  guildById: Map<string, RemoteRow>,
-): RemoteRow | null {
-  if (!profile) return null
-  const guildId = str(profile.guild_id)
-  const nested = profile.guilds as { name?: unknown } | null | undefined
-  const name = guildById.get(guildId)?.name ?? nested?.name ?? profile.guild_name
-  return {
-    username: profile.username,
-    appearance_json: profile.appearance_json,
-    guild_id: profile.guild_id,
-    guilds: name == null ? null : { name },
   }
 }
 

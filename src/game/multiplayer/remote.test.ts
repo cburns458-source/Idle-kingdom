@@ -4,8 +4,6 @@ import {
   cloudSaveRecordFrom,
   isPendingAccountUsername,
   isRemoteSaveNewer,
-  attachLeaderboardProfileJoins,
-  isMissingLeaderboardProfileRelationship,
   leaderboardEntriesFrom,
   leaderboardRowsFor,
   pendingAccountUsername,
@@ -17,7 +15,11 @@ import {
   sessionFromSignUp,
   type RemoteRow,
 } from './remote'
-import { DEFAULT_PLAYER_APPEARANCE, type CloudSaveRecord } from './types'
+import {
+  DEFAULT_PLAYER_APPEARANCE,
+  playerAppearanceFromRemote,
+  type CloudSaveRecord,
+} from './types'
 import type { PlayerSave } from '../save/types'
 
 function save(overrides: Partial<PlayerSave> = {}): PlayerSave {
@@ -176,31 +178,43 @@ describe('remote leaderboards', () => {
     expect(leaderboardEntriesFrom([row], 'gold_earned')[0].secondaryValue).toBeUndefined()
   })
 
-  it('detects a missing leaderboard-to-profile relationship', () => {
-    expect(
-      isMissingLeaderboardProfileRelationship(
-        "Could not find a relationship between 'leaderboard_snapshots' and 'profiles' in the schema cache",
-      ),
-    ).toBe(true)
-    expect(isMissingLeaderboardProfileRelationship('Connection closed.')).toBe(false)
-  })
-
-  it('folds profiles onto a board that was read without an embed', () => {
+  it('reads a view-shaped board row with its profile folded in', () => {
     const entries = leaderboardEntriesFrom(
-      attachLeaderboardProfileJoins(
-        [
-          { user_id: 'usr_1', board_key: 'total_level', value: 10 },
-          { user_id: 'usr_2', board_key: 'total_level', value: 5 },
-        ],
-        [{ user_id: 'usr_1', username: 'Hero', guild_id: 'gld_1' }],
-        [{ id: 'gld_1', name: 'Iron League' }],
-      ),
+      [
+        {
+          user_id: 'usr_1',
+          board_key: 'total_level',
+          value: 10,
+          profiles: {
+            username: 'Hero',
+            appearance_json: {},
+            guilds: { name: 'Iron League' },
+          },
+        },
+        {
+          user_id: 'usr_2',
+          board_key: 'total_level',
+          value: 5,
+          profiles: {
+            username: 'Adventurer',
+            appearance_json: DEFAULT_PLAYER_APPEARANCE,
+            guilds: null,
+          },
+        },
+      ],
       'total_level',
     )
     expect(entries[0]?.username).toBe('Hero')
     expect(entries[0]?.guildName).toBe('Iron League')
+    expect(entries[0]?.appearance).toEqual(DEFAULT_PLAYER_APPEARANCE)
     expect(entries[1]?.username).toBe('Adventurer')
     expect(entries[1]?.guildName).toBeNull()
+  })
+
+  it('an empty remote appearance_json does not throw', () => {
+    expect(playerAppearanceFromRemote(null)).toEqual(DEFAULT_PLAYER_APPEARANCE)
+    expect(playerAppearanceFromRemote({})).toEqual(DEFAULT_PLAYER_APPEARANCE)
+    expect(playerAppearanceFromRemote({ skinTone: 'APR-0001' }).skinTone).toBe('APR-0001')
   })
 
   it('leaves a fighter off the pacifist board', () => {

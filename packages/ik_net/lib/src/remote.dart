@@ -23,6 +23,7 @@ class RemoteTables {
   static const String profiles = 'profiles';
   static const String saves = 'player_saves';
   static const String leaderboard = 'leaderboard_snapshots';
+  static const String leaderboardEntries = 'leaderboard_entries';
   static const String chat = 'chat_messages';
   static const String bountyClaims = 'bounty_claims';
   static const String bazaarPosts = 'bazaar_posts';
@@ -49,20 +50,7 @@ String friendlyRemoteError(String message) {
   if (message.toLowerCase().contains('invalid path specified')) {
     return remoteInvalidBackendUrl;
   }
-  if (isMissingLeaderboardProfileRelationship(message)) {
-    return remoteLeaderboardJoinUnavailable;
-  }
   return message;
-}
-
-/// PostgREST's embed of profiles on a leaderboard row, which only works when the
-/// project has a foreign key between the two tables.
-bool isMissingLeaderboardProfileRelationship(String? reason) {
-  if (reason == null) return false;
-  final lower = reason.toLowerCase();
-  return lower.contains('relationship') &&
-      lower.contains('leaderboard_snapshots') &&
-      lower.contains('profiles');
 }
 
 /// What a screen says when an action threw instead of refusing.
@@ -84,20 +72,7 @@ const String remoteSaveColumns = 'save_version, updated_at, payload';
 const String remoteChatColumns =
     'id, channel_key, user_id, username, body, created_at, '
     'guild_tag, rank_icon, guest';
-const String remoteLeaderboardColumns =
-    'user_id, board_key, value, value_secondary, '
-    'profiles(username, appearance_json, guild_id, guilds(name))';
-
-/// The same board without the PostgREST embed, used when the project has not
-/// got a foreign key from [RemoteTables.leaderboard] to [RemoteTables.profiles].
-const String remoteLeaderboardValueColumns = 'user_id, board_key, value, value_secondary';
-const String remoteLeaderboardProfileColumns = 'user_id, username, appearance_json, guild_id';
-const String remoteLeaderboardGuildColumns = 'id, name';
-
-/// What a screen says when the leaderboard embed is missing on the project.
-const String remoteLeaderboardJoinUnavailable =
-    'Leaderboards could not load player names. Apply the latest database migration.';
-
+const String remoteLeaderboardColumns = 'user_id, board_key, value, value_secondary, profiles';
 const String remoteBountyClaimColumns = 'hour_key, bounty_id, user_id, username, claimed_at';
 const String remoteBazaarColumns = 'id, kind, user_id, username, body, created_at';
 
@@ -337,7 +312,8 @@ const String remotePlaySessionColumn = 'active_play_session_id';
 /// A leaderboard row joined with its profile.
 ///
 /// The rank is the position the ordered read put it in, since the table stores
-/// values rather than places.
+/// values rather than places. `profiles` is a jsonb column on
+/// `leaderboard_entries`, not a PostgREST embed.
 LeaderboardEntry leaderboardEntryFrom(RemoteRow row, MultiplayerBoardKey boardKey, int index) {
   final profile = _asRemoteMap(row['profiles']);
   final guild = _asRemoteMap(profile?['guilds']);
@@ -361,39 +337,6 @@ Map<String, Object?>? _asRemoteMap(Object? value) {
     return <String, Object?>{for (final entry in value.entries) entry.key.toString(): entry.value};
   }
   return null;
-}
-
-/// Folds profile and guild rows onto a board that was read without an embed.
-List<RemoteRow> attachLeaderboardProfileJoins({
-  required List<RemoteRow> boardRows,
-  required List<RemoteRow> profiles,
-  required List<RemoteRow> guilds,
-}) {
-  final guildById = <String, RemoteRow>{for (final guild in guilds) _str(guild['id']): guild};
-  final profileByUser = <String, RemoteRow>{
-    for (final profile in profiles) _str(profile['user_id']): profile,
-  };
-  return [
-    for (final row in boardRows)
-      <String, Object?>{
-        ...row,
-        'profiles': _manualLeaderboardProfile(profileByUser[_str(row['user_id'])], guildById),
-      },
-  ];
-}
-
-RemoteRow? _manualLeaderboardProfile(RemoteRow? profile, Map<String, RemoteRow> guildById) {
-  if (profile == null) return null;
-  final guildId = _str(profile['guild_id']);
-  final nested = profile['guilds'];
-  final nestedName = nested is Map ? nested['name'] : null;
-  final name = guildById[guildId]?['name'] ?? nestedName ?? profile['guild_name'];
-  return <String, Object?>{
-    'username': profile['username'],
-    'appearance_json': profile['appearance_json'],
-    'guild_id': profile['guild_id'],
-    'guilds': name == null ? null : <String, Object?>{'name': name},
-  };
 }
 
 List<LeaderboardEntry> leaderboardEntriesFrom(List<RemoteRow> rows, MultiplayerBoardKey boardKey) {

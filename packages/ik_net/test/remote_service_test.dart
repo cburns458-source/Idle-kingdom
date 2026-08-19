@@ -166,6 +166,10 @@ void main() {
     final rows = transport.tables[RemoteTables.leaderboard]!;
     expect(rows, isNotEmpty);
     expect(rows.every((row) => row['updated_at'] == isoFromMs(_nowMs)), isTrue);
+    expect(
+      transport.tables[RemoteTables.profiles]!.single['appearance_json'],
+      save.appearance.toJson(),
+    );
 
     // A second submit updates the same rows rather than adding more.
     final before = rows.length;
@@ -199,7 +203,27 @@ void main() {
     expect(board.last.appearance, isNotNull);
   });
 
-  test('joins profiles locally when PostgREST cannot embed them', () async {
+  test('two accounts that submit both appear on the board', () async {
+    final transport = FakeTransport();
+    final db = _database();
+
+    final hero = await _signedIn(transport, MemorySaveStorage());
+    final heroSave = createNewSave(db, _nowMs).copyWith(characterName: 'Hero');
+    await hero.pushSave(db, heroSave);
+    expect((await hero.submitLeaderboard(db, heroSave)).ok, isTrue);
+
+    final rival = _service(transport, MemorySaveStorage());
+    expect((await rival.signUp('rival@example.com', 'Rival', 'secret')).ok, isTrue);
+    final rivalSave = createNewSave(db, _nowMs).copyWith(characterName: 'Rival', gold: 999);
+    await rival.pushSave(db, rivalSave);
+    expect((await rival.submitLeaderboard(db, rivalSave)).ok, isTrue);
+
+    final board = await hero.leaderboard(boardTotalLevel);
+    expect(board.map((entry) => entry.username).toSet(), <String>{'Hero', 'Rival'});
+    expect(board, hasLength(2));
+  });
+
+  test('a snapshot without a profile still lists that other player', () async {
     final transport = FakeTransport();
     final storage = MemorySaveStorage();
     final service = await _signedIn(transport, storage);
@@ -208,26 +232,14 @@ void main() {
     await service.pushSave(db, save);
     await service.submitLeaderboard(db, save);
 
-    await transport.upsert(RemoteTables.guilds, <RemoteRow>[
-      <String, Object?>{'id': 'gld_iron', 'name': 'Iron League'},
-    ]);
-    await transport.upsert(RemoteTables.profiles, <RemoteRow>[
-      <String, Object?>{'user_id': 'usr_rival', 'username': 'Rival', 'guild_id': 'gld_iron'},
-    ]);
     await transport.upsert(RemoteTables.leaderboard, <RemoteRow>[
-      <String, Object?>{'user_id': 'usr_rival', 'board_key': boardTotalLevel, 'value': 99},
+      <String, Object?>{'user_id': 'usr_ghost', 'board_key': boardTotalLevel, 'value': 50},
     ], onConflict: remoteLeaderboardConflict);
 
-    transport.failOnce['select:${RemoteTables.leaderboard}'] = "Could not find a relationship between 'leaderboard_snapshots' and 'profiles' in the schema cache";
-
     final board = await service.leaderboard(boardTotalLevel);
-    expect(board.map((entry) => entry.username), <String>['Rival', 'Hero']);
-    expect(board.first.guildName, 'Iron League');
-    expect(
-      service.takeReadProblem(),
-      isNull,
-      reason: 'the schema-cache miss is recovered, not shown',
-    );
+    expect(board.map((entry) => entry.username), <String>['Adventurer', 'Hero']);
+    expect(board.first.userId, 'usr_ghost');
+    expect(board.last.username, 'Hero');
   });
 
   test('reports an empty board rather than throwing when a read fails', () async {
@@ -253,6 +265,17 @@ void main() {
 
     expect(service.takeReadProblem(), contains('value_secondary'));
     expect(service.takeReadProblem(), isNull, reason: 'reported once, not on every pass after');
+  });
+
+  test('a missing leaderboard view is remembered rather than hidden', () async {
+    final transport = FakeTransport();
+    final storage = MemorySaveStorage();
+    final service = await _signedIn(transport, storage);
+
+    transport.failNextWith =
+        'Could not find the table \'public.leaderboard_entries\' in the schema cache';
+    expect(await service.leaderboard(boardTotalLevel), isEmpty);
+    expect(service.takeReadProblem(), contains('leaderboard_entries'));
   });
 
   test('a refused read explains a wrong project URL the way sign-in does', () async {

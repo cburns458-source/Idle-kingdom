@@ -34,30 +34,32 @@ void main() {
     expect(friendlyRemoteError('Invalid login credentials'), 'Invalid login credentials');
   });
 
-  test('explains a missing leaderboard-to-profile relationship', () {
-    const raw =
-        "Could not find a relationship between 'leaderboard_snapshots' and 'profiles' in the schema cache";
-    expect(isMissingLeaderboardProfileRelationship(raw), isTrue);
-    expect(friendlyRemoteError(raw), remoteLeaderboardJoinUnavailable);
-    expect(isMissingLeaderboardProfileRelationship('Connection closed.'), isFalse);
-  });
-
-  test('folds profiles onto a board that was read without an embed', () {
-    final joined = attachLeaderboardProfileJoins(
-      boardRows: <RemoteRow>[
-        <String, Object?>{'user_id': 'usr_1', 'board_key': boardTotalLevel, 'value': 10},
-        <String, Object?>{'user_id': 'usr_2', 'board_key': boardTotalLevel, 'value': 5},
-      ],
-      profiles: <RemoteRow>[
-        <String, Object?>{'user_id': 'usr_1', 'username': 'Hero', 'guild_id': 'gld_1'},
-      ],
-      guilds: <RemoteRow>[
-        <String, Object?>{'id': 'gld_1', 'name': 'Iron League'},
-      ],
-    );
-    final entries = leaderboardEntriesFrom(joined, boardTotalLevel);
+  test('reads a view-shaped board row with its profile folded in', () {
+    final entries = leaderboardEntriesFrom(<RemoteRow>[
+      <String, Object?>{
+        'user_id': 'usr_1',
+        'board_key': boardTotalLevel,
+        'value': 10,
+        'profiles': <String, Object?>{
+          'username': 'Hero',
+          'appearance_json': <String, Object?>{},
+          'guilds': <String, Object?>{'name': 'Iron League'},
+        },
+      },
+      <String, Object?>{
+        'user_id': 'usr_2',
+        'board_key': boardTotalLevel,
+        'value': 5,
+        'profiles': <String, Object?>{
+          'username': 'Adventurer',
+          'appearance_json': defaultPlayerAppearance.toJson(),
+          'guilds': null,
+        },
+      },
+    ], boardTotalLevel);
     expect(entries.first.username, 'Hero');
     expect(entries.first.guildName, 'Iron League');
+    expect(entries.first.appearance.toJson(), defaultPlayerAppearance.toJson());
     expect(entries.last.username, 'Adventurer');
     expect(entries.last.guildName, isNull);
   });
