@@ -9838,7 +9838,7 @@
       "Notes": "Requires empty Weapon or Tool and Off-hand. Unequips those slots on start."
     },
     {
-      "Activity ID": "ACT-0036",
+      "Activity ID": "ACT-0037",
       "Internal Key": "fish_copper_pond",
       "Contextual Name": "Fish in the nearby pond",
       "Location ID": "LOC-0005",
@@ -13959,7 +13959,7 @@
     {
       "Requirement ID": "REQ-0106",
       "Entity Type": "Activity",
-      "Entity ID": "ACT-0036",
+      "Entity ID": "ACT-0037",
       "Requirement Group": "A",
       "Group Logic": "AND",
       "Requirement Type": "Tool Capability",
