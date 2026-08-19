@@ -30,7 +30,7 @@ Do not invent missing design values.
 
 ## 2. DEMO BOUNDARIES
 
-This is a single-player, offline-capable web demo.
+This is a single-player idle RPG web demo.
 
 Preserve these core requirements:
 

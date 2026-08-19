@@ -4,7 +4,7 @@
       "Key": "database_scope",
       "Value": "single_player_demo",
       "Unit": null,
-      "Notes": "Offline-capable web demo runtime content."
+      "Notes": "Idle RPG web demo runtime content."
     },
     {
       "Key": "primary_activity_slots",
