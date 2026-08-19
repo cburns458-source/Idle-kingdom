@@ -4,6 +4,8 @@ import {
   cloudSaveRecordFrom,
   isPendingAccountUsername,
   isRemoteSaveNewer,
+  attachLeaderboardProfileJoins,
+  isMissingLeaderboardProfileRelationship,
   leaderboardEntriesFrom,
   leaderboardRowsFor,
   pendingAccountUsername,
@@ -172,6 +174,33 @@ describe('remote leaderboards', () => {
 
     expect(leaderboardEntriesFrom([row], 'total_level')[0].secondaryValue).toBe(1204)
     expect(leaderboardEntriesFrom([row], 'gold_earned')[0].secondaryValue).toBeUndefined()
+  })
+
+  it('detects a missing leaderboard-to-profile relationship', () => {
+    expect(
+      isMissingLeaderboardProfileRelationship(
+        "Could not find a relationship between 'leaderboard_snapshots' and 'profiles' in the schema cache",
+      ),
+    ).toBe(true)
+    expect(isMissingLeaderboardProfileRelationship('Connection closed.')).toBe(false)
+  })
+
+  it('folds profiles onto a board that was read without an embed', () => {
+    const entries = leaderboardEntriesFrom(
+      attachLeaderboardProfileJoins(
+        [
+          { user_id: 'usr_1', board_key: 'total_level', value: 10 },
+          { user_id: 'usr_2', board_key: 'total_level', value: 5 },
+        ],
+        [{ user_id: 'usr_1', username: 'Hero', guild_id: 'gld_1' }],
+        [{ id: 'gld_1', name: 'Iron League' }],
+      ),
+      'total_level',
+    )
+    expect(entries[0]?.username).toBe('Hero')
+    expect(entries[0]?.guildName).toBe('Iron League')
+    expect(entries[1]?.username).toBe('Adventurer')
+    expect(entries[1]?.guildName).toBeNull()
   })
 
   it('leaves a fighter off the pacifist board', () => {

@@ -199,6 +199,37 @@ void main() {
     expect(board.last.appearance, isNotNull);
   });
 
+  test('joins profiles locally when PostgREST cannot embed them', () async {
+    final transport = FakeTransport();
+    final storage = MemorySaveStorage();
+    final service = await _signedIn(transport, storage);
+    final db = _database();
+    final save = createNewSave(db, _nowMs).copyWith(characterName: 'Hero');
+    await service.pushSave(db, save);
+    await service.submitLeaderboard(db, save);
+
+    await transport.upsert(RemoteTables.guilds, <RemoteRow>[
+      <String, Object?>{'id': 'gld_iron', 'name': 'Iron League'},
+    ]);
+    await transport.upsert(RemoteTables.profiles, <RemoteRow>[
+      <String, Object?>{'user_id': 'usr_rival', 'username': 'Rival', 'guild_id': 'gld_iron'},
+    ]);
+    await transport.upsert(RemoteTables.leaderboard, <RemoteRow>[
+      <String, Object?>{'user_id': 'usr_rival', 'board_key': boardTotalLevel, 'value': 99},
+    ], onConflict: remoteLeaderboardConflict);
+
+    transport.failOnce['select:${RemoteTables.leaderboard}'] = "Could not find a relationship between 'leaderboard_snapshots' and 'profiles' in the schema cache";
+
+    final board = await service.leaderboard(boardTotalLevel);
+    expect(board.map((entry) => entry.username), <String>['Rival', 'Hero']);
+    expect(board.first.guildName, 'Iron League');
+    expect(
+      service.takeReadProblem(),
+      isNull,
+      reason: 'the schema-cache miss is recovered, not shown',
+    );
+  });
+
   test('reports an empty board rather than throwing when a read fails', () async {
     final transport = FakeTransport();
     final storage = MemorySaveStorage();

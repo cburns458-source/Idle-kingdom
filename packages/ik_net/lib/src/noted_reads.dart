@@ -30,6 +30,13 @@ class NotedReads implements RemoteTransport {
     return held;
   }
 
+  /// Drops the held refusal when it matches [test], so a recovered read is not
+  /// reported. Leaves a different earlier failure in place.
+  void clearIf(bool Function(String reason) test) {
+    final held = _problem;
+    if (held != null && test(held)) _problem = null;
+  }
+
   @override
   Future<RemoteQueryResult> select(
     String table, {

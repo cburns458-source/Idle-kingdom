@@ -53,6 +53,9 @@ export const REMOTE_CHAT_COLUMNS =
 export const REMOTE_LEADERBOARD_COLUMNS =
   'user_id, board_key, value, value_secondary, ' +
   'profiles(username, appearance_json, guild_id, guilds(name))'
+export const REMOTE_LEADERBOARD_VALUE_COLUMNS = 'user_id, board_key, value, value_secondary'
+export const REMOTE_LEADERBOARD_PROFILE_COLUMNS = 'user_id, username, appearance_json, guild_id'
+export const REMOTE_LEADERBOARD_GUILD_COLUMNS = 'id, name'
 export const REMOTE_BOUNTY_CLAIM_COLUMNS = 'hour_key, bounty_id, user_id, username, claimed_at'
 export const REMOTE_BAZAAR_COLUMNS = 'id, kind, user_id, username, body, created_at'
 
@@ -264,6 +267,45 @@ export function leaderboardEntryFrom(
     ...(boardCarriesExperience(boardKey)
       ? { secondaryValue: num(row.value_secondary) }
       : {}),
+  }
+}
+
+export function isMissingLeaderboardProfileRelationship(reason: string | null | undefined): boolean {
+  if (!reason) return false
+  const lower = reason.toLowerCase()
+  return (
+    lower.includes('relationship') &&
+    lower.includes('leaderboard_snapshots') &&
+    lower.includes('profiles')
+  )
+}
+
+export function attachLeaderboardProfileJoins(
+  boardRows: RemoteRow[],
+  profiles: RemoteRow[],
+  guilds: RemoteRow[],
+): RemoteRow[] {
+  const guildById = new Map(guilds.map((guild) => [str(guild.id), guild]))
+  const profileByUser = new Map(profiles.map((profile) => [str(profile.user_id), profile]))
+  return boardRows.map((row) => ({
+    ...row,
+    profiles: manualLeaderboardProfile(profileByUser.get(str(row.user_id)) ?? null, guildById),
+  }))
+}
+
+function manualLeaderboardProfile(
+  profile: RemoteRow | null,
+  guildById: Map<string, RemoteRow>,
+): RemoteRow | null {
+  if (!profile) return null
+  const guildId = str(profile.guild_id)
+  const nested = profile.guilds as { name?: unknown } | null | undefined
+  const name = guildById.get(guildId)?.name ?? nested?.name ?? profile.guild_name
+  return {
+    username: profile.username,
+    appearance_json: profile.appearance_json,
+    guild_id: profile.guild_id,
+    guilds: name == null ? null : { name },
   }
 }
 

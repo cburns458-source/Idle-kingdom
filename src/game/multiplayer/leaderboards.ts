@@ -3,10 +3,15 @@ import type { PlayerSave } from '../save/types'
 import { getSession } from './auth'
 import { getLocalBackend, getSupabaseClient, multiplayerMode } from './client'
 import {
+  attachLeaderboardProfileJoins,
+  isMissingLeaderboardProfileRelationship,
   leaderboardEntriesFrom,
   leaderboardRowsFor,
   REMOTE_LEADERBOARD_COLUMNS,
   REMOTE_LEADERBOARD_CONFLICT,
+  REMOTE_LEADERBOARD_GUILD_COLUMNS,
+  REMOTE_LEADERBOARD_PROFILE_COLUMNS,
+  REMOTE_LEADERBOARD_VALUE_COLUMNS,
   REMOTE_NOT_CONFIGURED,
   REMOTE_TABLES,
   type RemoteRow,
@@ -55,9 +60,38 @@ export async function fetchLeaderboard(
     .eq('board_key', boardKey)
     .order('value', { ascending: false })
     .limit(limit)
+  if (!error && data) {
+    // The embedded profiles join is beyond what the client types can describe.
+    return leaderboardEntriesFrom(data as unknown as RemoteRow[], boardKey)
+  }
+  if (!isMissingLeaderboardProfileRelationship(error?.message)) return []
+  return fetchLeaderboardWithManualJoin(client, boardKey, limit)
+}
+
+async function fetchLeaderboardWithManualJoin(
+  client: NonNullable<ReturnType<typeof getSupabaseClient>>,
+  boardKey: MultiplayerBoardKey,
+  limit: number,
+): Promise<LeaderboardEntry[]> {
+  const { data, error } = await client
+    .from(REMOTE_TABLES.leaderboard)
+    .select(REMOTE_LEADERBOARD_VALUE_COLUMNS)
+    .eq('board_key', boardKey)
+    .order('value', { ascending: false })
+    .limit(limit)
   if (error || !data) return []
-  // The embedded profiles join is beyond what the client types can describe.
-  return leaderboardEntriesFrom(data as unknown as RemoteRow[], boardKey)
+  const [{ data: profiles }, { data: guilds }] = await Promise.all([
+    client.from(REMOTE_TABLES.profiles).select(REMOTE_LEADERBOARD_PROFILE_COLUMNS),
+    client.from('guilds').select(REMOTE_LEADERBOARD_GUILD_COLUMNS),
+  ])
+  return leaderboardEntriesFrom(
+    attachLeaderboardProfileJoins(
+      data as unknown as RemoteRow[],
+      (profiles ?? []) as unknown as RemoteRow[],
+      (guilds ?? []) as unknown as RemoteRow[],
+    ),
+    boardKey,
+  )
 }
 
 /**
