@@ -66,6 +66,19 @@ void main() {
     expectBundled(uiMapAssetPath(), 'the map button');
   });
 
+  test('every item has a unique Icon Asset Key matching its Internal Key', () {
+    final keys = <String>{};
+    for (final item in db.items) {
+      expect(item.iconAssetKey, item.internalKey, reason: '${item.itemId} (${item.displayName})');
+      expect(
+        keys.add(item.iconAssetKey!),
+        isTrue,
+        reason: '${item.itemId} reused Icon Asset Key ${item.iconAssetKey}',
+      );
+      expectBundled(itemIconPath(item), 'item ${item.itemId} (${item.displayName})');
+    }
+  });
+
   test('every skill resolves to an icon', () {
     for (final skill in db.skills) {
       expectBundled(skillIconPath(skill), 'skill ${skill.skillId} (${skill.displayName})');

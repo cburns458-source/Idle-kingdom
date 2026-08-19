@@ -118,17 +118,17 @@
       "Key": "spell_cycle_duration",
       "Value": 3600,
       "Unit": "seconds",
-      "Notes": "Deprecated — equipped spells are always active. Kept for older clients; unused by current runtime."
+      "Notes": "Deprecated \u2014 equipped spells are always active. Kept for older clients; unused by current runtime."
     },
     {
       "Key": "copy.merchant_tip",
-      "Value": "Here’s some tips about artisanry",
+      "Value": "Here\u2019s some tips about artisanry",
       "Unit": null,
       "Notes": "General-store merchant tip, first time."
     },
     {
       "Key": "copy.merchant_tip_spent",
-      "Value": "I’ve already shared what I know about artisanry.",
+      "Value": "I\u2019ve already shared what I know about artisanry.",
       "Unit": null,
       "Notes": "General-store merchant tip after it has been claimed."
     },
@@ -978,7 +978,7 @@
       "Display Name": "Spell 1",
       "Slot Group": "Spell Loadout",
       "Status": "Confirmed",
-      "Notes": "Equippable spell. Active spell cycles through slots 1–4 for one hour each."
+      "Notes": "Equippable spell. Active spell cycles through slots 1\u20134 for one hour each."
     },
     {
       "Slot ID": "SLOT-0014",
@@ -986,7 +986,7 @@
       "Display Name": "Spell 2",
       "Slot Group": "Spell Loadout",
       "Status": "Confirmed",
-      "Notes": "Equippable spell. Active spell cycles through slots 1–4 for one hour each."
+      "Notes": "Equippable spell. Active spell cycles through slots 1\u20134 for one hour each."
     },
     {
       "Slot ID": "SLOT-0015",
@@ -994,7 +994,7 @@
       "Display Name": "Spell 3",
       "Slot Group": "Spell Loadout",
       "Status": "Confirmed",
-      "Notes": "Equippable spell. Active spell cycles through slots 1–4 for one hour each."
+      "Notes": "Equippable spell. Active spell cycles through slots 1\u20134 for one hour each."
     },
     {
       "Slot ID": "SLOT-0016",
@@ -1002,7 +1002,7 @@
       "Display Name": "Spell 4",
       "Slot Group": "Spell Loadout",
       "Status": "Confirmed",
-      "Notes": "Equippable spell. Active spell cycles through slots 1–4 for one hour each."
+      "Notes": "Equippable spell. Active spell cycles through slots 1\u20134 for one hour each."
     }
   ],
   "Items": [
@@ -1018,7 +1018,7 @@
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Description": "Primary displayed currency.",
-      "Icon Asset Key": null,
+      "Icon Asset Key": "gold",
       "Notes": null,
       "Base Sell Value": 1
     },
@@ -1034,7 +1034,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "clay",
       "Notes": null,
       "Base Sell Value": 3
     },
@@ -1050,7 +1050,7 @@
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "copper_ore",
       "Notes": "Mining Proficiency 1.",
       "Base Sell Value": 6
     },
@@ -1066,7 +1066,7 @@
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "tin_ore",
       "Notes": "Mining Proficiency 5.",
       "Base Sell Value": 9
     },
@@ -1082,7 +1082,7 @@
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "iron_ore",
       "Notes": "Mining Proficiency 20.",
       "Base Sell Value": 24
     },
@@ -1098,7 +1098,7 @@
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "coal",
       "Notes": "Mining Proficiency 35.",
       "Base Sell Value": 55
     },
@@ -1114,7 +1114,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "silver_ore",
       "Notes": "Exact Proficiency Level TBD.",
       "Base Sell Value": 110
     },
@@ -1130,7 +1130,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "gold_ore",
       "Notes": "Exact Proficiency Level TBD.",
       "Base Sell Value": 225
     },
@@ -1146,7 +1146,7 @@
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "titanium_ore",
       "Notes": "Mining Proficiency 60.",
       "Base Sell Value": 420
     },
@@ -1162,7 +1162,7 @@
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "tungsten_ore",
       "Notes": "Mining Proficiency 70.",
       "Base Sell Value": 800
     },
@@ -1178,7 +1178,7 @@
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "essence",
       "Notes": "Low-level Wizard's Tower Mining Action; awards below-normal Mining XP and secondary Arcana XP.",
       "Base Sell Value": 1500
     },
@@ -1194,7 +1194,7 @@
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "sapphire",
       "Notes": "Rare mining reward and Goblin Chief reward concept.",
       "Base Sell Value": 2500
     },
@@ -1210,7 +1210,7 @@
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "emerald",
       "Notes": "Rare mining reward and Goblin Chief reward concept.",
       "Base Sell Value": 6000
     },
@@ -1226,7 +1226,7 @@
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "ruby",
       "Notes": "Rare mining reward and Goblin Chief reward concept.",
       "Base Sell Value": 18000
     },
@@ -1242,7 +1242,7 @@
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "cedar_log",
       "Notes": null,
       "Base Sell Value": 5
     },
@@ -1258,7 +1258,7 @@
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "oak_log",
       "Notes": null,
       "Base Sell Value": 18
     },
@@ -1274,7 +1274,7 @@
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "poplar_log",
       "Notes": null,
       "Base Sell Value": 50
     },
@@ -1290,7 +1290,7 @@
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "maple_log",
       "Notes": null,
       "Base Sell Value": 140
     },
@@ -1306,7 +1306,7 @@
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "mahogany_log",
       "Notes": null,
       "Base Sell Value": 600
     },
@@ -1322,7 +1322,7 @@
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "potato",
       "Notes": null,
       "Base Sell Value": 12
     },
@@ -1338,7 +1338,7 @@
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "golden_spud",
       "Notes": "Awarded by a rare Action whose display name remains Potato.",
       "Base Sell Value": 5000
     },
@@ -1354,7 +1354,7 @@
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "carrot",
       "Notes": null,
       "Base Sell Value": 15
     },
@@ -1370,7 +1370,7 @@
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "wild_berries",
       "Notes": "Can be equipped as Food and deals damage instead of healing.",
       "Base Sell Value": 45
     },
@@ -1386,7 +1386,7 @@
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "grapes",
       "Notes": null,
       "Base Sell Value": 30
     },
@@ -1402,7 +1402,7 @@
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "wild_roots",
       "Notes": null,
       "Base Sell Value": 3
     },
@@ -1418,7 +1418,7 @@
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "fernleaf",
       "Notes": null,
       "Base Sell Value": 10
     },
@@ -1434,7 +1434,7 @@
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "mosstole",
       "Notes": null,
       "Base Sell Value": 35
     },
@@ -1450,7 +1450,7 @@
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "augur_weed",
       "Notes": null,
       "Base Sell Value": 180
     },
@@ -1466,7 +1466,7 @@
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "rabbit_s_foot",
       "Notes": null,
       "Base Sell Value": 150
     },
@@ -1482,7 +1482,7 @@
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "pheasant_feathers",
       "Notes": null,
       "Base Sell Value": 90
     },
@@ -1498,7 +1498,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "bull_horns",
       "Notes": null,
       "Base Sell Value": 1200
     },
@@ -1514,7 +1514,7 @@
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "elk_horns",
       "Notes": null,
       "Base Sell Value": 450
     },
@@ -1530,7 +1530,7 @@
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "butterfly_wing",
       "Notes": null,
       "Base Sell Value": 8
     },
@@ -1546,7 +1546,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "boar_tusk",
       "Notes": null,
       "Base Sell Value": 650
     },
@@ -1562,7 +1562,7 @@
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "animal_tendons",
       "Notes": "Approved Bowstring material.",
       "Base Sell Value": 120
     },
@@ -1578,7 +1578,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "leather",
       "Notes": null,
       "Base Sell Value": 90
     },
@@ -1594,7 +1594,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "dragon_scale",
       "Notes": null,
       "Base Sell Value": 50000
     },
@@ -1610,7 +1610,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "raw_crawfish",
       "Notes": null,
       "Base Sell Value": 4
     },
@@ -1626,7 +1626,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "raw_trout",
       "Notes": null,
       "Base Sell Value": 14
     },
@@ -1642,7 +1642,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "raw_salmon",
       "Notes": null,
       "Base Sell Value": 38
     },
@@ -1658,7 +1658,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "raw_tuna",
       "Notes": null,
       "Base Sell Value": 95
     },
@@ -1674,7 +1674,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "raw_shark",
       "Notes": null,
       "Base Sell Value": 450
     },
@@ -1690,7 +1690,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "raw_rabbit",
       "Notes": null,
       "Base Sell Value": 10
     },
@@ -1706,7 +1706,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "raw_pheasant",
       "Notes": null,
       "Base Sell Value": 42
     },
@@ -1722,7 +1722,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "beef",
       "Notes": null,
       "Base Sell Value": 16
     },
@@ -1738,7 +1738,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "venison",
       "Notes": null,
       "Base Sell Value": 95
     },
@@ -1754,7 +1754,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "baked_potato",
       "Notes": null,
       "Base Sell Value": 8
     },
@@ -1770,7 +1770,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "cooked_crawfish",
       "Notes": null,
       "Base Sell Value": 10
     },
@@ -1786,7 +1786,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "cooked_trout",
       "Notes": null,
       "Base Sell Value": 26
     },
@@ -1802,7 +1802,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "cooked_salmon",
       "Notes": null,
       "Base Sell Value": 70
     },
@@ -1818,7 +1818,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "cooked_tuna",
       "Notes": null,
       "Base Sell Value": 220
     },
@@ -1834,7 +1834,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "cooked_shark",
       "Notes": null,
       "Base Sell Value": 900
     },
@@ -1850,7 +1850,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "cooked_rabbit",
       "Notes": null,
       "Base Sell Value": 38
     },
@@ -1866,7 +1866,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "cooked_pheasant",
       "Notes": null,
       "Base Sell Value": 100
     },
@@ -1882,7 +1882,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "cooked_beef",
       "Notes": null,
       "Base Sell Value": 45
     },
@@ -1898,7 +1898,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "cooked_venison",
       "Notes": null,
       "Base Sell Value": 220
     },
@@ -1914,7 +1914,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "pheasant_stew",
       "Notes": null,
       "Base Sell Value": 180
     },
@@ -1930,7 +1930,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "venison_stew",
       "Notes": null,
       "Base Sell Value": 480
     },
@@ -1946,7 +1946,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": "Increases Drop Chance for defined Actions; provisional direction is to double the affected rare-drop chance.",
-      "Icon Asset Key": null,
+      "Icon Asset Key": "luck_potion",
       "Notes": null,
       "Base Sell Value": 1000
     },
@@ -1962,7 +1962,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": "Reduces Standard Production time; provisional target 10%; does not affect Alchemy under the current concept.",
-      "Icon Asset Key": null,
+      "Icon Asset Key": "speed_potion",
       "Notes": null,
       "Base Sell Value": 400
     },
@@ -1978,7 +1978,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": "Increases applicable damage; provisional target 5%.",
-      "Icon Asset Key": null,
+      "Icon Asset Key": "strength_potion",
       "Notes": null,
       "Base Sell Value": 220
     },
@@ -1994,7 +1994,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": "Deals damage equal to 10% of the enemy's maximum HP for the eligible Combat encounter.",
-      "Icon Asset Key": null,
+      "Icon Asset Key": "poison_potion",
       "Notes": null,
       "Base Sell Value": 220
     },
@@ -2010,7 +2010,7 @@
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "copper_bar",
       "Notes": "Proficiency 1. Recipe: Copper Ore",
       "Base Sell Value": 14
     },
@@ -2026,7 +2026,7 @@
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "bronze_bar",
       "Notes": "Proficiency 5. Recipe: Copper Ore + Tin Ore",
       "Base Sell Value": 24
     },
@@ -2042,7 +2042,7 @@
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "iron_bar",
       "Notes": "Proficiency 20. Recipe: Iron Ore",
       "Base Sell Value": 55
     },
@@ -2058,7 +2058,7 @@
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "steel_bar",
       "Notes": "Proficiency 35. Recipe: Iron Ore + Coal",
       "Base Sell Value": 135
     },
@@ -2074,7 +2074,7 @@
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "reinforced_steel_bar",
       "Notes": "Proficiency 45. Recipe: Steel Bar + Coal",
       "Base Sell Value": 300
     },
@@ -2090,7 +2090,7 @@
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "titanium_bar",
       "Notes": "Proficiency 60. Recipe: Titanium Ore + Tin Ore",
       "Base Sell Value": 950
     },
@@ -2106,7 +2106,7 @@
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "tungsten_bar",
       "Notes": "Proficiency 70. Recipe: Copper Ore + Iron Ore + Tungsten Ore",
       "Base Sell Value": 1850
     },
@@ -2122,7 +2122,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "silver_bar",
       "Notes": "Silver Ore; exact level TBD",
       "Base Sell Value": 250
     },
@@ -2138,7 +2138,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "gold_bar",
       "Notes": "Gold Ore; exact level TBD",
       "Base Sell Value": 520
     },
@@ -2154,7 +2154,7 @@
       "Status": "Proposed",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "bowstring",
       "Notes": null,
       "Base Sell Value": 65
     },
@@ -2170,7 +2170,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "leather_straps",
       "Notes": null,
       "Base Sell Value": 30
     },
@@ -2186,7 +2186,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "cut_sapphire",
       "Notes": null,
       "Base Sell Value": 3500
     },
@@ -2202,7 +2202,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "cut_emerald",
       "Notes": null,
       "Base Sell Value": 8500
     },
@@ -2218,7 +2218,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "cut_ruby",
       "Notes": null,
       "Base Sell Value": 25000
     },
@@ -2234,7 +2234,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "gem_setting",
       "Notes": null,
       "Base Sell Value": 120
     },
@@ -2250,7 +2250,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "chain",
       "Notes": null,
       "Base Sell Value": 80
     },
@@ -2266,7 +2266,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "clasp",
       "Notes": null,
       "Base Sell Value": 40
     },
@@ -2282,7 +2282,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "cloth_wrap",
       "Notes": null,
       "Base Sell Value": 30
     },
@@ -2298,7 +2298,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "plant_fiber_component",
       "Notes": null,
       "Base Sell Value": 8
     },
@@ -2314,7 +2314,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "steel_spear_head",
       "Notes": null,
       "Base Sell Value": 500
     },
@@ -2330,7 +2330,7 @@
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Description": "Created through Crafting and consumed by Arcana to apply an enchantment.",
-      "Icon Asset Key": null,
+      "Icon Asset Key": "enchanting_tablet",
       "Notes": null,
       "Base Sell Value": 2500
     },
@@ -2346,7 +2346,7 @@
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Description": "Created through Crafting and consumed by Arcana to create or unlock a magical project.",
-      "Icon Asset Key": null,
+      "Icon Asset Key": "spell_tablet",
       "Notes": null,
       "Base Sell Value": 5000
     },
@@ -2362,7 +2362,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "wooden_axe",
       "Notes": null,
       "Base Sell Value": 15
     },
@@ -2378,7 +2378,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "wooden_hatchet",
       "Notes": null,
       "Base Sell Value": 15
     },
@@ -2394,7 +2394,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "wooden_pickaxe",
       "Notes": null,
       "Base Sell Value": 15
     },
@@ -2410,7 +2410,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "wooden_fishing_rod",
       "Notes": null,
       "Base Sell Value": 15
     },
@@ -2426,7 +2426,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "fishing_net",
       "Notes": null,
       "Base Sell Value": 500
     },
@@ -2442,7 +2442,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "net",
       "Notes": null,
       "Base Sell Value": 500
     },
@@ -2458,7 +2458,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "sling",
       "Notes": null,
       "Base Sell Value": 500
     },
@@ -2474,7 +2474,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "copper_hatchet",
       "Notes": null,
       "Base Sell Value": 100
     },
@@ -2490,7 +2490,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "copper_pickaxe",
       "Notes": null,
       "Base Sell Value": 100
     },
@@ -2506,7 +2506,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "copper_fishing_rod",
       "Notes": null,
       "Base Sell Value": 100
     },
@@ -2522,7 +2522,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "copper_harpoon",
       "Notes": null,
       "Base Sell Value": 100
     },
@@ -2538,7 +2538,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "iron_hatchet",
       "Notes": null,
       "Base Sell Value": 900
     },
@@ -2554,7 +2554,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "iron_pickaxe",
       "Notes": null,
       "Base Sell Value": 900
     },
@@ -2570,7 +2570,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "iron_fishing_rod",
       "Notes": null,
       "Base Sell Value": 900
     },
@@ -2586,7 +2586,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "iron_harpoon",
       "Notes": null,
       "Base Sell Value": 900
     },
@@ -2602,7 +2602,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "steel_hatchet",
       "Notes": null,
       "Base Sell Value": 4500
     },
@@ -2618,7 +2618,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "steel_pickaxe",
       "Notes": null,
       "Base Sell Value": 4500
     },
@@ -2634,7 +2634,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "steel_fishing_rod",
       "Notes": null,
       "Base Sell Value": 4500
     },
@@ -2650,7 +2650,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "steel_harpoon",
       "Notes": null,
       "Base Sell Value": 4500
     },
@@ -2666,7 +2666,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "goblin_staff",
       "Notes": null,
       "Base Sell Value": 500
     },
@@ -2682,7 +2682,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "dwarven_warhammer",
       "Notes": null,
       "Base Sell Value": 500
     },
@@ -2698,7 +2698,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "wooden_sword",
       "Notes": null,
       "Base Sell Value": 15
     },
@@ -2714,7 +2714,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "wooden_dagger",
       "Notes": null,
       "Base Sell Value": 15
     },
@@ -2730,7 +2730,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "iron_sword",
       "Notes": null,
       "Base Sell Value": 900
     },
@@ -2746,7 +2746,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "iron_dagger",
       "Notes": null,
       "Base Sell Value": 900
     },
@@ -2762,7 +2762,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "steel_sword",
       "Notes": null,
       "Base Sell Value": 4500
     },
@@ -2778,7 +2778,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "steel_dagger",
       "Notes": null,
       "Base Sell Value": 4500
     },
@@ -2794,7 +2794,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "copper_axe",
       "Notes": null,
       "Base Sell Value": 100
     },
@@ -2810,7 +2810,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "iron_axe",
       "Notes": null,
       "Base Sell Value": 900
     },
@@ -2826,7 +2826,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "steel_axe",
       "Notes": null,
       "Base Sell Value": 4500
     },
@@ -2842,7 +2842,7 @@
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "regular_bow",
       "Notes": null,
       "Base Sell Value": 500
     },
@@ -2858,7 +2858,7 @@
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "cedar_bow",
       "Notes": null,
       "Base Sell Value": 500
     },
@@ -2874,7 +2874,7 @@
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "oak_bow",
       "Notes": null,
       "Base Sell Value": 500
     },
@@ -2890,7 +2890,7 @@
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "poplar_bow",
       "Notes": null,
       "Base Sell Value": 500
     },
@@ -2906,7 +2906,7 @@
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "maple_bow",
       "Notes": null,
       "Base Sell Value": 500
     },
@@ -2922,7 +2922,7 @@
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "mahogany_bow",
       "Notes": null,
       "Base Sell Value": 500
     },
@@ -2938,7 +2938,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "boar_spear",
       "Notes": null,
       "Base Sell Value": 500
     },
@@ -2954,7 +2954,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "steel_battleaxe",
       "Notes": null,
       "Base Sell Value": 4500
     },
@@ -2970,7 +2970,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "warhammer",
       "Notes": null,
       "Base Sell Value": 500
     },
@@ -2986,7 +2986,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "enchanted_sword",
       "Notes": null,
       "Base Sell Value": 500
     },
@@ -3002,7 +3002,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "wooden_shield",
       "Notes": null,
       "Base Sell Value": 15
     },
@@ -3018,7 +3018,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "iron_shield",
       "Notes": null,
       "Base Sell Value": 900
     },
@@ -3034,7 +3034,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "steel_shield",
       "Notes": null,
       "Base Sell Value": 4500
     },
@@ -3050,7 +3050,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "wizard_s_tome",
       "Notes": null,
       "Base Sell Value": 500
     },
@@ -3066,7 +3066,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "iron_helmet",
       "Notes": null,
       "Base Sell Value": 900
     },
@@ -3082,7 +3082,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "iron_chestplate",
       "Notes": null,
       "Base Sell Value": 900
     },
@@ -3098,7 +3098,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "iron_platelegs",
       "Notes": null,
       "Base Sell Value": 900
     },
@@ -3114,7 +3114,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "iron_boots",
       "Notes": null,
       "Base Sell Value": 900
     },
@@ -3130,7 +3130,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "iron_gloves",
       "Notes": null,
       "Base Sell Value": 900
     },
@@ -3146,7 +3146,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "steel_helmet",
       "Notes": null,
       "Base Sell Value": 4500
     },
@@ -3162,7 +3162,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "steel_chestplate",
       "Notes": null,
       "Base Sell Value": 4500
     },
@@ -3178,7 +3178,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "steel_platelegs",
       "Notes": null,
       "Base Sell Value": 4500
     },
@@ -3194,7 +3194,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "steel_boots",
       "Notes": null,
       "Base Sell Value": 4500
     },
@@ -3210,7 +3210,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "steel_gloves",
       "Notes": null,
       "Base Sell Value": 4500
     },
@@ -3226,7 +3226,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "chef_s_hat",
       "Notes": null,
       "Base Sell Value": 500
     },
@@ -3242,7 +3242,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "wizard_s_hat",
       "Notes": null,
       "Base Sell Value": 500
     },
@@ -3258,7 +3258,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "falconer_s_gloves",
       "Notes": null,
       "Base Sell Value": 500
     },
@@ -3274,7 +3274,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "bull_horn_helmet",
       "Notes": null,
       "Base Sell Value": 500
     },
@@ -3290,7 +3290,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "explorer_s_backpack",
       "Notes": null,
       "Base Sell Value": 500
     },
@@ -3306,7 +3306,7 @@
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "silver_necklace",
       "Notes": null,
       "Base Sell Value": 500
     },
@@ -3322,7 +3322,7 @@
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "silver_ring",
       "Notes": null,
       "Base Sell Value": 500
     },
@@ -3338,7 +3338,7 @@
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "gold_necklace",
       "Notes": null,
       "Base Sell Value": 500
     },
@@ -3354,7 +3354,7 @@
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "gold_ring",
       "Notes": null,
       "Base Sell Value": 500
     },
@@ -3370,7 +3370,7 @@
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "sapphire_necklace",
       "Notes": null,
       "Base Sell Value": 500
     },
@@ -3386,7 +3386,7 @@
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "sapphire_ring",
       "Notes": null,
       "Base Sell Value": 500
     },
@@ -3402,7 +3402,7 @@
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "emerald_necklace",
       "Notes": null,
       "Base Sell Value": 500
     },
@@ -3418,7 +3418,7 @@
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "emerald_ring",
       "Notes": null,
       "Base Sell Value": 500
     },
@@ -3434,7 +3434,7 @@
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "ruby_necklace",
       "Notes": null,
       "Base Sell Value": 500
     },
@@ -3450,7 +3450,7 @@
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "ruby_ring",
       "Notes": null,
       "Base Sell Value": 500
     },
@@ -3466,7 +3466,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "lucky_necklace",
       "Notes": null,
       "Base Sell Value": 500
     },
@@ -3482,7 +3482,7 @@
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "old_boots",
       "Notes": null,
       "Base Sell Value": 25
     },
@@ -3498,7 +3498,7 @@
       "Status": "Proposed",
       "Release Phase": "Expansion",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "aether_equipment",
       "Notes": null,
       "Base Sell Value": 100000
     },
@@ -3514,7 +3514,7 @@
       "Status": "Proposed",
       "Release Phase": "Expansion",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "moonstone_ore",
       "Notes": null,
       "Base Sell Value": 3500
     },
@@ -3530,7 +3530,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "raw_baby_giant_squid",
       "Notes": null,
       "Base Sell Value": 1800
     },
@@ -3546,7 +3546,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "cooked_baby_giant_squid",
       "Notes": null,
       "Base Sell Value": 4000
     },
@@ -3562,7 +3562,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "raw_duck",
       "Notes": null,
       "Base Sell Value": 24
     },
@@ -3578,7 +3578,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "raw_boar_meat",
       "Notes": null,
       "Base Sell Value": 80
     },
@@ -3594,7 +3594,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "boar_hide",
       "Notes": null,
       "Base Sell Value": 180
     },
@@ -3610,7 +3610,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "goat_hide",
       "Notes": null,
       "Base Sell Value": 210
     },
@@ -3626,7 +3626,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "great_stag_hide",
       "Notes": null,
       "Base Sell Value": 900
     },
@@ -3642,7 +3642,7 @@
       "Status": "Planned",
       "Release Phase": "Expansion",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "moonhorn_hide",
       "Notes": null,
       "Base Sell Value": 3500
     },
@@ -3658,7 +3658,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "great_antler",
       "Notes": null,
       "Base Sell Value": 4500
     },
@@ -3674,7 +3674,7 @@
       "Status": "Planned",
       "Release Phase": "Expansion",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "moonhorn_antler",
       "Notes": null,
       "Base Sell Value": 20000
     },
@@ -3690,7 +3690,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "troll_tooth",
       "Notes": null,
       "Base Sell Value": 1200
     },
@@ -3706,7 +3706,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "ancient_sap",
       "Notes": null,
       "Base Sell Value": 2200
     },
@@ -3722,7 +3722,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "ent_bark",
       "Notes": null,
       "Base Sell Value": 1800
     },
@@ -3738,7 +3738,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "ancient_heartwood",
       "Notes": null,
       "Base Sell Value": 12000
     },
@@ -3754,7 +3754,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "corrupted_sap",
       "Notes": null,
       "Base Sell Value": 7500
     },
@@ -3770,7 +3770,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "corrupted_heartwood",
       "Notes": null,
       "Base Sell Value": 22000
     },
@@ -3786,7 +3786,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "moonblossom",
       "Notes": null,
       "Base Sell Value": 850
     },
@@ -3802,7 +3802,7 @@
       "Status": "Planned",
       "Release Phase": "Expansion",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "starroot",
       "Notes": null,
       "Base Sell Value": 3000
     },
@@ -3818,7 +3818,7 @@
       "Status": "Planned",
       "Release Phase": "Expansion",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "ancient_alloy",
       "Notes": null,
       "Base Sell Value": 7500
     },
@@ -3834,7 +3834,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "minor_luck_potion",
       "Notes": null,
       "Base Sell Value": 75
     },
@@ -3850,7 +3850,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "minor_strength_potion",
       "Notes": null,
       "Base Sell Value": 140
     },
@@ -3866,7 +3866,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "greater_strength_potion",
       "Notes": null,
       "Base Sell Value": 1800
     },
@@ -3882,7 +3882,7 @@
       "Status": "Planned",
       "Release Phase": "Expansion",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "masterwork_draught",
       "Notes": null,
       "Base Sell Value": 7500
     },
@@ -3898,7 +3898,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "cedar_timber",
       "Notes": null,
       "Base Sell Value": 18
     },
@@ -3914,7 +3914,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "oak_timber",
       "Notes": null,
       "Base Sell Value": 55
     },
@@ -3930,7 +3930,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "poplar_timber",
       "Notes": null,
       "Base Sell Value": 140
     },
@@ -3946,7 +3946,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "maple_timber",
       "Notes": null,
       "Base Sell Value": 350
     },
@@ -3962,7 +3962,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "mahogany_timber",
       "Notes": null,
       "Base Sell Value": 1200
     },
@@ -3978,7 +3978,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "ancient_timber",
       "Notes": null,
       "Base Sell Value": 2500
     },
@@ -3994,7 +3994,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "bronze_hatchet",
       "Notes": "Requires the corresponding skill tier.",
       "Base Sell Value": 225
     },
@@ -4010,7 +4010,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "bronze_pickaxe",
       "Notes": "Requires the corresponding skill tier.",
       "Base Sell Value": 225
     },
@@ -4026,7 +4026,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "bronze_fishing_rod",
       "Notes": "Requires the corresponding skill tier.",
       "Base Sell Value": 225
     },
@@ -4042,7 +4042,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "bronze_harpoon",
       "Notes": "Requires the corresponding skill tier.",
       "Base Sell Value": 225
     },
@@ -4058,7 +4058,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "bronze_sword",
       "Notes": null,
       "Base Sell Value": 330
     },
@@ -4074,7 +4074,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "bronze_dagger",
       "Notes": null,
       "Base Sell Value": 330
     },
@@ -4090,7 +4090,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "bronze_axe",
       "Notes": null,
       "Base Sell Value": 330
     },
@@ -4106,7 +4106,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "bronze_shield",
       "Notes": null,
       "Base Sell Value": 360
     },
@@ -4122,7 +4122,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "bronze_helmet",
       "Notes": null,
       "Base Sell Value": 270
     },
@@ -4138,7 +4138,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "bronze_chestplate",
       "Notes": null,
       "Base Sell Value": 270
     },
@@ -4154,7 +4154,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "bronze_platelegs",
       "Notes": null,
       "Base Sell Value": 270
     },
@@ -4170,7 +4170,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "bronze_boots",
       "Notes": null,
       "Base Sell Value": 270
     },
@@ -4186,7 +4186,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "bronze_gloves",
       "Notes": null,
       "Base Sell Value": 270
     },
@@ -4202,7 +4202,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "reinforced_steel_hatchet",
       "Notes": "Requires the corresponding skill tier.",
       "Base Sell Value": 1800
     },
@@ -4218,7 +4218,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "reinforced_steel_pickaxe",
       "Notes": "Requires the corresponding skill tier.",
       "Base Sell Value": 1800
     },
@@ -4234,7 +4234,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "reinforced_steel_fishing_rod",
       "Notes": "Requires the corresponding skill tier.",
       "Base Sell Value": 1800
     },
@@ -4250,7 +4250,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "reinforced_steel_harpoon",
       "Notes": "Requires the corresponding skill tier.",
       "Base Sell Value": 1800
     },
@@ -4266,7 +4266,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "reinforced_steel_sword",
       "Notes": null,
       "Base Sell Value": 2640
     },
@@ -4282,7 +4282,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "reinforced_steel_dagger",
       "Notes": null,
       "Base Sell Value": 2640
     },
@@ -4298,7 +4298,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "reinforced_steel_axe",
       "Notes": null,
       "Base Sell Value": 2640
     },
@@ -4314,7 +4314,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "reinforced_steel_shield",
       "Notes": null,
       "Base Sell Value": 2880
     },
@@ -4330,7 +4330,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "reinforced_steel_helmet",
       "Notes": null,
       "Base Sell Value": 2160
     },
@@ -4346,7 +4346,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "reinforced_steel_chestplate",
       "Notes": null,
       "Base Sell Value": 2160
     },
@@ -4362,7 +4362,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "reinforced_steel_platelegs",
       "Notes": null,
       "Base Sell Value": 2160
     },
@@ -4378,7 +4378,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "reinforced_steel_boots",
       "Notes": null,
       "Base Sell Value": 2160
     },
@@ -4394,7 +4394,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "reinforced_steel_gloves",
       "Notes": null,
       "Base Sell Value": 2160
     },
@@ -4410,7 +4410,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "titanium_hatchet",
       "Notes": "Requires the corresponding skill tier.",
       "Base Sell Value": 3600
     },
@@ -4426,7 +4426,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "titanium_pickaxe",
       "Notes": "Requires the corresponding skill tier.",
       "Base Sell Value": 3600
     },
@@ -4442,7 +4442,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "titanium_fishing_rod",
       "Notes": "Requires the corresponding skill tier.",
       "Base Sell Value": 3600
     },
@@ -4458,7 +4458,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "titanium_harpoon",
       "Notes": "Requires the corresponding skill tier.",
       "Base Sell Value": 3600
     },
@@ -4474,7 +4474,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "titanium_sword",
       "Notes": null,
       "Base Sell Value": 5280
     },
@@ -4490,7 +4490,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "titanium_dagger",
       "Notes": null,
       "Base Sell Value": 5280
     },
@@ -4506,7 +4506,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "titanium_axe",
       "Notes": null,
       "Base Sell Value": 5280
     },
@@ -4522,7 +4522,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "titanium_shield",
       "Notes": null,
       "Base Sell Value": 5760
     },
@@ -4538,7 +4538,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "titanium_helmet",
       "Notes": null,
       "Base Sell Value": 4320
     },
@@ -4554,7 +4554,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "titanium_chestplate",
       "Notes": null,
       "Base Sell Value": 4320
     },
@@ -4570,7 +4570,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "titanium_platelegs",
       "Notes": null,
       "Base Sell Value": 4320
     },
@@ -4586,7 +4586,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "titanium_boots",
       "Notes": null,
       "Base Sell Value": 4320
     },
@@ -4602,7 +4602,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "titanium_gloves",
       "Notes": null,
       "Base Sell Value": 4320
     },
@@ -4618,7 +4618,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "tungsten_hatchet",
       "Notes": "Requires the corresponding skill tier.",
       "Base Sell Value": 6750
     },
@@ -4634,7 +4634,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "tungsten_pickaxe",
       "Notes": "Requires the corresponding skill tier.",
       "Base Sell Value": 6750
     },
@@ -4650,7 +4650,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "tungsten_fishing_rod",
       "Notes": "Requires the corresponding skill tier.",
       "Base Sell Value": 6750
     },
@@ -4666,7 +4666,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "tungsten_harpoon",
       "Notes": "Requires the corresponding skill tier.",
       "Base Sell Value": 6750
     },
@@ -4682,7 +4682,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "tungsten_sword",
       "Notes": null,
       "Base Sell Value": 9900
     },
@@ -4698,7 +4698,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "tungsten_dagger",
       "Notes": null,
       "Base Sell Value": 9900
     },
@@ -4714,7 +4714,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "tungsten_axe",
       "Notes": null,
       "Base Sell Value": 9900
     },
@@ -4730,7 +4730,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "tungsten_shield",
       "Notes": null,
       "Base Sell Value": 10800
     },
@@ -4746,7 +4746,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "tungsten_helmet",
       "Notes": null,
       "Base Sell Value": 8100
     },
@@ -4762,7 +4762,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "tungsten_chestplate",
       "Notes": null,
       "Base Sell Value": 8100
     },
@@ -4778,7 +4778,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "tungsten_platelegs",
       "Notes": null,
       "Base Sell Value": 8100
     },
@@ -4794,7 +4794,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "tungsten_boots",
       "Notes": null,
       "Base Sell Value": 8100
     },
@@ -4810,7 +4810,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "tungsten_gloves",
       "Notes": null,
       "Base Sell Value": 8100
     },
@@ -4826,7 +4826,7 @@
       "Status": "Planned",
       "Release Phase": "Expansion",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "ancient_alloy_hatchet",
       "Notes": "Requires the corresponding skill tier.",
       "Base Sell Value": 18000
     },
@@ -4842,7 +4842,7 @@
       "Status": "Planned",
       "Release Phase": "Expansion",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "ancient_alloy_pickaxe",
       "Notes": "Requires the corresponding skill tier.",
       "Base Sell Value": 18000
     },
@@ -4858,7 +4858,7 @@
       "Status": "Planned",
       "Release Phase": "Expansion",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "ancient_alloy_fishing_rod",
       "Notes": "Requires the corresponding skill tier.",
       "Base Sell Value": 18000
     },
@@ -4874,7 +4874,7 @@
       "Status": "Planned",
       "Release Phase": "Expansion",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "ancient_alloy_harpoon",
       "Notes": "Requires the corresponding skill tier.",
       "Base Sell Value": 18000
     },
@@ -4890,7 +4890,7 @@
       "Status": "Planned",
       "Release Phase": "Expansion",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "ancient_alloy_sword",
       "Notes": null,
       "Base Sell Value": 26400
     },
@@ -4906,7 +4906,7 @@
       "Status": "Planned",
       "Release Phase": "Expansion",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "ancient_alloy_dagger",
       "Notes": null,
       "Base Sell Value": 26400
     },
@@ -4922,7 +4922,7 @@
       "Status": "Planned",
       "Release Phase": "Expansion",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "ancient_alloy_axe",
       "Notes": null,
       "Base Sell Value": 26400
     },
@@ -4938,7 +4938,7 @@
       "Status": "Planned",
       "Release Phase": "Expansion",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "ancient_alloy_shield",
       "Notes": null,
       "Base Sell Value": 28800
     },
@@ -4954,7 +4954,7 @@
       "Status": "Planned",
       "Release Phase": "Expansion",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "ancient_alloy_helmet",
       "Notes": null,
       "Base Sell Value": 21600
     },
@@ -4970,7 +4970,7 @@
       "Status": "Planned",
       "Release Phase": "Expansion",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "ancient_alloy_chestplate",
       "Notes": null,
       "Base Sell Value": 21600
     },
@@ -4986,7 +4986,7 @@
       "Status": "Planned",
       "Release Phase": "Expansion",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "ancient_alloy_platelegs",
       "Notes": null,
       "Base Sell Value": 21600
     },
@@ -5002,7 +5002,7 @@
       "Status": "Planned",
       "Release Phase": "Expansion",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "ancient_alloy_boots",
       "Notes": null,
       "Base Sell Value": 21600
     },
@@ -5018,7 +5018,7 @@
       "Status": "Planned",
       "Release Phase": "Expansion",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "ancient_alloy_gloves",
       "Notes": null,
       "Base Sell Value": 21600
     },
@@ -5034,7 +5034,7 @@
       "Status": "Planned",
       "Release Phase": "Expansion",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "ancient_bow",
       "Notes": null,
       "Base Sell Value": 300000
     },
@@ -5050,7 +5050,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "bone_shard",
       "Notes": null,
       "Base Sell Value": 60
     },
@@ -5066,7 +5066,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "grave_cloth",
       "Notes": null,
       "Base Sell Value": 90
     },
@@ -5082,7 +5082,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "pirate_insignia",
       "Notes": null,
       "Base Sell Value": 1500
     },
@@ -5098,7 +5098,7 @@
       "Status": "Planned",
       "Release Phase": "Expansion",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "shade_essence",
       "Notes": null,
       "Base Sell Value": 8000
     },
@@ -5114,7 +5114,7 @@
       "Status": "Planned",
       "Release Phase": "Expansion",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "ancient_binding",
       "Notes": null,
       "Base Sell Value": 9000
     },
@@ -5130,7 +5130,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "herb_1",
       "Notes": "Current Harvesting resource defined by the single-player demo game bible.",
       "Base Sell Value": null
     },
@@ -5146,7 +5146,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "herb_2",
       "Notes": "Current Harvesting resource defined by the single-player demo game bible.",
       "Base Sell Value": null
     },
@@ -5162,7 +5162,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "oak_shaft",
       "Notes": "Required by the Boar Spear project; acquisition method is not fixed in the game bible.",
       "Base Sell Value": null
     },
@@ -5178,7 +5178,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "leather_grip",
       "Notes": "Required by the Boar Spear project; acquisition method is not fixed in the game bible.",
       "Base Sell Value": null
     },
@@ -5194,7 +5194,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": "A prepared Strength spell. Equip it in a spell slot to grant +10% damage range while equipped. Duplicate Strength spells stack.",
-      "Icon Asset Key": null,
+      "Icon Asset Key": "strength_spell",
       "Notes": "Crafted at the Arcana Facility. May fill any spell slot; duplicates allowed.",
       "Base Sell Value": 8000
     },
@@ -5210,7 +5210,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": "A prepared Abundance spell. While equipped, each successful item drop has a chance to grant double quantity. Duplicate Abundance spells stack.",
-      "Icon Asset Key": null,
+      "Icon Asset Key": "abundance_spell",
       "Notes": "Crafted at the Arcana Facility. May fill any spell slot; duplicates stack additively.",
       "Base Sell Value": 12000
     },
@@ -5225,7 +5225,7 @@
       "Associated Skill ID": null,
       "Equipment Slot ID": null,
       "Base Sell Value": 150,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "cosmetic_travelers_tunic",
       "Description": "A cozy, well-worn medieval traveler's outfit.",
       "Functional / Source Tags": "cosmetic; outfit",
       "Notes": "Default starter Wardrobe outfit, granted and equipped automatically."
@@ -5242,7 +5242,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": "Simple level-1 gloves. Combat bonuses are still being written.",
-      "Icon Asset Key": null,
+      "Icon Asset Key": "leather_gloves",
       "Notes": "Owner will fill combat data (HP bonus / damage reduction).",
       "Base Sell Value": 50
     },
@@ -5258,7 +5258,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": "A worn purse the barracks guards took from a beggar.",
-      "Icon Asset Key": null,
+      "Icon Asset Key": "stolen_coin_purse",
       "Notes": "Delivered to the Beggar for QST-0003 The Missing Purse.",
       "Base Sell Value": 0
     },
@@ -5273,7 +5273,7 @@
       "Associated Skill ID": null,
       "Equipment Slot ID": null,
       "Base Sell Value": 0,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "beggars_hood",
       "Description": "A threadbare hood, given in thanks.",
       "Functional / Source Tags": "cosmetic; outfit",
       "Notes": "Wardrobe outfit granted by QST-0003 The Missing Purse."
@@ -6826,7 +6826,7 @@
       "Action Time Reduction %": null,
       "Capabilities / Effects": "artisanry_output; special_effect; +15% relative Drop Chance",
       "Status": "Planned",
-      "Notes": "Special-effect jewelry — not Arcana-enchantable. +15% relative drop chance (stacks additively with luck potions)."
+      "Notes": "Special-effect jewelry \u2014 not Arcana-enchantable. +15% relative drop chance (stacks additively with luck potions)."
     },
     {
       "Equipment ID": "EQP-0105",
@@ -8122,7 +8122,7 @@
       "Action Time Reduction %": null,
       "Capabilities / Effects": "spell; spell_effect:ENCH-0005; damage_range_bonus_percent:10; spell_stacks",
       "Status": "Confirmed",
-      "Notes": "May be equipped to any Spell slot (SLOT-0013–SLOT-0016)."
+      "Notes": "May be equipped to any Spell slot (SLOT-0013\u2013SLOT-0016)."
     },
     {
       "Equipment ID": "EQP-0177",
@@ -8140,7 +8140,7 @@
       "Action Time Reduction %": null,
       "Capabilities / Effects": "spell; spell_effect:ENCH-0007; item_double_chance_percent:10; spell_stacks",
       "Status": "Confirmed",
-      "Notes": "May be equipped to any Spell slot (SLOT-0013–SLOT-0016). Stacks additively with other Abundance spells."
+      "Notes": "May be equipped to any Spell slot (SLOT-0013\u2013SLOT-0016). Stacks additively with other Abundance spells."
     },
     {
       "Equipment ID": "EQP-0178",
@@ -8282,11 +8282,11 @@
       "Internal Key": "critical_strike_chance",
       "Display Name": "Critical Strike Chance",
       "Valid Target": "Eligible weapon or jewelry",
-      "Effect": "+10% Critical Strike Chance (1.5× damage on crit)",
+      "Effect": "+10% Critical Strike Chance (1.5\u00d7 damage on crit)",
       "Required Materials": "Enchanting Tablet; Rabbit's Foot; Boar Tusk",
       "Status": "Confirmed",
       "Release Phase": "Launch",
-      "Notes": "Crit chances from multiple enchanted equipped items add together. Multiplier is 1.5× rolled damage."
+      "Notes": "Crit chances from multiple enchanted equipped items add together. Multiplier is 1.5\u00d7 rolled damage."
     }
   ],
   "Maps": [
@@ -9072,7 +9072,7 @@
       "Required Mount / Status": null,
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": "Town square to Rose’s Apothecary"
+      "Notes": "Town square to Rose\u2019s Apothecary"
     },
     {
       "Connection ID": "TRV-0012",
@@ -10325,7 +10325,7 @@
       "Action ID": "ACN-0046",
       "Weight": 100,
       "Status": "Planned",
-      "Notes": "Citadel Gathering Outskirts — cedar only."
+      "Notes": "Citadel Gathering Outskirts \u2014 cedar only."
     },
     {
       "Pool Entry ID": "PEN-0062",
@@ -10333,7 +10333,7 @@
       "Action ID": "ACN-0009",
       "Weight": 100,
       "Status": "Planned",
-      "Notes": "Citadel Combat Training Grounds — castle guard only."
+      "Notes": "Citadel Combat Training Grounds \u2014 castle guard only."
     },
     {
       "Pool Entry ID": "PEN-0063",
@@ -10341,7 +10341,7 @@
       "Action ID": "ACN-0171",
       "Weight": 100,
       "Status": "Planned",
-      "Notes": "QST-0003 Pressure the Guards — nervous guard only."
+      "Notes": "QST-0003 Pressure the Guards \u2014 nervous guard only."
     },
     {
       "Pool Entry ID": "PEN-0064",
@@ -10349,7 +10349,7 @@
       "Action ID": "ACN-0172",
       "Weight": 100,
       "Status": "Planned",
-      "Notes": "Temple — Monk only."
+      "Notes": "Temple \u2014 Monk only."
     }
   ],
   "Actions": [
@@ -13973,7 +13973,7 @@
       "Operator": null,
       "Required Value": null,
       "Status": "Planned",
-      "Notes": "Train with the monks — empty Weapon or Tool."
+      "Notes": "Train with the monks \u2014 empty Weapon or Tool."
     },
     {
       "Requirement ID": "REQ-0105",
@@ -13986,7 +13986,7 @@
       "Operator": null,
       "Required Value": null,
       "Status": "Planned",
-      "Notes": "Train with the monks — empty Shield or Off-hand."
+      "Notes": "Train with the monks \u2014 empty Shield or Off-hand."
     }
   ],
   "Enemies": [
@@ -15849,7 +15849,7 @@
     {
       "Reward Entry ID": "RWE-0100",
       "Reward Table ID": "RWT-0058",
-      "Reward Table Name": "Secondary Gems — Sapphire Only",
+      "Reward Table Name": "Secondary Gems \u2014 Sapphire Only",
       "Purpose": "Independent Mining gem drop",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0012",
@@ -15864,7 +15864,7 @@
     {
       "Reward Entry ID": "RWE-0101",
       "Reward Table ID": "RWT-0059",
-      "Reward Table Name": "Secondary Gems — Sapphire Emerald",
+      "Reward Table Name": "Secondary Gems \u2014 Sapphire Emerald",
       "Purpose": "Independent Mining gem drop",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0012",
@@ -15879,7 +15879,7 @@
     {
       "Reward Entry ID": "RWE-0102",
       "Reward Table ID": "RWT-0059",
-      "Reward Table Name": "Secondary Gems — Sapphire Emerald",
+      "Reward Table Name": "Secondary Gems \u2014 Sapphire Emerald",
       "Purpose": "Independent Mining gem drop",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0013",
@@ -15894,7 +15894,7 @@
     {
       "Reward Entry ID": "RWE-0103",
       "Reward Table ID": "RWT-0060",
-      "Reward Table Name": "Secondary Gems — All Gems",
+      "Reward Table Name": "Secondary Gems \u2014 All Gems",
       "Purpose": "Independent Mining gem drop",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0012",
@@ -15909,7 +15909,7 @@
     {
       "Reward Entry ID": "RWE-0104",
       "Reward Table ID": "RWT-0060",
-      "Reward Table Name": "Secondary Gems — All Gems",
+      "Reward Table Name": "Secondary Gems \u2014 All Gems",
       "Purpose": "Independent Mining gem drop",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0013",
@@ -15924,7 +15924,7 @@
     {
       "Reward Entry ID": "RWE-0105",
       "Reward Table ID": "RWT-0060",
-      "Reward Table Name": "Secondary Gems — All Gems",
+      "Reward Table Name": "Secondary Gems \u2014 All Gems",
       "Purpose": "Independent Mining gem drop",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0014",
@@ -21948,7 +21948,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": "Buys and sells ordinary items. Stocks starter tools.",
-      "Notes": "Sells all level-1 tools. Player buy price = 2× Base Sell Value. Buys ordinary items at Base Sell Value.",
+      "Notes": "Sells all level-1 tools. Player buy price = 2\u00d7 Base Sell Value. Buys ordinary items at Base Sell Value.",
       "Entry 1 Item ID": "ITEM-0100",
       "Entry 1 Mode": "Sell",
       "Entry 1 Price": null,
@@ -22039,7 +22039,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": "Sells improved pickaxes and pays better prices for ores.",
-      "Notes": "Access requires Mining Level 40. Player buy price = 2× Base Sell Value. Buys ores at 1.5× Base Sell Value.",
+      "Notes": "Access requires Mining Level 40. Player buy price = 2\u00d7 Base Sell Value. Buys ores at 1.5\u00d7 Base Sell Value.",
       "Entry 1 Item ID": "ITEM-0111",
       "Entry 1 Mode": "Sell",
       "Entry 1 Price": null,
@@ -22130,7 +22130,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": "Sells Essence at a premium so Mining remains the primary efficient source.",
-      "Notes": "Essence buy price = 100× Base Sell Value. Other stock buy price = 2× Base Sell Value.",
+      "Notes": "Essence buy price = 100\u00d7 Base Sell Value. Other stock buy price = 2\u00d7 Base Sell Value.",
       "Entry 1 Item ID": "ITEM-0011",
       "Entry 1 Mode": "Sell",
       "Entry 1 Price": null,
@@ -22221,7 +22221,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": "Citadel market hall stocking everyday tools and supplies.",
-      "Notes": "Player buy price = 2× Base Sell Value. Buys ordinary items at Base Sell Value.",
+      "Notes": "Player buy price = 2\u00d7 Base Sell Value. Buys ordinary items at Base Sell Value.",
       "Entry 1 Item ID": "ITEM-0100",
       "Entry 1 Mode": "Sell",
       "Entry 1 Price": null,
@@ -22312,7 +22312,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": "A compact stall with food, potions, and starter tools for travelers.",
-      "Notes": "Player buy price = 2× Base Sell Value.",
+      "Notes": "Player buy price = 2\u00d7 Base Sell Value.",
       "Entry 1 Item ID": "ITEM-0058",
       "Entry 1 Mode": "Sell",
       "Entry 1 Price": null,
@@ -22403,7 +22403,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": "Sells outfits, specialist hats, and gloves.",
-      "Notes": "Player buy price = 2× Base Sell Value. Mostly wardrobe cosmetics; Chef's Hat, Wizard's Hat, and Leather Gloves are wearable gear.",
+      "Notes": "Player buy price = 2\u00d7 Base Sell Value. Mostly wardrobe cosmetics; Chef's Hat, Wizard's Hat, and Leather Gloves are wearable gear.",
       "Entry 1 Item ID": "ITEM-0296",
       "Entry 1 Mode": "Sell",
       "Entry 1 Price": null,
@@ -22512,8 +22512,8 @@
       "Internal Key": "help_the_aspiring_apothecary",
       "Display Name": "Help the aspiring apothecary",
       "NPC ID": "NPC-0005",
-      "Summary": "Help Rose gather supplies to open her apothecary: 5 Rabbit’s Feet, 5 Fernleaf, and 1,000 gold.",
-      "Pitch": "I’m tired of working in the kitchen, I just saw a lot for sale down the street, I’m thinking of starting the alchemy shop I’ve always dreamed of…",
+      "Summary": "Help Rose gather supplies to open her apothecary: 5 Rabbit\u2019s Feet, 5 Fernleaf, and 1,000 gold.",
+      "Pitch": "I\u2019m tired of working in the kitchen, I just saw a lot for sale down the street, I\u2019m thinking of starting the alchemy shop I\u2019ve always dreamed of\u2026",
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": "Deliver: ITEM-0038 x5, ITEM-0031 x5; GoldCost: 1000; UnlockLocation: LOC-0026",
@@ -22525,7 +22525,7 @@
       "Reward XP Amount": 11000,
       "Reward Item ID": "ITEM-0165",
       "Reward Item Quantity": 1,
-      "Possible Rewards": "11,000 Alchemy XP; Chef's Hat x1; unlocks Rose’s Apothecary"
+      "Possible Rewards": "11,000 Alchemy XP; Chef's Hat x1; unlocks Rose\u2019s Apothecary"
     },
     {
       "Quest ID": "QST-0003",
@@ -22533,7 +22533,7 @@
       "Display Name": "The Missing Purse",
       "NPC ID": "NPC-0011",
       "Summary": "Donate 25 gold, then recover the beggar's stolen purse from the guards.",
-      "Pitch": "Please, traveler… someone took my coin purse in the night, I have nothing left.",
+      "Pitch": "Please, traveler\u2026 someone took my coin purse in the night, I have nothing left.",
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": "Talk: NPC-0012; Deliver: ITEM-0299 x1; AcceptGold: 25; RewardGold: 500; RewardCosmetic: COS-0002; BribeGold: 200; ChoiceNpc: NPC-0012; BranchSkillXp: 2500",
@@ -22593,7 +22593,7 @@
       "Dialogue ID": "QDL-0001",
       "Quest ID": "QST-0003",
       "NPC ID": "NPC-0007",
-      "Line": "A beggar lost a purse? The guards at the barracks were laughing about some poor fool…",
+      "Line": "A beggar lost a purse? The guards at the barracks were laughing about some poor fool\u2026",
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": null
@@ -22602,7 +22602,7 @@
       "Dialogue ID": "QDL-0002",
       "Quest ID": "QST-0003",
       "NPC ID": "NPC-0012",
-      "Line": "A purse? Maybe I saw something. Of course, my memory gets expensive… or you could try taking it.",
+      "Line": "A purse? Maybe I saw something. Of course, my memory gets expensive\u2026 or you could try taking it.",
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": null
@@ -22620,7 +22620,7 @@
       "Dialogue ID": "QDL-0004",
       "Quest ID": "QST-0004",
       "NPC ID": "NPC-0006",
-      "Line": "New around here? Browse all you like — no obligation to buy.",
+      "Line": "New around here? Browse all you like \u2014 no obligation to buy.",
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": null
@@ -23114,7 +23114,7 @@
       "Race ID": "RACE-0005",
       "Internal Key": "goblin",
       "Display Name": "Goblin",
-      "Description": "Small and green — welcome among the camps of their kin.",
+      "Description": "Small and green \u2014 welcome among the camps of their kin.",
       "Sort Order": 5,
       "Portrait Asset Key": null,
       "Hostility Immunity Location IDs": "LOC-0003",
