@@ -3,13 +3,32 @@ import 'package:ik_rules/ik_rules.dart';
 
 import '../session/game_controller.dart';
 import '../theme.dart';
-import 'catalog_popup.dart';
 import 'format.dart';
 import 'game_popup.dart';
 import 'ingredient_chip.dart';
 import 'item_icon.dart';
 import 'quantity_sheet.dart';
 import 'recipe_book_sheet.dart';
+
+/// The station counter as its own floating card, not in the location list.
+Future<void> showProjectPicker(
+  BuildContext context, {
+  required GameController controller,
+  required SpecialProductionStation station,
+  Rect? origin,
+}) {
+  return showGamePopup<void>(
+    context: context,
+    origin: origin,
+    builder: (context) => SingleChildScrollView(
+      child: ProjectPicker(
+        controller: controller,
+        station: station,
+        onClose: () => Navigator.of(context).pop(),
+      ),
+    ),
+  );
+}
 
 /// A Special Production station: pick a project, then complete it on the spot.
 ///
@@ -143,31 +162,18 @@ class _ProjectPickerState extends State<ProjectPicker> {
           if (all.isEmpty)
             MutedText(_emptyCopy(defined))
           else ...[
-            GameSelectField(
+            GameDropdown<String>(
               label: 'Project',
-              value: all
-                  .firstWhere((row) => row.projectId == selectedId, orElse: () => all.first)
-                  .label,
-              onPressed: () async {
-                final chosen = await showGameCatalogPopup(
-                  context: context,
-                  origin: popupOrigin(context),
-                  eyebrow: 'Project',
-                  title: widget.station.label,
-                  selectable: true,
-                  entries: [
-                    for (final row in all)
-                      CatalogPopupEntry(
-                        title: row.locked ? '${row.label} (locked)' : row.label,
-                        dimmed: row.locked,
-                        enabled: !row.locked,
-                        emphasized: row.projectId == selectedId,
-                      ),
-                  ],
-                );
-                if (chosen == null || !mounted) return;
-                _select(all[chosen].projectId);
-              },
+              value: selectedId,
+              items: [
+                for (final row in all)
+                  GameDropdownItem(
+                    value: row.projectId,
+                    label: row.locked ? '${row.label} (locked)' : row.label,
+                    enabled: !row.locked,
+                  ),
+              ],
+              onChanged: _select,
             ),
             if (detail != null) ...[
               const SizedBox(height: 10),
@@ -259,32 +265,17 @@ class _ProjectPickerState extends State<ProjectPicker> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        GameSelectField(
+        GameDropdown<String>(
           label: 'Item to enchant',
-          value: detail.enchantTargets
-              .firstWhere(
-                (target) => target.id == selected,
-                orElse: () => detail.enchantTargets.first,
-              )
-              .label,
-          onPressed: () async {
-            final chosen = await showGameCatalogPopup(
-              context: context,
-              origin: popupOrigin(context),
-              eyebrow: 'Item to enchant',
-              title: detail.name,
-              selectable: true,
-              entries: [
-                for (final target in detail.enchantTargets)
-                  CatalogPopupEntry(title: target.label, emphasized: target.id == selected),
-              ],
-            );
-            if (chosen == null || !mounted) return;
-            setState(() {
-              _enchantTargetId = detail.enchantTargets[chosen].id;
-              _error = null;
-            });
-          },
+          value: selected,
+          items: [
+            for (final target in detail.enchantTargets)
+              GameDropdownItem(value: target.id, label: target.label),
+          ],
+          onChanged: (value) => setState(() {
+            _enchantTargetId = value;
+            _error = null;
+          }),
         ),
         const SizedBox(height: 8),
         GameButton(label: 'Complete project', onPressed: () => _complete(detail, 1)),

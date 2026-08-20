@@ -78,11 +78,10 @@ flutter:
     - content/assets/player/
     - content/assets/workstations/
 
-  # Pixel UI face, OFL from https://github.com/eifetx/Pixelify-Sans.
-  # Readable at this phone-frame scale; closer to RuneScape chat than chunky 8-bit.
+  # 7:12 Serif by Christian Munk (CMunk), CC BY-SA 3.0.
+  # https://fontstruct.com/fontstructions/show/243645/7_12_serif
+  # Clean pixel serif; FontStruct notes it reads best near 16px.
   fonts:
-    - family: PixelifySans
+    - family: SevenTwelveSerif
       fonts:
-        - asset: fonts/PixelifySans-Regular.ttf
-        - asset: fonts/PixelifySans-Bold.ttf
-          weight: 700
+        - asset: fonts/712_serif.ttf

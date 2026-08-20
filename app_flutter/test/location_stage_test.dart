@@ -112,7 +112,9 @@ void main() {
         matching: find.bySemanticsLabel('Recipes'),
       ),
     );
+    await tester.pumpAndSettle();
     expect(find.byType(ProductionPicker), findsOne);
+    expect(find.byKey(const Key('game-popup')), findsOne);
 
     await tester.tap(find.text('Max'));
     await tester.pump();

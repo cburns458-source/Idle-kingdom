@@ -96,7 +96,7 @@ const TextStyle warningStyle = TextStyle(
   shadows: overlayShadow,
 );
 
-const String gameFontFamily = 'PixelifySans';
+const String gameFontFamily = 'SevenTwelveSerif';
 
 ThemeData buildAppTheme() {
   final base = ThemeData.dark(useMaterial3: true);
@@ -296,6 +296,93 @@ class GameIconButton extends StatelessWidget {
     );
     if (tooltip == null) return chip;
     return Tooltip(message: tooltip!, child: chip);
+  }
+}
+
+/// One line in a [GameDropdown].
+class GameDropdownItem<T> {
+  const GameDropdownItem({required this.value, required this.label, this.enabled = true});
+
+  final T value;
+  final String label;
+  final bool enabled;
+}
+
+/// One-line field that expands a local menu, not a separate catalog popup.
+class GameDropdown<T> extends StatelessWidget {
+  const GameDropdown({
+    super.key,
+    required this.label,
+    required this.value,
+    required this.items,
+    required this.onChanged,
+  });
+
+  final String label;
+  final T? value;
+  final List<GameDropdownItem<T>> items;
+  final ValueChanged<T> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final selected = items.where((item) => item.value == value).firstOrNull;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        MutedText(label),
+        const SizedBox(height: 4),
+        PopupMenuButton<T>(
+          tooltip: label,
+          enabled: items.isNotEmpty,
+          color: Palette.parchmentDeep,
+          offset: const Offset(0, 8),
+          constraints: const BoxConstraints(minWidth: 220, maxWidth: 360),
+          onSelected: onChanged,
+          itemBuilder: (context) => [
+            for (final item in items)
+              PopupMenuItem<T>(
+                value: item.value,
+                enabled: item.enabled,
+                child: Text(
+                  item.label,
+                  style: TextStyle(
+                    fontFamily: gameFontFamily,
+                    fontWeight: item.value == value ? FontWeight.w700 : FontWeight.w400,
+                    color: item.enabled ? Palette.parchmentText : Palette.muted,
+                  ),
+                ),
+              ),
+          ],
+          child: Material(
+            color: const Color(0xFF45301F),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+              side: const BorderSide(color: Color(0x73D4AF37)),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      selected?.label ?? '',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontFamily: gameFontFamily,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13.5,
+                      ),
+                    ),
+                  ),
+                  const Icon(Icons.expand_more, size: 20, color: Palette.gold),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }
 

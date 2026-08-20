@@ -83,7 +83,7 @@ void main() {
     expect(find.widgetWithText(GameButton, '10'), findsOne);
 
     // Picking another recipe starts over at one, since its materials differ.
-    await tester.tap(find.byType(GameSelectField));
+    await tester.tap(find.byType(GameDropdown<String>));
     await tester.pumpAndSettle();
     await tester.tap(find.textContaining('Cooked Crawfish').last);
     await tester.pumpAndSettle();
