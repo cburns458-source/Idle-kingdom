@@ -1196,7 +1196,7 @@ class LocalMultiplayerBackend {
     final db = _db();
     final profile = db.profiles.firstWhereOrNull((row) => row.userId == session.userId);
     final updatedAt = _nowIso();
-    final expiresAt = isoFromMs(_now() + presenceTtlSeconds * 1000);
+    final expiresAt = isoFromMs(_now() + presenceAwayTtlSeconds * 1000);
     final row = ActivityPresence(
       userId: session.userId,
       username: session.username,

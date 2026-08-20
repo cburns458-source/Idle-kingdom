@@ -337,8 +337,11 @@ class GameController extends ChangeNotifier {
   }
 
   /// Loads the account save, including catch-up for time away.
-  void adoptAccountSave(PlayerSave incoming) {
-    adoptBoot(session.adoptAccount(incoming));
+  ///
+  /// [nowMs] should be the server clock when playing hosted, so catch-up is
+  /// fair against a skewed device clock.
+  void adoptAccountSave(PlayerSave incoming, {num? nowMs}) {
+    adoptBoot(session.adoptAccount(incoming, nowMs: nowMs));
     notifyListeners();
   }
 

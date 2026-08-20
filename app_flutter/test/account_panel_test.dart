@@ -73,7 +73,8 @@ void main() {
     await tester.pump();
 
     expect(transport.magicLinks.single, 'hero@example.com');
-    expect(find.text('Magic link sent.'), findsOne);
+    // Notices surface as AppShell alerts; the panel itself only drives the wire.
+    expect(net.notice, 'Magic link sent.');
   });
 
   testWidgets('creating an account against the backend uploads a named leftover', (tester) async {
@@ -83,7 +84,7 @@ void main() {
 
     await submit(tester, 'Create account');
 
-    expect(find.textContaining('Account created for'), findsOne);
+    expect(net.notice, contains('Account created for'));
     expect(find.text('Signed in as Tester'), findsOne);
     expect(transport.tables[RemoteTables.saves], hasLength(1));
     // First sign-in of the day posts the boards once. The save upload itself does not.
@@ -97,7 +98,7 @@ void main() {
 
     await submit(tester, 'Sign in');
 
-    expect(find.text('Invalid login credentials.'), findsOne);
+    expect(net.notice, 'Invalid login credentials.');
     expect(find.text('Sign in'), findsOne);
   });
 
@@ -111,7 +112,7 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    expect(find.text('Signed out.'), findsOne);
+    expect(net.notice, 'Signed out.');
     expect(transport.signedOut, isTrue);
     expect(find.widgetWithText(TextField, 'Email'), findsOne);
   });

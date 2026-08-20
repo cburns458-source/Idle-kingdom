@@ -110,10 +110,6 @@ class _CitadelHubPanelState extends State<CitadelHubPanel> {
           if (index > 0) const SizedBox(height: 8),
           _BountyCard(row: row, busy: net.busy, onTurnIn: () => _turnIn(board.bounties[index])),
         ],
-        if (net.notice case final notice?) ...[
-          const SizedBox(height: 8),
-          Text(notice, style: const TextStyle(color: Palette.gold, fontSize: 12)),
-        ],
       ],
     );
   }
@@ -143,10 +139,6 @@ class _CitadelHubPanelState extends State<CitadelHubPanel> {
             if (index > 0) const SizedBox(height: 8),
             _PostCard(heading: row.heading, body: row.body),
           ],
-        if (net.notice case final notice?) ...[
-          const SizedBox(height: 8),
-          Text(notice, style: const TextStyle(color: Palette.gold, fontSize: 12)),
-        ],
       ],
     );
   }

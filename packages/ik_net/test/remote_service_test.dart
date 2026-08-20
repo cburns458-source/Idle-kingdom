@@ -451,18 +451,53 @@ void main() {
     );
   });
 
-  test('answers the screens no server owns from this device', () async {
+  test('publishes presence so another account at the same place can see it', () async {
     final transport = FakeTransport();
-    final storage = MemorySaveStorage();
-    final service = await _signedIn(transport, storage);
-    final save = createNewSave(_database(), _nowMs).copyWith(currentLocationId: 'LOC-0028');
+    final hero = await _signedIn(transport, MemorySaveStorage());
+    final save = createNewSave(_database(), _nowMs).copyWith(currentLocationId: 'LOC-0005');
+    expect(await hero.publishPresence(presenceFromSave(save)), isNotNull);
+    expect(transport.tables[RemoteTables.activityPresence], hasLength(1));
+    final row = transport.tables[RemoteTables.activityPresence]!.single;
+    expect(row['expires_at'], isoFromMs(_nowMs + presenceAwayTtlSeconds * 1000));
 
-    expect(await service.publishPresence(presenceFromSave(save)), isNotNull);
-    expect(await service.peersAtLocation('LOC-0028', excludeSelf: false), hasLength(1));
+    final rival = _service(transport, MemorySaveStorage());
+    await rival.signUp('rival@example.com', 'Rival', 'secret');
+    final peers = await rival.peersAtLocation('LOC-0005');
+    expect(peers.single.username, 'Hero');
+    expect(peers.single.locationId, 'LOC-0005');
+  });
 
-    // Presence never leaves the device: nothing was written to a table for it.
-    expect(transport.calls.where((call) => call.startsWith('insert')), isEmpty);
-    expect(transport.calls.where((call) => call.startsWith('upsert:activity')), isEmpty);
+  test('keeps Away peers visible until the away TTL, then drops them', () async {
+    var clock = _nowMs;
+    final transport = FakeTransport();
+    final hero = RemoteMultiplayerService(
+      transport: transport,
+      storage: MemorySaveStorage(),
+      ports: LocalBackendPorts(nowMs: () => clock, newId: (prefix) => '${prefix}_0001'),
+    );
+    await hero.signUp('hero@example.com', 'Hero', 'secret');
+    final save = createNewSave(_database(), clock).copyWith(currentLocationId: 'LOC-0005');
+    await hero.publishPresence(presenceFromSave(save));
+
+    clock += presenceTtlSeconds * 1000 + 1000;
+    final mid = await hero.peersAtLocation('LOC-0005', excludeSelf: false);
+    expect(mid, hasLength(1));
+
+    clock = _nowMs + presenceAwayTtlSeconds * 1000 + 1000;
+    final gone = await hero.peersAtLocation('LOC-0005', excludeSelf: false);
+    expect(gone, isEmpty);
+  });
+
+  test('authoritativeNowMs prefers the transport server clock', () async {
+    final transport = FakeTransport(nowMs: () => _nowMs + 60_000);
+    final service = _service(transport, MemorySaveStorage());
+    expect(await service.authoritativeNowMs(), _nowMs + 60_000);
+  });
+
+  test('authoritativeNowMs falls back to the local ports clock', () async {
+    final transport = FakeTransport();
+    final service = _service(transport, MemorySaveStorage());
+    expect(await service.authoritativeNowMs(), _nowMs);
   });
 
   test('records the first bounty turn-in of the hour and no other', () async {

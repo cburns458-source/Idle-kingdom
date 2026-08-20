@@ -69,6 +69,7 @@ void main() {
 
     await signInRegisteredAccount(net, controller.save);
     await tester.pump();
+    await dismissSocialAlertIfPresent(tester);
 
     expect(find.text('Sign in to play'), findsNothing);
     expect(find.text('Name your character'), findsOne);
@@ -99,6 +100,7 @@ void main() {
     await tester.tap(find.text('Create account'));
     await tester.pump();
     await tester.pump();
+    await dismissSocialAlertIfPresent(tester);
 
     expect(find.text('Name your character'), findsOne);
     expect(find.widgetWithText(TextField, 'Username'), findsNothing);
@@ -128,11 +130,13 @@ void main() {
     await tester.tap(find.text('Create account'));
     await tester.pump();
     await tester.pump();
+    await dismissSocialAlertIfPresent(tester);
 
     await tester.enterText(find.widgetWithText(TextField, 'Character name'), 'Tester');
     await tester.tap(find.text('Begin'));
     await tester.pump();
     await tester.pump();
+    await dismissSocialAlertIfPresent(tester);
 
     expect(find.text('That name is taken.'), findsOne);
     expect(find.text('Name your character'), findsOne);
@@ -202,7 +206,7 @@ void main() {
     final writer = buildRemoteMultiplayer(database, transport: transport);
     addTearDown(writer.dispose);
     final stored = startedCharacter(database).copyWith(characterName: 'Vari', gold: 777);
-    await writer.signUp('vari@example.com', 'Vari', 'secret', stored, adopt: (_) {});
+    await writer.signUp('vari@example.com', 'Vari', 'secret', stored, adopt: (save, {nowMs}) {});
 
     final controller = buildController(database);
     final net = buildRemoteMultiplayer(database, transport: transport);

@@ -113,5 +113,7 @@ void main() {
     expect(find.text('Hero · message'), findsOne);
     expect(find.text('Selling copper ore'), findsOne);
     expect(find.text(bazaarPostedNotice), findsOne);
+    await tester.tap(find.text('OK'));
+    await tester.pump();
   });
 }

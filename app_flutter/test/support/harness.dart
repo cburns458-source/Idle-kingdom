@@ -131,10 +131,19 @@ Future<void> signInRegisteredAccount(
   PlayerSave save, {
   TestAccount account = testAccount,
 }) async {
-  await multiplayer.signIn(account.email, account.password, save, adopt: (_) {});
+  await multiplayer.signIn(account.email, account.password, save, adopt: (save, {nowMs}) {});
   if (!multiplayer.isSignedIn) {
     throw StateError(multiplayer.notice ?? 'Sign-in of ${account.email} failed.');
   }
+}
+
+/// Clears a one-shot social OK alert so the shell underneath can be tapped.
+Future<void> dismissSocialAlertIfPresent(WidgetTester tester) async {
+  await tester.pump();
+  final ok = find.text('OK');
+  if (ok.evaluate().isEmpty) return;
+  await tester.tap(ok);
+  await tester.pump();
 }
 
 /// The same, over a hosted backend held in memory.

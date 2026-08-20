@@ -5,7 +5,11 @@ import {
   citadelLocationId,
 } from '../../game/multiplayer/citadel'
 import { softValidateSave } from '../../game/multiplayer/cloudSave'
-import { CHAT_COOLDOWN_SECONDS, PRESENCE_TTL_SECONDS } from '../../game/multiplayer/config'
+import {
+  CHAT_COOLDOWN_SECONDS,
+  PRESENCE_AWAY_TTL_SECONDS,
+  PRESENCE_TTL_SECONDS,
+} from '../../game/multiplayer/config'
 import { LocalMultiplayerBackend } from '../../game/multiplayer/localBackend'
 import { filterProfanity } from '../../game/multiplayer/moderation'
 import { boardLabel, launchBoardKeys } from '../../game/multiplayer/leaderboards'
@@ -330,6 +334,7 @@ export const multiplayerScenarios: ParityScenario[] = [
         ],
         cooldowns: CHAT_COOLDOWN_SECONDS,
         presenceTtlSeconds: PRESENCE_TTL_SECONDS,
+        presenceAwayTtlSeconds: PRESENCE_AWAY_TTL_SECONDS,
         guild: {
           createGoldCost: GUILD_CREATE_GOLD_COST,
           maxMembers: GUILD_MAX_MEMBERS,
@@ -843,8 +848,13 @@ export const multiplayerScenarios: ParityScenario[] = [
         locationId: 'LOC-0002',
       })
       const anyLocation = harness.backend.listPresence({})
-      // Past the TTL of the first row but not the second.
-      harness.advance(100_000)
+      // Past the Online heartbeat, but still inside the Away window.
+      harness.advance(PRESENCE_TTL_SECONDS * 1000 + 1_000)
+      const afterHeartbeat = harness.backend.listPresence({
+        locationId: 'LOC-0028',
+      })
+      // Past the Away TTL of the earlier row (and the later one too).
+      harness.advance(PRESENCE_AWAY_TTL_SECONDS * 1000)
       const afterExpiry = harness.backend.listPresence({
         locationId: 'LOC-0028',
       })
@@ -856,6 +866,7 @@ export const multiplayerScenarios: ParityScenario[] = [
         byActivity,
         elsewhere,
         anyLocation,
+        afterHeartbeat,
         afterExpiry,
         cleared: harness.backend.listPresence({}),
       } as unknown as JsonValue

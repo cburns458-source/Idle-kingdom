@@ -113,6 +113,9 @@ abstract interface class RemoteTransport {
   Future<String?> delete(String table, {required Map<String, Object?> equals});
 
   Future<RemoteInvokeResult> invoke(String function, RemoteRow body);
+
+  /// Server wall clock in milliseconds, or null when the project cannot answer.
+  Future<num?> serverNowMs();
 }
 
 extension _FirstOrNull<T> on List<T> {

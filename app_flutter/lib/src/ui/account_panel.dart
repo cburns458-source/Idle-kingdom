@@ -38,7 +38,6 @@ class _AccountPanelState extends State<AccountPanel> {
           AccountAuthForm(controller: widget.controller, multiplayer: net)
         else
           ..._signedIn(session),
-        SocialNotice(notice: net.notice),
       ],
     );
   }

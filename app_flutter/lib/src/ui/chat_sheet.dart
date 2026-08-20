@@ -359,7 +359,6 @@ class _ChatSheetState extends State<ChatSheet> {
                         },
                       ),
               ),
-              SocialNotice(notice: net.notice),
               if (_viewingGuilds)
                 const SizedBox.shrink()
               else if (net.chatTab == ChatTab.dm)

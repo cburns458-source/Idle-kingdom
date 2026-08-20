@@ -230,7 +230,7 @@ class MultiplayerController extends ChangeNotifier {
     String username,
     String password,
     PlayerSave localHint, {
-    required void Function(PlayerSave save) adopt,
+    required void Function(PlayerSave save, {num? nowMs}) adopt,
   }) {
     return run(() async {
       final result = await service.signUp(email, username, password);
@@ -268,7 +268,7 @@ class MultiplayerController extends ChangeNotifier {
     String email,
     String password,
     PlayerSave localHint, {
-    required void Function(PlayerSave save) adopt,
+    required void Function(PlayerSave save, {num? nowMs}) adopt,
   }) {
     return run(() async {
       final result = await service.signIn(email, password);
@@ -307,7 +307,7 @@ class MultiplayerController extends ChangeNotifier {
   /// otherwise this device is kicked.
   Future<void> resumeAccount(
     PlayerSave localHint, {
-    required void Function(PlayerSave save) adopt,
+    required void Function(PlayerSave save, {num? nowMs}) adopt,
   }) {
     return run(() async {
       if (!isSignedIn) return null;
@@ -374,12 +374,13 @@ class MultiplayerController extends ChangeNotifier {
   /// Loads the account row, or promotes a leftover named save onto the account.
   Future<PlayerSave?> _adoptAccountSave(
     PlayerSave localHint,
-    void Function(PlayerSave save) adopt,
+    void Function(PlayerSave save, {num? nowMs}) adopt,
   ) async {
     _cloudLoadProblem = null;
+    final nowMs = await service.authoritativeNowMs();
     final pulled = await service.pullSave();
     if (pulled.ok && hasNamedCharacter(pulled.save)) {
-      adopt(pulled.save!);
+      adopt(pulled.save!, nowMs: nowMs);
       pendingLeftover = null;
       onAccountSaveReady?.call();
       return pulled.save;
@@ -391,7 +392,7 @@ class MultiplayerController extends ChangeNotifier {
     }
     final leftover = _bestLeftover(localHint);
     if (leftover != null) {
-      if (!identical(leftover, localHint)) adopt(leftover);
+      if (!identical(leftover, localHint)) adopt(leftover, nowMs: nowMs);
       if (isPlayableSave(leftover)) {
         await service.pushSave(db, leftover, force: true);
       }
@@ -811,7 +812,10 @@ class MultiplayerController extends ChangeNotifier {
       return 'Guild created.';
     });
     if (founded) return null;
-    return _notice ?? 'The guild was not created. Try again.';
+    // Refusal stays on the create sheet; do not also fire the global alert.
+    final reason = _notice ?? 'The guild was not created. Try again.';
+    _notice = null;
+    return reason;
   }
 
   Future<void> applyToGuild(String guildId, String message, PlayerSave save) {

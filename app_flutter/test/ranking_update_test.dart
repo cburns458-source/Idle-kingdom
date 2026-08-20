@@ -21,7 +21,7 @@ void main() {
     addTearDown(net.dispose);
     final save = startedCharacter(database);
 
-    await net.signUp('hero@example.com', 'Hero', 'secret', save, adopt: (_) {});
+    await net.signUp('hero@example.com', 'Hero', 'secret', save, adopt: (save, {nowMs}) {});
 
     expect(net.board, isNotEmpty);
     expect(net.canPressUpdateRanking, isFalse);
@@ -41,7 +41,7 @@ void main() {
     final net = buildMultiplayer(database, clock: clock);
     addTearDown(net.dispose);
     final save = startedCharacter(database);
-    await net.signUp('hero@example.com', 'Hero', 'secret', save, adopt: (_) {});
+    await net.signUp('hero@example.com', 'Hero', 'secret', save, adopt: (save, {nowMs}) {});
     net.storage.removeItem(rankingUpdateStorageKey(net.session!.userId));
     expect(net.lastRankingSubmitAt, isNull);
 
@@ -55,7 +55,7 @@ void main() {
     final net = buildMultiplayer(database, clock: clock);
     addTearDown(net.dispose);
     final save = startedCharacter(database);
-    await net.signUp('hero@example.com', 'Hero', 'secret', save, adopt: (_) {});
+    await net.signUp('hero@example.com', 'Hero', 'secret', save, adopt: (save, {nowMs}) {});
 
     clock.advance(24 * 60 * 60 * 1000);
     await net.maybeAutoSubmitRanking(save);
@@ -67,7 +67,7 @@ void main() {
     final net = buildMultiplayer(database, clock: clock);
     addTearDown(net.dispose);
     final save = startedCharacter(database);
-    await net.signUp('hero@example.com', 'Hero', 'secret', save, adopt: (_) {});
+    await net.signUp('hero@example.com', 'Hero', 'secret', save, adopt: (save, {nowMs}) {});
 
     final game = buildController(database, seed: save, clock: clock);
     addTearDown(game.dispose);
@@ -91,7 +91,7 @@ void main() {
     final net = buildRemoteMultiplayer(database, transport: transport, clock: clock);
     addTearDown(net.dispose);
     final save = startedCharacter(database).copyWith(characterName: 'Vari');
-    await net.signUp('vari@example.com', 'Vari', 'secret', save, adopt: (_) {});
+    await net.signUp('vari@example.com', 'Vari', 'secret', save, adopt: (save, {nowMs}) {});
 
     final game = buildController(database, seed: save, clock: clock);
     addTearDown(game.dispose);
@@ -115,7 +115,7 @@ void main() {
     final net = buildMultiplayer(database, clock: clock);
     addTearDown(net.dispose);
     final save = startedCharacter(database).copyWith(characterName: 'Vari');
-    await net.signUp('vari@example.com', 'Vari', 'secret', save, adopt: (_) {});
+    await net.signUp('vari@example.com', 'Vari', 'secret', save, adopt: (save, {nowMs}) {});
 
     final game = buildController(database, seed: save, clock: clock);
     addTearDown(game.dispose);

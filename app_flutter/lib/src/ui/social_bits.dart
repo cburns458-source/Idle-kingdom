@@ -154,20 +154,3 @@ class SignedOutNotice extends StatelessWidget {
     );
   }
 }
-
-/// What the last action said, in the place every social panel puts it.
-class SocialNotice extends StatelessWidget {
-  const SocialNotice({super.key, required this.notice});
-
-  final String? notice;
-
-  @override
-  Widget build(BuildContext context) {
-    final text = notice;
-    if (text == null) return const SizedBox.shrink();
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      child: MutedText(text),
-    );
-  }
-}

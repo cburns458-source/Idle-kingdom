@@ -20,6 +20,7 @@ import 'new_character_sheet.dart';
 import 'overlay_notice.dart';
 import 'playable_frame.dart';
 import 'skills_view.dart';
+import 'social_alert.dart';
 import 'social_view.dart';
 import 'top_hud.dart';
 import 'travel_overlay.dart';
@@ -55,6 +56,7 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
   String? _selectedLocationId;
   bool _wardrobeOpen = false;
   bool _nearbyOpen = false;
+  bool _socialAlertQueued = false;
   final GlobalKey _toastKey = GlobalKey();
   AnimationController? _mapWalk;
   String? _walkFromId;
@@ -84,12 +86,41 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
       controller.tick();
     });
     _syncPlayLoop();
+    _maybePresentSocialNotice();
   }
 
   void _onMultiplayerChanged() {
     if (!mounted) return;
     _syncPlayLoop();
     setState(() {});
+    _maybePresentSocialNotice();
+  }
+
+  /// Turns the shared multiplayer notice into a one-shot alert, then clears it.
+  ///
+  /// Social panels used to paint the same sticky string; a popup keeps the
+  /// result on the action that caused it without leaking across every screen.
+  void _maybePresentSocialNotice() {
+    final text = multiplayer.notice;
+    if (text == null || text.isEmpty || _socialAlertQueued) return;
+    _socialAlertQueued = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) {
+        _socialAlertQueued = false;
+        return;
+      }
+      // Re-read: callers like createGuild may clear a notice meant only for a form.
+      final message = multiplayer.notice;
+      if (message == null || message.isEmpty) {
+        _socialAlertQueued = false;
+        return;
+      }
+      await showSocialAlert(context, message);
+      if (!mounted) return;
+      if (multiplayer.notice == message) multiplayer.announce(null);
+      _socialAlertQueued = false;
+      _maybePresentSocialNotice();
+    });
   }
 
   bool _polling = false;

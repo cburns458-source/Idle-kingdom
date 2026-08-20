@@ -34,6 +34,7 @@ class RemoteTables {
   static const String guildHalls = 'guild_halls';
   static const String guildProjects = 'guild_projects';
   static const String guildChallenges = 'guild_challenges';
+  static const String activityPresence = 'activity_presence';
 }
 
 /// The edge function that writes chat, since a client may not insert directly.
@@ -75,6 +76,11 @@ const String remoteChatColumns =
 const String remoteLeaderboardColumns = 'user_id, board_key, value, value_secondary, profiles';
 const String remoteBountyClaimColumns = 'hour_key, bounty_id, user_id, username, claimed_at';
 const String remoteBazaarColumns = 'id, kind, user_id, username, body, created_at';
+const String remotePresenceColumns =
+    'user_id, username, appearance_json, guild_name, location_id, '
+    'current_activity_id, skill_id, skill_level, outfit_cosmetic_id, '
+    'mount_cosmetic_id, updated_at, expires_at';
+const String remotePresenceConflict = 'user_id';
 
 /// How many Bazaar notices a read asks for.
 const int remoteBazaarLimit = 40;
@@ -396,3 +402,49 @@ BazaarPost bazaarPostFrom(RemoteRow row) => BazaarPost(
 /// most recent forty, so the order is turned round once they arrive.
 List<BazaarPost> bazaarPostsFrom(List<RemoteRow> rows) =>
     rows.reversed.map(bazaarPostFrom).toList();
+
+/// The snapshot one account publishes so Nearby can list them without reading
+/// another player's save.
+RemoteRow presenceRowFor({
+  required MultiplayerSession session,
+  required PresenceInput input,
+  String? guildName,
+  required String updatedAt,
+  required String expiresAt,
+}) => <String, Object?>{
+  'user_id': session.userId,
+  'username': session.username,
+  'appearance_json': input.appearance.toJson(),
+  'guild_name': guildName,
+  'location_id': input.locationId,
+  'current_activity_id': input.currentActivityId,
+  'skill_id': input.skillId,
+  'skill_level': input.skillLevel,
+  'outfit_cosmetic_id': input.outfitCosmeticId,
+  'mount_cosmetic_id': input.mountCosmeticId,
+  'updated_at': updatedAt,
+  'expires_at': expiresAt,
+};
+
+ActivityPresence activityPresenceFrom(RemoteRow row) => ActivityPresence(
+  userId: _str(row['user_id']),
+  username: _str(row['username']),
+  appearance: playerAppearanceFromRemote(row['appearance_json']),
+  guildName: _optStr(row['guild_name']),
+  locationId: _str(row['location_id']),
+  currentActivityId: _optStr(row['current_activity_id']),
+  skillId: _optStr(row['skill_id']),
+  skillLevel: row['skill_level'] == null ? null : _num(row['skill_level']),
+  outfitCosmeticId: _optStr(row['outfit_cosmetic_id']),
+  mountCosmeticId: _optStr(row['mount_cosmetic_id']),
+  updatedAt: _str(row['updated_at']),
+  expiresAt: _str(row['expires_at']),
+);
+
+/// Live rows only: expired stamps stay in the table for last-online, but Nearby
+/// must not list a player who has already gone.
+List<ActivityPresence> livePresenceFrom(List<RemoteRow> rows, num nowMs) {
+  return [for (final row in rows) activityPresenceFrom(row)]
+      .where((row) => jsDateParse(row.expiresAt) > nowMs)
+      .toList();
+}

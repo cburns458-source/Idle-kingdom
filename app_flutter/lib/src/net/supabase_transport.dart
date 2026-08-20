@@ -221,4 +221,16 @@ class SupabaseTransport implements RemoteTransport {
       return RemoteInvokeResult.failed('$error');
     }
   }
+
+  @override
+  Future<num?> serverNowMs() async {
+    try {
+      final value = await client.rpc<dynamic>('server_now_ms');
+      if (value is num) return value;
+      if (value is String) return num.tryParse(value);
+      return null;
+    } on Object {
+      return null;
+    }
+  }
 }

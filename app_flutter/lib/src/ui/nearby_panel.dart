@@ -55,7 +55,7 @@ class _NearbyPanelState extends State<NearbyPanel> {
     return ListenableBuilder(
       listenable: net,
       builder: (context, _) {
-        final rows = peerRows(net.peers, _skillName);
+        final rows = peerRows(net.peers, _skillName, nowMs: widget.controller.session.clock());
         return Positioned.fill(
           child: ColoredBox(
             color: const Color(0xAA0C0805),
@@ -117,9 +117,10 @@ class _NearbyPanelState extends State<NearbyPanel> {
                     ? null
                     : widget.controller.indexes.activitiesById[peer.currentActivityId!];
                 final activityName = activity?.contextualName ?? activity?.internalKey;
+                final subtitle = <String>[row.statusLabel, ?activityName, row.subtitle].join(' · ');
                 return SocialRow(
                   title: row.username,
-                  subtitle: activityName == null ? row.subtitle : '$activityName · ${row.subtitle}',
+                  subtitle: subtitle,
                   leading: SocialPortrait(appearance: peer.appearance),
                   onTap: () => openPlayerProfile(
                     context,
@@ -131,7 +132,6 @@ class _NearbyPanelState extends State<NearbyPanel> {
               },
             ),
           ),
-        SocialNotice(notice: net.notice),
       ],
     );
   }

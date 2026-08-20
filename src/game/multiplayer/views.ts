@@ -402,18 +402,27 @@ export function emptyBoardMessage(boardKey: MultiplayerBoardKey): string {
 export interface PeerRowView {
   userId: string
   username: string
+  /** `Online` while the heartbeat is fresh; otherwise `Away`. */
+  statusLabel: string
   /** `Combat 7 · Iron League`, with an em dash for an unknown level. */
   subtitle: string
   appearance: PlayerAppearance
 }
 
+/** Online while `updatedAt` is inside the heartbeat window; Away otherwise. */
+export function peerPresenceStatus(updatedAt: string | null | undefined, nowMs: number): string {
+  return rosterLastOnline(updatedAt, nowMs).isOnline ? 'Online' : 'Away'
+}
+
 export function peerRows(
   peers: ActivityPresence[],
   skillName: (skillId: string | null) => string,
+  nowMs = 0,
 ): PeerRowView[] {
   return peers.map((peer) => ({
     userId: peer.userId,
     username: peer.username,
+    statusLabel: peerPresenceStatus(peer.updatedAt, nowMs),
     subtitle: [
       `${skillName(peer.skillId)} ${peer.skillLevel ?? '—'}`,
       peer.guildName ?? null,

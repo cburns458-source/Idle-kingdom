@@ -10,7 +10,7 @@ import {
 } from '../save/types'
 import { pendingAccountUsername, isPendingAccountUsername, remoteUsername } from './remote'
 import { totalLevel } from '../skills/totals'
-import { CHAT_COOLDOWN_SECONDS, PRESENCE_TTL_SECONDS } from './config'
+import { CHAT_COOLDOWN_SECONDS, PRESENCE_AWAY_TTL_SECONDS } from './config'
 import { containsSlur, CHAT_DISABLED_NOTICE } from './moderation'
 import { buildLeaderboardSnapshot, rankLeaderboardEntries } from './snapshots'
 import type { GameDatabase } from '../data/types'
@@ -1186,7 +1186,7 @@ export class LocalMultiplayerBackend {
     const db = this.db()
     const profile = db.profiles.find((row) => row.userId === session.userId)
     const updatedAt = this.nowIso()
-    const expiresAt = new Date(this.now() + PRESENCE_TTL_SECONDS * 1000).toISOString()
+    const expiresAt = new Date(this.now() + PRESENCE_AWAY_TTL_SECONDS * 1000).toISOString()
     const row: ActivityPresence = {
       userId: session.userId,
       username: session.username,

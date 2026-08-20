@@ -69,10 +69,13 @@ class GameSession {
   }
 
   /// Replaces the in-memory save with the account's row and credits time away.
-  SessionBoot adoptAccount(PlayerSave incoming) {
-    final nowMs = clock();
-    final unattended = resolveUnattendedProgress(db, incoming, nowMs, random);
-    final synced = syncProgressionMeta(db, unattended.save, nowMs);
+  ///
+  /// [nowMs] is the catch-up clock. Hosted play should pass the server's time
+  /// so a skewed device clock cannot invent progress.
+  SessionBoot adoptAccount(PlayerSave incoming, {num? nowMs}) {
+    final at = nowMs ?? clock();
+    final unattended = resolveUnattendedProgress(db, incoming, at, random);
+    final synced = syncProgressionMeta(db, unattended.save, at);
     _save = repository.write(synced);
     return SessionBoot(save: save, created: false, unattended: unattended);
   }

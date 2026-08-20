@@ -542,12 +542,16 @@ class PeerRowView {
   const PeerRowView({
     required this.userId,
     required this.username,
+    required this.statusLabel,
     required this.subtitle,
     required this.appearance,
   });
 
   final String userId;
   final String username;
+
+  /// `Online` while the heartbeat is fresh; otherwise `Away`.
+  final String statusLabel;
 
   /// `Combat 7 · Iron League`, with an em dash for an unknown level.
   final String subtitle;
@@ -556,20 +560,29 @@ class PeerRowView {
   Map<String, Object?> toJson() => <String, Object?>{
     'userId': userId,
     'username': username,
+    'statusLabel': statusLabel,
     'subtitle': subtitle,
     'appearance': appearance.toJson(),
   };
 }
 
+/// Online while [updatedAt] is inside the heartbeat window; Away otherwise.
+String peerPresenceStatus(String? updatedAt, num nowMs) {
+  return rosterLastOnline(updatedAt, nowMs).isOnline ? 'Online' : 'Away';
+}
+
 List<PeerRowView> peerRows(
   List<ActivityPresence> peers,
-  String Function(String? skillId) skillName,
-) {
+  String Function(String? skillId) skillName, {
+  num? nowMs,
+}) {
+  final clock = nowMs ?? 0;
   return peers.map((peer) {
     final level = peer.skillLevel == null ? '—' : jsNumberToString(peer.skillLevel!);
     return PeerRowView(
       userId: peer.userId,
       username: peer.username,
+      statusLabel: peerPresenceStatus(peer.updatedAt, clock),
       subtitle: <String>[
         '${skillName(peer.skillId)} $level',
         if (peer.guildName != null) peer.guildName!,
