@@ -87,8 +87,11 @@ const List<Shadow> overlayShadow = [
   Shadow(offset: Offset(0, 1), blurRadius: 2, color: Color(0x8C000000)),
 ];
 
+const String gameFontFamily = 'SevenTwelveSerif';
+
 /// Combat and gathering warnings.
 const TextStyle warningStyle = TextStyle(
+  fontFamily: gameFontFamily,
   color: Palette.warning,
   fontSize: 13,
   fontWeight: FontWeight.w600,
@@ -96,17 +99,21 @@ const TextStyle warningStyle = TextStyle(
   shadows: overlayShadow,
 );
 
-const String gameFontFamily = 'SevenTwelveSerif';
-
 ThemeData buildAppTheme() {
-  final base = ThemeData.dark(useMaterial3: true);
+  // Pass fontFamily on the constructor. copyWith cannot set it, and bold
+  // Material styles fall back to Roboto unless this family is on the theme.
+  final base = ThemeData(
+    useMaterial3: true,
+    brightness: Brightness.dark,
+    fontFamily: gameFontFamily,
+    scaffoldBackgroundColor: Palette.ink,
+  );
   final textTheme = base.textTheme.apply(
     fontFamily: gameFontFamily,
     bodyColor: Palette.parchmentText,
     displayColor: Palette.parchmentText,
   );
   return base.copyWith(
-    scaffoldBackgroundColor: Palette.ink,
     colorScheme: base.colorScheme.copyWith(
       primary: Palette.gold,
       onPrimary: Palette.ink,
