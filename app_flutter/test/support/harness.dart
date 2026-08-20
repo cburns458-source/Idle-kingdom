@@ -137,6 +137,15 @@ Future<void> signInRegisteredAccount(
   }
 }
 
+/// Clears a one-shot social OK alert so the shell underneath can be tapped.
+Future<void> dismissSocialAlertIfPresent(WidgetTester tester) async {
+  await tester.pump();
+  final ok = find.text('OK');
+  if (ok.evaluate().isEmpty) return;
+  await tester.tap(ok);
+  await tester.pump();
+}
+
 /// The same, over a hosted backend held in memory.
 ///
 /// This is the arrangement a released build runs in when it was given a Supabase
