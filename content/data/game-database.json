@@ -9413,7 +9413,7 @@
       "Internal Key": "search_riverside",
       "Contextual Name": "Search the riverside",
       "Location ID": "LOC-0003",
-      "Description": "Fishing at the river: crawfish, trout, and tuna.",
+      "Description": "Fishing at the river: crawfish, trout, and salmon.",
       "Danger Warning Combat Level": null,
       "Pool ID": "POOL-0003",
       "Pool Internal Key": "goblin_fishing",
@@ -9927,10 +9927,10 @@
     {
       "Pool Entry ID": "PEN-0010",
       "Pool ID": "POOL-0003",
-      "Action ID": "ACN-0102",
+      "Action ID": "ACN-0101",
       "Weight": 20,
       "Status": "Planned",
-      "Notes": "Tuna, 20% of goblin riverside fishing."
+      "Notes": "Salmon, 20% of goblin riverside fishing."
     },
     {
       "Pool Entry ID": "PEN-0011",
