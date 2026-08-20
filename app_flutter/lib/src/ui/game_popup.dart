@@ -62,7 +62,10 @@ Future<T?> showGamePopup<T>({
                     MediaQuery.sizeOf(context).height *
                     (placement == GamePopupPlacement.topHalf ? 0.48 : 0.7),
               ),
-              child: KeyedSubtree(key: const Key('game-popup'), child: builder(context)),
+              child: Material(
+                type: MaterialType.transparency,
+                child: KeyedSubtree(key: const Key('game-popup'), child: builder(context)),
+              ),
             ),
           ),
         ),

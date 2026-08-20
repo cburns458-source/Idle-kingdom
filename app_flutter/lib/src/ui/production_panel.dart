@@ -21,11 +21,14 @@ Future<void> showProductionPicker(
   return showGamePopup<void>(
     context: context,
     origin: origin,
-    builder: (context) => SingleChildScrollView(
-      child: ProductionPicker(
-        controller: controller,
-        activity: activity,
-        onClose: () => Navigator.of(context).pop(),
+    builder: (context) => SizedBox(
+      width: 360,
+      child: SingleChildScrollView(
+        child: ProductionPicker(
+          controller: controller,
+          activity: activity,
+          onClose: () => Navigator.of(context).pop(),
+        ),
       ),
     ),
   );

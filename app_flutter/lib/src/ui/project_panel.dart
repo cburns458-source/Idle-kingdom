@@ -20,11 +20,14 @@ Future<void> showProjectPicker(
   return showGamePopup<void>(
     context: context,
     origin: origin,
-    builder: (context) => SingleChildScrollView(
-      child: ProjectPicker(
-        controller: controller,
-        station: station,
-        onClose: () => Navigator.of(context).pop(),
+    builder: (context) => SizedBox(
+      width: 360,
+      child: SingleChildScrollView(
+        child: ProjectPicker(
+          controller: controller,
+          station: station,
+          onClose: () => Navigator.of(context).pop(),
+        ),
       ),
     ),
   );
