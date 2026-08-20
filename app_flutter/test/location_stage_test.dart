@@ -50,6 +50,21 @@ void main() {
     expect(find.bySemanticsLabel('Action progress'), findsOne);
   });
 
+  testWidgets('the farm plate runs behind the activities band', (tester) async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(currentLocationId: 'LOC-0001'),
+    );
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller, size: const Size(420, 420 * 16 / 9));
+
+    final plate = tester.getRect(
+      find.byWidgetPredicate((widget) => assetNamed(widget, 'loc_farm.webp')),
+    );
+    final activities = tester.getRect(find.text('Activities'));
+    expect(plate.bottom, greaterThan(activities.bottom));
+  });
+
   testWidgets('combat shows the enemy on the right with both HP bars', (tester) async {
     final clock = TestClock();
     final controller = buildController(

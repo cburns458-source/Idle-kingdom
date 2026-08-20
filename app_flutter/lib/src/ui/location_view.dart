@@ -104,6 +104,9 @@ class _LocationViewState extends State<LocationView> {
 
   static const double _collapsedBand = 176;
 
+  /// Farm art is a 9:16 plate; the path is aligned from the bottom of the card.
+  static const String _farmLocationId = 'LOC-0001';
+
   GameController get controller => widget.controller;
 
   void _openPanel(LocationPanel panel) {
@@ -212,11 +215,7 @@ class _LocationViewState extends State<LocationView> {
               return Stack(
                 fit: StackFit.expand,
                 children: [
-                  GameImage(
-                    locationAssetPath(locationId),
-                    fit: BoxFit.cover,
-                    alignment: Alignment.topCenter,
-                  ),
+                  _locationPlate(locationId),
                   const DecoratedBox(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
@@ -353,6 +352,17 @@ class _LocationViewState extends State<LocationView> {
           ),
         ),
       ),
+    );
+  }
+
+  /// Farm uses a 9:16 plate pinned to the bottom so the dirt path stays above
+  /// the activities list while the art still runs behind it.
+  Widget _locationPlate(String locationId) {
+    return GameImage(
+      locationAssetPath(locationId),
+      fit: BoxFit.cover,
+      alignment: locationId == _farmLocationId ? Alignment.bottomCenter : Alignment.topCenter,
+      filterQuality: locationId == _farmLocationId ? FilterQuality.medium : FilterQuality.none,
     );
   }
 

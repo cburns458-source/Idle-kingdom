@@ -34,7 +34,8 @@ class LocalBackendPorts {
     return LocalBackendPorts(
       nowMs: () => DateTime.now().millisecondsSinceEpoch,
       newId: (prefix) {
-        final noise = rng.nextInt(1 << 32).toRadixString(36);
+        // JS bitwise width makes `1 << 32` become 0, which nextInt rejects.
+        final noise = rng.nextInt(0x7fffffff).toRadixString(36);
         final stamp = DateTime.now().millisecondsSinceEpoch.toRadixString(36);
         return '${prefix}_${noise}_$stamp';
       },
