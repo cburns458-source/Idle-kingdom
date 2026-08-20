@@ -345,6 +345,8 @@ export interface PublicPlayerProfile {
   publicSkills: Array<{ skillId: string; level: number; xp: number }>
   achievementsUnlocked: number
   totalLevel: number
+  /** Whole percent of the Log. 0 when the save cannot be read. */
+  logCompletionPercent?: number
 }
 
 /** Citadel Plaza — hub presence / Nearby listing target. */

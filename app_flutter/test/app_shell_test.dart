@@ -485,7 +485,7 @@ void main() {
     expect(controller.mapTravelAnimation, isTrue);
   });
 
-  testWidgets('chat opens upward from the bottom-right', (tester) async {
+  testWidgets('chat opens in the top half of the frame', (tester) async {
     final controller = buildController(database, seed: startedCharacter(database));
     addTearDown(controller.dispose);
     await pumpShell(tester, controller);
@@ -499,5 +499,31 @@ void main() {
 
     expect(find.text('Global'), findsWidgets);
     expect(find.byTooltip('Close chat'), findsOne);
+  });
+
+  testWidgets('Close pops one page, and a second chin tab replaces the first', (tester) async {
+    final controller = buildController(database, seed: startedCharacter(database));
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller);
+
+    await tester.tap(find.text('Skills'));
+    await tester.pump();
+    expect(find.text('Total level'), findsOne);
+
+    await tester.tap(find.text('Inventory'));
+    await tester.pump();
+    expect(find.textContaining('slots'), findsOne);
+    expect(find.text('Total level'), findsNothing);
+
+    await tester.tap(find.widgetWithText(OutlinedButton, 'Close'));
+    await tester.pump();
+    expect(find.textContaining('slots'), findsNothing);
+    expect(find.text('Meadow'), findsWidgets);
+
+    await openChinScreen(tester, 'Log');
+    expect(find.text('Skill milestones unlocked on this save.'), findsOne);
+    await tester.tap(find.widgetWithText(OutlinedButton, 'Close'));
+    await tester.pump();
+    expect(find.text('Skill milestones unlocked on this save.'), findsNothing);
   });
 }

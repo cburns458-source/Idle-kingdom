@@ -4,6 +4,7 @@ import 'package:ik_rules/ik_rules.dart';
 import '../session/game_controller.dart';
 import '../theme.dart';
 import 'format.dart';
+import 'game_popup.dart';
 import 'ingredient_chip.dart';
 import 'item_icon.dart';
 import 'quantity_sheet.dart';
@@ -331,36 +332,27 @@ class _ProjectDetails extends StatelessWidget {
 
 /// Shows what a finished project produced.
 Future<void> showProjectReceipt(BuildContext context, {required ProjectReceipt receipt}) {
-  return showModalBottomSheet<void>(
+  return showGamePopup<void>(
     context: context,
-    backgroundColor: Colors.transparent,
-    builder: (context) => SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: GamePanel(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const MutedText('Project complete'),
-              Text(
-                receipt.projectName,
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-              ),
-              const SizedBox(height: 8),
-              for (final line in receipt.lines)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 2),
-                  child: Text('· $line', style: const TextStyle(color: Palette.gold)),
-                ),
-              const SizedBox(height: 10),
-              FilledButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Collect'),
-              ),
-            ],
+    builder: (context) => GamePopupCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const MutedText('Project complete'),
+          Text(
+            receipt.projectName,
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
           ),
-        ),
+          const SizedBox(height: 8),
+          for (final line in receipt.lines)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 2),
+              child: Text('· $line', style: const TextStyle(color: Palette.gold)),
+            ),
+          const SizedBox(height: 10),
+          FilledButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Collect')),
+        ],
       ),
     ),
   );

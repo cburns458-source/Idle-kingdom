@@ -308,7 +308,7 @@ class RemoteMultiplayerService implements MultiplayerService {
       guildName: account.guildName,
       publicSkills: account.privacyPublicSkills ? skills : const <PublicSkillLine>[],
       achievementsUnlocked: achievements,
-      totalLevel: totalLevel < 1 ? 1 : totalLevel,
+      totalLevel: totalLevel < 1 ? 13 : totalLevel,
     );
   }
 

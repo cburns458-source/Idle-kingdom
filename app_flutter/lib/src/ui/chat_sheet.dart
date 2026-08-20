@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 import 'package:ik_net/ik_net.dart';
 import 'package:ik_rules/ik_rules.dart';
@@ -10,169 +8,65 @@ import '../theme.dart';
 import 'player_profile_sheet.dart';
 import 'social_bits.dart';
 
-/// The shell chat button, and the panel that grows up from it.
-///
-/// Chat never covers the whole screen: the game keeps running behind it, and the
-/// button carries the unread count so a closed panel still says something.
-class ChatLauncher extends StatefulWidget {
+/// The shell chat button. The panel itself sits on the AppShell stack so it
+/// can stay in the top half of the playable frame.
+class ChatLauncher extends StatelessWidget {
   const ChatLauncher({
     super.key,
-    required this.controller,
+    required this.open,
     required this.multiplayer,
-    required this.locationId,
-    this.citadelHub = false,
+    required this.onToggle,
   });
 
-  final GameController controller;
+  final bool open;
   final MultiplayerController multiplayer;
-  final String locationId;
-
-  /// True anywhere in the Citadel, where Local is one room across districts.
-  final bool citadelHub;
-
-  @override
-  State<ChatLauncher> createState() => _ChatLauncherState();
-}
-
-class _ChatLauncherState extends State<ChatLauncher> {
-  final LayerLink _link = LayerLink();
-  OverlayEntry? _entry;
-
-  MultiplayerController get net => widget.multiplayer;
-
-  bool get _open => _entry != null;
-
-  @override
-  void didUpdateWidget(covariant ChatLauncher oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.locationId == widget.locationId && oldWidget.citadelHub == widget.citadelHub) {
-      return;
-    }
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _entry?.markNeedsBuild();
-    });
-  }
-
-  @override
-  void dispose() {
-    _entry?.remove();
-    _entry = null;
-    super.dispose();
-  }
-
-  void _close() {
-    _entry?.remove();
-    _entry = null;
-    if (mounted) setState(() {});
-  }
-
-  Future<void> _toggle() async {
-    if (_open) {
-      _close();
-      return;
-    }
-    if (net.canSeeSocialPages) {
-      await net.selectChatTab(net.chatTab, widget.locationId, citadelHub: widget.citadelHub);
-    }
-    if (!mounted || _open) return;
-    final entry = OverlayEntry(builder: _buildOverlay);
-    _entry = entry;
-    Overlay.of(context, rootOverlay: true).insert(entry);
-    setState(() {});
-  }
-
-  Widget _buildOverlay(BuildContext context) {
-    final size = MediaQuery.sizeOf(context);
-    final width = math.min(360.0, size.width - 16);
-    final height = math.min(420.0, size.height * 0.62);
-    return Stack(
-      children: [
-        Positioned.fill(
-          child: GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: _close,
-            child: const ColoredBox(color: Color(0x00000000)),
-          ),
-        ),
-        CompositedTransformFollower(
-          link: _link,
-          showWhenUnlinked: false,
-          targetAnchor: Alignment.topRight,
-          followerAnchor: Alignment.bottomRight,
-          offset: const Offset(0, -8),
-          child: Material(
-            color: Palette.parchmentDeep,
-            elevation: 12,
-            shadowColor: const Color(0x73000000),
-            clipBehavior: Clip.antiAlias,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(14),
-              side: const BorderSide(color: Palette.edge),
-            ),
-            child: SizedBox(
-              width: width,
-              height: height,
-              child: ChatSheet(
-                controller: widget.controller,
-                multiplayer: net,
-                locationId: widget.locationId,
-                citadelHub: widget.citadelHub,
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
+  final VoidCallback onToggle;
 
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: net,
+      listenable: multiplayer,
       builder: (context, _) {
-        final badge = unreadBadgeLabel(net.unreadDms);
-        final tooltip = _open
+        final badge = unreadBadgeLabel(multiplayer.unreadDms);
+        final tooltip = open
             ? 'Close chat'
             : badge == null
             ? 'Open chat'
             : 'Open chat, $badge unread';
-        return CompositedTransformTarget(
-          link: _link,
-          child: Tooltip(
-            message: tooltip,
-            child: Material(
-              color: _open ? const Color(0xD9546E3E) : Palette.parchment,
-              shape: CircleBorder(
-                side: BorderSide(color: _open ? const Color(0x66BEDC96) : Palette.edge),
-              ),
-              child: InkWell(
-                customBorder: const CircleBorder(),
-                onTap: _toggle,
-                child: SizedBox.square(
-                  dimension: 36,
-                  child: Stack(
-                    clipBehavior: Clip.none,
-                    alignment: Alignment.center,
-                    children: [
-                      const Icon(Icons.chat_bubble, size: 18, color: Palette.parchmentText),
-                      if (badge != null)
-                        Positioned(
-                          right: -2,
-                          top: -2,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                            decoration: BoxDecoration(
-                              color: Palette.danger,
-                              borderRadius: BorderRadius.circular(999),
-                            ),
-                            child: Text(
-                              badge,
-                              style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w700),
-                            ),
+        return Tooltip(
+          message: tooltip,
+          child: Material(
+            color: open ? const Color(0xD9546E3E) : Palette.parchment,
+            shape: CircleBorder(
+              side: BorderSide(color: open ? const Color(0x66BEDC96) : Palette.edge),
+            ),
+            child: InkWell(
+              customBorder: const CircleBorder(),
+              onTap: onToggle,
+              child: SizedBox.square(
+                dimension: 36,
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  alignment: Alignment.center,
+                  children: [
+                    const Icon(Icons.chat_bubble, size: 18, color: Palette.parchmentText),
+                    if (badge != null)
+                      Positioned(
+                        right: -2,
+                        top: -2,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                          decoration: BoxDecoration(
+                            color: Palette.danger,
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          child: Text(
+                            badge,
+                            style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w700),
                           ),
                         ),
-                    ],
-                  ),
+                      ),
+                  ],
                 ),
               ),
             ),

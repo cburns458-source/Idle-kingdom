@@ -432,17 +432,20 @@ class OverlayChipButton extends StatelessWidget {
 
 /// Small muted caption, the equivalent of the CSS `.muted.tiny` pairing.
 class MutedText extends StatelessWidget {
-  const MutedText(this.text, {super.key, this.textAlign});
+  const MutedText(this.text, {super.key, this.textAlign, this.color});
 
   final String text;
   final TextAlign? textAlign;
+
+  /// Override when the surface is [Palette.muted] itself (wardrobe).
+  final Color? color;
 
   @override
   Widget build(BuildContext context) {
     return Text(
       text,
       textAlign: textAlign,
-      style: const TextStyle(fontSize: 12.5, color: Palette.muted, height: 1.35),
+      style: TextStyle(fontSize: 12.5, color: color ?? Palette.muted, height: 1.35),
     );
   }
 }

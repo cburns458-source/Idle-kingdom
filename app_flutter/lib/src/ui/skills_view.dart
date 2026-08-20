@@ -6,12 +6,15 @@ import '../session/game_controller.dart';
 import '../theme.dart';
 import 'format.dart';
 import 'game_image.dart';
+import 'game_popup.dart';
+import 'page_header.dart';
 
 /// Every skill as a tile, with the totals they add up to along the bottom.
 class SkillsView extends StatelessWidget {
-  const SkillsView({super.key, required this.controller});
+  const SkillsView({super.key, required this.controller, this.onClose});
 
   final GameController controller;
+  final VoidCallback? onClose;
 
   @override
   Widget build(BuildContext context) {
@@ -19,10 +22,13 @@ class SkillsView extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Padding(
-          padding: EdgeInsets.fromLTRB(12, 12, 12, 8),
-          child: Text('Skills', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
-        ),
+        if (onClose != null)
+          PageHeader(title: 'Skills', onClose: onClose!)
+        else
+          const Padding(
+            padding: EdgeInsets.fromLTRB(12, 12, 12, 8),
+            child: Text('Skills', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
+          ),
         Expanded(
           child: GridView.extent(
             padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
@@ -107,36 +113,31 @@ void _openSkillMenu(
   String skillName,
 ) {
   final entries = skillMenuDisplayEntries(controller.db, skillId);
-  showModalBottomSheet<void>(
+  showGamePopup<void>(
     context: context,
-    backgroundColor: Colors.transparent,
-    builder: (context) => SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: GamePanel(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.55),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(skillName, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
-                const SizedBox(height: 8),
-                Expanded(
-                  child: entries.isEmpty
-                      ? const MutedText('Nothing listed for this skill yet.')
-                      : ListView(
-                          children: [
-                            for (final entry in entries)
-                              Padding(
-                                padding: const EdgeInsets.only(bottom: 6),
-                                child: Text(skillMenuLine(entry)),
-                              ),
-                          ],
-                        ),
-                ),
-              ],
+    origin: popupOrigin(context),
+    builder: (context) => GamePopupCard(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.55),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(skillName, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+            const SizedBox(height: 8),
+            Expanded(
+              child: entries.isEmpty
+                  ? const MutedText('Nothing listed for this skill yet.')
+                  : ListView(
+                      children: [
+                        for (final entry in entries)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 6),
+                            child: Text(skillMenuLine(entry)),
+                          ),
+                      ],
+                    ),
             ),
-          ),
+          ],
         ),
       ),
     ),

@@ -8,6 +8,7 @@ import '../session/game_controller.dart';
 import '../session/multiplayer_controller.dart';
 import '../session/pick_local_png.dart';
 import '../theme.dart';
+import 'page_header.dart';
 import 'player_sprite.dart';
 
 const String _playerArtHeading = 'Player sprite';
@@ -19,10 +20,11 @@ const String _playerArtReset = 'Back to the default adventurer.';
 
 /// Character identity, a local sprite override, and the save tools.
 class MenuView extends StatefulWidget {
-  const MenuView({super.key, required this.controller, required this.multiplayer});
+  const MenuView({super.key, required this.controller, required this.multiplayer, this.onClose});
 
   final GameController controller;
   final MultiplayerController multiplayer;
+  final VoidCallback? onClose;
 
   @override
   State<MenuView> createState() => _MenuViewState();
@@ -92,8 +94,11 @@ class _MenuViewState extends State<MenuView> {
     return ListView(
       padding: const EdgeInsets.all(12),
       children: [
-        const Text('Settings', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
-        const SizedBox(height: 4),
+        if (widget.onClose != null)
+          PageHeader(title: 'Settings', onClose: widget.onClose!)
+        else
+          const Text('Settings', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
+        if (widget.onClose == null) const SizedBox(height: 4),
         const MutedText('Settings and save tools.'),
         const SizedBox(height: 16),
         GamePanel(

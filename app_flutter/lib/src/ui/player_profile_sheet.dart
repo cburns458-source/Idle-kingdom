@@ -1,22 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:ik_net/ik_net.dart';
+import 'package:ik_rules/ik_rules.dart';
 
 import '../session/game_controller.dart';
 import '../session/multiplayer_controller.dart';
 import '../theme.dart';
+import 'game_popup.dart';
 import 'social_bits.dart';
 
-/// Opens a player's public profile in a modal sheet.
+/// Opens a player's public profile as a centered card.
 Future<void> openPlayerProfile(
   BuildContext context, {
   required GameController controller,
   required MultiplayerController multiplayer,
   required String userId,
 }) {
-  return showModalBottomSheet<void>(
+  return showGamePopup<void>(
     context: context,
-    isScrollControlled: true,
-    backgroundColor: Palette.parchmentDeep,
+    origin: popupOrigin(context),
     builder: (context) =>
         PlayerProfileSheet(controller: controller, multiplayer: multiplayer, userId: userId),
   );
@@ -82,33 +83,57 @@ class _PlayerProfileSheetState extends State<PlayerProfileSheet> {
       listenable: net,
       builder: (context, _) {
         final profile = _profile;
-        return SafeArea(
-          child: Padding(
-            padding: EdgeInsets.only(
-              left: 12,
-              right: 12,
-              top: 12,
-              bottom: MediaQuery.viewInsetsOf(context).bottom + 12,
-            ),
-            child: _loading
-                ? const SizedBox(height: 120, child: Center(child: CircularProgressIndicator()))
-                : profile == null
-                ? Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      MutedText(_loadError ?? 'That player could not be found.'),
-                      const SizedBox(height: 10),
-                      OutlinedButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        child: const Text('Close'),
-                      ),
-                    ],
-                  )
-                : _buildBody(publicProfileView(profile, _skillName)),
+        return GamePopupCard(
+          padding: EdgeInsets.only(
+            left: 12,
+            right: 12,
+            top: 12,
+            bottom: MediaQuery.viewInsetsOf(context).bottom + 12,
           ),
+          child: _loading
+              ? const SizedBox(height: 120, child: Center(child: CircularProgressIndicator()))
+              : profile == null
+              ? Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    MutedText(_loadError ?? 'That player could not be found.'),
+                    const SizedBox(height: 10),
+                    OutlinedButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: const Text('Close'),
+                    ),
+                  ],
+                )
+              : _buildBody(publicProfileView(_displayProfile(profile), _skillName)),
         );
       },
+    );
+  }
+
+  PublicPlayerProfile _displayProfile(PublicPlayerProfile profile) {
+    if (_isSelf) {
+      final save = widget.controller.save;
+      return PublicPlayerProfile(
+        userId: profile.userId,
+        username: profile.username,
+        appearance: profile.appearance,
+        guildName: profile.guildName,
+        publicSkills: profile.publicSkills,
+        achievementsUnlocked: profile.achievementsUnlocked,
+        totalLevel: totalLevel(save),
+        logCompletionPercent: logCompletion(widget.controller.db, save).overall.percent,
+      );
+    }
+    return PublicPlayerProfile(
+      userId: profile.userId,
+      username: profile.username,
+      appearance: profile.appearance,
+      guildName: profile.guildName,
+      publicSkills: profile.publicSkills,
+      achievementsUnlocked: profile.achievementsUnlocked,
+      totalLevel: profile.totalLevel < 1 ? 13 : profile.totalLevel,
+      logCompletionPercent: profile.logCompletionPercent,
     );
   }
 

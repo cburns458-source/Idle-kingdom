@@ -10,6 +10,7 @@ import '../session/map_geometry.dart';
 import '../session/map_walk.dart';
 import '../theme.dart';
 import 'game_image.dart';
+import 'page_header.dart';
 import 'player_sprite.dart';
 
 /// How far below the top of a node widget its dot centre sits: the 8px of top
@@ -30,6 +31,7 @@ class WorldMapView extends StatelessWidget {
     required this.onBrowseMap,
     required this.onTravel,
     this.onOpenHere,
+    this.onClose,
     this.hiddenLocationIds = const <String>[],
     this.walkFromId,
     this.walkToId,
@@ -45,6 +47,8 @@ class WorldMapView extends StatelessWidget {
 
   /// Opens the location page for the node the player is already standing on.
   final VoidCallback? onOpenHere;
+
+  final VoidCallback? onClose;
 
   /// Nodes to omit — the Guild Hall until the player has joined a guild.
   final List<String> hiddenLocationIds;
@@ -127,10 +131,17 @@ class WorldMapView extends StatelessWidget {
             );
           },
         ),
+        if (onClose != null)
+          Positioned(
+            left: 0,
+            right: 0,
+            top: 0,
+            child: PageHeader(title: 'Map', onClose: onClose!),
+          ),
         if (browseMapId != mainMapId)
           Positioned(
             right: 12,
-            top: 12,
+            top: onClose == null ? 12 : 56,
             child: OverlayChipButton(
               tooltip: 'Open world map',
               onPressed: () => onBrowseMap(mainMapId),

@@ -183,6 +183,7 @@ final PublicPlayerProfile _profile = PublicPlayerProfile(
   totalLevel: 214,
   guildName: 'Iron League',
   achievementsUnlocked: 12,
+  logCompletionPercent: 12,
   publicSkills: List<PublicSkillLine>.generate(
     10,
     (index) => PublicSkillLine(
@@ -579,6 +580,7 @@ void main() {
                 totalLevel: _profile.totalLevel,
                 guildName: null,
                 achievementsUnlocked: _profile.achievementsUnlocked,
+                logCompletionPercent: _profile.logCompletionPercent,
                 publicSkills: const <PublicSkillLine>[],
               ),
               _skillName,

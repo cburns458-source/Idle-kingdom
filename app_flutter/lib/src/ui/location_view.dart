@@ -15,6 +15,8 @@ import 'guild_hall_panel.dart';
 import 'critter_overlay.dart';
 import 'format.dart';
 import 'game_image.dart';
+import 'game_popup.dart';
+import 'nearby_panel.dart';
 import 'npc_panel.dart';
 import 'production_panel.dart';
 import 'project_panel.dart';
@@ -83,7 +85,6 @@ class LocationView extends StatefulWidget {
     required this.multiplayer,
     required this.onOpenMap,
     required this.onOpenSubMap,
-    this.onOpenNearby,
     this.onOpenGuilds,
   });
 
@@ -97,7 +98,6 @@ class LocationView extends StatefulWidget {
   /// Opens the district map a gateway location leads into.
   final ValueChanged<String> onOpenSubMap;
 
-  final VoidCallback? onOpenNearby;
   final VoidCallback? onOpenGuilds;
 
   @override
@@ -105,7 +105,7 @@ class LocationView extends StatefulWidget {
 }
 
 class _LocationViewState extends State<LocationView> {
-  LocationPanel? _open;
+  final List<LocationPanel> _open = [];
 
   /// The location the open panel belongs to, so travelling closes it.
   String? _openAt;
@@ -135,13 +135,17 @@ class _LocationViewState extends State<LocationView> {
     }
     if (!identical(save, controller.save)) controller.commit(save);
     setState(() {
-      _open = panel;
+      _open.add(panel);
       _openAt = controller.save.currentLocationId;
       _bandExpanded = false;
     });
   }
 
-  void _closePanel() => setState(() => _open = null);
+  void _closePanel() => setState(() {
+    if (_open.isNotEmpty) _open.removeLast();
+  });
+
+  LocationPanel? get _currentPanel => _open.isEmpty ? null : _open.last;
 
   void _search(String searchId) {
     final result = claimLocationSearch(
@@ -166,7 +170,7 @@ class _LocationViewState extends State<LocationView> {
     }
     final locationId = location.locationId;
     if (_openAt != null && _openAt != locationId) {
-      _open = null;
+      _open.clear();
       _openAt = null;
     }
     if (_bandAt != locationId) {
@@ -175,7 +179,7 @@ class _LocationViewState extends State<LocationView> {
     }
 
     final running = controller.save.currentActivityId != null;
-    final openPanel = _open;
+    final openPanel = _currentPanel;
     // A running action keeps the stage. An open shop/NPC/workshop shares the
     // band instead of covering the fight or gather UI.
     final stage = running
@@ -227,19 +231,26 @@ class _LocationViewState extends State<LocationView> {
                             const SizedBox(width: 11),
                             Row(
                               children: [
-                                if (widget.onOpenNearby case final openNearby?) ...[
-                                  OverlayChipButton(
-                                    tooltip: 'Nearby adventurers',
-                                    onPressed: openNearby,
-                                    dark: true,
-                                    child: const Icon(
-                                      Icons.groups,
-                                      size: 32,
-                                      color: Color(0xF2ECD6A8),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 7),
-                                ],
+                                Builder(
+                                  builder: (context) {
+                                    return OverlayChipButton(
+                                      tooltip: 'Nearby adventurers',
+                                      onPressed: () => showNearbyPopup(
+                                        context,
+                                        controller: controller,
+                                        multiplayer: widget.multiplayer,
+                                        origin: popupOrigin(context),
+                                      ),
+                                      dark: true,
+                                      child: const Icon(
+                                        Icons.groups,
+                                        size: 32,
+                                        color: Color(0xF2ECD6A8),
+                                      ),
+                                    );
+                                  },
+                                ),
+                                const SizedBox(width: 7),
                                 OverlayChipButton(
                                   tooltip: 'Open world map',
                                   onPressed: widget.onOpenMap,
@@ -439,13 +450,12 @@ class _LocationViewState extends State<LocationView> {
   Future<void> _bless() async {
     final result = controller.receiveBlessing();
     if (!result.ok || !mounted) return;
-    await showDialog<void>(
+    await showGameAlert(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(amenityCopy(controller.db, 'blessing').title),
-        content: Text(result.message),
-        actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('OK'))],
-      ),
+      title: amenityCopy(controller.db, 'blessing').title,
+      message: result.message,
+      confirmLabel: 'OK',
+      placement: GamePopupPlacement.center,
     );
   }
 

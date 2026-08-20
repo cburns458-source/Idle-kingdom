@@ -15,7 +15,6 @@ import 'inventory_view.dart';
 import 'location_view.dart';
 import 'log_view.dart';
 import 'menu_view.dart';
-import 'nearby_panel.dart';
 import 'new_character_sheet.dart';
 import 'overlay_notice.dart';
 import 'playable_frame.dart';
@@ -28,6 +27,18 @@ import 'wardrobe_sheet.dart';
 import 'world_map_view.dart';
 
 enum GameScreen { location, map, skills, inventory, log, leaderboards, guilds, account, menu }
+
+const Set<GameScreen> _chinScreens = {
+  GameScreen.skills,
+  GameScreen.inventory,
+  GameScreen.log,
+  GameScreen.leaderboards,
+  GameScreen.guilds,
+  GameScreen.account,
+  GameScreen.menu,
+};
+
+enum _PageMotion { slideUp, slideDown, expandFromChip }
 
 /// The frame the whole game lives in: HUD on top, screen in the middle, nav
 /// underneath, and the overlays that can cover all three.
@@ -51,12 +62,14 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
   /// backgrounded; the next tick picks the elapsed time back up from the clock.
   Ticker? _ticker;
 
-  GameScreen _screen = GameScreen.location;
+  final List<GameScreen> _stack = [GameScreen.location];
   late String _browseMapId = _mapIdForCurrentLocation();
   String? _selectedLocationId;
   bool _wardrobeOpen = false;
-  bool _nearbyOpen = false;
+  bool _chatOpen = false;
   bool _socialAlertQueued = false;
+
+  GameScreen get _screen => _stack.last;
   final GlobalKey _toastKey = GlobalKey();
   AnimationController? _mapWalk;
   String? _walkFromId;
@@ -194,7 +207,8 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
     setState(() {
       _browseMapId = mainMapId;
       _selectedLocationId = controller.save.currentLocationId;
-      _screen = GameScreen.map;
+      _wardrobeOpen = false;
+      if (_stack.last != GameScreen.map) _stack.add(GameScreen.map);
     });
   }
 
@@ -204,15 +218,50 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
     setState(() {
       _browseMapId = mapId;
       _selectedLocationId = null;
-      _screen = GameScreen.map;
+      _wardrobeOpen = false;
+      if (_stack.last != GameScreen.map) _stack.add(GameScreen.map);
+    });
+  }
+
+  void _popToLocation() {
+    _cancelMapWalk();
+    setState(() {
+      _wardrobeOpen = false;
+      _stack
+        ..clear()
+        ..add(GameScreen.location);
+    });
+  }
+
+  /// Close pops one page. Wardrobe is a HUD overlay, so it goes first.
+  void _popPage() {
+    if (_wardrobeOpen) {
+      setState(() => _wardrobeOpen = false);
+      return;
+    }
+    if (_stack.length <= 1) return;
+    setState(() {
+      final popped = _stack.removeLast();
+      if (popped == GameScreen.map) _cancelMapWalk();
     });
   }
 
   void _selectScreen(GameScreen screen) {
-    if (_screen == GameScreen.map && screen != GameScreen.map) {
-      _cancelMapWalk();
+    if (screen == GameScreen.location) {
+      _popToLocation();
+      return;
     }
-    setState(() => _screen = screen);
+    setState(() {
+      _wardrobeOpen = false;
+      if (_screen == GameScreen.map && screen != GameScreen.map) {
+        _cancelMapWalk();
+      }
+      if (_chinScreens.contains(_screen) && _chinScreens.contains(screen)) {
+        _stack[_stack.length - 1] = screen;
+      } else if (_stack.last != screen) {
+        _stack.add(screen);
+      }
+    });
   }
 
   void _browseMap(String mapId) {
@@ -229,7 +278,10 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
     setState(() {
       _browseMapId = _mapIdForCurrentLocation();
       _selectedLocationId = null;
-      _screen = GameScreen.location;
+      _wardrobeOpen = false;
+      _stack
+        ..clear()
+        ..add(GameScreen.location);
     });
   }
 
@@ -315,12 +367,16 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
                   decoration: const BoxDecoration(gradient: Palette.frameGradient),
                   // Material widgets (text fields, ink, tooltips) need one of these
                   // above them, and the frame's own gradient shows through it.
+                  // A nested navigator keeps popups inside this 420px frame.
                   child: Material(
                     type: MaterialType.transparency,
-                    clipBehavior: Clip.none,
-                    child: ListenableBuilder(
-                      listenable: Listenable.merge(<Listenable>[controller, multiplayer]),
-                      builder: (context, _) => _buildFrame(context),
+                    clipBehavior: Clip.hardEdge,
+                    child: MediaQuery(
+                      data: MediaQuery.of(context).copyWith(size: frame),
+                      child: ListenableBuilder(
+                        listenable: Listenable.merge(<Listenable>[controller, multiplayer]),
+                        builder: (context, _) => _buildFrame(context),
+                      ),
                     ),
                   ),
                 ),
@@ -355,7 +411,32 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
                 fit: StackFit.expand,
                 clipBehavior: Clip.none,
                 children: [
-                  _buildScreen(),
+                  LocationView(
+                    controller: controller,
+                    multiplayer: multiplayer,
+                    onOpenMap: _showMap,
+                    onOpenSubMap: _browseSubMap,
+                    onOpenGuilds: () => _selectScreen(GameScreen.guilds),
+                  ),
+                  if (_screen != GameScreen.location)
+                    _PageLayer(
+                      key: ValueKey(_screen),
+                      motion: _screen == GameScreen.map
+                          ? _PageMotion.expandFromChip
+                          : _PageMotion.slideUp,
+                      child: DecoratedBox(
+                        decoration: const BoxDecoration(gradient: Palette.frameGradient),
+                        child: _coveringPage(),
+                      ),
+                    ),
+                  if (_wardrobeOpen)
+                    _PageLayer(
+                      motion: _PageMotion.slideDown,
+                      child: WardrobeSheet(
+                        controller: controller,
+                        onClose: () => setState(() => _wardrobeOpen = false),
+                      ),
+                    ),
                   if (_toastText case final text?)
                     Positioned(
                       top: 10,
@@ -383,22 +464,63 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
             right: 12,
             bottom: 62,
             child: ChatLauncher(
-              controller: controller,
+              open: _chatOpen,
               multiplayer: multiplayer,
-              locationId: save.currentLocationId,
-              citadelHub: _inCitadel,
+              onToggle: () async {
+                if (_chatOpen) {
+                  setState(() => _chatOpen = false);
+                  return;
+                }
+                if (multiplayer.canSeeSocialPages) {
+                  await multiplayer.selectChatTab(
+                    multiplayer.chatTab,
+                    save.currentLocationId,
+                    citadelHub: _inCitadel,
+                  );
+                }
+                if (mounted) setState(() => _chatOpen = true);
+              },
             ),
           ),
-        if (_nearbyOpen)
-          NearbyPanel(
-            controller: controller,
-            multiplayer: multiplayer,
-            onClose: () => setState(() => _nearbyOpen = false),
-          ),
-        if (_wardrobeOpen)
-          WardrobeSheet(
-            controller: controller,
-            onClose: () => setState(() => _wardrobeOpen = false),
+        if (_chatOpen)
+          Positioned.fill(
+            child: Stack(
+              children: [
+                GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () => setState(() => _chatOpen = false),
+                  child: const ColoredBox(color: Color(0x00000000)),
+                ),
+                Align(
+                  alignment: const Alignment(0, -0.65),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxWidth: 400,
+                        maxHeight: MediaQuery.sizeOf(context).height * 0.48,
+                      ),
+                      child: Material(
+                        color: Palette.parchmentDeep,
+                        elevation: 12,
+                        shadowColor: const Color(0x73000000),
+                        clipBehavior: Clip.antiAlias,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          side: const BorderSide(color: Palette.edge),
+                        ),
+                        child: ChatSheet(
+                          controller: controller,
+                          multiplayer: multiplayer,
+                          locationId: save.currentLocationId,
+                          citadelHub: _inCitadel,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         if (controller.travel case final journey?)
           TravelOverlay(controller: controller, journey: journey),
@@ -416,17 +538,10 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
     );
   }
 
-  Widget _buildScreen() {
+  Widget _coveringPage() {
     switch (_screen) {
       case GameScreen.location:
-        return LocationView(
-          controller: controller,
-          multiplayer: multiplayer,
-          onOpenMap: _showMap,
-          onOpenSubMap: _browseSubMap,
-          onOpenNearby: () => setState(() => _nearbyOpen = true),
-          onOpenGuilds: () => setState(() => _screen = GameScreen.guilds),
-        );
+        return const SizedBox.shrink();
       case GameScreen.map:
         return WorldMapView(
           controller: controller,
@@ -437,8 +552,9 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
           onTravel: _travelTo,
           onOpenHere: () {
             _cancelMapWalk();
-            setState(() => _screen = GameScreen.location);
+            _popPage();
           },
+          onClose: _popPage,
           hiddenLocationIds: multiplayer.guildId == null
               ? const <String>[guildHallLocationId]
               : const <String>[],
@@ -447,25 +563,27 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
           walkProgress: _mapWalk?.value,
         );
       case GameScreen.skills:
-        return SkillsView(controller: controller);
+        return SkillsView(controller: controller, onClose: _popPage);
       case GameScreen.inventory:
-        return InventoryView(controller: controller);
+        return InventoryView(controller: controller, onClose: _popPage);
       case GameScreen.log:
-        return LogView(controller: controller);
+        return LogView(controller: controller, onClose: _popPage);
       case GameScreen.leaderboards:
         return SocialView(
           controller: controller,
           multiplayer: multiplayer,
           section: SocialTab.leaderboards,
+          onClose: _popPage,
         );
       case GameScreen.guilds:
         return SocialView(
           controller: controller,
           multiplayer: multiplayer,
           section: SocialTab.guilds,
+          onClose: _popPage,
           onTravelToHall: () {
             if (!controller.travelToGuildHall()) return;
-            setState(() => _screen = GameScreen.location);
+            _popToLocation();
           },
         );
       case GameScreen.account:
@@ -473,9 +591,44 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
           controller: controller,
           multiplayer: multiplayer,
           section: SocialTab.account,
+          onClose: _popPage,
         );
       case GameScreen.menu:
-        return MenuView(controller: controller, multiplayer: multiplayer);
+        return MenuView(controller: controller, multiplayer: multiplayer, onClose: _popPage);
     }
+  }
+}
+
+class _PageLayer extends StatelessWidget {
+  const _PageLayer({super.key, required this.motion, required this.child});
+
+  final _PageMotion motion;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween<double>(begin: 0, end: 1),
+      duration: const Duration(milliseconds: 280),
+      curve: Curves.easeOutCubic,
+      builder: (context, t, child) {
+        switch (motion) {
+          case _PageMotion.slideUp:
+            return FractionalTranslation(translation: Offset(0, 1 - t), child: child);
+          case _PageMotion.slideDown:
+            return FractionalTranslation(translation: Offset(0, t - 1), child: child);
+          case _PageMotion.expandFromChip:
+            return Opacity(
+              opacity: t,
+              child: Transform.scale(
+                alignment: Alignment.topRight,
+                scale: 0.55 + 0.45 * t,
+                child: child,
+              ),
+            );
+        }
+      },
+      child: child,
+    );
   }
 }

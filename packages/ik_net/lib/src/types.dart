@@ -1030,6 +1030,7 @@ class PublicPlayerProfile {
     required this.publicSkills,
     required this.achievementsUnlocked,
     required this.totalLevel,
+    this.logCompletionPercent = 0,
   });
 
   final String userId;
@@ -1040,6 +1041,9 @@ class PublicPlayerProfile {
   final num achievementsUnlocked;
   final num totalLevel;
 
+  /// Whole percent of the Log. 0 when the save cannot be read.
+  final num logCompletionPercent;
+
   Map<String, Object?> toJson() => <String, Object?>{
     'userId': userId,
     'username': username,
@@ -1048,6 +1052,7 @@ class PublicPlayerProfile {
     'publicSkills': publicSkills.map((row) => row.toJson()).toList(),
     'achievementsUnlocked': achievementsUnlocked,
     'totalLevel': totalLevel,
+    'logCompletionPercent': logCompletionPercent,
   };
 }
 

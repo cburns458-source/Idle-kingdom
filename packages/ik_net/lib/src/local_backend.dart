@@ -1299,7 +1299,7 @@ class LocalMultiplayerBackend {
       guildName: profile.guildName,
       publicSkills: profile.privacyPublicSkills ? skills : const <PublicSkillLine>[],
       achievementsUnlocked: save?.achievements.where((row) => row.unlocked).length ?? 0,
-      totalLevel: total,
+      totalLevel: total < 1 ? 13 : total,
     );
   }
 
