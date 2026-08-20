@@ -50,7 +50,7 @@ void main() {
     expect(find.bySemanticsLabel('Action progress'), findsOne);
   });
 
-  testWidgets('the farm plate sits on the activities band', (tester) async {
+  testWidgets('the farm plate runs behind the activities band', (tester) async {
     final controller = buildController(
       database,
       seed: startedCharacter(database).copyWith(currentLocationId: 'LOC-0001'),
@@ -62,8 +62,7 @@ void main() {
       find.byWidgetPredicate((widget) => assetNamed(widget, 'loc_farm.webp')),
     );
     final activities = tester.getRect(find.text('Activities'));
-    expect(plate.bottom, lessThanOrEqualTo(activities.top));
-    expect(activities.top - plate.bottom, lessThan(32));
+    expect(plate.bottom, greaterThan(activities.bottom));
   });
 
   testWidgets('combat shows the enemy on the right with both HP bars', (tester) async {

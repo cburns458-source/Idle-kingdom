@@ -104,7 +104,7 @@ class _LocationViewState extends State<LocationView> {
 
   static const double _collapsedBand = 176;
 
-  /// The farm plate is a portrait stage, so its dirt path can sit on this band.
+  /// Farm art is a 9:16 plate; the path is aligned from the bottom of the card.
   static const String _farmLocationId = 'LOC-0001';
 
   GameController get controller => widget.controller;
@@ -215,7 +215,7 @@ class _LocationViewState extends State<LocationView> {
               return Stack(
                 fit: StackFit.expand,
                 children: [
-                  _locationPlate(locationId, card.maxHeight, bandTop),
+                  _locationPlate(locationId),
                   const DecoratedBox(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
@@ -355,17 +355,15 @@ class _LocationViewState extends State<LocationView> {
     );
   }
 
-  /// Other locations still bleed behind the band. The farm plate stops at the
-  /// activities header so its path lines up with the sprites' feet.
-  Widget _locationPlate(String locationId, double cardHeight, double bandTop) {
-    final plate = GameImage(
+  /// Farm uses a 9:16 plate pinned to the bottom so the dirt path stays above
+  /// the activities list while the art still runs behind it.
+  Widget _locationPlate(String locationId) {
+    return GameImage(
       locationAssetPath(locationId),
       fit: BoxFit.cover,
       alignment: locationId == _farmLocationId ? Alignment.bottomCenter : Alignment.topCenter,
       filterQuality: locationId == _farmLocationId ? FilterQuality.medium : FilterQuality.none,
     );
-    if (locationId != _farmLocationId) return plate;
-    return Positioned(left: 0, right: 0, top: 0, bottom: cardHeight - bandTop, child: plate);
   }
 
   Widget _buildPanel(LocationPanel panel) {

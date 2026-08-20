@@ -6,8 +6,8 @@ import 'package:ik_rules/ik_rules.dart';
 /// The tables mirror `src/game/assets/`, and the paths only differ by the
 /// `content/` prefix Flutter needs. No cache-busting query: a Flutter bundle is
 /// versioned by the build itself. Art is WebP: lossless for sprites, lossy for
-/// the location and map backgrounds. The farm plate is a 2× portrait stage;
-/// the rest of the location set is still 384px square.
+/// the location and map backgrounds. The farm plate is 1080×1920 (9:16),
+/// matching the main maps; the rest of the location set is still 384px square.
 
 const String _assetRoot = 'content/assets';
 
