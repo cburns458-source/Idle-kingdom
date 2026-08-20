@@ -46,6 +46,7 @@ void main() {
               'dm': ChatCooldownSeconds.dm,
             },
             'presenceTtlSeconds': presenceTtlSeconds,
+            'presenceAwayTtlSeconds': presenceAwayTtlSeconds,
             'guild': <String, Object?>{
               'createGoldCost': guildCreateGoldCost,
               'maxMembers': guildMaxMembers,
@@ -431,7 +432,9 @@ void main() {
         );
         final elsewhere = harness.backend.listPresence(locationId: 'LOC-0002');
         final anyLocation = harness.backend.listPresence();
-        harness.advance(100000);
+        harness.advance(presenceTtlSeconds * 1000 + 1000);
+        final afterHeartbeat = harness.backend.listPresence(locationId: 'LOC-0028');
+        harness.advance(presenceAwayTtlSeconds * 1000);
         final afterExpiry = harness.backend.listPresence(locationId: 'LOC-0028');
         harness.backend.clearPresence(rival.userId);
         expect(
@@ -442,6 +445,7 @@ void main() {
             'byActivity': _presenceJson(byActivity),
             'elsewhere': _presenceJson(elsewhere),
             'anyLocation': _presenceJson(anyLocation),
+            'afterHeartbeat': _presenceJson(afterHeartbeat),
             'afterExpiry': _presenceJson(afterExpiry),
             'cleared': _presenceJson(harness.backend.listPresence()),
           }),

@@ -48,6 +48,12 @@ class RemoteMultiplayerService implements MultiplayerService {
   @override
   String? takeReadProblem() => _reads.take();
 
+  @override
+  Future<num> authoritativeNowMs() async {
+    final remote = await transport.serverNowMs();
+    return remote ?? _nowMs();
+  }
+
   final SessionStore _sessions;
   final LocalMultiplayerService _local;
   late final RemoteGuildBackend _guilds;
@@ -519,7 +525,7 @@ class RemoteMultiplayerService implements MultiplayerService {
       input: input,
       guildName: _guildNameSeen,
       updatedAt: isoFromMs(now),
-      expiresAt: isoFromMs(now + presenceTtlSeconds * 1000),
+      expiresAt: isoFromMs(now + presenceAwayTtlSeconds * 1000),
     );
     final refused = await transport.upsert(RemoteTables.activityPresence, <RemoteRow>[
       row,

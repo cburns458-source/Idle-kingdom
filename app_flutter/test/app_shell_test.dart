@@ -202,7 +202,7 @@ void main() {
     final writer = buildRemoteMultiplayer(database, transport: transport);
     addTearDown(writer.dispose);
     final stored = startedCharacter(database).copyWith(characterName: 'Vari', gold: 777);
-    await writer.signUp('vari@example.com', 'Vari', 'secret', stored, adopt: (_) {});
+    await writer.signUp('vari@example.com', 'Vari', 'secret', stored, adopt: (save, {nowMs}) {});
 
     final controller = buildController(database);
     final net = buildRemoteMultiplayer(database, transport: transport);

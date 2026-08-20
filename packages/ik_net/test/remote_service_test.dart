@@ -457,12 +457,50 @@ void main() {
     final save = createNewSave(_database(), _nowMs).copyWith(currentLocationId: 'LOC-0005');
     expect(await hero.publishPresence(presenceFromSave(save)), isNotNull);
     expect(transport.tables[RemoteTables.activityPresence], hasLength(1));
+    final row = transport.tables[RemoteTables.activityPresence]!.single;
+    expect(row['expires_at'], isoFromMs(_nowMs + presenceAwayTtlSeconds * 1000));
 
     final rival = _service(transport, MemorySaveStorage());
     await rival.signUp('rival@example.com', 'Rival', 'secret');
     final peers = await rival.peersAtLocation('LOC-0005');
     expect(peers.single.username, 'Hero');
     expect(peers.single.locationId, 'LOC-0005');
+  });
+
+  test('keeps Away peers visible until the away TTL, then drops them', () async {
+    var clock = _nowMs;
+    final transport = FakeTransport();
+    final hero = RemoteMultiplayerService(
+      transport: transport,
+      storage: MemorySaveStorage(),
+      ports: LocalBackendPorts(
+        nowMs: () => clock,
+        newId: (prefix) => '${prefix}_0001',
+      ),
+    );
+    await hero.signUp('hero@example.com', 'Hero', 'secret');
+    final save = createNewSave(_database(), clock).copyWith(currentLocationId: 'LOC-0005');
+    await hero.publishPresence(presenceFromSave(save));
+
+    clock += presenceTtlSeconds * 1000 + 1000;
+    final mid = await hero.peersAtLocation('LOC-0005', excludeSelf: false);
+    expect(mid, hasLength(1));
+
+    clock = _nowMs + presenceAwayTtlSeconds * 1000 + 1000;
+    final gone = await hero.peersAtLocation('LOC-0005', excludeSelf: false);
+    expect(gone, isEmpty);
+  });
+
+  test('authoritativeNowMs prefers the transport server clock', () async {
+    final transport = FakeTransport(nowMs: () => _nowMs + 60_000);
+    final service = _service(transport, MemorySaveStorage());
+    expect(await service.authoritativeNowMs(), _nowMs + 60_000);
+  });
+
+  test('authoritativeNowMs falls back to the local ports clock', () async {
+    final transport = FakeTransport();
+    final service = _service(transport, MemorySaveStorage());
+    expect(await service.authoritativeNowMs(), _nowMs);
   });
 
   test('records the first bounty turn-in of the hour and no other', () async {

@@ -423,6 +423,7 @@ export const socialViewScenarios: ParityScenario[] = [
   }),
 
   scenario('social-views/presence', 'rows', { source: 'raw', value: null }, () => {
+    const nowMs = Date.parse('2026-08-12T21:00:00.000Z')
     return {
       peers: peerRows(
         [
@@ -433,6 +434,7 @@ export const socialViewScenarios: ParityScenario[] = [
           presence({ userId: 'usr_6', skillId: 'SKL-9999', skillLevel: 0 }),
         ],
         skillName,
+        nowMs,
       ),
       citadelSubtitles: [
         citadelVisitorSubtitle(presence()),

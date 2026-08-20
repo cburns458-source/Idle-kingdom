@@ -8,7 +8,11 @@ class ChatCooldownSeconds {
   static const num dm = 2;
 }
 
+/// Heartbeat window: a presence row newer than this is Online.
 const num presenceTtlSeconds = 120;
+
+/// How long a closed-client presence stays visible as Away on Nearby.
+const num presenceAwayTtlSeconds = 24 * 60 * 60;
 
 /// Supabase project credentials. Absent means the local backend is in use.
 class RemoteBackendConfig {

@@ -190,6 +190,12 @@ abstract interface class MultiplayerService {
   /// the rest. This is how it then says why that list is short, instead of
   /// showing an empty panel that looks like a game with nothing in it.
   String? takeReadProblem();
+
+  /// Authoritative clock for catch-up on login.
+  ///
+  /// Hosted play uses the server's time so a device clock cannot invent AFK
+  /// progress. Local play uses the device clock.
+  Future<num> authoritativeNowMs();
 }
 
 /// The single-device implementation: the local backend plus the stored session.
@@ -214,6 +220,9 @@ class LocalMultiplayerService implements MultiplayerService {
   /// A table on this device is always there to be read.
   @override
   String? takeReadProblem() => null;
+
+  @override
+  Future<num> authoritativeNowMs() async => _backend.ports.nowMs();
 
   @override
   Future<SessionResult> signUp(String email, String username, String password) async {

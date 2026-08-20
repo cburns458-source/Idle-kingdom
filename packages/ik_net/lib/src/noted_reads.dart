@@ -98,4 +98,7 @@ class NotedReads implements RemoteTransport {
   @override
   Future<RemoteInvokeResult> invoke(String function, RemoteRow body) =>
       inner.invoke(function, body);
+
+  @override
+  Future<num?> serverNowMs() => inner.serverNowMs();
 }

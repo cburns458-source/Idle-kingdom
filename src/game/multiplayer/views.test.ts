@@ -383,13 +383,22 @@ describe('presence views', () => {
   const skillName = (skillId: string | null) => (skillId === 'SKL-0001' ? 'Combat' : 'Unknown')
 
   it('names the skill a peer is working', () => {
+    const nowMs = Date.parse('2026-08-12T21:00:00.000Z')
     const rows = peerRows(
-      [presence(), presence({ userId: 'usr_3', guildName: 'Iron League' }), presence({ userId: 'usr_4', skillLevel: null })],
+      [
+        presence(),
+        presence({ userId: 'usr_3', guildName: 'Iron League' }),
+        presence({ userId: 'usr_4', skillLevel: null }),
+        presence({ userId: 'usr_5', updatedAt: '2026-08-12T20:50:00.000Z' }),
+      ],
       skillName,
+      nowMs,
     )
+    expect(rows[0].statusLabel).toBe('Online')
     expect(rows[0].subtitle).toBe('Combat 7')
     expect(rows[1].subtitle).toBe('Combat 7 · Iron League')
     expect(rows[2].subtitle).toBe('Combat —')
+    expect(rows[3].statusLabel).toBe('Away')
   })
 
   it('says whether a Citadel visitor has a guild', () => {

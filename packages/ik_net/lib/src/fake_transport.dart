@@ -9,10 +9,13 @@ import 'types.dart';
 /// a leaderboard row to its profile — because those are the assumptions that
 /// would otherwise only be checked against a live project.
 class FakeTransport implements RemoteTransport {
-  FakeTransport({this.startIso = '2026-08-13T00:00:00.000Z'});
+  FakeTransport({this.startIso = '2026-08-13T00:00:00.000Z', this.nowMs});
 
   /// The instant the first stamped row is written at.
   final String startIso;
+
+  /// Optional authoritative clock for [serverNowMs], matching a hosted now().
+  final num Function()? nowMs;
 
   /// A fresh timestamp, a second later each time.
   ///
@@ -405,6 +408,14 @@ class FakeTransport implements RemoteTransport {
     };
     tables[RemoteTables.chat]!.add(row);
     return RemoteInvokeResult.ok(<String, Object?>{...row});
+  }
+
+  @override
+  Future<num?> serverNowMs() async {
+    calls.add('serverNowMs');
+    final reason = _takeFailure('serverNowMs');
+    if (reason != null) return null;
+    return nowMs?.call();
   }
 }
 

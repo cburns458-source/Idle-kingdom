@@ -131,7 +131,7 @@ Future<void> signInRegisteredAccount(
   PlayerSave save, {
   TestAccount account = testAccount,
 }) async {
-  await multiplayer.signIn(account.email, account.password, save, adopt: (_) {});
+  await multiplayer.signIn(account.email, account.password, save, adopt: (save, {nowMs}) {});
   if (!multiplayer.isSignedIn) {
     throw StateError(multiplayer.notice ?? 'Sign-in of ${account.email} failed.');
   }

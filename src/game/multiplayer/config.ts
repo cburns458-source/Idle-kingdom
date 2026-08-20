@@ -18,4 +18,8 @@ export const CHAT_COOLDOWN_SECONDS = {
   dm: 2,
 } as const
 
+/** Heartbeat window: a presence row newer than this is Online. */
 export const PRESENCE_TTL_SECONDS = 120
+
+/** How long a closed-client presence stays visible as Away on Nearby. */
+export const PRESENCE_AWAY_TTL_SECONDS = 24 * 60 * 60

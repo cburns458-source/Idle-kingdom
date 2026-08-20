@@ -89,6 +89,25 @@ void main() {
     expect(boot.save.unattendedProgressAt, isoFromMs(now));
   });
 
+  test('adoptAccount can catch up on an injected server clock', () {
+    session.boot();
+    session.apply(
+      beginActivitySave(
+        session.save.copyWith(currentLocationId: meadowLocationId),
+        meadowActivityId,
+        isoFromMs(now),
+      ),
+    );
+    session.tick();
+    final parked = session.save;
+
+    // Device clock stays put; server time is an hour ahead.
+    final serverNow = now + 3600000;
+    final adopted = session.adoptAccount(parked, nowMs: serverNow);
+    expect(adopted.unattended.gatheringActions, greaterThan(0));
+    expect(adopted.save.unattendedProgressAt, isoFromMs(serverNow));
+  });
+
   test('travels instantly on the shipped connections', () {
     session.boot();
     final plan = session.travelTo(meadowLocationId, mainMapId);

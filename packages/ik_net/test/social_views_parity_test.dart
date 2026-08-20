@@ -554,7 +554,7 @@ void main() {
                 _presence(userId: 'usr_4', skillLevel: null),
                 _presence(userId: 'usr_5', skillId: null, skillLevel: null, guildName: 'Oak Guard'),
                 _presence(userId: 'usr_6', skillId: 'SKL-9999', skillLevel: 0),
-              ], _skillName),
+              ], _skillName, nowMs: _rosterNow),
             ),
             'citadelSubtitles': <String>[
               citadelVisitorSubtitle(_presence()),
