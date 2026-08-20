@@ -7,6 +7,7 @@ import 'package:ik_rules/ik_rules.dart';
 import '../session/game_controller.dart';
 import '../session/multiplayer_controller.dart';
 import '../theme.dart';
+import 'player_profile_sheet.dart';
 import 'social_bits.dart';
 
 /// The shell chat button, and the panel that grows up from it.
@@ -305,22 +306,54 @@ class _ChatSheetState extends State<ChatSheet> {
                         itemCount: lines.length,
                         itemBuilder: (context, index) {
                           final line = lines[index];
+                          final stamp = formatChatTimestamp(line.createdAt);
                           return Padding(
                             padding: const EdgeInsets.symmetric(vertical: 3),
-                            child: RichText(
-                              text: TextSpan(
-                                style: const TextStyle(fontSize: 13, color: Palette.parchmentText),
-                                children: [
-                                  TextSpan(
-                                    text: '${line.username}: ',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w700,
-                                      color: line.mine ? Palette.gold : Palette.parchmentText,
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  child: RichText(
+                                    text: TextSpan(
+                                      style: const TextStyle(
+                                        fontSize: 13,
+                                        color: Palette.parchmentText,
+                                      ),
+                                      children: [
+                                        WidgetSpan(
+                                          alignment: PlaceholderAlignment.baseline,
+                                          baseline: TextBaseline.alphabetic,
+                                          child: GestureDetector(
+                                            onTap: line.userId.isEmpty
+                                                ? null
+                                                : () => openPlayerProfile(
+                                                    context,
+                                                    controller: widget.controller,
+                                                    multiplayer: net,
+                                                    userId: line.userId,
+                                                  ),
+                                            child: Text(
+                                              '${line.username}: ',
+                                              style: TextStyle(
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.w700,
+                                                color: line.mine
+                                                    ? Palette.gold
+                                                    : Palette.parchmentText,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        TextSpan(text: line.body),
+                                      ],
                                     ),
                                   ),
-                                  TextSpan(text: line.body),
+                                ),
+                                if (stamp.isNotEmpty) ...[
+                                  const SizedBox(width: 8),
+                                  MutedText(stamp),
                                 ],
-                              ),
+                              ],
                             ),
                           );
                         },

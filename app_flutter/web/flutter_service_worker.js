@@ -1,7 +1,7 @@
 // Replaces the caching Flutter PWA worker from earlier deploys.
 // The browser fetches this script from the network, so a new deploy can
 // take over, drop the cached "Sign in to play" bundle, and reload.
-self.addEventListener('install', function (event) {
+self.addEventListener('install', function (_event) {
   self.skipWaiting();
 });
 

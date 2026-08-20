@@ -140,7 +140,7 @@ void main() {
     await openChinScreen(tester, 'Leaderboards');
     expect(find.text(signInPrompt), findsNothing);
     expect(find.text('Board'), findsOne);
-    expect(find.bySemanticsLabel('Update my ranking'), findsOne);
+    expect(find.bySemanticsLabel('Update my ranking'), findsNothing);
   });
 
   testWidgets('browse social pages shows guilds, chat, and nearby while signed in', (tester) async {

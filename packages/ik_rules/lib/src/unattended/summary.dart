@@ -15,7 +15,8 @@ final RegExp _craftedLine = RegExp(
 ///
 /// Anything that is not a craft line is left exactly as the resolver wrote it,
 /// and each item keeps the place its first line had, so the story of the absence
-/// still reads in order.
+/// still reads in order. After crafts are merged, any other identical message is
+/// collapsed to a single line with how many times it appeared.
 List<String> consolidateAwayMessages(List<String> messages) {
   final totals = <String, _CraftTotal>{};
   final lines = <String?>[];
@@ -46,7 +47,27 @@ List<String> consolidateAwayMessages(List<String> messages) {
         '(+${jsNumberToString(total.xp)} XP)';
   }
 
-  return lines.whereType<String>().toList();
+  final crafted = lines.whereType<String>().toList();
+  return _collapseRepeatedMessages(crafted);
+}
+
+/// Identical lines become one line with "… X times." keeping first-seen order.
+List<String> _collapseRepeatedMessages(List<String> messages) {
+  final counts = <String, int>{};
+  final order = <String>[];
+  for (final message in messages) {
+    final seen = counts[message];
+    if (seen == null) {
+      counts[message] = 1;
+      order.add(message);
+    } else {
+      counts[message] = seen + 1;
+    }
+  }
+  return [
+    for (final message in order)
+      if ((counts[message] ?? 1) <= 1) message else '$message … ${counts[message]} times.',
+  ];
 }
 
 class _CraftTotal {

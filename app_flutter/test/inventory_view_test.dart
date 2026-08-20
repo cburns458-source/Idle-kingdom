@@ -63,7 +63,11 @@ void main() {
     await tester.tap(find.text('Sell items'));
     await tester.pump();
     await tester.tap(find.byTooltip('Clay').first);
-    await tester.pump();
+    await tester.pumpAndSettle();
+    // Each stack asks for a quantity before it joins the selection.
+    expect(find.text('Sell Clay'), findsOne);
+    await tester.tap(find.text('Select'));
+    await tester.pumpAndSettle();
 
     expect(find.textContaining('Sell selected'), findsOne);
     await tester.tap(find.textContaining('Sell selected'));

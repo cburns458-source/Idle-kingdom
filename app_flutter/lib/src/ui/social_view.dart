@@ -6,6 +6,7 @@ import '../session/multiplayer_controller.dart';
 import '../theme.dart';
 import 'account_panel.dart';
 import 'guild_panel.dart';
+import 'player_profile_sheet.dart';
 import 'social_bits.dart';
 
 enum SocialTab { leaderboards, guilds, citadel, account }
@@ -121,14 +122,6 @@ class _LeaderboardTab extends StatelessWidget {
           },
         ),
         const SizedBox(height: 10),
-        GameButton(
-          label: 'Update my ranking',
-          onPressed: multiplayer.busy || !multiplayer.canPressUpdateRanking
-              ? null
-              : () => multiplayer.updateRanking(controller.save),
-        ),
-        const SizedBox(height: 6),
-        MutedText(multiplayer.rankingUpdateHintText),
         SocialNotice(notice: multiplayer.notice),
         const SizedBox(height: 10),
         if (rows.isEmpty)
@@ -141,6 +134,14 @@ class _LeaderboardTab extends StatelessWidget {
               leading: row.emblem == null
                   ? SocialPortrait(appearance: row.appearance)
                   : GuildEmblemBadge(emblem: row.emblem!),
+              onTap: row.isGuild
+                  ? null
+                  : () => openPlayerProfile(
+                      context,
+                      controller: controller,
+                      multiplayer: multiplayer,
+                      userId: row.entryId,
+                    ),
               trailing: Row(
                 children: [
                   Column(

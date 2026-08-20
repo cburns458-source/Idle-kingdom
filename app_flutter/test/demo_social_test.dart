@@ -57,7 +57,16 @@ void main() {
     await tester.pump();
 
     expect(find.text('[WCH] The Watch'), findsOne);
+    await tester.tap(find.text('[WCH] The Watch'));
+    await tester.pump();
+    await tester.pump();
+    expect(find.text('Join'), findsOne);
     await tester.tap(find.text('Join'));
+    await tester.pump();
+    await tester.pump();
+
+    // Leave the roster detail; the guild home now owns the panel.
+    await tester.tap(find.byType(BackButton));
     await tester.pump();
     await tester.pump();
 
@@ -73,6 +82,9 @@ void main() {
     await tester.pump();
 
     expect(find.text('[WCH] The Watch'), findsOne);
+    await tester.tap(find.text('[WCH] The Watch'));
+    await tester.pump();
+    await tester.pump();
     expect(find.text('Join'), findsOne);
   });
 
@@ -88,12 +100,19 @@ void main() {
     await tester.pump();
 
     expect(find.text('[WCH] The Watch'), findsOne);
+    await tester.tap(find.text('[WCH] The Watch'));
+    await tester.pump();
+    await tester.pump();
+    expect(find.text('Guest'), findsOne);
     await tester.tap(find.text('Guest'));
     await tester.pump();
     await tester.pump();
 
+    await tester.tap(find.byType(BackButton));
+    await tester.pump();
+    await tester.pump();
+
     expect(find.textContaining('Guest of [WCH] The Watch'), findsOne);
-    expect(find.text('Join'), findsOne);
     expect(find.text('Leave guest'), findsOne);
     expect(find.text('Leave guild'), findsNothing);
   });

@@ -140,6 +140,7 @@ class PvpActionStage extends StatelessWidget {
         ),
         playerCaption: _FighterCaption(
           name: youName,
+          hpLabel: '${youHp.round()}/${youMaxHp.round()}',
           alignEnd: false,
           meter: _Meter(
             label: 'Player health',
@@ -150,6 +151,7 @@ class PvpActionStage extends StatelessWidget {
         ),
         sceneCaption: _FighterCaption(
           name: themName,
+          hpLabel: '${themHp.round()}/${themMaxHp.round()}',
           alignEnd: true,
           meter: _Meter(
             label: '$themName health',
@@ -341,21 +343,40 @@ class _Meter extends StatelessWidget {
 
 /// Name + HP so both fighters' bars sit on the same row.
 class _FighterCaption extends StatelessWidget {
-  const _FighterCaption({required this.name, required this.alignEnd, required this.meter});
+  const _FighterCaption({
+    required this.name,
+    required this.hpLabel,
+    required this.alignEnd,
+    required this.meter,
+  });
 
   final String name;
+  final String hpLabel;
   final bool alignEnd;
   final Widget meter;
 
   @override
   Widget build(BuildContext context) {
+    final hpStyle = const TextStyle(fontSize: 11, color: Palette.muted);
+    final nameRow = alignEnd
+        ? Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              Text(hpLabel, style: hpStyle),
+              const SizedBox(width: 6),
+              Flexible(child: _SceneName(name, alignEnd: true)),
+            ],
+          )
+        : Row(
+            children: [
+              Flexible(child: _SceneName(name, alignEnd: false)),
+              const SizedBox(width: 6),
+              Text(hpLabel, style: hpStyle),
+            ],
+          );
     return Column(
       crossAxisAlignment: alignEnd ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-      children: [
-        _SceneName(name, alignEnd: alignEnd),
-        const SizedBox(height: 3),
-        meter,
-      ],
+      children: [nameRow, const SizedBox(height: 3), meter],
     );
   }
 }
@@ -435,6 +456,7 @@ class _CombatStage extends StatelessWidget {
         ),
         playerCaption: _FighterCaption(
           name: save.characterName ?? 'Adventurer',
+          hpLabel: '${playerHp.round()}/${maxHp.round()}',
           alignEnd: false,
           meter: _Meter(
             label: 'Player health',
@@ -445,6 +467,7 @@ class _CombatStage extends StatelessWidget {
         ),
         sceneCaption: _FighterCaption(
           name: enemyName,
+          hpLabel: '${enemyHp.round()}/${enemyMaxHp.round()}',
           alignEnd: true,
           meter: _Meter(
             label: '$enemyName health',
