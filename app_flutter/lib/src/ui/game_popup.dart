@@ -128,16 +128,18 @@ Future<bool> showGameAlert({
             Row(
               children: [
                 if (cancelLabel != null) ...[
-                  OutlinedButton(
+                  GameButton(
+                    label: cancelLabel,
+                    tone: GameButtonTone.secondary,
+                    compact: true,
                     onPressed: () => Navigator.of(context).pop(false),
-                    child: Text(cancelLabel),
                   ),
                   const SizedBox(width: 8),
                 ],
                 Expanded(
-                  child: FilledButton(
+                  child: GameButton(
+                    label: confirmLabel,
                     onPressed: () => Navigator.of(context).pop(true),
-                    child: Text(confirmLabel),
                   ),
                 ),
               ],

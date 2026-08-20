@@ -113,11 +113,7 @@ class _BankPanelState extends State<BankPanel> {
                 style: const TextStyle(color: Palette.gold),
               ),
               if (widget.onClose != null)
-                IconButton(
-                  onPressed: widget.onClose,
-                  tooltip: 'Close',
-                  icon: const Icon(Icons.close, size: 18),
-                ),
+                GameIconButton(icon: Icons.close, tooltip: 'Close', onPressed: widget.onClose),
             ],
           ),
           MutedText(

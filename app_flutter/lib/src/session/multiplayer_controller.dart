@@ -122,6 +122,9 @@ class MultiplayerController extends ChangeNotifier {
   List<BountyClaimRecord> _bountyClaims = const <BountyClaimRecord>[];
   List<BazaarPost> _bazaarPosts = const <BazaarPost>[];
   ChatTab _chatTab = ChatTab.global;
+  String? _selectedDmPeerId;
+  final List<String> _openDmPeerIds = <String>[];
+  final Map<String, String> _dmPeerNames = <String, String>{};
   int _unreadDms = 0;
   String? _notice;
   bool _busy = false;
@@ -179,6 +182,39 @@ class MultiplayerController extends ChangeNotifier {
   List<BazaarPost> get bazaarPosts => _bazaarPosts;
   ChatTab get chatTab => _chatTab;
   int get unreadDms => _unreadDms;
+  String? get selectedDmPeerId => _selectedDmPeerId;
+
+  /// Open private threads, newest first, including ones started from a profile.
+  List<({String userId, String username})> get openDmThreads {
+    final seen = <String>{};
+    final out = <({String userId, String username})>[];
+    void add(String id, [String? name]) {
+      if (id.isEmpty || !seen.add(id)) return;
+      out.add((userId: id, username: _dmPeerNames[id] ?? name ?? 'Adventurer'));
+    }
+
+    for (final id in _openDmPeerIds) {
+      add(id);
+    }
+    final me = session?.userId;
+    if (me != null) {
+      for (final message in _messages) {
+        final peer = _dmPeerIdFromMessage(message, me);
+        if (peer == null) continue;
+        if (message.userId != me) _dmPeerNames[peer] = message.username;
+        add(peer, message.userId == me ? null : message.username);
+      }
+    }
+    return out;
+  }
+
+  List<ChatMessage> messagesForSelectedDm() {
+    final me = session?.userId;
+    final peer = _selectedDmPeerId;
+    if (me == null || peer == null) return const <ChatMessage>[];
+    final key = chatChannelKey(ChatChannel.dm(dmPairKey(me, peer)));
+    return _messages.where((message) => message.channelKey == key).toList();
+  }
 
   /// What the last action said, success or refusal, until something else speaks.
   String? get notice => _notice;
@@ -346,6 +382,9 @@ class MultiplayerController extends ChangeNotifier {
     _outgoingFriendRequests = const <SocialContact>[];
     _ignored = const <SocialContact>[];
     _messages = const <ChatMessage>[];
+    _selectedDmPeerId = null;
+    _openDmPeerIds.clear();
+    _dmPeerNames.clear();
     _bountyClaims = const <BountyClaimRecord>[];
     _bazaarPosts = const <BazaarPost>[];
     _unreadDms = 0;
@@ -740,6 +779,7 @@ class MultiplayerController extends ChangeNotifier {
     }
     if (tab == ChatTab.dm) {
       _messages = await service.listDirectMessages();
+      _ingestDmPeers(_messages);
       _markDmsRead();
       notifyListeners();
       return;
@@ -757,6 +797,13 @@ class MultiplayerController extends ChangeNotifier {
 
   /// Sends [body] to the open tab, then shows the room again.
   Future<void> sendChat(String body, String locationId, {bool citadelHub = false}) {
+    if (_chatTab == ChatTab.dm) {
+      final peer = _selectedDmPeerId;
+      if (peer == null) {
+        return run(() async => 'Pick a conversation.');
+      }
+      return sendDirectMessage(peer, body, announceSent: false);
+    }
     return run(() async {
       final channel = chatChannelForTab(
         _chatTab,
@@ -775,13 +822,60 @@ class MultiplayerController extends ChangeNotifier {
     });
   }
 
+  void rememberDmPeer(String userId, String username) {
+    if (userId.isEmpty) return;
+    if (username.isNotEmpty) _dmPeerNames[userId] = username;
+    _openDmPeerIds.remove(userId);
+    _openDmPeerIds.insert(0, userId);
+    notifyListeners();
+  }
+
+  void selectDmPeer(String userId, {String? username}) {
+    _selectedDmPeerId = userId;
+    rememberDmPeer(userId, username ?? _dmPeerNames[userId] ?? 'Adventurer');
+  }
+
+  String? _dmPeerIdFromMessage(ChatMessage message, String me) {
+    if (!message.channelKey.startsWith('dm:')) {
+      return message.userId == me ? null : message.userId;
+    }
+    final parts = message.channelKey.substring(3).split(':');
+    if (parts.length < 2) return message.userId == me ? null : message.userId;
+    if (parts[0] == me) return parts[1];
+    if (parts[1] == me) return parts[0];
+    return message.userId == me ? null : message.userId;
+  }
+
+  void _ingestDmPeers(List<ChatMessage> messages) {
+    final me = session?.userId;
+    if (me == null) return;
+    for (final message in messages) {
+      final peer = _dmPeerIdFromMessage(message, me);
+      if (peer == null) continue;
+      if (message.userId != me) _dmPeerNames[peer] = message.username;
+      if (!_openDmPeerIds.contains(peer)) _openDmPeerIds.add(peer);
+    }
+  }
+
   /// Answers a peer where they can read it, without leaving the panel.
-  Future<void> sendDirectMessage(String userId, String body) {
+  Future<void> sendDirectMessage(
+    String userId,
+    String body, {
+    String? username,
+    bool announceSent = true,
+  }) {
     return run(() async {
       final me = session?.userId;
       if (me == null) return 'Sign in to chat.';
       final result = await service.sendChat(ChatChannel.dm(dmPairKey(me, userId)), body);
-      return result.ok ? 'Message sent.' : result.reason;
+      if (!result.ok) return result.reason;
+      rememberDmPeer(userId, username ?? _dmPeerNames[userId] ?? 'Adventurer');
+      if (_chatTab == ChatTab.dm) {
+        _messages = await service.listDirectMessages();
+        _ingestDmPeers(_messages);
+        _markDmsRead();
+      }
+      return announceSent ? 'Message sent.' : null;
     });
   }
 

@@ -55,12 +55,8 @@ class _WardrobeSheetState extends State<WardrobeSheet> {
     final slot = wardrobeSlotView(controller.db, save, _slotId);
 
     return ColoredBox(
-      color: Palette.muted,
-      child: DefaultTextStyle.merge(
-        style: const TextStyle(color: Palette.ink),
-        child: IconTheme.merge(
-          data: const IconThemeData(color: Palette.ink),
-          child: Padding(
+      color: Palette.parchmentDeep,
+      child: Padding(
             padding: const EdgeInsets.all(12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -70,16 +66,15 @@ class _WardrobeSheetState extends State<WardrobeSheet> {
                     const Expanded(
                       child: Text(
                         'Wardrobe',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w700,
-                          color: Palette.ink,
-                        ),
+                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
                       ),
                     ),
-                    Tooltip(
-                      message: 'Close',
-                      child: OutlinedButton(onPressed: widget.onClose, child: const Text('Close')),
+                    GameButton(
+                      label: 'Close',
+                      tone: GameButtonTone.secondary,
+                      compact: true,
+                      tooltip: 'Close',
+                      onPressed: widget.onClose,
                     ),
                   ],
                 ),
@@ -110,7 +105,7 @@ class _WardrobeSheetState extends State<WardrobeSheet> {
                                       alignment: Alignment.topCenter,
                                     ),
                                   ),
-                                  if (race != null) MutedText(race, color: Palette.parchment),
+                                  if (race != null) MutedText(race),
                                 ],
                               ),
                             );
@@ -135,17 +130,27 @@ class _WardrobeSheetState extends State<WardrobeSheet> {
                   child: ListView(
                     children: [
                       if (tabs.length > 1)
-                        SegmentedButton<String>(
-                          segments: [
-                            for (final tab in tabs)
-                              ButtonSegment(value: tab.slotId, label: Text(tab.label)),
-                          ],
-                          selected: {slot?.slotId ?? _slotId},
-                          showSelectedIcon: false,
-                          onSelectionChanged: (selection) => setState(() {
-                            _slotId = selection.first;
-                            _error = null;
-                          }),
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: [
+                              for (final tab in tabs) ...[
+                                GameButton(
+                                  label: tab.label,
+                                  compact: true,
+                                  selected: (slot?.slotId ?? _slotId) == tab.slotId,
+                                  tone: (slot?.slotId ?? _slotId) == tab.slotId
+                                      ? GameButtonTone.primary
+                                      : GameButtonTone.secondary,
+                                  onPressed: () => setState(() {
+                                    _slotId = tab.slotId;
+                                    _error = null;
+                                  }),
+                                ),
+                                const SizedBox(width: 6),
+                              ],
+                            ],
+                          ),
                         ),
                       if (slot case final slot?) ...[
                         const SizedBox(height: 12),
@@ -169,7 +174,7 @@ class _WardrobeSheetState extends State<WardrobeSheet> {
                         ),
                         if (slot.tiles.isEmpty) ...[
                           const SizedBox(height: 8),
-                          MutedText(slot.emptyNote, color: Palette.parchment),
+                          MutedText(slot.emptyNote),
                         ],
                       ],
                       if (_error case final error?) ...[
@@ -182,8 +187,6 @@ class _WardrobeSheetState extends State<WardrobeSheet> {
               ],
             ),
           ),
-        ),
-      ),
     );
   }
 }
@@ -280,10 +283,7 @@ class WardrobeUnlockPopup extends StatelessWidget {
                 const Text('It has been added to your Wardrobe.'),
                 if (notice.hint case final hint?) ...[const SizedBox(height: 6), MutedText(hint)],
                 const SizedBox(height: 14),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: FilledButton(onPressed: onClose, child: const Text('Nice!')),
-                ),
+                GameButton(label: 'Nice!', onPressed: onClose),
               ],
             ),
           ),

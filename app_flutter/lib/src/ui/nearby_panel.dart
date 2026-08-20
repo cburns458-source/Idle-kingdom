@@ -98,7 +98,12 @@ class _NearbyPanelState extends State<NearbyPanel> {
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
               ),
             ),
-            OutlinedButton(onPressed: widget.onClose, child: const Text('Close')),
+            GameButton(
+              label: 'Close',
+              tone: GameButtonTone.secondary,
+              compact: true,
+              onPressed: widget.onClose,
+            ),
           ],
         ),
         const SizedBox(height: 8),

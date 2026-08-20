@@ -9,7 +9,7 @@ import 'player_profile_sheet.dart';
 import 'social_bits.dart';
 
 /// The shell chat button. The panel itself sits on the AppShell stack so it
-/// can stay in the top half of the playable frame.
+/// can stay above the chin and rise with the keyboard.
 class ChatLauncher extends StatelessWidget {
   const ChatLauncher({
     super.key,
@@ -85,12 +85,14 @@ class ChatSheet extends StatefulWidget {
     required this.multiplayer,
     required this.locationId,
     required this.citadelHub,
+    required this.onClose,
   });
 
   final GameController controller;
   final MultiplayerController multiplayer;
   final String locationId;
   final bool citadelHub;
+  final VoidCallback onClose;
 
   @override
   State<ChatSheet> createState() => _ChatSheetState();
@@ -98,6 +100,7 @@ class ChatSheet extends StatefulWidget {
 
 class _ChatSheetState extends State<ChatSheet> {
   final TextEditingController _body = TextEditingController();
+  final FocusNode _composerFocus = FocusNode();
   bool _viewingGuilds = false;
 
   MultiplayerController get net => widget.multiplayer;
@@ -105,8 +108,15 @@ class _ChatSheetState extends State<ChatSheet> {
 
   @override
   void dispose() {
+    _composerFocus.dispose();
     _body.dispose();
     super.dispose();
+  }
+
+  void _close() {
+    _composerFocus.unfocus();
+    FocusManager.instance.primaryFocus?.unfocus();
+    widget.onClose();
   }
 
   Future<void> _send() async {
@@ -122,7 +132,12 @@ class _ChatSheetState extends State<ChatSheet> {
       listenable: net,
       builder: (context, _) {
         if (!net.canSeeSocialPages) {
-          return const SignedOutNotice(title: 'Chat', prompt: signInPrompt);
+          return Column(
+            children: [
+              _header(const []),
+              const Expanded(child: SignedOutNotice(title: 'Chat', prompt: signInPrompt)),
+            ],
+          );
         }
         final tabs = chatTabs(
           selected: net.chatTab,
@@ -131,157 +146,209 @@ class _ChatSheetState extends State<ChatSheet> {
           hasGuest: net.guestGuildId != null,
           unreadDms: net.unreadDms,
         );
+        final source = net.chatTab == ChatTab.dm ? net.messagesForSelectedDm() : net.messages;
         final lines = chatLines(
-          net.messages,
+          source,
           net.session?.userId,
           filterProfanityEnabled: net.filterChatProfanity,
         );
-        return Padding(
-          padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(12, 12, 12, 6),
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: [
-                      for (final tab in tabs) ...[
-                        OutlinedButton(
-                          onPressed: tab.enabled
-                              ? () => net.selectChatTab(
-                                  tab.tab,
-                                  widget.locationId,
-                                  citadelHub: widget.citadelHub,
-                                )
-                              : null,
-                          style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                            backgroundColor: tab.selected ? const Color(0x33D4AF37) : null,
-                            side: BorderSide(color: tab.selected ? Palette.gold : Palette.edge),
-                          ),
-                          child: Text(tab.label, maxLines: 1, style: const TextStyle(fontSize: 12)),
-                        ),
-                        if (tab.tab != tabs.last.tab) const SizedBox(width: 6),
-                      ],
-                    ],
-                  ),
+        final showComposer =
+            !_viewingGuilds && (net.chatTab != ChatTab.dm || net.selectedDmPeerId != null);
+        return Column(
+          children: [
+            _header(tabs),
+            if (net.chatTab == ChatTab.dm) _dmThreadRow(),
+            if (net.chatTab == ChatTab.guild || net.chatTab == ChatTab.guest)
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Wrap(
+                  children: [
+                    GameButton(
+                      label: _viewingGuilds ? 'Back to chat' : chatViewGuildsLabel,
+                      tone: GameButtonTone.secondary,
+                      compact: true,
+                      onPressed: () => setState(() => _viewingGuilds = !_viewingGuilds),
+                    ),
+                    if (net.guestGuild != null)
+                      GameButton(
+                        label: 'Leave guest',
+                        tone: GameButtonTone.secondary,
+                        compact: true,
+                        onPressed: net.busy
+                            ? null
+                            : () async {
+                                await net.leaveGuest(save);
+                                if (mounted) setState(() => _viewingGuilds = false);
+                              },
+                      ),
+                  ],
                 ),
               ),
-              if (net.chatTab == ChatTab.guild || net.chatTab == ChatTab.guest)
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Wrap(
-                    children: [
-                      TextButton(
-                        onPressed: () => setState(() => _viewingGuilds = !_viewingGuilds),
-                        child: Text(_viewingGuilds ? 'Back to chat' : chatViewGuildsLabel),
-                      ),
-                      if (net.guestGuild != null)
-                        TextButton(
-                          onPressed: net.busy
-                              ? null
-                              : () async {
-                                  await net.leaveGuest(save);
-                                  if (mounted) setState(() => _viewingGuilds = false);
-                                },
-                          child: const Text('Leave guest'),
-                        ),
-                    ],
-                  ),
-                ),
-              Expanded(
-                child: _viewingGuilds
-                    ? _buildGuildBrowser()
-                    : lines.isEmpty
-                    ? Center(child: MutedText(emptyChatMessage(net.chatTab)))
-                    : ListView.builder(
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        itemCount: lines.length,
-                        itemBuilder: (context, index) {
-                          final line = lines[index];
-                          final stamp = formatChatTimestamp(line.createdAt);
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 3),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Expanded(
-                                  child: RichText(
-                                    text: TextSpan(
-                                      style: const TextStyle(
-                                        fontSize: 13,
-                                        color: Palette.parchmentText,
-                                      ),
-                                      children: [
-                                        WidgetSpan(
-                                          alignment: PlaceholderAlignment.baseline,
-                                          baseline: TextBaseline.alphabetic,
-                                          child: GestureDetector(
-                                            onTap: line.userId.isEmpty
-                                                ? null
-                                                : () => openPlayerProfile(
-                                                    context,
-                                                    controller: widget.controller,
-                                                    multiplayer: net,
-                                                    userId: line.userId,
-                                                  ),
-                                            child: Text(
-                                              '${line.username}: ',
-                                              style: TextStyle(
-                                                fontSize: 13,
-                                                fontWeight: FontWeight.w700,
-                                                color: line.mine
-                                                    ? Palette.gold
-                                                    : Palette.parchmentText,
-                                              ),
+            Expanded(
+              child: _viewingGuilds
+                  ? _buildGuildBrowser()
+                  : net.chatTab == ChatTab.dm && net.selectedDmPeerId == null
+                  ? const Center(child: MutedText(chatDmHint))
+                  : lines.isEmpty
+                  ? Center(child: MutedText(emptyChatMessage(net.chatTab)))
+                  : ListView.builder(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      itemCount: lines.length,
+                      itemBuilder: (context, index) {
+                        final line = lines[index];
+                        final stamp = formatChatTimestamp(line.createdAt);
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 3),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: RichText(
+                                  text: TextSpan(
+                                    style: const TextStyle(
+                                      fontFamily: gameFontFamily,
+                                      fontSize: 13,
+                                      color: Palette.parchmentText,
+                                    ),
+                                    children: [
+                                      WidgetSpan(
+                                        alignment: PlaceholderAlignment.baseline,
+                                        baseline: TextBaseline.alphabetic,
+                                        child: GestureDetector(
+                                          onTap: line.userId.isEmpty
+                                              ? null
+                                              : () => openPlayerProfile(
+                                                  context,
+                                                  controller: widget.controller,
+                                                  multiplayer: net,
+                                                  userId: line.userId,
+                                                ),
+                                          child: Text(
+                                            '${line.username}: ',
+                                            style: TextStyle(
+                                              fontFamily: gameFontFamily,
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w700,
+                                              color: line.mine
+                                                  ? Palette.gold
+                                                  : Palette.parchmentText,
                                             ),
                                           ),
                                         ),
-                                        TextSpan(text: line.body),
-                                      ],
-                                    ),
+                                      ),
+                                      TextSpan(text: line.body),
+                                    ],
                                   ),
                                 ),
-                                if (stamp.isNotEmpty) ...[
-                                  const SizedBox(width: 8),
-                                  MutedText(stamp),
-                                ],
+                              ),
+                              if (stamp.isNotEmpty) ...[
+                                const SizedBox(width: 8),
+                                MutedText(stamp),
                               ],
-                            ),
-                          );
-                        },
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+            ),
+            if (showComposer)
+              Padding(
+                padding: const EdgeInsets.all(12),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _body,
+                        focusNode: _composerFocus,
+                        maxLength: 240,
+                        decoration: const InputDecoration(hintText: 'Message…', counterText: ''),
+                        onSubmitted: (_) => _send(),
                       ),
-              ),
-              if (_viewingGuilds)
-                const SizedBox.shrink()
-              else if (net.chatTab == ChatTab.dm)
-                const Padding(padding: EdgeInsets.all(12), child: MutedText(chatDmHint))
-              else
-                Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: _body,
-                          maxLength: 240,
-                          decoration: const InputDecoration(hintText: 'Message…', counterText: ''),
-                          onSubmitted: (_) => _send(),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      FilledButton(
-                        onPressed: net.busy || !net.isSignedIn ? null : _send,
-                        child: const Text('Send'),
-                      ),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(width: 8),
+                    GameButton(
+                      label: 'Send',
+                      compact: true,
+                      onPressed: net.busy || !net.isSignedIn ? null : _send,
+                    ),
+                  ],
                 ),
-            ],
-          ),
+              )
+            else if (net.chatTab == ChatTab.dm)
+              const SizedBox(height: 8),
+          ],
         );
       },
+    );
+  }
+
+  Widget _header(List<ChatTabView> tabs) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 6),
+      child: Row(
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  for (final tab in tabs) ...[
+                    GameButton(
+                      label: tab.label,
+                      compact: true,
+                      selected: tab.selected,
+                      tone: tab.selected ? GameButtonTone.primary : GameButtonTone.secondary,
+                      onPressed: tab.enabled
+                          ? () => net.selectChatTab(
+                              tab.tab,
+                              widget.locationId,
+                              citadelHub: widget.citadelHub,
+                            )
+                          : null,
+                    ),
+                    if (tab.tab != tabs.last.tab) const SizedBox(width: 6),
+                  ],
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          GameButton(
+            label: 'Close',
+            tone: GameButtonTone.secondary,
+            compact: true,
+            tooltip: 'Close chat',
+            onPressed: _close,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _dmThreadRow() {
+    final threads = net.openDmThreads;
+    if (threads.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 0, 12, 6),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            for (final thread in threads) ...[
+              GameButton(
+                label: thread.username,
+                compact: true,
+                selected: net.selectedDmPeerId == thread.userId,
+                tone: net.selectedDmPeerId == thread.userId
+                    ? GameButtonTone.primary
+                    : GameButtonTone.secondary,
+                onPressed: () => net.selectDmPeer(thread.userId, username: thread.username),
+              ),
+              const SizedBox(width: 6),
+            ],
+          ],
+        ),
+      ),
     );
   }
 
@@ -302,7 +369,10 @@ class _ChatSheetState extends State<ChatSheet> {
             title: row.title,
             subtitle: row.subtitle,
             leading: GuildEmblemBadge(emblem: row.emblem),
-            trailing: OutlinedButton(
+            trailing: GameButton(
+              label: row.guestLabel,
+              tone: GameButtonTone.secondary,
+              compact: true,
               onPressed: net.busy
                   ? null
                   : () async {
@@ -320,7 +390,6 @@ class _ChatSheetState extends State<ChatSheet> {
                         );
                       }
                     },
-              child: Text(row.guestLabel),
             ),
           ),
           const SizedBox(height: 6),

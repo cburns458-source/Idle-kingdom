@@ -160,11 +160,7 @@ class _CitadelHubPanelState extends State<CitadelHubPanel> {
                   ],
                 ),
               ),
-              IconButton(
-                onPressed: widget.onClose,
-                tooltip: 'Close',
-                icon: const Icon(Icons.close, size: 18),
-              ),
+              GameIconButton(icon: Icons.close, tooltip: 'Close', onPressed: widget.onClose),
             ],
           ),
           const SizedBox(height: 10),
@@ -200,9 +196,10 @@ class _BountyCard extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          FilledButton(
+          GameButton(
+            label: row.actionLabel,
+            compact: true,
             onPressed: row.canTurnIn && !busy ? onTurnIn : null,
-            child: Text(row.actionLabel),
           ),
         ],
       ),
@@ -258,10 +255,12 @@ class _Compose extends StatelessWidget {
           spacing: 8,
           children: [
             for (final option in bazaarKindOptions())
-              ChoiceChip(
-                label: Text(option.label),
+              GameButton(
+                label: option.label,
+                compact: true,
                 selected: option.kind == kind,
-                onSelected: (_) => onKind(option.kind),
+                tone: option.kind == kind ? GameButtonTone.primary : GameButtonTone.secondary,
+                onPressed: () => onKind(option.kind),
               ),
           ],
         ),
@@ -275,11 +274,16 @@ class _Compose extends StatelessWidget {
         Row(
           children: [
             Expanded(
-              child: FilledButton(onPressed: busy ? null : onPost, child: const Text('Post')),
+              child: GameButton(label: 'Post', onPressed: busy ? null : onPost),
             ),
             if (onOpenGuilds case final openGuilds?) ...[
               const SizedBox(width: 8),
-              OutlinedButton(onPressed: openGuilds, child: const Text('Open Guilds')),
+              GameButton(
+                label: 'Open Guilds',
+                tone: GameButtonTone.secondary,
+                compact: true,
+                onPressed: openGuilds,
+              ),
             ],
           ],
         ),

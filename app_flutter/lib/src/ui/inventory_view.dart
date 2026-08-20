@@ -239,34 +239,59 @@ class _InventoryViewState extends State<InventoryView> {
             child: MutedText('${inventorySlotCount(save)} / $inventorySlotLimit slots'),
           ),
           const SizedBox(height: 8),
-          SegmentedButton<_InventoryTab>(
-            segments: const [
-              ButtonSegment(value: _InventoryTab.items, label: Text('Items')),
-              ButtonSegment(value: _InventoryTab.equipment, label: Text('Equipment')),
+          Row(
+            children: [
+              Expanded(
+                child: GameButton(
+                  label: 'Items',
+                  compact: true,
+                  selected: _tab == _InventoryTab.items,
+                  tone: _tab == _InventoryTab.items
+                      ? GameButtonTone.primary
+                      : GameButtonTone.secondary,
+                  onPressed: () => setState(() {
+                    _tab = _InventoryTab.items;
+                    _selling = null;
+                    _message = null;
+                    _showSources = false;
+                  }),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: GameButton(
+                  label: 'Equipment',
+                  compact: true,
+                  selected: _tab == _InventoryTab.equipment,
+                  tone: _tab == _InventoryTab.equipment
+                      ? GameButtonTone.primary
+                      : GameButtonTone.secondary,
+                  onPressed: () => setState(() {
+                    _tab = _InventoryTab.equipment;
+                    _selling = null;
+                    _message = null;
+                  }),
+                ),
+              ),
             ],
-            selected: {_tab},
-            showSelectedIcon: false,
-            onSelectionChanged: (selection) => setState(() {
-              _tab = selection.first;
-              _selling = null;
-              _message = null;
-              if (_tab != _InventoryTab.equipment) _showSources = false;
-            }),
           ),
           if (selling != null) ...[
             const SizedBox(height: 8),
             Row(
               children: [
-                OutlinedButton(onPressed: _exitSellMode, child: const Text('Cancel')),
+                GameButton(
+                  label: 'Cancel',
+                  tone: GameButtonTone.secondary,
+                  compact: true,
+                  onPressed: _exitSellMode,
+                ),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: FilledButton(
+                  child: GameButton(
+                    label: selling.isEmpty
+                        ? 'Sell selected'
+                        : 'Sell selected (${formatThousands(_selectedGold)}g)',
                     onPressed: selling.isEmpty ? null : _confirmSell,
-                    child: Text(
-                      selling.isEmpty
-                          ? 'Sell selected'
-                          : 'Sell selected (${formatThousands(_selectedGold)}g)',
-                    ),
                   ),
                 ),
               ],
@@ -275,14 +300,16 @@ class _InventoryViewState extends State<InventoryView> {
             const SizedBox(height: 8),
             Align(
               alignment: Alignment.centerLeft,
-              child: OutlinedButton(
+              child: GameButton(
+                label: 'Sell items',
+                tone: GameButtonTone.secondary,
+                compact: true,
                 onPressed: save.inventory.isEmpty
                     ? null
                     : () => setState(() {
                         _selling = <int, int>{};
                         _message = null;
                       }),
-                child: const Text('Sell items'),
               ),
             ),
           ],
@@ -459,9 +486,11 @@ class _InventoryViewState extends State<InventoryView> {
           const SizedBox(height: 8),
           Align(
             alignment: Alignment.centerLeft,
-            child: OutlinedButton(
+            child: GameButton(
+              label: _showSources ? 'Hide sources' : 'Show sources',
+              tone: GameButtonTone.secondary,
+              compact: true,
               onPressed: () => setState(() => _showSources = !_showSources),
-              child: Text(_showSources ? 'Hide sources' : 'Show sources'),
             ),
           ),
           if (_showSources) ...[

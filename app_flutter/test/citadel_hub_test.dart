@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:idle_kingdoms/src/session/multiplayer_controller.dart';
+import 'package:idle_kingdoms/src/theme.dart';
 import 'package:ik_content/ik_content.dart';
 import 'package:ik_net/ik_net.dart';
 import 'package:ik_rules/ik_rules.dart';
@@ -106,7 +107,7 @@ void main() {
     expect(find.text(bazaarEmptyHeading), findsOne);
 
     await tester.enterText(find.byType(TextField), 'Selling copper ore');
-    await tester.tap(find.widgetWithText(FilledButton, 'Post'));
+    await tester.tap(find.widgetWithText(GameButton, 'Post'));
     await tester.pump();
     await tester.pump();
 

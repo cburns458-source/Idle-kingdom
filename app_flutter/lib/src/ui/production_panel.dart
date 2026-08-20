@@ -5,6 +5,8 @@ import 'package:ik_rules/ik_rules.dart';
 import '../session/game_controller.dart';
 import '../theme.dart';
 import 'format.dart';
+import 'catalog_popup.dart';
+import 'game_popup.dart';
 import 'ingredient_chip.dart';
 import 'item_icon.dart';
 import 'quantity_sheet.dart';
@@ -84,13 +86,16 @@ class _ProductionPickerState extends State<ProductionPicker> {
                   style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
                 ),
               ),
-              TextButton(onPressed: _openBook, child: const Text('Recipe book')),
-              if (widget.onClose != null)
-                IconButton(
-                  onPressed: widget.onClose,
-                  tooltip: 'Close',
-                  icon: const Icon(Icons.close, size: 18),
-                ),
+              GameButton(
+                label: 'Recipe book',
+                tone: GameButtonTone.secondary,
+                compact: true,
+                onPressed: _openBook,
+              ),
+              if (widget.onClose != null) ...[
+                const SizedBox(width: 6),
+                GameIconButton(icon: Icons.close, tooltip: 'Close', onPressed: widget.onClose),
+              ],
             ],
           ),
           const SizedBox(height: 8),
@@ -101,25 +106,31 @@ class _ProductionPickerState extends State<ProductionPicker> {
                   : 'No recipes you can make right now. Open the recipe book to see what you need.',
             )
           else ...[
-            DropdownButtonFormField<String>(
-              initialValue: recipe.recipeId,
-              isExpanded: true,
-              decoration: const InputDecoration(labelText: 'Recipe', border: OutlineInputBorder()),
-              items: [
-                for (final row in recipes)
-                  DropdownMenuItem(
-                    value: row.recipeId,
-                    child: Text(
-                      '${row.displayName} (Lv ${row.proficiencyLevel})',
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-              ],
-              onChanged: (value) => setState(() {
-                _recipeId = value;
-                _quantity = 1;
-                _error = null;
-              }),
+            GameSelectField(
+              label: 'Recipe',
+              value: '${recipe.displayName} (Lv ${recipe.proficiencyLevel})',
+              onPressed: () async {
+                final chosen = await showGameCatalogPopup(
+                  context: context,
+                  origin: popupOrigin(context),
+                  eyebrow: 'Recipe',
+                  title: widget.activity.contextualName ?? widget.activity.internalKey,
+                  selectable: true,
+                  entries: [
+                    for (final row in recipes)
+                      CatalogPopupEntry(
+                        title: '${row.displayName} (Lv ${row.proficiencyLevel})',
+                        emphasized: row.recipeId == recipe.recipeId,
+                      ),
+                  ],
+                );
+                if (chosen == null || !mounted) return;
+                setState(() {
+                  _recipeId = recipes[chosen].recipeId;
+                  _quantity = 1;
+                  _error = null;
+                });
+              },
             ),
             const SizedBox(height: 10),
             _RecipeDetails(controller: controller, recipe: recipe),
@@ -151,7 +162,10 @@ class _ProductionPickerState extends State<ProductionPicker> {
         const SizedBox(height: 6),
         Row(
           children: [
-            OutlinedButton(
+            GameButton(
+              label: formatThousands(quantity),
+              tone: GameButtonTone.secondary,
+              compact: true,
               onPressed: ceiling < 1
                   ? null
                   : () async {
@@ -170,20 +184,21 @@ class _ProductionPickerState extends State<ProductionPicker> {
                       if (chosen == null || !mounted) return;
                       setState(() => _quantity = chosen);
                     },
-              child: Text(formatThousands(quantity)),
             ),
             const SizedBox(width: 8),
-            OutlinedButton(
+            GameButton(
+              label: 'Max',
+              tone: GameButtonTone.secondary,
+              compact: true,
               onPressed: ceiling < 1 ? null : () => setState(() => _quantity = ceiling),
-              child: const Text('Max'),
             ),
             const SizedBox(width: 8),
             Expanded(
-              child: FilledButton(
+              child: GameButton(
+                label: 'Start queue',
                 onPressed: ceiling < 1 || controller.isRecovering
                     ? null
                     : () => _start(recipe, quantity),
-                child: const Text('Start queue'),
               ),
             ),
           ],

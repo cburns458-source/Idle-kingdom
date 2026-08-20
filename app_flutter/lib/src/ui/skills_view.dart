@@ -5,6 +5,7 @@ import '../content/asset_paths.dart';
 import '../session/game_controller.dart';
 import '../theme.dart';
 import 'format.dart';
+import 'catalog_popup.dart';
 import 'game_image.dart';
 import 'game_popup.dart';
 import 'page_header.dart';
@@ -113,34 +114,13 @@ void _openSkillMenu(
   String skillName,
 ) {
   final entries = skillMenuDisplayEntries(controller.db, skillId);
-  showGamePopup<void>(
+  showGameCatalogPopup(
     context: context,
     origin: popupOrigin(context),
-    builder: (context) => GamePopupCard(
-      child: ConstrainedBox(
-        constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.55),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(skillName, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
-            const SizedBox(height: 8),
-            Expanded(
-              child: entries.isEmpty
-                  ? const MutedText('Nothing listed for this skill yet.')
-                  : ListView(
-                      children: [
-                        for (final entry in entries)
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 6),
-                            child: Text(skillMenuLine(entry)),
-                          ),
-                      ],
-                    ),
-            ),
-          ],
-        ),
-      ),
-    ),
+    eyebrow: 'Skill',
+    title: skillName,
+    emptyMessage: 'Nothing listed for this skill yet.',
+    entries: [for (final entry in entries) CatalogPopupEntry(title: skillMenuLine(entry))],
   );
 }
 

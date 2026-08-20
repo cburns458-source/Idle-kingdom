@@ -97,7 +97,7 @@ class _TesterPasskeyFormState extends State<_TesterPasskeyForm> {
           Text(error, style: const TextStyle(color: Palette.danger)),
         ],
         const SizedBox(height: 12),
-        FilledButton(onPressed: _submit, child: const Text('Continue')),
+        GameButton(label: 'Continue', onPressed: _submit),
       ],
     );
   }

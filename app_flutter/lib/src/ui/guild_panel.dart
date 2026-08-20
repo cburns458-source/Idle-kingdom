@@ -5,10 +5,40 @@ import 'package:ik_rules/ik_rules.dart';
 import '../session/game_controller.dart';
 import '../session/multiplayer_controller.dart';
 import '../theme.dart';
+import 'catalog_popup.dart';
 import 'game_popup.dart';
 import 'page_header.dart';
 import 'player_profile_sheet.dart';
 import 'social_bits.dart';
+
+const List<(GuildRosterSort, String)> _rosterSortOptions = [
+  (GuildRosterSort.oldest, 'Join date (oldest)'),
+  (GuildRosterSort.newest, 'Join date (newest)'),
+  (GuildRosterSort.totalLevel, 'Total level'),
+  (GuildRosterSort.guildRank, 'Guild rank'),
+];
+
+String _rosterSortLabel(GuildRosterSort sort) {
+  for (final option in _rosterSortOptions) {
+    if (option.$1 == sort) return option.$2;
+  }
+  return 'Sort';
+}
+
+Future<GuildRosterSort?> _pickRosterSort(BuildContext context, GuildRosterSort current) async {
+  final chosen = await showGameCatalogPopup(
+    context: context,
+    eyebrow: 'Sort',
+    title: 'Members',
+    selectable: true,
+    entries: [
+      for (final option in _rosterSortOptions)
+        CatalogPopupEntry(title: option.$2, emphasized: option.$1 == current),
+    ],
+  );
+  if (chosen == null) return null;
+  return _rosterSortOptions[chosen].$1;
+}
 
 /// Guilds: the browser when you have none, the roster when you do.
 class GuildPanel extends StatefulWidget {
@@ -127,9 +157,11 @@ class _GuildPanelState extends State<GuildPanel> {
           SocialRow(
             title: 'Guest of [${guest.tag}] ${guest.name}',
             subtitle: 'Chat only — not on their roster.',
-            trailing: OutlinedButton(
+            trailing: GameButton(
+              label: 'Leave guest',
+              tone: GameButtonTone.secondary,
+              compact: true,
               onPressed: net.busy ? null : () => net.leaveGuest(save),
-              child: const Text('Leave guest'),
             ),
           ),
           const SizedBox(height: 10),
@@ -151,9 +183,9 @@ class _GuildPanelState extends State<GuildPanel> {
             const SizedBox(height: 6),
           ],
         const SizedBox(height: 10),
-        FilledButton(
+        GameButton(
+          label: 'Create guild (${form.goldCost} gold)',
           onPressed: net.busy ? null : _openCreateSheet,
-          child: Text('Create guild (${form.goldCost} gold)'),
         ),
       ],
     );
@@ -227,10 +259,10 @@ class _GuildPanelState extends State<GuildPanel> {
           leading: GuildEmblemBadge(emblem: header.emblem, size: 40),
           onTap: () => _openGuildDetail(guild, mode: _GuildDetailMode.own),
           trailing: header.canManage
-              ? IconButton(
+              ? GameIconButton(
                   onPressed: () => _openSettingsSheet(guild),
                   tooltip: 'Guild settings',
-                  icon: const Icon(Icons.settings, size: 20),
+                  icon: Icons.settings,
                 )
               : null,
         ),
@@ -247,9 +279,11 @@ class _GuildPanelState extends State<GuildPanel> {
           SocialRow(
             title: 'Guest of [${guest.tag}] ${guest.name}',
             subtitle: 'Chat only — not on their roster.',
-            trailing: OutlinedButton(
+            trailing: GameButton(
+              label: 'Leave guest',
+              tone: GameButtonTone.secondary,
+              compact: true,
               onPressed: net.busy ? null : () => net.leaveGuest(save),
-              child: const Text('Leave guest'),
             ),
           ),
           const SizedBox(height: 10),
@@ -263,19 +297,19 @@ class _GuildPanelState extends State<GuildPanel> {
               subtitle: row.message,
               trailing: Row(
                 children: [
-                  IconButton(
+                  GameIconButton(
                     onPressed: net.busy
                         ? null
                         : () => net.decideApplication(row.applicationId, true, save),
                     tooltip: 'Accept',
-                    icon: const Icon(Icons.check, size: 20),
+                    icon: Icons.check,
                   ),
-                  IconButton(
+                  GameIconButton(
                     onPressed: net.busy
                         ? null
                         : () => net.decideApplication(row.applicationId, false, save),
                     tooltip: 'Decline',
-                    icon: const Icon(Icons.close, size: 20),
+                    icon: Icons.close,
                   ),
                 ],
               ),
@@ -289,17 +323,13 @@ class _GuildPanelState extends State<GuildPanel> {
             const Expanded(
               child: Text('Members', style: TextStyle(fontWeight: FontWeight.w700)),
             ),
-            DropdownButton<GuildRosterSort>(
-              value: _sort,
-              underline: const SizedBox.shrink(),
-              items: const <DropdownMenuItem<GuildRosterSort>>[
-                DropdownMenuItem(value: GuildRosterSort.oldest, child: Text('Join date (oldest)')),
-                DropdownMenuItem(value: GuildRosterSort.newest, child: Text('Join date (newest)')),
-                DropdownMenuItem(value: GuildRosterSort.totalLevel, child: Text('Total level')),
-                DropdownMenuItem(value: GuildRosterSort.guildRank, child: Text('Guild rank')),
-              ],
-              onChanged: (sort) {
-                if (sort != null) setState(() => _sort = sort);
+            GameButton(
+              label: _rosterSortLabel(_sort),
+              tone: GameButtonTone.secondary,
+              compact: true,
+              onPressed: () async {
+                final sort = await _pickRosterSort(context, _sort);
+                if (sort != null && mounted) setState(() => _sort = sort);
               },
             ),
           ],
@@ -354,12 +384,13 @@ class _GuildPanelState extends State<GuildPanel> {
           ],
         ],
         const SizedBox(height: 10),
-        FilledButton(onPressed: _openOtherGuilds, child: const Text('Other guilds')),
+        GameButton(label: 'Other guilds', onPressed: _openOtherGuilds),
         const SizedBox(height: 10),
         if (!_confirmingLeave)
-          OutlinedButton(
+          GameButton(
+            label: 'Leave guild',
+            tone: GameButtonTone.secondary,
             onPressed: () => setState(() => _confirmingLeave = true),
-            child: const Text('Leave guild'),
           )
         else ...[
           Text(leaveGuildPrompt(guild), style: const TextStyle(color: Palette.danger)),
@@ -367,22 +398,23 @@ class _GuildPanelState extends State<GuildPanel> {
           Row(
             children: [
               Expanded(
-                child: OutlinedButton(
+                child: GameButton(
+                  label: 'Cancel',
+                  tone: GameButtonTone.secondary,
                   onPressed: () => setState(() => _confirmingLeave = false),
-                  child: const Text('Cancel'),
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
-                child: FilledButton(
-                  style: FilledButton.styleFrom(backgroundColor: Palette.danger),
+                child: GameButton(
+                  label: 'Leave',
+                  tone: GameButtonTone.secondary,
                   onPressed: net.busy
                       ? null
                       : () {
                           setState(() => _confirmingLeave = false);
                           net.leaveGuild(save);
                         },
-                  child: const Text('Leave'),
                 ),
               ),
             ],
@@ -477,7 +509,10 @@ class _OtherGuildsPageState extends State<_OtherGuildsPage> {
                         title: row.title,
                         subtitle: row.subtitle,
                         leading: GuildEmblemBadge(emblem: row.emblem),
-                        trailing: OutlinedButton(
+                        trailing: GameButton(
+                          label: row.guestLabel,
+                          tone: GameButtonTone.secondary,
+                          compact: true,
                           onPressed: net.busy
                               ? null
                               : () => net.joinAsGuest(
@@ -485,7 +520,6 @@ class _OtherGuildsPageState extends State<_OtherGuildsPage> {
                                   defaultApplicationMessage(save.characterName),
                                   save,
                                 ),
-                          child: Text(row.guestLabel),
                         ),
                         onTap: () {
                           final listing = listingById[row.guildId];
@@ -608,7 +642,10 @@ class _GuildDetailPageState extends State<_GuildDetailPage> {
                             Row(
                               children: [
                                 Expanded(
-                                  child: OutlinedButton(
+                                  child: GameButton(
+                                    label: browse.actionLabel,
+                                    tone: GameButtonTone.secondary,
+                                    compact: true,
                                     onPressed: browse.full || net.busy
                                         ? null
                                         : () => net.applyToGuild(
@@ -616,12 +653,14 @@ class _GuildDetailPageState extends State<_GuildDetailPage> {
                                             defaultApplicationMessage(save.characterName),
                                             save,
                                           ),
-                                    child: Text(browse.actionLabel),
                                   ),
                                 ),
                                 const SizedBox(width: 8),
                                 Expanded(
-                                  child: OutlinedButton(
+                                  child: GameButton(
+                                    label: browse.guestLabel,
+                                    tone: GameButtonTone.secondary,
+                                    compact: true,
                                     onPressed: net.busy || net.guestGuildId == browse.guildId
                                         ? null
                                         : () => net.joinAsGuest(
@@ -629,13 +668,15 @@ class _GuildDetailPageState extends State<_GuildDetailPage> {
                                             defaultApplicationMessage(save.characterName),
                                             save,
                                           ),
-                                    child: Text(browse.guestLabel),
                                   ),
                                 ),
                               ],
                             )
                           else
-                            OutlinedButton(
+                            GameButton(
+                              label: browse.guestLabel,
+                              tone: GameButtonTone.secondary,
+                              compact: true,
                               onPressed: net.busy || net.guestGuildId == browse.guildId
                                   ? null
                                   : () => net.joinAsGuest(
@@ -643,7 +684,6 @@ class _GuildDetailPageState extends State<_GuildDetailPage> {
                                       defaultApplicationMessage(save.characterName),
                                       save,
                                     ),
-                              child: Text(browse.guestLabel),
                             ),
                         ],
                         const SizedBox(height: 10),
@@ -652,29 +692,13 @@ class _GuildDetailPageState extends State<_GuildDetailPage> {
                             const Expanded(
                               child: Text('Members', style: TextStyle(fontWeight: FontWeight.w700)),
                             ),
-                            DropdownButton<GuildRosterSort>(
-                              value: _sort,
-                              underline: const SizedBox.shrink(),
-                              items: const <DropdownMenuItem<GuildRosterSort>>[
-                                DropdownMenuItem(
-                                  value: GuildRosterSort.oldest,
-                                  child: Text('Join date (oldest)'),
-                                ),
-                                DropdownMenuItem(
-                                  value: GuildRosterSort.newest,
-                                  child: Text('Join date (newest)'),
-                                ),
-                                DropdownMenuItem(
-                                  value: GuildRosterSort.totalLevel,
-                                  child: Text('Total level'),
-                                ),
-                                DropdownMenuItem(
-                                  value: GuildRosterSort.guildRank,
-                                  child: Text('Guild rank'),
-                                ),
-                              ],
-                              onChanged: (sort) {
-                                if (sort != null) setState(() => _sort = sort);
+                            GameButton(
+                              label: _rosterSortLabel(_sort),
+                              tone: GameButtonTone.secondary,
+                              compact: true,
+                              onPressed: () async {
+                                final sort = await _pickRosterSort(context, _sort);
+                                if (sort != null && mounted) setState(() => _sort = sort);
                               },
                             ),
                           ],
@@ -747,19 +771,28 @@ class _RankPicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DropdownButton<GuildRole>(
-      value: role,
-      underline: const SizedBox.shrink(),
-      items: options
-          .map(
-            (option) => DropdownMenuItem<GuildRole>(
-              value: option.role,
-              child: Text(option.label, style: const TextStyle(fontSize: 13)),
-            ),
-          )
-          .toList(),
-      onChanged: (next) {
-        if (next != null && next != role) onChanged(next);
+    return GameButton(
+      label: options
+          .where((option) => option.role == role)
+          .map((option) => option.label)
+          .firstOrNull ??
+          role,
+      tone: GameButtonTone.secondary,
+      compact: true,
+      onPressed: () async {
+        final chosen = await showGameCatalogPopup(
+          context: context,
+          eyebrow: 'Rank',
+          title: 'Guild rank',
+          selectable: true,
+          entries: [
+            for (final option in options)
+              CatalogPopupEntry(title: option.label, emphasized: option.role == role),
+          ],
+        );
+        if (chosen == null) return;
+        final next = options[chosen].role;
+        if (next != role) onChanged(next);
       },
     );
   }
@@ -977,9 +1010,9 @@ class _CreateGuildSheetState extends State<_CreateGuildSheet> {
               Text(reason, style: const TextStyle(color: Palette.danger)),
               const SizedBox(height: 6),
             ],
-            FilledButton(
+            GameButton(
+              label: _sending ? 'Creating…' : form.submitLabel,
               onPressed: _sending ? null : _submit,
-              child: Text(_sending ? 'Creating…' : form.submitLabel),
             ),
           ],
         ),
@@ -1051,33 +1084,65 @@ class _GuildSettingsSheetState extends State<_GuildSettingsSheet> {
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 12),
-            DropdownButtonFormField<GuildJoinPolicy>(
-              initialValue: _policy,
-              decoration: const InputDecoration(labelText: 'Join policy'),
-              items: const <DropdownMenuItem<GuildJoinPolicy>>[
-                DropdownMenuItem(value: guildJoinOpen, child: Text('Accept applications')),
-                DropdownMenuItem(value: guildJoinClosed, child: Text('Closed')),
-              ],
-              onChanged: (policy) {
-                if (policy != null) setState(() => _policy = policy);
+            GameSelectField(
+              label: 'Join policy',
+              value: _policy == guildJoinOpen ? 'Accept applications' : 'Closed',
+              onPressed: () async {
+                final chosen = await showGameCatalogPopup(
+                  context: context,
+                  eyebrow: 'Join policy',
+                  title: 'Guild settings',
+                  selectable: true,
+                  entries: const [
+                    CatalogPopupEntry(title: 'Accept applications'),
+                    CatalogPopupEntry(title: 'Closed'),
+                  ],
+                );
+                if (chosen == null || !mounted) return;
+                setState(() => _policy = chosen == 0 ? guildJoinOpen : guildJoinClosed);
               },
             ),
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              title: const Text('Guest auto-accept'),
-              subtitle: const Text('Guests join chat without an application.'),
-              value: _guestAutoAccept,
-              onChanged: (value) => setState(() => _guestAutoAccept = value),
-            ),
-            DropdownButtonFormField<String>(
-              initialValue: _rankIconTheme,
-              decoration: const InputDecoration(labelText: 'Rank icons'),
-              items: const <DropdownMenuItem<String>>[
-                DropdownMenuItem(value: guildRankIconThemeStripes, child: Text('Army stripes')),
-                DropdownMenuItem(value: guildRankIconThemeCrowns, child: Text('Crowns and pips')),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Guest auto-accept', style: TextStyle(fontWeight: FontWeight.w700)),
+                      MutedText('Guests join chat without an application.'),
+                    ],
+                  ),
+                ),
+                GameSwitch(
+                  value: _guestAutoAccept,
+                  onChanged: (value) => setState(() => _guestAutoAccept = value),
+                ),
               ],
-              onChanged: (theme) {
-                if (theme != null) setState(() => _rankIconTheme = theme);
+            ),
+            const SizedBox(height: 12),
+            GameSelectField(
+              label: 'Rank icons',
+              value: _rankIconTheme == guildRankIconThemeCrowns
+                  ? 'Crowns and pips'
+                  : 'Army stripes',
+              onPressed: () async {
+                final chosen = await showGameCatalogPopup(
+                  context: context,
+                  eyebrow: 'Rank icons',
+                  title: 'Guild settings',
+                  selectable: true,
+                  entries: const [
+                    CatalogPopupEntry(title: 'Army stripes'),
+                    CatalogPopupEntry(title: 'Crowns and pips'),
+                  ],
+                );
+                if (chosen == null || !mounted) return;
+                setState(
+                  () => _rankIconTheme = chosen == 1
+                      ? guildRankIconThemeCrowns
+                      : guildRankIconThemeStripes,
+                );
               },
             ),
             const SizedBox(height: 12),
@@ -1094,7 +1159,8 @@ class _GuildSettingsSheetState extends State<_GuildSettingsSheet> {
               ),
             ],
             const SizedBox(height: 6),
-            FilledButton(
+            GameButton(
+              label: 'Save settings',
               onPressed: () => Navigator.of(context).pop(
                 _GuildSettings(
                   joinPolicy: _policy,
@@ -1106,7 +1172,6 @@ class _GuildSettingsSheetState extends State<_GuildSettingsSheet> {
                   },
                 ),
               ),
-              child: const Text('Save settings'),
             ),
           ],
         ),

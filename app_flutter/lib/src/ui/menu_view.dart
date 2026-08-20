@@ -8,6 +8,8 @@ import '../session/game_controller.dart';
 import '../session/multiplayer_controller.dart';
 import '../session/pick_local_png.dart';
 import '../theme.dart';
+import 'account_panel.dart';
+import 'catalog_popup.dart';
 import 'page_header.dart';
 import 'player_sprite.dart';
 
@@ -89,7 +91,6 @@ class _MenuViewState extends State<MenuView> {
   @override
   Widget build(BuildContext context) {
     final save = controller.save;
-    final raceName = raceDisplayName(controller.db, save.raceId);
     final hasOverride = controller.localArt.hasOverride;
     return ListView(
       padding: const EdgeInsets.all(12),
@@ -100,21 +101,6 @@ class _MenuViewState extends State<MenuView> {
           const Text('Settings', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
         if (widget.onClose == null) const SizedBox(height: 4),
         const MutedText('Settings and save tools.'),
-        const SizedBox(height: 16),
-        GamePanel(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const MutedText('Character'),
-              const SizedBox(height: 4),
-              Text(
-                displayNameForSave(save, 'Unnamed'),
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-              ),
-              MutedText('Race: ${raceName ?? 'Unchosen'}'),
-            ],
-          ),
-        ),
         const SizedBox(height: 16),
         GamePanel(
           child: Row(
@@ -128,7 +114,7 @@ class _MenuViewState extends State<MenuView> {
                   ],
                 ),
               ),
-              Switch(
+              GameSwitch(
                 value: controller.mapTravelAnimation,
                 onChanged: controller.setMapTravelAnimation,
               ),
@@ -155,7 +141,7 @@ class _MenuViewState extends State<MenuView> {
                           ],
                         ),
                       ),
-                      Switch(
+                      GameSwitch(
                         value: widget.multiplayer.filterChatProfanity,
                         onChanged: widget.multiplayer.setFilterChatProfanity,
                       ),
@@ -175,7 +161,7 @@ class _MenuViewState extends State<MenuView> {
                           ],
                         ),
                       ),
-                      Switch(
+                      GameSwitch(
                         value: widget.multiplayer.showHudGuildTag,
                         onChanged: widget.multiplayer.setShowHudGuildTag,
                       ),
@@ -200,7 +186,7 @@ class _MenuViewState extends State<MenuView> {
                           ],
                         ),
                       ),
-                      Switch(
+                      GameSwitch(
                         value: controller.showTitleOnHud,
                         onChanged: controller.setShowTitleOnHud,
                       ),
@@ -220,7 +206,7 @@ class _MenuViewState extends State<MenuView> {
                           ],
                         ),
                       ),
-                      Switch(
+                      GameSwitch(
                         value: widget.multiplayer.hideChatBubble,
                         onChanged: widget.multiplayer.setHideChatBubble,
                       ),
@@ -235,6 +221,8 @@ class _MenuViewState extends State<MenuView> {
         _buildTestingTools(),
         const SizedBox(height: 16),
         _buildPlayerSprite(save, hasOverride),
+        const SizedBox(height: 16),
+        AccountPanel(controller: controller, multiplayer: widget.multiplayer, embedded: true),
       ],
     );
   }
@@ -300,15 +288,26 @@ class _MenuViewState extends State<MenuView> {
             onPressed: () => _runTool(controller.debugSpawnCritter),
           ),
           const SizedBox(height: 12),
-          DropdownButtonFormField<String>(
-            initialValue: raceRows.any((row) => row.raceId == _raceId) ? _raceId : null,
-            decoration: const InputDecoration(labelText: 'Race'),
-            items: [
-              for (final row in raceRows)
-                DropdownMenuItem<String>(value: row.raceId, child: Text(row.displayName)),
-            ],
-            onChanged: (value) {
-              if (value != null) setState(() => _raceId = value);
+          GameSelectField(
+            label: 'Race',
+            value: raceRows
+                .where((row) => row.raceId == _raceId)
+                .map((row) => row.displayName)
+                .firstOrNull ??
+                'Choose',
+            onPressed: () async {
+              final chosen = await showGameCatalogPopup(
+                context: context,
+                eyebrow: 'Race',
+                title: 'Change race',
+                selectable: true,
+                entries: [
+                  for (final row in raceRows)
+                    CatalogPopupEntry(title: row.displayName, emphasized: row.raceId == _raceId),
+                ],
+              );
+              if (chosen == null || !mounted) return;
+              setState(() => _raceId = raceRows[chosen].raceId);
             },
           ),
           const SizedBox(height: 8),
@@ -347,18 +346,26 @@ class _MenuViewState extends State<MenuView> {
             ],
           ),
           const SizedBox(height: 12),
-          DropdownButtonFormField<String>(
-            initialValue: skillRows.any((row) => row.skillId == _skillId) ? _skillId : null,
-            decoration: InputDecoration(
-              labelText: 'Skill',
-              helperText: 'Current level ${selectedSkill.level}',
-            ),
-            items: [
-              for (final row in skillRows)
-                DropdownMenuItem<String>(value: row.skillId, child: Text(row.displayName)),
-            ],
-            onChanged: (value) {
-              if (value != null) setState(() => _skillId = value);
+          GameSelectField(
+            label: 'Skill · Lv ${selectedSkill.level}',
+            value: skillRows
+                .where((row) => row.skillId == _skillId)
+                .map((row) => row.displayName)
+                .firstOrNull ??
+                'Choose',
+            onPressed: () async {
+              final chosen = await showGameCatalogPopup(
+                context: context,
+                eyebrow: 'Skill',
+                title: 'Testing tools',
+                selectable: true,
+                entries: [
+                  for (final row in skillRows)
+                    CatalogPopupEntry(title: row.displayName, emphasized: row.skillId == _skillId),
+                ],
+              );
+              if (chosen == null || !mounted) return;
+              setState(() => _skillId = skillRows[chosen].skillId);
             },
           ),
           const SizedBox(height: 8),

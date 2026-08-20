@@ -1,5 +1,5 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:idle_kingdoms/src/theme.dart';
 import 'package:idle_kingdoms/src/ui/project_panel.dart';
 import 'package:ik_content/ik_content.dart';
 import 'package:ik_rules/ik_rules.dart';
@@ -58,7 +58,7 @@ void main() {
     );
     expect(find.text('Smithing forge'), findsOne);
 
-    await tester.tap(find.byType(DropdownButtonFormField<String>));
+    await tester.tap(find.byType(GameSelectField));
     await tester.pumpAndSettle();
     await tester.tap(find.textContaining('Copper Axe → Copper Axe').last);
     await tester.pumpAndSettle();
@@ -87,7 +87,7 @@ void main() {
       tester,
       ProjectPicker(controller: controller, station: stationFor(forgeLocationId, 'SKL-0011')),
     );
-    await tester.tap(find.byType(DropdownButtonFormField<String>));
+    await tester.tap(find.byType(GameSelectField));
     await tester.pumpAndSettle();
     await tester.tap(find.textContaining('Copper Axe → Copper Axe').last);
     await tester.pumpAndSettle();
@@ -108,8 +108,8 @@ void main() {
       tester,
       ProjectPicker(controller: controller, station: stationFor(forgeLocationId, 'SKL-0011')),
     );
-    expect(find.byType(DropdownButtonFormField<String>), findsOne);
-    await tester.tap(find.byType(DropdownButtonFormField<String>));
+    expect(find.byType(GameSelectField), findsOne);
+    await tester.tap(find.byType(GameSelectField));
     await tester.pumpAndSettle();
     expect(find.textContaining('Copper Axe → Copper Axe'), findsWidgets);
   });
@@ -125,7 +125,7 @@ void main() {
       tester,
       ProjectPicker(controller: controller, station: stationFor(forgeLocationId, 'SKL-0011')),
     );
-    expect(find.byType(DropdownButtonFormField<String>), findsNothing);
+    expect(find.byType(GameSelectField), findsNothing);
     expect(find.textContaining('speak with the Master Dwarf'), findsOne);
 
     await tester.tap(find.text('Recipe book'));
@@ -178,7 +178,7 @@ void main() {
       tester,
       ProjectPicker(controller: controller, station: stationFor(mageLocationId, 'SKL-0013')),
     );
-    await tester.tap(find.byType(DropdownButtonFormField<String>).first);
+    await tester.tap(find.byType(GameSelectField).first);
     await tester.pumpAndSettle();
     await tester.tap(find.textContaining('Minor Combat Enchantment').last);
     await tester.pumpAndSettle();

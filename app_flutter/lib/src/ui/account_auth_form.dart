@@ -3,6 +3,7 @@ import 'package:ik_net/ik_net.dart';
 
 import '../session/game_controller.dart';
 import '../session/multiplayer_controller.dart';
+import '../theme.dart';
 
 /// Email sign-in and sign-up fields shared by the entry gate and Account tab.
 class AccountAuthForm extends StatefulWidget {
@@ -62,7 +63,8 @@ class _AccountAuthFormState extends State<AccountAuthForm> {
               obscureText: true,
             ),
             const SizedBox(height: 12),
-            FilledButton(
+            GameButton(
+              label: 'Sign in',
               onPressed: net.busy
                   ? null
                   : () => net.signIn(
@@ -71,10 +73,11 @@ class _AccountAuthFormState extends State<AccountAuthForm> {
                       widget.controller.save,
                       adopt: widget.controller.adoptAccountSave,
                     ),
-              child: const Text('Sign in'),
             ),
             const SizedBox(height: 6),
-            OutlinedButton(
+            GameButton(
+              label: 'Create account',
+              tone: GameButtonTone.secondary,
               onPressed: net.busy
                   ? null
                   : () => net.signUp(
@@ -84,15 +87,15 @@ class _AccountAuthFormState extends State<AccountAuthForm> {
                       widget.controller.save,
                       adopt: widget.controller.adoptAccountSave,
                     ),
-              child: const Text('Create account'),
             ),
             if (net.mode == MultiplayerMode.supabase) ...<Widget>[
               const SizedBox(height: 6),
-              OutlinedButton(
+              GameButton(
+                label: 'Email magic link',
+                tone: GameButtonTone.secondary,
                 onPressed: net.busy || _email.text.isEmpty
                     ? null
                     : () => net.sendMagicLink(_email.text),
-                child: const Text('Email magic link'),
               ),
             ],
           ],

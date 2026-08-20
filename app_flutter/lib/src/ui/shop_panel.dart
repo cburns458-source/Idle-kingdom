@@ -220,7 +220,10 @@ class _ShopPanelState extends State<ShopPanel> {
           const SizedBox(height: 8),
           Row(
             children: [
-              OutlinedButton(
+              GameButton(
+                label: 'Clear offer',
+                tone: GameButtonTone.secondary,
+                compact: true,
                 onPressed: _buys.isEmpty && _sells.isEmpty
                     ? null
                     : () => setState(() {
@@ -228,13 +231,12 @@ class _ShopPanelState extends State<ShopPanel> {
                         _sells.clear();
                         _error = null;
                       }),
-                child: const Text('Clear offer'),
               ),
               const SizedBox(width: 8),
               Expanded(
-                child: FilledButton(
+                child: GameButton(
+                  label: 'Confirm trade',
                   onPressed: _buys.isEmpty && _sells.isEmpty ? null : _confirm,
-                  child: const Text('Confirm trade'),
                 ),
               ),
             ],
@@ -270,11 +272,7 @@ class _ShopPanelState extends State<ShopPanel> {
                 style: const TextStyle(color: Palette.gold),
               ),
               if (widget.onClose != null)
-                IconButton(
-                  onPressed: widget.onClose,
-                  tooltip: 'Close',
-                  icon: const Icon(Icons.close, size: 18),
-                ),
+                GameIconButton(icon: Icons.close, tooltip: 'Close', onPressed: widget.onClose),
             ],
           ),
           const SizedBox(height: 8),

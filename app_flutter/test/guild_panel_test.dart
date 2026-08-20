@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:idle_kingdoms/src/session/game_controller.dart';
 import 'package:idle_kingdoms/src/session/multiplayer_controller.dart';
+import 'package:idle_kingdoms/src/theme.dart';
 import 'package:idle_kingdoms/src/ui/guild_panel.dart';
 import 'package:ik_content/ik_content.dart';
 import 'package:ik_net/ik_net.dart';
@@ -39,7 +40,7 @@ void main() {
     await tester.pump();
     await tester.enterText(find.widgetWithText(TextField, 'Name'), name);
     await tester.pump();
-    await tester.tap(find.widgetWithText(FilledButton, 'Create for $guildCreateGoldCost gold'));
+    await tester.tap(find.widgetWithText(GameButton, 'Create for $guildCreateGoldCost gold'));
     await tester.pumpAndSettle();
   }
 
@@ -113,8 +114,8 @@ void main() {
     await tester.tap(find.textContaining('Create guild ('));
     await tester.pumpAndSettle();
 
-    final button = find.widgetWithText(FilledButton, 'Create for $guildCreateGoldCost gold');
-    expect(tester.widget<FilledButton>(button).onPressed, isNotNull, reason: 'never a dead button');
+    final button = find.widgetWithText(GameButton, 'Create for $guildCreateGoldCost gold');
+    expect(tester.widget<GameButton>(button).onPressed, isNotNull, reason: 'never a dead button');
 
     await tester.tap(button);
     await tester.pumpAndSettle();
@@ -151,7 +152,7 @@ void main() {
     expect(controller.save.gold, guildCreateGoldCost, reason: 'a refused guild is not paid for');
 
     // Trying again with the backend no longer refusing works.
-    await tester.tap(find.widgetWithText(FilledButton, 'Create for $guildCreateGoldCost gold'));
+    await tester.tap(find.widgetWithText(GameButton, 'Create for $guildCreateGoldCost gold'));
     await tester.pumpAndSettle();
 
     expect(net.guild?.name, 'Iron League');

@@ -622,10 +622,10 @@ class _FloatingOptionBand extends StatelessWidget {
           Positioned(
             top: 0,
             right: 0,
-            child: IconButton(
+            child: GameIconButton(
               tooltip: expanded ? 'Collapse list' : 'Expand list',
               onPressed: onToggle,
-              icon: Icon(expanded ? Icons.expand_more : Icons.expand_less, size: 20),
+              icon: expanded ? Icons.expand_more : Icons.expand_less,
             ),
           ),
         ],
@@ -731,17 +731,11 @@ class _ActivityCard extends StatelessWidget {
     final hostileLock = locationIsHostileFor(controller.db, controller.save);
     final favorited = favoriteActivityAt(controller.save) == activityId;
     return DockRow(
-      leading: IconButton(
-        visualDensity: VisualDensity.compact,
-        padding: EdgeInsets.zero,
-        constraints: const BoxConstraints.tightFor(width: 28, height: 28),
+      leading: GameIconButton(
         tooltip: favorited ? 'Clear favorite' : 'Favorite this activity',
         onPressed: () => controller.toggleFavorite(activityId),
-        icon: Icon(
-          favorited ? Icons.star : Icons.star_border,
-          size: 20,
-          color: favorited ? Palette.gold : Palette.muted,
-        ),
+        icon: favorited ? Icons.star : Icons.star_border,
+        size: 28,
       ),
       title: activity.contextualName ?? activityId,
       lines: [

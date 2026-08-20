@@ -96,9 +96,16 @@ const TextStyle warningStyle = TextStyle(
   shadows: overlayShadow,
 );
 
+const String gameFontFamily = 'PixelifySans';
+
 ThemeData buildAppTheme() {
   final base = ThemeData.dark(useMaterial3: true);
-  final themed = base.copyWith(
+  final textTheme = base.textTheme.apply(
+    fontFamily: gameFontFamily,
+    bodyColor: Palette.parchmentText,
+    displayColor: Palette.parchmentText,
+  );
+  return base.copyWith(
     scaffoldBackgroundColor: Palette.ink,
     colorScheme: base.colorScheme.copyWith(
       primary: Palette.gold,
@@ -108,28 +115,21 @@ ThemeData buildAppTheme() {
       onSurface: Palette.parchmentText,
       error: Palette.danger,
     ),
-    textTheme: base.textTheme.apply(
-      bodyColor: Palette.parchmentText,
-      displayColor: Palette.parchmentText,
-    ),
+    textTheme: textTheme,
+    primaryTextTheme: textTheme,
     dividerColor: Palette.edge,
-    filledButtonTheme: FilledButtonThemeData(
-      style: FilledButton.styleFrom(
-        backgroundColor: Palette.gold,
-        foregroundColor: Palette.ink,
-        shape: const StadiumBorder(),
-        textStyle: const TextStyle(fontWeight: FontWeight.w700),
-      ),
-    ),
-    outlinedButtonTheme: OutlinedButtonThemeData(
-      style: OutlinedButton.styleFrom(
-        foregroundColor: Palette.parchmentText,
-        side: const BorderSide(color: Palette.edge),
-        shape: const StadiumBorder(),
-      ),
+    switchTheme: SwitchThemeData(
+      thumbColor: WidgetStateProperty.resolveWith((states) {
+        return states.contains(WidgetState.selected) ? const Color(0xFFF4FFE8) : Palette.muted;
+      }),
+      trackColor: WidgetStateProperty.resolveWith((states) {
+        return states.contains(WidgetState.selected)
+            ? const Color(0xFF5F7A45)
+            : const Color(0xFF45301F);
+      }),
+      trackOutlineColor: WidgetStateProperty.all(const Color(0x73D4AF37)),
     ),
   );
-  return themed;
 }
 
 /// Which of the two button faces to wear: green for doing, brown for the rest.
@@ -142,11 +142,22 @@ class GameButton extends StatefulWidget {
     required this.label,
     required this.onPressed,
     this.tone = GameButtonTone.primary,
+    this.compact = false,
+    this.selected = false,
+    this.tooltip,
   });
 
   final String label;
   final VoidCallback? onPressed;
   final GameButtonTone tone;
+
+  /// Chat tabs, keypad keys, and other tight rows.
+  final bool compact;
+
+  /// Gold wash for the active tab or conversation.
+  final bool selected;
+
+  final String? tooltip;
 
   static const LinearGradient _primaryFill = LinearGradient(
     begin: Alignment.topCenter,
@@ -183,7 +194,10 @@ class _GameButtonState extends State<GameButton> {
   Widget build(BuildContext context) {
     final primary = widget.tone == GameButtonTone.primary;
     final down = _pressed && widget.onPressed != null;
-    return Semantics(
+    final borderColor = widget.selected
+        ? Palette.gold
+        : (primary ? const Color(0x73BEDC96) : const Color(0x73D4AF37));
+    final button = Semantics(
       button: true,
       enabled: widget.onPressed != null,
       label: widget.label,
@@ -195,10 +209,9 @@ class _GameButtonState extends State<GameButton> {
               gradient: primary
                   ? (down ? GameButton._primaryPressed : GameButton._primaryFill)
                   : (down ? GameButton._secondaryPressed : GameButton._secondaryFill),
+              color: widget.selected ? const Color(0x33D4AF37) : null,
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: primary ? const Color(0x73BEDC96) : const Color(0x73D4AF37),
-              ),
+              border: Border.all(color: borderColor),
               boxShadow: const [BoxShadow(offset: Offset(0, 2), color: Color(0x40000000))],
             ),
             child: InkWell(
@@ -211,14 +224,21 @@ class _GameButtonState extends State<GameButton> {
               highlightColor: Colors.transparent,
               borderRadius: BorderRadius.circular(14),
               child: Container(
-                constraints: const BoxConstraints(minHeight: 44, minWidth: 90),
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                constraints: widget.compact
+                    ? const BoxConstraints(minHeight: 32)
+                    : const BoxConstraints(minHeight: 44, minWidth: 90),
+                padding: widget.compact
+                    ? const EdgeInsets.symmetric(horizontal: 10, vertical: 6)
+                    : const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 alignment: Alignment.center,
                 child: Text(
                   widget.label,
                   textAlign: TextAlign.center,
+                  maxLines: widget.compact ? 1 : 2,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: 13.5,
+                    fontFamily: gameFontFamily,
+                    fontSize: widget.compact ? 12 : 13.5,
                     fontWeight: FontWeight.w700,
                     color: primary ? const Color(0xFFF4FFE8) : const Color(0xFFFFF4D4),
                   ),
@@ -229,6 +249,122 @@ class _GameButtonState extends State<GameButton> {
         ),
       ),
     );
+    if (widget.tooltip == null) return button;
+    return Tooltip(message: widget.tooltip!, child: button);
+  }
+}
+
+/// Small gold-edged icon chip for panel closes and keypad extras.
+class GameIconButton extends StatelessWidget {
+  const GameIconButton({
+    super.key,
+    required this.icon,
+    required this.onPressed,
+    this.tooltip,
+    this.size = 32,
+  });
+
+  final IconData icon;
+  final VoidCallback? onPressed;
+  final String? tooltip;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    final chip = Semantics(
+      button: true,
+      enabled: onPressed != null,
+      label: tooltip,
+      child: Opacity(
+        opacity: onPressed == null ? 0.55 : 1,
+        child: Material(
+          color: const Color(0xFF45301F),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+            side: const BorderSide(color: Color(0x73D4AF37)),
+          ),
+          child: InkWell(
+            onTap: onPressed,
+            borderRadius: BorderRadius.circular(10),
+            child: SizedBox.square(
+              dimension: size,
+              child: Icon(icon, size: size * 0.55, color: const Color(0xFFFFF4D4)),
+            ),
+          ),
+        ),
+      ),
+    );
+    if (tooltip == null) return chip;
+    return Tooltip(message: tooltip!, child: chip);
+  }
+}
+
+/// One-line field that opens a catalog popup instead of a Material dropdown.
+class GameSelectField extends StatelessWidget {
+  const GameSelectField({
+    super.key,
+    required this.label,
+    required this.value,
+    required this.onPressed,
+  });
+
+  final String label;
+  final String value;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        MutedText(label),
+        const SizedBox(height: 4),
+        Material(
+          color: const Color(0xFF45301F),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: const BorderSide(color: Color(0x73D4AF37)),
+          ),
+          child: InkWell(
+            onTap: onPressed,
+            borderRadius: BorderRadius.circular(12),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      value,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontFamily: gameFontFamily,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13.5,
+                      ),
+                    ),
+                  ),
+                  const Icon(Icons.expand_more, size: 20, color: Palette.gold),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Parchment toggle used on Settings.
+class GameSwitch extends StatelessWidget {
+  const GameSwitch({super.key, required this.value, required this.onChanged});
+
+  final bool value;
+  final ValueChanged<bool>? onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Switch(value: value, onChanged: onChanged);
   }
 }
 

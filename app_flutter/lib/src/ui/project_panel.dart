@@ -3,6 +3,7 @@ import 'package:ik_rules/ik_rules.dart';
 
 import '../session/game_controller.dart';
 import '../theme.dart';
+import 'catalog_popup.dart';
 import 'format.dart';
 import 'game_popup.dart';
 import 'ingredient_chip.dart';
@@ -126,35 +127,46 @@ class _ProjectPickerState extends State<ProjectPicker> {
                   style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
                 ),
               ),
-              TextButton(onPressed: _openBook, child: const Text('Recipe book')),
-              if (widget.onClose != null)
-                IconButton(
-                  onPressed: widget.onClose,
-                  tooltip: 'Close',
-                  icon: const Icon(Icons.close, size: 18),
-                ),
+              GameButton(
+                label: 'Recipe book',
+                tone: GameButtonTone.secondary,
+                compact: true,
+                onPressed: _openBook,
+              ),
+              if (widget.onClose != null) ...[
+                const SizedBox(width: 6),
+                GameIconButton(icon: Icons.close, tooltip: 'Close', onPressed: widget.onClose),
+              ],
             ],
           ),
           const SizedBox(height: 8),
           if (all.isEmpty)
             MutedText(_emptyCopy(defined))
           else ...[
-            DropdownButtonFormField<String>(
-              initialValue: selectedId,
-              isExpanded: true,
-              decoration: const InputDecoration(labelText: 'Project', border: OutlineInputBorder()),
-              items: [
-                for (final row in all)
-                  DropdownMenuItem(
-                    value: row.projectId,
-                    child: Text(
-                      row.locked ? '${row.label} (locked)' : row.label,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-              ],
-              onChanged: (value) {
-                if (value != null) _select(value);
+            GameSelectField(
+              label: 'Project',
+              value: all
+                  .firstWhere((row) => row.projectId == selectedId, orElse: () => all.first)
+                  .label,
+              onPressed: () async {
+                final chosen = await showGameCatalogPopup(
+                  context: context,
+                  origin: popupOrigin(context),
+                  eyebrow: 'Project',
+                  title: widget.station.label,
+                  selectable: true,
+                  entries: [
+                    for (final row in all)
+                      CatalogPopupEntry(
+                        title: row.locked ? '${row.label} (locked)' : row.label,
+                        dimmed: row.locked,
+                        enabled: !row.locked,
+                        emphasized: row.projectId == selectedId,
+                      ),
+                  ],
+                );
+                if (chosen == null || !mounted) return;
+                _select(all[chosen].projectId);
               },
             ),
             if (detail != null) ...[
@@ -193,7 +205,10 @@ class _ProjectPickerState extends State<ProjectPicker> {
         const SizedBox(height: 6),
         Row(
           children: [
-            OutlinedButton(
+            GameButton(
+              label: formatThousands(quantity),
+              tone: GameButtonTone.secondary,
+              compact: true,
               onPressed: ceiling < 1
                   ? null
                   : () async {
@@ -209,18 +224,19 @@ class _ProjectPickerState extends State<ProjectPicker> {
                       if (chosen == null || !mounted) return;
                       setState(() => _quantity = chosen);
                     },
-              child: Text(formatThousands(quantity)),
             ),
             const SizedBox(width: 8),
-            OutlinedButton(
+            GameButton(
+              label: 'Max',
+              tone: GameButtonTone.secondary,
+              compact: true,
               onPressed: ceiling < 1 ? null : () => setState(() => _quantity = ceiling),
-              child: const Text('Max'),
             ),
             const SizedBox(width: 8),
             Expanded(
-              child: FilledButton(
+              child: GameButton(
+                label: 'Complete project',
                 onPressed: ceiling < 1 ? null : () => _complete(detail, quantity),
-                child: const Text('Complete project'),
               ),
             ),
           ],
@@ -243,27 +259,32 @@ class _ProjectPickerState extends State<ProjectPicker> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        DropdownButtonFormField<String>(
-          initialValue: selected,
-          isExpanded: true,
-          decoration: const InputDecoration(
-            labelText: 'Item to enchant',
-            border: OutlineInputBorder(),
-          ),
-          items: [
-            for (final target in detail.enchantTargets)
-              DropdownMenuItem(
-                value: target.id,
-                child: Text(target.label, overflow: TextOverflow.ellipsis),
-              ),
-          ],
-          onChanged: (value) => setState(() {
-            _enchantTargetId = value;
-            _error = null;
-          }),
+        GameSelectField(
+          label: 'Item to enchant',
+          value: detail.enchantTargets
+              .firstWhere((target) => target.id == selected, orElse: () => detail.enchantTargets.first)
+              .label,
+          onPressed: () async {
+            final chosen = await showGameCatalogPopup(
+              context: context,
+              origin: popupOrigin(context),
+              eyebrow: 'Item to enchant',
+              title: detail.name,
+              selectable: true,
+              entries: [
+                for (final target in detail.enchantTargets)
+                  CatalogPopupEntry(title: target.label, emphasized: target.id == selected),
+              ],
+            );
+            if (chosen == null || !mounted) return;
+            setState(() {
+              _enchantTargetId = detail.enchantTargets[chosen].id;
+              _error = null;
+            });
+          },
         ),
         const SizedBox(height: 8),
-        FilledButton(onPressed: () => _complete(detail, 1), child: const Text('Complete project')),
+        GameButton(label: 'Complete project', onPressed: () => _complete(detail, 1)),
       ],
     );
   }
@@ -351,7 +372,7 @@ Future<void> showProjectReceipt(BuildContext context, {required ProjectReceipt r
               child: Text('· $line', style: const TextStyle(color: Palette.gold)),
             ),
           const SizedBox(height: 10),
-          FilledButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Collect')),
+          GameButton(label: 'Collect', onPressed: () => Navigator.of(context).pop()),
         ],
       ),
     ),

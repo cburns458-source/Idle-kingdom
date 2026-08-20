@@ -129,7 +129,10 @@ class _QuantitySheetState extends State<_QuantitySheet> {
                   ),
                 ),
                 const SizedBox(width: 8),
-                OutlinedButton(
+                GameButton(
+                  label: 'Max',
+                  tone: GameButtonTone.secondary,
+                  compact: true,
                   onPressed: ceiling == null || ceiling < widget.min
                       ? null
                       : () => setState(() {
@@ -137,7 +140,6 @@ class _QuantitySheetState extends State<_QuantitySheet> {
                           _edited = true;
                           _text = '$ceiling';
                         }),
-                  child: const Text('Max'),
                 ),
               ],
             ),
@@ -151,18 +153,21 @@ class _QuantitySheetState extends State<_QuantitySheet> {
               childAspectRatio: 2,
               children: [
                 for (final key in const ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'C', '0'])
-                  OutlinedButton(
+                  GameButton(
+                    label: key,
+                    tone: GameButtonTone.secondary,
+                    compact: true,
                     onPressed: () => key == 'C'
                         ? setState(() {
                             _edited = true;
                             _text = '0';
                           })
                         : _append(key),
-                    child: Text(key),
                   ),
-                OutlinedButton(
+                GameIconButton(
+                  icon: Icons.backspace_outlined,
+                  tooltip: 'Backspace',
                   onPressed: _backspace,
-                  child: const Icon(Icons.backspace_outlined, size: 16),
                 ),
               ],
             ),
@@ -173,13 +178,15 @@ class _QuantitySheetState extends State<_QuantitySheet> {
             const SizedBox(height: 10),
             Row(
               children: [
-                OutlinedButton(
+                GameButton(
+                  label: 'Cancel',
+                  tone: GameButtonTone.secondary,
+                  compact: true,
                   onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Cancel'),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: FilledButton(onPressed: _confirm, child: Text(widget.confirmLabel)),
+                  child: GameButton(label: widget.confirmLabel, onPressed: _confirm),
                 ),
               ],
             ),
