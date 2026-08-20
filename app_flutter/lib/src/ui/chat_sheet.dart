@@ -62,7 +62,7 @@ class ChatLauncher extends StatelessWidget {
                           ),
                           child: Text(
                             badge,
-                            style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w700),
+                            style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w400),
                           ),
                         ),
                       ),
@@ -230,7 +230,7 @@ class _ChatSheetState extends State<ChatSheet> {
                                             style: TextStyle(
                                               fontFamily: gameFontFamily,
                                               fontSize: 13,
-                                              fontWeight: FontWeight.w700,
+                                              fontWeight: FontWeight.w400,
                                               color: line.mine
                                                   ? Palette.gold
                                                   : Palette.parchmentText,

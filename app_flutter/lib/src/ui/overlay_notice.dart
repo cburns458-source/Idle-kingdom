@@ -74,7 +74,7 @@ class _OverlayNoticeState extends State<OverlayNotice> {
           child: Text(
             widget.text,
             textAlign: TextAlign.center,
-            style: TextStyle(color: widget.tone, fontSize: 13, fontWeight: FontWeight.w600),
+            style: TextStyle(color: widget.tone, fontSize: 13, fontWeight: FontWeight.w400),
           ),
         ),
       ),

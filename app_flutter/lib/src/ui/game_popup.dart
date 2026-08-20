@@ -62,7 +62,10 @@ Future<T?> showGamePopup<T>({
                     MediaQuery.sizeOf(context).height *
                     (placement == GamePopupPlacement.topHalf ? 0.48 : 0.7),
               ),
-              child: KeyedSubtree(key: const Key('game-popup'), child: builder(context)),
+              child: Material(
+                type: MaterialType.transparency,
+                child: KeyedSubtree(key: const Key('game-popup'), child: builder(context)),
+              ),
             ),
           ),
         ),
@@ -121,7 +124,7 @@ Future<bool> showGameAlert({
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             if (title != null)
-              Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+              Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w400)),
             if (title != null) const SizedBox(height: 8),
             Text(message, style: const TextStyle(height: 1.4)),
             const SizedBox(height: 14),

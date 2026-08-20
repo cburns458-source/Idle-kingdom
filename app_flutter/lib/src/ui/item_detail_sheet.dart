@@ -69,7 +69,7 @@ class ItemDetailSheet extends StatelessWidget {
                     children: [
                       Text(
                         item?.displayName ?? slot?.displayName ?? id ?? 'Empty slot',
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
                       ),
                       if (quantity > 1) MutedText('×${formatThousands(quantity)}'),
                       if (id != null && slot != null) MutedText('Worn: ${slot.displayName}'),

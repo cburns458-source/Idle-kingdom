@@ -100,7 +100,7 @@ class _MenuViewState extends State<MenuView> {
           if (widget.onClose != null)
             PageHeader(title: 'Settings', onClose: widget.onClose!)
           else
-            const Text('Settings', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
+            const Text('Settings', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w400)),
           if (widget.onClose == null) const SizedBox(height: 4),
           const MutedText('Settings and save tools.'),
           const SizedBox(height: 16),
@@ -111,7 +111,7 @@ class _MenuViewState extends State<MenuView> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Map travel animation', style: TextStyle(fontWeight: FontWeight.w700)),
+                      Text('Map travel animation', style: TextStyle(fontWeight: FontWeight.w400)),
                       MutedText('Walk a small sprite to the destination before arriving.'),
                     ],
                   ),
@@ -136,7 +136,7 @@ class _MenuViewState extends State<MenuView> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('Filter chat', style: TextStyle(fontWeight: FontWeight.w700)),
+                              Text('Filter chat', style: TextStyle(fontWeight: FontWeight.w400)),
                               MutedText(
                                 'Hide profanity in chat. Messages are still stored as typed.',
                               ),
@@ -160,7 +160,7 @@ class _MenuViewState extends State<MenuView> {
                             children: [
                               Text(
                                 'Guild tag on HUD',
-                                style: TextStyle(fontWeight: FontWeight.w700),
+                                style: TextStyle(fontWeight: FontWeight.w400),
                               ),
                               MutedText('Show your guild tag, like [DEV], before your name.'),
                             ],
@@ -183,7 +183,7 @@ class _MenuViewState extends State<MenuView> {
                             children: [
                               Text(
                                 'Show title on HUD',
-                                style: TextStyle(fontWeight: FontWeight.w700),
+                                style: TextStyle(fontWeight: FontWeight.w400),
                               ),
                               MutedText(
                                 'Show your equipped title, like The Undying, after your name.',
@@ -208,7 +208,7 @@ class _MenuViewState extends State<MenuView> {
                             children: [
                               Text(
                                 'Hide chat bubble',
-                                style: TextStyle(fontWeight: FontWeight.w700),
+                                style: TextStyle(fontWeight: FontWeight.w400),
                               ),
                               MutedText('Hide the chat button in the corner of the game.'),
                             ],
@@ -243,7 +243,7 @@ class _MenuViewState extends State<MenuView> {
         children: [
           const Text(
             _playerArtHeading,
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
           ),
           const MutedText(_playerArtBlurb),
           if (hasOverride) ...[
@@ -289,7 +289,7 @@ class _MenuViewState extends State<MenuView> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text('Testing tools', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+          const Text('Testing tools', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w400)),
           const MutedText('Local debug grants. They are not a live economy.'),
           const SizedBox(height: 10),
           GameButton(

@@ -58,7 +58,7 @@ void main() {
     );
     expect(find.text('Smithing forge'), findsOne);
 
-    await tester.tap(find.byType(GameSelectField));
+    await tester.tap(find.byType(GameDropdown<String>));
     await tester.pumpAndSettle();
     await tester.tap(find.textContaining('Copper Axe → Copper Axe').last);
     await tester.pumpAndSettle();
@@ -87,7 +87,7 @@ void main() {
       tester,
       ProjectPicker(controller: controller, station: stationFor(forgeLocationId, 'SKL-0011')),
     );
-    await tester.tap(find.byType(GameSelectField));
+    await tester.tap(find.byType(GameDropdown<String>));
     await tester.pumpAndSettle();
     await tester.tap(find.textContaining('Copper Axe → Copper Axe').last);
     await tester.pumpAndSettle();
@@ -108,8 +108,8 @@ void main() {
       tester,
       ProjectPicker(controller: controller, station: stationFor(forgeLocationId, 'SKL-0011')),
     );
-    expect(find.byType(GameSelectField), findsOne);
-    await tester.tap(find.byType(GameSelectField));
+    expect(find.byType(GameDropdown<String>), findsOne);
+    await tester.tap(find.byType(GameDropdown<String>));
     await tester.pumpAndSettle();
     expect(find.textContaining('Copper Axe → Copper Axe'), findsWidgets);
   });
@@ -125,7 +125,7 @@ void main() {
       tester,
       ProjectPicker(controller: controller, station: stationFor(forgeLocationId, 'SKL-0011')),
     );
-    expect(find.byType(GameSelectField), findsNothing);
+    expect(find.byType(GameDropdown<String>), findsNothing);
     expect(find.textContaining('speak with the Master Dwarf'), findsOne);
 
     await tester.tap(find.text('Recipe book'));
@@ -178,7 +178,7 @@ void main() {
       tester,
       ProjectPicker(controller: controller, station: stationFor(mageLocationId, 'SKL-0013')),
     );
-    await tester.tap(find.byType(GameSelectField).first);
+    await tester.tap(find.byType(GameDropdown<String>).first);
     await tester.pumpAndSettle();
     await tester.tap(find.textContaining('Minor Combat Enchantment').last);
     await tester.pumpAndSettle();

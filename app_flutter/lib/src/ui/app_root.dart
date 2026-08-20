@@ -30,6 +30,13 @@ class IdleKingdomsApp extends StatelessWidget {
       title: 'RestoriaIdle',
       debugShowCheckedModeBanner: false,
       theme: buildAppTheme(),
+      builder: (context, child) {
+        return DefaultTextStyle(
+          style: Theme.of(context).textTheme.bodyMedium!
+              .copyWith(fontFamily: gameFontFamily, fontWeight: FontWeight.w400),
+          child: child ?? const SizedBox.shrink(),
+        );
+      },
       home: const _BootGate(),
     );
   }

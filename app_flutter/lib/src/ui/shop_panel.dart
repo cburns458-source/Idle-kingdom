@@ -215,7 +215,7 @@ class _ShopPanelState extends State<ShopPanel> {
           Text(
             'Offer — buy ${formatThousands(buyTotal)} / sell ${formatThousands(sellTotal)} · '
             'net ${net >= 0 ? '+' : ''}${formatThousands(net)} gold',
-            style: const TextStyle(fontWeight: FontWeight.w700),
+            style: const TextStyle(fontWeight: FontWeight.w400),
           ),
           const SizedBox(height: 8),
           Row(
@@ -264,7 +264,7 @@ class _ShopPanelState extends State<ShopPanel> {
               Expanded(
                 child: Text(
                   title,
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w400),
                 ),
               ),
               GoldAmount(
@@ -341,7 +341,7 @@ class _ShopPanelState extends State<ShopPanel> {
                         '×${formatThousands(offered)}',
                         style: const TextStyle(
                           fontSize: 10,
-                          fontWeight: FontWeight.w800,
+                          fontWeight: FontWeight.w400,
                           color: Color(0xFF1A1208),
                           height: 1.2,
                         ),
@@ -370,7 +370,7 @@ class _Column extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(heading, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+        Text(heading, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w400)),
         const SizedBox(height: 5),
         if (tiles.isEmpty)
           MutedText(empty)

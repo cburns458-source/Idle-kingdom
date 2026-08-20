@@ -112,12 +112,15 @@ void main() {
         matching: find.bySemanticsLabel('Recipes'),
       ),
     );
+    await tester.pump(const Duration(milliseconds: 250));
     expect(find.byType(ProductionPicker), findsOne);
+    expect(find.byKey(const Key('game-popup')), findsOne);
 
     await tester.tap(find.text('Max'));
     await tester.pump();
     await tester.tap(find.text('Start queue'));
     await tester.pump();
+    await tester.pump(const Duration(milliseconds: 250));
 
     expect(controller.save.currentActivityId, 'ACT-0017');
     expect(find.byType(ActionStage), findsOne);

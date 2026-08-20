@@ -35,7 +35,7 @@ class IngredientChip extends StatelessWidget {
               '${formatThousands(owned)}/${formatThousands(need)}',
               style: TextStyle(
                 fontSize: 11,
-                fontWeight: FontWeight.w700,
+                fontWeight: FontWeight.w400,
                 color: short ? Palette.danger : Palette.parchmentText,
               ),
             ),

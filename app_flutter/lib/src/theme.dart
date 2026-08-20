@@ -87,26 +87,58 @@ const List<Shadow> overlayShadow = [
   Shadow(offset: Offset(0, 1), blurRadius: 2, color: Color(0x8C000000)),
 ];
 
+const String gameFontFamily = 'SevenTwelveSerif';
+
 /// Combat and gathering warnings.
 const TextStyle warningStyle = TextStyle(
+  fontFamily: gameFontFamily,
   color: Palette.warning,
   fontSize: 13,
-  fontWeight: FontWeight.w600,
+  fontWeight: FontWeight.w400,
   height: 1.35,
   shadows: overlayShadow,
 );
 
-const String gameFontFamily = 'PixelifySans';
+/// 7:12 Serif is Regular-only. Force every role onto that cut.
+TextTheme _regularGameText(TextTheme theme) {
+  TextStyle? regular(TextStyle? style) {
+    return style?.copyWith(fontFamily: gameFontFamily, fontWeight: FontWeight.w400);
+  }
+
+  return TextTheme(
+    displayLarge: regular(theme.displayLarge),
+    displayMedium: regular(theme.displayMedium),
+    displaySmall: regular(theme.displaySmall),
+    headlineLarge: regular(theme.headlineLarge),
+    headlineMedium: regular(theme.headlineMedium),
+    headlineSmall: regular(theme.headlineSmall),
+    titleLarge: regular(theme.titleLarge),
+    titleMedium: regular(theme.titleMedium),
+    titleSmall: regular(theme.titleSmall),
+    bodyLarge: regular(theme.bodyLarge),
+    bodyMedium: regular(theme.bodyMedium),
+    bodySmall: regular(theme.bodySmall),
+    labelLarge: regular(theme.labelLarge),
+    labelMedium: regular(theme.labelMedium),
+    labelSmall: regular(theme.labelSmall),
+  );
+}
 
 ThemeData buildAppTheme() {
-  final base = ThemeData.dark(useMaterial3: true);
-  final textTheme = base.textTheme.apply(
+  final base = ThemeData(
+    useMaterial3: true,
+    brightness: Brightness.dark,
     fontFamily: gameFontFamily,
-    bodyColor: Palette.parchmentText,
-    displayColor: Palette.parchmentText,
+    scaffoldBackgroundColor: Palette.ink,
+  );
+  final textTheme = _regularGameText(
+    base.textTheme.apply(
+      fontFamily: gameFontFamily,
+      bodyColor: Palette.parchmentText,
+      displayColor: Palette.parchmentText,
+    ),
   );
   return base.copyWith(
-    scaffoldBackgroundColor: Palette.ink,
     colorScheme: base.colorScheme.copyWith(
       primary: Palette.gold,
       onPrimary: Palette.ink,
@@ -239,7 +271,7 @@ class _GameButtonState extends State<GameButton> {
                   style: TextStyle(
                     fontFamily: gameFontFamily,
                     fontSize: widget.compact ? 12 : 13.5,
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w400,
                     color: primary ? const Color(0xFFF4FFE8) : const Color(0xFFFFF4D4),
                   ),
                 ),
@@ -299,6 +331,93 @@ class GameIconButton extends StatelessWidget {
   }
 }
 
+/// One line in a [GameDropdown].
+class GameDropdownItem<T> {
+  const GameDropdownItem({required this.value, required this.label, this.enabled = true});
+
+  final T value;
+  final String label;
+  final bool enabled;
+}
+
+/// One-line field that expands a local menu, not a separate catalog popup.
+class GameDropdown<T> extends StatelessWidget {
+  const GameDropdown({
+    super.key,
+    required this.label,
+    required this.value,
+    required this.items,
+    required this.onChanged,
+  });
+
+  final String label;
+  final T? value;
+  final List<GameDropdownItem<T>> items;
+  final ValueChanged<T> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final selected = items.where((item) => item.value == value).firstOrNull;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        MutedText(label),
+        const SizedBox(height: 4),
+        PopupMenuButton<T>(
+          tooltip: label,
+          enabled: items.isNotEmpty,
+          color: Palette.parchmentDeep,
+          offset: const Offset(0, 8),
+          constraints: const BoxConstraints(minWidth: 220, maxWidth: 360),
+          onSelected: onChanged,
+          itemBuilder: (context) => [
+            for (final item in items)
+              PopupMenuItem<T>(
+                value: item.value,
+                enabled: item.enabled,
+                child: Text(
+                  item.label,
+                  style: TextStyle(
+                    fontFamily: gameFontFamily,
+                    fontWeight: FontWeight.w400,
+                    color: item.enabled ? Palette.parchmentText : Palette.muted,
+                  ),
+                ),
+              ),
+          ],
+          child: Material(
+            color: const Color(0xFF45301F),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+              side: const BorderSide(color: Color(0x73D4AF37)),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      selected?.label ?? '',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontFamily: gameFontFamily,
+                        fontWeight: FontWeight.w400,
+                        fontSize: 13.5,
+                      ),
+                    ),
+                  ),
+                  const Icon(Icons.expand_more, size: 20, color: Palette.gold),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 /// One-line field that opens a catalog popup instead of a Material dropdown.
 class GameSelectField extends StatelessWidget {
   const GameSelectField({
@@ -339,7 +458,7 @@ class GameSelectField extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         fontFamily: gameFontFamily,
-                        fontWeight: FontWeight.w700,
+                        fontWeight: FontWeight.w400,
                         fontSize: 13.5,
                       ),
                     ),
@@ -407,7 +526,7 @@ class DockRow extends StatelessWidget {
                   title,
                   style: const TextStyle(
                     fontSize: 14.5,
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w400,
                     shadows: overlayShadow,
                   ),
                 ),

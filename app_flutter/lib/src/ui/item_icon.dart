@@ -50,7 +50,7 @@ class GoldAmount extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(formatThousands(amount), style: style ?? const TextStyle(fontWeight: FontWeight.w700)),
+        Text(formatThousands(amount), style: style ?? const TextStyle(fontWeight: FontWeight.w400)),
         const SizedBox(width: 4),
         GameImage(goldIconPath(), width: size, height: size),
       ],

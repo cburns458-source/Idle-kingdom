@@ -55,7 +55,7 @@ class _LogViewState extends State<LogView> {
               '${jsNumberToString(completion.overall.percent)}% complete',
               style: const TextStyle(
                 fontSize: 12.5,
-                fontWeight: FontWeight.w700,
+                fontWeight: FontWeight.w400,
                 color: Palette.gold,
               ),
             ),
@@ -68,12 +68,12 @@ class _LogViewState extends State<LogView> {
               crossAxisAlignment: CrossAxisAlignment.baseline,
               textBaseline: TextBaseline.alphabetic,
               children: [
-                const Text('Log', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
+                const Text('Log', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w400)),
                 Text(
                   '${jsNumberToString(completion.overall.percent)}% complete',
                   style: const TextStyle(
                     fontSize: 12.5,
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w400,
                     color: Palette.gold,
                   ),
                 ),
@@ -111,7 +111,7 @@ class _LogViewState extends State<LogView> {
                   section.label,
                   style: const TextStyle(
                     fontSize: 12,
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w400,
                     color: Palette.gold,
                   ),
                 ),
@@ -229,7 +229,7 @@ class _LogRow extends StatelessWidget {
                 Text(
                   title,
                   style: TextStyle(
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w400,
                     color: highlight ? Palette.gold : Palette.parchmentText,
                   ),
                 ),

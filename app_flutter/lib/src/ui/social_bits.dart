@@ -119,7 +119,7 @@ class SocialRow extends StatelessWidget {
                   title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontWeight: FontWeight.w700),
+                  style: const TextStyle(fontWeight: FontWeight.w400),
                 ),
                 if (subtitle.isNotEmpty) MutedText(subtitle),
               ],
@@ -153,7 +153,7 @@ class SignedOutNotice extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (showTitle) ...[
-            Text(title, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
+            Text(title, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w400)),
             const SizedBox(height: 8),
           ],
           Text(prompt),

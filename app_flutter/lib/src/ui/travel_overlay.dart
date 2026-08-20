@@ -29,7 +29,7 @@ class TravelOverlay extends StatelessWidget {
               Text(
                 '${nameOf(journey.fromLocationId)} → ${nameOf(journey.toLocationId)}',
                 textAlign: TextAlign.center,
-                style: const TextStyle(fontWeight: FontWeight.w700),
+                style: const TextStyle(fontWeight: FontWeight.w400),
               ),
               const SizedBox(height: 14),
               MeterBar(value: controller.travelProgress, color: Palette.gold),

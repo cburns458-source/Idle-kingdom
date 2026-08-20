@@ -107,7 +107,7 @@ class _QuantitySheetState extends State<_QuantitySheet> {
           mainAxisSize: MainAxisSize.min,
           children: [
             if (widget.subtitle case final subtitle?) MutedText(subtitle),
-            Text(widget.title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+            Text(widget.title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w400)),
             for (final line in widget.details)
               Padding(padding: const EdgeInsets.only(top: 2), child: MutedText(line)),
             const SizedBox(height: 10),
@@ -124,7 +124,7 @@ class _QuantitySheetState extends State<_QuantitySheet> {
                     child: Text(
                       _text,
                       textAlign: TextAlign.center,
-                      style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
+                      style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w400),
                     ),
                   ),
                 ),

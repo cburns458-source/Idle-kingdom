@@ -253,7 +253,7 @@ class _NpcPanelState extends State<NpcPanel> {
                   children: [
                     Text(
                       conversation.name,
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w400),
                     ),
                     if (conversation.role case final role? when role.toLowerCase() != 'quest giver')
                       MutedText(role),
@@ -349,7 +349,7 @@ class _QuestBlock extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(quest.name, style: const TextStyle(fontWeight: FontWeight.w700)),
+          Text(quest.name, style: const TextStyle(fontWeight: FontWeight.w400)),
           if (quest.summary case final summary?) MutedText(summary),
           const SizedBox(height: 8),
           switch (quest.status) {
@@ -432,7 +432,7 @@ class _DialogueCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+          Text(name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w400)),
           const SizedBox(height: 6),
           Text(line, style: const TextStyle(fontSize: 15)),
           if (detail case final detail?) ...[const SizedBox(height: 4), MutedText(detail)],
@@ -462,7 +462,7 @@ Future<void> showQuestRewards(
         mainAxisSize: MainAxisSize.min,
         children: [
           const MutedText('Quest complete'),
-          Text(questName, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+          Text(questName, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w400)),
           const SizedBox(height: 8),
           if (rewards.isEmpty)
             const MutedText('No rewards.')
@@ -498,7 +498,7 @@ Future<void> showSkillXpPicker(
           const MutedText('Choose a skill'),
           Text(
             '${formatThousands(amount)} XP',
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w400),
           ),
           const SizedBox(height: 8),
           ConstrainedBox(

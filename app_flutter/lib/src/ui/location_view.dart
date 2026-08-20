@@ -49,13 +49,6 @@ class GuildHallOpen extends LocationPanel {
   const GuildHallOpen();
 }
 
-/// The recipe picker for a Standard Production station.
-class WorkshopOpen extends LocationPanel {
-  const WorkshopOpen(this.activity);
-
-  final ActivityRow activity;
-}
-
 class NpcOpen extends LocationPanel {
   const NpcOpen(this.npc);
 
@@ -67,13 +60,6 @@ class CitadelHubOpen extends LocationPanel {
   const CitadelHubOpen(this.tab);
 
   final CitadelHubTab tab;
-}
-
-/// The project list for a Special Production station.
-class StationOpen extends LocationPanel {
-  const StationOpen(this.station);
-
-  final SpecialProductionStation station;
 }
 
 /// Where the player is standing: the art, what can be done here, and whatever
@@ -128,10 +114,6 @@ class _LocationViewState extends State<LocationView> {
         save,
         panel.tab == CitadelHubTab.bazaar ? 'bazaar' : 'bounties',
       );
-    } else if (panel is WorkshopOpen || panel is StationOpen) {
-      if (save.currentLocationId == 'LOC-0030') {
-        save = applyQuestInspectProgress(controller.db, save, 'processing');
-      }
     }
     if (!identical(save, controller.save)) controller.commit(save);
     setState(() {
@@ -144,6 +126,32 @@ class _LocationViewState extends State<LocationView> {
   void _closePanel() => setState(() {
     if (_open.isNotEmpty) _open.removeLast();
   });
+
+  void _inspectProcessing() {
+    if (controller.save.currentLocationId != 'LOC-0030') return;
+    final save = applyQuestInspectProgress(controller.db, controller.save, 'processing');
+    if (!identical(save, controller.save)) controller.commit(save);
+  }
+
+  void _openWorkshop(ActivityRow activity, BuildContext buttonContext) {
+    _inspectProcessing();
+    showProductionPicker(
+      buttonContext,
+      controller: controller,
+      activity: activity,
+      origin: popupOrigin(buttonContext),
+    );
+  }
+
+  void _openStation(SpecialProductionStation station, BuildContext buttonContext) {
+    _inspectProcessing();
+    showProjectPicker(
+      buttonContext,
+      controller: controller,
+      station: station,
+      origin: popupOrigin(buttonContext),
+    );
+  }
 
   LocationPanel? get _currentPanel => _open.isEmpty ? null : _open.last;
 
@@ -180,8 +188,8 @@ class _LocationViewState extends State<LocationView> {
 
     final running = controller.save.currentActivityId != null;
     final openPanel = _currentPanel;
-    // A running action keeps the stage. An open shop/NPC/workshop shares the
-    // band instead of covering the fight or gather UI.
+    // A running action keeps the stage. An open shop/NPC shares the band
+    // instead of covering the fight or gather UI.
     final stage = running
         ? ActivityPanel(controller: controller)
         : openPanel != null
@@ -367,10 +375,6 @@ class _LocationViewState extends State<LocationView> {
           onClose: _closePanel,
           onOpenBank: () => _openPanel(const BankOpen()),
         );
-      case WorkshopOpen(activity: final activity):
-        return ProductionPicker(controller: controller, activity: activity, onClose: _closePanel);
-      case StationOpen(station: final station):
-        return ProjectPicker(controller: controller, station: station, onClose: _closePanel);
       case NpcOpen(npc: final npc):
         return NpcPanel(
           controller: controller,
@@ -424,7 +428,7 @@ class _LocationViewState extends State<LocationView> {
           child: _ActivityCard(
             controller: controller,
             activity: activity,
-            onOpenWorkshop: () => _openPanel(WorkshopOpen(activity)),
+            onOpenWorkshop: (buttonContext) => _openWorkshop(activity, buttonContext),
           ),
         ),
     ];
@@ -467,11 +471,13 @@ class _LocationViewState extends State<LocationView> {
       for (final station in stations)
         Padding(
           padding: const EdgeInsets.only(bottom: 8),
-          child: _InteractionCard(
-            title: station.label,
-            actionLabel: 'Projects',
-            tone: GameButtonTone.primary,
-            onPressed: () => _openPanel(StationOpen(station)),
+          child: Builder(
+            builder: (context) => _InteractionCard(
+              title: station.label,
+              actionLabel: 'Projects',
+              tone: GameButtonTone.primary,
+              onPressed: () => _openStation(station, context),
+            ),
           ),
         ),
     ];
@@ -649,7 +655,7 @@ class _LocationHead extends StatelessWidget {
           location.displayName,
           style: const TextStyle(
             fontSize: 21.5,
-            fontWeight: FontWeight.w700,
+            fontWeight: FontWeight.w400,
             color: Palette.heading,
             height: 1.2,
             shadows: overlayShadow,
@@ -677,7 +683,7 @@ class _SectionHeading extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 6),
       child: Text(
         text,
-        style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700, shadows: overlayShadow),
+        style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w400, shadows: overlayShadow),
       ),
     );
   }
@@ -718,7 +724,7 @@ class _ActivityCard extends StatelessWidget {
 
   final GameController controller;
   final ActivityRow activity;
-  final VoidCallback onOpenWorkshop;
+  final ValueChanged<BuildContext> onOpenWorkshop;
 
   @override
   Widget build(BuildContext context) {
@@ -761,7 +767,7 @@ class _ActivityCard extends StatelessWidget {
               onPressed: recovering
                   ? null
                   : production
-                  ? onOpenWorkshop
+                  ? () => onOpenWorkshop(context)
                   : () => controller.startActivity(activityId),
             ),
     );
@@ -779,7 +785,7 @@ class _RecoveringPanel extends StatelessWidget {
       child: Row(
         children: [
           const Expanded(
-            child: Text('Recovering…', style: TextStyle(fontWeight: FontWeight.w700)),
+            child: Text('Recovering…', style: TextStyle(fontWeight: FontWeight.w400)),
           ),
           SizedBox(
             width: 96,

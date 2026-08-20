@@ -5,12 +5,34 @@ import 'package:ik_rules/ik_rules.dart';
 import '../session/game_controller.dart';
 import '../theme.dart';
 import 'format.dart';
-import 'catalog_popup.dart';
 import 'game_popup.dart';
 import 'ingredient_chip.dart';
 import 'item_icon.dart';
 import 'quantity_sheet.dart';
 import 'recipe_book_sheet.dart';
+
+/// The workshop counter as its own floating card, not in the location list.
+Future<void> showProductionPicker(
+  BuildContext context, {
+  required GameController controller,
+  required ActivityRow activity,
+  Rect? origin,
+}) {
+  return showGamePopup<void>(
+    context: context,
+    origin: origin,
+    builder: (context) => SizedBox(
+      width: 360,
+      child: SingleChildScrollView(
+        child: ProductionPicker(
+          controller: controller,
+          activity: activity,
+          onClose: () => Navigator.of(context).pop(),
+        ),
+      ),
+    ),
+  );
+}
 
 /// The workshop counter: choose a recipe, choose how many, start the queue.
 ///
@@ -83,7 +105,7 @@ class _ProductionPickerState extends State<ProductionPicker> {
               Expanded(
                 child: Text(
                   widget.activity.contextualName ?? widget.activity.internalKey,
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w400),
                 ),
               ),
               GameButton(
@@ -106,31 +128,21 @@ class _ProductionPickerState extends State<ProductionPicker> {
                   : 'No recipes you can make right now. Open the recipe book to see what you need.',
             )
           else ...[
-            GameSelectField(
+            GameDropdown<String>(
               label: 'Recipe',
-              value: '${recipe.displayName} (Lv ${recipe.proficiencyLevel})',
-              onPressed: () async {
-                final chosen = await showGameCatalogPopup(
-                  context: context,
-                  origin: popupOrigin(context),
-                  eyebrow: 'Recipe',
-                  title: widget.activity.contextualName ?? widget.activity.internalKey,
-                  selectable: true,
-                  entries: [
-                    for (final row in recipes)
-                      CatalogPopupEntry(
-                        title: '${row.displayName} (Lv ${row.proficiencyLevel})',
-                        emphasized: row.recipeId == recipe.recipeId,
-                      ),
-                  ],
-                );
-                if (chosen == null || !mounted) return;
-                setState(() {
-                  _recipeId = recipes[chosen].recipeId;
-                  _quantity = 1;
-                  _error = null;
-                });
-              },
+              value: recipe.recipeId,
+              items: [
+                for (final row in recipes)
+                  GameDropdownItem(
+                    value: row.recipeId,
+                    label: '${row.displayName} (Lv ${row.proficiencyLevel})',
+                  ),
+              ],
+              onChanged: (value) => setState(() {
+                _recipeId = value;
+                _quantity = 1;
+                _error = null;
+              }),
             ),
             const SizedBox(height: 10),
             _RecipeDetails(controller: controller, recipe: recipe),
@@ -234,7 +246,7 @@ class _RecipeDetails extends StatelessWidget {
                 children: [
                   Text(
                     '${output?.displayName ?? recipe.displayName} ×${recipe.outputQuantity}',
-                    style: const TextStyle(fontWeight: FontWeight.w700),
+                    style: const TextStyle(fontWeight: FontWeight.w400),
                   ),
                   MutedText(
                     '${formatDurationSeconds(recipe.baseDurationSeconds)} · '
