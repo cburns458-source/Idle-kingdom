@@ -64,6 +64,11 @@ void main() {
     await tester.tap(find.text('Join'));
     await tester.pump();
     await tester.pump();
+    // Action results are alerts now, not a sticky banner.
+    expect(find.text('OK'), findsOne);
+    await tester.tap(find.text('OK'));
+    await tester.pump();
+    await tester.pump();
 
     // Leave the roster detail; the guild home now owns the panel.
     await tester.tap(find.byType(BackButton));
@@ -78,6 +83,10 @@ void main() {
     await tester.tap(find.text('Leave guild'));
     await tester.pump();
     await tester.tap(find.text('Leave'));
+    await tester.pump();
+    await tester.pump();
+    expect(find.text('OK'), findsOne);
+    await tester.tap(find.text('OK'));
     await tester.pump();
     await tester.pump();
 
@@ -105,6 +114,10 @@ void main() {
     await tester.pump();
     expect(find.text('Guest'), findsOne);
     await tester.tap(find.text('Guest'));
+    await tester.pump();
+    await tester.pump();
+    expect(find.text('OK'), findsOne);
+    await tester.tap(find.text('OK'));
     await tester.pump();
     await tester.pump();
 

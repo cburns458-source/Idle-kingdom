@@ -5,7 +5,6 @@ import '../session/game_controller.dart';
 import '../session/multiplayer_controller.dart';
 import '../theme.dart';
 import 'account_auth_form.dart';
-import 'social_bits.dart';
 
 /// Blocks the game until the player signs in with email.
 ///
@@ -40,7 +39,6 @@ class AuthGateSheet extends StatelessWidget {
                     MutedText(authGateIntro(multiplayer.mode)),
                     const SizedBox(height: 16),
                     AccountAuthForm(controller: controller, multiplayer: multiplayer),
-                    SocialNotice(notice: multiplayer.notice),
                   ],
                 ],
               );

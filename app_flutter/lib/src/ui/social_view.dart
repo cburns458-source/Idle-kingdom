@@ -122,8 +122,6 @@ class _LeaderboardTab extends StatelessWidget {
           },
         ),
         const SizedBox(height: 10),
-        SocialNotice(notice: multiplayer.notice),
-        const SizedBox(height: 10),
         if (rows.isEmpty)
           MutedText(emptyBoardMessage(multiplayer.boardKey))
         else

@@ -189,7 +189,6 @@ class _PlayerProfileSheetState extends State<PlayerProfileSheet> {
               ],
             ),
           ],
-          SocialNotice(notice: net.notice),
         ],
       ),
     );

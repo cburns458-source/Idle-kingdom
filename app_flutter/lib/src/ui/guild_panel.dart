@@ -62,8 +62,6 @@ class _GuildPanelState extends State<GuildPanel> {
         ),
         // Near the top, because a list of guilds is as long as the game is old
         // and a message under it is a message nobody reads.
-        SocialNotice(notice: net.notice),
-        const SizedBox(height: 10),
         if (net.guestGuild case final guest?) ...[
           SocialRow(
             title: 'Guest of [${guest.tag}] ${guest.name}',
@@ -177,7 +175,6 @@ class _GuildPanelState extends State<GuildPanel> {
                 )
               : null,
         ),
-        SocialNotice(notice: net.notice),
         const SizedBox(height: 10),
         GameButton(
           label: save.currentLocationId == guildHallLocationId ? 'In the hall' : 'Travel to hall',
@@ -405,7 +402,6 @@ class _OtherGuildsPageState extends State<_OtherGuildsPage> {
                 ),
                 onChanged: (_) => setState(() {}),
               ),
-              SocialNotice(notice: net.notice),
               const SizedBox(height: 10),
               if (rows.isEmpty)
                 const MutedText('No other guilds yet.')
@@ -588,7 +584,6 @@ class _GuildDetailPageState extends State<_GuildDetailPage> {
                           child: Text(browse.guestLabel),
                         ),
                     ],
-                    SocialNotice(notice: net.notice),
                     const SizedBox(height: 10),
                     Row(
                       children: [

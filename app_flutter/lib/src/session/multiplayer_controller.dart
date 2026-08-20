@@ -811,7 +811,10 @@ class MultiplayerController extends ChangeNotifier {
       return 'Guild created.';
     });
     if (founded) return null;
-    return _notice ?? 'The guild was not created. Try again.';
+    // Refusal stays on the create sheet; do not also fire the global alert.
+    final reason = _notice ?? 'The guild was not created. Try again.';
+    _notice = null;
+    return reason;
   }
 
   Future<void> applyToGuild(String guildId, String message, PlayerSave save) {

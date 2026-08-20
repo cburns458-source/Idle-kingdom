@@ -131,7 +131,6 @@ class _NearbyPanelState extends State<NearbyPanel> {
               },
             ),
           ),
-        SocialNotice(notice: net.notice),
       ],
     );
   }
