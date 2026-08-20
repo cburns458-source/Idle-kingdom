@@ -525,7 +525,7 @@ void main() {
     await tester.pump();
 
     final chat = tester.getRect(find.byTooltip('Open chat'));
-    final travel = tester.getRect(find.bySemanticsLabel('Travel'));
+    final travel = tester.getRect(find.widgetWithText(GameButton, 'Travel'));
     expect(chat.bottom, lessThanOrEqualTo(travel.top));
   });
 

@@ -28,8 +28,8 @@ import 'world_map_view.dart';
 
 enum GameScreen { location, map, skills, inventory, log, leaderboards, guilds, account, menu }
 
-/// Clears the chin (48) and the map Travel strip (~68) plus a gap.
-const double chatLauncherBottom = 128;
+/// Clears the chin and the map Travel strip. Measured on a 9:16 phone frame.
+const double chatLauncherBottom = 192;
 
 const Set<GameScreen> _chinScreens = {
   GameScreen.skills,
