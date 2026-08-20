@@ -28,6 +28,9 @@ import 'world_map_view.dart';
 
 enum GameScreen { location, map, skills, inventory, log, leaderboards, guilds, account, menu }
 
+/// Clears the chin (48) and the map Travel strip (~68) plus a gap.
+const double chatLauncherBottom = 128;
+
 const Set<GameScreen> _chinScreens = {
   GameScreen.skills,
   GameScreen.inventory,
@@ -469,7 +472,7 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
         if (!multiplayer.hideChatBubble)
           Positioned(
             right: 12,
-            bottom: 62,
+            bottom: chatLauncherBottom,
             child: ChatLauncher(
               open: _chatOpen,
               multiplayer: multiplayer,

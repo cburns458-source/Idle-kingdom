@@ -8432,7 +8432,7 @@
     {
       "Location ID": "LOC-0004",
       "Internal Key": "river_coast_dock",
-      "Display Name": "River, Coast, and Dock",
+      "Display Name": "The Docks",
       "Map ID": "MAP-0001",
       "Location Type": "Region",
       "Parent Location ID": null,
@@ -8864,7 +8864,7 @@
       "Node ID": "NODE-0031",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Description": "Cedar stands on the citadel fringe for woodcutting.",
+      "Description": "Poplar stands on the citadel fringe for woodcutting.",
       "Danger / Hostility": null,
       "Background Asset Key": null,
       "Map Node Name": null,
@@ -9660,7 +9660,7 @@
       "Internal Key": "reason_with_pirates",
       "Contextual Name": "Try to reason with the pirates",
       "Location ID": "LOC-0004",
-      "Description": "Pirate Combat encounters along the river coast and dock.",
+      "Description": "Pirate Combat encounters at the docks.",
       "Danger Warning Combat Level": 50,
       "Pool ID": "POOL-0018",
       "Pool Internal Key": "dock_pirates",
@@ -9788,15 +9788,15 @@
     {
       "Activity ID": "ACT-0032",
       "Internal Key": "gather_citadel_outskirts",
-      "Contextual Name": "Cut cedar trees",
+      "Contextual Name": "Cut poplar trees",
       "Location ID": "LOC-0031",
-      "Description": "Cut cedar trees on the citadel outskirts.",
+      "Description": "Cut poplar trees on the citadel outskirts.",
       "Danger Warning Combat Level": null,
       "Pool ID": "POOL-0023",
-      "Pool Internal Key": "citadel_cedar",
+      "Pool Internal Key": "citadel_poplar",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": "Single-action pool: Cut cedar tree (ACN-0046)."
+      "Notes": "Single-action pool: Cut poplar tree (ACN-0048)."
     },
     {
       "Activity ID": "ACT-0033",
@@ -9849,6 +9849,19 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": "Single-action pool: Catch crawfish (ACN-0099)."
+    },
+    {
+      "Activity ID": "ACT-0038",
+      "Internal Key": "fish_deep_pools",
+      "Contextual Name": "Fish the deep pools",
+      "Location ID": "LOC-0022",
+      "Description": "Fishing the flooded shafts: tuna and shark.",
+      "Danger Warning Combat Level": null,
+      "Pool ID": "POOL-0004",
+      "Pool Internal Key": "coast_fishing",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": "Copied from ACT-0004. Same tuna and shark pool as the docks."
     }
   ],
   "PoolEntries": [
@@ -10295,10 +10308,10 @@
     {
       "Pool Entry ID": "PEN-0061",
       "Pool ID": "POOL-0023",
-      "Action ID": "ACN-0046",
+      "Action ID": "ACN-0048",
       "Weight": 100,
       "Status": "Planned",
-      "Notes": "Citadel Gathering Outskirts \u2014 cedar only."
+      "Notes": "Citadel Gathering Outskirts \u2014 poplar only."
     },
     {
       "Pool Entry ID": "PEN-0062",
@@ -13863,7 +13876,7 @@
       "Operator": null,
       "Required Value": null,
       "Status": "Planned",
-      "Notes": "Mirrored from ACT-0010 for citadel cedar cutting."
+      "Notes": "Mirrored from ACT-0010 for citadel poplar cutting."
     },
     {
       "Requirement ID": "REQ-0099",
@@ -13968,6 +13981,19 @@
       "Required Value": null,
       "Status": "Planned",
       "Notes": "Pond fishing at the copper mine needs a fishing tool."
+    },
+    {
+      "Requirement ID": "REQ-0107",
+      "Entity Type": "Activity",
+      "Entity ID": "ACT-0038",
+      "Requirement Group": "A",
+      "Group Logic": "AND",
+      "Requirement Type": "Tool Capability",
+      "Reference ID / Value": "fishing_tool",
+      "Operator": null,
+      "Required Value": null,
+      "Status": "Planned",
+      "Notes": "Deep-pool fishing in the abandoned mineshaft needs a fishing tool."
     }
   ],
   "Enemies": [
