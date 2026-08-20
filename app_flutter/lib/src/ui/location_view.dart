@@ -104,8 +104,8 @@ class _LocationViewState extends State<LocationView> {
 
   static const double _collapsedBand = 176;
 
-  /// Farm art is a 9:16 plate; the path is aligned from the bottom of the card.
-  static const String _farmLocationId = 'LOC-0001';
+  /// Town, the cave mouth, and the castle gate still use the old square plates.
+  static const Set<String> _squarePlates = {'LOC-0002', 'LOC-0010', 'LOC-0013'};
 
   GameController get controller => widget.controller;
 
@@ -355,14 +355,14 @@ class _LocationViewState extends State<LocationView> {
     );
   }
 
-  /// Farm uses a 9:16 plate pinned to the bottom so the dirt path stays above
-  /// the activities list while the art still runs behind it.
+  /// 9:16 plates pin to the bottom so the walking band stays with the sprites.
   Widget _locationPlate(String locationId) {
+    final square = _squarePlates.contains(locationId);
     return GameImage(
       locationAssetPath(locationId),
       fit: BoxFit.cover,
-      alignment: locationId == _farmLocationId ? Alignment.bottomCenter : Alignment.topCenter,
-      filterQuality: locationId == _farmLocationId ? FilterQuality.medium : FilterQuality.none,
+      alignment: square ? Alignment.topCenter : Alignment.bottomCenter,
+      filterQuality: square ? FilterQuality.none : FilterQuality.medium,
     );
   }
 
