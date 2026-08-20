@@ -151,6 +151,22 @@
     "LOC-0032": {
       "internalKey": "citadel_combat",
       "path": "/assets/locations/loc_citadel_combat.webp"
+    },
+    "LOC-0033": {
+      "internalKey": "guild_hall",
+      "path": "/assets/locations/loc_guild_hall.webp"
+    },
+    "LOC-0034": {
+      "internalKey": "town_bank",
+      "path": "/assets/locations/loc_town_bank.webp"
+    },
+    "LOC-0035": {
+      "internalKey": "citadel_bank",
+      "path": "/assets/locations/loc_citadel_bank.webp"
+    },
+    "LOC-0036": {
+      "internalKey": "temple",
+      "path": "/assets/locations/loc_temple.webp"
     }
   },
   "enemies": {
