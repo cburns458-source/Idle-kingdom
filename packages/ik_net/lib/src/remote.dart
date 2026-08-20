@@ -80,6 +80,10 @@ const String remotePresenceColumns =
     'user_id, username, appearance_json, guild_name, location_id, '
     'current_activity_id, skill_id, skill_level, outfit_cosmetic_id, '
     'mount_cosmetic_id, updated_at, expires_at';
+
+/// Columns a public profile sheet needs from `profiles`.
+const String remotePublicProfileColumns =
+    'user_id, username, appearance_json, guild_id, privacy_public_skills, updated_at';
 const String remotePresenceConflict = 'user_id';
 
 /// How many Bazaar notices a read asks for.
@@ -440,6 +444,23 @@ ActivityPresence activityPresenceFrom(RemoteRow row) => ActivityPresence(
   updatedAt: _str(row['updated_at']),
   expiresAt: _str(row['expires_at']),
 );
+
+/// A hosted `profiles` row as the account card social surfaces list.
+MultiplayerProfile? multiplayerProfileFromRemote(RemoteRow? row) {
+  if (row == null) return null;
+  final userId = _str(row['user_id']);
+  if (userId.isEmpty) return null;
+  final username = _str(row['username']);
+  return MultiplayerProfile(
+    userId: userId,
+    username: username.isEmpty ? 'Adventurer' : username,
+    appearance: playerAppearanceFromRemote(row['appearance_json']),
+    guildId: _optStr(row['guild_id']),
+    guildName: _optStr(row['guild_name']),
+    privacyPublicSkills: row['privacy_public_skills'] != false,
+    updatedAt: _str(row['updated_at']),
+  );
+}
 
 /// Live rows only: expired stamps stay in the table for last-online, but Nearby
 /// must not list a player who has already gone.

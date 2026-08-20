@@ -500,6 +500,23 @@ void main() {
     expect(await service.authoritativeNowMs(), _nowMs);
   });
 
+  test('loads another account public profile from the hosted profiles table', () async {
+    final transport = FakeTransport();
+    final hero = await _signedIn(transport, MemorySaveStorage());
+    final db = _database();
+    final save = createNewSave(db, _nowMs).copyWith(characterName: 'Hero', gold: 10);
+    await hero.pushSave(db, save, force: true);
+    await hero.submitLeaderboard(db, save);
+
+    final rival = _service(transport, MemorySaveStorage());
+    await rival.signUp('rival@example.com', 'Rival', 'secret');
+    final profile = await rival.publicProfile(hero.session!.userId);
+    expect(profile, isNotNull);
+    expect(profile!.username, 'Hero');
+    expect(profile.totalLevel, greaterThanOrEqualTo(1));
+    expect(await rival.publicProfile('missing-user'), isNull);
+  });
+
   test('records the first bounty turn-in of the hour and no other', () async {
     final transport = FakeTransport();
     final hero = await _signedIn(transport, MemorySaveStorage());

@@ -229,7 +229,88 @@ class RemoteMultiplayerService implements MultiplayerService {
   }
 
   @override
-  Future<MultiplayerProfile?> profile(String userId) => _local.profile(userId);
+  Future<MultiplayerProfile?> profile(String userId) async {
+    final result = await transport.select(
+      RemoteTables.profiles,
+      columns: remotePublicProfileColumns,
+      equals: <String, Object?>{'user_id': userId},
+      limit: 1,
+    );
+    if (!result.ok) return null;
+    final profile = multiplayerProfileFromRemote(result.single);
+    if (profile == null) return null;
+    final guildName = await _guildNameFor(profile.guildId);
+    if (guildName == null) return profile;
+    return profile.copyWith(guildName: guildName);
+  }
+
+  Future<String?> _guildNameFor(String? guildId) async {
+    if (guildId == null || guildId.isEmpty) return null;
+    final result = await transport.select(
+      RemoteTables.guilds,
+      columns: 'id, name',
+      equals: <String, Object?>{'id': guildId},
+      limit: 1,
+    );
+    if (!result.ok || result.single == null) return null;
+    final name = result.single!['name'];
+    return name is String && name.isNotEmpty ? name : null;
+  }
+
+  /// Total level posted to the boards, when this account has submitted.
+  Future<num> _leaderboardTotalLevel(String userId) async {
+    final result = await transport.select(
+      RemoteTables.leaderboard,
+      columns: 'value',
+      equals: <String, Object?>{'user_id': userId, 'board_key': boardTotalLevel},
+      limit: 1,
+    );
+    if (!result.ok || result.single == null) return 0;
+    return _num(result.single!['value']);
+  }
+
+  num _num(Object? value) => value is num ? value : 0;
+
+  @override
+  Future<PublicPlayerProfile?> publicProfile(String userId) async {
+    final account = await profile(userId);
+    if (account == null) return null;
+
+    List<PublicSkillLine> skills = const <PublicSkillLine>[];
+    num achievements = 0;
+    num totalLevel = 0;
+
+    // Cloud saves are self-only under RLS. The viewer's own save can fill
+    // skills; everyone else gets the boards' total level and no skill list
+    // until a public skill snapshot exists.
+    if (session?.userId == userId) {
+      final row = await _readSaveRow(userId);
+      final save = row?.toCloudSaveRecordOrNull()?.payload;
+      if (save != null) {
+        skills = [
+          for (final skill in save.skills)
+            PublicSkillLine(skillId: skill.skillId, level: skill.level, xp: skill.xp),
+        ];
+        achievements = save.achievements.where((row) => row.unlocked).length;
+        totalLevel = 0;
+        for (final skill in skills) {
+          totalLevel += skill.level;
+        }
+      }
+    } else {
+      totalLevel = await _leaderboardTotalLevel(userId);
+    }
+
+    return PublicPlayerProfile(
+      userId: account.userId,
+      username: account.username,
+      appearance: account.appearance,
+      guildName: account.guildName,
+      publicSkills: account.privacyPublicSkills ? skills : const <PublicSkillLine>[],
+      achievementsUnlocked: achievements,
+      totalLevel: totalLevel < 1 ? 1 : totalLevel,
+    );
+  }
 
   @override
   Future<MultiplayerProfile?> setPrivacyPublicSkills(bool value) =>
@@ -594,9 +675,6 @@ class RemoteMultiplayerService implements MultiplayerService {
         .where((row) => !excludeSelf || row.userId != current.userId)
         .toList();
   }
-
-  @override
-  Future<PublicPlayerProfile?> publicProfile(String userId) => _local.publicProfile(userId);
 
   @override
   Future<ActionResult> sendFriendRequest(String targetUserId) =>
