@@ -4,8 +4,10 @@ import 'package:ik_runtime/ik_runtime.dart';
 
 import 'bazaar.dart';
 import 'cloud_save.dart';
+import 'config.dart';
 import 'local_backend.dart';
 import 'noted_reads.dart';
+import 'presence.dart';
 import 'remote.dart';
 import 'remote_guild_backend.dart';
 import 'remote_transport.dart';
@@ -18,10 +20,10 @@ import 'types.dart';
 /// The hosted backend, reached over a [RemoteTransport].
 ///
 /// What a server owns goes over the wire: accounts, cloud saves, leaderboards,
-/// chat, and guilds — rosters, requests, guests, and each guild's hall. What is
-/// left on the device is what only the device can answer: presence, the Bazaar,
-/// bounty claims, and sparring partners, which need to read another player's
-/// save that row-level security rightly will not hand over.
+/// chat, guilds, and presence — the Nearby snapshot each account publishes so
+/// other devices can list them without reading their save. What is left on the
+/// device is what only the device can answer: friends and ignores, the Bazaar,
+/// bounty claims, and sparring partners.
 class RemoteMultiplayerService implements MultiplayerService {
   RemoteMultiplayerService({
     required RemoteTransport transport,
@@ -54,6 +56,9 @@ class RemoteMultiplayerService implements MultiplayerService {
   /// The guild this account was last seen in, so a ranking update can refresh
   /// its own roster row without a read to find out where to write it.
   String? _guildIdSeen;
+
+  /// The name that guild last had, stamped onto this account's presence row.
+  String? _guildNameSeen;
 
   /// This player's roster facts, taken from the save the account already has.
   Future<GuildMemberFacts> _ownMemberFacts() async {
@@ -412,6 +417,7 @@ class RemoteMultiplayerService implements MultiplayerService {
   /// Keeps this device's note of which guild the player is in current.
   void _noteGuild(GuildRecord? guild) {
     _guildIdSeen = guild?.id;
+    _guildNameSeen = guild?.name;
     final current = session;
     if (current != null) _local.backend.noteGuild(current.userId, guild);
   }
@@ -504,27 +510,84 @@ class RemoteMultiplayerService implements MultiplayerService {
   }
 
   @override
-  Future<ActivityPresence?> publishPresence(PresenceInput input) => _local.publishPresence(input);
+  Future<ActivityPresence?> publishPresence(PresenceInput input) async {
+    final current = session;
+    if (current == null) return null;
+    final now = _nowMs();
+    final row = presenceRowFor(
+      session: current,
+      input: input,
+      guildName: _guildNameSeen,
+      updatedAt: isoFromMs(now),
+      expiresAt: isoFromMs(now + presenceTtlSeconds * 1000),
+    );
+    final refused = await transport.upsert(RemoteTables.activityPresence, <RemoteRow>[
+      row,
+    ], onConflict: remotePresenceConflict);
+    if (refused != null) return null;
+    return activityPresenceFrom(row);
+  }
 
   @override
-  Future<void> clearPresence() => _local.clearPresence();
+  Future<void> clearPresence() async {
+    final current = session;
+    if (current == null) return;
+    await transport.delete(
+      RemoteTables.activityPresence,
+      equals: <String, Object?>{'user_id': current.userId},
+    );
+  }
 
   @override
-  Future<List<ActivityPresence>> peersAtLocation(String locationId, {bool excludeSelf = true}) =>
-      _local.peersAtLocation(locationId, excludeSelf: excludeSelf);
+  Future<List<ActivityPresence>> peersAtLocation(
+    String locationId, {
+    bool excludeSelf = true,
+  }) async {
+    final result = await transport.select(
+      RemoteTables.activityPresence,
+      columns: remotePresenceColumns,
+      equals: <String, Object?>{'location_id': locationId},
+    );
+    if (!result.ok) return const <ActivityPresence>[];
+    return _visiblePeers(livePresenceFrom(result.rows!, _nowMs()), excludeSelf);
+  }
 
   @override
   Future<List<ActivityPresence>> peersAtActivity(
     String locationId,
     String? activityId, {
     bool excludeSelf = true,
-  }) => _local.peersAtActivity(locationId, activityId, excludeSelf: excludeSelf);
+  }) async {
+    final peers = await peersAtLocation(locationId, excludeSelf: excludeSelf);
+    return [
+      for (final row in peers)
+        if (activityId == null || row.currentActivityId == activityId) row,
+    ];
+  }
 
   @override
-  Future<List<ActivityPresence>> citadelVisitors() => _local.citadelVisitors();
+  Future<List<ActivityPresence>> citadelVisitors() =>
+      peersAtLocation(citadelLocationId(), excludeSelf: true);
 
   @override
-  Future<List<ActivityPresence>> presenceRecords() => _local.presenceRecords();
+  Future<List<ActivityPresence>> presenceRecords() async {
+    final result = await transport.select(
+      RemoteTables.activityPresence,
+      columns: remotePresenceColumns,
+    );
+    if (!result.ok) return const <ActivityPresence>[];
+    return result.rows!.map(activityPresenceFrom).toList();
+  }
+
+  List<ActivityPresence> _visiblePeers(List<ActivityPresence> peers, bool excludeSelf) {
+    final current = session;
+    if (current == null) return peers;
+    final hidden = _local.backend.blockedIds(current.userId);
+    return peers
+        .where((row) => !hidden.contains(row.userId))
+        .where((row) => !excludeSelf || row.userId != current.userId)
+        .toList();
+  }
 
   @override
   Future<PublicPlayerProfile?> publicProfile(String userId) => _local.publicProfile(userId);

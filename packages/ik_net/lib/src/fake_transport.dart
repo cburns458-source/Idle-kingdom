@@ -40,6 +40,7 @@ class FakeTransport implements RemoteTransport {
     RemoteTables.guildHalls: <RemoteRow>[],
     RemoteTables.guildProjects: <RemoteRow>[],
     RemoteTables.guildChallenges: <RemoteRow>[],
+    RemoteTables.activityPresence: <RemoteRow>[],
   };
 
   /// Accounts by email, as an auth provider would hold them.
@@ -109,6 +110,7 @@ class FakeTransport implements RemoteTransport {
     RemoteTables.guildHalls: <String>['guild_id'],
     RemoteTables.guildProjects: <String>['id'],
     RemoteTables.guildChallenges: <String>['id'],
+    RemoteTables.activityPresence: <String>['user_id'],
   };
 
   /// Columns a table holds unique beyond its key, so an insert can lose a race.

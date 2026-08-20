@@ -451,18 +451,18 @@ void main() {
     );
   });
 
-  test('answers the screens no server owns from this device', () async {
+  test('publishes presence so another account at the same place can see it', () async {
     final transport = FakeTransport();
-    final storage = MemorySaveStorage();
-    final service = await _signedIn(transport, storage);
-    final save = createNewSave(_database(), _nowMs).copyWith(currentLocationId: 'LOC-0028');
+    final hero = await _signedIn(transport, MemorySaveStorage());
+    final save = createNewSave(_database(), _nowMs).copyWith(currentLocationId: 'LOC-0005');
+    expect(await hero.publishPresence(presenceFromSave(save)), isNotNull);
+    expect(transport.tables[RemoteTables.activityPresence], hasLength(1));
 
-    expect(await service.publishPresence(presenceFromSave(save)), isNotNull);
-    expect(await service.peersAtLocation('LOC-0028', excludeSelf: false), hasLength(1));
-
-    // Presence never leaves the device: nothing was written to a table for it.
-    expect(transport.calls.where((call) => call.startsWith('insert')), isEmpty);
-    expect(transport.calls.where((call) => call.startsWith('upsert:activity')), isEmpty);
+    final rival = _service(transport, MemorySaveStorage());
+    await rival.signUp('rival@example.com', 'Rival', 'secret');
+    final peers = await rival.peersAtLocation('LOC-0005');
+    expect(peers.single.username, 'Hero');
+    expect(peers.single.locationId, 'LOC-0005');
   });
 
   test('records the first bounty turn-in of the hour and no other', () async {
