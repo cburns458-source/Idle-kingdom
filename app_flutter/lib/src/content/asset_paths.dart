@@ -6,8 +6,9 @@ import 'package:ik_rules/ik_rules.dart';
 /// The tables mirror `src/game/assets/`, and the paths only differ by the
 /// `content/` prefix Flutter needs. No cache-busting query: a Flutter bundle is
 /// versioned by the build itself. Art is WebP: lossless for sprites, lossy for
-/// the location and map backgrounds. The farm plate is 1080×1920 (9:16),
-/// matching the main maps; the rest of the location set is still 384px square.
+/// the location and map backgrounds. Most location plates are 1080×1920
+/// (9:16), matching the main maps. Town, the cave entrance, and the castle
+/// gateway are still the old 384px squares until those plates are redrawn.
 
 const String _assetRoot = 'content/assets';
 
@@ -52,10 +53,10 @@ const Map<String, String> _locationArt = <String, String>{
   'LOC-0030': 'locations/loc_citadel_processing.webp',
   'LOC-0031': 'locations/loc_citadel_gathering.webp',
   'LOC-0032': 'locations/loc_citadel_combat.webp',
-  'LOC-0033': 'locations/loc_citadel_plaza.webp',
-  'LOC-0034': 'locations/loc_town_general_store.webp',
-  'LOC-0035': 'locations/loc_citadel_plaza.webp',
-  'LOC-0036': 'locations/loc_castle_main_hall.webp',
+  'LOC-0033': 'locations/loc_guild_hall.webp',
+  'LOC-0034': 'locations/loc_town_bank.webp',
+  'LOC-0035': 'locations/loc_citadel_bank.webp',
+  'LOC-0036': 'locations/loc_temple.webp',
 };
 
 /// Item icons keyed by id, for the items whose art the heuristic cannot infer.
