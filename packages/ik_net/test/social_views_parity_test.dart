@@ -548,13 +548,22 @@ void main() {
         expect(
           checkParity(fixture, <String, Object?>{
             'peers': _rows(
-              peerRows(<ActivityPresence>[
-                _presence(),
-                _presence(userId: 'usr_3', guildName: 'Iron League'),
-                _presence(userId: 'usr_4', skillLevel: null),
-                _presence(userId: 'usr_5', skillId: null, skillLevel: null, guildName: 'Oak Guard'),
-                _presence(userId: 'usr_6', skillId: 'SKL-9999', skillLevel: 0),
-              ], _skillName, nowMs: _rosterNow),
+              peerRows(
+                <ActivityPresence>[
+                  _presence(),
+                  _presence(userId: 'usr_3', guildName: 'Iron League'),
+                  _presence(userId: 'usr_4', skillLevel: null),
+                  _presence(
+                    userId: 'usr_5',
+                    skillId: null,
+                    skillLevel: null,
+                    guildName: 'Oak Guard',
+                  ),
+                  _presence(userId: 'usr_6', skillId: 'SKL-9999', skillLevel: 0),
+                ],
+                _skillName,
+                nowMs: _rosterNow,
+              ),
             ),
             'citadelSubtitles': <String>[
               citadelVisitorSubtitle(_presence()),

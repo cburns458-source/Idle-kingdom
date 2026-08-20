@@ -117,11 +117,7 @@ class _NearbyPanelState extends State<NearbyPanel> {
                     ? null
                     : widget.controller.indexes.activitiesById[peer.currentActivityId!];
                 final activityName = activity?.contextualName ?? activity?.internalKey;
-                final subtitle = <String>[
-                  row.statusLabel,
-                  if (activityName != null) activityName,
-                  row.subtitle,
-                ].join(' · ');
+                final subtitle = <String>[row.statusLabel, ?activityName, row.subtitle].join(' · ');
                 return SocialRow(
                   title: row.username,
                   subtitle: subtitle,

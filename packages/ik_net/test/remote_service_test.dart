@@ -473,10 +473,7 @@ void main() {
     final hero = RemoteMultiplayerService(
       transport: transport,
       storage: MemorySaveStorage(),
-      ports: LocalBackendPorts(
-        nowMs: () => clock,
-        newId: (prefix) => '${prefix}_0001',
-      ),
+      ports: LocalBackendPorts(nowMs: () => clock, newId: (prefix) => '${prefix}_0001'),
     );
     await hero.signUp('hero@example.com', 'Hero', 'secret');
     final save = createNewSave(_database(), clock).copyWith(currentLocationId: 'LOC-0005');
