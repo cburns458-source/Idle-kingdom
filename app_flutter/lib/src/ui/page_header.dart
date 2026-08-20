@@ -15,7 +15,12 @@ class PageHeader extends StatelessWidget {
       child: Row(
         children: [
           Expanded(
-            child: Text(title, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
+            child: Text(
+              title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+            ),
           ),
           if (trailing != null) ...[trailing!, const SizedBox(width: 8)],
           Tooltip(

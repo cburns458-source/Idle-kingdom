@@ -518,7 +518,7 @@ void main() {
     await tester.tap(find.widgetWithText(OutlinedButton, 'Close'));
     await tester.pump();
     expect(find.textContaining('slots'), findsNothing);
-    expect(find.text('Meadow'), findsWidgets);
+    expect(find.byTooltip('Open world map'), findsOne);
 
     await openChinScreen(tester, 'Log');
     expect(find.text('Skill milestones unlocked on this save.'), findsOne);

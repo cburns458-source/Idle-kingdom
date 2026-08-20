@@ -231,23 +231,13 @@ class _InventoryViewState extends State<InventoryView> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           if (widget.onClose != null)
-            PageHeader(
-              title: 'Inventory',
-              onClose: widget.onClose!,
-              trailing: MutedText('${inventorySlotCount(save)} / $inventorySlotLimit slots'),
-            )
+            PageHeader(title: 'Inventory', onClose: widget.onClose!)
           else
-            Row(
-              children: [
-                const Expanded(
-                  child: Text(
-                    'Inventory',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
-                  ),
-                ),
-                MutedText('${inventorySlotCount(save)} / $inventorySlotLimit slots'),
-              ],
-            ),
+            const Text('Inventory', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
+          Align(
+            alignment: Alignment.centerRight,
+            child: MutedText('${inventorySlotCount(save)} / $inventorySlotLimit slots'),
+          ),
           const SizedBox(height: 8),
           SegmentedButton<_InventoryTab>(
             segments: const [

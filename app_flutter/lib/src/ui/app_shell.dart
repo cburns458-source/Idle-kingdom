@@ -612,21 +612,20 @@ class _PageLayer extends StatelessWidget {
       duration: const Duration(milliseconds: 280),
       curve: Curves.easeOutCubic,
       builder: (context, t, child) {
-        switch (motion) {
-          case _PageMotion.slideUp:
-            return FractionalTranslation(translation: Offset(0, 1 - t), child: child);
-          case _PageMotion.slideDown:
-            return FractionalTranslation(translation: Offset(0, t - 1), child: child);
-          case _PageMotion.expandFromChip:
-            return Opacity(
-              opacity: t,
-              child: Transform.scale(
-                alignment: Alignment.topRight,
-                scale: 0.55 + 0.45 * t,
-                child: child,
-              ),
-            );
-        }
+        final dy = switch (motion) {
+          _PageMotion.slideUp => 28 * (1 - t),
+          _PageMotion.slideDown => -28 * (1 - t),
+          _PageMotion.expandFromChip => 0.0,
+        };
+        final scale = motion == _PageMotion.expandFromChip ? 0.88 + 0.12 * t : 1.0;
+        return Transform.translate(
+          offset: Offset(0, dy),
+          child: Transform.scale(
+            alignment: motion == _PageMotion.expandFromChip ? Alignment.topRight : Alignment.center,
+            scale: scale,
+            child: child,
+          ),
+        );
       },
       child: child,
     );

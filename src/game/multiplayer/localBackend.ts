@@ -1279,7 +1279,11 @@ export class LocalMultiplayerBackend {
       guildName: profile.guildName,
       publicSkills: profile.privacyPublicSkills ? skills : [],
       achievementsUnlocked: save?.achievements.filter((row) => row.unlocked).length ?? 0,
-      totalLevel: skills.reduce((sum, skill) => sum + skill.level, 0),
+      totalLevel: (() => {
+        const total = skills.reduce((sum, skill) => sum + skill.level, 0)
+        return total < 1 ? 13 : total
+      })(),
+      logCompletionPercent: 0,
     }
   }
 

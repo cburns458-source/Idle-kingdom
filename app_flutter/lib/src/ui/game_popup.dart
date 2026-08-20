@@ -13,9 +13,9 @@ enum GamePopupPlacement {
 
 /// The box a control occupies, for popups that grow out of that control.
 Rect? popupOrigin(BuildContext context) {
-  final box = context.findRenderObject() as RenderBox?;
-  if (box == null || !box.hasSize) return null;
-  return box.localToGlobal(Offset.zero) & box.size;
+  final render = context.findRenderObject();
+  if (render is! RenderBox || !render.hasSize) return null;
+  return render.localToGlobal(Offset.zero) & render.size;
 }
 
 Alignment _alignmentFor(BuildContext context, Rect? origin, GamePopupPlacement placement) {
