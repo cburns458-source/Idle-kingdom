@@ -77,3 +77,12 @@ flutter:
     - content/assets/maps/
     - content/assets/player/
     - content/assets/workstations/
+
+  # Pixel UI face, OFL from https://github.com/eifetx/Pixelify-Sans.
+  # Readable at this phone-frame scale; closer to RuneScape chat than chunky 8-bit.
+  fonts:
+    - family: PixelifySans
+      fonts:
+        - asset: fonts/PixelifySans-Regular.ttf
+        - asset: fonts/PixelifySans-Bold.ttf
+          weight: 700

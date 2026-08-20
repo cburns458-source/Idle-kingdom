@@ -1,5 +1,5 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:idle_kingdoms/src/theme.dart';
 import 'package:idle_kingdoms/src/ui/shop_panel.dart';
 import 'package:ik_content/ik_content.dart';
 import 'package:ik_rules/ik_rules.dart';
@@ -34,7 +34,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // The keypad opens on 1; make it 2 and add it to the offer.
-    await tester.tap(find.widgetWithText(OutlinedButton, '2'));
+    await tester.tap(find.widgetWithText(GameButton, '2'));
     await tester.pump();
     await tester.tap(find.text('Add to offer'));
     await tester.pumpAndSettle();

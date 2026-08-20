@@ -186,7 +186,7 @@ class _NewCharacterSheetState extends State<NewCharacterSheet> {
                   padding: const EdgeInsets.only(bottom: 8),
                   child: Text(error, style: const TextStyle(color: Palette.danger)),
                 ),
-              FilledButton(onPressed: _submitting ? null : _submit, child: const Text('Begin')),
+              GameButton(label: 'Begin', onPressed: _submitting ? null : _submit),
             ],
           ),
         ),

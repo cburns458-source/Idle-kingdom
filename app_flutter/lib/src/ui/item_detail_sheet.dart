@@ -103,9 +103,10 @@ class ItemDetailSheet extends StatelessWidget {
             const SizedBox(height: 12),
             Align(
               alignment: Alignment.centerRight,
-              child: FilledButton(
+              child: GameButton(
+                label: 'Close',
+                tone: GameButtonTone.secondary,
                 onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Close'),
               ),
             ),
           ],

@@ -8,7 +8,6 @@ const List<(GameScreen, String)> _nestItems = [
   (GameScreen.log, 'Log'),
   (GameScreen.leaderboards, 'Leaderboards'),
   (GameScreen.guilds, 'Guilds'),
-  (GameScreen.account, 'Account'),
 ];
 
 final Set<GameScreen> _nestScreens = {for (final item in _nestItems) item.$1};

@@ -5,6 +5,7 @@ import '../session/game_controller.dart';
 import '../session/multiplayer_controller.dart';
 import '../theme.dart';
 import 'account_panel.dart';
+import 'catalog_popup.dart';
 import 'guild_panel.dart';
 import 'page_header.dart';
 import 'player_profile_sheet.dart';
@@ -136,19 +137,30 @@ class _LeaderboardTab extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(12),
       children: [
-        DropdownButtonFormField<MultiplayerBoardKey>(
-          initialValue: multiplayer.boardKey,
-          decoration: const InputDecoration(labelText: 'Board'),
-          items: boards
-              .map(
-                (board) => DropdownMenuItem<MultiplayerBoardKey>(
-                  value: board.key,
-                  child: Text(board.label),
-                ),
-              )
-              .toList(),
-          onChanged: (key) {
-            if (key != null) multiplayer.selectBoard(key, controller.save);
+        GameSelectField(
+          label: 'Board',
+          value:
+              boards
+                  .where((board) => board.key == multiplayer.boardKey)
+                  .map((board) => board.label)
+                  .firstOrNull ??
+              'Board',
+          onPressed: () async {
+            final chosen = await showGameCatalogPopup(
+              context: context,
+              eyebrow: 'Board',
+              title: 'Leaderboards',
+              selectable: true,
+              entries: [
+                for (final board in boards)
+                  CatalogPopupEntry(
+                    title: board.label,
+                    emphasized: board.key == multiplayer.boardKey,
+                  ),
+              ],
+            );
+            if (chosen == null) return;
+            await multiplayer.selectBoard(boards[chosen].key, controller.save);
           },
         ),
         const SizedBox(height: 10),

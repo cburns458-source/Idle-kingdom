@@ -62,7 +62,7 @@ class AwaySummarySheet extends StatelessWidget {
                 const SizedBox(height: 14),
                 Align(
                   alignment: Alignment.centerRight,
-                  child: FilledButton(onPressed: onDismiss, child: const Text('Continue')),
+                  child: GameButton(label: 'Continue', onPressed: onDismiss),
                 ),
               ],
             ),

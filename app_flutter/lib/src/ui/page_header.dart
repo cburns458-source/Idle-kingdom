@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../theme.dart';
+
 /// Title + Close for every pushable page. Close pops one page on the stack.
 class PageHeader extends StatelessWidget {
   const PageHeader({super.key, required this.title, required this.onClose, this.trailing});
@@ -23,9 +25,12 @@ class PageHeader extends StatelessWidget {
             ),
           ),
           if (trailing != null) ...[trailing!, const SizedBox(width: 8)],
-          Tooltip(
-            message: 'Close',
-            child: OutlinedButton(onPressed: onClose, child: const Text('Close')),
+          GameButton(
+            label: 'Close',
+            tone: GameButtonTone.secondary,
+            compact: true,
+            tooltip: 'Close',
+            onPressed: onClose,
           ),
         ],
       ),

@@ -88,28 +88,12 @@ class _LogViewState extends State<LogView> {
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 2),
-                    child: TextButton(
+                    child: GameButton(
+                      label: tab.label,
+                      compact: true,
+                      selected: _tab == tab,
+                      tone: _tab == tab ? GameButtonTone.primary : GameButtonTone.secondary,
                       onPressed: () => setState(() => _tab = tab),
-                      style: TextButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-                        backgroundColor: _tab == tab ? const Color(0xD9546E3E) : Colors.transparent,
-                        foregroundColor: _tab == tab
-                            ? const Color(0xFFF4FFE8)
-                            : Palette.parchmentText,
-                      ),
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Text(
-                          tab.label,
-                          maxLines: 2,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                            height: 1.15,
-                          ),
-                        ),
-                      ),
                     ),
                   ),
                 ),

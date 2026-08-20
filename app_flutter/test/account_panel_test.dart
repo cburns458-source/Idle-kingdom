@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:idle_kingdoms/src/session/multiplayer_controller.dart';
+import 'package:idle_kingdoms/src/theme.dart';
 import 'package:idle_kingdoms/src/ui/account_panel.dart';
 import 'package:ik_content/ik_content.dart';
 import 'package:ik_net/ik_net.dart';
@@ -63,8 +64,8 @@ void main() {
 
     expect(find.text(multiplayerModeLine(MultiplayerMode.supabase)), findsOne);
 
-    final link = find.widgetWithText(OutlinedButton, 'Email magic link');
-    expect(tester.widget<OutlinedButton>(link).onPressed, isNull);
+    final link = find.widgetWithText(GameButton, 'Email magic link');
+    expect(tester.widget<GameButton>(link).onPressed, isNull);
 
     await tester.enterText(find.widgetWithText(TextField, 'Email'), 'hero@example.com');
     await tester.pump();

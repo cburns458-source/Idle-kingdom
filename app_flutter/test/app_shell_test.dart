@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:idle_kingdoms/src/session/multiplayer_controller.dart';
 import 'package:idle_kingdoms/src/session/tester_access.dart';
 import 'package:idle_kingdoms/src/theme.dart';
+import 'package:idle_kingdoms/src/ui/app_shell.dart';
 import 'package:idle_kingdoms/src/ui/reward_strip.dart';
 import 'package:ik_content/ik_content.dart';
 import 'package:ik_net/ik_net.dart';
@@ -234,7 +235,8 @@ void main() {
     await pumpShell(tester, controller, multiplayer: net);
 
     expect(find.text('Sign in to play'), findsNothing);
-    await openChinScreen(tester, 'Account');
+    await openChinScreen(tester, 'Settings');
+    await tester.ensureVisible(find.text('Sign out'));
     await tester.tap(find.text('Sign out'));
     await tester.pump();
     await tester.pump();
@@ -445,9 +447,7 @@ void main() {
     expect(find.text('Combat'), findsWidgets);
   });
 
-  testWidgets('the chin nest opens Settings, Log, Leaderboards, Guilds, and Account', (
-    tester,
-  ) async {
+  testWidgets('the chin nest opens Settings, Log, Leaderboards, and Guilds', (tester) async {
     final controller = buildController(database, seed: startedCharacter(database));
     addTearDown(controller.dispose);
     await pumpShell(tester, controller);
@@ -465,7 +465,7 @@ void main() {
     expect(find.text('Log'), findsOne);
     expect(find.text('Leaderboards'), findsOne);
     expect(find.text('Guilds'), findsOne);
-    expect(find.text('Account'), findsOne);
+    expect(find.text('Account'), findsNothing);
 
     await tester.tap(find.text('Log'));
     await tester.pump();
@@ -480,12 +480,14 @@ void main() {
     expect(controller.mapTravelAnimation, isFalse);
     await openChinScreen(tester, 'Settings');
     expect(find.text('Map travel animation'), findsOne);
+    expect(find.text('Account'), findsOne);
+    expect(find.text('Character'), findsNothing);
     await tester.tap(find.byType(Switch).first);
     await tester.pump();
     expect(controller.mapTravelAnimation, isTrue);
   });
 
-  testWidgets('chat opens in the top half of the frame', (tester) async {
+  testWidgets('chat opens above the chin with a close control', (tester) async {
     final controller = buildController(database, seed: startedCharacter(database));
     addTearDown(controller.dispose);
     await pumpShell(tester, controller);
@@ -498,7 +500,15 @@ void main() {
     await tester.pump();
 
     expect(find.text('Global'), findsWidgets);
-    expect(find.byTooltip('Close chat'), findsOne);
+    expect(find.byTooltip('Close chat'), findsWidgets);
+    expect(find.byKey(const Key('chat-panel')), findsOne);
+    final chatBottom = tester.getBottomLeft(find.byKey(const Key('chat-panel'))).dy;
+    final frameHeight = tester.getSize(find.byType(AppShell)).height;
+    expect(chatBottom, greaterThan(frameHeight * 0.4));
+
+    await tester.tap(find.widgetWithText(GameButton, 'Close').last);
+    await tester.pump();
+    expect(find.byKey(const Key('chat-panel')), findsNothing);
   });
 
   testWidgets('Close pops one page, and a second chin tab replaces the first', (tester) async {
@@ -515,14 +525,14 @@ void main() {
     expect(find.textContaining('slots'), findsOne);
     expect(find.text('Total level'), findsNothing);
 
-    await tester.tap(find.widgetWithText(OutlinedButton, 'Close'));
+    await tester.tap(find.widgetWithText(GameButton, 'Close'));
     await tester.pump();
     expect(find.textContaining('slots'), findsNothing);
     expect(find.byTooltip('Open world map'), findsOne);
 
     await openChinScreen(tester, 'Log');
     expect(find.text('Skill milestones unlocked on this save.'), findsOne);
-    await tester.tap(find.widgetWithText(OutlinedButton, 'Close'));
+    await tester.tap(find.widgetWithText(GameButton, 'Close'));
     await tester.pump();
     expect(find.text('Skill milestones unlocked on this save.'), findsNothing);
   });

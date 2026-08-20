@@ -55,133 +55,136 @@ class _WardrobeSheetState extends State<WardrobeSheet> {
     final slot = wardrobeSlotView(controller.db, save, _slotId);
 
     return ColoredBox(
-      color: Palette.muted,
-      child: DefaultTextStyle.merge(
-        style: const TextStyle(color: Palette.ink),
-        child: IconTheme.merge(
-          data: const IconThemeData(color: Palette.ink),
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+      color: Palette.parchmentDeep,
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
               children: [
-                Row(
-                  children: [
-                    const Expanded(
-                      child: Text(
-                        'Wardrobe',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w700,
-                          color: Palette.ink,
-                        ),
-                      ),
-                    ),
-                    Tooltip(
-                      message: 'Close',
-                      child: OutlinedButton(onPressed: widget.onClose, child: const Text('Close')),
-                    ),
-                  ],
-                ),
-                Flexible(
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: LayoutBuilder(
-                          builder: (context, constraints) {
-                            final race = raceDisplayName(controller.db, save.raceId);
-                            final label = race == null ? 0.0 : 18.0;
-                            final side = constraints.maxWidth < constraints.maxHeight - label
-                                ? constraints.maxWidth
-                                : constraints.maxHeight - label;
-                            return Align(
-                              alignment: Alignment.topCenter,
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  SizedBox(
-                                    width: side,
-                                    height: side,
-                                    child: PlayerSprite(
-                                      appearance: save.appearance,
-                                      bytes: controller.localPlayerPng,
-                                      fit: BoxFit.contain,
-                                      alignment: Alignment.topCenter,
-                                    ),
-                                  ),
-                                  if (race != null) MutedText(race, color: Palette.parchment),
-                                ],
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: SingleChildScrollView(
-                          child: AppearancePicker(
-                            db: controller.db,
-                            appearance: save.appearance,
-                            onSelect: _setAppearance,
-                          ),
-                        ),
-                      ),
-                    ],
+                const Expanded(
+                  child: Text(
+                    'Wardrobe',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
                   ),
                 ),
-                const SizedBox(height: 12),
-                Expanded(
-                  child: ListView(
-                    children: [
-                      if (tabs.length > 1)
-                        SegmentedButton<String>(
-                          segments: [
-                            for (final tab in tabs)
-                              ButtonSegment(value: tab.slotId, label: Text(tab.label)),
-                          ],
-                          selected: {slot?.slotId ?? _slotId},
-                          showSelectedIcon: false,
-                          onSelectionChanged: (selection) => setState(() {
-                            _slotId = selection.first;
-                            _error = null;
-                          }),
-                        ),
-                      if (slot case final slot?) ...[
-                        const SizedBox(height: 12),
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: [
-                            _CosmeticTile(
-                              label: 'None',
-                              selected: slot.equippedCosmeticId == null,
-                              onTap: () => _equip(slot.slotId, null),
-                            ),
-                            for (final tile in slot.tiles)
-                              _CosmeticTile(
-                                label: tile.name,
-                                selected: tile.equipped,
-                                item: controller.indexes.itemsById[tile.itemId],
-                                onTap: () => _equip(slot.slotId, tile.cosmeticId),
-                              ),
-                          ],
-                        ),
-                        if (slot.tiles.isEmpty) ...[
-                          const SizedBox(height: 8),
-                          MutedText(slot.emptyNote, color: Palette.parchment),
-                        ],
-                      ],
-                      if (_error case final error?) ...[
-                        const SizedBox(height: 8),
-                        Text(error, style: const TextStyle(color: Palette.danger, fontSize: 12)),
-                      ],
-                    ],
-                  ),
+                GameButton(
+                  label: 'Close',
+                  tone: GameButtonTone.secondary,
+                  compact: true,
+                  tooltip: 'Close',
+                  onPressed: widget.onClose,
                 ),
               ],
             ),
-          ),
+            Flexible(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        final race = raceDisplayName(controller.db, save.raceId);
+                        final label = race == null ? 0.0 : 18.0;
+                        final side = constraints.maxWidth < constraints.maxHeight - label
+                            ? constraints.maxWidth
+                            : constraints.maxHeight - label;
+                        return Align(
+                          alignment: Alignment.topCenter,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              SizedBox(
+                                width: side,
+                                height: side,
+                                child: PlayerSprite(
+                                  appearance: save.appearance,
+                                  bytes: controller.localPlayerPng,
+                                  fit: BoxFit.contain,
+                                  alignment: Alignment.topCenter,
+                                ),
+                              ),
+                              if (race != null) MutedText(race),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      child: AppearancePicker(
+                        db: controller.db,
+                        appearance: save.appearance,
+                        onSelect: _setAppearance,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            Expanded(
+              child: ListView(
+                children: [
+                  if (tabs.length > 1)
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          for (final tab in tabs) ...[
+                            GameButton(
+                              label: tab.label,
+                              compact: true,
+                              selected: (slot?.slotId ?? _slotId) == tab.slotId,
+                              tone: (slot?.slotId ?? _slotId) == tab.slotId
+                                  ? GameButtonTone.primary
+                                  : GameButtonTone.secondary,
+                              onPressed: () => setState(() {
+                                _slotId = tab.slotId;
+                                _error = null;
+                              }),
+                            ),
+                            const SizedBox(width: 6),
+                          ],
+                        ],
+                      ),
+                    ),
+                  if (slot case final slot?) ...[
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        _CosmeticTile(
+                          label: 'None',
+                          selected: slot.equippedCosmeticId == null,
+                          onTap: () => _equip(slot.slotId, null),
+                        ),
+                        for (final tile in slot.tiles)
+                          _CosmeticTile(
+                            label: tile.name,
+                            selected: tile.equipped,
+                            item: controller.indexes.itemsById[tile.itemId],
+                            onTap: () => _equip(slot.slotId, tile.cosmeticId),
+                          ),
+                      ],
+                    ),
+                    if (slot.tiles.isEmpty) ...[
+                      const SizedBox(height: 8),
+                      MutedText(slot.emptyNote),
+                    ],
+                  ],
+                  if (_error case final error?) ...[
+                    const SizedBox(height: 8),
+                    Text(error, style: const TextStyle(color: Palette.danger, fontSize: 12)),
+                  ],
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -280,10 +283,7 @@ class WardrobeUnlockPopup extends StatelessWidget {
                 const Text('It has been added to your Wardrobe.'),
                 if (notice.hint case final hint?) ...[const SizedBox(height: 6), MutedText(hint)],
                 const SizedBox(height: 14),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: FilledButton(onPressed: onClose, child: const Text('Nice!')),
-                ),
+                GameButton(label: 'Nice!', onPressed: onClose),
               ],
             ),
           ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ik_net/ik_net.dart';
+import 'package:ik_rules/ik_rules.dart';
 
 import '../session/game_controller.dart';
 import '../session/multiplayer_controller.dart';
@@ -10,12 +11,21 @@ import 'social_bits.dart';
 /// Signing in and signing out.
 ///
 /// New players sign in on the entry gate before character creation; this panel
-/// is for returning players to sign out and manage friends.
+/// is for returning players to sign out and manage friends. On Settings it sits
+/// as a section under the toggles.
 class AccountPanel extends StatefulWidget {
-  const AccountPanel({super.key, required this.controller, required this.multiplayer});
+  const AccountPanel({
+    super.key,
+    required this.controller,
+    required this.multiplayer,
+    this.embedded = false,
+  });
 
   final GameController controller;
   final MultiplayerController multiplayer;
+
+  /// True when this lives inside Settings' scroll view.
+  final bool embedded;
 
   @override
   State<AccountPanel> createState() => _AccountPanelState();
@@ -26,19 +36,42 @@ class _AccountPanelState extends State<AccountPanel> {
 
   @override
   Widget build(BuildContext context) {
+    return ListenableBuilder(listenable: net, builder: (context, _) => _build());
+  }
+
+  Widget _build() {
     final session = net.session;
-    return ListView(
-      padding: const EdgeInsets.all(12),
-      children: [
-        const Text('Account', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
-        const SizedBox(height: 4),
-        MutedText(multiplayerModeLine(net.mode)),
-        const SizedBox(height: 12),
-        if (session == null)
-          AccountAuthForm(controller: widget.controller, multiplayer: net)
-        else
-          ..._signedIn(session),
-      ],
+    final children = <Widget>[
+      const Text('Account', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+      const SizedBox(height: 4),
+      MutedText(multiplayerModeLine(net.mode)),
+      const SizedBox(height: 12),
+      _character(),
+      const SizedBox(height: 12),
+      if (session == null)
+        AccountAuthForm(controller: widget.controller, multiplayer: net)
+      else
+        ..._signedIn(session),
+    ];
+    if (widget.embedded) {
+      return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: children);
+    }
+    return ListView(padding: const EdgeInsets.all(12), children: children);
+  }
+
+  Widget _character() {
+    final save = widget.controller.save;
+    return GamePanel(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            displayNameForSave(save, 'Unnamed'),
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+          ),
+          MutedText('Race: ${raceDisplayName(widget.controller.db, save.raceId) ?? 'Unchosen'}'),
+        ],
+      ),
     );
   }
 
@@ -50,9 +83,10 @@ class _AccountPanelState extends State<AccountPanel> {
       ),
       MutedText(session.email),
       const SizedBox(height: 12),
-      OutlinedButton(
+      GameButton(
+        label: 'Sign out',
+        tone: GameButtonTone.secondary,
         onPressed: net.busy ? null : () => net.signOut(widget.controller.save),
-        child: const Text('Sign out'),
       ),
       const SizedBox(height: 20),
       ..._peopleSection('Friends', net.friends, empty: 'No friends yet.'),
@@ -61,9 +95,10 @@ class _AccountPanelState extends State<AccountPanel> {
         ..._peopleSection(
           'Friend requests',
           net.incomingFriendRequests,
-          trailing: (contact) => OutlinedButton(
+          trailing: (contact) => GameButton(
+            label: 'Accept',
+            compact: true,
             onPressed: net.busy ? null : () => net.sendFriendRequest(contact.userId),
-            child: const Text('Accept'),
           ),
         ),
       ],
@@ -76,9 +111,11 @@ class _AccountPanelState extends State<AccountPanel> {
         'Ignored',
         net.ignoredPlayers,
         empty: 'Nobody ignored.',
-        trailing: (contact) => OutlinedButton(
+        trailing: (contact) => GameButton(
+          label: 'Unignore',
+          tone: GameButtonTone.secondary,
+          compact: true,
           onPressed: net.busy ? null : () => net.unignorePlayer(contact.userId),
-          child: const Text('Unignore'),
         ),
       ),
     ];

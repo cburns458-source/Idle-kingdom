@@ -246,7 +246,14 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
     });
   }
 
+  void _closeChat() {
+    FocusManager.instance.primaryFocus?.unfocus();
+    if (!_chatOpen) return;
+    setState(() => _chatOpen = false);
+  }
+
   void _selectScreen(GameScreen screen) {
+    if (screen == GameScreen.account) screen = GameScreen.menu;
     if (screen == GameScreen.location) {
       _popToLocation();
       return;
@@ -468,7 +475,7 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
               multiplayer: multiplayer,
               onToggle: () async {
                 if (_chatOpen) {
-                  setState(() => _chatOpen = false);
+                  _closeChat();
                   return;
                 }
                 if (multiplayer.canSeeSocialPages) {
@@ -488,33 +495,33 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
               children: [
                 GestureDetector(
                   behavior: HitTestBehavior.opaque,
-                  onTap: () => setState(() => _chatOpen = false),
+                  onTap: _closeChat,
                   child: const ColoredBox(color: Color(0x00000000)),
                 ),
-                Align(
-                  alignment: const Alignment(0, -0.65),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(
-                        maxWidth: 400,
-                        maxHeight: MediaQuery.sizeOf(context).height * 0.48,
+                Positioned(
+                  left: 12,
+                  right: 12,
+                  bottom: 50 + MediaQuery.viewInsetsOf(context).bottom,
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxHeight: MediaQuery.sizeOf(context).height * 0.48,
+                    ),
+                    child: Material(
+                      key: const Key('chat-panel'),
+                      color: Palette.parchmentDeep,
+                      elevation: 12,
+                      shadowColor: const Color(0x73000000),
+                      clipBehavior: Clip.antiAlias,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        side: const BorderSide(color: Palette.edge),
                       ),
-                      child: Material(
-                        color: Palette.parchmentDeep,
-                        elevation: 12,
-                        shadowColor: const Color(0x73000000),
-                        clipBehavior: Clip.antiAlias,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          side: const BorderSide(color: Palette.edge),
-                        ),
-                        child: ChatSheet(
-                          controller: controller,
-                          multiplayer: multiplayer,
-                          locationId: save.currentLocationId,
-                          citadelHub: _inCitadel,
-                        ),
+                      child: ChatSheet(
+                        controller: controller,
+                        multiplayer: multiplayer,
+                        locationId: save.currentLocationId,
+                        citadelHub: _inCitadel,
+                        onClose: _closeChat,
                       ),
                     ),
                   ),
@@ -587,12 +594,7 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
           },
         );
       case GameScreen.account:
-        return SocialView(
-          controller: controller,
-          multiplayer: multiplayer,
-          section: SocialTab.account,
-          onClose: _popPage,
-        );
+        return MenuView(controller: controller, multiplayer: multiplayer, onClose: _popPage);
       case GameScreen.menu:
         return MenuView(controller: controller, multiplayer: multiplayer, onClose: _popPage);
     }

@@ -201,11 +201,13 @@ class _NpcPanelState extends State<NpcPanel> {
           detail: detail,
           actions: [
             if (conversation.shopId case final shopId?)
-              OutlinedButton(
+              GameButton(
+                label: 'Browse the shop',
+                tone: GameButtonTone.secondary,
+                compact: true,
                 onPressed: () => _dismissMerchant(thenOpenShop: shopId),
-                child: const Text('Browse the shop'),
               ),
-            FilledButton(onPressed: _dismissMerchant, child: const Text('Continue')),
+            GameButton(label: 'Continue', onPressed: _dismissMerchant),
           ],
         );
       case QuestPitchGreeting(questId: final questId, line: final line, acceptLabel: final label):
@@ -215,13 +217,15 @@ class _NpcPanelState extends State<NpcPanel> {
           line: line,
           error: _error,
           actions: [
-            OutlinedButton(
+            GameButton(
+              label: 'Not now',
+              tone: GameButtonTone.secondary,
+              compact: true,
               onPressed: () => setState(() => _dialogue = null),
-              child: const Text('Not now'),
             ),
-            FilledButton(
+            GameButton(
+              label: label,
               onPressed: () => (quest?.canDonate ?? false) ? _donate(questId) : _accept(questId),
-              child: Text(label),
             ),
           ],
         );
@@ -233,7 +237,7 @@ class _NpcPanelState extends State<NpcPanel> {
       return _DialogueCard(
         name: conversation.name,
         line: talkLine,
-        actions: [FilledButton(onPressed: _commitTalk, child: const Text('Continue'))],
+        actions: [GameButton(label: 'Continue', onPressed: _commitTalk)],
       );
     }
 
@@ -256,11 +260,7 @@ class _NpcPanelState extends State<NpcPanel> {
                   ],
                 ),
               ),
-              IconButton(
-                onPressed: widget.onClose,
-                tooltip: 'Close',
-                icon: const Icon(Icons.close, size: 18),
-              ),
+              GameIconButton(icon: Icons.close, tooltip: 'Close', onPressed: widget.onClose),
             ],
           ),
           Text(conversation.description),
@@ -273,9 +273,11 @@ class _NpcPanelState extends State<NpcPanel> {
             if (greeting case MerchantGreeting(:final detail) when detail != null)
               MutedText(detail),
             const SizedBox(height: 8),
-            OutlinedButton(
+            GameButton(
+              label: 'Talk',
+              tone: GameButtonTone.secondary,
+              compact: true,
               onPressed: () => setState(() => _dialogue = greeting),
-              child: const Text('Talk'),
             ),
           ],
           if (conversation.mentor case final mentor?) ...[
@@ -283,13 +285,15 @@ class _NpcPanelState extends State<NpcPanel> {
             if (mentor.known)
               MutedText(mentor.knownNote)
             else
-              FilledButton(onPressed: _learn, child: Text(mentor.learnLabel)),
+              GameButton(label: mentor.learnLabel, onPressed: _learn),
           ],
           if (conversation.isMerchant && conversation.shopId != null) ...[
             const SizedBox(height: 10),
-            OutlinedButton(
+            GameButton(
+              label: 'Browse the shop',
+              tone: GameButtonTone.secondary,
+              compact: true,
               onPressed: () => _dismissMerchant(thenOpenShop: conversation.shopId),
-              child: const Text('Browse the shop'),
             ),
           ],
           for (final quest in conversation.quests) ...[
@@ -354,11 +358,14 @@ class _QuestBlock extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 if (quest.canDonate) ...[
-                  OutlinedButton(onPressed: onDonate, child: Text(quest.donateLabel)),
+                  GameButton(
+                    label: quest.donateLabel,
+                    tone: GameButtonTone.secondary,
+                    onPressed: onDonate,
+                  ),
                   const SizedBox(height: 6),
                 ],
-                if (quest.canAccept)
-                  FilledButton(onPressed: onAccept, child: Text(quest.acceptLabel)),
+                if (quest.canAccept) GameButton(label: quest.acceptLabel, onPressed: onAccept),
               ],
             ),
             _ => Column(
@@ -370,22 +377,27 @@ class _QuestBlock extends StatelessWidget {
                   MutedText(quest.idlePrompt),
                 if (quest.canTalk) ...[
                   const SizedBox(height: 6),
-                  FilledButton(onPressed: onTalk, child: Text(quest.talkLabel)),
+                  GameButton(label: quest.talkLabel, onPressed: onTalk),
                 ],
                 if (quest.canBribe) ...[
                   const SizedBox(height: 6),
-                  OutlinedButton(onPressed: onBribe, child: Text(quest.bribeLabel)),
+                  GameButton(
+                    label: quest.bribeLabel,
+                    tone: GameButtonTone.secondary,
+                    onPressed: onBribe,
+                  ),
                 ],
                 if (quest.canChooseCombat) ...[
                   const SizedBox(height: 6),
-                  OutlinedButton(onPressed: onChooseCombat, child: Text(quest.combatLabel)),
+                  GameButton(
+                    label: quest.combatLabel,
+                    tone: GameButtonTone.secondary,
+                    onPressed: onChooseCombat,
+                  ),
                 ],
                 if (quest.canTurnIn) ...[
                   const SizedBox(height: 6),
-                  FilledButton(
-                    onPressed: quest.ready ? onTurnIn : null,
-                    child: const Text('Turn in'),
-                  ),
+                  GameButton(label: 'Turn in', onPressed: quest.ready ? onTurnIn : null),
                 ],
               ],
             ),
@@ -461,7 +473,7 @@ Future<void> showQuestRewards(
                 child: Text('· $reward', style: const TextStyle(color: Palette.gold)),
               ),
           const SizedBox(height: 10),
-          FilledButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Collect')),
+          GameButton(label: 'Collect', onPressed: () => Navigator.of(context).pop()),
         ],
       ),
     ),
@@ -497,7 +509,9 @@ Future<void> showSkillXpPicker(
                 for (final skill in skills)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 6),
-                    child: OutlinedButton(
+                    child: GameButton(
+                      label: skill.displayName,
+                      tone: GameButtonTone.secondary,
                       onPressed: () {
                         final result = assignQuestSkillXp(
                           controller.db,
@@ -513,7 +527,6 @@ Future<void> showSkillXpPicker(
                         }
                         Navigator.of(context).pop();
                       },
-                      child: Text(skill.displayName),
                     ),
                   ),
               ],

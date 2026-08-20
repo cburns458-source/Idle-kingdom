@@ -90,13 +90,16 @@ class AutoEquipPrompt extends StatelessWidget {
                     spacing: 8,
                     runSpacing: 8,
                     children: [
-                      OutlinedButton(
+                      GameButton(
+                        label: prompt.cancelLabel,
+                        tone: GameButtonTone.secondary,
+                        compact: true,
                         onPressed: controller.declineAutoEquip,
-                        child: Text(prompt.cancelLabel),
                       ),
-                      FilledButton(
+                      GameButton(
+                        label: prompt.confirmLabel,
+                        compact: true,
                         onPressed: controller.confirmAutoEquip,
-                        child: Text(prompt.confirmLabel),
                       ),
                     ],
                   ),

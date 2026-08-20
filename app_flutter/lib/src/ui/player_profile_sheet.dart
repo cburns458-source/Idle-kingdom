@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:ik_net/ik_net.dart';
 import 'package:ik_rules/ik_rules.dart';
 
+import '../content/asset_paths.dart';
 import '../session/game_controller.dart';
 import '../session/multiplayer_controller.dart';
 import '../theme.dart';
+import 'game_image.dart';
 import 'game_popup.dart';
 import 'social_bits.dart';
 
@@ -99,9 +101,10 @@ class _PlayerProfileSheetState extends State<PlayerProfileSheet> {
                   children: [
                     MutedText(_loadError ?? 'That player could not be found.'),
                     const SizedBox(height: 10),
-                    OutlinedButton(
+                    GameButton(
+                      label: 'Close',
+                      tone: GameButtonTone.secondary,
                       onPressed: () => Navigator.of(context).pop(),
-                      child: const Text('Close'),
                     ),
                   ],
                 )
@@ -151,9 +154,11 @@ class _PlayerProfileSheetState extends State<PlayerProfileSheet> {
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
                 ),
               ),
-              OutlinedButton(
+              GameButton(
+                label: 'Close',
+                tone: GameButtonTone.secondary,
+                compact: true,
                 onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Close'),
               ),
             ],
           ),
@@ -177,14 +182,8 @@ class _PlayerProfileSheetState extends State<PlayerProfileSheet> {
               ),
             ],
           ),
-          if (!view.skillsHidden) ...[
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 4,
-              children: view.skillLines.map((line) => MutedText(line)).toList(),
-            ),
-          ],
+          const SizedBox(height: 8),
+          _skillIconGrid(_profile!),
           if (!_isSelf && net.isSignedIn) ...[
             const SizedBox(height: 10),
             ..._profileActions(view.userId),
@@ -202,14 +201,19 @@ class _PlayerProfileSheetState extends State<PlayerProfileSheet> {
                   ),
                 ),
                 const SizedBox(width: 8),
-                FilledButton(
+                GameButton(
+                  label: 'Private',
+                  compact: true,
                   onPressed: net.busy
                       ? null
                       : () async {
-                          await net.sendDirectMessage(view.userId, _dm.text);
+                          await net.sendDirectMessage(
+                            view.userId,
+                            _dm.text,
+                            username: view.username,
+                          );
                           if (mounted) _dm.clear();
                         },
-                  child: const Text('Private'),
                 ),
               ],
             ),
@@ -219,32 +223,75 @@ class _PlayerProfileSheetState extends State<PlayerProfileSheet> {
     );
   }
 
+  Widget _skillIconGrid(PublicPlayerProfile profile) {
+    final levels = <String, num>{for (final line in profile.publicSkills) line.skillId: line.level};
+    if (_isSelf) {
+      for (final skill in widget.controller.save.skills) {
+        levels[skill.skillId] = getSkillProgress(widget.controller.save, skill.skillId).level;
+      }
+    }
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        for (final skill in widget.controller.db.skills)
+          Tooltip(
+            message: skill.displayName,
+            child: SizedBox(
+              width: 36,
+              child: Column(
+                children: [
+                  GameImage(skillIconPath(skill), width: 28, height: 28),
+                  Text(
+                    '${levels[skill.skillId] ?? 1}',
+                    style: const TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: Palette.gold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
   List<Widget> _profileActions(String userId) {
     if (net.isIgnored(userId)) {
       return <Widget>[
-        OutlinedButton(
+        GameButton(
+          label: 'Unignore',
+          tone: GameButtonTone.secondary,
+          compact: true,
           onPressed: net.busy ? null : () => net.unignorePlayer(userId),
-          child: const Text('Unignore'),
         ),
       ];
     }
     return <Widget>[
       if (net.isFriend(userId))
-        OutlinedButton(
+        GameButton(
+          label: 'Remove friend',
+          tone: GameButtonTone.secondary,
+          compact: true,
           onPressed: net.busy ? null : () => net.removeFriend(userId),
-          child: const Text('Remove friend'),
         )
       else if (net.hasOutgoingRequestTo(userId))
         const MutedText('Friend request sent.')
       else
-        OutlinedButton(
+        GameButton(
+          label: net.hasIncomingRequestFrom(userId) ? 'Accept friend' : 'Friend request',
+          tone: GameButtonTone.secondary,
+          compact: true,
           onPressed: net.busy ? null : () => net.sendFriendRequest(userId),
-          child: Text(net.hasIncomingRequestFrom(userId) ? 'Accept friend' : 'Friend request'),
         ),
       const SizedBox(height: 8),
-      OutlinedButton(
+      GameButton(
+        label: 'Ignore',
+        tone: GameButtonTone.secondary,
+        compact: true,
         onPressed: net.busy ? null : () => net.ignorePlayer(userId),
-        child: const Text('Ignore'),
       ),
     ];
   }

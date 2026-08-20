@@ -1,5 +1,5 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:idle_kingdoms/src/theme.dart';
 import 'package:idle_kingdoms/src/ui/production_panel.dart';
 import 'package:ik_content/ik_content.dart';
 import 'package:ik_rules/ik_rules.dart';
@@ -40,7 +40,7 @@ void main() {
     // Ten potatoes in the bag, so ten crafts of one potato each.
     expect(find.textContaining('materials 10'), findsOne);
 
-    await tester.tap(find.widgetWithText(OutlinedButton, 'Max'));
+    await tester.tap(find.widgetWithText(GameButton, 'Max'));
     await tester.pump();
     await tester.tap(find.text('Start queue'));
     await tester.pump();
@@ -78,16 +78,16 @@ void main() {
     addTearDown(controller.dispose);
 
     await pumpPanel(tester, ProductionPicker(controller: controller, activity: kitchen()));
-    await tester.tap(find.widgetWithText(OutlinedButton, 'Max'));
+    await tester.tap(find.widgetWithText(GameButton, 'Max'));
     await tester.pump();
-    expect(find.widgetWithText(OutlinedButton, '10'), findsOne);
+    expect(find.widgetWithText(GameButton, '10'), findsOne);
 
     // Picking another recipe starts over at one, since its materials differ.
-    await tester.tap(find.byType(DropdownButtonFormField<String>));
+    await tester.tap(find.byType(GameSelectField));
     await tester.pumpAndSettle();
     await tester.tap(find.textContaining('Cooked Crawfish').last);
     await tester.pumpAndSettle();
 
-    expect(find.widgetWithText(OutlinedButton, '1'), findsOne);
+    expect(find.widgetWithText(GameButton, '1'), findsOne);
   });
 }
