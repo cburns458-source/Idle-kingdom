@@ -8,6 +8,7 @@ import '../session/game_controller.dart';
 import '../session/multiplayer_controller.dart';
 import '../theme.dart';
 import 'format.dart';
+import 'game_popup.dart';
 import 'item_icon.dart';
 import 'quantity_sheet.dart';
 
@@ -98,25 +99,23 @@ class _GuildHallPanelState extends State<GuildHallPanel> {
       _error = null;
     });
     if (result.paidOffJustNow && mounted) {
-      await showDialog<void>(
+      await showGameAlert(
         context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Good job!'),
-          content: const Text('The hall debt is paid.'),
-          actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('OK'))],
-        ),
+        title: 'Good job!',
+        message: 'The hall debt is paid.',
+        confirmLabel: 'OK',
+        placement: GamePopupPlacement.center,
       );
     }
     for (final tierId in result.tiersFinishedNow) {
       if (!mounted) return;
       final tier = guildHallTiers.firstWhere((row) => row.id == tierId);
-      await showDialog<void>(
+      await showGameAlert(
         context: context,
-        builder: (context) => AlertDialog(
-          title: Text('${tier.name} finished'),
-          content: Text('The guild spent the materials. ${tier.blurb}'),
-          actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('OK'))],
-        ),
+        title: '${tier.name} finished',
+        message: 'The guild spent the materials. ${tier.blurb}',
+        confirmLabel: 'OK',
+        placement: GamePopupPlacement.center,
       );
     }
   }
@@ -372,17 +371,14 @@ class _GuildHallPanelState extends State<GuildHallPanel> {
     }
     final fight = simulatePvpFight(controller.db, save, them, controller.session.random);
     if (!mounted) return;
-    await showDialog<void>(
+    await showGameAlert(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(fight.outcome == 'win' ? 'Victory' : 'Defeat'),
-        content: Text(
-          fight.outcome == 'win'
-              ? 'You beat ${opponent.username} in the ring.'
-              : '${opponent.username} won the bout. No gold changes hands.',
-        ),
-        actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('OK'))],
-      ),
+      title: fight.outcome == 'win' ? 'Victory' : 'Defeat',
+      message: fight.outcome == 'win'
+          ? 'You beat ${opponent.username} in the ring.'
+          : '${opponent.username} won the bout. No gold changes hands.',
+      confirmLabel: 'OK',
+      placement: GamePopupPlacement.center,
     );
   }
 }

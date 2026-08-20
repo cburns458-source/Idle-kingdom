@@ -553,7 +553,7 @@ class PeerRowView {
   /// `Online` while the heartbeat is fresh; otherwise `Away`.
   final String statusLabel;
 
-  /// `Combat 7 · Iron League`, with an em dash for an unknown level.
+  /// `Combat 7 · Iron League`. A missing skill level reads as 1.
   final String subtitle;
   final PlayerAppearance appearance;
 
@@ -578,7 +578,7 @@ List<PeerRowView> peerRows(
 }) {
   final clock = nowMs ?? 0;
   return peers.map((peer) {
-    final level = peer.skillLevel == null ? '—' : jsNumberToString(peer.skillLevel!);
+    final level = jsNumberToString(peer.skillLevel ?? 1);
     return PeerRowView(
       userId: peer.userId,
       username: peer.username,
@@ -595,8 +595,8 @@ List<PeerRowView> peerRows(
 /// What the Citadel visitor list says about one visitor.
 String citadelVisitorSubtitle(ActivityPresence visitor) {
   final guild = visitor.guildName ?? 'No guild';
-  final level = visitor.skillLevel;
-  return level == null ? guild : '$guild · Lv ${jsNumberToString(level)}';
+  final level = visitor.skillLevel ?? 1;
+  return '$guild · Lv ${jsNumberToString(level)}';
 }
 
 /// The public profile sheet, with nothing left to derive.
@@ -614,7 +614,7 @@ class PublicProfileView {
   final String username;
   final PlayerAppearance appearance;
 
-  /// `Total level 214 · Iron League · 12 achievements`.
+  /// `Total level 214 · Iron League · 12% log`.
   final String summaryLine;
 
   /// At most [publicProfileSkillLimit] lines like `Combat 12`.
@@ -645,9 +645,9 @@ PublicProfileView publicProfileView(
     username: profile.username,
     appearance: profile.appearance,
     summaryLine: <String>[
-      'Total level ${jsNumberToString(profile.totalLevel)}',
+      'Total level ${jsNumberToString(profile.totalLevel > 0 ? profile.totalLevel : 13)}',
       if (profile.guildName != null) profile.guildName!,
-      '${jsNumberToString(profile.achievementsUnlocked)} achievements',
+      '${jsNumberToString(profile.logCompletionPercent)}% log',
     ].join(' · '),
     skillLines: skills
         .map((skill) => '${skillName(skill.skillId)} ${jsNumberToString(skill.level)}')

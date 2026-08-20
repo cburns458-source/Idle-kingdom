@@ -134,10 +134,16 @@ class SocialRow extends StatelessWidget {
 
 /// The line a signed-out panel shows in place of everything else.
 class SignedOutNotice extends StatelessWidget {
-  const SignedOutNotice({super.key, required this.title, required this.prompt});
+  const SignedOutNotice({
+    super.key,
+    required this.title,
+    required this.prompt,
+    this.showTitle = true,
+  });
 
   final String title;
   final String prompt;
+  final bool showTitle;
 
   @override
   Widget build(BuildContext context) {
@@ -146,8 +152,10 @@ class SignedOutNotice extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
-          const SizedBox(height: 8),
+          if (showTitle) ...[
+            Text(title, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
+            const SizedBox(height: 8),
+          ],
           Text(prompt),
         ],
       ),

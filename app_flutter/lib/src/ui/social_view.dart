@@ -6,6 +6,7 @@ import '../session/multiplayer_controller.dart';
 import '../theme.dart';
 import 'account_panel.dart';
 import 'guild_panel.dart';
+import 'page_header.dart';
 import 'player_profile_sheet.dart';
 import 'social_bits.dart';
 
@@ -23,12 +24,14 @@ class SocialView extends StatefulWidget {
     required this.multiplayer,
     required this.section,
     this.onTravelToHall,
+    this.onClose,
   });
 
   final GameController controller;
   final MultiplayerController multiplayer;
   final SocialTab section;
   final VoidCallback? onTravelToHall;
+  final VoidCallback? onClose;
 
   @override
   State<SocialView> createState() => _SocialViewState();
@@ -69,27 +72,54 @@ class _SocialViewState extends State<SocialView> {
   Widget _buildSection() {
     switch (widget.section) {
       case SocialTab.account:
-        return AccountPanel(controller: widget.controller, multiplayer: net);
+        return _withHeader(
+          'Account',
+          AccountPanel(controller: widget.controller, multiplayer: net),
+        );
       case SocialTab.guilds:
         if (!net.canSeeSocialPages) {
-          return const SignedOutNotice(title: 'Guilds', prompt: guildSignInPrompt);
+          return _withHeader(
+            'Guilds',
+            const SignedOutNotice(title: 'Guilds', prompt: guildSignInPrompt, showTitle: false),
+          );
         }
         return GuildPanel(
           controller: widget.controller,
           multiplayer: net,
           onTravelToHall: widget.onTravelToHall,
+          onClose: widget.onClose,
         );
       case SocialTab.citadel:
         if (!net.canSeeSocialPages) {
-          return const SignedOutNotice(title: 'Citadel', prompt: signInPrompt);
+          return _withHeader(
+            'Citadel',
+            const SignedOutNotice(title: 'Citadel', prompt: signInPrompt, showTitle: false),
+          );
         }
-        return _CitadelTab(multiplayer: net);
+        return _withHeader('Citadel', _CitadelTab(multiplayer: net));
       case SocialTab.leaderboards:
         if (!net.canSeeSocialPages) {
-          return const SignedOutNotice(title: 'Leaderboards', prompt: signInPrompt);
+          return _withHeader(
+            'Leaderboards',
+            const SignedOutNotice(title: 'Leaderboards', prompt: signInPrompt, showTitle: false),
+          );
         }
-        return _LeaderboardTab(controller: widget.controller, multiplayer: net);
+        return _withHeader(
+          'Leaderboards',
+          _LeaderboardTab(controller: widget.controller, multiplayer: net),
+        );
     }
+  }
+
+  Widget _withHeader(String title, Widget body) {
+    if (widget.onClose == null) return body;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        PageHeader(title: title, onClose: widget.onClose!),
+        Expanded(child: body),
+      ],
+    );
   }
 }
 

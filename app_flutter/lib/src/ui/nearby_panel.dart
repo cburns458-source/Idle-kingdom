@@ -6,13 +6,32 @@ import 'package:ik_net/ik_net.dart';
 import '../session/game_controller.dart';
 import '../session/multiplayer_controller.dart';
 import '../theme.dart';
+import 'game_popup.dart';
 import 'player_profile_sheet.dart';
 import 'social_bits.dart';
 
+/// Who else is at this location, as a card grown from the nearby chip.
+Future<void> showNearbyPopup(
+  BuildContext context, {
+  required GameController controller,
+  required MultiplayerController multiplayer,
+  Rect? origin,
+}) {
+  return showGamePopup<void>(
+    context: context,
+    origin: origin,
+    builder: (context) => NearbyPanel(
+      controller: controller,
+      multiplayer: multiplayer,
+      onClose: () => Navigator.of(context).pop(),
+    ),
+  );
+}
+
 /// Who else is at this location.
 ///
-/// A sheet rather than a screen, because looking at the neighbours must not
-/// interrupt the primary activity.
+/// A floating card rather than a screen, because looking at the neighbours must
+/// not interrupt the primary activity.
 class NearbyPanel extends StatefulWidget {
   const NearbyPanel({
     super.key,
@@ -56,27 +75,10 @@ class _NearbyPanelState extends State<NearbyPanel> {
       listenable: net,
       builder: (context, _) {
         final rows = peerRows(net.peers, _skillName, nowMs: widget.controller.session.clock());
-        return Positioned.fill(
-          child: ColoredBox(
-            color: const Color(0xAA0C0805),
-            child: GestureDetector(
-              onTap: widget.onClose,
-              child: Align(
-                alignment: Alignment.bottomCenter,
-                child: GestureDetector(
-                  onTap: () {},
-                  child: Container(
-                    constraints: const BoxConstraints(maxHeight: 460),
-                    decoration: const BoxDecoration(
-                      gradient: Palette.frameGradient,
-                      border: Border(top: BorderSide(color: Palette.edge)),
-                    ),
-                    padding: const EdgeInsets.all(12),
-                    child: _buildPeerList(rows),
-                  ),
-                ),
-              ),
-            ),
+        return GamePopupCard(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minWidth: 280, minHeight: 160),
+            child: _buildPeerList(rows),
           ),
         );
       },
@@ -105,7 +107,8 @@ class _NearbyPanelState extends State<NearbyPanel> {
         else if (rows.isEmpty)
           const MutedText('No other players here right now.')
         else
-          Flexible(
+          ConstrainedBox(
+            constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.38),
             child: ListView.separated(
               shrinkWrap: true,
               itemCount: rows.length,

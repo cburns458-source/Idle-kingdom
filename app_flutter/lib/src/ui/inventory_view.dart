@@ -5,9 +5,11 @@ import 'package:ik_rules/ik_rules.dart';
 import '../session/game_controller.dart';
 import '../theme.dart';
 import 'format.dart';
+import 'game_popup.dart';
 import 'item_detail_sheet.dart';
 import 'item_icon.dart';
 import 'overlay_notice.dart';
+import 'page_header.dart';
 import 'quantity_sheet.dart';
 
 /// Paper-doll order: 4 columns × 4 rows, spells down the right-hand column.
@@ -34,9 +36,10 @@ enum _InventoryTab { items, equipment }
 
 /// The bag and the worn gear, with the combat numbers they add up to.
 class InventoryView extends StatefulWidget {
-  const InventoryView({super.key, required this.controller});
+  const InventoryView({super.key, required this.controller, this.onClose});
 
   final GameController controller;
+  final VoidCallback? onClose;
 
   @override
   State<InventoryView> createState() => _InventoryViewState();
@@ -153,27 +156,15 @@ class _InventoryViewState extends State<InventoryView> {
     final selected = _selling;
     if (selected == null || selected.isEmpty) return;
     final gold = _selectedGold;
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showGameAlert(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Palette.parchmentDeep,
-        title: const Text('Sell items?'),
-        content: Text(
-          'Sell ${pluralize(selected.length, 'stack')} for ${formatThousands(gold)} gold.',
-        ),
-        actions: [
-          OutlinedButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Keep items'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Confirm sell'),
-          ),
-        ],
-      ),
+      title: 'Sell items?',
+      message: 'Sell ${pluralize(selected.length, 'stack')} for ${formatThousands(gold)} gold.',
+      confirmLabel: 'Confirm sell',
+      cancelLabel: 'Keep items',
+      placement: GamePopupPlacement.center,
     );
-    if (confirmed != true || !mounted) return;
+    if (!confirmed || !mounted) return;
 
     final result = sellInventoryQuantities(db, save, selected);
     if (!result.ok) {
@@ -191,9 +182,9 @@ class _InventoryViewState extends State<InventoryView> {
   }
 
   void _showDetail({InventoryStack? stack, EquippedStack? equipped, String? slotId}) {
-    showModalBottomSheet<void>(
+    showGamePopup<void>(
       context: context,
-      backgroundColor: Colors.transparent,
+      origin: popupOrigin(context),
       builder: (context) => ItemDetailSheet(
         controller: controller,
         itemId: stack?.itemId ?? equipped?.itemId,
@@ -239,16 +230,13 @@ class _InventoryViewState extends State<InventoryView> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            children: [
-              const Expanded(
-                child: Text(
-                  'Inventory',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
-                ),
-              ),
-              MutedText('${inventorySlotCount(save)} / $inventorySlotLimit slots'),
-            ],
+          if (widget.onClose != null)
+            PageHeader(title: 'Inventory', onClose: widget.onClose!)
+          else
+            const Text('Inventory', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
+          Align(
+            alignment: Alignment.centerRight,
+            child: MutedText('${inventorySlotCount(save)} / $inventorySlotLimit slots'),
           ),
           const SizedBox(height: 8),
           SegmentedButton<_InventoryTab>(

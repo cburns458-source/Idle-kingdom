@@ -71,7 +71,7 @@ void main() {
     await tester.pump();
 
     // Leave the roster detail; the guild home now owns the panel.
-    await tester.tap(find.byType(BackButton));
+    await tester.tap(find.widgetWithText(OutlinedButton, 'Close'));
     await tester.pump();
     await tester.pump();
 
@@ -121,7 +121,7 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    await tester.tap(find.byType(BackButton));
+    await tester.tap(find.widgetWithText(OutlinedButton, 'Close'));
     await tester.pump();
     await tester.pump();
 

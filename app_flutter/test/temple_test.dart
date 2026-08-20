@@ -41,10 +41,10 @@ void main() {
     expect(slotItemId(controller.save, weaponToolSlotId), 'ITEM-0100');
     expect(slotItemId(controller.save, offhandSlotId), 'ITEM-0145');
     expect(controller.save.currentActivityId, isNull);
-    expect(find.byType(AlertDialog), findsOne);
+    expect(find.byKey(const Key('game-popup')), findsOne);
     expect(
       find.descendant(
-        of: find.byType(AlertDialog),
+        of: find.byKey(const Key('game-popup')),
         matching: find.text('The monks restore you to full health.'),
       ),
       findsOne,
@@ -52,7 +52,7 @@ void main() {
 
     await tester.tap(find.text('OK'));
     await tester.pump();
-    expect(find.byType(AlertDialog), findsNothing);
+    expect(find.byKey(const Key('game-popup')), findsNothing);
   });
 
   testWidgets('Train with the monks starts an unarmed Monk fight', (tester) async {

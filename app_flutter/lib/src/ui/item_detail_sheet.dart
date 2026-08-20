@@ -4,6 +4,7 @@ import 'package:ik_rules/ik_rules.dart';
 import '../session/game_controller.dart';
 import '../theme.dart';
 import 'format.dart';
+import 'game_popup.dart';
 import 'item_icon.dart';
 
 /// Everything known about one item: stats, enchantment, spell effect, sell value.
@@ -49,68 +50,65 @@ class ItemDetailSheet extends StatelessWidget {
     final description = item?.description;
     final priced = id == null ? null : sellPriceAtLocation(db, controller.save, id);
 
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: GamePanel(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
+    return GamePopupCard(
+      child: GamePanel(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              children: [
+                if (id == null && slotId != null)
+                  SlotGlyph(slotId: slotId!, size: 38)
+                else
+                  ItemIcon(item: item, size: 38),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        item?.displayName ?? slot?.displayName ?? id ?? 'Empty slot',
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                      ),
+                      if (quantity > 1) MutedText('×${formatThousands(quantity)}'),
+                      if (id != null && slot != null) MutedText('Worn: ${slot.displayName}'),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            if (description is String && description.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              MutedText(description),
+            ],
+            if (lines.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              for (final line in lines)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 2),
+                  child: Text(line, style: const TextStyle(fontSize: 13)),
+                ),
+            ],
+            if (priced != null) ...[
+              const SizedBox(height: 8),
               Row(
                 children: [
-                  if (id == null && slotId != null)
-                    SlotGlyph(slotId: slotId!, size: 38)
-                  else
-                    ItemIcon(item: item, size: 38),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          item?.displayName ?? slot?.displayName ?? id ?? 'Empty slot',
-                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-                        ),
-                        if (quantity > 1) MutedText('×${formatThousands(quantity)}'),
-                        if (id != null && slot != null) MutedText('Worn: ${slot.displayName}'),
-                      ],
-                    ),
-                  ),
+                  MutedText(priced.shopId == null ? 'Field value each' : 'Shop pays each'),
+                  const SizedBox(width: 6),
+                  GoldAmount(amount: priced.unitPrice, style: const TextStyle(fontSize: 13)),
                 ],
               ),
-              if (description is String && description.isNotEmpty) ...[
-                const SizedBox(height: 8),
-                MutedText(description),
-              ],
-              if (lines.isNotEmpty) ...[
-                const SizedBox(height: 8),
-                for (final line in lines)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 2),
-                    child: Text(line, style: const TextStyle(fontSize: 13)),
-                  ),
-              ],
-              if (priced != null) ...[
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    MutedText(priced.shopId == null ? 'Field value each' : 'Shop pays each'),
-                    const SizedBox(width: 6),
-                    GoldAmount(amount: priced.unitPrice, style: const TextStyle(fontSize: 13)),
-                  ],
-                ),
-              ],
-              const SizedBox(height: 12),
-              Align(
-                alignment: Alignment.centerRight,
-                child: FilledButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Close'),
-                ),
-              ),
             ],
-          ),
+            const SizedBox(height: 12),
+            Align(
+              alignment: Alignment.centerRight,
+              child: FilledButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Close'),
+              ),
+            ),
+          ],
         ),
       ),
     );

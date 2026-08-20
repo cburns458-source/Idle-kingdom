@@ -397,14 +397,14 @@ describe('presence views', () => {
     expect(rows[0].statusLabel).toBe('Online')
     expect(rows[0].subtitle).toBe('Combat 7')
     expect(rows[1].subtitle).toBe('Combat 7 · Iron League')
-    expect(rows[2].subtitle).toBe('Combat —')
+    expect(rows[2].subtitle).toBe('Combat 1')
     expect(rows[3].statusLabel).toBe('Away')
   })
 
   it('says whether a Citadel visitor has a guild', () => {
     expect(citadelVisitorSubtitle(presence())).toBe('No guild · Lv 7')
     expect(citadelVisitorSubtitle(presence({ guildName: 'Iron League', skillLevel: null }))).toBe(
-      'Iron League',
+      'Iron League · Lv 1',
     )
   })
 
@@ -416,6 +416,7 @@ describe('presence views', () => {
       totalLevel: 214,
       guildName: 'Iron League',
       achievementsUnlocked: 12,
+      logCompletionPercent: 12,
       publicSkills: Array.from({ length: 10 }, (_, index) => ({
         skillId: 'SKL-0001',
         level: index + 1,
@@ -423,13 +424,13 @@ describe('presence views', () => {
       })),
     }
     const view = publicProfileView(profile, skillName)
-    expect(view.summaryLine).toBe('Total level 214 · Iron League · 12 achievements')
+    expect(view.summaryLine).toBe('Total level 214 · Iron League · 12% log')
     expect(view.skillLines).toHaveLength(8)
     expect(view.skillLines[0]).toBe('Combat 1')
     expect(view.skillsHidden).toBe(false)
 
     const hidden = publicProfileView({ ...profile, guildName: null, publicSkills: [] }, skillName)
-    expect(hidden.summaryLine).toBe('Total level 214 · 12 achievements')
+    expect(hidden.summaryLine).toBe('Total level 214 · 12% log')
     expect(hidden.skillsHidden).toBe(true)
   })
 })

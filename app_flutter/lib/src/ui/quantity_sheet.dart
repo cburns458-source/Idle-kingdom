@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../theme.dart';
 import 'format.dart';
+import 'game_popup.dart';
 
 /// Asks for a whole number, with a keypad so a thumb can answer.
 ///
@@ -20,20 +21,16 @@ Future<int?> askQuantity(
   int min = 1,
   int? max,
 }) {
-  return showDialog<int>(
+  return showGamePopup<int>(
     context: context,
-    builder: (context) => Dialog(
-      backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-      child: _QuantitySheet(
-        title: title,
-        subtitle: subtitle,
-        details: details,
-        confirmLabel: confirmLabel,
-        initialValue: initialValue,
-        min: min,
-        max: max,
-      ),
+    builder: (context) => _QuantitySheet(
+      title: title,
+      subtitle: subtitle,
+      details: details,
+      confirmLabel: confirmLabel,
+      initialValue: initialValue,
+      min: min,
+      max: max,
     ),
   );
 }
@@ -103,93 +100,90 @@ class _QuantitySheetState extends State<_QuantitySheet> {
   @override
   Widget build(BuildContext context) {
     final ceiling = widget.max;
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: GamePanel(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (widget.subtitle case final subtitle?) MutedText(subtitle),
-              Text(widget.title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
-              for (final line in widget.details)
-                Padding(padding: const EdgeInsets.only(top: 2), child: MutedText(line)),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  Expanded(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                      decoration: BoxDecoration(
-                        color: Palette.panel,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: Palette.edge),
-                      ),
-                      child: Text(
-                        _text,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
-                      ),
+    return GamePopupCard(
+      child: GamePanel(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (widget.subtitle case final subtitle?) MutedText(subtitle),
+            Text(widget.title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+            for (final line in widget.details)
+              Padding(padding: const EdgeInsets.only(top: 2), child: MutedText(line)),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: Palette.panel,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: Palette.edge),
+                    ),
+                    child: Text(
+                      _text,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  OutlinedButton(
-                    onPressed: ceiling == null || ceiling < widget.min
-                        ? null
-                        : () => setState(() {
-                            _error = null;
-                            _edited = true;
-                            _text = '$ceiling';
-                          }),
-                    child: const Text('Max'),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              GridView.count(
-                crossAxisCount: 3,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                mainAxisSpacing: 6,
-                crossAxisSpacing: 6,
-                childAspectRatio: 2,
-                children: [
-                  for (final key in const ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'C', '0'])
-                    OutlinedButton(
-                      onPressed: () => key == 'C'
-                          ? setState(() {
-                              _edited = true;
-                              _text = '0';
-                            })
-                          : _append(key),
-                      child: Text(key),
-                    ),
-                  OutlinedButton(
-                    onPressed: _backspace,
-                    child: const Icon(Icons.backspace_outlined, size: 16),
-                  ),
-                ],
-              ),
-              if (_error case final error?) ...[
-                const SizedBox(height: 6),
-                Text(error, style: const TextStyle(color: Palette.danger, fontSize: 12)),
+                ),
+                const SizedBox(width: 8),
+                OutlinedButton(
+                  onPressed: ceiling == null || ceiling < widget.min
+                      ? null
+                      : () => setState(() {
+                          _error = null;
+                          _edited = true;
+                          _text = '$ceiling';
+                        }),
+                  child: const Text('Max'),
+                ),
               ],
-              const SizedBox(height: 10),
-              Row(
-                children: [
+            ),
+            const SizedBox(height: 8),
+            GridView.count(
+              crossAxisCount: 3,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              mainAxisSpacing: 6,
+              crossAxisSpacing: 6,
+              childAspectRatio: 2,
+              children: [
+                for (final key in const ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'C', '0'])
                   OutlinedButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('Cancel'),
+                    onPressed: () => key == 'C'
+                        ? setState(() {
+                            _edited = true;
+                            _text = '0';
+                          })
+                        : _append(key),
+                    child: Text(key),
                   ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: FilledButton(onPressed: _confirm, child: Text(widget.confirmLabel)),
-                  ),
-                ],
-              ),
+                OutlinedButton(
+                  onPressed: _backspace,
+                  child: const Icon(Icons.backspace_outlined, size: 16),
+                ),
+              ],
+            ),
+            if (_error case final error?) ...[
+              const SizedBox(height: 6),
+              Text(error, style: const TextStyle(color: Palette.danger, fontSize: 12)),
             ],
-          ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                OutlinedButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Cancel'),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: FilledButton(onPressed: _confirm, child: Text(widget.confirmLabel)),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );

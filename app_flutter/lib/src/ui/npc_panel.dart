@@ -5,6 +5,7 @@ import 'package:ik_rules/ik_rules.dart';
 import '../session/game_controller.dart';
 import '../theme.dart';
 import 'format.dart';
+import 'game_popup.dart';
 
 /// Talking to somebody: their greeting, what they can teach, and their quests.
 ///
@@ -441,36 +442,27 @@ Future<void> showQuestRewards(
   required String questName,
   required List<String> rewards,
 }) {
-  return showModalBottomSheet<void>(
+  return showGamePopup<void>(
     context: context,
-    backgroundColor: Colors.transparent,
-    builder: (context) => SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: GamePanel(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const MutedText('Quest complete'),
-              Text(questName, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
-              const SizedBox(height: 8),
-              if (rewards.isEmpty)
-                const MutedText('No rewards.')
-              else
-                for (final reward in rewards)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 2),
-                    child: Text('· $reward', style: const TextStyle(color: Palette.gold)),
-                  ),
-              const SizedBox(height: 10),
-              FilledButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Collect'),
+    builder: (context) => GamePopupCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const MutedText('Quest complete'),
+          Text(questName, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+          const SizedBox(height: 8),
+          if (rewards.isEmpty)
+            const MutedText('No rewards.')
+          else
+            for (final reward in rewards)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 2),
+                child: Text('· $reward', style: const TextStyle(color: Palette.gold)),
               ),
-            ],
-          ),
-        ),
+          const SizedBox(height: 10),
+          FilledButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Collect')),
+        ],
       ),
     ),
   );
@@ -483,58 +475,51 @@ Future<void> showSkillXpPicker(
   required num amount,
 }) {
   final skills = selectableNonCombatSkills(controller.db);
-  return showModalBottomSheet<void>(
+  return showGamePopup<void>(
     context: context,
-    backgroundColor: Colors.transparent,
-    isDismissible: false,
-    enableDrag: false,
-    builder: (context) => SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: GamePanel(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const MutedText('Choose a skill'),
-              Text(
-                '${formatThousands(amount)} XP',
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-              ),
-              const SizedBox(height: 8),
-              ConstrainedBox(
-                constraints: const BoxConstraints(maxHeight: 320),
-                child: ListView(
-                  shrinkWrap: true,
-                  children: [
-                    for (final skill in skills)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 6),
-                        child: OutlinedButton(
-                          onPressed: () {
-                            final result = assignQuestSkillXp(
-                              controller.db,
-                              controller.save,
-                              skill.skillId,
-                              amount,
-                            );
-                            if (result.ok) {
-                              controller.commit(result.save!);
-                              controller.announce(result.message!);
-                            } else {
-                              controller.report(result.reason);
-                            }
-                            Navigator.of(context).pop();
-                          },
-                          child: Text(skill.displayName),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            ],
+    barrierDismissible: false,
+    builder: (context) => GamePopupCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const MutedText('Choose a skill'),
+          Text(
+            '${formatThousands(amount)} XP',
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
           ),
-        ),
+          const SizedBox(height: 8),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxHeight: 320),
+            child: ListView(
+              shrinkWrap: true,
+              children: [
+                for (final skill in skills)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 6),
+                    child: OutlinedButton(
+                      onPressed: () {
+                        final result = assignQuestSkillXp(
+                          controller.db,
+                          controller.save,
+                          skill.skillId,
+                          amount,
+                        );
+                        if (result.ok) {
+                          controller.commit(result.save!);
+                          controller.announce(result.message!);
+                        } else {
+                          controller.report(result.reason);
+                        }
+                        Navigator.of(context).pop();
+                      },
+                      child: Text(skill.displayName),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
       ),
     ),
   );

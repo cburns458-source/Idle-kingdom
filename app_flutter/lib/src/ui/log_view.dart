@@ -6,6 +6,7 @@ import '../session/game_controller.dart';
 import '../theme.dart';
 import 'format.dart';
 import 'game_image.dart';
+import 'page_header.dart';
 
 enum _LogTab {
   achievements('Achievements', 'Skill milestones unlocked on this save.', 'achievements'),
@@ -23,9 +24,10 @@ enum _LogTab {
 
 /// What this save has done: milestones, quests, and critters met.
 class LogView extends StatefulWidget {
-  const LogView({super.key, required this.controller});
+  const LogView({super.key, required this.controller, this.onClose});
 
   final GameController controller;
+  final VoidCallback? onClose;
 
   @override
   State<LogView> createState() => _LogViewState();
@@ -45,25 +47,39 @@ class _LogViewState extends State<LogView> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
-            children: [
-              const Text('Log', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
-              Text(
-                '${jsNumberToString(completion.overall.percent)}% complete',
-                style: const TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w700,
-                  color: Palette.gold,
-                ),
+        if (widget.onClose != null)
+          PageHeader(
+            title: 'Log',
+            onClose: widget.onClose!,
+            trailing: Text(
+              '${jsNumberToString(completion.overall.percent)}% complete',
+              style: const TextStyle(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w700,
+                color: Palette.gold,
               ),
-            ],
+            ),
+          )
+        else
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
+              children: [
+                const Text('Log', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
+                Text(
+                  '${jsNumberToString(completion.overall.percent)}% complete',
+                  style: const TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w700,
+                    color: Palette.gold,
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
         Padding(
           padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
           child: Row(

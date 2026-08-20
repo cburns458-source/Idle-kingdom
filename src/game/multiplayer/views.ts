@@ -404,7 +404,7 @@ export interface PeerRowView {
   username: string
   /** `Online` while the heartbeat is fresh; otherwise `Away`. */
   statusLabel: string
-  /** `Combat 7 · Iron League`, with an em dash for an unknown level. */
+  /** `Combat 7 · Iron League`. A missing skill level reads as 1. */
   subtitle: string
   appearance: PlayerAppearance
 }
@@ -424,7 +424,7 @@ export function peerRows(
     username: peer.username,
     statusLabel: peerPresenceStatus(peer.updatedAt, nowMs),
     subtitle: [
-      `${skillName(peer.skillId)} ${peer.skillLevel ?? '—'}`,
+      `${skillName(peer.skillId)} ${peer.skillLevel ?? 1}`,
       peer.guildName ?? null,
     ]
       .filter((part): part is string => part !== null)
@@ -436,7 +436,7 @@ export function peerRows(
 /** What the Citadel visitor list says about one visitor. */
 export function citadelVisitorSubtitle(visitor: ActivityPresence): string {
   const guild = visitor.guildName ?? 'No guild'
-  return visitor.skillLevel != null ? `${guild} · Lv ${visitor.skillLevel}` : guild
+  return `${guild} · Lv ${visitor.skillLevel ?? 1}`
 }
 
 /** The public profile sheet, with nothing left to derive. */
@@ -444,7 +444,7 @@ export interface PublicProfileView {
   userId: string
   username: string
   appearance: PlayerAppearance
-  /** `Total level 214 · Iron League · 12 achievements`. */
+  /** `Total level 214 · Iron League · 12% log`. */
   summaryLine: string
   /** At most [PUBLIC_PROFILE_SKILL_LIMIT] lines like `Combat 12`. */
   skillLines: string[]
@@ -461,9 +461,9 @@ export function publicProfileView(
     username: profile.username,
     appearance: profile.appearance,
     summaryLine: [
-      `Total level ${profile.totalLevel}`,
+      `Total level ${profile.totalLevel > 0 ? profile.totalLevel : 13}`,
       profile.guildName ?? null,
-      `${profile.achievementsUnlocked} achievements`,
+      `${profile.logCompletionPercent ?? 0}% log`,
     ]
       .filter((part): part is string => part !== null)
       .join(' · '),
