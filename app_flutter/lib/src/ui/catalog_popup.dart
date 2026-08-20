@@ -64,10 +64,7 @@ Future<int?> showGameCatalogPopup({
                   ),
                 ),
                 const SizedBox(height: 8),
-                GameButton(
-                  label: closeLabel,
-                  onPressed: () => Navigator.of(context).pop(),
-                ),
+                GameButton(label: closeLabel, onPressed: () => Navigator.of(context).pop()),
               ],
             ),
           ),

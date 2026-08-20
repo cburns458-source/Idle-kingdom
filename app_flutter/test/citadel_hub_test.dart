@@ -107,7 +107,7 @@ void main() {
     expect(find.text(bazaarEmptyHeading), findsOne);
 
     await tester.enterText(find.byType(TextField), 'Selling copper ore');
-    await tester.tap(find.widgetWithText(GameButton, 'Post'));
+    await tester.tap(find.byKey(const Key('bazaar-post')));
     await tester.pump();
     await tester.pump();
 

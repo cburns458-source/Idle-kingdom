@@ -262,7 +262,10 @@ class _ProjectPickerState extends State<ProjectPicker> {
         GameSelectField(
           label: 'Item to enchant',
           value: detail.enchantTargets
-              .firstWhere((target) => target.id == selected, orElse: () => detail.enchantTargets.first)
+              .firstWhere(
+                (target) => target.id == selected,
+                orElse: () => detail.enchantTargets.first,
+              )
               .label,
           onPressed: () async {
             final chosen = await showGameCatalogPopup(

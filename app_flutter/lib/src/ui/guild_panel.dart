@@ -772,10 +772,11 @@ class _RankPicker extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GameButton(
-      label: options
-          .where((option) => option.role == role)
-          .map((option) => option.label)
-          .firstOrNull ??
+      label:
+          options
+              .where((option) => option.role == role)
+              .map((option) => option.label)
+              .firstOrNull ??
           role,
       tone: GameButtonTone.secondary,
       compact: true,

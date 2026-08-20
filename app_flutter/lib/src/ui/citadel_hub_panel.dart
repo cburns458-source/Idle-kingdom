@@ -274,7 +274,11 @@ class _Compose extends StatelessWidget {
         Row(
           children: [
             Expanded(
-              child: GameButton(label: 'Post', onPressed: busy ? null : onPost),
+              child: GameButton(
+                key: const Key('bazaar-post'),
+                label: 'Post',
+                onPressed: busy ? null : onPost,
+              ),
             ),
             if (onOpenGuilds case final openGuilds?) ...[
               const SizedBox(width: 8),

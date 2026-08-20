@@ -135,7 +135,9 @@ class _ChatSheetState extends State<ChatSheet> {
           return Column(
             children: [
               _header(const []),
-              const Expanded(child: SignedOutNotice(title: 'Chat', prompt: signInPrompt)),
+              const Expanded(
+                child: SignedOutNotice(title: 'Chat', prompt: signInPrompt),
+              ),
             ],
           );
         }
@@ -241,10 +243,7 @@ class _ChatSheetState extends State<ChatSheet> {
                                   ),
                                 ),
                               ),
-                              if (stamp.isNotEmpty) ...[
-                                const SizedBox(width: 8),
-                                MutedText(stamp),
-                              ],
+                              if (stamp.isNotEmpty) ...[const SizedBox(width: 8), MutedText(stamp)],
                             ],
                           ),
                         );

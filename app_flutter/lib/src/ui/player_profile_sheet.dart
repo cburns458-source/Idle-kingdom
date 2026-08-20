@@ -224,9 +224,7 @@ class _PlayerProfileSheetState extends State<PlayerProfileSheet> {
   }
 
   Widget _skillIconGrid(PublicPlayerProfile profile) {
-    final levels = <String, num>{
-      for (final line in profile.publicSkills) line.skillId: line.level,
-    };
+    final levels = <String, num>{for (final line in profile.publicSkills) line.skillId: line.level};
     if (_isSelf) {
       for (final skill in widget.controller.save.skills) {
         levels[skill.skillId] = getSkillProgress(widget.controller.save, skill.skillId).level;

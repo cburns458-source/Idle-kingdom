@@ -365,8 +365,7 @@ class _QuestBlock extends StatelessWidget {
                   ),
                   const SizedBox(height: 6),
                 ],
-                if (quest.canAccept)
-                  GameButton(label: quest.acceptLabel, onPressed: onAccept),
+                if (quest.canAccept) GameButton(label: quest.acceptLabel, onPressed: onAccept),
               ],
             ),
             _ => Column(
@@ -398,10 +397,7 @@ class _QuestBlock extends StatelessWidget {
                 ],
                 if (quest.canTurnIn) ...[
                   const SizedBox(height: 6),
-                  GameButton(
-                    label: 'Turn in',
-                    onPressed: quest.ready ? onTurnIn : null,
-                  ),
+                  GameButton(label: 'Turn in', onPressed: quest.ready ? onTurnIn : null),
                 ],
               ],
             ),

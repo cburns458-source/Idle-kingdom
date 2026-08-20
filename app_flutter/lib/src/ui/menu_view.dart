@@ -92,138 +92,147 @@ class _MenuViewState extends State<MenuView> {
   Widget build(BuildContext context) {
     final save = controller.save;
     final hasOverride = controller.localArt.hasOverride;
-    return ListView(
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(12),
-      children: [
-        if (widget.onClose != null)
-          PageHeader(title: 'Settings', onClose: widget.onClose!)
-        else
-          const Text('Settings', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
-        if (widget.onClose == null) const SizedBox(height: 4),
-        const MutedText('Settings and save tools.'),
-        const SizedBox(height: 16),
-        GamePanel(
-          child: Row(
-            children: [
-              const Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Map travel animation', style: TextStyle(fontWeight: FontWeight.w700)),
-                    MutedText('Walk a small sprite to the destination before arriving.'),
-                  ],
-                ),
-              ),
-              GameSwitch(
-                value: controller.mapTravelAnimation,
-                onChanged: controller.setMapTravelAnimation,
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 16),
-        ListenableBuilder(
-          listenable: widget.multiplayer,
-          builder: (context, _) {
-            return Column(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (widget.onClose != null)
+            PageHeader(title: 'Settings', onClose: widget.onClose!)
+          else
+            const Text('Settings', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
+          if (widget.onClose == null) const SizedBox(height: 4),
+          const MutedText('Settings and save tools.'),
+          const SizedBox(height: 16),
+          GamePanel(
+            child: Row(
               children: [
-                GamePanel(
-                  child: Row(
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('Filter chat', style: TextStyle(fontWeight: FontWeight.w700)),
-                            MutedText(
-                              'Hide profanity in chat. Messages are still stored as typed.',
-                            ),
-                          ],
-                        ),
-                      ),
-                      GameSwitch(
-                        value: widget.multiplayer.filterChatProfanity,
-                        onChanged: widget.multiplayer.setFilterChatProfanity,
-                      ),
+                      Text('Map travel animation', style: TextStyle(fontWeight: FontWeight.w700)),
+                      MutedText('Walk a small sprite to the destination before arriving.'),
                     ],
                   ),
                 ),
-                const SizedBox(height: 16),
-                GamePanel(
-                  child: Row(
-                    children: [
-                      const Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('Guild tag on HUD', style: TextStyle(fontWeight: FontWeight.w700)),
-                            MutedText('Show your guild tag, like [DEV], before your name.'),
-                          ],
-                        ),
-                      ),
-                      GameSwitch(
-                        value: widget.multiplayer.showHudGuildTag,
-                        onChanged: widget.multiplayer.setShowHudGuildTag,
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-                GamePanel(
-                  child: Row(
-                    children: [
-                      const Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Show title on HUD',
-                              style: TextStyle(fontWeight: FontWeight.w700),
-                            ),
-                            MutedText(
-                              'Show your equipped title, like The Undying, after your name.',
-                            ),
-                          ],
-                        ),
-                      ),
-                      GameSwitch(
-                        value: controller.showTitleOnHud,
-                        onChanged: controller.setShowTitleOnHud,
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-                GamePanel(
-                  child: Row(
-                    children: [
-                      const Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('Hide chat bubble', style: TextStyle(fontWeight: FontWeight.w700)),
-                            MutedText('Hide the chat button in the corner of the game.'),
-                          ],
-                        ),
-                      ),
-                      GameSwitch(
-                        value: widget.multiplayer.hideChatBubble,
-                        onChanged: widget.multiplayer.setHideChatBubble,
-                      ),
-                    ],
-                  ),
+                GameSwitch(
+                  value: controller.mapTravelAnimation,
+                  onChanged: controller.setMapTravelAnimation,
                 ),
               ],
-            );
-          },
-        ),
-        const SizedBox(height: 16),
-        _buildTestingTools(),
-        const SizedBox(height: 16),
-        _buildPlayerSprite(save, hasOverride),
-        const SizedBox(height: 16),
-        AccountPanel(controller: controller, multiplayer: widget.multiplayer, embedded: true),
-      ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          ListenableBuilder(
+            listenable: widget.multiplayer,
+            builder: (context, _) {
+              return Column(
+                children: [
+                  GamePanel(
+                    child: Row(
+                      children: [
+                        const Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Filter chat', style: TextStyle(fontWeight: FontWeight.w700)),
+                              MutedText(
+                                'Hide profanity in chat. Messages are still stored as typed.',
+                              ),
+                            ],
+                          ),
+                        ),
+                        GameSwitch(
+                          value: widget.multiplayer.filterChatProfanity,
+                          onChanged: widget.multiplayer.setFilterChatProfanity,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  GamePanel(
+                    child: Row(
+                      children: [
+                        const Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Guild tag on HUD',
+                                style: TextStyle(fontWeight: FontWeight.w700),
+                              ),
+                              MutedText('Show your guild tag, like [DEV], before your name.'),
+                            ],
+                          ),
+                        ),
+                        GameSwitch(
+                          value: widget.multiplayer.showHudGuildTag,
+                          onChanged: widget.multiplayer.setShowHudGuildTag,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  GamePanel(
+                    child: Row(
+                      children: [
+                        const Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Show title on HUD',
+                                style: TextStyle(fontWeight: FontWeight.w700),
+                              ),
+                              MutedText(
+                                'Show your equipped title, like The Undying, after your name.',
+                              ),
+                            ],
+                          ),
+                        ),
+                        GameSwitch(
+                          value: controller.showTitleOnHud,
+                          onChanged: controller.setShowTitleOnHud,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  GamePanel(
+                    child: Row(
+                      children: [
+                        const Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Hide chat bubble',
+                                style: TextStyle(fontWeight: FontWeight.w700),
+                              ),
+                              MutedText('Hide the chat button in the corner of the game.'),
+                            ],
+                          ),
+                        ),
+                        GameSwitch(
+                          value: widget.multiplayer.hideChatBubble,
+                          onChanged: widget.multiplayer.setHideChatBubble,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+          const SizedBox(height: 16),
+          AccountPanel(controller: controller, multiplayer: widget.multiplayer, embedded: true),
+          const SizedBox(height: 16),
+          _buildTestingTools(),
+          const SizedBox(height: 16),
+          _buildPlayerSprite(save, hasOverride),
+        ],
+      ),
     );
   }
 
@@ -290,10 +299,11 @@ class _MenuViewState extends State<MenuView> {
           const SizedBox(height: 12),
           GameSelectField(
             label: 'Race',
-            value: raceRows
-                .where((row) => row.raceId == _raceId)
-                .map((row) => row.displayName)
-                .firstOrNull ??
+            value:
+                raceRows
+                    .where((row) => row.raceId == _raceId)
+                    .map((row) => row.displayName)
+                    .firstOrNull ??
                 'Choose',
             onPressed: () async {
               final chosen = await showGameCatalogPopup(
@@ -348,10 +358,11 @@ class _MenuViewState extends State<MenuView> {
           const SizedBox(height: 12),
           GameSelectField(
             label: 'Skill · Lv ${selectedSkill.level}',
-            value: skillRows
-                .where((row) => row.skillId == _skillId)
-                .map((row) => row.displayName)
-                .firstOrNull ??
+            value:
+                skillRows
+                    .where((row) => row.skillId == _skillId)
+                    .map((row) => row.displayName)
+                    .firstOrNull ??
                 'Choose',
             onPressed: () async {
               final chosen = await showGameCatalogPopup(

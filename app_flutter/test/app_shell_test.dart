@@ -447,9 +447,7 @@ void main() {
     expect(find.text('Combat'), findsWidgets);
   });
 
-  testWidgets('the chin nest opens Settings, Log, Leaderboards, and Guilds', (
-    tester,
-  ) async {
+  testWidgets('the chin nest opens Settings, Log, Leaderboards, and Guilds', (tester) async {
     final controller = buildController(database, seed: startedCharacter(database));
     addTearDown(controller.dispose);
     await pumpShell(tester, controller);

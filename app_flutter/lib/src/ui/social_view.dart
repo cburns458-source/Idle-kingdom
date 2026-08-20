@@ -139,10 +139,11 @@ class _LeaderboardTab extends StatelessWidget {
       children: [
         GameSelectField(
           label: 'Board',
-          value: boards
-              .where((board) => board.key == multiplayer.boardKey)
-              .map((board) => board.label)
-              .firstOrNull ??
+          value:
+              boards
+                  .where((board) => board.key == multiplayer.boardKey)
+                  .map((board) => board.label)
+                  .firstOrNull ??
               'Board',
           onPressed: () async {
             final chosen = await showGameCatalogPopup(
