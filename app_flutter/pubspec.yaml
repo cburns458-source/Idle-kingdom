@@ -86,7 +86,3 @@ flutter:
       fonts:
         - asset: fonts/712_serif.ttf
           weight: 400
-        # Only one cut exists; register it at 700 too so bold copy does not
-        # fall back to Roboto when the theme asks for w700.
-        - asset: fonts/712_serif.ttf
-          weight: 700

@@ -655,7 +655,7 @@ class _LocationHead extends StatelessWidget {
           location.displayName,
           style: const TextStyle(
             fontSize: 21.5,
-            fontWeight: FontWeight.w700,
+            fontWeight: FontWeight.w400,
             color: Palette.heading,
             height: 1.2,
             shadows: overlayShadow,
@@ -683,7 +683,7 @@ class _SectionHeading extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 6),
       child: Text(
         text,
-        style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700, shadows: overlayShadow),
+        style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w400, shadows: overlayShadow),
       ),
     );
   }
@@ -785,7 +785,7 @@ class _RecoveringPanel extends StatelessWidget {
       child: Row(
         children: [
           const Expanded(
-            child: Text('Recovering…', style: TextStyle(fontWeight: FontWeight.w700)),
+            child: Text('Recovering…', style: TextStyle(fontWeight: FontWeight.w400)),
           ),
           SizedBox(
             width: 96,

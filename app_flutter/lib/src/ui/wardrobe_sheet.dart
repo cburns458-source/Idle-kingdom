@@ -66,7 +66,7 @@ class _WardrobeSheetState extends State<WardrobeSheet> {
                 const Expanded(
                   child: Text(
                     'Wardrobe',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w400),
                   ),
                 ),
                 GameButton(
@@ -267,7 +267,7 @@ class WardrobeUnlockPopup extends StatelessWidget {
                 const MutedText('New Cosmetic'),
                 const Text(
                   'You found a Cosmetic!',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w400),
                 ),
                 const SizedBox(height: 10),
                 Row(
@@ -275,7 +275,7 @@ class WardrobeUnlockPopup extends StatelessWidget {
                     ItemIcon(item: item, size: 40),
                     const SizedBox(width: 8),
                     Expanded(
-                      child: Text(notice.name, style: const TextStyle(fontWeight: FontWeight.w700)),
+                      child: Text(notice.name, style: const TextStyle(fontWeight: FontWeight.w400)),
                     ),
                   ],
                 ),

@@ -28,7 +28,7 @@ class SkillsView extends StatelessWidget {
         else
           const Padding(
             padding: EdgeInsets.fromLTRB(12, 12, 12, 8),
-            child: Text('Skills', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
+            child: Text('Skills', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w400)),
           ),
         Expanded(
           child: GridView.extent(
@@ -85,7 +85,7 @@ class _SkillTile extends StatelessWidget {
                   textAlign: TextAlign.center,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, height: 1.15),
+                  style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w400, height: 1.15),
                 ),
               ),
               const SizedBox(height: 2),
@@ -93,7 +93,7 @@ class _SkillTile extends StatelessWidget {
                 progress.atCap ? 'Max' : 'Lv ${progress.level}',
                 style: const TextStyle(
                   fontSize: 11,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w400,
                   color: Palette.gold,
                 ),
               ),
@@ -167,7 +167,7 @@ class _Total extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           MutedText(label),
-          Text(value, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+          Text(value, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w400)),
         ],
       ),
     );

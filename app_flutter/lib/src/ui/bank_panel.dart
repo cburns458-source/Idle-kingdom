@@ -106,7 +106,7 @@ class _BankPanelState extends State<BankPanel> {
           Row(
             children: [
               const Expanded(
-                child: Text('Bank', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+                child: Text('Bank', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w400)),
               ),
               GoldAmount(
                 amount: save.gold,
@@ -223,7 +223,7 @@ class _Column extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(heading, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+        Text(heading, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w400)),
         const SizedBox(height: 5),
         if (tiles.isEmpty)
           MutedText(empty)

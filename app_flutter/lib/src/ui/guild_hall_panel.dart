@@ -169,7 +169,7 @@ class _GuildHallPanelState extends State<GuildHallPanel> {
               const Expanded(
                 child: Text(
                   'Guild Hall',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w400),
                 ),
               ),
               GoldAmount(
@@ -244,7 +244,7 @@ class _GuildHallPanelState extends State<GuildHallPanel> {
       children: [
         _tierCard(hall),
         const SizedBox(height: 8),
-        const Text('Bag', style: TextStyle(fontWeight: FontWeight.w700)),
+        const Text('Bag', style: TextStyle(fontWeight: FontWeight.w400)),
         if (bag.isEmpty)
           const MutedText('Nothing to contribute.')
         else
@@ -261,7 +261,7 @@ class _GuildHallPanelState extends State<GuildHallPanel> {
               ),
             ),
         const SizedBox(height: 8),
-        const Text('Store House', style: TextStyle(fontWeight: FontWeight.w700)),
+        const Text('Store House', style: TextStyle(fontWeight: FontWeight.w400)),
         if (hall.storehouse.isEmpty)
           const MutedText('Empty.')
         else
@@ -287,7 +287,7 @@ class _GuildHallPanelState extends State<GuildHallPanel> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(tier.name, style: const TextStyle(fontWeight: FontWeight.w700)),
+        Text(tier.name, style: const TextStyle(fontWeight: FontWeight.w400)),
         MutedText('${tier.blurb} Donations are spent when it is finished.'),
         for (final need in needs)
           MutedText(
@@ -321,7 +321,7 @@ class _GuildHallPanelState extends State<GuildHallPanel> {
           hall.debtPaidOff
               ? 'Paid in full.'
               : 'Remaining: ${formatThousands(hall.debtRemaining)} / ${formatThousands(guildHallDebtGold)}',
-          style: const TextStyle(fontWeight: FontWeight.w700),
+          style: const TextStyle(fontWeight: FontWeight.w400),
         ),
         MutedText(
           'Your payments: ${formatThousands(mine)} gold. Member and above can pay. No extra reward.',

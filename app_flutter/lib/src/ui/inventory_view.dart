@@ -233,7 +233,7 @@ class _InventoryViewState extends State<InventoryView> {
           if (widget.onClose != null)
             PageHeader(title: 'Inventory', onClose: widget.onClose!)
           else
-            const Text('Inventory', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
+            const Text('Inventory', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w400)),
           Align(
             alignment: Alignment.centerRight,
             child: MutedText('${inventorySlotCount(save)} / $inventorySlotLimit slots'),
@@ -463,7 +463,7 @@ class _InventoryViewState extends State<InventoryView> {
             ],
           ),
           const SizedBox(height: 10),
-          const Text('Active bonuses', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+          const Text('Active bonuses', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w400)),
           if (summary.activeBonuses.isEmpty)
             const Padding(padding: EdgeInsets.only(top: 4), child: MutedText('No active bonuses.'))
           else
@@ -475,7 +475,7 @@ class _InventoryViewState extends State<InventoryView> {
                     children: [
                       TextSpan(
                         text: bonus.name,
-                        style: const TextStyle(fontWeight: FontWeight.w700),
+                        style: const TextStyle(fontWeight: FontWeight.w400),
                       ),
                       TextSpan(text: ' — ${bonus.effect}'),
                     ],
@@ -511,7 +511,7 @@ class _InventoryViewState extends State<InventoryView> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(title, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+          Text(title, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w400)),
           for (final line in lines)
             Padding(
               padding: const EdgeInsets.only(top: 2),
@@ -520,7 +520,7 @@ class _InventoryViewState extends State<InventoryView> {
                   Expanded(child: MutedText(line.label)),
                   Text(
                     line.detail,
-                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w400),
                   ),
                 ],
               ),
@@ -544,7 +544,7 @@ class _Stat extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           MutedText(label),
-          Text(value, style: const TextStyle(fontWeight: FontWeight.w700)),
+          Text(value, style: const TextStyle(fontWeight: FontWeight.w400)),
         ],
       ),
     );
@@ -608,7 +608,7 @@ class _ItemTile extends StatelessWidget {
                   bottom: 0,
                   child: Text(
                     '${quantity.round()}',
-                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
+                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w400),
                   ),
                 ),
               if (selected)

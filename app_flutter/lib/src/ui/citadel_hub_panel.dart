@@ -155,7 +155,7 @@ class _CitadelHubPanelState extends State<CitadelHubPanel> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+                    Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w400)),
                     MutedText(subtitle),
                   ],
                 ),
@@ -188,7 +188,7 @@ class _BountyCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(row.title, style: const TextStyle(fontWeight: FontWeight.w700)),
+                Text(row.title, style: const TextStyle(fontWeight: FontWeight.w400)),
                 MutedText(row.description),
                 MutedText(row.progressLine),
                 if (row.firstCompleterLine case final line?) MutedText(line),
@@ -220,7 +220,7 @@ class _PostCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(heading, style: const TextStyle(fontWeight: FontWeight.w700)),
+          Text(heading, style: const TextStyle(fontWeight: FontWeight.w400)),
           MutedText(body),
         ],
       ),

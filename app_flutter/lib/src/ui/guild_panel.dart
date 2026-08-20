@@ -289,7 +289,7 @@ class _GuildPanelState extends State<GuildPanel> {
           const SizedBox(height: 10),
         ],
         if (header.canManage && applications.isNotEmpty) ...[
-          const Text('Pending applications', style: TextStyle(fontWeight: FontWeight.w700)),
+          const Text('Pending applications', style: TextStyle(fontWeight: FontWeight.w400)),
           const SizedBox(height: 6),
           for (final row in applications) ...[
             SocialRow(
@@ -321,7 +321,7 @@ class _GuildPanelState extends State<GuildPanel> {
         Row(
           children: [
             const Expanded(
-              child: Text('Members', style: TextStyle(fontWeight: FontWeight.w700)),
+              child: Text('Members', style: TextStyle(fontWeight: FontWeight.w400)),
             ),
             GameButton(
               label: _rosterSortLabel(_sort),
@@ -352,7 +352,7 @@ class _GuildPanelState extends State<GuildPanel> {
                     options: options,
                     onChanged: (role) => net.setMemberRole(row.userId, role, save),
                   )
-                : Text('${row.totalLevel}', style: const TextStyle(fontWeight: FontWeight.w700)),
+                : Text('${row.totalLevel}', style: const TextStyle(fontWeight: FontWeight.w400)),
           ),
           const SizedBox(height: 6),
         ],
@@ -362,7 +362,7 @@ class _GuildPanelState extends State<GuildPanel> {
             crossAxisAlignment: CrossAxisAlignment.baseline,
             textBaseline: TextBaseline.alphabetic,
             children: [
-              Text('Guests', style: TextStyle(fontWeight: FontWeight.w700)),
+              Text('Guests', style: TextStyle(fontWeight: FontWeight.w400)),
               SizedBox(width: 8),
               Expanded(child: MutedText('Chat only — not in roster')),
             ],
@@ -690,7 +690,7 @@ class _GuildDetailPageState extends State<_GuildDetailPage> {
                         Row(
                           children: [
                             const Expanded(
-                              child: Text('Members', style: TextStyle(fontWeight: FontWeight.w700)),
+                              child: Text('Members', style: TextStyle(fontWeight: FontWeight.w400)),
                             ),
                             GameButton(
                               label: _rosterSortLabel(_sort),
@@ -720,7 +720,7 @@ class _GuildDetailPageState extends State<_GuildDetailPage> {
                               ),
                               trailing: Text(
                                 '${row.totalLevel}',
-                                style: const TextStyle(fontWeight: FontWeight.w700),
+                                style: const TextStyle(fontWeight: FontWeight.w400),
                               ),
                             ),
                             const SizedBox(height: 6),
@@ -731,7 +731,7 @@ class _GuildDetailPageState extends State<_GuildDetailPage> {
                             crossAxisAlignment: CrossAxisAlignment.baseline,
                             textBaseline: TextBaseline.alphabetic,
                             children: [
-                              Text('Guests', style: TextStyle(fontWeight: FontWeight.w700)),
+                              Text('Guests', style: TextStyle(fontWeight: FontWeight.w400)),
                               SizedBox(width: 8),
                               Expanded(child: MutedText('Chat only — not in roster')),
                             ],
@@ -973,7 +973,7 @@ class _CreateGuildSheetState extends State<_CreateGuildSheet> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Create guild', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+            const Text('Create guild', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w400)),
             const SizedBox(height: 4),
             MutedText(form.costLine),
             const SizedBox(height: 12),
@@ -1082,7 +1082,7 @@ class _GuildSettingsSheetState extends State<_GuildSettingsSheet> {
           children: [
             const Text(
               'Guild settings',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w400),
             ),
             const SizedBox(height: 12),
             GameSelectField(
@@ -1110,7 +1110,7 @@ class _GuildSettingsSheetState extends State<_GuildSettingsSheet> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Guest auto-accept', style: TextStyle(fontWeight: FontWeight.w700)),
+                      Text('Guest auto-accept', style: TextStyle(fontWeight: FontWeight.w400)),
                       MutedText('Guests join chat without an application.'),
                     ],
                   ),
@@ -1149,7 +1149,7 @@ class _GuildSettingsSheetState extends State<_GuildSettingsSheet> {
             const SizedBox(height: 12),
             _EmblemEditor(emblem: _emblem, onChanged: (next) => setState(() => _emblem = next)),
             const SizedBox(height: 12),
-            const Text('Rank names', style: TextStyle(fontWeight: FontWeight.w700)),
+            const Text('Rank names', style: TextStyle(fontWeight: FontWeight.w400)),
             const MutedText('Rename Leader and the four promotable ranks.'),
             const SizedBox(height: 6),
             for (final field in rankLabelFields(widget.guild)) ...[

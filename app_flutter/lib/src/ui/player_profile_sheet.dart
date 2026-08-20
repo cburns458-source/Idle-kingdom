@@ -151,7 +151,7 @@ class _PlayerProfileSheetState extends State<PlayerProfileSheet> {
               const Expanded(
                 child: Text(
                   'Player profile',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
                 ),
               ),
               GameButton(
@@ -173,7 +173,7 @@ class _PlayerProfileSheetState extends State<PlayerProfileSheet> {
                   children: [
                     Text(
                       view.username,
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
                     ),
                     MutedText(view.summaryLine),
                     if (_isSelf) const MutedText('This is you.'),
@@ -246,7 +246,7 @@ class _PlayerProfileSheetState extends State<PlayerProfileSheet> {
                     '${levels[skill.skillId] ?? 1}',
                     style: const TextStyle(
                       fontSize: 10,
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.w400,
                       color: Palette.gold,
                     ),
                   ),

@@ -83,7 +83,7 @@ class _Chip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+          Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w400)),
           const SizedBox(width: 4),
           GameImage(iconPath, width: 14, height: 14),
         ],

@@ -146,7 +146,7 @@ class _ProjectPickerState extends State<ProjectPicker> {
               Expanded(
                 child: Text(
                   widget.station.label,
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w400),
                 ),
               ),
               GameButton(
@@ -311,7 +311,7 @@ class _ProjectDetails extends StatelessWidget {
                 children: [
                   Text(
                     '${detail.outputName} ×${formatThousands(detail.outputQuantity)}',
-                    style: const TextStyle(fontWeight: FontWeight.w700),
+                    style: const TextStyle(fontWeight: FontWeight.w400),
                   ),
                   MutedText(detail.summaryLine),
                   if (detail.effectLine case final effect?) MutedText(effect),
@@ -338,7 +338,7 @@ class _ProjectDetails extends StatelessWidget {
                 style: TextStyle(
                   color: detail.goldOwned < detail.goldCost ? Palette.danger : Palette.gold,
                   fontSize: 11,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w400,
                 ),
               ),
           ],
@@ -360,7 +360,7 @@ Future<void> showProjectReceipt(BuildContext context, {required ProjectReceipt r
           const MutedText('Project complete'),
           Text(
             receipt.projectName,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w400),
           ),
           const SizedBox(height: 8),
           for (final line in receipt.lines)

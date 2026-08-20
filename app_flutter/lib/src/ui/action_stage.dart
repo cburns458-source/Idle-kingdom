@@ -301,7 +301,7 @@ class _SceneName extends StatelessWidget {
       overflow: TextOverflow.ellipsis,
       style: const TextStyle(
         fontSize: 13.5,
-        fontWeight: FontWeight.w700,
+        fontWeight: FontWeight.w400,
         color: _sceneNameColor,
         height: 1.15,
         shadows: overlayShadow,
@@ -420,7 +420,7 @@ class _CombatStage extends StatelessWidget {
                     'defeated',
                     style: TextStyle(
                       fontSize: 26,
-                      fontWeight: FontWeight.w800,
+                      fontWeight: FontWeight.w400,
                       letterSpacing: 1,
                       color: Color(0xFFFF3B3B),
                       shadows: overlayShadow,
@@ -513,7 +513,7 @@ class _RecoveringStage extends StatelessWidget {
               'Recovering…',
               style: TextStyle(
                 fontSize: 24,
-                fontWeight: FontWeight.w700,
+                fontWeight: FontWeight.w400,
                 color: Color(0xFFE0A080),
                 shadows: overlayShadow,
               ),
@@ -758,7 +758,7 @@ class _DamageFloaterState extends State<_DamageFloater> with SingleTickerProvide
             widget.text,
             style: TextStyle(
               fontSize: widget.fontSize,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w400,
               color: widget.color,
               shadows: const [
                 Shadow(color: Color(0xD9000000), blurRadius: 2),

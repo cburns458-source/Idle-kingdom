@@ -188,7 +188,7 @@ class _LeaderboardTab extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.end,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(row.valueLabel, style: const TextStyle(fontWeight: FontWeight.w700)),
+                      Text(row.valueLabel, style: const TextStyle(fontWeight: FontWeight.w400)),
                       if (row.secondaryLabel != null) MutedText(row.secondaryLabel!),
                     ],
                   ),

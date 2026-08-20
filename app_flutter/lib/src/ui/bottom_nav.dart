@@ -227,7 +227,7 @@ class _NavSection extends StatelessWidget {
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           textAlign: alignStart ? TextAlign.left : TextAlign.center,
-          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w400),
         );
     final button = Material(
       color: selected ? const Color(0xD9546E3E) : Colors.transparent,

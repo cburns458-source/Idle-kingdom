@@ -303,7 +303,7 @@ class _MapNodeState extends State<_MapNode> {
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 11,
-              fontWeight: isHere ? FontWeight.w700 : FontWeight.w600,
+              fontWeight: FontWeight.w400,
               color: isHere ? Palette.gold : Palette.parchmentText,
               shadows: overlayShadow,
             ),
@@ -353,7 +353,7 @@ class _SelectionPanel extends StatelessWidget {
                     children: [
                       Text(
                         mapNodeLabel(place, browseMapId),
-                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w400),
                       ),
                     ],
                   ),

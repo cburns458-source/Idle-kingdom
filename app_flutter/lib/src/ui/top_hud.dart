@@ -129,7 +129,7 @@ class TopHud extends StatelessWidget {
                                 maxLines: 1,
                                 style: const TextStyle(
                                   fontSize: 16,
-                                  fontWeight: FontWeight.w700,
+                                  fontWeight: FontWeight.w400,
                                   height: 1.15,
                                 ),
                               ),
@@ -140,7 +140,7 @@ class TopHud extends StatelessWidget {
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
                                 fontSize: 11.5,
-                                fontWeight: FontWeight.w600,
+                                fontWeight: FontWeight.w400,
                                 color: Color(0xFFC8D7B6),
                                 height: 1.2,
                               ),
@@ -154,7 +154,7 @@ class TopHud extends StatelessWidget {
                                 overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
                                   fontSize: 11.5,
-                                  fontWeight: FontWeight.w600,
+                                  fontWeight: FontWeight.w400,
                                   color: Color(0xFFC8D7B6),
                                   height: 1.2,
                                 ),
@@ -185,7 +185,7 @@ class TopHud extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
                             fontSize: 12,
-                            fontWeight: FontWeight.w700,
+                            fontWeight: FontWeight.w400,
                             color: Color(0xFFFFF4D4),
                           ),
                         ),
@@ -202,7 +202,7 @@ class TopHud extends StatelessWidget {
                             textAlign: TextAlign.right,
                             style: TextStyle(
                               fontSize: 11,
-                              fontWeight: FontWeight.w700,
+                              fontWeight: FontWeight.w400,
                               color: controller.isRecovering
                                   ? const Color(0xFFE8A090)
                                   : const Color(0xFFF0D78C),
@@ -258,7 +258,7 @@ class _ActivityReadout extends StatelessWidget {
             textAlign: TextAlign.right,
             style: const TextStyle(
               fontSize: 11,
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.w400,
               color: Color(0xFFF4EFD8),
               height: 1.1,
             ),

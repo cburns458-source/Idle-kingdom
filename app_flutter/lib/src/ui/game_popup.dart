@@ -124,7 +124,7 @@ Future<bool> showGameAlert({
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             if (title != null)
-              Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+              Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w400)),
             if (title != null) const SizedBox(height: 8),
             Text(message, style: const TextStyle(height: 1.4)),
             const SizedBox(height: 14),

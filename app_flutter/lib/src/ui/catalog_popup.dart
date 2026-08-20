@@ -44,7 +44,7 @@ Future<int?> showGameCatalogPopup({
               mainAxisSize: MainAxisSize.min,
               children: [
                 MutedText(eyebrow),
-                Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+                Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w400)),
                 const SizedBox(height: 10),
                 Flexible(
                   child: ListView(
@@ -92,7 +92,7 @@ class _CatalogRow extends StatelessWidget {
             Text(
               entry.title,
               style: TextStyle(
-                fontWeight: FontWeight.w700,
+                fontWeight: FontWeight.w400,
                 color: entry.emphasized ? Palette.gold : Palette.parchmentText,
               ),
             ),

@@ -94,24 +94,49 @@ const TextStyle warningStyle = TextStyle(
   fontFamily: gameFontFamily,
   color: Palette.warning,
   fontSize: 13,
-  fontWeight: FontWeight.w600,
+  fontWeight: FontWeight.w400,
   height: 1.35,
   shadows: overlayShadow,
 );
 
+/// 7:12 Serif is Regular-only. Force every role onto that cut.
+TextTheme _regularGameText(TextTheme theme) {
+  TextStyle? regular(TextStyle? style) {
+    return style?.copyWith(fontFamily: gameFontFamily, fontWeight: FontWeight.w400);
+  }
+
+  return TextTheme(
+    displayLarge: regular(theme.displayLarge),
+    displayMedium: regular(theme.displayMedium),
+    displaySmall: regular(theme.displaySmall),
+    headlineLarge: regular(theme.headlineLarge),
+    headlineMedium: regular(theme.headlineMedium),
+    headlineSmall: regular(theme.headlineSmall),
+    titleLarge: regular(theme.titleLarge),
+    titleMedium: regular(theme.titleMedium),
+    titleSmall: regular(theme.titleSmall),
+    bodyLarge: regular(theme.bodyLarge),
+    bodyMedium: regular(theme.bodyMedium),
+    bodySmall: regular(theme.bodySmall),
+    labelLarge: regular(theme.labelLarge),
+    labelMedium: regular(theme.labelMedium),
+    labelSmall: regular(theme.labelSmall),
+  );
+}
+
 ThemeData buildAppTheme() {
-  // Pass fontFamily on the constructor. copyWith cannot set it, and bold
-  // Material styles fall back to Roboto unless this family is on the theme.
   final base = ThemeData(
     useMaterial3: true,
     brightness: Brightness.dark,
     fontFamily: gameFontFamily,
     scaffoldBackgroundColor: Palette.ink,
   );
-  final textTheme = base.textTheme.apply(
-    fontFamily: gameFontFamily,
-    bodyColor: Palette.parchmentText,
-    displayColor: Palette.parchmentText,
+  final textTheme = _regularGameText(
+    base.textTheme.apply(
+      fontFamily: gameFontFamily,
+      bodyColor: Palette.parchmentText,
+      displayColor: Palette.parchmentText,
+    ),
   );
   return base.copyWith(
     colorScheme: base.colorScheme.copyWith(
@@ -246,7 +271,7 @@ class _GameButtonState extends State<GameButton> {
                   style: TextStyle(
                     fontFamily: gameFontFamily,
                     fontSize: widget.compact ? 12 : 13.5,
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w400,
                     color: primary ? const Color(0xFFF4FFE8) : const Color(0xFFFFF4D4),
                   ),
                 ),
@@ -354,7 +379,7 @@ class GameDropdown<T> extends StatelessWidget {
                   item.label,
                   style: TextStyle(
                     fontFamily: gameFontFamily,
-                    fontWeight: item.value == value ? FontWeight.w700 : FontWeight.w400,
+                    fontWeight: FontWeight.w400,
                     color: item.enabled ? Palette.parchmentText : Palette.muted,
                   ),
                 ),
@@ -377,7 +402,7 @@ class GameDropdown<T> extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         fontFamily: gameFontFamily,
-                        fontWeight: FontWeight.w700,
+                        fontWeight: FontWeight.w400,
                         fontSize: 13.5,
                       ),
                     ),
@@ -433,7 +458,7 @@ class GameSelectField extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         fontFamily: gameFontFamily,
-                        fontWeight: FontWeight.w700,
+                        fontWeight: FontWeight.w400,
                         fontSize: 13.5,
                       ),
                     ),
@@ -501,7 +526,7 @@ class DockRow extends StatelessWidget {
                   title,
                   style: const TextStyle(
                     fontSize: 14.5,
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w400,
                     shadows: overlayShadow,
                   ),
                 ),

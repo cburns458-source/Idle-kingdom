@@ -39,7 +39,7 @@ class AwaySummarySheet extends StatelessWidget {
               children: [
                 const Text(
                   'While you were away',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w400),
                 ),
                 MutedText('${formatDurationMs(summary.effectiveElapsedMs)} of progress'),
                 const SizedBox(height: 10),

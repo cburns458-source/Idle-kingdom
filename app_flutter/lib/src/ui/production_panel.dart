@@ -105,7 +105,7 @@ class _ProductionPickerState extends State<ProductionPicker> {
               Expanded(
                 child: Text(
                   widget.activity.contextualName ?? widget.activity.internalKey,
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w400),
                 ),
               ),
               GameButton(
@@ -246,7 +246,7 @@ class _RecipeDetails extends StatelessWidget {
                 children: [
                   Text(
                     '${output?.displayName ?? recipe.displayName} ×${recipe.outputQuantity}',
-                    style: const TextStyle(fontWeight: FontWeight.w700),
+                    style: const TextStyle(fontWeight: FontWeight.w400),
                   ),
                   MutedText(
                     '${formatDurationSeconds(recipe.baseDurationSeconds)} · '

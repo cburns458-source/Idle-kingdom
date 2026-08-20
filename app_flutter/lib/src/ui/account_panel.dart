@@ -42,7 +42,7 @@ class _AccountPanelState extends State<AccountPanel> {
   Widget _build() {
     final session = net.session;
     final children = <Widget>[
-      const Text('Account', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+      const Text('Account', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w400)),
       const SizedBox(height: 4),
       MutedText(multiplayerModeLine(net.mode)),
       const SizedBox(height: 12),
@@ -67,7 +67,7 @@ class _AccountPanelState extends State<AccountPanel> {
         children: [
           Text(
             displayNameForSave(save, 'Unnamed'),
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
           ),
           MutedText('Race: ${raceDisplayName(widget.controller.db, save.raceId) ?? 'Unchosen'}'),
         ],
@@ -79,7 +79,7 @@ class _AccountPanelState extends State<AccountPanel> {
     return <Widget>[
       Text(
         'Signed in as ${session.username}',
-        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
       ),
       MutedText(session.email),
       const SizedBox(height: 12),
@@ -128,7 +128,7 @@ class _AccountPanelState extends State<AccountPanel> {
     Widget Function(SocialContact contact)? trailing,
   }) {
     return <Widget>[
-      Text(heading, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+      Text(heading, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w400)),
       const SizedBox(height: 6),
       if (people.isEmpty && empty.isNotEmpty)
         MutedText(empty)

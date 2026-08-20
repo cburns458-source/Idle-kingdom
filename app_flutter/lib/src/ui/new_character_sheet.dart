@@ -105,7 +105,7 @@ class _NewCharacterSheetState extends State<NewCharacterSheet> {
             children: [
               const Text(
                 'Name your character',
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.w400),
               ),
               const MutedText(
                 'Choose a name and a people. Other players will know you by this name.',
@@ -218,7 +218,7 @@ class _RaceCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(race.displayName, style: const TextStyle(fontWeight: FontWeight.w700)),
+                Text(race.displayName, style: const TextStyle(fontWeight: FontWeight.w400)),
                 if (race.description case final blurb?) MutedText(blurb),
               ],
             ),
