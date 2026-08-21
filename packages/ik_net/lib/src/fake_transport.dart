@@ -290,7 +290,7 @@ class FakeTransport implements RemoteTransport {
   /// SQL LIKE with `%` as the only wildcard, enough for `dm:%` inbox reads.
   static bool _matchesLike(Object? value, String pattern) {
     final text = '$value';
-    final regex = RegExp('^${RegExp.escape(pattern).replaceAll('\\%', '.*')}\$');
+    final regex = RegExp('^${pattern.split('%').map(RegExp.escape).join('.*')}\$');
     return regex.hasMatch(text);
   }
 

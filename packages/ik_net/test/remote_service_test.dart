@@ -431,8 +431,11 @@ void main() {
     expect((await rival.signUp('rival@example.com', 'Rival', 'secret')).ok, isTrue);
 
     final pair = ChatChannel.dm(dmPairKey(hero.session!.userId, rival.session!.userId));
+    // The fake wire has one signed-in seat; take it back before the function writes.
+    expect((await hero.signIn('hero@example.com', 'secret')).ok, isTrue);
     final sent = await hero.sendChat(pair, 'Meet at the docks?');
     expect(sent.ok, isTrue, reason: sent.reason);
+    expect(sent.message!.userId, hero.session!.userId);
     expect(sent.message!.channelKey.startsWith('dm:'), isTrue);
     expect(sent.message!.body, 'Meet at the docks?');
 
