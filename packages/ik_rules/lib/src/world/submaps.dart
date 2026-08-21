@@ -52,14 +52,26 @@ String subMapDisplayName(GameDatabase db, String mapId) {
   return displayName is String ? displayName : 'Sub-map';
 }
 
+/// Drops a trailing "Map" so "Town Map" reads as "Town".
+String shortSubMapName(GameDatabase db, String mapId) {
+  final name = subMapDisplayName(db, mapId);
+  final trimmed = name.replaceAll(RegExp(r'\s+map$', caseSensitive: false), '').trim();
+  return trimmed.isEmpty ? name : trimmed;
+}
+
 /// Enter-button label for a gateway location.
 String? enterSubMapLabel(GameDatabase db, LocationRow gateway) {
   final mapId = subMapIdForGateway(db, jsString(gateway.raw['Location ID']));
   if (mapId == null) return null;
-  final name = subMapDisplayName(db, mapId);
-  // Prefer short CTA: "Enter Town Map" → "Enter Town" when name ends with Map.
-  final trimmed = name.replaceAll(RegExp(r'\s+map$', caseSensitive: false), '').trim();
-  return 'Enter ${trimmed.isEmpty ? name : trimmed}';
+  return 'Enter ${shortSubMapName(db, mapId)}';
+}
+
+/// Back-button label for a location that sits on a sub-map.
+String? backToSubMapLabel(GameDatabase db, LocationRow location) {
+  final rawMapId = location.raw['Map ID'];
+  final mapId = rawMapId is String ? rawMapId : mainMapId;
+  if (!isSubMap(db, mapId) || isSubMapGateway(location)) return null;
+  return 'Back to ${shortSubMapName(db, mapId)}';
 }
 
 /// Notes marker: location stays hidden/locked until unlockedLocationIds includes it.
