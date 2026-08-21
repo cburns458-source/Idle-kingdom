@@ -34,6 +34,15 @@ void main() {
     expect(friendlyRemoteError('Invalid login credentials'), 'Invalid login credentials');
   });
 
+  test('explains a skipped chat-privacy migration without the SQL column name', () {
+    expect(
+      friendlyRemoteError('column profiles.privacy_direct_messages does not exist'),
+      remoteChatPrivacyUnavailable,
+    );
+    expect(remoteMissingChatPrivacyColumn(remoteChatPrivacyUnavailable), isTrue);
+    expect(remoteMissingChatPrivacyColumn('Connection closed.'), isFalse);
+  });
+
   test('reads a view-shaped board row with its profile folded in', () {
     final entries = leaderboardEntriesFrom(<RemoteRow>[
       <String, Object?>{

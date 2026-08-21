@@ -81,6 +81,13 @@ class FakeTransport implements RemoteTransport {
   /// used once. For making one step of a sequence fail rather than the next one.
   final Map<String, String> failOnce = <String, String>{};
 
+  /// Columns this stand-in pretends the project has not got, as a skipped
+  /// migration would. A select or upsert that names one of them is refused.
+  final Set<String> missingColumns = <String>{};
+
+  /// Every select's column list, so a test can see a retry drop missing ones.
+  final List<String> selectedColumns = <String>[];
+
   /// Set to answer the send-chat function with something unusable.
   RemoteRow? chatFunctionReply;
 
@@ -96,6 +103,14 @@ class FakeTransport implements RemoteTransport {
     final reason = failNextWith;
     failNextWith = null;
     return reason;
+  }
+
+  /// The PostgREST line a missing column produces, so a retry can match it.
+  String? _missingColumnRefusal(String named) {
+    for (final column in missingColumns) {
+      if (named.contains(column)) return 'column profiles.$column does not exist';
+    }
+    return null;
   }
 
   /// Which columns make a row the same row, so an upsert replaces it.
@@ -222,8 +237,11 @@ class FakeTransport implements RemoteTransport {
     int? limit,
   }) async {
     calls.add('select:$table');
+    selectedColumns.add(columns);
     final reason = _takeFailure('select:$table');
     if (reason != null) return RemoteQueryResult.failed(reason);
+    final missing = _missingColumnRefusal(columns);
+    if (missing != null) return RemoteQueryResult.failed(missing);
 
     final storedTable = table == RemoteTables.leaderboardEntries ? RemoteTables.leaderboard : table;
     var rows = (tables[storedTable] ?? const <RemoteRow>[])
@@ -299,6 +317,10 @@ class FakeTransport implements RemoteTransport {
     calls.add('upsert:$table');
     final reason = _takeFailure('upsert:$table');
     if (reason != null) return reason;
+    for (final row in rows) {
+      final missing = _missingColumnRefusal(row.keys.join(','));
+      if (missing != null) return missing;
+    }
 
     if (table == RemoteTables.saves) {
       final blocked = _playSessionRefusal(rows);
