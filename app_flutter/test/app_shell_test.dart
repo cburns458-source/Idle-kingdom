@@ -237,6 +237,8 @@ void main() {
 
     expect(find.text('Sign in to play'), findsNothing);
     await openChinScreen(tester, 'Settings');
+    await tester.tap(find.widgetWithText(GameButton, 'Account'));
+    await tester.pump();
     await tester.ensureVisible(find.text('Sign out'));
     await tester.tap(find.text('Sign out'));
     await tester.pump();

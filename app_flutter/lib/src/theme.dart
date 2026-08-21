@@ -263,19 +263,16 @@ class _GameButtonState extends State<GameButton> {
                     ? const EdgeInsets.symmetric(horizontal: 10, vertical: 6)
                     : const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 alignment: Alignment.center,
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Text(
-                    widget.label,
-                    textAlign: TextAlign.center,
-                    maxLines: widget.compact ? 1 : 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontFamily: gameFontFamily,
-                      fontSize: widget.compact ? 12 : 13.5,
-                      fontWeight: FontWeight.w400,
-                      color: primary ? const Color(0xFFF4FFE8) : const Color(0xFFFFF4D4),
-                    ),
+                child: Text(
+                  widget.label,
+                  textAlign: TextAlign.center,
+                  maxLines: widget.compact ? 1 : 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontFamily: gameFontFamily,
+                    fontSize: widget.compact ? 12 : 13.5,
+                    fontWeight: FontWeight.w400,
+                    color: primary ? const Color(0xFFF4FFE8) : const Color(0xFFFFF4D4),
                   ),
                 ),
               ),

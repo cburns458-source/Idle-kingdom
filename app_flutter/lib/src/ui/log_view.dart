@@ -192,43 +192,46 @@ class _DifficultyBand extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 8),
       child: GamePanel(
         padding: EdgeInsets.zero,
-        child: Theme(
-          data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-          child: ExpansionTile(
-            initiallyExpanded: difficulty == 'Easy',
-            tilePadding: const EdgeInsets.symmetric(horizontal: 12),
-            childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-            title: Text(
-              difficulty,
-              style: const TextStyle(fontWeight: FontWeight.w400, fontSize: 16),
-            ),
-            subtitle: Padding(
-              padding: const EdgeInsets.only(top: 6),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  MutedText(completion.label),
-                  const SizedBox(height: 4),
-                  MeterBar(
-                    value: completion.total <= 0 ? 0 : completion.done / completion.total,
-                    color: Palette.gold,
-                    height: 6,
-                  ),
-                ],
+        child: Material(
+          type: MaterialType.transparency,
+          child: Theme(
+            data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+            child: ExpansionTile(
+              initiallyExpanded: difficulty == 'Easy',
+              tilePadding: const EdgeInsets.symmetric(horizontal: 12),
+              childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+              title: Text(
+                difficulty,
+                style: const TextStyle(fontWeight: FontWeight.w400, fontSize: 16),
               ),
-            ),
-            children: [
-              for (final row in rows)
-                Padding(
-                  padding: const EdgeInsets.only(top: 8),
-                  child: _LogRow(
-                    title: row.name,
-                    detail: row.note,
-                    highlight: row.unlocked,
-                    dimmed: !row.unlocked,
-                  ),
+              subtitle: Padding(
+                padding: const EdgeInsets.only(top: 6),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    MutedText(completion.label),
+                    const SizedBox(height: 4),
+                    MeterBar(
+                      value: completion.total <= 0 ? 0 : completion.done / completion.total,
+                      color: Palette.gold,
+                      height: 6,
+                    ),
+                  ],
                 ),
-            ],
+              ),
+              children: [
+                for (final row in rows)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: _LogRow(
+                      title: row.name,
+                      detail: row.note,
+                      highlight: row.unlocked,
+                      dimmed: !row.unlocked,
+                    ),
+                  ),
+              ],
+            ),
           ),
         ),
       ),

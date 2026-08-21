@@ -61,11 +61,13 @@ class _CharacterViewState extends State<CharacterView> {
           child: switch (_tab) {
             CharacterTab.skills => SkillsView(controller: widget.controller, showHeader: false),
             CharacterTab.inventory => InventoryView(
+              key: const ValueKey(InventoryPane.items),
               controller: widget.controller,
               pane: InventoryPane.items,
               showHeader: false,
             ),
             CharacterTab.equipment => InventoryView(
+              key: const ValueKey(InventoryPane.equipment),
               controller: widget.controller,
               pane: InventoryPane.equipment,
               showHeader: false,

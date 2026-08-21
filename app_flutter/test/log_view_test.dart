@@ -72,11 +72,12 @@ void main() {
       seed: syncProgressionMeta(database.launch, every, testStartMs),
     );
     addTearDown(controller.dispose);
-    await pumpShell(tester, controller);
+    await pumpShell(tester, controller, size: const Size(420, 900));
 
     await openLog(tester);
     await tester.tap(find.text('Hard'));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
     expect(find.text('Critter collector'), findsOne);
     expect(
       find.ancestor(of: find.text('Critter collector'), matching: find.byType(Opacity)),

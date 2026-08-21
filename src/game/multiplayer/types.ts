@@ -82,8 +82,8 @@ export interface MultiplayerProfile {
   guildId: string | null
   guildName: string | null
   privacyPublicSkills: boolean
-  privacyDirectMessages?: string
-  privacyLocalChat?: string
+  privacyDirectMessages: string
+  privacyLocalChat: string
   updatedAt: string
 }
 

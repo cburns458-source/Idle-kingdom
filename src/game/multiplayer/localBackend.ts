@@ -26,6 +26,7 @@ import type { BountyClaimRecord } from '../bounties/types'
 import {
   boardCarriesExperience,
   boardHidesZeroes,
+  CHAT_PRIVACY_PUBLIC,
   chatChannelKey,
   DEFAULT_GUILD_RANK_LABELS,
   GUILD_CREATE_GOLD_COST,
@@ -298,6 +299,8 @@ export class LocalMultiplayerBackend {
       guildId: null,
       guildName: null,
       privacyPublicSkills: true,
+      privacyDirectMessages: CHAT_PRIVACY_PUBLIC,
+      privacyLocalChat: CHAT_PRIVACY_PUBLIC,
       updatedAt: this.nowIso(),
     })
     this.write(db)
@@ -383,6 +386,8 @@ export class LocalMultiplayerBackend {
       guildId: null,
       guildName: null,
       privacyPublicSkills: true,
+      privacyDirectMessages: CHAT_PRIVACY_PUBLIC,
+      privacyLocalChat: CHAT_PRIVACY_PUBLIC,
       updatedAt: this.nowIso(),
     }
     db.profiles.push(profile)
@@ -392,7 +397,16 @@ export class LocalMultiplayerBackend {
 
   upsertProfile(
     userId: string,
-    patch: Partial<Pick<MultiplayerProfile, 'appearance' | 'privacyPublicSkills' | 'username'>>,
+    patch: Partial<
+      Pick<
+        MultiplayerProfile,
+        | 'appearance'
+        | 'privacyPublicSkills'
+        | 'privacyDirectMessages'
+        | 'privacyLocalChat'
+        | 'username'
+      >
+    >,
   ): MultiplayerProfile | null {
     const db = this.db()
     const index = db.profiles.findIndex((row) => row.userId === userId)
