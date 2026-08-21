@@ -564,7 +564,6 @@ class _GuildDetailPage extends StatefulWidget {
 class _GuildDetailPageState extends State<_GuildDetailPage> {
   GuildRosterSort _sort = GuildRosterSort.oldest;
   List<GuildMember>? _members;
-  List<GuildGuest>? _guests;
   String? _error;
   bool _loading = true;
 
@@ -581,13 +580,9 @@ class _GuildDetailPageState extends State<_GuildDetailPage> {
   Future<void> _load() async {
     try {
       final members = await net.service.guildMembers(guild.id);
-      final guests = widget.mode == _GuildDetailMode.own
-          ? await net.service.guildGuests(guild.id)
-          : const <GuildGuest>[];
       if (!mounted) return;
       setState(() {
         _members = members;
-        _guests = guests;
         _loading = false;
         _error = null;
       });
@@ -727,7 +722,7 @@ class _GuildDetailPageState extends State<_GuildDetailPage> {
                             ),
                             const SizedBox(height: 6),
                           ],
-                        if (guests != null && guests.isNotEmpty) ...[
+                        if (guests.isNotEmpty) ...[
                           const SizedBox(height: 8),
                           const Row(
                             crossAxisAlignment: CrossAxisAlignment.baseline,
