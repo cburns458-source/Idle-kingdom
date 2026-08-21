@@ -504,17 +504,51 @@ void main() {
     final transport = FakeTransport();
     final hero = await _signedIn(transport, MemorySaveStorage());
     final db = _database();
-    final save = createNewSave(db, _nowMs).copyWith(characterName: 'Hero', gold: 10);
+    final base = createNewSave(db, _nowMs);
+    final save = base.copyWith(
+      characterName: 'Hero',
+      gold: 10,
+      skills: [
+        for (final skill in base.skills)
+          skill.skillId == combatSkillId ? skill.copyWith(level: 18, xp: 4000) : skill,
+      ],
+    );
     await hero.pushSave(db, save, force: true);
     await hero.submitLeaderboard(db, save);
 
     final rival = _service(transport, MemorySaveStorage());
     await rival.signUp('rival@example.com', 'Rival', 'secret');
-    final profile = await rival.publicProfile(hero.session!.userId);
+    final profile = await rival.publicProfile(hero.session!.userId, db: db);
     expect(profile, isNotNull);
     expect(profile!.username, 'Hero');
-    expect(profile.totalLevel, greaterThanOrEqualTo(1));
+    expect(profile.totalLevel, totalLevel(save));
+    expect(profile.publicSkills.where((skill) => skill.skillId == combatSkillId).single.level, 18);
+
+    final board = await rival.leaderboard(skillBoardKey(combatSkillId));
+    final heroRow = board.singleWhere((entry) => entry.userId == hero.session!.userId);
+    expect(
+      profile.publicSkills.where((skill) => skill.skillId == combatSkillId).single.level,
+      heroRow.value,
+    );
     expect(await rival.publicProfile('missing-user'), isNull);
+  });
+
+  test('hides snapshot skills when the account opted out of public skills', () async {
+    final transport = FakeTransport();
+    final hero = await _signedIn(transport, MemorySaveStorage());
+    final db = _database();
+    final save = createNewSave(db, _nowMs).copyWith(characterName: 'Hero');
+    await hero.submitLeaderboard(db, save);
+    transport.tables[RemoteTables.profiles]!.firstWhere(
+      (row) => row['user_id'] == hero.session!.userId,
+    )['privacy_public_skills'] = false;
+
+    final rival = _service(transport, MemorySaveStorage());
+    await rival.signUp('rival@example.com', 'Rival', 'secret');
+    final profile = await rival.publicProfile(hero.session!.userId, db: db);
+    expect(profile, isNotNull);
+    expect(profile!.publicSkills, isEmpty);
+    expect(profile.totalLevel, totalLevel(save));
   });
 
   test('records the first bounty turn-in of the hour and no other', () async {

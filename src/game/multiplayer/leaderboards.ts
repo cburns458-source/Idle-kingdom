@@ -14,7 +14,7 @@ import {
 import { buildLeaderboardSnapshot } from './snapshots'
 import type { LeaderboardEntry, MultiplayerBoardKey } from './types'
 
-export { boardLabel, buildLeaderboardSnapshot } from './snapshots'
+export { boardLabel, buildLeaderboardSnapshot, publicProfileStatsFromLeaderboardRows } from './snapshots'
 
 export async function submitLeaderboardFromSave(
   db: GameDatabase,

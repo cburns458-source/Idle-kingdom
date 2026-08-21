@@ -5,7 +5,12 @@ import { prepareDatabase } from '../data/loadDatabase'
 import { createNewSave } from '../save/saveStore'
 import { COMBAT_SKILL_ID } from '../combat/stats'
 import { totalLevel, totalSkillXp } from '../skills/totals'
-import { buildLeaderboardSnapshot, boardLabel, rankLeaderboardEntries } from './snapshots'
+import {
+  buildLeaderboardSnapshot,
+  boardLabel,
+  publicProfileStatsFromLeaderboardRows,
+  rankLeaderboardEntries,
+} from './snapshots'
 import { DEFAULT_PLAYER_APPEARANCE, type LeaderboardEntry } from './types'
 
 const rawDatabase = JSON.parse(
@@ -109,5 +114,26 @@ describe('leaderboard snapshot builder', () => {
     ]
 
     expect(rankLeaderboardEntries(entries).map((entry) => entry.username)).toEqual(['Bea', 'Ada'])
+  })
+
+  it('rebuilds public profile skills from the same snapshot rows', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const save = {
+      ...createNewSave(launch),
+      skills: createNewSave(launch).skills.map((skill) =>
+        skill.skillId === COMBAT_SKILL_ID ? { ...skill, level: 18, xp: 4000 } : skill,
+      ),
+    }
+    const snapshot = buildLeaderboardSnapshot(launch, save)
+    const rows = snapshot.boards.map((board) => ({
+      board_key: board.boardKey,
+      value: board.value,
+      value_secondary: board.secondaryValue,
+    }))
+    const stats = publicProfileStatsFromLeaderboardRows(rows, launch)
+    expect(stats.totalLevel).toBe(totalLevel(save))
+    expect(stats.totalXp).toBe(totalSkillXp(save))
+    expect(stats.skills.find((skill) => skill.skillId === COMBAT_SKILL_ID)?.level).toBe(18)
+    expect(stats.skills).toHaveLength(launch.Skills.filter((row) => row['Release Phase'] === 'Launch').length)
   })
 })

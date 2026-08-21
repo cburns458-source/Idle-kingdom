@@ -461,7 +461,7 @@ export function publicProfileView(
     username: profile.username,
     appearance: profile.appearance,
     summaryLine: [
-      `Total level ${profile.totalLevel > 0 ? profile.totalLevel : 13}`,
+      profile.totalLevel > 0 ? `Total level ${profile.totalLevel}` : 'No ranking yet',
       profile.guildName ?? null,
       `${profile.logCompletionPercent ?? 0}% log`,
     ]
