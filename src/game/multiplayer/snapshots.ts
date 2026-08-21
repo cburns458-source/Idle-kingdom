@@ -1,8 +1,9 @@
 import type { GameDatabase } from '../data/types'
 import type { PlayerSave } from '../save/types'
+import { levelForTotalXp } from '../activity/xp'
 import { rankedPvpKd } from '../pvp/matchmaking'
 import { isPacifistSave, totalLevel, totalSkillXp } from '../skills/totals'
-import type { LeaderboardEntry, MultiplayerBoardKey } from './types'
+import type { LeaderboardEntry, MultiplayerBoardKey, PublicPlayerProfile } from './types'
 
 export interface LeaderboardBoardValue {
   boardKey: MultiplayerBoardKey
@@ -94,4 +95,44 @@ export function rankLeaderboardEntries(entries: LeaderboardEntry[]): Leaderboard
         a.username.localeCompare(b.username),
     )
     .map((entry, index) => ({ ...entry, rank: index + 1 }))
+}
+
+/** Public skill levels and total level reconstructed from ranking snapshots. */
+export interface PublicProfileStats {
+  totalLevel: number
+  totalXp?: number
+  skills: PublicPlayerProfile['publicSkills']
+}
+
+/** Turns `leaderboard_snapshots` rows for one account into profile stats. */
+export function publicProfileStatsFromLeaderboardRows(
+  rows: Array<Record<string, unknown>>,
+  db?: GameDatabase,
+): PublicProfileStats {
+  let totalLevelValue = 0
+  let totalXp: number | undefined
+  const skills: PublicPlayerProfile['publicSkills'] = []
+  for (const row of rows) {
+    const key = String(row.board_key ?? row.boardKey ?? '')
+    const value = Number(row.value ?? 0)
+    if (key === 'total_level') {
+      totalLevelValue = value
+      const secondary = row.value_secondary ?? row.secondaryValue
+      if (typeof secondary === 'number') totalXp = secondary
+      continue
+    }
+    if (!key.startsWith('skill:')) continue
+    const skillId = key.slice('skill:'.length)
+    if (!skillId) continue
+    if (value > 100) {
+      skills.push({
+        skillId,
+        level: db ? levelForTotalXp(db, value) : 101,
+        xp: value,
+      })
+    } else {
+      skills.push({ skillId, level: value < 1 ? 1 : value, xp: 0 })
+    }
+  }
+  return { totalLevel: totalLevelValue, totalXp, skills }
 }

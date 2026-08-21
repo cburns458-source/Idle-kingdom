@@ -257,22 +257,19 @@ class RemoteMultiplayerService implements MultiplayerService {
     return name is String && name.isNotEmpty ? name : null;
   }
 
-  /// Total level posted to the boards, when this account has submitted.
-  Future<num> _leaderboardTotalLevel(String userId) async {
+  /// Every board this account has posted, which is what the leaderboard shows.
+  Future<PublicProfileStats> _leaderboardProfileStats(String userId, {GameDatabase? db}) async {
     final result = await transport.select(
       RemoteTables.leaderboard,
-      columns: 'value',
-      equals: <String, Object?>{'user_id': userId, 'board_key': boardTotalLevel},
-      limit: 1,
+      columns: 'board_key, value, value_secondary',
+      equals: <String, Object?>{'user_id': userId},
     );
-    if (!result.ok || result.single == null) return 0;
-    return _num(result.single!['value']);
+    if (!result.ok) return const PublicProfileStats(totalLevel: 0, skills: <PublicSkillLine>[]);
+    return publicProfileStatsFromLeaderboardRows(result.rows ?? const <RemoteRow>[], db: db);
   }
 
-  num _num(Object? value) => value is num ? value : 0;
-
   @override
-  Future<PublicPlayerProfile?> publicProfile(String userId) async {
+  Future<PublicPlayerProfile?> publicProfile(String userId, {GameDatabase? db}) async {
     final account = await profile(userId);
     if (account == null) return null;
 
@@ -281,8 +278,8 @@ class RemoteMultiplayerService implements MultiplayerService {
     num totalLevel = 0;
 
     // Cloud saves are self-only under RLS. The viewer's own save can fill
-    // skills; everyone else gets the boards' total level and no skill list
-    // until a public skill snapshot exists.
+    // skills and achievements; everyone else uses the same snapshot rows
+    // the leaderboard already published.
     if (session?.userId == userId) {
       final row = await _readSaveRow(userId);
       final save = row?.toCloudSaveRecordOrNull()?.payload;
@@ -297,8 +294,17 @@ class RemoteMultiplayerService implements MultiplayerService {
           totalLevel += skill.level;
         }
       }
-    } else {
-      totalLevel = await _leaderboardTotalLevel(userId);
+    }
+
+    if (session?.userId != userId || totalLevel < 1) {
+      final stats = await _leaderboardProfileStats(userId, db: db);
+      if (session?.userId != userId) {
+        skills = stats.skills;
+        totalLevel = stats.totalLevel;
+      } else if (totalLevel < 1) {
+        totalLevel = stats.totalLevel;
+        if (skills.isEmpty) skills = stats.skills;
+      }
     }
 
     return PublicPlayerProfile(
@@ -308,7 +314,7 @@ class RemoteMultiplayerService implements MultiplayerService {
       guildName: account.guildName,
       publicSkills: account.privacyPublicSkills ? skills : const <PublicSkillLine>[],
       achievementsUnlocked: achievements,
-      totalLevel: totalLevel < 1 ? 13 : totalLevel,
+      totalLevel: totalLevel,
     );
   }
 

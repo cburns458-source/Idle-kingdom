@@ -645,7 +645,9 @@ PublicProfileView publicProfileView(
     username: profile.username,
     appearance: profile.appearance,
     summaryLine: <String>[
-      'Total level ${jsNumberToString(profile.totalLevel > 0 ? profile.totalLevel : 13)}',
+      profile.totalLevel > 0
+          ? 'Total level ${jsNumberToString(profile.totalLevel)}'
+          : 'No ranking yet',
       if (profile.guildName != null) profile.guildName!,
       '${jsNumberToString(profile.logCompletionPercent)}% log',
     ].join(' · '),

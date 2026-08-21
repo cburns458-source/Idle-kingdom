@@ -184,3 +184,50 @@ List<MultiplayerBoardKey> launchBoardKeys(GameDatabase db) => <MultiplayerBoardK
   for (final skill in db.skills.where((row) => row.raw['Release Phase'] == 'Launch'))
     skillBoardKey(skill.raw['Skill ID']! as String),
 ];
+
+/// Public skill levels and total level reconstructed from ranking snapshots.
+///
+/// The same rows the leaderboard lists. Past 100 a skill board stores XP, not
+/// level, matching [buildLeaderboardSnapshot].
+class PublicProfileStats {
+  const PublicProfileStats({required this.totalLevel, required this.skills, this.totalXp});
+
+  final num totalLevel;
+  final num? totalXp;
+  final List<PublicSkillLine> skills;
+}
+
+/// Turns `leaderboard_snapshots` rows for one account into profile stats.
+PublicProfileStats publicProfileStatsFromLeaderboardRows(
+  Iterable<Map<String, Object?>> rows, {
+  GameDatabase? db,
+}) {
+  num totalLevel = 0;
+  num? totalXp;
+  final skills = <PublicSkillLine>[];
+  for (final row in rows) {
+    final key = jsString(row['board_key'] ?? row['boardKey'] ?? '');
+    final value = jsNumber(row['value'] ?? 0);
+    if (key == boardTotalLevel) {
+      totalLevel = value;
+      final secondary = row['value_secondary'] ?? row['secondaryValue'];
+      if (secondary is num) totalXp = secondary;
+      continue;
+    }
+    if (!key.startsWith(skillBoardPrefix)) continue;
+    final skillId = key.substring(skillBoardPrefix.length);
+    if (skillId.isEmpty) continue;
+    if (value > 100) {
+      skills.add(
+        PublicSkillLine(
+          skillId: skillId,
+          level: db == null ? 101 : levelForTotalXp(db, value),
+          xp: value,
+        ),
+      );
+    } else {
+      skills.add(PublicSkillLine(skillId: skillId, level: value < 1 ? 1 : value, xp: 0));
+    }
+  }
+  return PublicProfileStats(totalLevel: totalLevel, skills: skills, totalXp: totalXp);
+}

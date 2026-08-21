@@ -614,7 +614,8 @@ class MultiplayerController extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<PublicPlayerProfile?> publicProfile(String userId) => service.publicProfile(userId);
+  Future<PublicPlayerProfile?> publicProfile(String userId, {GameDatabase? db}) =>
+      service.publicProfile(userId, db: db);
 
   bool isFriend(String userId) => _friends.any((row) => row.userId == userId);
 

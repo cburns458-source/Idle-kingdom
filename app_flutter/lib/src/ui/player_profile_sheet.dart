@@ -64,7 +64,7 @@ class _PlayerProfileSheetState extends State<PlayerProfileSheet> {
   }
 
   Future<void> _load() async {
-    final profile = await net.publicProfile(widget.userId);
+    final profile = await net.publicProfile(widget.userId, db: widget.controller.db);
     if (!mounted) return;
     setState(() {
       _loading = false;
@@ -128,16 +128,7 @@ class _PlayerProfileSheetState extends State<PlayerProfileSheet> {
         logCompletionPercent: logCompletion(widget.controller.db, save).overall.percent,
       );
     }
-    return PublicPlayerProfile(
-      userId: profile.userId,
-      username: profile.username,
-      appearance: profile.appearance,
-      guildName: profile.guildName,
-      publicSkills: profile.publicSkills,
-      achievementsUnlocked: profile.achievementsUnlocked,
-      totalLevel: profile.totalLevel < 1 ? 13 : profile.totalLevel,
-      logCompletionPercent: profile.logCompletionPercent,
-    );
+    return profile;
   }
 
   Widget _buildBody(PublicProfileView view) {
@@ -229,6 +220,8 @@ class _PlayerProfileSheetState extends State<PlayerProfileSheet> {
       for (final skill in widget.controller.save.skills) {
         levels[skill.skillId] = getSkillProgress(widget.controller.save, skill.skillId).level;
       }
+    } else if (profile.publicSkills.isEmpty) {
+      return MutedText(profile.totalLevel >= 1 ? 'Skills hidden' : 'Not submitted');
     }
     return Wrap(
       spacing: 8,
@@ -243,7 +236,7 @@ class _PlayerProfileSheetState extends State<PlayerProfileSheet> {
                 children: [
                   GameImage(skillIconPath(skill), width: 28, height: 28),
                   Text(
-                    '${levels[skill.skillId] ?? 1}',
+                    levels[skill.skillId] == null ? '—' : '${levels[skill.skillId]}',
                     style: const TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w400,
