@@ -451,6 +451,8 @@ void main() {
 
     await tester.tap(find.widgetWithText(GameButton, 'Equipment'));
     await tester.pump();
+    expect(find.textContaining('slots'), findsNothing);
+    expect(find.text('Sell items'), findsNothing);
     expect(find.text('Damage'), findsOne);
     expect(find.text('Health'), findsOne);
     expect(find.text('DR'), findsOne);
