@@ -511,6 +511,24 @@ void main() {
     expect(find.byKey(const Key('chat-panel')), findsNothing);
   });
 
+  testWidgets('the chat button sits above the map Travel button', (tester) async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(currentLocationId: 'LOC-0009'),
+    );
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller, size: const Size(420, 420 * 16 / 9));
+
+    await tester.tap(find.byTooltip('Open world map'));
+    await tester.pump();
+    await tester.tap(find.text('The Farm'));
+    await tester.pump();
+
+    final chat = tester.getRect(find.byTooltip('Open chat'));
+    final travel = tester.getRect(find.widgetWithText(GameButton, 'Travel'));
+    expect(chat.bottom, lessThanOrEqualTo(travel.top));
+  });
+
   testWidgets('Close pops one page, and a second chin tab replaces the first', (tester) async {
     final controller = buildController(database, seed: startedCharacter(database));
     addTearDown(controller.dispose);
