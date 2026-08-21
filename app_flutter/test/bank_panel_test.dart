@@ -83,11 +83,7 @@ void main() {
     addTearDown(town.dispose);
     await pumpPanel(
       tester,
-      LocationView(
-        controller: town,
-        multiplayer: buildMultiplayer(database),
-        onOpenMap: () {},
-      ),
+      LocationView(controller: town, multiplayer: buildMultiplayer(database), onOpenMap: () {}),
     );
     expect(find.text('Item storage'), findsOne);
 
@@ -98,11 +94,7 @@ void main() {
     addTearDown(meadow.dispose);
     await pumpPanel(
       tester,
-      LocationView(
-        controller: meadow,
-        multiplayer: buildMultiplayer(database),
-        onOpenMap: () {},
-      ),
+      LocationView(controller: meadow, multiplayer: buildMultiplayer(database), onOpenMap: () {}),
     );
     expect(find.text('Item storage'), findsNothing);
   });

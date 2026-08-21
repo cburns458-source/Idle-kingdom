@@ -126,7 +126,7 @@ void main() {
     expect(find.text('Damage'), findsOne);
     expect(find.text('Health'), findsOne);
     expect(find.text('DR'), findsOne);
-    expect(find.textContaining('Race:'), findsWidgets);
+    expect(find.textContaining('Human'), findsWidgets);
 
     await tester.tap(find.text('Show sources'));
     await tester.pump();

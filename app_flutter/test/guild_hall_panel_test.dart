@@ -25,11 +25,7 @@ void main() {
     addTearDown(hall.dispose);
     await pumpPanel(
       tester,
-      LocationView(
-        controller: hall,
-        multiplayer: buildMultiplayer(database),
-        onOpenMap: () {},
-      ),
+      LocationView(controller: hall, multiplayer: buildMultiplayer(database), onOpenMap: () {}),
       size: const Size(900, 2400),
     );
     expect(find.text('Hall services'), findsOne);
@@ -41,11 +37,7 @@ void main() {
     addTearDown(meadow.dispose);
     await pumpPanel(
       tester,
-      LocationView(
-        controller: meadow,
-        multiplayer: buildMultiplayer(database),
-        onOpenMap: () {},
-      ),
+      LocationView(controller: meadow, multiplayer: buildMultiplayer(database), onOpenMap: () {}),
     );
     expect(find.text('Hall services'), findsNothing);
   });

@@ -35,10 +35,10 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    expect(find.text('Mira'), findsOne);
-    expect(find.textContaining('The Watch'), findsWidgets);
+    expect(find.text('[WCH]Mira'), findsOne);
+    expect(find.textContaining('The Watch'), findsNothing);
 
-    await tester.tap(find.text('Mira'));
+    await tester.tap(find.text('[WCH]Mira'));
     await tester.pump();
     await tester.pump();
 
