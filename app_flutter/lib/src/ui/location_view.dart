@@ -279,6 +279,17 @@ class _LocationViewState extends State<LocationView> {
                               onPressed: () => widget.onOpenSubMap(subMapId),
                             ),
                           ),
+                        )
+                      else if (backToSubMapLabel(controller.db, location) case final backLabel?)
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(13, 8, 13, 0),
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: GameButton(
+                              label: backLabel,
+                              onPressed: () => widget.onOpenSubMap(getLocationMapId(location)),
+                            ),
+                          ),
                         ),
                       if (controller.showRecoveringStage && stage == null)
                         Padding(

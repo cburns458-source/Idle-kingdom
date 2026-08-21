@@ -18,11 +18,14 @@ import {
   CAVE_MAP_ID,
   CITADEL_MAP_ID,
   CITADEL_GATEWAY_ID,
+  CITADEL_PLAZA_ID,
   CASTLE_GATEWAY_ID,
   TOWN_GATEWAY_ID,
+  TOWN_KITCHEN_ID,
   TOWN_MAP_ID,
 } from './constants'
 import { mapNodeLabel } from './mapLabel'
+import { backToSubMapLabel, enterSubMapLabel } from './submaps'
 
 const rawDatabase = JSON.parse(
   readFileSync(resolve(process.cwd(), 'content/data/game-database.json'), 'utf8'),
@@ -167,6 +170,18 @@ describe('travel rules', () => {
     const hall = launch.Locations.find((location) => location['Location ID'] === 'LOC-0033')
     expect(locationHasGuildHall(hall)).toBe(true)
     expect(locationHasGuildHall(gateway)).toBe(false)
+  })
+
+  it('labels a back button for submap interiors', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const kitchen = launch.Locations.find((row) => row['Location ID'] === TOWN_KITCHEN_ID)!
+    const town = launch.Locations.find((row) => row['Location ID'] === TOWN_GATEWAY_ID)!
+    const plaza = launch.Locations.find((row) => row['Location ID'] === CITADEL_PLAZA_ID)!
+    expect(backToSubMapLabel(launch, kitchen)).toBe('Back to Town')
+    expect(enterSubMapLabel(launch, kitchen)).toBeNull()
+    expect(backToSubMapLabel(launch, town)).toBeNull()
+    expect(enterSubMapLabel(launch, town)).toBe('Enter Town')
+    expect(backToSubMapLabel(launch, plaza)).toBe('Back to Citadel')
   })
 
   it('labels town and castle gateways on their submaps', () => {

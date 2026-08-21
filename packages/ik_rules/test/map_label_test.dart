@@ -20,6 +20,22 @@ void main() {
     expect(mapNodeLabel(castle, mainMapId), 'Castle');
   });
 
+  test('submap interiors offer a back label and gateways do not', () {
+    final kitchen = db.locations.firstWhere((row) => row.locationId == townKitchenId);
+    expect(backToSubMapLabel(db, kitchen), 'Back to Town');
+    expect(enterSubMapLabel(db, kitchen), isNull);
+
+    final town = db.locations.firstWhere((row) => row.locationId == townGatewayId);
+    expect(backToSubMapLabel(db, town), isNull);
+    expect(enterSubMapLabel(db, town), 'Enter Town');
+
+    final plaza = db.locations.firstWhere((row) => row.locationId == citadelPlazaId);
+    expect(backToSubMapLabel(db, plaza), 'Back to Citadel');
+
+    final farm = db.locations.firstWhere((row) => row.locationId == 'LOC-0001');
+    expect(backToSubMapLabel(db, farm), isNull);
+  });
+
   test('the Citadel gateway is hidden on the citadel submap', () {
     final citadelNodes = locationsForMapView(db, citadelMapId);
     expect(citadelNodes.any((row) => row.locationId == citadelGatewayId), isFalse);

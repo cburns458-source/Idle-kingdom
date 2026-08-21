@@ -241,6 +241,26 @@ void main() {
     });
   });
 
+  testWidgets('a town district offers Back to Town and opens the town map', (tester) async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(currentLocationId: townKitchenId),
+    );
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller);
+
+    expect(find.text('Enter Town'), findsNothing);
+    expect(find.text('Back to Town'), findsOne);
+    expect(find.byTooltip('Open world map'), findsOne);
+
+    await tester.tap(find.text('Back to Town'));
+    await tester.pump();
+
+    expect(find.byType(WorldMapView), findsOne);
+    expect(find.text('Kitchen'), findsWidgets);
+    expect(find.text('You are here.'), findsOne);
+  });
+
   testWidgets('the town district labels the gateway Town Gate', (tester) async {
     final controller = buildController(database, seed: startedCharacter(database));
     addTearDown(controller.dispose);

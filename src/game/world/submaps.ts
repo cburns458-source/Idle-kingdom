@@ -57,14 +57,24 @@ export function subMapDisplayName(db: GameDatabase, mapId: string): string {
   return map?.['Display Name'] ?? 'Sub-map'
 }
 
+/** Drops a trailing "Map" so "Town Map" reads as "Town". */
+export function shortSubMapName(db: GameDatabase, mapId: string): string {
+  const name = subMapDisplayName(db, mapId)
+  return name.replace(/\s+map$/i, '').trim() || name
+}
+
 /** Enter-button label for a gateway location. */
 export function enterSubMapLabel(db: GameDatabase, gateway: LocationRow): string | null {
   const mapId = subMapIdForGateway(db, gateway['Location ID'])
   if (!mapId) return null
-  const name = subMapDisplayName(db, mapId)
-  // Prefer short CTA: "Enter Town Map" → "Enter Town" when name ends with Map.
-  const short = name.replace(/\s+map$/i, '').trim() || name
-  return `Enter ${short}`
+  return `Enter ${shortSubMapName(db, mapId)}`
+}
+
+/** Back-button label for a location that sits on a sub-map. */
+export function backToSubMapLabel(db: GameDatabase, location: LocationRow): string | null {
+  const mapId = location['Map ID'] ?? MAIN_MAP_ID
+  if (!isSubMap(db, mapId) || isSubMapGateway(location)) return null
+  return `Back to ${shortSubMapName(db, mapId)}`
 }
 
 /** Notes marker: location stays hidden/locked until unlockedLocationIds includes it. */
