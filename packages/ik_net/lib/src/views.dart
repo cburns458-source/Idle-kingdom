@@ -307,6 +307,65 @@ List<GuildRosterRow> guildRosterRows(
   }).toList();
 }
 
+/// One friends-list row, same shape as a guild roster line: name, guild, online.
+class FriendListRow {
+  const FriendListRow({
+    required this.userId,
+    required this.username,
+    required this.appearance,
+    required this.subtitle,
+    required this.isOnline,
+    required this.lastOnlineLabel,
+  });
+
+  final String userId;
+  final String username;
+  final PlayerAppearance appearance;
+
+  /// `Devguild · Online`, or `No guild · 3h ago` when they have no guild.
+  final String subtitle;
+  final bool isOnline;
+  final String lastOnlineLabel;
+
+  Map<String, Object?> toJson() => <String, Object?>{
+    'userId': userId,
+    'username': username,
+    'appearance': appearance.toJson(),
+    'subtitle': subtitle,
+    'isOnline': isOnline,
+    'lastOnlineLabel': lastOnlineLabel,
+  };
+}
+
+/// Guild name plus last-online, matching how the roster writes its second line.
+String friendContactSubtitle(SocialContact contact, String lastOnlineLabel) {
+  final guild = contact.guildName;
+  if (guild == null || guild.isEmpty) return 'No guild · $lastOnlineLabel';
+  return '$guild · $lastOnlineLabel';
+}
+
+List<FriendListRow> friendListRows(
+  List<SocialContact> friends, {
+  List<ActivityPresence> presence = const <ActivityPresence>[],
+  num? nowMs,
+}) {
+  final clock = nowMs ?? 0;
+  final seen = <String, String>{for (final row in presence) row.userId: row.updatedAt};
+  return [for (final contact in friends) _friendListRow(contact, seen[contact.userId], clock)];
+}
+
+FriendListRow _friendListRow(SocialContact contact, String? updatedAt, num nowMs) {
+  final online = rosterLastOnline(updatedAt, nowMs);
+  return FriendListRow(
+    userId: contact.userId,
+    username: contact.username,
+    appearance: contact.appearance,
+    subtitle: friendContactSubtitle(contact, online.lastOnlineLabel),
+    isOnline: online.isOnline,
+    lastOnlineLabel: online.lastOnlineLabel,
+  );
+}
+
 /// One pending application, as the leader reads it.
 class GuildApplicationRow {
   const GuildApplicationRow({

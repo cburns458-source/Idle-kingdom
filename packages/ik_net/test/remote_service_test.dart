@@ -611,6 +611,41 @@ void main() {
     expect(profile.totalLevel, totalLevel(save));
   });
 
+  test('a hosted friend request lands on the other account and accept makes friends', () async {
+    final transport = FakeTransport();
+    final hero = await _signedIn(transport, MemorySaveStorage());
+    final rival = _service(transport, MemorySaveStorage());
+    await rival.signUp('rival@example.com', 'Rival', 'secret');
+
+    expect((await hero.sendFriendRequest(rival.session!.userId)).ok, isTrue);
+    expect((await hero.outgoingFriendRequests()).single.username, 'Rival');
+    expect((await rival.incomingFriendRequests()).single.username, 'Hero');
+    expect(await rival.friends(), isEmpty);
+
+    expect((await rival.sendFriendRequest(hero.session!.userId)).ok, isTrue);
+    expect(await hero.incomingFriendRequests(), isEmpty);
+    expect(await rival.outgoingFriendRequests(), isEmpty);
+    expect((await hero.friends()).single.username, 'Rival');
+    expect((await rival.friends()).single.username, 'Hero');
+
+    expect((await hero.sendFriendRequest(rival.session!.userId)).reason, 'Already friends.');
+    expect((await hero.removeFriend(rival.session!.userId)).ok, isTrue);
+    expect(await hero.friends(), isEmpty);
+    expect(await rival.friends(), isEmpty);
+  });
+
+  test('falls back to the device friends list when the hosted tables are missing', () async {
+    final transport = FakeTransport();
+    transport.missingTables.addAll(const <String>['friend_requests', 'friendships']);
+    final hero = await _signedIn(transport, MemorySaveStorage());
+    final rival = _service(transport, MemorySaveStorage());
+    await rival.signUp('rival@example.com', 'Rival', 'secret');
+
+    expect((await hero.sendFriendRequest(rival.session!.userId)).ok, isTrue);
+    expect(await rival.incomingFriendRequests(), isEmpty);
+    expect(hero.takeReadProblem(), isNull);
+  });
+
   test('records the first bounty turn-in of the hour and no other', () async {
     final transport = FakeTransport();
     final hero = await _signedIn(transport, MemorySaveStorage());

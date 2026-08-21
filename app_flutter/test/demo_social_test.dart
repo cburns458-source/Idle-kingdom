@@ -152,7 +152,11 @@ void main() {
     });
     await signIn(net);
     await net.sendFriendRequest(demoMiraId);
+    final local = net.service as LocalMultiplayerService;
+    local.backend.sendFriendRequest(demoMiraId, net.session!.userId);
+    await net.sendFriendRequest(demoMiraId);
     await net.ignorePlayer(demoBramId);
+    await net.refresh(controller.save);
     await pumpPanel(
       tester,
       ListenableBuilder(
@@ -162,8 +166,9 @@ void main() {
     );
 
     expect(find.text('Friends'), findsOne);
-    expect(find.text('Sent requests'), findsOne);
     expect(find.text('Mira'), findsOne);
+    expect(find.textContaining('The Watch ·'), findsOne);
+    expect(find.text('Sent requests'), findsNothing);
     expect(find.text('Ignored'), findsOne);
     expect(find.text('Bram'), findsOne);
   });
