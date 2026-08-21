@@ -28,8 +28,12 @@ import 'world_map_view.dart';
 
 enum GameScreen { location, map, skills, inventory, log, leaderboards, guilds, account, menu }
 
-/// Clears the chin and the map Travel strip. Measured on a 9:16 phone frame.
-const double chatLauncherBottom = 192;
+/// Sits on the chin. Kept low on the location screen so it does not cover
+/// Expand list or the activity buttons.
+const double chatLauncherBottom = 62;
+
+/// On the map, sits above the Travel strip.
+const double chatLauncherBottomOnMap = 192;
 
 const Set<GameScreen> _chinScreens = {
   GameScreen.skills,
@@ -472,7 +476,7 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
         if (!multiplayer.hideChatBubble)
           Positioned(
             right: 12,
-            bottom: chatLauncherBottom,
+            bottom: _screen == GameScreen.map ? chatLauncherBottomOnMap : chatLauncherBottom,
             child: ChatLauncher(
               open: _chatOpen,
               multiplayer: multiplayer,
