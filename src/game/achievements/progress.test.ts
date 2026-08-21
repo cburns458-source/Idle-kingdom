@@ -7,7 +7,6 @@ import { createNewSave } from '../save/saveStore'
 import type { PlayerSave } from '../save/types'
 import {
   CRITTER_COLLECTOR_ACHIEVEMENT_ID,
-  REVOCABLE_ACHIEVEMENT_CATEGORY,
   asAchievementRows,
   hasEveryCritter,
   syncProgressionMeta,
