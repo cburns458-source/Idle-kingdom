@@ -35,6 +35,8 @@ class RemoteTables {
   static const String guildProjects = 'guild_projects';
   static const String guildChallenges = 'guild_challenges';
   static const String activityPresence = 'activity_presence';
+  static const String friendRequests = 'friend_requests';
+  static const String friendships = 'friendships';
 }
 
 /// The edge function that writes chat, since a client may not insert directly.
@@ -67,6 +69,21 @@ bool remoteMissingChatPrivacyColumn(String? reason) {
   final lower = reason.toLowerCase();
   if (!lower.contains('does not exist')) return false;
   return lower.contains('privacy_direct_messages') || lower.contains('privacy_local_chat');
+}
+
+/// True when [reason] is the hosted project missing migration 014.
+bool remoteMissingFriendsTable(String? reason) {
+  if (reason == null || reason.isEmpty) return false;
+  final lower = reason.toLowerCase();
+  if (!lower.contains('friend_requests') && !lower.contains('friendships')) {
+    return false;
+  }
+  return lower.contains('schema cache') || lower.contains('does not exist');
+}
+
+/// The sorted pair a `friendships` row stores, matching `user_a < user_b`.
+({String userA, String userB}) friendshipPair(String left, String right) {
+  return left.compareTo(right) < 0 ? (userA: left, userB: right) : (userA: right, userB: left);
 }
 
 /// What a screen says when an action threw instead of refusing.
@@ -112,6 +129,8 @@ const String remoteChatPrivacyColumns = 'privacy_direct_messages, privacy_local_
 const String remotePublicProfileColumns =
     '$remotePublicProfileBaseColumns, $remoteChatPrivacyColumns';
 const String remotePresenceConflict = 'user_id';
+const String remoteFriendRequestColumns = 'from_user_id, to_user_id, created_at';
+const String remoteFriendshipColumns = 'user_a, user_b, created_at';
 
 /// How many Bazaar notices a read asks for.
 const int remoteBazaarLimit = 40;

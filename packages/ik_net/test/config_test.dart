@@ -34,6 +34,43 @@ void main() {
     expect(friendlyRemoteError('Invalid login credentials'), 'Invalid login credentials');
   });
 
+  test('friend list rows use guild name and last-online like the roster', () {
+    const friend = SocialContact(
+      userId: 'usr_1',
+      username: 'Vari',
+      appearance: defaultPlayerAppearance,
+      guildName: 'Devguild',
+    );
+    final online = friendListRows(
+      const <SocialContact>[friend],
+      presence: <ActivityPresence>[
+        ActivityPresence(
+          userId: 'usr_1',
+          username: 'Vari',
+          appearance: defaultPlayerAppearance,
+          guildName: 'Devguild',
+          locationId: 'LOC-0001',
+          currentActivityId: null,
+          skillId: null,
+          skillLevel: null,
+          outfitCosmeticId: null,
+          mountCosmeticId: null,
+          updatedAt: '2026-01-01T00:00:00.000Z',
+          expiresAt: '2026-01-02T00:00:00.000Z',
+        ),
+      ],
+      nowMs: DateTime.utc(2026, 1, 1).millisecondsSinceEpoch,
+    ).single;
+    expect(online.subtitle, 'Devguild · Online');
+    expect(online.isOnline, isTrue);
+
+    final unknown = friendListRows(const <SocialContact>[
+      SocialContact(userId: 'usr_2', username: 'test', appearance: defaultPlayerAppearance),
+    ]).single;
+    expect(unknown.subtitle, 'No guild · Unknown');
+    expect(friendshipPair('b', 'a'), (userA: 'a', userB: 'b'));
+  });
+
   test('explains a skipped chat-privacy migration without the SQL column name', () {
     expect(
       friendlyRemoteError('column profiles.privacy_direct_messages does not exist'),

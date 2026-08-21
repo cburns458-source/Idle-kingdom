@@ -6,6 +6,7 @@ import '../session/game_controller.dart';
 import '../session/multiplayer_controller.dart';
 import '../theme.dart';
 import 'account_auth_form.dart';
+import 'player_profile_sheet.dart';
 import 'social_bits.dart';
 
 /// Signing in and signing out.
@@ -89,12 +90,13 @@ class _AccountPanelState extends State<AccountPanel> {
         onPressed: net.busy ? null : () => net.signOut(widget.controller.save),
       ),
       const SizedBox(height: 20),
-      ..._peopleSection('Friends', net.friends, empty: 'No friends yet.'),
+      ..._peopleSection('Friends', net.friends, empty: 'No friends yet.', showOnline: true),
       const SizedBox(height: 16),
       ..._peopleSection(
         'Friend requests',
         net.incomingFriendRequests,
         empty: 'No incoming requests.',
+        showOnline: true,
         trailing: (contact) => GameButton(
           label: 'Accept',
           compact: true,
@@ -103,7 +105,7 @@ class _AccountPanelState extends State<AccountPanel> {
       ),
       if (net.outgoingFriendRequests.isNotEmpty) ...[
         const SizedBox(height: 16),
-        ..._peopleSection('Sent requests', net.outgoingFriendRequests, empty: ''),
+        ..._peopleSection('Sent requests', net.outgoingFriendRequests, empty: '', showOnline: true),
       ],
       const SizedBox(height: 16),
       ..._peopleSection(
@@ -124,13 +126,35 @@ class _AccountPanelState extends State<AccountPanel> {
     String heading,
     List<SocialContact> people, {
     String empty = '',
+    bool showOnline = false,
     Widget Function(SocialContact contact)? trailing,
   }) {
+    final rows = showOnline
+        ? friendListRows(people, presence: net.presence, nowMs: widget.controller.session.clock())
+        : null;
     return <Widget>[
       Text(heading, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w400)),
       const SizedBox(height: 6),
       if (people.isEmpty && empty.isNotEmpty)
         MutedText(empty)
+      else if (rows != null)
+        for (final row in rows) ...[
+          SocialRow(
+            title: row.username,
+            subtitle: row.subtitle,
+            leading: SocialPortrait(appearance: row.appearance),
+            trailing: trailing?.call(
+              SocialContact(userId: row.userId, username: row.username, appearance: row.appearance),
+            ),
+            onTap: () => openPlayerProfile(
+              context,
+              controller: widget.controller,
+              multiplayer: net,
+              userId: row.userId,
+            ),
+          ),
+          const SizedBox(height: 6),
+        ]
       else
         for (final contact in people) ...[
           SocialRow(
@@ -138,6 +162,12 @@ class _AccountPanelState extends State<AccountPanel> {
             subtitle: contact.guildName ?? '',
             leading: SocialPortrait(appearance: contact.appearance),
             trailing: trailing?.call(contact),
+            onTap: () => openPlayerProfile(
+              context,
+              controller: widget.controller,
+              multiplayer: net,
+              userId: contact.userId,
+            ),
           ),
           const SizedBox(height: 6),
         ],

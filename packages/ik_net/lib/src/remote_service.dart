@@ -75,6 +75,13 @@ class RemoteMultiplayerService implements MultiplayerService {
       ? remotePublicProfileBaseColumns
       : remotePublicProfileColumns;
 
+  /// Whether friend tables exist on the project. Null until a read tells us.
+  /// Missing migration 014 falls back to the device list.
+  bool? _friendsHosted;
+
+  /// Friend ids from the last hosted read, so chat privacy does not re-list.
+  Set<String>? _friendIdsCache;
+
   /// This player's roster facts, taken from the save the account already has.
   Future<GuildMemberFacts> _ownMemberFacts() async {
     final current = session;
@@ -752,29 +759,281 @@ class RemoteMultiplayerService implements MultiplayerService {
   }
 
   @override
-  Future<ActionResult> sendFriendRequest(String targetUserId) =>
-      _local.sendFriendRequest(targetUserId);
+  Future<ActionResult> sendFriendRequest(String targetUserId) async {
+    final current = session;
+    if (current == null) return const ActionResult.failed('Sign in required.');
+    if (targetUserId == current.userId) {
+      return const ActionResult.failed('Cannot friend yourself.');
+    }
+    if (_local.backend.blockedIds(current.userId).contains(targetUserId) ||
+        _local.backend.blockedIds(targetUserId).contains(current.userId)) {
+      return const ActionResult.failed('That player is ignored.');
+    }
+    if (!await _ensureFriendsHosted()) return _local.sendFriendRequest(targetUserId);
+
+    if (await _hostedAreFriends(current.userId, targetUserId)) {
+      return const ActionResult.failed('Already friends.');
+    }
+
+    final incoming = await transport.select(
+      RemoteTables.friendRequests,
+      columns: remoteFriendRequestColumns,
+      equals: <String, Object?>{'from_user_id': targetUserId, 'to_user_id': current.userId},
+      limit: 1,
+    );
+    if (!incoming.ok) {
+      if (_markFriendsUnhosted(incoming.reason)) return _local.sendFriendRequest(targetUserId);
+      return ActionResult.failed(incoming.reason ?? 'Could not send friend request.');
+    }
+    if (incoming.single != null) {
+      final accepted = await _acceptHostedFriend(current.userId, targetUserId);
+      _invalidateFriends();
+      return accepted;
+    }
+
+    final outgoing = await transport.select(
+      RemoteTables.friendRequests,
+      columns: remoteFriendRequestColumns,
+      equals: <String, Object?>{'from_user_id': current.userId, 'to_user_id': targetUserId},
+      limit: 1,
+    );
+    if (!outgoing.ok) {
+      return ActionResult.failed(outgoing.reason ?? 'Could not send friend request.');
+    }
+    if (outgoing.single != null) {
+      return const ActionResult.failed('Friend request already sent.');
+    }
+
+    final written = await transport.insert(RemoteTables.friendRequests, <String, Object?>{
+      'from_user_id': current.userId,
+      'to_user_id': targetUserId,
+    }, columns: remoteFriendRequestColumns);
+    if (!written.ok) {
+      if (_markFriendsUnhosted(written.reason)) return _local.sendFriendRequest(targetUserId);
+      return ActionResult.failed(written.reason ?? 'Could not send friend request.');
+    }
+    _invalidateFriends();
+    return const ActionResult.ok();
+  }
 
   @override
-  Future<ActionResult> removeFriend(String targetUserId) => _local.removeFriend(targetUserId);
+  Future<ActionResult> removeFriend(String targetUserId) async {
+    final current = session;
+    if (current == null) return const ActionResult.failed('Sign in required.');
+    if (!await _ensureFriendsHosted()) return _local.removeFriend(targetUserId);
+    if (targetUserId == current.userId) {
+      return const ActionResult.failed('Cannot unfriend yourself.');
+    }
+    if (!await _hostedAreFriends(current.userId, targetUserId)) {
+      return const ActionResult.failed('Not friends.');
+    }
+    final pair = friendshipPair(current.userId, targetUserId);
+    final refused = await transport.delete(
+      RemoteTables.friendships,
+      equals: <String, Object?>{'user_a': pair.userA, 'user_b': pair.userB},
+    );
+    if (refused != null) return ActionResult.failed(refused);
+    _invalidateFriends();
+    return const ActionResult.ok();
+  }
 
   @override
-  Future<void> ignorePlayer(String targetUserId) => _local.ignorePlayer(targetUserId);
+  Future<void> ignorePlayer(String targetUserId) async {
+    await _dropHostedRelationship(targetUserId);
+    return _local.ignorePlayer(targetUserId);
+  }
 
   @override
   Future<void> unignorePlayer(String targetUserId) => _local.unignorePlayer(targetUserId);
 
   @override
-  Future<List<SocialContact>> friends() => _local.friends();
+  Future<List<SocialContact>> friends() async {
+    if (!await _ensureFriendsHosted()) {
+      final local = await _local.friends();
+      _friendIdsCache = {for (final row in local) row.userId};
+      return local;
+    }
+    final current = session;
+    if (current == null) return const <SocialContact>[];
+    final ids = await _hostedFriendIds(current.userId);
+    if (ids == null) return _local.friends();
+    _friendIdsCache = ids;
+    return _contactsFor(ids);
+  }
 
   @override
-  Future<List<SocialContact>> incomingFriendRequests() => _local.incomingFriendRequests();
+  Future<List<SocialContact>> incomingFriendRequests() async {
+    if (!await _ensureFriendsHosted()) return _local.incomingFriendRequests();
+    final current = session;
+    if (current == null) return const <SocialContact>[];
+    final result = await transport.select(
+      RemoteTables.friendRequests,
+      columns: remoteFriendRequestColumns,
+      equals: <String, Object?>{'to_user_id': current.userId},
+    );
+    if (!result.ok) {
+      if (_markFriendsUnhosted(result.reason)) return _local.incomingFriendRequests();
+      return const <SocialContact>[];
+    }
+    return _contactsFor({
+      for (final row in result.rows ?? const <RemoteRow>[]) _strId(row['from_user_id']),
+    });
+  }
 
   @override
-  Future<List<SocialContact>> outgoingFriendRequests() => _local.outgoingFriendRequests();
+  Future<List<SocialContact>> outgoingFriendRequests() async {
+    if (!await _ensureFriendsHosted()) return _local.outgoingFriendRequests();
+    final current = session;
+    if (current == null) return const <SocialContact>[];
+    final result = await transport.select(
+      RemoteTables.friendRequests,
+      columns: remoteFriendRequestColumns,
+      equals: <String, Object?>{'from_user_id': current.userId},
+    );
+    if (!result.ok) {
+      if (_markFriendsUnhosted(result.reason)) return _local.outgoingFriendRequests();
+      return const <SocialContact>[];
+    }
+    return _contactsFor({
+      for (final row in result.rows ?? const <RemoteRow>[]) _strId(row['to_user_id']),
+    });
+  }
 
   @override
   Future<List<SocialContact>> ignoredPlayers() => _local.ignoredPlayers();
+
+  void _invalidateFriends() => _friendIdsCache = null;
+
+  Future<Set<String>> _friendIdSet() async {
+    if (_friendIdsCache != null) return _friendIdsCache!;
+    final rows = await friends();
+    return _friendIdsCache = {for (final row in rows) row.userId};
+  }
+
+  bool _markFriendsUnhosted(String? reason) {
+    if (!remoteMissingFriendsTable(reason)) return false;
+    _friendsHosted = false;
+    _reads.clearIf(remoteMissingFriendsTable);
+    return true;
+  }
+
+  Future<bool> _ensureFriendsHosted() async {
+    if (_friendsHosted == false) return false;
+    if (_friendsHosted == true) return true;
+    final current = session;
+    if (current == null) return false;
+    final result = await transport.select(
+      RemoteTables.friendRequests,
+      columns: remoteFriendRequestColumns,
+      equals: <String, Object?>{'to_user_id': current.userId},
+      limit: 1,
+    );
+    if (!result.ok) {
+      if (_markFriendsUnhosted(result.reason)) return false;
+      _friendsHosted = true;
+      return true;
+    }
+    _friendsHosted = true;
+    return true;
+  }
+
+  Future<ActionResult> _acceptHostedFriend(String me, String other) async {
+    await transport.delete(
+      RemoteTables.friendRequests,
+      equals: <String, Object?>{'from_user_id': other, 'to_user_id': me},
+    );
+    await transport.delete(
+      RemoteTables.friendRequests,
+      equals: <String, Object?>{'from_user_id': me, 'to_user_id': other},
+    );
+    final pair = friendshipPair(me, other);
+    final written = await transport.insert(RemoteTables.friendships, <String, Object?>{
+      'user_a': pair.userA,
+      'user_b': pair.userB,
+    }, columns: remoteFriendshipColumns);
+    if (!written.ok && !(written.reason ?? '').toLowerCase().contains('duplicate key')) {
+      if (_markFriendsUnhosted(written.reason)) {
+        return _local.sendFriendRequest(other);
+      }
+      return ActionResult.failed(written.reason ?? 'Could not accept friend request.');
+    }
+    return const ActionResult.ok();
+  }
+
+  Future<bool> _hostedAreFriends(String me, String other) async {
+    final pair = friendshipPair(me, other);
+    final result = await transport.select(
+      RemoteTables.friendships,
+      columns: remoteFriendshipColumns,
+      equals: <String, Object?>{'user_a': pair.userA, 'user_b': pair.userB},
+      limit: 1,
+    );
+    if (!result.ok) {
+      _markFriendsUnhosted(result.reason);
+      return false;
+    }
+    return result.single != null;
+  }
+
+  Future<Set<String>?> _hostedFriendIds(String me) async {
+    final asA = await transport.select(
+      RemoteTables.friendships,
+      columns: remoteFriendshipColumns,
+      equals: <String, Object?>{'user_a': me},
+    );
+    if (!asA.ok) {
+      if (_markFriendsUnhosted(asA.reason)) return null;
+      return const <String>{};
+    }
+    final asB = await transport.select(
+      RemoteTables.friendships,
+      columns: remoteFriendshipColumns,
+      equals: <String, Object?>{'user_b': me},
+    );
+    if (!asB.ok) return const <String>{};
+    return <String>{
+      for (final row in asA.rows ?? const <RemoteRow>[]) _strId(row['user_b']),
+      for (final row in asB.rows ?? const <RemoteRow>[]) _strId(row['user_a']),
+    }..removeWhere((id) => id.isEmpty);
+  }
+
+  Future<void> _dropHostedRelationship(String otherUserId) async {
+    final current = session;
+    if (current == null || !await _ensureFriendsHosted()) return;
+    await transport.delete(
+      RemoteTables.friendRequests,
+      equals: <String, Object?>{'from_user_id': current.userId, 'to_user_id': otherUserId},
+    );
+    await transport.delete(
+      RemoteTables.friendRequests,
+      equals: <String, Object?>{'from_user_id': otherUserId, 'to_user_id': current.userId},
+    );
+    final pair = friendshipPair(current.userId, otherUserId);
+    await transport.delete(
+      RemoteTables.friendships,
+      equals: <String, Object?>{'user_a': pair.userA, 'user_b': pair.userB},
+    );
+    _invalidateFriends();
+  }
+
+  Future<List<SocialContact>> _contactsFor(Set<String> userIds) async {
+    final out = <SocialContact>[];
+    for (final userId in userIds) {
+      if (userId.isEmpty) continue;
+      final account = await profile(userId);
+      out.add(
+        SocialContact(
+          userId: userId,
+          username: account?.username ?? 'Adventurer',
+          appearance: account?.appearance ?? defaultPlayerAppearance,
+          guildName: account?.guildName,
+        ),
+      );
+    }
+    return out;
+  }
+
+  String _strId(Object? value) => value is String ? value : '$value';
 
   @override
   Future<List<BountyClaimRecord>> bountyClaims(String hourKey) async {
@@ -904,10 +1163,10 @@ class RemoteMultiplayerService implements MultiplayerService {
           : parts[1];
       if (peer == null || peer.isEmpty) return 'Unknown chat channel.';
       final theirs = await profile(peer) ?? _local.backend.getProfile(peer);
-      final friends = await _local.friends();
+      final friendIds = await _friendIdSet();
       return refuseIncomingDirectMessage(
         theirs?.privacyDirectMessages ?? chatPrivacyPublic,
-        areFriends: friends.any((row) => row.userId == peer),
+        areFriends: friendIds.contains(peer),
       );
     }
     return null;
@@ -918,7 +1177,7 @@ class RemoteMultiplayerService implements MultiplayerService {
     if (me == null) return const <ChatMessage>[];
     final mine = await profile(me) ?? _local.backend.getProfile(me);
     final viewerPrivacy = mine?.privacyLocalChat ?? chatPrivacyPublic;
-    final friends = {for (final row in await _local.friends()) row.userId};
+    final friends = await _friendIdSet();
     final out = <ChatMessage>[];
     for (final message in messages) {
       final sender = await profile(message.userId) ?? _local.backend.getProfile(message.userId);

@@ -44,6 +44,8 @@ class FakeTransport implements RemoteTransport {
     RemoteTables.guildProjects: <RemoteRow>[],
     RemoteTables.guildChallenges: <RemoteRow>[],
     RemoteTables.activityPresence: <RemoteRow>[],
+    RemoteTables.friendRequests: <RemoteRow>[],
+    RemoteTables.friendships: <RemoteRow>[],
   };
 
   /// Accounts by email, as an auth provider would hold them.
@@ -85,6 +87,10 @@ class FakeTransport implements RemoteTransport {
   /// migration would. A select or upsert that names one of them is refused.
   final Set<String> missingColumns = <String>{};
 
+  /// Tables this stand-in pretends the project has not got, as a skipped
+  /// migration would.
+  final Set<String> missingTables = <String>{};
+
   /// Every select's column list, so a test can see a retry drop missing ones.
   final List<String> selectedColumns = <String>[];
 
@@ -113,6 +119,12 @@ class FakeTransport implements RemoteTransport {
     return null;
   }
 
+  /// The PostgREST line a missing table produces.
+  String? _missingTableRefusal(String table) {
+    if (!missingTables.contains(table)) return null;
+    return 'Could not find the table \'public.$table\' in the schema cache';
+  }
+
   /// Which columns make a row the same row, so an upsert replaces it.
   static const Map<String, List<String>> _keys = <String, List<String>>{
     RemoteTables.profiles: <String>['user_id'],
@@ -129,6 +141,8 @@ class FakeTransport implements RemoteTransport {
     RemoteTables.guildProjects: <String>['id'],
     RemoteTables.guildChallenges: <String>['id'],
     RemoteTables.activityPresence: <String>['user_id'],
+    RemoteTables.friendRequests: <String>['from_user_id', 'to_user_id'],
+    RemoteTables.friendships: <String>['user_a', 'user_b'],
   };
 
   /// Columns a table holds unique beyond its key, so an insert can lose a race.
@@ -149,6 +163,8 @@ class FakeTransport implements RemoteTransport {
     RemoteTables.guildGuests => <String, Object?>{'joined_at': stamp()},
     RemoteTables.guildProjects => <String, Object?>{'id': _nextId('gprj')},
     RemoteTables.guildChallenges => <String, Object?>{'id': _nextId('gch')},
+    RemoteTables.friendRequests => <String, Object?>{'created_at': stamp()},
+    RemoteTables.friendships => <String, Object?>{'created_at': stamp()},
     _ => const <String, Object?>{},
   };
 
@@ -240,6 +256,8 @@ class FakeTransport implements RemoteTransport {
     selectedColumns.add(columns);
     final reason = _takeFailure('select:$table');
     if (reason != null) return RemoteQueryResult.failed(reason);
+    final missingTable = _missingTableRefusal(table);
+    if (missingTable != null) return RemoteQueryResult.failed(missingTable);
     final missing = _missingColumnRefusal(columns);
     if (missing != null) return RemoteQueryResult.failed(missing);
 
@@ -317,6 +335,8 @@ class FakeTransport implements RemoteTransport {
     calls.add('upsert:$table');
     final reason = _takeFailure('upsert:$table');
     if (reason != null) return reason;
+    final missingTable = _missingTableRefusal(table);
+    if (missingTable != null) return missingTable;
     for (final row in rows) {
       final missing = _missingColumnRefusal(row.keys.join(','));
       if (missing != null) return missing;
@@ -345,6 +365,8 @@ class FakeTransport implements RemoteTransport {
     calls.add('insert:$table');
     final reason = _takeFailure('insert:$table');
     if (reason != null) return RemoteQueryResult.failed(reason);
+    final missingTable = _missingTableRefusal(table);
+    if (missingTable != null) return RemoteQueryResult.failed(missingTable);
 
     final key = _keys[table]!;
     final stored = tables.putIfAbsent(table, () => <RemoteRow>[]);
@@ -388,6 +410,8 @@ class FakeTransport implements RemoteTransport {
     calls.add('delete:$table');
     final reason = _takeFailure('delete:$table');
     if (reason != null) return reason;
+    final missingTable = _missingTableRefusal(table);
+    if (missingTable != null) return missingTable;
     if (equals.isEmpty) return 'A delete needs a filter.';
 
     final stored = tables.putIfAbsent(table, () => <RemoteRow>[]);
