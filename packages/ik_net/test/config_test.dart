@@ -98,6 +98,14 @@ void main() {
     expect(member.appearance.toJson(), defaultPlayerAppearance.toJson());
   });
 
+  test('matches a private channel by its pair parts, not a substring', () {
+    const pair = 'dm:usr_0001:usr_0002';
+    expect(dmChannelInvolves(pair, 'usr_0001'), isTrue);
+    expect(dmChannelInvolves(pair, 'usr_0002'), isTrue);
+    expect(dmChannelInvolves(pair, 'usr_000'), isFalse);
+    expect(dmChannelInvolves('global', 'usr_0001'), isFalse);
+  });
+
   test('rejects a URL that is only a suffix after trim', () {
     expect(RemoteBackendConfig.from(url: '  ', anonKey: 'key'), isNull);
     expect(

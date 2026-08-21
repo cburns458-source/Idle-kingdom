@@ -44,6 +44,7 @@ export const REMOTE_MAGIC_LINK_UNAVAILABLE =
 
 /** How many messages a channel read asks for. */
 export const REMOTE_CHAT_LIMIT = 50
+export const REMOTE_DIRECT_MESSAGE_LIMIT = 80
 
 /** As long as a username may be, which is what the account metadata carries. */
 export const REMOTE_USERNAME_MAX_LENGTH = 24

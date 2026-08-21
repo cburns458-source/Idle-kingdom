@@ -216,6 +216,7 @@ class FakeTransport implements RemoteTransport {
     String table, {
     required String columns,
     Map<String, Object?> equals = const <String, Object?>{},
+    Map<String, String> like = const <String, String>{},
     String? orderBy,
     bool ascending = true,
     int? limit,
@@ -227,6 +228,7 @@ class FakeTransport implements RemoteTransport {
     final storedTable = table == RemoteTables.leaderboardEntries ? RemoteTables.leaderboard : table;
     var rows = (tables[storedTable] ?? const <RemoteRow>[])
         .where((row) => equals.entries.every((filter) => row[filter.key] == filter.value))
+        .where((row) => like.entries.every((filter) => _matchesLike(row[filter.key], filter.value)))
         .map((row) => <String, Object?>{...row})
         .toList();
 
@@ -283,6 +285,13 @@ class FakeTransport implements RemoteTransport {
   static int _compare(Object? a, Object? b) {
     if (a is num && b is num) return a.compareTo(b);
     return '$a'.compareTo('$b');
+  }
+
+  /// SQL LIKE with `%` as the only wildcard, enough for `dm:%` inbox reads.
+  static bool _matchesLike(Object? value, String pattern) {
+    final text = '$value';
+    final regex = RegExp('^${RegExp.escape(pattern).replaceAll('\\%', '.*')}\$');
+    return regex.hasMatch(text);
   }
 
   @override

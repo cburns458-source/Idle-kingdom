@@ -478,11 +478,34 @@ class RemoteMultiplayerService implements MultiplayerService {
   }
 
   @override
-  Future<List<ChatMessage>> listDirectMessages() => _local.listDirectMessages();
+  Future<List<ChatMessage>> listDirectMessages() async {
+    if (!isSignedIn) return const <ChatMessage>[];
+    final viewerId = session!.userId;
+    final result = await transport.select(
+      RemoteTables.chat,
+      columns: remoteChatColumns,
+      like: const <String, String>{'channel_key': 'dm:%'},
+      orderBy: 'created_at',
+      limit: remoteDirectMessageLimit,
+    );
+    if (!result.ok) return const <ChatMessage>[];
+    final silenced = _local.backend.silencedIds(viewerId);
+    return [
+      for (final message in result.rows!.map(chatMessageFrom))
+        if (dmChannelInvolves(message.channelKey, viewerId) && !silenced.contains(message.userId))
+          message,
+    ];
+  }
 
   @override
-  Future<int> countUnreadDirectMessages(String? sinceIso) =>
-      _local.countUnreadDirectMessages(sinceIso);
+  Future<int> countUnreadDirectMessages(String? sinceIso) async {
+    if (!isSignedIn) return 0;
+    final viewerId = session!.userId;
+    final sinceMs = sinceIso != null ? jsDateParse(sinceIso) : 0;
+    return (await listDirectMessages())
+        .where((row) => row.userId != viewerId && jsDateParse(row.createdAt) > sinceMs)
+        .length;
+  }
 
   @override
   Future<void> mutePlayer(String targetUserId) => _local.mutePlayer(targetUserId);

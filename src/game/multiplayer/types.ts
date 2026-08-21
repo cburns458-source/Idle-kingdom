@@ -366,3 +366,9 @@ export function chatChannelKey(channel: ChatChannel): string {
 export function dmPairKey(userA: string, userB: string): string {
   return [userA, userB].sort().join(':')
 }
+
+/** True when [channelKey] is a private thread that includes [userId]. */
+export function dmChannelInvolves(channelKey: string, userId: string): boolean {
+  if (!channelKey.startsWith('dm:')) return false
+  return channelKey.slice(3).split(':').includes(userId)
+}

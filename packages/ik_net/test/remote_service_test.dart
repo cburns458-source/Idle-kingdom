@@ -424,6 +424,33 @@ void main() {
     expect(await service.listChat(const ChatChannel.global()), isEmpty);
   });
 
+  test('sends a private message through the function and the other account reads it', () async {
+    final transport = FakeTransport();
+    final hero = await _signedIn(transport, MemorySaveStorage());
+    final rival = _service(transport, MemorySaveStorage());
+    expect((await rival.signUp('rival@example.com', 'Rival', 'secret')).ok, isTrue);
+
+    final pair = ChatChannel.dm(dmPairKey(hero.session!.userId, rival.session!.userId));
+    final sent = await hero.sendChat(pair, 'Meet at the docks?');
+    expect(sent.ok, isTrue, reason: sent.reason);
+    expect(sent.message!.channelKey.startsWith('dm:'), isTrue);
+    expect(sent.message!.body, 'Meet at the docks?');
+
+    final heroInbox = await hero.listDirectMessages();
+    expect(heroInbox.single.body, 'Meet at the docks?');
+    expect(heroInbox.single.channelKey, sent.message!.channelKey);
+
+    final rivalInbox = await rival.listDirectMessages();
+    expect(rivalInbox.single.body, 'Meet at the docks?');
+    expect(rivalInbox.single.userId, hero.session!.userId);
+    expect(await rival.countUnreadDirectMessages(null), 1);
+    expect(await hero.countUnreadDirectMessages(null), 0);
+
+    final stranger = _service(transport, MemorySaveStorage());
+    expect((await stranger.signUp('stranger@example.com', 'Stranger', 'secret')).ok, isTrue);
+    expect(await stranger.listDirectMessages(), isEmpty);
+  });
+
   test('accepts either spelling of the fields the function answers with', () async {
     final transport = FakeTransport();
     final service = await _signedIn(transport, MemorySaveStorage());
