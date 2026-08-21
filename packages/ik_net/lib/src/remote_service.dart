@@ -66,6 +66,15 @@ class RemoteMultiplayerService implements MultiplayerService {
   /// The name that guild last had, stamped onto this account's presence row.
   String? _guildNameSeen;
 
+  /// Whether `profiles` has the chat-privacy columns. Null until a read tells
+  /// us. A hosted project that has not applied migration 011 answers without
+  /// them; once we see that, later reads skip the missing columns.
+  bool? _profilesHaveChatPrivacy;
+
+  String get _publicProfileSelectColumns => _profilesHaveChatPrivacy == false
+      ? remotePublicProfileBaseColumns
+      : remotePublicProfileColumns;
+
   /// This player's roster facts, taken from the save the account already has.
   Future<GuildMemberFacts> _ownMemberFacts() async {
     final current = session;
@@ -230,12 +239,24 @@ class RemoteMultiplayerService implements MultiplayerService {
 
   @override
   Future<MultiplayerProfile?> profile(String userId) async {
-    final result = await transport.select(
+    var result = await transport.select(
       RemoteTables.profiles,
-      columns: remotePublicProfileColumns,
+      columns: _publicProfileSelectColumns,
       equals: <String, Object?>{'user_id': userId},
       limit: 1,
     );
+    if (!result.ok && remoteMissingChatPrivacyColumn(result.reason)) {
+      _profilesHaveChatPrivacy = false;
+      _reads.clearIf(remoteMissingChatPrivacyColumn);
+      result = await transport.select(
+        RemoteTables.profiles,
+        columns: remotePublicProfileBaseColumns,
+        equals: <String, Object?>{'user_id': userId},
+        limit: 1,
+      );
+    } else if (result.ok) {
+      _profilesHaveChatPrivacy ??= true;
+    }
     if (!result.ok) return null;
     final profile = multiplayerProfileFromRemote(result.single);
     if (profile == null) return null;
@@ -328,13 +349,18 @@ class RemoteMultiplayerService implements MultiplayerService {
     if (current == null) return null;
     final dms = directMessages == null ? null : normalizeChatPrivacy(directMessages);
     final local = localChat == null ? null : normalizeChatPrivacy(localChat);
-    await transport.upsert(RemoteTables.profiles, <RemoteRow>[
-      <String, Object?>{
-        'user_id': current.userId,
-        'privacy_direct_messages': ?dms,
-        'privacy_local_chat': ?local,
-      },
-    ], onConflict: 'user_id');
+    if (_profilesHaveChatPrivacy != false) {
+      final refused = await transport.upsert(RemoteTables.profiles, <RemoteRow>[
+        <String, Object?>{
+          'user_id': current.userId,
+          'privacy_direct_messages': ?dms,
+          'privacy_local_chat': ?local,
+        },
+      ], onConflict: 'user_id');
+      if (refused != null && remoteMissingChatPrivacyColumn(refused)) {
+        _profilesHaveChatPrivacy = false;
+      }
+    }
     return _local.setChatPrivacy(directMessages: dms, localChat: local);
   }
 

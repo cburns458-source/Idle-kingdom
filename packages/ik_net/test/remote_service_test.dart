@@ -563,6 +563,36 @@ void main() {
     expect(await rival.publicProfile('missing-user'), isNull);
   });
 
+  test('loads a public profile when chat-privacy columns are missing', () async {
+    final transport = FakeTransport();
+    transport.missingColumns.addAll(const <String>[
+      'privacy_direct_messages',
+      'privacy_local_chat',
+    ]);
+    final hero = await _signedIn(transport, MemorySaveStorage());
+    final db = _database();
+    final save = createNewSave(db, _nowMs).copyWith(characterName: 'Hero');
+    await hero.submitLeaderboard(db, save);
+
+    final rival = _service(transport, MemorySaveStorage());
+    await rival.signUp('rival@example.com', 'Rival', 'secret');
+    final profile = await rival.publicProfile(hero.session!.userId, db: db);
+    expect(profile, isNotNull);
+    expect(profile!.username, 'Hero');
+    expect(profile.totalLevel, totalLevel(save));
+    expect((await rival.profile(hero.session!.userId))?.privacyDirectMessages, chatPrivacyPublic);
+    expect(rival.takeReadProblem(), isNull);
+
+    // A later read skips the missing columns instead of failing again.
+    final before = transport.selectedColumns.length;
+    expect(await rival.profile(hero.session!.userId), isNotNull);
+    expect(
+      transport.selectedColumns.sublist(before),
+      everyElement(isNot(contains('privacy_direct_messages'))),
+    );
+    expect(await hero.setChatPrivacy(directMessages: chatPrivacyFriends), isNotNull);
+  });
+
   test('hides snapshot skills when the account opted out of public skills', () async {
     final transport = FakeTransport();
     final hero = await _signedIn(transport, MemorySaveStorage());

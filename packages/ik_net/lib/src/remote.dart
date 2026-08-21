@@ -51,7 +51,22 @@ String friendlyRemoteError(String message) {
   if (message.toLowerCase().contains('invalid path specified')) {
     return remoteInvalidBackendUrl;
   }
+  if (remoteMissingChatPrivacyColumn(message)) {
+    return remoteChatPrivacyUnavailable;
+  }
   return message;
+}
+
+/// What a skipped chat-privacy migration looks like from PostgREST.
+const String remoteChatPrivacyUnavailable = 'Chat privacy is not available on the server yet.';
+
+/// True when [reason] is the hosted project missing migration 011.
+bool remoteMissingChatPrivacyColumn(String? reason) {
+  if (reason == null || reason.isEmpty) return false;
+  if (reason == remoteChatPrivacyUnavailable) return true;
+  final lower = reason.toLowerCase();
+  if (!lower.contains('does not exist')) return false;
+  return lower.contains('privacy_direct_messages') || lower.contains('privacy_local_chat');
 }
 
 /// What a screen says when an action threw instead of refusing.
@@ -84,10 +99,18 @@ const String remotePresenceColumns =
     'current_activity_id, skill_id, skill_level, outfit_cosmetic_id, '
     'mount_cosmetic_id, updated_at, expires_at';
 
-/// Columns a public profile sheet needs from `profiles`.
-const String remotePublicProfileColumns =
+/// Columns a public profile sheet needs from `profiles` that every project has.
+const String remotePublicProfileBaseColumns =
     'user_id, username, appearance_json, guild_id, privacy_public_skills, '
-    'privacy_direct_messages, privacy_local_chat, updated_at';
+    'updated_at';
+
+/// Chat-privacy columns from migration 011. Hosted projects that have not
+/// applied it still answer profile reads; these stay off the required select.
+const String remoteChatPrivacyColumns = 'privacy_direct_messages, privacy_local_chat';
+
+/// Columns a public profile sheet asks for when the privacy migration is on.
+const String remotePublicProfileColumns =
+    '$remotePublicProfileBaseColumns, $remoteChatPrivacyColumns';
 const String remotePresenceConflict = 'user_id';
 
 /// How many Bazaar notices a read asks for.
