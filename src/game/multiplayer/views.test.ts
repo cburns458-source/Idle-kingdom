@@ -437,17 +437,13 @@ describe('presence views', () => {
 
 describe('account views', () => {
   it('names the backend the player is talking to', () => {
-    expect(multiplayerModeLine('local')).toBe(
-      'Accounts use the local demo backend. Sign in to play and sync progress.',
-    )
-    expect(multiplayerModeLine('supabase')).toBe(
-      'Accounts use the Supabase. Sign in to play and sync progress.',
-    )
+    expect(multiplayerModeLine('local')).toBe('Sign in to play and sync progress.')
+    expect(multiplayerModeLine('supabase')).toBe('Sign in to play and sync progress.')
   })
 
   it('tells a new player they name the adventurer after the account', () => {
     expect(authGateIntro('local')).toBe(
-      'Create an account with your email and password. Name your adventurer next. Accounts use the local demo backend.',
+      'Create an account with your email and password. Name your adventurer next.',
     )
   })
 })

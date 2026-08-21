@@ -4,6 +4,7 @@ import 'package:ik_content/ik_content.dart';
 import '../activity/reward_summary.dart';
 import '../activity/rewards.dart';
 import '../activity/types.dart';
+import '../achievements/progress.dart';
 import '../activity/xp.dart';
 import '../bounties/progress.dart';
 import '../inventory/add_items.dart';
@@ -160,6 +161,7 @@ ProductionCraftResult? completeProductionCraft(GameDatabase db, PlayerSave save,
   final remaining = remainingBefore - 1;
   next = applyQuestProcessProgress(db, next, jsString(recipe.raw['Recipe ID']), 1);
   next = applyBountyProcessProgress(next, jsString(recipe.raw['Recipe ID']), 1, nowMs);
+  next = recordProductionMilestones(db, next, outputItemId, outputQty);
 
   final itemName = db.items
       .firstWhereOrNull((item) => item.raw['Item ID'] == outputItemId)

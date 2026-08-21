@@ -23,8 +23,9 @@ void main() {
 
     await openLog(tester);
 
-    expect(find.text('Skill milestones unlocked on this save.'), findsOne);
-    expect(find.textContaining('Reach '), findsWidgets);
+    expect(find.text('Milestones unlocked on this save.'), findsOne);
+    expect(find.text('Easy'), findsOne);
+    expect(find.textContaining('Reach level 50'), findsWidgets);
   });
 
   testWidgets('an achievement stays greyed out until it is earned', (tester) async {
@@ -40,7 +41,8 @@ void main() {
         find.ancestor(of: find.text(title), matching: find.byType(Opacity));
 
     expect(rowFor('Mining Level 50'), findsNothing);
-    expect(tester.widget<Opacity>(rowFor('Combat Level 50').first).opacity, lessThan(1));
+    expect(rowFor('Combat Level 50'), findsNothing);
+    expect(tester.widget<Opacity>(rowFor('Every skill 50').first).opacity, lessThan(1));
   });
 
   testWidgets('the Log reports how much of each page is done', (tester) async {
@@ -73,9 +75,11 @@ void main() {
     await pumpShell(tester, controller);
 
     await openLog(tester);
-    expect(find.text('Critter Collector'), findsOne);
+    await tester.tap(find.text('Hard'));
+    await tester.pumpAndSettle();
+    expect(find.text('Critter collector'), findsOne);
     expect(
-      find.ancestor(of: find.text('Critter Collector'), matching: find.byType(Opacity)),
+      find.ancestor(of: find.text('Critter collector'), matching: find.byType(Opacity)),
       findsNothing,
     );
 

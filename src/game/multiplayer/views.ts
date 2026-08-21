@@ -662,15 +662,13 @@ export function chatLineUsername(message: ChatMessage): string {
 }
 
 /** What the account panel says about where multiplayer data lives. */
-export function multiplayerModeLine(mode: 'local' | 'supabase'): string {
-  const backend = mode === 'local' ? 'local demo backend' : 'Supabase'
-  return `Accounts use the ${backend}. Sign in to play and sync progress.`
+export function multiplayerModeLine(_mode: 'local' | 'supabase'): string {
+  return 'Sign in to play and sync progress.'
 }
 
 /** What the entry gate says before character creation. */
-export function authGateIntro(mode: 'local' | 'supabase'): string {
-  const backend = mode === 'local' ? 'local demo backend' : 'Supabase'
-  return `Create an account with your email and password. Name your adventurer next. Accounts use the ${backend}.`
+export function authGateIntro(_mode: 'local' | 'supabase'): string {
+  return 'Create an account with your email and password. Name your adventurer next.'
 }
 
 /** The line every signed-out multiplayer panel shows instead of content. */

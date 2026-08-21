@@ -226,6 +226,17 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
     });
   }
 
+  /// Opens a district map: from a gateway, or back from a location on that map.
+  void _browseSubMap(String mapId) {
+    _cancelMapWalk();
+    setState(() {
+      _browseMapId = mapId;
+      _selectedLocationId = controller.save.currentLocationId;
+      _wardrobeOpen = false;
+      if (_stack.last != GameScreen.map) _stack.add(GameScreen.map);
+    });
+  }
+
   void _popToLocation() {
     _cancelMapWalk();
     setState(() {
@@ -453,6 +464,7 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
                     controller: controller,
                     multiplayer: multiplayer,
                     onOpenMap: _showMap,
+                    onOpenSubMap: _browseSubMap,
                     onOpenGuilds: () => _selectScreen(GameScreen.guilds),
                   ),
                   if (_screen != GameScreen.location)

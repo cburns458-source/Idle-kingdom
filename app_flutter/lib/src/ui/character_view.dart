@@ -39,7 +39,7 @@ class _CharacterViewState extends State<CharacterView> {
           child: Row(
             children: [
               for (final tab in CharacterTab.values) ...[
-                if (tab != CharacterTab.skills) const SizedBox(width: 8),
+                if (tab != CharacterTab.skills) const SizedBox(width: 6),
                 Expanded(
                   child: GameButton(
                     label: switch (tab) {

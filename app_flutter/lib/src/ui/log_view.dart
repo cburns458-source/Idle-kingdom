@@ -9,7 +9,7 @@ import 'game_image.dart';
 import 'page_header.dart';
 
 enum _LogTab {
-  achievements('Achievements', 'Skill milestones unlocked on this save.', 'achievements'),
+  achievements('Achievements', 'Milestones unlocked on this save.', 'achievements'),
   quests('Quests', 'Quest log for this save.', 'quests'),
   critters('Critters', 'Critters found while working their habitats.', 'critters');
 
@@ -124,15 +124,7 @@ class _LogViewState extends State<LogView> {
             padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
             children: [
               switch (_tab) {
-                _LogTab.achievements => _Rows([
-                  for (final row in achievementLog(db, save))
-                    _LogRow(
-                      title: row.name,
-                      detail: row.note,
-                      highlight: row.unlocked,
-                      dimmed: !row.unlocked,
-                    ),
-                ]),
+                _LogTab.achievements => _AchievementBands(rows: achievementLog(db, save)),
                 _LogTab.quests => _Rows([
                   for (final row in questLog(db, save))
                     _LogRow(
@@ -162,6 +154,84 @@ class _LogViewState extends State<LogView> {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _AchievementBands extends StatelessWidget {
+  const _AchievementBands({required this.rows});
+
+  final List<AchievementLogRow> rows;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (final difficulty in achievementDifficulties)
+          _DifficultyBand(
+            difficulty: difficulty,
+            rows: achievementLogForDifficulty(rows, difficulty),
+            completion: achievementDifficultyCompletion(rows, difficulty),
+          ),
+      ],
+    );
+  }
+}
+
+class _DifficultyBand extends StatelessWidget {
+  const _DifficultyBand({required this.difficulty, required this.rows, required this.completion});
+
+  final String difficulty;
+  final List<AchievementLogRow> rows;
+  final LogSectionCompletion completion;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: GamePanel(
+        padding: EdgeInsets.zero,
+        child: Theme(
+          data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+          child: ExpansionTile(
+            initiallyExpanded: difficulty == 'Easy',
+            tilePadding: const EdgeInsets.symmetric(horizontal: 12),
+            childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+            title: Text(
+              difficulty,
+              style: const TextStyle(fontWeight: FontWeight.w400, fontSize: 16),
+            ),
+            subtitle: Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  MutedText(completion.label),
+                  const SizedBox(height: 4),
+                  MeterBar(
+                    value: completion.total <= 0 ? 0 : completion.done / completion.total,
+                    color: Palette.gold,
+                    height: 6,
+                  ),
+                ],
+              ),
+            ),
+            children: [
+              for (final row in rows)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: _LogRow(
+                    title: row.name,
+                    detail: row.note,
+                    highlight: row.unlocked,
+                    dimmed: !row.unlocked,
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

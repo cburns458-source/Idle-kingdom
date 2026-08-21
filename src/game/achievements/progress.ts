@@ -9,12 +9,73 @@ export interface AchievementRow {
   'Internal Key': string
   'Display Name': string
   Category: string | null
+  Difficulty: string | null
+  'Check Type': string | null
+  'Target ID': string | null
+  'Required Count': number | null
   Status: string
   'Release Phase': string
   Reward: string | null
   'Target Skill ID': string | null
   'Required Level': number | null
   Notes: string | null
+}
+
+export const ACHIEVEMENT_DIFFICULTIES = ['Easy', 'Medium', 'Hard'] as const
+
+export function addLifetimeStat(save: PlayerSave, key: string, amount = 1): PlayerSave {
+  const current = Number(save.statistics.values[key] ?? 0)
+  return {
+    ...save,
+    statistics: {
+      values: {
+        ...save.statistics.values,
+        [key]: current + amount,
+      },
+    },
+  }
+}
+
+export function isSpellProject(project: { 'Internal Key'?: string; 'Display Name'?: string }): boolean {
+  const key = String(project['Internal Key'] ?? '')
+  const name = String(project['Display Name'] ?? '').toLowerCase()
+  return key.includes('_spell') || (name.includes('spell') && !name.includes('enchant'))
+}
+
+export function recordProjectMilestones(
+  db: GameDatabase,
+  save: PlayerSave,
+  projectId: string,
+  crafts: number,
+): PlayerSave {
+  const project = db.Projects.find((row) => row['Project ID'] === projectId)
+  let next = addLifetimeStat(save, `project_${projectId}`, crafts)
+  const outputId = String(project?.['Output Item / Target ID'] ?? '')
+  if (outputId.startsWith('ENCH-')) {
+    next = addLifetimeStat(next, 'items_enchanted', crafts)
+  }
+  if (project && isSpellProject(project)) {
+    next = addLifetimeStat(next, 'spell_projects', crafts)
+  }
+  return next
+}
+
+export function recordProductionMilestones(
+  db: GameDatabase,
+  save: PlayerSave,
+  outputItemId: string,
+  quantity: number,
+): PlayerSave {
+  let next = addLifetimeStat(save, `output_${outputItemId}`, quantity)
+  const item = db.Items.find((row) => row['Item ID'] === outputItemId)
+  if (item?.Category === 'Potion') {
+    next = addLifetimeStat(next, 'potions_created', quantity)
+  }
+  return next
+}
+
+export function recordFoodConsumed(save: PlayerSave, itemId: string): PlayerSave {
+  return addLifetimeStat(save, `consumed_${itemId}`, 1)
 }
 
 export interface StatisticRow {
@@ -77,6 +138,46 @@ function holdsRevocableAchievement(save: PlayerSave, achievementId: string): boo
   return achievementId === CRITTER_COLLECTOR_ACHIEVEMENT_ID && hasEveryCritter(save)
 }
 
+function lifetimeCount(values: Record<string, number>, key: string): number {
+  return Number(values[key] ?? 0)
+}
+
+function holdsMilestone(
+  db: GameDatabase,
+  save: PlayerSave,
+  achievement: AchievementRow,
+  values: Record<string, number>,
+): boolean {
+  const check = achievement['Check Type'] ?? ''
+  const target = achievement['Target ID']
+  const count = Number(achievement['Required Count'] ?? 1)
+  const required = achievement['Required Level']
+  switch (check) {
+    case 'project':
+      return target != null && lifetimeCount(values, `project_${target}`) >= count
+    case 'consume':
+      return target != null && lifetimeCount(values, `consumed_${target}`) >= count
+    case 'output_item':
+      return target != null && lifetimeCount(values, `output_${target}`) >= count
+    case 'enchant':
+      return lifetimeCount(values, 'items_enchanted') >= count
+    case 'potion':
+      return lifetimeCount(values, 'potions_created') >= count
+    case 'spell_projects':
+      return lifetimeCount(values, 'spell_projects') >= count
+    case 'gold':
+      return lifetimeCount(values, 'gold_earned') >= count
+    case 'skill_all':
+      if (typeof required !== 'number') return false
+      return db.Skills.every((skill) => getSkillProgress(save, skill['Skill ID']).level >= required)
+    default: {
+      const skillId = achievement['Target Skill ID']
+      if (!skillId || typeof required !== 'number') return false
+      return getSkillProgress(save, skillId).level >= required
+    }
+  }
+}
+
 /** Refresh lifetime totals and unlock skill-level achievements. */
 export function syncProgressionMeta(db: GameDatabase, save: PlayerSave, now = Date.now()): PlayerSave {
   const crittersCollected = (save.critterCollections ?? []).reduce(
@@ -103,11 +204,7 @@ export function syncProgressionMeta(db: GameDatabase, save: PlayerSave, now = Da
         : revokeAchievement(achievements, achievementId)
       continue
     }
-    const skillId = achievement['Target Skill ID']
-    const required = achievement['Required Level']
-    if (!skillId || typeof required !== 'number') continue
-    const level = getSkillProgress(save, skillId).level
-    if (level >= required) {
+    if (holdsMilestone(db, save, achievement, values)) {
       achievements = upsertAchievement(achievements, achievementId, unlockedAt)
     }
   }

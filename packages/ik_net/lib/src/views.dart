@@ -878,14 +878,20 @@ String chatLineUsername(ChatMessage message) {
 enum MultiplayerMode { local, supabase }
 
 String multiplayerModeLine(MultiplayerMode mode) {
-  final backend = mode == MultiplayerMode.local ? 'local demo backend' : 'Supabase';
-  return 'Accounts use the $backend. Sign in to play and sync progress.';
+  switch (mode) {
+    case MultiplayerMode.local:
+    case MultiplayerMode.supabase:
+      return 'Sign in to play and sync progress.';
+  }
 }
 
 /// What the entry gate says before character creation.
 String authGateIntro(MultiplayerMode mode) {
-  final backend = mode == MultiplayerMode.local ? 'local demo backend' : 'Supabase';
-  return 'Create an account with your email and password. Name your adventurer next. Accounts use the $backend.';
+  switch (mode) {
+    case MultiplayerMode.local:
+    case MultiplayerMode.supabase:
+      return 'Create an account with your email and password. Name your adventurer next.';
+  }
 }
 
 /// The line every signed-out multiplayer panel shows instead of content.

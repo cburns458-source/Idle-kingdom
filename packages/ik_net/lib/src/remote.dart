@@ -86,7 +86,8 @@ const String remotePresenceColumns =
 
 /// Columns a public profile sheet needs from `profiles`.
 const String remotePublicProfileColumns =
-    'user_id, username, appearance_json, guild_id, privacy_public_skills, updated_at';
+    'user_id, username, appearance_json, guild_id, privacy_public_skills, '
+    'privacy_direct_messages, privacy_local_chat, updated_at';
 const String remotePresenceConflict = 'user_id';
 
 /// How many Bazaar notices a read asks for.
@@ -461,6 +462,8 @@ MultiplayerProfile? multiplayerProfileFromRemote(RemoteRow? row) {
     guildId: _optStr(row['guild_id']),
     guildName: _optStr(row['guild_name']),
     privacyPublicSkills: row['privacy_public_skills'] != false,
+    privacyDirectMessages: normalizeChatPrivacy(_optStr(row['privacy_direct_messages'])),
+    privacyLocalChat: normalizeChatPrivacy(_optStr(row['privacy_local_chat'])),
     updatedAt: _str(row['updated_at']),
   );
 }

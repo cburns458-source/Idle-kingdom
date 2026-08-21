@@ -71,6 +71,10 @@ export function boardHidesZeroes(boardKey: MultiplayerBoardKey): boolean {
   return boardKey === 'total_level_combat_1'
 }
 
+export const CHAT_PRIVACY_PUBLIC = 'public'
+export const CHAT_PRIVACY_FRIENDS = 'friends'
+export const CHAT_PRIVACY_OFF = 'off'
+
 export interface MultiplayerProfile {
   userId: string
   username: string
@@ -78,6 +82,8 @@ export interface MultiplayerProfile {
   guildId: string | null
   guildName: string | null
   privacyPublicSkills: boolean
+  privacyDirectMessages?: string
+  privacyLocalChat?: string
   updatedAt: string
 }
 

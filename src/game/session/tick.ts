@@ -212,14 +212,14 @@ function resolveDueCombatRound(
     out.emit({
       kind: 'message',
       text: victory.foodConsumed
-        ? `Ate ${victory.foodName} (+${victory.foodHealed} HP)`
+        ? `Ate ${victory.foodName} (${victory.foodHealed > 0 ? '+' : ''}${victory.foodHealed} HP)`
         : round.thornsHit > 0
           ? `Thorns reflects ${round.thornsHit} and defeats ${enemy['Display Name']}!`
           : round.playerCrit
             ? `Critical hit! Defeated ${enemy['Display Name']}`
             : `Defeated ${enemy['Display Name']}`,
     })
-    if (victory.foodConsumed && victory.foodHealed > 0) {
+    if (victory.foodConsumed && victory.foodHealed !== 0) {
       out.emit({
         kind: 'food-healed',
         healed: victory.foodHealed,

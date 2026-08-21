@@ -263,16 +263,19 @@ class _GameButtonState extends State<GameButton> {
                     ? const EdgeInsets.symmetric(horizontal: 10, vertical: 6)
                     : const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 alignment: Alignment.center,
-                child: Text(
-                  widget.label,
-                  textAlign: TextAlign.center,
-                  maxLines: widget.compact ? 1 : 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontFamily: gameFontFamily,
-                    fontSize: widget.compact ? 12 : 13.5,
-                    fontWeight: FontWeight.w400,
-                    color: primary ? const Color(0xFFF4FFE8) : const Color(0xFFFFF4D4),
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    widget.label,
+                    textAlign: TextAlign.center,
+                    maxLines: widget.compact ? 1 : 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontFamily: gameFontFamily,
+                      fontSize: widget.compact ? 12 : 13.5,
+                      fontWeight: FontWeight.w400,
+                      color: primary ? const Color(0xFFF4FFE8) : const Color(0xFFFFF4D4),
+                    ),
                   ),
                 ),
               ),
@@ -654,6 +657,7 @@ class OverlayChipButton extends StatelessWidget {
     required this.onPressed,
     required this.child,
     this.dark = false,
+    this.highlight = false,
   });
 
   final String tooltip;
@@ -663,6 +667,9 @@ class OverlayChipButton extends StatelessWidget {
   /// The nearby chip is brown rather than the map's parchment green.
   final bool dark;
 
+  /// Gold rim when other players are standing here.
+  final bool highlight;
+
   @override
   Widget build(BuildContext context) {
     return Tooltip(
@@ -671,7 +678,14 @@ class OverlayChipButton extends StatelessWidget {
         color: dark ? Palette.panel : const Color(0xFFBADCA0),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: dark ? const Color(0x8CD4AF5A) : const Color(0xB3B4DC96)),
+          side: BorderSide(
+            color: highlight
+                ? Palette.gold
+                : dark
+                ? const Color(0x8CD4AF5A)
+                : const Color(0xB3B4DC96),
+            width: highlight ? 2 : 1,
+          ),
         ),
         shadowColor: const Color(0x47000000),
         elevation: 6,

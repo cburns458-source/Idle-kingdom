@@ -446,6 +446,14 @@ void main() {
     await tester.tap(find.widgetWithText(GameButton, 'Inventory'));
     await tester.pump();
     expect(find.textContaining('slots'), findsOne);
+
+    await tester.tap(find.widgetWithText(GameButton, 'Equipment'));
+    await tester.pump();
+    expect(find.text('Damage'), findsOne);
+    expect(find.text('Health'), findsOne);
+    expect(find.text('DR'), findsOne);
+    expect(find.text('Helmet'), findsOne);
+    expect(find.text('Active bonuses'), findsOne);
   });
 
   testWidgets('the chin nest opens Settings, Log, Leaderboards, and Guilds', (tester) async {
@@ -471,7 +479,7 @@ void main() {
 
     await tester.tap(find.text('Log'));
     await tester.pump();
-    expect(find.text('Skill milestones unlocked on this save.'), findsOne);
+    expect(find.text('Milestones unlocked on this save.'), findsOne);
   });
 
   testWidgets('the map travel walk is off until Settings turns it on', (tester) async {
@@ -554,9 +562,9 @@ void main() {
     expect(find.byTooltip('Open world map'), findsOne);
 
     await openChinScreen(tester, 'Log');
-    expect(find.text('Skill milestones unlocked on this save.'), findsOne);
+    expect(find.text('Milestones unlocked on this save.'), findsOne);
     await tester.tap(find.widgetWithText(GameButton, 'Close'));
     await tester.pump();
-    expect(find.text('Skill milestones unlocked on this save.'), findsNothing);
+    expect(find.text('Milestones unlocked on this save.'), findsNothing);
   });
 }

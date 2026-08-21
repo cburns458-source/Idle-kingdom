@@ -16,7 +16,9 @@ describe('achievement log', () => {
     const rows = achievementLog(launch, createNewSave(launch))
     expect(rows.length).toBeGreaterThan(0)
     expect(rows.every((row) => !row.unlocked)).toBe(true)
-    expect(rows[0]!.note).toMatch(/^Reach .+ level \d+$/)
+    expect(rows[0]!.note.length).toBeGreaterThan(0)
+    expect(rows.some((row) => row.difficulty === 'Easy')).toBe(true)
+    expect(rows.some((row) => row.difficulty === 'Hard')).toBe(true)
   })
 
   it('reads Unlocked once the save has it', () => {

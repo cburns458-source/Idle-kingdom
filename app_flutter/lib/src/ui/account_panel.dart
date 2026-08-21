@@ -90,18 +90,17 @@ class _AccountPanelState extends State<AccountPanel> {
       ),
       const SizedBox(height: 20),
       ..._peopleSection('Friends', net.friends, empty: 'No friends yet.'),
-      if (net.incomingFriendRequests.isNotEmpty) ...[
-        const SizedBox(height: 16),
-        ..._peopleSection(
-          'Friend requests',
-          net.incomingFriendRequests,
-          trailing: (contact) => GameButton(
-            label: 'Accept',
-            compact: true,
-            onPressed: net.busy ? null : () => net.sendFriendRequest(contact.userId),
-          ),
+      const SizedBox(height: 16),
+      ..._peopleSection(
+        'Friend requests',
+        net.incomingFriendRequests,
+        empty: 'No incoming requests.',
+        trailing: (contact) => GameButton(
+          label: 'Accept',
+          compact: true,
+          onPressed: net.busy ? null : () => net.sendFriendRequest(contact.userId),
         ),
-      ],
+      ),
       if (net.outgoingFriendRequests.isNotEmpty) ...[
         const SizedBox(height: 16),
         ..._peopleSection('Sent requests', net.outgoingFriendRequests, empty: ''),

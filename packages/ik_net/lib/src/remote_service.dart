@@ -322,6 +322,22 @@ class RemoteMultiplayerService implements MultiplayerService {
   Future<MultiplayerProfile?> setPrivacyPublicSkills(bool value) =>
       _local.setPrivacyPublicSkills(value);
 
+  @override
+  Future<MultiplayerProfile?> setChatPrivacy({String? directMessages, String? localChat}) async {
+    final current = session;
+    if (current == null) return null;
+    final dms = directMessages == null ? null : normalizeChatPrivacy(directMessages);
+    final local = localChat == null ? null : normalizeChatPrivacy(localChat);
+    await transport.upsert(RemoteTables.profiles, <RemoteRow>[
+      <String, Object?>{
+        'user_id': current.userId,
+        'privacy_direct_messages': ?dms,
+        'privacy_local_chat': ?local,
+      },
+    ], onConflict: 'user_id');
+    return _local.setChatPrivacy(directMessages: dms, localChat: local);
+  }
+
   /// The account's stored save row, or null when it has none or the read failed.
   Future<RemoteSaveRow?> _readSaveRow(String userId) async {
     final loaded = await _querySaveRow(userId);
@@ -459,6 +475,8 @@ class RemoteMultiplayerService implements MultiplayerService {
   @override
   Future<ChatSendResult> sendChat(ChatChannel channel, String body) async {
     if (!isSignedIn) return const ChatSendResult.failed('Sign in to chat.');
+    final blocked = await _remoteChatPrivacyRefusal(channel);
+    if (blocked != null) return ChatSendResult.failed(blocked);
     final result = await transport.invoke(remoteSendChatFunction, <String, Object?>{
       'channelKey': chatChannelKey(channel),
       'body': body,
@@ -480,7 +498,9 @@ class RemoteMultiplayerService implements MultiplayerService {
       limit: remoteChatLimit,
     );
     if (!result.ok) return const <ChatMessage>[];
-    return result.rows!.map(chatMessageFrom).toList();
+    final messages = result.rows!.map(chatMessageFrom).toList();
+    if (channel is! LocalChatChannel) return messages;
+    return _filterLocalChat(messages);
   }
 
   @override
@@ -841,6 +861,53 @@ class RemoteMultiplayerService implements MultiplayerService {
     int inventoryIndex,
     num quantity,
   ) => _guilds.contributeHallItem(save, inventoryIndex, quantity);
+
+  Future<String?> _remoteChatPrivacyRefusal(ChatChannel channel) async {
+    final me = session?.userId;
+    if (me == null) return 'Sign in to chat.';
+    if (channel is LocalChatChannel) {
+      final mine = await profile(me) ?? _local.backend.getProfile(me);
+      return refuseOutgoingLocalChat(mine?.privacyLocalChat ?? chatPrivacyPublic);
+    }
+    if (channel is DirectChatChannel) {
+      final parts = channel.pairKey.split(':');
+      final peer = parts.length < 2
+          ? null
+          : parts[0] == me
+          ? parts[1]
+          : parts[1];
+      if (peer == null || peer.isEmpty) return 'Unknown chat channel.';
+      final theirs = await profile(peer) ?? _local.backend.getProfile(peer);
+      final friends = await _local.friends();
+      return refuseIncomingDirectMessage(
+        theirs?.privacyDirectMessages ?? chatPrivacyPublic,
+        areFriends: friends.any((row) => row.userId == peer),
+      );
+    }
+    return null;
+  }
+
+  Future<List<ChatMessage>> _filterLocalChat(List<ChatMessage> messages) async {
+    final me = session?.userId;
+    if (me == null) return const <ChatMessage>[];
+    final mine = await profile(me) ?? _local.backend.getProfile(me);
+    final viewerPrivacy = mine?.privacyLocalChat ?? chatPrivacyPublic;
+    final friends = {for (final row in await _local.friends()) row.userId};
+    final out = <ChatMessage>[];
+    for (final message in messages) {
+      final sender = await profile(message.userId) ?? _local.backend.getProfile(message.userId);
+      if (canSeeLocalChatLine(
+        viewerId: me,
+        senderId: message.userId,
+        viewerPrivacy: viewerPrivacy,
+        senderPrivacy: sender?.privacyLocalChat ?? chatPrivacyPublic,
+        areFriends: friends.contains(message.userId),
+      )) {
+        out.add(message);
+      }
+    }
+    return out;
+  }
 
   /// Sparring partners in the hall, which stay on the device.
   ///

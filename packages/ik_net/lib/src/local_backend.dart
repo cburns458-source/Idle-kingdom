@@ -228,6 +228,8 @@ class LocalMultiplayerBackend {
     String userId, {
     PlayerAppearance? appearance,
     bool? privacyPublicSkills,
+    String? privacyDirectMessages,
+    String? privacyLocalChat,
     String? username,
   }) {
     final db = _db();
@@ -236,6 +238,8 @@ class LocalMultiplayerBackend {
     db.profiles[index] = db.profiles[index].copyWith(
       appearance: appearance,
       privacyPublicSkills: privacyPublicSkills,
+      privacyDirectMessages: privacyDirectMessages,
+      privacyLocalChat: privacyLocalChat,
       username: username,
       updatedAt: _nowIso(),
     );
@@ -411,12 +415,55 @@ class LocalMultiplayerBackend {
   GuildGuest? _guestOf(LocalDb db, String userId) =>
       db.guests.firstWhereOrNull((row) => row.userId == userId);
 
+  String? _chatPrivacyRefusal(String senderId, ChatChannel channel) {
+    if (channel is LocalChatChannel) {
+      final mine = getProfile(senderId);
+      return refuseOutgoingLocalChat(mine?.privacyLocalChat ?? chatPrivacyPublic);
+    }
+    if (channel is DirectChatChannel) {
+      final peer = _dmPeerId(channel.pairKey, senderId);
+      if (peer == null) return 'Unknown chat channel.';
+      final theirs = getProfile(peer);
+      return refuseIncomingDirectMessage(
+        theirs?.privacyDirectMessages ?? chatPrivacyPublic,
+        areFriends: _areFriends(senderId, peer),
+      );
+    }
+    return null;
+  }
+
+  bool _canSeeChatLine(LocalDb db, ChatChannel channel, String viewerId, ChatMessage row) {
+    if (channel is! LocalChatChannel) return true;
+    final viewer = getProfile(viewerId);
+    final sender = getProfile(row.userId);
+    return canSeeLocalChatLine(
+      viewerId: viewerId,
+      senderId: row.userId,
+      viewerPrivacy: viewer?.privacyLocalChat ?? chatPrivacyPublic,
+      senderPrivacy: sender?.privacyLocalChat ?? chatPrivacyPublic,
+      areFriends: _areFriends(viewerId, row.userId),
+    );
+  }
+
+  bool _areFriends(String userA, String userB) =>
+      listFriends(userA).any((row) => row.userId == userB);
+
+  String? _dmPeerId(String pairKey, String me) {
+    final parts = pairKey.split(':');
+    if (parts.length < 2) return null;
+    if (parts[0] == me) return parts[1];
+    if (parts[1] == me) return parts[0];
+    return null;
+  }
+
   // --- Chat -----------------------------------------------------------------
 
   ChatSendResult sendChat(MultiplayerSession session, ChatChannel channel, String body) {
     final trimmedBody = body.trim();
     final trimmed = trimmedBody.length > 240 ? trimmedBody.substring(0, 240) : trimmedBody;
     if (trimmed.isEmpty) return const ChatSendResult.failed('Message is empty.');
+    final privacyBlock = _chatPrivacyRefusal(session.userId, channel);
+    if (privacyBlock != null) return ChatSendResult.failed(privacyBlock);
     final key = chatChannelKey(channel);
     final cooldown = switch (channel) {
       GlobalChatChannel() => ChatCooldownSeconds.global,
@@ -482,6 +529,7 @@ class LocalMultiplayerBackend {
     final silenced = _silencedBy(db, viewerId);
     final rows = db.messages
         .where((row) => row.channelKey == key && !silenced.contains(row.userId))
+        .where((row) => _canSeeChatLine(db, channel, viewerId, row))
         .toList();
     mergeSort(
       rows,
