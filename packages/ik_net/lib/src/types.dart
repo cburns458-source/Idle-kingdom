@@ -1076,6 +1076,12 @@ String dmPairKey(String userA, String userB) {
   return pair.join(':');
 }
 
+/// True when [channelKey] is a private thread that includes [userId].
+bool dmChannelInvolves(String channelKey, String userId) {
+  if (!channelKey.startsWith('dm:')) return false;
+  return channelKey.substring(3).split(':').contains(userId);
+}
+
 /// The appearance a row falls back to when no save or profile supplied one.
 const PlayerAppearance defaultPlayerAppearance = PlayerAppearance(
   skinTone: defaultSkinToneId,

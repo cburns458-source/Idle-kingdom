@@ -6,11 +6,12 @@ import {
   REMOTE_CHAT_COLUMNS,
   REMOTE_CHAT_LIMIT,
   REMOTE_CHAT_SEND_FAILED,
+  REMOTE_DIRECT_MESSAGE_LIMIT,
   REMOTE_NOT_CONFIGURED,
   REMOTE_SEND_CHAT_FUNCTION,
   REMOTE_TABLES,
 } from './remote'
-import { chatChannelKey, type ChatChannel, type ChatMessage } from './types'
+import { chatChannelKey, dmChannelInvolves, type ChatChannel, type ChatMessage } from './types'
 
 export async function sendChatMessage(
   channel: ChatChannel,
@@ -55,13 +56,34 @@ export async function listChatMessages(channel: ChatChannel): Promise<ChatMessag
 export async function listDirectMessages(): Promise<ChatMessage[]> {
   const session = getSession()
   if (!session) return []
-  return getLocalBackend().listDirectMessages(session.userId)
+  if (multiplayerMode() === 'local') {
+    return getLocalBackend().listDirectMessages(session.userId)
+  }
+  const client = getSupabaseClient()
+  if (!client) return []
+  const { data, error } = await client
+    .from(REMOTE_TABLES.chat)
+    .select(REMOTE_CHAT_COLUMNS)
+    .like('channel_key', 'dm:%')
+    .order('created_at', { ascending: true })
+    .limit(REMOTE_DIRECT_MESSAGE_LIMIT)
+  if (error || !data) return []
+  const silenced = new Set(getLocalBackend().silencedIds(session.userId))
+  return data
+    .map(chatMessageFrom)
+    .filter((message) => dmChannelInvolves(message.channelKey, session.userId) && !silenced.has(message.userId))
 }
 
-export function countUnreadDirectMessages(sinceIso: string | null): number {
+export async function countUnreadDirectMessages(sinceIso: string | null): Promise<number> {
   const session = getSession()
   if (!session) return 0
-  return getLocalBackend().countUnreadDirectMessages(session.userId, sinceIso)
+  if (multiplayerMode() === 'local') {
+    return getLocalBackend().countUnreadDirectMessages(session.userId, sinceIso)
+  }
+  const sinceMs = sinceIso ? Date.parse(sinceIso) : 0
+  const messages = await listDirectMessages()
+  return messages.filter((row) => row.userId !== session.userId && Date.parse(row.createdAt) > sinceMs)
+    .length
 }
 
 export function mutePlayer(targetUserId: string): void {

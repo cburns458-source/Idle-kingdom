@@ -42,6 +42,7 @@ class NotedReads implements RemoteTransport {
     String table, {
     required String columns,
     Map<String, Object?> equals = const <String, Object?>{},
+    Map<String, String> like = const <String, String>{},
     String? orderBy,
     bool ascending = true,
     int? limit,
@@ -50,6 +51,7 @@ class NotedReads implements RemoteTransport {
       table,
       columns: columns,
       equals: equals,
+      like: like,
       orderBy: orderBy,
       ascending: ascending,
       limit: limit,

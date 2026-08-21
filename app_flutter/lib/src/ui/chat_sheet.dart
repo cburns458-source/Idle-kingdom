@@ -329,11 +329,15 @@ class _ChatSheetState extends State<ChatSheet> {
     if (threads.isEmpty) return const SizedBox.shrink();
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 0, 12, 6),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: Wrap(
+          alignment: WrapAlignment.start,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: 6,
+          runSpacing: 6,
           children: [
-            for (final thread in threads) ...[
+            for (final thread in threads)
               GameButton(
                 label: thread.username,
                 compact: true,
@@ -343,8 +347,6 @@ class _ChatSheetState extends State<ChatSheet> {
                     : GameButtonTone.secondary,
                 onPressed: () => net.selectDmPeer(thread.userId, username: thread.username),
               ),
-              const SizedBox(width: 6),
-            ],
           ],
         ),
       ),

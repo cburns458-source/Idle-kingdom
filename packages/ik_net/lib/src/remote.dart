@@ -66,6 +66,9 @@ const String remoteMagicLinkUnavailable =
 /// How many messages a channel read asks for.
 const int remoteChatLimit = 50;
 
+/// How many private messages an inbox read asks for.
+const int remoteDirectMessageLimit = 80;
+
 /// As long as a username may be, which is what the account metadata carries.
 const int remoteUsernameMaxLength = 24;
 

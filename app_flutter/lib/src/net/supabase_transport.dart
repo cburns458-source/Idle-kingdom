@@ -122,6 +122,7 @@ class SupabaseTransport implements RemoteTransport {
     String table, {
     required String columns,
     Map<String, Object?> equals = const <String, Object?>{},
+    Map<String, String> like = const <String, String>{},
     String? orderBy,
     bool ascending = true,
     int? limit,
@@ -130,6 +131,9 @@ class SupabaseTransport implements RemoteTransport {
       var filter = client.from(table).select(columns);
       for (final entry in equals.entries) {
         filter = filter.eq(entry.key, entry.value as Object);
+      }
+      for (final entry in like.entries) {
+        filter = filter.like(entry.key, entry.value);
       }
       // Ordering and limiting have to come after every filter, which is why the
       // query is only narrowed once the loop above is done.

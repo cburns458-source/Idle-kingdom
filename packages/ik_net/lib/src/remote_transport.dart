@@ -84,6 +84,7 @@ abstract interface class RemoteTransport {
     String table, {
     required String columns,
     Map<String, Object?> equals = const <String, Object?>{},
+    Map<String, String> like = const <String, String>{},
     String? orderBy,
     bool ascending = true,
     int? limit,

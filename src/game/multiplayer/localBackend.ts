@@ -654,6 +654,15 @@ export class LocalMultiplayerBackend {
       .slice(-limit)
   }
 
+  /** Mutes and blocks this account will not see in private chat. */
+  silencedIds(userId: string): string[] {
+    const db = this.db()
+    return [
+      ...db.mutes.filter((row) => row.userId === userId).map((row) => row.mutedUserId),
+      ...db.blocks.filter((row) => row.userId === userId).map((row) => row.blockedUserId),
+    ]
+  }
+
   /** Unread DMs sent by other players after `sinceIso` (exclusive). */
   countUnreadDirectMessages(viewerId: string, sinceIso: string | null): number {
     const sinceMs = sinceIso ? Date.parse(sinceIso) : 0

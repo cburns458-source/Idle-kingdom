@@ -558,6 +558,9 @@ class LocalMultiplayerBackend {
       if (row.userId == userId) row.otherUserId,
   };
 
+  /// Mutes and blocks this account will not see in private chat.
+  Set<String> silencedIds(String userId) => _silencedBy(_db(), userId);
+
   ActionResult removeFriend(String userId, String otherUserId) {
     if (userId == otherUserId) return const ActionResult.failed('Cannot unfriend yourself.');
     final db = _db();

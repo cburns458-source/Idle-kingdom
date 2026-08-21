@@ -587,6 +587,13 @@ class MultiplayerController extends ChangeNotifier {
     if (!isSignedIn) return;
     if (await _wasKicked()) return;
     _unreadDms = await service.countUnreadDirectMessages(_dmCursor());
+    if (_chatTab == ChatTab.dm) {
+      _messages = await service.listDirectMessages();
+      _ingestDmPeers(_messages);
+      if (_selectedDmPeerId == null && _openDmPeerIds.isNotEmpty) {
+        _selectedDmPeerId = _openDmPeerIds.first;
+      }
+    }
     _citadelVisitors = await service.citadelVisitors();
     _presence = await service.presenceRecords();
     _peers = await service.peersAtLocation(save.currentLocationId);
@@ -781,6 +788,9 @@ class MultiplayerController extends ChangeNotifier {
     if (tab == ChatTab.dm) {
       _messages = await service.listDirectMessages();
       _ingestDmPeers(_messages);
+      if (_selectedDmPeerId == null && _openDmPeerIds.isNotEmpty) {
+        _selectedDmPeerId = _openDmPeerIds.first;
+      }
       _markDmsRead();
       notifyListeners();
       return;
@@ -870,12 +880,15 @@ class MultiplayerController extends ChangeNotifier {
       if (me == null) return 'Sign in to chat.';
       final result = await service.sendChat(ChatChannel.dm(dmPairKey(me, userId)), body);
       if (!result.ok) return result.reason;
-      rememberDmPeer(userId, username ?? _dmPeerNames[userId] ?? 'Adventurer');
-      if (_chatTab == ChatTab.dm) {
-        _messages = await service.listDirectMessages();
-        _ingestDmPeers(_messages);
-        _markDmsRead();
+      _chatTab = ChatTab.dm;
+      selectDmPeer(userId, username: username ?? _dmPeerNames[userId] ?? 'Adventurer');
+      _messages = await service.listDirectMessages();
+      if (_messages.isEmpty) {
+        final sent = result.message;
+        if (sent != null) _messages = <ChatMessage>[sent];
       }
+      _ingestDmPeers(_messages);
+      _markDmsRead();
       return announceSent ? 'Message sent.' : null;
     });
   }
