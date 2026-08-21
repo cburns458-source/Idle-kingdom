@@ -59,12 +59,28 @@ class InventoryView extends StatefulWidget {
 }
 
 class _InventoryViewState extends State<InventoryView> {
-  late _InventoryTab _tab = widget.pane == InventoryPane.equipment
-      ? _InventoryTab.equipment
-      : _InventoryTab.items;
+  late _InventoryTab _tab = _paneTab(widget.pane);
   String? _message;
   bool _showSources = false;
   bool get _lockedPane => widget.pane != null;
+
+  /// Character locks this to one pane. Prefer that over leftover inner-tab state
+  /// so Equipment cannot keep showing the bag after Inventory.
+  _InventoryTab get _activeTab => _lockedPane ? _paneTab(widget.pane) : _tab;
+
+  static _InventoryTab _paneTab(InventoryPane? pane) =>
+      pane == InventoryPane.equipment ? _InventoryTab.equipment : _InventoryTab.items;
+
+  @override
+  void didUpdateWidget(InventoryView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.pane != widget.pane) {
+      _tab = _paneTab(widget.pane);
+      _selling = null;
+      _message = null;
+      _showSources = false;
+    }
+  }
 
   /// Non-null while picking stacks to sell; values are chosen quantities.
   Map<int, int>? _selling;
@@ -219,7 +235,7 @@ class _InventoryViewState extends State<InventoryView> {
         Column(
           children: [
             _header(),
-            Expanded(child: _tab == _InventoryTab.items ? _bag() : _paperDoll()),
+            Expanded(child: _activeTab == _InventoryTab.items ? _bag() : _paperDoll()),
           ],
         ),
         if (_message case final message?)
@@ -251,7 +267,7 @@ class _InventoryViewState extends State<InventoryView> {
               PageHeader(title: 'Inventory', onClose: widget.onClose!)
             else
               const Text('Inventory', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w400)),
-          if (_tab == _InventoryTab.items)
+          if (_activeTab == _InventoryTab.items)
             Align(
               alignment: Alignment.centerRight,
               child: MutedText('${inventorySlotCount(save)} / $inventorySlotLimit slots'),
@@ -264,8 +280,8 @@ class _InventoryViewState extends State<InventoryView> {
                   child: GameButton(
                     label: 'Items',
                     compact: true,
-                    selected: _tab == _InventoryTab.items,
-                    tone: _tab == _InventoryTab.items
+                    selected: _activeTab == _InventoryTab.items,
+                    tone: _activeTab == _InventoryTab.items
                         ? GameButtonTone.primary
                         : GameButtonTone.secondary,
                     onPressed: () => setState(() {
@@ -281,8 +297,8 @@ class _InventoryViewState extends State<InventoryView> {
                   child: GameButton(
                     label: 'Equipment',
                     compact: true,
-                    selected: _tab == _InventoryTab.equipment,
-                    tone: _tab == _InventoryTab.equipment
+                    selected: _activeTab == _InventoryTab.equipment,
+                    tone: _activeTab == _InventoryTab.equipment
                         ? GameButtonTone.primary
                         : GameButtonTone.secondary,
                     onPressed: () => setState(() {
@@ -316,7 +332,7 @@ class _InventoryViewState extends State<InventoryView> {
                 ),
               ],
             ),
-          ] else if (_tab == _InventoryTab.items) ...[
+          ] else if (_activeTab == _InventoryTab.items) ...[
             const SizedBox(height: 8),
             Align(
               alignment: Alignment.centerLeft,

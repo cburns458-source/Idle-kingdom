@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:ik_content/ik_content.dart';
+import 'package:ik_net/ik_net.dart';
 import 'package:ik_rules/ik_rules.dart';
 
 import '../session/game_controller.dart';
@@ -32,6 +33,8 @@ class MenuView extends StatefulWidget {
   State<MenuView> createState() => _MenuViewState();
 }
 
+enum _SettingsTab { general, account }
+
 class _MenuViewState extends State<MenuView> {
   String? _artNotice;
   bool _artError = false;
@@ -40,6 +43,7 @@ class _MenuViewState extends State<MenuView> {
   late String _raceId;
   late String _skillId;
   String _itemId = 'ITEM-0025';
+  _SettingsTab _tab = _SettingsTab.general;
 
   GameController get controller => widget.controller;
 
@@ -103,134 +107,221 @@ class _MenuViewState extends State<MenuView> {
             const Text('Settings', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w400)),
           if (widget.onClose == null) const SizedBox(height: 4),
           const MutedText('Settings and save tools.'),
-          const SizedBox(height: 16),
-          GamePanel(
-            child: Row(
-              children: [
-                const Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Map travel animation', style: TextStyle(fontWeight: FontWeight.w400)),
-                      MutedText('Walk a small sprite to the destination before arriving.'),
-                    ],
-                  ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: GameButton(
+                  label: 'General',
+                  compact: true,
+                  selected: _tab == _SettingsTab.general,
+                  tone: _tab == _SettingsTab.general
+                      ? GameButtonTone.primary
+                      : GameButtonTone.secondary,
+                  onPressed: () => setState(() => _tab = _SettingsTab.general),
                 ),
-                GameSwitch(
-                  value: controller.mapTravelAnimation,
-                  onChanged: controller.setMapTravelAnimation,
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: GameButton(
+                  label: 'Account',
+                  compact: true,
+                  selected: _tab == _SettingsTab.account,
+                  tone: _tab == _SettingsTab.account
+                      ? GameButtonTone.primary
+                      : GameButtonTone.secondary,
+                  onPressed: () => setState(() => _tab = _SettingsTab.account),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
           const SizedBox(height: 16),
-          ListenableBuilder(
-            listenable: widget.multiplayer,
-            builder: (context, _) {
-              return Column(
+          if (_tab == _SettingsTab.account)
+            AccountPanel(controller: controller, multiplayer: widget.multiplayer, embedded: true)
+          else ...[
+            GamePanel(
+              child: Row(
                 children: [
-                  GamePanel(
-                    child: Row(
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('Filter chat', style: TextStyle(fontWeight: FontWeight.w400)),
-                              MutedText(
-                                'Hide profanity in chat. Messages are still stored as typed.',
-                              ),
-                            ],
-                          ),
-                        ),
-                        GameSwitch(
-                          value: widget.multiplayer.filterChatProfanity,
-                          onChanged: widget.multiplayer.setFilterChatProfanity,
-                        ),
+                        Text('Map travel animation', style: TextStyle(fontWeight: FontWeight.w400)),
+                        MutedText('Walk a small sprite to the destination before arriving.'),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  GamePanel(
-                    child: Row(
-                      children: [
-                        const Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Guild tag on HUD',
-                                style: TextStyle(fontWeight: FontWeight.w400),
-                              ),
-                              MutedText('Show your guild tag, like [DEV], before your name.'),
-                            ],
-                          ),
-                        ),
-                        GameSwitch(
-                          value: widget.multiplayer.showHudGuildTag,
-                          onChanged: widget.multiplayer.setShowHudGuildTag,
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  GamePanel(
-                    child: Row(
-                      children: [
-                        const Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Show title on HUD',
-                                style: TextStyle(fontWeight: FontWeight.w400),
-                              ),
-                              MutedText(
-                                'Show your equipped title, like The Undying, after your name.',
-                              ),
-                            ],
-                          ),
-                        ),
-                        GameSwitch(
-                          value: controller.showTitleOnHud,
-                          onChanged: controller.setShowTitleOnHud,
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  GamePanel(
-                    child: Row(
-                      children: [
-                        const Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Hide chat bubble',
-                                style: TextStyle(fontWeight: FontWeight.w400),
-                              ),
-                              MutedText('Hide the chat button in the corner of the game.'),
-                            ],
-                          ),
-                        ),
-                        GameSwitch(
-                          value: widget.multiplayer.hideChatBubble,
-                          onChanged: widget.multiplayer.setHideChatBubble,
-                        ),
-                      ],
-                    ),
+                  GameSwitch(
+                    value: controller.mapTravelAnimation,
+                    onChanged: controller.setMapTravelAnimation,
                   ),
                 ],
-              );
-            },
+              ),
+            ),
+            const SizedBox(height: 16),
+            ListenableBuilder(
+              listenable: widget.multiplayer,
+              builder: (context, _) {
+                return Column(
+                  children: [
+                    GamePanel(
+                      child: Row(
+                        children: [
+                          const Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('Filter chat', style: TextStyle(fontWeight: FontWeight.w400)),
+                                MutedText(
+                                  'Hide profanity in chat. Messages are still stored as typed.',
+                                ),
+                              ],
+                            ),
+                          ),
+                          GameSwitch(
+                            value: widget.multiplayer.filterChatProfanity,
+                            onChanged: widget.multiplayer.setFilterChatProfanity,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    GamePanel(
+                      child: Row(
+                        children: [
+                          const Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Guild tag on HUD',
+                                  style: TextStyle(fontWeight: FontWeight.w400),
+                                ),
+                                MutedText('Show your guild tag, like [DEV], before your name.'),
+                              ],
+                            ),
+                          ),
+                          GameSwitch(
+                            value: widget.multiplayer.showHudGuildTag,
+                            onChanged: widget.multiplayer.setShowHudGuildTag,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    GamePanel(
+                      child: Row(
+                        children: [
+                          const Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Show title on HUD',
+                                  style: TextStyle(fontWeight: FontWeight.w400),
+                                ),
+                                MutedText(
+                                  'Show your equipped title, like The Undying, after your name.',
+                                ),
+                              ],
+                            ),
+                          ),
+                          GameSwitch(
+                            value: controller.showTitleOnHud,
+                            onChanged: controller.setShowTitleOnHud,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    GamePanel(
+                      child: Row(
+                        children: [
+                          const Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Hide chat bubble',
+                                  style: TextStyle(fontWeight: FontWeight.w400),
+                                ),
+                                MutedText('Hide the chat button in the corner of the game.'),
+                              ],
+                            ),
+                          ),
+                          GameSwitch(
+                            value: widget.multiplayer.hideChatBubble,
+                            onChanged: widget.multiplayer.setHideChatBubble,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+            const SizedBox(height: 16),
+            ListenableBuilder(
+              listenable: widget.multiplayer,
+              builder: (context, _) {
+                return Column(
+                  children: [
+                    _chatPrivacyRow(
+                      title: 'Private messages',
+                      detail: 'Who may send you a private message.',
+                      value: widget.multiplayer.privacyDirectMessages,
+                      onChanged: widget.multiplayer.setPrivacyDirectMessages,
+                    ),
+                    const SizedBox(height: 16),
+                    _chatPrivacyRow(
+                      title: 'Local chat',
+                      detail: 'Who may see you in local chat, and whose lines you see.',
+                      value: widget.multiplayer.privacyLocalChat,
+                      onChanged: widget.multiplayer.setPrivacyLocalChat,
+                    ),
+                  ],
+                );
+              },
+            ),
+            const SizedBox(height: 16),
+            _buildTestingTools(),
+            const SizedBox(height: 16),
+            _buildPlayerSprite(save, hasOverride),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _chatPrivacyRow({
+    required String title,
+    required String detail,
+    required String value,
+    required Future<void> Function(String value) onChanged,
+  }) {
+    return GamePanel(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(title, style: const TextStyle(fontWeight: FontWeight.w400)),
+          MutedText(detail),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              for (final option in chatPrivacyValues)
+                GameButton(
+                  label: chatPrivacyLabel(option),
+                  compact: true,
+                  selected: value == option,
+                  tone: value == option ? GameButtonTone.primary : GameButtonTone.secondary,
+                  onPressed: widget.multiplayer.busy || !widget.multiplayer.isSignedIn
+                      ? null
+                      : () => onChanged(option),
+                ),
+            ],
           ),
-          const SizedBox(height: 16),
-          AccountPanel(controller: controller, multiplayer: widget.multiplayer, embedded: true),
-          const SizedBox(height: 16),
-          _buildTestingTools(),
-          const SizedBox(height: 16),
-          _buildPlayerSprite(save, hasOverride),
         ],
       ),
     );

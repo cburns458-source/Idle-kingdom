@@ -194,7 +194,7 @@ void _resolveDueCombatRound(
     out.emit(
       MessageEvent(
         victory.foodConsumed
-            ? 'Ate ${jsString(victory.foodName)} (+${jsNumberToString(victory.foodHealed)} HP)'
+            ? 'Ate ${jsString(victory.foodName)} (${victory.foodHealed > 0 ? '+' : ''}${jsNumberToString(victory.foodHealed)} HP)'
             : round.thornsHit > 0
             ? 'Thorns reflects ${jsNumberToString(round.thornsHit)} and defeats $enemyName!'
             : round.playerCrit
@@ -202,7 +202,7 @@ void _resolveDueCombatRound(
             : 'Defeated $enemyName',
       ),
     );
-    if (victory.foodConsumed && victory.foodHealed > 0) {
+    if (victory.foodConsumed && victory.foodHealed != 0) {
       out.emit(FoodHealedEvent(healed: victory.foodHealed, foodName: jsString(victory.foodName)));
     }
     out.emit(EnemyDefeatedEvent(enemyId: enemyId, enemyName: enemyName));

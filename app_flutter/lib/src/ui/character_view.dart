@@ -39,7 +39,7 @@ class _CharacterViewState extends State<CharacterView> {
           child: Row(
             children: [
               for (final tab in CharacterTab.values) ...[
-                if (tab != CharacterTab.skills) const SizedBox(width: 8),
+                if (tab != CharacterTab.skills) const SizedBox(width: 6),
                 Expanded(
                   child: GameButton(
                     label: switch (tab) {
@@ -61,11 +61,13 @@ class _CharacterViewState extends State<CharacterView> {
           child: switch (_tab) {
             CharacterTab.skills => SkillsView(controller: widget.controller, showHeader: false),
             CharacterTab.inventory => InventoryView(
+              key: const ValueKey(InventoryPane.items),
               controller: widget.controller,
               pane: InventoryPane.items,
               showHeader: false,
             ),
             CharacterTab.equipment => InventoryView(
+              key: const ValueKey(InventoryPane.equipment),
               controller: widget.controller,
               pane: InventoryPane.equipment,
               showHeader: false,

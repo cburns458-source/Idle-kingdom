@@ -654,6 +654,7 @@ class OverlayChipButton extends StatelessWidget {
     required this.onPressed,
     required this.child,
     this.dark = false,
+    this.highlight = false,
   });
 
   final String tooltip;
@@ -663,6 +664,9 @@ class OverlayChipButton extends StatelessWidget {
   /// The nearby chip is brown rather than the map's parchment green.
   final bool dark;
 
+  /// Gold rim when other players are standing here.
+  final bool highlight;
+
   @override
   Widget build(BuildContext context) {
     return Tooltip(
@@ -671,7 +675,14 @@ class OverlayChipButton extends StatelessWidget {
         color: dark ? Palette.panel : const Color(0xFFBADCA0),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: dark ? const Color(0x8CD4AF5A) : const Color(0xB3B4DC96)),
+          side: BorderSide(
+            color: highlight
+                ? Palette.gold
+                : dark
+                ? const Color(0x8CD4AF5A)
+                : const Color(0xB3B4DC96),
+            width: highlight ? 2 : 1,
+          ),
         ),
         shadowColor: const Color(0x47000000),
         elevation: 6,

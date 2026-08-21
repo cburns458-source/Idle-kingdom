@@ -18,6 +18,7 @@ class AchievementLogRow {
     required this.name,
     required this.note,
     required this.unlocked,
+    this.difficulty = 'Easy',
   });
 
   final String achievementId;
@@ -26,12 +27,14 @@ class AchievementLogRow {
   /// `Unlocked`, or what it takes: `Reach Mining level 50`.
   final String note;
   final bool unlocked;
+  final String difficulty;
 
   Map<String, Object?> toJson() => <String, Object?>{
     'achievementId': achievementId,
     'name': name,
     'note': note,
     'unlocked': unlocked,
+    'difficulty': difficulty,
   };
 }
 
@@ -41,6 +44,9 @@ List<AchievementLogRow> achievementLog(GameDatabase db, PlayerSave save) {
     final unlocked = save.achievements.any(
       (row) => row.achievementId == achievementId && row.unlocked,
     );
+    final difficulty = jsString(achievement['Difficulty']).isEmpty
+        ? 'Easy'
+        : jsString(achievement['Difficulty']);
     if (achievement['Category'] == revocableAchievementCategory) {
       final held = critterDefs.where((critter) => collectionCount(save, critter.id) > 0).length;
       return AchievementLogRow(
@@ -51,24 +57,72 @@ List<AchievementLogRow> achievementLog(GameDatabase db, PlayerSave save) {
             : 'Collect one of every critter '
                   '(${jsNumberToString(held)}/${jsNumberToString(critterDefs.length)})',
         unlocked: unlocked,
+        difficulty: difficulty,
       );
     }
-    final skill = db.skills.firstWhereOrNull(
-      (row) => row.raw['Skill ID'] == achievement['Target Skill ID'],
-    );
-    final skillName = skill?.raw['Display Name'] is String
-        ? skill!.raw['Display Name']! as String
-        : 'Skill';
-    final level = achievement['Required Level'];
     return AchievementLogRow(
       achievementId: achievementId,
       name: jsString(achievement['Display Name']),
-      note: unlocked
-          ? 'Unlocked'
-          : 'Reach $skillName level ${jsNumberToString(level is num ? level : 50)}',
+      note: unlocked ? 'Unlocked' : _achievementNote(achievement),
       unlocked: unlocked,
+      difficulty: difficulty,
     );
   }).toList();
+}
+
+String _achievementNote(Map<String, Object?> achievement) {
+  final check = jsString(achievement['Check Type']);
+  final count = achievement['Required Count'];
+  final level = achievement['Required Level'];
+  switch (check) {
+    case 'skill_all':
+      return 'Reach level ${jsNumberToString(level is num ? level : 50)} in every skill';
+    case 'gold':
+      return 'Earn ${formatLogCount(count is num ? count : 0)} gold';
+    case 'spell_projects':
+      return 'Complete ${jsNumberToString(count is num ? count : 4)} spell projects';
+    case 'enchant':
+      return 'Enchant an item';
+    case 'potion':
+      return 'Create a potion';
+    case 'consume':
+    case 'project':
+    case 'output_item':
+      final notes = achievement['Notes'];
+      return notes is String && notes.isNotEmpty ? notes : 'Complete the required work';
+    default:
+      final notes = achievement['Notes'];
+      return notes is String && notes.isNotEmpty ? notes : 'Locked';
+  }
+}
+
+String formatLogCount(num value) {
+  final whole = value.round();
+  final text = jsNumberToString(whole);
+  final buffer = StringBuffer();
+  for (var i = 0; i < text.length; i++) {
+    final fromEnd = text.length - i;
+    if (i > 0 && fromEnd % 3 == 0) buffer.write(',');
+    buffer.write(text[i]);
+  }
+  return buffer.toString();
+}
+
+List<AchievementLogRow> achievementLogForDifficulty(
+  List<AchievementLogRow> rows,
+  String difficulty,
+) => rows.where((row) => row.difficulty == difficulty).toList();
+
+LogSectionCompletion achievementDifficultyCompletion(
+  List<AchievementLogRow> rows,
+  String difficulty,
+) {
+  final group = achievementLogForDifficulty(rows, difficulty);
+  return LogSectionCompletion(
+    section: difficulty.toLowerCase(),
+    done: group.where((row) => row.unlocked).length,
+    total: group.length,
+  );
 }
 
 /// One objective of an active quest, with its bar already worked out.

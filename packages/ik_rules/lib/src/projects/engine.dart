@@ -1,6 +1,7 @@
 import 'package:collection/collection.dart';
 import 'package:ik_content/ik_content.dart';
 
+import '../achievements/progress.dart';
 import '../activity/xp.dart';
 import '../bounties/progress.dart';
 import '../inventory/add_items.dart';
@@ -206,6 +207,7 @@ ProjectCompleteResult completeSpecialProject(
   next = applyXp(next, db, skillId, xpTotal).save;
   next = applyQuestProcessProgress(db, next, jsString(project.raw['Project ID']), crafts);
   next = applyBountyProjectProgress(next, jsString(project.raw['Project ID']), crafts, nowMs);
+  next = recordProjectMilestones(db, next, jsString(project.raw['Project ID']), crafts);
 
   return ProjectCompleteResult.ok(
     save: next,

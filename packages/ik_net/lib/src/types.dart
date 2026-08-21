@@ -39,6 +39,55 @@ bool boardCarriesExperience(MultiplayerBoardKey boardKey) =>
 /// rather than a real score of nothing.
 bool boardHidesZeroes(MultiplayerBoardKey boardKey) => boardKey == boardPacifistTotalLevel;
 
+const String chatPrivacyPublic = 'public';
+const String chatPrivacyFriends = 'friends';
+const String chatPrivacyOff = 'off';
+
+const List<String> chatPrivacyValues = <String>[
+  chatPrivacyPublic,
+  chatPrivacyFriends,
+  chatPrivacyOff,
+];
+
+String normalizeChatPrivacy(String? raw) =>
+    chatPrivacyValues.contains(raw) ? raw! : chatPrivacyPublic;
+
+String chatPrivacyLabel(String value) => switch (value) {
+  chatPrivacyFriends => 'Friends only',
+  chatPrivacyOff => 'Off',
+  _ => 'Public',
+};
+
+String? refuseIncomingDirectMessage(String recipientPrivacy, {required bool areFriends}) {
+  if (recipientPrivacy == chatPrivacyOff) {
+    return 'This player is not accepting private messages.';
+  }
+  if (recipientPrivacy == chatPrivacyFriends && !areFriends) {
+    return 'This player only accepts private messages from friends.';
+  }
+  return null;
+}
+
+String? refuseOutgoingLocalChat(String senderPrivacy) {
+  if (senderPrivacy == chatPrivacyOff) return 'Local chat is turned off.';
+  return null;
+}
+
+bool canSeeLocalChatLine({
+  required String viewerId,
+  required String senderId,
+  required String viewerPrivacy,
+  required String senderPrivacy,
+  required bool areFriends,
+}) {
+  if (senderId == viewerId) return true;
+  if (viewerPrivacy == chatPrivacyOff || senderPrivacy == chatPrivacyOff) return false;
+  if ((viewerPrivacy == chatPrivacyFriends || senderPrivacy == chatPrivacyFriends) && !areFriends) {
+    return false;
+  }
+  return true;
+}
+
 /// The account row every social surface reads names and portraits from.
 class MultiplayerProfile {
   const MultiplayerProfile({
@@ -48,6 +97,8 @@ class MultiplayerProfile {
     required this.guildId,
     required this.guildName,
     required this.privacyPublicSkills,
+    this.privacyDirectMessages = chatPrivacyPublic,
+    this.privacyLocalChat = chatPrivacyPublic,
     required this.updatedAt,
   });
 
@@ -58,6 +109,8 @@ class MultiplayerProfile {
     guildId: json['guildId'] as String?,
     guildName: json['guildName'] as String?,
     privacyPublicSkills: json['privacyPublicSkills'] as bool? ?? true,
+    privacyDirectMessages: normalizeChatPrivacy(json['privacyDirectMessages'] as String?),
+    privacyLocalChat: normalizeChatPrivacy(json['privacyLocalChat'] as String?),
     updatedAt: json['updatedAt']! as String,
   );
 
@@ -67,6 +120,8 @@ class MultiplayerProfile {
   final String? guildId;
   final String? guildName;
   final bool privacyPublicSkills;
+  final String privacyDirectMessages;
+  final String privacyLocalChat;
   final String updatedAt;
 
   MultiplayerProfile copyWith({
@@ -75,6 +130,8 @@ class MultiplayerProfile {
     String? guildId,
     String? guildName,
     bool? privacyPublicSkills,
+    String? privacyDirectMessages,
+    String? privacyLocalChat,
     String? updatedAt,
     bool clearGuild = false,
   }) => MultiplayerProfile(
@@ -84,6 +141,8 @@ class MultiplayerProfile {
     guildId: clearGuild ? null : (guildId ?? this.guildId),
     guildName: clearGuild ? null : (guildName ?? this.guildName),
     privacyPublicSkills: privacyPublicSkills ?? this.privacyPublicSkills,
+    privacyDirectMessages: privacyDirectMessages ?? this.privacyDirectMessages,
+    privacyLocalChat: privacyLocalChat ?? this.privacyLocalChat,
     updatedAt: updatedAt ?? this.updatedAt,
   );
 
@@ -94,6 +153,8 @@ class MultiplayerProfile {
     'guildId': guildId,
     'guildName': guildName,
     'privacyPublicSkills': privacyPublicSkills,
+    'privacyDirectMessages': privacyDirectMessages,
+    'privacyLocalChat': privacyLocalChat,
     'updatedAt': updatedAt,
   };
 }

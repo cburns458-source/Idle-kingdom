@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:idle_kingdoms/src/session/multiplayer_controller.dart';
 import 'package:idle_kingdoms/src/theme.dart';
+import 'package:idle_kingdoms/src/ui/account_panel.dart';
 import 'package:ik_content/ik_content.dart';
 import 'package:ik_net/ik_net.dart';
 
@@ -152,12 +153,13 @@ void main() {
     await signIn(net);
     await net.sendFriendRequest(demoMiraId);
     await net.ignorePlayer(demoBramId);
-    await pumpShell(tester, controller, multiplayer: net, size: const Size(900, 2400));
-
-    await openChinScreen(tester, 'Settings');
-    await tester.ensureVisible(find.text('Friends'));
-    await tester.pump();
-    await tester.pump();
+    await pumpPanel(
+      tester,
+      ListenableBuilder(
+        listenable: net,
+        builder: (context, _) => AccountPanel(controller: controller, multiplayer: net),
+      ),
+    );
 
     expect(find.text('Friends'), findsOne);
     expect(find.text('Sent requests'), findsOne);

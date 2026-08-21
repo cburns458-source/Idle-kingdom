@@ -70,6 +70,8 @@ Reward: Experience, items, gold, or other progression granted by an Action or pr
 
 Damage Range: The minimum and maximum damage an entity can deal with one attack. Damage is selected as a random integer in the range and cannot be reduced below 1.
 
+Sentence case: Player-facing Display Names use sentence case. Capitalize the first word and proper names only. Example: Copper mine, not Copper Mine Near Town. Existing title-case names may stay until they are edited.
+
 ======================================================================
 3. PLAYER SAVE AND UNATTENDED PROGRESSION
 ======================================================================
@@ -165,7 +167,7 @@ RIVER, COAST, AND DOCK
 - Pirate encounters may exist as Combat content.
 - Transportation interactions may exist.
 
-COPPER MINE NEAR TOWN
+COPPER MINE
 Mining pool:
 - Copper Ore as the main result.
 - Clay.
@@ -497,7 +499,7 @@ Current resources:
 - Potato.
 - Golden Spud.
 - Carrot.
-- Wild Berries.
+- Wild berries.
 - Grapes.
 - Wild Roots.
 - Fernleaf.

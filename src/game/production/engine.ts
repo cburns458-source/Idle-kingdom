@@ -23,6 +23,7 @@ import {
   recipeMatchesFacility,
 } from './recipes'
 import { applyBountyProcessProgress } from '../bounties/progress'
+import { recordProductionMilestones } from '../achievements/progress'
 import { applyQuestProcessProgress } from '../quests/progress'
 
 export function clearProductionSave(save: PlayerSave): PlayerSave {
@@ -151,6 +152,7 @@ export function completeProductionCraft(
   // Bounty hour follows the craft's own completion time, so offline catch-up
   // credits the hour the craft finished in rather than the moment of resolving.
   next = applyBountyProcessProgress(next, recipe['Recipe ID'], 1, nowMs)
+  next = recordProductionMilestones(db, next, recipe['Output Item ID'], outputQty)
   const outputItem = db.Items.find((item) => item['Item ID'] === recipe['Output Item ID'])
   const outputName = outputItem?.['Display Name'] ?? recipe['Display Name']
   const xpReward = summarizeXpReward(

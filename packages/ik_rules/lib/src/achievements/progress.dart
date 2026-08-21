@@ -25,6 +25,55 @@ const String revocableAchievementCategory = 'Collections';
 
 const String critterCollectorAchievementId = 'ACH-0015';
 
+const List<String> achievementDifficulties = <String>['Easy', 'Medium', 'Hard'];
+
+PlayerSave addLifetimeStat(PlayerSave save, String key, [num amount = 1]) {
+  final current = jsNumber(save.statistics.values[key] ?? 0);
+  return save.copyWith(
+    statistics: PlayerStatistics(
+      values: <String, num>{...save.statistics.values, key: current + amount},
+    ),
+  );
+}
+
+bool isSpellProject(Map<String, Object?> project) {
+  final key = jsString(project['Internal Key']);
+  final name = jsString(project['Display Name']).toLowerCase();
+  return key.contains('_spell') || (name.contains('spell') && !name.contains('enchant'));
+}
+
+PlayerSave recordProjectMilestones(GameDatabase db, PlayerSave save, String projectId, num crafts) {
+  final project = db.projects.firstWhereOrNull(
+    (row) => jsString(row.raw['Project ID']) == projectId,
+  );
+  var next = addLifetimeStat(save, 'project_$projectId', crafts);
+  final outputId = jsString(project?.raw['Output Item / Target ID']);
+  if (outputId.startsWith('ENCH-')) {
+    next = addLifetimeStat(next, 'items_enchanted', crafts);
+  }
+  if (project != null && isSpellProject(project.raw)) {
+    next = addLifetimeStat(next, 'spell_projects', crafts);
+  }
+  return next;
+}
+
+PlayerSave recordProductionMilestones(
+  GameDatabase db,
+  PlayerSave save,
+  String outputItemId,
+  num quantity,
+) {
+  var next = addLifetimeStat(save, 'output_$outputItemId', quantity);
+  final item = db.items.firstWhereOrNull((row) => jsString(row.raw['Item ID']) == outputItemId);
+  if (jsString(item?.raw['Category']) == 'Potion') {
+    next = addLifetimeStat(next, 'potions_created', quantity);
+  }
+  return next;
+}
+
+PlayerSave recordFoodConsumed(PlayerSave save, String itemId) =>
+    addLifetimeStat(save, 'consumed_$itemId');
+
 List<AchievementProgress> _upsertAchievement(
   List<AchievementProgress> list,
   String achievementId,
@@ -55,6 +104,43 @@ bool _holdsRevocableAchievement(PlayerSave save, String achievementId) {
   return achievementId == critterCollectorAchievementId && hasEveryCritter(save);
 }
 
+num _lifetimeCount(Map<String, num> values, String key) => jsNumber(values[key] ?? 0);
+
+bool _holdsMilestone(
+  GameDatabase db,
+  PlayerSave save,
+  Map<String, Object?> achievement,
+  Map<String, num> values,
+) {
+  final check = jsString(achievement['Check Type']);
+  final target = achievement['Target ID'];
+  final count = jsNumber(achievement['Required Count'] ?? 1);
+  final required = achievement['Required Level'];
+  switch (check) {
+    case 'project':
+      return target is String && _lifetimeCount(values, 'project_$target') >= count;
+    case 'consume':
+      return target is String && _lifetimeCount(values, 'consumed_$target') >= count;
+    case 'output_item':
+      return target is String && _lifetimeCount(values, 'output_$target') >= count;
+    case 'enchant':
+      return _lifetimeCount(values, 'items_enchanted') >= count;
+    case 'potion':
+      return _lifetimeCount(values, 'potions_created') >= count;
+    case 'spell_projects':
+      return _lifetimeCount(values, 'spell_projects') >= count;
+    case 'gold':
+      return _lifetimeCount(values, 'gold_earned') >= count;
+    case 'skill_all':
+      if (required is! num) return false;
+      return db.skills.every((skill) => getSkillProgress(save, skill.skillId).level >= required);
+    default:
+      final skillId = achievement['Target Skill ID'];
+      if (skillId is! String || skillId.isEmpty || required is! num) return false;
+      return getSkillProgress(save, skillId).level >= required;
+  }
+}
+
 /// Refreshes the lifetime totals and unlocks any skill-level achievement the
 /// player now qualifies for.
 PlayerSave syncProgressionMeta(GameDatabase db, PlayerSave save, num nowMs) {
@@ -82,10 +168,7 @@ PlayerSave syncProgressionMeta(GameDatabase db, PlayerSave save, num nowMs) {
           : _revokeAchievement(achievements, achievementId);
       continue;
     }
-    final skillId = achievement['Target Skill ID'];
-    final required = achievement['Required Level'];
-    if (skillId is! String || skillId.isEmpty || required is! num) continue;
-    if (getSkillProgress(save, skillId).level >= required) {
+    if (_holdsMilestone(db, save, achievement, values)) {
       achievements = _upsertAchievement(achievements, achievementId, unlockedAt);
     }
   }

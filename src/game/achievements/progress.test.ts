@@ -7,7 +7,6 @@ import { createNewSave } from '../save/saveStore'
 import type { PlayerSave } from '../save/types'
 import {
   CRITTER_COLLECTOR_ACHIEVEMENT_ID,
-  REVOCABLE_ACHIEVEMENT_CATEGORY,
   asAchievementRows,
   hasEveryCritter,
   syncProgressionMeta,
@@ -18,13 +17,16 @@ const rawDatabase = JSON.parse(
 )
 
 describe('achievements and statistics', () => {
-  it('has one level-50 achievement per Launch skill', () => {
+  it('uses all-skill tiers instead of one achievement per skill', () => {
     const { launch } = prepareDatabase(rawDatabase)
-    const milestones = asAchievementRows(launch).filter(
-      (row) => row.Category !== REVOCABLE_ACHIEVEMENT_CATEGORY,
+    const rows = asAchievementRows(launch)
+    const skillAll = rows.filter((row) => row['Check Type'] === 'skill_all')
+    expect(skillAll.map((row) => row['Required Level']).sort((a, b) => Number(a) - Number(b))).toEqual(
+      [50, 70, 100],
     )
-    expect(milestones).toHaveLength(launch.Skills.length)
-    expect(milestones.every((row) => row['Required Level'] === 50)).toBe(true)
+    expect(rows.every((row) => !row['Target Skill ID'])).toBe(true)
+    expect(rows.some((row) => row.Difficulty === 'Easy')).toBe(true)
+    expect(rows.some((row) => row.Difficulty === 'Hard')).toBe(true)
   })
 
   it('holds Critter Collector only while the collection is complete', () => {
@@ -56,8 +58,13 @@ describe('achievements and statistics', () => {
     expect(held(complete)).toBe(true)
   })
 
-  it('unlocks a skill achievement at level 50 and syncs totals', () => {
+  it('unlocks every-skill-50 only when every skill is 50', () => {
     const { launch } = prepareDatabase(rawDatabase)
+    const target = asAchievementRows(launch).find(
+      (row) => row['Check Type'] === 'skill_all' && row['Required Level'] === 50,
+    )
+    expect(target).toBeTruthy()
+
     let save = createNewSave(launch)
     save = {
       ...save,
@@ -66,14 +73,18 @@ describe('achievements and statistics', () => {
       ),
     }
     save = syncProgressionMeta(launch, save)
-    expect(save.statistics.values.total_level).toBeGreaterThan(50)
     expect(save.statistics.values.total_experience).toBe(1_000_000)
-    const cooking = asAchievementRows(launch).find((row) => row['Target Skill ID'] === 'SKL-0007')
-    expect(cooking).toBeTruthy()
     expect(
-      save.achievements.some(
-        (row) => row.achievementId === cooking!['Achievement ID'] && row.unlocked,
-      ),
+      save.achievements.some((row) => row.achievementId === target!['Achievement ID'] && row.unlocked),
+    ).toBe(false)
+
+    save = {
+      ...save,
+      skills: save.skills.map((skill) => ({ ...skill, level: 50, xp: 1_000_000 })),
+    }
+    save = syncProgressionMeta(launch, save)
+    expect(
+      save.achievements.some((row) => row.achievementId === target!['Achievement ID'] && row.unlocked),
     ).toBe(true)
   })
 })

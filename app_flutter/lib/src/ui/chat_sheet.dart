@@ -101,7 +101,6 @@ class ChatSheet extends StatefulWidget {
 class _ChatSheetState extends State<ChatSheet> {
   final TextEditingController _body = TextEditingController();
   final FocusNode _composerFocus = FocusNode();
-  bool _viewingGuilds = false;
 
   MultiplayerController get net => widget.multiplayer;
   PlayerSave get save => widget.controller.save;
@@ -154,42 +153,27 @@ class _ChatSheetState extends State<ChatSheet> {
           net.session?.userId,
           filterProfanityEnabled: net.filterChatProfanity,
         );
-        final showComposer =
-            !_viewingGuilds && (net.chatTab != ChatTab.dm || net.selectedDmPeerId != null);
+        final showComposer = net.chatTab != ChatTab.dm || net.selectedDmPeerId != null;
         return Column(
           children: [
             _header(tabs),
             if (net.chatTab == ChatTab.dm) _dmThreadRow(),
-            if (net.chatTab == ChatTab.guild || net.chatTab == ChatTab.guest)
+            if (net.chatTab == ChatTab.guest && net.guestGuild != null)
               Align(
                 alignment: Alignment.centerLeft,
-                child: Wrap(
-                  children: [
-                    GameButton(
-                      label: _viewingGuilds ? 'Back to chat' : chatViewGuildsLabel,
-                      tone: GameButtonTone.secondary,
-                      compact: true,
-                      onPressed: () => setState(() => _viewingGuilds = !_viewingGuilds),
-                    ),
-                    if (net.guestGuild != null)
-                      GameButton(
-                        label: 'Leave guest',
-                        tone: GameButtonTone.secondary,
-                        compact: true,
-                        onPressed: net.busy
-                            ? null
-                            : () async {
-                                await net.leaveGuest(save);
-                                if (mounted) setState(() => _viewingGuilds = false);
-                              },
-                      ),
-                  ],
+                child: GameButton(
+                  label: 'Leave guest',
+                  tone: GameButtonTone.secondary,
+                  compact: true,
+                  onPressed: net.busy
+                      ? null
+                      : () async {
+                          await net.leaveGuest(save);
+                        },
                 ),
               ),
             Expanded(
-              child: _viewingGuilds
-                  ? _buildGuildBrowser()
-                  : net.chatTab == ChatTab.dm && net.selectedDmPeerId == null
+              child: net.chatTab == ChatTab.dm && net.selectedDmPeerId == null
                   ? const Center(child: MutedText(chatDmHint))
                   : lines.isEmpty
                   ? Center(child: MutedText(emptyChatMessage(net.chatTab)))
@@ -350,52 +334,6 @@ class _ChatSheetState extends State<ChatSheet> {
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildGuildBrowser() {
-    final own = <String>{
-      if (net.guildId != null) net.guildId!,
-      if (net.guestGuildId != null) net.guestGuildId!,
-    };
-    final rows = guildBrowseRows(net.listings.where((row) => !own.contains(row.id)).toList());
-    if (rows.isEmpty) {
-      return const Center(child: MutedText('No other guilds to guest.'));
-    }
-    return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      children: [
-        for (final row in rows) ...[
-          SocialRow(
-            title: row.title,
-            subtitle: row.subtitle,
-            leading: GuildEmblemBadge(emblem: row.emblem),
-            trailing: GameButton(
-              label: row.guestLabel,
-              tone: GameButtonTone.secondary,
-              compact: true,
-              onPressed: net.busy
-                  ? null
-                  : () async {
-                      await net.joinAsGuest(
-                        row.guildId,
-                        defaultApplicationMessage(save.characterName),
-                        save,
-                      );
-                      if (mounted) {
-                        setState(() => _viewingGuilds = false);
-                        await net.selectChatTab(
-                          ChatTab.guest,
-                          widget.locationId,
-                          citadelHub: widget.citadelHub,
-                        );
-                      }
-                    },
-            ),
-          ),
-          const SizedBox(height: 6),
-        ],
-      ],
     );
   }
 }

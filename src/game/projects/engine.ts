@@ -12,6 +12,7 @@ import {
 import { hasProjectKnowledge } from '../npcs/knowledge'
 import { applyBountyProjectProgress } from '../bounties/progress'
 import { projectFacilityIdForLookup } from '../production/recipes'
+import { recordProjectMilestones } from '../achievements/progress'
 import { applyQuestProcessProgress } from '../quests/progress'
 import {
   getEnchantment,
@@ -192,6 +193,7 @@ export function completeSpecialProject(
   next = xpApplied.save
   next = applyQuestProcessProgress(db, next, project['Project ID'], crafts)
   next = applyBountyProjectProgress(next, project['Project ID'], crafts, nowMs)
+  next = recordProjectMilestones(db, next, project['Project ID'], crafts)
 
   return {
     ok: true,

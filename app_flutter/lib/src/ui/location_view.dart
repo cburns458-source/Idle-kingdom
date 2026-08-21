@@ -70,6 +70,7 @@ class LocationView extends StatefulWidget {
     required this.controller,
     required this.multiplayer,
     required this.onOpenMap,
+    this.onOpenSubMap,
     this.onOpenGuilds,
   });
 
@@ -79,6 +80,9 @@ class LocationView extends StatefulWidget {
   /// other players can reach into.
   final MultiplayerController multiplayer;
   final VoidCallback onOpenMap;
+
+  /// Opens a district map from a gateway, or back from a location on that map.
+  final ValueChanged<String>? onOpenSubMap;
 
   final VoidCallback? onOpenGuilds;
 
@@ -233,37 +237,76 @@ class _LocationViewState extends State<LocationView> {
                             Expanded(child: _LocationHead(location: location)),
                             const SizedBox(width: 11),
                             Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Builder(
                                   builder: (context) {
-                                    return OverlayChipButton(
-                                      tooltip: 'Nearby adventurers',
-                                      onPressed: () => showNearbyPopup(
-                                        context,
-                                        controller: controller,
-                                        multiplayer: widget.multiplayer,
-                                        origin: popupOrigin(context),
-                                      ),
-                                      dark: true,
-                                      child: const Icon(
-                                        Icons.groups,
-                                        size: 32,
-                                        color: Color(0xF2ECD6A8),
-                                      ),
+                                    return ListenableBuilder(
+                                      listenable: widget.multiplayer,
+                                      builder: (context, _) {
+                                        return OverlayChipButton(
+                                          tooltip: 'Nearby adventurers',
+                                          onPressed: () => showNearbyPopup(
+                                            context,
+                                            controller: controller,
+                                            multiplayer: widget.multiplayer,
+                                            origin: popupOrigin(context),
+                                          ),
+                                          dark: true,
+                                          highlight: widget.multiplayer.peers.isNotEmpty,
+                                          child: const Icon(
+                                            Icons.groups,
+                                            size: 32,
+                                            color: Color(0xF2ECD6A8),
+                                          ),
+                                        );
+                                      },
                                     );
                                   },
                                 ),
                                 const SizedBox(width: 7),
-                                OverlayChipButton(
-                                  tooltip: 'Open world map',
-                                  onPressed: widget.onOpenMap,
-                                  child: GameImage(uiMapAssetPath(), width: 38, height: 38),
+                                Column(
+                                  children: [
+                                    OverlayChipButton(
+                                      tooltip: 'Open world map',
+                                      onPressed: widget.onOpenMap,
+                                      child: GameImage(uiMapAssetPath(), width: 38, height: 38),
+                                    ),
+                                    if (widget.onOpenSubMap != null)
+                                      if (backToSubMapLabel(controller.db, location)
+                                          case final backLabel?) ...[
+                                        const SizedBox(height: 7),
+                                        OverlayChipButton(
+                                          tooltip: backLabel,
+                                          onPressed: () =>
+                                              widget.onOpenSubMap!(getLocationMapId(location)),
+                                          child: const Icon(
+                                            Icons.arrow_back,
+                                            size: 32,
+                                            color: Color(0xFF3F522E),
+                                          ),
+                                        ),
+                                      ],
+                                  ],
                                 ),
                               ],
                             ),
                           ],
                         ),
                       ),
+                      if (widget.onOpenSubMap != null)
+                        if (subMapIdForGateway(controller.db, locationId) case final subMapId?
+                            when isSubMapGateway(location))
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(13, 8, 13, 0),
+                            child: Align(
+                              alignment: Alignment.centerLeft,
+                              child: GameButton(
+                                label: enterSubMapLabel(controller.db, location) ?? 'Enter',
+                                onPressed: () => widget.onOpenSubMap!(subMapId),
+                              ),
+                            ),
+                          ),
                       if (controller.showRecoveringStage && stage == null)
                         Padding(
                           padding: const EdgeInsets.fromLTRB(13, 8, 13, 0),

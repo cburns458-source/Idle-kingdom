@@ -1,4 +1,8 @@
-import { REVOCABLE_ACHIEVEMENT_CATEGORY, asAchievementRows } from '../achievements/progress'
+import {
+  REVOCABLE_ACHIEVEMENT_CATEGORY,
+  asAchievementRows,
+  type AchievementRow,
+} from '../achievements/progress'
 import { CRITTER_DEFS, collectionCount } from '../critters/critters'
 import type { GameDatabase } from '../data/types'
 import { questObjectiveProgress } from '../quests/objectives'
@@ -13,6 +17,7 @@ export interface AchievementLogRow {
   /** `Unlocked`, or what it takes: `Reach Mining level 50`. */
   note: string
   unlocked: boolean
+  difficulty: string
 }
 
 export function achievementLog(db: GameDatabase, save: PlayerSave): AchievementLogRow[] {
@@ -21,6 +26,7 @@ export function achievementLog(db: GameDatabase, save: PlayerSave): AchievementL
     const unlocked = save.achievements.some(
       (row) => row.achievementId === achievementId && row.unlocked,
     )
+    const difficulty = achievement.Difficulty ?? 'Easy'
     if (achievement.Category === REVOCABLE_ACHIEVEMENT_CATEGORY) {
       const held = CRITTER_DEFS.filter((critter) => collectionCount(save, critter.id) > 0).length
       return {
@@ -30,21 +36,42 @@ export function achievementLog(db: GameDatabase, save: PlayerSave): AchievementL
           ? 'Unlocked'
           : `Collect one of every critter (${held}/${CRITTER_DEFS.length})`,
         unlocked,
+        difficulty,
       }
     }
-    const skillName =
-      db.Skills.find((skill) => skill['Skill ID'] === achievement['Target Skill ID'])?.[
-        'Display Name'
-      ] ?? 'Skill'
     return {
       achievementId,
       name: achievement['Display Name'],
-      note: unlocked
-        ? 'Unlocked'
-        : `Reach ${skillName} level ${achievement['Required Level'] ?? 50}`,
+      note: unlocked ? 'Unlocked' : achievementNote(achievement),
       unlocked,
+      difficulty,
     }
   })
+}
+
+function achievementNote(achievement: AchievementRow): string {
+  const check = achievement['Check Type'] ?? ''
+  const count = achievement['Required Count']
+  const level = achievement['Required Level']
+  switch (check) {
+    case 'skill_all':
+      return `Reach level ${level ?? 50} in every skill`
+    case 'gold':
+      return `Earn ${Number(count ?? 0).toLocaleString('en-US')} gold`
+    case 'spell_projects':
+      return `Complete ${count ?? 4} spell projects`
+    case 'enchant':
+      return 'Enchant an item'
+    case 'potion':
+      return 'Create a potion'
+    case 'consume':
+      return achievement.Notes ?? 'Eat the required item'
+    case 'project':
+    case 'output_item':
+      return achievement.Notes ?? 'Complete the required work'
+    default:
+      return achievement.Notes ?? 'Locked'
+  }
 }
 
 /** One objective of an active quest, with its bar already worked out. */

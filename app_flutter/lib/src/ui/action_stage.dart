@@ -24,6 +24,7 @@ const Color _critHitColor = Color(0xFFFFD166);
 const Color _offhandHitColor = Color(0xFFF0A868);
 const Color _enemyHitColor = Color(0xFFFFD0D0);
 const Color _healColor = Color(0xFF7CFF9E);
+const Color _foodHurtColor = Color(0xFFFF6B6B);
 const Color _sceneNameColor = Color(0xFFF4EFD8);
 
 /// Shared two-column stage for combat, gathering, and production.
@@ -801,8 +802,8 @@ Widget? _playerFloaters(CombatRoundEvent? round, int seq, bool showHits, HealPop
       if (heal != null)
         _DamageFloater(
           key: ValueKey('heal-${heal.seq}'),
-          text: '+${heal.amount.round()}',
-          color: _healColor,
+          text: heal.amount > 0 ? '+${heal.amount.round()}' : '${heal.amount.round()}',
+          color: heal.amount > 0 ? _healColor : _foodHurtColor,
           alignment: const Alignment(-0.08, -0.72),
           offset: _floaterOffset(heal.seq, 5),
         ),

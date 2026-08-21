@@ -112,6 +112,21 @@ void main() {
     expect(find.textContaining('value each'), findsOne);
   });
 
+  testWidgets('a locked equipment pane shows the paper doll, not the bag', (tester) async {
+    final controller = buildController(database, seed: startedCharacter(database));
+    addTearDown(controller.dispose);
+
+    await pumpPanel(
+      tester,
+      InventoryView(controller: controller, pane: InventoryPane.equipment, showHeader: false),
+    );
+
+    expect(find.text('Sell items'), findsNothing);
+    expect(find.textContaining('slots'), findsNothing);
+    expect(find.text('Damage'), findsOne);
+    expect(find.text('Helmet'), findsOne);
+  });
+
   testWidgets('combat stats live on the equipment page, not the bag', (tester) async {
     final controller = buildController(database, seed: startedCharacter(database));
     addTearDown(controller.dispose);

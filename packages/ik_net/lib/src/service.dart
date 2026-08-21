@@ -45,6 +45,8 @@ abstract interface class MultiplayerService {
 
   Future<MultiplayerProfile?> setPrivacyPublicSkills(bool value);
 
+  Future<MultiplayerProfile?> setChatPrivacy({String? directMessages, String? localChat});
+
   /// Uploads [save] as the account's cloud copy.
   ///
   /// [force] is the player choosing this save over the stored one, having been
@@ -285,6 +287,17 @@ class LocalMultiplayerService implements MultiplayerService {
     final current = session;
     if (current == null) return null;
     return _backend.upsertProfile(current.userId, privacyPublicSkills: value);
+  }
+
+  @override
+  Future<MultiplayerProfile?> setChatPrivacy({String? directMessages, String? localChat}) async {
+    final current = session;
+    if (current == null) return null;
+    return _backend.upsertProfile(
+      current.userId,
+      privacyDirectMessages: directMessages == null ? null : normalizeChatPrivacy(directMessages),
+      privacyLocalChat: localChat == null ? null : normalizeChatPrivacy(localChat),
+    );
   }
 
   @override

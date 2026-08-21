@@ -65,6 +65,20 @@ class MultiplayerController extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> setPrivacyDirectMessages(String value) {
+    return run(() async {
+      _ownProfile = await service.setChatPrivacy(directMessages: value);
+      return null;
+    });
+  }
+
+  Future<void> setPrivacyLocalChat(String value) {
+    return run(() async {
+      _ownProfile = await service.setChatPrivacy(localChat: value);
+      return null;
+    });
+  }
+
   /// True when this device may see sign-in. An empty [testerPasskey] leaves
   /// the gate off.
   bool get hasTesterAccess => !testerPasskeyRequired(storage.getItem(testerAccessStorageKey));
@@ -118,6 +132,7 @@ class MultiplayerController extends ChangeNotifier {
   List<SocialContact> _incomingFriendRequests = const <SocialContact>[];
   List<SocialContact> _outgoingFriendRequests = const <SocialContact>[];
   List<SocialContact> _ignored = const <SocialContact>[];
+  MultiplayerProfile? _ownProfile;
   List<ChatMessage> _messages = const <ChatMessage>[];
   List<BountyClaimRecord> _bountyClaims = const <BountyClaimRecord>[];
   List<BazaarPost> _bazaarPosts = const <BazaarPost>[];
@@ -175,6 +190,8 @@ class MultiplayerController extends ChangeNotifier {
   List<SocialContact> get incomingFriendRequests => _incomingFriendRequests;
   List<SocialContact> get outgoingFriendRequests => _outgoingFriendRequests;
   List<SocialContact> get ignoredPlayers => _ignored;
+  String get privacyDirectMessages => _ownProfile?.privacyDirectMessages ?? chatPrivacyPublic;
+  String get privacyLocalChat => _ownProfile?.privacyLocalChat ?? chatPrivacyPublic;
   List<ChatMessage> get messages => _messages;
 
   /// Who claimed each of this hour's bounties first, as far as the last read saw.
@@ -381,6 +398,7 @@ class MultiplayerController extends ChangeNotifier {
     _incomingFriendRequests = const <SocialContact>[];
     _outgoingFriendRequests = const <SocialContact>[];
     _ignored = const <SocialContact>[];
+    _ownProfile = null;
     _messages = const <ChatMessage>[];
     _selectedDmPeerId = null;
     _openDmPeerIds.clear();
@@ -639,6 +657,8 @@ class MultiplayerController extends ChangeNotifier {
     _incomingFriendRequests = await service.incomingFriendRequests();
     _outgoingFriendRequests = await service.outgoingFriendRequests();
     _ignored = await service.ignoredPlayers();
+    final me = session?.userId;
+    _ownProfile = me == null ? null : await service.profile(me);
   }
 
   Future<void> sendFriendRequest(String userId) {
