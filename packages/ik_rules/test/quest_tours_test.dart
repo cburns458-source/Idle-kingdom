@@ -42,7 +42,7 @@ void main() {
     save = bribed.save!;
     expect(inventoryCount(save, 'ITEM-0299'), 1);
 
-    save = save.copyWith(currentLocationId: 'LOC-0002');
+    save = save.copyWith(currentLocationId: 'LOC-0034');
     final completed = completeQuest(db, save, 'QST-0003');
     expect(completed.ok, isTrue);
     expect(completed.pendingSkillXp, 2500);
