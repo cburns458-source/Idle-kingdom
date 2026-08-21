@@ -75,6 +75,7 @@ export function createNewSave(db: GameDatabase, nowMs: number = Date.now()): Pla
     rankedPvpWins: 0,
     rankedPvpLosses: 0,
     claimedMerchantTipIds: [],
+    claimedKingswoodsSling: false,
     critterCollections: [],
     activeCritterSpawns: [],
     critterProgressMs: {},

@@ -417,6 +417,15 @@ final List<SaveMigration> saveMigrations = <SaveMigration>[
       return next;
     },
   ),
+  SaveMigration(
+    fromVersion: 28,
+    toVersion: 29,
+    migrate: (save, nowMs) {
+      final next = _bumped(save, 29);
+      next['claimedKingswoodsSling'] = save['claimedKingswoodsSling'] == true;
+      return next;
+    },
+  ),
 ];
 
 /// Thrown when a save cannot be brought to the current version.

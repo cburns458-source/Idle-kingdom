@@ -69,6 +69,24 @@ class _NearbyPanelState extends State<NearbyPanel> {
     return widget.controller.indexes.skillsById[skillId]?.displayName ?? skillId;
   }
 
+  /// `[TAG]Name` when we know their guild tag; otherwise just the name.
+  String _peerTitle(ActivityPresence peer) {
+    final name = peer.username;
+    final tag = _tagForGuildName(peer.guildName);
+    if (tag == null || tag.isEmpty) return name;
+    return '[$tag]$name';
+  }
+
+  String? _tagForGuildName(String? guildName) {
+    if (guildName == null || guildName.isEmpty) return null;
+    final own = net.guild;
+    if (own != null && own.name == guildName) return own.tag;
+    for (final listing in net.listings) {
+      if (listing.name == guildName) return listing.tag;
+    }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
@@ -125,9 +143,9 @@ class _NearbyPanelState extends State<NearbyPanel> {
                     ? null
                     : widget.controller.indexes.activitiesById[peer.currentActivityId!];
                 final activityName = activity?.contextualName ?? activity?.internalKey;
-                final subtitle = <String>[row.statusLabel, ?activityName, row.subtitle].join(' · ');
+                final subtitle = <String>[row.statusLabel, ?activityName].join(' · ');
                 return SocialRow(
-                  title: row.username,
+                  title: _peerTitle(peer),
                   subtitle: subtitle,
                   leading: SocialPortrait(appearance: peer.appearance),
                   onTap: () => openPlayerProfile(

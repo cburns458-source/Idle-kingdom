@@ -442,6 +442,15 @@ export const SAVE_MIGRATIONS: SaveMigration[] = [
       }
     },
   },
+  {
+    fromVersion: 28,
+    toVersion: 29,
+    migrate: (save) => ({
+      ...save,
+      claimedKingswoodsSling: save.claimedKingswoodsSling === true,
+      saveVersion: 29,
+    }),
+  },
 ]
 
 export function migrateSave(save: PlayerSave, nowMs: number = Date.now()): PlayerSave {

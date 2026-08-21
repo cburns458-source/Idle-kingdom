@@ -1,6 +1,6 @@
-export const SAVE_VERSION = 28
+export const SAVE_VERSION = 29
 export const SAVE_STORAGE_KEY = 'idle-kingdoms.demo.save'
-export const STARTING_LOCATION_ID = 'LOC-0002'
+export const STARTING_LOCATION_ID = 'LOC-0001'
 /** Base gold before race kit; race starters grant the real starting gold. */
 export const STARTING_GOLD = 0
 /** Level 1 Hunting Net — granted on older save migration only. */
@@ -198,6 +198,8 @@ export interface PlayerSave {
   rankedPvpLosses: number
   /** Merchant tip rewards already claimed (one-time dialogue grants). */
   claimedMerchantTipIds: string[]
+  /** One-time Kingswoods Sling grant. Existing saves keep false until they visit. */
+  claimedKingswoodsSling: boolean
   /** Critter collection counts (unlocked entries in the Log). */
   critterCollections: CritterCollectionEntry[]
   /** At most one pending Critter spawn per location until collected. */

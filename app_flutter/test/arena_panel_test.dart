@@ -22,12 +22,7 @@ void main() {
     addTearDown(plaza.dispose);
     await pumpPanel(
       tester,
-      LocationView(
-        controller: plaza,
-        multiplayer: buildMultiplayer(database),
-        onOpenMap: () {},
-        onOpenSubMap: (_) {},
-      ),
+      LocationView(controller: plaza, multiplayer: buildMultiplayer(database), onOpenMap: () {}),
       size: const Size(900, 2400),
     );
     expect(find.text('Player fights'), findsOne);
@@ -39,12 +34,7 @@ void main() {
     addTearDown(meadow.dispose);
     await pumpPanel(
       tester,
-      LocationView(
-        controller: meadow,
-        multiplayer: buildMultiplayer(database),
-        onOpenMap: () {},
-        onOpenSubMap: (_) {},
-      ),
+      LocationView(controller: meadow, multiplayer: buildMultiplayer(database), onOpenMap: () {}),
     );
     expect(find.text('Player fights'), findsNothing);
   });

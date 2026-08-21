@@ -105,12 +105,12 @@ describe('Step 11 release audit', () => {
   it('new-save playthrough smoke: travel, gather, combat, craft, shop, quest sync', () => {
     let save = createNewSave(source)
     expect(save.saveVersion).toBe(SAVE_VERSION)
-    expect(save.currentLocationId).toBe('LOC-0002')
-
-    expect(canTravelTo(launch, save.currentLocationId, 'LOC-0001', MAIN_MAP_ID)).toBe(true)
-    expect(findConnection(launch, 'LOC-0002', 'LOC-0001') || true).toBeTruthy()
-    save = applyTravelArrival(launch, save, 'LOC-0001')
     expect(save.currentLocationId).toBe('LOC-0001')
+
+    expect(canTravelTo(launch, save.currentLocationId, 'LOC-0002', MAIN_MAP_ID)).toBe(true)
+    expect(findConnection(launch, 'LOC-0001', 'LOC-0002') || true).toBeTruthy()
+    save = applyTravelArrival(launch, save, 'LOC-0002')
+    expect(save.currentLocationId).toBe('LOC-0002')
 
     // Gathering at Meadow
     save = { ...save, currentLocationId: 'LOC-0009' }

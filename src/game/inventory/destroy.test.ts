@@ -31,6 +31,7 @@ function saveWithInventory(itemIds: string[]): PlayerSave {
     favoriteActivityByLocationId: {},
     heldActionByActivityId: {},
     claimedMerchantTipIds: [],
+    claimedKingswoodsSling: false,
     critterCollections: [],
     activeCritterSpawns: [],
     critterProgressMs: {},

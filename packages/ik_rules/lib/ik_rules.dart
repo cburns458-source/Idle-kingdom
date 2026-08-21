@@ -94,6 +94,7 @@ export 'src/world/amenity_copy.dart';
 export 'src/world/blessing.dart';
 export 'src/world/constants.dart';
 export 'src/world/hostility.dart';
+export 'src/world/kingswoods_sling.dart';
 export 'src/world/location_search.dart';
 export 'src/world/map_label.dart';
 export 'src/world/map_layout.dart';

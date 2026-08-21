@@ -180,6 +180,6 @@ void main() {
     await tester.pump();
     await tester.pump();
     expect(find.text(signInPrompt), findsNothing);
-    expect(find.text('Mira'), findsOne);
+    expect(find.text('[WCH]Mira'), findsOne);
   });
 }

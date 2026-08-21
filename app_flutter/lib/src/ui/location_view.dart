@@ -70,7 +70,6 @@ class LocationView extends StatefulWidget {
     required this.controller,
     required this.multiplayer,
     required this.onOpenMap,
-    required this.onOpenSubMap,
     this.onOpenGuilds,
   });
 
@@ -80,9 +79,6 @@ class LocationView extends StatefulWidget {
   /// other players can reach into.
   final MultiplayerController multiplayer;
   final VoidCallback onOpenMap;
-
-  /// Opens the district map a gateway location leads into.
-  final ValueChanged<String> onOpenSubMap;
 
   final VoidCallback? onOpenGuilds;
 
@@ -268,29 +264,6 @@ class _LocationViewState extends State<LocationView> {
                           ],
                         ),
                       ),
-                      if (subMapIdForGateway(controller.db, locationId) case final subMapId?
-                          when isSubMapGateway(location))
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(13, 8, 13, 0),
-                          child: Align(
-                            alignment: Alignment.centerLeft,
-                            child: GameButton(
-                              label: enterSubMapLabel(controller.db, location) ?? 'Enter',
-                              onPressed: () => widget.onOpenSubMap(subMapId),
-                            ),
-                          ),
-                        )
-                      else if (backToSubMapLabel(controller.db, location) case final backLabel?)
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(13, 8, 13, 0),
-                          child: Align(
-                            alignment: Alignment.centerLeft,
-                            child: GameButton(
-                              label: backLabel,
-                              onPressed: () => widget.onOpenSubMap(getLocationMapId(location)),
-                            ),
-                          ),
-                        ),
                       if (controller.showRecoveringStage && stage == null)
                         Padding(
                           padding: const EdgeInsets.fromLTRB(13, 8, 13, 0),

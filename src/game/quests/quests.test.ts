@@ -28,9 +28,9 @@ describe('quest tours', () => {
   it('charges 25 gold, recovers the purse by bribe, and grants the hood plus skill XP', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const beggar = launch.NPCs.find((row) => row['NPC ID'] === 'NPC-0011')!
-    expect(beggar['Location ID']).toBe('LOC-0002')
+    expect(beggar['Location ID']).toBe('LOC-0034')
 
-    let save = { ...createNewSave(launch), currentLocationId: 'LOC-0002', gold: 300 }
+    let save = { ...createNewSave(launch), currentLocationId: 'LOC-0034', gold: 300 }
     const pitched = npcConversation(launch, save, beggar)
     expect(pitched.greeting).toEqual(
       expect.objectContaining({ kind: 'quest_pitch', questId: 'QST-0003' }),
@@ -61,7 +61,7 @@ describe('quest tours', () => {
     expect(save.inventory.find((stack) => stack.itemId === 'ITEM-0299')?.quantity).toBe(1)
     expect(activityVisibleForSave(launch, save, 'ACT-0034')).toBe(false)
 
-    save = { ...save, currentLocationId: 'LOC-0002' }
+    save = { ...save, currentLocationId: 'LOC-0034' }
     const completed = completeQuest(launch, save, 'QST-0003')
     expect(completed.ok).toBe(true)
     if (!completed.ok) return
@@ -76,7 +76,7 @@ describe('quest tours', () => {
 
   it('opens Pressure the Guards only on the combat route, then grants Combat XP', () => {
     const { launch } = prepareDatabase(rawDatabase)
-    let save = { ...createNewSave(launch), currentLocationId: 'LOC-0002', gold: 25 }
+    let save = { ...createNewSave(launch), currentLocationId: 'LOC-0034', gold: 25 }
     const donated = donateForQuest(launch, save, 'QST-0003')
     expect(donated.ok).toBe(true)
     if (!donated.ok) return
@@ -99,7 +99,7 @@ describe('quest tours', () => {
 
     save = addItemToInventory(save, 'ITEM-0299', 1)
     expect(activityVisibleForSave(launch, save, 'ACT-0034')).toBe(false)
-    save = { ...save, currentLocationId: 'LOC-0002' }
+    save = { ...save, currentLocationId: 'LOC-0034' }
     const completed = completeQuest(launch, save, 'QST-0003')
     expect(completed.ok).toBe(true)
     if (!completed.ok) return

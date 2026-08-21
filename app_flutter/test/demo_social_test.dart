@@ -27,18 +27,22 @@ void main() {
     final net = buildMultiplayer(database);
     addTearDown(controller.dispose);
     addTearDown(net.dispose);
+    addTearDown(() async {
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
     await signIn(net);
-    await pumpShell(tester, controller, multiplayer: net);
+    await net.refresh(controller.save);
+    await pumpShell(tester, controller, multiplayer: net, size: const Size(900, 2400));
     await tester.pump();
 
     await tester.tap(find.byTooltip('Nearby adventurers'));
     await tester.pump();
     await tester.pump();
 
-    expect(find.text('Mira'), findsOne);
-    expect(find.textContaining('The Watch'), findsWidgets);
+    expect(find.text('[WCH]Mira'), findsOne);
+    expect(find.textContaining('The Watch'), findsNothing);
 
-    await tester.tap(find.text('Mira'));
+    await tester.tap(find.text('[WCH]Mira'));
     await tester.pump();
     await tester.pump();
 
@@ -51,6 +55,9 @@ void main() {
     final net = buildMultiplayer(database);
     addTearDown(controller.dispose);
     addTearDown(net.dispose);
+    addTearDown(() async {
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
     await signIn(net);
     await pumpShell(tester, controller, multiplayer: net, size: const Size(900, 2400));
 
@@ -103,6 +110,9 @@ void main() {
     final net = buildMultiplayer(database);
     addTearDown(controller.dispose);
     addTearDown(net.dispose);
+    addTearDown(() async {
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
     await signIn(net);
     await pumpShell(tester, controller, multiplayer: net, size: const Size(900, 2400));
 
@@ -136,6 +146,9 @@ void main() {
     final net = buildMultiplayer(database);
     addTearDown(controller.dispose);
     addTearDown(net.dispose);
+    addTearDown(() async {
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
     await signIn(net);
     await net.sendFriendRequest(demoMiraId);
     await net.ignorePlayer(demoBramId);

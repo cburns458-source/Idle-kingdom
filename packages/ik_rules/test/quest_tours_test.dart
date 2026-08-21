@@ -16,14 +16,14 @@ void main() {
     db = _db();
   });
 
-  test('the Beggar stands at The Town gateway', () {
+  test('the Beggar stands at the Town Bank', () {
     final beggar = db.npcs.firstWhere((row) => row.raw['NPC ID'] == 'NPC-0011');
-    expect(beggar.raw['Location ID'], 'LOC-0002');
+    expect(beggar.raw['Location ID'], 'LOC-0034');
     expect(beggar.raw['Display Name'], 'Beggar');
   });
 
   test('the Missing Purse bribe grants the hood and a skill pick', () {
-    var save = _save(db, locationId: 'LOC-0002', gold: 300);
+    var save = _save(db, locationId: 'LOC-0034', gold: 300);
     expect(acceptQuest(db, save, 'QST-0003').ok, isFalse);
     final donated = donateForQuest(db, save, 'QST-0003');
     expect(donated.ok, isTrue);
@@ -42,7 +42,7 @@ void main() {
     save = bribed.save!;
     expect(inventoryCount(save, 'ITEM-0299'), 1);
 
-    save = save.copyWith(currentLocationId: 'LOC-0002');
+    save = save.copyWith(currentLocationId: 'LOC-0034');
     final completed = completeQuest(db, save, 'QST-0003');
     expect(completed.ok, isTrue);
     expect(completed.pendingSkillXp, 2500);

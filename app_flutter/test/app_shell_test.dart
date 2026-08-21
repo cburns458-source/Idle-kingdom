@@ -4,6 +4,7 @@ import 'package:idle_kingdoms/src/session/multiplayer_controller.dart';
 import 'package:idle_kingdoms/src/session/tester_access.dart';
 import 'package:idle_kingdoms/src/theme.dart';
 import 'package:idle_kingdoms/src/ui/app_shell.dart';
+import 'package:idle_kingdoms/src/ui/menu_view.dart';
 import 'package:idle_kingdoms/src/ui/reward_strip.dart';
 import 'package:ik_content/ik_content.dart';
 import 'package:ik_net/ik_net.dart';
@@ -376,7 +377,7 @@ void main() {
     await tester.pump();
     expect(find.bySemanticsLabel('Travelling'), findsOne);
 
-    await tester.tap(find.text('Inventory'));
+    await tester.tap(find.text('Character'));
     await tester.pump();
     expect(controller.save.currentLocationId, 'LOC-0009');
     expect(find.bySemanticsLabel('Travelling'), findsNothing);
@@ -438,13 +439,13 @@ void main() {
     addTearDown(controller.dispose);
     await pumpShell(tester, controller);
 
-    await tester.tap(find.text('Inventory'));
-    await tester.pump();
-    expect(find.textContaining('slots'), findsOne);
-
-    await tester.tap(find.text('Skills'));
+    await tester.tap(find.text('Character'));
     await tester.pump();
     expect(find.text('Combat'), findsWidgets);
+
+    await tester.tap(find.widgetWithText(GameButton, 'Inventory'));
+    await tester.pump();
+    expect(find.textContaining('slots'), findsOne);
   });
 
   testWidgets('the chin nest opens Settings, Log, Leaderboards, and Guilds', (tester) async {
@@ -452,8 +453,9 @@ void main() {
     addTearDown(controller.dispose);
     await pumpShell(tester, controller);
 
-    expect(find.text('Inventory'), findsOne);
-    expect(find.text('Skills'), findsOne);
+    expect(find.text('Character'), findsOne);
+    expect(find.text('Skills'), findsNothing);
+    expect(find.text('Inventory'), findsNothing);
     expect(find.byTooltip('Open menu'), findsOne);
     expect(find.text('Log'), findsNothing);
     expect(find.text('Social'), findsNothing);
@@ -481,7 +483,10 @@ void main() {
     await openChinScreen(tester, 'Settings');
     expect(find.text('Map travel animation'), findsOne);
     expect(find.text('Account'), findsOne);
-    expect(find.text('Character'), findsNothing);
+    expect(
+      find.descendant(of: find.byType(MenuView), matching: find.text('Character')),
+      findsNothing,
+    );
     await tester.tap(find.byType(Switch).first);
     await tester.pump();
     expect(controller.mapTravelAnimation, isTrue);
@@ -534,11 +539,11 @@ void main() {
     addTearDown(controller.dispose);
     await pumpShell(tester, controller);
 
-    await tester.tap(find.text('Skills'));
+    await tester.tap(find.text('Character'));
     await tester.pump();
     expect(find.text('Total level'), findsOne);
 
-    await tester.tap(find.text('Inventory'));
+    await tester.tap(find.widgetWithText(GameButton, 'Inventory'));
     await tester.pump();
     expect(find.textContaining('slots'), findsOne);
     expect(find.text('Total level'), findsNothing);

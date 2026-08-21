@@ -11,14 +11,13 @@ import 'away_summary_sheet.dart';
 import 'bottom_nav.dart';
 import 'chat_sheet.dart';
 import 'critter_overlay.dart';
-import 'inventory_view.dart';
+import 'character_view.dart';
 import 'location_view.dart';
 import 'log_view.dart';
 import 'menu_view.dart';
 import 'new_character_sheet.dart';
 import 'overlay_notice.dart';
 import 'playable_frame.dart';
-import 'skills_view.dart';
 import 'social_alert.dart';
 import 'social_view.dart';
 import 'top_hud.dart';
@@ -26,7 +25,7 @@ import 'travel_overlay.dart';
 import 'wardrobe_sheet.dart';
 import 'world_map_view.dart';
 
-enum GameScreen { location, map, skills, inventory, log, leaderboards, guilds, account, menu }
+enum GameScreen { location, map, character, log, leaderboards, guilds, account, menu }
 
 /// Sits on the chin. Kept low on the location screen so it does not cover
 /// Expand list or the activity buttons.
@@ -36,8 +35,7 @@ const double chatLauncherBottom = 62;
 const double chatLauncherBottomOnMap = 192;
 
 const Set<GameScreen> _chinScreens = {
-  GameScreen.skills,
-  GameScreen.inventory,
+  GameScreen.character,
   GameScreen.log,
   GameScreen.leaderboards,
   GameScreen.guilds,
@@ -75,6 +73,7 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
   bool _wardrobeOpen = false;
   bool _chatOpen = false;
   bool _socialAlertQueued = false;
+  String? _socialAlertMessage;
 
   GameScreen get _screen => _stack.last;
   final GlobalKey _toastKey = GlobalKey();
@@ -122,9 +121,11 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
   /// result on the action that caused it without leaking across every screen.
   void _maybePresentSocialNotice() {
     final text = multiplayer.notice;
-    if (text == null || text.isEmpty || _socialAlertQueued) return;
+    if (text == null || text.isEmpty || _socialAlertQueued || _socialAlertMessage != null) {
+      return;
+    }
     _socialAlertQueued = true;
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) {
         _socialAlertQueued = false;
         return;
@@ -135,12 +136,18 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
         _socialAlertQueued = false;
         return;
       }
-      await showSocialAlert(context, message);
-      if (!mounted) return;
-      if (multiplayer.notice == message) multiplayer.announce(null);
-      _socialAlertQueued = false;
-      _maybePresentSocialNotice();
+      setState(() {
+        _socialAlertMessage = message;
+        _socialAlertQueued = false;
+      });
     });
+  }
+
+  void _dismissSocialAlert() {
+    final message = _socialAlertMessage;
+    setState(() => _socialAlertMessage = null);
+    if (message != null && multiplayer.notice == message) multiplayer.announce(null);
+    _maybePresentSocialNotice();
   }
 
   bool _polling = false;
@@ -219,17 +226,6 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
     });
   }
 
-  /// Opens a district map: from a gateway, or back from a location on that map.
-  void _browseSubMap(String mapId) {
-    _cancelMapWalk();
-    setState(() {
-      _browseMapId = mapId;
-      _selectedLocationId = controller.save.currentLocationId;
-      _wardrobeOpen = false;
-      if (_stack.last != GameScreen.map) _stack.add(GameScreen.map);
-    });
-  }
-
   void _popToLocation() {
     _cancelMapWalk();
     setState(() {
@@ -299,8 +295,36 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
     });
   }
 
+  /// Gateways open or close a child map without moving the player.
+  bool _openMapPortal(String locationId) {
+    final dest = controller.indexes.locationsById[locationId];
+    if (dest == null || !isSubMapGateway(dest)) return false;
+    if (_browseMapId == mainMapId) {
+      final child = subMapIdForGateway(controller.db, locationId);
+      if (child == null) return false;
+      _cancelMapWalk();
+      setState(() {
+        _browseMapId = child;
+        _selectedLocationId = locationId;
+        _wardrobeOpen = false;
+        if (_stack.last != GameScreen.map) _stack.add(GameScreen.map);
+      });
+      return true;
+    }
+    if (gatewayLocationIdForSubMap(controller.db, _browseMapId) == locationId) {
+      _cancelMapWalk();
+      setState(() {
+        _browseMapId = mainMapId;
+        _selectedLocationId = locationId;
+      });
+      return true;
+    }
+    return false;
+  }
+
   void _travelTo(String locationId) {
     if (controller.isRecovering) return;
+    if (_openMapPortal(locationId)) return;
     if (!canTravelTo(
       controller.db,
       controller.save.currentLocationId,
@@ -429,7 +453,6 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
                     controller: controller,
                     multiplayer: multiplayer,
                     onOpenMap: _showMap,
-                    onOpenSubMap: _browseSubMap,
                     onOpenGuilds: () => _selectScreen(GameScreen.guilds),
                   ),
                   if (_screen != GameScreen.location)
@@ -548,6 +571,10 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
             item: notice.itemId == null ? null : controller.indexes.itemsById[notice.itemId!],
             onClose: controller.dismissCosmeticUnlock,
           ),
+        if (controller.discoveryNotice case final notice?)
+          SocialAlertOverlay(message: notice, onClose: controller.dismissDiscoveryNotice),
+        if (_socialAlertMessage case final message?)
+          SocialAlertOverlay(message: message, onClose: _dismissSocialAlert),
       ],
     );
   }
@@ -576,10 +603,8 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
           walkToId: _walkToId,
           walkProgress: _mapWalk?.value,
         );
-      case GameScreen.skills:
-        return SkillsView(controller: controller, onClose: _popPage);
-      case GameScreen.inventory:
-        return InventoryView(controller: controller, onClose: _popPage);
+      case GameScreen.character:
+        return CharacterView(controller: controller, onClose: _popPage);
       case GameScreen.log:
         return LogView(controller: controller, onClose: _popPage);
       case GameScreen.leaderboards:

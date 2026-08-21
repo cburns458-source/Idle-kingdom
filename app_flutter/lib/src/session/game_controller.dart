@@ -126,6 +126,7 @@ class GameController extends ChangeNotifier {
   double _travelProgress = 0;
   UnattendedResult? _awaySummary;
   CosmeticUnlockNotice? _cosmeticUnlock;
+  String? _discoveryNotice;
   AutoEquipProposal? _autoEquip;
   CombatRoundEvent? _lastRound;
   num? _lastRoundAtMs;
@@ -150,6 +151,9 @@ class GameController extends ChangeNotifier {
 
   /// A cosmetic that was just unlocked and has not been shown off yet.
   CosmeticUnlockNotice? get cosmeticUnlock => _cosmeticUnlock;
+
+  /// A one-shot find (Kingswoods Sling) that has not been shown off yet.
+  String? get discoveryNotice => _discoveryNotice;
 
   /// The tool an activity wants, offered rather than demanded.
   AutoEquipProposal? get autoEquip => _autoEquip;
@@ -334,6 +338,7 @@ class GameController extends ChangeNotifier {
         away.combatDeaths +
         away.crittersSpawned;
     _awaySummary = boot.created || credited <= 0 ? null : away;
+    _offerKingswoodsSling();
   }
 
   /// Loads the account save, including catch-up for time away.
@@ -372,6 +377,11 @@ class GameController extends ChangeNotifier {
 
   void dismissCosmeticUnlock() {
     _cosmeticUnlock = null;
+    notifyListeners();
+  }
+
+  void dismissDiscoveryNotice() {
+    _discoveryNotice = null;
     notifyListeners();
   }
 
@@ -415,6 +425,7 @@ class GameController extends ChangeNotifier {
     for (final event in result.events) {
       _applyEvent(event);
     }
+    _offerKingswoodsSling();
     _expireStageFx();
     _advanceTravel();
     // A frame always repaints: the progress bars and timers are read from the
@@ -497,7 +508,10 @@ class GameController extends ChangeNotifier {
     if (_travelProgress < 1) return;
     _travel = null;
     _travelProgress = 0;
+    final claimedSling = save.claimedKingswoodsSling;
+    final ownedSling = saveOwnsSling(save);
     _showArrival(session.arrive(journey.toLocationId));
+    _noteKingswoodsSling(claimedBefore: claimedSling, ownedBefore: ownedSling);
   }
 
   /// Starts or replaces the primary activity at the current location.
@@ -601,6 +615,8 @@ class GameController extends ChangeNotifier {
     if (_travel != null) return false;
     final nowMs = session.clock();
     final from = save.currentLocationId;
+    final claimedSling = save.claimedKingswoodsSling;
+    final ownedSling = saveOwnsSling(save);
     final plan = session.travelTo(destinationId, browseMapId);
     switch (plan) {
       case TravelBlocked():
@@ -608,6 +624,7 @@ class GameController extends ChangeNotifier {
       case TravelInstant(arrival: final arrival):
         _recentRewards.clear();
         _showArrival(arrival);
+        _noteKingswoodsSling(claimedBefore: claimedSling, ownedBefore: ownedSling);
       case TravelTimed(durationMs: final durationMs):
         _recentRewards.clear();
         _travel = TravelInFlight(
@@ -749,6 +766,26 @@ class GameController extends ChangeNotifier {
   void _showArrival(TravelArrival arrival) {
     _message = arrival.forcedActivityId != null ? arrival.message : null;
     _activityError = arrival.blockedReason != null ? arrival.message : null;
+    notifyListeners();
+  }
+
+  void _offerKingswoodsSling() {
+    final result = maybeGrantKingswoodsSling(db, save);
+    if (result.granted) {
+      session.apply(result.save);
+      _discoveryNotice = result.message;
+      return;
+    }
+    if (result.save.claimedKingswoodsSling != save.claimedKingswoodsSling) {
+      session.apply(result.save);
+    }
+  }
+
+  void _noteKingswoodsSling({required bool claimedBefore, required bool ownedBefore}) {
+    if (claimedBefore || ownedBefore || !save.claimedKingswoodsSling || !saveOwnsSling(save)) {
+      return;
+    }
+    _discoveryNotice = kingswoodsSlingFoundMessage;
     notifyListeners();
   }
 

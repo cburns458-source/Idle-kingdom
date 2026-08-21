@@ -8,6 +8,7 @@ import '../quests/progress.dart';
 import '../save/generated/save_models.dart';
 import 'constants.dart';
 import 'map_label.dart';
+import 'kingswoods_sling.dart';
 import 'submaps.dart';
 
 /// Travel is a menu button: destinations are instant, with no walk or mount delay.
@@ -139,5 +140,8 @@ PlayerSave applyTravelArrival(
   if (isDeathPaused(save, nowMs)) return save;
   final stopped = stopPrimaryActivityNow(db, save, nowMs);
   final arrived = stopped.copyWith(currentLocationId: destinationLocationId);
-  return applyQuestLocationProgress(db, arrived, destinationLocationId);
+  return maybeGrantKingswoodsSling(
+    db,
+    applyQuestLocationProgress(db, arrived, destinationLocationId),
+  ).save;
 }
