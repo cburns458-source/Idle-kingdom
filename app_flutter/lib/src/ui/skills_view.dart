@@ -12,10 +12,11 @@ import 'page_header.dart';
 
 /// Every skill as a tile, with the totals they add up to along the bottom.
 class SkillsView extends StatelessWidget {
-  const SkillsView({super.key, required this.controller, this.onClose});
+  const SkillsView({super.key, required this.controller, this.onClose, this.showHeader = true});
 
   final GameController controller;
   final VoidCallback? onClose;
+  final bool showHeader;
 
   @override
   Widget build(BuildContext context) {
@@ -23,13 +24,14 @@ class SkillsView extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (onClose != null)
-          PageHeader(title: 'Skills', onClose: onClose!)
-        else
-          const Padding(
-            padding: EdgeInsets.fromLTRB(12, 12, 12, 8),
-            child: Text('Skills', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w400)),
-          ),
+        if (showHeader)
+          if (onClose != null)
+            PageHeader(title: 'Skills', onClose: onClose!)
+          else
+            const Padding(
+              padding: EdgeInsets.fromLTRB(12, 12, 12, 8),
+              child: Text('Skills', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w400)),
+            ),
         Expanded(
           child: GridView.extent(
             padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),

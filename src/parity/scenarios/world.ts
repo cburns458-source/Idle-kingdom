@@ -1,4 +1,5 @@
 import { mulberry32 } from '../../game/rng/mulberry32'
+import type { GameDatabase, LocationSearchRow } from '../../game/data/types'
 import type { PlayerSave } from '../../game/save/types'
 import {
   applyHostileTravelArrival,
@@ -98,6 +99,24 @@ const TRAVEL_LOCATIONS = [
   'LOC-9999',
 ]
 const SEARCH_LOCATIONS = ['LOC-0010', 'LOC-0002', 'LOC-9999']
+const SYNTHETIC_SEARCH: LocationSearchRow = {
+  'Search ID': 'SRCH-0001',
+  'Internal Key': 'test_search',
+  'Location ID': 'LOC-0010',
+  'Display Name': 'Search around the entrance',
+  'Button Label': 'Search',
+  'Reward Item ID': 'ITEM-0109',
+  'Reward Quantity': 1,
+  'Cooldown Hours': 24,
+  Status: 'Planned',
+  'Release Phase': 'Launch',
+  Notes: null,
+}
+
+function searchDatabase(): GameDatabase {
+  const db = contentDatabase()
+  return { ...db, LocationSearches: [SYNTHETIC_SEARCH] }
+}
 const HOSTILE_LOCATIONS = ['LOC-0003', 'LOC-0006', 'LOC-0032', 'LOC-0002', 'LOC-9999']
 
 /** Every ordered pair among the sampled nodes, on each map that could show them. */
@@ -296,7 +315,7 @@ export const worldScenarios: ParityScenario[] = [
     'cooldowns',
     withSave('base', { locations: SEARCH_LOCATIONS }),
     () => {
-      const db = contentDatabase()
+      const db = searchDatabase()
       const save = saveFor('base')
       const claimed: PlayerSave = {
         ...save,
@@ -340,7 +359,7 @@ export const worldScenarios: ParityScenario[] = [
       entry.name,
       withSave(entry.save, { searchId: entry.searchId }),
       () => {
-        const db = contentDatabase()
+        const db = searchDatabase()
         const first = claimLocationSearch(db, saveFor(entry.save), entry.searchId, PINNED_NOW_MS)
         const again = claimLocationSearch(db, first.save, entry.searchId, PINNED_NOW_MS + 60_000)
         const later = claimLocationSearch(

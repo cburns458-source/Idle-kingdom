@@ -34,21 +34,37 @@ const List<String> equipmentGridOrder = <String>[
 
 enum _InventoryTab { items, equipment }
 
+/// Which pane [InventoryView] should open on, and whether the other is offered.
+enum InventoryPane { items, equipment }
+
 /// The bag and the worn gear, with the combat numbers they add up to.
 class InventoryView extends StatefulWidget {
-  const InventoryView({super.key, required this.controller, this.onClose});
+  const InventoryView({
+    super.key,
+    required this.controller,
+    this.onClose,
+    this.pane,
+    this.showHeader = true,
+  });
 
   final GameController controller;
   final VoidCallback? onClose;
+
+  /// When set, only this pane is shown and the Items / Equipment toggle is hidden.
+  final InventoryPane? pane;
+  final bool showHeader;
 
   @override
   State<InventoryView> createState() => _InventoryViewState();
 }
 
 class _InventoryViewState extends State<InventoryView> {
-  _InventoryTab _tab = _InventoryTab.items;
+  late _InventoryTab _tab = widget.pane == InventoryPane.equipment
+      ? _InventoryTab.equipment
+      : _InventoryTab.items;
   String? _message;
   bool _showSources = false;
+  bool get _lockedPane => widget.pane != null;
 
   /// Non-null while picking stacks to sell; values are chosen quantities.
   Map<int, int>? _selling;
@@ -230,51 +246,55 @@ class _InventoryViewState extends State<InventoryView> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (widget.onClose != null)
-            PageHeader(title: 'Inventory', onClose: widget.onClose!)
-          else
-            const Text('Inventory', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w400)),
-          Align(
-            alignment: Alignment.centerRight,
-            child: MutedText('${inventorySlotCount(save)} / $inventorySlotLimit slots'),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: GameButton(
-                  label: 'Items',
-                  compact: true,
-                  selected: _tab == _InventoryTab.items,
-                  tone: _tab == _InventoryTab.items
-                      ? GameButtonTone.primary
-                      : GameButtonTone.secondary,
-                  onPressed: () => setState(() {
-                    _tab = _InventoryTab.items;
-                    _selling = null;
-                    _message = null;
-                    _showSources = false;
-                  }),
+          if (widget.showHeader)
+            if (widget.onClose != null)
+              PageHeader(title: 'Inventory', onClose: widget.onClose!)
+            else
+              const Text('Inventory', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w400)),
+          if (_tab == _InventoryTab.items)
+            Align(
+              alignment: Alignment.centerRight,
+              child: MutedText('${inventorySlotCount(save)} / $inventorySlotLimit slots'),
+            ),
+          if (!_lockedPane) ...[
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: GameButton(
+                    label: 'Items',
+                    compact: true,
+                    selected: _tab == _InventoryTab.items,
+                    tone: _tab == _InventoryTab.items
+                        ? GameButtonTone.primary
+                        : GameButtonTone.secondary,
+                    onPressed: () => setState(() {
+                      _tab = _InventoryTab.items;
+                      _selling = null;
+                      _message = null;
+                      _showSources = false;
+                    }),
+                  ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: GameButton(
-                  label: 'Equipment',
-                  compact: true,
-                  selected: _tab == _InventoryTab.equipment,
-                  tone: _tab == _InventoryTab.equipment
-                      ? GameButtonTone.primary
-                      : GameButtonTone.secondary,
-                  onPressed: () => setState(() {
-                    _tab = _InventoryTab.equipment;
-                    _selling = null;
-                    _message = null;
-                  }),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: GameButton(
+                    label: 'Equipment',
+                    compact: true,
+                    selected: _tab == _InventoryTab.equipment,
+                    tone: _tab == _InventoryTab.equipment
+                        ? GameButtonTone.primary
+                        : GameButtonTone.secondary,
+                    onPressed: () => setState(() {
+                      _tab = _InventoryTab.equipment;
+                      _selling = null;
+                      _message = null;
+                    }),
+                  ),
                 ),
-              ),
-            ],
-          ),
+              ],
+            ),
+          ],
           if (selling != null) ...[
             const SizedBox(height: 8),
             Row(

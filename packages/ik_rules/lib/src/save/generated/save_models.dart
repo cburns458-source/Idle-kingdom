@@ -7,11 +7,11 @@
 
 import '../../json_support.dart';
 
-const int saveVersion = 28;
+const int saveVersion = 29;
 
 const String saveStorageKey = 'idle-kingdoms.demo.save';
 
-const String startingLocationId = 'LOC-0002';
+const String startingLocationId = 'LOC-0001';
 
 /// Base gold before race kit; race starters grant the real starting gold.
 const int startingGold = 0;
@@ -559,6 +559,7 @@ class PlayerSave {
     required this.rankedPvpWins,
     required this.rankedPvpLosses,
     required this.claimedMerchantTipIds,
+    required this.claimedKingswoodsSling,
     required this.critterCollections,
     required this.activeCritterSpawns,
     required this.critterProgressMs,
@@ -631,6 +632,7 @@ class PlayerSave {
         json['claimedMerchantTipIds'],
         (Object? entry) => entry as String,
       ),
+      claimedKingswoodsSling: json['claimedKingswoodsSling'] as bool,
       critterCollections: listOf(
         json['critterCollections'],
         (Object? entry) => CritterCollectionEntry.fromJson(asJsonMap(entry)),
@@ -736,6 +738,9 @@ class PlayerSave {
   /// Merchant tip rewards already claimed (one-time dialogue grants).
   final List<String> claimedMerchantTipIds;
 
+  /// One-time Kingswoods Sling grant. Existing saves keep false until they visit.
+  final bool claimedKingswoodsSling;
+
   /// Critter collection counts (unlocked entries in the Log).
   final List<CritterCollectionEntry> critterCollections;
 
@@ -830,6 +835,7 @@ class PlayerSave {
       'rankedPvpWins': rankedPvpWins,
       'rankedPvpLosses': rankedPvpLosses,
       'claimedMerchantTipIds': claimedMerchantTipIds,
+      'claimedKingswoodsSling': claimedKingswoodsSling,
       'critterCollections': critterCollections.map((entry) => entry.toJson()).toList(),
       'activeCritterSpawns': activeCritterSpawns.map((entry) => entry.toJson()).toList(),
       'critterProgressMs': critterProgressMs,
@@ -887,6 +893,7 @@ class PlayerSave {
     num? rankedPvpWins,
     num? rankedPvpLosses,
     List<String>? claimedMerchantTipIds,
+    bool? claimedKingswoodsSling,
     List<CritterCollectionEntry>? critterCollections,
     List<CritterSpawn>? activeCritterSpawns,
     Map<String, num>? critterProgressMs,
@@ -945,6 +952,7 @@ class PlayerSave {
       rankedPvpWins: rankedPvpWins ?? this.rankedPvpWins,
       rankedPvpLosses: rankedPvpLosses ?? this.rankedPvpLosses,
       claimedMerchantTipIds: claimedMerchantTipIds ?? this.claimedMerchantTipIds,
+      claimedKingswoodsSling: claimedKingswoodsSling ?? this.claimedKingswoodsSling,
       critterCollections: critterCollections ?? this.critterCollections,
       activeCritterSpawns: activeCritterSpawns ?? this.activeCritterSpawns,
       critterProgressMs: critterProgressMs ?? this.critterProgressMs,

@@ -122,7 +122,7 @@ describe('npc conversation', () => {
   })
 
   it('reads quest pitches and talk lines from the database', () => {
-    const beggar = npcConversation(launch, saveAt('LOC-0002'), npc('NPC-0011'))
+    const beggar = npcConversation(launch, saveAt('LOC-0034'), npc('NPC-0011'))
     expect(beggar.greeting).toEqual({
       kind: 'quest_pitch',
       questId: 'QST-0003',

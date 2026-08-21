@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { prepareDatabase } from '../data/loadDatabase'
+import type { GameDatabase, LocationSearchRow } from '../data/types'
 import { createNewSave } from '../save/saveStore'
 import {
   canClaimLocationSearch,
@@ -14,9 +15,33 @@ const rawDatabase = JSON.parse(
   readFileSync(resolve(process.cwd(), 'content/data/game-database.json'), 'utf8'),
 )
 
+const TEST_SEARCH: LocationSearchRow = {
+  'Search ID': 'SRCH-0001',
+  'Internal Key': 'test_search',
+  'Location ID': 'LOC-0010',
+  'Display Name': 'Search around the entrance',
+  'Button Label': 'Search',
+  'Reward Item ID': 'ITEM-0109',
+  'Reward Quantity': 1,
+  'Cooldown Hours': 24,
+  Status: 'Planned',
+  'Release Phase': 'Launch',
+  Notes: null,
+}
+
+function dbWithSearch(): GameDatabase {
+  const { launch } = prepareDatabase(rawDatabase)
+  return { ...launch, LocationSearches: [TEST_SEARCH] }
+}
+
 describe('location search', () => {
-  it('lists the Cave Entrance search spot', () => {
+  it('lists no Cave Entrance search in launch content', () => {
     const { launch } = prepareDatabase(rawDatabase)
+    expect(locationSearchesAt(launch, 'LOC-0010')).toEqual([])
+  })
+
+  it('lists an injected search spot', () => {
+    const launch = dbWithSearch()
     const spots = locationSearchesAt(launch, 'LOC-0010')
     expect(spots).toHaveLength(1)
     expect(spots[0]?.['Display Name']).toBe('Search around the entrance')
@@ -24,13 +49,13 @@ describe('location search', () => {
   })
 
   it('grants the reward on first search and starts a 24h cooldown', () => {
-    const { launch } = prepareDatabase(rawDatabase)
+    const launch = dbWithSearch()
     const save = createNewSave(launch)
     const nowMs = Date.parse('2026-01-01T00:00:00.000Z')
 
-    expect(
-      canClaimLocationSearch(save, locationSearchesAt(launch, 'LOC-0010')[0]!, nowMs),
-    ).toBe(true)
+    expect(canClaimLocationSearch(save, locationSearchesAt(launch, 'LOC-0010')[0]!, nowMs)).toBe(
+      true,
+    )
 
     const result = claimLocationSearch(launch, save, 'SRCH-0001', nowMs)
     expect(result.ok).toBe(true)
@@ -42,7 +67,7 @@ describe('location search', () => {
   })
 
   it('blocks a second search before 24 hours have passed, and allows it after', () => {
-    const { launch } = prepareDatabase(rawDatabase)
+    const launch = dbWithSearch()
     const save = createNewSave(launch)
     const firstMs = Date.parse('2026-01-01T00:00:00.000Z')
     const first = claimLocationSearch(launch, save, 'SRCH-0001', firstMs)
@@ -71,7 +96,7 @@ describe('location search', () => {
   })
 
   it('does not consume the search or reset the cooldown when the inventory is full', () => {
-    const { launch } = prepareDatabase(rawDatabase)
+    const launch = dbWithSearch()
     let save = createNewSave(launch)
     // Fill every inventory slot with a non-stacking-relevant item so the Sling has no room.
     save = {

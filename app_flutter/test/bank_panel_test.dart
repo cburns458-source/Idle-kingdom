@@ -87,7 +87,6 @@ void main() {
         controller: town,
         multiplayer: buildMultiplayer(database),
         onOpenMap: () {},
-        onOpenSubMap: (_) {},
       ),
     );
     expect(find.text('Item storage'), findsOne);
@@ -103,7 +102,6 @@ void main() {
         controller: meadow,
         multiplayer: buildMultiplayer(database),
         onOpenMap: () {},
-        onOpenSubMap: (_) {},
       ),
     );
     expect(find.text('Item storage'), findsNothing);

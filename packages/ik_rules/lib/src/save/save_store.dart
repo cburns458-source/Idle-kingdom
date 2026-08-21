@@ -60,6 +60,7 @@ PlayerSave createNewSave(GameDatabase db, num nowMs) {
     rankedPvpWins: 0,
     rankedPvpLosses: 0,
     claimedMerchantTipIds: const <String>[],
+    claimedKingswoodsSling: false,
     critterCollections: const <CritterCollectionEntry>[],
     activeCritterSpawns: const <CritterSpawn>[],
     critterProgressMs: const <String, num>{},

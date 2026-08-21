@@ -28,9 +28,9 @@ describe('quest tours', () => {
   it('charges 25 gold, recovers the purse by bribe, and grants the hood plus skill XP', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const beggar = launch.NPCs.find((row) => row['NPC ID'] === 'NPC-0011')!
-    expect(beggar['Location ID']).toBe('LOC-0002')
+    expect(beggar['Location ID']).toBe('LOC-0034')
 
-    let save = { ...createNewSave(launch), currentLocationId: 'LOC-0002', gold: 300 }
+    let save = { ...createNewSave(launch), currentLocationId: 'LOC-0034', gold: 300 }
     const pitched = npcConversation(launch, save, beggar)
     expect(pitched.greeting).toEqual(
       expect.objectContaining({ kind: 'quest_pitch', questId: 'QST-0003' }),

@@ -29,6 +29,7 @@ function sampleSave(skills: Array<{ skillId: string; level: number; xp: number }
     favoriteActivityByLocationId: {},
     heldActionByActivityId: {},
     claimedMerchantTipIds: [],
+    claimedKingswoodsSling: false,
     critterCollections: [],
     activeCritterSpawns: [],
     critterProgressMs: {},

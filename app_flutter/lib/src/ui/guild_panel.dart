@@ -581,7 +581,9 @@ class _GuildDetailPageState extends State<_GuildDetailPage> {
   Future<void> _load() async {
     try {
       final members = await net.service.guildMembers(guild.id);
-      final guests = await net.service.guildGuests(guild.id);
+      final guests = widget.mode == _GuildDetailMode.own
+          ? await net.service.guildGuests(guild.id)
+          : const <GuildGuest>[];
       if (!mounted) return;
       setState(() {
         _members = members;
@@ -604,7 +606,7 @@ class _GuildDetailPageState extends State<_GuildDetailPage> {
       listenable: net,
       builder: (context, _) {
         final members = widget.mode == _GuildDetailMode.own ? net.members : _members;
-        final guests = widget.mode == _GuildDetailMode.own ? net.guests : _guests;
+        final guests = widget.mode == _GuildDetailMode.own ? net.guests : const <GuildGuest>[];
         final header = guildHomeHeader(guild, members?.length ?? 0, net.session?.userId);
         final rows = members == null
             ? const <GuildRosterRow>[]

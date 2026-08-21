@@ -18,7 +18,7 @@ void main() {
     addTearDown(controller.dispose);
     await pumpShell(tester, controller);
 
-    await tester.tap(find.text('Skills'));
+    await tester.tap(find.text('Character'));
     await tester.pump();
     await tester.tap(find.text('Mining'));
     await tester.pump();
@@ -32,7 +32,7 @@ void main() {
     addTearDown(controller.dispose);
     await pumpShell(tester, controller);
 
-    await tester.tap(find.text('Skills'));
+    await tester.tap(find.text('Character'));
     await tester.pump();
     await tester.tap(find.text('Smithing'));
     await tester.pump();
@@ -48,7 +48,7 @@ void main() {
     addTearDown(controller.dispose);
     await pumpShell(tester, controller);
 
-    await tester.tap(find.text('Skills'));
+    await tester.tap(find.text('Character'));
     await tester.pump();
 
     final progress = skillXpProgress(

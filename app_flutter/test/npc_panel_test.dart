@@ -190,7 +190,7 @@ void main() {
   });
 
   testWidgets('the Beggar at The Town asks for 25 gold', (tester) async {
-    final controller = buildController(database, seed: standing('LOC-0002', gold: 40));
+    final controller = buildController(database, seed: standing('LOC-0034', gold: 40));
     addTearDown(controller.dispose);
 
     await pumpPanel(

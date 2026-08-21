@@ -26,7 +26,6 @@ void main() {
         controller: plaza,
         multiplayer: buildMultiplayer(database),
         onOpenMap: () {},
-        onOpenSubMap: (_) {},
       ),
       size: const Size(900, 2400),
     );
@@ -43,7 +42,6 @@ void main() {
         controller: meadow,
         multiplayer: buildMultiplayer(database),
         onOpenMap: () {},
-        onOpenSubMap: (_) {},
       ),
     );
     expect(find.text('Player fights'), findsNothing);

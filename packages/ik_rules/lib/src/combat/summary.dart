@@ -168,16 +168,13 @@ List<CombatBonusLine> _activeBonuses(GameDatabase db, PlayerSave save) {
 
   final raceId = save.raceId;
   if (isNotBlank(raceId)) {
-    final combatLines = raceBonusSummaryLines(
-      db,
-      raceId!,
-    ).where((line) => line.contains('maximum HP') || line.contains('combat damage')).toList();
-    if (combatLines.isNotEmpty) {
+    final raceLines = raceBonusSummaryLines(db, raceId!);
+    if (raceLines.isNotEmpty) {
       bonuses.add(
         CombatBonusLine(
           kind: 'race',
           name: raceDisplayName(db, raceId) ?? raceId,
-          effect: combatLines.join(', '),
+          effect: raceLines.join(', '),
         ),
       );
     }

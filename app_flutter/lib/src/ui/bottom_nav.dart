@@ -12,7 +12,7 @@ const List<(GameScreen, String)> _nestItems = [
 
 final Set<GameScreen> _nestScreens = {for (final item in _nestItems) item.$1};
 
-/// The chin: where you are, inventory, skills, and the nest for everything else.
+/// The chin: where you are, character, and the nest for everything else.
 class BottomNav extends StatefulWidget {
   const BottomNav({
     super.key,
@@ -119,17 +119,9 @@ class _BottomNavState extends State<BottomNav> {
             const VerticalDivider(width: 1, color: Palette.edge),
             Expanded(
               child: _NavSection(
-                label: 'Skills',
-                selected: widget.screen == GameScreen.skills,
-                onTap: () => _selectTab(GameScreen.skills),
-              ),
-            ),
-            const VerticalDivider(width: 1, color: Palette.edge),
-            Expanded(
-              child: _NavSection(
-                label: 'Inventory',
-                selected: widget.screen == GameScreen.inventory,
-                onTap: () => _selectTab(GameScreen.inventory),
+                label: 'Character',
+                selected: widget.screen == GameScreen.character,
+                onTap: () => _selectTab(GameScreen.character),
               ),
             ),
             const VerticalDivider(width: 1, color: Palette.edge),

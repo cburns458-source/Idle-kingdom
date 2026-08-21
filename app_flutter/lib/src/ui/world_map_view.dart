@@ -106,6 +106,8 @@ class WorldMapView extends StatelessWidget {
                       onTap: () => onSelect(node.locationId),
                       onDoubleTap: controller.isRecovering || walking
                           ? null
+                          : isSubMapGateway(node)
+                          ? () => onTravel(node.locationId)
                           : node.locationId == save.currentLocationId
                           ? onOpenHere
                           : () => onTravel(node.locationId),
@@ -156,6 +158,7 @@ class WorldMapView extends StatelessWidget {
             selected: selected,
             browseMapId: browseMapId,
             isHere: selected?.locationId == save.currentLocationId,
+            isPortal: selected != null && isSubMapGateway(selected),
             onTravel: onTravel,
             canTravel: !controller.isRecovering && !walking,
           ),
@@ -315,14 +318,12 @@ class _MapNodeState extends State<_MapNode> {
 }
 
 /// What is at the selected place, and the one button that takes you there.
-///
-/// Entering a sub-map is not offered here: that belongs to the gateway's own
-/// location page, once the player has actually travelled to it.
 class _SelectionPanel extends StatelessWidget {
   const _SelectionPanel({
     required this.selected,
     required this.browseMapId,
     required this.isHere,
+    required this.isPortal,
     required this.onTravel,
     required this.canTravel,
   });
@@ -330,6 +331,9 @@ class _SelectionPanel extends StatelessWidget {
   final LocationRow? selected;
   final String browseMapId;
   final bool isHere;
+
+  /// Gateways open a child map or return to the world without moving you.
+  final bool isPortal;
   final ValueChanged<String> onTravel;
   final bool canTravel;
 
@@ -359,7 +363,7 @@ class _SelectionPanel extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 10),
-                if (isHere)
+                if (isHere && !isPortal)
                   const MutedText('You are here.')
                 else
                   GameButton(

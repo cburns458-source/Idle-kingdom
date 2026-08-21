@@ -3,6 +3,7 @@ import { stopPrimaryActivityNow } from '../activity/transition'
 import type { GameDatabase, LocationRow, TravelConnectionRow } from '../data/types'
 import { applyQuestLocationProgress } from '../quests/progress'
 import type { PlayerSave } from '../save/types'
+import { maybeGrantKingswoodsSling } from './kingswoodsSling'
 import { MAIN_MAP_ID, isFutureHorizonLocation } from './constants'
 import { locationHiddenOnMap } from './mapLabel'
 import {
@@ -154,5 +155,6 @@ export function applyTravelArrival(
     ...stopped,
     currentLocationId: destinationLocationId,
   }
-  return applyQuestLocationProgress(db, arrived, destinationLocationId)
+  const progressed = applyQuestLocationProgress(db, arrived, destinationLocationId)
+  return maybeGrantKingswoodsSling(db, progressed).save
 }
