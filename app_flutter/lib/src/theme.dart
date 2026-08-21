@@ -87,7 +87,7 @@ const List<Shadow> overlayShadow = [
   Shadow(offset: Offset(0, 1), blurRadius: 2, color: Color(0x8C000000)),
 ];
 
-const String gameFontFamily = 'SevenTwelveSerif';
+const String gameFontFamily = 'PixeloidSans';
 
 /// Combat and gathering warnings.
 const TextStyle warningStyle = TextStyle(
@@ -99,7 +99,7 @@ const TextStyle warningStyle = TextStyle(
   shadows: overlayShadow,
 );
 
-/// 7:12 Serif is Regular-only. Force every role onto that cut.
+/// Pixeloid Sans Regular is the UI cut. Force every role onto that weight.
 TextTheme _regularGameText(TextTheme theme) {
   TextStyle? regular(TextStyle? style) {
     return style?.copyWith(fontFamily: gameFontFamily, fontWeight: FontWeight.w400);

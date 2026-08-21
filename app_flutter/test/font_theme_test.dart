@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:idle_kingdoms/src/theme.dart';
 
 void main() {
-  testWidgets('theme copy stays on regular 7:12 Serif', (tester) async {
+  testWidgets('theme copy stays on regular Pixeloid Sans', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
         theme: buildAppTheme(),
