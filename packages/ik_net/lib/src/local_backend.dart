@@ -277,6 +277,7 @@ class LocalMultiplayerBackend {
     );
     db.saves = db.saves.where((row) => row.userId != userId).toList();
     db.saves.add(record);
+    _overlayPvpLiveStats(db, userId, save);
     _write(db);
     return CloudSaveWriteResult.ok(record);
   }
@@ -331,6 +332,35 @@ class LocalMultiplayerBackend {
     return const ActionResult.ok();
   }
 
+  PlayerSave? ownPvpSnapshot(String userId) {
+    final record = _db().pvpSnapshots.firstWhereOrNull((row) => row.userId == userId);
+    if (record == null) return null;
+    return parseSave(record.payload.toJson(), _now());
+  }
+
+  void refreshPvpLiveStats(String userId, PlayerSave live) {
+    final db = _db();
+    _overlayPvpLiveStats(db, userId, live);
+    _write(db);
+  }
+
+  void _overlayPvpLiveStats(LocalDb db, String userId, PlayerSave live) {
+    final existing = db.pvpSnapshots.firstWhereOrNull((row) => row.userId == userId);
+    if (existing == null) return;
+    db.pvpSnapshots = [
+      for (final row in db.pvpSnapshots)
+        if (row.userId == userId)
+          CloudSaveRecord(
+            userId: userId,
+            saveVersion: live.saveVersion,
+            updatedAt: isNotBlank(live.updatedAt) ? live.updatedAt : _nowIso(),
+            payload: overlayPvpLiveStats(existing.payload, live),
+          )
+        else
+          row,
+    ];
+  }
+
   ArenaOpponent _arenaOpponentFromRecord(LocalDb db, CloudSaveRecord record) {
     final profile = db.profiles.firstWhereOrNull((row) => row.userId == record.userId);
     final username = isNotBlank(profile?.username)
@@ -380,6 +410,7 @@ class LocalMultiplayerBackend {
               : row,
         )
         .toList();
+    _overlayPvpLiveStats(db, userId, save);
     _write(db);
   }
 

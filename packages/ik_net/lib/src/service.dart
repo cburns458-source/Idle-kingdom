@@ -177,6 +177,9 @@ abstract interface class MultiplayerService {
   /// Publishes [save] as the loadout others fight in the arena.
   Future<ActionResult> savePvpEquipment(PlayerSave save);
 
+  /// The signed-in player's saved PvP loadout, or null if they have not saved.
+  Future<PlayerSave?> ownPvpSnapshot();
+
   Future<GuildHallState?> guildHall(String guildId);
 
   Future<GuildHallActionResult> payGuildDebt(PlayerSave save, num amount);
@@ -721,6 +724,13 @@ class LocalMultiplayerService implements MultiplayerService {
       return const ActionResult.failed('Sign in to save PvP equipment.');
     }
     return _backend.savePvpEquipment(current.userId, save);
+  }
+
+  @override
+  Future<PlayerSave?> ownPvpSnapshot() async {
+    final current = session;
+    if (current == null) return null;
+    return _backend.ownPvpSnapshot(current.userId);
   }
 
   @override

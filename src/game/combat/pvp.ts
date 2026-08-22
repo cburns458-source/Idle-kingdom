@@ -86,7 +86,26 @@ function thornsFrom(dealt: number, percent: number): number {
   return Math.round((dealt * percent) / 100)
 }
 
-/** Snapshot PvP: both fighters use current equipment at full HP. No potions. */
+/** Why a fight is refused when the player has not published a loadout. */
+export const pvpEquipmentRequired = 'Save equipment first.'
+
+/** Keeps snapshot gear and copies live combat, race, and look onto it. */
+export function overlayPvpLiveStats(snapshot: PlayerSave, live: PlayerSave): PlayerSave {
+  return {
+    ...snapshot,
+    skills: live.skills,
+    raceId: live.raceId,
+    appearance: live.appearance,
+    characterName: live.characterName,
+  }
+}
+
+/** Saved loadout plus the live character: gear from [loadout], combat and race from [live]. */
+export function composePvpFighter(db: GameDatabase, live: PlayerSave, loadout: PlayerSave): PlayerSave {
+  return preparePvpFighter(db, { ...live, equipment: loadout.equipment })
+}
+
+/** Snapshot PvP: the given save, at full HP, with potions stripped. */
 export function preparePvpFighter(db: GameDatabase, save: PlayerSave): PlayerSave {
   const maxHp = playerMaxHp(db, save)
   return {

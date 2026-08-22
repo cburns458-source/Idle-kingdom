@@ -45,6 +45,7 @@ class _ArenaPanelState extends State<ArenaPanel> {
   bool _rankedApplied = false;
   bool _savingEquipment = false;
   bool _equipmentSaved = false;
+  PlayerSave? _ownLoadout;
 
   GameController get controller => widget.controller;
   MultiplayerController get multiplayer => widget.multiplayer;
@@ -80,10 +81,13 @@ class _ArenaPanelState extends State<ArenaPanel> {
 
   Future<void> _loadOpponents() async {
     final rows = await multiplayer.service.listArenaOpponents();
+    final own = await multiplayer.service.ownPvpSnapshot();
     if (!mounted) return;
     setState(() {
       _all = rows;
       _matches = searchArenaOpponents(rows, _search.text);
+      _ownLoadout = own;
+      _equipmentSaved = own != null;
       _loading = false;
     });
   }
@@ -93,6 +97,11 @@ class _ArenaPanelState extends State<ArenaPanel> {
   }
 
   Future<void> _fightOpponent(ArenaOpponent opponent, {required bool ranked}) async {
+    final loadout = _ownLoadout;
+    if (loadout == null) {
+      setState(() => _error = pvpEquipmentRequired);
+      return;
+    }
     if (ranked) {
       final gate = canStartRankedPvp(save, controller.session.clock());
       if (!gate.ok) {
@@ -106,8 +115,8 @@ class _ArenaPanelState extends State<ArenaPanel> {
       setState(() => _error = 'That player has no character to fight.');
       return;
     }
-    final you = preparePvpFighter(controller.db, save);
-    final them = preparePvpFighter(controller.db, themSave);
+    final you = composePvpFighter(controller.db, save, loadout);
+    final them = composePvpFighter(controller.db, themSave, themSave);
     setState(() {
       _error = null;
       _opponent = opponent;
@@ -195,6 +204,7 @@ class _ArenaPanelState extends State<ArenaPanel> {
         _savingEquipment = false;
         if (result.ok) {
           _equipmentSaved = true;
+          _ownLoadout = save;
         } else {
           _error = result.reason ?? 'Could not save PvP equipment.';
         }
@@ -243,9 +253,7 @@ class _ArenaPanelState extends State<ArenaPanel> {
                 GameIconButton(icon: Icons.close, tooltip: 'Close', onPressed: widget.onClose),
             ],
           ),
-          const MutedText(
-            'Others fight the equipment you save. You fight with what you are wearing now.',
-          ),
+          const MutedText('You fight in the gear you save. Combat level and race stay current.'),
           if (_error case final error?) ...[
             const SizedBox(height: 6),
             Text(error, style: warningStyle),
@@ -268,7 +276,9 @@ class _ArenaPanelState extends State<ArenaPanel> {
         ),
         const SizedBox(height: 6),
         MutedText(
-          _equipmentSaved ? 'PvP snapshot saved. Others will fight this loadout.' : 'Save the gear others will fight. Search and ranked ignore anyone who has not saved.',
+          _equipmentSaved
+              ? 'Loadout saved. Others will fight this gear at your current combat level.'
+              : 'Save the gear you fight in. Search and ranked ignore anyone who has not saved.',
         ),
         const SizedBox(height: 10),
         Row(
@@ -364,7 +374,7 @@ class _ArenaPanelState extends State<ArenaPanel> {
           youName: save.characterName ?? 'You',
           themName: opponent.username,
           youAppearance: save.appearance,
-          themAppearance: opponent.appearance ?? save.appearance,
+          themAppearance: _them?.appearance ?? opponent.appearance ?? save.appearance,
           youBytes: controller.localPlayerPng,
           youHp: _youHp,
           youMaxHp: _youMaxHp,

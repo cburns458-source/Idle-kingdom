@@ -32,22 +32,32 @@ void main() {
     expect(combatLevelOf(mira!), 8);
   });
 
-  test('arena fights the saved equipment snapshot, not a later cloud save', () {
+  test('arena fights saved gear with live combat after a later cloud save', () {
     final harness = LocalMultiplayerBackend(storage: MemorySaveStorage());
     harness.ensureDemoWorld(database);
     final mira = harness.opponentSave(demoMiraId)!;
-    expect(harness.savePvpEquipment(demoMiraId, mira).ok, isTrue);
+    final sword = equipStackToSlot(mira, weaponToolSlotId, 'ITEM-0128', 1);
+    expect(harness.savePvpEquipment(demoMiraId, sword).ok, isTrue);
 
-    final later = mira.copyWith(
-      skills: [
-        for (final skill in mira.skills)
-          skill.skillId == combatSkillId ? skill.copyWith(level: 20) : skill,
-      ],
+    final later = equipStackToSlot(
+      mira.copyWith(
+        raceId: 'RACE-0003',
+        skills: [
+          for (final skill in mira.skills)
+            skill.skillId == combatSkillId ? skill.copyWith(level: 20) : skill,
+        ],
+      ),
+      weaponToolSlotId,
+      'ITEM-0102',
+      1,
     );
     expect(harness.writeCloudSave(demoMiraId, later, force: true).ok, isTrue);
-    expect(combatLevelOf(harness.opponentSave(demoMiraId)!), 8);
+    final snapshot = harness.opponentSave(demoMiraId)!;
+    expect(combatLevelOf(snapshot), 20);
+    expect(snapshot.raceId, 'RACE-0003');
+    expect(slotItemId(snapshot, weaponToolSlotId), 'ITEM-0128');
 
     final listed = harness.listArenaOpponents().firstWhere((row) => row.userId == demoMiraId);
-    expect(listed.combatLevel, 8);
+    expect(listed.combatLevel, 20);
   });
 }

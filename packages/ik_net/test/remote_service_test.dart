@@ -802,7 +802,9 @@ void main() {
     expect(await hero.listArenaOpponents(), isEmpty);
     expect(await hero.readOpponentSave(rival.session!.userId), isNull);
 
-    expect((await rival.savePvpEquipment(rivalSave)).ok, isTrue);
+    final rivalLoadout = equipStackToSlot(rivalSave, weaponToolSlotId, 'ITEM-0128', 1);
+    expect((await rival.savePvpEquipment(rivalLoadout)).ok, isTrue);
+    expect(await rival.ownPvpSnapshot(), isNotNull);
 
     final found = await hero.listArenaOpponents();
     expect(found, hasLength(1));
@@ -816,16 +818,27 @@ void main() {
     final snapshot = await hero.readOpponentSave(rival.session!.userId);
     expect(snapshot, isNotNull);
     expect(combatLevelOf(snapshot!), 9);
+    expect(slotItemId(snapshot, weaponToolSlotId), 'ITEM-0128');
     expect(await hero.readOpponentSave(hero.session!.userId), isNull);
 
-    final later = rivalSave.copyWith(
-      skills: [
-        for (final skill in rivalSave.skills)
-          skill.skillId == combatSkillId ? skill.copyWith(level: 20) : skill,
-      ],
+    final later = equipStackToSlot(
+      rivalSave.copyWith(
+        raceId: 'RACE-0004',
+        skills: [
+          for (final skill in rivalSave.skills)
+            skill.skillId == combatSkillId ? skill.copyWith(level: 20) : skill,
+        ],
+      ),
+      weaponToolSlotId,
+      'ITEM-0102',
+      1,
     );
     expect((await rival.pushSave(db, later)).ok, isTrue);
-    expect(combatLevelOf((await hero.readOpponentSave(rival.session!.userId))!), 9);
+    final refreshed = await hero.readOpponentSave(rival.session!.userId);
+    expect(combatLevelOf(refreshed!), 20);
+    expect(refreshed.raceId, 'RACE-0004');
+    expect(slotItemId(refreshed, weaponToolSlotId), 'ITEM-0128');
+    expect((await hero.listArenaOpponents()).single.combatLevel, 20);
   });
 
   test('hosted arena falls back locally when pvp_snapshots is missing', () async {

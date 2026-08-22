@@ -419,6 +419,7 @@ class RemoteMultiplayerService implements MultiplayerService {
     ]);
     if (refused != null) return CloudSyncResult.failed(refused);
 
+    await _refreshPvpLiveStats(stamped);
     return CloudSyncResult.ok(stamped, CloudSyncSource.uploaded);
   }
 
@@ -492,6 +493,7 @@ class RemoteMultiplayerService implements MultiplayerService {
     // the roster too.
     final guildId = _guildIdSeen;
     if (guildId != null) await _guilds.refreshOwnMemberRow(guildId, current, save);
+    await _refreshPvpLiveStats(save);
     return refused == null ? const ActionResult.ok() : ActionResult.failed(refused);
   }
 
@@ -1155,6 +1157,24 @@ class RemoteMultiplayerService implements MultiplayerService {
   }
 
   @override
+  Future<PlayerSave?> ownPvpSnapshot() async {
+    final current = session;
+    if (current == null) return null;
+    if (!await _ensurePvpSnapshotsHosted()) return _local.ownPvpSnapshot();
+    final result = await transport.select(
+      RemoteTables.pvpSnapshots,
+      columns: remotePvpSnapshotColumns,
+      equals: <String, Object?>{'user_id': current.userId},
+      limit: 1,
+    );
+    if (!result.ok) {
+      if (_markPvpSnapshotsUnhosted(result.reason)) return _local.ownPvpSnapshot();
+      return null;
+    }
+    return _parsePvpSnapshotPayload(pvpSnapshotPayloadFrom(result.single));
+  }
+
+  @override
   Future<PlayerSave?> readOpponentSave(String userId) async {
     final current = session;
     if (current != null && current.userId == userId) return null;
@@ -1169,13 +1189,7 @@ class RemoteMultiplayerService implements MultiplayerService {
       if (_markPvpSnapshotsUnhosted(result.reason)) return _local.readOpponentSave(userId);
       return null;
     }
-    final payload = pvpSnapshotPayloadFrom(result.single);
-    if (payload == null) return null;
-    try {
-      return parseSave(payload, _nowMs());
-    } on Object {
-      return null;
-    }
+    return _parsePvpSnapshotPayload(pvpSnapshotPayloadFrom(result.single));
   }
 
   @override
@@ -1254,6 +1268,43 @@ class RemoteMultiplayerService implements MultiplayerService {
       for (final row in await _hostedArenaOpponents())
         if (ids.contains(row.userId)) row,
     ];
+  }
+
+  Future<void> _refreshPvpLiveStats(PlayerSave live) async {
+    final current = session;
+    if (current == null) return;
+    if (!await _ensurePvpSnapshotsHosted()) {
+      _local.backend.refreshPvpLiveStats(current.userId, live);
+      return;
+    }
+    final result = await transport.select(
+      RemoteTables.pvpSnapshots,
+      columns: remotePvpSnapshotColumns,
+      equals: <String, Object?>{'user_id': current.userId},
+      limit: 1,
+    );
+    if (!result.ok) {
+      _markPvpSnapshotsUnhosted(result.reason);
+      return;
+    }
+    final existing = _parsePvpSnapshotPayload(pvpSnapshotPayloadFrom(result.single));
+    if (existing == null) return;
+    await transport.upsert(RemoteTables.pvpSnapshots, <RemoteRow>[
+      pvpSnapshotRowFor(
+        session: current,
+        save: overlayPvpLiveStats(existing, live),
+        updatedAt: isoFromMs(_nowMs()),
+      ),
+    ], onConflict: remotePvpSnapshotConflict);
+  }
+
+  PlayerSave? _parsePvpSnapshotPayload(Map<String, Object?>? payload) {
+    if (payload == null) return null;
+    try {
+      return parseSave(payload, _nowMs());
+    } on Object {
+      return null;
+    }
   }
 
   Future<List<ArenaOpponent>> _hostedArenaOpponents() async {
