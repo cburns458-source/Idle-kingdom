@@ -144,10 +144,16 @@ class _NearbyPanelState extends State<NearbyPanel> {
                     : widget.controller.indexes.activitiesById[peer.currentActivityId!];
                 final activityName = activity?.contextualName ?? activity?.internalKey;
                 final subtitle = <String>[row.statusLabel, ?activityName].join(' · ');
+                final allied =
+                    net.isFriend(row.userId) ||
+                    net.members.any((member) => member.userId == row.userId);
                 return SocialRow(
                   title: _peerTitle(peer),
                   subtitle: subtitle,
-                  leading: SocialPortrait(appearance: peer.appearance),
+                  leading: SocialPortrait(
+                    appearance: peer.appearance,
+                    borderColor: allied ? Palette.softGreen : null,
+                  ),
                   onTap: () => openPlayerProfile(
                     context,
                     controller: widget.controller,

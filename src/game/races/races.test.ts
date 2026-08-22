@@ -126,9 +126,9 @@ describe('playable races', () => {
     expect(goblin.ok).toBe(true)
     if (!goblin.ok) return
     expect(forcedHostileActivity(launch, goblin.save, 'LOC-0003')).toBeNull()
-    // Other hostile locations still force (Citadel grounds training).
-    const citadel = forcedHostileActivity(launch, goblin.save, 'LOC-0032')
-    expect(citadel).not.toBeNull()
+    // Other hostile locations still force (pirate docks).
+    const docks = forcedHostileActivity(launch, goblin.save, 'LOC-0004')
+    expect(docks).not.toBeNull()
   })
 
   it('grants Human woodcutting XP bonus when completing a woodcutting action', () => {

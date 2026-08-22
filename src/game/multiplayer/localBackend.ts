@@ -1306,7 +1306,10 @@ export class LocalMultiplayerBackend {
         const total = skills.reduce((sum, skill) => sum + skill.level, 0)
         return total < 1 ? 13 : total
       })(),
-      logCompletionPercent: 0,
+      logCompletionPercent:
+        this.db().leaderboards.find(
+          (entry) => entry.userId === userId && entry.boardKey === 'log_completion',
+        )?.value ?? 0,
     }
   }
 

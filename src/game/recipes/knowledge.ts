@@ -15,6 +15,16 @@ function knowledgeSourceOf(recipe: RecipeRow): string {
   return String(recipe['Knowledge Source'] ?? '').trim()
 }
 
+/**
+ * Level-unlock recipes (empty / "automatic" / "level unlock") appear as soon as
+ * the player reaches the proficiency. Any other Knowledge Source is a taught
+ * recipe: it stays locked until `unlockedRecipeIds` includes it.
+ *
+ * Smithing is skill-taught via a mentor (`knowsProject` / `hasProjectKnowledge`),
+ * so individual smithing rows are not separately locked. Cooking and crafting
+ * currently have no teacher — they stay automatic. Later taught recipes just
+ * need a non-automatic Knowledge Source; this gate already handles them.
+ */
 export function isAutomaticLevelUnlock(recipe: RecipeRow): boolean {
   const source = knowledgeSourceOf(recipe).toLowerCase()
   return !source || source.includes('automatic') || source.includes('level unlock')
@@ -180,8 +190,7 @@ export function listRecipeBookEntries(save: PlayerSave, db: GameDatabase): Recip
   })
 
   return [...recipes, ...projects].sort((a, b) => {
-    if (a.known !== b.known) return a.known ? -1 : 1
-    if (a.kind !== b.kind) return a.kind === 'recipe' ? -1 : 1
+    if (a.proficiency !== b.proficiency) return a.proficiency - b.proficiency
     return a.name.localeCompare(b.name)
   })
 }

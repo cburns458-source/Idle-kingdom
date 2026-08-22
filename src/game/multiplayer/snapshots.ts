@@ -1,6 +1,7 @@
 import type { GameDatabase } from '../data/types'
 import type { PlayerSave } from '../save/types'
 import { levelForTotalXp } from '../activity/xp'
+import { logCompletion } from '../log/log'
 import { rankedPvpKd } from '../pvp/matchmaking'
 import { isPacifistSave, totalLevel, totalSkillXp } from '../skills/totals'
 import type { LeaderboardEntry, MultiplayerBoardKey, PublicPlayerProfile } from './types'
@@ -49,6 +50,10 @@ export function buildLeaderboardSnapshot(
       boardKey: 'pvp_kd',
       value: rankedPvpKd(save.rankedPvpWins ?? 0, save.rankedPvpLosses ?? 0),
     },
+    {
+      boardKey: 'log_completion',
+      value: logCompletion(db, save).overall.percent,
+    },
   ]
 
   for (const skill of db.Skills.filter((row) => row['Release Phase'] === 'Launch')) {
@@ -73,6 +78,7 @@ export function boardLabel(db: GameDatabase, boardKey: MultiplayerBoardKey): str
   if (boardKey === 'critters_collected') return 'Critters Collected'
   if (boardKey === 'bounties_completed') return 'Bounties Completed'
   if (boardKey === 'pvp_kd') return 'PvP K/D'
+  if (boardKey === 'log_completion') return 'Log Completion'
   if (boardKey.startsWith('skill:')) {
     const skillId = boardKey.slice('skill:'.length)
     return db.Skills.find((skill) => skill['Skill ID'] === skillId)?.['Display Name'] ?? skillId
@@ -102,6 +108,7 @@ export interface PublicProfileStats {
   totalLevel: number
   totalXp?: number
   skills: PublicPlayerProfile['publicSkills']
+  logCompletionPercent?: number
 }
 
 /** Turns `leaderboard_snapshots` rows for one account into profile stats. */
@@ -111,6 +118,7 @@ export function publicProfileStatsFromLeaderboardRows(
 ): PublicProfileStats {
   let totalLevelValue = 0
   let totalXp: number | undefined
+  let logCompletionPercent = 0
   const skills: PublicPlayerProfile['publicSkills'] = []
   for (const row of rows) {
     const key = String(row.board_key ?? row.boardKey ?? '')
@@ -119,6 +127,10 @@ export function publicProfileStatsFromLeaderboardRows(
       totalLevelValue = value
       const secondary = row.value_secondary ?? row.secondaryValue
       if (typeof secondary === 'number') totalXp = secondary
+      continue
+    }
+    if (key === 'log_completion') {
+      logCompletionPercent = value
       continue
     }
     if (!key.startsWith('skill:')) continue
@@ -134,5 +146,5 @@ export function publicProfileStatsFromLeaderboardRows(
       skills.push({ skillId, level: value < 1 ? 1 : value, xp: 0 })
     }
   }
-  return { totalLevel: totalLevelValue, totalXp, skills }
+  return { totalLevel: totalLevelValue, totalXp, skills, logCompletionPercent }
 }

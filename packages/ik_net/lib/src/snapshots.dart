@@ -70,6 +70,10 @@ LeaderboardSnapshotValues buildLeaderboardSnapshot(GameDatabase db, PlayerSave s
       boardKey: boardPvpKd,
       value: rankedPvpKd(save.rankedPvpWins, save.rankedPvpLosses),
     ),
+    LeaderboardBoardValue(
+      boardKey: boardLogCompletion,
+      value: logCompletion(db, save).overall.percent,
+    ),
   ];
 
   for (final skill in db.skills.where((row) => row.raw['Release Phase'] == 'Launch')) {
@@ -97,6 +101,7 @@ String boardLabel(GameDatabase db, MultiplayerBoardKey boardKey) {
   if (boardKey == boardCrittersCollected) return 'Critters Collected';
   if (boardKey == boardBountiesCompleted) return 'Bounties Completed';
   if (boardKey == boardPvpKd) return 'PvP K/D';
+  if (boardKey == boardLogCompletion) return 'Log Completion';
   if (boardKey.startsWith(skillBoardPrefix)) {
     final skillId = boardKey.substring(skillBoardPrefix.length);
     final skill = db.skills.where((row) => row.raw['Skill ID'] == skillId).firstOrNull;
@@ -180,6 +185,7 @@ List<MultiplayerBoardKey> launchBoardKeys(GameDatabase db) => <MultiplayerBoardK
   boardMonstersKilled,
   boardCrittersCollected,
   boardBountiesCompleted,
+  boardLogCompletion,
   boardPvpKd,
   for (final skill in db.skills.where((row) => row.raw['Release Phase'] == 'Launch'))
     skillBoardKey(skill.raw['Skill ID']! as String),
@@ -190,11 +196,17 @@ List<MultiplayerBoardKey> launchBoardKeys(GameDatabase db) => <MultiplayerBoardK
 /// The same rows the leaderboard lists. Past 100 a skill board stores XP, not
 /// level, matching [buildLeaderboardSnapshot].
 class PublicProfileStats {
-  const PublicProfileStats({required this.totalLevel, required this.skills, this.totalXp});
+  const PublicProfileStats({
+    required this.totalLevel,
+    required this.skills,
+    this.totalXp,
+    this.logCompletionPercent = 0,
+  });
 
   final num totalLevel;
   final num? totalXp;
   final List<PublicSkillLine> skills;
+  final num logCompletionPercent;
 }
 
 /// Turns `leaderboard_snapshots` rows for one account into profile stats.
@@ -204,6 +216,7 @@ PublicProfileStats publicProfileStatsFromLeaderboardRows(
 }) {
   num totalLevel = 0;
   num? totalXp;
+  num logCompletionPercent = 0;
   final skills = <PublicSkillLine>[];
   for (final row in rows) {
     final key = jsString(row['board_key'] ?? row['boardKey'] ?? '');
@@ -212,6 +225,10 @@ PublicProfileStats publicProfileStatsFromLeaderboardRows(
       totalLevel = value;
       final secondary = row['value_secondary'] ?? row['secondaryValue'];
       if (secondary is num) totalXp = secondary;
+      continue;
+    }
+    if (key == boardLogCompletion) {
+      logCompletionPercent = value;
       continue;
     }
     if (!key.startsWith(skillBoardPrefix)) continue;
@@ -229,5 +246,10 @@ PublicProfileStats publicProfileStatsFromLeaderboardRows(
       skills.add(PublicSkillLine(skillId: skillId, level: value < 1 ? 1 : value, xp: 0));
     }
   }
-  return PublicProfileStats(totalLevel: totalLevel, skills: skills, totalXp: totalXp);
+  return PublicProfileStats(
+    totalLevel: totalLevel,
+    skills: skills,
+    totalXp: totalXp,
+    logCompletionPercent: logCompletionPercent,
+  );
 }

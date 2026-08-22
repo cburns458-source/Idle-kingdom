@@ -11,8 +11,15 @@ import {
   REMOTE_TABLES,
   type RemoteRow,
 } from './remote'
-import { buildLeaderboardSnapshot } from './snapshots'
-import type { LeaderboardEntry, MultiplayerBoardKey } from './types'
+import { rankLeaderboardEntries, buildLeaderboardSnapshot } from './snapshots'
+import {
+  DEFAULT_PLAYER_APPEARANCE,
+  GUILD_MAX_MEMBERS,
+  playerAppearanceFromRemote,
+  type GuildEmblem,
+  type LeaderboardEntry,
+  type MultiplayerBoardKey,
+} from './types'
 
 export { boardLabel, buildLeaderboardSnapshot, publicProfileStatsFromLeaderboardRows } from './snapshots'
 
@@ -54,6 +61,9 @@ export async function fetchLeaderboard(
 
   const client = getSupabaseClient()
   if (!client) return []
+  if (boardKey === 'guild_total_level') {
+    return fetchGuildTotalLevelBoard(client, limit)
+  }
   const { data, error } = await client
     .from(REMOTE_TABLES.leaderboardEntries)
     .select(REMOTE_LEADERBOARD_COLUMNS)
@@ -62,6 +72,46 @@ export async function fetchLeaderboard(
     .limit(limit)
   if (error || !data) return []
   return leaderboardEntriesFrom(data as unknown as RemoteRow[], boardKey)
+}
+
+async function fetchGuildTotalLevelBoard(
+  client: NonNullable<ReturnType<typeof getSupabaseClient>>,
+  limit: number,
+): Promise<LeaderboardEntry[]> {
+  const [guilds, members] = await Promise.all([
+    client.from(REMOTE_TABLES.guilds).select('id, name, tag, emblem, leader_id'),
+    client.from(REMOTE_TABLES.guildMembers).select('guild_id, user_id, appearance_json, total_level'),
+  ])
+  if (guilds.error || !guilds.data) return []
+  const byGuild = new Map<string, Array<Record<string, unknown>>>()
+  for (const row of (members.data ?? []) as RemoteRow[]) {
+    const guildId = String(row.guild_id ?? '')
+    if (!guildId) continue
+    const list = byGuild.get(guildId) ?? []
+    list.push(row)
+    byGuild.set(guildId, list)
+  }
+  const scored: LeaderboardEntry[] = (guilds.data as RemoteRow[]).map((guild) => {
+    const roster = byGuild.get(String(guild.id ?? '')) ?? []
+    const value = roster.reduce((sum, row) => sum + Number(row.total_level ?? 0), 0)
+    const leader =
+      roster.find((row) => String(row.user_id ?? '') === String(guild.leader_id ?? '')) ??
+      roster[0]
+    return {
+      userId: String(guild.id ?? ''),
+      username: `[${String(guild.tag ?? '')}] ${String(guild.name ?? '')}`,
+      appearance: leader
+        ? playerAppearanceFromRemote(leader.appearance_json)
+        : DEFAULT_PLAYER_APPEARANCE,
+      guildName: `${roster.length}/${GUILD_MAX_MEMBERS} members`,
+      boardKey: 'guild_total_level',
+      value,
+      rank: 0,
+      entryKind: 'guild',
+      emblem: (guild.emblem as GuildEmblem | null) ?? null,
+    }
+  })
+  return rankLeaderboardEntries(scored).slice(0, limit)
 }
 
 /**
@@ -81,6 +131,7 @@ export function launchBoardKeys(db: GameDatabase): MultiplayerBoardKey[] {
     'monsters_killed',
     'critters_collected',
     'bounties_completed',
+    'log_completion',
     'pvp_kd',
     ...skills,
   ]

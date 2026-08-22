@@ -29,6 +29,7 @@ void main() {
     final stats = publicProfileStatsFromLeaderboardRows(rows, db: db);
     expect(stats.totalLevel, totalLevel(save));
     expect(stats.totalXp, totalSkillXp(save));
+    expect(stats.logCompletionPercent, logCompletion(db, save).overall.percent);
     expect(stats.skills.where((skill) => skill.skillId == combatSkillId).single.level, 18);
     expect(
       stats.skills,

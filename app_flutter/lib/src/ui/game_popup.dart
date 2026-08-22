@@ -98,7 +98,10 @@ class GamePopupCard extends StatelessWidget {
       color: Palette.parchmentDeep,
       borderRadius: BorderRadius.circular(14),
       clipBehavior: Clip.antiAlias,
-      child: Padding(padding: padding ?? const EdgeInsets.all(16), child: child),
+      child: DecoratedBox(
+        decoration: BoxDecoration(image: panelGrainImage()),
+        child: Padding(padding: padding ?? const EdgeInsets.all(16), child: child),
+      ),
     );
   }
 }

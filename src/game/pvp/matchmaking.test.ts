@@ -35,9 +35,9 @@ function opponents(): ArenaOpponent[] {
 describe('arena matchmaking', () => {
   const { launch, launchIndexes } = prepareDatabase(rawDatabase)
 
-  it('is at the Citadel plaza and combat grounds', () => {
+  it('is at the Citadel plaza only', () => {
     expect(locationHasArena(launchIndexes.locationsById.get('LOC-0028'))).toBe(true)
-    expect(locationHasArena(launchIndexes.locationsById.get('LOC-0032'))).toBe(true)
+    expect(locationHasArena(launchIndexes.locationsById.get('LOC-0032'))).toBe(false)
     expect(locationHasArena(launchIndexes.locationsById.get('LOC-0029'))).toBe(false)
     expect(locationHasArena(undefined)).toBe(false)
   })
