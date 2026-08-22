@@ -1,5 +1,5 @@
 /** Bump when replacing files under content/assets so browsers fetch new art. */
-export const ASSET_CACHE_VERSION = 's16-gender-presentation-sprites'
+export const ASSET_CACHE_VERSION = 'item-icons-fill-32'
 
 export function withAssetVersion(path: string): string {
   if (!path) return path
