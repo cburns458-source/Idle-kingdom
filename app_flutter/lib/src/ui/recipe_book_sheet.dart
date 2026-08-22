@@ -8,12 +8,13 @@ Future<void> showStationRecipeBook(
   BuildContext context, {
   required String title,
   required List<RecipeLogRow> rows,
+  String emptyMessage = 'Nothing is written for this station yet.',
 }) {
   return showGameCatalogPopup(
     context: context,
     eyebrow: 'Recipe book',
     title: title,
-    emptyMessage: 'Nothing is written for this station yet.',
+    emptyMessage: emptyMessage,
     entries: [
       for (final row in rows)
         CatalogPopupEntry(

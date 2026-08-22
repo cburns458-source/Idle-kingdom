@@ -5293,6 +5293,22 @@
       "Description": "A title worn until the first world defeat. Equip or remove it in the Wardrobe.",
       "Functional / Source Tags": "cosmetic; title",
       "Notes": "Starter title cosmetic, granted and equipped while the character has never died."
+    },
+    {
+      "Item ID": "ITEM-0302",
+      "Internal Key": "squid_noodle_soup",
+      "Display Name": "Squid Noodle Soup",
+      "Category": "Food",
+      "Subtype": "Equippable food",
+      "Associated Skill ID": "SKL-0007",
+      "Equipment Slot ID": "SLOT-0011",
+      "Functional / Source Tags": "cooking_output; food_slot; combat_healing",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Description": "A rich bowl of baby giant squid, potatoes, and carrots.",
+      "Icon Asset Key": "squid_noodle_soup",
+      "Notes": "Heals 1,100. Level 80 kitchen recipe.",
+      "Base Sell Value": 5000
     }
   ],
   "Equipment": [
@@ -8193,6 +8209,24 @@
       "Capabilities / Effects": "food_slot; consumed_after_victory; damages_instead_of_healing",
       "Status": "Confirmed",
       "Notes": "Automatically consumed after a victorious Combat Action. Deals 10 damage."
+    },
+    {
+      "Equipment ID": "EQP-0180",
+      "Item ID": "ITEM-0302",
+      "Slot ID": "SLOT-0011",
+      "Required Skill ID": "SKL-0007",
+      "Required Level": 1,
+      "Secondary Required Skill ID": null,
+      "Secondary Required Level": null,
+      "Min Damage": null,
+      "Max Damage": null,
+      "HP Bonus": null,
+      "Damage Reduction": null,
+      "Healing Amount": 1100,
+      "Action Time Reduction %": null,
+      "Capabilities / Effects": "food_slot; consumed_after_victory",
+      "Status": "Planned",
+      "Notes": "Automatically consumed after a victorious Combat Action when HP is below maximum."
     }
   ],
   "Statistics": [
@@ -9926,6 +9960,19 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": "Own pool. Tuna 50%, shark 45%, baby giant squid 5%. Docks stay tuna/shark only."
+    },
+    {
+      "Activity ID": "ACT-0039",
+      "Internal Key": "pick_weeds",
+      "Contextual Name": "Pick weeds",
+      "Location ID": "LOC-0036",
+      "Description": "Pull weeds from the temple garden: mostly Augur Weed, sometimes Moonblossom.",
+      "Danger Warning Combat Level": null,
+      "Pool ID": "POOL-0029",
+      "Pool Internal Key": "temple_weeds",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": "Single harvesting action. Same empty-hand rules as Train with the monks."
     }
   ],
   "PoolEntries": [
@@ -10432,6 +10479,14 @@
       "Weight": 5,
       "Status": "Planned",
       "Notes": "Baby giant squid, 5% of deep-pool fishing."
+    },
+    {
+      "Pool Entry ID": "PEN-0071",
+      "Pool ID": "POOL-0029",
+      "Action ID": "ACN-0174",
+      "Weight": 100,
+      "Status": "Planned",
+      "Notes": "Pick weeds — only action in the temple garden pool."
     }
   ],
   "Actions": [
@@ -11823,7 +11878,7 @@
       "Relevant Skill ID": "SKL-0007",
       "Target Type": "Item",
       "Target ID": "ITEM-0192",
-      "Proficiency Level": 80,
+      "Proficiency Level": 75,
       "Base Duration Seconds": 5400,
       "XP Reward": 10000000,
       "Guaranteed Gold": 0,
@@ -11832,7 +11887,7 @@
       "Secondary Drop Chance": null,
       "Secondary Reward Table ID": null,
       "Status": "Planned",
-      "Release Phase": "Expansion",
+      "Release Phase": "Launch",
       "Notes": "Production is hard-gated by Proficiency Level."
     },
     {
@@ -12754,6 +12809,46 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": "Combat is resolved in four-second rounds; Enemy record owns HP, damage, and guaranteed Gold."
+    },
+    {
+      "Action ID": "ACN-0175",
+      "Internal Key": "cook_squid_noodle_soup",
+      "Display Name": "Squid noodle soup",
+      "Category": "Standard Production",
+      "Relevant Skill ID": "SKL-0007",
+      "Target Type": "Item",
+      "Target ID": "ITEM-0302",
+      "Proficiency Level": 80,
+      "Base Duration Seconds": 5400,
+      "XP Reward": 10000000,
+      "Guaranteed Gold": 0,
+      "Drop Chance": 100,
+      "Reward Table ID": "RWT-0118",
+      "Secondary Drop Chance": null,
+      "Secondary Reward Table ID": null,
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": "Production is hard-gated by Proficiency Level."
+    },
+    {
+      "Action ID": "ACN-0174",
+      "Internal Key": "pick_weeds",
+      "Display Name": "Pick weeds",
+      "Category": "Gathering",
+      "Relevant Skill ID": "SKL-0004",
+      "Target Type": "Item",
+      "Target ID": "ITEM-0033",
+      "Proficiency Level": 50,
+      "Base Duration Seconds": 1800,
+      "XP Reward": 650000,
+      "Guaranteed Gold": 0,
+      "Drop Chance": 100,
+      "Reward Table ID": "RWT-0119",
+      "Secondary Drop Chance": null,
+      "Secondary Reward Table ID": null,
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": "Temple garden. 90% Augur Weed, 10% Moonblossom."
     }
   ],
   "Requirements": [
@@ -14082,6 +14177,45 @@
       "Required Value": null,
       "Status": "Planned",
       "Notes": "Deep-pool fishing in the abandoned mineshaft needs a fishing tool."
+    },
+    {
+      "Requirement ID": "REQ-0108",
+      "Entity Type": "Activity",
+      "Entity ID": "ACT-0039",
+      "Requirement Group": "A",
+      "Group Logic": "AND",
+      "Requirement Type": "Empty Slot",
+      "Reference ID / Value": "SLOT-0001",
+      "Operator": null,
+      "Required Value": null,
+      "Status": "Planned",
+      "Notes": "Pick weeds — empty Weapon or Tool."
+    },
+    {
+      "Requirement ID": "REQ-0109",
+      "Entity Type": "Activity",
+      "Entity ID": "ACT-0039",
+      "Requirement Group": "A",
+      "Group Logic": "AND",
+      "Requirement Type": "Empty Slot",
+      "Reference ID / Value": "SLOT-0002",
+      "Operator": null,
+      "Required Value": null,
+      "Status": "Planned",
+      "Notes": "Pick weeds — empty Shield or Off-hand."
+    },
+    {
+      "Requirement ID": "REQ-0110",
+      "Entity Type": "Action",
+      "Entity ID": "ACN-0174",
+      "Requirement Group": "LEVEL",
+      "Group Logic": "AND",
+      "Requirement Type": "Skill Level",
+      "Reference ID / Value": "SKL-0004",
+      "Operator": "Proficiency",
+      "Required Value": 50,
+      "Status": "Confirmed",
+      "Notes": null
     }
   ],
   "Enemies": [
@@ -16945,6 +17079,51 @@
       "XP Amount": null,
       "Status": "Planned",
       "Notes": "Stolen Coin Purse for QST-0003."
+    },
+    {
+      "Reward Entry ID": "RWE-0167",
+      "Reward Table ID": "RWT-0118",
+      "Reward Table Name": "Squid Noodle Soup Output",
+      "Purpose": "Standard Production output",
+      "Reward Type": "Item",
+      "Reward ID / Value": "ITEM-0302",
+      "Weight": 100,
+      "Minimum Quantity": 1,
+      "Maximum Quantity": 1,
+      "Skill ID": null,
+      "XP Amount": null,
+      "Status": "Planned",
+      "Notes": null
+    },
+    {
+      "Reward Entry ID": "RWE-0168",
+      "Reward Table ID": "RWT-0119",
+      "Reward Table Name": "Temple Weeds",
+      "Purpose": "Gathering drop",
+      "Reward Type": "Item",
+      "Reward ID / Value": "ITEM-0033",
+      "Weight": 90,
+      "Minimum Quantity": 1,
+      "Maximum Quantity": 1,
+      "Skill ID": null,
+      "XP Amount": null,
+      "Status": "Planned",
+      "Notes": "Augur Weed, 90% of pick weeds."
+    },
+    {
+      "Reward Entry ID": "RWE-0169",
+      "Reward Table ID": "RWT-0119",
+      "Reward Table Name": "Temple Weeds",
+      "Purpose": "Gathering drop",
+      "Reward Type": "Item",
+      "Reward ID / Value": "ITEM-0207",
+      "Weight": 10,
+      "Minimum Quantity": 1,
+      "Maximum Quantity": 1,
+      "Skill ID": null,
+      "XP Amount": null,
+      "Status": "Planned",
+      "Notes": "Moonblossom, 10% of pick weeds."
     }
   ],
   "Recipes": [
@@ -17715,13 +17894,13 @@
       "Output Item ID": "ITEM-0192",
       "Output Quantity": 1,
       "Facility ID": "FAC-0001",
-      "Proficiency Level": 80,
+      "Proficiency Level": 75,
       "Base Duration Seconds": 5400,
       "XP Reward": 1000000,
       "Knowledge Source": "Automatic level unlock",
       "Action ID": "ACN-0127",
       "Status": "Planned",
-      "Release Phase": "Expansion",
+      "Release Phase": "Launch",
       "Notes": null,
       "Ingredient 1 Item ID": "ITEM-0191",
       "Ingredient 1 Quantity": 1,
@@ -18074,6 +18253,29 @@
       "Ingredient 2 Quantity": null,
       "Ingredient 3 Item ID": null,
       "Ingredient 3 Quantity": null
+    },
+    {
+      "Recipe ID": "RCP-0060",
+      "Internal Key": "cook_squid_noodle_soup",
+      "Display Name": "Squid Noodle Soup",
+      "Skill ID": "SKL-0007",
+      "Output Item ID": "ITEM-0302",
+      "Output Quantity": 1,
+      "Facility ID": "FAC-0001",
+      "Proficiency Level": 80,
+      "Base Duration Seconds": 5400,
+      "XP Reward": 1000000,
+      "Knowledge Source": "Automatic level unlock",
+      "Action ID": "ACN-0175",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": null,
+      "Ingredient 1 Item ID": "ITEM-0025",
+      "Ingredient 1 Quantity": 10,
+      "Ingredient 2 Item ID": "ITEM-0027",
+      "Ingredient 2 Quantity": 5,
+      "Ingredient 3 Item ID": "ITEM-0191",
+      "Ingredient 3 Quantity": 1
     }
   ],
   "Projects": [

@@ -5,10 +5,10 @@ import '../content/asset_paths.dart';
 import '../session/game_controller.dart';
 import '../theme.dart';
 import 'format.dart';
-import 'catalog_popup.dart';
 import 'game_image.dart';
 import 'game_popup.dart';
 import 'page_header.dart';
+import 'skill_menu_sheet.dart';
 
 /// Every skill as a tile, with the totals they add up to along the bottom.
 class SkillsView extends StatelessWidget {
@@ -115,14 +115,13 @@ void _openSkillMenu(
   String skillId,
   String skillName,
 ) {
-  final entries = skillMenuDisplayEntries(controller.db, skillId);
-  showGameCatalogPopup(
+  showSkillMenuPopup(
     context: context,
     origin: popupOrigin(context),
-    eyebrow: 'Skill',
-    title: skillName,
-    emptyMessage: 'Nothing listed for this skill yet.',
-    entries: [for (final entry in entries) CatalogPopupEntry(title: skillMenuLine(entry))],
+    db: controller.db,
+    save: controller.save,
+    skillId: skillId,
+    skillName: skillName,
   );
 }
 

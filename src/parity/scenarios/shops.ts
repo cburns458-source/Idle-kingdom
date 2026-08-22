@@ -21,7 +21,13 @@ import {
   shopsAtLocation,
 } from '../../game/shops/shops'
 import { confirmShopOffer, type ShopOffer } from '../../game/shops/transactions'
-import { actionsForSkill, projectsForSkill, skillMenuEntries } from '../../game/skills/skillActions'
+import {
+  actionsForSkill,
+  projectsForSkill,
+  skillMenuDisplayEntries,
+  skillMenuEntries,
+  skillMenuView,
+} from '../../game/skills/skillActions'
 import { scenario, type JsonValue, type ParityScenario } from '../types'
 import { contentDatabase } from './contentDatabase'
 import { asJson, baseSave } from './saveFixtures'
@@ -473,6 +479,8 @@ export const shopScenarios: ParityScenario[] = [
         actions: actionsForSkill(db, skillId),
         projects: projectsForSkill(db, skillId),
         combined: skillMenuEntries(db, skillId).map((entry) => entry.id),
+        display: skillMenuDisplayEntries(db, skillId),
+        view: skillMenuView(db, skillId),
       })),
     } as unknown as JsonValue
   }),
