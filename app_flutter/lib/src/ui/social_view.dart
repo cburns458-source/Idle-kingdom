@@ -169,6 +169,9 @@ class _LeaderboardTab extends StatelessWidget {
         else
           for (final row in rows) ...[
             SocialRow(
+              highlight: row.isGuild
+                  ? row.entryId == multiplayer.guildId
+                  : row.entryId == multiplayer.session?.userId,
               title: row.username,
               subtitle: row.subtitle,
               leading: row.emblem == null

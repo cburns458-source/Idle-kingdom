@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:ik_content/ik_content.dart';
 import 'package:ik_rules/ik_rules.dart';
 import 'package:ik_runtime/ik_runtime.dart';
@@ -10,6 +11,7 @@ import 'noted_reads.dart';
 import 'presence.dart';
 import 'remote.dart';
 import 'remote_guild_backend.dart';
+import 'remote_guilds.dart';
 import 'remote_transport.dart';
 import 'results.dart';
 import 'service.dart';
@@ -296,7 +298,9 @@ class RemoteMultiplayerService implements MultiplayerService {
       columns: 'board_key, value, value_secondary',
       equals: <String, Object?>{'user_id': userId},
     );
-    if (!result.ok) return const PublicProfileStats(totalLevel: 0, skills: <PublicSkillLine>[]);
+    if (!result.ok) {
+      return const PublicProfileStats(totalLevel: 0, skills: <PublicSkillLine>[]);
+    }
     return publicProfileStatsFromLeaderboardRows(result.rows ?? const <RemoteRow>[], db: db);
   }
 
@@ -308,10 +312,11 @@ class RemoteMultiplayerService implements MultiplayerService {
     List<PublicSkillLine> skills = const <PublicSkillLine>[];
     num achievements = 0;
     num totalLevel = 0;
+    num logPercent = 0;
 
     // Cloud saves are self-only under RLS. The viewer's own save can fill
-    // skills and achievements; everyone else uses the same snapshot rows
-    // the leaderboard already published.
+    // skills, achievements, and log %; everyone else uses the same snapshot
+    // rows the leaderboard already published.
     if (session?.userId == userId) {
       final row = await _readSaveRow(userId);
       final save = row?.toCloudSaveRecordOrNull()?.payload;
@@ -325,17 +330,22 @@ class RemoteMultiplayerService implements MultiplayerService {
         for (final skill in skills) {
           totalLevel += skill.level;
         }
+        if (db != null) logPercent = logCompletion(db, save).overall.percent;
       }
     }
 
-    if (session?.userId != userId || totalLevel < 1) {
+    if (session?.userId != userId || totalLevel < 1 || logPercent <= 0) {
       final stats = await _leaderboardProfileStats(userId, db: db);
       if (session?.userId != userId) {
         skills = stats.skills;
         totalLevel = stats.totalLevel;
-      } else if (totalLevel < 1) {
-        totalLevel = stats.totalLevel;
-        if (skills.isEmpty) skills = stats.skills;
+        logPercent = stats.logCompletionPercent;
+      } else {
+        if (totalLevel < 1) {
+          totalLevel = stats.totalLevel;
+          if (skills.isEmpty) skills = stats.skills;
+        }
+        if (logPercent <= 0) logPercent = stats.logCompletionPercent;
       }
     }
 
@@ -347,6 +357,7 @@ class RemoteMultiplayerService implements MultiplayerService {
       publicSkills: account.privacyPublicSkills ? skills : const <PublicSkillLine>[],
       achievementsUnlocked: achievements,
       totalLevel: totalLevel,
+      logCompletionPercent: logPercent,
     );
   }
 
@@ -499,6 +510,7 @@ class RemoteMultiplayerService implements MultiplayerService {
 
   @override
   Future<List<LeaderboardEntry>> leaderboard(MultiplayerBoardKey boardKey, {int limit = 25}) async {
+    if (boardKey == boardGuildTotalLevel) return _guildTotalLevelBoard(limit: limit);
     final result = await transport.select(
       RemoteTables.leaderboardEntries,
       columns: remoteLeaderboardColumns,
@@ -509,6 +521,42 @@ class RemoteMultiplayerService implements MultiplayerService {
     );
     if (!result.ok) return const <LeaderboardEntry>[];
     return leaderboardEntriesFrom(result.rows!, boardKey);
+  }
+
+  /// Guild Total Level is a roster sum, not a submitted snapshot row.
+  Future<List<LeaderboardEntry>> _guildTotalLevelBoard({int limit = 25}) async {
+    final listings = await _guilds.listGuilds();
+    if (listings.isEmpty) return const <LeaderboardEntry>[];
+    final membersResult = await transport.select(
+      RemoteTables.guildMembers,
+      columns: remoteGuildMemberColumns,
+    );
+    final byGuild = <String, List<GuildMember>>{};
+    for (final member in guildMembersFrom(membersResult.rows ?? const <RemoteRow>[])) {
+      byGuild.putIfAbsent(member.guildId, () => <GuildMember>[]).add(member);
+    }
+    final scored = listings.map((listing) {
+      final members = byGuild[listing.guild.id] ?? const <GuildMember>[];
+      num value = 0;
+      for (final member in members) {
+        value += member.totalLevel;
+      }
+      final leader =
+          members.where((member) => member.userId == listing.guild.leaderId).firstOrNull ??
+          members.firstOrNull;
+      return LeaderboardEntry(
+        userId: listing.guild.id,
+        username: '[${listing.guild.tag}] ${listing.guild.name}',
+        appearance: leader?.appearance ?? defaultPlayerAppearance,
+        guildName: '${members.length}/$guildMaxMembers members',
+        boardKey: boardGuildTotalLevel,
+        value: value,
+        rank: 0,
+        entryKind: LeaderboardEntryKind.guild,
+        emblem: listing.guild.emblem,
+      );
+    }).toList();
+    return rankLeaderboardEntries(scored).take(limit).toList();
   }
 
   @override

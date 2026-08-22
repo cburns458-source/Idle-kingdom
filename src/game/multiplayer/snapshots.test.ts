@@ -42,7 +42,11 @@ describe('leaderboard snapshot builder', () => {
     expect(keys).toContain('critters_collected')
     expect(keys).toContain('bounties_completed')
     expect(keys).toContain('pvp_kd')
+    expect(keys).toContain('log_completion')
     expect(snapshot.boards.find((board) => board.boardKey === 'pvp_kd')?.value).toBe(0)
+    expect(typeof snapshot.boards.find((board) => board.boardKey === 'log_completion')?.value).toBe(
+      'number',
+    )
     expect(snapshot.boards.find((board) => board.boardKey === 'critters_collected')?.value).toBe(2)
     expect(snapshot.boards.find((board) => board.boardKey === 'bounties_completed')?.value).toBe(1)
     const launchSkills = launch.Skills.filter((skill) => skill['Release Phase'] === 'Launch')
@@ -53,6 +57,7 @@ describe('leaderboard snapshot builder', () => {
     expect(boardLabel(launch, 'total_level')).toBe('Total Level & XP')
     expect(boardLabel(launch, 'total_level_combat_1')).toBe('Pacifist Total Level')
     expect(boardLabel(launch, 'guild_total_level')).toBe('Guild Total Level')
+    expect(boardLabel(launch, 'log_completion')).toBe('Log Completion')
   })
 
   it('carries total XP alongside the total level', () => {

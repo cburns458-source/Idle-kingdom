@@ -577,7 +577,9 @@ List<LeaderboardRowView> leaderboardRows(List<LeaderboardEntry> entries) {
       entryId: entry.userId,
       username: entry.username,
       subtitle: isGuild ? (entry.guildName ?? 'Guild') : (entry.guildName ?? 'No guild'),
-      valueLabel: jsLocaleNumber(entry.value),
+      valueLabel: entry.boardKey == boardLogCompletion
+          ? '${jsNumberToString(entry.value)}%'
+          : jsLocaleNumber(entry.value),
       secondaryLabel: experience == null ? null : '${jsLocaleNumber(experience)} xp',
       emblem: isGuild ? entry.emblem : null,
       appearance: entry.appearance,

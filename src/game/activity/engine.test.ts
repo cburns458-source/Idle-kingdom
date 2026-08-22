@@ -186,6 +186,14 @@ describe('primary activity engine', () => {
     expect(pickWeightedAction(meadow, () => 0.99)?.['Action ID']).toBe('ACN-0106')
   })
 
+  it('hunts rabbit and duck in the meadows, elk and pheasant in the kingswoods', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const meadow = eligiblePoolEntries(launch, 'POOL-0011').map((pair) => pair.action['Action ID'])
+    const woods = eligiblePoolEntries(launch, 'POOL-0009').map((pair) => pair.action['Action ID'])
+    expect(meadow.sort()).toEqual(['ACN-0013', 'ACN-0016'])
+    expect(woods.sort()).toEqual(['ACN-0008', 'ACN-0014', 'ACN-0017'])
+  })
+
   it('refuses to stop or replace activities during death pause', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const now = Date.parse('2026-01-01T00:00:00.000Z')

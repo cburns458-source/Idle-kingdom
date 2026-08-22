@@ -363,6 +363,31 @@ void main() {
     expect((await leader.peersAtLocation('LOC-0028', excludeSelf: false)).single.guildName, isNull);
   });
 
+  test('Guild Total Level sums roster levels on the hosted board', () async {
+    final transport = FakeTransport();
+    final leader = await _player(transport, 'leader@example.com', 'Leader');
+    final joiner = await _player(transport, 'joiner@example.com', 'Joiner');
+    final db = _database();
+
+    final created = await leader.createGuild(_ironLeague, guildCreateGoldCost);
+    expect(created.ok, isTrue, reason: created.reason);
+    expect((await joiner.applyToGuild(created.guild!.id, '')).ok, isTrue);
+
+    final leaderSave = createNewSave(db, _nowMs);
+    await leader.pushSave(db, leaderSave);
+    await leader.submitLeaderboard(db, leaderSave);
+    final joinerSave = createNewSave(db, _nowMs);
+    await joiner.pushSave(db, joinerSave);
+    await joiner.submitLeaderboard(db, joinerSave);
+
+    final board = await joiner.leaderboard(boardGuildTotalLevel);
+    expect(board, hasLength(1));
+    expect(board.single.entryKind, LeaderboardEntryKind.guild);
+    expect(board.single.username, '[IRN] Iron League');
+    expect(board.single.value, greaterThan(0));
+    expect(board.single.guildName, '2/$guildMaxMembers members');
+  });
+
   test('a refused write is reported rather than swallowed', () async {
     final transport = FakeTransport();
     final leader = await _player(transport, 'leader@example.com', 'Leader');

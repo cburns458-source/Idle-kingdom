@@ -51,6 +51,7 @@ export type MultiplayerBoardKey =
   | 'critters_collected'
   | 'bounties_completed'
   | 'pvp_kd'
+  | 'log_completion'
   | `skill:${string}`
 
 /**

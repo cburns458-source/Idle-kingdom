@@ -31,6 +31,8 @@ export const REMOTE_TABLES = {
   chat: 'chat_messages',
   bountyClaims: 'bounty_claims',
   bazaarPosts: 'bazaar_posts',
+  guilds: 'guilds',
+  guildMembers: 'guild_members',
 } as const
 
 /** The edge function that writes chat, since a client may not insert directly. */

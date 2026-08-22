@@ -204,8 +204,9 @@ class _LocationViewState extends State<LocationView> {
         : null;
     final bandPanel = running && openPanel != null ? _buildPanel(openPanel) : null;
 
+    final keyboard = MediaQuery.viewInsetsOf(context).bottom;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(10, 8, 10, 0),
+      padding: EdgeInsets.fromLTRB(10, 8, 10, keyboard),
       child: DecoratedBox(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(15),

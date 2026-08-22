@@ -379,7 +379,8 @@ export function leaderboardRows(entries: LeaderboardEntry[]): LeaderboardRowView
       entryId: entry.userId,
       username: entry.username,
       subtitle: isGuild ? (entry.guildName ?? 'Guild') : (entry.guildName ?? 'No guild'),
-      valueLabel: entry.value.toLocaleString(),
+      valueLabel:
+        entry.boardKey === 'log_completion' ? `${entry.value}%` : entry.value.toLocaleString(),
       ...(experience == null ? {} : { secondaryLabel: `${experience.toLocaleString()} xp` }),
       emblem: isGuild ? (entry.emblem ?? null) : null,
       appearance: entry.appearance,

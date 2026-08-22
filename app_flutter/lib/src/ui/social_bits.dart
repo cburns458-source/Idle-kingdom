@@ -60,10 +60,11 @@ Color _color(String hex) {
 
 /// A player's face, at the size social lists use.
 class SocialPortrait extends StatelessWidget {
-  const SocialPortrait({super.key, required this.appearance, this.size = 34});
+  const SocialPortrait({super.key, required this.appearance, this.size = 34, this.borderColor});
 
   final PlayerAppearance appearance;
   final double size;
+  final Color? borderColor;
 
   @override
   Widget build(BuildContext context) {
@@ -73,7 +74,7 @@ class SocialPortrait extends StatelessWidget {
       decoration: BoxDecoration(
         color: Palette.panel,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Palette.edge),
+        border: Border.all(color: borderColor ?? Palette.edge),
       ),
       clipBehavior: Clip.antiAlias,
       child: GameImage(
@@ -95,6 +96,7 @@ class SocialRow extends StatelessWidget {
     this.leading,
     this.trailing,
     this.onTap,
+    this.highlight = false,
   });
 
   final String title;
@@ -102,10 +104,12 @@ class SocialRow extends StatelessWidget {
   final Widget? leading;
   final Widget? trailing;
   final VoidCallback? onTap;
+  final bool highlight;
 
   @override
   Widget build(BuildContext context) {
     return GamePanel(
+      highlight: highlight,
       onTap: onTap,
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       child: Row(

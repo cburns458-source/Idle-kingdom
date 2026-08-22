@@ -3,7 +3,7 @@ import 'package:ik_rules/ik_rules.dart';
 
 import 'catalog_popup.dart';
 
-/// Station-scoped recipe book: known rows in gold, locked rows still named.
+/// Station-scoped recipe book: listed by skill level, locked rows stay in place.
 Future<void> showStationRecipeBook(
   BuildContext context, {
   required String title,

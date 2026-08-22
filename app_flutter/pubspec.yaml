@@ -73,6 +73,7 @@ flutter:
     - content/assets/icons/skills/
     - content/assets/icons/slots/
     - content/assets/icons/ui/
+    - assets/ui/
     - content/assets/locations/
     - content/assets/maps/
     - content/assets/player/

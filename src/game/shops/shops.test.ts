@@ -105,6 +105,27 @@ describe('shops', () => {
     expect(result.ok).toBe(false)
   })
 
+  it('stocks the Armory with bronze and iron swords and plate, and buys back at 1×', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const shop = launch.Shops.find((row) => row['Shop ID'] === 'SHP-0007')!
+    expect(shop['Location ID']).toBe('LOC-0032')
+    expect(shopStockEntries(shop).map((entry) => entry.itemId)).toEqual([
+      'ITEM-0224',
+      'ITEM-0228',
+      'ITEM-0229',
+      'ITEM-0230',
+      'ITEM-0128',
+      'ITEM-0155',
+      'ITEM-0156',
+      'ITEM-0157',
+    ])
+    expect(playerBuyPrice(launch, shop, 'ITEM-0224')).toBe(660)
+    expect(playerSellPrice(launch, shop, 'ITEM-0224')).toBe(330)
+    expect(playerSellPrice(launch, shop, 'ITEM-0128')).toBe(
+      playerSellPrice(launch, launch.Shops.find((row) => row['Shop ID'] === 'SHP-0001')!, 'ITEM-0128'),
+    )
+  })
+
   it('stocks the Clothier with the tunic, specialist hats, and Leather Gloves', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const shop = launch.Shops.find((row) => row['Shop ID'] === 'SHP-0006')!

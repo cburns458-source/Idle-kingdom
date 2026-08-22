@@ -330,9 +330,17 @@ describe('leaderboard views', () => {
     const options = boardOptions(db)
     expect(options[0]).toEqual({ key: 'total_level', label: 'Total Level & XP' })
     expect(options.some((option) => option.key === 'guild_total_level')).toBe(true)
+    expect(options.some((option) => option.key === 'log_completion')).toBe(true)
+    expect(options.find((option) => option.key === 'log_completion')?.label).toBe('Log Completion')
     expect(options.some((option) => option.key === 'total_level_combat_1')).toBe(true)
     // The old XP-only board is gone; its number now rides on Total Level & XP.
     expect(options.some((option) => option.key === 'total_experience')).toBe(false)
+  })
+
+  it('writes log completion as a percent', () => {
+    const rows = leaderboardRows([entry({ boardKey: 'log_completion', value: 42 })])
+    expect(rows[0].valueLabel).toBe('42%')
+    expect(rows[0].secondaryLabel).toBeUndefined()
   })
 
   it('writes experience under the level on a combined board', () => {

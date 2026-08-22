@@ -1418,6 +1418,12 @@ class LocalMultiplayerBackend {
       publicSkills: profile.privacyPublicSkills ? skills : const <PublicSkillLine>[],
       achievementsUnlocked: save?.achievements.where((row) => row.unlocked).length ?? 0,
       totalLevel: total < 1 ? 13 : total,
+      logCompletionPercent:
+          _db().leaderboards
+              .where((row) => row.userId == userId && row.boardKey == boardLogCompletion)
+              .map((row) => row.value)
+              .firstOrNull ??
+          0,
     );
   }
 

@@ -605,12 +605,22 @@ class _GatheringStage extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             _SceneName(actionName),
-            if (slow)
+            if (slow) ...[
               const Text(
                 'this is tough work',
                 textAlign: TextAlign.right,
                 style: TextStyle(fontSize: 12.5, color: Palette.muted, shadows: overlayShadow),
               ),
+              Text(
+                'Recommended lvl ${formatThousands(action.proficiencyLevel ?? 1)}',
+                textAlign: TextAlign.right,
+                style: const TextStyle(
+                  fontSize: 12.5,
+                  color: Palette.muted,
+                  shadows: overlayShadow,
+                ),
+              ),
+            ],
           ],
         ),
       ),

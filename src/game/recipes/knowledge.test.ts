@@ -38,4 +38,16 @@ describe('recipe knowledge', () => {
     expect(entries.some((entry) => entry.kind === 'recipe')).toBe(true)
     expect(entries.some((entry) => entry.known)).toBe(true)
   })
+
+  it('lists the recipe book by proficiency, leaving locked rows in place', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const save = createNewSave(launch)
+    const entries = listRecipeBookEntries(save, launch)
+    const levels = entries.map((entry) => entry.proficiency)
+    expect(levels).toEqual([...levels].sort((a, b) => a - b))
+    expect(entries.some((entry) => !entry.known)).toBe(true)
+    const firstLocked = entries.findIndex((entry) => !entry.known)
+    const laterKnown = entries.slice(firstLocked + 1).some((entry) => entry.known)
+    expect(laterKnown).toBe(true)
+  })
 })

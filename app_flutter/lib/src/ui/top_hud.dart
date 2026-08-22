@@ -91,9 +91,8 @@ class TopHud extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.fromLTRB(8, 4, 10, 4),
-      decoration: const BoxDecoration(
-        color: Palette.panel,
-        border: Border(bottom: BorderSide(color: Palette.edge)),
+      decoration: panelFill(
+        border: const Border(bottom: BorderSide(color: Palette.edge)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,

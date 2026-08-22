@@ -44,6 +44,30 @@ abstract final class Palette {
   static const panel = parchmentDeep;
 }
 
+/// Fine film grain tiled over panel fills, the HUD, and the chin.
+const String panelGrainAsset = 'assets/ui/panel-grain.png';
+
+DecorationImage panelGrainImage() => const DecorationImage(
+  image: AssetImage(panelGrainAsset),
+  repeat: ImageRepeat.repeat,
+  fit: BoxFit.none,
+  alignment: Alignment.topLeft,
+  filterQuality: FilterQuality.none,
+);
+
+BoxDecoration panelFill({
+  Color color = Palette.panel,
+  BorderRadius? borderRadius,
+  BoxBorder? border,
+}) {
+  return BoxDecoration(
+    color: color,
+    borderRadius: borderRadius,
+    border: border,
+    image: panelGrainImage(),
+  );
+}
+
 /// The bar fills, each one a three-stop gradient as the old client drew them.
 abstract final class Meters {
   static const playerHp = LinearGradient(
@@ -510,8 +534,7 @@ class DockRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.fromLTRB(11, 10, 11, 10),
-      decoration: BoxDecoration(
-        color: Palette.panel,
+      decoration: panelFill(
         borderRadius: BorderRadius.circular(13),
         border: Border.all(color: const Color(0x2EE8DCB4)),
       ),
@@ -590,20 +613,31 @@ class PillBar extends StatelessWidget {
 
 /// The bordered, slightly translucent card every panel in the game uses.
 class GamePanel extends StatelessWidget {
-  const GamePanel({super.key, required this.child, this.padding, this.onTap});
+  const GamePanel({
+    super.key,
+    required this.child,
+    this.padding,
+    this.onTap,
+    this.highlight = false,
+  });
 
   final Widget child;
   final EdgeInsetsGeometry? padding;
   final VoidCallback? onTap;
 
+  /// Gold, thicker edge for the viewer's own leaderboard row.
+  final bool highlight;
+
   @override
   Widget build(BuildContext context) {
     final panel = Container(
       padding: padding ?? const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Palette.panel,
+      decoration: panelFill(
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Palette.edge),
+        border: Border.all(
+          color: highlight ? Palette.gold : Palette.edge,
+          width: highlight ? 2 : 1,
+        ),
       ),
       child: child,
     );

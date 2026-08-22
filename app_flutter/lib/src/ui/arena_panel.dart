@@ -25,6 +25,8 @@ class ArenaPanel extends StatefulWidget {
 
 class _ArenaPanelState extends State<ArenaPanel> {
   final TextEditingController _search = TextEditingController();
+  final FocusNode _searchFocus = FocusNode();
+  final GlobalKey _searchFieldKey = GlobalKey();
   _ArenaTab _tab = _ArenaTab.search;
   List<ArenaOpponent> _all = const <ArenaOpponent>[];
   List<ArenaOpponent> _matches = const <ArenaOpponent>[];
@@ -64,14 +66,31 @@ class _ArenaPanelState extends State<ArenaPanel> {
   void initState() {
     super.initState();
     controller.addListener(_onTick);
+    _searchFocus.addListener(_scrollSearchIntoView);
     _loadOpponents();
   }
 
   @override
   void dispose() {
     controller.removeListener(_onTick);
+    _searchFocus.removeListener(_scrollSearchIntoView);
+    _searchFocus.dispose();
     _search.dispose();
     super.dispose();
+  }
+
+  void _scrollSearchIntoView() {
+    if (!_searchFocus.hasFocus) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final target = _searchFieldKey.currentContext;
+      if (target == null || !target.mounted) return;
+      Scrollable.ensureVisible(
+        target,
+        duration: const Duration(milliseconds: 220),
+        curve: Curves.easeOut,
+        alignment: 0.2,
+      );
+    });
   }
 
   void _onTick() {
@@ -236,31 +255,34 @@ class _ArenaPanelState extends State<ArenaPanel> {
 
   @override
   Widget build(BuildContext context) {
-    return GamePanel(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            children: [
-              const Expanded(
-                child: Text('Arena', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w400)),
-              ),
-              GoldAmount(
-                amount: save.gold,
-                style: const TextStyle(color: Palette.gold),
-              ),
-              if (widget.onClose != null)
-                GameIconButton(icon: Icons.close, tooltip: 'Close', onPressed: widget.onClose),
+    return Padding(
+      padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
+      child: GamePanel(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                const Expanded(
+                  child: Text('Arena', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w400)),
+                ),
+                GoldAmount(
+                  amount: save.gold,
+                  style: const TextStyle(color: Palette.gold),
+                ),
+                if (widget.onClose != null)
+                  GameIconButton(icon: Icons.close, tooltip: 'Close', onPressed: widget.onClose),
+              ],
+            ),
+            const MutedText('You fight in the gear you save. Combat level and race stay current.'),
+            if (_error case final error?) ...[
+              const SizedBox(height: 6),
+              Text(error, style: warningStyle),
             ],
-          ),
-          const MutedText('You fight in the gear you save. Combat level and race stay current.'),
-          if (_error case final error?) ...[
-            const SizedBox(height: 6),
-            Text(error, style: warningStyle),
+            const SizedBox(height: 10),
+            if (_fighting) _fightView() else _lobby(),
           ],
-          const SizedBox(height: 10),
-          if (_fighting) _fightView() else _lobby(),
-        ],
+        ),
       ),
     );
   }
@@ -313,6 +335,8 @@ class _ArenaPanelState extends State<ArenaPanel> {
         const MutedText('Search by name. No gold, no rank.'),
         const SizedBox(height: 8),
         TextField(
+          key: _searchFieldKey,
+          focusNode: _searchFocus,
           controller: _search,
           decoration: const InputDecoration(hintText: 'Player name'),
           onChanged: (_) => _filter(),
