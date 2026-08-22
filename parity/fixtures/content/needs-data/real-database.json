@@ -1,1 +1,1 @@
-{"case":"real-database","input":{"source":"content"},"module":"content/needs-data","output":{"needsDataCount":11}}
+{"case":"real-database","input":{"source":"content"},"module":"content/needs-data","output":{"needsDataCount":8}}

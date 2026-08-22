@@ -3,7 +3,7 @@ import { ACTION_ASSET_PATHS, actionAssetPath } from './actionAssets'
 
 describe('actionAssets', () => {
   it('maps every gathering action id to a versioned path', () => {
-    expect(Object.keys(ACTION_ASSET_PATHS).length).toBe(46)
+    expect(Object.keys(ACTION_ASSET_PATHS).length).toBe(44)
     const path = actionAssetPath('ACN-0035')
     expect(path).toContain('/assets/actions/acn_harvest_potato.webp')
     expect(path).toContain('v=')

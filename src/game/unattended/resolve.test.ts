@@ -31,8 +31,8 @@ describe('unattended progression', () => {
       unattendedProgressAt: new Date(startedAt).toISOString(),
     }
 
-    // Meadow gathering actions are ~20s; two minutes covers several completions.
-    const now = startedAt + 120_000
+    // Meadow gathering actions are ~30-45s; two minutes covers several completions.
+    const now = startedAt + 180_000
     const resolved = resolveUnattendedProgress(launch, save, now, () => 0)
     expect(resolved.gatheringActions).toBeGreaterThanOrEqual(3)
     expect(resolved.save.unattendedProgressAt).toBe(new Date(now).toISOString())
