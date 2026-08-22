@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:idle_kingdoms/src/theme.dart';
 import 'package:idle_kingdoms/src/ui/app_shell.dart';
 import 'package:idle_kingdoms/src/ui/arena_panel.dart';
 import 'package:idle_kingdoms/src/ui/location_view.dart';
@@ -118,8 +119,10 @@ void main() {
     addTearDown(controller.dispose);
     await pumpShell(tester, controller, size: const Size(900, 2400));
 
-    await tapVisible(tester, find.text('Player fights'));
+    await tapVisible(tester, find.byTooltip('Expand list'));
+    await tapVisible(tester, find.widgetWithText(GameButton, 'Arena'));
     await tester.pump();
+    expect(find.byType(ArenaPanel), findsOne);
 
     final field = find.byKey(const Key('arena-search-field'));
     expect(field, findsOne);
