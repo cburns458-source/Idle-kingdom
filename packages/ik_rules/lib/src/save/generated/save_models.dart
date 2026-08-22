@@ -7,7 +7,7 @@
 
 import '../../json_support.dart';
 
-const int saveVersion = 29;
+const int saveVersion = 30;
 
 const String saveStorageKey = 'idle-kingdoms.demo.save';
 
@@ -585,6 +585,7 @@ class PlayerSave {
     this.productionQuantityRemaining,
     this.activityTransition,
     this.unattendedProgressAt,
+    required this.playTimeMs,
     required this.currentHp,
     required this.maxHp,
   });
@@ -664,6 +665,7 @@ class PlayerSave {
       productionQuantityRemaining: json['productionQuantityRemaining'] as num?,
       activityTransition: mapOrNull(json['activityTransition'], ActivityTransition.fromJson),
       unattendedProgressAt: json['unattendedProgressAt'] as String?,
+      playTimeMs: json['playTimeMs'] as num,
       currentHp: json['currentHp'] as num,
       maxHp: json['maxHp'] as num,
     );
@@ -803,6 +805,10 @@ class PlayerSave {
 
   final String? unattendedProgressAt;
 
+  /// Time on this character: live session frames plus unattended catch-up
+  /// (capped the same way as away progress). Existing saves start at 0.
+  final num playTimeMs;
+
   final num currentHp;
 
   final num maxHp;
@@ -861,6 +867,7 @@ class PlayerSave {
       'productionQuantityRemaining': productionQuantityRemaining,
       'activityTransition': activityTransition?.toJson(),
       'unattendedProgressAt': unattendedProgressAt,
+      'playTimeMs': playTimeMs,
       'currentHp': currentHp,
       'maxHp': maxHp,
     };
@@ -919,6 +926,7 @@ class PlayerSave {
     Object? productionQuantityRemaining = _unset,
     Object? activityTransition = _unset,
     Object? unattendedProgressAt = _unset,
+    num? playTimeMs,
     num? currentHp,
     num? maxHp,
   }) {
@@ -1004,6 +1012,7 @@ class PlayerSave {
       unattendedProgressAt: unattendedProgressAt == _unset
           ? this.unattendedProgressAt
           : unattendedProgressAt as String?,
+      playTimeMs: playTimeMs ?? this.playTimeMs,
       currentHp: currentHp ?? this.currentHp,
       maxHp: maxHp ?? this.maxHp,
     );

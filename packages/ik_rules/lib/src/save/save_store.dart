@@ -104,6 +104,7 @@ PlayerSave createNewSave(GameDatabase db, num nowMs) {
     productionQuantityRemaining: null,
     activityTransition: null,
     unattendedProgressAt: timestamp,
+    playTimeMs: 0,
     currentHp: maxHp,
     maxHp: maxHp,
   );

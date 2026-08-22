@@ -65,6 +65,7 @@ function saveWithInventory(itemIds: string[]): PlayerSave {
     maxHp: 100,
     currentHp: 100,
     unattendedProgressAt: null,
+    playTimeMs: 0,
   }
 }
 

@@ -1,4 +1,4 @@
-export const SAVE_VERSION = 29
+export const SAVE_VERSION = 30
 export const SAVE_STORAGE_KEY = 'idle-kingdoms.demo.save'
 export const STARTING_LOCATION_ID = 'LOC-0001'
 /** Base gold before race kit; race starters grant the real starting gold. */
@@ -239,6 +239,11 @@ export interface PlayerSave {
   /** Pending start/stop delay for Primary Activities. */
   activityTransition: ActivityTransition | null
   unattendedProgressAt: string | null
+  /**
+   * Time on this character: live session frames plus unattended catch-up
+   * (capped the same way as away progress). Existing saves start at 0.
+   */
+  playTimeMs: number
   currentHp: number
   maxHp: number
 }

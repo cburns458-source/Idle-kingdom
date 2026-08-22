@@ -44,6 +44,13 @@ class GameSession {
 
   PlayerSave? _save;
 
+  /// Last clock reading that was credited into [PlayerSave.playTimeMs].
+  ///
+  /// Session-local on purpose: a second persisted timestamp would fight the
+  /// unattended anchor. Boot and adopt credit catch-up first, then this is
+  /// set so the next live frame does not add that window again.
+  num? _playAccruedAt;
+
   /// The save being played. Throws before [boot], which is what loads it.
   PlayerSave get save {
     final current = _save;
@@ -65,6 +72,7 @@ class GameSession {
     // must not stamp it again.
     final synced = syncProgressionMeta(db, unattended.save, nowMs);
     _save = repository.write(synced);
+    _playAccruedAt = nowMs;
     return SessionBoot(save: save, created: loaded.created, unattended: unattended);
   }
 
@@ -77,12 +85,15 @@ class GameSession {
     final unattended = resolveUnattendedProgress(db, incoming, at, random);
     final synced = syncProgressionMeta(db, unattended.save, at);
     _save = repository.write(synced);
+    _playAccruedAt = clock();
     return SessionBoot(save: save, created: false, unattended: unattended);
   }
 
   /// Clears the playable character after sign-out or a kick.
   void resetUnsigned() {
-    _save = repository.write(createNewSave(db, clock()));
+    final nowMs = clock();
+    _save = repository.write(createNewSave(db, nowMs));
+    _playAccruedAt = nowMs;
   }
 
   /// Advances whatever is due, storing the save only when something happened.
@@ -91,6 +102,7 @@ class GameSession {
   /// and applies the returned events.
   SessionTickResult tick() {
     final nowMs = clock();
+    _save = _creditLivePlayTime(save, nowMs);
     final result = advanceSession(db, save, nowMs, random);
     if (result.changed) apply(result.save);
     return result;
@@ -102,8 +114,18 @@ class GameSession {
   /// `buyFromShop`, `equipInventoryIndex`, …); this is where their new save
   /// lands, so no caller can skip the write pipeline.
   PlayerSave apply(PlayerSave next) {
-    _save = repository.write(prepareSaveForWrite(db, next, clock()));
+    final nowMs = clock();
+    final credited = _creditLivePlayTime(next, nowMs);
+    _save = repository.write(prepareSaveForWrite(db, credited, nowMs));
     return save;
+  }
+
+  /// Credits the gap since the last live reading, capped like unattended time.
+  PlayerSave _creditLivePlayTime(PlayerSave current, num nowMs) {
+    final last = _playAccruedAt;
+    _playAccruedAt = nowMs;
+    if (last == null) return current;
+    return creditElapsedPlayTime(current, nowMs - last, unattendedCapMs(db));
   }
 
   /// How far along the action in progress is, from 0 to 1.
