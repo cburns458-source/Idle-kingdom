@@ -107,6 +107,23 @@ class Canvas:
         return img
 
 
+def fit_to_square(img: Image.Image, size: int = 32, margin: int = 1) -> Image.Image:
+    """Scale the opaque art so it fills the item square, with a 1px gutter."""
+    bbox = img.getbbox()
+    out = Image.new('RGBA', (size, size), (0, 0, 0, 0))
+    if not bbox:
+        return out
+    cropped = img.crop(bbox)
+    cw, ch = cropped.size
+    target = max(1, size - 2 * margin)
+    scale = min(target / cw, target / ch)
+    nw = max(1, min(target, round(cw * scale)))
+    nh = max(1, min(target, round(ch * scale)))
+    scaled = cropped.resize((nw, nh), Image.Resampling.NEAREST)
+    out.paste(scaled, ((size - nw) // 2, (size - nh) // 2), scaled)
+    return out
+
+
 def metal_of(name: str) -> tuple[tuple[int, int, int], ...] | None:
     n = name.lower()
     for key in sorted(METAL, key=len, reverse=True):
@@ -1231,7 +1248,7 @@ def paint_unique(c: Canvas, name: str) -> bool:
     return False
 
 
-def paint_item(name: str) -> Image.Image:
+def compose_item(name: str) -> Image.Image:
     c = Canvas()
     n = name.lower()
 
@@ -1370,6 +1387,10 @@ def paint_item(name: str) -> Image.Image:
 
     paint_backpack(c)
     return c.image()
+
+
+def paint_item(name: str) -> Image.Image:
+    return fit_to_square(compose_item(name))
 
 
 FAMILY_DEFAULTS = {
