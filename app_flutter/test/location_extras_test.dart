@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:idle_kingdoms/src/session/map_geometry.dart';
 import 'package:idle_kingdoms/src/ui/critter_overlay.dart';
 import 'package:idle_kingdoms/src/theme.dart';
 import 'package:idle_kingdoms/src/ui/overlay_notice.dart';
@@ -303,7 +302,7 @@ void main() {
     expect(find.text('General Store'), findsWidgets);
   });
 
-  testWidgets('a sub-map node reads its position from the map on screen', (tester) async {
+  testWidgets('the town map shows district nodes and hides the entrance', (tester) async {
     final controller = buildController(
       database,
       seed: startedCharacter(database).copyWith(currentLocationId: townKitchenId),
@@ -313,25 +312,17 @@ void main() {
 
     await tester.tap(find.byTooltip('Back to Town'));
     await tester.pump();
-    final kitchenNode = find.descendant(
-      of: find.byType(WorldMapView),
-      matching: find.text('Kitchen'),
-    );
-    await tester.tap(kitchenNode);
-    await tester.pump();
 
-    // Kitchen sits at a town-map node. Reading the world-map layout would
-    // miss it, because the kitchen is not on the overworld.
-    final map = tester.getRect(find.byType(WorldMapView));
-    final kitchen = tester.getCenter(kitchenNode);
-    final expected = mapArtOffset(
-      layoutForMap(townMapId)[townKitchenId]!,
-      map.size,
-      aspectRatio: artAspectRatioForMap(townMapId),
+    expect(find.byType(WorldMapView), findsOne);
+    expect(
+      find.descendant(of: find.byType(WorldMapView), matching: find.text('Kitchen')),
+      findsWidgets,
     );
-
-    expect(kitchen.dx, closeTo(map.left + expected.dx, 1));
-    expect(kitchen.dy, closeTo(map.top + expected.dy, 1));
+    expect(
+      find.descendant(of: find.byType(WorldMapView), matching: find.text('General Store')),
+      findsOne,
+    );
+    expect(find.text('Town Gate'), findsNothing);
   });
 
   testWidgets('expanding the option list does not carry to the next location', (tester) async {

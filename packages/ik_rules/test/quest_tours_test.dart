@@ -80,7 +80,7 @@ void main() {
     final save = applyTravelArrival(db, _save(db, locationId: 'LOC-0002'), 'LOC-0028', 0);
     expect(getQuestProgress(save, 'QST-0004').status, 'active');
     expect(
-      db.quests.firstWhere((row) => row.raw['Quest ID'] == 'QST-0004').raw['Notes'],
+      db.quests.firstWhere((row) => row['Quest ID'] == 'QST-0004')['Notes'],
       contains('AutoStart: LOC-0028'),
     );
   });
