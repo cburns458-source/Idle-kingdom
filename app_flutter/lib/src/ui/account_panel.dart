@@ -6,6 +6,7 @@ import '../session/game_controller.dart';
 import '../session/multiplayer_controller.dart';
 import '../theme.dart';
 import 'account_auth_form.dart';
+import 'format.dart';
 import 'player_profile_sheet.dart';
 import 'social_bits.dart';
 
@@ -37,7 +38,10 @@ class _AccountPanelState extends State<AccountPanel> {
 
   @override
   Widget build(BuildContext context) {
-    return ListenableBuilder(listenable: net, builder: (context, _) => _build());
+    return ListenableBuilder(
+      listenable: Listenable.merge(<Listenable>[widget.controller, net]),
+      builder: (context, _) => _build(),
+    );
   }
 
   Widget _build() {
@@ -71,6 +75,7 @@ class _AccountPanelState extends State<AccountPanel> {
             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
           ),
           MutedText('Race: ${raceDisplayName(widget.controller.db, save.raceId) ?? 'Unchosen'}'),
+          MutedText('Play time: ${formatPlayTimeMs(save.playTimeMs)}'),
         ],
       ),
     );

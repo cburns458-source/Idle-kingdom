@@ -74,6 +74,7 @@ void main() {
       ),
     );
     session.tick();
+    final playBeforeAway = session.save.playTimeMs;
 
     // A fresh session over the same storage, an hour later.
     now += 3600000;
@@ -87,6 +88,23 @@ void main() {
     expect(boot.created, isFalse);
     expect(boot.unattended.gatheringActions, greaterThan(0));
     expect(boot.save.unattendedProgressAt, isoFromMs(now));
+    expect(boot.unattended.effectiveElapsedMs, 3600000);
+    expect(boot.save.playTimeMs, playBeforeAway + 3600000);
+  });
+
+  test('accrues live ticks in memory and caps a long gap like unattended time', () {
+    session.boot();
+    expect(session.save.playTimeMs, 0);
+
+    now += 1500;
+    expect(session.tick().changed, isFalse);
+    expect(session.save.playTimeMs, 1500);
+    // Idle frames do not persist; the next boot recovers via catch-up.
+    expect(session.repository.read()!.playTimeMs, 0);
+
+    now += 48 * 3600000;
+    session.tick();
+    expect(session.save.playTimeMs, 1500 + 24 * 3600000);
   });
 
   test('adoptAccount can catch up on an injected server clock', () {
@@ -106,6 +124,7 @@ void main() {
     final adopted = session.adoptAccount(parked, nowMs: serverNow);
     expect(adopted.unattended.gatheringActions, greaterThan(0));
     expect(adopted.save.unattendedProgressAt, isoFromMs(serverNow));
+    expect(adopted.save.playTimeMs, parked.playTimeMs + adopted.unattended.effectiveElapsedMs);
   });
 
   test('travels instantly on the shipped connections', () {

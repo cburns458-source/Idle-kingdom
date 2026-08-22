@@ -6,6 +6,7 @@ import { createMemoryStorage } from '../../test/memoryStorage'
 import { createNewSave, loadOrCreateSave, readSave, writeSave } from './saveStore'
 import {
   SAVE_STORAGE_KEY,
+  SAVE_VERSION,
   STARTING_GOLD,
   STARTING_LOCATION_ID,
   WEAPON_TOOL_SLOT_ID,
@@ -29,6 +30,7 @@ describe('local save', () => {
     expect(save.currentActivityId).toBeNull()
     expect(save.skills.length).toBeGreaterThan(0)
     expect(save.skills.every((skill) => skill.level === 1 && skill.xp === 0)).toBe(true)
+    expect(save.playTimeMs).toBe(0)
   })
 
   it('auto-creates then reloads the same save', () => {
@@ -57,5 +59,18 @@ describe('local save', () => {
     expect(loaded?.currentLocationId).toBe(STARTING_LOCATION_ID)
     expect(loaded?.inventory).toEqual([])
     expect(loaded?.raceId).toBeNull()
+  })
+
+  it('migrates older saves to playTimeMs 0', () => {
+    const storage = createMemoryStorage()
+    const { source } = prepareDatabase(rawDatabase)
+    const created = createNewSave(source)
+    const legacy = { ...created, saveVersion: 29 } as Record<string, unknown>
+    delete legacy.playTimeMs
+    storage.setItem(SAVE_STORAGE_KEY, JSON.stringify(legacy))
+
+    const loaded = readSave(storage)
+    expect(loaded?.saveVersion).toBe(SAVE_VERSION)
+    expect(loaded?.playTimeMs).toBe(0)
   })
 })

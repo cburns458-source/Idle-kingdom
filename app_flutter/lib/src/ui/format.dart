@@ -15,6 +15,20 @@ String formatDurationSeconds(num totalSeconds) {
 
 String formatDurationMs(num milliseconds) => formatDurationSeconds(milliseconds / 1000);
 
+/// Character play time: `3h 12m`, hiding seconds after the first minute.
+String formatPlayTimeMs(num milliseconds) {
+  if (!milliseconds.isFinite || milliseconds <= 0) return '0m';
+  final totalSeconds = (milliseconds / 1000).floor();
+  if (totalSeconds < 60) return '${totalSeconds}s';
+  final totalMinutes = totalSeconds ~/ 60;
+  final days = totalMinutes ~/ (60 * 24);
+  final hours = (totalMinutes % (60 * 24)) ~/ 60;
+  final minutes = totalMinutes % 60;
+  if (days > 0) return hours > 0 ? '${days}d ${hours}h' : '${days}d';
+  if (hours > 0) return minutes > 0 ? '${hours}h ${minutes}m' : '${hours}h';
+  return '${minutes}m';
+}
+
 /// 12345 -> "12,345", the grouping JavaScript's `toLocaleString()` gives.
 String formatThousands(num value) {
   final digits = value.round().abs().toString();

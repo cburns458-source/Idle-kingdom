@@ -451,6 +451,18 @@ export const SAVE_MIGRATIONS: SaveMigration[] = [
       saveVersion: 29,
     }),
   },
+  {
+    fromVersion: 29,
+    toVersion: 30,
+    migrate: (save) => ({
+      ...save,
+      playTimeMs:
+        typeof save.playTimeMs === 'number' && Number.isFinite(save.playTimeMs) && save.playTimeMs > 0
+          ? save.playTimeMs
+          : 0,
+      saveVersion: 30,
+    }),
+  },
 ]
 
 export function migrateSave(save: PlayerSave, nowMs: number = Date.now()): PlayerSave {

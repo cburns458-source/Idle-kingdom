@@ -115,6 +115,7 @@ export function createNewSave(db: GameDatabase, nowMs: number = Date.now()): Pla
     productionQuantityRemaining: null,
     activityTransition: null,
     unattendedProgressAt: timestamp,
+    playTimeMs: 0,
     currentHp: maxHp,
     maxHp,
   }
