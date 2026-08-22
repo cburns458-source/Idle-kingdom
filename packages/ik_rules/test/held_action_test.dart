@@ -9,6 +9,15 @@ PlayerSave _inMeadow(GameDatabase db) {
   return createNewSave(db, 0).copyWith(currentLocationId: 'LOC-0009');
 }
 
+PlayerSave _withSkillLevel(PlayerSave save, String skillId, num level) {
+  return save.copyWith(
+    skills: [
+      for (final skill in save.skills)
+        if (skill.skillId == skillId) skill.copyWith(level: level) else skill,
+    ],
+  );
+}
+
 void main() {
   late GameDatabase db;
 
@@ -81,7 +90,14 @@ void main() {
     save = completeGatheringAction(db, save, action, () => 0).save;
     expect(save.heldActionByActivityId.containsKey('ACT-0012'), isFalse);
 
-    final next = generateNextAction(db, save, 'ACT-0012', () => 0.999, 10);
+    // Fernleaf is foraging 5; keep it in the preferred pool so a high roll can change.
+    final next = generateNextAction(
+      db,
+      _withSkillLevel(save, 'SKL-0004', 5),
+      'ACT-0012',
+      () => 0.999,
+      10,
+    );
     expect(next!.action.raw['Action ID'], isNot('ACN-0105'));
     expect(next.save.heldActionByActivityId['ACT-0012'], next.action.raw['Action ID']);
   });

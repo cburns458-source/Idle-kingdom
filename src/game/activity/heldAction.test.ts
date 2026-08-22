@@ -106,7 +106,14 @@ describe('held pool actions', () => {
     const finished = completeGatheringAction(launch, started.save, action, () => 0)
     expect(finished.save.heldActionByActivityId['ACT-0012']).toBeUndefined()
 
-    const next = generateNextAction(launch, finished.save, 'ACT-0012', () => 0.999, 10)
+    // Fernleaf is foraging 5; keep it in the preferred pool so a high roll can change.
+    const ready = {
+      ...finished.save,
+      skills: finished.save.skills.map((skill) =>
+        skill.skillId === 'SKL-0004' ? { ...skill, level: 5 } : skill,
+      ),
+    }
+    const next = generateNextAction(launch, ready, 'ACT-0012', () => 0.999, 10)
     expect(next?.action['Action ID']).not.toBe('ACN-0105')
     expect(next?.save.heldActionByActivityId['ACT-0012']).toBe(next?.action['Action ID'])
   })
