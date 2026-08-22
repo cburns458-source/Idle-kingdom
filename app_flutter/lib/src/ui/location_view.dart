@@ -111,6 +111,9 @@ class _LocationViewState extends State<LocationView> {
   /// Town, the cave mouth, and the castle gate still use the old square plates.
   static const Set<String> _squarePlates = {'LOC-0002', 'LOC-0010', 'LOC-0013'};
 
+  /// Keeps arena search state when the panel lifts above the keyboard.
+  final GlobalKey _arenaPanelKey = GlobalKey();
+
   GameController get controller => widget.controller;
 
   void _openPanel(LocationPanel panel) {
@@ -205,8 +208,9 @@ class _LocationViewState extends State<LocationView> {
     final bandPanel = running && openPanel != null ? _buildPanel(openPanel) : null;
 
     final keyboard = MediaQuery.viewInsetsOf(context).bottom;
+    final liftArena = openPanel is ArenaOpen && keyboard > 0;
     return Padding(
-      padding: EdgeInsets.fromLTRB(10, 8, 10, keyboard),
+      padding: EdgeInsets.fromLTRB(10, 8, 10, liftArena ? 0 : keyboard),
       child: DecoratedBox(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(15),
@@ -328,15 +332,30 @@ class _LocationViewState extends State<LocationView> {
                       Expanded(
                         child: Stack(
                           children: [
-                            if (stage != null)
+                            if (stage != null && !liftArena)
                               Positioned(
                                 top: 0,
                                 left: 13,
                                 right: 13,
                                 bottom: _collapsedBand + 8,
-                                child: Align(
-                                  alignment: Alignment.bottomCenter,
-                                  child: SingleChildScrollView(child: stage),
+                                child: openPanel is ArenaOpen
+                                    ? stage
+                                    : Align(
+                                        alignment: Alignment.bottomCenter,
+                                        child: SingleChildScrollView(child: stage),
+                                      ),
+                              ),
+                            if (liftArena && stage != null)
+                              Positioned(
+                                left: 10,
+                                right: 10,
+                                bottom: 8 + keyboard,
+                                child: SizedBox(
+                                  height: (card.maxHeight - keyboard - 16).clamp(
+                                    180,
+                                    card.maxHeight * 0.62,
+                                  ),
+                                  child: stage,
                                 ),
                               ),
                             if (controller.recentRewards.isNotEmpty)
@@ -414,6 +433,7 @@ class _LocationViewState extends State<LocationView> {
         return BankPanel(controller: controller, onClose: _closePanel);
       case ArenaOpen():
         return ArenaPanel(
+          key: _arenaPanelKey,
           controller: controller,
           multiplayer: widget.multiplayer,
           onClose: _closePanel,

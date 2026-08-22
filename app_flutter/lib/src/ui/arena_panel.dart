@@ -26,7 +26,6 @@ class ArenaPanel extends StatefulWidget {
 class _ArenaPanelState extends State<ArenaPanel> {
   final TextEditingController _search = TextEditingController();
   final FocusNode _searchFocus = FocusNode();
-  final GlobalKey _searchFieldKey = GlobalKey();
   _ArenaTab _tab = _ArenaTab.search;
   List<ArenaOpponent> _all = const <ArenaOpponent>[];
   List<ArenaOpponent> _matches = const <ArenaOpponent>[];
@@ -66,31 +65,15 @@ class _ArenaPanelState extends State<ArenaPanel> {
   void initState() {
     super.initState();
     controller.addListener(_onTick);
-    _searchFocus.addListener(_scrollSearchIntoView);
     _loadOpponents();
   }
 
   @override
   void dispose() {
     controller.removeListener(_onTick);
-    _searchFocus.removeListener(_scrollSearchIntoView);
     _searchFocus.dispose();
     _search.dispose();
     super.dispose();
-  }
-
-  void _scrollSearchIntoView() {
-    if (!_searchFocus.hasFocus) return;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final target = _searchFieldKey.currentContext;
-      if (target == null || !target.mounted) return;
-      Scrollable.ensureVisible(
-        target,
-        duration: const Duration(milliseconds: 220),
-        curve: Curves.easeOut,
-        alignment: 0.2,
-      );
-    });
   }
 
   void _onTick() {
@@ -255,34 +238,31 @@ class _ArenaPanelState extends State<ArenaPanel> {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
-      child: GamePanel(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              children: [
-                const Expanded(
-                  child: Text('Arena', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w400)),
-                ),
-                GoldAmount(
-                  amount: save.gold,
-                  style: const TextStyle(color: Palette.gold),
-                ),
-                if (widget.onClose != null)
-                  GameIconButton(icon: Icons.close, tooltip: 'Close', onPressed: widget.onClose),
-              ],
-            ),
-            const MutedText('You fight in the gear you save. Combat level and race stay current.'),
-            if (_error case final error?) ...[
-              const SizedBox(height: 6),
-              Text(error, style: warningStyle),
+    return GamePanel(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              const Expanded(
+                child: Text('Arena', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w400)),
+              ),
+              GoldAmount(
+                amount: save.gold,
+                style: const TextStyle(color: Palette.gold),
+              ),
+              if (widget.onClose != null)
+                GameIconButton(icon: Icons.close, tooltip: 'Close', onPressed: widget.onClose),
             ],
-            const SizedBox(height: 10),
-            if (_fighting) _fightView() else _lobby(),
+          ),
+          const MutedText('You fight in the gear you save. Combat level and race stay current.'),
+          if (_error case final error?) ...[
+            const SizedBox(height: 6),
+            Text(error, style: warningStyle),
           ],
-        ),
+          const SizedBox(height: 10),
+          Expanded(child: _fighting ? SingleChildScrollView(child: _fightView()) : _lobby()),
+        ],
       ),
     );
   }
@@ -323,7 +303,7 @@ class _ArenaPanelState extends State<ArenaPanel> {
           ],
         ),
         const SizedBox(height: 10),
-        if (_tab == _ArenaTab.search) _searchLobby() else _rankedLobby(),
+        Expanded(child: _tab == _ArenaTab.search ? _searchLobby() : _rankedLobby()),
       ],
     );
   }
@@ -334,33 +314,45 @@ class _ArenaPanelState extends State<ArenaPanel> {
       children: [
         const MutedText('Search by name. No gold, no rank.'),
         const SizedBox(height: 8),
+        Expanded(
+          child: _loading
+              ? const Align(alignment: Alignment.topLeft, child: MutedText('Loading players…'))
+              : _search.text.trim().isEmpty
+              ? const Align(
+                  alignment: Alignment.topLeft,
+                  child: MutedText('Type a name to find someone.'),
+                )
+              : _matches.isEmpty
+              ? const Align(
+                  alignment: Alignment.topLeft,
+                  child: MutedText('No players match that name.'),
+                )
+              : ListView(
+                  padding: EdgeInsets.zero,
+                  children: [
+                    for (final row in _matches)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: DockRow(
+                          title: row.username,
+                          lines: [MutedText('Combat ${formatThousands(row.combatLevel)}')],
+                          trailing: GameButton(
+                            label: 'Fight',
+                            onPressed: () => _fightOpponent(row, ranked: false),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+        ),
         TextField(
-          key: _searchFieldKey,
+          key: const Key('arena-search-field'),
           focusNode: _searchFocus,
           controller: _search,
+          textInputAction: TextInputAction.search,
           decoration: const InputDecoration(hintText: 'Player name'),
           onChanged: (_) => _filter(),
         ),
-        const SizedBox(height: 8),
-        if (_loading)
-          const MutedText('Loading players…')
-        else if (_search.text.trim().isEmpty)
-          const MutedText('Type a name to find someone.')
-        else if (_matches.isEmpty)
-          const MutedText('No players match that name.')
-        else
-          for (final row in _matches)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: DockRow(
-                title: row.username,
-                lines: [MutedText('Combat ${formatThousands(row.combatLevel)}')],
-                trailing: GameButton(
-                  label: 'Fight',
-                  onPressed: () => _fightOpponent(row, ranked: false),
-                ),
-              ),
-            ),
       ],
     );
   }
