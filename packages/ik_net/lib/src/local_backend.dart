@@ -335,7 +335,9 @@ class LocalMultiplayerBackend {
     final profile = db.profiles.firstWhereOrNull((row) => row.userId == record.userId);
     final username = isNotBlank(profile?.username)
         ? profile!.username
-        : (isNotBlank(record.payload.characterName) ? record.payload.characterName! : record.userId);
+        : (isNotBlank(record.payload.characterName)
+              ? record.payload.characterName!
+              : record.userId);
     return ArenaOpponent(
       userId: record.userId,
       username: username,

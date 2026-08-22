@@ -268,9 +268,7 @@ class _ArenaPanelState extends State<ArenaPanel> {
         ),
         const SizedBox(height: 6),
         MutedText(
-          _equipmentSaved
-              ? 'PvP snapshot saved. Others will fight this loadout.'
-              : 'Save the gear others will fight. Search and ranked ignore anyone who has not saved.',
+          _equipmentSaved ? 'PvP snapshot saved. Others will fight this loadout.' : 'Save the gear others will fight. Search and ranked ignore anyone who has not saved.',
         ),
         const SizedBox(height: 10),
         Row(
