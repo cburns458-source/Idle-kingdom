@@ -3,11 +3,13 @@ import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { prepareDatabase } from '../data/loadDatabase'
 import {
+  actionIsQuestOnly,
   actionsForSkill,
   projectsForSkill,
   skillMenuDisplayEntries,
   skillMenuEntries,
   skillMenuLine,
+  skillMenuView,
 } from './skillActions'
 
 const rawDatabase = JSON.parse(
@@ -32,6 +34,35 @@ describe('skill menu entries', () => {
     const combat = actionsForSkill(launch, 'SKL-0001')
     expect(combat.length).toBeGreaterThan(0)
     expect(combat.every((item) => item.level == null)).toBe(true)
+    expect(combat.some((item) => item.displayName === 'Pressure the guards')).toBe(false)
+    expect(actionIsQuestOnly(launch, 'ACN-0171')).toBe(true)
+  })
+
+  it('lists combat enemies by combat level and keeps steel battleaxes on Basic metal', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const combat = skillMenuView(launch, 'SKL-0001')
+    expect(combat.tabs[0]?.label).toBe('Enemies')
+    const goblin = combat.tabs[0]?.sections[0]?.entries.find((item) => item.displayName === 'Goblin Scout')
+    expect(goblin?.level).toEqual(expect.any(Number))
+    expect(skillMenuLine(goblin!)).toMatch(/^\d+\. Goblin Scout$/)
+
+    const smithing = skillMenuView(launch, 'SKL-0011')
+    expect(smithing.tabs.map((tab) => tab.label)).toEqual(['Basic metal', 'Other'])
+    expect(
+      smithing.tabs[0]?.sections[0]?.entries.some(
+        (item) => item.displayName === 'Steel items' && item.level === 35,
+      ),
+    ).toBe(true)
+    expect(smithing.tabs[1]?.sections[0]?.entries.some((item) => item.displayName === 'Warhammer')).toBe(
+      true,
+    )
+
+    const artisanry = skillMenuView(launch, 'SKL-0012')
+    expect(
+      artisanry.tabs
+        .find((tab) => tab.id === 'jewelry')
+        ?.sections[0]?.entries.some((item) => item.displayName === 'Lucky Necklace'),
+    ).toBe(true)
   })
 
   it('lists smithing projects by output item name and required level', () => {
