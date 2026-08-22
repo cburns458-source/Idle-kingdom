@@ -65,7 +65,10 @@ export function activitiesForAction(db: GameDatabase, actionId: string): GameDat
     db.PoolEntries.filter((entry) => entry['Action ID'] === actionId).map((entry) => entry['Pool ID']),
   )
   if (poolIds.size === 0) return []
-  return db.Activities.filter((activity) => poolIds.has(activity['Pool ID']))
+  return db.Activities.filter((activity) => {
+    const poolId = activity['Pool ID']
+    return poolId != null && poolIds.has(poolId)
+  })
 }
 
 function isQuestOnlyRequirement(requirement: RequirementRow): boolean {

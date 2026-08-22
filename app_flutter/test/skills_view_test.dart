@@ -68,6 +68,14 @@ void main() {
     await tester.tap(find.text('Smithing'));
     await tester.pump();
 
+    await tester.scrollUntilVisible(
+      find.text('70. Tungsten items'),
+      200,
+      scrollable: find.descendant(
+        of: find.byKey(const Key('game-popup')),
+        matching: find.byType(Scrollable),
+      ),
+    );
     expect(find.text('70. Tungsten items'), findsOne);
     expect(find.textContaining('Tungsten Sword'), findsNothing);
   });

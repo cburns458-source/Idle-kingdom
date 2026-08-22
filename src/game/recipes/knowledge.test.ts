@@ -39,7 +39,7 @@ describe('recipe knowledge', () => {
     expect(entries.some((entry) => entry.known)).toBe(true)
   })
 
-  it('skill recipe books list only unlocked rows for that skill', () {
+  it('skill recipe books list only unlocked rows for that skill', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const save = createNewSave(launch)
     const cooking = recipeBookForSkill(save, launch, 'SKL-0007')
@@ -49,7 +49,7 @@ describe('recipe knowledge', () => {
     expect(cooking.some((entry) => entry.name.includes('Baby Giant Squid'))).toBe(false)
   })
 
-  it('lists the recipe book by proficiency, leaving locked rows in place', () {
+  it('lists the recipe book by proficiency, leaving locked rows in place', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const save = createNewSave(launch)
     const entries = listRecipeBookEntries(save, launch)

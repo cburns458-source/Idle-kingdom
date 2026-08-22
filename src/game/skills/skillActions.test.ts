@@ -38,7 +38,7 @@ describe('skill menu entries', () => {
     expect(actionIsQuestOnly(launch, 'ACN-0171')).toBe(true)
   })
 
-  it('lists combat enemies by combat level and keeps steel battleaxes on Basic metal', () {
+  it('lists combat enemies by combat level and keeps steel battleaxes on Basic metal', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const combat = skillMenuView(launch, 'SKL-0001')
     expect(combat.tabs[0]?.label).toBe('Enemies')
