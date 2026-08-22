@@ -31,11 +31,37 @@ void main() {
     expect(_weights(db, activity.raw['Pool ID']! as String), {'ACN-0048': 100});
   });
 
-  test('the abandoned mineshaft can fish the same dock pool', () {
+  test('catch crawfish and hunt pheasant sit on the early gather curve', () {
+    final crawfish = db.actions.firstWhere((row) => row.raw['Action ID'] == 'ACN-0099');
+    expect(crawfish.raw['XP Reward'], 200);
+    expect(crawfish.raw['Base Duration Seconds'], 10);
+    final pheasant = db.actions.firstWhere((row) => row.raw['Action ID'] == 'ACN-0017');
+    expect(pheasant.raw['XP Reward'], 3000);
+    expect(pheasant.raw['Base Duration Seconds'], 120);
+  });
+
+  test('enemy gold is a tenth, with animals that never paid staying at zero', () {
+    num gold(String id, String key) {
+      final enemy = db.enemies.firstWhere((row) => row.raw['Enemy ID'] == id);
+      return enemy.raw[key]! as num;
+    }
+
+    expect(gold('ENM-0001', 'Minimum Gold'), 0);
+    expect(gold('ENM-0002', 'Maximum Gold'), 0);
+    expect(gold('ENM-0010', 'Minimum Gold'), 0);
+    expect(gold('ENM-0010', 'Maximum Gold'), 0);
+    expect(gold('ENM-0003', 'Minimum Gold'), 1);
+    expect(gold('ENM-0003', 'Maximum Gold'), 3);
+    expect(gold('ENM-0017', 'Minimum Gold'), 1);
+    expect(gold('ENM-0006', 'Maximum Gold'), 1000);
+  });
+
+  test('the abandoned mineshaft fishes tuna, shark, and baby giant squid', () {
     final activity = db.activities.firstWhere((row) => row.activityId == 'ACT-0038');
     expect(activity.raw['Contextual Name'], 'Fish the deep pools');
     expect(activity.raw['Location ID'], 'LOC-0022');
-    expect(activity.raw['Pool ID'], 'POOL-0004');
+    expect(activity.raw['Pool ID'], 'POOL-0028');
+    expect(_weights(db, 'POOL-0028'), {'ACN-0102': 50, 'ACN-0103': 45, 'ACN-0104': 5});
     expect(_weights(db, 'POOL-0004'), {'ACN-0102': 55, 'ACN-0103': 45});
   });
 }

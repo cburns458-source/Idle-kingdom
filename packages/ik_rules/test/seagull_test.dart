@@ -45,6 +45,15 @@ void main() {
     expect(weights.values.reduce((a, b) => a + b), 100);
   });
 
+  test('deep-pool fishing can roll the baby giant squid', () {
+    final activity = db.activities.firstWhere((row) => row.activityId == 'ACT-0038');
+    expect(activity.raw['Pool ID'], 'POOL-0028');
+    final weights = _weights(db, 'POOL-0028');
+    expect(weights['ACN-0104'], 5);
+    expect(weights['ACN-0102'], 50);
+    expect(weights['ACN-0103'], 45);
+  });
+
   test('dock fishing is only tuna and shark', () {
     final weights = _weights(db, 'POOL-0004');
     expect(weights, {'ACN-0102': 55, 'ACN-0103': 45});

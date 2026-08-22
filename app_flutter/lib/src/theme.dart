@@ -53,7 +53,7 @@ DecorationImage panelGrainImage() => const DecorationImage(
   fit: BoxFit.none,
   alignment: Alignment.topLeft,
   filterQuality: FilterQuality.none,
-  opacity: 0.01,
+  opacity: 0.03,
 );
 
 BoxDecoration panelFill({

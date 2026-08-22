@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:idle_kingdoms/src/ui/app_shell.dart';
 import 'package:idle_kingdoms/src/ui/arena_panel.dart';
 import 'package:idle_kingdoms/src/ui/location_view.dart';
 import 'package:ik_content/ik_content.dart';
@@ -107,5 +108,32 @@ void main() {
       goldBefore + (controller.save.rankedPvpWins > 0 ? rankedPvpWinGold : 0),
     );
     expect(controller.save.rankedPvpWins + controller.save.rankedPvpLosses, 1);
+  });
+
+  testWidgets('arena search sits above the keyboard', (tester) async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(currentLocationId: citadelPlazaId),
+    );
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller, size: const Size(900, 2400));
+
+    await tapVisible(tester, find.text('Player fights'));
+    await tester.pump();
+
+    final field = find.byKey(const Key('arena-search-field'));
+    expect(field, findsOne);
+    await tester.tap(field);
+    await tester.pump();
+
+    tester.view.viewInsets = const FakeViewPadding(bottom: 280);
+    addTearDown(tester.view.resetViewInsets);
+    await tester.pump();
+
+    expect(field, findsOne);
+    final fieldBox = tester.getRect(field);
+    final frame = tester.getRect(find.byType(AppShell));
+    expect(fieldBox.bottom, lessThanOrEqualTo(frame.bottom - 280 + 2));
+    expect(fieldBox.top, greaterThan(frame.top));
   });
 }
