@@ -306,23 +306,13 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
     });
   }
 
-  /// Gateways open or close a child map without moving the player.
+  /// Exit: tapping this submap's gateway while browsing it opens the world map.
+  /// Entry travels; [planTravel] lands on the gateway's child-map node.
   bool _openMapPortal(String locationId) {
     final dest = controller.indexes.locationsById[locationId];
     if (dest == null || !isSubMapGateway(dest)) return false;
-    if (_browseMapId == mainMapId) {
-      final child = subMapIdForGateway(controller.db, locationId);
-      if (child == null) return false;
-      _cancelMapWalk();
-      setState(() {
-        _browseMapId = child;
-        _selectedLocationId = locationId;
-        _wardrobeOpen = false;
-        if (_stack.last != GameScreen.map) _stack.add(GameScreen.map);
-      });
-      return true;
-    }
-    if (gatewayLocationIdForSubMap(controller.db, _browseMapId) == locationId) {
+    if (_browseMapId != mainMapId &&
+        subMapIdForGateway(controller.db, locationId) == _browseMapId) {
       _cancelMapWalk();
       setState(() {
         _browseMapId = mainMapId;
@@ -333,9 +323,17 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
     return false;
   }
 
+  void _enterGateway(String locationId) {
+    _arrive(locationId);
+  }
+
   void _travelTo(String locationId) {
     if (controller.isRecovering) return;
     if (_openMapPortal(locationId)) return;
+    if (locationId == controller.save.currentLocationId) {
+      _arrive(locationId);
+      return;
+    }
     if (!canTravelTo(
       controller.db,
       controller.save.currentLocationId,
@@ -465,6 +463,7 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
                     multiplayer: multiplayer,
                     onOpenMap: _showMap,
                     onOpenSubMap: _browseSubMap,
+                    onEnterGateway: _enterGateway,
                     onOpenGuilds: () => _selectScreen(GameScreen.guilds),
                   ),
                   if (_screen != GameScreen.location)

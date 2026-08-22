@@ -28,6 +28,47 @@ bool isSubMapGateway(LocationRow location) {
   return lowerOrEmpty(location.raw['Location Type']).contains('sub-map gateway');
 }
 
+/// Landing node written on a gateway row, if any.
+String? landingLocationIdFor(LocationRow location) {
+  final raw = location.raw['Landing Location ID'];
+  if (raw is! String) return null;
+  final id = raw.trim();
+  return id.isEmpty ? null : id;
+}
+
+/// World-map Travel to a gateway lands on that gateway's child-map node.
+///
+/// Standing on a gateway and choosing it again does the same, so Enter still
+/// works if someone is already on an inaccessible entrance. Intra-submap
+/// travel is left alone.
+String resolveSubMapTravelDestination(
+  GameDatabase db,
+  String selectedLocationId,
+  String browseMapId, [
+  String? currentLocationId,
+]) {
+  final dest = db.locations.firstWhereOrNull((row) => row.raw['Location ID'] == selectedLocationId);
+  if (dest == null) return selectedLocationId;
+  final landing = landingLocationIdFor(dest);
+  if (landing == null) return selectedLocationId;
+  if (!db.locations.any((row) => row.raw['Location ID'] == landing)) {
+    return selectedLocationId;
+  }
+  final fromMain = browseMapId == mainMapId;
+  final standingOnGateway = (currentLocationId ?? selectedLocationId) == selectedLocationId;
+  if (!fromMain && !standingOnGateway) return selectedLocationId;
+  return landing;
+}
+
+/// Where a walk onto [mapId] should start when the player is not on that map.
+String? entryLandingLocationIdForMap(GameDatabase db, String mapId) {
+  final gatewayId = gatewayLocationIdForSubMap(db, mapId);
+  if (gatewayId == null) return null;
+  final gateway = db.locations.firstWhereOrNull((row) => row.raw['Location ID'] == gatewayId);
+  if (gateway == null) return gatewayId;
+  return landingLocationIdFor(gateway) ?? gatewayId;
+}
+
 /// Child Map ID for a gateway location, if any.
 String? subMapIdForGateway(GameDatabase db, String gatewayLocationId) {
   final child = db.locations.firstWhereOrNull(

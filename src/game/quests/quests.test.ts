@@ -107,17 +107,19 @@ describe('quest tours', () => {
     expect(completed.rewards.some((reward) => /Combat XP/i.test(reward.label))).toBe(true)
   })
 
-  it('auto-starts Visiting the Citadel on arriving at the gateway and pays 1000 gold', () => {
+  it('auto-starts Visiting the Citadel on arriving at the plaza and pays 1000 gold', () => {
     const { launch } = prepareDatabase(rawDatabase)
     let save = createNewSave(launch)
-    save = applyTravelArrival(launch, save, 'LOC-0027', Date.parse('2026-01-01T00:00:00.000Z'))
+    save = applyTravelArrival(launch, save, 'LOC-0028', Date.parse('2026-01-01T00:00:00.000Z'))
     expect(getQuestProgress(save, 'QST-0004').status).toBe('active')
+    expect(launch.Quests.find((row) => row['Quest ID'] === 'QST-0004')?.Notes).toMatch(
+      /AutoStart:\s*LOC-0028/,
+    )
 
     save = applyTravelArrival(launch, save, 'LOC-0029', Date.parse('2026-01-01T00:00:01.000Z'))
     save = applyTravelArrival(launch, save, 'LOC-0030', Date.parse('2026-01-01T00:00:02.000Z'))
     save = applyTravelArrival(launch, save, 'LOC-0035', Date.parse('2026-01-01T00:00:03.000Z'))
-    save = applyTravelArrival(launch, save, 'LOC-0028', Date.parse('2026-01-01T00:00:04.000Z'))
-    save = applyTravelArrival(launch, save, 'LOC-0033', Date.parse('2026-01-01T00:00:05.000Z'))
+    save = applyTravelArrival(launch, save, 'LOC-0033', Date.parse('2026-01-01T00:00:04.000Z'))
     save = applyQuestTalkProgress(launch, save, 'NPC-0013')
     save = applyQuestTalkProgress(launch, save, 'NPC-0006')
     save = applyQuestInspectProgress(launch, save, 'bazaar')

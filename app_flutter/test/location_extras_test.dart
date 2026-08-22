@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:idle_kingdoms/src/session/map_geometry.dart';
 import 'package:idle_kingdoms/src/ui/critter_overlay.dart';
 import 'package:idle_kingdoms/src/theme.dart';
 import 'package:idle_kingdoms/src/ui/overlay_notice.dart';
@@ -241,9 +240,7 @@ void main() {
     });
   });
 
-  testWidgets('travelling to Town from the world map opens the town map without moving', (
-    tester,
-  ) async {
+  testWidgets('travelling to Town from the world map lands at the General Store', (tester) async {
     final controller = buildController(
       database,
       seed: startedCharacter(database).copyWith(currentLocationId: 'LOC-0009'),
@@ -252,7 +249,7 @@ void main() {
     await pumpShell(tester, controller);
 
     expect(find.text('Enter Town'), findsNothing);
-    expect(find.text('Back to Town'), findsNothing);
+    expect(find.byTooltip('Back to Town'), findsNothing);
 
     await tester.tap(find.byTooltip('Open world map'));
     await tester.pump();
@@ -261,13 +258,13 @@ void main() {
     await tester.tap(find.text('Travel'));
     await tester.pump();
 
-    expect(controller.save.currentLocationId, 'LOC-0009');
-    expect(find.byType(WorldMapView), findsOne);
-    expect(find.text('Town Gate'), findsWidgets);
-    expect(find.text('Kitchen'), findsWidgets);
+    expect(controller.save.currentLocationId, townGeneralStoreId);
+    expect(find.text('General Store'), findsWidgets);
+    expect(find.byTooltip('Back to Town'), findsOne);
+    expect(find.text('Town Gate'), findsNothing);
   });
 
-  testWidgets('the town exit node returns to the world map without moving', (tester) async {
+  testWidgets('the town map chip returns to the world map without moving', (tester) async {
     final controller = buildController(
       database,
       seed: startedCharacter(database).copyWith(currentLocationId: townKitchenId),
@@ -275,52 +272,57 @@ void main() {
     addTearDown(controller.dispose);
     await pumpShell(tester, controller);
 
-    await tester.tap(find.byTooltip('Open world map'));
+    await tester.tap(find.byTooltip('Back to Town'));
     await tester.pump();
-    await tester.tap(find.text('The Town'));
-    await tester.pump();
-    await tester.tap(find.text('Travel'));
+    expect(find.byType(WorldMapView), findsOne);
+    expect(find.text('Town Gate'), findsNothing);
+
+    await tester.tap(
+      find.descendant(of: find.byType(WorldMapView), matching: find.byTooltip('Open world map')),
+    );
     await tester.pump();
 
-    expect(find.text('Town Gate'), findsWidgets);
-    expect(controller.save.currentLocationId, townKitchenId);
-
-    await tester.tap(find.text('Town Gate').first);
-    await tester.pump();
-    await tester.tap(find.text('Travel'));
-    await tester.pump();
-
-    expect(controller.save.currentLocationId, townKitchenId);
     expect(find.text('The Farm'), findsOne);
+    expect(controller.save.currentLocationId, townKitchenId);
   });
 
-  testWidgets('a sub-map node reads its position from the map on screen', (tester) async {
+  testWidgets('Enter on a gateway travels to its landing', (tester) async {
     final controller = buildController(
       database,
-      seed: startedCharacter(database).copyWith(currentLocationId: 'LOC-0009'),
+      seed: startedCharacter(database).copyWith(currentLocationId: townGatewayId),
     );
     addTearDown(controller.dispose);
     await pumpShell(tester, controller);
 
-    await tester.tap(find.byTooltip('Open world map'));
-    await tester.pump();
-    await tester.tap(find.text('The Town'));
-    await tester.pump();
-    await tester.tap(find.text('Travel'));
+    expect(find.text('Enter Town'), findsOne);
+    await tester.tap(find.text('Enter Town'));
     await tester.pump();
 
-    // The gateway sits at (40, 21) on the town map but (28, 50) on the world
-    // map, so reading the wrong layout would drop it into the middle-left.
-    final map = tester.getRect(find.byType(WorldMapView));
-    final gate = tester.getCenter(find.text('Town Gate').first);
-    final expected = mapArtOffset(
-      layoutForMap(townMapId)['LOC-0002']!,
-      map.size,
-      aspectRatio: artAspectRatioForMap(townMapId),
+    expect(controller.save.currentLocationId, townGeneralStoreId);
+    expect(find.text('General Store'), findsWidgets);
+  });
+
+  testWidgets('the town map shows district nodes and hides the entrance', (tester) async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(currentLocationId: townKitchenId),
     );
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller);
 
-    expect(gate.dx, closeTo(map.left + expected.dx, 1));
-    expect(gate.dy, lessThan(map.top + map.height / 2));
+    await tester.tap(find.byTooltip('Back to Town'));
+    await tester.pump();
+
+    expect(find.byType(WorldMapView), findsOne);
+    expect(
+      find.descendant(of: find.byType(WorldMapView), matching: find.text('Kitchen')),
+      findsWidgets,
+    );
+    expect(
+      find.descendant(of: find.byType(WorldMapView), matching: find.text('General Store')),
+      findsOne,
+    );
+    expect(find.text('Town Gate'), findsNothing);
   });
 
   testWidgets('expanding the option list does not carry to the next location', (tester) async {

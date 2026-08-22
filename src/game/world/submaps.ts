@@ -29,6 +29,46 @@ export function isSubMapGateway(location: LocationRow): boolean {
   return (location['Location Type'] ?? '').toLowerCase().includes('sub-map gateway')
 }
 
+/** Landing node written on a gateway row, if any. */
+export function landingLocationIdFor(location: LocationRow): string | null {
+  const raw = location['Landing Location ID']
+  if (typeof raw !== 'string') return null
+  const id = raw.trim()
+  return id.length > 0 ? id : null
+}
+
+/**
+ * World-map Travel to a gateway lands on that gateway's child-map node.
+ * Standing on a gateway and choosing it again does the same, so Enter still
+ * works if someone is already on an inaccessible entrance.
+ * Intra-submap travel is left alone.
+ */
+export function resolveSubMapTravelDestination(
+  db: GameDatabase,
+  selectedLocationId: string,
+  browseMapId: string,
+  currentLocationId: string = selectedLocationId,
+): string {
+  const dest = db.Locations.find((row) => row['Location ID'] === selectedLocationId)
+  if (!dest) return selectedLocationId
+  const landing = landingLocationIdFor(dest)
+  if (!landing) return selectedLocationId
+  if (!db.Locations.some((row) => row['Location ID'] === landing)) return selectedLocationId
+  const fromMain = browseMapId === MAIN_MAP_ID
+  const standingOnGateway = currentLocationId === selectedLocationId
+  if (!fromMain && !standingOnGateway) return selectedLocationId
+  return landing
+}
+
+/** Where a walk onto [mapId] should start when the player is not on that map. */
+export function entryLandingLocationIdForMap(db: GameDatabase, mapId: string): string | null {
+  const gatewayId = gatewayLocationIdForSubMap(db, mapId)
+  if (!gatewayId) return null
+  const gateway = db.Locations.find((row) => row['Location ID'] === gatewayId)
+  if (!gateway) return gatewayId
+  return landingLocationIdFor(gateway) ?? gatewayId
+}
+
 /** Child Map ID for a gateway location, if any. */
 export function subMapIdForGateway(
   db: GameDatabase,

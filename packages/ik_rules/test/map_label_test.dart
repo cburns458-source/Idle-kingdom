@@ -36,12 +36,57 @@ void main() {
     expect(backToSubMapLabel(db, farm), isNull);
   });
 
-  test('the Citadel gateway is hidden on the citadel submap', () {
-    final citadelNodes = locationsForMapView(db, citadelMapId);
-    expect(citadelNodes.any((row) => row.locationId == citadelGatewayId), isFalse);
+  test('submap gateways stay on the world map and hide on their child maps', () {
+    expect(
+      locationsForMapView(db, townMapId).any((row) => row.locationId == townGatewayId),
+      isFalse,
+    );
+    expect(
+      locationsForMapView(db, caveMapId).any((row) => row.locationId == caveEntranceId),
+      isFalse,
+    );
+    expect(
+      locationsForMapView(db, castleMapId).any((row) => row.locationId == castleGatewayId),
+      isFalse,
+    );
+    expect(
+      locationsForMapView(db, citadelMapId).any((row) => row.locationId == citadelGatewayId),
+      isFalse,
+    );
+    expect(
+      locationsForMapView(db, mainMapId).any((row) => row.locationId == townGatewayId),
+      isTrue,
+    );
     expect(
       locationsForMapView(db, mainMapId).any((row) => row.locationId == citadelGatewayId),
       isTrue,
+    );
+  });
+
+  test('world-map travel to a gateway lands on the written child-map node', () {
+    expect(
+      landingLocationIdFor(db.locations.firstWhere((row) => row.locationId == townGatewayId)),
+      townGeneralStoreId,
+    );
+    expect(
+      landingLocationIdFor(db.locations.firstWhere((row) => row.locationId == caveEntranceId)),
+      caveMiningStoreId,
+    );
+    expect(
+      landingLocationIdFor(db.locations.firstWhere((row) => row.locationId == castleGatewayId)),
+      castleCourtyardId,
+    );
+    expect(
+      landingLocationIdFor(db.locations.firstWhere((row) => row.locationId == citadelGatewayId)),
+      citadelPlazaId,
+    );
+    expect(
+      resolveSubMapTravelDestination(db, townGatewayId, mainMapId, 'LOC-0009'),
+      townGeneralStoreId,
+    );
+    expect(
+      resolveSubMapTravelDestination(db, townGeneralStoreId, townMapId, townKitchenId),
+      townGeneralStoreId,
     );
   });
 

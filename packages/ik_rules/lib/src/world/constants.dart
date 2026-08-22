@@ -13,7 +13,9 @@ const String townMapId = 'MAP-0006';
 const String citadelMapId = 'MAP-0007';
 
 const String caveEntranceId = 'LOC-0010';
+const String caveMiningStoreId = 'LOC-0012';
 const String castleGatewayId = 'LOC-0013';
+const String castleCourtyardId = 'LOC-0014';
 const String townGatewayId = 'LOC-0002';
 const String citadelGatewayId = 'LOC-0027';
 const String westHorizonId = 'LOC-0019';

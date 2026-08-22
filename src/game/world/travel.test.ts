@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest'
 import { prepareDatabase } from '../data/loadDatabase'
 import { locationHasGuildHall } from '../guild/hall'
 import { createNewSave } from '../save/saveStore'
+import { planTravel } from '../session/travel'
 import {
   applyTravelArrival,
   canTravelTo,
@@ -16,16 +17,24 @@ import {
   MAIN_MAP_ID,
   CASTLE_MAP_ID,
   CAVE_MAP_ID,
+  CAVE_MINING_STORE_ID,
   CITADEL_MAP_ID,
   CITADEL_GATEWAY_ID,
   CITADEL_PLAZA_ID,
+  CASTLE_COURTYARD_ID,
   CASTLE_GATEWAY_ID,
   TOWN_GATEWAY_ID,
+  TOWN_GENERAL_STORE_ID,
   TOWN_KITCHEN_ID,
   TOWN_MAP_ID,
 } from './constants'
 import { mapNodeLabel } from './mapLabel'
-import { backToSubMapLabel, enterSubMapLabel } from './submaps'
+import {
+  backToSubMapLabel,
+  enterSubMapLabel,
+  landingLocationIdFor,
+  resolveSubMapTravelDestination,
+} from './submaps'
 
 const rawDatabase = JSON.parse(
   readFileSync(resolve(process.cwd(), 'content/data/game-database.json'), 'utf8'),
@@ -130,8 +139,9 @@ describe('travel rules', () => {
     expect(resolveActiveMapId(launch, town)).toBe('MAP-0006')
     const townNodes = locationsForMapView(launch, 'MAP-0006').map((row) => row['Location ID'])
     expect(townNodes).toEqual(
-      expect.arrayContaining(['LOC-0002', 'LOC-0023', 'LOC-0024', 'LOC-0025']),
+      expect.arrayContaining(['LOC-0023', 'LOC-0024', 'LOC-0025']),
     )
+    expect(townNodes).not.toContain('LOC-0002')
     expect(townNodes).not.toContain('LOC-0026')
     const unlocked = locationsForMapView(launch, 'MAP-0006', {
       unlockedLocationIds: ['LOC-0026'],
@@ -143,8 +153,10 @@ describe('travel rules', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const castleNodes = locationsForMapView(launch, CASTLE_MAP_ID).map((row) => row['Location ID'])
     expect(castleNodes).toEqual(expect.arrayContaining(['LOC-0015', 'LOC-0021']))
+    expect(castleNodes).not.toContain(CASTLE_GATEWAY_ID)
     const caveNodes = locationsForMapView(launch, CAVE_MAP_ID).map((row) => row['Location ID'])
     expect(caveNodes).toEqual(expect.arrayContaining(['LOC-0011', 'LOC-0022']))
+    expect(caveNodes).not.toContain('LOC-0010')
   })
 
   it('opens citadel sub-map from The Citadel gateway', () => {
@@ -197,5 +209,54 @@ describe('travel rules', () => {
         (row) => row['Location ID'] === CITADEL_GATEWAY_ID,
       ),
     ).toBe(false)
+  })
+
+  it('hides every gateway on its own child map', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    expect(
+      locationsForMapView(launch, TOWN_MAP_ID).some((row) => row['Location ID'] === TOWN_GATEWAY_ID),
+    ).toBe(false)
+    expect(
+      locationsForMapView(launch, CAVE_MAP_ID).some((row) => row['Location ID'] === 'LOC-0010'),
+    ).toBe(false)
+    expect(
+      locationsForMapView(launch, CASTLE_MAP_ID).some(
+        (row) => row['Location ID'] === CASTLE_GATEWAY_ID,
+      ),
+    ).toBe(false)
+  })
+
+  it('resolves world-map gateway travel to the written landing', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const town = launch.Locations.find((row) => row['Location ID'] === TOWN_GATEWAY_ID)!
+    const cave = launch.Locations.find((row) => row['Location ID'] === 'LOC-0010')!
+    const castle = launch.Locations.find((row) => row['Location ID'] === CASTLE_GATEWAY_ID)!
+    const citadel = launch.Locations.find((row) => row['Location ID'] === CITADEL_GATEWAY_ID)!
+    expect(landingLocationIdFor(town)).toBe(TOWN_GENERAL_STORE_ID)
+    expect(landingLocationIdFor(cave)).toBe(CAVE_MINING_STORE_ID)
+    expect(landingLocationIdFor(castle)).toBe(CASTLE_COURTYARD_ID)
+    expect(landingLocationIdFor(citadel)).toBe(CITADEL_PLAZA_ID)
+    expect(resolveSubMapTravelDestination(launch, TOWN_GATEWAY_ID, MAIN_MAP_ID, 'LOC-0009')).toBe(
+      TOWN_GENERAL_STORE_ID,
+    )
+    expect(
+      resolveSubMapTravelDestination(launch, TOWN_GENERAL_STORE_ID, TOWN_MAP_ID, TOWN_KITCHEN_ID),
+    ).toBe(TOWN_GENERAL_STORE_ID)
+  })
+
+  it('lands planTravel on the gateway landing from the world map', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const now = Date.parse('2026-01-01T00:00:00.000Z')
+    const fromMeadow = { ...createNewSave(launch), currentLocationId: 'LOC-0009' }
+    const toTown = planTravel(launch, fromMeadow, TOWN_GATEWAY_ID, MAIN_MAP_ID, now)
+    expect(toTown.kind).toBe('instant')
+    if (toTown.kind !== 'instant') return
+    expect(toTown.arrival.save.currentLocationId).toBe(TOWN_GENERAL_STORE_ID)
+
+    const onGateway = { ...createNewSave(launch), currentLocationId: TOWN_GATEWAY_ID }
+    const enter = planTravel(launch, onGateway, TOWN_GATEWAY_ID, MAIN_MAP_ID, now)
+    expect(enter.kind).toBe('instant')
+    if (enter.kind !== 'instant') return
+    expect(enter.arrival.save.currentLocationId).toBe(TOWN_GENERAL_STORE_ID)
   })
 })

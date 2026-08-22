@@ -332,7 +332,7 @@ class _SelectionPanel extends StatelessWidget {
   final String browseMapId;
   final bool isHere;
 
-  /// Gateways open a child map or return to the world without moving you.
+  /// Gateways travel into their landing, or return to the world without moving.
   final bool isPortal;
   final ValueChanged<String> onTravel;
   final bool canTravel;

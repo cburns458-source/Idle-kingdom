@@ -71,6 +71,7 @@ class LocationView extends StatefulWidget {
     required this.multiplayer,
     required this.onOpenMap,
     this.onOpenSubMap,
+    this.onEnterGateway,
     this.onOpenGuilds,
   });
 
@@ -81,8 +82,11 @@ class LocationView extends StatefulWidget {
   final MultiplayerController multiplayer;
   final VoidCallback onOpenMap;
 
-  /// Opens a district map from a gateway, or back from a location on that map.
+  /// Opens a district map from a location on that map (Back).
   final ValueChanged<String>? onOpenSubMap;
+
+  /// Travels from a gateway into its landing node.
+  final ValueChanged<String>? onEnterGateway;
 
   final VoidCallback? onOpenGuilds;
 
@@ -294,19 +298,27 @@ class _LocationViewState extends State<LocationView> {
                           ],
                         ),
                       ),
-                      if (widget.onOpenSubMap != null)
-                        if (subMapIdForGateway(controller.db, locationId) case final subMapId?
-                            when isSubMapGateway(location))
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(13, 8, 13, 0),
-                            child: Align(
-                              alignment: Alignment.centerLeft,
-                              child: GameButton(
-                                label: enterSubMapLabel(controller.db, location) ?? 'Enter',
-                                onPressed: () => widget.onOpenSubMap!(subMapId),
-                              ),
+                      if (isSubMapGateway(location) &&
+                          (widget.onEnterGateway != null || widget.onOpenSubMap != null) &&
+                          subMapIdForGateway(controller.db, locationId) != null)
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(13, 8, 13, 0),
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: GameButton(
+                              label: enterSubMapLabel(controller.db, location) ?? 'Enter',
+                              onPressed: () {
+                                if (widget.onEnterGateway != null) {
+                                  widget.onEnterGateway!(locationId);
+                                  return;
+                                }
+                                widget.onOpenSubMap!(
+                                  subMapIdForGateway(controller.db, locationId)!,
+                                );
+                              },
                             ),
                           ),
+                        ),
                       if (controller.showRecoveringStage && stage == null)
                         Padding(
                           padding: const EdgeInsets.fromLTRB(13, 8, 13, 0),

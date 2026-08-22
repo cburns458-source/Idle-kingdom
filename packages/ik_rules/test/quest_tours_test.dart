@@ -76,9 +76,13 @@ void main() {
     );
   });
 
-  test('arriving at the Citadel gateway starts Visiting the Citadel', () {
-    final save = applyTravelArrival(db, _save(db, locationId: 'LOC-0002'), 'LOC-0027', 0);
+  test('arriving at the Citadel plaza starts Visiting the Citadel', () {
+    final save = applyTravelArrival(db, _save(db, locationId: 'LOC-0002'), 'LOC-0028', 0);
     expect(getQuestProgress(save, 'QST-0004').status, 'active');
+    expect(
+      db.quests.firstWhere((row) => row['Quest ID'] == 'QST-0004')['Notes'],
+      contains('AutoStart: LOC-0028'),
+    );
   });
 
   test('wardrobe lists The Undying in the Titles slot', () {
