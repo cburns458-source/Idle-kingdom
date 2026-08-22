@@ -1,1 +1,1 @@
-{"case":"locations","input":{"source":"content"},"module":"pvp/arena","output":{"combat":true,"market":false,"missing":false,"plaza":true}}
+{"case":"locations","input":{"source":"content"},"module":"pvp/arena","output":{"combat":false,"market":false,"missing":false,"plaza":true}}

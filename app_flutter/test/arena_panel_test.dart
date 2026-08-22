@@ -39,6 +39,22 @@ void main() {
     expect(find.text('Player fights'), findsNothing);
   });
 
+  testWidgets('keeps the training grounds peaceful and shops the Armory', (tester) async {
+    final grounds = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(currentLocationId: 'LOC-0032'),
+    );
+    addTearDown(grounds.dispose);
+    await pumpPanel(
+      tester,
+      LocationView(controller: grounds, multiplayer: buildMultiplayer(database), onOpenMap: () {}),
+      size: const Size(900, 2400),
+    );
+    expect(find.text('Player fights'), findsNothing);
+    expect(find.text('Armory'), findsOne);
+    expect(find.text('Challenge the guards'), findsOne);
+  });
+
   testWidgets('search finds Mira by name and ranked picks Bram by combat level', (tester) async {
     final controller = buildController(database, seed: startedCharacter(database));
     final net = buildMultiplayer(database);

@@ -608,6 +608,8 @@ void main() {
                 'chat': RemoteTables.chat,
                 'bountyClaims': RemoteTables.bountyClaims,
                 'bazaarPosts': RemoteTables.bazaarPosts,
+                'guilds': RemoteTables.guilds,
+                'guildMembers': RemoteTables.guildMembers,
               },
               'sendChat': remoteSendChatFunction,
               'saveColumns': remoteSaveColumns,
