@@ -293,16 +293,35 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
     });
   }
 
+  /// After a gateway click, [planTravel] lands on the child-map node. Open that
+  /// submap instead of the landing node's location page.
+  String? _subMapOpenedByArrival(String requestedId) {
+    final dest = controller.indexes.locationsById[requestedId];
+    if (dest == null || !isSubMapGateway(dest)) return null;
+    if (controller.save.currentLocationId == requestedId) return null;
+    return subMapIdForGateway(controller.db, requestedId);
+  }
+
   void _arrive(String locationId) {
     _cancelMapWalk();
     if (!controller.travelTo(locationId, _browseMapId)) return;
+    final subMapId = _subMapOpenedByArrival(locationId);
     setState(() {
-      _browseMapId = _mapIdForCurrentLocation();
-      _selectedLocationId = null;
       _wardrobeOpen = false;
-      _stack
-        ..clear()
-        ..add(GameScreen.location);
+      if (subMapId != null) {
+        _browseMapId = subMapId;
+        _selectedLocationId = controller.save.currentLocationId;
+        _stack
+          ..clear()
+          ..add(GameScreen.location)
+          ..add(GameScreen.map);
+      } else {
+        _browseMapId = _mapIdForCurrentLocation();
+        _selectedLocationId = null;
+        _stack
+          ..clear()
+          ..add(GameScreen.location);
+      }
     });
   }
 
