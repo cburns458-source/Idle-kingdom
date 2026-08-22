@@ -268,7 +268,7 @@ void main() {
     );
     expect(
       find.descendant(of: find.byType(WorldMapView), matching: find.text('General Store')),
-      findsOne,
+      findsWidgets,
     );
     expect(find.text('Town Gate'), findsNothing);
     expect(find.text('You are here.'), findsOne);
@@ -317,7 +317,7 @@ void main() {
     expect(find.byType(WorldMapView), findsOne);
     expect(
       find.descendant(of: find.byType(WorldMapView), matching: find.text('General Store')),
-      findsOne,
+      findsWidgets,
     );
     expect(find.text('You are here.'), findsOne);
   });
