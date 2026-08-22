@@ -217,10 +217,8 @@ List<RecipeBookEntry> listRecipeBookEntries(PlayerSave save, GameDatabase db) {
 
   mergeSort(
     entries,
-    compare: (a, b) => jsCompareThen(
-      a.proficiency - b.proficiency,
-      () => jsLocaleCompare(a.name, b.name),
-    ),
+    compare: (a, b) =>
+        jsCompareThen(a.proficiency - b.proficiency, () => jsLocaleCompare(a.name, b.name)),
   );
   return entries;
 }

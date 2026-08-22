@@ -614,7 +614,11 @@ class _GatheringStage extends StatelessWidget {
               Text(
                 'Recommended lvl ${formatThousands(action.proficiencyLevel ?? 1)}',
                 textAlign: TextAlign.right,
-                style: const TextStyle(fontSize: 12.5, color: Palette.muted, shadows: overlayShadow),
+                style: const TextStyle(
+                  fontSize: 12.5,
+                  color: Palette.muted,
+                  shadows: overlayShadow,
+                ),
               ),
             ],
           ],

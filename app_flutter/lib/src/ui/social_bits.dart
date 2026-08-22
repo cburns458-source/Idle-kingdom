@@ -60,12 +60,7 @@ Color _color(String hex) {
 
 /// A player's face, at the size social lists use.
 class SocialPortrait extends StatelessWidget {
-  const SocialPortrait({
-    super.key,
-    required this.appearance,
-    this.size = 34,
-    this.borderColor,
-  });
+  const SocialPortrait({super.key, required this.appearance, this.size = 34, this.borderColor});
 
   final PlayerAppearance appearance;
   final double size;
