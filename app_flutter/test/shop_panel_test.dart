@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:idle_kingdoms/src/theme.dart';
 import 'package:idle_kingdoms/src/ui/shop_panel.dart';
@@ -136,5 +137,24 @@ void main() {
 
     expect(controller.save.gold, 1000 - unit);
     expect(inventoryCount(controller.save, glovesId), 1);
+  });
+
+  testWidgets('a phone-sized location can scroll the shop to Confirm trade', (tester) async {
+    final controller = buildController(
+      database,
+      seed: shopper(inventory: [const InventoryStack(itemId: clayId, quantity: 4)]),
+    );
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller, size: const Size(375, 667));
+
+    await tapVisible(tester, find.byTooltip('Expand list'));
+    final store = find.ancestor(of: find.text('General Store'), matching: find.byType(DockRow));
+    await tapVisible(tester, find.descendant(of: store, matching: find.bySemanticsLabel('Shop')));
+
+    expect(find.text('Sell'), findsOne);
+    await tester.ensureVisible(find.text('Confirm trade'));
+    expect(find.text('Confirm trade').hitTestable(), findsOne);
+    await tester.ensureVisible(find.byTooltip('Clay'));
+    expect(find.byTooltip('Clay').hitTestable(), findsOne);
   });
 }
