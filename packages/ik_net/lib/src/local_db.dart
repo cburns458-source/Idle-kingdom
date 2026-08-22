@@ -183,7 +183,8 @@ class LocalDb {
     required this.guests,
     required this.halls,
     required this.playSessions,
-  });
+    List<CloudSaveRecord>? pvpSnapshots,
+  }) : pvpSnapshots = pvpSnapshots ?? <CloudSaveRecord>[];
 
   LocalDb.empty()
     : users = <LocalAccount>[],
@@ -207,7 +208,8 @@ class LocalDb {
       bazaarPosts = <BazaarPost>[],
       guests = <GuildGuest>[],
       halls = <GuildHallState>[],
-      playSessions = <String, String>{};
+      playSessions = <String, String>{},
+      pvpSnapshots = <CloudSaveRecord>[];
 
   /// Reads whatever a previous version wrote, filling in anything it lacks.
   factory LocalDb.fromJson(Object? raw) {
@@ -247,6 +249,7 @@ class LocalDb {
     db.bazaarPosts.addAll(rows('bazaarPosts').map(BazaarPost.fromJson));
     db.guests.addAll(rows('guests').map(GuildGuest.fromJson));
     db.halls.addAll(rows('halls').map(GuildHallState.fromJson));
+    db.pvpSnapshots.addAll(rows('pvpSnapshots').map(CloudSaveRecord.fromJson));
     final sessions = raw['playSessions'];
     if (sessions is Map<String, Object?>) {
       for (final entry in sessions.entries) {
@@ -279,6 +282,7 @@ class LocalDb {
   List<GuildGuest> guests;
   List<GuildHallState> halls;
   Map<String, String> playSessions;
+  List<CloudSaveRecord> pvpSnapshots;
 
   Map<String, Object?> toJson() => <String, Object?>{
     'users': users.map((row) => row.toJson()).toList(),
@@ -303,6 +307,7 @@ class LocalDb {
     if (guests.isNotEmpty) 'guests': guests.map((row) => row.toJson()).toList(),
     if (halls.isNotEmpty) 'halls': halls.map((row) => row.toJson()).toList(),
     if (playSessions.isNotEmpty) 'playSessions': <String, Object?>{...playSessions},
+    if (pvpSnapshots.isNotEmpty) 'pvpSnapshots': pvpSnapshots.map((row) => row.toJson()).toList(),
   };
 }
 

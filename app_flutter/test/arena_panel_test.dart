@@ -49,6 +49,22 @@ void main() {
     await tester.pump();
     await tester.pump();
 
+    expect(find.text('Save equipment'), findsOne);
+    await tester.tap(find.text('Ranked'));
+    await tester.pump();
+    await tester.tap(find.text('Find match'));
+    await tester.pump();
+    expect(find.text('Save equipment first.'), findsOne);
+
+    await tester.tap(find.text('Search'));
+    await tester.pump();
+    await tester.tap(find.text('Save equipment'));
+    await tester.pump();
+    expect(
+      find.text('Loadout saved. Others will fight this gear at your current combat level.'),
+      findsOne,
+    );
+
     await tester.enterText(find.byType(TextField), 'mi');
     await tester.pump();
     expect(find.text('Mira'), findsOne);

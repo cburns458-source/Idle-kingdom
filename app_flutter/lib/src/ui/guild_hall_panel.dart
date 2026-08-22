@@ -343,7 +343,7 @@ class _GuildHallPanelState extends State<GuildHallPanel> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const MutedText('Challenge a guildmate. Snapshot fight, no betting, no gold.'),
+        const MutedText('Challenge a guildmate. Saved gear, current combat and race. No gold.'),
         const SizedBox(height: 8),
         for (final row in _boxers)
           Padding(
@@ -359,13 +359,24 @@ class _GuildHallPanelState extends State<GuildHallPanel> {
   }
 
   Future<void> _box(ArenaOpponent opponent) async {
+    final loadout = await net.service.ownPvpSnapshot();
+    if (!mounted) return;
+    if (loadout == null) {
+      setState(() => _error = pvpEquipmentRequired);
+      return;
+    }
     final them = await net.service.readOpponentSave(opponent.userId);
     if (!mounted) return;
     if (them == null) {
       setState(() => _error = 'That player has no character to fight.');
       return;
     }
-    final fight = simulatePvpFight(controller.db, save, them, controller.session.random);
+    final fight = simulatePvpFight(
+      controller.db,
+      composePvpFighter(controller.db, save, loadout),
+      composePvpFighter(controller.db, them, them),
+      controller.session.random,
+    );
     if (!mounted) return;
     await showGameAlert(
       context: context,

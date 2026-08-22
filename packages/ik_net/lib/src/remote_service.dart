@@ -20,10 +20,10 @@ import 'types.dart';
 /// The hosted backend, reached over a [RemoteTransport].
 ///
 /// What a server owns goes over the wire: accounts, cloud saves, leaderboards,
-/// chat, guilds, and presence — the Nearby snapshot each account publishes so
-/// other devices can list them without reading their save. What is left on the
-/// device is what only the device can answer: friends and ignores, the Bazaar,
-/// bounty claims, and sparring partners.
+/// chat, guilds, presence, and arena fighter snapshots — so other devices can
+/// find someone to fight without reading their private save. What is left on
+/// the device is what only the device can answer: ignores, the Bazaar, and
+/// bounty claims.
 class RemoteMultiplayerService implements MultiplayerService {
   RemoteMultiplayerService({
     required RemoteTransport transport,
@@ -78,6 +78,10 @@ class RemoteMultiplayerService implements MultiplayerService {
   /// Whether friend tables exist on the project. Null until a read tells us.
   /// Missing migration 014 falls back to the device list.
   bool? _friendsHosted;
+
+  /// Whether `pvp_snapshots` exists. Null until a read tells us. Missing
+  /// migration 015 falls back to the empty device list.
+  bool? _pvpSnapshotsHosted;
 
   /// Friend ids from the last hosted read, so chat privacy does not re-list.
   Set<String>? _friendIdsCache;
@@ -415,6 +419,7 @@ class RemoteMultiplayerService implements MultiplayerService {
     ]);
     if (refused != null) return CloudSyncResult.failed(refused);
 
+    await _refreshPvpLiveStats(stamped);
     return CloudSyncResult.ok(stamped, CloudSyncSource.uploaded);
   }
 
@@ -488,6 +493,7 @@ class RemoteMultiplayerService implements MultiplayerService {
     // the roster too.
     final guildId = _guildIdSeen;
     if (guildId != null) await _guilds.refreshOwnMemberRow(guildId, current, save);
+    await _refreshPvpLiveStats(save);
     return refused == null ? const ActionResult.ok() : ActionResult.failed(refused);
   }
 
@@ -1128,10 +1134,63 @@ class RemoteMultiplayerService implements MultiplayerService {
   }
 
   @override
-  Future<List<ArenaOpponent>> listArenaOpponents() => _local.listArenaOpponents();
+  Future<List<ArenaOpponent>> listArenaOpponents() async {
+    if (!await _ensurePvpSnapshotsHosted()) return _local.listArenaOpponents();
+    return _hostedArenaOpponents();
+  }
 
   @override
-  Future<PlayerSave?> readOpponentSave(String userId) => _local.readOpponentSave(userId);
+  Future<ActionResult> savePvpEquipment(PlayerSave save) async {
+    final current = session;
+    if (current == null) {
+      return const ActionResult.failed('Sign in to save PvP equipment.');
+    }
+    if (!await _ensurePvpSnapshotsHosted()) return _local.savePvpEquipment(save);
+    final refused = await transport.upsert(RemoteTables.pvpSnapshots, <RemoteRow>[
+      pvpSnapshotRowFor(session: current, save: save, updatedAt: isoFromMs(_nowMs())),
+    ], onConflict: remotePvpSnapshotConflict);
+    if (refused != null) {
+      if (_markPvpSnapshotsUnhosted(refused)) return _local.savePvpEquipment(save);
+      return ActionResult.failed(friendlyRemoteError(refused));
+    }
+    return const ActionResult.ok();
+  }
+
+  @override
+  Future<PlayerSave?> ownPvpSnapshot() async {
+    final current = session;
+    if (current == null) return null;
+    if (!await _ensurePvpSnapshotsHosted()) return _local.ownPvpSnapshot();
+    final result = await transport.select(
+      RemoteTables.pvpSnapshots,
+      columns: remotePvpSnapshotColumns,
+      equals: <String, Object?>{'user_id': current.userId},
+      limit: 1,
+    );
+    if (!result.ok) {
+      if (_markPvpSnapshotsUnhosted(result.reason)) return _local.ownPvpSnapshot();
+      return null;
+    }
+    return _parsePvpSnapshotPayload(pvpSnapshotPayloadFrom(result.single));
+  }
+
+  @override
+  Future<PlayerSave?> readOpponentSave(String userId) async {
+    final current = session;
+    if (current != null && current.userId == userId) return null;
+    if (!await _ensurePvpSnapshotsHosted()) return _local.readOpponentSave(userId);
+    final result = await transport.select(
+      RemoteTables.pvpSnapshots,
+      columns: remotePvpSnapshotColumns,
+      equals: <String, Object?>{'user_id': userId},
+      limit: 1,
+    );
+    if (!result.ok) {
+      if (_markPvpSnapshotsUnhosted(result.reason)) return _local.readOpponentSave(userId);
+      return null;
+    }
+    return _parsePvpSnapshotPayload(pvpSnapshotPayloadFrom(result.single));
+  }
 
   @override
   Future<GuildHallState?> guildHall(String guildId) => _guilds.guildHall(guildId);
@@ -1194,12 +1253,101 @@ class RemoteMultiplayerService implements MultiplayerService {
     return out;
   }
 
-  /// Sparring partners in the hall, which stay on the device.
-  ///
-  /// A fight needs the other player's save, and an account's save is readable
-  /// only by that account. Opening it up to a guild would mean handing every
-  /// member's whole game to anyone who joined, so the boxing ring spars with
-  /// whoever this device knows, as the arena does.
+  /// Guildmates who have published a fighter snapshot.
   @override
-  Future<List<ArenaOpponent>> hallBoxingOpponents() => _local.hallBoxingOpponents();
+  Future<List<ArenaOpponent>> hallBoxingOpponents() async {
+    if (!await _ensurePvpSnapshotsHosted()) return _local.hallBoxingOpponents();
+    final current = session;
+    if (current == null) return const <ArenaOpponent>[];
+    var guildId = _guildIdSeen;
+    guildId ??= (await profile(current.userId))?.guildId;
+    if (guildId == null || guildId.isEmpty) return const <ArenaOpponent>[];
+    final members = await _guilds.guildMembers(guildId);
+    final ids = {for (final member in members) member.userId};
+    return [
+      for (final row in await _hostedArenaOpponents())
+        if (ids.contains(row.userId)) row,
+    ];
+  }
+
+  Future<void> _refreshPvpLiveStats(PlayerSave live) async {
+    final current = session;
+    if (current == null) return;
+    if (!await _ensurePvpSnapshotsHosted()) {
+      _local.backend.refreshPvpLiveStats(current.userId, live);
+      return;
+    }
+    final result = await transport.select(
+      RemoteTables.pvpSnapshots,
+      columns: remotePvpSnapshotColumns,
+      equals: <String, Object?>{'user_id': current.userId},
+      limit: 1,
+    );
+    if (!result.ok) {
+      _markPvpSnapshotsUnhosted(result.reason);
+      return;
+    }
+    final existing = _parsePvpSnapshotPayload(pvpSnapshotPayloadFrom(result.single));
+    if (existing == null) return;
+    await transport.upsert(RemoteTables.pvpSnapshots, <RemoteRow>[
+      pvpSnapshotRowFor(
+        session: current,
+        save: overlayPvpLiveStats(existing, live),
+        updatedAt: isoFromMs(_nowMs()),
+      ),
+    ], onConflict: remotePvpSnapshotConflict);
+  }
+
+  PlayerSave? _parsePvpSnapshotPayload(Map<String, Object?>? payload) {
+    if (payload == null) return null;
+    try {
+      return parseSave(payload, _nowMs());
+    } on Object {
+      return null;
+    }
+  }
+
+  Future<List<ArenaOpponent>> _hostedArenaOpponents() async {
+    final current = session;
+    final result = await transport.select(
+      RemoteTables.pvpSnapshots,
+      columns: remotePvpSnapshotColumns,
+      orderBy: 'username',
+    );
+    if (!result.ok) {
+      if (_markPvpSnapshotsUnhosted(result.reason)) return _local.listArenaOpponents();
+      return const <ArenaOpponent>[];
+    }
+    final hidden = current == null ? const <String>{} : _local.backend.blockedIds(current.userId);
+    final rows = [
+      for (final row in result.rows!)
+        if (row['user_id'] != current?.userId && !hidden.contains(_strId(row['user_id'])))
+          arenaOpponentFromPvpRow(row),
+    ];
+    rows.sort((a, b) {
+      final byName = a.username.compareTo(b.username);
+      return byName != 0 ? byName : a.userId.compareTo(b.userId);
+    });
+    return rows;
+  }
+
+  bool _markPvpSnapshotsUnhosted(String? reason) {
+    if (!remoteMissingPvpSnapshotsTable(reason)) return false;
+    _pvpSnapshotsHosted = false;
+    _reads.clearIf(remoteMissingPvpSnapshotsTable);
+    return true;
+  }
+
+  Future<bool> _ensurePvpSnapshotsHosted() async {
+    if (_pvpSnapshotsHosted == false) return false;
+    if (_pvpSnapshotsHosted == true) return true;
+    final result = await transport.select(RemoteTables.pvpSnapshots, columns: 'user_id', limit: 1);
+    if (!result.ok) {
+      if (_markPvpSnapshotsUnhosted(result.reason)) return false;
+      _pvpSnapshotsHosted = true;
+      return true;
+    }
+    _pvpSnapshotsHosted = true;
+    return true;
+  }
 }
