@@ -48,8 +48,6 @@ class _AccountPanelState extends State<AccountPanel> {
     final session = net.session;
     final children = <Widget>[
       const Text('Account', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w400)),
-      const SizedBox(height: 4),
-      MutedText(multiplayerModeLine(net.mode)),
       const SizedBox(height: 12),
       _character(),
       const SizedBox(height: 12),

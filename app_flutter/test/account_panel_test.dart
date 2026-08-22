@@ -67,7 +67,7 @@ void main() {
     final net = buildMultiplayer(database, signedIn: false);
     await pumpAccount(tester, net);
 
-    expect(find.text(multiplayerModeLine(MultiplayerMode.local)), findsOne);
+    expect(find.text(multiplayerModeLine(MultiplayerMode.local)), findsNothing);
     expect(find.text('Create account'), findsOne);
     expect(find.widgetWithText(TextField, 'Username'), findsNothing);
     expect(find.text('Email magic link'), findsNothing);
@@ -80,7 +80,7 @@ void main() {
     final net = buildRemoteMultiplayer(database, transport: transport);
     await pumpAccount(tester, net);
 
-    expect(find.text(multiplayerModeLine(MultiplayerMode.supabase)), findsOne);
+    expect(find.text(multiplayerModeLine(MultiplayerMode.supabase)), findsNothing);
 
     final link = find.widgetWithText(GameButton, 'Email magic link');
     expect(tester.widget<GameButton>(link).onPressed, isNull);

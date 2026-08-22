@@ -90,21 +90,53 @@ class _SkillMenuBodyState extends State<_SkillMenuBody> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: [
-        const MutedText('Skill'),
-        Text(widget.skillName, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w400)),
+        Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const MutedText('Skill'),
+                  Text(
+                    widget.skillName,
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w400),
+                  ),
+                ],
+              ),
+            ),
+            if (widget.view.showRecipeBook)
+              GameButton(
+                label: 'Recipe book',
+                tone: GameButtonTone.secondary,
+                compact: true,
+                onPressed: _openRecipeBook,
+              ),
+            const SizedBox(width: 6),
+            GameIconButton(
+              icon: Icons.close,
+              tooltip: 'Close',
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+          ],
+        ),
         if (widget.view.tabs.length > 1) ...[
           const SizedBox(height: 10),
-          Wrap(
-            spacing: 6,
-            runSpacing: 6,
+          Row(
             children: [
-              for (final tab in widget.view.tabs)
-                GameButton(
-                  label: tab.label,
-                  compact: true,
-                  selected: tab.id == _tab.id,
-                  onPressed: () => setState(() => _tabId = tab.id),
+              for (var index = 0; index < widget.view.tabs.length; index++) ...[
+                if (index > 0) const SizedBox(width: 6),
+                Expanded(
+                  child: GameButton(
+                    label: widget.view.tabs[index].label,
+                    compact: true,
+                    selected: widget.view.tabs[index].id == _tab.id,
+                    tone: widget.view.tabs[index].id == _tab.id
+                        ? GameButtonTone.primary
+                        : GameButtonTone.secondary,
+                    onPressed: () => setState(() => _tabId = widget.view.tabs[index].id),
+                  ),
                 ),
+              ],
             ],
           ),
         ],
@@ -120,16 +152,6 @@ class _SkillMenuBodyState extends State<_SkillMenuBody> {
             ],
           ),
         ),
-        const SizedBox(height: 8),
-        if (widget.view.showRecipeBook) ...[
-          GameButton(
-            label: 'Recipe book',
-            tone: GameButtonTone.secondary,
-            onPressed: _openRecipeBook,
-          ),
-          const SizedBox(height: 8),
-        ],
-        GameButton(label: 'Close', onPressed: () => Navigator.of(context).pop()),
       ],
     );
   }

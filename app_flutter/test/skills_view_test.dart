@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:idle_kingdoms/src/theme.dart';
 import 'package:idle_kingdoms/src/ui/format.dart';
 import 'package:ik_content/ik_content.dart';
 import 'package:ik_rules/ik_rules.dart';
@@ -40,6 +41,12 @@ void main() {
     expect(find.text('Enemies'), findsOne);
     expect(find.text('Weapons and equipment'), findsOne);
     expect(find.text('Pressure the guards'), findsNothing);
+    expect(find.widgetWithText(GameButton, 'Close'), findsNothing);
+    expect(find.byTooltip('Close'), findsOne);
+    final tabs = tester.widget<Row>(
+      find.ancestor(of: find.text('Enemies'), matching: find.byType(Row)).first,
+    );
+    expect(tabs.children.whereType<Expanded>(), hasLength(2));
   });
 
   testWidgets('cooking opens a recipe book of unlocked recipes', (tester) async {
@@ -52,7 +59,13 @@ void main() {
     await tester.tap(find.text('Cooking'));
     await tester.pump();
 
-    expect(find.text('Recipe book'), findsOne);
+    expect(find.widgetWithText(GameButton, 'Recipe book'), findsOne);
+    expect(
+      tester.widget<GameButton>(find.widgetWithText(GameButton, 'Recipe book')).compact,
+      isTrue,
+    );
+    expect(find.widgetWithText(GameButton, 'Close'), findsNothing);
+    expect(find.byTooltip('Close'), findsOne);
     await tester.tap(find.text('Recipe book'));
     await tester.pump();
     expect(find.textContaining('Baked Potato'), findsWidgets);
