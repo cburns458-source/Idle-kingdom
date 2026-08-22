@@ -46,6 +46,7 @@ class FakeTransport implements RemoteTransport {
     RemoteTables.activityPresence: <RemoteRow>[],
     RemoteTables.friendRequests: <RemoteRow>[],
     RemoteTables.friendships: <RemoteRow>[],
+    RemoteTables.pvpSnapshots: <RemoteRow>[],
   };
 
   /// Accounts by email, as an auth provider would hold them.
@@ -143,6 +144,7 @@ class FakeTransport implements RemoteTransport {
     RemoteTables.activityPresence: <String>['user_id'],
     RemoteTables.friendRequests: <String>['from_user_id', 'to_user_id'],
     RemoteTables.friendships: <String>['user_a', 'user_b'],
+    RemoteTables.pvpSnapshots: <String>['user_id'],
   };
 
   /// Columns a table holds unique beyond its key, so an insert can lose a race.

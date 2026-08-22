@@ -770,4 +770,55 @@ void main() {
     );
     expect(transport.calls.where((call) => call.startsWith('insert')), isEmpty);
   });
+
+  test('hosted arena lists the other account after a save push', () async {
+    final transport = FakeTransport();
+    final db = _database();
+
+    final hero = await _signedIn(transport, MemorySaveStorage());
+    final heroBase = createNewSave(db, _nowMs);
+    final heroSave = heroBase.copyWith(
+      characterName: 'Hero',
+      skills: [
+        for (final skill in heroBase.skills)
+          skill.skillId == combatSkillId ? skill.copyWith(level: 4) : skill,
+      ],
+    );
+    expect((await hero.pushSave(db, heroSave)).ok, isTrue);
+
+    final rival = _service(transport, MemorySaveStorage());
+    expect((await rival.signUp('rival@example.com', 'Rival', 'secret')).ok, isTrue);
+    final rivalBase = createNewSave(db, _nowMs);
+    final rivalSave = rivalBase.copyWith(
+      characterName: 'Rival',
+      skills: [
+        for (final skill in rivalBase.skills)
+          skill.skillId == combatSkillId ? skill.copyWith(level: 9) : skill,
+      ],
+    );
+    expect((await rival.pushSave(db, rivalSave)).ok, isTrue);
+
+    final found = await hero.listArenaOpponents();
+    expect(found, hasLength(1));
+    expect(found.single.username, 'Rival');
+    expect(found.single.combatLevel, 9);
+    expect(found.any((row) => row.userId == hero.session!.userId), isFalse);
+
+    expect(searchArenaOpponents(found, 'riv').single.username, 'Rival');
+    expect(pickRankedOpponent(4, totalLevel(heroSave), found)?.username, 'Rival');
+
+    final snapshot = await hero.readOpponentSave(rival.session!.userId);
+    expect(snapshot, isNotNull);
+    expect(combatLevelOf(snapshot!), 9);
+    expect(await hero.readOpponentSave(hero.session!.userId), isNull);
+  });
+
+  test('hosted arena falls back locally when pvp_snapshots is missing', () async {
+    final transport = FakeTransport();
+    transport.missingTables.add(RemoteTables.pvpSnapshots);
+    final hero = await _signedIn(transport, MemorySaveStorage());
+    final db = _database();
+    expect((await hero.pushSave(db, createNewSave(db, _nowMs))).ok, isTrue);
+    expect(await hero.listArenaOpponents(), isEmpty);
+  });
 }

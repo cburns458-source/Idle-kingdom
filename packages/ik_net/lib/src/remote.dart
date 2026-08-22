@@ -37,6 +37,7 @@ class RemoteTables {
   static const String activityPresence = 'activity_presence';
   static const String friendRequests = 'friend_requests';
   static const String friendships = 'friendships';
+  static const String pvpSnapshots = 'pvp_snapshots';
 }
 
 /// The edge function that writes chat, since a client may not insert directly.
@@ -69,6 +70,14 @@ bool remoteMissingChatPrivacyColumn(String? reason) {
   final lower = reason.toLowerCase();
   if (!lower.contains('does not exist')) return false;
   return lower.contains('privacy_direct_messages') || lower.contains('privacy_local_chat');
+}
+
+/// True when [reason] is the hosted project missing migration 015.
+bool remoteMissingPvpSnapshotsTable(String? reason) {
+  if (reason == null || reason.isEmpty) return false;
+  final lower = reason.toLowerCase();
+  if (!lower.contains('pvp_snapshots')) return false;
+  return lower.contains('schema cache') || lower.contains('does not exist');
 }
 
 /// True when [reason] is the hosted project missing migration 014.
@@ -131,6 +140,9 @@ const String remotePublicProfileColumns =
 const String remotePresenceConflict = 'user_id';
 const String remoteFriendRequestColumns = 'from_user_id, to_user_id, created_at';
 const String remoteFriendshipColumns = 'user_a, user_b, created_at';
+const String remotePvpSnapshotColumns =
+    'user_id, username, combat_level, total_level, appearance_json, payload, updated_at';
+const String remotePvpSnapshotConflict = 'user_id';
 
 /// How many Bazaar notices a read asks for.
 const int remoteBazaarLimit = 40;
@@ -455,6 +467,48 @@ List<BazaarPost> bazaarPostsFrom(List<RemoteRow> rows) =>
 
 /// The snapshot one account publishes so Nearby can list them without reading
 /// another player's save.
+RemoteRow pvpSnapshotRowFor({
+  required MultiplayerSession session,
+  required PlayerSave save,
+  required String updatedAt,
+}) {
+  final username = remoteUsername(
+    isNotBlank(session.username) ? session.username : (save.characterName ?? session.userId),
+  );
+  return <String, Object?>{
+    'user_id': session.userId,
+    'username': username.isEmpty ? 'Adventurer' : username,
+    'combat_level': combatLevelOf(save),
+    'total_level': totalLevel(save),
+    'appearance_json': save.appearance.toJson(),
+    'payload': save.toJson(),
+    'updated_at': updatedAt,
+  };
+}
+
+ArenaOpponent arenaOpponentFromPvpRow(RemoteRow row) {
+  final username = _str(row['username']);
+  return ArenaOpponent(
+    userId: _str(row['user_id']),
+    username: username.isEmpty ? 'Adventurer' : username,
+    combatLevel: _num(row['combat_level']),
+    totalLevel: _num(row['total_level']),
+    appearance: playerAppearanceFromRemote(row['appearance_json']),
+  );
+}
+
+Map<String, Object?>? pvpSnapshotPayloadFrom(RemoteRow? row) {
+  if (row == null) return null;
+  final payload = row['payload'];
+  if (payload is Map<String, Object?>) return payload;
+  if (payload is Map) {
+    return <String, Object?>{
+      for (final entry in payload.entries) entry.key.toString(): entry.value,
+    };
+  }
+  return null;
+}
+
 RemoteRow presenceRowFor({
   required MultiplayerSession session,
   required PresenceInput input,
