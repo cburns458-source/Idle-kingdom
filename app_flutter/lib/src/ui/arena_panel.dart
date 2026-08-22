@@ -43,6 +43,8 @@ class _ArenaPanelState extends State<ArenaPanel> {
   String? _outcome;
   bool _rankedFight = false;
   bool _rankedApplied = false;
+  bool _savingEquipment = false;
+  bool _equipmentSaved = false;
 
   GameController get controller => widget.controller;
   MultiplayerController get multiplayer => widget.multiplayer;
@@ -180,6 +182,32 @@ class _ArenaPanelState extends State<ArenaPanel> {
     controller.commit(next);
   }
 
+  Future<void> _saveEquipment() async {
+    if (_savingEquipment) return;
+    setState(() {
+      _savingEquipment = true;
+      _error = null;
+    });
+    try {
+      final result = await multiplayer.service.savePvpEquipment(save);
+      if (!mounted) return;
+      setState(() {
+        _savingEquipment = false;
+        if (result.ok) {
+          _equipmentSaved = true;
+        } else {
+          _error = result.reason ?? 'Could not save PvP equipment.';
+        }
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _savingEquipment = false;
+        _error = 'Could not save PvP equipment.';
+      });
+    }
+  }
+
   void _skipFight() {
     _advanceRounds(until: controller.session.clock(), skip: true);
   }
@@ -215,7 +243,9 @@ class _ArenaPanelState extends State<ArenaPanel> {
                 GameIconButton(icon: Icons.close, tooltip: 'Close', onPressed: widget.onClose),
             ],
           ),
-          const MutedText('Snapshot fights. Current equipment. Any player on the game.'),
+          const MutedText(
+            'Others fight the equipment you save. You fight with what you are wearing now.',
+          ),
           if (_error case final error?) ...[
             const SizedBox(height: 6),
             Text(error, style: warningStyle),
@@ -231,6 +261,18 @@ class _ArenaPanelState extends State<ArenaPanel> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        GameButton(
+          label: _savingEquipment ? 'Saving…' : 'Save equipment',
+          tone: GameButtonTone.secondary,
+          onPressed: _savingEquipment ? null : _saveEquipment,
+        ),
+        const SizedBox(height: 6),
+        MutedText(
+          _equipmentSaved
+              ? 'PvP snapshot saved. Others will fight this loadout.'
+              : 'Save the gear others will fight. Search and ranked ignore anyone who has not saved.',
+        ),
+        const SizedBox(height: 10),
         Row(
           children: [
             Expanded(

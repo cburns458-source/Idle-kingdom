@@ -281,25 +281,21 @@ class LocalMultiplayerBackend {
     return CloudSaveWriteResult.ok(record);
   }
 
-  /// Every stored character except [excludeUserId], which is the signed-in player.
+  /// Every stored fighter except [excludeUserId], which is the signed-in player.
+  ///
+  /// A saved PvP snapshot wins over the live cloud save so later gear changes
+  /// stay off the arena until the player presses Save equipment again. Demo
+  /// characters that never saved still appear from their stored save.
   List<ArenaOpponent> listArenaOpponents({String? excludeUserId}) {
     final db = _db();
+    final snapshots = {for (final row in db.pvpSnapshots) row.userId: row};
+    final saves = {for (final row in db.saves) row.userId: row};
     final rows = <ArenaOpponent>[];
-    for (final save in db.saves) {
-      if (excludeUserId != null && save.userId == excludeUserId) continue;
-      final profile = db.profiles.firstWhereOrNull((row) => row.userId == save.userId);
-      final username = isNotBlank(profile?.username)
-          ? profile!.username
-          : (isNotBlank(save.payload.characterName) ? save.payload.characterName! : save.userId);
-      rows.add(
-        ArenaOpponent(
-          userId: save.userId,
-          username: username,
-          combatLevel: combatLevelOf(save.payload),
-          totalLevel: totalLevel(save.payload),
-          appearance: profile?.appearance ?? save.payload.appearance,
-        ),
-      );
+    for (final userId in {...snapshots.keys, ...saves.keys}) {
+      if (excludeUserId != null && userId == excludeUserId) continue;
+      final record = snapshots[userId] ?? saves[userId];
+      if (record == null) continue;
+      rows.add(_arenaOpponentFromRecord(db, record));
     }
     rows.sort((a, b) {
       final byName = a.username.compareTo(b.username);
@@ -309,9 +305,44 @@ class LocalMultiplayerBackend {
   }
 
   PlayerSave? opponentSave(String userId) {
-    final record = readCloudSave(userId);
+    final db = _db();
+    final record =
+        db.pvpSnapshots.firstWhereOrNull((row) => row.userId == userId) ?? readCloudSave(userId);
     if (record == null) return null;
     return parseSave(record.payload.toJson(), _now());
+  }
+
+  /// Stores [save] as the loadout others fight, without changing the cloud save.
+  ActionResult savePvpEquipment(String userId, PlayerSave save) {
+    if (getProfile(userId) == null) {
+      return const ActionResult.failed('Sign in to save PvP equipment.');
+    }
+    final db = _db();
+    db.pvpSnapshots = db.pvpSnapshots.where((row) => row.userId != userId).toList();
+    db.pvpSnapshots.add(
+      CloudSaveRecord(
+        userId: userId,
+        saveVersion: save.saveVersion,
+        updatedAt: isNotBlank(save.updatedAt) ? save.updatedAt : _nowIso(),
+        payload: save,
+      ),
+    );
+    _write(db);
+    return const ActionResult.ok();
+  }
+
+  ArenaOpponent _arenaOpponentFromRecord(LocalDb db, CloudSaveRecord record) {
+    final profile = db.profiles.firstWhereOrNull((row) => row.userId == record.userId);
+    final username = isNotBlank(profile?.username)
+        ? profile!.username
+        : (isNotBlank(record.payload.characterName) ? record.payload.characterName! : record.userId);
+    return ArenaOpponent(
+      userId: record.userId,
+      username: username,
+      combatLevel: combatLevelOf(record.payload),
+      totalLevel: totalLevel(record.payload),
+      appearance: profile?.appearance ?? record.payload.appearance,
+    );
   }
 
   // --- Leaderboards ---------------------------------------------------------
@@ -1207,7 +1238,9 @@ class LocalMultiplayerBackend {
     final rows = <ArenaOpponent>[];
     for (final member in db.members.where((row) => row.guildId == membership.guildId)) {
       if (member.userId == userId) continue;
-      final save = db.saves.firstWhereOrNull((row) => row.userId == member.userId);
+      final save =
+          db.pvpSnapshots.firstWhereOrNull((row) => row.userId == member.userId) ??
+          db.saves.firstWhereOrNull((row) => row.userId == member.userId);
       if (save == null) continue;
       rows.add(
         ArenaOpponent(

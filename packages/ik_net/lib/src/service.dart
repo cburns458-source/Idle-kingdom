@@ -165,12 +165,17 @@ abstract interface class MultiplayerService {
 
   Future<BazaarPostResult> postBazaar(BazaarPostKind kind, String body);
 
-  /// Every stored player except the signed-in account. Search and ranked both
-  /// start from this list — any character on the game, not only who is online.
+  /// Players who have a fighter snapshot others can search or rank against.
+  ///
+  /// Hosted play lists only accounts that pressed Save equipment. Local demo
+  /// still lists stored characters so Bram, Mira, and Kael stay fightable.
   Future<List<ArenaOpponent>> listArenaOpponents();
 
-  /// The cloud save used as a PvP snapshot. Current equipment, full HP.
+  /// The saved PvP loadout for [userId], not their live cloud save.
   Future<PlayerSave?> readOpponentSave(String userId);
+
+  /// Publishes [save] as the loadout others fight in the arena.
+  Future<ActionResult> savePvpEquipment(PlayerSave save);
 
   Future<GuildHallState?> guildHall(String guildId);
 
@@ -707,6 +712,15 @@ class LocalMultiplayerService implements MultiplayerService {
     final current = session;
     if (current != null && current.userId == userId) return null;
     return _backend.opponentSave(userId);
+  }
+
+  @override
+  Future<ActionResult> savePvpEquipment(PlayerSave save) async {
+    final current = session;
+    if (current == null) {
+      return const ActionResult.failed('Sign in to save PvP equipment.');
+    }
+    return _backend.savePvpEquipment(current.userId, save);
   }
 
   @override

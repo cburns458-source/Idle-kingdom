@@ -33,4 +33,4 @@ create policy "pvp snapshots update self" on public.pvp_snapshots
   for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
 comment on table public.pvp_snapshots is
-  'Current combat snapshot for arena search and ranked matches. Readable by any signed-in player; only the owner writes.';
+  'Equipment snapshot published by Save equipment. Search and ranked read this, not the live cloud save. Readable by any signed-in player; only the owner writes.';

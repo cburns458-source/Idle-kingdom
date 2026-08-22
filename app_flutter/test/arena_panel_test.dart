@@ -49,6 +49,11 @@ void main() {
     await tester.pump();
     await tester.pump();
 
+    expect(find.text('Save equipment'), findsOne);
+    await tester.tap(find.text('Save equipment'));
+    await tester.pump();
+    expect(find.text('PvP snapshot saved. Others will fight this loadout.'), findsOne);
+
     await tester.enterText(find.byType(TextField), 'mi');
     await tester.pump();
     expect(find.text('Mira'), findsOne);

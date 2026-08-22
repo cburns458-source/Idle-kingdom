@@ -419,7 +419,6 @@ class RemoteMultiplayerService implements MultiplayerService {
     ]);
     if (refused != null) return CloudSyncResult.failed(refused);
 
-    await _publishPvpSnapshot(stamped);
     return CloudSyncResult.ok(stamped, CloudSyncSource.uploaded);
   }
 
@@ -493,7 +492,6 @@ class RemoteMultiplayerService implements MultiplayerService {
     // the roster too.
     final guildId = _guildIdSeen;
     if (guildId != null) await _guilds.refreshOwnMemberRow(guildId, current, save);
-    await _publishPvpSnapshot(save);
     return refused == null ? const ActionResult.ok() : ActionResult.failed(refused);
   }
 
@@ -1140,6 +1138,23 @@ class RemoteMultiplayerService implements MultiplayerService {
   }
 
   @override
+  Future<ActionResult> savePvpEquipment(PlayerSave save) async {
+    final current = session;
+    if (current == null) {
+      return const ActionResult.failed('Sign in to save PvP equipment.');
+    }
+    if (!await _ensurePvpSnapshotsHosted()) return _local.savePvpEquipment(save);
+    final refused = await transport.upsert(RemoteTables.pvpSnapshots, <RemoteRow>[
+      pvpSnapshotRowFor(session: current, save: save, updatedAt: isoFromMs(_nowMs())),
+    ], onConflict: remotePvpSnapshotConflict);
+    if (refused != null) {
+      if (_markPvpSnapshotsUnhosted(refused)) return _local.savePvpEquipment(save);
+      return ActionResult.failed(friendlyRemoteError(refused));
+    }
+    return const ActionResult.ok();
+  }
+
+  @override
   Future<PlayerSave?> readOpponentSave(String userId) async {
     final current = session;
     if (current != null && current.userId == userId) return null;
@@ -1239,15 +1254,6 @@ class RemoteMultiplayerService implements MultiplayerService {
       for (final row in await _hostedArenaOpponents())
         if (ids.contains(row.userId)) row,
     ];
-  }
-
-  Future<void> _publishPvpSnapshot(PlayerSave save) async {
-    final current = session;
-    if (current == null || _pvpSnapshotsHosted == false) return;
-    final refused = await transport.upsert(RemoteTables.pvpSnapshots, <RemoteRow>[
-      pvpSnapshotRowFor(session: current, save: save, updatedAt: isoFromMs(_nowMs())),
-    ], onConflict: remotePvpSnapshotConflict);
-    if (refused != null) _markPvpSnapshotsUnhosted(refused);
   }
 
   Future<List<ArenaOpponent>> _hostedArenaOpponents() async {

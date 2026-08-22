@@ -771,7 +771,7 @@ void main() {
     expect(transport.calls.where((call) => call.startsWith('insert')), isEmpty);
   });
 
-  test('hosted arena lists the other account after a save push', () async {
+  test('hosted arena lists only after savePvpEquipment, not after a save push', () async {
     final transport = FakeTransport();
     final db = _database();
 
@@ -785,6 +785,7 @@ void main() {
       ],
     );
     expect((await hero.pushSave(db, heroSave)).ok, isTrue);
+    expect((await hero.submitLeaderboard(db, heroSave)).ok, isTrue);
 
     final rival = _service(transport, MemorySaveStorage());
     expect((await rival.signUp('rival@example.com', 'Rival', 'secret')).ok, isTrue);
@@ -797,6 +798,11 @@ void main() {
       ],
     );
     expect((await rival.pushSave(db, rivalSave)).ok, isTrue);
+    expect((await rival.submitLeaderboard(db, rivalSave)).ok, isTrue);
+    expect(await hero.listArenaOpponents(), isEmpty);
+    expect(await hero.readOpponentSave(rival.session!.userId), isNull);
+
+    expect((await rival.savePvpEquipment(rivalSave)).ok, isTrue);
 
     final found = await hero.listArenaOpponents();
     expect(found, hasLength(1));
@@ -811,6 +817,15 @@ void main() {
     expect(snapshot, isNotNull);
     expect(combatLevelOf(snapshot!), 9);
     expect(await hero.readOpponentSave(hero.session!.userId), isNull);
+
+    final later = rivalSave.copyWith(
+      skills: [
+        for (final skill in rivalSave.skills)
+          skill.skillId == combatSkillId ? skill.copyWith(level: 20) : skill,
+      ],
+    );
+    expect((await rival.pushSave(db, later)).ok, isTrue);
+    expect(combatLevelOf((await hero.readOpponentSave(rival.session!.userId))!), 9);
   });
 
   test('hosted arena falls back locally when pvp_snapshots is missing', () async {
