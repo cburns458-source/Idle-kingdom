@@ -347,6 +347,10 @@ class LocationRow extends DbRow {
   /// Semicolon-separated Map IDs that must not show this location.
   String? get hiddenOnMapIDs => stringOrNull('Hidden On Map IDs');
 
+  /// Child-map location world-map Travel lands on when this row is a gateway.
+  /// Leave null on ordinary locations; new submaps add a landing here.
+  String? get landingLocationId => stringOrNull('Landing Location ID');
+
   String? get notes => stringOrNull('Notes');
 }
 

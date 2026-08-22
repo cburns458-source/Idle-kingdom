@@ -25,6 +25,7 @@ import {
   isSubMapGateway,
   enterSubMapLabel,
   gatewayLocationIdForSubMap,
+  landingLocationIdFor,
   locationRequiresUnlock,
   subMapDisplayName,
   subMapIdForGateway,
@@ -182,6 +183,7 @@ export const questScenarios: ParityScenario[] = [
           locationId,
           isGateway: isSubMapGateway(location),
           childMapId: subMapIdForGateway(db, locationId),
+          landing: landingLocationIdFor(location),
           label: enterSubMapLabel(db, location),
         }
       }),

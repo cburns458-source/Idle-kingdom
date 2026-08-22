@@ -104,20 +104,29 @@ TravelPlan planTravel(
   RandomFn random,
 ) {
   if (isDeathPaused(save, nowMs)) return const TravelBlocked();
-  if (!canTravelTo(
+  final arrivalId = resolveSubMapTravelDestination(
     db,
-    save.currentLocationId,
     destinationId,
     browseMapId,
-    save.unlockedLocationIds,
-  )) {
+    save.currentLocationId,
+  );
+  final destOk = destinationId == save.currentLocationId
+      ? arrivalId != destinationId
+      : canTravelTo(
+          db,
+          save.currentLocationId,
+          destinationId,
+          browseMapId,
+          save.unlockedLocationIds,
+        );
+  if (!destOk) {
     return const TravelBlocked();
   }
 
   final durationMs = travelDurationMs(findConnection(db, save.currentLocationId, destinationId));
   if (durationMs <= 0) {
     return TravelInstant(
-      _arrivalOf(db, applyHostileTravelArrival(db, save, destinationId, nowMs, random)),
+      _arrivalOf(db, applyHostileTravelArrival(db, save, arrivalId, nowMs, random)),
     );
   }
 

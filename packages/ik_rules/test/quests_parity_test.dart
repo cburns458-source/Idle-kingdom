@@ -184,6 +184,7 @@ void main() {
                 'locationId': locationId,
                 'isGateway': isSubMapGateway(location),
                 'childMapId': subMapIdForGateway(db, locationId),
+                'landing': landingLocationIdFor(location),
                 'label': enterSubMapLabel(db, location),
               };
             })

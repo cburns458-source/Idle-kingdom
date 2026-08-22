@@ -184,6 +184,15 @@ export function validateDatabase(db: GameDatabase): ValidationIssue[] {
         message: `Missing Parent Location ID reference: ${parentId}`,
       })
     }
+    const landingId = location['Landing Location ID']
+    if (landingId && !indexes.locationsById.has(landingId)) {
+      issues.push({
+        severity: 'error',
+        table: 'Locations',
+        id: location['Location ID'],
+        message: `Missing Landing Location ID reference: ${landingId}`,
+      })
+    }
   }
 
   for (const activity of db.Activities) {

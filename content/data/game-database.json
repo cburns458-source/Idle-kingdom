@@ -8411,7 +8411,8 @@
       "Background Asset Key": null,
       "Map Node Name": null,
       "Hidden On Map IDs": null,
-      "Notes": null
+      "Notes": null,
+      "Landing Location ID": null
     },
     {
       "Location ID": "LOC-0002",
@@ -8427,8 +8428,9 @@
       "Danger / Hostility": null,
       "Background Asset Key": null,
       "Map Node Name": "Town Gate",
-      "Hidden On Map IDs": null,
-      "Notes": "Sub-map gateway for MAP-0006."
+      "Hidden On Map IDs": "MAP-0006",
+      "Notes": "Sub-map gateway for MAP-0006.",
+      "Landing Location ID": "LOC-0024"
     },
     {
       "Location ID": "LOC-0003",
@@ -8445,7 +8447,8 @@
       "Background Asset Key": null,
       "Map Node Name": null,
       "Hidden On Map IDs": null,
-      "Notes": null
+      "Notes": null,
+      "Landing Location ID": null
     },
     {
       "Location ID": "LOC-0004",
@@ -8462,7 +8465,8 @@
       "Background Asset Key": null,
       "Map Node Name": null,
       "Hidden On Map IDs": null,
-      "Notes": null
+      "Notes": null,
+      "Landing Location ID": null
     },
     {
       "Location ID": "LOC-0005",
@@ -8479,7 +8483,8 @@
       "Background Asset Key": null,
       "Map Node Name": null,
       "Hidden On Map IDs": null,
-      "Notes": null
+      "Notes": null,
+      "Landing Location ID": null
     },
     {
       "Location ID": "LOC-0006",
@@ -8496,7 +8501,8 @@
       "Background Asset Key": null,
       "Map Node Name": null,
       "Hidden On Map IDs": null,
-      "Notes": null
+      "Notes": null,
+      "Landing Location ID": null
     },
     {
       "Location ID": "LOC-0007",
@@ -8513,7 +8519,8 @@
       "Background Asset Key": null,
       "Map Node Name": null,
       "Hidden On Map IDs": null,
-      "Notes": null
+      "Notes": null,
+      "Landing Location ID": null
     },
     {
       "Location ID": "LOC-0008",
@@ -8530,7 +8537,8 @@
       "Background Asset Key": null,
       "Map Node Name": null,
       "Hidden On Map IDs": null,
-      "Notes": null
+      "Notes": null,
+      "Landing Location ID": null
     },
     {
       "Location ID": "LOC-0009",
@@ -8547,7 +8555,8 @@
       "Background Asset Key": null,
       "Map Node Name": null,
       "Hidden On Map IDs": null,
-      "Notes": null
+      "Notes": null,
+      "Landing Location ID": null
     },
     {
       "Location ID": "LOC-0010",
@@ -8563,8 +8572,9 @@
       "Danger / Hostility": null,
       "Background Asset Key": null,
       "Map Node Name": null,
-      "Hidden On Map IDs": null,
-      "Notes": null
+      "Hidden On Map IDs": "MAP-0002",
+      "Notes": null,
+      "Landing Location ID": "LOC-0012"
     },
     {
       "Location ID": "LOC-0011",
@@ -8581,7 +8591,8 @@
       "Background Asset Key": null,
       "Map Node Name": null,
       "Hidden On Map IDs": null,
-      "Notes": null
+      "Notes": null,
+      "Landing Location ID": null
     },
     {
       "Location ID": "LOC-0012",
@@ -8598,7 +8609,8 @@
       "Background Asset Key": null,
       "Map Node Name": null,
       "Hidden On Map IDs": null,
-      "Notes": null
+      "Notes": null,
+      "Landing Location ID": null
     },
     {
       "Location ID": "LOC-0013",
@@ -8614,8 +8626,9 @@
       "Danger / Hostility": null,
       "Background Asset Key": null,
       "Map Node Name": "Castle Gate",
-      "Hidden On Map IDs": null,
-      "Notes": null
+      "Hidden On Map IDs": "MAP-0003",
+      "Notes": null,
+      "Landing Location ID": "LOC-0014"
     },
     {
       "Location ID": "LOC-0014",
@@ -8632,7 +8645,8 @@
       "Background Asset Key": null,
       "Map Node Name": null,
       "Hidden On Map IDs": null,
-      "Notes": null
+      "Notes": null,
+      "Landing Location ID": null
     },
     {
       "Location ID": "LOC-0015",
@@ -8649,7 +8663,8 @@
       "Background Asset Key": null,
       "Map Node Name": null,
       "Hidden On Map IDs": null,
-      "Notes": null
+      "Notes": null,
+      "Landing Location ID": null
     },
     {
       "Location ID": "LOC-0016",
@@ -8666,7 +8681,8 @@
       "Background Asset Key": null,
       "Map Node Name": null,
       "Hidden On Map IDs": null,
-      "Notes": null
+      "Notes": null,
+      "Landing Location ID": null
     },
     {
       "Location ID": "LOC-0017",
@@ -8683,7 +8699,8 @@
       "Background Asset Key": null,
       "Map Node Name": null,
       "Hidden On Map IDs": null,
-      "Notes": null
+      "Notes": null,
+      "Landing Location ID": null
     },
     {
       "Location ID": "LOC-0018",
@@ -8700,7 +8717,8 @@
       "Background Asset Key": null,
       "Map Node Name": null,
       "Hidden On Map IDs": null,
-      "Notes": "Activity Pool: Ancient Tree, Ent, Ancient Ent, Corrupted Ent."
+      "Notes": "Activity Pool: Ancient Tree, Ent, Ancient Ent, Corrupted Ent.",
+      "Landing Location ID": null
     },
     {
       "Location ID": "LOC-0021",
@@ -8717,7 +8735,8 @@
       "Background Asset Key": null,
       "Map Node Name": null,
       "Hidden On Map IDs": null,
-      "Notes": null
+      "Notes": null,
+      "Landing Location ID": null
     },
     {
       "Location ID": "LOC-0022",
@@ -8734,7 +8753,8 @@
       "Background Asset Key": null,
       "Map Node Name": null,
       "Hidden On Map IDs": null,
-      "Notes": null
+      "Notes": null,
+      "Landing Location ID": null
     },
     {
       "Location ID": "LOC-0023",
@@ -8751,7 +8771,8 @@
       "Background Asset Key": null,
       "Map Node Name": null,
       "Hidden On Map IDs": null,
-      "Notes": null
+      "Notes": null,
+      "Landing Location ID": null
     },
     {
       "Location ID": "LOC-0024",
@@ -8768,7 +8789,8 @@
       "Background Asset Key": null,
       "Map Node Name": null,
       "Hidden On Map IDs": null,
-      "Notes": null
+      "Notes": null,
+      "Landing Location ID": null
     },
     {
       "Location ID": "LOC-0025",
@@ -8785,7 +8807,8 @@
       "Background Asset Key": null,
       "Map Node Name": null,
       "Hidden On Map IDs": null,
-      "Notes": null
+      "Notes": null,
+      "Landing Location ID": null
     },
     {
       "Location ID": "LOC-0026",
@@ -8802,7 +8825,8 @@
       "Background Asset Key": null,
       "Map Node Name": null,
       "Hidden On Map IDs": null,
-      "Notes": "requires_unlock; Unlocked by QST-0002 Help the aspiring apothecary."
+      "Notes": "requires_unlock; Unlocked by QST-0002 Help the aspiring apothecary.",
+      "Landing Location ID": null
     },
     {
       "Location ID": "LOC-0027",
@@ -8819,7 +8843,8 @@
       "Background Asset Key": null,
       "Map Node Name": null,
       "Hidden On Map IDs": "MAP-0007",
-      "Notes": "Sub-map gateway for MAP-0007."
+      "Notes": "Sub-map gateway for MAP-0007.",
+      "Landing Location ID": "LOC-0028"
     },
     {
       "Location ID": "LOC-0028",
@@ -8836,7 +8861,8 @@
       "Background Asset Key": null,
       "Map Node Name": null,
       "Hidden On Map IDs": null,
-      "Notes": null
+      "Notes": null,
+      "Landing Location ID": null
     },
     {
       "Location ID": "LOC-0029",
@@ -8853,7 +8879,8 @@
       "Background Asset Key": null,
       "Map Node Name": null,
       "Hidden On Map IDs": null,
-      "Notes": null
+      "Notes": null,
+      "Landing Location ID": null
     },
     {
       "Location ID": "LOC-0030",
@@ -8870,7 +8897,8 @@
       "Background Asset Key": null,
       "Map Node Name": null,
       "Hidden On Map IDs": null,
-      "Notes": null
+      "Notes": null,
+      "Landing Location ID": null
     },
     {
       "Location ID": "LOC-0031",
@@ -8887,7 +8915,8 @@
       "Background Asset Key": null,
       "Map Node Name": null,
       "Hidden On Map IDs": null,
-      "Notes": null
+      "Notes": null,
+      "Landing Location ID": null
     },
     {
       "Location ID": "LOC-0032",
@@ -8904,7 +8933,8 @@
       "Background Asset Key": null,
       "Map Node Name": null,
       "Hidden On Map IDs": null,
-      "Notes": null
+      "Notes": null,
+      "Landing Location ID": null
     },
     {
       "Location ID": "LOC-0033",
@@ -8921,7 +8951,8 @@
       "Background Asset Key": null,
       "Map Node Name": null,
       "Hidden On Map IDs": null,
-      "Notes": "Reached from the Guilds screen. Art reuses the Citadel plaza."
+      "Notes": "Reached from the Guilds screen. Art reuses the Citadel plaza.",
+      "Landing Location ID": null
     },
     {
       "Location ID": "LOC-0034",
@@ -8938,7 +8969,8 @@
       "Background Asset Key": null,
       "Map Node Name": null,
       "Hidden On Map IDs": null,
-      "Notes": "Art reuses the General Store until a bank interior is drawn."
+      "Notes": "Art reuses the General Store until a bank interior is drawn.",
+      "Landing Location ID": null
     },
     {
       "Location ID": "LOC-0035",
@@ -8955,7 +8987,8 @@
       "Background Asset Key": null,
       "Map Node Name": null,
       "Hidden On Map IDs": null,
-      "Notes": "Art reuses the Citadel plaza until a bank interior is drawn."
+      "Notes": "Art reuses the Citadel plaza until a bank interior is drawn.",
+      "Landing Location ID": null
     },
     {
       "Location ID": "LOC-0036",
@@ -8972,7 +9005,8 @@
       "Background Asset Key": null,
       "Map Node Name": null,
       "Hidden On Map IDs": null,
-      "Notes": "Main-map node. Monk training requires empty Weapon or Tool and Off-hand. Blessing is a location action, not an activity."
+      "Notes": "Main-map node. Monk training requires empty Weapon or Tool and Off-hand. Blessing is a location action, not an activity.",
+      "Landing Location ID": null
     }
   ],
   "TravelConnections": [
@@ -22577,11 +22611,11 @@
       "Internal Key": "visiting_the_citadel",
       "Display Name": "Visiting the Citadel",
       "NPC ID": "NPC-0013",
-      "Summary": "Tour the Citadel: talk to the guide and market master, visit the Market, Processing District, Bank, Arena, and Guild Hall, and inspect the boards.",
-      "Pitch": null,
+      "Summary": "Arrive at the plaza, walk the other Citadel districts, talk to the guide and market master, and inspect the boards.",
+      "Pitch": "You have reached the Citadel plaza. See the other districts, then return here.",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": "Talk: NPC-0013, NPC-0006; Visit: LOC-0029, LOC-0030, LOC-0035, LOC-0028, LOC-0033; Inspect: bazaar, bounties, processing; RewardGold: 1000; AutoStart: LOC-0027",
+      "Notes": "Talk: NPC-0013, NPC-0006; Visit: LOC-0029, LOC-0030, LOC-0035, LOC-0033; Inspect: bazaar, bounties, processing; RewardGold: 1000; AutoStart: LOC-0028",
       "Objective Type": "Gather / Deliver",
       "Objective Target ID": null,
       "Required Quantity": null,
@@ -22636,7 +22670,7 @@
       "Dialogue ID": "QDL-0003",
       "Quest ID": "QST-0004",
       "NPC ID": "NPC-0013",
-      "Line": "Welcome to the Citadel. Visit the Market, Processing District, Bank, Arena, and Guild Hall. Inspect the Grand Bazaar and Bounty Board, then come back to me.",
+      "Line": "Welcome to the Citadel plaza. Walk the Market, Processing District, Bank, and Guild Hall. Inspect the Grand Bazaar and Bounty Board, then come back to me.",
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": null

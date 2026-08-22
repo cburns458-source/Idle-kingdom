@@ -198,6 +198,19 @@ List<ValidationIssue> validateDatabase(GameDatabase db) {
         ),
       );
     }
+    final landingId = location.raw['Landing Location ID'];
+    if (landingId is String &&
+        landingId.isNotEmpty &&
+        !indexes.locationsById.containsKey(landingId)) {
+      issues.add(
+        ValidationIssue(
+          severity: IssueSeverity.error,
+          table: 'Locations',
+          id: location.locationId,
+          message: 'Missing Landing Location ID reference: $landingId',
+        ),
+      );
+    }
   }
 
   for (final activity in db.activities) {

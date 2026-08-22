@@ -80,6 +80,7 @@ export function location(id: string, name: string, extra: JsonValue = {}): JsonV
     'Background Asset Key': null,
     'Map Node Name': null,
     'Hidden On Map IDs': null,
+    'Landing Location ID': null,
     Notes: null,
     ...(extra as object),
   }

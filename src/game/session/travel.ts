@@ -7,6 +7,7 @@ import {
   hostileForceMessage,
   type HostileTravelArrivalResult,
 } from '../world/hostility'
+import { resolveSubMapTravelDestination } from '../world/submaps'
 import { canTravelTo, findConnection, travelDurationMs } from '../world/travel'
 
 /** What a travel request turns into, once the rules have had their say. */
@@ -57,7 +58,17 @@ export function planTravel(
   random: () => number = Math.random,
 ): TravelPlan {
   if (isDeathPaused(save, nowMs)) return { kind: 'blocked' }
-  if (!canTravelTo(db, save.currentLocationId, destinationId, browseMapId, save)) {
+  const arrivalId = resolveSubMapTravelDestination(
+    db,
+    destinationId,
+    browseMapId,
+    save.currentLocationId,
+  )
+  const destOk =
+    destinationId === save.currentLocationId
+      ? arrivalId !== destinationId
+      : canTravelTo(db, save.currentLocationId, destinationId, browseMapId, save)
+  if (!destOk) {
     return { kind: 'blocked' }
   }
 
@@ -65,10 +76,7 @@ export function planTravel(
   if (durationMs <= 0) {
     return {
       kind: 'instant',
-      arrival: arrivalOf(
-        db,
-        applyHostileTravelArrival(db, save, destinationId, nowMs, random),
-      ),
+      arrival: arrivalOf(db, applyHostileTravelArrival(db, save, arrivalId, nowMs, random)),
     }
   }
 

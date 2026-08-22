@@ -32,7 +32,7 @@ String mapWalkStartLocationId(GameDatabase db, String currentLocationId, String 
     return gatewayLocationIdForSubMap(db, currentMap) ?? currentLocationId;
   }
   if (isSubMap(db, browseMapId)) {
-    return gatewayLocationIdForSubMap(db, browseMapId) ?? currentLocationId;
+    return entryLandingLocationIdForMap(db, browseMapId) ?? currentLocationId;
   }
   return currentLocationId;
 }

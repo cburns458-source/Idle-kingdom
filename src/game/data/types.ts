@@ -95,6 +95,11 @@ export interface LocationRow {
   'Map Node Name': string | null
   /** Semicolon-separated Map IDs that must not show this location. */
   'Hidden On Map IDs': string | null
+  /**
+   * Child-map location world-map Travel lands on when this row is a gateway.
+   * Leave null on ordinary locations; new submaps add a landing here.
+   */
+  'Landing Location ID': string | null
   Notes: string | null
 }
 

@@ -24,6 +24,13 @@ void main() {
     expect(mapWalkStartLocationId(database.launch, 'LOC-0028', mainMapId), citadelGatewayId);
   });
 
+  test('a walk onto a district starts at that map\'s landing', () {
+    expect(mapWalkStartLocationId(database.launch, 'LOC-0009', townMapId), townGeneralStoreId);
+    expect(mapWalkStartLocationId(database.launch, 'LOC-0009', caveMapId), caveMiningStoreId);
+    expect(mapWalkStartLocationId(database.launch, 'LOC-0009', castleMapId), castleCourtyardId);
+    expect(mapWalkStartLocationId(database.launch, 'LOC-0009', citadelMapId), citadelPlazaId);
+  });
+
   test('square district art fills a square viewport', () {
     final rect = mapArtRect(const Size(300, 300));
     expect(rect, const Rect.fromLTWH(0, 0, 300, 300));

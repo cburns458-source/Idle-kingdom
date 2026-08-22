@@ -319,7 +319,7 @@ void main() {
   });
 
   testWidgets('the map travels to a chosen location', (tester) async {
-    // From the meadow, because the town is a gateway and opens its district map.
+    // From the meadow, so the destination is a world-map node rather than a landing.
     final controller = buildController(
       database,
       seed: startedCharacter(database).copyWith(currentLocationId: 'LOC-0009'),
