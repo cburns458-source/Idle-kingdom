@@ -32,8 +32,46 @@ void main() {
     expect(locationHasBlessing(location), isTrue);
 
     final activities = db.activities.where((row) => row.raw['Location ID'] == 'LOC-0036');
-    expect(activities.map((row) => row.raw['Contextual Name']), ['Train with the monks']);
+    expect(activities.map((row) => row.raw['Contextual Name']), [
+      'Train with the monks',
+      'Pick weeds',
+    ]);
     expect(db.activities.any((row) => row.activityId == 'ACT-0036'), isFalse);
+  });
+
+  test('Pick weeds is a single harvesting action with 90/10 drops and empty hands', () {
+    final activity = db.activities.firstWhere((row) => row.activityId == 'ACT-0039');
+    expect(activity.raw['Contextual Name'], 'Pick weeds');
+    expect(activity.poolId, 'POOL-0029');
+
+    final pool = db.poolEntries.where((row) => row.raw['Pool ID'] == 'POOL-0029').toList();
+    expect(pool, hasLength(1));
+    expect(pool.single.raw['Action ID'], 'ACN-0174');
+
+    final action = db.actions.firstWhere((row) => row.actionId == 'ACN-0174');
+    expect(action.displayName, 'Pick weeds');
+    expect(action.relevantSkillId, 'SKL-0004');
+    expect(action.proficiencyLevel, 50);
+    expect(action.xpReward, 650000);
+    expect(action.baseDurationSeconds, 1800);
+
+    final drops = db.rewardEntries
+        .where((row) => row.raw['Reward Table ID'] == 'RWT-0119')
+        .toList();
+    expect(drops, hasLength(2));
+    expect(
+      drops.map((row) => '${row.raw['Reward ID / Value']}:${row.raw['Weight']}'),
+      containsAll(<String>['ITEM-0033:90', 'ITEM-0207:10']),
+    );
+
+    var save = _withHands(_atTemple(db), weaponId: 'ITEM-0100', offhandId: 'ITEM-0145');
+    final started = requestActivityStart(db, save, 'ACT-0039', 0, () => 0);
+    expect(started.ok, isTrue);
+    save = started.save!;
+    expect(slotItemId(save, weaponToolSlotId), isNull);
+    expect(slotItemId(save, offhandSlotId), isNull);
+    expect(save.currentActivityId, 'ACT-0039');
+    expect(save.currentActionId, 'ACN-0174');
   });
 
   test('the Monk is a level-10 unarmed training fight with no loot', () {

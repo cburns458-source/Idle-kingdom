@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest'
 import { prepareDatabase } from '../data/loadDatabase'
 import { canKnowRecipe, getRecipe } from '../production/recipes'
 import { createNewSave } from '../save/saveStore'
-import { knowsRecipe, listRecipeBookEntries, unlockRecipeId } from './knowledge'
+import { knowsRecipe, listRecipeBookEntries, recipeBookForSkill, unlockRecipeId } from './knowledge'
 
 const rawDatabase = JSON.parse(
   readFileSync(resolve(process.cwd(), 'content/data/game-database.json'), 'utf8'),
@@ -39,7 +39,17 @@ describe('recipe knowledge', () => {
     expect(entries.some((entry) => entry.known)).toBe(true)
   })
 
-  it('lists the recipe book by proficiency, leaving locked rows in place', () => {
+  it('skill recipe books list only unlocked rows for that skill', () {
+    const { launch } = prepareDatabase(rawDatabase)
+    const save = createNewSave(launch)
+    const cooking = recipeBookForSkill(save, launch, 'SKL-0007')
+    expect(cooking.length).toBeGreaterThan(0)
+    expect(cooking.every((entry) => entry.known)).toBe(true)
+    expect(cooking.every((entry) => entry.skill === 'Cooking')).toBe(true)
+    expect(cooking.some((entry) => entry.name.includes('Baby Giant Squid'))).toBe(false)
+  })
+
+  it('lists the recipe book by proficiency, leaving locked rows in place', () {
     const { launch } = prepareDatabase(rawDatabase)
     const save = createNewSave(launch)
     const entries = listRecipeBookEntries(save, launch)
