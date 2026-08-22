@@ -357,7 +357,11 @@ class _ShopPanelState extends State<ShopPanel> {
   }
 }
 
-/// One side of the counter: a heading over a tight, scrolling grid of items.
+/// One side of the counter: a heading over a tight grid of items.
+///
+/// The grid does not scroll on its own. The location screen already scrolls
+/// the whole counter, and a nested grid on a phone steals that drag so Sell
+/// and Confirm never come on screen.
 class _Column extends StatelessWidget {
   const _Column({required this.heading, required this.empty, required this.tiles});
 
@@ -375,17 +379,15 @@ class _Column extends StatelessWidget {
         if (tiles.isEmpty)
           MutedText(empty)
         else
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxHeight: 256),
-            child: GridView.extent(
-              maxCrossAxisExtent: 78,
-              shrinkWrap: true,
-              padding: EdgeInsets.zero,
-              mainAxisSpacing: 5,
-              crossAxisSpacing: 5,
-              childAspectRatio: 1,
-              children: tiles,
-            ),
+          GridView.extent(
+            maxCrossAxisExtent: 78,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            padding: EdgeInsets.zero,
+            mainAxisSpacing: 5,
+            crossAxisSpacing: 5,
+            childAspectRatio: 1,
+            children: tiles,
           ),
       ],
     );
