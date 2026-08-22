@@ -41,8 +41,12 @@ void main() {
     expect(find.text('Enemies'), findsOne);
     expect(find.text('Weapons and equipment'), findsOne);
     expect(find.text('Pressure the guards'), findsNothing);
-    expect(find.widgetWithText(GameButton, 'Close'), findsNothing);
-    expect(find.byTooltip('Close'), findsOne);
+    final popup = find.byKey(const Key('game-popup'));
+    expect(
+      find.descendant(of: popup, matching: find.widgetWithText(GameButton, 'Close')),
+      findsNothing,
+    );
+    expect(find.descendant(of: popup, matching: find.byTooltip('Close')), findsOne);
     final tabs = tester.widget<Row>(
       find.ancestor(of: find.text('Enemies'), matching: find.byType(Row)).first,
     );
@@ -59,13 +63,20 @@ void main() {
     await tester.tap(find.text('Cooking'));
     await tester.pump();
 
-    expect(find.widgetWithText(GameButton, 'Recipe book'), findsOne);
+    final popup = find.byKey(const Key('game-popup'));
+    expect(
+      find.descendant(of: popup, matching: find.widgetWithText(GameButton, 'Recipe book')),
+      findsOne,
+    );
     expect(
       tester.widget<GameButton>(find.widgetWithText(GameButton, 'Recipe book')).compact,
       isTrue,
     );
-    expect(find.widgetWithText(GameButton, 'Close'), findsNothing);
-    expect(find.byTooltip('Close'), findsOne);
+    expect(
+      find.descendant(of: popup, matching: find.widgetWithText(GameButton, 'Close')),
+      findsNothing,
+    );
+    expect(find.descendant(of: popup, matching: find.byTooltip('Close')), findsOne);
     await tester.tap(find.text('Recipe book'));
     await tester.pump();
     expect(find.textContaining('Baked Potato'), findsWidgets);
