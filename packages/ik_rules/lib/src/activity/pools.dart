@@ -2,6 +2,8 @@ import 'package:collection/collection.dart';
 import 'package:ik_content/ik_content.dart';
 
 import '../rng/mulberry32.dart';
+import '../save/generated/save_models.dart';
+import 'gathering.dart';
 
 /// A pool entry paired with the action it selects.
 class PoolCandidate {
@@ -39,6 +41,20 @@ List<PoolCandidate> eligiblePoolEntries(GameDatabase db, String poolId) {
     pairs.add(PoolCandidate(entry: entry, action: action));
   }
   return pairs;
+}
+
+/// Pool actions the player can do at full speed, or the whole pool if none.
+///
+/// Mixed gathering pools (rare wood, rare ore) include high-proficiency actions
+/// that take tens of minutes below level. Rolling those first looks like the
+/// activity dropped nothing.
+List<PoolCandidate> preferredPoolEntries(GameDatabase db, PlayerSave save, String poolId) {
+  final all = eligiblePoolEntries(db, poolId);
+  final ready = [
+    for (final pair in all)
+      if (!isBelowProficiency(save, pair.action)) pair,
+  ];
+  return ready.isNotEmpty ? ready : all;
 }
 
 /// Picks one action, weighted by entry weight.

@@ -11,7 +11,7 @@ import {
   validateActivityStart,
 } from './engine'
 import { gatheringDurationMs, gatheringXpReward } from './gathering'
-import { eligiblePoolEntries, pickWeightedAction } from './pools'
+import { eligiblePoolEntries, pickWeightedAction, preferredPoolEntries } from './pools'
 
 const rawDatabase = JSON.parse(
   readFileSync(resolve(process.cwd(), 'content/data/game-database.json'), 'utf8'),
@@ -173,6 +173,33 @@ describe('primary activity engine', () => {
       'ACN-0012',
       'ACN-0051',
     ])
+  })
+
+  it('prefers cedar when searching for rare wood below poplar proficiency', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const starter = createNewSave(launch)
+    expect(preferredPoolEntries(launch, starter, 'POOL-0021').map((pair) => pair.action['Action ID'])).toEqual([
+      'ACN-0046',
+    ])
+    expect(eligiblePoolEntries(launch, 'POOL-0021').map((pair) => pair.action['Action ID'])).toEqual([
+      'ACN-0046',
+      'ACN-0048',
+    ])
+
+    const save = { ...starter, currentLocationId: 'LOC-0008' }
+    expect(generateNextAction(launch, save, 'ACT-0026', () => 0)?.action['Action ID']).toBe('ACN-0046')
+    expect(generateNextAction(launch, save, 'ACT-0026', () => 0.999)?.action['Action ID']).toBe('ACN-0046')
+
+    const ready = {
+      ...save,
+      skills: save.skills.map((skill) => (skill.skillId === 'SKL-0006' ? { ...skill, level: 30 } : skill)),
+    }
+    expect(preferredPoolEntries(launch, ready, 'POOL-0021').map((pair) => pair.action['Action ID'])).toEqual([
+      'ACN-0046',
+      'ACN-0048',
+    ])
+    expect(generateNextAction(launch, ready, 'ACT-0026', () => 0)?.action['Action ID']).toBe('ACN-0046')
+    expect(generateNextAction(launch, ready, 'ACT-0026', () => 0.999)?.action['Action ID']).toBe('ACN-0048')
   })
 
   it('weighted selection respects ordering', () => {

@@ -1,6 +1,10 @@
 import type { ActionRow, GameDatabase, PoolEntryRow } from '../data/types'
+import { isBelowProficiency } from './gathering'
+import type { PlayerSave } from '../save/types'
 
 export type RandomFn = () => number
+
+export type PoolCandidate = { entry: PoolEntryRow; action: ActionRow }
 
 /** Gathering or Combat actions with complete runtime data. */
 export function isSelectableAction(action: ActionRow): boolean {
@@ -17,11 +21,8 @@ export function isSelectableAction(action: ActionRow): boolean {
 /** @deprecated use isSelectableAction */
 export const isStep3SelectableAction = isSelectableAction
 
-export function eligiblePoolEntries(
-  db: GameDatabase,
-  poolId: string,
-): Array<{ entry: PoolEntryRow; action: ActionRow }> {
-  const pairs: Array<{ entry: PoolEntryRow; action: ActionRow }> = []
+export function eligiblePoolEntries(db: GameDatabase, poolId: string): PoolCandidate[] {
+  const pairs: PoolCandidate[] = []
   for (const entry of db.PoolEntries) {
     if (entry['Pool ID'] !== poolId) continue
     if (entry.Status === 'Needs Data') continue
@@ -31,6 +32,17 @@ export function eligiblePoolEntries(
     pairs.push({ entry, action })
   }
   return pairs
+}
+
+/** Pool actions the player can do at full speed, or the whole pool if none. */
+export function preferredPoolEntries(
+  db: GameDatabase,
+  save: PlayerSave,
+  poolId: string,
+): PoolCandidate[] {
+  const all = eligiblePoolEntries(db, poolId)
+  const ready = all.filter((pair) => !isBelowProficiency(save, pair.action))
+  return ready.length > 0 ? ready : all
 }
 
 export function pickWeightedAction(

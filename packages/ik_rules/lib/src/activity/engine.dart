@@ -132,8 +132,11 @@ GeneratedAction? generateNextAction(
   if (heldId != null) {
     action = db.actions.firstWhereOrNull((row) => row.raw['Action ID'] == heldId);
     if (action != null && !isSelectableAction(action)) action = null;
+    if (action != null && _shouldRerollHeldGathering(db, save, poolId, action)) {
+      action = null;
+    }
   }
-  action ??= pickWeightedAction(eligiblePoolEntries(db, poolId), random);
+  action ??= pickWeightedAction(preferredPoolEntries(db, save, poolId), random);
   if (action == null) return null;
   final actionId = jsString(action.raw['Action ID']);
 
@@ -175,6 +178,16 @@ GeneratedAction? generateNextAction(
       actionId,
     ),
   );
+}
+
+/// A held gathering action below proficiency is dropped when a ready one exists.
+bool _shouldRerollHeldGathering(GameDatabase db, PlayerSave save, String poolId, ActionRow held) {
+  if (held.raw['Category'] != 'Gathering') return false;
+  if (!isBelowProficiency(save, held)) return false;
+  final preferred = preferredPoolEntries(db, save, poolId);
+  final heldId = jsString(held.raw['Action ID']);
+  return preferred.isNotEmpty &&
+      preferred.every((pair) => jsString(pair.action.raw['Action ID']) != heldId);
 }
 
 /// A finished gathering action: the updated save and what it paid out.

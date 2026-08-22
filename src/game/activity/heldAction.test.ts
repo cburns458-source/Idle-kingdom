@@ -66,6 +66,18 @@ describe('held pool actions', () => {
     expect(back.save.currentActionId).toBe('ACN-0105')
   })
 
+  it('drops a held rare-wood poplar cut when cedar is ready', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const save = withHeldAction(
+      { ...createNewSave(launch), currentLocationId: 'LOC-0008' },
+      'ACT-0026',
+      'ACN-0048',
+    )
+    const next = generateNextAction(launch, save, 'ACT-0026', () => 0.999, 0)
+    expect(next?.action['Action ID']).toBe('ACN-0046')
+    expect(next?.save.heldActionByActivityId['ACT-0026']).toBe('ACN-0046')
+  })
+
   it('reuses a held action that is not in the activity pool', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const save = withHeldAction(

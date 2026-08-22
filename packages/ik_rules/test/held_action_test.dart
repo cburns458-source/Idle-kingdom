@@ -64,6 +64,17 @@ void main() {
     expect(started.save!.currentActionId, 'ACN-0015');
   });
 
+  test('drops a held rare-wood poplar cut when cedar is ready', () {
+    final save = withHeldAction(
+      createNewSave(db, 0).copyWith(currentLocationId: 'LOC-0008'),
+      'ACT-0026',
+      'ACN-0048',
+    );
+    final next = generateNextAction(db, save, 'ACT-0026', () => 0.999, 0);
+    expect(next!.action.raw['Action ID'], 'ACN-0046');
+    expect(next.save.heldActionByActivityId['ACT-0026'], 'ACN-0046');
+  });
+
   test('finishing a gathering action forgets it so the next roll can change', () {
     var save = requestActivityStart(db, _inMeadow(db), 'ACT-0012', 0, () => 0).save!;
     final action = db.actions.firstWhere((row) => row.raw['Action ID'] == 'ACN-0105');

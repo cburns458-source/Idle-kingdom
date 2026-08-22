@@ -10,9 +10,15 @@ import type { ActionRow, ActivityRow, GameDatabase } from '../data/types'
 import type { PlayerSave } from '../save/types'
 import { clearActivePotionEffect, tryConsumePotionForScope } from '../potions/effects'
 import { applyRaceSkillXp } from '../races/races'
-import { gatheringDurationMs, gatheringXpReward } from './gathering'
+import { gatheringDurationMs, gatheringXpReward, isBelowProficiency } from './gathering'
 import { heldActionIdFor, withHeldAction, withoutHeldAction } from './heldAction'
-import { eligiblePoolEntries, isSelectableAction, pickWeightedAction, type RandomFn } from './pools'
+import {
+  eligiblePoolEntries,
+  isSelectableAction,
+  pickWeightedAction,
+  preferredPoolEntries,
+  type RandomFn,
+} from './pools'
 import {
   requirementsForEntity,
   unmetHardRequirements,
@@ -136,7 +142,8 @@ export function generateNextAction(
   const heldId = heldActionIdFor(save, activityId)
   let action = heldId ? db.Actions.find((row) => row['Action ID'] === heldId) : undefined
   if (action && !isSelectableAction(action)) action = undefined
-  action ??= pickWeightedAction(eligiblePoolEntries(db, activity['Pool ID']), random) ?? undefined
+  if (action && shouldRerollHeldGathering(db, save, activity['Pool ID'], action)) action = undefined
+  action ??= pickWeightedAction(preferredPoolEntries(db, save, activity['Pool ID']), random) ?? undefined
   if (!action) return null
   const actionId = action['Action ID']
 
@@ -176,6 +183,19 @@ export function generateNextAction(
     },
     save: withHeldAction(next, activityId, actionId),
   }
+}
+
+function shouldRerollHeldGathering(
+  db: GameDatabase,
+  save: PlayerSave,
+  poolId: string,
+  held: ActionRow,
+): boolean {
+  if (held.Category !== 'Gathering') return false
+  if (!isBelowProficiency(save, held)) return false
+  const preferred = preferredPoolEntries(db, save, poolId)
+  const heldId = held['Action ID']
+  return preferred.length > 0 && preferred.every((pair) => pair.action['Action ID'] !== heldId)
 }
 
 export function completeGatheringAction(
