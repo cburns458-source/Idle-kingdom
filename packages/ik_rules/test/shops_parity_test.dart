@@ -223,6 +223,11 @@ void main() {
                 'actions': actionsForSkill(db, skillId).map((item) => item.toJson()).toList(),
                 'projects': projectsForSkill(db, skillId).map((item) => item.toJson()).toList(),
                 'combined': skillMenuEntries(db, skillId).map((item) => item.id).toList(),
+                'display': skillMenuDisplayEntries(
+                  db,
+                  skillId,
+                ).map((item) => item.toJson()).toList(),
+                'view': skillMenuView(db, skillId).toJson(),
               },
             )
             .toList();
