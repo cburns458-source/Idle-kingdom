@@ -11768,7 +11768,7 @@
       "Target ID": "ITEM-0062",
       "Proficiency Level": 40,
       "Base Duration Seconds": 360,
-      "XP Reward": 480000,
+      "XP Reward": 250000,
       "Guaranteed Gold": 0,
       "Drop Chance": 100,
       "Reward Table ID": "RWT-0075",
@@ -11788,7 +11788,7 @@
       "Target ID": "ITEM-0067",
       "Proficiency Level": 50,
       "Base Duration Seconds": 360,
-      "XP Reward": 520000,
+      "XP Reward": 350000,
       "Guaranteed Gold": 0,
       "Drop Chance": 100,
       "Reward Table ID": "RWT-0076",
@@ -11848,7 +11848,7 @@
       "Target ID": "ITEM-0192",
       "Proficiency Level": 80,
       "Base Duration Seconds": 720,
-      "XP Reward": 2400000,
+      "XP Reward": 1500000,
       "Guaranteed Gold": 0,
       "Drop Chance": 100,
       "Reward Table ID": "RWT-0079",
@@ -11928,7 +11928,7 @@
       "Target ID": "ITEM-0077",
       "Proficiency Level": 35,
       "Base Duration Seconds": 300,
-      "XP Reward": 380000,
+      "XP Reward": 160000,
       "Guaranteed Gold": 0,
       "Drop Chance": 100,
       "Reward Table ID": "RWT-0083",
@@ -11948,7 +11948,7 @@
       "Target ID": "ITEM-0081",
       "Proficiency Level": 45,
       "Base Duration Seconds": 360,
-      "XP Reward": 450000,
+      "XP Reward": 300000,
       "Guaranteed Gold": 0,
       "Drop Chance": 100,
       "Reward Table ID": "RWT-0084",
@@ -12028,7 +12028,7 @@
       "Target ID": "ITEM-0080",
       "Proficiency Level": 70,
       "Base Duration Seconds": 540,
-      "XP Reward": 2000000,
+      "XP Reward": 1600000,
       "Guaranteed Gold": 0,
       "Drop Chance": 100,
       "Reward Table ID": "RWT-0088",
@@ -12428,7 +12428,7 @@
       "Target ID": "ITEM-0073",
       "Proficiency Level": 30,
       "Base Duration Seconds": 240,
-      "XP Reward": 280000,
+      "XP Reward": 120000,
       "Guaranteed Gold": 0,
       "Drop Chance": 100,
       "Reward Table ID": "RWT-0107",
@@ -12448,7 +12448,7 @@
       "Target ID": "ITEM-0071",
       "Proficiency Level": 40,
       "Base Duration Seconds": 300,
-      "XP Reward": 420000,
+      "XP Reward": 320000,
       "Guaranteed Gold": 0,
       "Drop Chance": 100,
       "Reward Table ID": "RWT-0108",
@@ -16885,7 +16885,9 @@
       "Ingredient 2 Item ID": null,
       "Ingredient 2 Quantity": null,
       "Ingredient 3 Item ID": null,
-      "Ingredient 3 Quantity": null
+      "Ingredient 3 Quantity": null,
+      "Ingredient 4 Item ID": null,
+      "Ingredient 4 Quantity": null
     },
     {
       "Recipe ID": "RCP-0002",
@@ -16908,7 +16910,9 @@
       "Ingredient 2 Item ID": null,
       "Ingredient 2 Quantity": null,
       "Ingredient 3 Item ID": null,
-      "Ingredient 3 Quantity": null
+      "Ingredient 3 Quantity": null,
+      "Ingredient 4 Item ID": null,
+      "Ingredient 4 Quantity": null
     },
     {
       "Recipe ID": "RCP-0003",
@@ -16931,7 +16935,9 @@
       "Ingredient 2 Item ID": null,
       "Ingredient 2 Quantity": null,
       "Ingredient 3 Item ID": null,
-      "Ingredient 3 Quantity": null
+      "Ingredient 3 Quantity": null,
+      "Ingredient 4 Item ID": null,
+      "Ingredient 4 Quantity": null
     },
     {
       "Recipe ID": "RCP-0004",
@@ -16954,7 +16960,9 @@
       "Ingredient 2 Item ID": null,
       "Ingredient 2 Quantity": null,
       "Ingredient 3 Item ID": null,
-      "Ingredient 3 Quantity": null
+      "Ingredient 3 Quantity": null,
+      "Ingredient 4 Item ID": null,
+      "Ingredient 4 Quantity": null
     },
     {
       "Recipe ID": "RCP-0005",
@@ -16966,7 +16974,7 @@
       "Facility ID": "FAC-0001",
       "Proficiency Level": 40,
       "Base Duration Seconds": 360,
-      "XP Reward": 48000,
+      "XP Reward": 25000,
       "Knowledge Source": "Automatic level unlock",
       "Action ID": "ACN-0123",
       "Status": "Planned",
@@ -16977,7 +16985,9 @@
       "Ingredient 2 Item ID": null,
       "Ingredient 2 Quantity": null,
       "Ingredient 3 Item ID": null,
-      "Ingredient 3 Quantity": null
+      "Ingredient 3 Quantity": null,
+      "Ingredient 4 Item ID": null,
+      "Ingredient 4 Quantity": null
     },
     {
       "Recipe ID": "RCP-0006",
@@ -17000,7 +17010,9 @@
       "Ingredient 2 Item ID": null,
       "Ingredient 2 Quantity": null,
       "Ingredient 3 Item ID": null,
-      "Ingredient 3 Quantity": null
+      "Ingredient 3 Quantity": null,
+      "Ingredient 4 Item ID": null,
+      "Ingredient 4 Quantity": null
     },
     {
       "Recipe ID": "RCP-0007",
@@ -17023,7 +17035,9 @@
       "Ingredient 2 Item ID": null,
       "Ingredient 2 Quantity": null,
       "Ingredient 3 Item ID": null,
-      "Ingredient 3 Quantity": null
+      "Ingredient 3 Quantity": null,
+      "Ingredient 4 Item ID": null,
+      "Ingredient 4 Quantity": null
     },
     {
       "Recipe ID": "RCP-0008",
@@ -17046,7 +17060,9 @@
       "Ingredient 2 Item ID": null,
       "Ingredient 2 Quantity": null,
       "Ingredient 3 Item ID": null,
-      "Ingredient 3 Quantity": null
+      "Ingredient 3 Quantity": null,
+      "Ingredient 4 Item ID": null,
+      "Ingredient 4 Quantity": null
     },
     {
       "Recipe ID": "RCP-0009",
@@ -17069,7 +17085,9 @@
       "Ingredient 2 Item ID": null,
       "Ingredient 2 Quantity": null,
       "Ingredient 3 Item ID": null,
-      "Ingredient 3 Quantity": null
+      "Ingredient 3 Quantity": null,
+      "Ingredient 4 Item ID": null,
+      "Ingredient 4 Quantity": null
     },
     {
       "Recipe ID": "RCP-0010",
@@ -17081,7 +17099,7 @@
       "Facility ID": "FAC-0001",
       "Proficiency Level": 50,
       "Base Duration Seconds": 360,
-      "XP Reward": 52000,
+      "XP Reward": 35000,
       "Knowledge Source": "Automatic level unlock",
       "Action ID": "ACN-0124",
       "Status": "Planned",
@@ -17092,7 +17110,9 @@
       "Ingredient 2 Item ID": null,
       "Ingredient 2 Quantity": null,
       "Ingredient 3 Item ID": null,
-      "Ingredient 3 Quantity": null
+      "Ingredient 3 Quantity": null,
+      "Ingredient 4 Item ID": null,
+      "Ingredient 4 Quantity": null
     },
     {
       "Recipe ID": "RCP-0012",
@@ -17112,10 +17132,12 @@
       "Notes": null,
       "Ingredient 1 Item ID": "ITEM-0053",
       "Ingredient 1 Quantity": 1,
-      "Ingredient 2 Item ID": "ITEM-0030",
-      "Ingredient 2 Quantity": 2,
-      "Ingredient 3 Item ID": "ITEM-0031",
-      "Ingredient 3 Quantity": 1
+      "Ingredient 2 Item ID": "ITEM-0027",
+      "Ingredient 2 Quantity": 3,
+      "Ingredient 3 Item ID": "ITEM-0030",
+      "Ingredient 3 Quantity": 1,
+      "Ingredient 4 Item ID": null,
+      "Ingredient 4 Quantity": null
     },
     {
       "Recipe ID": "RCP-0013",
@@ -17135,10 +17157,12 @@
       "Notes": null,
       "Ingredient 1 Item ID": "ITEM-0055",
       "Ingredient 1 Quantity": 1,
-      "Ingredient 2 Item ID": "ITEM-0030",
+      "Ingredient 2 Item ID": "ITEM-0025",
       "Ingredient 2 Quantity": 3,
-      "Ingredient 3 Item ID": "ITEM-0032",
-      "Ingredient 3 Quantity": 1
+      "Ingredient 3 Item ID": "ITEM-0031",
+      "Ingredient 3 Quantity": 2,
+      "Ingredient 4 Item ID": null,
+      "Ingredient 4 Quantity": null
     },
     {
       "Recipe ID": "RCP-0014",
@@ -17161,7 +17185,9 @@
       "Ingredient 2 Item ID": null,
       "Ingredient 2 Quantity": null,
       "Ingredient 3 Item ID": null,
-      "Ingredient 3 Quantity": null
+      "Ingredient 3 Quantity": null,
+      "Ingredient 4 Item ID": null,
+      "Ingredient 4 Quantity": null
     },
     {
       "Recipe ID": "RCP-0015",
@@ -17184,7 +17210,9 @@
       "Ingredient 2 Item ID": "ITEM-0004",
       "Ingredient 2 Quantity": 1,
       "Ingredient 3 Item ID": null,
-      "Ingredient 3 Quantity": null
+      "Ingredient 3 Quantity": null,
+      "Ingredient 4 Item ID": null,
+      "Ingredient 4 Quantity": null
     },
     {
       "Recipe ID": "RCP-0016",
@@ -17207,7 +17235,9 @@
       "Ingredient 2 Item ID": null,
       "Ingredient 2 Quantity": null,
       "Ingredient 3 Item ID": null,
-      "Ingredient 3 Quantity": null
+      "Ingredient 3 Quantity": null,
+      "Ingredient 4 Item ID": null,
+      "Ingredient 4 Quantity": null
     },
     {
       "Recipe ID": "RCP-0017",
@@ -17219,7 +17249,7 @@
       "Facility ID": "FAC-0004",
       "Proficiency Level": 35,
       "Base Duration Seconds": 300,
-      "XP Reward": 38000,
+      "XP Reward": 16000,
       "Knowledge Source": "Automatic level unlock",
       "Action ID": "ACN-0131",
       "Status": "Planned",
@@ -17230,7 +17260,9 @@
       "Ingredient 2 Item ID": "ITEM-0006",
       "Ingredient 2 Quantity": 2,
       "Ingredient 3 Item ID": null,
-      "Ingredient 3 Quantity": null
+      "Ingredient 3 Quantity": null,
+      "Ingredient 4 Item ID": null,
+      "Ingredient 4 Quantity": null
     },
     {
       "Recipe ID": "RCP-0018",
@@ -17253,7 +17285,9 @@
       "Ingredient 2 Item ID": "ITEM-0006",
       "Ingredient 2 Quantity": 3,
       "Ingredient 3 Item ID": null,
-      "Ingredient 3 Quantity": null
+      "Ingredient 3 Quantity": null,
+      "Ingredient 4 Item ID": null,
+      "Ingredient 4 Quantity": null
     },
     {
       "Recipe ID": "RCP-0019",
@@ -17276,7 +17310,9 @@
       "Ingredient 2 Item ID": "ITEM-0004",
       "Ingredient 2 Quantity": 1,
       "Ingredient 3 Item ID": null,
-      "Ingredient 3 Quantity": null
+      "Ingredient 3 Quantity": null,
+      "Ingredient 4 Item ID": null,
+      "Ingredient 4 Quantity": null
     },
     {
       "Recipe ID": "RCP-0020",
@@ -17288,7 +17324,7 @@
       "Facility ID": "FAC-0004",
       "Proficiency Level": 70,
       "Base Duration Seconds": 540,
-      "XP Reward": 200000,
+      "XP Reward": 160000,
       "Knowledge Source": "Automatic level unlock",
       "Action ID": "ACN-0136",
       "Status": "Planned",
@@ -17299,7 +17335,9 @@
       "Ingredient 2 Item ID": "ITEM-0005",
       "Ingredient 2 Quantity": 1,
       "Ingredient 3 Item ID": "ITEM-0003",
-      "Ingredient 3 Quantity": 1
+      "Ingredient 3 Quantity": 1,
+      "Ingredient 4 Item ID": null,
+      "Ingredient 4 Quantity": null
     },
     {
       "Recipe ID": "RCP-0021",
@@ -17311,7 +17349,7 @@
       "Facility ID": "FAC-0004",
       "Proficiency Level": 45,
       "Base Duration Seconds": 360,
-      "XP Reward": 45000,
+      "XP Reward": 30000,
       "Knowledge Source": "Automatic level unlock",
       "Action ID": "ACN-0132",
       "Status": "Planned",
@@ -17322,7 +17360,9 @@
       "Ingredient 2 Item ID": null,
       "Ingredient 2 Quantity": null,
       "Ingredient 3 Item ID": null,
-      "Ingredient 3 Quantity": null
+      "Ingredient 3 Quantity": null,
+      "Ingredient 4 Item ID": null,
+      "Ingredient 4 Quantity": null
     },
     {
       "Recipe ID": "RCP-0022",
@@ -17345,7 +17385,9 @@
       "Ingredient 2 Item ID": null,
       "Ingredient 2 Quantity": null,
       "Ingredient 3 Item ID": null,
-      "Ingredient 3 Quantity": null
+      "Ingredient 3 Quantity": null,
+      "Ingredient 4 Item ID": null,
+      "Ingredient 4 Quantity": null
     },
     {
       "Recipe ID": "RCP-0023",
@@ -17368,7 +17410,9 @@
       "Ingredient 2 Item ID": null,
       "Ingredient 2 Quantity": null,
       "Ingredient 3 Item ID": null,
-      "Ingredient 3 Quantity": null
+      "Ingredient 3 Quantity": null,
+      "Ingredient 4 Item ID": null,
+      "Ingredient 4 Quantity": null
     },
     {
       "Recipe ID": "RCP-0024",
@@ -17391,7 +17435,9 @@
       "Ingredient 2 Item ID": null,
       "Ingredient 2 Quantity": null,
       "Ingredient 3 Item ID": null,
-      "Ingredient 3 Quantity": null
+      "Ingredient 3 Quantity": null,
+      "Ingredient 4 Item ID": null,
+      "Ingredient 4 Quantity": null
     },
     {
       "Recipe ID": "RCP-0028",
@@ -17414,7 +17460,9 @@
       "Ingredient 2 Item ID": null,
       "Ingredient 2 Quantity": null,
       "Ingredient 3 Item ID": null,
-      "Ingredient 3 Quantity": null
+      "Ingredient 3 Quantity": null,
+      "Ingredient 4 Item ID": null,
+      "Ingredient 4 Quantity": null
     },
     {
       "Recipe ID": "RCP-0029",
@@ -17437,7 +17485,9 @@
       "Ingredient 2 Item ID": null,
       "Ingredient 2 Quantity": null,
       "Ingredient 3 Item ID": null,
-      "Ingredient 3 Quantity": null
+      "Ingredient 3 Quantity": null,
+      "Ingredient 4 Item ID": null,
+      "Ingredient 4 Quantity": null
     },
     {
       "Recipe ID": "RCP-0030",
@@ -17460,7 +17510,9 @@
       "Ingredient 2 Item ID": null,
       "Ingredient 2 Quantity": null,
       "Ingredient 3 Item ID": null,
-      "Ingredient 3 Quantity": null
+      "Ingredient 3 Quantity": null,
+      "Ingredient 4 Item ID": null,
+      "Ingredient 4 Quantity": null
     },
     {
       "Recipe ID": "RCP-0032",
@@ -17483,7 +17535,9 @@
       "Ingredient 2 Item ID": null,
       "Ingredient 2 Quantity": null,
       "Ingredient 3 Item ID": null,
-      "Ingredient 3 Quantity": null
+      "Ingredient 3 Quantity": null,
+      "Ingredient 4 Item ID": null,
+      "Ingredient 4 Quantity": null
     },
     {
       "Recipe ID": "RCP-0033",
@@ -17506,7 +17560,9 @@
       "Ingredient 2 Item ID": null,
       "Ingredient 2 Quantity": null,
       "Ingredient 3 Item ID": null,
-      "Ingredient 3 Quantity": null
+      "Ingredient 3 Quantity": null,
+      "Ingredient 4 Item ID": null,
+      "Ingredient 4 Quantity": null
     },
     {
       "Recipe ID": "RCP-0036",
@@ -17529,7 +17585,9 @@
       "Ingredient 2 Item ID": "ITEM-0033",
       "Ingredient 2 Quantity": 1,
       "Ingredient 3 Item ID": "ITEM-0082",
-      "Ingredient 3 Quantity": 1
+      "Ingredient 3 Quantity": 1,
+      "Ingredient 4 Item ID": "ITEM-0002",
+      "Ingredient 4 Quantity": 3
     },
     {
       "Recipe ID": "RCP-0037",
@@ -17552,7 +17610,9 @@
       "Ingredient 2 Item ID": "ITEM-0207",
       "Ingredient 2 Quantity": 1,
       "Ingredient 3 Item ID": "ITEM-0082",
-      "Ingredient 3 Quantity": 1
+      "Ingredient 3 Quantity": 1,
+      "Ingredient 4 Item ID": "ITEM-0002",
+      "Ingredient 4 Quantity": 3
     },
     {
       "Recipe ID": "RCP-0040",
@@ -17575,7 +17635,9 @@
       "Ingredient 2 Item ID": "ITEM-0041",
       "Ingredient 2 Quantity": 1,
       "Ingredient 3 Item ID": "ITEM-0011",
-      "Ingredient 3 Quantity": 1
+      "Ingredient 3 Quantity": 1,
+      "Ingredient 4 Item ID": null,
+      "Ingredient 4 Quantity": null
     },
     {
       "Recipe ID": "RCP-0041",
@@ -17587,7 +17649,7 @@
       "Facility ID": "FAC-0006",
       "Proficiency Level": 40,
       "Base Duration Seconds": 300,
-      "XP Reward": 42000,
+      "XP Reward": 32000,
       "Knowledge Source": "Automatic level unlock",
       "Action ID": "ACN-0157",
       "Status": "Planned",
@@ -17598,7 +17660,9 @@
       "Ingredient 2 Item ID": "ITEM-0039",
       "Ingredient 2 Quantity": 2,
       "Ingredient 3 Item ID": null,
-      "Ingredient 3 Quantity": null
+      "Ingredient 3 Quantity": null,
+      "Ingredient 4 Item ID": null,
+      "Ingredient 4 Quantity": null
     },
     {
       "Recipe ID": "RCP-0043",
@@ -17610,7 +17674,7 @@
       "Facility ID": "FAC-0006",
       "Proficiency Level": 30,
       "Base Duration Seconds": 240,
-      "XP Reward": 28000,
+      "XP Reward": 12000,
       "Knowledge Source": "Automatic level unlock",
       "Action ID": "ACN-0156",
       "Status": "Planned",
@@ -17621,7 +17685,9 @@
       "Ingredient 2 Item ID": "ITEM-0042",
       "Ingredient 2 Quantity": 1,
       "Ingredient 3 Item ID": null,
-      "Ingredient 3 Quantity": null
+      "Ingredient 3 Quantity": null,
+      "Ingredient 4 Item ID": null,
+      "Ingredient 4 Quantity": null
     },
     {
       "Recipe ID": "RCP-0044",
@@ -17633,7 +17699,7 @@
       "Facility ID": "FAC-0001",
       "Proficiency Level": 80,
       "Base Duration Seconds": 720,
-      "XP Reward": 240000,
+      "XP Reward": 150000,
       "Knowledge Source": "Automatic level unlock",
       "Action ID": "ACN-0127",
       "Status": "Planned",
@@ -17644,7 +17710,9 @@
       "Ingredient 2 Item ID": "ITEM-0207",
       "Ingredient 2 Quantity": 1,
       "Ingredient 3 Item ID": "ITEM-0208",
-      "Ingredient 3 Quantity": 1
+      "Ingredient 3 Quantity": 1,
+      "Ingredient 4 Item ID": null,
+      "Ingredient 4 Quantity": null
     },
     {
       "Recipe ID": "RCP-0045",
@@ -17667,7 +17735,9 @@
       "Ingredient 2 Item ID": "ITEM-0202",
       "Ingredient 2 Quantity": 1,
       "Ingredient 3 Item ID": "ITEM-0011",
-      "Ingredient 3 Quantity": 1
+      "Ingredient 3 Quantity": 1,
+      "Ingredient 4 Item ID": null,
+      "Ingredient 4 Quantity": null
     },
     {
       "Recipe ID": "RCP-0046",
@@ -17690,7 +17760,9 @@
       "Ingredient 2 Item ID": null,
       "Ingredient 2 Quantity": null,
       "Ingredient 3 Item ID": null,
-      "Ingredient 3 Quantity": null
+      "Ingredient 3 Quantity": null,
+      "Ingredient 4 Item ID": null,
+      "Ingredient 4 Quantity": null
     },
     {
       "Recipe ID": "RCP-0047",
@@ -17713,7 +17785,9 @@
       "Ingredient 2 Item ID": null,
       "Ingredient 2 Quantity": null,
       "Ingredient 3 Item ID": null,
-      "Ingredient 3 Quantity": null
+      "Ingredient 3 Quantity": null,
+      "Ingredient 4 Item ID": null,
+      "Ingredient 4 Quantity": null
     },
     {
       "Recipe ID": "RCP-0048",
@@ -17736,7 +17810,9 @@
       "Ingredient 2 Item ID": null,
       "Ingredient 2 Quantity": null,
       "Ingredient 3 Item ID": null,
-      "Ingredient 3 Quantity": null
+      "Ingredient 3 Quantity": null,
+      "Ingredient 4 Item ID": null,
+      "Ingredient 4 Quantity": null
     },
     {
       "Recipe ID": "RCP-0049",
@@ -17759,7 +17835,9 @@
       "Ingredient 2 Item ID": null,
       "Ingredient 2 Quantity": null,
       "Ingredient 3 Item ID": null,
-      "Ingredient 3 Quantity": null
+      "Ingredient 3 Quantity": null,
+      "Ingredient 4 Item ID": null,
+      "Ingredient 4 Quantity": null
     },
     {
       "Recipe ID": "RCP-0050",
@@ -17782,7 +17860,9 @@
       "Ingredient 2 Item ID": null,
       "Ingredient 2 Quantity": null,
       "Ingredient 3 Item ID": null,
-      "Ingredient 3 Quantity": null
+      "Ingredient 3 Quantity": null,
+      "Ingredient 4 Item ID": null,
+      "Ingredient 4 Quantity": null
     },
     {
       "Recipe ID": "RCP-0051",
@@ -17805,7 +17885,9 @@
       "Ingredient 2 Item ID": null,
       "Ingredient 2 Quantity": null,
       "Ingredient 3 Item ID": null,
-      "Ingredient 3 Quantity": null
+      "Ingredient 3 Quantity": null,
+      "Ingredient 4 Item ID": null,
+      "Ingredient 4 Quantity": null
     },
     {
       "Recipe ID": "RCP-0052",
@@ -17828,7 +17910,9 @@
       "Ingredient 2 Item ID": "ITEM-0202",
       "Ingredient 2 Quantity": 1,
       "Ingredient 3 Item ID": null,
-      "Ingredient 3 Quantity": null
+      "Ingredient 3 Quantity": null,
+      "Ingredient 4 Item ID": null,
+      "Ingredient 4 Quantity": null
     },
     {
       "Recipe ID": "RCP-0053",
@@ -17851,7 +17935,9 @@
       "Ingredient 2 Item ID": "ITEM-0038",
       "Ingredient 2 Quantity": 1,
       "Ingredient 3 Item ID": null,
-      "Ingredient 3 Quantity": null
+      "Ingredient 3 Quantity": null,
+      "Ingredient 4 Item ID": null,
+      "Ingredient 4 Quantity": null
     },
     {
       "Recipe ID": "RCP-0054",
@@ -17874,7 +17960,9 @@
       "Ingredient 2 Item ID": "ITEM-0040",
       "Ingredient 2 Quantity": 1,
       "Ingredient 3 Item ID": null,
-      "Ingredient 3 Quantity": null
+      "Ingredient 3 Quantity": null,
+      "Ingredient 4 Item ID": null,
+      "Ingredient 4 Quantity": null
     },
     {
       "Recipe ID": "RCP-0059",
@@ -17897,7 +17985,9 @@
       "Ingredient 2 Item ID": "ITEM-0041",
       "Ingredient 2 Quantity": 1,
       "Ingredient 3 Item ID": "ITEM-0011",
-      "Ingredient 3 Quantity": 1
+      "Ingredient 3 Quantity": 1,
+      "Ingredient 4 Item ID": null,
+      "Ingredient 4 Quantity": null
     },
     {
       "Recipe ID": "RCP-0055",
@@ -17920,7 +18010,9 @@
       "Ingredient 2 Item ID": "ITEM-0201",
       "Ingredient 2 Quantity": 1,
       "Ingredient 3 Item ID": null,
-      "Ingredient 3 Quantity": null
+      "Ingredient 3 Quantity": null,
+      "Ingredient 4 Item ID": null,
+      "Ingredient 4 Quantity": null
     },
     {
       "Recipe ID": "RCP-0056",
@@ -17943,7 +18035,9 @@
       "Ingredient 2 Item ID": "ITEM-0202",
       "Ingredient 2 Quantity": 1,
       "Ingredient 3 Item ID": "ITEM-0011",
-      "Ingredient 3 Quantity": 2
+      "Ingredient 3 Quantity": 2,
+      "Ingredient 4 Item ID": null,
+      "Ingredient 4 Quantity": null
     },
     {
       "Recipe ID": "RCP-0057",
@@ -17966,7 +18060,9 @@
       "Ingredient 2 Item ID": "ITEM-0095",
       "Ingredient 2 Quantity": 10,
       "Ingredient 3 Item ID": null,
-      "Ingredient 3 Quantity": null
+      "Ingredient 3 Quantity": null,
+      "Ingredient 4 Item ID": null,
+      "Ingredient 4 Quantity": null
     },
     {
       "Recipe ID": "RCP-0058",
@@ -17989,7 +18085,9 @@
       "Ingredient 2 Item ID": null,
       "Ingredient 2 Quantity": null,
       "Ingredient 3 Item ID": null,
-      "Ingredient 3 Quantity": null
+      "Ingredient 3 Quantity": null,
+      "Ingredient 4 Item ID": null,
+      "Ingredient 4 Quantity": null
     },
     {
       "Recipe ID": "RCP-0060",
@@ -18012,7 +18110,9 @@
       "Ingredient 2 Item ID": "ITEM-0027",
       "Ingredient 2 Quantity": 5,
       "Ingredient 3 Item ID": "ITEM-0191",
-      "Ingredient 3 Quantity": 1
+      "Ingredient 3 Quantity": 1,
+      "Ingredient 4 Item ID": null,
+      "Ingredient 4 Quantity": null
     }
   ],
   "Projects": [

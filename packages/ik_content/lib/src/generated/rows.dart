@@ -623,6 +623,10 @@ class RecipeRow extends DbRow {
   String? get ingredient3ItemId => stringOrNull('Ingredient 3 Item ID');
 
   num? get ingredient3Quantity => numberOrNull('Ingredient 3 Quantity');
+
+  String? get ingredient4ItemId => stringOrNull('Ingredient 4 Item ID');
+
+  num? get ingredient4Quantity => numberOrNull('Ingredient 4 Quantity');
 }
 
 class RequirementRow extends DbRow {
