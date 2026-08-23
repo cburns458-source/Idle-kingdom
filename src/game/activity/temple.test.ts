@@ -92,4 +92,50 @@ describe('Temple', () => {
     expect(forcedHostileActivity(launch, save, 'LOC-0036')).toBeNull()
     expect(locationIsHostileFor(launch, save, 'LOC-0036')).toBe(false)
   })
+
+  it('pick weeds rolls augur weed or moonblossom with empty hands', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const activity = launch.Activities.find((row) => row['Activity ID'] === 'ACT-0039')
+    expect(activity?.['Contextual Name']).toBe('Pick weeds')
+    expect(activity?.['Pool ID']).toBe('POOL-0029')
+
+    const pool = launch.PoolEntries.filter((row) => row['Pool ID'] === 'POOL-0029')
+    expect(pool).toHaveLength(2)
+    expect(pool.map((row) => `${row['Action ID']}:${row.Weight}`)).toEqual(
+      expect.arrayContaining(['ACN-0109:90', 'ACN-0110:10']),
+    )
+
+    const augur = launch.Actions.find((row) => row['Action ID'] === 'ACN-0109')
+    expect(augur?.['Display Name']).toBe('Gather augur weed')
+    expect(augur?.['Base Duration Seconds']).toBe(360)
+    expect(augur?.['XP Reward']).toBe(50000)
+
+    const moon = launch.Actions.find((row) => row['Action ID'] === 'ACN-0110')
+    expect(moon?.['Base Duration Seconds']).toBe(540)
+    expect(moon?.['XP Reward']).toBe(75000)
+
+    expect(launch.Actions.some((row) => row['Action ID'] === 'ACN-0174')).toBe(false)
+
+    let save = {
+      ...createNewSave(launch),
+      currentLocationId: 'LOC-0036',
+    }
+    save = equipStackToSlot(save, WEAPON_TOOL_SLOT_ID, 'ITEM-0100', 1)
+    save = equipStackToSlot(save, OFFHAND_SLOT_ID, 'ITEM-0145', 1)
+
+    const started = requestActivityStart(
+      launch,
+      save,
+      'ACT-0039',
+      Date.parse('2026-01-01T00:00:00.000Z'),
+      () => 0,
+    )
+    expect(started.ok).toBe(true)
+    if (!started.ok) return
+    save = started.save
+    expect(save.equipment.slots[WEAPON_TOOL_SLOT_ID]).toBeNull()
+    expect(save.equipment.slots[OFFHAND_SLOT_ID]).toBeNull()
+    expect(save.currentActivityId).toBe('ACT-0039')
+    expect(save.currentActionId).toBe('ACN-0109')
+  })
 })
