@@ -37,6 +37,7 @@ const INTRODUCED_AT: Array<[number, string[]]> = [
   [24, ['rankedPvpDayKey', 'rankedPvpFightsToday', 'rankedPvpWins', 'rankedPvpLosses']],
   [25, ['favoriteActivityByLocationId']],
   [29, ['claimedKingswoodsSling']],
+  [30, ['playTimeMs']],
 ]
 
 /**

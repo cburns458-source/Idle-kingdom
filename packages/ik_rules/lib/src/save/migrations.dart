@@ -426,6 +426,16 @@ final List<SaveMigration> saveMigrations = <SaveMigration>[
       return next;
     },
   ),
+  SaveMigration(
+    fromVersion: 29,
+    toVersion: 30,
+    migrate: (save, nowMs) {
+      final next = _bumped(save, 30);
+      final raw = jsNumber(save['playTimeMs']);
+      next['playTimeMs'] = raw.isFinite && raw > 0 ? raw : 0;
+      return next;
+    },
+  ),
 ];
 
 /// Thrown when a save cannot be brought to the current version.

@@ -165,6 +165,7 @@ const Map<String, String> _actionArt = <String, String>{
   'ACN-0107': 'actions/acn_gather_mosstole.webp',
   'ACN-0108': 'actions/acn_gather_wild_berries.webp',
   'ACN-0109': 'actions/acn_gather_augur_weed.webp',
+  'ACN-0174': 'actions/acn_gather_augur_weed.webp',
   'ACN-0110': 'actions/acn_gather_moonblossom.webp',
   'ACN-0111': 'actions/acn_gather_starroot.webp',
   'ACN-0112': 'actions/acn_hunt_mountain_goat.webp',

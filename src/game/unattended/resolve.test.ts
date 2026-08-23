@@ -29,13 +29,16 @@ describe('unattended progression', () => {
     save = {
       ...generated!.save,
       unattendedProgressAt: new Date(startedAt).toISOString(),
+      playTimeMs: 5_000,
     }
 
-    // Meadow gathering actions are ~30-45s; two minutes covers several completions.
+    // Meadow gathering actions are ~30-45s; three minutes covers several completions.
     const now = startedAt + 180_000
     const resolved = resolveUnattendedProgress(launch, save, now, () => 0)
     expect(resolved.gatheringActions).toBeGreaterThanOrEqual(3)
     expect(resolved.save.unattendedProgressAt).toBe(new Date(now).toISOString())
+    expect(resolved.save.playTimeMs).toBe(5_000 + resolved.effectiveElapsedMs)
+    expect(resolved.effectiveElapsedMs).toBe(180_000)
   })
 
   it('caps catch-up at unattended_cap even for longer absences', () => {
@@ -65,6 +68,7 @@ describe('unattended progression', () => {
     )
     expect(resolved.gatheringActions).toBe(uncapped.gatheringActions)
     expect(resolved.gatheringActions).toBeGreaterThan(0)
+    expect(resolved.save.playTimeMs).toBe(24 * 3_600_000)
   })
 
   it('advances a production queue within the capped window', () => {

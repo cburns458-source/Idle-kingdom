@@ -16,4 +16,16 @@ void main() {
       expect(formatDurationMs(120000), '2m 0s');
     });
   });
+
+  group('formatPlayTimeMs', () {
+    test('hides seconds after the first minute', () {
+      expect(formatPlayTimeMs(0), '0m');
+      expect(formatPlayTimeMs(45000), '45s');
+      expect(formatPlayTimeMs(12 * 60000), '12m');
+      expect(formatPlayTimeMs(3 * 3600000 + 12 * 60000), '3h 12m');
+      expect(formatPlayTimeMs(3 * 3600000), '3h');
+      expect(formatPlayTimeMs(2 * 24 * 3600000 + 5 * 3600000), '2d 5h');
+      expect(formatPlayTimeMs(2 * 24 * 3600000), '2d');
+    });
+  });
 }

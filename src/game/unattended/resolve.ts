@@ -19,6 +19,7 @@ import {
 import type { GameDatabase } from '../data/types'
 import { applyActivityTimeTowardCritters } from '../critters/critters'
 import { resolveProductionProgress } from '../production/engine'
+import { accruePlayTime } from '../save/playTime'
 import type { PlayerSave } from '../save/types'
 
 /**
@@ -350,7 +351,7 @@ export function resolveUnattendedProgress(
   // advance the anchor as far as the simulation actually got — the
   // remainder will be caught up on the next load instead of being lost.
   const stampAt = hitStepLimit ? Math.min(nowMs, lastResolvedMs) : nowMs
-  const stamped = stampUnattendedProgressAt(current, stampAt)
+  const stamped = accruePlayTime(stampUnattendedProgressAt(current, stampAt), effectiveElapsedMs)
   const changed =
     stamped !== save &&
     (gatheringActions > 0 ||
@@ -359,6 +360,7 @@ export function resolveUnattendedProgress(
       combatDeaths > 0 ||
       crittersSpawned > 0 ||
       stamped.unattendedProgressAt !== save.unattendedProgressAt ||
+      stamped.playTimeMs !== save.playTimeMs ||
       stamped.currentActionId !== save.currentActionId ||
       stamped.combatEnemyHp !== save.combatEnemyHp ||
       stamped.currentHp !== save.currentHp ||

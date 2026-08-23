@@ -63,6 +63,7 @@ function sampleSave(skills: Array<{ skillId: string; level: number; xp: number }
     productionQuantityRemaining: null,
     activityTransition: null,
     unattendedProgressAt: null,
+    playTimeMs: 0,
     currentHp: 1000,
     maxHp: 1000,
   }

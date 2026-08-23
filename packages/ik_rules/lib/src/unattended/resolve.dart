@@ -12,6 +12,7 @@ import '../js_compat.dart';
 import '../production/engine.dart';
 import '../rng/mulberry32.dart';
 import '../save/generated/save_models.dart';
+import '../save/play_time.dart';
 import '../time.dart';
 
 /// Safety valve on the combat/gathering catch-up loop (one discrete round/action
@@ -354,7 +355,7 @@ UnattendedResult resolveUnattendedProgress(
   // anchor as far as the simulation actually got — the remainder will be caught
   // up on the next load instead of being lost.
   final stampAt = hitStepLimit ? math.min(nowMs, lastResolvedMs) : nowMs;
-  final stamped = stampUnattendedProgressAt(current, stampAt);
+  final stamped = accruePlayTime(stampUnattendedProgressAt(current, stampAt), effectiveElapsedMs);
   const deep = DeepCollectionEquality();
   final changed =
       !identical(stamped, save) &&
@@ -364,6 +365,7 @@ UnattendedResult resolveUnattendedProgress(
           combatDeaths > 0 ||
           crittersSpawned > 0 ||
           stamped.unattendedProgressAt != save.unattendedProgressAt ||
+          stamped.playTimeMs != save.playTimeMs ||
           stamped.currentActionId != save.currentActionId ||
           stamped.combatEnemyHp != save.combatEnemyHp ||
           stamped.currentHp != save.currentHp ||

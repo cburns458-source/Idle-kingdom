@@ -27,6 +27,7 @@ void main() {
 
     expect(find.text('Temple'), findsWidgets);
     expect(find.text('Train with the monks'), findsOne);
+    expect(find.text('Pick weeds'), findsOne);
     expect(find.text('Blessing'), findsOne);
     expect(find.text('Be blessed'), findsOne);
     expect(find.bySemanticsLabel('Bless'), findsOne);

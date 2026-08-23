@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:idle_kingdoms/src/session/game_controller.dart';
 import 'package:idle_kingdoms/src/session/multiplayer_controller.dart';
 import 'package:idle_kingdoms/src/theme.dart';
 import 'package:idle_kingdoms/src/ui/account_panel.dart';
 import 'package:ik_content/ik_content.dart';
 import 'package:ik_net/ik_net.dart';
 import 'package:ik_net/testing.dart';
+import 'package:ik_rules/ik_rules.dart';
 
 import 'support/harness.dart';
 
@@ -16,17 +18,22 @@ void main() {
     database = loadDatabaseFromRepo();
   });
 
-  Future<void> pumpAccount(WidgetTester tester, MultiplayerController net) async {
-    final game = buildController(database, seed: startedCharacter(database));
+  Future<GameController> pumpAccount(
+    WidgetTester tester,
+    MultiplayerController net, {
+    PlayerSave? seed,
+  }) async {
+    final game = buildController(database, seed: seed ?? startedCharacter(database));
     addTearDown(game.dispose);
     addTearDown(net.dispose);
     await pumpPanel(
       tester,
       ListenableBuilder(
-        listenable: net,
+        listenable: Listenable.merge(<Listenable>[game, net]),
         builder: (context, _) => AccountPanel(controller: game, multiplayer: net),
       ),
     );
+    return game;
   }
 
   /// Fills the form and presses [button], letting both the call and the repaint
@@ -45,11 +52,22 @@ void main() {
     await tester.pump();
   }
 
+  testWidgets('shows play time on the character card', (tester) async {
+    final net = buildMultiplayer(database, signedIn: false);
+    await pumpAccount(
+      tester,
+      net,
+      seed: startedCharacter(database).copyWith(playTimeMs: 3 * 3600000 + 12 * 60000),
+    );
+
+    expect(find.text('Play time: 3h 12m'), findsOne);
+  });
+
   testWidgets('a local build says so and offers no magic link', (tester) async {
     final net = buildMultiplayer(database, signedIn: false);
     await pumpAccount(tester, net);
 
-    expect(find.text(multiplayerModeLine(MultiplayerMode.local)), findsOne);
+    expect(find.text(multiplayerModeLine(MultiplayerMode.local)), findsNothing);
     expect(find.text('Create account'), findsOne);
     expect(find.widgetWithText(TextField, 'Username'), findsNothing);
     expect(find.text('Email magic link'), findsNothing);
@@ -62,7 +80,7 @@ void main() {
     final net = buildRemoteMultiplayer(database, transport: transport);
     await pumpAccount(tester, net);
 
-    expect(find.text(multiplayerModeLine(MultiplayerMode.supabase)), findsOne);
+    expect(find.text(multiplayerModeLine(MultiplayerMode.supabase)), findsNothing);
 
     final link = find.widgetWithText(GameButton, 'Email magic link');
     expect(tester.widget<GameButton>(link).onPressed, isNull);
