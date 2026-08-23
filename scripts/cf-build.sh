@@ -9,12 +9,6 @@ FLUTTER_VERSION="${FLUTTER_VERSION:-3.47.0}"
 FLUTTER_HOME="${FLUTTER_HOME:-$HOME/flutter}"
 OUT="$ROOT/app_flutter/build/web"
 
-if [[ -z "${SUPABASE_URL:-}" || -z "${SUPABASE_ANON_KEY:-}" ]]; then
-  echo "SUPABASE_URL and SUPABASE_ANON_KEY must be set as Cloudflare environment variables." >&2
-  echo "Without them the built site cannot sign in against your project." >&2
-  exit 1
-fi
-
 if ! command -v flutter >/dev/null 2>&1; then
   echo "Installing Flutter $FLUTTER_VERSION into $FLUTTER_HOME"
   rm -rf "$FLUTTER_HOME"
@@ -28,9 +22,15 @@ flutter --version
 
 cd "$ROOT/app_flutter"
 flutter pub get
-flutter build web --release --pwa-strategy=none \
-  --dart-define="SUPABASE_URL=$SUPABASE_URL" \
-  --dart-define="SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY"
+
+if [[ -n "${SUPABASE_URL:-}" && -n "${SUPABASE_ANON_KEY:-}" ]]; then
+  flutter build web --release --pwa-strategy=none \
+    --dart-define="SUPABASE_URL=$SUPABASE_URL" \
+    --dart-define="SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY"
+else
+  echo "SUPABASE_URL and SUPABASE_ANON_KEY are unset; building a local-only preview bundle." >&2
+  flutter build web --release --pwa-strategy=none
+fi
 
 if [[ ! -f "$OUT/index.html" ]]; then
   echo "Flutter build finished but $OUT/index.html is missing." >&2

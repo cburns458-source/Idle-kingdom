@@ -94,7 +94,7 @@ void main() {
   test('cooking lists cooked squid and soup, and the book is known recipes only', () {
     final cooking = actionsForSkill(db, 'SKL-0007');
     expect(
-      cooking.any((row) => row.displayName == 'Cooked Baby Giant Squid' && row.level == 75),
+      cooking.any((row) => row.displayName == 'Cooked Baby Giant Squid' && row.level == 80),
       isTrue,
     );
     expect(cooking.any((row) => row.displayName == 'Squid noodle soup' && row.level == 80), isTrue);
@@ -123,10 +123,10 @@ void main() {
     final equipment = db.equipment.firstWhere((row) => row.raw['Item ID'] == 'ITEM-0302');
     expect(equipment.raw['Healing Amount'], 1100);
     final action = db.actions.firstWhere((row) => row.actionId == 'ACN-0127');
-    expect(action.proficiencyLevel, 75);
+    expect(action.proficiencyLevel, 80);
     expect(action.releasePhase, 'Launch');
     final recipe = db.recipes.firstWhere((row) => row.raw['Recipe ID'] == 'RCP-0044');
-    expect(recipe.raw['Proficiency Level'], 75);
+    expect(recipe.raw['Proficiency Level'], 80);
     expect(recipe.raw['Release Phase'], 'Launch');
   });
 }
