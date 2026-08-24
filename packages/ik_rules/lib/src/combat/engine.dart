@@ -267,7 +267,7 @@ CombatRoundResult resolveCombatRound(
   final playerHp = math.max(0, save.currentHp - enemyHit);
 
   final thornsPercent = equippedEnchantmentThornsPercent(db, save);
-  var thornsHit = thornsPercent > 0 ? (enemyHit * thornsPercent / 100).round() : 0;
+  num thornsHit = thornsPercent > 0 ? (enemyHit * thornsPercent / 100).round() : 0;
   thornsHit = applySleepIncoming(thornsHit, asleep);
   if (thornsHit > 0) {
     nextEnemyHp = math.max(0, nextEnemyHp - thornsHit);
