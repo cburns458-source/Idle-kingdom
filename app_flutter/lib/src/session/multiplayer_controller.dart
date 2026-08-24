@@ -23,6 +23,7 @@ class MultiplayerController extends ChangeNotifier {
     required this.service,
     required this.storage,
     required this.clock,
+    this.cloudUnavailable = false,
   });
 
   /// The wall clock, for the read cursor a DM tab writes.
@@ -30,6 +31,9 @@ class MultiplayerController extends ChangeNotifier {
 
   final LoadedDatabase database;
   final MultiplayerService service;
+
+  /// True when this build was given a hosted backend that could not be reached.
+  final bool cloudUnavailable;
 
   /// Where the DM read cursors live, next to the save and the backend document.
   final SaveStorage storage;

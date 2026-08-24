@@ -1,4 +1,4 @@
-import type { LocationRow } from '../data/types'
+import type { GameDatabase, LocationRow } from '../data/types'
 import type { InventoryStack, PlayerSave } from '../save/types'
 import { addItemToInventoryExact } from '../activity/rewards'
 import { canFitItemQuantity, inventorySlotsFree, INVENTORY_SLOT_LIMIT } from './capacity'
@@ -17,8 +17,11 @@ export function bankStacks(save: Pick<PlayerSave, 'bank'>): InventoryStack[] {
 }
 
 /** Gold currency cannot be deposited; enchanted gold stacks still take a slot. */
-export function stackIsUnbankableGold(stack: Pick<InventoryStack, 'itemId' | 'enchantmentId'>): boolean {
-  return isGoldCurrencyItem(stack.itemId) && !stack.enchantmentId
+export function stackIsUnbankableGold(
+  stack: Pick<InventoryStack, 'itemId' | 'enchantmentId'>,
+  db?: GameDatabase,
+): boolean {
+  return isGoldCurrencyItem(stack.itemId, db) && !stack.enchantmentId
 }
 
 export function bankSlotsFree(save: Pick<PlayerSave, 'bank'>): number {

@@ -1,5 +1,7 @@
 import 'dart:math' as math;
 
+import 'package:ik_content/ik_content.dart';
+
 import '../js_compat.dart';
 import '../save/generated/save_models.dart';
 import 'gold.dart';
@@ -36,8 +38,9 @@ num maxAddableQuantity(
   String itemId, [
   String? enchantmentId,
   bool favorite = false,
+  GameDatabase? db,
 ]) {
-  if (isGoldCurrencyItem(itemId) && isBlank(enchantmentId)) {
+  if (isGoldCurrencyItem(itemId, db) && isBlank(enchantmentId)) {
     return inventoryStackMax;
   }
   if (isNotBlank(enchantmentId)) {
@@ -57,8 +60,9 @@ bool canFitItemQuantity(
   num quantity, [
   String? enchantmentId,
   bool favorite = false,
+  GameDatabase? db,
 ]) {
   final want = quantity.floor();
   if (want <= 0) return true;
-  return maxAddableQuantity(save, itemId, enchantmentId, favorite) >= want;
+  return maxAddableQuantity(save, itemId, enchantmentId, favorite, db) >= want;
 }

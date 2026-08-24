@@ -110,6 +110,9 @@ export function resolveUnattendedProgress(
   }
 
   const production = resolveProductionProgress(db, current, endMs, random)
+  if (production.blockedByInventory) {
+    messages.push('Crafting paused: inventory is full.')
+  }
   if (production.craftsCompleted > 0 || production.activityMs > 0) {
     current = production.save
     craftsCompleted = production.craftsCompleted

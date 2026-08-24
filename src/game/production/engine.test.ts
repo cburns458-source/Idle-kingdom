@@ -157,6 +157,35 @@ describe('standard production', () => {
     expect(cancelled.inventory.find((stack) => stack.itemId === 'ITEM-0003')?.quantity).toBe(6)
   })
 
+  it('pauses a due craft when the bag cannot hold the output', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    let save = createNewSave(launch)
+    save = addItemToInventory(save, 'ITEM-0025', 5)
+    const queued = beginProductionQueue(launch, save, 'ACT-0017', 'RCP-0001', 2)
+    expect(queued.ok).toBe(true)
+    if (!queued.ok) return
+
+    const filled = {
+      ...queued.save,
+      inventory: Array.from({ length: 180 }, (_, index) => ({
+        itemId: `FILL-${index}`,
+        quantity: 1,
+      })),
+    }
+    const blocked = completeProductionCraft(launch, filled)
+    expect(blocked).toBeNull()
+    expect(filled.productionQuantityRemaining).toBe(2)
+
+    const roomToRefund = { ...filled, inventory: filled.inventory.slice(0, 179) }
+    const cancelled = cancelProductionActivity(launch, roomToRefund)
+    expect(cancelled.inventory.find((stack) => stack.itemId === 'ITEM-0025')?.quantity).toBe(2)
+
+    const opened = { ...filled, inventory: [] }
+    const finished = completeProductionCraft(launch, opened)
+    expect(finished?.outputQty).toBe(1)
+    expect(finished?.save.productionQuantityRemaining).toBe(1)
+  })
+
   it('hard-gates alchemy until proficiency level', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const save = createNewSave(launch)

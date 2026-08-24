@@ -39,6 +39,17 @@ const Map<String, String> tableIdFields = <String, String>{
   'RaceStartingItems': 'Race Starting Item ID',
 };
 
+const List<String> _knownRequirementTypes = <String>[
+  'Tool Capability',
+  'Empty Slot',
+  'Station',
+  'Skill Level',
+  'Quest Access',
+  'Quest Active',
+  'Quest Flag',
+  'Item Absent',
+];
+
 const List<String> _requiredConfigKeys = <String>[
   'primary_activity_slots',
   'save_slots',
@@ -250,6 +261,45 @@ List<ValidationIssue> validateDatabase(GameDatabase db) {
           table: 'Actions',
           id: '${action.raw['Action ID'] ?? ''}',
           message: 'Missing Relevant Skill ID reference: $skillId',
+        ),
+      );
+    }
+    final actionId = '${action.raw['Action ID'] ?? ''}';
+    final rewardTable = action.raw['Reward Table ID'];
+    if (rewardTable != null && rewardTable != '' && action.raw['Drop Chance'] is! num) {
+      issues.add(
+        ValidationIssue(
+          severity: IssueSeverity.error,
+          table: 'Actions',
+          id: actionId,
+          message: 'Missing Drop Chance for reward table $rewardTable',
+        ),
+      );
+    }
+    final secondaryTable = action.raw['Secondary Reward Table ID'];
+    if (secondaryTable != null &&
+        secondaryTable != '' &&
+        action.raw['Secondary Drop Chance'] is! num) {
+      issues.add(
+        ValidationIssue(
+          severity: IssueSeverity.error,
+          table: 'Actions',
+          id: actionId,
+          message: 'Missing Secondary Drop Chance for reward table $secondaryTable',
+        ),
+      );
+    }
+  }
+
+  for (final requirement in db.requirements) {
+    final type = requirement.requirementType;
+    if (type.isNotEmpty && !_knownRequirementTypes.contains(type)) {
+      issues.add(
+        ValidationIssue(
+          severity: IssueSeverity.error,
+          table: 'Requirements',
+          id: requirement.requirementId,
+          message: 'Unknown Requirement Type: $type',
         ),
       );
     }

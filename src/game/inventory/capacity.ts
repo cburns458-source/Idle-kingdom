@@ -1,3 +1,4 @@
+import type { GameDatabase } from '../data/types'
 import type { PlayerSave } from '../save/types'
 import { isGoldCurrencyItem } from './gold'
 
@@ -48,8 +49,9 @@ export function maxAddableQuantity(
   itemId: string,
   enchantmentId: string | null = null,
   _favorite = false,
+  db?: GameDatabase,
 ): number {
-  if (isGoldCurrencyItem(itemId) && !enchantmentId) {
+  if (isGoldCurrencyItem(itemId, db) && !enchantmentId) {
     return INVENTORY_STACK_MAX
   }
   if (enchantmentId) {
@@ -72,8 +74,9 @@ export function canFitItemQuantity(
   quantity: number,
   enchantmentId: string | null = null,
   favorite = false,
+  db?: GameDatabase,
 ): boolean {
   const want = Math.floor(quantity)
   if (want <= 0) return true
-  return maxAddableQuantity(save, itemId, enchantmentId, favorite) >= want
+  return maxAddableQuantity(save, itemId, enchantmentId, favorite, db) >= want
 }

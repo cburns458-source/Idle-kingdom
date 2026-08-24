@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:ik_rules/ik_rules.dart';
 
+import '../session/account_save_unload.dart';
 import '../session/game_controller.dart';
 import '../session/map_walk.dart';
 import '../session/multiplayer_controller.dart';
@@ -104,6 +105,10 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    listenForPageUnload(() {
+      if (!mounted) return;
+      multiplayer.flushAccountSave(controller.save);
+    });
     multiplayer.onAccountCleared ??= controller.resetUnsigned;
     multiplayer.addListener(_onMultiplayerChanged);
     controller.addListener(_armReturningHold);
@@ -459,6 +464,9 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
   ///
   /// Combat round chatter stays off the toast while a fight is on screen.
   String? get _toastText {
+    if (controller.productionInventoryFull) {
+      return 'Inventory full — free a slot to keep crafting.';
+    }
     if (controller.activityError case final error?) return error;
     if (controller.save.combatEnemyId != null) return null;
     return controller.message;
@@ -518,6 +526,18 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
       children: [
         Column(
           children: [
+            if (multiplayer.cloudUnavailable)
+              const Material(
+                color: Palette.danger,
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  child: Text(
+                    'Cloud unavailable — progress is not syncing.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.white, fontSize: 12),
+                  ),
+                ),
+              ),
             TopHud(controller: controller, multiplayer: multiplayer, onOpenWardrobe: _openWardrobe),
             Expanded(
               child: Stack(
@@ -559,7 +579,9 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
                       child: OverlayNotice(
                         key: _toastKey,
                         text: text,
-                        tone: controller.activityError != null ? Palette.danger : Palette.gold,
+                        tone: controller.activityError != null || controller.productionInventoryFull
+                            ? Palette.danger
+                            : Palette.gold,
                         onDismissed: controller.clearMessages,
                       ),
                     ),

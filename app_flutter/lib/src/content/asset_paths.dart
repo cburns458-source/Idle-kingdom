@@ -117,7 +117,7 @@ const Map<String, String> _enemyArt = <String, String>{
   'ENM-0016': 'enemies/enm_goblin_warrior.webp',
   'ENM-0018': 'enemies/enm_elder_rock_troll.webp',
   'ENM-0019': 'enemies/enm_castle_guard.webp',
-  'ENM-0020': 'enemies/enm_castle_guard.webp',
+  'ENM-0020': 'enemies/enm_monk.webp',
   'ENM-0021': 'enemies/enm_seagull.webp',
   'ENM-0022': 'enemies/enm_ghost.webp',
 };

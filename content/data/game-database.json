@@ -2,9 +2,9 @@
   "Config": [
     {
       "Key": "database_scope",
-      "Value": "single_player_demo",
+      "Value": "live_multiplayer_demo",
       "Unit": null,
-      "Notes": "Idle RPG web demo runtime content."
+      "Notes": "Live multiplayer idle RPG web demo. Sign-in required."
     },
     {
       "Key": "primary_activity_slots",
@@ -15,8 +15,8 @@
     {
       "Key": "save_slots",
       "Value": 1,
-      "Unit": "local save",
-      "Notes": "Automatically created and loaded."
+      "Unit": "account save",
+      "Notes": "One character save on the signed-in account."
     },
     {
       "Key": "unattended_cap",
@@ -35,12 +35,6 @@
       "Value": 30,
       "Unit": "seconds",
       "Notes": "Pause after Combat defeat."
-    },
-    {
-      "Key": "activity_change_delay",
-      "Value": 30,
-      "Unit": "seconds",
-      "Notes": "Delay before a Primary Activity start or cancel/stop takes effect. Also applies when replacing an activity without an explicit Stop."
     },
     {
       "Key": "combat_round_duration",
@@ -978,7 +972,7 @@
       "Display Name": "Spell 1",
       "Slot Group": "Spell Loadout",
       "Status": "Confirmed",
-      "Notes": "Equippable spell. Active spell cycles through slots 1\u20134 for one hour each."
+      "Notes": "Equippable spell. Equipped spells are always active."
     },
     {
       "Slot ID": "SLOT-0014",
@@ -986,7 +980,7 @@
       "Display Name": "Spell 2",
       "Slot Group": "Spell Loadout",
       "Status": "Confirmed",
-      "Notes": "Equippable spell. Active spell cycles through slots 1\u20134 for one hour each."
+      "Notes": "Equippable spell. Equipped spells are always active."
     },
     {
       "Slot ID": "SLOT-0015",
@@ -994,7 +988,7 @@
       "Display Name": "Spell 3",
       "Slot Group": "Spell Loadout",
       "Status": "Confirmed",
-      "Notes": "Equippable spell. Active spell cycles through slots 1\u20134 for one hour each."
+      "Notes": "Equippable spell. Equipped spells are always active."
     },
     {
       "Slot ID": "SLOT-0016",
@@ -1002,7 +996,7 @@
       "Display Name": "Spell 4",
       "Slot Group": "Spell Loadout",
       "Status": "Confirmed",
-      "Notes": "Equippable spell. Active spell cycles through slots 1\u20134 for one hour each."
+      "Notes": "Equippable spell. Equipped spells are always active."
     }
   ],
   "Items": [

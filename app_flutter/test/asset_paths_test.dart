@@ -93,6 +93,7 @@ void main() {
     expect(goldIconPath(), 'content/assets/icons/items/item_gold.webp');
     expect(slotIconPath('SLOT-0003'), 'content/assets/icons/slots/slot_helmet.webp');
     expect(enemyAssetPath('ENM-0006'), 'content/assets/enemies/enm_dragon.webp');
+    expect(enemyAssetPath('ENM-0020'), 'content/assets/enemies/enm_monk.webp');
     expect(actionAssetPath('ACN-0046'), 'content/assets/actions/acn_cut_cedar.webp');
     // Unmapped ids fall back rather than pointing at a missing bundle key.
     expect(enemyAssetPath('ENM-9999'), 'content/assets/enemies/enm_cow.webp');
