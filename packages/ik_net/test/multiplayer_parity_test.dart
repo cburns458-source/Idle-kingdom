@@ -552,10 +552,13 @@ void main() {
         final harness = BackendHarness(startMs: fixture.inputField<num>('nowMs'));
         final hero = harness.signUp('hero@example.com', 'Hero');
         final shy = harness.signUp('shy@example.com', 'Shy');
+        final cloak = harness.signUp('cloak@example.com', 'Cloak');
         final save = saveOf(fixture);
         harness.backend.writeCloudSave(hero.userId, save);
         harness.backend.writeCloudSave(shy.userId, save);
+        harness.backend.writeCloudSave(cloak.userId, save);
         harness.backend.upsertProfile(shy.userId, privacyPublicSkills: false);
+        harness.backend.upsertProfile(cloak.userId, privacyPublicGear: false);
         final friendRequest = harness.backend.sendFriendRequest(hero.userId, shy.userId);
         final duplicateRequest = harness.backend.sendFriendRequest(hero.userId, shy.userId);
         final self = harness.backend.sendFriendRequest(hero.userId, hero.userId);
@@ -565,6 +568,7 @@ void main() {
           checkParity(fixture, <String, Object?>{
             'open': harness.backend.publicProfile(hero.userId)?.toJson(),
             'private': harness.backend.publicProfile(shy.userId)?.toJson(),
+            'hiddenGear': harness.backend.publicProfile(cloak.userId)?.toJson(),
             'noAccount': harness.backend.publicProfile('usr_9999')?.toJson(),
             'noSave': harness.backend
                 .publicProfile(

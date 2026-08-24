@@ -234,7 +234,7 @@ export const metaScenarios: ParityScenario[] = [
     'guaranteed-spawn',
     withSave('base', { location: 'LOC-0001', spans: CRITTER_SPANS }),
     () => ({
-      // A generator pinned to 0 always rolls under the 1/200 spawn chance.
+      // A generator pinned to 0 always rolls under the 1/50 spawn chance.
       bySpan: CRITTER_SPANS.map((elapsedMs) => {
         const result = applyActivityTimeTowardCritters(
           saveFor('base'),

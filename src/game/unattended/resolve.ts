@@ -108,7 +108,7 @@ export function resolveUnattendedProgress(
     messages.push(`A ${spawned.displayName} appeared while you were away.`)
   }
 
-  const production = resolveProductionProgress(db, current, endMs)
+  const production = resolveProductionProgress(db, current, endMs, random)
   if (production.craftsCompleted > 0 || production.activityMs > 0) {
     current = production.save
     craftsCompleted = production.craftsCompleted

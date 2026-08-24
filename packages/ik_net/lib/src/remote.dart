@@ -57,6 +57,9 @@ String friendlyRemoteError(String message) {
   if (remoteMissingChatPrivacyColumn(message)) {
     return remoteChatPrivacyUnavailable;
   }
+  if (remoteMissingGearPrivacyColumn(message)) {
+    return remoteGearPrivacyUnavailable;
+  }
   return message;
 }
 
@@ -70,6 +73,18 @@ bool remoteMissingChatPrivacyColumn(String? reason) {
   final lower = reason.toLowerCase();
   if (!lower.contains('does not exist')) return false;
   return lower.contains('privacy_direct_messages') || lower.contains('privacy_local_chat');
+}
+
+/// What a skipped gear-privacy migration looks like from PostgREST.
+const String remoteGearPrivacyUnavailable = 'Gear privacy is not available on the server yet.';
+
+/// True when [reason] is the hosted project missing migration 016.
+bool remoteMissingGearPrivacyColumn(String? reason) {
+  if (reason == null || reason.isEmpty) return false;
+  if (reason == remoteGearPrivacyUnavailable) return true;
+  final lower = reason.toLowerCase();
+  if (!lower.contains('does not exist')) return false;
+  return lower.contains('privacy_public_gear') || lower.contains('equipment_json');
 }
 
 /// True when [reason] is the hosted project missing migration 015.
@@ -135,8 +150,13 @@ const String remotePublicProfileBaseColumns =
 const String remoteChatPrivacyColumns = 'privacy_direct_messages, privacy_local_chat';
 
 /// Columns a public profile sheet asks for when the privacy migration is on.
+const String remoteGearPrivacyColumn = 'privacy_public_gear';
+const String remoteEquipmentJsonColumn = 'equipment_json';
+const String remoteGearProfileColumns = '$remoteGearPrivacyColumn, $remoteEquipmentJsonColumn';
+
+/// Columns a public profile sheet asks for when the privacy migrations are on.
 const String remotePublicProfileColumns =
-    '$remotePublicProfileBaseColumns, $remoteChatPrivacyColumns';
+    '$remotePublicProfileBaseColumns, $remoteChatPrivacyColumns, $remoteGearPrivacyColumn';
 const String remotePresenceConflict = 'user_id';
 const String remoteFriendRequestColumns = 'from_user_id, to_user_id, created_at';
 const String remoteFriendshipColumns = 'user_a, user_b, created_at';
@@ -225,6 +245,7 @@ RemoteRow profileRowForSignUp(MultiplayerSession session) => <String, Object?>{
   'user_id': session.userId,
   'username': session.username,
   'privacy_public_skills': true,
+  'privacy_public_gear': true,
 };
 
 /// Claims this device as the only one allowed to play the account.
@@ -559,10 +580,26 @@ MultiplayerProfile? multiplayerProfileFromRemote(RemoteRow? row) {
     guildId: _optStr(row['guild_id']),
     guildName: _optStr(row['guild_name']),
     privacyPublicSkills: row['privacy_public_skills'] != false,
+    privacyPublicGear: row['privacy_public_gear'] != false,
+    publishedEquipment: _equipmentFromRemote(row['equipment_json']),
     privacyDirectMessages: normalizeChatPrivacy(_optStr(row['privacy_direct_messages'])),
     privacyLocalChat: normalizeChatPrivacy(_optStr(row['privacy_local_chat'])),
     updatedAt: _str(row['updated_at']),
   );
+}
+
+List<PublicEquippedSlot> _equipmentFromRemote(Object? raw) {
+  if (raw is! List) return const <PublicEquippedSlot>[];
+  return [
+    for (final row in raw)
+      if (row is Map)
+        PublicEquippedSlot(
+          slotId: _str(row['slotId'] ?? row['slot_id']),
+          itemId: _str(row['itemId'] ?? row['item_id']),
+          quantity: row['quantity'] == null ? 1 : _num(row['quantity']),
+          enchantmentId: _optStr(row['enchantmentId'] ?? row['enchantment_id']),
+        ),
+  ].where((row) => row.itemId.isNotEmpty).toList();
 }
 
 /// Live rows only: expired stamps stay in the table for last-online, but Nearby

@@ -14,7 +14,7 @@ import {
   maxProjectQuantity,
   meetsProjectKnowledge,
   meetsProjectSkills,
-  projectInputs,
+  projectInputsForSave,
   projectSkillRequirements,
   projectsForFacility,
   unmetProjectSkillRequirements,
@@ -231,7 +231,7 @@ export function projectDetail(
         : skills
             .map((requirement) => `${skillName(db, requirement.skillId)} ${requirement.level}`)
             .join(' · '),
-    ingredients: projectInputs(project).map((input) => ({
+    ingredients: projectInputsForSave(save, project).map((input) => ({
       itemId: input.itemId,
       name: itemName(db, input.itemId) ?? input.itemId,
       need: input.quantity,

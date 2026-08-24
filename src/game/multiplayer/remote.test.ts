@@ -85,6 +85,7 @@ describe('remote identity', () => {
       user_id: 'usr-1',
       username: 'Rowan',
       privacy_public_skills: true,
+      privacy_public_gear: true,
     })
   })
 })

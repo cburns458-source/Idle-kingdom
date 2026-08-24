@@ -166,7 +166,7 @@ void main() {
             .toList(),
         inventory: const [
           InventoryStack(itemId: 'ITEM-0098', quantity: 2),
-          InventoryStack(itemId: 'ITEM-0011', quantity: 6),
+          InventoryStack(itemId: 'ITEM-0011', quantity: 300),
           InventoryStack(itemId: 'ITEM-0040', quantity: 2),
           InventoryStack(itemId: copperAxeItem, quantity: 1),
         ],

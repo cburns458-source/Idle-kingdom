@@ -271,7 +271,10 @@ String itemIconStem(ItemRow? item) {
   if (blob.contains('potato') || blob.contains('spud')) {
     return blob.contains('baked') ? 'baked_potato' : 'potato';
   }
-  if (blob.contains('backpack') || blob.contains('back item') || subtype.contains('back')) {
+  if (blob.contains('quiver') ||
+      blob.contains('backpack') ||
+      blob.contains('back item') ||
+      subtype.contains('back')) {
     return 'backpack';
   }
   if (blob.contains('fishing') || blob.contains('rod') || blob.contains('harpoon')) {

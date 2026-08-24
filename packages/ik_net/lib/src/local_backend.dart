@@ -228,6 +228,7 @@ class LocalMultiplayerBackend {
     String userId, {
     PlayerAppearance? appearance,
     bool? privacyPublicSkills,
+    bool? privacyPublicGear,
     String? privacyDirectMessages,
     String? privacyLocalChat,
     String? username,
@@ -238,6 +239,7 @@ class LocalMultiplayerBackend {
     db.profiles[index] = db.profiles[index].copyWith(
       appearance: appearance,
       privacyPublicSkills: privacyPublicSkills,
+      privacyPublicGear: privacyPublicGear,
       privacyDirectMessages: privacyDirectMessages,
       privacyLocalChat: privacyLocalChat,
       username: username,
@@ -1420,6 +1422,7 @@ class LocalMultiplayerBackend {
       appearance: profile.appearance,
       guildName: profile.guildName,
       publicSkills: profile.privacyPublicSkills ? skills : const <PublicSkillLine>[],
+      publicEquipment: profile.privacyPublicGear ? publicEquipmentFromSave(save) : null,
       achievementsUnlocked: save?.achievements.where((row) => row.unlocked).length ?? 0,
       totalLevel: total < 1 ? 13 : total,
       logCompletionPercent:

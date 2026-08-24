@@ -61,7 +61,7 @@ void main() {
 
     await tester.tap(find.text('Recipe book'));
     await tester.pumpAndSettle();
-    expect(find.text('Baked Potato'), findsWidgets);
+    expect(find.textContaining('Baked potato'), findsWidgets);
     expect(find.textContaining('Locked · '), findsWidgets);
   });
 

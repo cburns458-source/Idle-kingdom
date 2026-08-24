@@ -2,7 +2,7 @@ import type { PlayerSave } from '../save/types'
 
 export const CRITTER_HOUR_MS = 3_600_000
 /** One roll per full activity-hour at the Critter's location. */
-export const CRITTER_SPAWN_CHANCE = 1 / 200
+export const CRITTER_SPAWN_CHANCE = 1 / 50
 
 export interface CritterDef {
   id: string
@@ -67,7 +67,7 @@ export function activeSpawnAtLocation(
 
 /**
  * Apply activity time at a location toward Critter hour-rolls.
- * Full hours each roll 1/200; remainder is kept. No stacking if a spawn is already active.
+ * Full hours each roll 1/50; remainder is kept. No stacking if a spawn is already active.
  */
 export function applyActivityTimeTowardCritters(
   save: PlayerSave,

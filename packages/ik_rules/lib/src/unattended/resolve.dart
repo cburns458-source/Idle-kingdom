@@ -116,7 +116,7 @@ UnattendedResult resolveUnattendedProgress(
     messages.add('A ${spawned.displayName} appeared while you were away.');
   }
 
-  final production = resolveProductionProgress(db, current, endMs);
+  final production = resolveProductionProgress(db, current, endMs, random);
   if (production.craftsCompleted > 0 || production.activityMs > 0) {
     current = production.save;
     craftsCompleted = production.craftsCompleted;

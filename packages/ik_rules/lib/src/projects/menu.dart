@@ -298,7 +298,7 @@ ProjectDetail? projectDetail(GameDatabase db, PlayerSave save, String projectId)
                     '${jsNumberToString(requirement.level)}',
               )
               .join(' · '),
-    ingredients: projectInputs(project)
+    ingredients: projectInputsForSave(save, project)
         .map(
           (input) => ProjectIngredientLine(
             itemId: input.itemId,
