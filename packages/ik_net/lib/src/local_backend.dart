@@ -434,6 +434,7 @@ class LocalMultiplayerBackend {
               ? row.copyWith(
                   appearance: save.appearance,
                   username: isNotBlank(save.characterName) ? save.characterName : row.username,
+                  publishedEquipment: snapshot.equipment,
                   updatedAt: updatedAt,
                 )
               : row,
@@ -1457,7 +1458,11 @@ class LocalMultiplayerBackend {
       appearance: profile.appearance,
       guildName: profile.guildName,
       publicSkills: profile.privacyPublicSkills ? skills : const <PublicSkillLine>[],
-      publicEquipment: profile.privacyPublicGear ? publicEquipmentFromSave(save) : null,
+      publicEquipment: !profile.privacyPublicGear
+          ? null
+          : save != null
+          ? publicEquipmentFromSave(save)
+          : profile.publishedEquipment,
       achievementsUnlocked: save?.achievements.where((row) => row.unlocked).length ?? 0,
       totalLevel: total < 1 ? 13 : total,
       logCompletionPercent:

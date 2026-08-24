@@ -375,7 +375,9 @@ class RemoteMultiplayerService implements MultiplayerService {
       publicSkills: account.privacyPublicSkills ? skills : const <PublicSkillLine>[],
       publicEquipment: !account.privacyPublicGear
           ? null
-          : (save != null ? publicEquipmentFromSave(save) : account.publishedEquipment),
+          : session?.userId == userId && save != null
+          ? publicEquipmentFromSave(save)
+          : account.publishedEquipment,
       achievementsUnlocked: achievements,
       totalLevel: totalLevel,
       logCompletionPercent: logPercent,
@@ -539,13 +541,24 @@ class RemoteMultiplayerService implements MultiplayerService {
       leaderboardRowsFor(current.userId, snapshot, isoFromMs(_nowMs())),
       onConflict: remoteLeaderboardConflict,
     );
-    await transport.upsert(RemoteTables.profiles, <RemoteRow>[
-      <String, Object?>{
-        'user_id': current.userId,
-        'username': current.username,
-        'appearance_json': save.appearance.toJson(),
-      },
+    final profileRow = <String, Object?>{
+      'user_id': current.userId,
+      'username': current.username,
+      'appearance_json': save.appearance.toJson(),
+    };
+    if (_profilesHaveGearPrivacy != false) {
+      profileRow[remoteEquipmentJsonColumn] = snapshot.equipment
+          .map((row) => row.toJson())
+          .toList();
+    }
+    final refusedProfile = await transport.upsert(RemoteTables.profiles, <RemoteRow>[
+      profileRow,
     ], onConflict: 'user_id');
+    if (refusedProfile != null && remoteMissingGearPrivacyColumn(refusedProfile)) {
+      _profilesHaveGearPrivacy = false;
+      profileRow.remove(remoteEquipmentJsonColumn);
+      await transport.upsert(RemoteTables.profiles, <RemoteRow>[profileRow], onConflict: 'user_id');
+    }
     // A roster lists each member's name, look, and level, and only that member
     // may write their own row, so the submit that refreshes the boards refreshes
     // the roster too.
