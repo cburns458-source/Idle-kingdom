@@ -200,6 +200,7 @@ class GameButton extends StatefulWidget {
     required this.onPressed,
     this.tone = GameButtonTone.primary,
     this.compact = false,
+    this.dense = false,
     this.selected = false,
     this.tooltip,
   });
@@ -210,6 +211,9 @@ class GameButton extends StatefulWidget {
 
   /// Chat tabs, keypad keys, and other tight rows.
   final bool compact;
+
+  /// Smaller than [compact] — header chips such as Sell items.
+  final bool dense;
 
   /// Gold wash for the active tab or conversation.
   final bool selected;
@@ -281,21 +285,29 @@ class _GameButtonState extends State<GameButton> {
               highlightColor: Colors.transparent,
               borderRadius: BorderRadius.circular(14),
               child: Container(
-                constraints: widget.compact
+                constraints: widget.dense
+                    ? const BoxConstraints(minHeight: 26)
+                    : widget.compact
                     ? const BoxConstraints(minHeight: 32)
                     : const BoxConstraints(minHeight: 44, minWidth: 90),
-                padding: widget.compact
+                padding: widget.dense
+                    ? const EdgeInsets.symmetric(horizontal: 8, vertical: 4)
+                    : widget.compact
                     ? const EdgeInsets.symmetric(horizontal: 10, vertical: 6)
                     : const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 alignment: Alignment.center,
                 child: Text(
                   widget.label,
                   textAlign: TextAlign.center,
-                  maxLines: widget.compact ? 1 : 2,
+                  maxLines: widget.compact || widget.dense ? 1 : 2,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     fontFamily: gameFontFamily,
-                    fontSize: widget.compact ? 12 : 13.5,
+                    fontSize: widget.dense
+                        ? 11
+                        : widget.compact
+                        ? 12
+                        : 13.5,
                     fontWeight: FontWeight.w400,
                     color: primary ? const Color(0xFFF4FFE8) : const Color(0xFFFFF4D4),
                   ),

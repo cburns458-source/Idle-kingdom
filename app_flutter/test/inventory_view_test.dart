@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:idle_kingdoms/src/ui/inventory_view.dart';
 import 'package:ik_content/ik_content.dart';
@@ -173,6 +174,63 @@ void main() {
     expect(find.text('No active bonuses.'), findsNothing);
     expect(find.textContaining('High Elf'), findsOne);
     expect(find.textContaining('Strength Potion'), findsOne);
+  });
+
+  List<String> visibleBagOrder(WidgetTester tester, List<String> names) {
+    final placed =
+        [for (final name in names) (name: name, rect: tester.getRect(find.byTooltip(name)))]
+          ..sort((a, b) {
+            if ((a.rect.center.dy - b.rect.center.dy).abs() > 12) {
+              return a.rect.center.dy.compareTo(b.rect.center.dy);
+            }
+            return a.rect.center.dx.compareTo(b.rect.center.dx);
+          });
+    return [for (final entry in placed) entry.name];
+  }
+
+  testWidgets('groups the bag and only shows Search after it is picked', (tester) async {
+    final seed = unequippedCharacter().copyWith(
+      inventory: const [
+        InventoryStack(itemId: 'ITEM-0128', quantity: 1),
+        InventoryStack(itemId: 'ITEM-0003', quantity: 1),
+        InventoryStack(itemId: 'ITEM-0074', quantity: 1),
+        InventoryStack(itemId: 'ITEM-0058', quantity: 1, favorite: true),
+        InventoryStack(itemId: 'ITEM-0025', quantity: 1),
+      ],
+    );
+    final controller = buildController(database, seed: seed);
+    addTearDown(controller.dispose);
+
+    await pumpPanel(tester, InventoryView(controller: controller));
+    expect(find.text('Sell items'), findsOne);
+    expect(find.byTooltip('Sort'), findsOne);
+    expect(find.byType(TextField), findsNothing);
+
+    expect(
+      visibleBagOrder(tester, ['Baked Potato', 'Copper Ore', 'Potato', 'Copper Bar', 'Iron Sword']),
+      ['Baked Potato', 'Copper Ore', 'Potato', 'Copper Bar', 'Iron Sword'],
+    );
+
+    await tester.tap(find.byTooltip('Sort'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('A–Z').last);
+    await tester.pumpAndSettle();
+    expect(
+      visibleBagOrder(tester, ['Baked Potato', 'Copper Bar', 'Copper Ore', 'Iron Sword', 'Potato']),
+      ['Baked Potato', 'Copper Bar', 'Copper Ore', 'Iron Sword', 'Potato'],
+    );
+
+    await tester.tap(find.byTooltip('Sort'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Search').last);
+    await tester.pumpAndSettle();
+    expect(find.byType(TextField), findsOne);
+
+    await tester.enterText(find.byType(TextField), 'copper');
+    await tester.pump();
+    expect(find.byTooltip('Copper Ore'), findsOne);
+    expect(find.byTooltip('Copper Bar'), findsOne);
+    expect(find.byTooltip('Potato'), findsNothing);
   });
 
   testWidgets('the favorite heart sits at the top-right of an item tile', (tester) async {
