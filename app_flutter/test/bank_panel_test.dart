@@ -75,6 +75,24 @@ void main() {
     expect(find.byTooltip('Copper Ore'), findsOne);
   });
 
+  testWidgets('groups the bag column the same way as inventory', (tester) async {
+    final controller = buildController(
+      database,
+      seed: stashed(
+        inventory: const [
+          InventoryStack(itemId: 'ITEM-0128', quantity: 1),
+          InventoryStack(itemId: 'ITEM-0003', quantity: 2),
+        ],
+      ),
+    );
+    addTearDown(controller.dispose);
+
+    await pumpPanel(tester, BankPanel(controller: controller));
+    final ore = tester.getRect(find.byTooltip('Copper Ore'));
+    final sword = tester.getRect(find.byTooltip('Iron Sword'));
+    expect(ore.center.dx, lessThan(sword.center.dx));
+  });
+
   testWidgets('offers the bank at Town and hides it in the Meadow', (tester) async {
     final town = buildController(
       database,

@@ -20,10 +20,19 @@ class BankPanel extends StatefulWidget {
 
 class _BankPanelState extends State<BankPanel> {
   final TextEditingController _search = TextEditingController();
+  late InventorySorter _sorter = InventorySorter(widget.controller.db);
   String? _error;
 
   GameController get controller => widget.controller;
   PlayerSave get save => controller.save;
+
+  @override
+  void didUpdateWidget(BankPanel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.controller != widget.controller) {
+      _sorter = InventorySorter(widget.controller.db);
+    }
+  }
 
   @override
   void dispose() {
@@ -93,7 +102,7 @@ class _BankPanelState extends State<BankPanel> {
       for (final entry in save.inventory.indexed)
         if (!stackIsUnbankableGold(entry.$2) && _matches(entry.$2))
           (index: entry.$1, stack: entry.$2),
-    ];
+    ]..sort((a, b) => _sorter.compareGrouped(a.stack, b.stack, a.index, b.index));
     final chest = <({int index, InventoryStack stack})>[
       for (final entry in bankStacks(save).indexed)
         if (_matches(entry.$2)) (index: entry.$1, stack: entry.$2),

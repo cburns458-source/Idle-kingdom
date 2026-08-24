@@ -52,6 +52,7 @@ export 'src/inventory/destroy.dart';
 export 'src/inventory/favorites.dart';
 export 'src/inventory/gold.dart';
 export 'src/inventory/sell.dart';
+export 'src/inventory/sort.dart';
 export 'src/js_compat.dart';
 export 'src/json_support.dart';
 export 'src/log/log.dart';

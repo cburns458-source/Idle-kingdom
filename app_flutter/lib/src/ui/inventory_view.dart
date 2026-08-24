@@ -62,6 +62,9 @@ class _InventoryViewState extends State<InventoryView> {
   late _InventoryTab _tab = _paneTab(widget.pane);
   String? _message;
   bool _showSources = false;
+  InventorySortMode _sortMode = InventorySortMode.group;
+  final TextEditingController _search = TextEditingController();
+  late InventorySorter _sorter = InventorySorter(widget.controller.db);
   bool get _lockedPane => widget.pane != null;
 
   /// Character locks this to one pane. Prefer that over leftover inner-tab state
@@ -74,12 +77,21 @@ class _InventoryViewState extends State<InventoryView> {
   @override
   void didUpdateWidget(InventoryView oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (oldWidget.controller != widget.controller) {
+      _sorter = InventorySorter(widget.controller.db);
+    }
     if (oldWidget.pane != widget.pane) {
       _tab = _paneTab(widget.pane);
       _selling = null;
       _message = null;
       _showSources = false;
     }
+  }
+
+  @override
+  void dispose() {
+    _search.dispose();
+    super.dispose();
   }
 
   /// Non-null while picking stacks to sell; values are chosen quantities.
@@ -334,20 +346,40 @@ class _InventoryViewState extends State<InventoryView> {
             ),
           ] else if (_activeTab == _InventoryTab.items) ...[
             const SizedBox(height: 8),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: GameButton(
-                label: 'Sell items',
-                tone: GameButtonTone.secondary,
-                compact: true,
-                onPressed: save.inventory.isEmpty
-                    ? null
-                    : () => setState(() {
-                        _selling = <int, int>{};
-                        _message = null;
-                      }),
-              ),
+            Row(
+              children: [
+                GameButton(
+                  label: 'Sell items',
+                  tone: GameButtonTone.secondary,
+                  compact: true,
+                  dense: true,
+                  onPressed: save.inventory.isEmpty
+                      ? null
+                      : () => setState(() {
+                          _selling = <int, int>{};
+                          _message = null;
+                        }),
+                ),
+                const Spacer(),
+                _SortMenu(
+                  mode: _sortMode,
+                  onSelected: (mode) => setState(() {
+                    _sortMode = mode;
+                    if (mode != InventorySortMode.search) _search.clear();
+                    _message = null;
+                  }),
+                ),
+              ],
             ),
+            if (_sortMode == InventorySortMode.search) ...[
+              const SizedBox(height: 8),
+              TextField(
+                controller: _search,
+                autofocus: true,
+                decoration: const InputDecoration(hintText: 'Search by name', isDense: true),
+                onChanged: (_) => setState(() {}),
+              ),
+            ],
           ],
         ],
       ),
@@ -359,6 +391,10 @@ class _InventoryViewState extends State<InventoryView> {
       return const Center(child: MutedText('No items yet. Fight or gather to fill this grid.'));
     }
     final selling = _selling;
+    final indexes = _sorter.displayIndexes(save.inventory, _sortMode, _search.text);
+    if (indexes.isEmpty) {
+      return const Center(child: MutedText('Nothing in the bag matches.'));
+    }
 
     return ListView(
       padding: const EdgeInsets.all(12),
@@ -371,8 +407,9 @@ class _InventoryViewState extends State<InventoryView> {
             mainAxisSpacing: 8,
             crossAxisSpacing: 8,
           ),
-          itemCount: save.inventory.length,
-          itemBuilder: (context, index) {
+          itemCount: indexes.length,
+          itemBuilder: (context, visible) {
+            final index = indexes[visible];
             final stack = save.inventory[index];
             final item = controller.indexes.itemsById[stack.itemId];
             final equippable = equipmentForItemId(db, stack.itemId)?.slotId != null;
@@ -562,6 +599,70 @@ class _InventoryViewState extends State<InventoryView> {
               ),
             ),
         ],
+      ),
+    );
+  }
+}
+
+class _SortMenu extends StatelessWidget {
+  const _SortMenu({required this.mode, required this.onSelected});
+
+  final InventorySortMode mode;
+  final ValueChanged<InventorySortMode> onSelected;
+
+  static String _label(InventorySortMode mode) {
+    return switch (mode) {
+      InventorySortMode.group => 'Group',
+      InventorySortMode.az => 'A–Z',
+      InventorySortMode.search => 'Search',
+    };
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return PopupMenuButton<InventorySortMode>(
+      tooltip: 'Sort',
+      initialValue: mode,
+      color: Palette.parchmentDeep,
+      position: PopupMenuPosition.under,
+      offset: const Offset(-80, 4),
+      constraints: const BoxConstraints(minWidth: 148, maxWidth: 180),
+      onSelected: onSelected,
+      itemBuilder: (context) => [
+        for (final option in InventorySortMode.values)
+          CheckedPopupMenuItem<InventorySortMode>(
+            value: option,
+            checked: option == mode,
+            child: Text(
+              _label(option),
+              style: TextStyle(
+                fontFamily: gameFontFamily,
+                fontWeight: FontWeight.w400,
+                color: Palette.parchmentText,
+              ),
+            ),
+          ),
+      ],
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFF6A4A30), Color(0xFF45301F)],
+          ),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: mode == InventorySortMode.group ? const Color(0x73D4AF37) : Palette.gold,
+          ),
+          boxShadow: const [BoxShadow(offset: Offset(0, 2), color: Color(0x40000000))],
+        ),
+        child: const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          child: Text(
+            'Sort',
+            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w400, color: Color(0xFFFFF4D4)),
+          ),
+        ),
       ),
     );
   }
