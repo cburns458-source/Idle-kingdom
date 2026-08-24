@@ -55,13 +55,18 @@ export type MultiplayerBoardKey =
   | `skill:${string}`
 
 /**
- * Boards that carry a second number: total level ranks, total XP rides along.
+ * Boards that carry a second number: total level and per-skill ranks show XP
+ * under the level.
  *
  * The guild board is not one of them: its value is a whole roster totalled by
  * the backend, and it was never two boards to begin with.
  */
 export function boardCarriesExperience(boardKey: MultiplayerBoardKey): boolean {
-  return boardKey === 'total_level' || boardKey === 'total_level_combat_1'
+  return (
+    boardKey === 'total_level' ||
+    boardKey === 'total_level_combat_1' ||
+    boardKey.startsWith('skill:')
+  )
 }
 
 /**

@@ -77,6 +77,7 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
   bool _chatOpen = false;
   bool _socialAlertQueued = false;
   String? _socialAlertMessage;
+  OverlayEntry? _socialAlertEntry;
 
   GameScreen get _screen => _stack.last;
   final GlobalKey _toastKey = GlobalKey();
@@ -143,15 +144,34 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
         _socialAlertQueued = false;
         return;
       }
-      setState(() {
-        _socialAlertMessage = message;
-        _socialAlertQueued = false;
-      });
+      _socialAlertQueued = false;
+      _presentRootSocialAlert(message);
     });
+  }
+
+  void _presentRootSocialAlert(String message) {
+    _removeRootSocialAlert();
+    _socialAlertMessage = message;
+    final overlay = Overlay.maybeOf(context, rootOverlay: true);
+    if (overlay == null) {
+      setState(() {});
+      return;
+    }
+    _socialAlertEntry = OverlayEntry(
+      builder: (context) => SocialAlertOverlay(message: message, onClose: _dismissSocialAlert),
+    );
+    overlay.insert(_socialAlertEntry!);
+    setState(() {});
+  }
+
+  void _removeRootSocialAlert() {
+    _socialAlertEntry?.remove();
+    _socialAlertEntry = null;
   }
 
   void _dismissSocialAlert() {
     final message = _socialAlertMessage;
+    _removeRootSocialAlert();
     setState(() => _socialAlertMessage = null);
     if (message != null && multiplayer.notice == message) multiplayer.announce(null);
     _maybePresentSocialNotice();
@@ -213,6 +233,7 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
     _ticker?.dispose();
     _ticker = null;
     _mapWalk?.dispose();
+    _removeRootSocialAlert();
     multiplayer.stopPolling();
     super.dispose();
   }
@@ -631,8 +652,8 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
           ),
         if (controller.discoveryNotice case final notice?)
           SocialAlertOverlay(message: notice, onClose: controller.dismissDiscoveryNotice),
-        if (_socialAlertMessage case final message?)
-          SocialAlertOverlay(message: message, onClose: _dismissSocialAlert),
+        if (_socialAlertEntry == null && _socialAlertMessage != null)
+          SocialAlertOverlay(message: _socialAlertMessage!, onClose: _dismissSocialAlert),
       ],
     );
   }

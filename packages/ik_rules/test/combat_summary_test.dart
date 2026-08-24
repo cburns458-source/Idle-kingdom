@@ -79,6 +79,18 @@ void main() {
     expect(summary.reductionBreakdown.last.detail, '1');
   });
 
+  test('lists action time reduction from equipped tools', () {
+    final db = filterLaunchContent(assertGameDatabaseShape(contentDatabaseJson()));
+    final save = equipStackToSlot(createNewSave(db, 0), weaponToolSlotId, 'ITEM-0110', 1);
+    final summary = playerCombatStatSummary(db, save);
+    expect(summary.activeBonuses.map((bonus) => bonus.kind), contains('equipment'));
+    expect(summary.activeBonuses.map((bonus) => bonus.name), contains('Action time reduction'));
+    expect(
+      summary.activeBonuses.firstWhere((bonus) => bonus.name == 'Action time reduction').effect,
+      contains('5%'),
+    );
+  });
+
   test('an unarmed save still lists Unarmed as a main-hand source', () {
     final fixture = loadParityFixtures('combat/stats').firstWhere((row) => row.name == 'base');
     final summary = playerCombatStatSummary(databaseOf(fixture), saveOf(fixture));

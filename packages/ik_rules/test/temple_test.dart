@@ -140,4 +140,10 @@ void main() {
     expect(forcedHostileActivity(db, save, 'LOC-0036'), isNull);
     expect(locationIsHostileFor(db, save, 'LOC-0036'), isFalse);
   });
+
+  test('Ancient Forest is not a forced-hostile arrival', () {
+    final save = createNewSave(db, 0);
+    expect(forcedHostileActivity(db, save, 'LOC-0018'), isNull);
+    expect(locationIsHostileFor(db, save, 'LOC-0018'), isFalse);
+  });
 }

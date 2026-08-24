@@ -71,6 +71,12 @@ void main() {
           .any((row) => row.displayName == 'Wooden Sword' && row.level == 1),
       isTrue,
     );
+    final gear = view.tabs.last.sections.expand((section) => section.entries);
+    expect(gear.any((row) => row.displayName == 'Tungsten equipment'), isTrue);
+    expect(gear.any((row) => row.displayName == 'Reinforced Steel equipment'), isTrue);
+    expect(gear.any((row) => row.displayName == 'Bull Horn equipment'), isTrue);
+    expect(gear.any((row) => row.displayName == 'Tungsten Helmet'), isFalse);
+    expect(gear.any((row) => row.displayName == 'Tungsten Sword'), isTrue);
   });
 
   test('gathering tools include the wooden starters at level 1', () {
@@ -91,7 +97,7 @@ void main() {
     expect(jewelry.any((row) => row.displayName == 'Lucky Necklace' && row.level == 25), isTrue);
   });
 
-  test('cooking lists cooked squid and soup, and the book is known recipes only', () {
+  test('cooking lists cooked squid and soup, and the book keeps locked recipes', () {
     final cooking = actionsForSkill(db, 'SKL-0007');
     expect(
       cooking.any((row) => row.displayName == 'Cooked Baby Giant Squid' && row.level == 80),
@@ -102,8 +108,8 @@ void main() {
     final save = createNewSave(db, 0);
     final book = recipeBookForSkill(save, db, 'SKL-0007');
     expect(book, isNotEmpty);
-    expect(book.every((entry) => entry.known), isTrue);
-    expect(book.any((entry) => entry.name.contains('Baby Giant Squid')), isFalse);
+    expect(book.any((entry) => entry.known), isTrue);
+    expect(book.any((entry) => entry.name.contains('Baby Giant Squid') && !entry.known), isTrue);
     expect(
       listRecipeBookEntries(
         save,

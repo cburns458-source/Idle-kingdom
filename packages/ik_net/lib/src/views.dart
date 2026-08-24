@@ -568,20 +568,50 @@ class LeaderboardRowView {
   };
 }
 
-String _leaderboardDisplayName(LeaderboardEntry entry, bool isGuild) {
-  if (isGuild) return entry.username;
-  final tag = entry.guildTag?.trim();
-  return tag != null && tag.isNotEmpty ? '[$tag]${entry.username}' : entry.username;
+/// `[TAG]` from the player's own guild or a listing, when the row has a name
+/// but no tag of its own.
+String? guildTagForName(
+  String? guildName, {
+  String? ownName,
+  String? ownTag,
+  Iterable<GuildListing> listings = const <GuildListing>[],
+}) {
+  if (guildName == null || guildName.isEmpty) return null;
+  if (ownName == guildName && ownTag != null && ownTag.trim().isNotEmpty) {
+    return ownTag.trim();
+  }
+  for (final listing in listings) {
+    if (listing.name == guildName && listing.tag.trim().isNotEmpty) {
+      return listing.tag.trim();
+    }
+  }
+  return null;
 }
 
-List<LeaderboardRowView> leaderboardRows(List<LeaderboardEntry> entries) {
+String _leaderboardDisplayName(
+  LeaderboardEntry entry,
+  bool isGuild, {
+  String? Function(String? guildName)? tagForGuildName,
+}) {
+  if (isGuild) return entry.username;
+  final tagged = entry.guildTag?.trim();
+  final resolved = (tagged != null && tagged.isNotEmpty)
+      ? tagged
+      : tagForGuildName?.call(entry.guildName)?.trim();
+  return resolved != null && resolved.isNotEmpty ? '[$resolved]${entry.username}' : entry.username;
+}
+
+List<LeaderboardRowView> leaderboardRows(
+  List<LeaderboardEntry> entries, {
+  String? Function(String? guildName)? tagForGuildName,
+}) {
   return entries.map((entry) {
     final isGuild = entry.entryKind == LeaderboardEntryKind.guild;
     final experience = entry.secondaryValue;
     return LeaderboardRowView(
       rank: entry.rank,
       entryId: entry.userId,
-      username: _leaderboardDisplayName(entry, isGuild),
+      username: _leaderboardDisplayName(entry, isGuild, tagForGuildName: tagForGuildName),
       subtitle: isGuild ? (entry.guildName ?? 'Guild') : '',
       valueLabel: entry.boardKey == boardLogCompletion
           ? '${jsNumberToString(entry.value)}%'

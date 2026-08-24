@@ -694,6 +694,18 @@ void main() {
     expect(await rival.friends(), isEmpty);
   });
 
+  test('ignored hosted players keep their name on the account list', () async {
+    final transport = FakeTransport();
+    final hero = await _signedIn(transport, MemorySaveStorage());
+    final rival = _service(transport, MemorySaveStorage());
+    await rival.signUp('rival@example.com', 'Rival', 'secret');
+
+    await hero.ignorePlayer(rival.session!.userId);
+    final ignored = await hero.ignoredPlayers();
+    expect(ignored.single.userId, rival.session!.userId);
+    expect(ignored.single.username, 'Rival');
+  });
+
   test('falls back to the device friends list when the hosted tables are missing', () async {
     final transport = FakeTransport();
     transport.missingTables.addAll(const <String>['friend_requests', 'friendships']);

@@ -73,7 +73,7 @@ class _SkillMenuBodyState extends State<_SkillMenuBody> {
       context,
       title: widget.skillName,
       rows: recipeLogForEntries(recipeBookForSkill(widget.save, widget.db, widget.skillId)),
-      emptyMessage: "You haven't unlocked any recipes for this skill yet.",
+      emptyMessage: 'Nothing is written for this skill yet.',
     );
   }
 

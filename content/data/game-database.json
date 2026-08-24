@@ -9847,7 +9847,7 @@
       "Contextual Name": "Explore the ancient forest",
       "Location ID": "LOC-0018",
       "Description": "One axe-compatible pool containing Ancient Tree, Ent, Ancient Ent, and Corrupted Ent.",
-      "Danger Warning Combat Level": 65,
+      "Danger Warning Combat Level": null,
       "Pool ID": "POOL-0016",
       "Pool Internal Key": "ancient_forest_pool",
       "Status": "Planned",

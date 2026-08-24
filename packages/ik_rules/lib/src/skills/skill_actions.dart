@@ -34,6 +34,14 @@ const Set<String> _combatGearWords = <String>{
   'Spear',
 };
 
+const List<String> _combatArmorWords = <String>[
+  'Helmet',
+  'Chestplate',
+  'Platelegs',
+  'Boots',
+  'Gloves',
+];
+
 /// One row of a skill menu: what it makes and the level it needs.
 class SkillMenuListItem {
   const SkillMenuListItem({required this.id, required this.displayName, required this.level});
@@ -357,7 +365,20 @@ List<SkillMenuListItem> _combatGearEntries(GameDatabase db) {
     }),
     ..._woodenItems(db, _woodenCombatGear),
   ];
-  return _dedupeByName(items);
+  final grouped = <SkillMenuListItem>[];
+  final other = <SkillMenuListItem>[];
+  final seen = <String>{};
+  for (final item in items) {
+    final material = _armorMaterial(item.displayName);
+    if (material == null) {
+      other.add(item);
+      continue;
+    }
+    final key = '${item.level ?? ''}|$material';
+    if (!seen.add(key)) continue;
+    grouped.add(SkillMenuListItem(id: key, displayName: '$material equipment', level: item.level));
+  }
+  return _dedupeByName([...grouped, ...other]);
 }
 
 List<SkillMenuListItem> _gatheringToolEntries(GameDatabase db, String skillId) {
@@ -458,6 +479,17 @@ String? _smithingMaterial(String name) {
   final parts = name.trim().split(RegExp(r'\s+'));
   if (parts.length < 2) return null;
   return parts.first;
+}
+
+String? _armorMaterial(String name) {
+  for (final word in _combatArmorWords) {
+    if (!_endsWithWord(name, word)) continue;
+    if (name.length <= word.length) return null;
+    final material = name.substring(0, name.length - word.length).trim();
+    if (material.isEmpty) return null;
+    return material;
+  }
+  return null;
 }
 
 bool _endsWithWord(String name, String word) {

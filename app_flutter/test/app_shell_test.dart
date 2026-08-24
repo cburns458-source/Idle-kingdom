@@ -443,6 +443,10 @@ void main() {
 
     await tester.tap(find.text('Character'));
     await tester.pump();
+    expect(find.textContaining('slots'), findsOne);
+
+    await tester.tap(find.widgetWithText(GameButton, 'Skills'));
+    await tester.pump();
     expect(find.text('Combat'), findsWidgets);
 
     await tester.tap(find.widgetWithText(GameButton, 'Inventory'));
@@ -552,6 +556,11 @@ void main() {
     await pumpShell(tester, controller);
 
     await tester.tap(find.text('Character'));
+    await tester.pump();
+    expect(find.textContaining('slots'), findsOne);
+    expect(find.text('Total level'), findsNothing);
+
+    await tester.tap(find.widgetWithText(GameButton, 'Skills'));
     await tester.pump();
     expect(find.text('Total level'), findsOne);
 

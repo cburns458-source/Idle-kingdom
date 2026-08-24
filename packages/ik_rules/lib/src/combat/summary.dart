@@ -17,7 +17,7 @@ import 'stats.dart';
 class CombatBonusLine {
   const CombatBonusLine({required this.kind, required this.name, required this.effect});
 
-  /// `enchantment`, `spell`, `potion`, or `race`.
+  /// `enchantment`, `spell`, `potion`, `race`, or `equipment`.
   final String kind;
   final String name;
   final String effect;
@@ -178,6 +178,17 @@ List<CombatBonusLine> _activeBonuses(GameDatabase db, PlayerSave save) {
         ),
       );
     }
+  }
+
+  final actionTimeReduction = equippedActionTimeReductionPercent(db, save);
+  if (actionTimeReduction > 0) {
+    bonuses.add(
+      CombatBonusLine(
+        kind: 'equipment',
+        name: 'Action time reduction',
+        effect: '-${jsNumberToString(actionTimeReduction)}% action time',
+      ),
+    );
   }
 
   return bonuses;

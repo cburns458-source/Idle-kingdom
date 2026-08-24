@@ -370,20 +370,44 @@ export interface LeaderboardRowView {
   isGuild: boolean
 }
 
-function leaderboardDisplayName(entry: LeaderboardEntry, isGuild: boolean): string {
+/** `[TAG]` from the row, or from a guild-name lookup when the row has none. */
+export function guildTagForName(
+  guildName: string | null | undefined,
+  options: {
+    ownName?: string | null
+    ownTag?: string | null
+    listings?: Array<{ name: string; tag: string }>
+  } = {},
+): string | undefined {
+  if (!guildName) return undefined
+  if (options.ownName === guildName && options.ownTag?.trim()) return options.ownTag.trim()
+  for (const listing of options.listings ?? []) {
+    if (listing.name === guildName && listing.tag.trim()) return listing.tag.trim()
+  }
+  return undefined
+}
+
+function leaderboardDisplayName(
+  entry: LeaderboardEntry,
+  isGuild: boolean,
+  tagForGuildName?: (guildName: string | null | undefined) => string | undefined,
+): string {
   if (isGuild) return entry.username
-  const tag = entry.guildTag?.trim()
+  const tag = entry.guildTag?.trim() || tagForGuildName?.(entry.guildName)?.trim()
   return tag ? `[${tag}]${entry.username}` : entry.username
 }
 
-export function leaderboardRows(entries: LeaderboardEntry[]): LeaderboardRowView[] {
+export function leaderboardRows(
+  entries: LeaderboardEntry[],
+  options?: { tagForGuildName?: (guildName: string | null | undefined) => string | undefined },
+): LeaderboardRowView[] {
   return entries.map((entry) => {
     const isGuild = entry.entryKind === 'guild'
     const experience = entry.secondaryValue
     return {
       rank: entry.rank,
       entryId: entry.userId,
-      username: leaderboardDisplayName(entry, isGuild),
+      username: leaderboardDisplayName(entry, isGuild, options?.tagForGuildName),
       subtitle: isGuild ? (entry.guildName ?? 'Guild') : '',
       valueLabel:
         entry.boardKey === 'log_completion' ? `${entry.value}%` : entry.value.toLocaleString(),

@@ -198,14 +198,13 @@ export function listRecipeBookEntries(save: PlayerSave, db: GameDatabase): Recip
   })
 }
 
-/** Unlocked recipes and mentor-known projects for one skill. */
+/** Recipes and mentor projects for one skill, including locked rows. */
 export function recipeBookForSkill(
   save: PlayerSave,
   db: GameDatabase,
   skillId: string,
 ): RecipeBookEntry[] {
   return listRecipeBookEntries(save, db).filter((entry) => {
-    if (!entry.known) return false
     if (entry.kind === 'recipe') {
       return getRecipe(db, entry.id)?.['Skill ID'] === skillId
     }
