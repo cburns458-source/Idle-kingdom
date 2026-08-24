@@ -144,6 +144,7 @@ describe('remote leaderboards', () => {
           { boardKey: 'total_level', value: 42, secondaryValue: 1204 },
           { boardKey: 'gold_earned', value: 7 },
         ],
+        equipment: [],
       },
       '2026-08-12T21:00:00.000Z',
     )
