@@ -1124,6 +1124,21 @@ def paint_unique(c: Canvas, name: str) -> bool:
         c.put(22, 10, (196, 148, 72))
         c.put(23, 9, (168, 112, 56))
         return True
+    if "mage's wand" in n or 'mages wand' in n:
+        c.stamp_centered(
+            [
+                '...ggg...',
+                '..gGGGg..',
+                '.gGGGGGg.',
+                '..gGGGg..',
+                '...HHH...',
+                '...HHH...',
+                '...HHH...',
+                '...ddd...',
+            ],
+            {'g': GEM['emerald'][0], 'G': GEM['emerald'][2], 'H': WOOD['maple'][1], 'd': WOOD['maple'][2]},
+        )
+        return True
     if 'staff of sparks' in n:
         paint_battle_staff(c, (88, 176, 255), (40, 96, 196))
         return True

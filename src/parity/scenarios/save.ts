@@ -38,6 +38,8 @@ const INTRODUCED_AT: Array<[number, string[]]> = [
   [25, ['favoriteActivityByLocationId']],
   [29, ['claimedKingswoodsSling']],
   [30, ['playTimeMs']],
+  [31, ['combatSkipEnemyAttack']],
+  [32, ['combatBossSleepRoundsRemaining', 'bossRespawnUntilByEnemyId']],
 ]
 
 /**

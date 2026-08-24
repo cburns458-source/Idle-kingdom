@@ -167,6 +167,10 @@
     "LOC-0036": {
       "internalKey": "temple",
       "path": "/assets/locations/loc_temple.webp"
+    },
+    "LOC-0037": {
+      "internalKey": "castle_crypt",
+      "path": "/assets/locations/loc_castle_crypt.webp"
     }
   },
   "enemies": {
@@ -180,6 +184,7 @@
     "ent": "/assets/enemies/enm_ent.webp",
     "goblin_chief": "/assets/enemies/enm_goblin_chief.webp",
     "goblin_scout": "/assets/enemies/enm_goblin_scout.webp",
+    "ghost": "/assets/enemies/enm_ghost.webp",
     "goblin_warrior": "/assets/enemies/enm_goblin_warrior.webp",
     "pirate": "/assets/enemies/enm_pirate.webp",
     "rabbit_buck": "/assets/enemies/enm_rabbit_buck.webp",

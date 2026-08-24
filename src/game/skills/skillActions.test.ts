@@ -92,6 +92,7 @@ describe('skill menu entries', () => {
     expect(weapons.map((item) => item.displayName)).toEqual([
       'Staff of Sparks',
       'Staff of Binding',
+      "Mage's Wand",
       'Staff of Power',
     ])
     expect(weapons.find((item) => item.displayName === 'Staff of Sparks')?.level).toBe(35)

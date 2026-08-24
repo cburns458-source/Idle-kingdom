@@ -32,6 +32,7 @@ import {
   rollDamage,
   staffSparksDamageRange,
 } from './stats'
+import { applySleepIncoming, bossProfile, withBossRespawn } from './boss'
 
 export type RandomFn = () => number
 
@@ -48,6 +49,12 @@ export interface CombatRoundResult {
   enemyHit: number | null
   /** Damage reflected back at the enemy this round via armor enchantments (e.g. Thorns). */
   thornsHit: number
+  /** Remaining boss sleep rounds after this one, or null when the enemy is not a boss. */
+  bossSleepRoundsRemaining: number | null
+  /** True when this enemy started the round asleep. */
+  enemyAsleep: boolean
+  /** True when the enemy's landing swing was a rampage hit. */
+  enemyRampage: boolean
   enemyHp: number
   playerHp: number
   outcome: 'ongoing' | 'victory' | 'defeat'
@@ -91,6 +98,7 @@ export function beginCombatSave(
     combatEnemyHp: enemyHp,
     combatRoundStartedAt: nowIso,
     combatSkipEnemyAttack: false,
+    combatBossSleepRoundsRemaining: bossProfile(enemy)?.sleepStart ?? null,
     activePotionEffect: potion.effect,
     deathPauseUntil: null,
   }
@@ -103,6 +111,7 @@ export function clearCombatSave(save: PlayerSave): PlayerSave {
     combatEnemyHp: null,
     combatRoundStartedAt: null,
     combatSkipEnemyAttack: false,
+    combatBossSleepRoundsRemaining: null,
     activePotionEffect:
       save.activePotionEffect?.scope === 'one_combat_encounter' ? null : save.activePotionEffect,
   }
@@ -116,6 +125,8 @@ export function resolveCombatRound(
   random: RandomFn = Math.random,
 ): CombatRoundResult {
   const floor = configNumber(db, 'damage_floor', 1)
+  const profile = bossProfile(enemy)
+  const asleep = (save.combatBossSleepRoundsRemaining ?? 0) > 0
   const playerRange = playerDamageRange(db, save)
   let playerHit = rollDamage(playerRange.min, playerRange.max, random)
   let playerCrit = false
@@ -124,6 +135,7 @@ export function resolveCombatRound(
     playerCrit = true
     playerHit = Math.max(1, Math.floor(playerHit * criticalStrikeDamageMultiplier()))
   }
+  playerHit = applySleepIncoming(playerHit, asleep)
   let nextEnemyHp = Math.max(0, enemyHp - playerHit)
 
   const weaponId = save.equipment.slots[WEAPON_TOOL_SLOT_ID]?.itemId ?? null
@@ -133,7 +145,7 @@ export function resolveCombatRound(
   let staffHit: number | null = null
   if (nextEnemyHp > 0 && weaponId && itemHasCapability(db, weaponId, 'staff_sparks')) {
     const sparks = staffSparksDamageRange(getSkillProgress(save, ARCANA_SKILL_ID).level)
-    staffHit = rollDamage(sparks.min, sparks.max, random)
+    staffHit = applySleepIncoming(rollDamage(sparks.min, sparks.max, random), asleep)
     nextEnemyHp = Math.max(0, nextEnemyHp - staffHit)
   }
 
@@ -144,7 +156,7 @@ export function resolveCombatRound(
   if (nextEnemyHp > 0) {
     const offhandRange = playerOffhandDamageRange(db, save)
     if (offhandRange) {
-      offhandHit = rollDamage(offhandRange.min, offhandRange.max, random)
+      offhandHit = applySleepIncoming(rollDamage(offhandRange.min, offhandRange.max, random), asleep)
       nextEnemyHp = Math.max(0, nextEnemyHp - offhandHit)
     }
   }
@@ -153,6 +165,12 @@ export function resolveCombatRound(
   let skipNextEnemyAttack = false
   if (nextEnemyHp > 0 && weaponId && itemHasCapability(db, weaponId, 'staff_binding')) {
     skipNextEnemyAttack = random() < 0.5
+  }
+
+  let nextSleep = profile == null ? null : save.combatBossSleepRoundsRemaining ?? 0
+  if (nextSleep != null && nextSleep > 0) nextSleep -= 1
+  if (profile && nextEnemyHp <= enemy['Maximum HP'] * profile.wakeHpRatio) {
+    nextSleep = 0
   }
 
   if (nextEnemyHp <= 0) {
@@ -164,13 +182,16 @@ export function resolveCombatRound(
       skipNextEnemyAttack: false,
       enemyHit: null,
       thornsHit: 0,
+      bossSleepRoundsRemaining: nextSleep,
+      enemyAsleep: asleep,
+      enemyRampage: false,
       enemyHp: 0,
       playerHp: save.currentHp,
       outcome: 'victory',
     }
   }
 
-  if (save.combatSkipEnemyAttack) {
+  if (save.combatSkipEnemyAttack || asleep) {
     return {
       playerHit,
       playerCrit,
@@ -179,18 +200,24 @@ export function resolveCombatRound(
       skipNextEnemyAttack,
       enemyHit: null,
       thornsHit: 0,
+      bossSleepRoundsRemaining: nextSleep,
+      enemyAsleep: asleep,
+      enemyRampage: false,
       enemyHp: nextEnemyHp,
       playerHp: save.currentHp,
       outcome: 'ongoing',
     }
   }
 
-  const enemyRaw = rollDamage(enemy['Min Damage'], enemy['Max Damage'], random)
+  const rampage = Boolean(profile && nextEnemyHp <= enemy['Maximum HP'] * profile.rampageHpRatio)
+  let enemyRaw = rollDamage(enemy['Min Damage'], enemy['Max Damage'], random)
+  if (rampage) enemyRaw *= 2
   const enemyHit = applyMitigation(enemyRaw, playerDamageReduction(db, save), floor)
   const playerHp = Math.max(0, save.currentHp - enemyHit)
 
   const thornsPercent = equippedEnchantmentThornsPercent(db, save)
-  const thornsHit = thornsPercent > 0 ? Math.round((enemyHit * thornsPercent) / 100) : 0
+  let thornsHit = thornsPercent > 0 ? Math.round((enemyHit * thornsPercent) / 100) : 0
+  thornsHit = applySleepIncoming(thornsHit, asleep)
   if (thornsHit > 0) {
     nextEnemyHp = Math.max(0, nextEnemyHp - thornsHit)
   }
@@ -203,6 +230,9 @@ export function resolveCombatRound(
     skipNextEnemyAttack,
     enemyHit,
     thornsHit,
+    bossSleepRoundsRemaining: nextSleep,
+    enemyAsleep: asleep,
+    enemyRampage: rampage,
     enemyHp: nextEnemyHp,
     playerHp,
     // Simultaneous kills favor defeat: the enemy's own hit must land before Thorns reflects it.
@@ -254,7 +284,7 @@ export function applyCombatVictory(
   }
 
   const food = tryConsumeFoodAfterVictory(db, next)
-  next = clearCombatSave(food.save)
+  next = withBossRespawn(clearCombatSave(food.save), enemy, nowMs)
   next = applyQuestDefeatProgress(db, next, enemy['Enemy ID'], 1)
   next = applyBountyDefeatProgress(next, enemy['Enemy ID'], 1, nowMs)
   next = withoutHeldAction(next, save.currentActivityId)

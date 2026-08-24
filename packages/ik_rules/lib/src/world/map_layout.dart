@@ -69,6 +69,8 @@ const Map<String, NodePosition> castleMapNodeLayout = <String, NodePosition>{
   'LOC-0014': NodePosition(x: 50, y: 55),
   // Castle gateway at the outer gatehouse
   'LOC-0013': NodePosition(x: 50, y: 78),
+  // Castle Crypt, bottom-left of the grounds
+  'LOC-0037': NodePosition(x: 22, y: 70),
 };
 
 const Map<String, NodePosition> townMapNodeLayout = <String, NodePosition>{

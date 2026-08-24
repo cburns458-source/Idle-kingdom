@@ -26,9 +26,49 @@ import type {
 import { bonusSkillXpForAction, bowHuntingCombatXpBonus } from './bonusXp'
 import { summarizeXpReward } from './rewardSummary'
 import { applyXp } from './xp'
+import { bossRespawnUntilMs, isBossEnemy, isBossRespawnReady } from '../combat/boss'
+
+export const COMING_SOON_REASON = 'Coming soon.'
 
 export function getActivity(db: GameDatabase, activityId: string): ActivityRow | undefined {
   return db.Activities.find((row) => row['Activity ID'] === activityId)
+}
+
+export function activityIsComingSoon(activity: ActivityRow | null | undefined): boolean {
+  if (!activity) return false
+  return String(activity.Notes ?? '')
+    .split(';')
+    .map((token) => token.trim().toLowerCase())
+    .includes('coming_soon')
+}
+
+/** Earliest time the next pool action can start, or null when nothing is waiting. */
+export function bossRespawnWaitUntilMs(
+  db: GameDatabase,
+  save: PlayerSave,
+  activityId: string,
+): number | null {
+  const activity = getActivity(db, activityId)
+  if (!activity?.['Pool ID']) return null
+
+  const heldId = heldActionIdFor(save, activityId)
+  let held = heldId ? db.Actions.find((row) => row['Action ID'] === heldId) : undefined
+  if (held && !isSelectableAction(held)) held = undefined
+  const candidates: ActionRow[] = held
+    ? [held]
+    : eligiblePoolEntries(db, activity['Pool ID']).map((entry) => entry.action)
+  if (candidates.length === 0) return null
+
+  let wait: number | null = null
+  for (const action of candidates) {
+    if (action.Category !== 'Combat') return null
+    const enemy = enemyForAction(db, action)
+    if (!enemy || !isBossEnemy(enemy)) return null
+    const until = bossRespawnUntilMs(save, enemy['Enemy ID'])
+    if (until == null) return null
+    wait = wait == null ? until : Math.min(wait, until)
+  }
+  return wait
 }
 
 export function validateActivityStart(
@@ -40,6 +80,9 @@ export function validateActivityStart(
   if (!activity) return { ok: false, reason: 'Unknown activity.' }
   if (activity['Location ID'] !== save.currentLocationId) {
     return { ok: false, reason: 'Travel to this location before starting the activity.' }
+  }
+  if (activityIsComingSoon(activity)) {
+    return { ok: false, reason: COMING_SOON_REASON }
   }
   const activityReqFailures = unmetHardRequirements(
     db,
@@ -148,6 +191,16 @@ export function generateNextAction(
       ...save,
       currentActivityId: activityId,
       activityStartedAt: save.activityStartedAt ?? startedAt,
+      currentActionId: null,
+      actionStartedAt: null,
+      actionDurationMs: null,
+    }
+    if (isBossEnemy(enemy) && !isBossRespawnReady(save, enemy['Enemy ID'], nowMs)) {
+      return {
+        action,
+        state: null,
+        save: clearCombatSave(withActivity),
+      }
     }
     return {
       action,

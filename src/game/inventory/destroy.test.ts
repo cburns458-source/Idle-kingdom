@@ -57,6 +57,8 @@ function saveWithInventory(itemIds: string[]): PlayerSave {
     combatEnemyHp: null,
     combatRoundStartedAt: null,
     combatSkipEnemyAttack: false,
+    combatBossSleepRoundsRemaining: null,
+    bossRespawnUntilByEnemyId: {},
     activePotionEffect: null,
     deathPauseUntil: null,
     productionRecipeId: null,

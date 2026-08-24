@@ -19,6 +19,7 @@ import '../rng/mulberry32.dart';
 import '../cosmetics/cosmetics.dart';
 import '../save/generated/save_models.dart';
 import '../time.dart';
+import 'boss.dart';
 import 'food.dart';
 import 'stats.dart';
 
@@ -32,6 +33,9 @@ class CombatRoundResult {
     required this.skipNextEnemyAttack,
     required this.enemyHit,
     required this.thornsHit,
+    required this.bossSleepRoundsRemaining,
+    required this.enemyAsleep,
+    required this.enemyRampage,
     required this.enemyHp,
     required this.playerHp,
     required this.outcome,
@@ -54,6 +58,15 @@ class CombatRoundResult {
 
   /// Damage reflected back at the enemy this round via armor enchantments (e.g. Thorns).
   final num thornsHit;
+
+  /// Remaining boss sleep rounds after this one, or null when the enemy is not a boss.
+  final num? bossSleepRoundsRemaining;
+
+  /// True when this enemy started the round asleep.
+  final bool enemyAsleep;
+
+  /// True when the enemy's landing swing was a rampage hit.
+  final bool enemyRampage;
   final num enemyHp;
   final num playerHp;
 
@@ -68,6 +81,9 @@ class CombatRoundResult {
     'skipNextEnemyAttack': skipNextEnemyAttack,
     'enemyHit': enemyHit,
     'thornsHit': thornsHit,
+    'bossSleepRoundsRemaining': bossSleepRoundsRemaining,
+    'enemyAsleep': enemyAsleep,
+    'enemyRampage': enemyRampage,
     'enemyHp': enemyHp,
     'playerHp': playerHp,
     'outcome': outcome,
@@ -124,6 +140,7 @@ PlayerSave beginCombatSave(
     combatEnemyHp: math.max(0, enemyMaxHp - poisonDamage),
     combatRoundStartedAt: nowIso,
     combatSkipEnemyAttack: false,
+    combatBossSleepRoundsRemaining: bossProfile(enemy)?.sleepStart,
     activePotionEffect: potion.effect,
     deathPauseUntil: null,
   );
@@ -135,6 +152,7 @@ PlayerSave clearCombatSave(PlayerSave save) {
     combatEnemyHp: null,
     combatRoundStartedAt: null,
     combatSkipEnemyAttack: false,
+    combatBossSleepRoundsRemaining: null,
     activePotionEffect: save.activePotionEffect?.scope == 'one_combat_encounter'
         ? null
         : save.activePotionEffect,
@@ -149,6 +167,8 @@ CombatRoundResult resolveCombatRound(
   RandomFn random,
 ) {
   final floor = configNumber(db, 'damage_floor', 1);
+  final profile = bossProfile(enemy);
+  final asleep = (save.combatBossSleepRoundsRemaining ?? 0) > 0;
   final playerRange = playerDamageRange(db, save);
   var playerHit = rollDamage(playerRange.min, playerRange.max, random);
   var playerCrit = false;
@@ -157,6 +177,7 @@ CombatRoundResult resolveCombatRound(
     playerCrit = true;
     playerHit = math.max(1, (playerHit * criticalStrikeDamageMultiplier()).floor());
   }
+  playerHit = applySleepIncoming(playerHit, asleep);
   var nextEnemyHp = math.max(0, enemyHp - playerHit);
   final weaponId = save.equipment.slots[weaponToolSlotId]?.itemId;
 
@@ -165,7 +186,7 @@ CombatRoundResult resolveCombatRound(
   num? staffHit;
   if (nextEnemyHp > 0 && isNotBlank(weaponId) && itemHasCapability(db, weaponId!, 'staff_sparks')) {
     final sparks = staffSparksDamageRange(getSkillProgress(save, arcanaSkillId).level);
-    staffHit = rollDamage(sparks.min, sparks.max, random);
+    staffHit = applySleepIncoming(rollDamage(sparks.min, sparks.max, random), asleep);
     nextEnemyHp = math.max(0, nextEnemyHp - staffHit);
   }
 
@@ -176,7 +197,10 @@ CombatRoundResult resolveCombatRound(
   if (nextEnemyHp > 0) {
     final offhandRange = playerOffhandDamageRange(db, save);
     if (offhandRange != null) {
-      offhandHit = rollDamage(offhandRange.min, offhandRange.max, random);
+      offhandHit = applySleepIncoming(
+        rollDamage(offhandRange.min, offhandRange.max, random),
+        asleep,
+      );
       nextEnemyHp = math.max(0, nextEnemyHp - offhandHit);
     }
   }
@@ -189,6 +213,12 @@ CombatRoundResult resolveCombatRound(
     skipNextEnemyAttack = random() < 0.5;
   }
 
+  num? nextSleep = profile == null ? null : (save.combatBossSleepRoundsRemaining ?? 0);
+  if (nextSleep != null && nextSleep > 0) nextSleep = nextSleep - 1;
+  if (profile != null && nextEnemyHp <= jsNumber(enemy.raw['Maximum HP']) * profile.wakeHpRatio) {
+    nextSleep = 0;
+  }
+
   if (nextEnemyHp <= 0) {
     return CombatRoundResult(
       playerHit: playerHit,
@@ -198,13 +228,16 @@ CombatRoundResult resolveCombatRound(
       skipNextEnemyAttack: false,
       enemyHit: null,
       thornsHit: 0,
+      bossSleepRoundsRemaining: nextSleep,
+      enemyAsleep: asleep,
+      enemyRampage: false,
       enemyHp: 0,
       playerHp: save.currentHp,
       outcome: 'victory',
     );
   }
 
-  if (save.combatSkipEnemyAttack) {
+  if (save.combatSkipEnemyAttack || asleep) {
     return CombatRoundResult(
       playerHit: playerHit,
       playerCrit: playerCrit,
@@ -213,22 +246,29 @@ CombatRoundResult resolveCombatRound(
       skipNextEnemyAttack: skipNextEnemyAttack,
       enemyHit: null,
       thornsHit: 0,
+      bossSleepRoundsRemaining: nextSleep,
+      enemyAsleep: asleep,
+      enemyRampage: false,
       enemyHp: nextEnemyHp,
       playerHp: save.currentHp,
       outcome: 'ongoing',
     );
   }
 
-  final enemyRaw = rollDamage(
+  final rampage =
+      profile != null && nextEnemyHp <= jsNumber(enemy.raw['Maximum HP']) * profile.rampageHpRatio;
+  var enemyRaw = rollDamage(
     jsNumber(enemy.raw['Min Damage']),
     jsNumber(enemy.raw['Max Damage']),
     random,
   );
+  if (rampage) enemyRaw *= 2;
   final enemyHit = applyMitigation(enemyRaw, playerDamageReduction(db, save), floor);
   final playerHp = math.max(0, save.currentHp - enemyHit);
 
   final thornsPercent = equippedEnchantmentThornsPercent(db, save);
-  final thornsHit = thornsPercent > 0 ? (enemyHit * thornsPercent / 100).round() : 0;
+  var thornsHit = thornsPercent > 0 ? (enemyHit * thornsPercent / 100).round() : 0;
+  thornsHit = applySleepIncoming(thornsHit, asleep);
   if (thornsHit > 0) {
     nextEnemyHp = math.max(0, nextEnemyHp - thornsHit);
   }
@@ -241,6 +281,9 @@ CombatRoundResult resolveCombatRound(
     skipNextEnemyAttack: skipNextEnemyAttack,
     enemyHit: enemyHit,
     thornsHit: thornsHit,
+    bossSleepRoundsRemaining: nextSleep,
+    enemyAsleep: asleep,
+    enemyRampage: rampage,
     enemyHp: nextEnemyHp,
     playerHp: playerHp,
     // Simultaneous kills favor defeat: the enemy's own hit must land before Thorns reflects it.
@@ -293,7 +336,7 @@ CombatVictoryResult applyCombatVictory(
   );
 
   final food = tryConsumeFoodAfterVictory(db, next);
-  next = clearCombatSave(food.save);
+  next = withBossRespawn(clearCombatSave(food.save), enemy, nowMs);
   next = applyQuestDefeatProgress(db, next, jsString(enemy.raw['Enemy ID']), 1);
   next = applyBountyDefeatProgress(next, jsString(enemy.raw['Enemy ID']), 1, nowMs);
   next = withoutHeldAction(next, save.currentActivityId);

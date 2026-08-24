@@ -506,7 +506,8 @@ bool _isSpellName(String name) => name.contains('Spell');
 bool _isArcanaWeaponName(String name, String outputId) {
   if (outputId.startsWith('ENCH-')) return false;
   return RegExp(r'staff of\b', caseSensitive: false).hasMatch(name) ||
-      RegExp(r'\bstaff\b', caseSensitive: false).hasMatch(name);
+      RegExp(r'\bstaff\b', caseSensitive: false).hasMatch(name) ||
+      RegExp(r'\bwand\b', caseSensitive: false).hasMatch(name);
 }
 
 bool _isEnchantmentName(String name, String outputId) {

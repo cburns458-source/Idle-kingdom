@@ -799,6 +799,25 @@ class _InteractionCard extends StatelessWidget {
   }
 }
 
+Future<void> _startOrComingSoon(
+  BuildContext context,
+  GameController controller,
+  ActivityRow activity,
+) async {
+  if (activityIsComingSoon(activity)) {
+    if (!context.mounted) return;
+    await showGameAlert(
+      context: context,
+      title: 'Coming soon',
+      message: activity.description ?? comingSoonReason,
+      confirmLabel: 'OK',
+      placement: GamePopupPlacement.center,
+    );
+    return;
+  }
+  controller.startActivity(activity.activityId);
+}
+
 class _ActivityCard extends StatelessWidget {
   const _ActivityCard({
     required this.controller,
@@ -852,7 +871,7 @@ class _ActivityCard extends StatelessWidget {
                   ? null
                   : production
                   ? () => onOpenWorkshop(context)
-                  : () => controller.startActivity(activityId),
+                  : () => _startOrComingSoon(context, controller, activity),
             ),
     );
   }
