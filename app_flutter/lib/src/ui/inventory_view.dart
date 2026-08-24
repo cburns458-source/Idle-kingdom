@@ -624,7 +624,9 @@ class _SortMenu extends StatelessWidget {
       tooltip: 'Sort',
       initialValue: mode,
       color: Palette.parchmentDeep,
-      offset: const Offset(0, 8),
+      position: PopupMenuPosition.under,
+      offset: const Offset(-80, 4),
+      constraints: const BoxConstraints(minWidth: 148, maxWidth: 180),
       onSelected: onSelected,
       itemBuilder: (context) => [
         for (final option in InventorySortMode.values)

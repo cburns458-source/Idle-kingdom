@@ -213,7 +213,7 @@ void main() {
 
     await tester.tap(find.byTooltip('Sort'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('A–Z').last);
+    await tester.tap(find.widgetWithText(CheckedPopupMenuItem<InventorySortMode>, 'A–Z'));
     await tester.pumpAndSettle();
     expect(
       visibleBagOrder(tester, ['Baked Potato', 'Copper Bar', 'Copper Ore', 'Iron Sword', 'Potato']),
@@ -222,7 +222,7 @@ void main() {
 
     await tester.tap(find.byTooltip('Sort'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Search').last);
+    await tester.tap(find.widgetWithText(CheckedPopupMenuItem<InventorySortMode>, 'Search'));
     await tester.pumpAndSettle();
     expect(find.byType(TextField), findsOne);
 
