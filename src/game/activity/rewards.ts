@@ -185,6 +185,7 @@ export function resolveActionRewards(
 
   rollTable(action['Reward Table ID'], action['Drop Chance'])
   rollTable(action['Secondary Reward Table ID'], action['Secondary Drop Chance'])
+  rollTable(action['Tertiary Reward Table ID'], action['Tertiary Drop Chance'])
 
   goldGained = applyRaceGoldGain(db, save, goldGained)
   if (goldGained > 0) {

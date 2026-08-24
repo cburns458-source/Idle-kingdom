@@ -31,9 +31,10 @@ describe('primary activity engine', () => {
     expect(generated?.action['Action ID']).toBe('ACN-0105')
 
     const completed = completeGatheringAction(launch, generated!.save, generated!.action, () => 0)
-    expect(completed.result.xpGained).toBe(100)
+    // Below Harvesting 10 proficiency: half XP on wild roots.
+    expect(completed.result.xpGained).toBe(250)
     expect(completed.save.inventory.some((stack) => stack.itemId === 'ITEM-0030')).toBe(true)
-    expect(completed.save.skills.find((skill) => skill.skillId === 'SKL-0004')?.xp).toBe(100)
+    expect(completed.save.skills.find((skill) => skill.skillId === 'SKL-0004')?.xp).toBe(250)
   })
 
   it('grants bonus Combat XP for a bow-based Hunting Action when a bow is equipped', () => {
@@ -127,14 +128,14 @@ describe('primary activity engine', () => {
   it('doubles gathering duration and halves XP below proficiency', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const save = createNewSave(launch)
-    const potato = launch.Actions.find((action) => action['Action ID'] === 'ACN-0035')!
-    expect(potato['Proficiency Level']).toBe(10)
-    expect(gatheringDurationMs(launch, save, potato)).toBe(120_000)
-    expect(gatheringXpReward(launch, save, potato)).toBe(325)
+    const roots = launch.Actions.find((action) => action['Action ID'] === 'ACN-0105')!
+    expect(roots['Proficiency Level']).toBe(10)
+    expect(gatheringDurationMs(launch, save, roots)).toBe(60_000)
+    expect(gatheringXpReward(launch, save, roots)).toBe(250)
 
-    const completed = completeGatheringAction(launch, save, potato, () => 0)
-    expect(completed.result.xpGained).toBe(325)
-    expect(completed.save.skills.find((skill) => skill.skillId === 'SKL-0004')?.xp).toBe(325)
+    const completed = completeGatheringAction(launch, save, roots, () => 0)
+    expect(completed.result.xpGained).toBe(250)
+    expect(completed.save.skills.find((skill) => skill.skillId === 'SKL-0004')?.xp).toBe(250)
   })
 
   it('halves Delve for Essence XP and Arcana bonus below mining proficiency', () => {

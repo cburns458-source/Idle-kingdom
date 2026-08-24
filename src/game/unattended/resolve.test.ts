@@ -32,13 +32,13 @@ describe('unattended progression', () => {
       playTimeMs: 5_000,
     }
 
-    // Meadow gathering actions are ~20s; two minutes covers several completions.
-    const now = startedAt + 120_000
+    // Meadow gathering actions are ~30-45s; three minutes covers several completions.
+    const now = startedAt + 180_000
     const resolved = resolveUnattendedProgress(launch, save, now, () => 0)
     expect(resolved.gatheringActions).toBeGreaterThanOrEqual(3)
     expect(resolved.save.unattendedProgressAt).toBe(new Date(now).toISOString())
     expect(resolved.save.playTimeMs).toBe(5_000 + resolved.effectiveElapsedMs)
-    expect(resolved.effectiveElapsedMs).toBe(120_000)
+    expect(resolved.effectiveElapsedMs).toBe(180_000)
   })
 
   it('caps catch-up at unattended_cap even for longer absences', () => {

@@ -34,7 +34,7 @@ bool isCompleteRecipe(RecipeRow recipe) {
 
 List<RecipeIngredient> recipeIngredients(RecipeRow recipe) {
   final out = <RecipeIngredient>[];
-  for (var slot = 1; slot <= 3; slot += 1) {
+  for (var slot = 1; slot <= 4; slot += 1) {
     final itemId = recipe.raw['Ingredient $slot Item ID'];
     final quantity = recipe.raw['Ingredient $slot Quantity'];
     if (itemId is String && itemId.isNotEmpty && quantity is num && quantity > 0) {

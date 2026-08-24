@@ -22,9 +22,9 @@ describe('skill menu entries', () => {
     const items = actionsForSkill(launch, 'SKL-0004')
     const potatoes = items.filter((item) => item.displayName === 'Harvest potato')
     expect(potatoes).toHaveLength(1)
-    expect(potatoes[0]?.level).toBe(10)
+    expect(potatoes[0]?.level).toBe(1)
     expect(items.every((item) => !item.displayName.startsWith('ACN-'))).toBe(true)
-    expect(items.some((item) => item.displayName === 'Gather fernleaf' && item.level === 5)).toBe(
+    expect(items.some((item) => item.displayName === 'Gather fernleaf' && item.level === 10)).toBe(
       true,
     )
   })
