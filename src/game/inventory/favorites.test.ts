@@ -60,6 +60,40 @@ describe('inventory favorites', () => {
     expect(isFavoriteStack(back)).toBe(true)
   })
 
+  it('adds collected items onto an existing favorited stack', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    let save = createNewSave(launch)
+    save = { ...save, inventory: [] }
+    save = addItemToInventory(save, 'ITEM-0025', 2)
+    const favorited = toggleInventoryFavorite(save, 0)
+    expect(favorited).toBeTruthy()
+    save = favorited!
+
+    save = addItemToInventory(save, 'ITEM-0025', 3)
+    expect(save.inventory).toHaveLength(1)
+    expect(save.inventory[0]?.itemId).toBe('ITEM-0025')
+    expect(save.inventory[0]?.quantity).toBe(5)
+    expect(isFavoriteStack(save.inventory[0])).toBe(true)
+  })
+
+  it('grows the favorited pile and leaves a leftover unfavorited pile alone', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    let save = createNewSave(launch)
+    save = {
+      ...save,
+      inventory: [
+        { itemId: 'ITEM-0025', quantity: 4, favorite: true },
+        { itemId: 'ITEM-0025', quantity: 2 },
+      ],
+    }
+
+    save = addItemToInventory(save, 'ITEM-0025', 3)
+    expect(save.inventory).toHaveLength(2)
+    expect(save.inventory[0]).toMatchObject({ itemId: 'ITEM-0025', quantity: 7, favorite: true })
+    expect(save.inventory[1]).toMatchObject({ itemId: 'ITEM-0025', quantity: 2 })
+    expect(isFavoriteStack(save.inventory[1])).toBe(false)
+  })
+
   it('blocks shop sells from consuming favorited stacks', () => {
     const { launch } = prepareDatabase(rawDatabase)
     let save = {

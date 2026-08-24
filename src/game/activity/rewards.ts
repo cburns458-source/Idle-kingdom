@@ -3,6 +3,7 @@ import {
   INVENTORY_SLOT_LIMIT,
   INVENTORY_STACK_MAX,
   maxAddableQuantity,
+  mergeableStackIndex,
 } from '../inventory/capacity'
 import { sortInventoryFavoritesFirst } from '../inventory/favorites'
 import { isGoldCurrencyItem } from '../inventory/gold'
@@ -82,12 +83,8 @@ export function addItemsToInventory(
     return { save: sortInventoryFavoritesFirst({ ...save, inventory }), added }
   }
 
-  const existing = inventory.find(
-    (stack) =>
-      stack.itemId === itemId &&
-      !stack.enchantmentId &&
-      Boolean(stack.favorite) === favorite,
-  )
+  const existingIndex = mergeableStackIndex(inventory, itemId)
+  const existing = existingIndex >= 0 ? inventory[existingIndex] : undefined
   if (existing) {
     existing.quantity = Math.min(INVENTORY_STACK_MAX, existing.quantity + added)
   } else {
