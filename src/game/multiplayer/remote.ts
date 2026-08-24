@@ -129,6 +129,7 @@ export function profileRowForSignUp(session: MultiplayerSession): RemoteRow {
     user_id: session.userId,
     username: session.username,
     privacy_public_skills: true,
+    privacy_public_gear: true,
   }
 }
 

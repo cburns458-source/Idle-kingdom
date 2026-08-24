@@ -616,6 +616,7 @@ void main() {
     final hero = await _signedIn(transport, MemorySaveStorage());
     final db = _database();
     final save = createNewSave(db, _nowMs).copyWith(characterName: 'Hero');
+    await hero.submitLeaderboard(db, save);
     await hero.pushSave(db, save, force: true);
     expect(await hero.setPrivacyPublicGear(false), isNotNull);
 

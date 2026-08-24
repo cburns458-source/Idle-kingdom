@@ -167,7 +167,8 @@ class MultiplayerProfile {
     'privacyPublicGear': privacyPublicGear,
     'privacyDirectMessages': privacyDirectMessages,
     'privacyLocalChat': privacyLocalChat,
-    'publishedEquipment': publishedEquipment.map((row) => row.toJson()).toList(),
+    if (publishedEquipment.isNotEmpty)
+      'publishedEquipment': publishedEquipment.map((row) => row.toJson()).toList(),
     'updatedAt': updatedAt,
   };
 }
