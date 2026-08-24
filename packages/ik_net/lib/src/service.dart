@@ -642,6 +642,10 @@ class LocalMultiplayerService implements MultiplayerService {
   Future<ActivityPresence?> publishPresence(PresenceInput input) async {
     final current = session;
     if (current == null) return null;
+    if (!isPublicAdventurerUsername(current.username)) {
+      _backend.clearPresence(current.userId);
+      return null;
+    }
     return _backend.upsertPresence(current, input);
   }
 
@@ -670,11 +674,11 @@ class LocalMultiplayerService implements MultiplayerService {
 
   List<ActivityPresence> _visiblePeers(List<ActivityPresence> peers, bool excludeSelf) {
     final current = session;
-    if (current == null) return peers;
-    final hidden = _backend.blockedIds(current.userId);
+    final hidden = current == null ? const <String>{} : _backend.blockedIds(current.userId);
     return peers
+        .where((row) => isPublicAdventurerUsername(row.username))
         .where((row) => !hidden.contains(row.userId))
-        .where((row) => !excludeSelf || row.userId != current.userId)
+        .where((row) => current == null || !excludeSelf || row.userId != current.userId)
         .toList();
   }
 

@@ -81,6 +81,11 @@ export function isPendingAccountUsername(username: string): boolean {
   return username.startsWith(PENDING_ACCOUNT_USERNAME_PREFIX)
 }
 
+/** False for the `pending_<id>` stand-in used before character creation. */
+export function isPublicAdventurerUsername(username: string): boolean {
+  return !isPendingAccountUsername(username)
+}
+
 export function remoteEmail(raw: string): string {
   return raw.trim().toLowerCase()
 }
