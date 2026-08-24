@@ -441,7 +441,7 @@ function isWoodcuttingToolName(name: string): boolean {
 }
 
 function isFishingToolName(name: string): boolean {
-  return name.includes('Fishing Rod') || endsWithWord(name, 'Harpoon') || endsWithWord(name, 'Net')
+  return name.includes('Fishing Rod') || endsWithWord(name, 'Harpoon')
 }
 
 function isHuntingToolName(name: string): boolean {

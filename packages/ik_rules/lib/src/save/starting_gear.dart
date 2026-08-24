@@ -74,3 +74,57 @@ SaveJson ensureStartingHuntingToolJson(SaveJson save) {
 /// Typed wrapper for callers that already hold a current-schema save.
 PlayerSave ensureStartingHuntingTool(PlayerSave save) =>
     PlayerSave.fromJson(ensureStartingHuntingToolJson(save.toJson()));
+
+String _remapRetiredNetId(Object? itemId) {
+  return itemId == retiredFishingNetItemId ? startingHuntingToolId : jsString(itemId);
+}
+
+String _stackMergeKey(SaveJson stack) {
+  final enchantment = stack['enchantmentId'] is String ? stack['enchantmentId'] as String : '';
+  final favorite = stack['favorite'] == true ? '1' : '0';
+  return '${stack['itemId']}\u0000$enchantment\u0000$favorite';
+}
+
+List<Object?> _mergeRemappedStacks(List<Object?> stacks) {
+  final merged = <SaveJson>[];
+  final indexByKey = <String, int>{};
+  for (final entry in stacks) {
+    if (entry is! SaveJson) continue;
+    final next = SaveJson.of(entry);
+    next['itemId'] = _remapRetiredNetId(next['itemId']);
+    final key = _stackMergeKey(next);
+    final existingIndex = indexByKey[key];
+    if (existingIndex == null) {
+      indexByKey[key] = merged.length;
+      merged.add(next);
+      continue;
+    }
+    final existing = merged[existingIndex];
+    existing['quantity'] = jsNumber(existing['quantity']) + jsNumber(next['quantity']);
+  }
+  return merged;
+}
+
+/// Turns leftover Fishing Nets into the regular hunting Net.
+SaveJson replaceFishingNetsWithNetJson(SaveJson save) {
+  final next = copySave(save);
+  next['inventory'] = _mergeRemappedStacks(arrayOrEmpty(save, 'inventory'));
+  next['bank'] = _mergeRemappedStacks(arrayOrEmpty(save, 'bank'));
+  final slots = objectOrEmpty(objectAt(save, 'equipment') ?? <String, Object?>{}, 'slots');
+  final nextSlots = <String, Object?>{};
+  for (final entry in slots.entries) {
+    final stack = asObject(entry.value);
+    if (stack == null) {
+      nextSlots[entry.key] = entry.value;
+      continue;
+    }
+    final remapped = SaveJson.of(stack);
+    remapped['itemId'] = _remapRetiredNetId(remapped['itemId']);
+    nextSlots[entry.key] = remapped;
+  }
+  next['equipment'] = <String, Object?>{'slots': nextSlots};
+  return next;
+}
+
+PlayerSave replaceFishingNetsWithNet(PlayerSave save) =>
+    PlayerSave.fromJson(replaceFishingNetsWithNetJson(save.toJson()));

@@ -1,4 +1,4 @@
-import { ensureStartingHuntingTool } from './startingGear'
+import { ensureStartingHuntingTool, replaceFishingNetsWithNet } from './startingGear'
 import type { ActivePotionEffect, EquippedStack, PlayerSave, SaveMigration } from './types'
 import {
   DEFAULT_BEARD_ID,
@@ -487,6 +487,14 @@ export const SAVE_MIGRATIONS: SaveMigration[] = [
           ? save.bossRespawnUntilByEnemyId
           : {},
       saveVersion: 32,
+    }),
+  },
+  {
+    fromVersion: 32,
+    toVersion: 33,
+    migrate: (save) => ({
+      ...replaceFishingNetsWithNet(save),
+      saveVersion: 33,
     }),
   },
 ]

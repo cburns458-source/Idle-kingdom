@@ -513,7 +513,6 @@ Essence is a Mining resource used by Arcana and is available near or within the 
 Fishing catches fish and water-related resources.
 
 Tools include:
-- Fishing Net.
 - Fishing Rods.
 - Harpoons.
 

@@ -459,6 +459,11 @@ final List<SaveMigration> saveMigrations = <SaveMigration>[
       return next;
     },
   ),
+  SaveMigration(
+    fromVersion: 32,
+    toVersion: 33,
+    migrate: (save, nowMs) => _bumped(replaceFishingNetsWithNetJson(save), 33),
+  ),
 ];
 
 /// Thrown when a save cannot be brought to the current version.

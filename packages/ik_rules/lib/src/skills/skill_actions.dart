@@ -511,9 +511,7 @@ bool _isWoodcuttingToolName(String name) {
 }
 
 bool _isFishingToolName(String name) {
-  return name.contains('Fishing Rod') ||
-      _endsWithWord(name, 'Harpoon') ||
-      _endsWithWord(name, 'Net');
+  return name.contains('Fishing Rod') || _endsWithWord(name, 'Harpoon');
 }
 
 bool _isHuntingToolName(String name) {
