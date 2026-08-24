@@ -2,6 +2,7 @@ import { getSkillProgress } from '../activity/xp'
 import { entityVisibleForSave } from '../activity/requirements'
 import type { EnchantmentRow, ProjectRow } from '../data/projectTypes'
 import type { FacilityRow, GameDatabase } from '../data/types'
+import { ESSENCE_ITEM_ID, wizardEssenceCost } from '../equipment/specialist'
 import { hasProjectKnowledge } from '../npcs/knowledge'
 import { inventoryCount, projectFacilityIdForLookup } from '../production/recipes'
 import type { PlayerSave } from '../save/types'
@@ -52,6 +53,15 @@ export function projectInputs(project: ProjectRow): ProjectInput[] {
     }
   }
   return out
+}
+
+/** Project inputs after equipped modifiers (Wizard's Hat essence discount). */
+export function projectInputsForSave(save: PlayerSave, project: ProjectRow): ProjectInput[] {
+  return projectInputs(project).map((input) =>
+    input.itemId === ESSENCE_ITEM_ID
+      ? { ...input, quantity: wizardEssenceCost(input.quantity, save) }
+      : input,
+  )
 }
 
 export function projectSkillRequirements(
@@ -118,7 +128,7 @@ export function unmetProjectSkillRequirements(
 }
 
 export function maxProjectsFromMaterials(save: PlayerSave, project: ProjectRow): number {
-  const inputs = projectInputs(project)
+  const inputs = projectInputsForSave(save, project)
   if (inputs.length === 0) return Number.POSITIVE_INFINITY
   let max = Number.POSITIVE_INFINITY
   for (const input of inputs) {

@@ -971,10 +971,13 @@ export const multiplayerScenarios: ParityScenario[] = [
       const harness = new Harness()
       const hero = harness.signUp('hero@example.com', 'Hero')
       const shy = harness.signUp('shy@example.com', 'Shy')
+      const cloak = harness.signUp('cloak@example.com', 'Cloak')
       const save = profileSave()
       harness.backend.writeCloudSave(hero.userId, save)
       harness.backend.writeCloudSave(shy.userId, save)
+      harness.backend.writeCloudSave(cloak.userId, save)
       harness.backend.upsertProfile(shy.userId, { privacyPublicSkills: false })
+      harness.backend.upsertProfile(cloak.userId, { privacyPublicGear: false })
       const friendRequest = harness.backend.sendFriendRequest(hero.userId, shy.userId)
       const duplicateRequest = harness.backend.sendFriendRequest(hero.userId, shy.userId)
       const self = harness.backend.sendFriendRequest(hero.userId, hero.userId)
@@ -983,6 +986,7 @@ export const multiplayerScenarios: ParityScenario[] = [
       return {
         open: harness.backend.publicProfile(hero.userId),
         private: harness.backend.publicProfile(shy.userId),
+        hiddenGear: harness.backend.publicProfile(cloak.userId),
         noAccount: harness.backend.publicProfile('usr_9999'),
         noSave: harness.backend.publicProfile(hero.userId, {
           ...save,

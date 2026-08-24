@@ -1,3 +1,4 @@
+import { applyQuiverHuntingXp } from '../equipment/specialist'
 import { equippedActionTimeReductionPercent } from '../equipment/loadout'
 import type { ActionRow, GameDatabase } from '../data/types'
 import { equippedEnchantmentGatheringMultiplier } from '../projects/enchantments'
@@ -47,7 +48,8 @@ export function gatheringXpReward(
 ): number {
   const amount = Math.max(0, Number(baseXp) || 0)
   if (amount <= 0) return 0
-  if (!isBelowProficiency(save, action)) return Math.floor(amount)
-  const factor = configNumber(db, 'gathering_below_proficiency_xp_multiplier', 0.5)
-  return Math.floor(amount * factor)
+  const afterProficiency = !isBelowProficiency(save, action)
+    ? Math.floor(amount)
+    : Math.floor(amount * configNumber(db, 'gathering_below_proficiency_xp_multiplier', 0.5))
+  return applyQuiverHuntingXp(afterProficiency, save, action['Relevant Skill ID'] ?? '')
 }

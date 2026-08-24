@@ -2,6 +2,8 @@ import { addItemToInventory, addItemToInventoryExact } from '../activity/rewards
 import { summarizeXpReward } from '../activity/rewardSummary'
 import type { ActionRewardBundle } from '../activity/types'
 import { applyXp } from '../activity/xp'
+import type { RandomFn } from '../activity/pools'
+import { chefHatOutputQuantity } from '../equipment/specialist'
 import { canFitItemQuantity } from '../inventory/capacity'
 import type { GameDatabase } from '../data/types'
 import {
@@ -126,6 +128,7 @@ export function completeProductionCraft(
   db: GameDatabase,
   save: PlayerSave,
   nowMs: number = Date.now(),
+  random: RandomFn = Math.random,
 ): {
   save: PlayerSave
   finishedQueue: boolean
@@ -139,7 +142,11 @@ export function completeProductionCraft(
   const recipe = getRecipe(db, save.productionRecipeId)
   if (!recipe) return null
 
-  const outputQty = recipe['Output Quantity']
+  const baseQty = recipe['Output Quantity']
+  let outputQty = chefHatOutputQuantity(baseQty, save, recipe['Skill ID'], random)
+  if (outputQty > baseQty && !canFitItemQuantity(save, recipe['Output Item ID'], outputQty)) {
+    outputQty = baseQty
+  }
   const granted = addItemToInventoryExact(save, recipe['Output Item ID'], outputQty)
   if (!granted.ok) return null
   let next = granted.save
@@ -219,6 +226,7 @@ export function resolveProductionProgress(
   db: GameDatabase,
   save: PlayerSave,
   nowMs: number = Date.now(),
+  random: RandomFn = Math.random,
 ): { save: PlayerSave; craftsCompleted: number; messages: string[]; activityMs: number } {
   let current = save
   let craftsCompleted = 0
@@ -236,7 +244,7 @@ export function resolveProductionProgress(
     const durationMs = current.actionDurationMs
     const due = Date.parse(current.actionStartedAt) + durationMs
     if (due > nowMs) break
-    const completed = completeProductionCraft(db, current, due)
+    const completed = completeProductionCraft(db, current, due, random)
     if (!completed) break
     current = completed.save
     craftsCompleted += 1

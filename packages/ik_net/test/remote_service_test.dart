@@ -611,6 +611,48 @@ void main() {
     expect(profile.totalLevel, totalLevel(save));
   });
 
+  test('hides published gear when the account opted out of public gear', () async {
+    final transport = FakeTransport();
+    final hero = await _signedIn(transport, MemorySaveStorage());
+    final db = _database();
+    final save = createNewSave(db, _nowMs).copyWith(characterName: 'Hero');
+    await hero.submitLeaderboard(db, save);
+    await hero.pushSave(db, save, force: true);
+    expect(await hero.setPrivacyPublicGear(false), isNotNull);
+
+    final rival = _service(transport, MemorySaveStorage());
+    await rival.signUp('rival@example.com', 'Rival', 'secret');
+    final profile = await rival.publicProfile(hero.session!.userId, db: db);
+    expect(profile, isNotNull);
+    expect(profile!.publicEquipment, isNull);
+    expect(profile.totalLevel, totalLevel(save));
+  });
+
+  test('loads a public profile when gear-privacy columns are missing', () async {
+    final transport = FakeTransport();
+    transport.missingColumns.addAll(const <String>['privacy_public_gear', 'equipment_json']);
+    final hero = await _signedIn(transport, MemorySaveStorage());
+    final db = _database();
+    final save = createNewSave(db, _nowMs).copyWith(characterName: 'Hero');
+    await hero.submitLeaderboard(db, save);
+
+    final rival = _service(transport, MemorySaveStorage());
+    await rival.signUp('rival@example.com', 'Rival', 'secret');
+    final profile = await rival.publicProfile(hero.session!.userId, db: db);
+    expect(profile, isNotNull);
+    expect(profile!.username, 'Hero');
+    expect((await rival.profile(hero.session!.userId))?.privacyPublicGear, isTrue);
+    expect(rival.takeReadProblem(), isNull);
+
+    final before = transport.selectedColumns.length;
+    expect(await rival.profile(hero.session!.userId), isNotNull);
+    expect(
+      transport.selectedColumns.sublist(before),
+      everyElement(isNot(contains('privacy_public_gear'))),
+    );
+    expect(await hero.setPrivacyPublicGear(false), isNotNull);
+  });
+
   test('a hosted friend request lands on the other account and accept makes friends', () async {
     final transport = FakeTransport();
     final hero = await _signedIn(transport, MemorySaveStorage());

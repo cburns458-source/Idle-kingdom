@@ -79,7 +79,7 @@ void main() {
     expect(find.descendant(of: popup, matching: find.byTooltip('Close')), findsOne);
     await tester.tap(find.text('Recipe book'));
     await tester.pump();
-    expect(find.textContaining('Baked Potato'), findsWidgets);
+    expect(find.textContaining('Baked potato'), findsWidgets);
   });
 
   testWidgets('smithing lists material groups instead of every item', (tester) async {
@@ -93,14 +93,14 @@ void main() {
     await tester.pump();
 
     await tester.scrollUntilVisible(
-      find.text('70. Tungsten items'),
+      find.textContaining('70. Tungsten items'),
       200,
       scrollable: find.descendant(
         of: find.byKey(const Key('game-popup')),
         matching: find.byType(Scrollable),
       ),
     );
-    expect(find.text('70. Tungsten items'), findsOne);
+    expect(find.textContaining('70. Tungsten items'), findsOne);
     expect(find.textContaining('Tungsten Sword'), findsNothing);
   });
 
