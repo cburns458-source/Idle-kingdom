@@ -17,6 +17,7 @@ const String woodcuttingSkillId = 'SKL-0006';
 const List<String> _woodenMiningTools = <String>['ITEM-0102'];
 const List<String> _woodenWoodcuttingTools = <String>['ITEM-0100', 'ITEM-0101'];
 const List<String> _woodenFishingTools = <String>['ITEM-0103'];
+const List<String> _woodenHuntingTools = <String>['ITEM-0108', 'ITEM-0109'];
 const List<String> _woodenCombatGear = <String>['ITEM-0124', 'ITEM-0125', 'ITEM-0145'];
 
 const Set<String> _combatGearWords = <String>{
@@ -405,7 +406,7 @@ List<SkillMenuListItem> _gatheringToolEntries(GameDatabase db, String skillId) {
     case fishingSkillId:
       return (woodenIds: _woodenFishingTools, match: (item, name) => _isFishingToolName(name));
     case huntingSkillId:
-      return (woodenIds: const <String>[], match: (item, name) => _isHuntingToolName(name));
+      return (woodenIds: _woodenHuntingTools, match: (item, name) => _isHuntingToolName(name));
     default:
       return null;
   }
@@ -439,8 +440,16 @@ List<SkillMenuListItem> _woodenItems(GameDatabase db, List<String> itemIds) {
   return [
     for (final itemId in itemIds)
       if (db.items.firstWhereOrNull((row) => row.itemId == itemId) case final item?)
-        SkillMenuListItem(id: item.itemId, displayName: item.displayName, level: 1),
+        SkillMenuListItem(
+          id: item.itemId,
+          displayName: item.displayName,
+          level: _woodenToolLevel(db, itemId),
+        ),
   ];
+}
+
+num _woodenToolLevel(GameDatabase db, String itemId) {
+  return db.equipment.firstWhereOrNull((row) => row.itemId == itemId)?.requiredLevel ?? 1;
 }
 
 SkillMenuTab _listTab(String id, String label, List<SkillMenuListItem> entries) {
@@ -508,7 +517,10 @@ bool _isFishingToolName(String name) {
 }
 
 bool _isHuntingToolName(String name) {
-  return _endsWithWord(name, 'Bow') || _endsWithWord(name, 'Spear');
+  return _endsWithWord(name, 'Bow') ||
+      _endsWithWord(name, 'Spear') ||
+      name == 'Net' ||
+      name == 'Sling';
 }
 
 bool _isBowName(String name) => _endsWithWord(name, 'Bow');
