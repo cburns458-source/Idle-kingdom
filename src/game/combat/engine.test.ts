@@ -227,7 +227,7 @@ describe('combat engine', () => {
       },
     }
     const enemy = launch.Enemies.find((row) => row['Enemy ID'] === 'ENM-0001')!
-    const round = resolveCombatRound(launch, save, enemy, 28, () => 0)
+    const round = resolveCombatRound(launch, save, enemy, 40, () => 0)
     expect(round.staffHit).toBe(27)
     expect(round.outcome).toBe('victory')
     expect(round.enemyHit).toBeNull()

@@ -71,8 +71,8 @@ describe('combat level bonuses', () => {
         },
       },
     }
-    // 60–90 × combat-40 (1.40) × arcana-50 (1.50)
-    expect(playerDamageRange(launch, power)).toEqual({ min: 126, max: 189 })
+    // 60–90 × combat-40 (1.40) × arcana-50 (1.50), floored once.
+    expect(playerDamageRange(launch, power)).toEqual({ min: 125, max: 188 })
 
     const sparks = {
       ...power,
