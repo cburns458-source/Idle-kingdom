@@ -176,6 +176,21 @@ void main() {
     expect(find.textContaining('Strength Potion'), findsOne);
   });
 
+  testWidgets('equipment page lists action time reduction', (tester) async {
+    final base = startedCharacter(database);
+    final controller = buildController(
+      database,
+      seed: equipStackToSlot(base, weaponToolSlotId, 'ITEM-0110', 1),
+    );
+    addTearDown(controller.dispose);
+
+    await pumpPanel(tester, InventoryView(controller: controller));
+    await tester.tap(find.text('Equipment'));
+    await tester.pump();
+
+    expect(find.textContaining('Action time reduction'), findsOne);
+  });
+
   List<String> visibleBagOrder(WidgetTester tester, List<String> names) {
     final placed =
         [for (final name in names) (name: name, rect: tester.getRect(find.byTooltip(name)))]

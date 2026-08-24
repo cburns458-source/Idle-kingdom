@@ -81,9 +81,10 @@ describe('recipe log', () => {
 
     const locked = rows.filter((row) => !row.known)
     expect(locked.length).toBeGreaterThan(0)
-    // A locked row either hides its name entirely or says the level it needs.
+    expect(locked.some((row) => row.title === 'Unknown recipe')).toBe(true)
+    expect(locked.some((row) => /^\d+\. /.test(row.title))).toBe(true)
     expect(
-      locked.every((row) => row.title === 'Unknown recipe' || row.title.startsWith('Locked · ')),
+      locked.every((row) => row.title === 'Unknown recipe' || /^\d+\. /.test(row.title)),
     ).toBe(true)
   })
 })

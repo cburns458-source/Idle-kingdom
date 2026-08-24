@@ -224,6 +224,33 @@ class LocalMultiplayerBackend {
     return profile;
   }
 
+  /// Keeps a contact we have already seen, so ignore lists can name them.
+  void rememberProfile({
+    required String userId,
+    required String username,
+    PlayerAppearance? appearance,
+    String? guildName,
+  }) {
+    final existing = getProfile(userId);
+    if (existing != null) {
+      upsertProfile(userId, appearance: appearance, username: username);
+      return;
+    }
+    final db = _db();
+    db.profiles.add(
+      MultiplayerProfile(
+        userId: userId,
+        username: username,
+        appearance: appearance ?? defaultPlayerAppearance,
+        guildId: null,
+        guildName: guildName,
+        privacyPublicSkills: true,
+        updatedAt: _nowIso(),
+      ),
+    );
+    _write(db);
+  }
+
   MultiplayerProfile? upsertProfile(
     String userId, {
     PlayerAppearance? appearance,
@@ -721,7 +748,15 @@ class LocalMultiplayerBackend {
 
   List<SocialContact> listIgnored(String userId) {
     final db = _db();
-    return [for (final other in blockedIds(userId)) ?_contact(db, other)];
+    return [
+      for (final other in blockedIds(userId))
+        _contact(db, other) ??
+            SocialContact(
+              userId: other,
+              username: 'Adventurer',
+              appearance: defaultPlayerAppearance,
+            ),
+    ];
   }
 
   SocialContact? _contact(LocalDb db, String userId) {

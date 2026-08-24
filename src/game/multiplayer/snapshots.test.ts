@@ -139,6 +139,10 @@ describe('leaderboard snapshot builder', () => {
     expect(stats.totalLevel).toBe(totalLevel(save))
     expect(stats.totalXp).toBe(totalSkillXp(save))
     expect(stats.skills.find((skill) => skill.skillId === COMBAT_SKILL_ID)?.level).toBe(18)
+    expect(stats.skills.find((skill) => skill.skillId === COMBAT_SKILL_ID)?.xp).toBe(4000)
+    expect(snapshot.boards.find((board) => board.boardKey === `skill:${COMBAT_SKILL_ID}`)?.secondaryValue).toBe(
+      4000,
+    )
     expect(stats.skills).toHaveLength(launch.Skills.filter((row) => row['Release Phase'] === 'Launch').length)
   })
 })

@@ -31,6 +31,14 @@ void main() {
     expect(stats.totalXp, totalSkillXp(save));
     expect(stats.logCompletionPercent, logCompletion(db, save).overall.percent);
     expect(stats.skills.where((skill) => skill.skillId == combatSkillId).single.level, 18);
+    expect(stats.skills.where((skill) => skill.skillId == combatSkillId).single.xp, 4000);
+    expect(
+      snapshot.boards
+          .where((board) => board.boardKey == skillBoardKey(combatSkillId))
+          .single
+          .secondaryValue,
+      4000,
+    );
     expect(
       stats.skills,
       hasLength(db.skills.where((row) => row.raw['Release Phase'] == 'Launch').length),

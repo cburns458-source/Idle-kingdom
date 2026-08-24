@@ -223,10 +223,9 @@ List<RecipeBookEntry> listRecipeBookEntries(PlayerSave save, GameDatabase db) {
   return entries;
 }
 
-/// Unlocked recipes and mentor-known projects for one skill.
+/// Recipes and mentor projects for one skill, including locked rows.
 List<RecipeBookEntry> recipeBookForSkill(PlayerSave save, GameDatabase db, String skillId) {
   return listRecipeBookEntries(save, db).where((entry) {
-    if (!entry.known) return false;
     if (entry.kind == 'recipe') {
       return getRecipe(db, entry.id)?.raw['Skill ID'] == skillId;
     }

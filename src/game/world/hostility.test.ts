@@ -43,6 +43,16 @@ describe('hostile travel forcing', () => {
     expect(arrived.save.currentActivityId).toBeNull()
   })
 
+  it('does not treat the Ancient Forest as hostile', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const save = createNewSave(launch)
+    expect(forcedHostileActivity(launch, save, 'LOC-0018')).toBeNull()
+    expect(locationIsHostileFor(launch, save, 'LOC-0018')).toBe(false)
+    const arrived = applyHostileTravelArrival(launch, save, 'LOC-0018')
+    expect(arrived.forcedActivityId).toBeNull()
+    expect(arrived.save.currentActivityId).toBeNull()
+  })
+
   it('does not treat the Wizard Tower as hostile', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const save = createNewSave(launch)

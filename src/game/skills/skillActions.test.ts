@@ -65,6 +65,18 @@ describe('skill menu entries', () => {
     ).toBe(true)
   })
 
+  it('groups same-tier combat armor as material equipment', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const combat = skillMenuView(launch, 'SKL-0001')
+    const gear = combat.tabs.find((tab) => tab.id === 'gear')?.sections[0]?.entries ?? []
+    expect(gear.some((item) => item.displayName === 'Tungsten equipment')).toBe(true)
+    expect(gear.some((item) => item.displayName === 'Reinforced Steel equipment')).toBe(true)
+    expect(gear.some((item) => item.displayName === 'Bull Horn equipment')).toBe(true)
+    expect(gear.some((item) => item.displayName === 'Tungsten Helmet')).toBe(false)
+    expect(gear.some((item) => item.displayName === 'Tungsten Sword')).toBe(true)
+    expect(gear.some((item) => item.displayName === 'Wooden Sword')).toBe(true)
+  })
+
   it('lists smithing projects by output item name and required level', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const items = projectsForSkill(launch, 'SKL-0011')

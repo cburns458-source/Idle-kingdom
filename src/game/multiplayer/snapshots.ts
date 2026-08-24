@@ -60,9 +60,7 @@ export function buildLeaderboardSnapshot(
     const progress = save.skills.find((row) => row.skillId === skill['Skill ID'])
     const level = progress?.level ?? 1
     const xp = progress?.xp ?? 0
-    // Post-100 boards rank by XP; at/under 100 rank by level (XP still stored for ties).
-    const value = level > 100 ? xp : level
-    boards.push({ boardKey: `skill:${skill['Skill ID']}`, value })
+    boards.push({ boardKey: `skill:${skill['Skill ID']}`, value: level, secondaryValue: xp })
   }
 
   return { boards }
@@ -136,7 +134,15 @@ export function publicProfileStatsFromLeaderboardRows(
     if (!key.startsWith('skill:')) continue
     const skillId = key.slice('skill:'.length)
     if (!skillId) continue
-    if (value > 100) {
+    const secondary = row.value_secondary ?? row.secondaryValue
+    if (typeof secondary === 'number') {
+      skills.push({
+        skillId,
+        level: value < 1 ? 1 : value,
+        xp: secondary,
+      })
+    } else if (value > 100) {
+      // Older snapshots stored post-100 XP as the only value.
       skills.push({
         skillId,
         level: db ? levelForTotalXp(db, value) : 101,

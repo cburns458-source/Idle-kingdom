@@ -6,7 +6,7 @@ import 'inventory_view.dart';
 import 'page_header.dart';
 import 'skills_view.dart';
 
-enum CharacterTab { skills, inventory, equipment }
+enum CharacterTab { inventory, equipment, skills }
 
 /// Skills, the bag, and worn gear behind one chin tab.
 class CharacterView extends StatefulWidget {
@@ -20,7 +20,7 @@ class CharacterView extends StatefulWidget {
 }
 
 class _CharacterViewState extends State<CharacterView> {
-  CharacterTab _tab = CharacterTab.skills;
+  CharacterTab _tab = CharacterTab.inventory;
 
   @override
   Widget build(BuildContext context) {
@@ -39,7 +39,7 @@ class _CharacterViewState extends State<CharacterView> {
           child: Row(
             children: [
               for (final tab in CharacterTab.values) ...[
-                if (tab != CharacterTab.skills) const SizedBox(width: 6),
+                if (tab != CharacterTab.inventory) const SizedBox(width: 6),
                 Expanded(
                   child: GameButton(
                     label: switch (tab) {

@@ -653,4 +653,11 @@ void main() {
       });
     }
   });
+
+  test('fills a missing guild tag from the guild name', () {
+    final rows = leaderboardRows(<LeaderboardEntry>[
+      _entry(guildName: 'Iron League'),
+    ], tagForGuildName: (name) => guildTagForName(name, listings: <GuildListing>[_listing()]));
+    expect(rows.single.username, '[IRN]Hero');
+  });
 }

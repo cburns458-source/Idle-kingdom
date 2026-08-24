@@ -81,10 +81,8 @@ LeaderboardSnapshotValues buildLeaderboardSnapshot(GameDatabase db, PlayerSave s
     final progress = save.skills.where((row) => row.skillId == skillId).firstOrNull;
     final level = progress?.level ?? 1;
     final xp = progress?.xp ?? 0;
-    // Past 100 the boards rank by XP; at or under it they rank by level, with
-    // XP still stored so ties resolve.
     boards.add(
-      LeaderboardBoardValue(boardKey: skillBoardKey(skillId), value: level > 100 ? xp : level),
+      LeaderboardBoardValue(boardKey: skillBoardKey(skillId), value: level, secondaryValue: xp),
     );
   }
 
@@ -195,8 +193,8 @@ List<MultiplayerBoardKey> launchBoardKeys(GameDatabase db) => <MultiplayerBoardK
 
 /// Public skill levels and total level reconstructed from ranking snapshots.
 ///
-/// The same rows the leaderboard lists. Past 100 a skill board stores XP, not
-/// level, matching [buildLeaderboardSnapshot].
+/// The same rows the leaderboard lists. Skill boards store level as the value
+/// and XP as [LeaderboardBoardValue.secondaryValue].
 class PublicProfileStats {
   const PublicProfileStats({
     required this.totalLevel,
@@ -236,7 +234,11 @@ PublicProfileStats publicProfileStatsFromLeaderboardRows(
     if (!key.startsWith(skillBoardPrefix)) continue;
     final skillId = key.substring(skillBoardPrefix.length);
     if (skillId.isEmpty) continue;
-    if (value > 100) {
+    final secondary = row['value_secondary'] ?? row['secondaryValue'];
+    if (secondary is num) {
+      skills.add(PublicSkillLine(skillId: skillId, level: value < 1 ? 1 : value, xp: secondary));
+    } else if (value > 100) {
+      // Older snapshots stored post-100 XP as the only value.
       skills.add(
         PublicSkillLine(
           skillId: skillId,

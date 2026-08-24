@@ -179,6 +179,7 @@ describe('remote leaderboards', () => {
     }
 
     expect(leaderboardEntriesFrom([row], 'total_level')[0].secondaryValue).toBe(1204)
+    expect(leaderboardEntriesFrom([row], 'skill:SKL-0001')[0].secondaryValue).toBe(1204)
     expect(leaderboardEntriesFrom([row], 'gold_earned')[0].secondaryValue).toBeUndefined()
   })
 

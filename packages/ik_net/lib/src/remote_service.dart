@@ -945,6 +945,15 @@ class RemoteMultiplayerService implements MultiplayerService {
   @override
   Future<void> ignorePlayer(String targetUserId) async {
     await _dropHostedRelationship(targetUserId);
+    final account = await profile(targetUserId);
+    if (account != null) {
+      _local.backend.rememberProfile(
+        userId: account.userId,
+        username: account.username,
+        appearance: account.appearance,
+        guildName: account.guildName,
+      );
+    }
     return _local.ignorePlayer(targetUserId);
   }
 
@@ -1005,7 +1014,11 @@ class RemoteMultiplayerService implements MultiplayerService {
   }
 
   @override
-  Future<List<SocialContact>> ignoredPlayers() => _local.ignoredPlayers();
+  Future<List<SocialContact>> ignoredPlayers() async {
+    final current = session;
+    if (current == null) return const <SocialContact>[];
+    return _contactsFor(_local.backend.blockedIds(current.userId));
+  }
 
   void _invalidateFriends() => _friendIdsCache = null;
 
