@@ -84,6 +84,26 @@ describe('skill menu entries', () => {
     expect(items.find((item) => item.displayName === 'Minor Gathering Enchantment')?.level).toBe(20)
   })
 
+  it('puts battle staves on an Arcana Weapons tab', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const arcana = skillMenuView(launch, 'SKL-0013')
+    expect(arcana.tabs.map((tab) => tab.label)).toEqual(['Spells', 'Weapons', 'Enchantments'])
+    const weapons = arcana.tabs.find((tab) => tab.id === 'weapons')?.sections[0]?.entries ?? []
+    expect(weapons.map((item) => item.displayName)).toEqual([
+      'Staff of Sparks',
+      'Staff of Binding',
+      'Staff of Power',
+    ])
+    expect(weapons.find((item) => item.displayName === 'Staff of Sparks')?.level).toBe(35)
+    expect(weapons.find((item) => item.displayName === 'Staff of Binding')?.level).toBe(45)
+    expect(weapons.find((item) => item.displayName === 'Staff of Power')?.level).toBe(65)
+    expect(
+      arcana.tabs
+        .find((tab) => tab.id === 'enchantments')
+        ?.sections[0]?.entries.some((item) => item.displayName.startsWith('Staff of')),
+    ).toBe(false)
+  })
+
   it('groups smithing by material and numbers every menu row', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const mining = skillMenuDisplayEntries(launch, 'SKL-0002')

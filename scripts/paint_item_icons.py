@@ -666,6 +666,26 @@ def paint_chef_hat(c: Canvas) -> None:
     c.stamp_centered(rows, {'m': white, 'M': mid, 'D': shade})
 
 
+def paint_battle_staff(c: Canvas, gem: tuple[int, int, int], gem_shade: tuple[int, int, int]) -> None:
+    c.stamp_centered(
+        [
+            '...ggg...',
+            '..gGGGg..',
+            '.gGGGGGg.',
+            '..gGGGg..',
+            '...HHH...',
+            '...HHH...',
+            '...HHH...',
+            '...HHH...',
+            '...HHH...',
+            '...HHH...',
+            '...HHH...',
+            '...ddd...',
+        ],
+        {'g': gem, 'G': gem_shade, 'H': HANDLE[1], 'd': HANDLE[2]},
+    )
+
+
 def paint_wizard_hat(c: Canvas) -> None:
     cloth = ((92, 64, 168), (58, 36, 120), (32, 20, 72))
     rows = [
@@ -1103,6 +1123,15 @@ def paint_unique(c: Canvas, name: str) -> bool:
         c.stamp_centered(GLOVES, mp(LEATHER))
         c.put(22, 10, (196, 148, 72))
         c.put(23, 9, (168, 112, 56))
+        return True
+    if 'staff of sparks' in n:
+        paint_battle_staff(c, (88, 176, 255), (40, 96, 196))
+        return True
+    if 'staff of binding' in n:
+        paint_battle_staff(c, (92, 176, 88), (40, 96, 48))
+        return True
+    if 'staff of power' in n:
+        paint_battle_staff(c, (220, 176, 72), (148, 72, 24))
         return True
     if 'goblin staff' in n:
         c.stamp_centered(

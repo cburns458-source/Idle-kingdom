@@ -312,11 +312,14 @@ List<SkillMenuTab> _artisanryTabs(GameDatabase db) {
 
 List<SkillMenuTab> _arcanaTabs(GameDatabase db) {
   final spells = <SkillMenuListItem>[...actionsForSkill(db, arcanaSkillId)];
+  final weapons = <SkillMenuListItem>[];
   final enchantments = <SkillMenuListItem>[];
   for (final project in projectsForSkill(db, arcanaSkillId)) {
     final outputId = _projectOutputId(db, project.id);
     if (_isSpellName(project.displayName)) {
       spells.add(project);
+    } else if (_isArcanaWeaponName(project.displayName, outputId)) {
+      weapons.add(project);
     } else if (_isEnchantmentName(project.displayName, outputId)) {
       enchantments.add(project);
     } else {
@@ -325,6 +328,7 @@ List<SkillMenuTab> _arcanaTabs(GameDatabase db) {
   }
   return <SkillMenuTab>[
     _listTab('spells', 'Spells', _dedupeByName(spells)),
+    _listTab('weapons', 'Weapons', _dedupeByName(weapons)),
     _listTab('enchantments', 'Enchantments', _dedupeByName(enchantments)),
   ];
 }
@@ -498,6 +502,12 @@ bool _isCombatGearItem(ItemRow item) {
 }
 
 bool _isSpellName(String name) => name.contains('Spell');
+
+bool _isArcanaWeaponName(String name, String outputId) {
+  if (outputId.startsWith('ENCH-')) return false;
+  return RegExp(r'staff of\b', caseSensitive: false).hasMatch(name) ||
+      RegExp(r'\bstaff\b', caseSensitive: false).hasMatch(name);
+}
 
 bool _isEnchantmentName(String name, String outputId) {
   return outputId.startsWith('ENCH-') || name.contains('Enchantment') || name.contains('Enchanted');

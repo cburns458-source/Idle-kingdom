@@ -242,6 +242,7 @@ UnattendedResult resolveUnattendedProgress(
         currentHp: round.playerHp,
         combatEnemyHp: round.enemyHp,
         combatRoundStartedAt: isoFromMs(roundEnd),
+        combatSkipEnemyAttack: round.skipNextEnemyAttack,
       );
       final critter = applyActivityTimeTowardCritters(
         continued,

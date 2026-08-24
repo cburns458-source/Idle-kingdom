@@ -96,6 +96,7 @@ PlayerSave createNewSave(GameDatabase db, num nowMs) {
     combatEnemyId: null,
     combatEnemyHp: null,
     combatRoundStartedAt: null,
+    combatSkipEnemyAttack: false,
     activePotionEffect: null,
     deathPauseUntil: null,
     hasEverDied: false,

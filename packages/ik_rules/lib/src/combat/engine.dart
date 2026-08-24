@@ -6,6 +6,8 @@ import 'package:ik_content/ik_content.dart';
 import '../activity/held_action.dart';
 import '../activity/rewards.dart';
 import '../activity/xp.dart';
+import '../equipment/loadout.dart';
+import '../npcs/knowledge.dart';
 import '../bounties/progress.dart';
 import '../config.dart';
 import '../js_compat.dart';
@@ -26,6 +28,8 @@ class CombatRoundResult {
     required this.playerHit,
     required this.playerCrit,
     required this.offhandHit,
+    required this.staffHit,
+    required this.skipNextEnemyAttack,
     required this.enemyHit,
     required this.thornsHit,
     required this.enemyHp,
@@ -40,6 +44,12 @@ class CombatRoundResult {
 
   /// Off-hand dagger hit this round, or null when none / skipped.
   final num? offhandHit;
+
+  /// Staff of Sparks extra hit this round, or null when none / skipped.
+  final num? staffHit;
+
+  /// Persist Binding: skip the enemy's next attack.
+  final bool skipNextEnemyAttack;
   final num? enemyHit;
 
   /// Damage reflected back at the enemy this round via armor enchantments (e.g. Thorns).
@@ -54,6 +64,8 @@ class CombatRoundResult {
     'playerHit': playerHit,
     'playerCrit': playerCrit,
     'offhandHit': offhandHit,
+    'staffHit': staffHit,
+    'skipNextEnemyAttack': skipNextEnemyAttack,
     'enemyHit': enemyHit,
     'thornsHit': thornsHit,
     'enemyHp': enemyHp,
@@ -111,6 +123,7 @@ PlayerSave beginCombatSave(
     combatEnemyId: enemy.raw['Enemy ID'] as String?,
     combatEnemyHp: math.max(0, enemyMaxHp - poisonDamage),
     combatRoundStartedAt: nowIso,
+    combatSkipEnemyAttack: false,
     activePotionEffect: potion.effect,
     deathPauseUntil: null,
   );
@@ -121,6 +134,7 @@ PlayerSave clearCombatSave(PlayerSave save) {
     combatEnemyId: null,
     combatEnemyHp: null,
     combatRoundStartedAt: null,
+    combatSkipEnemyAttack: false,
     activePotionEffect: save.activePotionEffect?.scope == 'one_combat_encounter'
         ? null
         : save.activePotionEffect,
@@ -144,8 +158,19 @@ CombatRoundResult resolveCombatRound(
     playerHit = math.max(1, (playerHit * criticalStrikeDamageMultiplier()).floor());
   }
   var nextEnemyHp = math.max(0, enemyHp - playerHit);
+  final weaponId = save.equipment.slots[weaponToolSlotId]?.itemId;
+
+  // Staff of Sparks: a second blue hit after the main swing if the enemy is still up.
+  // No crit and no Strength / combat / potion / race multipliers — Arcana level only.
+  num? staffHit;
+  if (nextEnemyHp > 0 && isNotBlank(weaponId) && itemHasCapability(db, weaponId!, 'staff_sparks')) {
+    final sparks = staffSparksDamageRange(getSkillProgress(save, arcanaSkillId).level);
+    staffHit = rollDamage(sparks.min, sparks.max, random);
+    nextEnemyHp = math.max(0, nextEnemyHp - staffHit);
+  }
 
   // Off-hand dagger swings after the main-hand hit if the enemy is still up.
+  // Two-handers never keep an off-hand dagger, so this stays null for staves.
   // Off-hand cannot crit; shared enchant/spell bonuses are already in its range.
   num? offhandHit;
   if (nextEnemyHp > 0) {
@@ -156,16 +181,41 @@ CombatRoundResult resolveCombatRound(
     }
   }
 
+  // Binding procs on this hit: they still attack this round, then skip the next.
+  var skipNextEnemyAttack = false;
+  if (nextEnemyHp > 0 &&
+      isNotBlank(weaponId) &&
+      itemHasCapability(db, weaponId!, 'staff_binding')) {
+    skipNextEnemyAttack = random() < 0.5;
+  }
+
   if (nextEnemyHp <= 0) {
     return CombatRoundResult(
       playerHit: playerHit,
       playerCrit: playerCrit,
       offhandHit: offhandHit,
+      staffHit: staffHit,
+      skipNextEnemyAttack: false,
       enemyHit: null,
       thornsHit: 0,
       enemyHp: 0,
       playerHp: save.currentHp,
       outcome: 'victory',
+    );
+  }
+
+  if (save.combatSkipEnemyAttack) {
+    return CombatRoundResult(
+      playerHit: playerHit,
+      playerCrit: playerCrit,
+      offhandHit: offhandHit,
+      staffHit: staffHit,
+      skipNextEnemyAttack: skipNextEnemyAttack,
+      enemyHit: null,
+      thornsHit: 0,
+      enemyHp: nextEnemyHp,
+      playerHp: save.currentHp,
+      outcome: 'ongoing',
     );
   }
 
@@ -187,6 +237,8 @@ CombatRoundResult resolveCombatRound(
     playerHit: playerHit,
     playerCrit: playerCrit,
     offhandHit: offhandHit,
+    staffHit: staffHit,
+    skipNextEnemyAttack: skipNextEnemyAttack,
     enemyHit: enemyHit,
     thornsHit: thornsHit,
     enemyHp: nextEnemyHp,

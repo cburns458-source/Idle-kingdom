@@ -256,15 +256,18 @@ function artisanryTabs(db: GameDatabase): SkillMenuTab[] {
 
 function arcanaTabs(db: GameDatabase): SkillMenuTab[] {
   const spells: SkillMenuListItem[] = [...actionsForSkill(db, ARCANA_SKILL_ID)]
+  const weapons: SkillMenuListItem[] = []
   const enchantments: SkillMenuListItem[] = []
   for (const project of projectsForSkill(db, ARCANA_SKILL_ID)) {
     const outputId = projectOutputId(db, project.id)
     if (isSpellName(project.displayName)) spells.push(project)
+    else if (isArcanaWeaponName(project.displayName, outputId)) weapons.push(project)
     else if (isEnchantmentName(project.displayName, outputId)) enchantments.push(project)
     else enchantments.push(project)
   }
   return [
     listTab('spells', 'Spells', dedupeByName(spells)),
+    listTab('weapons', 'Weapons', dedupeByName(weapons)),
     listTab('enchantments', 'Enchantments', dedupeByName(enchantments)),
   ]
 }
@@ -426,6 +429,11 @@ function isCombatGearItem(item: ItemRow): boolean {
 
 function isSpellName(name: string): boolean {
   return name.includes('Spell')
+}
+
+function isArcanaWeaponName(name: string, outputId: string): boolean {
+  if (outputId.startsWith('ENCH-')) return false
+  return /staff of\b/i.test(name) || /\bstaff\b/i.test(name)
 }
 
 function isEnchantmentName(name: string, outputId: string): boolean {

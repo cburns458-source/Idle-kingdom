@@ -1,7 +1,7 @@
 import { withoutHeldAction } from '../activity/heldAction'
 import { configNumber } from '../activity/gathering'
 import { resolveActionRewards } from '../activity/rewards'
-import { applyXp } from '../activity/xp'
+import { applyXp, getSkillProgress } from '../activity/xp'
 import type { ActionRow, GameDatabase } from '../data/types'
 import type { EnemyRow } from '../data/enemyTypes'
 import { revokeCosmetic } from '../cosmetics/cosmetics'
@@ -21,6 +21,8 @@ import {
 import { applyBountyDefeatProgress } from '../bounties/progress'
 import { applyQuestDefeatProgress } from '../quests/progress'
 import { applyRaceGoldGain } from '../races/races'
+import { itemHasCapability, WEAPON_TOOL_SLOT_ID } from '../equipment/loadout'
+import { ARCANA_SKILL_ID } from '../npcs/knowledge'
 import {
   applyMitigation,
   playerDamageRange,
@@ -28,6 +30,7 @@ import {
   playerMaxHp,
   playerOffhandDamageRange,
   rollDamage,
+  staffSparksDamageRange,
 } from './stats'
 
 export type RandomFn = () => number
@@ -38,6 +41,10 @@ export interface CombatRoundResult {
   playerCrit: boolean
   /** Off-hand dagger hit this round, or null when none / skipped. */
   offhandHit: number | null
+  /** Staff of Sparks extra hit this round, or null when none / skipped. */
+  staffHit: number | null
+  /** Persist Binding: skip the enemy's next attack. */
+  skipNextEnemyAttack: boolean
   enemyHit: number | null
   /** Damage reflected back at the enemy this round via armor enchantments (e.g. Thorns). */
   thornsHit: number
@@ -83,6 +90,7 @@ export function beginCombatSave(
     combatEnemyId: enemy['Enemy ID'],
     combatEnemyHp: enemyHp,
     combatRoundStartedAt: nowIso,
+    combatSkipEnemyAttack: false,
     activePotionEffect: potion.effect,
     deathPauseUntil: null,
   }
@@ -94,6 +102,7 @@ export function clearCombatSave(save: PlayerSave): PlayerSave {
     combatEnemyId: null,
     combatEnemyHp: null,
     combatRoundStartedAt: null,
+    combatSkipEnemyAttack: false,
     activePotionEffect:
       save.activePotionEffect?.scope === 'one_combat_encounter' ? null : save.activePotionEffect,
   }
@@ -117,7 +126,19 @@ export function resolveCombatRound(
   }
   let nextEnemyHp = Math.max(0, enemyHp - playerHit)
 
+  const weaponId = save.equipment.slots[WEAPON_TOOL_SLOT_ID]?.itemId ?? null
+
+  // Staff of Sparks: a second blue hit after the main swing if the enemy is still up.
+  // No crit and no Strength / combat / potion / race multipliers — Arcana level only.
+  let staffHit: number | null = null
+  if (nextEnemyHp > 0 && weaponId && itemHasCapability(db, weaponId, 'staff_sparks')) {
+    const sparks = staffSparksDamageRange(getSkillProgress(save, ARCANA_SKILL_ID).level)
+    staffHit = rollDamage(sparks.min, sparks.max, random)
+    nextEnemyHp = Math.max(0, nextEnemyHp - staffHit)
+  }
+
   // Off-hand dagger swings after the main-hand hit if the enemy is still up.
+  // Two-handers never keep an off-hand dagger, so this stays null for staves.
   // Off-hand cannot crit; shared enchant/spell bonuses are already in its range.
   let offhandHit: number | null = null
   if (nextEnemyHp > 0) {
@@ -128,16 +149,39 @@ export function resolveCombatRound(
     }
   }
 
+  // Binding procs on this hit: they still attack this round, then skip the next.
+  let skipNextEnemyAttack = false
+  if (nextEnemyHp > 0 && weaponId && itemHasCapability(db, weaponId, 'staff_binding')) {
+    skipNextEnemyAttack = random() < 0.5
+  }
+
   if (nextEnemyHp <= 0) {
     return {
       playerHit,
       playerCrit,
       offhandHit,
+      staffHit,
+      skipNextEnemyAttack: false,
       enemyHit: null,
       thornsHit: 0,
       enemyHp: 0,
       playerHp: save.currentHp,
       outcome: 'victory',
+    }
+  }
+
+  if (save.combatSkipEnemyAttack) {
+    return {
+      playerHit,
+      playerCrit,
+      offhandHit,
+      staffHit,
+      skipNextEnemyAttack,
+      enemyHit: null,
+      thornsHit: 0,
+      enemyHp: nextEnemyHp,
+      playerHp: save.currentHp,
+      outcome: 'ongoing',
     }
   }
 
@@ -155,6 +199,8 @@ export function resolveCombatRound(
     playerHit,
     playerCrit,
     offhandHit,
+    staffHit,
+    skipNextEnemyAttack,
     enemyHit,
     thornsHit,
     enemyHp: nextEnemyHp,

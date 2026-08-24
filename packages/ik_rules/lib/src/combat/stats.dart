@@ -7,6 +7,7 @@ import '../activity/xp.dart';
 import '../config.dart';
 import '../equipment/loadout.dart';
 import '../js_compat.dart';
+import '../npcs/knowledge.dart';
 import '../projects/enchantments.dart';
 import '../races/races.dart';
 import '../rng/mulberry32.dart';
@@ -76,9 +77,22 @@ DamageRange _unarmedRange(GameDatabase db, num enchantBonus) {
   );
 }
 
+num staffPowerMultiplier(GameDatabase db, PlayerSave save) {
+  final weaponId = save.equipment.slots[weaponToolSlotId]?.itemId;
+  if (isBlank(weaponId) || !itemHasCapability(db, weaponId!, 'staff_power')) return 1;
+  return 1 + getSkillProgress(save, arcanaSkillId).level / 100;
+}
+
+/// Spark splat range from Arcana level only: ±10%, floored, never below 1.
+DamageRange staffSparksDamageRange(num arcanaLevel) {
+  final min = math.max(1, (arcanaLevel * 0.9).floor());
+  final max = math.max(min, (arcanaLevel * 1.1).floor());
+  return DamageRange(min: min, max: max);
+}
+
 DamageRange playerDamageRange(GameDatabase db, PlayerSave save) {
   final enchantBonus = equippedEnchantmentDamageBonus(db, save);
-  final combined = _damageRangeMultipliers(db, save);
+  final combined = _damageRangeMultipliers(db, save) * staffPowerMultiplier(db, save);
   final weaponId = save.equipment.slots[weaponToolSlotId]?.itemId;
   var base = _unarmedRange(db, enchantBonus);
   if (isNotBlank(weaponId)) {

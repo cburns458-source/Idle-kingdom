@@ -50,4 +50,39 @@ describe('combat level bonuses', () => {
     expect(playerMaxHp(launch, at20)).toBe(1200)
     expect(playerDamageRange(launch, at20)).toEqual({ min: 12, max: 36 })
   })
+
+  it('adds an Arcana layer only on Staff of Power', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const base = createNewSave(launch)
+    const withSkills = {
+      ...base,
+      skills: base.skills.map((skill) => {
+        if (skill.skillId === 'SKL-0001') return { ...skill, level: 40 }
+        if (skill.skillId === 'SKL-0013') return { ...skill, level: 50 }
+        return skill
+      }),
+    }
+    const power = {
+      ...withSkills,
+      equipment: {
+        slots: {
+          ...withSkills.equipment.slots,
+          'SLOT-0001': { itemId: 'ITEM-0306', quantity: 1 },
+        },
+      },
+    }
+    // 60–90 × combat-40 (1.40) × arcana-50 (1.50)
+    expect(playerDamageRange(launch, power)).toEqual({ min: 126, max: 189 })
+
+    const sparks = {
+      ...power,
+      equipment: {
+        slots: {
+          ...power.equipment.slots,
+          'SLOT-0001': { itemId: 'ITEM-0304', quantity: 1 },
+        },
+      },
+    }
+    expect(playerDamageRange(launch, sparks)).toEqual({ min: 42, max: 84 })
+  })
 })

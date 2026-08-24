@@ -7,7 +7,7 @@
 
 import '../../json_support.dart';
 
-const int saveVersion = 30;
+const int saveVersion = 31;
 
 const String saveStorageKey = 'idle-kingdoms.demo.save';
 
@@ -577,6 +577,7 @@ class PlayerSave {
     this.combatEnemyId,
     this.combatEnemyHp,
     this.combatRoundStartedAt,
+    required this.combatSkipEnemyAttack,
     this.activePotionEffect,
     this.deathPauseUntil,
     required this.hasEverDied,
@@ -657,6 +658,7 @@ class PlayerSave {
       combatEnemyId: json['combatEnemyId'] as String?,
       combatEnemyHp: json['combatEnemyHp'] as num?,
       combatRoundStartedAt: json['combatRoundStartedAt'] as String?,
+      combatSkipEnemyAttack: json['combatSkipEnemyAttack'] as bool,
       activePotionEffect: mapOrNull(json['activePotionEffect'], ActivePotionEffect.fromJson),
       deathPauseUntil: json['deathPauseUntil'] as String?,
       hasEverDied: json['hasEverDied'] as bool,
@@ -784,6 +786,10 @@ class PlayerSave {
 
   final String? combatRoundStartedAt;
 
+  /// Staff of Binding: when true, the enemy skips their next attack.
+  /// Cleared after that skipped swing, or when combat ends.
+  final bool combatSkipEnemyAttack;
+
   /// Potion consumed for the current gathering action, craft, or combat encounter.
   final ActivePotionEffect? activePotionEffect;
 
@@ -859,6 +865,7 @@ class PlayerSave {
       'combatEnemyId': combatEnemyId,
       'combatEnemyHp': combatEnemyHp,
       'combatRoundStartedAt': combatRoundStartedAt,
+      'combatSkipEnemyAttack': combatSkipEnemyAttack,
       'activePotionEffect': activePotionEffect?.toJson(),
       'deathPauseUntil': deathPauseUntil,
       'hasEverDied': hasEverDied,
@@ -918,6 +925,7 @@ class PlayerSave {
     Object? combatEnemyId = _unset,
     Object? combatEnemyHp = _unset,
     Object? combatRoundStartedAt = _unset,
+    bool? combatSkipEnemyAttack,
     Object? activePotionEffect = _unset,
     Object? deathPauseUntil = _unset,
     bool? hasEverDied,
@@ -990,6 +998,7 @@ class PlayerSave {
       combatRoundStartedAt: combatRoundStartedAt == _unset
           ? this.combatRoundStartedAt
           : combatRoundStartedAt as String?,
+      combatSkipEnemyAttack: combatSkipEnemyAttack ?? this.combatSkipEnemyAttack,
       activePotionEffect: activePotionEffect == _unset
           ? this.activePotionEffect
           : activePotionEffect as ActivePotionEffect?,
