@@ -451,8 +451,9 @@ final List<SaveMigration> saveMigrations = <SaveMigration>[
     migrate: (save, nowMs) {
       final next = _bumped(save, 32);
       final remaining = save['combatBossSleepRoundsRemaining'];
-      next['combatBossSleepRoundsRemaining'] =
-          remaining is num && remaining.isFinite ? remaining : null;
+      next['combatBossSleepRoundsRemaining'] = remaining is num && remaining.isFinite
+          ? remaining
+          : null;
       final raw = save['bossRespawnUntilByEnemyId'];
       next['bossRespawnUntilByEnemyId'] = raw is Map ? raw : <String, String>{};
       return next;
