@@ -19,7 +19,7 @@ Future<void> showStationRecipeBook(
       for (final row in rows)
         CatalogPopupEntry(
           title: row.title,
-          detail: row.detail,
+          detail: row.detail.isEmpty ? null : row.detail,
           dimmed: !row.known,
           emphasized: row.known,
         ),

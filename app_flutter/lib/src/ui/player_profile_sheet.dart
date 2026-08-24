@@ -8,6 +8,8 @@ import '../session/multiplayer_controller.dart';
 import '../theme.dart';
 import 'game_image.dart';
 import 'game_popup.dart';
+import 'item_icon.dart';
+import 'player_gear_sheet.dart';
 import 'social_bits.dart';
 
 /// Opens a player's public profile as a centered card.
@@ -126,6 +128,7 @@ class _PlayerProfileSheetState extends State<PlayerProfileSheet> {
         achievementsUnlocked: profile.achievementsUnlocked,
         totalLevel: totalLevel(save),
         logCompletionPercent: logCompletion(widget.controller.db, save).overall.percent,
+        publicEquipment: publicEquipmentFromSave(save),
       );
     }
     return profile;
@@ -171,6 +174,19 @@ class _PlayerProfileSheetState extends State<PlayerProfileSheet> {
                   ],
                 ),
               ),
+              if (_isSelf || _profile?.publicEquipment != null)
+                IconButton(
+                  tooltip: 'Gear',
+                  onPressed: () => openPlayerGear(
+                    context,
+                    controller: widget.controller,
+                    username: view.username,
+                    equipment: _isSelf
+                        ? publicEquipmentFromSave(widget.controller.save)
+                        : _profile?.publicEquipment,
+                  ),
+                  icon: const SlotGlyph(slotId: 'SLOT-0004', size: 28),
+                ),
             ],
           ),
           const SizedBox(height: 8),

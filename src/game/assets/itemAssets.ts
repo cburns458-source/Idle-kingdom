@@ -51,7 +51,12 @@ function iconStemFromText(blob: string, category: string, subtype: string): stri
   if (blob.includes('potato') || blob.includes('spud')) {
     return blob.includes('baked') ? 'baked_potato' : 'potato'
   }
-  if (blob.includes('backpack') || blob.includes('back item') || subtype.includes('back')) {
+  if (
+    blob.includes('quiver') ||
+    blob.includes('backpack') ||
+    blob.includes('back item') ||
+    subtype.includes('back')
+  ) {
     return 'backpack'
   }
   if (blob.includes('fishing') || blob.includes('rod') || blob.includes('harpoon')) {

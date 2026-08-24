@@ -130,15 +130,29 @@ export interface RecipeLogRow {
   known: boolean
 }
 
+export function sentenceCase(text: string): string {
+  const trimmed = text.trim()
+  if (!trimmed) return trimmed
+  return trimmed.charAt(0).toUpperCase() + trimmed.slice(1).toLowerCase()
+}
+
+export function formatRecipeMaterials(materials: string): string {
+  return materials
+    .split(', ')
+    .map((part) => {
+      const match = part.match(/^(.*?)\s*×\s*(\d+)\s*$/)
+      if (match) return `${sentenceCase(match[1] ?? '')} × ${match[2]}`
+      return sentenceCase(part)
+    })
+    .join(', ')
+}
+
 export function recipeLogRowFromEntry(entry: RecipeBookEntry): RecipeLogRow {
-  const kind = entry.kind === 'project' ? 'Project' : 'Recipe'
   if (entry.known) {
     return {
       key: `${entry.kind}-${entry.id}`,
-      title: entry.name,
-      detail:
-        `${kind} · ${entry.skill} ${entry.proficiency} · ` +
-        `${entry.station} (${entry.location}) · ${entry.materials} → ${entry.output}`,
+      title: `${entry.proficiency}. ${sentenceCase(entry.name)}: ${formatRecipeMaterials(entry.materials)}`,
+      detail: '',
       known: true,
     }
   }

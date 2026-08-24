@@ -73,9 +73,15 @@ class RemoteMultiplayerService implements MultiplayerService {
   /// them; once we see that, later reads skip the missing columns.
   bool? _profilesHaveChatPrivacy;
 
-  String get _publicProfileSelectColumns => _profilesHaveChatPrivacy == false
-      ? remotePublicProfileBaseColumns
-      : remotePublicProfileColumns;
+  /// Whether `profiles` has `privacy_public_gear`. Null until a read tells us.
+  bool? _profilesHaveGearPrivacy;
+
+  String get _publicProfileSelectColumns {
+    final parts = <String>[remotePublicProfileBaseColumns];
+    if (_profilesHaveChatPrivacy != false) parts.add(remoteChatPrivacyColumns);
+    if (_profilesHaveGearPrivacy != false) parts.add(remoteGearProfileColumns);
+    return parts.join(', ');
+  }
 
   /// Whether friend tables exist on the project. Null until a read tells us.
   /// Missing migration 014 falls back to the device list.
@@ -263,12 +269,23 @@ class RemoteMultiplayerService implements MultiplayerService {
       _reads.clearIf(remoteMissingChatPrivacyColumn);
       result = await transport.select(
         RemoteTables.profiles,
-        columns: remotePublicProfileBaseColumns,
+        columns: _publicProfileSelectColumns,
+        equals: <String, Object?>{'user_id': userId},
+        limit: 1,
+      );
+    }
+    if (!result.ok && remoteMissingGearPrivacyColumn(result.reason)) {
+      _profilesHaveGearPrivacy = false;
+      _reads.clearIf(remoteMissingGearPrivacyColumn);
+      result = await transport.select(
+        RemoteTables.profiles,
+        columns: _publicProfileSelectColumns,
         equals: <String, Object?>{'user_id': userId},
         limit: 1,
       );
     } else if (result.ok) {
       _profilesHaveChatPrivacy ??= true;
+      _profilesHaveGearPrivacy ??= true;
     }
     if (!result.ok) return null;
     final profile = multiplayerProfileFromRemote(result.single);
@@ -313,13 +330,14 @@ class RemoteMultiplayerService implements MultiplayerService {
     num achievements = 0;
     num totalLevel = 0;
     num logPercent = 0;
+    PlayerSave? save;
 
     // Cloud saves are self-only under RLS. The viewer's own save can fill
     // skills, achievements, and log %; everyone else uses the same snapshot
     // rows the leaderboard already published.
     if (session?.userId == userId) {
       final row = await _readSaveRow(userId);
-      final save = row?.toCloudSaveRecordOrNull()?.payload;
+      save = row?.toCloudSaveRecordOrNull()?.payload;
       if (save != null) {
         skills = [
           for (final skill in save.skills)
@@ -355,6 +373,9 @@ class RemoteMultiplayerService implements MultiplayerService {
       appearance: account.appearance,
       guildName: account.guildName,
       publicSkills: account.privacyPublicSkills ? skills : const <PublicSkillLine>[],
+      publicEquipment: !account.privacyPublicGear
+          ? null
+          : (save != null ? publicEquipmentFromSave(save) : account.publishedEquipment),
       achievementsUnlocked: achievements,
       totalLevel: totalLevel,
       logCompletionPercent: logPercent,
@@ -364,6 +385,21 @@ class RemoteMultiplayerService implements MultiplayerService {
   @override
   Future<MultiplayerProfile?> setPrivacyPublicSkills(bool value) =>
       _local.setPrivacyPublicSkills(value);
+
+  @override
+  Future<MultiplayerProfile?> setPrivacyPublicGear(bool value) async {
+    final current = session;
+    if (current == null) return null;
+    if (_profilesHaveGearPrivacy != false) {
+      final refused = await transport.upsert(RemoteTables.profiles, <RemoteRow>[
+        <String, Object?>{'user_id': current.userId, 'privacy_public_gear': value},
+      ], onConflict: 'user_id');
+      if (refused != null && remoteMissingGearPrivacyColumn(refused)) {
+        _profilesHaveGearPrivacy = false;
+      }
+    }
+    return _local.setPrivacyPublicGear(value);
+  }
 
   @override
   Future<MultiplayerProfile?> setChatPrivacy({String? directMessages, String? localChat}) async {
@@ -431,6 +467,17 @@ class RemoteMultiplayerService implements MultiplayerService {
     if (refused != null) return CloudSyncResult.failed(refused);
 
     await _refreshPvpLiveStats(stamped);
+    if (_profilesHaveGearPrivacy != false) {
+      final refusedGear = await transport.upsert(RemoteTables.profiles, <RemoteRow>[
+        <String, Object?>{
+          'user_id': current.userId,
+          'equipment_json': publicEquipmentFromSave(stamped).map((row) => row.toJson()).toList(),
+        },
+      ], onConflict: 'user_id');
+      if (refusedGear != null && remoteMissingGearPrivacyColumn(refusedGear)) {
+        _profilesHaveGearPrivacy = false;
+      }
+    }
     return CloudSyncResult.ok(stamped, CloudSyncSource.uploaded);
   }
 

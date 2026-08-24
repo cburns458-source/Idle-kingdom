@@ -10,10 +10,12 @@ import '../bounties/progress.dart';
 import '../inventory/add_items.dart';
 import '../inventory/capacity.dart';
 import '../js_compat.dart';
+import '../equipment/specialist.dart';
 import '../potions/effects.dart';
 import '../quests/progress.dart';
 import '../races/races.dart';
 import '../recipes/knowledge.dart';
+import '../rng/mulberry32.dart';
 import '../save/generated/save_models.dart';
 import '../time.dart';
 import 'inventory.dart';
@@ -140,15 +142,24 @@ class ProductionCraftResult {
   final ActionRewardBundle reward;
 }
 
-ProductionCraftResult? completeProductionCraft(GameDatabase db, PlayerSave save, num nowMs) {
+ProductionCraftResult? completeProductionCraft(
+  GameDatabase db,
+  PlayerSave save,
+  num nowMs, [
+  RandomFn random = _noChefProc,
+]) {
   final recipeId = save.productionRecipeId;
   final remainingBefore = save.productionQuantityRemaining ?? 0;
   if (isBlank(recipeId) || remainingBefore == 0) return null;
   final recipe = getRecipe(db, recipeId!);
   if (recipe == null) return null;
 
-  final outputQty = jsNumber(recipe.raw['Output Quantity']);
+  final baseQty = jsNumber(recipe.raw['Output Quantity']);
+  var outputQty = chefHatOutputQuantity(baseQty, save, jsString(recipe.raw['Skill ID']), random);
   final outputItemId = jsString(recipe.raw['Output Item ID']);
+  if (outputQty > baseQty && !canFitItemQuantity(save, outputItemId, outputQty)) {
+    outputQty = baseQty;
+  }
   final granted = addItemToInventoryExact(save, outputItemId, outputQty);
   if (!granted.ok) return null;
   var next = granted.save!;
@@ -236,8 +247,15 @@ class _CraftTotal {
   num xp;
 }
 
+double _noChefProc() => 1;
+
 /// Advances a production queue by elapsed offline/online time.
-ProductionProgressResult resolveProductionProgress(GameDatabase db, PlayerSave save, num nowMs) {
+ProductionProgressResult resolveProductionProgress(
+  GameDatabase db,
+  PlayerSave save,
+  num nowMs, [
+  RandomFn random = _noChefProc,
+]) {
   var current = save;
   num craftsCompleted = 0;
   num activityMs = 0;
@@ -251,7 +269,7 @@ ProductionProgressResult resolveProductionProgress(GameDatabase db, PlayerSave s
     final durationMs = current.actionDurationMs!;
     final due = jsDateParse(current.actionStartedAt) + durationMs;
     if (due > nowMs) break;
-    final completed = completeProductionCraft(db, current, due);
+    final completed = completeProductionCraft(db, current, due, random);
     if (completed == null) break;
     current = completed.save;
     craftsCompleted += 1;

@@ -5,6 +5,7 @@ import 'package:ik_content/ik_content.dart';
 
 import '../activity/xp.dart';
 import '../activity/requirements.dart';
+import '../equipment/specialist.dart';
 import '../js_compat.dart';
 import '../npcs/knowledge.dart';
 import '../production/recipes.dart';
@@ -85,6 +86,17 @@ List<ProjectInput> projectInputs(ProjectRow project) {
   return out;
 }
 
+/// Project inputs after equipped modifiers (Wizard's Hat essence discount).
+List<ProjectInput> projectInputsForSave(PlayerSave save, ProjectRow project) {
+  return projectInputs(project)
+      .map(
+        (input) => input.itemId == essenceItemId
+            ? ProjectInput(itemId: input.itemId, quantity: wizardEssenceCost(input.quantity, save))
+            : input,
+      )
+      .toList();
+}
+
 List<ProjectSkillRequirement> projectSkillRequirements(ProjectRow project) {
   final out = <ProjectSkillRequirement>[];
   for (var slot = 1; slot <= 3; slot += 1) {
@@ -162,7 +174,7 @@ List<UnmetProjectSkill> unmetProjectSkillRequirements(
 
 /// Crafts affordable from bag materials. Infinite when the project needs none.
 num maxProjectsFromMaterials(PlayerSave save, ProjectRow project) {
-  final inputs = projectInputs(project);
+  final inputs = projectInputsForSave(save, project);
   if (inputs.isEmpty) return double.infinity;
   num max = double.infinity;
   for (final input in inputs) {

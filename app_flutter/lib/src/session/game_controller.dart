@@ -125,6 +125,7 @@ class GameController extends ChangeNotifier {
   TravelInFlight? _travel;
   double _travelProgress = 0;
   UnattendedResult? _awaySummary;
+  bool _returningFromAway = false;
   CosmeticUnlockNotice? _cosmeticUnlock;
   String? _discoveryNotice;
   AutoEquipProposal? _autoEquip;
@@ -148,6 +149,12 @@ class GameController extends ChangeNotifier {
 
   /// The catch-up from the last boot, until the player dismisses it.
   UnattendedResult? get awaySummary => _awaySummary;
+
+  /// True while the return overlay is covering the world after catch-up.
+  bool get returningFromAway => _returningFromAway;
+
+  /// How long the return overlay stays up before the away summary.
+  static const int returningHoldMs = 700;
 
   /// A cosmetic that was just unlocked and has not been shown off yet.
   CosmeticUnlockNotice? get cosmeticUnlock => _cosmeticUnlock;
@@ -338,7 +345,14 @@ class GameController extends ChangeNotifier {
         away.combatDeaths +
         away.crittersSpawned;
     _awaySummary = boot.created || credited <= 0 ? null : away;
+    _returningFromAway = !boot.created && away.effectiveElapsedMs > 0;
     _offerKingswoodsSling();
+  }
+
+  void finishReturningFromAway() {
+    if (!_returningFromAway) return;
+    _returningFromAway = false;
+    notifyListeners();
   }
 
   /// Loads the account save, including catch-up for time away.
@@ -354,6 +368,7 @@ class GameController extends ChangeNotifier {
   void resetUnsigned() {
     session.resetUnsigned();
     _awaySummary = null;
+    _returningFromAway = false;
     _message = null;
     _activityError = null;
     notifyListeners();

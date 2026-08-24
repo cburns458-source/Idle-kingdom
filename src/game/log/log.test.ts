@@ -75,7 +75,9 @@ describe('recipe log', () => {
     const rows = recipeLog(launch, createNewSave(launch))
     const known = rows.filter((row) => row.known)
     expect(known.length).toBeGreaterThan(0)
-    expect(known[0]!.detail).toMatch(/^Recipe · .+ · .+ \(.+\) · .+ → .+$/)
+    expect(known[0]!.title).toMatch(/^\d+\. [A-Z][^:]*: .+$/)
+    expect(known[0]!.detail).toBe('')
+    expect(known[0]!.title.includes(' × ')).toBe(true)
 
     const locked = rows.filter((row) => !row.known)
     expect(locked.length).toBeGreaterThan(0)

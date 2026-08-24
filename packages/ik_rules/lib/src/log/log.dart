@@ -235,16 +235,32 @@ class RecipeLogRow {
   };
 }
 
+String sentenceCase(String text) {
+  final trimmed = text.trim();
+  if (trimmed.isEmpty) return trimmed;
+  return '${trimmed[0].toUpperCase()}${trimmed.substring(1).toLowerCase()}';
+}
+
+String formatRecipeMaterials(String materials) {
+  return materials
+      .split(', ')
+      .map((part) {
+        final match = RegExp(r'^(.*?)\s*×\s*(\d+)\s*$').firstMatch(part);
+        if (match != null) {
+          return '${sentenceCase(match.group(1) ?? '')} × ${match.group(2)}';
+        }
+        return sentenceCase(part);
+      })
+      .join(', ');
+}
+
 RecipeLogRow recipeLogRowFromEntry(RecipeBookEntry entry) {
-  final kind = entry.kind == 'project' ? 'Project' : 'Recipe';
   final proficiency = jsNumberToString(entry.proficiency);
   if (entry.known) {
     return RecipeLogRow(
       key: '${entry.kind}-${entry.id}',
-      title: entry.name,
-      detail:
-          '$kind · ${entry.skill} $proficiency · '
-          '${entry.station} (${entry.location}) · ${entry.materials} → ${entry.output}',
+      title: '$proficiency. ${sentenceCase(entry.name)}: ${formatRecipeMaterials(entry.materials)}',
+      detail: '',
       known: true,
     );
   }
