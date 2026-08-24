@@ -463,6 +463,15 @@ export const SAVE_MIGRATIONS: SaveMigration[] = [
       saveVersion: 30,
     }),
   },
+  {
+    fromVersion: 30,
+    toVersion: 31,
+    migrate: (save) => ({
+      ...save,
+      combatSkipEnemyAttack: save.combatSkipEnemyAttack === true,
+      saveVersion: 31,
+    }),
+  },
 ]
 
 export function migrateSave(save: PlayerSave, nowMs: number = Date.now()): PlayerSave {

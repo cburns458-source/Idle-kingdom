@@ -130,13 +130,19 @@ String _roundMessage(EnemyRow enemy, CombatRoundResult round) {
   final offhandLabel = offhand != null && offhand > 0
       ? ' Off-hand hits ${jsNumberToString(offhand)}.'
       : '';
+  final sparks = round.staffHit;
+  final sparksLabel = sparks != null && sparks > 0
+      ? ' Sparks hit ${jsNumberToString(sparks)}.'
+      : '';
   final name = jsString(enemy.raw['Display Name']);
-  // `enemyHit` is null when the enemy never swung, which prints as `null`.
+  if (round.enemyHit == null) {
+    return 'You $hitLabel.$offhandLabel$sparksLabel $name is bound and cannot attack.';
+  }
   final enemyHit = jsString(round.enemyHit);
   return round.thornsHit > 0
-      ? 'You $hitLabel.$offhandLabel $name hits $enemyHit. '
+      ? 'You $hitLabel.$offhandLabel$sparksLabel $name hits $enemyHit. '
             'Thorns reflects ${jsNumberToString(round.thornsHit)}.'
-      : 'You $hitLabel.$offhandLabel $name hits $enemyHit.';
+      : 'You $hitLabel.$offhandLabel$sparksLabel $name hits $enemyHit.';
 }
 
 void _resolveDueCombatRound(
@@ -160,6 +166,7 @@ void _resolveDueCombatRound(
       playerHit: round.playerHit,
       playerCrit: round.playerCrit,
       offhandHit: round.offhandHit,
+      staffHit: round.staffHit,
       enemyHit: round.enemyHit,
       thornsHit: round.thornsHit,
       outcome: round.outcome,
@@ -230,6 +237,7 @@ void _resolveDueCombatRound(
       currentHp: round.playerHp,
       combatEnemyHp: round.enemyHp,
       combatRoundStartedAt: isoFromMs(roundEnd),
+      combatSkipEnemyAttack: round.skipNextEnemyAttack,
     ),
   );
   out.creditCritterTime(roundMs, roundEnd, random);

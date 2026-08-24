@@ -243,6 +243,7 @@ export function resolveUnattendedProgress(
         currentHp: round.playerHp,
         combatEnemyHp: round.enemyHp,
         combatRoundStartedAt: new Date(roundEnd).toISOString(),
+        combatSkipEnemyAttack: round.skipNextEnemyAttack,
       }
       const critter = applyActivityTimeTowardCritters(
         continued,

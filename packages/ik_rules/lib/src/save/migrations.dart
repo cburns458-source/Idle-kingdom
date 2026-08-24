@@ -436,6 +436,15 @@ final List<SaveMigration> saveMigrations = <SaveMigration>[
       return next;
     },
   ),
+  SaveMigration(
+    fromVersion: 30,
+    toVersion: 31,
+    migrate: (save, nowMs) {
+      final next = _bumped(save, 31);
+      next['combatSkipEnemyAttack'] = save['combatSkipEnemyAttack'] == true;
+      return next;
+    },
+  ),
 ];
 
 /// Thrown when a save cannot be brought to the current version.

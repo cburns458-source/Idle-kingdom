@@ -9,6 +9,7 @@ import '../inventory/capacity.dart';
 import '../js_compat.dart';
 import '../save/generated/save_models.dart';
 import '../spells/spells.dart';
+import '../tags.dart';
 import '../world/blessing.dart';
 
 const String foodSlotId = 'SLOT-0011';
@@ -23,6 +24,13 @@ bool isDaggerItem(GameDatabase db, String itemId) {
   final name = lowerOrEmpty(item.raw['Display Name']);
   return key.contains('dagger') || RegExp(r'\bdagger\b').hasMatch(name);
 }
+
+bool itemHasCapability(GameDatabase db, String itemId, String tag) {
+  final equipment = db.equipment.firstWhereOrNull((row) => row.raw['Item ID'] == itemId);
+  return capabilityTags(equipment?.raw['Capabilities / Effects']).contains(tag.toLowerCase());
+}
+
+bool isTwoHandedItem(GameDatabase db, String itemId) => itemHasCapability(db, itemId, 'two_handed');
 
 /// Either the updated save or the reason the change was refused.
 class EquipResult {
@@ -282,6 +290,23 @@ EquipResult equipInventoryIndex(GameDatabase db, PlayerSave save, num index) {
     next = unequipped.save!;
   } else {
     next = _removeInventoryAtIndex(next, index, 1);
+  }
+
+  // Two-handed weapons occupy both hands. Equipping one clears the off-hand;
+  // equipping an off-hand item while a two-hander is worn clears the main hand.
+  // Either extra unequip can fail if the bag is full, which refuses the whole
+  // equip so gear is never destroyed.
+  if (isTwoHandedItem(db, itemId) && slotId == weaponToolSlotId) {
+    final cleared = unequipSlot(next, offhandSlotId);
+    if (!cleared.ok) return cleared;
+    next = cleared.save!;
+  } else if (slotId == offhandSlotId) {
+    final mainhandId = slotItemId(next, weaponToolSlotId);
+    if (isNotBlank(mainhandId) && isTwoHandedItem(db, mainhandId!)) {
+      final cleared = unequipSlot(next, weaponToolSlotId);
+      if (!cleared.ok) return cleared;
+      next = cleared.save!;
+    }
   }
 
   return EquipResult.ok(

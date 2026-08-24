@@ -8,11 +8,13 @@ import { migrateSave } from '../save/migrations'
 import { SAVE_VERSION, type PlayerSave } from '../save/types'
 import { tryConsumeFoodAfterVictory } from '../combat/food'
 import { gatheringDurationMs } from '../activity/gathering'
+import { INVENTORY_SLOT_LIMIT } from '../inventory/capacity'
 import {
   equipInventoryIndex,
   equipItemFromInventory,
   equipStackToSlot,
   FOOD_SLOT_ID,
+  isTwoHandedItem,
   OFFHAND_SLOT_ID,
   POTION_SLOT_ID,
   unequipSlot,
@@ -283,5 +285,103 @@ describe('equipment loadout', () => {
     save = addItemToInventory(save, 'ITEM-0225', 1) // Bronze Dagger
     const result = equipItemFromInventory(launch, save, 'ITEM-0225')
     expect(result.ok).toBe(false)
+  })
+
+  it('treats bows, battleaxes, warhammers, and battle staves as two-handed', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    expect(isTwoHandedItem(launch, 'ITEM-0135')).toBe(true) // Regular Bow
+    expect(isTwoHandedItem(launch, 'ITEM-0142')).toBe(true) // Steel Battleaxe
+    expect(isTwoHandedItem(launch, 'ITEM-0143')).toBe(true) // Warhammer
+    expect(isTwoHandedItem(launch, 'ITEM-0123')).toBe(true) // Dwarven Warhammer
+    expect(isTwoHandedItem(launch, 'ITEM-0285')).toBe(true) // Ancient Bow
+    expect(isTwoHandedItem(launch, 'ITEM-0304')).toBe(true)
+    expect(isTwoHandedItem(launch, 'ITEM-0305')).toBe(true)
+    expect(isTwoHandedItem(launch, 'ITEM-0306')).toBe(true)
+    expect(isTwoHandedItem(launch, 'ITEM-0122')).toBe(false) // Goblin Staff
+    expect(isTwoHandedItem(launch, 'ITEM-0124')).toBe(false) // Wooden Sword
+  })
+
+  it('unequips the off-hand when a two-handed weapon is equipped', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    let save = createNewSave(launch)
+    save = {
+      ...save,
+      inventory: [],
+      skills: save.skills.map((skill) =>
+        skill.skillId === 'SKL-0001' || skill.skillId === 'SKL-0005'
+          ? { ...skill, level: 10 }
+          : skill,
+      ),
+    }
+    save = addItemToInventory(save, 'ITEM-0145', 1) // Wooden Shield
+    save = addItemToInventory(save, 'ITEM-0135', 1) // Regular Bow
+    const shield = equipItemFromInventory(launch, save, 'ITEM-0145')
+    expect(shield.ok).toBe(true)
+    if (!shield.ok) return
+    const bow = equipItemFromInventory(launch, shield.save, 'ITEM-0135')
+    expect(bow.ok).toBe(true)
+    if (!bow.ok) return
+    expect(bow.save.equipment.slots[WEAPON_TOOL_SLOT_ID]?.itemId).toBe('ITEM-0135')
+    expect(bow.save.equipment.slots[OFFHAND_SLOT_ID]).toBeNull()
+    expect(bow.save.inventory.find((stack) => stack.itemId === 'ITEM-0145')?.quantity).toBe(1)
+  })
+
+  it('unequips a two-hander when an off-hand item is equipped', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    let save = createNewSave(launch)
+    save = {
+      ...save,
+      inventory: [],
+      skills: save.skills.map((skill) =>
+        skill.skillId === 'SKL-0001' || skill.skillId === 'SKL-0005'
+          ? { ...skill, level: 10 }
+          : skill,
+      ),
+    }
+    save = addItemToInventory(save, 'ITEM-0135', 1)
+    save = addItemToInventory(save, 'ITEM-0145', 1)
+    const bow = equipItemFromInventory(launch, save, 'ITEM-0135')
+    expect(bow.ok).toBe(true)
+    if (!bow.ok) return
+    const shield = equipItemFromInventory(launch, bow.save, 'ITEM-0145')
+    expect(shield.ok).toBe(true)
+    if (!shield.ok) return
+    expect(shield.save.equipment.slots[OFFHAND_SLOT_ID]?.itemId).toBe('ITEM-0145')
+    expect(shield.save.equipment.slots[WEAPON_TOOL_SLOT_ID]).toBeNull()
+    expect(shield.save.inventory.find((stack) => stack.itemId === 'ITEM-0135')?.quantity).toBe(1)
+  })
+
+  it('blocks a two-hander when the bag cannot hold the off-hand item', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    let save = createNewSave(launch)
+    save = {
+      ...save,
+      inventory: [],
+      skills: save.skills.map((skill) =>
+        skill.skillId === 'SKL-0001' || skill.skillId === 'SKL-0005'
+          ? { ...skill, level: 10 }
+          : skill,
+      ),
+    }
+    save = equipStackToSlot(save, WEAPON_TOOL_SLOT_ID, 'ITEM-0124', 1)
+    save = equipStackToSlot(save, OFFHAND_SLOT_ID, 'ITEM-0145', 1)
+    const filler = launch.Items.filter(
+      (item) =>
+        item['Item ID'] !== 'ITEM-0135' &&
+        item['Item ID'] !== 'ITEM-0145' &&
+        item['Item ID'] !== 'ITEM-0124',
+    ).slice(0, INVENTORY_SLOT_LIMIT - 1)
+    save = {
+      ...save,
+      inventory: [
+        ...filler.map((item) => ({ itemId: item['Item ID'], quantity: 1 })),
+        { itemId: 'ITEM-0135', quantity: 1 },
+      ],
+    }
+    const result = equipItemFromInventory(launch, save, 'ITEM-0135')
+    expect(result.ok).toBe(false)
+    if (result.ok) return
+    expect(result.reason).toMatch(/inventory space/i)
+    expect(save.equipment.slots[OFFHAND_SLOT_ID]?.itemId).toBe('ITEM-0145')
   })
 })

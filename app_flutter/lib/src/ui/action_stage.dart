@@ -22,6 +22,7 @@ const double _stageMaxWidth = 460;
 const Color _playerHitColor = Color(0xFFFF8A3D);
 const Color _critHitColor = Color(0xFFFFD166);
 const Color _offhandHitColor = Color(0xFFF0A868);
+const Color _staffHitColor = Color(0xFF6EC8FF);
 const Color _enemyHitColor = Color(0xFFFFD0D0);
 const Color _healColor = Color(0xFF7CFF9E);
 const Color _foodHurtColor = Color(0xFFFF6B6B);
@@ -450,6 +451,15 @@ class _CombatStage extends StatelessWidget {
                         color: _offhandHitColor,
                         alignment: const Alignment(0, -0.24),
                         offset: _floaterOffset(seq, 3),
+                        fontSize: 17,
+                      ),
+                    if (round != null && (round.staffHit ?? 0) > 0)
+                      _DamageFloater(
+                        key: ValueKey('staff-hit-$seq'),
+                        text: '${round.staffHit!.round()}',
+                        color: _staffHitColor,
+                        alignment: const Alignment(0.18, -0.38),
+                        offset: _floaterOffset(seq, 4),
                         fontSize: 17,
                       ),
                   ],

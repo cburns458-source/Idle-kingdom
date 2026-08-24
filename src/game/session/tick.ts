@@ -155,10 +155,15 @@ function roundMessage(enemy: EnemyRow, round: ReturnType<typeof resolveCombatRou
   const hitLabel = round.playerCrit ? `crit for ${round.playerHit}` : `hit ${round.playerHit}`
   const offhandLabel =
     round.offhandHit != null && round.offhandHit > 0 ? ` Off-hand hits ${round.offhandHit}.` : ''
+  const sparksLabel =
+    round.staffHit != null && round.staffHit > 0 ? ` Sparks hit ${round.staffHit}.` : ''
   const name = enemy['Display Name']
+  if (round.enemyHit == null) {
+    return `You ${hitLabel}.${offhandLabel}${sparksLabel} ${name} is bound and cannot attack.`
+  }
   return round.thornsHit > 0
-    ? `You ${hitLabel}.${offhandLabel} ${name} hits ${round.enemyHit}. Thorns reflects ${round.thornsHit}.`
-    : `You ${hitLabel}.${offhandLabel} ${name} hits ${round.enemyHit}.`
+    ? `You ${hitLabel}.${offhandLabel}${sparksLabel} ${name} hits ${round.enemyHit}. Thorns reflects ${round.thornsHit}.`
+    : `You ${hitLabel}.${offhandLabel}${sparksLabel} ${name} hits ${round.enemyHit}.`
 }
 
 function resolveDueCombatRound(
@@ -180,6 +185,7 @@ function resolveDueCombatRound(
     playerHit: round.playerHit,
     playerCrit: round.playerCrit,
     offhandHit: round.offhandHit,
+    staffHit: round.staffHit,
     enemyHit: round.enemyHit,
     thornsHit: round.thornsHit,
     outcome: round.outcome,
@@ -252,6 +258,7 @@ function resolveDueCombatRound(
     currentHp: round.playerHp,
     combatEnemyHp: round.enemyHp,
     combatRoundStartedAt: new Date(roundEnd).toISOString(),
+    combatSkipEnemyAttack: round.skipNextEnemyAttack,
   })
   out.creditCritterTime(roundMs, roundEnd, random)
   out.emit({ kind: 'message', text: roundMessage(enemy, round) })

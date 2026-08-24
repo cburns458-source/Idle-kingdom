@@ -107,6 +107,7 @@ export function createNewSave(db: GameDatabase, nowMs: number = Date.now()): Pla
     combatEnemyId: null,
     combatEnemyHp: null,
     combatRoundStartedAt: null,
+    combatSkipEnemyAttack: false,
     activePotionEffect: null,
     deathPauseUntil: null,
     hasEverDied: false,
