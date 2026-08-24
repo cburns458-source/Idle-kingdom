@@ -9,7 +9,7 @@ import {
 import type { PlayerSave } from '../../game/save/types'
 import { scenario, type JsonValue, type ParityScenario } from '../types'
 import { contentDatabase } from './contentDatabase'
-import { asJson, baseSave, forgeSave, questSave } from './saveFixtures'
+import { asJson, baseSave, FIXED_TIMESTAMP_MS, forgeSave, questSave } from './saveFixtures'
 
 type SaveKind = 'base' | 'forge' | 'quest'
 
@@ -46,7 +46,7 @@ export const npcScenarios: ParityScenario[] = [
       return {
         conversations: CONVERSATION_NPCS.map((npcId) => {
           const npc = db.NPCs.find((row) => row['NPC ID'] === npcId)!
-          return npcConversation(db, save, npc)
+          return npcConversation(db, save, npc, FIXED_TIMESTAMP_MS)
         }),
         pitchLines: PITCH_QUESTS.map((questId) => questPitchLine(db, questId)),
         mentorSkills: MENTOR_NPCS.map((npcId) => skillForKnowledgeNpc(npcId)),

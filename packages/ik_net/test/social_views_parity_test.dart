@@ -119,6 +119,7 @@ LeaderboardEntry _entry({
   num value = 1204,
   num? secondaryValue,
   String? guildName,
+  String? guildTag,
   GuildEmblem? emblem,
 }) {
   return LeaderboardEntry(
@@ -126,6 +127,7 @@ LeaderboardEntry _entry({
     username: username,
     appearance: _appearance,
     guildName: guildName,
+    guildTag: guildTag,
     boardKey: boardKey,
     value: value,
     rank: rank,
@@ -358,7 +360,7 @@ void main() {
             'boards': _rows(boardOptions(db)),
             'rows': _rows(
               leaderboardRows(<LeaderboardEntry>[
-                _entry(secondaryValue: 9500000, guildName: 'Iron League'),
+                _entry(secondaryValue: 9500000, guildName: 'Iron League', guildTag: 'IRN'),
                 _entry(rank: 2, userId: 'usr_2', username: 'Rival', value: 12),
                 _entry(
                   boardKey: boardGuildTotalLevel,

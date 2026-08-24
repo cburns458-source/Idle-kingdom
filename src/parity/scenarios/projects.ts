@@ -49,7 +49,15 @@ const NOW_MS = Date.parse('2026-01-01T00:00:00.000Z')
 
 const STATION_LOCATIONS = ['LOC-0025', 'LOC-0007', 'LOC-0030', 'LOC-0023', 'LOC-9999']
 const KNOWLEDGE_SKILLS = ['SKL-0011', 'SKL-0012', 'SKL-0013', 'SKL-0007']
-const NPC_LOCATIONS = ['LOC-0006', 'LOC-0007', 'LOC-0024', 'LOC-0029', 'LOC-9999']
+const NPC_LOCATIONS = [
+  'LOC-0006',
+  'LOC-0007',
+  'LOC-0011',
+  'LOC-0022',
+  'LOC-0024',
+  'LOC-0029',
+  'LOC-9999',
+]
 const UNLOCK_NPCS = ['NPC-0003', 'NPC-0004', 'NPC-0001']
 
 /** The three stations, one search that matches and one that cannot. */
@@ -268,8 +276,8 @@ export const projectScenarios: ParityScenario[] = [
       return {
         byLocation: NPC_LOCATIONS.map((locationId) => ({
           locationId,
-          npcIds: npcsAtLocation(db, locationId).map((npc) => npc['NPC ID']),
-          shopIds: npcsAtLocation(db, locationId).map((npc) => shopIdForMerchant(db, npc)),
+          npcIds: npcsAtLocation(db, locationId, NOW_MS).map((npc) => npc['NPC ID']),
+          shopIds: npcsAtLocation(db, locationId, NOW_MS).map((npc) => shopIdForMerchant(db, npc)),
         })),
         mentorForSkill: KNOWLEDGE_SKILLS.map((skillId) => knowledgeNpcForSkill(skillId)),
         knows: UNLOCK_NPCS.map((npcId) => hasNpcKnowledge(save, npcId)),

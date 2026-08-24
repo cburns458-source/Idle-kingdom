@@ -101,6 +101,8 @@ export interface LeaderboardEntry {
   username: string
   appearance: PlayerAppearance
   guildName: string | null
+  /** Player rows only. Guild board names already include the tag. */
+  guildTag?: string | null
   boardKey: MultiplayerBoardKey
   value: number
   rank: number

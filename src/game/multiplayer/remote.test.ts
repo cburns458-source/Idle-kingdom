@@ -189,7 +189,7 @@ describe('remote leaderboards', () => {
           profiles: {
             username: 'Hero',
             appearance_json: {},
-            guilds: { name: 'Iron League' },
+            guilds: { name: 'Iron League', tag: 'IRN' },
           },
         },
         {
@@ -207,6 +207,7 @@ describe('remote leaderboards', () => {
     )
     expect(entries[0]?.username).toBe('Hero')
     expect(entries[0]?.guildName).toBe('Iron League')
+    expect(entries[0]?.guildTag).toBe('IRN')
     expect(entries[0]?.appearance).toEqual(DEFAULT_PLAYER_APPEARANCE)
     expect(entries[1]?.username).toBe('Adventurer')
     expect(entries[1]?.guildName).toBeNull()

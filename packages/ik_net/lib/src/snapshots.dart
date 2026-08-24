@@ -126,6 +126,7 @@ List<LeaderboardEntry> mergeLiveLeaderboardScore({
   required String username,
   required PlayerAppearance appearance,
   String? guildName,
+  String? guildTag,
 }) {
   if (boardKey == boardGuildTotalLevel) return stored;
   final mine = buildLeaderboardSnapshot(
@@ -146,6 +147,7 @@ List<LeaderboardEntry> mergeLiveLeaderboardScore({
       username: username,
       appearance: appearance,
       guildName: guildName,
+      guildTag: guildTag,
       boardKey: boardKey,
       value: mine.value,
       rank: 0,

@@ -32,6 +32,7 @@ import {
   shopIdForMerchant,
   unlockNpcKnowledge,
 } from './knowledge'
+import { DWARVEN_MINING_MERCHANT_ID, masterDwarfLocationId } from './roaming'
 
 const FALLBACK_MERCHANT_TIP = 'Here’s some tips about artisanry'
 const FALLBACK_MERCHANT_TIP_SPENT = 'I’ve already shared what I know about artisanry.'
@@ -138,6 +139,12 @@ export interface NpcQuestBlock {
   idlePrompt: string
 }
 
+/** Merchant-only: ask where the Master Dwarf is today. */
+export interface NpcWhereabouts {
+  label: string
+  line: string
+}
+
 /** Everything a client needs to draw one NPC, with no game rules left in it. */
 export interface NpcConversation {
   npcId: string
@@ -149,6 +156,7 @@ export interface NpcConversation {
   greeting: NpcGreeting | null
   mentor: NpcMentorBlock | null
   quests: NpcQuestBlock[]
+  whereabouts?: NpcWhereabouts
 }
 
 function completedNote(db: GameDatabase, quest: QuestRow): string {
@@ -276,6 +284,7 @@ export function npcConversation(
   db: GameDatabase,
   save: PlayerSave,
   npc: NpcRow,
+  nowMs: number = Date.now(),
 ): NpcConversation {
   const npcId = npc['NPC ID']
   const quests = questsTouchingNpc(db, npcId)
@@ -285,6 +294,13 @@ export function npcConversation(
       return isGiver || status === 'active'
     })
     .map((quest) => questBlock(db, save, quest, npcId))
+  const whereabouts =
+    npcId === DWARVEN_MINING_MERCHANT_ID
+      ? {
+          label: 'Ask where the Master Dwarf is',
+          line: `The Master Dwarf is at the ${locationName(db, masterDwarfLocationId(nowMs))} today.`,
+        }
+      : undefined
   return {
     npcId,
     name: npc['Display Name'],
@@ -296,6 +312,7 @@ export function npcConversation(
     greeting: greetingFor(db, save, npc, quests),
     mentor: mentorBlock(db, save, npcId),
     quests,
+    ...(whereabouts ? { whereabouts } : {}),
   }
 }
 

@@ -251,6 +251,7 @@ class LeaderboardEntry {
     required this.boardKey,
     required this.value,
     required this.rank,
+    this.guildTag,
     this.secondaryValue,
     this.entryKind,
     this.emblem,
@@ -260,6 +261,9 @@ class LeaderboardEntry {
   final String username;
   final PlayerAppearance appearance;
   final String? guildName;
+
+  /// Player rows only. Guild board names already include the tag.
+  final String? guildTag;
   final MultiplayerBoardKey boardKey;
   final num value;
   final num rank;
@@ -277,6 +281,7 @@ class LeaderboardEntry {
     username: username,
     appearance: appearance,
     guildName: guildName,
+    guildTag: guildTag,
     boardKey: boardKey,
     value: value,
     rank: next,
@@ -290,6 +295,7 @@ class LeaderboardEntry {
     'username': username,
     'appearance': appearance.toJson(),
     'guildName': guildName,
+    if (guildTag != null) 'guildTag': guildTag,
     'boardKey': boardKey,
     'value': value,
     'rank': rank,

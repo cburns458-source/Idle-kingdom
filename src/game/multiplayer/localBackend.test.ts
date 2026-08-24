@@ -56,6 +56,7 @@ describe('local multiplayer backend', () => {
     expect(guild.goldCost).toBe(25)
     expect(guild.guild.tag).toBe('OAK')
     expect(backend.guildMembers(guild.guild.id)).toHaveLength(1)
+    expect(backend.listLeaderboard('monsters_killed')[0]?.guildTag).toBe('OAK')
 
     backend.upsertPresence(signed.session, {
       appearance: save.appearance,

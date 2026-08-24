@@ -445,11 +445,15 @@ class LocalMultiplayerBackend {
     final rows = db.leaderboards.where((row) => row.boardKey == boardKey).toList();
     final entries = rows.map((row) {
       final profile = db.profiles.firstWhereOrNull((candidate) => candidate.userId == row.userId);
+      final guild = profile?.guildId == null
+          ? null
+          : db.guilds.firstWhereOrNull((candidate) => candidate.id == profile!.guildId);
       return LeaderboardEntry(
         userId: row.userId,
         username: profile?.username ?? 'Adventurer',
         appearance: profile?.appearance ?? defaultPlayerAppearance,
         guildName: profile?.guildName,
+        guildTag: guild?.tag,
         boardKey: boardKey,
         value: row.value,
         rank: 0,

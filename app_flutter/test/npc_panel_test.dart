@@ -100,6 +100,23 @@ void main() {
     expect(controller.save.claimedMerchantTipIds, [merchantId]);
   });
 
+  testWidgets('the mining merchant says where the Master Dwarf is today', (tester) async {
+    final controller = buildController(database, seed: standing('LOC-0012'));
+    addTearDown(controller.dispose);
+
+    await pumpPanel(
+      tester,
+      NpcPanel(controller: controller, npc: npcOf('NPC-0008'), onClose: () {}),
+    );
+    expect(find.text('Ask where the Master Dwarf is'), findsOne);
+
+    await tester.tap(find.text('Ask where the Master Dwarf is'));
+    await tester.pump();
+
+    expect(find.textContaining('The Master Dwarf is at the'), findsOne);
+    expect(find.textContaining('today.'), findsOne);
+  });
+
   testWidgets('the mentor unlocks projects and then says so', (tester) async {
     final controller = buildController(database, seed: standing(forgeLocationId));
     addTearDown(controller.dispose);
