@@ -8,6 +8,24 @@ import {
 import type { PlayerSave } from '../save/types'
 import { getSkillProgress } from './xp'
 
+/** Requirement types the runtime knows how to evaluate. Unknown types fail closed. */
+export const KNOWN_REQUIREMENT_TYPES = [
+  'Tool Capability',
+  'Empty Slot',
+  'Station',
+  'Skill Level',
+  'Quest Access',
+  'Quest Active',
+  'Quest Flag',
+  'Item Absent',
+] as const
+
+export type KnownRequirementType = (typeof KNOWN_REQUIREMENT_TYPES)[number]
+
+export function isKnownRequirementType(type: string): type is KnownRequirementType {
+  return (KNOWN_REQUIREMENT_TYPES as readonly string[]).includes(type)
+}
+
 function equippedCapabilityTags(db: GameDatabase, save: PlayerSave): Set<string> {
   const tags = new Set<string>()
   for (const stack of Object.values(save.equipment.slots)) {
@@ -142,7 +160,7 @@ export function evaluateRequirement(
     }
   }
 
-  return { met: true, detail: 'OK' }
+  return { met: false, detail: 'Unknown requirement.' }
 }
 
 function isQuestGateRequirement(type: string): boolean {

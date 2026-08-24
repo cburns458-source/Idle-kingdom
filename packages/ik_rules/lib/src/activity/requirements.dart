@@ -7,6 +7,20 @@ import '../quests/progress.dart';
 import '../save/generated/save_models.dart';
 import 'xp.dart';
 
+/// Requirement types the runtime knows how to evaluate. Unknown types fail closed.
+const List<String> knownRequirementTypes = <String>[
+  'Tool Capability',
+  'Empty Slot',
+  'Station',
+  'Skill Level',
+  'Quest Access',
+  'Quest Active',
+  'Quest Flag',
+  'Item Absent',
+];
+
+bool isKnownRequirementType(String type) => knownRequirementTypes.contains(type);
+
 Set<String> _equippedCapabilityTags(GameDatabase db, PlayerSave save) {
   final tags = <String>{};
   for (final stack in save.equipment.slots.values) {
@@ -135,7 +149,7 @@ RequirementCheck evaluateRequirement(GameDatabase db, PlayerSave save, Requireme
     return RequirementCheck(met: met, detail: met ? 'Item not held' : 'Already have that item');
   }
 
-  return const RequirementCheck(met: true, detail: 'OK');
+  return const RequirementCheck(met: false, detail: 'Unknown requirement.');
 }
 
 bool isQuestGateRequirement(String type) {

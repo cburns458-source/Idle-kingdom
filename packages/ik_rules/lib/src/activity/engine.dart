@@ -128,12 +128,16 @@ GeneratedAction? generateNextAction(
   if (poolId is! String || poolId.isEmpty) return null;
 
   final heldId = heldActionIdFor(save, activityId);
+  final eligible = eligiblePoolEntries(db, poolId);
   ActionRow? action;
   if (heldId != null) {
     action = db.actions.firstWhereOrNull((row) => row.raw['Action ID'] == heldId);
     if (action != null && !isSelectableAction(action)) action = null;
+    if (action != null && !eligible.any((pair) => pair.action.raw['Action ID'] == heldId)) {
+      action = null;
+    }
   }
-  action ??= pickWeightedAction(eligiblePoolEntries(db, poolId), random);
+  action ??= pickWeightedAction(eligible, random);
   if (action == null) return null;
   final actionId = jsString(action.raw['Action ID']);
 

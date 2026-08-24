@@ -125,6 +125,11 @@ void main() {
     expect(adopted.unattended.gatheringActions, greaterThan(0));
     expect(adopted.save.unattendedProgressAt, isoFromMs(serverNow));
     expect(adopted.save.playTimeMs, parked.playTimeMs + adopted.unattended.effectiveElapsedMs);
+
+    // Live ticks use the catch-up clock as the baseline, so device/server skew
+    // is not credited again.
+    final afterTick = session.tick();
+    expect(afterTick.save.playTimeMs, adopted.save.playTimeMs);
   });
 
   test('travels instantly on the shipped connections', () {

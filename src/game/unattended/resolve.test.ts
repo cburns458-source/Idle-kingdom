@@ -92,6 +92,29 @@ describe('unattended progression', () => {
     expect(resolved.save.inventory.some((stack) => stack.itemId === 'ITEM-0058')).toBe(true)
   })
 
+  it('reports when a production queue pauses because the bag is full', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    let save = createNewSave(launch)
+    save = addItemToInventory(save, 'ITEM-0025', 20)
+    const startedAt = Date.parse('2026-01-01T00:00:00.000Z')
+    const begun = beginProductionQueue(launch, save, 'ACT-0017', 'RCP-0001', 2, startedAt)
+    expect(begun.ok).toBe(true)
+    if (!begun.ok) return
+    save = {
+      ...begun.save,
+      unattendedProgressAt: new Date(startedAt).toISOString(),
+      inventory: Array.from({ length: 180 }, (_, index) => ({
+        itemId: `FILL-${index}`,
+        quantity: 1,
+      })),
+    }
+    const now = startedAt + begun.save.actionDurationMs! + 100
+    const resolved = resolveUnattendedProgress(launch, save, now, () => 0)
+    expect(resolved.craftsCompleted).toBe(0)
+    expect(resolved.messages).toContain('Crafting paused: inventory is full.')
+    expect(resolved.save.productionQuantityRemaining).toBe(2)
+  })
+
   it('fully catches up 24h of sustained combat without falling short of the cap', () => {
     const { launch } = prepareDatabase(rawDatabase)
     let save = createNewSave(launch)

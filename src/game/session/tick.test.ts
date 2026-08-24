@@ -126,6 +126,27 @@ describe('session tick', () => {
     expect(result.save.productionQuantityRemaining).toBe(1)
   })
 
+  it('emits inventory-full and leaves the queue when the bag cannot hold the output', () => {
+    const stocked = addItemToInventory(
+      newSave({ currentLocationId: 'LOC-0023' }),
+      'ITEM-0025',
+      10,
+    )
+    const queued = beginProductionQueue(db, stocked, 'ACT-0017', 'RCP-0001', 2, START_MS)
+    expect(queued.ok).toBe(true)
+    const save = {
+      ...(queued as { ok: true; save: PlayerSave }).save,
+      inventory: Array.from({ length: 180 }, (_, index) => ({
+        itemId: `FILL-${index}`,
+        quantity: 1,
+      })),
+    }
+    const dueMs = START_MS + save.actionDurationMs!
+    const result = advanceSession(db, save, dueMs, firstOfPool)
+    expect(result.events.map((event) => event.kind)).toContain('inventory-full')
+    expect(result.save.productionQuantityRemaining).toBe(2)
+  })
+
   it('applies a legacy queued activity change and reports the save as moved', () => {
     const save: PlayerSave = {
       ...newSave({ currentLocationId: 'LOC-0009' }),

@@ -117,6 +117,9 @@ UnattendedResult resolveUnattendedProgress(
   }
 
   final production = resolveProductionProgress(db, current, endMs);
+  if (production.blockedByInventory) {
+    messages.add('Crafting paused: inventory is full.');
+  }
   if (production.craftsCompleted > 0 || production.activityMs > 0) {
     current = production.save;
     craftsCompleted = production.craftsCompleted;

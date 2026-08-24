@@ -35,4 +35,28 @@ describe('database loading', () => {
     expect(town?.['Display Name']).toBe('The Town')
     expect(loaded.launchIndexes.skillsById.get('SKL-0001')?.['Display Name']).toBe('Combat')
   })
+
+  it('rejects unknown requirement types and missing drop chances', () => {
+    const loaded = prepareDatabase(rawDatabase)
+    const action = loaded.source.Actions.find((row) => row['Reward Table ID'])
+    expect(action).toBeDefined()
+    const issues = validateDatabase({
+      ...loaded.source,
+      Actions: loaded.source.Actions.map((row) =>
+        row === action ? { ...row, 'Drop Chance': null } : row,
+      ),
+      Requirements: [
+        ...loaded.source.Requirements,
+        {
+          'Requirement ID': 'REQ-BAD',
+          'Requirement Type': 'Made Up',
+          'Entity Type': 'Activity',
+          'Entity ID': 'ACT-0001',
+          'Reference ID / Value': 'x',
+        },
+      ],
+    })
+    expect(issues.some((issue) => issue.message.includes('Missing Drop Chance'))).toBe(true)
+    expect(issues.some((issue) => issue.message.includes('Unknown Requirement Type'))).toBe(true)
+  })
 })

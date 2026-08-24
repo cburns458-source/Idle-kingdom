@@ -143,6 +143,18 @@ class GameController extends ChangeNotifier {
   List<ActionRewardBundle> get recentRewards => List.unmodifiable(_recentRewards);
   String? get message => _message;
   String? get activityError => _activityError;
+
+  /// True while a Standard Production queue is waiting for bag space.
+  bool get productionInventoryFull {
+    final recipeId = save.productionRecipeId;
+    if (recipeId == null) return false;
+    final recipe = getRecipe(db, recipeId);
+    if (recipe == null) return false;
+    final itemId = recipe.raw['Output Item ID'];
+    final qty = recipe.raw['Output Quantity'];
+    if (itemId is! String || qty is! num) return false;
+    return !canFitItemQuantity(save, itemId, qty);
+  }
   TravelInFlight? get travel => _travel;
   double get travelProgress => _travelProgress;
 

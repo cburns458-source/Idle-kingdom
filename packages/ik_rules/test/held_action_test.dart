@@ -57,11 +57,12 @@ void main() {
     expect(back.save!.currentActionId, 'ACN-0105');
   });
 
-  test('a held action is reused even when it is not in the activity pool', () {
+  test('a held action is forgotten when it is no longer in the activity pool', () {
     final save = withHeldAction(_inMeadow(db), 'ACT-0012', 'ACN-0015');
     final started = requestActivityStart(db, save, 'ACT-0012', 0, () => 0);
     expect(started.ok, isTrue);
-    expect(started.save!.currentActionId, 'ACN-0015');
+    expect(started.save!.currentActionId, isNot('ACN-0015'));
+    expect(started.save!.currentActionId, 'ACN-0105');
   });
 
   test('finishing a gathering action forgets it so the next roll can change', () {
