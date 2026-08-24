@@ -142,9 +142,10 @@ ProjectCompleteResult completeSpecialProject(
   final crafts = quantity.floor();
   final withMaterials = removeIngredients(
     save,
-    projectInputs(project)
-        .map((input) => RecipeIngredient(itemId: input.itemId, quantity: input.quantity))
-        .toList(),
+    projectInputsForSave(
+      save,
+      project,
+    ).map((input) => RecipeIngredient(itemId: input.itemId, quantity: input.quantity)).toList(),
     crafts,
   );
   if (withMaterials == null) {

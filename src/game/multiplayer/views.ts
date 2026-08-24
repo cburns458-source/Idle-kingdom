@@ -370,6 +370,12 @@ export interface LeaderboardRowView {
   isGuild: boolean
 }
 
+function leaderboardDisplayName(entry: LeaderboardEntry, isGuild: boolean): string {
+  if (isGuild) return entry.username
+  const tag = entry.guildTag?.trim()
+  return tag ? `[${tag}]${entry.username}` : entry.username
+}
+
 export function leaderboardRows(entries: LeaderboardEntry[]): LeaderboardRowView[] {
   return entries.map((entry) => {
     const isGuild = entry.entryKind === 'guild'
@@ -377,8 +383,8 @@ export function leaderboardRows(entries: LeaderboardEntry[]): LeaderboardRowView
     return {
       rank: entry.rank,
       entryId: entry.userId,
-      username: entry.username,
-      subtitle: isGuild ? (entry.guildName ?? 'Guild') : (entry.guildName ?? 'No guild'),
+      username: leaderboardDisplayName(entry, isGuild),
+      subtitle: isGuild ? (entry.guildName ?? 'Guild') : '',
       valueLabel:
         entry.boardKey === 'log_completion' ? `${entry.value}%` : entry.value.toLocaleString(),
       ...(experience == null ? {} : { secondaryLabel: `${experience.toLocaleString()} xp` }),
@@ -436,8 +442,9 @@ export function peerRows(
 
 /** What the Citadel visitor list says about one visitor. */
 export function citadelVisitorSubtitle(visitor: ActivityPresence): string {
-  const guild = visitor.guildName ?? 'No guild'
-  return `${guild} · Lv ${visitor.skillLevel ?? 1}`
+  const level = `Lv ${visitor.skillLevel ?? 1}`
+  const guild = visitor.guildName
+  return guild ? `${guild} · ${level}` : level
 }
 
 /** The public profile sheet, with nothing left to derive. */

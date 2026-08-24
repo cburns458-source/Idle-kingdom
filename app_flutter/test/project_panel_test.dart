@@ -126,7 +126,7 @@ void main() {
       ProjectPicker(controller: controller, station: stationFor(forgeLocationId, 'SKL-0011')),
     );
     expect(find.byType(GameDropdown<String>), findsNothing);
-    expect(find.textContaining('speak with the Master Dwarf'), findsOne);
+    expect(find.textContaining('find the Master Dwarf'), findsOne);
 
     await tester.tap(find.text('Recipe book'));
     await tester.pumpAndSettle();
@@ -145,7 +145,7 @@ void main() {
       tester,
       ProjectPicker(controller: controller, station: stationFor(forgeLocationId, 'SKL-0011')),
     );
-    expect(find.textContaining('speak with the Master Dwarf'), findsOne);
+    expect(find.textContaining('find the Master Dwarf'), findsOne);
     expect(find.text('Complete project'), findsNothing);
   });
 
@@ -166,7 +166,7 @@ void main() {
             .toList(),
         inventory: const [
           InventoryStack(itemId: 'ITEM-0098', quantity: 2),
-          InventoryStack(itemId: 'ITEM-0011', quantity: 6),
+          InventoryStack(itemId: 'ITEM-0011', quantity: 300),
           InventoryStack(itemId: 'ITEM-0040', quantity: 2),
           InventoryStack(itemId: copperAxeItem, quantity: 1),
         ],

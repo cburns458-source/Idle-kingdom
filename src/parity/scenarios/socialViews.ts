@@ -279,7 +279,12 @@ export const socialViewScenarios: ParityScenario[] = [
     return {
       boards: boardOptions(db),
       rows: leaderboardRows([
-        entry({ value: 1204, secondaryValue: 9_500_000, guildName: 'Iron League' }),
+        entry({
+          value: 1204,
+          secondaryValue: 9_500_000,
+          guildName: 'Iron League',
+          guildTag: 'IRN',
+        }),
         entry({ rank: 2, userId: 'usr_2', username: 'Rival', value: 12 }),
         entry({
           rank: 1,

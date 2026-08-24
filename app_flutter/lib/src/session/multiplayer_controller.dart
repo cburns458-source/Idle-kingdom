@@ -79,6 +79,13 @@ class MultiplayerController extends ChangeNotifier {
     });
   }
 
+  Future<void> setPrivacyPublicGear(bool value) {
+    return run(() async {
+      _ownProfile = await service.setPrivacyPublicGear(value);
+      return null;
+    });
+  }
+
   /// True when this device may see sign-in. An empty [testerPasskey] leaves
   /// the gate off.
   bool get hasTesterAccess => !testerPasskeyRequired(storage.getItem(testerAccessStorageKey));
@@ -192,6 +199,7 @@ class MultiplayerController extends ChangeNotifier {
   List<SocialContact> get ignoredPlayers => _ignored;
   String get privacyDirectMessages => _ownProfile?.privacyDirectMessages ?? chatPrivacyPublic;
   String get privacyLocalChat => _ownProfile?.privacyLocalChat ?? chatPrivacyPublic;
+  bool get privacyPublicGear => _ownProfile?.privacyPublicGear ?? true;
   List<ChatMessage> get messages => _messages;
 
   /// Who claimed each of this hour's bounties first, as far as the last read saw.
@@ -774,6 +782,7 @@ class MultiplayerController extends ChangeNotifier {
       username: isNotBlank(save.characterName) ? save.characterName! : current.username,
       appearance: save.appearance,
       guildName: _guild?.name,
+      guildTag: _guild?.tag,
     );
   }
 

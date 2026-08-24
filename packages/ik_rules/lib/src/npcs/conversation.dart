@@ -8,6 +8,7 @@ import '../quests/progress.dart';
 import '../quests/quests.dart';
 import '../save/generated/save_models.dart';
 import 'knowledge.dart';
+import 'roaming.dart';
 
 const String _fallbackMerchantTip = 'Here\u2019s some tips about artisanry';
 const String _fallbackMerchantTipSpent = 'I\u2019ve already shared what I know about artisanry.';
@@ -220,6 +221,16 @@ class NpcQuestBlock {
   };
 }
 
+/// Merchant-only: ask where the Master Dwarf is today.
+class NpcWhereabouts {
+  const NpcWhereabouts({required this.label, required this.line});
+
+  final String label;
+  final String line;
+
+  Map<String, Object?> toJson() => <String, Object?>{'label': label, 'line': line};
+}
+
 /// Everything a client needs to draw one NPC, with no game rules left in it.
 class NpcConversation {
   const NpcConversation({
@@ -232,6 +243,7 @@ class NpcConversation {
     required this.greeting,
     required this.mentor,
     required this.quests,
+    this.whereabouts,
   });
 
   final String npcId;
@@ -243,6 +255,7 @@ class NpcConversation {
   final NpcGreeting? greeting;
   final NpcMentorBlock? mentor;
   final List<NpcQuestBlock> quests;
+  final NpcWhereabouts? whereabouts;
 
   Map<String, Object?> toJson() => <String, Object?>{
     'npcId': npcId,
@@ -254,6 +267,7 @@ class NpcConversation {
     'greeting': greeting?.toJson(),
     'mentor': mentor?.toJson(),
     'quests': quests.map((quest) => quest.toJson()).toList(),
+    if (whereabouts != null) 'whereabouts': whereabouts!.toJson(),
   };
 }
 
@@ -377,7 +391,7 @@ NpcGreeting? _greetingFor(
   );
 }
 
-NpcConversation npcConversation(GameDatabase db, PlayerSave save, NpcRow npc) {
+NpcConversation npcConversation(GameDatabase db, PlayerSave save, NpcRow npc, [num? nowMs]) {
   final npcId = npc.raw['NPC ID'] as String;
   final quests = <NpcQuestBlock>[];
   for (final quest in questsTouchingNpc(db, npcId)) {
@@ -389,6 +403,14 @@ NpcConversation npcConversation(GameDatabase db, PlayerSave save, NpcRow npc) {
   final displayName = npc.raw['Display Name'];
   final role = npc.raw['Role'];
   final description = npc.raw['Description'];
+  final clock = nowMs ?? DateTime.now().millisecondsSinceEpoch;
+  final whereabouts = npcId == dwarvenMiningMerchantId
+      ? NpcWhereabouts(
+          label: 'Ask where the Master Dwarf is',
+          line:
+              'The Master Dwarf is at the ${_locationName(db, masterDwarfLocationId(clock))} today.',
+        )
+      : null;
   return NpcConversation(
     npcId: npcId,
     name: displayName is String ? displayName : npcId,
@@ -401,6 +423,7 @@ NpcConversation npcConversation(GameDatabase db, PlayerSave save, NpcRow npc) {
     greeting: _greetingFor(db, save, npc, quests),
     mentor: _mentorBlock(db, save, npcId),
     quests: quests,
+    whereabouts: whereabouts,
   );
 }
 

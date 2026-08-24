@@ -129,6 +129,7 @@ export function profileRowForSignUp(session: MultiplayerSession): RemoteRow {
     user_id: session.userId,
     username: session.username,
     privacy_public_skills: true,
+    privacy_public_gear: true,
   }
 }
 
@@ -255,14 +256,16 @@ export function leaderboardEntryFrom(
   const profile = (row.profiles ?? null) as {
     username?: string
     appearance_json?: unknown
-    guilds?: { name?: string } | null
+    guilds?: { name?: string; tag?: string } | null
   } | null
   const username = profile?.username?.trim() ?? ''
+  const guildTag = profile?.guilds?.tag?.trim()
   return {
     userId: str(row.user_id),
     username: username.length === 0 ? 'Adventurer' : username,
     appearance: playerAppearanceFromRemote(profile?.appearance_json),
     guildName: profile?.guilds?.name ?? null,
+    ...(guildTag ? { guildTag } : {}),
     boardKey,
     value: num(row.value),
     rank: index + 1,

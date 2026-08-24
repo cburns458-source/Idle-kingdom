@@ -114,6 +114,15 @@ describe('npc conversation', () => {
     expect(npcConversation(launch, learned.save, npc('NPC-0003')).mentor?.known).toBe(true)
   })
 
+  it('lets the mining merchant say where the Master Dwarf is today', () => {
+    const nowMs = Date.parse('2026-01-01T00:00:00.000Z')
+    const conversation = npcConversation(launch, saveAt('LOC-0012'), npc('NPC-0008'), nowMs)
+    expect(conversation.whereabouts?.label).toBe('Ask where the Master Dwarf is')
+    expect(conversation.whereabouts?.line).toMatch(
+      /^The Master Dwarf is at the (Mountains|Deep Mines|Abandoned Mineshaft) today\.$/,
+    )
+  })
+
   it('leaves plain NPCs without a greeting or mentor block', () => {
     const conversation = npcConversation(launch, saveAt('LOC-0016'), npc('NPC-0001'))
     expect(conversation.greeting).toBeNull()

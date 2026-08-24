@@ -68,7 +68,12 @@ void main() {
 
         final conversations = _idsOf(fixture, 'npcIds').map((npcId) {
           final npc = db.npcs.firstWhere((row) => row.raw['NPC ID'] == npcId);
-          return npcConversation(db, save, npc).toJson();
+          return npcConversation(
+            db,
+            save,
+            npc,
+            DateTime.utc(2026, 1, 1).millisecondsSinceEpoch,
+          ).toJson();
         }).toList();
         expect(
           checkParity(fixture, {

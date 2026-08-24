@@ -120,6 +120,10 @@ class _ProjectPickerState extends State<ProjectPicker> {
     if (defined.isEmpty) return 'No projects are defined for this station yet.';
     final knowledge = hasProjectKnowledge(controller.db, controller.save, skillId);
     if (!knowledge.ok) {
+      if (skillId == smithingSkillId) {
+        return 'Locked — find the Master Dwarf to unlock Smithing projects. '
+            'The Dwarven Mining Merchant knows where he is today.';
+      }
       return 'Locked — speak with the ${knowledge.npcName ?? 'mentor'} to unlock '
           '${widget.station.skillName} projects.';
     }

@@ -21,7 +21,7 @@ import {
   maxProjectQuantity,
   meetsProjectKnowledge,
   meetsProjectSkills,
-  projectInputs,
+  projectInputsForSave,
   projectSkillRequirements,
 } from './projects'
 
@@ -138,7 +138,7 @@ export function completeSpecialProject(
 
   const project = getProject(db, projectId)!
   const crafts = Math.floor(quantity)
-  const inputs = projectInputs(project)
+  const inputs = projectInputsForSave(save, project)
   const withMaterials = removeIngredients(save, inputs, crafts)
   if (!withMaterials) {
     return { ok: false, reason: 'Missing required materials.' }

@@ -58,6 +58,7 @@ import {
   type MultiplayerProfile,
   type MultiplayerSession,
   type PublicPlayerProfile,
+  publicEquipmentFromSave,
 } from './types'
 
 interface LocalDb {
@@ -211,6 +212,10 @@ function loadDb(storage: Storage = localStorage): LocalDb {
     merged.bountyClaims = Array.isArray(merged.bountyClaims) ? merged.bountyClaims : []
     merged.bazaarPosts = Array.isArray(merged.bazaarPosts) ? merged.bazaarPosts : []
     merged.guests = Array.isArray(merged.guests) ? merged.guests : []
+    merged.profiles = (merged.profiles ?? []).map((profile) => ({
+      ...profile,
+      privacyPublicGear: profile.privacyPublicGear !== false,
+    }))
     return merged
   } catch {
     return emptyDb()
@@ -299,6 +304,7 @@ export class LocalMultiplayerBackend {
       guildId: null,
       guildName: null,
       privacyPublicSkills: true,
+      privacyPublicGear: true,
       privacyDirectMessages: CHAT_PRIVACY_PUBLIC,
       privacyLocalChat: CHAT_PRIVACY_PUBLIC,
       updatedAt: this.nowIso(),
@@ -386,6 +392,7 @@ export class LocalMultiplayerBackend {
       guildId: null,
       guildName: null,
       privacyPublicSkills: true,
+      privacyPublicGear: true,
       privacyDirectMessages: CHAT_PRIVACY_PUBLIC,
       privacyLocalChat: CHAT_PRIVACY_PUBLIC,
       updatedAt: this.nowIso(),
@@ -402,6 +409,7 @@ export class LocalMultiplayerBackend {
         MultiplayerProfile,
         | 'appearance'
         | 'privacyPublicSkills'
+        | 'privacyPublicGear'
         | 'privacyDirectMessages'
         | 'privacyLocalChat'
         | 'username'
@@ -518,11 +526,15 @@ export class LocalMultiplayerBackend {
       .filter((row) => row.boardKey === boardKey)
       .map((row) => {
         const profile = db.profiles.find((entry) => entry.userId === row.userId)
+        const guild = profile?.guildId
+          ? db.guilds.find((candidate) => candidate.id === profile.guildId)
+          : undefined
         return {
           userId: row.userId,
           username: profile?.username ?? 'Adventurer',
           appearance: profile?.appearance ?? defaultAppearance(),
           guildName: profile?.guildName ?? null,
+          guildTag: guild?.tag,
           boardKey,
           value: row.value,
           rank: 0,
@@ -1301,6 +1313,7 @@ export class LocalMultiplayerBackend {
       appearance: profile.appearance,
       guildName: profile.guildName,
       publicSkills: profile.privacyPublicSkills ? skills : [],
+      publicEquipment: profile.privacyPublicGear !== false ? publicEquipmentFromSave(save) : null,
       achievementsUnlocked: save?.achievements.filter((row) => row.unlocked).length ?? 0,
       totalLevel: (() => {
         const total = skills.reduce((sum, skill) => sum + skill.level, 0)

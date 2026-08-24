@@ -36,11 +36,13 @@ class _NpcPanelState extends State<NpcPanel> {
   /// afterwards whichever pitch the player asked to hear again.
   NpcGreeting? _dialogue;
   String? _talkLine;
+  String? _whereaboutsLine;
   String? _error;
 
   GameController get controller => widget.controller;
 
-  NpcConversation get conversation => npcConversation(controller.db, controller.save, widget.npc);
+  NpcConversation get conversation =>
+      npcConversation(controller.db, controller.save, widget.npc, controller.session.clock());
 
   @override
   void initState() {
@@ -241,6 +243,16 @@ class _NpcPanelState extends State<NpcPanel> {
       );
     }
 
+    if (_whereaboutsLine case final whereaboutsLine?) {
+      return _DialogueCard(
+        name: conversation.name,
+        line: whereaboutsLine,
+        actions: [
+          GameButton(label: 'Continue', onPressed: () => setState(() => _whereaboutsLine = null)),
+        ],
+      );
+    }
+
     return GamePanel(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -294,6 +306,15 @@ class _NpcPanelState extends State<NpcPanel> {
               tone: GameButtonTone.secondary,
               compact: true,
               onPressed: () => _dismissMerchant(thenOpenShop: conversation.shopId),
+            ),
+          ],
+          if (conversation.whereabouts case final whereabouts?) ...[
+            const SizedBox(height: 10),
+            GameButton(
+              label: whereabouts.label,
+              tone: GameButtonTone.secondary,
+              compact: true,
+              onPressed: () => setState(() => _whereaboutsLine = whereabouts.line),
             ),
           ],
           for (final quest in conversation.quests) ...[

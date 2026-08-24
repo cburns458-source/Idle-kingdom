@@ -83,6 +83,7 @@ export interface MultiplayerProfile {
   guildId: string | null
   guildName: string | null
   privacyPublicSkills: boolean
+  privacyPublicGear: boolean
   privacyDirectMessages: string
   privacyLocalChat: string
   updatedAt: string
@@ -100,6 +101,8 @@ export interface LeaderboardEntry {
   username: string
   appearance: PlayerAppearance
   guildName: string | null
+  /** Player rows only. Guild board names already include the tag. */
+  guildTag?: string | null
   boardKey: MultiplayerBoardKey
   value: number
   rank: number
@@ -344,6 +347,28 @@ export interface MultiplayerSession {
   accessToken: string
 }
 
+export interface PublicEquippedSlot {
+  slotId: string
+  itemId: string
+  quantity: number
+  enchantmentId: string | null
+}
+
+export function publicEquipmentFromSave(save: PlayerSave | null | undefined): PublicEquippedSlot[] {
+  if (!save) return []
+  const out: PublicEquippedSlot[] = []
+  for (const [slotId, stack] of Object.entries(save.equipment.slots)) {
+    if (!stack?.itemId) continue
+    out.push({
+      slotId,
+      itemId: stack.itemId,
+      quantity: stack.quantity,
+      enchantmentId: stack.enchantmentId ?? null,
+    })
+  }
+  return out
+}
+
 export interface PublicPlayerProfile {
   userId: string
   username: string
@@ -354,6 +379,8 @@ export interface PublicPlayerProfile {
   totalLevel: number
   /** Whole percent of the Log. 0 when the save cannot be read. */
   logCompletionPercent?: number
+  /** Null when the player hid their gear. */
+  publicEquipment?: PublicEquippedSlot[] | null
 }
 
 /** Citadel Plaza — hub presence / Nearby listing target. */

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:ik_rules/ik_rules.dart';
@@ -17,6 +19,7 @@ import 'log_view.dart';
 import 'menu_view.dart';
 import 'new_character_sheet.dart';
 import 'overlay_notice.dart';
+import 'returning_overlay.dart';
 import 'playable_frame.dart';
 import 'social_alert.dart';
 import 'social_view.dart';
@@ -80,6 +83,8 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
   AnimationController? _mapWalk;
   String? _walkFromId;
   String? _walkToId;
+  bool _returnHoldArmed = false;
+  Timer? _returnHold;
 
   GameController get controller => widget.controller;
   MultiplayerController get multiplayer => widget.multiplayer;
@@ -100,6 +105,8 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
     WidgetsBinding.instance.addObserver(this);
     multiplayer.onAccountCleared ??= controller.resetUnsigned;
     multiplayer.addListener(_onMultiplayerChanged);
+    controller.addListener(_armReturningHold);
+    _armReturningHold();
     _ticker = createTicker((_) {
       if (!mounted || !_canPlay) return;
       controller.tick();
@@ -150,6 +157,22 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
     _maybePresentSocialNotice();
   }
 
+  void _armReturningHold() {
+    if (!controller.returningFromAway) {
+      _returnHold?.cancel();
+      _returnHold = null;
+      _returnHoldArmed = false;
+      return;
+    }
+    if (_returnHoldArmed) return;
+    _returnHoldArmed = true;
+    _returnHold?.cancel();
+    _returnHold = Timer(const Duration(milliseconds: GameController.returningHoldMs), () {
+      if (!mounted) return;
+      controller.finishReturningFromAway();
+    });
+  }
+
   bool _polling = false;
 
   /// Presence and the game clock stay off until the player is signed in and named.
@@ -180,9 +203,12 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
 
   @override
   void dispose() {
+    _returnHold?.cancel();
+    _returnHold = null;
     WidgetsBinding.instance.removeObserver(this);
     multiplayer.flushAccountSave(controller.save);
     multiplayer.removeListener(_onMultiplayerChanged);
+    controller.removeListener(_armReturningHold);
     _ticker?.stop();
     _ticker?.dispose();
     _ticker = null;
@@ -591,7 +617,9 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
           ),
         if (controller.travel case final journey?)
           TravelOverlay(controller: controller, journey: journey),
-        if (controller.awaySummary case final summary?)
+        if (controller.returningFromAway)
+          const ReturningOverlay()
+        else if (controller.awaySummary case final summary?)
           AwaySummarySheet(summary: summary, onDismiss: controller.dismissAwaySummary),
         if (controller.autoEquip case final proposal?)
           AutoEquipPrompt(controller: controller, proposal: proposal),

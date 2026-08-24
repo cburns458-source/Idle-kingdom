@@ -8,7 +8,7 @@ import '../time.dart';
 const num critterHourMs = 3600000;
 
 /// One roll per full activity-hour spent at the Critter's location.
-const double critterSpawnChance = 1 / 200;
+const double critterSpawnChance = 1 / 50;
 
 class CritterDef {
   const CritterDef({

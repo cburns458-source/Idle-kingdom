@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:idle_kingdoms/src/ui/critter_overlay.dart';
 import 'package:idle_kingdoms/src/theme.dart';
+import 'package:idle_kingdoms/src/ui/location_view.dart';
 import 'package:idle_kingdoms/src/ui/overlay_notice.dart';
 import 'package:idle_kingdoms/src/ui/world_map_view.dart';
 import 'package:ik_content/ik_content.dart';
@@ -383,5 +384,26 @@ void main() {
     expect(controller.save.currentLocationId, 'LOC-0001');
     expect(find.byTooltip('Expand list'), findsOne);
     expect(find.byTooltip('Collapse list'), findsNothing);
+  });
+
+  testWidgets('the Master Dwarf stands only at today’s shared stop', (tester) async {
+    final today = masterDwarfLocationId(testStartMs);
+    for (final locationId in masterDwarfRoute) {
+      final controller = buildController(
+        database,
+        seed: startedCharacter(database).copyWith(currentLocationId: locationId),
+      );
+      addTearDown(controller.dispose);
+      await pumpPanel(
+        tester,
+        LocationView(
+          controller: controller,
+          multiplayer: buildMultiplayer(database),
+          onOpenMap: () {},
+        ),
+        size: const Size(900, 2400),
+      );
+      expect(find.text('Master Dwarf'), locationId == today ? findsOne : findsNothing);
+    }
   });
 }
