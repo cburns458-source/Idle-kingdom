@@ -1,19 +1,21 @@
 RESTORIAIDLE
-SINGLE-PLAYER DEMO GAME BIBLE
+LIVE MULTIPLAYER DEMO GAME BIBLE
 
-Document status: Current source of truth for the single-player demo
+Document status: Current source of truth for the live multiplayer demo
 Game title: RestoriaIdle
 World name: Restoria
 
 PURPOSE
-This document defines the playable idle RPG web demo. It contains the current gameplay, content, progression, art, interface, save, and data rules needed for the demo. Numerical balance values should remain data-driven unless explicitly fixed here.
+This document defines the playable idle RPG web demo. It contains the current gameplay, content, progression, art, interface, save, social, and data rules needed for the demo. Numerical balance values should remain data-driven unless explicitly fixed here.
+
+The initial single-player offline demo is retired. RestoriaIdle is a live demo: one account carries one character, sign-in is required to play, and the world should feel shared with other players.
 
 ======================================================================
 1. GAME OVERVIEW
 ======================================================================
 
 1.1 HIGH CONCEPT
-RestoriaIdle is a portrait-oriented 2D idle fantasy RPG set in the open world of Restoria. The player explores a visible world map, selects location-based Activities, and progresses through Combat, Gathering, Standard Production, and Special Production. The game supports active play and up to 24 hours of unattended progression.
+RestoriaIdle is a portrait-oriented 2D idle fantasy RPG set in the open world of Restoria. The player explores a visible world map, selects location-based Activities, and progresses through Combat, Gathering, Standard Production, and Special Production. Other players are visible in the world. The game supports active play and up to 24 hours of unattended progression on the signed-in account.
 
 Core loop:
 Explore -> Gather or Fight -> Process -> Create -> Improve -> Explore further
@@ -30,6 +32,7 @@ Explore -> Gather or Fight -> Process -> Create -> Improve -> Explore further
 - Frequent Actions use controlled reward tables so resources remain meaningful.
 - Item and currency values should remain readable and avoid unnecessary inflation.
 - Content should be data-driven rather than individually hardcoded.
+- The live demo should feel like a multiplayer game: accounts, presence, chat, guilds, shared hubs, and account-owned progress.
 
 1.3 TARGET EXPERIENCE
 - Relaxing and cozy during ordinary progression.
@@ -37,6 +40,7 @@ Explore -> Gather or Fight -> Process -> Create -> Improve -> Explore further
 - Occasionally dangerous without becoming punishing.
 - Readable and comfortable to leave open while idling.
 - Built around long-term skill and equipment progression.
+- Shared: other adventurers, guilds, and hubs are part of ordinary play.
 
 ======================================================================
 2. CORE TERMINOLOGY
@@ -73,13 +77,25 @@ Damage Range: The minimum and maximum damage an entity can deal with one attack.
 Sentence case: Player-facing Display Names use sentence case. Capitalize the first word and proper names only. Example: Copper mine, not Copper Mine Near Town. Existing title-case names may stay until they are edited.
 
 ======================================================================
-3. PLAYER SAVE AND UNATTENDED PROGRESSION
+3. ACCOUNT, SAVE, AND UNATTENDED PROGRESSION
 ======================================================================
 
-- The demo uses one local player save.
-- A new save is created on first launch and automatically loaded on later launches.
-- The save contains skills and XP, inventory, equipment, currency, quests, achievements, statistics, settings, current Location, current Activity, Activity start time, unattended-progress timestamp, and save version.
+3.1 ACCOUNT
+- Sign-in is required before play. There is no offline guest path.
+- One account carries one character. The character belongs to the account, not to the device.
+- Signing in loads that account's save and signs the other device out.
+- The first character name is also the account name other players see.
+- Character creation chooses a name, a Race, and a starting appearance. Appearance can later be changed from the wardrobe.
+- Closed-test builds may also require a tester passkey before sign-in.
+
+3.2 SAVE
+- The account save is the source of truth. The client writes it back automatically; there is no sync button.
+- A new save is created when the account first creates a character.
+- The save contains skills and XP, inventory, bank, equipment, cosmetics, currency, quests, achievements, statistics, settings, current Location, current Activity, Activity start time, unattended-progress timestamp, and save version.
 - Saving must support versioning and migration so later demo builds can update existing saves safely.
+- Combat and gathering remain client-resolved with soft server validation. Do not make the game remotely authoritative in this demo.
+
+3.3 UNATTENDED PROGRESSION
 - Gathering and Combat may continue for up to 24 hours while the game is closed.
 - Standard Production queues may contain up to 24 hours of work and continue while the game is closed.
 - Special Production completes instantly and does not require unattended simulation.
@@ -93,12 +109,14 @@ Sentence case: Player-facing Display Names use sentence case. Capitalize the fir
 4.1 WORLD MAP
 Restoria is presented as a selectable map. Current geography includes:
 - A river through the world.
-- The Farm, Town, and Goblin Encampment near the river.
+- The Farm, Town, and Goblin Camp near the river.
 - Three river crossings.
 - Mountains with a cave entrance.
 - Wizard's Tower near the mountains.
 - Kingswoods between the mountains and Castle.
-- River access to the coast and dock.
+- River access to the coast and The Docks.
+- Temple on the main map.
+- The Citadel as a shared hub.
 
 4.2 NAVIGATION
 - Main nodes may open Locations or sub-maps containing several Activities and interactions.
@@ -114,7 +132,8 @@ Gathering:
 - No hard skill-level access lock.
 - Mandatory tools are still required.
 - Below the Action's Proficiency Level, Base Duration is doubled.
-- XP and reward rules are otherwise unchanged.
+- Below the Action's Proficiency Level, gathering XP (including bonus skill XP) is halved. Item and gold rewards are unchanged.
+- These multipliers live in Config (`gathering_below_proficiency_duration_multiplier`, `gathering_below_proficiency_xp_multiplier`).
 
 Combat:
 - No Combat-level access lock.
@@ -135,45 +154,43 @@ Dangerous Areas:
 4.4 LOCATIONS AND CURRENT ACTIVITIES
 
 THE FARM
-- Combat Activity: Cows.
-- Bulls may appear as a rarer, more dangerous Action.
+- Combat Activity: Tend the pasture.
+- Cows are the common Action. Bulls are rarer and more dangerous.
 - Cows can reward Beef.
 - Bulls reward more Beef and XP and may rarely reward Bull Horns.
+- Gathering Activity: Work the fields.
 
 THE TOWN
-Facilities:
+Sub-map gateway. Landing district is the General Store. Districts:
 - Kitchen for Cooking.
 - General Store.
-- Workshop for Crafting.
-- Metalworking facilities.
-- Apothecary for Alchemy.
-- NPC and quest interactions.
+- The Foundry for Metallurgy, Crafting, and related projects.
+- Rose's Apothecary for Alchemy. Unlock is quest-gated.
+- Town Bank for item storage.
 
 General Store interface:
 - Player inventory and store inventory are shown separately.
 - Items can be added to a buy or sell offer.
 - The transaction requires confirmation.
 
-GOBLIN ENCAMPMENT
-- Combat Activity: Goblins.
-- Rare Goblin Chief encounter.
+GOBLIN CAMP
+- Combat Activity: Fight the goblins (scout, warrior, rare Goblin Chief).
 - Rewards may include gold, daggers, armor pieces, and gems from the Goblin Chief.
-- Fishing Activity.
+- Fishing Activity: Search the riverside.
 - Dangerous for players below approximately Combat Level 10.
 
-RIVER, COAST, AND DOCK
-- Fishing Activities.
-- Coastal shops or NPCs.
-- Pirate encounters may exist as Combat content.
-- Transportation interactions may exist.
+THE DOCKS
+- Fishing Activity: Fish the river and coast (tuna and shark).
+- Combat Activity: Try to reason with the pirates (pirate encounters, with a seagull as a rarer nuisance fight).
+- The seagull fight has no loot.
+- Coastal shops or NPCs and transportation interactions may exist.
 
 COPPER MINE
 Mining pool:
 - Copper Ore as the main result.
 - Clay.
 - Tin Ore.
-- Coal as a rarer result.
-- Rare gems may appear.
+Fishing Activity: Fish in the nearby pond (crawfish).
 
 MOUNTAINS
 - Mining Activities.
@@ -199,6 +216,8 @@ Harvesting pool:
 - Cedar Tree (Woodcutting): 60%.
 - Augur Weed: 40%.
 
+Rare wood search is a separate Activity.
+
 MEADOW
 Hunting pool:
 - Butterfly: 10%.
@@ -209,17 +228,17 @@ Harvesting pool:
 - Fernleaf: 50%.
 
 CAVES BENEATH THE MOUNTAIN
-- Underground connected Location Nodes.
-- Mining focused on Iron Ore and Coal.
-- Rare Sapphire, Emerald, and Ruby Actions.
-- Mining Store sells improved pickaxes and pays better prices for ores.
-- Mining Store requirement: Mining Level 40.
+Sub-map reached from Cave Entrance. Underground connected Location Nodes:
+- Deep Mines: Iron Ore, Coal, and rare gem Actions.
+- Dwarven Mining Store: improved pickaxes and better ore prices. Requires Mining Level 40.
+- Abandoned Mineshaft: rare-ore mining (titanium and tungsten) and Fish the deep pools (tuna, shark, and a rare Baby Giant Squid).
 
 CASTLE AND CASTLE GROUNDS
 Sub-map:
 - Courtyard and Gate.
 - Main Hall.
 - King's Quarters.
+- Queen's Quarters.
 - Barracks.
 
 Courtyard and Gate:
@@ -234,13 +253,31 @@ King's Quarters:
 - Material-gathering quests.
 - Rewards may include enchanted swords, unique jewelry, rare items, or recipe knowledge.
 
+Queen's Quarters:
+- Hostile royal chamber. Combat Activity against the Queen and her dragon.
+
 Barracks:
-- Combat Activity against Guards.
+- Combat Activities against Guards.
 
 ANCIENT FOREST
 - High-level woodland Location.
-- Woodcutting Actions: Ancient Tree, Cedar Tree, Mahogany Tree.
-- Combat Actions: Ent, Ancient Ent, Corrupted Ent.
+- One axe-compatible Activity containing an Ancient Tree and Ent, Ancient Ent, and Corrupted Ent Combat Actions.
+
+TEMPLE
+- Main-map node.
+- Combat Activity: Train with the monks. Unarmed training against a Monk. Requires empty Weapon or Tool and Off-hand. No item drops.
+- Gathering Activity: Pick weeds (Augur Weed commonly, Moonblossom rarely). Same empty-hand rules.
+- Blessing is a location amenity, not an Activity. It restores the player to full health.
+
+THE CITADEL
+Shared hub sub-map. Landing district is Citadel Plaza.
+- Citadel Plaza: bounties, meeting other adventurers, and the PvP Arena amenity.
+- Grand Bazaar: player-to-player listings and specialty goods.
+- Processing District: shared Kitchen, Crafting, Metallurgy, and Alchemy stations.
+- Gathering Outskirts: cut poplar trees.
+- Combat Training Grounds: optional Castle Guard practice. Arrival is peaceful.
+- Citadel Bank: item storage.
+- Guild Hall: reached from the Guilds screen. Each guild has its own hall instance with a store house and debt ledger.
 
 ======================================================================
 5. ACTIVITY, ACTION, AND POOL SYSTEM
@@ -315,7 +352,9 @@ The same Action should use the same core mechanics wherever it appears. Location
 - Rare rewards should remain rare.
 
 5.7 RECALCULATION
-A running Activity recalculates when relevant state changes, including skill level, equipment, requirements, buffs, Location availability, or required inventory materials. If a mandatory requirement is no longer met, the Activity stops.
+Requirements are re-checked when an Action completes and before the next Action starts, and when the player starts, stops, or replaces an Activity. If a mandatory requirement is no longer met at that boundary, the Activity stops.
+
+An in-progress Action keeps the duration, combat encounter, and held Action computed when that Action was generated. Equipment, skill-level, and buff changes apply to the next Action, not the one already in progress.
 
 ======================================================================
 6. SKILLS AND PROGRESSION
@@ -368,7 +407,8 @@ Level 100: 100,579,020
 Gathering:
 - May be attempted below Proficiency Level if all non-level requirements are met.
 - Below Proficiency Level, Base Duration is doubled.
-- XP and rewards are unchanged.
+- Below Proficiency Level, gathering XP (including bonus skill XP) is halved.
+- Item and gold rewards are unchanged.
 
 Combat:
 - Not level-gated.
@@ -429,7 +469,7 @@ Combat uses fixed-duration rounds so active and unattended resolution follow the
 - No food is consumed at full HP.
 
 7.8 COMBAT INSIDE OTHER ACTIVITIES
-Equipment-compatible non-Combat Activities may generate Combat Actions. After the encounter resolves, the parent Activity continues.
+Equipment-compatible non-Combat Activities may generate Combat Actions. After victory, or after the death pause following defeat, the parent Activity continues by generating the next Action. The interrupted Action is not forced to resume.
 
 7.9 WEAPONS AND TOOLS
 - Purpose-built weapons are intended for Combat.
@@ -711,7 +751,7 @@ Core resources and relationships:
 - Essence is a primary Arcana resource gathered through Mining.
 - Crafting creates Enchanting Tablets and Spell Tablets.
 - Arcana consumes an Enchanting Tablet, Essence, and any project-specific materials to apply an enchantment to a valid item.
-- Arcana may also craft prepared Spells (for example Strength Spell) that equip into Spell slots and cycle timed player effects.
+- Arcana may also craft prepared Spells (for example Strength Spell) that equip into Spell slots. Equipped spells are always active; they do not cycle.
 - Arcana projects may require knowledge from NPCs, quests, discoveries, or Locations.
 
 ======================================================================
@@ -758,7 +798,7 @@ Current functional slots:
 - Potion.
 - Spell 1–4.
 
-Spell slots hold prepared Arcana spells. Exactly one spell may occupy each slot. The same spell type may fill multiple slots. Equipped spells cycle in order for one hour each; the active slot’s effect applies to the player for that hour.
+Spell slots hold prepared Arcana spells. Exactly one spell may occupy each slot. The same spell type may fill multiple slots. Every equipped spell is always active while it remains in a slot. Duplicate copies stack only when the spell data allows stacking.
 
 11.4 INVENTORY
 - The bag has 180 slots. Each item stack (or each enchanted item) uses one slot.
@@ -768,6 +808,17 @@ Spell slots hold prepared Arcana spells. Exactly one spell may occupy each slot.
 - Standard Production and shops must validate available inventory space before committing.
 - Unattended progression grants only what fits and must not overflow slots or stacks.
 - Death pause keeps the Primary Activity; clearing/stopping it is refused until recovery ends. Passive browse (recipes, Special Production, shops, NPCs) remains available.
+
+11.5 BANK
+- Town Bank and Citadel Bank are dedicated storage Locations.
+- The bank uses the same 180-slot stack rules as the bag.
+- Gold currency cannot be deposited.
+- Banking is a Passive Interaction and does not stop the Primary Activity.
+
+11.6 CHARACTER APPEARANCE
+- Race is chosen at character creation and grants defined bonuses and starting items.
+- Cosmetic slots and wardrobe items change appearance only.
+- Clothes and cosmetics do not grant combat or gathering stats unless a source record explicitly says so.
 
 ======================================================================
 12. ECONOMY AND SHOPS
@@ -878,12 +929,14 @@ The top HUD should prioritize:
 - Current combat or progression information when relevant.
 
 15.3 BOTTOM NAVIGATION
-Confirmed navigation functions include:
-- Inventory.
-- Log.
-- Settings/Menu.
+The chin has three sections:
+- Current Location (returns to the location screen).
+- Character (inventory, equipment, appearance, and related character management).
+- Menu nest: Settings, Log, Leaderboards, Guilds.
 
-Additional navigation should remain minimal and consistent with the same layout.
+A chat launcher sits on the location and map screens. Account management is reached from Settings or the social flow after sign-in.
+
+Additional navigation should remain consistent with the same layout.
 
 15.4 INVENTORY SCREEN
 Inventory is a full-screen menu with:
@@ -981,10 +1034,13 @@ Data records should define:
 Stable IDs should be used for relationships between records.
 
 17.2 PLAYER SAVE DATA
-The local save should contain:
+The account save should contain:
 - Skills and XP.
 - Inventory.
+- Bank.
 - Equipment.
+- Cosmetics and appearance.
+- Race.
 - Currency.
 - Quests.
 - Achievements.
@@ -1000,7 +1056,7 @@ The local save should contain:
 - Store the selected Activity, start time, relevant state, and modifiers.
 - Calculate progress from elapsed time when the game resumes.
 - Apply the 24-hour cap.
-- Recalculate when equipment, skill, buff, requirement, or inventory state changes.
+- Re-check requirements at Action boundaries. An Action already in progress keeps the duration and encounter computed when it started.
 - Combat calculation must reproduce active Combat rules exactly.
 
 ======================================================================
@@ -1039,17 +1095,59 @@ Woodcutting + Hunting + Crafting -> Artisanry -> Bows -> Hunting and Combat prog
 ======================================================================
 
 The playable demo should allow the player to:
-- Start and automatically continue one local save.
+- Sign in, create one character on the account, and continue that save on any signed-in device.
+- See other players, chat, join or found a guild, and use shared Citadel amenities.
 - Explore the world map and travel between available Locations.
 - Start, stop, and replace Primary Activities.
 - Perform weighted Gathering and mixed-category Activities.
 - Fight enemies using the defined Combat loop.
 - Gain XP and skill levels.
 - Gather resources and receive controlled rewards.
-- Use equipment, food, inventory, and shops.
+- Use equipment, food, inventory, bank, and shops.
 - Use Cooking, Metallurgy, Crafting, and Alchemy.
 - Complete instant Smithing, Artisanry, and Arcana projects.
 - Complete quests and track achievements/statistics.
-- Close the game and later receive up to 24 hours of correctly calculated unattended progression.
+- Close the game and later receive up to 24 hours of correctly calculated unattended progression on the account save.
+
+======================================================================
+20. MULTIPLAYER AND SOCIAL
+======================================================================
+
+The live demo should feel shared. These systems are part of ordinary play, not optional overlays hidden until later.
+
+20.1 PRESENCE
+- Other signed-in players may appear at Locations and on the map.
+- A player's current Location is visible to others unless a privacy setting hides it.
+
+20.2 CHAT
+- Chat is available from the location and map screens.
+- Public and private chat follow the current moderation and guest-filter rules.
+
+20.3 GUILDS
+- Players may create or join a guild.
+- A guild has a shared roster, join requests, and one Guild Hall instance.
+- The hall has a store house and a debt ledger. Members donate to build it out.
+
+20.4 LEADERBOARDS
+- Leaderboards show account-owned characters.
+- Rankings update on a defined cadence (daily where implemented).
+
+20.5 BOUNTIES
+- Hourly bounty boards are available from the Citadel.
+- Turn-in and rewards follow the current bounty catalog and hour window.
+
+20.6 BAZAAR
+- The Grand Bazaar lists player-to-player offers.
+- Listings are shared, not a copy on one device.
+
+20.7 ARENA
+- The Citadel Plaza Arena is optional player combat.
+- Search by name or by combat-level ranking.
+- Arena fights do not replace the ordinary world Combat loop.
+
+20.8 RESOLUTION
+- Combat and gathering stay client-resolved with soft server validation.
+- Shared rows (guild roster, hall, bazaar listings, chat, presence) are server-backed when the live backend is configured.
+- A build with no backend may keep shared rows on the device so tests and local development still run. That fallback is not a player-facing offline mode.
 
 END OF GAME BIBLE

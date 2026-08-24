@@ -34,6 +34,7 @@ npm test                    # The reference rules, and the fixture drift check
 - Signing in loads the account's save, and signs the other device out.
 - The save is written back on its own; there is no sync button to press.
 - Guilds are shared: a roster, its requests, and its hall are rows every member
-  reads, not a copy on one phone. A build with no Supabase project keeps them on
-  the device instead, which is what makes offline play and the tests work.
+  reads, not a copy on one phone. A build with no Supabase project keeps those
+  rows on the device so tests and local development still run. That fallback is
+  not a player-facing offline mode.
 - `supabase/migrations/` is applied in order. Guilds need through `008`.
