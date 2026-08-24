@@ -1,6 +1,10 @@
 import { getSkillProgress } from '../activity/xp'
 import { requirementsForEntity, unmetHardRequirements } from '../activity/requirements'
 import { cosmeticByItemId, isCosmeticUnlocked } from '../cosmetics/cosmetics'
+import {
+  DWARVEN_MINING_STORE_FACILITY_ID,
+  dwarvenMiningStoreRequiredLevel,
+} from '../races/races'
 import type { GameDatabase, ItemRow, ShopRow } from '../data/types'
 import type { PlayerSave } from '../save/types'
 
@@ -69,8 +73,13 @@ export function canAccessShop(
   )
   if (unmet.length > 0) {
     const mining = getSkillProgress(save, 'SKL-0002').level
-    if (facility['Facility ID'] === 'FAC-0009') {
-      return { ok: false, reason: `Requires Mining level 40 (have ${mining}).` }
+    if (facility['Facility ID'] === DWARVEN_MINING_STORE_FACILITY_ID) {
+      const required = dwarvenMiningStoreRequiredLevel(save)
+      if (mining >= required) return { ok: true }
+      return {
+        ok: false,
+        reason: `Requires Mining level ${required} (have ${mining}).`,
+      }
     }
     return { ok: false, reason: unmet[0] ?? 'Requirements not met.' }
   }

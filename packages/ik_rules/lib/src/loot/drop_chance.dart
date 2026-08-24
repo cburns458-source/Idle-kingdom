@@ -47,3 +47,10 @@ num? applyRelativeDropChance(num? baseChance, num relativeBonusPercent) {
   if (relativeBonusPercent == 0 || relativeBonusPercent.isNaN) return baseChance;
   return math.min(100, baseChance * (1 + relativeBonusPercent / 100));
 }
+
+/// Add flat percentage points after relative bonuses, capped at 100.
+num? applyFlatDropChanceBonus(num? chance, num flatBonusPercent) {
+  if (chance == null) return null;
+  if (flatBonusPercent == 0 || flatBonusPercent.isNaN) return chance;
+  return math.min(100, chance + flatBonusPercent);
+}

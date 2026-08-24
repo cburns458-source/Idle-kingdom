@@ -61,8 +61,7 @@ num _damageRangeMultipliers(GameDatabase db, PlayerSave save) {
       potionBonus != null && potionBonus > 0 && potion?.scope == 'one_combat_encounter'
       ? 1 + potionBonus / 100
       : 1;
-  final raceMult = raceCombatDamageMultiplier(db, save);
-  return levelMult * spellMult * potionMult * raceMult;
+  return levelMult * spellMult * potionMult;
 }
 
 DamageRange _scaleDamageRange(num min, num max, num multiplier) {

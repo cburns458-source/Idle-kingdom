@@ -52,3 +52,13 @@ export function applyRelativeDropChance(
   if (!relativeBonusPercent) return baseChance
   return Math.min(100, baseChance * (1 + relativeBonusPercent / 100))
 }
+
+/** Add flat percentage points after relative bonuses, capped at 100. */
+export function applyFlatDropChanceBonus(
+  chance: number | null,
+  flatBonusPercent: number,
+): number | null {
+  if (typeof chance !== 'number') return chance
+  if (!flatBonusPercent) return chance
+  return Math.min(100, chance + flatBonusPercent)
+}

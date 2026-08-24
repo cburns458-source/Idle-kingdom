@@ -6,11 +6,13 @@ import { prepareDatabase } from '../data/loadDatabase'
 import { createNewSave } from '../save/saveStore'
 import {
   ESSENCE_ITEM_ID,
+  canAccessShop,
   playerBuyPrice,
   playerSellPrice,
   shopStockEntries,
   shopStockForPlayer,
 } from './shops'
+import { assignRace } from '../races/assignRace'
 import { confirmShopOffer } from './transactions'
 
 const rawDatabase = JSON.parse(
@@ -32,6 +34,23 @@ describe('shops', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const shop = launch.Shops.find((row) => row['Shop ID'] === 'SHP-0003')!
     expect(playerBuyPrice(launch, shop, ESSENCE_ITEM_ID)).toBe(10_000)
+  })
+
+  it('lets Dwarves access the Mining Store at Mining 35', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const shop = launch.Shops.find((row) => row['Shop ID'] === 'SHP-0002')!
+    let save = createNewSave(launch)
+    const dwarf = assignRace(launch, save, 'RACE-0006')
+    expect(dwarf.ok).toBe(true)
+    if (!dwarf.ok) return
+    save = {
+      ...dwarf.save,
+      currentLocationId: 'LOC-0012',
+      skills: dwarf.save.skills.map((skill) =>
+        skill.skillId === 'SKL-0002' ? { ...skill, level: 35, xp: 50_000 } : skill,
+      ),
+    }
+    expect(canAccessShop(launch, save, shop).ok).toBe(true)
   })
 
   it('buys ores at 1.5× in the Mining Store when Mining is high enough', () => {

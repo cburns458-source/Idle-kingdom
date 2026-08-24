@@ -7,11 +7,12 @@ import {
 import { sortInventoryFavoritesFirst } from '../inventory/favorites'
 import { isGoldCurrencyItem } from '../inventory/gold'
 import {
+  applyFlatDropChanceBonus,
   applyRelativeDropChance,
   totalRelativeDropChanceBonusPercent,
 } from '../loot/dropChance'
 import type { ActionRow, GameDatabase, RewardEntryRow } from '../data/types'
-import { applyRaceGoldGain } from '../races/races'
+import { applyRaceGoldGain, raceSkillDropChanceBonusPercent } from '../races/races'
 import { activeSpellItemDoubleChancePercent } from '../spells/spells'
 import type { PlayerSave } from '../save/types'
 import type { LootGrant } from './types'
@@ -146,11 +147,20 @@ export function resolveActionRewards(
   const loot: LootGrant[] = []
   let goldGained = Number(action['Guaranteed Gold'] ?? 0)
 
+  const skillDropBonus = raceSkillDropChanceBonusPercent(
+    db,
+    save,
+    action['Relevant Skill ID'],
+  )
+
   const rollTable = (tableId: string | null, chance: number | null) => {
     if (!tableId) return
-    const dropChance = applyRelativeDropChance(
-      typeof chance === 'number' ? chance : 100,
-      totalRelativeDropChanceBonusPercent(db, save),
+    const dropChance = applyFlatDropChanceBonus(
+      applyRelativeDropChance(
+        typeof chance === 'number' ? chance : 100,
+        totalRelativeDropChanceBonusPercent(db, save),
+      ),
+      skillDropBonus,
     )
     if (typeof dropChance !== 'number' || random() * 100 >= dropChance) return
     const entries = db.RewardEntries.filter((row) => row['Reward Table ID'] === tableId)

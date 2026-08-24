@@ -1,17 +1,16 @@
 import { assignRace } from '../../game/races/assignRace'
 import {
   applyRaceGoldGain,
-  applyRaceSkillXp,
+  dwarvenMiningStoreRequiredLevel,
   grantRaceStartingItems,
   raceBonusSummaryLines,
   raceBonusesFor,
   raceById,
   raceBypassesForcedHostilityAt,
-  raceCombatDamageMultiplier,
   raceDisplayName,
   raceGoldGainMultiplier,
   raceMaxHpMultiplier,
-  raceSkillXpMultiplier,
+  raceSkillDropChanceBonusPercent,
   raceStartingItems,
   races,
 } from '../../game/races/races'
@@ -21,8 +20,8 @@ import { contentDatabase } from './contentDatabase'
 import { asJson, baseSave, richSave } from './saveFixtures'
 
 const RACE_IDS = ['RACE-0001', 'RACE-0002', 'RACE-0003', 'RACE-0004', 'RACE-0005', 'RACE-0006', 'RACE-0007']
-const SKILL_IDS = ['SKL-0001', 'SKL-0002', 'SKL-0003', 'SKL-0007', 'SKL-9999']
-const XP_AMOUNTS = [0, 1, 7, 100, 12.5, -20]
+const SKILL_IDS = ['SKL-0001', 'SKL-0002', 'SKL-0003', 'SKL-0004', 'SKL-0005', 'SKL-0006', 'SKL-0007', 'SKL-9999']
+const GOLD_AMOUNTS = [0, 1, 7, 100, 12.5, -20]
 const HOSTILITY_LOCATIONS = ['LOC-0002', 'LOC-0003', 'LOC-9999']
 
 /** The base save with a race forced on, bypassing the kit grant. */
@@ -54,14 +53,13 @@ export const raceScenarios: ParityScenario[] = [
         bonusIds: raceBonusesFor(db, raceId).map((row) => row['Race Bonus ID']),
         summary: raceBonusSummaryLines(db, raceId),
         startingItemIds: raceStartingItems(db, raceId).map((row) => row['Race Starting Item ID']),
-        combatDamage: raceCombatDamageMultiplier(db, save),
+        miningStoreLevel: dwarvenMiningStoreRequiredLevel(save),
         maxHp: raceMaxHpMultiplier(db, save),
         goldGain: raceGoldGainMultiplier(db, save),
-        skillXp: SKILL_IDS.map((skillId) => raceSkillXpMultiplier(db, save, skillId)),
-        appliedXp: SKILL_IDS.flatMap((skillId) =>
-          XP_AMOUNTS.map((amount) => applyRaceSkillXp(db, save, skillId, amount)),
+        skillDropChance: SKILL_IDS.map((skillId) =>
+          raceSkillDropChanceBonusPercent(db, save, skillId),
         ),
-        appliedGold: XP_AMOUNTS.map((amount) => applyRaceGoldGain(db, save, amount)),
+        appliedGold: GOLD_AMOUNTS.map((amount) => applyRaceGoldGain(db, save, amount)),
         hostility: HOSTILITY_LOCATIONS.map((locationId) =>
           raceBypassesForcedHostilityAt(db, save, locationId),
         ),
@@ -74,7 +72,7 @@ export const raceScenarios: ParityScenario[] = [
     const save = saveWithRace(null)
     return {
       bonusIds: raceBonusesFor(db, null).map((row) => row['Race Bonus ID']),
-      combatDamage: raceCombatDamageMultiplier(db, save),
+      miningStoreLevel: dwarvenMiningStoreRequiredLevel(save),
       maxHp: raceMaxHpMultiplier(db, save),
       goldGain: raceGoldGainMultiplier(db, save),
       hostility: HOSTILITY_LOCATIONS.map((locationId) =>

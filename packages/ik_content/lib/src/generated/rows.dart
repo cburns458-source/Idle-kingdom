@@ -530,7 +530,7 @@ class RaceBonusRow extends DbRow {
 
   String get bonusType => stringValue('Bonus Type');
 
-  /// Skill ID for skill_xp_percent; null for global bonuses.
+  /// Skill ID for skill_drop_chance_percent; null for global bonuses.
   String? get referenceId => stringOrNull('Reference ID');
 
   num get bonusValue => numberValue('Bonus Value');

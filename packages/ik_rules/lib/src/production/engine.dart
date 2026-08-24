@@ -13,7 +13,6 @@ import '../js_compat.dart';
 import '../equipment/specialist.dart';
 import '../potions/effects.dart';
 import '../quests/progress.dart';
-import '../races/races.dart';
 import '../recipes/knowledge.dart';
 import '../rng/mulberry32.dart';
 import '../save/generated/save_models.dart';
@@ -165,7 +164,7 @@ ProductionCraftResult? completeProductionCraft(
   var next = granted.save!;
 
   final skillId = jsString(recipe.raw['Skill ID']);
-  final xpGained = applyRaceSkillXp(db, save, skillId, jsNumber(recipe.raw['XP Reward']));
+  final xpGained = jsNumber(recipe.raw['XP Reward']);
   final xpApplied = applyXp(next, db, skillId, xpGained);
   next = xpApplied.save;
 
