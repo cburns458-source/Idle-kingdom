@@ -116,6 +116,7 @@ ActionRewards resolveActionRewards(
 
   rollTable(action.raw['Reward Table ID'], action.raw['Drop Chance']);
   rollTable(action.raw['Secondary Reward Table ID'], action.raw['Secondary Drop Chance']);
+  rollTable(action.raw['Tertiary Reward Table ID'], action.raw['Tertiary Drop Chance']);
 
   goldGained = applyRaceGoldGain(db, save, goldGained);
   if (goldGained > 0) {

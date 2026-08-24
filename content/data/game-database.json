@@ -10718,8 +10718,8 @@
       "Guaranteed Gold": 0,
       "Drop Chance": 90,
       "Reward Table ID": "RWT-0051",
-      "Secondary Drop Chance": null,
-      "Secondary Reward Table ID": null,
+      "Secondary Drop Chance": 10,
+      "Secondary Reward Table ID": "RWT-0119",
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": null
@@ -10742,7 +10742,9 @@
       "Secondary Reward Table ID": "RWT-0064",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": null
+      "Notes": null,
+      "Tertiary Reward Table ID": "RWT-0119",
+      "Tertiary Drop Chance": 10
     },
     {
       "Action ID": "ACN-0015",
@@ -10782,7 +10784,9 @@
       "Secondary Reward Table ID": "RWT-0062",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": null
+      "Notes": null,
+      "Tertiary Reward Table ID": "RWT-0119",
+      "Tertiary Drop Chance": 10
     },
     {
       "Action ID": "ACN-0017",
@@ -10802,7 +10806,9 @@
       "Secondary Reward Table ID": "RWT-0063",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": null
+      "Notes": null,
+      "Tertiary Reward Table ID": "RWT-0119",
+      "Tertiary Drop Chance": 10
     },
     {
       "Action ID": "ACN-0018",
@@ -11518,8 +11524,8 @@
       "Guaranteed Gold": 0,
       "Drop Chance": 82,
       "Reward Table ID": "RWT-0054",
-      "Secondary Drop Chance": null,
-      "Secondary Reward Table ID": null,
+      "Secondary Drop Chance": 10,
+      "Secondary Reward Table ID": "RWT-0119",
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": null
@@ -11542,7 +11548,9 @@
       "Secondary Reward Table ID": "RWT-0065",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": null
+      "Notes": null,
+      "Tertiary Reward Table ID": "RWT-0119",
+      "Tertiary Drop Chance": 10
     },
     {
       "Action ID": "ACN-0114",
@@ -11562,7 +11570,9 @@
       "Secondary Reward Table ID": "RWT-0066",
       "Status": "Planned",
       "Release Phase": "Expansion",
-      "Notes": null
+      "Notes": null,
+      "Tertiary Reward Table ID": "RWT-0119",
+      "Tertiary Drop Chance": 10
     },
     {
       "Action ID": "ACN-0115",
@@ -16820,6 +16830,21 @@
       "Purpose": "Standard Production output",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0302",
+      "Weight": 100,
+      "Minimum Quantity": 1,
+      "Maximum Quantity": 1,
+      "Skill ID": null,
+      "XP Amount": null,
+      "Status": "Planned",
+      "Notes": null
+    },
+    {
+      "Reward Entry ID": "RWE-0168",
+      "Reward Table ID": "RWT-0119",
+      "Reward Table Name": "Animal Tendons Secondary Drop",
+      "Purpose": "Independent Hunting drop",
+      "Reward Type": "Item",
+      "Reward ID / Value": "ITEM-0044",
       "Weight": 100,
       "Minimum Quantity": 1,
       "Maximum Quantity": 1,

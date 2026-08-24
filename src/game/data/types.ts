@@ -179,6 +179,8 @@ export interface ActionRow {
   'Reward Table ID': string | null
   'Secondary Drop Chance': number | null
   'Secondary Reward Table ID': string | null
+  'Tertiary Drop Chance': number | null
+  'Tertiary Reward Table ID': string | null
   Status: RecordStatus
   'Release Phase': ReleasePhase
   Notes: string | null

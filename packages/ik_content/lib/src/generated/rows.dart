@@ -43,6 +43,10 @@ class ActionRow extends DbRow {
 
   String? get secondaryRewardTableId => stringOrNull('Secondary Reward Table ID');
 
+  num? get tertiaryDropChance => numberOrNull('Tertiary Drop Chance');
+
+  String? get tertiaryRewardTableId => stringOrNull('Tertiary Reward Table ID');
+
   String get status => stringValue('Status');
 
   String get releasePhase => stringValue('Release Phase');

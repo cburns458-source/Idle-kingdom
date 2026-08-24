@@ -137,6 +137,8 @@ export function action(id: string, skillId: string, extra: JsonValue = {}): Json
     'Reward Table ID': null,
     'Secondary Drop Chance': null,
     'Secondary Reward Table ID': null,
+    'Tertiary Drop Chance': null,
+    'Tertiary Reward Table ID': null,
     Status: 'Confirmed',
     'Release Phase': 'Launch',
     Notes: null,
