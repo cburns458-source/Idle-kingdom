@@ -245,12 +245,12 @@ void main() {
     await tester.tap(find.text('Equipment'));
     await tester.pump();
 
-    expect(find.textContaining('Woodcutting'), findsNothing);
+    expect(find.textContaining('action time'), findsNothing);
     await tester.tap(find.text('Show bonuses'));
     await tester.pump();
 
-    expect(find.textContaining('Woodcutting'), findsOne);
-    expect(find.textContaining('action time'), findsOne);
+    expect(find.textContaining('Woodcutting'), findsWidgets);
+    expect(find.textContaining('-5% action time'), findsOne);
   });
 
   List<String> visibleBagOrder(WidgetTester tester, List<String> names) {
