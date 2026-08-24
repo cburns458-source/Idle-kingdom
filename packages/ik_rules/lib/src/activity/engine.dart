@@ -6,7 +6,6 @@ import '../js_compat.dart';
 import '../potions/effects.dart';
 import '../production/engine.dart';
 import '../production/recipes.dart';
-import '../races/races.dart';
 import '../rng/mulberry32.dart';
 import '../save/generated/save_models.dart';
 import '../time.dart';

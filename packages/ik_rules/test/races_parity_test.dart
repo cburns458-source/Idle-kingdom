@@ -65,7 +65,9 @@ void main() {
             'skillDropChance': _skillIds
                 .map((skillId) => raceSkillDropChanceBonusPercent(db, save, skillId))
                 .toList(),
-            'appliedGold': _goldAmounts.map((amount) => applyRaceGoldGain(db, save, amount)).toList(),
+            'appliedGold': _goldAmounts
+                .map((amount) => applyRaceGoldGain(db, save, amount))
+                .toList(),
             'hostility': _hostilityLocations
                 .map((locationId) => raceBypassesForcedHostilityAt(db, save, locationId))
                 .toList(),

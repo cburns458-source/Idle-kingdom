@@ -12,7 +12,6 @@ import '../inventory/capacity.dart';
 import '../js_compat.dart';
 import '../potions/effects.dart';
 import '../quests/progress.dart';
-import '../races/races.dart';
 import '../recipes/knowledge.dart';
 import '../save/generated/save_models.dart';
 import '../time.dart';
