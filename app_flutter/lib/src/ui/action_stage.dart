@@ -430,40 +430,52 @@ class _CombatStage extends StatelessWidget {
                   ),
                 )
               : null,
-          overlay: !showFloaters
-              ? null
-              : Stack(
-                  children: [
-                    if (round != null && round.playerHit > 0)
-                      _DamageFloater(
-                        key: ValueKey('player-hit-$seq'),
-                        text: round.playerCrit
-                            ? 'CRIT ${round.playerHit.round()}'
-                            : '${round.playerHit.round()}',
-                        color: round.playerCrit ? _critHitColor : _playerHitColor,
-                        alignment: const Alignment(0, -0.64),
-                        offset: _floaterOffset(seq, 2),
-                      ),
-                    if (round != null && (round.offhandHit ?? 0) > 0)
-                      _DamageFloater(
-                        key: ValueKey('offhand-hit-$seq'),
-                        text: '${round.offhandHit!.round()}',
-                        color: _offhandHitColor,
-                        alignment: const Alignment(0, -0.24),
-                        offset: _floaterOffset(seq, 3),
-                        fontSize: 17,
-                      ),
-                    if (round != null && (round.staffHit ?? 0) > 0)
-                      _DamageFloater(
-                        key: ValueKey('staff-hit-$seq'),
-                        text: '${round.staffHit!.round()}',
-                        color: _staffHitColor,
-                        alignment: const Alignment(0.18, -0.38),
-                        offset: _floaterOffset(seq, 4),
-                        fontSize: 17,
-                      ),
-                  ],
+          overlay: Stack(
+            children: [
+              if ((save.combatBossSleepRoundsRemaining ?? 0) > 0)
+                const Align(
+                  alignment: Alignment(0.18, -0.72),
+                  child: Text(
+                    'Zzz',
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w400,
+                      letterSpacing: 1,
+                      color: Color(0xFFB8D4FF),
+                      shadows: overlayShadow,
+                    ),
+                  ),
                 ),
+              if (showFloaters && round != null && round.playerHit > 0)
+                _DamageFloater(
+                  key: ValueKey('player-hit-$seq'),
+                  text: round.playerCrit
+                      ? 'CRIT ${round.playerHit.round()}'
+                      : '${round.playerHit.round()}',
+                  color: round.playerCrit ? _critHitColor : _playerHitColor,
+                  alignment: const Alignment(0, -0.64),
+                  offset: _floaterOffset(seq, 2),
+                ),
+              if (showFloaters && round != null && (round.offhandHit ?? 0) > 0)
+                _DamageFloater(
+                  key: ValueKey('offhand-hit-$seq'),
+                  text: '${round.offhandHit!.round()}',
+                  color: _offhandHitColor,
+                  alignment: const Alignment(0, -0.24),
+                  offset: _floaterOffset(seq, 3),
+                  fontSize: 17,
+                ),
+              if (showFloaters && round != null && (round.staffHit ?? 0) > 0)
+                _DamageFloater(
+                  key: ValueKey('staff-hit-$seq'),
+                  text: '${round.staffHit!.round()}',
+                  color: _staffHitColor,
+                  alignment: const Alignment(0.18, -0.38),
+                  offset: _floaterOffset(seq, 4),
+                  fontSize: 17,
+                ),
+            ],
+          ),
         ),
         playerCaption: _FighterCaption(
           name: save.characterName ?? 'Adventurer',

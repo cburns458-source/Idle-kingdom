@@ -57,6 +57,7 @@ const Map<String, String> _locationArt = <String, String>{
   'LOC-0034': 'locations/loc_town_bank.webp',
   'LOC-0035': 'locations/loc_citadel_bank.webp',
   'LOC-0036': 'locations/loc_temple.webp',
+  'LOC-0037': 'locations/loc_castle_crypt.webp',
 };
 
 /// Item icons keyed by id, for the items whose art the heuristic cannot infer.
@@ -118,6 +119,7 @@ const Map<String, String> _enemyArt = <String, String>{
   'ENM-0019': 'enemies/enm_castle_guard.webp',
   'ENM-0020': 'enemies/enm_castle_guard.webp',
   'ENM-0021': 'enemies/enm_seagull.webp',
+  'ENM-0022': 'enemies/enm_ghost.webp',
 };
 
 /// Transparent workstation art for Standard Production stations.

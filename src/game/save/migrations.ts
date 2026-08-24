@@ -472,6 +472,23 @@ export const SAVE_MIGRATIONS: SaveMigration[] = [
       saveVersion: 31,
     }),
   },
+  {
+    fromVersion: 31,
+    toVersion: 32,
+    migrate: (save) => ({
+      ...save,
+      combatBossSleepRoundsRemaining:
+        typeof save.combatBossSleepRoundsRemaining === 'number' &&
+        Number.isFinite(save.combatBossSleepRoundsRemaining)
+          ? save.combatBossSleepRoundsRemaining
+          : null,
+      bossRespawnUntilByEnemyId:
+        save.bossRespawnUntilByEnemyId && typeof save.bossRespawnUntilByEnemyId === 'object'
+          ? save.bossRespawnUntilByEnemyId
+          : {},
+      saveVersion: 32,
+    }),
+  },
 ]
 
 export function migrateSave(save: PlayerSave, nowMs: number = Date.now()): PlayerSave {

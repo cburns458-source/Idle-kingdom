@@ -433,7 +433,7 @@ function isSpellName(name: string): boolean {
 
 function isArcanaWeaponName(name: string, outputId: string): boolean {
   if (outputId.startsWith('ENCH-')) return false
-  return /staff of\b/i.test(name) || /\bstaff\b/i.test(name)
+  return /staff of\b/i.test(name) || /\bstaff\b/i.test(name) || /\bwand\b/i.test(name)
 }
 
 function isEnchantmentName(name: string, outputId: string): boolean {

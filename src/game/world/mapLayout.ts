@@ -72,6 +72,8 @@ export const CASTLE_MAP_NODE_LAYOUT: Record<string, NodePosition> = {
   'LOC-0014': { x: 50, y: 55 },
   // Castle gateway at the outer gatehouse
   'LOC-0013': { x: 50, y: 78 },
+  // Castle Crypt, bottom-left of the grounds
+  'LOC-0037': { x: 22, y: 70 },
 }
 
 export const TOWN_MAP_NODE_LAYOUT: Record<string, NodePosition> = {

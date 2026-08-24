@@ -210,6 +210,29 @@ describe('combat engine', () => {
     expect(round.enemyHp).toBe(200 - round.playerHit - 27)
   })
 
+  it("lets Mage's Wand spark while keeping an off-hand dagger", () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const base = createNewSave(launch)
+    const save = {
+      ...base,
+      skills: base.skills.map((skill) =>
+        skill.skillId === 'SKL-0013' ? { ...skill, level: 50 } : skill,
+      ),
+      equipment: {
+        ...base.equipment,
+        slots: {
+          ...base.equipment.slots,
+          'SLOT-0001': { itemId: 'ITEM-0307', quantity: 1 },
+          'SLOT-0002': { itemId: 'ITEM-0125', quantity: 1 },
+        },
+      },
+    }
+    const enemy = launch.Enemies.find((row) => row['Enemy ID'] === 'ENM-0001')!
+    const round = resolveCombatRound(launch, save, enemy, 400, () => 0)
+    expect(round.staffHit).toBeGreaterThan(0)
+    expect(round.offhandHit).toBeGreaterThan(0)
+  })
+
   it('lets Staff of Sparks finish a kill before the enemy swings', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const base = createNewSave(launch)

@@ -97,6 +97,8 @@ PlayerSave createNewSave(GameDatabase db, num nowMs) {
     combatEnemyHp: null,
     combatRoundStartedAt: null,
     combatSkipEnemyAttack: false,
+    combatBossSleepRoundsRemaining: null,
+    bossRespawnUntilByEnemyId: const <String, String>{},
     activePotionEffect: null,
     deathPauseUntil: null,
     hasEverDied: false,

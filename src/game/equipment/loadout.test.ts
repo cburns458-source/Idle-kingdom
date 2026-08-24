@@ -298,6 +298,7 @@ describe('equipment loadout', () => {
     expect(isTwoHandedItem(launch, 'ITEM-0305')).toBe(true)
     expect(isTwoHandedItem(launch, 'ITEM-0306')).toBe(true)
     expect(isTwoHandedItem(launch, 'ITEM-0122')).toBe(false) // Goblin Staff
+    expect(isTwoHandedItem(launch, 'ITEM-0307')).toBe(false) // Mage's Wand
     expect(isTwoHandedItem(launch, 'ITEM-0124')).toBe(false) // Wooden Sword
   })
 
