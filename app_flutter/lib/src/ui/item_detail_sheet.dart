@@ -20,6 +20,7 @@ class ItemDetailSheet extends StatelessWidget {
     required this.quantity,
     this.enchantmentId,
     this.slotId,
+    this.onEquip,
   });
 
   final GameController controller;
@@ -29,6 +30,10 @@ class ItemDetailSheet extends StatelessWidget {
   final num quantity;
   final String? enchantmentId;
   final String? slotId;
+
+  /// Equips this bag piece. Omitted for worn gear, empty slots, and items that
+  /// cannot be equipped.
+  final VoidCallback? onEquip;
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +45,7 @@ class ItemDetailSheet extends StatelessWidget {
         : db.equipmentSlots.where((row) => row.slotId == slotId).firstOrNull;
 
     final lines = <String>[
-      if (id != null) ...equipmentTooltipStatLines(equipmentForItemId(db, id)),
+      if (id != null) ...equipmentTooltipStatLines(equipmentForItemId(db, id), db),
       ...enchantmentTooltipLines(db, enchantmentId),
       if (id != null && isSpellItem(db, id)) ...spellTooltipLines(db, item, id),
       if (id == null && slotId != null && isSpellSlotId(slotId!))
@@ -101,13 +106,25 @@ class ItemDetailSheet extends StatelessWidget {
               ),
             ],
             const SizedBox(height: 12),
-            Align(
-              alignment: Alignment.centerRight,
-              child: GameButton(
-                label: 'Close',
-                tone: GameButtonTone.secondary,
-                onPressed: () => Navigator.of(context).pop(),
-              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                if (onEquip != null) ...[
+                  GameButton(
+                    label: 'Equip',
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      onEquip!();
+                    },
+                  ),
+                  const SizedBox(width: 8),
+                ],
+                GameButton(
+                  label: 'Close',
+                  tone: GameButtonTone.secondary,
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+              ],
             ),
           ],
         ),

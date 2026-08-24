@@ -9,7 +9,7 @@ import {
   equipItemFromInventory,
   equipStackToSlot,
   equipmentRequirementFailure,
-  equippedActionTimeReductionPercent,
+  equippedActionTimeReductionBySkill,
   isDaggerItem,
   isTwoHandedItem,
   isStackableConsumableSlot,
@@ -160,7 +160,7 @@ export const equipmentScenarios: ParityScenario[] = [
         rows: db.Equipment.map((equipment) => ({
           itemId: equipment['Item ID'],
           requirementFailure: equipmentRequirementFailure(db, save, equipment),
-          tooltip: equipmentTooltipStatLines(equipment),
+          tooltip: equipmentTooltipStatLines(equipment, db),
           dagger: isDaggerItem(db, equipment['Item ID']),
           twoHanded: isTwoHandedItem(db, equipment['Item ID']),
           consumableSlot: isStackableConsumableSlot(equipment['Slot ID'] ?? ''),
@@ -207,7 +207,7 @@ export const equipmentScenarios: ParityScenario[] = [
       const db = contentDatabase()
       const save = saveFor(kind)
       return {
-        actionTimeReduction: equippedActionTimeReductionPercent(db, save),
+        actionTimeReductionBySkill: equippedActionTimeReductionBySkill(db, save),
         mainhand: slotItemId(save, 'SLOT-0001'),
         offhand: slotItemId(save, 'SLOT-0002'),
         vitals: asJson(withRecalculatedVitals(db, save)),

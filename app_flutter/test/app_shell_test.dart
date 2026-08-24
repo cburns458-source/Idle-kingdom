@@ -504,7 +504,7 @@ void main() {
     expect(find.text('Health'), findsOne);
     expect(find.text('DR'), findsOne);
     expect(find.text('Helmet'), findsOne);
-    expect(find.text('Active bonuses'), findsOne);
+    expect(find.text('Show bonuses'), findsOne);
   });
 
   testWidgets('the chin nest opens Settings, Log, Leaderboards, and Guilds', (tester) async {

@@ -71,7 +71,7 @@ void main() {
           return <String, Object?>{
             'itemId': equipment.itemId,
             'requirementFailure': equipmentRequirementFailure(db, save, equipment),
-            'tooltip': equipmentTooltipStatLines(equipment),
+            'tooltip': equipmentTooltipStatLines(equipment, db),
             'dagger': isDaggerItem(db, equipment.itemId),
             'twoHanded': isTwoHandedItem(db, equipment.itemId),
             'consumableSlot': isStackableConsumableSlot(slotId is String ? slotId : ''),
@@ -132,7 +132,7 @@ void main() {
         final save = saveOf(fixture);
         expect(
           checkParity(fixture, {
-            'actionTimeReduction': equippedActionTimeReductionPercent(db, save),
+            'actionTimeReductionBySkill': equippedActionTimeReductionBySkill(db, save),
             'mainhand': slotItemId(save, 'SLOT-0001'),
             'offhand': slotItemId(save, 'SLOT-0002'),
             'vitals': withRecalculatedVitals(db, save).toJson(),
