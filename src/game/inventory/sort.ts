@@ -1,5 +1,4 @@
 import type { GameDatabase, ItemRow } from '../data/types'
-import { isFavoriteStack } from './favorites'
 
 export type InventorySortMode = 'group' | 'az' | 'search'
 
@@ -103,7 +102,7 @@ export class InventorySorter {
   private readonly slotByItem = new Map<string, string>()
   private readonly levels = new Map<string, number>()
 
-  constructor(private readonly db: GameDatabase) {
+  constructor(db: GameDatabase) {
     for (const item of db.Items) {
       this.items.set(item['Item ID'], item)
     }
@@ -194,8 +193,8 @@ export class InventorySorter {
     a: { favorite?: boolean | null },
     b: { favorite?: boolean | null },
   ): number {
-    const af = isFavoriteStack(a) ? 0 : 1
-    const bf = isFavoriteStack(b) ? 0 : 1
+    const af = a.favorite === true ? 0 : 1
+    const bf = b.favorite === true ? 0 : 1
     return af - bf
   }
 
