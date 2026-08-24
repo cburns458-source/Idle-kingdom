@@ -242,16 +242,6 @@ List<CombatStatContribution> _damageMultiplierLines(GameDatabase db, PlayerSave 
     );
   }
 
-  final raceMult = raceCombatDamageMultiplier(db, save);
-  if (raceMult != 1 && isNotBlank(save.raceId)) {
-    lines.add(
-      CombatStatContribution(
-        label: raceDisplayName(db, save.raceId) ?? save.raceId!,
-        detail: _percent((raceMult - 1) * 100),
-      ),
-    );
-  }
-
   return lines;
 }
 

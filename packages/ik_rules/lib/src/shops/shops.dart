@@ -5,6 +5,7 @@ import '../activity/requirements.dart';
 import '../activity/xp.dart';
 import '../cosmetics/cosmetics.dart';
 import '../js_compat.dart';
+import '../races/races.dart';
 import '../save/generated/save_models.dart';
 
 const String essenceItemId = 'ITEM-0011';
@@ -89,9 +90,13 @@ ShopAccess canAccessShop(GameDatabase db, PlayerSave save, ShopRow shop) {
     requirementsForEntity(db, 'Facility', jsString(facility.raw['Facility ID'])),
   );
   if (unmet.isNotEmpty) {
-    if (facility.raw['Facility ID'] == 'FAC-0009') {
-      final mining = getSkillProgress(save, 'SKL-0002').level;
-      return ShopAccess.failed('Requires Mining level 40 (have ${jsNumberToString(mining)}).');
+    final mining = getSkillProgress(save, 'SKL-0002').level;
+    if (facility.raw['Facility ID'] == dwarvenMiningStoreFacilityId) {
+      final required = dwarvenMiningStoreRequiredLevel(save);
+      if (mining >= required) return const ShopAccess.ok();
+      return ShopAccess.failed(
+        'Requires Mining level ${jsNumberToString(required)} (have ${jsNumberToString(mining)}).',
+      );
     }
     return ShopAccess.failed(unmet.first);
   }

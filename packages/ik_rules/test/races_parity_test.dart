@@ -13,8 +13,17 @@ const _raceIds = <String>[
   'RACE-0006',
   'RACE-0007',
 ];
-const _skillIds = <String>['SKL-0001', 'SKL-0002', 'SKL-0003', 'SKL-0007', 'SKL-9999'];
-const _xpAmounts = <num>[0, 1, 7, 100, 12.5, -20];
+const _skillIds = <String>[
+  'SKL-0001',
+  'SKL-0002',
+  'SKL-0003',
+  'SKL-0004',
+  'SKL-0005',
+  'SKL-0006',
+  'SKL-0007',
+  'SKL-9999',
+];
+const _goldAmounts = <num>[0, 1, 7, 100, 12.5, -20];
 const _hostilityLocations = <String>['LOC-0002', 'LOC-0003', 'LOC-9999'];
 
 void main() {
@@ -50,19 +59,13 @@ void main() {
               db,
               raceId,
             ).map((row) => row.raceStartingItemId).toList(),
-            'combatDamage': raceCombatDamageMultiplier(db, save),
+            'miningStoreLevel': dwarvenMiningStoreRequiredLevel(save),
             'maxHp': raceMaxHpMultiplier(db, save),
             'goldGain': raceGoldGainMultiplier(db, save),
-            'skillXp': _skillIds
-                .map((skillId) => raceSkillXpMultiplier(db, save, skillId))
+            'skillDropChance': _skillIds
+                .map((skillId) => raceSkillDropChanceBonusPercent(db, save, skillId))
                 .toList(),
-            'appliedXp': _skillIds
-                .expand(
-                  (skillId) =>
-                      _xpAmounts.map((amount) => applyRaceSkillXp(db, save, skillId, amount)),
-                )
-                .toList(),
-            'appliedGold': _xpAmounts.map((amount) => applyRaceGoldGain(db, save, amount)).toList(),
+            'appliedGold': _goldAmounts.map((amount) => applyRaceGoldGain(db, save, amount)).toList(),
             'hostility': _hostilityLocations
                 .map((locationId) => raceBypassesForcedHostilityAt(db, save, locationId))
                 .toList(),
@@ -79,7 +82,7 @@ void main() {
         expect(
           checkParity(fixture, {
             'bonusIds': raceBonusesFor(db, null).map((row) => row.raceBonusId).toList(),
-            'combatDamage': raceCombatDamageMultiplier(db, save),
+            'miningStoreLevel': dwarvenMiningStoreRequiredLevel(save),
             'maxHp': raceMaxHpMultiplier(db, save),
             'goldGain': raceGoldGainMultiplier(db, save),
             'hostility': _hostilityLocations

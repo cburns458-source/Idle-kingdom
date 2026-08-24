@@ -203,7 +203,7 @@ ProjectCompleteResult completeSpecialProject(
   }
 
   final skillId = jsString(project.raw['Skill ID']);
-  final xpTotal = applyRaceSkillXp(db, save, skillId, jsNumber(project.raw['XP Reward']) * crafts);
+  final xpTotal = jsNumber(project.raw['XP Reward']) * crafts;
   next = applyXp(next, db, skillId, xpTotal).save;
   next = applyQuestProcessProgress(db, next, jsString(project.raw['Project ID']), crafts);
   next = applyBountyProjectProgress(next, jsString(project.raw['Project ID']), crafts, nowMs);

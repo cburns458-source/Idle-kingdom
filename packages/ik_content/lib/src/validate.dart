@@ -318,7 +318,7 @@ List<ValidationIssue> validateDatabase(GameDatabase db) {
       );
     }
     final referenceId = bonus.raw['Reference ID'];
-    if (bonus.raw['Bonus Type'] == 'skill_xp_percent' &&
+    if (bonus.raw['Bonus Type'] == 'skill_drop_chance_percent' &&
         referenceId is String &&
         !indexes.skillsById.containsKey(referenceId)) {
       issues.add(

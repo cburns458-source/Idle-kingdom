@@ -284,7 +284,7 @@ export function validateDatabase(db: GameDatabase): ValidationIssue[] {
       })
     }
     if (
-      bonus['Bonus Type'] === 'skill_xp_percent' &&
+      bonus['Bonus Type'] === 'skill_drop_chance_percent' &&
       typeof bonus['Reference ID'] === 'string' &&
       !indexes.skillsById.has(bonus['Reference ID'])
     ) {

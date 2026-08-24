@@ -154,7 +154,7 @@ ProductionCraftResult? completeProductionCraft(GameDatabase db, PlayerSave save,
   var next = granted.save!;
 
   final skillId = jsString(recipe.raw['Skill ID']);
-  final xpGained = applyRaceSkillXp(db, save, skillId, jsNumber(recipe.raw['XP Reward']));
+  final xpGained = jsNumber(recipe.raw['XP Reward']);
   final xpApplied = applyXp(next, db, skillId, xpGained);
   next = xpApplied.save;
 

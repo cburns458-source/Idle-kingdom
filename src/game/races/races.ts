@@ -7,6 +7,9 @@ import type {
 } from '../data/types'
 import type { PlayerSave } from '../save/types'
 
+export const DWARF_RACE_ID = 'RACE-0006'
+export const DWARVEN_MINING_STORE_FACILITY_ID = 'FAC-0009'
+
 function parseIdList(raw: string | null | undefined): string[] {
   if (typeof raw !== 'string' || !raw.trim()) return []
   return raw
@@ -68,17 +71,12 @@ function totalBonusPercent(
   return total
 }
 
-export function raceSkillXpMultiplier(
+export function raceSkillDropChanceBonusPercent(
   db: GameDatabase,
   save: PlayerSave,
   skillId: string,
 ): number {
-  const percent = totalBonusPercent(db, save, 'skill_xp_percent', skillId)
-  return 1 + percent / 100
-}
-
-export function raceCombatDamageMultiplier(db: GameDatabase, save: PlayerSave): number {
-  return 1 + totalBonusPercent(db, save, 'combat_damage_percent') / 100
+  return totalBonusPercent(db, save, 'skill_drop_chance_percent', skillId)
 }
 
 export function raceMaxHpMultiplier(db: GameDatabase, save: PlayerSave): number {
@@ -89,19 +87,12 @@ export function raceGoldGainMultiplier(db: GameDatabase, save: PlayerSave): numb
   return 1 + totalBonusPercent(db, save, 'gold_gain_percent') / 100
 }
 
-/** Apply race skill XP percent (floored). */
-export function applyRaceSkillXp(
-  db: GameDatabase,
-  save: PlayerSave,
-  skillId: string,
-  baseXp: number,
-): number {
-  const amount = Math.max(0, Number(baseXp) || 0)
-  if (amount <= 0) return 0
-  return Math.floor(amount * raceSkillXpMultiplier(db, save, skillId))
+/** Mining level required for the Dwarven Mining Store (35 for Dwarves, 40 otherwise). */
+export function dwarvenMiningStoreRequiredLevel(save: PlayerSave): number {
+  return save.raceId === DWARF_RACE_ID ? 35 : 40
 }
 
-/** Apply race gold percent (floored). */
+/** Apply race gold percent (floored). Used for action and combat gold only. */
 export function applyRaceGoldGain(
   db: GameDatabase,
   save: PlayerSave,
@@ -127,23 +118,19 @@ export function raceBonusSummaryLines(db: GameDatabase, raceId: string): string[
   for (const bonus of raceBonusesFor(db, raceId)) {
     const value = Number(bonus['Bonus Value'] ?? 0)
     if (!Number.isFinite(value) || value === 0) continue
-    if (bonus['Bonus Type'] === 'skill_xp_percent' && bonus['Reference ID']) {
+    if (bonus['Bonus Type'] === 'skill_drop_chance_percent' && bonus['Reference ID']) {
       const skill =
         db.Skills.find((row) => row['Skill ID'] === bonus['Reference ID'])?.['Display Name'] ??
         'skill'
-      lines.push(`+${value}% ${skill} XP`)
+      lines.push(`+${value}% ${skill} drop chance`)
       continue
     }
     if (bonus['Bonus Type'] === 'max_hp_percent') {
       lines.push(`+${value}% maximum HP`)
       continue
     }
-    if (bonus['Bonus Type'] === 'combat_damage_percent') {
-      lines.push(`+${value}% combat damage`)
-      continue
-    }
     if (bonus['Bonus Type'] === 'gold_gain_percent') {
-      lines.push(`+${value}% gold gains`)
+      lines.push(`+${value}% gold from enemies and actions`)
     }
   }
   const race = raceById(db, raceId)
@@ -152,6 +139,9 @@ export function raceBonusSummaryLines(db: GameDatabase, raceId: string): string[
       db.Locations.find((row) => row['Location ID'] === locationId)?.['Display Name'] ??
       locationId
     lines.push(`Welcome at ${location} (no forced hostility)`)
+  }
+  if (raceId === DWARF_RACE_ID) {
+    lines.push('Dwarven Mining Store at Mining level 35')
   }
   return lines
 }

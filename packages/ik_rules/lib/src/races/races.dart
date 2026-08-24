@@ -7,6 +7,9 @@ import '../inventory/add_items.dart';
 import '../js_compat.dart';
 import '../save/generated/save_models.dart';
 
+const String dwarfRaceId = 'RACE-0006';
+const String dwarvenMiningStoreFacilityId = 'FAC-0009';
+
 List<String> _parseIdList(Object? raw) {
   if (raw is! String || raw.trim().isEmpty) return const <String>[];
   return raw
@@ -78,12 +81,8 @@ num _totalBonusPercent(GameDatabase db, PlayerSave save, String bonusType, [Stri
   return total;
 }
 
-num raceSkillXpMultiplier(GameDatabase db, PlayerSave save, String skillId) {
-  return 1 + _totalBonusPercent(db, save, 'skill_xp_percent', skillId) / 100;
-}
-
-num raceCombatDamageMultiplier(GameDatabase db, PlayerSave save) {
-  return 1 + _totalBonusPercent(db, save, 'combat_damage_percent') / 100;
+num raceSkillDropChanceBonusPercent(GameDatabase db, PlayerSave save, String skillId) {
+  return _totalBonusPercent(db, save, 'skill_drop_chance_percent', skillId);
 }
 
 num raceMaxHpMultiplier(GameDatabase db, PlayerSave save) {
@@ -94,11 +93,9 @@ num raceGoldGainMultiplier(GameDatabase db, PlayerSave save) {
   return 1 + _totalBonusPercent(db, save, 'gold_gain_percent') / 100;
 }
 
-/// Applies race skill XP percent (floored).
-num applyRaceSkillXp(GameDatabase db, PlayerSave save, String skillId, num baseXp) {
-  final amount = math.max(0, jsNumberOrZero(baseXp));
-  if (amount <= 0) return 0;
-  return (amount * raceSkillXpMultiplier(db, save, skillId)).floor();
+/// Mining level required for the Dwarven Mining Store (35 for Dwarves, 40 otherwise).
+num dwarvenMiningStoreRequiredLevel(PlayerSave save) {
+  return save.raceId == dwarfRaceId ? 35 : 40;
 }
 
 /// Applies race gold percent (floored).
@@ -122,23 +119,19 @@ List<String> raceBonusSummaryLines(GameDatabase db, String raceId) {
     final amount = jsNumberToString(value);
     final bonusType = bonus.raw['Bonus Type'];
     final reference = bonus.raw['Reference ID'];
-    if (bonusType == 'skill_xp_percent' && reference is String && reference.isNotEmpty) {
+    if (bonusType == 'skill_drop_chance_percent' && reference is String && reference.isNotEmpty) {
       final displayName = db.skills
           .firstWhereOrNull((row) => row.raw['Skill ID'] == reference)
           ?.raw['Display Name'];
-      lines.add('+$amount% ${displayName is String ? displayName : 'skill'} XP');
+      lines.add('+$amount% ${displayName is String ? displayName : 'skill'} drop chance');
       continue;
     }
     if (bonusType == 'max_hp_percent') {
       lines.add('+$amount% maximum HP');
       continue;
     }
-    if (bonusType == 'combat_damage_percent') {
-      lines.add('+$amount% combat damage');
-      continue;
-    }
     if (bonusType == 'gold_gain_percent') {
-      lines.add('+$amount% gold gains');
+      lines.add('+$amount% gold from enemies and actions');
     }
   }
   final race = raceById(db, raceId);
@@ -150,6 +143,9 @@ List<String> raceBonusSummaryLines(GameDatabase db, String raceId) {
       'Welcome at ${displayName is String ? displayName : locationId} '
       '(no forced hostility)',
     );
+  }
+  if (raceId == dwarfRaceId) {
+    lines.add('Dwarven Mining Store at Mining level 35');
   }
   return lines;
 }

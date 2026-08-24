@@ -193,7 +193,7 @@ GatheringCompletion completeGatheringAction(
 ) {
   final skillId = jsString(action.raw['Relevant Skill ID']);
   final rewarded = resolveActionRewards(db, save, action, random);
-  final xpAmount = applyRaceSkillXp(db, save, skillId, gatheringXpReward(db, save, action));
+  final xpAmount = gatheringXpReward(db, save, action);
   final xpApplied = applyXp(clearActivePotionEffect(rewarded.save), db, skillId, xpAmount);
   var next = xpApplied.save;
   var leveledUpTo = xpApplied.leveledUpTo;
@@ -205,13 +205,10 @@ GatheringCompletion completeGatheringAction(
 
   void applyBonusXp(String bonusSkillId, num amount) {
     if (amount <= 0) return;
-    // Race XP bonuses read the pre-action save, matching the primary award.
-    final raced = applyRaceSkillXp(db, save, bonusSkillId, amount);
-    if (raced <= 0) return;
-    final applied = applyXp(next, db, bonusSkillId, raced);
+    final applied = applyXp(next, db, bonusSkillId, amount);
     next = applied.save;
-    bonusXp.add(BonusXpGrant(skillId: bonusSkillId, xp: raced));
-    final reward = summarizeXpReward(db, next, bonusSkillId, raced, applied.leveledUpTo);
+    bonusXp.add(BonusXpGrant(skillId: bonusSkillId, xp: amount));
+    final reward = summarizeXpReward(db, next, bonusSkillId, amount, applied.leveledUpTo);
     if (reward != null) xpRewards.add(reward);
     if (applied.leveledUpTo != null) leveledUpTo = applied.leveledUpTo;
   }

@@ -2,10 +2,7 @@ import type { EquipmentRow, GameDatabase } from '../data/types'
 import { getSkillProgress } from '../activity/xp'
 import { OFFHAND_SLOT_ID, WEAPON_TOOL_SLOT_ID, isDaggerItem } from '../equipment/loadout'
 import { equippedEnchantmentDamageBonus } from '../projects/enchantments'
-import {
-  raceCombatDamageMultiplier,
-  raceMaxHpMultiplier,
-} from '../races/races'
+import { raceMaxHpMultiplier } from '../races/races'
 import type { PlayerSave } from '../save/types'
 import { configNumber } from '../activity/gathering'
 import { activeSpellDamageRangeMultiplier } from '../spells/spells'
@@ -53,8 +50,7 @@ function damageRangeMultipliers(
     potionBonus && potionBonus > 0 && save.activePotionEffect?.scope === 'one_combat_encounter'
       ? 1 + potionBonus / 100
       : 1
-  const raceMult = raceCombatDamageMultiplier(db, save)
-  return levelMult * spellMult * potionMult * raceMult
+  return levelMult * spellMult * potionMult
 }
 
 function scaleDamageRange(
