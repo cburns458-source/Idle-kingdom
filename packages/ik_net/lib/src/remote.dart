@@ -188,6 +188,9 @@ String pendingAccountUsername(String userId) {
 
 bool isPendingAccountUsername(String username) => username.startsWith(pendingAccountUsernamePrefix);
 
+/// False for the `pending_<id>` stand-in used before character creation.
+bool isPublicAdventurerUsername(String username) => !isPendingAccountUsername(username);
+
 String remoteEmail(String raw) => raw.trim().toLowerCase();
 
 /// The session a fresh sign-up produces, from what the auth call returned.

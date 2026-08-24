@@ -497,6 +497,24 @@ void main() {
     expect(peers.single.locationId, 'LOC-0005');
   });
 
+  test('hides pending stand-in names from Nearby until a character is named', () async {
+    final transport = FakeTransport();
+    final pending = _service(transport, MemorySaveStorage());
+    await pending.signUp('new@example.com', '', 'secret');
+    expect(isPendingAccountUsername(pending.session!.username), isTrue);
+    final save = createNewSave(_database(), _nowMs).copyWith(currentLocationId: 'LOC-0005');
+    expect(await pending.publishPresence(presenceFromSave(save)), isNull);
+    expect(transport.tables[RemoteTables.activityPresence] ?? const [], isEmpty);
+
+    final watcher = _service(transport, MemorySaveStorage());
+    await watcher.signUp('watcher@example.com', 'Watcher', 'secret');
+    expect(await watcher.peersAtLocation('LOC-0005'), isEmpty);
+
+    expect((await pending.claimAccountUsername('Sprout')).ok, isTrue);
+    expect(await pending.publishPresence(presenceFromSave(save)), isNotNull);
+    expect((await watcher.peersAtLocation('LOC-0005')).single.username, 'Sprout');
+  });
+
   test('keeps Away peers visible until the away TTL, then drops them', () async {
     var clock = _nowMs;
     final transport = FakeTransport();

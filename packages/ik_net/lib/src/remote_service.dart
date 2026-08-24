@@ -783,6 +783,10 @@ class RemoteMultiplayerService implements MultiplayerService {
   Future<ActivityPresence?> publishPresence(PresenceInput input) async {
     final current = session;
     if (current == null) return null;
+    if (!isPublicAdventurerUsername(current.username)) {
+      await clearPresence();
+      return null;
+    }
     final now = _nowMs();
     final row = presenceRowFor(
       session: current,
@@ -851,11 +855,11 @@ class RemoteMultiplayerService implements MultiplayerService {
 
   List<ActivityPresence> _visiblePeers(List<ActivityPresence> peers, bool excludeSelf) {
     final current = session;
-    if (current == null) return peers;
-    final hidden = _local.backend.blockedIds(current.userId);
+    final hidden = current == null ? const <String>{} : _local.backend.blockedIds(current.userId);
     return peers
+        .where((row) => isPublicAdventurerUsername(row.username))
         .where((row) => !hidden.contains(row.userId))
-        .where((row) => !excludeSelf || row.userId != current.userId)
+        .where((row) => current == null || !excludeSelf || row.userId != current.userId)
         .toList();
   }
 

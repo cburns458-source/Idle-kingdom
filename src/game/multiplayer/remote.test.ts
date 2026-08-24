@@ -3,6 +3,7 @@ import {
   chatMessageFrom,
   cloudSaveRecordFrom,
   isPendingAccountUsername,
+  isPublicAdventurerUsername,
   isRemoteSaveNewer,
   leaderboardEntriesFrom,
   leaderboardRowsFor,
@@ -41,6 +42,8 @@ describe('remote identity', () => {
     expect(pendingAccountUsername('usr_0001')).toBe('pending_usr0001')
     expect(isPendingAccountUsername('pending_usr0001')).toBe(true)
     expect(isPendingAccountUsername('Hero')).toBe(false)
+    expect(isPublicAdventurerUsername('pending_usr0001')).toBe(false)
+    expect(isPublicAdventurerUsername('Hero')).toBe(true)
   })
 
   it('folds an email to one form so two spellings are one account', () => {
