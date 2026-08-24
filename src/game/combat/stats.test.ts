@@ -14,6 +14,34 @@ const rawDatabase = JSON.parse(
 )
 
 describe('combat level bonuses', () => {
+  it('gives every fishing rod a 10-10 damage range', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const base = createNewSave(launch)
+    const rodIds = [
+      'ITEM-0103',
+      'ITEM-0112',
+      'ITEM-0222',
+      'ITEM-0116',
+      'ITEM-0120',
+      'ITEM-0235',
+      'ITEM-0248',
+      'ITEM-0261',
+      'ITEM-0274',
+    ]
+    for (const itemId of rodIds) {
+      const save = {
+        ...base,
+        equipment: {
+          slots: {
+            ...base.equipment.slots,
+            'SLOT-0001': { itemId, quantity: 1 },
+          },
+        },
+      }
+      expect(playerDamageRange(launch, save), itemId).toEqual({ min: 10, max: 10 })
+    }
+  })
+
   it('gives no bonus below Combat Level 10', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const save = createNewSave(launch)

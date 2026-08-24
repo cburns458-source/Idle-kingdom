@@ -196,11 +196,16 @@ void main() {
       expect(controller.activityError, isNotNull);
     });
 
-    testWidgets('says why when the bag has no tool to offer', (tester) async {
-      final controller = buildController(
-        database,
-        seed: startedCharacter(database).copyWith(currentLocationId: 'LOC-0009'),
+    PlayerSave startedWithoutNet() {
+      final save = startedCharacter(database);
+      return save.copyWith(
+        currentLocationId: 'LOC-0009',
+        inventory: save.inventory.where((stack) => stack.itemId != 'ITEM-0108').toList(),
       );
+    }
+
+    testWidgets('says why when the bag has no tool to offer', (tester) async {
+      final controller = buildController(database, seed: startedWithoutNet());
       addTearDown(controller.dispose);
       await pumpShell(tester, controller);
 
@@ -211,10 +216,7 @@ void main() {
     });
 
     testWidgets('a refusal floats over the dock and fades away', (tester) async {
-      final controller = buildController(
-        database,
-        seed: startedCharacter(database).copyWith(currentLocationId: 'LOC-0009'),
-      );
+      final controller = buildController(database, seed: startedWithoutNet());
       addTearDown(controller.dispose);
       await pumpShell(tester, controller);
 

@@ -112,17 +112,17 @@
       "Key": "spell_cycle_duration",
       "Value": 3600,
       "Unit": "seconds",
-      "Notes": "Deprecated \u2014 equipped spells are always active. Kept for older clients; unused by current runtime."
+      "Notes": "Deprecated — equipped spells are always active. Kept for older clients; unused by current runtime."
     },
     {
       "Key": "copy.merchant_tip",
-      "Value": "Here\u2019s some tips about artisanry",
+      "Value": "Here’s some tips about artisanry",
       "Unit": null,
       "Notes": "General-store merchant tip, first time."
     },
     {
       "Key": "copy.merchant_tip_spent",
-      "Value": "I\u2019ve already shared what I know about artisanry.",
+      "Value": "I’ve already shared what I know about artisanry.",
       "Unit": null,
       "Notes": "General-store merchant tip after it has been claimed."
     },
@@ -2438,7 +2438,7 @@
       "Description": null,
       "Icon Asset Key": "net",
       "Notes": null,
-      "Base Sell Value": 120
+      "Base Sell Value": 12
     },
     {
       "Item ID": "ITEM-0109",
@@ -5720,8 +5720,8 @@
       "Required Level": 1,
       "Secondary Required Skill ID": null,
       "Secondary Required Level": null,
-      "Min Damage": null,
-      "Max Damage": null,
+      "Min Damage": 10,
+      "Max Damage": 10,
       "HP Bonus": null,
       "Damage Reduction": null,
       "Healing Amount": null,
@@ -5828,8 +5828,8 @@
       "Required Level": 1,
       "Secondary Required Skill ID": null,
       "Secondary Required Level": null,
-      "Min Damage": null,
-      "Max Damage": null,
+      "Min Damage": 10,
+      "Max Damage": 10,
       "HP Bonus": null,
       "Damage Reduction": null,
       "Healing Amount": null,
@@ -5900,8 +5900,8 @@
       "Required Level": 20,
       "Secondary Required Skill ID": null,
       "Secondary Required Level": null,
-      "Min Damage": null,
-      "Max Damage": null,
+      "Min Damage": 10,
+      "Max Damage": 10,
       "HP Bonus": null,
       "Damage Reduction": null,
       "Healing Amount": null,
@@ -5972,8 +5972,8 @@
       "Required Level": 35,
       "Secondary Required Skill ID": null,
       "Secondary Required Level": null,
-      "Min Damage": null,
-      "Max Damage": null,
+      "Min Damage": 10,
+      "Max Damage": 10,
       "HP Bonus": null,
       "Damage Reduction": null,
       "Healing Amount": null,
@@ -6898,7 +6898,7 @@
       "Action Time Reduction %": null,
       "Capabilities / Effects": "artisanry_output; special_effect; +15% relative Drop Chance",
       "Status": "Planned",
-      "Notes": "Special-effect jewelry \u2014 not Arcana-enchantable. +15% relative drop chance (stacks additively with luck potions)."
+      "Notes": "Special-effect jewelry — not Arcana-enchantable. +15% relative drop chance (stacks additively with luck potions)."
     },
     {
       "Equipment ID": "EQP-0105",
@@ -7034,8 +7034,8 @@
       "Required Level": 5,
       "Secondary Required Skill ID": null,
       "Secondary Required Level": null,
-      "Min Damage": null,
-      "Max Damage": null,
+      "Min Damage": 10,
+      "Max Damage": 10,
       "HP Bonus": null,
       "Damage Reduction": null,
       "Healing Amount": null,
@@ -7106,8 +7106,8 @@
       "Required Level": 45,
       "Secondary Required Skill ID": null,
       "Secondary Required Level": null,
-      "Min Damage": null,
-      "Max Damage": null,
+      "Min Damage": 10,
+      "Max Damage": 10,
       "HP Bonus": null,
       "Damage Reduction": null,
       "Healing Amount": null,
@@ -7178,8 +7178,8 @@
       "Required Level": 60,
       "Secondary Required Skill ID": null,
       "Secondary Required Level": null,
-      "Min Damage": null,
-      "Max Damage": null,
+      "Min Damage": 10,
+      "Max Damage": 10,
       "HP Bonus": null,
       "Damage Reduction": null,
       "Healing Amount": null,
@@ -7250,8 +7250,8 @@
       "Required Level": 70,
       "Secondary Required Skill ID": null,
       "Secondary Required Level": null,
-      "Min Damage": null,
-      "Max Damage": null,
+      "Min Damage": 10,
+      "Max Damage": 10,
       "HP Bonus": null,
       "Damage Reduction": null,
       "Healing Amount": null,
@@ -7322,8 +7322,8 @@
       "Required Level": 85,
       "Secondary Required Skill ID": null,
       "Secondary Required Level": null,
-      "Min Damage": null,
-      "Max Damage": null,
+      "Min Damage": 10,
+      "Max Damage": 10,
       "HP Bonus": null,
       "Damage Reduction": null,
       "Healing Amount": null,
@@ -8194,7 +8194,7 @@
       "Action Time Reduction %": null,
       "Capabilities / Effects": "spell; spell_effect:ENCH-0005; damage_range_bonus_percent:10; spell_stacks",
       "Status": "Confirmed",
-      "Notes": "May be equipped to any Spell slot (SLOT-0013\u2013SLOT-0016)."
+      "Notes": "May be equipped to any Spell slot (SLOT-0013–SLOT-0016)."
     },
     {
       "Equipment ID": "EQP-0177",
@@ -8212,7 +8212,7 @@
       "Action Time Reduction %": null,
       "Capabilities / Effects": "spell; spell_effect:ENCH-0007; item_double_chance_percent:10; spell_stacks",
       "Status": "Confirmed",
-      "Notes": "May be equipped to any Spell slot (SLOT-0013\u2013SLOT-0016). Stacks additively with other Abundance spells."
+      "Notes": "May be equipped to any Spell slot (SLOT-0013–SLOT-0016). Stacks additively with other Abundance spells."
     },
     {
       "Equipment ID": "EQP-0178",
@@ -8480,11 +8480,11 @@
       "Internal Key": "critical_strike_chance",
       "Display Name": "Critical Strike Chance",
       "Valid Target": "Eligible weapon or jewelry",
-      "Effect": "+10% Critical Strike Chance (1.5\u00d7 damage on crit)",
+      "Effect": "+10% Critical Strike Chance (1.5× damage on crit)",
       "Required Materials": "Enchanting Tablet; Rabbit's Foot; Boar Tusk",
       "Status": "Confirmed",
       "Release Phase": "Launch",
-      "Notes": "Crit chances from multiple enchanted equipped items add together. Multiplier is 1.5\u00d7 rolled damage."
+      "Notes": "Crit chances from multiple enchanted equipped items add together. Multiplier is 1.5× rolled damage."
     }
   ],
   "Maps": [
@@ -9092,7 +9092,7 @@
       "Node ID": "NODE-0032",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Description": "Training grounds for Castle Guard combat practice. Challenge the guards when you want a fight \u2014 arrival is peaceful.",
+      "Description": "Training grounds for Castle Guard combat practice. Challenge the guards when you want a fight — arrival is peaceful.",
       "Danger / Hostility": null,
       "Background Asset Key": null,
       "Map Node Name": null,
@@ -9322,7 +9322,7 @@
       "Required Mount / Status": null,
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": "Town square to Rose\u2019s Apothecary"
+      "Notes": "Town square to Rose’s Apothecary"
     },
     {
       "Connection ID": "TRV-0012",
@@ -9636,7 +9636,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": "Bronze and iron swords, helmets, chestplates, and platelegs.",
-      "Notes": "Shop only. Buys back at the normal 1\u00d7 general-store rate."
+      "Notes": "Shop only. Buys back at the normal 1× general-store rate."
     }
   ],
   "Activities": [
@@ -10061,7 +10061,7 @@
       "Internal Key": "train_citadel_grounds",
       "Contextual Name": "Challenge the guards",
       "Location ID": "LOC-0032",
-      "Description": "Face Castle Guard training encounters. Optional \u2014 the grounds stay peaceful until you start this.",
+      "Description": "Face Castle Guard training encounters. Optional — the grounds stay peaceful until you start this.",
       "Danger Warning Combat Level": null,
       "Pool ID": "POOL-0024",
       "Pool Internal Key": "citadel_guards",
@@ -10621,7 +10621,7 @@
       "Action ID": "ACN-0048",
       "Weight": 100,
       "Status": "Planned",
-      "Notes": "Citadel Gathering Outskirts \u2014 poplar only."
+      "Notes": "Citadel Gathering Outskirts — poplar only."
     },
     {
       "Pool Entry ID": "PEN-0062",
@@ -10629,7 +10629,7 @@
       "Action ID": "ACN-0009",
       "Weight": 100,
       "Status": "Planned",
-      "Notes": "Citadel Combat Training Grounds \u2014 castle guard only."
+      "Notes": "Citadel Combat Training Grounds — castle guard only."
     },
     {
       "Pool Entry ID": "PEN-0063",
@@ -10637,7 +10637,7 @@
       "Action ID": "ACN-0171",
       "Weight": 100,
       "Status": "Planned",
-      "Notes": "QST-0003 Pressure the Guards \u2014 nervous guard only."
+      "Notes": "QST-0003 Pressure the Guards — nervous guard only."
     },
     {
       "Pool Entry ID": "PEN-0064",
@@ -10645,7 +10645,7 @@
       "Action ID": "ACN-0172",
       "Weight": 100,
       "Status": "Planned",
-      "Notes": "Temple \u2014 Monk only."
+      "Notes": "Temple — Monk only."
     },
     {
       "Pool Entry ID": "PEN-0067",
@@ -10685,7 +10685,7 @@
       "Action ID": "ACN-0109",
       "Weight": 90,
       "Status": "Planned",
-      "Notes": "Augur weed \u2014 90% of temple pick weeds."
+      "Notes": "Augur weed — 90% of temple pick weeds."
     },
     {
       "Pool Entry ID": "PEN-0072",
@@ -10693,7 +10693,7 @@
       "Action ID": "ACN-0110",
       "Weight": 10,
       "Status": "Planned",
-      "Notes": "Moonblossom \u2014 10% of temple pick weeds."
+      "Notes": "Moonblossom — 10% of temple pick weeds."
     },
     {
       "Pool Entry ID": "PEN-0073",
@@ -10701,7 +10701,7 @@
       "Action ID": "ACN-0049",
       "Weight": 70,
       "Status": "Planned",
-      "Notes": "Cut maple tree \u2014 70% of hardwood chopping."
+      "Notes": "Cut maple tree — 70% of hardwood chopping."
     },
     {
       "Pool Entry ID": "PEN-0074",
@@ -10709,7 +10709,7 @@
       "Action ID": "ACN-0050",
       "Weight": 30,
       "Status": "Planned",
-      "Notes": "Cut mahogany tree \u2014 30% of hardwood chopping."
+      "Notes": "Cut mahogany tree — 30% of hardwood chopping."
     },
     {
       "Pool Entry ID": "PEN-0075",
@@ -10717,7 +10717,7 @@
       "Action ID": "ACN-0176",
       "Weight": 90,
       "Status": "Planned",
-      "Notes": "Fight ghost \u2014 90% of fending off the old spirits."
+      "Notes": "Fight ghost — 90% of fending off the old spirits."
     },
     {
       "Pool Entry ID": "PEN-0076",
@@ -10725,7 +10725,7 @@
       "Action ID": "ACN-0006",
       "Weight": 10,
       "Status": "Planned",
-      "Notes": "Fight skeleton \u2014 10% of fending off the old spirits."
+      "Notes": "Fight skeleton — 10% of fending off the old spirits."
     }
   ],
   "Actions": [
@@ -14306,7 +14306,7 @@
       "Operator": null,
       "Required Value": null,
       "Status": "Planned",
-      "Notes": "Train with the monks \u2014 empty Weapon or Tool."
+      "Notes": "Train with the monks — empty Weapon or Tool."
     },
     {
       "Requirement ID": "REQ-0105",
@@ -14319,7 +14319,7 @@
       "Operator": null,
       "Required Value": null,
       "Status": "Planned",
-      "Notes": "Train with the monks \u2014 empty Shield or Off-hand."
+      "Notes": "Train with the monks — empty Shield or Off-hand."
     },
     {
       "Requirement ID": "REQ-0106",
@@ -14358,7 +14358,7 @@
       "Operator": null,
       "Required Value": null,
       "Status": "Planned",
-      "Notes": "Pick weeds \u2014 empty Weapon or Tool."
+      "Notes": "Pick weeds — empty Weapon or Tool."
     },
     {
       "Requirement ID": "REQ-0109",
@@ -14371,7 +14371,7 @@
       "Operator": null,
       "Required Value": null,
       "Status": "Planned",
-      "Notes": "Pick weeds \u2014 empty Shield or Off-hand."
+      "Notes": "Pick weeds — empty Shield or Off-hand."
     },
     {
       "Requirement ID": "REQ-0110",
@@ -16138,7 +16138,7 @@
     {
       "Reward Entry ID": "RWE-0100",
       "Reward Table ID": "RWT-0058",
-      "Reward Table Name": "Secondary Gems \u2014 Sapphire Only",
+      "Reward Table Name": "Secondary Gems — Sapphire Only",
       "Purpose": "Independent Mining gem drop",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0012",
@@ -16153,7 +16153,7 @@
     {
       "Reward Entry ID": "RWE-0101",
       "Reward Table ID": "RWT-0059",
-      "Reward Table Name": "Secondary Gems \u2014 Sapphire Emerald",
+      "Reward Table Name": "Secondary Gems — Sapphire Emerald",
       "Purpose": "Independent Mining gem drop",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0012",
@@ -16168,7 +16168,7 @@
     {
       "Reward Entry ID": "RWE-0102",
       "Reward Table ID": "RWT-0059",
-      "Reward Table Name": "Secondary Gems \u2014 Sapphire Emerald",
+      "Reward Table Name": "Secondary Gems — Sapphire Emerald",
       "Purpose": "Independent Mining gem drop",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0013",
@@ -16183,7 +16183,7 @@
     {
       "Reward Entry ID": "RWE-0103",
       "Reward Table ID": "RWT-0060",
-      "Reward Table Name": "Secondary Gems \u2014 All Gems",
+      "Reward Table Name": "Secondary Gems — All Gems",
       "Purpose": "Independent Mining gem drop",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0012",
@@ -16198,7 +16198,7 @@
     {
       "Reward Entry ID": "RWE-0104",
       "Reward Table ID": "RWT-0060",
-      "Reward Table Name": "Secondary Gems \u2014 All Gems",
+      "Reward Table Name": "Secondary Gems — All Gems",
       "Purpose": "Independent Mining gem drop",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0013",
@@ -16213,7 +16213,7 @@
     {
       "Reward Entry ID": "RWE-0105",
       "Reward Table ID": "RWT-0060",
-      "Reward Table Name": "Secondary Gems \u2014 All Gems",
+      "Reward Table Name": "Secondary Gems — All Gems",
       "Purpose": "Independent Mining gem drop",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0014",
@@ -22525,7 +22525,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": "Buys and sells ordinary items. Stocks starter tools.",
-      "Notes": "Sells all level-1 tools. Player buy price = 2\u00d7 Base Sell Value. Buys ordinary items at Base Sell Value.",
+      "Notes": "Sells all level-1 tools. Player buy price = 2× Base Sell Value. Buys ordinary items at Base Sell Value.",
       "Entry 1 Item ID": "ITEM-0100",
       "Entry 1 Mode": "Sell",
       "Entry 1 Price": null,
@@ -22616,7 +22616,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": "Sells improved pickaxes and pays better prices for ores.",
-      "Notes": "Access requires Mining Level 40. Player buy price = 2\u00d7 Base Sell Value. Buys ores at 1.5\u00d7 Base Sell Value.",
+      "Notes": "Access requires Mining Level 40. Player buy price = 2× Base Sell Value. Buys ores at 1.5× Base Sell Value.",
       "Entry 1 Item ID": "ITEM-0111",
       "Entry 1 Mode": "Sell",
       "Entry 1 Price": null,
@@ -22707,7 +22707,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": "Sells Essence at a premium so Mining remains the primary efficient source.",
-      "Notes": "Essence buy price = 100\u00d7 Base Sell Value. Other stock buy price = 2\u00d7 Base Sell Value.",
+      "Notes": "Essence buy price = 100× Base Sell Value. Other stock buy price = 2× Base Sell Value.",
       "Entry 1 Item ID": "ITEM-0011",
       "Entry 1 Mode": "Sell",
       "Entry 1 Price": null,
@@ -22798,7 +22798,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": "Citadel market hall stocking everyday tools and supplies.",
-      "Notes": "Player buy price = 2\u00d7 Base Sell Value. Buys ordinary items at Base Sell Value.",
+      "Notes": "Player buy price = 2× Base Sell Value. Buys ordinary items at Base Sell Value.",
       "Entry 1 Item ID": "ITEM-0100",
       "Entry 1 Mode": "Sell",
       "Entry 1 Price": null,
@@ -22889,7 +22889,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": "A compact stall with food, potions, and starter tools for travelers.",
-      "Notes": "Player buy price = 2\u00d7 Base Sell Value.",
+      "Notes": "Player buy price = 2× Base Sell Value.",
       "Entry 1 Item ID": "ITEM-0058",
       "Entry 1 Mode": "Sell",
       "Entry 1 Price": null,
@@ -22980,7 +22980,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": "Sells outfits, specialist hats, and gloves.",
-      "Notes": "Player buy price = 2\u00d7 Base Sell Value. Mostly wardrobe cosmetics; Chef's Hat, Wizard's Hat, and Leather Gloves are wearable gear.",
+      "Notes": "Player buy price = 2× Base Sell Value. Mostly wardrobe cosmetics; Chef's Hat, Wizard's Hat, and Leather Gloves are wearable gear.",
       "Entry 1 Item ID": "ITEM-0296",
       "Entry 1 Mode": "Sell",
       "Entry 1 Price": null,
@@ -23071,7 +23071,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": "Sells bronze and iron swords, helmets, chestplates, and platelegs.",
-      "Notes": "Player buy price = 2\u00d7 Base Sell Value. Buyback uses the normal 1\u00d7 general-store rate. No boots or gloves.",
+      "Notes": "Player buy price = 2× Base Sell Value. Buyback uses the normal 1× general-store rate. No boots or gloves.",
       "Entry 1 Item ID": "ITEM-0224",
       "Entry 1 Mode": "Sell",
       "Entry 1 Price": null,
@@ -23180,8 +23180,8 @@
       "Internal Key": "help_the_aspiring_apothecary",
       "Display Name": "Help the aspiring apothecary",
       "NPC ID": "NPC-0005",
-      "Summary": "Help Rose gather supplies to open her apothecary: 5 Rabbit\u2019s Feet, 5 Fernleaf, and 1,000 gold.",
-      "Pitch": "I\u2019m tired of working in the kitchen, I just saw a lot for sale down the street, I\u2019m thinking of starting the alchemy shop I\u2019ve always dreamed of\u2026",
+      "Summary": "Help Rose gather supplies to open her apothecary: 5 Rabbit’s Feet, 5 Fernleaf, and 1,000 gold.",
+      "Pitch": "I’m tired of working in the kitchen, I just saw a lot for sale down the street, I’m thinking of starting the alchemy shop I’ve always dreamed of…",
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": "Deliver: ITEM-0038 x5, ITEM-0031 x5; GoldCost: 1000; UnlockLocation: LOC-0026",
@@ -23193,7 +23193,7 @@
       "Reward XP Amount": 11000,
       "Reward Item ID": "ITEM-0165",
       "Reward Item Quantity": 1,
-      "Possible Rewards": "11,000 Alchemy XP; Chef's Hat x1; unlocks Rose\u2019s Apothecary"
+      "Possible Rewards": "11,000 Alchemy XP; Chef's Hat x1; unlocks Rose’s Apothecary"
     },
     {
       "Quest ID": "QST-0003",
@@ -23201,7 +23201,7 @@
       "Display Name": "The Missing Purse",
       "NPC ID": "NPC-0011",
       "Summary": "Donate 25 gold, then recover the beggar's stolen purse from the guards.",
-      "Pitch": "Please, traveler\u2026 someone took my coin purse in the night, I have nothing left.",
+      "Pitch": "Please, traveler… someone took my coin purse in the night, I have nothing left.",
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": "Talk: NPC-0012; Deliver: ITEM-0299 x1; AcceptGold: 25; RewardGold: 500; RewardCosmetic: COS-0002; BribeGold: 200; ChoiceNpc: NPC-0012; BranchSkillXp: 2500",
@@ -23261,7 +23261,7 @@
       "Dialogue ID": "QDL-0001",
       "Quest ID": "QST-0003",
       "NPC ID": "NPC-0007",
-      "Line": "A beggar lost a purse? The guards at the barracks were laughing about some poor fool\u2026",
+      "Line": "A beggar lost a purse? The guards at the barracks were laughing about some poor fool…",
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": null
@@ -23270,7 +23270,7 @@
       "Dialogue ID": "QDL-0002",
       "Quest ID": "QST-0003",
       "NPC ID": "NPC-0012",
-      "Line": "A purse? Maybe I saw something. Of course, my memory gets expensive\u2026 or you could try taking it.",
+      "Line": "A purse? Maybe I saw something. Of course, my memory gets expensive… or you could try taking it.",
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": null
@@ -23288,7 +23288,7 @@
       "Dialogue ID": "QDL-0004",
       "Quest ID": "QST-0004",
       "NPC ID": "NPC-0006",
-      "Line": "New around here? Browse all you like \u2014 no obligation to buy.",
+      "Line": "New around here? Browse all you like — no obligation to buy.",
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": null
@@ -23817,7 +23817,7 @@
       "Race ID": "RACE-0005",
       "Internal Key": "goblin",
       "Display Name": "Goblin",
-      "Description": "Small and green \u2014 welcome among the camps of their kin.",
+      "Description": "Small and green — welcome among the camps of their kin.",
       "Sort Order": 5,
       "Portrait Asset Key": null,
       "Hostility Immunity Location IDs": "LOC-0003",
@@ -24363,6 +24363,69 @@
       "Item ID": "ITEM-0058",
       "Quantity": 5,
       "Sort Order": 7,
+      "Status": "Planned",
+      "Notes": null
+    },
+    {
+      "Race Starting Item ID": "RST-0050",
+      "Race ID": "RACE-0001",
+      "Item ID": "ITEM-0108",
+      "Quantity": 1,
+      "Sort Order": 8,
+      "Status": "Planned",
+      "Notes": null
+    },
+    {
+      "Race Starting Item ID": "RST-0051",
+      "Race ID": "RACE-0002",
+      "Item ID": "ITEM-0108",
+      "Quantity": 1,
+      "Sort Order": 8,
+      "Status": "Planned",
+      "Notes": null
+    },
+    {
+      "Race Starting Item ID": "RST-0052",
+      "Race ID": "RACE-0003",
+      "Item ID": "ITEM-0108",
+      "Quantity": 1,
+      "Sort Order": 8,
+      "Status": "Planned",
+      "Notes": null
+    },
+    {
+      "Race Starting Item ID": "RST-0053",
+      "Race ID": "RACE-0004",
+      "Item ID": "ITEM-0108",
+      "Quantity": 1,
+      "Sort Order": 8,
+      "Status": "Planned",
+      "Notes": null
+    },
+    {
+      "Race Starting Item ID": "RST-0054",
+      "Race ID": "RACE-0005",
+      "Item ID": "ITEM-0108",
+      "Quantity": 1,
+      "Sort Order": 8,
+      "Status": "Planned",
+      "Notes": null
+    },
+    {
+      "Race Starting Item ID": "RST-0055",
+      "Race ID": "RACE-0006",
+      "Item ID": "ITEM-0108",
+      "Quantity": 1,
+      "Sort Order": 8,
+      "Status": "Planned",
+      "Notes": null
+    },
+    {
+      "Race Starting Item ID": "RST-0056",
+      "Race ID": "RACE-0007",
+      "Item ID": "ITEM-0108",
+      "Quantity": 1,
+      "Sort Order": 8,
       "Status": "Planned",
       "Notes": null
     }
