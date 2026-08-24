@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:ik_rules/ik_rules.dart';
@@ -82,6 +84,7 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
   String? _walkFromId;
   String? _walkToId;
   bool _returnHoldArmed = false;
+  Timer? _returnHold;
 
   GameController get controller => widget.controller;
   MultiplayerController get multiplayer => widget.multiplayer;
@@ -156,12 +159,15 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
 
   void _armReturningHold() {
     if (!controller.returningFromAway) {
+      _returnHold?.cancel();
+      _returnHold = null;
       _returnHoldArmed = false;
       return;
     }
     if (_returnHoldArmed) return;
     _returnHoldArmed = true;
-    Future<void>.delayed(const Duration(milliseconds: GameController.returningHoldMs), () {
+    _returnHold?.cancel();
+    _returnHold = Timer(const Duration(milliseconds: GameController.returningHoldMs), () {
       if (!mounted) return;
       controller.finishReturningFromAway();
     });
@@ -197,6 +203,8 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
 
   @override
   void dispose() {
+    _returnHold?.cancel();
+    _returnHold = null;
     WidgetsBinding.instance.removeObserver(this);
     multiplayer.flushAccountSave(controller.save);
     multiplayer.removeListener(_onMultiplayerChanged);

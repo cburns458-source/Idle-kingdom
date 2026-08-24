@@ -5306,7 +5306,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": "Improves hunting experience by 5% while equipped.",
-      "Icon Asset Key": "backpack",
+      "Icon Asset Key": "quiver",
       "Notes": "Artisanry 15. Worn on the back.",
       "Base Sell Value": 180
     }
