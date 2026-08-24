@@ -783,6 +783,7 @@ class ChatTabView {
     required this.label,
     required this.enabled,
     required this.selected,
+    this.unread = 0,
   });
 
   final ChatTab tab;
@@ -794,11 +795,15 @@ class ChatTabView {
   final bool enabled;
   final bool selected;
 
+  /// New lines waiting on this tab. Zero when notifications are off.
+  final num unread;
+
   Map<String, Object?> toJson() => <String, Object?>{
     'tab': tab.wire,
     'label': label,
     'enabled': enabled,
     'selected': selected,
+    'unread': unread,
   };
 }
 
@@ -821,14 +826,16 @@ List<ChatTabView> chatTabs({
   required bool hasGuild,
   required bool hasGuest,
   required num unreadDms,
+  Map<ChatTab, num> unread = const <ChatTab, num>{},
 }) {
   return chatTabOrder.map((tab) {
+    final waiting = unread[tab] ?? (tab == ChatTab.dm ? unreadDms : 0);
     final label = switch (tab) {
       ChatTab.global => 'Global',
       ChatTab.local => citadelHub ? 'Citadel' : 'Local',
       ChatTab.guild => 'Guild',
       ChatTab.guest => 'Guest',
-      ChatTab.dm => unreadDms > 0 ? 'Private (${jsNumberToString(unreadDms)})' : 'Private',
+      ChatTab.dm => waiting > 0 ? 'Private (${jsNumberToString(waiting)})' : 'Private',
     };
     return ChatTabView(
       tab: tab,
@@ -839,6 +846,7 @@ List<ChatTabView> chatTabs({
         _ => true,
       },
       selected: tab == selected,
+      unread: waiting,
     );
   }).toList();
 }
@@ -879,6 +887,13 @@ const String chatViewGuildsLabel = 'View guilds';
 
 /// Where the read cursor for one account's DMs is kept.
 String dmReadCursorKey(String userId) => 'idle-kingdoms.chat.dm-read-at:$userId';
+
+/// Where the read cursor for one public chat room is kept.
+String chatReadCursorKey(String userId, String channelKey) =>
+    'idle-kingdoms.chat.read-at:$userId:$channelKey';
+
+/// Device toggle for a channel's unread bubble. Absent means on.
+String chatNotifyStorageKey(ChatTab tab) => 'idle-kingdoms.client.chat-notify:${tab.wire}';
 
 /// One line of a chat room.
 class ChatLineView {

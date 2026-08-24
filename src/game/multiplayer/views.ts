@@ -519,6 +519,8 @@ export interface ChatTabView {
   /** False for guild or guest chat without a room to show. */
   enabled: boolean
   selected: boolean
+  /** New lines waiting on this tab. Zero when notifications are off. */
+  unread: number
 }
 
 /**
@@ -543,32 +545,38 @@ export function chatTabs({
   hasGuild,
   hasGuest,
   unreadDms,
+  unread,
 }: {
   selected: ChatTab
   citadelHub: boolean
   hasGuild: boolean
   hasGuest: boolean
   unreadDms: number
+  unread?: Partial<Record<ChatTab, number>>
 }): ChatTabView[] {
-  return CHAT_TABS.map((tab) => ({
-    tab,
-    label:
-      tab === 'global'
-        ? 'Global'
-        : tab === 'local'
-          ? citadelHub
-            ? 'Citadel'
-            : 'Local'
-          : tab === 'guild'
-            ? 'Guild'
-            : tab === 'guest'
-              ? 'Guest'
-              : unreadDms > 0
-                ? `Private (${unreadDms})`
-                : 'Private',
-    enabled: tab === 'guild' ? hasGuild : tab === 'guest' ? hasGuest : true,
-    selected: tab === selected,
-  }))
+  return CHAT_TABS.map((tab) => {
+    const waiting = unread?.[tab] ?? (tab === 'dm' ? unreadDms : 0)
+    return {
+      tab,
+      label:
+        tab === 'global'
+          ? 'Global'
+          : tab === 'local'
+            ? citadelHub
+              ? 'Citadel'
+              : 'Local'
+            : tab === 'guild'
+              ? 'Guild'
+              : tab === 'guest'
+                ? 'Guest'
+                : waiting > 0
+                  ? `Private (${waiting})`
+                  : 'Private',
+      enabled: tab === 'guild' ? hasGuild : tab === 'guest' ? hasGuest : true,
+      selected: tab === selected,
+      unread: waiting,
+    }
+  })
 }
 
 /**
@@ -623,6 +631,16 @@ export const CHAT_VIEW_GUILDS_LABEL = 'View guilds'
 /** Where the read cursor for one account's DMs is kept. */
 export function dmReadCursorKey(userId: string): string {
   return `idle-kingdoms.chat.dm-read-at:${userId}`
+}
+
+/** Where the read cursor for one public chat room is kept. */
+export function chatReadCursorKey(userId: string, channelKey: string): string {
+  return `idle-kingdoms.chat.read-at:${userId}:${channelKey}`
+}
+
+/** Device toggle for a channel's unread bubble. Absent means on. */
+export function chatNotifyStorageKey(tab: ChatTab): string {
+  return `idle-kingdoms.client.chat-notify:${tab}`
 }
 
 /** One line of a chat room. */

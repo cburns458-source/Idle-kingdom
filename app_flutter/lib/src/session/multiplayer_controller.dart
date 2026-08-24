@@ -65,6 +65,15 @@ class MultiplayerController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// When on, new lines on [tab] raise a bubble on the chat icon and tab.
+  bool chatNotifyEnabled(ChatTab tab) => storage.getItem(chatNotifyStorageKey(tab)) != '0';
+
+  void setChatNotifyEnabled(ChatTab tab, bool value) {
+    storage.setItem(chatNotifyStorageKey(tab), value ? '1' : '0');
+    if (!value) _unread[tab] = 0;
+    notifyListeners();
+  }
+
   Future<void> setPrivacyDirectMessages(String value) {
     return run(() async {
       _ownProfile = await service.setChatPrivacy(directMessages: value);
@@ -148,6 +157,10 @@ class MultiplayerController extends ChangeNotifier {
   final List<String> _openDmPeerIds = <String>[];
   final Map<String, String> _dmPeerNames = <String, String>{};
   int _unreadDms = 0;
+  final Map<ChatTab, int> _unread = <ChatTab, int>{};
+  bool _chatOpen = false;
+  bool _citadelHub = false;
+  String _chatLocationId = '';
   String? _notice;
   bool _busy = false;
   bool _suppressUploads = false;
@@ -207,6 +220,16 @@ class MultiplayerController extends ChangeNotifier {
   List<BazaarPost> get bazaarPosts => _bazaarPosts;
   ChatTab get chatTab => _chatTab;
   int get unreadDms => _unreadDms;
+
+  /// Unread lines waiting on one tab, after notification toggles.
+  int unreadFor(ChatTab tab) => _unread[tab] ?? (tab == ChatTab.dm ? _unreadDms : 0);
+
+  /// Sum of enabled-channel bubbles for the corner chat icon.
+  int get unreadTotal => chatTabOrder.fold<int>(0, (sum, tab) => sum + unreadFor(tab));
+
+  Map<ChatTab, num> get unreadByTab => <ChatTab, num>{
+    for (final tab in chatTabOrder) tab: unreadFor(tab),
+  };
   String? get selectedDmPeerId => _selectedDmPeerId;
 
   /// Open private threads, newest first, including ones started from a profile.
@@ -414,6 +437,8 @@ class MultiplayerController extends ChangeNotifier {
     _bountyClaims = const <BountyClaimRecord>[];
     _bazaarPosts = const <BazaarPost>[];
     _unreadDms = 0;
+    _unread.clear();
+    _chatOpen = false;
   }
 
   // --- Account saves --------------------------------------------------------
@@ -584,7 +609,7 @@ class MultiplayerController extends ChangeNotifier {
     _board = await _readBoard(save);
     _citadelVisitors = await service.citadelVisitors();
     _presence = await service.presenceRecords();
-    _unreadDms = await service.countUnreadDirectMessages(_dmCursor());
+    await _refreshUnread(save);
     await _loadSocialLists();
     notifyListeners();
   }
@@ -612,7 +637,7 @@ class MultiplayerController extends ChangeNotifier {
   Future<void> _poll(PlayerSave save) async {
     if (!isSignedIn) return;
     if (await _wasKicked()) return;
-    _unreadDms = await service.countUnreadDirectMessages(_dmCursor());
+    await _refreshUnread(save);
     if (_chatTab == ChatTab.dm) {
       _messages = await service.listDirectMessages();
       _ingestDmPeers(_messages);
@@ -788,6 +813,81 @@ class MultiplayerController extends ChangeNotifier {
 
   // --- Chat -----------------------------------------------------------------
 
+  /// Keeps unread polling pointed at the open drawer and the room the player is in.
+  void syncChatSurface({required bool open, required String locationId, required bool citadelHub}) {
+    _chatOpen = open;
+    _chatLocationId = locationId;
+    _citadelHub = citadelHub;
+  }
+
+  Future<void> _refreshUnread(PlayerSave save) async {
+    if (!isSignedIn) {
+      _unreadDms = 0;
+      _unread.clear();
+      return;
+    }
+    final locationId = _chatLocationId.isEmpty ? save.currentLocationId : _chatLocationId;
+    for (final tab in chatTabOrder) {
+      _unread[tab] = await _unreadCountFor(tab, locationId);
+    }
+    _unreadDms = _unread[ChatTab.dm] ?? 0;
+  }
+
+  Future<int> _unreadCountFor(ChatTab tab, String locationId) async {
+    if (!chatNotifyEnabled(tab)) return 0;
+    if (_chatOpen && _chatTab == tab) {
+      _markTabRead(tab, locationId);
+      return 0;
+    }
+    if (tab == ChatTab.dm) {
+      return service.countUnreadDirectMessages(_dmCursor());
+    }
+    final channel = chatChannelForTab(
+      tab,
+      locationId: locationId,
+      citadelHub: _citadelHub,
+      guildId: _guildId,
+      guestGuildId: _guestGuildId,
+    );
+    if (channel == null) return 0;
+    final cursor = _channelCursor(channel);
+    if (cursor == null) {
+      _storeChannelCursor(channel);
+      return 0;
+    }
+    return service.countUnreadChat(channel, cursor);
+  }
+
+  void _markTabRead(ChatTab tab, String locationId) {
+    if (tab == ChatTab.dm) {
+      _markDmsRead();
+      _unread[ChatTab.dm] = 0;
+      return;
+    }
+    final channel = chatChannelForTab(
+      tab,
+      locationId: locationId,
+      citadelHub: _citadelHub,
+      guildId: _guildId,
+      guestGuildId: _guestGuildId,
+    );
+    if (channel == null) return;
+    _storeChannelCursor(channel);
+    _unread[tab] = 0;
+  }
+
+  String? _channelCursor(ChatChannel channel) {
+    final userId = session?.userId;
+    if (userId == null) return null;
+    return storage.getItem(chatReadCursorKey(userId, chatChannelKey(channel)));
+  }
+
+  void _storeChannelCursor(ChatChannel channel) {
+    final userId = session?.userId;
+    if (userId == null) return;
+    storage.setItem(chatReadCursorKey(userId, chatChannelKey(channel)), isoFromMs(clock()));
+  }
+
   String? _dmCursor() {
     final userId = session?.userId;
     if (userId == null) return null;
@@ -820,7 +920,7 @@ class MultiplayerController extends ChangeNotifier {
       if (_selectedDmPeerId == null && _openDmPeerIds.isNotEmpty) {
         _selectedDmPeerId = _openDmPeerIds.first;
       }
-      _markDmsRead();
+      _markTabRead(ChatTab.dm, locationId);
       notifyListeners();
       return;
     }
@@ -832,6 +932,7 @@ class MultiplayerController extends ChangeNotifier {
       guestGuildId: _guestGuildId,
     );
     _messages = channel == null ? const <ChatMessage>[] : await service.listChat(channel);
+    _markTabRead(tab, locationId);
     notifyListeners();
   }
 

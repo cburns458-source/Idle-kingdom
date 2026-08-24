@@ -109,7 +109,14 @@ MultiplayerController buildMultiplayer(
 }) {
   final testClock = clock ?? TestClock();
   final storage = MemorySaveStorage();
-  final service = LocalMultiplayerService(storage: storage);
+  var ids = 0;
+  final service = LocalMultiplayerService(
+    storage: storage,
+    ports: LocalBackendPorts(
+      nowMs: testClock.read,
+      newId: (prefix) => '${prefix}_${(ids += 1).toString().padLeft(4, '0')}',
+    ),
+  );
   service.ensureDemoWorld(database.launch);
   registerTestAccount(service, account: account);
   if (signedIn) {

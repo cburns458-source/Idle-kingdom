@@ -681,6 +681,16 @@ class RemoteMultiplayerService implements MultiplayerService {
   }
 
   @override
+  Future<int> countUnreadChat(ChatChannel channel, String? sinceIso) async {
+    if (!isSignedIn) return 0;
+    final viewerId = session!.userId;
+    final sinceMs = sinceIso != null ? jsDateParse(sinceIso) : 0;
+    return (await listChat(channel))
+        .where((row) => row.userId != viewerId && jsDateParse(row.createdAt) > sinceMs)
+        .length;
+  }
+
+  @override
   Future<void> mutePlayer(String targetUserId) => _local.mutePlayer(targetUserId);
 
   @override
