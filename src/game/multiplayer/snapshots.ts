@@ -4,7 +4,13 @@ import { levelForTotalXp } from '../activity/xp'
 import { logCompletion } from '../log/log'
 import { rankedPvpKd } from '../pvp/matchmaking'
 import { isPacifistSave, totalLevel, totalSkillXp } from '../skills/totals'
-import type { LeaderboardEntry, MultiplayerBoardKey, PublicPlayerProfile } from './types'
+import {
+  publicEquipmentFromSave,
+  type LeaderboardEntry,
+  type MultiplayerBoardKey,
+  type PublicEquippedSlot,
+  type PublicPlayerProfile,
+} from './types'
 
 export interface LeaderboardBoardValue {
   boardKey: MultiplayerBoardKey
@@ -15,6 +21,8 @@ export interface LeaderboardBoardValue {
 
 export interface LeaderboardSnapshotValues {
   boards: LeaderboardBoardValue[]
+  /** Equipped slots published with the ranking submit. */
+  equipment: PublicEquippedSlot[]
 }
 
 /** Build leaderboard snapshot values from a local save (submitted on a ranking update). */
@@ -63,7 +71,7 @@ export function buildLeaderboardSnapshot(
     boards.push({ boardKey: `skill:${skill['Skill ID']}`, value: level, secondaryValue: xp })
   }
 
-  return { boards }
+  return { boards, equipment: publicEquipmentFromSave(save) }
 }
 
 export function boardLabel(db: GameDatabase, boardKey: MultiplayerBoardKey): string {

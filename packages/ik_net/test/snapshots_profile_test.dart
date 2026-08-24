@@ -44,4 +44,19 @@ void main() {
       hasLength(db.skills.where((row) => row.raw['Release Phase'] == 'Launch').length),
     );
   });
+
+  test('publishes equipped slots with the snapshot', () {
+    final db = _database();
+    final save = equipStackToSlot(
+      createNewSave(db, 1786568400000),
+      weaponToolSlotId,
+      'ITEM-0110',
+      1,
+    );
+    final snapshot = buildLeaderboardSnapshot(db, save);
+    expect(snapshot.equipment, hasLength(1));
+    expect(snapshot.equipment.single.slotId, weaponToolSlotId);
+    expect(snapshot.equipment.single.itemId, 'ITEM-0110');
+    expect(buildLeaderboardSnapshot(db, createNewSave(db, 1786568400000)).equipment, isEmpty);
+  });
 }

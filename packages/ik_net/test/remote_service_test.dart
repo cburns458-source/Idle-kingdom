@@ -629,6 +629,27 @@ void main() {
     expect(profile.totalLevel, totalLevel(save));
   });
 
+  test('publishes equipped gear on a ranking submit so other players can see it', () async {
+    final transport = FakeTransport();
+    final hero = await _signedIn(transport, MemorySaveStorage());
+    final db = _database();
+    final save = equipStackToSlot(
+      createNewSave(db, _nowMs).copyWith(characterName: 'Hero'),
+      weaponToolSlotId,
+      'ITEM-0110',
+      1,
+    );
+    expect((await hero.submitLeaderboard(db, save)).ok, isTrue);
+
+    final rival = _service(transport, MemorySaveStorage());
+    await rival.signUp('rival@example.com', 'Rival', 'secret');
+    final profile = await rival.publicProfile(hero.session!.userId, db: db);
+    expect(profile, isNotNull);
+    expect(profile!.publicEquipment, isNotNull);
+    expect(profile.publicEquipment!.single.itemId, 'ITEM-0110');
+    expect(profile.publicEquipment!.single.slotId, weaponToolSlotId);
+  });
+
   test('hides published gear when the account opted out of public gear', () async {
     final transport = FakeTransport();
     final hero = await _signedIn(transport, MemorySaveStorage());

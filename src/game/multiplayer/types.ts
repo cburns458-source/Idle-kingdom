@@ -91,6 +91,8 @@ export interface MultiplayerProfile {
   privacyPublicGear: boolean
   privacyDirectMessages: string
   privacyLocalChat: string
+  /** Loadout last published with a ranking submit. */
+  publishedEquipment?: PublicEquippedSlot[]
   updatedAt: string
 }
 

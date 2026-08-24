@@ -24,12 +24,19 @@ class LeaderboardBoardValue {
 }
 
 class LeaderboardSnapshotValues {
-  const LeaderboardSnapshotValues({required this.boards});
+  const LeaderboardSnapshotValues({
+    required this.boards,
+    this.equipment = const <PublicEquippedSlot>[],
+  });
 
   final List<LeaderboardBoardValue> boards;
 
+  /// Equipped slots published with the ranking submit.
+  final List<PublicEquippedSlot> equipment;
+
   Map<String, Object?> toJson() => <String, Object?>{
     'boards': boards.map((board) => board.toJson()).toList(),
+    'equipment': equipment.map((row) => row.toJson()).toList(),
   };
 }
 
@@ -86,7 +93,7 @@ LeaderboardSnapshotValues buildLeaderboardSnapshot(GameDatabase db, PlayerSave s
     );
   }
 
-  return LeaderboardSnapshotValues(boards: boards);
+  return LeaderboardSnapshotValues(boards: boards, equipment: publicEquipmentFromSave(save));
 }
 
 String boardLabel(GameDatabase db, MultiplayerBoardKey boardKey) {
