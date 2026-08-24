@@ -67,7 +67,7 @@ void main() {
     final unknown = friendListRows(const <SocialContact>[
       SocialContact(userId: 'usr_2', username: 'test', appearance: defaultPlayerAppearance),
     ]).single;
-    expect(unknown.subtitle, 'No guild · Unknown');
+    expect(unknown.subtitle, 'Unknown');
     expect(friendshipPair('b', 'a'), (userA: 'a', userB: 'b'));
   });
 
@@ -89,7 +89,7 @@ void main() {
         'profiles': <String, Object?>{
           'username': 'Hero',
           'appearance_json': <String, Object?>{},
-          'guilds': <String, Object?>{'name': 'Iron League'},
+          'guilds': <String, Object?>{'name': 'Iron League', 'tag': 'IRN'},
         },
       },
       <String, Object?>{
@@ -105,6 +105,7 @@ void main() {
     ], boardTotalLevel);
     expect(entries.first.username, 'Hero');
     expect(entries.first.guildName, 'Iron League');
+    expect(entries.first.guildTag, 'IRN');
     expect(entries.first.appearance.toJson(), defaultPlayerAppearance.toJson());
     expect(entries.last.username, 'Adventurer');
     expect(entries.last.guildName, isNull);

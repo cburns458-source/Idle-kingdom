@@ -391,6 +391,7 @@ LeaderboardEntry leaderboardEntryFrom(RemoteRow row, MultiplayerBoardKey boardKe
     username: username.isEmpty ? 'Adventurer' : username,
     appearance: playerAppearanceFromRemote(profile?['appearance_json']),
     guildName: _optStr(guild?['name']),
+    guildTag: _optStr(guild?['tag']),
     boardKey: boardKey,
     value: _num(row['value']),
     rank: index + 1,

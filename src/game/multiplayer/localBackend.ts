@@ -518,11 +518,15 @@ export class LocalMultiplayerBackend {
       .filter((row) => row.boardKey === boardKey)
       .map((row) => {
         const profile = db.profiles.find((entry) => entry.userId === row.userId)
+        const guild = profile?.guildId
+          ? db.guilds.find((candidate) => candidate.id === profile.guildId)
+          : undefined
         return {
           userId: row.userId,
           username: profile?.username ?? 'Adventurer',
           appearance: profile?.appearance ?? defaultAppearance(),
           guildName: profile?.guildName ?? null,
+          guildTag: guild?.tag,
           boardKey,
           value: row.value,
           rank: 0,

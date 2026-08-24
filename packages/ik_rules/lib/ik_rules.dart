@@ -56,6 +56,7 @@ export 'src/log/log.dart';
 export 'src/loot/drop_chance.dart';
 export 'src/npcs/conversation.dart';
 export 'src/npcs/knowledge.dart';
+export 'src/npcs/roaming.dart';
 export 'src/potions/effects.dart';
 export 'src/production/engine.dart';
 export 'src/production/inventory.dart';

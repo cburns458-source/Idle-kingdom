@@ -240,6 +240,10 @@ String _summaryLine(ProjectRow project) {
 String? _lockedReason(GameDatabase db, PlayerSave save, ProjectRow project, String skillId) {
   final knowledge = hasProjectKnowledge(db, save, skillId);
   if (!knowledge.ok) {
+    if (skillId == smithingSkillId) {
+      return 'Locked — find the Master Dwarf to unlock Smithing projects. '
+          'The Dwarven Mining Merchant knows where he is today.';
+    }
     return 'Locked — speak with the ${knowledge.npcName} to unlock '
         '${_skillName(db, skillId)} projects.';
   }

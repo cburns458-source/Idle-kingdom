@@ -1,6 +1,6 @@
 import type { ProjectRow } from '../data/projectTypes'
 import type { GameDatabase } from '../data/types'
-import { hasProjectKnowledge } from '../npcs/knowledge'
+import { hasProjectKnowledge, SMITHING_SKILL_ID } from '../npcs/knowledge'
 import { inventoryCount } from '../production/recipes'
 import { listRecipeBookEntries, type RecipeBookEntry } from '../recipes/knowledge'
 import type { PlayerSave } from '../save/types'
@@ -181,6 +181,9 @@ function lockedReason(
 ): string | null {
   const knowledge = hasProjectKnowledge(db, save, skillId)
   if (!knowledge.ok) {
+    if (skillId === SMITHING_SKILL_ID) {
+      return 'Locked — find the Master Dwarf to unlock Smithing projects. The Dwarven Mining Merchant knows where he is today.'
+    }
     return `Locked — speak with the ${knowledge.npcName} to unlock ${skillName(db, skillId)} projects.`
   }
   if (meetsProjectSkills(save, project)) return null

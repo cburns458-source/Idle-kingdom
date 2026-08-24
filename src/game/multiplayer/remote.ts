@@ -255,14 +255,16 @@ export function leaderboardEntryFrom(
   const profile = (row.profiles ?? null) as {
     username?: string
     appearance_json?: unknown
-    guilds?: { name?: string } | null
+    guilds?: { name?: string; tag?: string } | null
   } | null
   const username = profile?.username?.trim() ?? ''
+  const guildTag = profile?.guilds?.tag?.trim()
   return {
     userId: str(row.user_id),
     username: username.length === 0 ? 'Adventurer' : username,
     appearance: playerAppearanceFromRemote(profile?.appearance_json),
     guildName: profile?.guilds?.name ?? null,
+    ...(guildTag ? { guildTag } : {}),
     boardKey,
     value: num(row.value),
     rank: index + 1,

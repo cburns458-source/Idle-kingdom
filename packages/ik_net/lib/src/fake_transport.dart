@@ -290,11 +290,13 @@ class FakeTransport implements RemoteTransport {
     for (final profile in tables[RemoteTables.profiles]!) {
       if (profile['user_id'] != userId) continue;
       Object? guildName = profile['guild_name'];
+      Object? guildTag;
       final guildId = profile['guild_id'];
-      if (guildName == null && guildId != null) {
+      if (guildId != null) {
         for (final guild in tables[RemoteTables.guilds]!) {
           if (guild['id'] == guildId) {
-            guildName = guild['name'];
+            guildName ??= guild['name'];
+            guildTag = guild['tag'];
             break;
           }
         }
@@ -304,7 +306,9 @@ class FakeTransport implements RemoteTransport {
         'username': username is String && username.isNotEmpty ? username : 'Adventurer',
         'appearance_json': _appearanceJson(profile['appearance_json']),
         'guild_id': guildId,
-        'guilds': guildName == null ? null : <String, Object?>{'name': guildName},
+        'guilds': guildName == null
+            ? null
+            : <String, Object?>{'name': guildName, if (guildTag != null) 'tag': guildTag},
       };
     }
     return <String, Object?>{

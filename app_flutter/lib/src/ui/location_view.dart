@@ -554,7 +554,7 @@ class _LocationViewState extends State<LocationView> {
   }
 
   List<Widget> _people(String locationId) {
-    final npcs = controller.indexes.npcsByLocationId[locationId] ?? const [];
+    final npcs = npcsAtLocation(controller.db, locationId, controller.session.clock());
     if (npcs.isEmpty) return const [];
     return [
       _SectionHeading('People'),

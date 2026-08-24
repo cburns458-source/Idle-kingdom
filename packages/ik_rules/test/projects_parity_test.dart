@@ -263,10 +263,15 @@ void main() {
             .map(
               (locationId) => <String, Object?>{
                 'locationId': locationId,
-                'npcIds': npcsAtLocation(db, locationId).map((npc) => npc.npcId).toList(),
+                'npcIds': npcsAtLocation(
+                  db,
+                  locationId,
+                  DateTime.utc(2026, 1, 1).millisecondsSinceEpoch,
+                ).map((npc) => npc.npcId).toList(),
                 'shopIds': npcsAtLocation(
                   db,
                   locationId,
+                  DateTime.utc(2026, 1, 1).millisecondsSinceEpoch,
                 ).map((npc) => shopIdForMerchant(db, npc)).toList(),
               },
             )
