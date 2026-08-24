@@ -16,17 +16,31 @@ export function inventorySlotsFree(save: Pick<PlayerSave, 'inventory'>): number 
   return Math.max(0, INVENTORY_SLOT_LIMIT - inventorySlotCount(save))
 }
 
-function stackMatches(
+function isUnenchantedMatch(
   stack: PlayerSave['inventory'][number],
   itemId: string,
-  enchantmentId: string | null,
-  favorite: boolean,
 ): boolean {
-  return (
-    stack.itemId === itemId &&
-    (stack.enchantmentId ?? null) === enchantmentId &&
-    Boolean(stack.favorite) === favorite
-  )
+  return stack.itemId === itemId && !stack.enchantmentId
+}
+
+/**
+ * Index of the unenchanted pile to grow. Hearted stacks win when both exist.
+ * Enchanted items never merge. Returns -1 when a new slot is needed.
+ */
+export function mergeableStackIndex(
+  inventory: PlayerSave['inventory'],
+  itemId: string,
+  enchantmentId: string | null = null,
+): number {
+  if (enchantmentId) return -1
+  let unfavorited = -1
+  for (let i = 0; i < inventory.length; i += 1) {
+    const stack = inventory[i]
+    if (!stack || !isUnenchantedMatch(stack, itemId)) continue
+    if (stack.favorite === true) return i
+    if (unfavorited < 0) unfavorited = i
+  }
+  return unfavorited
 }
 
 /** How many of this item can still be added without overflowing slots or stack max. */
@@ -34,7 +48,7 @@ export function maxAddableQuantity(
   save: Pick<PlayerSave, 'inventory'>,
   itemId: string,
   enchantmentId: string | null = null,
-  favorite = false,
+  _favorite = false,
   db?: GameDatabase,
 ): number {
   if (isGoldCurrencyItem(itemId, db) && !enchantmentId) {
@@ -44,9 +58,8 @@ export function maxAddableQuantity(
     return inventorySlotsFree(save)
   }
 
-  const existing = save.inventory.find((stack) =>
-    stackMatches(stack, itemId, null, favorite),
-  )
+  const existingIndex = mergeableStackIndex(save.inventory, itemId)
+  const existing = existingIndex >= 0 ? save.inventory[existingIndex] : undefined
   const stackRoom = existing
     ? Math.max(0, INVENTORY_STACK_MAX - existing.quantity)
     : inventorySlotsFree(save) > 0

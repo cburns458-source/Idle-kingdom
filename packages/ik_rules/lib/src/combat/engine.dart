@@ -6,6 +6,8 @@ import 'package:ik_content/ik_content.dart';
 import '../activity/held_action.dart';
 import '../activity/rewards.dart';
 import '../activity/xp.dart';
+import '../equipment/loadout.dart';
+import '../npcs/knowledge.dart';
 import '../bounties/progress.dart';
 import '../config.dart';
 import '../js_compat.dart';
@@ -17,6 +19,7 @@ import '../rng/mulberry32.dart';
 import '../cosmetics/cosmetics.dart';
 import '../save/generated/save_models.dart';
 import '../time.dart';
+import 'boss.dart';
 import 'food.dart';
 import 'stats.dart';
 
@@ -26,8 +29,13 @@ class CombatRoundResult {
     required this.playerHit,
     required this.playerCrit,
     required this.offhandHit,
+    required this.staffHit,
+    required this.skipNextEnemyAttack,
     required this.enemyHit,
     required this.thornsHit,
+    required this.bossSleepRoundsRemaining,
+    required this.enemyAsleep,
+    required this.enemyRampage,
     required this.enemyHp,
     required this.playerHp,
     required this.outcome,
@@ -40,10 +48,25 @@ class CombatRoundResult {
 
   /// Off-hand dagger hit this round, or null when none / skipped.
   final num? offhandHit;
+
+  /// Staff of Sparks extra hit this round, or null when none / skipped.
+  final num? staffHit;
+
+  /// Persist Binding: skip the enemy's next attack.
+  final bool skipNextEnemyAttack;
   final num? enemyHit;
 
   /// Damage reflected back at the enemy this round via armor enchantments (e.g. Thorns).
   final num thornsHit;
+
+  /// Remaining boss sleep rounds after this one, or null when the enemy is not a boss.
+  final num? bossSleepRoundsRemaining;
+
+  /// True when this enemy started the round asleep.
+  final bool enemyAsleep;
+
+  /// True when the enemy's landing swing was a rampage hit.
+  final bool enemyRampage;
   final num enemyHp;
   final num playerHp;
 
@@ -54,8 +77,13 @@ class CombatRoundResult {
     'playerHit': playerHit,
     'playerCrit': playerCrit,
     'offhandHit': offhandHit,
+    'staffHit': staffHit,
+    'skipNextEnemyAttack': skipNextEnemyAttack,
     'enemyHit': enemyHit,
     'thornsHit': thornsHit,
+    'bossSleepRoundsRemaining': bossSleepRoundsRemaining,
+    'enemyAsleep': enemyAsleep,
+    'enemyRampage': enemyRampage,
     'enemyHp': enemyHp,
     'playerHp': playerHp,
     'outcome': outcome,
@@ -111,6 +139,8 @@ PlayerSave beginCombatSave(
     combatEnemyId: enemy.raw['Enemy ID'] as String?,
     combatEnemyHp: math.max(0, enemyMaxHp - poisonDamage),
     combatRoundStartedAt: nowIso,
+    combatSkipEnemyAttack: false,
+    combatBossSleepRoundsRemaining: bossProfile(enemy)?.sleepStart,
     activePotionEffect: potion.effect,
     deathPauseUntil: null,
   );
@@ -121,6 +151,8 @@ PlayerSave clearCombatSave(PlayerSave save) {
     combatEnemyId: null,
     combatEnemyHp: null,
     combatRoundStartedAt: null,
+    combatSkipEnemyAttack: false,
+    combatBossSleepRoundsRemaining: null,
     activePotionEffect: save.activePotionEffect?.scope == 'one_combat_encounter'
         ? null
         : save.activePotionEffect,
@@ -135,6 +167,8 @@ CombatRoundResult resolveCombatRound(
   RandomFn random,
 ) {
   final floor = configNumber(db, 'damage_floor', 1);
+  final profile = bossProfile(enemy);
+  final asleep = (save.combatBossSleepRoundsRemaining ?? 0) > 0;
   final playerRange = playerDamageRange(db, save);
   var playerHit = rollDamage(playerRange.min, playerRange.max, random);
   var playerCrit = false;
@@ -143,17 +177,46 @@ CombatRoundResult resolveCombatRound(
     playerCrit = true;
     playerHit = math.max(1, (playerHit * criticalStrikeDamageMultiplier()).floor());
   }
+  playerHit = applySleepIncoming(playerHit, asleep);
   var nextEnemyHp = math.max(0, enemyHp - playerHit);
+  final weaponId = save.equipment.slots[weaponToolSlotId]?.itemId;
+
+  // Staff of Sparks: a second blue hit after the main swing if the enemy is still up.
+  // No crit and no Strength / combat / potion / race multipliers — Arcana level only.
+  num? staffHit;
+  if (nextEnemyHp > 0 && isNotBlank(weaponId) && itemHasCapability(db, weaponId!, 'staff_sparks')) {
+    final sparks = staffSparksDamageRange(getSkillProgress(save, arcanaSkillId).level);
+    staffHit = applySleepIncoming(rollDamage(sparks.min, sparks.max, random), asleep);
+    nextEnemyHp = math.max(0, nextEnemyHp - staffHit);
+  }
 
   // Off-hand dagger swings after the main-hand hit if the enemy is still up.
+  // Two-handers never keep an off-hand dagger, so this stays null for staves.
   // Off-hand cannot crit; shared enchant/spell bonuses are already in its range.
   num? offhandHit;
   if (nextEnemyHp > 0) {
     final offhandRange = playerOffhandDamageRange(db, save);
     if (offhandRange != null) {
-      offhandHit = rollDamage(offhandRange.min, offhandRange.max, random);
+      offhandHit = applySleepIncoming(
+        rollDamage(offhandRange.min, offhandRange.max, random),
+        asleep,
+      );
       nextEnemyHp = math.max(0, nextEnemyHp - offhandHit);
     }
+  }
+
+  // Binding procs on this hit: they still attack this round, then skip the next.
+  var skipNextEnemyAttack = false;
+  if (nextEnemyHp > 0 &&
+      isNotBlank(weaponId) &&
+      itemHasCapability(db, weaponId!, 'staff_binding')) {
+    skipNextEnemyAttack = random() < 0.5;
+  }
+
+  num? nextSleep = profile == null ? null : (save.combatBossSleepRoundsRemaining ?? 0);
+  if (nextSleep != null && nextSleep > 0) nextSleep = nextSleep - 1;
+  if (profile != null && nextEnemyHp <= jsNumber(enemy.raw['Maximum HP']) * profile.wakeHpRatio) {
+    nextSleep = 0;
   }
 
   if (nextEnemyHp <= 0) {
@@ -161,24 +224,51 @@ CombatRoundResult resolveCombatRound(
       playerHit: playerHit,
       playerCrit: playerCrit,
       offhandHit: offhandHit,
+      staffHit: staffHit,
+      skipNextEnemyAttack: false,
       enemyHit: null,
       thornsHit: 0,
+      bossSleepRoundsRemaining: nextSleep,
+      enemyAsleep: asleep,
+      enemyRampage: false,
       enemyHp: 0,
       playerHp: save.currentHp,
       outcome: 'victory',
     );
   }
 
-  final enemyRaw = rollDamage(
+  if (save.combatSkipEnemyAttack || asleep) {
+    return CombatRoundResult(
+      playerHit: playerHit,
+      playerCrit: playerCrit,
+      offhandHit: offhandHit,
+      staffHit: staffHit,
+      skipNextEnemyAttack: skipNextEnemyAttack,
+      enemyHit: null,
+      thornsHit: 0,
+      bossSleepRoundsRemaining: nextSleep,
+      enemyAsleep: asleep,
+      enemyRampage: false,
+      enemyHp: nextEnemyHp,
+      playerHp: save.currentHp,
+      outcome: 'ongoing',
+    );
+  }
+
+  final rampage =
+      profile != null && nextEnemyHp <= jsNumber(enemy.raw['Maximum HP']) * profile.rampageHpRatio;
+  var enemyRaw = rollDamage(
     jsNumber(enemy.raw['Min Damage']),
     jsNumber(enemy.raw['Max Damage']),
     random,
   );
+  if (rampage) enemyRaw *= 2;
   final enemyHit = applyMitigation(enemyRaw, playerDamageReduction(db, save), floor);
   final playerHp = math.max(0, save.currentHp - enemyHit);
 
   final thornsPercent = equippedEnchantmentThornsPercent(db, save);
-  final thornsHit = thornsPercent > 0 ? (enemyHit * thornsPercent / 100).round() : 0;
+  num thornsHit = thornsPercent > 0 ? (enemyHit * thornsPercent / 100).round() : 0;
+  thornsHit = applySleepIncoming(thornsHit, asleep);
   if (thornsHit > 0) {
     nextEnemyHp = math.max(0, nextEnemyHp - thornsHit);
   }
@@ -187,8 +277,13 @@ CombatRoundResult resolveCombatRound(
     playerHit: playerHit,
     playerCrit: playerCrit,
     offhandHit: offhandHit,
+    staffHit: staffHit,
+    skipNextEnemyAttack: skipNextEnemyAttack,
     enemyHit: enemyHit,
     thornsHit: thornsHit,
+    bossSleepRoundsRemaining: nextSleep,
+    enemyAsleep: asleep,
+    enemyRampage: rampage,
     enemyHp: nextEnemyHp,
     playerHp: playerHp,
     // Simultaneous kills favor defeat: the enemy's own hit must land before Thorns reflects it.
@@ -241,7 +336,7 @@ CombatVictoryResult applyCombatVictory(
   );
 
   final food = tryConsumeFoodAfterVictory(db, next);
-  next = clearCombatSave(food.save);
+  next = withBossRespawn(clearCombatSave(food.save), enemy, nowMs);
   next = applyQuestDefeatProgress(db, next, jsString(enemy.raw['Enemy ID']), 1);
   next = applyBountyDefeatProgress(next, jsString(enemy.raw['Enemy ID']), 1, nowMs);
   next = withoutHeldAction(next, save.currentActivityId);

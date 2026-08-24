@@ -43,6 +43,10 @@ class ActionRow extends DbRow {
 
   String? get secondaryRewardTableId => stringOrNull('Secondary Reward Table ID');
 
+  num? get tertiaryDropChance => numberOrNull('Tertiary Drop Chance');
+
+  String? get tertiaryRewardTableId => stringOrNull('Tertiary Reward Table ID');
+
   String get status => stringValue('Status');
 
   String get releasePhase => stringValue('Release Phase');
@@ -526,7 +530,7 @@ class RaceBonusRow extends DbRow {
 
   String get bonusType => stringValue('Bonus Type');
 
-  /// Skill ID for skill_xp_percent; null for global bonuses.
+  /// Skill ID for skill_drop_chance_percent; null for global bonuses.
   String? get referenceId => stringOrNull('Reference ID');
 
   num get bonusValue => numberValue('Bonus Value');
@@ -623,6 +627,10 @@ class RecipeRow extends DbRow {
   String? get ingredient3ItemId => stringOrNull('Ingredient 3 Item ID');
 
   num? get ingredient3Quantity => numberOrNull('Ingredient 3 Quantity');
+
+  String? get ingredient4ItemId => stringOrNull('Ingredient 4 Item ID');
+
+  num? get ingredient4Quantity => numberOrNull('Ingredient 4 Quantity');
 }
 
 class RequirementRow extends DbRow {

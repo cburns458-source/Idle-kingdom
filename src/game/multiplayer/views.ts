@@ -370,15 +370,45 @@ export interface LeaderboardRowView {
   isGuild: boolean
 }
 
-export function leaderboardRows(entries: LeaderboardEntry[]): LeaderboardRowView[] {
+/** `[TAG]` from the row, or from a guild-name lookup when the row has none. */
+export function guildTagForName(
+  guildName: string | null | undefined,
+  options: {
+    ownName?: string | null
+    ownTag?: string | null
+    listings?: Array<{ name: string; tag: string }>
+  } = {},
+): string | undefined {
+  if (!guildName) return undefined
+  if (options.ownName === guildName && options.ownTag?.trim()) return options.ownTag.trim()
+  for (const listing of options.listings ?? []) {
+    if (listing.name === guildName && listing.tag.trim()) return listing.tag.trim()
+  }
+  return undefined
+}
+
+function leaderboardDisplayName(
+  entry: LeaderboardEntry,
+  isGuild: boolean,
+  tagForGuildName?: (guildName: string | null | undefined) => string | undefined,
+): string {
+  if (isGuild) return entry.username
+  const tag = entry.guildTag?.trim() || tagForGuildName?.(entry.guildName)?.trim()
+  return tag ? `[${tag}]${entry.username}` : entry.username
+}
+
+export function leaderboardRows(
+  entries: LeaderboardEntry[],
+  options?: { tagForGuildName?: (guildName: string | null | undefined) => string | undefined },
+): LeaderboardRowView[] {
   return entries.map((entry) => {
     const isGuild = entry.entryKind === 'guild'
     const experience = entry.secondaryValue
     return {
       rank: entry.rank,
       entryId: entry.userId,
-      username: entry.username,
-      subtitle: isGuild ? (entry.guildName ?? 'Guild') : (entry.guildName ?? 'No guild'),
+      username: leaderboardDisplayName(entry, isGuild, options?.tagForGuildName),
+      subtitle: isGuild ? (entry.guildName ?? 'Guild') : '',
       valueLabel:
         entry.boardKey === 'log_completion' ? `${entry.value}%` : entry.value.toLocaleString(),
       ...(experience == null ? {} : { secondaryLabel: `${experience.toLocaleString()} xp` }),
@@ -436,8 +466,9 @@ export function peerRows(
 
 /** What the Citadel visitor list says about one visitor. */
 export function citadelVisitorSubtitle(visitor: ActivityPresence): string {
-  const guild = visitor.guildName ?? 'No guild'
-  return `${guild} · Lv ${visitor.skillLevel ?? 1}`
+  const level = `Lv ${visitor.skillLevel ?? 1}`
+  const guild = visitor.guildName
+  return guild ? `${guild} · ${level}` : level
 }
 
 /** The public profile sheet, with nothing left to derive. */

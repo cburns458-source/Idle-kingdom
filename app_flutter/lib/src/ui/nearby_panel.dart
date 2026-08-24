@@ -72,19 +72,14 @@ class _NearbyPanelState extends State<NearbyPanel> {
   /// `[TAG]Name` when we know their guild tag; otherwise just the name.
   String _peerTitle(ActivityPresence peer) {
     final name = peer.username;
-    final tag = _tagForGuildName(peer.guildName);
+    final tag = guildTagForName(
+      peer.guildName,
+      ownName: net.guild?.name,
+      ownTag: net.guild?.tag,
+      listings: net.listings,
+    );
     if (tag == null || tag.isEmpty) return name;
     return '[$tag]$name';
-  }
-
-  String? _tagForGuildName(String? guildName) {
-    if (guildName == null || guildName.isEmpty) return null;
-    final own = net.guild;
-    if (own != null && own.name == guildName) return own.tag;
-    for (final listing in net.listings) {
-      if (listing.name == guildName) return listing.tag;
-    }
-    return null;
   }
 
   @override

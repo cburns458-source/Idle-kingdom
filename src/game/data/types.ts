@@ -179,6 +179,8 @@ export interface ActionRow {
   'Reward Table ID': string | null
   'Secondary Drop Chance': number | null
   'Secondary Reward Table ID': string | null
+  'Tertiary Drop Chance': number | null
+  'Tertiary Reward Table ID': string | null
   Status: RecordStatus
   'Release Phase': ReleasePhase
   Notes: string | null
@@ -307,8 +309,7 @@ export interface LocationSearchRow {
 }
 
 export type RaceBonusType =
-  | 'skill_xp_percent'
-  | 'combat_damage_percent'
+  | 'skill_drop_chance_percent'
   | 'max_hp_percent'
   | 'gold_gain_percent'
   | string
@@ -331,7 +332,7 @@ export interface RaceBonusRow {
   'Race Bonus ID': string
   'Race ID': string
   'Bonus Type': RaceBonusType
-  /** Skill ID for skill_xp_percent; null for global bonuses. */
+  /** Skill ID for skill_drop_chance_percent; null for global bonuses. */
   'Reference ID': string | null
   'Bonus Value': number
   Status: RecordStatus

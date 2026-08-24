@@ -148,6 +148,22 @@ void main() {
     expect(peers.single.username, 'Hero');
   });
 
+  test('hides pending stand-in names from Nearby until a character is named', () async {
+    final storage = MemorySaveStorage();
+    final pending = _service(storage);
+    await pending.signUp('new@example.com', '', 'secret');
+    expect(isPendingAccountUsername(pending.session!.username), isTrue);
+    final save = createNewSave(_database(), _nowMs).copyWith(currentLocationId: 'LOC-0028');
+    expect(await pending.publishPresence(presenceFromSave(save)), isNull);
+
+    // A leftover row from before this rule still must not appear.
+    pending.backend.upsertPresence(pending.session!, presenceFromSave(save));
+
+    final watcher = _service(storage, startMs: _nowMs + 1000, idOffset: 100);
+    await watcher.signUp('watcher@example.com', 'Watcher', 'secret');
+    expect(await watcher.peersAtLocation('LOC-0028'), isEmpty);
+  });
+
   test('reports the guild the player joined', () async {
     final storage = MemorySaveStorage();
     final service = _service(storage);
@@ -349,5 +365,25 @@ void main() {
 
     expect(await service.leaderboard(boardPacifistTotalLevel), isEmpty);
     expect((await service.leaderboard(boardTotalLevel)).single.value, totalLevel(fighter));
+  });
+
+  test('a ranking submit publishes equipped gear onto the public profile', () async {
+    final storage = MemorySaveStorage();
+    final service = _service(storage);
+    await service.signUp('hero@example.com', 'Hero', 'secret');
+    final db = _database();
+    final save = equipStackToSlot(
+      createNewSave(db, _nowMs).copyWith(characterName: 'Hero'),
+      weaponToolSlotId,
+      'ITEM-0110',
+      1,
+    );
+
+    await service.submitLeaderboard(db, save);
+    final profile = await service.publicProfile(service.session!.userId);
+    expect(profile, isNotNull);
+    expect(profile!.publicEquipment, isNotNull);
+    expect(profile.publicEquipment!.single.itemId, 'ITEM-0110');
+    expect(profile.publicEquipment!.single.slotId, weaponToolSlotId);
   });
 }

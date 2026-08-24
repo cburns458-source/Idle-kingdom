@@ -2,7 +2,6 @@ import { addItemToInventoryExact } from '../activity/rewards'
 import { applyXp } from '../activity/xp'
 import type { GameDatabase } from '../data/types'
 import { removeIngredients } from '../production/inventory'
-import { applyRaceSkillXp } from '../races/races'
 import type { PlayerSave } from '../save/types'
 import {
   applyEnchantmentToTarget,
@@ -22,7 +21,7 @@ import {
   maxProjectQuantity,
   meetsProjectKnowledge,
   meetsProjectSkills,
-  projectInputs,
+  projectInputsForSave,
   projectSkillRequirements,
 } from './projects'
 
@@ -139,7 +138,7 @@ export function completeSpecialProject(
 
   const project = getProject(db, projectId)!
   const crafts = Math.floor(quantity)
-  const inputs = projectInputs(project)
+  const inputs = projectInputsForSave(save, project)
   const withMaterials = removeIngredients(save, inputs, crafts)
   if (!withMaterials) {
     return { ok: false, reason: 'Missing required materials.' }
@@ -188,7 +187,7 @@ export function completeSpecialProject(
       db.Items.find((item) => item['Item ID'] === outputId)?.['Display Name'] ?? outputLabel
   }
 
-  const xpTotal = applyRaceSkillXp(db, save, project['Skill ID'], project['XP Reward'] * crafts)
+  const xpTotal = project['XP Reward'] * crafts
   const xpApplied = applyXp(next, db, project['Skill ID'], xpTotal)
   next = xpApplied.save
   next = applyQuestProcessProgress(db, next, project['Project ID'], crafts)

@@ -35,7 +35,6 @@ void main() {
     test('uses the pinned id before the heuristic', () {
       // Berries would otherwise fall through to the generic raw-food icon.
       expect(itemIconStem(item(itemId: 'ITEM-0028', displayName: 'Wild Berries')), 'berries');
-      expect(itemIconStem(item(itemId: 'ITEM-0169', displayName: 'Backpack')), 'backpack');
       expect(itemIconStem(item(itemId: 'ITEM-0295', displayName: 'Spell')), 'spell');
     });
 

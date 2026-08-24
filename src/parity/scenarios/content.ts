@@ -222,11 +222,11 @@ function brokenDatabases(): Array<[string, JsonDatabase]> {
       raceBonus('RB-0001', 'RACE-0001'),
       raceBonus('RB-0002', 'RACE-9999'),
       raceBonus('RB-0003', 'RACE-0001', {
-        'Bonus Type': 'skill_xp_percent',
+        'Bonus Type': 'skill_drop_chance_percent',
         'Reference ID': 'SKL-9999',
       }),
       raceBonus('RB-0004', 'RACE-0001', {
-        'Bonus Type': 'skill_xp_percent',
+        'Bonus Type': 'skill_drop_chance_percent',
         'Reference ID': 'SKL-0001',
       }),
       // Non-skill bonus types ignore a dangling reference.

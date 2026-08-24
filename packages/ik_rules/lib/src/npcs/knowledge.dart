@@ -4,6 +4,7 @@ import 'package:ik_content/ik_content.dart';
 import '../activity/xp.dart';
 import '../js_compat.dart';
 import '../save/generated/save_models.dart';
+import 'roaming.dart';
 
 const String masterDwarfId = 'NPC-0003';
 const String archmageId = 'NPC-0004';
@@ -15,8 +16,9 @@ const String generalStoreMerchantId = 'NPC-0007';
 const String artisanrySkillId = 'SKL-0012';
 const num merchantTipXp = 11000;
 
-List<NpcRow> npcsAtLocation(GameDatabase db, String locationId) {
-  return db.npcs.where((npc) => npc.raw['Location ID'] == locationId).toList();
+List<NpcRow> npcsAtLocation(GameDatabase db, String locationId, [num? nowMs]) {
+  final clock = nowMs ?? DateTime.now().millisecondsSinceEpoch;
+  return db.npcs.where((npc) => npcLocationAt(npc, clock) == locationId).toList();
 }
 
 bool hasNpcKnowledge(PlayerSave save, String npcId) => save.unlockedNpcIds.contains(npcId);

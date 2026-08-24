@@ -21,6 +21,8 @@ void main() {
 
     await tester.tap(find.text('Character'));
     await tester.pump();
+    await tester.tap(find.widgetWithText(GameButton, 'Skills'));
+    await tester.pump();
     await tester.tap(find.text('Mining'));
     await tester.pump();
 
@@ -34,6 +36,8 @@ void main() {
     await pumpShell(tester, controller);
 
     await tester.tap(find.text('Character'));
+    await tester.pump();
+    await tester.tap(find.widgetWithText(GameButton, 'Skills'));
     await tester.pump();
     await tester.tap(find.text('Combat'));
     await tester.pump();
@@ -53,12 +57,14 @@ void main() {
     expect(tabs.children.whereType<Expanded>(), hasLength(2));
   });
 
-  testWidgets('cooking opens a recipe book of unlocked recipes', (tester) async {
+  testWidgets('cooking opens a recipe book that includes locked recipes', (tester) async {
     final controller = buildController(database, seed: startedCharacter(database));
     addTearDown(controller.dispose);
     await pumpShell(tester, controller);
 
     await tester.tap(find.text('Character'));
+    await tester.pump();
+    await tester.tap(find.widgetWithText(GameButton, 'Skills'));
     await tester.pump();
     await tester.tap(find.text('Cooking'));
     await tester.pump();
@@ -79,7 +85,8 @@ void main() {
     expect(find.descendant(of: popup, matching: find.byTooltip('Close')), findsOne);
     await tester.tap(find.text('Recipe book'));
     await tester.pump();
-    expect(find.textContaining('Baked Potato'), findsWidgets);
+    expect(find.textContaining('Baked potato'), findsWidgets);
+    expect(find.textContaining('Unlocks at Cooking'), findsWidgets);
   });
 
   testWidgets('smithing lists material groups instead of every item', (tester) async {
@@ -89,19 +96,48 @@ void main() {
 
     await tester.tap(find.text('Character'));
     await tester.pump();
+    await tester.tap(find.widgetWithText(GameButton, 'Skills'));
+    await tester.pump();
     await tester.tap(find.text('Smithing'));
     await tester.pump();
 
     await tester.scrollUntilVisible(
-      find.text('70. Tungsten items'),
+      find.textContaining('70. Tungsten items'),
       200,
       scrollable: find.descendant(
         of: find.byKey(const Key('game-popup')),
         matching: find.byType(Scrollable),
       ),
     );
-    expect(find.text('70. Tungsten items'), findsOne);
+    expect(find.textContaining('70. Tungsten items'), findsOne);
     expect(find.textContaining('Tungsten Sword'), findsNothing);
+  });
+
+  testWidgets('combat lists armor tiers as equipment instead of every piece', (tester) async {
+    final controller = buildController(database, seed: startedCharacter(database));
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller);
+
+    await tester.tap(find.text('Character'));
+    await tester.pump();
+    await tester.tap(find.widgetWithText(GameButton, 'Skills'));
+    await tester.pump();
+    await tester.tap(find.text('Combat'));
+    await tester.pump();
+
+    await tester.tap(find.text('Weapons and equipment'));
+    await tester.pump();
+    await tester.scrollUntilVisible(
+      find.textContaining('Tungsten equipment'),
+      200,
+      scrollable: find.descendant(
+        of: find.byKey(const Key('game-popup')),
+        matching: find.byType(Scrollable),
+      ),
+    );
+    expect(find.textContaining('Tungsten equipment'), findsOne);
+    expect(find.textContaining('Tungsten Helmet'), findsNothing);
+    expect(find.textContaining('Tungsten Sword'), findsOne);
   });
 
   testWidgets('a skill tooltip reads total xp and what the next level needs', (tester) async {
@@ -112,6 +148,8 @@ void main() {
     await pumpShell(tester, controller);
 
     await tester.tap(find.text('Character'));
+    await tester.pump();
+    await tester.tap(find.widgetWithText(GameButton, 'Skills'));
     await tester.pump();
 
     final progress = skillXpProgress(

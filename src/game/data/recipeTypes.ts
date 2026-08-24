@@ -22,4 +22,6 @@ export interface RecipeRow {
   'Ingredient 2 Quantity': number | null
   'Ingredient 3 Item ID': string | null
   'Ingredient 3 Quantity': number | null
+  'Ingredient 4 Item ID': string | null
+  'Ingredient 4 Quantity': number | null
 }

@@ -1,6 +1,7 @@
 import { applyXp } from '../activity/xp'
 import type { GameDatabase, NpcRow } from '../data/types'
 import type { PlayerSave } from '../save/types'
+import { npcLocationAt } from './roaming'
 
 export const MASTER_DWARF_ID = 'NPC-0003'
 export const ARCHMAGE_ID = 'NPC-0004'
@@ -12,8 +13,12 @@ export const GENERAL_STORE_MERCHANT_ID = 'NPC-0007'
 export const ARTISANRY_SKILL_ID = 'SKL-0012'
 export const MERCHANT_TIP_XP = 11_000
 
-export function npcsAtLocation(db: GameDatabase, locationId: string): NpcRow[] {
-  return db.NPCs.filter((npc) => npc['Location ID'] === locationId)
+export function npcsAtLocation(
+  db: GameDatabase,
+  locationId: string,
+  nowMs: number = Date.now(),
+): NpcRow[] {
+  return db.NPCs.filter((npc) => npcLocationAt(npc, nowMs) === locationId)
 }
 
 export function hasNpcKnowledge(save: PlayerSave, npcId: string): boolean {

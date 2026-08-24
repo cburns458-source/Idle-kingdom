@@ -12,6 +12,7 @@ import {
   guildRankOptions,
   chatLineUsername,
   guildRosterRows,
+  guildTagForName,
   leaderboardRows,
   leaveGuildPrompt,
   authGateIntro,
@@ -353,9 +354,9 @@ describe('leaderboard views', () => {
     expect(rows[1].secondaryLabel).toBeUndefined()
   })
 
-  it('groups values and names the guild column', () => {
+  it('puts the guild tag before a player name and leaves no guild blank', () => {
     const rows = leaderboardRows([
-      entry({ value: 1204, guildName: 'Iron League' }),
+      entry({ value: 1204, guildName: 'Iron League', guildTag: 'IRN' }),
       entry({ rank: 2, userId: 'usr_2', username: 'Rival', value: 12 }),
       entry({
         rank: 1,
@@ -368,12 +369,22 @@ describe('leaderboard views', () => {
       }),
     ])
     expect(rows[0].valueLabel).toBe('1,204')
-    expect(rows[0].subtitle).toBe('Iron League')
+    expect(rows[0].username).toBe('[IRN]Hero')
+    expect(rows[0].subtitle).toBe('')
     expect(rows[0].emblem).toBeNull()
-    expect(rows[1].subtitle).toBe('No guild')
+    expect(rows[1].username).toBe('Rival')
+    expect(rows[1].subtitle).toBe('')
     expect(rows[2].isGuild).toBe(true)
+    expect(rows[2].username).toBe('[IRN] Iron League')
     expect(rows[2].subtitle).toBe('4/25 members')
     expect(rows[2].emblem?.symbol).toBe('shield')
+  })
+
+  it('fills a missing guild tag from the guild name', () => {
+    const rows = leaderboardRows([entry({ value: 12, guildName: 'Iron League' })], {
+      tagForGuildName: (name) => guildTagForName(name, { listings: [{ name: 'Iron League', tag: 'IRN' }] }),
+    })
+    expect(rows[0].username).toBe('[IRN]Hero')
   })
 
   it('points an empty board at the way to fill it', () => {
@@ -410,7 +421,7 @@ describe('presence views', () => {
   })
 
   it('says whether a Citadel visitor has a guild', () => {
-    expect(citadelVisitorSubtitle(presence())).toBe('No guild · Lv 7')
+    expect(citadelVisitorSubtitle(presence())).toBe('Lv 7')
     expect(citadelVisitorSubtitle(presence({ guildName: 'Iron League', skillLevel: null }))).toBe(
       'Iron League · Lv 1',
     )

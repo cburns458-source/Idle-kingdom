@@ -45,7 +45,6 @@ describe('itemAssetPath', () => {
     expect(itemAssetPath('ITEM-0028')).toContain('item_berries.webp')
     expect(itemAssetPath('ITEM-0046')).toContain('item_dragon_scale.webp')
     expect(itemAssetPath('ITEM-0288')).toContain('item_insignia.webp')
-    expect(itemAssetPath('ITEM-0169')).toContain('item_backpack.webp')
     expect(itemAssetPath('ITEM-0123')).toContain('item_hammer.webp')
     expect(itemAssetPath('ITEM-0103')).toContain('item_fishing_tool.webp')
   })

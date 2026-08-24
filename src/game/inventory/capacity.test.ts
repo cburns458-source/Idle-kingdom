@@ -58,4 +58,28 @@ describe('inventory capacity', () => {
     expect(partial.added).toBe(2)
     expect(partial.save.inventory[0]?.quantity).toBe(INVENTORY_STACK_MAX)
   })
+
+  it('still accepts more of an item when the bag is full but a matching pile exists', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    let save = createNewSave(launch)
+    save = {
+      ...save,
+      inventory: [
+        { itemId: 'ITEM-0025', quantity: 1, favorite: true },
+        ...Array.from({ length: INVENTORY_SLOT_LIMIT - 1 }, (_, index) => ({
+          itemId: `ITEM-fake-${index}`,
+          quantity: 1,
+        })),
+      ],
+    }
+    expect(inventorySlotsFree(save)).toBe(0)
+    expect(maxAddableQuantity(save, 'ITEM-0025')).toBe(INVENTORY_STACK_MAX - 1)
+    expect(canFitItemQuantity(save, 'ITEM-0025', 4)).toBe(true)
+
+    const added = addItemsToInventory(save, 'ITEM-0025', 4)
+    expect(added.added).toBe(4)
+    expect(added.save.inventory[0]?.quantity).toBe(5)
+    expect(added.save.inventory[0]?.favorite).toBe(true)
+    expect(added.save.inventory).toHaveLength(INVENTORY_SLOT_LIMIT)
+  })
 })

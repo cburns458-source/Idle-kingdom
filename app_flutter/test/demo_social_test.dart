@@ -49,6 +49,15 @@ void main() {
 
     expect(find.text('Friend request'), findsOne);
     expect(find.text('Ignore'), findsOne);
+
+    await tester.tap(find.text('Ignore'));
+    await tester.pump();
+    await tester.pump();
+    expect(find.text('Ignored.'), findsOne);
+    expect(find.text('OK'), findsOne);
+    await tester.tap(find.text('OK'));
+    await tester.pump();
+    expect(find.text('Unignore'), findsOne);
   });
 
   testWidgets('guild search shows The Watch, and a recruit can join and leave', (tester) async {

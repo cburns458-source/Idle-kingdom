@@ -322,7 +322,7 @@ class FriendListRow {
   final String username;
   final PlayerAppearance appearance;
 
-  /// `Devguild · Online`, or `No guild · 3h ago` when they have no guild.
+  /// `Devguild · Online`, or just the last-online label when they have no guild.
   final String subtitle;
   final bool isOnline;
   final String lastOnlineLabel;
@@ -340,7 +340,7 @@ class FriendListRow {
 /// Guild name plus last-online, matching how the roster writes its second line.
 String friendContactSubtitle(SocialContact contact, String lastOnlineLabel) {
   final guild = contact.guildName;
-  if (guild == null || guild.isEmpty) return 'No guild · $lastOnlineLabel';
+  if (guild == null || guild.isEmpty) return lastOnlineLabel;
   return '$guild · $lastOnlineLabel';
 }
 
@@ -568,15 +568,51 @@ class LeaderboardRowView {
   };
 }
 
-List<LeaderboardRowView> leaderboardRows(List<LeaderboardEntry> entries) {
+/// `[TAG]` from the player's own guild or a listing, when the row has a name
+/// but no tag of its own.
+String? guildTagForName(
+  String? guildName, {
+  String? ownName,
+  String? ownTag,
+  Iterable<GuildListing> listings = const <GuildListing>[],
+}) {
+  if (guildName == null || guildName.isEmpty) return null;
+  if (ownName == guildName && ownTag != null && ownTag.trim().isNotEmpty) {
+    return ownTag.trim();
+  }
+  for (final listing in listings) {
+    if (listing.name == guildName && listing.tag.trim().isNotEmpty) {
+      return listing.tag.trim();
+    }
+  }
+  return null;
+}
+
+String _leaderboardDisplayName(
+  LeaderboardEntry entry,
+  bool isGuild, {
+  String? Function(String? guildName)? tagForGuildName,
+}) {
+  if (isGuild) return entry.username;
+  final tagged = entry.guildTag?.trim();
+  final resolved = (tagged != null && tagged.isNotEmpty)
+      ? tagged
+      : tagForGuildName?.call(entry.guildName)?.trim();
+  return resolved != null && resolved.isNotEmpty ? '[$resolved]${entry.username}' : entry.username;
+}
+
+List<LeaderboardRowView> leaderboardRows(
+  List<LeaderboardEntry> entries, {
+  String? Function(String? guildName)? tagForGuildName,
+}) {
   return entries.map((entry) {
     final isGuild = entry.entryKind == LeaderboardEntryKind.guild;
     final experience = entry.secondaryValue;
     return LeaderboardRowView(
       rank: entry.rank,
       entryId: entry.userId,
-      username: entry.username,
-      subtitle: isGuild ? (entry.guildName ?? 'Guild') : (entry.guildName ?? 'No guild'),
+      username: _leaderboardDisplayName(entry, isGuild, tagForGuildName: tagForGuildName),
+      subtitle: isGuild ? (entry.guildName ?? 'Guild') : '',
       valueLabel: entry.boardKey == boardLogCompletion
           ? '${jsNumberToString(entry.value)}%'
           : jsLocaleNumber(entry.value),
@@ -655,9 +691,9 @@ List<PeerRowView> peerRows(
 
 /// What the Citadel visitor list says about one visitor.
 String citadelVisitorSubtitle(ActivityPresence visitor) {
-  final guild = visitor.guildName ?? 'No guild';
-  final level = visitor.skillLevel ?? 1;
-  return '$guild · Lv ${jsNumberToString(level)}';
+  final level = 'Lv ${jsNumberToString(visitor.skillLevel ?? 1)}';
+  final guild = visitor.guildName;
+  return guild == null || guild.isEmpty ? level : '$guild · $level';
 }
 
 /// The public profile sheet, with nothing left to derive.

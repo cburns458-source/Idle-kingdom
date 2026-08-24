@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:ik_rules/ik_rules.dart';
@@ -18,6 +20,7 @@ import 'log_view.dart';
 import 'menu_view.dart';
 import 'new_character_sheet.dart';
 import 'overlay_notice.dart';
+import 'returning_overlay.dart';
 import 'playable_frame.dart';
 import 'social_alert.dart';
 import 'social_view.dart';
@@ -75,12 +78,15 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
   bool _chatOpen = false;
   bool _socialAlertQueued = false;
   String? _socialAlertMessage;
+  OverlayEntry? _socialAlertEntry;
 
   GameScreen get _screen => _stack.last;
   final GlobalKey _toastKey = GlobalKey();
   AnimationController? _mapWalk;
   String? _walkFromId;
   String? _walkToId;
+  bool _returnHoldArmed = false;
+  Timer? _returnHold;
 
   GameController get controller => widget.controller;
   MultiplayerController get multiplayer => widget.multiplayer;
@@ -105,6 +111,8 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
     });
     multiplayer.onAccountCleared ??= controller.resetUnsigned;
     multiplayer.addListener(_onMultiplayerChanged);
+    controller.addListener(_armReturningHold);
+    _armReturningHold();
     _ticker = createTicker((_) {
       if (!mounted || !_canPlay) return;
       controller.tick();
@@ -141,18 +149,53 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
         _socialAlertQueued = false;
         return;
       }
-      setState(() {
-        _socialAlertMessage = message;
-        _socialAlertQueued = false;
-      });
+      _socialAlertQueued = false;
+      _presentRootSocialAlert(message);
     });
+  }
+
+  void _presentRootSocialAlert(String message) {
+    _removeRootSocialAlert();
+    _socialAlertMessage = message;
+    final overlay = Overlay.maybeOf(context, rootOverlay: true);
+    if (overlay == null) {
+      setState(() {});
+      return;
+    }
+    _socialAlertEntry = OverlayEntry(
+      builder: (context) => SocialAlertOverlay(message: message, onClose: _dismissSocialAlert),
+    );
+    overlay.insert(_socialAlertEntry!);
+    setState(() {});
+  }
+
+  void _removeRootSocialAlert() {
+    _socialAlertEntry?.remove();
+    _socialAlertEntry = null;
   }
 
   void _dismissSocialAlert() {
     final message = _socialAlertMessage;
+    _removeRootSocialAlert();
     setState(() => _socialAlertMessage = null);
     if (message != null && multiplayer.notice == message) multiplayer.announce(null);
     _maybePresentSocialNotice();
+  }
+
+  void _armReturningHold() {
+    if (!controller.returningFromAway) {
+      _returnHold?.cancel();
+      _returnHold = null;
+      _returnHoldArmed = false;
+      return;
+    }
+    if (_returnHoldArmed) return;
+    _returnHoldArmed = true;
+    _returnHold?.cancel();
+    _returnHold = Timer(const Duration(milliseconds: GameController.returningHoldMs), () {
+      if (!mounted) return;
+      controller.finishReturningFromAway();
+    });
   }
 
   bool _polling = false;
@@ -185,13 +228,17 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
 
   @override
   void dispose() {
+    _returnHold?.cancel();
+    _returnHold = null;
     WidgetsBinding.instance.removeObserver(this);
     multiplayer.flushAccountSave(controller.save);
     multiplayer.removeListener(_onMultiplayerChanged);
+    controller.removeListener(_armReturningHold);
     _ticker?.stop();
     _ticker?.dispose();
     _ticker = null;
     _mapWalk?.dispose();
+    _removeRootSocialAlert();
     multiplayer.stopPolling();
     super.dispose();
   }
@@ -613,7 +660,9 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
           ),
         if (controller.travel case final journey?)
           TravelOverlay(controller: controller, journey: journey),
-        if (controller.awaySummary case final summary?)
+        if (controller.returningFromAway)
+          const ReturningOverlay()
+        else if (controller.awaySummary case final summary?)
           AwaySummarySheet(summary: summary, onDismiss: controller.dismissAwaySummary),
         if (controller.autoEquip case final proposal?)
           AutoEquipPrompt(controller: controller, proposal: proposal),
@@ -625,8 +674,8 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
           ),
         if (controller.discoveryNotice case final notice?)
           SocialAlertOverlay(message: notice, onClose: controller.dismissDiscoveryNotice),
-        if (_socialAlertMessage case final message?)
-          SocialAlertOverlay(message: message, onClose: _dismissSocialAlert),
+        if (_socialAlertEntry == null && _socialAlertMessage != null)
+          SocialAlertOverlay(message: _socialAlertMessage!, onClose: _dismissSocialAlert),
       ],
     );
   }

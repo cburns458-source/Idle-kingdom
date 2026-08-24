@@ -87,6 +87,26 @@ class _AccountPanelState extends State<AccountPanel> {
       ),
       MutedText(session.email),
       const SizedBox(height: 12),
+      GamePanel(
+        child: Row(
+          children: [
+            const Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Show gear on profile', style: TextStyle(fontWeight: FontWeight.w400)),
+                  MutedText('Let other players open your equipped gear from your profile.'),
+                ],
+              ),
+            ),
+            GameSwitch(
+              value: net.privacyPublicGear,
+              onChanged: net.busy ? null : net.setPrivacyPublicGear,
+            ),
+          ],
+        ),
+      ),
+      const SizedBox(height: 12),
       GameButton(
         label: 'Sign out',
         tone: GameButtonTone.secondary,

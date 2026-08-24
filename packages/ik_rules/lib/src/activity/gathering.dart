@@ -4,6 +4,7 @@ import 'package:ik_content/ik_content.dart';
 
 import '../config.dart';
 import '../equipment/loadout.dart';
+import '../equipment/specialist.dart';
 import '../js_compat.dart';
 import '../projects/enchantments.dart';
 import '../save/generated/save_models.dart';
@@ -32,7 +33,8 @@ bool isBelowProficiency(PlayerSave save, ActionRow action) {
 num gatheringXpReward(GameDatabase db, PlayerSave save, ActionRow action, [num? baseXp]) {
   final amount = math.max(0, jsNumberOrZero(baseXp ?? jsNumber(action.raw['XP Reward'] ?? 0)));
   if (amount <= 0) return 0;
-  if (!isBelowProficiency(save, action)) return amount.floor();
-  final factor = configNumber(db, 'gathering_below_proficiency_xp_multiplier', 0.5);
-  return (amount * factor).floor();
+  final afterProficiency = !isBelowProficiency(save, action)
+      ? amount.floor()
+      : (amount * configNumber(db, 'gathering_below_proficiency_xp_multiplier', 0.5)).floor();
+  return applyQuiverHuntingXp(afterProficiency, save, jsString(action.raw['Relevant Skill ID']));
 }

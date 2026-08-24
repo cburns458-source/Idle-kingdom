@@ -57,6 +57,7 @@ const Map<String, String> _locationArt = <String, String>{
   'LOC-0034': 'locations/loc_town_bank.webp',
   'LOC-0035': 'locations/loc_citadel_bank.webp',
   'LOC-0036': 'locations/loc_temple.webp',
+  'LOC-0037': 'locations/loc_castle_crypt.webp',
 };
 
 /// Item icons keyed by id, for the items whose art the heuristic cannot infer.
@@ -74,7 +75,6 @@ const Map<String, String> _itemIcons = <String, String>{
   'ITEM-0111': 'copper_pickaxe',
   'ITEM-0119': 'steel_pickaxe',
   'ITEM-0123': 'hammer',
-  'ITEM-0169': 'backpack',
   'ITEM-0288': 'insignia',
   'ITEM-0295': 'spell',
   'ITEM-0296': 'cosmetic_outfit_travelers_tunic',
@@ -114,13 +114,12 @@ const Map<String, String> _enemyArt = <String, String>{
   'ENM-0012': 'enemies/enm_ent.webp',
   'ENM-0013': 'enemies/enm_ancient_ent.webp',
   'ENM-0014': 'enemies/enm_corrupted_ent.webp',
-  'ENM-0015': 'enemies/enm_shade_goblin.webp',
   'ENM-0016': 'enemies/enm_goblin_warrior.webp',
-  'ENM-0017': 'enemies/enm_rabbit_buck.webp',
   'ENM-0018': 'enemies/enm_elder_rock_troll.webp',
   'ENM-0019': 'enemies/enm_castle_guard.webp',
   'ENM-0020': 'enemies/enm_monk.webp',
   'ENM-0021': 'enemies/enm_seagull.webp',
+  'ENM-0022': 'enemies/enm_ghost.webp',
 };
 
 /// Transparent workstation art for Standard Production stations.
@@ -167,7 +166,6 @@ const Map<String, String> _actionArt = <String, String>{
   'ACN-0107': 'actions/acn_gather_mosstole.webp',
   'ACN-0108': 'actions/acn_gather_wild_berries.webp',
   'ACN-0109': 'actions/acn_gather_augur_weed.webp',
-  'ACN-0174': 'actions/acn_gather_augur_weed.webp',
   'ACN-0110': 'actions/acn_gather_moonblossom.webp',
   'ACN-0111': 'actions/acn_gather_starroot.webp',
   'ACN-0112': 'actions/acn_hunt_mountain_goat.webp',
@@ -175,8 +173,6 @@ const Map<String, String> _actionArt = <String, String>{
   'ACN-0114': 'actions/acn_hunt_moonhorn_elk.webp',
   'ACN-0162': 'actions/acn_gather_carrot.webp',
   'ACN-0163': 'actions/acn_gather_grapes.webp',
-  'ACN-0164': 'actions/acn_gather_herb_1.webp',
-  'ACN-0165': 'actions/acn_gather_herb_2.webp',
   'ACN-0166': 'actions/acn_mine_sapphire.webp',
   'ACN-0167': 'actions/acn_mine_emerald.webp',
   'ACN-0168': 'actions/acn_mine_ruby.webp',
@@ -277,7 +273,10 @@ String itemIconStem(ItemRow? item) {
   if (blob.contains('potato') || blob.contains('spud')) {
     return blob.contains('baked') ? 'baked_potato' : 'potato';
   }
-  if (blob.contains('backpack') || blob.contains('back item') || subtype.contains('back')) {
+  if (blob.contains('quiver') ||
+      blob.contains('backpack') ||
+      blob.contains('back item') ||
+      subtype.contains('back')) {
     return 'backpack';
   }
   if (blob.contains('fishing') || blob.contains('rod') || blob.contains('harpoon')) {

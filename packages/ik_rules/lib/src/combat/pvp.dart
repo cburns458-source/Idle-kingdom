@@ -158,6 +158,8 @@ PlayerSave preparePvpFighter(GameDatabase db, PlayerSave save) {
     combatEnemyId: null,
     combatEnemyHp: null,
     combatRoundStartedAt: null,
+    combatSkipEnemyAttack: false,
+    combatBossSleepRoundsRemaining: null,
   );
 }
 

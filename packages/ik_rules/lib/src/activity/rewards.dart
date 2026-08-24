@@ -70,13 +70,21 @@ ActionRewards resolveActionRewards(
   var next = save;
   final loot = <LootGrant>[];
   var goldGained = jsNumber(action.raw['Guaranteed Gold'] ?? 0);
+  final skillDropBonus = raceSkillDropChanceBonusPercent(
+    db,
+    save,
+    jsString(action.raw['Relevant Skill ID']),
+  );
 
   void rollTable(Object? tableIdValue, Object? chanceValue) {
     final tableId = tableIdValue is String ? tableIdValue : null;
     if (isBlank(tableId)) return;
-    final dropChance = applyRelativeDropChance(
-      chanceValue is num ? chanceValue : 0,
-      totalRelativeDropChanceBonusPercent(db, save),
+    final dropChance = applyFlatDropChanceBonus(
+      applyRelativeDropChance(
+        chanceValue is num ? chanceValue : 0,
+        totalRelativeDropChanceBonusPercent(db, save),
+      ),
+      skillDropBonus,
     );
     if (dropChance == null || random() * 100 >= dropChance) return;
     final entries = db.rewardEntries.where((row) => row.raw['Reward Table ID'] == tableId).toList();
@@ -116,6 +124,7 @@ ActionRewards resolveActionRewards(
 
   rollTable(action.raw['Reward Table ID'], action.raw['Drop Chance']);
   rollTable(action.raw['Secondary Reward Table ID'], action.raw['Secondary Drop Chance']);
+  rollTable(action.raw['Tertiary Reward Table ID'], action.raw['Tertiary Drop Chance']);
 
   goldGained = applyRaceGoldGain(db, save, goldGained);
   if (goldGained > 0) {

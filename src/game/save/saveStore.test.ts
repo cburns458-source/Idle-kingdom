@@ -31,6 +31,9 @@ describe('local save', () => {
     expect(save.skills.length).toBeGreaterThan(0)
     expect(save.skills.every((skill) => skill.level === 1 && skill.xp === 0)).toBe(true)
     expect(save.playTimeMs).toBe(0)
+    expect(save.combatSkipEnemyAttack).toBe(false)
+    expect(save.combatBossSleepRoundsRemaining).toBeNull()
+    expect(save.bossRespawnUntilByEnemyId).toEqual({})
   })
 
   it('auto-creates then reloads the same save', () => {
@@ -72,5 +75,6 @@ describe('local save', () => {
     const loaded = readSave(storage)
     expect(loaded?.saveVersion).toBe(SAVE_VERSION)
     expect(loaded?.playTimeMs).toBe(0)
+    expect(loaded?.combatSkipEnemyAttack).toBe(false)
   })
 })

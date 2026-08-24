@@ -62,6 +62,17 @@ class CitadelHubOpen extends LocationPanel {
   final CitadelHubTab tab;
 }
 
+/// Opening a shop replaces any shop already on the stack so menus do not pile up.
+/// An NPC under that shop stays, so Close still returns to the NPC.
+List<LocationPanel> pushLocationPanel(List<LocationPanel> open, LocationPanel panel) {
+  final next = List<LocationPanel>.of(open);
+  if (panel is ShopOpen) {
+    next.removeWhere((entry) => entry is ShopOpen);
+  }
+  next.add(panel);
+  return next;
+}
+
 /// Where the player is standing: the art, what can be done here, and whatever
 /// is currently running or open.
 class LocationView extends StatefulWidget {
@@ -127,7 +138,10 @@ class _LocationViewState extends State<LocationView> {
     }
     if (!identical(save, controller.save)) controller.commit(save);
     setState(() {
-      _open.add(panel);
+      final next = pushLocationPanel(_open, panel);
+      _open
+        ..clear()
+        ..addAll(next);
       _openAt = controller.save.currentLocationId;
       _bandExpanded = false;
     });
@@ -554,7 +568,7 @@ class _LocationViewState extends State<LocationView> {
   }
 
   List<Widget> _people(String locationId) {
-    final npcs = controller.indexes.npcsByLocationId[locationId] ?? const [];
+    final npcs = npcsAtLocation(controller.db, locationId, controller.session.clock());
     if (npcs.isEmpty) return const [];
     return [
       _SectionHeading('People'),
@@ -785,6 +799,25 @@ class _InteractionCard extends StatelessWidget {
   }
 }
 
+Future<void> _startOrComingSoon(
+  BuildContext context,
+  GameController controller,
+  ActivityRow activity,
+) async {
+  if (activityIsComingSoon(activity)) {
+    if (!context.mounted) return;
+    await showGameAlert(
+      context: context,
+      title: 'Coming soon',
+      message: activity.description ?? comingSoonReason,
+      confirmLabel: 'OK',
+      placement: GamePopupPlacement.center,
+    );
+    return;
+  }
+  controller.startActivity(activity.activityId);
+}
+
 class _ActivityCard extends StatelessWidget {
   const _ActivityCard({
     required this.controller,
@@ -838,7 +871,7 @@ class _ActivityCard extends StatelessWidget {
                   ? null
                   : production
                   ? () => onOpenWorkshop(context)
-                  : () => controller.startActivity(activityId),
+                  : () => _startOrComingSoon(context, controller, activity),
             ),
     );
   }

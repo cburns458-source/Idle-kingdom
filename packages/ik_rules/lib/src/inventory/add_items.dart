@@ -73,12 +73,7 @@ AddItemsResult addItemsToInventory(
     );
   }
 
-  final existingIndex = inventory.indexWhere(
-    (stack) =>
-        stack.itemId == itemId &&
-        isBlank(stack.enchantmentId) &&
-        (stack.favorite == true) == favorite,
-  );
+  final existingIndex = mergeableStackIndex(inventory, itemId);
   if (existingIndex >= 0) {
     final existing = inventory[existingIndex];
     inventory[existingIndex] = existing.copyWith(

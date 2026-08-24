@@ -4,6 +4,7 @@ import { resolve } from 'node:path'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { prepareDatabase } from '../data/loadDatabase'
 import { createNewSave } from '../save/saveStore'
+import { WEAPON_TOOL_SLOT_ID, equipStackToSlot } from '../equipment/loadout'
 import { LocalMultiplayerBackend } from './localBackend'
 import { filterProfanity } from './moderation'
 import { isPendingAccountUsername } from './remote'
@@ -56,6 +57,7 @@ describe('local multiplayer backend', () => {
     expect(guild.goldCost).toBe(25)
     expect(guild.guild.tag).toBe('OAK')
     expect(backend.guildMembers(guild.guild.id)).toHaveLength(1)
+    expect(backend.listLeaderboard('monsters_killed')[0]?.guildTag).toBe('OAK')
 
     backend.upsertPresence(signed.session, {
       appearance: save.appearance,
@@ -283,5 +285,24 @@ describe('local multiplayer backend', () => {
     expect(blocked.ok).toBe(false)
     if (blocked.ok) return
     expect(blocked.reason).toMatch(/full/i)
+  })
+
+  it('publishes equipped gear on a ranking submit without a cloud save', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const backend = new LocalMultiplayerBackend()
+    const signed = backend.signUp('hero@example.com', 'Hero', 'secret')
+    expect(signed.ok).toBe(true)
+    if (!signed.ok) return
+    const save = equipStackToSlot(
+      { ...createNewSave(launch), characterName: 'Hero' },
+      WEAPON_TOOL_SLOT_ID,
+      'ITEM-0110',
+      1,
+    )
+    backend.submitLeaderboardSnapshot(launch, signed.session.userId, save)
+    const profile = backend.publicProfile(signed.session.userId)
+    expect(profile?.publicEquipment).toEqual([
+      { slotId: WEAPON_TOOL_SLOT_ID, itemId: 'ITEM-0110', quantity: 1, enchantmentId: null },
+    ])
   })
 })

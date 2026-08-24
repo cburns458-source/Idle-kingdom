@@ -497,6 +497,24 @@ void main() {
     expect(peers.single.locationId, 'LOC-0005');
   });
 
+  test('hides pending stand-in names from Nearby until a character is named', () async {
+    final transport = FakeTransport();
+    final pending = _service(transport, MemorySaveStorage());
+    await pending.signUp('new@example.com', '', 'secret');
+    expect(isPendingAccountUsername(pending.session!.username), isTrue);
+    final save = createNewSave(_database(), _nowMs).copyWith(currentLocationId: 'LOC-0005');
+    expect(await pending.publishPresence(presenceFromSave(save)), isNull);
+    expect(transport.tables[RemoteTables.activityPresence] ?? const [], isEmpty);
+
+    final watcher = _service(transport, MemorySaveStorage());
+    await watcher.signUp('watcher@example.com', 'Watcher', 'secret');
+    expect(await watcher.peersAtLocation('LOC-0005'), isEmpty);
+
+    expect((await pending.claimAccountUsername('Sprout')).ok, isTrue);
+    expect(await pending.publishPresence(presenceFromSave(save)), isNotNull);
+    expect((await watcher.peersAtLocation('LOC-0005')).single.username, 'Sprout');
+  });
+
   test('keeps Away peers visible until the away TTL, then drops them', () async {
     var clock = _nowMs;
     final transport = FakeTransport();
@@ -611,6 +629,69 @@ void main() {
     expect(profile.totalLevel, totalLevel(save));
   });
 
+  test('publishes equipped gear on a ranking submit so other players can see it', () async {
+    final transport = FakeTransport();
+    final hero = await _signedIn(transport, MemorySaveStorage());
+    final db = _database();
+    final save = equipStackToSlot(
+      createNewSave(db, _nowMs).copyWith(characterName: 'Hero'),
+      weaponToolSlotId,
+      'ITEM-0110',
+      1,
+    );
+    expect((await hero.submitLeaderboard(db, save)).ok, isTrue);
+
+    final rival = _service(transport, MemorySaveStorage());
+    await rival.signUp('rival@example.com', 'Rival', 'secret');
+    final profile = await rival.publicProfile(hero.session!.userId, db: db);
+    expect(profile, isNotNull);
+    expect(profile!.publicEquipment, isNotNull);
+    expect(profile.publicEquipment!.single.itemId, 'ITEM-0110');
+    expect(profile.publicEquipment!.single.slotId, weaponToolSlotId);
+  });
+
+  test('hides published gear when the account opted out of public gear', () async {
+    final transport = FakeTransport();
+    final hero = await _signedIn(transport, MemorySaveStorage());
+    final db = _database();
+    final save = createNewSave(db, _nowMs).copyWith(characterName: 'Hero');
+    await hero.submitLeaderboard(db, save);
+    await hero.pushSave(db, save, force: true);
+    expect(await hero.setPrivacyPublicGear(false), isNotNull);
+
+    final rival = _service(transport, MemorySaveStorage());
+    await rival.signUp('rival@example.com', 'Rival', 'secret');
+    final profile = await rival.publicProfile(hero.session!.userId, db: db);
+    expect(profile, isNotNull);
+    expect(profile!.publicEquipment, isNull);
+    expect(profile.totalLevel, totalLevel(save));
+  });
+
+  test('loads a public profile when gear-privacy columns are missing', () async {
+    final transport = FakeTransport();
+    transport.missingColumns.addAll(const <String>['privacy_public_gear', 'equipment_json']);
+    final hero = await _signedIn(transport, MemorySaveStorage());
+    final db = _database();
+    final save = createNewSave(db, _nowMs).copyWith(characterName: 'Hero');
+    await hero.submitLeaderboard(db, save);
+
+    final rival = _service(transport, MemorySaveStorage());
+    await rival.signUp('rival@example.com', 'Rival', 'secret');
+    final profile = await rival.publicProfile(hero.session!.userId, db: db);
+    expect(profile, isNotNull);
+    expect(profile!.username, 'Hero');
+    expect((await rival.profile(hero.session!.userId))?.privacyPublicGear, isTrue);
+    expect(rival.takeReadProblem(), isNull);
+
+    final before = transport.selectedColumns.length;
+    expect(await rival.profile(hero.session!.userId), isNotNull);
+    expect(
+      transport.selectedColumns.sublist(before),
+      everyElement(isNot(contains('privacy_public_gear'))),
+    );
+    expect(await hero.setPrivacyPublicGear(false), isNotNull);
+  });
+
   test('a hosted friend request lands on the other account and accept makes friends', () async {
     final transport = FakeTransport();
     final hero = await _signedIn(transport, MemorySaveStorage());
@@ -632,6 +713,18 @@ void main() {
     expect((await hero.removeFriend(rival.session!.userId)).ok, isTrue);
     expect(await hero.friends(), isEmpty);
     expect(await rival.friends(), isEmpty);
+  });
+
+  test('ignored hosted players keep their name on the account list', () async {
+    final transport = FakeTransport();
+    final hero = await _signedIn(transport, MemorySaveStorage());
+    final rival = _service(transport, MemorySaveStorage());
+    await rival.signUp('rival@example.com', 'Rival', 'secret');
+
+    await hero.ignorePlayer(rival.session!.userId);
+    final ignored = await hero.ignoredPlayers();
+    expect(ignored.single.userId, rival.session!.userId);
+    expect(ignored.single.username, 'Rival');
   });
 
   test('falls back to the device friends list when the hosted tables are missing', () async {

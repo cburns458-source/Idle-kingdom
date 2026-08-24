@@ -34,6 +34,14 @@ const Set<String> _combatGearWords = <String>{
   'Spear',
 };
 
+const List<String> _combatArmorWords = <String>[
+  'Helmet',
+  'Chestplate',
+  'Platelegs',
+  'Boots',
+  'Gloves',
+];
+
 /// One row of a skill menu: what it makes and the level it needs.
 class SkillMenuListItem {
   const SkillMenuListItem({required this.id, required this.displayName, required this.level});
@@ -312,11 +320,14 @@ List<SkillMenuTab> _artisanryTabs(GameDatabase db) {
 
 List<SkillMenuTab> _arcanaTabs(GameDatabase db) {
   final spells = <SkillMenuListItem>[...actionsForSkill(db, arcanaSkillId)];
+  final weapons = <SkillMenuListItem>[];
   final enchantments = <SkillMenuListItem>[];
   for (final project in projectsForSkill(db, arcanaSkillId)) {
     final outputId = _projectOutputId(db, project.id);
     if (_isSpellName(project.displayName)) {
       spells.add(project);
+    } else if (_isArcanaWeaponName(project.displayName, outputId)) {
+      weapons.add(project);
     } else if (_isEnchantmentName(project.displayName, outputId)) {
       enchantments.add(project);
     } else {
@@ -325,6 +336,7 @@ List<SkillMenuTab> _arcanaTabs(GameDatabase db) {
   }
   return <SkillMenuTab>[
     _listTab('spells', 'Spells', _dedupeByName(spells)),
+    _listTab('weapons', 'Weapons', _dedupeByName(weapons)),
     _listTab('enchantments', 'Enchantments', _dedupeByName(enchantments)),
   ];
 }
@@ -353,7 +365,20 @@ List<SkillMenuListItem> _combatGearEntries(GameDatabase db) {
     }),
     ..._woodenItems(db, _woodenCombatGear),
   ];
-  return _dedupeByName(items);
+  final grouped = <SkillMenuListItem>[];
+  final other = <SkillMenuListItem>[];
+  final seen = <String>{};
+  for (final item in items) {
+    final material = _armorMaterial(item.displayName);
+    if (material == null) {
+      other.add(item);
+      continue;
+    }
+    final key = '${item.level ?? ''}|$material';
+    if (!seen.add(key)) continue;
+    grouped.add(SkillMenuListItem(id: key, displayName: '$material equipment', level: item.level));
+  }
+  return _dedupeByName([...grouped, ...other]);
 }
 
 List<SkillMenuListItem> _gatheringToolEntries(GameDatabase db, String skillId) {
@@ -456,6 +481,17 @@ String? _smithingMaterial(String name) {
   return parts.first;
 }
 
+String? _armorMaterial(String name) {
+  for (final word in _combatArmorWords) {
+    if (!_endsWithWord(name, word)) continue;
+    if (name.length <= word.length) return null;
+    final material = name.substring(0, name.length - word.length).trim();
+    if (material.isEmpty) return null;
+    return material;
+  }
+  return null;
+}
+
 bool _endsWithWord(String name, String word) {
   return name == word || name.endsWith(' $word');
 }
@@ -498,6 +534,13 @@ bool _isCombatGearItem(ItemRow item) {
 }
 
 bool _isSpellName(String name) => name.contains('Spell');
+
+bool _isArcanaWeaponName(String name, String outputId) {
+  if (outputId.startsWith('ENCH-')) return false;
+  return RegExp(r'staff of\b', caseSensitive: false).hasMatch(name) ||
+      RegExp(r'\bstaff\b', caseSensitive: false).hasMatch(name) ||
+      RegExp(r'\bwand\b', caseSensitive: false).hasMatch(name);
+}
 
 bool _isEnchantmentName(String name, String outputId) {
   return outputId.startsWith('ENCH-') || name.contains('Enchantment') || name.contains('Enchanted');

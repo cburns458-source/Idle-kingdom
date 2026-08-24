@@ -73,9 +73,15 @@ class RemoteMultiplayerService implements MultiplayerService {
   /// them; once we see that, later reads skip the missing columns.
   bool? _profilesHaveChatPrivacy;
 
-  String get _publicProfileSelectColumns => _profilesHaveChatPrivacy == false
-      ? remotePublicProfileBaseColumns
-      : remotePublicProfileColumns;
+  /// Whether `profiles` has `privacy_public_gear`. Null until a read tells us.
+  bool? _profilesHaveGearPrivacy;
+
+  String get _publicProfileSelectColumns {
+    final parts = <String>[remotePublicProfileBaseColumns];
+    if (_profilesHaveChatPrivacy != false) parts.add(remoteChatPrivacyColumns);
+    if (_profilesHaveGearPrivacy != false) parts.add(remoteGearProfileColumns);
+    return parts.join(', ');
+  }
 
   /// Whether friend tables exist on the project. Null until a read tells us.
   /// Missing migration 014 falls back to the device list.
@@ -263,12 +269,23 @@ class RemoteMultiplayerService implements MultiplayerService {
       _reads.clearIf(remoteMissingChatPrivacyColumn);
       result = await transport.select(
         RemoteTables.profiles,
-        columns: remotePublicProfileBaseColumns,
+        columns: _publicProfileSelectColumns,
+        equals: <String, Object?>{'user_id': userId},
+        limit: 1,
+      );
+    }
+    if (!result.ok && remoteMissingGearPrivacyColumn(result.reason)) {
+      _profilesHaveGearPrivacy = false;
+      _reads.clearIf(remoteMissingGearPrivacyColumn);
+      result = await transport.select(
+        RemoteTables.profiles,
+        columns: _publicProfileSelectColumns,
         equals: <String, Object?>{'user_id': userId},
         limit: 1,
       );
     } else if (result.ok) {
       _profilesHaveChatPrivacy ??= true;
+      _profilesHaveGearPrivacy ??= true;
     }
     if (!result.ok) return null;
     final profile = multiplayerProfileFromRemote(result.single);
@@ -313,13 +330,14 @@ class RemoteMultiplayerService implements MultiplayerService {
     num achievements = 0;
     num totalLevel = 0;
     num logPercent = 0;
+    PlayerSave? save;
 
     // Cloud saves are self-only under RLS. The viewer's own save can fill
     // skills, achievements, and log %; everyone else uses the same snapshot
     // rows the leaderboard already published.
     if (session?.userId == userId) {
       final row = await _readSaveRow(userId);
-      final save = row?.toCloudSaveRecordOrNull()?.payload;
+      save = row?.toCloudSaveRecordOrNull()?.payload;
       if (save != null) {
         skills = [
           for (final skill in save.skills)
@@ -355,6 +373,11 @@ class RemoteMultiplayerService implements MultiplayerService {
       appearance: account.appearance,
       guildName: account.guildName,
       publicSkills: account.privacyPublicSkills ? skills : const <PublicSkillLine>[],
+      publicEquipment: !account.privacyPublicGear
+          ? null
+          : session?.userId == userId && save != null
+          ? publicEquipmentFromSave(save)
+          : account.publishedEquipment,
       achievementsUnlocked: achievements,
       totalLevel: totalLevel,
       logCompletionPercent: logPercent,
@@ -364,6 +387,21 @@ class RemoteMultiplayerService implements MultiplayerService {
   @override
   Future<MultiplayerProfile?> setPrivacyPublicSkills(bool value) =>
       _local.setPrivacyPublicSkills(value);
+
+  @override
+  Future<MultiplayerProfile?> setPrivacyPublicGear(bool value) async {
+    final current = session;
+    if (current == null) return null;
+    if (_profilesHaveGearPrivacy != false) {
+      final refused = await transport.upsert(RemoteTables.profiles, <RemoteRow>[
+        <String, Object?>{'user_id': current.userId, 'privacy_public_gear': value},
+      ], onConflict: 'user_id');
+      if (refused != null && remoteMissingGearPrivacyColumn(refused)) {
+        _profilesHaveGearPrivacy = false;
+      }
+    }
+    return _local.setPrivacyPublicGear(value);
+  }
 
   @override
   Future<MultiplayerProfile?> setChatPrivacy({String? directMessages, String? localChat}) async {
@@ -431,6 +469,17 @@ class RemoteMultiplayerService implements MultiplayerService {
     if (refused != null) return CloudSyncResult.failed(refused);
 
     await _refreshPvpLiveStats(stamped);
+    if (_profilesHaveGearPrivacy != false) {
+      final refusedGear = await transport.upsert(RemoteTables.profiles, <RemoteRow>[
+        <String, Object?>{
+          'user_id': current.userId,
+          'equipment_json': publicEquipmentFromSave(stamped).map((row) => row.toJson()).toList(),
+        },
+      ], onConflict: 'user_id');
+      if (refusedGear != null && remoteMissingGearPrivacyColumn(refusedGear)) {
+        _profilesHaveGearPrivacy = false;
+      }
+    }
     return CloudSyncResult.ok(stamped, CloudSyncSource.uploaded);
   }
 
@@ -492,13 +541,24 @@ class RemoteMultiplayerService implements MultiplayerService {
       leaderboardRowsFor(current.userId, snapshot, isoFromMs(_nowMs())),
       onConflict: remoteLeaderboardConflict,
     );
-    await transport.upsert(RemoteTables.profiles, <RemoteRow>[
-      <String, Object?>{
-        'user_id': current.userId,
-        'username': current.username,
-        'appearance_json': save.appearance.toJson(),
-      },
+    final profileRow = <String, Object?>{
+      'user_id': current.userId,
+      'username': current.username,
+      'appearance_json': save.appearance.toJson(),
+    };
+    if (_profilesHaveGearPrivacy != false) {
+      profileRow[remoteEquipmentJsonColumn] = snapshot.equipment
+          .map((row) => row.toJson())
+          .toList();
+    }
+    final refusedProfile = await transport.upsert(RemoteTables.profiles, <RemoteRow>[
+      profileRow,
     ], onConflict: 'user_id');
+    if (refusedProfile != null && remoteMissingGearPrivacyColumn(refusedProfile)) {
+      _profilesHaveGearPrivacy = false;
+      profileRow.remove(remoteEquipmentJsonColumn);
+      await transport.upsert(RemoteTables.profiles, <RemoteRow>[profileRow], onConflict: 'user_id');
+    }
     // A roster lists each member's name, look, and level, and only that member
     // may write their own row, so the submit that refreshes the boards refreshes
     // the roster too.
@@ -736,6 +796,10 @@ class RemoteMultiplayerService implements MultiplayerService {
   Future<ActivityPresence?> publishPresence(PresenceInput input) async {
     final current = session;
     if (current == null) return null;
+    if (!isPublicAdventurerUsername(current.username)) {
+      await clearPresence();
+      return null;
+    }
     final now = _nowMs();
     final row = presenceRowFor(
       session: current,
@@ -804,11 +868,11 @@ class RemoteMultiplayerService implements MultiplayerService {
 
   List<ActivityPresence> _visiblePeers(List<ActivityPresence> peers, bool excludeSelf) {
     final current = session;
-    if (current == null) return peers;
-    final hidden = _local.backend.blockedIds(current.userId);
+    final hidden = current == null ? const <String>{} : _local.backend.blockedIds(current.userId);
     return peers
+        .where((row) => isPublicAdventurerUsername(row.username))
         .where((row) => !hidden.contains(row.userId))
-        .where((row) => !excludeSelf || row.userId != current.userId)
+        .where((row) => current == null || !excludeSelf || row.userId != current.userId)
         .toList();
   }
 
@@ -894,6 +958,15 @@ class RemoteMultiplayerService implements MultiplayerService {
   @override
   Future<void> ignorePlayer(String targetUserId) async {
     await _dropHostedRelationship(targetUserId);
+    final account = await profile(targetUserId);
+    if (account != null) {
+      _local.backend.rememberProfile(
+        userId: account.userId,
+        username: account.username,
+        appearance: account.appearance,
+        guildName: account.guildName,
+      );
+    }
     return _local.ignorePlayer(targetUserId);
   }
 
@@ -954,7 +1027,11 @@ class RemoteMultiplayerService implements MultiplayerService {
   }
 
   @override
-  Future<List<SocialContact>> ignoredPlayers() => _local.ignoredPlayers();
+  Future<List<SocialContact>> ignoredPlayers() async {
+    final current = session;
+    if (current == null) return const <SocialContact>[];
+    return _contactsFor(_local.backend.blockedIds(current.userId));
+  }
 
   void _invalidateFriends() => _friendIdsCache = null;
 

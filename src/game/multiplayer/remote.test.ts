@@ -3,6 +3,7 @@ import {
   chatMessageFrom,
   cloudSaveRecordFrom,
   isPendingAccountUsername,
+  isPublicAdventurerUsername,
   isRemoteSaveNewer,
   leaderboardEntriesFrom,
   leaderboardRowsFor,
@@ -41,6 +42,8 @@ describe('remote identity', () => {
     expect(pendingAccountUsername('usr_0001')).toBe('pending_usr0001')
     expect(isPendingAccountUsername('pending_usr0001')).toBe(true)
     expect(isPendingAccountUsername('Hero')).toBe(false)
+    expect(isPublicAdventurerUsername('pending_usr0001')).toBe(false)
+    expect(isPublicAdventurerUsername('Hero')).toBe(true)
   })
 
   it('folds an email to one form so two spellings are one account', () => {
@@ -85,6 +88,7 @@ describe('remote identity', () => {
       user_id: 'usr-1',
       username: 'Rowan',
       privacy_public_skills: true,
+      privacy_public_gear: true,
     })
   })
 })
@@ -140,6 +144,7 @@ describe('remote leaderboards', () => {
           { boardKey: 'total_level', value: 42, secondaryValue: 1204 },
           { boardKey: 'gold_earned', value: 7 },
         ],
+        equipment: [],
       },
       '2026-08-12T21:00:00.000Z',
     )
@@ -175,6 +180,7 @@ describe('remote leaderboards', () => {
     }
 
     expect(leaderboardEntriesFrom([row], 'total_level')[0].secondaryValue).toBe(1204)
+    expect(leaderboardEntriesFrom([row], 'skill:SKL-0001')[0].secondaryValue).toBe(1204)
     expect(leaderboardEntriesFrom([row], 'gold_earned')[0].secondaryValue).toBeUndefined()
   })
 
@@ -188,7 +194,7 @@ describe('remote leaderboards', () => {
           profiles: {
             username: 'Hero',
             appearance_json: {},
-            guilds: { name: 'Iron League' },
+            guilds: { name: 'Iron League', tag: 'IRN' },
           },
         },
         {
@@ -206,6 +212,7 @@ describe('remote leaderboards', () => {
     )
     expect(entries[0]?.username).toBe('Hero')
     expect(entries[0]?.guildName).toBe('Iron League')
+    expect(entries[0]?.guildTag).toBe('IRN')
     expect(entries[0]?.appearance).toEqual(DEFAULT_PLAYER_APPEARANCE)
     expect(entries[1]?.username).toBe('Adventurer')
     expect(entries[1]?.guildName).toBeNull()

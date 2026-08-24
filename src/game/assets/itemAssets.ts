@@ -16,7 +16,6 @@ const ITEM_ID_ICONS: Record<string, string> = {
   'ITEM-0111': 'copper_pickaxe',
   'ITEM-0119': 'steel_pickaxe',
   'ITEM-0123': 'hammer',
-  'ITEM-0169': 'backpack',
   'ITEM-0288': 'insignia',
   'ITEM-0295': 'spell',
   'ITEM-0296': 'cosmetic_outfit_travelers_tunic',
@@ -52,7 +51,12 @@ function iconStemFromText(blob: string, category: string, subtype: string): stri
   if (blob.includes('potato') || blob.includes('spud')) {
     return blob.includes('baked') ? 'baked_potato' : 'potato'
   }
-  if (blob.includes('backpack') || blob.includes('back item') || subtype.includes('back')) {
+  if (
+    blob.includes('quiver') ||
+    blob.includes('backpack') ||
+    blob.includes('back item') ||
+    subtype.includes('back')
+  ) {
     return 'backpack'
   }
   if (blob.includes('fishing') || blob.includes('rod') || blob.includes('harpoon')) {

@@ -150,7 +150,7 @@ List<RecipeBookEntry> listRecipeBookEntries(PlayerSave save, GameDatabase db) {
         ?.raw['Display Name'];
     final place = _facilityLabel(db, recipe.raw['Facility ID']);
     final ingredients = _joinLines(<String?>[
-      for (var slot = 1; slot <= 3; slot += 1)
+      for (var slot = 1; slot <= 4; slot += 1)
         if (isNotBlank(recipe.raw['Ingredient $slot Item ID'] as String?))
           '${_itemName(db, recipe.raw['Ingredient $slot Item ID'])} '
               '×${jsNumberToString(jsNumber(recipe.raw['Ingredient $slot Quantity'] ?? 1))}',
@@ -223,10 +223,9 @@ List<RecipeBookEntry> listRecipeBookEntries(PlayerSave save, GameDatabase db) {
   return entries;
 }
 
-/// Unlocked recipes and mentor-known projects for one skill.
+/// Recipes and mentor projects for one skill, including locked rows.
 List<RecipeBookEntry> recipeBookForSkill(PlayerSave save, GameDatabase db, String skillId) {
   return listRecipeBookEntries(save, db).where((entry) {
-    if (!entry.known) return false;
     if (entry.kind == 'recipe') {
       return getRecipe(db, entry.id)?.raw['Skill ID'] == skillId;
     }

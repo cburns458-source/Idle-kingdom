@@ -6,11 +6,13 @@ import { prepareDatabase } from '../data/loadDatabase'
 import { createNewSave } from '../save/saveStore'
 import {
   ESSENCE_ITEM_ID,
+  canAccessShop,
   playerBuyPrice,
   playerSellPrice,
   shopStockEntries,
   shopStockForPlayer,
 } from './shops'
+import { assignRace } from '../races/assignRace'
 import { confirmShopOffer } from './transactions'
 
 const rawDatabase = JSON.parse(
@@ -25,19 +27,36 @@ describe('shops', () => {
     expect(stock).toContain('ITEM-0102')
     expect(stock).toContain('ITEM-0108')
     expect(stock.length).toBeGreaterThanOrEqual(10)
-    expect(playerBuyPrice(launch, shop, 'ITEM-0102')).toBe(30)
+    expect(playerBuyPrice(launch, shop, 'ITEM-0102')).toBe(24)
   })
 
   it('prices Essence at 100× base sell value in the Wizard shop', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const shop = launch.Shops.find((row) => row['Shop ID'] === 'SHP-0003')!
-    expect(playerBuyPrice(launch, shop, ESSENCE_ITEM_ID)).toBe(150_000)
+    expect(playerBuyPrice(launch, shop, ESSENCE_ITEM_ID)).toBe(10_000)
+  })
+
+  it('lets Dwarves access the Mining Store at Mining 35', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const shop = launch.Shops.find((row) => row['Shop ID'] === 'SHP-0002')!
+    let save = createNewSave(launch)
+    const dwarf = assignRace(launch, save, 'RACE-0006')
+    expect(dwarf.ok).toBe(true)
+    if (!dwarf.ok) return
+    save = {
+      ...dwarf.save,
+      currentLocationId: 'LOC-0012',
+      skills: dwarf.save.skills.map((skill) =>
+        skill.skillId === 'SKL-0002' ? { ...skill, level: 35, xp: 50_000 } : skill,
+      ),
+    }
+    expect(canAccessShop(launch, save, shop).ok).toBe(true)
   })
 
   it('buys ores at 1.5× in the Mining Store when Mining is high enough', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const shop = launch.Shops.find((row) => row['Shop ID'] === 'SHP-0002')!
-    expect(playerSellPrice(launch, shop, 'ITEM-0003')).toBe(9)
+    expect(playerSellPrice(launch, shop, 'ITEM-0003')).toBe(12)
 
     let save = createNewSave(launch)
     save = {
@@ -55,13 +74,13 @@ describe('shops', () => {
     })
     expect(result.ok).toBe(true)
     if (!result.ok) return
-    expect(result.save.gold).toBe(18)
+    expect(result.save.gold).toBe(24)
   })
 
   it('requires confirmation flow to buy a tool for 2× base sell value', () => {
     const { launch } = prepareDatabase(rawDatabase)
     let save = createNewSave(launch)
-    save = { ...save, gold: 30, currentLocationId: 'LOC-0024' }
+    save = { ...save, gold: 24, currentLocationId: 'LOC-0024' }
     const result = confirmShopOffer(launch, save, 'SHP-0001', {
       buys: [{ itemId: 'ITEM-0102', quantity: 1 }],
       sells: [],
@@ -119,8 +138,8 @@ describe('shops', () => {
       'ITEM-0156',
       'ITEM-0157',
     ])
-    expect(playerBuyPrice(launch, shop, 'ITEM-0224')).toBe(660)
-    expect(playerSellPrice(launch, shop, 'ITEM-0224')).toBe(330)
+    expect(playerBuyPrice(launch, shop, 'ITEM-0224')).toBe(120)
+    expect(playerSellPrice(launch, shop, 'ITEM-0224')).toBe(60)
     expect(playerSellPrice(launch, shop, 'ITEM-0128')).toBe(
       playerSellPrice(launch, launch.Shops.find((row) => row['Shop ID'] === 'SHP-0001')!, 'ITEM-0128'),
     )

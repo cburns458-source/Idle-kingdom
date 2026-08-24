@@ -9,7 +9,6 @@ import { isStandardProductionActivity, recipesForActivity } from '../production/
 import type { ActionRow, ActivityRow, GameDatabase } from '../data/types'
 import type { PlayerSave } from '../save/types'
 import { clearActivePotionEffect, tryConsumePotionForScope } from '../potions/effects'
-import { applyRaceSkillXp } from '../races/races'
 import { gatheringDurationMs, gatheringXpReward } from './gathering'
 import { heldActionIdFor, withHeldAction, withoutHeldAction } from './heldAction'
 import { eligiblePoolEntries, isSelectableAction, pickWeightedAction, type RandomFn } from './pools'
@@ -27,9 +26,49 @@ import type {
 import { bonusSkillXpForAction, bowHuntingCombatXpBonus } from './bonusXp'
 import { summarizeXpReward } from './rewardSummary'
 import { applyXp } from './xp'
+import { bossRespawnUntilMs, isBossEnemy, isBossRespawnReady } from '../combat/boss'
+
+export const COMING_SOON_REASON = 'Coming soon.'
 
 export function getActivity(db: GameDatabase, activityId: string): ActivityRow | undefined {
   return db.Activities.find((row) => row['Activity ID'] === activityId)
+}
+
+export function activityIsComingSoon(activity: ActivityRow | null | undefined): boolean {
+  if (!activity) return false
+  return String(activity.Notes ?? '')
+    .split(';')
+    .map((token) => token.trim().toLowerCase())
+    .includes('coming_soon')
+}
+
+/** Earliest time the next pool action can start, or null when nothing is waiting. */
+export function bossRespawnWaitUntilMs(
+  db: GameDatabase,
+  save: PlayerSave,
+  activityId: string,
+): number | null {
+  const activity = getActivity(db, activityId)
+  if (!activity?.['Pool ID']) return null
+
+  const heldId = heldActionIdFor(save, activityId)
+  let held = heldId ? db.Actions.find((row) => row['Action ID'] === heldId) : undefined
+  if (held && !isSelectableAction(held)) held = undefined
+  const candidates: ActionRow[] = held
+    ? [held]
+    : eligiblePoolEntries(db, activity['Pool ID']).map((entry) => entry.action)
+  if (candidates.length === 0) return null
+
+  let wait: number | null = null
+  for (const action of candidates) {
+    if (action.Category !== 'Combat') return null
+    const enemy = enemyForAction(db, action)
+    if (!enemy || !isBossEnemy(enemy)) return null
+    const until = bossRespawnUntilMs(save, enemy['Enemy ID'])
+    if (until == null) return null
+    wait = wait == null ? until : Math.min(wait, until)
+  }
+  return wait
 }
 
 export function validateActivityStart(
@@ -41,6 +80,9 @@ export function validateActivityStart(
   if (!activity) return { ok: false, reason: 'Unknown activity.' }
   if (activity['Location ID'] !== save.currentLocationId) {
     return { ok: false, reason: 'Travel to this location before starting the activity.' }
+  }
+  if (activityIsComingSoon(activity)) {
+    return { ok: false, reason: COMING_SOON_REASON }
   }
   const activityReqFailures = unmetHardRequirements(
     db,
@@ -151,6 +193,16 @@ export function generateNextAction(
       ...save,
       currentActivityId: activityId,
       activityStartedAt: save.activityStartedAt ?? startedAt,
+      currentActionId: null,
+      actionStartedAt: null,
+      actionDurationMs: null,
+    }
+    if (isBossEnemy(enemy) && !isBossRespawnReady(save, enemy['Enemy ID'], nowMs)) {
+      return {
+        action,
+        state: null,
+        save: clearCombatSave(withActivity),
+      }
     }
     return {
       action,
@@ -187,12 +239,7 @@ export function completeGatheringAction(
   random: RandomFn = Math.random,
 ): { save: PlayerSave; result: ActionCompletionResult } {
   const rewarded = resolveActionRewards(db, save, action, random)
-  const xpAmount = applyRaceSkillXp(
-    db,
-    save,
-    action['Relevant Skill ID'],
-    gatheringXpReward(db, save, action),
-  )
+  const xpAmount = gatheringXpReward(db, save, action)
   let next = clearActivePotionEffect(rewarded.save)
   const xpApplied = applyXp(next, db, action['Relevant Skill ID'], xpAmount)
   next = xpApplied.save
@@ -211,12 +258,10 @@ export function completeGatheringAction(
 
   function applyBonusXp(skillId: string, amount: number) {
     if (amount <= 0) return
-    const raced = applyRaceSkillXp(db, save, skillId, amount)
-    if (raced <= 0) return
-    const applied = applyXp(next, db, skillId, raced)
+    const applied = applyXp(next, db, skillId, amount)
     next = applied.save
-    bonusXp.push({ skillId, xp: raced })
-    const reward = summarizeXpReward(db, next, skillId, raced, applied.leveledUpTo)
+    bonusXp.push({ skillId, xp: amount })
+    const reward = summarizeXpReward(db, next, skillId, amount, applied.leveledUpTo)
     if (reward) xpRewards.push(reward)
     if (applied.leveledUpTo != null) {
       leveledUpTo = applied.leveledUpTo

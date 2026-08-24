@@ -52,7 +52,7 @@ void main() {
     expect(gold('ENM-0010', 'Maximum Gold'), 0);
     expect(gold('ENM-0003', 'Minimum Gold'), 1);
     expect(gold('ENM-0003', 'Maximum Gold'), 3);
-    expect(gold('ENM-0017', 'Minimum Gold'), 1);
+    expect(gold('ENM-0016', 'Minimum Gold'), 3);
     expect(gold('ENM-0006', 'Maximum Gold'), 1000);
   });
 

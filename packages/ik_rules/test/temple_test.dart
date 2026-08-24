@@ -39,30 +39,32 @@ void main() {
     expect(db.activities.any((row) => row.activityId == 'ACT-0036'), isFalse);
   });
 
-  test('Pick weeds is a single harvesting action with 90/10 drops and empty hands', () {
+  test('Pick weeds rolls augur weed or moonblossom with empty hands', () {
     final activity = db.activities.firstWhere((row) => row.activityId == 'ACT-0039');
     expect(activity.raw['Contextual Name'], 'Pick weeds');
     expect(activity.poolId, 'POOL-0029');
 
     final pool = db.poolEntries.where((row) => row.raw['Pool ID'] == 'POOL-0029').toList();
-    expect(pool, hasLength(1));
-    expect(pool.single.raw['Action ID'], 'ACN-0174');
-
-    final action = db.actions.firstWhere((row) => row.actionId == 'ACN-0174');
-    expect(action.displayName, 'Pick weeds');
-    expect(action.relevantSkillId, 'SKL-0004');
-    expect(action.proficiencyLevel, 50);
-    expect(action.xpReward, 650000);
-    expect(action.baseDurationSeconds, 1800);
-
-    final drops = db.rewardEntries
-        .where((row) => row.raw['Reward Table ID'] == 'RWT-0119')
-        .toList();
-    expect(drops, hasLength(2));
+    expect(pool, hasLength(2));
     expect(
-      drops.map((row) => '${row.raw['Reward ID / Value']}:${row.raw['Weight']}'),
-      containsAll(<String>['ITEM-0033:90', 'ITEM-0207:10']),
+      pool.map((row) => '${row.raw['Action ID']}:${row.raw['Weight']}'),
+      containsAll(<String>['ACN-0109:90', 'ACN-0110:10']),
     );
+
+    final augur = db.actions.firstWhere((row) => row.actionId == 'ACN-0109');
+    expect(augur.displayName, 'Gather augur weed');
+    expect(augur.relevantSkillId, 'SKL-0004');
+    expect(augur.proficiencyLevel, 50);
+    expect(augur.xpReward, 50000);
+    expect(augur.baseDurationSeconds, 360);
+
+    final moonblossom = db.actions.firstWhere((row) => row.actionId == 'ACN-0110');
+    expect(moonblossom.displayName, 'Gather moonblossom');
+    expect(moonblossom.proficiencyLevel, 70);
+    expect(moonblossom.xpReward, 75000);
+    expect(moonblossom.baseDurationSeconds, 540);
+
+    expect(db.actions.any((row) => row.actionId == 'ACN-0174'), isFalse);
 
     var save = _withHands(_atTemple(db), weaponId: 'ITEM-0100', offhandId: 'ITEM-0145');
     final started = requestActivityStart(db, save, 'ACT-0039', 0, () => 0);
@@ -71,23 +73,23 @@ void main() {
     expect(slotItemId(save, weaponToolSlotId), isNull);
     expect(slotItemId(save, offhandSlotId), isNull);
     expect(save.currentActivityId, 'ACT-0039');
-    expect(save.currentActionId, 'ACN-0174');
+    expect(save.currentActionId, 'ACN-0109');
   });
 
   test('the Monk is a level-10 unarmed training fight with no loot', () {
     final enemy = getEnemy(db, 'ENM-0020')!;
     expect(enemy.raw['Display Name'], 'Monk');
     expect(enemy.raw['Combat Level'], 10);
-    expect(enemy.raw['Maximum HP'], 500);
+    expect(enemy.raw['Maximum HP'], 350);
     expect(enemy.raw['Min Damage'], 11);
     expect(enemy.raw['Max Damage'], 33);
-    expect(enemy.raw['Combat XP'], 2500);
+    expect(enemy.raw['Combat XP'], 1200);
     expect(enemy.raw['Drop Chance'], 0);
     expect(enemy.raw['Reward Table ID'], isNull);
 
     final action = db.actions.firstWhere((row) => row.raw['Action ID'] == 'ACN-0172');
     expect(action.raw['Display Name'], 'Monk');
-    expect(action.raw['XP Reward'], 2500);
+    expect(action.raw['XP Reward'], 1200);
     expect(action.raw['Target ID'], 'ENM-0020');
   });
 
@@ -104,7 +106,7 @@ void main() {
     expect(save.currentActivityId, 'ACT-0035');
     expect(save.currentActionId, 'ACN-0172');
     expect(save.combatEnemyId, 'ENM-0020');
-    expect(save.combatEnemyHp, 500);
+    expect(save.combatEnemyHp, 350);
     expect(save.inventory.any((stack) => stack.itemId == 'ITEM-0100'), isTrue);
     expect(save.inventory.any((stack) => stack.itemId == 'ITEM-0145'), isTrue);
   });
@@ -137,5 +139,11 @@ void main() {
     final save = createNewSave(db, 0);
     expect(forcedHostileActivity(db, save, 'LOC-0036'), isNull);
     expect(locationIsHostileFor(db, save, 'LOC-0036'), isFalse);
+  });
+
+  test('Ancient Forest is not a forced-hostile arrival', () {
+    final save = createNewSave(db, 0);
+    expect(forcedHostileActivity(db, save, 'LOC-0018'), isNull);
+    expect(locationIsHostileFor(db, save, 'LOC-0018'), isFalse);
   });
 }

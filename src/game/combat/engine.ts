@@ -1,7 +1,7 @@
 import { withoutHeldAction } from '../activity/heldAction'
 import { configNumber } from '../activity/gathering'
 import { resolveActionRewards } from '../activity/rewards'
-import { applyXp } from '../activity/xp'
+import { applyXp, getSkillProgress } from '../activity/xp'
 import type { ActionRow, GameDatabase } from '../data/types'
 import type { EnemyRow } from '../data/enemyTypes'
 import { revokeCosmetic } from '../cosmetics/cosmetics'
@@ -21,6 +21,8 @@ import {
 import { applyBountyDefeatProgress } from '../bounties/progress'
 import { applyQuestDefeatProgress } from '../quests/progress'
 import { applyRaceGoldGain } from '../races/races'
+import { itemHasCapability, WEAPON_TOOL_SLOT_ID } from '../equipment/loadout'
+import { ARCANA_SKILL_ID } from '../npcs/knowledge'
 import {
   applyMitigation,
   playerDamageRange,
@@ -28,7 +30,9 @@ import {
   playerMaxHp,
   playerOffhandDamageRange,
   rollDamage,
+  staffSparksDamageRange,
 } from './stats'
+import { applySleepIncoming, bossProfile, withBossRespawn } from './boss'
 
 export type RandomFn = () => number
 
@@ -38,9 +42,19 @@ export interface CombatRoundResult {
   playerCrit: boolean
   /** Off-hand dagger hit this round, or null when none / skipped. */
   offhandHit: number | null
+  /** Staff of Sparks extra hit this round, or null when none / skipped. */
+  staffHit: number | null
+  /** Persist Binding: skip the enemy's next attack. */
+  skipNextEnemyAttack: boolean
   enemyHit: number | null
   /** Damage reflected back at the enemy this round via armor enchantments (e.g. Thorns). */
   thornsHit: number
+  /** Remaining boss sleep rounds after this one, or null when the enemy is not a boss. */
+  bossSleepRoundsRemaining: number | null
+  /** True when this enemy started the round asleep. */
+  enemyAsleep: boolean
+  /** True when the enemy's landing swing was a rampage hit. */
+  enemyRampage: boolean
   enemyHp: number
   playerHp: number
   outcome: 'ongoing' | 'victory' | 'defeat'
@@ -83,6 +97,8 @@ export function beginCombatSave(
     combatEnemyId: enemy['Enemy ID'],
     combatEnemyHp: enemyHp,
     combatRoundStartedAt: nowIso,
+    combatSkipEnemyAttack: false,
+    combatBossSleepRoundsRemaining: bossProfile(enemy)?.sleepStart ?? null,
     activePotionEffect: potion.effect,
     deathPauseUntil: null,
   }
@@ -94,6 +110,8 @@ export function clearCombatSave(save: PlayerSave): PlayerSave {
     combatEnemyId: null,
     combatEnemyHp: null,
     combatRoundStartedAt: null,
+    combatSkipEnemyAttack: false,
+    combatBossSleepRoundsRemaining: null,
     activePotionEffect:
       save.activePotionEffect?.scope === 'one_combat_encounter' ? null : save.activePotionEffect,
   }
@@ -107,6 +125,8 @@ export function resolveCombatRound(
   random: RandomFn = Math.random,
 ): CombatRoundResult {
   const floor = configNumber(db, 'damage_floor', 1)
+  const profile = bossProfile(enemy)
+  const asleep = (save.combatBossSleepRoundsRemaining ?? 0) > 0
   const playerRange = playerDamageRange(db, save)
   let playerHit = rollDamage(playerRange.min, playerRange.max, random)
   let playerCrit = false
@@ -115,17 +135,42 @@ export function resolveCombatRound(
     playerCrit = true
     playerHit = Math.max(1, Math.floor(playerHit * criticalStrikeDamageMultiplier()))
   }
+  playerHit = applySleepIncoming(playerHit, asleep)
   let nextEnemyHp = Math.max(0, enemyHp - playerHit)
 
+  const weaponId = save.equipment.slots[WEAPON_TOOL_SLOT_ID]?.itemId ?? null
+
+  // Staff of Sparks: a second blue hit after the main swing if the enemy is still up.
+  // No crit and no Strength / combat / potion / race multipliers — Arcana level only.
+  let staffHit: number | null = null
+  if (nextEnemyHp > 0 && weaponId && itemHasCapability(db, weaponId, 'staff_sparks')) {
+    const sparks = staffSparksDamageRange(getSkillProgress(save, ARCANA_SKILL_ID).level)
+    staffHit = applySleepIncoming(rollDamage(sparks.min, sparks.max, random), asleep)
+    nextEnemyHp = Math.max(0, nextEnemyHp - staffHit)
+  }
+
   // Off-hand dagger swings after the main-hand hit if the enemy is still up.
+  // Two-handers never keep an off-hand dagger, so this stays null for staves.
   // Off-hand cannot crit; shared enchant/spell bonuses are already in its range.
   let offhandHit: number | null = null
   if (nextEnemyHp > 0) {
     const offhandRange = playerOffhandDamageRange(db, save)
     if (offhandRange) {
-      offhandHit = rollDamage(offhandRange.min, offhandRange.max, random)
+      offhandHit = applySleepIncoming(rollDamage(offhandRange.min, offhandRange.max, random), asleep)
       nextEnemyHp = Math.max(0, nextEnemyHp - offhandHit)
     }
+  }
+
+  // Binding procs on this hit: they still attack this round, then skip the next.
+  let skipNextEnemyAttack = false
+  if (nextEnemyHp > 0 && weaponId && itemHasCapability(db, weaponId, 'staff_binding')) {
+    skipNextEnemyAttack = random() < 0.5
+  }
+
+  let nextSleep = profile == null ? null : save.combatBossSleepRoundsRemaining ?? 0
+  if (nextSleep != null && nextSleep > 0) nextSleep -= 1
+  if (profile && nextEnemyHp <= enemy['Maximum HP'] * profile.wakeHpRatio) {
+    nextSleep = 0
   }
 
   if (nextEnemyHp <= 0) {
@@ -133,20 +178,46 @@ export function resolveCombatRound(
       playerHit,
       playerCrit,
       offhandHit,
+      staffHit,
+      skipNextEnemyAttack: false,
       enemyHit: null,
       thornsHit: 0,
+      bossSleepRoundsRemaining: nextSleep,
+      enemyAsleep: asleep,
+      enemyRampage: false,
       enemyHp: 0,
       playerHp: save.currentHp,
       outcome: 'victory',
     }
   }
 
-  const enemyRaw = rollDamage(enemy['Min Damage'], enemy['Max Damage'], random)
+  if (save.combatSkipEnemyAttack || asleep) {
+    return {
+      playerHit,
+      playerCrit,
+      offhandHit,
+      staffHit,
+      skipNextEnemyAttack,
+      enemyHit: null,
+      thornsHit: 0,
+      bossSleepRoundsRemaining: nextSleep,
+      enemyAsleep: asleep,
+      enemyRampage: false,
+      enemyHp: nextEnemyHp,
+      playerHp: save.currentHp,
+      outcome: 'ongoing',
+    }
+  }
+
+  const rampage = Boolean(profile && nextEnemyHp <= enemy['Maximum HP'] * profile.rampageHpRatio)
+  let enemyRaw = rollDamage(enemy['Min Damage'], enemy['Max Damage'], random)
+  if (rampage) enemyRaw *= 2
   const enemyHit = applyMitigation(enemyRaw, playerDamageReduction(db, save), floor)
   const playerHp = Math.max(0, save.currentHp - enemyHit)
 
   const thornsPercent = equippedEnchantmentThornsPercent(db, save)
-  const thornsHit = thornsPercent > 0 ? Math.round((enemyHit * thornsPercent) / 100) : 0
+  let thornsHit = thornsPercent > 0 ? Math.round((enemyHit * thornsPercent) / 100) : 0
+  thornsHit = applySleepIncoming(thornsHit, asleep)
   if (thornsHit > 0) {
     nextEnemyHp = Math.max(0, nextEnemyHp - thornsHit)
   }
@@ -155,8 +226,13 @@ export function resolveCombatRound(
     playerHit,
     playerCrit,
     offhandHit,
+    staffHit,
+    skipNextEnemyAttack,
     enemyHit,
     thornsHit,
+    bossSleepRoundsRemaining: nextSleep,
+    enemyAsleep: asleep,
+    enemyRampage: rampage,
     enemyHp: nextEnemyHp,
     playerHp,
     // Simultaneous kills favor defeat: the enemy's own hit must land before Thorns reflects it.
@@ -208,7 +284,7 @@ export function applyCombatVictory(
   }
 
   const food = tryConsumeFoodAfterVictory(db, next)
-  next = clearCombatSave(food.save)
+  next = withBossRespawn(clearCombatSave(food.save), enemy, nowMs)
   next = applyQuestDefeatProgress(db, next, enemy['Enemy ID'], 1)
   next = applyBountyDefeatProgress(next, enemy['Enemy ID'], 1, nowMs)
   next = withoutHeldAction(next, save.currentActivityId)

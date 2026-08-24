@@ -26,6 +26,7 @@ export function recipeIngredients(recipe: RecipeRow): RecipeIngredient[] {
     [recipe['Ingredient 1 Item ID'], recipe['Ingredient 1 Quantity']],
     [recipe['Ingredient 2 Item ID'], recipe['Ingredient 2 Quantity']],
     [recipe['Ingredient 3 Item ID'], recipe['Ingredient 3 Quantity']],
+    [recipe['Ingredient 4 Item ID'], recipe['Ingredient 4 Quantity']],
   ]
   for (const [itemId, quantity] of pairs) {
     if (itemId && typeof quantity === 'number' && quantity > 0) {

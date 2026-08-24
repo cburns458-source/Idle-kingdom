@@ -1,12 +1,12 @@
 import 'package:collection/collection.dart';
 import 'package:ik_content/ik_content.dart';
 
+import '../combat/boss.dart';
 import '../combat/engine.dart';
 import '../js_compat.dart';
 import '../potions/effects.dart';
 import '../production/engine.dart';
 import '../production/recipes.dart';
-import '../races/races.dart';
 import '../rng/mulberry32.dart';
 import '../save/generated/save_models.dart';
 import '../time.dart';
@@ -20,8 +20,46 @@ import 'rewards.dart';
 import 'types.dart';
 import 'xp.dart';
 
+const String comingSoonReason = 'Coming soon.';
+
 ActivityRow? getActivity(GameDatabase db, String activityId) {
   return db.activities.firstWhereOrNull((row) => row.raw['Activity ID'] == activityId);
+}
+
+bool activityIsComingSoon(ActivityRow? activity) {
+  if (activity == null) return false;
+  return jsString(activity.raw['Notes'])
+      .split(';')
+      .map((token) => token.trim().toLowerCase())
+      .contains('coming_soon');
+}
+
+/// Earliest time the next pool action can start, or null when nothing is waiting.
+num? bossRespawnWaitUntilMs(GameDatabase db, PlayerSave save, String activityId) {
+  final poolId = getActivity(db, activityId)?.raw['Pool ID'];
+  if (poolId is! String || poolId.isEmpty) return null;
+
+  final heldId = heldActionIdFor(save, activityId);
+  ActionRow? held;
+  if (heldId != null) {
+    held = db.actions.firstWhereOrNull((row) => row.raw['Action ID'] == heldId);
+    if (held != null && !isSelectableAction(held)) held = null;
+  }
+  final candidates = held != null
+      ? <ActionRow>[held]
+      : eligiblePoolEntries(db, poolId).map((entry) => entry.action).toList();
+  if (candidates.isEmpty) return null;
+
+  num? wait;
+  for (final action in candidates) {
+    if (action.raw['Category'] != 'Combat') return null;
+    final enemy = enemyForAction(db, action);
+    if (enemy == null || !isBossEnemy(enemy)) return null;
+    final until = bossRespawnUntilMs(save, jsString(enemy.raw['Enemy ID']));
+    if (until == null) return null;
+    wait = wait == null || until < wait ? until : wait;
+  }
+  return wait;
 }
 
 ActivityStartResult validateActivityStart(GameDatabase db, PlayerSave save, String activityId) {
@@ -31,6 +69,9 @@ ActivityStartResult validateActivityStart(GameDatabase db, PlayerSave save, Stri
     return const ActivityStartResult.failed(
       'Travel to this location before starting the activity.',
     );
+  }
+  if (activityIsComingSoon(activity)) {
+    return const ActivityStartResult.failed(comingSoonReason);
   }
   final activityReqFailures = unmetHardRequirements(
     db,
@@ -149,7 +190,13 @@ GeneratedAction? generateNextAction(
     final withActivity = save.copyWith(
       currentActivityId: activityId,
       activityStartedAt: save.activityStartedAt ?? startedAt,
+      currentActionId: null,
+      actionStartedAt: null,
+      actionDurationMs: null,
     );
+    if (isBossEnemy(enemy) && !isBossRespawnReady(save, jsString(enemy.raw['Enemy ID']), nowMs)) {
+      return GeneratedAction(action: action, state: null, save: clearCombatSave(withActivity));
+    }
     return GeneratedAction(
       action: action,
       state: null,
@@ -197,7 +244,7 @@ GatheringCompletion completeGatheringAction(
 ) {
   final skillId = jsString(action.raw['Relevant Skill ID']);
   final rewarded = resolveActionRewards(db, save, action, random);
-  final xpAmount = applyRaceSkillXp(db, save, skillId, gatheringXpReward(db, save, action));
+  final xpAmount = gatheringXpReward(db, save, action);
   final xpApplied = applyXp(clearActivePotionEffect(rewarded.save), db, skillId, xpAmount);
   var next = xpApplied.save;
   var leveledUpTo = xpApplied.leveledUpTo;
@@ -209,13 +256,10 @@ GatheringCompletion completeGatheringAction(
 
   void applyBonusXp(String bonusSkillId, num amount) {
     if (amount <= 0) return;
-    // Race XP bonuses read the pre-action save, matching the primary award.
-    final raced = applyRaceSkillXp(db, save, bonusSkillId, amount);
-    if (raced <= 0) return;
-    final applied = applyXp(next, db, bonusSkillId, raced);
+    final applied = applyXp(next, db, bonusSkillId, amount);
     next = applied.save;
-    bonusXp.add(BonusXpGrant(skillId: bonusSkillId, xp: raced));
-    final reward = summarizeXpReward(db, next, bonusSkillId, raced, applied.leveledUpTo);
+    bonusXp.add(BonusXpGrant(skillId: bonusSkillId, xp: amount));
+    final reward = summarizeXpReward(db, next, bonusSkillId, amount, applied.leveledUpTo);
     if (reward != null) xpRewards.add(reward);
     if (applied.leveledUpTo != null) leveledUpTo = applied.leveledUpTo;
   }

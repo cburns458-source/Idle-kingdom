@@ -11,6 +11,7 @@ import {
   equipmentRequirementFailure,
   equippedActionTimeReductionPercent,
   isDaggerItem,
+  isTwoHandedItem,
   isStackableConsumableSlot,
   slotItemId,
   templeHandsRefusal,
@@ -161,6 +162,7 @@ export const equipmentScenarios: ParityScenario[] = [
           requirementFailure: equipmentRequirementFailure(db, save, equipment),
           tooltip: equipmentTooltipStatLines(equipment),
           dagger: isDaggerItem(db, equipment['Item ID']),
+          twoHanded: isTwoHandedItem(db, equipment['Item ID']),
           consumableSlot: isStackableConsumableSlot(equipment['Slot ID'] ?? ''),
         })),
       } as unknown as JsonValue

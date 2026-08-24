@@ -29,12 +29,15 @@ const String skillBoardPrefix = 'skill:';
 
 MultiplayerBoardKey skillBoardKey(String skillId) => '$skillBoardPrefix$skillId';
 
-/// Boards that carry a second number: total level ranks, total XP rides along.
+/// Boards that carry a second number: total level and per-skill ranks show XP
+/// under the level.
 ///
 /// The guild board is not one of them: its value is a whole roster totalled by
 /// the backend, and it was never two boards to begin with.
 bool boardCarriesExperience(MultiplayerBoardKey boardKey) =>
-    boardKey == boardTotalLevel || boardKey == boardPacifistTotalLevel;
+    boardKey == boardTotalLevel ||
+    boardKey == boardPacifistTotalLevel ||
+    boardKey.startsWith(skillBoardPrefix);
 
 /// A board only some players stand on, where a zero means "does not qualify"
 /// rather than a real score of nothing.
@@ -98,8 +101,10 @@ class MultiplayerProfile {
     required this.guildId,
     required this.guildName,
     required this.privacyPublicSkills,
+    this.privacyPublicGear = true,
     this.privacyDirectMessages = chatPrivacyPublic,
     this.privacyLocalChat = chatPrivacyPublic,
+    this.publishedEquipment = const <PublicEquippedSlot>[],
     required this.updatedAt,
   });
 
@@ -110,8 +115,10 @@ class MultiplayerProfile {
     guildId: json['guildId'] as String?,
     guildName: json['guildName'] as String?,
     privacyPublicSkills: json['privacyPublicSkills'] as bool? ?? true,
+    privacyPublicGear: json['privacyPublicGear'] as bool? ?? true,
     privacyDirectMessages: normalizeChatPrivacy(json['privacyDirectMessages'] as String?),
     privacyLocalChat: normalizeChatPrivacy(json['privacyLocalChat'] as String?),
+    publishedEquipment: _publishedEquipmentFromJson(json['publishedEquipment']),
     updatedAt: json['updatedAt']! as String,
   );
 
@@ -121,8 +128,10 @@ class MultiplayerProfile {
   final String? guildId;
   final String? guildName;
   final bool privacyPublicSkills;
+  final bool privacyPublicGear;
   final String privacyDirectMessages;
   final String privacyLocalChat;
+  final List<PublicEquippedSlot> publishedEquipment;
   final String updatedAt;
 
   MultiplayerProfile copyWith({
@@ -131,8 +140,10 @@ class MultiplayerProfile {
     String? guildId,
     String? guildName,
     bool? privacyPublicSkills,
+    bool? privacyPublicGear,
     String? privacyDirectMessages,
     String? privacyLocalChat,
+    List<PublicEquippedSlot>? publishedEquipment,
     String? updatedAt,
     bool clearGuild = false,
   }) => MultiplayerProfile(
@@ -142,8 +153,10 @@ class MultiplayerProfile {
     guildId: clearGuild ? null : (guildId ?? this.guildId),
     guildName: clearGuild ? null : (guildName ?? this.guildName),
     privacyPublicSkills: privacyPublicSkills ?? this.privacyPublicSkills,
+    privacyPublicGear: privacyPublicGear ?? this.privacyPublicGear,
     privacyDirectMessages: privacyDirectMessages ?? this.privacyDirectMessages,
     privacyLocalChat: privacyLocalChat ?? this.privacyLocalChat,
+    publishedEquipment: publishedEquipment ?? this.publishedEquipment,
     updatedAt: updatedAt ?? this.updatedAt,
   );
 
@@ -154,10 +167,21 @@ class MultiplayerProfile {
     'guildId': guildId,
     'guildName': guildName,
     'privacyPublicSkills': privacyPublicSkills,
+    'privacyPublicGear': privacyPublicGear,
     'privacyDirectMessages': privacyDirectMessages,
     'privacyLocalChat': privacyLocalChat,
+    if (publishedEquipment.isNotEmpty)
+      'publishedEquipment': publishedEquipment.map((row) => row.toJson()).toList(),
     'updatedAt': updatedAt,
   };
+}
+
+List<PublicEquippedSlot> _publishedEquipmentFromJson(Object? raw) {
+  if (raw is! List) return const <PublicEquippedSlot>[];
+  return [
+    for (final row in raw)
+      if (row is Map) PublicEquippedSlot.fromJson(Map<String, Object?>.from(row)),
+  ];
 }
 
 /// A name and portrait for a friends or ignore row.
@@ -230,6 +254,7 @@ class LeaderboardEntry {
     required this.boardKey,
     required this.value,
     required this.rank,
+    this.guildTag,
     this.secondaryValue,
     this.entryKind,
     this.emblem,
@@ -239,6 +264,9 @@ class LeaderboardEntry {
   final String username;
   final PlayerAppearance appearance;
   final String? guildName;
+
+  /// Player rows only. Guild board names already include the tag.
+  final String? guildTag;
   final MultiplayerBoardKey boardKey;
   final num value;
   final num rank;
@@ -256,6 +284,7 @@ class LeaderboardEntry {
     username: username,
     appearance: appearance,
     guildName: guildName,
+    guildTag: guildTag,
     boardKey: boardKey,
     value: value,
     rank: next,
@@ -269,6 +298,7 @@ class LeaderboardEntry {
     'username': username,
     'appearance': appearance.toJson(),
     'guildName': guildName,
+    if (guildTag != null) 'guildTag': guildTag,
     'boardKey': boardKey,
     'value': value,
     'rank': rank,
@@ -1083,6 +1113,52 @@ class PublicSkillLine {
   Map<String, Object?> toJson() => <String, Object?>{'skillId': skillId, 'level': level, 'xp': xp};
 }
 
+class PublicEquippedSlot {
+  const PublicEquippedSlot({
+    required this.slotId,
+    required this.itemId,
+    required this.quantity,
+    this.enchantmentId,
+  });
+
+  factory PublicEquippedSlot.fromJson(Map<String, Object?> json) => PublicEquippedSlot(
+    slotId: json['slotId']! as String,
+    itemId: json['itemId']! as String,
+    quantity: json['quantity'] as num? ?? 1,
+    enchantmentId: json['enchantmentId'] as String?,
+  );
+
+  final String slotId;
+  final String itemId;
+  final num quantity;
+  final String? enchantmentId;
+
+  Map<String, Object?> toJson() => <String, Object?>{
+    'slotId': slotId,
+    'itemId': itemId,
+    'quantity': quantity,
+    'enchantmentId': enchantmentId,
+  };
+}
+
+List<PublicEquippedSlot> publicEquipmentFromSave(PlayerSave? save) {
+  if (save == null) return const <PublicEquippedSlot>[];
+  final out = <PublicEquippedSlot>[];
+  save.equipment.slots.forEach((slotId, stack) {
+    final itemId = stack?.itemId;
+    if (itemId == null || itemId.isEmpty) return;
+    out.add(
+      PublicEquippedSlot(
+        slotId: slotId,
+        itemId: itemId,
+        quantity: stack!.quantity,
+        enchantmentId: stack.enchantmentId,
+      ),
+    );
+  });
+  return out;
+}
+
 class PublicPlayerProfile {
   const PublicPlayerProfile({
     required this.userId,
@@ -1093,6 +1169,7 @@ class PublicPlayerProfile {
     required this.achievementsUnlocked,
     required this.totalLevel,
     this.logCompletionPercent = 0,
+    this.publicEquipment,
   });
 
   final String userId;
@@ -1106,6 +1183,9 @@ class PublicPlayerProfile {
   /// Whole percent of the Log. 0 when the save cannot be read.
   final num logCompletionPercent;
 
+  /// Null when the player hid their gear.
+  final List<PublicEquippedSlot>? publicEquipment;
+
   Map<String, Object?> toJson() => <String, Object?>{
     'userId': userId,
     'username': username,
@@ -1115,6 +1195,7 @@ class PublicPlayerProfile {
     'achievementsUnlocked': achievementsUnlocked,
     'totalLevel': totalLevel,
     'logCompletionPercent': logCompletionPercent,
+    'publicEquipment': publicEquipment?.map((row) => row.toJson()).toList(),
   };
 }
 

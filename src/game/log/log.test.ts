@@ -75,13 +75,16 @@ describe('recipe log', () => {
     const rows = recipeLog(launch, createNewSave(launch))
     const known = rows.filter((row) => row.known)
     expect(known.length).toBeGreaterThan(0)
-    expect(known[0]!.detail).toMatch(/^Recipe · .+ · .+ \(.+\) · .+ → .+$/)
+    expect(known[0]!.title).toMatch(/^\d+\. [A-Z][^:]*: .+$/)
+    expect(known[0]!.detail).toBe('')
+    expect(known[0]!.title.includes(' × ')).toBe(true)
 
     const locked = rows.filter((row) => !row.known)
     expect(locked.length).toBeGreaterThan(0)
-    // A locked row either hides its name entirely or says the level it needs.
+    expect(locked.some((row) => row.title === 'Unknown recipe')).toBe(true)
+    expect(locked.some((row) => /^\d+\. /.test(row.title))).toBe(true)
     expect(
-      locked.every((row) => row.title === 'Unknown recipe' || row.title.startsWith('Locked · ')),
+      locked.every((row) => row.title === 'Unknown recipe' || /^\d+\. /.test(row.title)),
     ).toBe(true)
   })
 })

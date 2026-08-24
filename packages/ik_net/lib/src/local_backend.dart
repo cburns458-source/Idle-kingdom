@@ -224,10 +224,38 @@ class LocalMultiplayerBackend {
     return profile;
   }
 
+  /// Keeps a contact we have already seen, so ignore lists can name them.
+  void rememberProfile({
+    required String userId,
+    required String username,
+    PlayerAppearance? appearance,
+    String? guildName,
+  }) {
+    final existing = getProfile(userId);
+    if (existing != null) {
+      upsertProfile(userId, appearance: appearance, username: username);
+      return;
+    }
+    final db = _db();
+    db.profiles.add(
+      MultiplayerProfile(
+        userId: userId,
+        username: username,
+        appearance: appearance ?? defaultPlayerAppearance,
+        guildId: null,
+        guildName: guildName,
+        privacyPublicSkills: true,
+        updatedAt: _nowIso(),
+      ),
+    );
+    _write(db);
+  }
+
   MultiplayerProfile? upsertProfile(
     String userId, {
     PlayerAppearance? appearance,
     bool? privacyPublicSkills,
+    bool? privacyPublicGear,
     String? privacyDirectMessages,
     String? privacyLocalChat,
     String? username,
@@ -238,6 +266,7 @@ class LocalMultiplayerBackend {
     db.profiles[index] = db.profiles[index].copyWith(
       appearance: appearance,
       privacyPublicSkills: privacyPublicSkills,
+      privacyPublicGear: privacyPublicGear,
       privacyDirectMessages: privacyDirectMessages,
       privacyLocalChat: privacyLocalChat,
       username: username,
@@ -405,6 +434,7 @@ class LocalMultiplayerBackend {
               ? row.copyWith(
                   appearance: save.appearance,
                   username: isNotBlank(save.characterName) ? save.characterName : row.username,
+                  publishedEquipment: snapshot.equipment,
                   updatedAt: updatedAt,
                 )
               : row,
@@ -443,11 +473,15 @@ class LocalMultiplayerBackend {
     final rows = db.leaderboards.where((row) => row.boardKey == boardKey).toList();
     final entries = rows.map((row) {
       final profile = db.profiles.firstWhereOrNull((candidate) => candidate.userId == row.userId);
+      final guild = profile?.guildId == null
+          ? null
+          : db.guilds.firstWhereOrNull((candidate) => candidate.id == profile!.guildId);
       return LeaderboardEntry(
         userId: row.userId,
         username: profile?.username ?? 'Adventurer',
         appearance: profile?.appearance ?? defaultPlayerAppearance,
         guildName: profile?.guildName,
+        guildTag: guild?.tag,
         boardKey: boardKey,
         value: row.value,
         rank: 0,
@@ -715,7 +749,15 @@ class LocalMultiplayerBackend {
 
   List<SocialContact> listIgnored(String userId) {
     final db = _db();
-    return [for (final other in blockedIds(userId)) ?_contact(db, other)];
+    return [
+      for (final other in blockedIds(userId))
+        _contact(db, other) ??
+            SocialContact(
+              userId: other,
+              username: 'Adventurer',
+              appearance: defaultPlayerAppearance,
+            ),
+    ];
   }
 
   SocialContact? _contact(LocalDb db, String userId) {
@@ -1416,6 +1458,11 @@ class LocalMultiplayerBackend {
       appearance: profile.appearance,
       guildName: profile.guildName,
       publicSkills: profile.privacyPublicSkills ? skills : const <PublicSkillLine>[],
+      publicEquipment: !profile.privacyPublicGear
+          ? null
+          : save != null
+          ? publicEquipmentFromSave(save)
+          : profile.publishedEquipment,
       achievementsUnlocked: save?.achievements.where((row) => row.unlocked).length ?? 0,
       totalLevel: total < 1 ? 13 : total,
       logCompletionPercent:

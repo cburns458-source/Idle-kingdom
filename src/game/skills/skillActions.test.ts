@@ -22,9 +22,9 @@ describe('skill menu entries', () => {
     const items = actionsForSkill(launch, 'SKL-0004')
     const potatoes = items.filter((item) => item.displayName === 'Harvest potato')
     expect(potatoes).toHaveLength(1)
-    expect(potatoes[0]?.level).toBe(10)
+    expect(potatoes[0]?.level).toBe(1)
     expect(items.every((item) => !item.displayName.startsWith('ACN-'))).toBe(true)
-    expect(items.some((item) => item.displayName === 'Gather fernleaf' && item.level === 5)).toBe(
+    expect(items.some((item) => item.displayName === 'Gather fernleaf' && item.level === 10)).toBe(
       true,
     )
   })
@@ -65,6 +65,18 @@ describe('skill menu entries', () => {
     ).toBe(true)
   })
 
+  it('groups same-tier combat armor as material equipment', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const combat = skillMenuView(launch, 'SKL-0001')
+    const gear = combat.tabs.find((tab) => tab.id === 'gear')?.sections[0]?.entries ?? []
+    expect(gear.some((item) => item.displayName === 'Tungsten equipment')).toBe(true)
+    expect(gear.some((item) => item.displayName === 'Reinforced Steel equipment')).toBe(true)
+    expect(gear.some((item) => item.displayName === 'Bull Horn equipment')).toBe(true)
+    expect(gear.some((item) => item.displayName === 'Tungsten Helmet')).toBe(false)
+    expect(gear.some((item) => item.displayName === 'Tungsten Sword')).toBe(true)
+    expect(gear.some((item) => item.displayName === 'Wooden Sword')).toBe(true)
+  })
+
   it('lists smithing projects by output item name and required level', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const items = projectsForSkill(launch, 'SKL-0011')
@@ -82,6 +94,27 @@ describe('skill menu entries', () => {
     expect(items.some((item) => item.displayName === 'Strength Spell')).toBe(true)
     expect(items.some((item) => item.displayName === 'Minor Gathering Enchantment')).toBe(true)
     expect(items.find((item) => item.displayName === 'Minor Gathering Enchantment')?.level).toBe(20)
+  })
+
+  it('puts battle staves on an Arcana Weapons tab', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const arcana = skillMenuView(launch, 'SKL-0013')
+    expect(arcana.tabs.map((tab) => tab.label)).toEqual(['Spells', 'Weapons', 'Enchantments'])
+    const weapons = arcana.tabs.find((tab) => tab.id === 'weapons')?.sections[0]?.entries ?? []
+    expect(weapons.map((item) => item.displayName)).toEqual([
+      'Staff of Sparks',
+      'Staff of Binding',
+      "Mage's Wand",
+      'Staff of Power',
+    ])
+    expect(weapons.find((item) => item.displayName === 'Staff of Sparks')?.level).toBe(35)
+    expect(weapons.find((item) => item.displayName === 'Staff of Binding')?.level).toBe(45)
+    expect(weapons.find((item) => item.displayName === 'Staff of Power')?.level).toBe(65)
+    expect(
+      arcana.tabs
+        .find((tab) => tab.id === 'enchantments')
+        ?.sections[0]?.entries.some((item) => item.displayName.startsWith('Staff of')),
+    ).toBe(false)
   })
 
   it('groups smithing by material and numbers every menu row', () => {

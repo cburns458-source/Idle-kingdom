@@ -24,12 +24,19 @@ class LeaderboardBoardValue {
 }
 
 class LeaderboardSnapshotValues {
-  const LeaderboardSnapshotValues({required this.boards});
+  const LeaderboardSnapshotValues({
+    required this.boards,
+    this.equipment = const <PublicEquippedSlot>[],
+  });
 
   final List<LeaderboardBoardValue> boards;
 
+  /// Equipped slots published with the ranking submit.
+  final List<PublicEquippedSlot> equipment;
+
   Map<String, Object?> toJson() => <String, Object?>{
     'boards': boards.map((board) => board.toJson()).toList(),
+    'equipment': equipment.map((row) => row.toJson()).toList(),
   };
 }
 
@@ -81,14 +88,12 @@ LeaderboardSnapshotValues buildLeaderboardSnapshot(GameDatabase db, PlayerSave s
     final progress = save.skills.where((row) => row.skillId == skillId).firstOrNull;
     final level = progress?.level ?? 1;
     final xp = progress?.xp ?? 0;
-    // Past 100 the boards rank by XP; at or under it they rank by level, with
-    // XP still stored so ties resolve.
     boards.add(
-      LeaderboardBoardValue(boardKey: skillBoardKey(skillId), value: level > 100 ? xp : level),
+      LeaderboardBoardValue(boardKey: skillBoardKey(skillId), value: level, secondaryValue: xp),
     );
   }
 
-  return LeaderboardSnapshotValues(boards: boards);
+  return LeaderboardSnapshotValues(boards: boards, equipment: publicEquipmentFromSave(save));
 }
 
 String boardLabel(GameDatabase db, MultiplayerBoardKey boardKey) {
@@ -126,6 +131,7 @@ List<LeaderboardEntry> mergeLiveLeaderboardScore({
   required String username,
   required PlayerAppearance appearance,
   String? guildName,
+  String? guildTag,
 }) {
   if (boardKey == boardGuildTotalLevel) return stored;
   final mine = buildLeaderboardSnapshot(
@@ -146,6 +152,7 @@ List<LeaderboardEntry> mergeLiveLeaderboardScore({
       username: username,
       appearance: appearance,
       guildName: guildName,
+      guildTag: guildTag,
       boardKey: boardKey,
       value: mine.value,
       rank: 0,
@@ -193,8 +200,8 @@ List<MultiplayerBoardKey> launchBoardKeys(GameDatabase db) => <MultiplayerBoardK
 
 /// Public skill levels and total level reconstructed from ranking snapshots.
 ///
-/// The same rows the leaderboard lists. Past 100 a skill board stores XP, not
-/// level, matching [buildLeaderboardSnapshot].
+/// The same rows the leaderboard lists. Skill boards store level as the value
+/// and XP as [LeaderboardBoardValue.secondaryValue].
 class PublicProfileStats {
   const PublicProfileStats({
     required this.totalLevel,
@@ -234,7 +241,11 @@ PublicProfileStats publicProfileStatsFromLeaderboardRows(
     if (!key.startsWith(skillBoardPrefix)) continue;
     final skillId = key.substring(skillBoardPrefix.length);
     if (skillId.isEmpty) continue;
-    if (value > 100) {
+    final secondary = row['value_secondary'] ?? row['secondaryValue'];
+    if (secondary is num) {
+      skills.add(PublicSkillLine(skillId: skillId, level: value < 1 ? 1 : value, xp: secondary));
+    } else if (value > 100) {
+      // Older snapshots stored post-100 XP as the only value.
       skills.add(
         PublicSkillLine(
           skillId: skillId,

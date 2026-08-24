@@ -1,7 +1,5 @@
 import 'dart:math' as math;
 
-import 'package:collection/collection.dart';
-
 import 'package:ik_content/ik_content.dart';
 
 import '../js_compat.dart';
@@ -19,10 +17,18 @@ int inventorySlotCount(PlayerSave save) => save.inventory.length;
 int inventorySlotsFree(PlayerSave save) =>
     math.max(0, inventorySlotLimit - inventorySlotCount(save));
 
-bool _stackMatches(InventoryStack stack, String itemId, String? enchantmentId, bool favorite) {
-  return stack.itemId == itemId &&
-      stack.enchantmentId == enchantmentId &&
-      (stack.favorite == true) == favorite;
+/// Index of the unenchanted pile to grow. Hearted stacks win when both exist.
+/// Enchanted items never merge. Returns -1 when a new slot is needed.
+int mergeableStackIndex(List<InventoryStack> inventory, String itemId, [String? enchantmentId]) {
+  if (isNotBlank(enchantmentId)) return -1;
+  var unfavorited = -1;
+  for (final entry in inventory.indexed) {
+    final stack = entry.$2;
+    if (stack.itemId != itemId || isNotBlank(stack.enchantmentId)) continue;
+    if (stack.favorite == true) return entry.$1;
+    if (unfavorited < 0) unfavorited = entry.$1;
+  }
+  return unfavorited;
 }
 
 /// How many of this item can still be added without overflowing slots or the
@@ -41,11 +47,9 @@ num maxAddableQuantity(
     return inventorySlotsFree(save);
   }
 
-  final existing = save.inventory.firstWhereOrNull(
-    (stack) => _stackMatches(stack, itemId, null, favorite),
-  );
-  if (existing != null) {
-    return math.max(0, inventoryStackMax - existing.quantity);
+  final existingIndex = mergeableStackIndex(save.inventory, itemId);
+  if (existingIndex >= 0) {
+    return math.max(0, inventoryStackMax - save.inventory[existingIndex].quantity);
   }
   return inventorySlotsFree(save) > 0 ? inventoryStackMax : 0;
 }

@@ -37,6 +37,10 @@ describe('special production', () => {
       'PRJ-0140',
       'PRJ-0141',
       'PRJ-0142',
+      'PRJ-0144',
+      'PRJ-0145',
+      'PRJ-0146',
+      'PRJ-0147',
     ])
     expect(listed.find((project) => project['Project ID'] === 'PRJ-0139')?.['Display Name']).toBe(
       'Strength Spell',
@@ -67,6 +71,7 @@ describe('special production', () => {
     }
     save = addItemToInventory(save, 'ITEM-0099', 1)
     save = addItemToInventory(save, 'ITEM-0040', 10)
+    save = addItemToInventory(save, 'ITEM-0011', 100)
 
     const result = completeSpecialProject(launch, save, 'PRJ-0139', 1)
     expect(result.ok).toBe(true)
@@ -99,6 +104,7 @@ describe('special production', () => {
     }
     save = addItemToInventory(save, 'ITEM-0099', 1)
     save = addItemToInventory(save, 'ITEM-0040', 10)
+    save = addItemToInventory(save, 'ITEM-0011', 100)
 
     const result = completeSpecialProject(launch, save, 'PRJ-0139', 1)
     expect(result.ok).toBe(true)
@@ -180,7 +186,7 @@ describe('special production', () => {
       ),
     }
     save = addItemToInventory(save, 'ITEM-0098', 1)
-    save = addItemToInventory(save, 'ITEM-0011', 2)
+    save = addItemToInventory(save, 'ITEM-0011', 200)
     save = addItemToInventory(save, 'ITEM-0031', 10)
     // Steel pickaxe is gathering gear eligible for minor gathering enchantment.
     save = addItemToInventory(save, 'ITEM-0119', 2)

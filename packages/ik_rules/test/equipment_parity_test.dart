@@ -73,6 +73,7 @@ void main() {
             'requirementFailure': equipmentRequirementFailure(db, save, equipment),
             'tooltip': equipmentTooltipStatLines(equipment),
             'dagger': isDaggerItem(db, equipment.itemId),
+            'twoHanded': isTwoHandedItem(db, equipment.itemId),
             'consumableSlot': isStackableConsumableSlot(slotId is String ? slotId : ''),
           };
         }).toList();

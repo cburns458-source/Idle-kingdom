@@ -130,13 +130,23 @@ String _roundMessage(EnemyRow enemy, CombatRoundResult round) {
   final offhandLabel = offhand != null && offhand > 0
       ? ' Off-hand hits ${jsNumberToString(offhand)}.'
       : '';
+  final sparks = round.staffHit;
+  final sparksLabel = sparks != null && sparks > 0
+      ? ' Sparks hit ${jsNumberToString(sparks)}.'
+      : '';
   final name = jsString(enemy.raw['Display Name']);
-  // `enemyHit` is null when the enemy never swung, which prints as `null`.
-  final enemyHit = jsString(round.enemyHit);
+  if (round.enemyHit == null) {
+    return round.enemyAsleep
+        ? 'You $hitLabel.$offhandLabel$sparksLabel $name sleeps.'
+        : 'You $hitLabel.$offhandLabel$sparksLabel $name is bound and cannot attack.';
+  }
+  final swing = round.enemyRampage
+      ? '$name rampages for ${jsString(round.enemyHit)}'
+      : '$name hits ${jsString(round.enemyHit)}';
   return round.thornsHit > 0
-      ? 'You $hitLabel.$offhandLabel $name hits $enemyHit. '
+      ? 'You $hitLabel.$offhandLabel$sparksLabel $swing. '
             'Thorns reflects ${jsNumberToString(round.thornsHit)}.'
-      : 'You $hitLabel.$offhandLabel $name hits $enemyHit.';
+      : 'You $hitLabel.$offhandLabel$sparksLabel $swing.';
 }
 
 void _resolveDueCombatRound(
@@ -160,6 +170,7 @@ void _resolveDueCombatRound(
       playerHit: round.playerHit,
       playerCrit: round.playerCrit,
       offhandHit: round.offhandHit,
+      staffHit: round.staffHit,
       enemyHit: round.enemyHit,
       thornsHit: round.thornsHit,
       outcome: round.outcome,
@@ -230,6 +241,8 @@ void _resolveDueCombatRound(
       currentHp: round.playerHp,
       combatEnemyHp: round.enemyHp,
       combatRoundStartedAt: isoFromMs(roundEnd),
+      combatSkipEnemyAttack: round.skipNextEnemyAttack,
+      combatBossSleepRoundsRemaining: round.bossSleepRoundsRemaining,
     ),
   );
   out.creditCritterTime(roundMs, roundEnd, random);
@@ -345,6 +358,8 @@ SessionTickResult advanceSession(GameDatabase db, PlayerSave save, num nowMs, Ra
   // for the player to pick a recipe instead of rolling an action.
   final activity = getActivity(db, activityId!);
   if (activity != null && isStandardProductionActivity(db, activity)) return out.result();
+  final waitUntil = bossRespawnWaitUntilMs(db, out.current, activityId);
+  if (waitUntil != null && waitUntil > nowMs) return out.result();
   _continueActivity(
     db,
     out,

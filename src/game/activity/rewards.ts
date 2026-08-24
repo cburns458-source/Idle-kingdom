@@ -3,15 +3,17 @@ import {
   INVENTORY_SLOT_LIMIT,
   INVENTORY_STACK_MAX,
   maxAddableQuantity,
+  mergeableStackIndex,
 } from '../inventory/capacity'
 import { sortInventoryFavoritesFirst } from '../inventory/favorites'
 import { isGoldCurrencyItem } from '../inventory/gold'
 import {
+  applyFlatDropChanceBonus,
   applyRelativeDropChance,
   totalRelativeDropChanceBonusPercent,
 } from '../loot/dropChance'
 import type { ActionRow, GameDatabase, RewardEntryRow } from '../data/types'
-import { applyRaceGoldGain } from '../races/races'
+import { applyRaceGoldGain, raceSkillDropChanceBonusPercent } from '../races/races'
 import { activeSpellItemDoubleChancePercent } from '../spells/spells'
 import type { PlayerSave } from '../save/types'
 import type { LootGrant } from './types'
@@ -82,12 +84,8 @@ export function addItemsToInventory(
     return { save: sortInventoryFavoritesFirst({ ...save, inventory }), added }
   }
 
-  const existing = inventory.find(
-    (stack) =>
-      stack.itemId === itemId &&
-      !stack.enchantmentId &&
-      Boolean(stack.favorite) === favorite,
-  )
+  const existingIndex = mergeableStackIndex(inventory, itemId)
+  const existing = existingIndex >= 0 ? inventory[existingIndex] : undefined
   if (existing) {
     existing.quantity = Math.min(INVENTORY_STACK_MAX, existing.quantity + added)
   } else {
@@ -149,11 +147,20 @@ export function resolveActionRewards(
   const loot: LootGrant[] = []
   let goldGained = Number(action['Guaranteed Gold'] ?? 0)
 
+  const skillDropBonus = raceSkillDropChanceBonusPercent(
+    db,
+    save,
+    action['Relevant Skill ID'],
+  )
+
   const rollTable = (tableId: string | null, chance: number | null) => {
     if (!tableId) return
-    const dropChance = applyRelativeDropChance(
-      typeof chance === 'number' ? chance : 0,
-      totalRelativeDropChanceBonusPercent(db, save),
+    const dropChance = applyFlatDropChanceBonus(
+      applyRelativeDropChance(
+        typeof chance === 'number' ? chance : 0,
+        totalRelativeDropChanceBonusPercent(db, save),
+      ),
+      skillDropBonus,
     )
     if (typeof dropChance !== 'number' || random() * 100 >= dropChance) return
     const entries = db.RewardEntries.filter((row) => row['Reward Table ID'] === tableId)
@@ -188,6 +195,7 @@ export function resolveActionRewards(
 
   rollTable(action['Reward Table ID'], action['Drop Chance'])
   rollTable(action['Secondary Reward Table ID'], action['Secondary Drop Chance'])
+  rollTable(action['Tertiary Reward Table ID'], action['Tertiary Drop Chance'])
 
   goldGained = applyRaceGoldGain(db, save, goldGained)
   if (goldGained > 0) {

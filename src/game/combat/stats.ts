@@ -1,11 +1,9 @@
 import type { EquipmentRow, GameDatabase } from '../data/types'
 import { getSkillProgress } from '../activity/xp'
-import { OFFHAND_SLOT_ID, WEAPON_TOOL_SLOT_ID, isDaggerItem } from '../equipment/loadout'
+import { OFFHAND_SLOT_ID, WEAPON_TOOL_SLOT_ID, isDaggerItem, itemHasCapability } from '../equipment/loadout'
+import { ARCANA_SKILL_ID } from '../npcs/knowledge'
 import { equippedEnchantmentDamageBonus } from '../projects/enchantments'
-import {
-  raceCombatDamageMultiplier,
-  raceMaxHpMultiplier,
-} from '../races/races'
+import { raceMaxHpMultiplier } from '../races/races'
 import type { PlayerSave } from '../save/types'
 import { configNumber } from '../activity/gathering'
 import { activeSpellDamageRangeMultiplier } from '../spells/spells'
@@ -53,8 +51,7 @@ function damageRangeMultipliers(
     potionBonus && potionBonus > 0 && save.activePotionEffect?.scope === 'one_combat_encounter'
       ? 1 + potionBonus / 100
       : 1
-  const raceMult = raceCombatDamageMultiplier(db, save)
-  return levelMult * spellMult * potionMult * raceMult
+  return levelMult * spellMult * potionMult
 }
 
 function scaleDamageRange(
@@ -69,13 +66,26 @@ function scaleDamageRange(
   }
 }
 
+export function staffPowerMultiplier(db: GameDatabase, save: PlayerSave): number {
+  const weaponId = save.equipment.slots[WEAPON_TOOL_SLOT_ID]?.itemId
+  if (!weaponId || !itemHasCapability(db, weaponId, 'staff_power')) return 1
+  return 1 + getSkillProgress(save, ARCANA_SKILL_ID).level / 100
+}
+
+/** Spark splat range from Arcana level only: ±10%, floored, never below 1. */
+export function staffSparksDamageRange(arcanaLevel: number): { min: number; max: number } {
+  const min = Math.max(1, Math.floor(arcanaLevel * 0.9))
+  const max = Math.max(min, Math.floor(arcanaLevel * 1.1))
+  return { min, max }
+}
+
 export function playerDamageRange(
   db: GameDatabase,
   save: PlayerSave,
   nowMs: number = Date.now(),
 ): { min: number; max: number } {
   const enchantBonus = equippedEnchantmentDamageBonus(db, save)
-  const combined = damageRangeMultipliers(db, save, nowMs)
+  const combined = damageRangeMultipliers(db, save, nowMs) * staffPowerMultiplier(db, save)
   const weaponId = save.equipment.slots[WEAPON_TOOL_SLOT_ID]?.itemId
   let min: number
   let max: number

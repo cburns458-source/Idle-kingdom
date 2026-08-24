@@ -17,13 +17,12 @@ export const ENEMY_ASSET_PATHS: Record<string, string> = {
   'ENM-0012': '/assets/enemies/enm_ent.webp',
   'ENM-0013': '/assets/enemies/enm_ancient_ent.webp',
   'ENM-0014': '/assets/enemies/enm_corrupted_ent.webp',
-  'ENM-0015': '/assets/enemies/enm_shade_goblin.webp',
   'ENM-0016': '/assets/enemies/enm_goblin_warrior.webp',
-  'ENM-0017': '/assets/enemies/enm_rabbit_buck.webp',
   'ENM-0018': '/assets/enemies/enm_elder_rock_troll.webp',
   'ENM-0019': '/assets/enemies/enm_castle_guard.webp',
   'ENM-0020': '/assets/enemies/enm_monk.webp',
   'ENM-0021': '/assets/enemies/enm_seagull.webp',
+  'ENM-0022': '/assets/enemies/enm_ghost.webp',
 }
 
 export function enemyAssetPath(enemyId: string): string {

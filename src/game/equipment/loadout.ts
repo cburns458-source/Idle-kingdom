@@ -20,6 +20,23 @@ export function isDaggerItem(db: GameDatabase, itemId: string): boolean {
   return key.includes('dagger') || /\bdagger\b/.test(name)
 }
 
+function capabilityTags(effects: string | null | undefined): string[] {
+  if (typeof effects !== 'string') return []
+  return effects
+    .split(';')
+    .map((part) => part.trim().toLowerCase())
+    .filter(Boolean)
+}
+
+export function itemHasCapability(db: GameDatabase, itemId: string, tag: string): boolean {
+  const equipment = db.Equipment.find((row) => row['Item ID'] === itemId)
+  return capabilityTags(equipment?.['Capabilities / Effects']).includes(tag.toLowerCase())
+}
+
+export function isTwoHandedItem(db: GameDatabase, itemId: string): boolean {
+  return itemHasCapability(db, itemId, 'two_handed')
+}
+
 export type EquipResult =
   | { ok: true; save: PlayerSave }
   | { ok: false; reason: string }
@@ -227,7 +244,8 @@ export function equipInventoryIndex(
     slotId = empty
   } else if (isDaggerItem(db, itemId)) {
     // Daggers equip to the off-hand only (replacing a shield). Dual-wielding two
-    // daggers is not supported yet.
+    // daggers is not supported yet. A two-hander in the main hand is cleared
+    // later, the same way a shield is.
     slotId = OFFHAND_SLOT_ID
     const mainhandId = slotItemId(save, WEAPON_TOOL_SLOT_ID)
     if (mainhandId && isDaggerItem(db, mainhandId)) {
@@ -295,6 +313,23 @@ export function equipInventoryIndex(
     next = unequipped.save
   } else {
     next = removeInventoryAtIndex(next, index, 1)
+  }
+
+  // Two-handed weapons occupy both hands. Equipping one clears the off-hand;
+  // equipping an off-hand item while a two-hander is worn clears the main hand.
+  // Either extra unequip can fail if the bag is full, which refuses the whole
+  // equip so gear is never destroyed.
+  if (isTwoHandedItem(db, itemId) && slotId === WEAPON_TOOL_SLOT_ID) {
+    const cleared = unequipSlot(next, OFFHAND_SLOT_ID)
+    if (!cleared.ok) return cleared
+    next = cleared.save
+  } else if (slotId === OFFHAND_SLOT_ID) {
+    const mainhandId = slotItemId(next, WEAPON_TOOL_SLOT_ID)
+    if (mainhandId && isTwoHandedItem(db, mainhandId)) {
+      const cleared = unequipSlot(next, WEAPON_TOOL_SLOT_ID)
+      if (!cleared.ok) return cleared
+      next = cleared.save
+    }
   }
 
   return {
