@@ -101,6 +101,11 @@ void main() {
       findsOne,
     );
 
+    await tester.scrollUntilVisible(
+      find.bySemanticsLabel('Reset to default'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
     await tester.tap(find.bySemanticsLabel('Reset to default'));
     await tester.pump();
 

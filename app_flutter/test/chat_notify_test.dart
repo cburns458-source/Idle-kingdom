@@ -85,6 +85,31 @@ void main() {
     expect(wired.net.unreadTotal, 0);
   });
 
+  test('a new empty local room does not inherit a bubble', () async {
+    final wired = wiredNet();
+    addTearDown(wired.net.dispose);
+    final save = startedCharacter(database);
+    await wired.net.refresh(save);
+    expect(wired.net.unreadFor(ChatTab.local), 0);
+
+    await otherPlayerChats(
+      wired.service,
+      wired.clock,
+      ChatChannel.local(save.currentLocationId),
+      'Anyone at the meadow?',
+    );
+    await wired.net.refresh(save);
+    expect(wired.net.unreadFor(ChatTab.local), 1);
+
+    const elsewhere = 'LOC-0009';
+    wired.net.syncChatSurface(open: false, locationId: elsewhere, citadelHub: false);
+    expect(wired.net.unreadFor(ChatTab.local), 0);
+
+    await wired.net.refresh(save.copyWith(currentLocationId: elsewhere));
+    expect(wired.net.unreadFor(ChatTab.local), 0);
+    expect(wired.net.unreadTotal, 0);
+  });
+
   testWidgets('a new local line badges the chat icon and the Local tab', (tester) async {
     final wired = wiredNet();
     addTearDown(wired.net.dispose);

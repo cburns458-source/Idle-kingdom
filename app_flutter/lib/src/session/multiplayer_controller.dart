@@ -70,7 +70,10 @@ class MultiplayerController extends ChangeNotifier {
 
   void setChatNotifyEnabled(ChatTab tab, bool value) {
     storage.setItem(chatNotifyStorageKey(tab), value ? '1' : '0');
-    if (!value) _unread[tab] = 0;
+    if (!value) {
+      _unread[tab] = 0;
+      if (tab == ChatTab.local) _localUnread.clear();
+    }
     notifyListeners();
   }
 
@@ -158,6 +161,7 @@ class MultiplayerController extends ChangeNotifier {
   final Map<String, String> _dmPeerNames = <String, String>{};
   int _unreadDms = 0;
   final Map<ChatTab, int> _unread = <ChatTab, int>{};
+  final Map<String, int> _localUnread = <String, int>{};
   bool _chatOpen = false;
   bool _citadelHub = false;
   String _chatLocationId = '';
@@ -222,7 +226,17 @@ class MultiplayerController extends ChangeNotifier {
   int get unreadDms => _unreadDms;
 
   /// Unread lines waiting on one tab, after notification toggles.
-  int unreadFor(ChatTab tab) => _unread[tab] ?? (tab == ChatTab.dm ? _unreadDms : 0);
+  ///
+  /// Local is the room for the location the player is in. A new empty place
+  /// does not inherit a bubble from the last one.
+  int unreadFor(ChatTab tab) {
+    if (tab == ChatTab.local) {
+      if (!chatNotifyEnabled(tab)) return 0;
+      final key = _currentLocalChannelKey();
+      if (key != null) return _localUnread[key] ?? 0;
+    }
+    return _unread[tab] ?? (tab == ChatTab.dm ? _unreadDms : 0);
+  }
 
   /// Sum of enabled-channel bubbles for the corner chat icon.
   int get unreadTotal => chatTabOrder.fold<int>(0, (sum, tab) => sum + unreadFor(tab));
@@ -438,6 +452,7 @@ class MultiplayerController extends ChangeNotifier {
     _bazaarPosts = const <BazaarPost>[];
     _unreadDms = 0;
     _unread.clear();
+    _localUnread.clear();
     _chatOpen = false;
   }
 
@@ -824,11 +839,17 @@ class MultiplayerController extends ChangeNotifier {
     if (!isSignedIn) {
       _unreadDms = 0;
       _unread.clear();
+      _localUnread.clear();
       return;
     }
     final locationId = _chatLocationId.isEmpty ? save.currentLocationId : _chatLocationId;
     for (final tab in chatTabOrder) {
-      _unread[tab] = await _unreadCountFor(tab, locationId);
+      final count = await _unreadCountFor(tab, locationId);
+      _unread[tab] = count;
+      if (tab == ChatTab.local) {
+        final key = _localChannelKey(locationId);
+        if (key != null) _localUnread[key] = count;
+      }
     }
     _unreadDms = _unread[ChatTab.dm] ?? 0;
   }
@@ -874,7 +895,21 @@ class MultiplayerController extends ChangeNotifier {
     if (channel == null) return;
     _storeChannelCursor(channel);
     _unread[tab] = 0;
+    if (tab == ChatTab.local) _localUnread[chatChannelKey(channel)] = 0;
   }
+
+  String? _localChannelKey(String locationId) {
+    final channel = chatChannelForTab(
+      ChatTab.local,
+      locationId: locationId,
+      citadelHub: _citadelHub,
+      guildId: null,
+    );
+    return channel == null ? null : chatChannelKey(channel);
+  }
+
+  String? _currentLocalChannelKey() =>
+      _chatLocationId.isEmpty ? null : _localChannelKey(_chatLocationId);
 
   String? _channelCursor(ChatChannel channel) {
     final userId = session?.userId;
