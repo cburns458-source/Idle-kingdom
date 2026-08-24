@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
+import type { RequirementRow } from './types'
 import { prepareDatabase } from './loadDatabase'
 import { filterLaunchContent, validateDatabase } from './validate'
 
@@ -53,7 +54,7 @@ describe('database loading', () => {
           'Entity Type': 'Activity',
           'Entity ID': 'ACT-0001',
           'Reference ID / Value': 'x',
-        },
+        } as RequirementRow,
       ],
     })
     expect(issues.some((issue) => issue.message.includes('Missing Drop Chance'))).toBe(true)

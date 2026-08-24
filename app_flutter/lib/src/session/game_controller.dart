@@ -155,6 +155,7 @@ class GameController extends ChangeNotifier {
     if (itemId is! String || qty is! num) return false;
     return !canFitItemQuantity(save, itemId, qty);
   }
+
   TravelInFlight? get travel => _travel;
   double get travelProgress => _travelProgress;
 

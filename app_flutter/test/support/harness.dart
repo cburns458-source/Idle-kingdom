@@ -105,6 +105,7 @@ MultiplayerController buildMultiplayer(
   TestClock? clock,
   bool signedIn = true,
   bool testerAccess = true,
+  bool cloudUnavailable = false,
   TestAccount account = testAccount,
 }) {
   final testClock = clock ?? TestClock();
@@ -120,6 +121,7 @@ MultiplayerController buildMultiplayer(
     service: service,
     storage: storage,
     clock: testClock.read,
+    cloudUnavailable: cloudUnavailable,
   );
   if (testerAccess) net.unlockTesterAccess(testerPasskey);
   return net;

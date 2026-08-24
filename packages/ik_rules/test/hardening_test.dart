@@ -51,16 +51,16 @@ void main() {
     final queued = beginProductionQueue(db, save, 'ACT-0017', 'RCP-0001', 2, 0);
     expect(queued.ok, isTrue);
     final filled = queued.save!.copyWith(
-      inventory: [
-        for (var i = 0; i < 180; i++) InventoryStack(itemId: 'FILL-$i', quantity: 1),
-      ],
+      inventory: [for (var i = 0; i < 180; i++) InventoryStack(itemId: 'FILL-$i', quantity: 1)],
     );
     expect(completeProductionCraft(db, filled, 1_000_000), isNull);
 
     final room = filled.copyWith(inventory: filled.inventory.take(179).toList());
     final cancelled = cancelProductionActivity(db, room);
     expect(
-      cancelled.inventory.where((stack) => stack.itemId == 'ITEM-0025').fold<num>(0, (sum, stack) => sum + stack.quantity),
+      cancelled.inventory
+          .where((stack) => stack.itemId == 'ITEM-0025')
+          .fold<num>(0, (sum, stack) => sum + stack.quantity),
       2,
     );
   });
@@ -73,9 +73,7 @@ void main() {
     expect(queued.ok, isTrue);
     save = queued.save!.copyWith(
       unattendedProgressAt: isoFromMs(startedAt),
-      inventory: [
-        for (var i = 0; i < 180; i++) InventoryStack(itemId: 'FILL-$i', quantity: 1),
-      ],
+      inventory: [for (var i = 0; i < 180; i++) InventoryStack(itemId: 'FILL-$i', quantity: 1)],
     );
     final resolved = resolveUnattendedProgress(
       db,

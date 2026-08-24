@@ -7,7 +7,9 @@ const String goldItemId = 'ITEM-0001';
 /// Gold item ID from Config, or [goldItemId] when the row is missing.
 String currencyItemId([GameDatabase? db]) {
   if (db == null) return goldItemId;
-  final raw = db.config.firstWhereOrNull((row) => row.raw['Key'] == 'currency_item_id')?.raw['Value'];
+  final raw = db.config
+      .firstWhereOrNull((row) => row.raw['Key'] == 'currency_item_id')
+      ?.raw['Value'];
   return raw is String && raw.isNotEmpty ? raw : goldItemId;
 }
 
