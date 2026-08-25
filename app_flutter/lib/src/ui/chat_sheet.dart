@@ -101,15 +101,49 @@ class ChatSheet extends StatefulWidget {
 class _ChatSheetState extends State<ChatSheet> {
   final TextEditingController _body = TextEditingController();
   final FocusNode _composerFocus = FocusNode();
+  final ScrollController _scroll = ScrollController();
+  ChatTab? _pinnedTab;
+  String? _pinnedDm;
+  int _pinnedCount = -1;
 
   MultiplayerController get net => widget.multiplayer;
   PlayerSave get save => widget.controller.save;
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _pinToLatest(force: true));
+  }
+
+  @override
   void dispose() {
     _composerFocus.dispose();
     _body.dispose();
+    _scroll.dispose();
     super.dispose();
+  }
+
+  void _pinToLatest({required bool force}) {
+    if (!mounted || !_scroll.hasClients) return;
+    final pos = _scroll.position;
+    if (!force && pos.maxScrollExtent - pos.pixels > 72) return;
+    _scroll.jumpTo(pos.maxScrollExtent);
+  }
+
+  /// Jump to the newest line on open or tab change, and stay there as lines
+  /// arrive unless the player has scrolled up.
+  void _considerPin(ChatTab tab, String? dm, int count) {
+    final switched = _pinnedTab != tab || _pinnedDm != dm;
+    final grew = count > _pinnedCount && _pinnedCount >= 0;
+    final first = _pinnedCount < 0;
+    _pinnedTab = tab;
+    _pinnedDm = dm;
+    _pinnedCount = count;
+    if (first || switched || grew) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _pinToLatest(force: first || switched);
+      });
+    }
   }
 
   void _close() {
@@ -155,6 +189,7 @@ class _ChatSheetState extends State<ChatSheet> {
           filterProfanityEnabled: net.filterChatProfanity,
         );
         final showComposer = net.chatTab != ChatTab.dm || net.selectedDmPeerId != null;
+        _considerPin(net.chatTab, net.selectedDmPeerId, lines.length);
         return Column(
           children: [
             _header(tabs),
@@ -179,6 +214,7 @@ class _ChatSheetState extends State<ChatSheet> {
                   : lines.isEmpty
                   ? Center(child: MutedText(emptyChatMessage(net.chatTab)))
                   : ListView.builder(
+                      controller: _scroll,
                       padding: const EdgeInsets.symmetric(horizontal: 12),
                       itemCount: lines.length,
                       itemBuilder: (context, index) {

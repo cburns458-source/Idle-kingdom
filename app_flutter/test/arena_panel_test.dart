@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:idle_kingdoms/src/theme.dart';
 import 'package:idle_kingdoms/src/ui/app_shell.dart';
+import 'package:idle_kingdoms/src/ui/action_stage.dart';
 import 'package:idle_kingdoms/src/ui/arena_panel.dart';
 import 'package:idle_kingdoms/src/ui/location_view.dart';
 import 'package:ik_content/ik_content.dart';
@@ -138,5 +139,34 @@ void main() {
     final frame = tester.getRect(find.byType(AppShell));
     expect(fieldBox.bottom, lessThanOrEqualTo(frame.bottom - 280 + 2));
     expect(fieldBox.top, greaterThan(frame.top));
+  });
+
+  testWidgets('arena opponent art is mirrored toward the player', (tester) async {
+    final look = startedCharacter(database).appearance;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: PvpActionStage(
+            youName: 'You',
+            themName: 'Them',
+            youAppearance: look,
+            themAppearance: look,
+            youHp: 10,
+            youMaxHp: 10,
+            themHp: 10,
+            themMaxHp: 10,
+            roundProgress: 0,
+          ),
+        ),
+      ),
+    );
+
+    expect(
+      find.byWidgetPredicate((widget) {
+        if (widget is! Transform) return false;
+        return widget.transform.storage[0] < 0;
+      }),
+      findsOne,
+    );
   });
 }

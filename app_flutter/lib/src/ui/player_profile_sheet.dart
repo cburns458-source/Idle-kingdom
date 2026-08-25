@@ -158,39 +158,46 @@ class _PlayerProfileSheetState extends State<PlayerProfileSheet> {
           ),
           const SizedBox(height: 8),
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SocialPortrait(appearance: view.appearance, size: 52),
+              SocialPortrait(appearance: view.appearance, size: 52, height: 156),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      view.username,
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            view.username,
+                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
+                          ),
+                        ),
+                        if (_isSelf || _profile?.publicEquipment != null)
+                          IconButton(
+                            tooltip: 'Gear',
+                            onPressed: () => openPlayerGear(
+                              context,
+                              controller: widget.controller,
+                              username: view.username,
+                              equipment: _isSelf
+                                  ? publicEquipmentFromSave(widget.controller.save)
+                                  : _profile?.publicEquipment,
+                            ),
+                            icon: const SlotGlyph(slotId: 'SLOT-0004', size: 28),
+                          ),
+                      ],
                     ),
                     MutedText(view.summaryLine),
                     if (_isSelf) const MutedText('This is you.'),
+                    const SizedBox(height: 8),
+                    _skillIconGrid(_profile!),
                   ],
                 ),
               ),
-              if (_isSelf || _profile?.publicEquipment != null)
-                IconButton(
-                  tooltip: 'Gear',
-                  onPressed: () => openPlayerGear(
-                    context,
-                    controller: widget.controller,
-                    username: view.username,
-                    equipment: _isSelf
-                        ? publicEquipmentFromSave(widget.controller.save)
-                        : _profile?.publicEquipment,
-                  ),
-                  icon: const SlotGlyph(slotId: 'SLOT-0004', size: 28),
-                ),
             ],
           ),
-          const SizedBox(height: 8),
-          _skillIconGrid(_profile!),
           if (!_isSelf && net.isSignedIn) ...[
             const SizedBox(height: 10),
             ..._profileActions(view.userId),

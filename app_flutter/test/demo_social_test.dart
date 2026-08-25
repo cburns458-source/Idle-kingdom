@@ -3,7 +3,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:idle_kingdoms/src/session/multiplayer_controller.dart';
 import 'package:idle_kingdoms/src/theme.dart';
 import 'package:idle_kingdoms/src/ui/account_panel.dart';
+import 'package:idle_kingdoms/src/ui/game_image.dart';
 import 'package:idle_kingdoms/src/ui/player_profile_sheet.dart';
+import 'package:idle_kingdoms/src/ui/social_bits.dart';
 import 'package:ik_content/ik_content.dart';
 import 'package:ik_net/ik_net.dart';
 
@@ -61,6 +63,44 @@ void main() {
     expect(find.text('Unignore'), findsOne);
   });
 
+  Color nearbyChipRim(WidgetTester tester) {
+    final material = tester
+        .widgetList<Material>(
+          find.descendant(
+            of: find.byTooltip('Nearby adventurers'),
+            matching: find.byType(Material),
+          ),
+        )
+        .firstWhere((row) => row.shape is RoundedRectangleBorder);
+    return (material.shape! as RoundedRectangleBorder).side.color;
+  }
+
+  testWidgets('nearby chip is gold for strangers and green for guildmates', (tester) async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(currentLocationId: demoMiraLocationId),
+    );
+    final net = buildMultiplayer(database);
+    addTearDown(controller.dispose);
+    addTearDown(net.dispose);
+    await signIn(net);
+    await net.refresh(controller.save);
+    await pumpShell(tester, controller, multiplayer: net, size: const Size(900, 2400));
+    await tester.pump();
+
+    expect(net.peers, isNotEmpty);
+    expect(net.nearbyHasAllies, isFalse);
+    expect(nearbyChipRim(tester), Palette.gold);
+
+    await net.applyToGuild(demoGuildId, 'Reporting in', controller.save);
+    await tester.pump();
+    await net.refresh(controller.save);
+    await tester.pump();
+
+    expect(net.nearbyHasAllies, isTrue);
+    expect(nearbyChipRim(tester), Palette.softGreen);
+  });
+
   testWidgets('a nearby profile shows the player\'s equipped items', (tester) async {
     final controller = buildController(
       database,
@@ -85,6 +125,32 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byTooltip('Wooden Sword'), findsOne);
     expect(find.byTooltip('Wooden Shield'), findsOne);
+  });
+
+  testWidgets('a profile shows a tall bust with skills beside it', (tester) async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(currentLocationId: demoMiraLocationId),
+    );
+    final net = buildMultiplayer(database);
+    addTearDown(controller.dispose);
+    addTearDown(net.dispose);
+    await signIn(net);
+    await pumpPanel(
+      tester,
+      PlayerProfileSheet(controller: controller, multiplayer: net, userId: demoMiraId),
+    );
+    await tester.pumpAndSettle();
+
+    final art = tester.getRect(find.byType(SocialPortrait));
+    expect(art.width, 52);
+    expect(art.height, 156);
+
+    final beside = find.byType(GameImage).evaluate().any((element) {
+      final box = tester.getRect(find.byWidget(element.widget));
+      return box.left > art.right && box.top < art.bottom;
+    });
+    expect(beside, isTrue);
   });
 
   testWidgets('guild search shows The Watch, and a recruit can join and leave', (tester) async {
