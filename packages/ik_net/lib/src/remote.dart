@@ -6,6 +6,7 @@
 /// on an HTTP library.
 library;
 
+import 'dart:convert';
 import 'dart:math';
 
 import 'package:ik_rules/ik_rules.dart';
@@ -592,9 +593,17 @@ MultiplayerProfile? multiplayerProfileFromRemote(RemoteRow? row) {
 }
 
 List<PublicEquippedSlot> _equipmentFromRemote(Object? raw) {
-  if (raw is! List) return const <PublicEquippedSlot>[];
+  Object? value = raw;
+  if (value is String && value.trim().isNotEmpty) {
+    try {
+      value = jsonDecode(value);
+    } catch (_) {
+      return const <PublicEquippedSlot>[];
+    }
+  }
+  if (value is! List) return const <PublicEquippedSlot>[];
   return [
-    for (final row in raw)
+    for (final row in value)
       if (row is Map)
         PublicEquippedSlot(
           slotId: _str(row['slotId'] ?? row['slot_id']),
