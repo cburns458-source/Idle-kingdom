@@ -148,12 +148,11 @@ void main() {
     final wired = wiredNet();
     addTearDown(wired.net.dispose);
     final save = startedCharacter(database);
-    final rival = wired.service.backend.signUp('rival@example.com', 'Rival', 'secret');
-    expect(rival.ok, isTrue, reason: rival.reason);
     for (var i = 0; i < 16; i++) {
-      wired.clock.advance(20000);
+      final speaker = wired.service.backend.signUp('rival$i@example.com', 'Rival$i', 'secret');
+      expect(speaker.ok, isTrue, reason: speaker.reason);
       final sent = wired.service.backend.sendChat(
-        rival.session!,
+        speaker.session!,
         const ChatChannel.global(),
         'Line $i of the watch',
       );
@@ -161,6 +160,7 @@ void main() {
     }
     await wired.net.refresh(save);
     await wired.net.selectChatTab(ChatTab.global, save.currentLocationId);
+    expect(wired.net.messages.length, greaterThanOrEqualTo(16));
 
     final controller = buildController(database, seed: save, clock: wired.clock);
     addTearDown(controller.dispose);
@@ -175,10 +175,12 @@ void main() {
       ),
       size: const Size(420, 360),
     );
-    await tester.pump();
-    await tester.pump();
+    await tester.pumpAndSettle();
 
-    expect(find.text('Line 15 of the watch'), findsOne);
-    expect(find.text('Line 0 of the watch').hitTestable(), findsNothing);
+    expect(find.textContaining('Line 15 of the watch', findRichText: true), findsOne);
+    expect(
+      find.textContaining('Line 0 of the watch', findRichText: true).hitTestable(),
+      findsNothing,
+    );
   });
 }

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import type { PlayerSave } from '../save/types'
 import { playerArtStem, playerPortraitAssetPath } from './playerAssets'
 
 describe('race and gender player assets', () => {
@@ -29,7 +30,7 @@ describe('race and gender player assets', () => {
           beard: 'APR-0014',
           genderPresentation: 'APR-0018',
         },
-      } as const),
+      } as PlayerSave),
     ).toContain('player_orc_masculine')
   })
 })
