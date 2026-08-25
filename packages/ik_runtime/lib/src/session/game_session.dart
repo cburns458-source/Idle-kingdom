@@ -9,13 +9,17 @@ import 'progress.dart';
 import 'tick.dart';
 import 'travel.dart';
 
-/// Smallest background gap treated as time away instead of live frames.
+/// Shortest background gap treated as time away instead of live frames.
 ///
-/// A lock-screen glance is shorter than one combat round, so those ticks stay
-/// live. A longer hide would replay many steps on screen; the next tick
+/// The playthrough, and a player watching an action, step a few seconds at a
+/// time. Those waits stay live. A lock-screen glance is in the same band.
+/// A longer hide would replay many steps on screen, so the next tick
 /// batch-resolves like a boot.
+const num _minForegroundCatchUpMs = 15000;
+
 num foregroundCatchUpFloorMs(GameDatabase db) {
-  return math.max(1000, configNumber(db, 'combat_round_duration', 4) * 1000);
+  final roundMs = math.max(1000, configNumber(db, 'combat_round_duration', 4) * 1000);
+  return math.max(_minForegroundCatchUpMs, roundMs);
 }
 
 /// What a boot found: the save to play, and what happened while away.
@@ -124,7 +128,7 @@ class GameSession {
   }
 
   /// Batch-resolves a long foreground gap. Returns null when the live tick
-  /// should run — including a short lock that is at most one combat round.
+  /// should run — including a short lock or a few-second wait on an action.
   SessionTickResult? _catchUpForegroundGap(num nowMs) {
     final last = _playAccruedAt;
     if (last == null) return null;
