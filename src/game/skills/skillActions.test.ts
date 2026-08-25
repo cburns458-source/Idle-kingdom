@@ -117,6 +117,15 @@ describe('skill menu entries', () => {
     ).toBe(false)
   })
 
+  it('does not list a net on the fishing Tools tab', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const fishing = skillMenuView(launch, 'SKL-0003')
+    const tools = fishing.tabs.find((tab) => tab.id === 'tools')?.sections[0]?.entries ?? []
+    expect(tools.some((item) => item.displayName === 'Net')).toBe(false)
+    expect(tools.some((item) => item.displayName === 'Fishing Net')).toBe(false)
+    expect(tools.some((item) => item.displayName.includes('Fishing Rod'))).toBe(true)
+  })
+
   it('lists net and sling on the hunting Tools tab', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const hunting = skillMenuView(launch, 'SKL-0005')
