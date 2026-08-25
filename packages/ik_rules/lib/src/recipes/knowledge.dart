@@ -53,7 +53,7 @@ PlayerSave unlockRecipeId(PlayerSave save, String recipeId) {
 bool knowsProject(PlayerSave save, GameDatabase db, String projectId) {
   final project = getProject(db, projectId);
   if (project == null || !isCompleteProject(project)) return false;
-  return hasProjectKnowledge(db, save, jsString(project.raw['Skill ID'])).ok;
+  return meetsProjectKnowledge(db, save, project);
 }
 
 /// One row of the recipe book: a production recipe or a special project.
@@ -192,24 +192,30 @@ List<RecipeBookEntry> listRecipeBookEntries(PlayerSave save, GameDatabase db) {
     final knowledge = hasProjectKnowledge(db, save, jsString(project.raw['Skill ID']));
     final goldCost = jsNumber(project.raw['Gold Cost']);
     final outputId = jsString(project.raw['Output Item / Target ID']);
+    final name = jsString(project.raw['Display Name']);
+    final knowledgeSource = !hasQuillProjectKnowledge(save, project)
+        ? 'Mentor: Quill'
+        : knowledge.ok
+        ? 'Mentor unlock'
+        : 'Mentor: ${knowledge.npcName}';
     entries.add(
       RecipeBookEntry(
         kind: 'project',
         id: projectId,
         known: known,
-        name: jsString(project.raw['Display Name']),
+        name: name,
         skill: skillName is String ? skillName : jsString(project.raw['Skill ID']),
         proficiency: _projectSkillFloor(project),
         station: place.station,
         location: place.location,
         output: isEnchantmentOutput(outputId)
-            ? jsString(project.raw['Display Name'])
+            ? name
             : '${_itemName(db, outputId)} '
                   '×${jsNumberToString(jsNumber(project.raw['Output Quantity']))}',
         materials: materials.isNotEmpty
             ? materials
             : (goldCost > 0 ? '${jsNumberToString(goldCost)} gold' : '—'),
-        knowledgeSource: knowledge.ok ? 'Mentor unlock' : 'Mentor: ${knowledge.npcName}',
+        knowledgeSource: knowledgeSource,
         hintUnknown: !known,
       ),
     );

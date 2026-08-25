@@ -8,13 +8,20 @@ import 'roaming.dart';
 
 const String masterDwarfId = 'NPC-0003';
 const String archmageId = 'NPC-0004';
+const String quillId = 'NPC-0002';
 const String smithingSkillId = 'SKL-0011';
 const String arcanaSkillId = 'SKL-0013';
 
-/// The general store merchant, who explains artisanry once.
+/// The general store merchant, who points travelers toward Quill.
 const String generalStoreMerchantId = 'NPC-0007';
 const String artisanrySkillId = 'SKL-0012';
 const num merchantTipXp = 11000;
+
+const String quillLockedReason =
+    'Locked — find Quill to learn how to make bows and quivers. '
+    'The General Store merchant knows where he was last seen.';
+
+const String quillMissingReason = 'Speak with Quill to learn how to make bows and quivers.';
 
 List<NpcRow> npcsAtLocation(GameDatabase db, String locationId, [num? nowMs]) {
   final clock = nowMs ?? DateTime.now().millisecondsSinceEpoch;
@@ -35,7 +42,7 @@ class UnlockNpcResult {
 }
 
 UnlockNpcResult unlockNpcKnowledge(PlayerSave save, String npcId) {
-  if (npcId != masterDwarfId && npcId != archmageId) {
+  if (npcId != masterDwarfId && npcId != archmageId && npcId != quillId) {
     return const UnlockNpcResult.failed('This NPC does not teach projects.');
   }
   if (hasNpcKnowledge(save, npcId)) {
@@ -76,13 +83,28 @@ ProjectKnowledge hasProjectKnowledge(GameDatabase db, PlayerSave save, String sk
   );
 }
 
+/// Bow and quiver artisanry, taught by Quill rather than a skill-wide mentor.
+bool isQuillTaughtName(String displayName) {
+  final name = displayName.trim().toLowerCase();
+  return name == 'quiver' || name.endsWith(' quiver') || name == 'bow' || name.endsWith(' bow');
+}
+
+bool isQuillTaughtProject(ProjectRow project) {
+  final name = project.raw['Display Name'];
+  return name is String && isQuillTaughtName(name);
+}
+
+bool hasQuillProjectKnowledge(PlayerSave save, ProjectRow project) {
+  return !isQuillTaughtProject(project) || hasNpcKnowledge(save, quillId);
+}
+
 bool hasClaimedMerchantTip(PlayerSave save, String npcId) {
   return save.claimedMerchantTipIds.contains(npcId);
 }
 
-/// Whether [npcId] has artisanry advice left to give.
+/// The general store no longer teaches artisanry; Quill does that now.
 bool offersMerchantTip(PlayerSave save, String npcId) {
-  return npcId == generalStoreMerchantId && !hasClaimedMerchantTip(save, npcId);
+  return npcId == generalStoreMerchantId && !hasClaimedMerchantTip(save, npcId) && false;
 }
 
 /// The XP a merchant's advice was worth, and the save that records the claim.

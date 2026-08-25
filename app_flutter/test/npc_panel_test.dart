@@ -37,45 +37,28 @@ void main() {
         .copyWith(currentLocationId: locationId, gold: gold, inventory: inventory, quests: quests);
   }
 
-  testWidgets('the merchant pays for listening, once', (tester) async {
+  testWidgets('the merchant names Quill’s stop instead of teaching artisanry', (tester) async {
     final controller = buildController(database, seed: standing(merchantLocationId));
     addTearDown(controller.dispose);
     var closed = 0;
+    final artisanryXp = getSkillProgress(controller.save, 'SKL-0012').xp;
 
     await pumpPanel(
       tester,
       NpcPanel(controller: controller, npc: npcOf(merchantId), onClose: () => closed += 1),
     );
-    expect(find.textContaining('tips about artisanry'), findsOne);
-    expect(find.text('11,000 Artisanry XP'), findsOne);
+    expect(find.textContaining('tips about artisanry'), findsNothing);
+    expect(find.text('Ask about Quill'), findsOne);
 
-    await tester.tap(find.text('Talk'));
+    await tester.tap(find.text('Ask about Quill'));
     await tester.pump();
+    expect(find.textContaining('Last I heard, Quill was at the'), findsOne);
+
     await tester.tap(find.text('Continue'));
     await tester.pump();
-
     expect(closed, 0);
-    expect(controller.save.claimedMerchantTipIds, [merchantId]);
-    expect(getSkillProgress(controller.save, 'SKL-0012').level, greaterThan(1));
-
-    // Coming back finds the advice already given, and nothing more to collect.
-    // The key stands in for closing the panel and opening it again.
-    final xpAfterFirst = getSkillProgress(controller.save, 'SKL-0012').xp;
-    await pumpPanel(
-      tester,
-      NpcPanel(
-        key: const ValueKey('second visit'),
-        controller: controller,
-        npc: npcOf(merchantId),
-        onClose: () {},
-      ),
-    );
-    expect(find.textContaining('already shared'), findsOne);
-    await tester.tap(find.text('Talk'));
-    await tester.pump();
-    await tester.tap(find.text('Continue'));
-    await tester.pump();
-    expect(getSkillProgress(controller.save, 'SKL-0012').xp, xpAfterFirst);
+    expect(controller.save.claimedMerchantTipIds, isEmpty);
+    expect(getSkillProgress(controller.save, 'SKL-0012').xp, artisanryXp);
   });
 
   testWidgets('the merchant hands the player on to their counter', (tester) async {
@@ -96,8 +79,7 @@ void main() {
     await tester.pump();
 
     expect(opened, 'SHP-0001');
-    // The advice is still paid for on the way to the counter.
-    expect(controller.save.claimedMerchantTipIds, [merchantId]);
+    expect(controller.save.claimedMerchantTipIds, isEmpty);
   });
 
   testWidgets('the mining merchant says where the Master Dwarf is today', (tester) async {
@@ -131,6 +113,32 @@ void main() {
     expect(controller.save.unlockedNpcIds, contains(masterDwarfId));
     expect(controller.message, 'The Master Dwarf unlocks all Smithing projects.');
     expect(find.text('Smithing projects are unlocked.'), findsOne);
+  });
+
+  testWidgets('Quill teaches bows and quivers in his own words', (tester) async {
+    final today = quillLocationId(testStartMs);
+    final controller = buildController(database, seed: standing(today));
+    addTearDown(controller.dispose);
+
+    await pumpPanel(
+      tester,
+      NpcPanel(controller: controller, npc: npcOf('NPC-0002'), onClose: () {}),
+    );
+    expect(find.text('Quill'), findsOne);
+    expect(find.text('A master hunter.'), findsOne);
+    expect(find.text('Ask about hunting'), findsOne);
+
+    await tester.tap(find.text('Ask about hunting'));
+    await tester.pump();
+    expect(find.textContaining('combat experience'), findsOne);
+    expect(find.textContaining('quiver'), findsOne);
+
+    await tester.tap(find.text('Continue'));
+    await tester.pump();
+
+    expect(controller.save.unlockedNpcIds, contains('NPC-0002'));
+    expect(controller.message, 'Quill shows you how to make bows and quivers.');
+    expect(find.text('You know how to make bows and quivers.'), findsOne);
   });
 
   testWidgets('Rose pitches her shop, and declining leaves the quest alone', (tester) async {

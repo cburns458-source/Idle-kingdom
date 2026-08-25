@@ -21,24 +21,25 @@ import { configString } from '../activity/gathering'
 import {
   ARCHMAGE_ID,
   ARCANA_SKILL_ID,
-  ARTISANRY_SKILL_ID,
   GENERAL_STORE_MERCHANT_ID,
   MASTER_DWARF_ID,
-  MERCHANT_TIP_XP,
+  QUILL_ID,
   SMITHING_SKILL_ID,
   claimMerchantTip,
   hasNpcKnowledge,
-  offersMerchantTip,
   shopIdForMerchant,
   unlockNpcKnowledge,
 } from './knowledge'
-import { DWARVEN_MINING_MERCHANT_ID, masterDwarfLocationId } from './roaming'
+import { DWARVEN_MINING_MERCHANT_ID, masterDwarfLocationId, quillLocationId } from './roaming'
 
-const FALLBACK_MERCHANT_TIP = 'Here’s some tips about artisanry'
-const FALLBACK_MERCHANT_TIP_SPENT = 'I’ve already shared what I know about artisanry.'
+const FALLBACK_MERCHANT_TIP = 'Last I heard, Quill was nearby.'
+const FALLBACK_MERCHANT_TIP_SPENT = 'Last I heard, Quill was nearby.'
 const FALLBACK_MERCHANT_LINE = 'Welcome to my shop.'
 const FALLBACK_NPC_DESCRIPTION = 'An inhabitant of Restoria.'
 const FALLBACK_QUEST_ACTIVE_PROMPT = 'What else do you need?'
+const FALLBACK_QUILL_TEACH =
+  'A bow’s only half the work — you’ll want a quiver too. I can show you how to make both. Hunt with a bow and you pick up combat experience as well. The animals fight back; might as well learn from it.'
+const FALLBACK_QUILL_KNOWN = 'You know how to make bows and quivers.'
 
 export function merchantTipLine(db: GameDatabase): string {
   return configString(db, 'copy.merchant_tip', FALLBACK_MERCHANT_TIP)
@@ -99,6 +100,8 @@ export interface NpcMentorBlock {
   /** Shown once the knowledge is held. */
   knownNote: string
   learnLabel: string
+  /** Spoken when the player asks to learn, when the mentor has something to say. */
+  line?: string
 }
 
 export interface NpcQuestObjectiveLine {
@@ -232,7 +235,23 @@ function questBlock(
   }
 }
 
+export function quillTeachLine(db: GameDatabase): string {
+  return configString(db, 'copy.quill_teach', FALLBACK_QUILL_TEACH)
+}
+
+export function quillKnownLine(db: GameDatabase): string {
+  return configString(db, 'copy.quill_known', FALLBACK_QUILL_KNOWN)
+}
+
 function mentorBlock(db: GameDatabase, save: PlayerSave, npcId: string): NpcMentorBlock | null {
+  if (npcId === QUILL_ID) {
+    return {
+      known: hasNpcKnowledge(save, npcId),
+      knownNote: quillKnownLine(db),
+      learnLabel: 'Ask about hunting',
+      line: quillTeachLine(db),
+    }
+  }
   const skillId = skillForKnowledgeNpc(npcId)
   if (!skillId) return null
   const name = skillName(db, skillId)
@@ -245,25 +264,14 @@ function mentorBlock(db: GameDatabase, save: PlayerSave, npcId: string): NpcMent
 
 function greetingFor(
   db: GameDatabase,
-  save: PlayerSave,
+  _save: PlayerSave,
   npc: NpcRow,
   quests: NpcQuestBlock[],
 ): NpcGreeting | null {
-  const npcId = npc['NPC ID']
   if ((npc.Role ?? '').toLowerCase() === 'merchant') {
-    if (offersMerchantTip(save, npcId)) {
-      return {
-        kind: 'merchant',
-        line: merchantTipLine(db),
-        detail: `${MERCHANT_TIP_XP.toLocaleString()} ${skillName(db, ARTISANRY_SKILL_ID)} XP`,
-      }
-    }
-    const spent = npcId === GENERAL_STORE_MERCHANT_ID
     return {
       kind: 'merchant',
-      line: spent
-        ? merchantTipSpentLine(db)
-        : (npc.Description ?? configString(db, 'copy.default_merchant_line', FALLBACK_MERCHANT_LINE)),
+      line: npc.Description ?? configString(db, 'copy.default_merchant_line', FALLBACK_MERCHANT_LINE),
       detail: null,
     }
   }
@@ -280,6 +288,26 @@ function greetingFor(
   }
 }
 
+function whereaboutsFor(
+  db: GameDatabase,
+  npcId: string,
+  nowMs: number,
+): NpcWhereabouts | undefined {
+  if (npcId === DWARVEN_MINING_MERCHANT_ID) {
+    return {
+      label: 'Ask where the Master Dwarf is',
+      line: `The Master Dwarf is at the ${locationName(db, masterDwarfLocationId(nowMs))} today.`,
+    }
+  }
+  if (npcId === GENERAL_STORE_MERCHANT_ID) {
+    return {
+      label: 'Ask about Quill',
+      line: `Last I heard, Quill was at the ${locationName(db, quillLocationId(nowMs))}.`,
+    }
+  }
+  return undefined
+}
+
 export function npcConversation(
   db: GameDatabase,
   save: PlayerSave,
@@ -294,13 +322,7 @@ export function npcConversation(
       return isGiver || status === 'active'
     })
     .map((quest) => questBlock(db, save, quest, npcId))
-  const whereabouts =
-    npcId === DWARVEN_MINING_MERCHANT_ID
-      ? {
-          label: 'Ask where the Master Dwarf is',
-          line: `The Master Dwarf is at the ${locationName(db, masterDwarfLocationId(nowMs))} today.`,
-        }
-      : undefined
+  const whereabouts = whereaboutsFor(db, npcId, nowMs)
   return {
     npcId,
     name: npc['Display Name'],
@@ -329,6 +351,13 @@ export function learnMentorProjects(
 ): { ok: true; save: PlayerSave; message: string } | { ok: false; reason: string } {
   const result = unlockNpcKnowledge(save, npcId)
   if (!result.ok) return result
+  if (npcId === QUILL_ID) {
+    return {
+      ok: true,
+      save: result.save,
+      message: 'Quill shows you how to make bows and quivers.',
+    }
+  }
   const skillId = skillForKnowledgeNpc(npcId)
   const name = skillId ? skillName(db, skillId) : 'these'
   const npcName = db.NPCs.find((row) => row['NPC ID'] === npcId)?.['Display Name'] ?? 'mentor'

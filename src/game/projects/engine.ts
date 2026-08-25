@@ -8,7 +8,7 @@ import {
   decodeEnchantTarget,
   eligibleEnchantmentTargets,
 } from './enchantments'
-import { hasProjectKnowledge } from '../npcs/knowledge'
+import { hasProjectKnowledge, QUILL_MISSING_REASON } from '../npcs/knowledge'
 import { applyBountyProjectProgress } from '../bounties/progress'
 import { projectFacilityIdForLookup } from '../production/recipes'
 import { recordProjectMilestones } from '../achievements/progress'
@@ -65,6 +65,7 @@ export function validateProjectCompletion(
         reason: `Speak with the ${knowledge.npcName} to unlock these projects.`,
       }
     }
+    return { ok: false, reason: QUILL_MISSING_REASON }
   }
 
   if (!meetsProjectSkills(save, project)) {

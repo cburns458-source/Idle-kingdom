@@ -126,7 +126,8 @@ bool meetsProjectSkills(PlayerSave save, ProjectRow project) {
 }
 
 bool meetsProjectKnowledge(GameDatabase db, PlayerSave save, ProjectRow project) {
-  return hasProjectKnowledge(db, save, jsString(project.raw['Skill ID'])).ok;
+  return hasProjectKnowledge(db, save, jsString(project.raw['Skill ID'])).ok &&
+      hasQuillProjectKnowledge(save, project);
 }
 
 /// A skill gate the player has not reached yet.

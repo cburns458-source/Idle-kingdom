@@ -144,6 +144,38 @@ describe('special production', () => {
     expect(result.reason).toMatch(/Master Dwarf/i)
   })
 
+  it('rejects bow projects before Quill knowledge and still allows leather', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    let save = createNewSave(launch)
+    save = {
+      ...save,
+      currentLocationId: 'LOC-0025',
+      gold: 500,
+      skills: save.skills.map((skill) =>
+        skill.skillId === 'SKL-0012' ? { ...skill, level: 20, xp: 50_000 } : skill,
+      ),
+    }
+    save = addItemToInventory(save, 'ITEM-0214', 8)
+    save = addItemToInventory(save, 'ITEM-0083', 2)
+    save = addItemToInventory(save, 'ITEM-0045', 6)
+    save = addItemToInventory(save, 'ITEM-0095', 10)
+
+    const bow = completeSpecialProject(launch, save, 'PRJ-0030', 1)
+    expect(bow.ok).toBe(false)
+    if (!bow.ok) expect(bow.reason).toMatch(/Quill/i)
+
+    const leather = completeSpecialProject(launch, save, 'PRJ-0148', 1)
+    expect(leather.ok).toBe(true)
+
+    const taught = completeSpecialProject(
+      launch,
+      { ...save, unlockedNpcIds: ['NPC-0002'] },
+      'PRJ-0030',
+      1,
+    )
+    expect(taught.ok).toBe(true)
+  })
+
   it('rejects projects when materials are missing', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const save = {

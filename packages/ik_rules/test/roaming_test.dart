@@ -44,6 +44,34 @@ void main() {
     }
   });
 
+  test('shares one Quill stop for the UTC day', () {
+    final morning = quillLocationId(day);
+    expect(quillRoute, contains(morning));
+    expect(quillLocationId(sameDayEvening), morning);
+    expect(roamingLocationFor(quillId, quillRoute, day), morning);
+  });
+
+  test('lists Quill only at today’s stop', () {
+    final today = quillLocationId(day);
+    for (final locationId in quillRoute) {
+      final ids = npcsAtLocation(db, locationId, day).map((npc) => npc.npcId).toList();
+      if (locationId == today) {
+        expect(ids, contains(quillId));
+      } else {
+        expect(ids, isNot(contains(quillId)));
+      }
+    }
+  });
+
+  test('lets the general store merchant name Quill’s stop', () {
+    final merchant = db.npcs.firstWhere((npc) => npc.npcId == generalStoreMerchantId);
+    final save = createNewSave(db, day);
+    final conversation = npcConversation(db, save, merchant, day);
+    final place = locationDisplayName(db, quillLocationId(day));
+    expect(conversation.whereabouts?.label, 'Ask about Quill');
+    expect(conversation.whereabouts?.line, 'Last I heard, Quill was at the $place.');
+  });
+
   test('lets the mining merchant name today’s stop', () {
     final merchant = db.npcs.firstWhere((npc) => npc.npcId == dwarvenMiningMerchantId);
     final save = createNewSave(db, day);

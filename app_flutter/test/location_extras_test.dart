@@ -396,6 +396,27 @@ void main() {
     expect(find.byTooltip('Collapse list'), findsNothing);
   });
 
+  testWidgets('Quill stands only at today’s shared stop', (tester) async {
+    final today = quillLocationId(testStartMs);
+    for (final locationId in quillRoute) {
+      final controller = buildController(
+        database,
+        seed: startedCharacter(database).copyWith(currentLocationId: locationId),
+      );
+      addTearDown(controller.dispose);
+      await pumpPanel(
+        tester,
+        LocationView(
+          controller: controller,
+          multiplayer: buildMultiplayer(database),
+          onOpenMap: () {},
+        ),
+        size: const Size(900, 2400),
+      );
+      expect(find.text('Quill'), locationId == today ? findsOne : findsNothing);
+    }
+  });
+
   testWidgets('the Master Dwarf stands only at today’s shared stop', (tester) async {
     final today = masterDwarfLocationId(testStartMs);
     for (final locationId in masterDwarfRoute) {

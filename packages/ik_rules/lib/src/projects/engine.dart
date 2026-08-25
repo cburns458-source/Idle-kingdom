@@ -77,6 +77,7 @@ ProjectValidation validateProjectCompletion(
         'Speak with the ${knowledge.npcName} to unlock these projects.',
       );
     }
+    return const ProjectValidation.failed(quillMissingReason);
   }
 
   if (!meetsProjectSkills(save, project)) {

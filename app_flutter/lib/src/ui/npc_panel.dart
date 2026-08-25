@@ -37,6 +37,7 @@ class _NpcPanelState extends State<NpcPanel> {
   NpcGreeting? _dialogue;
   String? _talkLine;
   String? _whereaboutsLine;
+  String? _mentorLine;
   String? _error;
 
   GameController get controller => widget.controller;
@@ -110,6 +111,19 @@ class _NpcPanelState extends State<NpcPanel> {
   }
 
   void _learn() {
+    final mentor = conversation.mentor;
+    final line = mentor?.line;
+    if (line != null && mentor?.known != true && _mentorLine == null) {
+      setState(() {
+        _error = null;
+        _mentorLine = line;
+      });
+      return;
+    }
+    _commitLearn();
+  }
+
+  void _commitLearn() {
     final result = learnMentorProjects(controller.db, controller.save, conversation.npcId);
     if (!result.ok) {
       setState(() => _error = result.reason);
@@ -117,7 +131,10 @@ class _NpcPanelState extends State<NpcPanel> {
     }
     controller.commit(result.save!);
     controller.announce(result.message!);
-    setState(() => _error = null);
+    setState(() {
+      _error = null;
+      _mentorLine = null;
+    });
   }
 
   void _talk(NpcQuestBlock quest) {
@@ -250,6 +267,14 @@ class _NpcPanelState extends State<NpcPanel> {
         actions: [
           GameButton(label: 'Continue', onPressed: () => setState(() => _whereaboutsLine = null)),
         ],
+      );
+    }
+
+    if (_mentorLine case final mentorLine?) {
+      return _DialogueCard(
+        name: conversation.name,
+        line: mentorLine,
+        actions: [GameButton(label: 'Continue', onPressed: _commitLearn)],
       );
     }
 

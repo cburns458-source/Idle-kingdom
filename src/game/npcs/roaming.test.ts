@@ -7,7 +7,10 @@ import { npcsAtLocation } from './knowledge'
 import {
   MASTER_DWARF_ID,
   MASTER_DWARF_ROUTE,
+  QUILL_ID,
+  QUILL_ROUTE,
   masterDwarfLocationId,
+  quillLocationId,
   roamingDayKey,
   roamingLocationFor,
 } from './roaming'
@@ -64,6 +67,39 @@ describe('master dwarf roam', () => {
     expect(conversation.whereabouts).toEqual({
       label: 'Ask where the Master Dwarf is',
       line: `The Master Dwarf is at the ${place} today.`,
+    })
+  })
+
+  it('shares one Quill stop for the UTC day', () => {
+    const morning = quillLocationId(DAY)
+    expect(QUILL_ROUTE).toContain(morning)
+    expect(quillLocationId(SAME_DAY_EVENING)).toBe(morning)
+    expect(roamingLocationFor(QUILL_ID, QUILL_ROUTE, DAY)).toBe(morning)
+  })
+
+  it('lists Quill only at today’s stop', () => {
+    const today = quillLocationId(DAY)
+    for (const locationId of QUILL_ROUTE) {
+      const ids = npcsAtLocation(launch, locationId, DAY).map((npc) => npc['NPC ID'])
+      if (locationId === today) {
+        expect(ids).toContain(QUILL_ID)
+      } else {
+        expect(ids).not.toContain(QUILL_ID)
+      }
+    }
+  })
+
+  it('lets the general store merchant name Quill’s stop', () => {
+    const merchant = launch.NPCs.find((npc) => npc['NPC ID'] === 'NPC-0007')
+    if (!merchant) throw new Error('missing NPC-0007')
+    const save = createNewSave(launch)
+    const conversation = npcConversation(launch, save, merchant, DAY)
+    const place = launch.Locations.find(
+      (row) => row['Location ID'] === quillLocationId(DAY),
+    )?.['Display Name']
+    expect(conversation.whereabouts).toEqual({
+      label: 'Ask about Quill',
+      line: `Last I heard, Quill was at the ${place}.`,
     })
   })
 })
