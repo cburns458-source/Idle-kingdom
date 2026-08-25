@@ -10,6 +10,7 @@ import {
   completeProductionCraft,
   resolveProductionProgress,
 } from './engine'
+import type { RecipeRow } from '../data/recipeTypes'
 import {
   canKnowRecipe,
   getRecipe,
@@ -23,11 +24,18 @@ const rawDatabase = JSON.parse(
 )
 
 describe('standard production', () => {
-  it('skips Needs Data recipes such as Cloth Wrap', () => {
-    const { launch } = prepareDatabase(rawDatabase)
-    const cloth = getRecipe(launch, 'RCP-0058')
-    expect(cloth).toBeDefined()
-    expect(isCompleteRecipe(cloth!)).toBe(false)
+  it('skips incomplete recipes', () => {
+    const incomplete = {
+      Status: 'Needs Data',
+      'Base Duration Seconds': null,
+      'XP Reward': null,
+      'Output Quantity': 1,
+      'Output Item ID': 'ITEM-0001',
+      'Facility ID': 'FAC-0003',
+      'Skill ID': 'SKL-0009',
+      'Proficiency Level': null,
+    } as RecipeRow
+    expect(isCompleteRecipe(incomplete)).toBe(false)
   })
 
   it('lists level-1 kitchen recipes and consumes materials for a queue', () => {

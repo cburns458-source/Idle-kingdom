@@ -1519,7 +1519,7 @@ def main() -> None:
         'spell': 'Strength Spell',
         'necklace': 'Silver Necklace',
         'ring': 'Silver Ring',
-        'component': 'Cloth Wrap',
+        'component': 'Plant-Fiber Component',
         'creature': 'Leather',
         'herb': 'Herb 1',
         'food': 'Baked Potato',
