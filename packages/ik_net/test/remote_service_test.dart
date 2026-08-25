@@ -658,8 +658,7 @@ void main() {
       'appearance_json': defaultPlayerAppearance.toJson(),
       'privacy_public_skills': true,
       'privacy_public_gear': true,
-      'equipment_json':
-          '[{"slotId":"$weaponToolSlotId","itemId":"ITEM-0110","quantity":1}]',
+      'equipment_json': '[{"slotId":"$weaponToolSlotId","itemId":"ITEM-0110","quantity":1}]',
       'updated_at': '2026-01-01T00:00:00.000Z',
     });
     expect(profile, isNotNull);
