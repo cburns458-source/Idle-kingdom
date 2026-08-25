@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:idle_kingdoms/src/session/multiplayer_controller.dart';
 import 'package:idle_kingdoms/src/theme.dart';
 import 'package:idle_kingdoms/src/ui/account_panel.dart';
+import 'package:idle_kingdoms/src/ui/player_profile_sheet.dart';
 import 'package:ik_content/ik_content.dart';
 import 'package:ik_net/ik_net.dart';
 
@@ -58,6 +59,32 @@ void main() {
     await tester.tap(find.text('OK'));
     await tester.pump();
     expect(find.text('Unignore'), findsOne);
+  });
+
+  testWidgets('a nearby profile shows the player\'s equipped items', (tester) async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(currentLocationId: demoMiraLocationId),
+    );
+    final net = buildMultiplayer(database);
+    addTearDown(controller.dispose);
+    addTearDown(net.dispose);
+    addTearDown(() async {
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
+    await signIn(net);
+    await net.refresh(controller.save);
+    await pumpPanel(
+      tester,
+      PlayerProfileSheet(controller: controller, multiplayer: net, userId: demoMiraId),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byTooltip('Gear'), findsOne);
+    await tester.tap(find.byTooltip('Gear'));
+    await tester.pumpAndSettle();
+    expect(find.byTooltip('Wooden Sword'), findsOne);
+    expect(find.byTooltip('Wooden Shield'), findsOne);
   });
 
   testWidgets('guild search shows The Watch, and a recruit can join and leave', (tester) async {

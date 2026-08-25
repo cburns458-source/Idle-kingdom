@@ -321,6 +321,10 @@ void _upsertSave(
     skills: skills,
     updatedAt: nowIso,
   );
+  for (final itemId in const <String>['ITEM-0124', 'ITEM-0145']) {
+    final equipped = equipItemFromInventory(gameDb, save, itemId);
+    if (equipped.save != null) save = equipped.save!;
+  }
   db.saves = db.saves.where((row) => row.userId != userId).toList();
   db.saves.add(
     CloudSaveRecord(
@@ -330,6 +334,12 @@ void _upsertSave(
       payload: save,
     ),
   );
+  final profileIndex = db.profiles.indexWhere((row) => row.userId == userId);
+  if (profileIndex >= 0) {
+    db.profiles[profileIndex] = db.profiles[profileIndex].copyWith(
+      publishedEquipment: publicEquipmentFromSave(save),
+    );
+  }
 }
 
 void _upsertMember(

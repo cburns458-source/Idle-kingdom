@@ -651,6 +651,21 @@ void main() {
     expect(profile.publicEquipment!.single.slotId, weaponToolSlotId);
   });
 
+  test('reads published gear when equipment_json arrives as a JSON string', () {
+    final profile = multiplayerProfileFromRemote(<String, Object?>{
+      'user_id': 'usr_hero',
+      'username': 'Hero',
+      'appearance_json': defaultPlayerAppearance.toJson(),
+      'privacy_public_skills': true,
+      'privacy_public_gear': true,
+      'equipment_json': '[{"slotId":"$weaponToolSlotId","itemId":"ITEM-0110","quantity":1}]',
+      'updated_at': '2026-01-01T00:00:00.000Z',
+    });
+    expect(profile, isNotNull);
+    expect(profile!.publishedEquipment.single.itemId, 'ITEM-0110');
+    expect(profile.publishedEquipment.single.slotId, weaponToolSlotId);
+  });
+
   test('hides published gear when the account opted out of public gear', () async {
     final transport = FakeTransport();
     final hero = await _signedIn(transport, MemorySaveStorage());
