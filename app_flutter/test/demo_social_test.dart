@@ -181,4 +181,28 @@ void main() {
     expect(find.text('Ignored'), findsOne);
     expect(find.text('Bram'), findsOne);
   });
+
+  testWidgets('Settings Account lists a player after they are ignored', (tester) async {
+    final controller = buildController(database, seed: startedCharacter(database));
+    final net = buildMultiplayer(database);
+    addTearDown(controller.dispose);
+    addTearDown(net.dispose);
+    addTearDown(() async {
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
+    await signIn(net);
+    await net.ignorePlayer(demoBramId);
+    net.announce(null);
+    await pumpShell(tester, controller, multiplayer: net, size: const Size(900, 2400));
+
+    await openChinScreen(tester, 'Settings');
+    await tester.pump(const Duration(milliseconds: 280));
+    await tester.tap(find.widgetWithText(GameButton, 'Account'));
+    await tester.pump();
+    await tester.ensureVisible(find.text('Bram'));
+
+    expect(find.text('Ignored'), findsOne);
+    expect(find.text('Bram'), findsOne);
+    expect(find.widgetWithText(GameButton, 'Unignore'), findsOne);
+  });
 }
