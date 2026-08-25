@@ -117,6 +117,24 @@ describe('skill menu entries', () => {
     ).toBe(false)
   })
 
+  it('does not list a net on the fishing Tools tab', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const fishing = skillMenuView(launch, 'SKL-0003')
+    const tools = fishing.tabs.find((tab) => tab.id === 'tools')?.sections[0]?.entries ?? []
+    expect(tools.some((item) => item.displayName === 'Net')).toBe(false)
+    expect(tools.some((item) => item.displayName === 'Fishing Net')).toBe(false)
+    expect(tools.some((item) => item.displayName.includes('Fishing Rod'))).toBe(true)
+  })
+
+  it('lists net and sling on the hunting Tools tab', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const hunting = skillMenuView(launch, 'SKL-0005')
+    expect(hunting.tabs.map((tab) => tab.label)).toEqual(['Actions', 'Tools'])
+    const tools = hunting.tabs.find((tab) => tab.id === 'tools')?.sections[0]?.entries ?? []
+    expect(tools.some((item) => item.displayName === 'Net' && item.level === 1)).toBe(true)
+    expect(tools.some((item) => item.displayName === 'Sling' && item.level === 5)).toBe(true)
+  })
+
   it('groups smithing by material and numbers every menu row', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const mining = skillMenuDisplayEntries(launch, 'SKL-0002')

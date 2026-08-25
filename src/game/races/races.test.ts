@@ -25,6 +25,7 @@ const SHARED_STARTER_ITEMS = [
   'ITEM-0102',
   'ITEM-0101',
   'ITEM-0103',
+  'ITEM-0108',
   'ITEM-0124',
   'ITEM-0001',
   'ITEM-0058',
@@ -45,7 +46,7 @@ describe('playable races', () => {
     ])
     for (const race of list) {
       const kit = raceStartingItems(launch, race['Race ID'])
-      expect(kit.length).toBe(7)
+      expect(kit.length).toBe(8)
       const itemIds = kit.map((row) => row['Item ID'])
       for (const itemId of SHARED_STARTER_ITEMS) {
         expect(itemIds).toContain(itemId)
@@ -96,7 +97,7 @@ describe('playable races', () => {
       if (!assigned.ok) continue
       expect(assigned.save.gold).toBe(25)
       expect(assigned.save.inventory.find((s) => s.itemId === 'ITEM-0058')?.quantity).toBe(5)
-      for (const itemId of ['ITEM-0102', 'ITEM-0101', 'ITEM-0103', 'ITEM-0124']) {
+      for (const itemId of ['ITEM-0102', 'ITEM-0101', 'ITEM-0103', 'ITEM-0108', 'ITEM-0124']) {
         expect(assigned.save.inventory.find((s) => s.itemId === itemId)?.quantity).toBe(1)
       }
       if (raceId === 'RACE-0005') {

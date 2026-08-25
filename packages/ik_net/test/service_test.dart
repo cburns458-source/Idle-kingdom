@@ -386,4 +386,23 @@ void main() {
     expect(profile.publicEquipment!.single.itemId, 'ITEM-0110');
     expect(profile.publicEquipment!.single.slotId, weaponToolSlotId);
   });
+
+  test('counts unread public chat from other players after a cursor', () async {
+    final storage = MemorySaveStorage();
+    final hero = _service(storage);
+    await hero.signUp('hero@example.com', 'Hero', 'secret');
+    final rival = _service(storage, startMs: _nowMs + 2000, idOffset: 100);
+    await rival.signUp('rival@example.com', 'Rival', 'secret');
+
+    const room = ChatChannel.global();
+    expect((await rival.sendChat(room, 'Hello global')).ok, isTrue);
+
+    expect((await hero.signIn('hero@example.com', 'secret')).ok, isTrue);
+    expect(await hero.countUnreadChat(room, null), 1);
+    expect(await hero.countUnreadChat(room, isoFromMs(_nowMs + 1000)), 1);
+    expect(await hero.countUnreadChat(room, isoFromMs(_nowMs + 3000)), 0);
+
+    expect((await rival.signIn('rival@example.com', 'secret')).ok, isTrue);
+    expect(await rival.countUnreadChat(room, null), 0);
+  });
 }

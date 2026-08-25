@@ -7,7 +7,7 @@
 
 import '../../json_support.dart';
 
-const int saveVersion = 32;
+const int saveVersion = 33;
 
 const String saveStorageKey = 'idle-kingdoms.demo.save';
 
@@ -18,6 +18,9 @@ const int startingGold = 0;
 
 /// Level 1 Hunting Net — granted on older save migration only.
 const String startingHuntingToolId = 'ITEM-0108';
+
+/// Retired fishing-net item. Existing copies become the hunting Net.
+const String retiredFishingNetItemId = 'ITEM-0104';
 
 const String weaponToolSlotId = 'SLOT-0001';
 

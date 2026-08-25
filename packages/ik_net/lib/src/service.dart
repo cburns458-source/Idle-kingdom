@@ -72,6 +72,8 @@ abstract interface class MultiplayerService {
 
   Future<int> countUnreadDirectMessages(String? sinceIso);
 
+  Future<int> countUnreadChat(ChatChannel channel, String? sinceIso);
+
   Future<void> mutePlayer(String targetUserId);
 
   Future<void> blockPlayer(String targetUserId);
@@ -416,6 +418,13 @@ class LocalMultiplayerService implements MultiplayerService {
     final current = session;
     if (current == null) return 0;
     return _backend.countUnreadDirectMessages(current.userId, sinceIso);
+  }
+
+  @override
+  Future<int> countUnreadChat(ChatChannel channel, String? sinceIso) async {
+    final current = session;
+    if (current == null) return 0;
+    return _backend.countUnreadChat(current.userId, channel, sinceIso);
   }
 
   @override

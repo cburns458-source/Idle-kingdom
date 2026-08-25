@@ -26,6 +26,7 @@ describe('shops', () => {
     const stock = shopStockEntries(shop).map((entry) => entry.itemId)
     expect(stock).toContain('ITEM-0102')
     expect(stock).toContain('ITEM-0108')
+    expect(stock).not.toContain('ITEM-0104')
     expect(stock.length).toBeGreaterThanOrEqual(10)
     expect(playerBuyPrice(launch, shop, 'ITEM-0102')).toBe(24)
   })

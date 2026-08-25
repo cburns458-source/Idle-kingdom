@@ -703,6 +703,14 @@ export class LocalMultiplayerBackend {
     ).length
   }
 
+  /** Public-channel lines from other players after `sinceIso` (exclusive). */
+  countUnreadChat(viewerId: string, channel: ChatChannel, sinceIso: string | null): number {
+    const sinceMs = sinceIso ? Date.parse(sinceIso) : 0
+    return this.listChat(channel, viewerId).filter(
+      (row) => row.userId !== viewerId && Date.parse(row.createdAt) > sinceMs,
+    ).length
+  }
+
   muteUser(userId: string, mutedUserId: string): void {
     const db = this.db()
     if (!db.mutes.some((row) => row.userId === userId && row.mutedUserId === mutedUserId)) {

@@ -256,6 +256,42 @@ class _MenuViewState extends State<MenuView> {
                         ],
                       ),
                     ),
+                    const SizedBox(height: 16),
+                    const Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        'Chat notifications',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    const Align(
+                      alignment: Alignment.centerLeft,
+                      child: MutedText(
+                        'Show a bubble on the chat icon and on the channel tab when a new line arrives.',
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    for (final tab in chatTabOrder) ...[
+                      GamePanel(
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                _chatNotifyLabel(tab),
+                                style: const TextStyle(fontWeight: FontWeight.w400),
+                              ),
+                            ),
+                            GameSwitch(
+                              value: widget.multiplayer.chatNotifyEnabled(tab),
+                              onChanged: (value) =>
+                                  widget.multiplayer.setChatNotifyEnabled(tab, value),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (tab != chatTabOrder.last) const SizedBox(height: 10),
+                    ],
                   ],
                 );
               },
@@ -504,3 +540,11 @@ class _MenuViewState extends State<MenuView> {
     );
   }
 }
+
+String _chatNotifyLabel(ChatTab tab) => switch (tab) {
+  ChatTab.global => 'Global',
+  ChatTab.local => 'Local',
+  ChatTab.guild => 'Guild',
+  ChatTab.guest => 'Guest',
+  ChatTab.dm => 'Private',
+};
