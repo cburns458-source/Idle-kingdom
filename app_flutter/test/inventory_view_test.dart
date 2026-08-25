@@ -191,6 +191,11 @@ void main() {
     expect(find.text('Health'), findsOne);
     expect(find.text('DR'), findsOne);
     expect(find.text('Show bonuses'), findsOne);
+    expect(find.text('Show sources'), findsOne);
+    final bonuses = tester.getRect(find.text('Show bonuses'));
+    final sources = tester.getRect(find.text('Show sources'));
+    expect((bonuses.center.dy - sources.center.dy).abs(), lessThan(8));
+    expect(bonuses.right, lessThan(sources.left));
     expect(find.textContaining('Human'), findsNothing);
 
     await tester.tap(find.text('Show bonuses'));

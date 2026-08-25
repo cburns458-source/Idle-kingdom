@@ -95,6 +95,16 @@ void main() {
     );
   });
 
+  test('sums action time reduction when two pieces share a skill', () {
+    final db = filterLaunchContent(assertGameDatabaseShape(contentDatabaseJson()));
+    var save = equipStackToSlot(createNewSave(db, 0), weaponToolSlotId, 'ITEM-0110', 1);
+    save = equipStackToSlot(save, 'SLOT-0009', 'ITEM-0110', 1);
+    final summary = playerCombatStatSummary(db, save);
+    final woodcutting = summary.activeBonuses.where((bonus) => bonus.name == 'Woodcutting');
+    expect(woodcutting, hasLength(1));
+    expect(woodcutting.first.effect, contains('10%'));
+  });
+
   test('an unarmed save still lists Unarmed as a main-hand source', () {
     final fixture = loadParityFixtures('combat/stats').firstWhere((row) => row.name == 'base');
     final summary = playerCombatStatSummary(databaseOf(fixture), saveOf(fixture));
