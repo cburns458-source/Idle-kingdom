@@ -86,6 +86,18 @@ export async function countUnreadDirectMessages(sinceIso: string | null): Promis
     .length
 }
 
+export async function countUnreadChat(channel: ChatChannel, sinceIso: string | null): Promise<number> {
+  const session = getSession()
+  if (!session) return 0
+  if (multiplayerMode() === 'local') {
+    return getLocalBackend().countUnreadChat(session.userId, channel, sinceIso)
+  }
+  const sinceMs = sinceIso ? Date.parse(sinceIso) : 0
+  const messages = await listChatMessages(channel)
+  return messages.filter((row) => row.userId !== session.userId && Date.parse(row.createdAt) > sinceMs)
+    .length
+}
+
 export function mutePlayer(targetUserId: string): void {
   const session = getSession()
   if (!session) return

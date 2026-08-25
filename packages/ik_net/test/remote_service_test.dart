@@ -422,6 +422,7 @@ void main() {
     expect(read.single.body, 'Anyone here?');
     // Another room does not see it.
     expect(await service.listChat(const ChatChannel.global()), isEmpty);
+    expect(await service.countUnreadChat(const ChatChannel.local('LOC-0028'), null), 0);
   });
 
   test('sends a private message through the function and the other account reads it', () async {

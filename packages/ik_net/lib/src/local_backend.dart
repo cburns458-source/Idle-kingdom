@@ -666,6 +666,15 @@ class LocalMultiplayerBackend {
     ).where((row) => row.userId != viewerId && jsDateParse(row.createdAt) > sinceMs).length;
   }
 
+  /// Public-channel lines from other players newer than [sinceIso], exclusive.
+  int countUnreadChat(String viewerId, ChatChannel channel, String? sinceIso) {
+    final sinceMs = sinceIso != null ? jsDateParse(sinceIso) : 0;
+    return listChat(
+      channel,
+      viewerId,
+    ).where((row) => row.userId != viewerId && jsDateParse(row.createdAt) > sinceMs).length;
+  }
+
   Set<String> _silencedBy(LocalDb db, String viewerId) => <String>{
     for (final row in db.mutes)
       if (row.userId == viewerId) row.otherUserId,

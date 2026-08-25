@@ -74,6 +74,18 @@ void main() {
     expect(find.text('Guild tag on HUD'), findsOne);
     expect(find.text('Show title on HUD'), findsOne);
     expect(find.text('Hide chat bubble'), findsOne);
+    await tester.scrollUntilVisible(
+      find.text('Chat notifications'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pump();
+    expect(find.text('Chat notifications'), findsOne);
+    expect(find.text('Global'), findsOne);
+    expect(find.text('Local'), findsOne);
+    expect(find.text('Guild'), findsOne);
+    expect(find.text('Guest'), findsOne);
+    expect(find.text('Private'), findsOne);
     expect(find.text('Browse social pages'), findsNothing);
     expect(find.text('Move this save'), findsNothing);
 

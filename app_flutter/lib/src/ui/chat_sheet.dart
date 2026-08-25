@@ -27,7 +27,7 @@ class ChatLauncher extends StatelessWidget {
     return ListenableBuilder(
       listenable: multiplayer,
       builder: (context, _) {
-        final badge = unreadBadgeLabel(multiplayer.unreadDms);
+        final badge = unreadBadgeLabel(multiplayer.unreadTotal);
         final tooltip = open
             ? 'Close chat'
             : badge == null
@@ -146,6 +146,7 @@ class _ChatSheetState extends State<ChatSheet> {
           hasGuild: net.guildId != null,
           hasGuest: net.guestGuildId != null,
           unreadDms: net.unreadDms,
+          unread: net.unreadByTab,
         );
         final source = net.chatTab == ChatTab.dm ? net.messagesForSelectedDm() : net.messages;
         final lines = chatLines(
@@ -276,11 +277,8 @@ class _ChatSheetState extends State<ChatSheet> {
               child: Row(
                 children: [
                   for (final tab in tabs) ...[
-                    GameButton(
-                      label: tab.label,
-                      compact: true,
-                      selected: tab.selected,
-                      tone: tab.selected ? GameButtonTone.primary : GameButtonTone.secondary,
+                    _ChatTabButton(
+                      tab: tab,
                       onPressed: tab.enabled
                           ? () => net.selectChatTab(
                               tab.tab,
@@ -334,6 +332,43 @@ class _ChatSheetState extends State<ChatSheet> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _ChatTabButton extends StatelessWidget {
+  const _ChatTabButton({required this.tab, required this.onPressed});
+
+  final ChatTabView tab;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final badge = tab.selected ? null : unreadBadgeLabel(tab.unread);
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        GameButton(
+          label: tab.label,
+          compact: true,
+          selected: tab.selected,
+          tone: tab.selected ? GameButtonTone.primary : GameButtonTone.secondary,
+          onPressed: onPressed,
+        ),
+        if (badge != null)
+          Positioned(
+            right: -4,
+            top: -4,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+              decoration: BoxDecoration(
+                color: Palette.danger,
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: Text(badge, style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w400)),
+            ),
+          ),
+      ],
     );
   }
 }

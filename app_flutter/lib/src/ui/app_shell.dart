@@ -521,6 +521,11 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
       );
     }
     final save = controller.save;
+    multiplayer.syncChatSurface(
+      open: _chatOpen,
+      locationId: save.currentLocationId,
+      citadelHub: _inCitadel,
+    );
     return Stack(
       fit: StackFit.expand,
       children: [
