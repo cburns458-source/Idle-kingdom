@@ -138,6 +138,15 @@ void main() {
       ),
     );
     expect(find.textContaining('Tungsten equipment'), findsOne);
+    await tester.scrollUntilVisible(
+      find.textContaining('Leather equipment'),
+      -200,
+      scrollable: find.descendant(
+        of: find.byKey(const Key('game-popup')),
+        matching: find.byType(Scrollable),
+      ),
+    );
+    expect(find.textContaining('Leather equipment'), findsOne);
     expect(find.textContaining('Tungsten Helmet'), findsNothing);
     expect(find.textContaining('Tungsten Shield'), findsNothing);
     expect(find.textContaining('Tungsten Sword'), findsNothing);

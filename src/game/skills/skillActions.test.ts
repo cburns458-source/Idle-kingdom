@@ -63,6 +63,14 @@ describe('skill menu entries', () => {
         .find((tab) => tab.id === 'jewelry')
         ?.sections[0]?.entries.some((item) => item.displayName === 'Lucky Necklace'),
     ).toBe(true)
+    const artisanryOther =
+      artisanry.tabs.find((tab) => tab.id === 'other')?.sections[0]?.entries ?? []
+    expect(artisanryOther.some((item) => item.displayName === 'Leather Helmet' && item.level === 1)).toBe(
+      true,
+    )
+    expect(artisanryOther.some((item) => item.displayName === 'Leather Gloves' && item.level === 1)).toBe(
+      true,
+    )
   })
 
   it('groups same-tier combat armor as material equipment', () => {
@@ -75,6 +83,10 @@ describe('skill menu entries', () => {
     expect(gear.some((item) => item.displayName === 'Reinforced Steel equipment')).toBe(true)
     expect(gear.some((item) => item.displayName === 'Bull Horn equipment')).toBe(true)
     expect(gear.some((item) => item.displayName === 'Wooden equipment')).toBe(true)
+    expect(gear.some((item) => item.displayName === 'Leather equipment' && item.level === 1)).toBe(
+      true,
+    )
+    expect(gear.some((item) => item.displayName === 'Leather Helmet')).toBe(false)
     expect(gear.some((item) => item.displayName === 'Tungsten Helmet')).toBe(false)
     expect(gear.some((item) => item.displayName === 'Tungsten Shield')).toBe(false)
     expect(gear.some((item) => item.displayName === 'Tungsten Sword')).toBe(false)

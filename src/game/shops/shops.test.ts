@@ -146,13 +146,23 @@ describe('shops', () => {
     )
   })
 
-  it('stocks the Clothier with the tunic, specialist hats, and Leather Gloves', () => {
+  it('stocks the Clothier with the tunic, specialist hats, and leather armor', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const shop = launch.Shops.find((row) => row['Shop ID'] === 'SHP-0006')!
     expect(shop['Location ID']).toBe('LOC-0029')
     const stock = shopStockEntries(shop).map((entry) => entry.itemId)
-    expect(stock).toEqual(['ITEM-0296', 'ITEM-0165', 'ITEM-0166', 'ITEM-0298'])
-    expect(playerBuyPrice(launch, shop, 'ITEM-0298')).toBe(100)
+    expect(stock).toEqual([
+      'ITEM-0296',
+      'ITEM-0165',
+      'ITEM-0166',
+      'ITEM-0308',
+      'ITEM-0309',
+      'ITEM-0310',
+      'ITEM-0311',
+      'ITEM-0298',
+    ])
+    expect(playerBuyPrice(launch, shop, 'ITEM-0298')).toBe(56)
+    expect(playerBuyPrice(launch, shop, 'ITEM-0308')).toBe(56)
     const fresh = createNewSave(launch)
     expect(shopStockForPlayer(launch, fresh, shop).map((entry) => entry.itemId)).not.toContain(
       'ITEM-0296',

@@ -128,6 +128,7 @@ void main() {
     final unit = playerBuyPrice(database.launch, getShop(database.launch, clothierId)!, glovesId)!;
 
     await pumpPanel(tester, ShopPanel(controller: controller, shopId: clothierId));
+    await tester.ensureVisible(find.byTooltip('Leather Gloves'));
     await tester.tap(find.byTooltip('Leather Gloves'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Add to offer'));
