@@ -379,12 +379,7 @@ NpcMentorBlock? _mentorBlock(GameDatabase db, PlayerSave save, String npcId) {
   );
 }
 
-NpcGreeting? _greetingFor(
-  GameDatabase db,
-  PlayerSave _,
-  NpcRow npc,
-  List<NpcQuestBlock> quests,
-) {
+NpcGreeting? _greetingFor(GameDatabase db, PlayerSave _, NpcRow npc, List<NpcQuestBlock> quests) {
   if (lowerOrEmpty(npc.raw['Role']) == 'merchant') {
     final description = npc.raw['Description'];
     return MerchantGreeting(
