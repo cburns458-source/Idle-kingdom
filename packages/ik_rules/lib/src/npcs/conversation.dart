@@ -10,11 +10,15 @@ import '../save/generated/save_models.dart';
 import 'knowledge.dart';
 import 'roaming.dart';
 
-const String _fallbackMerchantTip = 'Here\u2019s some tips about artisanry';
-const String _fallbackMerchantTipSpent = 'I\u2019ve already shared what I know about artisanry.';
+const String _fallbackMerchantTip = 'Last I heard, Quill was nearby.';
+const String _fallbackMerchantTipSpent = 'Last I heard, Quill was nearby.';
 const String _fallbackMerchantLine = 'Welcome to my shop.';
 const String _fallbackNpcDescription = 'An inhabitant of Restoria.';
 const String _fallbackQuestActivePrompt = 'What else do you need?';
+const String _fallbackQuillTeach =
+    'A bow\u2019s only half the work \u2014 you\u2019ll want a quiver too. I can show you how to make both. '
+    'Hunt with a bow and you pick up combat experience as well. The animals fight back; might as well learn from it.';
+const String _fallbackQuillKnown = 'You know how to make bows and quivers.';
 
 String merchantTipLine(GameDatabase db) =>
     configString(db, 'copy.merchant_tip', _fallbackMerchantTip);
@@ -116,7 +120,12 @@ class QuestPitchGreeting extends NpcGreeting {
 
 /// A mentor's one-off project knowledge, and how to describe it.
 class NpcMentorBlock {
-  const NpcMentorBlock({required this.known, required this.knownNote, required this.learnLabel});
+  const NpcMentorBlock({
+    required this.known,
+    required this.knownNote,
+    required this.learnLabel,
+    this.line,
+  });
 
   final bool known;
 
@@ -124,10 +133,14 @@ class NpcMentorBlock {
   final String knownNote;
   final String learnLabel;
 
+  /// Spoken when the player asks to learn, when the mentor has something to say.
+  final String? line;
+
   Map<String, Object?> toJson() => <String, Object?>{
     'known': known,
     'knownNote': knownNote,
     'learnLabel': learnLabel,
+    if (line != null) 'line': line,
   };
 }
 
@@ -343,7 +356,19 @@ NpcQuestBlock _questBlock(GameDatabase db, PlayerSave save, QuestRow quest, Stri
   );
 }
 
+String quillTeachLine(GameDatabase db) => configString(db, 'copy.quill_teach', _fallbackQuillTeach);
+
+String quillKnownLine(GameDatabase db) => configString(db, 'copy.quill_known', _fallbackQuillKnown);
+
 NpcMentorBlock? _mentorBlock(GameDatabase db, PlayerSave save, String npcId) {
+  if (npcId == quillId) {
+    return NpcMentorBlock(
+      known: hasNpcKnowledge(save, npcId),
+      knownNote: quillKnownLine(db),
+      learnLabel: 'Ask about hunting',
+      line: quillTeachLine(db),
+    );
+  }
   final skillId = skillForKnowledgeNpc(npcId);
   if (skillId == null) return null;
   final name = _skillName(db, skillId);
@@ -354,25 +379,11 @@ NpcMentorBlock? _mentorBlock(GameDatabase db, PlayerSave save, String npcId) {
   );
 }
 
-NpcGreeting? _greetingFor(
-  GameDatabase db,
-  PlayerSave save,
-  NpcRow npc,
-  List<NpcQuestBlock> quests,
-) {
-  final npcId = npc.raw['NPC ID'] as String;
+NpcGreeting? _greetingFor(GameDatabase db, PlayerSave _, NpcRow npc, List<NpcQuestBlock> quests) {
   if (lowerOrEmpty(npc.raw['Role']) == 'merchant') {
-    if (offersMerchantTip(save, npcId)) {
-      return MerchantGreeting(
-        line: merchantTipLine(db),
-        detail: '${jsLocaleNumber(merchantTipXp)} ${_skillName(db, artisanrySkillId)} XP',
-      );
-    }
     final description = npc.raw['Description'];
     return MerchantGreeting(
-      line: npcId == generalStoreMerchantId
-          ? merchantTipSpentLine(db)
-          : description is String
+      line: description is String
           ? description
           : configString(db, 'copy.default_merchant_line', _fallbackMerchantLine),
       detail: null,
@@ -391,6 +402,22 @@ NpcGreeting? _greetingFor(
   );
 }
 
+NpcWhereabouts? _whereaboutsFor(GameDatabase db, String npcId, num clock) {
+  if (npcId == dwarvenMiningMerchantId) {
+    return NpcWhereabouts(
+      label: 'Ask where the Master Dwarf is',
+      line: 'The Master Dwarf is at the ${_locationName(db, masterDwarfLocationId(clock))} today.',
+    );
+  }
+  if (npcId == generalStoreMerchantId) {
+    return NpcWhereabouts(
+      label: 'Ask about Quill',
+      line: 'Last I heard, Quill was at the ${_locationName(db, quillLocationId(clock))}.',
+    );
+  }
+  return null;
+}
+
 NpcConversation npcConversation(GameDatabase db, PlayerSave save, NpcRow npc, [num? nowMs]) {
   final npcId = npc.raw['NPC ID'] as String;
   final quests = <NpcQuestBlock>[];
@@ -404,13 +431,7 @@ NpcConversation npcConversation(GameDatabase db, PlayerSave save, NpcRow npc, [n
   final role = npc.raw['Role'];
   final description = npc.raw['Description'];
   final clock = nowMs ?? DateTime.now().millisecondsSinceEpoch;
-  final whereabouts = npcId == dwarvenMiningMerchantId
-      ? NpcWhereabouts(
-          label: 'Ask where the Master Dwarf is',
-          line:
-              'The Master Dwarf is at the ${_locationName(db, masterDwarfLocationId(clock))} today.',
-        )
-      : null;
+  final whereabouts = _whereaboutsFor(db, npcId, clock);
   return NpcConversation(
     npcId: npcId,
     name: displayName is String ? displayName : npcId,
@@ -452,6 +473,12 @@ class NpcActionResult {
 NpcActionResult learnMentorProjects(GameDatabase db, PlayerSave save, String npcId) {
   final result = unlockNpcKnowledge(save, npcId);
   if (!result.ok) return NpcActionResult.failed(result.reason!);
+  if (npcId == quillId) {
+    return NpcActionResult.ok(
+      save: result.save!,
+      message: 'Quill shows you how to make bows and quivers.',
+    );
+  }
   final skillId = skillForKnowledgeNpc(npcId);
   final name = skillId == null ? 'these' : _skillName(db, skillId);
   return NpcActionResult.ok(

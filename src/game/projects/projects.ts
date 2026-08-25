@@ -3,7 +3,7 @@ import { entityVisibleForSave } from '../activity/requirements'
 import type { EnchantmentRow, ProjectRow } from '../data/projectTypes'
 import type { FacilityRow, GameDatabase } from '../data/types'
 import { ESSENCE_ITEM_ID, wizardEssenceCost } from '../equipment/specialist'
-import { hasProjectKnowledge } from '../npcs/knowledge'
+import { hasProjectKnowledge, hasQuillProjectKnowledge } from '../npcs/knowledge'
 import { inventoryCount, projectFacilityIdForLookup } from '../production/recipes'
 import type { PlayerSave } from '../save/types'
 
@@ -104,7 +104,10 @@ export function meetsProjectKnowledge(
   save: PlayerSave,
   project: ProjectRow,
 ): boolean {
-  return hasProjectKnowledge(db, save, project['Skill ID']).ok
+  return (
+    hasProjectKnowledge(db, save, project['Skill ID']).ok &&
+    hasQuillProjectKnowledge(save, project['Display Name'])
+  )
 }
 
 export function unmetProjectSkillRequirements(

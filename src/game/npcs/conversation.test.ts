@@ -24,29 +24,42 @@ function saveAt(locationId: string): PlayerSave {
 }
 
 describe('npc conversation', () => {
-  it('offers the merchant tip once and pays it out on dismissal', () => {
+  it('lets the general store merchant name Quill’s stop instead of teaching artisanry', () => {
     const merchant = npc('NPC-0007')
     const save = saveAt('LOC-0024')
+    const nowMs = Date.parse('2026-01-01T00:00:00.000Z')
 
-    const first = npcConversation(launch, save, merchant)
-    expect(first.greeting).toEqual({
+    const conversation = npcConversation(launch, save, merchant, nowMs)
+    expect(conversation.greeting).toEqual({
       kind: 'merchant',
-      line: 'Here’s some tips about artisanry',
-      detail: '11,000 Artisanry XP',
-    })
-    expect(first.shopId).toBe('SHP-0001')
-
-    const claimed = takeMerchantTip(launch, save, 'NPC-0007')
-    expect(claimed?.message).toBe('Learned artisanry tips (+11,000 XP).')
-    if (!claimed) return
-
-    const second = npcConversation(launch, claimed.save, merchant)
-    expect(second.greeting).toEqual({
-      kind: 'merchant',
-      line: 'I’ve already shared what I know about artisanry.',
+      line: 'Keeps the General Store stocked.',
       detail: null,
     })
-    expect(takeMerchantTip(launch, claimed.save, 'NPC-0007')).toBeNull()
+    expect(conversation.shopId).toBe('SHP-0001')
+    expect(conversation.whereabouts?.label).toBe('Ask about Quill')
+    expect(conversation.whereabouts?.line).toMatch(
+      /^Last I heard, Quill was at the (Meadow|Ancient Forest|Gathering Outskirts|Mountains)\.$/,
+    )
+    expect(takeMerchantTip(launch, save, 'NPC-0007')).toBeNull()
+  })
+
+  it('lets Quill teach bows, quivers, and bow-hunting combat experience', () => {
+    const save = saveAt('LOC-0009')
+    const before = npcConversation(launch, save, npc('NPC-0002'))
+    expect(before.mentor).toEqual({
+      known: false,
+      knownNote: 'You know how to make bows and quivers.',
+      learnLabel: 'Ask about hunting',
+      line: expect.stringContaining('combat experience'),
+    })
+    expect(before.mentor?.line).toContain('quiver')
+
+    const learned = learnMentorProjects(launch, save, 'NPC-0002')
+    expect(learned.ok).toBe(true)
+    if (!learned.ok) return
+    expect(learned.message).toBe('Quill shows you how to make bows and quivers.')
+    expect(learned.save.unlockedNpcIds).toContain('NPC-0002')
+    expect(npcConversation(launch, learned.save, npc('NPC-0002')).mentor?.known).toBe(true)
   })
 
   it('greets with the merchant’s own description when they have nothing to teach', () => {

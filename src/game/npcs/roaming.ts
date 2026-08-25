@@ -3,8 +3,17 @@ import type { GameDatabase, NpcRow } from '../data/types'
 /** Mountains, Deep Mines, Abandoned Mineshaft. */
 export const MASTER_DWARF_ROUTE = ['LOC-0006', 'LOC-0011', 'LOC-0022'] as const
 
+/** Meadow, Ancient Forest, Gathering Outskirts, Mountains. */
+export const QUILL_ROUTE = ['LOC-0009', 'LOC-0018', 'LOC-0031', 'LOC-0006'] as const
+
 export const MASTER_DWARF_ID = 'NPC-0003'
+export const QUILL_ID = 'NPC-0002'
 export const DWARVEN_MINING_MERCHANT_ID = 'NPC-0008'
+
+const ROAMING_ROUTES: Record<string, readonly string[]> = {
+  [MASTER_DWARF_ID]: MASTER_DWARF_ROUTE,
+  [QUILL_ID]: QUILL_ROUTE,
+}
 
 /** UTC calendar day `YYYY-MM-DD` for [nowMs]. */
 export function roamingDayKey(nowMs: number): string {
@@ -32,14 +41,17 @@ export function roamingLocationFor(
 }
 
 export function npcLocationAt(npc: NpcRow, nowMs: number): string {
-  if (npc['NPC ID'] === MASTER_DWARF_ID) {
-    return roamingLocationFor(MASTER_DWARF_ID, MASTER_DWARF_ROUTE, nowMs)
-  }
+  const route = ROAMING_ROUTES[npc['NPC ID']]
+  if (route) return roamingLocationFor(npc['NPC ID'], route, nowMs)
   return npc['Location ID']
 }
 
 export function masterDwarfLocationId(nowMs: number): string {
   return roamingLocationFor(MASTER_DWARF_ID, MASTER_DWARF_ROUTE, nowMs)
+}
+
+export function quillLocationId(nowMs: number): string {
+  return roamingLocationFor(QUILL_ID, QUILL_ROUTE, nowMs)
 }
 
 export function locationDisplayName(db: GameDatabase, locationId: string): string {

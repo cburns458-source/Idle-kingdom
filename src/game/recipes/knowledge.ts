@@ -1,14 +1,14 @@
 import type { RecipeRow } from '../data/recipeTypes'
 import type { GameDatabase } from '../data/types'
 import { getSkillProgress } from '../activity/xp'
-import { hasProjectKnowledge } from '../npcs/knowledge'
+import { hasProjectKnowledge, hasQuillProjectKnowledge } from '../npcs/knowledge'
 import {
   facilityIdForActivity,
   getRecipe,
   isCompleteRecipe,
   recipeMatchesFacility,
 } from '../production/recipes'
-import { getProject, isCompleteProject } from '../projects/projects'
+import { getProject, isCompleteProject, meetsProjectKnowledge } from '../projects/projects'
 import type { PlayerSave } from '../save/types'
 
 function knowledgeSourceOf(recipe: RecipeRow): string {
@@ -56,7 +56,7 @@ export function unlockRecipeId(save: PlayerSave, recipeId: string): PlayerSave {
 export function knowsProject(save: PlayerSave, db: GameDatabase, projectId: string): boolean {
   const project = getProject(db, projectId)
   if (!project || !isCompleteProject(project)) return false
-  return hasProjectKnowledge(db, save, project['Skill ID']).ok
+  return meetsProjectKnowledge(db, save, project)
 }
 
 export type RecipeBookEntry =
@@ -171,9 +171,11 @@ export function listRecipeBookEntries(save: PlayerSave, db: GameDatabase): Recip
       .filter(Boolean)
       .join(', ')
     const knowledge = hasProjectKnowledge(db, save, project['Skill ID'])
-    const source = !knowledge.ok
-      ? `Mentor: ${knowledge.npcName}`
-      : 'Mentor unlock'
+    const source = !hasQuillProjectKnowledge(save, project['Display Name'])
+      ? 'Mentor: Quill'
+      : !knowledge.ok
+        ? `Mentor: ${knowledge.npcName}`
+        : 'Mentor unlock'
     return {
       kind: 'project',
       id: project['Project ID'],

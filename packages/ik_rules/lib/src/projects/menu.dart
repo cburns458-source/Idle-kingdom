@@ -247,6 +247,9 @@ String? _lockedReason(GameDatabase db, PlayerSave save, ProjectRow project, Stri
     return 'Locked — speak with the ${knowledge.npcName} to unlock '
         '${_skillName(db, skillId)} projects.';
   }
+  if (!hasQuillProjectKnowledge(save, project)) {
+    return quillLockedReason;
+  }
   if (meetsProjectSkills(save, project)) return null;
   final unmet = unmetProjectSkillRequirements(db, save, project)
       .map((requirement) => '${requirement.skillName} ${jsNumberToString(requirement.level)}')

@@ -84,6 +84,7 @@ void main() {
               'QST-9999',
             ].map((questId) => questPitchLine(db, questId)).toList(),
             'mentorSkills': const <String>[
+              'NPC-0002',
               'NPC-0003',
               'NPC-0004',
               'NPC-0007',

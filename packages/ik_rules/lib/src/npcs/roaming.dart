@@ -6,8 +6,17 @@ import '../js_compat.dart';
 /// Mountains, Deep Mines, Abandoned Mineshaft.
 const List<String> masterDwarfRoute = <String>['LOC-0006', 'LOC-0011', 'LOC-0022'];
 
+/// Meadow, Ancient Forest, Gathering Outskirts, Mountains.
+const List<String> quillRoute = <String>['LOC-0009', 'LOC-0018', 'LOC-0031', 'LOC-0006'];
+
 const String _masterDwarfId = 'NPC-0003';
+const String _quillId = 'NPC-0002';
 const String dwarvenMiningMerchantId = 'NPC-0008';
+
+const Map<String, List<String>> roamingRoutes = <String, List<String>>{
+  _masterDwarfId: masterDwarfRoute,
+  _quillId: quillRoute,
+};
 
 const int _uint32Mask = 0xFFFFFFFF;
 
@@ -37,8 +46,9 @@ String roamingLocationFor(String npcId, List<String> route, num nowMs) {
 
 String npcLocationAt(NpcRow npc, num nowMs) {
   final npcId = npc.raw['NPC ID'];
-  if (npcId == _masterDwarfId) {
-    return roamingLocationFor(_masterDwarfId, masterDwarfRoute, nowMs);
+  if (npcId is String) {
+    final route = roamingRoutes[npcId];
+    if (route != null) return roamingLocationFor(npcId, route, nowMs);
   }
   final locationId = npc.raw['Location ID'];
   return locationId is String ? locationId : '';
@@ -46,6 +56,10 @@ String npcLocationAt(NpcRow npc, num nowMs) {
 
 String masterDwarfLocationId(num nowMs) {
   return roamingLocationFor(_masterDwarfId, masterDwarfRoute, nowMs);
+}
+
+String quillLocationId(num nowMs) {
+  return roamingLocationFor(_quillId, quillRoute, nowMs);
 }
 
 String locationDisplayName(GameDatabase db, String locationId) {

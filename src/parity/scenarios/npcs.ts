@@ -24,9 +24,10 @@ function withSave(kind: SaveKind, extra: Record<string, JsonValue> = {}): JsonVa
   return { source: 'content', save: asJson(saveFor(kind)), ...extra }
 }
 
-/** A merchant with advice, merchants without, both mentors, and quest givers. */
+/** Merchants, mentors including Quill, and quest givers. */
 const CONVERSATION_NPCS = [
   'NPC-0001',
+  'NPC-0002',
   'NPC-0003',
   'NPC-0004',
   'NPC-0005',
@@ -35,7 +36,7 @@ const CONVERSATION_NPCS = [
   'NPC-0009',
 ]
 
-const MENTOR_NPCS = ['NPC-0003', 'NPC-0004', 'NPC-0007', 'NPC-9999']
+const MENTOR_NPCS = ['NPC-0002', 'NPC-0003', 'NPC-0004', 'NPC-0007', 'NPC-9999']
 const PITCH_QUESTS = ['QST-0001', 'QST-0002', 'QST-9999']
 
 export const npcScenarios: ParityScenario[] = [
