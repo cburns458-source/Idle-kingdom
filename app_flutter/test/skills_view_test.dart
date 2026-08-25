@@ -43,9 +43,10 @@ void main() {
     await tester.pump();
 
     expect(find.text('Enemies'), findsOne);
-    expect(find.text('Weapons and equipment'), findsOne);
-    expect(find.text('Pressure the guards'), findsNothing);
     final popup = find.byKey(const Key('game-popup'));
+    expect(find.descendant(of: popup, matching: find.text('Equipment')), findsOne);
+    expect(find.descendant(of: popup, matching: find.text('Weapons')), findsOne);
+    expect(find.text('Pressure the guards'), findsNothing);
     expect(
       find.descendant(of: popup, matching: find.widgetWithText(GameButton, 'Close')),
       findsNothing,
@@ -54,7 +55,7 @@ void main() {
     final tabs = tester.widget<Row>(
       find.ancestor(of: find.text('Enemies'), matching: find.byType(Row)).first,
     );
-    expect(tabs.children.whereType<Expanded>(), hasLength(2));
+    expect(tabs.children.whereType<Expanded>(), hasLength(3));
   });
 
   testWidgets('cooking opens a recipe book that includes locked recipes', (tester) async {
@@ -125,7 +126,8 @@ void main() {
     await tester.tap(find.text('Combat'));
     await tester.pump();
 
-    await tester.tap(find.text('Weapons and equipment'));
+    final popup = find.byKey(const Key('game-popup'));
+    await tester.tap(find.descendant(of: popup, matching: find.text('Equipment')));
     await tester.pump();
     await tester.scrollUntilVisible(
       find.textContaining('Tungsten equipment'),
@@ -137,7 +139,21 @@ void main() {
     );
     expect(find.textContaining('Tungsten equipment'), findsOne);
     expect(find.textContaining('Tungsten Helmet'), findsNothing);
+    expect(find.textContaining('Tungsten Shield'), findsNothing);
+    expect(find.textContaining('Tungsten Sword'), findsNothing);
+
+    await tester.tap(find.descendant(of: popup, matching: find.text('Weapons')));
+    await tester.pump();
+    await tester.scrollUntilVisible(
+      find.textContaining('Tungsten Sword'),
+      200,
+      scrollable: find.descendant(
+        of: find.byKey(const Key('game-popup')),
+        matching: find.byType(Scrollable),
+      ),
+    );
     expect(find.textContaining('Tungsten Sword'), findsOne);
+    expect(find.textContaining('Tungsten Shield'), findsNothing);
   });
 
   testWidgets('a skill tooltip reads total xp and what the next level needs', (tester) async {

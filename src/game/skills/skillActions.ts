@@ -38,7 +38,7 @@ const COMBAT_GEAR_WORDS = [
   'Spear',
 ] as const
 
-const COMBAT_ARMOR_WORDS = ['Helmet', 'Chestplate', 'Platelegs', 'Boots', 'Gloves'] as const
+const COMBAT_ARMOR_WORDS = ['Helmet', 'Chestplate', 'Platelegs', 'Boots', 'Gloves', 'Shield'] as const
 
 export interface SkillMenuListItem {
   id: string
@@ -197,7 +197,8 @@ function tabsForSkill(db: GameDatabase, skillId: string): SkillMenuTab[] {
   if (skillId === COMBAT_SKILL_ID) {
     return [
       listTab('enemies', 'Enemies', combatEnemyEntries(db)),
-      listTab('gear', 'Weapons and equipment', combatGearEntries(db)),
+      listTab('gear', 'Equipment', combatEquipmentEntries(db)),
+      listTab('weapons', 'Weapons', combatWeaponEntries(db)),
     ]
   }
   if (
@@ -296,20 +297,19 @@ function combatEnemyEntries(db: GameDatabase): SkillMenuListItem[] {
   return dedupeByName(items)
 }
 
-function combatGearEntries(db: GameDatabase): SkillMenuListItem[] {
-  const items = [
+function combatGearItems(db: GameDatabase): SkillMenuListItem[] {
+  return [
     ...projectItemsWhere(db, (item) => isCombatGearItem(item), new Set([SMITHING_SKILL_ID, ARTISANRY_SKILL_ID])),
     ...woodenItems(db, WOODEN_COMBAT_GEAR),
   ]
+}
+
+function combatEquipmentEntries(db: GameDatabase): SkillMenuListItem[] {
   const grouped: SkillMenuListItem[] = []
-  const other: SkillMenuListItem[] = []
   const seen = new Set<string>()
-  for (const item of items) {
+  for (const item of combatGearItems(db)) {
     const material = armorMaterial(item.displayName)
-    if (!material) {
-      other.push(item)
-      continue
-    }
+    if (!material) continue
     const key = `${item.level ?? ''}|${material}`
     if (seen.has(key)) continue
     seen.add(key)
@@ -319,7 +319,11 @@ function combatGearEntries(db: GameDatabase): SkillMenuListItem[] {
       level: item.level,
     })
   }
-  return dedupeByName([...grouped, ...other])
+  return dedupeByName(grouped)
+}
+
+function combatWeaponEntries(db: GameDatabase): SkillMenuListItem[] {
+  return dedupeByName(combatGearItems(db).filter((item) => !armorMaterial(item.displayName)))
 }
 
 function gatheringToolEntries(db: GameDatabase, skillId: string): SkillMenuListItem[] {

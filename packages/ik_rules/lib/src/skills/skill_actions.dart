@@ -41,6 +41,7 @@ const List<String> _combatArmorWords = <String>[
   'Platelegs',
   'Boots',
   'Gloves',
+  'Shield',
 ];
 
 /// One row of a skill menu: what it makes and the level it needs.
@@ -253,7 +254,8 @@ List<SkillMenuTab> _tabsForSkill(GameDatabase db, String skillId) {
   if (skillId == combatSkillId) {
     return <SkillMenuTab>[
       _listTab('enemies', 'Enemies', _combatEnemyEntries(db)),
-      _listTab('gear', 'Weapons and equipment', _combatGearEntries(db)),
+      _listTab('gear', 'Equipment', _combatEquipmentEntries(db)),
+      _listTab('weapons', 'Weapons', _combatWeaponEntries(db)),
     ];
   }
   if (skillId == miningSkillId ||
@@ -358,28 +360,34 @@ List<SkillMenuListItem> _combatEnemyEntries(GameDatabase db) {
   return _dedupeByName(items);
 }
 
-List<SkillMenuListItem> _combatGearEntries(GameDatabase db) {
-  final items = <SkillMenuListItem>[
+List<SkillMenuListItem> _combatGearItems(GameDatabase db) {
+  return <SkillMenuListItem>[
     ..._projectItemsWhere(db, (item, _) => _isCombatGearItem(item), <String>{
       smithingSkillId,
       artisanrySkillId,
     }),
     ..._woodenItems(db, _woodenCombatGear),
   ];
+}
+
+List<SkillMenuListItem> _combatEquipmentEntries(GameDatabase db) {
   final grouped = <SkillMenuListItem>[];
-  final other = <SkillMenuListItem>[];
   final seen = <String>{};
-  for (final item in items) {
+  for (final item in _combatGearItems(db)) {
     final material = _armorMaterial(item.displayName);
-    if (material == null) {
-      other.add(item);
-      continue;
-    }
+    if (material == null) continue;
     final key = '${item.level ?? ''}|$material';
     if (!seen.add(key)) continue;
     grouped.add(SkillMenuListItem(id: key, displayName: '$material equipment', level: item.level));
   }
-  return _dedupeByName([...grouped, ...other]);
+  return _dedupeByName(grouped);
+}
+
+List<SkillMenuListItem> _combatWeaponEntries(GameDatabase db) {
+  return _dedupeByName([
+    for (final item in _combatGearItems(db))
+      if (_armorMaterial(item.displayName) == null) item,
+  ]);
 }
 
 List<SkillMenuListItem> _gatheringToolEntries(GameDatabase db, String skillId) {

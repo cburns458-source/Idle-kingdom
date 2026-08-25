@@ -65,18 +65,25 @@ void main() {
     );
     expect(goblin.level, isNotNull);
     expect(skillMenuLine(goblin), matches(RegExp(r'^\d+\. Goblin Scout$')));
-    expect(
-      view.tabs.last.sections
-          .expand((section) => section.entries)
-          .any((row) => row.displayName == 'Wooden Sword' && row.level == 1),
-      isTrue,
-    );
-    final gear = view.tabs.last.sections.expand((section) => section.entries);
+    expect(view.tabs.map((tab) => tab.label), ['Enemies', 'Equipment', 'Weapons']);
+    final weapons = view.tabs
+        .firstWhere((tab) => tab.id == 'weapons')
+        .sections
+        .expand((section) => section.entries);
+    expect(weapons.any((row) => row.displayName == 'Wooden Sword' && row.level == 1), isTrue);
+    expect(weapons.any((row) => row.displayName == 'Tungsten Sword'), isTrue);
+    expect(weapons.any((row) => row.displayName == 'Tungsten Shield'), isFalse);
+    final gear = view.tabs
+        .firstWhere((tab) => tab.id == 'gear')
+        .sections
+        .expand((section) => section.entries);
     expect(gear.any((row) => row.displayName == 'Tungsten equipment'), isTrue);
     expect(gear.any((row) => row.displayName == 'Reinforced Steel equipment'), isTrue);
     expect(gear.any((row) => row.displayName == 'Bull Horn equipment'), isTrue);
+    expect(gear.any((row) => row.displayName == 'Wooden equipment'), isTrue);
     expect(gear.any((row) => row.displayName == 'Tungsten Helmet'), isFalse);
-    expect(gear.any((row) => row.displayName == 'Tungsten Sword'), isTrue);
+    expect(gear.any((row) => row.displayName == 'Tungsten Shield'), isFalse);
+    expect(gear.any((row) => row.displayName == 'Tungsten Sword'), isFalse);
   });
 
   test('hunting tools include net and sling', () {

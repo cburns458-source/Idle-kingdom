@@ -68,13 +68,19 @@ describe('skill menu entries', () => {
   it('groups same-tier combat armor as material equipment', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const combat = skillMenuView(launch, 'SKL-0001')
+    expect(combat.tabs.map((tab) => tab.label)).toEqual(['Enemies', 'Equipment', 'Weapons'])
     const gear = combat.tabs.find((tab) => tab.id === 'gear')?.sections[0]?.entries ?? []
+    const weapons = combat.tabs.find((tab) => tab.id === 'weapons')?.sections[0]?.entries ?? []
     expect(gear.some((item) => item.displayName === 'Tungsten equipment')).toBe(true)
     expect(gear.some((item) => item.displayName === 'Reinforced Steel equipment')).toBe(true)
     expect(gear.some((item) => item.displayName === 'Bull Horn equipment')).toBe(true)
+    expect(gear.some((item) => item.displayName === 'Wooden equipment')).toBe(true)
     expect(gear.some((item) => item.displayName === 'Tungsten Helmet')).toBe(false)
-    expect(gear.some((item) => item.displayName === 'Tungsten Sword')).toBe(true)
-    expect(gear.some((item) => item.displayName === 'Wooden Sword')).toBe(true)
+    expect(gear.some((item) => item.displayName === 'Tungsten Shield')).toBe(false)
+    expect(gear.some((item) => item.displayName === 'Tungsten Sword')).toBe(false)
+    expect(weapons.some((item) => item.displayName === 'Tungsten Sword')).toBe(true)
+    expect(weapons.some((item) => item.displayName === 'Wooden Sword')).toBe(true)
+    expect(weapons.some((item) => item.displayName === 'Tungsten Shield')).toBe(false)
   })
 
   it('lists smithing projects by output item name and required level', () => {
