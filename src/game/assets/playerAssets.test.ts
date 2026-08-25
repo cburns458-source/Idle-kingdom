@@ -1,33 +1,35 @@
 import { describe, expect, it } from 'vitest'
-import {
-  genderPresentationAssetPath,
-  playerPortraitAssetPath,
-  PLAYER_GENDER_ANDROGYNOUS_PATH,
-  PLAYER_GENDER_FEMININE_PATH,
-  PLAYER_GENDER_MASCULINE_PATH,
-} from './playerAssets'
+import { playerArtStem, playerPortraitAssetPath } from './playerAssets'
 
-describe('gender presentation player assets', () => {
-  it('maps each gender presentation option to its sprite', () => {
-    expect(genderPresentationAssetPath('APR-0017')).toContain(PLAYER_GENDER_FEMININE_PATH)
-    expect(genderPresentationAssetPath('APR-0019')).toContain(PLAYER_GENDER_ANDROGYNOUS_PATH)
-    expect(genderPresentationAssetPath('APR-0018')).toContain(PLAYER_GENDER_MASCULINE_PATH)
+describe('race and gender player assets', () => {
+  it('maps each gender presentation to feminine or masculine plates', () => {
+    expect(playerArtStem('RACE-0001', 'APR-0017')).toBe('player_human_feminine')
+    expect(playerArtStem('RACE-0001', 'APR-0019')).toBe('player_human_feminine')
+    expect(playerArtStem('RACE-0001', 'APR-0018')).toBe('player_human_masculine')
   })
 
-  it('falls back to feminine for unknown presentation ids', () => {
-    expect(genderPresentationAssetPath('APR-MISSING')).toContain(PLAYER_GENDER_FEMININE_PATH)
+  it('maps each launch race to its own stem', () => {
+    expect(playerArtStem('RACE-0006', 'APR-0018')).toBe('player_dwarf_masculine')
+    expect(playerArtStem('RACE-0007', 'APR-0017')).toBe('player_halfling_feminine')
   })
 
-  it('reads gender presentation from a PlayerAppearance value', () => {
+  it('falls back to human for unknown race ids', () => {
+    expect(playerArtStem('RACE-MISSING', 'APR-0018')).toBe('player_human_masculine')
+  })
+
+  it('reads race and gender presentation from a PlayerSave value', () => {
     expect(
       playerPortraitAssetPath({
-        skinTone: 'APR-0001',
-        hairstyle: 'APR-0004',
-        hairColor: 'APR-0007',
-        expression: 'APR-0011',
-        beard: 'APR-0014',
-        genderPresentation: 'APR-0018',
-      }),
-    ).toContain(PLAYER_GENDER_MASCULINE_PATH)
+        raceId: 'RACE-0004',
+        appearance: {
+          skinTone: 'APR-0001',
+          hairstyle: 'APR-0004',
+          hairColor: 'APR-0007',
+          expression: 'APR-0011',
+          beard: 'APR-0014',
+          genderPresentation: 'APR-0018',
+        },
+      } as const),
+    ).toContain('player_orc_masculine')
   })
 })

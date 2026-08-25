@@ -178,10 +178,15 @@ const Map<String, String> _actionArt = <String, String>{
   'ACN-0168': 'actions/acn_mine_ruby.webp',
 };
 
-const Map<String, String> _genderArt = <String, String>{
-  'APR-0017': 'player/player_gender_feminine.webp',
-  'APR-0019': 'player/player_gender_androgynous.webp',
-  'APR-0018': 'player/player_gender_masculine.webp',
+/// Launch races that have bundled player sprites.
+const Map<String, String> _racePlayerKeys = <String, String>{
+  'RACE-0001': 'human',
+  'RACE-0002': 'wood_elf',
+  'RACE-0003': 'high_elf',
+  'RACE-0004': 'orc',
+  'RACE-0005': 'goblin',
+  'RACE-0006': 'dwarf',
+  'RACE-0007': 'halfling',
 };
 
 /// Whether the art tables name this id rather than answering with a fallback.
@@ -237,10 +242,26 @@ String skillIconPath(SkillRow? skill) {
   return '$_assetRoot/icons/skills/skl_$key.webp';
 }
 
+/// Whether a race and gender presentation has a bundled player sprite.
+bool hasPlayerArt({String? raceId, String? genderPresentationId}) {
+  final raceKey = _racePlayerKeys[raceId] ?? 'human';
+  return _racePlayerKeys.containsValue(raceKey);
+}
+
+/// File stem under `content/assets/player/` for a race and presentation.
+///
+/// Feminine and androgynous share the same plate; masculine has its own.
+String playerArtStem({String? raceId, String? genderPresentationId}) {
+  final raceKey = _racePlayerKeys[raceId] ?? 'human';
+  final masculine = genderPresentationId == 'APR-0018';
+  final bucket = masculine ? 'masculine' : 'feminine';
+  return 'player_${raceKey}_$bucket';
+}
+
 /// The player sprite, used for the portrait and the action scenes alike.
-String playerAssetPath(PlayerAppearance? appearance) {
-  final art = _genderArt[appearance?.genderPresentation] ?? _genderArt[defaultGenderPresentationId];
-  return '$_assetRoot/${art ?? 'player/player_gender_feminine.webp'}';
+String playerAssetPath(PlayerAppearance? appearance, {String? raceId}) {
+  final gender = appearance?.genderPresentation ?? defaultGenderPresentationId;
+  return '$_assetRoot/player/${playerArtStem(raceId: raceId, genderPresentationId: gender)}.webp';
 }
 
 String uiMapAssetPath() => '$_assetRoot/icons/ui/ui_map.webp';

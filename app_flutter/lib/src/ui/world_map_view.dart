@@ -126,6 +126,7 @@ class WorldMapView extends StatelessWidget {
                     child: _MapWalker(
                       progress: walkProgress!,
                       appearance: save.appearance,
+                      raceId: save.raceId,
                       bytes: controller.localPlayerPng,
                     ),
                   ),
@@ -205,10 +206,11 @@ class _PinnedToArt extends StatelessWidget {
 
 /// A shrunk player sprite, wobbling as it walks.
 class _MapWalker extends StatelessWidget {
-  const _MapWalker({required this.progress, required this.appearance, this.bytes});
+  const _MapWalker({required this.progress, required this.appearance, this.raceId, this.bytes});
 
   final double progress;
   final PlayerAppearance appearance;
+  final String? raceId;
   final Uint8List? bytes;
 
   @override
@@ -219,6 +221,7 @@ class _MapWalker extends StatelessWidget {
         angle: mapWalkWobbleRadians(progress),
         child: PlayerSprite(
           appearance: appearance,
+          raceId: raceId,
           bytes: bytes,
           width: mapWalkerSize,
           height: mapWalkerSize,

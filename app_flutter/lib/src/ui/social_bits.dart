@@ -63,12 +63,14 @@ class SocialPortrait extends StatelessWidget {
   const SocialPortrait({
     super.key,
     required this.appearance,
+    this.raceId,
     this.size = 34,
     this.height,
     this.borderColor,
   });
 
   final PlayerAppearance appearance;
+  final String? raceId;
   final double size;
 
   /// Taller than [size] on the profile card. Width stays [size].
@@ -90,7 +92,7 @@ class SocialPortrait extends StatelessWidget {
         scale: playerPortraitHeadZoom,
         alignment: Alignment.topCenter,
         child: GameImage(
-          playerAssetPath(appearance),
+          playerAssetPath(appearance, raceId: raceId),
           alignment: Alignment.topCenter,
           fit: BoxFit.cover,
           filterQuality: FilterQuality.none,

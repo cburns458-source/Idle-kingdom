@@ -391,6 +391,8 @@ class _ArenaPanelState extends State<ArenaPanel> {
           themName: opponent.username,
           youAppearance: save.appearance,
           themAppearance: _them?.appearance ?? opponent.appearance ?? save.appearance,
+          youRaceId: save.raceId,
+          themRaceId: _them?.raceId,
           youBytes: controller.localPlayerPng,
           youHp: _youHp,
           youMaxHp: _youMaxHp,

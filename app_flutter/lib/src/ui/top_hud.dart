@@ -99,6 +99,7 @@ class TopHud extends StatelessWidget {
         children: [
           HudPortrait(
             appearance: save.appearance,
+            raceId: save.raceId,
             bytes: controller.localPlayerPng,
             hint: !save.hasSeenWardrobeIntro && save.cosmetics.unlocked.isNotEmpty,
             onTap: onOpenWardrobe,
@@ -280,6 +281,7 @@ class HudPortrait extends StatelessWidget {
   const HudPortrait({
     super.key,
     required this.appearance,
+    this.raceId,
     this.bytes,
     required this.hint,
     required this.onTap,
@@ -290,6 +292,9 @@ class HudPortrait extends StatelessWidget {
   static const double _cornerRadius = 6;
 
   final PlayerAppearance appearance;
+
+  /// The save's people, which picks the race sprite.
+  final String? raceId;
 
   /// A local PNG override, when this device has one.
   final Uint8List? bytes;
@@ -321,6 +326,7 @@ class HudPortrait extends StatelessWidget {
               child: bytes != null
                   ? PlayerSprite(
                       appearance: appearance,
+                      raceId: raceId,
                       bytes: bytes,
                       filterQuality: FilterQuality.none,
                       alignment: Alignment.center,
@@ -331,6 +337,7 @@ class HudPortrait extends StatelessWidget {
                       alignment: Alignment.topCenter,
                       child: PlayerSprite(
                         appearance: appearance,
+                        raceId: raceId,
                         bytes: bytes,
                         filterQuality: FilterQuality.none,
                         alignment: Alignment.topCenter,
