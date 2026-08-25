@@ -167,6 +167,7 @@ class GameSession {
     final credited = last == null
         ? current
         : creditElapsedPlayTime(current, nowMs - last, unattendedCapMs(db));
+    if (credited.unattendedProgressAt == isoFromMs(nowMs)) return credited;
     return stampUnattendedProgressAt(credited, nowMs);
   }
 

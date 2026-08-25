@@ -52,14 +52,30 @@ void main() {
     expect(session.tick().changed, isFalse);
     expect(session.actionProgress, 0);
 
-    now += session.save.actionDurationMs! / 2;
-    expect(session.tick().changed, isFalse);
+    final duration = session.save.actionDurationMs!;
+    final floor = foregroundCatchUpFloorMs(db);
+    now += duration / 2;
+    // A half-action jump is longer than a lock-screen glance, so this tick
+    // batch-resolves. Progress is still the live clock; nothing has completed.
+    if (duration / 2 > floor) {
+      final mid = session.tick();
+      expect(mid.awayCatchUp, isNotNull);
+      expect(mid.events, isEmpty);
+    } else {
+      expect(session.tick().changed, isFalse);
+    }
     expect(session.actionProgress, closeTo(0.5, 0.001));
 
-    now += session.save.actionDurationMs! / 2;
+    now += duration / 2;
     final due = session.tick();
-    expect(due.changed, isTrue);
-    expect(due.events.whereType<RewardsEvent>(), isNotEmpty);
+    if (duration / 2 > floor) {
+      expect(due.awayCatchUp, isNotNull);
+      expect(due.events, isEmpty);
+      expect(due.awayCatchUp!.gatheringActions, greaterThan(0));
+    } else {
+      expect(due.changed, isTrue);
+      expect(due.events.whereType<RewardsEvent>(), isNotEmpty);
+    }
     // The advanced save was stored, not just returned.
     expect(session.repository.read()!.toJson(), session.save.toJson());
   });
