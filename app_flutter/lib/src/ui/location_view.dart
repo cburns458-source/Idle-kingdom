@@ -276,7 +276,11 @@ class _LocationViewState extends State<LocationView> {
                                             origin: popupOrigin(context),
                                           ),
                                           dark: true,
-                                          highlight: widget.multiplayer.peers.isNotEmpty,
+                                          highlightColor: widget.multiplayer.peers.isEmpty
+                                              ? null
+                                              : widget.multiplayer.nearbyHasAllies
+                                              ? Palette.softGreen
+                                              : Palette.gold,
                                           child: const Icon(
                                             Icons.groups,
                                             size: 32,

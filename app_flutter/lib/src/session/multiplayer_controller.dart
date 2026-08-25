@@ -714,6 +714,13 @@ class MultiplayerController extends ChangeNotifier {
 
   bool isFriend(String userId) => _friends.any((row) => row.userId == userId);
 
+  /// A friend or a member of the player's own guild.
+  bool isAlliedUser(String userId) =>
+      isFriend(userId) || _members.any((member) => member.userId == userId);
+
+  /// True when someone standing here is a friend or guildmate.
+  bool get nearbyHasAllies => _peers.any((peer) => isAlliedUser(peer.userId));
+
   bool hasIncomingRequestFrom(String userId) =>
       _incomingFriendRequests.any((row) => row.userId == userId);
 

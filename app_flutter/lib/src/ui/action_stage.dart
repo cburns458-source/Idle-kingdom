@@ -116,6 +116,7 @@ class PvpActionStage extends StatelessWidget {
           assetPath: playerAssetPath(themAppearance),
           semanticsLabel: themName,
           alignment: Alignment.centerLeft,
+          flipX: true,
           overlay: finished
               ? null
               : Stack(
@@ -248,6 +249,7 @@ class _Portrait extends StatelessWidget {
     this.bytes,
     this.overlay,
     this.placeholder,
+    this.flipX = false,
   });
 
   final String? assetPath;
@@ -256,6 +258,9 @@ class _Portrait extends StatelessWidget {
   final Alignment alignment;
   final Widget? overlay;
   final Widget? placeholder;
+
+  /// Arena opponents face the player. Damage numbers stay unflipped.
+  final bool flipX;
 
   @override
   Widget build(BuildContext context) {
@@ -270,15 +275,18 @@ class _Portrait extends StatelessWidget {
           children: [
             ?placeholder,
             if (placeholder == null)
-              bytes != null
-                  ? Image.memory(
-                      bytes!,
-                      fit: BoxFit.contain,
-                      alignment: alignment,
-                      filterQuality: FilterQuality.none,
-                      gaplessPlayback: true,
-                    )
-                  : GameImage(assetPath!, fit: BoxFit.contain, alignment: alignment),
+              Transform.flip(
+                flipX: flipX,
+                child: bytes != null
+                    ? Image.memory(
+                        bytes!,
+                        fit: BoxFit.contain,
+                        alignment: alignment,
+                        filterQuality: FilterQuality.none,
+                        gaplessPlayback: true,
+                      )
+                    : GameImage(assetPath!, fit: BoxFit.contain, alignment: alignment),
+              ),
             ?overlay,
           ],
         ),

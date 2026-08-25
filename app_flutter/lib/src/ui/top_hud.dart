@@ -289,9 +289,6 @@ class HudPortrait extends StatelessWidget {
 
   static const double _cornerRadius = 6;
 
-  /// Enough of the bundled sprite's height to fill the window with its head.
-  static const double _headZoom = 1.55;
-
   final PlayerAppearance appearance;
 
   /// A local PNG override, when this device has one.
@@ -330,7 +327,7 @@ class HudPortrait extends StatelessWidget {
                       fit: BoxFit.cover,
                     )
                   : Transform.scale(
-                      scale: _headZoom,
+                      scale: playerPortraitHeadZoom,
                       alignment: Alignment.topCenter,
                       child: PlayerSprite(
                         appearance: appearance,

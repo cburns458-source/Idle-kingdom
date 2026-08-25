@@ -58,30 +58,43 @@ Color _color(String hex) {
   return Color(0xFF000000 | value);
 }
 
-/// A player's face, at the size social lists use.
+/// A player's face, cropped like the HUD avatar so lists show the head.
 class SocialPortrait extends StatelessWidget {
-  const SocialPortrait({super.key, required this.appearance, this.size = 34, this.borderColor});
+  const SocialPortrait({
+    super.key,
+    required this.appearance,
+    this.size = 34,
+    this.height,
+    this.borderColor,
+  });
 
   final PlayerAppearance appearance;
   final double size;
+
+  /// Taller than [size] on the profile card. Width stays [size].
+  final double? height;
   final Color? borderColor;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       width: size,
-      height: size,
+      height: height ?? size,
       decoration: BoxDecoration(
         color: Palette.panel,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: borderColor ?? Palette.edge),
       ),
       clipBehavior: Clip.antiAlias,
-      child: GameImage(
-        playerAssetPath(appearance),
+      child: Transform.scale(
+        scale: playerPortraitHeadZoom,
         alignment: Alignment.topCenter,
-        fit: BoxFit.cover,
-        filterQuality: FilterQuality.none,
+        child: GameImage(
+          playerAssetPath(appearance),
+          alignment: Alignment.topCenter,
+          fit: BoxFit.cover,
+          filterQuality: FilterQuality.none,
+        ),
       ),
     );
   }

@@ -143,4 +143,42 @@ void main() {
     final tabStack = find.ancestor(of: localTab, matching: find.byType(Stack)).first;
     expect(find.descendant(of: tabStack, matching: find.text('1')), findsOne);
   });
+
+  testWidgets('opening chat shows the latest line', (tester) async {
+    final wired = wiredNet();
+    addTearDown(wired.net.dispose);
+    final save = startedCharacter(database);
+    final rival = wired.service.backend.signUp('rival@example.com', 'Rival', 'secret');
+    expect(rival.ok, isTrue, reason: rival.reason);
+    for (var i = 0; i < 16; i++) {
+      wired.clock.advance(20000);
+      final sent = wired.service.backend.sendChat(
+        rival.session!,
+        const ChatChannel.global(),
+        'Line $i of the watch',
+      );
+      expect(sent.ok, isTrue, reason: sent.reason);
+    }
+    await wired.net.refresh(save);
+    await wired.net.selectChatTab(ChatTab.global, save.currentLocationId);
+
+    final controller = buildController(database, seed: save, clock: wired.clock);
+    addTearDown(controller.dispose);
+    await pumpPanel(
+      tester,
+      ChatSheet(
+        controller: controller,
+        multiplayer: wired.net,
+        locationId: save.currentLocationId,
+        citadelHub: false,
+        onClose: () {},
+      ),
+      size: const Size(420, 360),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('Line 15 of the watch'), findsOne);
+    expect(find.text('Line 0 of the watch').hitTestable(), findsNothing);
+  });
 }

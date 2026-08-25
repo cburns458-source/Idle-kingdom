@@ -44,6 +44,9 @@ abstract final class Palette {
   static const panel = parchmentDeep;
 }
 
+/// Zoom that fills a portrait window with the bundled sprite's head.
+const double playerPortraitHeadZoom = 1.55;
+
 /// Fine film grain tiled over panel fills, the HUD, and the chin.
 const String panelGrainAsset = 'assets/ui/panel-grain.png';
 
@@ -702,6 +705,7 @@ class OverlayChipButton extends StatelessWidget {
     required this.child,
     this.dark = false,
     this.highlight = false,
+    this.highlightColor,
   });
 
   final String tooltip;
@@ -711,11 +715,15 @@ class OverlayChipButton extends StatelessWidget {
   /// The nearby chip is brown rather than the map's parchment green.
   final bool dark;
 
-  /// Gold rim when other players are standing here.
+  /// Gold when strangers are here, green when a friend or guildmate is.
   final bool highlight;
+
+  /// Overrides [highlight] when the nearby chip should be green instead of gold.
+  final Color? highlightColor;
 
   @override
   Widget build(BuildContext context) {
+    final rim = highlightColor ?? (highlight ? Palette.gold : null);
     return Tooltip(
       message: tooltip,
       child: Material(
@@ -723,12 +731,8 @@ class OverlayChipButton extends StatelessWidget {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
           side: BorderSide(
-            color: highlight
-                ? Palette.gold
-                : dark
-                ? const Color(0x8CD4AF5A)
-                : const Color(0xB3B4DC96),
-            width: highlight ? 2 : 1,
+            color: rim ?? (dark ? const Color(0x8CD4AF5A) : const Color(0xB3B4DC96)),
+            width: rim != null ? 2 : 1,
           ),
         ),
         shadowColor: const Color(0x47000000),
