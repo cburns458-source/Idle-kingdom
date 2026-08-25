@@ -145,23 +145,20 @@ class SupabaseTransport implements RemoteTransport {
     bool ascending = true,
     int? limit,
   }) {
-    return _retryAuth(
-      () async {
-        var filter = client.from(table).select(columns);
-        for (final entry in equals.entries) {
-          filter = filter.eq(entry.key, entry.value as Object);
-        }
-        for (final entry in like.entries) {
-          filter = filter.like(entry.key, entry.value);
-        }
-        // Ordering and limiting have to come after every filter, which is why the
-        // query is only narrowed once the loop above is done.
-        final ordered = orderBy == null ? filter : filter.order(orderBy, ascending: ascending);
-        final rows = await (limit == null ? ordered : ordered.limit(limit));
-        return RemoteQueryResult.ok(rows.map((row) => Map<String, Object?>.from(row)).toList());
-      },
-      (reason) => RemoteQueryResult.failed(reason),
-    );
+    return _retryAuth(() async {
+      var filter = client.from(table).select(columns);
+      for (final entry in equals.entries) {
+        filter = filter.eq(entry.key, entry.value as Object);
+      }
+      for (final entry in like.entries) {
+        filter = filter.like(entry.key, entry.value);
+      }
+      // Ordering and limiting have to come after every filter, which is why the
+      // query is only narrowed once the loop above is done.
+      final ordered = orderBy == null ? filter : filter.order(orderBy, ascending: ascending);
+      final rows = await (limit == null ? ordered : ordered.limit(limit));
+      return RemoteQueryResult.ok(rows.map((row) => Map<String, Object?>.from(row)).toList());
+    }, (reason) => RemoteQueryResult.failed(reason));
   }
 
   @override
