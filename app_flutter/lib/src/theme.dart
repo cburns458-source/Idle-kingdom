@@ -45,7 +45,7 @@ abstract final class Palette {
 }
 
 /// Zoom that fills a portrait window with the bundled sprite's head.
-const double playerPortraitHeadZoom = 1.55;
+const double playerPortraitHeadZoom = 1.72;
 
 /// Fine film grain tiled over panel fills, the HUD, and the chin.
 const String panelGrainAsset = 'assets/ui/panel-grain.png';

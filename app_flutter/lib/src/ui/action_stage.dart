@@ -14,6 +14,7 @@ import 'item_icon.dart';
 
 /// How tall a fighter, a gathering scene, or a workstation is drawn.
 const double _portraitHeight = 152;
+const double _playerStageScale = 1.2;
 
 /// How wide either half of the stage can get, so the two sprites stay shoulder
 /// to shoulder in the middle of a wide window instead of drifting apart.
@@ -106,6 +107,7 @@ class PvpActionStage extends StatelessWidget {
           bytes: youBytes,
           semanticsLabel: youName,
           alignment: Alignment.centerRight,
+          scale: _playerStageScale,
           overlay: !finished && youHit > 0
               ? _DamageFloater(
                   key: ValueKey('pvp-them-hit-$roundSeq'),
@@ -254,6 +256,7 @@ class _Portrait extends StatelessWidget {
     this.overlay,
     this.placeholder,
     this.flipX = false,
+    this.scale = 1,
   });
 
   final String? assetPath;
@@ -265,6 +268,7 @@ class _Portrait extends StatelessWidget {
 
   /// Arena opponents face the player. Damage numbers stay unflipped.
   final bool flipX;
+  final double scale;
 
   @override
   Widget build(BuildContext context) {
@@ -279,17 +283,20 @@ class _Portrait extends StatelessWidget {
           children: [
             ?placeholder,
             if (placeholder == null)
-              Transform.flip(
-                flipX: flipX,
-                child: bytes != null
-                    ? Image.memory(
-                        bytes!,
-                        fit: BoxFit.contain,
-                        alignment: alignment,
-                        filterQuality: FilterQuality.none,
-                        gaplessPlayback: true,
-                      )
-                    : GameImage(assetPath!, fit: BoxFit.contain, alignment: alignment),
+              Transform.scale(
+                scale: scale,
+                child: Transform.flip(
+                  flipX: flipX,
+                  child: bytes != null
+                      ? Image.memory(
+                          bytes!,
+                          fit: BoxFit.contain,
+                          alignment: alignment,
+                          filterQuality: FilterQuality.none,
+                          gaplessPlayback: true,
+                        )
+                      : GameImage(assetPath!, fit: BoxFit.contain, alignment: alignment),
+                ),
               ),
             ?overlay,
           ],
@@ -422,6 +429,7 @@ class _CombatStage extends StatelessWidget {
           bytes: controller.localPlayerPng,
           semanticsLabel: 'Adventurer',
           alignment: Alignment.centerRight,
+          scale: _playerStageScale,
           overlay: _playerFloaters(round, seq, showFloaters, controller.healPopup),
         ),
         scene: _Portrait(
@@ -627,6 +635,7 @@ class _GatheringStage extends StatelessWidget {
           bytes: controller.localPlayerPng,
           semanticsLabel: 'Adventurer',
           alignment: Alignment.centerRight,
+          scale: _playerStageScale,
         ),
         scene: _Portrait(
           assetPath: action == null ? null : actionAssetPath(action.actionId),
@@ -688,6 +697,7 @@ class _ProductionStage extends StatelessWidget {
           bytes: controller.localPlayerPng,
           semanticsLabel: 'Adventurer',
           alignment: Alignment.centerRight,
+          scale: _playerStageScale,
         ),
         scene: _Portrait(
           assetPath: workstationAssetPath(recipe?.facilityId),
