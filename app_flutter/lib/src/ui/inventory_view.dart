@@ -553,14 +553,22 @@ class _InventoryViewState extends State<InventoryView> {
             ],
           ),
           const SizedBox(height: 10),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: GameButton(
-              label: _showBonuses ? 'Hide bonuses' : 'Show bonuses',
-              tone: GameButtonTone.secondary,
-              compact: true,
-              onPressed: () => setState(() => _showBonuses = !_showBonuses),
-            ),
+          Row(
+            children: [
+              GameButton(
+                label: _showBonuses ? 'Hide bonuses' : 'Show bonuses',
+                tone: GameButtonTone.secondary,
+                compact: true,
+                onPressed: () => setState(() => _showBonuses = !_showBonuses),
+              ),
+              const SizedBox(width: 8),
+              GameButton(
+                label: _showSources ? 'Hide sources' : 'Show sources',
+                tone: GameButtonTone.secondary,
+                compact: true,
+                onPressed: () => setState(() => _showSources = !_showSources),
+              ),
+            ],
           ),
           if (_showBonuses && summary.activeBonuses.isEmpty)
             const Padding(padding: EdgeInsets.only(top: 4), child: MutedText('No active bonuses.')),
@@ -581,16 +589,6 @@ class _InventoryViewState extends State<InventoryView> {
                   style: const TextStyle(fontSize: 12, height: 1.3),
                 ),
               ),
-          const SizedBox(height: 8),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: GameButton(
-              label: _showSources ? 'Hide sources' : 'Show sources',
-              tone: GameButtonTone.secondary,
-              compact: true,
-              onPressed: () => setState(() => _showSources = !_showSources),
-            ),
-          ),
           if (_showSources) ...[
             _breakdownSection('Main-hand', summary.mainhandBreakdown),
             if (summary.offhandBreakdown.isNotEmpty)
