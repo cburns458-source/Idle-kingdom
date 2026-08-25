@@ -51,7 +51,20 @@ const String remoteInvalidBackendUrl =
     'The Supabase project URL is wrong. Use https://YOUR_PROJECT.supabase.co with no /rest/v1.';
 
 /// Maps PostgREST/Auth path errors to a fix the operator can act on.
+/// Shown when the session token cannot be refreshed. The character stays local.
+const String remoteSignInAgain = 'Sign in again.';
+
+/// True when PostgREST/Auth refused the request because the access JWT is dead.
+bool isExpiredAuthError(String? message) {
+  if (message == null || message.isEmpty) return false;
+  final lower = message.toLowerCase();
+  return lower.contains('jwt expired') ||
+      lower.contains('invalid jwt') ||
+      (lower.contains('token') && lower.contains('expired'));
+}
+
 String friendlyRemoteError(String message) {
+  if (isExpiredAuthError(message)) return remoteSignInAgain;
   if (message.toLowerCase().contains('invalid path specified')) {
     return remoteInvalidBackendUrl;
   }
