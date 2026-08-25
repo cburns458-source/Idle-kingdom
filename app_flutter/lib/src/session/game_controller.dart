@@ -351,14 +351,19 @@ class GameController extends ChangeNotifier {
   /// and should not be met with a summary panel.
   void adoptBoot(SessionBoot boot) {
     final away = boot.unattended;
-    final credited =
-        away.gatheringActions +
-        away.craftsCompleted +
-        away.combatVictories +
-        away.combatDeaths +
-        away.crittersSpawned;
-    _awaySummary = boot.created || credited <= 0 ? null : away;
+    _awaySummary = boot.created || !away.hasCreditedWork ? null : away;
     _returningFromAway = !boot.created && away.effectiveElapsedMs > 0;
+    _offerKingswoodsSling();
+  }
+
+  /// Covers a long hide the same way a cold boot does, but only when catch-up
+  /// actually finished work. A short lock never reaches here.
+  void _adoptResumeCatchUp(UnattendedResult away) {
+    _awaySummary = away.hasCreditedWork ? away : null;
+    _returningFromAway = away.hasCreditedWork;
+    _clearStageFx();
+    _recentRewards.clear();
+    _message = null;
     _offerKingswoodsSling();
   }
 
@@ -444,12 +449,18 @@ class GameController extends ChangeNotifier {
   void commitLoadout(PlayerSave next) => commit(withRecalculatedVitals(db, next));
 
   /// Advances the game by one frame. The shell drives this from a ticker, so it
-  /// stops when the app is backgrounded and picks up from the clock on return.
+  /// stops when the app is backgrounded. A long hide is batch-resolved like a
+  /// boot and covered; a short lock stays on the live tick.
   void tick() {
     if (save.combatEnemyId != null) {
       _liveEnemyHp = save.combatEnemyHp;
     }
     final result = session.tick();
+    if (result.awayCatchUp case final away?) {
+      _adoptResumeCatchUp(away);
+      notifyListeners();
+      return;
+    }
     for (final event in result.events) {
       _applyEvent(event);
     }

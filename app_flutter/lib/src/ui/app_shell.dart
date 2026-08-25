@@ -68,7 +68,8 @@ class AppShell extends StatefulWidget {
 
 class _AppShellState extends State<AppShell> with TickerProviderStateMixin, WidgetsBindingObserver {
   /// Drives the game loop. Coming from the widget means it stops when the app is
-  /// backgrounded; the next tick picks the elapsed time back up from the clock.
+  /// backgrounded. A long hide is batch-resolved under the return overlay; a
+  /// short lock stays on the live tick.
   Ticker? _ticker;
 
   final List<GameScreen> _stack = [GameScreen.location];
@@ -224,7 +225,13 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
         state == AppLifecycleState.inactive) {
       multiplayer.flushAccountSave(controller.save);
     }
+    // Leave the ticker running through [inactive] (control center, a banner).
+    // [paused] / [hidden] stop it so the next resume is one catch-up tick.
+    if (state == AppLifecycleState.paused || state == AppLifecycleState.hidden) {
+      _ticker?.stop();
+    }
     if (state == AppLifecycleState.resumed) {
+      _syncPlayLoop();
       unawaited(multiplayer.onForeground(controller.save));
     }
   }

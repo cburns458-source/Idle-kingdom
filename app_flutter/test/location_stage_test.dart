@@ -6,6 +6,7 @@ import 'package:idle_kingdoms/src/theme.dart';
 import 'package:idle_kingdoms/src/ui/production_panel.dart';
 import 'package:ik_content/ik_content.dart';
 import 'package:ik_rules/ik_rules.dart';
+import 'package:ik_runtime/ik_runtime.dart';
 
 import 'support/harness.dart';
 
@@ -143,8 +144,15 @@ void main() {
     expect(find.byWidgetPredicate((widget) => assetNamed(widget, '/workstations/')), findsOne);
 
     final durationMs = controller.save.actionDurationMs ?? 20000;
-    clock.advance(durationMs);
-    await tester.pump();
+    final step = foregroundCatchUpFloorMs(database.launch);
+    var left = durationMs;
+    while (left > 0 && controller.craftPopup == null) {
+      final chunk = left > step ? step : left;
+      clock.advance(chunk);
+      controller.tick();
+      await tester.pump();
+      left -= chunk;
+    }
 
     expect(controller.craftPopup, isNotNull);
     expect(controller.craftPopup!.displayName, 'Baked Potato');

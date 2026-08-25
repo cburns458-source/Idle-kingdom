@@ -92,6 +92,41 @@ void main() {
     expect(boot.save.playTimeMs, playBeforeAway + 3600000);
   });
 
+  test('a short lock stays on the live tick and a long hide batch-resolves', () {
+    session.boot();
+    session.apply(
+      beginActivitySave(
+        session.save.copyWith(currentLocationId: meadowLocationId),
+        meadowActivityId,
+        isoFromMs(now),
+      ),
+    );
+    expect(session.tick().changed, isTrue);
+    expect(session.save.currentActionId, isNotNull);
+    final duration = session.save.actionDurationMs!;
+    expect(duration, greaterThan(0));
+
+    now += 2000;
+    final short = session.tick();
+    expect(short.awayCatchUp, isNull);
+    if (duration <= 2000) {
+      expect(short.events.whereType<RewardsEvent>(), isNotEmpty);
+    } else {
+      expect(short.changed, isFalse);
+    }
+
+    now += 2 * 60 * 1000;
+    final hide = session.tick();
+    expect(hide.awayCatchUp, isNotNull);
+    expect(hide.events, isEmpty);
+    expect(hide.awayCatchUp!.gatheringActions, greaterThan(1));
+    expect(hide.save.unattendedProgressAt, isoFromMs(now));
+
+    final playAfterHide = session.save.playTimeMs;
+    session.tick();
+    expect(session.save.playTimeMs, playAfterHide);
+  });
+
   test('accrues live ticks in memory and caps a long gap like unattended time', () {
     session.boot();
     expect(session.save.playTimeMs, 0);
