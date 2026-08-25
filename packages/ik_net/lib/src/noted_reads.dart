@@ -82,6 +82,9 @@ class NotedReads implements RemoteTransport {
   Future<void> signOut() => inner.signOut();
 
   @override
+  Future<String?> refreshSession() => inner.refreshSession();
+
+  @override
   Future<String?> upsert(String table, List<RemoteRow> rows, {String? onConflict}) =>
       inner.upsert(table, rows, onConflict: onConflict);
 

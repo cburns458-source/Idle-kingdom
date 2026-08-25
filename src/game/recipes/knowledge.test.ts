@@ -39,14 +39,20 @@ describe('recipe knowledge', () => {
     expect(entries.some((entry) => entry.known)).toBe(true)
   })
 
-  it('skill recipe books list only unlocked rows for that skill', () => {
+  it('skill recipe books list locked and unlocked rows for that skill', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const save = createNewSave(launch)
     const cooking = recipeBookForSkill(save, launch, 'SKL-0007')
     expect(cooking.length).toBeGreaterThan(0)
-    expect(cooking.every((entry) => entry.known)).toBe(true)
+    expect(cooking.some((entry) => entry.known)).toBe(true)
+    expect(cooking.some((entry) => !entry.known)).toBe(true)
     expect(cooking.every((entry) => entry.skill === 'Cooking')).toBe(true)
-    expect(cooking.some((entry) => entry.name.includes('Baby Giant Squid'))).toBe(false)
+    expect(cooking.some((entry) => entry.name.includes('Baby Giant Squid') && !entry.known)).toBe(
+      true,
+    )
+    const artisanry = recipeBookForSkill(save, launch, 'SKL-0012')
+    expect(artisanry.some((entry) => entry.name === 'Leather Helmet' && entry.known)).toBe(true)
+    expect(artisanry.some((entry) => entry.name === 'Leather Gloves' && entry.known)).toBe(true)
   })
 
   it('lists the recipe book by proficiency, leaving locked rows in place', () => {

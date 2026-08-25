@@ -20,6 +20,7 @@ export const WOODCUTTING_SKILL_ID = 'SKL-0006'
 const WOODEN_MINING_TOOLS = ['ITEM-0102']
 const WOODEN_WOODCUTTING_TOOLS = ['ITEM-0100', 'ITEM-0101']
 const WOODEN_FISHING_TOOLS = ['ITEM-0103']
+const WOODEN_HUNTING_TOOLS = ['ITEM-0108', 'ITEM-0109']
 const WOODEN_COMBAT_GEAR = ['ITEM-0124', 'ITEM-0125', 'ITEM-0145']
 
 const COMBAT_GEAR_WORDS = [
@@ -36,6 +37,8 @@ const COMBAT_GEAR_WORDS = [
   'Bow',
   'Spear',
 ] as const
+
+const COMBAT_ARMOR_WORDS = ['Helmet', 'Chestplate', 'Platelegs', 'Boots', 'Gloves', 'Shield'] as const
 
 export interface SkillMenuListItem {
   id: string
@@ -194,7 +197,8 @@ function tabsForSkill(db: GameDatabase, skillId: string): SkillMenuTab[] {
   if (skillId === COMBAT_SKILL_ID) {
     return [
       listTab('enemies', 'Enemies', combatEnemyEntries(db)),
-      listTab('gear', 'Weapons and equipment', combatGearEntries(db)),
+      listTab('gear', 'Equipment', combatEquipmentEntries(db)),
+      listTab('weapons', 'Weapons', combatWeaponEntries(db)),
     ]
   }
   if (
@@ -293,11 +297,33 @@ function combatEnemyEntries(db: GameDatabase): SkillMenuListItem[] {
   return dedupeByName(items)
 }
 
-function combatGearEntries(db: GameDatabase): SkillMenuListItem[] {
-  return dedupeByName([
+function combatGearItems(db: GameDatabase): SkillMenuListItem[] {
+  return [
     ...projectItemsWhere(db, (item) => isCombatGearItem(item), new Set([SMITHING_SKILL_ID, ARTISANRY_SKILL_ID])),
     ...woodenItems(db, WOODEN_COMBAT_GEAR),
-  ])
+  ]
+}
+
+function combatEquipmentEntries(db: GameDatabase): SkillMenuListItem[] {
+  const grouped: SkillMenuListItem[] = []
+  const seen = new Set<string>()
+  for (const item of combatGearItems(db)) {
+    const material = armorMaterial(item.displayName)
+    if (!material) continue
+    const key = `${item.level ?? ''}|${material}`
+    if (seen.has(key)) continue
+    seen.add(key)
+    grouped.push({
+      id: key,
+      displayName: `${material} equipment`,
+      level: item.level,
+    })
+  }
+  return dedupeByName(grouped)
+}
+
+function combatWeaponEntries(db: GameDatabase): SkillMenuListItem[] {
+  return dedupeByName(combatGearItems(db).filter((item) => !armorMaterial(item.displayName)))
 }
 
 function gatheringToolEntries(db: GameDatabase, skillId: string): SkillMenuListItem[] {
@@ -320,7 +346,7 @@ function gatheringToolSpec(
     case FISHING_SKILL_ID:
       return { woodenIds: WOODEN_FISHING_TOOLS, match: (_item, name) => isFishingToolName(name) }
     case HUNTING_SKILL_ID:
-      return { woodenIds: [], match: (_item, name) => isHuntingToolName(name) }
+      return { woodenIds: WOODEN_HUNTING_TOOLS, match: (_item, name) => isHuntingToolName(name) }
     default:
       return null
   }
@@ -353,9 +379,18 @@ function woodenItems(db: GameDatabase, itemIds: string[]): SkillMenuListItem[] {
   for (const itemId of itemIds) {
     const item = db.Items.find((row) => row['Item ID'] === itemId)
     if (!item) continue
-    items.push({ id: item['Item ID'], displayName: item['Display Name'], level: 1 })
+    items.push({
+      id: item['Item ID'],
+      displayName: item['Display Name'],
+      level: woodenToolLevel(db, itemId),
+    })
   }
   return items
+}
+
+function woodenToolLevel(db: GameDatabase, itemId: string): number {
+  const level = db.Equipment.find((row) => row['Item ID'] === itemId)?.['Required Level']
+  return typeof level === 'number' ? level : 1
 }
 
 function listTab(id: string, label: string, entries: SkillMenuListItem[]): SkillMenuTab {
@@ -391,6 +426,15 @@ function smithingMaterial(name: string): string | null {
   return parts[0] ?? null
 }
 
+function armorMaterial(name: string): string | null {
+  for (const word of COMBAT_ARMOR_WORDS) {
+    if (!endsWithWord(name, word)) continue
+    const material = name.slice(0, Math.max(0, name.length - word.length)).trim()
+    return material || null
+  }
+  return null
+}
+
 function endsWithWord(name: string, word: string): boolean {
   return name === word || name.endsWith(` ${word}`)
 }
@@ -401,11 +445,16 @@ function isWoodcuttingToolName(name: string): boolean {
 }
 
 function isFishingToolName(name: string): boolean {
-  return name.includes('Fishing Rod') || endsWithWord(name, 'Harpoon') || endsWithWord(name, 'Net')
+  return name.includes('Fishing Rod') || endsWithWord(name, 'Harpoon')
 }
 
 function isHuntingToolName(name: string): boolean {
-  return endsWithWord(name, 'Bow') || endsWithWord(name, 'Spear')
+  return (
+    endsWithWord(name, 'Bow') ||
+    endsWithWord(name, 'Spear') ||
+    name === 'Net' ||
+    name === 'Sling'
+  )
 }
 
 function isBowName(name: string): boolean {
@@ -433,7 +482,7 @@ function isSpellName(name: string): boolean {
 
 function isArcanaWeaponName(name: string, outputId: string): boolean {
   if (outputId.startsWith('ENCH-')) return false
-  return /staff of\b/i.test(name) || /\bstaff\b/i.test(name)
+  return /staff of\b/i.test(name) || /\bstaff\b/i.test(name) || /\bwand\b/i.test(name)
 }
 
 function isEnchantmentName(name: string, outputId: string): boolean {

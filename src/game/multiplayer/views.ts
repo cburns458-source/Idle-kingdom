@@ -370,20 +370,44 @@ export interface LeaderboardRowView {
   isGuild: boolean
 }
 
-function leaderboardDisplayName(entry: LeaderboardEntry, isGuild: boolean): string {
+/** `[TAG]` from the row, or from a guild-name lookup when the row has none. */
+export function guildTagForName(
+  guildName: string | null | undefined,
+  options: {
+    ownName?: string | null
+    ownTag?: string | null
+    listings?: Array<{ name: string; tag: string }>
+  } = {},
+): string | undefined {
+  if (!guildName) return undefined
+  if (options.ownName === guildName && options.ownTag?.trim()) return options.ownTag.trim()
+  for (const listing of options.listings ?? []) {
+    if (listing.name === guildName && listing.tag.trim()) return listing.tag.trim()
+  }
+  return undefined
+}
+
+function leaderboardDisplayName(
+  entry: LeaderboardEntry,
+  isGuild: boolean,
+  tagForGuildName?: (guildName: string | null | undefined) => string | undefined,
+): string {
   if (isGuild) return entry.username
-  const tag = entry.guildTag?.trim()
+  const tag = entry.guildTag?.trim() || tagForGuildName?.(entry.guildName)?.trim()
   return tag ? `[${tag}]${entry.username}` : entry.username
 }
 
-export function leaderboardRows(entries: LeaderboardEntry[]): LeaderboardRowView[] {
+export function leaderboardRows(
+  entries: LeaderboardEntry[],
+  options?: { tagForGuildName?: (guildName: string | null | undefined) => string | undefined },
+): LeaderboardRowView[] {
   return entries.map((entry) => {
     const isGuild = entry.entryKind === 'guild'
     const experience = entry.secondaryValue
     return {
       rank: entry.rank,
       entryId: entry.userId,
-      username: leaderboardDisplayName(entry, isGuild),
+      username: leaderboardDisplayName(entry, isGuild, options?.tagForGuildName),
       subtitle: isGuild ? (entry.guildName ?? 'Guild') : '',
       valueLabel:
         entry.boardKey === 'log_completion' ? `${entry.value}%` : entry.value.toLocaleString(),
@@ -495,6 +519,8 @@ export interface ChatTabView {
   /** False for guild or guest chat without a room to show. */
   enabled: boolean
   selected: boolean
+  /** New lines waiting on this tab. Zero when notifications are off. */
+  unread: number
 }
 
 /**
@@ -519,32 +545,38 @@ export function chatTabs({
   hasGuild,
   hasGuest,
   unreadDms,
+  unread,
 }: {
   selected: ChatTab
   citadelHub: boolean
   hasGuild: boolean
   hasGuest: boolean
   unreadDms: number
+  unread?: Partial<Record<ChatTab, number>>
 }): ChatTabView[] {
-  return CHAT_TABS.map((tab) => ({
-    tab,
-    label:
-      tab === 'global'
-        ? 'Global'
-        : tab === 'local'
-          ? citadelHub
-            ? 'Citadel'
-            : 'Local'
-          : tab === 'guild'
-            ? 'Guild'
-            : tab === 'guest'
-              ? 'Guest'
-              : unreadDms > 0
-                ? `Private (${unreadDms})`
-                : 'Private',
-    enabled: tab === 'guild' ? hasGuild : tab === 'guest' ? hasGuest : true,
-    selected: tab === selected,
-  }))
+  return CHAT_TABS.map((tab) => {
+    const waiting = unread?.[tab] ?? (tab === 'dm' ? unreadDms : 0)
+    return {
+      tab,
+      label:
+        tab === 'global'
+          ? 'Global'
+          : tab === 'local'
+            ? citadelHub
+              ? 'Citadel'
+              : 'Local'
+            : tab === 'guild'
+              ? 'Guild'
+              : tab === 'guest'
+                ? 'Guest'
+                : waiting > 0
+                  ? `Private (${waiting})`
+                  : 'Private',
+      enabled: tab === 'guild' ? hasGuild : tab === 'guest' ? hasGuest : true,
+      selected: tab === selected,
+      unread: waiting,
+    }
+  })
 }
 
 /**
@@ -599,6 +631,16 @@ export const CHAT_VIEW_GUILDS_LABEL = 'View guilds'
 /** Where the read cursor for one account's DMs is kept. */
 export function dmReadCursorKey(userId: string): string {
   return `idle-kingdoms.chat.dm-read-at:${userId}`
+}
+
+/** Where the read cursor for one public chat room is kept. */
+export function chatReadCursorKey(userId: string, channelKey: string): string {
+  return `idle-kingdoms.chat.read-at:${userId}:${channelKey}`
+}
+
+/** Device toggle for a channel's unread bubble. Absent means on. */
+export function chatNotifyStorageKey(tab: ChatTab): string {
+  return `idle-kingdoms.client.chat-notify:${tab}`
 }
 
 /** One line of a chat room. */

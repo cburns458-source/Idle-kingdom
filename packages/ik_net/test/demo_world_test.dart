@@ -86,6 +86,18 @@ void main() {
     expect(store.getGuild(demoGuildId)?.leaderId, demoMiraId);
   });
 
+  test('demo characters wear a starter sword and shield on their public profile', () {
+    final store = backend();
+    store.ensureDemoWorld(database);
+    final profile = store.publicProfile(demoMiraId);
+    expect(profile, isNotNull);
+    expect(profile!.publicEquipment, isNotNull);
+    expect(
+      profile.publicEquipment!.map((row) => row.itemId),
+      containsAll(<String>['ITEM-0124', 'ITEM-0145']),
+    );
+  });
+
   test('friends and ignore lists, and ignored players drop out of nearby', () async {
     final storage = MemorySaveStorage();
     final service = LocalMultiplayerService(storage: storage);

@@ -72,6 +72,8 @@ abstract interface class MultiplayerService {
 
   Future<int> countUnreadDirectMessages(String? sinceIso);
 
+  Future<int> countUnreadChat(ChatChannel channel, String? sinceIso);
+
   Future<void> mutePlayer(String targetUserId);
 
   Future<void> blockPlayer(String targetUserId);
@@ -196,6 +198,9 @@ abstract interface class MultiplayerService {
 
   Future<List<ArenaOpponent>> hallBoxingOpponents();
 
+  /// Refreshes the hosted access token. Local play has nothing to refresh.
+  Future<String?> refreshSession();
+
   /// Why the most recent read was refused, cleared by the taking.
   ///
   /// A read answers with what arrived, so a screen short of one list still draws
@@ -232,6 +237,9 @@ class LocalMultiplayerService implements MultiplayerService {
   /// A table on this device is always there to be read.
   @override
   String? takeReadProblem() => null;
+
+  @override
+  Future<String?> refreshSession() async => null;
 
   @override
   Future<num> authoritativeNowMs() async => _backend.ports.nowMs();
@@ -416,6 +424,13 @@ class LocalMultiplayerService implements MultiplayerService {
     final current = session;
     if (current == null) return 0;
     return _backend.countUnreadDirectMessages(current.userId, sinceIso);
+  }
+
+  @override
+  Future<int> countUnreadChat(ChatChannel channel, String? sinceIso) async {
+    final current = session;
+    if (current == null) return 0;
+    return _backend.countUnreadChat(current.userId, channel, sinceIso);
   }
 
   @override
@@ -642,6 +657,10 @@ class LocalMultiplayerService implements MultiplayerService {
   Future<ActivityPresence?> publishPresence(PresenceInput input) async {
     final current = session;
     if (current == null) return null;
+    if (!isPublicAdventurerUsername(current.username)) {
+      _backend.clearPresence(current.userId);
+      return null;
+    }
     return _backend.upsertPresence(current, input);
   }
 
@@ -670,11 +689,11 @@ class LocalMultiplayerService implements MultiplayerService {
 
   List<ActivityPresence> _visiblePeers(List<ActivityPresence> peers, bool excludeSelf) {
     final current = session;
-    if (current == null) return peers;
-    final hidden = _backend.blockedIds(current.userId);
+    final hidden = current == null ? const <String>{} : _backend.blockedIds(current.userId);
     return peers
+        .where((row) => isPublicAdventurerUsername(row.username))
         .where((row) => !hidden.contains(row.userId))
-        .where((row) => !excludeSelf || row.userId != current.userId)
+        .where((row) => current == null || !excludeSelf || row.userId != current.userId)
         .toList();
   }
 

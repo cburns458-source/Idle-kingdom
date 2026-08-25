@@ -66,7 +66,7 @@ describe('held pool actions', () => {
     expect(back.save.currentActionId).toBe('ACN-0105')
   })
 
-  it('reuses a held action that is not in the activity pool', () => {
+  it('forgets a held action that is no longer in the activity pool', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const save = withHeldAction(
       { ...createNewSave(launch), currentLocationId: 'LOC-0009' },
@@ -76,7 +76,8 @@ describe('held pool actions', () => {
     const started = requestActivityStart(launch, save, 'ACT-0012', 0, () => 0)
     expect(started.ok).toBe(true)
     if (!started.ok) return
-    expect(started.save.currentActionId).toBe('ACN-0015')
+    expect(started.save.currentActionId).not.toBe('ACN-0015')
+    expect(started.save.currentActionId).toBe('ACN-0105')
   })
 
   it('forgets a gathering action when it finishes so the next roll can change', () => {

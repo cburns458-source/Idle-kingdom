@@ -445,6 +445,25 @@ final List<SaveMigration> saveMigrations = <SaveMigration>[
       return next;
     },
   ),
+  SaveMigration(
+    fromVersion: 31,
+    toVersion: 32,
+    migrate: (save, nowMs) {
+      final next = _bumped(save, 32);
+      final remaining = save['combatBossSleepRoundsRemaining'];
+      next['combatBossSleepRoundsRemaining'] = remaining is num && remaining.isFinite
+          ? remaining
+          : null;
+      final raw = save['bossRespawnUntilByEnemyId'];
+      next['bossRespawnUntilByEnemyId'] = raw is Map ? raw : <String, String>{};
+      return next;
+    },
+  ),
+  SaveMigration(
+    fromVersion: 32,
+    toVersion: 33,
+    migrate: (save, nowMs) => _bumped(replaceFishingNetsWithNetJson(save), 33),
+  ),
 ];
 
 /// Thrown when a save cannot be brought to the current version.

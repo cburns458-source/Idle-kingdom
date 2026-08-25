@@ -81,7 +81,7 @@ ActionRewards resolveActionRewards(
     if (isBlank(tableId)) return;
     final dropChance = applyFlatDropChanceBonus(
       applyRelativeDropChance(
-        chanceValue is num ? chanceValue : 100,
+        chanceValue is num ? chanceValue : 0,
         totalRelativeDropChanceBonusPercent(db, save),
       ),
       skillDropBonus,
@@ -94,7 +94,7 @@ ActionRewards resolveActionRewards(
     final rewardValue = picked.raw['Reward ID / Value'];
     if (rewardType == 'Item' && rewardValue is String && rewardValue.isNotEmpty) {
       var quantity = _rollQuantity(picked, random);
-      if (isGoldCurrencyItem(rewardValue)) {
+      if (isGoldCurrencyItem(rewardValue, db)) {
         // Abundance doubles item drops only — gold currency item rewards stay single.
         goldGained += quantity;
         return;
@@ -103,7 +103,7 @@ ActionRewards resolveActionRewards(
       if (doubleChance > 0 && random() * 100 < doubleChance) {
         quantity *= 2;
       }
-      final granted = addItemsToInventory(next, rewardValue, quantity);
+      final granted = addItemsToInventory(next, rewardValue, quantity, null, false, db);
       next = granted.save;
       if (granted.added > 0) {
         final displayName = db.items

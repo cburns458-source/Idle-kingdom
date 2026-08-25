@@ -117,6 +117,9 @@ UnattendedResult resolveUnattendedProgress(
   }
 
   final production = resolveProductionProgress(db, current, endMs, random);
+  if (production.blockedByInventory) {
+    messages.add('Crafting paused: inventory is full.');
+  }
   if (production.craftsCompleted > 0 || production.activityMs > 0) {
     current = production.save;
     craftsCompleted = production.craftsCompleted;
@@ -243,6 +246,7 @@ UnattendedResult resolveUnattendedProgress(
         combatEnemyHp: round.enemyHp,
         combatRoundStartedAt: isoFromMs(roundEnd),
         combatSkipEnemyAttack: round.skipNextEnemyAttack,
+        combatBossSleepRoundsRemaining: round.bossSleepRoundsRemaining,
       );
       final critter = applyActivityTimeTowardCritters(
         continued,
@@ -312,7 +316,10 @@ UnattendedResult resolveUnattendedProgress(
         messages.add('Activity stopped — requirements no longer met.');
         break;
       }
-      final generated = generateNextAction(db, current, activityId, random, endMs);
+      final waitUntil = bossRespawnWaitUntilMs(db, current, activityId);
+      final startAt = waitUntil ?? endMs;
+      if (startAt > endMs) break;
+      final generated = generateNextAction(db, current, activityId, random, startAt);
       if (generated == null) break;
       // If generation only stamps "now" without being due, avoid looping forever:
       // only accept if something actionable was created.
@@ -321,7 +328,7 @@ UnattendedResult resolveUnattendedProgress(
         break;
       }
       current = generated.save;
-      lastResolvedMs = endMs;
+      lastResolvedMs = startAt;
       continue;
     }
 

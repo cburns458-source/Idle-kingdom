@@ -152,7 +152,7 @@ describe('travel rules', () => {
   it('lists castle and cave sub-map nodes including new content rooms', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const castleNodes = locationsForMapView(launch, CASTLE_MAP_ID).map((row) => row['Location ID'])
-    expect(castleNodes).toEqual(expect.arrayContaining(['LOC-0015', 'LOC-0021']))
+    expect(castleNodes).toEqual(expect.arrayContaining(['LOC-0015', 'LOC-0021', 'LOC-0037']))
     expect(castleNodes).not.toContain(CASTLE_GATEWAY_ID)
     const caveNodes = locationsForMapView(launch, CAVE_MAP_ID).map((row) => row['Location ID'])
     expect(caveNodes).toEqual(expect.arrayContaining(['LOC-0011', 'LOC-0022']))

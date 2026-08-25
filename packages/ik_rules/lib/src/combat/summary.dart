@@ -17,7 +17,7 @@ import 'stats.dart';
 class CombatBonusLine {
   const CombatBonusLine({required this.kind, required this.name, required this.effect});
 
-  /// `enchantment`, `spell`, `potion`, or `race`.
+  /// `enchantment`, `spell`, `potion`, `race`, or `equipment`.
   final String kind;
   final String name;
   final String effect;
@@ -180,7 +180,27 @@ List<CombatBonusLine> _activeBonuses(GameDatabase db, PlayerSave save) {
     }
   }
 
+  final atrBySkill = equippedActionTimeReductionBySkill(db, save);
+  final atrSkills = atrBySkill.entries.toList()
+    ..sort((left, right) => _skillName(db, left.key).compareTo(_skillName(db, right.key)));
+  for (final entry in atrSkills) {
+    bonuses.add(
+      CombatBonusLine(
+        kind: 'equipment',
+        name: _skillName(db, entry.key),
+        effect: '-${jsNumberToString(entry.value)}% action time',
+      ),
+    );
+  }
+
   return bonuses;
+}
+
+String _skillName(GameDatabase db, String skillId) {
+  final name = db.skills
+      .firstWhereOrNull((skill) => skill.raw['Skill ID'] == skillId)
+      ?.raw['Display Name'];
+  return name is String && name.isNotEmpty ? name : skillId;
 }
 
 String _potionEffect(ActivePotionEffect potion) {

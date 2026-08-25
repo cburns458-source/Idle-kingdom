@@ -15,7 +15,7 @@ void main() {
     database = loadDatabaseFromRepo();
   });
 
-  test('sign-up posts the daily ranking and then waits an hour', () async {
+  test('sign-up publishes the ranking immediately', () async {
     final clock = TestClock();
     final net = buildMultiplayer(database, clock: clock);
     addTearDown(net.dispose);
@@ -24,42 +24,58 @@ void main() {
     await net.signUp('hero@example.com', 'Hero', 'secret', save, adopt: (save, {nowMs}) {});
 
     expect(net.board, isNotEmpty);
-    expect(net.canPressUpdateRanking, isFalse);
     expect(net.lastRankingSubmitAt, testStartMs);
-
-    await net.updateRanking(save);
-    expect(net.notice, 'You can update your ranking again in 1 hour.');
-
-    clock.advance(rankingUpdateCooldownMs);
-    await net.updateRanking(save);
-    expect(net.notice, rankingUpdatedNotice);
-    expect(net.canPressUpdateRanking, isFalse);
   });
 
-  test('opening the boards posts once when the UTC day is new', () async {
-    final clock = TestClock();
-    final net = buildMultiplayer(database, clock: clock);
-    addTearDown(net.dispose);
-    final save = startedCharacter(database);
-    await net.signUp('hero@example.com', 'Hero', 'secret', save, adopt: (save, {nowMs}) {});
-    net.storage.removeItem(rankingUpdateStorageKey(net.session!.userId));
-    expect(net.lastRankingSubmitAt, isNull);
-
-    await net.openLeaderboards(save);
-    expect(net.lastRankingSubmitAt, testStartMs);
-    expect(net.board, isNotEmpty);
-  });
-
-  test('a new UTC day posts again without a button press', () async {
+  test('opening the app publishes again after a short session', () async {
     final clock = TestClock();
     final net = buildMultiplayer(database, clock: clock);
     addTearDown(net.dispose);
     final save = startedCharacter(database);
     await net.signUp('hero@example.com', 'Hero', 'secret', save, adopt: (save, {nowMs}) {});
 
-    clock.advance(24 * 60 * 60 * 1000);
-    await net.maybeAutoSubmitRanking(save);
-    expect(net.lastRankingSubmitAt, testStartMs + 24 * 60 * 60 * 1000);
+    clock.advance(60 * 1000);
+    await net.onForeground(save);
+    expect(net.lastRankingSubmitAt, testStartMs + 60 * 1000);
+  });
+
+  test('a second publish in the same couple of seconds is ignored', () async {
+    final clock = TestClock();
+    final net = buildMultiplayer(database, clock: clock);
+    addTearDown(net.dispose);
+    final save = startedCharacter(database);
+    await net.signUp('hero@example.com', 'Hero', 'secret', save, adopt: (save, {nowMs}) {});
+
+    clock.advance(1000);
+    await net.onForeground(save);
+    expect(net.lastRankingSubmitAt, testStartMs);
+  });
+
+  test('the next UTC hour publishes without a button', () async {
+    final clock = TestClock();
+    final net = buildMultiplayer(database, clock: clock);
+    addTearDown(net.dispose);
+    final save = startedCharacter(database);
+    await net.signUp('hero@example.com', 'Hero', 'secret', save, adopt: (save, {nowMs}) {});
+
+    clock.advance(60 * 60 * 1000);
+    await net.publishForUtcHour(save);
+    expect(net.lastRankingSubmitAt, testStartMs + 60 * 60 * 1000);
+  });
+
+  test('a failed session refresh asks to sign in again without signing out', () async {
+    final clock = TestClock();
+    final transport = FakeTransport();
+    final net = buildRemoteMultiplayer(database, transport: transport, clock: clock);
+    addTearDown(net.dispose);
+    final save = startedCharacter(database);
+    await net.signUp('vari@example.com', 'Vari', 'secret', save, adopt: (save, {nowMs}) {});
+    expect(net.isSignedIn, isTrue);
+
+    transport.failNextWith = 'JWT expired';
+    await net.onForeground(save);
+    expect(net.isSignedIn, isTrue);
+    expect(net.notice, remoteSignInAgain);
   });
 
   testWidgets('the leaderboard tab has no manual update control', (tester) async {

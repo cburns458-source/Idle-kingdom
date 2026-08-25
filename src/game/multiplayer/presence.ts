@@ -2,6 +2,7 @@ import type { PlayerSave } from '../save/types'
 import { OUTFIT_COSMETIC_SLOT_ID, PET_COSMETIC_SLOT_ID } from '../save/types'
 import { getSession } from './auth'
 import { getLocalBackend } from './client'
+import { isPublicAdventurerUsername } from './remote'
 import type { ActivityPresence, PublicPlayerProfile } from './types'
 
 export type PresenceInput = Omit<
@@ -32,6 +33,10 @@ export function presenceInputFromSave(save: PlayerSave): PresenceInput {
 export function publishActivityPresence(save: PlayerSave): ActivityPresence | null {
   const session = getSession()
   if (!session) return null
+  if (!isPublicAdventurerUsername(session.username)) {
+    getLocalBackend().clearPresence(session.userId)
+    return null
+  }
   return getLocalBackend().upsertPresence(session, presenceInputFromSave(save))
 }
 
@@ -47,14 +52,18 @@ export function listPeersAtActivity(
   excludeSelf = true,
 ): ActivityPresence[] {
   const session = getSession()
-  const peers = getLocalBackend().listPresence({ locationId, activityId })
+  const peers = getLocalBackend()
+    .listPresence({ locationId, activityId })
+    .filter((row) => isPublicAdventurerUsername(row.username))
   if (!excludeSelf || !session) return peers
   return peers.filter((row) => row.userId !== session.userId)
 }
 
 export function listPeersAtLocation(locationId: string, excludeSelf = true): ActivityPresence[] {
   const session = getSession()
-  const peers = getLocalBackend().listPresence({ locationId })
+  const peers = getLocalBackend()
+    .listPresence({ locationId })
+    .filter((row) => isPublicAdventurerUsername(row.username))
   if (!excludeSelf || !session) return peers
   return peers.filter((row) => row.userId !== session.userId)
 }

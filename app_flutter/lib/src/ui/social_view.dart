@@ -133,7 +133,15 @@ class _LeaderboardTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final boards = boardOptions(multiplayer.db);
-    final rows = leaderboardRows(multiplayer.board);
+    final rows = leaderboardRows(
+      multiplayer.board,
+      tagForGuildName: (name) => guildTagForName(
+        name,
+        ownName: multiplayer.guild?.name,
+        ownTag: multiplayer.guild?.tag,
+        listings: multiplayer.listings,
+      ),
+    );
     return ListView(
       padding: const EdgeInsets.all(12),
       children: [

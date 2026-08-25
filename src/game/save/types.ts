@@ -1,10 +1,12 @@
-export const SAVE_VERSION = 31
+export const SAVE_VERSION = 33
 export const SAVE_STORAGE_KEY = 'idle-kingdoms.demo.save'
 export const STARTING_LOCATION_ID = 'LOC-0001'
 /** Base gold before race kit; race starters grant the real starting gold. */
 export const STARTING_GOLD = 0
 /** Level 1 Hunting Net — granted on older save migration only. */
 export const STARTING_HUNTING_TOOL_ID = 'ITEM-0108'
+/** Retired fishing-net item. Existing copies become the hunting Net. */
+export const RETIRED_FISHING_NET_ITEM_ID = 'ITEM-0104'
 export const WEAPON_TOOL_SLOT_ID = 'SLOT-0001'
 /** New-player starter kit item IDs. */
 export const STARTING_BAKED_POTATO_ID = 'ITEM-0058'
@@ -229,6 +231,13 @@ export interface PlayerSave {
    * Cleared after that skipped swing, or when combat ends.
    */
   combatSkipEnemyAttack: boolean
+  /**
+   * Boss sleep rounds still remaining, including the current one when > 0.
+   * Null when the current enemy is not a sleeping boss.
+   */
+  combatBossSleepRoundsRemaining: number | null
+  /** ISO timestamps until a defeated boss can be fought again, keyed by Enemy ID. */
+  bossRespawnUntilByEnemyId: Record<string, string>
   /** Potion consumed for the current gathering action, craft, or combat encounter. */
   activePotionEffect: ActivePotionEffect | null
   deathPauseUntil: string | null

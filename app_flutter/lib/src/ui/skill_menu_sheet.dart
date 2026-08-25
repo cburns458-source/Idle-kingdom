@@ -73,7 +73,7 @@ class _SkillMenuBodyState extends State<_SkillMenuBody> {
       context,
       title: widget.skillName,
       rows: recipeLogForEntries(recipeBookForSkill(widget.save, widget.db, widget.skillId)),
-      emptyMessage: "You haven't unlocked any recipes for this skill yet.",
+      emptyMessage: 'Nothing is written for this skill yet.',
     );
   }
 
@@ -129,6 +129,7 @@ class _SkillMenuBodyState extends State<_SkillMenuBody> {
                   child: GameButton(
                     label: widget.view.tabs[index].label,
                     compact: true,
+                    dense: widget.view.tabs.length > 2,
                     selected: widget.view.tabs[index].id == _tab.id,
                     tone: widget.view.tabs[index].id == _tab.id
                         ? GameButtonTone.primary

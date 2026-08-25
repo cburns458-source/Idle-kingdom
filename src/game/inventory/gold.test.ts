@@ -30,4 +30,18 @@ describe('gold currency item', () => {
     expect(partial.added).toBe(5)
     expect(partial.save.gold).toBe(startedGold + 5)
   })
+
+  it('converts the Config currency item even when it is not ITEM-0001', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const db = {
+      ...launch,
+      Config: launch.Config.map((row) =>
+        row.Key === 'currency_item_id' ? { ...row, Value: 'ITEM-9999' } : row,
+      ),
+    }
+    const save = createNewSave(db)
+    const next = addItemToInventory(save, 'ITEM-9999', 40, null, false, db)
+    expect(next.gold).toBe(save.gold + 40)
+    expect(next.inventory.some((stack) => stack.itemId === 'ITEM-9999')).toBe(false)
+  })
 })

@@ -32,6 +32,8 @@ describe('local save', () => {
     expect(save.skills.every((skill) => skill.level === 1 && skill.xp === 0)).toBe(true)
     expect(save.playTimeMs).toBe(0)
     expect(save.combatSkipEnemyAttack).toBe(false)
+    expect(save.combatBossSleepRoundsRemaining).toBeNull()
+    expect(save.bossRespawnUntilByEnemyId).toEqual({})
   })
 
   it('auto-creates then reloads the same save', () => {

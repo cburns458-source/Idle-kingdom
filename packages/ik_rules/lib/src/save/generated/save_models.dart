@@ -7,7 +7,7 @@
 
 import '../../json_support.dart';
 
-const int saveVersion = 31;
+const int saveVersion = 33;
 
 const String saveStorageKey = 'idle-kingdoms.demo.save';
 
@@ -18,6 +18,9 @@ const int startingGold = 0;
 
 /// Level 1 Hunting Net — granted on older save migration only.
 const String startingHuntingToolId = 'ITEM-0108';
+
+/// Retired fishing-net item. Existing copies become the hunting Net.
+const String retiredFishingNetItemId = 'ITEM-0104';
 
 const String weaponToolSlotId = 'SLOT-0001';
 
@@ -578,6 +581,8 @@ class PlayerSave {
     this.combatEnemyHp,
     this.combatRoundStartedAt,
     required this.combatSkipEnemyAttack,
+    this.combatBossSleepRoundsRemaining,
+    required this.bossRespawnUntilByEnemyId,
     this.activePotionEffect,
     this.deathPauseUntil,
     required this.hasEverDied,
@@ -659,6 +664,11 @@ class PlayerSave {
       combatEnemyHp: json['combatEnemyHp'] as num?,
       combatRoundStartedAt: json['combatRoundStartedAt'] as String?,
       combatSkipEnemyAttack: json['combatSkipEnemyAttack'] as bool,
+      combatBossSleepRoundsRemaining: json['combatBossSleepRoundsRemaining'] as num?,
+      bossRespawnUntilByEnemyId: mapOf(
+        json['bossRespawnUntilByEnemyId'],
+        (Object? value) => value as String,
+      ),
       activePotionEffect: mapOrNull(json['activePotionEffect'], ActivePotionEffect.fromJson),
       deathPauseUntil: json['deathPauseUntil'] as String?,
       hasEverDied: json['hasEverDied'] as bool,
@@ -790,6 +800,13 @@ class PlayerSave {
   /// Cleared after that skipped swing, or when combat ends.
   final bool combatSkipEnemyAttack;
 
+  /// Boss sleep rounds still remaining, including the current one when > 0.
+  /// Null when the current enemy is not a sleeping boss.
+  final num? combatBossSleepRoundsRemaining;
+
+  /// ISO timestamps until a defeated boss can be fought again, keyed by Enemy ID.
+  final Map<String, String> bossRespawnUntilByEnemyId;
+
   /// Potion consumed for the current gathering action, craft, or combat encounter.
   final ActivePotionEffect? activePotionEffect;
 
@@ -866,6 +883,8 @@ class PlayerSave {
       'combatEnemyHp': combatEnemyHp,
       'combatRoundStartedAt': combatRoundStartedAt,
       'combatSkipEnemyAttack': combatSkipEnemyAttack,
+      'combatBossSleepRoundsRemaining': combatBossSleepRoundsRemaining,
+      'bossRespawnUntilByEnemyId': bossRespawnUntilByEnemyId,
       'activePotionEffect': activePotionEffect?.toJson(),
       'deathPauseUntil': deathPauseUntil,
       'hasEverDied': hasEverDied,
@@ -926,6 +945,8 @@ class PlayerSave {
     Object? combatEnemyHp = _unset,
     Object? combatRoundStartedAt = _unset,
     bool? combatSkipEnemyAttack,
+    Object? combatBossSleepRoundsRemaining = _unset,
+    Map<String, String>? bossRespawnUntilByEnemyId,
     Object? activePotionEffect = _unset,
     Object? deathPauseUntil = _unset,
     bool? hasEverDied,
@@ -999,6 +1020,10 @@ class PlayerSave {
           ? this.combatRoundStartedAt
           : combatRoundStartedAt as String?,
       combatSkipEnemyAttack: combatSkipEnemyAttack ?? this.combatSkipEnemyAttack,
+      combatBossSleepRoundsRemaining: combatBossSleepRoundsRemaining == _unset
+          ? this.combatBossSleepRoundsRemaining
+          : combatBossSleepRoundsRemaining as num?,
+      bossRespawnUntilByEnemyId: bossRespawnUntilByEnemyId ?? this.bossRespawnUntilByEnemyId,
       activePotionEffect: activePotionEffect == _unset
           ? this.activePotionEffect
           : activePotionEffect as ActivePotionEffect?,

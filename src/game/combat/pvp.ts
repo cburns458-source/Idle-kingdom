@@ -117,6 +117,7 @@ export function preparePvpFighter(db: GameDatabase, save: PlayerSave): PlayerSav
     combatEnemyHp: null,
     combatRoundStartedAt: null,
     combatSkipEnemyAttack: false,
+    combatBossSleepRoundsRemaining: null,
   }
 }
 

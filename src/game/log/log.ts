@@ -157,12 +157,18 @@ export function recipeLogRowFromEntry(entry: RecipeBookEntry): RecipeLogRow {
     }
   }
   // A mentor-taught recipe is not even named until somebody teaches it.
+  if (entry.hintUnknown) {
+    return {
+      key: `${entry.kind}-${entry.id}`,
+      title: 'Unknown recipe',
+      detail: entry.knowledgeSource,
+      known: false,
+    }
+  }
   return {
     key: `${entry.kind}-${entry.id}`,
-    title: entry.hintUnknown ? 'Unknown recipe' : `Locked · ${entry.skill} ${entry.proficiency}`,
-    detail: entry.hintUnknown
-      ? entry.knowledgeSource
-      : `Unlocks at ${entry.skill} level ${entry.proficiency}`,
+    title: `${entry.proficiency}. ${sentenceCase(entry.name)}`,
+    detail: `Unlocks at ${entry.skill} level ${entry.proficiency}`,
     known: false,
   }
 }

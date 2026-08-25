@@ -121,6 +121,9 @@ class RemoteMultiplayerService implements MultiplayerService {
   bool get isSignedIn => _sessions.isSignedIn;
 
   @override
+  Future<String?> refreshSession() => transport.refreshSession();
+
+  @override
   Future<SessionResult> signUp(String email, String username, String password) async {
     final result = await transport.signUp(
       email: email.trim(),
@@ -375,7 +378,9 @@ class RemoteMultiplayerService implements MultiplayerService {
       publicSkills: account.privacyPublicSkills ? skills : const <PublicSkillLine>[],
       publicEquipment: !account.privacyPublicGear
           ? null
-          : (save != null ? publicEquipmentFromSave(save) : account.publishedEquipment),
+          : session?.userId == userId && save != null
+          ? publicEquipmentFromSave(save)
+          : account.publishedEquipment,
       achievementsUnlocked: achievements,
       totalLevel: totalLevel,
       logCompletionPercent: logPercent,
@@ -539,13 +544,24 @@ class RemoteMultiplayerService implements MultiplayerService {
       leaderboardRowsFor(current.userId, snapshot, isoFromMs(_nowMs())),
       onConflict: remoteLeaderboardConflict,
     );
-    await transport.upsert(RemoteTables.profiles, <RemoteRow>[
-      <String, Object?>{
-        'user_id': current.userId,
-        'username': current.username,
-        'appearance_json': save.appearance.toJson(),
-      },
+    final profileRow = <String, Object?>{
+      'user_id': current.userId,
+      'username': current.username,
+      'appearance_json': save.appearance.toJson(),
+    };
+    if (_profilesHaveGearPrivacy != false) {
+      profileRow[remoteEquipmentJsonColumn] = snapshot.equipment
+          .map((row) => row.toJson())
+          .toList();
+    }
+    final refusedProfile = await transport.upsert(RemoteTables.profiles, <RemoteRow>[
+      profileRow,
     ], onConflict: 'user_id');
+    if (refusedProfile != null && remoteMissingGearPrivacyColumn(refusedProfile)) {
+      _profilesHaveGearPrivacy = false;
+      profileRow.remove(remoteEquipmentJsonColumn);
+      await transport.upsert(RemoteTables.profiles, <RemoteRow>[profileRow], onConflict: 'user_id');
+    }
     // A roster lists each member's name, look, and level, and only that member
     // may write their own row, so the submit that refreshes the boards refreshes
     // the roster too.
@@ -668,6 +684,16 @@ class RemoteMultiplayerService implements MultiplayerService {
   }
 
   @override
+  Future<int> countUnreadChat(ChatChannel channel, String? sinceIso) async {
+    if (!isSignedIn) return 0;
+    final viewerId = session!.userId;
+    final sinceMs = sinceIso != null ? jsDateParse(sinceIso) : 0;
+    return (await listChat(channel))
+        .where((row) => row.userId != viewerId && jsDateParse(row.createdAt) > sinceMs)
+        .length;
+  }
+
+  @override
   Future<void> mutePlayer(String targetUserId) => _local.mutePlayer(targetUserId);
 
   @override
@@ -783,6 +809,10 @@ class RemoteMultiplayerService implements MultiplayerService {
   Future<ActivityPresence?> publishPresence(PresenceInput input) async {
     final current = session;
     if (current == null) return null;
+    if (!isPublicAdventurerUsername(current.username)) {
+      await clearPresence();
+      return null;
+    }
     final now = _nowMs();
     final row = presenceRowFor(
       session: current,
@@ -851,11 +881,11 @@ class RemoteMultiplayerService implements MultiplayerService {
 
   List<ActivityPresence> _visiblePeers(List<ActivityPresence> peers, bool excludeSelf) {
     final current = session;
-    if (current == null) return peers;
-    final hidden = _local.backend.blockedIds(current.userId);
+    final hidden = current == null ? const <String>{} : _local.backend.blockedIds(current.userId);
     return peers
+        .where((row) => isPublicAdventurerUsername(row.username))
         .where((row) => !hidden.contains(row.userId))
-        .where((row) => !excludeSelf || row.userId != current.userId)
+        .where((row) => current == null || !excludeSelf || row.userId != current.userId)
         .toList();
   }
 
@@ -941,6 +971,15 @@ class RemoteMultiplayerService implements MultiplayerService {
   @override
   Future<void> ignorePlayer(String targetUserId) async {
     await _dropHostedRelationship(targetUserId);
+    final account = await profile(targetUserId);
+    if (account != null) {
+      _local.backend.rememberProfile(
+        userId: account.userId,
+        username: account.username,
+        appearance: account.appearance,
+        guildName: account.guildName,
+      );
+    }
     return _local.ignorePlayer(targetUserId);
   }
 
@@ -1001,7 +1040,11 @@ class RemoteMultiplayerService implements MultiplayerService {
   }
 
   @override
-  Future<List<SocialContact>> ignoredPlayers() => _local.ignoredPlayers();
+  Future<List<SocialContact>> ignoredPlayers() async {
+    final current = session;
+    if (current == null) return const <SocialContact>[];
+    return _contactsFor(_local.backend.blockedIds(current.userId));
+  }
 
   void _invalidateFriends() => _friendIdsCache = null;
 

@@ -62,6 +62,7 @@ class _InventoryViewState extends State<InventoryView> {
   late _InventoryTab _tab = _paneTab(widget.pane);
   String? _message;
   bool _showSources = false;
+  bool _showBonuses = false;
   InventorySortMode _sortMode = InventorySortMode.group;
   final TextEditingController _search = TextEditingController();
   late InventorySorter _sorter = InventorySorter(widget.controller.db);
@@ -85,6 +86,7 @@ class _InventoryViewState extends State<InventoryView> {
       _selling = null;
       _message = null;
       _showSources = false;
+      _showBonuses = false;
     }
   }
 
@@ -225,16 +227,30 @@ class _InventoryViewState extends State<InventoryView> {
     });
   }
 
-  void _showDetail({InventoryStack? stack, EquippedStack? equipped, String? slotId}) {
+  void _showDetail({
+    InventoryStack? stack,
+    EquippedStack? equipped,
+    String? slotId,
+    int? inventoryIndex,
+  }) {
+    final itemId = stack?.itemId ?? equipped?.itemId;
+    final canEquip =
+        inventoryIndex != null && itemId != null && equipmentForItemId(db, itemId)?.slotId != null;
     showGamePopup<void>(
       context: context,
       origin: popupOrigin(context),
       builder: (context) => ItemDetailSheet(
         controller: controller,
-        itemId: stack?.itemId ?? equipped?.itemId,
+        itemId: itemId,
         quantity: stack?.quantity ?? equipped?.quantity ?? 0,
         enchantmentId: stack?.enchantmentId ?? equipped?.enchantmentId,
         slotId: slotId,
+        onEquip: canEquip
+            ? () {
+                if (!mounted) return;
+                _equipAt(inventoryIndex);
+              }
+            : null,
       ),
     );
   }
@@ -301,6 +317,7 @@ class _InventoryViewState extends State<InventoryView> {
                       _selling = null;
                       _message = null;
                       _showSources = false;
+                      _showBonuses = false;
                     }),
                   ),
                 ),
@@ -426,10 +443,10 @@ class _InventoryViewState extends State<InventoryView> {
                 } else if (equippable) {
                   _equipAt(index);
                 } else {
-                  _showDetail(stack: stack);
+                  _showDetail(stack: stack, inventoryIndex: index);
                 }
               },
-              onLongPress: () => _showDetail(stack: stack),
+              onLongPress: () => _showDetail(stack: stack, inventoryIndex: index),
               onToggleFavorite: () => _toggleFavorite(index),
             );
           },
@@ -536,10 +553,32 @@ class _InventoryViewState extends State<InventoryView> {
             ],
           ),
           const SizedBox(height: 10),
-          const Text('Active bonuses', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w400)),
-          if (summary.activeBonuses.isEmpty)
-            const Padding(padding: EdgeInsets.only(top: 4), child: MutedText('No active bonuses.'))
-          else
+          Row(
+            children: [
+              Flexible(
+                child: GameButton(
+                  label: _showBonuses ? 'Hide bonuses' : 'Show bonuses',
+                  tone: GameButtonTone.secondary,
+                  compact: true,
+                  dense: true,
+                  onPressed: () => setState(() => _showBonuses = !_showBonuses),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Flexible(
+                child: GameButton(
+                  label: _showSources ? 'Hide sources' : 'Show sources',
+                  tone: GameButtonTone.secondary,
+                  compact: true,
+                  dense: true,
+                  onPressed: () => setState(() => _showSources = !_showSources),
+                ),
+              ),
+            ],
+          ),
+          if (_showBonuses && summary.activeBonuses.isEmpty)
+            const Padding(padding: EdgeInsets.only(top: 4), child: MutedText('No active bonuses.')),
+          if (_showBonuses)
             for (final bonus in summary.activeBonuses)
               Padding(
                 padding: const EdgeInsets.only(top: 4),
@@ -556,16 +595,6 @@ class _InventoryViewState extends State<InventoryView> {
                   style: const TextStyle(fontSize: 12, height: 1.3),
                 ),
               ),
-          const SizedBox(height: 8),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: GameButton(
-              label: _showSources ? 'Hide sources' : 'Show sources',
-              tone: GameButtonTone.secondary,
-              compact: true,
-              onPressed: () => setState(() => _showSources = !_showSources),
-            ),
-          ),
           if (_showSources) ...[
             _breakdownSection('Main-hand', summary.mainhandBreakdown),
             if (summary.offhandBreakdown.isNotEmpty)

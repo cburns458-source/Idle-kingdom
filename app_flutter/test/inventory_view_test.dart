@@ -98,6 +98,54 @@ void main() {
     expect(find.text('Sell selected'), findsOne);
   });
 
+  testWidgets('the detail sheet equips gear from the bag', (tester) async {
+    final controller = buildController(database, seed: unequippedCharacter());
+    addTearDown(controller.dispose);
+
+    final gear = controller.save.inventory
+        .map((stack) => equipmentForItemId(database.launch, stack.itemId))
+        .nonNulls
+        .firstWhere((row) => row.slotId != null);
+    final slotId = gear.slotId!;
+    final name = database.launchIndexes.itemsById[gear.itemId]!.displayName;
+
+    await pumpPanel(tester, InventoryView(controller: controller));
+    await tester.longPress(find.byTooltip(name).first);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Equip'), findsOne);
+    await tester.tap(find.text('Equip'));
+    await tester.pumpAndSettle();
+
+    expect(controller.save.equipment.slots[slotId]?.itemId, gear.itemId);
+    expect(find.text('Equip'), findsNothing);
+  });
+
+  testWidgets('the detail sheet names a tool skill bonus and equips it', (tester) async {
+    final seed = unequippedCharacter().copyWith(
+      inventory: [const InventoryStack(itemId: 'ITEM-0110', quantity: 1)],
+    );
+    final controller = buildController(database, seed: seed);
+    addTearDown(controller.dispose);
+
+    await pumpPanel(tester, InventoryView(controller: controller));
+    await tester.longPress(find.byTooltip('Copper Hatchet'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Woodcutting: -5% action time'), findsOne);
+    expect(find.text('Equip'), findsOne);
+    await tester.tap(find.text('Equip'));
+    await tester.pumpAndSettle();
+    expect(controller.save.equipment.slots[weaponToolSlotId]?.itemId, 'ITEM-0110');
+
+    await tester.tap(find.text('Equipment'));
+    await tester.pump();
+    await tester.longPress(find.byTooltip('Copper Hatchet').first);
+    await tester.pumpAndSettle();
+    expect(find.text('Woodcutting: -5% action time'), findsOne);
+    expect(find.text('Equip'), findsNothing);
+  });
+
   testWidgets('the detail sheet reports what an item is worth', (tester) async {
     final seed = unequippedCharacter().copyWith(
       inventory: [const InventoryStack(itemId: 'ITEM-0002', quantity: 5)],
@@ -142,6 +190,16 @@ void main() {
     expect(find.text('Damage'), findsOne);
     expect(find.text('Health'), findsOne);
     expect(find.text('DR'), findsOne);
+    expect(find.text('Show bonuses'), findsOne);
+    expect(find.text('Show sources'), findsOne);
+    final bonuses = tester.getRect(find.text('Show bonuses'));
+    final sources = tester.getRect(find.text('Show sources'));
+    expect((bonuses.center.dy - sources.center.dy).abs(), lessThan(8));
+    expect(bonuses.right, lessThan(sources.left));
+    expect(find.textContaining('Human'), findsNothing);
+
+    await tester.tap(find.text('Show bonuses'));
+    await tester.pump();
     expect(find.textContaining('Human'), findsWidgets);
 
     await tester.tap(find.text('Show sources'));
@@ -171,9 +229,33 @@ void main() {
     await tester.tap(find.text('Equipment'));
     await tester.pump();
 
+    expect(find.textContaining('High Elf'), findsNothing);
+    await tester.tap(find.text('Show bonuses'));
+    await tester.pump();
+
     expect(find.text('No active bonuses.'), findsNothing);
     expect(find.textContaining('High Elf'), findsOne);
     expect(find.textContaining('Strength Potion'), findsOne);
+  });
+
+  testWidgets('equipment page lists action time reduction on the tool skill', (tester) async {
+    final base = startedCharacter(database);
+    final controller = buildController(
+      database,
+      seed: equipStackToSlot(base, weaponToolSlotId, 'ITEM-0110', 1),
+    );
+    addTearDown(controller.dispose);
+
+    await pumpPanel(tester, InventoryView(controller: controller));
+    await tester.tap(find.text('Equipment'));
+    await tester.pump();
+
+    expect(find.textContaining('action time'), findsNothing);
+    await tester.tap(find.text('Show bonuses'));
+    await tester.pump();
+
+    expect(find.textContaining('Woodcutting'), findsWidgets);
+    expect(find.textContaining('-5% action time'), findsOne);
   });
 
   List<String> visibleBagOrder(WidgetTester tester, List<String> names) {

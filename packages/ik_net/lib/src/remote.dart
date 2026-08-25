@@ -6,6 +6,7 @@
 /// on an HTTP library.
 library;
 
+import 'dart:convert';
 import 'dart:math';
 
 import 'package:ik_rules/ik_rules.dart';
@@ -50,7 +51,20 @@ const String remoteInvalidBackendUrl =
     'The Supabase project URL is wrong. Use https://YOUR_PROJECT.supabase.co with no /rest/v1.';
 
 /// Maps PostgREST/Auth path errors to a fix the operator can act on.
+/// Shown when the session token cannot be refreshed. The character stays local.
+const String remoteSignInAgain = 'Sign in again.';
+
+/// True when PostgREST/Auth refused the request because the access JWT is dead.
+bool isExpiredAuthError(String? message) {
+  if (message == null || message.isEmpty) return false;
+  final lower = message.toLowerCase();
+  return lower.contains('jwt expired') ||
+      lower.contains('invalid jwt') ||
+      (lower.contains('token') && lower.contains('expired'));
+}
+
 String friendlyRemoteError(String message) {
+  if (isExpiredAuthError(message)) return remoteSignInAgain;
   if (message.toLowerCase().contains('invalid path specified')) {
     return remoteInvalidBackendUrl;
   }
@@ -187,6 +201,9 @@ String pendingAccountUsername(String userId) {
 }
 
 bool isPendingAccountUsername(String username) => username.startsWith(pendingAccountUsernamePrefix);
+
+/// False for the `pending_<id>` stand-in used before character creation.
+bool isPublicAdventurerUsername(String username) => !isPendingAccountUsername(username);
 
 String remoteEmail(String raw) => raw.trim().toLowerCase();
 
@@ -589,9 +606,17 @@ MultiplayerProfile? multiplayerProfileFromRemote(RemoteRow? row) {
 }
 
 List<PublicEquippedSlot> _equipmentFromRemote(Object? raw) {
-  if (raw is! List) return const <PublicEquippedSlot>[];
+  Object? value = raw;
+  if (value is String && value.trim().isNotEmpty) {
+    try {
+      value = jsonDecode(value);
+    } catch (_) {
+      return const <PublicEquippedSlot>[];
+    }
+  }
+  if (value is! List) return const <PublicEquippedSlot>[];
   return [
-    for (final row in raw)
+    for (final row in value)
       if (row is Map)
         PublicEquippedSlot(
           slotId: _str(row['slotId'] ?? row['slot_id']),

@@ -224,12 +224,14 @@ class ProductionProgressResult {
     required this.craftsCompleted,
     required this.messages,
     required this.activityMs,
+    this.blockedByInventory = false,
   });
 
   final PlayerSave save;
   final num craftsCompleted;
   final List<String> messages;
   final num activityMs;
+  final bool blockedByInventory;
 
   Map<String, Object?> toJson() => <String, Object?>{
     'save': save.toJson(),
@@ -258,6 +260,7 @@ ProductionProgressResult resolveProductionProgress(
   var current = save;
   num craftsCompleted = 0;
   num activityMs = 0;
+  var blockedByInventory = false;
   // Aggregate identical outputs so AFK summaries show one line per item.
   final craftTotals = <String, _CraftTotal>{};
 
@@ -269,7 +272,10 @@ ProductionProgressResult resolveProductionProgress(
     final due = jsDateParse(current.actionStartedAt) + durationMs;
     if (due > nowMs) break;
     final completed = completeProductionCraft(db, current, due, random);
-    if (completed == null) break;
+    if (completed == null) {
+      blockedByInventory = true;
+      break;
+    }
     current = completed.save;
     craftsCompleted += 1;
     activityMs += durationMs;
@@ -294,5 +300,6 @@ ProductionProgressResult resolveProductionProgress(
         )
         .toList(),
     activityMs: activityMs,
+    blockedByInventory: blockedByInventory,
   );
 }

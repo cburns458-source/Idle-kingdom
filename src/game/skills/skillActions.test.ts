@@ -63,6 +63,36 @@ describe('skill menu entries', () => {
         .find((tab) => tab.id === 'jewelry')
         ?.sections[0]?.entries.some((item) => item.displayName === 'Lucky Necklace'),
     ).toBe(true)
+    const artisanryOther =
+      artisanry.tabs.find((tab) => tab.id === 'other')?.sections[0]?.entries ?? []
+    expect(artisanryOther.some((item) => item.displayName === 'Leather Helmet' && item.level === 1)).toBe(
+      true,
+    )
+    expect(artisanryOther.some((item) => item.displayName === 'Leather Gloves' && item.level === 1)).toBe(
+      true,
+    )
+  })
+
+  it('groups same-tier combat armor as material equipment', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const combat = skillMenuView(launch, 'SKL-0001')
+    expect(combat.tabs.map((tab) => tab.label)).toEqual(['Enemies', 'Equipment', 'Weapons'])
+    const gear = combat.tabs.find((tab) => tab.id === 'gear')?.sections[0]?.entries ?? []
+    const weapons = combat.tabs.find((tab) => tab.id === 'weapons')?.sections[0]?.entries ?? []
+    expect(gear.some((item) => item.displayName === 'Tungsten equipment')).toBe(true)
+    expect(gear.some((item) => item.displayName === 'Reinforced Steel equipment')).toBe(true)
+    expect(gear.some((item) => item.displayName === 'Bull Horn equipment')).toBe(true)
+    expect(gear.some((item) => item.displayName === 'Wooden equipment')).toBe(true)
+    expect(gear.some((item) => item.displayName === 'Leather equipment' && item.level === 1)).toBe(
+      true,
+    )
+    expect(gear.some((item) => item.displayName === 'Leather Helmet')).toBe(false)
+    expect(gear.some((item) => item.displayName === 'Tungsten Helmet')).toBe(false)
+    expect(gear.some((item) => item.displayName === 'Tungsten Shield')).toBe(false)
+    expect(gear.some((item) => item.displayName === 'Tungsten Sword')).toBe(false)
+    expect(weapons.some((item) => item.displayName === 'Tungsten Sword')).toBe(true)
+    expect(weapons.some((item) => item.displayName === 'Wooden Sword')).toBe(true)
+    expect(weapons.some((item) => item.displayName === 'Tungsten Shield')).toBe(false)
   })
 
   it('lists smithing projects by output item name and required level', () => {
@@ -92,6 +122,7 @@ describe('skill menu entries', () => {
     expect(weapons.map((item) => item.displayName)).toEqual([
       'Staff of Sparks',
       'Staff of Binding',
+      "Mage's Wand",
       'Staff of Power',
     ])
     expect(weapons.find((item) => item.displayName === 'Staff of Sparks')?.level).toBe(35)
@@ -102,6 +133,24 @@ describe('skill menu entries', () => {
         .find((tab) => tab.id === 'enchantments')
         ?.sections[0]?.entries.some((item) => item.displayName.startsWith('Staff of')),
     ).toBe(false)
+  })
+
+  it('does not list a net on the fishing Tools tab', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const fishing = skillMenuView(launch, 'SKL-0003')
+    const tools = fishing.tabs.find((tab) => tab.id === 'tools')?.sections[0]?.entries ?? []
+    expect(tools.some((item) => item.displayName === 'Net')).toBe(false)
+    expect(tools.some((item) => item.displayName === 'Fishing Net')).toBe(false)
+    expect(tools.some((item) => item.displayName.includes('Fishing Rod'))).toBe(true)
+  })
+
+  it('lists net and sling on the hunting Tools tab', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const hunting = skillMenuView(launch, 'SKL-0005')
+    expect(hunting.tabs.map((tab) => tab.label)).toEqual(['Actions', 'Tools'])
+    const tools = hunting.tabs.find((tab) => tab.id === 'tools')?.sections[0]?.entries ?? []
+    expect(tools.some((item) => item.displayName === 'Net' && item.level === 1)).toBe(true)
+    expect(tools.some((item) => item.displayName === 'Sling' && item.level === 5)).toBe(true)
   })
 
   it('groups smithing by material and numbers every menu row', () => {

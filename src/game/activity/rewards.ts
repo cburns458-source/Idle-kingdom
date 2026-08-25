@@ -3,6 +3,7 @@ import {
   INVENTORY_SLOT_LIMIT,
   INVENTORY_STACK_MAX,
   maxAddableQuantity,
+  mergeableStackIndex,
 } from '../inventory/capacity'
 import { sortInventoryFavoritesFirst } from '../inventory/favorites'
 import { isGoldCurrencyItem } from '../inventory/gold'
@@ -53,18 +54,19 @@ export function addItemsToInventory(
   quantity: number,
   enchantmentId: string | null = null,
   favorite = false,
+  db?: GameDatabase,
 ): { save: PlayerSave; added: number } {
   const want = Math.floor(quantity)
   if (want <= 0) return { save, added: 0 }
 
-  if (isGoldCurrencyItem(itemId) && !enchantmentId) {
+  if (isGoldCurrencyItem(itemId, db) && !enchantmentId) {
     return {
       save: { ...save, gold: save.gold + want },
       added: want,
     }
   }
 
-  const addable = maxAddableQuantity(save, itemId, enchantmentId, favorite)
+  const addable = maxAddableQuantity(save, itemId, enchantmentId, favorite, db)
   const added = Math.min(want, addable)
   if (added <= 0) return { save, added: 0 }
 
@@ -82,12 +84,8 @@ export function addItemsToInventory(
     return { save: sortInventoryFavoritesFirst({ ...save, inventory }), added }
   }
 
-  const existing = inventory.find(
-    (stack) =>
-      stack.itemId === itemId &&
-      !stack.enchantmentId &&
-      Boolean(stack.favorite) === favorite,
-  )
+  const existingIndex = mergeableStackIndex(inventory, itemId)
+  const existing = existingIndex >= 0 ? inventory[existingIndex] : undefined
   if (existing) {
     existing.quantity = Math.min(INVENTORY_STACK_MAX, existing.quantity + added)
   } else {
@@ -107,8 +105,9 @@ export function addItemToInventory(
   quantity: number,
   enchantmentId: string | null = null,
   favorite = false,
+  db?: GameDatabase,
 ): PlayerSave {
-  return addItemsToInventory(save, itemId, quantity, enchantmentId, favorite).save
+  return addItemsToInventory(save, itemId, quantity, enchantmentId, favorite, db).save
 }
 
 /** Add the full quantity or fail without changing the save. */
@@ -118,19 +117,20 @@ export function addItemToInventoryExact(
   quantity: number,
   enchantmentId: string | null = null,
   favorite = false,
+  db?: GameDatabase,
 ): { ok: true; save: PlayerSave } | { ok: false; reason: string } {
   const want = Math.floor(quantity)
   if (want <= 0) return { ok: true, save }
-  if (isGoldCurrencyItem(itemId) && !enchantmentId) {
-    return { ok: true, save: addItemsToInventory(save, itemId, want).save }
+  if (isGoldCurrencyItem(itemId, db) && !enchantmentId) {
+    return { ok: true, save: addItemsToInventory(save, itemId, want, null, false, db).save }
   }
-  if (!canFitItemQuantity(save, itemId, want, enchantmentId, favorite)) {
+  if (!canFitItemQuantity(save, itemId, want, enchantmentId, favorite, db)) {
     if (save.inventory.length >= INVENTORY_SLOT_LIMIT) {
       return { ok: false, reason: 'Inventory is full (180 slots).' }
     }
     return { ok: false, reason: 'That stack cannot hold more of this item.' }
   }
-  const result = addItemsToInventory(save, itemId, want, enchantmentId, favorite)
+  const result = addItemsToInventory(save, itemId, want, enchantmentId, favorite, db)
   if (result.added < want) {
     return { ok: false, reason: 'Inventory is full (180 slots).' }
   }
@@ -157,7 +157,7 @@ export function resolveActionRewards(
     if (!tableId) return
     const dropChance = applyFlatDropChanceBonus(
       applyRelativeDropChance(
-        typeof chance === 'number' ? chance : 100,
+        typeof chance === 'number' ? chance : 0,
         totalRelativeDropChanceBonusPercent(db, save),
       ),
       skillDropBonus,
@@ -169,7 +169,7 @@ export function resolveActionRewards(
     if (picked['Reward Type'] === 'Item' && picked['Reward ID / Value']) {
       let quantity = rollQuantity(picked, random)
       const itemId = picked['Reward ID / Value']
-      if (isGoldCurrencyItem(itemId)) {
+      if (isGoldCurrencyItem(itemId, db)) {
         // Abundance doubles item drops only — gold currency item rewards stay single.
         goldGained += quantity
         return
@@ -178,7 +178,7 @@ export function resolveActionRewards(
       if (doubleChance > 0 && random() * 100 < doubleChance) {
         quantity *= 2
       }
-      const granted = addItemsToInventory(next, itemId, quantity)
+      const granted = addItemsToInventory(next, itemId, quantity, null, false, db)
       next = granted.save
       if (granted.added > 0) {
         loot.push({

@@ -9,6 +9,7 @@ import 'package:idle_kingdoms/src/ui/reward_strip.dart';
 import 'package:ik_content/ik_content.dart';
 import 'package:ik_net/ik_net.dart';
 import 'package:ik_net/testing.dart';
+import 'package:ik_rules/ik_rules.dart';
 import 'package:ik_runtime/ik_runtime.dart';
 
 import 'support/harness.dart';
@@ -185,6 +186,48 @@ void main() {
     expect(find.text('Sign in to play'), findsOne);
     expect(find.byKey(const Key('auth-email')), findsOne);
     expect(net.hasTesterAccess, isTrue);
+  });
+
+  testWidgets('a local build does not claim the cloud is unavailable', (tester) async {
+    final controller = buildController(database, seed: startedCharacter(database));
+    final net = buildMultiplayer(database);
+    addTearDown(controller.dispose);
+    addTearDown(net.dispose);
+    await pumpShell(tester, controller, multiplayer: net);
+
+    expect(find.text('Cloud unavailable — progress is not syncing.'), findsNothing);
+  });
+
+  testWidgets('a hosted backend that cannot be reached shows a banner', (tester) async {
+    final controller = buildController(database, seed: startedCharacter(database));
+    final net = buildMultiplayer(database, cloudUnavailable: true);
+    addTearDown(controller.dispose);
+    addTearDown(net.dispose);
+    await pumpShell(tester, controller, multiplayer: net);
+
+    expect(find.text('Cloud unavailable — progress is not syncing.'), findsOne);
+  });
+
+  testWidgets('a full bag while crafting shows a pause toast', (tester) async {
+    var seed = startedCharacter(database).copyWith(currentLocationId: 'LOC-0023');
+    seed = addItemToInventory(seed, 'ITEM-0025', 5);
+    final queued = beginProductionQueue(
+      database.launch,
+      seed,
+      'ACT-0017',
+      'RCP-0001',
+      2,
+      testStartMs,
+    );
+    expect(queued.ok, isTrue);
+    final filled = queued.save!.copyWith(
+      inventory: [for (var i = 0; i < 180; i++) InventoryStack(itemId: 'FILL-$i', quantity: 1)],
+    );
+    final controller = buildController(database, seed: filled);
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller);
+
+    expect(find.text('Inventory full — free a slot to keep crafting.'), findsOne);
   });
 
   testWidgets('an unsigned player cannot reach the location screen', (tester) async {
@@ -443,6 +486,10 @@ void main() {
 
     await tester.tap(find.text('Character'));
     await tester.pump();
+    expect(find.textContaining('slots'), findsOne);
+
+    await tester.tap(find.widgetWithText(GameButton, 'Skills'));
+    await tester.pump();
     expect(find.text('Combat'), findsWidgets);
 
     await tester.tap(find.widgetWithText(GameButton, 'Inventory'));
@@ -457,7 +504,7 @@ void main() {
     expect(find.text('Health'), findsOne);
     expect(find.text('DR'), findsOne);
     expect(find.text('Helmet'), findsOne);
-    expect(find.text('Active bonuses'), findsOne);
+    expect(find.text('Show bonuses'), findsOne);
   });
 
   testWidgets('the chin nest opens Settings, Log, Leaderboards, and Guilds', (tester) async {
@@ -552,6 +599,11 @@ void main() {
     await pumpShell(tester, controller);
 
     await tester.tap(find.text('Character'));
+    await tester.pump();
+    expect(find.textContaining('slots'), findsOne);
+    expect(find.text('Total level'), findsNothing);
+
+    await tester.tap(find.widgetWithText(GameButton, 'Skills'));
     await tester.pump();
     expect(find.text('Total level'), findsOne);
 

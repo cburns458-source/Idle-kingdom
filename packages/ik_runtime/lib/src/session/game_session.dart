@@ -85,7 +85,7 @@ class GameSession {
     final unattended = resolveUnattendedProgress(db, incoming, at, random);
     final synced = syncProgressionMeta(db, unattended.save, at);
     _save = repository.write(synced);
-    _playAccruedAt = clock();
+    _playAccruedAt = at;
     return SessionBoot(save: save, created: false, unattended: unattended);
   }
 

@@ -17,6 +17,7 @@ const String woodcuttingSkillId = 'SKL-0006';
 const List<String> _woodenMiningTools = <String>['ITEM-0102'];
 const List<String> _woodenWoodcuttingTools = <String>['ITEM-0100', 'ITEM-0101'];
 const List<String> _woodenFishingTools = <String>['ITEM-0103'];
+const List<String> _woodenHuntingTools = <String>['ITEM-0108', 'ITEM-0109'];
 const List<String> _woodenCombatGear = <String>['ITEM-0124', 'ITEM-0125', 'ITEM-0145'];
 
 const Set<String> _combatGearWords = <String>{
@@ -33,6 +34,15 @@ const Set<String> _combatGearWords = <String>{
   'Bow',
   'Spear',
 };
+
+const List<String> _combatArmorWords = <String>[
+  'Helmet',
+  'Chestplate',
+  'Platelegs',
+  'Boots',
+  'Gloves',
+  'Shield',
+];
 
 /// One row of a skill menu: what it makes and the level it needs.
 class SkillMenuListItem {
@@ -244,7 +254,8 @@ List<SkillMenuTab> _tabsForSkill(GameDatabase db, String skillId) {
   if (skillId == combatSkillId) {
     return <SkillMenuTab>[
       _listTab('enemies', 'Enemies', _combatEnemyEntries(db)),
-      _listTab('gear', 'Weapons and equipment', _combatGearEntries(db)),
+      _listTab('gear', 'Equipment', _combatEquipmentEntries(db)),
+      _listTab('weapons', 'Weapons', _combatWeaponEntries(db)),
     ];
   }
   if (skillId == miningSkillId ||
@@ -349,15 +360,34 @@ List<SkillMenuListItem> _combatEnemyEntries(GameDatabase db) {
   return _dedupeByName(items);
 }
 
-List<SkillMenuListItem> _combatGearEntries(GameDatabase db) {
-  final items = <SkillMenuListItem>[
+List<SkillMenuListItem> _combatGearItems(GameDatabase db) {
+  return <SkillMenuListItem>[
     ..._projectItemsWhere(db, (item, _) => _isCombatGearItem(item), <String>{
       smithingSkillId,
       artisanrySkillId,
     }),
     ..._woodenItems(db, _woodenCombatGear),
   ];
-  return _dedupeByName(items);
+}
+
+List<SkillMenuListItem> _combatEquipmentEntries(GameDatabase db) {
+  final grouped = <SkillMenuListItem>[];
+  final seen = <String>{};
+  for (final item in _combatGearItems(db)) {
+    final material = _armorMaterial(item.displayName);
+    if (material == null) continue;
+    final key = '${item.level ?? ''}|$material';
+    if (!seen.add(key)) continue;
+    grouped.add(SkillMenuListItem(id: key, displayName: '$material equipment', level: item.level));
+  }
+  return _dedupeByName(grouped);
+}
+
+List<SkillMenuListItem> _combatWeaponEntries(GameDatabase db) {
+  return _dedupeByName([
+    for (final item in _combatGearItems(db))
+      if (_armorMaterial(item.displayName) == null) item,
+  ]);
 }
 
 List<SkillMenuListItem> _gatheringToolEntries(GameDatabase db, String skillId) {
@@ -384,7 +414,7 @@ List<SkillMenuListItem> _gatheringToolEntries(GameDatabase db, String skillId) {
     case fishingSkillId:
       return (woodenIds: _woodenFishingTools, match: (item, name) => _isFishingToolName(name));
     case huntingSkillId:
-      return (woodenIds: const <String>[], match: (item, name) => _isHuntingToolName(name));
+      return (woodenIds: _woodenHuntingTools, match: (item, name) => _isHuntingToolName(name));
     default:
       return null;
   }
@@ -418,8 +448,16 @@ List<SkillMenuListItem> _woodenItems(GameDatabase db, List<String> itemIds) {
   return [
     for (final itemId in itemIds)
       if (db.items.firstWhereOrNull((row) => row.itemId == itemId) case final item?)
-        SkillMenuListItem(id: item.itemId, displayName: item.displayName, level: 1),
+        SkillMenuListItem(
+          id: item.itemId,
+          displayName: item.displayName,
+          level: _woodenToolLevel(db, itemId),
+        ),
   ];
+}
+
+num _woodenToolLevel(GameDatabase db, String itemId) {
+  return db.equipment.firstWhereOrNull((row) => row.itemId == itemId)?.requiredLevel ?? 1;
 }
 
 SkillMenuTab _listTab(String id, String label, List<SkillMenuListItem> entries) {
@@ -460,6 +498,17 @@ String? _smithingMaterial(String name) {
   return parts.first;
 }
 
+String? _armorMaterial(String name) {
+  for (final word in _combatArmorWords) {
+    if (!_endsWithWord(name, word)) continue;
+    if (name.length <= word.length) return null;
+    final material = name.substring(0, name.length - word.length).trim();
+    if (material.isEmpty) return null;
+    return material;
+  }
+  return null;
+}
+
 bool _endsWithWord(String name, String word) {
   return name == word || name.endsWith(' $word');
 }
@@ -470,13 +519,14 @@ bool _isWoodcuttingToolName(String name) {
 }
 
 bool _isFishingToolName(String name) {
-  return name.contains('Fishing Rod') ||
-      _endsWithWord(name, 'Harpoon') ||
-      _endsWithWord(name, 'Net');
+  return name.contains('Fishing Rod') || _endsWithWord(name, 'Harpoon');
 }
 
 bool _isHuntingToolName(String name) {
-  return _endsWithWord(name, 'Bow') || _endsWithWord(name, 'Spear');
+  return _endsWithWord(name, 'Bow') ||
+      _endsWithWord(name, 'Spear') ||
+      name == 'Net' ||
+      name == 'Sling';
 }
 
 bool _isBowName(String name) => _endsWithWord(name, 'Bow');
@@ -506,7 +556,8 @@ bool _isSpellName(String name) => name.contains('Spell');
 bool _isArcanaWeaponName(String name, String outputId) {
   if (outputId.startsWith('ENCH-')) return false;
   return RegExp(r'staff of\b', caseSensitive: false).hasMatch(name) ||
-      RegExp(r'\bstaff\b', caseSensitive: false).hasMatch(name);
+      RegExp(r'\bstaff\b', caseSensitive: false).hasMatch(name) ||
+      RegExp(r'\bwand\b', caseSensitive: false).hasMatch(name);
 }
 
 bool _isEnchantmentName(String name, String outputId) {

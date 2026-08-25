@@ -86,13 +86,14 @@ class _BootGateState extends State<_BootGate> {
       hudLevel: HudLevelPref.load(storage),
       hudTitle: HudTitlePref.load(storage),
     )..adoptBoot(boot);
-    final service = await _multiplayerService(storage);
-    _ensureDemoWorld(service, database.launch);
+    final backend = await _multiplayerService(storage);
+    _ensureDemoWorld(backend.service, database.launch);
     final multiplayer = MultiplayerController(
       database: database,
-      service: service,
+      service: backend.service,
       storage: storage,
       clock: clock,
+      cloudUnavailable: backend.cloudUnavailable,
     );
     multiplayer.pendingLeftover = leftover;
     multiplayer.onAccountCleared = game.resetUnsigned;
@@ -110,14 +111,21 @@ class _BootGateState extends State<_BootGate> {
   ///
   /// A project that cannot be reached must not stop the game starting, so a
   /// failed connection falls back to local play rather than throwing.
-  Future<MultiplayerService> _multiplayerService(SaveStorage storage) async {
+  Future<({MultiplayerService service, bool cloudUnavailable})> _multiplayerService(
+    SaveStorage storage,
+  ) async {
     final config = remoteBackendConfigFromEnvironment();
-    if (config == null) return LocalMultiplayerService(storage: storage);
+    if (config == null) {
+      return (service: LocalMultiplayerService(storage: storage), cloudUnavailable: false);
+    }
     try {
       final transport = await SupabaseTransport.connect(config);
-      return RemoteMultiplayerService(transport: transport, storage: storage);
+      return (
+        service: RemoteMultiplayerService(transport: transport, storage: storage),
+        cloudUnavailable: false,
+      );
     } on Object {
-      return LocalMultiplayerService(storage: storage);
+      return (service: LocalMultiplayerService(storage: storage), cloudUnavailable: true);
     }
   }
 

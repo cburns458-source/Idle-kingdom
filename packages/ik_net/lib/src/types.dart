@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:ik_rules/ik_rules.dart';
 
 /// Which ladder a leaderboard row belongs to.
@@ -29,12 +31,15 @@ const String skillBoardPrefix = 'skill:';
 
 MultiplayerBoardKey skillBoardKey(String skillId) => '$skillBoardPrefix$skillId';
 
-/// Boards that carry a second number: total level ranks, total XP rides along.
+/// Boards that carry a second number: total level and per-skill ranks show XP
+/// under the level.
 ///
 /// The guild board is not one of them: its value is a whole roster totalled by
 /// the backend, and it was never two boards to begin with.
 bool boardCarriesExperience(MultiplayerBoardKey boardKey) =>
-    boardKey == boardTotalLevel || boardKey == boardPacifistTotalLevel;
+    boardKey == boardTotalLevel ||
+    boardKey == boardPacifistTotalLevel ||
+    boardKey.startsWith(skillBoardPrefix);
 
 /// A board only some players stand on, where a zero means "does not qualify"
 /// rather than a real score of nothing.
@@ -174,9 +179,17 @@ class MultiplayerProfile {
 }
 
 List<PublicEquippedSlot> _publishedEquipmentFromJson(Object? raw) {
-  if (raw is! List) return const <PublicEquippedSlot>[];
+  Object? value = raw;
+  if (value is String && value.trim().isNotEmpty) {
+    try {
+      value = jsonDecode(value);
+    } catch (_) {
+      return const <PublicEquippedSlot>[];
+    }
+  }
+  if (value is! List) return const <PublicEquippedSlot>[];
   return [
-    for (final row in raw)
+    for (final row in value)
       if (row is Map) PublicEquippedSlot.fromJson(Map<String, Object?>.from(row)),
   ];
 }

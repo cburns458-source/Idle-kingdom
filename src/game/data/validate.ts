@@ -12,6 +12,18 @@ import {
   type ValidationIssue,
 } from './types'
 
+/** Kept here so content validation does not import runtime requirement rules. */
+const KNOWN_REQUIREMENT_TYPES = [
+  'Tool Capability',
+  'Empty Slot',
+  'Station',
+  'Skill Level',
+  'Quest Access',
+  'Quest Active',
+  'Quest Flag',
+  'Item Absent',
+] as const
+
 const TABLE_ID_FIELDS: Record<string, string> = {
   Skills: 'Skill ID',
   EquipmentSlots: 'Slot ID',
@@ -227,6 +239,39 @@ export function validateDatabase(db: GameDatabase): ValidationIssue[] {
         table: 'Actions',
         id: String(action['Action ID'] ?? ''),
         message: `Missing Relevant Skill ID reference: ${skillId}`,
+      })
+    }
+    const actionId = String(action['Action ID'] ?? '')
+    if (action['Reward Table ID'] && typeof action['Drop Chance'] !== 'number') {
+      issues.push({
+        severity: 'error',
+        table: 'Actions',
+        id: actionId,
+        message: `Missing Drop Chance for reward table ${action['Reward Table ID']}`,
+      })
+    }
+    if (action['Secondary Reward Table ID'] && typeof action['Secondary Drop Chance'] !== 'number') {
+      issues.push({
+        severity: 'error',
+        table: 'Actions',
+        id: actionId,
+        message: `Missing Secondary Drop Chance for reward table ${action['Secondary Reward Table ID']}`,
+      })
+    }
+  }
+
+  for (const requirement of db.Requirements) {
+    const type = requirement['Requirement Type']
+    if (
+      typeof type === 'string' &&
+      type.length > 0 &&
+      !(KNOWN_REQUIREMENT_TYPES as readonly string[]).includes(type)
+    ) {
+      issues.push({
+        severity: 'error',
+        table: 'Requirements',
+        id: String(requirement['Requirement ID'] ?? ''),
+        message: `Unknown Requirement Type: ${type}`,
       })
     }
   }

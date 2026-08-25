@@ -1,5 +1,9 @@
-import type { EquippedStack, PlayerSave } from './types'
-import { STARTING_HUNTING_TOOL_ID, WEAPON_TOOL_SLOT_ID } from './types'
+import type { EquippedStack, InventoryStack, PlayerSave } from './types'
+import {
+  RETIRED_FISHING_NET_ITEM_ID,
+  STARTING_HUNTING_TOOL_ID,
+  WEAPON_TOOL_SLOT_ID,
+} from './types'
 
 function hasItem(save: PlayerSave, itemId: string): boolean {
   if (save.inventory.some((stack) => stack.itemId === itemId && stack.quantity > 0)) {
@@ -52,4 +56,50 @@ export function ensureStartingHuntingTool(save: PlayerSave): PlayerSave {
   }
 
   return save
+}
+
+function remapRetiredNetId(itemId: string): string {
+  return itemId === RETIRED_FISHING_NET_ITEM_ID ? STARTING_HUNTING_TOOL_ID : itemId
+}
+
+function stackMergeKey(stack: InventoryStack | EquippedStack): string {
+  const enchantment = stack.enchantmentId ?? ''
+  const favorite = stack.favorite === true ? '1' : '0'
+  return `${stack.itemId}\0${enchantment}\0${favorite}`
+}
+
+function mergeRemappedStacks<T extends InventoryStack>(stacks: T[]): T[] {
+  const merged: T[] = []
+  const indexByKey = new Map<string, number>()
+  for (const stack of stacks) {
+    const next = { ...stack, itemId: remapRetiredNetId(stack.itemId) }
+    const key = stackMergeKey(next)
+    const existingIndex = indexByKey.get(key)
+    if (existingIndex == null) {
+      indexByKey.set(key, merged.length)
+      merged.push(next)
+      continue
+    }
+    const existing = merged[existingIndex]
+    if (!existing) continue
+    merged[existingIndex] = {
+      ...existing,
+      quantity: existing.quantity + next.quantity,
+    }
+  }
+  return merged
+}
+
+/** Turn leftover Fishing Nets into the regular hunting Net. */
+export function replaceFishingNetsWithNet(save: PlayerSave): PlayerSave {
+  const slots: Record<string, EquippedStack | null> = {}
+  for (const [slotId, stack] of Object.entries(save.equipment.slots)) {
+    slots[slotId] = stack ? { ...stack, itemId: remapRetiredNetId(stack.itemId) } : null
+  }
+  return {
+    ...save,
+    inventory: mergeRemappedStacks(save.inventory),
+    bank: mergeRemappedStacks(save.bank ?? []),
+    equipment: { ...save.equipment, slots },
+  }
 }

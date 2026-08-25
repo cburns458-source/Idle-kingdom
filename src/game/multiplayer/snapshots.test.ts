@@ -3,6 +3,7 @@ import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { prepareDatabase } from '../data/loadDatabase'
 import { createNewSave } from '../save/saveStore'
+import { WEAPON_TOOL_SLOT_ID, equipStackToSlot } from '../equipment/loadout'
 import { COMBAT_SKILL_ID } from '../combat/stats'
 import { totalLevel, totalSkillXp } from '../skills/totals'
 import {
@@ -139,6 +140,20 @@ describe('leaderboard snapshot builder', () => {
     expect(stats.totalLevel).toBe(totalLevel(save))
     expect(stats.totalXp).toBe(totalSkillXp(save))
     expect(stats.skills.find((skill) => skill.skillId === COMBAT_SKILL_ID)?.level).toBe(18)
+    expect(stats.skills.find((skill) => skill.skillId === COMBAT_SKILL_ID)?.xp).toBe(4000)
+    expect(snapshot.boards.find((board) => board.boardKey === `skill:${COMBAT_SKILL_ID}`)?.secondaryValue).toBe(
+      4000,
+    )
     expect(stats.skills).toHaveLength(launch.Skills.filter((row) => row['Release Phase'] === 'Launch').length)
+  })
+
+  it('publishes equipped slots with the snapshot', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const save = equipStackToSlot(createNewSave(launch), WEAPON_TOOL_SLOT_ID, 'ITEM-0110', 1)
+    const snapshot = buildLeaderboardSnapshot(launch, save)
+    expect(snapshot.equipment).toEqual([
+      { slotId: WEAPON_TOOL_SLOT_ID, itemId: 'ITEM-0110', quantity: 1, enchantmentId: null },
+    ])
+    expect(buildLeaderboardSnapshot(launch, createNewSave(launch)).equipment).toEqual([])
   })
 })

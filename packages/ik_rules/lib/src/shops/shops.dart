@@ -4,6 +4,7 @@ import 'package:ik_content/ik_content.dart';
 import '../activity/requirements.dart';
 import '../activity/xp.dart';
 import '../cosmetics/cosmetics.dart';
+import '../inventory/gold.dart';
 import '../js_compat.dart';
 import '../races/races.dart';
 import '../save/generated/save_models.dart';
@@ -24,13 +25,6 @@ class ShopStockEntry {
   String get mode => 'Sell';
 
   Map<String, Object?> toJson() => <String, Object?>{'itemId': itemId, 'mode': mode};
-}
-
-String currencyItemId(GameDatabase db) {
-  final raw = db.config
-      .firstWhereOrNull((row) => row.raw['Key'] == 'currency_item_id')
-      ?.raw['Value'];
-  return raw is String && raw.isNotEmpty ? raw : 'ITEM-0001';
 }
 
 List<ShopStockEntry> shopStockEntries(ShopRow shop) {

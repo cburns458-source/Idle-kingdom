@@ -12,6 +12,7 @@ import {
   guildRankOptions,
   chatLineUsername,
   guildRosterRows,
+  guildTagForName,
   leaderboardRows,
   leaveGuildPrompt,
   authGateIntro,
@@ -377,6 +378,13 @@ describe('leaderboard views', () => {
     expect(rows[2].username).toBe('[IRN] Iron League')
     expect(rows[2].subtitle).toBe('4/25 members')
     expect(rows[2].emblem?.symbol).toBe('shield')
+  })
+
+  it('fills a missing guild tag from the guild name', () => {
+    const rows = leaderboardRows([entry({ value: 12, guildName: 'Iron League' })], {
+      tagForGuildName: (name) => guildTagForName(name, { listings: [{ name: 'Iron League', tag: 'IRN' }] }),
+    })
+    expect(rows[0].username).toBe('[IRN]Hero')
   })
 
   it('points an empty board at the way to fill it', () => {

@@ -1,5 +1,6 @@
 import {
   activityStillValid,
+  bossRespawnWaitUntilMs,
   clearActivitySave,
   completeGatheringAction,
   generateNextAction,
@@ -159,11 +160,16 @@ function roundMessage(enemy: EnemyRow, round: ReturnType<typeof resolveCombatRou
     round.staffHit != null && round.staffHit > 0 ? ` Sparks hit ${round.staffHit}.` : ''
   const name = enemy['Display Name']
   if (round.enemyHit == null) {
-    return `You ${hitLabel}.${offhandLabel}${sparksLabel} ${name} is bound and cannot attack.`
+    return round.enemyAsleep
+      ? `You ${hitLabel}.${offhandLabel}${sparksLabel} ${name} sleeps.`
+      : `You ${hitLabel}.${offhandLabel}${sparksLabel} ${name} is bound and cannot attack.`
   }
+  const swing = round.enemyRampage
+    ? `${name} rampages for ${round.enemyHit}`
+    : `${name} hits ${round.enemyHit}`
   return round.thornsHit > 0
-    ? `You ${hitLabel}.${offhandLabel}${sparksLabel} ${name} hits ${round.enemyHit}. Thorns reflects ${round.thornsHit}.`
-    : `You ${hitLabel}.${offhandLabel}${sparksLabel} ${name} hits ${round.enemyHit}.`
+    ? `You ${hitLabel}.${offhandLabel}${sparksLabel} ${swing}. Thorns reflects ${round.thornsHit}.`
+    : `You ${hitLabel}.${offhandLabel}${sparksLabel} ${swing}.`
 }
 
 function resolveDueCombatRound(
@@ -259,6 +265,7 @@ function resolveDueCombatRound(
     combatEnemyHp: round.enemyHp,
     combatRoundStartedAt: new Date(roundEnd).toISOString(),
     combatSkipEnemyAttack: round.skipNextEnemyAttack,
+    combatBossSleepRoundsRemaining: round.bossSleepRoundsRemaining,
   })
   out.creditCritterTime(roundMs, roundEnd, random)
   out.emit({ kind: 'message', text: roundMessage(enemy, round) })
@@ -381,6 +388,8 @@ export function advanceSession(
   // for the player to pick a recipe instead of rolling an action.
   const activity = db.Activities.find((row) => row['Activity ID'] === activityId)
   if (activity && isStandardProductionActivity(db, activity)) return out.result()
+  const waitUntil = bossRespawnWaitUntilMs(db, out.current, activityId)
+  if (waitUntil != null && waitUntil > nowMs) return out.result()
   continueActivity(
     db,
     out,

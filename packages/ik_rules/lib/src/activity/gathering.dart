@@ -17,7 +17,11 @@ num gatheringDurationMs(GameDatabase db, PlayerSave save, ActionRow action) {
   final multiplier = skill.level < proficiency
       ? configNumber(db, 'gathering_below_proficiency_duration_multiplier', 2)
       : 1;
-  final actionTimeReduction = equippedActionTimeReductionPercent(db, save);
+  final actionTimeReduction = equippedActionTimeReductionPercent(
+    db,
+    save,
+    jsString(action.raw['Relevant Skill ID']),
+  );
   final reductionFactor = math.max(0.01, 1 - actionTimeReduction / 100);
   final enchantFactor = equippedEnchantmentGatheringMultiplier(db, save);
   return math.max(0, baseSeconds * multiplier * reductionFactor * enchantFactor * 1000);

@@ -31,9 +31,32 @@ void main() {
     expect(stats.totalXp, totalSkillXp(save));
     expect(stats.logCompletionPercent, logCompletion(db, save).overall.percent);
     expect(stats.skills.where((skill) => skill.skillId == combatSkillId).single.level, 18);
+    expect(stats.skills.where((skill) => skill.skillId == combatSkillId).single.xp, 4000);
+    expect(
+      snapshot.boards
+          .where((board) => board.boardKey == skillBoardKey(combatSkillId))
+          .single
+          .secondaryValue,
+      4000,
+    );
     expect(
       stats.skills,
       hasLength(db.skills.where((row) => row.raw['Release Phase'] == 'Launch').length),
     );
+  });
+
+  test('publishes equipped slots with the snapshot', () {
+    final db = _database();
+    final save = equipStackToSlot(
+      createNewSave(db, 1786568400000),
+      weaponToolSlotId,
+      'ITEM-0110',
+      1,
+    );
+    final snapshot = buildLeaderboardSnapshot(db, save);
+    expect(snapshot.equipment, hasLength(1));
+    expect(snapshot.equipment.single.slotId, weaponToolSlotId);
+    expect(snapshot.equipment.single.itemId, 'ITEM-0110');
+    expect(buildLeaderboardSnapshot(db, createNewSave(db, 1786568400000)).equipment, isEmpty);
   });
 }

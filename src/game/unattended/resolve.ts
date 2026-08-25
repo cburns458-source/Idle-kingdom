@@ -4,6 +4,7 @@ import {
   completeGatheringAction,
   generateNextAction,
   restoreActiveActionState,
+  bossRespawnWaitUntilMs,
 } from '../activity/engine'
 import { configNumber } from '../activity/gathering'
 import type { RandomFn } from '../activity/pools'
@@ -109,6 +110,9 @@ export function resolveUnattendedProgress(
   }
 
   const production = resolveProductionProgress(db, current, endMs, random)
+  if (production.blockedByInventory) {
+    messages.push('Crafting paused: inventory is full.')
+  }
   if (production.craftsCompleted > 0 || production.activityMs > 0) {
     current = production.save
     craftsCompleted = production.craftsCompleted
@@ -244,6 +248,7 @@ export function resolveUnattendedProgress(
         combatEnemyHp: round.enemyHp,
         combatRoundStartedAt: new Date(roundEnd).toISOString(),
         combatSkipEnemyAttack: round.skipNextEnemyAttack,
+        combatBossSleepRoundsRemaining: round.bossSleepRoundsRemaining,
       }
       const critter = applyActivityTimeTowardCritters(
         continued,
@@ -310,12 +315,15 @@ export function resolveUnattendedProgress(
         messages.push('Activity stopped — requirements no longer met.')
         break
       }
+      const waitUntil = bossRespawnWaitUntilMs(db, current, current.currentActivityId)
+      const startAt = waitUntil != null ? waitUntil : endMs
+      if (startAt > endMs) break
       const generated = generateNextAction(
         db,
         current,
         current.currentActivityId,
         random,
-        endMs,
+        startAt,
       )
       if (!generated) break
       // If generation only stamps "now" without being due, avoid looping forever:
@@ -327,7 +335,7 @@ export function resolveUnattendedProgress(
         break
       }
       current = generated.save
-      lastResolvedMs = endMs
+      lastResolvedMs = startAt
       continue
     }
 

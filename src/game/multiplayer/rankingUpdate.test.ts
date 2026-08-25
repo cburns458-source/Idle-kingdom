@@ -1,15 +1,20 @@
 import { describe, expect, it } from 'vitest'
 import {
   canUpdateRanking,
+  msUntilNextUtcHour,
   parseRankingSubmitAt,
   rankingCooldownMessage,
   rankingCooldownRemainingMs,
+  RANKING_PUBLISH_DEBOUNCE_MS,
   RANKING_UPDATE_COOLDOWN_MS,
   RANKING_UPDATE_READY_HINT,
   rankingUpdateHint,
   rankingUpdateStorageKey,
   shouldAutoSubmitRanking,
+  shouldPublishForUtcHour,
+  shouldPublishOnOpen,
   utcDayKey,
+  utcHourKey,
 } from './rankingUpdate'
 
 const noon = 1_786_568_400_000
@@ -45,6 +50,19 @@ describe('ranking update policy', () => {
     )
     expect(rankingUpdateHint(startOfDay, startOfDay)).toBe('You can update your ranking again in 1 hour.')
     expect(rankingUpdateHint(null, startOfDay)).toBe(RANKING_UPDATE_READY_HINT)
+  })
+
+  it('uses UTC hour marks and a short debounce for opening the app', () => {
+    expect(utcHourKey(startOfDay).endsWith('T00')).toBe(true)
+    expect(utcHourKey(startOfDay + 15 * 60 * 1000)).toBe(utcHourKey(startOfDay))
+    expect(msUntilNextUtcHour(startOfDay)).toBe(60 * 60 * 1000)
+    expect(msUntilNextUtcHour(startOfDay + 15 * 60 * 1000)).toBe(45 * 60 * 1000)
+    expect(shouldPublishForUtcHour(null, startOfDay)).toBe(true)
+    expect(shouldPublishForUtcHour(startOfDay, startOfDay + 59 * 60 * 1000)).toBe(false)
+    expect(shouldPublishForUtcHour(startOfDay, startOfDay + 60 * 60 * 1000)).toBe(true)
+    expect(shouldPublishOnOpen(null, startOfDay)).toBe(true)
+    expect(shouldPublishOnOpen(startOfDay, startOfDay + 1000)).toBe(false)
+    expect(shouldPublishOnOpen(startOfDay, startOfDay + RANKING_PUBLISH_DEBOUNCE_MS)).toBe(true)
   })
 
   it('parses a stored timestamp', () => {

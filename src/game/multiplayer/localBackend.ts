@@ -490,10 +490,16 @@ export class LocalMultiplayerBackend {
         updatedAt,
       })
     }
-    // Refresh profile cosmetics snapshot from save.
+    // Refresh profile cosmetics and the published loadout from the save.
     local.profiles = local.profiles.map((row) =>
       row.userId === userId
-        ? { ...row, appearance: save.appearance, username: save.characterName || row.username, updatedAt }
+        ? {
+            ...row,
+            appearance: save.appearance,
+            username: save.characterName || row.username,
+            publishedEquipment: snapshot.equipment,
+            updatedAt,
+          }
         : row,
     )
     this.write(local)
@@ -693,6 +699,14 @@ export class LocalMultiplayerBackend {
   countUnreadDirectMessages(viewerId: string, sinceIso: string | null): number {
     const sinceMs = sinceIso ? Date.parse(sinceIso) : 0
     return this.listDirectMessages(viewerId, 200).filter(
+      (row) => row.userId !== viewerId && Date.parse(row.createdAt) > sinceMs,
+    ).length
+  }
+
+  /** Public-channel lines from other players after `sinceIso` (exclusive). */
+  countUnreadChat(viewerId: string, channel: ChatChannel, sinceIso: string | null): number {
+    const sinceMs = sinceIso ? Date.parse(sinceIso) : 0
+    return this.listChat(channel, viewerId).filter(
       (row) => row.userId !== viewerId && Date.parse(row.createdAt) > sinceMs,
     ).length
   }
@@ -1313,7 +1327,12 @@ export class LocalMultiplayerBackend {
       appearance: profile.appearance,
       guildName: profile.guildName,
       publicSkills: profile.privacyPublicSkills ? skills : [],
-      publicEquipment: profile.privacyPublicGear !== false ? publicEquipmentFromSave(save) : null,
+      publicEquipment:
+        profile.privacyPublicGear !== false
+          ? save != null
+            ? publicEquipmentFromSave(save)
+            : (profile.publishedEquipment ?? [])
+          : null,
       achievementsUnlocked: save?.achievements.filter((row) => row.unlocked).length ?? 0,
       totalLevel: (() => {
         const total = skills.reduce((sum, skill) => sum + skill.level, 0)

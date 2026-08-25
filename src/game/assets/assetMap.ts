@@ -47,6 +47,7 @@ export const LOCATION_ASSET_PATHS: Record<string, string> = {
   'LOC-0034': '/assets/locations/loc_town_bank.webp',
   'LOC-0035': '/assets/locations/loc_citadel_bank.webp',
   'LOC-0036': '/assets/locations/loc_temple.webp',
+  'LOC-0037': '/assets/locations/loc_castle_crypt.webp',
 }
 
 export function mapAssetPath(mapId: string): string {

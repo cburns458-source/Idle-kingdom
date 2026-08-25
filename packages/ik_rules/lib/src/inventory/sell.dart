@@ -6,6 +6,7 @@ import 'package:ik_content/ik_content.dart';
 import '../js_compat.dart';
 import '../save/generated/save_models.dart';
 import '../shops/shops.dart';
+import 'gold.dart';
 import 'favorites.dart';
 
 /// Off-shop / field sale: half of Base Sell Value.

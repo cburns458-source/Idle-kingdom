@@ -6,7 +6,10 @@ import {
   dwarvenMiningStoreRequiredLevel,
 } from '../races/races'
 import type { GameDatabase, ItemRow, ShopRow } from '../data/types'
+import { currencyItemId } from '../inventory/gold'
 import type { PlayerSave } from '../save/types'
+
+export { currencyItemId }
 
 export const ESSENCE_ITEM_ID = 'ITEM-0011'
 export const SHOP_BUY_MULT = 2
@@ -18,11 +21,6 @@ export interface ShopStockEntry {
   itemId: string
   /** Shop sells this item to the player. */
   mode: 'Sell'
-}
-
-export function currencyItemId(db: GameDatabase): string {
-  const raw = db.Config.find((row) => row.Key === 'currency_item_id')?.Value
-  return typeof raw === 'string' && raw.length > 0 ? raw : 'ITEM-0001'
 }
 
 export function shopStockEntries(shop: ShopRow): ShopStockEntry[] {

@@ -3,6 +3,7 @@ import {
   chatMessageFrom,
   cloudSaveRecordFrom,
   isPendingAccountUsername,
+  isPublicAdventurerUsername,
   isRemoteSaveNewer,
   leaderboardEntriesFrom,
   leaderboardRowsFor,
@@ -41,6 +42,8 @@ describe('remote identity', () => {
     expect(pendingAccountUsername('usr_0001')).toBe('pending_usr0001')
     expect(isPendingAccountUsername('pending_usr0001')).toBe(true)
     expect(isPendingAccountUsername('Hero')).toBe(false)
+    expect(isPublicAdventurerUsername('pending_usr0001')).toBe(false)
+    expect(isPublicAdventurerUsername('Hero')).toBe(true)
   })
 
   it('folds an email to one form so two spellings are one account', () => {
@@ -141,6 +144,7 @@ describe('remote leaderboards', () => {
           { boardKey: 'total_level', value: 42, secondaryValue: 1204 },
           { boardKey: 'gold_earned', value: 7 },
         ],
+        equipment: [],
       },
       '2026-08-12T21:00:00.000Z',
     )
@@ -176,6 +180,7 @@ describe('remote leaderboards', () => {
     }
 
     expect(leaderboardEntriesFrom([row], 'total_level')[0].secondaryValue).toBe(1204)
+    expect(leaderboardEntriesFrom([row], 'skill:SKL-0001')[0].secondaryValue).toBe(1204)
     expect(leaderboardEntriesFrom([row], 'gold_earned')[0].secondaryValue).toBeUndefined()
   })
 

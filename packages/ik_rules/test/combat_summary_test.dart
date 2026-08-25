@@ -79,6 +79,32 @@ void main() {
     expect(summary.reductionBreakdown.last.detail, '1');
   });
 
+  test('lists action time reduction on the tool\'s own skill', () {
+    final db = filterLaunchContent(assertGameDatabaseShape(contentDatabaseJson()));
+    final save = equipStackToSlot(createNewSave(db, 0), weaponToolSlotId, 'ITEM-0110', 1);
+    final summary = playerCombatStatSummary(db, save);
+    expect(summary.activeBonuses.map((bonus) => bonus.kind), contains('equipment'));
+    expect(summary.activeBonuses.map((bonus) => bonus.name), contains('Woodcutting'));
+    expect(
+      summary.activeBonuses.firstWhere((bonus) => bonus.name == 'Woodcutting').effect,
+      contains('5%'),
+    );
+    expect(
+      summary.activeBonuses.map((bonus) => bonus.name),
+      isNot(contains('Action time reduction')),
+    );
+  });
+
+  test('sums action time reduction when two pieces share a skill', () {
+    final db = filterLaunchContent(assertGameDatabaseShape(contentDatabaseJson()));
+    var save = equipStackToSlot(createNewSave(db, 0), weaponToolSlotId, 'ITEM-0110', 1);
+    save = equipStackToSlot(save, 'SLOT-0009', 'ITEM-0110', 1);
+    final summary = playerCombatStatSummary(db, save);
+    final woodcutting = summary.activeBonuses.where((bonus) => bonus.name == 'Woodcutting');
+    expect(woodcutting, hasLength(1));
+    expect(woodcutting.first.effect, contains('10%'));
+  });
+
   test('an unarmed save still lists Unarmed as a main-hand source', () {
     final fixture = loadParityFixtures('combat/stats').firstWhere((row) => row.name == 'base');
     final summary = playerCombatStatSummary(databaseOf(fixture), saveOf(fixture));

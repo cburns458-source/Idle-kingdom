@@ -136,13 +136,17 @@ String _roundMessage(EnemyRow enemy, CombatRoundResult round) {
       : '';
   final name = jsString(enemy.raw['Display Name']);
   if (round.enemyHit == null) {
-    return 'You $hitLabel.$offhandLabel$sparksLabel $name is bound and cannot attack.';
+    return round.enemyAsleep
+        ? 'You $hitLabel.$offhandLabel$sparksLabel $name sleeps.'
+        : 'You $hitLabel.$offhandLabel$sparksLabel $name is bound and cannot attack.';
   }
-  final enemyHit = jsString(round.enemyHit);
+  final swing = round.enemyRampage
+      ? '$name rampages for ${jsString(round.enemyHit)}'
+      : '$name hits ${jsString(round.enemyHit)}';
   return round.thornsHit > 0
-      ? 'You $hitLabel.$offhandLabel$sparksLabel $name hits $enemyHit. '
+      ? 'You $hitLabel.$offhandLabel$sparksLabel $swing. '
             'Thorns reflects ${jsNumberToString(round.thornsHit)}.'
-      : 'You $hitLabel.$offhandLabel$sparksLabel $name hits $enemyHit.';
+      : 'You $hitLabel.$offhandLabel$sparksLabel $swing.';
 }
 
 void _resolveDueCombatRound(
@@ -238,6 +242,7 @@ void _resolveDueCombatRound(
       combatEnemyHp: round.enemyHp,
       combatRoundStartedAt: isoFromMs(roundEnd),
       combatSkipEnemyAttack: round.skipNextEnemyAttack,
+      combatBossSleepRoundsRemaining: round.bossSleepRoundsRemaining,
     ),
   );
   out.creditCritterTime(roundMs, roundEnd, random);
@@ -353,6 +358,8 @@ SessionTickResult advanceSession(GameDatabase db, PlayerSave save, num nowMs, Ra
   // for the player to pick a recipe instead of rolling an action.
   final activity = getActivity(db, activityId!);
   if (activity != null && isStandardProductionActivity(db, activity)) return out.result();
+  final waitUntil = bossRespawnWaitUntilMs(db, out.current, activityId);
+  if (waitUntil != null && waitUntil > nowMs) return out.result();
   _continueActivity(
     db,
     out,

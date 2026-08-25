@@ -43,11 +43,19 @@ export async function submitLeaderboardFromSave(
     onConflict: REMOTE_LEADERBOARD_CONFLICT,
   })
   if (error) return { ok: false, reason: error.message }
-  await client.from(REMOTE_TABLES.profiles).upsert({
+  const { error: profileError } = await client.from(REMOTE_TABLES.profiles).upsert({
     user_id: session.userId,
     username: session.username,
     appearance_json: save.appearance,
+    equipment_json: snapshot.equipment,
   })
+  if (profileError) {
+    await client.from(REMOTE_TABLES.profiles).upsert({
+      user_id: session.userId,
+      username: session.username,
+      appearance_json: save.appearance,
+    })
+  }
   return { ok: true }
 }
 

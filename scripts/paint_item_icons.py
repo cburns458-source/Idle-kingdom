@@ -1124,6 +1124,21 @@ def paint_unique(c: Canvas, name: str) -> bool:
         c.put(22, 10, (196, 148, 72))
         c.put(23, 9, (168, 112, 56))
         return True
+    if "mage's wand" in n or 'mages wand' in n:
+        c.stamp_centered(
+            [
+                '...ggg...',
+                '..gGGGg..',
+                '.gGGGGGg.',
+                '..gGGGg..',
+                '...HHH...',
+                '...HHH...',
+                '...HHH...',
+                '...ddd...',
+            ],
+            {'g': GEM['emerald'][0], 'G': GEM['emerald'][2], 'H': WOOD['maple'][1], 'd': WOOD['maple'][2]},
+        )
+        return True
     if 'staff of sparks' in n:
         paint_battle_staff(c, (88, 176, 255), (40, 96, 196))
         return True
@@ -1169,8 +1184,19 @@ def paint_unique(c: Canvas, name: str) -> bool:
     if 'aether' in n:
         metal_body(c, CHEST, 'aether')
         return True
-    if 'leather gloves' in n:
-        c.stamp_centered(GLOVES, mp(LEATHER))
+    if n.startswith('leather ') and any(
+        piece in n for piece in ('helmet', 'chest', 'plateleg', 'boot', 'glove')
+    ):
+        if 'glove' in n:
+            c.stamp_centered(GLOVES, mp(LEATHER))
+        elif 'plateleg' in n or n.endswith('legs'):
+            c.stamp_centered(LEGS, mp(LEATHER))
+        elif 'chest' in n:
+            c.stamp_centered(CHEST, mp(LEATHER))
+        elif 'helmet' in n:
+            c.stamp_centered(HELMET, mp(LEATHER))
+        else:
+            c.stamp_centered(BOOTS, mp(LEATHER))
         return True
     if 'lucky necklace' in n:
         c.stamp_centered(
@@ -1346,19 +1372,34 @@ def compose_item(name: str) -> Image.Image:
             metal_body(c, SHIELD, name)
         return c.image()
     if 'plateleg' in n or n.endswith('legs'):
-        metal_body(c, LEGS, name)
+        if 'leather' in n:
+            c.stamp_centered(LEGS, mp(LEATHER))
+        else:
+            metal_body(c, LEGS, name)
         return c.image()
     if 'chest' in n or 'tunic' in n:
-        metal_body(c, CHEST, name)
+        if 'leather' in n:
+            c.stamp_centered(CHEST, mp(LEATHER))
+        else:
+            metal_body(c, CHEST, name)
         return c.image()
     if 'helmet' in n:
-        metal_body(c, HELMET, name)
+        if 'leather' in n:
+            c.stamp_centered(HELMET, mp(LEATHER))
+        else:
+            metal_body(c, HELMET, name)
         return c.image()
     if 'boot' in n:
-        metal_body(c, BOOTS, name)
+        if 'leather' in n:
+            c.stamp_centered(BOOTS, mp(LEATHER))
+        else:
+            metal_body(c, BOOTS, name)
         return c.image()
     if 'glove' in n:
-        metal_body(c, GLOVES, name)
+        if 'leather' in n:
+            c.stamp_centered(GLOVES, mp(LEATHER))
+        else:
+            metal_body(c, GLOVES, name)
         return c.image()
     if 'fishing rod' in n or n.endswith('rod'):
         tool(c, ROD, name)

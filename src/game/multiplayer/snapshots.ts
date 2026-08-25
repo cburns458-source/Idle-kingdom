@@ -4,7 +4,13 @@ import { levelForTotalXp } from '../activity/xp'
 import { logCompletion } from '../log/log'
 import { rankedPvpKd } from '../pvp/matchmaking'
 import { isPacifistSave, totalLevel, totalSkillXp } from '../skills/totals'
-import type { LeaderboardEntry, MultiplayerBoardKey, PublicPlayerProfile } from './types'
+import {
+  publicEquipmentFromSave,
+  type LeaderboardEntry,
+  type MultiplayerBoardKey,
+  type PublicEquippedSlot,
+  type PublicPlayerProfile,
+} from './types'
 
 export interface LeaderboardBoardValue {
   boardKey: MultiplayerBoardKey
@@ -15,6 +21,8 @@ export interface LeaderboardBoardValue {
 
 export interface LeaderboardSnapshotValues {
   boards: LeaderboardBoardValue[]
+  /** Equipped slots published with the ranking submit. */
+  equipment: PublicEquippedSlot[]
 }
 
 /** Build leaderboard snapshot values from a local save (submitted on a ranking update). */
@@ -60,12 +68,10 @@ export function buildLeaderboardSnapshot(
     const progress = save.skills.find((row) => row.skillId === skill['Skill ID'])
     const level = progress?.level ?? 1
     const xp = progress?.xp ?? 0
-    // Post-100 boards rank by XP; at/under 100 rank by level (XP still stored for ties).
-    const value = level > 100 ? xp : level
-    boards.push({ boardKey: `skill:${skill['Skill ID']}`, value })
+    boards.push({ boardKey: `skill:${skill['Skill ID']}`, value: level, secondaryValue: xp })
   }
 
-  return { boards }
+  return { boards, equipment: publicEquipmentFromSave(save) }
 }
 
 export function boardLabel(db: GameDatabase, boardKey: MultiplayerBoardKey): string {
@@ -136,7 +142,15 @@ export function publicProfileStatsFromLeaderboardRows(
     if (!key.startsWith('skill:')) continue
     const skillId = key.slice('skill:'.length)
     if (!skillId) continue
-    if (value > 100) {
+    const secondary = row.value_secondary ?? row.secondaryValue
+    if (typeof secondary === 'number') {
+      skills.push({
+        skillId,
+        level: value < 1 ? 1 : value,
+        xp: secondary,
+      })
+    } else if (value > 100) {
+      // Older snapshots stored post-100 XP as the only value.
       skills.push({
         skillId,
         level: db ? levelForTotalXp(db, value) : 101,

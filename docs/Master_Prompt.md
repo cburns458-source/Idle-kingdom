@@ -1,11 +1,11 @@
 # IDLE KINGDOMS — CURSOR MASTER BUILD PROMPT
 
-You are the implementation agent for the RestoriaIdle single-player demo.
+You are the implementation agent for the RestoriaIdle live multiplayer demo.
 
 Work directly from the supplied repository plus these two source files:
 
-1. `Idle_Kingdoms_Single_Player_Demo_Game_Bible(2).txt`
-2. `Idle_Kingdoms_Single_Player_Demo_Compact_Database.json`
+1. `docs/Game_Bible.txt`
+2. `content/data/game-database.json`
 
 Your job is to build the playable demo in controlled steps without inventing game design, balance, content, or requirements.
 
@@ -18,7 +18,7 @@ Use this authority order:
 3. The JSON database for exact data records, IDs, relationships, numeric values, requirements, timings, rewards, progression values, enemies, equipment, recipes, projects, shops, quests, achievements, and other content data.
 4. Existing repository code only when it does not conflict with the sources above.
 
-The Game Bible is the current design source of truth for the single-player demo.
+The Game Bible is the current design source of truth for the live multiplayer demo.
 
 When the Game Bible says an exact value belongs in game data, use the JSON database value.
 
@@ -30,11 +30,12 @@ Do not invent missing design values.
 
 ## 2. DEMO BOUNDARIES
 
-This is a single-player idle RPG web demo.
+This is a live multiplayer idle RPG web demo. Offline guest play is retired.
 
 Preserve these core requirements:
 
-- One automatically created and loaded local save.
+- Sign-in is required before play. One account carries one character.
+- The account save is the source of truth and is written back automatically.
 - One Primary Activity slot.
 - Combat, Gathering, and Standard Production use the Primary Activity slot.
 - Starting a new Primary Activity replaces the previous one.
@@ -46,11 +47,11 @@ Preserve these core requirements:
 - Content is data-driven rather than individually hardcoded.
 - Stable database IDs are used for relationships.
 - The experience is portrait-oriented, readable, cozy, mobile-first, and suitable for long idle sessions.
-- Multiplayer is an owner-approved exception (Quests / Recipe Book / Multiplayer roadmap): optional Supabase accounts, cloud save, leaderboards, chat, guilds, presence, and Citadel placeholder. Local offline play must remain intact; multiplayer UI stays hidden until signed in. Combat/gathering stay client-resolved with soft server validation — do not make the game remotely authoritative in v1. Do not require login for core single-player loops.
+- Social systems (presence, chat, guilds, leaderboards, bounties, bazaar, arena) are part of ordinary play. Combat and gathering stay client-resolved with soft server validation — do not make the game remotely authoritative in this demo.
 
 Do not add features simply because they are common in other RPGs.
 
-Do not add currencies, energy systems, monetization systems, cosmetics, character customization, animation systems, or other systems not defined by the supplied sources.
+Do not add currencies, energy systems, monetization systems, or other systems not defined by the supplied sources. Cosmetics and character customization exist only to the extent the Game Bible and database already define them.
 
 ## 3. DATABASE STATUS AND RELEASE RULES
 
@@ -300,14 +301,16 @@ Do not silently delete source rows because they are not currently used.
 
 ## 9. SAVE RULES
 
-The save system must remain local for the single-player demo.
+The save belongs to the signed-in account.
 
 Required behavior includes:
-- Create one save automatically on first launch.
-- Automatically load it on future launches.
+- Require sign-in before play.
+- Create one character save on the account when the player first creates a character.
+- Load that account save on later sign-ins, and sign the other device out.
+- Write the save back automatically.
 - Preserve skills and XP.
-- Preserve inventory.
-- Preserve equipment.
+- Preserve inventory and bank.
+- Preserve equipment, cosmetics, and appearance.
 - Preserve currency.
 - Preserve quests.
 - Preserve achievements.
@@ -320,9 +323,7 @@ Required behavior includes:
 - Preserve save version.
 - Support safe migration/versioning as the demo evolves.
 
-Do not add a login screen as a prerequisite to loading the demo.
-
-Do not require a server to recover ordinary local gameplay state.
+Do not restore an offline guest path.
 
 ## 10. GAMEPLAY RULES THAT MUST NOT BE CASUALLY CHANGED
 
@@ -343,13 +344,13 @@ Examples include:
 - Activity pools generate Actions by weight.
 - Mixed-skill pools are allowed only when equipment requirements are compatible.
 - XP is awarded according to the generated Action.
-- A running Activity recalculates when relevant state changes.
+- Requirements are re-checked at Action boundaries. An in-progress Action keeps the duration and encounter computed when it was generated.
 
 ### Gathering
 - Gathering is not hard skill-level locked.
 - Mandatory tools still apply.
 - Below Proficiency Level, Base Duration is multiplied by the defined penalty.
-- XP and rewards otherwise remain unchanged unless source data says otherwise.
+- Below Proficiency Level, gathering XP is multiplied by the defined XP penalty. Item and gold rewards are unchanged.
 
 ### Production
 - Standard Production is hard-gated by defined requirements.
@@ -392,20 +393,20 @@ Goal:
 Create or stabilize the minimum runtime foundation.
 
 Include:
-- Application launches directly into the single-player experience.
+- Application launches into the signed-in live-demo experience.
 - Load the compact JSON database.
 - Typed or validated access to content.
 - Stable ID lookup and reference validation.
 - Launch-content filtering without destroying source data.
-- One automatically created/loaded local save.
+- One account-owned character save, created at character creation and loaded on later sign-ins.
 - Save version field and migration structure.
 - Minimal diagnostics for data errors during development.
 - Preserve any already-correct architecture.
 
 Owner playtest should verify at minimum:
-- Game launches without login.
-- New local save is created automatically.
-- Reloading returns to the same save.
+- Game requires sign-in before play.
+- New account save is created at character creation.
+- Signing in again returns to the same save.
 - Source database loads without runtime errors.
 
 STOP for owner approval.
@@ -619,7 +620,7 @@ Quests:
 
 Achievements/statistics:
 - Track only supported categories.
-- Persist in the local save.
+- Persist in the account save.
 
 Owner playtest should verify representative flows for each implemented system.
 
@@ -780,14 +781,13 @@ Do not:
 - invent NPC dialogue,
 - invent quest content,
 - invent lore,
-- add multiplayer,
-- add login requirements,
 - add unnecessary backend services,
 - add analytics/telemetry unless explicitly requested,
 - add monetization,
 - add energy systems,
 - add extra currencies,
-- add cosmetics or customization systems not in scope,
+- restore offline guest play,
+- add cosmetics or customization systems not defined by the sources,
 - implement Expansion content simply because it exists in the database,
 - hardcode large content lists that belong in data,
 - replace working systems without reason,
@@ -800,7 +800,7 @@ Do not:
 
 The task is complete only when the owner has approved each implemented checkpoint and the Launch demo satisfies the source-defined completion target with:
 
-- automatic local save,
+- signed-in account save,
 - world exploration and travel,
 - Primary Activities,
 - Gathering,

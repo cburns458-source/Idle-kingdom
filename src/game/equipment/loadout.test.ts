@@ -108,25 +108,26 @@ describe('equipment loadout', () => {
     expect(result.reason).toMatch(/Mining level 35/i)
   })
 
-  it('applies action time reduction from equipped tools', () => {
+  it('applies action time reduction only to the tool\'s own skill', () => {
     const { launch } = prepareDatabase(rawDatabase)
     let save = createNewSave(launch)
-    // Clear starting Net so ATR is only from pickaxe.
-    const clearedNet = unequipSlot(save, 'SLOT-0001')
-    expect(clearedNet.ok).toBe(true)
-    if (!clearedNet.ok) return
-    save = clearedNet.save
-    save = addItemToInventory(save, 'ITEM-0111', 1) // Copper Pickaxe ATR 5
+    save = addItemToInventory(save, 'ITEM-0111', 1) // Copper Pickaxe, Mining ATR 5
     const equipped = equipItemFromInventory(launch, save, 'ITEM-0111')
     expect(equipped.ok).toBe(true)
     if (!equipped.ok) return
 
     const digClay = launch.Actions.find((action) => action['Action ID'] === 'ACN-0019')!
-    const base = Number(digClay['Base Duration Seconds'] ?? 0)
-    const proficiency = Number(digClay['Proficiency Level'] ?? 1)
-    const mult = 1 < proficiency ? 2 : 1
-    const expected = Math.round(base * mult * 0.95 * 1000)
-    expect(gatheringDurationMs(launch, equipped.save, digClay)).toBe(expected)
+    const cutCedar = launch.Actions.find((action) => action['Action ID'] === 'ACN-0046')!
+    const clayBase = Number(digClay['Base Duration Seconds'] ?? 0)
+    const clayMult = 1 < Number(digClay['Proficiency Level'] ?? 1) ? 2 : 1
+    const cedarBase = Number(cutCedar['Base Duration Seconds'] ?? 0)
+    const cedarMult = 1 < Number(cutCedar['Proficiency Level'] ?? 1) ? 2 : 1
+    expect(gatheringDurationMs(launch, equipped.save, digClay)).toBe(
+      Math.round(clayBase * clayMult * 0.95 * 1000),
+    )
+    expect(gatheringDurationMs(launch, equipped.save, cutCedar)).toBe(
+      Math.round(cedarBase * cedarMult * 1000),
+    )
   })
 
   it('clamps current HP when max HP drops', () => {
@@ -298,6 +299,7 @@ describe('equipment loadout', () => {
     expect(isTwoHandedItem(launch, 'ITEM-0305')).toBe(true)
     expect(isTwoHandedItem(launch, 'ITEM-0306')).toBe(true)
     expect(isTwoHandedItem(launch, 'ITEM-0122')).toBe(false) // Goblin Staff
+    expect(isTwoHandedItem(launch, 'ITEM-0307')).toBe(false) // Mage's Wand
     expect(isTwoHandedItem(launch, 'ITEM-0124')).toBe(false) // Wooden Sword
   })
 

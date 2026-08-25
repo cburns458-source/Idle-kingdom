@@ -1,4 +1,4 @@
-import { ensureStartingHuntingTool } from './startingGear'
+import { ensureStartingHuntingTool, replaceFishingNetsWithNet } from './startingGear'
 import type { ActivePotionEffect, EquippedStack, PlayerSave, SaveMigration } from './types'
 import {
   DEFAULT_BEARD_ID,
@@ -470,6 +470,31 @@ export const SAVE_MIGRATIONS: SaveMigration[] = [
       ...save,
       combatSkipEnemyAttack: save.combatSkipEnemyAttack === true,
       saveVersion: 31,
+    }),
+  },
+  {
+    fromVersion: 31,
+    toVersion: 32,
+    migrate: (save) => ({
+      ...save,
+      combatBossSleepRoundsRemaining:
+        typeof save.combatBossSleepRoundsRemaining === 'number' &&
+        Number.isFinite(save.combatBossSleepRoundsRemaining)
+          ? save.combatBossSleepRoundsRemaining
+          : null,
+      bossRespawnUntilByEnemyId:
+        save.bossRespawnUntilByEnemyId && typeof save.bossRespawnUntilByEnemyId === 'object'
+          ? save.bossRespawnUntilByEnemyId
+          : {},
+      saveVersion: 32,
+    }),
+  },
+  {
+    fromVersion: 32,
+    toVersion: 33,
+    migrate: (save) => ({
+      ...replaceFishingNetsWithNet(save),
+      saveVersion: 33,
     }),
   },
 ]

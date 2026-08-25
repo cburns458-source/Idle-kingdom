@@ -568,20 +568,50 @@ class LeaderboardRowView {
   };
 }
 
-String _leaderboardDisplayName(LeaderboardEntry entry, bool isGuild) {
-  if (isGuild) return entry.username;
-  final tag = entry.guildTag?.trim();
-  return tag != null && tag.isNotEmpty ? '[$tag]${entry.username}' : entry.username;
+/// `[TAG]` from the player's own guild or a listing, when the row has a name
+/// but no tag of its own.
+String? guildTagForName(
+  String? guildName, {
+  String? ownName,
+  String? ownTag,
+  Iterable<GuildListing> listings = const <GuildListing>[],
+}) {
+  if (guildName == null || guildName.isEmpty) return null;
+  if (ownName == guildName && ownTag != null && ownTag.trim().isNotEmpty) {
+    return ownTag.trim();
+  }
+  for (final listing in listings) {
+    if (listing.name == guildName && listing.tag.trim().isNotEmpty) {
+      return listing.tag.trim();
+    }
+  }
+  return null;
 }
 
-List<LeaderboardRowView> leaderboardRows(List<LeaderboardEntry> entries) {
+String _leaderboardDisplayName(
+  LeaderboardEntry entry,
+  bool isGuild, {
+  String? Function(String? guildName)? tagForGuildName,
+}) {
+  if (isGuild) return entry.username;
+  final tagged = entry.guildTag?.trim();
+  final resolved = (tagged != null && tagged.isNotEmpty)
+      ? tagged
+      : tagForGuildName?.call(entry.guildName)?.trim();
+  return resolved != null && resolved.isNotEmpty ? '[$resolved]${entry.username}' : entry.username;
+}
+
+List<LeaderboardRowView> leaderboardRows(
+  List<LeaderboardEntry> entries, {
+  String? Function(String? guildName)? tagForGuildName,
+}) {
   return entries.map((entry) {
     final isGuild = entry.entryKind == LeaderboardEntryKind.guild;
     final experience = entry.secondaryValue;
     return LeaderboardRowView(
       rank: entry.rank,
       entryId: entry.userId,
-      username: _leaderboardDisplayName(entry, isGuild),
+      username: _leaderboardDisplayName(entry, isGuild, tagForGuildName: tagForGuildName),
       subtitle: isGuild ? (entry.guildName ?? 'Guild') : '',
       valueLabel: entry.boardKey == boardLogCompletion
           ? '${jsNumberToString(entry.value)}%'
@@ -753,6 +783,7 @@ class ChatTabView {
     required this.label,
     required this.enabled,
     required this.selected,
+    this.unread = 0,
   });
 
   final ChatTab tab;
@@ -764,11 +795,15 @@ class ChatTabView {
   final bool enabled;
   final bool selected;
 
+  /// New lines waiting on this tab. Zero when notifications are off.
+  final num unread;
+
   Map<String, Object?> toJson() => <String, Object?>{
     'tab': tab.wire,
     'label': label,
     'enabled': enabled,
     'selected': selected,
+    'unread': unread,
   };
 }
 
@@ -791,14 +826,16 @@ List<ChatTabView> chatTabs({
   required bool hasGuild,
   required bool hasGuest,
   required num unreadDms,
+  Map<ChatTab, num> unread = const <ChatTab, num>{},
 }) {
   return chatTabOrder.map((tab) {
+    final waiting = unread[tab] ?? (tab == ChatTab.dm ? unreadDms : 0);
     final label = switch (tab) {
       ChatTab.global => 'Global',
       ChatTab.local => citadelHub ? 'Citadel' : 'Local',
       ChatTab.guild => 'Guild',
       ChatTab.guest => 'Guest',
-      ChatTab.dm => unreadDms > 0 ? 'Private (${jsNumberToString(unreadDms)})' : 'Private',
+      ChatTab.dm => waiting > 0 ? 'Private (${jsNumberToString(waiting)})' : 'Private',
     };
     return ChatTabView(
       tab: tab,
@@ -809,6 +846,7 @@ List<ChatTabView> chatTabs({
         _ => true,
       },
       selected: tab == selected,
+      unread: waiting,
     );
   }).toList();
 }
@@ -849,6 +887,13 @@ const String chatViewGuildsLabel = 'View guilds';
 
 /// Where the read cursor for one account's DMs is kept.
 String dmReadCursorKey(String userId) => 'idle-kingdoms.chat.dm-read-at:$userId';
+
+/// Where the read cursor for one public chat room is kept.
+String chatReadCursorKey(String userId, String channelKey) =>
+    'idle-kingdoms.chat.read-at:$userId:$channelKey';
+
+/// Device toggle for a channel's unread bubble. Absent means on.
+String chatNotifyStorageKey(ChatTab tab) => 'idle-kingdoms.client.chat-notify:${tab.wire}';
 
 /// One line of a chat room.
 class ChatLineView {

@@ -37,6 +37,15 @@ class _AccountPanelState extends State<AccountPanel> {
   MultiplayerController get net => widget.multiplayer;
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !net.isSignedIn) return;
+      net.refresh(widget.controller.save);
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
       listenable: Listenable.merge(<Listenable>[widget.controller, net]),

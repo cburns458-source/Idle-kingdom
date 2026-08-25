@@ -105,11 +105,19 @@ MultiplayerController buildMultiplayer(
   TestClock? clock,
   bool signedIn = true,
   bool testerAccess = true,
+  bool cloudUnavailable = false,
   TestAccount account = testAccount,
 }) {
   final testClock = clock ?? TestClock();
   final storage = MemorySaveStorage();
-  final service = LocalMultiplayerService(storage: storage);
+  var ids = 0;
+  final service = LocalMultiplayerService(
+    storage: storage,
+    ports: LocalBackendPorts(
+      nowMs: testClock.read,
+      newId: (prefix) => '${prefix}_${(ids += 1).toString().padLeft(4, '0')}',
+    ),
+  );
   service.ensureDemoWorld(database.launch);
   registerTestAccount(service, account: account);
   if (signedIn) {
@@ -120,6 +128,7 @@ MultiplayerController buildMultiplayer(
     service: service,
     storage: storage,
     clock: testClock.read,
+    cloudUnavailable: cloudUnavailable,
   );
   if (testerAccess) net.unlockTesterAccess(testerPasskey);
   return net;

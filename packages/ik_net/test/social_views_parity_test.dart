@@ -446,6 +446,13 @@ void main() {
                 hasGuild: true,
                 hasGuest: true,
                 unreadDms: 12,
+                unread: const <ChatTab, num>{
+                  ChatTab.global: 2,
+                  ChatTab.local: 1,
+                  ChatTab.guild: 4,
+                  ChatTab.guest: 0,
+                  ChatTab.dm: 12,
+                },
               ),
             ),
             'badges': <num>[0, 1, 9, 10, 99].map(unreadBadgeLabel).toList(),
@@ -480,6 +487,8 @@ void main() {
             'emptyMessages': chatTabOrder.map(emptyChatMessage).toList(),
             'hints': <String>[chatDmHint, chatNoGuildNotice, chatNoGuestNotice],
             'cursorKey': dmReadCursorKey('usr_0001'),
+            'readCursorKey': chatReadCursorKey('usr_0001', 'global'),
+            'notifyKeys': chatTabOrder.map(chatNotifyStorageKey).toList(),
             'lines': _rows(chatLines(messages, 'usr_1')),
             'linesAnonymous': _rows(chatLines(messages, null)),
             'prefixed': _rows(
@@ -652,5 +661,12 @@ void main() {
         );
       });
     }
+  });
+
+  test('fills a missing guild tag from the guild name', () {
+    final rows = leaderboardRows(<LeaderboardEntry>[
+      _entry(guildName: 'Iron League'),
+    ], tagForGuildName: (name) => guildTagForName(name, listings: <GuildListing>[_listing()]));
+    expect(rows.single.username, '[IRN]Hero');
   });
 }

@@ -34,6 +34,12 @@ void main() {
     expect(friendlyRemoteError('Invalid login credentials'), 'Invalid login credentials');
   });
 
+  test('maps a dead access token to sign in again', () {
+    expect(isExpiredAuthError('JWT expired'), isTrue);
+    expect(friendlyRemoteError('JWT expired'), remoteSignInAgain);
+    expect(friendlyRemoteError('invalid JWT'), remoteSignInAgain);
+  });
+
   test('friend list rows use guild name and last-online like the roster', () {
     const friend = SocialContact(
       userId: 'usr_1',

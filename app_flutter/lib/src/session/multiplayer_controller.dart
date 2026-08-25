@@ -23,6 +23,7 @@ class MultiplayerController extends ChangeNotifier {
     required this.service,
     required this.storage,
     required this.clock,
+    this.cloudUnavailable = false,
   });
 
   /// The wall clock, for the read cursor a DM tab writes.
@@ -30,6 +31,9 @@ class MultiplayerController extends ChangeNotifier {
 
   final LoadedDatabase database;
   final MultiplayerService service;
+
+  /// True when this build was given a hosted backend that could not be reached.
+  final bool cloudUnavailable;
 
   /// Where the DM read cursors live, next to the save and the backend document.
   final SaveStorage storage;
@@ -62,6 +66,18 @@ class MultiplayerController extends ChangeNotifier {
 
   void setHideChatBubble(bool value) {
     storage.setItem(hideChatBubbleStorageKey, value ? '1' : '0');
+    notifyListeners();
+  }
+
+  /// When on, new lines on [tab] raise a bubble on the chat icon and tab.
+  bool chatNotifyEnabled(ChatTab tab) => storage.getItem(chatNotifyStorageKey(tab)) != '0';
+
+  void setChatNotifyEnabled(ChatTab tab, bool value) {
+    storage.setItem(chatNotifyStorageKey(tab), value ? '1' : '0');
+    if (!value) {
+      _unread[tab] = 0;
+      if (tab == ChatTab.local) _localUnread.clear();
+    }
     notifyListeners();
   }
 
@@ -148,11 +164,17 @@ class MultiplayerController extends ChangeNotifier {
   final List<String> _openDmPeerIds = <String>[];
   final Map<String, String> _dmPeerNames = <String, String>{};
   int _unreadDms = 0;
+  final Map<ChatTab, int> _unread = <ChatTab, int>{};
+  final Map<String, int> _localUnread = <String, int>{};
+  bool _chatOpen = false;
+  bool _citadelHub = false;
+  String _chatLocationId = '';
   String? _notice;
   bool _busy = false;
   bool _suppressUploads = false;
   PlayerSave? _pendingAccountSave;
   Timer? _accountSaveTimer;
+  Timer? _hourTimer;
 
   /// A named save this device still holds from before accounts owned the save.
   /// Used once if the account has no playable row yet, then forgotten.
@@ -207,6 +229,26 @@ class MultiplayerController extends ChangeNotifier {
   List<BazaarPost> get bazaarPosts => _bazaarPosts;
   ChatTab get chatTab => _chatTab;
   int get unreadDms => _unreadDms;
+
+  /// Unread lines waiting on one tab, after notification toggles.
+  ///
+  /// Local is the room for the location the player is in. A new empty place
+  /// does not inherit a bubble from the last one.
+  int unreadFor(ChatTab tab) {
+    if (tab == ChatTab.local) {
+      if (!chatNotifyEnabled(tab)) return 0;
+      final key = _currentLocalChannelKey();
+      if (key != null) return _localUnread[key] ?? 0;
+    }
+    return _unread[tab] ?? (tab == ChatTab.dm ? _unreadDms : 0);
+  }
+
+  /// Sum of enabled-channel bubbles for the corner chat icon.
+  int get unreadTotal => chatTabOrder.fold<int>(0, (sum, tab) => sum + unreadFor(tab));
+
+  Map<ChatTab, num> get unreadByTab => <ChatTab, num>{
+    for (final tab in chatTabOrder) tab: unreadFor(tab),
+  };
   String? get selectedDmPeerId => _selectedDmPeerId;
 
   /// Open private threads, newest first, including ones started from a profile.
@@ -308,7 +350,7 @@ class MultiplayerController extends ChangeNotifier {
         if (!claimed.ok) claimReason = claimed.reason;
       }
       await refresh(playable ?? localHint);
-      if (playable != null) await maybeAutoSubmitRanking(playable);
+      if (playable != null) await publishRanking(playable);
       if (claimReason != null) return claimReason;
       final accountName = service.session?.username;
       if (accountName != null && !isPendingAccountUsername(accountName)) {
@@ -340,7 +382,7 @@ class MultiplayerController extends ChangeNotifier {
         _notice = _cloudLoadProblem;
       }
       await refresh(playable ?? localHint);
-      if (playable != null) await maybeAutoSubmitRanking(playable);
+      if (playable != null) await publishRanking(playable);
       return 'Welcome back, ${result.session!.username}.';
     });
   }
@@ -384,7 +426,7 @@ class MultiplayerController extends ChangeNotifier {
         _notice = _cloudLoadProblem;
       }
       await refresh(playable ?? localHint);
-      if (playable != null) await maybeAutoSubmitRanking(playable);
+      if (playable != null) await publishRanking(playable);
       return null;
     });
   }
@@ -414,6 +456,9 @@ class MultiplayerController extends ChangeNotifier {
     _bountyClaims = const <BountyClaimRecord>[];
     _bazaarPosts = const <BazaarPost>[];
     _unreadDms = 0;
+    _unread.clear();
+    _localUnread.clear();
+    _chatOpen = false;
   }
 
   // --- Account saves --------------------------------------------------------
@@ -486,7 +531,6 @@ class MultiplayerController extends ChangeNotifier {
     _pendingAccountSave = null;
     if (!isSignedIn || _suppressUploads || !isPlayableSave(outgoing)) return;
     await service.pushSave(db, outgoing!, force: true);
-    await maybeAutoSubmitRanking(outgoing);
   }
 
   /// Publishes a just-created character immediately.
@@ -503,6 +547,7 @@ class MultiplayerController extends ChangeNotifier {
       }
     }
     await flushAccountSave(save);
+    await publishRanking(save);
   }
 
   void _clearAccountLocally() {
@@ -584,7 +629,7 @@ class MultiplayerController extends ChangeNotifier {
     _board = await _readBoard(save);
     _citadelVisitors = await service.citadelVisitors();
     _presence = await service.presenceRecords();
-    _unreadDms = await service.countUnreadDirectMessages(_dmCursor());
+    await _refreshUnread(save);
     await _loadSocialLists();
     notifyListeners();
   }
@@ -598,6 +643,7 @@ class MultiplayerController extends ChangeNotifier {
     _pollTimer?.cancel();
     _presenceTimer = Timer.periodic(presenceInterval, (_) => publishPresence(saveOf()));
     _pollTimer = Timer.periodic(pollInterval, (_) => _poll(saveOf()));
+    _scheduleHourlyPublish(saveOf);
     publishPresence(saveOf());
   }
 
@@ -607,12 +653,28 @@ class MultiplayerController extends ChangeNotifier {
     _presenceTimer = null;
     _pollTimer?.cancel();
     _pollTimer = null;
+    _hourTimer?.cancel();
+    _hourTimer = null;
+  }
+
+  void _scheduleHourlyPublish(PlayerSave Function() saveOf) {
+    _hourTimer?.cancel();
+    final wait = msUntilNextUtcHour(clock()).round();
+    _hourTimer = Timer(Duration(milliseconds: wait < 500 ? 500 : wait), () {
+      unawaited(_onUtcHour(saveOf));
+    });
+  }
+
+  Future<void> _onUtcHour(PlayerSave Function() saveOf) async {
+    if (!isSignedIn) return;
+    await publishForUtcHour(saveOf());
+    _scheduleHourlyPublish(saveOf);
   }
 
   Future<void> _poll(PlayerSave save) async {
     if (!isSignedIn) return;
     if (await _wasKicked()) return;
-    _unreadDms = await service.countUnreadDirectMessages(_dmCursor());
+    await _refreshUnread(save);
     if (_chatTab == ChatTab.dm) {
       _messages = await service.listDirectMessages();
       _ingestDmPeers(_messages);
@@ -711,24 +773,20 @@ class MultiplayerController extends ChangeNotifier {
     return parseRankingSubmitAt(storage.getItem(rankingUpdateStorageKey(userId)));
   }
 
-  bool get canPressUpdateRanking => isSignedIn && canUpdateRanking(lastRankingSubmitAt, clock());
-
-  String get rankingUpdateHintText => rankingUpdateHint(lastRankingSubmitAt, clock());
-
   void _storeRankingSubmitAt(num nowMs) {
     final userId = session?.userId;
     if (userId == null) return;
     storage.setItem(rankingUpdateStorageKey(userId), nowMs.toString());
   }
 
-  /// Quiet submit as the account saves, at the same rate the button allows.
+  /// Publishes the live save to the boards and public gear.
   ///
-  /// No notice: the player did not press anything, and a board that cannot be
-  /// posted to is not something they can act on.
-  Future<void> maybeAutoSubmitRanking(PlayerSave save) async {
+  /// Login, opening the app, and each UTC hour call this. A second call in the
+  /// same couple of seconds is ignored so sign-in and restore do not double-fire.
+  Future<void> publishRanking(PlayerSave save, {bool ignoreDebounce = false}) async {
     if (!isSignedIn || !isPlayableSave(save)) return;
     final now = clock();
-    if (!canUpdateRanking(lastRankingSubmitAt, now)) return;
+    if (!ignoreDebounce && !shouldPublishOnOpen(lastRankingSubmitAt, now)) return;
     final result = await service.submitLeaderboard(db, save);
     if (!result.ok) return;
     _storeRankingSubmitAt(now);
@@ -736,27 +794,27 @@ class MultiplayerController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Opens the boards, posting this account's totals if the hour is up.
-  Future<void> openLeaderboards(PlayerSave save) async {
-    await refresh(save);
-    await maybeAutoSubmitRanking(save);
+  /// Publishes when the UTC hour has rolled over since the last publish.
+  Future<void> publishForUtcHour(PlayerSave save) async {
+    if (!shouldPublishForUtcHour(lastRankingSubmitAt, clock())) return;
+    await publishRanking(save, ignoreDebounce: true);
   }
 
-  /// Player-pressed ranking update, limited to once an hour.
-  Future<void> updateRanking(PlayerSave save) {
-    return run(() async {
-      if (!isSignedIn) return 'Sign in to update your ranking.';
-      final now = clock();
-      final last = lastRankingSubmitAt;
-      if (!canUpdateRanking(last, now)) {
-        return rankingCooldownMessage(rankingCooldownRemainingMs(last!, now));
-      }
-      final result = await service.submitLeaderboard(db, save);
-      if (!result.ok) return result.reason;
-      _storeRankingSubmitAt(now);
-      _board = await _readBoard(save);
-      return rankingUpdatedNotice;
-    });
+  /// Called when the app or tab comes back: refresh the session, then publish.
+  Future<void> onForeground(PlayerSave save) async {
+    if (!isSignedIn) return;
+    final refused = await service.refreshSession();
+    if (refused != null) {
+      _notice = refused;
+      notifyListeners();
+      return;
+    }
+    await publishRanking(save);
+  }
+
+  /// Opens the boards. Publish already happened on login or opening the app.
+  Future<void> openLeaderboards(PlayerSave save) async {
+    await refresh(save);
   }
 
   Future<void> selectBoard(MultiplayerBoardKey key, PlayerSave save) async {
@@ -787,6 +845,101 @@ class MultiplayerController extends ChangeNotifier {
   }
 
   // --- Chat -----------------------------------------------------------------
+
+  /// Keeps unread polling pointed at the open drawer and the room the player is in.
+  void syncChatSurface({required bool open, required String locationId, required bool citadelHub}) {
+    _chatOpen = open;
+    _chatLocationId = locationId;
+    _citadelHub = citadelHub;
+  }
+
+  Future<void> _refreshUnread(PlayerSave save) async {
+    if (!isSignedIn) {
+      _unreadDms = 0;
+      _unread.clear();
+      _localUnread.clear();
+      return;
+    }
+    final locationId = _chatLocationId.isEmpty ? save.currentLocationId : _chatLocationId;
+    for (final tab in chatTabOrder) {
+      final count = await _unreadCountFor(tab, locationId);
+      _unread[tab] = count;
+      if (tab == ChatTab.local) {
+        final key = _localChannelKey(locationId);
+        if (key != null) _localUnread[key] = count;
+      }
+    }
+    _unreadDms = _unread[ChatTab.dm] ?? 0;
+  }
+
+  Future<int> _unreadCountFor(ChatTab tab, String locationId) async {
+    if (!chatNotifyEnabled(tab)) return 0;
+    if (_chatOpen && _chatTab == tab) {
+      _markTabRead(tab, locationId);
+      return 0;
+    }
+    if (tab == ChatTab.dm) {
+      return service.countUnreadDirectMessages(_dmCursor());
+    }
+    final channel = chatChannelForTab(
+      tab,
+      locationId: locationId,
+      citadelHub: _citadelHub,
+      guildId: _guildId,
+      guestGuildId: _guestGuildId,
+    );
+    if (channel == null) return 0;
+    final cursor = _channelCursor(channel);
+    if (cursor == null) {
+      _storeChannelCursor(channel);
+      return 0;
+    }
+    return service.countUnreadChat(channel, cursor);
+  }
+
+  void _markTabRead(ChatTab tab, String locationId) {
+    if (tab == ChatTab.dm) {
+      _markDmsRead();
+      _unread[ChatTab.dm] = 0;
+      return;
+    }
+    final channel = chatChannelForTab(
+      tab,
+      locationId: locationId,
+      citadelHub: _citadelHub,
+      guildId: _guildId,
+      guestGuildId: _guestGuildId,
+    );
+    if (channel == null) return;
+    _storeChannelCursor(channel);
+    _unread[tab] = 0;
+    if (tab == ChatTab.local) _localUnread[chatChannelKey(channel)] = 0;
+  }
+
+  String? _localChannelKey(String locationId) {
+    final channel = chatChannelForTab(
+      ChatTab.local,
+      locationId: locationId,
+      citadelHub: _citadelHub,
+      guildId: null,
+    );
+    return channel == null ? null : chatChannelKey(channel);
+  }
+
+  String? _currentLocalChannelKey() =>
+      _chatLocationId.isEmpty ? null : _localChannelKey(_chatLocationId);
+
+  String? _channelCursor(ChatChannel channel) {
+    final userId = session?.userId;
+    if (userId == null) return null;
+    return storage.getItem(chatReadCursorKey(userId, chatChannelKey(channel)));
+  }
+
+  void _storeChannelCursor(ChatChannel channel) {
+    final userId = session?.userId;
+    if (userId == null) return;
+    storage.setItem(chatReadCursorKey(userId, chatChannelKey(channel)), isoFromMs(clock()));
+  }
 
   String? _dmCursor() {
     final userId = session?.userId;
@@ -820,7 +973,7 @@ class MultiplayerController extends ChangeNotifier {
       if (_selectedDmPeerId == null && _openDmPeerIds.isNotEmpty) {
         _selectedDmPeerId = _openDmPeerIds.first;
       }
-      _markDmsRead();
+      _markTabRead(ChatTab.dm, locationId);
       notifyListeners();
       return;
     }
@@ -832,6 +985,7 @@ class MultiplayerController extends ChangeNotifier {
       guestGuildId: _guestGuildId,
     );
     _messages = channel == null ? const <ChatMessage>[] : await service.listChat(channel);
+    _markTabRead(tab, locationId);
     notifyListeners();
   }
 

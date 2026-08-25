@@ -27,7 +27,7 @@ export function gatheringDurationMs(
     skill.level < proficiency
       ? configNumber(db, 'gathering_below_proficiency_duration_multiplier', 2)
       : 1
-  const atr = equippedActionTimeReductionPercent(db, save)
+  const atr = equippedActionTimeReductionPercent(db, save, action['Relevant Skill ID'])
   const reductionFactor = Math.max(0.01, 1 - atr / 100)
   const enchantFactor = equippedEnchantmentGatheringMultiplier(db, save)
   return Math.max(0, baseSeconds * multiplier * reductionFactor * enchantFactor * 1000)
