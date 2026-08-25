@@ -23,11 +23,11 @@ const rawDatabase = JSON.parse(
 )
 
 describe('standard production', () => {
-  it('skips Needs Data recipes such as Cloth Wrap', () => {
+  it('skips incomplete recipes', () => {
     const { launch } = prepareDatabase(rawDatabase)
-    const cloth = getRecipe(launch, 'RCP-0058')
-    expect(cloth).toBeDefined()
-    expect(isCompleteRecipe(cloth!)).toBe(false)
+    const complete = getRecipe(launch, 'RCP-0001')!
+    const incomplete = { ...complete, Status: 'Needs Data' as const }
+    expect(isCompleteRecipe(incomplete)).toBe(false)
   })
 
   it('lists level-1 kitchen recipes and consumes materials for a queue', () => {
