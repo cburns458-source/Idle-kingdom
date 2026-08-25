@@ -52,6 +52,10 @@ class UnattendedResult {
   final num crittersSpawned;
   final num effectiveElapsedMs;
 
+  /// True when catch-up finished at least one gather, craft, fight, or spawn.
+  bool get hasCreditedWork =>
+      gatheringActions + craftsCompleted + combatVictories + combatDeaths + crittersSpawned > 0;
+
   Map<String, Object?> toJson() => <String, Object?>{
     'save': save.toJson(),
     'changed': changed,

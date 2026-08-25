@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:ik_content/ik_content.dart';
 import 'package:ik_rules/ik_rules.dart';
 
@@ -6,6 +8,19 @@ import 'persist.dart';
 import 'progress.dart';
 import 'tick.dart';
 import 'travel.dart';
+
+/// Shortest background gap treated as time away instead of live frames.
+///
+/// The playthrough, and a player watching an action, step a few seconds at a
+/// time. Those waits stay live. A lock-screen glance is in the same band.
+/// A longer hide would replay many steps on screen, so the next tick
+/// batch-resolves like a boot.
+const num _minForegroundCatchUpMs = 15000;
+
+num foregroundCatchUpFloorMs(GameDatabase db) {
+  final roundMs = math.max(1000, configNumber(db, 'combat_round_duration', 4) * 1000);
+  return math.max(_minForegroundCatchUpMs, roundMs);
+}
 
 /// What a boot found: the save to play, and what happened while away.
 class SessionBoot {
@@ -99,13 +114,39 @@ class GameSession {
   /// Advances whatever is due, storing the save only when something happened.
   ///
   /// A client calls this as often as it likes — once a frame, or on a timer —
-  /// and applies the returned events.
+  /// and applies the returned events. A long pause (tab hide, app switcher)
+  /// is batch-resolved like a boot so the UI is not fed one overdue step per
+  /// frame.
   SessionTickResult tick() {
     final nowMs = clock();
+    final catchUp = _catchUpForegroundGap(nowMs);
+    if (catchUp != null) return catchUp;
     _save = _creditLivePlayTime(save, nowMs);
     final result = advanceSession(db, save, nowMs, random);
     if (result.changed) apply(result.save);
     return result;
+  }
+
+  /// Batch-resolves a long foreground gap. Returns null when the live tick
+  /// should run — including a short lock or a few-second wait on an action.
+  SessionTickResult? _catchUpForegroundGap(num nowMs) {
+    final last = _playAccruedAt;
+    if (last == null) return null;
+    if (nowMs - last <= foregroundCatchUpFloorMs(db)) return null;
+
+    // Catch-up from the last live frame so present time already in playTimeMs
+    // is not added again.
+    final anchored = stampUnattendedProgressAt(save, last);
+    final unattended = resolveUnattendedProgress(db, anchored, nowMs, random);
+    final synced = syncProgressionMeta(db, unattended.save, nowMs);
+    _save = repository.write(synced);
+    _playAccruedAt = nowMs;
+    return SessionTickResult(
+      save: save,
+      changed: unattended.changed,
+      events: const [],
+      awayCatchUp: unattended,
+    );
   }
 
   /// Stores the result of a player action, whatever rule produced it.
@@ -121,11 +162,17 @@ class GameSession {
   }
 
   /// Credits the gap since the last live reading, capped like unattended time.
+  ///
+  /// Also moves the unattended anchor in memory so a pause flush, then a kill,
+  /// catch-up from this frame instead of replaying time the player was here.
   PlayerSave _creditLivePlayTime(PlayerSave current, num nowMs) {
     final last = _playAccruedAt;
     _playAccruedAt = nowMs;
-    if (last == null) return current;
-    return creditElapsedPlayTime(current, nowMs - last, unattendedCapMs(db));
+    final credited = last == null
+        ? current
+        : creditElapsedPlayTime(current, nowMs - last, unattendedCapMs(db));
+    if (credited.unattendedProgressAt == isoFromMs(nowMs)) return credited;
+    return stampUnattendedProgressAt(credited, nowMs);
   }
 
   /// How far along the action in progress is, from 0 to 1.

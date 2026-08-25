@@ -52,14 +52,30 @@ void main() {
     expect(session.tick().changed, isFalse);
     expect(session.actionProgress, 0);
 
-    now += session.save.actionDurationMs! / 2;
-    expect(session.tick().changed, isFalse);
+    final duration = session.save.actionDurationMs!;
+    final floor = foregroundCatchUpFloorMs(db);
+    now += duration / 2;
+    // A half-action jump is longer than a lock-screen glance, so this tick
+    // batch-resolves. Progress is still the live clock; nothing has completed.
+    if (duration / 2 > floor) {
+      final mid = session.tick();
+      expect(mid.awayCatchUp, isNotNull);
+      expect(mid.events, isEmpty);
+    } else {
+      expect(session.tick().changed, isFalse);
+    }
     expect(session.actionProgress, closeTo(0.5, 0.001));
 
-    now += session.save.actionDurationMs! / 2;
+    now += duration / 2;
     final due = session.tick();
-    expect(due.changed, isTrue);
-    expect(due.events.whereType<RewardsEvent>(), isNotEmpty);
+    if (duration / 2 > floor) {
+      expect(due.awayCatchUp, isNotNull);
+      expect(due.events, isEmpty);
+      expect(due.awayCatchUp!.gatheringActions, greaterThan(0));
+    } else {
+      expect(due.changed, isTrue);
+      expect(due.events.whereType<RewardsEvent>(), isNotEmpty);
+    }
     // The advanced save was stored, not just returned.
     expect(session.repository.read()!.toJson(), session.save.toJson());
   });
@@ -90,6 +106,41 @@ void main() {
     expect(boot.save.unattendedProgressAt, isoFromMs(now));
     expect(boot.unattended.effectiveElapsedMs, 3600000);
     expect(boot.save.playTimeMs, playBeforeAway + 3600000);
+  });
+
+  test('a short lock stays on the live tick and a long hide batch-resolves', () {
+    session.boot();
+    session.apply(
+      beginActivitySave(
+        session.save.copyWith(currentLocationId: meadowLocationId),
+        meadowActivityId,
+        isoFromMs(now),
+      ),
+    );
+    expect(session.tick().changed, isTrue);
+    expect(session.save.currentActionId, isNotNull);
+    final duration = session.save.actionDurationMs!;
+    expect(duration, greaterThan(0));
+
+    now += 2000;
+    final short = session.tick();
+    expect(short.awayCatchUp, isNull);
+    if (duration <= 2000) {
+      expect(short.events.whereType<RewardsEvent>(), isNotEmpty);
+    } else {
+      expect(short.changed, isFalse);
+    }
+
+    now += 2 * 60 * 1000;
+    final hide = session.tick();
+    expect(hide.awayCatchUp, isNotNull);
+    expect(hide.events, isEmpty);
+    expect(hide.awayCatchUp!.gatheringActions, greaterThan(1));
+    expect(hide.save.unattendedProgressAt, isoFromMs(now));
+
+    final playAfterHide = session.save.playTimeMs;
+    session.tick();
+    expect(session.save.playTimeMs, playAfterHide);
   });
 
   test('accrues live ticks in memory and caps a long gap like unattended time', () {

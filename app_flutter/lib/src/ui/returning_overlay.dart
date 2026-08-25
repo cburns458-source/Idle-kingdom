@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../theme.dart';
 
-/// Covers the game while unattended catch-up is applied or presented.
+/// Covers the game after a long hide or a cold-boot catch-up.
 class ReturningOverlay extends StatelessWidget {
   const ReturningOverlay({super.key});
 

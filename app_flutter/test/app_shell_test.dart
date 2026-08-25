@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:idle_kingdoms/src/session/game_controller.dart';
 import 'package:idle_kingdoms/src/session/multiplayer_controller.dart';
 import 'package:idle_kingdoms/src/session/tester_access.dart';
 import 'package:idle_kingdoms/src/theme.dart';
@@ -359,6 +360,46 @@ void main() {
 
     await tapVisible(tester, find.bySemanticsLabel('Stop').first);
     expect(controller.save.currentActivityId, isNull);
+  });
+
+  testWidgets('a short lock stays live and a two-minute hide is covered', (tester) async {
+    final clock = TestClock();
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(currentLocationId: 'LOC-0009'),
+      clock: clock,
+    );
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller);
+
+    final gatherCard = find.ancestor(
+      of: find.text('Gather meadow supplies'),
+      matching: find.byType(DockRow),
+    );
+    await tapVisible(
+      tester,
+      find.descendant(of: gatherCard, matching: find.bySemanticsLabel('Start')),
+    );
+    controller.tick();
+    await tester.pump();
+
+    clock.advance(2000);
+    controller.tick();
+    await tester.pump();
+    expect(find.text('Returning to your adventure…'), findsNothing);
+    expect(controller.returningFromAway, isFalse);
+
+    clock.advance(2 * 60 * 1000);
+    controller.tick();
+    await tester.pump();
+    expect(find.text('Returning to your adventure…'), findsOne);
+    expect(controller.returningFromAway, isTrue);
+    expect(controller.recentRewards, isEmpty);
+    expect(find.textContaining('hit'), findsNothing);
+
+    await tester.pump(const Duration(milliseconds: GameController.returningHoldMs));
+    expect(find.text('Returning to your adventure…'), findsNothing);
+    expect(find.text('While you were away'), findsOne);
   });
 
   testWidgets('the map travels to a chosen location', (tester) async {

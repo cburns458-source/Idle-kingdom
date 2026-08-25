@@ -7,7 +7,12 @@ import 'events.dart';
 const String _combatSkillId = 'SKL-0001';
 
 class SessionTickResult {
-  const SessionTickResult({required this.save, required this.changed, required this.events});
+  const SessionTickResult({
+    required this.save,
+    required this.changed,
+    required this.events,
+    this.awayCatchUp,
+  });
 
   final PlayerSave save;
 
@@ -15,6 +20,11 @@ class SessionTickResult {
   final bool changed;
 
   final List<SessionEvent> events;
+
+  /// Set when this tick batch-resolved a long foreground gap instead of
+  /// emitting one live step. Omitted from [toJson] so parity fixtures stay
+  /// the live-tick shape.
+  final UnattendedResult? awayCatchUp;
 
   Map<String, Object?> toJson() => <String, Object?>{
     'save': save.toJson(),
