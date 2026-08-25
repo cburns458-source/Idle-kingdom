@@ -138,6 +138,15 @@ void main() {
       ),
     );
     expect(find.textContaining('Tungsten equipment'), findsOne);
+    await tester.scrollUntilVisible(
+      find.textContaining('Leather equipment'),
+      -200,
+      scrollable: find.descendant(
+        of: find.byKey(const Key('game-popup')),
+        matching: find.byType(Scrollable),
+      ),
+    );
+    expect(find.textContaining('Leather equipment'), findsOne);
     expect(find.textContaining('Tungsten Helmet'), findsNothing);
     expect(find.textContaining('Tungsten Shield'), findsNothing);
     expect(find.textContaining('Tungsten Sword'), findsNothing);
@@ -154,6 +163,33 @@ void main() {
     );
     expect(find.textContaining('Tungsten Sword'), findsOne);
     expect(find.textContaining('Tungsten Shield'), findsNothing);
+  });
+
+  testWidgets('artisanry lists leather armor on Other', (tester) async {
+    final controller = buildController(database, seed: startedCharacter(database));
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller);
+
+    await tester.tap(find.text('Character'));
+    await tester.pump();
+    await tester.tap(find.widgetWithText(GameButton, 'Skills'));
+    await tester.pump();
+    await tester.tap(find.text('Artisanry'));
+    await tester.pump();
+
+    final popup = find.byKey(const Key('game-popup'));
+    await tester.tap(find.descendant(of: popup, matching: find.text('Other')));
+    await tester.pump();
+    await tester.scrollUntilVisible(
+      find.textContaining('Leather Helmet'),
+      200,
+      scrollable: find.descendant(
+        of: find.byKey(const Key('game-popup')),
+        matching: find.byType(Scrollable),
+      ),
+    );
+    expect(find.textContaining('Leather Helmet'), findsOne);
+    expect(find.textContaining('Leather Gloves'), findsOne);
   });
 
   testWidgets('a skill tooltip reads total xp and what the next level needs', (tester) async {
