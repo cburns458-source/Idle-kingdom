@@ -340,12 +340,22 @@ PlayerSave equipStackToSlot(PlayerSave save, String slotId, String itemId, num q
   return _setSlot(next, slotId, EquippedStack(itemId: itemId, quantity: quantity));
 }
 
-num equippedActionTimeReductionPercent(GameDatabase db, PlayerSave save) {
-  num total = 0;
+/// Action-time reduction totals keyed by the tool's required skill.
+Map<String, num> equippedActionTimeReductionBySkill(GameDatabase db, PlayerSave save) {
+  final totals = <String, num>{};
   for (final stack in save.equipment.slots.values) {
     if (stack == null || isBlank(stack.itemId)) continue;
     final row = db.equipment.firstWhereOrNull((entry) => entry.raw['Item ID'] == stack.itemId);
-    total += jsNumber(row?.raw['Action Time Reduction %'] ?? 0);
+    final skillId = row?.raw['Required Skill ID'];
+    final amount = jsNumber(row?.raw['Action Time Reduction %'] ?? 0);
+    if (skillId is! String || isBlank(skillId) || amount <= 0) continue;
+    totals[skillId] = (totals[skillId] ?? 0) + amount;
   }
-  return math.max(0, total);
+  return totals;
+}
+
+/// Reduction that applies only to actions of this skill.
+num equippedActionTimeReductionPercent(GameDatabase db, PlayerSave save, String? skillId) {
+  if (isBlank(skillId)) return 0;
+  return math.max(0, equippedActionTimeReductionBySkill(db, save)[skillId!] ?? 0);
 }

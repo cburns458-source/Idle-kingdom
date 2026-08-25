@@ -79,15 +79,19 @@ void main() {
     expect(summary.reductionBreakdown.last.detail, '1');
   });
 
-  test('lists action time reduction from equipped tools', () {
+  test('lists action time reduction on the tool\'s own skill', () {
     final db = filterLaunchContent(assertGameDatabaseShape(contentDatabaseJson()));
     final save = equipStackToSlot(createNewSave(db, 0), weaponToolSlotId, 'ITEM-0110', 1);
     final summary = playerCombatStatSummary(db, save);
     expect(summary.activeBonuses.map((bonus) => bonus.kind), contains('equipment'));
-    expect(summary.activeBonuses.map((bonus) => bonus.name), contains('Action time reduction'));
+    expect(summary.activeBonuses.map((bonus) => bonus.name), contains('Woodcutting'));
     expect(
-      summary.activeBonuses.firstWhere((bonus) => bonus.name == 'Action time reduction').effect,
+      summary.activeBonuses.firstWhere((bonus) => bonus.name == 'Woodcutting').effect,
       contains('5%'),
+    );
+    expect(
+      summary.activeBonuses.map((bonus) => bonus.name),
+      isNot(contains('Action time reduction')),
     );
   });
 

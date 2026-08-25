@@ -180,18 +180,27 @@ List<CombatBonusLine> _activeBonuses(GameDatabase db, PlayerSave save) {
     }
   }
 
-  final actionTimeReduction = equippedActionTimeReductionPercent(db, save);
-  if (actionTimeReduction > 0) {
+  final atrBySkill = equippedActionTimeReductionBySkill(db, save);
+  final atrSkills = atrBySkill.entries.toList()
+    ..sort((left, right) => _skillName(db, left.key).compareTo(_skillName(db, right.key)));
+  for (final entry in atrSkills) {
     bonuses.add(
       CombatBonusLine(
         kind: 'equipment',
-        name: 'Action time reduction',
-        effect: '-${jsNumberToString(actionTimeReduction)}% action time',
+        name: _skillName(db, entry.key),
+        effect: '-${jsNumberToString(entry.value)}% action time',
       ),
     );
   }
 
   return bonuses;
+}
+
+String _skillName(GameDatabase db, String skillId) {
+  final name = db.skills
+      .firstWhereOrNull((skill) => skill.raw['Skill ID'] == skillId)
+      ?.raw['Display Name'];
+  return name is String && name.isNotEmpty ? name : skillId;
 }
 
 String _potionEffect(ActivePotionEffect potion) {

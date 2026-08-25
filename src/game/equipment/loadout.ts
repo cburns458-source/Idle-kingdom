@@ -365,12 +365,29 @@ export function equipStackToSlot(
   return setSlot(next, slotId, { itemId, quantity })
 }
 
-export function equippedActionTimeReductionPercent(db: GameDatabase, save: PlayerSave): number {
-  let total = 0
+/** Action-time reduction totals keyed by the tool's required skill. */
+export function equippedActionTimeReductionBySkill(
+  db: GameDatabase,
+  save: PlayerSave,
+): Record<string, number> {
+  const totals: Record<string, number> = {}
   for (const stack of Object.values(save.equipment.slots)) {
     if (!stack?.itemId) continue
     const row = db.Equipment.find((entry) => entry['Item ID'] === stack.itemId)
-    total += Number(row?.['Action Time Reduction %'] ?? 0)
+    const skillId = row?.['Required Skill ID']
+    const amount = Number(row?.['Action Time Reduction %'] ?? 0)
+    if (!skillId || amount <= 0) continue
+    totals[skillId] = (totals[skillId] ?? 0) + amount
   }
-  return Math.max(0, total)
+  return totals
+}
+
+/** Reduction that applies only to actions of this skill. */
+export function equippedActionTimeReductionPercent(
+  db: GameDatabase,
+  save: PlayerSave,
+  skillId: string | null | undefined,
+): number {
+  if (!skillId) return 0
+  return Math.max(0, equippedActionTimeReductionBySkill(db, save)[skillId] ?? 0)
 }
