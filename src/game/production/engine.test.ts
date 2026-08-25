@@ -10,7 +10,6 @@ import {
   completeProductionCraft,
   resolveProductionProgress,
 } from './engine'
-import type { RecipeRow } from '../data/recipeTypes'
 import {
   canKnowRecipe,
   getRecipe,
@@ -25,16 +24,9 @@ const rawDatabase = JSON.parse(
 
 describe('standard production', () => {
   it('skips incomplete recipes', () => {
-    const incomplete = {
-      Status: 'Needs Data',
-      'Base Duration Seconds': null,
-      'XP Reward': null,
-      'Output Quantity': 1,
-      'Output Item ID': 'ITEM-0001',
-      'Facility ID': 'FAC-0003',
-      'Skill ID': 'SKL-0009',
-      'Proficiency Level': null,
-    } as RecipeRow
+    const { launch } = prepareDatabase(rawDatabase)
+    const complete = getRecipe(launch, 'RCP-0001')!
+    const incomplete = { ...complete, Status: 'Needs Data' as const }
     expect(isCompleteRecipe(incomplete)).toBe(false)
   })
 
