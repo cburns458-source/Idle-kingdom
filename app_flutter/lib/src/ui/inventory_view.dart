@@ -555,18 +555,24 @@ class _InventoryViewState extends State<InventoryView> {
           const SizedBox(height: 10),
           Row(
             children: [
-              GameButton(
-                label: _showBonuses ? 'Hide bonuses' : 'Show bonuses',
-                tone: GameButtonTone.secondary,
-                compact: true,
-                onPressed: () => setState(() => _showBonuses = !_showBonuses),
+              Flexible(
+                child: GameButton(
+                  label: _showBonuses ? 'Hide bonuses' : 'Show bonuses',
+                  tone: GameButtonTone.secondary,
+                  compact: true,
+                  dense: true,
+                  onPressed: () => setState(() => _showBonuses = !_showBonuses),
+                ),
               ),
               const SizedBox(width: 8),
-              GameButton(
-                label: _showSources ? 'Hide sources' : 'Show sources',
-                tone: GameButtonTone.secondary,
-                compact: true,
-                onPressed: () => setState(() => _showSources = !_showSources),
+              Flexible(
+                child: GameButton(
+                  label: _showSources ? 'Hide sources' : 'Show sources',
+                  tone: GameButtonTone.secondary,
+                  compact: true,
+                  dense: true,
+                  onPressed: () => setState(() => _showSources = !_showSources),
+                ),
               ),
             ],
           ),
