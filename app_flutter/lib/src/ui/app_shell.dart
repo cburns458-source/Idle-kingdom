@@ -224,6 +224,9 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
         state == AppLifecycleState.inactive) {
       multiplayer.flushAccountSave(controller.save);
     }
+    if (state == AppLifecycleState.resumed) {
+      unawaited(multiplayer.onForeground(controller.save));
+    }
   }
 
   @override

@@ -198,6 +198,9 @@ abstract interface class MultiplayerService {
 
   Future<List<ArenaOpponent>> hallBoxingOpponents();
 
+  /// Refreshes the hosted access token. Local play has nothing to refresh.
+  Future<String?> refreshSession();
+
   /// Why the most recent read was refused, cleared by the taking.
   ///
   /// A read answers with what arrived, so a screen short of one list still draws
@@ -234,6 +237,9 @@ class LocalMultiplayerService implements MultiplayerService {
   /// A table on this device is always there to be read.
   @override
   String? takeReadProblem() => null;
+
+  @override
+  Future<String?> refreshSession() async => null;
 
   @override
   Future<num> authoritativeNowMs() async => _backend.ports.nowMs();

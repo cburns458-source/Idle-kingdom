@@ -174,6 +174,7 @@ class MultiplayerController extends ChangeNotifier {
   bool _suppressUploads = false;
   PlayerSave? _pendingAccountSave;
   Timer? _accountSaveTimer;
+  Timer? _hourTimer;
 
   /// A named save this device still holds from before accounts owned the save.
   /// Used once if the account has no playable row yet, then forgotten.
@@ -349,7 +350,7 @@ class MultiplayerController extends ChangeNotifier {
         if (!claimed.ok) claimReason = claimed.reason;
       }
       await refresh(playable ?? localHint);
-      if (playable != null) await maybeAutoSubmitRanking(playable);
+      if (playable != null) await publishRanking(playable);
       if (claimReason != null) return claimReason;
       final accountName = service.session?.username;
       if (accountName != null && !isPendingAccountUsername(accountName)) {
@@ -381,7 +382,7 @@ class MultiplayerController extends ChangeNotifier {
         _notice = _cloudLoadProblem;
       }
       await refresh(playable ?? localHint);
-      if (playable != null) await maybeAutoSubmitRanking(playable);
+      if (playable != null) await publishRanking(playable);
       return 'Welcome back, ${result.session!.username}.';
     });
   }
@@ -425,7 +426,7 @@ class MultiplayerController extends ChangeNotifier {
         _notice = _cloudLoadProblem;
       }
       await refresh(playable ?? localHint);
-      if (playable != null) await maybeAutoSubmitRanking(playable);
+      if (playable != null) await publishRanking(playable);
       return null;
     });
   }
@@ -530,7 +531,6 @@ class MultiplayerController extends ChangeNotifier {
     _pendingAccountSave = null;
     if (!isSignedIn || _suppressUploads || !isPlayableSave(outgoing)) return;
     await service.pushSave(db, outgoing!, force: true);
-    await maybeAutoSubmitRanking(outgoing);
   }
 
   /// Publishes a just-created character immediately.
@@ -547,6 +547,7 @@ class MultiplayerController extends ChangeNotifier {
       }
     }
     await flushAccountSave(save);
+    await publishRanking(save);
   }
 
   void _clearAccountLocally() {
@@ -642,6 +643,7 @@ class MultiplayerController extends ChangeNotifier {
     _pollTimer?.cancel();
     _presenceTimer = Timer.periodic(presenceInterval, (_) => publishPresence(saveOf()));
     _pollTimer = Timer.periodic(pollInterval, (_) => _poll(saveOf()));
+    _scheduleHourlyPublish(saveOf);
     publishPresence(saveOf());
   }
 
@@ -651,6 +653,22 @@ class MultiplayerController extends ChangeNotifier {
     _presenceTimer = null;
     _pollTimer?.cancel();
     _pollTimer = null;
+    _hourTimer?.cancel();
+    _hourTimer = null;
+  }
+
+  void _scheduleHourlyPublish(PlayerSave Function() saveOf) {
+    _hourTimer?.cancel();
+    final wait = msUntilNextUtcHour(clock()).round();
+    _hourTimer = Timer(Duration(milliseconds: wait < 500 ? 500 : wait), () {
+      unawaited(_onUtcHour(saveOf));
+    });
+  }
+
+  Future<void> _onUtcHour(PlayerSave Function() saveOf) async {
+    if (!isSignedIn) return;
+    await publishForUtcHour(saveOf());
+    _scheduleHourlyPublish(saveOf);
   }
 
   Future<void> _poll(PlayerSave save) async {
@@ -755,24 +773,20 @@ class MultiplayerController extends ChangeNotifier {
     return parseRankingSubmitAt(storage.getItem(rankingUpdateStorageKey(userId)));
   }
 
-  bool get canPressUpdateRanking => isSignedIn && canUpdateRanking(lastRankingSubmitAt, clock());
-
-  String get rankingUpdateHintText => rankingUpdateHint(lastRankingSubmitAt, clock());
-
   void _storeRankingSubmitAt(num nowMs) {
     final userId = session?.userId;
     if (userId == null) return;
     storage.setItem(rankingUpdateStorageKey(userId), nowMs.toString());
   }
 
-  /// Quiet submit as the account saves, at the same rate the button allows.
+  /// Publishes the live save to the boards and public gear.
   ///
-  /// No notice: the player did not press anything, and a board that cannot be
-  /// posted to is not something they can act on.
-  Future<void> maybeAutoSubmitRanking(PlayerSave save) async {
+  /// Login, opening the app, and each UTC hour call this. A second call in the
+  /// same couple of seconds is ignored so sign-in and restore do not double-fire.
+  Future<void> publishRanking(PlayerSave save, {bool ignoreDebounce = false}) async {
     if (!isSignedIn || !isPlayableSave(save)) return;
     final now = clock();
-    if (!canUpdateRanking(lastRankingSubmitAt, now)) return;
+    if (!ignoreDebounce && !shouldPublishOnOpen(lastRankingSubmitAt, now)) return;
     final result = await service.submitLeaderboard(db, save);
     if (!result.ok) return;
     _storeRankingSubmitAt(now);
@@ -780,27 +794,27 @@ class MultiplayerController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Opens the boards, posting this account's totals if the hour is up.
-  Future<void> openLeaderboards(PlayerSave save) async {
-    await refresh(save);
-    await maybeAutoSubmitRanking(save);
+  /// Publishes when the UTC hour has rolled over since the last publish.
+  Future<void> publishForUtcHour(PlayerSave save) async {
+    if (!shouldPublishForUtcHour(lastRankingSubmitAt, clock())) return;
+    await publishRanking(save, ignoreDebounce: true);
   }
 
-  /// Player-pressed ranking update, limited to once an hour.
-  Future<void> updateRanking(PlayerSave save) {
-    return run(() async {
-      if (!isSignedIn) return 'Sign in to update your ranking.';
-      final now = clock();
-      final last = lastRankingSubmitAt;
-      if (!canUpdateRanking(last, now)) {
-        return rankingCooldownMessage(rankingCooldownRemainingMs(last!, now));
-      }
-      final result = await service.submitLeaderboard(db, save);
-      if (!result.ok) return result.reason;
-      _storeRankingSubmitAt(now);
-      _board = await _readBoard(save);
-      return rankingUpdatedNotice;
-    });
+  /// Called when the app or tab comes back: refresh the session, then publish.
+  Future<void> onForeground(PlayerSave save) async {
+    if (!isSignedIn) return;
+    final refused = await service.refreshSession();
+    if (refused != null) {
+      _notice = refused;
+      notifyListeners();
+      return;
+    }
+    await publishRanking(save);
+  }
+
+  /// Opens the boards. Publish already happened on login or opening the app.
+  Future<void> openLeaderboards(PlayerSave save) async {
+    await refresh(save);
   }
 
   Future<void> selectBoard(MultiplayerBoardKey key, PlayerSave save) async {

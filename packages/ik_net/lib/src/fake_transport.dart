@@ -245,6 +245,13 @@ class FakeTransport implements RemoteTransport {
   }
 
   @override
+  Future<String?> refreshSession() async {
+    calls.add('refreshSession');
+    final reason = _takeFailure('refreshSession');
+    return reason == null ? null : friendlyRemoteError(reason);
+  }
+
+  @override
   Future<RemoteQueryResult> select(
     String table, {
     required String columns,

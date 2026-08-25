@@ -121,6 +121,9 @@ class RemoteMultiplayerService implements MultiplayerService {
   bool get isSignedIn => _sessions.isSignedIn;
 
   @override
+  Future<String?> refreshSession() => transport.refreshSession();
+
+  @override
   Future<SessionResult> signUp(String email, String username, String password) async {
     final result = await transport.signUp(
       email: email.trim(),

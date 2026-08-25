@@ -44,6 +44,19 @@ void main() {
     expect(rankingUpdateHint(null, startOfDay), rankingUpdateReadyHint);
   });
 
+  test('UTC hour marks and opening the app decide when to publish', () {
+    expect(utcHourKey(startOfDay).endsWith('T00'), isTrue);
+    expect(utcHourKey(startOfDay + 15 * 60 * 1000), utcHourKey(startOfDay));
+    expect(msUntilNextUtcHour(startOfDay), 60 * 60 * 1000);
+    expect(msUntilNextUtcHour(startOfDay + 15 * 60 * 1000), 45 * 60 * 1000);
+    expect(shouldPublishForUtcHour(null, startOfDay), isTrue);
+    expect(shouldPublishForUtcHour(startOfDay, startOfDay + 59 * 60 * 1000), isFalse);
+    expect(shouldPublishForUtcHour(startOfDay, startOfDay + 60 * 60 * 1000), isTrue);
+    expect(shouldPublishOnOpen(null, startOfDay), isTrue);
+    expect(shouldPublishOnOpen(startOfDay, startOfDay + 1000), isFalse);
+    expect(shouldPublishOnOpen(startOfDay, startOfDay + rankingPublishDebounceMs), isTrue);
+  });
+
   test('parses a stored timestamp', () {
     expect(parseRankingSubmitAt(null), isNull);
     expect(parseRankingSubmitAt(''), isNull);

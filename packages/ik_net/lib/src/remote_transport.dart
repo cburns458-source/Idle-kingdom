@@ -80,6 +80,12 @@ abstract interface class RemoteTransport {
 
   Future<void> signOut();
 
+  /// Mints a new access token from the stored refresh token.
+  ///
+  /// Returns null when the session is still good or was refreshed. A reason
+  /// means the player has to sign in again; the local character stays put.
+  Future<String?> refreshSession();
+
   Future<RemoteQueryResult> select(
     String table, {
     required String columns,
