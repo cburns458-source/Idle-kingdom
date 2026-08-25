@@ -46,6 +46,14 @@ void main() {
 
     expect(find.text('The Farm'), findsWidgets);
     expect(find.text('Pasture-focused starting area with Cow and Bull encounters.'), findsNothing);
+    expect(
+      find.descendant(of: find.byType(WorldMapView), matching: find.byTooltip('Combat')),
+      findsOne,
+    );
+    expect(
+      find.descendant(of: find.byType(WorldMapView), matching: find.byTooltip('Harvesting')),
+      findsOne,
+    );
   });
 
   testWidgets('OverlayNotice dismisses after its hold', (tester) async {

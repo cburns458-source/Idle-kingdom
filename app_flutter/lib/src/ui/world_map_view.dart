@@ -155,6 +155,7 @@ class WorldMapView extends StatelessWidget {
           right: 0,
           bottom: 0,
           child: _SelectionPanel(
+            controller: controller,
             selected: selected,
             browseMapId: browseMapId,
             isHere: selected?.locationId == save.currentLocationId,
@@ -320,6 +321,7 @@ class _MapNodeState extends State<_MapNode> {
 /// What is at the selected place, and the one button that takes you there.
 class _SelectionPanel extends StatelessWidget {
   const _SelectionPanel({
+    required this.controller,
     required this.selected,
     required this.browseMapId,
     required this.isHere,
@@ -328,6 +330,7 @@ class _SelectionPanel extends StatelessWidget {
     required this.canTravel,
   });
 
+  final GameController controller;
   final LocationRow? selected;
   final String browseMapId;
   final bool isHere;
@@ -340,6 +343,9 @@ class _SelectionPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final place = selected;
+    final skillIds = place == null
+        ? const <String>[]
+        : skillIdsForLocation(controller.db, controller.save, place.locationId);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(12),
@@ -359,6 +365,19 @@ class _SelectionPanel extends StatelessWidget {
                         mapNodeLabel(place, browseMapId),
                         style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w400),
                       ),
+                      if (skillIds.isNotEmpty) ...[
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 6,
+                          children: [
+                            for (final skillId in skillIds)
+                              _LocationSkillIcon(
+                                skill: controller.indexes.skillsById[skillId],
+                              ),
+                          ],
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -372,6 +391,23 @@ class _SelectionPanel extends StatelessWidget {
                   ),
               ],
             ),
+    );
+  }
+}
+
+class _LocationSkillIcon extends StatelessWidget {
+  const _LocationSkillIcon({required this.skill});
+
+  final SkillRow? skill;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: skill?.displayName ?? 'Skill',
+      child: ColorFiltered(
+        colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+        child: GameImage(skillIconPath(skill), width: 22, height: 22),
+      ),
     );
   }
 }
