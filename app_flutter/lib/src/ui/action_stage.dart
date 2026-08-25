@@ -64,6 +64,8 @@ class PvpActionStage extends StatelessWidget {
     required this.themName,
     required this.youAppearance,
     required this.themAppearance,
+    this.youRaceId,
+    this.themRaceId,
     this.youBytes,
     required this.youHp,
     required this.youMaxHp,
@@ -79,6 +81,8 @@ class PvpActionStage extends StatelessWidget {
   final String themName;
   final PlayerAppearance youAppearance;
   final PlayerAppearance themAppearance;
+  final String? youRaceId;
+  final String? themRaceId;
   final Uint8List? youBytes;
   final num youHp;
   final num youMaxHp;
@@ -98,7 +102,7 @@ class PvpActionStage extends StatelessWidget {
       semanticsLabel: 'Arena combat',
       scene: _TwoPortraits(
         player: _Portrait(
-          assetPath: playerAssetPath(youAppearance),
+          assetPath: playerAssetPath(youAppearance, raceId: youRaceId),
           bytes: youBytes,
           semanticsLabel: youName,
           alignment: Alignment.centerRight,
@@ -113,7 +117,7 @@ class PvpActionStage extends StatelessWidget {
               : null,
         ),
         scene: _Portrait(
-          assetPath: playerAssetPath(themAppearance),
+          assetPath: playerAssetPath(themAppearance, raceId: themRaceId),
           semanticsLabel: themName,
           alignment: Alignment.centerLeft,
           flipX: true,
@@ -414,7 +418,7 @@ class _CombatStage extends StatelessWidget {
       semanticsLabel: 'Combat',
       scene: _TwoPortraits(
         player: _Portrait(
-          assetPath: playerAssetPath(save.appearance),
+          assetPath: playerAssetPath(save.appearance, raceId: save.raceId),
           bytes: controller.localPlayerPng,
           semanticsLabel: 'Adventurer',
           alignment: Alignment.centerRight,
@@ -619,7 +623,7 @@ class _GatheringStage extends StatelessWidget {
       semanticsLabel: 'Gathering',
       scene: _TwoPortraits(
         player: _Portrait(
-          assetPath: playerAssetPath(save.appearance),
+          assetPath: playerAssetPath(save.appearance, raceId: save.raceId),
           bytes: controller.localPlayerPng,
           semanticsLabel: 'Adventurer',
           alignment: Alignment.centerRight,
@@ -680,7 +684,7 @@ class _ProductionStage extends StatelessWidget {
       semanticsLabel: 'Production',
       scene: _TwoPortraits(
         player: _Portrait(
-          assetPath: playerAssetPath(save.appearance),
+          assetPath: playerAssetPath(save.appearance, raceId: save.raceId),
           bytes: controller.localPlayerPng,
           semanticsLabel: 'Adventurer',
           alignment: Alignment.centerRight,

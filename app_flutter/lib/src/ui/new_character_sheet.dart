@@ -138,7 +138,7 @@ class _NewCharacterSheetState extends State<NewCharacterSheet> {
                               width: side,
                               height: side,
                               child: GameImage(
-                                playerAssetPath(_appearance),
+                                playerAssetPath(_appearance, raceId: _raceId),
                                 fit: BoxFit.contain,
                                 alignment: Alignment.topCenter,
                               ),

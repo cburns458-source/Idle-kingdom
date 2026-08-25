@@ -100,6 +100,7 @@ class _WardrobeSheetState extends State<WardrobeSheet> {
                                 height: side,
                                 child: PlayerSprite(
                                   appearance: save.appearance,
+                                  raceId: save.raceId,
                                   bytes: controller.localPlayerPng,
                                   fit: BoxFit.contain,
                                   alignment: Alignment.topCenter,

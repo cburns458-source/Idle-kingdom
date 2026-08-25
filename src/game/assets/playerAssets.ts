@@ -5,37 +5,49 @@ import {
   type PlayerSave,
 } from '../save/types'
 
-/** Feminine presentation — original adventurer sprite. */
-export const PLAYER_GENDER_FEMININE_PATH = '/assets/player/player_gender_feminine.webp'
-export const PLAYER_GENDER_ANDROGYNOUS_PATH = '/assets/player/player_gender_androgynous.webp'
-export const PLAYER_GENDER_MASCULINE_PATH = '/assets/player/player_gender_masculine.webp'
-
-/** @deprecated Prefer {@link playerPortraitAssetPath}. Kept for older imports. */
-export const PLAYER_COMBAT_ASSET_PATH = PLAYER_GENDER_FEMININE_PATH
-
-const GENDER_PRESENTATION_ASSET: Record<string, string> = {
-  'APR-0017': PLAYER_GENDER_FEMININE_PATH, // Feminine
-  'APR-0019': PLAYER_GENDER_ANDROGYNOUS_PATH, // Androgynous
-  'APR-0018': PLAYER_GENDER_MASCULINE_PATH, // Masculine
+const RACE_PLAYER_KEYS: Record<string, string> = {
+  'RACE-0001': 'human',
+  'RACE-0002': 'wood_elf',
+  'RACE-0003': 'high_elf',
+  'RACE-0004': 'orc',
+  'RACE-0005': 'goblin',
+  'RACE-0006': 'dwarf',
+  'RACE-0007': 'halfling',
 }
 
+/** @deprecated Prefer {@link playerPortraitAssetPath}. Kept for older imports. */
+export const PLAYER_COMBAT_ASSET_PATH = '/assets/player/player_human_feminine.webp'
+
+/** Feminine and androgynous share one plate per race; masculine has its own. */
+export function playerArtStem(
+  raceId: string | null | undefined,
+  genderPresentationId: string | null | undefined,
+): string {
+  const raceKey = (raceId && RACE_PLAYER_KEYS[raceId]) || 'human'
+  const masculine = genderPresentationId === 'APR-0018'
+  const bucket = masculine ? 'masculine' : 'feminine'
+  return `player_${raceKey}_${bucket}`
+}
+
+/** @deprecated Use {@link playerPortraitAssetPath} with a save race id. */
 export function genderPresentationAssetPath(
   genderPresentationId: string | null | undefined,
 ): string {
-  const path =
-    (genderPresentationId && GENDER_PRESENTATION_ASSET[genderPresentationId]) ||
-    GENDER_PRESENTATION_ASSET[DEFAULT_GENDER_PRESENTATION_ID] ||
-    PLAYER_GENDER_FEMININE_PATH
-  return withAssetVersion(path)
+  return withAssetVersion(`/assets/player/${playerArtStem(null, genderPresentationId)}.webp`)
 }
 
 export function playerPortraitAssetPath(
   appearanceOrSave: PlayerAppearance | PlayerSave | null | undefined,
 ): string {
-  if (!appearanceOrSave) return genderPresentationAssetPath(DEFAULT_GENDER_PRESENTATION_ID)
+  if (!appearanceOrSave) {
+    return withAssetVersion(`/assets/player/${playerArtStem(null, DEFAULT_GENDER_PRESENTATION_ID)}.webp`)
+  }
+  const raceId = 'raceId' in appearanceOrSave ? appearanceOrSave.raceId : null
   const appearance =
     'appearance' in appearanceOrSave ? appearanceOrSave.appearance : appearanceOrSave
-  return genderPresentationAssetPath(appearance?.genderPresentation)
+  return withAssetVersion(
+    `/assets/player/${playerArtStem(raceId, appearance?.genderPresentation)}.webp`,
+  )
 }
 
 /** Combat / gathering / production action sprite (same art as portrait for now). */

@@ -7,11 +7,12 @@ import '../content/asset_paths.dart';
 import 'game_image.dart';
 
 /// The local player figure: a custom PNG when this device has one, else the
-/// bundled gender-presentation sprite.
+/// bundled race and gender-presentation sprite.
 class PlayerSprite extends StatelessWidget {
   const PlayerSprite({
     super.key,
     required this.appearance,
+    this.raceId,
     this.bytes,
     this.width,
     this.height,
@@ -21,6 +22,7 @@ class PlayerSprite extends StatelessWidget {
   });
 
   final PlayerAppearance? appearance;
+  final String? raceId;
   final Uint8List? bytes;
   final double? width;
   final double? height;
@@ -42,7 +44,7 @@ class PlayerSprite extends StatelessWidget {
       );
     }
     return GameImage(
-      playerAssetPath(appearance),
+      playerAssetPath(appearance, raceId: raceId),
       width: width,
       height: height,
       fit: fit,

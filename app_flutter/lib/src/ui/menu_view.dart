@@ -379,6 +379,7 @@ class _MenuViewState extends State<MenuView> {
               alignment: Alignment.centerLeft,
               child: PlayerSprite(
                 appearance: save.appearance,
+                raceId: save.raceId,
                 bytes: controller.localPlayerPng,
                 width: 72,
                 height: 72,

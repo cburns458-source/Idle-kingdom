@@ -147,14 +147,19 @@ void main() {
     for (final critter in critterDefs) {
       expectBundled(critterAssetPath(critter.internalKey), 'critter ${critter.id}');
     }
-    for (final option in appearanceOptions(db, AppearanceCategory.genderPresentation)) {
-      final optionId = option.raw['Appearance Option ID'] as String;
-      final appearance = withAppearanceOption(
-        defaultAppearance(db),
-        AppearanceCategory.genderPresentation,
-        optionId,
-      );
-      expectBundled(playerAssetPath(appearance), 'appearance $optionId');
+    for (final race in db.races.where((row) => row.releasePhase == 'Launch')) {
+      for (final option in appearanceOptions(db, AppearanceCategory.genderPresentation)) {
+        final optionId = option.raw['Appearance Option ID'] as String;
+        final appearance = withAppearanceOption(
+          defaultAppearance(db),
+          AppearanceCategory.genderPresentation,
+          optionId,
+        );
+        expectBundled(
+          playerAssetPath(appearance, raceId: race.raceId),
+          'race ${race.raceId} appearance $optionId',
+        );
+      }
     }
     expectBundled(playerAssetPath(null), 'a player without an appearance');
     expectBundled(avatarFrameAssetPath(), 'the HUD portrait frame');
