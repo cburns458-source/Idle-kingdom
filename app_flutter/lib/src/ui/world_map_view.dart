@@ -372,9 +372,7 @@ class _SelectionPanel extends StatelessWidget {
                           runSpacing: 6,
                           children: [
                             for (final skillId in skillIds)
-                              _LocationSkillIcon(
-                                skill: controller.indexes.skillsById[skillId],
-                              ),
+                              _LocationSkillIcon(skill: controller.indexes.skillsById[skillId]),
                           ],
                         ),
                       ],
