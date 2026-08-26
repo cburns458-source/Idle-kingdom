@@ -289,8 +289,8 @@ void main() {
     expect(find.byType(TextField), findsNothing);
 
     expect(
-      visibleBagOrder(tester, ['Baked Potato', 'Copper Ore', 'Potato', 'Copper Bar', 'Iron Sword']),
-      ['Baked Potato', 'Copper Ore', 'Potato', 'Copper Bar', 'Iron Sword'],
+      visibleBagOrder(tester, ['Baked Potato', 'Copper Ore', 'Copper Bar', 'Iron Sword', 'Potato']),
+      ['Baked Potato', 'Copper Ore', 'Copper Bar', 'Iron Sword', 'Potato'],
     );
 
     await tester.tap(find.byTooltip('Sort'));

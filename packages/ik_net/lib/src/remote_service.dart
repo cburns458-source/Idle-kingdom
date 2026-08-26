@@ -374,6 +374,7 @@ class RemoteMultiplayerService implements MultiplayerService {
       userId: account.userId,
       username: account.username,
       appearance: account.appearance,
+      raceId: save?.raceId ?? account.raceId,
       guildName: account.guildName,
       publicSkills: account.privacyPublicSkills ? skills : const <PublicSkillLine>[],
       publicEquipment: !account.privacyPublicGear
@@ -472,16 +473,22 @@ class RemoteMultiplayerService implements MultiplayerService {
     if (refused != null) return CloudSyncResult.failed(refused);
 
     await _refreshPvpLiveStats(stamped);
+    final profileRow = <String, Object?>{
+      'user_id': current.userId,
+      'appearance_json': appearanceJsonForRemote(stamped.appearance, stamped.raceId),
+    };
     if (_profilesHaveGearPrivacy != false) {
-      final refusedGear = await transport.upsert(RemoteTables.profiles, <RemoteRow>[
-        <String, Object?>{
-          'user_id': current.userId,
-          'equipment_json': publicEquipmentFromSave(stamped).map((row) => row.toJson()).toList(),
-        },
-      ], onConflict: 'user_id');
-      if (refusedGear != null && remoteMissingGearPrivacyColumn(refusedGear)) {
-        _profilesHaveGearPrivacy = false;
-      }
+      profileRow[remoteEquipmentJsonColumn] = publicEquipmentFromSave(stamped)
+          .map((row) => row.toJson())
+          .toList();
+    }
+    final refusedProfile = await transport.upsert(RemoteTables.profiles, <RemoteRow>[
+      profileRow,
+    ], onConflict: 'user_id');
+    if (refusedProfile != null && remoteMissingGearPrivacyColumn(refusedProfile)) {
+      _profilesHaveGearPrivacy = false;
+      profileRow.remove(remoteEquipmentJsonColumn);
+      await transport.upsert(RemoteTables.profiles, <RemoteRow>[profileRow], onConflict: 'user_id');
     }
     return CloudSyncResult.ok(stamped, CloudSyncSource.uploaded);
   }
@@ -547,7 +554,7 @@ class RemoteMultiplayerService implements MultiplayerService {
     final profileRow = <String, Object?>{
       'user_id': current.userId,
       'username': current.username,
-      'appearance_json': save.appearance.toJson(),
+      'appearance_json': appearanceJsonForRemote(save.appearance, save.raceId),
     };
     if (_profilesHaveGearPrivacy != false) {
       profileRow[remoteEquipmentJsonColumn] = snapshot.equipment
@@ -611,6 +618,7 @@ class RemoteMultiplayerService implements MultiplayerService {
         userId: listing.guild.id,
         username: '[${listing.guild.tag}] ${listing.guild.name}',
         appearance: leader?.appearance ?? defaultPlayerAppearance,
+        raceId: leader?.raceId,
         guildName: '${members.length}/$guildMaxMembers members',
         boardKey: boardGuildTotalLevel,
         value: value,
@@ -977,6 +985,7 @@ class RemoteMultiplayerService implements MultiplayerService {
         userId: account.userId,
         username: account.username,
         appearance: account.appearance,
+        raceId: account.raceId,
         guildName: account.guildName,
       );
     }
@@ -1170,6 +1179,7 @@ class RemoteMultiplayerService implements MultiplayerService {
           userId: userId,
           username: account?.username ?? 'Adventurer',
           appearance: account?.appearance ?? defaultPlayerAppearance,
+          raceId: account?.raceId,
           guildName: account?.guildName,
         ),
       );

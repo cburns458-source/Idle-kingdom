@@ -183,7 +183,7 @@ class _LeaderboardTab extends StatelessWidget {
               title: row.username,
               subtitle: row.subtitle,
               leading: row.emblem == null
-                  ? SocialPortrait(appearance: row.appearance)
+                  ? SocialPortrait(appearance: row.appearance, raceId: row.raceId)
                   : GuildEmblemBadge(emblem: row.emblem!),
               onTap: row.isGuild
                   ? null
@@ -240,7 +240,7 @@ class _CitadelTab extends StatelessWidget {
             SocialRow(
               title: visitor.username,
               subtitle: citadelVisitorSubtitle(visitor),
-              leading: SocialPortrait(appearance: visitor.appearance),
+              leading: SocialPortrait(appearance: visitor.appearance, raceId: visitor.raceId),
             ),
             const SizedBox(height: 6),
           ],

@@ -344,6 +344,7 @@ class LocalMultiplayerService implements MultiplayerService {
     _backend.upsertProfile(
       current.userId,
       appearance: stamped.appearance,
+      raceId: stamped.raceId,
       username: isNotBlank(stamped.characterName) ? stamped.characterName : current.username,
     );
     return CloudSyncResult.ok(stamped, CloudSyncSource.uploaded);

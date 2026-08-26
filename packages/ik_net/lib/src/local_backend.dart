@@ -49,11 +49,13 @@ class _MemberSnapshot {
   const _MemberSnapshot({
     required this.username,
     required this.appearance,
+    this.raceId,
     required this.totalLevel,
   });
 
   final String username;
   final PlayerAppearance appearance;
+  final String? raceId;
   final num totalLevel;
 }
 
@@ -229,11 +231,12 @@ class LocalMultiplayerBackend {
     required String userId,
     required String username,
     PlayerAppearance? appearance,
+    String? raceId,
     String? guildName,
   }) {
     final existing = getProfile(userId);
     if (existing != null) {
-      upsertProfile(userId, appearance: appearance, username: username);
+      upsertProfile(userId, appearance: appearance, raceId: raceId, username: username);
       return;
     }
     final db = _db();
@@ -242,6 +245,7 @@ class LocalMultiplayerBackend {
         userId: userId,
         username: username,
         appearance: appearance ?? defaultPlayerAppearance,
+        raceId: raceId,
         guildId: null,
         guildName: guildName,
         privacyPublicSkills: true,
@@ -254,6 +258,7 @@ class LocalMultiplayerBackend {
   MultiplayerProfile? upsertProfile(
     String userId, {
     PlayerAppearance? appearance,
+    String? raceId,
     bool? privacyPublicSkills,
     bool? privacyPublicGear,
     String? privacyDirectMessages,
@@ -265,6 +270,7 @@ class LocalMultiplayerBackend {
     if (index < 0) return null;
     db.profiles[index] = db.profiles[index].copyWith(
       appearance: appearance,
+      raceId: raceId,
       privacyPublicSkills: privacyPublicSkills,
       privacyPublicGear: privacyPublicGear,
       privacyDirectMessages: privacyDirectMessages,
@@ -433,6 +439,7 @@ class LocalMultiplayerBackend {
           (row) => row.userId == userId
               ? row.copyWith(
                   appearance: save.appearance,
+                  raceId: save.raceId,
                   username: isNotBlank(save.characterName) ? save.characterName : row.username,
                   publishedEquipment: snapshot.equipment,
                   updatedAt: updatedAt,
@@ -480,6 +487,7 @@ class LocalMultiplayerBackend {
         userId: row.userId,
         username: profile?.username ?? 'Adventurer',
         appearance: profile?.appearance ?? defaultPlayerAppearance,
+        raceId: profile?.raceId,
         guildName: profile?.guildName,
         guildTag: guild?.tag,
         boardKey: boardKey,
@@ -776,6 +784,7 @@ class LocalMultiplayerBackend {
       userId: profile.userId,
       username: profile.username,
       appearance: profile.appearance,
+      raceId: profile.raceId,
       guildName: profile.guildName,
     );
   }
@@ -822,6 +831,7 @@ class LocalMultiplayerBackend {
     return _MemberSnapshot(
       username: isNotBlank(saveName) ? saveName! : (profile?.username ?? username),
       appearance: cloud?.payload.appearance ?? profile?.appearance ?? defaultPlayerAppearance,
+      raceId: cloud?.payload.raceId ?? profile?.raceId,
       totalLevel: math.max(1, level),
     );
   }
@@ -861,6 +871,7 @@ class LocalMultiplayerBackend {
         role: guildRoleLeader,
         joinedAt: _nowIso(),
         appearance: snapshot.appearance,
+        raceId: snapshot.raceId,
         totalLevel: snapshot.totalLevel,
       ),
     );
@@ -943,6 +954,7 @@ class LocalMultiplayerBackend {
         role: normalizeRole(row.role),
         username: snapshot.username,
         appearance: snapshot.appearance,
+        raceId: snapshot.raceId,
         totalLevel: snapshot.totalLevel,
       );
     }).toList();
@@ -968,6 +980,7 @@ class LocalMultiplayerBackend {
           role: guildRoleRecruit,
           joinedAt: _nowIso(),
           appearance: snapshot.appearance,
+          raceId: snapshot.raceId,
           totalLevel: snapshot.totalLevel,
         ),
       );
@@ -1023,6 +1036,7 @@ class LocalMultiplayerBackend {
           username: snapshot.username,
           joinedAt: _nowIso(),
           appearance: snapshot.appearance,
+          raceId: snapshot.raceId,
         ),
       );
       db.applications = db.applications
@@ -1094,6 +1108,7 @@ class LocalMultiplayerBackend {
             username: snapshot.username,
             joinedAt: _nowIso(),
             appearance: snapshot.appearance,
+            raceId: snapshot.raceId,
           ),
         );
         _write(db);
@@ -1116,6 +1131,7 @@ class LocalMultiplayerBackend {
           role: guildRoleRecruit,
           joinedAt: _nowIso(),
           appearance: snapshot.appearance,
+          raceId: snapshot.raceId,
           totalLevel: snapshot.totalLevel,
         ),
       );
@@ -1370,6 +1386,7 @@ class LocalMultiplayerBackend {
       userId: session.userId,
       username: session.username,
       appearance: input.appearance,
+      raceId: input.raceId ?? profile?.raceId,
       guildName: profile?.guildName,
       locationId: input.locationId,
       currentActivityId: input.currentActivityId,
@@ -1465,6 +1482,7 @@ class LocalMultiplayerBackend {
       userId: userId,
       username: profile.username,
       appearance: profile.appearance,
+      raceId: save?.raceId ?? profile.raceId,
       guildName: profile.guildName,
       publicSkills: profile.privacyPublicSkills ? skills : const <PublicSkillLine>[],
       publicEquipment: !profile.privacyPublicGear

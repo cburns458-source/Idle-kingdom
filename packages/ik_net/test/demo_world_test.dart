@@ -86,6 +86,15 @@ void main() {
     expect(store.getGuild(demoGuildId)?.leaderId, demoMiraId);
   });
 
+  test('demo characters publish race-specific portraits', () {
+    final store = backend();
+    store.ensureDemoWorld(database);
+    expect(store.publicProfile(demoMiraId)!.raceId, 'RACE-0002');
+    expect(store.publicProfile(demoBramId)!.raceId, 'RACE-0006');
+    expect(store.publicProfile(demoKaelId)!.raceId, 'RACE-0004');
+    expect(store.listPresence(locationId: demoMiraLocationId).single.raceId, 'RACE-0002');
+  });
+
   test('demo characters wear a starter sword and shield on their public profile', () {
     final store = backend();
     store.ensureDemoWorld(database);

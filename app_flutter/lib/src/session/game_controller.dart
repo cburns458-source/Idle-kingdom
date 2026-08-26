@@ -145,6 +145,40 @@ class GameController extends ChangeNotifier {
   String? get message => _message;
   String? get activityError => _activityError;
 
+  /// Pushes a completed action or project onto the live reward strip.
+  void noteReward(ActionRewardBundle bundle) {
+    _recentRewards.insert(0, bundle);
+    if (_recentRewards.length > _rewardHistory) _recentRewards.removeLast();
+  }
+
+  /// Instant projects toast a receipt and also land on the same strip as ticks.
+  void noteProjectCompletion(ProjectCompleteResult result) {
+    if (!result.ok || result.save == null) return;
+    final skillId = result.skillId;
+    final xp = skillId == null
+        ? null
+        : summarizeXpReward(db, result.save!, skillId, result.xpGained, result.leveledUpTo);
+    final outputId = result.outputItemId;
+    final loot = outputId == null || outputId.isEmpty
+        ? const <LootGrant>[]
+        : [
+            LootGrant(
+              itemId: outputId,
+              quantity: result.outputQty,
+              displayName: result.outputLabel ?? outputId,
+            ),
+          ];
+    if (xp == null && loot.isEmpty) return;
+    noteReward(
+      ActionRewardBundle(
+        id: 'project-${session.clock()}',
+        xpRewards: [?xp],
+        loot: loot,
+        goldGained: 0,
+      ),
+    );
+  }
+
   /// True while a Standard Production queue is waiting for bag space.
   bool get productionInventoryFull {
     final recipeId = save.productionRecipeId;
@@ -475,8 +509,7 @@ class GameController extends ChangeNotifier {
   void _applyEvent(SessionEvent event) {
     switch (event) {
       case RewardsEvent(bundle: final bundle):
-        _recentRewards.insert(0, bundle);
-        if (_recentRewards.length > _rewardHistory) _recentRewards.removeLast();
+        noteReward(bundle);
       case MessageEvent(text: final text):
         _message = text;
       case ActivityStoppedEvent(reason: final reason):

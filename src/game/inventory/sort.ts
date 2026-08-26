@@ -4,16 +4,16 @@ export type InventorySortMode = 'group' | 'az' | 'search'
 
 export const GROUP_COMBAT = 1
 export const GROUP_MINING = 2
-export const GROUP_FISHING = 3
-export const GROUP_HARVESTING = 4
-export const GROUP_HUNTING = 5
-export const GROUP_WOODCUTTING = 6
-export const GROUP_COOKING = 7
-export const GROUP_METALLURGY = 8
-export const GROUP_CRAFTING = 9
-export const GROUP_ALCHEMY = 10
-export const GROUP_SMITHING = 11
-export const GROUP_ARTISANRY = 12
+export const GROUP_METALLURGY = 3
+export const GROUP_SMITHING = 4
+export const GROUP_ARTISANRY = 5
+export const GROUP_COOKING = 6
+export const GROUP_FISHING = 7
+export const GROUP_HARVESTING = 8
+export const GROUP_HUNTING = 9
+export const GROUP_WOODCUTTING = 10
+export const GROUP_CRAFTING = 11
+export const GROUP_ALCHEMY = 12
 export const GROUP_ARCANA = 13
 export const GROUP_OTHER = 14
 

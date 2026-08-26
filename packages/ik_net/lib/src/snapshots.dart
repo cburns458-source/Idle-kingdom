@@ -130,6 +130,7 @@ List<LeaderboardEntry> mergeLiveLeaderboardScore({
   required String userId,
   required String username,
   required PlayerAppearance appearance,
+  String? raceId,
   String? guildName,
   String? guildTag,
 }) {
@@ -151,6 +152,7 @@ List<LeaderboardEntry> mergeLiveLeaderboardScore({
       userId: userId,
       username: username,
       appearance: appearance,
+      raceId: raceId ?? save.raceId,
       guildName: guildName,
       guildTag: guildTag,
       boardKey: boardKey,

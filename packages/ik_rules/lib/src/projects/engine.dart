@@ -31,6 +31,9 @@ class ProjectCompleteResult {
     required this.outputQty,
     required this.xpGained,
     required this.goldSpent,
+    this.skillId,
+    this.leveledUpTo,
+    this.outputItemId,
   }) : reason = null;
 
   const ProjectCompleteResult.failed(this.reason)
@@ -38,7 +41,10 @@ class ProjectCompleteResult {
       outputLabel = null,
       outputQty = 0,
       xpGained = 0,
-      goldSpent = 0;
+      goldSpent = 0,
+      skillId = null,
+      leveledUpTo = null,
+      outputItemId = null;
 
   bool get ok => reason == null;
   final PlayerSave? save;
@@ -46,6 +52,9 @@ class ProjectCompleteResult {
   final num outputQty;
   final num xpGained;
   final num goldSpent;
+  final String? skillId;
+  final num? leveledUpTo;
+  final String? outputItemId;
   final String? reason;
 }
 
@@ -205,7 +214,8 @@ ProjectCompleteResult completeSpecialProject(
 
   final skillId = jsString(project.raw['Skill ID']);
   final xpTotal = jsNumber(project.raw['XP Reward']) * crafts;
-  next = applyXp(next, db, skillId, xpTotal).save;
+  final xpApplied = applyXp(next, db, skillId, xpTotal);
+  next = xpApplied.save;
   next = applyQuestProcessProgress(db, next, jsString(project.raw['Project ID']), crafts);
   next = applyBountyProjectProgress(next, jsString(project.raw['Project ID']), crafts, nowMs);
   next = recordProjectMilestones(db, next, jsString(project.raw['Project ID']), crafts);
@@ -216,5 +226,8 @@ ProjectCompleteResult completeSpecialProject(
     outputQty: isEnchantmentOutput(outputId) ? 1 : outputQty,
     xpGained: xpTotal,
     goldSpent: goldCost,
+    skillId: skillId,
+    leveledUpTo: xpApplied.leveledUpTo,
+    outputItemId: isEnchantmentOutput(outputId) ? null : outputId,
   );
 }

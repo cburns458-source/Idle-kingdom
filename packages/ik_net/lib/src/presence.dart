@@ -12,6 +12,7 @@ PresenceInput presenceFromSave(PlayerSave save) {
   final skill = combat ?? fallback;
   return PresenceInput(
     appearance: save.appearance,
+    raceId: save.raceId,
     locationId: save.currentLocationId,
     currentActivityId: save.currentActivityId,
     skillId: skill?.skillId,

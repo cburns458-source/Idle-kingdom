@@ -127,7 +127,7 @@ RemoteRow guildMemberRowFor(GuildMember member) => <String, Object?>{
   'user_id': member.userId,
   'username': member.username,
   'role': member.role,
-  'appearance_json': member.appearance.toJson(),
+  'appearance_json': appearanceJsonForRemote(member.appearance, member.raceId),
   'total_level': member.totalLevel,
 };
 
@@ -138,6 +138,7 @@ GuildMember guildMemberFrom(RemoteRow row) => GuildMember(
   role: normalizeRole(_str(row['role'])),
   joinedAt: _str(row['joined_at']),
   appearance: playerAppearanceFromRemote(row['appearance_json']),
+  raceId: raceIdFromRemote(row['appearance_json']),
   totalLevel: _num(row['total_level']) < 1 ? 1 : _num(row['total_level']),
 );
 
@@ -172,7 +173,7 @@ RemoteRow guildGuestRowFor(GuildGuest guest) => <String, Object?>{
   'guild_id': guest.guildId,
   'user_id': guest.userId,
   'username': guest.username,
-  'appearance_json': guest.appearance.toJson(),
+  'appearance_json': appearanceJsonForRemote(guest.appearance, guest.raceId),
 };
 
 GuildGuest guildGuestFrom(RemoteRow row) => GuildGuest(
@@ -181,6 +182,7 @@ GuildGuest guildGuestFrom(RemoteRow row) => GuildGuest(
   username: _str(row['username']),
   joinedAt: _str(row['joined_at']),
   appearance: playerAppearanceFromRemote(row['appearance_json']),
+  raceId: raceIdFromRemote(row['appearance_json']),
 );
 
 RemoteRow guildProjectRowFor(GuildProject project) => <String, Object?>{

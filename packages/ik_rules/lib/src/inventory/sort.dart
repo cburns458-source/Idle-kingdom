@@ -9,16 +9,16 @@ enum InventorySortMode { group, az, search }
 
 const int groupCombat = 1;
 const int groupMining = 2;
-const int groupFishing = 3;
-const int groupHarvesting = 4;
-const int groupHunting = 5;
-const int groupWoodcutting = 6;
-const int groupCooking = 7;
-const int groupMetallurgy = 8;
-const int groupCrafting = 9;
-const int groupAlchemy = 10;
-const int groupSmithing = 11;
-const int groupArtisanry = 12;
+const int groupMetallurgy = 3;
+const int groupSmithing = 4;
+const int groupArtisanry = 5;
+const int groupCooking = 6;
+const int groupFishing = 7;
+const int groupHarvesting = 8;
+const int groupHunting = 9;
+const int groupWoodcutting = 10;
+const int groupCrafting = 11;
+const int groupAlchemy = 12;
 const int groupArcana = 13;
 const int groupOther = 14;
 

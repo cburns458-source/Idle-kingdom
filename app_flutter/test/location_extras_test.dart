@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:idle_kingdoms/src/ui/critter_overlay.dart';
 import 'package:idle_kingdoms/src/theme.dart';
+import 'package:idle_kingdoms/src/ui/action_stage.dart';
 import 'package:idle_kingdoms/src/ui/location_view.dart';
 import 'package:idle_kingdoms/src/ui/overlay_notice.dart';
+import 'package:idle_kingdoms/src/ui/shop_panel.dart';
 import 'package:idle_kingdoms/src/ui/world_map_view.dart';
 import 'package:ik_content/ik_content.dart';
 import 'package:ik_rules/ik_rules.dart';
@@ -436,5 +438,51 @@ void main() {
       );
       expect(find.text('Master Dwarf'), locationId == today ? findsOne : findsNothing);
     }
+  });
+
+  testWidgets('a shop overlays a running fight instead of sharing the band', (tester) async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(currentLocationId: 'LOC-0032'),
+    );
+    addTearDown(controller.dispose);
+    await pumpPanel(
+      tester,
+      ListenableBuilder(
+        listenable: controller,
+        builder: (context, _) => LocationView(
+          controller: controller,
+          multiplayer: buildMultiplayer(database),
+          onOpenMap: () {},
+        ),
+      ),
+      size: const Size(900, 2400),
+    );
+
+    Finder dockRow(String title) {
+      return find.ancestor(of: find.text(title), matching: find.byType(DockRow));
+    }
+
+    await tapVisible(
+      tester,
+      find.descendant(
+        of: dockRow('Challenge the guards'),
+        matching: find.bySemanticsLabel('Start'),
+      ),
+    );
+    expect(controller.save.currentActivityId, isNotNull);
+    expect(find.byType(ActionStage), findsOne);
+
+    await tapVisible(
+      tester,
+      find.descendant(of: dockRow('Armory'), matching: find.widgetWithText(GameButton, 'Shop')),
+    );
+    expect(find.byType(ActionStage), findsOne);
+    expect(find.byType(ShopPanel), findsOne);
+
+    final stage = tester.getRect(find.byType(ActionStage));
+    final shop = tester.getRect(find.byType(ShopPanel));
+    expect(shop.overlaps(stage), isTrue);
+    expect(shop.height, greaterThan(200));
   });
 }

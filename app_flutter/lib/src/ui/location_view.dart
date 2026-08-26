@@ -212,14 +212,14 @@ class _LocationViewState extends State<LocationView> {
 
     final running = controller.save.currentActivityId != null;
     final openPanel = _currentPanel;
-    // A running action keeps the stage. An open shop/NPC shares the band
-    // instead of covering the fight or gather UI.
+    // A running action keeps the stage. An open shop/NPC overlays that stage
+    // the same way it does when idle, so combat stays visible behind it.
     final stage = running
         ? ActivityPanel(controller: controller)
         : openPanel != null
         ? _buildPanel(openPanel)
         : null;
-    final bandPanel = running && openPanel != null ? _buildPanel(openPanel) : null;
+    final overlayPanel = running && openPanel != null ? _buildPanel(openPanel) : null;
 
     final keyboard = MediaQuery.viewInsetsOf(context).bottom;
     final liftArena = openPanel is ArenaOpen && keyboard > 0;
@@ -356,14 +356,21 @@ class _LocationViewState extends State<LocationView> {
                                 left: 13,
                                 right: 13,
                                 bottom: _collapsedBand + 8,
-                                child: openPanel is ArenaOpen
+                                child: openPanel is ArenaOpen && !running
                                     ? stage
-                                    : Align(
-                                        alignment: Alignment.bottomCenter,
-                                        child: SingleChildScrollView(child: stage),
-                                      ),
+                                    : _scrollingPanel(stage),
                               ),
-                            if (liftArena && stage != null)
+                            if (overlayPanel != null && !liftArena)
+                              Positioned(
+                                top: 0,
+                                left: 13,
+                                right: 13,
+                                bottom: _collapsedBand + 8,
+                                child: openPanel is ArenaOpen
+                                    ? overlayPanel
+                                    : _scrollingPanel(overlayPanel),
+                              ),
+                            if (liftArena && (overlayPanel ?? stage) != null)
                               Positioned(
                                 left: 10,
                                 right: 10,
@@ -373,7 +380,7 @@ class _LocationViewState extends State<LocationView> {
                                     180,
                                     card.maxHeight * 0.62,
                                   ),
-                                  child: stage,
+                                  child: overlayPanel ?? stage,
                                 ),
                               ),
                             if (controller.recentRewards.isNotEmpty)
@@ -408,7 +415,6 @@ class _LocationViewState extends State<LocationView> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          if (bandPanel != null) ...[bandPanel, const SizedBox(height: 10)],
                           ..._activities(locationId),
                           ..._blessing(),
                           ..._stations(locationId),
@@ -440,6 +446,21 @@ class _LocationViewState extends State<LocationView> {
       fit: BoxFit.cover,
       alignment: square ? Alignment.topCenter : Alignment.bottomCenter,
       filterQuality: square ? FilterQuality.none : FilterQuality.medium,
+    );
+  }
+
+  /// Keeps a shop or NPC as wide as the stage so its grid does not collapse
+  /// inside the scrolling overlay.
+  Widget _scrollingPanel(Widget panel) {
+    return LayoutBuilder(
+      builder: (context, stage) {
+        return Align(
+          alignment: Alignment.bottomCenter,
+          child: SingleChildScrollView(
+            child: SizedBox(width: stage.maxWidth, child: panel),
+          ),
+        );
+      },
     );
   }
 

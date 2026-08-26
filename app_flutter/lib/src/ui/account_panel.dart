@@ -174,9 +174,14 @@ class _AccountPanelState extends State<AccountPanel> {
           SocialRow(
             title: row.username,
             subtitle: row.subtitle,
-            leading: SocialPortrait(appearance: row.appearance),
+            leading: SocialPortrait(appearance: row.appearance, raceId: row.raceId),
             trailing: trailing?.call(
-              SocialContact(userId: row.userId, username: row.username, appearance: row.appearance),
+              SocialContact(
+                userId: row.userId,
+                username: row.username,
+                appearance: row.appearance,
+                raceId: row.raceId,
+              ),
             ),
             onTap: () => openPlayerProfile(
               context,
@@ -192,7 +197,7 @@ class _AccountPanelState extends State<AccountPanel> {
           SocialRow(
             title: contact.username,
             subtitle: contact.guildName ?? '',
-            leading: SocialPortrait(appearance: contact.appearance),
+            leading: SocialPortrait(appearance: contact.appearance, raceId: contact.raceId),
             trailing: trailing?.call(contact),
             onTap: () => openPlayerProfile(
               context,
