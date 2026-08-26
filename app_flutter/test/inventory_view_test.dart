@@ -289,13 +289,7 @@ void main() {
     expect(find.byType(TextField), findsNothing);
 
     expect(
-      visibleBagOrder(tester, [
-        'Baked Potato',
-        'Copper Ore',
-        'Copper Bar',
-        'Iron Sword',
-        'Potato',
-      ]),
+      visibleBagOrder(tester, ['Baked Potato', 'Copper Ore', 'Copper Bar', 'Iron Sword', 'Potato']),
       ['Baked Potato', 'Copper Ore', 'Copper Bar', 'Iron Sword', 'Potato'],
     );
 
