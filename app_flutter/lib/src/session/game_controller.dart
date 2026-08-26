@@ -172,7 +172,7 @@ class GameController extends ChangeNotifier {
     noteReward(
       ActionRewardBundle(
         id: 'project-${session.clock()}',
-        xpRewards: [if (xp != null) xp],
+        xpRewards: [?xp],
         loot: loot,
         goldGained: 0,
       ),

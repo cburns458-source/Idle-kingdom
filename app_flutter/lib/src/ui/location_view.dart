@@ -356,7 +356,7 @@ class _LocationViewState extends State<LocationView> {
                                 left: 13,
                                 right: 13,
                                 bottom: _collapsedBand + 8,
-                                child: running || openPanel is ArenaOpen
+                                child: openPanel is ArenaOpen && !running
                                     ? stage
                                     : _scrollingPanel(stage),
                               ),

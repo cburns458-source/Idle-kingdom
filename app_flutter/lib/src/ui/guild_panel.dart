@@ -708,7 +708,10 @@ class _GuildDetailPageState extends State<_GuildDetailPage> {
                             SocialRow(
                               title: '${row.position}. ${row.username}',
                               subtitle: '${row.rankLabel} · ${row.lastOnlineLabel}',
-                              leading: SocialPortrait(appearance: row.appearance, raceId: row.raceId),
+                              leading: SocialPortrait(
+                                appearance: row.appearance,
+                                raceId: row.raceId,
+                              ),
                               onTap: () => openPlayerProfile(
                                 context,
                                 controller: widget.controller,
@@ -738,7 +741,10 @@ class _GuildDetailPageState extends State<_GuildDetailPage> {
                             SocialRow(
                               title: guest.username,
                               subtitle: '',
-                              leading: SocialPortrait(appearance: guest.appearance, raceId: guest.raceId),
+                              leading: SocialPortrait(
+                                appearance: guest.appearance,
+                                raceId: guest.raceId,
+                              ),
                               onTap: () => openPlayerProfile(
                                 context,
                                 controller: widget.controller,

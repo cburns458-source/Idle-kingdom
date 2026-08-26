@@ -465,7 +465,10 @@ void main() {
 
     await tapVisible(
       tester,
-      find.descendant(of: dockRow('Challenge the guards'), matching: find.bySemanticsLabel('Start')),
+      find.descendant(
+        of: dockRow('Challenge the guards'),
+        matching: find.bySemanticsLabel('Start'),
+      ),
     );
     expect(controller.save.currentActivityId, isNotNull);
     expect(find.byType(ActionStage), findsOne);

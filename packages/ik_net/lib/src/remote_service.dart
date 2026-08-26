@@ -478,9 +478,9 @@ class RemoteMultiplayerService implements MultiplayerService {
       'appearance_json': appearanceJsonForRemote(stamped.appearance, stamped.raceId),
     };
     if (_profilesHaveGearPrivacy != false) {
-      profileRow[remoteEquipmentJsonColumn] = publicEquipmentFromSave(
-        stamped,
-      ).map((row) => row.toJson()).toList();
+      profileRow[remoteEquipmentJsonColumn] = publicEquipmentFromSave(stamped)
+          .map((row) => row.toJson())
+          .toList();
     }
     final refusedProfile = await transport.upsert(RemoteTables.profiles, <RemoteRow>[
       profileRow,
