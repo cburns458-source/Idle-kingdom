@@ -846,6 +846,7 @@ class MultiplayerController extends ChangeNotifier {
       userId: current.userId,
       username: isNotBlank(save.characterName) ? save.characterName! : current.username,
       appearance: save.appearance,
+      raceId: save.raceId,
       guildName: _guild?.name,
       guildTag: _guild?.tag,
     );

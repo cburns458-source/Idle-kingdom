@@ -62,6 +62,12 @@ void main() {
     expect(names(['ITEM-0061', 'ITEM-0058']), ['ITEM-0058', 'ITEM-0061']);
   });
 
+  test('places cooked food before raw fish', () {
+    expect(sorter.groupOf('ITEM-0061'), groupCooking);
+    expect(sorter.groupOf('ITEM-0049'), groupFishing);
+    expect(names(['ITEM-0049', 'ITEM-0061']), ['ITEM-0061', 'ITEM-0049']);
+  });
+
   test('puts hunting leftovers and crafting tablets in the intended groups', () {
     expect(sorter.groupOf('ITEM-0054'), groupHunting);
     expect(sorter.groupOf('ITEM-0025'), groupHarvesting);

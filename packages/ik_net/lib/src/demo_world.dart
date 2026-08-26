@@ -80,12 +80,16 @@ void applyDemoWorld(LocalDb db, GameDatabase gameDb, {required num nowMs, requir
     hairColor: 'APR-0008',
   );
   final kaelLook = defaultPlayerAppearance.copyWith(genderPresentation: 'APR-0019');
+  const miraRaceId = 'RACE-0002';
+  const bramRaceId = 'RACE-0006';
+  const kaelRaceId = 'RACE-0004';
 
   _upsertAccount(
     db,
     userId: demoMiraId,
     username: demoMiraName,
     appearance: miraLook,
+    raceId: miraRaceId,
     nowIso: nowIso,
   );
   _upsertAccount(
@@ -93,6 +97,7 @@ void applyDemoWorld(LocalDb db, GameDatabase gameDb, {required num nowMs, requir
     userId: demoBramId,
     username: demoBramName,
     appearance: bramLook,
+    raceId: bramRaceId,
     nowIso: nowIso,
   );
   _upsertAccount(
@@ -100,6 +105,7 @@ void applyDemoWorld(LocalDb db, GameDatabase gameDb, {required num nowMs, requir
     userId: demoKaelId,
     username: demoKaelName,
     appearance: kaelLook,
+    raceId: kaelRaceId,
     nowIso: nowIso,
   );
 
@@ -111,6 +117,7 @@ void applyDemoWorld(LocalDb db, GameDatabase gameDb, {required num nowMs, requir
     locationId: demoMiraLocationId,
     activityId: demoMiraActivityId,
     appearance: miraLook,
+    raceId: miraRaceId,
     skillLevels: const <String, num>{demoMiraSkillId: 14, combatSkillId: 8},
     nowMs: nowMs,
     nowIso: nowIso,
@@ -122,6 +129,7 @@ void applyDemoWorld(LocalDb db, GameDatabase gameDb, {required num nowMs, requir
     name: demoBramName,
     locationId: demoBramLocationId,
     appearance: bramLook,
+    raceId: bramRaceId,
     skillLevels: const <String, num>{demoBramSkillId: 11, combatSkillId: 6},
     nowMs: nowMs,
     nowIso: nowIso,
@@ -133,6 +141,7 @@ void applyDemoWorld(LocalDb db, GameDatabase gameDb, {required num nowMs, requir
     name: demoKaelName,
     locationId: demoKaelLocationId,
     appearance: kaelLook,
+    raceId: kaelRaceId,
     skillLevels: const <String, num>{demoKaelSkillId: 18},
     nowMs: nowMs,
     nowIso: nowIso,
@@ -164,6 +173,7 @@ void applyDemoWorld(LocalDb db, GameDatabase gameDb, {required num nowMs, requir
     username: demoMiraName,
     role: guildRoleLeader,
     appearance: miraLook,
+    raceId: miraRaceId,
     totalLevel: 14,
     joinedAt: nowIso,
   );
@@ -174,6 +184,7 @@ void applyDemoWorld(LocalDb db, GameDatabase gameDb, {required num nowMs, requir
     username: demoBramName,
     role: guildRoleOfficer,
     appearance: bramLook,
+    raceId: bramRaceId,
     totalLevel: 11,
     joinedAt: nowIso,
   );
@@ -184,6 +195,7 @@ void applyDemoWorld(LocalDb db, GameDatabase gameDb, {required num nowMs, requir
     username: demoKaelName,
     role: guildRoleMember,
     appearance: kaelLook,
+    raceId: kaelRaceId,
     totalLevel: 18,
     joinedAt: nowIso,
   );
@@ -203,6 +215,7 @@ void applyDemoWorld(LocalDb db, GameDatabase gameDb, {required num nowMs, requir
       userId: demoMiraId,
       username: demoMiraName,
       appearance: miraLook,
+      raceId: miraRaceId,
       locationId: demoMiraLocationId,
       activityId: demoMiraActivityId,
       skillId: demoMiraSkillId,
@@ -214,6 +227,7 @@ void applyDemoWorld(LocalDb db, GameDatabase gameDb, {required num nowMs, requir
       userId: demoBramId,
       username: demoBramName,
       appearance: bramLook,
+      raceId: bramRaceId,
       locationId: demoBramLocationId,
       skillId: demoBramSkillId,
       skillLevel: 11,
@@ -224,6 +238,7 @@ void applyDemoWorld(LocalDb db, GameDatabase gameDb, {required num nowMs, requir
       userId: demoKaelId,
       username: demoKaelName,
       appearance: kaelLook,
+      raceId: kaelRaceId,
       locationId: demoKaelLocationId,
       skillId: demoKaelSkillId,
       skillLevel: 18,
@@ -266,6 +281,7 @@ void _upsertAccount(
   required String userId,
   required String username,
   required PlayerAppearance appearance,
+  String? raceId,
   required String nowIso,
 }) {
   if (!db.users.any((row) => row.userId == userId)) {
@@ -283,6 +299,7 @@ void _upsertAccount(
     userId: userId,
     username: username,
     appearance: appearance,
+    raceId: raceId,
     guildId: demoGuildId,
     guildName: demoGuildName,
     privacyPublicSkills: true,
@@ -303,12 +320,13 @@ void _upsertSave(
   required String locationId,
   String? activityId,
   required PlayerAppearance appearance,
+  required String raceId,
   required Map<String, num> skillLevels,
   required num nowMs,
   required String nowIso,
 }) {
   var save = createNewSave(gameDb, nowMs).copyWith(characterName: name);
-  final assigned = assignRace(gameDb, save, 'RACE-0001');
+  final assigned = assignRace(gameDb, save, raceId);
   save = assigned.save ?? save;
   final skills = save.skills.map((skill) {
     final level = skillLevels[skill.skillId];
@@ -338,6 +356,7 @@ void _upsertSave(
   if (profileIndex >= 0) {
     db.profiles[profileIndex] = db.profiles[profileIndex].copyWith(
       publishedEquipment: publicEquipmentFromSave(save),
+      raceId: save.raceId,
     );
   }
 }
@@ -349,6 +368,7 @@ void _upsertMember(
   required String username,
   required String role,
   required PlayerAppearance appearance,
+  String? raceId,
   required num totalLevel,
   required String joinedAt,
 }) {
@@ -360,12 +380,18 @@ void _upsertMember(
     role: role,
     joinedAt: joinedAt,
     appearance: appearance,
+    raceId: raceId,
     totalLevel: totalLevel,
   );
   if (index < 0) {
     db.members.add(member);
   } else {
-    db.members[index] = member.copyWith(role: role, username: username, appearance: appearance);
+    db.members[index] = member.copyWith(
+      role: role,
+      username: username,
+      appearance: appearance,
+      raceId: raceId,
+    );
   }
 }
 
@@ -373,6 +399,7 @@ ActivityPresence _presence({
   required String userId,
   required String username,
   required PlayerAppearance appearance,
+  String? raceId,
   required String locationId,
   String? activityId,
   required String skillId,
@@ -384,6 +411,7 @@ ActivityPresence _presence({
     userId: userId,
     username: username,
     appearance: appearance,
+    raceId: raceId,
     guildName: demoGuildName,
     locationId: locationId,
     currentActivityId: activityId,

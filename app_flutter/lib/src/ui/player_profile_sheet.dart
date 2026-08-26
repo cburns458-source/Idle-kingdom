@@ -122,7 +122,8 @@ class _PlayerProfileSheetState extends State<PlayerProfileSheet> {
       return PublicPlayerProfile(
         userId: profile.userId,
         username: profile.username,
-        appearance: profile.appearance,
+        appearance: save.appearance,
+        raceId: save.raceId,
         guildName: profile.guildName,
         publicSkills: profile.publicSkills,
         achievementsUnlocked: profile.achievementsUnlocked,
@@ -160,7 +161,12 @@ class _PlayerProfileSheetState extends State<PlayerProfileSheet> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SocialPortrait(appearance: view.appearance, size: 52, height: 156),
+              SocialPortrait(
+                appearance: view.appearance,
+                raceId: view.raceId,
+                size: 52,
+                height: 156,
+              ),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(

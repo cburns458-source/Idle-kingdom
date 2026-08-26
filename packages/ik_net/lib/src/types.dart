@@ -100,6 +100,7 @@ class MultiplayerProfile {
     required this.userId,
     required this.username,
     required this.appearance,
+    this.raceId,
     required this.guildId,
     required this.guildName,
     required this.privacyPublicSkills,
@@ -114,6 +115,7 @@ class MultiplayerProfile {
     userId: json['userId']! as String,
     username: json['username']! as String,
     appearance: PlayerAppearance.fromJson(json['appearance']! as Map<String, Object?>),
+    raceId: json['raceId'] as String? ?? raceIdFromRemote(json['appearance']),
     guildId: json['guildId'] as String?,
     guildName: json['guildName'] as String?,
     privacyPublicSkills: json['privacyPublicSkills'] as bool? ?? true,
@@ -127,6 +129,7 @@ class MultiplayerProfile {
   final String userId;
   final String username;
   final PlayerAppearance appearance;
+  final String? raceId;
   final String? guildId;
   final String? guildName;
   final bool privacyPublicSkills;
@@ -139,6 +142,7 @@ class MultiplayerProfile {
   MultiplayerProfile copyWith({
     String? username,
     PlayerAppearance? appearance,
+    String? raceId,
     String? guildId,
     String? guildName,
     bool? privacyPublicSkills,
@@ -152,6 +156,7 @@ class MultiplayerProfile {
     userId: userId,
     username: username ?? this.username,
     appearance: appearance ?? this.appearance,
+    raceId: raceId ?? this.raceId,
     guildId: clearGuild ? null : (guildId ?? this.guildId),
     guildName: clearGuild ? null : (guildName ?? this.guildName),
     privacyPublicSkills: privacyPublicSkills ?? this.privacyPublicSkills,
@@ -166,6 +171,7 @@ class MultiplayerProfile {
     'userId': userId,
     'username': username,
     'appearance': appearance.toJson(),
+    if (raceId != null) 'raceId': raceId,
     'guildId': guildId,
     'guildName': guildName,
     'privacyPublicSkills': privacyPublicSkills,
@@ -200,18 +206,21 @@ class SocialContact {
     required this.userId,
     required this.username,
     required this.appearance,
+    this.raceId,
     this.guildName,
   });
 
   final String userId;
   final String username;
   final PlayerAppearance appearance;
+  final String? raceId;
   final String? guildName;
 
   Map<String, Object?> toJson() => <String, Object?>{
     'userId': userId,
     'username': username,
     'appearance': appearance.toJson(),
+    if (raceId != null) 'raceId': raceId,
     'guildName': guildName,
   };
 }
@@ -260,6 +269,7 @@ class LeaderboardEntry {
     required this.userId,
     required this.username,
     required this.appearance,
+    this.raceId,
     required this.guildName,
     required this.boardKey,
     required this.value,
@@ -273,6 +283,7 @@ class LeaderboardEntry {
   final String userId;
   final String username;
   final PlayerAppearance appearance;
+  final String? raceId;
   final String? guildName;
 
   /// Player rows only. Guild board names already include the tag.
@@ -293,6 +304,7 @@ class LeaderboardEntry {
     userId: userId,
     username: username,
     appearance: appearance,
+    raceId: raceId,
     guildName: guildName,
     guildTag: guildTag,
     boardKey: boardKey,
@@ -307,6 +319,7 @@ class LeaderboardEntry {
     'userId': userId,
     'username': username,
     'appearance': appearance.toJson(),
+    if (raceId != null) 'raceId': raceId,
     'guildName': guildName,
     if (guildTag != null) 'guildTag': guildTag,
     'boardKey': boardKey,
@@ -675,6 +688,7 @@ class GuildMember {
     required this.role,
     required this.joinedAt,
     required this.appearance,
+    this.raceId,
     required this.totalLevel,
   });
 
@@ -687,6 +701,7 @@ class GuildMember {
     appearance: json['appearance'] is Map<String, Object?>
         ? PlayerAppearance.fromJson(json['appearance']! as Map<String, Object?>)
         : defaultPlayerAppearance,
+    raceId: json['raceId'] as String? ?? raceIdFromRemote(json['appearance']),
     totalLevel: json['totalLevel'] is num ? json['totalLevel']! as num : 1,
   );
 
@@ -696,12 +711,14 @@ class GuildMember {
   final GuildRole role;
   final String joinedAt;
   final PlayerAppearance appearance;
+  final String? raceId;
   final num totalLevel;
 
   GuildMember copyWith({
     String? username,
     GuildRole? role,
     PlayerAppearance? appearance,
+    String? raceId,
     num? totalLevel,
   }) => GuildMember(
     guildId: guildId,
@@ -710,6 +727,7 @@ class GuildMember {
     role: role ?? this.role,
     joinedAt: joinedAt,
     appearance: appearance ?? this.appearance,
+    raceId: raceId ?? this.raceId,
     totalLevel: totalLevel ?? this.totalLevel,
   );
 
@@ -720,6 +738,7 @@ class GuildMember {
     'role': role,
     'joinedAt': joinedAt,
     'appearance': appearance.toJson(),
+    if (raceId != null) 'raceId': raceId,
     'totalLevel': totalLevel,
   };
 }
@@ -732,6 +751,7 @@ class GuildGuest {
     required this.username,
     required this.joinedAt,
     required this.appearance,
+    this.raceId,
   });
 
   factory GuildGuest.fromJson(Map<String, Object?> json) => GuildGuest(
@@ -742,6 +762,7 @@ class GuildGuest {
     appearance: json['appearance'] is Map<String, Object?>
         ? PlayerAppearance.fromJson(json['appearance']! as Map<String, Object?>)
         : defaultPlayerAppearance,
+    raceId: json['raceId'] as String? ?? raceIdFromRemote(json['appearance']),
   );
 
   final String guildId;
@@ -749,6 +770,7 @@ class GuildGuest {
   final String username;
   final String joinedAt;
   final PlayerAppearance appearance;
+  final String? raceId;
 
   Map<String, Object?> toJson() => <String, Object?>{
     'guildId': guildId,
@@ -756,6 +778,7 @@ class GuildGuest {
     'username': username,
     'joinedAt': joinedAt,
     'appearance': appearance.toJson(),
+    if (raceId != null) 'raceId': raceId,
   };
 }
 
@@ -994,6 +1017,7 @@ class ActivityPresence {
     required this.userId,
     required this.username,
     required this.appearance,
+    this.raceId,
     required this.guildName,
     required this.locationId,
     required this.currentActivityId,
@@ -1009,6 +1033,7 @@ class ActivityPresence {
     userId: json['userId']! as String,
     username: json['username']! as String,
     appearance: PlayerAppearance.fromJson(json['appearance']! as Map<String, Object?>),
+    raceId: json['raceId'] as String? ?? raceIdFromRemote(json['appearance']),
     guildName: json['guildName'] as String?,
     locationId: json['locationId']! as String,
     currentActivityId: json['currentActivityId'] as String?,
@@ -1023,6 +1048,7 @@ class ActivityPresence {
   final String userId;
   final String username;
   final PlayerAppearance appearance;
+  final String? raceId;
   final String? guildName;
   final String locationId;
   final String? currentActivityId;
@@ -1037,6 +1063,7 @@ class ActivityPresence {
     'userId': userId,
     'username': username,
     'appearance': appearance.toJson(),
+    if (raceId != null) 'raceId': raceId,
     'guildName': guildName,
     'locationId': locationId,
     'currentActivityId': currentActivityId,
@@ -1053,6 +1080,7 @@ class ActivityPresence {
 class PresenceInput {
   const PresenceInput({
     required this.appearance,
+    this.raceId,
     required this.locationId,
     required this.currentActivityId,
     required this.skillId,
@@ -1062,6 +1090,7 @@ class PresenceInput {
   });
 
   final PlayerAppearance appearance;
+  final String? raceId;
   final String locationId;
   final String? currentActivityId;
   final String? skillId;
@@ -1174,6 +1203,7 @@ class PublicPlayerProfile {
     required this.userId,
     required this.username,
     required this.appearance,
+    this.raceId,
     required this.guildName,
     required this.publicSkills,
     required this.achievementsUnlocked,
@@ -1185,6 +1215,7 @@ class PublicPlayerProfile {
   final String userId;
   final String username;
   final PlayerAppearance appearance;
+  final String? raceId;
   final String? guildName;
   final List<PublicSkillLine> publicSkills;
   final num achievementsUnlocked;
@@ -1200,6 +1231,7 @@ class PublicPlayerProfile {
     'userId': userId,
     'username': username,
     'appearance': appearance.toJson(),
+    if (raceId != null) 'raceId': raceId,
     'guildName': guildName,
     'publicSkills': publicSkills.map((row) => row.toJson()).toList(),
     'achievementsUnlocked': achievementsUnlocked,
@@ -1274,6 +1306,23 @@ PlayerAppearance playerAppearanceFromRemote(Object? value) {
     beard: opt('beard'),
     genderPresentation: opt('genderPresentation'),
   );
+}
+
+/// Race rides with the published look so other players can resolve the sprite
+/// without a cloud-save read. Older rows simply omit it.
+Map<String, Object?> appearanceJsonForRemote(PlayerAppearance appearance, [String? raceId]) {
+  return <String, Object?>{
+    ...appearance.toJson(),
+    if (raceId != null && raceId.isNotEmpty) 'raceId': raceId,
+  };
+}
+
+String? raceIdFromRemote(Object? value) {
+  if (value is Map) {
+    final id = value['raceId'];
+    if (id is String && id.isNotEmpty) return id;
+  }
+  return null;
 }
 
 /// A stored symbol, an emoji from an older save, or anything unrecognized,

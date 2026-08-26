@@ -21,11 +21,13 @@ class GuildMemberFacts {
   const GuildMemberFacts({
     required this.username,
     required this.appearance,
+    this.raceId,
     required this.totalLevel,
   });
 
   final String username;
   final PlayerAppearance appearance;
+  final String? raceId;
   final num totalLevel;
 }
 
@@ -35,6 +37,7 @@ GuildMemberFacts guildMemberFactsFrom(MultiplayerSession session, PlayerSave? sa
   return GuildMemberFacts(
     username: named != null && named.isNotEmpty ? named : session.username,
     appearance: save?.appearance ?? defaultPlayerAppearance,
+    raceId: save?.raceId,
     totalLevel: save == null ? 1 : totalLevel(save),
   );
 }
@@ -208,6 +211,7 @@ class RemoteGuildBackend {
           role: guildRoleLeader,
           joinedAt: nowIso(),
           appearance: facts.appearance,
+          raceId: facts.raceId,
           totalLevel: facts.totalLevel,
         ),
       ),
@@ -252,6 +256,7 @@ class RemoteGuildBackend {
             role: guildRoleRecruit,
             joinedAt: nowIso(),
             appearance: facts.appearance,
+            raceId: facts.raceId,
             totalLevel: facts.totalLevel,
           ),
         ),
@@ -311,6 +316,7 @@ class RemoteGuildBackend {
             username: facts.username,
             joinedAt: nowIso(),
             appearance: facts.appearance,
+            raceId: facts.raceId,
           ),
         ),
         columns: remoteGuildGuestColumns,
@@ -719,7 +725,7 @@ class RemoteGuildBackend {
       RemoteTables.guildMembers,
       <String, Object?>{
         'username': facts.username,
-        'appearance_json': facts.appearance.toJson(),
+        'appearance_json': appearanceJsonForRemote(facts.appearance, facts.raceId),
         'total_level': facts.totalLevel,
       },
       equals: <String, Object?>{'guild_id': guildId, 'user_id': session.userId},

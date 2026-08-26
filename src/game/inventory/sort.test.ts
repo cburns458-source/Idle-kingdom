@@ -5,6 +5,7 @@ import { prepareDatabase } from '../data/loadDatabase'
 import {
   GROUP_ARCANA,
   GROUP_COOKING,
+  GROUP_FISHING,
   GROUP_CRAFTING,
   GROUP_HARVESTING,
   GROUP_HUNTING,
@@ -77,6 +78,12 @@ describe('inventory group sort', () => {
     expect(sorter.groupOf('ITEM-0058')).toBe(GROUP_COOKING) // Baked Potato
     expect(sorter.groupOf('ITEM-0061')).toBe(GROUP_COOKING) // Cooked Salmon
     expect(names(['ITEM-0061', 'ITEM-0058'])).toEqual(['ITEM-0058', 'ITEM-0061'])
+  })
+
+  it('places cooked food before raw fish', () => {
+    expect(sorter.groupOf('ITEM-0061')).toBe(GROUP_COOKING) // Cooked Salmon
+    expect(sorter.groupOf('ITEM-0049')).toBe(GROUP_FISHING) // Raw Salmon
+    expect(names(['ITEM-0049', 'ITEM-0061'])).toEqual(['ITEM-0061', 'ITEM-0049'])
   })
 
   it('puts hunting leftovers and crafting tablets in the intended groups', () => {

@@ -145,6 +145,7 @@ class _NearbyPanelState extends State<NearbyPanel> {
                   subtitle: subtitle,
                   leading: SocialPortrait(
                     appearance: peer.appearance,
+                    raceId: peer.raceId,
                     borderColor: allied ? Palette.softGreen : null,
                   ),
                   onTap: () => openPlayerProfile(

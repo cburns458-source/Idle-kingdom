@@ -68,6 +68,9 @@ void main() {
     expect(inventoryCount(controller.save, copperAxeItem), 1);
     expect(find.text('Copper Axe'), findsWidgets);
     expect(find.textContaining('XP'), findsWidgets);
+    expect(controller.recentRewards, isNotEmpty);
+    expect(controller.recentRewards.first.xpRewards, isNotEmpty);
+    expect(controller.recentRewards.first.loot.single.itemId, copperAxeItem);
 
     await tester.tap(find.text('Collect'));
     await tester.pumpAndSettle();

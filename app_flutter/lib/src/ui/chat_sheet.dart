@@ -105,6 +105,7 @@ class _ChatSheetState extends State<ChatSheet> {
   ChatTab? _pinnedTab;
   String? _pinnedDm;
   int _pinnedCount = -1;
+  double _pinnedInset = -1;
 
   MultiplayerController get net => widget.multiplayer;
   PlayerSave get save => widget.controller.save;
@@ -123,11 +124,17 @@ class _ChatSheetState extends State<ChatSheet> {
     super.dispose();
   }
 
-  void _pinToLatest({required bool force}) {
+  void _pinToLatest({required bool force, int attempt = 0}) {
     if (!mounted || !_scroll.hasClients) return;
     final pos = _scroll.position;
-    if (!force && pos.maxScrollExtent - pos.pixels > 72) return;
-    _scroll.jumpTo(pos.maxScrollExtent);
+    // reverse:true keeps the newest line at 0.
+    if (!force && pos.pixels > 72) return;
+    _scroll.jumpTo(0);
+    if (force && attempt < 5) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _pinToLatest(force: true, attempt: attempt + 1);
+      });
+    }
   }
 
   /// Jump to the newest line on open or tab change, and stay there as lines
@@ -189,7 +196,12 @@ class _ChatSheetState extends State<ChatSheet> {
           filterProfanityEnabled: net.filterChatProfanity,
         );
         final showComposer = net.chatTab != ChatTab.dm || net.selectedDmPeerId != null;
+        final inset = MediaQuery.viewInsetsOf(context).bottom;
         _considerPin(net.chatTab, net.selectedDmPeerId, lines.length);
+        if (inset != _pinnedInset) {
+          _pinnedInset = inset;
+          WidgetsBinding.instance.addPostFrameCallback((_) => _pinToLatest(force: false));
+        }
         return Column(
           children: [
             _header(tabs),
@@ -215,10 +227,11 @@ class _ChatSheetState extends State<ChatSheet> {
                   ? Center(child: MutedText(emptyChatMessage(net.chatTab)))
                   : ListView.builder(
                       controller: _scroll,
+                      reverse: true,
                       padding: const EdgeInsets.symmetric(horizontal: 12),
                       itemCount: lines.length,
                       itemBuilder: (context, index) {
-                        final line = lines[index];
+                        final line = lines[lines.length - 1 - index];
                         final stamp = formatChatTimestamp(line.createdAt);
                         return Padding(
                           padding: const EdgeInsets.symmetric(vertical: 3),

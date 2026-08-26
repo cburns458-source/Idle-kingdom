@@ -186,6 +186,7 @@ class GuildRosterRow {
     required this.role,
     required this.totalLevel,
     required this.appearance,
+    this.raceId,
     required this.manageable,
     this.lastOnlineAt,
     this.isOnline = false,
@@ -203,6 +204,7 @@ class GuildRosterRow {
   final GuildRole role;
   final num totalLevel;
   final PlayerAppearance appearance;
+  final String? raceId;
 
   /// True when the viewer can change this member's rank.
   final bool manageable;
@@ -299,6 +301,7 @@ List<GuildRosterRow> guildRosterRows(
       role: member.role,
       totalLevel: member.totalLevel,
       appearance: member.appearance,
+      raceId: member.raceId,
       manageable: canManage && member.role != guildRoleLeader,
       lastOnlineAt: online.lastOnlineAt,
       isOnline: online.isOnline,
@@ -313,6 +316,7 @@ class FriendListRow {
     required this.userId,
     required this.username,
     required this.appearance,
+    this.raceId,
     required this.subtitle,
     required this.isOnline,
     required this.lastOnlineLabel,
@@ -321,6 +325,7 @@ class FriendListRow {
   final String userId;
   final String username;
   final PlayerAppearance appearance;
+  final String? raceId;
 
   /// `Devguild · Online`, or just the last-online label when they have no guild.
   final String subtitle;
@@ -360,6 +365,7 @@ FriendListRow _friendListRow(SocialContact contact, String? updatedAt, num nowMs
     userId: contact.userId,
     username: contact.username,
     appearance: contact.appearance,
+    raceId: contact.raceId,
     subtitle: friendContactSubtitle(contact, online.lastOnlineLabel),
     isOnline: online.isOnline,
     lastOnlineLabel: online.lastOnlineLabel,
@@ -529,6 +535,7 @@ class LeaderboardRowView {
     required this.valueLabel,
     required this.emblem,
     required this.appearance,
+    this.raceId,
     required this.isGuild,
     this.secondaryLabel,
   });
@@ -553,6 +560,7 @@ class LeaderboardRowView {
   /// Set for a guild row, whose badge stands in for a portrait.
   final GuildEmblem? emblem;
   final PlayerAppearance appearance;
+  final String? raceId;
   final bool isGuild;
 
   Map<String, Object?> toJson() => <String, Object?>{
@@ -619,6 +627,7 @@ List<LeaderboardRowView> leaderboardRows(
       secondaryLabel: experience == null ? null : '${jsLocaleNumber(experience)} xp',
       emblem: isGuild ? entry.emblem : null,
       appearance: entry.appearance,
+      raceId: entry.raceId,
       isGuild: isGuild,
     );
   }).toList();
@@ -642,6 +651,7 @@ class PeerRowView {
     required this.statusLabel,
     required this.subtitle,
     required this.appearance,
+    this.raceId,
   });
 
   final String userId;
@@ -653,6 +663,7 @@ class PeerRowView {
   /// `Combat 7 · Iron League`. A missing skill level reads as 1.
   final String subtitle;
   final PlayerAppearance appearance;
+  final String? raceId;
 
   Map<String, Object?> toJson() => <String, Object?>{
     'userId': userId,
@@ -685,6 +696,7 @@ List<PeerRowView> peerRows(
         if (peer.guildName != null) peer.guildName!,
       ].join(' · '),
       appearance: peer.appearance,
+      raceId: peer.raceId,
     );
   }).toList();
 }
@@ -702,6 +714,7 @@ class PublicProfileView {
     required this.userId,
     required this.username,
     required this.appearance,
+    this.raceId,
     required this.summaryLine,
     required this.skillLines,
     required this.skillsHidden,
@@ -710,6 +723,7 @@ class PublicProfileView {
   final String userId;
   final String username;
   final PlayerAppearance appearance;
+  final String? raceId;
 
   /// `Total level 214 · Iron League · 12% log`.
   final String summaryLine;
@@ -741,6 +755,7 @@ PublicProfileView publicProfileView(
     userId: profile.userId,
     username: profile.username,
     appearance: profile.appearance,
+    raceId: profile.raceId,
     summaryLine: <String>[
       profile.totalLevel > 0
           ? 'Total level ${jsNumberToString(profile.totalLevel)}'
