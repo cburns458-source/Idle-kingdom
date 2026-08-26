@@ -274,7 +274,7 @@ Shared hub sub-map. Landing district is Citadel Plaza.
 - Citadel Plaza: bounties, meeting other adventurers, and the PvP Arena amenity.
 - Grand Bazaar: player-to-player listings and specialty goods.
 - Processing District: shared Kitchen, Crafting, Metallurgy, and Alchemy stations.
-- Gathering Outskirts: cut poplar trees.
+- Gathering Outskirts: cut oak trees.
 - Combat Training Grounds: optional Castle Guard practice. Arrival is peaceful.
 - Citadel Bank: item storage.
 - Guild Hall: reached from the Guilds screen. Each guild has its own hall instance with a store house and debt ledger.

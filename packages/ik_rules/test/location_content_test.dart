@@ -24,11 +24,18 @@ void main() {
     expect(db.locations.firstWhere((row) => row.locationId == 'LOC-0004').displayName, 'The Docks');
   });
 
-  test('citadel gathering cuts poplar, not cedar', () {
+  test('citadel gathering cuts oak', () {
     final activity = db.activities.firstWhere((row) => row.activityId == 'ACT-0032');
-    expect(activity.raw['Contextual Name'], 'Cut poplar trees');
+    expect(activity.raw['Contextual Name'], 'Cut oak trees');
     expect(activity.raw['Location ID'], 'LOC-0031');
-    expect(_weights(db, activity.raw['Pool ID']! as String), {'ACN-0048': 100});
+    expect(_weights(db, activity.raw['Pool ID']! as String), {'ACN-0047': 100});
+  });
+
+  test('kingswoods rare wood is cedar and oak', () {
+    final activity = db.activities.firstWhere((row) => row.activityId == 'ACT-0026');
+    expect(activity.raw['Contextual Name'], 'Search for rare wood');
+    expect(activity.raw['Location ID'], 'LOC-0008');
+    expect(_weights(db, activity.raw['Pool ID']! as String), {'ACN-0046': 70, 'ACN-0047': 30});
   });
 
   test('catch crawfish and hunt pheasant sit on the early gather curve', () {
