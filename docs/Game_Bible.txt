@@ -216,7 +216,7 @@ Harvesting pool:
 - Cedar Tree (Woodcutting): 60%.
 - Augur Weed: 40%.
 
-Rare wood search is a separate Activity.
+Rare wood search is a separate Activity: cedar 70%, oak 30%.
 
 MEADOW
 Hunting pool:
