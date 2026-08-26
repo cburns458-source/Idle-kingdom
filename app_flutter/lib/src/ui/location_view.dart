@@ -356,14 +356,9 @@ class _LocationViewState extends State<LocationView> {
                                 left: 13,
                                 right: 13,
                                 bottom: _collapsedBand + 8,
-                                child: running
+                                child: running || openPanel is ArenaOpen
                                     ? stage
-                                    : openPanel is ArenaOpen
-                                    ? stage
-                                    : Align(
-                                        alignment: Alignment.bottomCenter,
-                                        child: SingleChildScrollView(child: stage),
-                                      ),
+                                    : _scrollingPanel(stage),
                               ),
                             if (overlayPanel != null && !liftArena)
                               Positioned(
@@ -373,10 +368,7 @@ class _LocationViewState extends State<LocationView> {
                                 bottom: _collapsedBand + 8,
                                 child: openPanel is ArenaOpen
                                     ? overlayPanel
-                                    : Align(
-                                        alignment: Alignment.bottomCenter,
-                                        child: SingleChildScrollView(child: overlayPanel),
-                                      ),
+                                    : _scrollingPanel(overlayPanel),
                               ),
                             if (liftArena && (overlayPanel ?? stage) != null)
                               Positioned(
@@ -454,6 +446,21 @@ class _LocationViewState extends State<LocationView> {
       fit: BoxFit.cover,
       alignment: square ? Alignment.topCenter : Alignment.bottomCenter,
       filterQuality: square ? FilterQuality.none : FilterQuality.medium,
+    );
+  }
+
+  /// Keeps a shop or NPC as wide as the stage so its grid does not collapse
+  /// inside the scrolling overlay.
+  Widget _scrollingPanel(Widget panel) {
+    return LayoutBuilder(
+      builder: (context, stage) {
+        return Align(
+          alignment: Alignment.bottomCenter,
+          child: SingleChildScrollView(
+            child: SizedBox(width: stage.maxWidth, child: panel),
+          ),
+        );
+      },
     );
   }
 

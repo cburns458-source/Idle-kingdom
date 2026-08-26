@@ -448,10 +448,13 @@ void main() {
     addTearDown(controller.dispose);
     await pumpPanel(
       tester,
-      LocationView(
-        controller: controller,
-        multiplayer: buildMultiplayer(database),
-        onOpenMap: () {},
+      ListenableBuilder(
+        listenable: controller,
+        builder: (context, _) => LocationView(
+          controller: controller,
+          multiplayer: buildMultiplayer(database),
+          onOpenMap: () {},
+        ),
       ),
       size: const Size(900, 2400),
     );
