@@ -18,7 +18,7 @@ import 'player_sprite.dart';
 const double mapNodeDotCenter = 15;
 
 /// Side of the walking sprite.
-const double mapWalkerSize = 28;
+const double mapWalkerSize = 36;
 
 /// The map: nodes over the map art, and a panel for whichever one is selected.
 class WorldMapView extends StatelessWidget {
