@@ -24,11 +24,11 @@ void main() {
     expect(db.locations.firstWhere((row) => row.locationId == 'LOC-0004').displayName, 'The Docks');
   });
 
-  test('citadel gathering cuts oak', () {
+  test('citadel gathering cuts poplar and oak', () {
     final activity = db.activities.firstWhere((row) => row.activityId == 'ACT-0032');
-    expect(activity.raw['Contextual Name'], 'Cut oak trees');
+    expect(activity.raw['Contextual Name'], 'Cut poplar and oak trees');
     expect(activity.raw['Location ID'], 'LOC-0031');
-    expect(_weights(db, activity.raw['Pool ID']! as String), {'ACN-0047': 100});
+    expect(_weights(db, activity.raw['Pool ID']! as String), {'ACN-0048': 60, 'ACN-0047': 40});
   });
 
   test('kingswoods rare wood is cedar and oak', () {
