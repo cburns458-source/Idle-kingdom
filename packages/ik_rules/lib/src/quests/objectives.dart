@@ -204,9 +204,7 @@ StructuredQuestObjectives parseNotesObjectives(
         fallbackTargetId.isNotEmpty &&
         fallbackQuantity != null &&
         fallbackQuantity > 0) {
-      defeatTargets.add(
-        QuestCounterTarget(targetId: fallbackTargetId, quantity: fallbackQuantity),
-      );
+      defeatTargets.add(QuestCounterTarget(targetId: fallbackTargetId, quantity: fallbackQuantity));
     }
   }
 
@@ -231,7 +229,9 @@ StructuredQuestObjectives parseNotesObjectives(
     constructPortalIds: portalNote == null ? const <String>[] : _parseIdList(portalNote),
     unlockTravelIds: travelNote == null ? const <String>[] : _parseIdList(travelNote),
     talkNpcIds: talkNote == null ? const <String>[] : _parseIdList(talkNote),
-    optionalTalkNpcIds: optionalTalkNote == null ? const <String>[] : _parseIdList(optionalTalkNote),
+    optionalTalkNpcIds: optionalTalkNote == null
+        ? const <String>[]
+        : _parseIdList(optionalTalkNote),
     visitLocationIds: visitNote == null ? const <String>[] : _parseIdList(visitNote),
     inspectIds: inspectNote == null ? const <String>[] : _parseTokenList(inspectNote),
     goldCost: goldNote == null ? 0 : jsNumber(goldNote),
@@ -517,11 +517,7 @@ QuestObjectiveStatus questObjectiveProgress(GameDatabase db, PlayerSave save, Qu
   );
 }
 
-List<QuestJournalStep> questLegacyJournalSteps(
-  GameDatabase db,
-  PlayerSave save,
-  QuestRow quest,
-) {
+List<QuestJournalStep> questLegacyJournalSteps(GameDatabase db, PlayerSave save, QuestRow quest) {
   final structured = parseStructuredObjectives(quest);
   final counters =
       save.quests.firstWhereOrNull((row) => row.questId == quest['Quest ID'])?.counters ??

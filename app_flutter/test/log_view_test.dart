@@ -118,7 +118,8 @@ void main() {
     expect(find.text('Hear what the King needs'), findsNothing);
 
     await tester.tap(find.text('The Grand Feast'));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
     expect(find.text('Hear what the King needs'), findsOne);
     expect(find.text('Prepare food for the feast'), findsNothing);
   });

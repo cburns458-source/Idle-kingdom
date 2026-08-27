@@ -36,9 +36,10 @@ PlayerSave _applyProgress(
 ) {
   var next = save;
   for (final quest in asQuestRows(db)) {
-    final matches = questObjectiveSources(db, quest).any(
-      (structured) => targetsOf(structured).any((row) => row.targetId == targetId),
-    );
+    final matches = questObjectiveSources(
+      db,
+      quest,
+    ).any((structured) => targetsOf(structured).any((row) => row.targetId == targetId));
     if (!matches) continue;
     next = _bumpCounter(next, jsString(quest['Quest ID']), '$counterPrefix:$targetId', amount);
   }

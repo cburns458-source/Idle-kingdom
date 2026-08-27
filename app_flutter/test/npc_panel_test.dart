@@ -219,6 +219,8 @@ void main() {
       NpcPanel(controller: controller, npc: npcOf('NPC-0001'), onClose: () {}),
     );
     expect(find.textContaining('My cooks have fled'), findsOne);
+    await tester.tap(find.text('Start quest: The Grand Feast').last);
+    await tester.pump();
     await tester.tap(find.text('Start quest: The Grand Feast'));
     await tester.pump();
 

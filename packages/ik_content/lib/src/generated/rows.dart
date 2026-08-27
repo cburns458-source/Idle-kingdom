@@ -503,24 +503,6 @@ class ProjectRow extends DbRow {
   num? get requiredSkill3Level => numberOrNull('Required Skill 3 Level');
 }
 
-class QuestStepRow extends DbRow {
-  const QuestStepRow(super.raw);
-
-  String get stepId => stringValue('Step ID');
-
-  String get questId => stringValue('Quest ID');
-
-  num get stepOrder => numberValue('Step Order');
-
-  String get journalLabel => stringValue('Journal Label');
-
-  String? get notes => stringOrNull('Notes');
-
-  String get status => stringValue('Status');
-
-  String get releasePhase => stringValue('Release Phase');
-}
-
 class QuestDialogueRow extends DbRow {
   const QuestDialogueRow(super.raw);
 
@@ -537,6 +519,24 @@ class QuestDialogueRow extends DbRow {
   String get releasePhase => stringValue('Release Phase');
 
   String? get notes => stringOrNull('Notes');
+}
+
+class QuestStepRow extends DbRow {
+  const QuestStepRow(super.raw);
+
+  String get stepId => stringValue('Step ID');
+
+  String get questId => stringValue('Quest ID');
+
+  num get stepOrder => numberValue('Step Order');
+
+  String get journalLabel => stringValue('Journal Label');
+
+  String? get notes => stringOrNull('Notes');
+
+  String get status => stringValue('Status');
+
+  String get releasePhase => stringValue('Release Phase');
 }
 
 class RaceBonusRow extends DbRow {

@@ -13,11 +13,7 @@ class QuestJournalStep {
   final String label;
   final String state;
 
-  Map<String, Object?> toJson() => <String, Object?>{
-    'key': key,
-    'label': label,
-    'state': state,
-  };
+  Map<String, Object?> toJson() => <String, Object?>{'key': key, 'label': label, 'state': state};
 }
 
 List<QuestStepRow> getQuestSteps(GameDatabase db, String questId) {
@@ -34,9 +30,10 @@ bool questUsesSteps(GameDatabase db, String questId) {
 List<StructuredQuestObjectives> questObjectiveSources(GameDatabase db, QuestRow quest) {
   return [
     parseStructuredObjectives(quest),
-    ...getQuestSteps(db, jsString(quest['Quest ID'])).map(
-      (step) => parseNotesObjectives(step.notes ?? ''),
-    ),
+    ...getQuestSteps(
+      db,
+      jsString(quest['Quest ID']),
+    ).map((step) => parseNotesObjectives(step.notes ?? '')),
   ];
 }
 
@@ -65,13 +62,7 @@ List<QuestJournalStep> questStepJournal(GameDatabase db, PlayerSave save, QuestR
   final currentIndex = getCurrentStepIndex(db, save, quest);
   if (currentIndex >= steps.length) {
     return steps
-        .map(
-          (step) => QuestJournalStep(
-            key: step.stepId,
-            label: step.journalLabel,
-            state: 'done',
-          ),
-        )
+        .map((step) => QuestJournalStep(key: step.stepId, label: step.journalLabel, state: 'done'))
         .toList();
   }
 
@@ -116,12 +107,7 @@ bool questAllStepsComplete(GameDatabase db, PlayerSave save, QuestRow quest) {
 }
 
 /// Required or optional Talk on the current step (or quest Notes).
-bool questCanTalkToNpc(
-  GameDatabase db,
-  PlayerSave save,
-  QuestRow quest,
-  String npcId,
-) {
+bool questCanTalkToNpc(GameDatabase db, PlayerSave save, QuestRow quest, String npcId) {
   final objectives = questUsesSteps(db, jsString(quest['Quest ID']))
       ? questActiveStepObjectives(db, save, quest)
       : parseStructuredObjectives(quest);
@@ -130,12 +116,7 @@ bool questCanTalkToNpc(
 }
 
 /// True when this NPC still has an unfinished Talk step (or Notes talk).
-bool questNpcHasIncompleteTalk(
-  GameDatabase db,
-  PlayerSave save,
-  QuestRow quest,
-  String npcId,
-) {
+bool questNpcHasIncompleteTalk(GameDatabase db, PlayerSave save, QuestRow quest, String npcId) {
   final questId = jsString(quest['Quest ID']);
   final steps = getQuestSteps(db, questId);
   if (steps.isEmpty) {
@@ -148,12 +129,7 @@ bool questNpcHasIncompleteTalk(
   );
 }
 
-bool questTouchesNpcForSave(
-  GameDatabase db,
-  PlayerSave save,
-  QuestRow quest,
-  String npcId,
-) {
+bool questTouchesNpcForSave(GameDatabase db, PlayerSave save, QuestRow quest, String npcId) {
   if (quest['NPC ID'] == npcId) return true;
 
   final meta = parseStructuredObjectives(quest);

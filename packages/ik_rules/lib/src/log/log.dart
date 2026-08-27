@@ -166,8 +166,8 @@ List<QuestLogRow> questLog(GameDatabase db, PlayerSave save) {
     final summary = quest['Summary'];
     final steps = status == 'active'
         ? questUsesSteps(db, questId)
-            ? questStepJournal(db, save, quest)
-            : questLegacyJournalSteps(db, save, quest)
+              ? questStepJournal(db, save, quest)
+              : questLegacyJournalSteps(db, save, quest)
         : const <QuestJournalStep>[];
 
     return QuestLogRow(
