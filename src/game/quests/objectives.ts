@@ -2,7 +2,12 @@ import type { GameDatabase } from '../data/types'
 import { inventoryCount } from '../production/recipes'
 import { knowsRecipe } from '../recipes/knowledge'
 import type { PlayerSave } from '../save/types'
-import type { QuestRow } from './quests'
+import { getQuestProgress, type QuestRow } from './quests'
+import {
+  questActiveStepObjectives,
+  questAllStepsComplete,
+  questUsesSteps,
+} from './steps'
 import type { QuestObjectiveKind, StructuredQuestObjectives } from './types'
 
 function parseIdQtyList(raw: string): Array<{ targetId: string; quantity: number }> {
@@ -57,32 +62,43 @@ export function normalizeObjectiveKind(raw: string | null | undefined): QuestObj
   return 'gather_deliver'
 }
 
-/**
- * Parse structured objectives from quest fields + Notes.
- * Notes extensions (semicolon-separated):
- *   Deliver: ITEM-x xN, ...
- *   Defeat: ENM-x xN, ...
- *   Process: RCP-x xN, ...
- *   LearnRecipe: RCP-x, ...
- *   Talk: NPC-x, ...
- *   Visit: LOC-x, ...
- *   Inspect: bazaar, bounties, processing
- *   GoldCost: N
- *   AcceptGold: N
- *   RewardGold: N
- *   BribeGold: N
- *   BranchSkillXp: N
- *   ChoiceNpc: NPC-x
- *   TurnInNpc: NPC-x
- *   AutoStart: LOC-x
- *   UnlockLocation: LOC-x
- *   RewardRecipe: RCP-x
- *   RewardProjectNpc: NPC-x
- *   RewardCosmetic: COS-x
- */
-export function parseStructuredObjectives(quest: QuestRow): StructuredQuestObjectives {
-  const notes = quest.Notes ?? ''
-  const kind = normalizeObjectiveKind(quest['Objective Type'])
+const EMPTY_OBJECTIVES: StructuredQuestObjectives = {
+  kind: 'gather_deliver',
+  delivers: [],
+  processTargets: [],
+  defeatTargets: [],
+  learnRecipeIds: [],
+  restoreFacilityIds: [],
+  constructPortalIds: [],
+  unlockTravelIds: [],
+  talkNpcIds: [],
+  optionalTalkNpcIds: [],
+  visitLocationIds: [],
+  inspectIds: [],
+  goldCost: 0,
+  acceptGoldCost: 0,
+  rewardGold: 0,
+  bribeGold: 0,
+  branchSkillXp: 0,
+  choiceNpcId: null,
+  turnInNpcId: null,
+  autoStartLocationId: null,
+  unlockLocationIds: [],
+  rewardRecipeIds: [],
+  rewardProjectNpcIds: [],
+  rewardCosmeticIds: [],
+}
+
+/** Parse step Notes or quest objective tokens (not reward metadata). */
+export function parseNotesObjectives(
+  notes: string,
+  options: {
+    kind?: QuestObjectiveKind
+    fallbackTargetId?: string | null
+    fallbackQuantity?: number | null
+  } = {},
+): StructuredQuestObjectives {
+  const kind = options.kind ?? 'gather_deliver'
   const delivers: StructuredQuestObjectives['delivers'] = []
   const processTargets: StructuredQuestObjectives['processTargets'] = []
   const defeatTargets: StructuredQuestObjectives['defeatTargets'] = []
@@ -100,41 +116,31 @@ export function parseStructuredObjectives(quest: QuestRow): StructuredQuestObjec
   const restoreMatch = noteField(notes, String.raw`RestoreFacility:\s*([^;]+)`)
   const portalMatch = noteField(notes, String.raw`ConstructPortal:\s*([^;]+)`)
   const travelMatch = noteField(notes, String.raw`UnlockTravel:\s*([^;]+)`)
-  const talkMatch = noteField(notes, String.raw`Talk:\s*([^;]+)`)
+  const talkMatch = noteField(notes, String.raw`(?:^|;)\s*Talk:\s*([^;]+)`)
+  const optionalTalkMatch = noteField(notes, String.raw`(?:^|;)\s*OptionalTalk:\s*([^;]+)`)
   const visitMatch = noteField(notes, String.raw`Visit:\s*([^;]+)`)
   const inspectMatch = noteField(notes, String.raw`Inspect:\s*([^;]+)`)
   const goldMatch = noteField(notes, String.raw`GoldCost:\s*(\d+)`)
-  const acceptGoldMatch = noteField(notes, String.raw`AcceptGold:\s*(\d+)`)
-  const rewardGoldMatch = noteField(notes, String.raw`RewardGold:\s*(\d+)`)
-  const bribeGoldMatch = noteField(notes, String.raw`BribeGold:\s*(\d+)`)
-  const branchXpMatch = noteField(notes, String.raw`BranchSkillXp:\s*(\d+)`)
-  const choiceNpcMatch = noteField(notes, String.raw`ChoiceNpc:\s*([^;]+)`)
-  const turnInMatch = noteField(notes, String.raw`TurnInNpc:\s*([^;]+)`)
-  const autoStartMatch = noteField(notes, String.raw`AutoStart:\s*([^;]+)`)
-  const unlockMatch = noteField(notes, String.raw`UnlockLocation(?:s)?:\s*([^;]+)`)
-  const rewardRecipeMatch = noteField(notes, String.raw`RewardRecipe:\s*([^;]+)`)
-  const rewardNpcMatch = noteField(notes, String.raw`RewardProjectNpc:\s*([^;]+)`)
-  const rewardCosmeticMatch = noteField(notes, String.raw`RewardCosmetic:\s*([^;]+)`)
 
   if (delivers.length === 0 && kind === 'gather_deliver') {
-    const targetId = quest['Objective Target ID']
-    const required = quest['Required Quantity']
+    const targetId = options.fallbackTargetId
+    const required = options.fallbackQuantity
     if (targetId && typeof required === 'number' && required > 0) {
       delivers.push({ targetId, quantity: required })
     }
   }
 
   if (defeatTargets.length === 0 && kind === 'defeat') {
-    const targetId = quest['Objective Target ID']
-    const required = quest['Required Quantity']
+    const targetId = options.fallbackTargetId
+    const required = options.fallbackQuantity
     if (targetId && typeof required === 'number' && required > 0) {
       defeatTargets.push({ targetId, quantity: required })
     }
   }
 
   if (processTargets.length === 0 && kind === 'process') {
-    const targetId = quest['Objective Target ID']
-    const required = quest['Required Quantity']
+    const targetId = options.fallbackTargetId
+    const required = options.fallbackQuantity
     if (targetId && typeof required === 'number' && required > 0) {
       processTargets.push({ targetId, quantity: required })
     }
@@ -150,9 +156,47 @@ export function parseStructuredObjectives(quest: QuestRow): StructuredQuestObjec
     constructPortalIds: portalMatch ? parseIdList(portalMatch) : [],
     unlockTravelIds: travelMatch ? parseIdList(travelMatch) : [],
     talkNpcIds: talkMatch ? parseIdList(talkMatch) : [],
+    optionalTalkNpcIds: optionalTalkMatch ? parseIdList(optionalTalkMatch) : [],
     visitLocationIds: visitMatch ? parseIdList(visitMatch) : [],
     inspectIds: inspectMatch ? parseTokenList(inspectMatch) : [],
     goldCost: goldMatch ? Number(goldMatch) : 0,
+    acceptGoldCost: 0,
+    rewardGold: 0,
+    bribeGold: 0,
+    branchSkillXp: 0,
+    choiceNpcId: null,
+    turnInNpcId: null,
+    autoStartLocationId: null,
+    unlockLocationIds: [],
+    rewardRecipeIds: [],
+    rewardProjectNpcIds: [],
+    rewardCosmeticIds: [],
+  }
+}
+
+export function parseStructuredObjectives(quest: QuestRow): StructuredQuestObjectives {
+  const notes = quest.Notes ?? ''
+  const kind = normalizeObjectiveKind(quest['Objective Type'])
+  const objectives = parseNotesObjectives(notes, {
+    kind,
+    fallbackTargetId: quest['Objective Target ID'],
+    fallbackQuantity: quest['Required Quantity'],
+  })
+
+  const acceptGoldMatch = noteField(notes, String.raw`AcceptGold:\s*(\d+)`)
+  const rewardGoldMatch = noteField(notes, String.raw`RewardGold:\s*(\d+)`)
+  const bribeGoldMatch = noteField(notes, String.raw`BribeGold:\s*(\d+)`)
+  const branchXpMatch = noteField(notes, String.raw`BranchSkillXp:\s*(\d+)`)
+  const choiceNpcMatch = noteField(notes, String.raw`ChoiceNpc:\s*([^;]+)`)
+  const turnInMatch = noteField(notes, String.raw`TurnInNpc:\s*([^;]+)`)
+  const autoStartMatch = noteField(notes, String.raw`AutoStart:\s*([^;]+)`)
+  const unlockMatch = noteField(notes, String.raw`UnlockLocation(?:s)?:\s*([^;]+)`)
+  const rewardRecipeMatch = noteField(notes, String.raw`RewardRecipe:\s*([^;]+)`)
+  const rewardNpcMatch = noteField(notes, String.raw`RewardProjectNpc:\s*([^;]+)`)
+  const rewardCosmeticMatch = noteField(notes, String.raw`RewardCosmetic:\s*([^;]+)`)
+
+  return {
+    ...objectives,
     acceptGoldCost: acceptGoldMatch ? Number(acceptGoldMatch) : 0,
     rewardGold: rewardGoldMatch ? Number(rewardGoldMatch) : 0,
     bribeGold: bribeGoldMatch ? Number(bribeGoldMatch) : 0,
@@ -191,21 +235,17 @@ function inspectLabel(inspectId: string): string {
   return `Inspect ${inspectId}`
 }
 
-export function questObjectiveProgress(
+export function objectiveProgressFromStructured(
   db: GameDatabase,
   save: PlayerSave,
-  quest: QuestRow,
+  structured: StructuredQuestObjectives,
+  counters: Record<string, number> = {},
 ): {
   lines: Array<{ itemId: string; name: string; owned: number; required: number }>
   progressLines: QuestProgressLine[]
   goldOwned: number
   goldRequired: number
-  ready: boolean
 } {
-  const structured = parseStructuredObjectives(quest)
-  const progress = save.quests.find((row) => row.questId === quest['Quest ID'])
-  const counters = progress?.counters ?? {}
-
   const deliverLines = structured.delivers.map((line) => {
     const name =
       db.Items.find((item) => item['Item ID'] === line.targetId)?.['Display Name'] ??
@@ -291,25 +331,90 @@ export function questObjectiveProgress(
     })
   }
 
-  const counterReady = progressLines.every((line) => line.current >= line.required)
-  const hasWork =
-    progressLines.length > 0 ||
-    structured.goldCost > 0 ||
-    structured.restoreFacilityIds.length > 0 ||
-    structured.constructPortalIds.length > 0 ||
-    structured.unlockTravelIds.length > 0
-
-  // Guild collab / restore / portal stay incomplete until those systems land.
-  const deferredIncomplete =
-    structured.kind === 'guild_collab' ||
-    structured.restoreFacilityIds.length > 0 ||
-    structured.constructPortalIds.length > 0
-
   return {
     lines: deliverLines,
     progressLines,
     goldOwned: save.gold,
     goldRequired: structured.goldCost,
-    ready: hasWork && counterReady && !deferredIncomplete,
   }
+}
+
+function activeQuestObjectives(
+  db: GameDatabase,
+  save: PlayerSave,
+  quest: QuestRow,
+): StructuredQuestObjectives {
+  const questId = quest['Quest ID']
+  const progress = getQuestProgress(save, questId)
+  if (progress.status === 'active' && questUsesSteps(db, questId)) {
+    const stepObjectives = questActiveStepObjectives(db, save, quest)
+    if (stepObjectives) return stepObjectives
+    if (questAllStepsComplete(db, save, quest)) return EMPTY_OBJECTIVES
+  }
+  return parseStructuredObjectives(quest)
+}
+
+export function questObjectiveProgress(
+  db: GameDatabase,
+  save: PlayerSave,
+  quest: QuestRow,
+): {
+  lines: Array<{ itemId: string; name: string; owned: number; required: number }>
+  progressLines: QuestProgressLine[]
+  goldOwned: number
+  goldRequired: number
+  ready: boolean
+} {
+  const questId = quest['Quest ID']
+  const progress = save.quests.find((row) => row.questId === questId)
+  const counters = progress?.counters ?? {}
+  const structured = activeQuestObjectives(db, save, quest)
+  const body = objectiveProgressFromStructured(db, save, structured, counters)
+
+  const counterReady = body.progressLines.every((line) => line.current >= line.required)
+  const hasWork =
+    body.progressLines.length > 0 ||
+    structured.goldCost > 0 ||
+    structured.restoreFacilityIds.length > 0 ||
+    structured.constructPortalIds.length > 0 ||
+    structured.unlockTravelIds.length > 0
+
+  const deferredIncomplete =
+    structured.kind === 'guild_collab' ||
+    structured.restoreFacilityIds.length > 0 ||
+    structured.constructPortalIds.length > 0
+
+  const ready =
+    questUsesSteps(db, questId) && progress?.status === 'active'
+      ? questAllStepsComplete(db, save, quest)
+      : hasWork && counterReady && !deferredIncomplete
+
+  return {
+    ...body,
+    ready,
+  }
+}
+
+export function questLegacyJournalSteps(
+  db: GameDatabase,
+  save: PlayerSave,
+  quest: QuestRow,
+): Array<{ key: string; label: string; state: 'done' | 'current' }> {
+  const lines = parseStructuredObjectives(quest)
+  const allLines = objectiveProgressFromStructured(
+    db,
+    save,
+    lines,
+    save.quests.find((row) => row.questId === quest['Quest ID'])?.counters ?? {},
+  ).progressLines
+  if (allLines.length === 0) return []
+
+  const firstOpen = allLines.findIndex((line) => line.current < line.required)
+  const currentIndex = firstOpen === -1 ? allLines.length - 1 : firstOpen
+
+  return allLines.slice(0, currentIndex + 1).map((line, index) => ({
+    key: line.key,
+    label: line.label,
+    state: index < currentIndex || firstOpen === -1 ? 'done' : 'current',
+  }))
 }

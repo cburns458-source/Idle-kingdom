@@ -97,13 +97,12 @@ void main() {
     );
   });
 
-  testWidgets('shows an active quest with its objectives', (tester) async {
+  testWidgets('hides quest steps until the journal is opened', (tester) async {
     final controller = buildController(
       database,
       seed: startedCharacter(database).copyWith(
-        inventory: const <InventoryStack>[InventoryStack(itemId: 'ITEM-0038', quantity: 3)],
         quests: const <QuestProgress>[
-          QuestProgress(questId: 'QST-0002', status: 'active', progress: 0),
+          QuestProgress(questId: 'QST-0001', status: 'active', progress: 0),
         ],
       ),
     );
@@ -116,7 +115,13 @@ void main() {
 
     expect(find.text('Active'), findsOne);
     expect(find.text('Not started'), findsWidgets);
-    expect(find.textContaining('Deliver '), findsWidgets);
+    expect(find.text('Hear what the King needs'), findsNothing);
+
+    await tester.tap(find.text('The Grand Feast'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text('Hear what the King needs'), findsOne);
+    expect(find.text('Prepare food for the feast'), findsNothing);
   });
 
   testWidgets('the Log no longer carries a recipe book page', (tester) async {

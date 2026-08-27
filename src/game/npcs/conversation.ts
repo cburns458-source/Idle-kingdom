@@ -16,6 +16,7 @@ import {
   questsTouchingNpc,
   type QuestRow,
 } from '../quests/quests'
+import { questCanTalkToNpc, questNpcHasIncompleteTalk } from '../quests/steps'
 import type { PlayerSave } from '../save/types'
 import { configString } from '../activity/gathering'
 import {
@@ -60,10 +61,32 @@ export function questPitchLine(db: GameDatabase, questId: string): string | null
   return typeof pitch === 'string' && pitch.length > 0 ? pitch : null
 }
 
-export function questTalkLine(db: GameDatabase, questId: string, npcId: string): string | null {
-  const line = (db.QuestDialogue ?? []).find(
+function requiredTalkNpcIdsFromNotes(notes: string | null): string[] {
+  const field = (notes ?? '').match(/(?:^|;)\s*RequiresTalk:\s*([^;]+)/i)?.[1]
+  if (!field) return []
+  return field
+    .split(',')
+    .map((part) => part.trim().toUpperCase())
+    .filter((id) => /^[A-Z]+-\d+$/.test(id))
+}
+
+export function questTalkLine(
+  db: GameDatabase,
+  questId: string,
+  npcId: string,
+  save?: PlayerSave,
+): string | null {
+  const rows = (db.QuestDialogue ?? []).filter(
     (row) => row['Quest ID'] === questId && row['NPC ID'] === npcId,
-  )?.Line
+  )
+  const matching = rows.filter((row) => {
+    const required = requiredTalkNpcIdsFromNotes(row.Notes ?? null)
+    if (required.length === 0) return true
+    if (!save) return false
+    return required.every((requiredNpcId) => hasQuestFlag(save, questId, `talk:${requiredNpcId}`))
+  })
+  const specific = matching.filter((row) => requiredTalkNpcIdsFromNotes(row.Notes ?? null).length > 0)
+  const line = (specific[0] ?? matching[0])?.Line
   return line && line.length > 0 ? line : null
 }
 
@@ -191,7 +214,7 @@ function questBlock(
   const talked = hasQuestFlag(save, questId, `talk:${npcId}`)
   const chose =
     hasQuestFlag(save, questId, 'choice:bribe') || hasQuestFlag(save, questId, 'choice:combat')
-  const needsTalkFirst = parsed.talkNpcIds.includes(npcId) && !talked
+  const needsTalkFirst = questNpcHasIncompleteTalk(db, save, quest, npcId) && !talked
   const donated = hasQuestFlag(save, questId, ACCEPT_GOLD_FLAG)
   const needsDonate = parsed.acceptGoldCost > 0 && !donated
   let acceptLabel = 'Accept quest'
@@ -218,9 +241,9 @@ function questBlock(
     canDonate: isGiver && status === 'inactive' && needsDonate,
     donated,
     canTurnIn: turnInId === npcId && status === 'active',
-    canTalk: status === 'active' && parsed.talkNpcIds.includes(npcId) && !talked,
+    canTalk: status === 'active' && questCanTalkToNpc(db, save, quest, npcId) && !talked,
     talkLabel: 'Talk',
-    talkLine: questTalkLine(db, questId, npcId),
+    talkLine: questTalkLine(db, questId, npcId, save),
     idlePrompt: configString(db, 'copy.quest_active_prompt', FALLBACK_QUEST_ACTIVE_PROMPT),
     canBribe:
       status === 'active' &&
@@ -315,7 +338,7 @@ export function npcConversation(
   nowMs: number = Date.now(),
 ): NpcConversation {
   const npcId = npc['NPC ID']
-  const quests = questsTouchingNpc(db, npcId)
+  const quests = questsTouchingNpc(db, save, npcId)
     .filter((quest) => {
       const isGiver = quest['NPC ID'] === npcId
       const status = getQuestProgress(save, quest['Quest ID']).status

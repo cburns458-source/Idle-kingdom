@@ -73,6 +73,7 @@ export 'src/pvp/matchmaking.dart';
 export 'src/quests/objectives.dart';
 export 'src/quests/progress.dart';
 export 'src/quests/quests.dart';
+export 'src/quests/steps.dart';
 export 'src/races/assign_race.dart';
 export 'src/races/races.dart';
 export 'src/recipes/knowledge.dart';

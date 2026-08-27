@@ -5,8 +5,10 @@ import {
 } from '../achievements/progress'
 import { CRITTER_DEFS, collectionCount } from '../critters/critters'
 import type { GameDatabase } from '../data/types'
-import { questObjectiveProgress } from '../quests/objectives'
+import type { QuestRow } from '../quests/quests'
+import { questLegacyJournalSteps } from '../quests/objectives'
 import { asQuestRows, getQuestProgress, questStatusLabel } from '../quests/quests'
+import { questStepJournal, questUsesSteps } from '../quests/steps'
 import { listRecipeBookEntries, type RecipeBookEntry } from '../recipes/knowledge'
 import type { PlayerSave } from '../save/types'
 
@@ -74,24 +76,22 @@ function achievementNote(achievement: AchievementRow): string {
   }
 }
 
-/** One objective of an active quest, with its bar already worked out. */
-export interface QuestLogObjective {
+/** One step in an active quest journal. */
+export interface QuestLogStep {
   key: string
-  /** `Deliver Cabbage: 3/5`. */
   label: string
-  /** 0–100, capped, for the bar. */
-  percent: number
+  state: 'done' | 'current'
 }
 
 export interface QuestLogRow {
   questId: string
   name: string
-  /** `Rose needs herbs. · Rose`, the summary and who gave it. */
+  /** Vague report of the situation, plus who gave it. */
   detail: string
   statusLabel: string
   completed: boolean
-  /** Empty unless the quest is active and asks for something countable. */
-  objectives: QuestLogObjective[]
+  /** Revealed steps for active quests; open the row to read them. */
+  steps: QuestLogStep[]
 }
 
 export function questLog(db: GameDatabase, save: PlayerSave): QuestLogRow[] {
@@ -100,8 +100,13 @@ export function questLog(db: GameDatabase, save: PlayerSave): QuestLogRow[] {
     const status = getQuestProgress(save, questId).status
     const npcName =
       db.NPCs.find((npc) => npc['NPC ID'] === quest['NPC ID'])?.['Display Name'] ?? 'NPC'
-    const objectives =
-      status === 'active' ? questObjectiveProgress(db, save, quest).progressLines : []
+    const questRow = quest as QuestRow
+    const steps =
+      status === 'active'
+        ? questUsesSteps(db, questId)
+          ? questStepJournal(db, save, questRow)
+          : questLegacyJournalSteps(db, save, questRow)
+        : []
 
     return {
       questId,
@@ -109,14 +114,7 @@ export function questLog(db: GameDatabase, save: PlayerSave): QuestLogRow[] {
       detail: `${quest.Summary ?? 'No summary.'} · ${npcName}`,
       statusLabel: questStatusLabel(status),
       completed: status === 'completed',
-      objectives: objectives
-        .filter((line) => line.current < line.required)
-        .slice(0, 1)
-        .map((line) => ({
-          key: line.key,
-          label: `${line.label}: ${Math.min(line.current, line.required)}/${line.required}`,
-          percent: Math.min(100, Math.floor((line.current / Math.max(1, line.required)) * 100)),
-        })),
+      steps,
     }
   })
 }

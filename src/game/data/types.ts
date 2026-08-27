@@ -226,6 +226,16 @@ export interface QuestDialogueRow {
   Notes: string | null
 }
 
+export interface QuestStepRow {
+  'Step ID': string
+  'Quest ID': string
+  'Step Order': number
+  'Journal Label': string
+  Notes: string | null
+  Status: RecordStatus
+  'Release Phase': ReleasePhase
+}
+
 export interface NpcRow {
   'NPC ID': string
   'Internal Key': string
@@ -373,6 +383,7 @@ export interface GameDatabase {
   NPCs: NpcRow[]
   Shops: ShopRow[]
   Quests: Record<string, unknown>[]
+  QuestSteps: QuestStepRow[]
   QuestDialogue: QuestDialogueRow[]
   Achievements: Record<string, unknown>[]
   CosmeticSlots: CosmeticSlotRow[]
@@ -408,6 +419,7 @@ export const DATABASE_TABLES = [
   'NPCs',
   'Shops',
   'Quests',
+  'QuestSteps',
   'QuestDialogue',
   'Achievements',
   'CosmeticSlots',

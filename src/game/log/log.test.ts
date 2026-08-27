@@ -34,28 +34,77 @@ describe('achievement log', () => {
 })
 
 describe('quest log', () => {
-  it('starts every quest not started, with no objectives shown', () => {
+  it('starts every quest not started, with no steps shown', () => {
     const rows = questLog(launch, createNewSave(launch))
     expect(rows.length).toBeGreaterThan(0)
     expect(rows.every((row) => row.statusLabel === 'Not started')).toBe(true)
-    expect(rows.every((row) => row.objectives.length === 0)).toBe(true)
+    expect(rows.every((row) => row.steps.length === 0)).toBe(true)
     expect(rows[0]!.detail).toContain(' · ')
+    expect(rows.find((row) => row.questId === 'QST-0001')!.detail).toContain(
+      'new cook for the feast',
+    )
+    expect(rows.find((row) => row.questId === 'QST-0003')!.name).toBe('Lowly Beggar')
+    expect(rows.find((row) => row.questId === 'QST-0003')!.detail).toContain(
+      'asking for help in the town',
+    )
+    expect(rows.find((row) => row.questId === 'QST-0004')!.detail).toContain(
+      'guide was waiting in the Citadel plaza',
+    )
+    expect(rows.find((row) => row.questId === 'QST-0005')!.detail).toContain(
+      'Archmage wants an apprentice',
+    )
   })
 
-  it('counts an active quest towards what it asks for', () => {
+  it('reveals journal steps for an active quest without numeric progress', () => {
     const save = createNewSave(launch)
     const active = {
       ...save,
-      inventory: [{ itemId: 'ITEM-0038', quantity: 3 }],
-      quests: [{ questId: 'QST-0002', status: 'active' as const, progress: 0, counters: {} }],
+      quests: [{ questId: 'QST-0001', status: 'active' as const, progress: 0, counters: {} }],
     }
-    const row = questLog(launch, active).find((entry) => entry.questId === 'QST-0002')!
+    const row = questLog(launch, active).find((entry) => entry.questId === 'QST-0001')!
     expect(row.statusLabel).toBe('Active')
-    expect(row.objectives.length).toBeGreaterThan(0)
-    const delivery = row.objectives[0]!
-    expect(delivery.label).toMatch(/^Deliver .+: \d+\/\d+$/)
-    expect(delivery.percent).toBeGreaterThan(0)
-    expect(delivery.percent).toBeLessThanOrEqual(100)
+    expect(row.steps).toEqual([
+      { key: 'QSTP-0001', label: 'Hear what the King needs', state: 'current' },
+    ])
+  })
+
+  it('opens the Citadel tour on Hear the guide', () => {
+    const save = {
+      ...createNewSave(launch),
+      quests: [{ questId: 'QST-0004', status: 'active' as const, progress: 0, counters: {} }],
+    }
+    const row = questLog(launch, save).find((entry) => entry.questId === 'QST-0004')!
+    expect(row.steps).toEqual([{ key: 'QSTP-0008', label: 'Hear the guide', state: 'current' }])
+  })
+
+  it('opens Wizard Studies on Hear the shopkeeper out', () => {
+    const save = {
+      ...createNewSave(launch),
+      quests: [{ questId: 'QST-0005', status: 'active' as const, progress: 0, counters: {} }],
+    }
+    const row = questLog(launch, save).find((entry) => entry.questId === 'QST-0005')!
+    expect(row.steps).toEqual([
+      { key: 'QSTP-0010', label: 'Hear the shopkeeper out', state: 'current' },
+    ])
+  })
+
+  it('reveals the next feast step after the King is heard', () => {
+    const save = {
+      ...createNewSave(launch),
+      quests: [
+        {
+          questId: 'QST-0001',
+          status: 'active' as const,
+          progress: 1,
+          counters: { 'talk:NPC-0001': 1 },
+        },
+      ],
+    }
+    const row = questLog(launch, save).find((entry) => entry.questId === 'QST-0001')!
+    expect(row.steps).toEqual([
+      { key: 'QSTP-0001', label: 'Hear what the King needs', state: 'done' },
+      { key: 'QSTP-0002', label: 'Prepare food for the feast', state: 'current' },
+    ])
   })
 
   it('marks a finished quest completed', () => {

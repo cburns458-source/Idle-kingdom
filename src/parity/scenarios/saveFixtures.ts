@@ -235,6 +235,8 @@ export function questSave(db: GameDatabase): PlayerSave {
     inventory: [
       { itemId: 'ITEM-0038', quantity: 6 },
       { itemId: 'ITEM-0031', quantity: 5 },
+      { itemId: 'ITEM-0028', quantity: 5 },
+      { itemId: 'ITEM-0042', quantity: 5 },
       { itemId: 'ITEM-0058', quantity: 12 },
     ],
     quests: [

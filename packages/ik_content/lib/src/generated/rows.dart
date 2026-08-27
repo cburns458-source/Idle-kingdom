@@ -521,6 +521,24 @@ class QuestDialogueRow extends DbRow {
   String? get notes => stringOrNull('Notes');
 }
 
+class QuestStepRow extends DbRow {
+  const QuestStepRow(super.raw);
+
+  String get stepId => stringValue('Step ID');
+
+  String get questId => stringValue('Quest ID');
+
+  num get stepOrder => numberValue('Step Order');
+
+  String get journalLabel => stringValue('Journal Label');
+
+  String? get notes => stringOrNull('Notes');
+
+  String get status => stringValue('Status');
+
+  String get releasePhase => stringValue('Release Phase');
+}
+
 class RaceBonusRow extends DbRow {
   const RaceBonusRow(super.raw);
 
@@ -791,6 +809,7 @@ const List<String> databaseTables = <String>[
   'NPCs',
   'Shops',
   'Quests',
+  'QuestSteps',
   'QuestDialogue',
   'Achievements',
   'CosmeticSlots',
@@ -868,6 +887,8 @@ class GameDatabase {
   late final List<ShopRow> shops = typedRows(raw, 'Shops', ShopRow.new);
 
   late final List<Map<String, Object?>> quests = untypedRows(raw, 'Quests');
+
+  late final List<QuestStepRow> questSteps = typedRows(raw, 'QuestSteps', QuestStepRow.new);
 
   late final List<QuestDialogueRow> questDialogue = typedRows(
     raw,

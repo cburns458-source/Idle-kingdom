@@ -178,6 +178,8 @@ void main() {
         inventory: const [
           InventoryStack(itemId: rabbitsFootId, quantity: 5),
           InventoryStack(itemId: fernleafId, quantity: 5),
+          InventoryStack(itemId: 'ITEM-0028', quantity: 5),
+          InventoryStack(itemId: 'ITEM-0042', quantity: 5),
         ],
         quests: const [QuestProgress(questId: 'QST-0002', status: 'active', progress: 0)],
       ),
@@ -185,9 +187,15 @@ void main() {
     addTearDown(controller.dispose);
 
     await pumpPanel(tester, NpcPanel(controller: controller, npc: npcOf(roseId), onClose: () {}));
-    expect(find.text('What else do you need?'), findsOne);
+    expect(find.text('Talk'), findsOne);
     expect(find.textContaining("Progress: 5 / 5 Rabbit's Foot"), findsNothing);
     expect(find.text('Gold: 1,500 / 1,000'), findsNothing);
+
+    await tester.tap(find.text('Talk'));
+    await tester.pump();
+    expect(find.textContaining('wild berries'), findsOne);
+    await tester.tap(find.text('Continue'));
+    await tester.pump();
 
     await tester.tap(find.text('Turn in'));
     await tester.pumpAndSettle();
@@ -202,7 +210,7 @@ void main() {
     expect(find.text("Completed — Rose's Apothecary is open on the Town Map."), findsOne);
   });
 
-  testWidgets('a quest giver with no pitch is accepted straight from the list', (tester) async {
+  testWidgets('the King pitches the feast, then asks for help after accept', (tester) async {
     final controller = buildController(database, seed: standing('LOC-0016'));
     addTearDown(controller.dispose);
 
@@ -210,12 +218,15 @@ void main() {
       tester,
       NpcPanel(controller: controller, npc: npcOf('NPC-0001'), onClose: () {}),
     );
-    expect(find.text('The Grand Feast'), findsOne);
-    await tester.tap(find.text('Accept quest'));
+    expect(find.textContaining('My cooks have fled'), findsOne);
+    await tester.tap(find.text('Start quest: The Grand Feast').last);
+    await tester.pump();
+    await tester.tap(find.text('Start quest: The Grand Feast'));
     await tester.pump();
 
     expect(getQuestProgress(controller.save, 'QST-0001').status, 'active');
-    expect(find.text('What else do you need?'), findsOne);
+    expect(find.text('Talk'), findsOne);
+    expect(find.textContaining('baked potatoes'), findsNothing);
   });
 
   testWidgets('the Beggar at The Town asks for 25 gold', (tester) async {
@@ -232,7 +243,7 @@ void main() {
 
     expect(getQuestProgress(controller.save, 'QST-0003').status, 'inactive');
     expect(controller.save.gold, 15);
-    expect(find.text('Start the quest The Missing Purse?'), findsOne);
+    expect(find.text('Start the quest Lowly Beggar?'), findsOne);
 
     await pumpPanel(
       tester,
@@ -244,13 +255,20 @@ void main() {
       ),
     );
     expect(find.text('Donate 25 gold'), findsNothing);
-    expect(find.text('Start the quest The Missing Purse?'), findsWidgets);
-    await tester.tap(find.text('Start the quest The Missing Purse?').last);
+    expect(find.text('Start the quest Lowly Beggar?'), findsWidgets);
+    await tester.tap(find.text('Start the quest Lowly Beggar?').last);
     await tester.pump();
-    await tester.tap(find.text('Start the quest The Missing Purse?'));
+    await tester.tap(find.text('Start the quest Lowly Beggar?'));
     await tester.pump();
 
     expect(getQuestProgress(controller.save, 'QST-0003').status, 'active');
     expect(controller.save.gold, 15);
+    expect(find.text('Talk'), findsOne);
+    expect(find.textContaining('Donate 25 gold, then recover'), findsNothing);
+
+    await tester.tap(find.text('Talk'));
+    await tester.pump();
+    expect(find.textContaining('around town'), findsOne);
+    expect(find.textContaining('barracks'), findsNothing);
   });
 }

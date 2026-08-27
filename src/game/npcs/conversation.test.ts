@@ -83,23 +83,32 @@ describe('npc conversation', () => {
 
     const quest = conversation.quests[0]!
     expect(quest.status).toBe('inactive')
-    expect(quest.goldRequired).toBe(1_000)
+    expect(quest.summary).toContain('out of the kitchens')
 
     let stocked = { ...save, gold: 1_500 }
     stocked = addItemToInventory(stocked, 'ITEM-0038', 5)
     stocked = addItemToInventory(stocked, 'ITEM-0031', 5)
+    stocked = addItemToInventory(stocked, 'ITEM-0028', 5)
+    stocked = addItemToInventory(stocked, 'ITEM-0042', 5)
     const accepted = npcConversation(launch, { ...stocked, quests: [
       { questId: 'QST-0002', status: 'active', progress: 0 },
     ] }, npc('NPC-0005'))
     expect(accepted.greeting).toBeNull()
-    expect(accepted.quests[0]!.ready).toBe(true)
+    expect(accepted.quests[0]!.canTalk).toBe(true)
+    expect(accepted.quests[0]!.talkLine).toContain('wild berries')
+    expect(accepted.quests[0]!.ready).toBe(false)
   })
 
   it('names the location a completed quest opened', () => {
     let save = { ...saveAt('LOC-0023'), gold: 1_500 }
     save = addItemToInventory(save, 'ITEM-0038', 5)
     save = addItemToInventory(save, 'ITEM-0031', 5)
-    save = { ...save, quests: [{ questId: 'QST-0002', status: 'active', progress: 0 }] }
+    save = addItemToInventory(save, 'ITEM-0028', 5)
+    save = addItemToInventory(save, 'ITEM-0042', 5)
+    save = {
+      ...save,
+      quests: [{ questId: 'QST-0002', status: 'active', progress: 0, counters: { 'talk:NPC-0005': 1 } }],
+    }
     const completed = completeQuest(launch, save, 'QST-0002')
     expect(completed.ok).toBe(true)
     if (!completed.ok) return
@@ -136,11 +145,27 @@ describe('npc conversation', () => {
     )
   })
 
-  it('leaves plain NPCs without a greeting or mentor block', () => {
+  it("pitches the King's feast quest before it is accepted", () => {
     const conversation = npcConversation(launch, saveAt('LOC-0016'), npc('NPC-0001'))
-    expect(conversation.greeting).toBeNull()
+    expect(conversation.greeting).toEqual({
+      kind: 'quest_pitch',
+      questId: 'QST-0001',
+      line: 'My cooks have fled before the grand feast. If you know your way around a hearth, perhaps you can help.',
+      acceptLabel: 'Start quest: The Grand Feast',
+    })
     expect(conversation.mentor).toBeNull()
-    expect(conversation.quests.map((quest) => quest.acceptLabel)).toEqual(['Accept quest'])
+  })
+
+  it('asks the King for details after the feast is accepted', () => {
+    const save = {
+      ...saveAt('LOC-0016'),
+      quests: [{ questId: 'QST-0001', status: 'active' as const, progress: 0 }],
+    }
+    const conversation = npcConversation(launch, save, npc('NPC-0001'))
+    expect(conversation.greeting).toBeNull()
+    expect(conversation.quests[0]!.canTalk).toBe(true)
+    expect(conversation.quests[0]!.talkLine).toContain('cooked crawfish')
+    expect(conversation.quests[0]!.ready).toBe(false)
   })
 
   it('reads quest pitches and talk lines from the database', () => {
@@ -153,7 +178,16 @@ describe('npc conversation', () => {
     })
 
     const shopkeeper = npcConversation(launch, saveAt('LOC-0007'), npc('NPC-0009'))
-    expect(shopkeeper.quests[0]!.pitchLine).toContain('mine below the tower')
+    expect(shopkeeper.quests[0]!.pitchLine).toMatch(/new apprentice/)
+    expect(shopkeeper.quests[0]!.pitchLine).not.toMatch(/ten essence/)
+
+    const guidePitch = npcConversation(launch, saveAt('LOC-0028'), npc('NPC-0013'))
+    expect(guidePitch.greeting).toEqual({
+      kind: 'quest_pitch',
+      questId: 'QST-0004',
+      line: 'Welcome to the Citadel. If you have a moment, I can help you find your feet.',
+      acceptLabel: 'Start quest: Visiting the Citadel',
+    })
 
     const archmage = npcConversation(
       launch,
@@ -163,7 +197,167 @@ describe('npc conversation', () => {
       },
       npc('NPC-0004'),
     )
-    expect(archmage.quests[0]!.talkLine).toBe('Well done.')
+    expect(archmage.quests).toEqual([])
+  })
+
+  it('hides the barracks choice until the beggar is heard', () => {
+    const save = {
+      ...saveAt('LOC-0034'),
+      gold: 300,
+      quests: [{ questId: 'QST-0003', status: 'active' as const, progress: 0 }],
+    }
+    const beggar = npcConversation(launch, save, npc('NPC-0011'))
+    expect(beggar.greeting).toBeNull()
+    expect(beggar.quests[0]!.name).toBe('Lowly Beggar')
+    expect(beggar.quests[0]!.canTalk).toBe(true)
+    expect(beggar.quests[0]!.talkLine).toMatch(/around town/)
+    expect(beggar.quests[0]!.talkLine).not.toMatch(/barracks/)
+    expect(beggar.quests[0]!.ready).toBe(false)
+
+    const guardTooSoon = npcConversation(launch, { ...save, currentLocationId: 'LOC-0017' }, npc('NPC-0012'))
+    expect(guardTooSoon.quests).toEqual([])
+    const merchantTooSoon = npcConversation(launch, { ...save, currentLocationId: 'LOC-0024' }, npc('NPC-0007'))
+    expect(merchantTooSoon.quests).toEqual([])
+
+    const heard = {
+      ...save,
+      currentLocationId: 'LOC-0017',
+      quests: [
+        {
+          questId: 'QST-0003',
+          status: 'active' as const,
+          progress: 1,
+          counters: { 'talk:NPC-0011': 1 },
+        },
+      ],
+    }
+    const guard = npcConversation(launch, heard, npc('NPC-0012'))
+    expect(guard.quests[0]!.canTalk).toBe(true)
+    expect(guard.quests[0]!.canBribe).toBe(false)
+    expect(guard.quests[0]!.canChooseCombat).toBe(false)
+    expect(guard.quests[0]!.talkLine).not.toMatch(/purse/i)
+    expect(guard.quests[0]!.talkLine).toMatch(/gossip/)
+
+    const merchant = npcConversation(launch, { ...heard, currentLocationId: 'LOC-0024' }, npc('NPC-0007'))
+    expect(merchant.quests[0]!.canTalk).toBe(true)
+    expect(merchant.quests[0]!.talkLine).toMatch(/guards at the barracks/)
+
+    const afterMerchant = {
+      ...heard,
+      quests: [
+        {
+          questId: 'QST-0003',
+          status: 'active' as const,
+          progress: 2,
+          counters: { 'talk:NPC-0011': 1, 'talk:NPC-0007': 1 },
+        },
+      ],
+    }
+    const threatened = npcConversation(launch, afterMerchant, npc('NPC-0012'))
+    expect(threatened.quests[0]!.canTalk).toBe(true)
+    expect(threatened.quests[0]!.talkLine).toMatch(/someone talked/)
+    expect(threatened.quests[0]!.talkLine).toMatch(/purse/i)
+    expect(threatened.quests[0]!.canBribe).toBe(false)
+    expect(threatened.quests[0]!.canChooseCombat).toBe(false)
+
+    const afterGuard = {
+      ...heard,
+      quests: [
+        {
+          questId: 'QST-0003',
+          status: 'active' as const,
+          progress: 2,
+          counters: { 'talk:NPC-0011': 1, 'talk:NPC-0012': 1 },
+        },
+      ],
+    }
+    const choice = npcConversation(launch, afterGuard, npc('NPC-0012'))
+    expect(choice.quests[0]!.canTalk).toBe(false)
+    expect(choice.quests[0]!.canBribe).toBe(true)
+    expect(choice.quests[0]!.canChooseCombat).toBe(true)
+
+    const afterBoth = {
+      ...afterMerchant,
+      quests: [
+        {
+          questId: 'QST-0003',
+          status: 'active' as const,
+          progress: 3,
+          counters: { 'talk:NPC-0011': 1, 'talk:NPC-0007': 1, 'talk:NPC-0012': 1 },
+        },
+      ],
+    }
+    const warnedChoice = npcConversation(launch, afterBoth, npc('NPC-0012'))
+    expect(warnedChoice.quests[0]!.canBribe).toBe(true)
+    expect(warnedChoice.quests[0]!.canChooseCombat).toBe(true)
+  })
+
+  it('lets the Citadel guide welcome visitors without listing every hall', () => {
+    const save = {
+      ...saveAt('LOC-0028'),
+      quests: [{ questId: 'QST-0004', status: 'active' as const, progress: 0 }],
+    }
+    const guide = npcConversation(launch, save, npc('NPC-0013'))
+    expect(guide.greeting).toBeNull()
+    expect(guide.quests[0]!.canTalk).toBe(true)
+    expect(guide.quests[0]!.talkLine).toMatch(/other halls/)
+    expect(guide.quests[0]!.talkLine).not.toMatch(/Guild Hall/)
+    expect(guide.quests[0]!.talkLine).not.toMatch(/Bounty Board/)
+    expect(guide.quests[0]!.ready).toBe(false)
+
+    const marketTooSoon = npcConversation(
+      launch,
+      { ...save, currentLocationId: 'LOC-0029' },
+      npc('NPC-0006'),
+    )
+    expect(marketTooSoon.quests).toEqual([])
+
+    const heard = {
+      ...save,
+      currentLocationId: 'LOC-0029',
+      quests: [
+        {
+          questId: 'QST-0004',
+          status: 'active' as const,
+          progress: 1,
+          counters: { 'talk:NPC-0013': 1 },
+        },
+      ],
+    }
+    const market = npcConversation(launch, heard, npc('NPC-0006'))
+    expect(market.quests[0]!.canTalk).toBe(true)
+    expect(market.quests[0]!.talkLine).toMatch(/no obligation to buy/)
+  })
+
+  it('reveals the Archmage essence request only after the shopkeeper is heard', () => {
+    const save = {
+      ...saveAt('LOC-0007'),
+      quests: [{ questId: 'QST-0005', status: 'active' as const, progress: 0 }],
+    }
+    const shop = npcConversation(launch, save, npc('NPC-0009'))
+    expect(shop.greeting?.kind).toBe('merchant')
+    expect(shop.quests[0]!.canTalk).toBe(true)
+    expect(shop.quests[0]!.talkLine).toMatch(/mine under the tower/)
+    expect(shop.quests[0]!.talkLine).not.toMatch(/ten essence/)
+    expect(shop.quests[0]!.ready).toBe(false)
+
+    expect(npcConversation(launch, save, npc('NPC-0004')).quests).toEqual([])
+
+    const heard = {
+      ...save,
+      quests: [
+        {
+          questId: 'QST-0005',
+          status: 'active' as const,
+          progress: 1,
+          counters: { 'talk:NPC-0009': 1 },
+        },
+      ],
+    }
+    const archmage = npcConversation(launch, heard, npc('NPC-0004'))
+    expect(archmage.quests[0]!.canTalk).toBe(true)
+    expect(archmage.quests[0]!.talkLine).toMatch(/ten essence/)
+    expect(archmage.quests[0]!.ready).toBe(false)
     expect(archmage.quests[0]!.idlePrompt).toBe('What else do you need?')
   })
 })

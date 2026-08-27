@@ -14,6 +14,7 @@ import {
   recordQuestFlag,
   setQuestFlag,
 } from './progress'
+import { questAllStepDelivers, questTouchesNpcForSave, questUsesSteps } from './steps'
 
 /** Set when the player pays AcceptGold without starting the quest yet. */
 export const ACCEPT_GOLD_FLAG = 'accept-gold'
@@ -50,16 +51,12 @@ export function questsForNpc(db: GameDatabase, npcId: string): QuestRow[] {
   return asQuestRows(db).filter((quest) => quest['NPC ID'] === npcId)
 }
 
-export function questsTouchingNpc(db: GameDatabase, npcId: string): QuestRow[] {
-  return asQuestRows(db).filter((quest) => {
-    if (quest['NPC ID'] === npcId) return true
-    const parsed = parseStructuredObjectives(quest)
-    return (
-      parsed.talkNpcIds.includes(npcId) ||
-      parsed.turnInNpcId === npcId ||
-      parsed.choiceNpcId === npcId
-    )
-  })
+export function questsTouchingNpc(
+  db: GameDatabase,
+  save: PlayerSave,
+  npcId: string,
+): QuestRow[] {
+  return asQuestRows(db).filter((quest) => questTouchesNpcForSave(db, save, quest, npcId))
 }
 
 export function getQuestProgress(save: PlayerSave, questId: string): QuestProgress {
@@ -72,9 +69,8 @@ export function getQuestProgress(save: PlayerSave, questId: string): QuestProgre
   )
 }
 
-export function isQuestRepeatable(quest: QuestRow): boolean {
-  const flag = (quest.Repeatable ?? 'No').toLowerCase()
-  return flag === 'yes' || flag === 'true' || flag === 'repeatable'
+export function isQuestRepeatable(_quest: QuestRow): boolean {
+  return false
 }
 
 export function acceptQuest(
@@ -96,7 +92,7 @@ export function acceptQuest(
   if (progress.status === 'active') {
     return { ok: false, reason: 'This quest is already active.' }
   }
-  if (progress.status === 'completed' && !isQuestRepeatable(quest)) {
+  if (progress.status === 'completed') {
     return { ok: false, reason: 'This quest is already completed.' }
   }
   if (parsed.acceptGoldCost > 0 && !hasQuestFlag(save, questId, ACCEPT_GOLD_FLAG)) {
@@ -139,7 +135,7 @@ export function donateForQuest(
   if (progress.status === 'active') {
     return { ok: false, reason: 'This quest is already active.' }
   }
-  if (progress.status === 'completed' && !isQuestRepeatable(quest)) {
+  if (progress.status === 'completed') {
     return { ok: false, reason: 'This quest is already completed.' }
   }
   if (hasQuestFlag(save, questId, ACCEPT_GOLD_FLAG)) {
@@ -191,18 +187,15 @@ export function completeQuest(
 
   const progress = getQuestProgress(save, questId)
   if (progress.status === 'completed') {
-    return {
-      ok: false,
-      reason: isQuestRepeatable(quest)
-        ? 'Accept this quest again before turning it in.'
-        : 'This quest is already completed.',
-    }
+    return { ok: false, reason: 'This quest is already completed.' }
   }
   if (progress.status !== 'active') {
     return { ok: false, reason: 'Accept this quest before turning it in.' }
   }
 
+  const stepDelivers = questAllStepDelivers(db, quest)
   const hasObjectives =
+    stepDelivers.length > 0 ||
     parsed.delivers.length > 0 ||
     parsed.defeatTargets.length > 0 ||
     parsed.processTargets.length > 0 ||
@@ -210,7 +203,8 @@ export function completeQuest(
     parsed.talkNpcIds.length > 0 ||
     parsed.visitLocationIds.length > 0 ||
     parsed.inspectIds.length > 0 ||
-    parsed.goldCost > 0
+    parsed.goldCost > 0 ||
+    questUsesSteps(db, questId)
   if (!hasObjectives) {
     return { ok: false, reason: 'Quest objectives are incomplete in data.' }
   }
@@ -227,10 +221,11 @@ export function completeQuest(
   }
 
   let next: PlayerSave = save
-  if (parsed.delivers.length > 0) {
+  const deliverItems = questUsesSteps(db, questId) ? stepDelivers : parsed.delivers
+  if (deliverItems.length > 0) {
     const removed = removeIngredients(
       next,
-      parsed.delivers.map((line) => ({ itemId: line.targetId, quantity: line.quantity })),
+      deliverItems.map((line) => ({ itemId: line.targetId, quantity: line.quantity })),
       1,
     )
     if (!removed) return { ok: false, reason: 'Missing required items.' }

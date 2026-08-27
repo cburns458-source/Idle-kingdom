@@ -1,6 +1,7 @@
 import type { PlayerSave } from '../save/types'
 import { asQuestRows, getQuestProgress } from './quests'
 import { parseStructuredObjectives } from './objectives'
+import { questCanTalkToNpc, questObjectiveSources } from './steps'
 import type { GameDatabase } from '../data/types'
 
 function bumpCounter(save: PlayerSave, questId: string, key: string, amount: number): PlayerSave {
@@ -27,8 +28,9 @@ export function applyQuestDefeatProgress(
 ): PlayerSave {
   let next = save
   for (const quest of asQuestRows(db)) {
-    const structured = parseStructuredObjectives(quest)
-    if (!structured.defeatTargets.some((row) => row.targetId === enemyId)) continue
+    if (!questObjectiveSources(db, quest).some((row) => row.defeatTargets.some((t) => t.targetId === enemyId))) {
+      continue
+    }
     next = bumpCounter(next, quest['Quest ID'], `defeat:${enemyId}`, amount)
   }
   return next
@@ -43,8 +45,13 @@ export function applyQuestProcessProgress(
 ): PlayerSave {
   let next = save
   for (const quest of asQuestRows(db)) {
-    const structured = parseStructuredObjectives(quest)
-    if (!structured.processTargets.some((row) => row.targetId === recipeOrProjectId)) continue
+    if (
+      !questObjectiveSources(db, quest).some((row) =>
+        row.processTargets.some((target) => target.targetId === recipeOrProjectId),
+      )
+    ) {
+      continue
+    }
     next = bumpCounter(next, quest['Quest ID'], `process:${recipeOrProjectId}`, amount)
   }
   return next
@@ -58,8 +65,9 @@ export function applyQuestLearnRecipeProgress(
 ): PlayerSave {
   let next = save
   for (const quest of asQuestRows(db)) {
-    const structured = parseStructuredObjectives(quest)
-    if (!structured.learnRecipeIds.includes(recipeId)) continue
+    if (!questObjectiveSources(db, quest).some((row) => row.learnRecipeIds.includes(recipeId))) {
+      continue
+    }
     next = bumpCounter(next, quest['Quest ID'], `learn:${recipeId}`, 1)
   }
   return next
@@ -113,8 +121,7 @@ export function applyQuestTalkProgress(
 ): PlayerSave {
   let next = save
   for (const quest of asQuestRows(db)) {
-    const structured = parseStructuredObjectives(quest)
-    if (!structured.talkNpcIds.includes(npcId)) continue
+    if (!questCanTalkToNpc(db, next, quest, npcId)) continue
     next = setQuestFlag(next, quest['Quest ID'], `talk:${npcId}`)
   }
   return next
@@ -128,8 +135,9 @@ export function applyQuestVisitProgress(
 ): PlayerSave {
   let next = save
   for (const quest of asQuestRows(db)) {
-    const structured = parseStructuredObjectives(quest)
-    if (!structured.visitLocationIds.includes(locationId)) continue
+    if (!questObjectiveSources(db, quest).some((row) => row.visitLocationIds.includes(locationId))) {
+      continue
+    }
     next = setQuestFlag(next, quest['Quest ID'], `visit:${locationId}`)
   }
   return next
@@ -143,8 +151,9 @@ export function applyQuestInspectProgress(
 ): PlayerSave {
   let next = save
   for (const quest of asQuestRows(db)) {
-    const structured = parseStructuredObjectives(quest)
-    if (!structured.inspectIds.includes(inspectId)) continue
+    if (!questObjectiveSources(db, quest).some((row) => row.inspectIds.includes(inspectId))) {
+      continue
+    }
     next = setQuestFlag(next, quest['Quest ID'], `inspect:${inspectId}`)
   }
   return next
