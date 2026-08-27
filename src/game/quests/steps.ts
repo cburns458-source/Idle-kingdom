@@ -182,12 +182,10 @@ export function questTouchesNpcForSave(
   if (quest['NPC ID'] === npcId) return true
 
   const meta = parseStructuredObjectives(quest)
-  if (meta.turnInNpcId === npcId) return true
-
   const progress = getQuestProgress(save, quest['Quest ID'])
   if (progress.status !== 'active') return false
 
-  if (meta.choiceNpcId === npcId) {
+  if (meta.turnInNpcId === npcId || meta.choiceNpcId === npcId) {
     if (!questUsesSteps(db, quest['Quest ID'])) return true
     if (questActiveStepObjectives(db, save, quest)?.talkNpcIds.includes(npcId)) return true
     return !questNpcHasIncompleteTalk(db, save, quest, npcId)

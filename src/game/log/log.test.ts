@@ -50,6 +50,9 @@ describe('quest log', () => {
     expect(rows.find((row) => row.questId === 'QST-0004')!.detail).toContain(
       'guide was waiting in the Citadel plaza',
     )
+    expect(rows.find((row) => row.questId === 'QST-0005')!.detail).toContain(
+      'Archmage wants an apprentice',
+    )
   })
 
   it('reveals journal steps for an active quest without numeric progress', () => {
@@ -72,6 +75,17 @@ describe('quest log', () => {
     }
     const row = questLog(launch, save).find((entry) => entry.questId === 'QST-0004')!
     expect(row.steps).toEqual([{ key: 'QSTP-0008', label: 'Hear the guide', state: 'current' }])
+  })
+
+  it('opens Wizard Studies on Hear the shopkeeper out', () => {
+    const save = {
+      ...createNewSave(launch),
+      quests: [{ questId: 'QST-0005', status: 'active' as const, progress: 0, counters: {} }],
+    }
+    const row = questLog(launch, save).find((entry) => entry.questId === 'QST-0005')!
+    expect(row.steps).toEqual([
+      { key: 'QSTP-0010', label: 'Hear the shopkeeper out', state: 'current' },
+    ])
   })
 
   it('reveals the next feast step after the King is heard', () => {

@@ -178,7 +178,8 @@ describe('npc conversation', () => {
     })
 
     const shopkeeper = npcConversation(launch, saveAt('LOC-0007'), npc('NPC-0009'))
-    expect(shopkeeper.quests[0]!.pitchLine).toContain('mine below the tower')
+    expect(shopkeeper.quests[0]!.pitchLine).toMatch(/new apprentice/)
+    expect(shopkeeper.quests[0]!.pitchLine).not.toMatch(/ten essence/)
 
     const guidePitch = npcConversation(launch, saveAt('LOC-0028'), npc('NPC-0013'))
     expect(guidePitch.greeting).toEqual({
@@ -196,8 +197,7 @@ describe('npc conversation', () => {
       },
       npc('NPC-0004'),
     )
-    expect(archmage.quests[0]!.talkLine).toBe('Well done.')
-    expect(archmage.quests[0]!.idlePrompt).toBe('What else do you need?')
+    expect(archmage.quests).toEqual([])
   })
 
   it('hides the barracks choice until the beggar is heard', () => {
@@ -327,5 +327,37 @@ describe('npc conversation', () => {
     const market = npcConversation(launch, heard, npc('NPC-0006'))
     expect(market.quests[0]!.canTalk).toBe(true)
     expect(market.quests[0]!.talkLine).toMatch(/no obligation to buy/)
+  })
+
+  it('reveals the Archmage essence request only after the shopkeeper is heard', () => {
+    const save = {
+      ...saveAt('LOC-0007'),
+      quests: [{ questId: 'QST-0005', status: 'active' as const, progress: 0 }],
+    }
+    const shop = npcConversation(launch, save, npc('NPC-0009'))
+    expect(shop.greeting?.kind).toBe('merchant')
+    expect(shop.quests[0]!.canTalk).toBe(true)
+    expect(shop.quests[0]!.talkLine).toMatch(/mine under the tower/)
+    expect(shop.quests[0]!.talkLine).not.toMatch(/ten essence/)
+    expect(shop.quests[0]!.ready).toBe(false)
+
+    expect(npcConversation(launch, save, npc('NPC-0004')).quests).toEqual([])
+
+    const heard = {
+      ...save,
+      quests: [
+        {
+          questId: 'QST-0005',
+          status: 'active' as const,
+          progress: 1,
+          counters: { 'talk:NPC-0009': 1 },
+        },
+      ],
+    }
+    const archmage = npcConversation(launch, heard, npc('NPC-0004'))
+    expect(archmage.quests[0]!.canTalk).toBe(true)
+    expect(archmage.quests[0]!.talkLine).toMatch(/ten essence/)
+    expect(archmage.quests[0]!.ready).toBe(false)
+    expect(archmage.quests[0]!.idlePrompt).toBe('What else do you need?')
   })
 })

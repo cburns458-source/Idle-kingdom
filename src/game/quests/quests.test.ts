@@ -232,8 +232,15 @@ describe('quest tours', () => {
       ),
     ).toBe(true)
 
-    save = applyQuestTalkProgress(launch, save, 'NPC-0004')
     save = addItemToInventory(save, 'ITEM-0011', 10)
+    expect(completeQuest(launch, save, 'QST-0005').ok).toBe(false)
+    save = applyQuestTalkProgress(launch, save, 'NPC-0004')
+    expect(hasQuestFlag(save, 'QST-0005', 'talk:NPC-0004')).toBe(false)
+    expect(completeQuest(launch, save, 'QST-0005').ok).toBe(false)
+
+    save = applyQuestTalkProgress(launch, save, 'NPC-0009')
+    expect(completeQuest(launch, save, 'QST-0005').ok).toBe(false)
+    save = applyQuestTalkProgress(launch, save, 'NPC-0004')
     const completed = completeQuest(launch, save, 'QST-0005')
     expect(completed.ok).toBe(true)
     if (!completed.ok) return

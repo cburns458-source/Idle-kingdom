@@ -157,12 +157,10 @@ bool questTouchesNpcForSave(
   if (quest['NPC ID'] == npcId) return true;
 
   final meta = parseStructuredObjectives(quest);
-  if (meta.turnInNpcId == npcId) return true;
-
   final progress = getQuestProgress(save, jsString(quest['Quest ID']));
   if (progress.status != 'active') return false;
 
-  if (meta.choiceNpcId == npcId) {
+  if (meta.turnInNpcId == npcId || meta.choiceNpcId == npcId) {
     if (!questUsesSteps(db, jsString(quest['Quest ID']))) return true;
     if (questActiveStepObjectives(db, save, quest)?.talkNpcIds.contains(npcId) ?? false) {
       return true;
