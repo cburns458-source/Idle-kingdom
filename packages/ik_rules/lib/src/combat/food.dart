@@ -93,7 +93,7 @@ num _extraFoodFromItem(GameDatabase db, String itemId) {
   return extra;
 }
 
-/// Extra equipped-food eats after an ongoing combat round. One per Gluttony stack.
+/// Extra victory eats. One per Gluttony stack. Does not fire between rounds.
 num extraFoodPerRound(GameDatabase db, PlayerSave save) {
   var extra = 0.0;
   for (final stack in equippedSpellStacks(save)) {
@@ -102,14 +102,15 @@ num extraFoodPerRound(GameDatabase db, PlayerSave save) {
   return extra;
 }
 
-/// Eats equipped food between combat rounds, once per extra_food_per_round stack.
-FoodConsumption consumeFoodBetweenRounds(GameDatabase db, PlayerSave save) {
-  final extra = extraFoodPerRound(db, save);
+/// Victory already eats one food. Each Gluttony stack adds another eat on top.
+/// Combat rounds do not eat.
+FoodConsumption consumeFoodAfterVictory(GameDatabase db, PlayerSave save) {
+  final times = 1 + extraFoodPerRound(db, save);
   var current = save;
   var consumed = false;
   var healed = 0.0;
   String? foodName;
-  for (var i = 0; i < extra; i += 1) {
+  for (var i = 0; i < times; i += 1) {
     final bite = tryConsumeFoodAfterVictory(db, current);
     current = bite.save;
     if (!bite.consumed) break;

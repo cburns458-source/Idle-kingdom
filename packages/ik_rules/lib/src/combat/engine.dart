@@ -342,7 +342,7 @@ CombatVictoryResult applyCombatVictory(
     ),
   );
 
-  final food = tryConsumeFoodAfterVictory(db, next);
+  final food = consumeFoodAfterVictory(db, next);
   next = withBossRespawn(clearCombatSave(food.save), enemy, nowMs);
   next = applyQuestDefeatProgress(db, next, jsString(enemy.raw['Enemy ID']), 1);
   next = applyBountyDefeatProgress(next, jsString(enemy.raw['Enemy ID']), 1, nowMs);

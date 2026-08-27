@@ -37,37 +37,22 @@ void main() {
     );
   });
 
-  test('between-round eats follow equipped Gluttony and stop when food runs out', () {
+  test('Gluttony counts extra victory eats and does not eat between rounds', () {
     expect(extraFoodPerRound(db, _withFoodAndSpells(db, foodQty: 4, gluttonyCount: 0)), 0);
-    final none = consumeFoodBetweenRounds(db, _withFoodAndSpells(db, foodQty: 4, gluttonyCount: 0));
-    expect(none.consumed, isFalse);
-    expect(none.save.equipment.slots[foodSlotId]?.quantity, 4);
-
-    final two = consumeFoodBetweenRounds(db, _withFoodAndSpells(db, foodQty: 5, gluttonyCount: 2));
-    expect(two.consumed, isTrue);
-    expect(two.save.equipment.slots[foodSlotId]?.quantity, 3);
-
-    final empty = consumeFoodBetweenRounds(
-      db,
-      _withFoodAndSpells(db, foodQty: 1, gluttonyCount: 4),
-    );
-    expect(empty.consumed, isTrue);
-    expect(empty.save.equipment.slots[foodSlotId], isNull);
-
-    final full = consumeFoodBetweenRounds(
-      db,
-      _withFoodAndSpells(db, foodQty: 4, gluttonyCount: 2).copyWith(currentHp: 99999),
-    );
-    expect(full.consumed, isFalse);
-    expect(full.save.equipment.slots[foodSlotId]?.quantity, 4);
+    expect(extraFoodPerRound(db, _withFoodAndSpells(db, foodQty: 4, gluttonyCount: 2)), 2);
   });
 
-  test('victory still eats once when Gluttony is equipped', () {
-    final victory = tryConsumeFoodAfterVictory(
-      db,
-      _withFoodAndSpells(db, foodQty: 4, gluttonyCount: 2),
-    );
-    expect(victory.consumed, isTrue);
-    expect(victory.save.equipment.slots[foodSlotId]?.quantity, 3);
+  test('victory eats the usual bite plus one per Gluttony', () {
+    final none = consumeFoodAfterVictory(db, _withFoodAndSpells(db, foodQty: 4, gluttonyCount: 0));
+    expect(none.consumed, isTrue);
+    expect(none.save.equipment.slots[foodSlotId]?.quantity, 3);
+
+    final two = consumeFoodAfterVictory(db, _withFoodAndSpells(db, foodQty: 4, gluttonyCount: 2));
+    expect(two.consumed, isTrue);
+    expect(two.save.equipment.slots[foodSlotId]?.quantity, 1);
+
+    final empty = consumeFoodAfterVictory(db, _withFoodAndSpells(db, foodQty: 2, gluttonyCount: 4));
+    expect(empty.consumed, isTrue);
+    expect(empty.save.equipment.slots[foodSlotId], isNull);
   });
 }

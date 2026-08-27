@@ -79,7 +79,7 @@ function extraFoodFromItem(db: GameDatabase, itemId: string): number {
   return extra
 }
 
-/** Extra equipped-food eats after an ongoing combat round. One per Gluttony stack. */
+/** Extra victory eats. One per Gluttony stack. Does not fire between rounds. */
 export function extraFoodPerRound(db: GameDatabase, save: PlayerSave): number {
   let extra = 0
   for (const stack of equippedSpellStacks(save)) {
@@ -88,14 +88,17 @@ export function extraFoodPerRound(db: GameDatabase, save: PlayerSave): number {
   return extra
 }
 
-/** Eats equipped food between combat rounds, once per extra_food_per_round stack. */
-export function consumeFoodBetweenRounds(db: GameDatabase, save: PlayerSave): FoodConsumption {
-  const extra = extraFoodPerRound(db, save)
+/**
+ * Victory already eats one food. Each Gluttony stack adds another eat on top.
+ * Combat rounds do not eat.
+ */
+export function consumeFoodAfterVictory(db: GameDatabase, save: PlayerSave): FoodConsumption {
+  const times = 1 + extraFoodPerRound(db, save)
   let current = save
   let consumed = false
   let healed = 0
   let foodName: string | null = null
-  for (let i = 0; i < extra; i += 1) {
+  for (let i = 0; i < times; i += 1) {
     const bite = tryConsumeFoodAfterVictory(db, current)
     current = bite.save
     if (!bite.consumed) break

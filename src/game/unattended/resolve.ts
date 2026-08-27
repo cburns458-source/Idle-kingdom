@@ -17,7 +17,6 @@ import {
   getEnemy,
   resolveCombatRound,
 } from '../combat/engine'
-import { consumeFoodBetweenRounds } from '../combat/food'
 import type { GameDatabase } from '../data/types'
 import { applyActivityTimeTowardCritters } from '../critters/critters'
 import { resolveProductionProgress } from '../production/engine'
@@ -243,14 +242,14 @@ export function resolveUnattendedProgress(
         continue
       }
 
-      let continued: PlayerSave = consumeFoodBetweenRounds(db, {
+      let continued: PlayerSave = {
         ...current,
         currentHp: round.playerHp,
         combatEnemyHp: round.enemyHp,
         combatRoundStartedAt: new Date(roundEnd).toISOString(),
         combatSkipEnemyAttack: round.skipNextEnemyAttack,
         combatBossSleepRoundsRemaining: round.bossSleepRoundsRemaining,
-      }).save
+      }
       const critter = applyActivityTimeTowardCritters(
         continued,
         continued.currentLocationId,

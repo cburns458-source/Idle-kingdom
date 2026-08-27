@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest'
 import { prepareDatabase } from '../data/loadDatabase'
 import { createNewSave } from '../save/saveStore'
 import type { EquippedStack } from '../save/types'
-import { consumeFoodBetweenRounds, extraFoodPerRound, tryConsumeFoodAfterVictory } from './food'
+import { consumeFoodAfterVictory, extraFoodPerRound } from './food'
 
 const rawDatabase = JSON.parse(
   readFileSync(resolve(process.cwd(), 'content/data/game-database.json'), 'utf8'),
@@ -27,39 +27,35 @@ function withFoodAndSpells(
   return { ...base, currentHp: 900, equipment: { ...base.equipment, slots } }
 }
 
-describe('gluttony food between rounds', () => {
-  it('does not eat between rounds without Gluttony', () => {
+describe('gluttony food on victory', () => {
+  it('counts one extra eat per equipped Gluttony and does not eat between rounds', () => {
     const { launch } = prepareDatabase(rawDatabase)
-    const save = withFoodAndSpells(launch, 4, 0)
-    expect(extraFoodPerRound(launch, save)).toBe(0)
-    const result = consumeFoodBetweenRounds(launch, save)
-    expect(result.consumed).toBe(false)
-    expect(result.save.equipment.slots['SLOT-0011']?.quantity).toBe(4)
+    expect(extraFoodPerRound(launch, withFoodAndSpells(launch, 4, 0))).toBe(0)
+    expect(extraFoodPerRound(launch, withFoodAndSpells(launch, 4, 2))).toBe(2)
   })
 
-  it('eats once per equipped Gluttony and stops when the stack runs out', () => {
+  it('adds one victory eat per Gluttony on top of the usual bite', () => {
     const { launch } = prepareDatabase(rawDatabase)
-    const two = consumeFoodBetweenRounds(launch, withFoodAndSpells(launch, 5, 2))
-    expect(two.consumed).toBe(true)
-    expect(two.save.equipment.slots['SLOT-0011']?.quantity).toBe(3)
+    const none = consumeFoodAfterVictory(launch, withFoodAndSpells(launch, 4, 0))
+    expect(none.consumed).toBe(true)
+    expect(none.save.equipment.slots['SLOT-0011']?.quantity).toBe(3)
 
-    const empty = consumeFoodBetweenRounds(launch, withFoodAndSpells(launch, 1, 4))
+    const two = consumeFoodAfterVictory(launch, withFoodAndSpells(launch, 4, 2))
+    expect(two.consumed).toBe(true)
+    expect(two.save.equipment.slots['SLOT-0011']?.quantity).toBe(1)
+
+    const empty = consumeFoodAfterVictory(launch, withFoodAndSpells(launch, 2, 4))
     expect(empty.consumed).toBe(true)
     expect(empty.save.equipment.slots['SLOT-0011']).toBeNull()
+  })
 
-    const full = consumeFoodBetweenRounds(launch, {
+  it('does not eat healing food at full HP even with Gluttony', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const full = consumeFoodAfterVictory(launch, {
       ...withFoodAndSpells(launch, 4, 2),
       currentHp: 99_999,
     })
     expect(full.consumed).toBe(false)
     expect(full.save.equipment.slots['SLOT-0011']?.quantity).toBe(4)
-  })
-
-  it('still eats once after victory with Gluttony equipped', () => {
-    const { launch } = prepareDatabase(rawDatabase)
-    const save = withFoodAndSpells(launch, 4, 2)
-    const victory = tryConsumeFoodAfterVictory(launch, save)
-    expect(victory.consumed).toBe(true)
-    expect(victory.save.equipment.slots['SLOT-0011']?.quantity).toBe(3)
   })
 })
