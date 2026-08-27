@@ -9,10 +9,7 @@ import { STARTER_TITLE_COSMETIC_ID } from '../save/types'
 import type { PlayerSave } from '../save/types'
 import type { LootGrant } from '../activity/types'
 import { tryConsumeFoodAfterVictory } from './food'
-import {
-  potionEnemyMaxHpDamage,
-  tryConsumePotionForScope,
-} from '../potions/effects'
+import { applyPotionEnemyRoundDamage, tryConsumePotionForScope } from '../potions/effects'
 import {
   criticalStrikeDamageMultiplier,
   equippedEnchantmentCritChancePercent,
@@ -87,15 +84,13 @@ export function beginCombatSave(
   nowIso: string = new Date().toISOString(),
 ): PlayerSave {
   const potion = tryConsumePotionForScope(db, save, 'one_combat_encounter')
-  const poisonDamage = potionEnemyMaxHpDamage(enemy['Maximum HP'], potion.effect)
-  const enemyHp = Math.max(0, enemy['Maximum HP'] - poisonDamage)
   return {
     ...potion.save,
     currentActionId: action['Action ID'],
     actionStartedAt: nowIso,
     actionDurationMs: null,
     combatEnemyId: enemy['Enemy ID'],
-    combatEnemyHp: enemyHp,
+    combatEnemyHp: enemy['Maximum HP'],
     combatRoundStartedAt: nowIso,
     combatSkipEnemyAttack: false,
     combatBossSleepRoundsRemaining: bossProfile(enemy)?.sleepStart ?? null,
@@ -159,6 +154,14 @@ export function resolveCombatRound(
       offhandHit = applySleepIncoming(rollDamage(offhandRange.min, offhandRange.max, random), asleep)
       nextEnemyHp = Math.max(0, nextEnemyHp - offhandHit)
     }
+  }
+
+  if (nextEnemyHp > 0) {
+    nextEnemyHp = applyPotionEnemyRoundDamage(
+      nextEnemyHp,
+      enemy['Maximum HP'],
+      save.activePotionEffect,
+    )
   }
 
   // Binding procs on this hit: they still attack this round, then skip the next.

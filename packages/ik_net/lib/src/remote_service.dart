@@ -7,6 +7,7 @@ import 'bazaar.dart';
 import 'cloud_save.dart';
 import 'config.dart';
 import 'local_backend.dart';
+import 'name_color.dart';
 import 'noted_reads.dart';
 import 'presence.dart';
 import 'remote.dart';
@@ -76,10 +77,14 @@ class RemoteMultiplayerService implements MultiplayerService {
   /// Whether `profiles` has `privacy_public_gear`. Null until a read tells us.
   bool? _profilesHaveGearPrivacy;
 
+  /// Whether `profiles` has `name_color`. Null until a read tells us.
+  bool? _profilesHaveNameColor;
+
   String get _publicProfileSelectColumns {
     final parts = <String>[remotePublicProfileBaseColumns];
     if (_profilesHaveChatPrivacy != false) parts.add(remoteChatPrivacyColumns);
     if (_profilesHaveGearPrivacy != false) parts.add(remoteGearProfileColumns);
+    if (_profilesHaveNameColor != false) parts.add(remoteNameColorColumn);
     return parts.join(', ');
   }
 
@@ -286,9 +291,20 @@ class RemoteMultiplayerService implements MultiplayerService {
         equals: <String, Object?>{'user_id': userId},
         limit: 1,
       );
+    }
+    if (!result.ok && remoteMissingNameColorColumn(result.reason)) {
+      _profilesHaveNameColor = false;
+      _reads.clearIf(remoteMissingNameColorColumn);
+      result = await transport.select(
+        RemoteTables.profiles,
+        columns: _publicProfileSelectColumns,
+        equals: <String, Object?>{'user_id': userId},
+        limit: 1,
+      );
     } else if (result.ok) {
       _profilesHaveChatPrivacy ??= true;
       _profilesHaveGearPrivacy ??= true;
+      _profilesHaveNameColor ??= true;
     }
     if (!result.ok) return null;
     final profile = multiplayerProfileFromRemote(result.single);
@@ -540,7 +556,12 @@ class RemoteMultiplayerService implements MultiplayerService {
   }
 
   @override
-  Future<ActionResult> submitLeaderboard(GameDatabase db, PlayerSave save) async {
+  Future<ActionResult> submitLeaderboard(
+    GameDatabase db,
+    PlayerSave save, {
+    String? nameColor,
+    bool publishNameColor = false,
+  }) async {
     final current = session;
     if (current == null) {
       return const ActionResult.failed('Sign in to submit leaderboard scores.');
@@ -561,12 +582,20 @@ class RemoteMultiplayerService implements MultiplayerService {
           .map((row) => row.toJson())
           .toList();
     }
+    if (publishNameColor && _profilesHaveNameColor != false) {
+      profileRow[remoteNameColorColumn] = normalizeNameColorHex(nameColor);
+    }
     final refusedProfile = await transport.upsert(RemoteTables.profiles, <RemoteRow>[
       profileRow,
     ], onConflict: 'user_id');
     if (refusedProfile != null && remoteMissingGearPrivacyColumn(refusedProfile)) {
       _profilesHaveGearPrivacy = false;
       profileRow.remove(remoteEquipmentJsonColumn);
+      await transport.upsert(RemoteTables.profiles, <RemoteRow>[profileRow], onConflict: 'user_id');
+    }
+    if (refusedProfile != null && remoteMissingNameColorColumn(refusedProfile)) {
+      _profilesHaveNameColor = false;
+      profileRow.remove(remoteNameColorColumn);
       await transport.upsert(RemoteTables.profiles, <RemoteRow>[profileRow], onConflict: 'user_id');
     }
     // A roster lists each member's name, look, and level, and only that member
@@ -576,6 +605,18 @@ class RemoteMultiplayerService implements MultiplayerService {
     if (guildId != null) await _guilds.refreshOwnMemberRow(guildId, current, save);
     await _refreshPvpLiveStats(save);
     return refused == null ? const ActionResult.ok() : ActionResult.failed(refused);
+  }
+
+  @override
+  Future<Map<String, String>> publishedNameColors(Iterable<String> userIds) async {
+    final colors = <String, String>{};
+    for (final userId in userIds.toSet()) {
+      if (userId.isEmpty) continue;
+      final profile = await this.profile(userId);
+      final color = normalizeNameColorHex(profile?.nameColor);
+      if (color != null) colors[userId] = color;
+    }
+    return colors;
   }
 
   @override

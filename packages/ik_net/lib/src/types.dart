@@ -108,6 +108,7 @@ class MultiplayerProfile {
     this.privacyDirectMessages = chatPrivacyPublic,
     this.privacyLocalChat = chatPrivacyPublic,
     this.publishedEquipment = const <PublicEquippedSlot>[],
+    this.nameColor,
     required this.updatedAt,
   });
 
@@ -123,6 +124,7 @@ class MultiplayerProfile {
     privacyDirectMessages: normalizeChatPrivacy(json['privacyDirectMessages'] as String?),
     privacyLocalChat: normalizeChatPrivacy(json['privacyLocalChat'] as String?),
     publishedEquipment: _publishedEquipmentFromJson(json['publishedEquipment']),
+    nameColor: json['nameColor'] as String?,
     updatedAt: json['updatedAt']! as String,
   );
 
@@ -137,6 +139,9 @@ class MultiplayerProfile {
   final String privacyDirectMessages;
   final String privacyLocalChat;
   final List<PublicEquippedSlot> publishedEquipment;
+
+  /// Chat name hex published on a ranking submit. Null uses the theme default.
+  final String? nameColor;
   final String updatedAt;
 
   MultiplayerProfile copyWith({
@@ -150,8 +155,10 @@ class MultiplayerProfile {
     String? privacyDirectMessages,
     String? privacyLocalChat,
     List<PublicEquippedSlot>? publishedEquipment,
+    String? nameColor,
     String? updatedAt,
     bool clearGuild = false,
+    bool clearNameColor = false,
   }) => MultiplayerProfile(
     userId: userId,
     username: username ?? this.username,
@@ -164,6 +171,7 @@ class MultiplayerProfile {
     privacyDirectMessages: privacyDirectMessages ?? this.privacyDirectMessages,
     privacyLocalChat: privacyLocalChat ?? this.privacyLocalChat,
     publishedEquipment: publishedEquipment ?? this.publishedEquipment,
+    nameColor: clearNameColor ? null : (nameColor ?? this.nameColor),
     updatedAt: updatedAt ?? this.updatedAt,
   );
 
@@ -180,6 +188,7 @@ class MultiplayerProfile {
     'privacyLocalChat': privacyLocalChat,
     if (publishedEquipment.isNotEmpty)
       'publishedEquipment': publishedEquipment.map((row) => row.toJson()).toList(),
+    if (nameColor != null) 'nameColor': nameColor,
     'updatedAt': updatedAt,
   };
 }

@@ -63,6 +63,16 @@ void main() {
     expect(gold('ENM-0006', 'Maximum Gold'), 1000);
   });
 
+  test('a location danger line is only for places with a hostile activity', () {
+    expect(locationShowsDangerWarning(db, 'LOC-0003'), isTrue);
+    expect(locationShowsDangerWarning(db, 'LOC-0004'), isTrue);
+    expect(locationShowsDangerWarning(db, 'LOC-0021'), isTrue);
+    expect(locationShowsDangerWarning(db, 'LOC-0037'), isTrue);
+    expect(locationShowsDangerWarning(db, 'LOC-0018'), isFalse);
+    expect(locationShowsDangerWarning(db, 'LOC-0007'), isFalse);
+    expect(locationShowsDangerWarning(db, 'LOC-0002'), isFalse);
+  });
+
   test('the abandoned mineshaft fishes tuna, shark, and baby giant squid', () {
     final activity = db.activities.firstWhere((row) => row.activityId == 'ACT-0038');
     expect(activity.raw['Contextual Name'], 'Fish the deep pools');

@@ -8,6 +8,7 @@ import {
   forcedHostileActivity,
   hostileForceMessage,
   locationIsHostileFor,
+  locationShowsDangerWarning,
 } from './hostility'
 
 const rawDatabase = JSON.parse(
@@ -41,6 +42,17 @@ describe('hostile travel forcing', () => {
     const arrived = applyHostileTravelArrival(launch, save, 'LOC-0003')
     expect(arrived.forcedActivityId).toBeNull()
     expect(arrived.save.currentActivityId).toBeNull()
+  })
+
+  it('shows a location danger line only where a hostile activity lives', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    expect(locationShowsDangerWarning(launch, 'LOC-0003')).toBe(true)
+    expect(locationShowsDangerWarning(launch, 'LOC-0004')).toBe(true)
+    expect(locationShowsDangerWarning(launch, 'LOC-0021')).toBe(true)
+    expect(locationShowsDangerWarning(launch, 'LOC-0037')).toBe(true)
+    expect(locationShowsDangerWarning(launch, 'LOC-0018')).toBe(false)
+    expect(locationShowsDangerWarning(launch, 'LOC-0007')).toBe(false)
+    expect(locationShowsDangerWarning(launch, 'LOC-0002')).toBe(false)
   })
 
   it('does not treat the Ancient Forest as hostile', () => {

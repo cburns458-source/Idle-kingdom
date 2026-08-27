@@ -13,6 +13,11 @@ import '../save/generated/save_models.dart';
 import '../time.dart';
 import 'travel.dart';
 
+/// True when this location has a hostile activity, so its danger line may show.
+bool locationShowsDangerWarning(GameDatabase db, String locationId) {
+  return hostileActivitiesAt(db, locationId).isNotEmpty;
+}
+
 /// Activities marked hostile through Danger Warning Combat Level.
 List<ActivityRow> hostileActivitiesAt(GameDatabase db, String locationId) {
   final rows = db.activities.where((activity) {

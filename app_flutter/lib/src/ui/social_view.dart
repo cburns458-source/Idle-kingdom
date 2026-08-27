@@ -124,11 +124,75 @@ class _SocialViewState extends State<SocialView> {
   }
 }
 
-class _LeaderboardTab extends StatelessWidget {
+enum _OwnPin { none, top, bottom }
+
+class _LeaderboardTab extends StatefulWidget {
   const _LeaderboardTab({required this.controller, required this.multiplayer});
 
   final GameController controller;
   final MultiplayerController multiplayer;
+
+  @override
+  State<_LeaderboardTab> createState() => _LeaderboardTabState();
+}
+
+class _LeaderboardTabState extends State<_LeaderboardTab> {
+  final _scroll = ScrollController();
+  final _listKey = GlobalKey();
+  final _ownKey = GlobalKey();
+  _OwnPin _pin = _OwnPin.none;
+
+  GameController get controller => widget.controller;
+  MultiplayerController get multiplayer => widget.multiplayer;
+
+  @override
+  void initState() {
+    super.initState();
+    _scroll.addListener(_updatePin);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _updatePin());
+  }
+
+  @override
+  void didUpdateWidget(covariant _LeaderboardTab oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _updatePin());
+  }
+
+  @override
+  void dispose() {
+    _scroll.removeListener(_updatePin);
+    _scroll.dispose();
+    super.dispose();
+  }
+
+  bool _isOwn(LeaderboardRowView row) {
+    return row.isGuild
+        ? row.entryId == multiplayer.guildId
+        : row.entryId == multiplayer.session?.userId;
+  }
+
+  void _updatePin() {
+    if (!mounted) return;
+    final listContext = _listKey.currentContext;
+    final ownContext = _ownKey.currentContext;
+    if (listContext == null || ownContext == null) {
+      if (_pin != _OwnPin.none) setState(() => _pin = _OwnPin.none);
+      return;
+    }
+    final listBox = listContext.findRenderObject();
+    final ownBox = ownContext.findRenderObject();
+    if (listBox is! RenderBox || ownBox is! RenderBox || !listBox.hasSize || !ownBox.hasSize) {
+      return;
+    }
+    final listHeight = listBox.size.height;
+    final ownOffset = ownBox.localToGlobal(Offset.zero, ancestor: listBox);
+    final next = ownOffset.dy + ownBox.size.height <= 1
+        ? _OwnPin.top
+        : ownOffset.dy >= listHeight - 1
+        ? _OwnPin.bottom
+        : _OwnPin.none;
+    if (next != _pin) setState(() => _pin = next);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -142,75 +206,115 @@ class _LeaderboardTab extends StatelessWidget {
         listings: multiplayer.listings,
       ),
     );
-    return ListView(
+    final own = rows.where(_isOwn).firstOrNull;
+    return Padding(
       padding: const EdgeInsets.all(12),
-      children: [
-        GameSelectField(
-          label: 'Board',
-          value:
-              boards
-                  .where((board) => board.key == multiplayer.boardKey)
-                  .map((board) => board.label)
-                  .firstOrNull ??
-              'Board',
-          onPressed: () async {
-            final chosen = await showGameCatalogPopup(
-              context: context,
-              eyebrow: 'Board',
-              title: 'Leaderboards',
-              selectable: true,
-              entries: [
-                for (final board in boards)
-                  CatalogPopupEntry(
-                    title: board.label,
-                    emphasized: board.key == multiplayer.boardKey,
-                  ),
-              ],
-            );
-            if (chosen == null) return;
-            await multiplayer.selectBoard(boards[chosen].key, controller.save);
-          },
-        ),
-        const SizedBox(height: 10),
-        if (rows.isEmpty)
-          MutedText(emptyBoardMessage(multiplayer.boardKey))
-        else
-          for (final row in rows) ...[
-            SocialRow(
-              highlight: row.isGuild
-                  ? row.entryId == multiplayer.guildId
-                  : row.entryId == multiplayer.session?.userId,
-              title: row.username,
-              subtitle: row.subtitle,
-              leading: row.emblem == null
-                  ? SocialPortrait(appearance: row.appearance, raceId: row.raceId)
-                  : GuildEmblemBadge(emblem: row.emblem!),
-              onTap: row.isGuild
-                  ? null
-                  : () => openPlayerProfile(
-                      context,
-                      controller: controller,
-                      multiplayer: multiplayer,
-                      userId: row.entryId,
+      child: Column(
+        children: [
+          GameSelectField(
+            label: 'Board',
+            value:
+                boards
+                    .where((board) => board.key == multiplayer.boardKey)
+                    .map((board) => board.label)
+                    .firstOrNull ??
+                'Board',
+            onPressed: () async {
+              final chosen = await showGameCatalogPopup(
+                context: context,
+                eyebrow: 'Board',
+                title: 'Leaderboards',
+                selectable: true,
+                entries: [
+                  for (final board in boards)
+                    CatalogPopupEntry(
+                      title: board.label,
+                      emphasized: board.key == multiplayer.boardKey,
                     ),
-              trailing: Row(
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(row.valueLabel, style: const TextStyle(fontWeight: FontWeight.w400)),
-                      if (row.secondaryLabel != null) MutedText(row.secondaryLabel!),
-                    ],
-                  ),
-                  const SizedBox(width: 6),
-                  MutedText('#${row.rank}'),
                 ],
-              ),
+              );
+              if (chosen == null) return;
+              await multiplayer.selectBoard(boards[chosen].key, controller.save);
+            },
+          ),
+          const SizedBox(height: 10),
+          if (own != null && _pin == _OwnPin.top) ...[
+            KeyedSubtree(
+              key: const ValueKey('own-pin-top'),
+              child: _row(context, own, pinned: true),
             ),
             const SizedBox(height: 6),
           ],
-      ],
+          Expanded(
+            child: rows.isEmpty
+                ? ListView(
+                    padding: EdgeInsets.zero,
+                    children: [MutedText(emptyBoardMessage(multiplayer.boardKey))],
+                  )
+                : NotificationListener<ScrollNotification>(
+                    onNotification: (_) {
+                      _updatePin();
+                      return false;
+                    },
+                    child: SingleChildScrollView(
+                      key: _listKey,
+                      controller: _scroll,
+                      child: Column(
+                        children: [
+                          for (final row in rows) ...[
+                            KeyedSubtree(
+                              key: _isOwn(row) ? _ownKey : ValueKey(row.entryId),
+                              child: _row(context, row),
+                            ),
+                            const SizedBox(height: 6),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
+          ),
+          if (own != null && _pin == _OwnPin.bottom) ...[
+            const SizedBox(height: 6),
+            KeyedSubtree(
+              key: const ValueKey('own-pin-bottom'),
+              child: _row(context, own, pinned: true),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _row(BuildContext context, LeaderboardRowView row, {bool pinned = false}) {
+    return SocialRow(
+      highlight: _isOwn(row) || pinned,
+      title: row.username,
+      subtitle: row.subtitle,
+      leading: row.emblem == null
+          ? SocialPortrait(appearance: row.appearance, raceId: row.raceId)
+          : GuildEmblemBadge(emblem: row.emblem!),
+      onTap: row.isGuild
+          ? null
+          : () => openPlayerProfile(
+              context,
+              controller: controller,
+              multiplayer: multiplayer,
+              userId: row.entryId,
+            ),
+      trailing: Row(
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(row.valueLabel, style: const TextStyle(fontWeight: FontWeight.w400)),
+              if (row.secondaryLabel != null) MutedText(row.secondaryLabel!),
+            ],
+          ),
+          const SizedBox(width: 6),
+          MutedText('#${row.rank}'),
+        ],
+      ),
     );
   }
 }

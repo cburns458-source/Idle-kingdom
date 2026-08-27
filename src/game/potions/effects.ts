@@ -39,7 +39,9 @@ export function parsePotionEffect(
       damageBonusPercent = Number(damage[1])
       continue
     }
-    const poison = tag.match(/^deals\s+(\d+(?:\.\d+)?)%\s+of\s+enemy\s+maximum\s+hp$/)
+    const poison = tag.match(
+      /^deals\s+(\d+(?:\.\d+)?)%\s+of\s+enemy\s+(?:current\s+hp\s+per\s+combat\s+round|maximum\s+hp)$/,
+    )
     if (poison) {
       enemyMaxHpDamagePercent = Number(poison[1])
       continue
@@ -149,7 +151,7 @@ export function applyPotionDurationMs(
   return Math.max(0, Math.floor(baseDurationMs * factor))
 }
 
-/** Flat HP dealt at combat start from "deals N% of enemy maximum HP". */
+/** Flat HP from the old one-shot "deals N% of enemy maximum HP" tag. */
 export function potionEnemyMaxHpDamage(
   enemyMaxHp: number,
   effect: ActivePotionEffect | null | undefined,
@@ -157,4 +159,28 @@ export function potionEnemyMaxHpDamage(
   const percent = effect?.enemyMaxHpDamagePercent
   if (percent == null || percent <= 0) return 0
   return Math.max(0, Math.floor(enemyMaxHp * (percent / 100)))
+}
+
+/** Lowest HP poison will leave: 10% of max, and never 0 while the enemy has HP. */
+export function potionEnemyHpFloor(enemyMaxHp: number): number {
+  if (enemyMaxHp <= 0) return 0
+  return Math.max(1, Math.floor(enemyMaxHp * 0.1))
+}
+
+/**
+ * After the player's swing: 10% of current HP, then clamp to the 10% max floor.
+ * Poison cannot kill.
+ */
+export function applyPotionEnemyRoundDamage(
+  enemyHp: number,
+  enemyMaxHp: number,
+  effect: ActivePotionEffect | null | undefined,
+): number {
+  const percent = effect?.enemyMaxHpDamagePercent
+  if (percent == null || percent <= 0) return enemyHp
+  const floorHp = potionEnemyHpFloor(enemyMaxHp)
+  if (enemyHp <= floorHp) return enemyHp
+  const damage = Math.floor(enemyHp * (percent / 100))
+  if (damage <= 0) return enemyHp
+  return Math.max(floorHp, enemyHp - damage)
 }

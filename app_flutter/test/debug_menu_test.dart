@@ -75,6 +75,13 @@ void main() {
     expect(find.text('Show title on HUD'), findsOne);
     expect(find.text('Hide chat bubble'), findsOne);
     await tester.scrollUntilVisible(
+      find.text('Chat name color'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pump();
+    expect(find.text('Chat name color'), findsOne);
+    await tester.scrollUntilVisible(
       find.text('Chat notifications'),
       300,
       scrollable: find.byType(Scrollable).first,

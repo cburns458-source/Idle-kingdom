@@ -12,6 +12,7 @@ import 'demo_world.dart';
 import 'guild_rules.dart';
 import 'local_db.dart';
 import 'moderation.dart';
+import 'name_color.dart';
 import 'remote.dart';
 import 'results.dart';
 import 'snapshots.dart';
@@ -186,6 +187,17 @@ class LocalMultiplayerBackend {
 
   MultiplayerProfile? getProfile(String userId) =>
       _db().profiles.firstWhereOrNull((row) => row.userId == userId);
+
+  Map<String, String> publishedNameColors(Iterable<String> userIds) {
+    final wanted = userIds.toSet();
+    final colors = <String, String>{};
+    for (final profile in _db().profiles) {
+      if (!wanted.contains(profile.userId)) continue;
+      final color = normalizeNameColorHex(profile.nameColor);
+      if (color != null) colors[profile.userId] = color;
+    }
+    return colors;
+  }
 
   void claimPlaySession(String userId, String sessionId) {
     final db = _db();
@@ -414,7 +426,13 @@ class LocalMultiplayerBackend {
 
   // --- Leaderboards ---------------------------------------------------------
 
-  void submitLeaderboardSnapshot(GameDatabase gameDb, String userId, PlayerSave save) {
+  void submitLeaderboardSnapshot(
+    GameDatabase gameDb,
+    String userId,
+    PlayerSave save, {
+    String? nameColor,
+    bool publishNameColor = false,
+  }) {
     if (getProfile(userId) == null) return;
     final snapshot = buildLeaderboardSnapshot(gameDb, save);
     final db = _db();
@@ -442,6 +460,8 @@ class LocalMultiplayerBackend {
                   raceId: save.raceId,
                   username: isNotBlank(save.characterName) ? save.characterName : row.username,
                   publishedEquipment: snapshot.equipment,
+                  nameColor: publishNameColor ? normalizeNameColorHex(nameColor) : row.nameColor,
+                  clearNameColor: publishNameColor && normalizeNameColorHex(nameColor) == null,
                   updatedAt: updatedAt,
                 )
               : row,

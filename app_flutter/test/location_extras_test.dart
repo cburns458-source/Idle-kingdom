@@ -33,6 +33,55 @@ void main() {
     expect(find.text('Wild Roots and Fernleaf Harvesting.'), findsNothing);
   });
 
+  Future<void> pumpLocation(WidgetTester tester, String locationId) async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(currentLocationId: locationId),
+    );
+    addTearDown(controller.dispose);
+    await pumpPanel(
+      tester,
+      LocationView(
+        controller: controller,
+        multiplayer: buildMultiplayer(database),
+        onOpenMap: () {},
+      ),
+      size: const Size(900, 2400),
+    );
+  }
+
+  testWidgets('Goblin Camp still shows the location danger line and activity warning', (
+    tester,
+  ) async {
+    await pumpLocation(tester, 'LOC-0003');
+    expect(find.text('Goblin Camp'), findsWidgets);
+    expect(find.text('Danger warning: approximately Combat Level 10.'), findsOne);
+    expect(find.text('Combat warning ~ Level 10'), findsOne);
+  });
+
+  testWidgets('hostile docks, quarters, and crypt still name their danger', (tester) async {
+    await pumpLocation(tester, 'LOC-0004');
+    expect(find.text('Pirate encounters can occur.'), findsOne);
+
+    await pumpLocation(tester, 'LOC-0021');
+    expect(find.text('A dragon guards the Queen.'), findsOne);
+
+    await pumpLocation(tester, 'LOC-0037');
+    expect(find.text('The old spirits still linger.'), findsOne);
+  });
+
+  testWidgets('Ancient Forest hides the location danger line', (tester) async {
+    await pumpLocation(tester, 'LOC-0018');
+    expect(find.text('Ancient Forest'), findsWidgets);
+    expect(find.text('Includes Ent Combat encounters.'), findsNothing);
+  });
+
+  testWidgets('Wizard\'s Tower hides the location danger line', (tester) async {
+    await pumpLocation(tester, 'LOC-0007');
+    expect(find.text('Wizard\'s Tower'), findsWidgets);
+    expect(find.text('Contains Skeleton and Zombie Combat Actions.'), findsNothing);
+  });
+
   testWidgets('the map panel names a place without describing it', (tester) async {
     final controller = buildController(
       database,

@@ -163,6 +163,7 @@ void main() {
     expect(transport.tables[RemoteTables.leaderboard], isEmpty);
 
     await service.submitLeaderboard(db, save);
+    expect(transport.tables[RemoteTables.profiles]!.single.containsKey('name_color'), isFalse);
     final rows = transport.tables[RemoteTables.leaderboard]!;
     expect(rows, isNotEmpty);
     expect(rows.every((row) => row['updated_at'] == isoFromMs(_nowMs)), isTrue);
@@ -706,6 +707,42 @@ void main() {
       everyElement(isNot(contains('privacy_public_gear'))),
     );
     expect(await hero.setPrivacyPublicGear(false), isNotNull);
+  });
+
+  test('a ranking submit can publish a chat name color', () async {
+    final transport = FakeTransport();
+    final service = await _signedIn(transport, MemorySaveStorage());
+    final db = _database();
+    final save = createNewSave(db, _nowMs).copyWith(characterName: 'Hero');
+    final userId = service.session!.userId;
+
+    await service.submitLeaderboard(db, save, nameColor: '#d4af37', publishNameColor: true);
+    expect(transport.tables[RemoteTables.profiles]!.single['name_color'], '#D4AF37');
+    expect((await service.profile(userId))?.nameColor, '#D4AF37');
+    expect(await service.publishedNameColors(<String>[userId]), <String, String>{
+      userId: '#D4AF37',
+    });
+  });
+
+  test('loads a profile when name_color is missing', () async {
+    final transport = FakeTransport();
+    transport.missingColumns.add('name_color');
+    final hero = await _signedIn(transport, MemorySaveStorage());
+    final db = _database();
+    final save = createNewSave(db, _nowMs).copyWith(characterName: 'Hero');
+    expect(
+      (await hero.submitLeaderboard(db, save, nameColor: '#FA3', publishNameColor: true)).ok,
+      isTrue,
+    );
+
+    final rival = _service(transport, MemorySaveStorage());
+    await rival.signUp('rival@example.com', 'Rival', 'secret');
+    expect((await rival.profile(hero.session!.userId))?.nameColor, isNull);
+    expect(rival.takeReadProblem(), isNull);
+
+    final before = transport.selectedColumns.length;
+    expect(await rival.profile(hero.session!.userId), isNotNull);
+    expect(transport.selectedColumns.sublist(before), everyElement(isNot(contains('name_color'))));
   });
 
   test('a hosted friend request lands on the other account and accept makes friends', () async {

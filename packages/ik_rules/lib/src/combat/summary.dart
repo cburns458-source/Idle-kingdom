@@ -209,7 +209,7 @@ String _potionEffect(ActivePotionEffect potion) {
   if (damage != null && damage > 0) parts.add('${_percent(damage)} damage');
   final poison = potion.enemyMaxHpDamagePercent;
   if (poison != null && poison > 0) {
-    parts.add('deals ${jsNumberToString(poison)}% of enemy maximum HP');
+    parts.add('deals ${jsNumberToString(poison)}% of enemy current HP after each swing');
   }
   final drop = potion.relativeDropChanceBonusPercent;
   if (drop != null && drop > 0) parts.add('${_percent(drop)} relative drop chance');

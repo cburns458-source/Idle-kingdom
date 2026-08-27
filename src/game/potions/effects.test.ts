@@ -12,6 +12,7 @@ import { addItemToInventory } from '../activity/rewards'
 import {
   applyPotionDropChance,
   applyPotionDurationMs,
+  applyPotionEnemyRoundDamage,
   parsePotionEffect,
   tryConsumePotionForScope,
 } from './effects'
@@ -103,14 +104,36 @@ describe('potion effects', () => {
     expect(boosted.min).toBe(Math.floor(baseline.min * 1.05))
   })
 
-  it('consumes poison potions on combat start and damages enemy max HP', () => {
+  it('consumes poison potions on combat start without chipping enemy HP yet', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const save = withPotion(createNewSave(launch), 'ITEM-0073', 1)
     const enemy = launch.Enemies.find((row) => row['Enemy ID'] === 'ENM-0001')!
     const action = launch.Actions.find((row) => row['Action ID'] === 'ACN-0001')!
     const started = beginCombatSave(launch, save, action, enemy)
     expect(started.equipment.slots[POTION_SLOT_ID]).toBeNull()
-    expect(started.combatEnemyHp).toBe(enemy['Maximum HP'] - Math.floor(enemy['Maximum HP'] * 0.1))
+    expect(started.combatEnemyHp).toBe(enemy['Maximum HP'])
+    expect(started.activePotionEffect?.enemyMaxHpDamagePercent).toBe(10)
+  })
+
+  it('still parses the old maximum-HP poison tag', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const equipment = launch.Equipment.find((row) => row['Item ID'] === 'ITEM-0073')!
+    const effect = parsePotionEffect(
+      { ...equipment, 'Capabilities / Effects': 'potion_slot; one_combat_encounter; deals 10% of enemy maximum HP' },
+      'ITEM-0073',
+    )
+    expect(effect?.enemyMaxHpDamagePercent).toBe(10)
+  })
+
+  it('ticks poison after the swing as 10% of current HP and stops at 10% max', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const equipment = launch.Equipment.find((row) => row['Item ID'] === 'ITEM-0073')
+    const effect = parsePotionEffect(equipment, 'ITEM-0073')
+    expect(applyPotionEnemyRoundDamage(1000, 1000, effect)).toBe(900)
+    expect(applyPotionEnemyRoundDamage(900, 1000, effect)).toBe(810)
+    expect(applyPotionEnemyRoundDamage(111, 1000, effect)).toBe(100)
+    expect(applyPotionEnemyRoundDamage(100, 1000, effect)).toBe(100)
+    expect(applyPotionEnemyRoundDamage(5, 1000, effect)).toBe(5)
   })
 
   it('consumes luck potions when a gathering action starts', () => {

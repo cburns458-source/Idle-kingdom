@@ -131,13 +131,12 @@ PlayerSave beginCombatSave(
 ) {
   final potion = tryConsumePotionForScope(db, save, 'one_combat_encounter');
   final enemyMaxHp = jsNumber(enemy.raw['Maximum HP']);
-  final poisonDamage = potionEnemyMaxHpDamage(enemyMaxHp, potion.effect);
   return potion.save.copyWith(
     currentActionId: action.raw['Action ID'] as String?,
     actionStartedAt: nowIso,
     actionDurationMs: null,
     combatEnemyId: enemy.raw['Enemy ID'] as String?,
-    combatEnemyHp: math.max(0, enemyMaxHp - poisonDamage),
+    combatEnemyHp: enemyMaxHp,
     combatRoundStartedAt: nowIso,
     combatSkipEnemyAttack: false,
     combatBossSleepRoundsRemaining: bossProfile(enemy)?.sleepStart,
@@ -203,6 +202,14 @@ CombatRoundResult resolveCombatRound(
       );
       nextEnemyHp = math.max(0, nextEnemyHp - offhandHit);
     }
+  }
+
+  if (nextEnemyHp > 0) {
+    nextEnemyHp = applyPotionEnemyRoundDamage(
+      nextEnemyHp,
+      jsNumber(enemy.raw['Maximum HP']),
+      save.activePotionEffect,
+    );
   }
 
   // Binding procs on this hit: they still attack this round, then skip the next.

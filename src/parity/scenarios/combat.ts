@@ -71,7 +71,7 @@ export const combatScenarios: ParityScenario[] = [
     }),
   ),
 
-  // Poison potion knocks a share of enemy max HP off before the first round.
+  // Poison potion is consumed at start; damage waits until after each swing.
   scenario(
     'combat/begin',
     'poison-potion',

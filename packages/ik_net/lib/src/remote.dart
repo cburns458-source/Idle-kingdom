@@ -12,6 +12,7 @@ import 'dart:math';
 import 'package:ik_rules/ik_rules.dart';
 
 import 'bazaar.dart';
+import 'name_color.dart';
 import 'snapshots.dart';
 import 'types.dart';
 
@@ -101,6 +102,14 @@ bool remoteMissingGearPrivacyColumn(String? reason) {
   return lower.contains('privacy_public_gear') || lower.contains('equipment_json');
 }
 
+/// True when [reason] is the hosted project missing the name-color column.
+bool remoteMissingNameColorColumn(String? reason) {
+  if (reason == null || reason.isEmpty) return false;
+  final lower = reason.toLowerCase();
+  if (!lower.contains('does not exist')) return false;
+  return lower.contains('name_color');
+}
+
 /// True when [reason] is the hosted project missing migration 015.
 bool remoteMissingPvpSnapshotsTable(String? reason) {
   if (reason == null || reason.isEmpty) return false;
@@ -167,6 +176,7 @@ const String remoteChatPrivacyColumns = 'privacy_direct_messages, privacy_local_
 const String remoteGearPrivacyColumn = 'privacy_public_gear';
 const String remoteEquipmentJsonColumn = 'equipment_json';
 const String remoteGearProfileColumns = '$remoteGearPrivacyColumn, $remoteEquipmentJsonColumn';
+const String remoteNameColorColumn = 'name_color';
 
 /// Columns a public profile sheet asks for when the privacy migrations are on.
 const String remotePublicProfileColumns =
@@ -604,6 +614,7 @@ MultiplayerProfile? multiplayerProfileFromRemote(RemoteRow? row) {
     publishedEquipment: _equipmentFromRemote(row['equipment_json']),
     privacyDirectMessages: normalizeChatPrivacy(_optStr(row['privacy_direct_messages'])),
     privacyLocalChat: normalizeChatPrivacy(_optStr(row['privacy_local_chat'])),
+    nameColor: normalizeNameColorHex(_optStr(row['name_color'])),
     updatedAt: _str(row['updated_at']),
   );
 }

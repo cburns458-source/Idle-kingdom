@@ -387,6 +387,29 @@ void main() {
     expect(profile.publicEquipment!.single.slotId, weaponToolSlotId);
   });
 
+  test('a ranking submit publishes a name color only when asked', () async {
+    final storage = MemorySaveStorage();
+    final service = _service(storage);
+    await service.signUp('hero@example.com', 'Hero', 'secret');
+    final db = _database();
+    final save = createNewSave(db, _nowMs).copyWith(characterName: 'Hero');
+    final userId = service.session!.userId;
+
+    await service.submitLeaderboard(db, save, nameColor: '#fa3');
+    expect((await service.profile(userId))?.nameColor, isNull);
+    expect(await service.publishedNameColors(<String>[userId]), isEmpty);
+
+    await service.submitLeaderboard(db, save, nameColor: '#fa3', publishNameColor: true);
+    expect((await service.profile(userId))?.nameColor, '#FFAA33');
+    expect(await service.publishedNameColors(<String>[userId]), <String, String>{
+      userId: '#FFAA33',
+    });
+
+    await service.submitLeaderboard(db, save, nameColor: 'nope', publishNameColor: true);
+    expect((await service.profile(userId))?.nameColor, isNull);
+    expect(await service.publishedNameColors(<String>[userId]), isEmpty);
+  });
+
   test('counts unread public chat from other players after a cursor', () async {
     final storage = MemorySaveStorage();
     final hero = _service(storage);
