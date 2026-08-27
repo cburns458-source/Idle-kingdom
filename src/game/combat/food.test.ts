@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest'
 import { prepareDatabase } from '../data/loadDatabase'
 import { createNewSave } from '../save/saveStore'
 import type { EquippedStack } from '../save/types'
-import { consumeFoodBetweenRounds, extraFoodPerRound, tryConsumeFoodAfterVictory } from './food'
+import { consumeFoodAfterVictory, consumeFoodBetweenRounds, extraFoodPerRound } from './food'
 
 const rawDatabase = JSON.parse(
   readFileSync(resolve(process.cwd(), 'content/data/game-database.json'), 'utf8'),
@@ -55,11 +55,18 @@ describe('gluttony food between rounds', () => {
     expect(full.save.equipment.slots['SLOT-0011']?.quantity).toBe(4)
   })
 
-  it('still eats once after victory with Gluttony equipped', () => {
+  it('adds one victory eat per Gluttony on top of the usual bite', () => {
     const { launch } = prepareDatabase(rawDatabase)
-    const save = withFoodAndSpells(launch, 4, 2)
-    const victory = tryConsumeFoodAfterVictory(launch, save)
-    expect(victory.consumed).toBe(true)
-    expect(victory.save.equipment.slots['SLOT-0011']?.quantity).toBe(3)
+    const none = consumeFoodAfterVictory(launch, withFoodAndSpells(launch, 4, 0))
+    expect(none.consumed).toBe(true)
+    expect(none.save.equipment.slots['SLOT-0011']?.quantity).toBe(3)
+
+    const two = consumeFoodAfterVictory(launch, withFoodAndSpells(launch, 4, 2))
+    expect(two.consumed).toBe(true)
+    expect(two.save.equipment.slots['SLOT-0011']?.quantity).toBe(1)
+
+    const empty = consumeFoodAfterVictory(launch, withFoodAndSpells(launch, 2, 4))
+    expect(empty.consumed).toBe(true)
+    expect(empty.save.equipment.slots['SLOT-0011']).toBeNull()
   })
 })

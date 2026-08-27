@@ -8,7 +8,7 @@ import { revokeCosmetic } from '../cosmetics/cosmetics'
 import { STARTER_TITLE_COSMETIC_ID } from '../save/types'
 import type { PlayerSave } from '../save/types'
 import type { LootGrant } from '../activity/types'
-import { tryConsumeFoodAfterVictory } from './food'
+import { consumeFoodAfterVictory } from './food'
 import { applyPotionEnemyRoundDamage, tryConsumePotionForScope } from '../potions/effects'
 import {
   criticalStrikeDamageMultiplier,
@@ -286,7 +286,7 @@ export function applyCombatVictory(
     },
   }
 
-  const food = tryConsumeFoodAfterVictory(db, next)
+  const food = consumeFoodAfterVictory(db, next)
   next = withBossRespawn(clearCombatSave(food.save), enemy, nowMs)
   next = applyQuestDefeatProgress(db, next, enemy['Enemy ID'], 1)
   next = applyBountyDefeatProgress(next, enemy['Enemy ID'], 1, nowMs)

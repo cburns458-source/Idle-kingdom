@@ -62,12 +62,17 @@ void main() {
     expect(full.save.equipment.slots[foodSlotId]?.quantity, 4);
   });
 
-  test('victory still eats once when Gluttony is equipped', () {
-    final victory = tryConsumeFoodAfterVictory(
-      db,
-      _withFoodAndSpells(db, foodQty: 4, gluttonyCount: 2),
-    );
-    expect(victory.consumed, isTrue);
-    expect(victory.save.equipment.slots[foodSlotId]?.quantity, 3);
+  test('victory eats the usual bite plus one per Gluttony', () {
+    final none = consumeFoodAfterVictory(db, _withFoodAndSpells(db, foodQty: 4, gluttonyCount: 0));
+    expect(none.consumed, isTrue);
+    expect(none.save.equipment.slots[foodSlotId]?.quantity, 3);
+
+    final two = consumeFoodAfterVictory(db, _withFoodAndSpells(db, foodQty: 4, gluttonyCount: 2));
+    expect(two.consumed, isTrue);
+    expect(two.save.equipment.slots[foodSlotId]?.quantity, 1);
+
+    final empty = consumeFoodAfterVictory(db, _withFoodAndSpells(db, foodQty: 2, gluttonyCount: 4));
+    expect(empty.consumed, isTrue);
+    expect(empty.save.equipment.slots[foodSlotId], isNull);
   });
 }
