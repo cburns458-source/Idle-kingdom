@@ -4,7 +4,7 @@ import 'package:ik_rules/ik_rules.dart';
 import 'package:test/test.dart';
 
 PlayerSave _withFoodAndSpells(GameDatabase db, {required int foodQty, required int gluttonyCount}) {
-  var save = createNewSave(db, 0);
+  final save = createNewSave(db, 0);
   final slots = Map<String, EquippedStack?>.from(save.equipment.slots)
     ..[foodSlotId] = EquippedStack(itemId: 'ITEM-0058', quantity: foodQty);
   const spellSlots = ['SLOT-0013', 'SLOT-0014', 'SLOT-0015', 'SLOT-0016'];

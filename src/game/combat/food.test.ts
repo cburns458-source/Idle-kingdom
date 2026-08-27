@@ -3,6 +3,7 @@ import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { prepareDatabase } from '../data/loadDatabase'
 import { createNewSave } from '../save/saveStore'
+import type { EquippedStack } from '../save/types'
 import { consumeFoodBetweenRounds, extraFoodPerRound, tryConsumeFoodAfterVictory } from './food'
 
 const rawDatabase = JSON.parse(
@@ -15,7 +16,10 @@ function withFoodAndSpells(
   gluttonyCount: number,
 ) {
   const base = createNewSave(launch)
-  const slots = { ...base.equipment.slots, 'SLOT-0011': { itemId: 'ITEM-0058', quantity: foodQty } }
+  const slots: Record<string, EquippedStack | null> = {
+    ...base.equipment.slots,
+    'SLOT-0011': { itemId: 'ITEM-0058', quantity: foodQty },
+  }
   const spellSlots = ['SLOT-0013', 'SLOT-0014', 'SLOT-0015', 'SLOT-0016'] as const
   for (let i = 0; i < gluttonyCount; i += 1) {
     slots[spellSlots[i]!] = { itemId: 'ITEM-0312', quantity: 1 }

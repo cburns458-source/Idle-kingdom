@@ -590,9 +590,8 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
                 ),
               ),
             MediaQuery(
-              data: MediaQuery.of(context).copyWith(
-                textScaler: playableHudTextScaler(MediaQuery.textScalerOf(context)),
-              ),
+              data: MediaQuery.of(context)
+                  .copyWith(textScaler: playableHudTextScaler(MediaQuery.textScalerOf(context))),
               child: TopHud(
                 controller: controller,
                 multiplayer: multiplayer,
