@@ -413,6 +413,7 @@ export class LocalMultiplayerBackend {
         | 'privacyDirectMessages'
         | 'privacyLocalChat'
         | 'username'
+        | 'nameColor'
       >
     >,
   ): MultiplayerProfile | null {
@@ -472,7 +473,12 @@ export class LocalMultiplayerBackend {
     return { ok: true, record }
   }
 
-  submitLeaderboardSnapshot(dbGame: GameDatabase, userId: string, save: PlayerSave): void {
+  submitLeaderboardSnapshot(
+    dbGame: GameDatabase,
+    userId: string,
+    save: PlayerSave,
+    options?: { nameColor?: string | null; publishNameColor?: boolean },
+  ): void {
     const profile = this.getProfile(userId)
     if (!profile) return
     const snapshot = buildLeaderboardSnapshot(dbGame, save)
@@ -498,6 +504,9 @@ export class LocalMultiplayerBackend {
             appearance: save.appearance,
             username: save.characterName || row.username,
             publishedEquipment: snapshot.equipment,
+            nameColor: options?.publishNameColor
+              ? (options.nameColor ?? null)
+              : row.nameColor,
             updatedAt,
           }
         : row,

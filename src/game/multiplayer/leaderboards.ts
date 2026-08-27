@@ -26,12 +26,16 @@ export { boardLabel, buildLeaderboardSnapshot, publicProfileStatsFromLeaderboard
 export async function submitLeaderboardFromSave(
   db: GameDatabase,
   save: PlayerSave,
+  options?: { nameColor?: string | null; publishNameColor?: boolean },
 ): Promise<{ ok: true } | { ok: false; reason: string }> {
   const session = getSession()
   if (!session) return { ok: false, reason: 'Sign in to submit leaderboard scores.' }
 
   if (multiplayerMode() === 'local') {
-    getLocalBackend().submitLeaderboardSnapshot(db, session.userId, save)
+    getLocalBackend().submitLeaderboardSnapshot(db, session.userId, save, {
+      nameColor: options?.nameColor,
+      publishNameColor: options?.publishNameColor,
+    })
     return { ok: true }
   }
 
@@ -48,6 +52,7 @@ export async function submitLeaderboardFromSave(
     username: session.username,
     appearance_json: save.appearance,
     equipment_json: snapshot.equipment,
+    ...(options?.publishNameColor ? { name_color: options.nameColor ?? null } : {}),
   })
   if (profileError) {
     await client.from(REMOTE_TABLES.profiles).upsert({

@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:idle_kingdoms/src/session/multiplayer_controller.dart';
 import 'package:idle_kingdoms/src/ui/social_view.dart';
 import 'package:ik_content/ik_content.dart';
 import 'package:ik_net/ik_net.dart';
 import 'package:ik_net/testing.dart';
 import 'package:ik_rules/ik_rules.dart';
+import 'package:ik_runtime/ik_runtime.dart';
 
 import 'support/harness.dart';
 
@@ -172,5 +174,133 @@ void main() {
     await tester.pump();
 
     expect(find.text('No scores on this board yet.'), findsOne);
+  });
+
+  PlayerSave boosted(PlayerSave save, num level) {
+    return save.copyWith(
+      skills: [for (final skill in save.skills) skill.copyWith(level: level, xp: 0)],
+    );
+  }
+
+  void seedRivals(
+    LocalMultiplayerService service,
+    PlayerSave template, {
+    required int count,
+    required num level,
+  }) {
+    for (var i = 0; i < count; i++) {
+      final created = service.backend.signUp('rival$i@example.com', 'Rival$i', 'secret');
+      expect(created.ok, isTrue, reason: created.reason);
+      service.backend.submitLeaderboardSnapshot(
+        database.launch,
+        created.session!.userId,
+        boosted(template, level),
+      );
+    }
+  }
+
+  testWidgets('the own row pins at the bottom when it is off-screen below', (tester) async {
+    final clock = TestClock();
+    final net = buildMultiplayer(database, clock: clock);
+    addTearDown(net.dispose);
+    final save = startedCharacter(database).copyWith(characterName: 'Vari');
+    await net.signUp('vari@example.com', 'Vari', 'secret', save, adopt: (save, {nowMs}) {});
+    seedRivals(net.service as LocalMultiplayerService, save, count: 20, level: 40);
+    await net.openLeaderboards(save);
+
+    final game = buildController(database, seed: save, clock: clock);
+    addTearDown(game.dispose);
+    await pumpPanel(
+      tester,
+      ListenableBuilder(
+        listenable: net,
+        builder: (context, _) =>
+            SocialView(controller: game, multiplayer: net, section: SocialTab.leaderboards),
+      ),
+      size: const Size(420, 360),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.byKey(const ValueKey('own-pin-bottom')), findsOne);
+    expect(find.byKey(const ValueKey('own-pin-top')), findsNothing);
+  });
+
+  testWidgets('the own row pins at the top when it is off-screen above', (tester) async {
+    final clock = TestClock();
+    final net = buildMultiplayer(database, clock: clock);
+    addTearDown(net.dispose);
+    final save = boosted(startedCharacter(database).copyWith(characterName: 'Vari'), 80);
+    await net.signUp('vari@example.com', 'Vari', 'secret', save, adopt: (save, {nowMs}) {});
+    seedRivals(net.service as LocalMultiplayerService, save, count: 20, level: 2);
+    await net.openLeaderboards(save);
+
+    final game = buildController(database, seed: save, clock: clock);
+    addTearDown(game.dispose);
+    await pumpPanel(
+      tester,
+      ListenableBuilder(
+        listenable: net,
+        builder: (context, _) =>
+            SocialView(controller: game, multiplayer: net, section: SocialTab.leaderboards),
+      ),
+      size: const Size(420, 360),
+    );
+    await tester.pump();
+    await tester.pump();
+    expect(find.byKey(const ValueKey('own-pin-top')), findsNothing);
+    expect(find.byKey(const ValueKey('own-pin-bottom')), findsNothing);
+
+    await tester.drag(find.byType(SingleChildScrollView), const Offset(0, -2400));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('own-pin-top')), findsOne);
+    expect(find.byKey(const ValueKey('own-pin-bottom')), findsNothing);
+  });
+
+  test('a draft name color waits for the scheduled ranking submit', () async {
+    final clock = TestClock();
+    final net = buildMultiplayer(database, clock: clock);
+    addTearDown(net.dispose);
+    final save = startedCharacter(database);
+    await net.signUp('hero@example.com', 'Hero', 'secret', save, adopt: (save, {nowMs}) {});
+
+    net.setNameColorDraft('#fa3');
+    expect(net.nameColorDraft, '#fa3');
+    expect(net.publishedNameColor(net.session!.userId), isNull);
+    expect((await net.service.profile(net.session!.userId))?.nameColor, isNull);
+
+    clock.advance(60 * 1000);
+    await net.onForeground(save);
+    expect(net.publishedNameColor(net.session!.userId), '#FFAA33');
+    expect((await net.service.profile(net.session!.userId))?.nameColor, '#FFAA33');
+  });
+
+  test('a new device seeds the draft from the published color', () async {
+    final clock = TestClock();
+    final first = buildMultiplayer(database, clock: clock);
+    addTearDown(first.dispose);
+    final save = startedCharacter(database);
+    await first.signUp('hero@example.com', 'Hero', 'secret', save, adopt: (save, {nowMs}) {});
+    first.setNameColorDraft('#FA3');
+    await first.publishRanking(save, ignoreDebounce: true);
+
+    final service = first.service as LocalMultiplayerService;
+    final storage = MemorySaveStorage();
+    restoreTestSession(
+      service,
+      storage,
+      account: const TestAccount(email: 'hero@example.com', username: 'Hero', password: 'secret'),
+    );
+    final second = MultiplayerController(
+      database: database,
+      service: service,
+      storage: storage,
+      clock: clock.read,
+    );
+    addTearDown(second.dispose);
+    await second.refresh(save);
+    expect(second.nameColorDraft, '#FFAA33');
+    expect(second.publishedNameColor(second.session!.userId), '#FFAA33');
   });
 }

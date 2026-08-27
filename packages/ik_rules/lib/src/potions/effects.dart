@@ -34,8 +34,9 @@ ActivePotionEffect? parsePotionEffect(EquipmentRow? equipment, String itemId) {
       damageBonusPercent = jsNumber(damage.group(1));
       continue;
     }
-    final poison = RegExp(r'^deals\s+(\d+(?:\.\d+)?)%\s+of\s+enemy\s+maximum\s+hp$')
-        .firstMatch(tag);
+    final poison = RegExp(
+      r'^deals\s+(\d+(?:\.\d+)?)%\s+of\s+enemy\s+(?:current\s+hp\s+per\s+combat\s+round|maximum\s+hp)$',
+    ).firstMatch(tag);
     if (poison != null) {
       enemyMaxHpDamagePercent = jsNumber(poison.group(1));
       continue;
@@ -139,9 +140,26 @@ num applyPotionDurationMs(num baseDurationMs, ActivePotionEffect? effect) {
   return math.max(0, (baseDurationMs * factor).floor());
 }
 
-/// Flat HP dealt at combat start from "deals N% of enemy maximum HP".
+/// Flat HP from the old one-shot "deals N% of enemy maximum HP" tag.
 num potionEnemyMaxHpDamage(num enemyMaxHp, ActivePotionEffect? effect) {
   final percent = effect?.enemyMaxHpDamagePercent;
   if (percent == null || percent <= 0) return 0;
   return math.max(0, (enemyMaxHp * (percent / 100)).floor());
+}
+
+/// Lowest HP poison will leave: 10% of max, and never 0 while the enemy has HP.
+num potionEnemyHpFloor(num enemyMaxHp) {
+  if (enemyMaxHp <= 0) return 0;
+  return math.max(1, (enemyMaxHp * 0.1).floor());
+}
+
+/// After the player's swing: 10% of current HP, then clamp to the 10% max floor.
+num applyPotionEnemyRoundDamage(num enemyHp, num enemyMaxHp, ActivePotionEffect? effect) {
+  final percent = effect?.enemyMaxHpDamagePercent;
+  if (percent == null || percent <= 0) return enemyHp;
+  final floorHp = potionEnemyHpFloor(enemyMaxHp);
+  if (enemyHp <= floorHp) return enemyHp;
+  final damage = (enemyHp * (percent / 100)).floor();
+  if (damage <= 0) return enemyHp;
+  return math.max(floorHp, enemyHp - damage);
 }

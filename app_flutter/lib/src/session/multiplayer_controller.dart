@@ -69,6 +69,22 @@ class MultiplayerController extends ChangeNotifier {
     notifyListeners();
   }
 
+  String _nameColorDraftKey() {
+    final userId = session?.userId;
+    return userId == null ? nameColorStorageKey('signed-out') : nameColorStorageKey(userId);
+  }
+
+  /// Draft hex kept on this device until the next scheduled ranking submit.
+  String get nameColorDraft => storage.getItem(_nameColorDraftKey()) ?? '';
+
+  void setNameColorDraft(String raw) {
+    storage.setItem(_nameColorDraftKey(), raw.trim());
+    notifyListeners();
+  }
+
+  /// Published chat name color for [userId], or null when they have none.
+  String? publishedNameColor(String userId) => _publishedNameColors[userId];
+
   /// When on, new lines on [tab] raise a bubble on the chat icon and tab.
   bool chatNotifyEnabled(ChatTab tab) => storage.getItem(chatNotifyStorageKey(tab)) != '0';
 
@@ -166,6 +182,7 @@ class MultiplayerController extends ChangeNotifier {
   int _unreadDms = 0;
   final Map<ChatTab, int> _unread = <ChatTab, int>{};
   final Map<String, int> _localUnread = <String, int>{};
+  final Map<String, String> _publishedNameColors = <String, String>{};
   bool _chatOpen = false;
   bool _citadelHub = false;
   String _chatLocationId = '';
@@ -458,6 +475,7 @@ class MultiplayerController extends ChangeNotifier {
     _unreadDms = 0;
     _unread.clear();
     _localUnread.clear();
+    _publishedNameColors.clear();
     _chatOpen = false;
   }
 
@@ -736,6 +754,15 @@ class MultiplayerController extends ChangeNotifier {
     _ignored = await service.ignoredPlayers();
     final me = session?.userId;
     _ownProfile = me == null ? null : await service.profile(me);
+    final ownColor = normalizeNameColorHex(_ownProfile?.nameColor);
+    if (me != null && ownColor != null) {
+      _publishedNameColors[me] = ownColor;
+      // A new device has no draft. Seed from the published color so the next
+      // scheduled submit does not wipe what this account already shows in chat.
+      if (storage.getItem(_nameColorDraftKey()) == null) {
+        storage.setItem(_nameColorDraftKey(), ownColor);
+      }
+    }
   }
 
   Future<void> sendFriendRequest(String userId) {
@@ -794,8 +821,23 @@ class MultiplayerController extends ChangeNotifier {
     if (!isSignedIn || !isPlayableSave(save)) return;
     final now = clock();
     if (!ignoreDebounce && !shouldPublishOnOpen(lastRankingSubmitAt, now)) return;
-    final result = await service.submitLeaderboard(db, save);
+    final result = await service.submitLeaderboard(
+      db,
+      save,
+      nameColor: normalizeNameColorHex(nameColorDraft),
+      publishNameColor: true,
+    );
     if (!result.ok) return;
+    final userId = session?.userId;
+    final published = normalizeNameColorHex(nameColorDraft);
+    if (userId != null) {
+      if (published != null) {
+        _publishedNameColors[userId] = published;
+      } else {
+        _publishedNameColors.remove(userId);
+      }
+      _ownProfile = _ownProfile?.copyWith(nameColor: published, clearNameColor: published == null);
+    }
     _storeRankingSubmitAt(now);
     _board = await _readBoard(save);
     notifyListeners();
@@ -962,6 +1004,19 @@ class MultiplayerController extends ChangeNotifier {
     _unreadDms = 0;
   }
 
+  Future<void> _ingestNameColors(Iterable<ChatMessage> messages) async {
+    final missing = messages
+        .map((message) => message.userId)
+        .where((userId) => userId.isNotEmpty && !_publishedNameColors.containsKey(userId))
+        .toSet();
+    if (missing.isEmpty) return;
+    final found = await service.publishedNameColors(missing);
+    for (final userId in missing) {
+      final color = found[userId];
+      if (color != null) _publishedNameColors[userId] = color;
+    }
+  }
+
   /// Opens a chat tab and loads what it holds.
   Future<void> selectChatTab(ChatTab tab, String locationId, {bool citadelHub = false}) async {
     _chatTab = tab;
@@ -978,6 +1033,7 @@ class MultiplayerController extends ChangeNotifier {
     if (tab == ChatTab.dm) {
       _messages = await service.listDirectMessages();
       _ingestDmPeers(_messages);
+      await _ingestNameColors(_messages);
       if (_selectedDmPeerId == null && _openDmPeerIds.isNotEmpty) {
         _selectedDmPeerId = _openDmPeerIds.first;
       }
@@ -993,6 +1049,7 @@ class MultiplayerController extends ChangeNotifier {
       guestGuildId: _guestGuildId,
     );
     _messages = channel == null ? const <ChatMessage>[] : await service.listChat(channel);
+    await _ingestNameColors(_messages);
     _markTabRead(tab, locationId);
     notifyListeners();
   }
@@ -1020,6 +1077,7 @@ class MultiplayerController extends ChangeNotifier {
       final result = await service.sendChat(channel, body);
       if (!result.ok) return result.reason;
       _messages = await service.listChat(channel);
+      await _ingestNameColors(_messages);
       return null;
     });
   }

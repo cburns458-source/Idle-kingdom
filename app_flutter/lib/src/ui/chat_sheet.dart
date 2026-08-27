@@ -274,9 +274,13 @@ class _ChatSheetState extends State<ChatSheet> {
                                               fontFamily: gameFontFamily,
                                               fontSize: 13,
                                               fontWeight: FontWeight.w400,
-                                              color: line.mine
-                                                  ? Palette.gold
-                                                  : Palette.parchmentText,
+                                              color:
+                                                  colorFromHexRgb(
+                                                    net.publishedNameColor(line.userId),
+                                                  ) ??
+                                                  (line.mine
+                                                      ? Palette.gold
+                                                      : Palette.parchmentText),
                                             ),
                                           ),
                                         ),

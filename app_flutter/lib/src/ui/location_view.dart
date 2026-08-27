@@ -261,7 +261,9 @@ class _LocationViewState extends State<LocationView> {
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Expanded(child: _LocationHead(location: location)),
+                            Expanded(
+                              child: _LocationHead(db: controller.db, location: location),
+                            ),
                             const SizedBox(width: 11),
                             Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -831,12 +833,15 @@ class _BandTabButton extends StatelessWidget {
 
 /// The name of the place, what it is, and what it will do to you.
 class _LocationHead extends StatelessWidget {
-  const _LocationHead({required this.location});
+  const _LocationHead({required this.db, required this.location});
 
+  final GameDatabase db;
   final LocationRow location;
 
   @override
   Widget build(BuildContext context) {
+    final danger = location.dangerHostility;
+    final showDanger = danger != null && locationShowsDangerWarning(db, location.locationId);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -851,7 +856,7 @@ class _LocationHead extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 3),
-        if (location.dangerHostility case final danger?)
+        if (showDanger)
           Padding(
             padding: const EdgeInsets.only(top: 3),
             child: Text(danger, style: warningStyle),

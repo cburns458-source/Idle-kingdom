@@ -13,6 +13,11 @@ import { raceBypassesForcedHostilityAt } from '../races/races'
 import type { PlayerSave } from '../save/types'
 import { applyTravelArrival } from './travel'
 
+/** True when this location has a hostile activity, so its danger line may show. */
+export function locationShowsDangerWarning(db: GameDatabase, locationId: string): boolean {
+  return hostileActivitiesAt(db, locationId).length > 0
+}
+
 /** Activities marked hostile via Danger Warning Combat Level. */
 export function hostileActivitiesAt(db: GameDatabase, locationId: string): ActivityRow[] {
   return db.Activities.filter((activity) => {

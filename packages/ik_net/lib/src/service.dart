@@ -60,7 +60,15 @@ abstract interface class MultiplayerService {
   /// Uploads at a safe point, or reports that the backend's copy is newer.
   Future<CloudSyncResult> syncSave(GameDatabase db, PlayerSave local, {bool forceUpload = false});
 
-  Future<ActionResult> submitLeaderboard(GameDatabase db, PlayerSave save);
+  Future<ActionResult> submitLeaderboard(
+    GameDatabase db,
+    PlayerSave save, {
+    String? nameColor,
+    bool publishNameColor = false,
+  });
+
+  /// Published chat name colors for [userIds], keyed by account.
+  Future<Map<String, String>> publishedNameColors(Iterable<String> userIds);
 
   Future<List<LeaderboardEntry>> leaderboard(MultiplayerBoardKey boardKey, {int limit = 25});
 
@@ -385,13 +393,29 @@ class LocalMultiplayerService implements MultiplayerService {
   }
 
   @override
-  Future<ActionResult> submitLeaderboard(GameDatabase db, PlayerSave save) async {
+  Future<ActionResult> submitLeaderboard(
+    GameDatabase db,
+    PlayerSave save, {
+    String? nameColor,
+    bool publishNameColor = false,
+  }) async {
     final current = session;
     if (current == null) {
       return const ActionResult.failed('Sign in to submit leaderboard scores.');
     }
-    _backend.submitLeaderboardSnapshot(db, current.userId, save);
+    _backend.submitLeaderboardSnapshot(
+      db,
+      current.userId,
+      save,
+      nameColor: nameColor,
+      publishNameColor: publishNameColor,
+    );
     return const ActionResult.ok();
+  }
+
+  @override
+  Future<Map<String, String>> publishedNameColors(Iterable<String> userIds) async {
+    return _backend.publishedNameColors(userIds);
   }
 
   @override

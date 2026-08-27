@@ -93,6 +93,8 @@ export interface MultiplayerProfile {
   privacyLocalChat: string
   /** Loadout last published with a ranking submit. */
   publishedEquipment?: PublicEquippedSlot[]
+  /** Chat name hex, published on a ranking submit. */
+  nameColor?: string | null
   updatedAt: string
 }
 

@@ -29,9 +29,9 @@ import {
 import {
   applyPotionDropChance,
   applyPotionDurationMs,
+  applyPotionEnemyRoundDamage,
   clearActivePotionEffect,
   parsePotionEffect,
-  potionEnemyMaxHpDamage,
   tryConsumePotionForScope,
 } from '../../game/potions/effects'
 import { mulberry32 } from '../../game/rng/mulberry32'
@@ -465,8 +465,9 @@ export const activityScenarios: ParityScenario[] = [
       dropChanceNoEffect: applyPotionDropChance(10, null),
       durations: [0, 1_000, 20_000, 33_333].map((ms) => applyPotionDurationMs(ms, durationEffect)),
       durationsNoEffect: [20_000].map((ms) => applyPotionDurationMs(ms, null)),
-      poison: [0, 100, 1_250].map((hp) => potionEnemyMaxHpDamage(hp, poisonEffect)),
-      poisonNoEffect: potionEnemyMaxHpDamage(1_250, durationEffect),
+      poison: [0, 100, 1_250].map((hp) => applyPotionEnemyRoundDamage(hp, hp || 100, poisonEffect)),
+      poisonFloor: applyPotionEnemyRoundDamage(100, 1_000, poisonEffect),
+      poisonNoEffect: applyPotionEnemyRoundDamage(1_250, 1_250, durationEffect),
     } as unknown as JsonValue
   }),
 ]

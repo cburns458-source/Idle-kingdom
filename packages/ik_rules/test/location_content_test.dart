@@ -1,5 +1,6 @@
 import 'package:ik_content/ik_content.dart';
 import 'package:ik_parity/ik_parity.dart';
+import 'package:ik_rules/ik_rules.dart';
 import 'package:test/test.dart';
 
 GameDatabase _db() => filterLaunchContent(assertGameDatabaseShape(contentDatabaseJson()));
@@ -61,6 +62,16 @@ void main() {
     expect(gold('ENM-0003', 'Maximum Gold'), 3);
     expect(gold('ENM-0016', 'Minimum Gold'), 3);
     expect(gold('ENM-0006', 'Maximum Gold'), 1000);
+  });
+
+  test('a location danger line is only for places with a hostile activity', () {
+    expect(locationShowsDangerWarning(db, 'LOC-0003'), isTrue);
+    expect(locationShowsDangerWarning(db, 'LOC-0004'), isTrue);
+    expect(locationShowsDangerWarning(db, 'LOC-0021'), isTrue);
+    expect(locationShowsDangerWarning(db, 'LOC-0037'), isTrue);
+    expect(locationShowsDangerWarning(db, 'LOC-0018'), isFalse);
+    expect(locationShowsDangerWarning(db, 'LOC-0007'), isFalse);
+    expect(locationShowsDangerWarning(db, 'LOC-0002'), isFalse);
   });
 
   test('the abandoned mineshaft fishes tuna, shark, and baby giant squid', () {

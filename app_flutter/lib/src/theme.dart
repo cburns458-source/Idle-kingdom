@@ -1,5 +1,13 @@
 import 'package:flutter/material.dart';
 
+/// Parses a canonical `#RRGGBB` into a color, or null when it is not one.
+Color? colorFromHexRgb(String? hex) {
+  if (hex == null || hex.length != 7 || !hex.startsWith('#')) return null;
+  final value = int.tryParse(hex.substring(1), radix: 16);
+  if (value == null) return null;
+  return Color(0xFF000000 | value);
+}
+
 /// The palette the game is drawn in: parchment, gold, and soft green.
 abstract final class Palette {
   static const parchmentText = Color(0xFFF4E7C8);

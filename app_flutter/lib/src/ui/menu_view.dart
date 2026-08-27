@@ -257,6 +257,8 @@ class _MenuViewState extends State<MenuView> {
                       ),
                     ),
                     const SizedBox(height: 16),
+                    _NameColorField(multiplayer: widget.multiplayer),
+                    const SizedBox(height: 16),
                     const Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
@@ -536,6 +538,73 @@ class _MenuViewState extends State<MenuView> {
             const SizedBox(height: 8),
             Text(notice, style: const TextStyle(color: Palette.gold, fontSize: 12)),
           ],
+        ],
+      ),
+    );
+  }
+}
+
+class _NameColorField extends StatefulWidget {
+  const _NameColorField({required this.multiplayer});
+
+  final MultiplayerController multiplayer;
+
+  @override
+  State<_NameColorField> createState() => _NameColorFieldState();
+}
+
+class _NameColorFieldState extends State<_NameColorField> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.multiplayer.nameColorDraft);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final preview =
+        colorFromHexRgb(normalizeNameColorHex(_controller.text)) ?? Palette.parchmentText;
+    return GamePanel(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text('Chat name color', style: TextStyle(fontWeight: FontWeight.w400)),
+          const MutedText(
+            'Hex like #D4AF37 or #FA3. Saves to your account on the next ranking update, then everyone sees it in chat.',
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Container(
+                width: 22,
+                height: 22,
+                decoration: BoxDecoration(
+                  color: preview,
+                  border: Border.all(color: Palette.edge),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: TextField(
+                  controller: _controller,
+                  enabled: widget.multiplayer.isSignedIn,
+                  decoration: const InputDecoration(hintText: '#RRGGBB', isDense: true),
+                  onChanged: (value) {
+                    widget.multiplayer.setNameColorDraft(value);
+                    setState(() {});
+                  },
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );
