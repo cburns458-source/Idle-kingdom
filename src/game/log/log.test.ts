@@ -43,6 +43,10 @@ describe('quest log', () => {
     expect(rows.find((row) => row.questId === 'QST-0001')!.detail).toContain(
       'new cook for the feast',
     )
+    expect(rows.find((row) => row.questId === 'QST-0003')!.name).toBe('Lowly Beggar')
+    expect(rows.find((row) => row.questId === 'QST-0003')!.detail).toContain(
+      'asking for help in the town',
+    )
   })
 
   it('reveals journal steps for an active quest without numeric progress', () => {

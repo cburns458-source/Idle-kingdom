@@ -314,7 +314,7 @@ NpcQuestBlock _questBlock(GameDatabase db, PlayerSave save, QuestRow quest, Stri
   final talked = hasQuestFlag(save, questId, 'talk:$npcId');
   final chose =
       hasQuestFlag(save, questId, 'choice:bribe') || hasQuestFlag(save, questId, 'choice:combat');
-  final needsTalkFirst = talkNpcIds.contains(npcId) && !talked;
+  final needsTalkFirst = questNpcHasIncompleteTalk(db, save, quest, npcId) && !talked;
   final donated = hasQuestFlag(save, questId, acceptGoldFlag);
   final needsDonate = parsed.acceptGoldCost > 0 && !donated;
   String acceptLabel;

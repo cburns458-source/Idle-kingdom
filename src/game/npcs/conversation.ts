@@ -16,7 +16,7 @@ import {
   questsTouchingNpc,
   type QuestRow,
 } from '../quests/quests'
-import { questActiveStepObjectives } from '../quests/steps'
+import { questActiveStepObjectives, questNpcHasIncompleteTalk } from '../quests/steps'
 import type { PlayerSave } from '../save/types'
 import { configString } from '../activity/gathering'
 import {
@@ -194,7 +194,7 @@ function questBlock(
   const talked = hasQuestFlag(save, questId, `talk:${npcId}`)
   const chose =
     hasQuestFlag(save, questId, 'choice:bribe') || hasQuestFlag(save, questId, 'choice:combat')
-  const needsTalkFirst = talkNpcIds.includes(npcId) && !talked
+  const needsTalkFirst = questNpcHasIncompleteTalk(db, save, quest, npcId) && !talked
   const donated = hasQuestFlag(save, questId, ACCEPT_GOLD_FLAG)
   const needsDonate = parsed.acceptGoldCost > 0 && !donated
   let acceptLabel = 'Accept quest'

@@ -241,7 +241,7 @@ void main() {
 
     expect(getQuestProgress(controller.save, 'QST-0003').status, 'inactive');
     expect(controller.save.gold, 15);
-    expect(find.text('Start the quest The Missing Purse?'), findsOne);
+    expect(find.text('Start the quest Lowly Beggar?'), findsOne);
 
     await pumpPanel(
       tester,
@@ -253,13 +253,15 @@ void main() {
       ),
     );
     expect(find.text('Donate 25 gold'), findsNothing);
-    expect(find.text('Start the quest The Missing Purse?'), findsWidgets);
-    await tester.tap(find.text('Start the quest The Missing Purse?').last);
+    expect(find.text('Start the quest Lowly Beggar?'), findsWidgets);
+    await tester.tap(find.text('Start the quest Lowly Beggar?').last);
     await tester.pump();
-    await tester.tap(find.text('Start the quest The Missing Purse?'));
+    await tester.tap(find.text('Start the quest Lowly Beggar?'));
     await tester.pump();
 
     expect(getQuestProgress(controller.save, 'QST-0003').status, 'active');
     expect(controller.save.gold, 15);
+    expect(find.text('Talk'), findsOne);
+    expect(find.textContaining('Donate 25 gold, then recover'), findsNothing);
   });
 }

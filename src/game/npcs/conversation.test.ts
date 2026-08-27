@@ -191,4 +191,55 @@ describe('npc conversation', () => {
     expect(archmage.quests[0]!.talkLine).toBe('Well done.')
     expect(archmage.quests[0]!.idlePrompt).toBe('What else do you need?')
   })
+
+  it('hides the barracks choice until the beggar is heard', () => {
+    const save = {
+      ...saveAt('LOC-0034'),
+      gold: 300,
+      quests: [{ questId: 'QST-0003', status: 'active' as const, progress: 0 }],
+    }
+    const beggar = npcConversation(launch, save, npc('NPC-0011'))
+    expect(beggar.greeting).toBeNull()
+    expect(beggar.quests[0]!.name).toBe('Lowly Beggar')
+    expect(beggar.quests[0]!.canTalk).toBe(true)
+    expect(beggar.quests[0]!.talkLine).toContain('barracks')
+    expect(beggar.quests[0]!.ready).toBe(false)
+
+    const guardTooSoon = npcConversation(launch, { ...save, currentLocationId: 'LOC-0017' }, npc('NPC-0012'))
+    expect(guardTooSoon.quests).toEqual([])
+
+    const heard = {
+      ...save,
+      currentLocationId: 'LOC-0017',
+      quests: [
+        {
+          questId: 'QST-0003',
+          status: 'active' as const,
+          progress: 1,
+          counters: { 'talk:NPC-0011': 1 },
+        },
+      ],
+    }
+    const guard = npcConversation(launch, heard, npc('NPC-0012'))
+    expect(guard.quests[0]!.canTalk).toBe(true)
+    expect(guard.quests[0]!.canBribe).toBe(false)
+    expect(guard.quests[0]!.canChooseCombat).toBe(false)
+    expect(guard.quests[0]!.talkLine).toMatch(/memory gets expensive/)
+
+    const afterGuard = {
+      ...heard,
+      quests: [
+        {
+          questId: 'QST-0003',
+          status: 'active' as const,
+          progress: 2,
+          counters: { 'talk:NPC-0011': 1, 'talk:NPC-0012': 1 },
+        },
+      ],
+    }
+    const choice = npcConversation(launch, afterGuard, npc('NPC-0012'))
+    expect(choice.quests[0]!.canTalk).toBe(false)
+    expect(choice.quests[0]!.canBribe).toBe(true)
+    expect(choice.quests[0]!.canChooseCombat).toBe(true)
+  })
 })

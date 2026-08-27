@@ -115,6 +115,25 @@ bool questAllStepsComplete(GameDatabase db, PlayerSave save, QuestRow quest) {
   return getCurrentStepIndex(db, save, quest) >= getQuestSteps(db, questId).length;
 }
 
+/// True when this NPC still has an unfinished Talk step (or Notes talk).
+bool questNpcHasIncompleteTalk(
+  GameDatabase db,
+  PlayerSave save,
+  QuestRow quest,
+  String npcId,
+) {
+  final questId = jsString(quest['Quest ID']);
+  final steps = getQuestSteps(db, questId);
+  if (steps.isEmpty) {
+    return parseStructuredObjectives(quest).talkNpcIds.contains(npcId);
+  }
+  return steps.any(
+    (step) =>
+        parseNotesObjectives(step.notes ?? '').talkNpcIds.contains(npcId) &&
+        !_isStepComplete(db, save, questId, step.notes ?? ''),
+  );
+}
+
 bool questTouchesNpcForSave(
   GameDatabase db,
   PlayerSave save,
@@ -124,14 +143,21 @@ bool questTouchesNpcForSave(
   if (quest['NPC ID'] == npcId) return true;
 
   final meta = parseStructuredObjectives(quest);
-  if (meta.turnInNpcId == npcId || meta.choiceNpcId == npcId) return true;
+  if (meta.turnInNpcId == npcId) return true;
 
   final progress = getQuestProgress(save, jsString(quest['Quest ID']));
   if (progress.status != 'active') return false;
 
+  if (meta.choiceNpcId == npcId) {
+    if (!questUsesSteps(db, jsString(quest['Quest ID']))) return true;
+    if (questActiveStepObjectives(db, save, quest)?.talkNpcIds.contains(npcId) ?? false) {
+      return true;
+    }
+    return !questNpcHasIncompleteTalk(db, save, quest, npcId);
+  }
+
   if (questUsesSteps(db, jsString(quest['Quest ID']))) {
-    final active = questActiveStepObjectives(db, save, quest);
-    return active?.talkNpcIds.contains(npcId) ?? false;
+    return questActiveStepObjectives(db, save, quest)?.talkNpcIds.contains(npcId) ?? false;
   }
 
   return meta.talkNpcIds.contains(npcId);

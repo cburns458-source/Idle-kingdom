@@ -93,9 +93,11 @@ describe('quest tours', () => {
     if (!accepted.ok) return
     save = accepted.save
     expect(save.gold).toBe(275)
+    expect(completeQuest(launch, save, 'QST-0003').ok).toBe(false)
 
-    save = { ...save, currentLocationId: 'LOC-0024' }
-    save = applyQuestTalkProgress(launch, save, 'NPC-0007')
+    save = applyQuestTalkProgress(launch, save, 'NPC-0011')
+    expect(completeQuest(launch, save, 'QST-0003').ok).toBe(false)
+
     save = { ...save, currentLocationId: 'LOC-0017' }
     save = applyQuestTalkProgress(launch, save, 'NPC-0012')
     const bribed = bribeQuestNpc(launch, save, 'QST-0003')
@@ -132,8 +134,8 @@ describe('quest tours', () => {
     save = accepted.save
     expect(activityVisibleForSave(launch, save, 'ACT-0034')).toBe(false)
 
+    save = applyQuestTalkProgress(launch, save, 'NPC-0011')
     save = { ...save, currentLocationId: 'LOC-0017' }
-    save = applyQuestTalkProgress(launch, save, 'NPC-0007')
     save = applyQuestTalkProgress(launch, save, 'NPC-0012')
     const combat = chooseQuestCombatRoute(save, 'QST-0003')
     expect(combat.ok).toBe(true)
