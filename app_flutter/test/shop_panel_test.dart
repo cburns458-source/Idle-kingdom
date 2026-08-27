@@ -174,6 +174,8 @@ void main() {
     await pumpShell(tester, controller, size: const Size(375, 667));
 
     await tapVisible(tester, find.byTooltip('Expand list'));
+    await tester.tap(find.widgetWithText(GameButton, 'Shops'));
+    await tester.pump();
     final store = find.ancestor(of: find.text('General Store'), matching: find.byType(DockRow));
     await tapVisible(tester, find.descendant(of: store, matching: find.bySemanticsLabel('Shop')));
 

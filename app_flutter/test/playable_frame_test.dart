@@ -23,6 +23,7 @@ void main() {
 
   test('a phone-narrow window does not open side chat', () {
     expect(playableFrameHasSideChat(const Size(390, 844)), isFalse);
+    expect(playableFrameHasSideChat(const Size(800, 600)), isFalse);
   });
 
   test('an empty box is returned unchanged', () {

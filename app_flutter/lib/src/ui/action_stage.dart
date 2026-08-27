@@ -44,7 +44,7 @@ class ActionStage extends StatelessWidget {
   Widget build(BuildContext context) {
     return MediaQuery(
       data: MediaQuery.of(context)
-          .copyWith(textScaler: MediaQuery.textScalerOf(context) / playableUiTextScale),
+          .copyWith(textScaler: playableHudTextScaler(MediaQuery.textScalerOf(context))),
       child: Builder(builder: _buildStage),
     );
   }

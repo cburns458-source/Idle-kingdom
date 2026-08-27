@@ -434,6 +434,11 @@ void main() {
         ),
         size: const Size(900, 2400),
       );
+      final people = find.widgetWithText(GameButton, 'People');
+      if (people.evaluate().isNotEmpty) {
+        await tester.tap(people);
+        await tester.pump();
+      }
       expect(find.text('Quill'), locationId == today ? findsOne : findsNothing);
     }
   });
@@ -455,6 +460,11 @@ void main() {
         ),
         size: const Size(900, 2400),
       );
+      final people = find.widgetWithText(GameButton, 'People');
+      if (people.evaluate().isNotEmpty) {
+        await tester.tap(people);
+        await tester.pump();
+      }
       expect(find.text('Master Dwarf'), locationId == today ? findsOne : findsNothing);
     }
   });
@@ -492,6 +502,8 @@ void main() {
     expect(controller.save.currentActivityId, isNotNull);
     expect(find.byType(ActionStage), findsOne);
 
+    await tester.tap(find.widgetWithText(GameButton, 'Shops'));
+    await tester.pump();
     await tapVisible(
       tester,
       find.descendant(of: dockRow('Armory'), matching: find.widgetWithText(GameButton, 'Shop')),

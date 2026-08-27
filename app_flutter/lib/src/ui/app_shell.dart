@@ -506,7 +506,7 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
                   child: MediaQuery(
                     data: MediaQuery.of(context).copyWith(
                       size: frame,
-                      textScaler: MediaQuery.textScalerOf(context) * playableUiTextScale,
+                      textScaler: playableUiTextScaler(MediaQuery.textScalerOf(context)),
                     ),
                     child: ListenableBuilder(
                       listenable: Listenable.merge(<Listenable>[controller, multiplayer]),
@@ -525,7 +525,7 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
                   child: MediaQuery(
                     data: MediaQuery.of(
                       context,
-                    ).copyWith(textScaler: MediaQuery.textScalerOf(context) * playableUiTextScale),
+                    ).copyWith(textScaler: playableUiTextScaler(MediaQuery.textScalerOf(context))),
                     child: ListenableBuilder(
                       listenable: Listenable.merge(<Listenable>[controller, multiplayer]),
                       builder: (context, _) {
@@ -590,8 +590,9 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
                 ),
               ),
             MediaQuery(
-              data: MediaQuery.of(context)
-                  .copyWith(textScaler: MediaQuery.textScalerOf(context) / playableUiTextScale),
+              data: MediaQuery.of(context).copyWith(
+                textScaler: playableHudTextScaler(MediaQuery.textScalerOf(context)),
+              ),
               child: TopHud(
                 controller: controller,
                 multiplayer: multiplayer,

@@ -47,18 +47,18 @@ describe('skill menu entries', () => {
     expect(skillMenuLine(goblin!)).toMatch(/^\d+\. Goblin Scout$/)
 
     const smithing = skillMenuView(launch, 'SKL-0011')
-    expect(smithing.tabs.map((tab) => tab.label)).toEqual(['Basic metal', 'Other'])
+    expect(smithing.tabs.map((tab) => tab.label)).toEqual(['Basic metal'])
     expect(
       smithing.tabs[0]?.sections[0]?.entries.some(
         (item) => item.displayName === 'Steel items' && item.level === 35,
       ),
     ).toBe(true)
-    expect(smithing.tabs[1]?.sections[0]?.entries.some((item) => item.displayName === 'Warhammer')).toBe(
+    expect(smithing.tabs[0]?.sections[0]?.entries.some((item) => item.displayName === 'Warhammer')).toBe(
       false,
     )
-    expect(smithing.tabs[1]?.sections[0]?.entries.some((item) => item.displayName === 'Steel Warhammer')).toBe(
-      false,
-    )
+    expect(
+      smithing.tabs[0]?.sections[0]?.entries.some((item) => item.displayName === 'Steel Warhammer'),
+    ).toBe(false)
 
     const artisanry = skillMenuView(launch, 'SKL-0012')
     expect(

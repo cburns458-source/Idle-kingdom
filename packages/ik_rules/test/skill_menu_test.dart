@@ -19,7 +19,7 @@ void main() {
 
   test('smithing groups the same material at one level on Basic metal', () {
     final view = skillMenuView(db, smithingSkillId);
-    expect(view.tabs.map((tab) => tab.label), ['Basic metal', 'Other']);
+    expect(view.tabs.map((tab) => tab.label), ['Basic metal']);
     final rows = skillMenuDisplayEntries(db, smithingSkillId);
     expect(rows.any((row) => row.displayName == 'Tungsten items' && row.level == 70), isTrue);
     expect(rows.where((row) => row.displayName == 'Tungsten Sword'), isEmpty);
@@ -37,13 +37,13 @@ void main() {
       isFalse,
     );
     expect(
-      view.tabs.last.sections
+      view.tabs.first.sections
           .expand((section) => section.entries)
           .any((row) => row.displayName == 'Warhammer'),
       isFalse,
     );
     expect(
-      view.tabs.last.sections
+      view.tabs.first.sections
           .expand((section) => section.entries)
           .any((row) => row.displayName == 'Steel Warhammer'),
       isFalse,
