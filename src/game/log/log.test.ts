@@ -47,6 +47,9 @@ describe('quest log', () => {
     expect(rows.find((row) => row.questId === 'QST-0003')!.detail).toContain(
       'asking for help in the town',
     )
+    expect(rows.find((row) => row.questId === 'QST-0004')!.detail).toContain(
+      'guide was waiting in the Citadel plaza',
+    )
   })
 
   it('reveals journal steps for an active quest without numeric progress', () => {
@@ -60,6 +63,15 @@ describe('quest log', () => {
     expect(row.steps).toEqual([
       { key: 'QSTP-0001', label: 'Hear what the King needs', state: 'current' },
     ])
+  })
+
+  it('opens the Citadel tour on Hear the guide', () => {
+    const save = {
+      ...createNewSave(launch),
+      quests: [{ questId: 'QST-0004', status: 'active' as const, progress: 0, counters: {} }],
+    }
+    const row = questLog(launch, save).find((entry) => entry.questId === 'QST-0004')!
+    expect(row.steps).toEqual([{ key: 'QSTP-0008', label: 'Hear the guide', state: 'current' }])
   })
 
   it('reveals the next feast step after the King is heard', () => {

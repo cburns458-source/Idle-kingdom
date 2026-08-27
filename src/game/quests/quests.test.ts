@@ -194,11 +194,16 @@ describe('quest tours', () => {
     save = applyTravelArrival(launch, save, 'LOC-0030', Date.parse('2026-01-01T00:00:02.000Z'))
     save = applyTravelArrival(launch, save, 'LOC-0035', Date.parse('2026-01-01T00:00:03.000Z'))
     save = applyTravelArrival(launch, save, 'LOC-0033', Date.parse('2026-01-01T00:00:04.000Z'))
-    save = applyQuestTalkProgress(launch, save, 'NPC-0013')
-    save = applyQuestTalkProgress(launch, save, 'NPC-0006')
     save = applyQuestInspectProgress(launch, save, 'bazaar')
     save = applyQuestInspectProgress(launch, save, 'bounties')
     save = applyQuestInspectProgress(launch, save, 'processing')
+    save = applyQuestTalkProgress(launch, save, 'NPC-0006')
+    expect(hasQuestFlag(save, 'QST-0004', 'talk:NPC-0006')).toBe(false)
+    expect(completeQuest(launch, save, 'QST-0004').ok).toBe(false)
+
+    save = applyQuestTalkProgress(launch, save, 'NPC-0013')
+    expect(completeQuest(launch, save, 'QST-0004').ok).toBe(false)
+    save = applyQuestTalkProgress(launch, save, 'NPC-0006')
     save = { ...save, currentLocationId: 'LOC-0028' }
     const completed = completeQuest(launch, save, 'QST-0004')
     expect(completed.ok).toBe(true)

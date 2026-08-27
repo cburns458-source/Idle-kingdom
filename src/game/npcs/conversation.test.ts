@@ -180,6 +180,14 @@ describe('npc conversation', () => {
     const shopkeeper = npcConversation(launch, saveAt('LOC-0007'), npc('NPC-0009'))
     expect(shopkeeper.quests[0]!.pitchLine).toContain('mine below the tower')
 
+    const guidePitch = npcConversation(launch, saveAt('LOC-0028'), npc('NPC-0013'))
+    expect(guidePitch.greeting).toEqual({
+      kind: 'quest_pitch',
+      questId: 'QST-0004',
+      line: 'Welcome to the Citadel. If you have a moment, I can help you find your feet.',
+      acceptLabel: 'Start quest: Visiting the Citadel',
+    })
+
     const archmage = npcConversation(
       launch,
       {
@@ -282,5 +290,42 @@ describe('npc conversation', () => {
     const warnedChoice = npcConversation(launch, afterBoth, npc('NPC-0012'))
     expect(warnedChoice.quests[0]!.canBribe).toBe(true)
     expect(warnedChoice.quests[0]!.canChooseCombat).toBe(true)
+  })
+
+  it('lets the Citadel guide welcome visitors without listing every hall', () => {
+    const save = {
+      ...saveAt('LOC-0028'),
+      quests: [{ questId: 'QST-0004', status: 'active' as const, progress: 0 }],
+    }
+    const guide = npcConversation(launch, save, npc('NPC-0013'))
+    expect(guide.greeting).toBeNull()
+    expect(guide.quests[0]!.canTalk).toBe(true)
+    expect(guide.quests[0]!.talkLine).toMatch(/other halls/)
+    expect(guide.quests[0]!.talkLine).not.toMatch(/Guild Hall/)
+    expect(guide.quests[0]!.talkLine).not.toMatch(/Bounty Board/)
+    expect(guide.quests[0]!.ready).toBe(false)
+
+    const marketTooSoon = npcConversation(
+      launch,
+      { ...save, currentLocationId: 'LOC-0029' },
+      npc('NPC-0006'),
+    )
+    expect(marketTooSoon.quests).toEqual([])
+
+    const heard = {
+      ...save,
+      currentLocationId: 'LOC-0029',
+      quests: [
+        {
+          questId: 'QST-0004',
+          status: 'active' as const,
+          progress: 1,
+          counters: { 'talk:NPC-0013': 1 },
+        },
+      ],
+    }
+    const market = npcConversation(launch, heard, npc('NPC-0006'))
+    expect(market.quests[0]!.canTalk).toBe(true)
+    expect(market.quests[0]!.talkLine).toMatch(/no obligation to buy/)
   })
 })
