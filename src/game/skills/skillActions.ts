@@ -39,6 +39,7 @@ const COMBAT_GEAR_WORDS = [
 ] as const
 
 const COMBAT_ARMOR_WORDS = ['Helmet', 'Chestplate', 'Platelegs', 'Boots', 'Gloves', 'Shield'] as const
+const COMBAT_WEAPON_WORDS = ['Sword', 'Dagger', 'Warhammer', 'Battleaxe'] as const
 
 export interface SkillMenuListItem {
   id: string
@@ -323,7 +324,26 @@ function combatEquipmentEntries(db: GameDatabase): SkillMenuListItem[] {
 }
 
 function combatWeaponEntries(db: GameDatabase): SkillMenuListItem[] {
-  return dedupeByName(combatGearItems(db).filter((item) => !armorMaterial(item.displayName)))
+  const grouped: SkillMenuListItem[] = []
+  const leftover: SkillMenuListItem[] = []
+  const seen = new Set<string>()
+  for (const item of combatGearItems(db)) {
+    if (armorMaterial(item.displayName)) continue
+    const material = weaponMaterial(item.displayName)
+    if (!material) {
+      leftover.push(item)
+      continue
+    }
+    const key = `${item.level ?? ''}|${material}`
+    if (seen.has(key)) continue
+    seen.add(key)
+    grouped.push({
+      id: key,
+      displayName: `${material} weapons`,
+      level: item.level,
+    })
+  }
+  return dedupeByName([...grouped, ...leftover])
 }
 
 function gatheringToolEntries(db: GameDatabase, skillId: string): SkillMenuListItem[] {
@@ -428,6 +448,15 @@ function smithingMaterial(name: string): string | null {
 
 function armorMaterial(name: string): string | null {
   for (const word of COMBAT_ARMOR_WORDS) {
+    if (!endsWithWord(name, word)) continue
+    const material = name.slice(0, Math.max(0, name.length - word.length)).trim()
+    return material || null
+  }
+  return null
+}
+
+function weaponMaterial(name: string): string | null {
+  for (const word of COMBAT_WEAPON_WORDS) {
     if (!endsWithWord(name, word)) continue
     const material = name.slice(0, Math.max(0, name.length - word.length)).trim()
     return material || null

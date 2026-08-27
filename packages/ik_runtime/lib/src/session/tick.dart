@@ -246,17 +246,20 @@ void _resolveDueCombatRound(
     return;
   }
 
-  out.set(
-    before.copyWith(
-      currentHp: round.playerHp,
-      combatEnemyHp: round.enemyHp,
-      combatRoundStartedAt: isoFromMs(roundEnd),
-      combatSkipEnemyAttack: round.skipNextEnemyAttack,
-      combatBossSleepRoundsRemaining: round.bossSleepRoundsRemaining,
-    ),
+  final continued = before.copyWith(
+    currentHp: round.playerHp,
+    combatEnemyHp: round.enemyHp,
+    combatRoundStartedAt: isoFromMs(roundEnd),
+    combatSkipEnemyAttack: round.skipNextEnemyAttack,
+    combatBossSleepRoundsRemaining: round.bossSleepRoundsRemaining,
   );
+  final food = consumeFoodBetweenRounds(db, continued);
+  out.set(food.save);
   out.creditCritterTime(roundMs, roundEnd, random);
   out.emit(MessageEvent(_roundMessage(enemy, round)));
+  if (food.consumed && food.healed != 0) {
+    out.emit(FoodHealedEvent(healed: food.healed, foodName: jsString(food.foodName)));
+  }
 }
 
 /// Advances whatever the save has due at [nowMs]: one combat round, one gathering

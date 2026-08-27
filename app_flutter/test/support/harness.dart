@@ -184,15 +184,13 @@ Future<void> pumpShell(
   WidgetTester tester,
   GameController controller, {
   MultiplayerController? multiplayer,
-  Size? size,
+  Size size = const Size(900, 2400),
 }) async {
-  // The location screen is a lazy list, so a test that reaches for something far
-  // down it needs a window tall enough to have built that far.
-  if (size != null) {
-    tester.view.physicalSize = size;
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.reset);
-  }
+  // Phone-shaped by default so side chat does not open. Wide-layout tests pass
+  // a landscape size. A tall window also lets the location list build farther.
+  tester.view.physicalSize = size;
+  tester.view.devicePixelRatio = 1;
+  addTearDown(tester.view.reset);
   final net = multiplayer ?? buildMultiplayer(controller.database);
   if (multiplayer == null) addTearDown(net.dispose);
   await tester.pumpWidget(

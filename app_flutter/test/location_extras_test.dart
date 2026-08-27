@@ -378,6 +378,25 @@ void main() {
     expect(find.byTooltip('Back to Town'), findsOne);
   });
 
+  testWidgets('the option band shows one tab per group at the kitchen', (tester) async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(currentLocationId: 'LOC-0023'),
+    );
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller);
+
+    expect(find.widgetWithText(GameButton, 'Activities'), findsOne);
+    expect(find.widgetWithText(GameButton, 'People'), findsOne);
+    expect(find.text('Cook at the kitchen'), findsOne);
+    expect(find.text('Rose'), findsNothing);
+
+    await tester.tap(find.widgetWithText(GameButton, 'People'));
+    await tester.pump();
+    expect(find.text('Rose'), findsOne);
+    expect(find.text('Cook at the kitchen'), findsNothing);
+  });
+
   testWidgets('expanding the option list does not carry to the next location', (tester) async {
     final controller = buildController(
       database,

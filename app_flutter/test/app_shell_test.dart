@@ -592,6 +592,20 @@ void main() {
     expect(controller.mapTravelAnimation, isTrue);
   });
 
+  testWidgets('a wide window docks chat beside a full-height 9:16 column', (tester) async {
+    final controller = buildController(database, seed: startedCharacter(database));
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller, size: const Size(1920, 1080));
+    await tester.pump();
+
+    expect(find.byTooltip('Open chat'), findsNothing);
+    expect(find.byKey(const Key('chat-panel')), findsOne);
+    expect(find.byTooltip('Close chat'), findsNothing);
+    final frame = tester.getSize(find.byType(AppShell));
+    expect(frame.height, 1080);
+    expect(tester.getSize(find.byKey(const Key('chat-panel'))).width, greaterThan(300));
+  });
+
   testWidgets('chat opens above the chin with a close control', (tester) async {
     final controller = buildController(database, seed: startedCharacter(database));
     addTearDown(controller.dispose);

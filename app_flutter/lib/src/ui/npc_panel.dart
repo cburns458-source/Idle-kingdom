@@ -6,6 +6,7 @@ import '../session/game_controller.dart';
 import '../theme.dart';
 import 'format.dart';
 import 'game_popup.dart';
+import 'social_bits.dart';
 
 /// Talking to somebody: their greeting, what they can teach, and their quests.
 ///
@@ -214,7 +215,7 @@ class _NpcPanelState extends State<NpcPanel> {
 
     switch (_dialogue) {
       case MerchantGreeting(line: final line, detail: final detail):
-        return _DialogueCard(
+        return _playerDialogue(
           name: conversation.name,
           line: line,
           detail: detail,
@@ -231,7 +232,7 @@ class _NpcPanelState extends State<NpcPanel> {
         );
       case QuestPitchGreeting(questId: final questId, line: final line, acceptLabel: final label):
         final quest = conversation.quests.where((row) => row.questId == questId).firstOrNull;
-        return _DialogueCard(
+        return _playerDialogue(
           name: conversation.name,
           line: line,
           error: _error,
@@ -253,7 +254,7 @@ class _NpcPanelState extends State<NpcPanel> {
     }
 
     if (_talkLine case final talkLine?) {
-      return _DialogueCard(
+      return _playerDialogue(
         name: conversation.name,
         line: talkLine,
         actions: [GameButton(label: 'Continue', onPressed: _commitTalk)],
@@ -261,7 +262,7 @@ class _NpcPanelState extends State<NpcPanel> {
     }
 
     if (_whereaboutsLine case final whereaboutsLine?) {
-      return _DialogueCard(
+      return _playerDialogue(
         name: conversation.name,
         line: whereaboutsLine,
         actions: [
@@ -271,7 +272,7 @@ class _NpcPanelState extends State<NpcPanel> {
     }
 
     if (_mentorLine case final mentorLine?) {
-      return _DialogueCard(
+      return _playerDialogue(
         name: conversation.name,
         line: mentorLine,
         actions: [GameButton(label: 'Continue', onPressed: _commitLearn)],
@@ -360,6 +361,24 @@ class _NpcPanelState extends State<NpcPanel> {
           ],
         ],
       ),
+    );
+  }
+
+  Widget _playerDialogue({
+    required String name,
+    required String line,
+    String? detail,
+    String? error,
+    required List<Widget> actions,
+  }) {
+    return _DialogueCard(
+      name: name,
+      line: line,
+      detail: detail,
+      error: error,
+      actions: actions,
+      appearance: controller.save.appearance,
+      raceId: controller.save.raceId,
     );
   }
 }
@@ -460,6 +479,8 @@ class _DialogueCard extends StatelessWidget {
     required this.name,
     required this.line,
     required this.actions,
+    required this.appearance,
+    this.raceId,
     this.detail,
     this.error,
   });
@@ -471,6 +492,8 @@ class _DialogueCard extends StatelessWidget {
   final String? detail;
   final String? error;
   final List<Widget> actions;
+  final PlayerAppearance appearance;
+  final String? raceId;
 
   @override
   Widget build(BuildContext context) {
@@ -478,7 +501,21 @@ class _DialogueCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w400)),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              IgnorePointer(
+                child: SocialPortrait(appearance: appearance, raceId: raceId, size: 68),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  name,
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w400),
+                ),
+              ),
+            ],
+          ),
           const SizedBox(height: 6),
           Text(line, style: const TextStyle(fontSize: 15)),
           if (detail case final detail?) ...[const SizedBox(height: 4), MutedText(detail)],

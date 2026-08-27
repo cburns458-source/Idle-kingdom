@@ -16,8 +16,13 @@ void main() {
     expect(playableFrameSize(const Size(390, 844)), const Size(390, 844));
   });
 
-  test('a landscape desktop window is a 9:16 phone', () {
-    expect(playableFrameSize(const Size(1920, 1080)), const Size(420, 420 * 16 / 9));
+  test('a landscape desktop window is a full-height 9:16 column', () {
+    expect(playableFrameHasSideChat(const Size(1920, 1080)), isTrue);
+    expect(playableFrameSize(const Size(1920, 1080)), const Size(1080 * 9 / 16, 1080));
+  });
+
+  test('a phone-narrow window does not open side chat', () {
+    expect(playableFrameHasSideChat(const Size(390, 844)), isFalse);
   });
 
   test('an empty box is returned unchanged', () {

@@ -164,8 +164,9 @@ class _PlayerProfileSheetState extends State<PlayerProfileSheet> {
               SocialPortrait(
                 appearance: view.appearance,
                 raceId: view.raceId,
-                size: 52,
+                size: 156,
                 height: 156,
+                fullArt: true,
               ),
               const SizedBox(width: 10),
               Expanded(

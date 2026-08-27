@@ -237,7 +237,9 @@ class _GuildHallPanelState extends State<GuildHallPanel> {
     final hall = _hall!;
     final bag = <(int, InventoryStack)>[
       for (final entry in save.inventory.indexed)
-        if (!stackIsUnbankableGold(entry.$2)) (entry.$1, entry.$2),
+        if (!stackIsUnbankableGold(entry.$2) &&
+            guildHallDonationCap(hall.completedTiers, hall.storehouse, entry.$2.itemId) > 0)
+          (entry.$1, entry.$2),
     ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -254,10 +256,7 @@ class _GuildHallPanelState extends State<GuildHallPanel> {
               child: DockRow(
                 title: _itemName(entry.$2),
                 lines: [MutedText('×${formatThousands(entry.$2.quantity)}')],
-                trailing:
-                    guildHallDonationCap(hall.completedTiers, hall.storehouse, entry.$2.itemId) > 0
-                    ? GameButton(label: 'In', onPressed: () => _deposit(entry.$1, entry.$2))
-                    : const SizedBox.shrink(),
+                trailing: GameButton(label: 'In', onPressed: () => _deposit(entry.$1, entry.$2)),
               ),
             ),
         const SizedBox(height: 8),
