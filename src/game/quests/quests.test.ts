@@ -39,11 +39,33 @@ describe('quest tours', () => {
     expect(completeQuest(launch, save, 'QST-0001').ok).toBe(false)
 
     save = addItemToInventory(save, 'ITEM-0058', 10)
+    expect(completeQuest(launch, save, 'QST-0001').ok).toBe(false)
+    save = addItemToInventory(save, 'ITEM-0059', 10)
     const completed = completeQuest(launch, save, 'QST-0001')
     expect(completed.ok).toBe(true)
     if (!completed.ok) return
-    expect(completed.rewards.some((reward) => /Cooking XP/i.test(reward.label))).toBe(true)
+    expect(completed.rewards.some((reward) => reward.label === '10,000 Cooking XP')).toBe(true)
     expect(completed.rewards.some((reward) => /Golden Spud/i.test(reward.label))).toBe(true)
+  })
+
+  it("reveals Rose's shopping list after she is heard", () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    let save = { ...createNewSave(launch), currentLocationId: 'LOC-0023', gold: 1500 }
+    save = addItemToInventory(save, 'ITEM-0038', 5)
+    save = addItemToInventory(save, 'ITEM-0031', 5)
+
+    const accepted = acceptQuest(launch, save, 'QST-0002')
+    expect(accepted.ok).toBe(true)
+    if (!accepted.ok) return
+    save = accepted.save
+    expect(completeQuest(launch, save, 'QST-0002').ok).toBe(false)
+
+    save = applyQuestTalkProgress(launch, save, 'NPC-0005')
+    const completed = completeQuest(launch, save, 'QST-0002')
+    expect(completed.ok).toBe(true)
+    if (!completed.ok) return
+    expect(completed.save.unlockedLocationIds).toContain('LOC-0026')
+    expect(completed.save.gold).toBe(500)
   })
 
   it('charges 25 gold, recovers the purse by bribe, and grants the hood plus skill XP', () => {

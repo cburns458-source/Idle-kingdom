@@ -83,7 +83,7 @@ describe('npc conversation', () => {
 
     const quest = conversation.quests[0]!
     expect(quest.status).toBe('inactive')
-    expect(quest.goldRequired).toBe(1_000)
+    expect(quest.summary).toContain('out of the kitchens')
 
     let stocked = { ...save, gold: 1_500 }
     stocked = addItemToInventory(stocked, 'ITEM-0038', 5)
@@ -92,14 +92,19 @@ describe('npc conversation', () => {
       { questId: 'QST-0002', status: 'active', progress: 0 },
     ] }, npc('NPC-0005'))
     expect(accepted.greeting).toBeNull()
-    expect(accepted.quests[0]!.ready).toBe(true)
+    expect(accepted.quests[0]!.canTalk).toBe(true)
+    expect(accepted.quests[0]!.talkLine).toContain("rabbit's feet")
+    expect(accepted.quests[0]!.ready).toBe(false)
   })
 
   it('names the location a completed quest opened', () => {
     let save = { ...saveAt('LOC-0023'), gold: 1_500 }
     save = addItemToInventory(save, 'ITEM-0038', 5)
     save = addItemToInventory(save, 'ITEM-0031', 5)
-    save = { ...save, quests: [{ questId: 'QST-0002', status: 'active', progress: 0 }] }
+    save = {
+      ...save,
+      quests: [{ questId: 'QST-0002', status: 'active', progress: 0, counters: { 'talk:NPC-0005': 1 } }],
+    }
     const completed = completeQuest(launch, save, 'QST-0002')
     expect(completed.ok).toBe(true)
     if (!completed.ok) return
@@ -155,7 +160,7 @@ describe('npc conversation', () => {
     const conversation = npcConversation(launch, save, npc('NPC-0001'))
     expect(conversation.greeting).toBeNull()
     expect(conversation.quests[0]!.canTalk).toBe(true)
-    expect(conversation.quests[0]!.talkLine).toContain('baked potatoes')
+    expect(conversation.quests[0]!.talkLine).toContain('cooked crawfish')
     expect(conversation.quests[0]!.ready).toBe(false)
   })
 

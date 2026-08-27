@@ -185,9 +185,15 @@ void main() {
     addTearDown(controller.dispose);
 
     await pumpPanel(tester, NpcPanel(controller: controller, npc: npcOf(roseId), onClose: () {}));
-    expect(find.text('What else do you need?'), findsOne);
+    expect(find.text('Talk'), findsOne);
     expect(find.textContaining("Progress: 5 / 5 Rabbit's Foot"), findsNothing);
     expect(find.text('Gold: 1,500 / 1,000'), findsNothing);
+
+    await tester.tap(find.text('Talk'));
+    await tester.pump();
+    expect(find.textContaining("rabbit's feet"), findsOne);
+    await tester.tap(find.text('Continue'));
+    await tester.pump();
 
     await tester.tap(find.text('Turn in'));
     await tester.pumpAndSettle();
