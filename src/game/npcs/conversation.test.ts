@@ -88,12 +88,14 @@ describe('npc conversation', () => {
     let stocked = { ...save, gold: 1_500 }
     stocked = addItemToInventory(stocked, 'ITEM-0038', 5)
     stocked = addItemToInventory(stocked, 'ITEM-0031', 5)
+    stocked = addItemToInventory(stocked, 'ITEM-0028', 5)
+    stocked = addItemToInventory(stocked, 'ITEM-0042', 5)
     const accepted = npcConversation(launch, { ...stocked, quests: [
       { questId: 'QST-0002', status: 'active', progress: 0 },
     ] }, npc('NPC-0005'))
     expect(accepted.greeting).toBeNull()
     expect(accepted.quests[0]!.canTalk).toBe(true)
-    expect(accepted.quests[0]!.talkLine).toContain("rabbit's feet")
+    expect(accepted.quests[0]!.talkLine).toContain('wild berries')
     expect(accepted.quests[0]!.ready).toBe(false)
   })
 
@@ -101,6 +103,8 @@ describe('npc conversation', () => {
     let save = { ...saveAt('LOC-0023'), gold: 1_500 }
     save = addItemToInventory(save, 'ITEM-0038', 5)
     save = addItemToInventory(save, 'ITEM-0031', 5)
+    save = addItemToInventory(save, 'ITEM-0028', 5)
+    save = addItemToInventory(save, 'ITEM-0042', 5)
     save = {
       ...save,
       quests: [{ questId: 'QST-0002', status: 'active', progress: 0, counters: { 'talk:NPC-0005': 1 } }],

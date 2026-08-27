@@ -53,6 +53,8 @@ describe('quest tours', () => {
     let save = { ...createNewSave(launch), currentLocationId: 'LOC-0023', gold: 1500 }
     save = addItemToInventory(save, 'ITEM-0038', 5)
     save = addItemToInventory(save, 'ITEM-0031', 5)
+    save = addItemToInventory(save, 'ITEM-0028', 5)
+    save = addItemToInventory(save, 'ITEM-0042', 5)
 
     const accepted = acceptQuest(launch, save, 'QST-0002')
     expect(accepted.ok).toBe(true)

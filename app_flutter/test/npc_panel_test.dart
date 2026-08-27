@@ -178,6 +178,8 @@ void main() {
         inventory: const [
           InventoryStack(itemId: rabbitsFootId, quantity: 5),
           InventoryStack(itemId: fernleafId, quantity: 5),
+          InventoryStack(itemId: 'ITEM-0028', quantity: 5),
+          InventoryStack(itemId: 'ITEM-0042', quantity: 5),
         ],
         quests: const [QuestProgress(questId: 'QST-0002', status: 'active', progress: 0)],
       ),
@@ -191,7 +193,7 @@ void main() {
 
     await tester.tap(find.text('Talk'));
     await tester.pump();
-    expect(find.textContaining("rabbit's feet"), findsOne);
+    expect(find.textContaining('wild berries'), findsOne);
     await tester.tap(find.text('Continue'));
     await tester.pump();
 
