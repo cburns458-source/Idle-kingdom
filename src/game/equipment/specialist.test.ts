@@ -70,7 +70,11 @@ describe('specialist hats and quiver', () => {
       ),
     }
     save = addItemToInventory(save, 'ITEM-0098', 1)
-    save = addItemToInventory(save, 'ITEM-0011', 198)
+    const gatheringEssence = Number(
+      launch.Projects.find((row) => row['Project ID'] === 'PRJ-0134')?.['Input 2 Quantity'] ?? 0,
+    )
+    const discounted = wizardEssenceCost(gatheringEssence, save)
+    save = addItemToInventory(save, 'ITEM-0011', discounted)
     save = addItemToInventory(save, 'ITEM-0031', 10)
     save = addItemToInventory(save, 'ITEM-0119', 1)
     const invIndex = save.inventory.findIndex((stack) => stack.itemId === 'ITEM-0119')

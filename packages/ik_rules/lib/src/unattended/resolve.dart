@@ -6,6 +6,7 @@ import 'package:ik_content/ik_content.dart';
 import '../activity/engine.dart';
 import '../activity/transition.dart';
 import '../combat/engine.dart';
+import '../combat/food.dart';
 import '../config.dart';
 import '../critters/critters.dart';
 import '../js_compat.dart';
@@ -245,13 +246,16 @@ UnattendedResult resolveUnattendedProgress(
         continue;
       }
 
-      var continued = current.copyWith(
-        currentHp: round.playerHp,
-        combatEnemyHp: round.enemyHp,
-        combatRoundStartedAt: isoFromMs(roundEnd),
-        combatSkipEnemyAttack: round.skipNextEnemyAttack,
-        combatBossSleepRoundsRemaining: round.bossSleepRoundsRemaining,
-      );
+      var continued = consumeFoodBetweenRounds(
+        db,
+        current.copyWith(
+          currentHp: round.playerHp,
+          combatEnemyHp: round.enemyHp,
+          combatRoundStartedAt: isoFromMs(roundEnd),
+          combatSkipEnemyAttack: round.skipNextEnemyAttack,
+          combatBossSleepRoundsRemaining: round.bossSleepRoundsRemaining,
+        ),
+      ).save;
       final critter = applyActivityTimeTowardCritters(
         continued,
         continued.currentLocationId,

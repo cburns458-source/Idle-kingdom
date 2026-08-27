@@ -154,14 +154,15 @@ void main() {
     await tester.tap(find.descendant(of: popup, matching: find.text('Weapons')));
     await tester.pump();
     await tester.scrollUntilVisible(
-      find.textContaining('Tungsten Sword'),
+      find.textContaining('Tungsten weapons'),
       200,
       scrollable: find.descendant(
         of: find.byKey(const Key('game-popup')),
         matching: find.byType(Scrollable),
       ),
     );
-    expect(find.textContaining('Tungsten Sword'), findsOne);
+    expect(find.textContaining('Tungsten weapons'), findsOne);
+    expect(find.textContaining('Tungsten Sword'), findsNothing);
     expect(find.textContaining('Tungsten Shield'), findsNothing);
   });
 

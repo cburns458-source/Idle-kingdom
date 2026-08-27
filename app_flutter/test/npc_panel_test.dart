@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:idle_kingdoms/src/ui/npc_panel.dart';
+import 'package:idle_kingdoms/src/ui/social_bits.dart';
 import 'package:ik_content/ik_content.dart';
 import 'package:ik_rules/ik_rules.dart';
 
@@ -53,6 +54,9 @@ void main() {
     await tester.tap(find.text('Ask about Quill'));
     await tester.pump();
     expect(find.textContaining('Last I heard, Quill was at the'), findsOne);
+    final portrait = tester.getRect(find.byType(SocialPortrait));
+    expect(portrait.width, 68);
+    expect(portrait.height, 68);
 
     await tester.tap(find.text('Continue'));
     await tester.pump();

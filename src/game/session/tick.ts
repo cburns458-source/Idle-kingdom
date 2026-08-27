@@ -19,6 +19,7 @@ import {
   getEnemy,
   resolveCombatRound,
 } from '../combat/engine'
+import { consumeFoodBetweenRounds } from '../combat/food'
 import { applyActivityTimeTowardCritters } from '../critters/critters'
 import type { ActionRow, EnemyRow, GameDatabase } from '../data/types'
 import { completeProductionCraft } from '../production/engine'
@@ -259,16 +260,25 @@ function resolveDueCombatRound(
     return
   }
 
-  out.set({
+  const continued = {
     ...before,
     currentHp: round.playerHp,
     combatEnemyHp: round.enemyHp,
     combatRoundStartedAt: new Date(roundEnd).toISOString(),
     combatSkipEnemyAttack: round.skipNextEnemyAttack,
     combatBossSleepRoundsRemaining: round.bossSleepRoundsRemaining,
-  })
+  }
+  const food = consumeFoodBetweenRounds(db, continued)
+  out.set(food.save)
   out.creditCritterTime(roundMs, roundEnd, random)
   out.emit({ kind: 'message', text: roundMessage(enemy, round) })
+  if (food.consumed && food.healed !== 0) {
+    out.emit({
+      kind: 'food-healed',
+      healed: food.healed,
+      foodName: String(food.foodName ?? ''),
+    })
+  }
 }
 
 /**

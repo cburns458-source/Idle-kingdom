@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:idle_kingdoms/src/theme.dart';
 import 'package:idle_kingdoms/src/ui/bank_panel.dart';
 import 'package:idle_kingdoms/src/ui/location_view.dart';
 import 'package:ik_content/ik_content.dart';
@@ -103,6 +104,8 @@ void main() {
       tester,
       LocationView(controller: town, multiplayer: buildMultiplayer(database), onOpenMap: () {}),
     );
+    await tester.tap(find.widgetWithText(GameButton, 'Bank'));
+    await tester.pump();
     expect(find.text('Item storage'), findsOne);
 
     final meadow = buildController(

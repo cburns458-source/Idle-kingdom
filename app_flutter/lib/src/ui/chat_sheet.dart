@@ -86,6 +86,7 @@ class ChatSheet extends StatefulWidget {
     required this.locationId,
     required this.citadelHub,
     required this.onClose,
+    this.embedded = false,
   });
 
   final GameController controller;
@@ -93,6 +94,9 @@ class ChatSheet extends StatefulWidget {
   final String locationId;
   final bool citadelHub;
   final VoidCallback onClose;
+
+  /// Side-docked chat stays open; the close control is hidden.
+  final bool embedded;
 
   @override
   State<ChatSheet> createState() => _ChatSheetState();
@@ -113,7 +117,12 @@ class _ChatSheetState extends State<ChatSheet> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _pinToLatest(force: true));
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _pinToLatest(force: true);
+      if (widget.embedded && net.canSeeSocialPages) {
+        net.selectChatTab(net.chatTab, widget.locationId, citadelHub: widget.citadelHub);
+      }
+    });
   }
 
   @override
@@ -342,14 +351,16 @@ class _ChatSheetState extends State<ChatSheet> {
               ),
             ),
           ),
-          const SizedBox(width: 8),
-          GameButton(
-            label: 'Close',
-            tone: GameButtonTone.secondary,
-            compact: true,
-            tooltip: 'Close chat',
-            onPressed: _close,
-          ),
+          if (!widget.embedded) ...[
+            const SizedBox(width: 8),
+            GameButton(
+              label: 'Close',
+              tone: GameButtonTone.secondary,
+              compact: true,
+              tooltip: 'Close chat',
+              onPressed: _close,
+            ),
+          ],
         ],
       ),
     );

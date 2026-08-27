@@ -146,6 +146,7 @@ void main() {
     await tester.pump();
 
     expect(find.text('In'), findsNothing);
+    expect(find.textContaining('Fernleaf'), findsNothing);
   });
 
   testWidgets('a finished counting room adds a Bank that opens the bank screen', (tester) async {

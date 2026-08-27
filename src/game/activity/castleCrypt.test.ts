@@ -114,7 +114,7 @@ describe("Mage's Wand", () => {
       'Input 1 Item ID': 'ITEM-0217',
       'Input 1 Quantity': 5,
       'Input 2 Item ID': 'ITEM-0011',
-      'Input 2 Quantity': 5,
+      'Input 2 Quantity': 50,
       'Input 3 Item ID': 'ITEM-0089',
       'Input 3 Quantity': 1,
       'XP Reward': 200000,

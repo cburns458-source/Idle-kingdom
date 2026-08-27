@@ -378,6 +378,25 @@ void main() {
     expect(find.byTooltip('Back to Town'), findsOne);
   });
 
+  testWidgets('the option band shows one tab per group at the kitchen', (tester) async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(currentLocationId: 'LOC-0023'),
+    );
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller);
+
+    expect(find.widgetWithText(GameButton, 'Activities'), findsOne);
+    expect(find.widgetWithText(GameButton, 'People'), findsOne);
+    expect(find.text('Cook at the kitchen'), findsOne);
+    expect(find.text('Rose'), findsNothing);
+
+    await tester.tap(find.widgetWithText(GameButton, 'People'));
+    await tester.pump();
+    expect(find.text('Rose'), findsOne);
+    expect(find.text('Cook at the kitchen'), findsNothing);
+  });
+
   testWidgets('expanding the option list does not carry to the next location', (tester) async {
     final controller = buildController(
       database,
@@ -415,6 +434,11 @@ void main() {
         ),
         size: const Size(900, 2400),
       );
+      final people = find.widgetWithText(GameButton, 'People');
+      if (people.evaluate().isNotEmpty) {
+        await tester.tap(people);
+        await tester.pump();
+      }
       expect(find.text('Quill'), locationId == today ? findsOne : findsNothing);
     }
   });
@@ -436,6 +460,11 @@ void main() {
         ),
         size: const Size(900, 2400),
       );
+      final people = find.widgetWithText(GameButton, 'People');
+      if (people.evaluate().isNotEmpty) {
+        await tester.tap(people);
+        await tester.pump();
+      }
       expect(find.text('Master Dwarf'), locationId == today ? findsOne : findsNothing);
     }
   });
@@ -473,6 +502,8 @@ void main() {
     expect(controller.save.currentActivityId, isNotNull);
     expect(find.byType(ActionStage), findsOne);
 
+    await tester.tap(find.widgetWithText(GameButton, 'Shops'));
+    await tester.pump();
     await tapVisible(
       tester,
       find.descendant(of: dockRow('Armory'), matching: find.widgetWithText(GameButton, 'Shop')),

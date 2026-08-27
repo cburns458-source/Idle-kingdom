@@ -47,15 +47,18 @@ describe('skill menu entries', () => {
     expect(skillMenuLine(goblin!)).toMatch(/^\d+\. Goblin Scout$/)
 
     const smithing = skillMenuView(launch, 'SKL-0011')
-    expect(smithing.tabs.map((tab) => tab.label)).toEqual(['Basic metal', 'Other'])
+    expect(smithing.tabs.map((tab) => tab.label)).toEqual(['Basic metal'])
     expect(
       smithing.tabs[0]?.sections[0]?.entries.some(
         (item) => item.displayName === 'Steel items' && item.level === 35,
       ),
     ).toBe(true)
-    expect(smithing.tabs[1]?.sections[0]?.entries.some((item) => item.displayName === 'Warhammer')).toBe(
-      true,
+    expect(smithing.tabs[0]?.sections[0]?.entries.some((item) => item.displayName === 'Warhammer')).toBe(
+      false,
     )
+    expect(
+      smithing.tabs[0]?.sections[0]?.entries.some((item) => item.displayName === 'Steel Warhammer'),
+    ).toBe(false)
 
     const artisanry = skillMenuView(launch, 'SKL-0012')
     expect(
@@ -90,8 +93,13 @@ describe('skill menu entries', () => {
     expect(gear.some((item) => item.displayName === 'Tungsten Helmet')).toBe(false)
     expect(gear.some((item) => item.displayName === 'Tungsten Shield')).toBe(false)
     expect(gear.some((item) => item.displayName === 'Tungsten Sword')).toBe(false)
-    expect(weapons.some((item) => item.displayName === 'Tungsten Sword')).toBe(true)
-    expect(weapons.some((item) => item.displayName === 'Wooden Sword')).toBe(true)
+    expect(weapons.some((item) => item.displayName === 'Tungsten weapons')).toBe(true)
+    expect(weapons.some((item) => item.displayName === 'Wooden weapons')).toBe(true)
+    expect(weapons.some((item) => item.displayName === 'Steel weapons')).toBe(true)
+    expect(weapons.some((item) => item.displayName === 'Tungsten Sword')).toBe(false)
+    expect(weapons.some((item) => item.displayName === 'Wooden Sword')).toBe(false)
+    expect(weapons.some((item) => item.displayName === 'Steel Warhammer')).toBe(false)
+    expect(weapons.some((item) => item.displayName === 'Cedar Bow')).toBe(true)
     expect(weapons.some((item) => item.displayName === 'Tungsten Shield')).toBe(false)
   })
 
@@ -110,6 +118,8 @@ describe('skill menu entries', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const items = skillMenuEntries(launch, 'SKL-0013')
     expect(items.some((item) => item.displayName === 'Strength Spell')).toBe(true)
+    expect(items.some((item) => item.displayName === 'Gluttony Spell')).toBe(true)
+    expect(items.find((item) => item.displayName === 'Gluttony Spell')?.level).toBe(30)
     expect(items.some((item) => item.displayName === 'Minor Gathering Enchantment')).toBe(true)
     expect(items.find((item) => item.displayName === 'Minor Gathering Enchantment')?.level).toBe(20)
   })

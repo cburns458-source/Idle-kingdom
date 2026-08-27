@@ -11,6 +11,7 @@ import '../theme.dart';
 import 'format.dart';
 import 'game_image.dart';
 import 'item_icon.dart';
+import 'playable_frame.dart';
 
 /// How tall a fighter, a gathering scene, or a workstation is drawn.
 const double _portraitHeight = 152;
@@ -41,6 +42,14 @@ class ActionStage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return MediaQuery(
+      data: MediaQuery.of(context)
+          .copyWith(textScaler: playableHudTextScaler(MediaQuery.textScalerOf(context))),
+      child: Builder(builder: _buildStage),
+    );
+  }
+
+  Widget _buildStage(BuildContext context) {
     final save = controller.save;
     if (save.currentActivityId == null) return const SizedBox.shrink();
     // A death blow keeps the last fight on screen for a beat, then Recovering

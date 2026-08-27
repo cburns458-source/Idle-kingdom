@@ -67,6 +67,7 @@ class SocialPortrait extends StatelessWidget {
     this.size = 34,
     this.height,
     this.borderColor,
+    this.fullArt = false,
   });
 
   final PlayerAppearance appearance;
@@ -77,8 +78,17 @@ class SocialPortrait extends StatelessWidget {
   final double? height;
   final Color? borderColor;
 
+  /// Full plate, no HUD crop. Used on the player profile.
+  final bool fullArt;
+
   @override
   Widget build(BuildContext context) {
+    final image = GameImage(
+      playerAssetPath(appearance, raceId: raceId),
+      alignment: Alignment.topCenter,
+      fit: fullArt ? BoxFit.contain : BoxFit.cover,
+      filterQuality: FilterQuality.none,
+    );
     return Container(
       width: size,
       height: height ?? size,
@@ -88,16 +98,13 @@ class SocialPortrait extends StatelessWidget {
         border: Border.all(color: borderColor ?? Palette.edge),
       ),
       clipBehavior: Clip.antiAlias,
-      child: Transform.scale(
-        scale: playerPortraitHeadZoom,
-        alignment: Alignment.topCenter,
-        child: GameImage(
-          playerAssetPath(appearance, raceId: raceId),
-          alignment: Alignment.topCenter,
-          fit: BoxFit.cover,
-          filterQuality: FilterQuality.none,
-        ),
-      ),
+      child: fullArt
+          ? image
+          : Transform.scale(
+              scale: playerPortraitHeadZoom,
+              alignment: Alignment.topCenter,
+              child: image,
+            ),
     );
   }
 }

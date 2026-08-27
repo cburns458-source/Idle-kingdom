@@ -117,6 +117,9 @@ class _LocationViewState extends State<LocationView> {
   /// The location the expand state belongs to, so travel collapses it.
   String? _bandAt;
 
+  /// Which option group is showing. Reset when the place changes.
+  String? _bandTab;
+
   static const double _collapsedBand = 176;
 
   /// Town, the cave mouth, and the castle gate still use the old square plates.
@@ -208,6 +211,7 @@ class _LocationViewState extends State<LocationView> {
     if (_bandAt != locationId) {
       _bandAt = locationId;
       _bandExpanded = false;
+      _bandTab = null;
     }
 
     final running = controller.save.currentActivityId != null;
@@ -412,20 +416,12 @@ class _LocationViewState extends State<LocationView> {
                     child: _FloatingOptionBand(
                       expanded: _bandExpanded,
                       onToggle: () => setState(() => _bandExpanded = !_bandExpanded),
+                      tabs: _optionSections(locationId).map((section) => section.label).toList(),
+                      selectedTab: _selectedBandTab(locationId),
+                      onSelectTab: (tab) => setState(() => _bandTab = tab),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          ..._activities(locationId),
-                          ..._blessing(),
-                          ..._stations(locationId),
-                          ..._people(locationId),
-                          ..._shops(locationId),
-                          ..._bank(),
-                          ..._arena(),
-                          ..._guildHall(),
-                          ..._citadelBoards(locationId),
-                          ..._searches(locationId),
-                        ],
+                        children: _selectedBandChildren(locationId),
                       ),
                     ),
                   ),
@@ -502,11 +498,44 @@ class _LocationViewState extends State<LocationView> {
     }
   }
 
+  List<_BandSection> _optionSections(String locationId) {
+    final sections = <_BandSection>[];
+    void add(String label, List<Widget> children) {
+      if (children.isEmpty) return;
+      sections.add(_BandSection(label, children));
+    }
+
+    add('Activities', _activities(locationId));
+    add('Blessing', _blessing());
+    add('Special production', _stations(locationId));
+    add('People', _people(locationId));
+    add('Shops', _shops(locationId));
+    add('Bank', _bank());
+    add('Arena', _arena());
+    add('Guild hall', _guildHall());
+    add(citadelHubTitleFor(locationId), _citadelBoards(locationId));
+    add('Search', _searches(locationId));
+    return sections;
+  }
+
+  String? _selectedBandTab(String locationId) {
+    final sections = _optionSections(locationId);
+    if (sections.isEmpty) return null;
+    if (sections.any((section) => section.label == _bandTab)) return _bandTab;
+    return sections.first.label;
+  }
+
+  List<Widget> _selectedBandChildren(String locationId) {
+    final sections = _optionSections(locationId);
+    if (sections.isEmpty) return const [MutedText('Nothing to do here yet.')];
+    final selected = _selectedBandTab(locationId);
+    return sections.firstWhere((section) => section.label == selected).children;
+  }
+
   List<Widget> _citadelBoards(String locationId) {
     final tabs = citadelHubTabsFor(locationId);
     if (tabs.isEmpty) return const [];
     return [
-      _SectionHeading(citadelHubTitleFor(locationId)),
       for (final tab in tabs)
         Padding(
           padding: const EdgeInsets.only(bottom: 8),
@@ -526,11 +555,8 @@ class _LocationViewState extends State<LocationView> {
           (activity) => activityVisibleForSave(controller.db, controller.save, activity.activityId),
         )
         .toList();
-    if (activities.isEmpty) {
-      return [const MutedText('Nothing to do here yet.')];
-    }
+    if (activities.isEmpty) return const [];
     return [
-      _SectionHeading('Activities'),
       for (final activity in activities)
         Padding(
           padding: const EdgeInsets.only(bottom: 8),
@@ -546,7 +572,6 @@ class _LocationViewState extends State<LocationView> {
   List<Widget> _blessing() {
     if (!locationHasBlessing(controller.location)) return const [];
     return [
-      const _SectionHeading('Blessing'),
       Padding(
         padding: const EdgeInsets.only(bottom: 8),
         child: _InteractionCard(
@@ -576,7 +601,6 @@ class _LocationViewState extends State<LocationView> {
     final stations = specialProductionStationsVisibleAt(controller.db, controller.save, locationId);
     if (stations.isEmpty) return const [];
     return [
-      _SectionHeading('Special production'),
       for (final station in stations)
         Padding(
           padding: const EdgeInsets.only(bottom: 8),
@@ -596,7 +620,6 @@ class _LocationViewState extends State<LocationView> {
     final npcs = npcsAtLocation(controller.db, locationId, controller.session.clock());
     if (npcs.isEmpty) return const [];
     return [
-      _SectionHeading('People'),
       for (final npc in npcs)
         Padding(
           padding: const EdgeInsets.only(bottom: 8),
@@ -614,7 +637,6 @@ class _LocationViewState extends State<LocationView> {
     final shops = controller.indexes.shopsByLocationId[locationId] ?? const [];
     if (shops.isEmpty) return const [];
     return [
-      _SectionHeading('Shops'),
       for (final shop in shops)
         Padding(
           padding: const EdgeInsets.only(bottom: 8),
@@ -630,7 +652,6 @@ class _LocationViewState extends State<LocationView> {
   List<Widget> _bank() {
     if (!locationHasBank(controller.location)) return const [];
     return [
-      const _SectionHeading('Bank'),
       Padding(
         padding: const EdgeInsets.only(bottom: 8),
         child: _InteractionCard(
@@ -647,7 +668,6 @@ class _LocationViewState extends State<LocationView> {
   List<Widget> _arena() {
     if (!locationHasArena(controller.location)) return const [];
     return [
-      const _SectionHeading('Arena'),
       Padding(
         padding: const EdgeInsets.only(bottom: 8),
         child: _InteractionCard(
@@ -668,7 +688,6 @@ class _LocationViewState extends State<LocationView> {
       return const [];
     }
     return [
-      const _SectionHeading('Guild hall'),
       Padding(
         padding: const EdgeInsets.only(bottom: 8),
         child: _InteractionCard(
@@ -687,7 +706,6 @@ class _LocationViewState extends State<LocationView> {
     if (spots.isEmpty) return const [];
     final nowMs = controller.session.clock();
     return [
-      _SectionHeading('Search'),
       for (final spot in spots)
         Padding(
           padding: const EdgeInsets.only(bottom: 8),
@@ -709,12 +727,29 @@ class _LocationViewState extends State<LocationView> {
   }
 }
 
+class _BandSection {
+  const _BandSection(this.label, this.children);
+
+  final String label;
+  final List<Widget> children;
+}
+
 /// Inset option list that floats over the location art.
 class _FloatingOptionBand extends StatelessWidget {
-  const _FloatingOptionBand({required this.expanded, required this.onToggle, required this.child});
+  const _FloatingOptionBand({
+    required this.expanded,
+    required this.onToggle,
+    required this.tabs,
+    required this.selectedTab,
+    required this.onSelectTab,
+    required this.child,
+  });
 
   final bool expanded;
   final VoidCallback onToggle;
+  final List<String> tabs;
+  final String? selectedTab;
+  final ValueChanged<String> onSelectTab;
   final Widget child;
 
   @override
@@ -728,10 +763,34 @@ class _FloatingOptionBand extends StatelessWidget {
       child: Stack(
         children: [
           Positioned.fill(
-            child: SingleChildScrollView(
-              clipBehavior: Clip.hardEdge,
-              padding: const EdgeInsets.fromLTRB(12, 8, 40, 10),
-              child: child,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (tabs.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(6, 4, 40, 0),
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          for (final tab in tabs)
+                            _BandTabButton(
+                              label: tab,
+                              selected: tab == selectedTab,
+                              onPressed: () => onSelectTab(tab),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                Expanded(
+                  child: SingleChildScrollView(
+                    clipBehavior: Clip.hardEdge,
+                    padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
+                    child: child,
+                  ),
+                ),
+              ],
             ),
           ),
           Positioned(
@@ -744,6 +803,27 @@ class _FloatingOptionBand extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _BandTabButton extends StatelessWidget {
+  const _BandTabButton({required this.label, required this.selected, required this.onPressed});
+
+  final String label;
+  final bool selected;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 4),
+      child: GameButton(
+        label: label,
+        compact: true,
+        tone: selected ? GameButtonTone.primary : GameButtonTone.secondary,
+        onPressed: onPressed,
       ),
     );
   }
@@ -777,23 +857,6 @@ class _LocationHead extends StatelessWidget {
             child: Text(danger, style: warningStyle),
           ),
       ],
-    );
-  }
-}
-
-class _SectionHeading extends StatelessWidget {
-  const _SectionHeading(this.text);
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: Text(
-        text,
-        style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w400, shadows: overlayShadow),
-      ),
     );
   }
 }

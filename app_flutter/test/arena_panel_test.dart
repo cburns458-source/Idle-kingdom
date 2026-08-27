@@ -28,6 +28,8 @@ void main() {
       LocationView(controller: plaza, multiplayer: buildMultiplayer(database), onOpenMap: () {}),
       size: const Size(900, 2400),
     );
+    await tester.tap(find.widgetWithText(GameButton, 'Arena'));
+    await tester.pump();
     expect(find.text('Player fights'), findsOne);
 
     final meadow = buildController(
@@ -54,8 +56,10 @@ void main() {
       size: const Size(900, 2400),
     );
     expect(find.text('Player fights'), findsNothing);
-    expect(find.text('Armory'), findsOne);
     expect(find.text('Challenge the guards'), findsOne);
+    await tester.tap(find.widgetWithText(GameButton, 'Shops'));
+    await tester.pump();
+    expect(find.text('Armory'), findsOne);
   });
 
   testWidgets('search finds Mira by name and ranked picks Bram by combat level', (tester) async {
@@ -121,7 +125,15 @@ void main() {
     await pumpShell(tester, controller, size: const Size(900, 2400));
 
     await tapVisible(tester, find.byTooltip('Expand list'));
-    await tapVisible(tester, find.widgetWithText(GameButton, 'Arena'));
+    await tester.tap(find.widgetWithText(GameButton, 'Arena'));
+    await tester.pump();
+    await tapVisible(
+      tester,
+      find.descendant(
+        of: find.ancestor(of: find.text('Player fights'), matching: find.byType(DockRow)),
+        matching: find.widgetWithText(GameButton, 'Arena'),
+      ),
+    );
     await tester.pump();
     expect(find.byType(ArenaPanel), findsOne);
 

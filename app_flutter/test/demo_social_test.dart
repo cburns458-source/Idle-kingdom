@@ -143,7 +143,7 @@ void main() {
     await tester.pumpAndSettle();
 
     final art = tester.getRect(find.byType(SocialPortrait));
-    expect(art.width, 52);
+    expect(art.width, 156);
     expect(art.height, 156);
     final portrait = tester.widget<GameImage>(
       find.descendant(of: find.byType(SocialPortrait), matching: find.byType(GameImage)),
