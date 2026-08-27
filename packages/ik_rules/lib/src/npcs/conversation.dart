@@ -35,10 +35,31 @@ String? questPitchLine(GameDatabase db, String questId) {
   return pitch is String && pitch.isNotEmpty ? pitch : null;
 }
 
-String? questTalkLine(GameDatabase db, String questId, String npcId) {
-  final line = db.questDialogue
-      .firstWhereOrNull((row) => row.questId == questId && row.npcId == npcId)
-      ?.line;
+List<String> _requiredTalkNpcIdsFromNotes(String? notes) {
+  final field = RegExp(
+    r'(?:^|;)\s*RequiresTalk:\s*([^;]+)',
+    caseSensitive: false,
+  ).firstMatch(notes ?? '')?.group(1);
+  if (field == null) return const <String>[];
+  return field
+      .split(',')
+      .map((part) => part.trim().toUpperCase())
+      .where((id) => RegExp(r'^[A-Z]+-\d+$').hasMatch(id))
+      .toList();
+}
+
+String? questTalkLine(GameDatabase db, String questId, String npcId, [PlayerSave? save]) {
+  final rows = db.questDialogue.where((row) => row.questId == questId && row.npcId == npcId);
+  final matching = rows.where((row) {
+    final required = _requiredTalkNpcIdsFromNotes(row.notes);
+    if (required.isEmpty) return true;
+    if (save == null) return false;
+    return required.every((requiredNpcId) => hasQuestFlag(save, questId, 'talk:$requiredNpcId'));
+  }).toList();
+  final specific = matching
+      .where((row) => _requiredTalkNpcIdsFromNotes(row.notes).isNotEmpty)
+      .toList();
+  final line = (specific.isNotEmpty ? specific.first : matching.firstOrNull)?.line;
   return line != null && line.isNotEmpty ? line : null;
 }
 
@@ -306,8 +327,6 @@ NpcQuestBlock _questBlock(GameDatabase db, PlayerSave save, QuestRow quest, Stri
   final pitch = questPitchLine(db, questId);
   final summary = quest['Summary'];
   final parsed = parseStructuredObjectives(quest);
-  final stepObjectives = questActiveStepObjectives(db, save, quest);
-  final talkNpcIds = stepObjectives?.talkNpcIds ?? parsed.talkNpcIds;
   final status = getQuestProgress(save, questId).status;
   final isGiver = quest['NPC ID'] == npcId;
   final turnInId = parsed.turnInNpcId ?? quest['NPC ID'];
@@ -343,9 +362,9 @@ NpcQuestBlock _questBlock(GameDatabase db, PlayerSave save, QuestRow quest, Stri
     canDonate: isGiver && status == 'inactive' && needsDonate,
     donated: donated,
     canTurnIn: turnInId == npcId && status == 'active',
-    canTalk: status == 'active' && talkNpcIds.contains(npcId) && !talked,
+    canTalk: status == 'active' && questCanTalkToNpc(db, save, quest, npcId) && !talked,
     talkLabel: 'Talk',
-    talkLine: questTalkLine(db, questId, npcId),
+    talkLine: questTalkLine(db, questId, npcId, save),
     idlePrompt: configString(db, 'copy.quest_active_prompt', _fallbackQuestActivePrompt),
     canBribe:
         status == 'active' &&

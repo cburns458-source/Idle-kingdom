@@ -130,12 +130,7 @@ PlayerSave applyQuestTalkProgress(GameDatabase db, PlayerSave save, String npcId
   var next = save;
   for (final quest in asQuestRows(db)) {
     final questId = jsString(quest['Quest ID']);
-    if (questUsesSteps(db, questId)) {
-      final active = questActiveStepObjectives(db, next, quest);
-      if (!(active?.talkNpcIds.contains(npcId) ?? false)) continue;
-    } else if (!questObjectiveSources(db, quest).any((row) => row.talkNpcIds.contains(npcId))) {
-      continue;
-    }
+    if (!questCanTalkToNpc(db, next, quest, npcId)) continue;
     next = setQuestFlag(next, questId, 'talk:$npcId');
   }
   return next;

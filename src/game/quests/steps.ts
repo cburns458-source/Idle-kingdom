@@ -140,6 +140,20 @@ export function questAllStepsComplete(
   return getCurrentStepIndex(db, save, quest) >= steps.length
 }
 
+/** Required or optional Talk on the current step (or quest Notes). */
+export function questCanTalkToNpc(
+  db: GameDatabase,
+  save: PlayerSave,
+  quest: QuestRow,
+  npcId: string,
+): boolean {
+  const objectives = questUsesSteps(db, quest['Quest ID'])
+    ? questActiveStepObjectives(db, save, quest)
+    : parseStructuredObjectives(quest)
+  if (!objectives) return false
+  return objectives.talkNpcIds.includes(npcId) || objectives.optionalTalkNpcIds.includes(npcId)
+}
+
 /** True when this NPC still has an unfinished Talk step (or Notes talk). */
 export function questNpcHasIncompleteTalk(
   db: GameDatabase,
@@ -179,9 +193,5 @@ export function questTouchesNpcForSave(
     return !questNpcHasIncompleteTalk(db, save, quest, npcId)
   }
 
-  if (questUsesSteps(db, quest['Quest ID'])) {
-    return questActiveStepObjectives(db, save, quest)?.talkNpcIds.includes(npcId) ?? false
-  }
-
-  return meta.talkNpcIds.includes(npcId)
+  return questCanTalkToNpc(db, save, quest, npcId)
 }

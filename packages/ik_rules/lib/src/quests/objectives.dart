@@ -31,6 +31,7 @@ class StructuredQuestObjectives {
     required this.constructPortalIds,
     required this.unlockTravelIds,
     required this.talkNpcIds,
+    required this.optionalTalkNpcIds,
     required this.visitLocationIds,
     required this.inspectIds,
     required this.goldCost,
@@ -57,6 +58,7 @@ class StructuredQuestObjectives {
   final List<String> constructPortalIds;
   final List<String> unlockTravelIds;
   final List<String> talkNpcIds;
+  final List<String> optionalTalkNpcIds;
   final List<String> visitLocationIds;
   final List<String> inspectIds;
   final num goldCost;
@@ -82,6 +84,7 @@ class StructuredQuestObjectives {
     'constructPortalIds': constructPortalIds,
     'unlockTravelIds': unlockTravelIds,
     'talkNpcIds': talkNpcIds,
+    'optionalTalkNpcIds': optionalTalkNpcIds,
     'visitLocationIds': visitLocationIds,
     'inspectIds': inspectIds,
     'goldCost': goldCost,
@@ -181,7 +184,8 @@ StructuredQuestObjectives parseNotesObjectives(
   final restoreNote = _noteField(notes, r'RestoreFacility:\s*([^;]+)');
   final portalNote = _noteField(notes, r'ConstructPortal:\s*([^;]+)');
   final travelNote = _noteField(notes, r'UnlockTravel:\s*([^;]+)');
-  final talkNote = _noteField(notes, r'Talk:\s*([^;]+)');
+  final talkNote = _noteField(notes, r'(?:^|;)\s*Talk:\s*([^;]+)');
+  final optionalTalkNote = _noteField(notes, r'(?:^|;)\s*OptionalTalk:\s*([^;]+)');
   final visitNote = _noteField(notes, r'Visit:\s*([^;]+)');
   final inspectNote = _noteField(notes, r'Inspect:\s*([^;]+)');
   final goldNote = _noteField(notes, r'GoldCost:\s*(\d+)');
@@ -227,6 +231,7 @@ StructuredQuestObjectives parseNotesObjectives(
     constructPortalIds: portalNote == null ? const <String>[] : _parseIdList(portalNote),
     unlockTravelIds: travelNote == null ? const <String>[] : _parseIdList(travelNote),
     talkNpcIds: talkNote == null ? const <String>[] : _parseIdList(talkNote),
+    optionalTalkNpcIds: optionalTalkNote == null ? const <String>[] : _parseIdList(optionalTalkNote),
     visitLocationIds: visitNote == null ? const <String>[] : _parseIdList(visitNote),
     inspectIds: inspectNote == null ? const <String>[] : _parseTokenList(inspectNote),
     goldCost: goldNote == null ? 0 : jsNumber(goldNote),
@@ -252,6 +257,7 @@ StructuredQuestObjectives parseNotesObjectives(
 ///   Process: RCP-x xN, ...
 ///   LearnRecipe: RCP-x, ...
 ///   Talk: NPC-x, ...
+///   OptionalTalk: NPC-x, ...
 ///   Visit: LOC-x, ...
 ///   Inspect: bazaar, bounties, processing
 ///   GoldCost: N
@@ -300,6 +306,7 @@ StructuredQuestObjectives parseStructuredObjectives(QuestRow quest) {
     constructPortalIds: objectives.constructPortalIds,
     unlockTravelIds: objectives.unlockTravelIds,
     talkNpcIds: objectives.talkNpcIds,
+    optionalTalkNpcIds: objectives.optionalTalkNpcIds,
     visitLocationIds: objectives.visitLocationIds,
     inspectIds: objectives.inspectIds,
     goldCost: objectives.goldCost,

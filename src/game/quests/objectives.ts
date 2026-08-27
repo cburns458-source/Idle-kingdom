@@ -72,6 +72,7 @@ const EMPTY_OBJECTIVES: StructuredQuestObjectives = {
   constructPortalIds: [],
   unlockTravelIds: [],
   talkNpcIds: [],
+  optionalTalkNpcIds: [],
   visitLocationIds: [],
   inspectIds: [],
   goldCost: 0,
@@ -115,7 +116,8 @@ export function parseNotesObjectives(
   const restoreMatch = noteField(notes, String.raw`RestoreFacility:\s*([^;]+)`)
   const portalMatch = noteField(notes, String.raw`ConstructPortal:\s*([^;]+)`)
   const travelMatch = noteField(notes, String.raw`UnlockTravel:\s*([^;]+)`)
-  const talkMatch = noteField(notes, String.raw`Talk:\s*([^;]+)`)
+  const talkMatch = noteField(notes, String.raw`(?:^|;)\s*Talk:\s*([^;]+)`)
+  const optionalTalkMatch = noteField(notes, String.raw`(?:^|;)\s*OptionalTalk:\s*([^;]+)`)
   const visitMatch = noteField(notes, String.raw`Visit:\s*([^;]+)`)
   const inspectMatch = noteField(notes, String.raw`Inspect:\s*([^;]+)`)
   const goldMatch = noteField(notes, String.raw`GoldCost:\s*(\d+)`)
@@ -154,6 +156,7 @@ export function parseNotesObjectives(
     constructPortalIds: portalMatch ? parseIdList(portalMatch) : [],
     unlockTravelIds: travelMatch ? parseIdList(travelMatch) : [],
     talkNpcIds: talkMatch ? parseIdList(talkMatch) : [],
+    optionalTalkNpcIds: optionalTalkMatch ? parseIdList(optionalTalkMatch) : [],
     visitLocationIds: visitMatch ? parseIdList(visitMatch) : [],
     inspectIds: inspectMatch ? parseTokenList(inspectMatch) : [],
     goldCost: goldMatch ? Number(goldMatch) : 0,

@@ -202,11 +202,14 @@ describe('npc conversation', () => {
     expect(beggar.greeting).toBeNull()
     expect(beggar.quests[0]!.name).toBe('Lowly Beggar')
     expect(beggar.quests[0]!.canTalk).toBe(true)
-    expect(beggar.quests[0]!.talkLine).toContain('barracks')
+    expect(beggar.quests[0]!.talkLine).toMatch(/around town/)
+    expect(beggar.quests[0]!.talkLine).not.toMatch(/barracks/)
     expect(beggar.quests[0]!.ready).toBe(false)
 
     const guardTooSoon = npcConversation(launch, { ...save, currentLocationId: 'LOC-0017' }, npc('NPC-0012'))
     expect(guardTooSoon.quests).toEqual([])
+    const merchantTooSoon = npcConversation(launch, { ...save, currentLocationId: 'LOC-0024' }, npc('NPC-0007'))
+    expect(merchantTooSoon.quests).toEqual([])
 
     const heard = {
       ...save,
@@ -224,7 +227,30 @@ describe('npc conversation', () => {
     expect(guard.quests[0]!.canTalk).toBe(true)
     expect(guard.quests[0]!.canBribe).toBe(false)
     expect(guard.quests[0]!.canChooseCombat).toBe(false)
-    expect(guard.quests[0]!.talkLine).toMatch(/memory gets expensive/)
+    expect(guard.quests[0]!.talkLine).not.toMatch(/purse/i)
+    expect(guard.quests[0]!.talkLine).toMatch(/gossip/)
+
+    const merchant = npcConversation(launch, { ...heard, currentLocationId: 'LOC-0024' }, npc('NPC-0007'))
+    expect(merchant.quests[0]!.canTalk).toBe(true)
+    expect(merchant.quests[0]!.talkLine).toMatch(/guards at the barracks/)
+
+    const afterMerchant = {
+      ...heard,
+      quests: [
+        {
+          questId: 'QST-0003',
+          status: 'active' as const,
+          progress: 2,
+          counters: { 'talk:NPC-0011': 1, 'talk:NPC-0007': 1 },
+        },
+      ],
+    }
+    const threatened = npcConversation(launch, afterMerchant, npc('NPC-0012'))
+    expect(threatened.quests[0]!.canTalk).toBe(true)
+    expect(threatened.quests[0]!.talkLine).toMatch(/someone talked/)
+    expect(threatened.quests[0]!.talkLine).toMatch(/purse/i)
+    expect(threatened.quests[0]!.canBribe).toBe(false)
+    expect(threatened.quests[0]!.canChooseCombat).toBe(false)
 
     const afterGuard = {
       ...heard,
@@ -241,5 +267,20 @@ describe('npc conversation', () => {
     expect(choice.quests[0]!.canTalk).toBe(false)
     expect(choice.quests[0]!.canBribe).toBe(true)
     expect(choice.quests[0]!.canChooseCombat).toBe(true)
+
+    const afterBoth = {
+      ...afterMerchant,
+      quests: [
+        {
+          questId: 'QST-0003',
+          status: 'active' as const,
+          progress: 3,
+          counters: { 'talk:NPC-0011': 1, 'talk:NPC-0007': 1, 'talk:NPC-0012': 1 },
+        },
+      ],
+    }
+    const warnedChoice = npcConversation(launch, afterBoth, npc('NPC-0012'))
+    expect(warnedChoice.quests[0]!.canBribe).toBe(true)
+    expect(warnedChoice.quests[0]!.canChooseCombat).toBe(true)
   })
 })

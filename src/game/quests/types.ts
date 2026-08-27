@@ -25,6 +25,7 @@ export interface StructuredQuestObjectives {
   constructPortalIds: string[]
   unlockTravelIds: string[]
   talkNpcIds: string[]
+  optionalTalkNpcIds: string[]
   visitLocationIds: string[]
   inspectIds: string[]
   goldCost: number

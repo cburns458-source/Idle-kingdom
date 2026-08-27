@@ -1,7 +1,7 @@
 import type { PlayerSave } from '../save/types'
 import { asQuestRows, getQuestProgress } from './quests'
 import { parseStructuredObjectives } from './objectives'
-import { questActiveStepObjectives, questObjectiveSources, questUsesSteps } from './steps'
+import { questCanTalkToNpc, questObjectiveSources } from './steps'
 import type { GameDatabase } from '../data/types'
 
 function bumpCounter(save: PlayerSave, questId: string, key: string, amount: number): PlayerSave {
@@ -121,12 +121,7 @@ export function applyQuestTalkProgress(
 ): PlayerSave {
   let next = save
   for (const quest of asQuestRows(db)) {
-    if (questUsesSteps(db, quest['Quest ID'])) {
-      const active = questActiveStepObjectives(db, next, quest)
-      if (!active?.talkNpcIds.includes(npcId)) continue
-    } else if (!questObjectiveSources(db, quest).some((row) => row.talkNpcIds.includes(npcId))) {
-      continue
-    }
+    if (!questCanTalkToNpc(db, next, quest, npcId)) continue
     next = setQuestFlag(next, quest['Quest ID'], `talk:${npcId}`)
   }
   return next

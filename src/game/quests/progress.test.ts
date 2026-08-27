@@ -3,7 +3,7 @@ import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { prepareDatabase } from '../data/loadDatabase'
 import { createNewSave } from '../save/saveStore'
-import { parseStructuredObjectives, questObjectiveProgress } from './objectives'
+import { parseNotesObjectives, parseStructuredObjectives, questObjectiveProgress } from './objectives'
 import {
   applyQuestDefeatProgress,
   applyQuestLearnRecipeProgress,
@@ -25,6 +25,12 @@ describe('quest objective engine v2', () => {
     expect(structured.delivers.length).toBeGreaterThan(0)
     expect(structured.goldCost).toBeGreaterThan(0)
     expect(structured.unlockLocationIds).toContain('LOC-0026')
+  })
+
+  it('keeps OptionalTalk separate from required Talk', () => {
+    const parsed = parseNotesObjectives('Talk: NPC-0012; OptionalTalk: NPC-0007')
+    expect(parsed.talkNpcIds).toEqual(['NPC-0012'])
+    expect(parsed.optionalTalkNpcIds).toEqual(['NPC-0007'])
   })
 
   it('tracks defeat and process counters on active quests', () => {

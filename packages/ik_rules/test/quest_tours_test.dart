@@ -45,7 +45,7 @@ void main() {
     save = save.copyWith(currentLocationId: 'LOC-0034');
     final completed = completeQuest(db, save, 'QST-0003');
     expect(completed.ok, isTrue);
-    expect(completed.pendingSkillXp, 2500);
+    expect(completed.pendingSkillXp, 25000);
     expect(completed.save!.gold, 575);
     expect(isCosmeticUnlocked(completed.save!, 'COS-0002'), isTrue);
   });

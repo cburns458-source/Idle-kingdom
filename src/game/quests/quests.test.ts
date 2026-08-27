@@ -112,10 +112,10 @@ describe('quest tours', () => {
     const completed = completeQuest(launch, save, 'QST-0003')
     expect(completed.ok).toBe(true)
     if (!completed.ok) return
-    expect(completed.pendingSkillXp).toBe(2500)
+    expect(completed.pendingSkillXp).toBe(25000)
     expect(completed.save.gold).toBe(575)
     expect(isCosmeticUnlocked(completed.save, 'COS-0002')).toBe(true)
-    const mining = applyQuestBranchSkillXp(launch, completed.save, 'SKL-0002', 2500)
+    const mining = applyQuestBranchSkillXp(launch, completed.save, 'SKL-0002', 25000)
     expect(mining.ok).toBe(true)
     if (!mining.ok) return
     expect(mining.save.skills.find((skill) => skill.skillId === 'SKL-0002')?.xp).toBeGreaterThan(0)
@@ -151,7 +151,34 @@ describe('quest tours', () => {
     expect(completed.ok).toBe(true)
     if (!completed.ok) return
     expect(completed.pendingSkillXp).toBe(0)
-    expect(completed.rewards.some((reward) => /Combat XP/i.test(reward.label))).toBe(true)
+    expect(completed.rewards.some((reward) => /25,000 Combat XP/i.test(reward.label))).toBe(true)
+  })
+
+  it('lets the general store merchant hint at the barracks without requiring it', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    let save = { ...createNewSave(launch), currentLocationId: 'LOC-0034', gold: 25 }
+    const donated = donateForQuest(launch, save, 'QST-0003')
+    expect(donated.ok).toBe(true)
+    if (!donated.ok) return
+    save = donated.save
+    const accepted = acceptQuest(launch, save, 'QST-0003')
+    expect(accepted.ok).toBe(true)
+    if (!accepted.ok) return
+    save = accepted.save
+    save = applyQuestTalkProgress(launch, save, 'NPC-0007')
+    expect(hasQuestFlag(save, 'QST-0003', 'talk:NPC-0007')).toBe(false)
+
+    save = applyQuestTalkProgress(launch, save, 'NPC-0011')
+    save = { ...save, currentLocationId: 'LOC-0024' }
+    save = applyQuestTalkProgress(launch, save, 'NPC-0007')
+    expect(hasQuestFlag(save, 'QST-0003', 'talk:NPC-0007')).toBe(true)
+    expect(completeQuest(launch, save, 'QST-0003').ok).toBe(false)
+
+    save = { ...save, currentLocationId: 'LOC-0017' }
+    save = applyQuestTalkProgress(launch, save, 'NPC-0012')
+    save = addItemToInventory(save, 'ITEM-0299', 1)
+    save = { ...save, currentLocationId: 'LOC-0034' }
+    expect(completeQuest(launch, save, 'QST-0003').ok).toBe(true)
   })
 
   it('auto-starts Visiting the Citadel on arriving at the plaza and pays 1000 gold', () => {

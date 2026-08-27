@@ -115,6 +115,20 @@ bool questAllStepsComplete(GameDatabase db, PlayerSave save, QuestRow quest) {
   return getCurrentStepIndex(db, save, quest) >= getQuestSteps(db, questId).length;
 }
 
+/// Required or optional Talk on the current step (or quest Notes).
+bool questCanTalkToNpc(
+  GameDatabase db,
+  PlayerSave save,
+  QuestRow quest,
+  String npcId,
+) {
+  final objectives = questUsesSteps(db, jsString(quest['Quest ID']))
+      ? questActiveStepObjectives(db, save, quest)
+      : parseStructuredObjectives(quest);
+  if (objectives == null) return false;
+  return objectives.talkNpcIds.contains(npcId) || objectives.optionalTalkNpcIds.contains(npcId);
+}
+
 /// True when this NPC still has an unfinished Talk step (or Notes talk).
 bool questNpcHasIncompleteTalk(
   GameDatabase db,
@@ -156,9 +170,5 @@ bool questTouchesNpcForSave(
     return !questNpcHasIncompleteTalk(db, save, quest, npcId);
   }
 
-  if (questUsesSteps(db, jsString(quest['Quest ID']))) {
-    return questActiveStepObjectives(db, save, quest)?.talkNpcIds.contains(npcId) ?? false;
-  }
-
-  return meta.talkNpcIds.contains(npcId);
+  return questCanTalkToNpc(db, save, quest, npcId);
 }

@@ -263,5 +263,10 @@ void main() {
     expect(controller.save.gold, 15);
     expect(find.text('Talk'), findsOne);
     expect(find.textContaining('Donate 25 gold, then recover'), findsNothing);
+
+    await tester.tap(find.text('Talk'));
+    await tester.pump();
+    expect(find.textContaining('around town'), findsOne);
+    expect(find.textContaining('barracks'), findsNothing);
   });
 }
