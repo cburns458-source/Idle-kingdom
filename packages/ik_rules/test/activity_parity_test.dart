@@ -395,12 +395,11 @@ void main() {
               33333,
             ].map((ms) => applyPotionDurationMs(ms, durationEffect)).toList(),
             'durationsNoEffect': <num>[applyPotionDurationMs(20000, null)],
-            'poison': const <num>[
-              0,
-              100,
-              1250,
-            ].map((hp) => potionEnemyMaxHpDamage(hp, poisonEffect)).toList(),
-            'poisonNoEffect': potionEnemyMaxHpDamage(1250, durationEffect),
+            'poison': const <num>[0, 100, 1250]
+                .map((hp) => applyPotionEnemyRoundDamage(hp, hp == 0 ? 100 : hp, poisonEffect))
+                .toList(),
+            'poisonFloor': applyPotionEnemyRoundDamage(100, 1000, poisonEffect),
+            'poisonNoEffect': applyPotionEnemyRoundDamage(1250, 1250, durationEffect),
           }),
           isNull,
         );

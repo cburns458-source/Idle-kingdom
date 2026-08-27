@@ -1,5 +1,6 @@
 import 'package:ik_content/ik_content.dart';
 import 'package:ik_parity/ik_parity.dart';
+import 'package:ik_rules/ik_rules.dart';
 import 'package:test/test.dart';
 
 GameDatabase _db() => filterLaunchContent(assertGameDatabaseShape(contentDatabaseJson()));
