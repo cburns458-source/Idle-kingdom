@@ -6,6 +6,7 @@ import '../production/recipes.dart';
 import '../recipes/knowledge.dart';
 import '../save/generated/save_models.dart';
 import 'quests.dart';
+import 'steps.dart';
 
 /// One counted objective line.
 class QuestCounterTarget {
@@ -156,6 +157,93 @@ String? _singleId(String? raw) {
   return ids.isEmpty ? null : ids.first;
 }
 
+/// Parses objective tokens from Notes (not reward metadata).
+StructuredQuestObjectives parseNotesObjectives(
+  String notes, {
+  String kind = 'gather_deliver',
+  String? fallbackTargetId,
+  num? fallbackQuantity,
+}) {
+  final delivers = <QuestCounterTarget>[];
+  final defeatTargets = <QuestCounterTarget>[];
+  final processTargets = <QuestCounterTarget>[];
+
+  final deliverNote = _noteField(notes, r'Deliver:\s*([^;]+)');
+  if (deliverNote != null) delivers.addAll(_parseIdQtyList(deliverNote));
+
+  final defeatNote = _noteField(notes, r'Defeat:\s*([^;]+)');
+  if (defeatNote != null) defeatTargets.addAll(_parseIdQtyList(defeatNote));
+
+  final processNote = _noteField(notes, r'Process:\s*([^;]+)');
+  if (processNote != null) processTargets.addAll(_parseIdQtyList(processNote));
+
+  final learnNote = _noteField(notes, r'LearnRecipe:\s*([^;]+)');
+  final restoreNote = _noteField(notes, r'RestoreFacility:\s*([^;]+)');
+  final portalNote = _noteField(notes, r'ConstructPortal:\s*([^;]+)');
+  final travelNote = _noteField(notes, r'UnlockTravel:\s*([^;]+)');
+  final talkNote = _noteField(notes, r'Talk:\s*([^;]+)');
+  final visitNote = _noteField(notes, r'Visit:\s*([^;]+)');
+  final inspectNote = _noteField(notes, r'Inspect:\s*([^;]+)');
+  final goldNote = _noteField(notes, r'GoldCost:\s*(\d+)');
+
+  if (delivers.isEmpty && kind == 'gather_deliver') {
+    if (fallbackTargetId != null &&
+        fallbackTargetId.isNotEmpty &&
+        fallbackQuantity != null &&
+        fallbackQuantity > 0) {
+      delivers.add(QuestCounterTarget(targetId: fallbackTargetId, quantity: fallbackQuantity));
+    }
+  }
+
+  if (defeatTargets.isEmpty && kind == 'defeat') {
+    if (fallbackTargetId != null &&
+        fallbackTargetId.isNotEmpty &&
+        fallbackQuantity != null &&
+        fallbackQuantity > 0) {
+      defeatTargets.add(
+        QuestCounterTarget(targetId: fallbackTargetId, quantity: fallbackQuantity),
+      );
+    }
+  }
+
+  if (processTargets.isEmpty && kind == 'process') {
+    if (fallbackTargetId != null &&
+        fallbackTargetId.isNotEmpty &&
+        fallbackQuantity != null &&
+        fallbackQuantity > 0) {
+      processTargets.add(
+        QuestCounterTarget(targetId: fallbackTargetId, quantity: fallbackQuantity),
+      );
+    }
+  }
+
+  return StructuredQuestObjectives(
+    kind: kind,
+    delivers: delivers,
+    processTargets: processTargets,
+    defeatTargets: defeatTargets,
+    learnRecipeIds: learnNote == null ? const <String>[] : _parseIdList(learnNote),
+    restoreFacilityIds: restoreNote == null ? const <String>[] : _parseIdList(restoreNote),
+    constructPortalIds: portalNote == null ? const <String>[] : _parseIdList(portalNote),
+    unlockTravelIds: travelNote == null ? const <String>[] : _parseIdList(travelNote),
+    talkNpcIds: talkNote == null ? const <String>[] : _parseIdList(talkNote),
+    visitLocationIds: visitNote == null ? const <String>[] : _parseIdList(visitNote),
+    inspectIds: inspectNote == null ? const <String>[] : _parseTokenList(inspectNote),
+    goldCost: goldNote == null ? 0 : jsNumber(goldNote),
+    acceptGoldCost: 0,
+    rewardGold: 0,
+    bribeGold: 0,
+    branchSkillXp: 0,
+    choiceNpcId: null,
+    turnInNpcId: null,
+    autoStartLocationId: null,
+    unlockLocationIds: const <String>[],
+    rewardRecipeIds: const <String>[],
+    rewardProjectNpcIds: const <String>[],
+    rewardCosmeticIds: const <String>[],
+  );
+}
+
 /// Parses structured objectives from quest fields + Notes.
 ///
 /// Notes extensions (semicolon-separated):
@@ -181,28 +269,15 @@ String? _singleId(String? raw) {
 StructuredQuestObjectives parseStructuredObjectives(QuestRow quest) {
   final notes = quest['Notes'] is String ? quest['Notes']! as String : '';
   final kind = normalizeObjectiveKind(quest['Objective Type']);
+  final targetId = quest['Objective Target ID'];
+  final required = quest['Required Quantity'];
+  final objectives = parseNotesObjectives(
+    notes,
+    kind: kind,
+    fallbackTargetId: targetId is String ? targetId : null,
+    fallbackQuantity: required is num ? required : null,
+  );
 
-  final delivers = <QuestCounterTarget>[];
-  final defeatTargets = <QuestCounterTarget>[];
-  final processTargets = <QuestCounterTarget>[];
-
-  final deliverNote = _noteField(notes, r'Deliver:\s*([^;]+)');
-  if (deliverNote != null) delivers.addAll(_parseIdQtyList(deliverNote));
-
-  final defeatNote = _noteField(notes, r'Defeat:\s*([^;]+)');
-  if (defeatNote != null) defeatTargets.addAll(_parseIdQtyList(defeatNote));
-
-  final processNote = _noteField(notes, r'Process:\s*([^;]+)');
-  if (processNote != null) processTargets.addAll(_parseIdQtyList(processNote));
-
-  final learnNote = _noteField(notes, r'LearnRecipe:\s*([^;]+)');
-  final restoreNote = _noteField(notes, r'RestoreFacility:\s*([^;]+)');
-  final portalNote = _noteField(notes, r'ConstructPortal:\s*([^;]+)');
-  final travelNote = _noteField(notes, r'UnlockTravel:\s*([^;]+)');
-  final talkNote = _noteField(notes, r'Talk:\s*([^;]+)');
-  final visitNote = _noteField(notes, r'Visit:\s*([^;]+)');
-  final inspectNote = _noteField(notes, r'Inspect:\s*([^;]+)');
-  final goldNote = _noteField(notes, r'GoldCost:\s*(\d+)');
   final acceptGoldNote = _noteField(notes, r'AcceptGold:\s*(\d+)');
   final rewardGoldNote = _noteField(notes, r'RewardGold:\s*(\d+)');
   final bribeGoldNote = _noteField(notes, r'BribeGold:\s*(\d+)');
@@ -215,33 +290,19 @@ StructuredQuestObjectives parseStructuredObjectives(QuestRow quest) {
   final rewardNpcNote = _noteField(notes, r'RewardProjectNpc:\s*([^;]+)');
   final rewardCosmeticNote = _noteField(notes, r'RewardCosmetic:\s*([^;]+)');
 
-  /// Field fallbacks apply only when Notes carried no lines of that kind.
-  void addFieldFallback(String forKind, List<QuestCounterTarget> into) {
-    if (into.isNotEmpty || kind != forKind) return;
-    final targetId = quest['Objective Target ID'];
-    final required = quest['Required Quantity'];
-    if (targetId is String && targetId.isNotEmpty && required is num && required > 0) {
-      into.add(QuestCounterTarget(targetId: targetId, quantity: required));
-    }
-  }
-
-  addFieldFallback('gather_deliver', delivers);
-  addFieldFallback('defeat', defeatTargets);
-  addFieldFallback('process', processTargets);
-
   return StructuredQuestObjectives(
-    kind: kind,
-    delivers: delivers,
-    processTargets: processTargets,
-    defeatTargets: defeatTargets,
-    learnRecipeIds: learnNote == null ? const <String>[] : _parseIdList(learnNote),
-    restoreFacilityIds: restoreNote == null ? const <String>[] : _parseIdList(restoreNote),
-    constructPortalIds: portalNote == null ? const <String>[] : _parseIdList(portalNote),
-    unlockTravelIds: travelNote == null ? const <String>[] : _parseIdList(travelNote),
-    talkNpcIds: talkNote == null ? const <String>[] : _parseIdList(talkNote),
-    visitLocationIds: visitNote == null ? const <String>[] : _parseIdList(visitNote),
-    inspectIds: inspectNote == null ? const <String>[] : _parseTokenList(inspectNote),
-    goldCost: goldNote == null ? 0 : jsNumber(goldNote),
+    kind: objectives.kind,
+    delivers: objectives.delivers,
+    processTargets: objectives.processTargets,
+    defeatTargets: objectives.defeatTargets,
+    learnRecipeIds: objectives.learnRecipeIds,
+    restoreFacilityIds: objectives.restoreFacilityIds,
+    constructPortalIds: objectives.constructPortalIds,
+    unlockTravelIds: objectives.unlockTravelIds,
+    talkNpcIds: objectives.talkNpcIds,
+    visitLocationIds: objectives.visitLocationIds,
+    inspectIds: objectives.inspectIds,
+    goldCost: objectives.goldCost,
     acceptGoldCost: acceptGoldNote == null ? 0 : jsNumber(acceptGoldNote),
     rewardGold: rewardGoldNote == null ? 0 : jsNumber(rewardGoldNote),
     bribeGold: bribeGoldNote == null ? 0 : jsNumber(bribeGoldNote),
@@ -326,12 +387,12 @@ class QuestObjectiveStatus {
   };
 }
 
-QuestObjectiveStatus questObjectiveProgress(GameDatabase db, PlayerSave save, QuestRow quest) {
-  final structured = parseStructuredObjectives(quest);
-  final counters =
-      save.quests.firstWhereOrNull((row) => row.questId == quest['Quest ID'])?.counters ??
-      const <String, num>{};
-
+QuestObjectiveStatus objectiveProgressFromStructured(
+  GameDatabase db,
+  PlayerSave save,
+  StructuredQuestObjectives structured, [
+  Map<String, num> counters = const <String, num>{},
+]) {
   final deliverLines = structured.delivers.map((line) {
     final displayName = db.items
         .firstWhereOrNull((item) => item.raw['Item ID'] == line.targetId)
@@ -403,27 +464,74 @@ QuestObjectiveStatus questObjectiveProgress(GameDatabase db, PlayerSave save, Qu
       ),
   ];
 
-  final counterReady = progressLines.every((line) => line.current >= line.required);
+  return QuestObjectiveStatus(
+    lines: deliverLines,
+    progressLines: progressLines,
+    goldOwned: save.gold,
+    goldRequired: structured.goldCost,
+    ready: false,
+  );
+}
+
+QuestObjectiveStatus questObjectiveProgress(GameDatabase db, PlayerSave save, QuestRow quest) {
+  final questId = jsString(quest['Quest ID']);
+  final progress = save.quests.firstWhereOrNull((row) => row.questId == questId);
+  StructuredQuestObjectives structured;
+  if (progress?.status == 'active' && questUsesSteps(db, questId)) {
+    final stepObjectives = questActiveStepObjectives(db, save, quest);
+    structured = stepObjectives ?? parseNotesObjectives('');
+  } else {
+    structured = parseStructuredObjectives(quest);
+  }
+  final counters = progress?.counters ?? const <String, num>{};
+  final body = objectiveProgressFromStructured(db, save, structured, counters);
+
+  final counterReady = body.progressLines.every((line) => line.current >= line.required);
   final hasWork =
-      progressLines.isNotEmpty ||
+      body.progressLines.isNotEmpty ||
       structured.goldCost > 0 ||
       structured.restoreFacilityIds.isNotEmpty ||
       structured.constructPortalIds.isNotEmpty ||
       structured.unlockTravelIds.isNotEmpty;
 
-  // Guild collab / restore / portal stay incomplete until those systems land.
   final deferredIncomplete =
       structured.kind == 'guild_collab' ||
       structured.restoreFacilityIds.isNotEmpty ||
       structured.constructPortalIds.isNotEmpty;
 
   return QuestObjectiveStatus(
-    lines: deliverLines,
-    progressLines: progressLines,
-    goldOwned: save.gold,
-    goldRequired: structured.goldCost,
-    ready: hasWork && counterReady && !deferredIncomplete,
+    lines: body.lines,
+    progressLines: body.progressLines,
+    goldOwned: body.goldOwned,
+    goldRequired: body.goldRequired,
+    ready: progress?.status == 'active' && questUsesSteps(db, questId)
+        ? questAllStepsComplete(db, save, quest)
+        : hasWork && counterReady && !deferredIncomplete,
   );
+}
+
+List<QuestJournalStep> questLegacyJournalSteps(
+  GameDatabase db,
+  PlayerSave save,
+  QuestRow quest,
+) {
+  final structured = parseStructuredObjectives(quest);
+  final counters =
+      save.quests.firstWhereOrNull((row) => row.questId == quest['Quest ID'])?.counters ??
+      const <String, num>{};
+  final allLines = objectiveProgressFromStructured(db, save, structured, counters).progressLines;
+  if (allLines.isEmpty) return const <QuestJournalStep>[];
+
+  final firstOpen = allLines.indexWhere((line) => line.current < line.required);
+  final currentIndex = firstOpen == -1 ? allLines.length - 1 : firstOpen;
+
+  return allLines.take(currentIndex + 1).toList().asMap().entries.map((entry) {
+    return QuestJournalStep(
+      key: entry.value.key,
+      label: entry.value.label,
+      state: entry.key < currentIndex || firstOpen == -1 ? 'done' : 'current',
+    );
+  }).toList();
 }
 
 String _npcDisplayName(GameDatabase db, String npcId) {

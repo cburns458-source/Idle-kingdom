@@ -13,6 +13,7 @@ import '../save/generated/save_models.dart';
 import '../world/submaps.dart';
 import 'objectives.dart';
 import 'progress.dart';
+import 'steps.dart';
 
 /// Set when the player pays AcceptGold without starting the quest yet.
 const String acceptGoldFlag = 'accept-gold';
@@ -35,12 +36,7 @@ QuestProgress getQuestProgress(PlayerSave save, String questId) {
       QuestProgress(questId: questId, status: 'inactive', progress: 0);
 }
 
-bool isQuestRepeatable(QuestRow quest) {
-  final flag = quest['Repeatable'] is String
-      ? (quest['Repeatable']! as String).toLowerCase()
-      : 'no';
-  return flag == 'yes' || flag == 'true' || flag == 'repeatable';
-}
+bool isQuestRepeatable(QuestRow quest) => false;
 
 /// Either the updated save or the reason the change was refused.
 class QuestActionResult {
@@ -53,14 +49,8 @@ class QuestActionResult {
   final String? reason;
 }
 
-List<QuestRow> questsTouchingNpc(GameDatabase db, String npcId) {
-  return asQuestRows(db).where((quest) {
-    if (quest['NPC ID'] == npcId) return true;
-    final parsed = parseStructuredObjectives(quest);
-    return parsed.talkNpcIds.contains(npcId) ||
-        parsed.turnInNpcId == npcId ||
-        parsed.choiceNpcId == npcId;
-  }).toList();
+List<QuestRow> questsTouchingNpc(GameDatabase db, PlayerSave save, String npcId) {
+  return asQuestRows(db).where((quest) => questTouchesNpcForSave(db, save, quest, npcId)).toList();
 }
 
 QuestActionResult acceptQuest(
@@ -82,7 +72,7 @@ QuestActionResult acceptQuest(
   if (progress.status == 'active') {
     return const QuestActionResult.failed('This quest is already active.');
   }
-  if (progress.status == 'completed' && !isQuestRepeatable(quest)) {
+  if (progress.status == 'completed') {
     return const QuestActionResult.failed('This quest is already completed.');
   }
   if (parsed.acceptGoldCost > 0 && !hasQuestFlag(save, questId, acceptGoldFlag)) {
@@ -129,7 +119,7 @@ QuestActionResult donateForQuest(
   if (progress.status == 'active') {
     return const QuestActionResult.failed('This quest is already active.');
   }
-  if (progress.status == 'completed' && !isQuestRepeatable(quest)) {
+  if (progress.status == 'completed') {
     return const QuestActionResult.failed('This quest is already completed.');
   }
   if (hasQuestFlag(save, questId, acceptGoldFlag)) {
@@ -199,17 +189,15 @@ QuestCompletion completeQuest(GameDatabase db, PlayerSave save, String questId) 
 
   final progress = getQuestProgress(save, questId);
   if (progress.status == 'completed') {
-    return QuestCompletion.failed(
-      isQuestRepeatable(quest)
-          ? 'Accept this quest again before turning it in.'
-          : 'This quest is already completed.',
-    );
+    return const QuestCompletion.failed('This quest is already completed.');
   }
   if (progress.status != 'active') {
     return const QuestCompletion.failed('Accept this quest before turning it in.');
   }
 
+  final stepDelivers = questAllStepDelivers(db, quest);
   final hasObjectives =
+      stepDelivers.isNotEmpty ||
       parsed.delivers.isNotEmpty ||
       parsed.defeatTargets.isNotEmpty ||
       parsed.processTargets.isNotEmpty ||
@@ -217,7 +205,8 @@ QuestCompletion completeQuest(GameDatabase db, PlayerSave save, String questId) 
       parsed.talkNpcIds.isNotEmpty ||
       parsed.visitLocationIds.isNotEmpty ||
       parsed.inspectIds.isNotEmpty ||
-      parsed.goldCost > 0;
+      parsed.goldCost > 0 ||
+      questUsesSteps(db, questId);
   if (!hasObjectives) {
     return const QuestCompletion.failed('Quest objectives are incomplete in data.');
   }
@@ -237,10 +226,11 @@ QuestCompletion completeQuest(GameDatabase db, PlayerSave save, String questId) 
   }
 
   var next = save;
-  if (parsed.delivers.isNotEmpty) {
+  final deliverItems = questUsesSteps(db, questId) ? stepDelivers : parsed.delivers;
+  if (deliverItems.isNotEmpty) {
     final removed = removeIngredients(
       next,
-      parsed.delivers
+      deliverItems
           .map((line) => RecipeIngredient(itemId: line.targetId, quantity: line.quantity))
           .toList(),
     );

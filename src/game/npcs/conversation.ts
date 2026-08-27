@@ -16,6 +16,7 @@ import {
   questsTouchingNpc,
   type QuestRow,
 } from '../quests/quests'
+import { questActiveStepObjectives } from '../quests/steps'
 import type { PlayerSave } from '../save/types'
 import { configString } from '../activity/gathering'
 import {
@@ -185,13 +186,15 @@ function questBlock(
   const objective = questObjectiveProgress(db, save, quest)
   const pitch = questPitchLine(db, questId)
   const parsed = parseStructuredObjectives(quest)
+  const stepObjectives = questActiveStepObjectives(db, save, quest)
+  const talkNpcIds = stepObjectives?.talkNpcIds ?? parsed.talkNpcIds
   const status = getQuestProgress(save, questId).status
   const isGiver = quest['NPC ID'] === npcId
   const turnInId = parsed.turnInNpcId ?? quest['NPC ID']
   const talked = hasQuestFlag(save, questId, `talk:${npcId}`)
   const chose =
     hasQuestFlag(save, questId, 'choice:bribe') || hasQuestFlag(save, questId, 'choice:combat')
-  const needsTalkFirst = parsed.talkNpcIds.includes(npcId) && !talked
+  const needsTalkFirst = talkNpcIds.includes(npcId) && !talked
   const donated = hasQuestFlag(save, questId, ACCEPT_GOLD_FLAG)
   const needsDonate = parsed.acceptGoldCost > 0 && !donated
   let acceptLabel = 'Accept quest'
@@ -218,7 +221,7 @@ function questBlock(
     canDonate: isGiver && status === 'inactive' && needsDonate,
     donated,
     canTurnIn: turnInId === npcId && status === 'active',
-    canTalk: status === 'active' && parsed.talkNpcIds.includes(npcId) && !talked,
+    canTalk: status === 'active' && talkNpcIds.includes(npcId) && !talked,
     talkLabel: 'Talk',
     talkLine: questTalkLine(db, questId, npcId),
     idlePrompt: configString(db, 'copy.quest_active_prompt', FALLBACK_QUEST_ACTIVE_PROMPT),
@@ -315,7 +318,7 @@ export function npcConversation(
   nowMs: number = Date.now(),
 ): NpcConversation {
   const npcId = npc['NPC ID']
-  const quests = questsTouchingNpc(db, npcId)
+  const quests = questsTouchingNpc(db, save, npcId)
     .filter((quest) => {
       const isGiver = quest['NPC ID'] === npcId
       const status = getQuestProgress(save, quest['Quest ID']).status

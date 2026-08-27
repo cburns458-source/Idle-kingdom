@@ -6,6 +6,7 @@ import '../js_compat.dart';
 import '../quests/objectives.dart';
 import '../quests/progress.dart';
 import '../quests/quests.dart';
+import '../quests/steps.dart';
 import '../save/generated/save_models.dart';
 import 'knowledge.dart';
 import 'roaming.dart';
@@ -305,13 +306,15 @@ NpcQuestBlock _questBlock(GameDatabase db, PlayerSave save, QuestRow quest, Stri
   final pitch = questPitchLine(db, questId);
   final summary = quest['Summary'];
   final parsed = parseStructuredObjectives(quest);
+  final stepObjectives = questActiveStepObjectives(db, save, quest);
+  final talkNpcIds = stepObjectives?.talkNpcIds ?? parsed.talkNpcIds;
   final status = getQuestProgress(save, questId).status;
   final isGiver = quest['NPC ID'] == npcId;
   final turnInId = parsed.turnInNpcId ?? quest['NPC ID'];
   final talked = hasQuestFlag(save, questId, 'talk:$npcId');
   final chose =
       hasQuestFlag(save, questId, 'choice:bribe') || hasQuestFlag(save, questId, 'choice:combat');
-  final needsTalkFirst = parsed.talkNpcIds.contains(npcId) && !talked;
+  final needsTalkFirst = talkNpcIds.contains(npcId) && !talked;
   final donated = hasQuestFlag(save, questId, acceptGoldFlag);
   final needsDonate = parsed.acceptGoldCost > 0 && !donated;
   String acceptLabel;
@@ -340,7 +343,7 @@ NpcQuestBlock _questBlock(GameDatabase db, PlayerSave save, QuestRow quest, Stri
     canDonate: isGiver && status == 'inactive' && needsDonate,
     donated: donated,
     canTurnIn: turnInId == npcId && status == 'active',
-    canTalk: status == 'active' && parsed.talkNpcIds.contains(npcId) && !talked,
+    canTalk: status == 'active' && talkNpcIds.contains(npcId) && !talked,
     talkLabel: 'Talk',
     talkLine: questTalkLine(db, questId, npcId),
     idlePrompt: configString(db, 'copy.quest_active_prompt', _fallbackQuestActivePrompt),
@@ -421,7 +424,7 @@ NpcWhereabouts? _whereaboutsFor(GameDatabase db, String npcId, num clock) {
 NpcConversation npcConversation(GameDatabase db, PlayerSave save, NpcRow npc, [num? nowMs]) {
   final npcId = npc.raw['NPC ID'] as String;
   final quests = <NpcQuestBlock>[];
-  for (final quest in questsTouchingNpc(db, npcId)) {
+  for (final quest in questsTouchingNpc(db, save, npcId)) {
     final isGiver = quest['NPC ID'] == npcId;
     final status = getQuestProgress(save, jsString(quest['Quest ID'])).status;
     if (!isGiver && status != 'active') continue;

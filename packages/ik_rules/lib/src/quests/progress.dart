@@ -4,6 +4,7 @@ import '../js_compat.dart';
 import '../save/generated/save_models.dart';
 import 'objectives.dart';
 import 'quests.dart';
+import 'steps.dart';
 
 PlayerSave _bumpCounter(PlayerSave save, String questId, String key, num amount) {
   if (amount <= 0) return save;
@@ -35,8 +36,10 @@ PlayerSave _applyProgress(
 ) {
   var next = save;
   for (final quest in asQuestRows(db)) {
-    final structured = parseStructuredObjectives(quest);
-    if (!targetsOf(structured).any((row) => row.targetId == targetId)) continue;
+    final matches = questObjectiveSources(db, quest).any(
+      (structured) => targetsOf(structured).any((row) => row.targetId == targetId),
+    );
+    if (!matches) continue;
     next = _bumpCounter(next, jsString(quest['Quest ID']), '$counterPrefix:$targetId', amount);
   }
   return next;
@@ -73,8 +76,9 @@ PlayerSave applyQuestProcessProgress(
 PlayerSave applyQuestLearnRecipeProgress(GameDatabase db, PlayerSave save, String recipeId) {
   var next = save;
   for (final quest in asQuestRows(db)) {
-    final structured = parseStructuredObjectives(quest);
-    if (!structured.learnRecipeIds.contains(recipeId)) continue;
+    if (!questObjectiveSources(db, quest).any((row) => row.learnRecipeIds.contains(recipeId))) {
+      continue;
+    }
     next = _bumpCounter(next, jsString(quest['Quest ID']), 'learn:$recipeId', 1);
   }
   return next;
@@ -125,8 +129,7 @@ PlayerSave recordQuestFlag(PlayerSave save, String questId, String key) {
 PlayerSave applyQuestTalkProgress(GameDatabase db, PlayerSave save, String npcId) {
   var next = save;
   for (final quest in asQuestRows(db)) {
-    final structured = parseStructuredObjectives(quest);
-    if (!structured.talkNpcIds.contains(npcId)) continue;
+    if (!questObjectiveSources(db, quest).any((row) => row.talkNpcIds.contains(npcId))) continue;
     next = setQuestFlag(next, jsString(quest['Quest ID']), 'talk:$npcId');
   }
   return next;
@@ -136,8 +139,9 @@ PlayerSave applyQuestTalkProgress(GameDatabase db, PlayerSave save, String npcId
 PlayerSave applyQuestVisitProgress(GameDatabase db, PlayerSave save, String locationId) {
   var next = save;
   for (final quest in asQuestRows(db)) {
-    final structured = parseStructuredObjectives(quest);
-    if (!structured.visitLocationIds.contains(locationId)) continue;
+    if (!questObjectiveSources(db, quest).any((row) => row.visitLocationIds.contains(locationId))) {
+      continue;
+    }
     next = setQuestFlag(next, jsString(quest['Quest ID']), 'visit:$locationId');
   }
   return next;
@@ -147,8 +151,9 @@ PlayerSave applyQuestVisitProgress(GameDatabase db, PlayerSave save, String loca
 PlayerSave applyQuestInspectProgress(GameDatabase db, PlayerSave save, String inspectId) {
   var next = save;
   for (final quest in asQuestRows(db)) {
-    final structured = parseStructuredObjectives(quest);
-    if (!structured.inspectIds.contains(inspectId)) continue;
+    if (!questObjectiveSources(db, quest).any((row) => row.inspectIds.contains(inspectId))) {
+      continue;
+    }
     next = setQuestFlag(next, jsString(quest['Quest ID']), 'inspect:$inspectId');
   }
   return next;

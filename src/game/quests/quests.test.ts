@@ -25,6 +25,27 @@ const rawDatabase = JSON.parse(
 )
 
 describe('quest tours', () => {
+  it('reveals the feast request in stages before turn-in', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    let save = { ...createNewSave(launch), currentLocationId: 'LOC-0016' }
+
+    const accepted = acceptQuest(launch, save, 'QST-0001')
+    expect(accepted.ok).toBe(true)
+    if (!accepted.ok) return
+    save = accepted.save
+
+    expect(completeQuest(launch, save, 'QST-0001').ok).toBe(false)
+    save = applyQuestTalkProgress(launch, save, 'NPC-0001')
+    expect(completeQuest(launch, save, 'QST-0001').ok).toBe(false)
+
+    save = addItemToInventory(save, 'ITEM-0058', 10)
+    const completed = completeQuest(launch, save, 'QST-0001')
+    expect(completed.ok).toBe(true)
+    if (!completed.ok) return
+    expect(completed.rewards.some((reward) => /Cooking XP/i.test(reward.label))).toBe(true)
+    expect(completed.rewards.some((reward) => /Golden Spud/i.test(reward.label))).toBe(true)
+  })
+
   it('charges 25 gold, recovers the purse by bribe, and grants the hood plus skill XP', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const beggar = launch.NPCs.find((row) => row['NPC ID'] === 'NPC-0011')!

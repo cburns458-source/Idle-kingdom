@@ -126,16 +126,7 @@ class _LogViewState extends State<LogView> {
               switch (_tab) {
                 _LogTab.achievements => _AchievementBands(rows: achievementLog(db, save)),
                 _LogTab.quests => _Rows([
-                  for (final row in questLog(db, save))
-                    _LogRow(
-                      title: row.name,
-                      detail: row.detail,
-                      trailing: row.statusLabel,
-                      highlight: row.completed,
-                      below: [
-                        for (final objective in row.objectives) _ObjectiveBar(objective: objective),
-                      ],
-                    ),
+                  for (final row in questLog(db, save)) _QuestJournalRow(row: row),
                 ]),
                 _LogTab.critters => _Rows([
                   for (final row in critterLog(save))
@@ -318,22 +309,66 @@ class _LogRow extends StatelessWidget {
   }
 }
 
-class _ObjectiveBar extends StatelessWidget {
-  const _ObjectiveBar({required this.objective});
+class _QuestJournalRow extends StatelessWidget {
+  const _QuestJournalRow({required this.row});
 
-  final QuestLogObjective objective;
+  final QuestLogRow row;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 4),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          MutedText(objective.label),
-          const SizedBox(height: 2),
-          MeterBar(value: objective.percent / 100, color: Palette.softGreen, height: 6),
-        ],
+    final canOpen = row.steps.isNotEmpty;
+    if (!canOpen) {
+      return _LogRow(
+        title: row.name,
+        detail: row.detail,
+        trailing: row.statusLabel,
+        highlight: row.completed,
+      );
+    }
+
+    return GamePanel(
+      padding: EdgeInsets.zero,
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          tilePadding: const EdgeInsets.symmetric(horizontal: 12),
+          childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+          title: Text(
+            row.name,
+            style: TextStyle(
+              fontWeight: FontWeight.w400,
+              color: row.completed ? Palette.gold : Palette.parchmentText,
+            ),
+          ),
+          subtitle: MutedText(row.detail),
+          trailing: MutedText(row.statusLabel),
+          children: [
+            for (final step in row.steps)
+              Padding(
+                padding: const EdgeInsets.only(top: 6),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      step.state == 'done' ? '✓' : '•',
+                      style: TextStyle(
+                        color: step.state == 'done' ? Palette.softGreen : Palette.gold,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        step.label,
+                        style: TextStyle(
+                          color: step.state == 'done' ? Palette.muted : Palette.parchmentText,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

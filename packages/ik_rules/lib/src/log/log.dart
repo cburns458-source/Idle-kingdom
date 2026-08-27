@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:collection/collection.dart';
 import 'package:ik_content/ik_content.dart';
 
@@ -8,6 +6,7 @@ import '../critters/critters.dart';
 import '../js_compat.dart';
 import '../quests/objectives.dart';
 import '../quests/quests.dart';
+import '../quests/steps.dart';
 import '../recipes/knowledge.dart';
 import '../save/generated/save_models.dart';
 
@@ -125,25 +124,6 @@ LogSectionCompletion achievementDifficultyCompletion(
   );
 }
 
-/// One objective of an active quest, with its bar already worked out.
-class QuestLogObjective {
-  const QuestLogObjective({required this.key, required this.label, required this.percent});
-
-  final String key;
-
-  /// `Deliver Cabbage: 3/5`.
-  final String label;
-
-  /// 0–100, capped, for the bar.
-  final num percent;
-
-  Map<String, Object?> toJson() => <String, Object?>{
-    'key': key,
-    'label': label,
-    'percent': percent,
-  };
-}
-
 class QuestLogRow {
   const QuestLogRow({
     required this.questId,
@@ -151,19 +131,19 @@ class QuestLogRow {
     required this.detail,
     required this.statusLabel,
     required this.completed,
-    required this.objectives,
+    required this.steps,
   });
 
   final String questId;
   final String name;
 
-  /// `Rose needs herbs. · Rose`, the summary and who gave it.
+  /// Vague report of the situation, plus who gave it.
   final String detail;
   final String statusLabel;
   final bool completed;
 
-  /// Empty unless the quest is active and asks for something countable.
-  final List<QuestLogObjective> objectives;
+  /// Revealed steps for active quests.
+  final List<QuestJournalStep> steps;
 
   Map<String, Object?> toJson() => <String, Object?>{
     'questId': questId,
@@ -171,7 +151,7 @@ class QuestLogRow {
     'detail': detail,
     'statusLabel': statusLabel,
     'completed': completed,
-    'objectives': objectives.map((objective) => objective.toJson()).toList(),
+    'steps': steps.map((step) => step.toJson()).toList(),
   };
 }
 
@@ -184,9 +164,11 @@ List<QuestLogRow> questLog(GameDatabase db, PlayerSave save) {
         ? npc!.raw['Display Name']! as String
         : 'NPC';
     final summary = quest['Summary'];
-    final objectives = status == 'active'
-        ? questObjectiveProgress(db, save, quest).progressLines
-        : const <QuestProgressLine>[];
+    final steps = status == 'active'
+        ? questUsesSteps(db, questId)
+            ? questStepJournal(db, save, quest)
+            : questLegacyJournalSteps(db, save, quest)
+        : const <QuestJournalStep>[];
 
     return QuestLogRow(
       questId: questId,
@@ -194,19 +176,7 @@ List<QuestLogRow> questLog(GameDatabase db, PlayerSave save) {
       detail: '${summary is String ? summary : 'No summary.'} · $npcName',
       statusLabel: questStatusLabel(status),
       completed: status == 'completed',
-      objectives: objectives
-          .where((line) => line.current < line.required)
-          .take(1)
-          .map(
-            (line) => QuestLogObjective(
-              key: line.key,
-              label:
-                  '${line.label}: ${jsNumberToString(math.min(line.current, line.required))}'
-                  '/${jsNumberToString(line.required)}',
-              percent: math.min(100, (line.current / math.max(1, line.required) * 100).floor()),
-            ),
-          )
-          .toList(),
+      steps: steps,
     );
   }).toList();
 }

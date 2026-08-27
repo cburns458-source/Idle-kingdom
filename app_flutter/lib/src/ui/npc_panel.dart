@@ -415,7 +415,8 @@ class _QuestBlock extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(quest.name, style: const TextStyle(fontWeight: FontWeight.w400)),
-          if (quest.summary case final summary?) MutedText(summary),
+          if (quest.summary case final summary?)
+            if (quest.status != 'active') MutedText(summary),
           const SizedBox(height: 8),
           switch (quest.status) {
             'completed' => MutedText(quest.completedNote),

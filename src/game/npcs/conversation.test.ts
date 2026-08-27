@@ -136,11 +136,27 @@ describe('npc conversation', () => {
     )
   })
 
-  it('leaves plain NPCs without a greeting or mentor block', () => {
+  it("pitches the King's feast quest before it is accepted", () => {
     const conversation = npcConversation(launch, saveAt('LOC-0016'), npc('NPC-0001'))
-    expect(conversation.greeting).toBeNull()
+    expect(conversation.greeting).toEqual({
+      kind: 'quest_pitch',
+      questId: 'QST-0001',
+      line: 'My cooks have fled before the grand feast. If you know your way around a hearth, perhaps you can help.',
+      acceptLabel: 'Start quest: The Grand Feast',
+    })
     expect(conversation.mentor).toBeNull()
-    expect(conversation.quests.map((quest) => quest.acceptLabel)).toEqual(['Accept quest'])
+  })
+
+  it('asks the King for details after the feast is accepted', () => {
+    const save = {
+      ...saveAt('LOC-0016'),
+      quests: [{ questId: 'QST-0001', status: 'active' as const, progress: 0 }],
+    }
+    const conversation = npcConversation(launch, save, npc('NPC-0001'))
+    expect(conversation.greeting).toBeNull()
+    expect(conversation.quests[0]!.canTalk).toBe(true)
+    expect(conversation.quests[0]!.talkLine).toContain('baked potatoes')
+    expect(conversation.quests[0]!.ready).toBe(false)
   })
 
   it('reads quest pitches and talk lines from the database', () => {

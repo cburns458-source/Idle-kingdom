@@ -202,7 +202,7 @@ void main() {
     expect(find.text("Completed — Rose's Apothecary is open on the Town Map."), findsOne);
   });
 
-  testWidgets('a quest giver with no pitch is accepted straight from the list', (tester) async {
+  testWidgets('the King pitches the feast, then asks for help after accept', (tester) async {
     final controller = buildController(database, seed: standing('LOC-0016'));
     addTearDown(controller.dispose);
 
@@ -210,12 +210,13 @@ void main() {
       tester,
       NpcPanel(controller: controller, npc: npcOf('NPC-0001'), onClose: () {}),
     );
-    expect(find.text('The Grand Feast'), findsOne);
-    await tester.tap(find.text('Accept quest'));
+    expect(find.textContaining('My cooks have fled'), findsOne);
+    await tester.tap(find.text('Start quest: The Grand Feast'));
     await tester.pump();
 
     expect(getQuestProgress(controller.save, 'QST-0001').status, 'active');
-    expect(find.text('What else do you need?'), findsOne);
+    expect(find.text('Talk'), findsOne);
+    expect(find.textContaining('baked potatoes'), findsNothing);
   });
 
   testWidgets('the Beggar at The Town asks for 25 gold', (tester) async {
