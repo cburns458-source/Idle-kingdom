@@ -13,9 +13,12 @@ import 'game_image.dart';
 import 'item_icon.dart';
 import 'playable_frame.dart';
 
-/// How tall a fighter, a gathering scene, or a workstation is drawn.
-const double _portraitHeight = 152;
-const double _playerStageScale = 1.2;
+/// Player and enemy portraits stay this tall. Gathering and workstation art
+/// sits in the same slot but is drawn smaller so the adventurer does not jump
+/// when the activity type changes.
+const double _playerArtHeight = 152;
+const double _enemyArtHeight = 152;
+const double _actionArtHeight = 72;
 
 /// How wide either half of the stage can get, so the two sprites stay shoulder
 /// to shoulder in the middle of a wide window instead of drifting apart.
@@ -116,7 +119,8 @@ class PvpActionStage extends StatelessWidget {
           bytes: youBytes,
           semanticsLabel: youName,
           alignment: Alignment.centerRight,
-          scale: _playerStageScale,
+          height: _playerArtHeight,
+          filterQuality: FilterQuality.medium,
           overlay: !finished && youHit > 0
               ? _DamageFloater(
                   key: ValueKey('pvp-them-hit-$roundSeq'),
@@ -131,6 +135,8 @@ class PvpActionStage extends StatelessWidget {
           assetPath: playerAssetPath(themAppearance, raceId: themRaceId),
           semanticsLabel: themName,
           alignment: Alignment.centerLeft,
+          height: _enemyArtHeight,
+          filterQuality: FilterQuality.medium,
           flipX: true,
           overlay: finished
               ? null
@@ -265,7 +271,9 @@ class _Portrait extends StatelessWidget {
     this.overlay,
     this.placeholder,
     this.flipX = false,
-    this.scale = 1,
+    this.height = _playerArtHeight,
+    this.slotHeight,
+    this.filterQuality = FilterQuality.none,
   });
 
   final String? assetPath;
@@ -277,35 +285,48 @@ class _Portrait extends StatelessWidget {
 
   /// Arena opponents face the player. Damage numbers stay unflipped.
   final bool flipX;
-  final double scale;
+  final double height;
+
+  /// When set, the art is drawn at [height] inside a taller slot so the
+  /// adventurer stays at a fixed 152px while action art sits smaller.
+  final double? slotHeight;
+  final FilterQuality filterQuality;
 
   @override
   Widget build(BuildContext context) {
+    final art = placeholder == null
+        ? Transform.flip(
+            flipX: flipX,
+            child: bytes != null
+                ? Image.memory(
+                    bytes!,
+                    fit: BoxFit.contain,
+                    alignment: alignment,
+                    filterQuality: filterQuality,
+                    gaplessPlayback: true,
+                  )
+                : GameImage(
+                    assetPath!,
+                    fit: BoxFit.contain,
+                    alignment: alignment,
+                    filterQuality: filterQuality,
+                  ),
+          )
+        : null;
     return Semantics(
       image: placeholder == null,
       label: semanticsLabel,
       child: SizedBox(
-        height: _portraitHeight,
+        height: slotHeight ?? height,
         width: double.infinity,
         child: Stack(
           fit: StackFit.expand,
           children: [
             ?placeholder,
-            if (placeholder == null)
-              Transform.scale(
-                scale: scale,
-                child: Transform.flip(
-                  flipX: flipX,
-                  child: bytes != null
-                      ? Image.memory(
-                          bytes!,
-                          fit: BoxFit.contain,
-                          alignment: alignment,
-                          filterQuality: FilterQuality.none,
-                          gaplessPlayback: true,
-                        )
-                      : GameImage(assetPath!, fit: BoxFit.contain, alignment: alignment),
-                ),
+            if (art != null)
+              Align(
+                alignment: Alignment.bottomCenter,
+                child: SizedBox(height: height, width: double.infinity, child: art),
               ),
             ?overlay,
           ],
@@ -438,12 +459,14 @@ class _CombatStage extends StatelessWidget {
           bytes: controller.localPlayerPng,
           semanticsLabel: 'Adventurer',
           alignment: Alignment.centerRight,
-          scale: _playerStageScale,
+          height: _playerArtHeight,
+          filterQuality: FilterQuality.medium,
           overlay: _playerFloaters(round, seq, showFloaters, controller.healPopup),
         ),
         scene: _Portrait(
           assetPath: controller.defeatedFlash || enemyId == null ? null : enemyAssetPath(enemyId),
           semanticsLabel: enemyName,
+          height: _enemyArtHeight,
           alignment: Alignment.centerLeft,
           placeholder: controller.defeatedFlash
               ? const Center(
@@ -573,7 +596,7 @@ class _RecoveringStage extends StatelessWidget {
           ),
         ),
         // Nothing fights back during the pause, so the other half stays empty.
-        scene: const SizedBox(height: _portraitHeight),
+        scene: const SizedBox(height: _playerArtHeight),
         playerCaption: const SizedBox(height: 16),
         sceneCaption: const SizedBox(height: 16),
       ),
@@ -644,11 +667,14 @@ class _GatheringStage extends StatelessWidget {
           bytes: controller.localPlayerPng,
           semanticsLabel: 'Adventurer',
           alignment: Alignment.centerRight,
-          scale: _playerStageScale,
+          height: _playerArtHeight,
+          filterQuality: FilterQuality.medium,
         ),
         scene: _Portrait(
           assetPath: action == null ? null : actionAssetPath(action.actionId),
           semanticsLabel: actionName,
+          height: _actionArtHeight,
+          slotHeight: _playerArtHeight,
           alignment: Alignment.centerLeft,
           placeholder: action == null ? const SizedBox.expand() : null,
         ),
@@ -706,11 +732,14 @@ class _ProductionStage extends StatelessWidget {
           bytes: controller.localPlayerPng,
           semanticsLabel: 'Adventurer',
           alignment: Alignment.centerRight,
-          scale: _playerStageScale,
+          height: _playerArtHeight,
+          filterQuality: FilterQuality.medium,
         ),
         scene: _Portrait(
           assetPath: workstationAssetPath(recipe?.facilityId),
           semanticsLabel: stationName,
+          height: _actionArtHeight,
+          slotHeight: _playerArtHeight,
           alignment: Alignment.centerLeft,
           overlay: popup == null
               ? null

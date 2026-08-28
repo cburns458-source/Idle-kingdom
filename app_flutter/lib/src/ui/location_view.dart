@@ -370,7 +370,12 @@ class _LocationViewState extends State<LocationView> {
                                 bottom: _collapsedBand + 8,
                                 child: openPanel is ArenaOpen && !running
                                     ? stage
-                                    : _scrollingPanel(stage),
+                                    : _scrollingPanel(
+                                        stage,
+                                        alignment: running
+                                            ? Alignment.topCenter
+                                            : Alignment.bottomCenter,
+                                      ),
                               ),
                             if (overlayPanel != null && !liftArena)
                               Positioned(
@@ -380,7 +385,12 @@ class _LocationViewState extends State<LocationView> {
                                 bottom: _collapsedBand + 8,
                                 child: openPanel is ArenaOpen
                                     ? overlayPanel
-                                    : _scrollingPanel(overlayPanel),
+                                    : _scrollingPanel(
+                                        overlayPanel,
+                                        alignment: running
+                                            ? Alignment.topCenter
+                                            : Alignment.bottomCenter,
+                                      ),
                               ),
                             if (liftArena && (overlayPanel ?? stage) != null)
                               Positioned(
@@ -455,11 +465,11 @@ class _LocationViewState extends State<LocationView> {
 
   /// Keeps a shop or NPC as wide as the stage so its grid does not collapse
   /// inside the scrolling overlay.
-  Widget _scrollingPanel(Widget panel) {
+  Widget _scrollingPanel(Widget panel, {Alignment alignment = Alignment.bottomCenter}) {
     return LayoutBuilder(
       builder: (context, stage) {
         return Align(
-          alignment: Alignment.bottomCenter,
+          alignment: alignment,
           child: SingleChildScrollView(
             child: SizedBox(width: stage.maxWidth, child: panel),
           ),

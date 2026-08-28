@@ -49,6 +49,39 @@ void main() {
     expect(find.bySemanticsLabel('Adventurer'), findsWidgets);
     expect(find.byWidgetPredicate((widget) => assetNamed(widget, '/actions/')), findsOne);
     expect(find.bySemanticsLabel('Action progress'), findsOne);
+
+    final stage = tester.getRect(find.byType(ActionStage));
+    final player = tester.getRect(find.bySemanticsLabel('Adventurer').first);
+    final action = tester.getRect(
+      find.byWidgetPredicate((widget) => assetNamed(widget, '/actions/')),
+    );
+    expect(player.height, 152);
+    expect(player.top - stage.top, closeTo(4, 1));
+    expect(action.height, 72);
+    expect(action.height, lessThan(player.height));
+  });
+
+  testWidgets('combat keeps the player at 152 and does not shrink the enemy', (tester) async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(currentLocationId: 'LOC-0001'),
+    );
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller);
+
+    await tapVisible(
+      tester,
+      find.descendant(of: dockRow('Tend the pasture'), matching: find.bySemanticsLabel('Start')),
+    );
+
+    final stage = tester.getRect(find.byType(ActionStage));
+    final player = tester.getRect(find.bySemanticsLabel('Adventurer').first);
+    final enemy = tester.getRect(
+      find.byWidgetPredicate((widget) => assetNamed(widget, '/enemies/')),
+    );
+    expect(player.height, 152);
+    expect(player.top - stage.top, closeTo(4, 1));
+    expect(enemy.height, 152);
   });
 
   testWidgets('the farm plate runs behind the activities band', (tester) async {
