@@ -1,3 +1,4 @@
+import { recordItemsSoldAtLocation } from '../achievements/progress'
 import { addItemToInventoryExact } from '../activity/rewards'
 import { grantCosmetic } from '../cosmetics/cosmetics'
 import { canFitItemQuantity } from '../inventory/capacity'
@@ -138,6 +139,10 @@ export function confirmShopOffer(
         },
       },
     }
+  }
+  if (sells.length > 0) {
+    const shopLocation = String(shop['Location ID'] ?? save.currentLocationId)
+    next = recordItemsSoldAtLocation(next, sells, shopLocation)
   }
 
   const parts: string[] = []

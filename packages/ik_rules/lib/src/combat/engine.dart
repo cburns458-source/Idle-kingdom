@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:collection/collection.dart';
 import 'package:ik_content/ik_content.dart';
 
+import '../achievements/progress.dart';
 import '../activity/held_action.dart';
 import '../activity/rewards.dart';
 import '../activity/xp.dart';
@@ -345,6 +346,7 @@ CombatVictoryResult applyCombatVictory(
       },
     ),
   );
+  next = recordEnemyKill(db, next, jsString(enemy.raw['Enemy ID']));
 
   final food = consumeFoodAfterVictory(db, next);
   next = withBossRespawn(clearCombatSave(food.save), enemy, nowMs);

@@ -1,3 +1,4 @@
+import { recordEnemyKill } from '../achievements/progress'
 import { withoutHeldAction } from '../activity/heldAction'
 import { configNumber } from '../activity/gathering'
 import { resolveActionRewards } from '../activity/rewards'
@@ -290,6 +291,7 @@ export function applyCombatVictory(
       },
     },
   }
+  next = recordEnemyKill(db, next, enemy['Enemy ID'])
 
   const food = consumeFoodAfterVictory(db, next)
   next = withBossRespawn(clearCombatSave(food.save), enemy, nowMs)

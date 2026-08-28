@@ -25,13 +25,11 @@ void main() {
 
     expect(find.text('Deeds unlocked on this save.'), findsOne);
     expect(find.text('Easy'), findsOne);
-    expect(find.textContaining('Reach level 50'), findsWidgets);
+    expect(find.textContaining('Craft any spell'), findsWidgets);
   });
 
   testWidgets('an achievement stays greyed out until it is earned', (tester) async {
-    final save = startedCharacter(database);
-    final raised = raiseSkillToMinimumLevel(save, database.launch, 'SKL-0002', 50);
-    final controller = buildController(database, seed: raised.save);
+    final controller = buildController(database, seed: startedCharacter(database));
     addTearDown(controller.dispose);
     await pumpShell(tester, controller);
 
@@ -40,9 +38,8 @@ void main() {
     Finder rowFor(String title) =>
         find.ancestor(of: find.text(title), matching: find.byType(Opacity));
 
-    expect(rowFor('Mining Level 50'), findsNothing);
-    expect(rowFor('Combat Level 50'), findsNothing);
-    expect(tester.widget<Opacity>(rowFor('Every skill 50').first).opacity, lessThan(1));
+    expect(rowFor('Every skill 50'), findsNothing);
+    expect(tester.widget<Opacity>(rowFor('Iron man').first).opacity, lessThan(1));
   });
 
   testWidgets('the Log reports how much of each page is done', (tester) async {

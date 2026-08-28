@@ -82,7 +82,10 @@ String _achievementNote(Map<String, Object?> achievement) {
     case 'gold':
       return 'Earn ${formatLogCount(count is num ? count : 0)} gold';
     case 'spell_projects':
-      return 'Complete ${jsNumberToString(count is num ? count : 4)} spell projects';
+      final notes = achievement['Notes'];
+      if (notes is String && notes.isNotEmpty) return notes;
+      final n = count is num ? count : 1;
+      return 'Complete ${jsNumberToString(n)} spell project${n == 1 ? '' : 's'}';
     case 'enchant':
       return 'Enchant an item';
     case 'potion':

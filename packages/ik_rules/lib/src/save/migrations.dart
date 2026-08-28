@@ -476,6 +476,16 @@ final List<SaveMigration> saveMigrations = <SaveMigration>[
     migrate: (save, nowMs) {
       final next = _bumped(save, 35);
       next['hasSeenFennelIntro'] = save['hasSeenFennelIntro'] ?? false;
+      final raw = save['achievements'];
+      if (raw is! List) {
+        next['achievements'] = <Object?>[];
+        return next;
+      }
+      next['achievements'] = raw.where((row) {
+        if (row is! Map) return false;
+        final id = row['achievementId'];
+        return id == 'ACH-0015' || id == 'ACH-0017';
+      }).toList();
       return next;
     },
   ),

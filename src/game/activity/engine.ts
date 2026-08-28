@@ -23,7 +23,8 @@ import type {
   ActiveActionState,
   ActivityStartResult,
 } from './types'
-import { addLifetimeStat } from '../achievements/progress'
+import { addLifetimeStat, recordGatheredDrops } from '../achievements/progress'
+import { WEAPON_TOOL_SLOT_ID } from '../save/types'
 import { GATHERING_ACTIONS_STAT } from '../log/milestones'
 import { bonusSkillXpForAction, bowHuntingCombatXpBonus } from './bonusXp'
 import { summarizeXpReward } from './rewardSummary'
@@ -283,6 +284,14 @@ export function completeGatheringAction(
   }
 
   next = addLifetimeStat(next, GATHERING_ACTIONS_STAT)
+  if (rewarded.loot.length > 0) {
+    next = recordGatheredDrops(
+      next,
+      rewarded.loot.map((drop) => drop.itemId),
+      save.currentLocationId,
+      save.equipment.slots[WEAPON_TOOL_SLOT_ID]?.itemId ?? null,
+    )
+  }
 
   return {
     save: withoutHeldAction(next, save.currentActivityId),

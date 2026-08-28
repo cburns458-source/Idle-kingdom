@@ -277,6 +277,14 @@ GatheringCompletion completeGatheringAction(
   if (bowBonus != null) applyBonusXp(bowBonus.skillId, bowBonus.xp);
 
   next = addLifetimeStat(next, gatheringActionsStat);
+  if (rewarded.loot.isNotEmpty) {
+    next = recordGatheredDrops(
+      next,
+      rewarded.loot.map((drop) => drop.itemId),
+      save.currentLocationId,
+      save.equipment.slots[weaponToolSlotId]?.itemId,
+    );
+  }
 
   return GatheringCompletion(
     save: withoutHeldAction(next, save.currentActivityId),
