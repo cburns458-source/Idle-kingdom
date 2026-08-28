@@ -371,7 +371,7 @@ class _LocationViewState extends State<LocationView> {
                                 bottom: _collapsedBand + 8,
                                 child: IgnorePointer(
                                   child: Align(
-                                    alignment: Alignment.bottomCenter,
+                                    alignment: Alignment.topCenter,
                                     child: LocationIdlePlayer(controller: controller),
                                   ),
                                 ),

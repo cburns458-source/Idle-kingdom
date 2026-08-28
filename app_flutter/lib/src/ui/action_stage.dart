@@ -82,23 +82,37 @@ class LocationIdlePlayer extends StatelessWidget {
   Widget build(BuildContext context) {
     if (controller.showRecoveringStage) return const SizedBox.shrink();
     final save = controller.save;
-    return _StageShell(
-      semanticsLabel: 'Adventurer stand',
-      scene: _TwoPortraits(
-        player: _Portrait(
-          assetPath: playerAssetPath(save.appearance, raceId: save.raceId),
-          bytes: controller.localPlayerPng,
-          semanticsLabel: 'Adventurer',
-          alignment: Alignment.centerRight,
-          height: _playerArtHeight,
-          slotHeight: _portraitSlotHeight,
-          filterQuality: FilterQuality.high,
+    return Semantics(
+      container: true,
+      explicitChildNodes: true,
+      label: 'Adventurer stand',
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(2, 4, 2, 0),
+        child: Align(
+          alignment: Alignment.topCenter,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: _stageMaxWidth),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: _Portrait(
+                    assetPath: playerAssetPath(save.appearance, raceId: save.raceId),
+                    bytes: controller.localPlayerPng,
+                    semanticsLabel: 'Adventurer',
+                    alignment: Alignment.centerRight,
+                    height: _playerArtHeight,
+                    slotHeight: _portraitSlotHeight,
+                    filterQuality: FilterQuality.high,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                const Expanded(child: SizedBox(height: _portraitSlotHeight)),
+              ],
+            ),
+          ),
         ),
-        scene: const SizedBox(height: _portraitSlotHeight),
-        playerCaption: const SizedBox(height: _captionMinHeight),
-        sceneCaption: const SizedBox(height: _captionMinHeight),
       ),
-      footer: const SizedBox(height: _stageFooterHeight),
     );
   }
 }
@@ -253,6 +267,7 @@ class _StageShell extends StatelessWidget {
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: _stageMaxWidth),
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [scene, const SizedBox(height: 7), footer],
             ),
