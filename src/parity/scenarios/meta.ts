@@ -29,7 +29,7 @@ import {
   getCritter,
   spawnCritterAtLocation,
 } from '../../game/critters/critters'
-import { achievementLog, critterLog, logCompletion, questLog, recipeLog } from '../../game/log/log'
+import { achievementLog, critterLog, logCompletion, milestoneLog, questLog, recipeLog } from '../../game/log/log'
 import { mulberry32 } from '../../game/rng/mulberry32'
 import { displayNameForSave, nameWithTitle, titleForSave } from '../../game/save/playerTitle'
 import type { PlayerSave } from '../../game/save/types'
@@ -322,6 +322,7 @@ export const metaScenarios: ParityScenario[] = [
       const save = saveFor(kind)
       return {
         achievements: achievementLog(db, save),
+        milestones: milestoneLog(db, save),
         quests: questLog(db, save),
         recipes: recipeLog(db, save),
         critters: critterLog(save),

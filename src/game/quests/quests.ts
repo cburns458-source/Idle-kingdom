@@ -1,4 +1,6 @@
+import { summarizeXpReward } from '../activity/rewardSummary'
 import { addItemToInventory } from '../activity/rewards'
+import type { ActionRewardBundle, ActionXpRewardSummary, LootGrant } from '../activity/types'
 import { applyXp } from '../activity/xp'
 import { COMBAT_SKILL_ID } from '../combat/stats'
 import { cosmeticById, grantCosmetic } from '../cosmetics/cosmetics'
@@ -174,6 +176,7 @@ export function completeQuest(
       questName: string
       rewards: QuestRewardLine[]
       pendingSkillXp: number
+      rewardBundle: ActionRewardBundle
     }
   | { ok: false; reason: string } {
   const quest = getQuest(db, questId)
@@ -240,6 +243,9 @@ export function completeQuest(
   }
 
   const rewards: QuestRewardLine[] = []
+  const xpRewards: ActionXpRewardSummary[] = []
+  const loot: LootGrant[] = []
+  let goldGained = 0
   let pendingSkillXp = 0
   const bribed = hasQuestFlag(save, questId, 'choice:bribe')
   const xpSkill = quest['Reward XP Skill ID']
@@ -255,9 +261,12 @@ export function completeQuest(
     const skillName =
       db.Skills.find((skill) => skill['Skill ID'] === xpSkill)?.['Display Name'] ?? 'skill'
     rewards.push({ label: `${xpAmount.toLocaleString()} ${skillName} XP` })
+    const xpLine = summarizeXpReward(db, next, xpSkill, xpAmount, applied.leveledUpTo)
+    if (xpLine) xpRewards.push(xpLine)
   }
 
   if (parsed.rewardGold > 0) {
+    goldGained = parsed.rewardGold
     next = { ...next, gold: next.gold + parsed.rewardGold }
     rewards.push({ label: `${parsed.rewardGold.toLocaleString()} gold` })
   }
@@ -269,6 +278,7 @@ export function completeQuest(
     const itemName =
       db.Items.find((item) => item['Item ID'] === rewardItemId)?.['Display Name'] ?? 'item'
     rewards.push({ label: `${rewardQty}× ${itemName}` })
+    loot.push({ itemId: rewardItemId, quantity: rewardQty, displayName: itemName })
   }
 
   let unlocked = next.unlockedLocationIds ?? []
@@ -332,6 +342,12 @@ export function completeQuest(
     questName: quest['Display Name'],
     rewards,
     pendingSkillXp,
+    rewardBundle: {
+      id: `quest-${questId}`,
+      xpRewards,
+      loot,
+      goldGained,
+    },
     message:
       rewards.length > 0
         ? `Quest complete — ${rewards.map((reward) => reward.label).join(' and ')}.`

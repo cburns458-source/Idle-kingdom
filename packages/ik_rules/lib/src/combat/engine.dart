@@ -7,6 +7,7 @@ import '../activity/held_action.dart';
 import '../activity/rewards.dart';
 import '../activity/xp.dart';
 import '../equipment/loadout.dart';
+import '../equipment/vitals.dart';
 import '../npcs/knowledge.dart';
 import '../bounties/progress.dart';
 import '../config.dart';
@@ -311,7 +312,10 @@ CombatVictoryResult applyCombatVictory(
   num nowMs,
 ) {
   final maxHp = playerMaxHp(db, save);
-  var next = save.copyWith(maxHp: maxHp, currentHp: math.min(save.currentHp, maxHp));
+  var next = save.copyWith(
+    maxHp: maxHp,
+    currentHp: currentHpAfterMaxChange(save.currentHp, save.maxHp, maxHp),
+  );
 
   final xpAmount = jsNumber(enemy.raw['Combat XP'] ?? action.raw['XP Reward'] ?? 0);
   next = applyXp(next, db, combatSkillId, xpAmount).save;

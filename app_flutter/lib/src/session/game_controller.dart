@@ -356,6 +356,29 @@ class GameController extends ChangeNotifier {
     notifyListeners();
   }
 
+  bool get showEatButton => save.settings.showEatButton;
+
+  void setShowEatButton(bool value) {
+    if (save.settings.showEatButton == value) return;
+    commit(save.copyWith(settings: save.settings.copyWith(showEatButton: value)));
+  }
+
+  /// Manual eat from the bag or food slot. Returns a refusal, or null on success.
+  String? eatFood({int? inventoryIndex}) {
+    final result = inventoryIndex == null
+        ? eatEquippedFood(db, save)
+        : eatInventoryFood(db, save, inventoryIndex);
+    if (!result.ok) return result.reason;
+    commit(result.save!);
+    _healPopup = HealPopup(
+      amount: result.healed,
+      shownAtMs: session.clock(),
+      seq: (_healPopup?.seq ?? 0) + 1,
+    );
+    notifyListeners();
+    return null;
+  }
+
   /// Whether the HUD identity line includes the equipped title.
   bool get showTitleOnHud => hudTitle.showTitle;
 

@@ -54,12 +54,50 @@ int getCurrentStepIndex(GameDatabase db, PlayerSave save, QuestRow quest) {
   return steps.length;
 }
 
+const String _citadelQuestId = 'QST-0004';
+const String _citadelGuideNpcId = 'NPC-0013';
+
+bool citadelGuideHeard(PlayerSave save) {
+  return jsNumber(
+        getQuestProgress(save, _citadelQuestId).counters?['talk:$_citadelGuideNpcId'] ?? 0,
+      ) >=
+      1;
+}
+
+List<QuestProgressLine> _stepProgressLines(
+  GameDatabase db,
+  PlayerSave save,
+  String questId,
+  String notes,
+) {
+  final structured = parseNotesObjectives(notes);
+  final counters = getQuestProgress(save, questId).counters ?? const <String, num>{};
+  return objectiveProgressFromStructured(db, save, structured, counters).progressLines;
+}
+
 List<QuestJournalStep> questStepJournal(GameDatabase db, PlayerSave save, QuestRow quest) {
   final questId = jsString(quest['Quest ID']);
   final steps = getQuestSteps(db, questId);
   if (steps.isEmpty) return const <QuestJournalStep>[];
 
   final currentIndex = getCurrentStepIndex(db, save, quest);
+  if (questId == _citadelQuestId && citadelGuideHeard(save) && currentIndex >= 1) {
+    final heard = steps.first;
+    final remaining = steps.skip(1).expand((step) {
+      return _stepProgressLines(db, save, questId, step.notes ?? '').map(
+        (line) => QuestJournalStep(
+          key: line.key,
+          label: line.label,
+          state: line.current >= line.required ? 'done' : 'current',
+        ),
+      );
+    });
+    return [
+      QuestJournalStep(key: heard.stepId, label: heard.journalLabel, state: 'done'),
+      ...remaining,
+    ];
+  }
+
   if (currentIndex >= steps.length) {
     return steps
         .map((step) => QuestJournalStep(key: step.stepId, label: step.journalLabel, state: 'done'))

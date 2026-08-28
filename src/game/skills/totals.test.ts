@@ -44,7 +44,12 @@ function sampleSave(skills: Array<{ skillId: string; level: number; xp: number }
       genderPresentation: 'APR-0017',
     },
     hasSeenWardrobeIntro: false,
-    settings: { soundEnabled: true, showActivityRewards: true, hudShowTotalXp: false },
+    settings: {
+      soundEnabled: true,
+      showActivityRewards: true,
+      hudShowTotalXp: false,
+      showEatButton: true,
+    },
     characterName: 'Tester',
     raceId: null,
     currentLocationId: 'LOC-0002',

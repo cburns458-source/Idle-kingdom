@@ -64,11 +64,12 @@ describe('Temple', () => {
     expect(blessed.ok).toBe(true)
     if (!blessed.ok) return
     expect(blessed.alreadyFull).toBe(false)
-    expect(blessed.message).toBe('The monks restore you to full health.')
+    expect(blessed.message).toBe('The monks restore you beyond full health.')
     save = blessed.save
     expect(save.equipment.slots[WEAPON_TOOL_SLOT_ID]?.itemId).toBe('ITEM-0100')
     expect(save.equipment.slots[OFFHAND_SLOT_ID]?.itemId).toBe('ITEM-0145')
-    expect(save.currentHp).toBe(playerMaxHp(launch, save))
+    const maxHp = playerMaxHp(launch, save)
+    expect(save.currentHp).toBe(maxHp + Math.floor(maxHp * 0.1))
     expect(save.currentActivityId).toBeNull()
   })
 
@@ -81,9 +82,10 @@ describe('Temple', () => {
     const blessed = requestBlessing(launch, save, Date.parse('2026-01-01T00:00:00.000Z'))
     expect(blessed.ok).toBe(true)
     if (!blessed.ok) return
-    expect(blessed.alreadyFull).toBe(true)
-    expect(blessed.message).toBe('You are already at full health.')
-    expect(blessed.save.currentHp).toBe(playerMaxHp(launch, blessed.save))
+    expect(blessed.alreadyFull).toBe(false)
+    expect(blessed.message).toBe('The monks restore you beyond full health.')
+    const maxHp = playerMaxHp(launch, blessed.save)
+    expect(blessed.save.currentHp).toBe(maxHp + Math.floor(maxHp * 0.1))
   })
 
   it('does not force combat on arrival', () => {

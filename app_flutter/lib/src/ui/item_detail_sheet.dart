@@ -21,6 +21,8 @@ class ItemDetailSheet extends StatelessWidget {
     this.enchantmentId,
     this.slotId,
     this.onEquip,
+    this.onEat,
+    this.eatEnabled = true,
   });
 
   final GameController controller;
@@ -34,6 +36,12 @@ class ItemDetailSheet extends StatelessWidget {
   /// Equips this bag piece. Omitted for worn gear, empty slots, and items that
   /// cannot be equipped.
   final VoidCallback? onEquip;
+
+  /// Eats this food immediately. Hidden when the Eat button is off in Settings.
+  final VoidCallback? onEat;
+
+  /// False during combat so Eat stays visible but cannot fire.
+  final bool eatEnabled;
 
   @override
   Widget build(BuildContext context) {
@@ -109,6 +117,18 @@ class ItemDetailSheet extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
+                if (onEat != null) ...[
+                  GameButton(
+                    label: 'Eat',
+                    onPressed: eatEnabled
+                        ? () {
+                            Navigator.of(context).pop();
+                            onEat!();
+                          }
+                        : null,
+                  ),
+                  const SizedBox(width: 8),
+                ],
                 if (onEquip != null) ...[
                   GameButton(
                     label: 'Equip',

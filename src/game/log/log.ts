@@ -11,6 +11,10 @@ import { asQuestRows, getQuestProgress, questStatusLabel } from '../quests/quest
 import { questStepJournal, questUsesSteps } from '../quests/steps'
 import { listRecipeBookEntries, type RecipeBookEntry } from '../recipes/knowledge'
 import type { PlayerSave } from '../save/types'
+import { milestoneLog } from './milestones'
+
+export { milestoneLog } from './milestones'
+export type { MilestoneLogRow } from './milestones'
 
 /** One skill milestone, and whether this save has reached it. */
 export interface AchievementLogRow {
@@ -208,7 +212,7 @@ export function critterLog(save: PlayerSave): CritterLogRow[] {
 
 /** How far through one page of the Log a save has got. */
 export interface LogSectionCompletion {
-  /** `achievements`, `quests`, or `critters`. */
+  /** `achievements`, `milestones`, `quests`, or `critters`. */
   section: string
   done: number
   total: number
@@ -235,6 +239,7 @@ function completion(section: string, done: number, total: number): LogSectionCom
 
 export function logCompletion(db: GameDatabase, save: PlayerSave): LogCompletion {
   const achievements = achievementLog(db, save)
+  const milestones = milestoneLog(db, save)
   const quests = questLog(db, save)
   const critters = critterLog(save)
 
@@ -243,6 +248,11 @@ export function logCompletion(db: GameDatabase, save: PlayerSave): LogCompletion
       'achievements',
       achievements.filter((row) => row.unlocked).length,
       achievements.length,
+    ),
+    completion(
+      'milestones',
+      milestones.filter((row) => row.unlocked).length,
+      milestones.length,
     ),
     completion('quests', quests.filter((row) => row.completed).length, quests.length),
     completion('critters', critters.filter((row) => row.found).length, critters.length),

@@ -79,15 +79,38 @@ export function getCurrentStepIndex(
   return steps.length
 }
 
+const CITADEL_QUEST_ID = 'QST-0004'
+const CITADEL_GUIDE_NPC_ID = 'NPC-0013'
+
+export function citadelGuideHeard(save: PlayerSave): boolean {
+  return Number(getQuestProgress(save, CITADEL_QUEST_ID).counters?.[`talk:${CITADEL_GUIDE_NPC_ID}`] ?? 0) >= 1
+}
+
 export function questStepJournal(
   db: GameDatabase,
   save: PlayerSave,
   quest: QuestRow,
 ): QuestJournalStep[] {
-  const steps = getQuestSteps(db, quest['Quest ID'])
+  const questId = quest['Quest ID']
+  const steps = getQuestSteps(db, questId)
   if (steps.length === 0) return []
 
   const currentIndex = getCurrentStepIndex(db, save, quest)
+  if (questId === CITADEL_QUEST_ID && citadelGuideHeard(save) && currentIndex >= 1) {
+    const heard = steps[0]!
+    const remaining = steps.slice(1).flatMap((step) =>
+      stepProgressLines(db, save, questId, step.Notes ?? '').map((line) => ({
+        key: line.key,
+        label: line.label,
+        state: (line.current >= line.required ? 'done' : 'current') as QuestJournalStepState,
+      })),
+    )
+    return [
+      { key: heard['Step ID'], label: heard['Journal Label'], state: 'done' },
+      ...remaining,
+    ]
+  }
+
   if (currentIndex >= steps.length) {
     return steps.map((step) => ({
       key: step['Step ID'],

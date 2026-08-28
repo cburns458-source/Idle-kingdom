@@ -9,7 +9,8 @@ import 'game_image.dart';
 import 'page_header.dart';
 
 enum _LogTab {
-  achievements('Achievements', 'Milestones unlocked on this save.', 'achievements'),
+  achievements('Deeds', 'Deeds unlocked on this save.', 'achievements'),
+  milestones('Milestones', 'Lifetime marks this save has reached.', 'milestones'),
   quests('Quests', 'Quest log for this save.', 'quests'),
   critters('Critters', 'Critters found while working their habitats.', 'critters');
 
@@ -125,6 +126,15 @@ class _LogViewState extends State<LogView> {
             children: [
               switch (_tab) {
                 _LogTab.achievements => _AchievementBands(rows: achievementLog(db, save)),
+                _LogTab.milestones => _Rows([
+                  for (final row in milestoneLog(db, save))
+                    _LogRow(
+                      title: row.name,
+                      detail: row.note,
+                      highlight: row.unlocked,
+                      dimmed: !row.unlocked,
+                    ),
+                ]),
                 _LogTab.quests => _Rows([
                   for (final row in questLog(db, save)) _QuestJournalRow(row: row),
                 ]),

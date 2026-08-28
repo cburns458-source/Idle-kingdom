@@ -196,6 +196,11 @@ class _NpcPanelState extends State<NpcPanel> {
     }
     controller.commit(result.save!);
     controller.announce(result.message!);
+    final bundle = result.rewardBundle;
+    if (bundle != null &&
+        (bundle.goldGained > 0 || bundle.xpRewards.isNotEmpty || bundle.loot.isNotEmpty)) {
+      controller.noteReward(bundle);
+    }
     setState(() => _error = null);
     final granted = result.save!.cosmetics.unlocked
         .where((id) => !beforeUnlocked.contains(id))
@@ -437,6 +442,37 @@ class _QuestBlock extends StatelessWidget {
             _ => Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                if (quest.progressLines.isNotEmpty) ...[
+                  for (final line in quest.progressLines)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            line.current >= line.required ? '✓' : '•',
+                            style: TextStyle(
+                              color: line.current >= line.required
+                                  ? Palette.softGreen
+                                  : Palette.gold,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              line.label,
+                              style: TextStyle(
+                                color: line.current >= line.required
+                                    ? Palette.muted
+                                    : Palette.parchmentText,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  const SizedBox(height: 6),
+                ],
                 if (quest.canTalk || quest.canBribe || quest.canChooseCombat)
                   const SizedBox.shrink()
                 else

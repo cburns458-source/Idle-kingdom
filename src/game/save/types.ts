@@ -1,4 +1,4 @@
-export const SAVE_VERSION = 33
+export const SAVE_VERSION = 34
 export const SAVE_STORAGE_KEY = 'idle-kingdoms.demo.save'
 export const STARTING_LOCATION_ID = 'LOC-0001'
 /** Base gold before race kit; race starters grant the real starting gold. */
@@ -100,6 +100,8 @@ export interface PlayerSettings {
   showActivityRewards: boolean
   /** When true, HUD identity line shows total XP instead of total level. */
   hudShowTotalXp: boolean
+  /** When false, the Eat button is hidden on food in the bag and food slot. */
+  showEatButton: boolean
 }
 
 export const APPEARANCE_CATEGORIES = [

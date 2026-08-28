@@ -4,7 +4,12 @@ import { describe, expect, it } from 'vitest'
 import { prepareDatabase } from '../data/loadDatabase'
 import { createNewSave } from '../save/saveStore'
 import type { EquippedStack } from '../save/types'
-import { consumeFoodAfterVictory, extraFoodPerRound } from './food'
+import {
+  consumeFoodAfterVictory,
+  eatEquippedFood,
+  eatInventoryFood,
+  extraFoodPerRound,
+} from './food'
 
 const rawDatabase = JSON.parse(
   readFileSync(resolve(process.cwd(), 'content/data/game-database.json'), 'utf8'),
@@ -57,5 +62,63 @@ describe('gluttony food on victory', () => {
     })
     expect(full.consumed).toBe(false)
     expect(full.save.equipment.slots['SLOT-0011']?.quantity).toBe(4)
+  })
+})
+
+describe('manual eat', () => {
+  it('eats from the bag and equipped slot, including +0 at full HP', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const base = createNewSave(launch)
+    const bag = {
+      ...base,
+      currentHp: 900,
+      inventory: [{ itemId: 'ITEM-0058', quantity: 2 }],
+    }
+    const healed = eatInventoryFood(launch, bag, 0)
+    expect(healed.ok).toBe(true)
+    if (!healed.ok) return
+    expect(healed.healed).toBe(40)
+    expect(healed.save.currentHp).toBe(940)
+    expect(healed.save.inventory[0]?.quantity).toBe(1)
+
+    const full = eatInventoryFood(launch, { ...healed.save, currentHp: healed.save.maxHp }, 0)
+    expect(full.ok).toBe(true)
+    if (!full.ok) return
+    expect(full.healed).toBe(0)
+    expect(full.save.inventory).toEqual([])
+
+    const equipped = eatEquippedFood(launch, withFoodAndSpells(launch, 2, 0))
+    expect(equipped.ok).toBe(true)
+    if (!equipped.ok) return
+    expect(equipped.healed).toBe(40)
+    expect(equipped.save.equipment.slots['SLOT-0011']?.quantity).toBe(1)
+  })
+
+  it('refuses to eat during combat', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const save = {
+      ...createNewSave(launch),
+      combatEnemyId: 'ENM-0001',
+      inventory: [{ itemId: 'ITEM-0058', quantity: 1 }],
+    }
+    expect(eatInventoryFood(launch, save, 0).reason).toBe('You cannot eat during combat.')
+    expect(
+      eatEquippedFood(launch, { ...withFoodAndSpells(launch, 2, 0), combatEnemyId: 'ENM-0001' })
+        .reason,
+    ).toBe('You cannot eat during combat.')
+  })
+
+  it('lets damaging food hurt but never drop below 1 HP', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const save = {
+      ...createNewSave(launch),
+      currentHp: 8,
+      inventory: [{ itemId: 'ITEM-0028', quantity: 1 }],
+    }
+    const eaten = eatInventoryFood(launch, save, 0)
+    expect(eaten.ok).toBe(true)
+    if (!eaten.ok) return
+    expect(eaten.healed).toBe(-7)
+    expect(eaten.save.currentHp).toBe(1)
   })
 })

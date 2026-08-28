@@ -117,11 +117,12 @@ void main() {
     final blessed = requestBlessing(db, save, 0);
     expect(blessed.ok, isTrue);
     expect(blessed.alreadyFull, isFalse);
-    expect(blessed.message, 'The monks restore you to full health.');
+    expect(blessed.message, 'The monks restore you beyond full health.');
     save = blessed.save!;
     expect(slotItemId(save, weaponToolSlotId), 'ITEM-0100');
     expect(slotItemId(save, offhandSlotId), 'ITEM-0145');
-    expect(save.currentHp, playerMaxHp(db, save));
+    final maxHp = playerMaxHp(db, save);
+    expect(save.currentHp, maxHp + (maxHp * 0.1).floor());
     expect(save.currentActivityId, isNull);
     expect(save.currentActionId, isNull);
   });
@@ -130,15 +131,32 @@ void main() {
     final save = createNewSave(db, 0).copyWith(currentLocationId: 'LOC-0036');
     final blessed = requestBlessing(db, save, 0);
     expect(blessed.ok, isTrue);
-    expect(blessed.alreadyFull, isTrue);
-    expect(blessed.message, 'You are already at full health.');
-    expect(blessed.save!.currentHp, playerMaxHp(db, blessed.save!));
+    expect(blessed.alreadyFull, isFalse);
+    expect(blessed.message, 'The monks restore you beyond full health.');
+    final maxHp = playerMaxHp(db, blessed.save!);
+    expect(blessed.save!.currentHp, maxHp + (maxHp * 0.1).floor());
   });
 
   test('Temple combat is not a forced-hostile arrival', () {
     final save = createNewSave(db, 0);
     expect(forcedHostileActivity(db, save, 'LOC-0036'), isNull);
     expect(locationIsHostileFor(db, save, 'LOC-0036'), isFalse);
+  });
+
+  test('blessing snaps to 110% and keeps surplus when max HP changes', () {
+    final save = createNewSave(db, 0).copyWith(currentLocationId: 'LOC-0036', currentHp: 250);
+    final first = requestBlessing(db, save, 0);
+    expect(first.ok, isTrue);
+    final maxHp = playerMaxHp(db, first.save!);
+    expect(first.save!.currentHp, maxHp + (maxHp * 0.1).floor());
+
+    final again = requestBlessing(db, first.save!, 0);
+    expect(again.alreadyFull, isTrue);
+    expect(again.save!.currentHp, first.save!.currentHp);
+
+    expect(currentHpAfterMaxChange(5500, 5000, 4000), 4500);
+    expect(currentHpAfterMaxChange(5250, 5000, 4000), 4250);
+    expect(currentHpAfterMaxChange(4900, 5000, 4000), 4000);
   });
 
   test('Ancient Forest is not a forced-hostile arrival', () {

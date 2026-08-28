@@ -23,6 +23,8 @@ import type {
   ActiveActionState,
   ActivityStartResult,
 } from './types'
+import { addLifetimeStat } from '../achievements/progress'
+import { GATHERING_ACTIONS_STAT } from '../log/milestones'
 import { bonusSkillXpForAction, bowHuntingCombatXpBonus } from './bonusXp'
 import { summarizeXpReward } from './rewardSummary'
 import { applyXp } from './xp'
@@ -279,6 +281,8 @@ export function completeGatheringAction(
   if (bowBonus) {
     applyBonusXp(bowBonus.skillId, bowBonus.xp)
   }
+
+  next = addLifetimeStat(next, GATHERING_ACTIONS_STAT)
 
   return {
     save: withoutHeldAction(next, save.currentActivityId),

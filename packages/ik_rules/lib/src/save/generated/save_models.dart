@@ -7,7 +7,7 @@
 
 import '../../json_support.dart';
 
-const int saveVersion = 33;
+const int saveVersion = 34;
 
 const String saveStorageKey = 'idle-kingdoms.demo.save';
 
@@ -1058,6 +1058,7 @@ class PlayerSettings {
     required this.soundEnabled,
     required this.showActivityRewards,
     required this.hudShowTotalXp,
+    required this.showEatButton,
   });
 
   factory PlayerSettings.fromJson(Map<String, Object?> json) {
@@ -1065,6 +1066,7 @@ class PlayerSettings {
       soundEnabled: json['soundEnabled'] as bool,
       showActivityRewards: json['showActivityRewards'] as bool,
       hudShowTotalXp: json['hudShowTotalXp'] as bool,
+      showEatButton: json['showEatButton'] as bool,
     );
   }
 
@@ -1077,19 +1079,29 @@ class PlayerSettings {
   /// When true, HUD identity line shows total XP instead of total level.
   final bool hudShowTotalXp;
 
+  /// When false, the Eat button is hidden on food in the bag and food slot.
+  final bool showEatButton;
+
   Map<String, Object?> toJson() {
     return <String, Object?>{
       'soundEnabled': soundEnabled,
       'showActivityRewards': showActivityRewards,
       'hudShowTotalXp': hudShowTotalXp,
+      'showEatButton': showEatButton,
     };
   }
 
-  PlayerSettings copyWith({bool? soundEnabled, bool? showActivityRewards, bool? hudShowTotalXp}) {
+  PlayerSettings copyWith({
+    bool? soundEnabled,
+    bool? showActivityRewards,
+    bool? hudShowTotalXp,
+    bool? showEatButton,
+  }) {
     return PlayerSettings(
       soundEnabled: soundEnabled ?? this.soundEnabled,
       showActivityRewards: showActivityRewards ?? this.showActivityRewards,
       hudShowTotalXp: hudShowTotalXp ?? this.hudShowTotalXp,
+      showEatButton: showEatButton ?? this.showEatButton,
     );
   }
 }

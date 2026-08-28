@@ -97,7 +97,12 @@ export function createNewSave(db: GameDatabase, nowMs: number = Date.now()): Pla
       genderPresentation: DEFAULT_GENDER_PRESENTATION_ID,
     },
     hasSeenWardrobeIntro: false,
-    settings: { soundEnabled: true, showActivityRewards: true, hudShowTotalXp: false },
+    settings: {
+      soundEnabled: true,
+      showActivityRewards: true,
+      hudShowTotalXp: false,
+      showEatButton: true,
+    },
     currentLocationId: STARTING_LOCATION_ID,
     currentActivityId: null,
     activityStartedAt: null,

@@ -110,6 +110,14 @@ class _InventoryViewState extends State<InventoryView> {
     });
   }
 
+  bool get _eatVisible => controller.showEatButton;
+
+  void _eatAt({int? inventoryIndex}) {
+    final reason = controller.eatFood(inventoryIndex: inventoryIndex);
+    if (!mounted) return;
+    setState(() => _message = reason);
+  }
+
   void _equipAt(int index) {
     final result = equipInventoryIndex(db, save, index);
     if (!result.ok) {
@@ -236,6 +244,11 @@ class _InventoryViewState extends State<InventoryView> {
     final itemId = stack?.itemId ?? equipped?.itemId;
     final canEquip =
         inventoryIndex != null && itemId != null && equipmentForItemId(db, itemId)?.slotId != null;
+    final canEat =
+        _eatVisible &&
+        itemId != null &&
+        isEdibleItem(db, itemId) &&
+        (inventoryIndex != null || slotId == foodSlotId);
     showGamePopup<void>(
       context: context,
       origin: popupOrigin(context),
@@ -245,6 +258,13 @@ class _InventoryViewState extends State<InventoryView> {
         quantity: stack?.quantity ?? equipped?.quantity ?? 0,
         enchantmentId: stack?.enchantmentId ?? equipped?.enchantmentId,
         slotId: slotId,
+        eatEnabled: !isInCombat(save),
+        onEat: canEat
+            ? () {
+                if (!mounted) return;
+                _eatAt(inventoryIndex: inventoryIndex);
+              }
+            : null,
         onEquip: canEquip
             ? () {
                 if (!mounted) return;
@@ -430,6 +450,7 @@ class _InventoryViewState extends State<InventoryView> {
             final stack = save.inventory[index];
             final item = controller.indexes.itemsById[stack.itemId];
             final equippable = equipmentForItemId(db, stack.itemId)?.slotId != null;
+            final canEat = _eatVisible && selling == null && isEdibleItem(db, stack.itemId);
             return _ItemTile(
               item: item,
               quantity: stack.quantity,
@@ -437,6 +458,8 @@ class _InventoryViewState extends State<InventoryView> {
               favorite: isFavoriteStack(stack),
               selected: selling?.containsKey(index) ?? false,
               selecting: selling != null,
+              onEat: canEat ? () => _eatAt(inventoryIndex: index) : null,
+              eatEnabled: !isInCombat(save),
               onTap: () {
                 if (selling != null) {
                   _toggleSelection(index);
@@ -526,6 +549,10 @@ class _InventoryViewState extends State<InventoryView> {
       favorite: false,
       selected: false,
       selecting: false,
+      onEat: _eatVisible && slotId == foodSlotId && isEdibleItem(db, stack.itemId)
+          ? () => _eatAt()
+          : null,
+      eatEnabled: !isInCombat(save),
       onTap: () => _unequip(slotId),
       onLongPress: () => _showDetail(equipped: stack, slotId: slotId),
       onToggleFavorite: null,
@@ -730,6 +757,8 @@ class _ItemTile extends StatelessWidget {
     required this.onTap,
     required this.onLongPress,
     required this.onToggleFavorite,
+    this.onEat,
+    this.eatEnabled = true,
   });
 
   final ItemRow? item;
@@ -741,6 +770,8 @@ class _ItemTile extends StatelessWidget {
   final VoidCallback onTap;
   final VoidCallback onLongPress;
   final VoidCallback? onToggleFavorite;
+  final VoidCallback? onEat;
+  final bool eatEnabled;
 
   @override
   Widget build(BuildContext context) {
@@ -775,6 +806,26 @@ class _ItemTile extends StatelessWidget {
                   child: Text(
                     '${quantity.round()}',
                     style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w400),
+                  ),
+                ),
+              if (onEat != null)
+                Positioned(
+                  left: 0,
+                  bottom: 0,
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: eatEnabled ? onEat : null,
+                    child: Padding(
+                      padding: const EdgeInsets.all(2),
+                      child: Text(
+                        'Eat',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w400,
+                          color: eatEnabled ? Palette.gold : const Color(0x80F4E7C8),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
               if (selected)

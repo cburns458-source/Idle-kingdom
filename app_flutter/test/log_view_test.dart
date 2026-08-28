@@ -23,7 +23,7 @@ void main() {
 
     await openLog(tester);
 
-    expect(find.text('Milestones unlocked on this save.'), findsOne);
+    expect(find.text('Deeds unlocked on this save.'), findsOne);
     expect(find.text('Easy'), findsOne);
     expect(find.textContaining('Reach level 50'), findsWidgets);
   });
@@ -165,7 +165,8 @@ void main() {
     await tester.pump();
 
     expect(find.text('Log'), findsOne);
-    expect(find.text('Achievements'), findsOne);
+    expect(find.text('Deeds'), findsOne);
+    expect(find.text('Milestones'), findsOne);
     expect(find.text('Quests'), findsOne);
     expect(find.text('Recipe Book'), findsNothing);
   });
