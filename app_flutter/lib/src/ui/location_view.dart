@@ -7,6 +7,7 @@ import '../content/asset_paths.dart';
 import '../session/game_controller.dart';
 import '../session/multiplayer_controller.dart';
 import '../theme.dart';
+import 'action_stage.dart';
 import 'activity_panel.dart';
 import 'arena_panel.dart';
 import 'bank_panel.dart';
@@ -362,6 +363,19 @@ class _LocationViewState extends State<LocationView> {
                       Expanded(
                         child: Stack(
                           children: [
+                            if (!liftArena)
+                              Positioned(
+                                top: 0,
+                                left: 13,
+                                right: 13,
+                                bottom: _collapsedBand + 8,
+                                child: IgnorePointer(
+                                  child: Align(
+                                    alignment: Alignment.topCenter,
+                                    child: LocationIdlePlayer(controller: controller),
+                                  ),
+                                ),
+                              ),
                             if (stage != null && !liftArena)
                               Positioned(
                                 top: 0,

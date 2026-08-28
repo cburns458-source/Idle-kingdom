@@ -21,6 +21,7 @@ const double _playerArtHeight = 137;
 const double _enemyArtHeight = 152;
 const double _actionArtHeight = 152;
 const double _captionMinHeight = 32;
+const double _stageFooterHeight = 8;
 
 /// How wide either half of the stage can get, so the two sprites stay shoulder
 /// to shoulder in the middle of a wide window instead of drifting apart.
@@ -37,9 +38,9 @@ const Color _sceneNameColor = Color(0xFFF4EFD8);
 
 /// Shared two-column stage for combat, gathering, and production.
 ///
-/// Player art is always on the left. The right side is the enemy, the gathering
-/// scene, or the workstation. Stopping lives on the activity row underneath, so
-/// the stage is only ever art, names, and bars.
+/// Player art lives on [LocationIdlePlayer], under this stage, so the adventurer
+/// stays on the location while idle. The right side is the enemy, the gathering
+/// scene, or the workstation. Stopping lives on the activity row underneath.
 class ActionStage extends StatelessWidget {
   const ActionStage({super.key, required this.controller});
 
@@ -67,6 +68,52 @@ class ActionStage extends StatelessWidget {
       return _ProductionStage(controller: controller);
     }
     return _GatheringStage(controller: controller);
+  }
+}
+
+/// The adventurer on the location plate: combat-stage left slot, always shown
+/// while standing here so they idle even when nothing is running.
+class LocationIdlePlayer extends StatelessWidget {
+  const LocationIdlePlayer({super.key, required this.controller});
+
+  final GameController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    if (controller.showRecoveringStage) return const SizedBox.shrink();
+    final save = controller.save;
+    return Semantics(
+      container: true,
+      explicitChildNodes: true,
+      label: 'Adventurer stand',
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(2, 4, 2, 0),
+        child: Align(
+          alignment: Alignment.topCenter,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: _stageMaxWidth),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: _Portrait(
+                    assetPath: playerAssetPath(save.appearance, raceId: save.raceId),
+                    bytes: controller.localPlayerPng,
+                    semanticsLabel: 'Adventurer',
+                    alignment: Alignment.centerRight,
+                    height: _playerArtHeight,
+                    slotHeight: _portraitSlotHeight,
+                    filterQuality: FilterQuality.high,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                const Expanded(child: SizedBox(height: _portraitSlotHeight)),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -194,7 +241,7 @@ class PvpActionStage extends StatelessWidget {
         child: PillBar(
           value: finished ? 1 : roundProgress.clamp(0, 1),
           gradient: Meters.combatRound,
-          height: 8,
+          height: _stageFooterHeight,
         ),
       ),
     );
@@ -220,6 +267,7 @@ class _StageShell extends StatelessWidget {
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: _stageMaxWidth),
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [scene, const SizedBox(height: 7), footer],
             ),
@@ -458,15 +506,12 @@ class _CombatStage extends StatelessWidget {
     return _StageShell(
       semanticsLabel: 'Combat',
       scene: _TwoPortraits(
-        player: _Portrait(
-          assetPath: playerAssetPath(save.appearance, raceId: save.raceId),
-          bytes: controller.localPlayerPng,
-          semanticsLabel: 'Adventurer',
-          alignment: Alignment.centerRight,
-          height: _playerArtHeight,
-          slotHeight: _portraitSlotHeight,
-          filterQuality: FilterQuality.high,
-          overlay: _playerFloaters(round, seq, showFloaters, controller.healPopup),
+        player: SizedBox(
+          height: _portraitSlotHeight,
+          width: double.infinity,
+          child:
+              _playerFloaters(round, seq, showFloaters, controller.healPopup) ??
+              const SizedBox.expand(),
         ),
         scene: _Portrait(
           assetPath: controller.defeatedFlash || enemyId == null ? null : enemyAssetPath(enemyId),
@@ -565,7 +610,7 @@ class _CombatStage extends StatelessWidget {
         child: PillBar(
           value: controller.combatRoundProgress,
           gradient: Meters.combatRound,
-          height: 8,
+          height: _stageFooterHeight,
           borderColor: const Color(0x38FFECC4),
         ),
       ),
@@ -613,7 +658,7 @@ class _RecoveringStage extends StatelessWidget {
         child: PillBar(
           value: controller.deathPauseProgress,
           gradient: Meters.combatRound,
-          height: 8,
+          height: _stageFooterHeight,
           borderColor: const Color(0x38FFECC4),
         ),
       ),
@@ -638,7 +683,7 @@ class _ActionProgress extends StatelessWidget {
             child: PillBar(
               value: progress,
               gradient: Meters.action,
-              height: 8,
+              height: _stageFooterHeight,
               borderColor: const Color(0x38FFECC4),
             ),
           ),
@@ -670,15 +715,7 @@ class _GatheringStage extends StatelessWidget {
     return _StageShell(
       semanticsLabel: 'Gathering',
       scene: _TwoPortraits(
-        player: _Portrait(
-          assetPath: playerAssetPath(save.appearance, raceId: save.raceId),
-          bytes: controller.localPlayerPng,
-          semanticsLabel: 'Adventurer',
-          alignment: Alignment.centerRight,
-          height: _playerArtHeight,
-          slotHeight: _portraitSlotHeight,
-          filterQuality: FilterQuality.high,
-        ),
+        player: const SizedBox(height: _portraitSlotHeight),
         scene: _Portrait(
           assetPath: action == null ? null : actionAssetPath(action.actionId),
           semanticsLabel: actionName,
@@ -739,15 +776,7 @@ class _ProductionStage extends StatelessWidget {
     return _StageShell(
       semanticsLabel: 'Production',
       scene: _TwoPortraits(
-        player: _Portrait(
-          assetPath: playerAssetPath(save.appearance, raceId: save.raceId),
-          bytes: controller.localPlayerPng,
-          semanticsLabel: 'Adventurer',
-          alignment: Alignment.centerRight,
-          height: _playerArtHeight,
-          slotHeight: _portraitSlotHeight,
-          filterQuality: FilterQuality.high,
-        ),
+        player: const SizedBox(height: _portraitSlotHeight),
         scene: _Portrait(
           assetPath: workstationAssetPath(recipe?.facilityId),
           semanticsLabel: stationName,

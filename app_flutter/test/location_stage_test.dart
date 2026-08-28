@@ -27,6 +27,27 @@ void main() {
     return image is AssetImage && image.assetName.contains(needle);
   }
 
+  testWidgets('entering a location shows the adventurer idle', (tester) async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(currentLocationId: 'LOC-0001'),
+    );
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller);
+
+    expect(controller.save.currentActivityId, isNull);
+    expect(find.byType(ActionStage), findsNothing);
+    expect(find.byType(LocationIdlePlayer), findsOne);
+    expect(find.bySemanticsLabel('Adventurer'), findsOne);
+
+    final player = tester.getRect(find.bySemanticsLabel('Adventurer'));
+    expect(player.height, 152);
+    final playerArt = tester.getRect(
+      find.descendant(of: find.bySemanticsLabel('Adventurer'), matching: find.byType(Image)),
+    );
+    expect(playerArt.height, 137);
+  });
+
   testWidgets('gathering shows the two-column stage and action art', (tester) async {
     final controller = buildController(
       database,
@@ -45,21 +66,21 @@ void main() {
 
     expect(controller.save.currentActivityId, 'ACT-0012');
     expect(find.byType(ActionStage), findsOne);
+    expect(find.byType(LocationIdlePlayer), findsOne);
     expect(find.bySemanticsLabel('Gathering'), findsOne);
-    expect(find.bySemanticsLabel('Adventurer'), findsWidgets);
+    expect(find.bySemanticsLabel('Adventurer'), findsOne);
     expect(find.byWidgetPredicate((widget) => assetNamed(widget, '/actions/')), findsOne);
     expect(find.bySemanticsLabel('Action progress'), findsOne);
 
-    final stage = tester.getRect(find.byType(ActionStage));
-    final player = tester.getRect(find.bySemanticsLabel('Adventurer').first);
+    final player = tester.getRect(find.bySemanticsLabel('Adventurer'));
     final action = tester.getRect(
       find.byWidgetPredicate((widget) => assetNamed(widget, '/actions/')),
     );
     expect(player.height, 152);
-    expect(player.top - stage.top, closeTo(4, 1));
     expect(action.height, 152);
+    expect(player.top, closeTo(action.top, 6));
     final playerArt = tester.getRect(
-      find.descendant(of: find.bySemanticsLabel('Adventurer').first, matching: find.byType(Image)),
+      find.descendant(of: find.bySemanticsLabel('Adventurer'), matching: find.byType(Image)),
     );
     expect(playerArt.height, 137);
   });
@@ -77,16 +98,15 @@ void main() {
       find.descendant(of: dockRow('Tend the pasture'), matching: find.bySemanticsLabel('Start')),
     );
 
-    final stage = tester.getRect(find.byType(ActionStage));
-    final player = tester.getRect(find.bySemanticsLabel('Adventurer').first);
+    final player = tester.getRect(find.bySemanticsLabel('Adventurer'));
     final enemy = tester.getRect(
       find.byWidgetPredicate((widget) => assetNamed(widget, '/enemies/')),
     );
     expect(player.height, 152);
-    expect(player.top - stage.top, closeTo(4, 1));
     expect(enemy.height, 152);
+    expect(player.top, closeTo(enemy.top, 6));
     final playerArt = tester.getRect(
-      find.descendant(of: find.bySemanticsLabel('Adventurer').first, matching: find.byType(Image)),
+      find.descendant(of: find.bySemanticsLabel('Adventurer'), matching: find.byType(Image)),
     );
     expect(playerArt.height, 137);
   });
@@ -287,6 +307,7 @@ void main() {
     await pumpShell(tester, controller);
 
     expect(find.text('Recovering…'), findsWidgets);
+    expect(find.bySemanticsLabel('Adventurer'), findsNothing);
     expect(find.bySemanticsLabel('Resume progress'), findsWidgets);
     expect(find.textContaining('Resuming in'), findsNothing);
     expect(find.text('resting'), findsNothing);
@@ -395,6 +416,7 @@ void main() {
     await tester.pump();
     expect(controller.showingDeathHold, isFalse);
     expect(find.bySemanticsLabel('Recovering'), findsOne);
+    expect(find.bySemanticsLabel('Adventurer'), findsNothing);
     expect(find.bySemanticsLabel('Resume progress'), findsWidgets);
   });
 }
