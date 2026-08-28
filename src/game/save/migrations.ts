@@ -1,5 +1,11 @@
 import { ensureStartingHuntingTool, replaceFishingNetsWithNet } from './startingGear'
-import type { ActivePotionEffect, EquippedStack, PlayerSave, SaveMigration } from './types'
+import type {
+  ActivePotionEffect,
+  EquippedStack,
+  PlayerSave,
+  PlayerSettings,
+  SaveMigration,
+} from './types'
 import {
   DEFAULT_BEARD_ID,
   DEFAULT_EXPRESSION_ID,
@@ -16,6 +22,15 @@ import {
 } from './types'
 
 const FOOD_SLOT_ID = 'SLOT-0011'
+
+function normalizeSettings(settings?: Partial<PlayerSettings> | null): PlayerSettings {
+  return {
+    soundEnabled: settings?.soundEnabled ?? true,
+    showActivityRewards: settings?.showActivityRewards ?? true,
+    hudShowTotalXp: settings?.hudShowTotalXp ?? false,
+    showEatButton: settings?.showEatButton ?? true,
+  }
+}
 
 function migrateEquipmentSlotsToStacks(save: PlayerSave): PlayerSave {
   const rawSlots = save.equipment?.slots ?? {}
@@ -155,11 +170,7 @@ export const SAVE_MIGRATIONS: SaveMigration[] = [
     toVersion: 11,
     migrate: (save) => ({
       ...save,
-      settings: {
-        soundEnabled: save.settings?.soundEnabled ?? true,
-        showActivityRewards: save.settings?.showActivityRewards ?? true,
-        hudShowTotalXp: save.settings?.hudShowTotalXp ?? false,
-      },
+      settings: normalizeSettings(save.settings),
       saveVersion: 11,
     }),
   },
@@ -208,11 +219,7 @@ export const SAVE_MIGRATIONS: SaveMigration[] = [
     toVersion: 14,
     migrate: (save) => ({
       ...save,
-      settings: {
-        soundEnabled: save.settings?.soundEnabled ?? true,
-        showActivityRewards: save.settings?.showActivityRewards ?? true,
-        hudShowTotalXp: save.settings?.hudShowTotalXp ?? false,
-      },
+      settings: normalizeSettings(save.settings),
       saveVersion: 14,
     }),
   },
@@ -502,12 +509,7 @@ export const SAVE_MIGRATIONS: SaveMigration[] = [
     toVersion: 34,
     migrate: (save) => ({
       ...save,
-      settings: {
-        soundEnabled: save.settings?.soundEnabled ?? true,
-        showActivityRewards: save.settings?.showActivityRewards ?? true,
-        hudShowTotalXp: save.settings?.hudShowTotalXp ?? false,
-        showEatButton: save.settings?.showEatButton ?? true,
-      },
+      settings: normalizeSettings(save.settings),
       saveVersion: 34,
     }),
   },

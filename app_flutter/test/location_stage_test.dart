@@ -198,7 +198,8 @@ void main() {
     }
 
     expect(controller.healPopup, isNotNull);
-    expect(find.text('+${controller.healPopup!.amount.round()}'), findsOne);
+    expect(find.byKey(ValueKey('heal-${controller.healPopup!.seq}')), findsOne);
+    expect(find.text('+${controller.healPopup!.amount.round()}'), findsNWidgets(2));
 
     clock.advance(GameController.healPopupHoldMs);
     controller.tick();
