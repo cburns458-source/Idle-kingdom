@@ -56,7 +56,7 @@ const TestAccount testAccount = TestAccount(
 PlayerSave startedCharacter(LoadedDatabase database) {
   final base = createNewSave(database.launch, testStartMs);
   final assigned = assignRace(database.launch, base.copyWith(characterName: 'Tester'), 'RACE-0001');
-  return assigned.save!;
+  return assigned.save!.copyWith(hasSeenFennelIntro: true);
 }
 
 /// A booted controller over an in-memory save slot and a clock the test drives.

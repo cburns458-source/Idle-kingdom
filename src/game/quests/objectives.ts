@@ -75,6 +75,7 @@ const EMPTY_OBJECTIVES: StructuredQuestObjectives = {
   optionalTalkNpcIds: [],
   visitLocationIds: [],
   inspectIds: [],
+  holds: [],
   goldCost: 0,
   acceptGoldCost: 0,
   rewardGold: 0,
@@ -83,6 +84,7 @@ const EMPTY_OBJECTIVES: StructuredQuestObjectives = {
   choiceNpcId: null,
   turnInNpcId: null,
   autoStartLocationId: null,
+  autoCompleteOnTalk: false,
   unlockLocationIds: [],
   rewardRecipeIds: [],
   rewardProjectNpcIds: [],
@@ -120,6 +122,7 @@ export function parseNotesObjectives(
   const optionalTalkMatch = noteField(notes, String.raw`(?:^|;)\s*OptionalTalk:\s*([^;]+)`)
   const visitMatch = noteField(notes, String.raw`Visit:\s*([^;]+)`)
   const inspectMatch = noteField(notes, String.raw`Inspect:\s*([^;]+)`)
+  const holdMatch = noteField(notes, String.raw`Hold:\s*([^;]+)`)
   const goldMatch = noteField(notes, String.raw`GoldCost:\s*(\d+)`)
 
   if (delivers.length === 0 && kind === 'gather_deliver') {
@@ -159,6 +162,7 @@ export function parseNotesObjectives(
     optionalTalkNpcIds: optionalTalkMatch ? parseIdList(optionalTalkMatch) : [],
     visitLocationIds: visitMatch ? parseIdList(visitMatch) : [],
     inspectIds: inspectMatch ? parseTokenList(inspectMatch) : [],
+    holds: holdMatch ? parseIdQtyList(holdMatch) : [],
     goldCost: goldMatch ? Number(goldMatch) : 0,
     acceptGoldCost: 0,
     rewardGold: 0,
@@ -167,6 +171,7 @@ export function parseNotesObjectives(
     choiceNpcId: null,
     turnInNpcId: null,
     autoStartLocationId: null,
+    autoCompleteOnTalk: false,
     unlockLocationIds: [],
     rewardRecipeIds: [],
     rewardProjectNpcIds: [],
@@ -204,6 +209,7 @@ export function parseStructuredObjectives(quest: QuestRow): StructuredQuestObjec
     choiceNpcId: singleId(choiceNpcMatch),
     turnInNpcId: singleId(turnInMatch),
     autoStartLocationId: singleId(autoStartMatch),
+    autoCompleteOnTalk: /AutoCompleteOnTalk/i.test(notes),
     unlockLocationIds: unlockMatch ? parseIdList(unlockMatch) : [],
     rewardRecipeIds: rewardRecipeMatch ? parseIdList(rewardRecipeMatch) : [],
     rewardProjectNpcIds: rewardNpcMatch ? parseIdList(rewardNpcMatch) : [],
@@ -320,6 +326,17 @@ export function objectiveProgressFromStructured(
       current: Number(counters[`inspect:${inspectId}`] ?? 0),
       required: 1,
     })),
+    ...structured.holds.map((line) => {
+      const name =
+        db.Items.find((item) => item['Item ID'] === line.targetId)?.['Display Name'] ??
+        line.targetId
+      return {
+        key: `hold:${line.targetId}`,
+        label: `Show ${name}`,
+        current: inventoryCount(save, line.targetId),
+        required: line.quantity,
+      }
+    }),
   ]
 
   if (structured.goldCost > 0) {

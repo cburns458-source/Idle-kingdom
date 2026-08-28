@@ -271,4 +271,48 @@ void main() {
     expect(find.textContaining('around town'), findsOne);
     expect(find.textContaining('barracks'), findsNothing);
   });
+
+  testWidgets('Fennel welcomes a new farmhand, then teaches in stages', (tester) async {
+    final controller = buildController(database, seed: standing('LOC-0001'));
+    addTearDown(controller.dispose);
+
+    await pumpPanel(
+      tester,
+      NpcPanel(controller: controller, npc: npcOf('NPC-0014'), onClose: () {}),
+    );
+    expect(find.textContaining('Gather five potatoes'), findsOne);
+    await tester.tap(find.text('Start quest: Getting Started').last);
+    await tester.pump();
+    await tester.tap(find.text('Start quest: Getting Started'));
+    await tester.pump();
+
+    expect(getQuestProgress(controller.save, 'QST-0006').status, 'active');
+    expect(find.text('Talk'), findsOne);
+    expect(find.text('Turn in'), findsNothing);
+
+    await tester.tap(find.text('Talk'));
+    await tester.pump();
+    expect(find.textContaining('five potatoes from the field'), findsOne);
+    await tester.tap(find.text('Continue'));
+    await tester.pump();
+    expect(find.text('Talk'), findsNothing);
+
+    controller.commit(addItemToInventory(controller.save, 'ITEM-0025', 5));
+    await pumpPanel(
+      tester,
+      NpcPanel(
+        key: const ValueKey('show potatoes'),
+        controller: controller,
+        npc: npcOf('NPC-0014'),
+        onClose: () {},
+      ),
+    );
+    await tester.tap(find.text('Talk'));
+    await tester.pump();
+    expect(find.textContaining('kitchen in town'), findsOne);
+    expect(
+      controller.save.inventory.where((stack) => stack.itemId == 'ITEM-0025').single.quantity,
+      5,
+    );
+  });
 }

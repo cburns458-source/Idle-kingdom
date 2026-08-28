@@ -3,6 +3,7 @@ import 'package:ik_content/ik_content.dart';
 
 import '../activity/xp.dart';
 import '../js_compat.dart';
+import '../quests/quests.dart';
 import '../save/generated/save_models.dart';
 import 'roaming.dart';
 
@@ -23,9 +24,43 @@ const String quillLockedReason =
 
 const String quillMissingReason = 'Speak with Quill to learn how to make bows and quivers.';
 
+const String fennelId = 'NPC-0014';
+const String gettingStartedQuestId = 'QST-0006';
+const String fennelWelcome =
+    'Welcome to the lands. I am Fennel. This farm is a good place to start — harvest, cook, and fight are all close by. Come talk to me when you want to learn the rest.';
+
+String? npcHideAfterQuestId(NpcRow npc) {
+  final notes = npc.notes ?? '';
+  final match = RegExp(r'HideAfterQuest:\s*(QST-\d+)', caseSensitive: false).firstMatch(notes);
+  return match?.group(1)?.toUpperCase();
+}
+
+bool npcVisibleForSave(NpcRow npc, PlayerSave save) {
+  final questId = npcHideAfterQuestId(npc);
+  if (questId == null) return true;
+  return getQuestProgress(save, questId).status != 'completed';
+}
+
 List<NpcRow> npcsAtLocation(GameDatabase db, String locationId, [num? nowMs]) {
   final clock = nowMs ?? DateTime.now().millisecondsSinceEpoch;
   return db.npcs.where((npc) => npcLocationAt(npc, clock) == locationId).toList();
+}
+
+List<NpcRow> npcsAtLocationForSave(
+  GameDatabase db,
+  PlayerSave save,
+  String locationId, [
+  num? nowMs,
+]) {
+  return npcsAtLocation(
+    db,
+    locationId,
+    nowMs,
+  ).where((npc) => npcVisibleForSave(npc, save)).toList();
+}
+
+bool fennelIntroPending(PlayerSave save) {
+  return !save.hasSeenFennelIntro && save.currentLocationId == 'LOC-0001' && save.raceId != null;
 }
 
 bool hasNpcKnowledge(PlayerSave save, String npcId) => save.unlockedNpcIds.contains(npcId);

@@ -570,6 +570,7 @@ class PlayerSave {
     required this.cosmetics,
     required this.appearance,
     required this.hasSeenWardrobeIntro,
+    required this.hasSeenFennelIntro,
     required this.settings,
     required this.currentLocationId,
     this.currentActivityId,
@@ -653,6 +654,7 @@ class PlayerSave {
       cosmetics: CosmeticsState.fromJson(asJsonMap(json['cosmetics'])),
       appearance: PlayerAppearance.fromJson(asJsonMap(json['appearance'])),
       hasSeenWardrobeIntro: json['hasSeenWardrobeIntro'] as bool,
+      hasSeenFennelIntro: json['hasSeenFennelIntro'] as bool,
       settings: PlayerSettings.fromJson(asJsonMap(json['settings'])),
       currentLocationId: json['currentLocationId'] as String,
       currentActivityId: json['currentActivityId'] as String?,
@@ -776,6 +778,9 @@ class PlayerSave {
   /// Whether the player has ever opened the Wardrobe (gates the intro hint highlight).
   final bool hasSeenWardrobeIntro;
 
+  /// Whether the player has dismissed Fennel's first farm welcome.
+  final bool hasSeenFennelIntro;
+
   final PlayerSettings settings;
 
   final String currentLocationId;
@@ -872,6 +877,7 @@ class PlayerSave {
       'cosmetics': cosmetics.toJson(),
       'appearance': appearance.toJson(),
       'hasSeenWardrobeIntro': hasSeenWardrobeIntro,
+      'hasSeenFennelIntro': hasSeenFennelIntro,
       'settings': settings.toJson(),
       'currentLocationId': currentLocationId,
       'currentActivityId': currentActivityId,
@@ -934,6 +940,7 @@ class PlayerSave {
     CosmeticsState? cosmetics,
     PlayerAppearance? appearance,
     bool? hasSeenWardrobeIntro,
+    bool? hasSeenFennelIntro,
     PlayerSettings? settings,
     String? currentLocationId,
     Object? currentActivityId = _unset,
@@ -997,6 +1004,7 @@ class PlayerSave {
       cosmetics: cosmetics ?? this.cosmetics,
       appearance: appearance ?? this.appearance,
       hasSeenWardrobeIntro: hasSeenWardrobeIntro ?? this.hasSeenWardrobeIntro,
+      hasSeenFennelIntro: hasSeenFennelIntro ?? this.hasSeenFennelIntro,
       settings: settings ?? this.settings,
       currentLocationId: currentLocationId ?? this.currentLocationId,
       currentActivityId: currentActivityId == _unset

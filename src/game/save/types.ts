@@ -218,6 +218,8 @@ export interface PlayerSave {
   appearance: PlayerAppearance
   /** Whether the player has ever opened the Wardrobe (gates the intro hint highlight). */
   hasSeenWardrobeIntro: boolean
+  /** Whether the player has dismissed Fennel's first farm welcome. */
+  hasSeenFennelIntro: boolean
   settings: PlayerSettings
   currentLocationId: string
   currentActivityId: string | null

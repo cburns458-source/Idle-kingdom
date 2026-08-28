@@ -101,6 +101,8 @@ class WorldMapView extends StatelessWidget {
                     child: _MapNode(
                       location: node,
                       browseMapId: browseMapId,
+                      hintPulse:
+                          questHintNodeId(controller.db, save, browseMapId) == node.locationId,
                       isHere: !walking && node.locationId == save.currentLocationId,
                       isSelected: node.locationId == selectedLocationId,
                       onTap: () => onSelect(node.locationId),
@@ -237,6 +239,7 @@ class _MapNode extends StatefulWidget {
     required this.browseMapId,
     required this.isHere,
     required this.isSelected,
+    required this.hintPulse,
     required this.onTap,
     required this.onDoubleTap,
   });
@@ -245,6 +248,7 @@ class _MapNode extends StatefulWidget {
   final String browseMapId;
   final bool isHere;
   final bool isSelected;
+  final bool hintPulse;
   final VoidCallback onTap;
 
   /// A second tap travels, so a place can be reached without the panel.
@@ -291,17 +295,21 @@ class _MapNodeState extends State<_MapNode> {
             label: label,
             child: Padding(
               padding: const EdgeInsets.fromLTRB(10, 8, 10, 4),
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: fill,
-                  border: Border.all(
-                    color: isSelected ? Palette.gold : Palette.parchment,
-                    width: isSelected || isHere ? 2 : 1,
+              child: QuestHintPulse(
+                enabled: widget.hintPulse,
+                circle: true,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: fill,
+                    border: Border.all(
+                      color: isSelected ? Palette.gold : Palette.parchment,
+                      width: isSelected || isHere ? 2 : 1,
+                    ),
+                    boxShadow: const [BoxShadow(offset: Offset(0, 1), color: Color(0x80000000))],
                   ),
-                  boxShadow: const [BoxShadow(offset: Offset(0, 1), color: Color(0x80000000))],
+                  child: const SizedBox.square(dimension: 14),
                 ),
-                child: const SizedBox.square(dimension: 14),
               ),
             ),
           ),

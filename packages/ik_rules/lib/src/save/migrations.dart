@@ -475,6 +475,7 @@ final List<SaveMigration> saveMigrations = <SaveMigration>[
     toVersion: 35,
     migrate: (save, nowMs) {
       final next = _bumped(save, 35);
+      next['hasSeenFennelIntro'] = save['hasSeenFennelIntro'] ?? false;
       final raw = save['achievements'];
       if (raw is! List) {
         next['achievements'] = <Object?>[];

@@ -2,6 +2,7 @@ import 'package:collection/collection.dart';
 import 'package:ik_content/ik_content.dart';
 
 import '../js_compat.dart';
+import '../production/recipes.dart';
 import '../save/generated/save_models.dart';
 import 'objectives.dart';
 import 'quests.dart';
@@ -37,21 +38,79 @@ List<StructuredQuestObjectives> questObjectiveSources(GameDatabase db, QuestRow 
   ];
 }
 
-bool _isStepComplete(GameDatabase db, PlayerSave save, String questId, String notes) {
+/// First Talk step for an NPC may still use the save-wide `talk:npc` flag.
+num _talkProgressForStep(
+  GameDatabase db,
+  String questId,
+  Map<String, num> counters,
+  String talkKey,
+  String stepId,
+) {
+  final scoped = counters['$talkKey:$stepId'] ?? 0;
+  if (scoped >= 1) return scoped;
+  final npcId = talkKey.substring('talk:'.length);
+  final first = getQuestSteps(db, questId).cast<QuestStepRow?>().firstWhere(
+    (step) => parseNotesObjectives(step!.notes ?? '').talkNpcIds.contains(npcId),
+    orElse: () => null,
+  );
+  if (first?.stepId != stepId) return 0;
+  return counters[talkKey] ?? 0;
+}
+
+List<QuestProgressLine> _scopedTalkLines(
+  GameDatabase db,
+  String questId,
+  List<QuestProgressLine> lines,
+  Map<String, num> counters,
+  String? stepId,
+) {
+  if (stepId == null) return lines;
+  return [
+    for (final line in lines)
+      if (line.key.startsWith('talk:'))
+        QuestProgressLine(
+          key: '${line.key}:$stepId',
+          label: line.label,
+          current: _talkProgressForStep(db, questId, counters, line.key, stepId),
+          required: line.required,
+        )
+      else
+        line,
+  ];
+}
+
+bool _isStepComplete(
+  GameDatabase db,
+  PlayerSave save,
+  String questId,
+  String notes, [
+  String? stepId,
+]) {
   final structured = parseNotesObjectives(notes);
   final counters = getQuestProgress(save, questId).counters ?? const <String, num>{};
   final progress = objectiveProgressFromStructured(db, save, structured, counters);
-  if (progress.progressLines.isEmpty) return true;
-  return progress.progressLines.every((line) => line.current >= line.required);
+  final lines = _scopedTalkLines(db, questId, progress.progressLines, counters, stepId);
+  if (lines.isEmpty) return true;
+  return lines.every((line) => line.current >= line.required);
 }
 
 int getCurrentStepIndex(GameDatabase db, PlayerSave save, QuestRow quest) {
   final questId = jsString(quest['Quest ID']);
   final steps = getQuestSteps(db, questId);
   for (var index = 0; index < steps.length; index++) {
-    if (!_isStepComplete(db, save, questId, steps[index].notes ?? '')) return index;
+    final step = steps[index];
+    if (!_isStepComplete(db, save, questId, step.notes ?? '', step.stepId)) return index;
   }
   return steps.length;
+}
+
+String currentStepTalkKey(GameDatabase db, PlayerSave save, QuestRow quest, String npcId) {
+  final questId = jsString(quest['Quest ID']);
+  if (!questUsesSteps(db, questId)) return 'talk:$npcId';
+  final steps = getQuestSteps(db, questId);
+  final index = getCurrentStepIndex(db, save, quest);
+  if (index < 0 || index >= steps.length) return 'talk:$npcId';
+  return 'talk:$npcId:${steps[index].stepId}';
 }
 
 const String _citadelQuestId = 'QST-0004';
@@ -150,7 +209,10 @@ bool questCanTalkToNpc(GameDatabase db, PlayerSave save, QuestRow quest, String 
       ? questActiveStepObjectives(db, save, quest)
       : parseStructuredObjectives(quest);
   if (objectives == null) return false;
-  return objectives.talkNpcIds.contains(npcId) || objectives.optionalTalkNpcIds.contains(npcId);
+  final talks =
+      objectives.talkNpcIds.contains(npcId) || objectives.optionalTalkNpcIds.contains(npcId);
+  if (!talks) return false;
+  return objectives.holds.every((hold) => inventoryCount(save, hold.targetId) >= hold.quantity);
 }
 
 /// True when this NPC still has an unfinished Talk step (or Notes talk).
@@ -163,7 +225,7 @@ bool questNpcHasIncompleteTalk(GameDatabase db, PlayerSave save, QuestRow quest,
   return steps.any(
     (step) =>
         parseNotesObjectives(step.notes ?? '').talkNpcIds.contains(npcId) &&
-        !_isStepComplete(db, save, questId, step.notes ?? ''),
+        !_isStepComplete(db, save, questId, step.notes ?? '', step.stepId),
   );
 }
 

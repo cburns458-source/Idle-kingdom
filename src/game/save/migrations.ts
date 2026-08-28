@@ -518,6 +518,7 @@ export const SAVE_MIGRATIONS: SaveMigration[] = [
     toVersion: 35,
     migrate: (save) => ({
       ...save,
+      hasSeenFennelIntro: save.hasSeenFennelIntro ?? false,
       achievements: (save.achievements ?? []).filter(
         (row) => row.achievementId === 'ACH-0015' || row.achievementId === 'ACH-0017',
       ),

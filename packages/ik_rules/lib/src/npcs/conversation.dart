@@ -48,16 +48,37 @@ List<String> _requiredTalkNpcIdsFromNotes(String? notes) {
       .toList();
 }
 
+String? _requiredStepIdFromNotes(String? notes) {
+  final field = RegExp(
+    r'(?:^|;)\s*RequiresStep:\s*(QSTP-\d+)',
+    caseSensitive: false,
+  ).firstMatch(notes ?? '')?.group(1);
+  return field?.toUpperCase();
+}
+
 String? questTalkLine(GameDatabase db, String questId, String npcId, [PlayerSave? save]) {
   final rows = db.questDialogue.where((row) => row.questId == questId && row.npcId == npcId);
+  final quest = getQuest(db, questId);
+  String? currentStepId;
+  if (save != null && quest != null) {
+    final steps = getQuestSteps(db, questId);
+    final index = getCurrentStepIndex(db, save, quest);
+    if (index >= 0 && index < steps.length) currentStepId = steps[index].stepId;
+  }
   final matching = rows.where((row) {
+    final requiredStep = _requiredStepIdFromNotes(row.notes);
+    if (requiredStep != null && requiredStep != currentStepId) return false;
     final required = _requiredTalkNpcIdsFromNotes(row.notes);
     if (required.isEmpty) return true;
     if (save == null) return false;
     return required.every((requiredNpcId) => hasQuestFlag(save, questId, 'talk:$requiredNpcId'));
   }).toList();
   final specific = matching
-      .where((row) => _requiredTalkNpcIdsFromNotes(row.notes).isNotEmpty)
+      .where(
+        (row) =>
+            _requiredTalkNpcIdsFromNotes(row.notes).isNotEmpty ||
+            _requiredStepIdFromNotes(row.notes) != null,
+      )
       .toList();
   final line = (specific.isNotEmpty ? specific.first : matching.firstOrNull)?.line;
   return line != null && line.isNotEmpty ? line : null;
@@ -330,10 +351,10 @@ NpcQuestBlock _questBlock(GameDatabase db, PlayerSave save, QuestRow quest, Stri
   final status = getQuestProgress(save, questId).status;
   final isGiver = quest['NPC ID'] == npcId;
   final turnInId = parsed.turnInNpcId ?? quest['NPC ID'];
-  final talked = hasQuestFlag(save, questId, 'talk:$npcId');
+  final talkedThisStep = hasQuestFlag(save, questId, currentStepTalkKey(db, save, quest, npcId));
   final chose =
       hasQuestFlag(save, questId, 'choice:bribe') || hasQuestFlag(save, questId, 'choice:combat');
-  final needsTalkFirst = questNpcHasIncompleteTalk(db, save, quest, npcId) && !talked;
+  final needsTalkFirst = questNpcHasIncompleteTalk(db, save, quest, npcId) && !talkedThisStep;
   final donated = hasQuestFlag(save, questId, acceptGoldFlag);
   final needsDonate = parsed.acceptGoldCost > 0 && !donated;
   String acceptLabel;
@@ -361,8 +382,8 @@ NpcQuestBlock _questBlock(GameDatabase db, PlayerSave save, QuestRow quest, Stri
     canAccept: isGiver && status == 'inactive' && !needsDonate,
     canDonate: isGiver && status == 'inactive' && needsDonate,
     donated: donated,
-    canTurnIn: turnInId == npcId && status == 'active',
-    canTalk: status == 'active' && questCanTalkToNpc(db, save, quest, npcId) && !talked,
+    canTurnIn: turnInId == npcId && status == 'active' && !parsed.autoCompleteOnTalk,
+    canTalk: status == 'active' && questCanTalkToNpc(db, save, quest, npcId) && !talkedThisStep,
     talkLabel: 'Talk',
     talkLine: questTalkLine(db, questId, npcId, save),
     idlePrompt: configString(db, 'copy.quest_active_prompt', _fallbackQuestActivePrompt),
@@ -544,7 +565,21 @@ NpcActionResult donateForQuestFromNpc(GameDatabase db, PlayerSave save, String q
 }
 
 NpcActionResult talkWithQuestNpc(GameDatabase db, PlayerSave save, String npcId) {
-  final next = applyQuestTalkProgress(db, save, npcId);
+  var next = applyQuestTalkProgress(db, save, npcId);
+  for (final quest in questsTouchingNpc(db, next, npcId)) {
+    final parsed = parseStructuredObjectives(quest);
+    if (!parsed.autoCompleteOnTalk) continue;
+    if (getQuestProgress(next, jsString(quest['Quest ID'])).status != 'active') continue;
+    if (!questAllStepsComplete(db, next, quest)) continue;
+    final completed = completeQuest(db, next, jsString(quest['Quest ID']));
+    if (completed.ok) {
+      final name = quest['Display Name'];
+      return NpcActionResult.ok(
+        save: completed.save!,
+        message: 'Completed: ${name is String ? name : 'quest'}.',
+      );
+    }
+  }
   return NpcActionResult.ok(save: next, message: 'You hear them out.');
 }
 
