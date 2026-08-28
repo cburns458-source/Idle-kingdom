@@ -5,7 +5,6 @@ import { activityVisibleForSave } from '../activity/requirements'
 import { addItemToInventory } from '../activity/rewards'
 import { prepareDatabase } from '../data/loadDatabase'
 import { chooseCombatForQuest, npcConversation, questTalkLine, talkWithQuestNpc } from '../npcs/conversation'
-import type { PlayerSave } from '../save/types'
 import { npcsAtLocationForSave } from '../npcs/knowledge'
 import { specialProductionStationsVisibleAt } from '../projects/projects'
 import { isCosmeticUnlocked } from '../cosmetics/cosmetics'
@@ -444,8 +443,14 @@ describe('quest tours', () => {
   it('hides the barracks journal line until the merchant talks, and lets recover skip asking around', () => {
     const { launch } = prepareDatabase(rawDatabase)
     let save = { ...createNewSave(launch), currentLocationId: 'LOC-0034', gold: 25 }
-    save = donateForQuest(launch, save, 'QST-0003').save as PlayerSave
-    save = acceptQuest(launch, save, 'QST-0003').save as PlayerSave
+    const donated = donateForQuest(launch, save, 'QST-0003')
+    expect(donated.ok).toBe(true)
+    if (!donated.ok) return
+    save = donated.save
+    const accepted = acceptQuest(launch, save, 'QST-0003')
+    expect(accepted.ok).toBe(true)
+    if (!accepted.ok) return
+    save = accepted.save
     save = applyQuestTalkProgress(launch, save, 'NPC-0011')
     const quest = getQuest(launch, 'QST-0003')!
     expect(questStepJournal(launch, save, quest).map((step) => step.label).join('\n')).not.toMatch(
@@ -480,20 +485,34 @@ describe('quest tours', () => {
 
   it('auto-starts Pressure the Guards at the barracks and on arrival', () => {
     const { launch } = prepareDatabase(rawDatabase)
-    let save = { ...createNewSave(launch), currentLocationId: 'LOC-0017', gold: 25 }
-    save = donateForQuest(launch, save, 'QST-0003').save as PlayerSave
-    save = acceptQuest(launch, save, 'QST-0003').save as PlayerSave
+    let save = { ...createNewSave(launch), currentLocationId: 'LOC-0034', gold: 25 }
+    const donated = donateForQuest(launch, save, 'QST-0003')
+    expect(donated.ok).toBe(true)
+    if (!donated.ok) return
+    save = donated.save
+    const accepted = acceptQuest(launch, save, 'QST-0003')
+    expect(accepted.ok).toBe(true)
+    if (!accepted.ok) return
+    save = accepted.save
     save = applyQuestTalkProgress(launch, save, 'NPC-0011')
+    save = { ...save, currentLocationId: 'LOC-0017' }
     const combat = chooseCombatForQuest(launch, save, 'QST-0003', Date.parse('2026-01-01T00:00:00.000Z'))
     expect(combat.ok).toBe(true)
     if (!combat.ok) return
     expect(combat.startedActivity).toBe(true)
     expect(combat.save.currentActivityId).toBe('ACT-0034')
 
-    let elsewhere = { ...createNewSave(launch), currentLocationId: 'LOC-0002', gold: 25 }
-    elsewhere = donateForQuest(launch, elsewhere, 'QST-0003').save as PlayerSave
-    elsewhere = acceptQuest(launch, elsewhere, 'QST-0003').save as PlayerSave
+    let elsewhere = { ...createNewSave(launch), currentLocationId: 'LOC-0034', gold: 25 }
+    const donatedAway = donateForQuest(launch, elsewhere, 'QST-0003')
+    expect(donatedAway.ok).toBe(true)
+    if (!donatedAway.ok) return
+    elsewhere = donatedAway.save
+    const acceptedAway = acceptQuest(launch, elsewhere, 'QST-0003')
+    expect(acceptedAway.ok).toBe(true)
+    if (!acceptedAway.ok) return
+    elsewhere = acceptedAway.save
     elsewhere = applyQuestTalkProgress(launch, elsewhere, 'NPC-0011')
+    elsewhere = { ...elsewhere, currentLocationId: 'LOC-0002' }
     const flagged = chooseCombatForQuest(
       launch,
       elsewhere,
@@ -544,7 +563,7 @@ describe('quest tours', () => {
           questId: 'QST-0006',
           status: 'active' as const,
           progress: 0,
-          counters: { 'talk:NPC-0014': 1, 'visit:LOC-0023': 1 },
+          counters: { 'talk:NPC-0014': 1, 'talk:NPC-0014:QSTP-0014': 1, 'visit:LOC-0023': 1 },
         },
       ],
     }
@@ -552,7 +571,10 @@ describe('quest tours', () => {
     const bring = {
       ...cook,
       currentLocationId: 'LOC-0002',
-      inventory: [{ itemId: 'ITEM-0058', quantity: 5 }],
+      inventory: [
+        { itemId: 'ITEM-0025', quantity: 5 },
+        { itemId: 'ITEM-0058', quantity: 5 },
+      ],
       quests: [
         {
           questId: 'QST-0006',
@@ -560,6 +582,7 @@ describe('quest tours', () => {
           progress: 0,
           counters: {
             'talk:NPC-0014': 1,
+            'talk:NPC-0014:QSTP-0014': 1,
             'visit:LOC-0023': 1,
             'process:RCP-0001': 5,
           },

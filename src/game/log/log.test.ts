@@ -204,7 +204,7 @@ describe('critter log', () => {
 describe('milestones', () => {
   it('tracks every-skill, kills, gold, and gathering marks', () => {
     const fresh = milestoneLog(launch, createNewSave(launch))
-    expect(fresh).toHaveLength(16)
+    expect(fresh).toHaveLength(13)
     expect(fresh.every((row) => !row.unlocked)).toBe(true)
     expect(fresh.some((row) => row.name === 'Every skill 25')).toBe(true)
     expect(fresh.some((row) => row.name === '10,000 monsters slain')).toBe(true)

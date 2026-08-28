@@ -432,7 +432,7 @@ class QuestProgressLine {
 
   /// Journal and dock copy: the objective plus how far it has got.
   String get caption {
-    final shown = current > required ? required : current;
+    final shown = key.startsWith('action:') && current > required ? required : current;
     return '$label $shown / $required';
   }
 }

@@ -70,7 +70,7 @@ export interface HostileTravelArrivalResult {
   /** Set when the player is under-level but the hostile activity could not start. */
   forceBlockedReason: string | null
   threatenedActivityId: string | null
-  questCompletions: QuestArrivalCompletion[]
+  questCompletions?: QuestArrivalCompletion[]
 }
 
 const QUEST_CHOICE_COMBAT_ACTIVITY_ID = 'ACT-0034'

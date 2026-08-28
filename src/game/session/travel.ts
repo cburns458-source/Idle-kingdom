@@ -42,7 +42,7 @@ function arrivalOf(db: GameDatabase, result: HostileTravelArrivalResult): Travel
     forcedActivityId: result.forcedActivityId,
     blockedReason: result.forceBlockedReason,
     message: hostileForceMessage(db, result),
-    questCompletions: result.questCompletions,
+    questCompletions: result.questCompletions ?? [],
   }
 }
 

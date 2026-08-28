@@ -117,9 +117,8 @@ function journalProgressLines(
   save: PlayerSave,
   questId: string,
   notes: string,
-  stepId?: string,
 ): QuestProgressLine[] {
-  const lines = stepProgressLines(db, save, questId, notes, stepId)
+  const lines = stepProgressLines(db, save, questId, notes)
   const structured = parseNotesObjectives(notes)
   if (structured.optionalTalkNpcIds.length === 0) return lines
   const counters = getQuestProgress(save, questId).counters ?? {}
@@ -225,7 +224,7 @@ export function questStepJournal(
       ? stepProgressLines(db, save, questId, step.Notes ?? '', step['Step ID']).filter((line) =>
           line.key.startsWith('action:'),
         )
-      : journalProgressLines(db, save, questId, step.Notes ?? '', step['Step ID'])
+      : journalProgressLines(db, save, questId, step.Notes ?? '')
     const progress = progressSource.map((line) => ({
       key: line.key,
       label: formatQuestProgressLine(line),

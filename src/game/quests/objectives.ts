@@ -272,7 +272,8 @@ export interface QuestProgressLine {
 
 /** Journal and dock copy: the objective plus how far it has got. */
 export function formatQuestProgressLine(line: QuestProgressLine): string {
-  const current = Math.min(line.current, line.required)
+  const current =
+    line.key.startsWith('action:') ? Math.min(line.current, line.required) : line.current
   return `${line.label} ${current} / ${line.required}`
 }
 
