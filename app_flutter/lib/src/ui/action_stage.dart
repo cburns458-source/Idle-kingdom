@@ -19,7 +19,7 @@ import 'playable_frame.dart';
 const double _portraitSlotHeight = 152;
 const double _playerArtHeight = 137;
 const double _enemyArtHeight = 152;
-const double _actionArtHeight = 86;
+const double _actionArtHeight = 152;
 const double _captionMinHeight = 32;
 
 /// How wide either half of the stage can get, so the two sprites stay shoulder

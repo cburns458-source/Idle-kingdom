@@ -17,6 +17,7 @@ import {
   questAvailableForSave,
   type QuestRow,
 } from './quests'
+import { hasQuestFlag } from './progress'
 import type { StructuredQuestObjectives } from './types'
 
 export type QuestJournalStepState = 'done' | 'current'
@@ -93,6 +94,47 @@ function stepProgressLines(
   })
 }
 
+function isAskAroundSkipped(
+  db: GameDatabase,
+  save: PlayerSave,
+  questId: string,
+  notes: string,
+): boolean {
+  const structured = parseNotesObjectives(notes)
+  if (structured.optionalTalkNpcIds.length === 0) return false
+  if (hasQuestFlag(save, questId, 'choice:bribe') || hasQuestFlag(save, questId, 'choice:combat')) {
+    return true
+  }
+  const quest = getQuest(db, questId)
+  if (!quest) return false
+  return questAllStepDelivers(db, quest).some(
+    (line) => inventoryCount(save, line.targetId) >= line.quantity,
+  )
+}
+
+function journalProgressLines(
+  db: GameDatabase,
+  save: PlayerSave,
+  questId: string,
+  notes: string,
+  stepId?: string,
+): QuestProgressLine[] {
+  const lines = stepProgressLines(db, save, questId, notes, stepId)
+  const structured = parseNotesObjectives(notes)
+  if (structured.optionalTalkNpcIds.length === 0) return lines
+  const counters = getQuestProgress(save, questId).counters ?? {}
+  const revealed = structured.optionalTalkNpcIds.some(
+    (npcId) => Number(counters[`talk:${npcId}`] ?? 0) >= 1,
+  )
+  if (revealed) return lines
+  return lines.filter(
+    (line) =>
+      !structured.talkNpcIds.some(
+        (npcId) => line.key === `talk:${npcId}` || line.key.startsWith(`talk:${npcId}:`),
+      ),
+  )
+}
+
 export function isStepComplete(
   db: GameDatabase,
   save: PlayerSave,
@@ -100,6 +142,7 @@ export function isStepComplete(
   notes: string,
   stepId?: string,
 ): boolean {
+  if (isAskAroundSkipped(db, save, questId, notes)) return true
   const lines = stepProgressLines(db, save, questId, notes, stepId)
   if (lines.length === 0) return true
   return lines.every((line) => line.current >= line.required)
@@ -178,8 +221,12 @@ export function questStepJournal(
       label: step['Journal Label'],
       state: (done ? 'done' : 'current') as QuestJournalStepState,
     }
-    if (done) return [head]
-    const progress = stepProgressLines(db, save, questId, step.Notes ?? '').map((line) => ({
+    const progressSource = done
+      ? stepProgressLines(db, save, questId, step.Notes ?? '', step['Step ID']).filter((line) =>
+          line.key.startsWith('action:'),
+        )
+      : journalProgressLines(db, save, questId, step.Notes ?? '', step['Step ID'])
+    const progress = progressSource.map((line) => ({
       key: line.key,
       label: formatQuestProgressLine(line),
       state: (line.current >= line.required ? 'done' : 'current') as QuestJournalStepState,
@@ -354,12 +401,18 @@ export function questActionProgressForActivity(
   for (const quest of asQuestRows(db)) {
     const questId = quest['Quest ID']
     if (getQuestProgress(save, questId).status !== 'active') continue
-    const notes = questUsesSteps(db, questId)
-      ? (getQuestSteps(db, questId)[getCurrentStepIndex(db, save, quest)]?.Notes ?? '')
-      : (quest.Notes ?? '')
-    for (const line of stepProgressLines(db, save, questId, notes)) {
-      const actionId = line.key.startsWith('action:') ? line.key.slice('action:'.length) : null
-      if (actionId && actionIds.has(actionId)) lines.push(line)
+    if (questUsesSteps(db, questId)) {
+      for (const step of getQuestSteps(db, questId)) {
+        for (const line of stepProgressLines(db, save, questId, step.Notes ?? '', step['Step ID'])) {
+          const actionId = line.key.startsWith('action:') ? line.key.slice('action:'.length) : null
+          if (actionId && actionIds.has(actionId)) lines.push(line)
+        }
+      }
+    } else {
+      for (const line of stepProgressLines(db, save, questId, quest.Notes ?? '')) {
+        const actionId = line.key.startsWith('action:') ? line.key.slice('action:'.length) : null
+        if (actionId && actionIds.has(actionId)) lines.push(line)
+      }
     }
   }
   return lines

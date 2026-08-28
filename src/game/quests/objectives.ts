@@ -95,6 +95,7 @@ const EMPTY_OBJECTIVES: StructuredQuestObjectives = {
   talkNpcIds: [],
   optionalTalkNpcIds: [],
   visitLocationIds: [],
+  hintLocationIds: [],
   inspectIds: [],
   holds: [],
   actionTargets: [],
@@ -148,6 +149,7 @@ export function parseNotesObjectives(
   const talkMatch = noteField(notes, String.raw`(?:^|;)\s*Talk:\s*([^;]+)`)
   const optionalTalkMatch = noteField(notes, String.raw`(?:^|;)\s*OptionalTalk:\s*([^;]+)`)
   const visitMatch = noteField(notes, String.raw`Visit:\s*([^;]+)`)
+  const hintMatch = noteField(notes, String.raw`Hint:\s*([^;]+)`)
   const inspectMatch = noteField(notes, String.raw`Inspect:\s*([^;]+)`)
   const holdMatch = noteField(notes, String.raw`Hold:\s*([^;]+)`)
   const actionMatch = noteField(notes, String.raw`Action:\s*([^;]+)`)
@@ -189,6 +191,7 @@ export function parseNotesObjectives(
     talkNpcIds: talkMatch ? parseIdList(talkMatch) : [],
     optionalTalkNpcIds: optionalTalkMatch ? parseIdList(optionalTalkMatch) : [],
     visitLocationIds: visitMatch ? parseIdList(visitMatch) : [],
+    hintLocationIds: hintMatch ? parseIdList(hintMatch) : [],
     inspectIds: inspectMatch ? parseTokenList(inspectMatch) : [],
     holds: holdMatch ? parseIdQtyList(holdMatch) : [],
     actionTargets: actionMatch ? parseIdQtyList(actionMatch) : [],
@@ -269,7 +272,8 @@ export interface QuestProgressLine {
 
 /** Journal and dock copy: the objective plus how far it has got. */
 export function formatQuestProgressLine(line: QuestProgressLine): string {
-  return `${line.label} ${line.current} / ${line.required}`
+  const current = Math.min(line.current, line.required)
+  return `${line.label} ${current} / ${line.required}`
 }
 
 function npcDisplayName(db: GameDatabase, npcId: string): string {

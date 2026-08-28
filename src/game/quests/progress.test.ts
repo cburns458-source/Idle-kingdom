@@ -33,6 +33,12 @@ describe('quest objective engine v2', () => {
     expect(parsed.optionalTalkNpcIds).toEqual(['NPC-0007'])
   })
 
+  it('parses Hint locations separately from Visit', () => {
+    const parsed = parseNotesObjectives('Visit: LOC-0023; Process: RCP-0001 x5; Hint: LOC-0023')
+    expect(parsed.visitLocationIds).toEqual(['LOC-0023'])
+    expect(parsed.hintLocationIds).toEqual(['LOC-0023'])
+  })
+
   it('tracks defeat and process counters on active quests', () => {
     const { launch } = prepareDatabase(rawDatabase)
     let save = createNewSave(launch)

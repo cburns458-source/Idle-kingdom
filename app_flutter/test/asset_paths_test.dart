@@ -98,5 +98,7 @@ void main() {
     // Unmapped ids fall back rather than pointing at a missing bundle key.
     expect(enemyAssetPath('ENM-9999'), 'content/assets/enemies/enm_cow.webp');
     expect(workstationAssetPath(null), 'content/assets/workstations/ws_crafting_bench.webp');
+    expect(npcAssetPath('NPC-0014'), 'content/assets/npc/npc_fennel.png');
+    expect(npcAssetPath('NPC-0015'), 'content/assets/npc/npc_helge.png');
   });
 }

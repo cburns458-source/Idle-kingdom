@@ -54,7 +54,7 @@ void main() {
     await tester.tap(find.text('Ask about Quill'));
     await tester.pump();
     expect(find.textContaining('Last I heard, Quill was at the'), findsOne);
-    final portrait = tester.getRect(find.byType(SocialPortrait));
+    final portrait = tester.getRect(find.byType(NpcPortrait));
     expect(portrait.width, 68);
     expect(portrait.height, 68);
 
@@ -207,7 +207,7 @@ void main() {
     await tester.tap(find.text('Collect'));
     await tester.pumpAndSettle();
 
-    expect(find.text("Completed — Rose's Apothecary is open on the Town Map."), findsOne);
+    expect(find.text("Thank you — Rose's Apothecary is open on the Town Map."), findsOne);
   });
 
   testWidgets('the King pitches the feast, then asks for help after accept', (tester) async {

@@ -260,12 +260,38 @@ class _MapNode extends StatefulWidget {
   State<_MapNode> createState() => _MapNodeState();
 }
 
-class _MapNodeState extends State<_MapNode> {
+class _MapNodeState extends State<_MapNode> with SingleTickerProviderStateMixin {
   /// Timed by hand rather than with `onDoubleTap`, which would hold the first
   /// tap back for the whole double-tap window before selecting anything.
   static const Duration _window = Duration(milliseconds: 300);
 
   DateTime? _lastTap;
+  late final AnimationController _hint;
+
+  @override
+  void initState() {
+    super.initState();
+    _hint = AnimationController(vsync: this, duration: const Duration(milliseconds: 1400));
+    if (widget.hintPulse) _hint.repeat(reverse: true);
+  }
+
+  @override
+  void didUpdateWidget(_MapNode oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.hintPulse && !_hint.isAnimating) {
+      _hint.repeat(reverse: true);
+    } else if (!widget.hintPulse && _hint.isAnimating) {
+      _hint
+        ..stop()
+        ..value = 0;
+    }
+  }
+
+  @override
+  void dispose() {
+    _hint.dispose();
+    super.dispose();
+  }
 
   void _handleTap() {
     final now = DateTime.now();
@@ -297,22 +323,23 @@ class _MapNodeState extends State<_MapNode> {
             label: label,
             child: Padding(
               padding: const EdgeInsets.fromLTRB(10, 8, 10, 4),
-              child: QuestHintPulse(
-                enabled: widget.hintPulse,
-                circle: true,
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: fill,
-                    border: Border.all(
-                      color: isSelected ? Palette.gold : Palette.parchment,
+              child: widget.hintPulse
+                  ? AnimatedBuilder(
+                      animation: _hint,
+                      builder: (context, _) {
+                        final border = Color.lerp(
+                          const Color(0xB3B42318),
+                          const Color(0xFFB42318),
+                          _hint.value,
+                        )!;
+                        return _mapDot(fill: fill, border: border, width: 2);
+                      },
+                    )
+                  : _mapDot(
+                      fill: fill,
+                      border: isSelected ? Palette.gold : Palette.parchment,
                       width: isSelected || isHere ? 2 : 1,
                     ),
-                    boxShadow: const [BoxShadow(offset: Offset(0, 1), color: Color(0x80000000))],
-                  ),
-                  child: const SizedBox.square(dimension: 14),
-                ),
-              ),
             ),
           ),
           Text(
@@ -327,6 +354,18 @@ class _MapNodeState extends State<_MapNode> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _mapDot({required Color fill, required Color border, required double width}) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: fill,
+        border: Border.all(color: border, width: width),
+        boxShadow: const [BoxShadow(offset: Offset(0, 1), color: Color(0x80000000))],
+      ),
+      child: const SizedBox.square(dimension: 14),
     );
   }
 }

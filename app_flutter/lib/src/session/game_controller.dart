@@ -128,6 +128,7 @@ class GameController extends ChangeNotifier {
   bool _returningFromAway = false;
   CosmeticUnlockNotice? _cosmeticUnlock;
   String? _discoveryNotice;
+  List<QuestArrivalCompletion> _pendingQuestCompletions = <QuestArrivalCompletion>[];
   AutoEquipProposal? _autoEquip;
   CombatRoundEvent? _lastRound;
   num? _lastRoundAtMs;
@@ -144,6 +145,18 @@ class GameController extends ChangeNotifier {
   List<ActionRewardBundle> get recentRewards => List.unmodifiable(_recentRewards);
   String? get message => _message;
   String? get activityError => _activityError;
+
+  /// Visit-complete quests waiting for the location-page reward popup.
+  List<QuestArrivalCompletion> takePendingQuestCompletions() {
+    final pending = List<QuestArrivalCompletion>.of(_pendingQuestCompletions);
+    _pendingQuestCompletions = <QuestArrivalCompletion>[];
+    return pending;
+  }
+
+  /// Pressure the Guards: set the combat flag and start the fight when standing at the barracks.
+  NpcActionResult chooseQuestCombat(String questId) {
+    return chooseCombatForQuest(db, save, questId, session.clock(), _random);
+  }
 
   /// Pushes a completed action or project onto the live reward strip.
   void noteReward(ActionRewardBundle bundle) {
@@ -861,6 +874,13 @@ class GameController extends ChangeNotifier {
   void _showArrival(TravelArrival arrival) {
     _message = arrival.forcedActivityId != null ? arrival.message : null;
     _activityError = arrival.blockedReason != null ? arrival.message : null;
+    if (arrival.questCompletions.isNotEmpty) {
+      _pendingQuestCompletions = List<QuestArrivalCompletion>.of(arrival.questCompletions);
+      for (final completion in arrival.questCompletions) {
+        final bundle = completion.rewardBundle;
+        if (bundle != null) noteReward(bundle);
+      }
+    }
     notifyListeners();
   }
 

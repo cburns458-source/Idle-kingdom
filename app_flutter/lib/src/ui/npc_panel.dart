@@ -133,7 +133,7 @@ class _NpcPanelState extends State<NpcPanel> {
   }
 
   void _chooseCombat(NpcQuestBlock quest) {
-    final result = chooseCombatForQuest(controller.save, quest.questId);
+    final result = controller.chooseQuestCombat(quest.questId);
     if (!result.ok) {
       setState(() => _error = result.reason);
       return;
@@ -141,6 +141,7 @@ class _NpcPanelState extends State<NpcPanel> {
     controller.commit(result.save!);
     controller.announce(result.message!);
     setState(() => _error = null);
+    if (result.startedActivity) widget.onClose();
   }
 
   Future<void> _turnIn(NpcQuestBlock quest) async {
@@ -402,8 +403,7 @@ class _NpcPanelState extends State<NpcPanel> {
       error: error,
       progress: progress,
       actions: actions,
-      appearance: controller.save.appearance,
-      raceId: controller.save.raceId,
+      npcId: widget.npc.npcId,
     );
   }
 }
@@ -414,8 +414,7 @@ class _DialogueCard extends StatelessWidget {
     required this.name,
     required this.line,
     required this.actions,
-    required this.appearance,
-    this.raceId,
+    required this.npcId,
     this.detail,
     this.error,
     this.progress = const [],
@@ -429,8 +428,7 @@ class _DialogueCard extends StatelessWidget {
   final String? error;
   final List<QuestProgressLine> progress;
   final List<Widget> actions;
-  final PlayerAppearance appearance;
-  final String? raceId;
+  final String npcId;
 
   @override
   Widget build(BuildContext context) {
@@ -441,9 +439,7 @@ class _DialogueCard extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              IgnorePointer(
-                child: SocialPortrait(appearance: appearance, raceId: raceId, size: 68),
-              ),
+              IgnorePointer(child: NpcPortrait(npcId: npcId, size: 68)),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
@@ -502,6 +498,7 @@ Future<void> showQuestRewards(
   BuildContext context, {
   required String questName,
   required List<String> rewards,
+  String? spokenLine,
 }) {
   return showGamePopup<void>(
     context: context,
@@ -510,8 +507,12 @@ Future<void> showQuestRewards(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: [
-          const MutedText('Quest complete'),
+          const MutedText('Thank you'),
           Text(questName, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w400)),
+          if (spokenLine case final spoken?) ...[
+            const SizedBox(height: 8),
+            Text(spoken, style: const TextStyle(fontSize: 15)),
+          ],
           const SizedBox(height: 8),
           if (rewards.isEmpty)
             const MutedText('No rewards.')

@@ -23,7 +23,6 @@ import {
   getQuestSteps,
   questAllStepsComplete,
   questCanTalkToNpc,
-  questNpcHasIncompleteTalk,
 } from '../quests/steps'
 import type { PlayerSave } from '../save/types'
 import { configString } from '../activity/gathering'
@@ -40,6 +39,8 @@ import {
   unlockNpcKnowledge,
 } from './knowledge'
 import { DWARVEN_MINING_MERCHANT_ID, masterDwarfLocationId, quillLocationId } from './roaming'
+import type { RandomFn } from '../activity/pools'
+import { tryStartQuestChoiceCombat } from '../world/hostility'
 
 const FALLBACK_MERCHANT_TIP = 'Last I heard, Quill was nearby.'
 const FALLBACK_MERCHANT_TIP_SPENT = 'Last I heard, Quill was nearby.'
@@ -83,6 +84,10 @@ function requiredStepIdFromNotes(notes: string | null): string | null {
   return field ? field.toUpperCase() : null
 }
 
+function whenCompletedFromNotes(notes: string | null): boolean {
+  return /(?:^|;)\s*When:\s*completed/i.test(notes ?? '')
+}
+
 export function questTalkLine(
   db: GameDatabase,
   questId: string,
@@ -93,21 +98,29 @@ export function questTalkLine(
     (row) => row['Quest ID'] === questId && row['NPC ID'] === npcId,
   )
   const quest = getQuest(db, questId)
+  const status = save ? getQuestProgress(save, questId).status : undefined
   const currentStepId =
     save && quest
       ? getQuestSteps(db, questId)[getCurrentStepIndex(db, save, quest)]?.['Step ID']
       : undefined
   const matching = rows.filter((row) => {
-    const requiredStep = requiredStepIdFromNotes(row.Notes ?? null)
+    const notes = row.Notes ?? null
+    if (whenCompletedFromNotes(notes)) return status === 'completed'
+    if (status === 'completed') return false
+    const requiredStep = requiredStepIdFromNotes(notes)
     if (requiredStep && requiredStep !== currentStepId) return false
-    const required = requiredTalkNpcIdsFromNotes(row.Notes ?? null)
+    const required = requiredTalkNpcIdsFromNotes(notes)
     if (required.length === 0) return true
     if (!save) return false
     return required.every((requiredNpcId) => hasQuestFlag(save, questId, `talk:${requiredNpcId}`))
   })
   const specific = matching.filter((row) => {
     const notes = row.Notes ?? null
-    return requiredTalkNpcIdsFromNotes(notes).length > 0 || requiredStepIdFromNotes(notes) != null
+    return (
+      whenCompletedFromNotes(notes) ||
+      requiredTalkNpcIdsFromNotes(notes).length > 0 ||
+      requiredStepIdFromNotes(notes) != null
+    )
   })
   const line = (specific[0] ?? matching[0])?.Line
   return line && line.length > 0 ? line : null
@@ -208,9 +221,16 @@ export interface NpcConversation {
   whereabouts?: NpcWhereabouts
 }
 
-function completedNote(db: GameDatabase, quest: QuestRow): string {
+function completedNote(
+  db: GameDatabase,
+  quest: QuestRow,
+  npcId: string,
+  save: PlayerSave,
+): string {
+  const spoken = questTalkLine(db, quest['Quest ID'], npcId, save)
+  if (spoken) return spoken
   const unlocked = parseStructuredObjectives(quest).unlockLocationIds
-  if (unlocked.length === 0) return 'Completed.'
+  if (unlocked.length === 0) return 'Thank you.'
   const opened = unlocked
     .map((locationId) => {
       const mapName = mapNameForLocation(db, locationId)
@@ -218,7 +238,7 @@ function completedNote(db: GameDatabase, quest: QuestRow): string {
       return `${locationName(db, locationId)} is open${where}`
     })
     .join(', ')
-  return `Completed — ${opened}.`
+  return `Thank you — ${opened}.`
 }
 
 function questBlock(
@@ -237,7 +257,6 @@ function questBlock(
   const talkedThisStep = hasQuestFlag(save, questId, currentStepTalkKey(db, save, quest, npcId))
   const chose =
     hasQuestFlag(save, questId, 'choice:bribe') || hasQuestFlag(save, questId, 'choice:combat')
-  const needsTalkFirst = questNpcHasIncompleteTalk(db, save, quest, npcId) && !talkedThisStep
   const donated = hasQuestFlag(save, questId, ACCEPT_GOLD_FLAG)
   const needsDonate = parsed.acceptGoldCost > 0 && !donated
   let acceptLabel = 'Accept quest'
@@ -251,7 +270,7 @@ function questBlock(
     name: quest['Display Name'],
     summary: quest.Summary,
     status,
-    completedNote: completedNote(db, quest),
+    completedNote: completedNote(db, quest, npcId, save),
     acceptLabel,
     donateLabel: `Donate ${parsed.acceptGoldCost.toLocaleString()} gold`,
     pitchLine: pitch,
@@ -269,14 +288,9 @@ function questBlock(
     talkLine: questTalkLine(db, questId, npcId, save),
     idlePrompt: configString(db, 'copy.quest_active_prompt', FALLBACK_QUEST_ACTIVE_PROMPT),
     canBribe:
-      status === 'active' &&
-      parsed.choiceNpcId === npcId &&
-      parsed.bribeGold > 0 &&
-      !chose &&
-      !needsTalkFirst,
+      status === 'active' && parsed.choiceNpcId === npcId && parsed.bribeGold > 0 && !chose,
     bribeLabel: `Bribe ${parsed.bribeGold.toLocaleString()} gold`,
-    canChooseCombat:
-      status === 'active' && parsed.choiceNpcId === npcId && !chose && !needsTalkFirst,
+    canChooseCombat: status === 'active' && parsed.choiceNpcId === npcId && !chose,
     combatLabel: 'Pressure the Guards',
   }
 }
@@ -482,7 +496,7 @@ export function talkWithQuestNpc(
       return {
         ok: true,
         save: completed.save,
-        message: `Completed: ${quest['Display Name']}.`,
+        message: `Thank you — ${quest['Display Name']}.`,
       }
     }
   }
@@ -500,15 +514,24 @@ export function bribeForQuest(
 }
 
 export function chooseCombatForQuest(
+  db: GameDatabase,
   save: PlayerSave,
   questId: string,
-): { ok: true; save: PlayerSave; message: string } | { ok: false; reason: string } {
+  nowMs: number = Date.now(),
+  random: RandomFn = Math.random,
+):
+  | { ok: true; save: PlayerSave; message: string; startedActivity: boolean }
+  | { ok: false; reason: string } {
   const result = chooseQuestCombatRoute(save, questId)
   if (!result.ok) return result
+  const started = tryStartQuestChoiceCombat(db, result.save, nowMs, random)
   return {
     ok: true,
-    save: result.save,
-    message: 'The guards look nervous. Pressure them nearby.',
+    save: started.save,
+    startedActivity: started.startedActivityId != null,
+    message: started.startedActivityId
+      ? 'The guards look nervous.'
+      : 'The guards look nervous. Pressure them nearby.',
   }
 }
 

@@ -33,6 +33,7 @@ class StructuredQuestObjectives {
     required this.talkNpcIds,
     required this.optionalTalkNpcIds,
     required this.visitLocationIds,
+    required this.hintLocationIds,
     required this.inspectIds,
     required this.holds,
     required this.actionTargets,
@@ -68,6 +69,9 @@ class StructuredQuestObjectives {
   final List<String> talkNpcIds;
   final List<String> optionalTalkNpcIds;
   final List<String> visitLocationIds;
+
+  /// Map-dot pulse targets; these stay until the step finishes.
+  final List<String> hintLocationIds;
   final List<String> inspectIds;
   final List<QuestCounterTarget> holds;
   final List<QuestCounterTarget> actionTargets;
@@ -102,6 +106,7 @@ class StructuredQuestObjectives {
     'talkNpcIds': talkNpcIds,
     'optionalTalkNpcIds': optionalTalkNpcIds,
     'visitLocationIds': visitLocationIds,
+    'hintLocationIds': hintLocationIds,
     'inspectIds': inspectIds,
     'holds': holds.map((line) => line.toJson()).toList(),
     'actionTargets': actionTargets.map((line) => line.toJson()).toList(),
@@ -232,6 +237,7 @@ StructuredQuestObjectives parseNotesObjectives(
   final talkNote = _noteField(notes, r'(?:^|;)\s*Talk:\s*([^;]+)');
   final optionalTalkNote = _noteField(notes, r'(?:^|;)\s*OptionalTalk:\s*([^;]+)');
   final visitNote = _noteField(notes, r'Visit:\s*([^;]+)');
+  final hintNote = _noteField(notes, r'Hint:\s*([^;]+)');
   final inspectNote = _noteField(notes, r'Inspect:\s*([^;]+)');
   final holdNote = _noteField(notes, r'Hold:\s*([^;]+)');
   final actionNote = _noteField(notes, r'Action:\s*([^;]+)');
@@ -280,6 +286,7 @@ StructuredQuestObjectives parseNotesObjectives(
         ? const <String>[]
         : _parseIdList(optionalTalkNote),
     visitLocationIds: visitNote == null ? const <String>[] : _parseIdList(visitNote),
+    hintLocationIds: hintNote == null ? const <String>[] : _parseIdList(hintNote),
     inspectIds: inspectNote == null ? const <String>[] : _parseTokenList(inspectNote),
     holds: holdNote == null ? const <QuestCounterTarget>[] : _parseIdQtyList(holdNote),
     actionTargets: actionNote == null ? const <QuestCounterTarget>[] : _parseIdQtyList(actionNote),
@@ -367,6 +374,7 @@ StructuredQuestObjectives parseStructuredObjectives(QuestRow quest) {
     talkNpcIds: objectives.talkNpcIds,
     optionalTalkNpcIds: objectives.optionalTalkNpcIds,
     visitLocationIds: objectives.visitLocationIds,
+    hintLocationIds: objectives.hintLocationIds,
     inspectIds: objectives.inspectIds,
     holds: objectives.holds,
     actionTargets: objectives.actionTargets,
@@ -423,7 +431,10 @@ class QuestProgressLine {
   };
 
   /// Journal and dock copy: the objective plus how far it has got.
-  String get caption => '$label $current / $required';
+  String get caption {
+    final shown = current > required ? required : current;
+    return '$label $shown / $required';
+  }
 }
 
 String formatQuestProgressLine(QuestProgressLine line) => line.caption;
