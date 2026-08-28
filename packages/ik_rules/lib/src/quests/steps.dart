@@ -1,6 +1,8 @@
 import 'package:collection/collection.dart';
 import 'package:ik_content/ik_content.dart';
 
+import '../activity/pools.dart';
+import '../activity/xp.dart';
 import '../js_compat.dart';
 import '../production/recipes.dart';
 import '../save/generated/save_models.dart';
@@ -146,7 +148,7 @@ List<QuestJournalStep> questStepJournal(GameDatabase db, PlayerSave save, QuestR
       return _stepProgressLines(db, save, questId, step.notes ?? '').map(
         (line) => QuestJournalStep(
           key: line.key,
-          label: line.label,
+          label: line.caption,
           state: line.current >= line.required ? 'done' : 'current',
         ),
       );
@@ -163,14 +165,61 @@ List<QuestJournalStep> questStepJournal(GameDatabase db, PlayerSave save, QuestR
         .toList();
   }
 
-  return steps.take(currentIndex + 1).toList().asMap().entries.map((entry) {
+  return steps.take(currentIndex + 1).toList().asMap().entries.expand((entry) {
     final step = entry.value;
-    return QuestJournalStep(
+    final done = entry.key < currentIndex;
+    final head = QuestJournalStep(
       key: step.stepId,
       label: step.journalLabel,
-      state: entry.key < currentIndex ? 'done' : 'current',
+      state: done ? 'done' : 'current',
     );
+    if (done) return <QuestJournalStep>[head];
+    final progress = _stepProgressLines(db, save, questId, step.notes ?? '')
+        .map(
+          (line) => QuestJournalStep(
+            key: line.key,
+            label: line.caption,
+            state: line.current >= line.required ? 'done' : 'current',
+          ),
+        )
+        .toList();
+    return <QuestJournalStep>[head, ...progress];
   }).toList();
+}
+
+/// Skill and prior-quest gates for a quest that has not been accepted yet.
+List<QuestJournalStep> questRequirementJournal(GameDatabase db, PlayerSave save, QuestRow quest) {
+  final parsed = parseStructuredObjectives(quest);
+  final steps = <QuestJournalStep>[];
+  for (final requirement in parsed.requiresSkills) {
+    final displayName = db.skills
+        .firstWhereOrNull((row) => row.raw['Skill ID'] == requirement.targetId)
+        ?.raw['Display Name'];
+    final name = displayName is String ? displayName : requirement.targetId;
+    final needed = requirement.quantity;
+    final level = getSkillProgress(save, requirement.targetId).level;
+    steps.add(
+      QuestJournalStep(
+        key: 'skill:${requirement.targetId}',
+        label: 'Reach $name $needed ($level / $needed)',
+        state: level >= needed ? 'done' : 'current',
+      ),
+    );
+  }
+  for (final requiredQuestId in parsed.requiresQuestIds) {
+    final required = getQuest(db, requiredQuestId);
+    final displayName = required?['Display Name'];
+    final name = displayName is String ? displayName : requiredQuestId;
+    final done = getQuestProgress(save, requiredQuestId).status == 'completed';
+    steps.add(
+      QuestJournalStep(
+        key: 'quest:$requiredQuestId',
+        label: 'Complete $name',
+        state: done ? 'done' : 'current',
+      ),
+    );
+  }
+  return steps;
 }
 
 StructuredQuestObjectives? questActiveStepObjectives(
@@ -259,4 +308,41 @@ bool questRevealsLocation(GameDatabase db, PlayerSave save, String locationId) {
     if (step != null && step.visitLocationIds.contains(locationId)) return true;
   }
   return false;
+}
+
+/// Quest action counts that belong on this activity's dock card.
+List<QuestProgressLine> questActionProgressForActivity(
+  GameDatabase db,
+  PlayerSave save,
+  String activityId,
+) {
+  final activity = db.activities.firstWhereOrNull((row) => row.raw['Activity ID'] == activityId);
+  final poolId = activity?.raw['Pool ID'];
+  final actionIds = <String>{};
+  if (poolId is String && poolId.isNotEmpty) {
+    for (final candidate in eligiblePoolEntries(db, poolId)) {
+      actionIds.add(jsString(candidate.action.raw['Action ID']));
+    }
+  }
+  if (save.currentActivityId == activityId && save.currentActionId != null) {
+    actionIds.add(save.currentActionId!);
+  }
+  if (actionIds.isEmpty) return const <QuestProgressLine>[];
+
+  final lines = <QuestProgressLine>[];
+  for (final quest in asQuestRows(db)) {
+    final questId = jsString(quest['Quest ID']);
+    if (getQuestProgress(save, questId).status != 'active') continue;
+    final notes = questUsesSteps(db, questId)
+        ? (getCurrentStepIndex(db, save, quest) < getQuestSteps(db, questId).length
+              ? getQuestSteps(db, questId)[getCurrentStepIndex(db, save, quest)].notes ?? ''
+              : '')
+        : jsString(quest['Notes']);
+    for (final line in _stepProgressLines(db, save, questId, notes)) {
+      if (!line.key.startsWith('action:')) continue;
+      final actionId = line.key.substring('action:'.length);
+      if (actionIds.contains(actionId)) lines.add(line);
+    }
+  }
+  return lines;
 }

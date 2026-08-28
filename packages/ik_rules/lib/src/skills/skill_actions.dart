@@ -261,6 +261,7 @@ List<SkillMenuTab> _tabsForSkill(GameDatabase db, String skillId) {
       _listTab('enemies', 'Enemies', _combatEnemyEntries(db)),
       _listTab('gear', 'Equipment', _combatEquipmentEntries(db)),
       _listTab('weapons', 'Weapons', _combatWeaponEntries(db)),
+      _listTab('other', 'Other', _combatOtherEntries(db)),
     ];
   }
   if (skillId == miningSkillId ||
@@ -380,7 +381,7 @@ List<SkillMenuListItem> _combatEquipmentEntries(GameDatabase db) {
   final seen = <String>{};
   for (final item in _combatGearItems(db)) {
     final material = _armorMaterial(item.displayName);
-    if (material == null) continue;
+    if (material == null || !_isMetalMaterial(material)) continue;
     final key = '${item.level ?? ''}|$material';
     if (!seen.add(key)) continue;
     grouped.add(SkillMenuListItem(id: key, displayName: '$material equipment', level: item.level));
@@ -390,20 +391,54 @@ List<SkillMenuListItem> _combatEquipmentEntries(GameDatabase db) {
 
 List<SkillMenuListItem> _combatWeaponEntries(GameDatabase db) {
   final grouped = <SkillMenuListItem>[];
-  final leftover = <SkillMenuListItem>[];
   final seen = <String>{};
   for (final item in _combatGearItems(db)) {
     if (_armorMaterial(item.displayName) != null) continue;
     final material = _weaponMaterial(item.displayName);
-    if (material == null) {
-      leftover.add(item);
-      continue;
-    }
+    if (material == null || !_isMetalMaterial(material)) continue;
     final key = '${item.level ?? ''}|$material';
     if (!seen.add(key)) continue;
     grouped.add(SkillMenuListItem(id: key, displayName: '$material weapons', level: item.level));
   }
-  return _dedupeByName([...grouped, ...leftover]);
+  return _dedupeByName(grouped);
+}
+
+List<SkillMenuListItem> _combatOtherEntries(GameDatabase db) {
+  return _dedupeByName([
+    for (final item in _combatGearItems(db))
+      if (_isCombatOtherItem(item)) item,
+  ]);
+}
+
+bool _isCombatOtherItem(SkillMenuListItem item) {
+  final armor = _armorMaterial(item.displayName);
+  if (armor != null) return !_isMetalMaterial(armor);
+  final weapon = _weaponMaterial(item.displayName);
+  if (weapon != null) return !_isMetalMaterial(weapon);
+  return true;
+}
+
+const Set<String> _metalMaterials = <String>{
+  'copper',
+  'tin',
+  'bronze',
+  'iron',
+  'steel',
+  'reinforced steel',
+  'titanium',
+  'tungsten',
+  'silver',
+  'gold',
+  'mithril',
+};
+
+bool _isMetalMaterial(String material) {
+  final lower = material.toLowerCase();
+  if (_metalMaterials.contains(lower)) return true;
+  return RegExp(
+    r'^(copper|tin|bronze|iron|steel|titanium|tungsten|silver|gold|mithril)',
+    caseSensitive: false,
+  ).hasMatch(lower);
 }
 
 List<SkillMenuListItem> _gatheringToolEntries(GameDatabase db, String skillId) {

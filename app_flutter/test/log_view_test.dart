@@ -118,6 +118,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     expect(find.text('Hear what the King needs'), findsOne);
+    expect(find.text('Talk to King 0 / 1'), findsOne);
     expect(find.text('Prepare food for the feast'), findsNothing);
   });
 

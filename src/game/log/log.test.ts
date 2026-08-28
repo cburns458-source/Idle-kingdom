@@ -35,11 +35,10 @@ describe('achievement log', () => {
 })
 
 describe('quest log', () => {
-  it('starts every quest not started, with no steps shown', () => {
+  it('starts every quest not started, and lists gates on locked ones', () => {
     const rows = questLog(launch, createNewSave(launch))
     expect(rows.length).toBeGreaterThan(0)
     expect(rows.every((row) => row.statusLabel === 'Not started')).toBe(true)
-    expect(rows.every((row) => row.steps.length === 0)).toBe(true)
     expect(rows[0]!.detail).toContain(' · ')
     expect(rows.find((row) => row.questId === 'QST-0001')!.detail).toContain(
       'new cook for the feast',
@@ -54,9 +53,18 @@ describe('quest log', () => {
     expect(rows.find((row) => row.questId === 'QST-0005')!.detail).toContain(
       'Archmage wants an apprentice',
     )
+    expect(rows.find((row) => row.questId === 'QST-0001')!.steps).toEqual([])
+    expect(rows.find((row) => row.questId === 'QST-0007')!.steps).toEqual([
+      { key: 'skill:SKL-0008', label: 'Reach Metallurgy 35 (1 / 35)', state: 'current' },
+      { key: 'skill:SKL-0011', label: 'Reach Smithing 35 (1 / 35)', state: 'current' },
+    ])
+    expect(rows.find((row) => row.questId === 'QST-0008')!.steps).toEqual([
+      { key: 'skill:SKL-0002', label: 'Reach Mining 60 (1 / 60)', state: 'current' },
+      { key: 'quest:QST-0007', label: 'Complete Forged in Fire', state: 'current' },
+    ])
   })
 
-  it('reveals journal steps for an active quest without numeric progress', () => {
+  it('reveals journal steps for an active quest with talk progress', () => {
     const save = createNewSave(launch)
     const active = {
       ...save,
@@ -66,6 +74,7 @@ describe('quest log', () => {
     expect(row.statusLabel).toBe('Active')
     expect(row.steps).toEqual([
       { key: 'QSTP-0001', label: 'Hear what the King needs', state: 'current' },
+      { key: 'talk:NPC-0001', label: 'Talk to King 0 / 1', state: 'current' },
     ])
   })
 
@@ -75,7 +84,10 @@ describe('quest log', () => {
       quests: [{ questId: 'QST-0004', status: 'active' as const, progress: 0, counters: {} }],
     }
     const row = questLog(launch, save).find((entry) => entry.questId === 'QST-0004')!
-    expect(row.steps).toEqual([{ key: 'QSTP-0008', label: 'Hear the guide', state: 'current' }])
+    expect(row.steps).toEqual([
+      { key: 'QSTP-0008', label: 'Hear the guide', state: 'current' },
+      { key: 'talk:NPC-0013', label: 'Talk to Citadel Guide 0 / 1', state: 'current' },
+    ])
   })
 
   it('lists every remaining Citadel stop after the guide is heard', () => {
@@ -94,14 +106,14 @@ describe('quest log', () => {
     expect(row.steps[0]).toEqual({ key: 'QSTP-0008', label: 'Hear the guide', state: 'done' })
     expect(row.steps.map((step) => step.label)).toEqual([
       'Hear the guide',
-      'Talk to Market Master',
-      'Visit Grand Bazaar',
-      'Visit Processing District',
-      'Visit Citadel Bank',
-      'Visit Guild Hall',
-      'Inspect the Grand Bazaar',
-      'Inspect the Bounty Board',
-      'Use a Processing District station',
+      'Talk to Market Master 0 / 1',
+      'Visit Grand Bazaar 0 / 1',
+      'Visit Processing District 0 / 1',
+      'Visit Citadel Bank 0 / 1',
+      'Visit Guild Hall 0 / 1',
+      'Inspect the Grand Bazaar 0 / 1',
+      'Inspect the Bounty Board 0 / 1',
+      'Use a Processing District station 0 / 1',
     ])
     expect(row.steps.slice(1).every((step) => step.state === 'current')).toBe(true)
   })
@@ -114,6 +126,7 @@ describe('quest log', () => {
     const row = questLog(launch, save).find((entry) => entry.questId === 'QST-0005')!
     expect(row.steps).toEqual([
       { key: 'QSTP-0010', label: 'Hear the shopkeeper out', state: 'current' },
+      { key: 'talk:NPC-0009', label: 'Talk to Wizard Shopkeeper 0 / 1', state: 'current' },
     ])
   })
 
@@ -133,6 +146,8 @@ describe('quest log', () => {
     expect(row.steps).toEqual([
       { key: 'QSTP-0001', label: 'Hear what the King needs', state: 'done' },
       { key: 'QSTP-0002', label: 'Prepare food for the feast', state: 'current' },
+      { key: 'deliver:ITEM-0058', label: 'Deliver Baked Potato 0 / 10', state: 'current' },
+      { key: 'deliver:ITEM-0059', label: 'Deliver Cooked Crawfish 0 / 10', state: 'current' },
     ])
   })
 

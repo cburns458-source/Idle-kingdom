@@ -1,13 +1,22 @@
 import type { GameDatabase, QuestStepRow } from '../data/types'
 import { inventoryCount } from '../production/recipes'
 import type { PlayerSave } from '../save/types'
+import { eligiblePoolEntries } from '../activity/pools'
+import { getSkillProgress } from '../activity/xp'
 import {
+  formatQuestProgressLine,
   objectiveProgressFromStructured,
   parseNotesObjectives,
   parseStructuredObjectives,
   type QuestProgressLine,
 } from './objectives'
-import { asQuestRows, getQuestProgress, questAvailableForSave, type QuestRow } from './quests'
+import {
+  asQuestRows,
+  getQuest,
+  getQuestProgress,
+  questAvailableForSave,
+  type QuestRow,
+} from './quests'
 import type { StructuredQuestObjectives } from './types'
 
 export type QuestJournalStepState = 'done' | 'current'
@@ -144,7 +153,7 @@ export function questStepJournal(
     const remaining = steps.slice(1).flatMap((step) =>
       stepProgressLines(db, save, questId, step.Notes ?? '').map((line) => ({
         key: line.key,
-        label: line.label,
+        label: formatQuestProgressLine(line),
         state: (line.current >= line.required ? 'done' : 'current') as QuestJournalStepState,
       })),
     )
@@ -162,11 +171,52 @@ export function questStepJournal(
     }))
   }
 
-  return steps.slice(0, currentIndex + 1).map((step, index) => ({
-    key: step['Step ID'],
-    label: step['Journal Label'],
-    state: index < currentIndex ? 'done' : 'current',
-  }))
+  return steps.slice(0, currentIndex + 1).flatMap((step, index) => {
+    const done = index < currentIndex
+    const head = {
+      key: step['Step ID'],
+      label: step['Journal Label'],
+      state: (done ? 'done' : 'current') as QuestJournalStepState,
+    }
+    if (done) return [head]
+    const progress = stepProgressLines(db, save, questId, step.Notes ?? '').map((line) => ({
+      key: line.key,
+      label: formatQuestProgressLine(line),
+      state: (line.current >= line.required ? 'done' : 'current') as QuestJournalStepState,
+    }))
+    return [head, ...progress]
+  })
+}
+
+/** Skill and prior-quest gates for a quest that has not been accepted yet. */
+export function questRequirementJournal(
+  db: GameDatabase,
+  save: PlayerSave,
+  quest: QuestRow,
+): QuestJournalStep[] {
+  const parsed = parseStructuredObjectives(quest)
+  const steps: QuestJournalStep[] = []
+  for (const requirement of parsed.requiresSkills) {
+    const name =
+      db.Skills.find((row) => row['Skill ID'] === requirement.skillId)?.['Display Name'] ??
+      requirement.skillId
+    const level = getSkillProgress(save, requirement.skillId).level
+    steps.push({
+      key: `skill:${requirement.skillId}`,
+      label: `Reach ${name} ${requirement.level} (${level} / ${requirement.level})`,
+      state: level >= requirement.level ? 'done' : 'current',
+    })
+  }
+  for (const requiredQuestId of parsed.requiresQuestIds) {
+    const name = getQuest(db, requiredQuestId)?.['Display Name'] ?? requiredQuestId
+    const done = getQuestProgress(save, requiredQuestId).status === 'completed'
+    steps.push({
+      key: `quest:${requiredQuestId}`,
+      label: `Complete ${name}`,
+      state: done ? 'done' : 'current',
+    })
+  }
+  return steps
 }
 
 /** Objectives for the active step only, or none once every step is done. */
@@ -279,4 +329,38 @@ export function questTouchesNpcForSave(
   }
 
   return questCanTalkToNpc(db, save, quest, npcId)
+}
+
+/** Quest action counts that belong on this activity's dock card. */
+export function questActionProgressForActivity(
+  db: GameDatabase,
+  save: PlayerSave,
+  activityId: string,
+): QuestProgressLine[] {
+  const activity = db.Activities.find((row) => row['Activity ID'] === activityId)
+  const poolId = activity?.['Pool ID']
+  const actionIds = new Set<string>()
+  if (typeof poolId === 'string' && poolId.length > 0) {
+    for (const candidate of eligiblePoolEntries(db, poolId)) {
+      actionIds.add(candidate.action['Action ID'])
+    }
+  }
+  if (save.currentActivityId === activityId && save.currentActionId) {
+    actionIds.add(save.currentActionId)
+  }
+  if (actionIds.size === 0) return []
+
+  const lines: QuestProgressLine[] = []
+  for (const quest of asQuestRows(db)) {
+    const questId = quest['Quest ID']
+    if (getQuestProgress(save, questId).status !== 'active') continue
+    const notes = questUsesSteps(db, questId)
+      ? (getQuestSteps(db, questId)[getCurrentStepIndex(db, save, quest)]?.Notes ?? '')
+      : (quest.Notes ?? '')
+    for (const line of stepProgressLines(db, save, questId, notes)) {
+      const actionId = line.key.startsWith('action:') ? line.key.slice('action:'.length) : null
+      if (actionId && actionIds.has(actionId)) lines.push(line)
+    }
+  }
+  return lines
 }

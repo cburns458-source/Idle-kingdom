@@ -4,6 +4,7 @@ import { knowsRecipe } from '../recipes/knowledge'
 import type { PlayerSave } from '../save/types'
 import { getQuestProgress, type QuestRow } from './quests'
 import {
+  getQuestSteps,
   questActiveStepObjectives,
   questAllStepsComplete,
   questUsesSteps,
@@ -266,6 +267,11 @@ export interface QuestProgressLine {
   required: number
 }
 
+/** Journal and dock copy: the objective plus how far it has got. */
+export function formatQuestProgressLine(line: QuestProgressLine): string {
+  return `${line.label} ${line.current} / ${line.required}`
+}
+
 function npcDisplayName(db: GameDatabase, npcId: string): string {
   return db.NPCs.find((row) => row['NPC ID'] === npcId)?.['Display Name'] ?? npcId
 }
@@ -419,7 +425,12 @@ function activeQuestObjectives(
   if (progress.status === 'active' && questUsesSteps(db, questId)) {
     const stepObjectives = questActiveStepObjectives(db, save, quest)
     if (stepObjectives) return stepObjectives
-    if (questAllStepsComplete(db, save, quest)) return EMPTY_OBJECTIVES
+    if (questAllStepsComplete(db, save, quest)) {
+      const steps = getQuestSteps(db, questId)
+      const last = steps[steps.length - 1]
+      if (last) return parseNotesObjectives(last.Notes ?? '')
+      return EMPTY_OBJECTIVES
+    }
   }
   return parseStructuredObjectives(quest)
 }
@@ -484,7 +495,7 @@ export function questLegacyJournalSteps(
 
   return allLines.slice(0, currentIndex + 1).map((line, index) => ({
     key: line.key,
-    label: line.label,
+    label: formatQuestProgressLine(line),
     state: index < currentIndex || firstOpen === -1 ? 'done' : 'current',
   }))
 }

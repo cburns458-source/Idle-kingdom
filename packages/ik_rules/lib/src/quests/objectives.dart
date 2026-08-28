@@ -421,7 +421,12 @@ class QuestProgressLine {
     'current': current,
     'required': required,
   };
+
+  /// Journal and dock copy: the objective plus how far it has got.
+  String get caption => '$label $current / $required';
 }
+
+String formatQuestProgressLine(QuestProgressLine line) => line.caption;
 
 /// One deliverable item line, with how many the bag holds.
 class QuestDeliverLine {
@@ -575,7 +580,16 @@ QuestObjectiveStatus questObjectiveProgress(GameDatabase db, PlayerSave save, Qu
   StructuredQuestObjectives structured;
   if (progress?.status == 'active' && questUsesSteps(db, questId)) {
     final stepObjectives = questActiveStepObjectives(db, save, quest);
-    structured = stepObjectives ?? parseNotesObjectives('');
+    if (stepObjectives != null) {
+      structured = stepObjectives;
+    } else if (questAllStepsComplete(db, save, quest)) {
+      final steps = getQuestSteps(db, questId);
+      structured = steps.isEmpty
+          ? parseNotesObjectives('')
+          : parseNotesObjectives(steps.last.notes ?? '');
+    } else {
+      structured = parseNotesObjectives('');
+    }
   } else {
     structured = parseStructuredObjectives(quest);
   }
@@ -620,7 +634,7 @@ List<QuestJournalStep> questLegacyJournalSteps(GameDatabase db, PlayerSave save,
   return allLines.take(currentIndex + 1).toList().asMap().entries.map((entry) {
     return QuestJournalStep(
       key: entry.value.key,
-      label: entry.value.label,
+      label: entry.value.caption,
       state: entry.key < currentIndex || firstOpen == -1 ? 'done' : 'current',
     );
   }).toList();

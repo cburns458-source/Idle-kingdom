@@ -8,7 +8,7 @@ import 'format.dart';
 import 'game_popup.dart';
 import 'social_bits.dart';
 
-/// Talking to somebody: their greeting, what they can teach, and their quests.
+/// Talking to somebody: Talk opens the dialogue box immediately.
 ///
 /// Every line and label comes from [npcConversation], so this widget never
 /// decides who says what — it only decides where the words go.
@@ -33,10 +33,6 @@ class NpcPanel extends StatefulWidget {
 }
 
 class _NpcPanelState extends State<NpcPanel> {
-  /// The dialogue on screen: the opening greeting until it is answered, and
-  /// afterwards whichever pitch the player asked to hear again.
-  NpcGreeting? _dialogue;
-  String? _talkLine;
   String? _whereaboutsLine;
   String? _mentorLine;
   String? _error;
@@ -46,10 +42,8 @@ class _NpcPanelState extends State<NpcPanel> {
   NpcConversation get conversation =>
       npcConversation(controller.db, controller.save, widget.npc, controller.session.clock());
 
-  @override
-  void initState() {
-    super.initState();
-    // Topics stay on screen; a greeting is a line, not a trap that closes the panel.
+  void _close() {
+    widget.onClose();
   }
 
   /// Takes the merchant's advice, if they had any left, and leaves.
@@ -59,11 +53,12 @@ class _NpcPanelState extends State<NpcPanel> {
       controller.commit(claimed.save!);
       controller.announce(claimed.message!);
     }
-    setState(() => _dialogue = null);
     if (thenOpenShop != null) {
       widget.onClose();
       widget.onOpenShop?.call(thenOpenShop);
+      return;
     }
+    _close();
   }
 
   void _accept(String questId) {
@@ -74,10 +69,7 @@ class _NpcPanelState extends State<NpcPanel> {
     }
     controller.commit(result.save!);
     controller.announce(result.message!);
-    setState(() {
-      _error = null;
-      _dialogue = null;
-    });
+    setState(() => _error = null);
   }
 
   void _donate(String questId) {
@@ -88,27 +80,7 @@ class _NpcPanelState extends State<NpcPanel> {
     }
     controller.commit(result.save!);
     controller.announce(result.message!);
-    setState(() {
-      _error = null;
-      _dialogue = null;
-    });
-  }
-
-  /// Accepts [quest], or hears the giver out first when they have a pitch.
-  void _openQuest(NpcQuestBlock quest) {
-    final line = quest.pitchLine;
-    if (line == null) {
-      _accept(quest.questId);
-      return;
-    }
-    setState(() {
-      _error = null;
-      _dialogue = QuestPitchGreeting(
-        questId: quest.questId,
-        line: line,
-        acceptLabel: quest.acceptLabel,
-      );
-    });
+    setState(() => _error = null);
   }
 
   void _learn() {
@@ -138,18 +110,6 @@ class _NpcPanelState extends State<NpcPanel> {
     });
   }
 
-  void _talk(NpcQuestBlock quest) {
-    final line = quest.talkLine;
-    if (line != null) {
-      setState(() {
-        _error = null;
-        _talkLine = line;
-      });
-      return;
-    }
-    _commitTalk();
-  }
-
   void _commitTalk() {
     final result = talkWithQuestNpc(controller.db, controller.save, conversation.npcId);
     if (!result.ok) {
@@ -158,10 +118,7 @@ class _NpcPanelState extends State<NpcPanel> {
     }
     controller.commit(result.save!);
     controller.announce(result.message!);
-    setState(() {
-      _error = null;
-      _talkLine = null;
-    });
+    setState(() => _error = null);
   }
 
   void _bribe(NpcQuestBlock quest) {
@@ -218,54 +175,6 @@ class _NpcPanelState extends State<NpcPanel> {
   Widget build(BuildContext context) {
     final conversation = this.conversation;
 
-    switch (_dialogue) {
-      case MerchantGreeting(line: final line, detail: final detail):
-        return _playerDialogue(
-          name: conversation.name,
-          line: line,
-          detail: detail,
-          actions: [
-            if (conversation.shopId case final shopId?)
-              GameButton(
-                label: 'Browse the shop',
-                tone: GameButtonTone.secondary,
-                compact: true,
-                onPressed: () => _dismissMerchant(thenOpenShop: shopId),
-              ),
-            GameButton(label: 'Continue', onPressed: _dismissMerchant),
-          ],
-        );
-      case QuestPitchGreeting(questId: final questId, line: final line, acceptLabel: final label):
-        final quest = conversation.quests.where((row) => row.questId == questId).firstOrNull;
-        return _playerDialogue(
-          name: conversation.name,
-          line: line,
-          error: _error,
-          actions: [
-            GameButton(
-              label: 'Not now',
-              tone: GameButtonTone.secondary,
-              compact: true,
-              onPressed: () => setState(() => _dialogue = null),
-            ),
-            GameButton(
-              label: label,
-              onPressed: () => (quest?.canDonate ?? false) ? _donate(questId) : _accept(questId),
-            ),
-          ],
-        );
-      case null:
-        break;
-    }
-
-    if (_talkLine case final talkLine?) {
-      return _playerDialogue(
-        name: conversation.name,
-        line: talkLine,
-        actions: [GameButton(label: 'Continue', onPressed: _commitTalk)],
-      );
-    }
-
     if (_whereaboutsLine case final whereaboutsLine?) {
       return _playerDialogue(
         name: conversation.name,
@@ -284,88 +193,197 @@ class _NpcPanelState extends State<NpcPanel> {
       );
     }
 
-    return GamePanel(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      conversation.name,
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w400),
-                    ),
-                    if (conversation.role case final role? when role.toLowerCase() != 'quest giver')
-                      MutedText(role),
-                  ],
-                ),
-              ),
-              GameIconButton(icon: Icons.close, tooltip: 'Close', onPressed: widget.onClose),
-            ],
+    return _openingDialogue(conversation);
+  }
+
+  Widget _openingDialogue(NpcConversation conversation) {
+    final talkQuest = conversation.quests.where((quest) => quest.canTalk).firstOrNull;
+    if (talkQuest != null) {
+      return _playerDialogue(
+        name: conversation.name,
+        line: talkQuest.talkLine ?? talkQuest.idlePrompt,
+        progress: talkQuest.progressLines,
+        error: _error,
+        actions: [GameButton(label: 'Continue', onPressed: _commitTalk)],
+      );
+    }
+
+    final donateQuest = conversation.quests.where((quest) => quest.canDonate).firstOrNull;
+    if (donateQuest != null) {
+      return _playerDialogue(
+        name: conversation.name,
+        line: donateQuest.pitchLine ?? donateQuest.summary ?? conversation.description,
+        error: _error,
+        actions: [
+          GameButton(
+            label: 'Not now',
+            tone: GameButtonTone.secondary,
+            compact: true,
+            onPressed: _close,
           ),
-          Text(conversation.description),
-          if (conversation.greeting case final greeting?) ...[
-            const SizedBox(height: 10),
-            Text(switch (greeting) {
-              MerchantGreeting(:final line) => line,
-              QuestPitchGreeting(:final line) => line,
-            }),
-            if (greeting case MerchantGreeting(:final detail) when detail != null)
-              MutedText(detail),
-            const SizedBox(height: 8),
+          GameButton(label: donateQuest.donateLabel, onPressed: () => _donate(donateQuest.questId)),
+        ],
+      );
+    }
+
+    final acceptQuest = conversation.quests.where((quest) => quest.canAccept).firstOrNull;
+    if (acceptQuest != null) {
+      return _playerDialogue(
+        name: conversation.name,
+        line: acceptQuest.pitchLine ?? acceptQuest.summary ?? conversation.description,
+        error: _error,
+        actions: [
+          GameButton(
+            label: 'Not now',
+            tone: GameButtonTone.secondary,
+            compact: true,
+            onPressed: _close,
+          ),
+          GameButton(label: acceptQuest.acceptLabel, onPressed: () => _accept(acceptQuest.questId)),
+        ],
+      );
+    }
+
+    final turnInQuest = conversation.quests.where((quest) => quest.canTurnIn).firstOrNull;
+    if (turnInQuest != null) {
+      return _playerDialogue(
+        name: conversation.name,
+        line: turnInQuest.talkLine ?? turnInQuest.idlePrompt,
+        progress: turnInQuest.progressLines,
+        error: _error,
+        actions: [
+          if (turnInQuest.canBribe)
             GameButton(
-              label: 'Talk',
+              label: turnInQuest.bribeLabel,
               tone: GameButtonTone.secondary,
               compact: true,
-              onPressed: () => setState(() => _dialogue = greeting),
+              onPressed: () => _bribe(turnInQuest),
             ),
-          ],
-          if (conversation.mentor case final mentor?) ...[
-            const SizedBox(height: 10),
-            if (mentor.known)
-              MutedText(mentor.knownNote)
-            else
-              GameButton(label: mentor.learnLabel, onPressed: _learn),
-          ],
-          if (conversation.isMerchant && conversation.shopId != null) ...[
-            const SizedBox(height: 10),
+          if (turnInQuest.canChooseCombat)
+            GameButton(
+              label: turnInQuest.combatLabel,
+              tone: GameButtonTone.secondary,
+              compact: true,
+              onPressed: () => _chooseCombat(turnInQuest),
+            ),
+          if (turnInQuest.ready)
+            GameButton(label: 'Turn in', onPressed: () => _turnIn(turnInQuest))
+          else
+            GameButton(label: 'Done', onPressed: _close),
+        ],
+      );
+    }
+
+    final choiceQuest = conversation.quests
+        .where((quest) => quest.canBribe || quest.canChooseCombat)
+        .firstOrNull;
+    if (choiceQuest != null) {
+      return _playerDialogue(
+        name: conversation.name,
+        line: choiceQuest.talkLine ?? choiceQuest.idlePrompt,
+        progress: choiceQuest.progressLines,
+        error: _error,
+        actions: [
+          if (choiceQuest.canBribe)
+            GameButton(
+              label: choiceQuest.bribeLabel,
+              tone: GameButtonTone.secondary,
+              compact: true,
+              onPressed: () => _bribe(choiceQuest),
+            ),
+          if (choiceQuest.canChooseCombat)
+            GameButton(
+              label: choiceQuest.combatLabel,
+              tone: GameButtonTone.secondary,
+              compact: true,
+              onPressed: () => _chooseCombat(choiceQuest),
+            ),
+          GameButton(label: 'Done', onPressed: _close),
+        ],
+      );
+    }
+
+    final activeQuest = conversation.quests.where((quest) => quest.status == 'active').firstOrNull;
+    if (activeQuest != null) {
+      return _playerDialogue(
+        name: conversation.name,
+        line: activeQuest.idlePrompt,
+        progress: activeQuest.progressLines,
+        error: _error,
+        actions: [GameButton(label: 'Done', onPressed: _close)],
+      );
+    }
+
+    if (conversation.isMerchant) {
+      final greeting = conversation.greeting;
+      final line = greeting is MerchantGreeting ? greeting.line : conversation.description;
+      return _playerDialogue(
+        name: conversation.name,
+        line: line,
+        detail: greeting is MerchantGreeting ? greeting.detail : null,
+        error: _error,
+        actions: [
+          if (conversation.shopId case final shopId?)
             GameButton(
               label: 'Browse the shop',
               tone: GameButtonTone.secondary,
               compact: true,
-              onPressed: () => _dismissMerchant(thenOpenShop: conversation.shopId),
+              onPressed: () => _dismissMerchant(thenOpenShop: shopId),
             ),
-          ],
-          if (conversation.whereabouts case final whereabouts?) ...[
-            const SizedBox(height: 10),
+          if (conversation.whereabouts case final whereabouts?)
             GameButton(
               label: whereabouts.label,
               tone: GameButtonTone.secondary,
               compact: true,
               onPressed: () => setState(() => _whereaboutsLine = whereabouts.line),
             ),
-          ],
-          for (final quest in conversation.quests) ...[
-            const SizedBox(height: 12),
-            _QuestBlock(
-              quest: quest,
-              onAccept: () => _openQuest(quest),
-              onDonate: () => _donate(quest.questId),
-              onTurnIn: () => _turnIn(quest),
-              onTalk: () => _talk(quest),
-              onBribe: () => _bribe(quest),
-              onChooseCombat: () => _chooseCombat(quest),
-            ),
-          ],
-          if (_error case final error?) ...[
-            const SizedBox(height: 8),
-            Text(error, style: const TextStyle(color: Palette.danger, fontSize: 12)),
-          ],
+          GameButton(label: 'Done', onPressed: _close),
         ],
-      ),
+      );
+    }
+
+    if (conversation.mentor case final mentor?) {
+      return _playerDialogue(
+        name: conversation.name,
+        line: mentor.known ? mentor.knownNote : conversation.description,
+        error: _error,
+        actions: [
+          if (conversation.whereabouts case final whereabouts?)
+            GameButton(
+              label: whereabouts.label,
+              tone: GameButtonTone.secondary,
+              compact: true,
+              onPressed: () => setState(() => _whereaboutsLine = whereabouts.line),
+            ),
+          if (!mentor.known) GameButton(label: mentor.learnLabel, onPressed: _learn),
+          GameButton(label: 'Done', onPressed: _close),
+        ],
+      );
+    }
+
+    if (conversation.whereabouts case final whereabouts?) {
+      return _playerDialogue(
+        name: conversation.name,
+        line: conversation.description,
+        error: _error,
+        actions: [
+          GameButton(
+            label: whereabouts.label,
+            tone: GameButtonTone.secondary,
+            compact: true,
+            onPressed: () => setState(() => _whereaboutsLine = whereabouts.line),
+          ),
+          GameButton(label: 'Done', onPressed: _close),
+        ],
+      );
+    }
+
+    final completed = conversation.quests.where((quest) => quest.status == 'completed').firstOrNull;
+    return _playerDialogue(
+      name: conversation.name,
+      line: completed?.completedNote ?? conversation.description,
+      error: _error,
+      actions: [GameButton(label: 'Done', onPressed: _close)],
     );
   }
 
@@ -374,6 +392,7 @@ class _NpcPanelState extends State<NpcPanel> {
     required String line,
     String? detail,
     String? error,
+    List<QuestProgressLine> progress = const [],
     required List<Widget> actions,
   }) {
     return _DialogueCard(
@@ -381,131 +400,10 @@ class _NpcPanelState extends State<NpcPanel> {
       line: line,
       detail: detail,
       error: error,
+      progress: progress,
       actions: actions,
       appearance: controller.save.appearance,
       raceId: controller.save.raceId,
-    );
-  }
-}
-
-class _QuestBlock extends StatelessWidget {
-  const _QuestBlock({
-    required this.quest,
-    required this.onAccept,
-    required this.onDonate,
-    required this.onTurnIn,
-    required this.onTalk,
-    required this.onBribe,
-    required this.onChooseCombat,
-  });
-
-  final NpcQuestBlock quest;
-  final VoidCallback onAccept;
-  final VoidCallback onDonate;
-  final VoidCallback onTurnIn;
-  final VoidCallback onTalk;
-  final VoidCallback onBribe;
-  final VoidCallback onChooseCombat;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: Palette.panel,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Palette.edge),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(quest.name, style: const TextStyle(fontWeight: FontWeight.w400)),
-          if (quest.summary case final summary?)
-            if (quest.status != 'active') MutedText(summary),
-          const SizedBox(height: 8),
-          switch (quest.status) {
-            'completed' => MutedText(quest.completedNote),
-            'inactive' => Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                if (quest.canDonate) ...[
-                  GameButton(
-                    label: quest.donateLabel,
-                    tone: GameButtonTone.secondary,
-                    onPressed: onDonate,
-                  ),
-                  const SizedBox(height: 6),
-                ],
-                if (quest.canAccept) GameButton(label: quest.acceptLabel, onPressed: onAccept),
-              ],
-            ),
-            _ => Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                if (quest.progressLines.isNotEmpty) ...[
-                  for (final line in quest.progressLines)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 4),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            line.current >= line.required ? '✓' : '•',
-                            style: TextStyle(
-                              color: line.current >= line.required
-                                  ? Palette.softGreen
-                                  : Palette.gold,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              line.label,
-                              style: TextStyle(
-                                color: line.current >= line.required
-                                    ? Palette.muted
-                                    : Palette.parchmentText,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  const SizedBox(height: 6),
-                ],
-                if (quest.canTalk || quest.canBribe || quest.canChooseCombat)
-                  const SizedBox.shrink()
-                else
-                  MutedText(quest.idlePrompt),
-                if (quest.canTalk) ...[
-                  const SizedBox(height: 6),
-                  GameButton(label: quest.talkLabel, onPressed: onTalk),
-                ],
-                if (quest.canBribe) ...[
-                  const SizedBox(height: 6),
-                  GameButton(
-                    label: quest.bribeLabel,
-                    tone: GameButtonTone.secondary,
-                    onPressed: onBribe,
-                  ),
-                ],
-                if (quest.canChooseCombat) ...[
-                  const SizedBox(height: 6),
-                  GameButton(
-                    label: quest.combatLabel,
-                    tone: GameButtonTone.secondary,
-                    onPressed: onChooseCombat,
-                  ),
-                ],
-                if (quest.canTurnIn) ...[
-                  const SizedBox(height: 6),
-                  GameButton(label: 'Turn in', onPressed: quest.ready ? onTurnIn : null),
-                ],
-              ],
-            ),
-          },
-        ],
-      ),
     );
   }
 }
@@ -520,6 +418,7 @@ class _DialogueCard extends StatelessWidget {
     this.raceId,
     this.detail,
     this.error,
+    this.progress = const [],
   });
 
   final String name;
@@ -528,6 +427,7 @@ class _DialogueCard extends StatelessWidget {
   /// What listening is worth, when the greeting is an offer.
   final String? detail;
   final String? error;
+  final List<QuestProgressLine> progress;
   final List<Widget> actions;
   final PlayerAppearance appearance;
   final String? raceId;
@@ -556,6 +456,35 @@ class _DialogueCard extends StatelessWidget {
           const SizedBox(height: 6),
           Text(line, style: const TextStyle(fontSize: 15)),
           if (detail case final detail?) ...[const SizedBox(height: 4), MutedText(detail)],
+          if (progress.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            for (final line in progress)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      line.current >= line.required ? '✓' : '•',
+                      style: TextStyle(
+                        color: line.current >= line.required ? Palette.softGreen : Palette.gold,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        line.caption,
+                        style: TextStyle(
+                          color: line.current >= line.required
+                              ? Palette.muted
+                              : Palette.parchmentText,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+          ],
           if (error case final error?) ...[
             const SizedBox(height: 6),
             Text(error, style: const TextStyle(color: Palette.danger, fontSize: 12)),

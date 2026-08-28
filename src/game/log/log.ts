@@ -8,7 +8,7 @@ import type { GameDatabase } from '../data/types'
 import type { QuestRow } from '../quests/quests'
 import { questLegacyJournalSteps } from '../quests/objectives'
 import { asQuestRows, getQuestProgress, questStatusLabel } from '../quests/quests'
-import { questStepJournal, questUsesSteps } from '../quests/steps'
+import { questRequirementJournal, questStepJournal, questUsesSteps } from '../quests/steps'
 import { listRecipeBookEntries, type RecipeBookEntry } from '../recipes/knowledge'
 import type { PlayerSave } from '../save/types'
 import { milestoneLog } from './milestones'
@@ -110,7 +110,9 @@ export function questLog(db: GameDatabase, save: PlayerSave): QuestLogRow[] {
         ? questUsesSteps(db, questId)
           ? questStepJournal(db, save, questRow)
           : questLegacyJournalSteps(db, save, questRow)
-        : []
+        : status === 'inactive'
+          ? questRequirementJournal(db, save, questRow)
+          : []
 
     return {
       questId,

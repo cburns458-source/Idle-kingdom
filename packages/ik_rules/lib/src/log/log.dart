@@ -174,6 +174,8 @@ List<QuestLogRow> questLog(GameDatabase db, PlayerSave save) {
         ? questUsesSteps(db, questId)
               ? questStepJournal(db, save, quest)
               : questLegacyJournalSteps(db, save, quest)
+        : status == 'inactive'
+        ? questRequirementJournal(db, save, quest)
         : const <QuestJournalStep>[];
 
     return QuestLogRow(

@@ -12,8 +12,8 @@ const double playableFrameSideChatMinLeftover = 300;
 /// Skip side chat on short windows (including the 800×600 widget-test surface).
 const double playableFrameSideChatMinWidth = 1100;
 
-/// Menus and location copy sit ~10% smaller than HUD and combat numbers.
-const double playableUiTextScale = 0.9;
+/// Menus and location copy sit smaller than HUD and combat numbers.
+const double playableUiTextScale = 0.81;
 
 double _textScaleFactor(TextScaler scaler) => scaler.scale(100) / 100;
 

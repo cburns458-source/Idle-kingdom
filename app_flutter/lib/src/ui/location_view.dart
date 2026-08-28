@@ -943,6 +943,11 @@ class _ActivityCard extends StatelessWidget {
     final recovering = controller.isRecovering;
     final hostileLock = locationIsHostileFor(controller.db, controller.save);
     final favorited = favoriteActivityAt(controller.save) == activityId;
+    final questProgress = questActionProgressForActivity(
+      controller.db,
+      controller.save,
+      activityId,
+    );
     return DockRow(
       leading: GameIconButton(
         tooltip: favorited ? 'Clear favorite' : 'Favorite this activity',
@@ -956,6 +961,7 @@ class _ActivityCard extends StatelessWidget {
           Text('Combat warning ~ Level $level', style: warningStyle),
         if (hostileLock && running) MutedText(hostileActivityLockReason),
         if (!check.ok && !running) MutedText(check.reason ?? ''),
+        for (final line in questProgress) MutedText(line.caption),
       ],
       trailing: running
           ? GameButton(
