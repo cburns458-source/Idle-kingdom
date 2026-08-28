@@ -4,11 +4,10 @@ import 'package:ik_content/ik_content.dart';
 import '../save/generated/save_models.dart';
 import '../world/constants.dart';
 import '../world/travel.dart';
-import 'progress.dart';
 import 'quests.dart';
 import 'steps.dart';
 
-/// First unvisited Visit target on an active quest step.
+/// First Hint target on an active quest step, or the step's Visit target.
 String? questVisitHintLocationId(GameDatabase db, PlayerSave save) {
   for (final quest in asQuestRows(db)) {
     final questId = quest['Quest ID'];
@@ -16,9 +15,8 @@ String? questVisitHintLocationId(GameDatabase db, PlayerSave save) {
     if (getQuestProgress(save, questId).status != 'active') continue;
     final step = questActiveStepObjectives(db, save, quest);
     if (step == null) continue;
-    for (final locationId in step.visitLocationIds) {
-      if (!hasQuestFlag(save, questId, 'visit:$locationId')) return locationId;
-    }
+    if (step.hintLocationIds.isNotEmpty) return step.hintLocationIds.first;
+    if (step.visitLocationIds.isNotEmpty) return step.visitLocationIds.first;
   }
   return null;
 }

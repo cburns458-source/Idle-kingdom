@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest'
 import { activityVisibleForSave } from '../activity/requirements'
 import { addItemToInventory } from '../activity/rewards'
 import { prepareDatabase } from '../data/loadDatabase'
-import { npcConversation, talkWithQuestNpc } from '../npcs/conversation'
+import { chooseCombatForQuest, npcConversation, questTalkLine, talkWithQuestNpc } from '../npcs/conversation'
 import { npcsAtLocationForSave } from '../npcs/knowledge'
 import { specialProductionStationsVisibleAt } from '../projects/projects'
 import { isCosmeticUnlocked } from '../cosmetics/cosmetics'
@@ -27,9 +27,12 @@ import {
   getQuest,
   getQuestProgress,
 } from './quests'
+import { formatQuestProgressLine } from './objectives'
 import { questActionProgressForActivity, questStepJournal } from './steps'
 import { CAVE_MAP_ID } from '../world/constants'
-import { applyTravelArrival, canTravelTo, locationsForMapView } from '../world/travel'
+import { applyHostileTravelArrival } from '../world/hostility'
+import { applyTravelArrival, applyTravelArrivalResult, canTravelTo, locationsForMapView } from '../world/travel'
+import { questVisitHintLocationId } from './hints'
 
 const rawDatabase = JSON.parse(
   readFileSync(resolve(process.cwd(), 'content/data/game-database.json'), 'utf8'),
@@ -364,7 +367,7 @@ describe('quest tours', () => {
       locationsForMapView(launch, CAVE_MAP_ID, save).map((row) => row['Location ID']),
     ).not.toContain('LOC-0022')
     save = applyQuestVisitProgress(launch, save, 'LOC-0011')
-    save = applyQuestActionProgress(launch, save, 'ACN-0177', 100)
+    save = applyQuestActionProgress(launch, save, 'ACN-0177', 50)
     expect(activityVisibleForSave(launch, { ...createNewSave(launch) }, 'ACT-0044')).toBe(false)
     expect(
       locationsForMapView(launch, CAVE_MAP_ID, save).map((row) => row['Location ID']),
@@ -409,21 +412,183 @@ describe('quest tours', () => {
     const quest = getQuest(launch, 'QST-0008')!
     const journal = questStepJournal(launch, save, quest).map((step) => step.label)
     expect(journal).toContain('Clear rubble in the Deep Mines')
-    expect(journal).toContain('Clear a rubble pile 0 / 100')
+    expect(journal).toContain('Clear a rubble pile 0 / 50')
 
     const card = questActionProgressForActivity(launch, save, 'ACT-0044')
     expect(card.map((line) => `${line.label} ${line.current} / ${line.required}`)).toEqual([
-      'Clear a rubble pile 0 / 100',
+      'Clear a rubble pile 0 / 50',
     ])
 
     save = applyQuestActionProgress(launch, save, 'ACN-0177', 12)
     expect(
-      questActionProgressForActivity(launch, save, 'ACT-0044').map(
-        (line) => `${line.label} ${line.current} / ${line.required}`,
+      questActionProgressForActivity(launch, save, 'ACT-0044').map((line) =>
+        formatQuestProgressLine(line),
       ),
-    ).toEqual(['Clear a rubble pile 12 / 100'])
+    ).toEqual(['Clear a rubble pile 12 / 50'])
     expect(questStepJournal(launch, save, quest).map((step) => step.label)).toContain(
-      'Clear a rubble pile 12 / 100',
+      'Clear a rubble pile 12 / 50',
     )
+
+    save = applyQuestActionProgress(launch, save, 'ACN-0177', 88)
+    expect(
+      questActionProgressForActivity(launch, save, 'ACT-0044').map((line) =>
+        formatQuestProgressLine(line),
+      ),
+    ).toEqual(['Clear a rubble pile 50 / 50'])
+    expect(questStepJournal(launch, save, quest).map((step) => step.label)).toContain(
+      'Clear a rubble pile 50 / 50',
+    )
+  })
+
+  it('hides the barracks journal line until the merchant talks, and lets recover skip asking around', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    let save = { ...createNewSave(launch), currentLocationId: 'LOC-0034', gold: 25 }
+    const donated = donateForQuest(launch, save, 'QST-0003')
+    expect(donated.ok).toBe(true)
+    if (!donated.ok) return
+    save = donated.save
+    const accepted = acceptQuest(launch, save, 'QST-0003')
+    expect(accepted.ok).toBe(true)
+    if (!accepted.ok) return
+    save = accepted.save
+    save = applyQuestTalkProgress(launch, save, 'NPC-0011')
+    const quest = getQuest(launch, 'QST-0003')!
+    expect(questStepJournal(launch, save, quest).map((step) => step.label).join('\n')).not.toMatch(
+      /Barracks|guard/i,
+    )
+
+    save = applyQuestTalkProgress(launch, { ...save, currentLocationId: 'LOC-0024' }, 'NPC-0007')
+    expect(questStepJournal(launch, save, quest).map((step) => step.label).join('\n')).toMatch(
+      /guard/i,
+    )
+
+    const skipped = addItemToInventory(
+      {
+        ...createNewSave(launch),
+        currentLocationId: 'LOC-0034',
+        gold: 25,
+        quests: [
+          {
+            questId: 'QST-0003',
+            status: 'active' as const,
+            progress: 1,
+            counters: { 'talk:NPC-0011': 1 },
+          },
+        ],
+      },
+      'ITEM-0299',
+      1,
+    )
+    const afterSkip = questStepJournal(launch, skipped, quest).map((step) => step.label)
+    expect(afterSkip).toContain('Recover what was taken')
+  })
+
+  it('auto-starts Pressure the Guards at the barracks and on arrival', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    let save = { ...createNewSave(launch), currentLocationId: 'LOC-0034', gold: 25 }
+    const donated = donateForQuest(launch, save, 'QST-0003')
+    expect(donated.ok).toBe(true)
+    if (!donated.ok) return
+    save = donated.save
+    const accepted = acceptQuest(launch, save, 'QST-0003')
+    expect(accepted.ok).toBe(true)
+    if (!accepted.ok) return
+    save = accepted.save
+    save = applyQuestTalkProgress(launch, save, 'NPC-0011')
+    save = { ...save, currentLocationId: 'LOC-0017' }
+    const combat = chooseCombatForQuest(launch, save, 'QST-0003', Date.parse('2026-01-01T00:00:00.000Z'))
+    expect(combat.ok).toBe(true)
+    if (!combat.ok) return
+    expect(combat.startedActivity).toBe(true)
+    expect(combat.save.currentActivityId).toBe('ACT-0034')
+
+    let elsewhere = { ...createNewSave(launch), currentLocationId: 'LOC-0034', gold: 25 }
+    const donatedAway = donateForQuest(launch, elsewhere, 'QST-0003')
+    expect(donatedAway.ok).toBe(true)
+    if (!donatedAway.ok) return
+    elsewhere = donatedAway.save
+    const acceptedAway = acceptQuest(launch, elsewhere, 'QST-0003')
+    expect(acceptedAway.ok).toBe(true)
+    if (!acceptedAway.ok) return
+    elsewhere = acceptedAway.save
+    elsewhere = applyQuestTalkProgress(launch, elsewhere, 'NPC-0011')
+    elsewhere = { ...elsewhere, currentLocationId: 'LOC-0002' }
+    const flagged = chooseCombatForQuest(
+      launch,
+      elsewhere,
+      'QST-0003',
+      Date.parse('2026-01-01T00:00:00.000Z'),
+    )
+    expect(flagged.ok).toBe(true)
+    if (!flagged.ok) return
+    expect(flagged.startedActivity).toBe(false)
+    const arrived = applyHostileTravelArrival(
+      launch,
+      flagged.save,
+      'LOC-0017',
+      Date.parse('2026-01-01T00:00:01.000Z'),
+    )
+    expect(arrived.save.currentActivityId).toBe('ACT-0034')
+  })
+
+  it('returns Going Deeper rewards when walking into the abandoned shaft', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    let save = applyQuestTalkProgress(
+      launch,
+      {
+        ...createNewSave(launch),
+        currentLocationId: 'LOC-0011',
+        quests: [{ questId: 'QST-0008', status: 'active' as const, progress: 0, counters: {} }],
+      },
+      'NPC-0015',
+    )
+    save = applyQuestVisitProgress(launch, save, 'LOC-0011')
+    save = applyQuestActionProgress(launch, save, 'ACN-0177', 50)
+    const arrival = applyTravelArrivalResult(launch, save, 'LOC-0022')
+    expect(arrival.save.quests.find((row) => row.questId === 'QST-0008')?.status).toBe('completed')
+    expect(arrival.questCompletions).toHaveLength(1)
+    expect(arrival.questCompletions[0]!.questName).toBe('Going Deeper')
+    expect(arrival.questCompletions[0]!.message).toMatch(/^Thank you/)
+    expect(questTalkLine(launch, 'QST-0008', 'NPC-0015', arrival.save)).toMatch(/rebuild our empire/)
+  })
+
+  it('pulses Getting Started map hints until the step finishes', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const cook = {
+      ...createNewSave(launch),
+      currentLocationId: 'LOC-0023',
+      inventory: [{ itemId: 'ITEM-0025', quantity: 5 }],
+      quests: [
+        {
+          questId: 'QST-0006',
+          status: 'active' as const,
+          progress: 0,
+          counters: { 'talk:NPC-0014': 1, 'talk:NPC-0014:QSTP-0014': 1, 'visit:LOC-0023': 1 },
+        },
+      ],
+    }
+    expect(questVisitHintLocationId(launch, cook)).toBe('LOC-0023')
+    const bring = {
+      ...cook,
+      currentLocationId: 'LOC-0002',
+      inventory: [
+        { itemId: 'ITEM-0025', quantity: 5 },
+        { itemId: 'ITEM-0058', quantity: 5 },
+      ],
+      quests: [
+        {
+          questId: 'QST-0006',
+          status: 'active' as const,
+          progress: 0,
+          counters: {
+            'talk:NPC-0014': 1,
+            'talk:NPC-0014:QSTP-0014': 1,
+            'visit:LOC-0023': 1,
+            'process:RCP-0001': 5,
+          },
+        },
+      ],
+    }
+    expect(questVisitHintLocationId(launch, bring)).toBe('LOC-0001')
   })
 })

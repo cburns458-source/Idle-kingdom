@@ -152,6 +152,13 @@ bool canTravelTo(
   ).any((location) => location.raw['Location ID'] == toLocationId);
 }
 
+class TravelArrivalSave {
+  const TravelArrivalSave({required this.save, required this.questCompletions});
+
+  final PlayerSave save;
+  final List<QuestArrivalCompletion> questCompletions;
+}
+
 /// Moves the player to a destination, stopping any running primary activity
 /// with refunds. A death pause blocks arrival and leaves the activity alone.
 PlayerSave applyTravelArrival(
@@ -160,14 +167,27 @@ PlayerSave applyTravelArrival(
   String destinationLocationId,
   num nowMs,
 ) {
-  if (isDeathPaused(save, nowMs)) return save;
+  return applyTravelArrivalResult(db, save, destinationLocationId, nowMs).save;
+}
+
+/// Arrival plus any visit-complete quest popups the client should show.
+TravelArrivalSave applyTravelArrivalResult(
+  GameDatabase db,
+  PlayerSave save,
+  String destinationLocationId,
+  num nowMs,
+) {
+  if (isDeathPaused(save, nowMs)) {
+    return TravelArrivalSave(save: save, questCompletions: const <QuestArrivalCompletion>[]);
+  }
   final stopped = stopPrimaryActivityNow(db, save, nowMs);
   final arrived = stopped.copyWith(currentLocationId: destinationLocationId);
-  return maybeGrantKingswoodsSling(
+  final auto = applyQuestAutoCompleteOnVisit(
     db,
-    applyQuestAutoCompleteOnVisit(
-      db,
-      applyQuestLocationProgress(db, arrived, destinationLocationId),
-    ),
-  ).save;
+    applyQuestLocationProgress(db, arrived, destinationLocationId),
+  );
+  return TravelArrivalSave(
+    save: maybeGrantKingswoodsSling(db, auto.save).save,
+    questCompletions: auto.completions,
+  );
 }

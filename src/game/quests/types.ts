@@ -27,6 +27,8 @@ export interface StructuredQuestObjectives {
   talkNpcIds: string[]
   optionalTalkNpcIds: string[]
   visitLocationIds: string[]
+  /** Map-dot pulse targets; these stay until the step finishes. */
+  hintLocationIds: string[]
   inspectIds: string[]
   /** Show these items; they are not taken on turn-in. */
   holds: QuestCounterTarget[]

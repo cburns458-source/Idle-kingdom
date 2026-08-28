@@ -11,7 +11,9 @@ import { COMBAT_SKILL_ID } from '../combat/stats'
 import type { ActivityRow, GameDatabase } from '../data/types'
 import { raceBypassesForcedHostilityAt } from '../races/races'
 import type { PlayerSave } from '../save/types'
-import { applyTravelArrival } from './travel'
+import { activityVisibleForSave } from '../activity/requirements'
+import { applyTravelArrivalResult } from './travel'
+import type { QuestArrivalCompletion } from '../quests/quests'
 
 /** True when this location has a hostile activity, so its danger line may show. */
 export function locationShowsDangerWarning(db: GameDatabase, locationId: string): boolean {
@@ -68,6 +70,45 @@ export interface HostileTravelArrivalResult {
   /** Set when the player is under-level but the hostile activity could not start. */
   forceBlockedReason: string | null
   threatenedActivityId: string | null
+  questCompletions?: QuestArrivalCompletion[]
+}
+
+const QUEST_CHOICE_COMBAT_ACTIVITY_ID = 'ACT-0034'
+
+/** Starts Pressure the Guards when the combat route is chosen and the player is at the barracks. */
+export function tryStartQuestChoiceCombat(
+  db: GameDatabase,
+  save: PlayerSave,
+  nowMs: number,
+  random: RandomFn,
+): { save: PlayerSave; startedActivityId: string | null } {
+  if (save.currentActivityId === QUEST_CHOICE_COMBAT_ACTIVITY_ID) {
+    return { save, startedActivityId: null }
+  }
+  const activity = db.Activities.find(
+    (row) => row['Activity ID'] === QUEST_CHOICE_COMBAT_ACTIVITY_ID,
+  )
+  if (!activity || activity['Location ID'] !== save.currentLocationId) {
+    return { save, startedActivityId: null }
+  }
+  if (!activityVisibleForSave(db, save, QUEST_CHOICE_COMBAT_ACTIVITY_ID)) {
+    return { save, startedActivityId: null }
+  }
+  const validation = validateActivityStart(db, save, QUEST_CHOICE_COMBAT_ACTIVITY_ID)
+  if (!validation.ok) return { save, startedActivityId: null }
+  const nowIso = new Date(nowMs).toISOString()
+  const started = beginActivitySave(save, QUEST_CHOICE_COMBAT_ACTIVITY_ID, nowIso)
+  const generated = generateNextAction(
+    db,
+    started,
+    QUEST_CHOICE_COMBAT_ACTIVITY_ID,
+    random,
+    nowMs,
+  )
+  return {
+    save: generated ? generated.save : started,
+    startedActivityId: QUEST_CHOICE_COMBAT_ACTIVITY_ID,
+  }
 }
 
 /**
@@ -81,16 +122,28 @@ export function applyHostileTravelArrival(
   nowMs: number = Date.now(),
   random: RandomFn = Math.random,
 ): HostileTravelArrivalResult {
-  let next = applyTravelArrival(db, save, destinationLocationId, nowMs)
-  next = clearActivityTransition(next)
+  const arrival = applyTravelArrivalResult(db, save, destinationLocationId, nowMs)
+  let next = clearActivityTransition(arrival.save)
+  const questCompletions = arrival.questCompletions
 
   const threatened = forcedHostileActivity(db, next, destinationLocationId)
   if (!threatened) {
+    const questCombat = tryStartQuestChoiceCombat(db, next, nowMs, random)
+    if (questCombat.startedActivityId) {
+      return {
+        save: questCombat.save,
+        forcedActivityId: null,
+        forceBlockedReason: null,
+        threatenedActivityId: null,
+        questCompletions,
+      }
+    }
     return {
       save: startFavoriteActivity(db, next, destinationLocationId, nowMs, random),
       forcedActivityId: null,
       forceBlockedReason: null,
       threatenedActivityId: null,
+      questCompletions,
     }
   }
 
@@ -101,6 +154,7 @@ export function applyHostileTravelArrival(
       forcedActivityId: null,
       forceBlockedReason: validation.reason,
       threatenedActivityId: threatened['Activity ID'],
+      questCompletions,
     }
   }
 
@@ -113,6 +167,7 @@ export function applyHostileTravelArrival(
     forcedActivityId: threatened['Activity ID'],
     forceBlockedReason: null,
     threatenedActivityId: threatened['Activity ID'],
+    questCompletions,
   }
 }
 

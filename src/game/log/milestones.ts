@@ -5,7 +5,7 @@ import type { PlayerSave } from '../save/types'
 export const GATHERING_ACTIONS_STAT = 'gathering_actions_completed'
 
 const SKILL_THRESHOLDS = [25, 50, 75, 100] as const
-const COUNT_THRESHOLDS = [10_000, 100_000, 1_000_000, 1_000_000_000] as const
+const COUNT_THRESHOLDS = [10_000, 100_000, 1_000_000] as const
 
 export interface MilestoneLogRow {
   milestoneId: string

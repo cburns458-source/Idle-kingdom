@@ -11,6 +11,8 @@ import '../races/races.dart';
 import '../rng/mulberry32.dart';
 import '../save/generated/save_models.dart';
 import '../time.dart';
+import '../activity/requirements.dart';
+import '../quests/quests.dart';
 import 'travel.dart';
 
 /// True when this location has a hostile activity, so its danger line may show.
@@ -64,6 +66,7 @@ class HostileTravelArrivalResult {
     required this.forcedActivityId,
     required this.forceBlockedReason,
     required this.threatenedActivityId,
+    this.questCompletions = const <QuestArrivalCompletion>[],
   });
 
   final PlayerSave save;
@@ -72,13 +75,43 @@ class HostileTravelArrivalResult {
   /// Set when the player is under-level but the hostile activity could not start.
   final String? forceBlockedReason;
   final String? threatenedActivityId;
+  final List<QuestArrivalCompletion> questCompletions;
 
   Map<String, Object?> toJson() => <String, Object?>{
     'save': save.toJson(),
     'forcedActivityId': forcedActivityId,
     'forceBlockedReason': forceBlockedReason,
     'threatenedActivityId': threatenedActivityId,
+    'questCompletions': questCompletions.map((row) => row.toJson()).toList(),
   };
+}
+
+const String questChoiceCombatActivityId = 'ACT-0034';
+
+/// Starts Pressure the Guards when the combat route is chosen and the player is at the barracks.
+({PlayerSave save, String? startedActivityId}) tryStartQuestChoiceCombat(
+  GameDatabase db,
+  PlayerSave save,
+  num nowMs,
+  RandomFn random,
+) {
+  if (save.currentActivityId == questChoiceCombatActivityId) {
+    return (save: save, startedActivityId: null);
+  }
+  final activity = db.activities.firstWhereOrNull(
+    (row) => row.raw['Activity ID'] == questChoiceCombatActivityId,
+  );
+  if (activity == null || activity.raw['Location ID'] != save.currentLocationId) {
+    return (save: save, startedActivityId: null);
+  }
+  if (!activityVisibleForSave(db, save, questChoiceCombatActivityId)) {
+    return (save: save, startedActivityId: null);
+  }
+  final validation = validateActivityStart(db, save, questChoiceCombatActivityId);
+  if (!validation.ok) return (save: save, startedActivityId: null);
+  final started = beginActivitySave(save, questChoiceCombatActivityId, isoFromMs(nowMs));
+  final generated = generateNextAction(db, started, questChoiceCombatActivityId, random, nowMs);
+  return (save: generated?.save ?? started, startedActivityId: questChoiceCombatActivityId);
 }
 
 /// Arrives at a destination, stopping any running primary activity. Arriving
@@ -90,16 +123,28 @@ HostileTravelArrivalResult applyHostileTravelArrival(
   num nowMs,
   RandomFn random,
 ) {
-  var next = applyTravelArrival(db, save, destinationLocationId, nowMs);
-  next = clearActivityTransition(next);
+  final arrival = applyTravelArrivalResult(db, save, destinationLocationId, nowMs);
+  var next = clearActivityTransition(arrival.save);
+  final questCompletions = arrival.questCompletions;
 
   final threatened = forcedHostileActivity(db, next, destinationLocationId);
   if (threatened == null) {
+    final questCombat = tryStartQuestChoiceCombat(db, next, nowMs, random);
+    if (questCombat.startedActivityId != null) {
+      return HostileTravelArrivalResult(
+        save: questCombat.save,
+        forcedActivityId: null,
+        forceBlockedReason: null,
+        threatenedActivityId: null,
+        questCompletions: questCompletions,
+      );
+    }
     return HostileTravelArrivalResult(
       save: _startFavoriteActivity(db, next, destinationLocationId, nowMs, random),
       forcedActivityId: null,
       forceBlockedReason: null,
       threatenedActivityId: null,
+      questCompletions: questCompletions,
     );
   }
 
@@ -111,6 +156,7 @@ HostileTravelArrivalResult applyHostileTravelArrival(
       forcedActivityId: null,
       forceBlockedReason: validation.reason,
       threatenedActivityId: activityId,
+      questCompletions: questCompletions,
     );
   }
 
@@ -122,6 +168,7 @@ HostileTravelArrivalResult applyHostileTravelArrival(
     forcedActivityId: activityId,
     forceBlockedReason: null,
     threatenedActivityId: activityId,
+    questCompletions: questCompletions,
   );
 }
 

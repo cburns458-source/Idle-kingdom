@@ -404,12 +404,47 @@ QuestCompletion completeQuest(
       loot: loot,
       goldGained: goldGained,
     ),
-    message: rewards.isNotEmpty ? 'Quest complete — ${rewards.join(' and ')}.' : 'Quest complete.',
+    message: rewards.isNotEmpty ? 'Thank you — ${rewards.join(' and ')}.' : 'Thank you.',
   );
 }
 
-PlayerSave applyQuestAutoCompleteOnVisit(GameDatabase db, PlayerSave save) {
+class QuestArrivalCompletion {
+  const QuestArrivalCompletion({
+    required this.questId,
+    required this.questName,
+    required this.rewards,
+    required this.pendingSkillXp,
+    required this.message,
+    this.rewardBundle,
+  });
+
+  final String questId;
+  final String questName;
+  final List<String> rewards;
+  final num pendingSkillXp;
+  final ActionRewardBundle? rewardBundle;
+  final String message;
+
+  Map<String, Object?> toJson() => <String, Object?>{
+    'questId': questId,
+    'questName': questName,
+    'rewards': rewards,
+    'pendingSkillXp': pendingSkillXp,
+    'rewardBundle': rewardBundle?.toJson(),
+    'message': message,
+  };
+}
+
+class QuestVisitAutoComplete {
+  const QuestVisitAutoComplete({required this.save, required this.completions});
+
+  final PlayerSave save;
+  final List<QuestArrivalCompletion> completions;
+}
+
+QuestVisitAutoComplete applyQuestAutoCompleteOnVisit(GameDatabase db, PlayerSave save) {
   var next = save;
+  final completions = <QuestArrivalCompletion>[];
   for (final quest in asQuestRows(db)) {
     final parsed = parseStructuredObjectives(quest);
     if (!parsed.autoCompleteOnVisit) continue;
@@ -417,9 +452,21 @@ PlayerSave applyQuestAutoCompleteOnVisit(GameDatabase db, PlayerSave save) {
     if (getQuestProgress(next, questId).status != 'active') continue;
     if (!questAllStepsComplete(db, next, quest)) continue;
     final completed = completeQuest(db, next, questId, ignoreLocation: true);
-    if (completed.ok) next = completed.save!;
+    if (completed.ok) {
+      next = completed.save!;
+      completions.add(
+        QuestArrivalCompletion(
+          questId: questId,
+          questName: completed.questName!,
+          rewards: completed.rewards,
+          pendingSkillXp: completed.pendingSkillXp,
+          rewardBundle: completed.rewardBundle,
+          message: completed.message!,
+        ),
+      );
+    }
   }
-  return next;
+  return QuestVisitAutoComplete(save: next, completions: completions);
 }
 
 /// Skills the bribe-route popup may grant, Combat excluded.

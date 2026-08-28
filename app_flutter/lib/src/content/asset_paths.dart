@@ -266,6 +266,27 @@ String playerAssetPath(PlayerAppearance? appearance, {String? raceId}) {
   return '$_assetRoot/player/${playerArtStem(raceId: raceId, genderPresentationId: gender)}.png';
 }
 
+const Map<String, String> _npcArt = <String, String>{
+  'NPC-0001': 'npc/npc_king.png',
+  'NPC-0002': 'npc/npc_quill.png',
+  'NPC-0003': 'npc/npc_master_dwarf.png',
+  'NPC-0004': 'npc/npc_archmage.png',
+  'NPC-0005': 'npc/npc_rose.png',
+  'NPC-0006': 'npc/npc_market_master.png',
+  'NPC-0007': 'npc/npc_general_store_merchant.png',
+  'NPC-0008': 'npc/npc_dwarven_mining_merchant.png',
+  'NPC-0009': 'npc/npc_wizard_shopkeeper.png',
+  'NPC-0010': 'npc/npc_supply_keeper.png',
+  'NPC-0011': 'npc/npc_beggar.png',
+  'NPC-0012': 'npc/npc_barracks_guard.png',
+  'NPC-0013': 'npc/npc_citadel_guide.png',
+  'NPC-0014': 'npc/npc_fennel.png',
+  'NPC-0015': 'npc/npc_helge.png',
+};
+
+/// Named plate for an NPC, copied from a gender-matched player sprite.
+String npcAssetPath(String npcId) => '$_assetRoot/${_npcArt[npcId] ?? 'npc/npc_king.png'}';
+
 String uiMapAssetPath() => '$_assetRoot/icons/ui/ui_map.webp';
 
 /// The pixel ring drawn over the HUD portrait.

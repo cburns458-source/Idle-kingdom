@@ -7,7 +7,7 @@ import '../save/generated/save_models.dart';
 const String gatheringActionsStat = 'gathering_actions_completed';
 
 const List<num> _skillThresholds = <num>[25, 50, 75, 100];
-const List<num> _countThresholds = <num>[10000, 100000, 1000000, 1000000000];
+const List<num> _countThresholds = <num>[10000, 100000, 1000000];
 
 class MilestoneLogRow {
   const MilestoneLogRow({

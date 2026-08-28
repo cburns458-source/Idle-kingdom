@@ -76,6 +76,7 @@ flutter:
     - assets/ui/
     - content/assets/locations/
     - content/assets/maps/
+    - content/assets/npc/
     - content/assets/player/
     - content/assets/workstations/
 

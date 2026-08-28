@@ -2,20 +2,18 @@ import type { GameDatabase } from '../data/types'
 import type { PlayerSave } from '../save/types'
 import { MAIN_MAP_ID } from '../world/constants'
 import { getLocationMapId } from '../world/travel'
-import { hasQuestFlag } from './progress'
 import { asQuestRows, getQuestProgress } from './quests'
 import { questActiveStepObjectives } from './steps'
 
-/** First unvisited Visit target on an active quest step. */
+/** First Hint target on an active quest step, or the step's Visit target. */
 export function questVisitHintLocationId(db: GameDatabase, save: PlayerSave): string | null {
   for (const quest of asQuestRows(db)) {
     const questId = quest['Quest ID']
     if (getQuestProgress(save, questId).status !== 'active') continue
     const step = questActiveStepObjectives(db, save, quest)
     if (!step) continue
-    for (const locationId of step.visitLocationIds) {
-      if (!hasQuestFlag(save, questId, `visit:${locationId}`)) return locationId
-    }
+    if (step.hintLocationIds.length > 0) return step.hintLocationIds[0]!
+    if (step.visitLocationIds.length > 0) return step.visitLocationIds[0]!
   }
   return null
 }

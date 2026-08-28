@@ -18,6 +18,7 @@ import 'character_view.dart';
 import 'location_view.dart';
 import 'log_view.dart';
 import 'menu_view.dart';
+import 'npc_panel.dart';
 import 'new_character_sheet.dart';
 import 'overlay_notice.dart';
 import 'returning_overlay.dart';
@@ -88,6 +89,7 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
   String? _walkToId;
   bool _returnHoldArmed = false;
   Timer? _returnHold;
+  bool _questRewardQueued = false;
 
   GameController get controller => widget.controller;
   MultiplayerController get multiplayer => widget.multiplayer;
@@ -113,6 +115,7 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
     multiplayer.onAccountCleared ??= controller.resetUnsigned;
     multiplayer.addListener(_onMultiplayerChanged);
     controller.addListener(_armReturningHold);
+    controller.addListener(_flushQuestRewards);
     _armReturningHold();
     _ticker = createTicker((_) {
       if (!mounted || !_canPlay) return;
@@ -183,6 +186,43 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
     _maybePresentSocialNotice();
   }
 
+  void _flushQuestRewards() {
+    if (_questRewardQueued) return;
+    final pending = controller.takePendingQuestCompletions();
+    if (pending.isEmpty) return;
+    _questRewardQueued = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      try {
+        if (!mounted) return;
+        for (final completion in pending) {
+          final quest = getQuest(controller.db, completion.questId);
+          final npcId = quest?['NPC ID'];
+          final spoken = npcId is String
+              ? questTalkLine(controller.db, completion.questId, npcId, controller.save)
+              : null;
+          await showQuestRewards(
+            context,
+            questName: completion.questName,
+            rewards: completion.rewards,
+            spokenLine: spoken,
+          );
+          if (!mounted) return;
+          if (completion.pendingSkillXp > 0) {
+            await showSkillXpPicker(
+              context,
+              controller: controller,
+              amount: completion.pendingSkillXp,
+            );
+          }
+          if (!mounted) return;
+        }
+      } finally {
+        _questRewardQueued = false;
+        if (mounted) _flushQuestRewards();
+      }
+    });
+  }
+
   void _armReturningHold() {
     if (!controller.returningFromAway) {
       _returnHold?.cancel();
@@ -244,6 +284,7 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
     multiplayer.flushAccountSave(controller.save);
     multiplayer.removeListener(_onMultiplayerChanged);
     controller.removeListener(_armReturningHold);
+    controller.removeListener(_flushQuestRewards);
     _ticker?.stop();
     _ticker?.dispose();
     _ticker = null;

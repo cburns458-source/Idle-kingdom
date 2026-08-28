@@ -2,6 +2,7 @@ import { beginTravelActivityChange } from '../activity/transition'
 import { isDeathPaused } from '../combat/engine'
 import type { GameDatabase } from '../data/types'
 import type { PlayerSave } from '../save/types'
+import type { QuestArrivalCompletion } from '../quests/quests'
 import {
   applyHostileTravelArrival,
   hostileForceMessage,
@@ -31,6 +32,8 @@ export interface TravelArrival {
   blockedReason: string | null
   /** The hostility line to show, or null when the arrival was uneventful. */
   message: string | null
+  /** Visit-complete quests that should show a reward popup. */
+  questCompletions: QuestArrivalCompletion[]
 }
 
 function arrivalOf(db: GameDatabase, result: HostileTravelArrivalResult): TravelArrival {
@@ -39,6 +42,7 @@ function arrivalOf(db: GameDatabase, result: HostileTravelArrivalResult): Travel
     forcedActivityId: result.forcedActivityId,
     blockedReason: result.forceBlockedReason,
     message: hostileForceMessage(db, result),
+    questCompletions: result.questCompletions ?? [],
   }
 }
 

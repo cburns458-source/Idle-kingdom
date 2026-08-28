@@ -8,6 +8,7 @@ class TravelArrival {
     required this.forcedActivityId,
     required this.blockedReason,
     required this.message,
+    this.questCompletions = const <QuestArrivalCompletion>[],
   });
 
   final PlayerSave save;
@@ -21,11 +22,15 @@ class TravelArrival {
   /// The hostility line to show, or null when the arrival was uneventful.
   final String? message;
 
+  /// Visit-complete quests that should show a reward popup.
+  final List<QuestArrivalCompletion> questCompletions;
+
   Map<String, Object?> toJson() => <String, Object?>{
     'save': save.toJson(),
     'forcedActivityId': forcedActivityId,
     'blockedReason': blockedReason,
     'message': message,
+    'questCompletions': questCompletions.map((row) => row.toJson()).toList(),
   };
 }
 
@@ -87,6 +92,7 @@ TravelArrival _arrivalOf(GameDatabase db, HostileTravelArrivalResult result) {
     forcedActivityId: result.forcedActivityId,
     blockedReason: result.forceBlockedReason,
     message: hostileForceMessage(db, result),
+    questCompletions: result.questCompletions,
   );
 }
 

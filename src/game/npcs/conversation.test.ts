@@ -116,7 +116,7 @@ describe('npc conversation', () => {
     const conversation = npcConversation(launch, completed.save, npc('NPC-0005'))
     expect(conversation.quests[0]!.status).toBe('completed')
     expect(conversation.quests[0]!.completedNote).toBe(
-      "Completed — Rose's Apothecary is open on the Town Map.",
+      "Thank you — Rose's Apothecary is open on the Town Map.",
     )
   })
 
@@ -233,8 +233,8 @@ describe('npc conversation', () => {
     }
     const guard = npcConversation(launch, heard, npc('NPC-0012'))
     expect(guard.quests[0]!.canTalk).toBe(true)
-    expect(guard.quests[0]!.canBribe).toBe(false)
-    expect(guard.quests[0]!.canChooseCombat).toBe(false)
+    expect(guard.quests[0]!.canBribe).toBe(true)
+    expect(guard.quests[0]!.canChooseCombat).toBe(true)
     expect(guard.quests[0]!.talkLine).not.toMatch(/purse/i)
     expect(guard.quests[0]!.talkLine).toMatch(/gossip/)
 
@@ -257,8 +257,8 @@ describe('npc conversation', () => {
     expect(threatened.quests[0]!.canTalk).toBe(true)
     expect(threatened.quests[0]!.talkLine).toMatch(/someone talked/)
     expect(threatened.quests[0]!.talkLine).toMatch(/purse/i)
-    expect(threatened.quests[0]!.canBribe).toBe(false)
-    expect(threatened.quests[0]!.canChooseCombat).toBe(false)
+    expect(threatened.quests[0]!.canBribe).toBe(true)
+    expect(threatened.quests[0]!.canChooseCombat).toBe(true)
 
     const afterGuard = {
       ...heard,
@@ -371,5 +371,14 @@ describe('npc conversation', () => {
     expect(archmage.quests[0]!.talkLine).toMatch(/ten essence/)
     expect(archmage.quests[0]!.ready).toBe(false)
     expect(archmage.quests[0]!.idlePrompt).toBe('What else do you need?')
+  })
+
+  it('lets Helge thank the player after Going Deeper', () => {
+    const save = {
+      ...saveAt('LOC-0011'),
+      quests: [{ questId: 'QST-0008', status: 'completed' as const, progress: 1, counters: {} }],
+    }
+    const helge = npcConversation(launch, save, npc('NPC-0015'))
+    expect(helge.quests[0]!.completedNote).toMatch(/rebuild our empire/)
   })
 })

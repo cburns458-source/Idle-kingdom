@@ -7,6 +7,7 @@ import '../js_compat.dart';
 import '../production/recipes.dart';
 import '../save/generated/save_models.dart';
 import 'objectives.dart';
+import 'progress.dart';
 import 'quests.dart';
 
 class QuestJournalStep {
@@ -81,6 +82,43 @@ List<QuestProgressLine> _scopedTalkLines(
   ];
 }
 
+bool _isAskAroundSkipped(GameDatabase db, PlayerSave save, String questId, String notes) {
+  final structured = parseNotesObjectives(notes);
+  if (structured.optionalTalkNpcIds.isEmpty) return false;
+  if (hasQuestFlag(save, questId, 'choice:bribe') || hasQuestFlag(save, questId, 'choice:combat')) {
+    return true;
+  }
+  final quest = getQuest(db, questId);
+  if (quest == null) return false;
+  return questAllStepDelivers(
+    db,
+    quest,
+  ).any((line) => inventoryCount(save, line.targetId) >= line.quantity);
+}
+
+List<QuestProgressLine> _journalProgressLines(
+  GameDatabase db,
+  PlayerSave save,
+  String questId,
+  String notes,
+) {
+  final lines = _stepProgressLines(db, save, questId, notes);
+  final structured = parseNotesObjectives(notes);
+  if (structured.optionalTalkNpcIds.isEmpty) return lines;
+  final counters = getQuestProgress(save, questId).counters ?? const <String, num>{};
+  final revealed = structured.optionalTalkNpcIds.any(
+    (npcId) => (counters['talk:$npcId'] ?? 0) >= 1,
+  );
+  if (revealed) return lines;
+  return lines
+      .where(
+        (line) => !structured.talkNpcIds.any(
+          (npcId) => line.key == 'talk:$npcId' || line.key.startsWith('talk:$npcId:'),
+        ),
+      )
+      .toList();
+}
+
 bool _isStepComplete(
   GameDatabase db,
   PlayerSave save,
@@ -88,6 +126,7 @@ bool _isStepComplete(
   String notes, [
   String? stepId,
 ]) {
+  if (_isAskAroundSkipped(db, save, questId, notes)) return true;
   final structured = parseNotesObjectives(notes);
   final counters = getQuestProgress(save, questId).counters ?? const <String, num>{};
   final progress = objectiveProgressFromStructured(db, save, structured, counters);
@@ -173,8 +212,15 @@ List<QuestJournalStep> questStepJournal(GameDatabase db, PlayerSave save, QuestR
       label: step.journalLabel,
       state: done ? 'done' : 'current',
     );
-    if (done) return <QuestJournalStep>[head];
-    final progress = _stepProgressLines(db, save, questId, step.notes ?? '')
+    final progressSource = done
+        ? _stepProgressLines(
+            db,
+            save,
+            questId,
+            step.notes ?? '',
+          ).where((line) => line.key.startsWith('action:')).toList()
+        : _journalProgressLines(db, save, questId, step.notes ?? '');
+    final progress = progressSource
         .map(
           (line) => QuestJournalStep(
             key: line.key,
@@ -333,15 +379,20 @@ List<QuestProgressLine> questActionProgressForActivity(
   for (final quest in asQuestRows(db)) {
     final questId = jsString(quest['Quest ID']);
     if (getQuestProgress(save, questId).status != 'active') continue;
-    final notes = questUsesSteps(db, questId)
-        ? (getCurrentStepIndex(db, save, quest) < getQuestSteps(db, questId).length
-              ? getQuestSteps(db, questId)[getCurrentStepIndex(db, save, quest)].notes ?? ''
-              : '')
-        : jsString(quest['Notes']);
-    for (final line in _stepProgressLines(db, save, questId, notes)) {
-      if (!line.key.startsWith('action:')) continue;
-      final actionId = line.key.substring('action:'.length);
-      if (actionIds.contains(actionId)) lines.add(line);
+    if (questUsesSteps(db, questId)) {
+      for (final step in getQuestSteps(db, questId)) {
+        for (final line in _stepProgressLines(db, save, questId, step.notes ?? '')) {
+          if (!line.key.startsWith('action:')) continue;
+          final actionId = line.key.substring('action:'.length);
+          if (actionIds.contains(actionId)) lines.add(line);
+        }
+      }
+    } else {
+      for (final line in _stepProgressLines(db, save, questId, jsString(quest['Notes']))) {
+        if (!line.key.startsWith('action:')) continue;
+        final actionId = line.key.substring('action:'.length);
+        if (actionIds.contains(actionId)) lines.add(line);
+      }
     }
   }
   return lines;

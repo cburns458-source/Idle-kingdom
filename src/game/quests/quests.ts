@@ -381,8 +381,8 @@ export function completeQuest(
     },
     message:
       rewards.length > 0
-        ? `Quest complete — ${rewards.map((reward) => reward.label).join(' and ')}.`
-        : 'Quest complete.',
+        ? `Thank you — ${rewards.map((reward) => reward.label).join(' and ')}.`
+        : 'Thank you.',
   }
 }
 
@@ -448,18 +448,41 @@ export function chooseQuestCombatRoute(
   return { ok: true, save: setQuestFlag(save, questId, 'choice:combat') }
 }
 
+export interface QuestArrivalCompletion {
+  questId: string
+  questName: string
+  rewards: string[]
+  pendingSkillXp: number
+  rewardBundle: ActionRewardBundle
+  message: string
+}
+
 /** Completes visit-finish quests after arrival progress is applied. */
-export function applyQuestAutoCompleteOnVisit(db: GameDatabase, save: PlayerSave): PlayerSave {
+export function applyQuestAutoCompleteOnVisit(
+  db: GameDatabase,
+  save: PlayerSave,
+): { save: PlayerSave; completions: QuestArrivalCompletion[] } {
   let next = save
+  const completions: QuestArrivalCompletion[] = []
   for (const quest of asQuestRows(db)) {
     const parsed = parseStructuredObjectives(quest)
     if (!parsed.autoCompleteOnVisit) continue
     if (getQuestProgress(next, quest['Quest ID']).status !== 'active') continue
     if (!questAllStepsComplete(db, next, quest)) continue
     const completed = completeQuest(db, next, quest['Quest ID'], { ignoreLocation: true })
-    if (completed.ok) next = completed.save
+    if (completed.ok) {
+      next = completed.save
+      completions.push({
+        questId: quest['Quest ID'],
+        questName: completed.questName,
+        rewards: completed.rewards.map((reward) => reward.label),
+        pendingSkillXp: completed.pendingSkillXp,
+        rewardBundle: completed.rewardBundle,
+        message: completed.message,
+      })
+    }
   }
-  return next
+  return { save: next, completions }
 }
 
 export function questStatusLabel(

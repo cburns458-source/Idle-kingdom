@@ -109,6 +109,40 @@ class SocialPortrait extends StatelessWidget {
   }
 }
 
+/// An NPC face, cropped like the HUD avatar so dialogue shows the head.
+class NpcPortrait extends StatelessWidget {
+  const NpcPortrait({super.key, required this.npcId, this.size = 34, this.borderColor});
+
+  final String npcId;
+  final double size;
+  final Color? borderColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final image = GameImage(
+      npcAssetPath(npcId),
+      alignment: Alignment.topCenter,
+      fit: BoxFit.cover,
+      filterQuality: FilterQuality.none,
+    );
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: Palette.panel,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: borderColor ?? Palette.edge),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Transform.scale(
+        scale: playerPortraitHeadZoom,
+        alignment: Alignment.topCenter,
+        child: image,
+      ),
+    );
+  }
+}
+
 /// One row of a social list: a mark, two lines of copy, and a trailing widget.
 class SocialRow extends StatelessWidget {
   const SocialRow({

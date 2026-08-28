@@ -57,8 +57,7 @@ void main() {
     );
     expect(player.height, 152);
     expect(player.top - stage.top, closeTo(4, 1));
-    expect(action.height, 86);
-    expect(action.height, lessThan(player.height));
+    expect(action.height, 152);
     final playerArt = tester.getRect(
       find.descendant(of: find.bySemanticsLabel('Adventurer').first, matching: find.byType(Image)),
     );

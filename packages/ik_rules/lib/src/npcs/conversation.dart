@@ -7,7 +7,9 @@ import '../quests/objectives.dart';
 import '../quests/progress.dart';
 import '../quests/quests.dart';
 import '../quests/steps.dart';
+import '../rng/mulberry32.dart';
 import '../save/generated/save_models.dart';
+import '../world/hostility.dart';
 import 'knowledge.dart';
 import 'roaming.dart';
 
@@ -56,9 +58,14 @@ String? _requiredStepIdFromNotes(String? notes) {
   return field?.toUpperCase();
 }
 
+bool _whenCompletedFromNotes(String? notes) {
+  return RegExp(r'(?:^|;)\s*When:\s*completed', caseSensitive: false).hasMatch(notes ?? '');
+}
+
 String? questTalkLine(GameDatabase db, String questId, String npcId, [PlayerSave? save]) {
   final rows = db.questDialogue.where((row) => row.questId == questId && row.npcId == npcId);
   final quest = getQuest(db, questId);
+  final status = save == null ? null : getQuestProgress(save, questId).status;
   String? currentStepId;
   if (save != null && quest != null) {
     final steps = getQuestSteps(db, questId);
@@ -66,6 +73,8 @@ String? questTalkLine(GameDatabase db, String questId, String npcId, [PlayerSave
     if (index >= 0 && index < steps.length) currentStepId = steps[index].stepId;
   }
   final matching = rows.where((row) {
+    if (_whenCompletedFromNotes(row.notes)) return status == 'completed';
+    if (status == 'completed') return false;
     final requiredStep = _requiredStepIdFromNotes(row.notes);
     if (requiredStep != null && requiredStep != currentStepId) return false;
     final required = _requiredTalkNpcIdsFromNotes(row.notes);
@@ -76,6 +85,7 @@ String? questTalkLine(GameDatabase db, String questId, String npcId, [PlayerSave
   final specific = matching
       .where(
         (row) =>
+            _whenCompletedFromNotes(row.notes) ||
             _requiredTalkNpcIdsFromNotes(row.notes).isNotEmpty ||
             _requiredStepIdFromNotes(row.notes) != null,
       )
@@ -327,9 +337,11 @@ class NpcConversation {
   };
 }
 
-String _completedNote(GameDatabase db, QuestRow quest) {
+String _completedNote(GameDatabase db, QuestRow quest, String npcId, PlayerSave save) {
+  final spoken = questTalkLine(db, jsString(quest['Quest ID']), npcId, save);
+  if (spoken != null) return spoken;
   final unlocked = parseStructuredObjectives(quest).unlockLocationIds;
-  if (unlocked.isEmpty) return 'Completed.';
+  if (unlocked.isEmpty) return 'Thank you.';
   final opened = unlocked
       .map((locationId) {
         final mapName = _mapNameForLocation(db, locationId);
@@ -337,7 +349,7 @@ String _completedNote(GameDatabase db, QuestRow quest) {
         return '${_locationName(db, locationId)} is open$where';
       })
       .join(', ');
-  return 'Completed \u2014 $opened.';
+  return 'Thank you \u2014 $opened.';
 }
 
 NpcQuestBlock _questBlock(GameDatabase db, PlayerSave save, QuestRow quest, String npcId) {
@@ -354,7 +366,6 @@ NpcQuestBlock _questBlock(GameDatabase db, PlayerSave save, QuestRow quest, Stri
   final talkedThisStep = hasQuestFlag(save, questId, currentStepTalkKey(db, save, quest, npcId));
   final chose =
       hasQuestFlag(save, questId, 'choice:bribe') || hasQuestFlag(save, questId, 'choice:combat');
-  final needsTalkFirst = questNpcHasIncompleteTalk(db, save, quest, npcId) && !talkedThisStep;
   final donated = hasQuestFlag(save, questId, acceptGoldFlag);
   final needsDonate = parsed.acceptGoldCost > 0 && !donated;
   String acceptLabel;
@@ -370,7 +381,7 @@ NpcQuestBlock _questBlock(GameDatabase db, PlayerSave save, QuestRow quest, Stri
     name: name,
     summary: summary is String ? summary : null,
     status: status,
-    completedNote: _completedNote(db, quest),
+    completedNote: _completedNote(db, quest, npcId, save),
     acceptLabel: acceptLabel,
     donateLabel: 'Donate ${jsLocaleNumber(parsed.acceptGoldCost)} gold',
     pitchLine: pitch,
@@ -387,14 +398,9 @@ NpcQuestBlock _questBlock(GameDatabase db, PlayerSave save, QuestRow quest, Stri
     talkLabel: 'Talk',
     talkLine: questTalkLine(db, questId, npcId, save),
     idlePrompt: configString(db, 'copy.quest_active_prompt', _fallbackQuestActivePrompt),
-    canBribe:
-        status == 'active' &&
-        parsed.choiceNpcId == npcId &&
-        parsed.bribeGold > 0 &&
-        !chose &&
-        !needsTalkFirst,
+    canBribe: status == 'active' && parsed.choiceNpcId == npcId && parsed.bribeGold > 0 && !chose,
     bribeLabel: 'Bribe ${jsLocaleNumber(parsed.bribeGold)} gold',
-    canChooseCombat: status == 'active' && parsed.choiceNpcId == npcId && !chose && !needsTalkFirst,
+    canChooseCombat: status == 'active' && parsed.choiceNpcId == npcId && !chose,
     combatLabel: 'Pressure the Guards',
   );
 }
@@ -493,9 +499,13 @@ NpcConversation npcConversation(GameDatabase db, PlayerSave save, NpcRow npc, [n
 
 /// Either the updated save with a line to announce, or why nothing happened.
 class NpcActionResult {
-  const NpcActionResult.ok({required this.save, required this.message}) : reason = null;
+  const NpcActionResult.ok({
+    required this.save,
+    required this.message,
+    this.startedActivity = false,
+  }) : reason = null;
 
-  const NpcActionResult.failed(this.reason) : save = null, message = null;
+  const NpcActionResult.failed(this.reason) : save = null, message = null, startedActivity = false;
 
   bool get ok => reason == null;
   final PlayerSave? save;
@@ -503,9 +513,15 @@ class NpcActionResult {
   /// The line to show the player, present whenever [ok] is true.
   final String? message;
   final String? reason;
+  final bool startedActivity;
 
   Map<String, Object?> toJson() => ok
-      ? <String, Object?>{'ok': true, 'message': message, 'save': save!.toJson()}
+      ? <String, Object?>{
+          'ok': true,
+          'message': message,
+          'save': save!.toJson(),
+          'startedActivity': startedActivity,
+        }
       : <String, Object?>{'ok': false, 'reason': reason};
 }
 
@@ -576,7 +592,7 @@ NpcActionResult talkWithQuestNpc(GameDatabase db, PlayerSave save, String npcId)
       final name = quest['Display Name'];
       return NpcActionResult.ok(
         save: completed.save!,
-        message: 'Completed: ${name is String ? name : 'quest'}.',
+        message: 'Thank you — ${name is String ? name : 'quest'}.',
       );
     }
   }
@@ -589,12 +605,22 @@ NpcActionResult bribeForQuest(GameDatabase db, PlayerSave save, String questId) 
   return NpcActionResult.ok(save: result.save!, message: 'The purse changes hands.');
 }
 
-NpcActionResult chooseCombatForQuest(PlayerSave save, String questId) {
+NpcActionResult chooseCombatForQuest(
+  GameDatabase db,
+  PlayerSave save,
+  String questId,
+  num nowMs,
+  RandomFn random,
+) {
   final result = chooseQuestCombatRoute(save, questId);
   if (!result.ok) return NpcActionResult.failed(result.reason!);
+  final started = tryStartQuestChoiceCombat(db, result.save!, nowMs, random);
   return NpcActionResult.ok(
-    save: result.save!,
-    message: 'The guards look nervous. Pressure them nearby.',
+    save: started.save,
+    startedActivity: started.startedActivityId != null,
+    message: started.startedActivityId != null
+        ? 'The guards look nervous.'
+        : 'The guards look nervous. Pressure them nearby.',
   );
 }
 
