@@ -20,6 +20,7 @@ const KNOWN_REQUIREMENT_TYPES = [
   'Skill Level',
   'Quest Access',
   'Quest Active',
+  'Quest Complete',
   'Quest Flag',
   'Item Absent',
 ] as const

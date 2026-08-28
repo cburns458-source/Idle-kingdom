@@ -20,6 +20,26 @@ function parseIdQtyList(raw: string): Array<{ targetId: string; quantity: number
   return out
 }
 
+function parseSkillLevelList(raw: string): Array<{ skillId: string; level: number }> {
+  const out: Array<{ skillId: string; level: number }> = []
+  for (const part of raw.split(',')) {
+    const m = part.trim().match(/^(SKL-\d+)\s+(\d+)$/i)
+    if (!m) continue
+    out.push({ skillId: m[1].toUpperCase(), level: Number(m[2]) })
+  }
+  return out
+}
+
+function parseRewardXpList(raw: string): Array<{ skillId: string; amount: number }> {
+  const out: Array<{ skillId: string; amount: number }> = []
+  for (const part of raw.split(',')) {
+    const m = part.trim().match(/^(SKL-\d+)\s+(\d+)$/i)
+    if (!m) continue
+    out.push({ skillId: m[1].toUpperCase(), amount: Number(m[2]) })
+  }
+  return out
+}
+
 function parseIdList(raw: string): string[] {
   return raw
     .split(',')
@@ -76,6 +96,11 @@ const EMPTY_OBJECTIVES: StructuredQuestObjectives = {
   visitLocationIds: [],
   inspectIds: [],
   holds: [],
+  actionTargets: [],
+  requiresSkills: [],
+  requiresQuestIds: [],
+  unlockOnAcceptLocationIds: [],
+  rewardXp: [],
   goldCost: 0,
   acceptGoldCost: 0,
   rewardGold: 0,
@@ -85,6 +110,7 @@ const EMPTY_OBJECTIVES: StructuredQuestObjectives = {
   turnInNpcId: null,
   autoStartLocationId: null,
   autoCompleteOnTalk: false,
+  autoCompleteOnVisit: false,
   unlockLocationIds: [],
   rewardRecipeIds: [],
   rewardProjectNpcIds: [],
@@ -123,6 +149,7 @@ export function parseNotesObjectives(
   const visitMatch = noteField(notes, String.raw`Visit:\s*([^;]+)`)
   const inspectMatch = noteField(notes, String.raw`Inspect:\s*([^;]+)`)
   const holdMatch = noteField(notes, String.raw`Hold:\s*([^;]+)`)
+  const actionMatch = noteField(notes, String.raw`Action:\s*([^;]+)`)
   const goldMatch = noteField(notes, String.raw`GoldCost:\s*(\d+)`)
 
   if (delivers.length === 0 && kind === 'gather_deliver') {
@@ -163,6 +190,11 @@ export function parseNotesObjectives(
     visitLocationIds: visitMatch ? parseIdList(visitMatch) : [],
     inspectIds: inspectMatch ? parseTokenList(inspectMatch) : [],
     holds: holdMatch ? parseIdQtyList(holdMatch) : [],
+    actionTargets: actionMatch ? parseIdQtyList(actionMatch) : [],
+    requiresSkills: [],
+    requiresQuestIds: [],
+    unlockOnAcceptLocationIds: [],
+    rewardXp: [],
     goldCost: goldMatch ? Number(goldMatch) : 0,
     acceptGoldCost: 0,
     rewardGold: 0,
@@ -172,6 +204,7 @@ export function parseNotesObjectives(
     turnInNpcId: null,
     autoStartLocationId: null,
     autoCompleteOnTalk: false,
+    autoCompleteOnVisit: false,
     unlockLocationIds: [],
     rewardRecipeIds: [],
     rewardProjectNpcIds: [],
@@ -196,6 +229,10 @@ export function parseStructuredObjectives(quest: QuestRow): StructuredQuestObjec
   const turnInMatch = noteField(notes, String.raw`TurnInNpc:\s*([^;]+)`)
   const autoStartMatch = noteField(notes, String.raw`AutoStart:\s*([^;]+)`)
   const unlockMatch = noteField(notes, String.raw`UnlockLocation(?:s)?:\s*([^;]+)`)
+  const unlockOnAcceptMatch = noteField(notes, String.raw`UnlockOnAccept:\s*([^;]+)`)
+  const requiresSkillMatch = noteField(notes, String.raw`RequiresSkill:\s*([^;]+)`)
+  const requiresQuestMatch = noteField(notes, String.raw`RequiresQuest:\s*([^;]+)`)
+  const rewardXpMatch = noteField(notes, String.raw`RewardXp:\s*([^;]+)`)
   const rewardRecipeMatch = noteField(notes, String.raw`RewardRecipe:\s*([^;]+)`)
   const rewardNpcMatch = noteField(notes, String.raw`RewardProjectNpc:\s*([^;]+)`)
   const rewardCosmeticMatch = noteField(notes, String.raw`RewardCosmetic:\s*([^;]+)`)
@@ -210,6 +247,11 @@ export function parseStructuredObjectives(quest: QuestRow): StructuredQuestObjec
     turnInNpcId: singleId(turnInMatch),
     autoStartLocationId: singleId(autoStartMatch),
     autoCompleteOnTalk: /AutoCompleteOnTalk/i.test(notes),
+    autoCompleteOnVisit: /AutoCompleteOnVisit/i.test(notes),
+    requiresSkills: requiresSkillMatch ? parseSkillLevelList(requiresSkillMatch) : [],
+    requiresQuestIds: requiresQuestMatch ? parseIdList(requiresQuestMatch) : [],
+    unlockOnAcceptLocationIds: unlockOnAcceptMatch ? parseIdList(unlockOnAcceptMatch) : [],
+    rewardXp: rewardXpMatch ? parseRewardXpList(rewardXpMatch) : [],
     unlockLocationIds: unlockMatch ? parseIdList(unlockMatch) : [],
     rewardRecipeIds: rewardRecipeMatch ? parseIdList(rewardRecipeMatch) : [],
     rewardProjectNpcIds: rewardNpcMatch ? parseIdList(rewardNpcMatch) : [],
@@ -334,6 +376,17 @@ export function objectiveProgressFromStructured(
         key: `hold:${line.targetId}`,
         label: `Show ${name}`,
         current: inventoryCount(save, line.targetId),
+        required: line.quantity,
+      }
+    }),
+    ...structured.actionTargets.map((line) => {
+      const name =
+        db.Actions.find((action) => action['Action ID'] === line.targetId)?.['Display Name'] ??
+        line.targetId
+      return {
+        key: `action:${line.targetId}`,
+        label: name,
+        current: Number(counters[`action:${line.targetId}`] ?? 0),
         required: line.quantity,
       }
     }),

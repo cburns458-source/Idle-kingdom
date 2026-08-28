@@ -30,6 +30,12 @@ export interface StructuredQuestObjectives {
   inspectIds: string[]
   /** Show these items; they are not taken on turn-in. */
   holds: QuestCounterTarget[]
+  /** Gathering/combat actions that count toward the step. */
+  actionTargets: QuestCounterTarget[]
+  requiresSkills: Array<{ skillId: string; level: number }>
+  requiresQuestIds: string[]
+  unlockOnAcceptLocationIds: string[]
+  rewardXp: Array<{ skillId: string; amount: number }>
   goldCost: number
   acceptGoldCost: number
   rewardGold: number
@@ -40,6 +46,8 @@ export interface StructuredQuestObjectives {
   autoStartLocationId: string | null
   /** Complete the quest when the last Talk finishes, with no Turn in. */
   autoCompleteOnTalk: boolean
+  /** Complete the quest when the last Visit finishes. */
+  autoCompleteOnVisit: boolean
   unlockLocationIds: string[]
   rewardRecipeIds: string[]
   rewardProjectNpcIds: string[]

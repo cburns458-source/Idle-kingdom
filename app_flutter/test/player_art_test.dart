@@ -14,15 +14,15 @@ void main() {
     );
     expect(
       playerAssetPath(look, raceId: 'RACE-0006'),
-      'content/assets/player/player_dwarf_masculine.webp',
+      'content/assets/player/player_dwarf_masculine.png',
     );
     expect(
       playerAssetPath(look.copyWith(genderPresentation: 'APR-0019'), raceId: 'RACE-0006'),
-      'content/assets/player/player_dwarf_feminine.webp',
+      'content/assets/player/player_dwarf_feminine.png',
     );
     expect(
       playerAssetPath(look, raceId: 'RACE-MISSING'),
-      'content/assets/player/player_human_masculine.webp',
+      'content/assets/player/player_human_masculine.png',
     );
   });
 }

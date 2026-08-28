@@ -56,6 +56,19 @@ List<QuestRow> questsTouchingNpc(GameDatabase db, PlayerSave save, String npcId)
   return asQuestRows(db).where((quest) => questTouchesNpcForSave(db, save, quest, npcId)).toList();
 }
 
+bool questAvailableForSave(GameDatabase db, PlayerSave save, QuestRow quest) {
+  final parsed = parseStructuredObjectives(quest);
+  for (final requirement in parsed.requiresSkills) {
+    if (getSkillProgress(save, requirement.targetId).level < requirement.quantity) {
+      return false;
+    }
+  }
+  for (final requiredQuestId in parsed.requiresQuestIds) {
+    if (getQuestProgress(save, requiredQuestId).status != 'completed') return false;
+  }
+  return true;
+}
+
 QuestActionResult acceptQuest(
   GameDatabase db,
   PlayerSave save,
@@ -83,7 +96,14 @@ QuestActionResult acceptQuest(
       'Donate ${jsLocaleNumber(parsed.acceptGoldCost)} gold before starting this quest.',
     );
   }
+  if (!questAvailableForSave(db, save, quest)) {
+    return const QuestActionResult.failed('You are not ready for this quest yet.');
+  }
 
+  var unlocked = save.unlockedLocationIds;
+  for (final locationId in parsed.unlockOnAcceptLocationIds) {
+    unlocked = unlockLocation(unlocked, locationId);
+  }
   return QuestActionResult.ok(
     save.copyWith(
       quests: [
@@ -95,6 +115,7 @@ QuestActionResult acceptQuest(
           counters: getQuestProgress(save, questId).counters,
         ),
       ],
+      unlockedLocationIds: unlocked,
     ),
   );
 }
@@ -183,13 +204,18 @@ String _skillName(GameDatabase db, String skillId) {
 
 final RegExp _objectiveVerb = RegExp(r'^(Deliver|Defeat|Craft|Learn)\s+', caseSensitive: false);
 
-QuestCompletion completeQuest(GameDatabase db, PlayerSave save, String questId) {
+QuestCompletion completeQuest(
+  GameDatabase db,
+  PlayerSave save,
+  String questId, {
+  bool ignoreLocation = false,
+}) {
   final quest = getQuest(db, questId);
   if (quest == null) return const QuestCompletion.failed('Quest not found.');
   final parsed = parseStructuredObjectives(quest);
   final npcId = parsed.turnInNpcId ?? quest['NPC ID'];
   final npc = db.npcs.firstWhereOrNull((row) => row.raw['NPC ID'] == npcId);
-  if (npc == null || npc.raw['Location ID'] != save.currentLocationId) {
+  if (!ignoreLocation && (npc == null || npc.raw['Location ID'] != save.currentLocationId)) {
     return const QuestCompletion.failed('Return to the quest giver to turn this in.');
   }
 
@@ -257,17 +283,36 @@ QuestCompletion completeQuest(GameDatabase db, PlayerSave save, String questId) 
   var goldGained = 0.0;
   num pendingSkillXp = 0;
   final bribed = hasQuestFlag(save, questId, 'choice:bribe');
-  final xpSkill = quest['Reward XP Skill ID'];
-  final xpAmount = quest['Reward XP Amount'];
+  final xpGrants = parsed.rewardXp.isNotEmpty
+      ? parsed.rewardXp
+      : (quest['Reward XP Skill ID'] is String &&
+            (quest['Reward XP Skill ID'] as String).isNotEmpty &&
+            quest['Reward XP Amount'] is num)
+      ? <QuestCounterTarget>[
+          QuestCounterTarget(
+            targetId: quest['Reward XP Skill ID']! as String,
+            quantity: quest['Reward XP Amount']! as num,
+          ),
+        ]
+      : const <QuestCounterTarget>[];
   if (bribed && parsed.branchSkillXp > 0) {
     pendingSkillXp = parsed.branchSkillXp;
     rewards.add('Choose ${jsLocaleNumber(pendingSkillXp)} XP in a non-combat skill');
-  } else if (xpSkill is String && xpSkill.isNotEmpty && xpAmount is num && xpAmount > 0) {
-    final applied = applyXp(next, db, xpSkill, xpAmount);
-    next = applied.save;
-    rewards.add('${jsLocaleNumber(xpAmount)} ${_skillName(db, xpSkill)} XP');
-    final xpLine = summarizeXpReward(db, next, xpSkill, xpAmount, applied.leveledUpTo);
-    if (xpLine != null) xpRewards.add(xpLine);
+  } else {
+    for (final grant in xpGrants) {
+      if (grant.quantity <= 0) continue;
+      final applied = applyXp(next, db, grant.targetId, grant.quantity);
+      next = applied.save;
+      rewards.add('${jsLocaleNumber(grant.quantity)} ${_skillName(db, grant.targetId)} XP');
+      final xpLine = summarizeXpReward(
+        db,
+        next,
+        grant.targetId,
+        grant.quantity,
+        applied.leveledUpTo,
+      );
+      if (xpLine != null) xpRewards.add(xpLine);
+    }
   }
 
   if (parsed.rewardGold > 0) {
@@ -361,6 +406,20 @@ QuestCompletion completeQuest(GameDatabase db, PlayerSave save, String questId) 
     ),
     message: rewards.isNotEmpty ? 'Quest complete — ${rewards.join(' and ')}.' : 'Quest complete.',
   );
+}
+
+PlayerSave applyQuestAutoCompleteOnVisit(GameDatabase db, PlayerSave save) {
+  var next = save;
+  for (final quest in asQuestRows(db)) {
+    final parsed = parseStructuredObjectives(quest);
+    if (!parsed.autoCompleteOnVisit) continue;
+    final questId = jsString(quest['Quest ID']);
+    if (getQuestProgress(next, questId).status != 'active') continue;
+    if (!questAllStepsComplete(db, next, quest)) continue;
+    final completed = completeQuest(db, next, questId, ignoreLocation: true);
+    if (completed.ok) next = completed.save!;
+  }
+  return next;
 }
 
 /// Skills the bribe-route popup may grant, Combat excluded.

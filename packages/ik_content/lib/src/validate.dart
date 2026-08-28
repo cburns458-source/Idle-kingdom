@@ -47,6 +47,7 @@ const List<String> _knownRequirementTypes = <String>[
   'Skill Level',
   'Quest Access',
   'Quest Active',
+  'Quest Complete',
   'Quest Flag',
   'Item Absent',
 ];

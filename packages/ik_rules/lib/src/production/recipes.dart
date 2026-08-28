@@ -74,12 +74,14 @@ const Map<String, String> _sharedRecipeFacilityIds = <String, String>{
   'FAC-0013': 'FAC-0003',
   'FAC-0014': 'FAC-0004',
   'FAC-0015': 'FAC-0006',
+  'FAC-0018': 'FAC-0004',
 };
 
 /// Citadel special-production facilities reuse Town project catalogs.
 const Map<String, String> sharedProjectFacilityIds = <String, String>{
   'FAC-0013': 'FAC-0003',
   'FAC-0016': 'FAC-0005',
+  'FAC-0019': 'FAC-0005',
 };
 
 String projectFacilityIdForLookup(String facilityId) {

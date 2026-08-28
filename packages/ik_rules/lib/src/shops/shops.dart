@@ -136,8 +136,19 @@ num? playerSellPrice(GameDatabase db, ShopRow shop, String itemId) {
     return (base * miningOreSellMult).round();
   }
   if (key == 'wizards_shop') return null;
+  if (key == 'helges_forge') {
+    if (item == null || isOreItem(item) || !isSmithingProjectOutput(db, itemId)) return null;
+    return (base * generalSellMult).round();
+  }
   // General store buys ordinary items at Base Sell Value.
   return (base * generalSellMult).round();
+}
+
+bool isSmithingProjectOutput(GameDatabase db, String itemId) {
+  return db.projects.any(
+    (project) =>
+        project.raw['Skill ID'] == 'SKL-0011' && project.raw['Output Item / Target ID'] == itemId,
+  );
 }
 
 bool shopSellsItem(ShopRow shop, String itemId) {

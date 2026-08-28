@@ -141,7 +141,7 @@ describe('npc conversation', () => {
     const conversation = npcConversation(launch, saveAt('LOC-0012'), npc('NPC-0008'), nowMs)
     expect(conversation.whereabouts?.label).toBe('Ask where the Master Dwarf is')
     expect(conversation.whereabouts?.line).toMatch(
-      /^The Master Dwarf is at the (Mountains|Deep Mines|Abandoned Mineshaft) today\.$/,
+      /^The Master Dwarf is at the (Mountains|Deep Mines) today\.$/,
     )
   })
 

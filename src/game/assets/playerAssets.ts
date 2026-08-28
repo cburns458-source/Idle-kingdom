@@ -16,7 +16,7 @@ const RACE_PLAYER_KEYS: Record<string, string> = {
 }
 
 /** @deprecated Prefer {@link playerPortraitAssetPath}. Kept for older imports. */
-export const PLAYER_COMBAT_ASSET_PATH = '/assets/player/player_human_feminine.webp'
+export const PLAYER_COMBAT_ASSET_PATH = '/assets/player/player_human_feminine.png'
 
 /** Feminine and androgynous share one plate per race; masculine has its own. */
 export function playerArtStem(
@@ -33,20 +33,20 @@ export function playerArtStem(
 export function genderPresentationAssetPath(
   genderPresentationId: string | null | undefined,
 ): string {
-  return withAssetVersion(`/assets/player/${playerArtStem(null, genderPresentationId)}.webp`)
+  return withAssetVersion(`/assets/player/${playerArtStem(null, genderPresentationId)}.png`)
 }
 
 export function playerPortraitAssetPath(
   appearanceOrSave: PlayerAppearance | PlayerSave | null | undefined,
 ): string {
   if (!appearanceOrSave) {
-    return withAssetVersion(`/assets/player/${playerArtStem(null, DEFAULT_GENDER_PRESENTATION_ID)}.webp`)
+    return withAssetVersion(`/assets/player/${playerArtStem(null, DEFAULT_GENDER_PRESENTATION_ID)}.png`)
   }
   const raceId = 'raceId' in appearanceOrSave ? appearanceOrSave.raceId : null
   const appearance =
     'appearance' in appearanceOrSave ? appearanceOrSave.appearance : appearanceOrSave
   return withAssetVersion(
-    `/assets/player/${playerArtStem(raceId, appearance?.genderPresentation)}.webp`,
+    `/assets/player/${playerArtStem(raceId, appearance?.genderPresentation)}.png`,
   )
 }
 

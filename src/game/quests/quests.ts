@@ -1,7 +1,7 @@
 import { summarizeXpReward } from '../activity/rewardSummary'
 import { addItemToInventory } from '../activity/rewards'
 import type { ActionRewardBundle, ActionXpRewardSummary, LootGrant } from '../activity/types'
-import { applyXp } from '../activity/xp'
+import { applyXp, getSkillProgress } from '../activity/xp'
 import { COMBAT_SKILL_ID } from '../combat/stats'
 import { cosmeticById, grantCosmetic } from '../cosmetics/cosmetics'
 import type { GameDatabase, SkillRow } from '../data/types'
@@ -16,7 +16,7 @@ import {
   recordQuestFlag,
   setQuestFlag,
 } from './progress'
-import { questAllStepDelivers, questTouchesNpcForSave, questUsesSteps } from './steps'
+import { questAllStepDelivers, questAllStepsComplete, questTouchesNpcForSave, questUsesSteps } from './steps'
 
 /** Set when the player pays AcceptGold without starting the quest yet. */
 export const ACCEPT_GOLD_FLAG = 'accept-gold'
@@ -61,6 +61,22 @@ export function questsTouchingNpc(
   return asQuestRows(db).filter((quest) => questTouchesNpcForSave(db, save, quest, npcId))
 }
 
+/** Skill and prior-quest gates from quest Notes. */
+export function questAvailableForSave(
+  _db: GameDatabase,
+  save: PlayerSave,
+  quest: QuestRow,
+): boolean {
+  const parsed = parseStructuredObjectives(quest)
+  for (const requirement of parsed.requiresSkills) {
+    if (getSkillProgress(save, requirement.skillId).level < requirement.level) return false
+  }
+  for (const requiredQuestId of parsed.requiresQuestIds) {
+    if (getQuestProgress(save, requiredQuestId).status !== 'completed') return false
+  }
+  return true
+}
+
 export function getQuestProgress(save: PlayerSave, questId: string): QuestProgress {
   return (
     save.quests.find((quest) => quest.questId === questId) ?? {
@@ -103,6 +119,9 @@ export function acceptQuest(
       reason: `Donate ${parsed.acceptGoldCost.toLocaleString()} gold before starting this quest.`,
     }
   }
+  if (!questAvailableForSave(db, save, quest)) {
+    return { ok: false, reason: 'You are not ready for this quest yet.' }
+  }
 
   const nextQuests = save.quests.filter((row) => row.questId !== questId)
   nextQuests.push({
@@ -111,7 +130,11 @@ export function acceptQuest(
     progress: 0,
     counters: getQuestProgress(save, questId).counters,
   })
-  return { ok: true, save: { ...save, quests: nextQuests } }
+  let unlocked = save.unlockedLocationIds ?? []
+  for (const locationId of parsed.unlockOnAcceptLocationIds) {
+    unlocked = unlockLocation({ unlockedLocationIds: unlocked }, locationId)
+  }
+  return { ok: true, save: { ...save, quests: nextQuests, unlockedLocationIds: unlocked } }
 }
 
 /** Pays AcceptGold and remembers it. Does not start the quest. */
@@ -168,6 +191,7 @@ export function completeQuest(
   db: GameDatabase,
   save: PlayerSave,
   questId: string,
+  options: { ignoreLocation?: boolean } = {},
 ):
   | {
       ok: true
@@ -184,7 +208,7 @@ export function completeQuest(
   const parsed = parseStructuredObjectives(quest)
   const npcId = parsed.turnInNpcId ?? quest['NPC ID']
   const npc = db.NPCs.find((row) => row['NPC ID'] === npcId)
-  if (!npc || npc['Location ID'] !== save.currentLocationId) {
+  if (!options.ignoreLocation && (!npc || npc['Location ID'] !== save.currentLocationId)) {
     return { ok: false, reason: 'Return to the quest giver to turn this in.' }
   }
 
@@ -248,21 +272,28 @@ export function completeQuest(
   let goldGained = 0
   let pendingSkillXp = 0
   const bribed = hasQuestFlag(save, questId, 'choice:bribe')
-  const xpSkill = quest['Reward XP Skill ID']
-  const xpAmount = quest['Reward XP Amount']
+  const xpGrants =
+    parsed.rewardXp.length > 0
+      ? parsed.rewardXp
+      : quest['Reward XP Skill ID'] && typeof quest['Reward XP Amount'] === 'number'
+        ? [{ skillId: quest['Reward XP Skill ID'], amount: quest['Reward XP Amount'] }]
+        : []
   if (bribed && parsed.branchSkillXp > 0) {
     pendingSkillXp = parsed.branchSkillXp
     rewards.push({
       label: `Choose ${pendingSkillXp.toLocaleString()} XP in a non-combat skill`,
     })
-  } else if (xpSkill && typeof xpAmount === 'number' && xpAmount > 0) {
-    const applied = applyXp(next, db, xpSkill, xpAmount)
-    next = applied.save
-    const skillName =
-      db.Skills.find((skill) => skill['Skill ID'] === xpSkill)?.['Display Name'] ?? 'skill'
-    rewards.push({ label: `${xpAmount.toLocaleString()} ${skillName} XP` })
-    const xpLine = summarizeXpReward(db, next, xpSkill, xpAmount, applied.leveledUpTo)
-    if (xpLine) xpRewards.push(xpLine)
+  } else {
+    for (const grant of xpGrants) {
+      if (grant.amount <= 0) continue
+      const applied = applyXp(next, db, grant.skillId, grant.amount)
+      next = applied.save
+      const skillName =
+        db.Skills.find((skill) => skill['Skill ID'] === grant.skillId)?.['Display Name'] ?? 'skill'
+      rewards.push({ label: `${grant.amount.toLocaleString()} ${skillName} XP` })
+      const xpLine = summarizeXpReward(db, next, grant.skillId, grant.amount, applied.leveledUpTo)
+      if (xpLine) xpRewards.push(xpLine)
+    }
   }
 
   if (parsed.rewardGold > 0) {
@@ -415,6 +446,20 @@ export function chooseQuestCombatRoute(
     return { ok: false, reason: 'You already chose how to handle this.' }
   }
   return { ok: true, save: setQuestFlag(save, questId, 'choice:combat') }
+}
+
+/** Completes visit-finish quests after arrival progress is applied. */
+export function applyQuestAutoCompleteOnVisit(db: GameDatabase, save: PlayerSave): PlayerSave {
+  let next = save
+  for (const quest of asQuestRows(db)) {
+    const parsed = parseStructuredObjectives(quest)
+    if (!parsed.autoCompleteOnVisit) continue
+    if (getQuestProgress(next, quest['Quest ID']).status !== 'active') continue
+    if (!questAllStepsComplete(db, next, quest)) continue
+    const completed = completeQuest(db, next, quest['Quest ID'], { ignoreLocation: true })
+    if (completed.ok) next = completed.save
+  }
+  return next
 }
 
 export function questStatusLabel(

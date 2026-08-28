@@ -35,6 +35,11 @@ class StructuredQuestObjectives {
     required this.visitLocationIds,
     required this.inspectIds,
     required this.holds,
+    required this.actionTargets,
+    required this.requiresSkills,
+    required this.requiresQuestIds,
+    required this.unlockOnAcceptLocationIds,
+    required this.rewardXp,
     required this.goldCost,
     required this.acceptGoldCost,
     required this.rewardGold,
@@ -44,6 +49,7 @@ class StructuredQuestObjectives {
     required this.turnInNpcId,
     required this.autoStartLocationId,
     required this.autoCompleteOnTalk,
+    required this.autoCompleteOnVisit,
     required this.unlockLocationIds,
     required this.rewardRecipeIds,
     required this.rewardProjectNpcIds,
@@ -64,6 +70,11 @@ class StructuredQuestObjectives {
   final List<String> visitLocationIds;
   final List<String> inspectIds;
   final List<QuestCounterTarget> holds;
+  final List<QuestCounterTarget> actionTargets;
+  final List<QuestCounterTarget> requiresSkills;
+  final List<String> requiresQuestIds;
+  final List<String> unlockOnAcceptLocationIds;
+  final List<QuestCounterTarget> rewardXp;
   final num goldCost;
   final num acceptGoldCost;
   final num rewardGold;
@@ -73,6 +84,7 @@ class StructuredQuestObjectives {
   final String? turnInNpcId;
   final String? autoStartLocationId;
   final bool autoCompleteOnTalk;
+  final bool autoCompleteOnVisit;
   final List<String> unlockLocationIds;
   final List<String> rewardRecipeIds;
   final List<String> rewardProjectNpcIds;
@@ -92,6 +104,15 @@ class StructuredQuestObjectives {
     'visitLocationIds': visitLocationIds,
     'inspectIds': inspectIds,
     'holds': holds.map((line) => line.toJson()).toList(),
+    'actionTargets': actionTargets.map((line) => line.toJson()).toList(),
+    'requiresSkills': requiresSkills
+        .map((line) => <String, Object?>{'skillId': line.targetId, 'level': line.quantity})
+        .toList(),
+    'requiresQuestIds': requiresQuestIds,
+    'unlockOnAcceptLocationIds': unlockOnAcceptLocationIds,
+    'rewardXp': rewardXp
+        .map((line) => <String, Object?>{'skillId': line.targetId, 'amount': line.quantity})
+        .toList(),
     'goldCost': goldCost,
     'acceptGoldCost': acceptGoldCost,
     'rewardGold': rewardGold,
@@ -101,6 +122,7 @@ class StructuredQuestObjectives {
     'turnInNpcId': turnInNpcId,
     'autoStartLocationId': autoStartLocationId,
     'autoCompleteOnTalk': autoCompleteOnTalk,
+    'autoCompleteOnVisit': autoCompleteOnVisit,
     'unlockLocationIds': unlockLocationIds,
     'rewardRecipeIds': rewardRecipeIds,
     'rewardProjectNpcIds': rewardProjectNpcIds,
@@ -115,6 +137,23 @@ List<QuestCounterTarget> _parseIdQtyList(String raw) {
   final out = <QuestCounterTarget>[];
   for (final part in raw.split(',')) {
     final match = _idQuantity.firstMatch(part.trim());
+    if (match == null) continue;
+    out.add(
+      QuestCounterTarget(
+        targetId: match.group(1)!.toUpperCase(),
+        quantity: jsNumber(match.group(2)),
+      ),
+    );
+  }
+  return out;
+}
+
+final RegExp _skillAmount = RegExp(r'^(SKL-\d+)\s+(\d+)$', caseSensitive: false);
+
+List<QuestCounterTarget> _parseSkillAmountList(String raw) {
+  final out = <QuestCounterTarget>[];
+  for (final part in raw.split(',')) {
+    final match = _skillAmount.firstMatch(part.trim());
     if (match == null) continue;
     out.add(
       QuestCounterTarget(
@@ -195,6 +234,7 @@ StructuredQuestObjectives parseNotesObjectives(
   final visitNote = _noteField(notes, r'Visit:\s*([^;]+)');
   final inspectNote = _noteField(notes, r'Inspect:\s*([^;]+)');
   final holdNote = _noteField(notes, r'Hold:\s*([^;]+)');
+  final actionNote = _noteField(notes, r'Action:\s*([^;]+)');
   final goldNote = _noteField(notes, r'GoldCost:\s*(\d+)');
 
   if (delivers.isEmpty && kind == 'gather_deliver') {
@@ -242,6 +282,11 @@ StructuredQuestObjectives parseNotesObjectives(
     visitLocationIds: visitNote == null ? const <String>[] : _parseIdList(visitNote),
     inspectIds: inspectNote == null ? const <String>[] : _parseTokenList(inspectNote),
     holds: holdNote == null ? const <QuestCounterTarget>[] : _parseIdQtyList(holdNote),
+    actionTargets: actionNote == null ? const <QuestCounterTarget>[] : _parseIdQtyList(actionNote),
+    requiresSkills: const <QuestCounterTarget>[],
+    requiresQuestIds: const <String>[],
+    unlockOnAcceptLocationIds: const <String>[],
+    rewardXp: const <QuestCounterTarget>[],
     goldCost: goldNote == null ? 0 : jsNumber(goldNote),
     acceptGoldCost: 0,
     rewardGold: 0,
@@ -251,6 +296,7 @@ StructuredQuestObjectives parseNotesObjectives(
     turnInNpcId: null,
     autoStartLocationId: null,
     autoCompleteOnTalk: false,
+    autoCompleteOnVisit: false,
     unlockLocationIds: const <String>[],
     rewardRecipeIds: const <String>[],
     rewardProjectNpcIds: const <String>[],
@@ -301,6 +347,10 @@ StructuredQuestObjectives parseStructuredObjectives(QuestRow quest) {
   final turnInNote = _noteField(notes, r'TurnInNpc:\s*([^;]+)');
   final autoStartNote = _noteField(notes, r'AutoStart:\s*([^;]+)');
   final unlockNote = _noteField(notes, r'UnlockLocation(?:s)?:\s*([^;]+)');
+  final unlockOnAcceptNote = _noteField(notes, r'UnlockOnAccept:\s*([^;]+)');
+  final requiresSkillNote = _noteField(notes, r'RequiresSkill:\s*([^;]+)');
+  final requiresQuestNote = _noteField(notes, r'RequiresQuest:\s*([^;]+)');
+  final rewardXpNote = _noteField(notes, r'RewardXp:\s*([^;]+)');
   final rewardRecipeNote = _noteField(notes, r'RewardRecipe:\s*([^;]+)');
   final rewardNpcNote = _noteField(notes, r'RewardProjectNpc:\s*([^;]+)');
   final rewardCosmeticNote = _noteField(notes, r'RewardCosmetic:\s*([^;]+)');
@@ -319,6 +369,19 @@ StructuredQuestObjectives parseStructuredObjectives(QuestRow quest) {
     visitLocationIds: objectives.visitLocationIds,
     inspectIds: objectives.inspectIds,
     holds: objectives.holds,
+    actionTargets: objectives.actionTargets,
+    requiresSkills: requiresSkillNote == null
+        ? const <QuestCounterTarget>[]
+        : _parseSkillAmountList(requiresSkillNote),
+    requiresQuestIds: requiresQuestNote == null
+        ? const <String>[]
+        : _parseIdList(requiresQuestNote),
+    unlockOnAcceptLocationIds: unlockOnAcceptNote == null
+        ? const <String>[]
+        : _parseIdList(unlockOnAcceptNote),
+    rewardXp: rewardXpNote == null
+        ? const <QuestCounterTarget>[]
+        : _parseSkillAmountList(rewardXpNote),
     goldCost: objectives.goldCost,
     acceptGoldCost: acceptGoldNote == null ? 0 : jsNumber(acceptGoldNote),
     rewardGold: rewardGoldNote == null ? 0 : jsNumber(rewardGoldNote),
@@ -328,6 +391,7 @@ StructuredQuestObjectives parseStructuredObjectives(QuestRow quest) {
     turnInNpcId: _singleId(turnInNote),
     autoStartLocationId: _singleId(autoStartNote),
     autoCompleteOnTalk: RegExp(r'AutoCompleteOnTalk', caseSensitive: false).hasMatch(notes),
+    autoCompleteOnVisit: RegExp(r'AutoCompleteOnVisit', caseSensitive: false).hasMatch(notes),
     unlockLocationIds: unlockNote == null ? const <String>[] : _parseIdList(unlockNote),
     rewardRecipeIds: rewardRecipeNote == null ? const <String>[] : _parseIdList(rewardRecipeNote),
     rewardProjectNpcIds: rewardNpcNote == null ? const <String>[] : _parseIdList(rewardNpcNote),
@@ -480,6 +544,13 @@ QuestObjectiveStatus objectiveProgressFromStructured(
         current: inventoryCount(save, line.targetId),
         required: line.quantity,
       ),
+    for (final line in structured.actionTargets)
+      QuestProgressLine(
+        key: 'action:${line.targetId}',
+        label: _actionName(db, line.targetId),
+        current: counters['action:${line.targetId}'] ?? 0,
+        required: line.quantity,
+      ),
     if (structured.goldCost > 0)
       QuestProgressLine(
         key: 'gold',
@@ -560,6 +631,13 @@ String _itemName(GameDatabase db, String itemId) {
       .firstWhereOrNull((item) => item.raw['Item ID'] == itemId)
       ?.raw['Display Name'];
   return displayName is String ? displayName : itemId;
+}
+
+String _actionName(GameDatabase db, String actionId) {
+  final displayName = db.actions
+      .firstWhereOrNull((action) => action.raw['Action ID'] == actionId)
+      ?.raw['Display Name'];
+  return displayName is String ? displayName : actionId;
 }
 
 String _npcDisplayName(GameDatabase db, String npcId) {
