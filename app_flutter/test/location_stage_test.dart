@@ -33,7 +33,7 @@ void main() {
       seed: startedCharacter(database).copyWith(currentLocationId: 'LOC-0001'),
     );
     addTearDown(controller.dispose);
-    await pumpShell(tester, controller);
+    await pumpShell(tester, controller, size: const Size(420, 420 * 16 / 9));
 
     expect(controller.save.currentActivityId, isNull);
     expect(find.byType(ActionStage), findsNothing);
@@ -46,6 +46,31 @@ void main() {
       find.descendant(of: find.bySemanticsLabel('Adventurer'), matching: find.byType(Image)),
     );
     expect(playerArt.height, 137);
+
+    final title = tester.getRect(find.text('The Farm').first);
+    final activities = tester.getRect(find.text('Activities'));
+    expect(activities.top - player.bottom, lessThan(player.top - title.bottom));
+  });
+
+  testWidgets('idle adventurer stays at combat height on the farm', (tester) async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(currentLocationId: 'LOC-0001'),
+    );
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller, size: const Size(420, 420 * 16 / 9));
+
+    final idle = tester.getRect(find.bySemanticsLabel('Adventurer'));
+    await tapVisible(
+      tester,
+      find.descendant(of: dockRow('Tend the pasture'), matching: find.bySemanticsLabel('Start')),
+    );
+    final fighting = tester.getRect(find.bySemanticsLabel('Adventurer'));
+    final enemy = tester.getRect(
+      find.byWidgetPredicate((widget) => assetNamed(widget, '/enemies/')),
+    );
+    expect(fighting.top, closeTo(idle.top, 6));
+    expect(fighting.top, closeTo(enemy.top, 6));
   });
 
   testWidgets('gathering shows the two-column stage and action art', (tester) async {
