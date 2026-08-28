@@ -111,7 +111,15 @@ void main() {
     save = save.copyWith(currentLocationId: 'LOC-0001');
     expect(npcConversation(db, save, fennel).quests.single.talkLine, contains('sword and shield'));
 
-    final finished = talkWithQuestNpc(db, save, 'NPC-0014');
+    final advice = talkWithQuestNpc(db, save, 'NPC-0014');
+    expect(advice.ok, isTrue);
+    expect(getQuestProgress(advice.save!, 'QST-0006').status, 'active');
+    expect(
+      npcConversation(db, advice.save!, fennel).quests.single.talkLine,
+      contains('Good luck on your adventure'),
+    );
+
+    final finished = talkWithQuestNpc(db, advice.save!, 'NPC-0014');
     expect(finished.ok, isTrue);
     expect(getQuestProgress(finished.save!, 'QST-0006').status, 'completed');
     expect(
@@ -137,6 +145,7 @@ void main() {
 
     final pitched = npcConversation(db, save, merchant);
     expect(pitched.quests.single.questId, 'QST-0007');
+    expect(pitched.quests.single.pitchLine, contains('Could you help me get the old forge'));
     expect(pitched.quests.single.canAccept, isTrue);
 
     final accepted = acceptQuest(db, save, 'QST-0007');
@@ -234,6 +243,29 @@ void main() {
         leftHidden,
       ),
       isFalse,
+    );
+  });
+
+  test('Going Deeper lists rubble counts on the journal and activity card', () {
+    var save = _save(db, locationId: 'LOC-0011').copyWith(
+      quests: const [QuestProgress(questId: 'QST-0008', status: 'active', progress: 0)],
+    );
+    save = applyQuestTalkProgress(db, save, 'NPC-0015');
+    final quest = db.quests.firstWhere((row) => row['Quest ID'] == 'QST-0008');
+    expect(questStepJournal(db, save, quest).map((step) => step.label), contains('Clear a rubble pile 0 / 100'));
+    expect(
+      questActionProgressForActivity(db, save, 'ACT-0044').map((line) => line.caption),
+      ['Clear a rubble pile 0 / 100'],
+    );
+
+    save = applyQuestActionProgress(db, save, 'ACN-0177', 12);
+    expect(
+      questActionProgressForActivity(db, save, 'ACT-0044').map((line) => line.caption),
+      ['Clear a rubble pile 12 / 100'],
+    );
+    expect(
+      questStepJournal(db, save, quest).map((step) => step.label),
+      contains('Clear a rubble pile 12 / 100'),
     );
   });
 

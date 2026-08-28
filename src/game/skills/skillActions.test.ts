@@ -79,28 +79,32 @@ describe('skill menu entries', () => {
   it('groups same-tier combat armor as material equipment', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const combat = skillMenuView(launch, 'SKL-0001')
-    expect(combat.tabs.map((tab) => tab.label)).toEqual(['Enemies', 'Equipment', 'Weapons'])
+    expect(combat.tabs.map((tab) => tab.label)).toEqual(['Enemies', 'Equipment', 'Weapons', 'Other'])
     const gear = combat.tabs.find((tab) => tab.id === 'gear')?.sections[0]?.entries ?? []
     const weapons = combat.tabs.find((tab) => tab.id === 'weapons')?.sections[0]?.entries ?? []
+    const other = combat.tabs.find((tab) => tab.id === 'other')?.sections[0]?.entries ?? []
     expect(gear.some((item) => item.displayName === 'Tungsten equipment')).toBe(true)
     expect(gear.some((item) => item.displayName === 'Reinforced Steel equipment')).toBe(true)
-    expect(gear.some((item) => item.displayName === 'Bull Horn equipment')).toBe(true)
-    expect(gear.some((item) => item.displayName === 'Wooden equipment')).toBe(true)
-    expect(gear.some((item) => item.displayName === 'Leather equipment' && item.level === 1)).toBe(
-      true,
-    )
+    expect(gear.some((item) => item.displayName === 'Bull Horn equipment')).toBe(false)
+    expect(gear.some((item) => item.displayName === 'Wooden equipment')).toBe(false)
+    expect(gear.some((item) => item.displayName === 'Leather equipment')).toBe(false)
     expect(gear.some((item) => item.displayName === 'Leather Helmet')).toBe(false)
     expect(gear.some((item) => item.displayName === 'Tungsten Helmet')).toBe(false)
     expect(gear.some((item) => item.displayName === 'Tungsten Shield')).toBe(false)
     expect(gear.some((item) => item.displayName === 'Tungsten Sword')).toBe(false)
     expect(weapons.some((item) => item.displayName === 'Tungsten weapons')).toBe(true)
-    expect(weapons.some((item) => item.displayName === 'Wooden weapons')).toBe(true)
+    expect(weapons.some((item) => item.displayName === 'Wooden weapons')).toBe(false)
     expect(weapons.some((item) => item.displayName === 'Steel weapons')).toBe(true)
     expect(weapons.some((item) => item.displayName === 'Tungsten Sword')).toBe(false)
     expect(weapons.some((item) => item.displayName === 'Wooden Sword')).toBe(false)
     expect(weapons.some((item) => item.displayName === 'Steel Warhammer')).toBe(false)
-    expect(weapons.some((item) => item.displayName === 'Cedar Bow')).toBe(true)
+    expect(weapons.some((item) => item.displayName === 'Cedar Bow')).toBe(false)
     expect(weapons.some((item) => item.displayName === 'Tungsten Shield')).toBe(false)
+    expect(other.some((item) => item.displayName === 'Bull Horn Helmet')).toBe(true)
+    expect(other.some((item) => item.displayName === 'Wooden Sword')).toBe(true)
+    expect(other.some((item) => item.displayName === 'Leather Helmet' && item.level === 1)).toBe(true)
+    expect(other.some((item) => item.displayName === 'Cedar Bow')).toBe(true)
+    expect(other.some((item) => item.displayName === 'Boar Spear')).toBe(true)
   })
 
   it('lists smithing projects by output item name and required level', () => {

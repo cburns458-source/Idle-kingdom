@@ -205,6 +205,7 @@ function tabsForSkill(db: GameDatabase, skillId: string): SkillMenuTab[] {
       listTab('enemies', 'Enemies', combatEnemyEntries(db)),
       listTab('gear', 'Equipment', combatEquipmentEntries(db)),
       listTab('weapons', 'Weapons', combatWeaponEntries(db)),
+      listTab('other', 'Other', combatOtherEntries(db)),
     ]
   }
   if (
@@ -315,7 +316,7 @@ function combatEquipmentEntries(db: GameDatabase): SkillMenuListItem[] {
   const seen = new Set<string>()
   for (const item of combatGearItems(db)) {
     const material = armorMaterial(item.displayName)
-    if (!material) continue
+    if (!material || !isMetalMaterial(material)) continue
     const key = `${item.level ?? ''}|${material}`
     if (seen.has(key)) continue
     seen.add(key)
@@ -330,15 +331,11 @@ function combatEquipmentEntries(db: GameDatabase): SkillMenuListItem[] {
 
 function combatWeaponEntries(db: GameDatabase): SkillMenuListItem[] {
   const grouped: SkillMenuListItem[] = []
-  const leftover: SkillMenuListItem[] = []
   const seen = new Set<string>()
   for (const item of combatGearItems(db)) {
     if (armorMaterial(item.displayName)) continue
     const material = weaponMaterial(item.displayName)
-    if (!material) {
-      leftover.push(item)
-      continue
-    }
+    if (!material || !isMetalMaterial(material)) continue
     const key = `${item.level ?? ''}|${material}`
     if (seen.has(key)) continue
     seen.add(key)
@@ -348,7 +345,19 @@ function combatWeaponEntries(db: GameDatabase): SkillMenuListItem[] {
       level: item.level,
     })
   }
-  return dedupeByName([...grouped, ...leftover])
+  return dedupeByName(grouped)
+}
+
+function combatOtherEntries(db: GameDatabase): SkillMenuListItem[] {
+  return dedupeByName(
+    combatGearItems(db).filter((item) => {
+      const armor = armorMaterial(item.displayName)
+      if (armor) return !isMetalMaterial(armor)
+      const weapon = weaponMaterial(item.displayName)
+      if (weapon) return !isMetalMaterial(weapon)
+      return true
+    }),
+  )
 }
 
 function gatheringToolEntries(db: GameDatabase, skillId: string): SkillMenuListItem[] {
@@ -443,6 +452,26 @@ function compareMenuItems(a: SkillMenuListItem, b: SkillMenuListItem): number {
   const bLevel = b.level ?? Number.POSITIVE_INFINITY
   if (aLevel !== bLevel) return aLevel - bLevel
   return a.displayName.localeCompare(b.displayName)
+}
+
+const METAL_MATERIALS = new Set([
+  'copper',
+  'tin',
+  'bronze',
+  'iron',
+  'steel',
+  'reinforced steel',
+  'titanium',
+  'tungsten',
+  'silver',
+  'gold',
+  'mithril',
+])
+
+function isMetalMaterial(material: string): boolean {
+  const lower = material.toLowerCase()
+  if (METAL_MATERIALS.has(lower)) return true
+  return /^(copper|tin|bronze|iron|steel|titanium|tungsten|silver|gold|mithril)/i.test(lower)
 }
 
 function smithingMaterial(name: string): string | null {

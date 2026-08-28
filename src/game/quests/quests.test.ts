@@ -24,8 +24,10 @@ import {
   chooseQuestCombatRoute,
   completeQuest,
   donateForQuest,
+  getQuest,
   getQuestProgress,
 } from './quests'
+import { questActionProgressForActivity, questStepJournal } from './steps'
 import { CAVE_MAP_ID } from '../world/constants'
 import { applyTravelArrival, canTravelTo, locationsForMapView } from '../world/travel'
 
@@ -288,7 +290,15 @@ describe('quest tours', () => {
     save = { ...save, currentLocationId: 'LOC-0001' }
     expect(npcConversation(launch, save, fennel).quests[0]?.talkLine).toMatch(/sword and shield/i)
 
-    const finished = talkWithQuestNpc(launch, save, 'NPC-0014')
+    const advice = talkWithQuestNpc(launch, save, 'NPC-0014')
+    expect(advice.ok).toBe(true)
+    if (!advice.ok) return
+    expect(getQuestProgress(advice.save, 'QST-0006').status).toBe('active')
+    expect(npcConversation(launch, advice.save, fennel).quests[0]?.talkLine).toMatch(
+      /Good luck on your adventure/i,
+    )
+
+    const finished = talkWithQuestNpc(launch, advice.save, 'NPC-0014')
     expect(finished.ok).toBe(true)
     if (!finished.ok) return
     expect(getQuestProgress(finished.save, 'QST-0006').status).toBe('completed')
@@ -383,5 +393,34 @@ describe('quest tours', () => {
       locationsForMapView(launch, CAVE_MAP_ID, leftHidden).map((row) => row['Location ID']),
     ).not.toContain('LOC-0022')
     expect(canTravelTo(launch, 'LOC-0011', 'LOC-0022', CAVE_MAP_ID, leftHidden)).toBe(false)
+  })
+
+  it('lists rubble counts on the Going Deeper journal and activity card', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    let save = {
+      ...createNewSave(launch),
+      currentLocationId: 'LOC-0011',
+      quests: [{ questId: 'QST-0008', status: 'active' as const, progress: 0, counters: {} }],
+    }
+    save = applyQuestTalkProgress(launch, save, 'NPC-0015')
+    const quest = getQuest(launch, 'QST-0008')!
+    const journal = questStepJournal(launch, save, quest).map((step) => step.label)
+    expect(journal).toContain('Clear rubble in the Deep Mines')
+    expect(journal).toContain('Clear a rubble pile 0 / 100')
+
+    const card = questActionProgressForActivity(launch, save, 'ACT-0044')
+    expect(card.map((line) => `${line.label} ${line.current} / ${line.required}`)).toEqual([
+      'Clear a rubble pile 0 / 100',
+    ])
+
+    save = applyQuestActionProgress(launch, save, 'ACN-0177', 12)
+    expect(
+      questActionProgressForActivity(launch, save, 'ACT-0044').map(
+        (line) => `${line.label} ${line.current} / ${line.required}`,
+      ),
+    ).toEqual(['Clear a rubble pile 12 / 100'])
+    expect(questStepJournal(launch, save, quest).map((step) => step.label)).toContain(
+      'Clear a rubble pile 12 / 100',
+    )
   })
 })

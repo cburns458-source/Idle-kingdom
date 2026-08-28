@@ -148,21 +148,22 @@ void main() {
   testWidgets('Rose pitches her shop, and declining leaves the quest alone', (tester) async {
     final controller = buildController(database, seed: standing(kitchenLocationId));
     addTearDown(controller.dispose);
+    var closed = 0;
 
-    await pumpPanel(tester, NpcPanel(controller: controller, npc: npcOf(roseId), onClose: () {}));
-    await tester.tap(find.text('Start quest: Help the aspiring apothecary'));
-    await tester.pump();
+    await pumpPanel(
+      tester,
+      NpcPanel(controller: controller, npc: npcOf(roseId), onClose: () => closed += 1),
+    );
     expect(find.textContaining('alchemy shop'), findsOne);
 
     await tester.tap(find.text('Not now'));
     await tester.pump();
 
     expect(controller.save.quests, isEmpty);
-    // The quest is still on offer from her list, pitch and all.
-    await tester.tap(find.text('Start quest: Help the aspiring apothecary'));
-    await tester.pump();
-    expect(find.textContaining('alchemy shop'), findsOne);
+    expect(closed, 1);
 
+    await pumpPanel(tester, NpcPanel(controller: controller, npc: npcOf(roseId), onClose: () {}));
+    expect(find.textContaining('alchemy shop'), findsOne);
     await tester.tap(find.text('Start quest: Help the aspiring apothecary'));
     await tester.pump();
     expect(getQuestProgress(controller.save, 'QST-0002').status, 'active');
@@ -187,15 +188,14 @@ void main() {
     addTearDown(controller.dispose);
 
     await pumpPanel(tester, NpcPanel(controller: controller, npc: npcOf(roseId), onClose: () {}));
-    expect(find.text('Talk'), findsOne);
-    expect(find.textContaining("Progress: 5 / 5 Rabbit's Foot"), findsNothing);
-    expect(find.text('Gold: 1,500 / 1,000'), findsNothing);
-
-    await tester.tap(find.text('Talk'));
-    await tester.pump();
+    expect(find.text('Talk'), findsNothing);
     expect(find.textContaining('wild berries'), findsOne);
+    expect(find.textContaining('Talk to Rose 0 / 1'), findsOne);
+
     await tester.tap(find.text('Continue'));
     await tester.pump();
+    expect(find.textContaining("Rabbit's Foot 5 / 5"), findsOne);
+    expect(find.textContaining('1500 / 1000'), findsOne);
 
     await tester.tap(find.text('Turn in'));
     await tester.pumpAndSettle();
@@ -219,14 +219,13 @@ void main() {
       NpcPanel(controller: controller, npc: npcOf('NPC-0001'), onClose: () {}),
     );
     expect(find.textContaining('My cooks have fled'), findsOne);
-    await tester.tap(find.text('Start quest: The Grand Feast').last);
-    await tester.pump();
     await tester.tap(find.text('Start quest: The Grand Feast'));
     await tester.pump();
 
     expect(getQuestProgress(controller.save, 'QST-0001').status, 'active');
-    expect(find.text('Talk'), findsOne);
-    expect(find.textContaining('baked potatoes'), findsNothing);
+    expect(find.text('Talk'), findsNothing);
+    expect(find.textContaining('baked potatoes'), findsOne);
+    expect(find.textContaining('Talk to King 0 / 1'), findsOne);
   });
 
   testWidgets('the Beggar at The Town asks for 25 gold', (tester) async {
@@ -255,20 +254,15 @@ void main() {
       ),
     );
     expect(find.text('Donate 25 gold'), findsNothing);
-    expect(find.text('Start the quest Lowly Beggar?'), findsWidgets);
-    await tester.tap(find.text('Start the quest Lowly Beggar?').last);
-    await tester.pump();
+    expect(find.text('Start the quest Lowly Beggar?'), findsOne);
     await tester.tap(find.text('Start the quest Lowly Beggar?'));
     await tester.pump();
 
     expect(getQuestProgress(controller.save, 'QST-0003').status, 'active');
     expect(controller.save.gold, 15);
-    expect(find.text('Talk'), findsOne);
-    expect(find.textContaining('Donate 25 gold, then recover'), findsNothing);
-
-    await tester.tap(find.text('Talk'));
-    await tester.pump();
+    expect(find.text('Talk'), findsNothing);
     expect(find.textContaining('around town'), findsOne);
+    expect(find.textContaining('Donate 25 gold, then recover'), findsNothing);
     expect(find.textContaining('barracks'), findsNothing);
   });
 
@@ -281,21 +275,17 @@ void main() {
       NpcPanel(controller: controller, npc: npcOf('NPC-0014'), onClose: () {}),
     );
     expect(find.textContaining('Gather five potatoes'), findsOne);
-    await tester.tap(find.text('Start quest: Getting Started').last);
-    await tester.pump();
     await tester.tap(find.text('Start quest: Getting Started'));
     await tester.pump();
 
     expect(getQuestProgress(controller.save, 'QST-0006').status, 'active');
-    expect(find.text('Talk'), findsOne);
+    expect(find.text('Talk'), findsNothing);
     expect(find.text('Turn in'), findsNothing);
-
-    await tester.tap(find.text('Talk'));
-    await tester.pump();
     expect(find.textContaining('five potatoes from the field'), findsOne);
     await tester.tap(find.text('Continue'));
     await tester.pump();
     expect(find.text('Talk'), findsNothing);
+    expect(find.textContaining('Show Potato 0 / 5'), findsOne);
 
     controller.commit(addItemToInventory(controller.save, 'ITEM-0025', 5));
     await pumpPanel(
@@ -307,8 +297,6 @@ void main() {
         onClose: () {},
       ),
     );
-    await tester.tap(find.text('Talk'));
-    await tester.pump();
     expect(find.textContaining('kitchen in town'), findsOne);
     expect(
       controller.save.inventory.where((stack) => stack.itemId == 'ITEM-0025').single.quantity,
