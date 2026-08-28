@@ -1,8 +1,10 @@
 import 'package:collection/collection.dart';
 import 'package:ik_content/ik_content.dart';
 
+import '../achievements/progress.dart';
 import '../combat/boss.dart';
 import '../combat/engine.dart';
+import '../log/milestones.dart';
 import '../js_compat.dart';
 import '../potions/effects.dart';
 import '../production/engine.dart';
@@ -273,6 +275,8 @@ GatheringCompletion completeGatheringAction(
   // Hunting XP just awarded) when a bow is the equipped Weapon/Tool.
   final bowBonus = bowHuntingCombatXpBonus(db, save, skillId, xpAmount);
   if (bowBonus != null) applyBonusXp(bowBonus.skillId, bowBonus.xp);
+
+  next = addLifetimeStat(next, gatheringActionsStat);
 
   return GatheringCompletion(
     save: withoutHeldAction(next, save.currentActivityId),

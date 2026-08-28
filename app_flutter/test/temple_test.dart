@@ -39,7 +39,8 @@ void main() {
     );
     await tester.pump();
 
-    expect(controller.save.currentHp, playerMaxHp(database.launch, controller.save));
+    final maxHp = playerMaxHp(database.launch, controller.save);
+    expect(controller.save.currentHp, maxHp + (maxHp * 0.1).floor());
     expect(slotItemId(controller.save, weaponToolSlotId), 'ITEM-0100');
     expect(slotItemId(controller.save, offhandSlotId), 'ITEM-0145');
     expect(controller.save.currentActivityId, isNull);
@@ -47,7 +48,7 @@ void main() {
     expect(
       find.descendant(
         of: find.byKey(const Key('game-popup')),
-        matching: find.text('The monks restore you to full health.'),
+        matching: find.text('The monks restore you beyond full health.'),
       ),
       findsOne,
     );

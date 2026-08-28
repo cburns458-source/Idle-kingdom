@@ -86,6 +86,7 @@ PlayerSave createNewSave(GameDatabase db, num nowMs) {
       soundEnabled: true,
       showActivityRewards: true,
       hudShowTotalXp: false,
+      showEatButton: true,
     ),
     currentLocationId: startingLocationId,
     currentActivityId: null,

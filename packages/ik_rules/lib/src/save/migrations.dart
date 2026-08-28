@@ -112,6 +112,7 @@ SaveJson _normalizeSettings(SaveJson save, int version) {
     'soundEnabled': settings['soundEnabled'] ?? true,
     'showActivityRewards': settings['showActivityRewards'] ?? true,
     'hudShowTotalXp': settings['hudShowTotalXp'] ?? false,
+    'showEatButton': settings['showEatButton'] ?? true,
   };
   return next;
 }
@@ -463,6 +464,11 @@ final List<SaveMigration> saveMigrations = <SaveMigration>[
     fromVersion: 32,
     toVersion: 33,
     migrate: (save, nowMs) => _bumped(replaceFishingNetsWithNetJson(save), 33),
+  ),
+  SaveMigration(
+    fromVersion: 33,
+    toVersion: 34,
+    migrate: (save, nowMs) => _normalizeSettings(save, 34),
   ),
 ];
 

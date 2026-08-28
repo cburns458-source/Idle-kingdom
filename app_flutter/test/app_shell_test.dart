@@ -571,7 +571,7 @@ void main() {
 
     await tester.tap(find.text('Log'));
     await tester.pump();
-    expect(find.text('Milestones unlocked on this save.'), findsOne);
+    expect(find.text('Deeds unlocked on this save.'), findsOne);
   });
 
   testWidgets('the map travel walk is off until Settings turns it on', (tester) async {
@@ -673,9 +673,9 @@ void main() {
     expect(find.byTooltip('Open world map'), findsOne);
 
     await openChinScreen(tester, 'Log');
-    expect(find.text('Milestones unlocked on this save.'), findsOne);
+    expect(find.text('Deeds unlocked on this save.'), findsOne);
     await tester.tap(find.widgetWithText(GameButton, 'Close'));
     await tester.pump();
-    expect(find.text('Milestones unlocked on this save.'), findsNothing);
+    expect(find.text('Deeds unlocked on this save.'), findsNothing);
   });
 }

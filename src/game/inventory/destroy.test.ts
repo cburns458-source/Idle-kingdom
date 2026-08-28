@@ -46,7 +46,12 @@ function saveWithInventory(itemIds: string[]): PlayerSave {
       genderPresentation: 'APR-0017',
     },
     hasSeenWardrobeIntro: false,
-    settings: { soundEnabled: true, showActivityRewards: true, hudShowTotalXp: false },
+    settings: {
+      soundEnabled: true,
+      showActivityRewards: true,
+      hudShowTotalXp: false,
+      showEatButton: true,
+    },
     currentLocationId: 'LOC-0002',
     currentActivityId: null,
     activityStartedAt: null,

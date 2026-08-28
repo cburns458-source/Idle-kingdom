@@ -35,6 +35,7 @@ describe('primary activity engine', () => {
     expect(completed.result.xpGained).toBe(250)
     expect(completed.save.inventory.some((stack) => stack.itemId === 'ITEM-0030')).toBe(true)
     expect(completed.save.skills.find((skill) => skill.skillId === 'SKL-0004')?.xp).toBe(250)
+    expect(completed.save.statistics.values.gathering_actions_completed).toBe(1)
   })
 
   it('grants bonus Combat XP for a bow-based Hunting Action when a bow is equipped', () => {

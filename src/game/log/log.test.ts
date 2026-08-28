@@ -3,7 +3,8 @@ import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { prepareDatabase } from '../data/loadDatabase'
 import { createNewSave } from '../save/saveStore'
-import { achievementLog, critterLog, questLog, recipeLog } from './log'
+import { achievementLog, critterLog, logCompletion, milestoneLog, questLog, recipeLog } from './log'
+import { GATHERING_ACTIONS_STAT } from './milestones'
 
 const rawDatabase = JSON.parse(
   readFileSync(resolve(process.cwd(), 'content/data/game-database.json'), 'utf8'),
@@ -75,6 +76,34 @@ describe('quest log', () => {
     }
     const row = questLog(launch, save).find((entry) => entry.questId === 'QST-0004')!
     expect(row.steps).toEqual([{ key: 'QSTP-0008', label: 'Hear the guide', state: 'current' }])
+  })
+
+  it('lists every remaining Citadel stop after the guide is heard', () => {
+    const save = {
+      ...createNewSave(launch),
+      quests: [
+        {
+          questId: 'QST-0004',
+          status: 'active' as const,
+          progress: 1,
+          counters: { 'talk:NPC-0013': 1 },
+        },
+      ],
+    }
+    const row = questLog(launch, save).find((entry) => entry.questId === 'QST-0004')!
+    expect(row.steps[0]).toEqual({ key: 'QSTP-0008', label: 'Hear the guide', state: 'done' })
+    expect(row.steps.map((step) => step.label)).toEqual([
+      'Hear the guide',
+      'Talk to Market Master',
+      'Visit Grand Bazaar',
+      'Visit Processing District',
+      'Visit Citadel Bank',
+      'Visit Guild Hall',
+      'Inspect the Grand Bazaar',
+      'Inspect the Bounty Board',
+      'Use a Processing District station',
+    ])
+    expect(row.steps.slice(1).every((step) => step.state === 'current')).toBe(true)
   })
 
   it('opens Wizard Studies on Hear the shopkeeper out', () => {
@@ -154,5 +183,43 @@ describe('critter log', () => {
     expect(row.description).not.toBeNull()
     expect(row.count).toBe(4)
     expect(row.found).toBe(true)
+  })
+})
+
+describe('milestones', () => {
+  it('tracks every-skill, kills, gold, and gathering marks', () => {
+    const fresh = milestoneLog(launch, createNewSave(launch))
+    expect(fresh).toHaveLength(16)
+    expect(fresh.every((row) => !row.unlocked)).toBe(true)
+    expect(fresh.some((row) => row.name === 'Every skill 25')).toBe(true)
+    expect(fresh.some((row) => row.name === '10,000 monsters slain')).toBe(true)
+    expect(fresh.some((row) => row.name === '10,000 gold earned')).toBe(true)
+    expect(fresh.some((row) => row.name === '10,000 gatherings')).toBe(true)
+
+    const save = {
+      ...createNewSave(launch),
+      skills: launch.Skills.map((skill) => ({
+        skillId: skill['Skill ID'],
+        level: 50,
+        xp: 0,
+      })),
+      statistics: {
+        values: {
+          monsters_killed: 10_000,
+          gold_earned: 1_000_000,
+          [GATHERING_ACTIONS_STAT]: 100_000,
+        },
+      },
+    }
+    const rows = milestoneLog(launch, save)
+    expect(rows.filter((row) => row.track === 'skills' && row.unlocked).map((row) => row.required)).toEqual([
+      25, 50,
+    ])
+    expect(rows.find((row) => row.milestoneId === 'kills-10000')!.unlocked).toBe(true)
+    expect(rows.find((row) => row.milestoneId === 'gold-1000000')!.unlocked).toBe(true)
+    expect(rows.find((row) => row.milestoneId === 'gatherings-100000')!.unlocked).toBe(true)
+    expect(logCompletion(launch, save).sections.find((row) => row.section === 'milestones')!.done).toBe(
+      8,
+    )
   })
 })

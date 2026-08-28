@@ -242,6 +242,29 @@ class _MenuViewState extends State<MenuView> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
+                                  'Show Eat button',
+                                  style: TextStyle(fontWeight: FontWeight.w400),
+                                ),
+                                MutedText('Show Eat on food in the bag and the food slot.'),
+                              ],
+                            ),
+                          ),
+                          GameSwitch(
+                            value: controller.showEatButton,
+                            onChanged: controller.setShowEatButton,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    GamePanel(
+                      child: Row(
+                        children: [
+                          const Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
                                   'Hide chat bubble',
                                   style: TextStyle(fontWeight: FontWeight.w400),
                                 ),

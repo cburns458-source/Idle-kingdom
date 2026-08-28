@@ -30,7 +30,7 @@ String _fallbackTitle(String kind) {
 
 String _fallbackSubtitle(String kind) {
   return switch (kind) {
-    'blessing' => 'The monks restore you to full health.',
+    'blessing' => 'The monks restore you beyond full health.',
     'bank' => 'Deposit and withdraw items.',
     'arena' => 'Search by name, or ranked by combat level.',
     'hall' => 'Store house and debt.',

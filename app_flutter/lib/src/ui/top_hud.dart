@@ -194,19 +194,39 @@ class TopHud extends StatelessWidget {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          Text(
-                            controller.isRecovering
-                                ? 'Recovering…'
-                                : '${formatThousands(save.currentHp)}/'
-                                      '${formatThousands(maxHp)}',
-                            textAlign: TextAlign.right,
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w400,
-                              color: controller.isRecovering
-                                  ? const Color(0xFFE8A090)
-                                  : const Color(0xFFF0D78C),
-                            ),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (controller.healPopup case final heal?) ...[
+                                Text(
+                                  heal.amount < 0
+                                      ? formatThousands(heal.amount)
+                                      : '+${formatThousands(heal.amount)}',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w400,
+                                    color: heal.amount < 0
+                                        ? const Color(0xFFE8A090)
+                                        : const Color(0xFF9FE3A8),
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                              ],
+                              Text(
+                                controller.isRecovering
+                                    ? 'Recovering…'
+                                    : '${formatThousands(save.currentHp)}/'
+                                          '${formatThousands(maxHp)}',
+                                textAlign: TextAlign.right,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w400,
+                                  color: controller.isRecovering
+                                      ? const Color(0xFFE8A090)
+                                      : const Color(0xFFF0D78C),
+                                ),
+                              ),
+                            ],
                           ),
                           const SizedBox(height: 2),
                           SizedBox(

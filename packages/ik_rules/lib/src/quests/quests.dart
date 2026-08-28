@@ -1,6 +1,9 @@
 import 'package:collection/collection.dart';
 import 'package:ik_content/ik_content.dart';
 
+import '../activity/reward_summary.dart';
+import '../activity/rewards.dart';
+import '../activity/types.dart';
 import '../activity/xp.dart';
 import '../combat/stats.dart';
 import '../cosmetics/cosmetics.dart';
@@ -146,6 +149,7 @@ class QuestCompletion {
     required this.questName,
     required this.rewards,
     this.pendingSkillXp = 0,
+    this.rewardBundle,
   }) : reason = null;
 
   const QuestCompletion.failed(this.reason)
@@ -153,7 +157,8 @@ class QuestCompletion {
       message = null,
       questName = null,
       rewards = const <String>[],
-      pendingSkillXp = 0;
+      pendingSkillXp = 0,
+      rewardBundle = null;
 
   bool get ok => reason == null;
   final PlayerSave? save;
@@ -165,6 +170,7 @@ class QuestCompletion {
 
   /// Bribe-route XP the player still has to assign to a non-combat skill.
   final num pendingSkillXp;
+  final ActionRewardBundle? rewardBundle;
   final String? reason;
 }
 
@@ -246,6 +252,9 @@ QuestCompletion completeQuest(GameDatabase db, PlayerSave save, String questId) 
   }
 
   final rewards = <String>[];
+  final xpRewards = <ActionXpRewardSummary>[];
+  final loot = <LootGrant>[];
+  var goldGained = 0.0;
   num pendingSkillXp = 0;
   final bribed = hasQuestFlag(save, questId, 'choice:bribe');
   final xpSkill = quest['Reward XP Skill ID'];
@@ -254,11 +263,15 @@ QuestCompletion completeQuest(GameDatabase db, PlayerSave save, String questId) 
     pendingSkillXp = parsed.branchSkillXp;
     rewards.add('Choose ${jsLocaleNumber(pendingSkillXp)} XP in a non-combat skill');
   } else if (xpSkill is String && xpSkill.isNotEmpty && xpAmount is num && xpAmount > 0) {
-    next = applyXp(next, db, xpSkill, xpAmount).save;
+    final applied = applyXp(next, db, xpSkill, xpAmount);
+    next = applied.save;
     rewards.add('${jsLocaleNumber(xpAmount)} ${_skillName(db, xpSkill)} XP');
+    final xpLine = summarizeXpReward(db, next, xpSkill, xpAmount, applied.leveledUpTo);
+    if (xpLine != null) xpRewards.add(xpLine);
   }
 
   if (parsed.rewardGold > 0) {
+    goldGained = parsed.rewardGold.toDouble();
     next = next.copyWith(gold: next.gold + parsed.rewardGold);
     rewards.add('${jsLocaleNumber(parsed.rewardGold)} gold');
   }
@@ -270,7 +283,9 @@ QuestCompletion completeQuest(GameDatabase db, PlayerSave save, String questId) 
     final itemName = db.items
         .firstWhereOrNull((item) => item.raw['Item ID'] == rewardItemId)
         ?.raw['Display Name'];
-    rewards.add('${jsNumberToString(rewardQty)}× ${itemName is String ? itemName : 'item'}');
+    final displayName = itemName is String ? itemName : 'item';
+    rewards.add('${jsNumberToString(rewardQty)}× $displayName');
+    loot.add(LootGrant(itemId: rewardItemId, quantity: rewardQty, displayName: displayName));
   }
 
   var unlocked = next.unlockedLocationIds;
@@ -338,6 +353,12 @@ QuestCompletion completeQuest(GameDatabase db, PlayerSave save, String questId) 
     questName: jsString(quest['Display Name']),
     rewards: rewards,
     pendingSkillXp: pendingSkillXp,
+    rewardBundle: ActionRewardBundle(
+      id: 'quest-$questId',
+      xpRewards: xpRewards,
+      loot: loot,
+      goldGained: goldGained,
+    ),
     message: rewards.isNotEmpty ? 'Quest complete — ${rewards.join(' and ')}.' : 'Quest complete.',
   );
 }

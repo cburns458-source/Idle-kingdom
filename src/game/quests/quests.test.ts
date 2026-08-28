@@ -209,6 +209,8 @@ describe('quest tours', () => {
     expect(completed.ok).toBe(true)
     if (!completed.ok) return
     expect(completed.save.gold).toBe(save.gold + 1000)
+    expect(completed.rewardBundle.goldGained).toBe(1000)
+    expect(completed.rewardBundle.loot).toEqual([])
   })
 
   it('locks Delve and Mages quarters until Wizard Studies is accepted', () => {

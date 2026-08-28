@@ -497,6 +497,20 @@ export const SAVE_MIGRATIONS: SaveMigration[] = [
       saveVersion: 33,
     }),
   },
+  {
+    fromVersion: 33,
+    toVersion: 34,
+    migrate: (save) => ({
+      ...save,
+      settings: {
+        soundEnabled: save.settings?.soundEnabled ?? true,
+        showActivityRewards: save.settings?.showActivityRewards ?? true,
+        hudShowTotalXp: save.settings?.hudShowTotalXp ?? false,
+        showEatButton: save.settings?.showEatButton ?? true,
+      },
+      saveVersion: 34,
+    }),
+  },
 ]
 
 export function migrateSave(save: PlayerSave, nowMs: number = Date.now()): PlayerSave {

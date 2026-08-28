@@ -120,3 +120,109 @@ FoodConsumption consumeFoodAfterVictory(GameDatabase db, PlayerSave save) {
   }
   return FoodConsumption(save: current, consumed: consumed, healed: healed, foodName: foodName);
 }
+
+num foodHealAmount(GameDatabase db, String itemId) {
+  final equipment = db.equipment.firstWhereOrNull((row) => row.raw['Item ID'] == itemId);
+  return jsNumber(equipment?.raw['Healing Amount'] ?? 0);
+}
+
+bool isEdibleItem(GameDatabase db, String itemId) => foodHealAmount(db, itemId) != 0;
+
+bool isInCombat(PlayerSave save) => save.combatEnemyId != null && save.combatEnemyId!.isNotEmpty;
+
+class EatFoodResult {
+  const EatFoodResult.ok({required this.save, required this.healed, required this.foodName})
+    : reason = null;
+
+  const EatFoodResult.failed(this.reason) : save = null, healed = 0, foodName = null;
+
+  final PlayerSave? save;
+  final num healed;
+  final String? foodName;
+  final String? reason;
+
+  bool get ok => reason == null;
+}
+
+({PlayerSave save, num healed, String foodName}) _applyManualEat(
+  GameDatabase db,
+  PlayerSave save,
+  String itemId,
+) {
+  final maxHp = playerMaxHp(db, save);
+  final healAmount = foodHealAmount(db, itemId);
+  final damaging = healAmount < 0;
+  final nextHp = damaging
+      ? math.max(1, save.currentHp + healAmount)
+      : save.currentHp >= maxHp
+      ? save.currentHp
+      : math.min(maxHp, save.currentHp + healAmount);
+  final displayName = db.items
+      .firstWhereOrNull((item) => item.raw['Item ID'] == itemId)
+      ?.raw['Display Name'];
+  return (
+    save: recordFoodConsumed(save.copyWith(maxHp: maxHp, currentHp: nextHp), itemId),
+    healed: nextHp - save.currentHp,
+    foodName: displayName is String ? displayName : itemId,
+  );
+}
+
+/// One-tap eat from a bag stack. Consumes even at full HP (shows +0).
+EatFoodResult eatInventoryFood(GameDatabase db, PlayerSave save, num index) {
+  if (isInCombat(save)) {
+    return const EatFoodResult.failed('You cannot eat during combat.');
+  }
+  final i = index.toInt();
+  if (i < 0 || i >= save.inventory.length) {
+    return const EatFoodResult.failed('Nothing to eat.');
+  }
+  final stack = save.inventory[i];
+  if (stack.quantity <= 0) return const EatFoodResult.failed('Nothing to eat.');
+  if (!isEdibleItem(db, stack.itemId)) {
+    return const EatFoodResult.failed('That cannot be eaten.');
+  }
+
+  final eaten = _applyManualEat(db, save, stack.itemId);
+  final nextQuantity = stack.quantity - 1;
+  final inventory = <InventoryStack>[
+    for (var rowIndex = 0; rowIndex < save.inventory.length; rowIndex++)
+      if (rowIndex != i)
+        save.inventory[rowIndex]
+      else if (nextQuantity > 0)
+        stack.copyWith(quantity: nextQuantity),
+  ];
+  return EatFoodResult.ok(
+    save: eaten.save.copyWith(inventory: inventory),
+    healed: eaten.healed,
+    foodName: eaten.foodName,
+  );
+}
+
+/// One-tap eat from the equipped food slot. Consumes even at full HP (shows +0).
+EatFoodResult eatEquippedFood(GameDatabase db, PlayerSave save) {
+  if (isInCombat(save)) {
+    return const EatFoodResult.failed('You cannot eat during combat.');
+  }
+  final food = slotStack(save, foodSlotId);
+  if (food == null || food.quantity <= 0) {
+    return const EatFoodResult.failed('Nothing to eat.');
+  }
+  if (!isEdibleItem(db, food.itemId)) {
+    return const EatFoodResult.failed('That cannot be eaten.');
+  }
+
+  final eaten = _applyManualEat(db, save, food.itemId);
+  final nextQuantity = food.quantity - 1;
+  return EatFoodResult.ok(
+    save: eaten.save.copyWith(
+      equipment: EquipmentLoadout(
+        slots: {
+          ...eaten.save.equipment.slots,
+          foodSlotId: nextQuantity > 0 ? food.copyWith(quantity: nextQuantity) : null,
+        },
+      ),
+    ),
+    healed: eaten.healed,
+    foodName: eaten.foodName,
+  );
+}

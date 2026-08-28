@@ -19,6 +19,7 @@ import { applyBountyDefeatProgress } from '../bounties/progress'
 import { applyQuestDefeatProgress } from '../quests/progress'
 import { applyRaceGoldGain } from '../races/races'
 import { itemHasCapability, WEAPON_TOOL_SLOT_ID } from '../equipment/loadout'
+import { currentHpAfterMaxChange } from '../equipment/vitals'
 import { ARCANA_SKILL_ID } from '../npcs/knowledge'
 import {
   applyMitigation,
@@ -252,7 +253,11 @@ export function applyCombatVictory(
   nowMs: number = Date.now(),
 ): CombatVictoryResult {
   const maxHp = playerMaxHp(db, save)
-  let next: PlayerSave = { ...save, maxHp, currentHp: Math.min(save.currentHp, maxHp) }
+  let next: PlayerSave = {
+    ...save,
+    maxHp,
+    currentHp: currentHpAfterMaxChange(save.currentHp, save.maxHp, maxHp),
+  }
 
   const xpAmount = Number(enemy['Combat XP'] ?? action['XP Reward'] ?? 0)
   const xpApplied = applyXp(next, db, 'SKL-0001', xpAmount)

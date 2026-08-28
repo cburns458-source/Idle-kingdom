@@ -7,6 +7,10 @@ import '../equipment/vitals.dart';
 import '../save/generated/save_models.dart';
 
 const String templeLocationId = 'LOC-0036';
+const num blessingOverhealRatio = 0.1;
+
+/// Blessing always snaps to 110% of current max. Extra 10% does not stack.
+num blessedCurrentHp(num maxHp) => maxHp + (maxHp * blessingOverhealRatio).floor();
 
 bool locationHasBlessing(LocationRow? location) {
   return location?.raw['Internal Key'] == 'temple';
@@ -26,7 +30,9 @@ class BlessResult {
 
   String get message =>
       _message ??
-      (alreadyFull ? 'You are already at full health.' : 'The monks restore you to full health.');
+      (alreadyFull
+          ? "The monks' blessing already fills you."
+          : 'The monks restore you beyond full health.');
 }
 
 /// Instant Temple heal. Does not start an activity or change equipment.
@@ -42,24 +48,21 @@ BlessResult requestBlessing(GameDatabase db, PlayerSave save, num nowMs) {
   }
 
   final next = withRecalculatedVitals(db, save);
-  if (next.currentHp >= next.maxHp) {
-    return BlessResult.ok(
-      next,
-      alreadyFull: true,
-      message: configString(
-        db,
-        'copy.amenity.blessing.already_full',
-        'You are already at full health.',
-      ),
-    );
-  }
+  final targetHp = blessedCurrentHp(next.maxHp);
+  final alreadyBlessed = next.currentHp >= targetHp;
   return BlessResult.ok(
-    next.copyWith(currentHp: next.maxHp),
-    alreadyFull: false,
-    message: configString(
-      db,
-      'copy.amenity.blessing.restored',
-      'The monks restore you to full health.',
-    ),
+    next.copyWith(currentHp: targetHp),
+    alreadyFull: alreadyBlessed,
+    message: alreadyBlessed
+        ? configString(
+            db,
+            'copy.amenity.blessing.already_full',
+            "The monks' blessing already fills you.",
+          )
+        : configString(
+            db,
+            'copy.amenity.blessing.restored',
+            'The monks restore you beyond full health.',
+          ),
   );
 }

@@ -9,6 +9,9 @@ import '../quests/quests.dart';
 import '../quests/steps.dart';
 import '../recipes/knowledge.dart';
 import '../save/generated/save_models.dart';
+import 'milestones.dart';
+
+export 'milestones.dart';
 
 /// One skill milestone, and whether this save has reached it.
 class AchievementLogRow {
@@ -338,6 +341,7 @@ class LogCompletion {
 
 LogCompletion logCompletion(GameDatabase db, PlayerSave save) {
   final achievements = achievementLog(db, save);
+  final milestones = milestoneLog(db, save);
   final quests = questLog(db, save);
   final critters = critterLog(save);
 
@@ -346,6 +350,11 @@ LogCompletion logCompletion(GameDatabase db, PlayerSave save) {
       section: 'achievements',
       done: achievements.where((row) => row.unlocked).length,
       total: achievements.length,
+    ),
+    LogSectionCompletion(
+      section: 'milestones',
+      done: milestones.where((row) => row.unlocked).length,
+      total: milestones.length,
     ),
     LogSectionCompletion(
       section: 'quests',
