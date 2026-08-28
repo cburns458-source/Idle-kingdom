@@ -46,6 +46,7 @@ void main() {
     final popup = find.byKey(const Key('game-popup'));
     expect(find.descendant(of: popup, matching: find.text('Equipment')), findsOne);
     expect(find.descendant(of: popup, matching: find.text('Weapons')), findsOne);
+    expect(find.descendant(of: popup, matching: find.text('Other')), findsOne);
     expect(find.text('Pressure the guards'), findsNothing);
     expect(
       find.descendant(of: popup, matching: find.widgetWithText(GameButton, 'Close')),
@@ -55,7 +56,7 @@ void main() {
     final tabs = tester.widget<Row>(
       find.ancestor(of: find.text('Enemies'), matching: find.byType(Row)).first,
     );
-    expect(tabs.children.whereType<Expanded>(), hasLength(3));
+    expect(tabs.children.whereType<Expanded>(), hasLength(4));
   });
 
   testWidgets('cooking opens a recipe book that includes locked recipes', (tester) async {
@@ -138,15 +139,7 @@ void main() {
       ),
     );
     expect(find.textContaining('Tungsten equipment'), findsOne);
-    await tester.scrollUntilVisible(
-      find.textContaining('Leather equipment'),
-      -200,
-      scrollable: find.descendant(
-        of: find.byKey(const Key('game-popup')),
-        matching: find.byType(Scrollable),
-      ),
-    );
-    expect(find.textContaining('Leather equipment'), findsOne);
+    expect(find.textContaining('Leather equipment'), findsNothing);
     expect(find.textContaining('Tungsten Helmet'), findsNothing);
     expect(find.textContaining('Tungsten Shield'), findsNothing);
     expect(find.textContaining('Tungsten Sword'), findsNothing);
@@ -164,6 +157,31 @@ void main() {
     expect(find.textContaining('Tungsten weapons'), findsOne);
     expect(find.textContaining('Tungsten Sword'), findsNothing);
     expect(find.textContaining('Tungsten Shield'), findsNothing);
+    expect(find.textContaining('Wooden weapons'), findsNothing);
+
+    await tester.tap(find.descendant(of: popup, matching: find.text('Other')));
+    await tester.pump();
+    expect(find.textContaining('Leather Helmet'), findsOne);
+    expect(find.textContaining('Wooden Sword'), findsOne);
+    await tester.scrollUntilVisible(
+      find.textContaining('Bull Horn Helmet'),
+      200,
+      scrollable: find.descendant(
+        of: find.byKey(const Key('game-popup')),
+        matching: find.byType(Scrollable),
+      ),
+    );
+    expect(find.textContaining('Bull Horn Helmet'), findsOne);
+    await tester.scrollUntilVisible(
+      find.textContaining('Cedar Bow'),
+      200,
+      scrollable: find.descendant(
+        of: find.byKey(const Key('game-popup')),
+        matching: find.byType(Scrollable),
+      ),
+    );
+    expect(find.textContaining('Cedar Bow'), findsOne);
+    expect(find.textContaining('Boar Spear'), findsOne);
   });
 
   testWidgets('artisanry lists leather armor on Other', (tester) async {

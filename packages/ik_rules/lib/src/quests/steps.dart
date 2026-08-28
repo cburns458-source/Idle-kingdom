@@ -188,11 +188,7 @@ List<QuestJournalStep> questStepJournal(GameDatabase db, PlayerSave save, QuestR
 }
 
 /// Skill and prior-quest gates for a quest that has not been accepted yet.
-List<QuestJournalStep> questRequirementJournal(
-  GameDatabase db,
-  PlayerSave save,
-  QuestRow quest,
-) {
+List<QuestJournalStep> questRequirementJournal(GameDatabase db, PlayerSave save, QuestRow quest) {
   final parsed = parseStructuredObjectives(quest);
   final steps = <QuestJournalStep>[];
   for (final requirement in parsed.requiresSkills) {

@@ -397,12 +397,15 @@ describe('quest tours', () => {
 
   it('lists rubble counts on the Going Deeper journal and activity card', () => {
     const { launch } = prepareDatabase(rawDatabase)
-    let save = {
-      ...createNewSave(launch),
-      currentLocationId: 'LOC-0011',
-      quests: [{ questId: 'QST-0008', status: 'active' as const, progress: 0, counters: {} }],
-    }
-    save = applyQuestTalkProgress(launch, save, 'NPC-0015')
+    let save = applyQuestTalkProgress(
+      launch,
+      {
+        ...createNewSave(launch),
+        currentLocationId: 'LOC-0011',
+        quests: [{ questId: 'QST-0008', status: 'active' as const, progress: 0, counters: {} }],
+      },
+      'NPC-0015',
+    )
     const quest = getQuest(launch, 'QST-0008')!
     const journal = questStepJournal(launch, save, quest).map((step) => step.label)
     expect(journal).toContain('Clear rubble in the Deep Mines')

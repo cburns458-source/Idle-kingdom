@@ -215,7 +215,12 @@ class _NpcPanelState extends State<NpcPanel> {
         line: donateQuest.pitchLine ?? donateQuest.summary ?? conversation.description,
         error: _error,
         actions: [
-          GameButton(label: 'Not now', tone: GameButtonTone.secondary, compact: true, onPressed: _close),
+          GameButton(
+            label: 'Not now',
+            tone: GameButtonTone.secondary,
+            compact: true,
+            onPressed: _close,
+          ),
           GameButton(label: donateQuest.donateLabel, onPressed: () => _donate(donateQuest.questId)),
         ],
       );
@@ -228,11 +233,13 @@ class _NpcPanelState extends State<NpcPanel> {
         line: acceptQuest.pitchLine ?? acceptQuest.summary ?? conversation.description,
         error: _error,
         actions: [
-          GameButton(label: 'Not now', tone: GameButtonTone.secondary, compact: true, onPressed: _close),
           GameButton(
-            label: acceptQuest.acceptLabel,
-            onPressed: () => _accept(acceptQuest.questId),
+            label: 'Not now',
+            tone: GameButtonTone.secondary,
+            compact: true,
+            onPressed: _close,
           ),
+          GameButton(label: acceptQuest.acceptLabel, onPressed: () => _accept(acceptQuest.questId)),
         ],
       );
     }

@@ -252,17 +252,18 @@ void main() {
     );
     save = applyQuestTalkProgress(db, save, 'NPC-0015');
     final quest = db.quests.firstWhere((row) => row['Quest ID'] == 'QST-0008');
-    expect(questStepJournal(db, save, quest).map((step) => step.label), contains('Clear a rubble pile 0 / 100'));
     expect(
-      questActionProgressForActivity(db, save, 'ACT-0044').map((line) => line.caption),
-      ['Clear a rubble pile 0 / 100'],
+      questStepJournal(db, save, quest).map((step) => step.label),
+      contains('Clear a rubble pile 0 / 100'),
     );
+    expect(questActionProgressForActivity(db, save, 'ACT-0044').map((line) => line.caption), [
+      'Clear a rubble pile 0 / 100',
+    ]);
 
     save = applyQuestActionProgress(db, save, 'ACN-0177', 12);
-    expect(
-      questActionProgressForActivity(db, save, 'ACT-0044').map((line) => line.caption),
-      ['Clear a rubble pile 12 / 100'],
-    );
+    expect(questActionProgressForActivity(db, save, 'ACT-0044').map((line) => line.caption), [
+      'Clear a rubble pile 12 / 100',
+    ]);
     expect(
       questStepJournal(db, save, quest).map((step) => step.label),
       contains('Clear a rubble pile 12 / 100'),
