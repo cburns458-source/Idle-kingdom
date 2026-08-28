@@ -63,7 +63,7 @@ export function questsTouchingNpc(
 
 /** Skill and prior-quest gates from quest Notes. */
 export function questAvailableForSave(
-  db: GameDatabase,
+  _db: GameDatabase,
   save: PlayerSave,
   quest: QuestRow,
 ): boolean {

@@ -81,7 +81,10 @@ export function findConnection(
 export function locationsForMapView(
   db: GameDatabase,
   mapId: string,
-  save?: Pick<PlayerSave, 'unlockedLocationIds' | 'currentLocationId'> | null,
+  save?: {
+    unlockedLocationIds?: string[] | null
+    currentLocationId?: string | null
+  } | null,
   hiddenLocationIds: readonly string[] = [],
 ): LocationRow[] {
   if (mapId === MAIN_MAP_ID) {
@@ -118,7 +121,10 @@ export function canTravelTo(
   fromLocationId: string,
   toLocationId: string,
   activeMapId: string,
-  save?: Pick<PlayerSave, 'unlockedLocationIds' | 'currentLocationId'> | null,
+  save?: {
+    unlockedLocationIds?: string[] | null
+    currentLocationId?: string | null
+  } | null,
 ): boolean {
   if (fromLocationId === toLocationId) return false
   if (isFutureHorizonLocation(toLocationId)) return false
