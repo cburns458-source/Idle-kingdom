@@ -90,9 +90,10 @@ bool _isAskAroundSkipped(GameDatabase db, PlayerSave save, String questId, Strin
   }
   final quest = getQuest(db, questId);
   if (quest == null) return false;
-  return questAllStepDelivers(db, quest).any(
-    (line) => inventoryCount(save, line.targetId) >= line.quantity,
-  );
+  return questAllStepDelivers(
+    db,
+    quest,
+  ).any((line) => inventoryCount(save, line.targetId) >= line.quantity);
 }
 
 List<QuestProgressLine> _journalProgressLines(
@@ -105,7 +106,9 @@ List<QuestProgressLine> _journalProgressLines(
   final structured = parseNotesObjectives(notes);
   if (structured.optionalTalkNpcIds.isEmpty) return lines;
   final counters = getQuestProgress(save, questId).counters ?? const <String, num>{};
-  final revealed = structured.optionalTalkNpcIds.any((npcId) => (counters['talk:$npcId'] ?? 0) >= 1);
+  final revealed = structured.optionalTalkNpcIds.any(
+    (npcId) => (counters['talk:$npcId'] ?? 0) >= 1,
+  );
   if (revealed) return lines;
   return lines
       .where(
@@ -210,9 +213,12 @@ List<QuestJournalStep> questStepJournal(GameDatabase db, PlayerSave save, QuestR
       state: done ? 'done' : 'current',
     );
     final progressSource = done
-        ? _stepProgressLines(db, save, questId, step.notes ?? '')
-              .where((line) => line.key.startsWith('action:'))
-              .toList()
+        ? _stepProgressLines(
+            db,
+            save,
+            questId,
+            step.notes ?? '',
+          ).where((line) => line.key.startsWith('action:')).toList()
         : _journalProgressLines(db, save, questId, step.notes ?? '');
     final progress = progressSource
         .map(

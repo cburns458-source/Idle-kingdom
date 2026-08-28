@@ -398,8 +398,7 @@ NpcQuestBlock _questBlock(GameDatabase db, PlayerSave save, QuestRow quest, Stri
     talkLabel: 'Talk',
     talkLine: questTalkLine(db, questId, npcId, save),
     idlePrompt: configString(db, 'copy.quest_active_prompt', _fallbackQuestActivePrompt),
-    canBribe:
-        status == 'active' && parsed.choiceNpcId == npcId && parsed.bribeGold > 0 && !chose,
+    canBribe: status == 'active' && parsed.choiceNpcId == npcId && parsed.bribeGold > 0 && !chose,
     bribeLabel: 'Bribe ${jsLocaleNumber(parsed.bribeGold)} gold',
     canChooseCombat: status == 'active' && parsed.choiceNpcId == npcId && !chose,
     combatLabel: 'Pressure the Guards',
@@ -506,10 +505,7 @@ class NpcActionResult {
     this.startedActivity = false,
   }) : reason = null;
 
-  const NpcActionResult.failed(this.reason)
-    : save = null,
-      message = null,
-      startedActivity = false;
+  const NpcActionResult.failed(this.reason) : save = null, message = null, startedActivity = false;
 
   bool get ok => reason == null;
   final PlayerSave? save;
