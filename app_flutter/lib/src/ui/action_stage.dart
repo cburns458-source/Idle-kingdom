@@ -72,7 +72,9 @@ class ActionStage extends StatelessWidget {
 }
 
 /// The adventurer on the location plate: combat-stage left slot, always shown
-/// while standing here so they idle even when nothing is running.
+/// while standing here so they idle even when nothing is running. Gathering,
+/// production, and combat scene art sit in the right slot on this same layer so
+/// starting an action does not jump the PNGs.
 class LocationIdlePlayer extends StatelessWidget {
   const LocationIdlePlayer({super.key, required this.controller});
 
@@ -84,8 +86,6 @@ class LocationIdlePlayer extends StatelessWidget {
     final save = controller.save;
     final maxHp = playerMaxHp(controller.db, save);
     final hp = save.currentHp;
-    // Combat-stage height, minus the expanding Center in [_StageShell], so a
-    // parent can pin this to the dirt line above the activities band.
     return MediaQuery(
       data: MediaQuery.of(context)
           .copyWith(textScaler: playableHudTextScaler(MediaQuery.textScalerOf(context))),
@@ -111,7 +111,7 @@ class LocationIdlePlayer extends StatelessWidget {
                     slotHeight: _portraitSlotHeight,
                     filterQuality: FilterQuality.high,
                   ),
-                  scene: const SizedBox(height: _portraitSlotHeight),
+                  scene: _groundedSceneArt(controller),
                   playerCaption: ExcludeSemantics(
                     child: Opacity(
                       opacity: 0,
@@ -138,6 +138,52 @@ class LocationIdlePlayer extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Right-slot art pinned with the adventurer: enemy, gather target, or station.
+Widget _groundedSceneArt(GameController controller) {
+  final save = controller.save;
+  if (save.currentActivityId == null) {
+    return const SizedBox(height: _portraitSlotHeight);
+  }
+  if (controller.defeatedFlash) {
+    return const SizedBox(height: _portraitSlotHeight);
+  }
+  if (save.combatEnemyId != null || controller.combatBlowHold) {
+    final enemyId = controller.stagedEnemyId ?? save.combatEnemyId;
+    if (enemyId == null) return const SizedBox(height: _portraitSlotHeight);
+    return _Portrait(
+      assetPath: enemyAssetPath(enemyId),
+      semanticsLabel: 'Enemy',
+      height: _enemyArtHeight,
+      slotHeight: _portraitSlotHeight,
+      alignment: Alignment.centerLeft,
+    );
+  }
+  if (save.productionRecipeId != null || controller.craftPopup != null) {
+    final recipeId = save.productionRecipeId;
+    final recipe = recipeId == null ? null : getRecipe(controller.db, recipeId);
+    return _Portrait(
+      assetPath: workstationAssetPath(recipe?.facilityId),
+      semanticsLabel: recipe?.displayName ?? 'Workstation',
+      height: _actionArtHeight,
+      slotHeight: _portraitSlotHeight,
+      alignment: Alignment.bottomLeft,
+      gaplessPlayback: true,
+    );
+  }
+  final action = save.currentActionId == null
+      ? null
+      : controller.indexes.actionsById[save.currentActionId!];
+  if (action == null) return const SizedBox(height: _portraitSlotHeight);
+  return _Portrait(
+    assetPath: actionAssetPath(action.actionId),
+    semanticsLabel: action.displayName,
+    height: _actionArtHeight,
+    slotHeight: _portraitSlotHeight,
+    alignment: Alignment.bottomLeft,
+    gaplessPlayback: true,
+  );
 }
 
 /// Arena PvP, drawn with the same portraits, HUD bars, round meter, and floaters
@@ -286,14 +332,14 @@ class _StageShell extends StatelessWidget {
       label: semanticsLabel,
       child: Padding(
         padding: const EdgeInsets.fromLTRB(2, 4, 2, 6),
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: _stageMaxWidth),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [scene, const SizedBox(height: 7), footer],
-            ),
+        // Size to the portraits — do not expand and re-center inside a tall
+        // location slot, or the gathering PNG jumps when the stage appears.
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: _stageMaxWidth),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [scene, const SizedBox(height: 7), footer],
           ),
         ),
       ),
@@ -349,6 +395,7 @@ class _Portrait extends StatelessWidget {
     this.height = _playerArtHeight,
     this.slotHeight,
     this.filterQuality = FilterQuality.none,
+    this.gaplessPlayback = false,
   });
 
   final String? assetPath;
@@ -366,6 +413,9 @@ class _Portrait extends StatelessWidget {
   /// adventurer stays at a fixed 152px while action art sits smaller.
   final double? slotHeight;
   final FilterQuality filterQuality;
+
+  /// Keep the last frame while the next gathering action art loads.
+  final bool gaplessPlayback;
 
   @override
   Widget build(BuildContext context) {
@@ -385,6 +435,7 @@ class _Portrait extends StatelessWidget {
                     fit: BoxFit.contain,
                     alignment: alignment,
                     filterQuality: filterQuality,
+                    gaplessPlayback: gaplessPlayback,
                   ),
           )
         : null;
@@ -537,7 +588,7 @@ class _CombatStage extends StatelessWidget {
               const SizedBox.expand(),
         ),
         scene: _Portrait(
-          assetPath: controller.defeatedFlash || enemyId == null ? null : enemyAssetPath(enemyId),
+          assetPath: null,
           semanticsLabel: enemyName,
           height: _enemyArtHeight,
           slotHeight: _portraitSlotHeight,
@@ -555,7 +606,7 @@ class _CombatStage extends StatelessWidget {
                     ),
                   ),
                 )
-              : null,
+              : const SizedBox.expand(),
           overlay: Stack(
             children: [
               if ((save.combatBossSleepRoundsRemaining ?? 0) > 0)
@@ -739,14 +790,7 @@ class _GatheringStage extends StatelessWidget {
       semanticsLabel: 'Gathering',
       scene: _TwoPortraits(
         player: const SizedBox(height: _portraitSlotHeight),
-        scene: _Portrait(
-          assetPath: action == null ? null : actionAssetPath(action.actionId),
-          semanticsLabel: actionName,
-          height: _actionArtHeight,
-          slotHeight: _portraitSlotHeight,
-          alignment: Alignment.centerLeft,
-          placeholder: action == null ? const SizedBox.expand() : null,
-        ),
+        scene: const SizedBox(height: _portraitSlotHeight),
         playerCaption: const SizedBox(height: _captionMinHeight),
         sceneCaption: ConstrainedBox(
           constraints: const BoxConstraints(minHeight: _captionMinHeight),
@@ -801,11 +845,12 @@ class _ProductionStage extends StatelessWidget {
       scene: _TwoPortraits(
         player: const SizedBox(height: _portraitSlotHeight),
         scene: _Portrait(
-          assetPath: workstationAssetPath(recipe?.facilityId),
+          assetPath: null,
           semanticsLabel: stationName,
           height: _actionArtHeight,
           slotHeight: _portraitSlotHeight,
-          alignment: Alignment.centerLeft,
+          alignment: Alignment.bottomLeft,
+          placeholder: const SizedBox.expand(),
           overlay: popup == null
               ? null
               : Align(

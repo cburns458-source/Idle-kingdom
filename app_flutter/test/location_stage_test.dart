@@ -110,6 +110,45 @@ void main() {
     expect(playerArt.height, 137);
   });
 
+  testWidgets('gathering action art stays put when the stage appears and ticks', (tester) async {
+    final clock = TestClock();
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(currentLocationId: 'LOC-0001'),
+      clock: clock,
+    );
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller, size: const Size(420, 420 * 16 / 9));
+
+    final idlePlayer = tester.getRect(find.bySemanticsLabel('Adventurer'));
+
+    await tapVisible(
+      tester,
+      find.descendant(of: dockRow('Work the fields'), matching: find.bySemanticsLabel('Start')),
+    );
+    expect(controller.save.currentActivityId, 'ACT-0021');
+    expect(find.byWidgetPredicate((widget) => assetNamed(widget, '/actions/')), findsOne);
+
+    final playerAfterStart = tester.getRect(find.bySemanticsLabel('Adventurer'));
+    final actionAfterStart = tester.getRect(
+      find.byWidgetPredicate((widget) => assetNamed(widget, '/actions/')),
+    );
+    expect(playerAfterStart.top, closeTo(idlePlayer.top, 6));
+    expect(actionAfterStart.top, closeTo(playerAfterStart.top, 6));
+
+    clock.advance(1000);
+    controller.tick();
+    await tester.pump();
+
+    final playerAfterTick = tester.getRect(find.bySemanticsLabel('Adventurer'));
+    final actionAfterTick = tester.getRect(
+      find.byWidgetPredicate((widget) => assetNamed(widget, '/actions/')),
+    );
+    expect(playerAfterTick.top, closeTo(playerAfterStart.top, 1));
+    expect(actionAfterTick.top, closeTo(actionAfterStart.top, 1));
+    expect(actionAfterTick.left, closeTo(actionAfterStart.left, 1));
+  });
+
   testWidgets('combat keeps the player at 152 and does not shrink the enemy', (tester) async {
     final controller = buildController(
       database,
