@@ -121,7 +121,10 @@ List<ActivityRow> activitiesForAction(GameDatabase db, String actionId) {
 
 bool _isQuestOnlyRequirement(RequirementRow requirement) {
   final type = requirement.requirementType;
-  return type == 'Quest Access' || type == 'Quest Flag' || type == 'Quest Active';
+  return type == 'Quest Access' ||
+      type == 'Quest Flag' ||
+      type == 'Quest Active' ||
+      type == 'Quest Complete';
 }
 
 /// True when every activity that can roll this action is quest-gated.

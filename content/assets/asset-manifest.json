@@ -171,6 +171,10 @@
     "LOC-0037": {
       "internalKey": "castle_crypt",
       "path": "/assets/locations/loc_castle_crypt.webp"
+    },
+    "LOC-0038": {
+      "internalKey": "dwarven_forge",
+      "path": "/assets/locations/loc_town_foundry.webp"
     }
   },
   "enemies": {

@@ -24,6 +24,7 @@ import type {
   ActivityStartResult,
 } from './types'
 import { addLifetimeStat } from '../achievements/progress'
+import { applyQuestActionProgress } from '../quests/progress'
 import { GATHERING_ACTIONS_STAT } from '../log/milestones'
 import { bonusSkillXpForAction, bowHuntingCombatXpBonus } from './bonusXp'
 import { summarizeXpReward } from './rewardSummary'
@@ -283,6 +284,7 @@ export function completeGatheringAction(
   }
 
   next = addLifetimeStat(next, GATHERING_ACTIONS_STAT)
+  next = applyQuestActionProgress(db, next, action['Action ID'])
 
   return {
     save: withoutHeldAction(next, save.currentActivityId),

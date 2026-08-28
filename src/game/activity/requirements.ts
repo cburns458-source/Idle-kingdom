@@ -4,6 +4,7 @@ import {
   hasQuestFlag,
   questIsActive,
   questIsActiveOrComplete,
+  questIsComplete,
 } from '../quests/progress'
 import type { PlayerSave } from '../save/types'
 import { getSkillProgress } from './xp'
@@ -16,6 +17,7 @@ export const KNOWN_REQUIREMENT_TYPES = [
   'Skill Level',
   'Quest Access',
   'Quest Active',
+  'Quest Complete',
   'Quest Flag',
   'Item Absent',
 ] as const
@@ -141,6 +143,14 @@ export function evaluateRequirement(
     }
   }
 
+  if (type === 'Quest Complete') {
+    const met = questIsComplete(save, reference)
+    return {
+      met,
+      detail: met ? 'Quest complete' : 'Requires completing that quest',
+    }
+  }
+
   if (type === 'Quest Flag') {
     const parts = reference.split(':')
     if (parts.length < 2) {
@@ -168,6 +178,7 @@ function isQuestGateRequirement(type: string): boolean {
     type === 'Quest Access' ||
     type === 'Quest Flag' ||
     type === 'Quest Active' ||
+    type === 'Quest Complete' ||
     type === 'Item Absent'
   )
 }

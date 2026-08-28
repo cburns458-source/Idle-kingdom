@@ -34,14 +34,17 @@ PlayerSave _applyProgress(
   String targetId,
   num amount,
 ) {
+  if (!save.quests.any((row) => row.status == 'active')) return save;
   var next = save;
   for (final quest in asQuestRows(db)) {
+    final questId = jsString(quest['Quest ID']);
+    if (getQuestProgress(next, questId).status != 'active') continue;
     final matches = questObjectiveSources(
       db,
       quest,
     ).any((structured) => targetsOf(structured).any((row) => row.targetId == targetId));
     if (!matches) continue;
-    next = _bumpCounter(next, jsString(quest['Quest ID']), '$counterPrefix:$targetId', amount);
+    next = _bumpCounter(next, questId, '$counterPrefix:$targetId', amount);
   }
   return next;
 }
@@ -101,6 +104,10 @@ bool questIsActiveOrComplete(PlayerSave save, String questId) {
   return status == 'active' || status == 'completed';
 }
 
+bool questIsComplete(PlayerSave save, String questId) {
+  return getQuestProgress(save, questId).status == 'completed';
+}
+
 PlayerSave setQuestFlag(PlayerSave save, String questId, String key) {
   if (hasQuestFlag(save, questId, key)) return save;
   return _bumpCounter(save, questId, key, 1);
@@ -135,6 +142,29 @@ PlayerSave applyQuestTalkProgress(GameDatabase db, PlayerSave save, String npcId
     final stepKey = currentStepTalkKey(db, next, quest, npcId);
     next = setQuestFlag(next, questId, 'talk:$npcId');
     next = setQuestFlag(next, questId, stepKey);
+  }
+  return next;
+}
+
+/// Marks Action objectives after a gathering action completes.
+PlayerSave applyQuestActionProgress(
+  GameDatabase db,
+  PlayerSave save,
+  String actionId, [
+  num amount = 1,
+]) {
+  if (!save.quests.any((row) => row.status == 'active')) return save;
+  var next = save;
+  for (final quest in asQuestRows(db)) {
+    final questId = jsString(quest['Quest ID']);
+    if (getQuestProgress(next, questId).status != 'active') continue;
+    if (!questObjectiveSources(
+      db,
+      quest,
+    ).any((row) => row.actionTargets.any((target) => target.targetId == actionId))) {
+      continue;
+    }
+    next = _bumpCounter(next, questId, 'action:$actionId', amount);
   }
   return next;
 }
