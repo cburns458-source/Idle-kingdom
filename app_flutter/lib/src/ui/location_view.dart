@@ -369,22 +369,26 @@ class _LocationViewState extends State<LocationView> {
                                 left: 13,
                                 right: 13,
                                 bottom: _collapsedBand + 8,
-                                child: IgnorePointer(
-                                  child: Align(
+                                child: _groundedStage(
+                                  Stack(
                                     alignment: Alignment.topCenter,
-                                    child: LocationIdlePlayer(controller: controller),
+                                    clipBehavior: Clip.none,
+                                    children: [
+                                      IgnorePointer(
+                                        child: LocationIdlePlayer(controller: controller),
+                                      ),
+                                      if (running) ActivityPanel(controller: controller),
+                                    ],
                                   ),
                                 ),
                               ),
-                            if (stage != null && !liftArena)
+                            if (stage != null && !running && !liftArena)
                               Positioned(
                                 top: 0,
                                 left: 13,
                                 right: 13,
                                 bottom: _collapsedBand + 8,
-                                child: openPanel is ArenaOpen && !running
-                                    ? stage
-                                    : _scrollingPanel(stage),
+                                child: openPanel is ArenaOpen ? stage : _scrollingPanel(stage),
                               ),
                             if (overlayPanel != null && !liftArena)
                               Positioned(
@@ -464,6 +468,18 @@ class _LocationViewState extends State<LocationView> {
       fit: BoxFit.cover,
       alignment: square ? Alignment.topCenter : Alignment.bottomCenter,
       filterQuality: square ? FilterQuality.none : FilterQuality.medium,
+    );
+  }
+
+  /// Pins combat and the idle stand to the dirt line above the activities band.
+  Widget _groundedStage(Widget panel) {
+    return Align(
+      alignment: Alignment.bottomCenter,
+      child: OverflowBox(
+        maxHeight: double.infinity,
+        alignment: Alignment.bottomCenter,
+        child: panel,
+      ),
     );
   }
 

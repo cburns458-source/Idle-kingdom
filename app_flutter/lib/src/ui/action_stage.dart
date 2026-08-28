@@ -82,21 +82,27 @@ class LocationIdlePlayer extends StatelessWidget {
   Widget build(BuildContext context) {
     if (controller.showRecoveringStage) return const SizedBox.shrink();
     final save = controller.save;
-    return Semantics(
-      container: true,
-      explicitChildNodes: true,
-      label: 'Adventurer stand',
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(2, 4, 2, 0),
-        child: Align(
-          alignment: Alignment.topCenter,
+    final maxHp = playerMaxHp(controller.db, save);
+    final hp = save.currentHp;
+    // Combat-stage height, minus the expanding Center in [_StageShell], so a
+    // parent can pin this to the dirt line above the activities band.
+    return MediaQuery(
+      data: MediaQuery.of(context)
+          .copyWith(textScaler: playableHudTextScaler(MediaQuery.textScalerOf(context))),
+      child: Semantics(
+        container: true,
+        explicitChildNodes: true,
+        label: 'Adventurer stand',
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(2, 4, 2, 6),
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: _stageMaxWidth),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Expanded(
-                  child: _Portrait(
+                _TwoPortraits(
+                  player: _Portrait(
                     assetPath: playerAssetPath(save.appearance, raceId: save.raceId),
                     bytes: controller.localPlayerPng,
                     semanticsLabel: 'Adventurer',
@@ -105,9 +111,26 @@ class LocationIdlePlayer extends StatelessWidget {
                     slotHeight: _portraitSlotHeight,
                     filterQuality: FilterQuality.high,
                   ),
+                  scene: const SizedBox(height: _portraitSlotHeight),
+                  playerCaption: ExcludeSemantics(
+                    child: Opacity(
+                      opacity: 0,
+                      child: _FighterCaption(
+                        name: save.characterName ?? 'Adventurer',
+                        hpLabel: '${hp.round()}/${maxHp.round()}',
+                        alignEnd: false,
+                        meter: _Meter(
+                          label: 'Player health',
+                          value: maxHp <= 0 ? 0 : (hp / maxHp).clamp(0, 1).toDouble(),
+                          gradient: Meters.hudHp,
+                        ),
+                      ),
+                    ),
+                  ),
+                  sceneCaption: const SizedBox(height: _captionMinHeight),
                 ),
-                const SizedBox(width: 10),
-                const Expanded(child: SizedBox(height: _portraitSlotHeight)),
+                const SizedBox(height: 7),
+                const SizedBox(height: _stageFooterHeight),
               ],
             ),
           ),
