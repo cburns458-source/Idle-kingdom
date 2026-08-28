@@ -225,7 +225,14 @@ void main() {
       isNot(contains('LOC-0022')),
     );
     expect(
-      canTravelTo(db, 'LOC-0011', 'LOC-0022', caveMapId, leftHidden.unlockedLocationIds, leftHidden),
+      canTravelTo(
+        db,
+        'LOC-0011',
+        'LOC-0022',
+        caveMapId,
+        leftHidden.unlockedLocationIds,
+        leftHidden,
+      ),
       isFalse,
     );
   });
