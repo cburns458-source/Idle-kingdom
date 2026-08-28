@@ -513,6 +513,17 @@ export const SAVE_MIGRATIONS: SaveMigration[] = [
       saveVersion: 34,
     }),
   },
+  {
+    fromVersion: 34,
+    toVersion: 35,
+    migrate: (save) => ({
+      ...save,
+      achievements: (save.achievements ?? []).filter(
+        (row) => row.achievementId === 'ACH-0015' || row.achievementId === 'ACH-0017',
+      ),
+      saveVersion: 35,
+    }),
+  },
 ]
 
 export function migrateSave(save: PlayerSave, nowMs: number = Date.now()): PlayerSave {

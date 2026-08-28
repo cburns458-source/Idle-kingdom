@@ -245,7 +245,7 @@ class _MenuViewState extends State<MenuView> {
                                   'Show Eat button',
                                   style: TextStyle(fontWeight: FontWeight.w400),
                                 ),
-                                MutedText('Show Eat on food in the bag and the food slot.'),
+                                MutedText('Show Eat on the food item detail sheet.'),
                               ],
                             ),
                           ),

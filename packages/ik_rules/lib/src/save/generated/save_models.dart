@@ -7,7 +7,7 @@
 
 import '../../json_support.dart';
 
-const int saveVersion = 34;
+const int saveVersion = 35;
 
 const String saveStorageKey = 'idle-kingdoms.demo.save';
 
@@ -1079,7 +1079,7 @@ class PlayerSettings {
   /// When true, HUD identity line shows total XP instead of total level.
   final bool hudShowTotalXp;
 
-  /// When false, the Eat button is hidden on food in the bag and food slot.
+  /// When false, the Eat button is hidden on the food item detail sheet.
   final bool showEatButton;
 
   Map<String, Object?> toJson() {

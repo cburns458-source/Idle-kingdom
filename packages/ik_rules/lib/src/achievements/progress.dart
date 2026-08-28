@@ -5,9 +5,11 @@ import 'package:ik_content/ik_content.dart';
 
 import '../activity/xp.dart';
 import '../critters/critters.dart';
+import '../equipment/loadout.dart';
 import '../js_compat.dart';
 import '../save/generated/save_models.dart';
 import '../skills/totals.dart';
+import '../tags.dart';
 import '../time.dart';
 
 /// The Achievements and Statistics tables stay untyped rows: nothing reads them
@@ -47,6 +49,10 @@ PlayerSave recordProjectMilestones(GameDatabase db, PlayerSave save, String proj
     (row) => jsString(row.raw['Project ID']) == projectId,
   );
   var next = addLifetimeStat(save, 'project_$projectId', crafts);
+  final locationId = save.currentLocationId;
+  if (locationId.isNotEmpty) {
+    next = addLifetimeStat(next, 'project_${projectId}_at_$locationId', crafts);
+  }
   final outputId = jsString(project?.raw['Output Item / Target ID']);
   if (outputId.startsWith('ENCH-')) {
     next = addLifetimeStat(next, 'items_enchanted', crafts);
@@ -64,6 +70,10 @@ PlayerSave recordProductionMilestones(
   num quantity,
 ) {
   var next = addLifetimeStat(save, 'output_$outputItemId', quantity);
+  final locationId = save.currentLocationId;
+  if (locationId.isNotEmpty) {
+    next = addLifetimeStat(next, 'output_${outputItemId}_at_$locationId', quantity);
+  }
   final item = db.items.firstWhereOrNull((row) => jsString(row.raw['Item ID']) == outputItemId);
   if (jsString(item?.raw['Category']) == 'Potion') {
     next = addLifetimeStat(next, 'potions_created', quantity);
@@ -73,6 +83,112 @@ PlayerSave recordProductionMilestones(
 
 PlayerSave recordFoodConsumed(PlayerSave save, String itemId) =>
     addLifetimeStat(save, 'consumed_$itemId');
+
+PlayerSave recordGatheredDrops(
+  PlayerSave save,
+  Iterable<String> itemIds,
+  String locationId,
+  String? weaponId,
+) {
+  final wield = weaponId != null && weaponId.isNotEmpty ? weaponId : 'none';
+  var next = save;
+  for (final itemId in itemIds) {
+    next = addLifetimeStat(next, 'gathered_${itemId}_at_${locationId}_wield_$wield');
+  }
+  return next;
+}
+
+PlayerSave recordItemsSoldAtLocation(
+  PlayerSave save,
+  Iterable<({String itemId, num quantity})> items,
+  String locationId,
+) {
+  var next = save;
+  for (final item in items) {
+    final qty = math.max(0, jsNumber(item.quantity));
+    if (qty <= 0) continue;
+    next = addLifetimeStat(next, 'sold_${item.itemId}_at_$locationId', qty);
+  }
+  return next;
+}
+
+bool itemHasClassLabel(GameDatabase db, String itemId, String label) {
+  final wanted = label.trim().toLowerCase();
+  if (wanted.isEmpty) return false;
+  if (itemHasCapability(db, itemId, wanted)) return true;
+  final item = db.items.firstWhereOrNull((row) => jsString(row.raw['Item ID']) == itemId);
+  return capabilityTags(item?.raw['Functional / Source Tags']).contains(wanted);
+}
+
+List<String> classLabelsFromAchievements(GameDatabase db) {
+  final labels = <String>{};
+  for (final row in achievementRows(db)) {
+    if (jsString(row['Check Type']) != 'kill_enemy_class') continue;
+    final parsed = _parseKillEnemyClass(
+      row['Target ID'] is String ? row['Target ID'] as String : null,
+    );
+    if (parsed == null) continue;
+    labels.addAll(parsed.classes);
+  }
+  return labels.toList();
+}
+
+List<String> classLabelsOnItem(GameDatabase db, String itemId) {
+  return classLabelsFromAchievements(db)
+      .where((label) => itemHasClassLabel(db, itemId, label))
+      .toList();
+}
+
+PlayerSave recordEnemyKill(GameDatabase db, PlayerSave save, String enemyId) {
+  var next = addLifetimeStat(save, 'killed_$enemyId');
+  final weaponId = save.equipment.slots[weaponToolSlotId]?.itemId;
+  if (weaponId == null) return next;
+  for (final label in classLabelsOnItem(db, weaponId)) {
+    next = addLifetimeStat(next, 'killed_${enemyId}_class_$label');
+  }
+  return next;
+}
+
+({String id, String locationId})? _parseAtLocation(String? target) {
+  if (target == null) return null;
+  final at = target.indexOf('@');
+  if (at <= 0 || at == target.length - 1) return null;
+  return (id: target.substring(0, at), locationId: target.substring(at + 1));
+}
+
+({String itemId, String locationId, String weaponId})? _parseGatherDrop(String? target) {
+  if (target == null) return null;
+  final parts = target.split('+wield:');
+  if (parts.length != 2) return null;
+  final parsed = _parseAtLocation(parts[0]);
+  if (parsed == null || parts[1].isEmpty) return null;
+  return (itemId: parsed.id, locationId: parsed.locationId, weaponId: parts[1]);
+}
+
+({String enemyId, List<String> classes})? _parseKillEnemyClass(String? target) {
+  if (target == null) return null;
+  final parts = target.split('+class:');
+  if (parts.length != 2) return null;
+  final classes = parts[1]
+      .split('|')
+      .map((part) => part.trim().toLowerCase())
+      .where((part) => part.isNotEmpty)
+      .toList();
+  if (parts[0].isEmpty || classes.isEmpty) return null;
+  return (enemyId: parts[0], classes: classes);
+}
+
+Set<String> _equippedItemIds(PlayerSave save) {
+  return save.equipment.slots.values.map((stack) => stack?.itemId).whereType<String>().toSet();
+}
+
+bool _holdsEquipSet(PlayerSave save, String? target) {
+  if (target == null || target.isEmpty) return false;
+  final needed = target.split(',').map((part) => part.trim()).where((part) => part.isNotEmpty);
+  if (needed.isEmpty) return false;
+  final worn = _equippedItemIds(save);
+  return needed.every(worn.contains);
+}
 
 List<AchievementProgress> _upsertAchievement(
   List<AchievementProgress> list,
@@ -123,6 +239,41 @@ bool _holdsMilestone(
       return target is String && _lifetimeCount(values, 'consumed_$target') >= count;
     case 'output_item':
       return target is String && _lifetimeCount(values, 'output_$target') >= count;
+    case 'output_at_location':
+      final outputAt = _parseAtLocation(target is String ? target : null);
+      return outputAt != null &&
+          _lifetimeCount(values, 'output_${outputAt.id}_at_${outputAt.locationId}') >= count;
+    case 'project_at_location':
+      final projectAt = _parseAtLocation(target is String ? target : null);
+      return projectAt != null &&
+          _lifetimeCount(values, 'project_${projectAt.id}_at_${projectAt.locationId}') >= count;
+    case 'gather_drop':
+      final gathered = _parseGatherDrop(target is String ? target : null);
+      return gathered != null &&
+          _lifetimeCount(
+                values,
+                'gathered_${gathered.itemId}_at_${gathered.locationId}_wield_${gathered.weaponId}',
+              ) >=
+              count;
+    case 'sold_at_location':
+      final sold = _parseAtLocation(target is String ? target : null);
+      return sold != null &&
+          _lifetimeCount(values, 'sold_${sold.id}_at_${sold.locationId}') >= count;
+    case 'kill_enemy':
+      return target is String && _lifetimeCount(values, 'killed_$target') >= count;
+    case 'kill_enemy_class':
+      final killClass = _parseKillEnemyClass(target is String ? target : null);
+      if (killClass == null) return false;
+      return killClass.classes.any(
+        (label) => _lifetimeCount(values, 'killed_${killClass.enemyId}_class_$label') >= count,
+      );
+    case 'equip_set':
+      return _holdsEquipSet(save, target is String ? target : null);
+    case 'equip_quiver_bow':
+      if (target is! String || target.isEmpty) return false;
+      if (!_equippedItemIds(save).contains(target)) return false;
+      final weaponId = save.equipment.slots[weaponToolSlotId]?.itemId;
+      return weaponId != null && itemHasCapability(db, weaponId, 'bow_combat_xp');
     case 'enchant':
       return _lifetimeCount(values, 'items_enchanted') >= count;
     case 'potion':

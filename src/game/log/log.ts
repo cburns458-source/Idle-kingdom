@@ -65,7 +65,7 @@ function achievementNote(achievement: AchievementRow): string {
     case 'gold':
       return `Earn ${Number(count ?? 0).toLocaleString('en-US')} gold`
     case 'spell_projects':
-      return `Complete ${count ?? 4} spell projects`
+      return achievement.Notes ?? `Complete ${count ?? 1} spell project${Number(count ?? 1) === 1 ? '' : 's'}`
     case 'enchant':
       return 'Enchant an item'
     case 'potion':

@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:collection/collection.dart';
 import 'package:ik_content/ik_content.dart';
 
+import '../achievements/progress.dart';
 import '../js_compat.dart';
 import '../save/generated/save_models.dart';
 import '../shops/shops.dart';
@@ -110,6 +111,7 @@ SellInventoryResult sellInventoryQuantities(
   num goldEarned = 0;
   var stacksSold = 0;
   final inventory = [...save.inventory];
+  final soldAtShop = <({String itemId, num quantity})>[];
 
   for (final index in unique) {
     final stack = inventory[index];
@@ -138,6 +140,9 @@ SellInventoryResult sellInventoryQuantities(
     }
     goldEarned += priced.unitPrice * quantity;
     stacksSold += 1;
+    if (priced.shopId != null) {
+      soldAtShop.add((itemId: stack.itemId, quantity: quantity));
+    }
     if (quantity >= stack.quantity) {
       inventory.removeAt(index);
     } else {
@@ -145,7 +150,7 @@ SellInventoryResult sellInventoryQuantities(
     }
   }
 
-  final next = save.copyWith(
+  var next = save.copyWith(
     inventory: inventory,
     gold: save.gold + goldEarned,
     statistics: PlayerStatistics(
@@ -155,6 +160,9 @@ SellInventoryResult sellInventoryQuantities(
       },
     ),
   );
+  if (soldAtShop.isNotEmpty) {
+    next = recordItemsSoldAtLocation(next, soldAtShop, save.currentLocationId);
+  }
 
   final shopsHere = shopsAtLocation(
     db,

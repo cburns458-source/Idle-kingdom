@@ -1,6 +1,7 @@
 import 'package:collection/collection.dart';
 import 'package:ik_content/ik_content.dart';
 
+import '../achievements/progress.dart';
 import '../cosmetics/cosmetics.dart';
 import '../inventory/add_items.dart';
 import '../inventory/capacity.dart';
@@ -182,6 +183,14 @@ ShopTransactionResult confirmShopOffer(
           'gold_earned': jsNumber(next.statistics.values['gold_earned'] ?? 0) + sellCredit.total,
         },
       ),
+    );
+  }
+  if (offer.sells.isNotEmpty) {
+    final shopLocation = jsString(shop.raw['Location ID']);
+    next = recordItemsSoldAtLocation(
+      next,
+      offer.sells.map((line) => (itemId: line.itemId, quantity: line.quantity)),
+      shopLocation.isEmpty ? save.currentLocationId : shopLocation,
     );
   }
 

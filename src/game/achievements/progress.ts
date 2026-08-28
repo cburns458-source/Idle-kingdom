@@ -1,6 +1,7 @@
 import { getSkillProgress } from '../activity/xp'
 import { CRITTER_DEFS, collectionCount } from '../critters/critters'
 import type { GameDatabase } from '../data/types'
+import { itemHasCapability, WEAPON_TOOL_SLOT_ID } from '../equipment/loadout'
 import { totalLevel, totalSkillXp } from '../skills/totals'
 import type { AchievementProgress, PlayerSave } from '../save/types'
 
@@ -50,6 +51,10 @@ export function recordProjectMilestones(
 ): PlayerSave {
   const project = db.Projects.find((row) => row['Project ID'] === projectId)
   let next = addLifetimeStat(save, `project_${projectId}`, crafts)
+  const locationId = save.currentLocationId
+  if (locationId) {
+    next = addLifetimeStat(next, `project_${projectId}_at_${locationId}`, crafts)
+  }
   const outputId = String(project?.['Output Item / Target ID'] ?? '')
   if (outputId.startsWith('ENCH-')) {
     next = addLifetimeStat(next, 'items_enchanted', crafts)
@@ -67,6 +72,10 @@ export function recordProductionMilestones(
   quantity: number,
 ): PlayerSave {
   let next = addLifetimeStat(save, `output_${outputItemId}`, quantity)
+  const locationId = save.currentLocationId
+  if (locationId) {
+    next = addLifetimeStat(next, `output_${outputItemId}_at_${locationId}`, quantity)
+  }
   const item = db.Items.find((row) => row['Item ID'] === outputItemId)
   if (item?.Category === 'Potion') {
     next = addLifetimeStat(next, 'potions_created', quantity)
@@ -76,6 +85,125 @@ export function recordProductionMilestones(
 
 export function recordFoodConsumed(save: PlayerSave, itemId: string): PlayerSave {
   return addLifetimeStat(save, `consumed_${itemId}`, 1)
+}
+
+export function recordGatheredDrops(
+  save: PlayerSave,
+  itemIds: Iterable<string>,
+  locationId: string,
+  weaponId: string | null,
+): PlayerSave {
+  const wield = weaponId && weaponId.length > 0 ? weaponId : 'none'
+  let next = save
+  for (const itemId of itemIds) {
+    next = addLifetimeStat(next, `gathered_${itemId}_at_${locationId}_wield_${wield}`)
+  }
+  return next
+}
+
+export function recordItemsSoldAtLocation(
+  save: PlayerSave,
+  items: Iterable<{ itemId: string; quantity: number }>,
+  locationId: string,
+): PlayerSave {
+  let next = save
+  for (const item of items) {
+    const qty = Math.max(0, Number(item.quantity) || 0)
+    if (qty <= 0) continue
+    next = addLifetimeStat(next, `sold_${item.itemId}_at_${locationId}`, qty)
+  }
+  return next
+}
+
+function splitTags(value: string | null | undefined): string[] {
+  if (typeof value !== 'string') return []
+  return value
+    .split(';')
+    .map((part) => part.trim().toLowerCase())
+    .filter(Boolean)
+}
+
+/** True when the item carries a class label such as `staff` or `wand`. */
+export function itemHasClassLabel(db: GameDatabase, itemId: string, label: string): boolean {
+  const wanted = label.trim().toLowerCase()
+  if (!wanted) return false
+  if (itemHasCapability(db, itemId, wanted)) return true
+  const item = db.Items.find((row) => row['Item ID'] === itemId)
+  return splitTags(item?.['Functional / Source Tags']).includes(wanted)
+}
+
+export function classLabelsFromAchievements(db: GameDatabase): string[] {
+  const labels = new Set<string>()
+  for (const row of asAchievementRows(db)) {
+    if (row['Check Type'] !== 'kill_enemy_class') continue
+    const parsed = parseKillEnemyClass(row['Target ID'])
+    parsed?.classes.forEach((name) => labels.add(name))
+  }
+  return [...labels]
+}
+
+export function classLabelsOnItem(db: GameDatabase, itemId: string): string[] {
+  return classLabelsFromAchievements(db).filter((label) => itemHasClassLabel(db, itemId, label))
+}
+
+export function recordEnemyKill(db: GameDatabase, save: PlayerSave, enemyId: string): PlayerSave {
+  let next = addLifetimeStat(save, `killed_${enemyId}`)
+  const weaponId = save.equipment.slots[WEAPON_TOOL_SLOT_ID]?.itemId
+  if (!weaponId) return next
+  for (const label of classLabelsOnItem(db, weaponId)) {
+    next = addLifetimeStat(next, `killed_${enemyId}_class_${label}`)
+  }
+  return next
+}
+
+function parseAtLocation(target: string | null): { id: string; locationId: string } | null {
+  if (!target) return null
+  const at = target.indexOf('@')
+  if (at <= 0 || at === target.length - 1) return null
+  return { id: target.slice(0, at), locationId: target.slice(at + 1) }
+}
+
+function parseGatherDrop(
+  target: string | null,
+): { itemId: string; locationId: string; weaponId: string } | null {
+  if (!target) return null
+  const [atPart, wieldPart] = target.split('+wield:')
+  const parsed = parseAtLocation(atPart ?? null)
+  if (!parsed || !wieldPart) return null
+  return { itemId: parsed.id, locationId: parsed.locationId, weaponId: wieldPart }
+}
+
+function parseKillEnemyClass(
+  target: string | null,
+): { enemyId: string; classes: string[] } | null {
+  if (!target) return null
+  const [enemyId, rest] = target.split('+class:')
+  if (!enemyId || !rest) return null
+  const classes = rest
+    .split('|')
+    .map((part) => part.trim().toLowerCase())
+    .filter(Boolean)
+  if (classes.length === 0) return null
+  return { enemyId, classes }
+}
+
+function equippedItemIds(save: PlayerSave): Set<string> {
+  const ids = new Set<string>()
+  for (const stack of Object.values(save.equipment.slots)) {
+    if (stack?.itemId) ids.add(stack.itemId)
+  }
+  return ids
+}
+
+function holdsEquipSet(save: PlayerSave, target: string | null): boolean {
+  if (!target) return false
+  const needed = target
+    .split(',')
+    .map((part) => part.trim())
+    .filter(Boolean)
+  if (needed.length === 0) return false
+  const worn = equippedItemIds(save)
+  return needed.every((itemId) => worn.has(itemId))
 }
 
 export interface StatisticRow {
@@ -159,6 +287,48 @@ function holdsMilestone(
       return target != null && lifetimeCount(values, `consumed_${target}`) >= count
     case 'output_item':
       return target != null && lifetimeCount(values, `output_${target}`) >= count
+    case 'output_at_location': {
+      const parsed = parseAtLocation(target)
+      return parsed != null && lifetimeCount(values, `output_${parsed.id}_at_${parsed.locationId}`) >= count
+    }
+    case 'project_at_location': {
+      const parsed = parseAtLocation(target)
+      return (
+        parsed != null && lifetimeCount(values, `project_${parsed.id}_at_${parsed.locationId}`) >= count
+      )
+    }
+    case 'gather_drop': {
+      const parsed = parseGatherDrop(target)
+      return (
+        parsed != null &&
+        lifetimeCount(
+          values,
+          `gathered_${parsed.itemId}_at_${parsed.locationId}_wield_${parsed.weaponId}`,
+        ) >= count
+      )
+    }
+    case 'sold_at_location': {
+      const parsed = parseAtLocation(target)
+      return parsed != null && lifetimeCount(values, `sold_${parsed.id}_at_${parsed.locationId}`) >= count
+    }
+    case 'kill_enemy':
+      return target != null && lifetimeCount(values, `killed_${target}`) >= count
+    case 'kill_enemy_class': {
+      const parsed = parseKillEnemyClass(target)
+      if (!parsed) return false
+      return parsed.classes.some(
+        (label) => lifetimeCount(values, `killed_${parsed.enemyId}_class_${label}`) >= count,
+      )
+    }
+    case 'equip_set':
+      return holdsEquipSet(save, target)
+    case 'equip_quiver_bow': {
+      if (!target) return false
+      const worn = equippedItemIds(save)
+      if (!worn.has(target)) return false
+      const weaponId = save.equipment.slots[WEAPON_TOOL_SLOT_ID]?.itemId
+      return weaponId != null && itemHasCapability(db, weaponId, 'bow_combat_xp')
+    }
     case 'enchant':
       return lifetimeCount(values, 'items_enchanted') >= count
     case 'potion':

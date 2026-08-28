@@ -340,4 +340,19 @@ void main() {
     expect(star.right, lessThanOrEqualTo(heart.right));
     expect(star.top, closeTo(tile.top, 12));
   });
+
+  testWidgets('food tiles do not say Eat; the detail sheet still does', (tester) async {
+    final seed = unequippedCharacter().copyWith(
+      inventory: [const InventoryStack(itemId: 'ITEM-0028', quantity: 2)],
+    );
+    final controller = buildController(database, seed: seed);
+    addTearDown(controller.dispose);
+
+    await pumpPanel(tester, InventoryView(controller: controller));
+    expect(find.text('Eat'), findsNothing);
+
+    await tester.longPress(find.byTooltip('Wild berries').first);
+    await tester.pumpAndSettle();
+    expect(find.text('Eat'), findsOne);
+  });
 }

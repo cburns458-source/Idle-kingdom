@@ -1,3 +1,4 @@
+import { recordItemsSoldAtLocation } from '../achievements/progress'
 import {
   baseSellValue,
   canAccessShop,
@@ -71,6 +72,7 @@ export function sellInventoryIndexes(
   let goldEarned = 0
   let stacksSold = 0
   const remove = new Set<number>()
+  const soldAtShop: { itemId: string; quantity: number }[] = []
 
   for (const index of unique) {
     const stack = save.inventory[index]
@@ -90,6 +92,9 @@ export function sellInventoryIndexes(
     goldEarned += priced.unitPrice * stack.quantity
     stacksSold += 1
     remove.add(index)
+    if (priced.shopId) {
+      soldAtShop.push({ itemId: stack.itemId, quantity: stack.quantity })
+    }
   }
 
   if (stacksSold === 0) {
@@ -97,7 +102,7 @@ export function sellInventoryIndexes(
   }
 
   const inventory = save.inventory.filter((_, index) => !remove.has(index))
-  const next: PlayerSave = {
+  let next: PlayerSave = {
     ...save,
     inventory,
     gold: save.gold + goldEarned,
@@ -107,6 +112,9 @@ export function sellInventoryIndexes(
         gold_earned: Number(save.statistics.values.gold_earned ?? 0) + goldEarned,
       },
     },
+  }
+  if (soldAtShop.length > 0) {
+    next = recordItemsSoldAtLocation(next, soldAtShop, save.currentLocationId)
   }
 
   const shopsHere = shopsAtLocation(db, save.currentLocationId).some(
