@@ -300,6 +300,7 @@ function arrivalJson(arrival: ReturnType<typeof arriveFromTravel>): JsonValue {
     forcedActivityId: arrival.forcedActivityId,
     blockedReason: arrival.blockedReason,
     message: arrival.message,
+    questCompletions: arrival.questCompletions,
   } as unknown as JsonValue
 }
 
