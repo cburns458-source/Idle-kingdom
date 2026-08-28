@@ -105,10 +105,14 @@ class StructuredQuestObjectives {
     'inspectIds': inspectIds,
     'holds': holds.map((line) => line.toJson()).toList(),
     'actionTargets': actionTargets.map((line) => line.toJson()).toList(),
-    'requiresSkills': requiresSkills.map((line) => line.toJson()).toList(),
+    'requiresSkills': requiresSkills
+        .map((line) => <String, Object?>{'skillId': line.targetId, 'level': line.quantity})
+        .toList(),
     'requiresQuestIds': requiresQuestIds,
     'unlockOnAcceptLocationIds': unlockOnAcceptLocationIds,
-    'rewardXp': rewardXp.map((line) => line.toJson()).toList(),
+    'rewardXp': rewardXp
+        .map((line) => <String, Object?>{'skillId': line.targetId, 'amount': line.quantity})
+        .toList(),
     'goldCost': goldCost,
     'acceptGoldCost': acceptGoldCost,
     'rewardGold': rewardGold,
