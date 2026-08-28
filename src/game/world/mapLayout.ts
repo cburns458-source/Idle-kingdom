@@ -57,6 +57,8 @@ export const CAVE_MAP_NODE_LAYOUT: Record<string, NodePosition> = {
   'LOC-0011': { x: 78, y: 78 },
   // Abandoned webbed shaft
   'LOC-0022': { x: 20, y: 76 },
+  // Dwarven Forge, above the abandoned shaft
+  'LOC-0038': { x: 22, y: 54 },
 }
 
 export const CASTLE_MAP_NODE_LAYOUT: Record<string, NodePosition> = {

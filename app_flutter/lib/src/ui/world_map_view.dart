@@ -70,6 +70,7 @@ class WorldMapView extends StatelessWidget {
       browseMapId,
       save.unlockedLocationIds,
       hiddenLocationIds,
+      save.currentLocationId,
     );
     final selected = selectedLocationId == null
         ? null

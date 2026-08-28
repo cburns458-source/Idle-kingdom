@@ -230,7 +230,11 @@ bool questNpcHasIncompleteTalk(GameDatabase db, PlayerSave save, QuestRow quest,
 }
 
 bool questTouchesNpcForSave(GameDatabase db, PlayerSave save, QuestRow quest, String npcId) {
-  if (quest['NPC ID'] == npcId) return true;
+  if (quest['NPC ID'] == npcId) {
+    final status = getQuestProgress(save, jsString(quest['Quest ID'])).status;
+    if (status == 'inactive') return questAvailableForSave(db, save, quest);
+    return true;
+  }
 
   final meta = parseStructuredObjectives(quest);
   final progress = getQuestProgress(save, jsString(quest['Quest ID']));

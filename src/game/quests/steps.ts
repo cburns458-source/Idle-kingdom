@@ -7,7 +7,7 @@ import {
   parseStructuredObjectives,
   type QuestProgressLine,
 } from './objectives'
-import { getQuestProgress, type QuestRow } from './quests'
+import { getQuestProgress, questAvailableForSave, type QuestRow } from './quests'
 import type { StructuredQuestObjectives } from './types'
 
 export type QuestJournalStepState = 'done' | 'current'
@@ -248,7 +248,11 @@ export function questTouchesNpcForSave(
   quest: QuestRow,
   npcId: string,
 ): boolean {
-  if (quest['NPC ID'] === npcId) return true
+  if (quest['NPC ID'] === npcId) {
+    const status = getQuestProgress(save, quest['Quest ID']).status
+    if (status === 'inactive') return questAvailableForSave(db, save, quest)
+    return true
+  }
 
   const meta = parseStructuredObjectives(quest)
   const progress = getQuestProgress(save, quest['Quest ID'])

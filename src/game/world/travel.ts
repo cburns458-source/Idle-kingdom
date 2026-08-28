@@ -1,6 +1,7 @@
 import { isDeathPaused } from '../combat/engine'
 import { stopPrimaryActivityNow } from '../activity/transition'
 import type { GameDatabase, LocationRow, TravelConnectionRow } from '../data/types'
+import { applyQuestAutoCompleteOnVisit } from '../quests/quests'
 import { applyQuestLocationProgress } from '../quests/progress'
 import type { PlayerSave } from '../save/types'
 import { maybeGrantKingswoodsSling } from './kingswoodsSling'
@@ -80,7 +81,7 @@ export function findConnection(
 export function locationsForMapView(
   db: GameDatabase,
   mapId: string,
-  save?: Pick<PlayerSave, 'unlockedLocationIds'> | null,
+  save?: Pick<PlayerSave, 'unlockedLocationIds' | 'currentLocationId'> | null,
   hiddenLocationIds: readonly string[] = [],
 ): LocationRow[] {
   if (mapId === MAIN_MAP_ID) {
@@ -117,7 +118,7 @@ export function canTravelTo(
   fromLocationId: string,
   toLocationId: string,
   activeMapId: string,
-  save?: Pick<PlayerSave, 'unlockedLocationIds'> | null,
+  save?: Pick<PlayerSave, 'unlockedLocationIds' | 'currentLocationId'> | null,
 ): boolean {
   if (fromLocationId === toLocationId) return false
   if (isFutureHorizonLocation(toLocationId)) return false
@@ -156,5 +157,5 @@ export function applyTravelArrival(
     currentLocationId: destinationLocationId,
   }
   const progressed = applyQuestLocationProgress(db, arrived, destinationLocationId)
-  return maybeGrantKingswoodsSling(db, progressed).save
+  return maybeGrantKingswoodsSling(db, applyQuestAutoCompleteOnVisit(db, progressed)).save
 }

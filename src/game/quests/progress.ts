@@ -90,6 +90,10 @@ export function questIsActiveOrComplete(save: PlayerSave, questId: string): bool
   return status === 'active' || status === 'completed'
 }
 
+export function questIsComplete(save: PlayerSave, questId: string): boolean {
+  return getQuestProgress(save, questId).status === 'completed'
+}
+
 export function setQuestFlag(save: PlayerSave, questId: string, key: string): PlayerSave {
   if (hasQuestFlag(save, questId, key)) return save
   return bumpCounter(save, questId, key, 1)
@@ -125,6 +129,23 @@ export function applyQuestTalkProgress(
     const stepKey = currentStepTalkKey(db, next, quest, npcId)
     next = setQuestFlag(next, quest['Quest ID'], `talk:${npcId}`)
     next = setQuestFlag(next, quest['Quest ID'], stepKey)
+  }
+  return next
+}
+
+/** Marks Action objectives after a gathering/combat action completes. */
+export function applyQuestActionProgress(
+  db: GameDatabase,
+  save: PlayerSave,
+  actionId: string,
+  amount = 1,
+): PlayerSave {
+  let next = save
+  for (const quest of asQuestRows(db)) {
+    if (!questObjectiveSources(db, quest).some((row) => row.actionTargets.some((t) => t.targetId === actionId))) {
+      continue
+    }
+    next = bumpCounter(next, quest['Quest ID'], `action:${actionId}`, amount)
   }
   return next
 }

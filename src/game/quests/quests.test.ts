@@ -10,6 +10,7 @@ import { specialProductionStationsVisibleAt } from '../projects/projects'
 import { isCosmeticUnlocked } from '../cosmetics/cosmetics'
 import { createNewSave } from '../save/saveStore'
 import {
+  applyQuestActionProgress,
   applyQuestInspectProgress,
   applyQuestProcessProgress,
   applyQuestTalkProgress,
@@ -292,5 +293,80 @@ describe('quest tours', () => {
     expect(getQuestProgress(finished.save, 'QST-0006').status).toBe('completed')
     expect(finished.save.inventory.find((stack) => stack.itemId === 'ITEM-0058')?.quantity).toBe(5)
     expect(npcsAtLocationForSave(launch, finished.save, 'LOC-0001')).toEqual([])
+  })
+
+  it('walks Forged in Fire and Going Deeper, and keeps a player already in the shaft', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const merchant = launch.NPCs.find((row) => row['NPC ID'] === 'NPC-0008')!
+    const helge = launch.NPCs.find((row) => row['NPC ID'] === 'NPC-0015')!
+    expect(helge['Location ID']).toBe('LOC-0038')
+
+    let save = {
+      ...createNewSave(launch),
+      currentLocationId: 'LOC-0012',
+      skills: [
+        { skillId: 'SKL-0008', level: 35, xp: 0 },
+        { skillId: 'SKL-0011', level: 35, xp: 0 },
+        { skillId: 'SKL-0002', level: 60, xp: 0 },
+      ],
+    }
+    expect(npcConversation(launch, { ...save, skills: [] }, merchant).quests).toEqual([])
+
+    const pitched = npcConversation(launch, save, merchant)
+    expect(pitched.quests[0]?.questId).toBe('QST-0007')
+    expect(pitched.quests[0]?.pitchLine).toMatch(/old forge/)
+    expect(pitched.quests[0]?.canAccept).toBe(true)
+
+    const accepted = acceptQuest(launch, save, 'QST-0007')
+    expect(accepted.ok).toBe(true)
+    if (!accepted.ok) return
+    save = accepted.save
+    expect(save.unlockedLocationIds).toContain('LOC-0038')
+    expect(specialProductionStationsVisibleAt(launch, save, 'LOC-0038')).toEqual([])
+
+    save = { ...save, currentLocationId: 'LOC-0038' }
+    save = applyQuestVisitProgress(launch, save, 'LOC-0038')
+    save = applyQuestTalkProgress(launch, save, 'NPC-0015')
+    save = addItemToInventory(save, 'ITEM-0077', 20)
+    save = addItemToInventory(save, 'ITEM-0006', 100)
+    save = applyQuestTalkProgress(launch, save, 'NPC-0015')
+    const forged = completeQuest(launch, save, 'QST-0007')
+    expect(forged.ok).toBe(true)
+    if (!forged.ok) return
+    expect(forged.rewards.some((reward) => /Smithing XP/i.test(reward.label))).toBe(true)
+    expect(forged.rewards.some((reward) => /Metallurgy XP/i.test(reward.label))).toBe(true)
+    save = forged.save
+    expect(save.inventory.find((stack) => stack.itemId === 'ITEM-0077')).toBeUndefined()
+    expect(specialProductionStationsVisibleAt(launch, save, 'LOC-0038').length).toBeGreaterThan(0)
+
+    const deeperPitch = npcConversation(launch, save, helge)
+    expect(deeperPitch.quests.some((quest) => quest.questId === 'QST-0008' && quest.canAccept)).toBe(
+      true,
+    )
+    const deeper = acceptQuest(launch, save, 'QST-0008')
+    expect(deeper.ok).toBe(true)
+    if (!deeper.ok) return
+    save = deeper.save
+    save = applyQuestTalkProgress(launch, save, 'NPC-0015')
+    expect(activityVisibleForSave(launch, save, 'ACT-0044')).toBe(true)
+    save = applyQuestVisitProgress(launch, save, 'LOC-0011')
+    save = applyQuestActionProgress(launch, save, 'ACN-0177', 100)
+    expect(activityVisibleForSave(launch, { ...createNewSave(launch) }, 'ACT-0044')).toBe(false)
+
+    const arrived = applyTravelArrival(launch, save, 'LOC-0022')
+    expect(getQuestProgress(arrived, 'QST-0008').status).toBe('completed')
+    expect(arrived.unlockedLocationIds).toContain('LOC-0022')
+    expect(arrived.inventory.find((stack) => stack.itemId === 'ITEM-0313')?.quantity).toBe(1)
+    expect(activityVisibleForSave(launch, arrived, 'ACT-0044')).toBe(false)
+
+    const stillInside = applyTravelArrival(
+      launch,
+      { ...createNewSave(launch), currentLocationId: 'LOC-0022' },
+      'LOC-0022',
+    )
+    expect(stillInside.currentLocationId).toBe('LOC-0022')
+    const leftHidden = applyTravelArrival(launch, stillInside, 'LOC-0011')
+    expect(leftHidden.currentLocationId).toBe('LOC-0011')
+    expect(leftHidden.unlockedLocationIds ?? []).not.toContain('LOC-0022')
   })
 })

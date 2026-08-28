@@ -123,11 +123,13 @@ export function locationRequiresUnlock(location: LocationRow): boolean {
 }
 
 export function isLocationUnlocked(
-  save: { unlockedLocationIds?: string[] | null },
+  save: { unlockedLocationIds?: string[] | null; currentLocationId?: string | null },
   location: LocationRow,
 ): boolean {
   if (!locationRequiresUnlock(location)) return true
-  return (save.unlockedLocationIds ?? []).includes(location['Location ID'])
+  const locationId = location['Location ID']
+  if (save.currentLocationId === locationId) return true
+  return (save.unlockedLocationIds ?? []).includes(locationId)
 }
 
 export function unlockLocation(

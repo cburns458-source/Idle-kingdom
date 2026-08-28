@@ -155,8 +155,18 @@ describe('travel rules', () => {
     expect(castleNodes).toEqual(expect.arrayContaining(['LOC-0015', 'LOC-0021', 'LOC-0037']))
     expect(castleNodes).not.toContain(CASTLE_GATEWAY_ID)
     const caveNodes = locationsForMapView(launch, CAVE_MAP_ID).map((row) => row['Location ID'])
-    expect(caveNodes).toEqual(expect.arrayContaining(['LOC-0011', 'LOC-0022']))
+    expect(caveNodes).toEqual(expect.arrayContaining(['LOC-0011']))
+    expect(caveNodes).not.toContain('LOC-0022')
+    expect(caveNodes).not.toContain('LOC-0038')
     expect(caveNodes).not.toContain('LOC-0010')
+    const standingInShaft = locationsForMapView(launch, CAVE_MAP_ID, {
+      currentLocationId: 'LOC-0022',
+    }).map((row) => row['Location ID'])
+    expect(standingInShaft).toContain('LOC-0022')
+    const unlockedShaft = locationsForMapView(launch, CAVE_MAP_ID, {
+      unlockedLocationIds: ['LOC-0022'],
+    }).map((row) => row['Location ID'])
+    expect(unlockedShaft).toContain('LOC-0022')
   })
 
   it('opens citadel sub-map from The Citadel gateway', () => {

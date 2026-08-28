@@ -101,6 +101,10 @@ bool questIsActiveOrComplete(PlayerSave save, String questId) {
   return status == 'active' || status == 'completed';
 }
 
+bool questIsComplete(PlayerSave save, String questId) {
+  return getQuestProgress(save, questId).status == 'completed';
+}
+
 PlayerSave setQuestFlag(PlayerSave save, String questId, String key) {
   if (hasQuestFlag(save, questId, key)) return save;
   return _bumpCounter(save, questId, key, 1);
@@ -135,6 +139,26 @@ PlayerSave applyQuestTalkProgress(GameDatabase db, PlayerSave save, String npcId
     final stepKey = currentStepTalkKey(db, next, quest, npcId);
     next = setQuestFlag(next, questId, 'talk:$npcId');
     next = setQuestFlag(next, questId, stepKey);
+  }
+  return next;
+}
+
+/// Marks Action objectives after a gathering action completes.
+PlayerSave applyQuestActionProgress(
+  GameDatabase db,
+  PlayerSave save,
+  String actionId, [
+  num amount = 1,
+]) {
+  var next = save;
+  for (final quest in asQuestRows(db)) {
+    if (!questObjectiveSources(
+      db,
+      quest,
+    ).any((row) => row.actionTargets.any((target) => target.targetId == actionId))) {
+      continue;
+    }
+    next = _bumpCounter(next, jsString(quest['Quest ID']), 'action:$actionId', amount);
   }
   return next;
 }

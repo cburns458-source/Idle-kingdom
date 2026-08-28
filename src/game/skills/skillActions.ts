@@ -77,7 +77,12 @@ export function activitiesForAction(db: GameDatabase, actionId: string): GameDat
 
 function isQuestOnlyRequirement(requirement: RequirementRow): boolean {
   const type = requirement['Requirement Type']
-  return type === 'Quest Access' || type === 'Quest Flag' || type === 'Quest Active'
+  return (
+    type === 'Quest Access' ||
+    type === 'Quest Flag' ||
+    type === 'Quest Active' ||
+    type === 'Quest Complete'
+  )
 }
 
 /** True when every activity that can roll this action is quest-gated. */

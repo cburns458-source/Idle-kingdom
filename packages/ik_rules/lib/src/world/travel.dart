@@ -5,6 +5,7 @@ import '../activity/transition.dart';
 import '../combat/engine.dart';
 import '../js_compat.dart';
 import '../quests/progress.dart';
+import '../quests/quests.dart';
 import '../save/generated/save_models.dart';
 import 'constants.dart';
 import 'map_label.dart';
@@ -67,6 +68,7 @@ List<LocationRow> locationsForMapView(
   String mapId, [
   List<String> unlockedLocationIds = const <String>[],
   List<String> hiddenLocationIds = const <String>[],
+  String? currentLocationId,
 ]) {
   if (mapId == mainMapId) {
     return db.locations
@@ -86,7 +88,7 @@ List<LocationRow> locationsForMapView(
 
   final merged = <String, LocationRow>{};
   for (final location in db.locations.where((row) => row.raw['Map ID'] == mapId)) {
-    if (!isLocationUnlocked(unlockedLocationIds, location)) continue;
+    if (!isLocationUnlocked(unlockedLocationIds, location, currentLocationId)) continue;
     final id = jsString(location.raw['Location ID']);
     if (hiddenLocationIds.contains(id)) continue;
     if (locationHiddenOnMap(location, mapId)) continue;
@@ -111,7 +113,7 @@ bool canTravelTo(
     (location) => location.raw['Location ID'] == toLocationId,
   );
   if (destination == null) return false;
-  if (!isLocationUnlocked(unlockedLocationIds, destination)) return false;
+  if (!isLocationUnlocked(unlockedLocationIds, destination, fromLocationId)) return false;
 
   if (activeMapId == mainMapId) {
     // World-map travel is allowed from anywhere, including sub-locations,
@@ -142,6 +144,9 @@ PlayerSave applyTravelArrival(
   final arrived = stopped.copyWith(currentLocationId: destinationLocationId);
   return maybeGrantKingswoodsSling(
     db,
-    applyQuestLocationProgress(db, arrived, destinationLocationId),
+    applyQuestAutoCompleteOnVisit(
+      db,
+      applyQuestLocationProgress(db, arrived, destinationLocationId),
+    ),
   ).save;
 }

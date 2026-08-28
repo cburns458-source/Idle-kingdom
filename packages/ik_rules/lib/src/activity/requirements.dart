@@ -15,6 +15,7 @@ const List<String> knownRequirementTypes = <String>[
   'Skill Level',
   'Quest Access',
   'Quest Active',
+  'Quest Complete',
   'Quest Flag',
   'Item Absent',
 ];
@@ -133,6 +134,14 @@ RequirementCheck evaluateRequirement(GameDatabase db, PlayerSave save, Requireme
     return RequirementCheck(met: met, detail: met ? 'Quest in progress' : 'Not available yet');
   }
 
+  if (type == 'Quest Complete') {
+    final met = questIsComplete(save, reference);
+    return RequirementCheck(
+      met: met,
+      detail: met ? 'Quest complete' : 'Requires completing that quest',
+    );
+  }
+
   if (type == 'Quest Flag') {
     final parts = reference.split(':');
     if (parts.length < 2) {
@@ -156,6 +165,7 @@ bool isQuestGateRequirement(String type) {
   return type == 'Quest Access' ||
       type == 'Quest Flag' ||
       type == 'Quest Active' ||
+      type == 'Quest Complete' ||
       type == 'Item Absent';
 }
 
