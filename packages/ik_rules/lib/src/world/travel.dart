@@ -6,6 +6,7 @@ import '../combat/engine.dart';
 import '../js_compat.dart';
 import '../quests/progress.dart';
 import '../quests/quests.dart';
+import '../quests/steps.dart';
 import '../save/generated/save_models.dart';
 import 'constants.dart';
 import 'map_label.dart';
@@ -59,6 +60,17 @@ TravelConnectionRow? findConnection(GameDatabase db, String fromLocationId, Stri
   });
 }
 
+bool _locationOpenForSave(
+  GameDatabase db,
+  LocationRow location, [
+  List<String> unlockedLocationIds = const <String>[],
+  String? currentLocationId,
+  PlayerSave? save,
+]) {
+  if (isLocationUnlocked(unlockedLocationIds, location, currentLocationId)) return true;
+  return save != null && questRevealsLocation(db, save, jsString(location.raw['Location ID']));
+}
+
 /// Destinations selectable on a map.
 ///
 /// The main map lists every location on it. A sub-map lists its own nodes plus
@@ -69,6 +81,7 @@ List<LocationRow> locationsForMapView(
   List<String> unlockedLocationIds = const <String>[],
   List<String> hiddenLocationIds = const <String>[],
   String? currentLocationId,
+  PlayerSave? save,
 ]) {
   if (mapId == mainMapId) {
     return db.locations
@@ -88,7 +101,9 @@ List<LocationRow> locationsForMapView(
 
   final merged = <String, LocationRow>{};
   for (final location in db.locations.where((row) => row.raw['Map ID'] == mapId)) {
-    if (!isLocationUnlocked(unlockedLocationIds, location, currentLocationId)) continue;
+    if (!_locationOpenForSave(db, location, unlockedLocationIds, currentLocationId, save)) {
+      continue;
+    }
     final id = jsString(location.raw['Location ID']);
     if (hiddenLocationIds.contains(id)) continue;
     if (locationHiddenOnMap(location, mapId)) continue;
@@ -106,6 +121,7 @@ bool canTravelTo(
   String toLocationId,
   String activeMapId, [
   List<String> unlockedLocationIds = const <String>[],
+  PlayerSave? save,
 ]) {
   if (fromLocationId == toLocationId) return false;
   if (isFutureHorizonLocation(toLocationId)) return false;
@@ -113,7 +129,9 @@ bool canTravelTo(
     (location) => location.raw['Location ID'] == toLocationId,
   );
   if (destination == null) return false;
-  if (!isLocationUnlocked(unlockedLocationIds, destination, fromLocationId)) return false;
+  if (!_locationOpenForSave(db, destination, unlockedLocationIds, fromLocationId, save)) {
+    return false;
+  }
 
   if (activeMapId == mainMapId) {
     // World-map travel is allowed from anywhere, including sub-locations,
@@ -128,6 +146,9 @@ bool canTravelTo(
     db,
     activeMapId,
     unlockedLocationIds,
+    const <String>[],
+    fromLocationId,
+    save,
   ).any((location) => location.raw['Location ID'] == toLocationId);
 }
 

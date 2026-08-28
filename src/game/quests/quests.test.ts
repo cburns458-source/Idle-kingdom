@@ -26,7 +26,8 @@ import {
   donateForQuest,
   getQuestProgress,
 } from './quests'
-import { applyTravelArrival } from '../world/travel'
+import { CAVE_MAP_ID } from '../world/constants'
+import { applyTravelArrival, canTravelTo, locationsForMapView } from '../world/travel'
 
 const rawDatabase = JSON.parse(
   readFileSync(resolve(process.cwd(), 'content/data/game-database.json'), 'utf8'),
@@ -349,9 +350,16 @@ describe('quest tours', () => {
     save = deeper.save
     save = applyQuestTalkProgress(launch, save, 'NPC-0015')
     expect(activityVisibleForSave(launch, save, 'ACT-0044')).toBe(true)
+    expect(
+      locationsForMapView(launch, CAVE_MAP_ID, save).map((row) => row['Location ID']),
+    ).not.toContain('LOC-0022')
     save = applyQuestVisitProgress(launch, save, 'LOC-0011')
     save = applyQuestActionProgress(launch, save, 'ACN-0177', 100)
     expect(activityVisibleForSave(launch, { ...createNewSave(launch) }, 'ACT-0044')).toBe(false)
+    expect(
+      locationsForMapView(launch, CAVE_MAP_ID, save).map((row) => row['Location ID']),
+    ).toContain('LOC-0022')
+    expect(canTravelTo(launch, 'LOC-0011', 'LOC-0022', CAVE_MAP_ID, save)).toBe(true)
 
     const arrived = applyTravelArrival(launch, save, 'LOC-0022')
     expect(getQuestProgress(arrived, 'QST-0008').status).toBe('completed')
@@ -365,8 +373,15 @@ describe('quest tours', () => {
       'LOC-0022',
     )
     expect(stillInside.currentLocationId).toBe('LOC-0022')
+    expect(
+      locationsForMapView(launch, CAVE_MAP_ID, stillInside).map((row) => row['Location ID']),
+    ).toContain('LOC-0022')
     const leftHidden = applyTravelArrival(launch, stillInside, 'LOC-0011')
     expect(leftHidden.currentLocationId).toBe('LOC-0011')
     expect(leftHidden.unlockedLocationIds ?? []).not.toContain('LOC-0022')
+    expect(
+      locationsForMapView(launch, CAVE_MAP_ID, leftHidden).map((row) => row['Location ID']),
+    ).not.toContain('LOC-0022')
+    expect(canTravelTo(launch, 'LOC-0011', 'LOC-0022', CAVE_MAP_ID, leftHidden)).toBe(false)
   })
 })

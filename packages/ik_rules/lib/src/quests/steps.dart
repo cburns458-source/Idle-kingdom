@@ -250,3 +250,13 @@ bool questTouchesNpcForSave(GameDatabase db, PlayerSave save, QuestRow quest, St
 
   return questCanTalkToNpc(db, save, quest, npcId);
 }
+
+/// Locked nodes stay hidden until a current Visit step (or a standing/unlock check) reveals them.
+bool questRevealsLocation(GameDatabase db, PlayerSave save, String locationId) {
+  for (final quest in asQuestRows(db)) {
+    if (getQuestProgress(save, jsString(quest['Quest ID'])).status != 'active') continue;
+    final step = questActiveStepObjectives(db, save, quest);
+    if (step != null && step.visitLocationIds.contains(locationId)) return true;
+  }
+  return false;
+}

@@ -697,6 +697,8 @@ void main() {
     expect(controller.save.hasSeenFennelIntro, isTrue);
     expect(find.textContaining('Welcome to the lands'), findsNothing);
     expect(getQuestProgress(controller.save, 'QST-0006').status, 'inactive');
+    await tester.tap(find.widgetWithText(GameButton, 'People'));
+    await tester.pump();
     expect(find.text('Fennel'), findsOne);
   });
 }

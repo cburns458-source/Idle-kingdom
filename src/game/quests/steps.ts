@@ -7,7 +7,7 @@ import {
   parseStructuredObjectives,
   type QuestProgressLine,
 } from './objectives'
-import { getQuestProgress, questAvailableForSave, type QuestRow } from './quests'
+import { asQuestRows, getQuestProgress, questAvailableForSave, type QuestRow } from './quests'
 import type { StructuredQuestObjectives } from './types'
 
 export type QuestJournalStepState = 'done' | 'current'
@@ -240,6 +240,20 @@ export function questNpcHasIncompleteTalk(
       parseNotesObjectives(step.Notes ?? '').talkNpcIds.includes(npcId) &&
       !isStepComplete(db, save, questId, step.Notes ?? '', step['Step ID']),
   )
+}
+
+/** Locked nodes stay hidden until a current Visit step (or a standing/unlock check) reveals them. */
+export function questRevealsLocation(
+  db: GameDatabase,
+  save: PlayerSave,
+  locationId: string,
+): boolean {
+  for (const quest of asQuestRows(db)) {
+    if (getQuestProgress(save, quest['Quest ID']).status !== 'active') continue
+    const step = questActiveStepObjectives(db, save, quest)
+    if (step?.visitLocationIds.includes(locationId)) return true
+  }
+  return false
 }
 
 export function questTouchesNpcForSave(

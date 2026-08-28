@@ -118,6 +118,7 @@ TravelPlan planTravel(
           destinationId,
           browseMapId,
           save.unlockedLocationIds,
+          save,
         );
   if (!destOk) {
     return const TravelBlocked();

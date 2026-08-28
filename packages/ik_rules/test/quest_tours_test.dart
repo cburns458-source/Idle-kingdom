@@ -163,8 +163,34 @@ void main() {
     save = deeper.save!;
     save = applyQuestTalkProgress(db, save, 'NPC-0015');
     expect(activityVisibleForSave(db, save, 'ACT-0044'), isTrue);
+    expect(
+      locationsForMapView(
+        db,
+        caveMapId,
+        save.unlockedLocationIds,
+        const <String>[],
+        save.currentLocationId,
+        save,
+      ).map((row) => row.locationId),
+      isNot(contains('LOC-0022')),
+    );
     save = applyQuestVisitProgress(db, save, 'LOC-0011');
     save = applyQuestActionProgress(db, save, 'ACN-0177', 100);
+    expect(
+      locationsForMapView(
+        db,
+        caveMapId,
+        save.unlockedLocationIds,
+        const <String>[],
+        save.currentLocationId,
+        save,
+      ).map((row) => row.locationId),
+      contains('LOC-0022'),
+    );
+    expect(
+      canTravelTo(db, 'LOC-0011', 'LOC-0022', caveMapId, save.unlockedLocationIds, save),
+      isTrue,
+    );
 
     final arrived = applyTravelArrival(db, save, 'LOC-0022', 0);
     expect(getQuestProgress(arrived, 'QST-0008').status, 'completed');
@@ -173,9 +199,35 @@ void main() {
 
     final stillInside = applyTravelArrival(db, _save(db, locationId: 'LOC-0022'), 'LOC-0022', 0);
     expect(stillInside.currentLocationId, 'LOC-0022');
+    expect(
+      locationsForMapView(
+        db,
+        caveMapId,
+        stillInside.unlockedLocationIds,
+        const <String>[],
+        stillInside.currentLocationId,
+        stillInside,
+      ).map((row) => row.locationId),
+      contains('LOC-0022'),
+    );
     final leftHidden = applyTravelArrival(db, stillInside, 'LOC-0011', 0);
     expect(leftHidden.currentLocationId, 'LOC-0011');
     expect(leftHidden.unlockedLocationIds, isNot(contains('LOC-0022')));
+    expect(
+      locationsForMapView(
+        db,
+        caveMapId,
+        leftHidden.unlockedLocationIds,
+        const <String>[],
+        leftHidden.currentLocationId,
+        leftHidden,
+      ).map((row) => row.locationId),
+      isNot(contains('LOC-0022')),
+    );
+    expect(
+      canTravelTo(db, 'LOC-0011', 'LOC-0022', caveMapId, leftHidden.unlockedLocationIds, leftHidden),
+      isFalse,
+    );
   });
 
   test('wardrobe lists The Undying in the Titles slot', () {

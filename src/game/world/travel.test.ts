@@ -167,6 +167,14 @@ describe('travel rules', () => {
       unlockedLocationIds: ['LOC-0022'],
     }).map((row) => row['Location ID'])
     expect(unlockedShaft).toContain('LOC-0022')
+    const leftTheShaft = locationsForMapView(launch, CAVE_MAP_ID, {
+      currentLocationId: 'LOC-0011',
+    }).map((row) => row['Location ID'])
+    expect(leftTheShaft).not.toContain('LOC-0022')
+    expect(canTravelTo(launch, 'LOC-0011', 'LOC-0022', CAVE_MAP_ID)).toBe(false)
+    expect(
+      canTravelTo(launch, 'LOC-0022', 'LOC-0011', CAVE_MAP_ID, { currentLocationId: 'LOC-0022' }),
+    ).toBe(true)
   })
 
   it('opens citadel sub-map from The Citadel gateway', () => {

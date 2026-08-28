@@ -3,6 +3,7 @@ import { stopPrimaryActivityNow } from '../activity/transition'
 import type { GameDatabase, LocationRow, TravelConnectionRow } from '../data/types'
 import { applyQuestAutoCompleteOnVisit } from '../quests/quests'
 import { applyQuestLocationProgress } from '../quests/progress'
+import { questRevealsLocation } from '../quests/steps'
 import type { PlayerSave } from '../save/types'
 import { maybeGrantKingswoodsSling } from './kingswoodsSling'
 import { MAIN_MAP_ID, isFutureHorizonLocation } from './constants'
@@ -78,13 +79,27 @@ export function findConnection(
  * Sub-maps: every node on that map plus its gateway (from Parent Location ID).
  * Locked nodes are omitted unless unlocked on the optional save.
  */
+type MapUnlockSave = {
+  unlockedLocationIds?: string[] | null
+  currentLocationId?: string | null
+  quests?: PlayerSave['quests']
+}
+
+function locationOpenForSave(
+  db: GameDatabase,
+  location: LocationRow,
+  save?: MapUnlockSave | null,
+): boolean {
+  const unlockState = save ?? { unlockedLocationIds: [] }
+  if (isLocationUnlocked(unlockState, location)) return true
+  if (!save || !Array.isArray(save.quests)) return false
+  return questRevealsLocation(db, save as PlayerSave, location['Location ID'])
+}
+
 export function locationsForMapView(
   db: GameDatabase,
   mapId: string,
-  save?: {
-    unlockedLocationIds?: string[] | null
-    currentLocationId?: string | null
-  } | null,
+  save?: MapUnlockSave | null,
   hiddenLocationIds: readonly string[] = [],
 ): LocationRow[] {
   if (mapId === MAIN_MAP_ID) {
@@ -102,10 +117,9 @@ export function locationsForMapView(
   const gateway = gatewayId
     ? db.Locations.find((location) => location['Location ID'] === gatewayId)
     : undefined
-  const unlockState = save ?? { unlockedLocationIds: [] }
   const merged = new Map<string, LocationRow>()
   for (const location of onMap) {
-    if (!isLocationUnlocked(unlockState, location)) continue
+    if (!locationOpenForSave(db, location, save)) continue
     if (hiddenLocationIds.includes(location['Location ID'])) continue
     if (locationHiddenOnMap(location, mapId)) continue
     merged.set(location['Location ID'], location)
@@ -121,16 +135,13 @@ export function canTravelTo(
   fromLocationId: string,
   toLocationId: string,
   activeMapId: string,
-  save?: {
-    unlockedLocationIds?: string[] | null
-    currentLocationId?: string | null
-  } | null,
+  save?: MapUnlockSave | null,
 ): boolean {
   if (fromLocationId === toLocationId) return false
   if (isFutureHorizonLocation(toLocationId)) return false
   const destination = db.Locations.find((location) => location['Location ID'] === toLocationId)
   if (!destination) return false
-  if (!isLocationUnlocked(save ?? { unlockedLocationIds: [] }, destination)) return false
+  if (!locationOpenForSave(db, destination, save)) return false
 
   if (activeMapId === MAIN_MAP_ID) {
     // World-map travel is allowed from anywhere, including sub-locations.
