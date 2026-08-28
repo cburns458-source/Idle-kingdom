@@ -1,4 +1,4 @@
-export const SAVE_VERSION = 34
+export const SAVE_VERSION = 35
 export const SAVE_STORAGE_KEY = 'idle-kingdoms.demo.save'
 export const STARTING_LOCATION_ID = 'LOC-0001'
 /** Base gold before race kit; race starters grant the real starting gold. */
@@ -218,6 +218,8 @@ export interface PlayerSave {
   appearance: PlayerAppearance
   /** Whether the player has ever opened the Wardrobe (gates the intro hint highlight). */
   hasSeenWardrobeIntro: boolean
+  /** Whether the player has dismissed Fennel's first farm welcome. */
+  hasSeenFennelIntro: boolean
   settings: PlayerSettings
   currentLocationId: string
   currentActivityId: string | null

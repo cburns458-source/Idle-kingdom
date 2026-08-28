@@ -10,13 +10,21 @@ import {
   applyQuestBranchSkillXp,
   bribeQuestNpc,
   chooseQuestCombatRoute,
+  completeQuest,
   donateForQuest,
   getQuest,
   getQuestProgress,
   questsTouchingNpc,
   type QuestRow,
 } from '../quests/quests'
-import { questCanTalkToNpc, questNpcHasIncompleteTalk } from '../quests/steps'
+import {
+  currentStepTalkKey,
+  getCurrentStepIndex,
+  getQuestSteps,
+  questAllStepsComplete,
+  questCanTalkToNpc,
+  questNpcHasIncompleteTalk,
+} from '../quests/steps'
 import type { PlayerSave } from '../save/types'
 import { configString } from '../activity/gathering'
 import {
@@ -70,6 +78,11 @@ function requiredTalkNpcIdsFromNotes(notes: string | null): string[] {
     .filter((id) => /^[A-Z]+-\d+$/.test(id))
 }
 
+function requiredStepIdFromNotes(notes: string | null): string | null {
+  const field = (notes ?? '').match(/(?:^|;)\s*RequiresStep:\s*(QSTP-\d+)/i)?.[1]
+  return field ? field.toUpperCase() : null
+}
+
 export function questTalkLine(
   db: GameDatabase,
   questId: string,
@@ -79,13 +92,23 @@ export function questTalkLine(
   const rows = (db.QuestDialogue ?? []).filter(
     (row) => row['Quest ID'] === questId && row['NPC ID'] === npcId,
   )
+  const quest = getQuest(db, questId)
+  const currentStepId =
+    save && quest
+      ? getQuestSteps(db, questId)[getCurrentStepIndex(db, save, quest)]?.['Step ID']
+      : undefined
   const matching = rows.filter((row) => {
+    const requiredStep = requiredStepIdFromNotes(row.Notes ?? null)
+    if (requiredStep && requiredStep !== currentStepId) return false
     const required = requiredTalkNpcIdsFromNotes(row.Notes ?? null)
     if (required.length === 0) return true
     if (!save) return false
     return required.every((requiredNpcId) => hasQuestFlag(save, questId, `talk:${requiredNpcId}`))
   })
-  const specific = matching.filter((row) => requiredTalkNpcIdsFromNotes(row.Notes ?? null).length > 0)
+  const specific = matching.filter((row) => {
+    const notes = row.Notes ?? null
+    return requiredTalkNpcIdsFromNotes(notes).length > 0 || requiredStepIdFromNotes(notes) != null
+  })
   const line = (specific[0] ?? matching[0])?.Line
   return line && line.length > 0 ? line : null
 }
@@ -211,10 +234,10 @@ function questBlock(
   const status = getQuestProgress(save, questId).status
   const isGiver = quest['NPC ID'] === npcId
   const turnInId = parsed.turnInNpcId ?? quest['NPC ID']
-  const talked = hasQuestFlag(save, questId, `talk:${npcId}`)
+  const talkedThisStep = hasQuestFlag(save, questId, currentStepTalkKey(db, save, quest, npcId))
   const chose =
     hasQuestFlag(save, questId, 'choice:bribe') || hasQuestFlag(save, questId, 'choice:combat')
-  const needsTalkFirst = questNpcHasIncompleteTalk(db, save, quest, npcId) && !talked
+  const needsTalkFirst = questNpcHasIncompleteTalk(db, save, quest, npcId) && !talkedThisStep
   const donated = hasQuestFlag(save, questId, ACCEPT_GOLD_FLAG)
   const needsDonate = parsed.acceptGoldCost > 0 && !donated
   let acceptLabel = 'Accept quest'
@@ -240,8 +263,8 @@ function questBlock(
     canAccept: isGiver && status === 'inactive' && !needsDonate,
     canDonate: isGiver && status === 'inactive' && needsDonate,
     donated,
-    canTurnIn: turnInId === npcId && status === 'active',
-    canTalk: status === 'active' && questCanTalkToNpc(db, save, quest, npcId) && !talked,
+    canTurnIn: turnInId === npcId && status === 'active' && !parsed.autoCompleteOnTalk,
+    canTalk: status === 'active' && questCanTalkToNpc(db, save, quest, npcId) && !talkedThisStep,
     talkLabel: 'Talk',
     talkLine: questTalkLine(db, questId, npcId, save),
     idlePrompt: configString(db, 'copy.quest_active_prompt', FALLBACK_QUEST_ACTIVE_PROMPT),
@@ -448,7 +471,22 @@ export function talkWithQuestNpc(
   save: PlayerSave,
   npcId: string,
 ): { ok: true; save: PlayerSave; message: string } | { ok: false; reason: string } {
-  return { ok: true, save: applyQuestTalkProgress(db, save, npcId), message: 'You hear them out.' }
+  let next = applyQuestTalkProgress(db, save, npcId)
+  for (const quest of questsTouchingNpc(db, next, npcId)) {
+    const parsed = parseStructuredObjectives(quest)
+    if (!parsed.autoCompleteOnTalk) continue
+    if (getQuestProgress(next, quest['Quest ID']).status !== 'active') continue
+    if (!questAllStepsComplete(db, next, quest)) continue
+    const completed = completeQuest(db, next, quest['Quest ID'])
+    if (completed.ok) {
+      return {
+        ok: true,
+        save: completed.save,
+        message: `Completed: ${quest['Display Name']}.`,
+      }
+    }
+  }
+  return { ok: true, save: next, message: 'You hear them out.' }
 }
 
 export function bribeForQuest(

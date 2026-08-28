@@ -46,6 +46,7 @@ function saveWithInventory(itemIds: string[]): PlayerSave {
       genderPresentation: 'APR-0017',
     },
     hasSeenWardrobeIntro: false,
+    hasSeenFennelIntro: false,
     settings: {
       soundEnabled: true,
       showActivityRewards: true,

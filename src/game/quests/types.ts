@@ -28,6 +28,8 @@ export interface StructuredQuestObjectives {
   optionalTalkNpcIds: string[]
   visitLocationIds: string[]
   inspectIds: string[]
+  /** Show these items; they are not taken on turn-in. */
+  holds: QuestCounterTarget[]
   goldCost: number
   acceptGoldCost: number
   rewardGold: number
@@ -36,6 +38,8 @@ export interface StructuredQuestObjectives {
   choiceNpcId: string | null
   turnInNpcId: string | null
   autoStartLocationId: string | null
+  /** Complete the quest when the last Talk finishes, with no Turn in. */
+  autoCompleteOnTalk: boolean
   unlockLocationIds: string[]
   rewardRecipeIds: string[]
   rewardProjectNpcIds: string[]

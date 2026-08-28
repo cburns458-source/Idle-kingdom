@@ -97,6 +97,7 @@ export function createNewSave(db: GameDatabase, nowMs: number = Date.now()): Pla
       genderPresentation: DEFAULT_GENDER_PRESENTATION_ID,
     },
     hasSeenWardrobeIntro: false,
+    hasSeenFennelIntro: false,
     settings: {
       soundEnabled: true,
       showActivityRewards: true,

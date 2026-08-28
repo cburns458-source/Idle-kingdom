@@ -132,7 +132,9 @@ PlayerSave applyQuestTalkProgress(GameDatabase db, PlayerSave save, String npcId
   for (final quest in asQuestRows(db)) {
     final questId = jsString(quest['Quest ID']);
     if (!questCanTalkToNpc(db, next, quest, npcId)) continue;
+    final stepKey = currentStepTalkKey(db, next, quest, npcId);
     next = setQuestFlag(next, questId, 'talk:$npcId');
+    next = setQuestFlag(next, questId, stepKey);
   }
   return next;
 }

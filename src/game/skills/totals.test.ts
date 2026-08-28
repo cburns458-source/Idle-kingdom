@@ -44,6 +44,7 @@ function sampleSave(skills: Array<{ skillId: string; level: number; xp: number }
       genderPresentation: 'APR-0017',
     },
     hasSeenWardrobeIntro: false,
+    hasSeenFennelIntro: false,
     settings: {
       soundEnabled: true,
       showActivityRewards: true,

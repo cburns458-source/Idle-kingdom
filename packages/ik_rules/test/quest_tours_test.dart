@@ -85,6 +85,42 @@ void main() {
     );
   });
 
+  test('Getting Started completes when Fennel sees the cooked potatoes', () {
+    final fennel = db.npcs.firstWhere((row) => row.raw['NPC ID'] == 'NPC-0014');
+    expect(fennel.raw['Location ID'], 'LOC-0001');
+
+    var save = _save(db, locationId: 'LOC-0001');
+    final accepted = acceptQuest(db, save, 'QST-0006');
+    expect(accepted.ok, isTrue);
+    save = accepted.save!;
+
+    expect(npcConversation(db, save, fennel).quests.single.canTalk, isTrue);
+    expect(npcConversation(db, save, fennel).quests.single.canTurnIn, isFalse);
+    save = applyQuestTalkProgress(db, save, 'NPC-0014');
+    expect(npcConversation(db, save, fennel).quests.single.canTalk, isFalse);
+
+    save = addItemToInventory(save, 'ITEM-0025', 5);
+    expect(npcConversation(db, save, fennel).quests.single.canTalk, isTrue);
+    expect(npcConversation(db, save, fennel).quests.single.talkLine, contains('kitchen in town'));
+    save = applyQuestTalkProgress(db, save, 'NPC-0014');
+    expect(save.inventory.where((stack) => stack.itemId == 'ITEM-0025').single.quantity, 5);
+
+    save = applyQuestVisitProgress(db, save, 'LOC-0023');
+    save = applyQuestProcessProgress(db, save, 'RCP-0001', 5);
+    save = addItemToInventory(save, 'ITEM-0058', 5);
+    save = save.copyWith(currentLocationId: 'LOC-0001');
+    expect(npcConversation(db, save, fennel).quests.single.talkLine, contains('sword and shield'));
+
+    final finished = talkWithQuestNpc(db, save, 'NPC-0014');
+    expect(finished.ok, isTrue);
+    expect(getQuestProgress(finished.save!, 'QST-0006').status, 'completed');
+    expect(
+      finished.save!.inventory.where((stack) => stack.itemId == 'ITEM-0058').single.quantity,
+      5,
+    );
+    expect(npcsAtLocationForSave(db, finished.save!, 'LOC-0001'), isEmpty);
+  });
+
   test('wardrobe lists The Undying in the Titles slot', () {
     final save = createNewSave(db, 0);
     final tabs = wardrobeSlotTabs(db);

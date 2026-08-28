@@ -300,10 +300,16 @@ class _LocationViewState extends State<LocationView> {
                                 const SizedBox(width: 7),
                                 Column(
                                   children: [
-                                    OverlayChipButton(
-                                      tooltip: 'Open world map',
-                                      onPressed: widget.onOpenMap,
-                                      child: GameImage(uiMapAssetPath(), width: 38, height: 38),
+                                    QuestHintPulse(
+                                      enabled: questHintsWorldMapButton(
+                                        controller.db,
+                                        controller.save,
+                                      ),
+                                      child: OverlayChipButton(
+                                        tooltip: 'Open world map',
+                                        onPressed: widget.onOpenMap,
+                                        child: GameImage(uiMapAssetPath(), width: 38, height: 38),
+                                      ),
                                     ),
                                     if (widget.onOpenSubMap != null)
                                       if (backToSubMapLabel(controller.db, location)
@@ -619,7 +625,12 @@ class _LocationViewState extends State<LocationView> {
   }
 
   List<Widget> _people(String locationId) {
-    final npcs = npcsAtLocation(controller.db, locationId, controller.session.clock());
+    final npcs = npcsAtLocationForSave(
+      controller.db,
+      controller.save,
+      locationId,
+      controller.session.clock(),
+    );
     if (npcs.isEmpty) return const [];
     return [
       for (final npc in npcs)
