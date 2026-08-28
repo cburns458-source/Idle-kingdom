@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Import race/gender player sprites -> 256x256 lossless WebP in content/assets/player."""
+"""Import race/gender player sprites -> 256x256 PNG in content/assets/player."""
 
 from __future__ import annotations
 
@@ -129,7 +129,7 @@ def strip_and_fit(src: Path, dest: Path) -> None:
     oy = (CANVAS - new_h) // 2
     canvas.paste(scaled, (ox, oy), scaled)
     dest.parent.mkdir(parents=True, exist_ok=True)
-    canvas.save(dest, 'WEBP', lossless=True)
+    canvas.save(dest, 'PNG')
 
 
 def main() -> None:
@@ -137,8 +137,8 @@ def main() -> None:
         src = SRC / filename
         if not src.exists():
             raise SystemExit(f'missing source {src}')
-        strip_and_fit(src, DEST / f'player_{stem}.webp')
-        print('wrote', DEST / f'player_{stem}.webp')
+        strip_and_fit(src, DEST / f'player_{stem}.png')
+        print('wrote', DEST / f'player_{stem}.png')
 
 
 if __name__ == '__main__':

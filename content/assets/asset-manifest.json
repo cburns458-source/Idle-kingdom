@@ -1,6 +1,6 @@
 {
   "generatedForStep": "items-enemies-cute-pixel",
-  "artDirection": "Cute old-school fantasy pixel art; backgrounds 384px WebP; skills/items/sprites lossless WebP",
+  "artDirection": "Cute old-school fantasy pixel art; backgrounds 384px WebP; player sprites PNG; other sprites lossless WebP",
   "maps": {
     "MAP-0001": {
       "internalKey": "idale_main",
@@ -171,6 +171,10 @@
     "LOC-0037": {
       "internalKey": "castle_crypt",
       "path": "/assets/locations/loc_castle_crypt.webp"
+    },
+    "LOC-0038": {
+      "internalKey": "dwarven_forge",
+      "path": "/assets/locations/loc_town_foundry.webp"
     }
   },
   "enemies": {

@@ -3,8 +3,8 @@ import 'package:ik_content/ik_content.dart';
 
 import '../js_compat.dart';
 
-/// Mountains, Deep Mines, Abandoned Mineshaft.
-const List<String> masterDwarfRoute = <String>['LOC-0006', 'LOC-0011', 'LOC-0022'];
+/// Mountains, Deep Mines.
+const List<String> masterDwarfRoute = <String>['LOC-0006', 'LOC-0011'];
 
 /// Meadow, Ancient Forest, Gathering Outskirts, Mountains.
 const List<String> quillRoute = <String>['LOC-0009', 'LOC-0018', 'LOC-0031', 'LOC-0006'];

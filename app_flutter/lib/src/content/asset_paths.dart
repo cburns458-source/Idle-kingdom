@@ -5,8 +5,8 @@ import 'package:ik_rules/ik_rules.dart';
 ///
 /// The tables mirror `src/game/assets/`, and the paths only differ by the
 /// `content/` prefix Flutter needs. No cache-busting query: a Flutter bundle is
-/// versioned by the build itself. Art is WebP: lossless for sprites, lossy for
-/// the location and map backgrounds. Most location plates are 1080×1920
+/// versioned by the build itself. Player sprites are PNG. Other art is WebP:
+/// lossless for sprites, lossy for the location and map backgrounds. Most location plates are 1080×1920
 /// (9:16), matching the main maps. Town, the cave entrance, and the castle
 /// gateway are still the old 384px squares until those plates are redrawn.
 
@@ -43,6 +43,7 @@ const Map<String, String> _locationArt = <String, String>{
   'LOC-0018': 'locations/loc_ancient_forest.webp',
   'LOC-0021': 'locations/loc_queens_quarters.webp',
   'LOC-0022': 'locations/loc_abandoned_mineshaft.webp',
+  'LOC-0038': 'locations/loc_town_foundry.webp',
   'LOC-0023': 'locations/loc_town_kitchen.webp',
   'LOC-0024': 'locations/loc_town_general_store.webp',
   'LOC-0025': 'locations/loc_town_foundry.webp',
@@ -176,6 +177,7 @@ const Map<String, String> _actionArt = <String, String>{
   'ACN-0166': 'actions/acn_mine_sapphire.webp',
   'ACN-0167': 'actions/acn_mine_emerald.webp',
   'ACN-0168': 'actions/acn_mine_ruby.webp',
+  'ACN-0177': 'actions/acn_mine_coal.webp',
 };
 
 /// Launch races that have bundled player sprites.
@@ -261,13 +263,13 @@ String playerArtStem({String? raceId, String? genderPresentationId}) {
 /// The player sprite, used for the portrait and the action scenes alike.
 String playerAssetPath(PlayerAppearance? appearance, {String? raceId}) {
   final gender = appearance?.genderPresentation ?? defaultGenderPresentationId;
-  return '$_assetRoot/player/${playerArtStem(raceId: raceId, genderPresentationId: gender)}.webp';
+  return '$_assetRoot/player/${playerArtStem(raceId: raceId, genderPresentationId: gender)}.png';
 }
 
 String uiMapAssetPath() => '$_assetRoot/icons/ui/ui_map.webp';
 
 /// The pixel ring drawn over the HUD portrait.
-String avatarFrameAssetPath() => '$_assetRoot/player/avatar_frame_pixel.webp';
+String avatarFrameAssetPath() => '$_assetRoot/player/avatar_frame_pixel.png';
 
 /// Picks an item's icon from its row key, then id, then category and name.
 ///

@@ -126,8 +126,19 @@ export function playerSellPrice(
   if (key === 'wizards_shop') {
     return null
   }
+  if (key === 'helges_forge') {
+    if (!item || isOreItem(item) || !isSmithingProjectOutput(db, itemId)) return null
+    return Math.round(base * GENERAL_SELL_MULT)
+  }
   // General store buys ordinary items at Base Sell Value.
   return Math.round(base * GENERAL_SELL_MULT)
+}
+
+export function isSmithingProjectOutput(db: GameDatabase, itemId: string): boolean {
+  return db.Projects.some(
+    (project) =>
+      project['Skill ID'] === 'SKL-0011' && project['Output Item / Target ID'] === itemId,
+  )
 }
 
 export function shopSellsItem(shop: ShopRow, itemId: string): boolean {

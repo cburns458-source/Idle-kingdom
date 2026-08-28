@@ -54,6 +54,8 @@ const Map<String, NodePosition> caveMapNodeLayout = <String, NodePosition>{
   'LOC-0011': NodePosition(x: 78, y: 78),
   // Abandoned webbed shaft
   'LOC-0022': NodePosition(x: 20, y: 76),
+  // Dwarven Forge, above the abandoned shaft
+  'LOC-0038': NodePosition(x: 22, y: 54),
 };
 
 const Map<String, NodePosition> castleMapNodeLayout = <String, NodePosition>{

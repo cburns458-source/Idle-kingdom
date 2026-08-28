@@ -24,6 +24,7 @@ import type {
   ActivityStartResult,
 } from './types'
 import { addLifetimeStat, recordGatheredDrops } from '../achievements/progress'
+import { applyQuestActionProgress } from '../quests/progress'
 import { WEAPON_TOOL_SLOT_ID } from '../save/types'
 import { GATHERING_ACTIONS_STAT } from '../log/milestones'
 import { bonusSkillXpForAction, bowHuntingCombatXpBonus } from './bonusXp'
@@ -292,6 +293,7 @@ export function completeGatheringAction(
       save.equipment.slots[WEAPON_TOOL_SLOT_ID]?.itemId ?? null,
     )
   }
+  next = applyQuestActionProgress(db, next, action['Action ID'])
 
   return {
     save: withoutHeldAction(next, save.currentActivityId),

@@ -121,6 +121,122 @@ void main() {
     expect(npcsAtLocationForSave(db, finished.save!, 'LOC-0001'), isEmpty);
   });
 
+  test('Forged in Fire unlocks the forge; Going Deeper opens the shaft without kicking anyone', () {
+    final merchant = db.npcs.firstWhere((row) => row.raw['NPC ID'] == 'NPC-0008');
+    final helge = db.npcs.firstWhere((row) => row.raw['NPC ID'] == 'NPC-0015');
+    expect(helge.raw['Location ID'], 'LOC-0038');
+
+    var save = _save(db, locationId: 'LOC-0012').copyWith(
+      skills: const [
+        SkillProgress(skillId: 'SKL-0008', level: 35, xp: 0),
+        SkillProgress(skillId: 'SKL-0011', level: 35, xp: 0),
+        SkillProgress(skillId: 'SKL-0002', level: 60, xp: 0),
+      ],
+    );
+    expect(npcConversation(db, _save(db, locationId: 'LOC-0012'), merchant).quests, isEmpty);
+
+    final pitched = npcConversation(db, save, merchant);
+    expect(pitched.quests.single.questId, 'QST-0007');
+    expect(pitched.quests.single.canAccept, isTrue);
+
+    final accepted = acceptQuest(db, save, 'QST-0007');
+    expect(accepted.ok, isTrue);
+    save = accepted.save!;
+    expect(save.unlockedLocationIds, contains('LOC-0038'));
+    expect(specialProductionStationsVisibleAt(db, save, 'LOC-0038'), isEmpty);
+
+    save = save.copyWith(currentLocationId: 'LOC-0038');
+    save = applyQuestVisitProgress(db, save, 'LOC-0038');
+    save = applyQuestTalkProgress(db, save, 'NPC-0015');
+    save = addItemToInventory(save, 'ITEM-0077', 20);
+    save = addItemToInventory(save, 'ITEM-0006', 100);
+    save = applyQuestTalkProgress(db, save, 'NPC-0015');
+    final forged = completeQuest(db, save, 'QST-0007');
+    expect(forged.ok, isTrue);
+    expect(forged.rewards.any((line) => line.contains('Smithing XP')), isTrue);
+    expect(forged.rewards.any((line) => line.contains('Metallurgy XP')), isTrue);
+    save = forged.save!;
+    expect(specialProductionStationsVisibleAt(db, save, 'LOC-0038'), isNotEmpty);
+
+    final deeper = acceptQuest(db, save, 'QST-0008');
+    expect(deeper.ok, isTrue);
+    save = deeper.save!;
+    save = applyQuestTalkProgress(db, save, 'NPC-0015');
+    expect(activityVisibleForSave(db, save, 'ACT-0044'), isTrue);
+    expect(
+      locationsForMapView(
+        db,
+        caveMapId,
+        save.unlockedLocationIds,
+        const <String>[],
+        save.currentLocationId,
+        save,
+      ).map((row) => row.locationId),
+      isNot(contains('LOC-0022')),
+    );
+    save = applyQuestVisitProgress(db, save, 'LOC-0011');
+    save = applyQuestActionProgress(db, save, 'ACN-0177', 100);
+    expect(
+      locationsForMapView(
+        db,
+        caveMapId,
+        save.unlockedLocationIds,
+        const <String>[],
+        save.currentLocationId,
+        save,
+      ).map((row) => row.locationId),
+      contains('LOC-0022'),
+    );
+    expect(
+      canTravelTo(db, 'LOC-0011', 'LOC-0022', caveMapId, save.unlockedLocationIds, save),
+      isTrue,
+    );
+
+    final arrived = applyTravelArrival(db, save, 'LOC-0022', 0);
+    expect(getQuestProgress(arrived, 'QST-0008').status, 'completed');
+    expect(arrived.unlockedLocationIds, contains('LOC-0022'));
+    expect(arrived.inventory.where((stack) => stack.itemId == 'ITEM-0313').single.quantity, 1);
+
+    final stillInside = applyTravelArrival(db, _save(db, locationId: 'LOC-0022'), 'LOC-0022', 0);
+    expect(stillInside.currentLocationId, 'LOC-0022');
+    expect(
+      locationsForMapView(
+        db,
+        caveMapId,
+        stillInside.unlockedLocationIds,
+        const <String>[],
+        stillInside.currentLocationId,
+        stillInside,
+      ).map((row) => row.locationId),
+      contains('LOC-0022'),
+    );
+    final leftHidden = applyTravelArrival(db, stillInside, 'LOC-0011', 0);
+    expect(leftHidden.currentLocationId, 'LOC-0011');
+    expect(leftHidden.unlockedLocationIds, isNot(contains('LOC-0022')));
+    expect(
+      locationsForMapView(
+        db,
+        caveMapId,
+        leftHidden.unlockedLocationIds,
+        const <String>[],
+        leftHidden.currentLocationId,
+        leftHidden,
+      ).map((row) => row.locationId),
+      isNot(contains('LOC-0022')),
+    );
+    expect(
+      canTravelTo(
+        db,
+        'LOC-0011',
+        'LOC-0022',
+        caveMapId,
+        leftHidden.unlockedLocationIds,
+        leftHidden,
+      ),
+      isFalse,
+    );
+  });
+
   test('wardrobe lists The Undying in the Titles slot', () {
     final save = createNewSave(db, 0);
     final tabs = wardrobeSlotTabs(db);

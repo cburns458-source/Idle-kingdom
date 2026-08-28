@@ -421,6 +421,7 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
       locationId,
       _browseMapId,
       controller.save.unlockedLocationIds,
+      controller.save,
     )) {
       return;
     }

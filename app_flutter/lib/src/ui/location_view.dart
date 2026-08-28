@@ -370,12 +370,7 @@ class _LocationViewState extends State<LocationView> {
                                 bottom: _collapsedBand + 8,
                                 child: openPanel is ArenaOpen && !running
                                     ? stage
-                                    : _scrollingPanel(
-                                        stage,
-                                        alignment: running
-                                            ? Alignment.topCenter
-                                            : Alignment.bottomCenter,
-                                      ),
+                                    : _scrollingPanel(stage),
                               ),
                             if (overlayPanel != null && !liftArena)
                               Positioned(
@@ -385,12 +380,7 @@ class _LocationViewState extends State<LocationView> {
                                 bottom: _collapsedBand + 8,
                                 child: openPanel is ArenaOpen
                                     ? overlayPanel
-                                    : _scrollingPanel(
-                                        overlayPanel,
-                                        alignment: running
-                                            ? Alignment.topCenter
-                                            : Alignment.bottomCenter,
-                                      ),
+                                    : _scrollingPanel(overlayPanel),
                               ),
                             if (liftArena && (overlayPanel ?? stage) != null)
                               Positioned(

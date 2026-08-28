@@ -120,9 +120,15 @@ bool locationRequiresUnlock(LocationRow location) {
   return lowerOrEmpty(location.raw['Notes']).contains('requires_unlock');
 }
 
-bool isLocationUnlocked(List<String> unlockedLocationIds, LocationRow location) {
+bool isLocationUnlocked(
+  List<String> unlockedLocationIds,
+  LocationRow location, [
+  String? currentLocationId,
+]) {
   if (!locationRequiresUnlock(location)) return true;
-  return unlockedLocationIds.contains(location.raw['Location ID']);
+  final locationId = location.raw['Location ID'];
+  if (currentLocationId != null && currentLocationId == locationId) return true;
+  return unlockedLocationIds.contains(locationId);
 }
 
 List<String> unlockLocation(List<String> unlockedLocationIds, String locationId) {

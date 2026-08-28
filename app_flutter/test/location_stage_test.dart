@@ -57,8 +57,12 @@ void main() {
     );
     expect(player.height, 152);
     expect(player.top - stage.top, closeTo(4, 1));
-    expect(action.height, 72);
+    expect(action.height, 86);
     expect(action.height, lessThan(player.height));
+    final playerArt = tester.getRect(
+      find.descendant(of: find.bySemanticsLabel('Adventurer').first, matching: find.byType(Image)),
+    );
+    expect(playerArt.height, 137);
   });
 
   testWidgets('combat keeps the player at 152 and does not shrink the enemy', (tester) async {
@@ -82,6 +86,10 @@ void main() {
     expect(player.height, 152);
     expect(player.top - stage.top, closeTo(4, 1));
     expect(enemy.height, 152);
+    final playerArt = tester.getRect(
+      find.descendant(of: find.bySemanticsLabel('Adventurer').first, matching: find.byType(Image)),
+    );
+    expect(playerArt.height, 137);
   });
 
   testWidgets('the farm plate runs behind the activities band', (tester) async {

@@ -9,6 +9,7 @@ import '../js_compat.dart';
 import '../potions/effects.dart';
 import '../production/engine.dart';
 import '../production/recipes.dart';
+import '../quests/progress.dart';
 import '../rng/mulberry32.dart';
 import '../save/generated/save_models.dart';
 import '../time.dart';
@@ -285,6 +286,7 @@ GatheringCompletion completeGatheringAction(
       save.equipment.slots[weaponToolSlotId]?.itemId,
     );
   }
+  next = applyQuestActionProgress(db, next, jsString(action.raw['Action ID']));
 
   return GatheringCompletion(
     save: withoutHeldAction(next, save.currentActivityId),

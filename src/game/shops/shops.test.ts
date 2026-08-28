@@ -168,4 +168,21 @@ describe('shops', () => {
       'ITEM-0296',
     )
   })
+
+  it("lets Helge sell ore at 2× and buy smithing work, but not ore", () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const shop = launch.Shops.find((row) => row['Shop ID'] === 'SHP-0008')!
+    expect(shop['Location ID']).toBe('LOC-0038')
+    expect(shopStockEntries(shop).map((entry) => entry.itemId)).toEqual([
+      'ITEM-0003',
+      'ITEM-0004',
+      'ITEM-0005',
+    ])
+    expect(playerBuyPrice(launch, shop, 'ITEM-0003')).toBe(16)
+    expect(playerSellPrice(launch, shop, 'ITEM-0003')).toBeNull()
+    expect(playerSellPrice(launch, shop, 'ITEM-0077')).toBeNull()
+    expect(playerSellPrice(launch, shop, 'ITEM-0128')).toBe(
+      playerSellPrice(launch, launch.Shops.find((row) => row['Shop ID'] === 'SHP-0001')!, 'ITEM-0128'),
+    )
+  })
 })

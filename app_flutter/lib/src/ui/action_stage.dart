@@ -13,12 +13,14 @@ import 'game_image.dart';
 import 'item_icon.dart';
 import 'playable_frame.dart';
 
-/// Player and enemy portraits stay this tall. Gathering and workstation art
-/// sits in the same slot but is drawn smaller so the adventurer does not jump
-/// when the activity type changes.
-const double _playerArtHeight = 152;
+/// Portrait slot stays 152 so the stage does not jump between activities.
+/// The player sprite is drawn smaller inside that slot; gathering scenes and
+/// workstations are smaller still. Enemies keep the full slot.
+const double _portraitSlotHeight = 152;
+const double _playerArtHeight = 137;
 const double _enemyArtHeight = 152;
-const double _actionArtHeight = 72;
+const double _actionArtHeight = 86;
+const double _captionMinHeight = 32;
 
 /// How wide either half of the stage can get, so the two sprites stay shoulder
 /// to shoulder in the middle of a wide window instead of drifting apart.
@@ -120,7 +122,8 @@ class PvpActionStage extends StatelessWidget {
           semanticsLabel: youName,
           alignment: Alignment.centerRight,
           height: _playerArtHeight,
-          filterQuality: FilterQuality.medium,
+          slotHeight: _portraitSlotHeight,
+          filterQuality: FilterQuality.high,
           overlay: !finished && youHit > 0
               ? _DamageFloater(
                   key: ValueKey('pvp-them-hit-$roundSeq'),
@@ -136,7 +139,8 @@ class PvpActionStage extends StatelessWidget {
           semanticsLabel: themName,
           alignment: Alignment.centerLeft,
           height: _enemyArtHeight,
-          filterQuality: FilterQuality.medium,
+          slotHeight: _portraitSlotHeight,
+          filterQuality: FilterQuality.high,
           flipX: true,
           overlay: finished
               ? null
@@ -460,13 +464,15 @@ class _CombatStage extends StatelessWidget {
           semanticsLabel: 'Adventurer',
           alignment: Alignment.centerRight,
           height: _playerArtHeight,
-          filterQuality: FilterQuality.medium,
+          slotHeight: _portraitSlotHeight,
+          filterQuality: FilterQuality.high,
           overlay: _playerFloaters(round, seq, showFloaters, controller.healPopup),
         ),
         scene: _Portrait(
           assetPath: controller.defeatedFlash || enemyId == null ? null : enemyAssetPath(enemyId),
           semanticsLabel: enemyName,
           height: _enemyArtHeight,
+          slotHeight: _portraitSlotHeight,
           alignment: Alignment.centerLeft,
           placeholder: controller.defeatedFlash
               ? const Center(
@@ -582,6 +588,8 @@ class _RecoveringStage extends StatelessWidget {
           assetPath: null,
           semanticsLabel: 'Recovering',
           alignment: Alignment.centerRight,
+          height: _playerArtHeight,
+          slotHeight: _portraitSlotHeight,
           placeholder: Align(
             alignment: Alignment.centerRight,
             child: Text(
@@ -596,9 +604,9 @@ class _RecoveringStage extends StatelessWidget {
           ),
         ),
         // Nothing fights back during the pause, so the other half stays empty.
-        scene: const SizedBox(height: _playerArtHeight),
-        playerCaption: const SizedBox(height: 16),
-        sceneCaption: const SizedBox(height: 16),
+        scene: const SizedBox(height: _portraitSlotHeight),
+        playerCaption: const SizedBox(height: _captionMinHeight),
+        sceneCaption: const SizedBox(height: _captionMinHeight),
       ),
       footer: Semantics(
         label: 'Resume progress',
@@ -668,38 +676,42 @@ class _GatheringStage extends StatelessWidget {
           semanticsLabel: 'Adventurer',
           alignment: Alignment.centerRight,
           height: _playerArtHeight,
-          filterQuality: FilterQuality.medium,
+          slotHeight: _portraitSlotHeight,
+          filterQuality: FilterQuality.high,
         ),
         scene: _Portrait(
           assetPath: action == null ? null : actionAssetPath(action.actionId),
           semanticsLabel: actionName,
           height: _actionArtHeight,
-          slotHeight: _playerArtHeight,
+          slotHeight: _portraitSlotHeight,
           alignment: Alignment.centerLeft,
           placeholder: action == null ? const SizedBox.expand() : null,
         ),
-        playerCaption: const SizedBox(height: 16),
-        sceneCaption: Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            _SceneName(actionName),
-            if (slow) ...[
-              const Text(
-                'this is tough work',
-                textAlign: TextAlign.right,
-                style: TextStyle(fontSize: 12.5, color: Palette.muted, shadows: overlayShadow),
-              ),
-              Text(
-                'Recommended lvl ${formatThousands(action.proficiencyLevel ?? 1)}',
-                textAlign: TextAlign.right,
-                style: const TextStyle(
-                  fontSize: 12.5,
-                  color: Palette.muted,
-                  shadows: overlayShadow,
+        playerCaption: const SizedBox(height: _captionMinHeight),
+        sceneCaption: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: _captionMinHeight),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              _SceneName(actionName),
+              if (slow) ...[
+                const Text(
+                  'this is tough work',
+                  textAlign: TextAlign.right,
+                  style: TextStyle(fontSize: 12.5, color: Palette.muted, shadows: overlayShadow),
                 ),
-              ),
+                Text(
+                  'Recommended lvl ${formatThousands(action.proficiencyLevel ?? 1)}',
+                  textAlign: TextAlign.right,
+                  style: const TextStyle(
+                    fontSize: 12.5,
+                    color: Palette.muted,
+                    shadows: overlayShadow,
+                  ),
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
       footer: _ActionProgress(
@@ -733,13 +745,14 @@ class _ProductionStage extends StatelessWidget {
           semanticsLabel: 'Adventurer',
           alignment: Alignment.centerRight,
           height: _playerArtHeight,
-          filterQuality: FilterQuality.medium,
+          slotHeight: _portraitSlotHeight,
+          filterQuality: FilterQuality.high,
         ),
         scene: _Portrait(
           assetPath: workstationAssetPath(recipe?.facilityId),
           semanticsLabel: stationName,
           height: _actionArtHeight,
-          slotHeight: _playerArtHeight,
+          slotHeight: _portraitSlotHeight,
           alignment: Alignment.centerLeft,
           overlay: popup == null
               ? null
@@ -769,22 +782,25 @@ class _ProductionStage extends StatelessWidget {
                   ),
                 ),
         ),
-        playerCaption: const SizedBox(height: 16),
-        sceneCaption: Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            _SceneName(stationName),
-            if (recipeId != null)
-              Text(
-                _queueLine(controller, recipeId),
-                textAlign: TextAlign.right,
-                style: const TextStyle(
-                  fontSize: 12.5,
-                  color: Palette.muted,
-                  shadows: overlayShadow,
+        playerCaption: const SizedBox(height: _captionMinHeight),
+        sceneCaption: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: _captionMinHeight),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              _SceneName(stationName),
+              if (recipeId != null)
+                Text(
+                  _queueLine(controller, recipeId),
+                  textAlign: TextAlign.right,
+                  style: const TextStyle(
+                    fontSize: 12.5,
+                    color: Palette.muted,
+                    shadows: overlayShadow,
+                  ),
                 ),
-              ),
-          ],
+            ],
+          ),
         ),
       ),
       footer: _ActionProgress(
