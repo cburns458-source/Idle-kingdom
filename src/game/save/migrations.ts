@@ -513,6 +513,15 @@ export const SAVE_MIGRATIONS: SaveMigration[] = [
       saveVersion: 34,
     }),
   },
+  {
+    fromVersion: 34,
+    toVersion: 35,
+    migrate: (save) => ({
+      ...save,
+      hasSeenFennelIntro: save.hasSeenFennelIntro ?? false,
+      saveVersion: 35,
+    }),
+  },
 ]
 
 export function migrateSave(save: PlayerSave, nowMs: number = Date.now()): PlayerSave {

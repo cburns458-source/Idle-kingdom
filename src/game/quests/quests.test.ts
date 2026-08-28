@@ -4,11 +4,18 @@ import { describe, expect, it } from 'vitest'
 import { activityVisibleForSave } from '../activity/requirements'
 import { addItemToInventory } from '../activity/rewards'
 import { prepareDatabase } from '../data/loadDatabase'
-import { npcConversation } from '../npcs/conversation'
+import { npcConversation, talkWithQuestNpc } from '../npcs/conversation'
+import { npcsAtLocationForSave } from '../npcs/knowledge'
 import { specialProductionStationsVisibleAt } from '../projects/projects'
 import { isCosmeticUnlocked } from '../cosmetics/cosmetics'
 import { createNewSave } from '../save/saveStore'
-import { applyQuestInspectProgress, applyQuestTalkProgress, hasQuestFlag } from './progress'
+import {
+  applyQuestInspectProgress,
+  applyQuestProcessProgress,
+  applyQuestTalkProgress,
+  applyQuestVisitProgress,
+  hasQuestFlag,
+} from './progress'
 import {
   acceptQuest,
   applyQuestBranchSkillXp,
@@ -249,5 +256,41 @@ describe('quest tours', () => {
     expect(completed.rewards.some((reward) => /Arcana XP/i.test(reward.label))).toBe(true)
     expect(completed.save.unlockedNpcIds).toContain('NPC-0004')
     expect(activityVisibleForSave(launch, completed.save, 'ACT-0008')).toBe(true)
+  })
+
+  it('walks Getting Started from accept through Fennel looking at cooked potatoes', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const fennel = launch.NPCs.find((row) => row['NPC ID'] === 'NPC-0014')!
+    expect(fennel['Location ID']).toBe('LOC-0001')
+
+    let save = { ...createNewSave(launch), currentLocationId: 'LOC-0001' }
+    const accepted = acceptQuest(launch, save, 'QST-0006')
+    expect(accepted.ok).toBe(true)
+    if (!accepted.ok) return
+    save = accepted.save
+
+    expect(npcConversation(launch, save, fennel).quests[0]?.canTalk).toBe(true)
+    expect(npcConversation(launch, save, fennel).quests[0]?.canTurnIn).toBe(false)
+    save = applyQuestTalkProgress(launch, save, 'NPC-0014')
+    expect(npcConversation(launch, save, fennel).quests[0]?.canTalk).toBe(false)
+
+    save = addItemToInventory(save, 'ITEM-0025', 5)
+    expect(npcConversation(launch, save, fennel).quests[0]?.canTalk).toBe(true)
+    expect(npcConversation(launch, save, fennel).quests[0]?.talkLine).toMatch(/kitchen in town/i)
+    save = applyQuestTalkProgress(launch, save, 'NPC-0014')
+    expect(save.inventory.find((stack) => stack.itemId === 'ITEM-0025')?.quantity).toBe(5)
+
+    save = applyQuestVisitProgress(launch, save, 'LOC-0023')
+    save = applyQuestProcessProgress(launch, save, 'RCP-0001', 5)
+    save = addItemToInventory(save, 'ITEM-0058', 5)
+    save = { ...save, currentLocationId: 'LOC-0001' }
+    expect(npcConversation(launch, save, fennel).quests[0]?.talkLine).toMatch(/sword and shield/i)
+
+    const finished = talkWithQuestNpc(launch, save, 'NPC-0014')
+    expect(finished.ok).toBe(true)
+    if (!finished.ok) return
+    expect(getQuestProgress(finished.save, 'QST-0006').status).toBe('completed')
+    expect(finished.save.inventory.find((stack) => stack.itemId === 'ITEM-0058')?.quantity).toBe(5)
+    expect(npcsAtLocationForSave(launch, finished.save, 'LOC-0001')).toEqual([])
   })
 })

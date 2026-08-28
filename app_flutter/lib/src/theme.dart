@@ -755,6 +755,76 @@ class OverlayChipButton extends StatelessWidget {
   }
 }
 
+/// Slow red rim for a quest travel hint.
+class QuestHintPulse extends StatefulWidget {
+  const QuestHintPulse({
+    super.key,
+    required this.enabled,
+    required this.child,
+    this.circle = false,
+  });
+
+  final bool enabled;
+  final Widget child;
+  final bool circle;
+
+  @override
+  State<QuestHintPulse> createState() => _QuestHintPulseState();
+}
+
+class _QuestHintPulseState extends State<QuestHintPulse> with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 1400));
+    if (widget.enabled) _controller.repeat(reverse: true);
+  }
+
+  @override
+  void didUpdateWidget(QuestHintPulse oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.enabled && !_controller.isAnimating) {
+      _controller.repeat(reverse: true);
+    } else if (!widget.enabled && _controller.isAnimating) {
+      _controller
+        ..stop()
+        ..value = 0;
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!widget.enabled) return widget.child;
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        final tint = Color.lerp(
+          const Color(0x00B42318),
+          const Color(0xE6B42318),
+          _controller.value,
+        )!;
+        return DecoratedBox(
+          decoration: BoxDecoration(
+            shape: widget.circle ? BoxShape.circle : BoxShape.rectangle,
+            borderRadius: widget.circle ? null : BorderRadius.circular(18),
+            border: Border.all(color: tint, width: 2),
+          ),
+          child: child,
+        );
+      },
+      child: widget.child,
+    );
+  }
+}
+
 /// Small muted caption, the equivalent of the CSS `.muted.tiny` pairing.
 class MutedText extends StatelessWidget {
   const MutedText(this.text, {super.key, this.textAlign, this.color});

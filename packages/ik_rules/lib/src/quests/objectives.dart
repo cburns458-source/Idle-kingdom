@@ -34,6 +34,7 @@ class StructuredQuestObjectives {
     required this.optionalTalkNpcIds,
     required this.visitLocationIds,
     required this.inspectIds,
+    required this.holds,
     required this.goldCost,
     required this.acceptGoldCost,
     required this.rewardGold,
@@ -42,6 +43,7 @@ class StructuredQuestObjectives {
     required this.choiceNpcId,
     required this.turnInNpcId,
     required this.autoStartLocationId,
+    required this.autoCompleteOnTalk,
     required this.unlockLocationIds,
     required this.rewardRecipeIds,
     required this.rewardProjectNpcIds,
@@ -61,6 +63,7 @@ class StructuredQuestObjectives {
   final List<String> optionalTalkNpcIds;
   final List<String> visitLocationIds;
   final List<String> inspectIds;
+  final List<QuestCounterTarget> holds;
   final num goldCost;
   final num acceptGoldCost;
   final num rewardGold;
@@ -69,6 +72,7 @@ class StructuredQuestObjectives {
   final String? choiceNpcId;
   final String? turnInNpcId;
   final String? autoStartLocationId;
+  final bool autoCompleteOnTalk;
   final List<String> unlockLocationIds;
   final List<String> rewardRecipeIds;
   final List<String> rewardProjectNpcIds;
@@ -87,6 +91,7 @@ class StructuredQuestObjectives {
     'optionalTalkNpcIds': optionalTalkNpcIds,
     'visitLocationIds': visitLocationIds,
     'inspectIds': inspectIds,
+    'holds': holds.map((line) => line.toJson()).toList(),
     'goldCost': goldCost,
     'acceptGoldCost': acceptGoldCost,
     'rewardGold': rewardGold,
@@ -95,6 +100,7 @@ class StructuredQuestObjectives {
     'choiceNpcId': choiceNpcId,
     'turnInNpcId': turnInNpcId,
     'autoStartLocationId': autoStartLocationId,
+    'autoCompleteOnTalk': autoCompleteOnTalk,
     'unlockLocationIds': unlockLocationIds,
     'rewardRecipeIds': rewardRecipeIds,
     'rewardProjectNpcIds': rewardProjectNpcIds,
@@ -188,6 +194,7 @@ StructuredQuestObjectives parseNotesObjectives(
   final optionalTalkNote = _noteField(notes, r'(?:^|;)\s*OptionalTalk:\s*([^;]+)');
   final visitNote = _noteField(notes, r'Visit:\s*([^;]+)');
   final inspectNote = _noteField(notes, r'Inspect:\s*([^;]+)');
+  final holdNote = _noteField(notes, r'Hold:\s*([^;]+)');
   final goldNote = _noteField(notes, r'GoldCost:\s*(\d+)');
 
   if (delivers.isEmpty && kind == 'gather_deliver') {
@@ -234,6 +241,7 @@ StructuredQuestObjectives parseNotesObjectives(
         : _parseIdList(optionalTalkNote),
     visitLocationIds: visitNote == null ? const <String>[] : _parseIdList(visitNote),
     inspectIds: inspectNote == null ? const <String>[] : _parseTokenList(inspectNote),
+    holds: holdNote == null ? const <QuestCounterTarget>[] : _parseIdQtyList(holdNote),
     goldCost: goldNote == null ? 0 : jsNumber(goldNote),
     acceptGoldCost: 0,
     rewardGold: 0,
@@ -242,6 +250,7 @@ StructuredQuestObjectives parseNotesObjectives(
     choiceNpcId: null,
     turnInNpcId: null,
     autoStartLocationId: null,
+    autoCompleteOnTalk: false,
     unlockLocationIds: const <String>[],
     rewardRecipeIds: const <String>[],
     rewardProjectNpcIds: const <String>[],
@@ -309,6 +318,7 @@ StructuredQuestObjectives parseStructuredObjectives(QuestRow quest) {
     optionalTalkNpcIds: objectives.optionalTalkNpcIds,
     visitLocationIds: objectives.visitLocationIds,
     inspectIds: objectives.inspectIds,
+    holds: objectives.holds,
     goldCost: objectives.goldCost,
     acceptGoldCost: acceptGoldNote == null ? 0 : jsNumber(acceptGoldNote),
     rewardGold: rewardGoldNote == null ? 0 : jsNumber(rewardGoldNote),
@@ -317,6 +327,7 @@ StructuredQuestObjectives parseStructuredObjectives(QuestRow quest) {
     choiceNpcId: _singleId(choiceNpcNote),
     turnInNpcId: _singleId(turnInNote),
     autoStartLocationId: _singleId(autoStartNote),
+    autoCompleteOnTalk: RegExp(r'AutoCompleteOnTalk', caseSensitive: false).hasMatch(notes),
     unlockLocationIds: unlockNote == null ? const <String>[] : _parseIdList(unlockNote),
     rewardRecipeIds: rewardRecipeNote == null ? const <String>[] : _parseIdList(rewardRecipeNote),
     rewardProjectNpcIds: rewardNpcNote == null ? const <String>[] : _parseIdList(rewardNpcNote),
@@ -462,6 +473,13 @@ QuestObjectiveStatus objectiveProgressFromStructured(
         current: counters['inspect:$inspectId'] ?? 0,
         required: 1,
       ),
+    for (final line in structured.holds)
+      QuestProgressLine(
+        key: 'hold:${line.targetId}',
+        label: 'Show ${_itemName(db, line.targetId)}',
+        current: inventoryCount(save, line.targetId),
+        required: line.quantity,
+      ),
     if (structured.goldCost > 0)
       QuestProgressLine(
         key: 'gold',
@@ -535,6 +553,13 @@ List<QuestJournalStep> questLegacyJournalSteps(GameDatabase db, PlayerSave save,
       state: entry.key < currentIndex || firstOpen == -1 ? 'done' : 'current',
     );
   }).toList();
+}
+
+String _itemName(GameDatabase db, String itemId) {
+  final displayName = db.items
+      .firstWhereOrNull((item) => item.raw['Item ID'] == itemId)
+      ?.raw['Display Name'];
+  return displayName is String ? displayName : itemId;
 }
 
 String _npcDisplayName(GameDatabase db, String npcId) {

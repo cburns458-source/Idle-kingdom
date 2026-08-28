@@ -70,6 +70,7 @@ export 'src/projects/menu.dart';
 export 'src/projects/projects.dart';
 export 'src/pvp/arena.dart';
 export 'src/pvp/matchmaking.dart';
+export 'src/quests/hints.dart';
 export 'src/quests/objectives.dart';
 export 'src/quests/progress.dart';
 export 'src/quests/quests.dart';

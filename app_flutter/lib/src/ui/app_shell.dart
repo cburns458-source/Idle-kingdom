@@ -735,6 +735,42 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
           SocialAlertOverlay(message: notice, onClose: controller.dismissDiscoveryNotice),
         if (_socialAlertEntry == null && _socialAlertMessage != null)
           SocialAlertOverlay(message: _socialAlertMessage!, onClose: _dismissSocialAlert),
+        if (fennelIntroPending(save))
+          Positioned.fill(
+            child: Stack(
+              children: [
+                const ModalBarrier(dismissible: false, color: Color(0xB3120C08)),
+                Center(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: GamePanel(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          const Text(
+                            'Fennel',
+                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w400),
+                          ),
+                          const SizedBox(height: 8),
+                          const Text(fennelWelcome, style: TextStyle(fontSize: 15)),
+                          const SizedBox(height: 12),
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: GameButton(
+                              label: 'OK',
+                              onPressed: () =>
+                                  controller.commit(save.copyWith(hasSeenFennelIntro: true)),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
       ],
     );
   }

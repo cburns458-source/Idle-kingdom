@@ -1,5 +1,6 @@
 import { applyXp } from '../activity/xp'
 import type { GameDatabase, NpcRow } from '../data/types'
+import { getQuestProgress } from '../quests/quests'
 import type { PlayerSave } from '../save/types'
 import { npcLocationAt } from './roaming'
 
@@ -19,12 +20,42 @@ export const QUILL_LOCKED_REASON =
 
 export const QUILL_MISSING_REASON = 'Speak with Quill to learn how to make bows and quivers.'
 
+export const FENNEL_ID = 'NPC-0014'
+export const GETTING_STARTED_QUEST_ID = 'QST-0006'
+export const FENNEL_WELCOME =
+  'Welcome to the lands. I am Fennel. This farm is a good place to start — harvest, cook, and fight are all close by. Come talk to me when you want to learn the rest.'
+
+export function npcHideAfterQuestId(npc: NpcRow): string | null {
+  const notes = typeof npc.Notes === 'string' ? npc.Notes : ''
+  const match = notes.match(/HideAfterQuest:\s*(QST-\d+)/i)
+  return match?.[1]?.toUpperCase() ?? null
+}
+
+export function npcVisibleForSave(npc: NpcRow, save: PlayerSave): boolean {
+  const questId = npcHideAfterQuestId(npc)
+  if (!questId) return true
+  return getQuestProgress(save, questId).status !== 'completed'
+}
+
 export function npcsAtLocation(
   db: GameDatabase,
   locationId: string,
   nowMs: number = Date.now(),
 ): NpcRow[] {
   return db.NPCs.filter((npc) => npcLocationAt(npc, nowMs) === locationId)
+}
+
+export function npcsAtLocationForSave(
+  db: GameDatabase,
+  save: PlayerSave,
+  locationId: string,
+  nowMs: number = Date.now(),
+): NpcRow[] {
+  return npcsAtLocation(db, locationId, nowMs).filter((npc) => npcVisibleForSave(npc, save))
+}
+
+export function fennelIntroPending(save: PlayerSave): boolean {
+  return !save.hasSeenFennelIntro && save.currentLocationId === 'LOC-0001' && save.raceId != null
 }
 
 export function hasNpcKnowledge(save: PlayerSave, npcId: string): boolean {

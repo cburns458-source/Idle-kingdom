@@ -470,6 +470,15 @@ final List<SaveMigration> saveMigrations = <SaveMigration>[
     toVersion: 34,
     migrate: (save, nowMs) => _normalizeSettings(save, 34),
   ),
+  SaveMigration(
+    fromVersion: 34,
+    toVersion: 35,
+    migrate: (save, nowMs) {
+      final next = _bumped(save, 35);
+      next['hasSeenFennelIntro'] = save['hasSeenFennelIntro'] ?? false;
+      return next;
+    },
+  ),
 ];
 
 /// Thrown when a save cannot be brought to the current version.

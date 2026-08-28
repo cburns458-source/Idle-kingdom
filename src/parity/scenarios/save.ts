@@ -40,6 +40,7 @@ const INTRODUCED_AT: Array<[number, string[]]> = [
   [30, ['playTimeMs']],
   [31, ['combatSkipEnemyAttack']],
   [32, ['combatBossSleepRoundsRemaining', 'bossRespawnUntilByEnemyId']],
+  [35, ['hasSeenFennelIntro']],
 ]
 
 /**

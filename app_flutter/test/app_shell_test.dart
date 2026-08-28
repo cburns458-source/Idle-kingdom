@@ -678,4 +678,27 @@ void main() {
     await tester.pump();
     expect(find.text('Deeds unlocked on this save.'), findsNothing);
   });
+
+  testWidgets('Fennel dimmed welcome does not start Getting Started', (tester) async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(hasSeenFennelIntro: false),
+    );
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller);
+
+    expect(find.text('Fennel'), findsOne);
+    expect(find.textContaining('Welcome to the lands'), findsOne);
+    expect(getQuestProgress(controller.save, 'QST-0006').status, 'inactive');
+
+    await tester.tap(find.text('OK'));
+    await tester.pump();
+
+    expect(controller.save.hasSeenFennelIntro, isTrue);
+    expect(find.textContaining('Welcome to the lands'), findsNothing);
+    expect(getQuestProgress(controller.save, 'QST-0006').status, 'inactive');
+    await tester.tap(find.widgetWithText(GameButton, 'People'));
+    await tester.pump();
+    expect(find.text('Fennel'), findsOne);
+  });
 }

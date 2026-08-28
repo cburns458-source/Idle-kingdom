@@ -1,4 +1,5 @@
 import type { GameDatabase, QuestStepRow } from '../data/types'
+import { inventoryCount } from '../production/recipes'
 import type { PlayerSave } from '../save/types'
 import {
   objectiveProgressFromStructured,
@@ -44,15 +45,43 @@ export function questObjectiveSources(
   ]
 }
 
+/** First Talk step for an NPC may still use the save-wide `talk:npc` flag. */
+function talkProgressForStep(
+  db: GameDatabase,
+  questId: string,
+  counters: Record<string, number>,
+  talkKey: string,
+  stepId: string,
+): number {
+  const scoped = Number(counters[`${talkKey}:${stepId}`] ?? 0)
+  if (scoped >= 1) return scoped
+  const npcId = talkKey.slice('talk:'.length)
+  const first = getQuestSteps(db, questId).find((step) =>
+    parseNotesObjectives(step.Notes ?? '').talkNpcIds.includes(npcId),
+  )
+  if (first?.['Step ID'] !== stepId) return 0
+  return Number(counters[talkKey] ?? 0)
+}
+
 function stepProgressLines(
   db: GameDatabase,
   save: PlayerSave,
   questId: string,
   notes: string,
+  stepId?: string,
 ): QuestProgressLine[] {
   const structured = parseNotesObjectives(notes)
   const counters = getQuestProgress(save, questId).counters ?? {}
-  return objectiveProgressFromStructured(db, save, structured, counters).progressLines
+  const lines = objectiveProgressFromStructured(db, save, structured, counters).progressLines
+  if (!stepId) return lines
+  return lines.map((line) => {
+    if (!line.key.startsWith('talk:')) return line
+    return {
+      ...line,
+      key: `${line.key}:${stepId}`,
+      current: talkProgressForStep(db, questId, counters, line.key, stepId),
+    }
+  })
 }
 
 export function isStepComplete(
@@ -60,8 +89,9 @@ export function isStepComplete(
   save: PlayerSave,
   questId: string,
   notes: string,
+  stepId?: string,
 ): boolean {
-  const lines = stepProgressLines(db, save, questId, notes)
+  const lines = stepProgressLines(db, save, questId, notes, stepId)
   if (lines.length === 0) return true
   return lines.every((line) => line.current >= line.required)
 }
@@ -74,9 +104,22 @@ export function getCurrentStepIndex(
   const questId = quest['Quest ID']
   const steps = getQuestSteps(db, questId)
   for (let index = 0; index < steps.length; index += 1) {
-    if (!isStepComplete(db, save, questId, steps[index]!.Notes ?? '')) return index
+    const step = steps[index]!
+    if (!isStepComplete(db, save, questId, step.Notes ?? '', step['Step ID'])) return index
   }
   return steps.length
+}
+
+export function currentStepTalkKey(
+  db: GameDatabase,
+  save: PlayerSave,
+  quest: QuestRow,
+  npcId: string,
+): string {
+  if (!questUsesSteps(db, quest['Quest ID'])) return `talk:${npcId}`
+  const steps = getQuestSteps(db, quest['Quest ID'])
+  const step = steps[getCurrentStepIndex(db, save, quest)]
+  return step ? `talk:${npcId}:${step['Step ID']}` : `talk:${npcId}`
 }
 
 const CITADEL_QUEST_ID = 'QST-0004'
@@ -174,7 +217,10 @@ export function questCanTalkToNpc(
     ? questActiveStepObjectives(db, save, quest)
     : parseStructuredObjectives(quest)
   if (!objectives) return false
-  return objectives.talkNpcIds.includes(npcId) || objectives.optionalTalkNpcIds.includes(npcId)
+  const talks =
+    objectives.talkNpcIds.includes(npcId) || objectives.optionalTalkNpcIds.includes(npcId)
+  if (!talks) return false
+  return objectives.holds.every((hold) => inventoryCount(save, hold.targetId) >= hold.quantity)
 }
 
 /** True when this NPC still has an unfinished Talk step (or Notes talk). */
@@ -192,7 +238,7 @@ export function questNpcHasIncompleteTalk(
   return steps.some(
     (step) =>
       parseNotesObjectives(step.Notes ?? '').talkNpcIds.includes(npcId) &&
-      !isStepComplete(db, save, questId, step.Notes ?? ''),
+      !isStepComplete(db, save, questId, step.Notes ?? '', step['Step ID']),
   )
 }
 

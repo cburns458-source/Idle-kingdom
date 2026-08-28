@@ -82,6 +82,7 @@ PlayerSave createNewSave(GameDatabase db, num nowMs) {
       genderPresentation: defaultGenderPresentationId,
     ),
     hasSeenWardrobeIntro: false,
+    hasSeenFennelIntro: false,
     settings: const PlayerSettings(
       soundEnabled: true,
       showActivityRewards: true,
