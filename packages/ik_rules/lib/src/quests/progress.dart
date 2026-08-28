@@ -34,14 +34,17 @@ PlayerSave _applyProgress(
   String targetId,
   num amount,
 ) {
+  if (!save.quests.any((row) => row.status == 'active')) return save;
   var next = save;
   for (final quest in asQuestRows(db)) {
+    final questId = jsString(quest['Quest ID']);
+    if (getQuestProgress(next, questId).status != 'active') continue;
     final matches = questObjectiveSources(
       db,
       quest,
     ).any((structured) => targetsOf(structured).any((row) => row.targetId == targetId));
     if (!matches) continue;
-    next = _bumpCounter(next, jsString(quest['Quest ID']), '$counterPrefix:$targetId', amount);
+    next = _bumpCounter(next, questId, '$counterPrefix:$targetId', amount);
   }
   return next;
 }
@@ -150,15 +153,18 @@ PlayerSave applyQuestActionProgress(
   String actionId, [
   num amount = 1,
 ]) {
+  if (!save.quests.any((row) => row.status == 'active')) return save;
   var next = save;
   for (final quest in asQuestRows(db)) {
+    final questId = jsString(quest['Quest ID']);
+    if (getQuestProgress(next, questId).status != 'active') continue;
     if (!questObjectiveSources(
       db,
       quest,
     ).any((row) => row.actionTargets.any((target) => target.targetId == actionId))) {
       continue;
     }
-    next = _bumpCounter(next, jsString(quest['Quest ID']), 'action:$actionId', amount);
+    next = _bumpCounter(next, questId, 'action:$actionId', amount);
   }
   return next;
 }

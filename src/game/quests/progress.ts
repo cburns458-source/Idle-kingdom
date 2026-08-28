@@ -4,6 +4,10 @@ import { parseStructuredObjectives } from './objectives'
 import { currentStepTalkKey, questCanTalkToNpc, questObjectiveSources } from './steps'
 import type { GameDatabase } from '../data/types'
 
+function saveHasActiveQuest(save: PlayerSave): boolean {
+  return save.quests.some((row) => row.status === 'active')
+}
+
 function bumpCounter(save: PlayerSave, questId: string, key: string, amount: number): PlayerSave {
   if (amount <= 0) return save
   const progress = getQuestProgress(save, questId)
@@ -26,8 +30,10 @@ export function applyQuestDefeatProgress(
   enemyId: string,
   amount = 1,
 ): PlayerSave {
+  if (!saveHasActiveQuest(save)) return save
   let next = save
   for (const quest of asQuestRows(db)) {
+    if (getQuestProgress(next, quest['Quest ID']).status !== 'active') continue
     if (!questObjectiveSources(db, quest).some((row) => row.defeatTargets.some((t) => t.targetId === enemyId))) {
       continue
     }
@@ -43,8 +49,10 @@ export function applyQuestProcessProgress(
   recipeOrProjectId: string,
   amount = 1,
 ): PlayerSave {
+  if (!saveHasActiveQuest(save)) return save
   let next = save
   for (const quest of asQuestRows(db)) {
+    if (getQuestProgress(next, quest['Quest ID']).status !== 'active') continue
     if (
       !questObjectiveSources(db, quest).some((row) =>
         row.processTargets.some((target) => target.targetId === recipeOrProjectId),
@@ -140,8 +148,10 @@ export function applyQuestActionProgress(
   actionId: string,
   amount = 1,
 ): PlayerSave {
+  if (!saveHasActiveQuest(save)) return save
   let next = save
   for (const quest of asQuestRows(db)) {
+    if (getQuestProgress(next, quest['Quest ID']).status !== 'active') continue
     if (!questObjectiveSources(db, quest).some((row) => row.actionTargets.some((t) => t.targetId === actionId))) {
       continue
     }

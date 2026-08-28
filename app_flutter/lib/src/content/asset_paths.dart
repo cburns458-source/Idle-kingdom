@@ -177,6 +177,7 @@ const Map<String, String> _actionArt = <String, String>{
   'ACN-0166': 'actions/acn_mine_sapphire.webp',
   'ACN-0167': 'actions/acn_mine_emerald.webp',
   'ACN-0168': 'actions/acn_mine_ruby.webp',
+  'ACN-0177': 'actions/acn_mine_coal.webp',
 };
 
 /// Launch races that have bundled player sprites.
