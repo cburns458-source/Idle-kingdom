@@ -1004,8 +1004,11 @@ export class LocalMultiplayerBackend {
     const application = db.applications.find((row) => row.id === applicationId)
     if (!application) return { ok: false, reason: 'Application not found.' }
     const guild = db.guilds.find((row) => row.id === application.guildId)
-    if (!guild || guild.leaderId !== leaderId) {
-      return { ok: false, reason: 'Only the guild leader can decide applications.' }
+    if (!guild) return { ok: false, reason: 'Guild not found.' }
+    const actor = db.members.find((row) => row.guildId === guild.id && row.userId === leaderId)
+    const officerOrLeader = guild.leaderId === leaderId || actor?.role === 'officer'
+    if (!officerOrLeader) {
+      return { ok: false, reason: 'Only the guild leader or an officer can decide applications.' }
     }
     db.applications = db.applications.filter((row) => row.id !== applicationId)
     if (accept) {
@@ -1059,6 +1062,53 @@ export class LocalMultiplayerBackend {
         (row) => !(row.guildId === guild.id && row.userId === application.userId),
       )
     }
+    this.write(db)
+    return { ok: true }
+  }
+
+  removeGuildMember(
+    actorId: string,
+    guildId: string,
+    targetUserId: string,
+  ): { ok: true } | { ok: false; reason: string } {
+    const db = this.db()
+    const guild = db.guilds.find((row) => row.id === guildId)
+    if (!guild) return { ok: false, reason: 'Guild not found.' }
+    if (guild.leaderId !== actorId) return { ok: false, reason: 'Only the leader can remove members.' }
+    if (targetUserId === guild.leaderId) return { ok: false, reason: 'Cannot remove the leader.' }
+    if (targetUserId === actorId) return { ok: false, reason: 'Leave the guild instead.' }
+    if (!db.members.some((row) => row.guildId === guildId && row.userId === targetUserId)) {
+      return { ok: false, reason: 'Not a member of that guild.' }
+    }
+    db.members = db.members.filter((row) => !(row.guildId === guildId && row.userId === targetUserId))
+    db.profiles = db.profiles.map((row) =>
+      row.userId === targetUserId
+        ? { ...row, guildId: null, guildName: null, updatedAt: this.nowIso() }
+        : row,
+    )
+    this.write(db)
+    return { ok: true }
+  }
+
+  removeGuildGuest(
+    actorId: string,
+    guildId: string,
+    targetUserId: string,
+  ): { ok: true } | { ok: false; reason: string } {
+    const db = this.db()
+    const guild = db.guilds.find((row) => row.id === guildId)
+    if (!guild) return { ok: false, reason: 'Guild not found.' }
+    const actor = db.members.find((row) => row.guildId === guildId && row.userId === actorId)
+    const officerOrLeader = guild.leaderId === actorId || actor?.role === 'officer'
+    if (!officerOrLeader) {
+      return { ok: false, reason: 'Only the guild leader or an officer can remove guests.' }
+    }
+    if (!this.guestsOf(db).some((row) => row.guildId === guildId && row.userId === targetUserId)) {
+      return { ok: false, reason: 'Not a guest of that guild.' }
+    }
+    db.guests = this.guestsOf(db).filter(
+      (row) => !(row.guildId === guildId && row.userId === targetUserId),
+    )
     this.write(db)
     return { ok: true }
   }

@@ -310,6 +310,7 @@ List<SkillMenuTab> _artisanryTabs(GameDatabase db) {
   final bows = <SkillMenuListItem>[];
   final jewelry = <SkillMenuListItem>[];
   final other = <SkillMenuListItem>[];
+  final seenLeather = <String>{};
   for (final project in projectsForSkill(db, artisanrySkillId)) {
     final item = _itemByName(db, project.displayName);
     if (_isBowName(project.displayName)) {
@@ -317,7 +318,16 @@ List<SkillMenuTab> _artisanryTabs(GameDatabase db) {
     } else if (_isJewelryItem(item, project.displayName)) {
       jewelry.add(project);
     } else {
-      other.add(project);
+      final material = _armorMaterial(project.displayName);
+      if (material != null && _isGroupedArmorMaterial(material)) {
+        final key = '${project.level ?? ''}|$material';
+        if (!seenLeather.add(key)) continue;
+        other.add(
+          SkillMenuListItem(id: key, displayName: '$material equipment', level: project.level),
+        );
+      } else {
+        other.add(project);
+      }
     }
   }
   return <SkillMenuTab>[
@@ -381,7 +391,7 @@ List<SkillMenuListItem> _combatEquipmentEntries(GameDatabase db) {
   final seen = <String>{};
   for (final item in _combatGearItems(db)) {
     final material = _armorMaterial(item.displayName);
-    if (material == null || !_isMetalMaterial(material)) continue;
+    if (material == null || !_isGroupedArmorMaterial(material)) continue;
     final key = '${item.level ?? ''}|$material';
     if (!seen.add(key)) continue;
     grouped.add(SkillMenuListItem(id: key, displayName: '$material equipment', level: item.level));
@@ -412,7 +422,7 @@ List<SkillMenuListItem> _combatOtherEntries(GameDatabase db) {
 
 bool _isCombatOtherItem(SkillMenuListItem item) {
   final armor = _armorMaterial(item.displayName);
-  if (armor != null) return !_isMetalMaterial(armor);
+  if (armor != null) return !_isGroupedArmorMaterial(armor);
   final weapon = _weaponMaterial(item.displayName);
   if (weapon != null) return !_isMetalMaterial(weapon);
   return true;
@@ -439,6 +449,10 @@ bool _isMetalMaterial(String material) {
     r'^(copper|tin|bronze|iron|steel|titanium|tungsten|silver|gold|mithril)',
     caseSensitive: false,
   ).hasMatch(lower);
+}
+
+bool _isGroupedArmorMaterial(String material) {
+  return _isMetalMaterial(material) || material.toLowerCase() == 'leather';
 }
 
 List<SkillMenuListItem> _gatheringToolEntries(GameDatabase db, String skillId) {

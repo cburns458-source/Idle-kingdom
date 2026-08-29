@@ -265,13 +265,15 @@ void main() {
             final renamed = _renamedGuild();
             expect(
               checkParity(fixture, <String, Object?>{
-                'leaderHeader': guildHomeHeader(_guild(), 4, 'usr_1').toJson(),
+                'leaderHeader': guildHomeHeader(_guild(), 4, 'usr_1', members: _roster).toJson(),
                 'memberHeader': guildHomeHeader(
                   _guild(joinPolicy: guildJoinClosed),
                   4,
-                  'usr_2',
+                  'usr_4',
+                  members: _roster,
                 ).toJson(),
-                'anonymousHeader': guildHomeHeader(_guild(), 0, null).toJson(),
+                'officerHeader': guildHomeHeader(_guild(), 4, 'usr_2', members: _roster).toJson(),
+                'anonymousHeader': guildHomeHeader(_guild(), 0, null, members: _roster).toJson(),
                 'oldest': _rows(
                   guildRosterRows(
                     _guild(),

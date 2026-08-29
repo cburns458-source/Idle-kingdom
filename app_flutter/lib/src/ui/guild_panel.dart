@@ -239,7 +239,12 @@ class _GuildPanelState extends State<GuildPanel> {
   // --- Home -----------------------------------------------------------------
 
   Widget _buildHome(GuildRecord guild) {
-    final header = guildHomeHeader(guild, net.members.length, net.session?.userId);
+    final header = guildHomeHeader(
+      guild,
+      net.members.length,
+      net.session?.userId,
+      members: net.members,
+    );
     final rows = guildRosterRows(
       guild,
       net.members,
@@ -288,7 +293,7 @@ class _GuildPanelState extends State<GuildPanel> {
           ),
           const SizedBox(height: 10),
         ],
-        if (header.canManage && applications.isNotEmpty) ...[
+        if (header.canManageApplications && applications.isNotEmpty) ...[
           const Text('Pending applications', style: TextStyle(fontWeight: FontWeight.w400)),
           const SizedBox(height: 6),
           for (final row in applications) ...[
@@ -346,13 +351,25 @@ class _GuildPanelState extends State<GuildPanel> {
               multiplayer: net,
               userId: row.userId,
             ),
-            trailing: row.manageable
-                ? _RankPicker(
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (row.manageable)
+                  _RankPicker(
                     role: row.role,
                     options: options,
                     onChanged: (role) => net.setMemberRole(row.userId, role, save),
                   )
-                : Text('${row.totalLevel}', style: const TextStyle(fontWeight: FontWeight.w400)),
+                else
+                  Text('${row.totalLevel}', style: const TextStyle(fontWeight: FontWeight.w400)),
+                if (row.removable)
+                  GameIconButton(
+                    onPressed: net.busy ? null : () => net.removeMember(row.userId, save),
+                    tooltip: 'Remove member',
+                    icon: Icons.person_remove,
+                  ),
+              ],
+            ),
           ),
           const SizedBox(height: 6),
         ],
@@ -379,6 +396,13 @@ class _GuildPanelState extends State<GuildPanel> {
                 multiplayer: net,
                 userId: guest.userId,
               ),
+              trailing: header.canRemoveGuests && guest.userId != net.session?.userId
+                  ? GameIconButton(
+                      onPressed: net.busy ? null : () => net.removeGuest(guest.userId, save),
+                      tooltip: 'Remove guest',
+                      icon: Icons.person_remove,
+                    )
+                  : null,
             ),
             const SizedBox(height: 6),
           ],
@@ -602,7 +626,12 @@ class _GuildDetailPageState extends State<_GuildDetailPage> {
       builder: (context, _) {
         final members = widget.mode == _GuildDetailMode.own ? net.members : _members;
         final guests = widget.mode == _GuildDetailMode.own ? net.guests : const <GuildGuest>[];
-        final header = guildHomeHeader(guild, members?.length ?? 0, net.session?.userId);
+        final header = guildHomeHeader(
+          guild,
+          members?.length ?? 0,
+          net.session?.userId,
+          members: members ?? const <GuildMember>[],
+        );
         final rows = members == null
             ? const <GuildRosterRow>[]
             : guildRosterRows(

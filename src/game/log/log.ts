@@ -8,7 +8,12 @@ import type { GameDatabase } from '../data/types'
 import type { QuestRow } from '../quests/quests'
 import { questLegacyJournalSteps } from '../quests/objectives'
 import { asQuestRows, getQuestProgress, questStatusLabel } from '../quests/quests'
-import { questRequirementJournal, questStepJournal, questUsesSteps } from '../quests/steps'
+import {
+  questCompletedJournal,
+  questRequirementJournal,
+  questStepJournal,
+  questUsesSteps,
+} from '../quests/steps'
 import { listRecipeBookEntries, type RecipeBookEntry } from '../recipes/knowledge'
 import type { PlayerSave } from '../save/types'
 import { milestoneLog } from './milestones'
@@ -20,7 +25,7 @@ export type { MilestoneLogRow } from './milestones'
 export interface AchievementLogRow {
   achievementId: string
   name: string
-  /** `Unlocked`, or what it takes: `Reach Mining level 50`. */
+  /** What it takes, even after the deed is finished. */
   note: string
   unlocked: boolean
   difficulty: string
@@ -38,9 +43,7 @@ export function achievementLog(db: GameDatabase, save: PlayerSave): AchievementL
       return {
         achievementId,
         name: achievement['Display Name'],
-        note: unlocked
-          ? 'Unlocked'
-          : `Collect one of every critter (${held}/${CRITTER_DEFS.length})`,
+        note: `Collect one of every critter (${held}/${CRITTER_DEFS.length})`,
         unlocked,
         difficulty,
       }
@@ -48,7 +51,7 @@ export function achievementLog(db: GameDatabase, save: PlayerSave): AchievementL
     return {
       achievementId,
       name: achievement['Display Name'],
-      note: unlocked ? 'Unlocked' : achievementNote(achievement),
+      note: achievementNote(achievement),
       unlocked,
       difficulty,
     }
@@ -112,7 +115,7 @@ export function questLog(db: GameDatabase, save: PlayerSave): QuestLogRow[] {
           : questLegacyJournalSteps(db, save, questRow)
         : status === 'inactive'
           ? questRequirementJournal(db, save, questRow)
-          : []
+          : questCompletedJournal(db, questRow)
 
     return {
       questId,

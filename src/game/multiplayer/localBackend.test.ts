@@ -305,4 +305,48 @@ describe('local multiplayer backend', () => {
       { slotId: WEAPON_TOOL_SLOT_ID, itemId: 'ITEM-0110', quantity: 1, enchantmentId: null },
     ])
   })
+
+  it('lets an officer decide applications and remove guests, not members', () => {
+    const backend = new LocalMultiplayerBackend()
+    const leader = backend.signUp('lead@example.com', 'Lead', 'secret')
+    const officer = backend.signUp('off@example.com', 'Off', 'secret')
+    const hopeful = backend.signUp('hope@example.com', 'Hope', 'secret')
+    const visitor = backend.signUp('visit@example.com', 'Visit', 'secret')
+    expect(leader.ok && officer.ok && hopeful.ok && visitor.ok).toBe(true)
+    if (!leader.ok || !officer.ok || !hopeful.ok || !visitor.ok) return
+
+    const created = backend.createGuild(
+      leader.session,
+      { name: 'Oak Guard', tag: 'OAK', emblem: { color: '#3d5a80', symbol: 'shield' } },
+      25,
+    )
+    expect(created.ok).toBe(true)
+    if (!created.ok) return
+    const guildId = created.guild.id
+    expect(backend.applyToGuild(officer.session, guildId, '').ok).toBe(true)
+    expect(backend.setMemberRole(leader.session.userId, guildId, officer.session.userId, 'officer').ok).toBe(
+      true,
+    )
+    backend.setGuildJoinPolicy(leader.session.userId, guildId, 'closed')
+    expect(backend.applyToGuild(hopeful.session, guildId, 'Please').ok).toBe(true)
+    const applicationId = backend.listApplications(guildId)[0]!.id
+    expect(backend.decideApplication(officer.session.userId, applicationId, true).ok).toBe(true)
+    expect(backend.guildMembers(guildId)).toHaveLength(3)
+
+    backend.setGuildGuestAutoAccept(leader.session.userId, guildId, true)
+    expect(backend.joinAsGuest(visitor.session, guildId, '').ok).toBe(true)
+    expect(backend.removeGuildGuest(officer.session.userId, guildId, visitor.session.userId).ok).toBe(true)
+    expect(backend.guildGuests(guildId)).toHaveLength(0)
+
+    const kickMember = backend.removeGuildMember(
+      officer.session.userId,
+      guildId,
+      hopeful.session.userId,
+    )
+    expect(kickMember.ok).toBe(false)
+    if (kickMember.ok) return
+    expect(kickMember.reason).toBe('Only the leader can remove members.')
+    expect(backend.removeGuildMember(leader.session.userId, guildId, hopeful.session.userId).ok).toBe(true)
+    expect(backend.guildMembers(guildId)).toHaveLength(2)
+  })
 })

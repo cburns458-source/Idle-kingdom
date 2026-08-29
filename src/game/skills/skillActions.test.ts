@@ -68,12 +68,11 @@ describe('skill menu entries', () => {
     ).toBe(true)
     const artisanryOther =
       artisanry.tabs.find((tab) => tab.id === 'other')?.sections[0]?.entries ?? []
-    expect(artisanryOther.some((item) => item.displayName === 'Leather Helmet' && item.level === 1)).toBe(
+    expect(artisanryOther.some((item) => item.displayName === 'Leather equipment' && item.level === 1)).toBe(
       true,
     )
-    expect(artisanryOther.some((item) => item.displayName === 'Leather Gloves' && item.level === 1)).toBe(
-      true,
-    )
+    expect(artisanryOther.some((item) => item.displayName === 'Leather Helmet')).toBe(false)
+    expect(artisanryOther.some((item) => item.displayName === 'Leather Gloves')).toBe(false)
   })
 
   it('groups same-tier combat armor as material equipment', () => {
@@ -87,7 +86,7 @@ describe('skill menu entries', () => {
     expect(gear.some((item) => item.displayName === 'Reinforced Steel equipment')).toBe(true)
     expect(gear.some((item) => item.displayName === 'Bull Horn equipment')).toBe(false)
     expect(gear.some((item) => item.displayName === 'Wooden equipment')).toBe(false)
-    expect(gear.some((item) => item.displayName === 'Leather equipment')).toBe(false)
+    expect(gear.some((item) => item.displayName === 'Leather equipment' && item.level === 1)).toBe(true)
     expect(gear.some((item) => item.displayName === 'Leather Helmet')).toBe(false)
     expect(gear.some((item) => item.displayName === 'Tungsten Helmet')).toBe(false)
     expect(gear.some((item) => item.displayName === 'Tungsten Shield')).toBe(false)
@@ -102,7 +101,8 @@ describe('skill menu entries', () => {
     expect(weapons.some((item) => item.displayName === 'Tungsten Shield')).toBe(false)
     expect(other.some((item) => item.displayName === 'Bull Horn Helmet')).toBe(true)
     expect(other.some((item) => item.displayName === 'Wooden Sword')).toBe(true)
-    expect(other.some((item) => item.displayName === 'Leather Helmet' && item.level === 1)).toBe(true)
+    expect(other.some((item) => item.displayName === 'Leather Helmet')).toBe(false)
+    expect(other.some((item) => item.displayName === 'Leather equipment')).toBe(false)
     expect(other.some((item) => item.displayName === 'Cedar Bow')).toBe(true)
     expect(other.some((item) => item.displayName === 'Boar Spear')).toBe(true)
   })

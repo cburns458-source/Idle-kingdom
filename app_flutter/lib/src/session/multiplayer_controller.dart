@@ -1213,6 +1213,28 @@ class MultiplayerController extends ChangeNotifier {
     });
   }
 
+  Future<void> removeMember(String userId, PlayerSave save) {
+    return run(() async {
+      final guildId = _guildId;
+      if (guildId == null) return 'Join a guild first.';
+      final result = await service.removeGuildMember(guildId, userId);
+      if (!result.ok) return result.reason;
+      await refresh(save);
+      return 'Removed from the guild.';
+    });
+  }
+
+  Future<void> removeGuest(String userId, PlayerSave save) {
+    return run(() async {
+      final guildId = _guildId;
+      if (guildId == null) return 'Join a guild first.';
+      final result = await service.removeGuildGuest(guildId, userId);
+      if (!result.ok) return result.reason;
+      await refresh(save);
+      return 'Removed guest.';
+    });
+  }
+
   Future<void> setMemberRole(String userId, GuildRole role, PlayerSave save) {
     return run(() async {
       final guildId = _guildId;

@@ -402,9 +402,11 @@ class RemoteGuildBackend {
     if (row == null) return const ActionResult.failed('Application not found.');
     final application = guildApplicationFrom(row);
     final guild = await guildById(application.guildId);
-    if (guild == null || guild.leaderId != current.userId) {
-      return const ActionResult.failed('Only the guild leader can decide applications.');
-    }
+    if (guild == null) return const ActionResult.failed('Guild not found.');
+    final actor = await _membershipOf(current.userId);
+    final actorRole = actor?.guildId == guild.id ? actor?.role : null;
+    final refusal = decideApplicationRefusal(guild, current.userId, actorRole);
+    if (refusal != null) return ActionResult.failed(refusal);
 
     Future<ActionResult> drop() async {
       final refused = await transport.delete(
@@ -474,6 +476,37 @@ class RemoteGuildBackend {
       equals: <String, Object?>{'guild_id': guild.id, 'user_id': application.userId},
     );
     return drop();
+  }
+
+  Future<ActionResult> removeGuildMember(String guildId, String targetUserId) async {
+    final current = sessionOf();
+    if (current == null) return const ActionResult.failed('Sign in first.');
+    final guild = await guildById(guildId);
+    if (guild == null) return const ActionResult.failed('Guild not found.');
+    final refusal = removeGuildMemberRefusal(guild, current.userId, targetUserId);
+    if (refusal != null) return ActionResult.failed(refusal);
+    final refused = await transport.delete(
+      RemoteTables.guildMembers,
+      equals: <String, Object?>{'guild_id': guildId, 'user_id': targetUserId},
+    );
+    if (refused != null) return ActionResult.failed(refused);
+    return const ActionResult.ok();
+  }
+
+  Future<ActionResult> removeGuildGuest(String guildId, String targetUserId) async {
+    final current = sessionOf();
+    if (current == null) return const ActionResult.failed('Sign in first.');
+    final guild = await guildById(guildId);
+    if (guild == null) return const ActionResult.failed('Guild not found.');
+    final actor = await _membershipOf(current.userId);
+    final actorRole = actor?.guildId == guild.id ? actor?.role : null;
+    final refusal = removeGuildGuestRefusal(guild, current.userId, actorRole);
+    if (refusal != null) return ActionResult.failed(refusal);
+    final refused = await transport.delete(
+      RemoteTables.guildGuests,
+      equals: <String, Object?>{'guild_id': guildId, 'user_id': targetUserId},
+    );
+    return refused == null ? const ActionResult.ok() : ActionResult.failed(refused);
   }
 
   // --- Ranks and settings ---------------------------------------------------

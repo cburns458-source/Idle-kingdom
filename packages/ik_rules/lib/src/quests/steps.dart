@@ -31,6 +31,13 @@ bool questUsesSteps(GameDatabase db, String questId) {
   return getQuestSteps(db, questId).isNotEmpty;
 }
 
+/// Every authored step, marked done — used once the quest is finished.
+List<QuestJournalStep> questCompletedJournal(GameDatabase db, QuestRow quest) {
+  return getQuestSteps(db, jsString(quest['Quest ID']))
+      .map((step) => QuestJournalStep(key: step.stepId, label: step.journalLabel, state: 'done'))
+      .toList();
+}
+
 List<StructuredQuestObjectives> questObjectiveSources(GameDatabase db, QuestRow quest) {
   return [
     parseStructuredObjectives(quest),
@@ -168,11 +175,13 @@ List<QuestProgressLine> _stepProgressLines(
   GameDatabase db,
   PlayerSave save,
   String questId,
-  String notes,
-) {
+  String notes, [
+  String? stepId,
+]) {
   final structured = parseNotesObjectives(notes);
   final counters = getQuestProgress(save, questId).counters ?? const <String, num>{};
-  return objectiveProgressFromStructured(db, save, structured, counters).progressLines;
+  final lines = objectiveProgressFromStructured(db, save, structured, counters).progressLines;
+  return _scopedTalkLines(db, questId, lines, counters, stepId);
 }
 
 List<QuestJournalStep> questStepJournal(GameDatabase db, PlayerSave save, QuestRow quest) {
@@ -184,7 +193,7 @@ List<QuestJournalStep> questStepJournal(GameDatabase db, PlayerSave save, QuestR
   if (questId == _citadelQuestId && citadelGuideHeard(save) && currentIndex >= 1) {
     final heard = steps.first;
     final remaining = steps.skip(1).expand((step) {
-      return _stepProgressLines(db, save, questId, step.notes ?? '').map(
+      return _stepProgressLines(db, save, questId, step.notes ?? '', step.stepId).map(
         (line) => QuestJournalStep(
           key: line.key,
           label: line.caption,
@@ -199,9 +208,7 @@ List<QuestJournalStep> questStepJournal(GameDatabase db, PlayerSave save, QuestR
   }
 
   if (currentIndex >= steps.length) {
-    return steps
-        .map((step) => QuestJournalStep(key: step.stepId, label: step.journalLabel, state: 'done'))
-        .toList();
+    return questCompletedJournal(db, quest);
   }
 
   return steps.take(currentIndex + 1).toList().asMap().entries.expand((entry) {

@@ -806,6 +806,14 @@ class RemoteMultiplayerService implements MultiplayerService {
       _guilds.decideGuildApplication(applicationId, accept);
 
   @override
+  Future<ActionResult> removeGuildMember(String guildId, String targetUserId) =>
+      _guilds.removeGuildMember(guildId, targetUserId);
+
+  @override
+  Future<ActionResult> removeGuildGuest(String guildId, String targetUserId) =>
+      _guilds.removeGuildGuest(guildId, targetUserId);
+
+  @override
   Future<ActionResult> setGuildMemberRole(String guildId, String targetUserId, GuildRole role) =>
       _guilds.setGuildMemberRole(guildId, targetUserId, role);
 

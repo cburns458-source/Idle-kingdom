@@ -26,7 +26,7 @@ class AchievementLogRow {
   final String achievementId;
   final String name;
 
-  /// `Unlocked`, or what it takes: `Reach Mining level 50`.
+  /// What it takes, even after the deed is finished.
   final String note;
   final bool unlocked;
   final String difficulty;
@@ -54,10 +54,9 @@ List<AchievementLogRow> achievementLog(GameDatabase db, PlayerSave save) {
       return AchievementLogRow(
         achievementId: achievementId,
         name: jsString(achievement['Display Name']),
-        note: unlocked
-            ? 'Unlocked'
-            : 'Collect one of every critter '
-                  '(${jsNumberToString(held)}/${jsNumberToString(critterDefs.length)})',
+        note:
+            'Collect one of every critter '
+            '(${jsNumberToString(held)}/${jsNumberToString(critterDefs.length)})',
         unlocked: unlocked,
         difficulty: difficulty,
       );
@@ -65,7 +64,7 @@ List<AchievementLogRow> achievementLog(GameDatabase db, PlayerSave save) {
     return AchievementLogRow(
       achievementId: achievementId,
       name: jsString(achievement['Display Name']),
-      note: unlocked ? 'Unlocked' : _achievementNote(achievement),
+      note: _achievementNote(achievement),
       unlocked: unlocked,
       difficulty: difficulty,
     );
@@ -176,7 +175,7 @@ List<QuestLogRow> questLog(GameDatabase db, PlayerSave save) {
               : questLegacyJournalSteps(db, save, quest)
         : status == 'inactive'
         ? questRequirementJournal(db, save, quest)
-        : const <QuestJournalStep>[];
+        : questCompletedJournal(db, quest);
 
     return QuestLogRow(
       questId: questId,

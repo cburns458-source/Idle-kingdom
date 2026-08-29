@@ -228,9 +228,10 @@ export const socialViewScenarios: ParityScenario[] = [
   scenario('social-views/guilds', 'home', { source: 'raw', value: null }, () => {
     const renamed = renamedGuild()
     return {
-      leaderHeader: guildHomeHeader(guild(), 4, 'usr_1'),
-      memberHeader: guildHomeHeader(guild({ joinPolicy: 'closed' }), 4, 'usr_2'),
-      anonymousHeader: guildHomeHeader(guild(), 0, null),
+      leaderHeader: guildHomeHeader(guild(), 4, 'usr_1', ROSTER),
+      memberHeader: guildHomeHeader(guild({ joinPolicy: 'closed' }), 4, 'usr_4', ROSTER),
+      officerHeader: guildHomeHeader(guild(), 4, 'usr_2', ROSTER),
+      anonymousHeader: guildHomeHeader(guild(), 0, null, ROSTER),
       oldest: guildRosterRows(guild(), ROSTER, 'oldest', 'usr_1', ROSTER_PRESENCE, ROSTER_NOW),
       newest: guildRosterRows(guild(), ROSTER, 'newest', 'usr_1', ROSTER_PRESENCE, ROSTER_NOW).map(
         (row) => row.username,

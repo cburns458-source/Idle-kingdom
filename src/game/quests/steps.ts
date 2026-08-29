@@ -42,6 +42,15 @@ export function questUsesSteps(db: GameDatabase, questId: string): boolean {
   return getQuestSteps(db, questId).length > 0
 }
 
+/** Every authored step, marked done — used once the quest is finished. */
+export function questCompletedJournal(db: GameDatabase, quest: QuestRow): QuestJournalStep[] {
+  return getQuestSteps(db, quest['Quest ID']).map((step) => ({
+    key: step['Step ID'],
+    label: step['Journal Label'],
+    state: 'done' as const,
+  }))
+}
+
 /** Quest-level Notes plus each authored step. */
 export function questObjectiveSources(
   db: GameDatabase,
@@ -193,7 +202,7 @@ export function questStepJournal(
   if (questId === CITADEL_QUEST_ID && citadelGuideHeard(save) && currentIndex >= 1) {
     const heard = steps[0]!
     const remaining = steps.slice(1).flatMap((step) =>
-      stepProgressLines(db, save, questId, step.Notes ?? '').map((line) => ({
+      stepProgressLines(db, save, questId, step.Notes ?? '', step['Step ID']).map((line) => ({
         key: line.key,
         label: formatQuestProgressLine(line),
         state: (line.current >= line.required ? 'done' : 'current') as QuestJournalStepState,
@@ -206,11 +215,7 @@ export function questStepJournal(
   }
 
   if (currentIndex >= steps.length) {
-    return steps.map((step) => ({
-      key: step['Step ID'],
-      label: step['Journal Label'],
-      state: 'done' as const,
-    }))
+    return questCompletedJournal(db, quest)
   }
 
   return steps.slice(0, currentIndex + 1).flatMap((step, index) => {

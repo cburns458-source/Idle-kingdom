@@ -75,6 +75,30 @@ GuildRecord guildFromCreateInput(
   createdAt: createdAt,
 );
 
+bool isGuildLeader(GuildRecord guild, String userId) => guild.leaderId == userId;
+
+bool isGuildOfficerOrLeader(GuildRecord guild, String userId, GuildRole? role) {
+  if (isGuildLeader(guild, userId)) return true;
+  return role == guildRoleOfficer;
+}
+
+String? decideApplicationRefusal(GuildRecord guild, String actorId, GuildRole? actorRole) {
+  if (isGuildOfficerOrLeader(guild, actorId, actorRole)) return null;
+  return 'Only the guild leader or an officer can decide applications.';
+}
+
+String? removeGuildMemberRefusal(GuildRecord guild, String actorId, String targetUserId) {
+  if (!isGuildLeader(guild, actorId)) return 'Only the leader can remove members.';
+  if (targetUserId == guild.leaderId) return 'Cannot remove the leader.';
+  if (targetUserId == actorId) return 'Leave the guild instead.';
+  return null;
+}
+
+String? removeGuildGuestRefusal(GuildRecord guild, String actorId, GuildRole? actorRole) {
+  if (isGuildOfficerOrLeader(guild, actorId, actorRole)) return null;
+  return 'Only the guild leader or an officer can remove guests.';
+}
+
 /// Why a rank change is refused, given the leader already asked for it.
 String? memberRoleRefusal(GuildRecord guild, String targetUserId, GuildRole role) {
   if (role == guildRoleLeader) return 'Transfer leadership is not available yet.';

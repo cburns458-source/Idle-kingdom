@@ -85,6 +85,25 @@ void main() {
     );
   });
 
+  test('Visiting the Citadel ends by talking to the guide again', () {
+    var save = applyTravelArrival(db, _save(db, locationId: 'LOC-0002'), 'LOC-0028', 0);
+    save = applyTravelArrival(db, save, 'LOC-0029', 1);
+    save = applyTravelArrival(db, save, 'LOC-0030', 2);
+    save = applyTravelArrival(db, save, 'LOC-0035', 3);
+    save = applyTravelArrival(db, save, 'LOC-0033', 4);
+    save = applyQuestInspectProgress(db, save, 'bazaar');
+    save = applyQuestInspectProgress(db, save, 'bounties');
+    save = applyQuestInspectProgress(db, save, 'processing');
+    save = applyQuestTalkProgress(db, save, 'NPC-0013');
+    save = applyQuestTalkProgress(db, save, 'NPC-0006');
+    save = save.copyWith(currentLocationId: 'LOC-0028');
+    expect(completeQuest(db, save, 'QST-0004').ok, isFalse);
+    save = applyQuestTalkProgress(db, save, 'NPC-0013');
+    final completed = completeQuest(db, save, 'QST-0004');
+    expect(completed.ok, isTrue);
+    expect(completed.save!.gold, save.gold + 1000);
+  });
+
   test('Getting Started completes when Fennel sees the cooked potatoes', () {
     final fennel = db.npcs.firstWhere((row) => row.raw['NPC ID'] == 'NPC-0014');
     expect(fennel.raw['Location ID'], 'LOC-0001');
