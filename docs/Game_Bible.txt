@@ -737,8 +737,8 @@ Requirements:
 Materials:
 - Steel Spear Head.
 - Boar Tusk.
-- Oak Shaft.
-- Leather Grip.
+- Oak Timber ×5.
+- Leather Straps ×5.
 
 Output:
 - Boar Spear.
