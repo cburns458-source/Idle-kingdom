@@ -448,7 +448,22 @@ List<SkillMenuListItem> _gatheringToolEntries(GameDatabase db, String skillId) {
     ..._projectItemsWhere(db, (item, name) => spec.match(item, name), null),
     ..._woodenItems(db, spec.woodenIds),
   ];
-  return _dedupeByName(items);
+  return _dedupeByName([
+    for (final item in items)
+      SkillMenuListItem(
+        id: item.id,
+        displayName: item.displayName,
+        level: _equipLevelForSkill(db, item.displayName, skillId) ?? item.level,
+      ),
+  ]);
+}
+
+num? _equipLevelForSkill(GameDatabase db, String displayName, String skillId) {
+  final item = db.items.firstWhereOrNull((row) => row.displayName == displayName);
+  if (item == null) return null;
+  final equipment = db.equipment.firstWhereOrNull((row) => row.itemId == item.itemId);
+  if (equipment == null || equipment.requiredSkillId != skillId) return null;
+  return equipment.requiredLevel;
 }
 
 ({List<String> woodenIds, bool Function(ItemRow item, String name) match})? _gatheringToolSpec(
@@ -588,7 +603,9 @@ bool _isHuntingToolName(String name) {
   return _endsWithWord(name, 'Bow') ||
       _endsWithWord(name, 'Spear') ||
       name == 'Net' ||
-      name == 'Sling';
+      name == 'Sling' ||
+      name == 'Noose Wand' ||
+      name == 'Magic Net';
 }
 
 bool _isBowName(String name) => _endsWithWord(name, 'Bow');

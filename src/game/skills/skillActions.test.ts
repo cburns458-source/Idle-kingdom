@@ -165,6 +165,8 @@ describe('skill menu entries', () => {
     const tools = hunting.tabs.find((tab) => tab.id === 'tools')?.sections[0]?.entries ?? []
     expect(tools.some((item) => item.displayName === 'Net' && item.level === 1)).toBe(true)
     expect(tools.some((item) => item.displayName === 'Sling' && item.level === 5)).toBe(true)
+    expect(tools.some((item) => item.displayName === 'Noose Wand' && item.level === 25)).toBe(true)
+    expect(tools.some((item) => item.displayName === 'Magic Net' && item.level === 45)).toBe(true)
   })
 
   it('groups smithing by material and numbers every menu row', () => {

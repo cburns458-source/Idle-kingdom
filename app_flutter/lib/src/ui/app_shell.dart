@@ -20,6 +20,7 @@ import 'log_view.dart';
 import 'menu_view.dart';
 import 'npc_panel.dart';
 import 'new_character_sheet.dart';
+import 'skill_level_up_popup.dart';
 import 'overlay_notice.dart';
 import 'returning_overlay.dart';
 import 'playable_frame.dart';
@@ -115,7 +116,7 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
     multiplayer.onAccountCleared ??= controller.resetUnsigned;
     multiplayer.addListener(_onMultiplayerChanged);
     controller.addListener(_armReturningHold);
-    controller.addListener(_flushQuestRewards);
+    controller.addListener(_flushPendingDialogs);
     _armReturningHold();
     _ticker = createTicker((_) {
       if (!mounted || !_canPlay) return;
@@ -186,10 +187,11 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
     _maybePresentSocialNotice();
   }
 
-  void _flushQuestRewards() {
+  void _flushPendingDialogs() {
     if (_questRewardQueued) return;
     final pending = controller.takePendingQuestCompletions();
-    if (pending.isEmpty) return;
+    final levelUps = controller.takePendingSkillLevelUps();
+    if (pending.isEmpty && levelUps.isEmpty) return;
     _questRewardQueued = true;
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       try {
@@ -216,9 +218,13 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
           }
           if (!mounted) return;
         }
+        for (final notice in levelUps) {
+          await showSkillLevelUp(context, notice);
+          if (!mounted) return;
+        }
       } finally {
         _questRewardQueued = false;
-        if (mounted) _flushQuestRewards();
+        if (mounted) _flushPendingDialogs();
       }
     });
   }
@@ -284,7 +290,7 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
     multiplayer.flushAccountSave(controller.save);
     multiplayer.removeListener(_onMultiplayerChanged);
     controller.removeListener(_armReturningHold);
-    controller.removeListener(_flushQuestRewards);
+    controller.removeListener(_flushPendingDialogs);
     _ticker?.stop();
     _ticker?.dispose();
     _ticker = null;

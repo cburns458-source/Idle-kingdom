@@ -90,6 +90,7 @@ export 'src/save/starting_gear.dart';
 export 'src/shops/quantity.dart';
 export 'src/shops/shops.dart';
 export 'src/shops/transactions.dart';
+export 'src/skills/level_unlocks.dart';
 export 'src/skills/skill_actions.dart';
 export 'src/skills/totals.dart';
 export 'src/spells/spells.dart';

@@ -129,6 +129,7 @@ class GameController extends ChangeNotifier {
   CosmeticUnlockNotice? _cosmeticUnlock;
   String? _discoveryNotice;
   List<QuestArrivalCompletion> _pendingQuestCompletions = <QuestArrivalCompletion>[];
+  List<SkillLevelUpNotice> _pendingSkillLevelUps = <SkillLevelUpNotice>[];
   AutoEquipProposal? _autoEquip;
   CombatRoundEvent? _lastRound;
   num? _lastRoundAtMs;
@@ -151,6 +152,17 @@ class GameController extends ChangeNotifier {
     final pending = List<QuestArrivalCompletion>.of(_pendingQuestCompletions);
     _pendingQuestCompletions = <QuestArrivalCompletion>[];
     return pending;
+  }
+
+  /// Skill gains waiting for the level-up popup.
+  List<SkillLevelUpNotice> takePendingSkillLevelUps() {
+    final pending = List<SkillLevelUpNotice>.of(_pendingSkillLevelUps);
+    _pendingSkillLevelUps = <SkillLevelUpNotice>[];
+    return pending;
+  }
+
+  void _queueSkillLevelUps(PlayerSave before, PlayerSave after) {
+    _pendingSkillLevelUps.addAll(skillLevelUpsBetween(db, before, after));
   }
 
   /// Pressure the Guards: set the combat flag and start the fight when standing at the barracks.
@@ -499,7 +511,9 @@ class GameController extends ChangeNotifier {
   /// Panels call the shared rules themselves and pass the result here, which is
   /// the only way a save reaches storage.
   void commit(PlayerSave next) {
+    final previous = save;
     session.apply(next);
+    _queueSkillLevelUps(previous, save);
     notifyListeners();
   }
 
@@ -525,9 +539,11 @@ class GameController extends ChangeNotifier {
     if (save.combatEnemyId != null) {
       _liveEnemyHp = save.combatEnemyHp;
     }
+    final previous = save;
     final result = session.tick();
     if (result.awayCatchUp case final away?) {
       _adoptResumeCatchUp(away);
+      _queueSkillLevelUps(previous, save);
       notifyListeners();
       return;
     }
@@ -537,6 +553,7 @@ class GameController extends ChangeNotifier {
     _offerKingswoodsSling();
     _expireStageFx();
     _advanceTravel();
+    _queueSkillLevelUps(previous, save);
     // A frame always repaints: the progress bars and timers are read from the
     // clock, so they move even on the ticks where nothing was due.
     notifyListeners();

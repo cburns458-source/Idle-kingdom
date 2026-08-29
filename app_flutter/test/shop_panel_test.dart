@@ -165,6 +165,26 @@ void main() {
     expect(inventoryCount(controller.save, helmetId), 1);
   });
 
+  testWidgets('shop grids stay five rows tall and scroll inside', (tester) async {
+    final controller = buildController(
+      database,
+      seed: shopper(inventory: [const InventoryStack(itemId: clayId, quantity: 4)]),
+    );
+    addTearDown(controller.dispose);
+    await pumpPanel(tester, ShopPanel(controller: controller, shopId: shopId));
+
+    expect(find.text('Confirm trade').hitTestable(), findsOne);
+    final grids = tester.widgetList<GridView>(find.byType(GridView)).toList();
+    expect(grids, isNotEmpty);
+    expect(grids.every((grid) => grid.physics is! NeverScrollableScrollPhysics), isTrue);
+    expect(
+      tester
+          .widgetList<ConstrainedBox>(find.byType(ConstrainedBox))
+          .any((box) => box.constraints.maxHeight == 410),
+      isTrue,
+    );
+  });
+
   testWidgets('a phone-sized location can scroll the shop to Confirm trade', (tester) async {
     final controller = buildController(
       database,
