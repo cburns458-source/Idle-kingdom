@@ -92,7 +92,7 @@ void main() {
     expect(gear.any((row) => row.displayName == 'Reinforced Steel equipment'), isTrue);
     expect(gear.any((row) => row.displayName == 'Bull Horn equipment'), isFalse);
     expect(gear.any((row) => row.displayName == 'Wooden equipment'), isFalse);
-    expect(gear.any((row) => row.displayName == 'Leather equipment'), isFalse);
+    expect(gear.any((row) => row.displayName == 'Leather equipment' && row.level == 1), isTrue);
     expect(gear.any((row) => row.displayName == 'Leather Helmet'), isFalse);
     expect(gear.any((row) => row.displayName == 'Tungsten Helmet'), isFalse);
     expect(gear.any((row) => row.displayName == 'Tungsten Shield'), isFalse);
@@ -103,7 +103,8 @@ void main() {
         .expand((section) => section.entries);
     expect(other.any((row) => row.displayName == 'Bull Horn Helmet'), isTrue);
     expect(other.any((row) => row.displayName == 'Wooden Sword' && row.level == 1), isTrue);
-    expect(other.any((row) => row.displayName == 'Leather Helmet' && row.level == 1), isTrue);
+    expect(other.any((row) => row.displayName == 'Leather Helmet'), isFalse);
+    expect(other.any((row) => row.displayName == 'Leather equipment'), isFalse);
     expect(other.any((row) => row.displayName == 'Cedar Bow'), isTrue);
     expect(other.any((row) => row.displayName == 'Boar Spear'), isTrue);
   });
@@ -135,8 +136,9 @@ void main() {
     final jewelry = view.tabs.firstWhere((tab) => tab.id == 'jewelry').sections.first.entries;
     expect(jewelry.any((row) => row.displayName == 'Lucky Necklace' && row.level == 25), isTrue);
     final other = view.tabs.firstWhere((tab) => tab.id == 'other').sections.first.entries;
-    expect(other.any((row) => row.displayName == 'Leather Helmet' && row.level == 1), isTrue);
-    expect(other.any((row) => row.displayName == 'Leather Gloves' && row.level == 1), isTrue);
+    expect(other.any((row) => row.displayName == 'Leather equipment' && row.level == 1), isTrue);
+    expect(other.any((row) => row.displayName == 'Leather Helmet'), isFalse);
+    expect(other.any((row) => row.displayName == 'Leather Gloves'), isFalse);
     final helmet = db.equipment.firstWhere((row) => row.raw['Item ID'] == 'ITEM-0308');
     expect(helmet.raw['HP Bonus'], 15);
     expect(helmet.raw['Damage Reduction'], 0);

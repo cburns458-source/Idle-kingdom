@@ -1106,8 +1106,13 @@ class LocalMultiplayerBackend {
     final application = db.applications.firstWhereOrNull((row) => row.id == applicationId);
     if (application == null) return const ActionResult.failed('Application not found.');
     final guild = db.guilds.firstWhereOrNull((row) => row.id == application.guildId);
-    if (guild == null || guild.leaderId != leaderId) {
-      return const ActionResult.failed('Only the guild leader can decide applications.');
+    if (guild == null) return const ActionResult.failed('Guild not found.');
+    final actor = db.members.firstWhereOrNull(
+      (row) => row.guildId == application.guildId && row.userId == leaderId,
+    );
+    final refusal = decideApplicationRefusal(guild, leaderId, actor?.role);
+    if (refusal != null) {
+      return ActionResult.failed(refusal);
     }
     db.applications = db.applications.where((row) => row.id != applicationId).toList();
     if (accept) {
@@ -1160,6 +1165,42 @@ class LocalMultiplayerBackend {
           .where((row) => !(row.guildId == guild.id && row.userId == application.userId))
           .toList();
     }
+    _write(db);
+    return const ActionResult.ok();
+  }
+
+  ActionResult removeGuildMember(String actorId, String guildId, String targetUserId) {
+    final db = _db();
+    final guild = db.guilds.firstWhereOrNull((row) => row.id == guildId);
+    if (guild == null) return const ActionResult.failed('Guild not found.');
+    final refusal = removeGuildMemberRefusal(guild, actorId, targetUserId);
+    if (refusal != null) return ActionResult.failed(refusal);
+    if (!db.members.any((row) => row.guildId == guildId && row.userId == targetUserId)) {
+      return const ActionResult.failed('Not a member of that guild.');
+    }
+    db.members = db.members
+        .where((row) => !(row.guildId == guildId && row.userId == targetUserId))
+        .toList();
+    db.profiles = _withGuild(db.profiles, targetUserId, null);
+    _write(db);
+    return const ActionResult.ok();
+  }
+
+  ActionResult removeGuildGuest(String actorId, String guildId, String targetUserId) {
+    final db = _db();
+    final guild = db.guilds.firstWhereOrNull((row) => row.id == guildId);
+    if (guild == null) return const ActionResult.failed('Guild not found.');
+    final actor = db.members.firstWhereOrNull(
+      (row) => row.guildId == guildId && row.userId == actorId,
+    );
+    final refusal = removeGuildGuestRefusal(guild, actorId, actor?.role);
+    if (refusal != null) return ActionResult.failed(refusal);
+    if (!db.guests.any((row) => row.guildId == guildId && row.userId == targetUserId)) {
+      return const ActionResult.failed('Not a guest of that guild.');
+    }
+    db.guests = db.guests
+        .where((row) => !(row.guildId == guildId && row.userId == targetUserId))
+        .toList();
     _write(db);
     return const ActionResult.ok();
   }

@@ -252,11 +252,26 @@ function artisanryTabs(db: GameDatabase): SkillMenuTab[] {
   const bows: SkillMenuListItem[] = []
   const jewelry: SkillMenuListItem[] = []
   const other: SkillMenuListItem[] = []
+  const seenLeather = new Set<string>()
   for (const project of projectsForSkill(db, ARTISANRY_SKILL_ID)) {
     const item = itemByName(db, project.displayName)
     if (isBowName(project.displayName)) bows.push(project)
     else if (isJewelryItem(item, project.displayName)) jewelry.push(project)
-    else other.push(project)
+    else {
+      const material = armorMaterial(project.displayName)
+      if (material && isGroupedArmorMaterial(material)) {
+        const key = `${project.level ?? ''}|${material}`
+        if (seenLeather.has(key)) continue
+        seenLeather.add(key)
+        other.push({
+          id: key,
+          displayName: `${material} equipment`,
+          level: project.level,
+        })
+      } else {
+        other.push(project)
+      }
+    }
   }
   return [
     listTab('bows', 'Bows', bows),
@@ -316,7 +331,7 @@ function combatEquipmentEntries(db: GameDatabase): SkillMenuListItem[] {
   const seen = new Set<string>()
   for (const item of combatGearItems(db)) {
     const material = armorMaterial(item.displayName)
-    if (!material || !isMetalMaterial(material)) continue
+    if (!material || !isGroupedArmorMaterial(material)) continue
     const key = `${item.level ?? ''}|${material}`
     if (seen.has(key)) continue
     seen.add(key)
@@ -352,7 +367,7 @@ function combatOtherEntries(db: GameDatabase): SkillMenuListItem[] {
   return dedupeByName(
     combatGearItems(db).filter((item) => {
       const armor = armorMaterial(item.displayName)
-      if (armor) return !isMetalMaterial(armor)
+      if (armor) return !isGroupedArmorMaterial(armor)
       const weapon = weaponMaterial(item.displayName)
       if (weapon) return !isMetalMaterial(weapon)
       return true
@@ -482,6 +497,10 @@ function isMetalMaterial(material: string): boolean {
   const lower = material.toLowerCase()
   if (METAL_MATERIALS.has(lower)) return true
   return /^(copper|tin|bronze|iron|steel|titanium|tungsten|silver|gold|mithril)/i.test(lower)
+}
+
+function isGroupedArmorMaterial(material: string): boolean {
+  return isMetalMaterial(material) || material.toLowerCase() === 'leather'
 }
 
 function smithingMaterial(name: string): string | null {

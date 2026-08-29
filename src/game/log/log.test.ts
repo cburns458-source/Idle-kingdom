@@ -22,15 +22,18 @@ describe('achievement log', () => {
     expect(rows.some((row) => row.difficulty === 'Hard')).toBe(true)
   })
 
-  it('reads Unlocked once the save has it', () => {
+  it('keeps the requirement and marks the deed completed', () => {
     const save = createNewSave(launch)
-    const achievementId = achievementLog(launch, save)[0]!.achievementId
+    const first = achievementLog(launch, save)[0]!
     const unlocked = {
       ...save,
-      achievements: [{ achievementId, unlocked: true, unlockedAt: null }],
+      achievements: [{ achievementId: first.achievementId, unlocked: true, unlockedAt: null }],
     }
-    expect(achievementLog(launch, unlocked)[0]!.note).toBe('Unlocked')
-    expect(achievementLog(launch, unlocked)[0]!.unlocked).toBe(true)
+    const row = achievementLog(launch, unlocked)[0]!
+    expect(row.note).toBe(first.note)
+    expect(row.note).not.toBe('Unlocked')
+    expect(row.note.length).toBeGreaterThan(0)
+    expect(row.unlocked).toBe(true)
   })
 })
 
@@ -114,6 +117,7 @@ describe('quest log', () => {
       'Inspect the Grand Bazaar 0 / 1',
       'Inspect the Bounty Board 0 / 1',
       'Use a Processing District station 0 / 1',
+      'Talk to Citadel Guide 0 / 1',
     ])
     expect(row.steps.slice(1).every((step) => step.state === 'current')).toBe(true)
   })
@@ -160,6 +164,8 @@ describe('quest log', () => {
     const row = questLog(launch, done).find((entry) => entry.questId === 'QST-0001')!
     expect(row.statusLabel).toBe('Completed')
     expect(row.completed).toBe(true)
+    expect(row.steps.length).toBeGreaterThan(0)
+    expect(row.steps.every((step) => step.state === 'done')).toBe(true)
   })
 })
 

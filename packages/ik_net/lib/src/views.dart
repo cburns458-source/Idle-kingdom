@@ -126,6 +126,9 @@ class GuildHomeHeader {
     required this.emblem,
     required this.tag,
     required this.canManage,
+    required this.canManageApplications,
+    required this.canRemoveGuests,
+    required this.canRemoveMembers,
   });
 
   final String title;
@@ -136,22 +139,53 @@ class GuildHomeHeader {
   /// True when the viewer may open settings and manage ranks.
   final bool canManage;
 
+  /// True when the viewer may accept or decline applications.
+  final bool canManageApplications;
+
+  /// True when the viewer may remove guests.
+  final bool canRemoveGuests;
+
+  /// True when the viewer may remove roster members.
+  final bool canRemoveMembers;
+
   Map<String, Object?> toJson() => <String, Object?>{
     'title': title,
     'subtitle': subtitle,
     'emblem': emblem.toJson(),
     'tag': tag,
     'canManage': canManage,
+    'canManageApplications': canManageApplications,
+    'canRemoveGuests': canRemoveGuests,
+    'canRemoveMembers': canRemoveMembers,
   };
 }
 
-GuildHomeHeader guildHomeHeader(GuildRecord guild, int memberCount, String? viewerId) {
+GuildRole? guildViewerRole(GuildRecord guild, List<GuildMember> members, String? viewerId) {
+  if (viewerId == null) return null;
+  if (guild.leaderId == viewerId) return guildRoleLeader;
+  for (final member in members) {
+    if (member.userId == viewerId) return member.role;
+  }
+  return null;
+}
+
+GuildHomeHeader guildHomeHeader(
+  GuildRecord guild,
+  int memberCount,
+  String? viewerId, {
+  List<GuildMember> members = const <GuildMember>[],
+}) {
+  final role = guildViewerRole(guild, members, viewerId);
+  final officerOrLeader = role == guildRoleLeader || role == guildRoleOfficer;
   return GuildHomeHeader(
     title: '[${guild.tag}] ${guild.name}',
     subtitle: '${_policyLabel(guild.joinPolicy)} · $memberCount/$guildMaxMembers members',
     emblem: guild.emblem,
     tag: guild.tag,
-    canManage: viewerId != null && guild.leaderId == viewerId,
+    canManage: role == guildRoleLeader,
+    canManageApplications: officerOrLeader,
+    canRemoveGuests: officerOrLeader,
+    canRemoveMembers: role == guildRoleLeader,
   );
 }
 
@@ -188,6 +222,7 @@ class GuildRosterRow {
     required this.appearance,
     this.raceId,
     required this.manageable,
+    required this.removable,
     this.lastOnlineAt,
     this.isOnline = false,
     this.lastOnlineLabel = 'Unknown',
@@ -209,6 +244,9 @@ class GuildRosterRow {
   /// True when the viewer can change this member's rank.
   final bool manageable;
 
+  /// True when the viewer can remove this member from the roster.
+  final bool removable;
+
   /// Presence `updatedAt`, or null when this member has never been seen.
   final String? lastOnlineAt;
   final bool isOnline;
@@ -225,6 +263,7 @@ class GuildRosterRow {
     'totalLevel': totalLevel,
     'appearance': appearance.toJson(),
     'manageable': manageable,
+    'removable': removable,
     'lastOnlineAt': lastOnlineAt,
     'isOnline': isOnline,
     'lastOnlineLabel': lastOnlineLabel,
@@ -275,6 +314,7 @@ List<GuildRosterRow> guildRosterRows(
   num? nowMs,
 }) {
   final canManage = viewerId != null && guild.leaderId == viewerId;
+  final canRemoveMembers = canManage;
   final clock = nowMs ?? 0;
   final seen = <String, String>{for (final row in presence) row.userId: row.updatedAt};
   final indexed = members.indexed.toList();
@@ -303,6 +343,7 @@ List<GuildRosterRow> guildRosterRows(
       appearance: member.appearance,
       raceId: member.raceId,
       manageable: canManage && member.role != guildRoleLeader,
+      removable: canRemoveMembers && member.role != guildRoleLeader && member.userId != viewerId,
       lastOnlineAt: online.lastOnlineAt,
       isOnline: online.isOnline,
       lastOnlineLabel: online.lastOnlineLabel,

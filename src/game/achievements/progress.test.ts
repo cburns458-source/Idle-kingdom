@@ -60,12 +60,13 @@ describe('achievements and statistics', () => {
       'Dwarven knowledge',
       'Dark nights',
       'Dragon!',
+      'Ent and hatchet',
       'Critter collector',
     ])
     expect(rows.some((row) => row['Check Type'] === 'skill_all')).toBe(false)
     expect(rows.filter((row) => row.Difficulty === 'Easy')).toHaveLength(5)
     expect(rows.filter((row) => row.Difficulty === 'Medium')).toHaveLength(5)
-    expect(rows.filter((row) => row.Difficulty === 'Hard')).toHaveLength(3)
+    expect(rows.filter((row) => row.Difficulty === 'Hard')).toHaveLength(4)
   })
 
   it('holds Critter Collector only while the collection is complete', () => {
@@ -250,6 +251,41 @@ describe('achievements and statistics', () => {
 
     const store = recordItemsSoldAtLocation(base, [{ itemId: 'ITEM-0288', quantity: 1 }], 'LOC-0024')
     expect(unlocks(store, 'ACH-0034', launch)).toBe(true)
+  })
+
+  it('unlocks Ent and hatchet from a regular Ent kill with a hatchet', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    expect(itemHasClassLabel(launch, 'ITEM-0101', 'hatchet')).toBe(true)
+    expect(itemHasClassLabel(launch, 'ITEM-0110', 'hatchet')).toBe(true)
+
+    const base = createNewSave(launch)
+    const withSword = recordEnemyKill(
+      launch,
+      withSlots(base, { 'SLOT-0001': 'ITEM-0128' }),
+      'ENM-0012',
+    )
+    expect(unlocks(withSword, 'ACH-0039', launch)).toBe(false)
+
+    const ancient = recordEnemyKill(
+      launch,
+      withSlots(base, { 'SLOT-0001': 'ITEM-0101' }),
+      'ENM-0013',
+    )
+    expect(unlocks(ancient, 'ACH-0039', launch)).toBe(false)
+
+    const corrupted = recordEnemyKill(
+      launch,
+      withSlots(base, { 'SLOT-0001': 'ITEM-0101' }),
+      'ENM-0014',
+    )
+    expect(unlocks(corrupted, 'ACH-0039', launch)).toBe(false)
+
+    const regular = recordEnemyKill(
+      launch,
+      withSlots(base, { 'SLOT-0001': 'ITEM-0101' }),
+      'ENM-0012',
+    )
+    expect(unlocks(regular, 'ACH-0039', launch)).toBe(true)
   })
 
   it('unlocks Dragon! from a dragon kill stat', () => {

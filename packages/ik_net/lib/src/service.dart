@@ -126,6 +126,10 @@ abstract interface class MultiplayerService {
 
   Future<ActionResult> decideGuildApplication(String applicationId, bool accept);
 
+  Future<ActionResult> removeGuildMember(String guildId, String targetUserId);
+
+  Future<ActionResult> removeGuildGuest(String guildId, String targetUserId);
+
   Future<ActionResult> setGuildMemberRole(String guildId, String targetUserId, GuildRole role);
 
   Future<ActionResult> setGuildJoinPolicy(String guildId, GuildJoinPolicy joinPolicy);
@@ -597,6 +601,20 @@ class LocalMultiplayerService implements MultiplayerService {
     final current = session;
     if (current == null) return const ActionResult.failed('Sign in required.');
     return _backend.decideApplication(current.userId, applicationId, accept);
+  }
+
+  @override
+  Future<ActionResult> removeGuildMember(String guildId, String targetUserId) async {
+    final current = session;
+    if (current == null) return const ActionResult.failed('Sign in required.');
+    return _backend.removeGuildMember(current.userId, guildId, targetUserId);
+  }
+
+  @override
+  Future<ActionResult> removeGuildGuest(String guildId, String targetUserId) async {
+    final current = session;
+    if (current == null) return const ActionResult.failed('Sign in required.');
+    return _backend.removeGuildGuest(current.userId, guildId, targetUserId);
   }
 
   @override

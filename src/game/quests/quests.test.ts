@@ -219,6 +219,8 @@ describe('quest tours', () => {
     expect(completeQuest(launch, save, 'QST-0004').ok).toBe(false)
     save = applyQuestTalkProgress(launch, save, 'NPC-0006')
     save = { ...save, currentLocationId: 'LOC-0028' }
+    expect(completeQuest(launch, save, 'QST-0004').ok).toBe(false)
+    save = applyQuestTalkProgress(launch, save, 'NPC-0013')
     const completed = completeQuest(launch, save, 'QST-0004')
     expect(completed.ok).toBe(true)
     if (!completed.ok) return

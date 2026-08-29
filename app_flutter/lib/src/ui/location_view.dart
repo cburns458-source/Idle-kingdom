@@ -553,9 +553,8 @@ class _LocationViewState extends State<LocationView> {
       sections.add(_BandSection(label, children));
     }
 
-    add('Activities', _activities(locationId));
+    add('Activities', _activityBand(locationId));
     add('Blessing', _blessing());
-    add('Special production', _stations(locationId));
     add('People', _people(locationId));
     add('Shops', _shops(locationId));
     add('Bank', _bank());
@@ -594,6 +593,19 @@ class _LocationViewState extends State<LocationView> {
             onPressed: () => _openPanel(CitadelHubOpen(tab)),
           ),
         ),
+    ];
+  }
+
+  List<Widget> _activityBand(String locationId) {
+    final activities = _activities(locationId);
+    final stations = _stations(locationId);
+    if (activities.isEmpty && stations.isEmpty) return const [];
+    if (activities.isEmpty) return stations;
+    if (stations.isEmpty) return activities;
+    return [
+      ...activities,
+      const Padding(padding: EdgeInsets.only(bottom: 8), child: MutedText('Special production')),
+      ...stations,
     ];
   }
 

@@ -227,6 +227,7 @@ class _DifficultyBand extends StatelessWidget {
                     child: _LogRow(
                       title: row.name,
                       detail: row.note,
+                      trailing: row.unlocked ? 'Completed' : null,
                       highlight: row.unlocked,
                       dimmed: !row.unlocked,
                     ),

@@ -160,7 +160,7 @@ void main() {
     // Only the leader decides; the applicant cannot wave themselves through.
     expect(
       (await hopeful.decideGuildApplication(pending.single.id, true)).reason,
-      'Only the guild leader can decide applications.',
+      'Only the guild leader or an officer can decide applications.',
     );
 
     expect((await leader.decideGuildApplication(pending.single.id, true)).ok, isTrue);
@@ -214,6 +214,39 @@ void main() {
     expect((await visitor.leaveGuest()).ok, isTrue);
     expect(await visitor.currentGuestGuildId(), isNull);
     expect((await visitor.leaveGuest()).reason, 'Not a guest of a guild.');
+  });
+
+  test('an officer decides applications and removes guests, not members', () async {
+    final transport = FakeTransport();
+    final leader = await _player(transport, 'lead@example.com', 'Lead');
+    final officer = await _player(transport, 'off@example.com', 'Off');
+    final hopeful = await _player(transport, 'hope@example.com', 'Hope');
+    final visitor = await _player(transport, 'visit@example.com', 'Visit');
+
+    final created = await leader.createGuild(_ironLeague, guildCreateGoldCost);
+    final guildId = created.guild!.id;
+    expect((await officer.applyToGuild(guildId, '')).ok, isTrue);
+    expect(
+      (await leader.setGuildMemberRole(guildId, officer.session!.userId, guildRoleOfficer)).ok,
+      isTrue,
+    );
+    expect((await leader.setGuildJoinPolicy(guildId, guildJoinClosed)).ok, isTrue);
+    expect((await hopeful.applyToGuild(guildId, 'Please')).ok, isTrue);
+    final applicationId = (await officer.guildApplications(guildId)).single.id;
+    expect((await officer.decideGuildApplication(applicationId, true)).ok, isTrue);
+    expect(await leader.guildMembers(guildId), hasLength(3));
+
+    expect((await leader.setGuildGuestAutoAccept(guildId, true)).ok, isTrue);
+    expect((await visitor.joinAsGuest(guildId, '')).ok, isTrue);
+    expect((await officer.removeGuildGuest(guildId, visitor.session!.userId)).ok, isTrue);
+    expect(await leader.guildGuests(guildId), isEmpty);
+
+    expect(
+      (await officer.removeGuildMember(guildId, hopeful.session!.userId)).reason,
+      'Only the leader can remove members.',
+    );
+    expect((await leader.removeGuildMember(guildId, hopeful.session!.userId)).ok, isTrue);
+    expect(await leader.guildMembers(guildId), hasLength(2));
   });
 
   test('the last member out closes the guild, and a leader with company cannot', () async {

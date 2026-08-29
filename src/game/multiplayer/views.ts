@@ -114,19 +114,41 @@ export interface GuildHomeHeader {
   tag: string
   /** True when the viewer may open settings and manage ranks. */
   canManage: boolean
+  /** True when the viewer may accept or decline applications. */
+  canManageApplications: boolean
+  /** True when the viewer may remove guests. */
+  canRemoveGuests: boolean
+  /** True when the viewer may remove roster members. */
+  canRemoveMembers: boolean
+}
+
+export function guildViewerRole(
+  guild: GuildRecord,
+  members: GuildMember[],
+  viewerId: string | null,
+): GuildRole | null {
+  if (viewerId === null) return null
+  if (guild.leaderId === viewerId) return 'leader'
+  return members.find((member) => member.userId === viewerId)?.role ?? null
 }
 
 export function guildHomeHeader(
   guild: GuildRecord,
   memberCount: number,
   viewerId: string | null,
+  members: GuildMember[] = [],
 ): GuildHomeHeader {
+  const role = guildViewerRole(guild, members, viewerId)
+  const officerOrLeader = role === 'leader' || role === 'officer'
   return {
     title: `[${guild.tag}] ${guild.name}`,
     subtitle: `${policyLabel(guild.joinPolicy)} · ${memberCount}/${GUILD_MAX_MEMBERS} members`,
     emblem: guild.emblem,
     tag: guild.tag,
-    canManage: viewerId !== null && guild.leaderId === viewerId,
+    canManage: role === 'leader',
+    canManageApplications: officerOrLeader,
+    canRemoveGuests: officerOrLeader,
+    canRemoveMembers: role === 'leader',
   }
 }
 
@@ -156,6 +178,8 @@ export interface GuildRosterRow {
   appearance: PlayerAppearance
   /** True when the viewer can change this member's rank. */
   manageable: boolean
+  /** True when the viewer can remove this member from the roster. */
+  removable: boolean
   /** Presence `updatedAt`, or null when this member has never been seen. */
   lastOnlineAt: string | null
   isOnline: boolean
@@ -209,6 +233,7 @@ export function guildRosterRows(
   nowMs = 0,
 ): GuildRosterRow[] {
   const canManage = viewerId !== null && guild.leaderId === viewerId
+  const canRemoveMembers = canManage
   const seen = new Map(presence.map((row) => [row.userId, row.updatedAt]))
   const sorted = members
     .map((member, index) => ({ member, index }))
@@ -237,6 +262,7 @@ export function guildRosterRows(
       totalLevel: member.totalLevel,
       appearance: member.appearance,
       manageable: canManage && member.role !== 'leader',
+      removable: canRemoveMembers && member.role !== 'leader' && member.userId !== viewerId,
       lastOnlineAt: online.lastOnlineAt,
       isOnline: online.isOnline,
       lastOnlineLabel: online.lastOnlineLabel,

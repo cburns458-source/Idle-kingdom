@@ -179,8 +179,24 @@ describe('guild home views', () => {
     expect(header.title).toBe('[IRN] Iron League')
     expect(header.subtitle).toBe('Accept applications · 4/25 members')
     expect(header.canManage).toBe(true)
+    expect(header.canManageApplications).toBe(true)
+    expect(header.canRemoveMembers).toBe(true)
     expect(guildHomeHeader(guild(), 4, 'usr_2').canManage).toBe(false)
     expect(guildHomeHeader(guild(), 4, null).canManage).toBe(false)
+
+    const roster = [
+      member({ userId: 'usr_1', username: 'Leader', role: 'leader' }),
+      member({ userId: 'usr_2', username: 'Officer', role: 'officer' }),
+      member({ userId: 'usr_3', username: 'Recruit', role: 'recruit' }),
+    ]
+    const officer = guildHomeHeader(guild(), 3, 'usr_2', roster)
+    expect(officer.canManage).toBe(false)
+    expect(officer.canManageApplications).toBe(true)
+    expect(officer.canRemoveGuests).toBe(true)
+    expect(officer.canRemoveMembers).toBe(false)
+    const recruit = guildHomeHeader(guild(), 3, 'usr_3', roster)
+    expect(recruit.canManageApplications).toBe(false)
+    expect(recruit.canRemoveGuests).toBe(false)
   })
 
   it('sorts the roster by join date, both ways', () => {
