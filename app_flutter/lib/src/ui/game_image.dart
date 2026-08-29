@@ -15,6 +15,7 @@ class GameImage extends StatelessWidget {
     this.fit,
     this.alignment = Alignment.center,
     this.filterQuality = FilterQuality.none,
+    this.gaplessPlayback = false,
   });
 
   final String path;
@@ -23,6 +24,7 @@ class GameImage extends StatelessWidget {
   final BoxFit? fit;
   final Alignment alignment;
   final FilterQuality filterQuality;
+  final bool gaplessPlayback;
 
   @override
   Widget build(BuildContext context) {
@@ -33,6 +35,7 @@ class GameImage extends StatelessWidget {
       fit: fit,
       alignment: alignment,
       filterQuality: filterQuality,
+      gaplessPlayback: gaplessPlayback,
       errorBuilder: (context, error, stack) {
         if (kIsWeb) {
           return Image.network(
@@ -42,6 +45,7 @@ class GameImage extends StatelessWidget {
             fit: fit,
             alignment: alignment,
             filterQuality: filterQuality,
+            gaplessPlayback: gaplessPlayback,
             errorBuilder: (context, error, stack) => _placeholder(),
           );
         }

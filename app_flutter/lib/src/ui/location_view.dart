@@ -370,14 +370,31 @@ class _LocationViewState extends State<LocationView> {
                                 right: 13,
                                 bottom: _collapsedBand + 8,
                                 child: _groundedStage(
+                                  // Separate bottom layers so starting a gather
+                                  // does not resize a shared stack and jump the art.
                                   Stack(
-                                    alignment: Alignment.topCenter,
+                                    fit: StackFit.expand,
                                     clipBehavior: Clip.none,
                                     children: [
-                                      IgnorePointer(
-                                        child: LocationIdlePlayer(controller: controller),
+                                      Align(
+                                        alignment: Alignment.bottomCenter,
+                                        child: OverflowBox(
+                                          maxHeight: double.infinity,
+                                          alignment: Alignment.bottomCenter,
+                                          child: IgnorePointer(
+                                            child: LocationIdlePlayer(controller: controller),
+                                          ),
+                                        ),
                                       ),
-                                      if (running) ActivityPanel(controller: controller),
+                                      if (running)
+                                        Align(
+                                          alignment: Alignment.bottomCenter,
+                                          child: OverflowBox(
+                                            maxHeight: double.infinity,
+                                            alignment: Alignment.bottomCenter,
+                                            child: ActivityPanel(controller: controller),
+                                          ),
+                                        ),
                                     ],
                                   ),
                                 ),
@@ -471,16 +488,9 @@ class _LocationViewState extends State<LocationView> {
     );
   }
 
-  /// Pins combat and the idle stand to the dirt line above the activities band.
+  /// The grounded actors fill this slot; each layer bottom-aligns itself.
   Widget _groundedStage(Widget panel) {
-    return Align(
-      alignment: Alignment.bottomCenter,
-      child: OverflowBox(
-        maxHeight: double.infinity,
-        alignment: Alignment.bottomCenter,
-        child: panel,
-      ),
-    );
+    return panel;
   }
 
   /// Keeps a shop or NPC as wide as the stage so its grid does not collapse
