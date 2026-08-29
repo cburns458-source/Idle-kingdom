@@ -2,7 +2,6 @@ import 'package:collection/collection.dart';
 import 'package:ik_content/ik_content.dart';
 
 import '../activity/requirements.dart';
-import '../activity/xp.dart';
 import '../js_compat.dart';
 import '../production/recipes.dart';
 import '../projects/projects.dart';
