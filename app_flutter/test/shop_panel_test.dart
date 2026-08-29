@@ -165,6 +165,22 @@ void main() {
     expect(inventoryCount(controller.save, helmetId), 1);
   });
 
+  testWidgets('Confirm trade stays on a phone without scrolling a long grid', (tester) async {
+    final controller = buildController(
+      database,
+      seed: shopper(inventory: [const InventoryStack(itemId: clayId, quantity: 4)]),
+    );
+    addTearDown(controller.dispose);
+    await pumpPanel(
+      tester,
+      ShopPanel(controller: controller, shopId: shopId),
+      size: const Size(375, 720),
+    );
+
+    expect(find.text('Confirm trade').hitTestable(), findsOne);
+    expect(find.byTooltip('Wooden Axe').hitTestable(), findsOne);
+  });
+
   testWidgets('a phone-sized location can scroll the shop to Confirm trade', (tester) async {
     final controller = buildController(
       database,

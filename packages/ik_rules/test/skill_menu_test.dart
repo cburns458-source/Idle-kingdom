@@ -114,6 +114,8 @@ void main() {
     final tools = hunting.tabs.firstWhere((tab) => tab.id == 'tools').sections.first.entries;
     expect(tools.any((row) => row.displayName == 'Net' && row.level == 1), isTrue);
     expect(tools.any((row) => row.displayName == 'Sling' && row.level == 5), isTrue);
+    expect(tools.any((row) => row.displayName == 'Noose Wand' && row.level == 25), isTrue);
+    expect(tools.any((row) => row.displayName == 'Magic Net' && row.level == 45), isTrue);
   });
 
   test('gathering tools include the wooden starters at level 1', () {

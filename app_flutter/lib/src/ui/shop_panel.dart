@@ -359,15 +359,19 @@ class _ShopPanelState extends State<ShopPanel> {
 
 /// One side of the counter: a heading over a tight grid of items.
 ///
-/// The grid does not scroll on its own. The location screen already scrolls
-/// the whole counter, and a nested grid on a phone steals that drag so Sell
-/// and Confirm never come on screen.
+/// Five rows stay in view so Confirm trade is not buried. Extra stock scrolls
+/// inside the grid instead of stretching the location page.
 class _Column extends StatelessWidget {
   const _Column({required this.heading, required this.empty, required this.tiles});
 
   final String heading;
   final String empty;
   final List<Widget> tiles;
+
+  static const double _tileExtent = 78;
+  static const double _gap = 5;
+  static const int _maxRows = 5;
+  static const double _maxGridHeight = _maxRows * _tileExtent + (_maxRows - 1) * _gap;
 
   @override
   Widget build(BuildContext context) {
@@ -379,15 +383,17 @@ class _Column extends StatelessWidget {
         if (tiles.isEmpty)
           MutedText(empty)
         else
-          GridView.extent(
-            maxCrossAxisExtent: 78,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            padding: EdgeInsets.zero,
-            mainAxisSpacing: 5,
-            crossAxisSpacing: 5,
-            childAspectRatio: 1,
-            children: tiles,
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxHeight: _maxGridHeight),
+            child: GridView.extent(
+              maxCrossAxisExtent: _tileExtent,
+              shrinkWrap: true,
+              padding: EdgeInsets.zero,
+              mainAxisSpacing: _gap,
+              crossAxisSpacing: _gap,
+              childAspectRatio: 1,
+              children: tiles,
+            ),
           ),
       ],
     );

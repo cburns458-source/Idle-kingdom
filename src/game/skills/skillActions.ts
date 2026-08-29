@@ -516,7 +516,9 @@ function isHuntingToolName(name: string): boolean {
     endsWithWord(name, 'Bow') ||
     endsWithWord(name, 'Spear') ||
     name === 'Net' ||
-    name === 'Sling'
+    name === 'Sling' ||
+    name === 'Noose Wand' ||
+    name === 'Magic Net'
   )
 }
 
