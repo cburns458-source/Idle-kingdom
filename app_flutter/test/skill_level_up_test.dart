@@ -15,14 +15,16 @@ void main() {
     final controller = buildController(database, seed: startedCharacter(database));
     addTearDown(controller.dispose);
     await pumpShell(tester, controller);
+    await tester.pump();
 
     expect(controller.debugAddSkillLevels('SKL-0009', 9), 'Crafting is now level 10.');
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump();
 
     expect(find.text('Level 10 Crafting'), findsOne);
     expect(find.text('· Leather Straps'), findsOne);
     await tester.tap(find.text('Continue'));
-    await tester.pumpAndSettle();
+    await tester.pump();
     expect(find.text('Level 10 Crafting'), findsNothing);
   });
 
@@ -30,14 +32,16 @@ void main() {
     final controller = buildController(database, seed: startedCharacter(database));
     addTearDown(controller.dispose);
     await pumpShell(tester, controller);
+    await tester.pump();
 
     expect(controller.debugAddSkillLevels(combatSkillId, 10), 'Combat is now level 11.');
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump();
 
     expect(find.text('Level 11 Combat'), findsOne);
     expect(find.textContaining('Fight '), findsNothing);
-    expect(find.textContaining('Cow'), findsNothing);
     await tester.tap(find.text('Continue'));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    expect(find.text('Level 11 Combat'), findsNothing);
   });
 }

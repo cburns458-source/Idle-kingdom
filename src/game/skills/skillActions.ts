@@ -363,10 +363,20 @@ function combatOtherEntries(db: GameDatabase): SkillMenuListItem[] {
 function gatheringToolEntries(db: GameDatabase, skillId: string): SkillMenuListItem[] {
   const spec = gatheringToolSpec(skillId)
   if (!spec) return []
-  return dedupeByName([
-    ...projectItemsWhere(db, spec.match, null),
-    ...woodenItems(db, spec.woodenIds),
-  ])
+  return dedupeByName(
+    [...projectItemsWhere(db, spec.match, null), ...woodenItems(db, spec.woodenIds)].map((item) => ({
+      ...item,
+      level: equipLevelForSkill(db, item.displayName, skillId) ?? item.level,
+    })),
+  )
+}
+
+function equipLevelForSkill(db: GameDatabase, displayName: string, skillId: string): number | null {
+  const item = db.Items.find((row) => row['Display Name'] === displayName)
+  if (!item) return null
+  const equipment = db.Equipment.find((row) => row['Item ID'] === item['Item ID'])
+  if (!equipment || equipment['Required Skill ID'] !== skillId) return null
+  return typeof equipment['Required Level'] === 'number' ? equipment['Required Level'] : null
 }
 
 function gatheringToolSpec(
