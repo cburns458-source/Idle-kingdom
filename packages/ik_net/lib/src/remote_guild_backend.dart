@@ -48,6 +48,7 @@ class RemoteGuildBackend {
     required this.sessionOf,
     required this.factsOf,
     required this.nowIso,
+    this.clearReadProblem,
   });
 
   final RemoteTransport transport;
@@ -60,15 +61,46 @@ class RemoteGuildBackend {
 
   final String Function() nowIso;
 
+  /// Clears a held read refusal after a successful retry without a missing
+  /// column, matching how profile privacy columns recover.
+  final void Function(bool Function(String reason) test)? clearReadProblem;
+
+  /// Whether `guilds.skill_milestone_settings` exists. Null until a read tells
+  /// us. A hosted project that has not applied migration 020 answers without
+  /// it; once we see that, later reads and writes skip the missing column.
+  bool? _guildsHaveSkillMilestones;
+
+  String get _guildSelectColumns =>
+      _guildsHaveSkillMilestones == false ? remoteGuildBaseColumns : remoteGuildColumns;
+
+  RemoteRow _guildCreateRow(String leaderId, GuildRecord guild) {
+    final row = guildRowForCreate(leaderId, guild);
+    if (_guildsHaveSkillMilestones == false) {
+      row.remove(remoteGuildSkillMilestoneColumn);
+    }
+    return row;
+  }
+
   // --- Reads ----------------------------------------------------------------
 
   Future<List<GuildRecord>> _guildRows({String? guildId}) async {
-    final result = await transport.select(
+    var result = await transport.select(
       RemoteTables.guilds,
-      columns: remoteGuildColumns,
+      columns: _guildSelectColumns,
       equals: guildId == null ? const <String, Object?>{} : <String, Object?>{'id': guildId},
       orderBy: 'name',
     );
+    if (!result.ok && remoteMissingGuildSkillMilestoneColumn(result.reason)) {
+      _guildsHaveSkillMilestones = false;
+      clearReadProblem?.call(remoteMissingGuildSkillMilestoneColumn);
+      result = await transport.select(
+        RemoteTables.guilds,
+        columns: remoteGuildBaseColumns,
+        equals: guildId == null ? const <String, Object?>{} : <String, Object?>{'id': guildId},
+        orderBy: 'name',
+      );
+    }
+    if (result.ok) _guildsHaveSkillMilestones ??= true;
     if (!result.ok) return const <GuildRecord>[];
     return result.rows!.map(guildRecordFrom).toList();
   }
@@ -186,11 +218,20 @@ class RemoteGuildBackend {
     }
 
     final wanted = guildFromCreateInput(current.userId, input, nowIso());
-    final written = await transport.insert(
+    var written = await transport.insert(
       RemoteTables.guilds,
-      guildRowForCreate(current.userId, wanted),
-      columns: remoteGuildColumns,
+      _guildCreateRow(current.userId, wanted),
+      columns: _guildSelectColumns,
     );
+    if (!written.ok && remoteMissingGuildSkillMilestoneColumn(written.reason)) {
+      _guildsHaveSkillMilestones = false;
+      written = await transport.insert(
+        RemoteTables.guilds,
+        _guildCreateRow(current.userId, wanted),
+        columns: remoteGuildBaseColumns,
+      );
+    }
+    if (written.ok) _guildsHaveSkillMilestones ??= true;
     if (!written.ok) {
       return CreateGuildResult.failed(
         isDuplicateRefusal(written.reason!) ? remoteGuildNameTaken : written.reason!,
@@ -571,9 +612,19 @@ class RemoteGuildBackend {
   Future<ActionResult> setGuildSkillMilestoneSettings(
     String guildId,
     GuildSkillMilestoneSettings settings,
-  ) => _setGuildColumn(guildId, <String, Object?>{
-    'skill_milestone_settings': normalizeGuildSkillMilestoneSettings(settings.toJson()).toJson(),
-  }, refusal: 'Only the leader can change skill milestones.');
+  ) async {
+    if (_guildsHaveSkillMilestones == false) {
+      return const ActionResult.failed(remoteGuildSkillMilestonesUnavailable);
+    }
+    final result = await _setGuildColumn(guildId, <String, Object?>{
+      'skill_milestone_settings': normalizeGuildSkillMilestoneSettings(settings.toJson()).toJson(),
+    }, refusal: 'Only the leader can change skill milestones.');
+    if (!result.ok && remoteMissingGuildSkillMilestoneColumn(result.reason)) {
+      _guildsHaveSkillMilestones = false;
+      return const ActionResult.failed(remoteGuildSkillMilestonesUnavailable);
+    }
+    return result;
+  }
 
   Future<ActionResult> setGuildRankLabels(
     String guildId,

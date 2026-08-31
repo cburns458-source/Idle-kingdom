@@ -40,6 +40,7 @@ class RemoteMultiplayerService implements MultiplayerService {
       sessionOf: () => session,
       factsOf: _ownMemberFacts,
       nowIso: () => isoFromMs(_nowMs()),
+      clearReadProblem: _reads.clearIf,
     );
   }
 
