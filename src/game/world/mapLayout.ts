@@ -102,6 +102,8 @@ export const FOREST_MAP_NODE_LAYOUT: Record<string, NodePosition> = {
   'LOC-0039': { x: 50, y: 86 },
   // Forest Path landing, just inside the gate
   'LOC-0040': { x: 50, y: 68 },
+  // Starlight Glade, mid woodland clearing
+  'LOC-0044': { x: 28, y: 48 },
   // Old Ent Grove in the ancient clearing
   'LOC-0018': { x: 48, y: 28 },
 }
@@ -109,8 +111,10 @@ export const FOREST_MAP_NODE_LAYOUT: Record<string, NodePosition> = {
 export const DEPTHS_MAP_NODE_LAYOUT: Record<string, NodePosition> = {
   // Sunken Approach at the drowned stairs (hidden on this submap)
   'LOC-0041': { x: 50, y: 86 },
-  // The Depths landing in the ruined plaza
-  'LOC-0042': { x: 50, y: 46 },
+  // The Shallows landing, sunlit water past the stairs
+  'LOC-0043': { x: 50, y: 62 },
+  // The Depths plaza farther down
+  'LOC-0042': { x: 50, y: 36 },
 }
 
 export const CITADEL_MAP_NODE_LAYOUT: Record<string, NodePosition> = {

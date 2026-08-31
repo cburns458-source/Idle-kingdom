@@ -97,6 +97,8 @@ const Map<String, NodePosition> forestMapNodeLayout = <String, NodePosition>{
   'LOC-0039': NodePosition(x: 50, y: 86),
   // Forest Path landing, just inside the gate
   'LOC-0040': NodePosition(x: 50, y: 68),
+  // Starlight Glade, mid woodland clearing
+  'LOC-0044': NodePosition(x: 28, y: 48),
   // Old Ent Grove in the ancient clearing
   'LOC-0018': NodePosition(x: 48, y: 28),
 };
@@ -104,8 +106,10 @@ const Map<String, NodePosition> forestMapNodeLayout = <String, NodePosition>{
 const Map<String, NodePosition> depthsMapNodeLayout = <String, NodePosition>{
   // Sunken Approach at the drowned stairs (hidden on this submap)
   'LOC-0041': NodePosition(x: 50, y: 86),
-  // The Depths landing in the ruined plaza
-  'LOC-0042': NodePosition(x: 50, y: 46),
+  // The Shallows landing, sunlit water past the stairs
+  'LOC-0043': NodePosition(x: 50, y: 62),
+  // The Depths plaza farther down
+  'LOC-0042': NodePosition(x: 50, y: 36),
 };
 
 const Map<String, NodePosition> citadelMapNodeLayout = <String, NodePosition>{

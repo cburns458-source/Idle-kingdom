@@ -26,8 +26,10 @@ import {
   FOREST_MAP_ID,
   FOREST_PATH_ID,
   OLD_ENT_GROVE_ID,
+  STARLIGHT_GLADE_ID,
   SUNKEN_APPROACH_ID,
   THE_DEPTHS_ID,
+  THE_SHALLOWS_ID,
   CASTLE_COURTYARD_ID,
   CASTLE_GATEWAY_ID,
   TOWN_GATEWAY_ID,
@@ -278,7 +280,7 @@ describe('travel rules', () => {
     const forest = launch.Locations.find((row) => row['Location ID'] === FOREST_GATEWAY_ID)!
     const depths = launch.Locations.find((row) => row['Location ID'] === SUNKEN_APPROACH_ID)!
     expect(landingLocationIdFor(forest)).toBe(FOREST_PATH_ID)
-    expect(landingLocationIdFor(depths)).toBe(THE_DEPTHS_ID)
+    expect(landingLocationIdFor(depths)).toBe(THE_SHALLOWS_ID)
     expect(resolveSubMapTravelDestination(launch, TOWN_GATEWAY_ID, MAIN_MAP_ID, 'LOC-0009')).toBe(
       TOWN_GENERAL_STORE_ID,
     )
@@ -313,13 +315,18 @@ describe('travel rules', () => {
     expect(enterSubMapLabel(launch, sunken)).toBe('Enter The Depths')
 
     const forestNodes = locationsForMapView(launch, FOREST_MAP_ID).map((row) => row['Location ID'])
-    expect(forestNodes).toEqual(expect.arrayContaining([FOREST_PATH_ID, OLD_ENT_GROVE_ID]))
+    expect(forestNodes).toEqual(
+      expect.arrayContaining([FOREST_PATH_ID, STARLIGHT_GLADE_ID, OLD_ENT_GROVE_ID]),
+    )
     expect(forestNodes).not.toContain(FOREST_GATEWAY_ID)
     expect(canTravelTo(launch, FOREST_PATH_ID, OLD_ENT_GROVE_ID, FOREST_MAP_ID)).toBe(true)
+    expect(canTravelTo(launch, FOREST_PATH_ID, STARLIGHT_GLADE_ID, FOREST_MAP_ID)).toBe(true)
 
     const depthNodes = locationsForMapView(launch, DEPTHS_MAP_ID).map((row) => row['Location ID'])
-    expect(depthNodes).toEqual([THE_DEPTHS_ID])
-    expect(canTravelTo(launch, SUNKEN_APPROACH_ID, THE_DEPTHS_ID, DEPTHS_MAP_ID)).toBe(true)
+    expect(depthNodes).toEqual(expect.arrayContaining([THE_SHALLOWS_ID, THE_DEPTHS_ID]))
+    expect(depthNodes).not.toContain(SUNKEN_APPROACH_ID)
+    expect(canTravelTo(launch, SUNKEN_APPROACH_ID, THE_SHALLOWS_ID, DEPTHS_MAP_ID)).toBe(true)
+    expect(canTravelTo(launch, THE_SHALLOWS_ID, THE_DEPTHS_ID, DEPTHS_MAP_ID)).toBe(true)
 
     const now = Date.parse('2026-01-01T00:00:00.000Z')
     const fromMeadow = { ...createNewSave(launch), currentLocationId: 'LOC-0009' }
@@ -331,6 +338,6 @@ describe('travel rules', () => {
     const toDepths = planTravel(launch, fromMeadow, SUNKEN_APPROACH_ID, MAIN_MAP_ID, now)
     expect(toDepths.kind).toBe('instant')
     if (toDepths.kind !== 'instant') return
-    expect(toDepths.arrival.save.currentLocationId).toBe(THE_DEPTHS_ID)
+    expect(toDepths.arrival.save.currentLocationId).toBe(THE_SHALLOWS_ID)
   })
 })

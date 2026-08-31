@@ -36,6 +36,9 @@ describe('dragon boss', () => {
       inkAt: null,
       inkChance: 0.35,
       damageMode: null,
+      playerBaseHpScale: null,
+      playerBaseDamagePctMin: null,
+      playerBaseDamagePctMax: null,
     })
   })
 

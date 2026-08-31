@@ -40,10 +40,12 @@ export const CITADEL_BANK_ID = 'LOC-0035'
 export const FOREST_GATEWAY_ID = 'LOC-0039'
 export const FOREST_PATH_ID = 'LOC-0040'
 export const OLD_ENT_GROVE_ID = 'LOC-0018'
+export const STARLIGHT_GLADE_ID = 'LOC-0044'
 
 /** The Depths underwater (MAP-0009). */
 export const SUNKEN_APPROACH_ID = 'LOC-0041'
 export const THE_DEPTHS_ID = 'LOC-0042'
+export const THE_SHALLOWS_ID = 'LOC-0043'
 
 export function isFutureHorizonLocation(locationId: string): boolean {
   return locationId === WEST_HORIZON_ID || locationId === EAST_HORIZON_ID

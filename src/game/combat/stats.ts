@@ -162,6 +162,17 @@ export function playerMaxHp(db: GameDatabase, save: PlayerSave): number {
   return Math.max(1, scaleStat(base + bonus, levelMult * raceMult))
 }
 
+/**
+ * Max HP from base + Combat Level + race only — equipment HP bonuses are ignored.
+ * Mother Squid scales HP and damage from this value.
+ */
+export function playerBaseMaxHp(db: GameDatabase, save: PlayerSave): number {
+  const base = configNumber(db, 'starting_max_hp', 1000)
+  const levelMult = combatLevelBonusMultiplier(save)
+  const raceMult = raceMaxHpMultiplier(db, save)
+  return Math.max(1, scaleStat(base, levelMult * raceMult))
+}
+
 export function rollDamage(min: number, max: number, random: () => number = Math.random): number {
   const lo = Math.min(min, max)
   const hi = Math.max(min, max)

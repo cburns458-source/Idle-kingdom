@@ -43,10 +43,12 @@ const String citadelBankId = 'LOC-0035';
 const String forestGatewayId = 'LOC-0039';
 const String forestPathId = 'LOC-0040';
 const String oldEntGroveId = 'LOC-0018';
+const String starlightGladeId = 'LOC-0044';
 
 /// The Depths underwater (MAP-0009).
 const String sunkenApproachId = 'LOC-0041';
 const String theDepthsId = 'LOC-0042';
+const String theShallowsId = 'LOC-0043';
 
 bool isFutureHorizonLocation(String locationId) {
   return locationId == westHorizonId || locationId == eastHorizonId;

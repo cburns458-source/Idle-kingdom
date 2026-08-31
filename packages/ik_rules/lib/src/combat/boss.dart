@@ -5,6 +5,7 @@ import 'package:ik_content/ik_content.dart';
 import '../js_compat.dart';
 import '../save/generated/save_models.dart';
 import '../time.dart';
+import 'stats.dart';
 
 const int defaultBossSleepRounds = 4;
 const num defaultBossWakeHpRatio = 0.5;
@@ -25,6 +26,9 @@ class BossProfile {
     required this.inkAt,
     required this.inkChance,
     required this.damageMode,
+    required this.playerBaseHpScale,
+    required this.playerBaseDamagePctMin,
+    required this.playerBaseDamagePctMax,
   });
 
   final int sleepStart;
@@ -37,6 +41,9 @@ class BossProfile {
   final num? inkAt;
   final num inkChance;
   final String? damageMode;
+  final num? playerBaseHpScale;
+  final num? playerBaseDamagePctMin;
+  final num? playerBaseDamagePctMax;
 }
 
 List<String> _noteTokens(Object? notes) {
@@ -77,6 +84,9 @@ BossProfile? bossProfile(EnemyRow? enemy) {
   final tokens = _noteTokens(enemy!.raw['Notes']);
   final squidlingsAtRaw = _noteNumber(tokens, 'squidlings_at', double.nan);
   final inkAtRaw = _noteNumber(tokens, 'ink_at', double.nan);
+  final hpScaleRaw = _noteNumber(tokens, 'player_base_hp_scale', double.nan);
+  final dmgMinRaw = _noteNumber(tokens, 'player_base_damage_pct_min', double.nan);
+  final dmgMaxRaw = _noteNumber(tokens, 'player_base_damage_pct_max', double.nan);
   final damageModeRaw = _noteString(tokens, 'damage_mode')?.toLowerCase();
   return BossProfile(
     sleepStart: math.max(0, _noteNumber(tokens, 'sleep_start', defaultBossSleepRounds).floor()),
@@ -92,6 +102,31 @@ BossProfile? bossProfile(EnemyRow? enemy) {
     inkAt: inkAtRaw.isFinite ? inkAtRaw : null,
     inkChance: _noteNumber(tokens, 'ink_chance', defaultBossInkChance),
     damageMode: damageModeRaw == 'fishing' ? 'fishing' : null,
+    playerBaseHpScale: hpScaleRaw.isFinite ? hpScaleRaw : null,
+    playerBaseDamagePctMin: dmgMinRaw.isFinite ? dmgMinRaw : null,
+    playerBaseDamagePctMax: dmgMaxRaw.isFinite ? dmgMaxRaw : null,
+  );
+}
+
+num enemyEncounterMaxHp(GameDatabase db, PlayerSave save, EnemyRow enemy) {
+  final profile = bossProfile(enemy);
+  if (profile?.playerBaseHpScale != null) {
+    return math.max(1, (playerBaseMaxHp(db, save) * profile!.playerBaseHpScale!).floor());
+  }
+  return jsNumber(enemy.raw['Maximum HP']);
+}
+
+DamageRange enemyEncounterDamageRange(GameDatabase db, PlayerSave save, EnemyRow enemy) {
+  final profile = bossProfile(enemy);
+  if (profile?.playerBaseDamagePctMin != null && profile?.playerBaseDamagePctMax != null) {
+    final base = playerBaseMaxHp(db, save);
+    final min = math.max(1, (base * profile!.playerBaseDamagePctMin! / 100).floor());
+    final max = math.max(min, (base * profile.playerBaseDamagePctMax! / 100).floor());
+    return DamageRange(min: min, max: max);
+  }
+  return DamageRange(
+    min: jsNumber(enemy.raw['Min Damage']),
+    max: jsNumber(enemy.raw['Max Damage']),
   );
 }
 

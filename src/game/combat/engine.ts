@@ -32,7 +32,7 @@ import {
   rollDamage,
   staffSparksDamageRange,
 } from './stats'
-import { applySleepIncoming, bossProfile, isBossAddFight, withBossRespawn } from './boss'
+import { applySleepIncoming, bossProfile, enemyEncounterDamageRange, enemyEncounterMaxHp, isBossAddFight, withBossRespawn } from './boss'
 
 export type RandomFn = () => number
 
@@ -99,7 +99,7 @@ export function beginCombatSave(
     actionStartedAt: nowIso,
     actionDurationMs: null,
     combatEnemyId: enemy['Enemy ID'],
-    combatEnemyHp: enemy['Maximum HP'],
+    combatEnemyHp: enemyEncounterMaxHp(db, potion.save, enemy),
     combatRoundStartedAt: nowIso,
     combatSkipEnemyAttack: false,
     combatBossSleepRoundsRemaining: bossProfile(enemy)?.sleepStart ?? null,
@@ -142,7 +142,7 @@ export function resolveCombatRound(
   const profile = bossProfile(enemy)
   const asleep = (save.combatBossSleepRoundsRemaining ?? 0) > 0
   const fishingMode = profile?.damageMode === 'fishing' && !isBossAddFight(save)
-  const enemyMaxHp = enemy['Maximum HP']
+  const enemyMaxHp = enemyEncounterMaxHp(db, save, enemy)
 
   let bossInkActive = false
   if (
@@ -198,7 +198,7 @@ export function resolveCombatRound(
   if (nextEnemyHp > 0) {
     nextEnemyHp = applyPotionEnemyRoundDamage(
       nextEnemyHp,
-      enemy['Maximum HP'],
+      enemyMaxHp,
       save.activePotionEffect,
     )
   }
@@ -292,7 +292,8 @@ export function resolveCombatRound(
   }
 
   const rampage = Boolean(profile && nextEnemyHp <= enemyMaxHp * profile.rampageHpRatio)
-  let enemyRaw = rollDamage(enemy['Min Damage'], enemy['Max Damage'], random)
+  const enemyRange = enemyEncounterDamageRange(db, save, enemy)
+  let enemyRaw = rollDamage(enemyRange.min, enemyRange.max, random)
   if (rampage) enemyRaw *= 2
   const enemyHit = applyMitigation(enemyRaw, playerDamageReduction(db, save), floor)
   const playerHp = Math.max(0, save.currentHp - enemyHit)
@@ -332,8 +333,9 @@ export function shouldSkipVictoryHealingFood(
   enemyHit: number | null,
   playerHpAfter: number,
   playerHpBefore: number,
+  encounterMaxHp?: number,
 ): boolean {
-  const maxHp = Number(enemy['Maximum HP'] ?? 0)
+  const maxHp = encounterMaxHp ?? Number(enemy['Maximum HP'] ?? 0)
   const startedAtFull = incomingEnemyHp == null || incomingEnemyHp === maxHp
   return startedAtFull && enemyHit == null && playerHpAfter === playerHpBefore
 }
