@@ -358,6 +358,54 @@ void main() {
     expect(find.text('Eat'), findsOne);
   });
 
+  testWidgets('edit mode previews and writes a snapshot without wearing it', (tester) async {
+    var save = unequippedCharacter();
+    save = addItemToInventory(save, 'ITEM-0111', 1);
+    save = addItemToInventory(save, 'ITEM-0110', 1);
+    final equipped = equipItemFromInventory(database.launch, save, 'ITEM-0111');
+    expect(equipped.ok, isTrue);
+    save = trackActiveEquipmentPreset(equipped.save!);
+
+    final controller = buildController(database, seed: save);
+    addTearDown(controller.dispose);
+
+    await pumpPanel(tester, InventoryView(controller: controller));
+    await tester.tap(find.text('Equipment'));
+    await tester.pump();
+
+    await tester.tap(find.bySemanticsLabel('Edit presets'));
+    await tester.pump();
+    expect(find.text('Done'), findsOneWidget);
+    expect(find.textContaining('worn gear unchanged'), findsOneWidget);
+
+    await tester.tap(find.bySemanticsLabel('Preset 2'));
+    await tester.pump();
+    expect(find.textContaining('Editing Preset 2'), findsOneWidget);
+    expect(controller.save.activeEquipmentPresetIndex, 0);
+    expect(controller.save.equipment.slots['SLOT-0001']?.itemId, 'ITEM-0111');
+
+    await tester.tap(find.text('Items'));
+    await tester.pump();
+    await tester.tap(find.byTooltip('Copper Hatchet').first);
+    await tester.pump();
+
+    expect(controller.save.activeEquipmentPresetIndex, 0);
+    expect(controller.save.equipment.slots['SLOT-0001']?.itemId, 'ITEM-0111');
+    expect(controller.save.equipmentPresets[1].slots['SLOT-0001']?.itemId, 'ITEM-0110');
+    expect(controller.save.inventory.any((stack) => stack.itemId == 'ITEM-0110'), isTrue);
+
+    await tester.tap(find.text('Equipment'));
+    await tester.pump();
+    await tester.tap(find.bySemanticsLabel('Done editing presets'));
+    await tester.pump();
+
+    expect(find.text('Edit'), findsOneWidget);
+    expect(find.textContaining('worn gear unchanged'), findsNothing);
+    expect(controller.save.activeEquipmentPresetIndex, 0);
+    expect(controller.save.equipment.slots['SLOT-0001']?.itemId, 'ITEM-0111');
+    expect(controller.save.equipmentPresets[1].slots['SLOT-0001']?.itemId, 'ITEM-0110');
+  });
+
   testWidgets('opens preset settings for all four presets from equipment bar', (tester) async {
     final controller = buildController(database, seed: startedCharacter(database));
     addTearDown(controller.dispose);

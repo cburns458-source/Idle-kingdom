@@ -7,13 +7,18 @@ import type {
   EquippedStack,
   PlayerSave,
 } from '../save/types'
-import type { EquipResult } from './loadout'
+import {
+  isTwoHandedItem,
+  OFFHAND_SLOT_ID,
+  WEAPON_TOOL_SLOT_ID,
+  type EquipResult,
+} from './loadout'
 
 export const EQUIPMENT_PRESET_COUNT = 4
 export const EQUIPMENT_PRESET_NAME_MAX = 24
 
 const BAG_FULL_REASON = 'Not enough inventory space to switch presets.'
-const MISSING_REASON = 'Missing items needed for that preset.'
+const MISSING_WARNING = 'Some items were missing.'
 
 export function defaultEquipmentPresetIcon(index: number): EquipmentPresetIcon {
   return { kind: 'roman', numeral: index + 1, skillId: null }
@@ -107,16 +112,50 @@ function normalizePresetIcon(
   return { kind: 'roman', numeral, skillId: null }
 }
 
-/** While preset 1 is active, keep its snapshot identical to the live loadout. */
+/** True when [need] is worn or sitting in the bag (same stack key). */
+export function equipmentStackOwned(save: PlayerSave, need: EquippedStack): boolean {
+  const want = stackKey(need.itemId, need.enchantmentId ?? null, need.favorite === true)
+  for (const equipped of Object.values(save.equipment.slots)) {
+    if (!equipped || equipped.quantity <= 0) continue
+    if (stackKey(equipped.itemId, equipped.enchantmentId ?? null, equipped.favorite === true) === want) {
+      return true
+    }
+  }
+  for (const stack of save.inventory) {
+    if (stack.quantity <= 0) continue
+    if (stackKey(stack.itemId, stack.enchantmentId ?? null, stack.favorite === true) === want) {
+      return true
+    }
+  }
+  return false
+}
+
+/**
+ * While preset 1 is active, copy live gear onto its snapshot.
+ * Empty live slots do not wipe a stored piece that is no longer owned, so a
+ * partial apply cannot forget missing items.
+ */
 export function trackActiveEquipmentPreset(save: PlayerSave): PlayerSave {
   const { equipmentPresets, activeEquipmentPresetIndex } = normalizeEquipmentPresets(save)
   if (activeEquipmentPresetIndex !== 0) {
     return { ...save, equipmentPresets, activeEquipmentPresetIndex }
   }
+  const slotIds = Object.keys(save.equipment.slots)
+  const stored = clonePresetSlots(equipmentPresets[0]!.slots)
+  for (const slotId of slotIds) {
+    const live = save.equipment.slots[slotId] ?? null
+    if (live && live.quantity > 0) {
+      stored[slotId] = cloneEquippedStack(live)
+      continue
+    }
+    const remembered = stored[slotId]
+    if (remembered && remembered.quantity > 0 && !equipmentStackOwned(save, remembered)) {
+      continue
+    }
+    stored[slotId] = null
+  }
   const next = equipmentPresets.map((preset, index) =>
-    index === 0
-      ? { ...preset, slots: clonePresetSlots(save.equipment.slots) }
-      : preset,
+    index === 0 ? { ...preset, slots: stored } : preset,
   )
   return { ...save, equipmentPresets: next, activeEquipmentPresetIndex }
 }
@@ -159,6 +198,29 @@ export function setEquipmentPresetIcon(
   return { ...save, equipmentPresets: next, activeEquipmentPresetIndex }
 }
 
+/** Write one slot onto a stored preset. Does not change worn gear. */
+export function setEquipmentPresetSlot(
+  db: GameDatabase,
+  save: PlayerSave,
+  index: number,
+  slotId: string,
+  stack: EquippedStack | null,
+): PlayerSave {
+  const { equipmentPresets, activeEquipmentPresetIndex } = normalizeEquipmentPresets(save)
+  if (index < 0 || index >= EQUIPMENT_PRESET_COUNT) return save
+  if (!(slotId in save.equipment.slots)) return save
+  const slots = clonePresetSlots(equipmentPresets[index]!.slots)
+  slots[slotId] = cloneEquippedStack(stack)
+  if (stack && isTwoHandedItem(db, stack.itemId) && slotId === WEAPON_TOOL_SLOT_ID) {
+    slots[OFFHAND_SLOT_ID] = null
+  } else if (stack && slotId === OFFHAND_SLOT_ID) {
+    const main = slots[WEAPON_TOOL_SLOT_ID]
+    if (main && isTwoHandedItem(db, main.itemId)) slots[WEAPON_TOOL_SLOT_ID] = null
+  }
+  const next = equipmentPresets.map((preset, i) => (i === index ? { ...preset, slots } : preset))
+  return { ...save, equipmentPresets: next, activeEquipmentPresetIndex }
+}
+
 type PoolEntry = {
   itemId: string
   quantity: number
@@ -189,8 +251,9 @@ function takeFromPool(pool: Map<string, PoolEntry>, need: EquippedStack): boolea
 }
 
 /**
- * Instant in-place swap to a stored preset. Blocks when the bag cannot hold
- * everything that would come off, or when preset pieces are missing.
+ * Instant in-place swap to a stored preset. Missing pieces are skipped and
+ * those slots stay empty. Blocks only when the bag cannot hold what comes off.
+ * The stored snapshot is left as-is so missing items can fill in later.
  */
 export function applyEquipmentPreset(
   _db: GameDatabase,
@@ -228,11 +291,19 @@ export function applyEquipmentPreset(
     if (stack.quantity > 0) addToPool(stack as unknown as EquippedStack)
   }
 
+  const worn: Record<string, EquippedStack | null> = {}
+  let missing = false
   for (const slotId of slotIds) {
     const want = target[slotId]
-    if (!want || want.quantity <= 0) continue
-    if (!takeFromPool(pool, want)) {
-      return { ok: false, reason: MISSING_REASON }
+    if (!want || want.quantity <= 0) {
+      worn[slotId] = null
+      continue
+    }
+    if (takeFromPool(pool, want)) {
+      worn[slotId] = want
+    } else {
+      worn[slotId] = null
+      missing = true
     }
   }
 
@@ -269,15 +340,11 @@ export function applyEquipmentPreset(
     ok: true,
     save: {
       ...working,
-      equipment: { slots: target },
+      equipment: { slots: worn },
       inventory: bagProbe.inventory,
       activeEquipmentPresetIndex: index,
-      equipmentPresets:
-        index === 0
-          ? working.equipmentPresets.map((preset, i) =>
-              i === 0 ? { ...preset, slots: clonePresetSlots(target) } : preset,
-            )
-          : working.equipmentPresets,
+      equipmentPresets: working.equipmentPresets,
     },
+    warning: missing ? MISSING_WARNING : undefined,
   }
 }

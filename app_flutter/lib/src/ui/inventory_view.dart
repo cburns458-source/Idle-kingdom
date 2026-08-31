@@ -67,7 +67,9 @@ class _InventoryViewState extends State<InventoryView> {
   InventorySortMode _sortMode = InventorySortMode.group;
   final TextEditingController _search = TextEditingController();
   late InventorySorter _sorter = InventorySorter(widget.controller.db);
+  int? _editingPresetIndex;
   bool get _lockedPane => widget.pane != null;
+  bool get _editingPreset => _editingPresetIndex != null;
 
   /// Character locks this to one pane. Prefer that over leftover inner-tab state
   /// so Equipment cannot keep showing the bag after Inventory.
@@ -88,6 +90,7 @@ class _InventoryViewState extends State<InventoryView> {
       _message = null;
       _showSources = false;
       _showBonuses = false;
+      _editingPresetIndex = null;
     }
   }
 
@@ -120,6 +123,10 @@ class _InventoryViewState extends State<InventoryView> {
   }
 
   void _equipAt(int index) {
+    if (_editingPreset) {
+      _assignToEditingPreset(index);
+      return;
+    }
     final result = equipInventoryIndex(db, save, index);
     if (!result.ok) {
       setState(() => _message = result.reason);
@@ -129,7 +136,40 @@ class _InventoryViewState extends State<InventoryView> {
     controller.commitLoadout(result.save!);
   }
 
+  void _assignToEditingPreset(int inventoryIndex) {
+    final editing = _editingPresetIndex;
+    if (editing == null || inventoryIndex < 0 || inventoryIndex >= save.inventory.length) return;
+    final stack = save.inventory[inventoryIndex];
+    final gear = equipmentForItemId(db, stack.itemId);
+    final slotId = gear?.slotId;
+    if (slotId == null) {
+      setState(() => _message = 'That does not go on a preset.');
+      return;
+    }
+    final quantity = isStackableConsumableSlot(slotId) ? stack.quantity : 1;
+    final next = setEquipmentPresetSlot(
+      db,
+      save,
+      editing,
+      slotId,
+      EquippedStack(
+        itemId: stack.itemId,
+        quantity: quantity,
+        enchantmentId: stack.enchantmentId,
+        favorite: stack.favorite == true ? true : null,
+      ),
+    );
+    setState(() => _message = null);
+    controller.commit(next);
+  }
+
   void _unequip(String slotId) {
+    if (_editingPreset) {
+      final next = setEquipmentPresetSlot(db, save, _editingPresetIndex!, slotId, null);
+      setState(() => _message = null);
+      controller.commit(next);
+      return;
+    }
     final result = unequipSlot(save, slotId);
     if (!result.ok) {
       setState(() => _message = result.reason);
@@ -499,10 +539,25 @@ class _InventoryViewState extends State<InventoryView> {
                 EquipmentPresetsBar(
                   controller: controller,
                   showSettingsButton: true,
+                  editingIndex: _editingPresetIndex,
+                  onStartEdit: () => setState(() {
+                    _editingPresetIndex = save.activeEquipmentPresetIndex.floor().clamp(
+                      0,
+                      equipmentPresetCount - 1,
+                    );
+                  }),
+                  onFinishEdit: () => setState(() => _editingPresetIndex = null),
+                  onSelectForEdit: (index) => setState(() => _editingPresetIndex = index),
                   onMessage: (message) {
                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
                   },
                 ),
+                if (_editingPreset) ...[
+                  const SizedBox(height: 8),
+                  MutedText(
+                    'Editing ${save.equipmentPresets[_editingPresetIndex!].name} — worn gear unchanged.',
+                  ),
+                ],
                 const SizedBox(height: 10),
                 GridView.count(
                   crossAxisCount: 4,
@@ -575,7 +630,14 @@ class _InventoryViewState extends State<InventoryView> {
   }
 
   Widget _slotTile(String slotId) {
-    final stack = save.equipment.slots[slotId];
+    final live = save.equipment.slots[slotId];
+    final preview = _editingPreset
+        ? (_editingPresetIndex! < save.equipmentPresets.length
+              ? save.equipmentPresets[_editingPresetIndex!].slots[slotId]
+              : null)
+        : live;
+    final stack = preview;
+    final missing = stack != null && _editingPreset && !equipmentStackOwned(save, stack);
     final slot = db.equipmentSlots.where((row) => row.slotId == slotId).firstOrNull;
     if (stack == null) {
       return GamePanel(
@@ -607,6 +669,7 @@ class _InventoryViewState extends State<InventoryView> {
       favorite: false,
       selected: false,
       selecting: false,
+      missing: missing,
       onTap: () => _unequip(slotId),
       onLongPress: () => _showDetail(equipped: stack, slotId: slotId),
       onToggleFavorite: null,
@@ -811,6 +874,7 @@ class _ItemTile extends StatelessWidget {
     required this.onTap,
     required this.onLongPress,
     required this.onToggleFavorite,
+    this.missing = false,
   });
 
   final ItemRow? item;
@@ -819,6 +883,7 @@ class _ItemTile extends StatelessWidget {
   final bool favorite;
   final bool selected;
   final bool selecting;
+  final bool missing;
   final VoidCallback onTap;
   final VoidCallback onLongPress;
   final VoidCallback? onToggleFavorite;
@@ -827,72 +892,75 @@ class _ItemTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final name = item?.displayName ?? '?';
     return Tooltip(
-      message: name,
+      message: missing ? '$name (missing)' : name,
       onTriggered: onLongPress,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
-        child: Container(
-          padding: const EdgeInsets.all(4),
-          decoration: BoxDecoration(
-            color: selected ? const Color(0x33D4AF37) : Palette.panel,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: selected
-                  ? Palette.gold
-                  : enchanted
-                  ? Palette.softGreen
-                  : Palette.edge,
-              width: selected ? 2 : 1,
+      child: Opacity(
+        opacity: missing ? 0.45 : 1,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(14),
+          child: Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: selected ? const Color(0x33D4AF37) : Palette.panel,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: selected
+                    ? Palette.gold
+                    : enchanted
+                    ? Palette.softGreen
+                    : Palette.edge,
+                width: selected ? 2 : 1,
+              ),
             ),
-          ),
-          child: Stack(
-            children: [
-              Center(child: ItemIcon(item: item, size: 36)),
-              if (!enchanted && quantity > 1)
-                Positioned(
-                  right: 0,
-                  bottom: 0,
-                  child: Text(
-                    '${quantity.round()}',
-                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w400),
+            child: Stack(
+              children: [
+                Center(child: ItemIcon(item: item, size: 36)),
+                if (!enchanted && quantity > 1)
+                  Positioned(
+                    right: 0,
+                    bottom: 0,
+                    child: Text(
+                      '${quantity.round()}',
+                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w400),
+                    ),
                   ),
-                ),
-              if (selected)
-                const Positioned(
-                  left: 0,
-                  top: 0,
-                  child: Icon(Icons.check, size: 14, color: Palette.gold),
-                ),
-              if (enchanted || (onToggleFavorite != null && !selecting))
-                Positioned(
-                  right: 0,
-                  top: 0,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (enchanted)
-                        const Text('★', style: TextStyle(fontSize: 11, color: Palette.softGreen)),
-                      if (onToggleFavorite != null && !selecting)
-                        GestureDetector(
-                          behavior: HitTestBehavior.opaque,
-                          onTap: onToggleFavorite,
-                          child: Tooltip(
-                            message: favorite ? 'Unfavorite' : 'Favorite',
-                            child: Padding(
-                              padding: const EdgeInsets.all(4),
-                              child: Icon(
-                                favorite ? Icons.favorite : Icons.favorite_border,
-                                size: 14,
-                                color: favorite ? Palette.gold : const Color(0x80F4E7C8),
+                if (selected)
+                  const Positioned(
+                    left: 0,
+                    top: 0,
+                    child: Icon(Icons.check, size: 14, color: Palette.gold),
+                  ),
+                if (enchanted || (onToggleFavorite != null && !selecting))
+                  Positioned(
+                    right: 0,
+                    top: 0,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (enchanted)
+                          const Text('★', style: TextStyle(fontSize: 11, color: Palette.softGreen)),
+                        if (onToggleFavorite != null && !selecting)
+                          GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onTap: onToggleFavorite,
+                            child: Tooltip(
+                              message: favorite ? 'Unfavorite' : 'Favorite',
+                              child: Padding(
+                                padding: const EdgeInsets.all(4),
+                                child: Icon(
+                                  favorite ? Icons.favorite : Icons.favorite_border,
+                                  size: 14,
+                                  color: favorite ? Palette.gold : const Color(0x80F4E7C8),
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

@@ -12,6 +12,7 @@ import {
   renameEquipmentPreset,
   saveActiveEquipmentPreset,
   setEquipmentPresetIcon,
+  setEquipmentPresetSlot,
   trackActiveEquipmentPreset,
 } from './presets'
 
@@ -98,6 +99,100 @@ describe('equipment presets', () => {
     expect(blocked.ok).toBe(false)
     if (blocked.ok) return
     expect(blocked.reason).toMatch(/inventory space/i)
+  })
+
+  it('equips owned pieces and leaves missing slots empty without rewriting the snapshot', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    let save = createNewSave(launch)
+    save = addItemToInventory(save, 'ITEM-0111', 1)
+    const equipped = equipItemFromInventory(launch, save, 'ITEM-0111')
+    expect(equipped.ok).toBe(true)
+    if (!equipped.ok) return
+    save = trackActiveEquipmentPreset(equipped.save)
+    save = {
+      ...save,
+      equipmentPresets: save.equipmentPresets.map((preset, index) =>
+        index === 1
+          ? {
+              ...preset,
+              slots: {
+                ...preset.slots,
+                'SLOT-0001': { itemId: 'ITEM-0111', quantity: 1 },
+                'SLOT-0003': { itemId: 'ITEM-0155', quantity: 1 },
+              },
+            }
+          : preset,
+      ),
+    }
+
+    const applied = applyEquipmentPreset(launch, save, 1)
+    expect(applied.ok).toBe(true)
+    if (!applied.ok) return
+    expect(applied.warning).toBe('Some items were missing.')
+    expect(applied.save.equipment.slots['SLOT-0001']?.itemId).toBe('ITEM-0111')
+    expect(applied.save.equipment.slots['SLOT-0003']).toBeNull()
+    expect(applied.save.equipmentPresets[1]?.slots['SLOT-0003']?.itemId).toBe('ITEM-0155')
+
+    const withHelm = addItemToInventory(applied.save, 'ITEM-0155', 1)
+    const toOne = applyEquipmentPreset(launch, withHelm, 0)
+    expect(toOne.ok).toBe(true)
+    if (!toOne.ok) return
+    const again = applyEquipmentPreset(launch, toOne.save, 1)
+    expect(again.ok).toBe(true)
+    if (!again.ok) return
+    expect(again.warning).toBeUndefined()
+    expect(again.save.equipment.slots['SLOT-0003']?.itemId).toBe('ITEM-0155')
+  })
+
+  it('keeps an unowned stored piece on preset 1 and clears it when the piece is still in the bag', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    let save = createNewSave(launch)
+    save = {
+      ...save,
+      equipment: {
+        slots: {
+          ...save.equipment.slots,
+          'SLOT-0001': { itemId: 'ITEM-0111', quantity: 1 },
+        },
+      },
+      equipmentPresets: save.equipmentPresets.map((preset, index) =>
+        index === 0
+          ? {
+              ...preset,
+              slots: {
+                ...preset.slots,
+                'SLOT-0001': { itemId: 'ITEM-0111', quantity: 1 },
+                'SLOT-0003': { itemId: 'ITEM-0155', quantity: 1 },
+              },
+            }
+          : preset,
+      ),
+      activeEquipmentPresetIndex: 0,
+    }
+    const kept = trackActiveEquipmentPreset(save)
+    expect(kept.equipmentPresets[0]?.slots['SLOT-0001']?.itemId).toBe('ITEM-0111')
+    expect(kept.equipmentPresets[0]?.slots['SLOT-0003']?.itemId).toBe('ITEM-0155')
+
+    const withHelm = addItemToInventory(save, 'ITEM-0155', 1)
+    const cleared = trackActiveEquipmentPreset(withHelm)
+    expect(cleared.equipmentPresets[0]?.slots['SLOT-0003']).toBeNull()
+  })
+
+  it('writes a snapshot slot without changing worn gear or the active preset', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    let save = createNewSave(launch)
+    save = addItemToInventory(save, 'ITEM-0111', 1)
+    const equipped = equipItemFromInventory(launch, save, 'ITEM-0111')
+    expect(equipped.ok).toBe(true)
+    if (!equipped.ok) return
+    save = equipped.save
+    const next = setEquipmentPresetSlot(launch, save, 1, 'SLOT-0001', {
+      itemId: 'ITEM-0110',
+      quantity: 1,
+    })
+    expect(next.activeEquipmentPresetIndex).toBe(0)
+    expect(next.equipment.slots['SLOT-0001']?.itemId).toBe('ITEM-0111')
+    expect(next.equipmentPresets[1]?.slots['SLOT-0001']?.itemId).toBe('ITEM-0110')
   })
 
   it('renames presets and sets icons', () => {

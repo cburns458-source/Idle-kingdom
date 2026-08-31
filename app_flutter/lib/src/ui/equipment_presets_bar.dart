@@ -22,6 +22,10 @@ class EquipmentPresetsBar extends StatelessWidget {
     this.compact = false,
     this.showSaveButton = true,
     this.showSettingsButton = false,
+    this.editingIndex,
+    this.onStartEdit,
+    this.onFinishEdit,
+    this.onSelectForEdit,
     this.onMessage,
   });
 
@@ -30,33 +34,48 @@ class EquipmentPresetsBar extends StatelessWidget {
   final bool compact;
   final bool showSaveButton;
   final bool showSettingsButton;
+
+  /// When set, the bar is in inventory Edit mode: taps preview a snapshot.
+  final int? editingIndex;
+  final VoidCallback? onStartEdit;
+  final VoidCallback? onFinishEdit;
+  final ValueChanged<int>? onSelectForEdit;
   final ValueChanged<String>? onMessage;
+
+  bool get _editing => editingIndex != null;
 
   @override
   Widget build(BuildContext context) {
     final save = controller.save;
     final presets = save.equipmentPresets;
     final active = save.activeEquipmentPresetIndex.floor().clamp(0, equipmentPresetCount - 1);
+    final highlighted = (editingIndex ?? active).clamp(0, equipmentPresetCount - 1);
     final buttons = <Widget>[
       for (var i = 0; i < equipmentPresetCount; i += 1)
         _PresetButton(
           preset: i < presets.length ? presets[i] : null,
           index: i,
-          selected: i == active,
+          selected: i == highlighted,
           compact: compact,
           square: compact && axis == Axis.vertical,
           skillsById: controller.indexes.skillsById,
+          tooltipHint: _editing ? 'Preview this loadout' : 'Long-press to edit name',
           onTap: () {
+            if (_editing) {
+              onSelectForEdit?.call(i);
+              return;
+            }
             final result = applyEquipmentPreset(controller.db, controller.save, i);
             if (!result.ok) {
               onMessage?.call(result.reason ?? 'Could not switch presets.');
               return;
             }
             controller.commitLoadout(result.save!);
+            if (result.warning != null) onMessage?.call(result.warning!);
           },
           onLongPress: () => _editPreset(context, i),
         ),
-      if (showSaveButton)
+      if (showSaveButton && !_editing)
         _SaveChip(
           compact: compact,
           square: compact && axis == Axis.vertical,
@@ -64,6 +83,22 @@ class EquipmentPresetsBar extends StatelessWidget {
             controller.commitLoadout(saveActiveEquipmentPreset(controller.save));
             onMessage?.call('Preset saved.');
           },
+        ),
+      if (onStartEdit != null && !_editing)
+        _LabelChip(
+          compact: compact,
+          square: compact && axis == Axis.vertical,
+          label: 'Edit',
+          semanticsLabel: 'Edit presets',
+          onPressed: onStartEdit!,
+        ),
+      if (_editing && onFinishEdit != null)
+        _LabelChip(
+          compact: compact,
+          square: compact && axis == Axis.vertical,
+          label: 'Done',
+          semanticsLabel: 'Done editing presets',
+          onPressed: onFinishEdit!,
         ),
       if (showSettingsButton)
         _SettingsChip(
@@ -218,26 +253,57 @@ class _SaveChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return _LabelChip(
+      compact: compact,
+      square: square,
+      label: 'Save',
+      semanticsLabel: 'Save preset',
+      onPressed: onPressed,
+    );
+  }
+}
+
+class _LabelChip extends StatelessWidget {
+  const _LabelChip({
+    required this.onPressed,
+    required this.compact,
+    required this.square,
+    required this.label,
+    required this.semanticsLabel,
+  });
+
+  final VoidCallback onPressed;
+  final bool compact;
+  final bool square;
+  final String label;
+  final String semanticsLabel;
+
+  @override
+  Widget build(BuildContext context) {
     final radius = BorderRadius.circular(square ? 4 : 6);
-    return Material(
-      color: Palette.panel,
-      borderRadius: radius,
-      child: InkWell(
-        onTap: onPressed,
+    return Semantics(
+      button: true,
+      label: semanticsLabel,
+      child: Material(
+        color: Palette.panel,
         borderRadius: radius,
-        child: SizedBox(
-          width: square ? _stageSquare : null,
-          height: square ? _stageSquare : (compact ? 28 : 34),
-          child: Center(
-            child: Text(
-              'Save',
-              style: TextStyle(
-                fontFamily: gameFontFamily,
-                fontSize: square ? 10 : 11,
-                fontWeight: FontWeight.w400,
-                color: Palette.heading,
-                height: 1,
-                shadows: square ? overlayShadow : null,
+        child: InkWell(
+          onTap: onPressed,
+          borderRadius: radius,
+          child: SizedBox(
+            width: square ? _stageSquare : null,
+            height: square ? _stageSquare : (compact ? 28 : 34),
+            child: Center(
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontFamily: gameFontFamily,
+                  fontSize: square ? 10 : 11,
+                  fontWeight: FontWeight.w400,
+                  color: Palette.heading,
+                  height: 1,
+                  shadows: square ? overlayShadow : null,
+                ),
               ),
             ),
           ),
@@ -297,6 +363,7 @@ class _PresetButton extends StatelessWidget {
     required this.skillsById,
     required this.onTap,
     required this.onLongPress,
+    this.tooltipHint = 'Long-press to edit name',
   });
 
   final EquipmentPreset? preset;
@@ -307,6 +374,7 @@ class _PresetButton extends StatelessWidget {
   final Map<String, SkillRow> skillsById;
   final VoidCallback onTap;
   final VoidCallback onLongPress;
+  final String tooltipHint;
 
   @override
   Widget build(BuildContext context) {
@@ -314,7 +382,7 @@ class _PresetButton extends StatelessWidget {
     final label = preset?.name ?? 'Preset ${index + 1}';
     final radius = BorderRadius.circular(square ? 4 : 6);
     return Tooltip(
-      message: '$label\nLong-press to edit',
+      message: '$label\n$tooltipHint',
       child: Semantics(
         button: true,
         selected: selected,
