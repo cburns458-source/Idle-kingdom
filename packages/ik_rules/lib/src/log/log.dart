@@ -4,9 +4,12 @@ import 'package:ik_content/ik_content.dart';
 import '../achievements/progress.dart';
 import '../critters/critters.dart';
 import '../js_compat.dart';
+import '../quests/miniquests.dart';
 import '../quests/objectives.dart';
 import '../quests/quests.dart';
 import '../quests/steps.dart';
+
+export '../quests/miniquests.dart' show MiniQuestLogRow, miniQuestLog;
 import '../recipes/knowledge.dart';
 import '../save/generated/save_models.dart';
 import 'milestones.dart';
@@ -161,7 +164,7 @@ class QuestLogRow {
 }
 
 List<QuestLogRow> questLog(GameDatabase db, PlayerSave save) {
-  return asQuestRows(db).map((quest) {
+  return asQuestRows(db).where((quest) => !hideFromQuestLog(quest)).map((quest) {
     final questId = jsString(quest['Quest ID']);
     final status = getQuestProgress(save, questId).status;
     final npc = db.npcs.firstWhereOrNull((row) => row.raw['NPC ID'] == quest['NPC ID']);

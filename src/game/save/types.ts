@@ -1,4 +1,4 @@
-export const SAVE_VERSION = 37
+export const SAVE_VERSION = 38
 export const SAVE_STORAGE_KEY = 'idle-kingdoms.demo.save'
 export const STARTING_LOCATION_ID = 'LOC-0001'
 /** Base gold before race kit; race starters grant the real starting gold. */
@@ -248,6 +248,8 @@ export interface PlayerSave {
   hasSeenWardrobeIntro: boolean
   /** Whether the player has dismissed Fennel's first farm welcome. */
   hasSeenFennelIntro: boolean
+  /** ISO timestamps of the last miniquest completion, keyed by Quest ID. */
+  miniquestCompletedAt: Record<string, string>
   settings: PlayerSettings
   currentLocationId: string
   currentActivityId: string | null

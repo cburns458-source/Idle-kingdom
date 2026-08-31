@@ -3,10 +3,12 @@ import 'package:ik_content/ik_content.dart';
 
 import '../config.dart';
 import '../js_compat.dart';
+import '../quests/miniquests.dart';
 import '../quests/objectives.dart';
 import '../quests/progress.dart';
 import '../quests/quests.dart';
 import '../quests/steps.dart';
+import '../races/change_race.dart';
 import '../rng/mulberry32.dart';
 import '../save/generated/save_models.dart';
 import '../world/hostility.dart';
@@ -310,6 +312,7 @@ class NpcConversation {
     required this.mentor,
     required this.quests,
     this.whereabouts,
+    this.raceChange,
   });
 
   final String npcId;
@@ -322,6 +325,7 @@ class NpcConversation {
   final NpcMentorBlock? mentor;
   final List<NpcQuestBlock> quests;
   final NpcWhereabouts? whereabouts;
+  final RaceChangeOffer? raceChange;
 
   Map<String, Object?> toJson() => <String, Object?>{
     'npcId': npcId,
@@ -334,6 +338,7 @@ class NpcConversation {
     'mentor': mentor?.toJson(),
     'quests': quests.map((quest) => quest.toJson()).toList(),
     if (whereabouts != null) 'whereabouts': whereabouts!.toJson(),
+    if (raceChange != null) 'raceChange': raceChange!.toJson(),
   };
 }
 
@@ -471,6 +476,7 @@ NpcConversation npcConversation(GameDatabase db, PlayerSave save, NpcRow npc, [n
   final npcId = npc.raw['NPC ID'] as String;
   final quests = <NpcQuestBlock>[];
   for (final quest in questsTouchingNpc(db, save, npcId)) {
+    if (isMiniquest(quest)) continue;
     final isGiver = quest['NPC ID'] == npcId;
     final status = getQuestProgress(save, jsString(quest['Quest ID'])).status;
     if (!isGiver && status != 'active') continue;
@@ -494,6 +500,7 @@ NpcConversation npcConversation(GameDatabase db, PlayerSave save, NpcRow npc, [n
     mentor: _mentorBlock(db, save, npcId),
     quests: quests,
     whereabouts: whereabouts,
+    raceChange: npcId == vesperId ? raceChangeOffer(db, save, clock) : null,
   );
 }
 
@@ -622,6 +629,12 @@ NpcActionResult chooseCombatForQuest(
         ? 'The guards look nervous.'
         : 'The guards look nervous. Pressure them nearby.',
   );
+}
+
+NpcActionResult changeRaceWithNpc(GameDatabase db, PlayerSave save, String raceId, [num? nowMs]) {
+  final result = changeRaceAtNpc(db, save, raceId, nowMs);
+  if (!result.ok) return NpcActionResult.failed(result.reason!);
+  return NpcActionResult.ok(save: result.save!, message: result.message!);
 }
 
 NpcActionResult assignQuestSkillXp(GameDatabase db, PlayerSave save, String skillId, num amount) {

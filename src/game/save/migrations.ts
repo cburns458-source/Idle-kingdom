@@ -548,6 +548,18 @@ export const SAVE_MIGRATIONS: SaveMigration[] = [
   {
     fromVersion: 36,
     toVersion: 37,
+    migrate: (save) => ({
+      ...save,
+      miniquestCompletedAt:
+        save.miniquestCompletedAt && typeof save.miniquestCompletedAt === 'object'
+          ? save.miniquestCompletedAt
+          : {},
+      saveVersion: 37,
+    }),
+  },
+  {
+    fromVersion: 37,
+    toVersion: 38,
     migrate: (save) => {
       const slotIds = Object.keys(save.equipment?.slots ?? {})
       const presets = createDefaultEquipmentPresets(slotIds)
@@ -576,7 +588,7 @@ export const SAVE_MIGRATIONS: SaveMigration[] = [
         ...save,
         equipmentPresets: presets,
         activeEquipmentPresetIndex: 0,
-        saveVersion: 37,
+        saveVersion: 38,
       }
     },
   },

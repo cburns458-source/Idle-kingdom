@@ -510,6 +510,20 @@ final List<SaveMigration> saveMigrations = <SaveMigration>[
     toVersion: 37,
     migrate: (save, nowMs) {
       final next = _bumped(save, 37);
+      final raw = save['miniquestCompletedAt'];
+      next['miniquestCompletedAt'] = raw is Map
+          ? Map<String, String>.from(
+              raw.map((key, value) => MapEntry(key.toString(), value.toString())),
+            )
+          : <String, String>{};
+      return next;
+    },
+  ),
+  SaveMigration(
+    fromVersion: 37,
+    toVersion: 38,
+    migrate: (save, nowMs) {
+      final next = _bumped(save, 38);
       final equipment = save['equipment'];
       final rawSlots = equipment is Map ? equipment['slots'] : null;
       final slotIds = <String>[];

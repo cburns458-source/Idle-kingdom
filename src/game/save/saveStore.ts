@@ -101,6 +101,7 @@ export function createNewSave(db: GameDatabase, nowMs: number = Date.now()): Pla
     },
     hasSeenWardrobeIntro: false,
     hasSeenFennelIntro: false,
+    miniquestCompletedAt: {},
     settings: {
       soundEnabled: true,
       showActivityRewards: true,

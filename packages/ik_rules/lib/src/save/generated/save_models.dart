@@ -7,7 +7,7 @@
 
 import '../../json_support.dart';
 
-const int saveVersion = 37;
+const int saveVersion = 38;
 
 const String saveStorageKey = 'idle-kingdoms.demo.save';
 
@@ -646,6 +646,7 @@ class PlayerSave {
     required this.appearance,
     required this.hasSeenWardrobeIntro,
     required this.hasSeenFennelIntro,
+    required this.miniquestCompletedAt,
     required this.settings,
     required this.currentLocationId,
     this.currentActivityId,
@@ -735,6 +736,7 @@ class PlayerSave {
       appearance: PlayerAppearance.fromJson(asJsonMap(json['appearance'])),
       hasSeenWardrobeIntro: json['hasSeenWardrobeIntro'] as bool,
       hasSeenFennelIntro: json['hasSeenFennelIntro'] as bool,
+      miniquestCompletedAt: mapOf(json['miniquestCompletedAt'], (Object? value) => value as String),
       settings: PlayerSettings.fromJson(asJsonMap(json['settings'])),
       currentLocationId: json['currentLocationId'] as String,
       currentActivityId: json['currentActivityId'] as String?,
@@ -867,6 +869,9 @@ class PlayerSave {
   /// Whether the player has dismissed Fennel's first farm welcome.
   final bool hasSeenFennelIntro;
 
+  /// ISO timestamps of the last miniquest completion, keyed by Quest ID.
+  final Map<String, String> miniquestCompletedAt;
+
   final PlayerSettings settings;
 
   final String currentLocationId;
@@ -966,6 +971,7 @@ class PlayerSave {
       'appearance': appearance.toJson(),
       'hasSeenWardrobeIntro': hasSeenWardrobeIntro,
       'hasSeenFennelIntro': hasSeenFennelIntro,
+      'miniquestCompletedAt': miniquestCompletedAt,
       'settings': settings.toJson(),
       'currentLocationId': currentLocationId,
       'currentActivityId': currentActivityId,
@@ -1031,6 +1037,7 @@ class PlayerSave {
     PlayerAppearance? appearance,
     bool? hasSeenWardrobeIntro,
     bool? hasSeenFennelIntro,
+    Map<String, String>? miniquestCompletedAt,
     PlayerSettings? settings,
     String? currentLocationId,
     Object? currentActivityId = _unset,
@@ -1097,6 +1104,7 @@ class PlayerSave {
       appearance: appearance ?? this.appearance,
       hasSeenWardrobeIntro: hasSeenWardrobeIntro ?? this.hasSeenWardrobeIntro,
       hasSeenFennelIntro: hasSeenFennelIntro ?? this.hasSeenFennelIntro,
+      miniquestCompletedAt: miniquestCompletedAt ?? this.miniquestCompletedAt,
       settings: settings ?? this.settings,
       currentLocationId: currentLocationId ?? this.currentLocationId,
       currentActivityId: currentActivityId == _unset

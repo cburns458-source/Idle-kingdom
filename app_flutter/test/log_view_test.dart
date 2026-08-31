@@ -110,6 +110,12 @@ void main() {
     await tester.tap(find.text('Quests'));
     await tester.pump();
 
+    expect(find.text('Quest log for this save.'), findsNothing);
+    expect(find.textContaining('Miniquests'), findsOne);
+    await tester.tap(find.textContaining('Miniquests'));
+    await tester.pump();
+    expect(find.text('No active miniquests.'), findsOne);
+
     expect(find.text('Active'), findsOne);
     expect(find.text('Not started'), findsWidgets);
     expect(find.text('Hear what the King needs'), findsNothing);
@@ -167,5 +173,32 @@ void main() {
     expect(find.text('Milestones'), findsOne);
     expect(find.text('Quests'), findsOne);
     expect(find.text('Recipe Book'), findsNothing);
+  });
+
+  testWidgets('miniquests list a weekly race change once total level is high enough', (
+    tester,
+  ) async {
+    final base = startedCharacter(database);
+    final bump = raceChangeTotalLevel - totalLevel(base);
+    final first = base.skills.first;
+    final seasoned = base.copyWith(
+      skills: <SkillProgress>[
+        first.copyWith(level: first.level + bump),
+        ...base.skills.skip(1),
+      ],
+    );
+    final controller = buildController(database, seed: seasoned);
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller);
+    await openLog(tester);
+
+    await tester.tap(find.text('Quests'));
+    await tester.pump();
+    await tester.tap(find.textContaining('Miniquests'));
+    await tester.pump();
+
+    expect(find.text('A Change of Skin'), findsOne);
+    expect(find.textContaining('Every 7 days'), findsOne);
+    expect(find.textContaining('Available now'), findsOne);
   });
 }

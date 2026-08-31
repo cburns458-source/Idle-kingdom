@@ -818,6 +818,17 @@ class GameController extends ChangeNotifier {
     return '${result.critter!.displayName} appeared.';
   }
 
+  /// Asks Vesper to rewrite the player's race. Kits are not re-granted.
+  ///
+  /// Returns the refusal, or null after the change is committed.
+  String? changeRaceWithVesper(String raceId) {
+    final result = changeRaceWithNpc(db, save, raceId, session.clock());
+    if (!result.ok) return result.reason;
+    commit(result.save!);
+    announce(result.message!);
+    return null;
+  }
+
   /// Swaps race after the first pick. Does not re-grant a starter kit.
   String? debugChangeRace(String raceId) {
     final result = assignRace(db, save, raceId);

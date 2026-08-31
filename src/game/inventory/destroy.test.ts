@@ -49,6 +49,7 @@ function saveWithInventory(itemIds: string[]): PlayerSave {
     },
     hasSeenWardrobeIntro: false,
     hasSeenFennelIntro: false,
+    miniquestCompletedAt: {},
     settings: {
       soundEnabled: true,
       showActivityRewards: true,
