@@ -465,6 +465,11 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
       _arrive(locationId);
       return;
     }
+    final depthsBlock = depthsTravelBlockReason(locationId, controller.save);
+    if (depthsBlock != null) {
+      controller.announce(depthsBlock);
+      return;
+    }
     if (!canTravelTo(
       controller.db,
       controller.save.currentLocationId,

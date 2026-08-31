@@ -3,6 +3,7 @@ import { withoutHeldAction } from '../activity/heldAction'
 import { configNumber } from '../activity/gathering'
 import { resolveActionRewards } from '../activity/rewards'
 import { applyXp, getSkillProgress } from '../activity/xp'
+import { FISHING_SKILL_ID } from '../skills/skillActions'
 import type { ActionRow, GameDatabase } from '../data/types'
 import type { EnemyRow } from '../data/enemyTypes'
 import { revokeCosmetic } from '../cosmetics/cosmetics'
@@ -141,7 +142,12 @@ export function resolveCombatRound(
   const floor = configNumber(db, 'damage_floor', 1)
   const profile = bossProfile(enemy)
   const asleep = (save.combatBossSleepRoundsRemaining ?? 0) > 0
-  const fishingMode = profile?.damageMode === 'fishing' && !isBossAddFight(save)
+  const fishingMode = (() => {
+    if (isBossAddFight(save) && save.combatBossPendingId) {
+      return bossProfile(getEnemy(db, save.combatBossPendingId))?.damageMode === 'fishing'
+    }
+    return profile?.damageMode === 'fishing'
+  })()
   const enemyMaxHp = enemyEncounterMaxHp(db, save, enemy)
 
   let bossInkActive = false
@@ -357,7 +363,9 @@ export function applyCombatVictory(
   }
 
   const xpAmount = Number(enemy['Combat XP'] ?? action['XP Reward'] ?? 0)
-  const xpApplied = applyXp(next, db, 'SKL-0001', xpAmount)
+  const xpSkillId =
+    bossProfile(enemy)?.damageMode === 'fishing' ? FISHING_SKILL_ID : 'SKL-0001'
+  const xpApplied = applyXp(next, db, xpSkillId, xpAmount)
   next = xpApplied.save
 
   const minGold = Number(enemy['Minimum Gold'] ?? 0)

@@ -22,6 +22,7 @@ class EquipmentPresetsBar extends StatelessWidget {
     this.compact = false,
     this.showSaveButton = true,
     this.showSettingsButton = false,
+    this.allowLongPressEdit = true,
     this.editingIndex,
     this.onStartEdit,
     this.onFinishEdit,
@@ -34,6 +35,9 @@ class EquipmentPresetsBar extends StatelessWidget {
   final bool compact;
   final bool showSaveButton;
   final bool showSettingsButton;
+
+  /// When false (location stage), taps only switch presets.
+  final bool allowLongPressEdit;
 
   /// When set, the bar is in inventory Edit mode: taps preview a snapshot.
   final int? editingIndex;
@@ -59,7 +63,9 @@ class EquipmentPresetsBar extends StatelessWidget {
           compact: compact,
           square: compact && axis == Axis.vertical,
           skillsById: controller.indexes.skillsById,
-          tooltipHint: _editing ? 'Preview this loadout' : 'Long-press to edit name',
+          tooltipHint: _editing
+              ? 'Preview this loadout'
+              : (allowLongPressEdit ? 'Long-press to edit name' : 'Tap to switch preset'),
           onTap: () {
             if (_editing) {
               onSelectForEdit?.call(i);
@@ -73,7 +79,7 @@ class EquipmentPresetsBar extends StatelessWidget {
             controller.commitLoadout(result.save!);
             if (result.warning != null) onMessage?.call(result.warning!);
           },
-          onLongPress: () => _editPreset(context, i),
+          onLongPress: allowLongPressEdit ? () => _editPreset(context, i) : null,
         ),
       if (showSaveButton && !_editing)
         _SaveChip(
@@ -362,7 +368,7 @@ class _PresetButton extends StatelessWidget {
     required this.square,
     required this.skillsById,
     required this.onTap,
-    required this.onLongPress,
+    this.onLongPress,
     this.tooltipHint = 'Long-press to edit name',
   });
 
@@ -373,7 +379,7 @@ class _PresetButton extends StatelessWidget {
   final bool square;
   final Map<String, SkillRow> skillsById;
   final VoidCallback onTap;
-  final VoidCallback onLongPress;
+  final VoidCallback? onLongPress;
   final String tooltipHint;
 
   @override

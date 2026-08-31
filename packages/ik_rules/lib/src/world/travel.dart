@@ -8,6 +8,8 @@ import '../quests/progress.dart';
 import '../quests/quests.dart';
 import '../quests/steps.dart';
 import '../save/generated/save_models.dart';
+import '../activity/xp.dart' show getSkillProgress;
+import '../skills/skill_actions.dart' show fishingSkillId;
 import 'constants.dart';
 import 'map_label.dart';
 import 'kingswoods_sling.dart';
@@ -115,6 +117,20 @@ List<LocationRow> locationsForMapView(
   return merged.values.toList();
 }
 
+
+/// Fishing level required to enter The Depths (LOC-0042).
+const int depthsFishingLevelRequirement = 50;
+
+String? depthsTravelBlockReason(String toLocationId, [PlayerSave? save]) {
+  if (toLocationId != theDepthsId) return null;
+  if (save == null) {
+    return 'Requires Fishing level $depthsFishingLevelRequirement.';
+  }
+  final level = getSkillProgress(save, fishingSkillId).level;
+  if (level >= depthsFishingLevelRequirement) return null;
+  return 'Requires Fishing level $depthsFishingLevelRequirement.';
+}
+
 bool canTravelTo(
   GameDatabase db,
   String fromLocationId,
@@ -132,6 +148,7 @@ bool canTravelTo(
   if (!_locationOpenForSave(db, destination, unlockedLocationIds, fromLocationId, save)) {
     return false;
   }
+  if (depthsTravelBlockReason(toLocationId, save) != null) return false;
 
   if (activeMapId == mainMapId) {
     // World-map travel is allowed from anywhere, including sub-locations,

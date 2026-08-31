@@ -22,6 +22,9 @@ class CharacterView extends StatefulWidget {
 class _CharacterViewState extends State<CharacterView> {
   CharacterTab _tab = CharacterTab.inventory;
 
+  /// Shared so Equipment → Inventory keeps preset Edit mode.
+  int? _editingPresetIndex;
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -50,7 +53,12 @@ class _CharacterViewState extends State<CharacterView> {
                     compact: true,
                     selected: _tab == tab,
                     tone: _tab == tab ? GameButtonTone.primary : GameButtonTone.secondary,
-                    onPressed: () => setState(() => _tab = tab),
+                    onPressed: () => setState(() {
+                      if (tab == CharacterTab.skills) {
+                        _editingPresetIndex = null;
+                      }
+                      _tab = tab;
+                    }),
                   ),
                 ),
               ],
@@ -65,12 +73,16 @@ class _CharacterViewState extends State<CharacterView> {
               controller: widget.controller,
               pane: InventoryPane.items,
               showHeader: false,
+              editingPresetIndex: _editingPresetIndex,
+              onEditingPresetIndexChanged: (index) => setState(() => _editingPresetIndex = index),
             ),
             CharacterTab.equipment => InventoryView(
               key: const ValueKey(InventoryPane.equipment),
               controller: widget.controller,
               pane: InventoryPane.equipment,
               showHeader: false,
+              editingPresetIndex: _editingPresetIndex,
+              onEditingPresetIndexChanged: (index) => setState(() => _editingPresetIndex = index),
             ),
           },
         ),

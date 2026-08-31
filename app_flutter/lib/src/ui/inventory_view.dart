@@ -46,6 +46,8 @@ class InventoryView extends StatefulWidget {
     this.onClose,
     this.pane,
     this.showHeader = true,
+    this.editingPresetIndex,
+    this.onEditingPresetIndexChanged,
   });
 
   final GameController controller;
@@ -54,6 +56,10 @@ class InventoryView extends StatefulWidget {
   /// When set, only this pane is shown and the Items / Equipment toggle is hidden.
   final InventoryPane? pane;
   final bool showHeader;
+
+  /// When provided by [CharacterView], edit mode survives Equipment → Inventory.
+  final int? editingPresetIndex;
+  final ValueChanged<int?>? onEditingPresetIndexChanged;
 
   @override
   State<InventoryView> createState() => _InventoryViewState();
@@ -67,9 +73,22 @@ class _InventoryViewState extends State<InventoryView> {
   InventorySortMode _sortMode = InventorySortMode.group;
   final TextEditingController _search = TextEditingController();
   late InventorySorter _sorter = InventorySorter(widget.controller.db);
-  int? _editingPresetIndex;
+  int? _localEditingPresetIndex;
   bool get _lockedPane => widget.pane != null;
+  int? get _editingPresetIndex =>
+      widget.onEditingPresetIndexChanged != null
+          ? widget.editingPresetIndex
+          : _localEditingPresetIndex;
   bool get _editingPreset => _editingPresetIndex != null;
+
+  void _setEditingPresetIndex(int? index) {
+    final notify = widget.onEditingPresetIndexChanged;
+    if (notify != null) {
+      notify(index);
+    } else {
+      setState(() => _localEditingPresetIndex = index);
+    }
+  }
 
   /// Character locks this to one pane. Prefer that over leftover inner-tab state
   /// so Equipment cannot keep showing the bag after Inventory.
@@ -90,7 +109,9 @@ class _InventoryViewState extends State<InventoryView> {
       _message = null;
       _showSources = false;
       _showBonuses = false;
-      _editingPresetIndex = null;
+      if (widget.onEditingPresetIndexChanged == null) {
+        _localEditingPresetIndex = null;
+      }
     }
   }
 
@@ -122,12 +143,12 @@ class _InventoryViewState extends State<InventoryView> {
     setState(() => _message = reason);
   }
 
-  void _equipAt(int index) {
+  void _equipAt(int index, {String? preferredSlotId}) {
     if (_editingPreset) {
-      _assignToEditingPreset(index);
+      _assignToEditingPreset(index, preferredSlotId: preferredSlotId);
       return;
     }
-    final result = equipInventoryIndex(db, save, index);
+    final result = equipInventoryIndex(db, save, index, preferredSlotId: preferredSlotId);
     if (!result.ok) {
       setState(() => _message = result.reason);
       return;
@@ -136,15 +157,22 @@ class _InventoryViewState extends State<InventoryView> {
     controller.commitLoadout(result.save!);
   }
 
-  void _assignToEditingPreset(int inventoryIndex) {
+  void _assignToEditingPreset(int inventoryIndex, {String? preferredSlotId}) {
     final editing = _editingPresetIndex;
     if (editing == null || inventoryIndex < 0 || inventoryIndex >= save.inventory.length) return;
     final stack = save.inventory[inventoryIndex];
     final gear = equipmentForItemId(db, stack.itemId);
-    final slotId = gear?.slotId;
+    var slotId = preferredSlotId ?? gear?.slotId;
     if (slotId == null) {
       setState(() => _message = 'That does not go on a preset.');
       return;
+    }
+    if (preferredSlotId != null && !_itemFitsSlot(stack.itemId, preferredSlotId)) {
+      setState(() => _message = 'That does not fit this slot.');
+      return;
+    }
+    if (isSpellSlotId(preferredSlotId ?? '') && preferredSlotId != null) {
+      slotId = preferredSlotId;
     }
     final quantity = isStackableConsumableSlot(slotId) ? stack.quantity : 1;
     final next = setEquipmentPresetSlot(
@@ -540,14 +568,11 @@ class _InventoryViewState extends State<InventoryView> {
                   controller: controller,
                   showSettingsButton: true,
                   editingIndex: _editingPresetIndex,
-                  onStartEdit: () => setState(() {
-                    _editingPresetIndex = save.activeEquipmentPresetIndex.floor().clamp(
-                      0,
-                      equipmentPresetCount - 1,
-                    );
-                  }),
-                  onFinishEdit: () => setState(() => _editingPresetIndex = null),
-                  onSelectForEdit: (index) => setState(() => _editingPresetIndex = index),
+                  onStartEdit: () => _setEditingPresetIndex(
+                    save.activeEquipmentPresetIndex.floor().clamp(0, equipmentPresetCount - 1),
+                  ),
+                  onFinishEdit: () => _setEditingPresetIndex(null),
+                  onSelectForEdit: _setEditingPresetIndex,
                   onMessage: (message) {
                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
                   },
@@ -629,6 +654,73 @@ class _InventoryViewState extends State<InventoryView> {
     );
   }
 
+  bool _itemFitsSlot(String itemId, String slotId) =>
+      itemFitsEquipmentSlot(db, itemId, slotId);
+
+  Future<void> _openSlotEquipPicker(String slotId) async {
+    final slot = db.equipmentSlots.where((row) => row.slotId == slotId).firstOrNull;
+    final candidates = <({int index, InventoryStack stack})>[
+      for (var i = 0; i < save.inventory.length; i += 1)
+        if (_itemFitsSlot(save.inventory[i].itemId, slotId))
+          (index: i, stack: save.inventory[i]),
+    ];
+    if (candidates.isEmpty) {
+      setState(() => _message = 'No items in your bag fit that slot.');
+      return;
+    }
+    final chosen = await showGamePopup<int>(
+      context: context,
+      builder: (context) {
+        return GamePopupCard(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'Equip — ${slot?.displayName ?? slotId}',
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 8),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxHeight: 320),
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  itemCount: candidates.length,
+                  separatorBuilder: (_, _) => const SizedBox(height: 6),
+                  itemBuilder: (context, i) {
+                    final entry = candidates[i];
+                    final item = controller.indexes.itemsById[entry.stack.itemId];
+                    final name = item?.displayName ?? entry.stack.itemId;
+                    final qty = entry.stack.quantity;
+                    return GamePanel(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                      onTap: () => Navigator.of(context).pop(entry.index),
+                      child: Row(
+                        children: [
+                          ItemIcon(item: item, size: 28),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              qty > 1 ? '$name ×$qty' : name,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+    if (!mounted || chosen == null) return;
+    _equipAt(chosen, preferredSlotId: slotId);
+  }
+
   Widget _slotTile(String slotId) {
     final live = save.equipment.slots[slotId];
     final preview = _editingPreset
@@ -642,7 +734,7 @@ class _InventoryViewState extends State<InventoryView> {
     if (stack == null) {
       return GamePanel(
         padding: const EdgeInsets.all(3),
-        onTap: () => _showDetail(slotId: slotId),
+        onTap: () => _openSlotEquipPicker(slotId),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [

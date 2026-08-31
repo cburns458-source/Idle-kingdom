@@ -16,6 +16,21 @@ const String foodSlotId = 'SLOT-0011';
 const String potionSlotId = 'SLOT-0012';
 const String offhandSlotId = 'SLOT-0002';
 
+/// Whether [itemId] can be equipped into [slotId] (including spell / dagger rules).
+bool itemFitsEquipmentSlot(GameDatabase db, String itemId, String slotId) {
+  final equipment = db.equipment.firstWhereOrNull((row) => row.raw['Item ID'] == itemId);
+  if (equipment == null) return false;
+  final gearSlot = equipment.raw['Slot ID'];
+  if (gearSlot is! String || gearSlot.isEmpty) return false;
+  if (isSpellSlotId(slotId)) {
+    return isSpellEquipment(equipment) || isSpellSlotId(gearSlot);
+  }
+  if (slotId == offhandSlotId) {
+    return gearSlot == offhandSlotId || isDaggerItem(db, itemId);
+  }
+  return gearSlot == slotId;
+}
+
 bool isDaggerItem(GameDatabase db, String itemId) {
   final item = db.items.firstWhereOrNull((row) => row.raw['Item ID'] == itemId);
   if (item == null) return false;
@@ -186,7 +201,7 @@ EquipResult equipItemFromInventory(GameDatabase db, PlayerSave save, String item
 }
 
 /// Equips a specific inventory stack index (preserves enchantments).
-EquipResult equipInventoryIndex(GameDatabase db, PlayerSave save, num index) {
+EquipResult equipInventoryIndex(GameDatabase db, PlayerSave save, num index, {String? preferredSlotId}) {
   final invStack = _stackAt(save.inventory, index);
   if (invStack == null || invStack.quantity <= 0) {
     return const EquipResult.failed('Item is not in inventory.');
@@ -214,11 +229,17 @@ EquipResult equipInventoryIndex(GameDatabase db, PlayerSave save, num index) {
   // Spells may fill any empty spell slot; duplicates are allowed across slots.
   var slotId = equipmentSlotId;
   if (isSpellEquipment(equipment) || isSpellSlotId(slotId)) {
-    final empty = firstEmptySpellSlot(save);
-    if (empty == null) {
-      return const EquipResult.failed('All spell slots are full.');
+    if (preferredSlotId != null &&
+        isSpellSlotId(preferredSlotId) &&
+        slotStack(save, preferredSlotId) == null) {
+      slotId = preferredSlotId;
+    } else {
+      final empty = firstEmptySpellSlot(save);
+      if (empty == null) {
+        return const EquipResult.failed('All spell slots are full.');
+      }
+      slotId = empty;
     }
-    slotId = empty;
   } else if (isDaggerItem(db, itemId)) {
     // Daggers equip to the off-hand only (replacing a shield). Dual-wielding two
     // daggers is not supported yet.

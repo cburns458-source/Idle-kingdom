@@ -116,12 +116,24 @@ num enemyEncounterMaxHp(GameDatabase db, PlayerSave save, EnemyRow enemy) {
   return jsNumber(enemy.raw['Maximum HP']);
 }
 
-DamageRange enemyEncounterDamageRange(GameDatabase db, PlayerSave save, EnemyRow enemy) {
+({num min, num max})? _playerBaseDamagePctFromNotes(EnemyRow enemy) {
   final profile = bossProfile(enemy);
   if (profile?.playerBaseDamagePctMin != null && profile?.playerBaseDamagePctMax != null) {
+    return (min: profile!.playerBaseDamagePctMin!, max: profile.playerBaseDamagePctMax!);
+  }
+  final tokens = _noteTokens(enemy.raw['Notes']);
+  final dmgMinRaw = _noteNumber(tokens, 'player_base_damage_pct_min', double.nan);
+  final dmgMaxRaw = _noteNumber(tokens, 'player_base_damage_pct_max', double.nan);
+  if (!dmgMinRaw.isFinite || !dmgMaxRaw.isFinite) return null;
+  return (min: dmgMinRaw, max: dmgMaxRaw);
+}
+
+DamageRange enemyEncounterDamageRange(GameDatabase db, PlayerSave save, EnemyRow enemy) {
+  final pct = _playerBaseDamagePctFromNotes(enemy);
+  if (pct != null) {
     final base = playerBaseMaxHp(db, save);
-    final min = math.max(1, (base * profile!.playerBaseDamagePctMin! / 100).floor());
-    final max = math.max(min, (base * profile.playerBaseDamagePctMax! / 100).floor());
+    final min = math.max(1, (base * pct.min / 100).floor());
+    final max = math.max(min, (base * pct.max / 100).floor());
     return DamageRange(min: min, max: max);
   }
   return DamageRange(

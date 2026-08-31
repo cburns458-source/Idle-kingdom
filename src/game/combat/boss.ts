@@ -107,20 +107,32 @@ export function enemyEncounterMaxHp(
   return enemy['Maximum HP']
 }
 
+/** Read player-base damage % notes from any enemy (boss or add). */
+function playerBaseDamagePctFromNotes(
+  enemy: EnemyRow,
+): { min: number; max: number } | null {
+  const profile = bossProfile(enemy)
+  if (profile?.playerBaseDamagePctMin != null && profile.playerBaseDamagePctMax != null) {
+    return { min: profile.playerBaseDamagePctMin, max: profile.playerBaseDamagePctMax }
+  }
+  const tokens = noteTokens(enemy.Notes)
+  const dmgMinRaw = noteNumber(tokens, 'player_base_damage_pct_min', Number.NaN)
+  const dmgMaxRaw = noteNumber(tokens, 'player_base_damage_pct_max', Number.NaN)
+  if (!Number.isFinite(dmgMinRaw) || !Number.isFinite(dmgMaxRaw)) return null
+  return { min: dmgMinRaw, max: dmgMaxRaw }
+}
+
 /** Enemy damage range for this encounter (scaled or static Min/Max Damage). */
 export function enemyEncounterDamageRange(
   db: GameDatabase,
   save: PlayerSave,
   enemy: EnemyRow,
 ): { min: number; max: number } {
-  const profile = bossProfile(enemy)
-  if (
-    profile?.playerBaseDamagePctMin != null &&
-    profile.playerBaseDamagePctMax != null
-  ) {
+  const pct = playerBaseDamagePctFromNotes(enemy)
+  if (pct) {
     const base = playerBaseMaxHp(db, save)
-    const min = Math.max(1, Math.floor((base * profile.playerBaseDamagePctMin) / 100))
-    const max = Math.max(min, Math.floor((base * profile.playerBaseDamagePctMax) / 100))
+    const min = Math.max(1, Math.floor((base * pct.min) / 100))
+    const max = Math.max(min, Math.floor((base * pct.max) / 100))
     return { min, max }
   }
   return { min: enemy['Min Damage'], max: enemy['Max Damage'] }
