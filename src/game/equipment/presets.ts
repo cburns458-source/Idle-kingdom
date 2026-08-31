@@ -29,12 +29,13 @@ export function emptyPresetSlots(
 
 export function cloneEquippedStack(stack: EquippedStack | null): EquippedStack | null {
   if (!stack) return null
-  return {
+  const next: EquippedStack = {
     itemId: stack.itemId,
     quantity: stack.quantity,
-    enchantmentId: stack.enchantmentId ?? null,
-    favorite: stack.favorite === true ? true : undefined,
   }
+  if (stack.enchantmentId) next.enchantmentId = stack.enchantmentId
+  if (stack.favorite === true) next.favorite = true
+  return next
 }
 
 export function clonePresetSlots(

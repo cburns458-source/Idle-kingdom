@@ -563,8 +563,8 @@ export const SAVE_MIGRATIONS: SaveMigration[] = [
                   ? {
                       itemId: stack.itemId,
                       quantity: stack.quantity,
-                      enchantmentId: stack.enchantmentId ?? null,
-                      favorite: stack.favorite === true ? true : undefined,
+                      ...(stack.enchantmentId ? { enchantmentId: stack.enchantmentId } : {}),
+                      ...(stack.favorite === true ? { favorite: true } : {}),
                     }
                   : null,
               ]

@@ -13,6 +13,8 @@ function saveWithInventory(itemIds: string[]): PlayerSave {
     inventory: itemIds.map((itemId) => ({ itemId, quantity: 1 })),
     bank: [],
     equipment: { slots: {} },
+    equipmentPresets: [],
+    activeEquipmentPresetIndex: 0,
     gold: 0,
     quests: [],
     achievements: [],
