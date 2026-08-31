@@ -4,6 +4,7 @@ import 'package:ik_content/ik_content.dart';
 
 import '../achievements/progress.dart';
 import '../activity/xp.dart';
+import '../skills/skill_actions.dart' show fishingSkillId;
 import '../save/generated/save_models.dart';
 import 'boss.dart';
 import 'engine.dart';
@@ -53,7 +54,7 @@ SquidlingVictoryResult applySquidlingVictory(
   String roundEndIso,
 ) {
   final xpAmount = squidling.combatXp ?? 0;
-  var next = applyXp(save, db, 'SKL-0001', xpAmount).save;
+  var next = applyXp(save, db, fishingSkillId, xpAmount).save;
   final kills = (next.statistics.values['monsters_killed'] ?? 0) + 1;
   next = next.copyWith(
     statistics: PlayerStatistics(

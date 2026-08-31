@@ -1,4 +1,5 @@
 import { applyXp } from '../activity/xp'
+import { FISHING_SKILL_ID } from '../skills/skillActions'
 import type { GameDatabase } from '../data/types'
 import type { EnemyRow } from '../data/enemyTypes'
 import type { PlayerSave } from '../save/types'
@@ -46,7 +47,7 @@ export function applySquidlingVictory(
   roundEndIso: string,
 ): SquidlingVictoryResult {
   const xpAmount = Number(squidling['Combat XP'] ?? 0)
-  let next = applyXp(save, db, 'SKL-0001', xpAmount).save
+  let next = applyXp(save, db, FISHING_SKILL_ID, xpAmount).save
   const kills = Number(next.statistics.values.monsters_killed ?? 0) + 1
   next = {
     ...next,

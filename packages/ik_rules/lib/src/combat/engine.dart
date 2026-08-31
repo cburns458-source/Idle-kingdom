@@ -23,6 +23,7 @@ import '../save/generated/save_models.dart';
 import '../time.dart';
 import 'boss.dart';
 import 'food.dart';
+import '../skills/skill_actions.dart' show fishingSkillId;
 import 'stats.dart';
 
 /// One resolved round of combat.
@@ -196,7 +197,12 @@ CombatRoundResult resolveCombatRound(
   final profile = bossProfile(enemy);
   final asleep = (save.combatBossSleepRoundsRemaining ?? 0) > 0;
   final enemyMaxHp = enemyEncounterMaxHp(db, save, enemy);
-  final fishingMode = profile?.damageMode == 'fishing' && !isBossAddFight(save);
+  final fishingMode = () {
+    if (isBossAddFight(save) && save.combatBossPendingId != null) {
+      return bossProfile(getEnemy(db, save.combatBossPendingId!))?.damageMode == 'fishing';
+    }
+    return profile?.damageMode == 'fishing';
+  }();
 
   var bossInkActive = false;
   if (profile?.inkAt != null &&
@@ -411,7 +417,8 @@ CombatVictoryResult applyCombatVictory(
   );
 
   final xpAmount = jsNumber(enemy.raw['Combat XP'] ?? action.raw['XP Reward'] ?? 0);
-  next = applyXp(next, db, combatSkillId, xpAmount).save;
+  final xpSkillId = bossProfile(enemy)?.damageMode == 'fishing' ? fishingSkillId : combatSkillId;
+  next = applyXp(next, db, xpSkillId, xpAmount).save;
 
   final minGold = jsNumber(enemy.raw['Minimum Gold'] ?? 0);
   final maxGold = jsNumber(enemy.raw['Maximum Gold'] ?? minGold);

@@ -6,7 +6,8 @@ import { applyQuestLocationProgress } from '../quests/progress'
 import { questRevealsLocation } from '../quests/steps'
 import type { PlayerSave } from '../save/types'
 import { maybeGrantKingswoodsSling } from './kingswoodsSling'
-import { MAIN_MAP_ID, isFutureHorizonLocation } from './constants'
+import { MAIN_MAP_ID, THE_DEPTHS_ID, isFutureHorizonLocation } from './constants'
+import { FISHING_SKILL_ID } from '../skills/skillActions'
 import { locationHiddenOnMap } from './mapLabel'
 import {
   gatewayLocationIdForSubMap,
@@ -83,6 +84,21 @@ type MapUnlockSave = {
   unlockedLocationIds?: string[] | null
   currentLocationId?: string | null
   quests?: PlayerSave['quests']
+  skills?: PlayerSave['skills']
+}
+
+/** Fishing level required to enter The Depths (LOC-0042). */
+export const DEPTHS_FISHING_LEVEL_REQUIREMENT = 50
+
+export function depthsTravelBlockReason(
+  toLocationId: string,
+  save?: MapUnlockSave | null,
+): string | null {
+  if (toLocationId !== THE_DEPTHS_ID) return null
+  const row = save?.skills?.find((skill) => skill.skillId === FISHING_SKILL_ID)
+  const level = row?.level ?? 1
+  if (level >= DEPTHS_FISHING_LEVEL_REQUIREMENT) return null
+  return `Requires Fishing level ${DEPTHS_FISHING_LEVEL_REQUIREMENT}.`
 }
 
 function locationOpenForSave(
@@ -142,6 +158,7 @@ export function canTravelTo(
   const destination = db.Locations.find((location) => location['Location ID'] === toLocationId)
   if (!destination) return false
   if (!locationOpenForSave(db, destination, save)) return false
+  if (depthsTravelBlockReason(toLocationId, save)) return false
 
   if (activeMapId === MAIN_MAP_ID) {
     // World-map travel is allowed from anywhere, including sub-locations.

@@ -149,4 +149,57 @@ describe('mother squid boss', () => {
       new Date(now + 30_000).toISOString(),
     )
   })
+
+  it('awards fishing XP for Mother Squid and Squidlings', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const squid = launch.Enemies.find((row) => row['Enemy ID'] === 'ENM-0023')!
+    const squidling = launch.Enemies.find((row) => row['Enemy ID'] === 'ENM-0024')!
+    const action = launch.Actions.find((row) => row['Action ID'] === 'ACN-0178')!
+    const before = saveAtDepths(launch)
+    const fishingBefore = before.skills.find((row) => row.skillId === FISHING_SKILL_ID)!.xp
+    const combatBefore = before.skills.find((row) => row.skillId === 'SKL-0001')!.xp
+
+    const squidlingWin = applySquidlingVictory(
+      launch,
+      {
+        ...before,
+        combatEnemyHp: 0,
+        combatBossPendingId: 'ENM-0023',
+        combatBossAddsRemaining: 1,
+      },
+      squidling,
+      new Date().toISOString(),
+    )
+    expect(squidlingWin.save.skills.find((row) => row.skillId === FISHING_SKILL_ID)!.xp).toBeGreaterThan(
+      fishingBefore,
+    )
+    expect(squidlingWin.save.skills.find((row) => row.skillId === 'SKL-0001')!.xp).toBe(combatBefore)
+
+    const victory = applyCombatVictory(launch, before, action, squid, () => 0)
+    expect(victory.save.skills.find((row) => row.skillId === FISHING_SKILL_ID)!.xp).toBeGreaterThan(
+      fishingBefore,
+    )
+    expect(victory.save.skills.find((row) => row.skillId === 'SKL-0001')!.xp).toBe(combatBefore)
+  })
+
+  it('uses fishing damage vs Squidlings and scales their hits to 4–6% of player base HP', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const squid = launch.Enemies.find((row) => row['Enemy ID'] === 'ENM-0023')!
+    const squidling = launch.Enemies.find((row) => row['Enemy ID'] === 'ENM-0024')!
+    const action = launch.Actions.find((row) => row['Action ID'] === 'ACN-0178')!
+    let save = beginCombatSave(launch, saveAtDepths(launch), action, squid)
+    save = beginBossAddsEncounter(
+      launch,
+      save,
+      squid,
+      bossProfile(squid)!,
+      1000,
+      new Date().toISOString(),
+    )
+    expect(enemyEncounterDamageRange(launch, save, squidling)).toEqual({ min: 40, max: 60 })
+
+    const fishing = fishingCombatDamageRange(launch, save)
+    const round = resolveCombatRound(launch, save, squidling, squidling['Maximum HP'], () => 0)
+    expect(round.playerHit).toBe(fishing.min)
+  })
 })

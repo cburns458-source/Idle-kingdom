@@ -37,6 +37,7 @@ import {
   TOWN_KITCHEN_ID,
   TOWN_MAP_ID,
 } from './constants'
+import { FISHING_SKILL_ID } from '../skills/skillActions'
 import { mapNodeLabel } from './mapLabel'
 import {
   backToSubMapLabel,
@@ -326,7 +327,14 @@ describe('travel rules', () => {
     expect(depthNodes).toEqual(expect.arrayContaining([THE_SHALLOWS_ID, THE_DEPTHS_ID]))
     expect(depthNodes).not.toContain(SUNKEN_APPROACH_ID)
     expect(canTravelTo(launch, SUNKEN_APPROACH_ID, THE_SHALLOWS_ID, DEPTHS_MAP_ID)).toBe(true)
-    expect(canTravelTo(launch, THE_SHALLOWS_ID, THE_DEPTHS_ID, DEPTHS_MAP_ID)).toBe(true)
+    expect(canTravelTo(launch, THE_SHALLOWS_ID, THE_DEPTHS_ID, DEPTHS_MAP_ID)).toBe(false)
+    const fishing50 = {
+      ...createNewSave(launch),
+      skills: createNewSave(launch).skills.map((row) =>
+        row.skillId === FISHING_SKILL_ID ? { ...row, level: 50 } : row,
+      ),
+    }
+    expect(canTravelTo(launch, THE_SHALLOWS_ID, THE_DEPTHS_ID, DEPTHS_MAP_ID, fishing50)).toBe(true)
 
     const now = Date.parse('2026-01-01T00:00:00.000Z')
     const fromMeadow = { ...createNewSave(launch), currentLocationId: 'LOC-0009' }
