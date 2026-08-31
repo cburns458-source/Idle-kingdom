@@ -38,6 +38,9 @@ class CombatRoundResult {
     required this.bossSleepRoundsRemaining,
     required this.enemyAsleep,
     required this.enemyRampage,
+    required this.bossAddsTriggered,
+    required this.bossInkActive,
+    required this.bossPendingHp,
     required this.enemyHp,
     required this.playerHp,
     required this.outcome,
@@ -69,6 +72,15 @@ class CombatRoundResult {
 
   /// True when the enemy's landing swing was a rampage hit.
   final bool enemyRampage;
+
+  /// True when this round triggered a boss add phase (e.g. squidlings).
+  final bool bossAddsTriggered;
+
+  /// True when ink halved player damage this round.
+  final bool bossInkActive;
+
+  /// HP to restore on the boss when adds finish. Set when bossAddsTriggered.
+  final num? bossPendingHp;
   final num enemyHp;
   final num playerHp;
 
@@ -86,6 +98,9 @@ class CombatRoundResult {
     'bossSleepRoundsRemaining': bossSleepRoundsRemaining,
     'enemyAsleep': enemyAsleep,
     'enemyRampage': enemyRampage,
+    'bossAddsTriggered': bossAddsTriggered,
+    'bossInkActive': bossInkActive,
+    'bossPendingHp': bossPendingHp,
     'enemyHp': enemyHp,
     'playerHp': playerHp,
     'outcome': outcome,
@@ -142,6 +157,11 @@ PlayerSave beginCombatSave(
     combatRoundStartedAt: nowIso,
     combatSkipEnemyAttack: false,
     combatBossSleepRoundsRemaining: bossProfile(enemy)?.sleepStart,
+    combatBossPendingId: null,
+    combatBossPendingHp: null,
+    combatBossAddsRemaining: null,
+    combatBossAddsTriggered: false,
+    combatBossInkActive: false,
     activePotionEffect: potion.effect,
     deathPauseUntil: null,
   );
@@ -154,6 +174,11 @@ PlayerSave clearCombatSave(PlayerSave save) {
     combatRoundStartedAt: null,
     combatSkipEnemyAttack: false,
     combatBossSleepRoundsRemaining: null,
+    combatBossPendingId: null,
+    combatBossPendingHp: null,
+    combatBossAddsRemaining: null,
+    combatBossAddsTriggered: false,
+    combatBossInkActive: false,
     activePotionEffect: save.activePotionEffect?.scope == 'one_combat_encounter'
         ? null
         : save.activePotionEffect,
@@ -170,51 +195,67 @@ CombatRoundResult resolveCombatRound(
   final floor = configNumber(db, 'damage_floor', 1);
   final profile = bossProfile(enemy);
   final asleep = (save.combatBossSleepRoundsRemaining ?? 0) > 0;
-  final playerRange = playerDamageRange(db, save);
-  var playerHit = rollDamage(playerRange.min, playerRange.max, random);
-  var playerCrit = false;
-  final critChance = equippedEnchantmentCritChancePercent(db, save);
-  if (critChance > 0 && random() * 100 < critChance) {
-    playerCrit = true;
-    playerHit = math.max(1, (playerHit * criticalStrikeDamageMultiplier()).floor());
+  final enemyMaxHp = jsNumber(enemy.raw['Maximum HP']);
+  final fishingMode = profile?.damageMode == 'fishing' && !isBossAddFight(save);
+
+  var bossInkActive = false;
+  if (profile?.inkAt != null &&
+      !isBossAddFight(save) &&
+      enemyHp <= enemyMaxHp * profile!.inkAt! &&
+      random() < profile.inkChance) {
+    bossInkActive = true;
   }
-  playerHit = applySleepIncoming(playerHit, asleep);
+
+  num playerHit = 0;
+  var playerCrit = false;
+  num? staffHit;
+  num? offhandHit;
+
+  if (fishingMode) {
+    final fishingRange = fishingCombatDamageRange(db, save);
+    playerHit = rollDamage(fishingRange.min, fishingRange.max, random);
+    if (bossInkActive) playerHit = math.max(1, (playerHit / 2).floor());
+    playerHit = applySleepIncoming(playerHit, asleep);
+  } else {
+    final playerRange = playerDamageRange(db, save);
+    playerHit = rollDamage(playerRange.min, playerRange.max, random);
+    final critChance = equippedEnchantmentCritChancePercent(db, save);
+    if (critChance > 0 && random() * 100 < critChance) {
+      playerCrit = true;
+      playerHit = math.max(1, (playerHit * criticalStrikeDamageMultiplier()).floor());
+    }
+    if (bossInkActive) playerHit = math.max(1, (playerHit / 2).floor());
+    playerHit = applySleepIncoming(playerHit, asleep);
+  }
+
   var nextEnemyHp = math.max(0, enemyHp - playerHit);
   final weaponId = save.equipment.slots[weaponToolSlotId]?.itemId;
 
-  // Staff of Sparks: a second blue hit after the main swing if the enemy is still up.
-  // No crit and no Strength / combat / potion / race multipliers — Arcana level only.
-  num? staffHit;
-  if (nextEnemyHp > 0 && isNotBlank(weaponId) && itemHasCapability(db, weaponId!, 'staff_sparks')) {
+  if (!fishingMode &&
+      nextEnemyHp > 0 &&
+      isNotBlank(weaponId) &&
+      itemHasCapability(db, weaponId!, 'staff_sparks')) {
     final sparks = staffSparksDamageRange(getSkillProgress(save, arcanaSkillId).level);
     staffHit = applySleepIncoming(rollDamage(sparks.min, sparks.max, random), asleep);
     nextEnemyHp = math.max(0, nextEnemyHp - staffHit);
   }
 
-  // Off-hand dagger swings after the main-hand hit if the enemy is still up.
-  // Two-handers never keep an off-hand dagger, so this stays null for staves.
-  // Off-hand cannot crit; shared enchant/spell bonuses are already in its range.
-  num? offhandHit;
-  if (nextEnemyHp > 0) {
+  if (!fishingMode && nextEnemyHp > 0) {
     final offhandRange = playerOffhandDamageRange(db, save);
     if (offhandRange != null) {
       offhandHit = applySleepIncoming(
         rollDamage(offhandRange.min, offhandRange.max, random),
         asleep,
       );
+      if (bossInkActive) offhandHit = math.max(1, (offhandHit / 2).floor());
       nextEnemyHp = math.max(0, nextEnemyHp - offhandHit);
     }
   }
 
   if (nextEnemyHp > 0) {
-    nextEnemyHp = applyPotionEnemyRoundDamage(
-      nextEnemyHp,
-      jsNumber(enemy.raw['Maximum HP']),
-      save.activePotionEffect,
-    );
+    nextEnemyHp = applyPotionEnemyRoundDamage(nextEnemyHp, enemyMaxHp, save.activePotionEffect);
   }
 
-  // Binding procs on this hit: they still attack this round, then skip the next.
   var skipNextEnemyAttack = false;
   if (nextEnemyHp > 0 &&
       isNotBlank(weaponId) &&
@@ -224,11 +265,22 @@ CombatRoundResult resolveCombatRound(
 
   num? nextSleep = profile == null ? null : (save.combatBossSleepRoundsRemaining ?? 0);
   if (nextSleep != null && nextSleep > 0) nextSleep = nextSleep - 1;
-  if (profile != null && nextEnemyHp <= jsNumber(enemy.raw['Maximum HP']) * profile.wakeHpRatio) {
+  if (profile != null && nextEnemyHp <= enemyMaxHp * profile.wakeHpRatio) {
     nextSleep = 0;
   }
 
-  if (nextEnemyHp <= 0) {
+  var bossAddsTriggered = false;
+  num? bossPendingHp;
+  if (profile?.squidlingsAt != null &&
+      profile!.squidlingEnemyId != null &&
+      !save.combatBossAddsTriggered &&
+      !isBossAddFight(save) &&
+      nextEnemyHp <= enemyMaxHp * profile.squidlingsAt!) {
+    bossAddsTriggered = true;
+    bossPendingHp = nextEnemyHp;
+  }
+
+  if (nextEnemyHp <= 0 && !bossAddsTriggered) {
     return CombatRoundResult(
       playerHit: playerHit,
       playerCrit: playerCrit,
@@ -240,9 +292,33 @@ CombatRoundResult resolveCombatRound(
       bossSleepRoundsRemaining: nextSleep,
       enemyAsleep: asleep,
       enemyRampage: false,
+      bossAddsTriggered: false,
+      bossInkActive: bossInkActive,
+      bossPendingHp: null,
       enemyHp: 0,
       playerHp: save.currentHp,
       outcome: 'victory',
+    );
+  }
+
+  if (bossAddsTriggered) {
+    return CombatRoundResult(
+      playerHit: playerHit,
+      playerCrit: playerCrit,
+      offhandHit: offhandHit,
+      staffHit: staffHit,
+      skipNextEnemyAttack: false,
+      enemyHit: null,
+      thornsHit: 0,
+      bossSleepRoundsRemaining: nextSleep,
+      enemyAsleep: asleep,
+      enemyRampage: false,
+      bossAddsTriggered: true,
+      bossInkActive: bossInkActive,
+      bossPendingHp: bossPendingHp,
+      enemyHp: bossPendingHp ?? nextEnemyHp,
+      playerHp: save.currentHp,
+      outcome: 'ongoing',
     );
   }
 
@@ -258,14 +334,16 @@ CombatRoundResult resolveCombatRound(
       bossSleepRoundsRemaining: nextSleep,
       enemyAsleep: asleep,
       enemyRampage: false,
+      bossAddsTriggered: false,
+      bossInkActive: bossInkActive,
+      bossPendingHp: null,
       enemyHp: nextEnemyHp,
       playerHp: save.currentHp,
       outcome: 'ongoing',
     );
   }
 
-  final rampage =
-      profile != null && nextEnemyHp <= jsNumber(enemy.raw['Maximum HP']) * profile.rampageHpRatio;
+  final rampage = profile != null && nextEnemyHp <= enemyMaxHp * profile.rampageHpRatio;
   var enemyRaw = rollDamage(
     jsNumber(enemy.raw['Min Damage']),
     jsNumber(enemy.raw['Max Damage']),
@@ -293,9 +371,11 @@ CombatRoundResult resolveCombatRound(
     bossSleepRoundsRemaining: nextSleep,
     enemyAsleep: asleep,
     enemyRampage: rampage,
+    bossAddsTriggered: false,
+    bossInkActive: bossInkActive,
+    bossPendingHp: null,
     enemyHp: nextEnemyHp,
     playerHp: playerHp,
-    // Simultaneous kills favor defeat: the enemy's own hit must land before Thorns reflects it.
     outcome: playerHp <= 0
         ? 'defeat'
         : nextEnemyHp <= 0

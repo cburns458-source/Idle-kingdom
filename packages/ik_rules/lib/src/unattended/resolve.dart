@@ -5,6 +5,8 @@ import 'package:ik_content/ik_content.dart';
 
 import '../activity/engine.dart';
 import '../activity/transition.dart';
+import '../combat/boss.dart';
+import '../combat/boss_phase.dart';
 import '../combat/engine.dart';
 import '../config.dart';
 import '../critters/critters.dart';
@@ -194,6 +196,41 @@ UnattendedResult resolveUnattendedProgress(
 
       final round = resolveCombatRound(db, current, enemy, current.combatEnemyHp!, random);
       if (round.outcome == 'victory') {
+        if (isSquidlingVictory(current, enemy)) {
+          final squidlingResult = applySquidlingVictory(
+            db,
+            current.copyWith(combatEnemyHp: 0, currentHp: round.playerHp),
+            enemy,
+            isoFromMs(roundEnd),
+          );
+          var next = squidlingResult.save;
+          final critter = applyActivityTimeTowardCritters(
+            next,
+            next.currentLocationId,
+            roundMs,
+            roundEnd,
+            random,
+          );
+          next = critter.save;
+          pushCritterSpawn(critter.spawned);
+          messages.add(squidlingResult.message);
+          if (squidlingResult.bossResumed) {
+            current = next;
+            lastResolvedMs = roundEnd;
+            continue;
+          }
+          combatVictories += 1;
+          final activityId = current.currentActivityId!;
+          if (!activityStillValid(db, next, activityId)) {
+            current = clearActivitySave(next, roundEnd);
+            messages.add('Defeated ${jsString(enemy.raw['Display Name'])} · activity stopped.');
+            break;
+          }
+          current = next;
+          lastResolvedMs = roundEnd;
+          continue;
+        }
+
         final victory = applyCombatVictory(
           db,
           current.copyWith(combatEnemyHp: 0, currentHp: round.playerHp),
@@ -258,7 +295,24 @@ UnattendedResult resolveUnattendedProgress(
         combatRoundStartedAt: isoFromMs(roundEnd),
         combatSkipEnemyAttack: round.skipNextEnemyAttack,
         combatBossSleepRoundsRemaining: round.bossSleepRoundsRemaining,
+        combatBossInkActive: round.bossInkActive,
       );
+
+      if (round.bossAddsTriggered && round.bossPendingHp != null) {
+        final profile = bossProfile(enemy);
+        if (profile?.squidlingEnemyId != null) {
+          continued = beginBossAddsEncounter(
+            db,
+            continued,
+            enemy,
+            profile!,
+            round.bossPendingHp!,
+            isoFromMs(roundEnd),
+          );
+          messages.add('${jsString(enemy.raw['Display Name'])} releases squidlings while away.');
+        }
+      }
+
       final critter = applyActivityTimeTowardCritters(
         continued,
         continued.currentLocationId,

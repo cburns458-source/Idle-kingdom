@@ -30,6 +30,12 @@ describe('dragon boss', () => {
       wakeHpRatio: 0.5,
       rampageHpRatio: 0.25,
       respawnSeconds: 10,
+      squidlingsAt: null,
+      squidlingEnemyId: null,
+      squidlingCount: 3,
+      inkAt: null,
+      inkChance: 0.35,
+      damageMode: null,
     })
   })
 

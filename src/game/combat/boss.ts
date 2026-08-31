@@ -5,12 +5,22 @@ export const DEFAULT_BOSS_SLEEP_ROUNDS = 4
 export const DEFAULT_BOSS_WAKE_HP_RATIO = 0.5
 export const DEFAULT_BOSS_RAMPAGE_HP_RATIO = 0.25
 export const DEFAULT_BOSS_RESPAWN_SECONDS = 10
+export const DEFAULT_BOSS_INK_CHANCE = 0.35
+export const DEFAULT_BOSS_SQUIDLING_COUNT = 3
+
+export type BossDamageMode = 'fishing'
 
 export interface BossProfile {
   sleepStart: number
   wakeHpRatio: number
   rampageHpRatio: number
   respawnSeconds: number
+  squidlingsAt: number | null
+  squidlingEnemyId: string | null
+  squidlingCount: number
+  inkAt: number | null
+  inkChance: number
+  damageMode: BossDamageMode | null
 }
 
 function noteTokens(notes: string | null | undefined): string[] {
@@ -30,6 +40,16 @@ function noteNumber(tokens: string[], key: string, fallback: number): number {
   return fallback
 }
 
+function noteString(tokens: string[], key: string, fallback: string | null = null): string | null {
+  const prefix = `${key}:`
+  for (const token of tokens) {
+    if (!token.toLowerCase().startsWith(prefix)) continue
+    const value = token.slice(prefix.length).trim()
+    if (value.length > 0) return value
+  }
+  return fallback
+}
+
 export function isBossEnemy(enemy: EnemyRow | null | undefined): boolean {
   if (!enemy) return false
   return noteTokens(enemy.Notes).some((token) => token.toLowerCase() === 'boss')
@@ -38,6 +58,9 @@ export function isBossEnemy(enemy: EnemyRow | null | undefined): boolean {
 export function bossProfile(enemy: EnemyRow | null | undefined): BossProfile | null {
   if (!isBossEnemy(enemy)) return null
   const tokens = noteTokens(enemy!.Notes)
+  const squidlingsAtRaw = noteNumber(tokens, 'squidlings_at', Number.NaN)
+  const inkAtRaw = noteNumber(tokens, 'ink_at', Number.NaN)
+  const damageModeRaw = noteString(tokens, 'damage_mode', null)?.toLowerCase() ?? null
   return {
     sleepStart: Math.max(0, Math.floor(noteNumber(tokens, 'sleep_start', DEFAULT_BOSS_SLEEP_ROUNDS))),
     wakeHpRatio: noteNumber(tokens, 'wake_hp_ratio', DEFAULT_BOSS_WAKE_HP_RATIO),
@@ -46,7 +69,24 @@ export function bossProfile(enemy: EnemyRow | null | undefined): BossProfile | n
       0,
       noteNumber(tokens, 'respawn_seconds', DEFAULT_BOSS_RESPAWN_SECONDS),
     ),
+    squidlingsAt: Number.isFinite(squidlingsAtRaw) ? squidlingsAtRaw : null,
+    squidlingEnemyId: noteString(tokens, 'squidling_enemy', null),
+    squidlingCount: Math.max(
+      1,
+      Math.floor(noteNumber(tokens, 'squidling_count', DEFAULT_BOSS_SQUIDLING_COUNT)),
+    ),
+    inkAt: Number.isFinite(inkAtRaw) ? inkAtRaw : null,
+    inkChance: noteNumber(tokens, 'ink_chance', DEFAULT_BOSS_INK_CHANCE),
+    damageMode: damageModeRaw === 'fishing' ? 'fishing' : null,
   }
+}
+
+export function isBossAddFight(save: PlayerSave): boolean {
+  return (
+    save.combatBossPendingId != null &&
+    save.combatBossAddsRemaining != null &&
+    save.combatBossAddsRemaining > 0
+  )
 }
 
 export function bossRespawnUntilMs(save: PlayerSave, enemyId: string): number | null {

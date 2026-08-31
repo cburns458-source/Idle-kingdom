@@ -133,6 +133,7 @@ ActionRewardBundle _victoryRewardBundle(
 }
 
 String _roundMessage(EnemyRow enemy, CombatRoundResult round) {
+  final inkLabel = round.bossInkActive ? ' Ink clouds your strike!' : '';
   final hitLabel = round.playerCrit
       ? 'crit for ${jsNumberToString(round.playerHit)}'
       : 'hit ${jsNumberToString(round.playerHit)}';
@@ -147,16 +148,16 @@ String _roundMessage(EnemyRow enemy, CombatRoundResult round) {
   final name = jsString(enemy.raw['Display Name']);
   if (round.enemyHit == null) {
     return round.enemyAsleep
-        ? 'You $hitLabel.$offhandLabel$sparksLabel $name sleeps.'
-        : 'You $hitLabel.$offhandLabel$sparksLabel $name is bound and cannot attack.';
+        ? 'You $hitLabel.$offhandLabel$sparksLabel$inkLabel $name sleeps.'
+        : 'You $hitLabel.$offhandLabel$sparksLabel$inkLabel $name is bound and cannot attack.';
   }
   final swing = round.enemyRampage
       ? '$name rampages for ${jsString(round.enemyHit)}'
       : '$name hits ${jsString(round.enemyHit)}';
   return round.thornsHit > 0
-      ? 'You $hitLabel.$offhandLabel$sparksLabel $swing. '
+      ? 'You $hitLabel.$offhandLabel$sparksLabel$inkLabel $swing. '
             'Thorns reflects ${jsNumberToString(round.thornsHit)}.'
-      : 'You $hitLabel.$offhandLabel$sparksLabel $swing.';
+      : 'You $hitLabel.$offhandLabel$sparksLabel$inkLabel $swing.';
 }
 
 void _resolveDueCombatRound(
@@ -188,6 +189,38 @@ void _resolveDueCombatRound(
   );
 
   if (round.outcome == 'victory') {
+    if (isSquidlingVictory(before, enemy)) {
+      final squidlingResult = applySquidlingVictory(
+        db,
+        before.copyWith(combatEnemyHp: 0, currentHp: round.playerHp),
+        enemy,
+        isoFromMs(roundEnd),
+      );
+      out.set(squidlingResult.save);
+      out.creditCritterTime(roundMs, roundEnd, random);
+      out.emit(MessageEvent(squidlingResult.message));
+      if (squidlingResult.xpGained > 0) {
+        out.emit(
+          RewardsEvent(
+            _victoryRewardBundle(
+              db,
+              before,
+              out.current,
+              enemy,
+              squidlingResult.xpGained,
+              const <LootGrant>[],
+              0,
+              roundEnd,
+            ),
+          ),
+        );
+      }
+      if (!squidlingResult.bossResumed) {
+        out.emit(EnemyDefeatedEvent(enemyId: enemyId, enemyName: enemyName));
+      }
+      return;
+    }
+
     final victory = applyCombatVictory(
       db,
       before.copyWith(combatEnemyHp: 0, currentHp: round.playerHp),
@@ -253,12 +286,35 @@ void _resolveDueCombatRound(
     return;
   }
 
+  if (round.bossAddsTriggered && round.bossPendingHp != null) {
+    final profile = bossProfile(enemy);
+    if (profile?.squidlingEnemyId != null) {
+      final addsStarted = beginBossAddsEncounter(
+        db,
+        before.copyWith(currentHp: round.playerHp, combatBossInkActive: round.bossInkActive),
+        enemy,
+        profile!,
+        round.bossPendingHp!,
+        isoFromMs(roundEnd),
+      );
+      out.set(addsStarted);
+      out.creditCritterTime(roundMs, roundEnd, random);
+      out.emit(
+        MessageEvent(
+          '${jsString(enemy.raw['Display Name'])} releases squidlings! Defeat them to continue.',
+        ),
+      );
+      return;
+    }
+  }
+
   final continued = before.copyWith(
     currentHp: round.playerHp,
     combatEnemyHp: round.enemyHp,
     combatRoundStartedAt: isoFromMs(roundEnd),
     combatSkipEnemyAttack: round.skipNextEnemyAttack,
     combatBossSleepRoundsRemaining: round.bossSleepRoundsRemaining,
+    combatBossInkActive: round.bossInkActive,
   );
   out.set(continued);
   out.creditCritterTime(roundMs, roundEnd, random);

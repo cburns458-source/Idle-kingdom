@@ -7,6 +7,7 @@ import '../activity/xp.dart';
 import '../config.dart';
 import '../equipment/loadout.dart';
 import '../js_compat.dart';
+import '../skills/skill_actions.dart';
 import '../npcs/knowledge.dart';
 import '../projects/enchantments.dart';
 import '../races/races.dart';
@@ -87,6 +88,16 @@ num staffPowerMultiplier(GameDatabase db, PlayerSave save) {
 DamageRange staffSparksDamageRange(num arcanaLevel) {
   final min = math.max(1, (arcanaLevel * 0.9).floor());
   final max = math.max(min, (arcanaLevel * 1.1).floor());
+  return DamageRange(min: min, max: max);
+}
+
+/// Mother Squid fishing combat: (2000 × Fishing ATR% + Fishing Level) ± 10%.
+DamageRange fishingCombatDamageRange(GameDatabase db, PlayerSave save) {
+  final atr = equippedActionTimeReductionPercent(db, save, fishingSkillId);
+  final level = getSkillProgress(save, fishingSkillId).level;
+  final base = 2000 * (atr / 100) + level;
+  final min = math.max(1, (base * 0.9).floor());
+  final max = math.max(min, (base * 1.1).floor());
   return DamageRange(min: min, max: max);
 }
 
