@@ -529,6 +529,9 @@ class GameController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Optional hook after a save lands (skill XP, combat, etc.).
+  void Function(PlayerSave before, PlayerSave after)? onSaveCommitted;
+
   /// Stores the save a panel's intent produced, and repaints.
   ///
   /// Panels call the shared rules themselves and pass the result here, which is
@@ -537,6 +540,7 @@ class GameController extends ChangeNotifier {
     final previous = save;
     session.apply(next);
     _queueSkillLevelUps(previous, save);
+    onSaveCommitted?.call(previous, save);
     notifyListeners();
   }
 
@@ -568,6 +572,7 @@ class GameController extends ChangeNotifier {
     if (result.awayCatchUp case final away?) {
       _adoptResumeCatchUp(away);
       _queueSkillLevelUps(previous, save);
+      onSaveCommitted?.call(previous, save);
       notifyListeners();
       return;
     }
@@ -578,6 +583,7 @@ class GameController extends ChangeNotifier {
     _expireStageFx();
     _advanceTravel();
     _queueSkillLevelUps(previous, save);
+    onSaveCommitted?.call(previous, save);
     // A frame always repaints: the progress bars and timers are read from the
     // clock, so they move even on the ticks where nothing was due.
     notifyListeners();

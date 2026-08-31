@@ -73,6 +73,7 @@ GuildRecord guildFromCreateInput(
   joinPolicy: guildJoinOpen,
   rankLabels: <GuildRankKey, String>{...defaultGuildRankLabels},
   createdAt: createdAt,
+  skillMilestoneSettings: defaultGuildSkillMilestoneSettings,
 );
 
 bool isGuildLeader(GuildRecord guild, String userId) => guild.leaderId == userId;

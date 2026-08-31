@@ -1054,6 +1054,49 @@ class MultiplayerController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Posts skill milestone lines to guild chat when thresholds are crossed.
+  Future<void> announceGuildSkillMilestones(
+    PlayerSave before,
+    PlayerSave after,
+    GameDatabase db,
+  ) async {
+    final guild = _guild;
+    final guildId = _guildId;
+    if (!isSignedIn || guild == null || guildId == null) return;
+    final settings = guild.skillMilestoneSettings;
+    if (!settings.enabled) return;
+    final milestones = guildSkillMilestonesBetweenSaves(
+      beforeSkills: [
+        for (final skill in before.skills)
+          (skillId: skill.skillId, level: skill.level, xp: skill.xp),
+      ],
+      afterSkills: [
+        for (final skill in after.skills)
+          (skillId: skill.skillId, level: skill.level, xp: skill.xp),
+      ],
+      skillName: (skillId) {
+        for (final skill in db.skills) {
+          if (skill.skillId == skillId) return skill.displayName;
+        }
+        return skillId;
+      },
+      settings: settings,
+    );
+    if (milestones.isEmpty) return;
+    final characterName = after.characterName?.trim();
+    final name = (characterName != null && characterName.isNotEmpty)
+        ? characterName
+        : (session?.username ?? 'Adventurer');
+    final body = milestones.map((row) => formatGuildSkillMilestone(name, row)).join('\n');
+    final result = await service.sendChat(ChatChannel.guild(guildId), body);
+    if (!result.ok) return;
+    if (_chatTab == ChatTab.guild) {
+      _messages = await service.listChat(ChatChannel.guild(guildId));
+      await _ingestNameColors(_messages);
+      notifyListeners();
+    }
+  }
+
   /// Sends [body] to the open tab, then shows the room again.
   Future<void> sendChat(String body, String locationId, {bool citadelHub = false}) {
     if (_chatTab == ChatTab.dm) {
@@ -1246,13 +1289,14 @@ class MultiplayerController extends ChangeNotifier {
     });
   }
 
-  /// Saves the three things guild settings can change, stopping at the first no.
+  /// Saves the guild settings sheet fields, stopping at the first no.
   Future<void> saveGuildSettings({
     required GuildJoinPolicy joinPolicy,
     required bool guestAutoAccept,
     required String rankIconTheme,
     required GuildEmblem emblem,
     required Map<GuildRankKey, String> rankLabels,
+    required GuildSkillMilestoneSettings skillMilestoneSettings,
     required PlayerSave save,
   }) {
     return run(() async {
@@ -1268,6 +1312,11 @@ class MultiplayerController extends ChangeNotifier {
       if (!banner.ok) return banner.reason;
       final ranks = await service.setGuildRankLabels(guildId, rankLabels);
       if (!ranks.ok) return ranks.reason;
+      final milestones = await service.setGuildSkillMilestoneSettings(
+        guildId,
+        skillMilestoneSettings,
+      );
+      if (!milestones.ok) return milestones.reason;
       await refresh(save);
       return 'Guild settings saved.';
     });

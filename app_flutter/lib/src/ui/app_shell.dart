@@ -115,6 +115,9 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
     });
     multiplayer.onAccountCleared ??= controller.resetUnsigned;
     multiplayer.addListener(_onMultiplayerChanged);
+    controller.onSaveCommitted = (before, after) {
+      unawaited(multiplayer.announceGuildSkillMilestones(before, after, controller.db));
+    };
     controller.addListener(_armReturningHold);
     controller.addListener(_flushPendingDialogs);
     _armReturningHold();

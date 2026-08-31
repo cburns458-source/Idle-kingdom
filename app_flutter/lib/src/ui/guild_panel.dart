@@ -460,6 +460,7 @@ class _GuildPanelState extends State<GuildPanel> {
       rankIconTheme: settings.rankIconTheme,
       emblem: settings.emblem,
       rankLabels: settings.rankLabels,
+      skillMilestoneSettings: settings.skillMilestoneSettings,
       save: save,
     );
   }
@@ -1062,6 +1063,7 @@ class _GuildSettings {
     required this.rankIconTheme,
     required this.emblem,
     required this.rankLabels,
+    required this.skillMilestoneSettings,
   });
 
   final GuildJoinPolicy joinPolicy;
@@ -1069,6 +1071,7 @@ class _GuildSettings {
   final String rankIconTheme;
   final GuildEmblem emblem;
   final Map<GuildRankKey, String> rankLabels;
+  final GuildSkillMilestoneSettings skillMilestoneSettings;
 }
 
 class _GuildSettingsSheet extends StatefulWidget {
@@ -1085,6 +1088,19 @@ class _GuildSettingsSheetState extends State<_GuildSettingsSheet> {
   late bool _guestAutoAccept = widget.guild.guestAutoAccept;
   late String _rankIconTheme = widget.guild.rankIconTheme;
   late GuildEmblem _emblem = widget.guild.emblem;
+  late bool _milestonesEnabled = widget.guild.skillMilestoneSettings.enabled;
+  late final TextEditingController _levelStart = TextEditingController(
+    text: '${widget.guild.skillMilestoneSettings.levelStart.round()}',
+  );
+  late final TextEditingController _levelStep = TextEditingController(
+    text: '${widget.guild.skillMilestoneSettings.levelStep.round()}',
+  );
+  late final TextEditingController _xpStart = TextEditingController(
+    text: '${widget.guild.skillMilestoneSettings.xpStartMillion.round()}',
+  );
+  late final TextEditingController _xpStep = TextEditingController(
+    text: '${widget.guild.skillMilestoneSettings.xpStepMillion.round()}',
+  );
   late final Map<GuildRankKey, TextEditingController> _labels =
       <GuildRankKey, TextEditingController>{
         for (final field in rankLabelFields(widget.guild))
@@ -1096,7 +1112,27 @@ class _GuildSettingsSheetState extends State<_GuildSettingsSheet> {
     for (final controller in _labels.values) {
       controller.dispose();
     }
+    _levelStart.dispose();
+    _levelStep.dispose();
+    _xpStart.dispose();
+    _xpStep.dispose();
     super.dispose();
+  }
+
+  GuildSkillMilestoneSettings _milestoneSettings() {
+    int parse(TextEditingController controller, int fallback) {
+      return int.tryParse(controller.text.trim()) ?? fallback;
+    }
+
+    return normalizeGuildSkillMilestoneSettings(
+      GuildSkillMilestoneSettings(
+        enabled: _milestonesEnabled,
+        levelStart: parse(_levelStart, 50),
+        levelStep: parse(_levelStep, 10),
+        xpStartMillion: parse(_xpStart, 125),
+        xpStepMillion: parse(_xpStep, 25),
+      ).toJson(),
+    );
   }
 
   @override
@@ -1179,6 +1215,39 @@ class _GuildSettingsSheetState extends State<_GuildSettingsSheet> {
               },
             ),
             const SizedBox(height: 12),
+            const Text('Skill milestones', style: TextStyle(fontWeight: FontWeight.w400)),
+            const MutedText('Guild chat when a member hits skill levels or high XP totals.'),
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                const Expanded(child: Text('Announce in guild chat')),
+                GameSwitch(
+                  value: _milestonesEnabled,
+                  onChanged: (value) => setState(() => _milestonesEnabled = value),
+                ),
+              ],
+            ),
+            TextField(
+              controller: _levelStart,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(labelText: 'First level (e.g. 50)'),
+            ),
+            TextField(
+              controller: _levelStep,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(labelText: 'Level step (e.g. 10)'),
+            ),
+            TextField(
+              controller: _xpStart,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(labelText: 'First XP million after 100 (e.g. 125)'),
+            ),
+            TextField(
+              controller: _xpStep,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(labelText: 'XP million step (e.g. 25)'),
+            ),
+            const SizedBox(height: 12),
             _EmblemEditor(emblem: _emblem, onChanged: (next) => setState(() => _emblem = next)),
             const SizedBox(height: 12),
             const Text('Rank names', style: TextStyle(fontWeight: FontWeight.w400)),
@@ -1203,6 +1272,7 @@ class _GuildSettingsSheetState extends State<_GuildSettingsSheet> {
                   rankLabels: <GuildRankKey, String>{
                     for (final entry in _labels.entries) entry.key: entry.value.text,
                   },
+                  skillMilestoneSettings: _milestoneSettings(),
                 ),
               ),
             ),
