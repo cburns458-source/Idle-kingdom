@@ -21,6 +21,7 @@ class EquipmentPresetsBar extends StatelessWidget {
     this.axis = Axis.horizontal,
     this.compact = false,
     this.showSaveButton = true,
+    this.showSettingsButton = false,
     this.onMessage,
   });
 
@@ -28,6 +29,7 @@ class EquipmentPresetsBar extends StatelessWidget {
   final Axis axis;
   final bool compact;
   final bool showSaveButton;
+  final bool showSettingsButton;
   final ValueChanged<String>? onMessage;
 
   @override
@@ -63,6 +65,12 @@ class EquipmentPresetsBar extends StatelessWidget {
             onMessage?.call('Preset saved.');
           },
         ),
+      if (showSettingsButton)
+        _SettingsChip(
+          compact: compact,
+          square: compact && axis == Axis.vertical,
+          onPressed: () => _openPresetSettings(context),
+        ),
     ];
     if (axis == Axis.vertical) {
       return Column(
@@ -83,6 +91,43 @@ class EquipmentPresetsBar extends StatelessWidget {
         ],
       ],
     );
+  }
+
+  Future<void> _openPresetSettings(BuildContext context) async {
+    final save = controller.save;
+    final skills = controller.db.skills
+        .where((row) => row.raw['Release Phase'] == 'Launch')
+        .toList();
+    final presets = [
+      for (var i = 0; i < equipmentPresetCount; i += 1)
+        i < save.equipmentPresets.length
+            ? save.equipmentPresets[i]
+            : EquipmentPreset(
+                name: 'Preset ${i + 1}',
+                icon: defaultEquipmentPresetIcon(i),
+                slots: const {},
+              ),
+    ];
+
+    final result = await showGamePopup<List<EquipmentPreset>?>(
+      context: context,
+      builder: (context) {
+        return _AllPresetsSettingsDialog(
+          presets: presets,
+          skills: skills,
+          skillsById: controller.indexes.skillsById,
+        );
+      },
+    );
+
+    if (result == null) return;
+    var next = controller.save;
+    for (var i = 0; i < result.length; i += 1) {
+      next = renameEquipmentPreset(next, i, result[i].name);
+      next = setEquipmentPresetIcon(next, i, result[i].icon);
+    }
+    controller.commit(next);
+    onMessage?.call('Preset settings saved.');
   }
 
   Future<void> _editPreset(BuildContext context, int index) async {
@@ -120,39 +165,10 @@ class EquipmentPresetsBar extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    const MutedText('Icon'),
-                    const SizedBox(height: 6),
-                    Wrap(
-                      spacing: 6,
-                      runSpacing: 6,
-                      children: [
-                        for (var n = 1; n <= 4; n += 1)
-                          _IconChoice(
-                            selected: icon.kind == 'roman' && icon.numeral == n,
-                            onTap: () => setLocal(() {
-                              icon = EquipmentPresetIcon(kind: 'roman', numeral: n);
-                            }),
-                            child: Text(
-                              _roman[n - 1],
-                              style: const TextStyle(fontWeight: FontWeight.w600),
-                            ),
-                          ),
-                        _IconChoice(
-                          selected: icon.kind == 'coin',
-                          onTap: () => setLocal(() {
-                            icon = const EquipmentPresetIcon(kind: 'coin');
-                          }),
-                          child: GameImage(goldIconPath(), width: 18, height: 18),
-                        ),
-                        for (final skill in skills)
-                          _IconChoice(
-                            selected: icon.kind == 'skill' && icon.skillId == skill.skillId,
-                            onTap: () => setLocal(() {
-                              icon = EquipmentPresetIcon(kind: 'skill', skillId: skill.skillId);
-                            }),
-                            child: GameImage(skillIconPath(skill), width: 18, height: 18),
-                          ),
-                      ],
+                    _PresetIconPicker(
+                      icon: icon,
+                      skills: skills,
+                      onChanged: (next) => setLocal(() => icon = next),
                     ),
                     const SizedBox(height: 12),
                     Row(
@@ -222,6 +238,46 @@ class _SaveChip extends StatelessWidget {
                 color: Palette.heading,
                 height: 1,
                 shadows: square ? overlayShadow : null,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SettingsChip extends StatelessWidget {
+  const _SettingsChip({required this.onPressed, required this.compact, required this.square});
+
+  final VoidCallback onPressed;
+  final bool compact;
+  final bool square;
+
+  @override
+  Widget build(BuildContext context) {
+    final radius = BorderRadius.circular(square ? 4 : 6);
+    return Tooltip(
+      message: 'Preset settings',
+      child: Semantics(
+        button: true,
+        label: 'Preset settings',
+        child: Material(
+          color: Palette.panel,
+          borderRadius: radius,
+          child: InkWell(
+            onTap: onPressed,
+            borderRadius: radius,
+            child: SizedBox(
+              width: square ? _stageSquare : null,
+              height: square ? _stageSquare : (compact ? 28 : 34),
+              child: Center(
+                child: Icon(
+                  Icons.settings,
+                  size: square ? 16 : 15,
+                  color: Palette.heading,
+                  shadows: square ? overlayShadow : null,
+                ),
               ),
             ),
           ),
@@ -344,6 +400,212 @@ class _IconChoice extends StatelessWidget {
         borderRadius: BorderRadius.circular(6),
         child: SizedBox(width: 32, height: 32, child: Center(child: child)),
       ),
+    );
+  }
+}
+
+class _AllPresetsSettingsDialog extends StatefulWidget {
+  const _AllPresetsSettingsDialog({
+    required this.presets,
+    required this.skills,
+    required this.skillsById,
+  });
+
+  final List<EquipmentPreset> presets;
+  final List<SkillRow> skills;
+  final Map<String, SkillRow> skillsById;
+
+  @override
+  State<_AllPresetsSettingsDialog> createState() => _AllPresetsSettingsDialogState();
+}
+
+class _AllPresetsSettingsDialogState extends State<_AllPresetsSettingsDialog> {
+  late final List<TextEditingController> _nameControllers;
+  late final List<EquipmentPresetIcon> _icons;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameControllers = [
+      for (final preset in widget.presets) TextEditingController(text: preset.name),
+    ];
+    _icons = [for (final preset in widget.presets) preset.icon];
+  }
+
+  @override
+  void dispose() {
+    for (final controller in _nameControllers) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
+
+  void _save() {
+    final next = <EquipmentPreset>[
+      for (var i = 0; i < widget.presets.length; i += 1)
+        widget.presets[i].copyWith(name: _nameControllers[i].text, icon: _icons[i]),
+    ];
+    Navigator.of(context).pop(next);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 360,
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text('Preset settings', style: TextStyle(fontSize: 16)),
+            const SizedBox(height: 8),
+            ConstrainedBox(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.sizeOf(context).height * 0.6,
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    for (var i = 0; i < widget.presets.length; i += 1) ...[
+                      if (i > 0) const SizedBox(height: 12),
+                      _PresetSettingsRow(
+                        index: i,
+                        nameController: _nameControllers[i],
+                        icon: _icons[i],
+                        skills: widget.skills,
+                        skillsById: widget.skillsById,
+                        onIconChanged: (icon) => setState(() => _icons[i] = icon),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: GameButton(
+                    label: 'Cancel',
+                    tone: GameButtonTone.secondary,
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: GameButton(
+                    label: 'Save',
+                    onPressed: _save,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PresetSettingsRow extends StatelessWidget {
+  const _PresetSettingsRow({
+    required this.index,
+    required this.nameController,
+    required this.icon,
+    required this.skills,
+    required this.skillsById,
+    required this.onIconChanged,
+  });
+
+  final int index;
+  final TextEditingController nameController;
+  final EquipmentPresetIcon icon;
+  final List<SkillRow> skills;
+  final Map<String, SkillRow> skillsById;
+  final ValueChanged<EquipmentPresetIcon> onIconChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Palette.panel,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Palette.edge),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                _PresetIcon(icon: icon, skillsById: skillsById, size: 18),
+                const SizedBox(width: 8),
+                Text('Preset ${index + 1}', style: const TextStyle(fontWeight: FontWeight.w600)),
+              ],
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: nameController,
+              maxLength: equipmentPresetNameMax,
+              decoration: const InputDecoration(
+                labelText: 'Name',
+                isDense: true,
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 8),
+            _PresetIconPicker(icon: icon, skills: skills, onChanged: onIconChanged),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PresetIconPicker extends StatelessWidget {
+  const _PresetIconPicker({
+    required this.icon,
+    required this.skills,
+    required this.onChanged,
+  });
+
+  final EquipmentPresetIcon icon;
+  final List<SkillRow> skills;
+  final ValueChanged<EquipmentPresetIcon> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const MutedText('Icon'),
+        const SizedBox(height: 6),
+        Wrap(
+          spacing: 6,
+          runSpacing: 6,
+          children: [
+            for (var n = 1; n <= 4; n += 1)
+              _IconChoice(
+                selected: icon.kind == 'roman' && icon.numeral == n,
+                onTap: () => onChanged(EquipmentPresetIcon(kind: 'roman', numeral: n)),
+                child: Text(_roman[n - 1], style: const TextStyle(fontWeight: FontWeight.w600)),
+              ),
+            _IconChoice(
+              selected: icon.kind == 'coin',
+              onTap: () => onChanged(const EquipmentPresetIcon(kind: 'coin')),
+              child: GameImage(goldIconPath(), width: 18, height: 18),
+            ),
+            for (final skill in skills)
+              _IconChoice(
+                selected: icon.kind == 'skill' && icon.skillId == skill.skillId,
+                onTap: () => onChanged(EquipmentPresetIcon(kind: 'skill', skillId: skill.skillId)),
+                child: GameImage(skillIconPath(skill), width: 18, height: 18),
+              ),
+          ],
+        ),
+      ],
     );
   }
 }

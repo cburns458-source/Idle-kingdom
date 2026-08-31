@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:idle_kingdoms/src/theme.dart';
 import 'package:idle_kingdoms/src/ui/inventory_view.dart';
 import 'package:ik_content/ik_content.dart';
 import 'package:ik_rules/ik_rules.dart';
@@ -355,5 +356,26 @@ void main() {
     await tester.longPress(find.byTooltip('Wild berries').first);
     await tester.pumpAndSettle();
     expect(find.text('Eat'), findsOne);
+  });
+
+  testWidgets('opens preset settings for all four presets from equipment bar', (tester) async {
+    final controller = buildController(database, seed: startedCharacter(database));
+    addTearDown(controller.dispose);
+
+    await pumpPanel(tester, InventoryView(controller: controller));
+    await tester.tap(find.text('Equipment'));
+    await tester.pump();
+
+    await tester.tap(find.byTooltip('Preset settings'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Preset settings'), findsOneWidget);
+    expect(find.byType(TextField), findsNWidgets(4));
+
+    await tester.enterText(find.byType(TextField).at(1), 'Mining Kit');
+    await tester.tap(find.widgetWithText(GameButton, 'Save'));
+    await tester.pumpAndSettle();
+
+    expect(controller.save.equipmentPresets[1].name, 'Mining Kit');
   });
 }
