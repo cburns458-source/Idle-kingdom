@@ -3,6 +3,8 @@ import {
   CASTLE_MAP_ID,
   CAVE_MAP_ID,
   CITADEL_MAP_ID,
+  DEPTHS_MAP_ID,
+  FOREST_MAP_ID,
   MAIN_MAP_ID,
   TOWN_MAP_ID,
 } from './constants'
@@ -20,8 +22,8 @@ export interface NodePosition {
 export const MAIN_MAP_NODE_LAYOUT: Record<string, NodePosition> = {
   // NW castle with red roofs
   'LOC-0013': { x: 26, y: 33 },
-  // Ancient Forest north of the castle
-  'LOC-0018': { x: 22, y: 23 },
+  // Forest Gate north of the castle, into the Ancient Forest
+  'LOC-0039': { x: 22, y: 23 },
   // Temple on the ridge between castle and mountains
   'LOC-0036': { x: 45, y: 25 },
   // Mountain peaks / ridge
@@ -44,6 +46,8 @@ export const MAIN_MAP_NODE_LAYOUT: Record<string, NodePosition> = {
   'LOC-0001': { x: 76, y: 65 },
   // Harbor / dock at river mouth
   'LOC-0004': { x: 54, y: 70 },
+  // Sunken Approach, just southeast of the docks
+  'LOC-0041': { x: 64, y: 78 },
   // Road to the Citadel — horse and carriage at the river fork
   'LOC-0027': { x: 48, y: 42 },
 }
@@ -93,6 +97,22 @@ export const TOWN_MAP_NODE_LAYOUT: Record<string, NodePosition> = {
   'LOC-0034': { x: 54, y: 53 },
 }
 
+export const FOREST_MAP_NODE_LAYOUT: Record<string, NodePosition> = {
+  // Forest Gate at the southern threshold (hidden on this submap)
+  'LOC-0039': { x: 50, y: 86 },
+  // Forest Path landing, just inside the gate
+  'LOC-0040': { x: 50, y: 68 },
+  // Old Ent Grove in the ancient clearing
+  'LOC-0018': { x: 48, y: 28 },
+}
+
+export const DEPTHS_MAP_NODE_LAYOUT: Record<string, NodePosition> = {
+  // Sunken Approach at the drowned stairs (hidden on this submap)
+  'LOC-0041': { x: 50, y: 86 },
+  // The Depths landing in the ruined plaza
+  'LOC-0042': { x: 50, y: 46 },
+}
+
 export const CITADEL_MAP_NODE_LAYOUT: Record<string, NodePosition> = {
   // Citadel gateway / exit (north gate, hidden on this submap)
   'LOC-0027': { x: 50, y: 18 },
@@ -118,6 +138,8 @@ const LAYOUTS: Record<string, Record<string, NodePosition>> = {
   [CASTLE_MAP_ID]: CASTLE_MAP_NODE_LAYOUT,
   [TOWN_MAP_ID]: TOWN_MAP_NODE_LAYOUT,
   [CITADEL_MAP_ID]: CITADEL_MAP_NODE_LAYOUT,
+  [FOREST_MAP_ID]: FOREST_MAP_NODE_LAYOUT,
+  [DEPTHS_MAP_ID]: DEPTHS_MAP_NODE_LAYOUT,
 }
 
 export function layoutForMap(mapId: string): Record<string, NodePosition> {

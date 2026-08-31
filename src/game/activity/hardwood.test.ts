@@ -8,7 +8,7 @@ const rawDatabase = JSON.parse(
 )
 
 describe('hardwood chopping', () => {
-  it('adds a maple/mahogany activity on the Ancient Forest', () => {
+  it('adds a maple/mahogany activity on Old Ent Grove', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const activity = launch.Activities.find((row) => row['Activity ID'] === 'ACT-0040')
     expect(activity?.['Contextual Name']).toBe('Chop down hardwood trees')

@@ -6,7 +6,7 @@ import '../js_compat.dart';
 /// Mountains, Deep Mines.
 const List<String> masterDwarfRoute = <String>['LOC-0006', 'LOC-0011'];
 
-/// Meadow, Ancient Forest, Gathering Outskirts, Mountains.
+/// Meadow, Old Ent Grove, Gathering Outskirts, Mountains.
 const List<String> quillRoute = <String>['LOC-0009', 'LOC-0018', 'LOC-0031', 'LOC-0006'];
 
 const String _masterDwarfId = 'NPC-0003';
