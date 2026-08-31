@@ -13,19 +13,21 @@ const _roman = <String>['I', 'II', 'III', 'IV'];
 /// Square side on the location stage: room for III or a skill icon, not a sliver.
 const double _stageSquare = 32;
 
-/// Four preset buttons plus Save; used above the paper doll and on location art.
+/// Four preset buttons (optional Save chip); used above the paper doll and on location art.
 class EquipmentPresetsBar extends StatelessWidget {
   const EquipmentPresetsBar({
     super.key,
     required this.controller,
     this.axis = Axis.horizontal,
     this.compact = false,
+    this.showSaveButton = true,
     this.onMessage,
   });
 
   final GameController controller;
   final Axis axis;
   final bool compact;
+  final bool showSaveButton;
   final ValueChanged<String>? onMessage;
 
   @override
@@ -52,14 +54,15 @@ class EquipmentPresetsBar extends StatelessWidget {
           },
           onLongPress: () => _editPreset(context, i),
         ),
-      _SaveChip(
-        compact: compact,
-        square: compact && axis == Axis.vertical,
-        onPressed: () {
-          controller.commitLoadout(saveActiveEquipmentPreset(controller.save));
-          onMessage?.call('Preset saved.');
-        },
-      ),
+      if (showSaveButton)
+        _SaveChip(
+          compact: compact,
+          square: compact && axis == Axis.vertical,
+          onPressed: () {
+            controller.commitLoadout(saveActiveEquipmentPreset(controller.save));
+            onMessage?.call('Preset saved.');
+          },
+        ),
     ];
     if (axis == Axis.vertical) {
       return Column(

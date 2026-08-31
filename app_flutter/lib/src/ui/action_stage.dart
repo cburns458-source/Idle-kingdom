@@ -110,6 +110,7 @@ class LocationIdlePlayer extends StatelessWidget {
                         controller: controller,
                         axis: Axis.vertical,
                         compact: true,
+                        showSaveButton: false,
                         onMessage: controller.announce,
                       ),
                       const SizedBox(width: 4),
