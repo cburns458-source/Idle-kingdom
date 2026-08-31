@@ -10,6 +10,9 @@ import 'game_popup.dart';
 
 const _roman = <String>['I', 'II', 'III', 'IV'];
 
+/// Square side on the location stage: room for III or a skill icon, not a sliver.
+const double _stageSquare = 32;
+
 /// Four preset buttons plus Save; used above the paper doll and on location art.
 class EquipmentPresetsBar extends StatelessWidget {
   const EquipmentPresetsBar({
@@ -37,6 +40,7 @@ class EquipmentPresetsBar extends StatelessWidget {
           index: i,
           selected: i == active,
           compact: compact,
+          square: compact && axis == Axis.vertical,
           skillsById: controller.indexes.skillsById,
           onTap: () {
             final result = applyEquipmentPreset(controller.db, controller.save, i);
@@ -50,6 +54,7 @@ class EquipmentPresetsBar extends StatelessWidget {
         ),
       _SaveChip(
         compact: compact,
+        square: compact && axis == Axis.vertical,
         onPressed: () {
           controller.commitLoadout(saveActiveEquipmentPreset(controller.save));
           onMessage?.call('Preset saved.');
@@ -186,23 +191,36 @@ class EquipmentPresetsBar extends StatelessWidget {
 }
 
 class _SaveChip extends StatelessWidget {
-  const _SaveChip({required this.onPressed, required this.compact});
+  const _SaveChip({required this.onPressed, required this.compact, required this.square});
 
   final VoidCallback onPressed;
   final bool compact;
+  final bool square;
 
   @override
   Widget build(BuildContext context) {
+    final radius = BorderRadius.circular(square ? 4 : 6);
     return Material(
       color: Palette.panel,
-      borderRadius: BorderRadius.circular(6),
+      borderRadius: radius,
       child: InkWell(
         onTap: onPressed,
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: radius,
         child: SizedBox(
-          height: compact ? 28 : 34,
-          child: const Center(
-            child: Text('Save', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
+          width: square ? _stageSquare : null,
+          height: square ? _stageSquare : (compact ? 28 : 34),
+          child: Center(
+            child: Text(
+              'Save',
+              style: TextStyle(
+                fontFamily: gameFontFamily,
+                fontSize: square ? 10 : 11,
+                fontWeight: FontWeight.w400,
+                color: Palette.heading,
+                height: 1,
+                shadows: square ? overlayShadow : null,
+              ),
+            ),
           ),
         ),
       ),
@@ -216,6 +234,7 @@ class _PresetButton extends StatelessWidget {
     required this.index,
     required this.selected,
     required this.compact,
+    required this.square,
     required this.skillsById,
     required this.onTap,
     required this.onLongPress,
@@ -225,6 +244,7 @@ class _PresetButton extends StatelessWidget {
   final int index;
   final bool selected;
   final bool compact;
+  final bool square;
   final Map<String, SkillRow> skillsById;
   final VoidCallback onTap;
   final VoidCallback onLongPress;
@@ -232,25 +252,37 @@ class _PresetButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final icon = preset?.icon ?? defaultEquipmentPresetIcon(index);
+    final label = preset?.name ?? 'Preset ${index + 1}';
+    final radius = BorderRadius.circular(square ? 4 : 6);
     return Tooltip(
-      message: '${preset?.name ?? 'Preset ${index + 1}'}\nLong-press to edit',
-      child: Material(
-        color: selected ? Palette.gold.withValues(alpha: 0.22) : Palette.panel,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(6),
-          side: BorderSide(
-            color: selected ? Palette.gold : Palette.edge,
-            width: selected ? 1.5 : 1,
+      message: '$label\nLong-press to edit',
+      child: Semantics(
+        button: true,
+        selected: selected,
+        label: label,
+        child: Material(
+          color: selected ? Palette.gold.withValues(alpha: 0.22) : Palette.panel,
+          shape: RoundedRectangleBorder(
+            borderRadius: radius,
+            side: BorderSide(
+              color: selected ? Palette.gold : Palette.edge,
+              width: selected ? 1.5 : 1,
+            ),
           ),
-        ),
-        child: InkWell(
-          onTap: onTap,
-          onLongPress: onLongPress,
-          borderRadius: BorderRadius.circular(6),
-          child: SizedBox(
-            height: compact ? 28 : 34,
-            child: Center(
-              child: _PresetIcon(icon: icon, skillsById: skillsById, size: compact ? 14 : 16),
+          child: InkWell(
+            onTap: onTap,
+            onLongPress: onLongPress,
+            borderRadius: radius,
+            child: SizedBox(
+              width: square ? _stageSquare : null,
+              height: square ? _stageSquare : (compact ? 28 : 34),
+              child: Center(
+                child: _PresetIcon(
+                  icon: icon,
+                  skillsById: skillsById,
+                  size: square ? 18 : (compact ? 14 : 16),
+                ),
+              ),
             ),
           ),
         ),
@@ -277,7 +309,14 @@ class _PresetIcon extends StatelessWidget {
     final n = (icon.numeral ?? 1).floor().clamp(1, 4);
     return Text(
       _roman[n - 1],
-      style: TextStyle(fontSize: size - 1, fontWeight: FontWeight.w700, color: Palette.ink),
+      style: TextStyle(
+        fontFamily: gameFontFamily,
+        fontSize: size - 1,
+        fontWeight: FontWeight.w400,
+        color: Palette.heading,
+        height: 1,
+        shadows: overlayShadow,
+      ),
     );
   }
 }
