@@ -461,9 +461,7 @@ class _AllPresetsSettingsDialogState extends State<_AllPresetsSettingsDialog> {
             const Text('Preset settings', style: TextStyle(fontSize: 16)),
             const SizedBox(height: 8),
             ConstrainedBox(
-              constraints: BoxConstraints(
-                maxHeight: MediaQuery.sizeOf(context).height * 0.6,
-              ),
+              constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.6),
               child: SingleChildScrollView(
                 child: Column(
                   children: [
@@ -494,10 +492,7 @@ class _AllPresetsSettingsDialogState extends State<_AllPresetsSettingsDialog> {
                 ),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: GameButton(
-                    label: 'Save',
-                    onPressed: _save,
-                  ),
+                  child: GameButton(label: 'Save', onPressed: _save),
                 ),
               ],
             ),
@@ -565,11 +560,7 @@ class _PresetSettingsRow extends StatelessWidget {
 }
 
 class _PresetIconPicker extends StatelessWidget {
-  const _PresetIconPicker({
-    required this.icon,
-    required this.skills,
-    required this.onChanged,
-  });
+  const _PresetIconPicker({required this.icon, required this.skills, required this.onChanged});
 
   final EquipmentPresetIcon icon;
   final List<SkillRow> skills;
