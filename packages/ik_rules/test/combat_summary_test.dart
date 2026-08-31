@@ -58,6 +58,10 @@ void main() {
     expect(summary.mainhandBreakdown.map((line) => line.label), contains('Steel Sword'));
     expect(summary.mainhandBreakdown.map((line) => line.label), contains('Enchantments'));
     expect(summary.mainhandBreakdown.map((line) => line.label), contains('Combat Level 25'));
+    expect(
+      summary.mainhandBreakdown.firstWhere((line) => line.label == 'Combat Level 25').detail,
+      '×1.25',
+    );
     expect(summary.mainhandBreakdown.map((line) => line.label), contains('Strength Spell'));
     expect(summary.mainhandBreakdown.map((line) => line.label), contains('Strength Potion'));
     expect(summary.mainhandBreakdown.lastWhere((line) => line.label == 'Total').detail, '165–297');
@@ -65,6 +69,10 @@ void main() {
     final offhand = playerOffhandDamageRange(db, save);
     if (offhand != null) {
       expect(summary.offhandBreakdown.map((line) => line.label), contains('Combat Level 25'));
+      expect(
+        summary.offhandBreakdown.firstWhere((line) => line.label == 'Combat Level 25').detail,
+        '×1.25',
+      );
       expect(summary.offhandBreakdown.last.label, 'Total');
     } else {
       expect(summary.offhandBreakdown, isEmpty);

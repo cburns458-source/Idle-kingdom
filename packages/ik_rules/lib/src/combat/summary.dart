@@ -92,7 +92,8 @@ String _signed(num value) {
 
 String _percent(num value) => '${_signed(value)}%';
 
-String _multiplier(num value) => '×${jsNumberToString(value)}';
+/// Combat Level and similar multipliers show hundredths only (×1.66, not float noise).
+String _multiplier(num value) => '×${value.toStringAsFixed(2)}';
 
 DamageRange _unarmedBase(GameDatabase db) {
   return DamageRange(
