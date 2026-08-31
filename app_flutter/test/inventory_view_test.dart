@@ -132,7 +132,7 @@ void main() {
     await tester.longPress(find.byTooltip('Copper Hatchet'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Woodcutting: -5% action time'), findsOne);
+    expect(find.text('Woodcutting: -3% action time'), findsOne);
     expect(find.text('Equip'), findsOne);
     await tester.tap(find.text('Equip'));
     await tester.pumpAndSettle();
@@ -142,7 +142,7 @@ void main() {
     await tester.pump();
     await tester.longPress(find.byTooltip('Copper Hatchet').first);
     await tester.pumpAndSettle();
-    expect(find.text('Woodcutting: -5% action time'), findsOne);
+    expect(find.text('Woodcutting: -3% action time'), findsOne);
     expect(find.text('Equip'), findsNothing);
   });
 
@@ -256,7 +256,7 @@ void main() {
     await tester.pump();
 
     expect(find.textContaining('Woodcutting'), findsWidgets);
-    expect(find.textContaining('-5% action time'), findsOne);
+    expect(find.textContaining('-3% action time'), findsOne);
   });
 
   List<String> visibleBagOrder(WidgetTester tester, List<String> names) {
