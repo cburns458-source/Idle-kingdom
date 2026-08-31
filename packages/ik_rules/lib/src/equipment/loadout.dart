@@ -34,12 +34,13 @@ bool isTwoHandedItem(GameDatabase db, String itemId) => itemHasCapability(db, it
 
 /// Either the updated save or the reason the change was refused.
 class EquipResult {
-  const EquipResult.ok(this.save) : reason = null;
+  const EquipResult.ok(this.save, {this.warning}) : reason = null;
 
-  const EquipResult.failed(this.reason) : save = null;
+  const EquipResult.failed(this.reason) : save = null, warning = null;
 
   final PlayerSave? save;
   final String? reason;
+  final String? warning;
 
   bool get ok => reason == null;
 }

@@ -38,7 +38,7 @@ export function isTwoHandedItem(db: GameDatabase, itemId: string): boolean {
 }
 
 export type EquipResult =
-  | { ok: true; save: PlayerSave }
+  | { ok: true; save: PlayerSave; warning?: string }
   | { ok: false; reason: string }
 
 export function slotStack(save: PlayerSave, slotId: string): EquippedStack | null {

@@ -12,7 +12,7 @@ const int equipmentPresetCount = 4;
 const int equipmentPresetNameMax = 24;
 
 const String _bagFullReason = 'Not enough inventory space to switch presets.';
-const String _missingReason = 'Missing items needed for that preset.';
+const String _missingWarning = 'Some items were missing.';
 
 EquipmentPresetIcon defaultEquipmentPresetIcon(int index) {
   return EquipmentPresetIcon(kind: 'roman', numeral: index + 1);
@@ -103,7 +103,27 @@ EquipmentPresetIcon _normalizePresetIcon(EquipmentPresetIcon icon, int index) {
   return EquipmentPresetIcon(kind: 'roman', numeral: numeral);
 }
 
-/// While preset 1 is active, keep its snapshot identical to the live loadout.
+/// True when [need] is worn or sitting in the bag (same stack key).
+bool equipmentStackOwned(PlayerSave save, EquippedStack need) {
+  final want = _stackKey(need.itemId, need.enchantmentId, need.favorite == true);
+  for (final equipped in save.equipment.slots.values) {
+    if (equipped == null || equipped.quantity <= 0) continue;
+    if (_stackKey(equipped.itemId, equipped.enchantmentId, equipped.favorite == true) == want) {
+      return true;
+    }
+  }
+  for (final stack in save.inventory) {
+    if (stack.quantity <= 0) continue;
+    if (_stackKey(stack.itemId, stack.enchantmentId, stack.favorite == true) == want) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/// While preset 1 is active, copy live gear onto its snapshot.
+/// Empty live slots do not wipe a stored piece that is no longer owned, so a
+/// partial apply cannot forget missing items.
 PlayerSave trackActiveEquipmentPreset(PlayerSave save) {
   final normalized = _normalizeEquipmentPresets(save);
   if (normalized.activeEquipmentPresetIndex != 0) {
@@ -112,10 +132,23 @@ PlayerSave trackActiveEquipmentPreset(PlayerSave save) {
       activeEquipmentPresetIndex: normalized.activeEquipmentPresetIndex,
     );
   }
+  final stored = clonePresetSlots(normalized.equipmentPresets[0].slots);
+  for (final slotId in save.equipment.slots.keys) {
+    final live = save.equipment.slots[slotId];
+    if (live != null && live.quantity > 0) {
+      stored[slotId] = cloneEquippedStack(live);
+      continue;
+    }
+    final remembered = stored[slotId];
+    if (remembered != null && remembered.quantity > 0 && !equipmentStackOwned(save, remembered)) {
+      continue;
+    }
+    stored[slotId] = null;
+  }
   final next = <EquipmentPreset>[
     for (var index = 0; index < normalized.equipmentPresets.length; index += 1)
       if (index == 0)
-        normalized.equipmentPresets[index].copyWith(slots: clonePresetSlots(save.equipment.slots))
+        normalized.equipmentPresets[index].copyWith(slots: stored)
       else
         normalized.equipmentPresets[index],
   ];
@@ -175,6 +208,40 @@ PlayerSave setEquipmentPresetIcon(PlayerSave save, int index, EquipmentPresetIco
   );
 }
 
+/// Write one slot onto a stored preset. Does not change worn gear.
+PlayerSave setEquipmentPresetSlot(
+  GameDatabase db,
+  PlayerSave save,
+  int index,
+  String slotId,
+  EquippedStack? stack,
+) {
+  final normalized = _normalizeEquipmentPresets(save);
+  if (index < 0 || index >= equipmentPresetCount) return save;
+  if (!save.equipment.slots.containsKey(slotId)) return save;
+  final slots = clonePresetSlots(normalized.equipmentPresets[index].slots);
+  slots[slotId] = cloneEquippedStack(stack);
+  if (stack != null && isTwoHandedItem(db, stack.itemId) && slotId == weaponToolSlotId) {
+    slots[offhandSlotId] = null;
+  } else if (stack != null && slotId == offhandSlotId) {
+    final main = slots[weaponToolSlotId];
+    if (main != null && isTwoHandedItem(db, main.itemId)) {
+      slots[weaponToolSlotId] = null;
+    }
+  }
+  final next = <EquipmentPreset>[
+    for (var i = 0; i < normalized.equipmentPresets.length; i += 1)
+      if (i == index)
+        normalized.equipmentPresets[i].copyWith(slots: slots)
+      else
+        normalized.equipmentPresets[i],
+  ];
+  return save.copyWith(
+    equipmentPresets: next,
+    activeEquipmentPresetIndex: normalized.activeEquipmentPresetIndex,
+  );
+}
+
 class _PoolEntry {
   _PoolEntry({
     required this.itemId,
@@ -202,7 +269,8 @@ bool _takeFromPool(Map<String, _PoolEntry> pool, EquippedStack need) {
   return true;
 }
 
-/// Instant in-place swap to a stored preset.
+/// Instant in-place swap to a stored preset. Missing pieces are skipped and
+/// those slots stay empty. Blocks only when the bag cannot hold what comes off.
 EquipResult applyEquipmentPreset(GameDatabase db, PlayerSave save, int index) {
   // db reserved for future requirement checks on apply.
   final _ = db;
@@ -257,11 +325,19 @@ EquipResult applyEquipmentPreset(GameDatabase db, PlayerSave save, int index) {
     }
   }
 
+  final worn = <String, EquippedStack?>{};
+  var missing = false;
   for (final slotId in slotIds) {
     final want = target[slotId];
-    if (want == null || want.quantity <= 0) continue;
-    if (!_takeFromPool(pool, want)) {
-      return const EquipResult.failed(_missingReason);
+    if (want == null || want.quantity <= 0) {
+      worn[slotId] = null;
+      continue;
+    }
+    if (_takeFromPool(pool, want)) {
+      worn[slotId] = want;
+    } else {
+      worn[slotId] = null;
+      missing = true;
     }
   }
 
@@ -290,22 +366,13 @@ EquipResult applyEquipmentPreset(GameDatabase db, PlayerSave save, int index) {
     );
   }
 
-  final presets = index == 0
-      ? <EquipmentPreset>[
-          for (var i = 0; i < working.equipmentPresets.length; i += 1)
-            if (i == 0)
-              working.equipmentPresets[i].copyWith(slots: clonePresetSlots(target))
-            else
-              working.equipmentPresets[i],
-        ]
-      : working.equipmentPresets;
-
   return EquipResult.ok(
     working.copyWith(
-      equipment: EquipmentLoadout(slots: target),
+      equipment: EquipmentLoadout(slots: worn),
       inventory: bagProbe.inventory,
       activeEquipmentPresetIndex: index,
-      equipmentPresets: presets,
+      equipmentPresets: working.equipmentPresets,
     ),
+    warning: missing ? _missingWarning : null,
   );
 }
