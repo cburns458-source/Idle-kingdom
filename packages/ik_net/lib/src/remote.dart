@@ -75,6 +75,9 @@ String friendlyRemoteError(String message) {
   if (remoteMissingGearPrivacyColumn(message)) {
     return remoteGearPrivacyUnavailable;
   }
+  if (remoteMissingGuildSkillMilestoneColumn(message)) {
+    return remoteGuildSkillMilestonesUnavailable;
+  }
   return message;
 }
 
@@ -100,6 +103,20 @@ bool remoteMissingGearPrivacyColumn(String? reason) {
   final lower = reason.toLowerCase();
   if (!lower.contains('does not exist')) return false;
   return lower.contains('privacy_public_gear') || lower.contains('equipment_json');
+}
+
+/// What a skipped guild skill-milestone migration looks like from PostgREST.
+const String remoteGuildSkillMilestonesUnavailable =
+    'Guild skill milestones are not available on the server yet. '
+    'Apply migration 020_guild_skill_milestones.sql.';
+
+/// True when [reason] is the hosted project missing migration 020.
+bool remoteMissingGuildSkillMilestoneColumn(String? reason) {
+  if (reason == null || reason.isEmpty) return false;
+  if (reason == remoteGuildSkillMilestonesUnavailable) return true;
+  final lower = reason.toLowerCase();
+  if (!lower.contains('does not exist')) return false;
+  return lower.contains('skill_milestone_settings');
 }
 
 /// True when [reason] is the hosted project missing the name-color column.

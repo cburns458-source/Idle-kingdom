@@ -113,9 +113,9 @@ class FakeTransport implements RemoteTransport {
   }
 
   /// The PostgREST line a missing column produces, so a retry can match it.
-  String? _missingColumnRefusal(String named) {
+  String? _missingColumnRefusal(String table, String named) {
     for (final column in missingColumns) {
-      if (named.contains(column)) return 'column profiles.$column does not exist';
+      if (named.contains(column)) return 'column $table.$column does not exist';
     }
     return null;
   }
@@ -267,7 +267,7 @@ class FakeTransport implements RemoteTransport {
     if (reason != null) return RemoteQueryResult.failed(reason);
     final missingTable = _missingTableRefusal(table);
     if (missingTable != null) return RemoteQueryResult.failed(missingTable);
-    final missing = _missingColumnRefusal(columns);
+    final missing = _missingColumnRefusal(table, columns);
     if (missing != null) return RemoteQueryResult.failed(missing);
 
     final storedTable = table == RemoteTables.leaderboardEntries ? RemoteTables.leaderboard : table;
@@ -351,7 +351,7 @@ class FakeTransport implements RemoteTransport {
     final missingTable = _missingTableRefusal(table);
     if (missingTable != null) return missingTable;
     for (final row in rows) {
-      final missing = _missingColumnRefusal(row.keys.join(','));
+      final missing = _missingColumnRefusal(table, row.keys.join(','));
       if (missing != null) return missing;
     }
 
@@ -380,6 +380,8 @@ class FakeTransport implements RemoteTransport {
     if (reason != null) return RemoteQueryResult.failed(reason);
     final missingTable = _missingTableRefusal(table);
     if (missingTable != null) return RemoteQueryResult.failed(missingTable);
+    final missing = _missingColumnRefusal(table, '$columns,${row.keys.join(',')}');
+    if (missing != null) return RemoteQueryResult.failed(missing);
 
     final key = _keys[table]!;
     final stored = tables.putIfAbsent(table, () => <RemoteRow>[]);
@@ -408,6 +410,8 @@ class FakeTransport implements RemoteTransport {
     calls.add('update:$table');
     final reason = _takeFailure('update:$table');
     if (reason != null) return reason;
+    final missing = _missingColumnRefusal(table, row.keys.join(','));
+    if (missing != null) return missing;
     if (equals.isEmpty) return 'An update needs a filter.';
 
     final stored = tables.putIfAbsent(table, () => <RemoteRow>[]);

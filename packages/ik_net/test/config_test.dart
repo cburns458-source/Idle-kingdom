@@ -77,6 +77,15 @@ void main() {
     expect(friendshipPair('b', 'a'), (userA: 'a', userB: 'b'));
   });
 
+  test('explains a skipped guild skill-milestone migration without the SQL column name', () {
+    expect(
+      friendlyRemoteError('column guilds.skill_milestone_settings does not exist'),
+      remoteGuildSkillMilestonesUnavailable,
+    );
+    expect(remoteMissingGuildSkillMilestoneColumn(remoteGuildSkillMilestonesUnavailable), isTrue);
+    expect(remoteMissingGuildSkillMilestoneColumn('Connection closed.'), isFalse);
+  });
+
   test('explains a skipped chat-privacy migration without the SQL column name', () {
     expect(
       friendlyRemoteError('column profiles.privacy_direct_messages does not exist'),

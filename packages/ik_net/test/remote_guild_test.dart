@@ -443,4 +443,37 @@ void main() {
     // Which means the same name works on the next try.
     expect((await leader.createGuild(_ironLeague, guildCreateGoldCost)).ok, isTrue);
   });
+
+  test('lists guilds when skill_milestone_settings has not been migrated yet', () async {
+    final transport = FakeTransport();
+    final leader = await _player(transport, 'leader@example.com', 'Leader');
+    expect((await leader.createGuild(_ironLeague, guildCreateGoldCost)).ok, isTrue);
+
+    transport.missingColumns.add(remoteGuildSkillMilestoneColumn);
+    final listings = await leader.listGuilds();
+    expect(listings, hasLength(1));
+    expect(listings.single.guild.name, 'Iron League');
+    expect(listings.single.guild.skillMilestoneSettings.enabled, isTrue);
+    expect(leader.takeReadProblem(), isNull);
+
+    final before = transport.selectedColumns.length;
+    expect(await leader.listGuilds(), hasLength(1));
+    expect(
+      transport.selectedColumns.sublist(before),
+      everyElement(isNot(contains(remoteGuildSkillMilestoneColumn))),
+    );
+
+    final settings = await leader.setGuildSkillMilestoneSettings(
+      listings.single.guild.id,
+      const GuildSkillMilestoneSettings(
+        enabled: false,
+        levelStart: 40,
+        levelStep: 5,
+        xpStartMillion: 100,
+        xpStepMillion: 20,
+      ),
+    );
+    expect(settings.ok, isFalse);
+    expect(settings.reason, remoteGuildSkillMilestonesUnavailable);
+  });
 }

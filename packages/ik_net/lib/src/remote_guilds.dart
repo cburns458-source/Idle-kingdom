@@ -12,9 +12,16 @@ import 'package:ik_rules/ik_rules.dart';
 import 'remote.dart';
 import 'types.dart';
 
-const String remoteGuildColumns =
+/// Guild columns that every hosted project already has.
+const String remoteGuildBaseColumns =
     'id, name, tag, description, emblem, leader_id, join_policy, '
-    'rank_labels, rank_icon_theme, guest_auto_accept, skill_milestone_settings, created_at';
+    'rank_labels, rank_icon_theme, guest_auto_accept, created_at';
+
+/// Added by migration `020_guild_skill_milestones.sql`.
+const String remoteGuildSkillMilestoneColumn = 'skill_milestone_settings';
+
+/// Full guild select when migration 020 is applied.
+const String remoteGuildColumns = '$remoteGuildBaseColumns, $remoteGuildSkillMilestoneColumn';
 
 const String remoteGuildMemberColumns =
     'guild_id, user_id, username, role, joined_at, appearance_json, total_level';
