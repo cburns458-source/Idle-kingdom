@@ -131,9 +131,7 @@ List<GuildSkillMilestone> guildSkillMilestonesCrossed({
   final beforeXpMarks = xpMillionMilestonesAtOrBelow(beforeXp, beforeLevel, normalized).toSet();
   for (final xpMillion in xpMillionMilestonesAtOrBelow(afterXp, afterLevel, normalized)) {
     if (!beforeXpMarks.contains(xpMillion)) {
-      out.add(
-        GuildSkillXpMilestone(skillId: skillId, skillName: skillName, xpMillion: xpMillion),
-      );
+      out.add(GuildSkillXpMilestone(skillId: skillId, skillName: skillName, xpMillion: xpMillion));
     }
   }
   return out;

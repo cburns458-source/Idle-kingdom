@@ -571,13 +571,9 @@ class RemoteGuildBackend {
   Future<ActionResult> setGuildSkillMilestoneSettings(
     String guildId,
     GuildSkillMilestoneSettings settings,
-  ) => _setGuildColumn(
-    guildId,
-    <String, Object?>{
-      'skill_milestone_settings': normalizeGuildSkillMilestoneSettings(settings.toJson()).toJson(),
-    },
-    refusal: 'Only the leader can change skill milestones.',
-  );
+  ) => _setGuildColumn(guildId, <String, Object?>{
+    'skill_milestone_settings': normalizeGuildSkillMilestoneSettings(settings.toJson()).toJson(),
+  }, refusal: 'Only the leader can change skill milestones.');
 
   Future<ActionResult> setGuildRankLabels(
     String guildId,
