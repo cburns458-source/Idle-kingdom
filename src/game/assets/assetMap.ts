@@ -37,6 +37,8 @@ export const LOCATION_ASSET_PATHS: Record<string, string> = {
   'LOC-0040': '/assets/locations/loc_forest_path.webp',
   'LOC-0041': '/assets/locations/loc_sunken_approach.webp',
   'LOC-0042': '/assets/locations/loc_the_depths.webp',
+  'LOC-0043': '/assets/locations/loc_the_shallows.webp',
+  'LOC-0044': '/assets/locations/loc_starlight_glade.webp',
   'LOC-0021': '/assets/locations/loc_queens_quarters.webp',
   'LOC-0022': '/assets/locations/loc_abandoned_mineshaft.webp',
   'LOC-0038': '/assets/locations/loc_town_foundry.webp',

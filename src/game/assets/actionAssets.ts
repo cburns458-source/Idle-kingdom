@@ -48,6 +48,8 @@ export const ACTION_ASSET_PATHS: Record<string, string> = {
   'ACN-0167': '/assets/actions/acn_mine_emerald.webp',
   'ACN-0168': '/assets/actions/acn_mine_ruby.webp',
   'ACN-0177': '/assets/actions/acn_mine_coal.webp',
+  'ACN-0179': '/assets/actions/acn_clear_vines.webp',
+  'ACN-0180': '/assets/actions/acn_gather_algae.webp',
 }
 
 const FALLBACK_ACTION_ASSET = '/assets/actions/acn_harvest_potato.webp'

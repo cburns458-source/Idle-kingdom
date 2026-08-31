@@ -158,6 +158,14 @@ num playerMaxHp(GameDatabase db, PlayerSave save) {
   return math.max(1, _scaleStat(base + bonus, levelMult * raceMult));
 }
 
+/// Max HP from base + Combat Level + race only — equipment HP bonuses are ignored.
+num playerBaseMaxHp(GameDatabase db, PlayerSave save) {
+  final base = configNumber(db, 'starting_max_hp', 1000);
+  final levelMult = combatLevelBonusMultiplier(save);
+  final raceMult = raceMaxHpMultiplier(db, save);
+  return math.max(1, _scaleStat(base, levelMult * raceMult));
+}
+
 num rollDamage(num min, num max, RandomFn random) {
   final lo = math.min(min, max);
   final hi = math.max(min, max);

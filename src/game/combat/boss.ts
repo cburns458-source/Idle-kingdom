@@ -1,5 +1,7 @@
 import type { EnemyRow } from '../data/enemyTypes'
+import type { GameDatabase } from '../data/types'
 import type { PlayerSave } from '../save/types'
+import { playerBaseMaxHp } from './stats'
 
 export const DEFAULT_BOSS_SLEEP_ROUNDS = 4
 export const DEFAULT_BOSS_WAKE_HP_RATIO = 0.5
@@ -21,6 +23,11 @@ export interface BossProfile {
   inkAt: number | null
   inkChance: number
   damageMode: BossDamageMode | null
+  /** When set, encounter max HP = playerBaseMaxHp × this scale (armor HP ignored). */
+  playerBaseHpScale: number | null
+  /** When both pct fields are set, enemy damage is this % of playerBaseMaxHp. */
+  playerBaseDamagePctMin: number | null
+  playerBaseDamagePctMax: number | null
 }
 
 function noteTokens(notes: string | null | undefined): string[] {
@@ -60,6 +67,9 @@ export function bossProfile(enemy: EnemyRow | null | undefined): BossProfile | n
   const tokens = noteTokens(enemy!.Notes)
   const squidlingsAtRaw = noteNumber(tokens, 'squidlings_at', Number.NaN)
   const inkAtRaw = noteNumber(tokens, 'ink_at', Number.NaN)
+  const hpScaleRaw = noteNumber(tokens, 'player_base_hp_scale', Number.NaN)
+  const dmgMinRaw = noteNumber(tokens, 'player_base_damage_pct_min', Number.NaN)
+  const dmgMaxRaw = noteNumber(tokens, 'player_base_damage_pct_max', Number.NaN)
   const damageModeRaw = noteString(tokens, 'damage_mode', null)?.toLowerCase() ?? null
   return {
     sleepStart: Math.max(0, Math.floor(noteNumber(tokens, 'sleep_start', DEFAULT_BOSS_SLEEP_ROUNDS))),
@@ -78,7 +88,42 @@ export function bossProfile(enemy: EnemyRow | null | undefined): BossProfile | n
     inkAt: Number.isFinite(inkAtRaw) ? inkAtRaw : null,
     inkChance: noteNumber(tokens, 'ink_chance', DEFAULT_BOSS_INK_CHANCE),
     damageMode: damageModeRaw === 'fishing' ? 'fishing' : null,
+    playerBaseHpScale: Number.isFinite(hpScaleRaw) ? hpScaleRaw : null,
+    playerBaseDamagePctMin: Number.isFinite(dmgMinRaw) ? dmgMinRaw : null,
+    playerBaseDamagePctMax: Number.isFinite(dmgMaxRaw) ? dmgMaxRaw : null,
   }
+}
+
+/** Encounter max HP: scaled from player base HP when the boss profile asks for it. */
+export function enemyEncounterMaxHp(
+  db: GameDatabase,
+  save: PlayerSave,
+  enemy: EnemyRow,
+): number {
+  const profile = bossProfile(enemy)
+  if (profile?.playerBaseHpScale != null) {
+    return Math.max(1, Math.floor(playerBaseMaxHp(db, save) * profile.playerBaseHpScale))
+  }
+  return enemy['Maximum HP']
+}
+
+/** Enemy damage range for this encounter (scaled or static Min/Max Damage). */
+export function enemyEncounterDamageRange(
+  db: GameDatabase,
+  save: PlayerSave,
+  enemy: EnemyRow,
+): { min: number; max: number } {
+  const profile = bossProfile(enemy)
+  if (
+    profile?.playerBaseDamagePctMin != null &&
+    profile.playerBaseDamagePctMax != null
+  ) {
+    const base = playerBaseMaxHp(db, save)
+    const min = Math.max(1, Math.floor((base * profile.playerBaseDamagePctMin) / 100))
+    const max = Math.max(min, Math.floor((base * profile.playerBaseDamagePctMax) / 100))
+    return { min, max }
+  }
+  return { min: enemy['Min Damage'], max: enemy['Max Damage'] }
 }
 
 export function isBossAddFight(save: PlayerSave): boolean {

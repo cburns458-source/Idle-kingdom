@@ -147,7 +147,7 @@ PlayerSave beginCombatSave(
   String nowIso,
 ) {
   final potion = tryConsumePotionForScope(db, save, 'one_combat_encounter');
-  final enemyMaxHp = jsNumber(enemy.raw['Maximum HP']);
+  final enemyMaxHp = enemyEncounterMaxHp(db, potion.save, enemy);
   return potion.save.copyWith(
     currentActionId: action.raw['Action ID'] as String?,
     actionStartedAt: nowIso,
@@ -195,7 +195,7 @@ CombatRoundResult resolveCombatRound(
   final floor = configNumber(db, 'damage_floor', 1);
   final profile = bossProfile(enemy);
   final asleep = (save.combatBossSleepRoundsRemaining ?? 0) > 0;
-  final enemyMaxHp = jsNumber(enemy.raw['Maximum HP']);
+  final enemyMaxHp = enemyEncounterMaxHp(db, save, enemy);
   final fishingMode = profile?.damageMode == 'fishing' && !isBossAddFight(save);
 
   var bossInkActive = false;
@@ -344,11 +344,8 @@ CombatRoundResult resolveCombatRound(
   }
 
   final rampage = profile != null && nextEnemyHp <= enemyMaxHp * profile.rampageHpRatio;
-  var enemyRaw = rollDamage(
-    jsNumber(enemy.raw['Min Damage']),
-    jsNumber(enemy.raw['Max Damage']),
-    random,
-  );
+  final enemyRange = enemyEncounterDamageRange(db, save, enemy);
+  var enemyRaw = rollDamage(enemyRange.min, enemyRange.max, random);
   if (rampage) enemyRaw *= 2;
   final enemyHit = applyMitigation(enemyRaw, playerDamageReduction(db, save), floor);
   final playerHp = math.max(0, save.currentHp - enemyHit);
@@ -390,9 +387,10 @@ bool shouldSkipVictoryHealingFood(
   num? incomingEnemyHp,
   num? enemyHit,
   num playerHpAfter,
-  num playerHpBefore,
-) {
-  final maxHp = jsNumber(enemy.raw['Maximum HP'] ?? 0);
+  num playerHpBefore, {
+  num? encounterMaxHp,
+}) {
+  final maxHp = encounterMaxHp ?? jsNumber(enemy.raw['Maximum HP'] ?? 0);
   final startedAtFull = incomingEnemyHp == null || incomingEnemyHp == maxHp;
   return startedAtFull && enemyHit == null && playerHpAfter == playerHpBefore;
 }

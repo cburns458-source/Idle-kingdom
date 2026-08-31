@@ -199,6 +199,14 @@
     "LOC-0042": {
       "internalKey": "the_depths",
       "path": "/assets/locations/loc_the_depths.webp"
+    },
+    "LOC-0043": {
+      "internalKey": "the_shallows",
+      "path": "/assets/locations/loc_the_shallows.webp"
+    },
+    "LOC-0044": {
+      "internalKey": "starlight_glade",
+      "path": "/assets/locations/loc_starlight_glade.webp"
     }
   },
   "enemies": {
@@ -301,7 +309,8 @@
       "spell": "/assets/icons/items/item_spell.webp",
       "steel_pickaxe": "/assets/icons/items/item_steel_pickaxe.webp",
       "sword": "/assets/icons/items/item_sword.webp",
-      "timber": "/assets/icons/items/item_timber.webp"
+      "timber": "/assets/icons/items/item_timber.webp",
+      "algae": "/assets/icons/items/item_algae.webp"
     },
     "ui": {
       "map": "/assets/icons/ui/ui_map.webp"

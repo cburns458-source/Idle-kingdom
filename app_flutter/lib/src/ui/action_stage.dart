@@ -600,7 +600,10 @@ class _CombatStage extends StatelessWidget {
     final enemyId = controller.stagedEnemyId ?? save.combatEnemyId;
     final enemy = enemyId == null ? null : getEnemy(controller.db, enemyId);
     final enemyName = _combatEnemyDisplayName(controller.db, save, enemy);
-    final enemyMaxHp = math.max(1, enemy?.maximumHp ?? 1);
+    final enemyMaxHp = math.max(
+      1,
+      enemy == null ? 1 : enemyEncounterMaxHp(controller.db, save, enemy).toInt(),
+    );
     final enemyHp = controller.stagedEnemyHp;
     final maxHp = playerMaxHp(controller.db, save);
     final playerHp = controller.stagedPlayerHp;

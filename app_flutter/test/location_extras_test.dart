@@ -410,7 +410,7 @@ void main() {
     expect(find.text('Forest Gate'), findsNothing);
   });
 
-  testWidgets('Enter Sunken Approach opens The Depths', (tester) async {
+  testWidgets('Enter Sunken Approach opens The Shallows', (tester) async {
     final controller = buildController(
       database,
       seed: startedCharacter(database).copyWith(currentLocationId: sunkenApproachId),
@@ -423,10 +423,10 @@ void main() {
     await tester.tap(find.text('Enter The Depths'));
     await tester.pump();
 
-    expect(controller.save.currentLocationId, theDepthsId);
+    expect(controller.save.currentLocationId, theShallowsId);
     expect(find.byType(WorldMapView), findsOne);
     expect(
-      find.descendant(of: find.byType(WorldMapView), matching: find.text('The Depths')),
+      find.descendant(of: find.byType(WorldMapView), matching: find.text('The Shallows')),
       findsWidgets,
     );
     expect(find.text('Sunken Approach'), findsNothing);
