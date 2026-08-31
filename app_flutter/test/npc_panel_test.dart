@@ -303,4 +303,43 @@ void main() {
       5,
     );
   });
+
+  testWidgets('Vesper changes race for mid-level goods once a week', (tester) async {
+    final base = standing('LOC-0015');
+    final bump = raceChangeTotalLevel - totalLevel(base);
+    final first = base.skills.first;
+    final seasoned = base.copyWith(
+      skills: <SkillProgress>[
+        first.copyWith(level: first.level + bump),
+        ...base.skills.skip(1),
+      ],
+      inventory: const <InventoryStack>[
+        InventoryStack(itemId: 'ITEM-0005', quantity: 60),
+        InventoryStack(itemId: 'ITEM-0006', quantity: 20),
+        InventoryStack(itemId: 'ITEM-0007', quantity: 20),
+      ],
+    );
+    final controller = buildController(database, seed: seasoned);
+    addTearDown(controller.dispose);
+
+    await pumpPanel(
+      tester,
+      NpcPanel(controller: controller, npc: npcOf('NPC-0016'), onClose: () {}),
+    );
+    expect(find.textContaining('starter'), findsNothing);
+    expect(find.textContaining('Change race'), findsOne);
+    await tester.tap(find.text('Change race'));
+    await tester.pump();
+    await tester.tap(find.text('Dwarf'));
+    await tester.pump();
+    expect(find.textContaining('Coal'), findsOne);
+    expect(find.textContaining('20 / 20'), findsWidgets);
+    await tester.tap(find.text('Change to Dwarf'));
+    await tester.pump();
+
+    expect(controller.save.raceId, 'RACE-0006');
+    expect(controller.save.miniquestCompletedAt.containsKey('QST-0009'), isTrue);
+    expect(find.text('Change race'), findsNothing);
+    expect(find.textContaining('Come back in'), findsOne);
+  });
 }

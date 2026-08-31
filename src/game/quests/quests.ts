@@ -9,6 +9,7 @@ import { unlockRecipeId } from '../recipes/knowledge'
 import { removeIngredients } from '../production/inventory'
 import type { PlayerSave, QuestProgress } from '../save/types'
 import { unlockLocation } from '../world/submaps'
+import { meetsTotalLevelRequirement, isMiniquest } from './miniquests'
 import { parseStructuredObjectives, questObjectiveProgress } from './objectives'
 import {
   applyQuestLearnRecipeProgress,
@@ -67,6 +68,7 @@ export function questAvailableForSave(
   save: PlayerSave,
   quest: QuestRow,
 ): boolean {
+  if (!meetsTotalLevelRequirement(save, quest.Notes)) return false
   const parsed = parseStructuredObjectives(quest)
   for (const requirement of parsed.requiresSkills) {
     if (getSkillProgress(save, requirement.skillId).level < requirement.level) return false
@@ -87,8 +89,8 @@ export function getQuestProgress(save: PlayerSave, questId: string): QuestProgre
   )
 }
 
-export function isQuestRepeatable(_quest: QuestRow): boolean {
-  return false
+export function isQuestRepeatable(quest: QuestRow): boolean {
+  return /(?:^|;)\s*Repeatable:\s*\d+\s*d/i.test(quest.Notes ?? '')
 }
 
 export function acceptQuest(
@@ -99,6 +101,9 @@ export function acceptQuest(
 ): { ok: true; save: PlayerSave } | { ok: false; reason: string } {
   const quest = getQuest(db, questId)
   if (!quest) return { ok: false, reason: 'Quest not found.' }
+  if (isMiniquest(quest)) {
+    return { ok: false, reason: 'Speak with Vesper to change race.' }
+  }
   const parsed = parseStructuredObjectives(quest)
   if (!options.ignoreLocation) {
     const npc = db.NPCs.find((row) => row['NPC ID'] === quest['NPC ID'])

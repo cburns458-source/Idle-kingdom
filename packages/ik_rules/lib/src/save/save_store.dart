@@ -83,6 +83,7 @@ PlayerSave createNewSave(GameDatabase db, num nowMs) {
     ),
     hasSeenWardrobeIntro: false,
     hasSeenFennelIntro: false,
+    miniquestCompletedAt: const <String, String>{},
     settings: const PlayerSettings(
       soundEnabled: true,
       showActivityRewards: true,

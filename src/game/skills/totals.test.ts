@@ -45,6 +45,7 @@ function sampleSave(skills: Array<{ skillId: string; level: number; xp: number }
     },
     hasSeenWardrobeIntro: false,
     hasSeenFennelIntro: false,
+    miniquestCompletedAt: {},
     settings: {
       soundEnabled: true,
       showActivityRewards: true,

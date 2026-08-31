@@ -36,6 +36,8 @@ class _NpcPanelState extends State<NpcPanel> {
   String? _whereaboutsLine;
   String? _mentorLine;
   String? _error;
+  String? _selectedRaceId;
+  bool _pickingRace = false;
 
   GameController get controller => widget.controller;
 
@@ -379,12 +381,117 @@ class _NpcPanelState extends State<NpcPanel> {
       );
     }
 
+    if (conversation.raceChange case final raceChange?) {
+      return _raceChangeDialogue(conversation, raceChange);
+    }
+
     final completed = conversation.quests.where((quest) => quest.status == 'completed').firstOrNull;
     return _playerDialogue(
       name: conversation.name,
       line: completed?.completedNote ?? conversation.description,
       error: _error,
       actions: [GameButton(label: 'Done', onPressed: _close)],
+    );
+  }
+
+  Widget _raceChangeDialogue(NpcConversation conversation, RaceChangeOffer raceChange) {
+    final selected = raceChange.options
+        .where((option) => option.raceId == _selectedRaceId)
+        .firstOrNull;
+
+    if (_pickingRace && selected != null) {
+      return _playerDialogue(
+        name: conversation.name,
+        line: '${selected.name}. ${selected.summary}',
+        detail: raceChange.warning,
+        error: _error,
+        progress: [
+          for (final line in selected.lines)
+            QuestProgressLine(
+              key: line.itemId ?? 'gold',
+              label: line.name,
+              current: line.owned,
+              required: line.required,
+            ),
+        ],
+        actions: [
+          GameButton(
+            label: 'Back',
+            tone: GameButtonTone.secondary,
+            compact: true,
+            onPressed: () => setState(() {
+              _selectedRaceId = null;
+              _error = null;
+            }),
+          ),
+          GameButton(
+            label: selected.current
+                ? 'Already this race'
+                : selected.canAfford && raceChange.ready
+                ? 'Change to ${selected.name}'
+                : 'Need more',
+            onPressed: selected.current || !selected.canAfford || !raceChange.ready
+                ? null
+                : () {
+                    final reason = controller.changeRaceWithVesper(selected.raceId);
+                    if (reason != null) {
+                      setState(() => _error = reason);
+                      return;
+                    }
+                    setState(() {
+                      _error = null;
+                      _pickingRace = false;
+                      _selectedRaceId = null;
+                    });
+                  },
+          ),
+        ],
+      );
+    }
+
+    if (_pickingRace) {
+      return _playerDialogue(
+        name: conversation.name,
+        line: raceChange.prompt,
+        detail: raceChange.warning,
+        error: _error,
+        actions: [
+          GameButton(
+            label: 'Back',
+            tone: GameButtonTone.secondary,
+            compact: true,
+            onPressed: () => setState(() {
+              _pickingRace = false;
+              _error = null;
+            }),
+          ),
+          for (final option in raceChange.options.where((row) => !row.current))
+            GameButton(
+              label: option.name,
+              tone: GameButtonTone.secondary,
+              compact: true,
+              onPressed: () => setState(() {
+                _selectedRaceId = option.raceId;
+                _error = null;
+              }),
+            ),
+        ],
+      );
+    }
+
+    final line = raceChange.ready
+        ? raceChange.prompt
+        : (raceChange.cooldownLabel ?? conversation.description);
+    return _playerDialogue(
+      name: conversation.name,
+      line: line,
+      detail: raceChange.ready ? raceChange.warning : null,
+      error: _error,
+      actions: [
+        GameButton(label: 'Done', tone: GameButtonTone.secondary, compact: true, onPressed: _close),
+        if (raceChange.ready)
+          GameButton(label: 'Change race', onPressed: () => setState(() => _pickingRace = true)),
+      ],
     );
   }
 

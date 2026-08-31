@@ -14,6 +14,7 @@ import '../production/recipes.dart';
 import '../recipes/knowledge.dart';
 import '../save/generated/save_models.dart';
 import '../world/submaps.dart';
+import 'miniquests.dart';
 import 'objectives.dart';
 import 'progress.dart';
 import 'steps.dart';
@@ -39,7 +40,10 @@ QuestProgress getQuestProgress(PlayerSave save, String questId) {
       QuestProgress(questId: questId, status: 'inactive', progress: 0);
 }
 
-bool isQuestRepeatable(QuestRow quest) => false;
+bool isQuestRepeatable(QuestRow quest) {
+  final notes = quest['Notes'] is String ? quest['Notes']! as String : '';
+  return RegExp(r'(?:^|;)\s*Repeatable:\s*\d+\s*d', caseSensitive: false).hasMatch(notes);
+}
 
 /// Either the updated save or the reason the change was refused.
 class QuestActionResult {
@@ -57,6 +61,8 @@ List<QuestRow> questsTouchingNpc(GameDatabase db, PlayerSave save, String npcId)
 }
 
 bool questAvailableForSave(GameDatabase db, PlayerSave save, QuestRow quest) {
+  final notes = quest['Notes'] is String ? quest['Notes']! as String : null;
+  if (!meetsTotalLevelRequirement(save, notes)) return false;
   final parsed = parseStructuredObjectives(quest);
   for (final requirement in parsed.requiresSkills) {
     if (getSkillProgress(save, requirement.targetId).level < requirement.quantity) {
@@ -77,6 +83,9 @@ QuestActionResult acceptQuest(
 }) {
   final quest = getQuest(db, questId);
   if (quest == null) return const QuestActionResult.failed('Quest not found.');
+  if (isMiniquest(quest)) {
+    return const QuestActionResult.failed('Speak with Vesper to change race.');
+  }
   final parsed = parseStructuredObjectives(quest);
   if (!ignoreLocation) {
     final npc = db.npcs.firstWhereOrNull((row) => row.raw['NPC ID'] == quest['NPC ID']);

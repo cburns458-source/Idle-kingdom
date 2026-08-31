@@ -11,7 +11,7 @@ import 'page_header.dart';
 enum _LogTab {
   achievements('Deeds', 'Deeds unlocked on this save.', 'achievements'),
   milestones('Milestones', 'Lifetime marks this save has reached.', 'milestones'),
-  quests('Quests', 'Quest log for this save.', 'quests'),
+  quests('Quests', '', 'quests'),
   critters('Critters', 'Critters found while working their habitats.', 'critters');
 
   const _LogTab(this.label, this.lead, this.section);
@@ -36,6 +36,7 @@ class LogView extends StatefulWidget {
 
 class _LogViewState extends State<LogView> {
   _LogTab _tab = _LogTab.achievements;
+  bool _miniquestsOpen = false;
 
   GameController get controller => widget.controller;
 
@@ -105,7 +106,21 @@ class _LogViewState extends State<LogView> {
           padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
           child: Row(
             children: [
-              Expanded(child: MutedText(_tab.lead)),
+              if (_tab == _LogTab.quests)
+                Expanded(
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: GameButton(
+                      label: _miniquestsOpen ? 'Miniquests ▴' : 'Miniquests ▾',
+                      compact: true,
+                      selected: _miniquestsOpen,
+                      tone: _miniquestsOpen ? GameButtonTone.primary : GameButtonTone.secondary,
+                      onPressed: () => setState(() => _miniquestsOpen = !_miniquestsOpen),
+                    ),
+                  ),
+                )
+              else
+                Expanded(child: MutedText(_tab.lead)),
               if (completion.section(_tab.section) case final section?) ...[
                 const SizedBox(width: 8),
                 Text(
@@ -120,6 +135,11 @@ class _LogViewState extends State<LogView> {
             ],
           ),
         ),
+        if (_tab == _LogTab.quests && _miniquestsOpen)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+            child: _MiniquestList(rows: miniQuestLog(db, save, controller.session.clock())),
+          ),
         Expanded(
           child: ListView(
             padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
@@ -379,6 +399,57 @@ class _QuestJournalRow extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _MiniquestList extends StatelessWidget {
+  const _MiniquestList({required this.rows});
+
+  final List<MiniQuestLogRow> rows;
+
+  @override
+  Widget build(BuildContext context) {
+    if (rows.isEmpty) {
+      return const GamePanel(
+        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        child: MutedText('No active miniquests.'),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (final row in rows)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: GamePanel(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    row.name,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w400,
+                      color: row.ready ? Palette.gold : Palette.parchmentText,
+                    ),
+                  ),
+                  MutedText(row.detail),
+                  const SizedBox(height: 4),
+                  Text(
+                    row.repeatable
+                        ? (row.repeatEveryLabel == null
+                              ? row.repeatLabel
+                              : '${row.repeatLabel} · ${row.repeatEveryLabel}')
+                        : row.repeatLabel,
+                    style: const TextStyle(fontSize: 12, color: Palette.gold),
+                  ),
+                ],
+              ),
+            ),
+          ),
+      ],
     );
   }
 }
