@@ -498,6 +498,7 @@ class _InventoryViewState extends State<InventoryView> {
               children: [
                 EquipmentPresetsBar(
                   controller: controller,
+                  showSettingsButton: true,
                   onMessage: (message) {
                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
                   },
