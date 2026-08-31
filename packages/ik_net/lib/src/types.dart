@@ -598,6 +598,7 @@ class GuildRecord {
     required this.createdAt,
     this.guestAutoAccept = false,
     this.rankIconTheme = guildRankIconThemeStripes,
+    this.skillMilestoneSettings = defaultGuildSkillMilestoneSettings,
   });
 
   factory GuildRecord.fromJson(Map<String, Object?> json) => GuildRecord(
@@ -612,6 +613,7 @@ class GuildRecord {
     createdAt: json['createdAt']! as String,
     guestAutoAccept: json['guestAutoAccept'] as bool? ?? false,
     rankIconTheme: normalizeRankIconTheme(json['rankIconTheme'] as String?),
+    skillMilestoneSettings: normalizeGuildSkillMilestoneSettings(json['skillMilestoneSettings']),
   );
 
   final String id;
@@ -632,6 +634,9 @@ class GuildRecord {
   /// Which of the two rank-icon themes guild chat uses.
   final String rankIconTheme;
 
+  /// Thresholds for guild chat skill milestone announcements.
+  final GuildSkillMilestoneSettings skillMilestoneSettings;
+
   GuildRecord copyWith({
     String? name,
     String? tag,
@@ -641,6 +646,7 @@ class GuildRecord {
     Map<GuildRankKey, String>? rankLabels,
     bool? guestAutoAccept,
     String? rankIconTheme,
+    GuildSkillMilestoneSettings? skillMilestoneSettings,
   }) => GuildRecord(
     id: id,
     name: name ?? this.name,
@@ -653,6 +659,7 @@ class GuildRecord {
     createdAt: createdAt,
     guestAutoAccept: guestAutoAccept ?? this.guestAutoAccept,
     rankIconTheme: rankIconTheme ?? this.rankIconTheme,
+    skillMilestoneSettings: skillMilestoneSettings ?? this.skillMilestoneSettings,
   );
 
   Map<String, Object?> toJson() => <String, Object?>{
@@ -667,6 +674,7 @@ class GuildRecord {
     'createdAt': createdAt,
     if (guestAutoAccept) 'guestAutoAccept': true,
     if (rankIconTheme != guildRankIconThemeStripes) 'rankIconTheme': rankIconTheme,
+    'skillMilestoneSettings': skillMilestoneSettings.toJson(),
   };
 }
 

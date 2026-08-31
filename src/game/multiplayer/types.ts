@@ -8,6 +8,7 @@ import {
   type PlayerAppearance,
   type PlayerSave,
 } from '../save/types'
+import type { GuildSkillMilestoneSettings } from '../guild/skillMilestones'
 
 /** The appearance a row falls back to when no save or profile supplied one. */
 export const DEFAULT_PLAYER_APPEARANCE: PlayerAppearance = {
@@ -269,6 +270,8 @@ export interface GuildRecord {
   createdAt: string
   guestAutoAccept?: boolean
   rankIconTheme?: string
+  /** Guild chat skill milestone thresholds; defaults when omitted. */
+  skillMilestoneSettings?: GuildSkillMilestoneSettings
 }
 
 /** A guild as the browser lists it, with how full it is. */

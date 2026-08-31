@@ -14,7 +14,7 @@ import 'types.dart';
 
 const String remoteGuildColumns =
     'id, name, tag, description, emblem, leader_id, join_policy, '
-    'rank_labels, rank_icon_theme, guest_auto_accept, created_at';
+    'rank_labels, rank_icon_theme, guest_auto_accept, skill_milestone_settings, created_at';
 
 const String remoteGuildMemberColumns =
     'guild_id, user_id, username, role, joined_at, appearance_json, total_level';
@@ -79,6 +79,7 @@ RemoteRow guildRowForCreate(String leaderId, GuildRecord guild) => <String, Obje
   'rank_labels': guild.rankLabels,
   'rank_icon_theme': guild.rankIconTheme,
   'guest_auto_accept': guild.guestAutoAccept,
+  'skill_milestone_settings': guild.skillMilestoneSettings.toJson(),
 };
 
 /// The settings half of a guild, for an update that leaves the rest alone.
@@ -90,6 +91,7 @@ RemoteRow guildSettingsRowFor(GuildRecord guild) => <String, Object?>{
   'rank_labels': guild.rankLabels,
   'rank_icon_theme': guild.rankIconTheme,
   'guest_auto_accept': guild.guestAutoAccept,
+  'skill_milestone_settings': guild.skillMilestoneSettings.toJson(),
 };
 
 /// An emblem as any shape a row has ever held it in.
@@ -119,6 +121,7 @@ GuildRecord guildRecordFrom(RemoteRow row) => GuildRecord(
   createdAt: _str(row['created_at']),
   guestAutoAccept: row['guest_auto_accept'] == true,
   rankIconTheme: normalizeRankIconTheme(_str(row['rank_icon_theme'])),
+  skillMilestoneSettings: normalizeGuildSkillMilestoneSettings(row['skill_milestone_settings']),
 );
 
 /// A roster row, carrying the name, look, and level it is listed under.

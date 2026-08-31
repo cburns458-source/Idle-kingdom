@@ -21,6 +21,10 @@ import {
   guildNameFromInput,
   guildTagFromInput,
 } from '../guild/rules'
+import {
+  normalizeGuildSkillMilestoneSettings,
+  type GuildSkillMilestoneSettings,
+} from '../guild/skillMilestones'
 import type { BazaarPost, BazaarPostKind } from '../bazaar/types'
 import type { BountyClaimRecord } from '../bounties/types'
 import {
@@ -193,6 +197,7 @@ function normalizeGuild(raw: GuildRecord): GuildRecord {
         : 'open',
     rankLabels: normalizeRankLabels((raw as GuildRecord & { rankLabels?: unknown }).rankLabels),
     description: raw.description ?? '',
+    skillMilestoneSettings: normalizeGuildSkillMilestoneSettings(raw.skillMilestoneSettings),
   }
 }
 
@@ -1181,6 +1186,24 @@ export class LocalMultiplayerBackend {
     const next = normalizeRankIconTheme(theme)
     if (next !== GUILD_RANK_ICON_THEME_STRIPES) guild.rankIconTheme = next
     else delete guild.rankIconTheme
+    this.write(db)
+    return { ok: true }
+  }
+
+  setGuildSkillMilestoneSettings(
+    actorId: string,
+    guildId: string,
+    settings: Partial<GuildSkillMilestoneSettings>,
+  ): { ok: true } | { ok: false; reason: string } {
+    const db = this.db()
+    const guild = db.guilds.find((row) => row.id === guildId)
+    if (!guild || guild.leaderId !== actorId) {
+      return { ok: false, reason: 'Only the leader can change skill milestones.' }
+    }
+    guild.skillMilestoneSettings = normalizeGuildSkillMilestoneSettings({
+      ...guild.skillMilestoneSettings,
+      ...settings,
+    })
     this.write(db)
     return { ok: true }
   }

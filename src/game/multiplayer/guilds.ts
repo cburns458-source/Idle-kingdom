@@ -123,6 +123,15 @@ export async function setGuildRankIconTheme(
   return getLocalBackend().setGuildRankIconTheme(session.userId, guildId, theme)
 }
 
+export async function setGuildSkillMilestoneSettings(
+  guildId: string,
+  settings: Partial<import('../guild/skillMilestones').GuildSkillMilestoneSettings>,
+): Promise<{ ok: true } | { ok: false; reason: string }> {
+  const session = getSession()
+  if (!session) return { ok: false, reason: 'Sign in required.' }
+  return getLocalBackend().setGuildSkillMilestoneSettings(session.userId, guildId, settings)
+}
+
 export async function setGuildRankLabels(
   guildId: string,
   rankLabels: Partial<Record<GuildRankKey, string>>,

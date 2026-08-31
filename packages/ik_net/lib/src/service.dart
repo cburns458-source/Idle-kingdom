@@ -138,6 +138,11 @@ abstract interface class MultiplayerService {
 
   Future<ActionResult> setGuildRankIconTheme(String guildId, String theme);
 
+  Future<ActionResult> setGuildSkillMilestoneSettings(
+    String guildId,
+    GuildSkillMilestoneSettings settings,
+  );
+
   Future<ActionResult> setGuildRankLabels(String guildId, Map<GuildRankKey, String> rankLabels);
 
   Future<ActionResult> setGuildEmblem(String guildId, GuildEmblem emblem);
@@ -647,6 +652,16 @@ class LocalMultiplayerService implements MultiplayerService {
     final current = session;
     if (current == null) return const ActionResult.failed('Sign in required.');
     return _backend.setGuildRankIconTheme(current.userId, guildId, theme);
+  }
+
+  @override
+  Future<ActionResult> setGuildSkillMilestoneSettings(
+    String guildId,
+    GuildSkillMilestoneSettings settings,
+  ) async {
+    final current = session;
+    if (current == null) return const ActionResult.failed('Sign in required.');
+    return _backend.setGuildSkillMilestoneSettings(current.userId, guildId, settings);
   }
 
   @override
