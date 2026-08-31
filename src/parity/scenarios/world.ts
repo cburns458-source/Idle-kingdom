@@ -81,7 +81,7 @@ function withSave(kind: SaveKind, extra: Record<string, JsonValue> = {}): JsonVa
   return { source: 'content', save: asJson(saveFor(kind)), nowMs: PINNED_NOW_MS, ...extra }
 }
 
-const MAP_IDS = ['MAP-0001', 'MAP-0002', 'MAP-0003', 'MAP-0004', 'MAP-0005', 'MAP-0006', 'MAP-0007', 'MAP-9999']
+const MAP_IDS = ['MAP-0001', 'MAP-0002', 'MAP-0003', 'MAP-0004', 'MAP-0005', 'MAP-0006', 'MAP-0007', 'MAP-0008', 'MAP-0009', 'MAP-9999']
 const TRAVEL_LOCATIONS = [
   'LOC-0002',
   'LOC-0003',

@@ -70,9 +70,9 @@ void main() {
     expect(find.text('The old spirits still linger.'), findsOne);
   });
 
-  testWidgets('Ancient Forest hides the location danger line', (tester) async {
+  testWidgets('Old Ent Grove hides the location danger line', (tester) async {
     await pumpLocation(tester, 'LOC-0018');
-    expect(find.text('Ancient Forest'), findsWidgets);
+    expect(find.text('Old Ent Grove'), findsWidgets);
     expect(find.text('Includes Ent Combat encounters.'), findsNothing);
   });
 
@@ -382,6 +382,54 @@ void main() {
       findsWidgets,
     );
     expect(find.text('You are here.'), findsOne);
+  });
+
+  testWidgets('Enter Forest Gate opens the Ancient Forest at Forest Path', (tester) async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(currentLocationId: forestGatewayId),
+    );
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller);
+
+    expect(find.text('Forest Gate'), findsWidgets);
+    expect(find.text('Enter Ancient Forest'), findsOne);
+    await tester.tap(find.text('Enter Ancient Forest'));
+    await tester.pump();
+
+    expect(controller.save.currentLocationId, forestPathId);
+    expect(find.byType(WorldMapView), findsOne);
+    expect(
+      find.descendant(of: find.byType(WorldMapView), matching: find.text('Forest Path')),
+      findsWidgets,
+    );
+    expect(
+      find.descendant(of: find.byType(WorldMapView), matching: find.text('Old Ent Grove')),
+      findsWidgets,
+    );
+    expect(find.text('Forest Gate'), findsNothing);
+  });
+
+  testWidgets('Enter Sunken Approach opens The Depths', (tester) async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(currentLocationId: sunkenApproachId),
+    );
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller);
+
+    expect(find.text('Sunken Approach'), findsWidgets);
+    expect(find.text('Enter The Depths'), findsOne);
+    await tester.tap(find.text('Enter The Depths'));
+    await tester.pump();
+
+    expect(controller.save.currentLocationId, theDepthsId);
+    expect(find.byType(WorldMapView), findsOne);
+    expect(
+      find.descendant(of: find.byType(WorldMapView), matching: find.text('The Depths')),
+      findsWidgets,
+    );
+    expect(find.text('Sunken Approach'), findsNothing);
   });
 
   testWidgets('the town map shows district nodes and hides the entrance', (tester) async {

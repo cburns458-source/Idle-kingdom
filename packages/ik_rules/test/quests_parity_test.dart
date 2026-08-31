@@ -175,8 +175,16 @@ void main() {
               },
             )
             .toList();
-        final gateways = const <String>['LOC-0002', 'LOC-0010', 'LOC-0013', 'LOC-0027', 'LOC-0001']
-            .map((locationId) {
+        final gateways =
+            const <String>[
+              'LOC-0002',
+              'LOC-0010',
+              'LOC-0013',
+              'LOC-0027',
+              'LOC-0039',
+              'LOC-0041',
+              'LOC-0001',
+            ].map((locationId) {
               final location = db.locations.firstWhereOrNull(
                 (row) => row.locationId == locationId,
               )!;
@@ -187,8 +195,7 @@ void main() {
                 'landing': landingLocationIdFor(location),
                 'label': enterSubMapLabel(db, location),
               };
-            })
-            .toList();
+            }).toList();
         final locked = db.locations
             .map(
               (location) => <String, Object?>{

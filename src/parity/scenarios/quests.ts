@@ -71,8 +71,8 @@ const OBJECTIVE_TYPES = [
 
 const QUEST_IDS = ['QST-0001', 'QST-0002', 'QST-9999']
 const NPC_IDS = ['NPC-0001', 'NPC-0005', 'NPC-0007']
-const MAP_IDS = ['MAP-0001', 'MAP-0002', 'MAP-0003', 'MAP-0004', 'MAP-0006', 'MAP-0007', 'MAP-9999']
-const GATEWAY_IDS = ['LOC-0002', 'LOC-0010', 'LOC-0013', 'LOC-0027', 'LOC-0001']
+const MAP_IDS = ['MAP-0001', 'MAP-0002', 'MAP-0003', 'MAP-0004', 'MAP-0006', 'MAP-0007', 'MAP-0008', 'MAP-0009', 'MAP-9999']
+const GATEWAY_IDS = ['LOC-0002', 'LOC-0010', 'LOC-0013', 'LOC-0027', 'LOC-0039', 'LOC-0041', 'LOC-0001']
 
 export const questScenarios: ParityScenario[] = [
   scenario(

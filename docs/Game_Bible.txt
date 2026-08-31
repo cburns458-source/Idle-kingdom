@@ -184,6 +184,12 @@ THE DOCKS
 - Combat Activity: Try to reason with the pirates (pirate encounters, with a seagull as a rarer nuisance fight).
 - The seagull fight has no loot.
 - Coastal shops or NPCs and transportation interactions may exist.
+- Sunken Approach sits beside the docks and opens The Depths underwater sub-map.
+
+THE DEPTHS
+- Underwater sub-map, entered from Sunken Approach on the main map.
+- Open from the start. Landing node is The Depths.
+- A quiet ruined plaza for now. Mother Squid is planned for a later node.
 
 COPPER MINE
 Mining pool:
@@ -260,8 +266,9 @@ Barracks:
 - Combat Activities against Guards.
 
 ANCIENT FOREST
-- High-level woodland Location.
-- One axe-compatible Activity containing an Ancient Tree and Ent, Ancient Ent, and Corrupted Ent Combat Actions.
+- Woodland sub-map, entered from Forest Gate on the main map (north of the castle).
+- Landing node is Forest Path. Deeper node is Old Ent Grove (the original Ancient Forest site).
+- Old Ent Grove: one axe-compatible Activity containing an Ancient Tree and Ent, Ancient Ent, and Corrupted Ent Combat Actions, plus a separate hardwood chopping activity.
 
 TEMPLE
 - Main-map node.

@@ -55,7 +55,7 @@ describe('hostile travel forcing', () => {
     expect(locationShowsDangerWarning(launch, 'LOC-0002')).toBe(false)
   })
 
-  it('does not treat the Ancient Forest as hostile', () => {
+  it('does not treat Old Ent Grove as hostile', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const save = createNewSave(launch)
     expect(forcedHostileActivity(launch, save, 'LOC-0018')).toBeNull()

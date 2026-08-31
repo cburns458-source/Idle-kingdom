@@ -29,6 +29,14 @@
     "MAP-0007": {
       "internalKey": "citadel_map",
       "path": "/assets/maps/map_citadel.webp"
+    },
+    "MAP-0008": {
+      "internalKey": "ancient_forest",
+      "path": "/assets/maps/map_ancient_forest.webp"
+    },
+    "MAP-0009": {
+      "internalKey": "the_depths",
+      "path": "/assets/maps/map_the_depths.webp"
     }
   },
   "locations": {
@@ -175,6 +183,22 @@
     "LOC-0038": {
       "internalKey": "dwarven_forge",
       "path": "/assets/locations/loc_town_foundry.webp"
+    },
+    "LOC-0039": {
+      "internalKey": "forest_gate",
+      "path": "/assets/locations/loc_forest_gate.webp"
+    },
+    "LOC-0040": {
+      "internalKey": "forest_path",
+      "path": "/assets/locations/loc_forest_path.webp"
+    },
+    "LOC-0041": {
+      "internalKey": "sunken_approach",
+      "path": "/assets/locations/loc_sunken_approach.webp"
+    },
+    "LOC-0042": {
+      "internalKey": "the_depths",
+      "path": "/assets/locations/loc_the_depths.webp"
     }
   },
   "enemies": {

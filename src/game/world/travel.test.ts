@@ -21,6 +21,13 @@ import {
   CITADEL_MAP_ID,
   CITADEL_GATEWAY_ID,
   CITADEL_PLAZA_ID,
+  DEPTHS_MAP_ID,
+  FOREST_GATEWAY_ID,
+  FOREST_MAP_ID,
+  FOREST_PATH_ID,
+  OLD_ENT_GROVE_ID,
+  SUNKEN_APPROACH_ID,
+  THE_DEPTHS_ID,
   CASTLE_COURTYARD_ID,
   CASTLE_GATEWAY_ID,
   TOWN_GATEWAY_ID,
@@ -60,20 +67,24 @@ describe('travel rules', () => {
     expect(canTravelTo(launch, 'LOC-0017', 'LOC-0001', MAIN_MAP_ID)).toBe(true)
   })
 
-  it('lists main-map Launch locations including Ancient Forest', () => {
+  it('lists main-map Launch locations including Forest Gate', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const nodes = locationsForMapView(launch, MAIN_MAP_ID)
     expect(nodes.some((location) => location['Location ID'] === 'LOC-0002')).toBe(true)
-    expect(nodes.some((location) => location['Location ID'] === 'LOC-0018')).toBe(true)
+    expect(nodes.some((location) => location['Location ID'] === 'LOC-0039')).toBe(true)
+    expect(nodes.some((location) => location['Location ID'] === 'LOC-0041')).toBe(true)
+    expect(nodes.some((location) => location['Location ID'] === 'LOC-0018')).toBe(false)
     expect(nodes.some((location) => location['Location ID'] === 'LOC-0036')).toBe(true)
     expect(nodes.some((location) => location['Location ID'] === 'LOC-0019')).toBe(false)
     expect(nodes.some((location) => location['Location ID'] === 'LOC-0020')).toBe(false)
   })
 
-  it('allows travel to Ancient Forest from the overworld', () => {
+  it('allows travel to Forest Gate and Sunken Approach from the overworld', () => {
     const { launch } = prepareDatabase(rawDatabase)
-    expect(canTravelTo(launch, 'LOC-0002', 'LOC-0018', MAIN_MAP_ID)).toBe(true)
-    expect(canTravelTo(launch, 'LOC-0013', 'LOC-0018', MAIN_MAP_ID)).toBe(true)
+    expect(canTravelTo(launch, 'LOC-0002', 'LOC-0039', MAIN_MAP_ID)).toBe(true)
+    expect(canTravelTo(launch, 'LOC-0013', 'LOC-0039', MAIN_MAP_ID)).toBe(true)
+    expect(canTravelTo(launch, 'LOC-0004', 'LOC-0041', MAIN_MAP_ID)).toBe(true)
+    expect(canTravelTo(launch, 'LOC-0002', 'LOC-0018', MAIN_MAP_ID)).toBe(false)
   })
 
   it('allows travel to the Temple from the overworld', () => {
@@ -242,6 +253,16 @@ describe('travel rules', () => {
         (row) => row['Location ID'] === CASTLE_GATEWAY_ID,
       ),
     ).toBe(false)
+    expect(
+      locationsForMapView(launch, FOREST_MAP_ID).some(
+        (row) => row['Location ID'] === FOREST_GATEWAY_ID,
+      ),
+    ).toBe(false)
+    expect(
+      locationsForMapView(launch, DEPTHS_MAP_ID).some(
+        (row) => row['Location ID'] === SUNKEN_APPROACH_ID,
+      ),
+    ).toBe(false)
   })
 
   it('resolves world-map gateway travel to the written landing', () => {
@@ -254,6 +275,10 @@ describe('travel rules', () => {
     expect(landingLocationIdFor(cave)).toBe(CAVE_MINING_STORE_ID)
     expect(landingLocationIdFor(castle)).toBe(CASTLE_COURTYARD_ID)
     expect(landingLocationIdFor(citadel)).toBe(CITADEL_PLAZA_ID)
+    const forest = launch.Locations.find((row) => row['Location ID'] === FOREST_GATEWAY_ID)!
+    const depths = launch.Locations.find((row) => row['Location ID'] === SUNKEN_APPROACH_ID)!
+    expect(landingLocationIdFor(forest)).toBe(FOREST_PATH_ID)
+    expect(landingLocationIdFor(depths)).toBe(THE_DEPTHS_ID)
     expect(resolveSubMapTravelDestination(launch, TOWN_GATEWAY_ID, MAIN_MAP_ID, 'LOC-0009')).toBe(
       TOWN_GENERAL_STORE_ID,
     )
@@ -276,5 +301,36 @@ describe('travel rules', () => {
     expect(enter.kind).toBe('instant')
     if (enter.kind !== 'instant') return
     expect(enter.arrival.save.currentLocationId).toBe(TOWN_GENERAL_STORE_ID)
+  })
+
+  it('opens the Ancient Forest and The Depths from their world-map gates', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const forestGate = launch.Locations.find((row) => row['Location ID'] === FOREST_GATEWAY_ID)!
+    const sunken = launch.Locations.find((row) => row['Location ID'] === SUNKEN_APPROACH_ID)!
+    expect(resolveActiveMapId(launch, forestGate)).toBe(FOREST_MAP_ID)
+    expect(resolveActiveMapId(launch, sunken)).toBe(DEPTHS_MAP_ID)
+    expect(enterSubMapLabel(launch, forestGate)).toBe('Enter Ancient Forest')
+    expect(enterSubMapLabel(launch, sunken)).toBe('Enter The Depths')
+
+    const forestNodes = locationsForMapView(launch, FOREST_MAP_ID).map((row) => row['Location ID'])
+    expect(forestNodes).toEqual(expect.arrayContaining([FOREST_PATH_ID, OLD_ENT_GROVE_ID]))
+    expect(forestNodes).not.toContain(FOREST_GATEWAY_ID)
+    expect(canTravelTo(launch, FOREST_PATH_ID, OLD_ENT_GROVE_ID, FOREST_MAP_ID)).toBe(true)
+
+    const depthNodes = locationsForMapView(launch, DEPTHS_MAP_ID).map((row) => row['Location ID'])
+    expect(depthNodes).toEqual([THE_DEPTHS_ID])
+    expect(canTravelTo(launch, SUNKEN_APPROACH_ID, THE_DEPTHS_ID, DEPTHS_MAP_ID)).toBe(true)
+
+    const now = Date.parse('2026-01-01T00:00:00.000Z')
+    const fromMeadow = { ...createNewSave(launch), currentLocationId: 'LOC-0009' }
+    const toForest = planTravel(launch, fromMeadow, FOREST_GATEWAY_ID, MAIN_MAP_ID, now)
+    expect(toForest.kind).toBe('instant')
+    if (toForest.kind !== 'instant') return
+    expect(toForest.arrival.save.currentLocationId).toBe(FOREST_PATH_ID)
+
+    const toDepths = planTravel(launch, fromMeadow, SUNKEN_APPROACH_ID, MAIN_MAP_ID, now)
+    expect(toDepths.kind).toBe('instant')
+    if (toDepths.kind !== 'instant') return
+    expect(toDepths.arrival.save.currentLocationId).toBe(THE_DEPTHS_ID)
   })
 })

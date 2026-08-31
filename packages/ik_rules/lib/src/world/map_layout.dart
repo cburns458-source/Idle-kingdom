@@ -17,8 +17,8 @@ class NodePosition {
 const Map<String, NodePosition> mainMapNodeLayout = <String, NodePosition>{
   // NW castle with red roofs
   'LOC-0013': NodePosition(x: 26, y: 33),
-  // Ancient Forest north of the castle
-  'LOC-0018': NodePosition(x: 22, y: 23),
+  // Forest Gate north of the castle, into the Ancient Forest
+  'LOC-0039': NodePosition(x: 22, y: 23),
   // Temple on the ridge between castle and mountains
   'LOC-0036': NodePosition(x: 45, y: 25),
   // Mountain peaks / ridge
@@ -41,6 +41,8 @@ const Map<String, NodePosition> mainMapNodeLayout = <String, NodePosition>{
   'LOC-0001': NodePosition(x: 76, y: 65),
   // Harbor / dock at river mouth
   'LOC-0004': NodePosition(x: 54, y: 70),
+  // Sunken Approach, just southeast of the docks
+  'LOC-0041': NodePosition(x: 64, y: 78),
   // Road to the Citadel — horse and carriage at the river fork
   'LOC-0027': NodePosition(x: 48, y: 42),
 };
@@ -90,6 +92,22 @@ const Map<String, NodePosition> townMapNodeLayout = <String, NodePosition>{
   'LOC-0034': NodePosition(x: 54, y: 53),
 };
 
+const Map<String, NodePosition> forestMapNodeLayout = <String, NodePosition>{
+  // Forest Gate at the southern threshold (hidden on this submap)
+  'LOC-0039': NodePosition(x: 50, y: 86),
+  // Forest Path landing, just inside the gate
+  'LOC-0040': NodePosition(x: 50, y: 68),
+  // Old Ent Grove in the ancient clearing
+  'LOC-0018': NodePosition(x: 48, y: 28),
+};
+
+const Map<String, NodePosition> depthsMapNodeLayout = <String, NodePosition>{
+  // Sunken Approach at the drowned stairs (hidden on this submap)
+  'LOC-0041': NodePosition(x: 50, y: 86),
+  // The Depths landing in the ruined plaza
+  'LOC-0042': NodePosition(x: 50, y: 46),
+};
+
 const Map<String, NodePosition> citadelMapNodeLayout = <String, NodePosition>{
   // Citadel gateway / exit (north gate, hidden on this submap)
   'LOC-0027': NodePosition(x: 50, y: 18),
@@ -115,6 +133,8 @@ const Map<String, Map<String, NodePosition>> _layouts = <String, Map<String, Nod
   castleMapId: castleMapNodeLayout,
   townMapId: townMapNodeLayout,
   citadelMapId: citadelMapNodeLayout,
+  forestMapId: forestMapNodeLayout,
+  depthsMapId: depthsMapNodeLayout,
 };
 
 Map<String, NodePosition> layoutForMap(String mapId) {

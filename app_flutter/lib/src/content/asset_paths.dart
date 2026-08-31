@@ -20,6 +20,8 @@ const Map<String, String> _mapArt = <String, String>{
   'MAP-0005': 'maps/map_idale_east.webp',
   'MAP-0006': 'maps/map_town.webp',
   'MAP-0007': 'maps/map_citadel.webp',
+  'MAP-0008': 'maps/map_ancient_forest.webp',
+  'MAP-0009': 'maps/map_the_depths.webp',
 };
 
 const Map<String, String> _locationArt = <String, String>{
@@ -41,6 +43,10 @@ const Map<String, String> _locationArt = <String, String>{
   'LOC-0016': 'locations/loc_kings_quarters.webp',
   'LOC-0017': 'locations/loc_castle_barracks.webp',
   'LOC-0018': 'locations/loc_ancient_forest.webp',
+  'LOC-0039': 'locations/loc_forest_gate.webp',
+  'LOC-0040': 'locations/loc_forest_path.webp',
+  'LOC-0041': 'locations/loc_sunken_approach.webp',
+  'LOC-0042': 'locations/loc_the_depths.webp',
   'LOC-0021': 'locations/loc_queens_quarters.webp',
   'LOC-0022': 'locations/loc_abandoned_mineshaft.webp',
   'LOC-0038': 'locations/loc_town_foundry.webp',

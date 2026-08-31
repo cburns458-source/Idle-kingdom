@@ -11,6 +11,8 @@ const String westMapId = 'MAP-0004';
 const String eastMapId = 'MAP-0005';
 const String townMapId = 'MAP-0006';
 const String citadelMapId = 'MAP-0007';
+const String forestMapId = 'MAP-0008';
+const String depthsMapId = 'MAP-0009';
 
 const String caveEntranceId = 'LOC-0010';
 const String caveMiningStoreId = 'LOC-0012';
@@ -36,6 +38,15 @@ const String citadelGatheringId = 'LOC-0031';
 const String citadelCombatId = 'LOC-0032';
 const String guildHallLocationId = 'LOC-0033';
 const String citadelBankId = 'LOC-0035';
+
+/// Ancient Forest woodland (MAP-0008).
+const String forestGatewayId = 'LOC-0039';
+const String forestPathId = 'LOC-0040';
+const String oldEntGroveId = 'LOC-0018';
+
+/// The Depths underwater (MAP-0009).
+const String sunkenApproachId = 'LOC-0041';
+const String theDepthsId = 'LOC-0042';
 
 bool isFutureHorizonLocation(String locationId) {
   return locationId == westHorizonId || locationId == eastHorizonId;

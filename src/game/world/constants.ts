@@ -8,6 +8,8 @@ export const WEST_MAP_ID = 'MAP-0004'
 export const EAST_MAP_ID = 'MAP-0005'
 export const TOWN_MAP_ID = 'MAP-0006'
 export const CITADEL_MAP_ID = 'MAP-0007'
+export const FOREST_MAP_ID = 'MAP-0008'
+export const DEPTHS_MAP_ID = 'MAP-0009'
 
 export const CAVE_ENTRANCE_ID = 'LOC-0010'
 export const CAVE_MINING_STORE_ID = 'LOC-0012'
@@ -33,6 +35,15 @@ export const CITADEL_GATHERING_ID = 'LOC-0031'
 export const CITADEL_COMBAT_ID = 'LOC-0032'
 export const GUILD_HALL_LOCATION_ID = 'LOC-0033'
 export const CITADEL_BANK_ID = 'LOC-0035'
+
+/** Ancient Forest woodland (MAP-0008). */
+export const FOREST_GATEWAY_ID = 'LOC-0039'
+export const FOREST_PATH_ID = 'LOC-0040'
+export const OLD_ENT_GROVE_ID = 'LOC-0018'
+
+/** The Depths underwater (MAP-0009). */
+export const SUNKEN_APPROACH_ID = 'LOC-0041'
+export const THE_DEPTHS_ID = 'LOC-0042'
 
 export function isFutureHorizonLocation(locationId: string): boolean {
   return locationId === WEST_HORIZON_ID || locationId === EAST_HORIZON_ID

@@ -159,7 +159,7 @@ void main() {
     expect(currentHpAfterMaxChange(4900, 5000, 4000), 4000);
   });
 
-  test('Ancient Forest is not a forced-hostile arrival', () {
+  test('Old Ent Grove is not a forced-hostile arrival', () {
     final save = createNewSave(db, 0);
     expect(forcedHostileActivity(db, save, 'LOC-0018'), isNull);
     expect(locationIsHostileFor(db, save, 'LOC-0018'), isFalse);

@@ -3,7 +3,7 @@ import type { GameDatabase, NpcRow } from '../data/types'
 /** Mountains, Deep Mines, Abandoned Mineshaft. */
 export const MASTER_DWARF_ROUTE = ['LOC-0006', 'LOC-0011'] as const
 
-/** Meadow, Ancient Forest, Gathering Outskirts, Mountains. */
+/** Meadow, Old Ent Grove, Gathering Outskirts, Mountains. */
 export const QUILL_ROUTE = ['LOC-0009', 'LOC-0018', 'LOC-0031', 'LOC-0006'] as const
 
 export const MASTER_DWARF_ID = 'NPC-0003'

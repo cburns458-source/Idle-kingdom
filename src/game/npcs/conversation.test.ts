@@ -38,7 +38,7 @@ describe('npc conversation', () => {
     expect(conversation.shopId).toBe('SHP-0001')
     expect(conversation.whereabouts?.label).toBe('Ask about Quill')
     expect(conversation.whereabouts?.line).toMatch(
-      /^Last I heard, Quill was at the (Meadow|Ancient Forest|Gathering Outskirts|Mountains)\.$/,
+      /^Last I heard, Quill was at the (Meadow|Old Ent Grove|Gathering Outskirts|Mountains)\.$/,
     )
     expect(takeMerchantTip(launch, save, 'NPC-0007')).toBeNull()
   })
