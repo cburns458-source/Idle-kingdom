@@ -373,12 +373,12 @@ void main() {
     await tester.tap(find.text('Equipment'));
     await tester.pump();
 
-    await tester.tap(find.bySemanticsLabel('Edit presets'));
+    await tester.tap(find.text('Edit'));
     await tester.pump();
     expect(find.text('Done'), findsOneWidget);
     expect(find.textContaining('worn gear unchanged'), findsOneWidget);
 
-    await tester.tap(find.bySemanticsLabel('Preset 2'));
+    await tester.tap(find.text('II'));
     await tester.pump();
     expect(find.textContaining('Editing Preset 2'), findsOneWidget);
     expect(controller.save.activeEquipmentPresetIndex, 0);
@@ -396,7 +396,7 @@ void main() {
 
     await tester.tap(find.text('Equipment'));
     await tester.pump();
-    await tester.tap(find.bySemanticsLabel('Done editing presets'));
+    await tester.tap(find.text('Done'));
     await tester.pump();
 
     expect(find.text('Edit'), findsOneWidget);

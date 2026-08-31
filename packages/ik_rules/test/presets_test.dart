@@ -132,7 +132,7 @@ void main() {
   );
 
   test('writes a snapshot slot without changing worn gear or the active preset', () {
-    var save = addItemToInventory(createNewSave(db, 0), 'ITEM-0111', 1);
+    final save = addItemToInventory(createNewSave(db, 0), 'ITEM-0111', 1);
     final equipped = equipItemFromInventory(db, save, 'ITEM-0111');
     expect(equipped.ok, isTrue);
     final next = setEquipmentPresetSlot(
@@ -148,10 +148,9 @@ void main() {
   });
 
   test('renames presets and sets icons', () {
-    var save = createNewSave(db, 0);
-    save = renameEquipmentPreset(save, 1, 'Mining Kit');
-    save = setEquipmentPresetIcon(
-      save,
+    final renamed = renameEquipmentPreset(createNewSave(db, 0), 1, 'Mining Kit');
+    final save = setEquipmentPresetIcon(
+      renamed,
       1,
       const EquipmentPresetIcon(kind: 'skill', skillId: 'SKL-0002'),
     );
