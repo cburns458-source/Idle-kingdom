@@ -1565,7 +1565,7 @@ def main() -> None:
         'ring': 'Silver Ring',
         'component': 'Thread',
         'creature': 'Leather',
-        'herb': 'Herb 1',
+        'herb': 'Fernleaf',
         'food': 'Baked Potato',
         'raw_food': 'Raw Trout',
         'dragon_scale': 'Dragon Scale',
