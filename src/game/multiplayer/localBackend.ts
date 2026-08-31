@@ -800,6 +800,7 @@ export class LocalMultiplayerBackend {
       joinPolicy: 'open',
       rankLabels: { ...DEFAULT_GUILD_RANK_LABELS },
       createdAt: this.nowIso(),
+      skillMilestoneSettings: normalizeGuildSkillMilestoneSettings(undefined),
     }
     db.guilds.push(guild)
     db.members.push({
