@@ -1,6 +1,10 @@
 import type { RecipeRow } from '../data/recipeTypes'
 import type { GameDatabase } from '../data/types'
 import { getSkillProgress } from '../activity/xp'
+import {
+  ALCHEMY_POTION_OUTPUT_MAX,
+  ALCHEMY_SKILL_ID,
+} from '../equipment/specialist'
 import { hasProjectKnowledge, hasQuillProjectKnowledge } from '../npcs/knowledge'
 import {
   facilityIdForActivity,
@@ -141,7 +145,11 @@ export function listRecipeBookEntries(save: PlayerSave, db: GameDatabase): Recip
       proficiency: recipe['Proficiency Level'],
       station: place.station,
       location: place.location,
-      output: `${itemName(db, recipe['Output Item ID'])} ×${recipe['Output Quantity']}`,
+      output: `${itemName(db, recipe['Output Item ID'])} ×${
+        recipe['Skill ID'] === ALCHEMY_SKILL_ID
+          ? `1–${ALCHEMY_POTION_OUTPUT_MAX}`
+          : recipe['Output Quantity']
+      }`,
       materials: ingredients || '—',
       knowledgeSource: source,
       hintUnknown: !known && !isAutomaticLevelUnlock(recipe),

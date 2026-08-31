@@ -3,9 +3,9 @@ import { summarizeXpReward } from '../activity/rewardSummary'
 import type { ActionRewardBundle } from '../activity/types'
 import { applyXp } from '../activity/xp'
 import type { RandomFn } from '../activity/pools'
-import { chefHatOutputQuantity } from '../equipment/specialist'
+import { chefHatOutputQuantity, alchemyPotionOutputQuantity, productionOutputReservePerCraft, ALCHEMY_SKILL_ID } from '../equipment/specialist'
 import { equippedActionTimeReductionPercent } from '../equipment/loadout'
-import { canFitItemQuantity } from '../inventory/capacity'
+import { canFitItemQuantity, maxAddableQuantity } from '../inventory/capacity'
 import type { GameDatabase } from '../data/types'
 import type { RecipeRow } from '../data/recipeTypes'
 import {
@@ -109,7 +109,8 @@ export function beginProductionQueue(
     return { ok: false, reason: 'Missing required materials.' }
   }
 
-  const outputTotal = recipe['Output Quantity'] * crafts
+  const outputTotal =
+    productionOutputReservePerCraft(recipe['Skill ID'], recipe['Output Quantity']) * crafts
   if (!canFitItemQuantity(withMaterials, recipe['Output Item ID'], outputTotal)) {
     return {
       ok: false,
@@ -155,9 +156,17 @@ export function completeProductionCraft(
   if (!recipe) return null
 
   const baseQty = recipe['Output Quantity']
-  let outputQty = chefHatOutputQuantity(baseQty, save, recipe['Skill ID'], random)
+  let outputQty =
+    recipe['Skill ID'] === ALCHEMY_SKILL_ID
+      ? alchemyPotionOutputQuantity(baseQty, save, recipe['Skill ID'], random)
+      : chefHatOutputQuantity(baseQty, save, recipe['Skill ID'], random)
   if (outputQty > baseQty && !canFitItemQuantity(save, recipe['Output Item ID'], outputQty)) {
-    outputQty = baseQty
+    if (recipe['Skill ID'] === ALCHEMY_SKILL_ID) {
+      outputQty = Math.min(outputQty, maxAddableQuantity(save, recipe['Output Item ID']))
+      if (outputQty <= 0) return null
+    } else {
+      outputQty = baseQty
+    }
   }
   const granted = addItemToInventoryExact(save, recipe['Output Item ID'], outputQty)
   if (!granted.ok) return null

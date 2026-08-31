@@ -212,8 +212,9 @@ class GameController extends ChangeNotifier {
     if (recipe == null) return false;
     final itemId = recipe.raw['Output Item ID'];
     final qty = recipe.raw['Output Quantity'];
-    if (itemId is! String || qty is! num) return false;
-    return !canFitItemQuantity(save, itemId, qty);
+    final skillId = recipe.raw['Skill ID'];
+    if (itemId is! String || qty is! num || skillId is! String) return false;
+    return !canFitItemQuantity(save, itemId, productionOutputReservePerCraft(skillId, qty));
   }
 
   TravelInFlight? get travel => _travel;
