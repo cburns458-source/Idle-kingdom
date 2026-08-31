@@ -112,7 +112,7 @@ describe('equipment loadout', () => {
   it('applies action time reduction only to the tool\'s own skill', () => {
     const { launch } = prepareDatabase(rawDatabase)
     let save = createNewSave(launch)
-    save = addItemToInventory(save, 'ITEM-0111', 1) // Copper Pickaxe, Mining ATR 5
+    save = addItemToInventory(save, 'ITEM-0111', 1) // Copper Pickaxe, Mining ATR 3
     const equipped = equipItemFromInventory(launch, save, 'ITEM-0111')
     expect(equipped.ok).toBe(true)
     if (!equipped.ok) return
@@ -124,7 +124,7 @@ describe('equipment loadout', () => {
     const cedarBase = Number(cutCedar['Base Duration Seconds'] ?? 0)
     const cedarMult = 1 < Number(cutCedar['Proficiency Level'] ?? 1) ? 2 : 1
     expect(gatheringDurationMs(launch, equipped.save, digClay)).toBe(
-      Math.round(clayBase * clayMult * 0.95 * 1000),
+      Math.round(clayBase * clayMult * 0.97 * 1000),
     )
     expect(gatheringDurationMs(launch, equipped.save, cutCedar)).toBe(
       Math.round(cedarBase * cedarMult * 1000),

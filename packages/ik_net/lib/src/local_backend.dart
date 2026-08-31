@@ -1256,6 +1256,23 @@ class LocalMultiplayerBackend {
     return const ActionResult.ok();
   }
 
+  ActionResult setGuildSkillMilestoneSettings(
+    String actorId,
+    String guildId,
+    GuildSkillMilestoneSettings settings,
+  ) {
+    final db = _db();
+    final index = db.guilds.indexWhere((row) => row.id == guildId);
+    if (index < 0 || db.guilds[index].leaderId != actorId) {
+      return const ActionResult.failed('Only the leader can change skill milestones.');
+    }
+    db.guilds[index] = db.guilds[index].copyWith(
+      skillMilestoneSettings: normalizeGuildSkillMilestoneSettings(settings.toJson()),
+    );
+    _write(db);
+    return const ActionResult.ok();
+  }
+
   ActionResult setGuildRankLabels(
     String actorId,
     String guildId,

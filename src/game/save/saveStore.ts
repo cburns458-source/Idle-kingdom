@@ -19,6 +19,7 @@ import {
   type EquippedStack,
   type PlayerSave,
 } from './types'
+import { createDefaultEquipmentPresets } from '../equipment/presets'
 
 export interface SaveStorage {
   getItem(key: string): string | null
@@ -60,6 +61,8 @@ export function createNewSave(db: GameDatabase, nowMs: number = Date.now()): Pla
     favoriteActivityByLocationId: {},
     heldActionByActivityId: {},
     equipment: { slots },
+    equipmentPresets: createDefaultEquipmentPresets(Object.keys(slots)),
+    activeEquipmentPresetIndex: 0,
     gold: STARTING_GOLD,
     quests: [],
     achievements: [],

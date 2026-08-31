@@ -2,6 +2,7 @@ import 'package:collection/collection.dart';
 import 'package:ik_content/ik_content.dart';
 
 import '../activity/xp.dart';
+import '../equipment/specialist.dart';
 import '../js_compat.dart';
 import '../npcs/knowledge.dart';
 import '../production/recipes.dart';
@@ -168,7 +169,7 @@ List<RecipeBookEntry> listRecipeBookEntries(PlayerSave save, GameDatabase db) {
         location: place.location,
         output:
             '${_itemName(db, recipe.raw['Output Item ID'])} '
-            '×${jsNumberToString(jsNumber(recipe.raw['Output Quantity']))}',
+            '×${jsString(recipe.raw['Skill ID']) == alchemySkillId ? '1–${jsNumberToString(alchemyPotionOutputMax)}' : jsNumberToString(jsNumber(recipe.raw['Output Quantity']))}',
         materials: ingredients.isEmpty ? '—' : ingredients,
         knowledgeSource: source.isEmpty ? 'Automatic level unlock' : source,
         hintUnknown: !known && !isAutomaticLevelUnlock(recipe),

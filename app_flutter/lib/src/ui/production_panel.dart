@@ -245,7 +245,7 @@ class _RecipeDetails extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '${output?.displayName ?? recipe.displayName} ×${recipe.outputQuantity}',
+                    '${output?.displayName ?? recipe.displayName} ×${_outputQuantityLabel(recipe)}',
                     style: const TextStyle(fontWeight: FontWeight.w400),
                   ),
                   MutedText(
@@ -273,4 +273,11 @@ class _RecipeDetails extends StatelessWidget {
       ],
     );
   }
+}
+
+String _outputQuantityLabel(RecipeRow recipe) {
+  if (recipe.skillId == alchemySkillId) {
+    return '1–${alchemyPotionOutputMax.toInt()}';
+  }
+  return '${recipe.outputQuantity}';
 }

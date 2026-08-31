@@ -212,8 +212,9 @@ class GameController extends ChangeNotifier {
     if (recipe == null) return false;
     final itemId = recipe.raw['Output Item ID'];
     final qty = recipe.raw['Output Quantity'];
-    if (itemId is! String || qty is! num) return false;
-    return !canFitItemQuantity(save, itemId, qty);
+    final skillId = recipe.raw['Skill ID'];
+    if (itemId is! String || qty is! num || skillId is! String) return false;
+    return !canFitItemQuantity(save, itemId, productionOutputReservePerCraft(skillId, qty));
   }
 
   TravelInFlight? get travel => _travel;
@@ -528,6 +529,9 @@ class GameController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Optional hook after a save lands (skill XP, combat, etc.).
+  void Function(PlayerSave before, PlayerSave after)? onSaveCommitted;
+
   /// Stores the save a panel's intent produced, and repaints.
   ///
   /// Panels call the shared rules themselves and pass the result here, which is
@@ -536,6 +540,7 @@ class GameController extends ChangeNotifier {
     final previous = save;
     session.apply(next);
     _queueSkillLevelUps(previous, save);
+    onSaveCommitted?.call(previous, save);
     notifyListeners();
   }
 
@@ -552,7 +557,8 @@ class GameController extends ChangeNotifier {
   }
 
   /// [commit] for anything that changed the loadout, so max HP follows the gear.
-  void commitLoadout(PlayerSave next) => commit(withRecalculatedVitals(db, next));
+  void commitLoadout(PlayerSave next) =>
+      commit(withRecalculatedVitals(db, trackActiveEquipmentPreset(next)));
 
   /// Advances the game by one frame. The shell drives this from a ticker, so it
   /// stops when the app is backgrounded. A long hide is batch-resolved like a
@@ -566,6 +572,7 @@ class GameController extends ChangeNotifier {
     if (result.awayCatchUp case final away?) {
       _adoptResumeCatchUp(away);
       _queueSkillLevelUps(previous, save);
+      onSaveCommitted?.call(previous, save);
       notifyListeners();
       return;
     }
@@ -576,6 +583,7 @@ class GameController extends ChangeNotifier {
     _expireStageFx();
     _advanceTravel();
     _queueSkillLevelUps(previous, save);
+    onSaveCommitted?.call(previous, save);
     // A frame always repaints: the progress bars and timers are read from the
     // clock, so they move even on the ticks where nothing was due.
     notifyListeners();

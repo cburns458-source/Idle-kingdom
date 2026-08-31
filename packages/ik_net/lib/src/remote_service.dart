@@ -830,6 +830,12 @@ class RemoteMultiplayerService implements MultiplayerService {
       _guilds.setGuildRankIconTheme(guildId, theme);
 
   @override
+  Future<ActionResult> setGuildSkillMilestoneSettings(
+    String guildId,
+    GuildSkillMilestoneSettings settings,
+  ) => _guilds.setGuildSkillMilestoneSettings(guildId, settings);
+
+  @override
   Future<ActionResult> setGuildRankLabels(String guildId, Map<GuildRankKey, String> rankLabels) =>
       _guilds.setGuildRankLabels(guildId, rankLabels);
 

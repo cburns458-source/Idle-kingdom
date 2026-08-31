@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:collection/collection.dart';
 
+import '../equipment/presets.dart';
 import '../js_compat.dart';
 import '../time.dart';
 import 'generated/save_models.dart';
@@ -515,6 +516,42 @@ final List<SaveMigration> saveMigrations = <SaveMigration>[
               raw.map((key, value) => MapEntry(key.toString(), value.toString())),
             )
           : <String, String>{};
+      return next;
+    },
+  ),
+  SaveMigration(
+    fromVersion: 37,
+    toVersion: 38,
+    migrate: (save, nowMs) {
+      final next = _bumped(save, 38);
+      final equipment = save['equipment'];
+      final rawSlots = equipment is Map ? equipment['slots'] : null;
+      final slotIds = <String>[];
+      if (rawSlots is Map) {
+        for (final key in rawSlots.keys) {
+          if (key is String) slotIds.add(key);
+        }
+      }
+      final presets = createDefaultEquipmentPresets(slotIds);
+      if (presets.isNotEmpty && rawSlots is Map) {
+        final slots = <String, EquippedStack?>{};
+        for (final slotId in slotIds) {
+          final stack = rawSlots[slotId];
+          if (stack is Map) {
+            slots[slotId] = EquippedStack(
+              itemId: jsString(stack['itemId']),
+              quantity: jsNumber(stack['quantity']),
+              enchantmentId: stack['enchantmentId'] as String?,
+              favorite: stack['favorite'] == true ? true : null,
+            );
+          } else {
+            slots[slotId] = null;
+          }
+        }
+        presets[0] = presets[0].copyWith(slots: slots);
+      }
+      next['equipmentPresets'] = presets.map((preset) => preset.toJson()).toList();
+      next['activeEquipmentPresetIndex'] = 0;
       return next;
     },
   ),
