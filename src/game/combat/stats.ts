@@ -1,6 +1,7 @@
 import type { EquipmentRow, GameDatabase } from '../data/types'
 import { getSkillProgress } from '../activity/xp'
-import { OFFHAND_SLOT_ID, WEAPON_TOOL_SLOT_ID, isDaggerItem, itemHasCapability } from '../equipment/loadout'
+import { equippedActionTimeReductionPercent, OFFHAND_SLOT_ID, WEAPON_TOOL_SLOT_ID, isDaggerItem, itemHasCapability } from '../equipment/loadout'
+import { FISHING_SKILL_ID } from '../skills/skillActions'
 import { ARCANA_SKILL_ID } from '../npcs/knowledge'
 import { equippedEnchantmentDamageBonus } from '../projects/enchantments'
 import { raceMaxHpMultiplier } from '../races/races'
@@ -76,6 +77,22 @@ export function staffPowerMultiplier(db: GameDatabase, save: PlayerSave): number
 export function staffSparksDamageRange(arcanaLevel: number): { min: number; max: number } {
   const min = Math.max(1, Math.floor(arcanaLevel * 0.9))
   const max = Math.max(min, Math.floor(arcanaLevel * 1.1))
+  return { min, max }
+}
+
+/**
+ * Mother Squid fishing combat: (2000 × Fishing ATR% + Fishing Level) ± 10%.
+ * ATR is the equipped Action Time Reduction percent for Fishing (SKL-0003).
+ */
+export function fishingCombatDamageRange(
+  db: GameDatabase,
+  save: PlayerSave,
+): { min: number; max: number } {
+  const atr = equippedActionTimeReductionPercent(db, save, FISHING_SKILL_ID)
+  const level = getSkillProgress(save, FISHING_SKILL_ID).level
+  const base = 2000 * (atr / 100) + level
+  const min = Math.max(1, Math.floor(base * 0.9))
+  const max = Math.max(min, Math.floor(base * 1.1))
   return { min, max }
 }
 

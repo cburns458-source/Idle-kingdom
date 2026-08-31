@@ -18,6 +18,8 @@ import {
   resolveCombatRound,
   shouldSkipVictoryHealingFood,
 } from '../combat/engine'
+import { bossProfile } from '../combat/boss'
+import { applySquidlingVictory, beginBossAddsEncounter, isSquidlingVictory } from '../combat/bossPhase'
 import type { GameDatabase } from '../data/types'
 import { applyActivityTimeTowardCritters } from '../critters/critters'
 import { resolveProductionProgress } from '../production/engine'
@@ -188,6 +190,41 @@ export function resolveUnattendedProgress(
 
       const round = resolveCombatRound(db, current, enemy, current.combatEnemyHp, random)
       if (round.outcome === 'victory') {
+        if (isSquidlingVictory(current, enemy)) {
+          const squidlingResult = applySquidlingVictory(
+            db,
+            { ...current, combatEnemyHp: 0, currentHp: round.playerHp },
+            enemy,
+            new Date(roundEnd).toISOString(),
+          )
+          let next = squidlingResult.save
+          const critter = applyActivityTimeTowardCritters(
+            next,
+            next.currentLocationId,
+            roundMs,
+            roundEnd,
+            random,
+          )
+          next = critter.save
+          pushCritterSpawn(critter.spawned)
+          messages.push(squidlingResult.message)
+          if (squidlingResult.bossResumed) {
+            current = next
+            lastResolvedMs = roundEnd
+            continue
+          }
+          combatVictories += 1
+          const activityId = current.currentActivityId
+          if (!activityStillValid(db, next, activityId)) {
+            current = clearActivitySave(next, roundEnd)
+            messages.push(`Defeated ${enemy['Display Name']} · activity stopped.`)
+            break
+          }
+          current = next
+          lastResolvedMs = roundEnd
+          continue
+        }
+
         const victory = applyCombatVictory(
           db,
           { ...current, combatEnemyHp: 0, currentHp: round.playerHp },
@@ -259,7 +296,24 @@ export function resolveUnattendedProgress(
         combatRoundStartedAt: new Date(roundEnd).toISOString(),
         combatSkipEnemyAttack: round.skipNextEnemyAttack,
         combatBossSleepRoundsRemaining: round.bossSleepRoundsRemaining,
+        combatBossInkActive: round.bossInkActive,
       }
+
+      if (round.bossAddsTriggered && round.bossPendingHp != null) {
+        const profile = bossProfile(enemy)
+        if (profile?.squidlingEnemyId) {
+          continued = beginBossAddsEncounter(
+            db,
+            continued,
+            enemy,
+            profile,
+            round.bossPendingHp,
+            new Date(roundEnd).toISOString(),
+          )
+          messages.push(`${enemy['Display Name']} releases squidlings while away.`)
+        }
+      }
+
       const critter = applyActivityTimeTowardCritters(
         continued,
         continued.currentLocationId,

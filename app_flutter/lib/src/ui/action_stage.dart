@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:ik_content/ik_content.dart';
 import 'package:ik_rules/ik_rules.dart';
 import 'package:ik_runtime/ik_runtime.dart';
 
@@ -152,6 +153,18 @@ class LocationIdlePlayer extends StatelessWidget {
       ),
     );
   }
+}
+
+String _combatEnemyDisplayName(GameDatabase db, PlayerSave save, EnemyRow? enemy) {
+  if (isBossAddFight(save) && save.combatBossPendingId != null) {
+    final boss = getEnemy(db, save.combatBossPendingId!);
+    final profile = boss != null ? bossProfile(boss) : null;
+    final total = profile?.squidlingCount ?? save.combatBossAddsRemaining ?? 1;
+    final remaining = save.combatBossAddsRemaining ?? 1;
+    final index = total - remaining + 1;
+    return 'Squidling ($index/$total)';
+  }
+  return enemy?.displayName ?? save.combatEnemyId ?? 'Enemy';
 }
 
 /// Right-slot art pinned with the adventurer: enemy, gather target, or station.
@@ -582,7 +595,7 @@ class _CombatStage extends StatelessWidget {
     final save = controller.save;
     final enemyId = controller.stagedEnemyId ?? save.combatEnemyId;
     final enemy = enemyId == null ? null : getEnemy(controller.db, enemyId);
-    final enemyName = enemy?.displayName ?? enemyId ?? 'Enemy';
+    final enemyName = _combatEnemyDisplayName(controller.db, save, enemy);
     final enemyMaxHp = math.max(1, enemy?.maximumHp ?? 1);
     final enemyHp = controller.stagedEnemyHp;
     final maxHp = playerMaxHp(controller.db, save);
@@ -633,6 +646,20 @@ class _CombatStage extends StatelessWidget {
                       fontWeight: FontWeight.w400,
                       letterSpacing: 1,
                       color: Color(0xFFB8D4FF),
+                      shadows: overlayShadow,
+                    ),
+                  ),
+                ),
+              if (save.combatBossInkActive)
+                const Align(
+                  alignment: Alignment(0.12, -0.55),
+                  child: Text(
+                    'INK',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w400,
+                      letterSpacing: 1,
+                      color: Color(0xFF2A1A4A),
                       shadows: overlayShadow,
                     ),
                   ),

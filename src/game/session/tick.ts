@@ -20,6 +20,8 @@ import {
   resolveCombatRound,
   shouldSkipVictoryHealingFood,
 } from '../combat/engine'
+import { bossProfile } from '../combat/boss'
+import { applySquidlingVictory, beginBossAddsEncounter, isSquidlingVictory } from '../combat/bossPhase'
 import { applyActivityTimeTowardCritters } from '../critters/critters'
 import type { ActionRow, EnemyRow, GameDatabase } from '../data/types'
 import { completeProductionCraft } from '../production/engine'
@@ -154,6 +156,7 @@ function victoryRewardBundle(
 }
 
 function roundMessage(enemy: EnemyRow, round: ReturnType<typeof resolveCombatRound>): string {
+  const inkLabel = round.bossInkActive ? ' Ink clouds your strike!' : ''
   const hitLabel = round.playerCrit ? `crit for ${round.playerHit}` : `hit ${round.playerHit}`
   const offhandLabel =
     round.offhandHit != null && round.offhandHit > 0 ? ` Off-hand hits ${round.offhandHit}.` : ''
@@ -162,15 +165,15 @@ function roundMessage(enemy: EnemyRow, round: ReturnType<typeof resolveCombatRou
   const name = enemy['Display Name']
   if (round.enemyHit == null) {
     return round.enemyAsleep
-      ? `You ${hitLabel}.${offhandLabel}${sparksLabel} ${name} sleeps.`
-      : `You ${hitLabel}.${offhandLabel}${sparksLabel} ${name} is bound and cannot attack.`
+      ? `You ${hitLabel}.${offhandLabel}${sparksLabel}${inkLabel} ${name} sleeps.`
+      : `You ${hitLabel}.${offhandLabel}${sparksLabel}${inkLabel} ${name} is bound and cannot attack.`
   }
   const swing = round.enemyRampage
     ? `${name} rampages for ${round.enemyHit}`
     : `${name} hits ${round.enemyHit}`
   return round.thornsHit > 0
-    ? `You ${hitLabel}.${offhandLabel}${sparksLabel} ${swing}. Thorns reflects ${round.thornsHit}.`
-    : `You ${hitLabel}.${offhandLabel}${sparksLabel} ${swing}.`
+    ? `You ${hitLabel}.${offhandLabel}${sparksLabel}${inkLabel} ${swing}. Thorns reflects ${round.thornsHit}.`
+    : `You ${hitLabel}.${offhandLabel}${sparksLabel}${inkLabel} ${swing}.`
 }
 
 function resolveDueCombatRound(
@@ -199,6 +202,41 @@ function resolveDueCombatRound(
   })
 
   if (round.outcome === 'victory') {
+    if (isSquidlingVictory(before, enemy)) {
+      const squidlingResult = applySquidlingVictory(
+        db,
+        { ...before, combatEnemyHp: 0, currentHp: round.playerHp },
+        enemy,
+        new Date(roundEnd).toISOString(),
+      )
+      out.set(squidlingResult.save)
+      out.creditCritterTime(roundMs, roundEnd, random)
+      out.emit({ kind: 'message', text: squidlingResult.message })
+      if (squidlingResult.xpGained > 0) {
+        out.emit({
+          kind: 'rewards',
+          bundle: victoryRewardBundle(
+            db,
+            before,
+            out.current,
+            enemy,
+            squidlingResult.xpGained,
+            [],
+            0,
+            roundEnd,
+          ),
+        })
+      }
+      if (!squidlingResult.bossResumed) {
+        out.emit({
+          kind: 'enemy-defeated',
+          enemyId: enemy['Enemy ID'],
+          enemyName: enemy['Display Name'],
+        })
+      }
+      return
+    }
+
     const victory = applyCombatVictory(
       db,
       { ...before, combatEnemyHp: 0, currentHp: round.playerHp },
@@ -269,6 +307,31 @@ function resolveDueCombatRound(
     return
   }
 
+  if (round.bossAddsTriggered && round.bossPendingHp != null) {
+    const profile = bossProfile(enemy)
+    if (profile?.squidlingEnemyId) {
+      const addsStarted = beginBossAddsEncounter(
+        db,
+        {
+          ...before,
+          currentHp: round.playerHp,
+          combatBossInkActive: round.bossInkActive,
+        },
+        enemy,
+        profile,
+        round.bossPendingHp,
+        new Date(roundEnd).toISOString(),
+      )
+      out.set(addsStarted)
+      out.creditCritterTime(roundMs, roundEnd, random)
+      out.emit({
+        kind: 'message',
+        text: `${enemy['Display Name']} releases squidlings! Defeat them to continue.`,
+      })
+      return
+    }
+  }
+
   const continued = {
     ...before,
     currentHp: round.playerHp,
@@ -276,6 +339,7 @@ function resolveDueCombatRound(
     combatRoundStartedAt: new Date(roundEnd).toISOString(),
     combatSkipEnemyAttack: round.skipNextEnemyAttack,
     combatBossSleepRoundsRemaining: round.bossSleepRoundsRemaining,
+    combatBossInkActive: round.bossInkActive,
   }
   out.set(continued)
   out.creditCritterTime(roundMs, roundEnd, random)

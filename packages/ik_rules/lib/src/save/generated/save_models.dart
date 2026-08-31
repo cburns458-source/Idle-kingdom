@@ -7,7 +7,7 @@
 
 import '../../json_support.dart';
 
-const int saveVersion = 38;
+const int saveVersion = 39;
 
 const String saveStorageKey = 'idle-kingdoms.demo.save';
 
@@ -659,6 +659,11 @@ class PlayerSave {
     this.combatRoundStartedAt,
     required this.combatSkipEnemyAttack,
     this.combatBossSleepRoundsRemaining,
+    this.combatBossPendingId,
+    this.combatBossPendingHp,
+    this.combatBossAddsRemaining,
+    required this.combatBossAddsTriggered,
+    required this.combatBossInkActive,
     required this.bossRespawnUntilByEnemyId,
     this.activePotionEffect,
     this.deathPauseUntil,
@@ -749,6 +754,11 @@ class PlayerSave {
       combatRoundStartedAt: json['combatRoundStartedAt'] as String?,
       combatSkipEnemyAttack: json['combatSkipEnemyAttack'] as bool,
       combatBossSleepRoundsRemaining: json['combatBossSleepRoundsRemaining'] as num?,
+      combatBossPendingId: json['combatBossPendingId'] as String?,
+      combatBossPendingHp: json['combatBossPendingHp'] as num?,
+      combatBossAddsRemaining: json['combatBossAddsRemaining'] as num?,
+      combatBossAddsTriggered: json['combatBossAddsTriggered'] as bool,
+      combatBossInkActive: json['combatBossInkActive'] as bool,
       bossRespawnUntilByEnemyId: mapOf(
         json['bossRespawnUntilByEnemyId'],
         (Object? value) => value as String,
@@ -900,6 +910,22 @@ class PlayerSave {
   /// Null when the current enemy is not a sleeping boss.
   final num? combatBossSleepRoundsRemaining;
 
+  /// Boss Enemy ID stored while the player clears add enemies (e.g. squidlings).
+  /// Null when not in an add phase.
+  final String? combatBossPendingId;
+
+  /// Boss HP to restore when all adds are defeated.
+  final num? combatBossPendingHp;
+
+  /// Add enemies still to defeat before the boss resumes. Null outside add phase.
+  final num? combatBossAddsRemaining;
+
+  /// True once the boss has triggered its add phase (prevents re-triggering).
+  final bool combatBossAddsTriggered;
+
+  /// True when ink halved player damage this combat round.
+  final bool combatBossInkActive;
+
   /// ISO timestamps until a defeated boss can be fought again, keyed by Enemy ID.
   final Map<String, String> bossRespawnUntilByEnemyId;
 
@@ -984,6 +1010,11 @@ class PlayerSave {
       'combatRoundStartedAt': combatRoundStartedAt,
       'combatSkipEnemyAttack': combatSkipEnemyAttack,
       'combatBossSleepRoundsRemaining': combatBossSleepRoundsRemaining,
+      'combatBossPendingId': combatBossPendingId,
+      'combatBossPendingHp': combatBossPendingHp,
+      'combatBossAddsRemaining': combatBossAddsRemaining,
+      'combatBossAddsTriggered': combatBossAddsTriggered,
+      'combatBossInkActive': combatBossInkActive,
       'bossRespawnUntilByEnemyId': bossRespawnUntilByEnemyId,
       'activePotionEffect': activePotionEffect?.toJson(),
       'deathPauseUntil': deathPauseUntil,
@@ -1050,6 +1081,11 @@ class PlayerSave {
     Object? combatRoundStartedAt = _unset,
     bool? combatSkipEnemyAttack,
     Object? combatBossSleepRoundsRemaining = _unset,
+    Object? combatBossPendingId = _unset,
+    Object? combatBossPendingHp = _unset,
+    Object? combatBossAddsRemaining = _unset,
+    bool? combatBossAddsTriggered,
+    bool? combatBossInkActive,
     Map<String, String>? bossRespawnUntilByEnemyId,
     Object? activePotionEffect = _unset,
     Object? deathPauseUntil = _unset,
@@ -1131,6 +1167,17 @@ class PlayerSave {
       combatBossSleepRoundsRemaining: combatBossSleepRoundsRemaining == _unset
           ? this.combatBossSleepRoundsRemaining
           : combatBossSleepRoundsRemaining as num?,
+      combatBossPendingId: combatBossPendingId == _unset
+          ? this.combatBossPendingId
+          : combatBossPendingId as String?,
+      combatBossPendingHp: combatBossPendingHp == _unset
+          ? this.combatBossPendingHp
+          : combatBossPendingHp as num?,
+      combatBossAddsRemaining: combatBossAddsRemaining == _unset
+          ? this.combatBossAddsRemaining
+          : combatBossAddsRemaining as num?,
+      combatBossAddsTriggered: combatBossAddsTriggered ?? this.combatBossAddsTriggered,
+      combatBossInkActive: combatBossInkActive ?? this.combatBossInkActive,
       bossRespawnUntilByEnemyId: bossRespawnUntilByEnemyId ?? this.bossRespawnUntilByEnemyId,
       activePotionEffect: activePotionEffect == _unset
           ? this.activePotionEffect

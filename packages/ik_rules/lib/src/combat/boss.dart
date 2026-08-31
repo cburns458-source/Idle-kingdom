@@ -10,6 +10,8 @@ const int defaultBossSleepRounds = 4;
 const num defaultBossWakeHpRatio = 0.5;
 const num defaultBossRampageHpRatio = 0.25;
 const num defaultBossRespawnSeconds = 10;
+const num defaultBossInkChance = 0.35;
+const int defaultBossSquidlingCount = 3;
 
 class BossProfile {
   const BossProfile({
@@ -17,12 +19,24 @@ class BossProfile {
     required this.wakeHpRatio,
     required this.rampageHpRatio,
     required this.respawnSeconds,
+    required this.squidlingsAt,
+    required this.squidlingEnemyId,
+    required this.squidlingCount,
+    required this.inkAt,
+    required this.inkChance,
+    required this.damageMode,
   });
 
   final int sleepStart;
   final num wakeHpRatio;
   final num rampageHpRatio;
   final num respawnSeconds;
+  final num? squidlingsAt;
+  final String? squidlingEnemyId;
+  final int squidlingCount;
+  final num? inkAt;
+  final num inkChance;
+  final String? damageMode;
 }
 
 List<String> _noteTokens(Object? notes) {
@@ -43,6 +57,16 @@ num _noteNumber(List<String> tokens, String key, num fallback) {
   return fallback;
 }
 
+String? _noteString(List<String> tokens, String key, {String? fallback}) {
+  final prefix = '$key:';
+  for (final token in tokens) {
+    if (!token.toLowerCase().startsWith(prefix)) continue;
+    final value = token.substring(prefix.length).trim();
+    if (value.isNotEmpty) return value;
+  }
+  return fallback;
+}
+
 bool isBossEnemy(EnemyRow? enemy) {
   if (enemy == null) return false;
   return _noteTokens(enemy.raw['Notes']).any((token) => token.toLowerCase() == 'boss');
@@ -51,12 +75,30 @@ bool isBossEnemy(EnemyRow? enemy) {
 BossProfile? bossProfile(EnemyRow? enemy) {
   if (!isBossEnemy(enemy)) return null;
   final tokens = _noteTokens(enemy!.raw['Notes']);
+  final squidlingsAtRaw = _noteNumber(tokens, 'squidlings_at', double.nan);
+  final inkAtRaw = _noteNumber(tokens, 'ink_at', double.nan);
+  final damageModeRaw = _noteString(tokens, 'damage_mode')?.toLowerCase();
   return BossProfile(
     sleepStart: math.max(0, _noteNumber(tokens, 'sleep_start', defaultBossSleepRounds).floor()),
     wakeHpRatio: _noteNumber(tokens, 'wake_hp_ratio', defaultBossWakeHpRatio),
     rampageHpRatio: _noteNumber(tokens, 'rampage_hp_ratio', defaultBossRampageHpRatio),
     respawnSeconds: math.max(0, _noteNumber(tokens, 'respawn_seconds', defaultBossRespawnSeconds)),
+    squidlingsAt: squidlingsAtRaw.isFinite ? squidlingsAtRaw : null,
+    squidlingEnemyId: _noteString(tokens, 'squidling_enemy'),
+    squidlingCount: math.max(
+      1,
+      _noteNumber(tokens, 'squidling_count', defaultBossSquidlingCount).floor(),
+    ),
+    inkAt: inkAtRaw.isFinite ? inkAtRaw : null,
+    inkChance: _noteNumber(tokens, 'ink_chance', defaultBossInkChance),
+    damageMode: damageModeRaw == 'fishing' ? 'fishing' : null,
   );
+}
+
+bool isBossAddFight(PlayerSave save) {
+  return save.combatBossPendingId != null &&
+      save.combatBossAddsRemaining != null &&
+      (save.combatBossAddsRemaining ?? 0) > 0;
 }
 
 num? bossRespawnUntilMs(PlayerSave save, String enemyId) {

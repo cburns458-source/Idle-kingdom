@@ -1,4 +1,4 @@
-export const SAVE_VERSION = 38
+export const SAVE_VERSION = 39
 export const SAVE_STORAGE_KEY = 'idle-kingdoms.demo.save'
 export const STARTING_LOCATION_ID = 'LOC-0001'
 /** Base gold before race kit; race starters grant the real starting gold. */
@@ -270,6 +270,19 @@ export interface PlayerSave {
    * Null when the current enemy is not a sleeping boss.
    */
   combatBossSleepRoundsRemaining: number | null
+  /**
+   * Boss Enemy ID stored while the player clears add enemies (e.g. squidlings).
+   * Null when not in an add phase.
+   */
+  combatBossPendingId: string | null
+  /** Boss HP to restore when all adds are defeated. */
+  combatBossPendingHp: number | null
+  /** Add enemies still to defeat before the boss resumes. Null outside add phase. */
+  combatBossAddsRemaining: number | null
+  /** True once the boss has triggered its add phase (prevents re-triggering). */
+  combatBossAddsTriggered: boolean
+  /** True when ink halved player damage this combat round. */
+  combatBossInkActive: boolean
   /** ISO timestamps until a defeated boss can be fought again, keyed by Enemy ID. */
   bossRespawnUntilByEnemyId: Record<string, string>
   /** Potion consumed for the current gathering action, craft, or combat encounter. */

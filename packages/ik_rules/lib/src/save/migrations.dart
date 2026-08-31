@@ -555,6 +555,23 @@ final List<SaveMigration> saveMigrations = <SaveMigration>[
       return next;
     },
   ),
+  SaveMigration(
+    fromVersion: 38,
+    toVersion: 39,
+    migrate: (save, nowMs) {
+      final next = _bumped(save, 39);
+      next['combatBossPendingId'] = save['combatBossPendingId'];
+      final pendingHp = save['combatBossPendingHp'];
+      next['combatBossPendingHp'] = pendingHp is num && pendingHp.isFinite ? pendingHp : null;
+      final addsRemaining = save['combatBossAddsRemaining'];
+      next['combatBossAddsRemaining'] = addsRemaining is num && addsRemaining.isFinite
+          ? addsRemaining
+          : null;
+      next['combatBossAddsTriggered'] = save['combatBossAddsTriggered'] == true;
+      next['combatBossInkActive'] = save['combatBossInkActive'] == true;
+      return next;
+    },
+  ),
 ];
 
 /// Thrown when a save cannot be brought to the current version.

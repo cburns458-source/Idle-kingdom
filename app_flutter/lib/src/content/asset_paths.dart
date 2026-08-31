@@ -127,6 +127,8 @@ const Map<String, String> _enemyArt = <String, String>{
   'ENM-0020': 'enemies/enm_monk.webp',
   'ENM-0021': 'enemies/enm_seagull.webp',
   'ENM-0022': 'enemies/enm_ghost.webp',
+  'ENM-0023': 'enemies/enm_mother_squid.webp',
+  'ENM-0024': 'enemies/enm_squidling.webp',
 };
 
 /// Transparent workstation art for Standard Production stations.

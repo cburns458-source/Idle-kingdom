@@ -8,7 +8,7 @@ import {
 import type { DatabaseIndexes, GameDatabase, ValidationIssue } from './types'
 
 /** Bump when Launch content rows change so browsers skip stale JSON. */
-export const DATABASE_CONTENT_VERSION = '2026-08-31-forest-depths-submaps'
+export const DATABASE_CONTENT_VERSION = '2026-08-31-mother-squid-boss'
 export const DATABASE_URL = `/data/game-database.json?v=${DATABASE_CONTENT_VERSION}`
 
 export interface LoadedDatabase {

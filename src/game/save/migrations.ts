@@ -592,6 +592,26 @@ export const SAVE_MIGRATIONS: SaveMigration[] = [
       }
     },
   },
+  {
+    fromVersion: 38,
+    toVersion: 39,
+    migrate: (save) => ({
+      ...save,
+      combatBossPendingId: save.combatBossPendingId ?? null,
+      combatBossPendingHp:
+        typeof save.combatBossPendingHp === 'number' && Number.isFinite(save.combatBossPendingHp)
+          ? save.combatBossPendingHp
+          : null,
+      combatBossAddsRemaining:
+        typeof save.combatBossAddsRemaining === 'number' &&
+        Number.isFinite(save.combatBossAddsRemaining)
+          ? save.combatBossAddsRemaining
+          : null,
+      combatBossAddsTriggered: save.combatBossAddsTriggered === true,
+      combatBossInkActive: save.combatBossInkActive === true,
+      saveVersion: 39,
+    }),
+  },
 ]
 
 export function migrateSave(save: PlayerSave, nowMs: number = Date.now()): PlayerSave {

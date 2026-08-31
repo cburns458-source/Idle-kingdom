@@ -213,6 +213,8 @@
     "goblin_chief": "/assets/enemies/enm_goblin_chief.webp",
     "goblin_scout": "/assets/enemies/enm_goblin_scout.webp",
     "ghost": "/assets/enemies/enm_ghost.webp",
+    "mother_squid": "/assets/enemies/enm_mother_squid.webp",
+    "squidling": "/assets/enemies/enm_squidling.webp",
     "goblin_warrior": "/assets/enemies/enm_goblin_warrior.webp",
     "monk": "/assets/enemies/enm_monk.webp",
     "pirate": "/assets/enemies/enm_pirate.webp",

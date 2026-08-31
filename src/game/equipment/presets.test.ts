@@ -31,7 +31,7 @@ describe('equipment presets', () => {
     legacy.saveVersion = 36
     delete (legacy as { equipmentPresets?: unknown }).equipmentPresets
     const migrated = migrateSave(legacy)
-    expect(migrated.saveVersion).toBe(38)
+    expect(migrated.saveVersion).toBe(39)
     expect(migrated.equipmentPresets).toHaveLength(4)
   })
 

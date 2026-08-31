@@ -24,6 +24,7 @@ import { currentHpAfterMaxChange } from '../equipment/vitals'
 import { ARCANA_SKILL_ID } from '../npcs/knowledge'
 import {
   applyMitigation,
+  fishingCombatDamageRange,
   playerDamageRange,
   playerDamageReduction,
   playerMaxHp,
@@ -31,7 +32,7 @@ import {
   rollDamage,
   staffSparksDamageRange,
 } from './stats'
-import { applySleepIncoming, bossProfile, withBossRespawn } from './boss'
+import { applySleepIncoming, bossProfile, isBossAddFight, withBossRespawn } from './boss'
 
 export type RandomFn = () => number
 
@@ -54,6 +55,12 @@ export interface CombatRoundResult {
   enemyAsleep: boolean
   /** True when the enemy's landing swing was a rampage hit. */
   enemyRampage: boolean
+  /** True when this round triggered a boss add phase (e.g. squidlings). */
+  bossAddsTriggered: boolean
+  /** True when ink halved player damage this round. */
+  bossInkActive: boolean
+  /** HP to restore on the boss when adds finish. Set when bossAddsTriggered. */
+  bossPendingHp: number | null
   enemyHp: number
   playerHp: number
   outcome: 'ongoing' | 'victory' | 'defeat'
@@ -96,6 +103,11 @@ export function beginCombatSave(
     combatRoundStartedAt: nowIso,
     combatSkipEnemyAttack: false,
     combatBossSleepRoundsRemaining: bossProfile(enemy)?.sleepStart ?? null,
+    combatBossPendingId: null,
+    combatBossPendingHp: null,
+    combatBossAddsRemaining: null,
+    combatBossAddsTriggered: false,
+    combatBossInkActive: false,
     activePotionEffect: potion.effect,
     deathPauseUntil: null,
   }
@@ -109,6 +121,11 @@ export function clearCombatSave(save: PlayerSave): PlayerSave {
     combatRoundStartedAt: null,
     combatSkipEnemyAttack: false,
     combatBossSleepRoundsRemaining: null,
+    combatBossPendingId: null,
+    combatBossPendingHp: null,
+    combatBossAddsRemaining: null,
+    combatBossAddsTriggered: false,
+    combatBossInkActive: false,
     activePotionEffect:
       save.activePotionEffect?.scope === 'one_combat_encounter' ? null : save.activePotionEffect,
   }
@@ -124,36 +141,56 @@ export function resolveCombatRound(
   const floor = configNumber(db, 'damage_floor', 1)
   const profile = bossProfile(enemy)
   const asleep = (save.combatBossSleepRoundsRemaining ?? 0) > 0
-  const playerRange = playerDamageRange(db, save)
-  let playerHit = rollDamage(playerRange.min, playerRange.max, random)
-  let playerCrit = false
-  const critChance = equippedEnchantmentCritChancePercent(db, save)
-  if (critChance > 0 && random() * 100 < critChance) {
-    playerCrit = true
-    playerHit = Math.max(1, Math.floor(playerHit * criticalStrikeDamageMultiplier()))
+  const fishingMode = profile?.damageMode === 'fishing' && !isBossAddFight(save)
+  const enemyMaxHp = enemy['Maximum HP']
+
+  let bossInkActive = false
+  if (
+    profile?.inkAt != null &&
+    !isBossAddFight(save) &&
+    enemyHp <= enemyMaxHp * profile.inkAt &&
+    random() < profile.inkChance
+  ) {
+    bossInkActive = true
   }
-  playerHit = applySleepIncoming(playerHit, asleep)
+
+  let playerHit: number
+  let playerCrit = false
+  let offhandHit: number | null = null
+  let staffHit: number | null = null
+
+  if (fishingMode) {
+    const fishingRange = fishingCombatDamageRange(db, save)
+    playerHit = rollDamage(fishingRange.min, fishingRange.max, random)
+    if (bossInkActive) playerHit = Math.max(1, Math.floor(playerHit / 2))
+    playerHit = applySleepIncoming(playerHit, asleep)
+  } else {
+    const playerRange = playerDamageRange(db, save)
+    playerHit = rollDamage(playerRange.min, playerRange.max, random)
+    const critChance = equippedEnchantmentCritChancePercent(db, save)
+    if (critChance > 0 && random() * 100 < critChance) {
+      playerCrit = true
+      playerHit = Math.max(1, Math.floor(playerHit * criticalStrikeDamageMultiplier()))
+    }
+    if (bossInkActive) playerHit = Math.max(1, Math.floor(playerHit / 2))
+    playerHit = applySleepIncoming(playerHit, asleep)
+  }
+
   let nextEnemyHp = Math.max(0, enemyHp - playerHit)
 
   const weaponId = save.equipment.slots[WEAPON_TOOL_SLOT_ID]?.itemId ?? null
 
-  // Staff of Sparks: a second blue hit after the main swing if the enemy is still up.
-  // No crit and no Strength / combat / potion / race multipliers — Arcana level only.
-  let staffHit: number | null = null
-  if (nextEnemyHp > 0 && weaponId && itemHasCapability(db, weaponId, 'staff_sparks')) {
+  if (!fishingMode && nextEnemyHp > 0 && weaponId && itemHasCapability(db, weaponId, 'staff_sparks')) {
     const sparks = staffSparksDamageRange(getSkillProgress(save, ARCANA_SKILL_ID).level)
     staffHit = applySleepIncoming(rollDamage(sparks.min, sparks.max, random), asleep)
     nextEnemyHp = Math.max(0, nextEnemyHp - staffHit)
   }
 
-  // Off-hand dagger swings after the main-hand hit if the enemy is still up.
-  // Two-handers never keep an off-hand dagger, so this stays null for staves.
-  // Off-hand cannot crit; shared enchant/spell bonuses are already in its range.
-  let offhandHit: number | null = null
-  if (nextEnemyHp > 0) {
+  if (!fishingMode && nextEnemyHp > 0) {
     const offhandRange = playerOffhandDamageRange(db, save)
     if (offhandRange) {
       offhandHit = applySleepIncoming(rollDamage(offhandRange.min, offhandRange.max, random), asleep)
+      if (bossInkActive) offhandHit = Math.max(1, Math.floor(offhandHit / 2))
       nextEnemyHp = Math.max(0, nextEnemyHp - offhandHit)
     }
   }
@@ -174,11 +211,24 @@ export function resolveCombatRound(
 
   let nextSleep = profile == null ? null : save.combatBossSleepRoundsRemaining ?? 0
   if (nextSleep != null && nextSleep > 0) nextSleep -= 1
-  if (profile && nextEnemyHp <= enemy['Maximum HP'] * profile.wakeHpRatio) {
+  if (profile && nextEnemyHp <= enemyMaxHp * profile.wakeHpRatio) {
     nextSleep = 0
   }
 
-  if (nextEnemyHp <= 0) {
+  let bossAddsTriggered = false
+  let bossPendingHp: number | null = null
+  if (
+    profile?.squidlingsAt != null &&
+    profile.squidlingEnemyId &&
+    !save.combatBossAddsTriggered &&
+    !isBossAddFight(save) &&
+    nextEnemyHp <= enemyMaxHp * profile.squidlingsAt
+  ) {
+    bossAddsTriggered = true
+    bossPendingHp = nextEnemyHp
+  }
+
+  if (nextEnemyHp <= 0 && !bossAddsTriggered) {
     return {
       playerHit,
       playerCrit,
@@ -190,9 +240,33 @@ export function resolveCombatRound(
       bossSleepRoundsRemaining: nextSleep,
       enemyAsleep: asleep,
       enemyRampage: false,
+      bossAddsTriggered: false,
+      bossInkActive,
+      bossPendingHp: null,
       enemyHp: 0,
       playerHp: save.currentHp,
       outcome: 'victory',
+    }
+  }
+
+  if (bossAddsTriggered) {
+    return {
+      playerHit,
+      playerCrit,
+      offhandHit,
+      staffHit,
+      skipNextEnemyAttack: false,
+      enemyHit: null,
+      thornsHit: 0,
+      bossSleepRoundsRemaining: nextSleep,
+      enemyAsleep: asleep,
+      enemyRampage: false,
+      bossAddsTriggered: true,
+      bossInkActive,
+      bossPendingHp,
+      enemyHp: bossPendingHp ?? nextEnemyHp,
+      playerHp: save.currentHp,
+      outcome: 'ongoing',
     }
   }
 
@@ -208,13 +282,16 @@ export function resolveCombatRound(
       bossSleepRoundsRemaining: nextSleep,
       enemyAsleep: asleep,
       enemyRampage: false,
+      bossAddsTriggered: false,
+      bossInkActive,
+      bossPendingHp: null,
       enemyHp: nextEnemyHp,
       playerHp: save.currentHp,
       outcome: 'ongoing',
     }
   }
 
-  const rampage = Boolean(profile && nextEnemyHp <= enemy['Maximum HP'] * profile.rampageHpRatio)
+  const rampage = Boolean(profile && nextEnemyHp <= enemyMaxHp * profile.rampageHpRatio)
   let enemyRaw = rollDamage(enemy['Min Damage'], enemy['Max Damage'], random)
   if (rampage) enemyRaw *= 2
   const enemyHit = applyMitigation(enemyRaw, playerDamageReduction(db, save), floor)
@@ -238,6 +315,9 @@ export function resolveCombatRound(
     bossSleepRoundsRemaining: nextSleep,
     enemyAsleep: asleep,
     enemyRampage: rampage,
+    bossAddsTriggered: false,
+    bossInkActive,
+    bossPendingHp: null,
     enemyHp: nextEnemyHp,
     playerHp,
     // Simultaneous kills favor defeat: the enemy's own hit must land before Thorns reflects it.

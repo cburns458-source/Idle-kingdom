@@ -29,6 +29,7 @@ export 'src/bounties/rotation.dart';
 export 'src/bounties/types.dart';
 export 'src/bounties/views.dart';
 export 'src/combat/boss.dart';
+export 'src/combat/boss_phase.dart';
 export 'src/combat/engine.dart';
 export 'src/combat/food.dart';
 export 'src/combat/pvp.dart';
