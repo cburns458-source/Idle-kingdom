@@ -4,6 +4,7 @@ import {
   applyQuestTalkProgress,
   hasQuestFlag,
 } from '../quests/progress'
+import { isMiniquest } from '../quests/miniquests'
 import {
   acceptQuest,
   ACCEPT_GOLD_FLAG,
@@ -17,6 +18,7 @@ import {
   questsTouchingNpc,
   type QuestRow,
 } from '../quests/quests'
+import { changeRaceAtNpc, raceChangeOffer, VESPER_ID, type RaceChangeOffer } from '../races/changeRace'
 import {
   currentStepTalkKey,
   getCurrentStepIndex,
@@ -219,6 +221,8 @@ export interface NpcConversation {
   mentor: NpcMentorBlock | null
   quests: NpcQuestBlock[]
   whereabouts?: NpcWhereabouts
+  /** Weekly race-change service. Present only on Vesper. */
+  raceChange?: RaceChangeOffer
 }
 
 function completedNote(
@@ -377,12 +381,14 @@ export function npcConversation(
   const npcId = npc['NPC ID']
   const quests = questsTouchingNpc(db, save, npcId)
     .filter((quest) => {
+      if (isMiniquest(quest)) return false
       const isGiver = quest['NPC ID'] === npcId
       const status = getQuestProgress(save, quest['Quest ID']).status
       return isGiver || status === 'active'
     })
     .map((quest) => questBlock(db, save, quest, npcId))
   const whereabouts = whereaboutsFor(db, npcId, nowMs)
+  const raceChange = npcId === VESPER_ID ? raceChangeOffer(db, save, nowMs) : undefined
   return {
     npcId,
     name: npc['Display Name'],
@@ -395,6 +401,7 @@ export function npcConversation(
     mentor: mentorBlock(db, save, npcId),
     quests,
     ...(whereabouts ? { whereabouts } : {}),
+    ...(raceChange ? { raceChange } : {}),
   }
 }
 
@@ -533,6 +540,15 @@ export function chooseCombatForQuest(
       ? 'The guards look nervous.'
       : 'The guards look nervous. Pressure them nearby.',
   }
+}
+
+export function changeRaceWithNpc(
+  db: GameDatabase,
+  save: PlayerSave,
+  raceId: string,
+  nowMs: number = Date.now(),
+): { ok: true; save: PlayerSave; message: string } | { ok: false; reason: string } {
+  return changeRaceAtNpc(db, save, raceId, nowMs)
 }
 
 export function assignQuestSkillXp(

@@ -3,6 +3,7 @@ import 'package:ik_content/ik_content.dart';
 
 import '../activity/xp.dart';
 import '../js_compat.dart';
+import '../quests/miniquests.dart';
 import '../quests/quests.dart';
 import '../save/generated/save_models.dart';
 import 'roaming.dart';
@@ -36,6 +37,7 @@ String? npcHideAfterQuestId(NpcRow npc) {
 }
 
 bool npcVisibleForSave(NpcRow npc, PlayerSave save) {
+  if (!meetsTotalLevelRequirement(save, npc.notes)) return false;
   final questId = npcHideAfterQuestId(npc);
   if (questId == null) return true;
   return getQuestProgress(save, questId).status != 'completed';

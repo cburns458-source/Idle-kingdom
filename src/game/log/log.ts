@@ -6,8 +6,12 @@ import {
 import { CRITTER_DEFS, collectionCount } from '../critters/critters'
 import type { GameDatabase } from '../data/types'
 import type { QuestRow } from '../quests/quests'
+import { hideFromQuestLog } from '../quests/miniquests'
 import { questLegacyJournalSteps } from '../quests/objectives'
 import { asQuestRows, getQuestProgress, questStatusLabel } from '../quests/quests'
+
+export { miniQuestLog } from '../quests/miniquests'
+export type { MiniQuestLogRow } from '../quests/miniquests'
 import {
   questCompletedJournal,
   questRequirementJournal,
@@ -102,7 +106,7 @@ export interface QuestLogRow {
 }
 
 export function questLog(db: GameDatabase, save: PlayerSave): QuestLogRow[] {
-  return asQuestRows(db).map((quest) => {
+  return asQuestRows(db).filter((quest) => !hideFromQuestLog(quest)).map((quest) => {
     const questId = quest['Quest ID']
     const status = getQuestProgress(save, questId).status
     const npcName =

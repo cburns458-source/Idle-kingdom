@@ -544,6 +544,18 @@ export const SAVE_MIGRATIONS: SaveMigration[] = [
       saveVersion: 36,
     }),
   },
+  {
+    fromVersion: 36,
+    toVersion: 37,
+    migrate: (save) => ({
+      ...save,
+      miniquestCompletedAt:
+        save.miniquestCompletedAt && typeof save.miniquestCompletedAt === 'object'
+          ? save.miniquestCompletedAt
+          : {},
+      saveVersion: 37,
+    }),
+  },
 ]
 
 export function migrateSave(save: PlayerSave, nowMs: number = Date.now()): PlayerSave {

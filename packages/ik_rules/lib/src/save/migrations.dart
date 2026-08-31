@@ -504,6 +504,20 @@ final List<SaveMigration> saveMigrations = <SaveMigration>[
     toVersion: 36,
     migrate: (save, nowMs) => _normalizeSettings(save, 36),
   ),
+  SaveMigration(
+    fromVersion: 36,
+    toVersion: 37,
+    migrate: (save, nowMs) {
+      final next = _bumped(save, 37);
+      final raw = save['miniquestCompletedAt'];
+      next['miniquestCompletedAt'] = raw is Map
+          ? Map<String, String>.from(
+              raw.map((key, value) => MapEntry(key.toString(), value.toString())),
+            )
+          : <String, String>{};
+      return next;
+    },
+  ),
 ];
 
 /// Thrown when a save cannot be brought to the current version.

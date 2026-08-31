@@ -1,5 +1,6 @@
 import { applyXp } from '../activity/xp'
 import type { GameDatabase, NpcRow } from '../data/types'
+import { meetsTotalLevelRequirement } from '../quests/miniquests'
 import { getQuestProgress } from '../quests/quests'
 import type { PlayerSave } from '../save/types'
 import { npcLocationAt } from './roaming'
@@ -32,6 +33,7 @@ export function npcHideAfterQuestId(npc: NpcRow): string | null {
 }
 
 export function npcVisibleForSave(npc: NpcRow, save: PlayerSave): boolean {
+  if (!meetsTotalLevelRequirement(save, npc.Notes ?? null)) return false
   const questId = npcHideAfterQuestId(npc)
   if (!questId) return true
   return getQuestProgress(save, questId).status !== 'completed'
