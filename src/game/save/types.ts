@@ -1,4 +1,4 @@
-export const SAVE_VERSION = 36
+export const SAVE_VERSION = 37
 export const SAVE_STORAGE_KEY = 'idle-kingdoms.demo.save'
 export const STARTING_LOCATION_ID = 'LOC-0001'
 /** Base gold before race kit; race starters grant the real starting gold. */
@@ -72,6 +72,23 @@ export interface EquippedStack {
 
 export interface EquipmentLoadout {
   /** Slot ID -> equipped stack or null */
+  slots: Record<string, EquippedStack | null>
+}
+
+/** Icon for an equipment preset button. */
+export interface EquipmentPresetIcon {
+  /** `roman`, `skill`, or `coin`. */
+  kind: string
+  /** 1–4 when kind is `roman`. */
+  numeral: number | null
+  /** Skill ID when kind is `skill`. */
+  skillId: string | null
+}
+
+/** Named snapshot of all equipment slots (gear, food/potion, spells). */
+export interface EquipmentPreset {
+  name: string
+  icon: EquipmentPresetIcon
   slots: Record<string, EquippedStack | null>
 }
 
@@ -182,6 +199,10 @@ export interface PlayerSave {
   /** Last unfinished pool action per activity, reused if that activity starts again. */
   heldActionByActivityId: Record<string, string>
   equipment: EquipmentLoadout
+  /** Four named loadout snapshots; preset 1 auto-tracks while active. */
+  equipmentPresets: EquipmentPreset[]
+  /** Index into equipmentPresets (0–3). */
+  activeEquipmentPresetIndex: number
   /** Gold amount; itemized currency uses Config currency_item_id. */
   gold: number
   quests: QuestProgress[]

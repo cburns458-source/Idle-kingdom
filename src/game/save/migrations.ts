@@ -1,3 +1,4 @@
+import { createDefaultEquipmentPresets } from '../equipment/presets'
 import { ensureStartingHuntingTool, replaceFishingNetsWithNet } from './startingGear'
 import type {
   ActivePotionEffect,
@@ -543,6 +544,41 @@ export const SAVE_MIGRATIONS: SaveMigration[] = [
       settings: normalizeSettings(save.settings),
       saveVersion: 36,
     }),
+  },
+  {
+    fromVersion: 36,
+    toVersion: 37,
+    migrate: (save) => {
+      const slotIds = Object.keys(save.equipment?.slots ?? {})
+      const presets = createDefaultEquipmentPresets(slotIds)
+      if (presets[0]) {
+        presets[0] = {
+          ...presets[0],
+          slots: Object.fromEntries(
+            slotIds.map((slotId) => {
+              const stack = save.equipment?.slots?.[slotId] ?? null
+              return [
+                slotId,
+                stack
+                  ? {
+                      itemId: stack.itemId,
+                      quantity: stack.quantity,
+                      enchantmentId: stack.enchantmentId ?? null,
+                      favorite: stack.favorite === true ? true : undefined,
+                    }
+                  : null,
+              ]
+            }),
+          ),
+        }
+      }
+      return {
+        ...save,
+        equipmentPresets: presets,
+        activeEquipmentPresetIndex: 0,
+        saveVersion: 37,
+      }
+    },
   },
 ]
 

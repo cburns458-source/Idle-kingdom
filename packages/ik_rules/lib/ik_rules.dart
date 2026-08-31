@@ -41,6 +41,7 @@ export 'src/cosmetics/wardrobe.dart';
 export 'src/critters/critters.dart';
 export 'src/equipment/auto_equip.dart';
 export 'src/equipment/loadout.dart';
+export 'src/equipment/presets.dart';
 export 'src/equipment/specialist.dart' hide essenceItemId, huntingSkillId;
 export 'src/equipment/tooltips.dart';
 export 'src/equipment/vitals.dart';
