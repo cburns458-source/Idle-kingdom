@@ -75,10 +75,9 @@ class _InventoryViewState extends State<InventoryView> {
   late InventorySorter _sorter = InventorySorter(widget.controller.db);
   int? _localEditingPresetIndex;
   bool get _lockedPane => widget.pane != null;
-  int? get _editingPresetIndex =>
-      widget.onEditingPresetIndexChanged != null
-          ? widget.editingPresetIndex
-          : _localEditingPresetIndex;
+  int? get _editingPresetIndex => widget.onEditingPresetIndexChanged != null
+      ? widget.editingPresetIndex
+      : _localEditingPresetIndex;
   bool get _editingPreset => _editingPresetIndex != null;
 
   void _setEditingPresetIndex(int? index) {
@@ -654,15 +653,13 @@ class _InventoryViewState extends State<InventoryView> {
     );
   }
 
-  bool _itemFitsSlot(String itemId, String slotId) =>
-      itemFitsEquipmentSlot(db, itemId, slotId);
+  bool _itemFitsSlot(String itemId, String slotId) => itemFitsEquipmentSlot(db, itemId, slotId);
 
   Future<void> _openSlotEquipPicker(String slotId) async {
     final slot = db.equipmentSlots.where((row) => row.slotId == slotId).firstOrNull;
     final candidates = <({int index, InventoryStack stack})>[
       for (var i = 0; i < save.inventory.length; i += 1)
-        if (_itemFitsSlot(save.inventory[i].itemId, slotId))
-          (index: i, stack: save.inventory[i]),
+        if (_itemFitsSlot(save.inventory[i].itemId, slotId)) (index: i, stack: save.inventory[i]),
     ];
     if (candidates.isEmpty) {
       setState(() => _message = 'No items in your bag fit that slot.');

@@ -201,7 +201,12 @@ EquipResult equipItemFromInventory(GameDatabase db, PlayerSave save, String item
 }
 
 /// Equips a specific inventory stack index (preserves enchantments).
-EquipResult equipInventoryIndex(GameDatabase db, PlayerSave save, num index, {String? preferredSlotId}) {
+EquipResult equipInventoryIndex(
+  GameDatabase db,
+  PlayerSave save,
+  num index, {
+  String? preferredSlotId,
+}) {
   final invStack = _stackAt(save.inventory, index);
   if (invStack == null || invStack.quantity <= 0) {
     return const EquipResult.failed('Item is not in inventory.');

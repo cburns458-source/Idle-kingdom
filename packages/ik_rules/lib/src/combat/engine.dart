@@ -417,8 +417,7 @@ CombatVictoryResult applyCombatVictory(
   );
 
   final xpAmount = jsNumber(enemy.raw['Combat XP'] ?? action.raw['XP Reward'] ?? 0);
-  final xpSkillId =
-      bossProfile(enemy)?.damageMode == 'fishing' ? fishingSkillId : combatSkillId;
+  final xpSkillId = bossProfile(enemy)?.damageMode == 'fishing' ? fishingSkillId : combatSkillId;
   next = applyXp(next, db, xpSkillId, xpAmount).save;
 
   final minGold = jsNumber(enemy.raw['Minimum Gold'] ?? 0);

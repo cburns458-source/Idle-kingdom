@@ -117,7 +117,6 @@ List<LocationRow> locationsForMapView(
   return merged.values.toList();
 }
 
-
 /// Fishing level required to enter The Depths (LOC-0042).
 const int depthsFishingLevelRequirement = 50;
 
