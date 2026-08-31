@@ -110,17 +110,20 @@ class LocationIdlePlayer extends StatelessWidget {
                         controller: controller,
                         axis: Axis.vertical,
                         compact: true,
+                        onMessage: controller.announce,
                       ),
                       const SizedBox(width: 4),
                       Expanded(
-                        child: _Portrait(
-                          assetPath: playerAssetPath(save.appearance, raceId: save.raceId),
-                          bytes: controller.localPlayerPng,
-                          semanticsLabel: 'Adventurer',
-                          alignment: Alignment.centerRight,
-                          height: _playerArtHeight,
-                          slotHeight: _portraitSlotHeight,
-                          filterQuality: FilterQuality.high,
+                        child: IgnorePointer(
+                          child: _Portrait(
+                            assetPath: playerAssetPath(save.appearance, raceId: save.raceId),
+                            bytes: controller.localPlayerPng,
+                            semanticsLabel: 'Adventurer',
+                            alignment: Alignment.centerRight,
+                            height: _playerArtHeight,
+                            slotHeight: _portraitSlotHeight,
+                            filterQuality: FilterQuality.high,
+                          ),
                         ),
                       ),
                     ],

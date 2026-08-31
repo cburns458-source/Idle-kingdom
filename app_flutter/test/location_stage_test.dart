@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:idle_kingdoms/src/session/game_controller.dart';
 import 'package:idle_kingdoms/src/ui/action_stage.dart';
+import 'package:idle_kingdoms/src/ui/equipment_presets_bar.dart';
 import 'package:idle_kingdoms/src/theme.dart';
 import 'package:idle_kingdoms/src/ui/production_panel.dart';
 import 'package:ik_content/ik_content.dart';
@@ -482,5 +483,63 @@ void main() {
     expect(find.bySemanticsLabel('Recovering'), findsOne);
     expect(find.bySemanticsLabel('Adventurer'), findsNothing);
     expect(find.bySemanticsLabel('Resume progress'), findsWidgets);
+  });
+
+  Finder stageNumeral(String numeral) {
+    return find.descendant(of: find.byType(LocationIdlePlayer), matching: find.text(numeral));
+  }
+
+  testWidgets('location stage presets are tappable heading-colored squares', (tester) async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(currentLocationId: 'LOC-0001'),
+    );
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller, size: const Size(420, 420 * 16 / 9));
+
+    expect(controller.save.activeEquipmentPresetIndex, 0);
+    expect(find.byType(EquipmentPresetsBar), findsOne);
+    expect(stageNumeral('I'), findsOne);
+    expect(stageNumeral('II'), findsOne);
+    expect(stageNumeral('III'), findsOne);
+    expect(stageNumeral('IV'), findsOne);
+
+    final numeral = tester.widget<Text>(stageNumeral('II'));
+    expect(numeral.style?.color, Palette.heading);
+    expect(numeral.style?.fontFamily, gameFontFamily);
+    expect(numeral.style?.fontWeight, FontWeight.w400);
+
+    final square = tester.getSize(
+      find.ancestor(of: stageNumeral('II'), matching: find.byType(InkWell)),
+    );
+    expect(square.width, 32);
+    expect(square.height, 32);
+
+    await tester.tap(stageNumeral('II'));
+    await tester.pump();
+
+    expect(controller.save.activeEquipmentPresetIndex, 1);
+  });
+
+  testWidgets('location stage presets still switch while gathering', (tester) async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(currentLocationId: 'LOC-0001'),
+    );
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller, size: const Size(420, 420 * 16 / 9));
+
+    await tapVisible(
+      tester,
+      find.descendant(of: dockRow('Work the fields'), matching: find.bySemanticsLabel('Start')),
+    );
+    expect(controller.save.currentActivityId, 'ACT-0021');
+    expect(find.byType(ActionStage), findsOne);
+    expect(controller.save.activeEquipmentPresetIndex, 0);
+
+    await tester.tap(stageNumeral('III'));
+    await tester.pump();
+
+    expect(controller.save.activeEquipmentPresetIndex, 2);
   });
 }

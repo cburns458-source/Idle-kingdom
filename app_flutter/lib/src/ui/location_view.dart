@@ -381,9 +381,7 @@ class _LocationViewState extends State<LocationView> {
                                         child: OverflowBox(
                                           maxHeight: double.infinity,
                                           alignment: Alignment.bottomCenter,
-                                          child: IgnorePointer(
-                                            child: LocationIdlePlayer(controller: controller),
-                                          ),
+                                          child: LocationIdlePlayer(controller: controller),
                                         ),
                                       ),
                                       if (running)
@@ -392,7 +390,9 @@ class _LocationViewState extends State<LocationView> {
                                           child: OverflowBox(
                                             maxHeight: double.infinity,
                                             alignment: Alignment.bottomCenter,
-                                            child: ActivityPanel(controller: controller),
+                                            child: IgnorePointer(
+                                              child: ActivityPanel(controller: controller),
+                                            ),
                                           ),
                                         ),
                                     ],
