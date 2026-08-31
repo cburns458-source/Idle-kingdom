@@ -1,6 +1,7 @@
 import 'package:ik_content/ik_content.dart';
 
 import '../config.dart';
+import '../equipment/presets.dart';
 import '../time.dart';
 import 'generated/save_models.dart';
 import 'json_save.dart';
@@ -45,6 +46,8 @@ PlayerSave createNewSave(GameDatabase db, num nowMs) {
     favoriteActivityByLocationId: const <String, String>{},
     heldActionByActivityId: const <String, String>{},
     equipment: EquipmentLoadout(slots: slots),
+    equipmentPresets: createDefaultEquipmentPresets(slots.keys),
+    activeEquipmentPresetIndex: 0,
     gold: startingGold,
     quests: const <QuestProgress>[],
     achievements: const <AchievementProgress>[],

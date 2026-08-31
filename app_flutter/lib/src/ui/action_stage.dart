@@ -9,6 +9,7 @@ import '../content/asset_paths.dart';
 import '../session/game_controller.dart';
 import '../theme.dart';
 import 'format.dart';
+import 'equipment_presets_bar.dart';
 import 'game_image.dart';
 import 'item_icon.dart';
 import 'playable_frame.dart';
@@ -102,14 +103,27 @@ class LocationIdlePlayer extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 _TwoPortraits(
-                  player: _Portrait(
-                    assetPath: playerAssetPath(save.appearance, raceId: save.raceId),
-                    bytes: controller.localPlayerPng,
-                    semanticsLabel: 'Adventurer',
-                    alignment: Alignment.centerRight,
-                    height: _playerArtHeight,
-                    slotHeight: _portraitSlotHeight,
-                    filterQuality: FilterQuality.high,
+                  player: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      EquipmentPresetsBar(
+                        controller: controller,
+                        axis: Axis.vertical,
+                        compact: true,
+                      ),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: _Portrait(
+                          assetPath: playerAssetPath(save.appearance, raceId: save.raceId),
+                          bytes: controller.localPlayerPng,
+                          semanticsLabel: 'Adventurer',
+                          alignment: Alignment.centerRight,
+                          height: _playerArtHeight,
+                          slotHeight: _portraitSlotHeight,
+                          filterQuality: FilterQuality.high,
+                        ),
+                      ),
+                    ],
                   ),
                   scene: _groundedSceneArt(controller),
                   playerCaption: ExcludeSemantics(

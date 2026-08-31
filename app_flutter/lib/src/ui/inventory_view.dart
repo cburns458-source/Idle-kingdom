@@ -5,6 +5,7 @@ import 'package:ik_rules/ik_rules.dart';
 import '../session/game_controller.dart';
 import '../theme.dart';
 import 'format.dart';
+import 'equipment_presets_bar.dart';
 import 'game_popup.dart';
 import 'item_detail_sheet.dart';
 import 'item_icon.dart';
@@ -492,13 +493,25 @@ class _InventoryViewState extends State<InventoryView> {
         Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 320),
-            child: GridView.count(
-              crossAxisCount: 4,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              mainAxisSpacing: 6,
-              crossAxisSpacing: 6,
-              children: [for (final slotId in equipmentGridOrder) _slotTile(slotId)],
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                EquipmentPresetsBar(
+                  controller: controller,
+                  onMessage: (message) {
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+                  },
+                ),
+                const SizedBox(height: 10),
+                GridView.count(
+                  crossAxisCount: 4,
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  mainAxisSpacing: 6,
+                  crossAxisSpacing: 6,
+                  children: [for (final slotId in equipmentGridOrder) _slotTile(slotId)],
+                ),
+              ],
             ),
           ),
         ),

@@ -7,7 +7,7 @@
 
 import '../../json_support.dart';
 
-const int saveVersion = 36;
+const int saveVersion = 37;
 
 const String saveStorageKey = 'idle-kingdoms.demo.save';
 
@@ -367,6 +367,79 @@ class EquipmentLoadout {
   }
 }
 
+/// Named snapshot of all equipment slots (gear, food/potion, spells).
+class EquipmentPreset {
+  const EquipmentPreset({required this.name, required this.icon, required this.slots});
+
+  factory EquipmentPreset.fromJson(Map<String, Object?> json) {
+    return EquipmentPreset(
+      name: json['name'] as String,
+      icon: EquipmentPresetIcon.fromJson(asJsonMap(json['icon'])),
+      slots: mapOf(json['slots'], (Object? value) => mapOrNull(value, EquippedStack.fromJson)),
+    );
+  }
+
+  final String name;
+
+  final EquipmentPresetIcon icon;
+
+  final Map<String, EquippedStack?> slots;
+
+  Map<String, Object?> toJson() {
+    return <String, Object?>{
+      'name': name,
+      'icon': icon.toJson(),
+      'slots': slots.map((key, value) => MapEntry(key, value?.toJson())),
+    };
+  }
+
+  EquipmentPreset copyWith({
+    String? name,
+    EquipmentPresetIcon? icon,
+    Map<String, EquippedStack?>? slots,
+  }) {
+    return EquipmentPreset(
+      name: name ?? this.name,
+      icon: icon ?? this.icon,
+      slots: slots ?? this.slots,
+    );
+  }
+}
+
+/// Icon for an equipment preset button.
+class EquipmentPresetIcon {
+  const EquipmentPresetIcon({required this.kind, this.numeral, this.skillId});
+
+  factory EquipmentPresetIcon.fromJson(Map<String, Object?> json) {
+    return EquipmentPresetIcon(
+      kind: json['kind'] as String,
+      numeral: json['numeral'] as num?,
+      skillId: json['skillId'] as String?,
+    );
+  }
+
+  /// `roman`, `skill`, or `coin`.
+  final String kind;
+
+  /// 1–4 when kind is `roman`.
+  final num? numeral;
+
+  /// Skill ID when kind is `skill`.
+  final String? skillId;
+
+  Map<String, Object?> toJson() {
+    return <String, Object?>{'kind': kind, 'numeral': numeral, 'skillId': skillId};
+  }
+
+  EquipmentPresetIcon copyWith({String? kind, Object? numeral = _unset, Object? skillId = _unset}) {
+    return EquipmentPresetIcon(
+      kind: kind ?? this.kind,
+      numeral: numeral == _unset ? this.numeral : numeral as num?,
+      skillId: skillId == _unset ? this.skillId : skillId as String?,
+    );
+  }
+}
+
 /// Equipped contents for one slot. Food and potions may hold any stack size.
 class EquippedStack {
   const EquippedStack({
@@ -547,6 +620,8 @@ class PlayerSave {
     required this.favoriteActivityByLocationId,
     required this.heldActionByActivityId,
     required this.equipment,
+    required this.equipmentPresets,
+    required this.activeEquipmentPresetIndex,
     required this.gold,
     required this.quests,
     required this.achievements,
@@ -619,6 +694,11 @@ class PlayerSave {
         (Object? value) => value as String,
       ),
       equipment: EquipmentLoadout.fromJson(asJsonMap(json['equipment'])),
+      equipmentPresets: listOf(
+        json['equipmentPresets'],
+        (Object? entry) => EquipmentPreset.fromJson(asJsonMap(entry)),
+      ),
+      activeEquipmentPresetIndex: json['activeEquipmentPresetIndex'] as num,
       gold: json['gold'] as num,
       quests: listOf(json['quests'], (Object? entry) => QuestProgress.fromJson(asJsonMap(entry))),
       achievements: listOf(
@@ -711,6 +791,12 @@ class PlayerSave {
   final Map<String, String> heldActionByActivityId;
 
   final EquipmentLoadout equipment;
+
+  /// Four named loadout snapshots; preset 1 auto-tracks while active.
+  final List<EquipmentPreset> equipmentPresets;
+
+  /// Index into equipmentPresets (0–3).
+  final num activeEquipmentPresetIndex;
 
   /// Gold amount; itemized currency uses Config currency_item_id.
   final num gold;
@@ -854,6 +940,8 @@ class PlayerSave {
       'favoriteActivityByLocationId': favoriteActivityByLocationId,
       'heldActionByActivityId': heldActionByActivityId,
       'equipment': equipment.toJson(),
+      'equipmentPresets': equipmentPresets.map((entry) => entry.toJson()).toList(),
+      'activeEquipmentPresetIndex': activeEquipmentPresetIndex,
       'gold': gold,
       'quests': quests.map((entry) => entry.toJson()).toList(),
       'achievements': achievements.map((entry) => entry.toJson()).toList(),
@@ -917,6 +1005,8 @@ class PlayerSave {
     Map<String, String>? favoriteActivityByLocationId,
     Map<String, String>? heldActionByActivityId,
     EquipmentLoadout? equipment,
+    List<EquipmentPreset>? equipmentPresets,
+    num? activeEquipmentPresetIndex,
     num? gold,
     List<QuestProgress>? quests,
     List<AchievementProgress>? achievements,
@@ -979,6 +1069,8 @@ class PlayerSave {
           favoriteActivityByLocationId ?? this.favoriteActivityByLocationId,
       heldActionByActivityId: heldActionByActivityId ?? this.heldActionByActivityId,
       equipment: equipment ?? this.equipment,
+      equipmentPresets: equipmentPresets ?? this.equipmentPresets,
+      activeEquipmentPresetIndex: activeEquipmentPresetIndex ?? this.activeEquipmentPresetIndex,
       gold: gold ?? this.gold,
       quests: quests ?? this.quests,
       achievements: achievements ?? this.achievements,
