@@ -192,6 +192,7 @@ void main() {
     expect(find.text('DR'), findsOne);
     expect(find.text('Show bonuses'), findsOne);
     expect(find.text('Show sources'), findsOne);
+    expect(find.textContaining('Eat at'), findsOne);
     final bonuses = tester.getRect(find.text('Show bonuses'));
     final sources = tester.getRect(find.text('Show sources'));
     expect((bonuses.center.dy - sources.center.dy).abs(), lessThan(8));

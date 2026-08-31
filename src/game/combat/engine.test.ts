@@ -80,6 +80,30 @@ describe('combat engine', () => {
     expect(victory.save.statistics.values.monsters_killed).toBe(1)
   })
 
+  it('skips healing food after a one-hit kill that dealt no damage', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    let save = createNewSave(launch)
+    save = {
+      ...save,
+      currentHp: 900,
+      equipment: {
+        ...save.equipment,
+        slots: {
+          ...save.equipment.slots,
+          'SLOT-0011': { itemId: 'ITEM-0058', quantity: 2 },
+        },
+      },
+    }
+    const enemy = launch.Enemies.find((row) => row['Enemy ID'] === 'ENM-0001')!
+    const action = launch.Actions.find((row) => row['Action ID'] === 'ACN-0001')!
+    const victory = applyCombatVictory(launch, save, action, enemy, () => 0, Date.now(), {
+      skipVictoryFood: true,
+    })
+    expect(victory.foodConsumed).toBe(false)
+    expect(victory.save.currentHp).toBe(900)
+    expect(victory.save.equipment.slots['SLOT-0011']?.quantity).toBe(2)
+  })
+
   it('does not eat food at full HP', () => {
     const { launch } = prepareDatabase(rawDatabase)
     let save = createNewSave(launch)

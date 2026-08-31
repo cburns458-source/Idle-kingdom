@@ -8,6 +8,7 @@ import { migrateSave } from '../save/migrations'
 import { SAVE_VERSION, type PlayerSave } from '../save/types'
 import { tryConsumeFoodAfterVictory } from '../combat/food'
 import { gatheringDurationMs } from '../activity/gathering'
+import { productionCraftDurationMs } from '../production/engine'
 import { INVENTORY_SLOT_LIMIT } from '../inventory/capacity'
 import {
   equipInventoryIndex,
@@ -128,6 +129,21 @@ describe('equipment loadout', () => {
     expect(gatheringDurationMs(launch, equipped.save, cutCedar)).toBe(
       Math.round(cedarBase * cedarMult * 1000),
     )
+  })
+
+  it('credits oven mitts action time to cooking and metallurgy production', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    let save = createNewSave(launch)
+    save = addItemToInventory(save, 'ITEM-0316', 1)
+    const equipped = equipItemFromInventory(launch, save, 'ITEM-0316')
+    expect(equipped.ok).toBe(true)
+    if (!equipped.ok) return
+
+    const beef = launch.Recipes.find((recipe) => recipe['Recipe ID'] === 'RCP-0009')!
+    const copper = launch.Recipes.find((recipe) => recipe['Recipe ID'] === 'RCP-0014')!
+    expect(productionCraftDurationMs(launch, equipped.save, beef, null)).toBe(10_000 * 0.95)
+    expect(productionCraftDurationMs(launch, equipped.save, copper, null)).toBe(15_000 * 0.95)
+    expect(productionCraftDurationMs(launch, save, beef, null)).toBe(10_000)
   })
 
   it('clamps current HP when max HP drops', () => {

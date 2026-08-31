@@ -388,6 +388,28 @@ class GameController extends ChangeNotifier {
     commit(save.copyWith(settings: save.settings.copyWith(showEatButton: value)));
   }
 
+  num get eatHealthThresholdPercent =>
+      clampEatHealthThresholdPercent(save.settings.eatHealthThresholdPercent);
+
+  bool get eatHealthThresholdAsPercent => save.settings.eatHealthThresholdAsPercent;
+
+  void setEatHealthThresholdPercent(num value) {
+    final next = clampEatHealthThresholdPercent(value);
+    if (save.settings.eatHealthThresholdPercent == next) return;
+    commit(save.copyWith(settings: save.settings.copyWith(eatHealthThresholdPercent: next)));
+  }
+
+  void setEatHealthThresholdAsPercent(bool value) {
+    if (save.settings.eatHealthThresholdAsPercent == value) return;
+    commit(save.copyWith(settings: save.settings.copyWith(eatHealthThresholdAsPercent: value)));
+  }
+
+  void setEatHealthThresholdHp(num hp, num maxHp) {
+    final cap = maxHp <= 0 ? 1 : maxHp;
+    final percent = clampEatHealthThresholdPercent((hp / cap) * 100);
+    setEatHealthThresholdPercent(percent);
+  }
+
   /// Manual eat from the bag or food slot. Returns a refusal, or null on success.
   String? eatFood({int? inventoryIndex}) {
     final result = inventoryIndex == null

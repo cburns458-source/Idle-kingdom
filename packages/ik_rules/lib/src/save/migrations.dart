@@ -113,8 +113,18 @@ SaveJson _normalizeSettings(SaveJson save, int version) {
     'showActivityRewards': settings['showActivityRewards'] ?? true,
     'hudShowTotalXp': settings['hudShowTotalXp'] ?? false,
     'showEatButton': settings['showEatButton'] ?? true,
+    'eatHealthThresholdPercent': _clampEatHealthThresholdPercent(
+      settings['eatHealthThresholdPercent'] ?? 100,
+    ),
+    'eatHealthThresholdAsPercent': settings['eatHealthThresholdAsPercent'] ?? false,
   };
   return next;
+}
+
+num _clampEatHealthThresholdPercent(Object? value) {
+  final n = jsNumber(value).round();
+  if (n.isNaN) return 100;
+  return n.clamp(1, 100);
 }
 
 /// Ordered migrations from older save versions up to [saveVersion].
@@ -488,6 +498,11 @@ final List<SaveMigration> saveMigrations = <SaveMigration>[
       }).toList();
       return next;
     },
+  ),
+  SaveMigration(
+    fromVersion: 35,
+    toVersion: 36,
+    migrate: (save, nowMs) => _normalizeSettings(save, 36),
   ),
 ];
 

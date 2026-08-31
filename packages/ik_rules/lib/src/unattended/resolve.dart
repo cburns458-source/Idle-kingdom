@@ -203,6 +203,13 @@ UnattendedResult resolveUnattendedProgress(
           // Credit the kill to the hour it happened in, not to the hour the
           // player happens to come back in.
           roundEnd,
+          skipVictoryFood: shouldSkipVictoryHealingFood(
+            enemy,
+            current.combatEnemyHp,
+            round.enemyHit,
+            round.playerHp,
+            current.currentHp,
+          ),
         );
         combatVictories += 1;
         var next = victory.save;

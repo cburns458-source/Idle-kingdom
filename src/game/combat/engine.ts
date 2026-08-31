@@ -245,6 +245,19 @@ export function resolveCombatRound(
   }
 }
 
+/** One-hit kill from full enemy HP with no player damage: skip healing food. */
+export function shouldSkipVictoryHealingFood(
+  enemy: EnemyRow,
+  incomingEnemyHp: number | null | undefined,
+  enemyHit: number | null,
+  playerHpAfter: number,
+  playerHpBefore: number,
+): boolean {
+  const maxHp = Number(enemy['Maximum HP'] ?? 0)
+  const startedAtFull = incomingEnemyHp == null || incomingEnemyHp === maxHp
+  return startedAtFull && enemyHit == null && playerHpAfter === playerHpBefore
+}
+
 export function applyCombatVictory(
   db: GameDatabase,
   save: PlayerSave,
@@ -252,6 +265,7 @@ export function applyCombatVictory(
   enemy: EnemyRow,
   random: RandomFn = Math.random,
   nowMs: number = Date.now(),
+  options?: { skipVictoryFood?: boolean },
 ): CombatVictoryResult {
   const maxHp = playerMaxHp(db, save)
   let next: PlayerSave = {
@@ -293,7 +307,7 @@ export function applyCombatVictory(
   }
   next = recordEnemyKill(db, next, enemy['Enemy ID'])
 
-  const food = consumeFoodAfterVictory(db, next)
+  const food = consumeFoodAfterVictory(db, next, { skipHealing: options?.skipVictoryFood })
   next = withBossRespawn(clearCombatSave(food.save), enemy, nowMs)
   next = applyQuestDefeatProgress(db, next, enemy['Enemy ID'], 1)
   next = applyBountyDefeatProgress(next, enemy['Enemy ID'], 1, nowMs)

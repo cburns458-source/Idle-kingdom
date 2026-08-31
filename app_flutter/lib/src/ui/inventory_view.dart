@@ -315,11 +315,6 @@ class _InventoryViewState extends State<InventoryView> {
               PageHeader(title: 'Inventory', onClose: widget.onClose!)
             else
               const Text('Inventory', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w400)),
-          if (_activeTab == _InventoryTab.items)
-            Align(
-              alignment: Alignment.centerRight,
-              child: MutedText('${inventorySlotCount(save)} / $inventorySlotLimit slots'),
-            ),
           if (!_lockedPane) ...[
             const SizedBox(height: 8),
             Row(
@@ -397,7 +392,11 @@ class _InventoryViewState extends State<InventoryView> {
                           _message = null;
                         }),
                 ),
-                const Spacer(),
+                Expanded(
+                  child: Center(
+                    child: MutedText('${inventorySlotCount(save)} / $inventorySlotLimit slots'),
+                  ),
+                ),
                 _SortMenu(
                   mode: _sortMode,
                   onSelected: (mode) => setState(() {
@@ -471,14 +470,13 @@ class _InventoryViewState extends State<InventoryView> {
             );
           },
         ),
-        const SizedBox(height: 8),
-        MutedText(
-          selling != null
-              ? 'Tap items to choose how many to sell, then confirm. Favorited items cannot be sold. '
-                    'Shops pay full value; selling in the field pays half.'
-              : 'Tap the heart to keep an item safe from selling. Tap gear to equip it, '
-                    'and hold anything for its details.',
-        ),
+        if (selling != null) ...[
+          const SizedBox(height: 8),
+          const MutedText(
+            'Tap items to choose how many to sell, then confirm. Favorited items cannot be sold. '
+            'Shops pay full value; selling in the field pays half.',
+          ),
+        ],
       ],
     );
   }
@@ -505,9 +503,58 @@ class _InventoryViewState extends State<InventoryView> {
           ),
         ),
         const SizedBox(height: 10),
-        const MutedText(
-          'Equipped spells are always active, and duplicates stack. Tap worn gear to take it '
-          'off, or hold a slot for what it does.',
+        _eatAtHealth(),
+      ],
+    );
+  }
+
+  Widget _eatAtHealth() {
+    final maxHp = playerMaxHp(db, save);
+    final cap = maxHp <= 0 ? 1.0 : maxHp.toDouble();
+    final percent = clampEatHealthThresholdPercent(save.settings.eatHealthThresholdPercent);
+    final asPercent = save.settings.eatHealthThresholdAsPercent;
+    final hpValue = eatHealthThresholdHp(cap, percent);
+    final sliderMax = asPercent ? 100.0 : cap;
+    final sliderValue = asPercent ? percent.toDouble() : hpValue.toDouble();
+    final divisions = asPercent ? 99 : (cap > 1 ? cap.round() - 1 : 1);
+    final label = asPercent ? '${percent.round()}%' : '${hpValue.round()} HP';
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            Expanded(child: MutedText('Eat at $label')),
+            GameButton(
+              label: asPercent ? '%' : 'HP',
+              tone: GameButtonTone.secondary,
+              compact: true,
+              dense: true,
+              onPressed: () => controller.setEatHealthThresholdAsPercent(!asPercent),
+            ),
+          ],
+        ),
+        SliderTheme(
+          data: SliderTheme.of(context).copyWith(
+            activeTrackColor: Palette.gold,
+            inactiveTrackColor: Palette.edge,
+            thumbColor: Palette.gold,
+            overlayShape: SliderComponentShape.noOverlay,
+            trackHeight: 4,
+          ),
+          child: Slider(
+            value: sliderValue.clamp(1, sliderMax).toDouble(),
+            min: 1,
+            max: sliderMax < 1 ? 1 : sliderMax,
+            divisions: divisions < 1 ? 1 : divisions,
+            label: label,
+            onChanged: (value) {
+              if (asPercent) {
+                controller.setEatHealthThresholdPercent(value.round());
+              } else {
+                controller.setEatHealthThresholdHp(value.round(), cap);
+              }
+            },
+          ),
         ),
       ],
     );

@@ -52,6 +52,8 @@ function saveWithInventory(itemIds: string[]): PlayerSave {
       showActivityRewards: true,
       hudShowTotalXp: false,
       showEatButton: true,
+      eatHealthThresholdPercent: 100,
+      eatHealthThresholdAsPercent: false,
     },
     currentLocationId: 'LOC-0002',
     currentActivityId: null,

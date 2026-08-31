@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:collection/collection.dart';
 import 'package:ik_content/ik_content.dart';
 
@@ -11,6 +13,7 @@ import '../inventory/add_items.dart';
 import '../inventory/capacity.dart';
 import '../js_compat.dart';
 import '../equipment/specialist.dart';
+import '../equipment/loadout.dart';
 import '../potions/effects.dart';
 import '../quests/progress.dart';
 import '../recipes/knowledge.dart';
@@ -19,6 +22,18 @@ import '../save/generated/save_models.dart';
 import '../time.dart';
 import 'inventory.dart';
 import 'recipes.dart';
+
+num productionCraftDurationMs(
+  GameDatabase db,
+  PlayerSave save,
+  RecipeRow recipe,
+  ActivePotionEffect? potionEffect,
+) {
+  final baseDurationMs = jsNumber(recipe.raw['Base Duration Seconds']) * 1000;
+  final atr = equippedActionTimeReductionPercent(db, save, jsString(recipe.raw['Skill ID']));
+  final reduced = baseDurationMs * math.max(0.01, 1 - atr / 100);
+  return applyPotionDurationMs(reduced, potionEffect);
+}
 
 PlayerSave clearProductionSave(PlayerSave save) {
   return clearActivePotionEffect(
@@ -106,7 +121,6 @@ ProductionQueueResult beginProductionQueue(
   }
 
   final startedAt = isoFromMs(nowMs);
-  final baseDurationMs = jsNumber(recipe.raw['Base Duration Seconds']) * 1000;
   final potion = tryConsumePotionForScope(db, withMaterials, 'one_standard_production_action');
   return ProductionQueueResult.ok(
     potion.save.copyWith(
@@ -117,7 +131,7 @@ ProductionQueueResult beginProductionQueue(
       productionQuantityRemaining: crafts,
       currentActionId: recipe.raw['Action ID'] as String?,
       actionStartedAt: startedAt,
-      actionDurationMs: applyPotionDurationMs(baseDurationMs, potion.effect),
+      actionDurationMs: productionCraftDurationMs(db, potion.save, recipe, potion.effect),
     ),
   );
 }
@@ -202,13 +216,12 @@ ProductionCraftResult? completeProductionCraft(
 
   final cleared = clearActivePotionEffect(next.copyWith(productionQuantityRemaining: remaining));
   final potion = tryConsumePotionForScope(db, cleared, 'one_standard_production_action');
-  final baseDurationMs = jsNumber(recipe.raw['Base Duration Seconds']) * 1000;
   return ProductionCraftResult(
     save: potion.save.copyWith(
       productionQuantityRemaining: remaining,
       currentActionId: recipe.raw['Action ID'] as String?,
       actionStartedAt: isoFromMs(nowMs),
-      actionDurationMs: applyPotionDurationMs(baseDurationMs, potion.effect),
+      actionDurationMs: productionCraftDurationMs(db, potion.save, recipe, potion.effect),
     ),
     finishedQueue: false,
     xpGained: xpGained,

@@ -88,6 +88,8 @@ PlayerSave createNewSave(GameDatabase db, num nowMs) {
       showActivityRewards: true,
       hudShowTotalXp: false,
       showEatButton: true,
+      eatHealthThresholdPercent: 100,
+      eatHealthThresholdAsPercent: false,
     ),
     currentLocationId: startingLocationId,
     currentActivityId: null,

@@ -82,7 +82,12 @@ ActionRewards resolveActionRewards(
     final dropChance = applyFlatDropChanceBonus(
       applyRelativeDropChance(
         chanceValue is num ? chanceValue : 0,
-        totalRelativeDropChanceBonusPercent(db, save),
+        totalRelativeDropChanceBonusPercent(db, save) +
+            equippedSkillRelativeDropChanceBonusPercent(
+              db,
+              save,
+              jsString(action.raw['Relevant Skill ID']),
+            ),
       ),
       skillDropBonus,
     );
