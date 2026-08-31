@@ -87,7 +87,7 @@ void main() {
     expect(summary.activeBonuses.map((bonus) => bonus.name), contains('Woodcutting'));
     expect(
       summary.activeBonuses.firstWhere((bonus) => bonus.name == 'Woodcutting').effect,
-      contains('5%'),
+      contains('3%'),
     );
     expect(
       summary.activeBonuses.map((bonus) => bonus.name),
@@ -102,7 +102,7 @@ void main() {
     final summary = playerCombatStatSummary(db, save);
     final woodcutting = summary.activeBonuses.where((bonus) => bonus.name == 'Woodcutting');
     expect(woodcutting, hasLength(1));
-    expect(woodcutting.first.effect, contains('10%'));
+    expect(woodcutting.first.effect, contains('6%'));
   });
 
   test('an unarmed save still lists Unarmed as a main-hand source', () {
