@@ -16,6 +16,7 @@ import {
   deathPauseRemainingMs,
   getEnemy,
   resolveCombatRound,
+  shouldSkipVictoryHealingFood,
 } from '../combat/engine'
 import type { GameDatabase } from '../data/types'
 import { applyActivityTimeTowardCritters } from '../critters/critters'
@@ -196,6 +197,15 @@ export function resolveUnattendedProgress(
           // Credit the kill to the hour it happened in, not to the hour the
           // player happens to come back in.
           roundEnd,
+          {
+            skipVictoryFood: shouldSkipVictoryHealingFood(
+              enemy,
+              current.combatEnemyHp,
+              round.enemyHit,
+              round.playerHp,
+              current.currentHp,
+            ),
+          },
         )
         combatVictories += 1
         let next = victory.save

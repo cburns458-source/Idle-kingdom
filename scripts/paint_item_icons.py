@@ -1119,6 +1119,50 @@ def paint_unique(c: Canvas, name: str) -> bool:
     if 'old boots' in n:
         c.stamp_centered(BOOTS, mp(LEATHER))
         return True
+    if n == 'oven mitts' or 'oven mitt' in n:
+        cloth = ((236, 196, 140), (196, 132, 72), (132, 80, 40))
+        stitch = (255, 232, 186)
+        c.stamp_centered(
+            [
+                '....mm....mm....',
+                '...mMMm..mMMm...',
+                '..mMMMMmmMMMMm..',
+                '..mMMMMMMMMMMm..',
+                '...mMMMMMMMMm...',
+                '....mMMMMMMm....',
+                '.....DDDDDD.....',
+            ],
+            {'m': cloth[0], 'M': cloth[1], 'D': cloth[2]},
+        )
+        c.put(12, 14, stitch)
+        c.put(19, 14, stitch)
+        return True
+    if n == 'scythe':
+        blade = ((220, 228, 236), (156, 168, 184), (88, 98, 114))
+        wood = WOOD['oak']
+        c.stamp_centered(
+            [
+                '........mmmmmM..',
+                '.......mMMMMMMD.',
+                '......mMMMMMD...',
+                '.....mMMMD......',
+                '....HH..........',
+                '...hHH..........',
+                '..hHHd..........',
+                '.hHHd...........',
+                'hHHd............',
+                'HHd.............',
+            ],
+            {
+                'm': blade[0],
+                'M': blade[1],
+                'D': blade[2],
+                'H': wood[1],
+                'h': wood[0],
+                'd': wood[2],
+            },
+        )
+        return True
     if 'falconer' in n:
         c.stamp_centered(GLOVES, mp(LEATHER))
         c.put(22, 10, (196, 148, 72))

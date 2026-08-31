@@ -7,7 +7,7 @@
 
 import '../../json_support.dart';
 
-const int saveVersion = 35;
+const int saveVersion = 36;
 
 const String saveStorageKey = 'idle-kingdoms.demo.save';
 
@@ -1067,6 +1067,8 @@ class PlayerSettings {
     required this.showActivityRewards,
     required this.hudShowTotalXp,
     required this.showEatButton,
+    required this.eatHealthThresholdPercent,
+    required this.eatHealthThresholdAsPercent,
   });
 
   factory PlayerSettings.fromJson(Map<String, Object?> json) {
@@ -1075,6 +1077,8 @@ class PlayerSettings {
       showActivityRewards: json['showActivityRewards'] as bool,
       hudShowTotalXp: json['hudShowTotalXp'] as bool,
       showEatButton: json['showEatButton'] as bool,
+      eatHealthThresholdPercent: json['eatHealthThresholdPercent'] as num,
+      eatHealthThresholdAsPercent: json['eatHealthThresholdAsPercent'] as bool,
     );
   }
 
@@ -1090,12 +1094,21 @@ class PlayerSettings {
   /// When false, the Eat button is hidden on the food item detail sheet.
   final bool showEatButton;
 
+  /// Auto-eat when current HP is at or below this percent of max HP (1–100).
+  /// 100 keeps the old rule: eat whenever current HP is below maximum.
+  final num eatHealthThresholdPercent;
+
+  /// When true, the Equipment eat-at slider is shown as a percent.
+  final bool eatHealthThresholdAsPercent;
+
   Map<String, Object?> toJson() {
     return <String, Object?>{
       'soundEnabled': soundEnabled,
       'showActivityRewards': showActivityRewards,
       'hudShowTotalXp': hudShowTotalXp,
       'showEatButton': showEatButton,
+      'eatHealthThresholdPercent': eatHealthThresholdPercent,
+      'eatHealthThresholdAsPercent': eatHealthThresholdAsPercent,
     };
   }
 
@@ -1104,12 +1117,16 @@ class PlayerSettings {
     bool? showActivityRewards,
     bool? hudShowTotalXp,
     bool? showEatButton,
+    num? eatHealthThresholdPercent,
+    bool? eatHealthThresholdAsPercent,
   }) {
     return PlayerSettings(
       soundEnabled: soundEnabled ?? this.soundEnabled,
       showActivityRewards: showActivityRewards ?? this.showActivityRewards,
       hudShowTotalXp: hudShowTotalXp ?? this.hudShowTotalXp,
       showEatButton: showEatButton ?? this.showEatButton,
+      eatHealthThresholdPercent: eatHealthThresholdPercent ?? this.eatHealthThresholdPercent,
+      eatHealthThresholdAsPercent: eatHealthThresholdAsPercent ?? this.eatHealthThresholdAsPercent,
     );
   }
 }

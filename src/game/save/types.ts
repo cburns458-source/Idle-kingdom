@@ -1,4 +1,4 @@
-export const SAVE_VERSION = 35
+export const SAVE_VERSION = 36
 export const SAVE_STORAGE_KEY = 'idle-kingdoms.demo.save'
 export const STARTING_LOCATION_ID = 'LOC-0001'
 /** Base gold before race kit; race starters grant the real starting gold. */
@@ -102,6 +102,13 @@ export interface PlayerSettings {
   hudShowTotalXp: boolean
   /** When false, the Eat button is hidden on the food item detail sheet. */
   showEatButton: boolean
+  /**
+   * Auto-eat when current HP is at or below this percent of max HP (1–100).
+   * 100 keeps the old rule: eat whenever current HP is below maximum.
+   */
+  eatHealthThresholdPercent: number
+  /** When true, the Equipment eat-at slider is shown as a percent. */
+  eatHealthThresholdAsPercent: boolean
 }
 
 export const APPEARANCE_CATEGORIES = [

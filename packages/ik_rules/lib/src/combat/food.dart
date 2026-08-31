@@ -28,8 +28,28 @@ class FoodConsumption {
   final String? foodName;
 }
 
-/// Eats one equipped food after a win. Healing food only when below max HP;
-/// damaging food always, and never drops the player below 1 HP.
+num clampEatHealthThresholdPercent(Object? value) {
+  final n = jsNumber(value).round();
+  if (n.isNaN) return 100;
+  return n.clamp(1, 100);
+}
+
+/// HP at or below which healing food auto-eats. Always in 1…maxHp.
+num eatHealthThresholdHp(num maxHp, Object? percent) {
+  final cap = math.max(1, maxHp);
+  final hp = ((clampEatHealthThresholdPercent(percent) / 100) * cap).round();
+  return math.min(cap, math.max(1, hp));
+}
+
+bool _shouldAutoEatHealingFood(PlayerSave save, num maxHp) {
+  if (save.currentHp >= maxHp) return false;
+  final threshold = eatHealthThresholdHp(maxHp, save.settings.eatHealthThresholdPercent);
+  return save.currentHp <= threshold;
+}
+
+/// Eats one equipped food after a win. Healing food only when current HP is at
+/// or below the eat-at threshold; damaging food always, and never drops the
+/// player below 1 HP.
 FoodConsumption tryConsumeFoodAfterVictory(GameDatabase db, PlayerSave save) {
   final maxHp = playerMaxHp(db, save);
   FoodConsumption unchanged(PlayerSave next) =>
@@ -51,7 +71,9 @@ FoodConsumption tryConsumeFoodAfterVictory(GameDatabase db, PlayerSave save) {
   final healAmount = jsNumber(equipment?.raw['Healing Amount'] ?? 0);
   if (healAmount == 0) return unchanged(save.copyWith(maxHp: maxHp));
   final damaging = healAmount < 0;
-  if (!damaging && save.currentHp >= maxHp) return unchanged(save.copyWith(maxHp: maxHp));
+  if (!damaging && !_shouldAutoEatHealingFood(save, maxHp)) {
+    return unchanged(save.copyWith(maxHp: maxHp));
+  }
 
   final nextQuantity = food.quantity - 1;
   final nextHp = damaging
@@ -103,8 +125,19 @@ num extraFoodPerRound(GameDatabase db, PlayerSave save) {
 }
 
 /// Victory already eats one food. Each Gluttony stack adds another eat on top.
-/// Combat rounds do not eat.
-FoodConsumption consumeFoodAfterVictory(GameDatabase db, PlayerSave save) {
+/// Combat rounds do not eat. [skipHealing] skips healing food (and extras) but
+/// still eats damaging food.
+FoodConsumption consumeFoodAfterVictory(
+  GameDatabase db,
+  PlayerSave save, {
+  bool skipHealing = false,
+}) {
+  if (skipHealing) {
+    final food = slotStack(save, foodSlotId);
+    if (food == null || foodHealAmount(db, food.itemId) >= 0) {
+      return FoodConsumption(save: save, consumed: false, healed: 0, foodName: null);
+    }
+  }
   final times = 1 + extraFoodPerRound(db, save);
   var current = save;
   var consumed = false;

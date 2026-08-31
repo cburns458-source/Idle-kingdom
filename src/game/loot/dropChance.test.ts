@@ -7,6 +7,7 @@ import type { ActivePotionEffect } from '../save/types'
 import {
   applyRelativeDropChance,
   equippedRelativeDropChanceBonusPercent,
+  equippedSkillRelativeDropChanceBonusPercent,
   totalRelativeDropChanceBonusPercent,
 } from './dropChance'
 
@@ -60,5 +61,23 @@ describe('relative drop chance stacking', () => {
     }
     expect(totalRelativeDropChanceBonusPercent(launch, save)).toBe(40)
     expect(applyRelativeDropChance(50, 40)).toBe(70)
+  })
+
+  it('applies Scythe harvesting drop chance only to harvesting actions', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const base = createNewSave(launch)
+    const save = {
+      ...base,
+      equipment: {
+        ...base.equipment,
+        slots: {
+          ...base.equipment.slots,
+          'SLOT-0001': { itemId: 'ITEM-0317', quantity: 1 },
+        },
+      },
+    }
+    expect(equippedRelativeDropChanceBonusPercent(launch, save)).toBe(0)
+    expect(equippedSkillRelativeDropChanceBonusPercent(launch, save, 'SKL-0004')).toBe(10)
+    expect(equippedSkillRelativeDropChanceBonusPercent(launch, save, 'SKL-0002')).toBe(0)
   })
 })

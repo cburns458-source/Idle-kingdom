@@ -304,14 +304,28 @@ CombatRoundResult resolveCombatRound(
   );
 }
 
+/// One-hit kill from full enemy HP with no player damage: skip healing food.
+bool shouldSkipVictoryHealingFood(
+  EnemyRow enemy,
+  num? incomingEnemyHp,
+  num? enemyHit,
+  num playerHpAfter,
+  num playerHpBefore,
+) {
+  final maxHp = jsNumber(enemy.raw['Maximum HP'] ?? 0);
+  final startedAtFull = incomingEnemyHp == null || incomingEnemyHp == maxHp;
+  return startedAtFull && enemyHit == null && playerHpAfter == playerHpBefore;
+}
+
 CombatVictoryResult applyCombatVictory(
   GameDatabase db,
   PlayerSave save,
   ActionRow action,
   EnemyRow enemy,
   RandomFn random,
-  num nowMs,
-) {
+  num nowMs, {
+  bool skipVictoryFood = false,
+}) {
   final maxHp = playerMaxHp(db, save);
   var next = save.copyWith(
     maxHp: maxHp,
@@ -348,7 +362,7 @@ CombatVictoryResult applyCombatVictory(
   );
   next = recordEnemyKill(db, next, jsString(enemy.raw['Enemy ID']));
 
-  final food = consumeFoodAfterVictory(db, next);
+  final food = consumeFoodAfterVictory(db, next, skipHealing: skipVictoryFood);
   next = withBossRespawn(clearCombatSave(food.save), enemy, nowMs);
   next = applyQuestDefeatProgress(db, next, jsString(enemy.raw['Enemy ID']), 1);
   next = applyBountyDefeatProgress(next, jsString(enemy.raw['Enemy ID']), 1, nowMs);

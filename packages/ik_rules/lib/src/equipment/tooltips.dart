@@ -54,11 +54,18 @@ List<String> equipmentTooltipStatLines(EquipmentRow? equipment, [GameDatabase? d
 
   final atr = equipment.raw['Action Time Reduction %'];
   if (atr is num && atr > 0) {
-    final skill = _skillDisplayName(db, equipment.raw['Required Skill ID'] as String?);
+    final skills = <String>[];
+    for (final id in <Object?>[
+      equipment.raw['Required Skill ID'],
+      equipment.raw['Secondary Required Skill ID'],
+    ]) {
+      final name = _skillDisplayName(db, id is String ? id : null);
+      if (name != null) skills.add(name);
+    }
     lines.add(
-      skill == null
+      skills.isEmpty
           ? '-${jsNumberToString(atr)}% action time'
-          : '$skill: -${jsNumberToString(atr)}% action time',
+          : '${skills.join(', ')}: -${jsNumberToString(atr)}% action time',
     );
   }
 
@@ -66,6 +73,7 @@ List<String> equipmentTooltipStatLines(EquipmentRow? equipment, [GameDatabase? d
   if (dropBonus > 0) {
     lines.add('+${jsNumberToString(dropBonus)}% relative Drop Chance');
   }
+  lines.addAll(skillRelativeDropChanceTooltipLines(equipment.raw['Capabilities / Effects']));
 
   return lines;
 }

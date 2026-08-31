@@ -195,6 +195,13 @@ void _resolveDueCombatRound(
       enemy,
       random,
       roundEnd,
+      skipVictoryFood: shouldSkipVictoryHealingFood(
+        enemy,
+        before.combatEnemyHp,
+        round.enemyHit,
+        round.playerHp,
+        before.currentHp,
+      ),
     );
     out.set(victory.save);
     out.creditCritterTime(roundMs, roundEnd, random);

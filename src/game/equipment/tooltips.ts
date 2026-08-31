@@ -1,4 +1,7 @@
-import { parseRelativeDropChanceBonusPercent } from '../loot/dropChance'
+import {
+  parseRelativeDropChanceBonusPercent,
+  skillRelativeDropChanceTooltipLines,
+} from '../loot/dropChance'
 import type { EquipmentRow, GameDatabase } from '../data/types'
 
 function skillDisplayName(
@@ -44,14 +47,17 @@ export function equipmentTooltipStatLines(
 
   const atr = equipment['Action Time Reduction %']
   if (typeof atr === 'number' && atr > 0) {
-    const skill = skillDisplayName(db, equipment['Required Skill ID'])
-    lines.push(skill ? `${skill}: -${atr}% action time` : `-${atr}% action time`)
+    const skills = [equipment['Required Skill ID'], equipment['Secondary Required Skill ID']]
+      .map((id) => skillDisplayName(db, id))
+      .filter((name): name is string => Boolean(name))
+    lines.push(skills.length > 0 ? `${skills.join(', ')}: -${atr}% action time` : `-${atr}% action time`)
   }
 
   const dropBonus = parseRelativeDropChanceBonusPercent(equipment['Capabilities / Effects'])
   if (dropBonus > 0) {
     lines.push(`+${dropBonus}% relative Drop Chance`)
   }
+  lines.push(...skillRelativeDropChanceTooltipLines(equipment['Capabilities / Effects']))
 
   return lines
 }

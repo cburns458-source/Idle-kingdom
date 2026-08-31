@@ -32,6 +32,32 @@ function withFoodAndSpells(
   return { ...base, currentHp: 900, equipment: { ...base.equipment, slots } }
 }
 
+describe('cooked beef and tablet recipes', () => {
+  it('cooks beef at level 1 for 10s / 200 XP and heals 40', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const recipe = launch.Recipes.find((row) => row['Recipe ID'] === 'RCP-0009')!
+    const action = launch.Actions.find((row) => row['Action ID'] === 'ACN-0120')!
+    const equipment = launch.Equipment.find((row) => row['Equipment ID'] === 'EQP-0010')!
+    expect(recipe['Proficiency Level']).toBe(1)
+    expect(recipe['Base Duration Seconds']).toBe(10)
+    expect(recipe['XP Reward']).toBe(200)
+    expect(action['Proficiency Level']).toBe(1)
+    expect(action['Base Duration Seconds']).toBe(10)
+    expect(action['XP Reward']).toBe(200)
+    expect(equipment['Healing Amount']).toBe(40)
+  })
+
+  it('swaps tablet herbs onto the cheaper lines', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const enchanting = launch.Recipes.find((row) => row['Recipe ID'] === 'RCP-0036')!
+    const spell = launch.Recipes.find((row) => row['Recipe ID'] === 'RCP-0037')!
+    expect(enchanting['Ingredient 2 Item ID']).toBe('ITEM-0031')
+    expect(enchanting['Ingredient 2 Quantity']).toBe(3)
+    expect(spell['Ingredient 2 Item ID']).toBe('ITEM-0033')
+    expect(spell['Ingredient 2 Quantity']).toBe(2)
+  })
+})
+
 describe('gluttony food on victory', () => {
   it('counts one extra eat per equipped Gluttony and does not eat between rounds', () => {
     const { launch } = prepareDatabase(rawDatabase)
@@ -52,6 +78,33 @@ describe('gluttony food on victory', () => {
     const empty = consumeFoodAfterVictory(launch, withFoodAndSpells(launch, 2, 4))
     expect(empty.consumed).toBe(true)
     expect(empty.save.equipment.slots['SLOT-0011']).toBeNull()
+  })
+
+  it('does not eat healing food above the eat-at threshold', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const save = {
+      ...withFoodAndSpells(launch, 4, 0),
+      currentHp: 800,
+      settings: {
+        ...withFoodAndSpells(launch, 4, 0).settings,
+        eatHealthThresholdPercent: 50,
+      },
+    }
+    const skipped = consumeFoodAfterVictory(launch, save)
+    expect(skipped.consumed).toBe(false)
+    expect(skipped.save.equipment.slots['SLOT-0011']?.quantity).toBe(4)
+
+    const eaten = consumeFoodAfterVictory(launch, { ...save, currentHp: 500 })
+    expect(eaten.consumed).toBe(true)
+    expect(eaten.save.equipment.slots['SLOT-0011']?.quantity).toBe(3)
+  })
+
+  it('skips healing food and Gluttony extras on a one-hit clean kill', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const save = withFoodAndSpells(launch, 4, 2)
+    const skipped = consumeFoodAfterVictory(launch, save, { skipHealing: true })
+    expect(skipped.consumed).toBe(false)
+    expect(skipped.save.equipment.slots['SLOT-0011']?.quantity).toBe(4)
   })
 
   it('does not eat healing food at full HP even with Gluttony', () => {

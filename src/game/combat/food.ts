@@ -12,6 +12,25 @@ export type FoodConsumption = {
   foodName: string | null
 }
 
+export function clampEatHealthThresholdPercent(value: unknown): number {
+  const n = Math.round(Number(value))
+  if (!Number.isFinite(n)) return 100
+  return Math.min(100, Math.max(1, n))
+}
+
+/** HP at or below which healing food auto-eats. Always in 1…maxHp. */
+export function eatHealthThresholdHp(maxHp: number, percent: unknown): number {
+  const cap = Math.max(1, maxHp)
+  const hp = Math.round((clampEatHealthThresholdPercent(percent) / 100) * cap)
+  return Math.min(cap, Math.max(1, hp))
+}
+
+function shouldAutoEatHealingFood(save: PlayerSave, maxHp: number): boolean {
+  if (save.currentHp >= maxHp) return false
+  const threshold = eatHealthThresholdHp(maxHp, save.settings.eatHealthThresholdPercent)
+  return save.currentHp <= threshold
+}
+
 export function tryConsumeFoodAfterVictory(db: GameDatabase, save: PlayerSave): FoodConsumption {
   const maxHp = playerMaxHp(db, save)
   const food = slotStack(save, FOOD_SLOT_ID)
@@ -36,7 +55,7 @@ export function tryConsumeFoodAfterVictory(db: GameDatabase, save: PlayerSave): 
     return { save: { ...save, maxHp }, consumed: false, healed: 0, foodName: null }
   }
   const damaging = healAmount < 0
-  if (!damaging && save.currentHp >= maxHp) {
+  if (!damaging && !shouldAutoEatHealingFood(save, maxHp)) {
     return { save: { ...save, maxHp }, consumed: false, healed: 0, foodName: null }
   }
 
@@ -200,7 +219,17 @@ export function eatEquippedFood(db: GameDatabase, save: PlayerSave): EatFoodResu
  * Victory already eats one food. Each Gluttony stack adds another eat on top.
  * Combat rounds do not eat.
  */
-export function consumeFoodAfterVictory(db: GameDatabase, save: PlayerSave): FoodConsumption {
+export function consumeFoodAfterVictory(
+  db: GameDatabase,
+  save: PlayerSave,
+  options?: { skipHealing?: boolean },
+): FoodConsumption {
+  if (options?.skipHealing) {
+    const food = slotStack(save, FOOD_SLOT_ID)
+    if (!food || foodHealAmount(db, food.itemId) >= 0) {
+      return { save, consumed: false, healed: 0, foodName: null }
+    }
+  }
   const times = 1 + extraFoodPerRound(db, save)
   let current = save
   let consumed = false

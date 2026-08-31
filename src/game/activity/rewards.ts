@@ -10,6 +10,7 @@ import { isGoldCurrencyItem } from '../inventory/gold'
 import {
   applyFlatDropChanceBonus,
   applyRelativeDropChance,
+  equippedSkillRelativeDropChanceBonusPercent,
   totalRelativeDropChanceBonusPercent,
 } from '../loot/dropChance'
 import type { ActionRow, GameDatabase, RewardEntryRow } from '../data/types'
@@ -158,7 +159,8 @@ export function resolveActionRewards(
     const dropChance = applyFlatDropChanceBonus(
       applyRelativeDropChance(
         typeof chance === 'number' ? chance : 0,
-        totalRelativeDropChanceBonusPercent(db, save),
+        totalRelativeDropChanceBonusPercent(db, save) +
+          equippedSkillRelativeDropChanceBonusPercent(db, save, action['Relevant Skill ID']),
       ),
       skillDropBonus,
     )

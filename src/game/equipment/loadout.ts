@@ -365,7 +365,11 @@ export function equipStackToSlot(
   return setSlot(next, slotId, { itemId, quantity })
 }
 
-/** Action-time reduction totals keyed by the tool's required skill. */
+function isEquipmentSkillId(value: unknown): value is string {
+  return typeof value === 'string' && value.length > 0 && value !== 'None'
+}
+
+/** Action-time reduction totals keyed by required and secondary skills. */
 export function equippedActionTimeReductionBySkill(
   db: GameDatabase,
   save: PlayerSave,
@@ -374,10 +378,12 @@ export function equippedActionTimeReductionBySkill(
   for (const stack of Object.values(save.equipment.slots)) {
     if (!stack?.itemId) continue
     const row = db.Equipment.find((entry) => entry['Item ID'] === stack.itemId)
-    const skillId = row?.['Required Skill ID']
     const amount = Number(row?.['Action Time Reduction %'] ?? 0)
-    if (!skillId || amount <= 0) continue
-    totals[skillId] = (totals[skillId] ?? 0) + amount
+    if (amount <= 0) continue
+    for (const skillId of [row?.['Required Skill ID'], row?.['Secondary Required Skill ID']]) {
+      if (!isEquipmentSkillId(skillId)) continue
+      totals[skillId] = (totals[skillId] ?? 0) + amount
+    }
   }
   return totals
 }

@@ -70,4 +70,25 @@ describe('equipment tooltips', () => {
       ),
     ).toEqual(['Mining: -5% action time'])
   })
+
+  it('lists secondary skill action time and skill-gated drop chance', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    expect(
+      equipmentTooltipStatLines(
+        equipment({
+          'Required Skill ID': 'SKL-0007',
+          'Secondary Required Skill ID': 'SKL-0008',
+          'Action Time Reduction %': 5,
+        }),
+        launch,
+      ),
+    ).toEqual(['Cooking, Metallurgy: -5% action time'])
+    expect(
+      equipmentTooltipStatLines(
+        equipment({
+          'Capabilities / Effects': 'harvesting_tool; +10% relative harvesting drop chance',
+        }),
+      ),
+    ).toEqual(['+10% relative Harvesting Drop Chance'])
+  })
 })

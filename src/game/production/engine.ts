@@ -4,14 +4,28 @@ import type { ActionRewardBundle } from '../activity/types'
 import { applyXp } from '../activity/xp'
 import type { RandomFn } from '../activity/pools'
 import { chefHatOutputQuantity } from '../equipment/specialist'
+import { equippedActionTimeReductionPercent } from '../equipment/loadout'
 import { canFitItemQuantity } from '../inventory/capacity'
 import type { GameDatabase } from '../data/types'
+import type { RecipeRow } from '../data/recipeTypes'
 import {
   applyPotionDurationMs,
   clearActivePotionEffect,
   tryConsumePotionForScope,
 } from '../potions/effects'
-import type { PlayerSave } from '../save/types'
+import type { ActivePotionEffect, PlayerSave } from '../save/types'
+
+export function productionCraftDurationMs(
+  db: GameDatabase,
+  save: PlayerSave,
+  recipe: RecipeRow,
+  potionEffect: ActivePotionEffect | null | undefined,
+): number {
+  const baseDurationMs = recipe['Base Duration Seconds'] * 1000
+  const atr = equippedActionTimeReductionPercent(db, save, recipe['Skill ID'])
+  const reduced = baseDurationMs * Math.max(0.01, 1 - atr / 100)
+  return applyPotionDurationMs(reduced, potionEffect)
+}
 import { removeIngredients } from './inventory'
 import {
   canKnowRecipe,
@@ -104,9 +118,8 @@ export function beginProductionQueue(
   }
 
   const startedAt = new Date(nowMs).toISOString()
-  const baseDurationMs = recipe['Base Duration Seconds'] * 1000
   const potion = tryConsumePotionForScope(db, withMaterials, 'one_standard_production_action')
-  const durationMs = applyPotionDurationMs(baseDurationMs, potion.effect)
+  const durationMs = productionCraftDurationMs(db, potion.save, recipe, potion.effect)
   return {
     ok: true,
     save: {
@@ -202,8 +215,7 @@ export function completeProductionCraft(
     productionQuantityRemaining: remaining,
   })
   const potion = tryConsumePotionForScope(db, cleared, 'one_standard_production_action')
-  const baseDurationMs = recipe['Base Duration Seconds'] * 1000
-  const durationMs = applyPotionDurationMs(baseDurationMs, potion.effect)
+  const durationMs = productionCraftDurationMs(db, potion.save, recipe, potion.effect)
   return {
     save: {
       ...potion.save,

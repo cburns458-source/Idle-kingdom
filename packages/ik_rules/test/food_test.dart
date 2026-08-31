@@ -78,6 +78,33 @@ void main() {
     expect(equipped.save!.equipment.slots[foodSlotId]?.quantity, 1);
   });
 
+  test('does not eat healing food above the eat-at threshold', () {
+    final base = _withFoodAndSpells(db, foodQty: 4, gluttonyCount: 0);
+    final skipped = consumeFoodAfterVictory(
+      db,
+      base.copyWith(
+        currentHp: 800,
+        settings: base.settings.copyWith(eatHealthThresholdPercent: 50),
+      ),
+    );
+    expect(skipped.consumed, isFalse);
+    expect(skipped.save.equipment.slots[foodSlotId]?.quantity, 4);
+
+    final eaten = consumeFoodAfterVictory(db, skipped.save.copyWith(currentHp: 500));
+    expect(eaten.consumed, isTrue);
+    expect(eaten.save.equipment.slots[foodSlotId]?.quantity, 3);
+  });
+
+  test('skips healing food and Gluttony extras on a one-hit clean kill', () {
+    final skipped = consumeFoodAfterVictory(
+      db,
+      _withFoodAndSpells(db, foodQty: 4, gluttonyCount: 2),
+      skipHealing: true,
+    );
+    expect(skipped.consumed, isFalse);
+    expect(skipped.save.equipment.slots[foodSlotId]?.quantity, 4);
+  });
+
   test('manual eat is refused during combat', () {
     final save = createNewSave(db, 0).copyWith(
       combatEnemyId: 'ENM-0001',

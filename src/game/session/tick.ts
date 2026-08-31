@@ -18,6 +18,7 @@ import {
   deathPauseRemainingMs,
   getEnemy,
   resolveCombatRound,
+  shouldSkipVictoryHealingFood,
 } from '../combat/engine'
 import { applyActivityTimeTowardCritters } from '../critters/critters'
 import type { ActionRow, EnemyRow, GameDatabase } from '../data/types'
@@ -205,6 +206,15 @@ function resolveDueCombatRound(
       enemy,
       random,
       roundEnd,
+      {
+        skipVictoryFood: shouldSkipVictoryHealingFood(
+          enemy,
+          before.combatEnemyHp,
+          round.enemyHit,
+          round.playerHp,
+          before.currentHp,
+        ),
+      },
     )
     out.set(victory.save)
     out.creditCritterTime(roundMs, roundEnd, random)

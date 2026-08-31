@@ -23,12 +23,22 @@ import {
 
 const FOOD_SLOT_ID = 'SLOT-0011'
 
+function clampEatHealthThresholdPercent(value: unknown): number {
+  const n = Math.round(Number(value))
+  if (!Number.isFinite(n)) return 100
+  return Math.min(100, Math.max(1, n))
+}
+
 function normalizeSettings(settings?: Partial<PlayerSettings> | null): PlayerSettings {
   return {
     soundEnabled: settings?.soundEnabled ?? true,
     showActivityRewards: settings?.showActivityRewards ?? true,
     hudShowTotalXp: settings?.hudShowTotalXp ?? false,
     showEatButton: settings?.showEatButton ?? true,
+    eatHealthThresholdPercent: clampEatHealthThresholdPercent(
+      settings?.eatHealthThresholdPercent ?? 100,
+    ),
+    eatHealthThresholdAsPercent: settings?.eatHealthThresholdAsPercent ?? false,
   }
 }
 
@@ -523,6 +533,15 @@ export const SAVE_MIGRATIONS: SaveMigration[] = [
         (row) => row.achievementId === 'ACH-0015' || row.achievementId === 'ACH-0017',
       ),
       saveVersion: 35,
+    }),
+  },
+  {
+    fromVersion: 35,
+    toVersion: 36,
+    migrate: (save) => ({
+      ...save,
+      settings: normalizeSettings(save.settings),
+      saveVersion: 36,
     }),
   },
 ]
