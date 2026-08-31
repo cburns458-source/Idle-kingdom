@@ -113,7 +113,12 @@ ProductionQueueResult beginProductionQueue(
     return const ProductionQueueResult.failed('Missing required materials.');
   }
 
-  final outputTotal = jsNumber(recipe.raw['Output Quantity']) * crafts;
+  final outputTotal =
+      productionOutputReservePerCraft(
+        jsString(recipe.raw['Skill ID']),
+        jsNumber(recipe.raw['Output Quantity']),
+      ) *
+      crafts;
   if (!canFitItemQuantity(withMaterials, jsString(recipe.raw['Output Item ID']), outputTotal)) {
     return const ProductionQueueResult.failed(
       'Not enough inventory space for that queue (180 slots, stacks to max).',
@@ -167,17 +172,24 @@ ProductionCraftResult? completeProductionCraft(
   final recipe = getRecipe(db, recipeId!);
   if (recipe == null) return null;
 
+  final skillId = jsString(recipe.raw['Skill ID']);
   final baseQty = jsNumber(recipe.raw['Output Quantity']);
-  var outputQty = chefHatOutputQuantity(baseQty, save, jsString(recipe.raw['Skill ID']), random);
+  var outputQty = skillId == alchemySkillId
+      ? alchemyPotionOutputQuantity(baseQty, save, skillId, random)
+      : chefHatOutputQuantity(baseQty, save, skillId, random);
   final outputItemId = jsString(recipe.raw['Output Item ID']);
   if (outputQty > baseQty && !canFitItemQuantity(save, outputItemId, outputQty)) {
-    outputQty = baseQty;
+    if (skillId == alchemySkillId) {
+      outputQty = math.min(outputQty, maxAddableQuantity(save, outputItemId));
+      if (outputQty <= 0) return null;
+    } else {
+      outputQty = baseQty;
+    }
   }
   final granted = addItemToInventoryExact(save, outputItemId, outputQty);
   if (!granted.ok) return null;
   var next = granted.save!;
 
-  final skillId = jsString(recipe.raw['Skill ID']);
   final xpGained = jsNumber(recipe.raw['XP Reward']);
   final xpApplied = applyXp(next, db, skillId, xpGained);
   next = xpApplied.save;

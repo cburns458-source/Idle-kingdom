@@ -9,9 +9,11 @@ import { completeSpecialProject } from '../projects/engine'
 import { encodeEnchantTarget } from '../projects/enchantments'
 import { createNewSave } from '../save/saveStore'
 import {
+  ALCHEMIST_GOGGLES_ITEM_ID,
   CHEF_HAT_ITEM_ID,
   QUIVER_ITEM_ID,
   WIZARD_HAT_ITEM_ID,
+  productionOutputReservePerCraft,
   wizardEssenceCost,
 } from './specialist'
 
@@ -97,5 +99,67 @@ describe('specialist hats and quiver', () => {
     const bare = gatheringXpReward(launch, createNewSave(launch), action)
     const worn = gatheringXpReward(launch, save, action)
     expect(worn).toBe(Math.floor(bare * 1.05))
+  })
+
+  it('rolls alchemy potion output 1–3 and 2–3 with goggles without extra XP', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    let save = createNewSave(launch)
+    save = {
+      ...save,
+      skills: save.skills.map((skill) =>
+        skill.skillId === 'SKL-0010' ? { ...skill, level: 10, xp: 5_000 } : skill,
+      ),
+    }
+    const recipe = launch.Recipes.find((row) => row['Recipe ID'] === 'RCP-0053')!
+    for (const slot of [1, 2, 3, 4] as const) {
+      const itemId = recipe[`Ingredient ${slot} Item ID`]
+      const qty = recipe[`Ingredient ${slot} Quantity`]
+      if (typeof itemId === 'string' && typeof qty === 'number') {
+        save = addItemToInventory(save, itemId, qty * 3)
+      }
+    }
+    const queued = beginProductionQueue(launch, save, 'ACT-0020', 'RCP-0053', 1)
+    expect(queued.ok).toBe(true)
+    if (!queued.ok) return
+
+    const low = completeProductionCraft(launch, queued.save, Date.now(), () => 0)
+    const mid = completeProductionCraft(launch, queued.save, Date.now(), () => 0.4)
+    const high = completeProductionCraft(launch, queued.save, Date.now(), () => 0.9)
+    expect(low?.outputQty).toBe(1)
+    expect(mid?.outputQty).toBe(2)
+    expect(high?.outputQty).toBe(3)
+    expect(low?.xpGained).toBe(high?.xpGained)
+
+    const withGoggles = withHelmet(queued.save, ALCHEMIST_GOGGLES_ITEM_ID)
+    const gLow = completeProductionCraft(launch, withGoggles, Date.now(), () => 0)
+    const gHigh = completeProductionCraft(launch, withGoggles, Date.now(), () => 0.9)
+    expect(gLow?.outputQty).toBe(2)
+    expect(gHigh?.outputQty).toBe(3)
+    expect(gLow?.xpGained).toBe(gHigh?.xpGained)
+    expect(gLow?.xpGained).toBe(low?.xpGained)
+  })
+
+  it('reserves max potion output when queueing alchemy crafts', () => {
+    expect(productionOutputReservePerCraft('SKL-0010', 1)).toBe(3)
+    expect(productionOutputReservePerCraft('SKL-0007', 1)).toBe(1)
+
+    const { launch } = prepareDatabase(rawDatabase)
+    let save = createNewSave(launch)
+    save = {
+      ...save,
+      skills: save.skills.map((skill) =>
+        skill.skillId === 'SKL-0010' ? { ...skill, level: 10, xp: 5_000 } : skill,
+      ),
+    }
+    const recipe = launch.Recipes.find((row) => row['Recipe ID'] === 'RCP-0053')!
+    for (const slot of [1, 2, 3, 4] as const) {
+      const itemId = recipe[`Ingredient ${slot} Item ID`]
+      const qty = recipe[`Ingredient ${slot} Quantity`]
+      if (typeof itemId === 'string' && typeof qty === 'number') {
+        save = addItemToInventory(save, itemId, qty * 2)
+      }
+    }
+    const queued = beginProductionQueue(launch, save, 'ACT-0020', 'RCP-0053', 2)
+    expect(queued.ok).toBe(true)
   })
 })
