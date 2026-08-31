@@ -19,7 +19,7 @@ const HELMET_SLOT_ID = 'SLOT-0003'
 const GLOVES_SLOT_ID = 'SLOT-0007'
 
 describe('clothes', () => {
-  it('sells the tunic, specialist hats, and leather armor at the Citadel clothier', () => {
+  it('sells the tunic, specialist hats, leather armor, mitts, and scythe at the Citadel clothier', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const shop = launch.Shops.find((row) => row['Shop ID'] === 'SHP-0006')
     expect(shop?.['Location ID']).toBe('LOC-0029')
@@ -32,6 +32,8 @@ describe('clothes', () => {
       'ITEM-0310',
       'ITEM-0311',
       LEATHER_GLOVES_ID,
+      'ITEM-0316',
+      'ITEM-0317',
     ])
   })
 
