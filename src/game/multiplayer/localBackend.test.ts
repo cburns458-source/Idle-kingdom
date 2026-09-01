@@ -29,6 +29,7 @@ describe('local multiplayer backend', () => {
     let save = {
       ...createNewSave(launch),
       characterName: 'Hero',
+    motto: null,
       statistics: { values: { monsters_killed: 5, gold_earned: 100 } },
     }
     const pushed = backend.writeCloudSave(signed.session.userId, save)
@@ -295,6 +296,7 @@ describe('local multiplayer backend', () => {
     if (!signed.ok) return
     const save = equipStackToSlot(
       { ...createNewSave(launch), characterName: 'Hero' },
+    motto: null,
       WEAPON_TOOL_SLOT_ID,
       'ITEM-0110',
       1,

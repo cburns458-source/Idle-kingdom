@@ -186,11 +186,15 @@ class _LeaderboardTabState extends State<_LeaderboardTab> {
     }
     final listHeight = listBox.size.height;
     final ownOffset = ownBox.localToGlobal(Offset.zero, ancestor: listBox);
-    // Pin one row sooner than fully off-screen so your name stays visible.
+    // Pin one row sooner than fully off-screen, but never while the row is still
+    // fully inside the viewport (e.g. sitting at the top of the list).
     final pinMargin = ownBox.size.height + 6;
-    final next = ownOffset.dy + ownBox.size.height <= pinMargin
+    final leavingTop = ownOffset.dy < 0 && ownOffset.dy + ownBox.size.height <= pinMargin;
+    final leavingBottom =
+        ownOffset.dy + ownBox.size.height > listHeight && ownOffset.dy >= listHeight - pinMargin;
+    final next = leavingTop
         ? _OwnPin.top
-        : ownOffset.dy >= listHeight - pinMargin
+        : leavingBottom
         ? _OwnPin.bottom
         : _OwnPin.none;
     if (next != _pin) setState(() => _pin = next);

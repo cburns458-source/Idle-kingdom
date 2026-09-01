@@ -579,8 +579,29 @@ final List<SaveMigration> saveMigrations = <SaveMigration>[
     migrate: (save, nowMs) {
       final next = _bumped(save, 40);
       next['motto'] = save['motto'] is String ? save['motto'] : null;
-      final withMotto = PlayerSave.fromJson(next);
-      return grantPetsForCollectedCritters(withMotto).toJson();
+      // Stay on loose JSON — missing-timestamp fixtures are not full PlayerSave rows.
+      final cosmeticsRaw = next['cosmetics'];
+      final cosmetics = cosmeticsRaw is Map
+          ? Map<String, Object?>.from(
+              cosmeticsRaw.map((key, value) => MapEntry(key.toString(), value)),
+            )
+          : <String, Object?>{'unlocked': <String>[], 'equipped': <String, Object?>{}};
+      final unlocked = List<String>.from(
+        ((cosmetics['unlocked'] as List?) ?? const <Object?>[]).map((entry) => entry.toString()),
+      );
+      final collections = (next['critterCollections'] as List?) ?? const <Object?>[];
+      for (final row in collections) {
+        if (row is! Map) continue;
+        final count = row['count'];
+        final critterId = row['critterId']?.toString();
+        if (critterId == null || count is! num || count < 1) continue;
+        final petId = petCosmeticIdForCritter(critterId);
+        if (petId == null || unlocked.contains(petId)) continue;
+        unlocked.add(petId);
+      }
+      cosmetics['unlocked'] = unlocked;
+      next['cosmetics'] = cosmetics;
+      return next;
     },
   ),
 ];

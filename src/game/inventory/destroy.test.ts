@@ -8,6 +8,7 @@ function saveWithInventory(itemIds: string[]): PlayerSave {
     createdAt: 't',
     updatedAt: 't',
     characterName: 'Test',
+    motto: null,
     raceId: null,
     skills: [],
     inventory: itemIds.map((itemId) => ({ itemId, quantity: 1 })),
