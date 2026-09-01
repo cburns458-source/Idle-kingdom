@@ -89,7 +89,7 @@ const String panelGrainAsset = 'assets/ui/panel-grain.png';
 /// Rows are uniform (no column noise) so tiling does not read as vertical striping.
 const String woodPanelAsset = 'assets/ui/wood-panel.png';
 
-DecorationImage panelGrainImage({double opacity = 0.12}) => DecorationImage(
+DecorationImage panelGrainImage({double opacity = 0.06}) => DecorationImage(
   image: const AssetImage(panelGrainAsset),
   repeat: ImageRepeat.repeat,
   fit: BoxFit.none,

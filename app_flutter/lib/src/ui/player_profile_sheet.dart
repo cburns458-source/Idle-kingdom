@@ -158,52 +158,60 @@ class _PlayerProfileSheetState extends State<PlayerProfileSheet> {
             ],
           ),
           const SizedBox(height: 8),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SocialPortrait(
-                appearance: view.appearance,
-                raceId: view.raceId,
-                size: 156,
-                height: 156,
-                fullArt: true,
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            view.username,
-                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
-                          ),
-                        ),
-                        if (_isSelf || _profile?.publicEquipment != null)
-                          IconButton(
-                            tooltip: 'Gear',
-                            onPressed: () => openPlayerGear(
-                              context,
-                              controller: widget.controller,
-                              username: view.username,
-                              equipment: _isSelf
-                                  ? publicEquipmentFromSave(widget.controller.save)
-                                  : _profile?.publicEquipment,
-                            ),
-                            icon: const SlotGlyph(slotId: 'SLOT-0004', size: 28),
-                          ),
-                      ],
-                    ),
-                    MutedText(view.summaryLine),
-                    if (_isSelf) const MutedText('This is you.'),
-                    const SizedBox(height: 8),
-                    _skillIconGrid(_profile!),
-                  ],
+          GamePanel(
+            framed: true,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SocialPortrait(
+                  appearance: view.appearance,
+                  raceId: view.raceId,
+                  size: 156,
+                  height: 156,
+                  fullArt: true,
                 ),
-              ),
-            ],
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              view.username,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w400,
+                                color: Palette.panelInk,
+                              ),
+                            ),
+                          ),
+                          if (_isSelf || _profile?.publicEquipment != null)
+                            IconButton(
+                              tooltip: 'Gear',
+                              color: Palette.panelInk,
+                              onPressed: () => openPlayerGear(
+                                context,
+                                controller: widget.controller,
+                                username: view.username,
+                                equipment: _isSelf
+                                    ? publicEquipmentFromSave(widget.controller.save)
+                                    : _profile?.publicEquipment,
+                              ),
+                              icon: const SlotGlyph(slotId: 'SLOT-0004', size: 28),
+                            ),
+                        ],
+                      ),
+                      MutedText(view.summaryLine),
+                      if (_isSelf) const MutedText('This is you.'),
+                      const SizedBox(height: 8),
+                      _skillIconGrid(_profile!),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
           if (!_isSelf && net.isSignedIn) ...[
             const SizedBox(height: 10),
@@ -270,7 +278,7 @@ class _PlayerProfileSheetState extends State<PlayerProfileSheet> {
                     style: const TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w400,
-                      color: Palette.gold,
+                      color: Palette.panelInk,
                     ),
                   ),
                 ],

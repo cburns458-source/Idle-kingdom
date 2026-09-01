@@ -67,28 +67,32 @@ class PlayerGearSheet extends StatelessWidget {
           if (hidden)
             const MutedText('This player hides their gear.')
           else
-            Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 320),
-                child: GridView.count(
-                  crossAxisCount: 4,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  mainAxisSpacing: 6,
-                  crossAxisSpacing: 6,
-                  children: [
-                    for (final slotId in equipmentGridOrder)
-                      _GearSlotTile(
-                        slotId: slotId,
-                        slot: controller.db.equipmentSlots
-                            .where((row) => row.slotId == slotId)
-                            .firstOrNull,
-                        equipped: bySlot[slotId],
-                        item: bySlot[slotId] == null
-                            ? null
-                            : controller.indexes.itemsById[bySlot[slotId]!.itemId],
-                      ),
-                  ],
+            GamePanel(
+              framed: true,
+              padding: const EdgeInsets.all(8),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 320),
+                  child: GridView.count(
+                    crossAxisCount: 4,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    mainAxisSpacing: 6,
+                    crossAxisSpacing: 6,
+                    children: [
+                      for (final slotId in equipmentGridOrder)
+                        _GearSlotTile(
+                          slotId: slotId,
+                          slot: controller.db.equipmentSlots
+                              .where((row) => row.slotId == slotId)
+                              .firstOrNull,
+                          equipped: bySlot[slotId],
+                          item: bySlot[slotId] == null
+                              ? null
+                              : controller.indexes.itemsById[bySlot[slotId]!.itemId],
+                        ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -114,7 +118,12 @@ class _GearSlotTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (equipped == null) {
-      return GamePanel(
+      return PixelPlate(
+        step: PixelChrome.stepTight,
+        fillColor: Palette.slot,
+        material: PixelPlateMaterial.none,
+        strokeWidth: 2,
+        shadow: false,
         padding: const EdgeInsets.all(3),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -127,7 +136,11 @@ class _GearSlotTile extends StatelessWidget {
                 textAlign: TextAlign.center,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: 8.5, height: 1.1, color: Color(0x80F4E7C8)),
+                style: const TextStyle(
+                  fontSize: 8.5,
+                  height: 1.1,
+                  color: Palette.muted,
+                ),
               ),
             ),
           ],
@@ -136,7 +149,12 @@ class _GearSlotTile extends StatelessWidget {
     }
     return Tooltip(
       message: item?.displayName ?? equipped!.itemId,
-      child: GamePanel(
+      child: PixelPlate(
+        step: PixelChrome.stepTight,
+        fillColor: Palette.slot,
+        material: PixelPlateMaterial.none,
+        strokeWidth: 2,
+        shadow: false,
         padding: const EdgeInsets.all(4),
         child: Stack(
           children: [
