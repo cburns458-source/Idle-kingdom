@@ -33,11 +33,13 @@ class TopHud extends StatelessWidget {
     required this.controller,
     required this.multiplayer,
     required this.onOpenWardrobe,
+    this.batterySaver = false,
   });
 
   final GameController controller;
   final MultiplayerController multiplayer;
   final VoidCallback onOpenWardrobe;
+  final bool batterySaver;
 
   /// A running craft queue reads as the item and how much of the order is left;
   /// anything else reads as the activity, its action, and how long it has run.
@@ -92,7 +94,12 @@ class TopHud extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(8, 4, 10, 4),
       decoration: woodBoardFill(
-        border: const Border(bottom: BorderSide(color: Palette.edge)),
+        border: Border(
+          bottom: BorderSide(
+            color: batterySaver ? Palette.gold : Palette.edge,
+            width: batterySaver ? 4 : 1,
+          ),
+        ),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -101,7 +108,10 @@ class TopHud extends StatelessWidget {
             appearance: save.appearance,
             raceId: save.raceId,
             bytes: controller.localPlayerPng,
-            hint: !save.hasSeenWardrobeIntro && save.cosmetics.unlocked.isNotEmpty,
+            hint:
+                !batterySaver &&
+                !save.hasSeenWardrobeIntro &&
+                save.cosmetics.unlocked.isNotEmpty,
             onTap: onOpenWardrobe,
           ),
           const SizedBox(width: 8),

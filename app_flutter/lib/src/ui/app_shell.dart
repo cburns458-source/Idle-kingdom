@@ -5,6 +5,7 @@ import 'package:flutter/scheduler.dart';
 import 'package:ik_rules/ik_rules.dart';
 
 import '../session/account_save_unload.dart';
+import '../session/battery_saver_pref.dart';
 import '../session/game_controller.dart';
 import '../session/map_walk.dart';
 import '../session/multiplayer_controller.dart';
@@ -71,8 +72,13 @@ class AppShell extends StatefulWidget {
 class _AppShellState extends State<AppShell> with TickerProviderStateMixin, WidgetsBindingObserver {
   /// Drives the game loop. Coming from the widget means it stops when the app is
   /// backgrounded. A long hide is batch-resolved under the return overlay; a
-  /// short lock stays on the live tick.
+  /// short lock stays on the live tick. Battery saver swaps this for [_saverTick].
   Ticker? _ticker;
+
+  /// Slower play loop while battery saver is on (~5Hz instead of vsync).
+  Timer? _saverTick;
+
+  static const Duration _saverTickPeriod = Duration(milliseconds: 200);
 
   final List<GameScreen> _stack = [GameScreen.location];
   late String _browseMapId = _mapIdForCurrentLocation();
@@ -120,6 +126,7 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
     };
     controller.addListener(_armReturningHold);
     controller.addListener(_flushPendingDialogs);
+    controller.addListener(_syncPlayLoop);
     _armReturningHold();
     _ticker = createTicker((_) {
       if (!mounted || !_canPlay) return;
@@ -249,18 +256,33 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
   }
 
   bool _polling = false;
+  bool _saverPolling = false;
 
   /// Presence and the game clock stay off until the player is signed in and named.
   void _syncPlayLoop() {
+    final saver = controller.batterySaver;
     if (_canPlay) {
-      if (!(_ticker?.isActive ?? false)) _ticker?.start();
+      if (saver) {
+        _ticker?.stop();
+        _saverTick ??= Timer.periodic(_saverTickPeriod, (_) {
+          if (!mounted || !_canPlay) return;
+          controller.tick();
+        });
+      } else {
+        _saverTick?.cancel();
+        _saverTick = null;
+        if (!(_ticker?.isActive ?? false)) _ticker?.start();
+      }
     } else {
       _ticker?.stop();
+      _saverTick?.cancel();
+      _saverTick = null;
     }
     final shouldPoll = multiplayer.isSignedIn;
-    if (shouldPoll && !_polling) {
+    if (shouldPoll && (!_polling || _saverPolling != saver)) {
       _polling = true;
-      multiplayer.startPolling(() => controller.save);
+      _saverPolling = saver;
+      multiplayer.startPolling(() => controller.save, batterySaver: saver);
     } else if (!shouldPoll && _polling) {
       _polling = false;
       multiplayer.stopPolling();
@@ -278,6 +300,8 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
     // [paused] / [hidden] stop it so the next resume is one catch-up tick.
     if (state == AppLifecycleState.paused || state == AppLifecycleState.hidden) {
       _ticker?.stop();
+      _saverTick?.cancel();
+      _saverTick = null;
     }
     if (state == AppLifecycleState.resumed) {
       _syncPlayLoop();
@@ -294,9 +318,12 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
     multiplayer.removeListener(_onMultiplayerChanged);
     controller.removeListener(_armReturningHold);
     controller.removeListener(_flushPendingDialogs);
+    controller.removeListener(_syncPlayLoop);
     _ticker?.stop();
     _ticker?.dispose();
     _ticker = null;
+    _saverTick?.cancel();
+    _saverTick = null;
     _mapWalk?.dispose();
     _removeRootSocialAlert();
     multiplayer.stopPolling();
@@ -480,7 +507,7 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
     )) {
       return;
     }
-    if (!controller.mapTravelAnimation) {
+    if (!controller.mapTravelAnimation || controller.batterySaver) {
       _arrive(locationId);
       return;
     }
@@ -566,7 +593,10 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
                     ),
                     child: ListenableBuilder(
                       listenable: Listenable.merge(<Listenable>[controller, multiplayer]),
-                      builder: (context, _) => _buildFrame(context, sideChat: sideChat),
+                      builder: (context, _) => BatterySaverScope(
+                        enabled: controller.batterySaver,
+                        child: _buildFrame(context, sideChat: sideChat),
+                      ),
                     ),
                   ),
                 ),
@@ -652,6 +682,7 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
                 controller: controller,
                 multiplayer: multiplayer,
                 onOpenWardrobe: _openWardrobe,
+                batterySaver: controller.batterySaver,
               ),
             ),
             Expanded(
@@ -699,6 +730,12 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
                             : Palette.gold,
                         onDismissed: controller.clearMessages,
                       ),
+                    ),
+                  if (controller.batterySaver && _screen == GameScreen.location && !_wardrobeOpen)
+                    Positioned(
+                      left: 8,
+                      bottom: 10,
+                      child: _BatterySaverPlaque(onOpenSettings: () => _selectScreen(GameScreen.menu)),
                     ),
                 ],
               ),
@@ -893,6 +930,7 @@ class _PageLayer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (BatterySaverScope.of(context)) return child;
     return TweenAnimationBuilder<double>(
       tween: Tween<double>(begin: 0, end: 1),
       duration: const Duration(milliseconds: 280),
@@ -914,6 +952,42 @@ class _PageLayer extends StatelessWidget {
         );
       },
       child: child,
+    );
+  }
+}
+
+class _BatterySaverPlaque extends StatelessWidget {
+  const _BatterySaverPlaque({required this.onOpenSettings});
+
+  final VoidCallback onOpenSettings;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      key: const Key('battery-saver-plaque'),
+      color: Palette.parchmentDeep,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+        side: const BorderSide(color: Palette.gold, width: 1),
+      ),
+      child: InkWell(
+        onTap: onOpenSettings,
+        borderRadius: BorderRadius.circular(8),
+        child: const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.bolt, size: 13, color: Palette.gold),
+              SizedBox(width: 4),
+              Text(
+                'Battery saver',
+                style: TextStyle(color: Palette.gold, fontSize: 11, fontWeight: FontWeight.w400),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

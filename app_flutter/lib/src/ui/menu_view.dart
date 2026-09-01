@@ -147,6 +147,27 @@ class _MenuViewState extends State<MenuView> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        Text('Battery saver', style: TextStyle(fontWeight: FontWeight.w400)),
+                        MutedText('Skip animations and refresh the screen less often.'),
+                      ],
+                    ),
+                  ),
+                  GameSwitch(
+                    value: controller.batterySaver,
+                    onChanged: controller.setBatterySaver,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            GamePanel(
+              framed: true,
+              child: Row(
+                children: [
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
                         Text('Map travel animation', style: TextStyle(fontWeight: FontWeight.w400)),
                         MutedText('Walk a small sprite to the destination before arriving.'),
                       ],
@@ -154,7 +175,7 @@ class _MenuViewState extends State<MenuView> {
                   ),
                   GameSwitch(
                     value: controller.mapTravelAnimation,
-                    onChanged: controller.setMapTravelAnimation,
+                    onChanged: controller.batterySaver ? null : controller.setMapTravelAnimation,
                   ),
                 ],
               ),

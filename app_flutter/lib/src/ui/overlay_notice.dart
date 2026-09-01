@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../session/battery_saver_pref.dart';
 import '../theme.dart';
 
 /// How long a floating notice stays up: 2s for a short line, 5s for a long one.
@@ -51,6 +52,10 @@ class _OverlayNoticeState extends State<OverlayNotice> {
 
   void _beginFade() {
     if (!mounted || !_opaque) return;
+    if (BatterySaverScope.of(context)) {
+      widget.onDismissed?.call();
+      return;
+    }
     setState(() => _opaque = false);
     _hold = Timer(noticeFadeDuration, () {
       if (mounted) widget.onDismissed?.call();
@@ -65,10 +70,11 @@ class _OverlayNoticeState extends State<OverlayNotice> {
 
   @override
   Widget build(BuildContext context) {
+    final reduceMotion = BatterySaverScope.of(context);
     return IgnorePointer(
       child: AnimatedOpacity(
         opacity: _opaque ? 1 : 0,
-        duration: noticeFadeDuration,
+        duration: reduceMotion ? Duration.zero : noticeFadeDuration,
         child: GamePanel(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           child: Text(

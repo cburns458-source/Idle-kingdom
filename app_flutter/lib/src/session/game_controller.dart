@@ -5,6 +5,7 @@ import 'package:ik_content/ik_content.dart';
 import 'package:ik_rules/ik_rules.dart';
 import 'package:ik_runtime/ik_runtime.dart';
 
+import 'battery_saver_pref.dart';
 import 'hud_level_pref.dart';
 import 'hud_title_pref.dart';
 import 'local_player_art.dart';
@@ -94,10 +95,12 @@ class GameController extends ChangeNotifier {
     MapTravelPref? mapTravel,
     HudLevelPref? hudLevel,
     HudTitlePref? hudTitle,
+    BatterySaverPref? batterySaverPref,
   }) : localArt = localArt ?? LocalPlayerArt(),
        mapTravel = mapTravel ?? MapTravelPref(),
        hudLevel = hudLevel ?? HudLevelPref(),
-       hudTitle = hudTitle ?? HudTitlePref();
+       hudTitle = hudTitle ?? HudTitlePref(),
+       batterySaverPref = batterySaverPref ?? BatterySaverPref();
 
   final LoadedDatabase database;
 
@@ -115,6 +118,9 @@ class GameController extends ChangeNotifier {
 
   /// Client-only HUD toggle for the equipped character title.
   final HudTitlePref hudTitle;
+
+  /// Client-only toggle that skips cosmetic motion and paints less often.
+  final BatterySaverPref batterySaverPref;
 
   /// How many completed actions the reward strip keeps.
   static const int _rewardHistory = 3;
@@ -371,6 +377,18 @@ class GameController extends ChangeNotifier {
   void setMapTravelAnimation(bool value) {
     if (mapTravel.enabled == value) return;
     mapTravel.setEnabled(value);
+    notifyListeners();
+  }
+
+  /// Whether this device is skipping cosmetic motion to save battery.
+  bool get batterySaver => batterySaverPref.enabled;
+
+  /// Same as [batterySaver]; overlays and popups read this to skip tweens.
+  bool get reduceMotion => batterySaver;
+
+  void setBatterySaver(bool value) {
+    if (batterySaverPref.enabled == value) return;
+    batterySaverPref.setEnabled(value);
     notifyListeners();
   }
 
