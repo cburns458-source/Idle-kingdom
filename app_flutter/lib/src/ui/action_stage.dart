@@ -133,14 +133,17 @@ class LocationIdlePlayer extends StatelessWidget {
                       const SizedBox(width: 4),
                       Expanded(
                         child: IgnorePointer(
-                          child: _Portrait(
-                            assetPath: playerAssetPath(save.appearance, raceId: save.raceId),
-                            bytes: controller.localPlayerPng,
-                            semanticsLabel: 'Adventurer',
-                            alignment: Alignment.centerRight,
-                            height: _playerArtHeight,
-                            slotHeight: _portraitSlotHeight,
-                            filterQuality: FilterQuality.high,
+                          child: _playerWithPet(
+                            save: save,
+                            player: _Portrait(
+                              assetPath: playerAssetPath(save.appearance, raceId: save.raceId),
+                              bytes: controller.localPlayerPng,
+                              semanticsLabel: 'Adventurer',
+                              alignment: Alignment.centerRight,
+                              height: _playerArtHeight,
+                              slotHeight: _portraitSlotHeight,
+                              filterQuality: FilterQuality.high,
+                            ),
                           ),
                         ),
                       ),
@@ -173,6 +176,25 @@ class LocationIdlePlayer extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Player art with an optional equipped pet sprite near the bottom-left.
+Widget _playerWithPet({required PlayerSave save, required Widget player}) {
+  final petId = save.cosmetics.equipped[petCosmeticSlotId];
+  final petKey = petId == null ? null : critterKeyForPetCosmetic(petId);
+  if (petKey == null) return player;
+  return Stack(
+    clipBehavior: Clip.none,
+    alignment: Alignment.centerRight,
+    children: [
+      player,
+      Positioned(
+        left: 0,
+        bottom: 8,
+        child: GameImage(critterAssetPath(petKey), width: 36, height: 36),
+      ),
+    ],
+  );
 }
 
 String _combatEnemyDisplayName(GameDatabase db, PlayerSave save, EnemyRow? enemy) {

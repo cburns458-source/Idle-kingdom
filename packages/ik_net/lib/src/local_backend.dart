@@ -276,6 +276,12 @@ class LocalMultiplayerBackend {
     String? privacyDirectMessages,
     String? privacyLocalChat,
     String? username,
+    String? nameColor,
+    String? motto,
+    String? petCosmeticId,
+    bool clearNameColor = false,
+    bool clearMotto = false,
+    bool clearPetCosmeticId = false,
   }) {
     final db = _db();
     final index = db.profiles.indexWhere((row) => row.userId == userId);
@@ -288,6 +294,12 @@ class LocalMultiplayerBackend {
       privacyDirectMessages: privacyDirectMessages,
       privacyLocalChat: privacyLocalChat,
       username: username,
+      nameColor: nameColor,
+      motto: motto,
+      petCosmeticId: petCosmeticId,
+      clearNameColor: clearNameColor,
+      clearMotto: clearMotto,
+      clearPetCosmeticId: clearPetCosmeticId,
       updatedAt: _nowIso(),
     );
     _write(db);
@@ -462,6 +474,10 @@ class LocalMultiplayerBackend {
                   publishedEquipment: snapshot.equipment,
                   nameColor: publishNameColor ? normalizeNameColorHex(nameColor) : row.nameColor,
                   clearNameColor: publishNameColor && normalizeNameColorHex(nameColor) == null,
+                  motto: save.motto,
+                  clearMotto: save.motto == null,
+                  petCosmeticId: save.cosmetics.equipped[petCosmeticSlotId],
+                  clearPetCosmeticId: save.cosmetics.equipped[petCosmeticSlotId] == null,
                   updatedAt: updatedAt,
                 )
               : row,
@@ -1576,6 +1592,10 @@ class LocalMultiplayerBackend {
               .map((row) => row.value)
               .firstOrNull ??
           0,
+      motto: save != null ? save.motto : profile.motto,
+      petCosmeticId: save != null
+          ? save.cosmetics.equipped[petCosmeticSlotId]
+          : profile.petCosmeticId,
     );
   }
 

@@ -85,6 +85,12 @@ describe('cosmetics', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const outfits = cosmeticsForSlot(launch, OUTFIT_COSMETIC_SLOT_ID)
     expect(outfits.some((row) => row['Cosmetic ID'] === 'COS-0001')).toBe(true)
-    expect(cosmeticsForSlot(launch, PET_COSMETIC_SLOT_ID)).toEqual([])
+    const pets = cosmeticsForSlot(launch, PET_COSMETIC_SLOT_ID)
+    expect(pets.map((row) => row['Cosmetic ID'])).toEqual([
+      'COS-0004',
+      'COS-0005',
+      'COS-0006',
+      'COS-0007',
+    ])
   })
 })

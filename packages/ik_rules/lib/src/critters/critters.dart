@@ -1,9 +1,11 @@
 import 'package:collection/collection.dart';
 
+import '../cosmetics/cosmetics.dart';
 import '../js_compat.dart';
 import '../rng/mulberry32.dart';
 import '../save/generated/save_models.dart';
 import '../time.dart';
+import 'pets.dart';
 
 const num critterHourMs = 3600000;
 
@@ -204,13 +206,20 @@ CritterCollectResult collectCritter(PlayerSave save, String locationId) {
           CritterCollectionEntry(critterId: critter.id, count: count),
         ];
 
+  var next = save.copyWith(
+    critterCollections: collections,
+    activeCritterSpawns: save.activeCritterSpawns
+        .where((row) => row.locationId != locationId)
+        .toList(),
+  );
+  // First find unlocks the matching pet cosmetic for the wardrobe Pet slot.
+  if (count == 1) {
+    final petId = petCosmeticIdForCritter(critter.id);
+    if (petId != null) next = grantCosmetic(next, petId).save;
+  }
+
   return CritterCollectResult.ok(
-    save: save.copyWith(
-      critterCollections: collections,
-      activeCritterSpawns: save.activeCritterSpawns
-          .where((row) => row.locationId != locationId)
-          .toList(),
-    ),
+    save: next,
     critter: critter,
     count: count,
     message: count > 1

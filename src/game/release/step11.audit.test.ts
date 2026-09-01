@@ -191,6 +191,7 @@ describe('Step 11 release audit', () => {
     const legacy = {
       saveVersion: 1,
       characterName: 'Legacy',
+    motto: null,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       currentLocationId: 'LOC-0002',
@@ -213,7 +214,7 @@ describe('Step 11 release audit', () => {
   it('persists and reloads a save through storage', () => {
     const storage = createMemoryStorage()
     const first = loadOrCreateSave(source, storage)
-    writeSave({ ...first.save, characterName: 'ReleaseCheck', gold: 25 }, storage)
+    writeSave({ ...first.save, characterName: 'ReleaseCheck', motto: null, gold: 25 }, storage)
     const second = loadOrCreateSave(source, storage)
     expect(second.created).toBe(false)
     expect(second.save.characterName).toBe('ReleaseCheck')

@@ -1,5 +1,6 @@
 import type { GameDatabase } from '../data/types'
 import type { PlayerSave } from '../save/types'
+import { PET_COSMETIC_SLOT_ID } from '../save/types'
 import { getSession } from './auth'
 import { getLocalBackend, getSupabaseClient, multiplayerMode } from './client'
 import {
@@ -52,9 +53,12 @@ export async function submitLeaderboardFromSave(
     username: session.username,
     appearance_json: save.appearance,
     equipment_json: snapshot.equipment,
+    motto: save.motto ?? null,
+    pet_cosmetic_id: save.cosmetics.equipped[PET_COSMETIC_SLOT_ID] ?? null,
     ...(options?.publishNameColor ? { name_color: options.nameColor ?? null } : {}),
   })
   if (profileError) {
+    // Graceful fallback when optional columns (name_color / motto / pet) are missing.
     await client.from(REMOTE_TABLES.profiles).upsert({
       user_id: session.userId,
       username: session.username,

@@ -1,6 +1,6 @@
 import type { PlayerSave } from '../save/types'
 import { parseSave, type SaveStorage, writeSave } from '../save/saveStore'
-import { SAVE_STORAGE_KEY } from '../save/types'
+import { PET_COSMETIC_SLOT_ID, SAVE_STORAGE_KEY } from '../save/types'
 import { getSession } from './auth'
 import { getLocalBackend, getSupabaseClient, multiplayerMode } from './client'
 import {
@@ -55,6 +55,8 @@ export async function pushCloudSave(
     getLocalBackend().upsertProfile(session.userId, {
       appearance: stamped.appearance,
       username: stamped.characterName || session.username,
+      motto: stamped.motto ?? null,
+      petCosmeticId: stamped.cosmetics.equipped[PET_COSMETIC_SLOT_ID] ?? null,
     })
     return { ok: true, save: stamped, source: 'uploaded' }
   }
@@ -74,6 +76,20 @@ export async function pushCloudSave(
     .from(REMOTE_TABLES.saves)
     .upsert(saveRowFor(session.userId, stamped))
   if (error) return { ok: false, reason: error.message }
+  // Publish motto / pet onto the profile row so other players can see them
+  // (RLS blocks reading another account's cloud save).
+  const { error: profileError } = await client.from(REMOTE_TABLES.profiles).upsert({
+    user_id: session.userId,
+    appearance_json: stamped.appearance,
+    motto: stamped.motto ?? null,
+    pet_cosmetic_id: stamped.cosmetics.equipped[PET_COSMETIC_SLOT_ID] ?? null,
+  })
+  if (profileError) {
+    await client.from(REMOTE_TABLES.profiles).upsert({
+      user_id: session.userId,
+      appearance_json: stamped.appearance,
+    })
+  }
   return { ok: true, save: stamped, source: 'uploaded' }
 }
 

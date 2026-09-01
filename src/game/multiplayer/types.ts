@@ -96,6 +96,10 @@ export interface MultiplayerProfile {
   publishedEquipment?: PublicEquippedSlot[]
   /** Chat name hex, published on a ranking submit. */
   nameColor?: string | null
+  /** Short public motto under player art; null when unset. */
+  motto?: string | null
+  /** Equipped pet cosmetic ID from CSLOT-0002; null when none. */
+  petCosmeticId?: string | null
   updatedAt: string
 }
 
@@ -393,6 +397,10 @@ export interface PublicPlayerProfile {
   logCompletionPercent?: number
   /** Null when the player hid their gear. */
   publicEquipment?: PublicEquippedSlot[] | null
+  /** Short public motto under player art; null when unset. */
+  motto?: string | null
+  /** Equipped pet cosmetic ID; null when none. */
+  petCosmeticId?: string | null
 }
 
 /** Citadel Plaza — hub presence / Nearby listing target. */

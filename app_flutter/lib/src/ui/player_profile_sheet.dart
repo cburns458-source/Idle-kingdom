@@ -9,6 +9,7 @@ import '../theme.dart';
 import 'game_image.dart';
 import 'game_popup.dart';
 import 'item_icon.dart';
+import 'motto_text.dart';
 import 'player_gear_sheet.dart';
 import 'social_bits.dart';
 
@@ -130,6 +131,8 @@ class _PlayerProfileSheetState extends State<PlayerProfileSheet> {
         totalLevel: totalLevel(save),
         logCompletionPercent: logCompletion(widget.controller.db, save).overall.percent,
         publicEquipment: publicEquipmentFromSave(save),
+        motto: save.motto,
+        petCosmeticId: save.cosmetics.equipped[petCosmeticSlotId],
       );
     }
     return profile;
@@ -163,13 +166,7 @@ class _PlayerProfileSheetState extends State<PlayerProfileSheet> {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                SocialPortrait(
-                  appearance: view.appearance,
-                  raceId: view.raceId,
-                  size: 156,
-                  height: 156,
-                  fullArt: true,
-                ),
+                _profilePortrait(view),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Column(
@@ -205,6 +202,17 @@ class _PlayerProfileSheetState extends State<PlayerProfileSheet> {
                       ),
                       MutedText(view.summaryLine),
                       if (_isSelf) const MutedText('This is you.'),
+                      if (view.motto != null && view.motto!.isNotEmpty) ...[
+                        const SizedBox(height: 6),
+                        MottoText(
+                          view.motto!,
+                          style: TextStyle(
+                            fontSize: 13,
+                            height: 1.25,
+                            color: UiChrome.of(context).panelInk.withValues(alpha: 0.9),
+                          ),
+                        ),
+                      ],
                       const SizedBox(height: 8),
                       _skillIconGrid(_profile!),
                     ],
@@ -247,6 +255,35 @@ class _PlayerProfileSheetState extends State<PlayerProfileSheet> {
               ],
             ),
           ],
+        ],
+      ),
+    );
+  }
+
+  Widget _profilePortrait(PublicProfileView view) {
+    final petKey = view.petCosmeticId == null
+        ? null
+        : critterKeyForPetCosmetic(view.petCosmeticId!);
+    final portrait = SocialPortrait(
+      appearance: view.appearance,
+      raceId: view.raceId,
+      size: 156,
+      height: 156,
+      fullArt: true,
+    );
+    if (petKey == null) return portrait;
+    return SizedBox(
+      width: 156,
+      height: 156,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          portrait,
+          Positioned(
+            left: 4,
+            bottom: 4,
+            child: GameImage(critterAssetPath(petKey), width: 40, height: 40),
+          ),
         ],
       ),
     );

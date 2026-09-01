@@ -39,6 +39,7 @@ PlayerSave createNewSave(GameDatabase db, num nowMs) {
     createdAt: timestamp,
     updatedAt: timestamp,
     characterName: null,
+    motto: null,
     raceId: null,
     skills: skills,
     inventory: const <InventoryStack>[],

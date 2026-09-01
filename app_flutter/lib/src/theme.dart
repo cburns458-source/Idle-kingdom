@@ -423,12 +423,16 @@ class GameIconButton extends StatelessWidget {
     required this.onPressed,
     this.tooltip,
     this.size = 32,
+    this.iconColor,
   });
 
   final IconData icon;
   final VoidCallback? onPressed;
   final String? tooltip;
   final double size;
+
+  /// Defaults to cream parchment; pass [Palette.gold] for selected favorites.
+  final Color? iconColor;
 
   @override
   Widget build(BuildContext context) {
@@ -446,7 +450,7 @@ class GameIconButton extends StatelessWidget {
           shadow: false,
           child: SizedBox.square(
             dimension: size,
-            child: Icon(icon, size: size * 0.55, color: const Color(0xFFFFF4D4)),
+            child: Icon(icon, size: size * 0.55, color: iconColor ?? const Color(0xFFFFF4D4)),
           ),
         ),
       ),

@@ -363,6 +363,10 @@ class LocalMultiplayerService implements MultiplayerService {
       appearance: stamped.appearance,
       raceId: stamped.raceId,
       username: isNotBlank(stamped.characterName) ? stamped.characterName : current.username,
+      motto: stamped.motto,
+      clearMotto: stamped.motto == null,
+      petCosmeticId: stamped.cosmetics.equipped[petCosmeticSlotId],
+      clearPetCosmeticId: stamped.cosmetics.equipped[petCosmeticSlotId] == null,
     );
     return CloudSyncResult.ok(stamped, CloudSyncSource.uploaded);
   }

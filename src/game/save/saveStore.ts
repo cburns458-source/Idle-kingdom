@@ -53,6 +53,7 @@ export function createNewSave(db: GameDatabase, nowMs: number = Date.now()): Pla
     createdAt: timestamp,
     updatedAt: timestamp,
     characterName: null,
+    motto: null,
     raceId: null,
     skills,
     // Race-specific starter kits are granted when the player picks a race.

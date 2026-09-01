@@ -127,6 +127,14 @@ bool remoteMissingNameColorColumn(String? reason) {
   return lower.contains('name_color');
 }
 
+/// True when [reason] is the hosted project missing motto / pet profile columns.
+bool remoteMissingMottoPetColumns(String? reason) {
+  if (reason == null || reason.isEmpty) return false;
+  final lower = reason.toLowerCase();
+  if (!lower.contains('does not exist')) return false;
+  return lower.contains('motto') || lower.contains('pet_cosmetic_id');
+}
+
 /// True when [reason] is the hosted project missing migration 015.
 bool remoteMissingPvpSnapshotsTable(String? reason) {
   if (reason == null || reason.isEmpty) return false;
@@ -194,6 +202,9 @@ const String remoteGearPrivacyColumn = 'privacy_public_gear';
 const String remoteEquipmentJsonColumn = 'equipment_json';
 const String remoteGearProfileColumns = '$remoteGearPrivacyColumn, $remoteEquipmentJsonColumn';
 const String remoteNameColorColumn = 'name_color';
+const String remoteMottoColumn = 'motto';
+const String remotePetCosmeticIdColumn = 'pet_cosmetic_id';
+const String remoteMottoPetColumns = '$remoteMottoColumn, $remotePetCosmeticIdColumn';
 
 /// Columns a public profile sheet asks for when the privacy migrations are on.
 const String remotePublicProfileColumns =
@@ -632,6 +643,8 @@ MultiplayerProfile? multiplayerProfileFromRemote(RemoteRow? row) {
     privacyDirectMessages: normalizeChatPrivacy(_optStr(row['privacy_direct_messages'])),
     privacyLocalChat: normalizeChatPrivacy(_optStr(row['privacy_local_chat'])),
     nameColor: normalizeNameColorHex(_optStr(row['name_color'])),
+    motto: _optStr(row['motto']),
+    petCosmeticId: _optStr(row['pet_cosmetic_id']),
     updatedAt: _str(row['updated_at']),
   );
 }

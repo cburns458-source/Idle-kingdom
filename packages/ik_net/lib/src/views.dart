@@ -759,6 +759,8 @@ class PublicProfileView {
     required this.summaryLine,
     required this.skillLines,
     required this.skillsHidden,
+    this.motto,
+    this.petCosmeticId,
   });
 
   final String userId;
@@ -775,6 +777,12 @@ class PublicProfileView {
   /// True when the player hid their skills.
   final bool skillsHidden;
 
+  /// Short motto under art; null when unset.
+  final String? motto;
+
+  /// Equipped pet cosmetic ID; null when none.
+  final String? petCosmeticId;
+
   Map<String, Object?> toJson() => <String, Object?>{
     'userId': userId,
     'username': username,
@@ -782,6 +790,8 @@ class PublicProfileView {
     'summaryLine': summaryLine,
     'skillLines': skillLines,
     'skillsHidden': skillsHidden,
+    'motto': motto,
+    'petCosmeticId': petCosmeticId,
   };
 }
 
@@ -808,6 +818,8 @@ PublicProfileView publicProfileView(
         .map((skill) => '${skillName(skill.skillId)} ${jsNumberToString(skill.level)}')
         .toList(),
     skillsHidden: profile.publicSkills.isEmpty,
+    motto: profile.motto,
+    petCosmeticId: profile.petCosmeticId,
   );
 }
 

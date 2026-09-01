@@ -1,4 +1,6 @@
 import type { PlayerSave } from '../save/types'
+import { grantCosmetic } from '../cosmetics/cosmetics'
+import { petCosmeticIdForCritter } from './pets'
 
 export const CRITTER_HOUR_MS = 3_600_000
 /** One roll per full activity-hour at the Critter's location. */
@@ -139,13 +141,20 @@ export function collectCritter(
     (row) => row.locationId !== locationId,
   )
 
+  let next: PlayerSave = {
+    ...save,
+    critterCollections: collections,
+    activeCritterSpawns: spawns,
+  }
+  // First find unlocks the matching pet cosmetic for the wardrobe Pet slot.
+  if (count === 1) {
+    const petId = petCosmeticIdForCritter(critter.id)
+    if (petId) next = grantCosmetic(next, petId).save
+  }
+
   return {
     ok: true,
-    save: {
-      ...save,
-      critterCollections: collections,
-      activeCritterSpawns: spawns,
-    },
+    save: next,
     critter,
     count,
     message:

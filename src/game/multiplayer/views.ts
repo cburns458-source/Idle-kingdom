@@ -508,6 +508,10 @@ export interface PublicProfileView {
   skillLines: string[]
   /** True when the player hid their skills. */
   skillsHidden: boolean
+  /** Short motto under art; null when unset. */
+  motto: string | null
+  /** Equipped pet cosmetic ID; null when none. */
+  petCosmeticId: string | null
 }
 
 export function publicProfileView(
@@ -529,6 +533,8 @@ export function publicProfileView(
       .slice(0, PUBLIC_PROFILE_SKILL_LIMIT)
       .map((skill) => `${skillName(skill.skillId)} ${skill.level}`),
     skillsHidden: profile.publicSkills.length === 0,
+    motto: profile.motto ?? null,
+    petCosmeticId: profile.petCosmeticId ?? null,
   }
 }
 

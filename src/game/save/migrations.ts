@@ -1,4 +1,5 @@
 import { createDefaultEquipmentPresets } from '../equipment/presets'
+import { grantPetsForCollectedCritters } from '../critters/pets'
 import { ensureStartingHuntingTool, replaceFishingNetsWithNet } from './startingGear'
 import type {
   ActivePotionEffect,
@@ -611,6 +612,18 @@ export const SAVE_MIGRATIONS: SaveMigration[] = [
       combatBossInkActive: save.combatBossInkActive === true,
       saveVersion: 39,
     }),
+  },
+  {
+    fromVersion: 39,
+    toVersion: 40,
+    migrate: (save) => {
+      const withMotto = {
+        ...save,
+        motto: typeof save.motto === 'string' ? save.motto : null,
+        saveVersion: 40,
+      }
+      return grantPetsForCollectedCritters(withMotto)
+    },
   },
 ]
 
