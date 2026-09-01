@@ -360,7 +360,7 @@ class _MapNodeState extends State<_MapNode> with SingleTickerProviderStateMixin 
               ),
               if (widget.hasShop) ...[
                 const SizedBox(width: 3),
-                Semantics(label: 'Shop', child: GameImage(goldIconPath(), width: 12, height: 12)),
+                Tooltip(message: 'Shop', child: GameImage(goldIconPath(), width: 12, height: 12)),
               ],
             ],
           ),

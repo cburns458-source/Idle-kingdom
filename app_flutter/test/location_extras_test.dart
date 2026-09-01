@@ -409,13 +409,14 @@ void main() {
     }
 
     expect(
-      find.descendant(of: nodeOf('General Store'), matching: find.bySemanticsLabel('Shop')),
-      findsOne,
+      find.descendant(of: find.byType(WorldMapView), matching: find.text('General Store')),
+      findsWidgets,
     );
     expect(
-      find.descendant(of: nodeOf('Kitchen'), matching: find.bySemanticsLabel('Shop')),
-      findsNothing,
+      find.descendant(of: nodeOf('General Store'), matching: find.byTooltip('Shop')),
+      findsOne,
     );
+    expect(find.descendant(of: nodeOf('Kitchen'), matching: find.byTooltip('Shop')), findsNothing);
   });
 
   testWidgets('Enter on a gateway opens the submap at its landing', (tester) async {
