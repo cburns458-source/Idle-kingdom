@@ -71,6 +71,8 @@ void main() {
     addTearDown(controller.dispose);
     await pumpShell(tester, controller, size: const Size(900, 2400));
     await openChinScreen(tester, 'Settings');
+    await tester.tap(find.text('Testing'));
+    await tester.pump();
     await tester.scrollUntilVisible(
       find.text('Player sprite'),
       300,
