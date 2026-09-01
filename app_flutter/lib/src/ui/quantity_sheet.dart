@@ -102,6 +102,7 @@ class _QuantitySheetState extends State<_QuantitySheet> {
     final ceiling = widget.max;
     return GamePopupCard(
       child: GamePanel(
+        framed: true,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,

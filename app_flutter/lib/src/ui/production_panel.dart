@@ -97,6 +97,7 @@ class _ProductionPickerState extends State<ProductionPicker> {
         recipes.where((row) => row.recipeId == _recipeId).firstOrNull ?? recipes.firstOrNull;
 
     return GamePanel(
+      framed: true,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

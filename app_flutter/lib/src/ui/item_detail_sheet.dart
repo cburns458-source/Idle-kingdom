@@ -65,6 +65,7 @@ class ItemDetailSheet extends StatelessWidget {
 
     return GamePopupCard(
       child: GamePanel(
+        framed: true,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,

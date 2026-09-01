@@ -84,6 +84,9 @@ const double playerPortraitHeadZoom = 1.72;
 const String panelGrainAsset = 'assets/ui/panel-grain.png';
 
 /// Horizontal wood-plank texture for outer boards and the main background.
+/// Pure horizontal strips only — no column noise (avoids vertical striping).
+/// Horizontal wood-plank texture for outer boards and the main background.
+/// Rows are uniform (no column noise) so tiling does not read as vertical striping.
 const String woodPanelAsset = 'assets/ui/wood-panel.png';
 
 DecorationImage panelGrainImage({double opacity = 0.12}) => DecorationImage(
@@ -345,6 +348,7 @@ class _GameButtonState extends State<GameButton> {
             step: widget.dense ? PixelChrome.stepTight : PixelChrome.step,
             strokeWidth: widget.selected ? 2.5 : 2,
             shadow: false,
+            material: PixelPlateMaterial.none,
             gradient: primary
                 ? (down ? GameButton._primaryPressed : GameButton._primaryFill)
                 : (down ? GameButton._secondaryPressed : GameButton._secondaryFill),
@@ -595,7 +599,7 @@ class GameSwitch extends StatelessWidget {
               step: PixelChrome.stepTight,
               strokeWidth: 1.5,
               shadow: false,
-              material: PixelPlateMaterial.wood,
+              material: PixelPlateMaterial.none,
               fillColor: value ? const Color(0xFF5F7A45) : const Color(0xFF3D2A1A),
               padding: const EdgeInsets.all(2),
               child: AnimatedAlign(
@@ -647,7 +651,7 @@ class DockRow extends StatelessWidget {
     return PixelPlate(
       step: PixelChrome.step,
       fillColor: Palette.slot,
-      material: PixelPlateMaterial.wood,
+      material: PixelPlateMaterial.none,
       strokeWidth: 1.5,
       shadow: false,
       padding: const EdgeInsets.fromLTRB(9, 7, 9, 7),
@@ -723,7 +727,10 @@ class PillBar extends StatelessWidget {
   }
 }
 
-/// The bordered, slightly translucent card every panel in the game uses.
+/// The bordered tan content card every panel in the game uses.
+///
+/// When [framed] is true, a quiet wood outer rim wraps the tan plate so content
+/// sits as a wood-bordered inset on the shell (inspiration inventory look).
 class GamePanel extends StatelessWidget {
   const GamePanel({
     super.key,
@@ -731,6 +738,7 @@ class GamePanel extends StatelessWidget {
     this.padding,
     this.onTap,
     this.highlight = false,
+    this.framed = false,
   });
 
   final Widget child;
@@ -739,6 +747,9 @@ class GamePanel extends StatelessWidget {
 
   /// Gold, thicker edge for the viewer's own leaderboard row.
   final bool highlight;
+
+  /// Wood outer board rim around the tan inner plate.
+  final bool framed;
 
   Widget _inked(Widget plateChild) {
     // Tan inner panels read with dark ink; overlays keep their own colors.
@@ -751,8 +762,7 @@ class GamePanel extends StatelessWidget {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
+  Widget _tanPlate() {
     if (onTap != null) {
       return PixelInkPlate(
         onTap: onTap,
@@ -776,6 +786,21 @@ class GamePanel extends StatelessWidget {
       shadow: false,
       padding: padding ?? const EdgeInsets.all(10),
       child: _inked(child),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final plate = _tanPlate();
+    if (!framed) return plate;
+    return PixelPlate(
+      step: PixelChrome.step,
+      fillColor: Palette.board,
+      material: PixelPlateMaterial.wood,
+      strokeWidth: 2,
+      shadow: false,
+      padding: const EdgeInsets.all(5),
+      child: plate,
     );
   }
 }

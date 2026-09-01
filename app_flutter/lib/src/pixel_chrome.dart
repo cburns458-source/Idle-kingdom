@@ -219,10 +219,12 @@ class PixelPlate extends StatelessWidget {
 
   DecorationImage? _texture() {
     if (fillColor == null && gradient == null) return null;
+    // Auto: tan texture on light fills only. Dark fills stay solid so wood is
+    // reserved for shell / HUD boards, not every button and slot.
     final kind = material == PixelPlateMaterial.auto
         ? ((fillColor != null && fillColor!.computeLuminance() > 0.28)
               ? PixelPlateMaterial.tan
-              : PixelPlateMaterial.wood)
+              : PixelPlateMaterial.none)
         : material;
     return switch (kind) {
       PixelPlateMaterial.wood => const DecorationImage(

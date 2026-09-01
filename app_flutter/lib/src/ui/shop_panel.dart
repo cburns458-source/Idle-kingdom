@@ -256,6 +256,7 @@ class _ShopPanelState extends State<ShopPanel> {
 
   Widget _frame({required String title, required Widget child}) {
     return GamePanel(
+      framed: true,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -300,7 +301,7 @@ class _ShopPanelState extends State<ShopPanel> {
         onTap: enabled ? () => onTap(unit, name) : null,
         step: PixelChrome.stepTight,
         fillColor: offered != null ? const Color(0xFF4A3820) : Palette.slot,
-        material: PixelPlateMaterial.wood,
+        material: PixelPlateMaterial.none,
         strokeWidth: offered != null ? 2.5 : 2,
         selected: offered != null,
         shadow: false,
