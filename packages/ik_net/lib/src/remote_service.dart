@@ -651,12 +651,14 @@ class RemoteMultiplayerService implements MultiplayerService {
 
   @override
   Future<Map<String, String>> publishedNameColors(Iterable<String> userIds) async {
+    final ids = userIds.where((id) => id.isNotEmpty).toSet().toList();
+    if (ids.isEmpty) return const <String, String>{};
+    // Parallel profile reads — sequential awaits made chat open feel stuck.
+    final profiles = await Future.wait(ids.map(profile));
     final colors = <String, String>{};
-    for (final userId in userIds.toSet()) {
-      if (userId.isEmpty) continue;
-      final profile = await this.profile(userId);
-      final color = normalizeNameColorHex(profile?.nameColor);
-      if (color != null) colors[userId] = color;
+    for (var i = 0; i < ids.length; i++) {
+      final color = normalizeNameColorHex(profiles[i]?.nameColor);
+      if (color != null) colors[ids[i]] = color;
     }
     return colors;
   }
@@ -736,10 +738,12 @@ class RemoteMultiplayerService implements MultiplayerService {
       columns: remoteChatColumns,
       equals: <String, Object?>{'channel_key': chatChannelKey(channel)},
       orderBy: 'created_at',
+      ascending: false,
       limit: remoteChatLimit,
     );
     if (!result.ok) return const <ChatMessage>[];
-    final messages = result.rows!.map(chatMessageFrom).toList();
+    // Newest-first from the query; UI / local filter expect chronological.
+    final messages = result.rows!.map(chatMessageFrom).toList().reversed.toList();
     if (channel is! LocalChatChannel) return messages;
     return _filterLocalChat(messages);
   }
@@ -753,12 +757,13 @@ class RemoteMultiplayerService implements MultiplayerService {
       columns: remoteChatColumns,
       like: const <String, String>{'channel_key': 'dm:%'},
       orderBy: 'created_at',
+      ascending: false,
       limit: remoteDirectMessageLimit,
     );
     if (!result.ok) return const <ChatMessage>[];
     final silenced = _local.backend.silencedIds(viewerId);
     return [
-      for (final message in result.rows!.map(chatMessageFrom))
+      for (final message in result.rows!.map(chatMessageFrom).toList().reversed)
         if (dmChannelInvolves(message.channelKey, viewerId) && !silenced.contains(message.userId))
           message,
     ];
@@ -1482,9 +1487,19 @@ class RemoteMultiplayerService implements MultiplayerService {
     final mine = await profile(me) ?? _local.backend.getProfile(me);
     final viewerPrivacy = mine?.privacyLocalChat ?? chatPrivacyPublic;
     final friends = await _friendIdSet();
+    final senderIds = <String>{
+      for (final message in messages)
+        if (message.userId.isNotEmpty) message.userId,
+    }..remove(me);
+    final profiles = await Future.wait(senderIds.map(profile));
+    final byId = <String, MultiplayerProfile?>{
+      for (var i = 0; i < senderIds.length; i++) senderIds.elementAt(i): profiles[i],
+    };
     final out = <ChatMessage>[];
     for (final message in messages) {
-      final sender = await profile(message.userId) ?? _local.backend.getProfile(message.userId);
+      final sender = message.userId == me
+          ? mine
+          : (byId[message.userId] ?? _local.backend.getProfile(message.userId));
       if (canSeeLocalChatLine(
         viewerId: me,
         senderId: message.userId,

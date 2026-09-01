@@ -320,10 +320,13 @@ class MultiplayerController extends ChangeNotifier {
 
   @override
   void dispose() {
+    _alive = false;
     _accountSaveTimer?.cancel();
     stopPolling();
     super.dispose();
   }
+
+  bool _alive = true;
 
   void announce(String? text) {
     _notice = text;
@@ -1025,7 +1028,28 @@ class MultiplayerController extends ChangeNotifier {
     }
   }
 
+  /// Loads name colors after lines are already shown.
+  Future<void> _ingestNameColorsLater(Iterable<ChatMessage> messages) async {
+    final before = Map<String, String>.of(_publishedNameColors);
+    await _ingestNameColors(messages);
+    if (_alive && !_mapEquals(before, _publishedNameColors)) {
+      notifyListeners();
+    }
+  }
+
+  bool _mapEquals(Map<String, String> a, Map<String, String> b) {
+    if (identical(a, b)) return true;
+    if (a.length != b.length) return false;
+    for (final entry in a.entries) {
+      if (b[entry.key] != entry.value) return false;
+    }
+    return true;
+  }
+
   /// Opens a chat tab and loads what it holds.
+  ///
+  /// Lines notify as soon as the list returns; name colors fill in afterward so
+  /// opening chat is not blocked on one profile fetch per author.
   Future<void> selectChatTab(ChatTab tab, String locationId, {bool citadelHub = false}) async {
     _chatTab = tab;
     if (!canSeeSocialPages) {
@@ -1041,12 +1065,12 @@ class MultiplayerController extends ChangeNotifier {
     if (tab == ChatTab.dm) {
       _messages = await service.listDirectMessages();
       _ingestDmPeers(_messages);
-      await _ingestNameColors(_messages);
       if (_selectedDmPeerId == null && _openDmPeerIds.isNotEmpty) {
         _selectedDmPeerId = _openDmPeerIds.first;
       }
       _markTabRead(ChatTab.dm, locationId);
       notifyListeners();
+      unawaited(_ingestNameColorsLater(_messages));
       return;
     }
     final channel = chatChannelForTab(
@@ -1057,9 +1081,9 @@ class MultiplayerController extends ChangeNotifier {
       guestGuildId: _guestGuildId,
     );
     _messages = channel == null ? const <ChatMessage>[] : await service.listChat(channel);
-    await _ingestNameColors(_messages);
     _markTabRead(tab, locationId);
     notifyListeners();
+    unawaited(_ingestNameColorsLater(_messages));
   }
 
   /// Posts skill milestone lines to guild chat when thresholds are crossed.
@@ -1100,8 +1124,8 @@ class MultiplayerController extends ChangeNotifier {
     if (!result.ok) return;
     if (_chatTab == ChatTab.guild) {
       _messages = await service.listChat(ChatChannel.guild(guildId));
-      await _ingestNameColors(_messages);
       notifyListeners();
+      unawaited(_ingestNameColorsLater(_messages));
     }
   }
 
@@ -1128,7 +1152,7 @@ class MultiplayerController extends ChangeNotifier {
       final result = await service.sendChat(channel, body);
       if (!result.ok) return result.reason;
       _messages = await service.listChat(channel);
-      await _ingestNameColors(_messages);
+      unawaited(_ingestNameColorsLater(_messages));
       return null;
     });
   }

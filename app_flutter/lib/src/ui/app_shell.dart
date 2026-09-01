@@ -607,14 +607,12 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
                                       MediaQuery.textScalerOf(context),
                                     ),
                                   ),
-                                  // Outer builder already listens to [controller];
-                                  // only multiplayer needs a nested subscription.
-                                  child: ListenableBuilder(
-                                    listenable: multiplayer,
-                                    builder: (context, _) => BatterySaverScope(
-                                      enabled: controller.batterySaver,
-                                      child: _buildFrame(context, sideChat: sideChat),
-                                    ),
+                                  // Outer builder already listens to [controller].
+                                  // Multiplayer polls must not rebuild LocationView —
+                                  // chat / nearby / HUD badge listen on their own.
+                                  child: BatterySaverScope(
+                                    enabled: controller.batterySaver,
+                                    child: _buildFrame(context, sideChat: sideChat),
                                   ),
                                 ),
                               ),
@@ -690,18 +688,23 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
       children: [
         Column(
           children: [
-            if (multiplayer.cloudUnavailable)
-              const Material(
-                color: Palette.danger,
-                child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  child: Text(
-                    'Cloud unavailable — progress is not syncing.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.white, fontSize: 12),
+            ListenableBuilder(
+              listenable: multiplayer,
+              builder: (context, _) {
+                if (!multiplayer.cloudUnavailable) return const SizedBox.shrink();
+                return const Material(
+                  color: Palette.danger,
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    child: Text(
+                      'Cloud unavailable — progress is not syncing.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.white, fontSize: 12),
+                    ),
                   ),
-                ),
-              ),
+                );
+              },
+            ),
             MediaQuery(
               data: MediaQuery.of(context)
                   .copyWith(textScaler: playableHudTextScaler(MediaQuery.textScalerOf(context))),
@@ -792,19 +795,22 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
             child: ChatLauncher(
               open: _chatOpen,
               multiplayer: multiplayer,
-              onToggle: () async {
+              onToggle: () {
                 if (_chatOpen) {
                   _closeChat();
                   return;
                 }
+                // Open first — do not wait on history fetch / name-color lookups.
+                setState(() => _chatOpen = true);
                 if (multiplayer.canSeeSocialPages) {
-                  await multiplayer.selectChatTab(
-                    multiplayer.chatTab,
-                    save.currentLocationId,
-                    citadelHub: _inCitadel,
+                  unawaited(
+                    multiplayer.selectChatTab(
+                      multiplayer.chatTab,
+                      save.currentLocationId,
+                      citadelHub: _inCitadel,
+                    ),
                   );
                 }
-                if (mounted) setState(() => _chatOpen = true);
               },
             ),
           ),
