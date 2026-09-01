@@ -319,7 +319,7 @@ class _LocationViewState extends State<LocationView> {
                                   child: OverlayChipButton(
                                     tooltip: 'Open world map',
                                     onPressed: widget.onOpenMap,
-                                    child: GameImage(uiMapAssetPath(), width: 20, height: 20),
+                                    child: GameImage(uiMapAssetPath(), width: 32, height: 32),
                                   ),
                                 ),
                               ],
