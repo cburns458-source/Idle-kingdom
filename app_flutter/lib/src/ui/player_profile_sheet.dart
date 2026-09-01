@@ -166,7 +166,26 @@ class _PlayerProfileSheetState extends State<PlayerProfileSheet> {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _profilePortrait(view),
+                SizedBox(
+                  width: 156,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _profilePortrait(view),
+                      if (view.motto != null && view.motto!.isNotEmpty) ...[
+                        const SizedBox(height: 6),
+                        MottoText(
+                          view.motto!,
+                          style: TextStyle(
+                            fontSize: 13,
+                            height: 1.25,
+                            color: UiChrome.of(context).panelInk.withValues(alpha: 0.9),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Column(
@@ -202,17 +221,6 @@ class _PlayerProfileSheetState extends State<PlayerProfileSheet> {
                       ),
                       MutedText(view.summaryLine),
                       if (_isSelf) const MutedText('This is you.'),
-                      if (view.motto != null && view.motto!.isNotEmpty) ...[
-                        const SizedBox(height: 6),
-                        MottoText(
-                          view.motto!,
-                          style: TextStyle(
-                            fontSize: 13,
-                            height: 1.25,
-                            color: UiChrome.of(context).panelInk.withValues(alpha: 0.9),
-                          ),
-                        ),
-                      ],
                       const SizedBox(height: 8),
                       _skillIconGrid(_profile!),
                     ],

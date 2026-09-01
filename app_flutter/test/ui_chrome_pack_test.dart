@@ -30,12 +30,12 @@ void main() {
     expect(find.text('UI look'), findsOneWidget);
     expect(find.text('Stone'), findsOneWidget);
 
-    await tester.tap(find.widgetWithText(GameButton, 'Stone'));
+    await tester.tap(find.widgetWithText(GameTextButton, 'Stone'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
     expect(controller.uiChromePack, UiChromePack.stone);
 
-    await tester.tap(find.widgetWithText(GameButton, 'Wood'));
+    await tester.tap(find.widgetWithText(GameTextButton, 'Wood'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
     expect(controller.uiChromePack, UiChromePack.wood);

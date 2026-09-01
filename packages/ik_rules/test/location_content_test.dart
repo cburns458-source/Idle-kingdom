@@ -32,6 +32,23 @@ void main() {
     expect(_weights(db, activity.raw['Pool ID']! as String), {'ACN-0048': 60, 'ACN-0047': 40});
   });
 
+  test('citadel gathering also hunts pheasant and gathers wild roots', () {
+    final hunt = db.activities.firstWhere((row) => row.activityId == 'ACT-0051');
+    expect(hunt.raw['Contextual Name'], 'Hunt pheasant');
+    expect(hunt.raw['Location ID'], 'LOC-0031');
+    expect(_weights(db, hunt.raw['Pool ID']! as String), {'ACN-0017': 100});
+
+    final roots = db.activities.firstWhere((row) => row.activityId == 'ACT-0052');
+    expect(roots.raw['Contextual Name'], 'Gather wild roots');
+    expect(roots.raw['Location ID'], 'LOC-0031');
+    expect(_weights(db, roots.raw['Pool ID']! as String), {'ACN-0105': 100});
+
+    final pheasant = db.actions.firstWhere((row) => row.raw['Action ID'] == 'ACN-0017');
+    expect(pheasant.raw['Reward Table ID'], 'RWT-0052');
+    expect(pheasant.raw['Secondary Reward Table ID'], 'RWT-0063');
+    expect(pheasant.raw['Tertiary Reward Table ID'], 'RWT-0119');
+  });
+
   test('kingswoods rare wood is cedar and oak', () {
     final activity = db.activities.firstWhere((row) => row.activityId == 'ACT-0026');
     expect(activity.raw['Contextual Name'], 'Search for rare wood');

@@ -4,6 +4,7 @@ import 'package:idle_kingdoms/src/session/multiplayer_controller.dart';
 import 'package:idle_kingdoms/src/theme.dart';
 import 'package:idle_kingdoms/src/ui/account_panel.dart';
 import 'package:idle_kingdoms/src/ui/game_image.dart';
+import 'package:idle_kingdoms/src/ui/motto_text.dart';
 import 'package:idle_kingdoms/src/ui/player_profile_sheet.dart';
 import 'package:idle_kingdoms/src/ui/social_bits.dart';
 import 'package:ik_content/ik_content.dart';
@@ -162,6 +163,28 @@ void main() {
     expect(beside, isTrue);
   });
 
+  testWidgets('profile motto sits under the portrait, left of skills', (tester) async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(motto: 'Keep the watch.'),
+    );
+    final net = buildMultiplayer(database);
+    addTearDown(controller.dispose);
+    addTearDown(net.dispose);
+    await signIn(net);
+    await pumpPanel(
+      tester,
+      PlayerProfileSheet(controller: controller, multiplayer: net, userId: net.session!.userId),
+    );
+    await tester.pumpAndSettle();
+
+    final art = tester.getRect(find.byType(SocialPortrait));
+    final motto = tester.getRect(find.byType(MottoText));
+    expect(motto.top, greaterThanOrEqualTo(art.bottom - 2));
+    expect(motto.left, closeTo(art.left, 8));
+    expect(motto.right, lessThanOrEqualTo(art.right + 8));
+  });
+
   testWidgets('guild search shows The Watch, and a recruit can join and leave', (tester) async {
     final controller = buildController(database, seed: startedCharacter(database));
     final net = buildMultiplayer(database);
@@ -277,10 +300,16 @@ void main() {
     );
 
     expect(find.text('Friends'), findsOne);
+    expect(find.text('Mira'), findsNothing);
+    await tester.tap(find.text('Friends'));
+    await tester.pump();
     expect(find.text('Mira'), findsOne);
     expect(find.textContaining('The Watch ·'), findsOne);
     expect(find.text('Sent requests'), findsNothing);
     expect(find.text('Ignored'), findsOne);
+    expect(find.text('Bram'), findsNothing);
+    await tester.tap(find.text('Ignored'));
+    await tester.pump();
     expect(find.text('Bram'), findsOne);
   });
 
@@ -301,10 +330,13 @@ void main() {
     await tester.pump(const Duration(milliseconds: 280));
     await tester.tap(find.widgetWithText(GameButton, 'Account'));
     await tester.pump();
+    await tester.ensureVisible(find.text('Ignored'));
+    await tester.tap(find.text('Ignored'));
+    await tester.pump();
     await tester.ensureVisible(find.text('Bram'));
 
     expect(find.text('Ignored'), findsOne);
     expect(find.text('Bram'), findsOne);
-    expect(find.widgetWithText(GameButton, 'Unignore'), findsOne);
+    expect(find.widgetWithText(GameTextButton, 'Unignore'), findsOne);
   });
 }
