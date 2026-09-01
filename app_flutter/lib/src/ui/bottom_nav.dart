@@ -3,14 +3,15 @@ import 'package:flutter/material.dart';
 import '../theme.dart';
 import 'app_shell.dart';
 
-const List<(GameScreen, String)> _nestItems = [
+/// Settings / Log / Leaderboards / Guilds — the hamburger nest and the desktop rail.
+const List<(GameScreen, String)> nestMenuItems = [
   (GameScreen.menu, 'Settings'),
   (GameScreen.log, 'Log'),
   (GameScreen.leaderboards, 'Leaderboards'),
   (GameScreen.guilds, 'Guilds'),
 ];
 
-final Set<GameScreen> _nestScreens = {for (final item in _nestItems) item.$1};
+final Set<GameScreen> nestMenuScreens = {for (final item in nestMenuItems) item.$1};
 
 /// The chin: where you are, character, and the nest for everything else.
 class BottomNav extends StatefulWidget {
@@ -19,11 +20,15 @@ class BottomNav extends StatefulWidget {
     required this.screen,
     required this.locationName,
     required this.onSelect,
+    this.showMenu = true,
   });
 
   final GameScreen screen;
   final String locationName;
   final ValueChanged<GameScreen> onSelect;
+
+  /// When false, the hamburger is omitted (desktop rails own those pages).
+  final bool showMenu;
 
   @override
   State<BottomNav> createState() => _BottomNavState();
@@ -34,7 +39,7 @@ class _BottomNavState extends State<BottomNav> {
   OverlayEntry? _nestEntry;
 
   bool get _nestOpen => _nestEntry != null;
-  bool get _nestActive => _nestOpen || _nestScreens.contains(widget.screen);
+  bool get _nestActive => _nestOpen || nestMenuScreens.contains(widget.screen);
 
   @override
   void dispose() {
@@ -124,19 +129,21 @@ class _BottomNavState extends State<BottomNav> {
                 onTap: () => _selectTab(GameScreen.character),
               ),
             ),
-            const VerticalDivider(width: 1, color: Palette.edge),
-            Expanded(
-              child: CompositedTransformTarget(
-                link: _nestLink,
-                child: _NavSection(
-                  selected: _nestActive,
-                  tooltip: 'Open menu',
-                  semanticsLabel: 'Open menu',
-                  onTap: _toggleNest,
-                  child: const Icon(Icons.menu, size: 22),
+            if (widget.showMenu) ...[
+              const VerticalDivider(width: 1, color: Palette.edge),
+              Expanded(
+                child: CompositedTransformTarget(
+                  link: _nestLink,
+                  child: _NavSection(
+                    selected: _nestActive,
+                    tooltip: 'Open menu',
+                    semanticsLabel: 'Open menu',
+                    onTap: _toggleNest,
+                    child: const Icon(Icons.menu, size: 22),
+                  ),
                 ),
               ),
-            ),
+            ],
           ],
         ),
       ),
@@ -169,7 +176,7 @@ class _NestPopup extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               mainAxisSize: MainAxisSize.min,
               children: [
-                for (final item in _nestItems)
+                for (final item in nestMenuItems)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 4),
                     child: _NavSection(

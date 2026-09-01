@@ -7,6 +7,7 @@ import 'package:idle_kingdoms/src/session/tester_access.dart';
 import 'package:idle_kingdoms/src/theme.dart';
 import 'package:idle_kingdoms/src/ui/app_shell.dart';
 import 'package:idle_kingdoms/src/ui/menu_view.dart';
+import 'package:idle_kingdoms/src/ui/playable_frame.dart';
 import 'package:idle_kingdoms/src/ui/reward_strip.dart';
 import 'package:ik_content/ik_content.dart';
 import 'package:ik_net/ik_net.dart';
@@ -717,11 +718,30 @@ void main() {
     await tester.pump();
 
     expect(find.byTooltip('Open chat'), findsNothing);
+    expect(find.byTooltip('Open menu'), findsNothing);
     expect(find.byKey(const Key('chat-panel')), findsOne);
     expect(find.byTooltip('Close chat'), findsNothing);
+    expect(find.text('Menu'), findsOne);
+    expect(find.text('Settings, log, and social pages.'), findsOne);
     final frame = tester.getSize(find.byType(AppShell));
     expect(frame.height, 1080);
-    expect(tester.getSize(find.byKey(const Key('chat-panel'))).width, greaterThan(300));
+    expect(tester.getSize(find.byKey(const Key('chat-panel'))).width, desktopRailWidth);
+  });
+
+  testWidgets('desktop rails open Log in the phone column', (tester) async {
+    final controller = buildController(database, seed: startedCharacter(database));
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller, size: const Size(1920, 1080));
+    await tester.pump();
+
+    await tester.tap(find.widgetWithText(GameButton, 'Log'));
+    await tester.pump();
+    expect(find.text('Deeds unlocked on this save.'), findsOne);
+
+    await tester.tap(find.widgetWithText(GameButton, 'Log'));
+    await tester.pump();
+    expect(find.text('Deeds unlocked on this save.'), findsNothing);
+    expect(find.byTooltip('Open world map'), findsOne);
   });
 
   testWidgets('an iPad landscape window docks chat beside the column', (tester) async {
@@ -731,8 +751,10 @@ void main() {
     await tester.pump();
 
     expect(find.byTooltip('Open chat'), findsNothing);
+    expect(find.byTooltip('Open menu'), findsNothing);
     expect(find.byKey(const Key('chat-panel')), findsOne);
     expect(find.byTooltip('Close chat'), findsNothing);
+    expect(find.text('Menu'), findsOne);
   });
 
   testWidgets('chat opens above the chin with a close control', (tester) async {

@@ -269,6 +269,21 @@ class _LocationViewState extends State<LocationView> {
                             Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
+                                if (widget.onOpenSubMap != null)
+                                  if (backToSubMapLabel(controller.db, location)
+                                      case final backLabel?) ...[
+                                    OverlayChipButton(
+                                      tooltip: backLabel,
+                                      onPressed: () =>
+                                          widget.onOpenSubMap!(getLocationMapId(location)),
+                                      child: const Icon(
+                                        Icons.arrow_back,
+                                        size: 32,
+                                        color: Color(0xFF3F522E),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 7),
+                                  ],
                                 Builder(
                                   builder: (context) {
                                     return ListenableBuilder(
@@ -299,35 +314,13 @@ class _LocationViewState extends State<LocationView> {
                                   },
                                 ),
                                 const SizedBox(width: 7),
-                                Column(
-                                  children: [
-                                    QuestHintPulse(
-                                      enabled: questHintsWorldMapButton(
-                                        controller.db,
-                                        controller.save,
-                                      ),
-                                      child: OverlayChipButton(
-                                        tooltip: 'Open world map',
-                                        onPressed: widget.onOpenMap,
-                                        child: GameImage(uiMapAssetPath(), width: 38, height: 38),
-                                      ),
-                                    ),
-                                    if (widget.onOpenSubMap != null)
-                                      if (backToSubMapLabel(controller.db, location)
-                                          case final backLabel?) ...[
-                                        const SizedBox(height: 7),
-                                        OverlayChipButton(
-                                          tooltip: backLabel,
-                                          onPressed: () =>
-                                              widget.onOpenSubMap!(getLocationMapId(location)),
-                                          child: const Icon(
-                                            Icons.arrow_back,
-                                            size: 32,
-                                            color: Color(0xFF3F522E),
-                                          ),
-                                        ),
-                                      ],
-                                  ],
+                                QuestHintPulse(
+                                  enabled: questHintsWorldMapButton(controller.db, controller.save),
+                                  child: OverlayChipButton(
+                                    tooltip: 'Open world map',
+                                    onPressed: widget.onOpenMap,
+                                    child: GameImage(uiMapAssetPath(), width: 38, height: 38),
+                                  ),
                                 ),
                               ],
                             ),
