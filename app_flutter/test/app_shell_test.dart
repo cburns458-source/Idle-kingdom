@@ -724,6 +724,17 @@ void main() {
     expect(tester.getSize(find.byKey(const Key('chat-panel'))).width, greaterThan(300));
   });
 
+  testWidgets('an iPad landscape window docks chat beside the column', (tester) async {
+    final controller = buildController(database, seed: startedCharacter(database));
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller, size: const Size(1080, 810));
+    await tester.pump();
+
+    expect(find.byTooltip('Open chat'), findsNothing);
+    expect(find.byKey(const Key('chat-panel')), findsOne);
+    expect(find.byTooltip('Close chat'), findsNothing);
+  });
+
   testWidgets('chat opens above the chin with a close control', (tester) async {
     final controller = buildController(database, seed: startedCharacter(database));
     addTearDown(controller.dispose);
