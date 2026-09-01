@@ -546,6 +546,12 @@ void main() {
     expect(nearby.right, lessThanOrEqualTo(map.left));
     expect(back.center.dy, closeTo(nearby.center.dy, 8));
     expect(nearby.center.dy, closeTo(map.center.dy, 8));
+    expect(back.width, 32);
+    expect(back.height, 32);
+    expect(nearby.width, 32);
+    expect(nearby.height, 32);
+    expect(map.width, 32);
+    expect(map.height, 32);
   });
 
   testWidgets('the workshop lists Special production as its own tab', (tester) async {

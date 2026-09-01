@@ -455,6 +455,16 @@ CombatVictoryResult applyCombatVictory(
     ),
   );
   next = recordEnemyKill(db, next, jsString(enemy.raw['Enemy ID']));
+  if (isBossEnemy(enemy)) {
+    next = next.copyWith(
+      statistics: PlayerStatistics(
+        values: <String, num>{
+          ...next.statistics.values,
+          'bosses_killed': (next.statistics.values['bosses_killed'] ?? 0) + 1,
+        },
+      ),
+    );
+  }
 
   final food = consumeFoodAfterVictory(db, next, skipHealing: skipVictoryFood);
   next = withBossRespawn(clearCombatSave(food.save), enemy, nowMs);

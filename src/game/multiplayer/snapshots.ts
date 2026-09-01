@@ -3,6 +3,7 @@ import type { PlayerSave } from '../save/types'
 import { levelForTotalXp } from '../activity/xp'
 import { logCompletion } from '../log/log'
 import { rankedPvpKd } from '../pvp/matchmaking'
+import { enemyKillCount, launchBossEnemies, totalBossKills } from '../combat/boss'
 import { isPacifistSave, totalLevel, totalSkillXp } from '../skills/totals'
 import {
   publicEquipmentFromSave,
@@ -49,6 +50,11 @@ export function buildLeaderboardSnapshot(
     },
     { boardKey: 'gold_earned', value: Number(save.statistics.values.gold_earned ?? 0) },
     { boardKey: 'monsters_killed', value: Number(save.statistics.values.monsters_killed ?? 0) },
+    { boardKey: 'bosses_killed', value: totalBossKills(db, save) },
+    ...launchBossEnemies(db).map((enemy) => ({
+      boardKey: `boss:${enemy['Enemy ID']}` as MultiplayerBoardKey,
+      value: enemyKillCount(save, enemy['Enemy ID']),
+    })),
     { boardKey: 'critters_collected', value: crittersCollected },
     {
       boardKey: 'bounties_completed',
@@ -81,6 +87,11 @@ export function boardLabel(db: GameDatabase, boardKey: MultiplayerBoardKey): str
   if (boardKey === 'total_experience') return 'Total XP'
   if (boardKey === 'gold_earned') return 'Gold Earned'
   if (boardKey === 'monsters_killed') return 'Monsters Killed'
+  if (boardKey === 'bosses_killed') return 'Total kills'
+  if (boardKey.startsWith('boss:')) {
+    const enemyId = boardKey.slice('boss:'.length)
+    return db.Enemies.find((enemy) => enemy['Enemy ID'] === enemyId)?.['Display Name'] ?? enemyId
+  }
   if (boardKey === 'critters_collected') return 'Critters Collected'
   if (boardKey === 'bounties_completed') return 'Bounties Completed'
   if (boardKey === 'pvp_kd') return 'PvP K/D'

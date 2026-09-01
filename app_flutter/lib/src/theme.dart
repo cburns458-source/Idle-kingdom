@@ -26,7 +26,8 @@ abstract final class Palette {
 
   /// Outer board / wood chrome.
   static const wood = Color(0xFF2A1C12);
-  static const softGreen = Color(0xFF8FAF7A);
+  static const softGreen = Color(0xFF2E8B57);
+  static const softGreenShade = Color(0xFF1F5E3B);
   static const ink = Color(0xFF1F1610);
   static const danger = Color(0xFFC2603F);
 
@@ -927,20 +928,21 @@ class OverlayChipButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final rim = highlightColor ?? (highlight ? Palette.gold : null);
     final side = BorderSide(
-      color: rim ?? (dark ? const Color(0x8C9A7B32) : const Color(0xB3B4DC96)),
+      color:
+          rim ?? (dark ? const Color(0x8C9A7B32) : Palette.softGreenShade.withValues(alpha: 0.70)),
       width: rim != null ? 2 : 1,
     );
     return Tooltip(
       message: tooltip,
       child: Material(
-        color: dark ? Palette.slot : const Color(0xFFBADCA0),
+        color: dark ? Palette.slot : Palette.softGreen,
         elevation: 6,
         shadowColor: const Color(0x47000000),
         shape: PixelSteppedBorder(step: PixelChrome.step, side: side),
         child: InkWell(
           onTap: onPressed,
           customBorder: PixelSteppedBorder(step: PixelChrome.step),
-          child: SizedBox(width: 60, height: 60, child: Center(child: child)),
+          child: SizedBox(width: 32, height: 32, child: Center(child: child)),
         ),
       ),
     );

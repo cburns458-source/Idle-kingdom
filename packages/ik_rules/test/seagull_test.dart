@@ -26,7 +26,7 @@ void main() {
     final enemy = getEnemy(db, 'ENM-0021')!;
     expect(enemy.raw['Display Name'], 'Seagull');
     expect(enemy.raw['Location ID'], 'LOC-0004');
-    expect(enemy.raw['Maximum HP'], 90);
+    expect(enemy.raw['Maximum HP'], 110);
     expect(enemy.raw['Min Damage'], 20);
     expect(enemy.raw['Max Damage'], 40);
     expect(enemy.raw['Drop Chance'], 0);
@@ -75,7 +75,7 @@ void main() {
     expect(started.ok, isTrue);
     expect(started.save!.currentActionId, 'ACN-0173');
     expect(started.save!.combatEnemyId, 'ENM-0021');
-    expect(started.save!.combatEnemyHp, 90);
+    expect(started.save!.combatEnemyHp, 110);
   });
 
   test('dock fishing rolls tuna or shark, never a seagull', () {

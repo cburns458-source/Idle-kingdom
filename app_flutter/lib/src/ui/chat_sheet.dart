@@ -256,35 +256,36 @@ class _ChatSheetState extends State<ChatSheet> {
                                       color: Palette.parchmentText,
                                     ),
                                     children: [
-                                      WidgetSpan(
-                                        alignment: PlaceholderAlignment.baseline,
-                                        baseline: TextBaseline.alphabetic,
-                                        child: GestureDetector(
-                                          onTap: line.userId.isEmpty
-                                              ? null
-                                              : () => openPlayerProfile(
-                                                  context,
-                                                  controller: widget.controller,
-                                                  multiplayer: net,
-                                                  userId: line.userId,
-                                                ),
-                                          child: Text(
-                                            '${line.username}: ',
-                                            style: TextStyle(
-                                              fontFamily: gameFontFamily,
-                                              fontSize: 13,
-                                              fontWeight: FontWeight.w400,
-                                              color:
-                                                  colorFromHexRgb(
-                                                    net.publishedNameColor(line.userId),
-                                                  ) ??
-                                                  (line.mine
-                                                      ? Palette.gold
-                                                      : Palette.parchmentText),
+                                      if (line.username.isNotEmpty)
+                                        WidgetSpan(
+                                          alignment: PlaceholderAlignment.baseline,
+                                          baseline: TextBaseline.alphabetic,
+                                          child: GestureDetector(
+                                            onTap: line.userId.isEmpty
+                                                ? null
+                                                : () => openPlayerProfile(
+                                                    context,
+                                                    controller: widget.controller,
+                                                    multiplayer: net,
+                                                    userId: line.userId,
+                                                  ),
+                                            child: Text(
+                                              '${line.username}: ',
+                                              style: TextStyle(
+                                                fontFamily: gameFontFamily,
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.w400,
+                                                color:
+                                                    colorFromHexRgb(
+                                                      net.publishedNameColor(line.userId),
+                                                    ) ??
+                                                    (line.mine
+                                                        ? Palette.gold
+                                                        : Palette.parchmentText),
+                                              ),
                                             ),
                                           ),
                                         ),
-                                      ),
                                       TextSpan(text: line.body),
                                     ],
                                   ),

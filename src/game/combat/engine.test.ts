@@ -71,8 +71,8 @@ describe('combat engine', () => {
     const enemy = launch.Enemies.find((row) => row['Enemy ID'] === 'ENM-0001')!
     const action = launch.Actions.find((row) => row['Action ID'] === 'ACN-0001')!
     const victory = applyCombatVictory(launch, save, action, enemy, () => 0)
-    expect(victory.xpGained).toBe(250)
-    expect(victory.save.skills.find((skill) => skill.skillId === 'SKL-0001')?.xp).toBe(250)
+    expect(victory.xpGained).toBe(125)
+    expect(victory.save.skills.find((skill) => skill.skillId === 'SKL-0001')?.xp).toBe(125)
     expect(victory.goldGained).toBe(0)
     expect(victory.foodConsumed).toBe(true)
     expect(victory.save.currentHp).toBeGreaterThan(900)
@@ -142,8 +142,8 @@ describe('combat engine', () => {
     expect(round.playerHit).toBe(10)
     expect(round.enemyHit).toBe(9) // 10 raw - 1 Damage Reduction from the chestplate.
     expect(round.thornsHit).toBe(1) // 10% of 9, rounded.
-    // 80 max HP - 10 (player hit) - 1 (10% Thorns reflect) = 69.
-    expect(round.enemyHp).toBe(69)
+    // 100 max HP - 10 (player hit) - 1 (10% Thorns reflect) = 89.
+    expect(round.enemyHp).toBe(89)
   })
 
   it('does not reflect damage when no Thorns enchantment is equipped', () => {
@@ -152,7 +152,7 @@ describe('combat engine', () => {
     const enemy = launch.Enemies.find((row) => row['Enemy ID'] === 'ENM-0001')!
     const round = resolveCombatRound(launch, save, enemy, enemy['Maximum HP'], () => 0)
     expect(round.thornsHit).toBe(0)
-    expect(round.enemyHp).toBe(70)
+    expect(round.enemyHp).toBe(90)
   })
 
   it('rolls a separate off-hand dagger hit with full damage and no crit', () => {

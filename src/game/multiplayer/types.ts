@@ -49,11 +49,13 @@ export type MultiplayerBoardKey =
   | 'total_level_combat_1'
   | 'gold_earned'
   | 'monsters_killed'
+  | 'bosses_killed'
   | 'critters_collected'
   | 'bounties_completed'
   | 'pvp_kd'
   | 'log_completion'
   | `skill:${string}`
+  | `boss:${string}`
 
 /**
  * Boards that carry a second number: total level and per-skill ranks show XP
@@ -76,6 +78,10 @@ export function boardCarriesExperience(boardKey: MultiplayerBoardKey): boolean {
  */
 export function boardHidesZeroes(boardKey: MultiplayerBoardKey): boolean {
   return boardKey === 'total_level_combat_1'
+}
+
+export function isBossBoardKey(boardKey: MultiplayerBoardKey): boolean {
+  return boardKey === 'bosses_killed' || boardKey.startsWith('boss:')
 }
 
 export const CHAT_PRIVACY_PUBLIC = 'public'

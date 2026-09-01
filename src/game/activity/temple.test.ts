@@ -47,7 +47,7 @@ describe('Temple', () => {
     expect(save.equipment.slots[OFFHAND_SLOT_ID]).toBeNull()
     expect(save.currentActivityId).toBe('ACT-0035')
     expect(save.combatEnemyId).toBe('ENM-0020')
-    expect(save.combatEnemyHp).toBe(350)
+    expect(save.combatEnemyHp).toBe(420)
   })
 
   it('restores full health without unequipping or starting an activity', () => {

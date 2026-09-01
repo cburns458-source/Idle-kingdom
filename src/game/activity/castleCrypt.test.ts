@@ -66,7 +66,7 @@ describe('Castle Crypt', () => {
       'Target ID': 'ENM-0022',
       'Drop Chance': 0,
       'Reward Table ID': null,
-      'XP Reward': 6000,
+      'XP Reward': 3000,
     })
   })
 

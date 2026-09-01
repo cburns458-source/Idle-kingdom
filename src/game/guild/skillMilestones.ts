@@ -55,6 +55,12 @@ export function formatGuildSkillMilestone(
   return `${name} reached ${milestone.xpMillion}m ${milestone.skillName} XP`
 }
 
+/** True when [body] is a guild skill-milestone line, which already names the player. */
+export function isGuildSkillMilestoneBody(body: string): boolean {
+  const text = body.trim()
+  return /^.+ reached .+ \d+$/.test(text) || /^.+ reached \d+m .+ XP$/.test(text)
+}
+
 /** Level thresholds at or below `level` starting from settings.levelStart. */
 export function levelMilestonesAtOrBelow(
   level: number,

@@ -43,24 +43,24 @@ describe('mother squid boss', () => {
       damageMode: 'fishing',
       respawnSeconds: 30,
       sleepStart: 0,
-      playerBaseHpScale: 2,
+      playerBaseHpScale: 2.2,
       playerBaseDamagePctMin: 8,
       playerBaseDamagePctMax: 12,
     })
   })
 
-  it('scales encounter HP to 2× player base HP and damage to 8–12%', () => {
+  it('scales encounter HP to 2.2× player base HP and damage to 8–12%', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const squid = launch.Enemies.find((row) => row['Enemy ID'] === 'ENM-0023')!
     const action = launch.Actions.find((row) => row['Action ID'] === 'ACN-0178')!
     const save = saveAtDepths(launch)
     const baseHp = playerBaseMaxHp(launch, save)
     expect(baseHp).toBe(1000)
-    expect(enemyEncounterMaxHp(launch, save, squid)).toBe(2000)
+    expect(enemyEncounterMaxHp(launch, save, squid)).toBe(2200)
     expect(enemyEncounterDamageRange(launch, save, squid)).toEqual({ min: 80, max: 120 })
 
     const started = beginCombatSave(launch, save, action, squid)
-    expect(started.combatEnemyHp).toBe(2000)
+    expect(started.combatEnemyHp).toBe(2200)
   })
 
   it('uses fishing ATR and level for damage instead of weapon range', () => {

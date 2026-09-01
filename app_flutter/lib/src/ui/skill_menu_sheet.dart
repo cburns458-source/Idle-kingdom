@@ -173,7 +173,7 @@ class _SkillMenuRow extends StatelessWidget {
           entry.title,
           style: TextStyle(
             fontWeight: FontWeight.w400,
-            color: entry.emphasized ? Palette.gold : Palette.parchmentText,
+            color: entry.emphasized ? Palette.gold : UiChrome.of(context).panelInk,
           ),
         ),
       ),

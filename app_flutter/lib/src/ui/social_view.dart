@@ -206,6 +206,7 @@ class _LeaderboardTabState extends State<_LeaderboardTab> {
   @override
   Widget build(BuildContext context) {
     final boards = boardOptions(multiplayer.db);
+    final bossBoards = bossBoardOptions(multiplayer.db);
     final rows = leaderboardRows(
       multiplayer.board,
       tagForGuildName: (name) => guildTagForName(
@@ -244,6 +245,33 @@ class _LeaderboardTabState extends State<_LeaderboardTab> {
               );
               if (chosen == null) return;
               await multiplayer.selectBoard(boards[chosen].key, controller.save);
+            },
+          ),
+          const SizedBox(height: 10),
+          GameSelectField(
+            label: 'Bosses',
+            value:
+                bossBoards
+                    .where((board) => board.key == multiplayer.boardKey)
+                    .map((board) => board.label)
+                    .firstOrNull ??
+                'Bosses',
+            onPressed: () async {
+              final chosen = await showGameCatalogPopup(
+                context: context,
+                eyebrow: 'Bosses',
+                title: 'Boss kills',
+                selectable: true,
+                entries: [
+                  for (final board in bossBoards)
+                    CatalogPopupEntry(
+                      title: board.label,
+                      emphasized: board.key == multiplayer.boardKey,
+                    ),
+                ],
+              );
+              if (chosen == null) return;
+              await multiplayer.selectBoard(bossBoards[chosen].key, controller.save);
             },
           ),
           const SizedBox(height: 10),
