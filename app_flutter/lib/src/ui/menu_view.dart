@@ -139,193 +139,206 @@ class _MenuViewState extends State<MenuView> {
           if (_tab == _SettingsTab.account)
             AccountPanel(controller: controller, multiplayer: widget.multiplayer, embedded: true)
           else ...[
-            _settingsSection('UI'),
-            GamePanel(
-              framed: true,
-              child: Row(
-                children: [
-                  const Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Battery saver', style: TextStyle(fontWeight: FontWeight.w400)),
-                        MutedText('Skip animations and refresh the screen less often.'),
-                      ],
-                    ),
-                  ),
-                  GameSwitch(value: controller.batterySaver, onChanged: controller.setBatterySaver),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-            GamePanel(
-              framed: true,
-              child: Row(
-                children: [
-                  const Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Map travel animation', style: TextStyle(fontWeight: FontWeight.w400)),
-                        MutedText('Walk a small sprite to the destination before arriving.'),
-                      ],
-                    ),
-                  ),
-                  GameSwitch(
-                    value: controller.mapTravelAnimation,
-                    onChanged: controller.batterySaver ? null : controller.setMapTravelAnimation,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-            GamePanel(
-              framed: true,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('UI look', style: TextStyle(fontWeight: FontWeight.w400)),
-                  const MutedText('Wood boards and tan panels, or grey stone and ash.'),
-                  const SizedBox(height: 10),
-                  Row(
+            _SettingsFold(
+              heading: 'UI',
+              children: [
+                GamePanel(
+                  framed: true,
+                  child: Row(
                     children: [
-                      for (final pack in UiChromePack.values) ...[
-                        if (pack != UiChromePack.values.first) const SizedBox(width: 8),
-                        Expanded(
-                          child: GameTextButton(
-                            label: UiChrome.forPack(pack).label,
-                            selected: controller.uiChromePack == pack,
-                            onPressed: () => controller.setUiChromePack(pack),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-            ListenableBuilder(
-              listenable: widget.multiplayer,
-              builder: (context, _) {
-                return Column(
-                  children: [
-                    _togglePanel(
-                      title: 'Guild tag on HUD',
-                      detail: 'Show your guild tag, like [DEV], before your name.',
-                      value: widget.multiplayer.showHudGuildTag,
-                      onChanged: widget.multiplayer.setShowHudGuildTag,
-                    ),
-                    const SizedBox(height: 16),
-                    _togglePanel(
-                      title: 'Show title on HUD',
-                      detail: 'Show your equipped title, like The Undying, after your name.',
-                      value: controller.showTitleOnHud,
-                      onChanged: controller.setShowTitleOnHud,
-                    ),
-                    const SizedBox(height: 16),
-                    _togglePanel(
-                      title: 'Show Eat button',
-                      detail: 'Show Eat on the food item detail sheet.',
-                      value: controller.showEatButton,
-                      onChanged: controller.setShowEatButton,
-                    ),
-                    const SizedBox(height: 16),
-                    _togglePanel(
-                      title: 'Hide chat bubble',
-                      detail: 'Hide the chat button in the corner of the game.',
-                      value: widget.multiplayer.hideChatBubble,
-                      onChanged: widget.multiplayer.setHideChatBubble,
-                    ),
-                  ],
-                );
-              },
-            ),
-            const SizedBox(height: 20),
-            _settingsSection('Chat'),
-            ListenableBuilder(
-              listenable: widget.multiplayer,
-              builder: (context, _) {
-                return Column(
-                  children: [
-                    _togglePanel(
-                      title: 'Filter chat',
-                      detail: 'Hide profanity in chat. Messages are still stored as typed.',
-                      value: widget.multiplayer.filterChatProfanity,
-                      onChanged: widget.multiplayer.setFilterChatProfanity,
-                    ),
-                    const SizedBox(height: 16),
-                    _NameColorField(multiplayer: widget.multiplayer),
-                    const SizedBox(height: 16),
-                    const Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        'Chat notifications',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    const Align(
-                      alignment: Alignment.centerLeft,
-                      child: MutedText(
-                        'Show a bubble on the chat icon and on the channel tab when a new line arrives.',
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    for (final tab in chatTabOrder) ...[
-                      GamePanel(
-                        framed: true,
-                        child: Row(
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Expanded(
-                              child: Text(
-                                _chatNotifyLabel(tab),
-                                style: const TextStyle(fontWeight: FontWeight.w400),
-                              ),
-                            ),
-                            GameSwitch(
-                              value: widget.multiplayer.chatNotifyEnabled(tab),
-                              onChanged: (value) =>
-                                  widget.multiplayer.setChatNotifyEnabled(tab, value),
-                            ),
+                            Text('Battery saver', style: TextStyle(fontWeight: FontWeight.w400)),
+                            MutedText('Skip animations and refresh the screen less often.'),
                           ],
                         ),
                       ),
-                      if (tab != chatTabOrder.last) const SizedBox(height: 10),
+                      GameSwitch(
+                        value: controller.batterySaver,
+                        onChanged: controller.setBatterySaver,
+                      ),
                     ],
-                    const SizedBox(height: 16),
-                    _chatPrivacyRow(
-                      title: 'Private messages',
-                      detail: 'Who may send you a private message.',
-                      value: widget.multiplayer.privacyDirectMessages,
-                      onChanged: widget.multiplayer.setPrivacyDirectMessages,
-                    ),
-                    const SizedBox(height: 16),
-                    _chatPrivacyRow(
-                      title: 'Local chat',
-                      detail: 'Who may see you in local chat, and whose lines you see.',
-                      value: widget.multiplayer.privacyLocalChat,
-                      onChanged: widget.multiplayer.setPrivacyLocalChat,
-                    ),
-                  ],
-                );
-              },
+                  ),
+                ),
+                const SizedBox(height: 16),
+                GamePanel(
+                  framed: true,
+                  child: Row(
+                    children: [
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Map travel animation',
+                              style: TextStyle(fontWeight: FontWeight.w400),
+                            ),
+                            MutedText('Walk a small sprite to the destination before arriving.'),
+                          ],
+                        ),
+                      ),
+                      GameSwitch(
+                        value: controller.mapTravelAnimation,
+                        onChanged: controller.batterySaver
+                            ? null
+                            : controller.setMapTravelAnimation,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                GamePanel(
+                  framed: true,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('UI look', style: TextStyle(fontWeight: FontWeight.w400)),
+                      const MutedText('Wood boards and tan panels, or grey stone and ash.'),
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          for (final pack in UiChromePack.values) ...[
+                            if (pack != UiChromePack.values.first) const SizedBox(width: 8),
+                            Expanded(
+                              child: GameTextButton(
+                                label: UiChrome.forPack(pack).label,
+                                selected: controller.uiChromePack == pack,
+                                onPressed: () => controller.setUiChromePack(pack),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                ListenableBuilder(
+                  listenable: widget.multiplayer,
+                  builder: (context, _) {
+                    return Column(
+                      children: [
+                        _togglePanel(
+                          title: 'Guild tag on HUD',
+                          detail: 'Show your guild tag, like [DEV], before your name.',
+                          value: widget.multiplayer.showHudGuildTag,
+                          onChanged: widget.multiplayer.setShowHudGuildTag,
+                        ),
+                        const SizedBox(height: 16),
+                        _togglePanel(
+                          title: 'Show title on HUD',
+                          detail: 'Show your equipped title, like The Undying, after your name.',
+                          value: controller.showTitleOnHud,
+                          onChanged: controller.setShowTitleOnHud,
+                        ),
+                        const SizedBox(height: 16),
+                        _togglePanel(
+                          title: 'Show Eat button',
+                          detail: 'Show Eat on the food item detail sheet.',
+                          value: controller.showEatButton,
+                          onChanged: controller.setShowEatButton,
+                        ),
+                        const SizedBox(height: 16),
+                        _togglePanel(
+                          title: 'Hide chat bubble',
+                          detail: 'Hide the chat button in the corner of the game.',
+                          value: widget.multiplayer.hideChatBubble,
+                          onChanged: widget.multiplayer.setHideChatBubble,
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ],
             ),
-            const SizedBox(height: 20),
-            _settingsSection('Testing'),
-            _buildTestingTools(),
-            const SizedBox(height: 16),
-            _buildPlayerSprite(save, hasOverride),
+            const SizedBox(height: 10),
+            _SettingsFold(
+              heading: 'Chat',
+              children: [
+                ListenableBuilder(
+                  listenable: widget.multiplayer,
+                  builder: (context, _) {
+                    return Column(
+                      children: [
+                        _togglePanel(
+                          title: 'Filter chat',
+                          detail: 'Hide profanity in chat. Messages are still stored as typed.',
+                          value: widget.multiplayer.filterChatProfanity,
+                          onChanged: widget.multiplayer.setFilterChatProfanity,
+                        ),
+                        const SizedBox(height: 16),
+                        _NameColorField(multiplayer: widget.multiplayer),
+                        const SizedBox(height: 16),
+                        const Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            'Chat notifications',
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        const Align(
+                          alignment: Alignment.centerLeft,
+                          child: MutedText(
+                            'Show a bubble on the chat icon and on the channel tab when a new line arrives.',
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        for (final tab in chatTabOrder) ...[
+                          GamePanel(
+                            framed: true,
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    _chatNotifyLabel(tab),
+                                    style: const TextStyle(fontWeight: FontWeight.w400),
+                                  ),
+                                ),
+                                GameSwitch(
+                                  value: widget.multiplayer.chatNotifyEnabled(tab),
+                                  onChanged: (value) =>
+                                      widget.multiplayer.setChatNotifyEnabled(tab, value),
+                                ),
+                              ],
+                            ),
+                          ),
+                          if (tab != chatTabOrder.last) const SizedBox(height: 10),
+                        ],
+                        const SizedBox(height: 16),
+                        _chatPrivacyRow(
+                          title: 'Private messages',
+                          detail: 'Who may send you a private message.',
+                          value: widget.multiplayer.privacyDirectMessages,
+                          onChanged: widget.multiplayer.setPrivacyDirectMessages,
+                        ),
+                        const SizedBox(height: 16),
+                        _chatPrivacyRow(
+                          title: 'Local chat',
+                          detail: 'Who may see you in local chat, and whose lines you see.',
+                          value: widget.multiplayer.privacyLocalChat,
+                          onChanged: widget.multiplayer.setPrivacyLocalChat,
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            _SettingsFold(
+              heading: 'Testing',
+              children: [
+                _buildTestingTools(),
+                const SizedBox(height: 16),
+                _buildPlayerSprite(save, hasOverride),
+              ],
+            ),
           ],
         ],
       ),
-    );
-  }
-
-  Widget _settingsSection(String title) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w400)),
     );
   }
 
@@ -630,6 +643,51 @@ class _NameColorFieldState extends State<_NameColorField> {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _SettingsFold extends StatefulWidget {
+  const _SettingsFold({required this.heading, required this.children});
+
+  final String heading;
+  final List<Widget> children;
+
+  @override
+  State<_SettingsFold> createState() => _SettingsFoldState();
+}
+
+class _SettingsFoldState extends State<_SettingsFold> {
+  bool _open = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        InkWell(
+          onTap: () => setState(() => _open = !_open),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 6),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    widget.heading,
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
+                  ),
+                ),
+                Icon(
+                  _open ? Icons.expand_less : Icons.expand_more,
+                  size: 20,
+                  color: UiChrome.of(context).panelInk,
+                ),
+              ],
+            ),
+          ),
+        ),
+        if (_open) ...widget.children,
+      ],
     );
   }
 }

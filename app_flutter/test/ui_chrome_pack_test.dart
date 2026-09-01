@@ -21,6 +21,8 @@ void main() {
     expect(controller.uiChromePack, UiChromePack.wood);
 
     await openChinScreen(tester, 'Settings');
+    await tester.tap(find.text('UI'));
+    await tester.pump();
     await tester.scrollUntilVisible(
       find.text('UI look'),
       300,
