@@ -75,8 +75,10 @@ class TopHud extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Structural / social chrome only — meters and the activity timer listen to
+    // [controller.progress] so the board texture is not rebuilt every tick.
     return ListenableBuilder(
-      listenable: Listenable.merge(<Listenable>[controller, controller.progress]),
+      listenable: Listenable.merge(<Listenable>[controller, multiplayer]),
       builder: (context, _) => _buildHud(context),
     );
   }
@@ -84,11 +86,7 @@ class TopHud extends StatelessWidget {
   Widget _buildHud(BuildContext context) {
     final save = controller.save;
     final maxHp = playerMaxHp(controller.db, save);
-    final hpFraction = controller.isRecovering || maxHp <= 0
-        ? 0.0
-        : (save.currentHp / maxHp).clamp(0, 1).toDouble();
     final raceName = raceDisplayName(controller.db, save.raceId) ?? 'Unsworn';
-    final status = _status();
     final characterName = controller.showTitleOnHud
         ? displayNameForSave(save, 'Adventurer')
         : (save.characterName ?? 'Adventurer');
@@ -123,148 +121,157 @@ class TopHud extends StatelessWidget {
           Expanded(
             child: ConstrainedBox(
               constraints: const BoxConstraints(minHeight: HudPortrait.size),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+              child: ListenableBuilder(
+                listenable: controller.progress,
+                builder: (context, _) {
+                  final hpFraction = controller.isRecovering || maxHp <= 0
+                      ? 0.0
+                      : (save.currentHp / maxHp).clamp(0, 1).toDouble();
+                  final status = _status();
+                  return Column(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Shrinks rather than clips, so a title is never cut in half.
-                            FittedBox(
-                              fit: BoxFit.scaleDown,
-                              alignment: Alignment.centerLeft,
-                              child: Text(
-                                title,
-                                maxLines: 1,
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w400,
-                                  height: 1.15,
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Shrinks rather than clips, so a title is never cut in half.
+                                FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  alignment: Alignment.centerLeft,
+                                  child: Text(
+                                    title,
+                                    maxLines: 1,
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w400,
+                                      height: 1.15,
+                                    ),
+                                  ),
                                 ),
-                              ),
+                                Text(
+                                  raceName,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w400,
+                                    color: Color(0xFFC8D7B6),
+                                    height: 1.2,
+                                  ),
+                                ),
+                                GestureDetector(
+                                  onTap: controller.toggleHudShowTotalXp,
+                                  behavior: HitTestBehavior.opaque,
+                                  child: Text(
+                                    totalsLabel,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      fontSize: 11.5,
+                                      fontWeight: FontWeight.w400,
+                                      color: Color(0xFFC8D7B6),
+                                      height: 1.2,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                            Text(
-                              raceName,
+                          ),
+                          if (status != null) ...[
+                            const SizedBox(width: 8),
+                            ConstrainedBox(
+                              constraints: const BoxConstraints(maxWidth: 140),
+                              child: _ActivityReadout(status: status),
+                            ),
+                          ],
+                        ],
+                      ),
+                      const SizedBox(height: 3),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          GameImage(goldIconPath(), width: 13, height: 13),
+                          const SizedBox(width: 3),
+                          Expanded(
+                            child: Text(
+                              formatThousands(save.gold),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
-                                fontSize: 11.5,
+                                fontSize: 12,
                                 fontWeight: FontWeight.w400,
-                                color: Color(0xFFC8D7B6),
-                                height: 1.2,
+                                color: Color(0xFFFFF4D4),
                               ),
                             ),
-                            GestureDetector(
-                              onTap: controller.toggleHudShowTotalXp,
-                              behavior: HitTestBehavior.opaque,
-                              child: Text(
-                                totalsLabel,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  fontSize: 11.5,
-                                  fontWeight: FontWeight.w400,
-                                  color: Color(0xFFC8D7B6),
-                                  height: 1.2,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      if (status != null) ...[
-                        const SizedBox(width: 8),
-                        ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 140),
-                          child: _ActivityReadout(status: status),
-                        ),
-                      ],
-                    ],
-                  ),
-                  const SizedBox(height: 3),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      GameImage(goldIconPath(), width: 13, height: 13),
-                      const SizedBox(width: 3),
-                      Expanded(
-                        child: Text(
-                          formatThousands(save.gold),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w400,
-                            color: Color(0xFFFFF4D4),
                           ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
+                          const SizedBox(width: 8),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
-                              if (controller.healPopup case final heal?) ...[
-                                Text(
-                                  heal.amount < 0
-                                      ? formatThousands(heal.amount)
-                                      : '+${formatThousands(heal.amount)}',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w400,
-                                    color: heal.amount < 0
-                                        ? const Color(0xFFE8A090)
-                                        : const Color(0xFF9FE3A8),
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  if (controller.healPopup case final heal?) ...[
+                                    Text(
+                                      heal.amount < 0
+                                          ? formatThousands(heal.amount)
+                                          : '+${formatThousands(heal.amount)}',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w400,
+                                        color: heal.amount < 0
+                                            ? const Color(0xFFE8A090)
+                                            : const Color(0xFF9FE3A8),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 4),
+                                  ],
+                                  Text(
+                                    controller.isRecovering
+                                        ? 'Recovering…'
+                                        : '${formatThousands(save.currentHp)}/'
+                                              '${formatThousands(maxHp)}',
+                                    textAlign: TextAlign.right,
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w400,
+                                      color: controller.isRecovering
+                                          ? const Color(0xFFE8A090)
+                                          : const Color(0xFFF0D78C),
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(width: 4),
-                              ],
-                              Text(
-                                controller.isRecovering
-                                    ? 'Recovering…'
-                                    : '${formatThousands(save.currentHp)}/'
-                                          '${formatThousands(maxHp)}',
-                                textAlign: TextAlign.right,
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w400,
-                                  color: controller.isRecovering
-                                      ? const Color(0xFFE8A090)
-                                      : const Color(0xFFF0D78C),
+                                ],
+                              ),
+                              const SizedBox(height: 2),
+                              SizedBox(
+                                width: _hudHpBarWidth,
+                                child: Semantics(
+                                  label: 'Hit points',
+                                  value:
+                                      '${formatThousands(save.currentHp)} / '
+                                      '${formatThousands(maxHp)}',
+                                  child: PillBar(
+                                    value: hpFraction,
+                                    gradient: Meters.hudHp,
+                                    height: 8,
+                                    trackColor: Palette.ink,
+                                    borderColor: const Color(0x599A7B32),
+                                  ),
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 2),
-                          SizedBox(
-                            width: _hudHpBarWidth,
-                            child: Semantics(
-                              label: 'Hit points',
-                              value:
-                                  '${formatThousands(save.currentHp)} / '
-                                  '${formatThousands(maxHp)}',
-                              child: PillBar(
-                                value: hpFraction,
-                                gradient: Meters.hudHp,
-                                height: 8,
-                                trackColor: Palette.ink,
-                                borderColor: const Color(0x599A7B32),
-                              ),
-                            ),
-                          ),
                         ],
                       ),
                     ],
-                  ),
-                ],
+                  );
+                },
               ),
             ),
           ),

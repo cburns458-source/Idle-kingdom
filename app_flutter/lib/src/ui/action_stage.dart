@@ -51,6 +51,8 @@ class ActionStage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Stage selection is mostly structural; meters/floaters need [progress].
+    // Keep both, but the idle stand below no longer rebuilds every quiet tick.
     return ListenableBuilder(
       listenable: Listenable.merge(<Listenable>[controller, controller.progress]),
       builder: (context, _) {
@@ -90,11 +92,22 @@ class LocationIdlePlayer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Death-hold → recovering is clock-driven ([progress]); loadout changes use
-    // the main listenable. Without both, the idle sprite can linger over Recovering.
+    // Recovering is clock-driven ([progress]). While idle with no death hold,
+    // only structural changes need a rebuild — do not repaint portraits every tick.
     return ListenableBuilder(
-      listenable: Listenable.merge(<Listenable>[controller, controller.progress]),
-      builder: (context, _) => _buildIdle(context),
+      listenable: controller,
+      builder: (context, _) {
+        if (!controller.isRecovering && !controller.showingDeathHold) {
+          return _buildIdle(context);
+        }
+        return ListenableBuilder(
+          listenable: controller.progress,
+          builder: (context, _) {
+            if (controller.showRecoveringStage) return const SizedBox.shrink();
+            return _buildIdle(context);
+          },
+        );
+      },
     );
   }
 
