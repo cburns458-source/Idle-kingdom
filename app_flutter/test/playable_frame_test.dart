@@ -26,6 +26,13 @@ void main() {
     expect(playableFrameHasSideChat(const Size(800, 600)), isFalse);
   });
 
+  test('a 10.2" iPad landscape docks chat beside the column', () {
+    // 2160×1620 px @2x is 1080×810 logical; SafeArea can shave a little width.
+    expect(playableFrameHasSideChat(const Size(1080, 810)), isTrue);
+    expect(playableFrameHasSideChat(const Size(1040, 790)), isTrue);
+    expect(playableFrameSize(const Size(1080, 810)), const Size(810 * 9 / 16, 810));
+  });
+
   test('an empty box is returned unchanged', () {
     expect(playableFrameSize(Size.zero), Size.zero);
   });

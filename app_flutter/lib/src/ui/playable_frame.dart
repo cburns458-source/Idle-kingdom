@@ -10,7 +10,10 @@ const double playableFrameAspect = 9 / 16;
 const double playableFrameSideChatMinLeftover = 300;
 
 /// Skip side chat on short windows (including the 800×600 widget-test surface).
-const double playableFrameSideChatMinWidth = 1100;
+///
+/// Kept under a 10.2" iPad's landscape logical width (1080 = 2160 CSS px @2x)
+/// so SafeArea / browser chrome still leaves room to dock chat.
+const double playableFrameSideChatMinWidth = 1000;
 
 /// Menus and location copy sit smaller than HUD and combat numbers.
 const double playableUiTextScale = 0.81;
