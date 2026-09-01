@@ -155,10 +155,7 @@ class _NestPopup extends StatelessWidget {
       color: const Color(0xFA302014),
       elevation: 12,
       shadowColor: const Color(0x73000000),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(14),
-        side: const BorderSide(color: Color(0x66D4AF37)),
-      ),
+      shape: PixelSteppedBorder(step: 3, side: const BorderSide(color: Color(0x66D4AF37))),
       child: Semantics(
         container: true,
         label: 'More screens',

@@ -71,8 +71,13 @@ void main() {
             matching: find.byType(Material),
           ),
         )
-        .firstWhere((row) => row.shape is RoundedRectangleBorder);
-    return (material.shape! as RoundedRectangleBorder).side.color;
+        .firstWhere((row) {
+          final shape = row.shape;
+          return shape is PixelSteppedBorder || shape is RoundedRectangleBorder;
+        });
+    final shape = material.shape!;
+    if (shape is PixelSteppedBorder) return shape.side.color;
+    return (shape as RoundedRectangleBorder).side.color;
   }
 
   testWidgets('nearby chip is gold for strangers and green for guildmates', (tester) async {

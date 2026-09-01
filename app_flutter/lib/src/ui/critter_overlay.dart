@@ -29,12 +29,12 @@ class CritterOverlay extends StatelessWidget {
       excludeSemantics: true,
       child: InkWell(
         onTap: controller.collectCritterHere,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.zero /* pixel step 3 */,
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
           decoration: BoxDecoration(
             color: Palette.panel,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.zero /* pixel step 3 */,
             border: Border.all(color: Palette.gold),
           ),
           child: Column(

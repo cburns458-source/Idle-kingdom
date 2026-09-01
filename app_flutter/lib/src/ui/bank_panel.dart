@@ -193,12 +193,12 @@ class _BankPanelState extends State<BankPanel> {
       child: InkWell(
         key: key,
         onTap: onTap,
-        borderRadius: BorderRadius.circular(9),
+        borderRadius: BorderRadius.zero /* pixel step 2 */,
         child: Container(
           padding: const EdgeInsets.fromLTRB(3, 5, 3, 4),
           decoration: BoxDecoration(
             color: Palette.panel,
-            borderRadius: BorderRadius.circular(9),
+            borderRadius: BorderRadius.zero /* pixel step 2 */,
             border: Border.all(color: stack.favorite == true ? Palette.gold : Palette.edge),
           ),
           child: Column(

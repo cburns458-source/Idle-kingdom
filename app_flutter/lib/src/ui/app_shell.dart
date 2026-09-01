@@ -756,8 +756,8 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
                       elevation: 12,
                       shadowColor: const Color(0x73000000),
                       clipBehavior: Clip.antiAlias,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
+                      shape: PixelSteppedBorder(
+                        step: 3,
                         side: const BorderSide(color: Palette.edge),
                       ),
                       child: ChatSheet(

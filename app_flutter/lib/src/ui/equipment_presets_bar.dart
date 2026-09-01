@@ -286,16 +286,16 @@ class _LabelChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final radius = BorderRadius.circular(square ? 4 : 6);
+    final step = square ? 2.0 : 2.0;
     return Semantics(
       button: true,
       label: semanticsLabel,
       child: Material(
         color: Palette.panel,
-        borderRadius: radius,
+        shape: PixelSteppedBorder(step: step),
         child: InkWell(
           onTap: onPressed,
-          borderRadius: radius,
+          customBorder: PixelSteppedBorder(step: step),
           child: SizedBox(
             width: square ? _stageSquare : null,
             height: square ? _stageSquare : (compact ? 28 : 34),
@@ -328,7 +328,7 @@ class _SettingsChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final radius = BorderRadius.circular(square ? 4 : 6);
+    final step = square ? 2.0 : 2.0;
     return Tooltip(
       message: 'Preset settings',
       child: Semantics(
@@ -336,10 +336,10 @@ class _SettingsChip extends StatelessWidget {
         label: 'Preset settings',
         child: Material(
           color: Palette.panel,
-          borderRadius: radius,
+          shape: PixelSteppedBorder(step: step),
           child: InkWell(
             onTap: onPressed,
-            borderRadius: radius,
+            customBorder: PixelSteppedBorder(step: step),
             child: SizedBox(
               width: square ? _stageSquare : null,
               height: square ? _stageSquare : (compact ? 28 : 34),
@@ -386,7 +386,7 @@ class _PresetButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final icon = preset?.icon ?? defaultEquipmentPresetIcon(index);
     final label = preset?.name ?? 'Preset ${index + 1}';
-    final radius = BorderRadius.circular(square ? 4 : 6);
+    final step = square ? 2.0 : 2.0;
     return Tooltip(
       message: '$label\n$tooltipHint',
       child: Semantics(
@@ -395,8 +395,8 @@ class _PresetButton extends StatelessWidget {
         label: label,
         child: Material(
           color: selected ? Palette.gold.withValues(alpha: 0.22) : Palette.panel,
-          shape: RoundedRectangleBorder(
-            borderRadius: radius,
+          shape: PixelSteppedBorder(
+            step: step,
             side: BorderSide(
               color: selected ? Palette.gold : Palette.edge,
               width: selected ? 1.5 : 1,
@@ -405,7 +405,7 @@ class _PresetButton extends StatelessWidget {
           child: InkWell(
             onTap: onTap,
             onLongPress: onLongPress,
-            borderRadius: radius,
+            customBorder: PixelSteppedBorder(step: step),
             child: SizedBox(
               width: square ? _stageSquare : null,
               height: square ? _stageSquare : (compact ? 28 : 34),
@@ -465,13 +465,13 @@ class _IconChoice extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: selected ? Palette.gold.withValues(alpha: 0.25) : Palette.panel,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(6),
+      shape: PixelSteppedBorder(
+        step: 2,
         side: BorderSide(color: selected ? Palette.gold : Palette.edge),
       ),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.zero /* pixel step 2 */,
         child: SizedBox(width: 32, height: 32, child: Center(child: child)),
       ),
     );
@@ -599,7 +599,7 @@ class _PresetSettingsRow extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: Palette.panel,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.zero /* pixel step 2 */,
         border: Border.all(color: Palette.edge),
       ),
       child: Padding(

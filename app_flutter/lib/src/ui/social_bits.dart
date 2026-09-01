@@ -24,7 +24,7 @@ class GuildEmblemBadge extends StatelessWidget {
       height: size,
       decoration: BoxDecoration(
         color: _color(emblem.color),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.zero /* pixel step 2 */,
         border: Border.all(color: Palette.edge),
       ),
       padding: EdgeInsets.all(size * 0.18),
@@ -94,7 +94,7 @@ class SocialPortrait extends StatelessWidget {
       height: height ?? size,
       decoration: BoxDecoration(
         color: Palette.panel,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.zero /* pixel step 2 */,
         border: Border.all(color: borderColor ?? Palette.edge),
       ),
       clipBehavior: Clip.antiAlias,
@@ -130,7 +130,7 @@ class NpcPortrait extends StatelessWidget {
       height: size,
       decoration: BoxDecoration(
         color: Palette.panel,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.zero /* pixel step 2 */,
         border: Border.all(color: borderColor ?? Palette.edge),
       ),
       clipBehavior: Clip.antiAlias,
