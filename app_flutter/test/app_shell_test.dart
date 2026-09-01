@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:idle_kingdoms/src/session/battery_saver_pref.dart';
 import 'package:idle_kingdoms/src/session/game_controller.dart';
 import 'package:idle_kingdoms/src/session/multiplayer_controller.dart';
 import 'package:idle_kingdoms/src/session/tester_access.dart';
@@ -587,9 +588,120 @@ void main() {
       find.descendant(of: find.byType(MenuView), matching: find.text('Character')),
       findsNothing,
     );
-    await tester.tap(find.byType(GameSwitch).first);
+    await tester.tap(_settingsSwitch('Map travel animation'));
     await tester.pump();
     expect(controller.mapTravelAnimation, isTrue);
+  });
+
+  test('battery saver stays on this device', () {
+    final storage = MemorySaveStorage();
+    final pref = BatterySaverPref.load(storage);
+    expect(pref.enabled, isFalse);
+
+    pref.setEnabled(true);
+    expect(pref.enabled, isTrue);
+    expect(storage.getItem(BatterySaverPref.storageKey), '1');
+    expect(BatterySaverPref.load(storage).enabled, isTrue);
+
+    pref.setEnabled(false);
+    expect(pref.enabled, isFalse);
+    expect(storage.getItem(BatterySaverPref.storageKey), '0');
+  });
+
+  testWidgets('Settings turns battery saver on and the plaque opens Settings', (tester) async {
+    final controller = buildController(database, seed: startedCharacter(database));
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller);
+
+    expect(controller.batterySaver, isFalse);
+    expect(find.byKey(const Key('battery-saver-plaque')), findsNothing);
+
+    await openChinScreen(tester, 'Settings');
+    expect(find.text('Battery saver'), findsOne);
+    expect(find.text('Skip animations and refresh the screen less often.'), findsOne);
+    await tester.tap(_settingsSwitch('Battery saver'));
+    await tester.pump();
+    expect(controller.batterySaver, isTrue);
+    expect(controller.reduceMotion, isTrue);
+
+    await tester.tap(find.widgetWithText(GameButton, 'Close'));
+    await tester.pump();
+    expect(find.byKey(const Key('battery-saver-plaque')), findsOne);
+
+    await tester.tap(find.byKey(const Key('battery-saver-plaque')));
+    await tester.pump();
+    expect(find.text('Skip animations and refresh the screen less often.'), findsOne);
+    expect(find.byKey(const Key('battery-saver-plaque')), findsNothing);
+
+    await tester.tap(_settingsSwitch('Map travel animation'));
+    await tester.pump();
+    expect(controller.mapTravelAnimation, isFalse);
+
+    await tester.tap(_settingsSwitch('Battery saver'));
+    await tester.pump();
+    expect(controller.batterySaver, isFalse);
+
+    await tester.tap(find.widgetWithText(GameButton, 'Close'));
+    await tester.pump();
+    expect(find.byKey(const Key('battery-saver-plaque')), findsNothing);
+  });
+
+  testWidgets('battery saver arrives from the map immediately', (tester) async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(currentLocationId: 'LOC-0009'),
+    );
+    addTearDown(controller.dispose);
+    controller.setMapTravelAnimation(true);
+    controller.setBatterySaver(true);
+    await pumpShell(tester, controller);
+
+    expect(find.byKey(const Key('battery-saver-plaque')), findsOne);
+
+    await tester.tap(find.byTooltip('Open world map'));
+    await tester.pump();
+    await tester.tap(find.text('The Farm'));
+    await tester.pump();
+    await tester.tap(find.text('Travel'));
+    await tester.pump();
+
+    expect(controller.save.currentLocationId, 'LOC-0001');
+    expect(find.bySemanticsLabel('Travelling'), findsNothing);
+    expect(find.text('The Farm'), findsWidgets);
+  });
+
+  testWidgets('the loop still runs under battery saver', (tester) async {
+    final clock = TestClock();
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(currentLocationId: 'LOC-0009'),
+      clock: clock,
+    );
+    addTearDown(controller.dispose);
+    controller.setBatterySaver(true);
+    await pumpShell(tester, controller);
+
+    final gatherCard = find.ancestor(
+      of: find.text('Gather meadow supplies'),
+      matching: find.byType(DockRow),
+    );
+    await tapVisible(
+      tester,
+      find.descendant(of: gatherCard, matching: find.bySemanticsLabel('Start')),
+    );
+
+    final durationMs = controller.save.actionDurationMs!;
+    expect(durationMs, greaterThan(0));
+
+    for (var elapsed = 0; elapsed <= durationMs; elapsed += 500) {
+      clock.advance(500);
+      await tester.pump(const Duration(milliseconds: 500));
+    }
+
+    expect(controller.recentRewards, isNotEmpty);
+    expect(controller.save.skills.fold<num>(0, (sum, skill) => sum + skill.xp), greaterThan(0));
+    expect(controller.save.currentActivityId, 'ACT-0012');
+    expect(find.byType(RewardStrip), findsOne);
   });
 
   testWidgets('a wide window docks chat beside a full-height 9:16 column', (tester) async {
@@ -701,4 +813,11 @@ void main() {
     await tester.pump();
     expect(find.text('Fennel'), findsOne);
   });
+}
+
+Finder _settingsSwitch(String title) {
+  return find.descendant(
+    of: find.ancestor(of: find.text(title), matching: find.byType(GamePanel)),
+    matching: find.byType(GameSwitch),
+  );
 }
