@@ -14,6 +14,7 @@ import 'auth_gate_sheet.dart';
 import 'away_summary_sheet.dart';
 import 'bottom_nav.dart';
 import 'chat_sheet.dart';
+import 'desktop_side_chrome.dart';
 import 'critter_overlay.dart';
 import 'character_view.dart';
 import 'location_view.dart';
@@ -585,6 +586,7 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
                         final available = constraints.biggest;
                         final frame = playableFrameSize(available);
                         final sideChat = playableFrameHasSideChat(available);
+                        final sideRails = sideChat && _canPlay;
                         final game = SizedBox(
                           width: frame.width,
                           height: frame.height,
@@ -612,47 +614,66 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
                                   // chat / nearby / HUD badge listen on their own.
                                   child: BatterySaverScope(
                                     enabled: controller.batterySaver,
-                                    child: _buildFrame(context, sideChat: sideChat),
+                                    child: _buildFrame(
+                                      context,
+                                      sideChat: sideChat,
+                                      showMenu: !sideRails,
+                                    ),
                                   ),
                                 ),
                               ),
                             ),
                           ),
                         );
-                        if (!sideChat) return Center(child: game);
-                        return Row(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            game,
-                            Expanded(
-                              child: MediaQuery(
-                                data: MediaQuery.of(context).copyWith(
-                                  textScaler: playableUiTextScaler(
-                                    MediaQuery.textScalerOf(context),
+                        if (!sideRails) return Center(child: game);
+                        return Center(
+                          child: SizedBox(
+                            height: frame.height,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                SizedBox(
+                                  width: desktopRailWidth,
+                                  child: MediaQuery(
+                                    data: MediaQuery.of(context).copyWith(
+                                      textScaler: playableUiTextScaler(
+                                        MediaQuery.textScalerOf(context),
+                                      ),
+                                    ),
+                                    child: DesktopMenuRail(
+                                      screen: _screen,
+                                      onSelect: _selectScreen,
+                                    ),
                                   ),
                                 ),
-                                child: ListenableBuilder(
-                                  listenable: multiplayer,
-                                  builder: (context, _) {
-                                    final save = controller.save;
-                                    return Material(
-                                      key: const Key('chat-panel'),
-                                      color: Palette.parchmentDeep,
-                                      clipBehavior: Clip.antiAlias,
-                                      child: ChatSheet(
-                                        controller: controller,
-                                        multiplayer: multiplayer,
-                                        locationId: save.currentLocationId,
-                                        citadelHub: _inCitadel,
-                                        embedded: true,
-                                        onClose: () {},
+                                const SizedBox(width: desktopRailGutter),
+                                game,
+                                const SizedBox(width: desktopRailGutter),
+                                SizedBox(
+                                  width: desktopRailWidth,
+                                  child: MediaQuery(
+                                    data: MediaQuery.of(context).copyWith(
+                                      textScaler: playableUiTextScaler(
+                                        MediaQuery.textScalerOf(context),
                                       ),
-                                    );
-                                  },
+                                    ),
+                                    child: ListenableBuilder(
+                                      listenable: multiplayer,
+                                      builder: (context, _) {
+                                        return DesktopChatRail(
+                                          controller: controller,
+                                          multiplayer: multiplayer,
+                                          locationId: controller.save.currentLocationId,
+                                          citadelHub: _inCitadel,
+                                        );
+                                      },
+                                    ),
+                                  ),
                                 ),
-                              ),
+                              ],
                             ),
-                          ],
+                          ),
                         );
                       },
                     ),
@@ -666,7 +687,7 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
     );
   }
 
-  Widget _buildFrame(BuildContext context, {required bool sideChat}) {
+  Widget _buildFrame(BuildContext context, {required bool sideChat, required bool showMenu}) {
     if (_needsAuth) {
       return AuthGateSheet(controller: controller, multiplayer: multiplayer);
     }
@@ -784,6 +805,7 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
                 screen: _screen,
                 locationName: controller.location?.displayName ?? 'Unknown',
                 onSelect: _selectScreen,
+                showMenu: showMenu,
               ),
             ),
           ],

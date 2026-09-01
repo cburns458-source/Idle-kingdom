@@ -531,6 +531,23 @@ void main() {
     expect(find.byTooltip('Back to Town'), findsOne);
   });
 
+  testWidgets('the district back chip sits left of nearby', (tester) async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(currentLocationId: townKitchenId),
+    );
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller);
+
+    final back = tester.getRect(find.byTooltip('Back to Town'));
+    final nearby = tester.getRect(find.byTooltip('Nearby adventurers'));
+    final map = tester.getRect(find.byTooltip('Open world map'));
+    expect(back.right, lessThanOrEqualTo(nearby.left));
+    expect(nearby.right, lessThanOrEqualTo(map.left));
+    expect(back.center.dy, closeTo(nearby.center.dy, 8));
+    expect(nearby.center.dy, closeTo(map.center.dy, 8));
+  });
+
   testWidgets('the workshop lists Special production as its own tab', (tester) async {
     final controller = buildController(
       database,

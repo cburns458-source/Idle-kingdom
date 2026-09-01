@@ -6,8 +6,14 @@ const double playableFrameMaxWidth = 420;
 /// Width / height of a phone column.
 const double playableFrameAspect = 9 / 16;
 
-/// Leftover width after a 9:16 column that is enough for side chat.
-const double playableFrameSideChatMinLeftover = 300;
+/// Fixed width of the desktop menu and chat rails.
+const double desktopRailWidth = 252;
+
+/// Gap between each rail and the 9:16 column.
+const double desktopRailGutter = 18;
+
+/// Leftover width after a 9:16 column that fits both rails and their gutters.
+const double playableFrameSideChatMinLeftover = desktopRailWidth * 2 + desktopRailGutter * 2;
 
 /// Skip side chat on short windows (including the 800×600 widget-test surface).
 ///
