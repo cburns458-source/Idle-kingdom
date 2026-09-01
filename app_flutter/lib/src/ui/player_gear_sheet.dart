@@ -136,11 +136,7 @@ class _GearSlotTile extends StatelessWidget {
                 textAlign: TextAlign.center,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 8.5,
-                  height: 1.1,
-                  color: Palette.muted,
-                ),
+                style: const TextStyle(fontSize: 8.5, height: 1.1, color: Palette.muted),
               ),
             ),
           ],

@@ -104,10 +104,7 @@ class GamePopupCard extends StatelessWidget {
       child: DecoratedBox(
         decoration: woodBoardFill(textureOpacity: 0.4),
         child: DefaultTextStyle.merge(
-          style: const TextStyle(
-            color: Palette.parchmentText,
-            fontFamily: gameFontFamily,
-          ),
+          style: const TextStyle(color: Palette.parchmentText, fontFamily: gameFontFamily),
           child: IconTheme.merge(
             data: const IconThemeData(color: Palette.parchmentText),
             child: Padding(padding: padding ?? const EdgeInsets.all(16), child: child),
