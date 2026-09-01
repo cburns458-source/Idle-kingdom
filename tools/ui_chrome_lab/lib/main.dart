@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:nes_ui/nes_ui.dart';
 import 'package:pixel_ui/pixel_ui.dart';
+import 'farm_location_screen.dart';
 
 /// Standalone chrome lab. Does not import or modify RestoriaIdle game code.
 void main() {
@@ -46,14 +47,40 @@ class UiChromeLabApp extends StatelessWidget {
       theme: flutterNesTheme(
         brightness: Brightness.dark,
         primaryColor: const Color(0xFF7F9D63),
+      ).copyWith(
+        // Same family as RestoriaIdle — do not introduce other UI fonts.
+        textTheme: ThemeData(brightness: Brightness.dark)
+            .textTheme
+            .apply(fontFamily: 'PixeloidSans'),
       ),
-      home: const LabHome(),
+      home: const LabGate(),
     );
   }
 }
 
+
+class LabGate extends StatefulWidget {
+  const LabGate({super.key});
+  @override
+  State<LabGate> createState() => _LabGateState();
+}
+
+class _LabGateState extends State<LabGate> {
+  bool _farm = true;
+
+  @override
+  Widget build(BuildContext context) {
+    if (_farm) {
+      return FarmLocationScreen(onBack: () => setState(() => _farm = false));
+    }
+    return LabHome(onOpenFarm: () => setState(() => _farm = true));
+  }
+}
+
 class LabHome extends StatefulWidget {
-  const LabHome({super.key});
+  const LabHome({super.key, this.onOpenFarm});
+
+  final VoidCallback? onOpenFarm;
 
   @override
   State<LabHome> createState() => _LabHomeState();
@@ -87,6 +114,20 @@ class _LabHomeState extends State<LabHome> {
               child: Text(
                 'No game client code. Same shell roles remapped per kit.',
                 style: TextStyle(color: Color(0xFFCBB894), fontSize: 12),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: FilledButton(
+                  onPressed: widget.onOpenFarm,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFF5F7A45),
+                    foregroundColor: const Color(0xFFF4E7C8),
+                  ),
+                  child: const Text('Open Farm location test'),
+                ),
               ),
             ),
             SizedBox(
