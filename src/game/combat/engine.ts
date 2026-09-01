@@ -365,8 +365,12 @@ export function applyCombatVictory(
   }
 
   const xpAmount = Number(enemy['Combat XP'] ?? action['XP Reward'] ?? 0)
+  // Prefer fishing-mode bosses, then the action's Relevant Skill (Fight Mother Squid
+  // is Fishing). Falls back to Combat for ordinary fights.
   const xpSkillId =
-    bossProfile(enemy)?.damageMode === 'fishing' ? FISHING_SKILL_ID : 'SKL-0001'
+    bossProfile(enemy)?.damageMode === 'fishing'
+      ? FISHING_SKILL_ID
+      : String(action['Relevant Skill ID'] || 'SKL-0001')
   const xpApplied = applyXp(next, db, xpSkillId, xpAmount)
   next = xpApplied.save
 

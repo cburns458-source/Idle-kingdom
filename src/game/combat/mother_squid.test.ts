@@ -10,6 +10,7 @@ import {
   enemyEncounterDamageRange,
   enemyEncounterMaxHp,
 } from './boss'
+import { summarizeXpReward } from '../activity/rewardSummary'
 import { applyCombatVictory, beginCombatSave, resolveCombatRound } from './engine'
 import { fishingCombatDamageRange, playerBaseMaxHp } from './stats'
 
@@ -170,16 +171,27 @@ describe('mother squid boss', () => {
       squidling,
       new Date().toISOString(),
     )
+    expect(squidlingWin.xpSkillId).toBe(FISHING_SKILL_ID)
     expect(squidlingWin.save.skills.find((row) => row.skillId === FISHING_SKILL_ID)!.xp).toBeGreaterThan(
       fishingBefore,
     )
     expect(squidlingWin.save.skills.find((row) => row.skillId === 'SKL-0001')!.xp).toBe(combatBefore)
 
     const victory = applyCombatVictory(launch, before, action, squid, () => 0)
+    expect(victory.xpSkillId).toBe(FISHING_SKILL_ID)
     expect(victory.save.skills.find((row) => row.skillId === FISHING_SKILL_ID)!.xp).toBeGreaterThan(
       fishingBefore,
     )
     expect(victory.save.skills.find((row) => row.skillId === 'SKL-0001')!.xp).toBe(combatBefore)
+    expect(summarizeXpReward(launch, victory.save, victory.xpSkillId, victory.xpGained, null)).toMatchObject({
+      skillId: FISHING_SKILL_ID,
+      skillName: 'Fishing',
+    })
+
+    // Squidling fallthrough via applyCombatVictory must still use the fight action's Fishing skill.
+    const fallthrough = applyCombatVictory(launch, before, action, squidling, () => 0)
+    expect(fallthrough.xpSkillId).toBe(FISHING_SKILL_ID)
+    expect(fallthrough.save.skills.find((row) => row.skillId === 'SKL-0001')!.xp).toBe(combatBefore)
   })
 
   it('uses fishing damage vs Squidlings and scales their hits to 4–6% of player base HP', () => {
