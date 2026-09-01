@@ -40,6 +40,9 @@ describe('leaderboard snapshot builder', () => {
     expect(keys).not.toContain('total_experience')
     expect(keys).toContain('gold_earned')
     expect(keys).toContain('monsters_killed')
+    expect(keys).toContain('bosses_killed')
+    expect(keys).toContain('boss:ENM-0006')
+    expect(keys).toContain('boss:ENM-0023')
     expect(keys).toContain('critters_collected')
     expect(keys).toContain('bounties_completed')
     expect(keys).toContain('pvp_kd')
@@ -59,6 +62,25 @@ describe('leaderboard snapshot builder', () => {
     expect(boardLabel(launch, 'total_level_combat_1')).toBe('Pacifist Total Level')
     expect(boardLabel(launch, 'guild_total_level')).toBe('Guild Total Level')
     expect(boardLabel(launch, 'log_completion')).toBe('Log Completion')
+    expect(boardLabel(launch, 'bosses_killed')).toBe('Total kills')
+    expect(boardLabel(launch, 'boss:ENM-0006')).toBe('Dragon')
+  })
+
+  it('backfills boss kills from per-enemy stats', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const save = {
+      ...createNewSave(launch),
+      statistics: {
+        values: {
+          killed_ENM-0006: 2,
+          killed_ENM-0023: 1,
+        },
+      },
+    }
+    const snapshot = buildLeaderboardSnapshot(launch, save)
+    expect(snapshot.boards.find((board) => board.boardKey === 'bosses_killed')?.value).toBe(3)
+    expect(snapshot.boards.find((board) => board.boardKey === 'boss:ENM-0006')?.value).toBe(2)
+    expect(snapshot.boards.find((board) => board.boardKey === 'boss:ENM-0023')?.value).toBe(1)
   })
 
   it('carries total XP alongside the total level', () => {

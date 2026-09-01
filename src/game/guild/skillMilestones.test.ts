@@ -3,6 +3,7 @@ import {
   DEFAULT_GUILD_SKILL_MILESTONE_SETTINGS,
   formatGuildSkillMilestone,
   guildSkillMilestonesCrossed,
+  isGuildSkillMilestoneBody,
 } from './skillMilestones'
 
 describe('guild skill milestones', () => {
@@ -64,5 +65,11 @@ describe('guild skill milestones', () => {
         xpMillion: 125,
       }),
     ).toBe('Vari reached 125m Mining XP')
+  })
+
+  it('recognizes milestone bodies so chat can drop the username prefix', () => {
+    expect(isGuildSkillMilestoneBody('Vari reached Mining 60')).toBe(true)
+    expect(isGuildSkillMilestoneBody('Vari reached 125m Mining XP')).toBe(true)
+    expect(isGuildSkillMilestoneBody('Hello guild')).toBe(false)
   })
 })

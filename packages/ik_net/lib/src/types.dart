@@ -22,14 +22,21 @@ const String boardPacifistTotalLevel = 'total_level_combat_1';
 
 const String boardGoldEarned = 'gold_earned';
 const String boardMonstersKilled = 'monsters_killed';
+const String boardBossesKilled = 'bosses_killed';
 const String boardCrittersCollected = 'critters_collected';
 const String boardBountiesCompleted = 'bounties_completed';
 const String boardPvpKd = 'pvp_kd';
 const String boardLogCompletion = 'log_completion';
 
 const String skillBoardPrefix = 'skill:';
+const String bossBoardPrefix = 'boss:';
 
 MultiplayerBoardKey skillBoardKey(String skillId) => '$skillBoardPrefix$skillId';
+
+MultiplayerBoardKey bossBoardKey(String enemyId) => '$bossBoardPrefix$enemyId';
+
+bool isBossBoardKey(MultiplayerBoardKey boardKey) =>
+    boardKey == boardBossesKilled || boardKey.startsWith(bossBoardPrefix);
 
 /// Boards that carry a second number: total level and per-skill ranks show XP
 /// under the level.

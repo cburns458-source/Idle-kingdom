@@ -93,7 +93,7 @@ class _CatalogRow extends StatelessWidget {
               entry.title,
               style: TextStyle(
                 fontWeight: FontWeight.w400,
-                color: entry.emphasized ? Palette.gold : Palette.parchmentText,
+                color: entry.emphasized ? Palette.gold : UiChrome.of(context).panelInk,
               ),
             ),
             if (entry.detail case final detail?) MutedText(detail),

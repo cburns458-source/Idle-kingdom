@@ -278,8 +278,8 @@ class _LocationViewState extends State<LocationView> {
                                           widget.onOpenSubMap!(getLocationMapId(location)),
                                       child: const Icon(
                                         Icons.arrow_back,
-                                        size: 32,
-                                        color: Color(0xFF3F522E),
+                                        size: 18,
+                                        color: Palette.softGreenShade,
                                       ),
                                     ),
                                     const SizedBox(width: 7),
@@ -305,7 +305,7 @@ class _LocationViewState extends State<LocationView> {
                                               : Palette.gold,
                                           child: const Icon(
                                             Icons.groups,
-                                            size: 32,
+                                            size: 18,
                                             color: Color(0xF2ECD6A8),
                                           ),
                                         );
@@ -319,7 +319,7 @@ class _LocationViewState extends State<LocationView> {
                                   child: OverlayChipButton(
                                     tooltip: 'Open world map',
                                     onPressed: widget.onOpenMap,
-                                    child: GameImage(uiMapAssetPath(), width: 38, height: 38),
+                                    child: GameImage(uiMapAssetPath(), width: 20, height: 20),
                                   ),
                                 ),
                               ],

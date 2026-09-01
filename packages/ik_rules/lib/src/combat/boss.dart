@@ -171,6 +171,27 @@ PlayerSave withBossRespawn(PlayerSave save, EnemyRow enemy, num nowMs) {
   );
 }
 
+List<EnemyRow> launchBossEnemies(GameDatabase db) {
+  return db.enemies
+      .where((enemy) => isBossEnemy(enemy) && enemy.raw['Release Phase'] != 'Expansion')
+      .toList();
+}
+
+String enemyKillStatKey(String enemyId) => 'killed_$enemyId';
+
+num enemyKillCount(PlayerSave save, String enemyId) =>
+    jsNumber(save.statistics.values[enemyKillStatKey(enemyId)] ?? 0);
+
+/// Lifetime boss kills, backfilling from per-enemy `killed_*` stats when needed.
+num totalBossKills(GameDatabase db, PlayerSave save) {
+  final stored = jsNumber(save.statistics.values['bosses_killed'] ?? 0);
+  var summed = 0.0;
+  for (final boss in launchBossEnemies(db)) {
+    summed += enemyKillCount(save, jsString(boss.raw['Enemy ID']));
+  }
+  return stored > summed ? stored : summed;
+}
+
 num applySleepIncoming(num damage, bool asleep) {
   if (!asleep) return damage;
   return (damage / 2).floor();

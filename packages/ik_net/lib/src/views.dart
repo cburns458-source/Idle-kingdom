@@ -566,6 +566,18 @@ List<BoardOption> boardOptions(GameDatabase db) {
       .toList();
 }
 
+/// Separate picker: lifetime boss kills, then each launch boss.
+List<BoardOption> bossBoardOptions(GameDatabase db) {
+  return <BoardOption>[
+    BoardOption(key: boardBossesKilled, label: boardLabel(db, boardBossesKilled)),
+    for (final boss in launchBossEnemies(db))
+      BoardOption(
+        key: bossBoardKey(jsString(boss.raw['Enemy ID'])),
+        label: boardLabel(db, bossBoardKey(jsString(boss.raw['Enemy ID']))),
+      ),
+  ];
+}
+
 /// One row of a leaderboard.
 class LeaderboardRowView {
   const LeaderboardRowView({
@@ -1005,7 +1017,10 @@ List<ChatLineView> chatLines(
         (message) => ChatLineView(
           messageId: message.id,
           userId: message.userId,
-          username: chatLineUsername(message),
+          username:
+              message.channelKey.startsWith('guild:') && isGuildSkillMilestoneBody(message.body)
+              ? ''
+              : chatLineUsername(message),
           body: filterProfanityEnabled ? filterProfanity(message.body) : message.body,
           createdAt: message.createdAt,
           mine: viewerId != null && message.userId == viewerId,

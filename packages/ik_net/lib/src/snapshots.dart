@@ -68,6 +68,12 @@ LeaderboardSnapshotValues buildLeaderboardSnapshot(GameDatabase db, PlayerSave s
       boardKey: boardMonstersKilled,
       value: jsNumber(save.statistics.values['monsters_killed'] ?? 0),
     ),
+    LeaderboardBoardValue(boardKey: boardBossesKilled, value: totalBossKills(db, save)),
+    for (final boss in launchBossEnemies(db))
+      LeaderboardBoardValue(
+        boardKey: bossBoardKey(jsString(boss.raw['Enemy ID'])),
+        value: enemyKillCount(save, jsString(boss.raw['Enemy ID'])),
+      ),
     LeaderboardBoardValue(boardKey: boardCrittersCollected, value: crittersCollected),
     LeaderboardBoardValue(
       boardKey: boardBountiesCompleted,
@@ -103,6 +109,13 @@ String boardLabel(GameDatabase db, MultiplayerBoardKey boardKey) {
   if (boardKey == boardTotalExperience) return 'Total XP';
   if (boardKey == boardGoldEarned) return 'Gold Earned';
   if (boardKey == boardMonstersKilled) return 'Monsters Killed';
+  if (boardKey == boardBossesKilled) return 'Total kills';
+  if (boardKey.startsWith(bossBoardPrefix)) {
+    final enemyId = boardKey.substring(bossBoardPrefix.length);
+    final enemy = db.enemies.where((row) => row.raw['Enemy ID'] == enemyId).firstOrNull;
+    final name = enemy?.raw['Display Name'];
+    return name is String ? name : enemyId;
+  }
   if (boardKey == boardCrittersCollected) return 'Critters Collected';
   if (boardKey == boardBountiesCompleted) return 'Bounties Completed';
   if (boardKey == boardPvpKd) return 'PvP K/D';

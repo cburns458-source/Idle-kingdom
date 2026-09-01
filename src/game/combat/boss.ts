@@ -174,6 +174,28 @@ export function withBossRespawn(
   }
 }
 
+export function launchBossEnemies(db: GameDatabase): EnemyRow[] {
+  return db.Enemies.filter((enemy) => isBossEnemy(enemy) && enemy['Release Phase'] !== 'Expansion')
+}
+
+export function enemyKillStatKey(enemyId: string): string {
+  return `killed_${enemyId}`
+}
+
+export function enemyKillCount(save: PlayerSave, enemyId: string): number {
+  return Number(save.statistics.values[enemyKillStatKey(enemyId)] ?? 0)
+}
+
+/** Lifetime boss kills, backfilling from per-enemy `killed_*` stats when needed. */
+export function totalBossKills(db: GameDatabase, save: PlayerSave): number {
+  const stored = Number(save.statistics.values.bosses_killed ?? 0)
+  const summed = launchBossEnemies(db).reduce(
+    (sum, enemy) => sum + enemyKillCount(save, enemy['Enemy ID']),
+    0,
+  )
+  return Math.max(stored, summed)
+}
+
 export function applySleepIncoming(damage: number, asleep: boolean): number {
   if (!asleep) return damage
   return Math.floor(damage / 2)

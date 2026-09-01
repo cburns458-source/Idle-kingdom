@@ -33,7 +33,7 @@ import {
   rollDamage,
   staffSparksDamageRange,
 } from './stats'
-import { applySleepIncoming, bossProfile, enemyEncounterDamageRange, enemyEncounterMaxHp, isBossAddFight, withBossRespawn } from './boss'
+import { applySleepIncoming, bossProfile, enemyEncounterDamageRange, enemyEncounterMaxHp, isBossAddFight, isBossEnemy, withBossRespawn } from './boss'
 
 export type RandomFn = () => number
 
@@ -402,6 +402,17 @@ export function applyCombatVictory(
     },
   }
   next = recordEnemyKill(db, next, enemy['Enemy ID'])
+  if (isBossEnemy(enemy)) {
+    next = {
+      ...next,
+      statistics: {
+        values: {
+          ...next.statistics.values,
+          bosses_killed: Number(next.statistics.values.bosses_killed ?? 0) + 1,
+        },
+      },
+    }
+  }
 
   const food = consumeFoodAfterVictory(db, next, { skipHealing: options?.skipVictoryFood })
   next = withBossRespawn(clearCombatSave(food.save), enemy, nowMs)

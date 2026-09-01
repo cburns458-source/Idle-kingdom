@@ -88,6 +88,13 @@ String formatGuildSkillMilestone(String characterName, GuildSkillMilestone miles
   return name;
 }
 
+/// True when [body] is a guild skill-milestone line, which already names the player.
+bool isGuildSkillMilestoneBody(String body) {
+  final text = body.trim();
+  return RegExp(r'^.+ reached .+ \d+$').hasMatch(text) ||
+      RegExp(r'^.+ reached \d+m .+ XP$').hasMatch(text);
+}
+
 List<num> levelMilestonesAtOrBelow(num level, GuildSkillMilestoneSettings settings) {
   if (level < settings.levelStart) return const <num>[];
   final out = <num>[];

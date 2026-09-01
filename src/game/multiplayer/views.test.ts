@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   boardOptions,
+  bossBoardOptions,
   citadelVisitorSubtitle,
   createGuildFormView,
   defaultApplicationMessage,
@@ -10,6 +11,7 @@ import {
   guildBrowseRows,
   guildHomeHeader,
   guildRankOptions,
+  chatLines,
   chatLineUsername,
   guildRosterRows,
   guildTagForName,
@@ -352,6 +354,13 @@ describe('leaderboard views', () => {
     expect(options.some((option) => option.key === 'total_level_combat_1')).toBe(true)
     // The old XP-only board is gone; its number now rides on Total Level & XP.
     expect(options.some((option) => option.key === 'total_experience')).toBe(false)
+    expect(options.some((option) => option.key === 'bosses_killed')).toBe(false)
+    const bosses = bossBoardOptions(db)
+    expect(bosses[0]).toEqual({ key: 'bosses_killed', label: 'Total kills' })
+    expect(bosses.some((option) => option.key === 'boss:ENM-0006' && option.label === 'Dragon')).toBe(
+      true,
+    )
+    expect(bosses.some((option) => option.key === 'boss:ENM-0023')).toBe(true)
   })
 
   it('writes log completion as a percent', () => {
@@ -515,5 +524,28 @@ describe('chat line names', () => {
     expect(
       chatLineUsername(chatMessage({ channelKey: 'guild:gld_1', username: 'Wanderer', guest: true })),
     ).toBe(`${GUILD_GUEST_CHAT_ICON} Wanderer`)
+  })
+
+  it('drops the username prefix on guild skill milestone lines', () => {
+    const lines = chatLines(
+      [
+        chatMessage({
+          channelKey: 'guild:gld_1',
+          username: 'Hero',
+          body: 'Vari reached Mining 60',
+          rankIcon: '★',
+        }),
+        chatMessage({
+          channelKey: 'guild:gld_1',
+          username: 'Hero',
+          body: 'Nice one',
+          rankIcon: '★',
+        }),
+      ],
+      'usr_1',
+    )
+    expect(lines[0]?.username).toBe('')
+    expect(lines[0]?.body).toBe('Vari reached Mining 60')
+    expect(lines[1]?.username).toBe('★ Hero')
   })
 })

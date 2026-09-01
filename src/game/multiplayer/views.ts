@@ -3,6 +3,8 @@ import type { GameDatabase } from '../data/types'
 import type { PlayerAppearance } from '../save/types'
 import { createGuildRefusalFor } from '../guild/rules'
 import { filterProfanity } from './moderation'
+import { launchBossEnemies } from '../combat/boss'
+import { isGuildSkillMilestoneBody } from '../guild/skillMilestones'
 import { boardLabel, launchBoardKeys } from './leaderboards'
 import {
   CITADEL_CHAT_LOCATION_ID,
@@ -372,6 +374,17 @@ export function boardOptions(db: GameDatabase): BoardOption[] {
   return launchBoardKeys(db).map((key) => ({ key, label: boardLabel(db, key) }))
 }
 
+/** Separate picker: lifetime boss kills, then each launch boss. */
+export function bossBoardOptions(db: GameDatabase): BoardOption[] {
+  return [
+    { key: 'bosses_killed', label: boardLabel(db, 'bosses_killed') },
+    ...launchBossEnemies(db).map((enemy) => ({
+      key: `boss:${enemy['Enemy ID']}` as MultiplayerBoardKey,
+      label: boardLabel(db, `boss:${enemy['Enemy ID']}`),
+    })),
+  ]
+}
+
 /** One row of a leaderboard. */
 export interface LeaderboardRowView {
   rank: number
@@ -695,7 +708,10 @@ export function chatLines(
   return messages.map((message) => ({
     messageId: message.id,
     userId: message.userId,
-    username: chatLineUsername(message),
+    username:
+      message.channelKey.startsWith('guild:') && isGuildSkillMilestoneBody(message.body)
+        ? ''
+        : chatLineUsername(message),
     body: filterProfanityEnabled ? filterProfanity(message.body) : message.body,
     createdAt: message.createdAt,
     mine: viewerId !== null && message.userId === viewerId,

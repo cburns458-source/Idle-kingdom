@@ -306,11 +306,11 @@ class _LogRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final row = _body();
+    final row = _body(context);
     return dimmed ? Opacity(opacity: 0.45, child: row) : row;
   }
 
-  Widget _body() {
+  Widget _body(BuildContext context) {
     return GamePanel(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       child: Row(
@@ -325,7 +325,7 @@ class _LogRow extends StatelessWidget {
                   title,
                   style: TextStyle(
                     fontWeight: FontWeight.w400,
-                    color: highlight ? Palette.gold : Palette.parchmentText,
+                    color: highlight ? Palette.gold : UiChrome.of(context).panelInk,
                   ),
                 ),
                 if (detail case final detail?) MutedText(detail),
@@ -369,7 +369,7 @@ class _QuestJournalRow extends StatelessWidget {
               row.name,
               style: TextStyle(
                 fontWeight: FontWeight.w400,
-                color: row.completed ? Palette.gold : Palette.parchmentText,
+                color: row.completed ? Palette.gold : UiChrome.of(context).panelInk,
               ),
             ),
             subtitle: MutedText(row.detail),
@@ -392,7 +392,9 @@ class _QuestJournalRow extends StatelessWidget {
                         child: Text(
                           step.label,
                           style: TextStyle(
-                            color: step.state == 'done' ? Palette.muted : Palette.parchmentText,
+                            color: step.state == 'done'
+                                ? Palette.muted
+                                : UiChrome.of(context).panelInk,
                           ),
                         ),
                       ),
@@ -436,7 +438,7 @@ class _MiniquestList extends StatelessWidget {
                     row.name,
                     style: TextStyle(
                       fontWeight: FontWeight.w400,
-                      color: row.ready ? Palette.gold : Palette.parchmentText,
+                      color: row.ready ? Palette.gold : UiChrome.of(context).panelInk,
                     ),
                   ),
                   MutedText(row.detail),

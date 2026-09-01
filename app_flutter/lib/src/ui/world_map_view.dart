@@ -153,7 +153,7 @@ class WorldMapView extends StatelessWidget {
             child: OverlayChipButton(
               tooltip: 'Open world map',
               onPressed: () => onBrowseMap(mainMapId),
-              child: GameImage(uiMapAssetPath(), width: 38, height: 38),
+              child: GameImage(uiMapAssetPath(), width: 20, height: 20),
             ),
           ),
         Positioned(

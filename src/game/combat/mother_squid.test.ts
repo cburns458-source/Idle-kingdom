@@ -56,11 +56,11 @@ describe('mother squid boss', () => {
     const save = saveAtDepths(launch)
     const baseHp = playerBaseMaxHp(launch, save)
     expect(baseHp).toBe(1000)
-    expect(enemyEncounterMaxHp(launch, save, squid)).toBe(2000)
+    expect(enemyEncounterMaxHp(launch, save, squid)).toBe(2200)
     expect(enemyEncounterDamageRange(launch, save, squid)).toEqual({ min: 80, max: 120 })
 
     const started = beginCombatSave(launch, save, action, squid)
-    expect(started.combatEnemyHp).toBe(2000)
+    expect(started.combatEnemyHp).toBe(2200)
   })
 
   it('uses fishing ATR and level for damage instead of weapon range', () => {
