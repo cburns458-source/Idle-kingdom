@@ -47,6 +47,11 @@ List<ShopRow> shopsAtLocation(GameDatabase db, String locationId) {
   return db.shops.where((shop) => shop.raw['Location ID'] == locationId).toList();
 }
 
+/// True when any shop counter is listed at [locationId].
+bool locationHasShop(GameDatabase db, String locationId) {
+  return shopsAtLocation(db, locationId).isNotEmpty;
+}
+
 FacilityRow? shopFacility(GameDatabase db, ShopRow shop) {
   return db.facilities.firstWhereOrNull(
     (facility) =>

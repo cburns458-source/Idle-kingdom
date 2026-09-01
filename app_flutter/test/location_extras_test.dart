@@ -274,6 +274,33 @@ void main() {
       expect(controller.activityError, isNotNull);
     });
 
+    testWidgets('arriving at a favorited hunt offers Equip & Start', (tester) async {
+      final base = startedCharacter(database);
+      final controller = buildController(
+        database,
+        seed: base.copyWith(
+          currentLocationId: 'LOC-0001',
+          favoriteActivityByLocationId: const {'LOC-0009': 'ACT-0011'},
+          inventory: <InventoryStack>[
+            ...base.inventory,
+            const InventoryStack(itemId: 'ITEM-0108', quantity: 1),
+          ],
+        ),
+      );
+      controller.setMapTravelAnimation(false);
+      addTearDown(controller.dispose);
+      await pumpShell(tester, controller);
+
+      expect(controller.autoEquip, isNull);
+      expect(controller.travelTo('LOC-0009', mainMapId), isTrue);
+      await tester.pump();
+
+      expect(controller.save.currentLocationId, 'LOC-0009');
+      expect(controller.save.currentActivityId, isNull);
+      expect(find.text('Equip required tool?'), findsOne);
+      expect(find.text('Equip & Start'), findsOne);
+    });
+
     testWidgets('a refusal floats over the dock and fades away', (tester) async {
       final controller = buildController(database, seed: startedWithoutNet());
       addTearDown(controller.dispose);
@@ -361,6 +388,35 @@ void main() {
 
     expect(find.text('The Farm'), findsOne);
     expect(controller.save.currentLocationId, townKitchenId);
+  });
+
+  testWidgets('shop map nodes show a coin, other nodes do not', (tester) async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(currentLocationId: townKitchenId),
+    );
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller);
+
+    await tester.tap(find.byTooltip('Back to Town'));
+    await tester.pump();
+
+    Finder nodeOf(String label) {
+      return find.ancestor(
+        of: find.descendant(of: find.byType(WorldMapView), matching: find.text(label)).first,
+        matching: find.byType(GestureDetector),
+      );
+    }
+
+    expect(
+      find.descendant(of: find.byType(WorldMapView), matching: find.text('General Store')),
+      findsWidgets,
+    );
+    expect(
+      find.descendant(of: nodeOf('General Store'), matching: find.byTooltip('Shop')),
+      findsOne,
+    );
+    expect(find.descendant(of: nodeOf('Kitchen'), matching: find.byTooltip('Shop')), findsNothing);
   });
 
   testWidgets('Enter on a gateway opens the submap at its landing', (tester) async {
@@ -473,6 +529,18 @@ void main() {
     expect(controller.save.currentLocationId, townGeneralStoreId);
     expect(find.byType(WorldMapView), findsNothing);
     expect(find.byTooltip('Back to Town'), findsOne);
+  });
+
+  testWidgets('the workshop lists Special production as its own tab', (tester) async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(currentLocationId: 'LOC-0025'),
+    );
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller);
+
+    expect(find.widgetWithText(GameButton, 'Special production'), findsOne);
+    expect(find.text('Special production'), findsOne);
   });
 
   testWidgets('the option band shows one tab per group at the kitchen', (tester) async {

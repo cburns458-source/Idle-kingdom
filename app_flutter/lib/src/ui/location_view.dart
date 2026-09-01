@@ -554,8 +554,9 @@ class _LocationViewState extends State<LocationView> {
       sections.add(_BandSection(label, children));
     }
 
-    add('Activities', _activityBand(locationId));
+    add('Activities', _activities(locationId));
     add('Blessing', _blessing());
+    add('Special production', _stations(locationId));
     add('People', _people(locationId));
     add('Shops', _shops(locationId));
     add('Bank', _bank());
@@ -594,19 +595,6 @@ class _LocationViewState extends State<LocationView> {
             onPressed: () => _openPanel(CitadelHubOpen(tab)),
           ),
         ),
-    ];
-  }
-
-  List<Widget> _activityBand(String locationId) {
-    final activities = _activities(locationId);
-    final stations = _stations(locationId);
-    if (activities.isEmpty && stations.isEmpty) return const [];
-    if (activities.isEmpty) return stations;
-    if (stations.isEmpty) return activities;
-    return [
-      ...activities,
-      const Padding(padding: EdgeInsets.only(bottom: 8), child: MutedText('Special production')),
-      ...stations,
     ];
   }
 
@@ -822,7 +810,7 @@ class _FloatingOptionBand extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: const Color(0xF0140D08),
+        color: Colors.transparent,
         borderRadius: BorderRadius.zero /* pixel step 3 */,
         border: Border.all(color: const Color(0x479A7B32)),
       ),

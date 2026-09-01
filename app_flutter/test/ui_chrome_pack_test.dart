@@ -42,4 +42,29 @@ void main() {
     await tester.pump(const Duration(milliseconds: 100));
     expect(controller.uiChromePack, UiChromePack.wood);
   });
+
+  test('Wood primaries are brown; Stone turns those browns grey and gold iron', () {
+    expect(UiChrome.wood.primaryFill.colors, isNot(contains(const Color(0xFF7F9D63))));
+    expect(UiChrome.wood.primaryFill.colors.first, const Color(0xFF8B5E34));
+    expect(UiChrome.wood.embossFace, const Color(0xFF7A5F24));
+    expect(UiChrome.stone.primaryFill.colors.first, const Color(0xFF6A6E78));
+    expect(UiChrome.stone.embossFace, const Color(0xFF4A4E56));
+    expect(UiChrome.stone.embossShade, const Color(0xFF141618));
+  });
+
+  testWidgets('GameButton wears the active pack fill', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildAppTheme(),
+        home: UiChromeScope(
+          chrome: UiChrome.stone,
+          child: Scaffold(
+            body: GameButton(label: 'Go', onPressed: () {}),
+          ),
+        ),
+      ),
+    );
+    final plate = tester.widget<PixelInkPlate>(find.byType(PixelInkPlate));
+    expect(plate.gradient, UiChrome.stone.primaryFill);
+  });
 }

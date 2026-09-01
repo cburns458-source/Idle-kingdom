@@ -27,6 +27,21 @@ class UiChrome {
     required this.panelTextureAsset,
     required this.shellGradient,
     required this.frameGradient,
+    required this.primaryFill,
+    required this.primaryPressed,
+    required this.secondaryFill,
+    required this.secondaryPressed,
+    required this.primaryLabel,
+    required this.secondaryLabel,
+    required this.iconButtonFill,
+    required this.embossFace,
+    required this.embossHighlight,
+    required this.embossShade,
+    required this.embossFaceSelected,
+    required this.embossHighlightSelected,
+    required this.embossShadeSelected,
+    required this.rivetFill,
+    required this.rivetShade,
   });
 
   final UiChromePack pack;
@@ -40,6 +55,21 @@ class UiChrome {
   final String panelTextureAsset;
   final LinearGradient shellGradient;
   final LinearGradient frameGradient;
+  final LinearGradient primaryFill;
+  final LinearGradient primaryPressed;
+  final LinearGradient secondaryFill;
+  final LinearGradient secondaryPressed;
+  final Color primaryLabel;
+  final Color secondaryLabel;
+  final Color iconButtonFill;
+  final Color embossFace;
+  final Color embossHighlight;
+  final Color embossShade;
+  final Color embossFaceSelected;
+  final Color embossHighlightSelected;
+  final Color embossShadeSelected;
+  final Color rivetFill;
+  final Color rivetShade;
 
   DecorationImage? _boardFill55;
   DecorationImage? _boardFill40;
@@ -69,6 +99,37 @@ class UiChrome {
       end: Alignment.bottomCenter,
       colors: [Color(0xFF3D2A1A), Color(0xFF2A1C12)],
     ),
+    primaryFill: const LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      colors: [Color(0xFF8B5E34), Color(0xFF5E3D22)],
+    ),
+    primaryPressed: const LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      colors: [Color(0xFF6E4A28), Color(0xFF3F2A16)],
+    ),
+    secondaryFill: const LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      colors: [Color(0xFF6A4A30), Color(0xFF45301F)],
+    ),
+    secondaryPressed: const LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      colors: [Color(0xFF4A3422), Color(0xFF2F2115)],
+    ),
+    primaryLabel: const Color(0xFFFFF6E4),
+    secondaryLabel: const Color(0xFFFFF4D4),
+    iconButtonFill: const Color(0xFF45301F),
+    embossFace: const Color(0xFF7A5F24),
+    embossHighlight: const Color(0xFF7A6434),
+    embossShade: const Color(0xFF3A2A0C),
+    embossFaceSelected: const Color(0xFF967A32),
+    embossHighlightSelected: const Color(0xFF968040),
+    embossShadeSelected: const Color(0xFF3A2A0A),
+    rivetFill: const Color(0xFF8A6B28),
+    rivetShade: const Color(0xFF3F2E0C),
   );
 
   static final stone = UiChrome(
@@ -92,6 +153,37 @@ class UiChrome {
       end: Alignment.bottomCenter,
       colors: [Color(0xFF3A3C42), Color(0xFF2A2C30)],
     ),
+    primaryFill: const LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      colors: [Color(0xFF6A6E78), Color(0xFF4A4E56)],
+    ),
+    primaryPressed: const LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      colors: [Color(0xFF52565E), Color(0xFF363A42)],
+    ),
+    secondaryFill: const LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      colors: [Color(0xFF4A4E56), Color(0xFF32363C)],
+    ),
+    secondaryPressed: const LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      colors: [Color(0xFF363A40), Color(0xFF22262C)],
+    ),
+    primaryLabel: const Color(0xFFF2F0EA),
+    secondaryLabel: const Color(0xFFE8E6E0),
+    iconButtonFill: const Color(0xFF32363C),
+    embossFace: const Color(0xFF4A4E56),
+    embossHighlight: const Color(0xFF5A5E66),
+    embossShade: const Color(0xFF141618),
+    embossFaceSelected: const Color(0xFF6A6E78),
+    embossHighlightSelected: const Color(0xFF7A7E86),
+    embossShadeSelected: const Color(0xFF0A0C0E),
+    rivetFill: const Color(0xFF5A5E66),
+    rivetShade: const Color(0xFF1A1C20),
   );
 
   static UiChrome forPack(UiChromePack pack) => switch (pack) {
