@@ -241,7 +241,7 @@ class PixelPlate extends StatelessWidget {
         fit: BoxFit.none,
         alignment: Alignment.topLeft,
         filterQuality: FilterQuality.none,
-        opacity: 0.55,
+        opacity: 0.32,
       ),
       PixelPlateMaterial.none => null,
       PixelPlateMaterial.auto => null,

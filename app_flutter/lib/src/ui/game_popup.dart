@@ -85,7 +85,10 @@ Future<T?> showGamePopup<T>({
   );
 }
 
-/// Parchment card chrome every floating popup shares.
+/// Wood-board card chrome every floating popup shares.
+///
+/// Quiet horizontal planks (not busy film grain). Light parchment copy on the
+/// board; nest [GamePanel] for tan info / stats plates with dark ink.
 class GamePopupCard extends StatelessWidget {
   const GamePopupCard({super.key, required this.child, this.padding});
 
@@ -95,12 +98,18 @@ class GamePopupCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Palette.parchmentDeep,
+      color: Palette.board,
       shape: PixelSteppedBorder(step: 3),
       clipBehavior: Clip.antiAlias,
       child: DecoratedBox(
-        decoration: BoxDecoration(image: panelGrainImage()),
-        child: Padding(padding: padding ?? const EdgeInsets.all(16), child: child),
+        decoration: woodBoardFill(textureOpacity: 0.4),
+        child: DefaultTextStyle.merge(
+          style: const TextStyle(color: Palette.parchmentText, fontFamily: gameFontFamily),
+          child: IconTheme.merge(
+            data: const IconThemeData(color: Palette.parchmentText),
+            child: Padding(padding: padding ?? const EdgeInsets.all(16), child: child),
+          ),
+        ),
       ),
     );
   }
