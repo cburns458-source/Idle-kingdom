@@ -152,10 +152,7 @@ class _MenuViewState extends State<MenuView> {
                       ],
                     ),
                   ),
-                  GameSwitch(
-                    value: controller.batterySaver,
-                    onChanged: controller.setBatterySaver,
-                  ),
+                  GameSwitch(value: controller.batterySaver, onChanged: controller.setBatterySaver),
                 ],
               ),
             ),

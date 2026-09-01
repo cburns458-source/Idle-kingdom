@@ -735,7 +735,9 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
                     Positioned(
                       left: 8,
                       bottom: 10,
-                      child: _BatterySaverPlaque(onOpenSettings: () => _selectScreen(GameScreen.menu)),
+                      child: _BatterySaverPlaque(
+                        onOpenSettings: () => _selectScreen(GameScreen.menu),
+                      ),
                     ),
                 ],
               ),

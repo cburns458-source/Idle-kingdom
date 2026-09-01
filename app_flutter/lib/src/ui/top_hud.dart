@@ -108,10 +108,7 @@ class TopHud extends StatelessWidget {
             appearance: save.appearance,
             raceId: save.raceId,
             bytes: controller.localPlayerPng,
-            hint:
-                !batterySaver &&
-                !save.hasSeenWardrobeIntro &&
-                save.cosmetics.unlocked.isNotEmpty,
+            hint: !batterySaver && !save.hasSeenWardrobeIntro && save.cosmetics.unlocked.isNotEmpty,
             onTap: onOpenWardrobe,
           ),
           const SizedBox(width: 8),
