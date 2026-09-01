@@ -436,20 +436,22 @@ class GameTextButton extends StatelessWidget {
       enabled: onPressed != null,
       selected: selected,
       label: label,
-      child: InkWell(
-        onTap: onPressed,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          child: Opacity(
-            opacity: onPressed == null ? 0.45 : 1,
-            child: Text(
-              label,
-              style: TextStyle(
-                fontFamily: gameFontFamily,
-                fontSize: 12,
-                fontWeight: FontWeight.w400,
-                color: selected ? Palette.gold : ink,
-                height: 1.1,
+      child: ExcludeSemantics(
+        child: InkWell(
+          onTap: onPressed,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            child: Opacity(
+              opacity: onPressed == null ? 0.45 : 1,
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontFamily: gameFontFamily,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w400,
+                  color: selected ? Palette.gold : ink,
+                  height: 1.1,
+                ),
               ),
             ),
           ),
