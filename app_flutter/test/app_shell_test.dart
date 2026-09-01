@@ -582,6 +582,8 @@ void main() {
 
     expect(controller.mapTravelAnimation, isFalse);
     await openChinScreen(tester, 'Settings');
+    await tester.tap(find.text('UI'));
+    await tester.pump();
     expect(find.text('Map travel animation'), findsOne);
     expect(find.text('Account'), findsOne);
     expect(
@@ -617,6 +619,8 @@ void main() {
     expect(find.byKey(const Key('battery-saver-plaque')), findsNothing);
 
     await openChinScreen(tester, 'Settings');
+    await tester.tap(find.text('UI'));
+    await tester.pump();
     expect(find.text('Battery saver'), findsOne);
     expect(find.text('Skip animations and refresh the screen less often.'), findsOne);
     await tester.tap(_settingsSwitch('Battery saver'));
@@ -629,6 +633,8 @@ void main() {
     expect(find.byKey(const Key('battery-saver-plaque')), findsOne);
 
     await tester.tap(find.byKey(const Key('battery-saver-plaque')));
+    await tester.pump();
+    await tester.tap(find.text('UI'));
     await tester.pump();
     expect(find.text('Skip animations and refresh the screen less often.'), findsOne);
     expect(find.byKey(const Key('battery-saver-plaque')), findsNothing);

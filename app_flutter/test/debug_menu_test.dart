@@ -64,6 +64,14 @@ void main() {
     await pumpShell(tester, controller, size: const Size(900, 2400));
 
     await openChinScreen(tester, 'Settings');
+    await tester.tap(find.text('UI'));
+    await tester.pump();
+    expect(find.text('Guild tag on HUD'), findsOne);
+    expect(find.text('Show title on HUD'), findsOne);
+    expect(find.text('Hide chat bubble'), findsOne);
+
+    await tester.tap(find.text('Chat'));
+    await tester.pump();
     await tester.scrollUntilVisible(
       find.text('Filter chat'),
       300,
@@ -71,9 +79,6 @@ void main() {
     );
     await tester.pump();
     expect(find.text('Filter chat'), findsOne);
-    expect(find.text('Guild tag on HUD'), findsOne);
-    expect(find.text('Show title on HUD'), findsOne);
-    expect(find.text('Hide chat bubble'), findsOne);
     await tester.scrollUntilVisible(
       find.text('Chat name color'),
       300,
@@ -96,6 +101,8 @@ void main() {
     expect(find.text('Browse social pages'), findsNothing);
     expect(find.text('Move this save'), findsNothing);
 
+    await tester.tap(find.text('Testing'));
+    await tester.pump();
     await tester.scrollUntilVisible(
       find.text('Testing tools'),
       300,
@@ -129,6 +136,8 @@ void main() {
     await pumpShell(tester, controller, size: const Size(900, 2400));
 
     await openChinScreen(tester, 'Settings');
+    await tester.tap(find.text('Testing'));
+    await tester.pump();
     await tester.scrollUntilVisible(
       find.bySemanticsLabel('Spawn critter'),
       300,
