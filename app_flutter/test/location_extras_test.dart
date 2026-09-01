@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:idle_kingdoms/src/content/asset_paths.dart';
 import 'package:idle_kingdoms/src/ui/critter_overlay.dart';
 import 'package:idle_kingdoms/src/theme.dart';
 import 'package:idle_kingdoms/src/ui/action_stage.dart';
+import 'package:idle_kingdoms/src/ui/game_image.dart';
 import 'package:idle_kingdoms/src/ui/location_view.dart';
 import 'package:idle_kingdoms/src/ui/overlay_notice.dart';
 import 'package:idle_kingdoms/src/ui/shop_panel.dart';
@@ -572,6 +574,13 @@ void main() {
     expect(nearby.height, 32);
     expect(map.width, 32);
     expect(map.height, 32);
+
+    final icon = tester.widget<GameImage>(
+      find.descendant(of: find.byTooltip('Open world map'), matching: find.byType(GameImage)),
+    );
+    expect(icon.path, uiMapAssetPath());
+    expect(icon.width, 32);
+    expect(icon.height, 32);
   });
 
   testWidgets('the workshop lists Special production as its own tab', (tester) async {
