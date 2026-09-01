@@ -334,9 +334,7 @@ class _ShopPanelState extends State<ShopPanel> {
                     right: 0,
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                      decoration: const BoxDecoration(
-                        color: Color(0xE69A7B32),
-                      ),
+                      decoration: const BoxDecoration(color: Color(0xE69A7B32)),
                       child: Text(
                         '×${formatThousands(offered)}',
                         style: const TextStyle(

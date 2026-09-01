@@ -1030,7 +1030,10 @@ class _ItemTile extends StatelessWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           if (enchanted)
-                            const Text('★', style: TextStyle(fontSize: 11, color: Palette.softGreen)),
+                            const Text(
+                              '★',
+                              style: TextStyle(fontSize: 11, color: Palette.softGreen),
+                            ),
                           if (onToggleFavorite != null && !selecting)
                             GestureDetector(
                               behavior: HitTestBehavior.opaque,

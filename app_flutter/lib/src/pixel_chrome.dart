@@ -272,11 +272,7 @@ class PixelPlate extends StatelessWidget {
       plate = ClipPath(
         clipper: _SteppedClipper(step: step),
         child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: fillColor,
-            gradient: gradient,
-            image: _texture(),
-          ),
+          decoration: BoxDecoration(color: fillColor, gradient: gradient, image: _texture()),
           child: plate,
         ),
       );

@@ -135,11 +135,7 @@ BoxDecoration woodBoardFill({
 
 /// Shell / loading / frame wash: wood planks as the dominant outer board.
 BoxDecoration woodShellDecoration({Gradient? gradient}) {
-  return BoxDecoration(
-    color: Palette.board,
-    gradient: gradient,
-    image: woodPanelImage(opacity: 1),
-  );
+  return BoxDecoration(color: Palette.board, gradient: gradient, image: woodPanelImage(opacity: 1));
 }
 
 /// The bar fills, each one a three-stop gradient as the old client drew them.
