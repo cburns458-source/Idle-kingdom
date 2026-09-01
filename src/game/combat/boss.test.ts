@@ -137,7 +137,7 @@ describe('dragon boss', () => {
     }
     const victory = applyCombatVictory(launch, save, action, dragon, () => 0, now)
     expect(victory.save.statistics.values.bosses_killed).toBe(1)
-    expect(victory.save.statistics.values.killed_ENM-0006).toBe(1)
+    expect(victory.save.statistics.values['killed_ENM-0006']).toBe(1)
     expect(victory.save.bossRespawnUntilByEnemyId['ENM-0006']).toBe(
       new Date(now + 10_000).toISOString(),
     )

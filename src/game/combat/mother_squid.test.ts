@@ -43,13 +43,13 @@ describe('mother squid boss', () => {
       damageMode: 'fishing',
       respawnSeconds: 30,
       sleepStart: 0,
-      playerBaseHpScale: 2,
+      playerBaseHpScale: 2.2,
       playerBaseDamagePctMin: 8,
       playerBaseDamagePctMax: 12,
     })
   })
 
-  it('scales encounter HP to 2× player base HP and damage to 8–12%', () => {
+  it('scales encounter HP to 2.2× player base HP and damage to 8–12%', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const squid = launch.Enemies.find((row) => row['Enemy ID'] === 'ENM-0023')!
     const action = launch.Actions.find((row) => row['Action ID'] === 'ACN-0178')!

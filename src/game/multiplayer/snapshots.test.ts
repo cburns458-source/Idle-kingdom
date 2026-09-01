@@ -72,8 +72,8 @@ describe('leaderboard snapshot builder', () => {
       ...createNewSave(launch),
       statistics: {
         values: {
-          killed_ENM-0006: 2,
-          killed_ENM-0023: 1,
+          'killed_ENM-0006': 2,
+          'killed_ENM-0023': 1,
         },
       },
     }
