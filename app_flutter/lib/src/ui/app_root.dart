@@ -15,7 +15,6 @@ import '../session/hud_level_pref.dart';
 import '../session/hud_title_pref.dart';
 import '../session/map_travel_pref.dart';
 import '../session/multiplayer_controller.dart';
-import '../session/ui_chrome.dart';
 import '../storage/legacy_browser_save.dart';
 import '../storage/prefs_store.dart';
 import '../storage/save_adoption.dart';

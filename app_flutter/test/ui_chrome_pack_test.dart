@@ -1,10 +1,5 @@
-import 'dart:io';
-import 'dart:ui' as ui;
-
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:idle_kingdoms/src/session/ui_chrome.dart';
 import 'package:idle_kingdoms/src/theme.dart';
 import 'package:ik_content/ik_content.dart';
 
@@ -45,7 +40,4 @@ void main() {
     await tester.pump(const Duration(milliseconds: 100));
     expect(controller.uiChromePack, UiChromePack.wood);
   });
-
-  /// Solid-color plate shots (no tiled assets) so rasterization cannot hang
-  /// waiting on unresolved [AssetImage]s in widget tests.
 }
