@@ -100,7 +100,7 @@ class _BottomNavState extends State<BottomNav> {
   @override
   Widget build(BuildContext context) {
     return DecoratedBox(
-      decoration: panelFill(
+      decoration: woodBoardFill(
         border: const Border(top: BorderSide(color: Palette.edge)),
       ),
       child: SizedBox(
@@ -155,7 +155,7 @@ class _NestPopup extends StatelessWidget {
       color: const Color(0xFA302014),
       elevation: 12,
       shadowColor: const Color(0x73000000),
-      shape: PixelSteppedBorder(step: 3, side: const BorderSide(color: Color(0x66D4AF37))),
+      shape: PixelSteppedBorder(step: 3, side: const BorderSide(color: Color(0x669A7B32))),
       child: Semantics(
         container: true,
         label: 'More screens',

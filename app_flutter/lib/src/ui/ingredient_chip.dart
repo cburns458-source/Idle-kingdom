@@ -22,7 +22,7 @@ class IngredientChip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
         decoration: BoxDecoration(
-          color: Palette.panel,
+          color: Palette.slot,
           borderRadius: BorderRadius.zero /* pixel step 2 */,
           border: Border.all(color: short ? Palette.danger : Palette.edge),
         ),

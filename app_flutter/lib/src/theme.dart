@@ -11,14 +11,18 @@ Color? colorFromHexRgb(String? hex) {
   return Color(0xFF000000 | value);
 }
 
-/// The palette the game is drawn in: parchment, gold, and soft green.
+/// The palette the game is drawn in: wood boards, tan panels, dull gold.
 abstract final class Palette {
   static const parchmentText = Color(0xFFF4E7C8);
   static const parchment = Color(0xFF5C4027);
   static const parchmentDeep = Color(0xFF3D2A1A);
-  static const gold = Color(0xFFD4AF37);
-  static const goldHighlight = Color(0xFFF2E6A8);
-  static const goldShade = Color(0xFF7A5A14);
+
+  /// Dull antique brass (borders, accents) — not bright jewelry gold.
+  static const gold = Color(0xFF8A6B28);
+  static const goldHighlight = Color(0xFFA89048);
+  static const goldShade = Color(0xFF3F2E0C);
+
+  /// Outer board / wood chrome.
   static const wood = Color(0xFF2A1C12);
   static const softGreen = Color(0xFF8FAF7A);
   static const ink = Color(0xFF1F1610);
@@ -27,8 +31,14 @@ abstract final class Palette {
   /// Secondary body text, the old client's `.muted`.
   static const muted = Color(0xFFCBB894);
 
+  /// Muted copy on tan inner panels.
+  static const panelMuted = Color(0xFF6B5338);
+
+  /// Body ink on tan inner panels.
+  static const panelInk = Color(0xFF2A1C12);
+
   /// Location and panel headings.
-  static const heading = Color(0xFFFFE7A8);
+  static const heading = Color(0xFFE8D090);
 
   /// Body copy on top of location art.
   static const overlayText = Color(0xFFF2E6C8);
@@ -37,42 +47,64 @@ abstract final class Palette {
   static const warning = Color(0xFFEFB07A);
 
   /// Hairline gold used for panel edges.
-  static const edge = Color(0x73D4AF37);
+  static const edge = Color(0x738A6B28);
 
-  /// The behind-everything wash, matching `.app-shell`.
+  /// The behind-everything wash — dark wood base under the plank texture.
   static const shellGradient = LinearGradient(
     begin: Alignment(-0.6, -1),
     end: Alignment(0.6, 1),
-    colors: [Color(0xFF2A1B12), Color(0xFF4A3422), Color(0xFF1F1610)],
+    colors: [Color(0xFF1A120C), Color(0xFF2A1C12), Color(0xFF14100A)],
     stops: [0, 0.45, 1],
   );
 
-  /// The frame the game is played inside, matching `.portrait-frame`.
+  /// The frame the game is played inside — outer brown board.
   static const frameGradient = LinearGradient(
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
-    colors: [Color(0xFF5C4027), Color(0xFF3D2A1A)],
+    colors: [Color(0xFF3D2A1A), Color(0xFF2A1C12)],
   );
 
-  /// Opaque card fill for docks, tiles, and panels.
-  static const panel = parchmentDeep;
+  /// Outer wood board (HUD, nav, shell chrome).
+  static const board = wood;
+
+  /// Tan inner fill for menus and content panels.
+  static const panelTan = Color(0xFFC4A882);
+
+  /// Opaque card fill for docks, tiles, and panels (tan inset).
+  static const panel = panelTan;
+
+  /// Recessed item-slot well on tan panels.
+  static const slot = Color(0xFF3D2A1A);
 }
 
 /// Zoom that fills a portrait window with the bundled sprite's head.
 const double playerPortraitHeadZoom = 1.72;
 
-/// Fine film grain tiled over panel fills, the HUD, and the chin.
+/// Fine film grain tiled over tan panel fills.
 const String panelGrainAsset = 'assets/ui/panel-grain.png';
 
-DecorationImage panelGrainImage() => const DecorationImage(
-  image: AssetImage(panelGrainAsset),
+/// Horizontal wood-plank texture for outer boards and the main background.
+const String woodPanelAsset = 'assets/ui/wood-panel.png';
+
+DecorationImage panelGrainImage({double opacity = 0.12}) => DecorationImage(
+  image: const AssetImage(panelGrainAsset),
   repeat: ImageRepeat.repeat,
   fit: BoxFit.none,
   alignment: Alignment.topLeft,
   filterQuality: FilterQuality.none,
-  opacity: 0.03,
+  opacity: opacity,
 );
 
+DecorationImage woodPanelImage({double opacity = 1}) => DecorationImage(
+  image: const AssetImage(woodPanelAsset),
+  repeat: ImageRepeat.repeat,
+  fit: BoxFit.none,
+  alignment: Alignment.topLeft,
+  filterQuality: FilterQuality.none,
+  opacity: opacity,
+);
+
+/// Tan inner panel fill (menus, content plates).
 BoxDecoration panelFill({
   Color color = Palette.panel,
   BorderRadius? borderRadius,
@@ -83,6 +115,29 @@ BoxDecoration panelFill({
     borderRadius: borderRadius,
     border: border,
     image: panelGrainImage(),
+  );
+}
+
+/// Dark wood outer board (HUD strip, nav chin, shell).
+BoxDecoration woodBoardFill({
+  Color color = Palette.board,
+  BorderRadius? borderRadius,
+  BoxBorder? border,
+  double textureOpacity = 0.85,
+}) {
+  return BoxDecoration(
+    color: color,
+    borderRadius: borderRadius,
+    border: border,
+    image: woodPanelImage(opacity: textureOpacity),
+  );
+}
+
+/// Shell / loading / frame wash: wood planks over a dark board base.
+BoxDecoration woodShellDecoration({Gradient? gradient}) {
+  return BoxDecoration(
+    gradient: gradient ?? Palette.shellGradient,
+    image: woodPanelImage(opacity: 0.9),
   );
 }
 
@@ -201,7 +256,7 @@ ThemeData buildAppTheme() {
             ? const Color(0xFF5F7A45)
             : const Color(0xFF45301F);
       }),
-      trackOutlineColor: WidgetStateProperty.all(const Color(0x73D4AF37)),
+      trackOutlineColor: WidgetStateProperty.all(const Color(0x739A7B32)),
     ),
   );
 }
@@ -292,7 +347,7 @@ class _GameButtonState extends State<GameButton> {
             gradient: primary
                 ? (down ? GameButton._primaryPressed : GameButton._primaryFill)
                 : (down ? GameButton._secondaryPressed : GameButton._secondaryFill),
-            fillColor: widget.selected ? const Color(0x33D4AF37) : null,
+            fillColor: widget.selected ? const Color(0x339A7B32) : null,
             padding: widget.dense
                 ? const EdgeInsets.symmetric(horizontal: 8, vertical: 4)
                 : widget.compact
@@ -545,7 +600,8 @@ class DockRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return PixelPlate(
       step: PixelChrome.step,
-      fillColor: Palette.panel,
+      fillColor: Palette.slot,
+      material: PixelPlateMaterial.wood,
       strokeWidth: 1.5,
       shadow: false,
       padding: const EdgeInsets.fromLTRB(11, 10, 11, 10),
@@ -638,6 +694,17 @@ class GamePanel extends StatelessWidget {
   /// Gold, thicker edge for the viewer's own leaderboard row.
   final bool highlight;
 
+  Widget _inked(Widget plateChild) {
+    // Tan inner panels read with dark ink; overlays keep their own colors.
+    return DefaultTextStyle.merge(
+      style: const TextStyle(color: Palette.panelInk, fontFamily: gameFontFamily),
+      child: IconTheme.merge(
+        data: const IconThemeData(color: Palette.panelInk),
+        child: plateChild,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (onTap != null) {
@@ -645,22 +712,24 @@ class GamePanel extends StatelessWidget {
         onTap: onTap,
         step: PixelChrome.step,
         fillColor: Palette.panel,
+        material: PixelPlateMaterial.tan,
         strokeWidth: highlight ? 2.5 : 2,
         selected: highlight,
         shadow: false,
         padding: padding ?? const EdgeInsets.all(12),
-        child: child,
+        child: _inked(child),
       );
     }
     return PixelPlate(
       step: PixelChrome.step,
       fillColor: Palette.panel,
+      material: PixelPlateMaterial.tan,
       strokeWidth: highlight ? 2.5 : 2,
       selected: highlight,
       rivets: highlight,
       shadow: false,
       padding: padding ?? const EdgeInsets.all(12),
-      child: child,
+      child: _inked(child),
     );
   }
 }
@@ -728,13 +797,13 @@ class OverlayChipButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final rim = highlightColor ?? (highlight ? Palette.gold : null);
     final side = BorderSide(
-      color: rim ?? (dark ? const Color(0x8CD4AF5A) : const Color(0xB3B4DC96)),
+      color: rim ?? (dark ? const Color(0x8C9A7B32) : const Color(0xB3B4DC96)),
       width: rim != null ? 2 : 1,
     );
     return Tooltip(
       message: tooltip,
       child: Material(
-        color: dark ? Palette.panel : const Color(0xFFBADCA0),
+        color: dark ? Palette.slot : const Color(0xFFBADCA0),
         elevation: 6,
         shadowColor: const Color(0x47000000),
         shape: PixelSteppedBorder(step: PixelChrome.step, side: side),
@@ -843,10 +912,16 @@ class MutedText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final inherited = DefaultTextStyle.of(context).style.color;
+    final onTan = inherited != null && inherited.computeLuminance() < 0.45;
     return Text(
       text,
       textAlign: textAlign,
-      style: TextStyle(fontSize: 12.5, color: color ?? Palette.muted, height: 1.35),
+      style: TextStyle(
+        fontSize: 12.5,
+        color: color ?? (onTan ? Palette.panelMuted : Palette.muted),
+        height: 1.35,
+      ),
     );
   }
 }

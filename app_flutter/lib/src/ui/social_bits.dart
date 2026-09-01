@@ -93,7 +93,7 @@ class SocialPortrait extends StatelessWidget {
       width: size,
       height: height ?? size,
       decoration: BoxDecoration(
-        color: Palette.panel,
+        color: Palette.slot,
         borderRadius: BorderRadius.zero /* pixel step 2 */,
         border: Border.all(color: borderColor ?? Palette.edge),
       ),
@@ -129,7 +129,7 @@ class NpcPortrait extends StatelessWidget {
       width: size,
       height: size,
       decoration: BoxDecoration(
-        color: Palette.panel,
+        color: Palette.slot,
         borderRadius: BorderRadius.zero /* pixel step 2 */,
         border: Border.all(color: borderColor ?? Palette.edge),
       ),

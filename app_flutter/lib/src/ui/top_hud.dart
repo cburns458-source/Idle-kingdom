@@ -91,7 +91,7 @@ class TopHud extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.fromLTRB(8, 4, 10, 4),
-      decoration: panelFill(
+      decoration: woodBoardFill(
         border: const Border(bottom: BorderSide(color: Palette.edge)),
       ),
       child: Row(
@@ -241,7 +241,7 @@ class TopHud extends StatelessWidget {
                                 gradient: Meters.hudHp,
                                 height: 8,
                                 trackColor: Palette.ink,
-                                borderColor: const Color(0x59D4AF37),
+                                borderColor: const Color(0x599A7B32),
                               ),
                             ),
                           ),

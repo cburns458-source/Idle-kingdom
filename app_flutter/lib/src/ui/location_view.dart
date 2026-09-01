@@ -233,7 +233,7 @@ class _LocationViewState extends State<LocationView> {
       child: DecoratedBox(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.zero /* pixel step 3 */,
-          border: Border.all(color: const Color(0x47D4AF37)),
+          border: Border.all(color: const Color(0x479A7B32)),
         ),
         child: ClipPath(
           clipper: const PixelSteppedClipper(step: 3),
@@ -823,7 +823,7 @@ class _FloatingOptionBand extends StatelessWidget {
       decoration: BoxDecoration(
         color: const Color(0xF0140D08),
         borderRadius: BorderRadius.zero /* pixel step 3 */,
-        border: Border.all(color: const Color(0x47D4AF37)),
+        border: Border.all(color: const Color(0x479A7B32)),
       ),
       child: Stack(
         children: [

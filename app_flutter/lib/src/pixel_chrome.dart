@@ -13,14 +13,14 @@ abstract final class PixelChrome {
   /// Tighter stair for compact chips / icon buttons.
   static const double stepTight = 2;
 
-  /// Gold emboss face (matches [Palette.gold]).
-  static const Color goldFace = Color(0xFFD4AF37);
+  /// Gold emboss face — antique brass, not bright jewelry gold.
+  static const Color goldFace = Color(0xFF8A6B28);
 
-  /// Top-left highlight on embossed gold borders.
-  static const Color goldHighlight = Color(0xFFF2E6A8);
+  /// Soft top-left highlight on embossed borders (kept dull).
+  static const Color goldHighlight = Color(0xFFA89048);
 
   /// Bottom-right shade on embossed gold borders.
-  static const Color goldShade = Color(0xFF7A5A14);
+  static const Color goldShade = Color(0xFF3F2E0C);
 
   /// Dark wood plate under gold rims.
   static const Color wood = Color(0xFF2A1C12);
@@ -114,19 +114,19 @@ class _EmbossBorderPainter extends CustomPainter {
     final shade = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = strokeWidth
-      ..color = selected ? PixelChrome.goldShade : const Color(0xFF5C4410)
+      ..color = selected ? PixelChrome.goldShade : const Color(0xFF3A2A0C)
       ..strokeJoin = StrokeJoin.miter;
 
     final face = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = math.max(1, strokeWidth - 0.5)
-      ..color = selected ? PixelChrome.goldHighlight : PixelChrome.goldFace
+      ..color = selected ? const Color(0xFF967A32) : PixelChrome.goldFace
       ..strokeJoin = StrokeJoin.miter;
 
     final light = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1
-      ..color = PixelChrome.goldHighlight
+      ..color = selected ? PixelChrome.goldHighlight : const Color(0xFF7A6434)
       ..strokeJoin = StrokeJoin.miter;
 
     canvas
@@ -136,7 +136,7 @@ class _EmbossBorderPainter extends CustomPainter {
       ..restore()
       ..drawPath(path, face);
 
-    // Top + left highlight segments for emboss read.
+    // Subtle top + left lift — muted so borders stay matte, not shiny.
     final s = step.clamp(1.0, math.min(size.width, size.height) / 3);
     final highlight = Path()
       ..moveTo(inset + s, inset)
@@ -170,8 +170,8 @@ class _RivetPainter extends CustomPainter {
       Offset(inset, size.height - inset),
       Offset(size.width - inset, size.height - inset),
     ];
-    final fill = Paint()..color = const Color(0xFFC9A227);
-    final shade = Paint()..color = const Color(0xFF5A4010);
+    final fill = Paint()..color = const Color(0xFF8A6B28);
+    final shade = Paint()..color = const Color(0xFF3F2E0C);
     for (final c in centers) {
       canvas.drawRect(
         Rect.fromCenter(center: c.translate(0.5, 0.5), width: rivet, height: rivet),
@@ -184,6 +184,9 @@ class _RivetPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _RivetPainter oldDelegate) => oldDelegate.step != step;
 }
+
+/// Fill material for [PixelPlate] — wood outer boards vs tan inner panels.
+enum PixelPlateMaterial { auto, wood, tan, none }
 
 /// Wood plate with stepped corners and gold emboss rim. Keeps child layout size.
 class PixelPlate extends StatelessWidget {
@@ -199,6 +202,7 @@ class PixelPlate extends StatelessWidget {
     this.rivets = false,
     this.shadow = true,
     this.clip = true,
+    this.material = PixelPlateMaterial.auto,
   });
 
   final Widget child;
@@ -211,6 +215,36 @@ class PixelPlate extends StatelessWidget {
   final bool rivets;
   final bool shadow;
   final bool clip;
+  final PixelPlateMaterial material;
+
+  DecorationImage? _texture() {
+    if (fillColor == null && gradient == null) return null;
+    final kind = material == PixelPlateMaterial.auto
+        ? ((fillColor != null && fillColor!.computeLuminance() > 0.28)
+              ? PixelPlateMaterial.tan
+              : PixelPlateMaterial.wood)
+        : material;
+    return switch (kind) {
+      PixelPlateMaterial.wood => const DecorationImage(
+        image: AssetImage('assets/ui/wood-panel.png'),
+        repeat: ImageRepeat.repeat,
+        fit: BoxFit.none,
+        alignment: Alignment.topLeft,
+        filterQuality: FilterQuality.none,
+        opacity: 0.55,
+      ),
+      PixelPlateMaterial.tan => const DecorationImage(
+        image: AssetImage('assets/ui/panel-tan.png'),
+        repeat: ImageRepeat.repeat,
+        fit: BoxFit.none,
+        alignment: Alignment.topLeft,
+        filterQuality: FilterQuality.none,
+        opacity: 0.35,
+      ),
+      PixelPlateMaterial.none => null,
+      PixelPlateMaterial.auto => null,
+    };
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -241,16 +275,7 @@ class PixelPlate extends StatelessWidget {
           decoration: BoxDecoration(
             color: fillColor,
             gradient: gradient,
-            image: fillColor != null || gradient != null
-                ? const DecorationImage(
-                    image: AssetImage('assets/ui/panel-grain.png'),
-                    repeat: ImageRepeat.repeat,
-                    fit: BoxFit.none,
-                    alignment: Alignment.topLeft,
-                    filterQuality: FilterQuality.none,
-                    opacity: 0.04,
-                  )
-                : null,
+            image: _texture(),
           ),
           child: plate,
         ),
@@ -307,6 +332,7 @@ class PixelInkPlate extends StatelessWidget {
     this.strokeWidth = 2,
     this.selected = false,
     this.shadow = true,
+    this.material = PixelPlateMaterial.auto,
   });
 
   final Widget child;
@@ -319,6 +345,7 @@ class PixelInkPlate extends StatelessWidget {
   final double strokeWidth;
   final bool selected;
   final bool shadow;
+  final PixelPlateMaterial material;
 
   @override
   Widget build(BuildContext context) {
@@ -342,6 +369,7 @@ class PixelInkPlate extends StatelessWidget {
           strokeWidth: strokeWidth,
           selected: selected,
           shadow: false,
+          material: material,
           child: child,
         ),
       ),

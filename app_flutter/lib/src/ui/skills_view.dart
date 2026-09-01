@@ -141,7 +141,7 @@ class _Totals extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
       decoration: const BoxDecoration(
-        color: Palette.panel,
+        color: Palette.slot,
         border: Border(top: BorderSide(color: Palette.edge)),
       ),
       child: Row(
