@@ -164,7 +164,11 @@ class _CitadelHubPanelState extends State<CitadelHubPanel> {
             ],
           ),
           const SizedBox(height: 10),
-          ...children,
+          Expanded(
+            child: SingleChildScrollView(
+              child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: children),
+            ),
+          ),
         ],
       ),
     );

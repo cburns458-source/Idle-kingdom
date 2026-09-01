@@ -9,6 +9,7 @@ import 'package:ik_runtime/ik_runtime.dart';
 
 import '../content/database_loader.dart';
 import '../net/supabase_transport.dart';
+import '../session/activity_icons_pref.dart';
 import '../session/battery_saver_pref.dart';
 import '../session/game_controller.dart';
 import '../session/local_player_art.dart';
@@ -86,6 +87,7 @@ class _BootGateState extends State<_BootGate> {
       mapTravel: MapTravelPref.load(storage),
       hudLevel: HudLevelPref.load(storage),
       hudTitle: HudTitlePref.load(storage),
+      activityIcons: ActivityIconsPref.load(storage),
       uiChrome: UiChromePref.load(storage),
       batterySaverPref: BatterySaverPref.load(storage),
     )..adoptBoot(boot);

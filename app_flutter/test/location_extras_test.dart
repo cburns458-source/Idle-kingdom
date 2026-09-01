@@ -105,6 +105,18 @@ void main() {
       find.descendant(of: find.byType(WorldMapView), matching: find.byTooltip('Harvesting')),
       findsOne,
     );
+    expect(find.byType(ColorFiltered), findsNothing);
+
+    controller.setShowActivityIcons(false);
+    await tester.pump();
+    expect(
+      find.descendant(of: find.byType(WorldMapView), matching: find.byTooltip('Combat')),
+      findsNothing,
+    );
+    expect(
+      find.descendant(of: find.byType(WorldMapView), matching: find.byTooltip('Harvesting')),
+      findsNothing,
+    );
   });
 
   testWidgets('OverlayNotice dismisses after its hold', (tester) async {
@@ -390,7 +402,7 @@ void main() {
     expect(controller.save.currentLocationId, townKitchenId);
   });
 
-  testWidgets('shop map nodes show a coin, other nodes do not', (tester) async {
+  testWidgets('shop locations show a coin on the popup, not on the node', (tester) async {
     final controller = buildController(
       database,
       seed: startedCharacter(database).copyWith(currentLocationId: townKitchenId),
@@ -401,22 +413,30 @@ void main() {
     await tester.tap(find.byTooltip('Back to Town'));
     await tester.pump();
 
-    Finder nodeOf(String label) {
-      return find.ancestor(
-        of: find.descendant(of: find.byType(WorldMapView), matching: find.text(label)).first,
-        matching: find.byType(GestureDetector),
-      );
-    }
-
     expect(
       find.descendant(of: find.byType(WorldMapView), matching: find.text('General Store')),
       findsWidgets,
     );
     expect(
-      find.descendant(of: nodeOf('General Store'), matching: find.byTooltip('Shop')),
+      find.descendant(of: find.byType(WorldMapView), matching: find.byTooltip('Shop')),
+      findsNothing,
+    );
+
+    await tester.tap(
+      find.descendant(of: find.byType(WorldMapView), matching: find.text('General Store')).first,
+    );
+    await tester.pump();
+    expect(
+      find.descendant(of: find.byType(WorldMapView), matching: find.byTooltip('Shop')),
       findsOne,
     );
-    expect(find.descendant(of: nodeOf('Kitchen'), matching: find.byTooltip('Shop')), findsNothing);
+
+    controller.setShowActivityIcons(false);
+    await tester.pump();
+    expect(
+      find.descendant(of: find.byType(WorldMapView), matching: find.byTooltip('Shop')),
+      findsNothing,
+    );
   });
 
   testWidgets('Enter on a gateway opens the submap at its landing', (tester) async {
@@ -701,7 +721,14 @@ void main() {
 
     final stage = tester.getRect(find.byType(ActionStage));
     final shop = tester.getRect(find.byType(ShopPanel));
+    final band = tester.getRect(find.byTooltip('Expand list'));
     expect(shop.overlaps(stage), isTrue);
     expect(shop.height, greaterThan(200));
+    expect(shop.bottom, lessThanOrEqualTo(band.top + 8));
+    expect(find.text('Confirm trade').hitTestable(), findsOne);
+    expect(
+      tester.getTopLeft(find.textContaining('Offer —')).dy,
+      lessThan(tester.getTopLeft(find.text('Buy')).dy),
+    );
   });
 }

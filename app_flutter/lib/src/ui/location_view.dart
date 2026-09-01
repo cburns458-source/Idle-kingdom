@@ -399,7 +399,9 @@ class _LocationViewState extends State<LocationView> {
                                 left: 13,
                                 right: 13,
                                 bottom: _collapsedBand + 8,
-                                child: openPanel is ArenaOpen ? stage : _scrollingPanel(stage),
+                                child: openPanel is ArenaOpen
+                                    ? stage
+                                    : _fittedPanel(stage, fill: _panelFillsSlot(openPanel)),
                               ),
                             if (overlayPanel != null && !liftArena)
                               Positioned(
@@ -409,7 +411,7 @@ class _LocationViewState extends State<LocationView> {
                                 bottom: _collapsedBand + 8,
                                 child: openPanel is ArenaOpen
                                     ? overlayPanel
-                                    : _scrollingPanel(overlayPanel),
+                                    : _fittedPanel(overlayPanel, fill: _panelFillsSlot(openPanel)),
                               ),
                             if (liftArena && (overlayPanel ?? stage) != null)
                               Positioned(
@@ -487,17 +489,28 @@ class _LocationViewState extends State<LocationView> {
     return panel;
   }
 
-  /// Keeps a shop or NPC as wide as the stage so its grid does not collapse
-  /// inside the scrolling overlay.
-  Widget _scrollingPanel(Widget panel, {Alignment alignment = Alignment.bottomCenter}) {
+  /// Shop and bank fill the slot so their inventories scroll; shorter cards
+  /// stay at the top and scroll only if they would pass the activity band.
+  bool _panelFillsSlot(LocationPanel? panel) {
+    return panel is ShopOpen ||
+        panel is BankOpen ||
+        panel is GuildHallOpen ||
+        panel is CitadelHubOpen;
+  }
+
+  /// Pins a location overlay to the stage slot above the activity band.
+  Widget _fittedPanel(Widget panel, {required bool fill}) {
     return LayoutBuilder(
       builder: (context, stage) {
-        return Align(
-          alignment: alignment,
-          child: SingleChildScrollView(
-            child: SizedBox(width: stage.maxWidth, child: panel),
-          ),
-        );
+        final child = fill
+            ? SizedBox(width: stage.maxWidth, height: stage.maxHeight, child: panel)
+            : ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: stage.maxWidth, maxHeight: stage.maxHeight),
+                child: SingleChildScrollView(
+                  child: SizedBox(width: stage.maxWidth, child: panel),
+                ),
+              );
+        return Align(alignment: Alignment.topCenter, child: child);
       },
     );
   }

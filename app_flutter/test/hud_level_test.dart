@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:idle_kingdoms/src/session/activity_icons_pref.dart';
 import 'package:idle_kingdoms/src/session/hud_level_pref.dart';
 import 'package:idle_kingdoms/src/session/hud_title_pref.dart';
 import 'package:idle_kingdoms/src/theme.dart';
@@ -46,6 +47,21 @@ void main() {
     pref.setShowTitle(true);
     expect(pref.showTitle, isTrue);
     expect(storage.getItem(HudTitlePref.storageKey), '1');
+  });
+
+  test('activity icons stay on this device and default on', () {
+    final storage = MemorySaveStorage();
+    final pref = ActivityIconsPref.load(storage);
+    expect(pref.showIcons, isTrue);
+
+    pref.setShowIcons(false);
+    expect(pref.showIcons, isFalse);
+    expect(storage.getItem(ActivityIconsPref.storageKey), '0');
+    expect(ActivityIconsPref.load(storage).showIcons, isFalse);
+
+    pref.setShowIcons(true);
+    expect(pref.showIcons, isTrue);
+    expect(storage.getItem(ActivityIconsPref.storageKey), '1');
   });
 
   testWidgets('tapping the HUD identity line switches level and experience', (tester) async {

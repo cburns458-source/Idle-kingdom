@@ -103,7 +103,6 @@ class WorldMapView extends StatelessWidget {
                     child: _MapNode(
                       location: node,
                       browseMapId: browseMapId,
-                      hasShop: locationHasShop(controller.db, node.locationId),
                       hintPulse:
                           questHintNodeId(controller.db, save, browseMapId) == node.locationId,
                       isHere: !walking && node.locationId == save.currentLocationId,
@@ -240,7 +239,6 @@ class _MapNode extends StatefulWidget {
   const _MapNode({
     required this.location,
     required this.browseMapId,
-    required this.hasShop,
     required this.isHere,
     required this.isSelected,
     required this.hintPulse,
@@ -250,7 +248,6 @@ class _MapNode extends StatefulWidget {
 
   final LocationRow location;
   final String browseMapId;
-  final bool hasShop;
   final bool isHere;
   final bool isSelected;
   final bool hintPulse;
@@ -345,24 +342,15 @@ class _MapNodeState extends State<_MapNode> with SingleTickerProviderStateMixin 
                     ),
             ),
           ),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                label,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w400,
-                  color: isHere ? Palette.gold : Palette.parchmentText,
-                  shadows: overlayShadow,
-                ),
-              ),
-              if (widget.hasShop) ...[
-                const SizedBox(width: 3),
-                Tooltip(message: 'Shop', child: GameImage(goldIconPath(), width: 12, height: 12)),
-              ],
-            ],
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w400,
+              color: isHere ? Palette.gold : Palette.parchmentText,
+              shadows: overlayShadow,
+            ),
           ),
         ],
       ),
@@ -410,6 +398,8 @@ class _SelectionPanel extends StatelessWidget {
     final skillIds = place == null
         ? const <String>[]
         : skillIdsForLocation(controller.db, controller.save, place.locationId);
+    final hasShop = place != null && locationHasShop(controller.db, place.locationId);
+    final showIcons = controller.showActivityIcons && (skillIds.isNotEmpty || hasShop);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(12),
@@ -429,14 +419,20 @@ class _SelectionPanel extends StatelessWidget {
                         mapNodeLabel(place, browseMapId),
                         style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w400),
                       ),
-                      if (skillIds.isNotEmpty) ...[
+                      if (showIcons) ...[
                         const SizedBox(height: 8),
                         Wrap(
                           spacing: 6,
                           runSpacing: 6,
                           children: [
                             for (final skillId in skillIds)
-                              _LocationSkillIcon(skill: controller.indexes.skillsById[skillId]),
+                              _LocationActivityIcon(
+                                tooltip:
+                                    controller.indexes.skillsById[skillId]?.displayName ?? 'Skill',
+                                path: skillIconPath(controller.indexes.skillsById[skillId]),
+                              ),
+                            if (hasShop)
+                              _LocationActivityIcon(tooltip: 'Shop', path: goldIconPath()),
                           ],
                         ),
                       ],
@@ -457,19 +453,14 @@ class _SelectionPanel extends StatelessWidget {
   }
 }
 
-class _LocationSkillIcon extends StatelessWidget {
-  const _LocationSkillIcon({required this.skill});
+class _LocationActivityIcon extends StatelessWidget {
+  const _LocationActivityIcon({required this.tooltip, required this.path});
 
-  final SkillRow? skill;
+  final String tooltip;
+  final String path;
 
   @override
   Widget build(BuildContext context) {
-    return Tooltip(
-      message: skill?.displayName ?? 'Skill',
-      child: ColorFiltered(
-        colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
-        child: GameImage(skillIconPath(skill), width: 22, height: 22),
-      ),
-    );
+    return Tooltip(message: tooltip, child: GameImage(path, width: 22, height: 22));
   }
 }

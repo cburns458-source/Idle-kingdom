@@ -136,51 +136,53 @@ class _BankPanelState extends State<BankPanel> {
             decoration: const InputDecoration(hintText: 'Search items', isDense: true),
             onChanged: (_) => setState(() {}),
           ),
-          const SizedBox(height: 10),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: _Column(
-                  heading: 'Bank',
-                  empty: bankStacks(save).isEmpty
-                      ? 'The chest is empty.'
-                      : 'Nothing in the bank matches.',
-                  tiles: [
-                    for (final row in chest)
-                      _tileFor(
-                        key: ValueKey('bank-${row.index}'),
-                        stack: row.stack,
-                        onTap: () => _withdraw(row.index, row.stack),
-                      ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 9),
-              Expanded(
-                child: _Column(
-                  heading: 'Bag',
-                  empty: save.inventory.isEmpty
-                      ? 'The bag is empty.'
-                      : bag.isEmpty && save.inventory.every(stackIsUnbankableGold)
-                      ? 'Nothing in the bag to deposit.'
-                      : 'Nothing in the bag matches.',
-                  tiles: [
-                    for (final row in bag)
-                      _tileFor(
-                        key: ValueKey('bag-${row.index}'),
-                        stack: row.stack,
-                        onTap: () => _deposit(row.index, row.stack),
-                      ),
-                  ],
-                ),
-              ),
-            ],
-          ),
           if (_error case final error?) ...[
             const SizedBox(height: 6),
             Text(error, style: const TextStyle(color: Palette.danger, fontSize: 12)),
           ],
+          const SizedBox(height: 10),
+          Expanded(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: _Column(
+                    heading: 'Bank',
+                    empty: bankStacks(save).isEmpty
+                        ? 'The chest is empty.'
+                        : 'Nothing in the bank matches.',
+                    tiles: [
+                      for (final row in chest)
+                        _tileFor(
+                          key: ValueKey('bank-${row.index}'),
+                          stack: row.stack,
+                          onTap: () => _withdraw(row.index, row.stack),
+                        ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 9),
+                Expanded(
+                  child: _Column(
+                    heading: 'Bag',
+                    empty: save.inventory.isEmpty
+                        ? 'The bag is empty.'
+                        : bag.isEmpty && save.inventory.every(stackIsUnbankableGold)
+                        ? 'Nothing in the bag to deposit.'
+                        : 'Nothing in the bag matches.',
+                    tiles: [
+                      for (final row in bag)
+                        _tileFor(
+                          key: ValueKey('bag-${row.index}'),
+                          stack: row.stack,
+                          onTap: () => _deposit(row.index, row.stack),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -241,11 +243,9 @@ class _Column extends StatelessWidget {
         if (tiles.isEmpty)
           MutedText(empty)
         else
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxHeight: 256),
+          Expanded(
             child: GridView.extent(
               maxCrossAxisExtent: 78,
-              shrinkWrap: true,
               padding: EdgeInsets.zero,
               mainAxisSpacing: 5,
               crossAxisSpacing: 5,

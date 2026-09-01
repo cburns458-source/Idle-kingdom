@@ -247,6 +247,13 @@ class _MenuViewState extends State<MenuView> {
                           value: widget.multiplayer.hideChatBubble,
                           onChanged: widget.multiplayer.setHideChatBubble,
                         ),
+                        const SizedBox(height: 16),
+                        _togglePanel(
+                          title: 'Activity icons',
+                          detail: 'Show skill and shop icons under a location name on the map.',
+                          value: controller.showActivityIcons,
+                          onChanged: controller.setShowActivityIcons,
+                        ),
                       ],
                     );
                   },
