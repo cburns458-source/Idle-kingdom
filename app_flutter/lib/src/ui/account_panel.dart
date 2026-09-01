@@ -48,7 +48,11 @@ class _AccountPanelState extends State<AccountPanel> {
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: Listenable.merge(<Listenable>[widget.controller, widget.controller.progress, net]),
+      listenable: Listenable.merge(<Listenable>[
+        widget.controller,
+        widget.controller.progress,
+        net,
+      ]),
       builder: (context, _) => _build(),
     );
   }

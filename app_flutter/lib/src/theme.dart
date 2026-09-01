@@ -130,11 +130,8 @@ BoxDecoration chromeBoardFill(
   BoxBorder? border,
   double textureOpacity = 0.55,
 }) {
-  return UiChrome.of(context).boardFill(
-    borderRadius: borderRadius,
-    border: border,
-    textureOpacity: textureOpacity,
-  );
+  return UiChrome.of(context)
+      .boardFill(borderRadius: borderRadius, border: border, textureOpacity: textureOpacity);
 }
 
 /// Shell / loading / frame wash for the active [UiChrome].
