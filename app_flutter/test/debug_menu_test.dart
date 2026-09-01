@@ -69,6 +69,7 @@ void main() {
     expect(find.text('Guild tag on HUD'), findsOne);
     expect(find.text('Show title on HUD'), findsOne);
     expect(find.text('Hide chat bubble'), findsOne);
+    expect(find.text('Activity icons'), findsOne);
 
     await tester.tap(find.text('Chat'));
     await tester.pump();

@@ -5,6 +5,7 @@ import 'package:ik_content/ik_content.dart';
 import 'package:ik_rules/ik_rules.dart';
 import 'package:ik_runtime/ik_runtime.dart';
 
+import 'activity_icons_pref.dart';
 import 'battery_saver_pref.dart';
 import 'hud_level_pref.dart';
 import 'hud_title_pref.dart';
@@ -98,12 +99,14 @@ class GameController extends ChangeNotifier {
     MapTravelPref? mapTravel,
     HudLevelPref? hudLevel,
     HudTitlePref? hudTitle,
+    ActivityIconsPref? activityIcons,
     UiChromePref? uiChrome,
     BatterySaverPref? batterySaverPref,
   }) : localArt = localArt ?? LocalPlayerArt(),
        mapTravel = mapTravel ?? MapTravelPref(),
        hudLevel = hudLevel ?? HudLevelPref(),
        hudTitle = hudTitle ?? HudTitlePref(),
+       activityIcons = activityIcons ?? ActivityIconsPref(),
        uiChrome = uiChrome ?? UiChromePref(),
        batterySaverPref = batterySaverPref ?? BatterySaverPref();
 
@@ -123,6 +126,9 @@ class GameController extends ChangeNotifier {
 
   /// Client-only HUD toggle for the equipped character title.
   final HudTitlePref hudTitle;
+
+  /// Client-only toggle for skill and shop icons on the map location popup.
+  final ActivityIconsPref activityIcons;
 
   /// Client-only UI chrome pack (wood vs stone boards).
   final UiChromePref uiChrome;
@@ -476,6 +482,15 @@ class GameController extends ChangeNotifier {
   void setShowTitleOnHud(bool value) {
     if (hudTitle.showTitle == value) return;
     hudTitle.setShowTitle(value);
+    notifyListeners();
+  }
+
+  /// Whether the map location popup shows skill and shop icons under the name.
+  bool get showActivityIcons => activityIcons.showIcons;
+
+  void setShowActivityIcons(bool value) {
+    if (activityIcons.showIcons == value) return;
+    activityIcons.setShowIcons(value);
     notifyListeners();
   }
 

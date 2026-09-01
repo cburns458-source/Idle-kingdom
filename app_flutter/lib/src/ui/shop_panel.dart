@@ -173,45 +173,6 @@ class _ShopPanelState extends State<ShopPanel> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Stock on the left, the bag on the right, so a trade is one glance.
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: _Column(
-                  heading: 'Buy',
-                  empty: 'No stock listed.',
-                  tiles: [
-                    for (final entry in stock)
-                      _tileFor(
-                        itemId: entry.itemId,
-                        unit: playerBuyPrice(db, shop, entry.itemId),
-                        offered: _buys[entry.itemId],
-                        onTap: (unit, name) => _addBuy(shop, entry.itemId, unit, name),
-                      ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 9),
-              Expanded(
-                child: _Column(
-                  heading: 'Sell',
-                  empty: 'Nothing here that this shop will buy.',
-                  tiles: [
-                    for (final row in sellable)
-                      _tileFor(
-                        itemId: row.itemId,
-                        unit: row.unit,
-                        owned: row.owned,
-                        offered: _sells[row.itemId],
-                        onTap: (unit, name) => _toggleSell(row.itemId, unit, name, row.owned),
-                      ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
           Text(
             'Offer — buy ${formatThousands(buyTotal)} / sell ${formatThousands(sellTotal)} · '
             'net ${net >= 0 ? '+' : ''}${formatThousands(net)} gold',
@@ -249,6 +210,47 @@ class _ShopPanelState extends State<ShopPanel> {
             const SizedBox(height: 6),
             Text(receipt, style: const TextStyle(color: Palette.gold, fontSize: 12)),
           ],
+          const SizedBox(height: 12),
+          // Stock on the left, the bag on the right, so a trade is one glance.
+          Expanded(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: _Column(
+                    heading: 'Buy',
+                    empty: 'No stock listed.',
+                    tiles: [
+                      for (final entry in stock)
+                        _tileFor(
+                          itemId: entry.itemId,
+                          unit: playerBuyPrice(db, shop, entry.itemId),
+                          offered: _buys[entry.itemId],
+                          onTap: (unit, name) => _addBuy(shop, entry.itemId, unit, name),
+                        ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 9),
+                Expanded(
+                  child: _Column(
+                    heading: 'Sell',
+                    empty: 'Nothing here that this shop will buy.',
+                    tiles: [
+                      for (final row in sellable)
+                        _tileFor(
+                          itemId: row.itemId,
+                          unit: row.unit,
+                          owned: row.owned,
+                          offered: _sells[row.itemId],
+                          onTap: (unit, name) => _toggleSell(row.itemId, unit, name, row.owned),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -277,7 +279,7 @@ class _ShopPanelState extends State<ShopPanel> {
             ],
           ),
           const SizedBox(height: 8),
-          child,
+          Expanded(child: child),
         ],
       ),
     );
@@ -360,8 +362,8 @@ class _ShopPanelState extends State<ShopPanel> {
 
 /// One side of the counter: a heading over a tight grid of items.
 ///
-/// Five rows stay in view so Confirm trade is not buried. Extra stock scrolls
-/// inside the grid instead of stretching the location page.
+/// The grid fills leftover height under the offer so extra stock scrolls
+/// inside the inventory instead of stretching the location page.
 class _Column extends StatelessWidget {
   const _Column({required this.heading, required this.empty, required this.tiles});
 
@@ -371,8 +373,6 @@ class _Column extends StatelessWidget {
 
   static const double _tileExtent = 78;
   static const double _gap = 5;
-  static const int _maxRows = 5;
-  static const double _maxGridHeight = _maxRows * _tileExtent + (_maxRows - 1) * _gap;
 
   @override
   Widget build(BuildContext context) {
@@ -384,11 +384,9 @@ class _Column extends StatelessWidget {
         if (tiles.isEmpty)
           MutedText(empty)
         else
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxHeight: _maxGridHeight),
+          Expanded(
             child: GridView.extent(
               maxCrossAxisExtent: _tileExtent,
-              shrinkWrap: true,
               padding: EdgeInsets.zero,
               mainAxisSpacing: _gap,
               crossAxisSpacing: _gap,

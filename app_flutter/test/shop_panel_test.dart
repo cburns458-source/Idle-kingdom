@@ -165,7 +165,7 @@ void main() {
     expect(inventoryCount(controller.save, helmetId), 1);
   });
 
-  testWidgets('shop grids stay five rows tall and scroll inside', (tester) async {
+  testWidgets('offer chrome sits above the inventories and the grids scroll', (tester) async {
     final controller = buildController(
       database,
       seed: shopper(inventory: [const InventoryStack(itemId: clayId, quantity: 4)]),
@@ -174,18 +174,20 @@ void main() {
     await pumpPanel(tester, ShopPanel(controller: controller, shopId: shopId));
 
     expect(find.text('Confirm trade').hitTestable(), findsOne);
+    expect(
+      tester.getTopLeft(find.textContaining('Offer —')).dy,
+      lessThan(tester.getTopLeft(find.text('Buy')).dy),
+    );
+    expect(
+      tester.getTopLeft(find.text('Confirm trade')).dy,
+      lessThan(tester.getTopLeft(find.text('Buy')).dy),
+    );
     final grids = tester.widgetList<GridView>(find.byType(GridView)).toList();
     expect(grids, isNotEmpty);
     expect(grids.every((grid) => grid.physics is! NeverScrollableScrollPhysics), isTrue);
-    expect(
-      tester
-          .widgetList<ConstrainedBox>(find.byType(ConstrainedBox))
-          .any((box) => box.constraints.maxHeight == 410),
-      isTrue,
-    );
   });
 
-  testWidgets('a phone-sized location can scroll the shop to Confirm trade', (tester) async {
+  testWidgets('a phone-sized location keeps Confirm trade on screen', (tester) async {
     final controller = buildController(
       database,
       seed: shopper(inventory: [const InventoryStack(itemId: clayId, quantity: 4)]),
@@ -200,9 +202,12 @@ void main() {
     await tapVisible(tester, find.descendant(of: store, matching: find.bySemanticsLabel('Shop')));
 
     expect(find.text('Sell'), findsOne);
-    await tester.ensureVisible(find.text('Confirm trade'));
     expect(find.text('Confirm trade').hitTestable(), findsOne);
+    final shop = tester.getRect(find.byType(ShopPanel));
+    final band = tester.getRect(find.byTooltip('Expand list'));
+    expect(shop.bottom, lessThanOrEqualTo(band.top + 8));
     await tester.ensureVisible(find.byTooltip('Clay'));
     expect(find.byTooltip('Clay').hitTestable(), findsOne);
+    expect(find.text('Confirm trade').hitTestable(), findsOne);
   });
 }

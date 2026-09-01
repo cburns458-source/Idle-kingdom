@@ -206,17 +206,23 @@ class _GuildHallPanelState extends State<GuildHallPanel> {
             ],
           ),
           const SizedBox(height: 10),
-          if (_loading)
-            const MutedText('Loading hall…')
-          else if (_hall == null)
-            const MutedText('Join a guild to use this hall.')
-          else
-            switch (_tab) {
-              _HallTab.storehouse => _storehouse(),
-              _HallTab.debt => _debt(),
-              _HallTab.bank => _bank(),
-              _HallTab.boxing => _boxing(),
-            },
+          Expanded(
+            child: _loading
+                ? const Align(alignment: Alignment.topLeft, child: MutedText('Loading hall…'))
+                : _hall == null
+                ? const Align(
+                    alignment: Alignment.topLeft,
+                    child: MutedText('Join a guild to use this hall.'),
+                  )
+                : SingleChildScrollView(
+                    child: switch (_tab) {
+                      _HallTab.storehouse => _storehouse(),
+                      _HallTab.debt => _debt(),
+                      _HallTab.bank => _bank(),
+                      _HallTab.boxing => _boxing(),
+                    },
+                  ),
+          ),
         ],
       ),
     );
