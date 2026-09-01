@@ -118,7 +118,7 @@ class _QuantitySheetState extends State<_QuantitySheet> {
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                     decoration: BoxDecoration(
                       color: Palette.panel,
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.zero /* pixel step 2 */,
                       border: Border.all(color: Palette.edge),
                     ),
                     child: Text(

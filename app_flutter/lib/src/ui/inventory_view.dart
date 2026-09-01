@@ -912,7 +912,7 @@ class _SortMenu extends StatelessWidget {
             end: Alignment.bottomCenter,
             colors: [Color(0xFF6A4A30), Color(0xFF45301F)],
           ),
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.zero /* pixel step 3 */,
           border: Border.all(
             color: mode == InventorySortMode.group ? const Color(0x73D4AF37) : Palette.gold,
           ),
@@ -987,12 +987,12 @@ class _ItemTile extends StatelessWidget {
         opacity: missing ? 0.45 : 1,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.zero /* pixel step 3 */,
           child: Container(
             padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
               color: selected ? const Color(0x33D4AF37) : Palette.panel,
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.zero /* pixel step 3 */,
               border: Border.all(
                 color: selected
                     ? Palette.gold

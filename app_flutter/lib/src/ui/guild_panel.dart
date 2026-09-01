@@ -895,13 +895,13 @@ class _Swatch extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.zero /* pixel step 2 */,
       child: Container(
         width: 30,
         height: 30,
         decoration: BoxDecoration(
           color: Color(0xFF000000 | (int.tryParse(color.replaceFirst('#', ''), radix: 16) ?? 0)),
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.zero /* pixel step 2 */,
           border: Border.all(
             color: selected ? Palette.gold : Palette.edge,
             width: selected ? 2 : 1,
@@ -923,14 +923,14 @@ class _SymbolButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.zero /* pixel step 2 */,
       child: Container(
         width: 34,
         height: 34,
         padding: const EdgeInsets.all(6),
         decoration: BoxDecoration(
           color: Palette.panel,
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.zero /* pixel step 2 */,
           border: Border.all(
             color: selected ? Palette.gold : Palette.edge,
             width: selected ? 2 : 1,

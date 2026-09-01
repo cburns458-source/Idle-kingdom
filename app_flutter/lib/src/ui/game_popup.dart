@@ -96,7 +96,7 @@ class GamePopupCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: Palette.parchmentDeep,
-      borderRadius: BorderRadius.circular(14),
+      shape: PixelSteppedBorder(step: 3),
       clipBehavior: Clip.antiAlias,
       child: DecoratedBox(
         decoration: BoxDecoration(image: panelGrainImage()),

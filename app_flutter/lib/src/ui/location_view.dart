@@ -232,11 +232,11 @@ class _LocationViewState extends State<LocationView> {
       padding: EdgeInsets.fromLTRB(10, 8, 10, liftArena ? 0 : keyboard),
       child: DecoratedBox(
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(15),
+          borderRadius: BorderRadius.zero /* pixel step 3 */,
           border: Border.all(color: const Color(0x47D4AF37)),
         ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(14),
+        child: ClipPath(
+          clipper: const PixelSteppedClipper(step: 3),
           child: LayoutBuilder(
             builder: (context, card) {
               final bandTop = _bandExpanded ? 8.0 : card.maxHeight - _collapsedBand - 8;
@@ -822,7 +822,7 @@ class _FloatingOptionBand extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: const Color(0xF0140D08),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.zero /* pixel step 3 */,
         border: Border.all(color: const Color(0x47D4AF37)),
       ),
       child: Stack(

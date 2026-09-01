@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import 'pixel_chrome.dart';
+export 'pixel_chrome.dart';
+
 /// Parses a canonical `#RRGGBB` into a color, or null when it is not one.
 Color? colorFromHexRgb(String? hex) {
   if (hex == null || hex.length != 7 || !hex.startsWith('#')) return null;
@@ -14,6 +17,9 @@ abstract final class Palette {
   static const parchment = Color(0xFF5C4027);
   static const parchmentDeep = Color(0xFF3D2A1A);
   static const gold = Color(0xFFD4AF37);
+  static const goldHighlight = Color(0xFFF2E6A8);
+  static const goldShade = Color(0xFF7A5A14);
+  static const wood = Color(0xFF2A1C12);
   static const softGreen = Color(0xFF8FAF7A);
   static const ink = Color(0xFF1F1610);
   static const danger = Color(0xFFC2603F);
@@ -203,7 +209,7 @@ ThemeData buildAppTheme() {
 /// Which of the two button faces to wear: green for doing, brown for the rest.
 enum GameButtonTone { primary, secondary }
 
-/// The rounded, gold-edged button the game does everything with.
+/// The stepped, gold-embossed pixel button the game does everything with.
 class GameButton extends StatefulWidget {
   const GameButton({
     super.key,
@@ -266,9 +272,6 @@ class _GameButtonState extends State<GameButton> {
   Widget build(BuildContext context) {
     final primary = widget.tone == GameButtonTone.primary;
     final down = _pressed && widget.onPressed != null;
-    final borderColor = widget.selected
-        ? Palette.gold
-        : (primary ? const Color(0x73BEDC96) : const Color(0x73D4AF37));
     final button = Semantics(
       button: true,
       enabled: widget.onPressed != null,
@@ -276,36 +279,32 @@ class _GameButtonState extends State<GameButton> {
       child: ExcludeSemantics(
         child: Opacity(
           opacity: widget.onPressed == null ? 0.55 : 1,
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: primary
-                  ? (down ? GameButton._primaryPressed : GameButton._primaryFill)
-                  : (down ? GameButton._secondaryPressed : GameButton._secondaryFill),
-              color: widget.selected ? const Color(0x33D4AF37) : null,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: borderColor),
-              boxShadow: const [BoxShadow(offset: Offset(0, 2), color: Color(0x40000000))],
-            ),
-            child: InkWell(
-              onTap: widget.onPressed,
-              onHighlightChanged: (value) {
-                if (_pressed == value) return;
-                setState(() => _pressed = value);
-              },
-              splashColor: Colors.transparent,
-              highlightColor: Colors.transparent,
-              borderRadius: BorderRadius.circular(14),
-              child: Container(
-                constraints: widget.dense
-                    ? const BoxConstraints(minHeight: 26)
-                    : widget.compact
-                    ? const BoxConstraints(minHeight: 32)
-                    : const BoxConstraints(minHeight: 44, minWidth: 90),
-                padding: widget.dense
-                    ? const EdgeInsets.symmetric(horizontal: 8, vertical: 4)
-                    : widget.compact
-                    ? const EdgeInsets.symmetric(horizontal: 10, vertical: 6)
-                    : const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          child: PixelInkPlate(
+            onTap: widget.onPressed,
+            onHighlightChanged: (value) {
+              if (_pressed == value) return;
+              setState(() => _pressed = value);
+            },
+            selected: widget.selected,
+            step: widget.dense ? PixelChrome.stepTight : PixelChrome.step,
+            strokeWidth: widget.selected ? 2.5 : 2,
+            shadow: false,
+            gradient: primary
+                ? (down ? GameButton._primaryPressed : GameButton._primaryFill)
+                : (down ? GameButton._secondaryPressed : GameButton._secondaryFill),
+            fillColor: widget.selected ? const Color(0x33D4AF37) : null,
+            padding: widget.dense
+                ? const EdgeInsets.symmetric(horizontal: 8, vertical: 4)
+                : widget.compact
+                ? const EdgeInsets.symmetric(horizontal: 10, vertical: 6)
+                : const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            child: ConstrainedBox(
+              constraints: widget.dense
+                  ? const BoxConstraints(minHeight: 26)
+                  : widget.compact
+                  ? const BoxConstraints(minHeight: 32)
+                  : const BoxConstraints(minHeight: 44, minWidth: 90),
+              child: Align(
                 alignment: Alignment.center,
                 child: Text(
                   widget.label,
@@ -329,6 +328,7 @@ class _GameButtonState extends State<GameButton> {
         ),
       ),
     );
+
     if (widget.tooltip == null) return button;
     return Tooltip(message: widget.tooltip!, child: button);
   }
@@ -357,19 +357,15 @@ class GameIconButton extends StatelessWidget {
       label: tooltip,
       child: Opacity(
         opacity: onPressed == null ? 0.55 : 1,
-        child: Material(
-          color: const Color(0xFF45301F),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-            side: const BorderSide(color: Color(0x73D4AF37)),
-          ),
-          child: InkWell(
-            onTap: onPressed,
-            borderRadius: BorderRadius.circular(10),
-            child: SizedBox.square(
-              dimension: size,
-              child: Icon(icon, size: size * 0.55, color: const Color(0xFFFFF4D4)),
-            ),
+        child: PixelInkPlate(
+          onTap: onPressed,
+          step: PixelChrome.stepTight,
+          fillColor: const Color(0xFF45301F),
+          strokeWidth: 1.5,
+          shadow: false,
+          child: SizedBox.square(
+            dimension: size,
+            child: Icon(icon, size: size * 0.55, color: const Color(0xFFFFF4D4)),
           ),
         ),
       ),
@@ -433,31 +429,28 @@ class GameDropdown<T> extends StatelessWidget {
                 ),
               ),
           ],
-          child: Material(
-            color: const Color(0xFF45301F),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-              side: const BorderSide(color: Color(0x73D4AF37)),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      selected?.label ?? '',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontFamily: gameFontFamily,
-                        fontWeight: FontWeight.w400,
-                        fontSize: 13.5,
-                      ),
+          child: PixelPlate(
+            step: PixelChrome.stepTight,
+            fillColor: const Color(0xFF45301F),
+            strokeWidth: 1.5,
+            shadow: false,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    selected?.label ?? '',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontFamily: gameFontFamily,
+                      fontWeight: FontWeight.w400,
+                      fontSize: 13.5,
                     ),
                   ),
-                  const Icon(Icons.expand_more, size: 20, color: Palette.gold),
-                ],
-              ),
+                ),
+                const Icon(Icons.expand_more, size: 20, color: Palette.gold),
+              ],
             ),
           ),
         ),
@@ -486,35 +479,29 @@ class GameSelectField extends StatelessWidget {
       children: [
         MutedText(label),
         const SizedBox(height: 4),
-        Material(
-          color: const Color(0xFF45301F),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-            side: const BorderSide(color: Color(0x73D4AF37)),
-          ),
-          child: InkWell(
-            onTap: onPressed,
-            borderRadius: BorderRadius.circular(12),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      value,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontFamily: gameFontFamily,
-                        fontWeight: FontWeight.w400,
-                        fontSize: 13.5,
-                      ),
-                    ),
+        PixelInkPlate(
+          onTap: onPressed,
+          step: PixelChrome.stepTight,
+          fillColor: const Color(0xFF45301F),
+          strokeWidth: 1.5,
+          shadow: false,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontFamily: gameFontFamily,
+                    fontWeight: FontWeight.w400,
+                    fontSize: 13.5,
                   ),
-                  const Icon(Icons.expand_more, size: 20, color: Palette.gold),
-                ],
+                ),
               ),
-            ),
+              const Icon(Icons.expand_more, size: 20, color: Palette.gold),
+            ],
           ),
         ),
       ],
@@ -556,12 +543,12 @@ class DockRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return PixelPlate(
+      step: PixelChrome.step,
+      fillColor: Palette.panel,
+      strokeWidth: 1.5,
+      shadow: false,
       padding: const EdgeInsets.fromLTRB(11, 10, 11, 10),
-      decoration: panelFill(
-        borderRadius: BorderRadius.circular(13),
-        border: Border.all(color: const Color(0x2EE8DCB4)),
-      ),
       child: Row(
         children: [
           if (leading case final star?) ...[star, const SizedBox(width: 6)],
@@ -615,14 +602,13 @@ class PillBar extends StatelessWidget {
     return SizedBox(
       width: double.infinity,
       height: height,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: trackColor,
-          borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: borderColor),
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(999),
+      child: PixelPlate(
+        step: PixelChrome.stepTight,
+        fillColor: trackColor,
+        strokeWidth: 1.5,
+        shadow: false,
+        child: ClipPath(
+          clipper: _MeterFillClipper(step: PixelChrome.stepTight),
           child: FractionallySizedBox(
             alignment: Alignment.centerLeft,
             widthFactor: fill,
@@ -654,19 +640,28 @@ class GamePanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final panel = Container(
+    if (onTap != null) {
+      return PixelInkPlate(
+        onTap: onTap,
+        step: PixelChrome.step,
+        fillColor: Palette.panel,
+        strokeWidth: highlight ? 2.5 : 2,
+        selected: highlight,
+        shadow: false,
+        padding: padding ?? const EdgeInsets.all(12),
+        child: child,
+      );
+    }
+    return PixelPlate(
+      step: PixelChrome.step,
+      fillColor: Palette.panel,
+      strokeWidth: highlight ? 2.5 : 2,
+      selected: highlight,
+      rivets: highlight,
+      shadow: false,
       padding: padding ?? const EdgeInsets.all(12),
-      decoration: panelFill(
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: highlight ? Palette.gold : Palette.edge,
-          width: highlight ? 2 : 1,
-        ),
-      ),
       child: child,
     );
-    if (onTap == null) return panel;
-    return InkWell(onTap: onTap, borderRadius: BorderRadius.circular(14), child: panel);
   }
 }
 
@@ -683,21 +678,21 @@ class MeterBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(999),
-      child: SizedBox(
-        height: height,
-        child: Stack(
-          children: [
-            const Positioned.fill(child: ColoredBox(color: Color(0x99120C08))),
-            Positioned.fill(
-              child: FractionallySizedBox(
-                alignment: Alignment.centerLeft,
-                widthFactor: value.isNaN ? 0 : value.clamp(0, 1),
-                child: ColoredBox(color: color),
-              ),
-            ),
-          ],
+    return SizedBox(
+      height: height,
+      width: double.infinity,
+      child: PixelPlate(
+        step: 1,
+        fillColor: const Color(0x99120C08),
+        strokeWidth: 1,
+        shadow: false,
+        child: ClipPath(
+          clipper: _MeterFillClipper(step: 1),
+          child: FractionallySizedBox(
+            alignment: Alignment.centerLeft,
+            widthFactor: value.isNaN ? 0 : value.clamp(0, 1),
+            child: ColoredBox(color: color),
+          ),
         ),
       ),
     );
@@ -732,22 +727,20 @@ class OverlayChipButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final rim = highlightColor ?? (highlight ? Palette.gold : null);
+    final side = BorderSide(
+      color: rim ?? (dark ? const Color(0x8CD4AF5A) : const Color(0xB3B4DC96)),
+      width: rim != null ? 2 : 1,
+    );
     return Tooltip(
       message: tooltip,
       child: Material(
         color: dark ? Palette.panel : const Color(0xFFBADCA0),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: BorderSide(
-            color: rim ?? (dark ? const Color(0x8CD4AF5A) : const Color(0xB3B4DC96)),
-            width: rim != null ? 2 : 1,
-          ),
-        ),
-        shadowColor: const Color(0x47000000),
         elevation: 6,
+        shadowColor: const Color(0x47000000),
+        shape: PixelSteppedBorder(step: PixelChrome.step, side: side),
         child: InkWell(
           onTap: onPressed,
-          borderRadius: BorderRadius.circular(16),
+          customBorder: PixelSteppedBorder(step: PixelChrome.step),
           child: SizedBox(width: 60, height: 60, child: Center(child: child)),
         ),
       ),
@@ -814,7 +807,7 @@ class _QuestHintPulseState extends State<QuestHintPulse> with SingleTickerProvid
         return DecoratedBox(
           decoration: BoxDecoration(
             shape: widget.circle ? BoxShape.circle : BoxShape.rectangle,
-            borderRadius: widget.circle ? null : BorderRadius.circular(18),
+            borderRadius: widget.circle ? null : BorderRadius.zero,
             border: Border.all(color: tint, width: 2),
           ),
           child: child,
@@ -823,6 +816,19 @@ class _QuestHintPulseState extends State<QuestHintPulse> with SingleTickerProvid
       child: widget.child,
     );
   }
+}
+
+/// Clips meter fills to the same stair outline as [PixelPlate].
+class _MeterFillClipper extends CustomClipper<Path> {
+  const _MeterFillClipper({required this.step});
+
+  final double step;
+
+  @override
+  Path getClip(Size size) => PixelChrome.steppedPath(Offset.zero & size, step: step);
+
+  @override
+  bool shouldReclip(covariant _MeterFillClipper oldClipper) => oldClipper.step != step;
 }
 
 /// Small muted caption, the equivalent of the CSS `.muted.tiny` pairing.

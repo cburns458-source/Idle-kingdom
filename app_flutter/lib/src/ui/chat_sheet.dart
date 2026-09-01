@@ -58,7 +58,7 @@ class ChatLauncher extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                           decoration: BoxDecoration(
                             color: Palette.danger,
-                            borderRadius: BorderRadius.circular(999),
+                            borderRadius: BorderRadius.zero /* pixel step 1 */,
                           ),
                           child: Text(
                             badge,
@@ -427,7 +427,7 @@ class _ChatTabButton extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
               decoration: BoxDecoration(
                 color: Palette.danger,
-                borderRadius: BorderRadius.circular(999),
+                borderRadius: BorderRadius.zero /* pixel step 1 */,
               ),
               child: Text(badge, style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w400)),
             ),

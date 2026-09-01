@@ -114,10 +114,11 @@ class ItemDetailSheet extends StatelessWidget {
               ),
             ],
             const SizedBox(height: 12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
+            OverflowBar(
+              alignment: MainAxisAlignment.end,
+              spacing: 8,
               children: [
-                if (onEat != null) ...[
+                if (onEat != null)
                   GameButton(
                     label: 'Eat',
                     onPressed: eatEnabled
@@ -127,9 +128,7 @@ class ItemDetailSheet extends StatelessWidget {
                           }
                         : null,
                   ),
-                  const SizedBox(width: 8),
-                ],
-                if (onEquip != null) ...[
+                if (onEquip != null)
                   GameButton(
                     label: 'Equip',
                     onPressed: () {
@@ -137,8 +136,6 @@ class ItemDetailSheet extends StatelessWidget {
                       onEquip!();
                     },
                   ),
-                  const SizedBox(width: 8),
-                ],
                 GameButton(
                   label: 'Close',
                   tone: GameButtonTone.secondary,

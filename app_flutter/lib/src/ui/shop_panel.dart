@@ -298,12 +298,12 @@ class _ShopPanelState extends State<ShopPanel> {
       message: name,
       child: InkWell(
         onTap: enabled ? () => onTap(unit, name) : null,
-        borderRadius: BorderRadius.circular(9),
+        borderRadius: BorderRadius.zero /* pixel step 2 */,
         child: Container(
           padding: const EdgeInsets.fromLTRB(3, 5, 3, 4),
           decoration: BoxDecoration(
             color: offered != null ? const Color(0x33D4AF37) : Palette.panel,
-            borderRadius: BorderRadius.circular(9),
+            borderRadius: BorderRadius.zero /* pixel step 2 */,
             border: Border.all(color: offered != null ? Palette.gold : Palette.edge),
           ),
           child: Opacity(
@@ -335,7 +335,7 @@ class _ShopPanelState extends State<ShopPanel> {
                       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                       decoration: BoxDecoration(
                         color: const Color(0xE6D4AF37),
-                        borderRadius: BorderRadius.circular(999),
+                        borderRadius: BorderRadius.zero /* pixel step 1 */,
                       ),
                       child: Text(
                         '×${formatThousands(offered)}',
