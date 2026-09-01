@@ -143,6 +143,7 @@ class _ProjectPickerState extends State<ProjectPicker> {
         : projectDetail(controller.db, controller.save, selectedId);
 
     return GamePanel(
+      framed: true,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

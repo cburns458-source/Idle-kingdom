@@ -205,6 +205,7 @@ class _RaceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GamePanel(
+      framed: true,
       onTap: onTap,
       child: Row(
         children: [

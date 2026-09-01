@@ -109,6 +109,7 @@ class _BankPanelState extends State<BankPanel> {
     ];
 
     return GamePanel(
+      framed: true,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -195,7 +196,7 @@ class _BankPanelState extends State<BankPanel> {
         onTap: onTap,
         step: PixelChrome.stepTight,
         fillColor: stack.favorite == true ? const Color(0xFF4A3820) : Palette.slot,
-        material: PixelPlateMaterial.wood,
+        material: PixelPlateMaterial.none,
         strokeWidth: stack.favorite == true ? 2.5 : 2,
         selected: stack.favorite == true,
         shadow: false,

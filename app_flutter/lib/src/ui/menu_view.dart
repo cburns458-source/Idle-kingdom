@@ -140,6 +140,7 @@ class _MenuViewState extends State<MenuView> {
             AccountPanel(controller: controller, multiplayer: widget.multiplayer, embedded: true)
           else ...[
             GamePanel(
+              framed: true,
               child: Row(
                 children: [
                   const Expanded(
@@ -165,6 +166,7 @@ class _MenuViewState extends State<MenuView> {
                 return Column(
                   children: [
                     GamePanel(
+                      framed: true,
                       child: Row(
                         children: [
                           const Expanded(
@@ -187,6 +189,7 @@ class _MenuViewState extends State<MenuView> {
                     ),
                     const SizedBox(height: 16),
                     GamePanel(
+                      framed: true,
                       child: Row(
                         children: [
                           const Expanded(
@@ -210,6 +213,7 @@ class _MenuViewState extends State<MenuView> {
                     ),
                     const SizedBox(height: 16),
                     GamePanel(
+                      framed: true,
                       child: Row(
                         children: [
                           const Expanded(
@@ -235,6 +239,7 @@ class _MenuViewState extends State<MenuView> {
                     ),
                     const SizedBox(height: 16),
                     GamePanel(
+                      framed: true,
                       child: Row(
                         children: [
                           const Expanded(
@@ -258,6 +263,7 @@ class _MenuViewState extends State<MenuView> {
                     ),
                     const SizedBox(height: 16),
                     GamePanel(
+                      framed: true,
                       child: Row(
                         children: [
                           const Expanded(
@@ -299,6 +305,7 @@ class _MenuViewState extends State<MenuView> {
                     const SizedBox(height: 10),
                     for (final tab in chatTabOrder) ...[
                       GamePanel(
+                        framed: true,
                         child: Row(
                           children: [
                             Expanded(
@@ -361,6 +368,7 @@ class _MenuViewState extends State<MenuView> {
     required Future<void> Function(String value) onChanged,
   }) {
     return GamePanel(
+      framed: true,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -390,6 +398,7 @@ class _MenuViewState extends State<MenuView> {
 
   Widget _buildPlayerSprite(PlayerSave save, bool hasOverride) {
     return GamePanel(
+      framed: true,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -439,6 +448,7 @@ class _MenuViewState extends State<MenuView> {
       ..sort((a, b) => a.displayName.compareTo(b.displayName));
     final selectedSkill = getSkillProgress(controller.save, _skillId);
     return GamePanel(
+      framed: true,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -596,6 +606,7 @@ class _NameColorFieldState extends State<_NameColorField> {
     final preview =
         colorFromHexRgb(normalizeNameColorHex(_controller.text)) ?? Palette.parchmentText;
     return GamePanel(
+      framed: true,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

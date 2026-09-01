@@ -345,28 +345,35 @@ class _InventoryViewState extends State<InventoryView> {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        Column(
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(8, 4, 8, 8),
+      child: GamePanel(
+        framed: true,
+        padding: EdgeInsets.zero,
+        child: Stack(
+          clipBehavior: Clip.none,
           children: [
-            _header(),
-            Expanded(child: _activeTab == _InventoryTab.items ? _bag() : _paperDoll()),
+            Column(
+              children: [
+                _header(),
+                Expanded(child: _activeTab == _InventoryTab.items ? _bag() : _paperDoll()),
+              ],
+            ),
+            if (_message case final message?)
+              Positioned(
+                top: 8,
+                left: 12,
+                right: 12,
+                child: OverlayNotice(
+                  key: ValueKey(message),
+                  text: message,
+                  tone: Palette.danger,
+                  onDismissed: () => setState(() => _message = null),
+                ),
+              ),
           ],
         ),
-        if (_message case final message?)
-          Positioned(
-            top: 8,
-            left: 12,
-            right: 12,
-            child: OverlayNotice(
-              key: ValueKey(message),
-              text: message,
-              tone: Palette.danger,
-              onDismissed: () => setState(() => _message = null),
-            ),
-          ),
-      ],
+      ),
     );
   }
 
@@ -392,9 +399,7 @@ class _InventoryViewState extends State<InventoryView> {
                     label: 'Items',
                     compact: true,
                     selected: _activeTab == _InventoryTab.items,
-                    tone: _activeTab == _InventoryTab.items
-                        ? GameButtonTone.primary
-                        : GameButtonTone.secondary,
+                    tone: GameButtonTone.secondary,
                     onPressed: () => setState(() {
                       _tab = _InventoryTab.items;
                       _selling = null;
@@ -410,9 +415,7 @@ class _InventoryViewState extends State<InventoryView> {
                     label: 'Equipment',
                     compact: true,
                     selected: _activeTab == _InventoryTab.equipment,
-                    tone: _activeTab == _InventoryTab.equipment
-                        ? GameButtonTone.primary
-                        : GameButtonTone.secondary,
+                    tone: GameButtonTone.secondary,
                     onPressed: () => setState(() {
                       _tab = _InventoryTab.equipment;
                       _selling = null;
@@ -994,7 +997,7 @@ class _ItemTile extends StatelessWidget {
           onTap: onTap,
           step: PixelChrome.stepTight,
           fillColor: fill,
-          material: PixelPlateMaterial.wood,
+          material: PixelPlateMaterial.none,
           strokeWidth: selected ? 2.5 : 2,
           selected: selected || enchanted,
           shadow: false,

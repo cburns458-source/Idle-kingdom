@@ -32,6 +32,7 @@ class AuthGateSheet extends StatelessWidget {
                     _TesterPasskeyForm(multiplayer: multiplayer)
                   else ...[
                     GamePanel(
+                      framed: true,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
@@ -85,6 +86,7 @@ class _TesterPasskeyFormState extends State<_TesterPasskeyForm> {
   @override
   Widget build(BuildContext context) {
     return GamePanel(
+      framed: true,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
