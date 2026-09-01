@@ -112,6 +112,7 @@ class CombatVictoryResult {
   const CombatVictoryResult({
     required this.save,
     required this.xpGained,
+    required this.xpSkillId,
     required this.goldGained,
     required this.loot,
     required this.foodConsumed,
@@ -121,6 +122,9 @@ class CombatVictoryResult {
 
   final PlayerSave save;
   final num xpGained;
+
+  /// Skill that received [xpGained] (Fishing for Mother Squid).
+  final String xpSkillId;
   final num goldGained;
   final List<LootGrant> loot;
   final bool foodConsumed;
@@ -456,6 +460,7 @@ CombatVictoryResult applyCombatVictory(
   return CombatVictoryResult(
     save: next,
     xpGained: xpAmount,
+    xpSkillId: xpSkillId,
     goldGained: goldGained,
     loot: rewarded.loot,
     foodConsumed: food.consumed,

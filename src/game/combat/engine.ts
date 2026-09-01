@@ -70,6 +70,8 @@ export interface CombatRoundResult {
 export interface CombatVictoryResult {
   save: PlayerSave
   xpGained: number
+  /** Skill that received [xpGained] (Fishing for Mother Squid). */
+  xpSkillId: string
   goldGained: number
   loot: LootGrant[]
   foodConsumed: boolean
@@ -406,6 +408,7 @@ export function applyCombatVictory(
   return {
     save: next,
     xpGained: xpAmount,
+    xpSkillId,
     goldGained,
     loot: rewarded.loot,
     foodConsumed: food.consumed,

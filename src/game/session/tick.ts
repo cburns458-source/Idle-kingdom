@@ -137,13 +137,14 @@ function victoryRewardBundle(
   loot: ActionRewardBundle['loot'],
   goldGained: number,
   nowMs: number,
+  xpSkillId: string = COMBAT_SKILL_ID,
 ): ActionRewardBundle {
-  const levelBefore = getSkillProgress(before, COMBAT_SKILL_ID).level
-  const levelAfter = getSkillProgress(after, COMBAT_SKILL_ID).level
+  const levelBefore = getSkillProgress(before, xpSkillId).level
+  const levelAfter = getSkillProgress(after, xpSkillId).level
   const summary = summarizeXpReward(
     db,
     after,
-    COMBAT_SKILL_ID,
+    xpSkillId,
     xpGained,
     levelAfter > levelBefore ? levelAfter : null,
   )
@@ -224,6 +225,7 @@ function resolveDueCombatRound(
             [],
             0,
             roundEnd,
+            squidlingResult.xpSkillId,
           ),
         })
       }
@@ -267,6 +269,7 @@ function resolveDueCombatRound(
         victory.loot,
         victory.goldGained,
         roundEnd,
+        victory.xpSkillId,
       ),
     })
     out.emit({
