@@ -295,8 +295,7 @@ describe('local multiplayer backend', () => {
     expect(signed.ok).toBe(true)
     if (!signed.ok) return
     const save = equipStackToSlot(
-      { ...createNewSave(launch), characterName: 'Hero' },
-    motto: null,
+      { ...createNewSave(launch), characterName: 'Hero', motto: null },
       WEAPON_TOOL_SLOT_ID,
       'ITEM-0110',
       1,
