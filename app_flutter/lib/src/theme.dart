@@ -415,6 +415,50 @@ class _GameButtonState extends State<GameButton> {
   }
 }
 
+/// Borderless label used on dense settings rows (privacy chips, list actions).
+class GameTextButton extends StatelessWidget {
+  const GameTextButton({
+    super.key,
+    required this.label,
+    required this.onPressed,
+    this.selected = false,
+  });
+
+  final String label;
+  final VoidCallback? onPressed;
+  final bool selected;
+
+  @override
+  Widget build(BuildContext context) {
+    final ink = UiChrome.of(context).panelInk;
+    return Semantics(
+      button: true,
+      enabled: onPressed != null,
+      selected: selected,
+      label: label,
+      child: InkWell(
+        onTap: onPressed,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          child: Opacity(
+            opacity: onPressed == null ? 0.45 : 1,
+            child: Text(
+              label,
+              style: TextStyle(
+                fontFamily: gameFontFamily,
+                fontSize: 12,
+                fontWeight: FontWeight.w400,
+                color: selected ? Palette.gold : ink,
+                height: 1.1,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 /// Small gold-edged icon chip for panel closes and keypad extras.
 class GameIconButton extends StatelessWidget {
   const GameIconButton({

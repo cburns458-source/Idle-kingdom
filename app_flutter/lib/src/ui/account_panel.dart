@@ -164,60 +164,152 @@ class _AccountPanelState extends State<AccountPanel> {
         onPressed: net.busy ? null : () => net.signOut(widget.controller.save),
       ),
       const SizedBox(height: 20),
-      ..._peopleSection('Friends', net.friends, empty: 'No friends yet.', showOnline: true),
-      const SizedBox(height: 16),
-      ..._peopleSection(
-        'Friend requests',
-        net.incomingFriendRequests,
-        empty: 'No incoming requests.',
+      _PeopleFold(
+        heading: 'Friends',
+        empty: 'No friends yet.',
+        people: net.friends,
         showOnline: true,
-        trailing: (contact) => GameButton(
+        nowMs: widget.controller.session.clock(),
+        presence: net.presence,
+        onOpen: (contact) => openPlayerProfile(
+          context,
+          controller: widget.controller,
+          multiplayer: net,
+          userId: contact.userId,
+        ),
+      ),
+      const SizedBox(height: 10),
+      _PeopleFold(
+        heading: 'Friend requests',
+        empty: 'No incoming requests.',
+        people: net.incomingFriendRequests,
+        showOnline: true,
+        nowMs: widget.controller.session.clock(),
+        presence: net.presence,
+        trailing: (contact) => GameTextButton(
           label: 'Accept',
-          compact: true,
           onPressed: net.busy ? null : () => net.sendFriendRequest(contact.userId),
+        ),
+        onOpen: (contact) => openPlayerProfile(
+          context,
+          controller: widget.controller,
+          multiplayer: net,
+          userId: contact.userId,
         ),
       ),
       if (net.outgoingFriendRequests.isNotEmpty) ...[
-        const SizedBox(height: 16),
-        ..._peopleSection('Sent requests', net.outgoingFriendRequests, empty: '', showOnline: true),
+        const SizedBox(height: 10),
+        _PeopleFold(
+          heading: 'Sent requests',
+          people: net.outgoingFriendRequests,
+          showOnline: true,
+          nowMs: widget.controller.session.clock(),
+          presence: net.presence,
+          onOpen: (contact) => openPlayerProfile(
+            context,
+            controller: widget.controller,
+            multiplayer: net,
+            userId: contact.userId,
+          ),
+        ),
       ],
-      const SizedBox(height: 16),
-      ..._peopleSection(
-        'Ignored',
-        net.ignoredPlayers,
+      const SizedBox(height: 10),
+      _PeopleFold(
+        heading: 'Ignored',
         empty: 'Nobody ignored.',
-        trailing: (contact) => GameButton(
+        people: net.ignoredPlayers,
+        trailing: (contact) => GameTextButton(
           label: 'Unignore',
-          tone: GameButtonTone.secondary,
-          compact: true,
           onPressed: net.busy ? null : () => net.unignorePlayer(contact.userId),
+        ),
+        onOpen: (contact) => openPlayerProfile(
+          context,
+          controller: widget.controller,
+          multiplayer: net,
+          userId: contact.userId,
         ),
       ),
     ];
   }
+}
 
-  List<Widget> _peopleSection(
-    String heading,
-    List<SocialContact> people, {
-    String empty = '',
-    bool showOnline = false,
-    Widget Function(SocialContact contact)? trailing,
-  }) {
-    final rows = showOnline
-        ? friendListRows(people, presence: net.presence, nowMs: widget.controller.session.clock())
-        : null;
-    return <Widget>[
-      Text(heading, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w400)),
-      const SizedBox(height: 6),
-      if (people.isEmpty && empty.isNotEmpty)
-        MutedText(empty)
-      else if (rows != null)
+class _PeopleFold extends StatefulWidget {
+  const _PeopleFold({
+    required this.heading,
+    required this.people,
+    required this.onOpen,
+    this.empty = '',
+    this.showOnline = false,
+    this.nowMs = 0,
+    this.presence = const <ActivityPresence>[],
+    this.trailing,
+  });
+
+  final String heading;
+  final String empty;
+  final List<SocialContact> people;
+  final bool showOnline;
+  final num nowMs;
+  final List<ActivityPresence> presence;
+  final Widget Function(SocialContact contact)? trailing;
+  final ValueChanged<SocialContact> onOpen;
+
+  @override
+  State<_PeopleFold> createState() => _PeopleFoldState();
+}
+
+class _PeopleFoldState extends State<_PeopleFold> {
+  bool _open = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        InkWell(
+          onTap: () => setState(() => _open = !_open),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 6),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    widget.heading,
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
+                  ),
+                ),
+                if (widget.people.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(right: 6),
+                    child: MutedText('${widget.people.length}'),
+                  ),
+                Icon(
+                  _open ? Icons.expand_less : Icons.expand_more,
+                  size: 20,
+                  color: UiChrome.of(context).panelInk,
+                ),
+              ],
+            ),
+          ),
+        ),
+        if (_open) ..._rows(),
+      ],
+    );
+  }
+
+  List<Widget> _rows() {
+    if (widget.people.isEmpty && widget.empty.isNotEmpty) {
+      return <Widget>[MutedText(widget.empty)];
+    }
+    if (widget.showOnline) {
+      final rows = friendListRows(widget.people, presence: widget.presence, nowMs: widget.nowMs);
+      return <Widget>[
         for (final row in rows) ...[
           SocialRow(
             title: row.username,
             subtitle: row.subtitle,
             leading: SocialPortrait(appearance: row.appearance, raceId: row.raceId),
-            trailing: trailing?.call(
+            trailing: widget.trailing?.call(
               SocialContact(
                 userId: row.userId,
                 username: row.username,
@@ -225,31 +317,30 @@ class _AccountPanelState extends State<AccountPanel> {
                 raceId: row.raceId,
               ),
             ),
-            onTap: () => openPlayerProfile(
-              context,
-              controller: widget.controller,
-              multiplayer: net,
-              userId: row.userId,
-            ),
-          ),
-          const SizedBox(height: 6),
-        ]
-      else
-        for (final contact in people) ...[
-          SocialRow(
-            title: contact.username,
-            subtitle: contact.guildName ?? '',
-            leading: SocialPortrait(appearance: contact.appearance, raceId: contact.raceId),
-            trailing: trailing?.call(contact),
-            onTap: () => openPlayerProfile(
-              context,
-              controller: widget.controller,
-              multiplayer: net,
-              userId: contact.userId,
+            onTap: () => widget.onOpen(
+              SocialContact(
+                userId: row.userId,
+                username: row.username,
+                appearance: row.appearance,
+                raceId: row.raceId,
+              ),
             ),
           ),
           const SizedBox(height: 6),
         ],
+      ];
+    }
+    return <Widget>[
+      for (final contact in widget.people) ...[
+        SocialRow(
+          title: contact.username,
+          subtitle: contact.guildName ?? '',
+          leading: SocialPortrait(appearance: contact.appearance, raceId: contact.raceId),
+          trailing: widget.trailing?.call(contact),
+          onTap: () => widget.onOpen(contact),
+        ),
+        const SizedBox(height: 6),
+      ],
     ];
   }
 }

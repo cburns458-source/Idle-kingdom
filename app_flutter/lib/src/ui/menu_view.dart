@@ -139,6 +139,7 @@ class _MenuViewState extends State<MenuView> {
           if (_tab == _SettingsTab.account)
             AccountPanel(controller: controller, multiplayer: widget.multiplayer, embedded: true)
           else ...[
+            _settingsSection('UI'),
             GamePanel(
               framed: true,
               child: Row(
@@ -191,12 +192,9 @@ class _MenuViewState extends State<MenuView> {
                       for (final pack in UiChromePack.values) ...[
                         if (pack != UiChromePack.values.first) const SizedBox(width: 8),
                         Expanded(
-                          child: GameButton(
+                          child: GameTextButton(
                             label: UiChrome.forPack(pack).label,
                             selected: controller.uiChromePack == pack,
-                            tone: controller.uiChromePack == pack
-                                ? GameButtonTone.primary
-                                : GameButtonTone.secondary,
                             onPressed: () => controller.setUiChromePack(pack),
                           ),
                         ),
@@ -212,125 +210,49 @@ class _MenuViewState extends State<MenuView> {
               builder: (context, _) {
                 return Column(
                   children: [
-                    GamePanel(
-                      framed: true,
-                      child: Row(
-                        children: [
-                          const Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text('Filter chat', style: TextStyle(fontWeight: FontWeight.w400)),
-                                MutedText(
-                                  'Hide profanity in chat. Messages are still stored as typed.',
-                                ),
-                              ],
-                            ),
-                          ),
-                          GameSwitch(
-                            value: widget.multiplayer.filterChatProfanity,
-                            onChanged: widget.multiplayer.setFilterChatProfanity,
-                          ),
-                        ],
-                      ),
+                    _togglePanel(
+                      title: 'Guild tag on HUD',
+                      detail: 'Show your guild tag, like [DEV], before your name.',
+                      value: widget.multiplayer.showHudGuildTag,
+                      onChanged: widget.multiplayer.setShowHudGuildTag,
                     ),
                     const SizedBox(height: 16),
-                    GamePanel(
-                      framed: true,
-                      child: Row(
-                        children: [
-                          const Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Guild tag on HUD',
-                                  style: TextStyle(fontWeight: FontWeight.w400),
-                                ),
-                                MutedText('Show your guild tag, like [DEV], before your name.'),
-                              ],
-                            ),
-                          ),
-                          GameSwitch(
-                            value: widget.multiplayer.showHudGuildTag,
-                            onChanged: widget.multiplayer.setShowHudGuildTag,
-                          ),
-                        ],
-                      ),
+                    _togglePanel(
+                      title: 'Show title on HUD',
+                      detail: 'Show your equipped title, like The Undying, after your name.',
+                      value: controller.showTitleOnHud,
+                      onChanged: controller.setShowTitleOnHud,
                     ),
                     const SizedBox(height: 16),
-                    GamePanel(
-                      framed: true,
-                      child: Row(
-                        children: [
-                          const Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Show title on HUD',
-                                  style: TextStyle(fontWeight: FontWeight.w400),
-                                ),
-                                MutedText(
-                                  'Show your equipped title, like The Undying, after your name.',
-                                ),
-                              ],
-                            ),
-                          ),
-                          GameSwitch(
-                            value: controller.showTitleOnHud,
-                            onChanged: controller.setShowTitleOnHud,
-                          ),
-                        ],
-                      ),
+                    _togglePanel(
+                      title: 'Show Eat button',
+                      detail: 'Show Eat on the food item detail sheet.',
+                      value: controller.showEatButton,
+                      onChanged: controller.setShowEatButton,
                     ),
                     const SizedBox(height: 16),
-                    GamePanel(
-                      framed: true,
-                      child: Row(
-                        children: [
-                          const Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Show Eat button',
-                                  style: TextStyle(fontWeight: FontWeight.w400),
-                                ),
-                                MutedText('Show Eat on the food item detail sheet.'),
-                              ],
-                            ),
-                          ),
-                          GameSwitch(
-                            value: controller.showEatButton,
-                            onChanged: controller.setShowEatButton,
-                          ),
-                        ],
-                      ),
+                    _togglePanel(
+                      title: 'Hide chat bubble',
+                      detail: 'Hide the chat button in the corner of the game.',
+                      value: widget.multiplayer.hideChatBubble,
+                      onChanged: widget.multiplayer.setHideChatBubble,
                     ),
-                    const SizedBox(height: 16),
-                    GamePanel(
-                      framed: true,
-                      child: Row(
-                        children: [
-                          const Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Hide chat bubble',
-                                  style: TextStyle(fontWeight: FontWeight.w400),
-                                ),
-                                MutedText('Hide the chat button in the corner of the game.'),
-                              ],
-                            ),
-                          ),
-                          GameSwitch(
-                            value: widget.multiplayer.hideChatBubble,
-                            onChanged: widget.multiplayer.setHideChatBubble,
-                          ),
-                        ],
-                      ),
+                  ],
+                );
+              },
+            ),
+            const SizedBox(height: 20),
+            _settingsSection('Chat'),
+            ListenableBuilder(
+              listenable: widget.multiplayer,
+              builder: (context, _) {
+                return Column(
+                  children: [
+                    _togglePanel(
+                      title: 'Filter chat',
+                      detail: 'Hide profanity in chat. Messages are still stored as typed.',
+                      value: widget.multiplayer.filterChatProfanity,
+                      onChanged: widget.multiplayer.setFilterChatProfanity,
                     ),
                     const SizedBox(height: 16),
                     _NameColorField(multiplayer: widget.multiplayer),
@@ -371,16 +293,7 @@ class _MenuViewState extends State<MenuView> {
                       ),
                       if (tab != chatTabOrder.last) const SizedBox(height: 10),
                     ],
-                  ],
-                );
-              },
-            ),
-            const SizedBox(height: 16),
-            ListenableBuilder(
-              listenable: widget.multiplayer,
-              builder: (context, _) {
-                return Column(
-                  children: [
+                    const SizedBox(height: 16),
                     _chatPrivacyRow(
                       title: 'Private messages',
                       detail: 'Who may send you a private message.',
@@ -398,11 +311,44 @@ class _MenuViewState extends State<MenuView> {
                 );
               },
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
+            _settingsSection('Testing'),
             _buildTestingTools(),
             const SizedBox(height: 16),
             _buildPlayerSprite(save, hasOverride),
           ],
+        ],
+      ),
+    );
+  }
+
+  Widget _settingsSection(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w400)),
+    );
+  }
+
+  Widget _togglePanel({
+    required String title,
+    required String detail,
+    required bool value,
+    required ValueChanged<bool> onChanged,
+  }) {
+    return GamePanel(
+      framed: true,
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: const TextStyle(fontWeight: FontWeight.w400)),
+                MutedText(detail),
+              ],
+            ),
+          ),
+          GameSwitch(value: value, onChanged: onChanged),
         ],
       ),
     );
@@ -427,11 +373,9 @@ class _MenuViewState extends State<MenuView> {
             runSpacing: 6,
             children: [
               for (final option in chatPrivacyValues)
-                GameButton(
+                GameTextButton(
                   label: chatPrivacyLabel(option),
-                  compact: true,
                   selected: value == option,
-                  tone: value == option ? GameButtonTone.primary : GameButtonTone.secondary,
                   onPressed: widget.multiplayer.busy || !widget.multiplayer.isSignedIn
                       ? null
                       : () => onChanged(option),
@@ -559,7 +503,7 @@ class _MenuViewState extends State<MenuView> {
             runSpacing: 8,
             children: [
               for (final qty in const [1, 10, 100])
-                GameButton(
+                GameTextButton(
                   label: 'Add $qty',
                   onPressed: () => _runTool(() => controller.debugGrantItem(_itemId, qty)),
                 ),
@@ -594,22 +538,20 @@ class _MenuViewState extends State<MenuView> {
             spacing: 8,
             runSpacing: 8,
             children: [
-              GameButton(
+              GameTextButton(
                 label: 'Add 1 level',
                 onPressed: () => _runTool(() => controller.debugAddSkillLevels(_skillId, 1)),
               ),
-              GameButton(
+              GameTextButton(
                 label: 'Add 10 levels',
                 onPressed: () => _runTool(() => controller.debugAddSkillLevels(_skillId, 10)),
               ),
-              GameButton(
+              GameTextButton(
                 label: 'Remove 1 level',
-                tone: GameButtonTone.secondary,
                 onPressed: () => _runTool(() => controller.debugRemoveSkillLevels(_skillId, 1)),
               ),
-              GameButton(
+              GameTextButton(
                 label: 'Reset all skills',
-                tone: GameButtonTone.secondary,
                 onPressed: () => _runTool(controller.debugResetAllSkills),
               ),
             ],
