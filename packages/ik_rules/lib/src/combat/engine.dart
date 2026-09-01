@@ -421,7 +421,12 @@ CombatVictoryResult applyCombatVictory(
   );
 
   final xpAmount = jsNumber(enemy.raw['Combat XP'] ?? action.raw['XP Reward'] ?? 0);
-  final xpSkillId = bossProfile(enemy)?.damageMode == 'fishing' ? fishingSkillId : combatSkillId;
+  // Prefer fishing-mode bosses, then the action's Relevant Skill (Fight Mother Squid
+  // is Fishing). Falls back to Combat for ordinary fights.
+  final relevantSkill = action.relevantSkillId;
+  final xpSkillId = bossProfile(enemy)?.damageMode == 'fishing'
+      ? fishingSkillId
+      : (relevantSkill.isNotEmpty ? relevantSkill : combatSkillId);
   next = applyXp(next, db, xpSkillId, xpAmount).save;
 
   final minGold = jsNumber(enemy.raw['Minimum Gold'] ?? 0);
