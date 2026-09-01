@@ -6,6 +6,7 @@ import { prepareDatabase } from '../data/loadDatabase'
 import { INVENTORY_SLOT_LIMIT } from '../inventory/capacity'
 import { createNewSave } from '../save/saveStore'
 import { migrateSave } from '../save/migrations'
+import { SAVE_VERSION } from '../save/types'
 import { equipItemFromInventory } from './loadout'
 import {
   applyEquipmentPreset,
@@ -32,7 +33,7 @@ describe('equipment presets', () => {
     legacy.saveVersion = 36
     delete (legacy as { equipmentPresets?: unknown }).equipmentPresets
     const migrated = migrateSave(legacy)
-    expect(migrated.saveVersion).toBe(39)
+    expect(migrated.saveVersion).toBe(SAVE_VERSION)
     expect(migrated.equipmentPresets).toHaveLength(4)
   })
 
