@@ -1,0 +1,2 @@
+Kenney Fantasy UI Borders (CC0 1.0) — https://kenney.nl
+Used panel slices under assets/panels/.
