@@ -296,18 +296,19 @@ class _ShopPanelState extends State<ShopPanel> {
 
     return Tooltip(
       message: name,
-      child: InkWell(
+      child: PixelInkPlate(
         onTap: enabled ? () => onTap(unit, name) : null,
-        borderRadius: BorderRadius.zero /* pixel step 2 */,
-        child: Container(
-          padding: const EdgeInsets.fromLTRB(3, 5, 3, 4),
-          decoration: BoxDecoration(
-            color: offered != null ? const Color(0x33D4AF37) : Palette.panel,
-            borderRadius: BorderRadius.zero /* pixel step 2 */,
-            border: Border.all(color: offered != null ? Palette.gold : Palette.edge),
-          ),
-          child: Opacity(
-            opacity: enabled ? 1 : 0.45,
+        step: PixelChrome.stepTight,
+        fillColor: offered != null ? const Color(0xFF4A3820) : Palette.slot,
+        material: PixelPlateMaterial.wood,
+        strokeWidth: offered != null ? 2.5 : 2,
+        selected: offered != null,
+        shadow: false,
+        padding: const EdgeInsets.fromLTRB(3, 5, 3, 4),
+        child: Opacity(
+          opacity: enabled ? 1 : 0.45,
+          child: DefaultTextStyle.merge(
+            style: const TextStyle(color: Palette.parchmentText),
             child: Stack(
               children: [
                 Column(
@@ -333,10 +334,7 @@ class _ShopPanelState extends State<ShopPanel> {
                     right: 0,
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                      decoration: BoxDecoration(
-                        color: const Color(0xE6D4AF37),
-                        borderRadius: BorderRadius.zero /* pixel step 1 */,
-                      ),
+                      decoration: const BoxDecoration(color: Color(0xE69A7B32)),
                       child: Text(
                         '×${formatThousands(offered)}',
                         style: const TextStyle(

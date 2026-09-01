@@ -214,7 +214,7 @@ class _CosmeticTile extends StatelessWidget {
         width: 92,
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
         decoration: BoxDecoration(
-          color: selected ? const Color(0x33D4AF37) : Palette.panel,
+          color: selected ? const Color(0x339A7B32) : Palette.slot,
           borderRadius: BorderRadius.zero /* pixel step 3 */,
           border: Border.all(color: selected ? Palette.gold : Palette.edge),
         ),

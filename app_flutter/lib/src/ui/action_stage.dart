@@ -544,7 +544,7 @@ class _Meter extends StatelessWidget {
         gradient: gradient,
         height: 8,
         trackColor: Palette.ink,
-        borderColor: const Color(0x59D4AF37),
+        borderColor: const Color(0x599A7B32),
       ),
     );
   }

@@ -160,9 +160,9 @@ class _BootGateState extends State<_BootGate> {
         }
         final booted = snapshot.data;
         if (booted == null) {
-          return const DecoratedBox(
-            decoration: BoxDecoration(gradient: Palette.shellGradient),
-            child: Center(child: CircularProgressIndicator()),
+          return DecoratedBox(
+            decoration: woodShellDecoration(),
+            child: const Center(child: CircularProgressIndicator(color: Palette.gold)),
           );
         }
         return AppShell(controller: booted.game, multiplayer: booted.multiplayer);
@@ -179,7 +179,7 @@ class _BootMessage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DecoratedBox(
-      decoration: const BoxDecoration(gradient: Palette.shellGradient),
+      decoration: woodShellDecoration(),
       child: Center(
         child: Padding(
           padding: const EdgeInsets.all(24),

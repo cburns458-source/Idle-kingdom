@@ -929,7 +929,7 @@ class _SymbolButton extends StatelessWidget {
         height: 34,
         padding: const EdgeInsets.all(6),
         decoration: BoxDecoration(
-          color: Palette.panel,
+          color: Palette.slot,
           borderRadius: BorderRadius.zero /* pixel step 2 */,
           border: Border.all(
             color: selected ? Palette.gold : Palette.edge,

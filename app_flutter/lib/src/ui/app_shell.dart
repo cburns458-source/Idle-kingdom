@@ -541,7 +541,7 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(gradient: Palette.shellGradient),
+      decoration: woodShellDecoration(),
       child: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
@@ -552,7 +552,7 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
               width: frame.width,
               height: frame.height,
               child: DecoratedBox(
-                decoration: const BoxDecoration(gradient: Palette.frameGradient),
+                decoration: woodShellDecoration(gradient: Palette.frameGradient),
                 // Material widgets (text fields, ink, tooltips) need one of these
                 // above them, and the frame's own gradient shows through it.
                 // A nested navigator keeps popups inside this 420px frame.
@@ -674,7 +674,7 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
                           ? _PageMotion.expandFromChip
                           : _PageMotion.slideUp,
                       child: DecoratedBox(
-                        decoration: const BoxDecoration(gradient: Palette.frameGradient),
+                        decoration: woodShellDecoration(gradient: Palette.frameGradient),
                         child: _coveringPage(),
                       ),
                     ),

@@ -402,7 +402,7 @@ class _SelectionPanel extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: const BoxDecoration(
-        color: Palette.panel,
+        color: Palette.slot,
         border: Border(top: BorderSide(color: Palette.edge)),
       ),
       child: place == null

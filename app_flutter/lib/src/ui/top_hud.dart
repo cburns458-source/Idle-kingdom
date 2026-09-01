@@ -91,7 +91,7 @@ class TopHud extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.fromLTRB(8, 4, 10, 4),
-      decoration: panelFill(
+      decoration: woodBoardFill(
         border: const Border(bottom: BorderSide(color: Palette.edge)),
       ),
       child: Row(
@@ -241,7 +241,7 @@ class TopHud extends StatelessWidget {
                                 gradient: Meters.hudHp,
                                 height: 8,
                                 trackColor: Palette.ink,
-                                borderColor: const Color(0x59D4AF37),
+                                borderColor: const Color(0x599A7B32),
                               ),
                             ),
                           ),
@@ -309,8 +309,6 @@ class HudPortrait extends StatelessWidget {
 
   static const double size = 68;
 
-  static const double _cornerRadius = 6;
-
   final PlayerAppearance appearance;
 
   /// The save's people, which picks the race sprite.
@@ -325,7 +323,6 @@ class HudPortrait extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final radius = BorderRadius.circular(_cornerRadius);
     return Semantics(
       button: true,
       label: 'Open wardrobe',
@@ -333,16 +330,16 @@ class HudPortrait extends StatelessWidget {
         onTap: onTap,
         child: SizedBox.square(
           dimension: size,
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              borderRadius: radius,
-              color: const Color(0xFF9EC8E8),
-              boxShadow: hint
-                  ? const [BoxShadow(color: Palette.gold, blurRadius: 8, spreadRadius: 1)]
-                  : null,
-            ),
-            child: ClipRRect(
-              borderRadius: radius,
+          child: PixelPlate(
+            step: PixelChrome.stepTight,
+            strokeWidth: hint ? 2.5 : 2,
+            selected: hint,
+            shadow: false,
+            rivets: false,
+            material: PixelPlateMaterial.none,
+            fillColor: const Color(0xFF9EC8E8),
+            child: ClipPath(
+              clipper: PixelSteppedClipper(step: PixelChrome.stepTight),
               child: bytes != null
                   ? PlayerSprite(
                       appearance: appearance,

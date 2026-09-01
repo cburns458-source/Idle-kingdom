@@ -291,7 +291,7 @@ class _LabelChip extends StatelessWidget {
       button: true,
       label: semanticsLabel,
       child: Material(
-        color: Palette.panel,
+        color: Palette.slot,
         shape: PixelSteppedBorder(step: step),
         child: InkWell(
           onTap: onPressed,
@@ -335,7 +335,7 @@ class _SettingsChip extends StatelessWidget {
         button: true,
         label: 'Preset settings',
         child: Material(
-          color: Palette.panel,
+          color: Palette.slot,
           shape: PixelSteppedBorder(step: step),
           child: InkWell(
             onTap: onPressed,
@@ -394,7 +394,7 @@ class _PresetButton extends StatelessWidget {
         selected: selected,
         label: label,
         child: Material(
-          color: selected ? Palette.gold.withValues(alpha: 0.22) : Palette.panel,
+          color: selected ? Palette.gold.withValues(alpha: 0.22) : Palette.slot,
           shape: PixelSteppedBorder(
             step: step,
             side: BorderSide(
@@ -464,7 +464,7 @@ class _IconChoice extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: selected ? Palette.gold.withValues(alpha: 0.25) : Palette.panel,
+      color: selected ? Palette.gold.withValues(alpha: 0.25) : Palette.slot,
       shape: PixelSteppedBorder(
         step: 2,
         side: BorderSide(color: selected ? Palette.gold : Palette.edge),
@@ -598,7 +598,7 @@ class _PresetSettingsRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: Palette.panel,
+        color: Palette.slot,
         borderRadius: BorderRadius.zero /* pixel step 2 */,
         border: Border.all(color: Palette.edge),
       ),

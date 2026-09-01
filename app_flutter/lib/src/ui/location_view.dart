@@ -233,7 +233,7 @@ class _LocationViewState extends State<LocationView> {
       child: DecoratedBox(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.zero /* pixel step 3 */,
-          border: Border.all(color: const Color(0x47D4AF37)),
+          border: Border.all(color: const Color(0x479A7B32)),
         ),
         child: ClipPath(
           clipper: const PixelSteppedClipper(step: 3),
@@ -343,6 +343,7 @@ class _LocationViewState extends State<LocationView> {
                             alignment: Alignment.centerLeft,
                             child: GameButton(
                               label: enterSubMapLabel(controller.db, location) ?? 'Enter',
+                              compact: true,
                               onPressed: () {
                                 if (widget.onEnterGateway != null) {
                                   widget.onEnterGateway!(locationId);
@@ -823,7 +824,7 @@ class _FloatingOptionBand extends StatelessWidget {
       decoration: BoxDecoration(
         color: const Color(0xF0140D08),
         borderRadius: BorderRadius.zero /* pixel step 3 */,
-        border: Border.all(color: const Color(0x47D4AF37)),
+        border: Border.all(color: const Color(0x479A7B32)),
       ),
       child: Stack(
         children: [
@@ -950,7 +951,7 @@ class _InteractionCard extends StatelessWidget {
     return DockRow(
       title: title,
       lines: [if (subtitle case final line?) MutedText(line)],
-      trailing: GameButton(label: actionLabel, tone: tone, onPressed: onPressed),
+      trailing: GameButton(label: actionLabel, tone: tone, compact: true, onPressed: onPressed),
     );
   }
 }
@@ -1019,6 +1020,7 @@ class _ActivityCard extends StatelessWidget {
           ? GameButton(
               label: 'Stop',
               tone: GameButtonTone.secondary,
+              compact: true,
               onPressed: recovering || hostileLock ? null : controller.stopActivity,
             )
           : GameButton(
@@ -1029,6 +1031,7 @@ class _ActivityCard extends StatelessWidget {
                   : controller.save.currentActivityId != null
                   ? 'Replace'
                   : 'Start',
+              compact: true,
               onPressed: recovering
                   ? null
                   : production

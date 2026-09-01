@@ -587,7 +587,7 @@ void main() {
       find.descendant(of: find.byType(MenuView), matching: find.text('Character')),
       findsNothing,
     );
-    await tester.tap(find.byType(Switch).first);
+    await tester.tap(find.byType(GameSwitch).first);
     await tester.pump();
     expect(controller.mapTravelAnimation, isTrue);
   });

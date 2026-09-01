@@ -190,17 +190,18 @@ class _BankPanelState extends State<BankPanel> {
     final name = item?.displayName ?? stack.itemId;
     return Tooltip(
       message: name,
-      child: InkWell(
+      child: PixelInkPlate(
         key: key,
         onTap: onTap,
-        borderRadius: BorderRadius.zero /* pixel step 2 */,
-        child: Container(
-          padding: const EdgeInsets.fromLTRB(3, 5, 3, 4),
-          decoration: BoxDecoration(
-            color: Palette.panel,
-            borderRadius: BorderRadius.zero /* pixel step 2 */,
-            border: Border.all(color: stack.favorite == true ? Palette.gold : Palette.edge),
-          ),
+        step: PixelChrome.stepTight,
+        fillColor: stack.favorite == true ? const Color(0xFF4A3820) : Palette.slot,
+        material: PixelPlateMaterial.wood,
+        strokeWidth: stack.favorite == true ? 2.5 : 2,
+        selected: stack.favorite == true,
+        shadow: false,
+        padding: const EdgeInsets.fromLTRB(3, 5, 3, 4),
+        child: DefaultTextStyle.merge(
+          style: const TextStyle(color: Palette.parchmentText),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
