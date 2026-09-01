@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../session/battery_saver_pref.dart';
 import '../theme.dart';
 
 /// Where a floating popup settles. Footer / bottom sheets are not used.
@@ -40,13 +41,14 @@ Future<T?> showGamePopup<T>({
   Rect? origin,
   bool barrierDismissible = true,
 }) {
+  final reduceMotion = BatterySaverScope.of(context);
   return showGeneralDialog<T>(
     context: context,
     useRootNavigator: false,
     barrierDismissible: barrierDismissible,
     barrierLabel: 'Dismiss',
     barrierColor: const Color(0xCC120C08),
-    transitionDuration: const Duration(milliseconds: 220),
+    transitionDuration: reduceMotion ? Duration.zero : const Duration(milliseconds: 220),
     pageBuilder: (context, animation, secondary) {
       return SafeArea(
         child: Align(
@@ -72,6 +74,7 @@ Future<T?> showGamePopup<T>({
       );
     },
     transitionBuilder: (context, animation, secondary, child) {
+      if (reduceMotion) return child;
       final curved = CurvedAnimation(parent: animation, curve: Curves.easeOutCubic);
       return FadeTransition(
         opacity: curved,
@@ -85,10 +88,10 @@ Future<T?> showGamePopup<T>({
   );
 }
 
-/// Wood-board card chrome every floating popup shares.
+/// Board-card chrome every floating popup shares.
 ///
-/// Quiet horizontal planks (not busy film grain). Light parchment copy on the
-/// board; nest [GamePanel] for tan info / stats plates with dark ink.
+/// Uses the active [UiChrome] pack (wood planks or stone courses). Light
+/// parchment copy on the board; nest [GamePanel] for inner info plates.
 class GamePopupCard extends StatelessWidget {
   const GamePopupCard({super.key, required this.child, this.padding});
 

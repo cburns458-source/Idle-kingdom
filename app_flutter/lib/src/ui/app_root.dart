@@ -9,6 +9,7 @@ import 'package:ik_runtime/ik_runtime.dart';
 
 import '../content/database_loader.dart';
 import '../net/supabase_transport.dart';
+import '../session/battery_saver_pref.dart';
 import '../session/game_controller.dart';
 import '../session/local_player_art.dart';
 import '../session/hud_level_pref.dart';
@@ -86,6 +87,7 @@ class _BootGateState extends State<_BootGate> {
       hudLevel: HudLevelPref.load(storage),
       hudTitle: HudTitlePref.load(storage),
       uiChrome: UiChromePref.load(storage),
+      batterySaverPref: BatterySaverPref.load(storage),
     )..adoptBoot(boot);
     final backend = await _multiplayerService(storage);
     _ensureDemoWorld(backend.service, database.launch);

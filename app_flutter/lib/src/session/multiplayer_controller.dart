@@ -148,6 +148,12 @@ class MultiplayerController extends ChangeNotifier {
   /// How often the unread count and the visitor lists are refreshed.
   static const Duration pollInterval = Duration(seconds: 4);
 
+  /// Presence cadence while battery saver is on.
+  static const Duration batterySaverPresenceInterval = Duration(seconds: 45);
+
+  /// Poll cadence while battery saver is on.
+  static const Duration batterySaverPollInterval = Duration(seconds: 12);
+
   /// How long play can sit in memory before it is written to the account.
   static const Duration accountSaveDebounce = Duration(seconds: 8);
 
@@ -656,11 +662,13 @@ class MultiplayerController extends ChangeNotifier {
   ///
   /// [saveOf] is read on every tick rather than captured, because the player
   /// moves and changes clothes while the timers run.
-  void startPolling(PlayerSave Function() saveOf) {
+  void startPolling(PlayerSave Function() saveOf, {bool batterySaver = false}) {
     _presenceTimer?.cancel();
     _pollTimer?.cancel();
-    _presenceTimer = Timer.periodic(presenceInterval, (_) => publishPresence(saveOf()));
-    _pollTimer = Timer.periodic(pollInterval, (_) => _poll(saveOf()));
+    final presence = batterySaver ? batterySaverPresenceInterval : presenceInterval;
+    final poll = batterySaver ? batterySaverPollInterval : pollInterval;
+    _presenceTimer = Timer.periodic(presence, (_) => publishPresence(saveOf()));
+    _pollTimer = Timer.periodic(poll, (_) => _poll(saveOf()));
     _scheduleHourlyPublish(saveOf);
     publishPresence(saveOf());
   }

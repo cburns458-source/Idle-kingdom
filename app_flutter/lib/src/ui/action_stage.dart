@@ -7,6 +7,7 @@ import 'package:ik_rules/ik_rules.dart';
 import 'package:ik_runtime/ik_runtime.dart';
 
 import '../content/asset_paths.dart';
+import '../session/battery_saver_pref.dart';
 import '../session/game_controller.dart';
 import '../theme.dart';
 import 'format.dart';
@@ -908,22 +909,24 @@ class _ProductionStage extends StatelessWidget {
                     liveRegion: true,
                     label: popup.displayName,
                     child: ExcludeSemantics(
-                      child: TweenAnimationBuilder<double>(
-                        key: ValueKey('craft-pop-${popup.seq}'),
-                        tween: Tween<double>(begin: 0, end: 1),
-                        duration: const Duration(milliseconds: 420),
-                        curve: Curves.easeOut,
-                        builder: (context, t, child) {
-                          return Opacity(
-                            opacity: t.clamp(0, 1),
-                            child: Transform.translate(
-                              offset: Offset(0, (1 - t) * 10),
-                              child: Transform.scale(scale: 0.85 + 0.15 * t, child: child),
+                      child: BatterySaverScope.of(context)
+                          ? ItemIcon(item: popupItem, size: 38)
+                          : TweenAnimationBuilder<double>(
+                              key: ValueKey('craft-pop-${popup.seq}'),
+                              tween: Tween<double>(begin: 0, end: 1),
+                              duration: const Duration(milliseconds: 420),
+                              curve: Curves.easeOut,
+                              builder: (context, t, child) {
+                                return Opacity(
+                                  opacity: t.clamp(0, 1),
+                                  child: Transform.translate(
+                                    offset: Offset(0, (1 - t) * 10),
+                                    child: Transform.scale(scale: 0.85 + 0.15 * t, child: child),
+                                  ),
+                                );
+                              },
+                              child: ItemIcon(item: popupItem, size: 38),
                             ),
-                          );
-                        },
-                        child: ItemIcon(item: popupItem, size: 38),
-                      ),
                     ),
                   ),
                 ),
@@ -957,7 +960,7 @@ class _ProductionStage extends StatelessWidget {
   }
 }
 
-class _DamageFloater extends StatefulWidget {
+class _DamageFloater extends StatelessWidget {
   const _DamageFloater({
     super.key,
     required this.text,
@@ -974,10 +977,39 @@ class _DamageFloater extends StatefulWidget {
   final double fontSize;
 
   @override
-  State<_DamageFloater> createState() => _DamageFloaterState();
+  Widget build(BuildContext context) {
+    if (BatterySaverScope.of(context)) return const SizedBox.shrink();
+    return _AnimatedDamageFloater(
+      text: text,
+      color: color,
+      alignment: alignment,
+      offset: offset,
+      fontSize: fontSize,
+    );
+  }
 }
 
-class _DamageFloaterState extends State<_DamageFloater> with SingleTickerProviderStateMixin {
+class _AnimatedDamageFloater extends StatefulWidget {
+  const _AnimatedDamageFloater({
+    required this.text,
+    required this.color,
+    required this.alignment,
+    required this.offset,
+    this.fontSize = 21.5,
+  });
+
+  final String text;
+  final Color color;
+  final Alignment alignment;
+  final Offset offset;
+  final double fontSize;
+
+  @override
+  State<_AnimatedDamageFloater> createState() => _AnimatedDamageFloaterState();
+}
+
+class _AnimatedDamageFloaterState extends State<_AnimatedDamageFloater>
+    with SingleTickerProviderStateMixin {
   late final AnimationController _life;
   late final Animation<double> _opacity;
 
