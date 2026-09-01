@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:pixel_ui/pixel_ui.dart';
 
 /// Full Farm location UI test — pixel_ui chrome + real farm art/copy roles.
-/// Does not import game client packages.
+/// Uses the same [PixeloidSans] family as the game client (no new fonts).
 class FarmLocationScreen extends StatefulWidget {
   const FarmLocationScreen({super.key, required this.onBack});
 
@@ -23,13 +23,14 @@ class _FarmLocationScreenState extends State<FarmLocationScreen> {
   static const muted = Color(0xFFD2C09A);
   static const gold = Color(0xFFE0C878);
 
+  /// Lighter grain so PixeloidSans stays readable on plates.
   static const panelStyle = PixelShapeStyle(
     corners: PixelCorners.lg,
     fillColor: Color(0xFF2E1C10),
     borderColor: cream,
     borderWidth: 3,
     shadow: PixelShadow(offset: Offset(3, 3), color: Color(0xEE000000)),
-    texture: PixelTexture(color: Color(0x55FFFFFF), density: 0.4, size: 1, seed: 17),
+    texture: PixelTexture(color: Color(0x33FFFFFF), density: 0.14, size: 1, seed: 17),
   );
 
   static const insetStyle = PixelShapeStyle(
@@ -37,7 +38,7 @@ class _FarmLocationScreenState extends State<FarmLocationScreen> {
     fillColor: Color(0xFF24160E),
     borderColor: Color(0xFFC9B07A),
     borderWidth: 2,
-    texture: PixelTexture(color: Color(0x44FFFFFF), density: 0.36, size: 1, seed: 29),
+    texture: PixelTexture(color: Color(0x28FFFFFF), density: 0.12, size: 1, seed: 29),
   );
 
   static const primaryStyle = PixelShapeStyle(
@@ -46,7 +47,7 @@ class _FarmLocationScreenState extends State<FarmLocationScreen> {
     borderColor: cream,
     borderWidth: 3,
     shadow: PixelShadow(offset: Offset(3, 3), color: Color(0xDD000000)),
-    texture: PixelTexture(color: Color(0x33000000), density: 0.26, size: 1, seed: 3),
+    texture: PixelTexture(color: Color(0x22000000), density: 0.12, size: 1, seed: 3),
   );
 
   static const secondaryStyle = PixelShapeStyle(
@@ -55,7 +56,7 @@ class _FarmLocationScreenState extends State<FarmLocationScreen> {
     borderColor: Color(0xFFE0C878),
     borderWidth: 3,
     shadow: PixelShadow(offset: Offset(3, 3), color: Color(0xDD000000)),
-    texture: PixelTexture(color: Color(0x33000000), density: 0.26, size: 1, seed: 7),
+    texture: PixelTexture(color: Color(0x22000000), density: 0.12, size: 1, seed: 7),
   );
 
   static const portraitStyle = PixelShapeStyle(
@@ -81,16 +82,17 @@ class _FarmLocationScreenState extends State<FarmLocationScreen> {
   TextStyle _tx(
     double size, {
     Color color = cream,
-    FontWeight? weight,
+    FontWeight weight = FontWeight.w400,
     double? tracking,
   }) {
     return TextStyle(
       fontFamily: 'PixeloidSans',
       fontSize: size,
       color: color,
-      fontWeight: weight ?? FontWeight.w400,
+      // Game theme keeps UI on regular cut; bold file is registered for w700.
+      fontWeight: weight,
       letterSpacing: tracking,
-      height: 1.15,
+      height: 1.2,
       shadows: const [Shadow(offset: Offset(1, 1), color: Color(0xAA000000))],
     );
   }
@@ -142,6 +144,32 @@ class _FarmLocationScreenState extends State<FarmLocationScreen> {
       _activity = _Activity.none;
       _progress = 0;
     });
+  }
+
+  /// PixelBox needs finite width/height — never pass [double.infinity] raw.
+  Widget _plate({
+    required double width,
+    required double height,
+    required PixelShapeStyle style,
+    Widget? label,
+    EdgeInsetsGeometry padding = const EdgeInsets.all(10),
+    AlignmentGeometry alignment = Alignment.center,
+    required Widget child,
+  }) {
+    final logicalW = width.clamp(24, 96).round().clamp(16, 96);
+    final logicalH =
+        (logicalW * height / width).round().clamp(8, 96);
+    return PixelBox(
+      logicalWidth: logicalW,
+      logicalHeight: logicalH,
+      width: width,
+      height: height,
+      style: style,
+      label: label,
+      padding: padding,
+      alignment: alignment,
+      child: child,
+    );
   }
 
   @override
@@ -199,34 +227,34 @@ class _FarmLocationScreenState extends State<FarmLocationScreen> {
                       Positioned(
                         left: 24,
                         right: 24,
-                        bottom: 88,
-                        child: PixelBox(
-                          logicalWidth: 40,
-                          logicalHeight: 10,
-                          width: double.infinity,
-                          height: 40,
-                          style: insetStyle,
-                          child: Center(
-                            child: Text(
-                              _toast!,
-                              style: _tx(11),
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
+                        bottom: 100,
+                        child: LayoutBuilder(
+                          builder: (context, c) {
+                            return _plate(
+                              width: c.maxWidth,
+                              height: 44,
+                              style: insetStyle,
+                              child: Text(
+                                _toast!,
+                                style: _tx(13),
+                                textAlign: TextAlign.center,
+                              ),
+                            );
+                          },
                         ),
                       ),
                     Positioned(
                       top: 8,
                       left: 8,
                       child: PixelButton(
-                        logicalWidth: 10,
-                        logicalHeight: 8,
-                        width: 52,
-                        height: 30,
+                        logicalWidth: 14,
+                        logicalHeight: 9,
+                        width: 64,
+                        height: 34,
                         normalStyle: secondaryStyle,
                         pressChildOffset: const Offset(0, 2),
                         onPressed: widget.onBack,
-                        child: Text('BACK', style: _tx(10, weight: FontWeight.w700)),
+                        child: Text('BACK', style: _tx(12, weight: FontWeight.w700)),
                       ),
                     ),
                   ],
@@ -245,209 +273,214 @@ class _FarmLocationScreenState extends State<FarmLocationScreen> {
       return Text(
         filled ? '█' : '░',
         style: _tx(
-          11,
+          12,
           color: filled ? const Color(0xFFC45A3A) : const Color(0xFF6A5040),
         ),
       );
     });
-    return PixelBox(
-      logicalWidth: 48,
-      logicalHeight: 16,
-      width: double.infinity,
-      height: 78,
-      style: panelStyle,
-      padding: const EdgeInsets.fromLTRB(10, 10, 10, 8),
-      child: Row(
-        children: [
-          PixelBox(
-            logicalWidth: 10,
-            logicalHeight: 10,
-            width: 48,
-            height: 48,
-            style: portraitStyle,
-            padding: const EdgeInsets.all(3),
-            child: Image.asset(
-              'assets/player_portrait.png',
-              fit: BoxFit.cover,
-              filterQuality: FilterQuality.none,
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'ARIC  LV07',
-                  style: _tx(12, weight: FontWeight.w700, tracking: 0.6),
+    return LayoutBuilder(
+      builder: (context, c) {
+        return _plate(
+          width: c.maxWidth,
+          height: 88,
+          style: panelStyle,
+          padding: const EdgeInsets.fromLTRB(10, 10, 10, 8),
+          child: Row(
+            children: [
+              PixelBox(
+                logicalWidth: 12,
+                logicalHeight: 12,
+                width: 52,
+                height: 52,
+                style: portraitStyle,
+                padding: const EdgeInsets.all(3),
+                child: Image.asset(
+                  'assets/player_portrait.png',
+                  fit: BoxFit.cover,
+                  filterQuality: FilterQuality.none,
                 ),
-                const SizedBox(height: 4),
-                Row(children: blocks),
-                Text('HP $_hp / $_maxHp', style: _tx(10, color: muted)),
-                const SizedBox(height: 3),
-                Text(
-                  'XP $_xp/$_xpMax   ${_goldAmount}g',
-                  style: _tx(10, color: gold),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'ARIC  LV07',
+                      style: _tx(14, weight: FontWeight.w700, tracking: 0.4),
+                    ),
+                    const SizedBox(height: 2),
+                    Row(children: blocks),
+                    Text('HP $_hp / $_maxHp', style: _tx(12, color: muted)),
+                    Text(
+                      'XP $_xp/$_xpMax   ${_goldAmount}g',
+                      style: _tx(12, color: gold),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
   Widget _buildBody() {
-    if (_tab != _Tab.adventure) {
-      return PixelBox(
-        logicalWidth: 48,
-        logicalHeight: 40,
-        width: double.infinity,
-        height: double.infinity,
-        style: panelStyle,
-        label: Text(_tab.name.toUpperCase(), style: _tx(10, weight: FontWeight.w700)),
-        padding: const EdgeInsets.fromLTRB(12, 18, 12, 12),
-        child: Center(
-          child: Text(
-            'Stub tab — farm chrome test focuses on Adventure.',
-            style: _tx(11, color: muted),
-            textAlign: TextAlign.center,
-          ),
-        ),
-      );
-    }
+    return LayoutBuilder(
+      builder: (context, c) {
+        if (_tab != _Tab.adventure) {
+          return _plate(
+            width: c.maxWidth,
+            height: c.maxHeight,
+            style: panelStyle,
+            label: Text(
+              _tab.name.toUpperCase(),
+              style: _tx(12, weight: FontWeight.w700),
+            ),
+            padding: const EdgeInsets.fromLTRB(14, 22, 14, 14),
+            child: Text(
+              'Stub tab — farm chrome test focuses on Adventure.',
+              style: _tx(13, color: muted),
+              textAlign: TextAlign.center,
+            ),
+          );
+        }
 
-    if (_talking) {
-      return PixelBox(
-        logicalWidth: 48,
-        logicalHeight: 40,
-        width: double.infinity,
-        height: double.infinity,
-        style: panelStyle,
-        label: Text('FENNEL', style: _tx(10, weight: FontWeight.w700)),
-        padding: const EdgeInsets.fromLTRB(12, 18, 12, 12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Expanded(
-              child: PixelBox(
-                logicalWidth: 40,
-                logicalHeight: 22,
-                width: double.infinity,
-                height: double.infinity,
-                style: insetStyle,
-                padding: const EdgeInsets.all(10),
-                alignment: Alignment.topLeft,
-                child: Text(
-                  'Welcome to the lands. I am Fennel.\n\n'
-                  'This farm is a good place to start — harvest, cook, and fight are all close by.',
-                  style: _tx(11, color: muted),
-                ),
-              ),
-            ),
-            const SizedBox(height: 10),
-            PixelButton(
-              logicalWidth: 40,
-              logicalHeight: 9,
-              height: 40,
-              normalStyle: primaryStyle,
-              pressChildOffset: const Offset(0, 2),
-              onPressed: () => setState(() => _talking = false),
-              child: Text('CLOSE', style: _tx(12, weight: FontWeight.w700)),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return PixelBox(
-      logicalWidth: 48,
-      logicalHeight: 40,
-      width: double.infinity,
-      height: double.infinity,
-      style: panelStyle,
-      label: Text('THE FARM', style: _tx(10, weight: FontWeight.w700)),
-      padding: const EdgeInsets.fromLTRB(12, 18, 12, 12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            'Pasture-focused starting area with Cow and Bull encounters.',
-            style: _tx(11, color: muted),
-          ),
-          const SizedBox(height: 10),
-          if (_activity != _Activity.none) ...[
-            PixelBox(
-              logicalWidth: 40,
-              logicalHeight: 12,
-              width: double.infinity,
-              height: 52,
-              style: insetStyle,
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    _activity == _Activity.pasture
-                        ? 'Tending pasture…'
-                        : 'Working fields…',
-                    style: _tx(11, weight: FontWeight.w700),
-                  ),
-                  const SizedBox(height: 6),
-                  _SegmentBar(progress: _progress),
-                ],
-              ),
-            ),
-            const SizedBox(height: 8),
-          ],
-          Expanded(
-            child: ListView(
-              padding: EdgeInsets.zero,
+        if (_talking) {
+          return _plate(
+            width: c.maxWidth,
+            height: c.maxHeight,
+            style: panelStyle,
+            label: Text('FENNEL', style: _tx(12, weight: FontWeight.w700)),
+            padding: const EdgeInsets.fromLTRB(14, 22, 14, 14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _activityCard(
-                  title: 'Tend the pasture',
-                  detail: 'Fight cows · rare bull',
-                  icon: 'assets/skl_combat.webp',
-                  active: _activity == _Activity.pasture,
-                  onStart: () => _start(_Activity.pasture),
+                Expanded(
+                  child: LayoutBuilder(
+                    builder: (context, inner) {
+                      return _plate(
+                        width: inner.maxWidth,
+                        height: inner.maxHeight,
+                        style: insetStyle,
+                        padding: const EdgeInsets.all(12),
+                        alignment: Alignment.topLeft,
+                        child: Text(
+                          'Welcome to the lands. I am Fennel.\n\n'
+                          'This farm is a good place to start — harvest, cook, and fight are all close by.',
+                          style: _tx(13, color: muted),
+                        ),
+                      );
+                    },
+                  ),
                 ),
-                const SizedBox(height: 8),
-                _activityCard(
-                  title: 'Work the fields',
-                  detail: 'Harvest potatoes · rare golden spud',
-                  icon: 'assets/skl_harvesting.webp',
-                  active: _activity == _Activity.fields,
-                  onStart: () => _start(_Activity.fields),
+                const SizedBox(height: 10),
+                PixelButton(
+                  logicalWidth: 40,
+                  logicalHeight: 10,
+                  width: c.maxWidth - 28,
+                  height: 42,
+                  normalStyle: primaryStyle,
+                  pressChildOffset: const Offset(0, 2),
+                  onPressed: () => setState(() => _talking = false),
+                  child: Text('CLOSE', style: _tx(14, weight: FontWeight.w700)),
                 ),
-                const SizedBox(height: 8),
-                _npcCard(),
               ],
             ),
+          );
+        }
+
+        return _plate(
+          width: c.maxWidth,
+          height: c.maxHeight,
+          style: panelStyle,
+          label: Text('THE FARM', style: _tx(12, weight: FontWeight.w700)),
+          padding: const EdgeInsets.fromLTRB(12, 22, 12, 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'Pasture-focused starting area with Cow and Bull encounters.',
+                style: _tx(12, color: muted),
+              ),
+              const SizedBox(height: 10),
+              if (_activity != _Activity.none) ...[
+                _plate(
+                  width: c.maxWidth - 24,
+                  height: 56,
+                  style: insetStyle,
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  alignment: Alignment.centerLeft,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        _activity == _Activity.pasture
+                            ? 'Tending pasture…'
+                            : 'Working fields…',
+                        style: _tx(13, weight: FontWeight.w700),
+                      ),
+                      const SizedBox(height: 6),
+                      _SegmentBar(progress: _progress),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 8),
+              ],
+              Expanded(
+                child: ListView(
+                  padding: EdgeInsets.zero,
+                  children: [
+                    _activityCard(
+                      width: c.maxWidth - 24,
+                      title: 'Tend the pasture',
+                      detail: 'Fight cows · rare bull',
+                      icon: 'assets/skl_combat.webp',
+                      active: _activity == _Activity.pasture,
+                      onStart: () => _start(_Activity.pasture),
+                    ),
+                    const SizedBox(height: 8),
+                    _activityCard(
+                      width: c.maxWidth - 24,
+                      title: 'Work the fields',
+                      detail: 'Harvest potatoes · rare golden spud',
+                      icon: 'assets/skl_harvesting.webp',
+                      active: _activity == _Activity.fields,
+                      onStart: () => _start(_Activity.fields),
+                    ),
+                    const SizedBox(height: 8),
+                    _npcCard(width: c.maxWidth - 24),
+                  ],
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
   Widget _activityCard({
+    required double width,
     required String title,
     required String detail,
     required String icon,
     required bool active,
     required VoidCallback onStart,
   }) {
-    return PixelBox(
-      logicalWidth: 40,
-      logicalHeight: 16,
-      width: double.infinity,
-      height: 72,
+    return _plate(
+      width: width,
+      height: 78,
       style: insetStyle,
       padding: const EdgeInsets.all(8),
       child: Row(
         children: [
           SizedBox(
-            width: 36,
-            height: 36,
+            width: 40,
+            height: 40,
             child: Image.asset(
               icon,
               fit: BoxFit.contain,
@@ -460,24 +493,24 @@ class _FarmLocationScreenState extends State<FarmLocationScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(title, style: _tx(11, weight: FontWeight.w700)),
+                Text(title, style: _tx(13, weight: FontWeight.w700)),
                 const SizedBox(height: 3),
-                Text(detail, style: _tx(10, color: muted)),
+                Text(detail, style: _tx(11, color: muted)),
               ],
             ),
           ),
           const SizedBox(width: 6),
           PixelButton(
-            logicalWidth: 12,
-            logicalHeight: 8,
-            width: 64,
-            height: 34,
+            logicalWidth: 14,
+            logicalHeight: 9,
+            width: 72,
+            height: 36,
             normalStyle: active ? secondaryStyle : primaryStyle,
             pressChildOffset: const Offset(0, 2),
             onPressed: active ? _stop : onStart,
             child: Text(
               active ? 'STOP' : 'START',
-              style: _tx(10, weight: FontWeight.w700),
+              style: _tx(12, weight: FontWeight.w700),
             ),
           ),
         ],
@@ -485,12 +518,10 @@ class _FarmLocationScreenState extends State<FarmLocationScreen> {
     );
   }
 
-  Widget _npcCard() {
-    return PixelBox(
-      logicalWidth: 40,
-      logicalHeight: 14,
-      width: double.infinity,
-      height: 60,
+  Widget _npcCard({required double width}) {
+    return _plate(
+      width: width,
+      height: 68,
       style: insetStyle,
       padding: const EdgeInsets.all(8),
       child: Row(
@@ -500,24 +531,24 @@ class _FarmLocationScreenState extends State<FarmLocationScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text('Fennel', style: _tx(11, weight: FontWeight.w700)),
+                Text('Fennel', style: _tx(13, weight: FontWeight.w700)),
                 const SizedBox(height: 3),
-                Text('Guide · Farm welcome', style: _tx(10, color: muted)),
+                Text('Guide · Farm welcome', style: _tx(11, color: muted)),
               ],
             ),
           ),
           PixelButton(
-            logicalWidth: 12,
-            logicalHeight: 8,
-            width: 64,
-            height: 34,
+            logicalWidth: 14,
+            logicalHeight: 9,
+            width: 72,
+            height: 36,
             normalStyle: secondaryStyle,
             pressChildOffset: const Offset(0, 2),
             onPressed: () {
               _stop();
               setState(() => _talking = true);
             },
-            child: Text('TALK', style: _tx(10, weight: FontWeight.w700)),
+            child: Text('TALK', style: _tx(12, weight: FontWeight.w700)),
           ),
         ],
       ),
@@ -526,36 +557,42 @@ class _FarmLocationScreenState extends State<FarmLocationScreen> {
 
   Widget _buildNav() {
     const items = <(_Tab, String)>[
-      (_Tab.adventure, 'ADVENTURE'),
+      (_Tab.adventure, 'ADV'),
       (_Tab.inventory, 'BAG'),
-      (_Tab.skills, 'SKILLS'),
-      (_Tab.quests, 'QUESTS'),
+      (_Tab.skills, 'SKL'),
+      (_Tab.quests, 'QST'),
     ];
-    return Row(
-      children: [
-        for (final (tab, label) in items)
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 3),
-              child: PixelButton(
-                logicalWidth: 12,
-                logicalHeight: 10,
-                height: 44,
-                normalStyle: _tab == tab ? primaryStyle : secondaryStyle,
-                pressChildOffset: const Offset(0, 2),
-                onPressed: () => setState(() {
-                  _tab = tab;
-                  _talking = false;
-                }),
-                child: Text(
-                  label,
-                  textAlign: TextAlign.center,
-                  style: _tx(10, weight: FontWeight.w700),
+    return LayoutBuilder(
+      builder: (context, c) {
+        final slot = (c.maxWidth / items.length) - 6;
+        return Row(
+          children: [
+            for (final (tab, label) in items)
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 3),
+                  child: PixelButton(
+                    logicalWidth: 14,
+                    logicalHeight: 11,
+                    width: slot.clamp(48, 120),
+                    height: 48,
+                    normalStyle: _tab == tab ? primaryStyle : secondaryStyle,
+                    pressChildOffset: const Offset(0, 2),
+                    onPressed: () => setState(() {
+                      _tab = tab;
+                      _talking = false;
+                    }),
+                    child: Text(
+                      label,
+                      textAlign: TextAlign.center,
+                      style: _tx(13, weight: FontWeight.w700),
+                    ),
+                  ),
                 ),
               ),
-            ),
-          ),
-      ],
+          ],
+        );
+      },
     );
   }
 }
