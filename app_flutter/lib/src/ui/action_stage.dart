@@ -51,10 +51,15 @@ class ActionStage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MediaQuery(
-      data: MediaQuery.of(context)
-          .copyWith(textScaler: playableHudTextScaler(MediaQuery.textScalerOf(context))),
-      child: Builder(builder: _buildStage),
+    return ListenableBuilder(
+      listenable: Listenable.merge(<Listenable>[controller, controller.progress]),
+      builder: (context, _) {
+        return MediaQuery(
+          data: MediaQuery.of(context)
+              .copyWith(textScaler: playableHudTextScaler(MediaQuery.textScalerOf(context))),
+          child: Builder(builder: _buildStage),
+        );
+      },
     );
   }
 
@@ -85,6 +90,15 @@ class LocationIdlePlayer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Death-hold → recovering is clock-driven ([progress]); loadout changes use
+    // the main listenable. Without both, the idle sprite can linger over Recovering.
+    return ListenableBuilder(
+      listenable: Listenable.merge(<Listenable>[controller, controller.progress]),
+      builder: (context, _) => _buildIdle(context),
+    );
+  }
+
+  Widget _buildIdle(BuildContext context) {
     if (controller.showRecoveringStage) return const SizedBox.shrink();
     final save = controller.save;
     final maxHp = playerMaxHp(controller.db, save);

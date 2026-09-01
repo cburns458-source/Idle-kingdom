@@ -567,6 +567,8 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
 
   @override
   Widget build(BuildContext context) {
+    // Structural / save changes only — clock ticks notify [GameController.progress]
+    // so shell board textures are not rebuilt every frame.
     return ListenableBuilder(
       listenable: controller,
       builder: (context, _) {
@@ -574,78 +576,88 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
           chrome: controller.chrome,
           child: Builder(
             builder: (context) {
-              return Container(
-                decoration: chromeShellDecoration(context),
-                child: SafeArea(
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      final available = constraints.biggest;
-                      final frame = playableFrameSize(available);
-                      final sideChat = playableFrameHasSideChat(available);
-                      final game = SizedBox(
-                        width: frame.width,
-                        height: frame.height,
-                        child: DecoratedBox(
-                          decoration: chromeShellDecoration(
-                            context,
-                            gradient: UiChrome.of(context).frameGradient,
-                          ),
-                          // Material widgets (text fields, ink, tooltips) need one of these
-                          // above them, and the frame's own gradient shows through it.
-                          // A nested navigator keeps popups inside this 420px frame.
-                          child: Material(
-                            type: MaterialType.transparency,
-                            clipBehavior: Clip.hardEdge,
-                            child: MediaQuery(
-                              data: MediaQuery.of(context).copyWith(
-                                size: frame,
-                                textScaler: playableUiTextScaler(MediaQuery.textScalerOf(context)),
+              return RepaintBoundary(
+                child: Container(
+                  decoration: chromeShellDecoration(context),
+                  child: SafeArea(
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        final available = constraints.biggest;
+                        final frame = playableFrameSize(available);
+                        final sideChat = playableFrameHasSideChat(available);
+                        final game = SizedBox(
+                          width: frame.width,
+                          height: frame.height,
+                          child: RepaintBoundary(
+                            child: DecoratedBox(
+                              decoration: chromeShellDecoration(
+                                context,
+                                gradient: UiChrome.of(context).frameGradient,
                               ),
-                              child: ListenableBuilder(
-                                listenable: Listenable.merge(<Listenable>[controller, multiplayer]),
-                                builder: (context, _) => BatterySaverScope(
-                                  enabled: controller.batterySaver,
-                                  child: _buildFrame(context, sideChat: sideChat),
+                              // Material widgets (text fields, ink, tooltips) need one of these
+                              // above them, and the frame's own gradient shows through it.
+                              // A nested navigator keeps popups inside this 420px frame.
+                              child: Material(
+                                type: MaterialType.transparency,
+                                clipBehavior: Clip.hardEdge,
+                                child: MediaQuery(
+                                  data: MediaQuery.of(context).copyWith(
+                                    size: frame,
+                                    textScaler: playableUiTextScaler(
+                                      MediaQuery.textScalerOf(context),
+                                    ),
+                                  ),
+                                  // Outer builder already listens to [controller];
+                                  // only multiplayer needs a nested subscription.
+                                  child: ListenableBuilder(
+                                    listenable: multiplayer,
+                                    builder: (context, _) => BatterySaverScope(
+                                      enabled: controller.batterySaver,
+                                      child: _buildFrame(context, sideChat: sideChat),
+                                    ),
+                                  ),
                                 ),
                               ),
                             ),
                           ),
-                        ),
-                      );
-                      if (!sideChat) return Center(child: game);
-                      return Row(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          game,
-                          Expanded(
-                            child: MediaQuery(
-                              data: MediaQuery.of(context).copyWith(
-                                textScaler: playableUiTextScaler(MediaQuery.textScalerOf(context)),
-                              ),
-                              child: ListenableBuilder(
-                                listenable: Listenable.merge(<Listenable>[controller, multiplayer]),
-                                builder: (context, _) {
-                                  final save = controller.save;
-                                  return Material(
-                                    key: const Key('chat-panel'),
-                                    color: Palette.parchmentDeep,
-                                    clipBehavior: Clip.antiAlias,
-                                    child: ChatSheet(
-                                      controller: controller,
-                                      multiplayer: multiplayer,
-                                      locationId: save.currentLocationId,
-                                      citadelHub: _inCitadel,
-                                      embedded: true,
-                                      onClose: () {},
-                                    ),
-                                  );
-                                },
+                        );
+                        if (!sideChat) return Center(child: game);
+                        return Row(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            game,
+                            Expanded(
+                              child: MediaQuery(
+                                data: MediaQuery.of(context).copyWith(
+                                  textScaler: playableUiTextScaler(
+                                    MediaQuery.textScalerOf(context),
+                                  ),
+                                ),
+                                child: ListenableBuilder(
+                                  listenable: multiplayer,
+                                  builder: (context, _) {
+                                    final save = controller.save;
+                                    return Material(
+                                      key: const Key('chat-panel'),
+                                      color: Palette.parchmentDeep,
+                                      clipBehavior: Clip.antiAlias,
+                                      child: ChatSheet(
+                                        controller: controller,
+                                        multiplayer: multiplayer,
+                                        locationId: save.currentLocationId,
+                                        citadelHub: _inCitadel,
+                                        embedded: true,
+                                        onClose: () {},
+                                      ),
+                                    );
+                                  },
+                                ),
                               ),
                             ),
-                          ),
-                        ],
-                      );
-                    },
+                          ],
+                        );
+                      },
+                    ),
                   ),
                 ),
               );
@@ -693,11 +705,13 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
             MediaQuery(
               data: MediaQuery.of(context)
                   .copyWith(textScaler: playableHudTextScaler(MediaQuery.textScalerOf(context))),
-              child: TopHud(
-                controller: controller,
-                multiplayer: multiplayer,
-                onOpenWardrobe: _openWardrobe,
-                batterySaver: controller.batterySaver,
+              child: RepaintBoundary(
+                child: TopHud(
+                  controller: controller,
+                  multiplayer: multiplayer,
+                  onOpenWardrobe: _openWardrobe,
+                  batterySaver: controller.batterySaver,
+                ),
               ),
             ),
             Expanded(
@@ -719,12 +733,14 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
                       motion: _screen == GameScreen.map
                           ? _PageMotion.expandFromChip
                           : _PageMotion.slideUp,
-                      child: DecoratedBox(
-                        decoration: chromeShellDecoration(
-                          context,
-                          gradient: UiChrome.of(context).frameGradient,
+                      child: RepaintBoundary(
+                        child: DecoratedBox(
+                          decoration: chromeShellDecoration(
+                            context,
+                            gradient: UiChrome.of(context).frameGradient,
+                          ),
+                          child: _coveringPage(),
                         ),
-                        child: _coveringPage(),
                       ),
                     ),
                   if (_wardrobeOpen)
@@ -760,10 +776,12 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
                 ],
               ),
             ),
-            BottomNav(
-              screen: _screen,
-              locationName: controller.location?.displayName ?? 'Unknown',
-              onSelect: _selectScreen,
+            RepaintBoundary(
+              child: BottomNav(
+                screen: _screen,
+                locationName: controller.location?.displayName ?? 'Unknown',
+                onSelect: _selectScreen,
+              ),
             ),
           ],
         ),

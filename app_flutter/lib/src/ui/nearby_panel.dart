@@ -85,7 +85,7 @@ class _NearbyPanelState extends State<NearbyPanel> {
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: net,
+      listenable: Listenable.merge(<Listenable>[net, widget.controller.progress]),
       builder: (context, _) {
         final rows = peerRows(net.peers, _skillName, nowMs: widget.controller.session.clock());
         return GamePopupCard(

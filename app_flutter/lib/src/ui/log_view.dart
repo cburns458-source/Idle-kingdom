@@ -138,7 +138,12 @@ class _LogViewState extends State<LogView> {
         if (_tab == _LogTab.quests && _miniquestsOpen)
           Padding(
             padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-            child: _MiniquestList(rows: miniQuestLog(db, save, controller.session.clock())),
+            child: ListenableBuilder(
+              listenable: controller.progress,
+              builder: (context, _) => _MiniquestList(
+                rows: miniQuestLog(db, save, controller.session.clock()),
+              ),
+            ),
           ),
         Expanded(
           child: ListView(

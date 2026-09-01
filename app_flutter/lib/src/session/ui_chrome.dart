@@ -11,8 +11,11 @@ enum UiChromePack {
 }
 
 /// Colors and textures for one [UiChromePack].
+///
+/// Pack instances are long-lived singletons so [DecorationImage]s can be cached
+/// and reused across rebuilds without reallocating [AssetImage]s every frame.
 class UiChrome {
-  const UiChrome({
+  UiChrome({
     required this.pack,
     required this.label,
     required this.board,
@@ -38,46 +41,53 @@ class UiChrome {
   final LinearGradient shellGradient;
   final LinearGradient frameGradient;
 
-  static const wood = UiChrome(
+  DecorationImage? _boardFill55;
+  DecorationImage? _boardFill40;
+  DecorationImage? _boardPlate45;
+  DecorationImage? _panelPlate32;
+  BoxDecoration? _shellDecoration;
+  BoxDecoration? _frameDecoration;
+
+  static final wood = UiChrome(
     pack: UiChromePack.wood,
     label: 'Wood',
-    board: Color(0xFF2A1C12),
-    panel: Color(0xFFC4A882),
-    slot: Color(0xFF3D2A1A),
-    panelInk: Color(0xFF2A1C12),
-    panelMuted: Color(0xFF6B5338),
+    board: const Color(0xFF2A1C12),
+    panel: const Color(0xFFC4A882),
+    slot: const Color(0xFF3D2A1A),
+    panelInk: const Color(0xFF2A1C12),
+    panelMuted: const Color(0xFF6B5338),
     boardTextureAsset: 'assets/ui/wood-panel.png',
     panelTextureAsset: 'assets/ui/panel-tan.png',
-    shellGradient: LinearGradient(
+    shellGradient: const LinearGradient(
       begin: Alignment(-0.6, -1),
       end: Alignment(0.6, 1),
       colors: [Color(0xFF1A120C), Color(0xFF2A1C12), Color(0xFF14100A)],
       stops: [0, 0.45, 1],
     ),
-    frameGradient: LinearGradient(
+    frameGradient: const LinearGradient(
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
       colors: [Color(0xFF3D2A1A), Color(0xFF2A1C12)],
     ),
   );
 
-  static const stone = UiChrome(
+  static final stone = UiChrome(
     pack: UiChromePack.stone,
     label: 'Stone',
-    board: Color(0xFF2A2C30),
-    panel: Color(0xFFB8B4A8),
-    slot: Color(0xFF3A3C42),
-    panelInk: Color(0xFF1E2024),
-    panelMuted: Color(0xFF5A5E66),
+    board: const Color(0xFF2A2C30),
+    panel: const Color(0xFFB8B4A8),
+    slot: const Color(0xFF3A3C42),
+    panelInk: const Color(0xFF1E2024),
+    panelMuted: const Color(0xFF5A5E66),
     boardTextureAsset: 'assets/ui/stone-panel.png',
     panelTextureAsset: 'assets/ui/panel-ash.png',
-    shellGradient: LinearGradient(
+    shellGradient: const LinearGradient(
       begin: Alignment(-0.6, -1),
       end: Alignment(0.6, 1),
       colors: [Color(0xFF181A1E), Color(0xFF2A2C30), Color(0xFF121418)],
       stops: [0, 0.45, 1],
     ),
-    frameGradient: LinearGradient(
+    frameGradient: const LinearGradient(
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
       colors: [Color(0xFF3A3C42), Color(0xFF2A2C30)],
@@ -93,6 +103,78 @@ class UiChrome {
   static UiChrome of(BuildContext context) {
     final scope = context.dependOnInheritedWidgetOfExactType<UiChromeScope>();
     return scope?.chrome ?? wood;
+  }
+
+  DecorationImage _boardImage(double opacity) => DecorationImage(
+    image: AssetImage(boardTextureAsset),
+    repeat: ImageRepeat.repeat,
+    fit: BoxFit.none,
+    alignment: Alignment.topLeft,
+    filterQuality: FilterQuality.none,
+    opacity: opacity,
+  );
+
+  /// Tiled board texture for HUD / nav / popup fills.
+  DecorationImage boardFillImage({double opacity = 0.55}) {
+    if (opacity == 0.55) return _boardFill55 ??= _boardImage(0.55);
+    if (opacity == 0.4) return _boardFill40 ??= _boardImage(0.4);
+    if (opacity == 0.45) return _boardPlate45 ??= _boardImage(0.45);
+    return _boardImage(opacity);
+  }
+
+  /// Tiled inner-panel texture for [PixelPlate] tan plates.
+  DecorationImage panelPlateImage({double opacity = 0.32}) {
+    if (opacity == 0.32) {
+      return _panelPlate32 ??= DecorationImage(
+        image: AssetImage(panelTextureAsset),
+        repeat: ImageRepeat.repeat,
+        fit: BoxFit.none,
+        alignment: Alignment.topLeft,
+        filterQuality: FilterQuality.none,
+        opacity: 0.32,
+      );
+    }
+    return DecorationImage(
+      image: AssetImage(panelTextureAsset),
+      repeat: ImageRepeat.repeat,
+      fit: BoxFit.none,
+      alignment: Alignment.topLeft,
+      filterQuality: FilterQuality.none,
+      opacity: opacity,
+    );
+  }
+
+  /// Full shell wash (default gradient). Custom [gradient] still reuses the image.
+  BoxDecoration shellDecoration({Gradient? gradient}) {
+    if (gradient == null) {
+      return _shellDecoration ??= BoxDecoration(
+        color: board,
+        gradient: shellGradient,
+        image: boardFillImage(),
+      );
+    }
+    if (identical(gradient, frameGradient)) {
+      return _frameDecoration ??= BoxDecoration(
+        color: board,
+        gradient: frameGradient,
+        image: boardFillImage(),
+      );
+    }
+    return BoxDecoration(color: board, gradient: gradient, image: boardFillImage());
+  }
+
+  /// Board fill with optional border / radius (image is pack-cached).
+  BoxDecoration boardFill({
+    BorderRadius? borderRadius,
+    BoxBorder? border,
+    double textureOpacity = 0.55,
+  }) {
+    return BoxDecoration(
+      color: board,
+      borderRadius: borderRadius,
+      border: border,
+      image: boardFillImage(opacity: textureOpacity),
+    );
   }
 }
 

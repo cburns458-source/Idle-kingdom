@@ -64,13 +64,13 @@ class _ArenaPanelState extends State<ArenaPanel> {
   @override
   void initState() {
     super.initState();
-    controller.addListener(_onTick);
+    controller.progress.addListener(_onTick);
     _loadOpponents();
   }
 
   @override
   void dispose() {
-    controller.removeListener(_onTick);
+    controller.progress.removeListener(_onTick);
     _searchFocus.dispose();
     _search.dispose();
     super.dispose();

@@ -230,22 +230,8 @@ class PixelPlate extends StatelessWidget {
         : material;
     final chrome = UiChrome.of(context);
     return switch (kind) {
-      PixelPlateMaterial.wood => DecorationImage(
-        image: AssetImage(chrome.boardTextureAsset),
-        repeat: ImageRepeat.repeat,
-        fit: BoxFit.none,
-        alignment: Alignment.topLeft,
-        filterQuality: FilterQuality.none,
-        opacity: 0.45,
-      ),
-      PixelPlateMaterial.tan => DecorationImage(
-        image: AssetImage(chrome.panelTextureAsset),
-        repeat: ImageRepeat.repeat,
-        fit: BoxFit.none,
-        alignment: Alignment.topLeft,
-        filterQuality: FilterQuality.none,
-        opacity: 0.32,
-      ),
+      PixelPlateMaterial.wood => chrome.boardFillImage(opacity: 0.45),
+      PixelPlateMaterial.tan => chrome.panelPlateImage(),
       PixelPlateMaterial.none => null,
       PixelPlateMaterial.auto => null,
     };

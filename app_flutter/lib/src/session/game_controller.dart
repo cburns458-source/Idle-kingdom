@@ -85,9 +85,11 @@ class HealPopup {
 ///
 /// The rules and the tick live in `ik_runtime`; this holds the things that are
 /// only true of a screen — the last few reward lines, the current message, the
-/// journey being animated — and notifies listeners once per frame. Player
-/// intents call the shared rules and hand the result to [GameSession.apply], so
-/// nothing on a screen can put a save into storage by another route.
+/// journey being animated. Clock ticks notify [progress]; the main listenable
+/// fires when save or UI structure changes so shell chrome is not rebuilt every
+/// frame. Player intents call the shared rules and hand the result to
+/// [GameSession.apply], so nothing on a screen can put a save into storage by
+/// another route.
 class GameController extends ChangeNotifier {
   GameController({
     required this.database,
@@ -127,6 +129,12 @@ class GameController extends ChangeNotifier {
 
   /// Client-only toggle that skips cosmetic motion and paints less often.
   final BatterySaverPref batterySaverPref;
+
+  /// Clock-driven progress bars and timers.
+  ///
+  /// [tick] always notifies this. The main [ChangeNotifier] only fires when
+  /// save/UI structure changes, so shell chrome is not rebuilt every frame.
+  final ChangeNotifier progress = ChangeNotifier();
 
   /// How many completed actions the reward strip keeps.
   static const int _rewardHistory = 3;
@@ -599,30 +607,63 @@ class GameController extends ChangeNotifier {
   /// stops when the app is backgrounded. A long hide is batch-resolved like a
   /// boot and covered; a short lock stays on the live tick.
   void tick() {
+    // Tear-down can dispose while a shell ticker is still queued.
+    if (!_alive) return;
     if (save.combatEnemyId != null) {
       _liveEnemyHp = save.combatEnemyHp;
     }
     final previous = save;
+    final wasTravelling = _travel != null;
+    final craftBefore = _craftPopup;
+    final healBefore = _healPopup;
+    final skillUpsBefore = _pendingSkillLevelUps.length;
+    final messageBefore = _message;
+    final activityErrorBefore = _activityError;
+    final discoveryBefore = _discoveryNotice;
     final result = session.tick();
     if (result.awayCatchUp case final away?) {
       _adoptResumeCatchUp(away);
       _queueSkillLevelUps(previous, save);
       onSaveCommitted?.call(previous, save);
+      progress.notifyListeners();
       notifyListeners();
       return;
     }
     for (final event in result.events) {
       _applyEvent(event);
     }
-    _offerKingswoodsSling();
+    final slingTouched = _offerKingswoodsSling();
     _expireStageFx();
     _advanceTravel();
     _queueSkillLevelUps(previous, save);
     onSaveCommitted?.call(previous, save);
-    // A frame always repaints: the progress bars and timers are read from the
-    // clock, so they move even on the ticks where nothing was due.
-    notifyListeners();
+    // Progress bars / timers always move with the clock.
+    progress.notifyListeners();
+    // Shell chrome only rebuilds when activity/UI structure changes.
+    // Do not use identical(previous, save): live play-time crediting allocates a
+    // new save every frame even when nothing gameplay-visible changed.
+    final structural =
+        result.changed ||
+        result.events.isNotEmpty ||
+        slingTouched ||
+        (wasTravelling && _travel == null) ||
+        !identical(craftBefore, _craftPopup) ||
+        !identical(healBefore, _healPopup) ||
+        skillUpsBefore != _pendingSkillLevelUps.length ||
+        !identical(messageBefore, _message) ||
+        !identical(activityErrorBefore, _activityError) ||
+        !identical(discoveryBefore, _discoveryNotice);
+    if (structural) notifyListeners();
   }
+
+  @override
+  void dispose() {
+    _alive = false;
+    progress.dispose();
+    super.dispose();
+  }
+
+  bool _alive = true;
 
   void _applyEvent(SessionEvent event) {
     switch (event) {
@@ -977,16 +1018,18 @@ class GameController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void _offerKingswoodsSling() {
+  bool _offerKingswoodsSling() {
     final result = maybeGrantKingswoodsSling(db, save);
     if (result.granted) {
       session.apply(result.save);
       _discoveryNotice = result.message;
-      return;
+      return true;
     }
     if (result.save.claimedKingswoodsSling != save.claimedKingswoodsSling) {
       session.apply(result.save);
+      return true;
     }
+    return false;
   }
 
   void _noteKingswoodsSling({required bool claimedBefore, required bool ownedBefore}) {

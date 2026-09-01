@@ -12,6 +12,13 @@ class TravelOverlay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: Listenable.merge(<Listenable>[controller, controller.progress]),
+      builder: (context, _) => _buildOverlay(context),
+    );
+  }
+
+  Widget _buildOverlay(BuildContext context) {
     String nameOf(String locationId) {
       return controller.indexes.locationsById[locationId]?.displayName ?? locationId;
     }

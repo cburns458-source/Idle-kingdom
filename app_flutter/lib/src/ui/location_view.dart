@@ -1049,26 +1049,31 @@ class _RecoveringPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GamePanel(
-      child: Row(
-        children: [
-          const Expanded(
-            child: Text('Recovering…', style: TextStyle(fontWeight: FontWeight.w400)),
-          ),
-          SizedBox(
-            width: 96,
-            child: Semantics(
-              label: 'Resume progress',
-              child: PillBar(
-                value: controller.deathPauseProgress,
-                gradient: Meters.combatRound,
-                height: 8,
-                borderColor: const Color(0x38FFECC4),
+    return ListenableBuilder(
+      listenable: Listenable.merge(<Listenable>[controller, controller.progress]),
+      builder: (context, _) {
+        return GamePanel(
+          child: Row(
+            children: [
+              const Expanded(
+                child: Text('Recovering…', style: TextStyle(fontWeight: FontWeight.w400)),
               ),
-            ),
+              SizedBox(
+                width: 96,
+                child: Semantics(
+                  label: 'Resume progress',
+                  child: PillBar(
+                    value: controller.deathPauseProgress,
+                    gradient: Meters.combatRound,
+                    height: 8,
+                    borderColor: const Color(0x38FFECC4),
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

@@ -623,7 +623,7 @@ class _GuildDetailPageState extends State<_GuildDetailPage> {
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: net,
+      listenable: Listenable.merge(<Listenable>[net, widget.controller.progress]),
       builder: (context, _) {
         final members = widget.mode == _GuildDetailMode.own ? net.members : _members;
         final guests = widget.mode == _GuildDetailMode.own ? net.guests : const <GuildGuest>[];
