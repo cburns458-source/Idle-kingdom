@@ -1007,6 +1007,7 @@ class _ActivityCard extends StatelessWidget {
         onPressed: () => controller.toggleFavorite(activityId),
         icon: favorited ? Icons.star : Icons.star_border,
         size: 28,
+        iconColor: favorited ? Palette.gold : null,
       ),
       title: activity.contextualName ?? activityId,
       lines: [

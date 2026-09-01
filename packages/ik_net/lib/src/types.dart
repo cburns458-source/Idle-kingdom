@@ -109,6 +109,8 @@ class MultiplayerProfile {
     this.privacyLocalChat = chatPrivacyPublic,
     this.publishedEquipment = const <PublicEquippedSlot>[],
     this.nameColor,
+    this.motto,
+    this.petCosmeticId,
     required this.updatedAt,
   });
 
@@ -125,6 +127,8 @@ class MultiplayerProfile {
     privacyLocalChat: normalizeChatPrivacy(json['privacyLocalChat'] as String?),
     publishedEquipment: _publishedEquipmentFromJson(json['publishedEquipment']),
     nameColor: json['nameColor'] as String?,
+    motto: json['motto'] as String?,
+    petCosmeticId: json['petCosmeticId'] as String?,
     updatedAt: json['updatedAt']! as String,
   );
 
@@ -142,6 +146,12 @@ class MultiplayerProfile {
 
   /// Chat name hex published on a ranking submit. Null uses the theme default.
   final String? nameColor;
+
+  /// Short public motto under player art; null when unset.
+  final String? motto;
+
+  /// Equipped pet cosmetic ID from CSLOT-0002; null when none.
+  final String? petCosmeticId;
   final String updatedAt;
 
   MultiplayerProfile copyWith({
@@ -156,9 +166,13 @@ class MultiplayerProfile {
     String? privacyLocalChat,
     List<PublicEquippedSlot>? publishedEquipment,
     String? nameColor,
+    String? motto,
+    String? petCosmeticId,
     String? updatedAt,
     bool clearGuild = false,
     bool clearNameColor = false,
+    bool clearMotto = false,
+    bool clearPetCosmeticId = false,
   }) => MultiplayerProfile(
     userId: userId,
     username: username ?? this.username,
@@ -172,6 +186,8 @@ class MultiplayerProfile {
     privacyLocalChat: privacyLocalChat ?? this.privacyLocalChat,
     publishedEquipment: publishedEquipment ?? this.publishedEquipment,
     nameColor: clearNameColor ? null : (nameColor ?? this.nameColor),
+    motto: clearMotto ? null : (motto ?? this.motto),
+    petCosmeticId: clearPetCosmeticId ? null : (petCosmeticId ?? this.petCosmeticId),
     updatedAt: updatedAt ?? this.updatedAt,
   );
 
@@ -189,6 +205,8 @@ class MultiplayerProfile {
     if (publishedEquipment.isNotEmpty)
       'publishedEquipment': publishedEquipment.map((row) => row.toJson()).toList(),
     if (nameColor != null) 'nameColor': nameColor,
+    if (motto != null) 'motto': motto,
+    if (petCosmeticId != null) 'petCosmeticId': petCosmeticId,
     'updatedAt': updatedAt,
   };
 }
@@ -1226,6 +1244,8 @@ class PublicPlayerProfile {
     required this.totalLevel,
     this.logCompletionPercent = 0,
     this.publicEquipment,
+    this.motto,
+    this.petCosmeticId,
   });
 
   final String userId;
@@ -1243,6 +1263,12 @@ class PublicPlayerProfile {
   /// Null when the player hid their gear.
   final List<PublicEquippedSlot>? publicEquipment;
 
+  /// Short public motto under player art; null when unset.
+  final String? motto;
+
+  /// Equipped pet cosmetic ID; null when none.
+  final String? petCosmeticId;
+
   Map<String, Object?> toJson() => <String, Object?>{
     'userId': userId,
     'username': username,
@@ -1253,6 +1279,8 @@ class PublicPlayerProfile {
     'totalLevel': totalLevel,
     'logCompletionPercent': logCompletionPercent,
     'publicEquipment': publicEquipment?.map((row) => row.toJson()).toList(),
+    'motto': motto,
+    'petCosmeticId': petCosmeticId,
   };
 }
 

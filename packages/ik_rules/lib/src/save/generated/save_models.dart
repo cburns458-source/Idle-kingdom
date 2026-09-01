@@ -7,7 +7,7 @@
 
 import '../../json_support.dart';
 
-const int saveVersion = 39;
+const int saveVersion = 40;
 
 const String saveStorageKey = 'idle-kingdoms.demo.save';
 
@@ -34,6 +34,9 @@ const String startingMinorStrengthPotionId = 'ITEM-0211';
 const String startingWoodenAxeId = 'ITEM-0100';
 
 const int characterNameMaxLength = 24;
+
+/// Short profile motto shown under player art.
+const int mottoMaxLength = 80;
 
 const String outfitCosmeticSlotId = 'CSLOT-0001';
 
@@ -613,6 +616,7 @@ class PlayerSave {
     required this.createdAt,
     required this.updatedAt,
     this.characterName,
+    this.motto,
     this.raceId,
     required this.skills,
     required this.inventory,
@@ -684,6 +688,7 @@ class PlayerSave {
       createdAt: json['createdAt'] as String,
       updatedAt: json['updatedAt'] as String,
       characterName: json['characterName'] as String?,
+      motto: json['motto'] as String?,
       raceId: json['raceId'] as String?,
       skills: listOf(json['skills'], (Object? entry) => SkillProgress.fromJson(asJsonMap(entry))),
       inventory: listOf(
@@ -785,6 +790,9 @@ class PlayerSave {
 
   /// Player-chosen display name; null until first set.
   final String? characterName;
+
+  /// Short public motto under player art; null when unset.
+  final String? motto;
 
   /// Selected playable Race ID; null until first-run (or one-time) race picker completes.
   final String? raceId;
@@ -964,6 +972,7 @@ class PlayerSave {
       'createdAt': createdAt,
       'updatedAt': updatedAt,
       'characterName': characterName,
+      'motto': motto,
       'raceId': raceId,
       'skills': skills.map((entry) => entry.toJson()).toList(),
       'inventory': inventory.map((entry) => entry.toJson()).toList(),
@@ -1035,6 +1044,7 @@ class PlayerSave {
     String? createdAt,
     String? updatedAt,
     Object? characterName = _unset,
+    Object? motto = _unset,
     Object? raceId = _unset,
     List<SkillProgress>? skills,
     List<InventoryStack>? inventory,
@@ -1104,6 +1114,7 @@ class PlayerSave {
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       characterName: characterName == _unset ? this.characterName : characterName as String?,
+      motto: motto == _unset ? this.motto : motto as String?,
       raceId: raceId == _unset ? this.raceId : raceId as String?,
       skills: skills ?? this.skills,
       inventory: inventory ?? this.inventory,

@@ -1,4 +1,4 @@
-export const SAVE_VERSION = 39
+export const SAVE_VERSION = 40
 export const SAVE_STORAGE_KEY = 'idle-kingdoms.demo.save'
 export const STARTING_LOCATION_ID = 'LOC-0001'
 /** Base gold before race kit; race starters grant the real starting gold. */
@@ -14,6 +14,8 @@ export const STARTING_BAKED_POTATO_QTY = 5
 export const STARTING_MINOR_STRENGTH_POTION_ID = 'ITEM-0211'
 export const STARTING_WOODEN_AXE_ID = 'ITEM-0100'
 export const CHARACTER_NAME_MAX_LENGTH = 24
+/** Short profile motto shown under player art. */
+export const MOTTO_MAX_LENGTH = 80
 
 // Wardrobe / Cosmetics
 export const OUTFIT_COSMETIC_SLOT_ID = 'CSLOT-0001'
@@ -188,6 +190,8 @@ export interface PlayerSave {
   updatedAt: string
   /** Player-chosen display name; null until first set. */
   characterName: string | null
+  /** Short public motto under player art; null when unset. */
+  motto: string | null
   /** Selected playable Race ID; null until first-run (or one-time) race picker completes. */
   raceId: string | null
   skills: SkillProgress[]

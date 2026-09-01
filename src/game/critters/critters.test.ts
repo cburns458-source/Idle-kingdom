@@ -67,6 +67,7 @@ describe('critters', () => {
     expect(first.ok).toBe(true)
     if (!first.ok) return
     expect(first.count).toBe(1)
+    expect(first.save.cosmetics.unlocked).toContain('COS-0004')
     save = applyActivityTimeTowardCritters(
       first.save,
       'LOC-0001',
@@ -74,10 +75,36 @@ describe('critters', () => {
       Date.now(),
       () => 0,
     ).save
+    const unlockedAfterFirst = first.save.cosmetics.unlocked.length
     const second = collectCritter(save, 'LOC-0001')
     expect(second.ok).toBe(true)
     if (!second.ok) return
     expect(second.count).toBe(2)
+    // Second collect does not re-grant; unlock list stays the same size.
+    expect(second.save.cosmetics.unlocked).toEqual(first.save.cosmetics.unlocked)
+    expect(second.save.cosmetics.unlocked.length).toBe(unlockedAfterFirst)
+  })
+
+  it('unlocks COS-0004 on first Fly collect only', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    let save = createNewSave(launch)
+    expect(save.cosmetics.unlocked).not.toContain('COS-0004')
+    const spawned = spawnCritterAtLocation(save, 'LOC-0001')
+    expect(spawned.ok).toBe(true)
+    if (!spawned.ok) return
+    const first = collectCritter(spawned.save, 'LOC-0001')
+    expect(first.ok).toBe(true)
+    if (!first.ok) return
+    expect(first.save.cosmetics.unlocked).toContain('COS-0004')
+
+    const again = spawnCritterAtLocation(first.save, 'LOC-0001')
+    expect(again.ok).toBe(true)
+    if (!again.ok) return
+    const second = collectCritter(again.save, 'LOC-0001')
+    expect(second.ok).toBe(true)
+    if (!second.ok) return
+    const flyPetGrants = second.save.cosmetics.unlocked.filter((id) => id === 'COS-0004')
+    expect(flyPetGrants).toHaveLength(1)
   })
 
   it('force-spawns only when a habitat Critter is available and none is waiting', () => {

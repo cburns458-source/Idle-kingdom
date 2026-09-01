@@ -53,6 +53,8 @@ describe('hostile travel forcing', () => {
     expect(locationShowsDangerWarning(launch, 'LOC-0018')).toBe(false)
     expect(locationShowsDangerWarning(launch, 'LOC-0007')).toBe(false)
     expect(locationShowsDangerWarning(launch, 'LOC-0002')).toBe(false)
+    // The Depths keeps its Fishing travel gate but is not a hostile force-start.
+    expect(locationShowsDangerWarning(launch, 'LOC-0042')).toBe(false)
   })
 
   it('does not treat Old Ent Grove as hostile', () => {

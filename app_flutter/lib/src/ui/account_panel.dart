@@ -35,14 +35,33 @@ class AccountPanel extends StatefulWidget {
 
 class _AccountPanelState extends State<AccountPanel> {
   MultiplayerController get net => widget.multiplayer;
+  late final TextEditingController _motto;
 
   @override
   void initState() {
     super.initState();
+    _motto = TextEditingController(text: widget.controller.save.motto ?? '');
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted || !net.isSignedIn) return;
       net.refresh(widget.controller.save);
     });
+  }
+
+  @override
+  void dispose() {
+    _motto.dispose();
+    super.dispose();
+  }
+
+  Future<void> _saveMotto() async {
+    final cleaned = normalizeMotto(_motto.text);
+    widget.controller.commit(widget.controller.save.copyWith(motto: cleaned));
+    _motto.text = cleaned ?? '';
+    if (net.isSignedIn) {
+      await net.flushAccountSave(widget.controller.save);
+      await net.publishRanking(widget.controller.save, ignoreDebounce: true);
+    }
+    if (mounted) setState(() {});
   }
 
   @override
@@ -83,6 +102,25 @@ class _AccountPanelState extends State<AccountPanel> {
           ),
           MutedText('Race: ${raceDisplayName(widget.controller.db, save.raceId) ?? 'Unchosen'}'),
           MutedText('Play time: ${formatPlayTimeMs(save.playTimeMs)}'),
+          const SizedBox(height: 10),
+          TextField(
+            controller: _motto,
+            maxLength: mottoMaxLength,
+            maxLines: 2,
+            decoration: const InputDecoration(
+              labelText: 'Motto',
+              hintText: 'Shown under your portrait',
+            ),
+          ),
+          const SizedBox(height: 6),
+          Align(
+            alignment: Alignment.centerRight,
+            child: GameButton(
+              label: 'Save',
+              compact: true,
+              onPressed: net.busy ? null : _saveMotto,
+            ),
+          ),
         ],
       ),
     );

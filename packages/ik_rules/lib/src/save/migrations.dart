@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:collection/collection.dart';
 
+import '../critters/pets.dart';
 import '../equipment/presets.dart';
 import '../js_compat.dart';
 import '../time.dart';
@@ -570,6 +571,16 @@ final List<SaveMigration> saveMigrations = <SaveMigration>[
       next['combatBossAddsTriggered'] = save['combatBossAddsTriggered'] == true;
       next['combatBossInkActive'] = save['combatBossInkActive'] == true;
       return next;
+    },
+  ),
+  SaveMigration(
+    fromVersion: 39,
+    toVersion: 40,
+    migrate: (save, nowMs) {
+      final next = _bumped(save, 40);
+      next['motto'] = save['motto'] is String ? save['motto'] : null;
+      final withMotto = PlayerSave.fromJson(next);
+      return grantPetsForCollectedCritters(withMotto).toJson();
     },
   ),
 ];

@@ -5,6 +5,7 @@ import {
   DEFAULT_HAIR_COLOR_ID,
   DEFAULT_HAIRSTYLE_ID,
   DEFAULT_SKIN_TONE_ID,
+  PET_COSMETIC_SLOT_ID,
   type PlayerAppearance,
   type PlayerSave,
 } from '../save/types'
@@ -419,6 +420,8 @@ export class LocalMultiplayerBackend {
         | 'privacyLocalChat'
         | 'username'
         | 'nameColor'
+        | 'motto'
+        | 'petCosmeticId'
       >
     >,
   ): MultiplayerProfile | null {
@@ -512,6 +515,8 @@ export class LocalMultiplayerBackend {
             nameColor: options?.publishNameColor
               ? (options.nameColor ?? null)
               : row.nameColor,
+            motto: save.motto ?? null,
+            petCosmeticId: save.cosmetics.equipped[PET_COSMETIC_SLOT_ID] ?? null,
             updatedAt,
           }
         : row,
@@ -1425,6 +1430,11 @@ export class LocalMultiplayerBackend {
         this.db().leaderboards.find(
           (entry) => entry.userId === userId && entry.boardKey === 'log_completion',
         )?.value ?? 0,
+      motto: save != null ? (save.motto ?? null) : (profile.motto ?? null),
+      petCosmeticId:
+        save != null
+          ? (save.cosmetics.equipped[PET_COSMETIC_SLOT_ID] ?? null)
+          : (profile.petCosmeticId ?? null),
     }
   }
 

@@ -81,11 +81,15 @@ class RemoteMultiplayerService implements MultiplayerService {
   /// Whether `profiles` has `name_color`. Null until a read tells us.
   bool? _profilesHaveNameColor;
 
+  /// Whether `profiles` has `motto` / `pet_cosmetic_id`. Null until a read tells us.
+  bool? _profilesHaveMottoPet;
+
   String get _publicProfileSelectColumns {
     final parts = <String>[remotePublicProfileBaseColumns];
     if (_profilesHaveChatPrivacy != false) parts.add(remoteChatPrivacyColumns);
     if (_profilesHaveGearPrivacy != false) parts.add(remoteGearProfileColumns);
     if (_profilesHaveNameColor != false) parts.add(remoteNameColorColumn);
+    if (_profilesHaveMottoPet != false) parts.add(remoteMottoPetColumns);
     return parts.join(', ');
   }
 
@@ -302,10 +306,21 @@ class RemoteMultiplayerService implements MultiplayerService {
         equals: <String, Object?>{'user_id': userId},
         limit: 1,
       );
+    }
+    if (!result.ok && remoteMissingMottoPetColumns(result.reason)) {
+      _profilesHaveMottoPet = false;
+      _reads.clearIf(remoteMissingMottoPetColumns);
+      result = await transport.select(
+        RemoteTables.profiles,
+        columns: _publicProfileSelectColumns,
+        equals: <String, Object?>{'user_id': userId},
+        limit: 1,
+      );
     } else if (result.ok) {
       _profilesHaveChatPrivacy ??= true;
       _profilesHaveGearPrivacy ??= true;
       _profilesHaveNameColor ??= true;
+      _profilesHaveMottoPet ??= true;
     }
     if (!result.ok) return null;
     final profile = multiplayerProfileFromRemote(result.single);
@@ -402,6 +417,12 @@ class RemoteMultiplayerService implements MultiplayerService {
       achievementsUnlocked: achievements,
       totalLevel: totalLevel,
       logCompletionPercent: logPercent,
+      // Own cloud save is readable; other players' mottos/pets come from the
+      // published profile row (RLS blocks foreign saves).
+      motto: save != null ? save.motto : account.motto,
+      petCosmeticId: save != null
+          ? save.cosmetics.equipped[petCosmeticSlotId]
+          : account.petCosmeticId,
     );
   }
 
@@ -499,12 +520,22 @@ class RemoteMultiplayerService implements MultiplayerService {
           .map((row) => row.toJson())
           .toList();
     }
+    if (_profilesHaveMottoPet != false) {
+      profileRow[remoteMottoColumn] = stamped.motto;
+      profileRow[remotePetCosmeticIdColumn] = stamped.cosmetics.equipped[petCosmeticSlotId];
+    }
     final refusedProfile = await transport.upsert(RemoteTables.profiles, <RemoteRow>[
       profileRow,
     ], onConflict: 'user_id');
     if (refusedProfile != null && remoteMissingGearPrivacyColumn(refusedProfile)) {
       _profilesHaveGearPrivacy = false;
       profileRow.remove(remoteEquipmentJsonColumn);
+      await transport.upsert(RemoteTables.profiles, <RemoteRow>[profileRow], onConflict: 'user_id');
+    }
+    if (refusedProfile != null && remoteMissingMottoPetColumns(refusedProfile)) {
+      _profilesHaveMottoPet = false;
+      profileRow.remove(remoteMottoColumn);
+      profileRow.remove(remotePetCosmeticIdColumn);
       await transport.upsert(RemoteTables.profiles, <RemoteRow>[profileRow], onConflict: 'user_id');
     }
     return CloudSyncResult.ok(stamped, CloudSyncSource.uploaded);
@@ -586,6 +617,10 @@ class RemoteMultiplayerService implements MultiplayerService {
     if (publishNameColor && _profilesHaveNameColor != false) {
       profileRow[remoteNameColorColumn] = normalizeNameColorHex(nameColor);
     }
+    if (_profilesHaveMottoPet != false) {
+      profileRow[remoteMottoColumn] = save.motto;
+      profileRow[remotePetCosmeticIdColumn] = save.cosmetics.equipped[petCosmeticSlotId];
+    }
     final refusedProfile = await transport.upsert(RemoteTables.profiles, <RemoteRow>[
       profileRow,
     ], onConflict: 'user_id');
@@ -597,6 +632,12 @@ class RemoteMultiplayerService implements MultiplayerService {
     if (refusedProfile != null && remoteMissingNameColorColumn(refusedProfile)) {
       _profilesHaveNameColor = false;
       profileRow.remove(remoteNameColorColumn);
+      await transport.upsert(RemoteTables.profiles, <RemoteRow>[profileRow], onConflict: 'user_id');
+    }
+    if (refusedProfile != null && remoteMissingMottoPetColumns(refusedProfile)) {
+      _profilesHaveMottoPet = false;
+      profileRow.remove(remoteMottoColumn);
+      profileRow.remove(remotePetCosmeticIdColumn);
       await transport.upsert(RemoteTables.profiles, <RemoteRow>[profileRow], onConflict: 'user_id');
     }
     // A roster lists each member's name, look, and level, and only that member
