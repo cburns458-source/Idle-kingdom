@@ -1008,6 +1008,7 @@ class GameController extends ChangeNotifier {
   void _showArrival(TravelArrival arrival) {
     _message = arrival.forcedActivityId != null ? arrival.message : null;
     _activityError = arrival.blockedReason != null ? arrival.message : null;
+    _autoEquip = null;
     if (arrival.questCompletions.isNotEmpty) {
       _pendingQuestCompletions = List<QuestArrivalCompletion>.of(arrival.questCompletions);
       for (final completion in arrival.questCompletions) {
@@ -1015,7 +1016,25 @@ class GameController extends ChangeNotifier {
         if (bundle != null) noteReward(bundle);
       }
     }
+    _offerArrivalFavoriteEquip(arrival);
     notifyListeners();
+  }
+
+  /// Favorite start already ran in the rules. If it failed only because the
+  /// required tool is sitting in the bag, ask the same Equip & Start question
+  /// a manual Start would. Hostile force / recovery never offer this.
+  void _offerArrivalFavoriteEquip(TravelArrival arrival) {
+    if (arrival.forcedActivityId != null || arrival.blockedReason != null || isRecovering) {
+      return;
+    }
+    final favoriteId = favoriteActivityAt(save);
+    if (favoriteId == null || save.currentActivityId == favoriteId) return;
+    final validation = validateActivityStart(db, save, favoriteId);
+    if (validation.ok) return;
+    final proposal = proposeAutoEquipForActivity(db, save, favoriteId, validation.reason!);
+    if (proposal == null) return;
+    _autoEquip = proposal;
+    _activityError = null;
   }
 
   bool _offerKingswoodsSling() {

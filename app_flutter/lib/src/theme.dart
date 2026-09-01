@@ -286,7 +286,7 @@ ThemeData buildAppTheme() {
   );
 }
 
-/// Which of the two button faces to wear: green for doing, brown for the rest.
+/// Which of the two button faces to wear: a lighter brown for doing, a darker brown for the rest.
 enum GameButtonTone { primary, secondary }
 
 /// The stepped, gold-embossed pixel button the game does everything with.
@@ -317,30 +317,6 @@ class GameButton extends StatefulWidget {
 
   final String? tooltip;
 
-  static const LinearGradient _primaryFill = LinearGradient(
-    begin: Alignment.topCenter,
-    end: Alignment.bottomCenter,
-    colors: [Color(0xFF7F9D63), Color(0xFF5F7A45)],
-  );
-
-  static const LinearGradient _primaryPressed = LinearGradient(
-    begin: Alignment.topCenter,
-    end: Alignment.bottomCenter,
-    colors: [Color(0xFF5A7044), Color(0xFF3F522E)],
-  );
-
-  static const LinearGradient _secondaryFill = LinearGradient(
-    begin: Alignment.topCenter,
-    end: Alignment.bottomCenter,
-    colors: [Color(0xFF6A4A30), Color(0xFF45301F)],
-  );
-
-  static const LinearGradient _secondaryPressed = LinearGradient(
-    begin: Alignment.topCenter,
-    end: Alignment.bottomCenter,
-    colors: [Color(0xFF4A3422), Color(0xFF2F2115)],
-  );
-
   @override
   State<GameButton> createState() => _GameButtonState();
 }
@@ -350,6 +326,7 @@ class _GameButtonState extends State<GameButton> {
 
   @override
   Widget build(BuildContext context) {
+    final chrome = UiChrome.of(context);
     final primary = widget.tone == GameButtonTone.primary;
     final down = _pressed && widget.onPressed != null;
     final button = Semantics(
@@ -371,8 +348,8 @@ class _GameButtonState extends State<GameButton> {
             shadow: false,
             material: PixelPlateMaterial.none,
             gradient: primary
-                ? (down ? GameButton._primaryPressed : GameButton._primaryFill)
-                : (down ? GameButton._secondaryPressed : GameButton._secondaryFill),
+                ? (down ? chrome.primaryPressed : chrome.primaryFill)
+                : (down ? chrome.secondaryPressed : chrome.secondaryFill),
             fillColor: widget.selected ? const Color(0x339A7B32) : null,
             padding: widget.dense
                 ? const EdgeInsets.symmetric(horizontal: 8, vertical: 4)
@@ -400,7 +377,7 @@ class _GameButtonState extends State<GameButton> {
                         ? 12
                         : 12.5,
                     fontWeight: FontWeight.w400,
-                    color: primary ? const Color(0xFFF4FFE8) : const Color(0xFFFFF4D4),
+                    color: primary ? chrome.primaryLabel : chrome.secondaryLabel,
                   ),
                 ),
               ),
@@ -491,7 +468,7 @@ class GameIconButton extends StatelessWidget {
         child: PixelInkPlate(
           onTap: onPressed,
           step: PixelChrome.stepTight,
-          fillColor: const Color(0xFF45301F),
+          fillColor: UiChrome.of(context).iconButtonFill,
           strokeWidth: 1.5,
           shadow: false,
           child: SizedBox.square(
@@ -562,7 +539,7 @@ class GameDropdown<T> extends StatelessWidget {
           ],
           child: PixelPlate(
             step: PixelChrome.stepTight,
-            fillColor: const Color(0xFF45301F),
+            fillColor: UiChrome.of(context).iconButtonFill,
             strokeWidth: 1.5,
             shadow: false,
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
@@ -613,7 +590,7 @@ class GameSelectField extends StatelessWidget {
         PixelInkPlate(
           onTap: onPressed,
           step: PixelChrome.stepTight,
-          fillColor: const Color(0xFF45301F),
+          fillColor: UiChrome.of(context).iconButtonFill,
           strokeWidth: 1.5,
           shadow: false,
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),

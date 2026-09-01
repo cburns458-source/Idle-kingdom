@@ -103,6 +103,7 @@ class WorldMapView extends StatelessWidget {
                     child: _MapNode(
                       location: node,
                       browseMapId: browseMapId,
+                      hasShop: locationHasShop(controller.db, node.locationId),
                       hintPulse:
                           questHintNodeId(controller.db, save, browseMapId) == node.locationId,
                       isHere: !walking && node.locationId == save.currentLocationId,
@@ -239,6 +240,7 @@ class _MapNode extends StatefulWidget {
   const _MapNode({
     required this.location,
     required this.browseMapId,
+    required this.hasShop,
     required this.isHere,
     required this.isSelected,
     required this.hintPulse,
@@ -248,6 +250,7 @@ class _MapNode extends StatefulWidget {
 
   final LocationRow location;
   final String browseMapId;
+  final bool hasShop;
   final bool isHere;
   final bool isSelected;
   final bool hintPulse;
@@ -342,15 +345,24 @@ class _MapNodeState extends State<_MapNode> with SingleTickerProviderStateMixin 
                     ),
             ),
           ),
-          Text(
-            label,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w400,
-              color: isHere ? Palette.gold : Palette.parchmentText,
-              shadows: overlayShadow,
-            ),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                label,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w400,
+                  color: isHere ? Palette.gold : Palette.parchmentText,
+                  shadows: overlayShadow,
+                ),
+              ),
+              if (widget.hasShop) ...[
+                const SizedBox(width: 3),
+                Semantics(label: 'Shop', child: GameImage(goldIconPath(), width: 12, height: 12)),
+              ],
+            ],
           ),
         ],
       ),

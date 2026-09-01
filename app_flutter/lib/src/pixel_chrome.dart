@@ -100,11 +100,17 @@ class _EmbossBorderPainter extends CustomPainter {
   const _EmbossBorderPainter({
     required this.step,
     required this.strokeWidth,
+    required this.face,
+    required this.highlight,
+    required this.shade,
     this.selected = false,
   });
 
   final double step;
   final double strokeWidth;
+  final Color face;
+  final Color highlight;
+  final Color shade;
   final bool selected;
 
   @override
@@ -113,54 +119,59 @@ class _EmbossBorderPainter extends CustomPainter {
     final rect = Offset.zero & size;
     final path = PixelChrome.steppedPath(rect.deflate(inset), step: step);
 
-    final shade = Paint()
+    final shadePaint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = strokeWidth
-      ..color = selected ? PixelChrome.goldShade : const Color(0xFF3A2A0C)
+      ..color = shade
       ..strokeJoin = StrokeJoin.miter;
 
-    final face = Paint()
+    final facePaint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = math.max(1, strokeWidth - 0.5)
-      ..color = selected ? const Color(0xFF967A32) : PixelChrome.goldFace
+      ..color = face
       ..strokeJoin = StrokeJoin.miter;
 
     final light = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1
-      ..color = selected ? PixelChrome.goldHighlight : const Color(0xFF7A6434)
+      ..color = highlight
       ..strokeJoin = StrokeJoin.miter;
 
     canvas
       ..save()
       ..translate(0.8, 0.8)
-      ..drawPath(path, shade)
+      ..drawPath(path, shadePaint)
       ..restore()
-      ..drawPath(path, face);
+      ..drawPath(path, facePaint);
 
     // Subtle top + left lift — muted so borders stay matte, not shiny.
     final s = step.clamp(1.0, math.min(size.width, size.height) / 3);
-    final highlight = Path()
+    final highlightPath = Path()
       ..moveTo(inset + s, inset)
       ..lineTo(size.width - inset - s, inset)
       ..moveTo(inset, inset + s)
       ..lineTo(inset, size.height - inset - s);
-    canvas.drawPath(highlight, light);
+    canvas.drawPath(highlightPath, light);
   }
 
   @override
   bool shouldRepaint(covariant _EmbossBorderPainter oldDelegate) {
     return oldDelegate.step != step ||
         oldDelegate.strokeWidth != strokeWidth ||
-        oldDelegate.selected != selected;
+        oldDelegate.selected != selected ||
+        oldDelegate.face != face ||
+        oldDelegate.highlight != highlight ||
+        oldDelegate.shade != shade;
   }
 }
 
 /// Optional corner rivets (photo-2 studs), drawn inside the plate.
 class _RivetPainter extends CustomPainter {
-  const _RivetPainter({required this.step});
+  const _RivetPainter({required this.step, required this.fill, required this.shade});
 
   final double step;
+  final Color fill;
+  final Color shade;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -172,19 +183,21 @@ class _RivetPainter extends CustomPainter {
       Offset(inset, size.height - inset),
       Offset(size.width - inset, size.height - inset),
     ];
-    final fill = Paint()..color = const Color(0xFF8A6B28);
-    final shade = Paint()..color = const Color(0xFF3F2E0C);
+    final fillPaint = Paint()..color = fill;
+    final shadePaint = Paint()..color = shade;
     for (final c in centers) {
       canvas.drawRect(
         Rect.fromCenter(center: c.translate(0.5, 0.5), width: rivet, height: rivet),
-        shade,
+        shadePaint,
       );
-      canvas.drawRect(Rect.fromCenter(center: c, width: rivet, height: rivet), fill);
+      canvas.drawRect(Rect.fromCenter(center: c, width: rivet, height: rivet), fillPaint);
     }
   }
 
   @override
-  bool shouldRepaint(covariant _RivetPainter oldDelegate) => oldDelegate.step != step;
+  bool shouldRepaint(covariant _RivetPainter oldDelegate) {
+    return oldDelegate.step != step || oldDelegate.fill != fill || oldDelegate.shade != shade;
+  }
 }
 
 /// Fill material for [PixelPlate] — wood outer boards vs tan inner panels.
@@ -239,6 +252,7 @@ class PixelPlate extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final chrome = UiChrome.of(context);
     final shape = PixelSteppedBorder(step: step);
     Widget content = child;
     if (padding != null) {
@@ -250,10 +264,13 @@ class PixelPlate extends StatelessWidget {
         step: step,
         strokeWidth: strokeWidth,
         selected: selected,
+        face: selected ? chrome.embossFaceSelected : chrome.embossFace,
+        highlight: selected ? chrome.embossHighlightSelected : chrome.embossHighlight,
+        shade: selected ? chrome.embossShadeSelected : chrome.embossShade,
       ),
       child: rivets
           ? CustomPaint(
-              painter: _RivetPainter(step: step),
+              painter: _RivetPainter(step: step, fill: chrome.rivetFill, shade: chrome.rivetShade),
               child: content,
             )
           : content,
