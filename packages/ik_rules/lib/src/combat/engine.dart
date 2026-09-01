@@ -112,6 +112,7 @@ class CombatVictoryResult {
   const CombatVictoryResult({
     required this.save,
     required this.xpGained,
+    required this.xpSkillId,
     required this.goldGained,
     required this.loot,
     required this.foodConsumed,
@@ -121,6 +122,9 @@ class CombatVictoryResult {
 
   final PlayerSave save;
   final num xpGained;
+
+  /// Skill that received [xpGained] (Fishing for Mother Squid).
+  final String xpSkillId;
   final num goldGained;
   final List<LootGrant> loot;
   final bool foodConsumed;
@@ -417,7 +421,12 @@ CombatVictoryResult applyCombatVictory(
   );
 
   final xpAmount = jsNumber(enemy.raw['Combat XP'] ?? action.raw['XP Reward'] ?? 0);
-  final xpSkillId = bossProfile(enemy)?.damageMode == 'fishing' ? fishingSkillId : combatSkillId;
+  // Prefer fishing-mode bosses, then the action's Relevant Skill (Fight Mother Squid
+  // is Fishing). Falls back to Combat for ordinary fights.
+  final relevantSkill = action.relevantSkillId;
+  final xpSkillId = bossProfile(enemy)?.damageMode == 'fishing'
+      ? fishingSkillId
+      : (relevantSkill.isNotEmpty ? relevantSkill : combatSkillId);
   next = applyXp(next, db, xpSkillId, xpAmount).save;
 
   final minGold = jsNumber(enemy.raw['Minimum Gold'] ?? 0);
@@ -456,6 +465,7 @@ CombatVictoryResult applyCombatVictory(
   return CombatVictoryResult(
     save: next,
     xpGained: xpAmount,
+    xpSkillId: xpSkillId,
     goldGained: goldGained,
     loot: rewarded.loot,
     foodConsumed: food.consumed,

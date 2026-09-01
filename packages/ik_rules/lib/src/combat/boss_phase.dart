@@ -13,12 +13,16 @@ class SquidlingVictoryResult {
   const SquidlingVictoryResult({
     required this.save,
     required this.xpGained,
+    required this.xpSkillId,
     required this.message,
     required this.bossResumed,
   });
 
   final PlayerSave save;
   final num xpGained;
+
+  /// Always Fishing for Squidling kills.
+  final String xpSkillId;
   final String message;
   final bool bossResumed;
 }
@@ -76,6 +80,7 @@ SquidlingVictoryResult applySquidlingVictory(
       return SquidlingVictoryResult(
         save: next,
         xpGained: xpAmount,
+        xpSkillId: fishingSkillId,
         message: 'Squidling defeated.',
         bossResumed: false,
       );
@@ -92,6 +97,7 @@ SquidlingVictoryResult applySquidlingVictory(
         combatSkipEnemyAttack: false,
       ),
       xpGained: xpAmount,
+      xpSkillId: fishingSkillId,
       message: 'Squidling defeated ($defeated/$total). Another emerges!',
       bossResumed: false,
     );
@@ -101,6 +107,7 @@ SquidlingVictoryResult applySquidlingVictory(
     return SquidlingVictoryResult(
       save: next,
       xpGained: xpAmount,
+      xpSkillId: fishingSkillId,
       message: 'Squidling defeated.',
       bossResumed: false,
     );
@@ -111,6 +118,7 @@ SquidlingVictoryResult applySquidlingVictory(
     return SquidlingVictoryResult(
       save: next,
       xpGained: xpAmount,
+      xpSkillId: fishingSkillId,
       message: 'Squidling defeated.',
       bossResumed: false,
     );
@@ -129,6 +137,7 @@ SquidlingVictoryResult applySquidlingVictory(
       combatBossSleepRoundsRemaining: null,
     ),
     xpGained: xpAmount,
+    xpSkillId: fishingSkillId,
     message: 'Squidling defeated. ${boss.displayName} returns at $pendingHp HP!',
     bossResumed: true,
   );
