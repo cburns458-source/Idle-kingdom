@@ -120,7 +120,7 @@ class _GearSlotTile extends StatelessWidget {
     if (equipped == null) {
       return PixelPlate(
         step: PixelChrome.stepTight,
-        fillColor: Palette.slot,
+        fillColor: UiChrome.of(context).slot,
         material: PixelPlateMaterial.none,
         strokeWidth: 2,
         shadow: false,
@@ -147,7 +147,7 @@ class _GearSlotTile extends StatelessWidget {
       message: item?.displayName ?? equipped!.itemId,
       child: PixelPlate(
         step: PixelChrome.stepTight,
-        fillColor: Palette.slot,
+        fillColor: UiChrome.of(context).slot,
         material: PixelPlateMaterial.none,
         strokeWidth: 2,
         shadow: false,

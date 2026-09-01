@@ -19,7 +19,7 @@ class AuthGateSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DecoratedBox(
-      decoration: woodBoardFill(),
+      decoration: chromeBoardFill(context),
       child: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16),

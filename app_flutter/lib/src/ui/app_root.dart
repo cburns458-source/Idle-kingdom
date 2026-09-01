@@ -86,6 +86,7 @@ class _BootGateState extends State<_BootGate> {
       mapTravel: MapTravelPref.load(storage),
       hudLevel: HudLevelPref.load(storage),
       hudTitle: HudTitlePref.load(storage),
+      uiChrome: UiChromePref.load(storage),
       batterySaverPref: BatterySaverPref.load(storage),
     )..adoptBoot(boot);
     final backend = await _multiplayerService(storage);

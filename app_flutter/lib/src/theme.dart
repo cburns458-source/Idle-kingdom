@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 import 'pixel_chrome.dart';
+import 'session/ui_chrome.dart';
 export 'pixel_chrome.dart';
+export 'session/ui_chrome.dart';
 
 /// Parses a canonical `#RRGGBB` into a color, or null when it is not one.
 Color? colorFromHexRgb(String? hex) {
@@ -121,7 +123,50 @@ BoxDecoration panelFill({
   );
 }
 
+/// Dark outer board (HUD strip, nav chin, shell). Uses the active [UiChrome].
+BoxDecoration chromeBoardFill(
+  BuildContext context, {
+  BorderRadius? borderRadius,
+  BoxBorder? border,
+  double textureOpacity = 0.55,
+}) {
+  final chrome = UiChrome.of(context);
+  return BoxDecoration(
+    color: chrome.board,
+    borderRadius: borderRadius,
+    border: border,
+    image: DecorationImage(
+      image: AssetImage(chrome.boardTextureAsset),
+      repeat: ImageRepeat.repeat,
+      fit: BoxFit.none,
+      alignment: Alignment.topLeft,
+      filterQuality: FilterQuality.none,
+      opacity: textureOpacity,
+    ),
+  );
+}
+
+/// Shell / loading / frame wash for the active [UiChrome].
+BoxDecoration chromeShellDecoration(BuildContext context, {Gradient? gradient}) {
+  final chrome = UiChrome.of(context);
+  return BoxDecoration(
+    color: chrome.board,
+    gradient: gradient ?? chrome.shellGradient,
+    image: DecorationImage(
+      image: AssetImage(chrome.boardTextureAsset),
+      repeat: ImageRepeat.repeat,
+      fit: BoxFit.none,
+      alignment: Alignment.topLeft,
+      filterQuality: FilterQuality.none,
+      opacity: 0.55,
+    ),
+  );
+}
+
 /// Dark wood outer board (HUD strip, nav chin, shell).
+///
+/// Prefer [chromeBoardFill] so stone packs swap correctly. Kept for boot
+/// screens that run before [UiChromeScope] is mounted.
 BoxDecoration woodBoardFill({
   Color color = Palette.board,
   BorderRadius? borderRadius,
@@ -727,10 +772,10 @@ class PillBar extends StatelessWidget {
   }
 }
 
-/// The bordered tan content card every panel in the game uses.
+/// The bordered content card every panel in the game uses.
 ///
-/// When [framed] is true, a quiet wood outer rim wraps the tan plate so content
-/// sits as a wood-bordered inset on the shell (inspiration inventory look).
+/// When [framed] is true, a quiet board outer rim wraps the inner plate so
+/// content sits as a bordered inset on the shell (inspiration inventory look).
 class GamePanel extends StatelessWidget {
   const GamePanel({
     super.key,
@@ -748,54 +793,56 @@ class GamePanel extends StatelessWidget {
   /// Gold, thicker edge for the viewer's own leaderboard row.
   final bool highlight;
 
-  /// Wood outer board rim around the tan inner plate.
+  /// Outer board rim around the inner panel plate.
   final bool framed;
 
-  Widget _inked(Widget plateChild) {
-    // Tan inner panels read with dark ink; overlays keep their own colors.
+  Widget _inked(BuildContext context, Widget plateChild) {
+    final ink = UiChrome.of(context).panelInk;
     return DefaultTextStyle.merge(
-      style: const TextStyle(color: Palette.panelInk, fontFamily: gameFontFamily),
+      style: TextStyle(color: ink, fontFamily: gameFontFamily),
       child: IconTheme.merge(
-        data: const IconThemeData(color: Palette.panelInk),
+        data: IconThemeData(color: ink),
         child: plateChild,
       ),
     );
   }
 
-  Widget _tanPlate() {
+  Widget _innerPlate(BuildContext context) {
+    final chrome = UiChrome.of(context);
     if (onTap != null) {
       return PixelInkPlate(
         onTap: onTap,
         step: PixelChrome.step,
-        fillColor: Palette.panel,
+        fillColor: chrome.panel,
         material: PixelPlateMaterial.tan,
         strokeWidth: highlight ? 2.5 : 2,
         selected: highlight,
         shadow: false,
         padding: padding ?? const EdgeInsets.all(10),
-        child: _inked(child),
+        child: _inked(context, child),
       );
     }
     return PixelPlate(
       step: PixelChrome.step,
-      fillColor: Palette.panel,
+      fillColor: chrome.panel,
       material: PixelPlateMaterial.tan,
       strokeWidth: highlight ? 2.5 : 2,
       selected: highlight,
       rivets: highlight,
       shadow: false,
       padding: padding ?? const EdgeInsets.all(10),
-      child: _inked(child),
+      child: _inked(context, child),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final plate = _tanPlate();
+    final plate = _innerPlate(context);
     if (!framed) return plate;
+    final chrome = UiChrome.of(context);
     return PixelPlate(
       step: PixelChrome.step,
-      fillColor: Palette.board,
+      fillColor: chrome.board,
       material: PixelPlateMaterial.wood,
       strokeWidth: 2,
       shadow: false,
@@ -984,13 +1031,13 @@ class MutedText extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final inherited = DefaultTextStyle.of(context).style.color;
-    final onTan = inherited != null && inherited.computeLuminance() < 0.45;
+    final onPanel = inherited != null && inherited.computeLuminance() < 0.45;
     return Text(
       text,
       textAlign: textAlign,
       style: TextStyle(
         fontSize: 12.5,
-        color: color ?? (onTan ? Palette.panelMuted : Palette.muted),
+        color: color ?? (onPanel ? UiChrome.of(context).panelMuted : Palette.muted),
         height: 1.35,
       ),
     );

@@ -178,6 +178,35 @@ class _MenuViewState extends State<MenuView> {
               ),
             ),
             const SizedBox(height: 16),
+            GamePanel(
+              framed: true,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('UI look', style: TextStyle(fontWeight: FontWeight.w400)),
+                  const MutedText('Wood boards and tan panels, or grey stone and ash.'),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      for (final pack in UiChromePack.values) ...[
+                        if (pack != UiChromePack.values.first) const SizedBox(width: 8),
+                        Expanded(
+                          child: GameButton(
+                            label: UiChrome.forPack(pack).label,
+                            selected: controller.uiChromePack == pack,
+                            tone: controller.uiChromePack == pack
+                                ? GameButtonTone.primary
+                                : GameButtonTone.secondary,
+                            onPressed: () => controller.setUiChromePack(pack),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
             ListenableBuilder(
               listenable: widget.multiplayer,
               builder: (context, _) {

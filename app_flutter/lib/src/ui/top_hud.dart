@@ -93,7 +93,8 @@ class TopHud extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.fromLTRB(8, 4, 10, 4),
-      decoration: woodBoardFill(
+      decoration: chromeBoardFill(
+        context,
         border: Border(
           bottom: BorderSide(
             color: batterySaver ? Palette.gold : Palette.edge,

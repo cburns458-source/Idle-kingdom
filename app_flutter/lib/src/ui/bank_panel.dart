@@ -195,7 +195,9 @@ class _BankPanelState extends State<BankPanel> {
         key: key,
         onTap: onTap,
         step: PixelChrome.stepTight,
-        fillColor: stack.favorite == true ? const Color(0xFF4A3820) : Palette.slot,
+        fillColor: stack.favorite == true
+            ? Color.lerp(UiChrome.of(context).slot, Palette.gold, 0.18)!
+            : UiChrome.of(context).slot,
         material: PixelPlateMaterial.none,
         strokeWidth: stack.favorite == true ? 2.5 : 2,
         selected: stack.favorite == true,
