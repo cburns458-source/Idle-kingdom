@@ -231,7 +231,7 @@ class PixelPlate extends StatelessWidget {
         fit: BoxFit.none,
         alignment: Alignment.topLeft,
         filterQuality: FilterQuality.none,
-        opacity: 0.85,
+        opacity: 0.45,
       ),
       PixelPlateMaterial.tan => const DecorationImage(
         image: AssetImage('assets/ui/panel-tan.png'),

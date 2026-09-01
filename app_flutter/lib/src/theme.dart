@@ -123,7 +123,7 @@ BoxDecoration woodBoardFill({
   Color color = Palette.board,
   BorderRadius? borderRadius,
   BoxBorder? border,
-  double textureOpacity = 1,
+  double textureOpacity = 0.55,
 }) {
   return BoxDecoration(
     color: color,
@@ -133,9 +133,13 @@ BoxDecoration woodBoardFill({
   );
 }
 
-/// Shell / loading / frame wash: wood planks as the dominant outer board.
+/// Shell / loading / frame wash: quiet wood planks over a solid board base.
 BoxDecoration woodShellDecoration({Gradient? gradient}) {
-  return BoxDecoration(color: Palette.board, gradient: gradient, image: woodPanelImage(opacity: 1));
+  return BoxDecoration(
+    color: Palette.board,
+    gradient: gradient,
+    image: woodPanelImage(opacity: 0.55),
+  );
 }
 
 /// The bar fills, each one a three-stop gradient as the old client drew them.
@@ -349,13 +353,13 @@ class _GameButtonState extends State<GameButton> {
                 ? const EdgeInsets.symmetric(horizontal: 8, vertical: 4)
                 : widget.compact
                 ? const EdgeInsets.symmetric(horizontal: 10, vertical: 6)
-                : const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                : const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
             child: ConstrainedBox(
               constraints: widget.dense
                   ? const BoxConstraints(minHeight: 26)
                   : widget.compact
                   ? const BoxConstraints(minHeight: 32)
-                  : const BoxConstraints(minHeight: 44, minWidth: 90),
+                  : const BoxConstraints(minHeight: 36, minWidth: 72),
               child: Align(
                 alignment: Alignment.center,
                 child: Text(
@@ -369,7 +373,7 @@ class _GameButtonState extends State<GameButton> {
                         ? 11
                         : widget.compact
                         ? 12
-                        : 13.5,
+                        : 12.5,
                     fontWeight: FontWeight.w400,
                     color: primary ? const Color(0xFFF4FFE8) : const Color(0xFFFFF4D4),
                   ),
@@ -561,16 +565,61 @@ class GameSelectField extends StatelessWidget {
   }
 }
 
-/// Parchment toggle used on Settings.
+/// Stepped pixel toggle used on Settings (matches button chrome, not Material).
 class GameSwitch extends StatelessWidget {
   const GameSwitch({super.key, required this.value, required this.onChanged});
 
   final bool value;
   final ValueChanged<bool>? onChanged;
 
+  static const double _width = 44;
+  static const double _height = 24;
+  static const double _thumb = 18;
+
   @override
   Widget build(BuildContext context) {
-    return Switch(value: value, onChanged: onChanged);
+    final enabled = onChanged != null;
+    return Semantics(
+      toggled: value,
+      enabled: enabled,
+      button: true,
+      child: Opacity(
+        opacity: enabled ? 1 : 0.55,
+        child: GestureDetector(
+          onTap: enabled ? () => onChanged!(!value) : null,
+          behavior: HitTestBehavior.opaque,
+          child: SizedBox(
+            width: _width,
+            height: _height,
+            child: PixelPlate(
+              step: PixelChrome.stepTight,
+              strokeWidth: 1.5,
+              shadow: false,
+              material: PixelPlateMaterial.wood,
+              fillColor: value ? const Color(0xFF5F7A45) : const Color(0xFF3D2A1A),
+              padding: const EdgeInsets.all(2),
+              child: AnimatedAlign(
+                duration: const Duration(milliseconds: 120),
+                curve: Curves.easeOut,
+                alignment: value ? Alignment.centerRight : Alignment.centerLeft,
+                child: SizedBox(
+                  width: _thumb,
+                  height: _thumb,
+                  child: PixelPlate(
+                    step: 1,
+                    strokeWidth: 1.5,
+                    shadow: false,
+                    material: PixelPlateMaterial.none,
+                    fillColor: value ? Palette.gold : const Color(0xFFCBB894),
+                    child: const SizedBox.expand(),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -601,10 +650,10 @@ class DockRow extends StatelessWidget {
       material: PixelPlateMaterial.wood,
       strokeWidth: 1.5,
       shadow: false,
-      padding: const EdgeInsets.fromLTRB(11, 10, 11, 10),
+      padding: const EdgeInsets.fromLTRB(9, 7, 9, 7),
       child: Row(
         children: [
-          if (leading case final star?) ...[star, const SizedBox(width: 6)],
+          if (leading case final star?) ...[star, const SizedBox(width: 4)],
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -612,7 +661,7 @@ class DockRow extends StatelessWidget {
                 Text(
                   title,
                   style: const TextStyle(
-                    fontSize: 14.5,
+                    fontSize: 13.5,
                     fontWeight: FontWeight.w400,
                     shadows: overlayShadow,
                   ),
@@ -621,7 +670,7 @@ class DockRow extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 8),
           trailing,
         ],
       ),
@@ -713,7 +762,7 @@ class GamePanel extends StatelessWidget {
         strokeWidth: highlight ? 2.5 : 2,
         selected: highlight,
         shadow: false,
-        padding: padding ?? const EdgeInsets.all(12),
+        padding: padding ?? const EdgeInsets.all(10),
         child: _inked(child),
       );
     }
@@ -725,7 +774,7 @@ class GamePanel extends StatelessWidget {
       selected: highlight,
       rivets: highlight,
       shadow: false,
-      padding: padding ?? const EdgeInsets.all(12),
+      padding: padding ?? const EdgeInsets.all(10),
       child: _inked(child),
     );
   }

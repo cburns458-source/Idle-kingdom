@@ -113,33 +113,44 @@ class ItemDetailSheet extends StatelessWidget {
                 ],
               ),
             ],
-            const SizedBox(height: 12),
-            OverflowBar(
-              alignment: MainAxisAlignment.end,
-              spacing: 8,
+            const SizedBox(height: 10),
+            Row(
               children: [
-                if (onEat != null)
-                  GameButton(
-                    label: 'Eat',
-                    onPressed: eatEnabled
-                        ? () {
-                            Navigator.of(context).pop();
-                            onEat!();
-                          }
-                        : null,
+                if (onEat != null) ...[
+                  Expanded(
+                    child: GameButton(
+                      label: 'Eat',
+                      compact: true,
+                      onPressed: eatEnabled
+                          ? () {
+                              Navigator.of(context).pop();
+                              onEat!();
+                            }
+                          : null,
+                    ),
                   ),
-                if (onEquip != null)
-                  GameButton(
-                    label: 'Equip',
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                      onEquip!();
-                    },
+                  const SizedBox(width: 6),
+                ],
+                if (onEquip != null) ...[
+                  Expanded(
+                    child: GameButton(
+                      label: 'Equip',
+                      compact: true,
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                        onEquip!();
+                      },
+                    ),
                   ),
-                GameButton(
-                  label: 'Close',
-                  tone: GameButtonTone.secondary,
-                  onPressed: () => Navigator.of(context).pop(),
+                  const SizedBox(width: 6),
+                ],
+                Expanded(
+                  child: GameButton(
+                    label: 'Close',
+                    compact: true,
+                    tone: GameButtonTone.secondary,
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
                 ),
               ],
             ),
