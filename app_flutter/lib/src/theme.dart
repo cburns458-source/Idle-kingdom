@@ -130,37 +130,13 @@ BoxDecoration chromeBoardFill(
   BoxBorder? border,
   double textureOpacity = 0.55,
 }) {
-  final chrome = UiChrome.of(context);
-  return BoxDecoration(
-    color: chrome.board,
-    borderRadius: borderRadius,
-    border: border,
-    image: DecorationImage(
-      image: AssetImage(chrome.boardTextureAsset),
-      repeat: ImageRepeat.repeat,
-      fit: BoxFit.none,
-      alignment: Alignment.topLeft,
-      filterQuality: FilterQuality.none,
-      opacity: textureOpacity,
-    ),
-  );
+  return UiChrome.of(context)
+      .boardFill(borderRadius: borderRadius, border: border, textureOpacity: textureOpacity);
 }
 
 /// Shell / loading / frame wash for the active [UiChrome].
 BoxDecoration chromeShellDecoration(BuildContext context, {Gradient? gradient}) {
-  final chrome = UiChrome.of(context);
-  return BoxDecoration(
-    color: chrome.board,
-    gradient: gradient ?? chrome.shellGradient,
-    image: DecorationImage(
-      image: AssetImage(chrome.boardTextureAsset),
-      repeat: ImageRepeat.repeat,
-      fit: BoxFit.none,
-      alignment: Alignment.topLeft,
-      filterQuality: FilterQuality.none,
-      opacity: 0.55,
-    ),
-  );
+  return UiChrome.of(context).shellDecoration(gradient: gradient);
 }
 
 /// Dark wood outer board (HUD strip, nav chin, shell).
@@ -750,21 +726,23 @@ class PillBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final fill = value.isNaN ? 0.0 : value.clamp(0.0, 1.0);
-    return SizedBox(
-      width: double.infinity,
-      height: height,
-      child: PixelPlate(
-        step: PixelChrome.stepTight,
-        fillColor: trackColor,
-        strokeWidth: 1.5,
-        shadow: false,
-        child: ClipPath(
-          clipper: _MeterFillClipper(step: PixelChrome.stepTight),
-          child: FractionallySizedBox(
-            alignment: Alignment.centerLeft,
-            widthFactor: fill,
-            heightFactor: 1,
-            child: DecoratedBox(decoration: BoxDecoration(gradient: gradient)),
+    return RepaintBoundary(
+      child: SizedBox(
+        width: double.infinity,
+        height: height,
+        child: PixelPlate(
+          step: PixelChrome.stepTight,
+          fillColor: trackColor,
+          strokeWidth: 1.5,
+          shadow: false,
+          child: ClipPath(
+            clipper: _MeterFillClipper(step: PixelChrome.stepTight),
+            child: FractionallySizedBox(
+              alignment: Alignment.centerLeft,
+              widthFactor: fill,
+              heightFactor: 1,
+              child: DecoratedBox(decoration: BoxDecoration(gradient: gradient)),
+            ),
           ),
         ),
       ),
@@ -838,17 +816,22 @@ class GamePanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final plate = _innerPlate(context);
-    if (!framed) return plate;
-    final chrome = UiChrome.of(context);
-    return PixelPlate(
-      step: PixelChrome.step,
-      fillColor: chrome.board,
-      material: PixelPlateMaterial.wood,
-      strokeWidth: 2,
-      shadow: false,
-      padding: const EdgeInsets.all(5),
-      child: plate,
-    );
+    final Widget body;
+    if (!framed) {
+      body = plate;
+    } else {
+      final chrome = UiChrome.of(context);
+      body = PixelPlate(
+        step: PixelChrome.step,
+        fillColor: chrome.board,
+        material: PixelPlateMaterial.wood,
+        strokeWidth: 2,
+        shadow: false,
+        padding: const EdgeInsets.all(5),
+        child: plate,
+      );
+    }
+    return RepaintBoundary(child: body);
   }
 }
 
@@ -865,20 +848,22 @@ class MeterBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: height,
-      width: double.infinity,
-      child: PixelPlate(
-        step: 1,
-        fillColor: const Color(0x99120C08),
-        strokeWidth: 1,
-        shadow: false,
-        child: ClipPath(
-          clipper: _MeterFillClipper(step: 1),
-          child: FractionallySizedBox(
-            alignment: Alignment.centerLeft,
-            widthFactor: value.isNaN ? 0 : value.clamp(0, 1),
-            child: ColoredBox(color: color),
+    return RepaintBoundary(
+      child: SizedBox(
+        height: height,
+        width: double.infinity,
+        child: PixelPlate(
+          step: 1,
+          fillColor: const Color(0x99120C08),
+          strokeWidth: 1,
+          shadow: false,
+          child: ClipPath(
+            clipper: _MeterFillClipper(step: 1),
+            child: FractionallySizedBox(
+              alignment: Alignment.centerLeft,
+              widthFactor: value.isNaN ? 0 : value.clamp(0, 1),
+              child: ColoredBox(color: color),
+            ),
           ),
         ),
       ),

@@ -75,6 +75,13 @@ class TopHud extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: Listenable.merge(<Listenable>[controller, controller.progress]),
+      builder: (context, _) => _buildHud(context),
+    );
+  }
+
+  Widget _buildHud(BuildContext context) {
     final save = controller.save;
     final maxHp = playerMaxHp(controller.db, save);
     final hpFraction = controller.isRecovering || maxHp <= 0
