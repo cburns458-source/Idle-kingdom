@@ -15,6 +15,7 @@ import '../session/hud_level_pref.dart';
 import '../session/hud_title_pref.dart';
 import '../session/map_travel_pref.dart';
 import '../session/multiplayer_controller.dart';
+import '../session/ui_chrome.dart';
 import '../storage/legacy_browser_save.dart';
 import '../storage/prefs_store.dart';
 import '../storage/save_adoption.dart';
@@ -85,6 +86,7 @@ class _BootGateState extends State<_BootGate> {
       mapTravel: MapTravelPref.load(storage),
       hudLevel: HudLevelPref.load(storage),
       hudTitle: HudTitlePref.load(storage),
+      uiChrome: UiChromePref.load(storage),
     )..adoptBoot(boot);
     final backend = await _multiplayerService(storage);
     _ensureDemoWorld(backend.service, database.launch);

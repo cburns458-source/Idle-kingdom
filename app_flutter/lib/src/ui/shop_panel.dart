@@ -300,7 +300,9 @@ class _ShopPanelState extends State<ShopPanel> {
       child: PixelInkPlate(
         onTap: enabled ? () => onTap(unit, name) : null,
         step: PixelChrome.stepTight,
-        fillColor: offered != null ? const Color(0xFF4A3820) : Palette.slot,
+        fillColor: offered != null
+            ? Color.lerp(UiChrome.of(context).slot, Palette.gold, 0.18)!
+            : UiChrome.of(context).slot,
         material: PixelPlateMaterial.none,
         strokeWidth: offered != null ? 2.5 : 2,
         selected: offered != null,

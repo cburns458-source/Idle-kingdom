@@ -9,6 +9,7 @@ import 'hud_level_pref.dart';
 import 'hud_title_pref.dart';
 import 'local_player_art.dart';
 import 'map_travel_pref.dart';
+import 'ui_chrome.dart';
 
 /// A journey in progress, which the client animates itself.
 class TravelInFlight {
@@ -94,10 +95,12 @@ class GameController extends ChangeNotifier {
     MapTravelPref? mapTravel,
     HudLevelPref? hudLevel,
     HudTitlePref? hudTitle,
+    UiChromePref? uiChrome,
   }) : localArt = localArt ?? LocalPlayerArt(),
        mapTravel = mapTravel ?? MapTravelPref(),
        hudLevel = hudLevel ?? HudLevelPref(),
-       hudTitle = hudTitle ?? HudTitlePref();
+       hudTitle = hudTitle ?? HudTitlePref(),
+       uiChrome = uiChrome ?? UiChromePref();
 
   final LoadedDatabase database;
 
@@ -115,6 +118,9 @@ class GameController extends ChangeNotifier {
 
   /// Client-only HUD toggle for the equipped character title.
   final HudTitlePref hudTitle;
+
+  /// Client-only UI chrome pack (wood vs stone boards).
+  final UiChromePref uiChrome;
 
   /// How many completed actions the reward strip keeps.
   static const int _rewardHistory = 3;
@@ -371,6 +377,17 @@ class GameController extends ChangeNotifier {
   void setMapTravelAnimation(bool value) {
     if (mapTravel.enabled == value) return;
     mapTravel.setEnabled(value);
+    notifyListeners();
+  }
+
+  /// Active UI chrome pack for boards / panels on this device.
+  UiChromePack get uiChromePack => uiChrome.pack;
+
+  UiChrome get chrome => uiChrome.chrome;
+
+  void setUiChromePack(UiChromePack value) {
+    if (uiChrome.pack == value) return;
+    uiChrome.setPack(value);
     notifyListeners();
   }
 

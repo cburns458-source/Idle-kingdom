@@ -100,7 +100,8 @@ class _BottomNavState extends State<BottomNav> {
   @override
   Widget build(BuildContext context) {
     return DecoratedBox(
-      decoration: woodBoardFill(
+      decoration: chromeBoardFill(
+        context,
         border: const Border(top: BorderSide(color: Palette.edge)),
       ),
       child: SizedBox(

@@ -983,11 +983,12 @@ class _ItemTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final name = item?.displayName ?? '?';
+    final slot = UiChrome.of(context).slot;
     final fill = selected
-        ? const Color(0xFF4A3820)
+        ? Color.lerp(slot, Palette.gold, 0.18)!
         : enchanted
         ? const Color(0xFF2F3A24)
-        : Palette.slot;
+        : slot;
     return Tooltip(
       message: missing ? '$name (missing)' : name,
       onTriggered: onLongPress,

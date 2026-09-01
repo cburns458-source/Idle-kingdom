@@ -2,6 +2,8 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import 'session/ui_chrome.dart';
+
 /// Wood + gold embossed pixel chrome (photo-2 direction).
 ///
 /// Stepped corners replace soft [BorderRadius] curves. Layout sizes stay the
@@ -217,26 +219,27 @@ class PixelPlate extends StatelessWidget {
   final bool clip;
   final PixelPlateMaterial material;
 
-  DecorationImage? _texture() {
+  DecorationImage? _texture(BuildContext context) {
     if (fillColor == null && gradient == null) return null;
-    // Auto: tan texture on light fills only. Dark fills stay solid so wood is
-    // reserved for shell / HUD boards, not every button and slot.
+    // Auto: panel texture on light fills only. Dark fills stay solid so board
+    // texture is reserved for shell / HUD boards, not every button and slot.
     final kind = material == PixelPlateMaterial.auto
         ? ((fillColor != null && fillColor!.computeLuminance() > 0.28)
               ? PixelPlateMaterial.tan
               : PixelPlateMaterial.none)
         : material;
+    final chrome = UiChrome.of(context);
     return switch (kind) {
-      PixelPlateMaterial.wood => const DecorationImage(
-        image: AssetImage('assets/ui/wood-panel.png'),
+      PixelPlateMaterial.wood => DecorationImage(
+        image: AssetImage(chrome.boardTextureAsset),
         repeat: ImageRepeat.repeat,
         fit: BoxFit.none,
         alignment: Alignment.topLeft,
         filterQuality: FilterQuality.none,
         opacity: 0.45,
       ),
-      PixelPlateMaterial.tan => const DecorationImage(
-        image: AssetImage('assets/ui/panel-tan.png'),
+      PixelPlateMaterial.tan => DecorationImage(
+        image: AssetImage(chrome.panelTextureAsset),
         repeat: ImageRepeat.repeat,
         fit: BoxFit.none,
         alignment: Alignment.topLeft,
@@ -274,7 +277,7 @@ class PixelPlate extends StatelessWidget {
       plate = ClipPath(
         clipper: _SteppedClipper(step: step),
         child: DecoratedBox(
-          decoration: BoxDecoration(color: fillColor, gradient: gradient, image: _texture()),
+          decoration: BoxDecoration(color: fillColor, gradient: gradient, image: _texture(context)),
           child: plate,
         ),
       );

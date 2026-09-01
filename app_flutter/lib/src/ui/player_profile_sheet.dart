@@ -180,17 +180,17 @@ class _PlayerProfileSheetState extends State<PlayerProfileSheet> {
                           Expanded(
                             child: Text(
                               view.username,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w400,
-                                color: Palette.panelInk,
+                                color: UiChrome.of(context).panelInk,
                               ),
                             ),
                           ),
                           if (_isSelf || _profile?.publicEquipment != null)
                             IconButton(
                               tooltip: 'Gear',
-                              color: Palette.panelInk,
+                              color: UiChrome.of(context).panelInk,
                               onPressed: () => openPlayerGear(
                                 context,
                                 controller: widget.controller,
@@ -275,10 +275,10 @@ class _PlayerProfileSheetState extends State<PlayerProfileSheet> {
                   GameImage(skillIconPath(skill), width: 28, height: 28),
                   Text(
                     levels[skill.skillId] == null ? '—' : '${levels[skill.skillId]}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w400,
-                      color: Palette.panelInk,
+                      color: UiChrome.of(context).panelInk,
                     ),
                   ),
                 ],

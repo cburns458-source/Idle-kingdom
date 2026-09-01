@@ -96,7 +96,7 @@ class _NewCharacterSheetState extends State<NewCharacterSheet> {
         .toList();
 
     return DecoratedBox(
-      decoration: woodBoardFill(),
+      decoration: chromeBoardFill(context),
       child: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16),

@@ -91,7 +91,8 @@ class TopHud extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.fromLTRB(8, 4, 10, 4),
-      decoration: woodBoardFill(
+      decoration: chromeBoardFill(
+        context,
         border: const Border(bottom: BorderSide(color: Palette.edge)),
       ),
       child: Row(
