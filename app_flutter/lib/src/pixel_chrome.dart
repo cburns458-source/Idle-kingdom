@@ -14,13 +14,13 @@ abstract final class PixelChrome {
   static const double stepTight = 2;
 
   /// Gold emboss face — antique brass, not bright jewelry gold.
-  static const Color goldFace = Color(0xFF8A6B28);
+  static const Color goldFace = Color(0xFF7A5F24);
 
   /// Soft top-left highlight on embossed borders (kept dull).
-  static const Color goldHighlight = Color(0xFFA89048);
+  static const Color goldHighlight = Color(0xFF968040);
 
   /// Bottom-right shade on embossed gold borders.
-  static const Color goldShade = Color(0xFF3F2E0C);
+  static const Color goldShade = Color(0xFF3A2A0A);
 
   /// Dark wood plate under gold rims.
   static const Color wood = Color(0xFF2A1C12);
@@ -231,7 +231,7 @@ class PixelPlate extends StatelessWidget {
         fit: BoxFit.none,
         alignment: Alignment.topLeft,
         filterQuality: FilterQuality.none,
-        opacity: 0.55,
+        opacity: 0.85,
       ),
       PixelPlateMaterial.tan => const DecorationImage(
         image: AssetImage('assets/ui/panel-tan.png'),
@@ -239,7 +239,7 @@ class PixelPlate extends StatelessWidget {
         fit: BoxFit.none,
         alignment: Alignment.topLeft,
         filterQuality: FilterQuality.none,
-        opacity: 0.35,
+        opacity: 0.55,
       ),
       PixelPlateMaterial.none => null,
       PixelPlateMaterial.auto => null,

@@ -18,8 +18,8 @@ class AuthGateSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ColoredBox(
-      color: Palette.ink,
+    return DecoratedBox(
+      decoration: woodBoardFill(),
       child: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -31,14 +31,21 @@ class AuthGateSheet extends StatelessWidget {
                   if (!multiplayer.hasTesterAccess)
                     _TesterPasskeyForm(multiplayer: multiplayer)
                   else ...[
-                    const Text(
-                      'Sign in to play',
-                      style: TextStyle(fontSize: 22, fontWeight: FontWeight.w400),
+                    GamePanel(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          const Text(
+                            'Sign in to play',
+                            style: TextStyle(fontSize: 22, fontWeight: FontWeight.w400),
+                          ),
+                          const SizedBox(height: 4),
+                          MutedText(authGateIntro(multiplayer.mode)),
+                          const SizedBox(height: 16),
+                          AccountAuthForm(controller: controller, multiplayer: multiplayer),
+                        ],
+                      ),
                     ),
-                    const SizedBox(height: 4),
-                    MutedText(authGateIntro(multiplayer.mode)),
-                    const SizedBox(height: 16),
-                    AccountAuthForm(controller: controller, multiplayer: multiplayer),
                   ],
                 ],
               );
@@ -77,28 +84,30 @@ class _TesterPasskeyFormState extends State<_TesterPasskeyForm> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        const Text('Test launch', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w400)),
-        const SizedBox(height: 4),
-        const MutedText('Enter the tester passkey to create an account or sign in.'),
-        const SizedBox(height: 16),
-        TextField(
-          key: const Key('tester-passkey'),
-          controller: _passkey,
-          obscureText: true,
-          textInputAction: TextInputAction.done,
-          onSubmitted: (_) => _submit(),
-          decoration: const InputDecoration(labelText: 'Passkey'),
-        ),
-        if (_error case final error?) ...[
-          const SizedBox(height: 8),
-          Text(error, style: const TextStyle(color: Palette.danger)),
+    return GamePanel(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text('Test launch', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w400)),
+          const SizedBox(height: 4),
+          const MutedText('Enter the tester passkey to create an account or sign in.'),
+          const SizedBox(height: 16),
+          TextField(
+            key: const Key('tester-passkey'),
+            controller: _passkey,
+            obscureText: true,
+            textInputAction: TextInputAction.done,
+            onSubmitted: (_) => _submit(),
+            decoration: const InputDecoration(labelText: 'Passkey'),
+          ),
+          if (_error case final error?) ...[
+            const SizedBox(height: 8),
+            Text(error, style: const TextStyle(color: Palette.danger)),
+          ],
+          const SizedBox(height: 12),
+          GameButton(label: 'Continue', onPressed: _submit),
         ],
-        const SizedBox(height: 12),
-        GameButton(label: 'Continue', onPressed: _submit),
-      ],
+      ),
     );
   }
 }

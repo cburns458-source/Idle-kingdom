@@ -95,8 +95,8 @@ class _NewCharacterSheetState extends State<NewCharacterSheet> {
         .where((race) => race.releasePhase == 'Launch')
         .toList();
 
-    return ColoredBox(
-      color: Palette.ink,
+    return DecoratedBox(
+      decoration: woodBoardFill(),
       child: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16),

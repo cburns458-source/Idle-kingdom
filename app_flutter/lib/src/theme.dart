@@ -18,9 +18,9 @@ abstract final class Palette {
   static const parchmentDeep = Color(0xFF3D2A1A);
 
   /// Dull antique brass (borders, accents) — not bright jewelry gold.
-  static const gold = Color(0xFF8A6B28);
-  static const goldHighlight = Color(0xFFA89048);
-  static const goldShade = Color(0xFF3F2E0C);
+  static const gold = Color(0xFF7A5F24);
+  static const goldHighlight = Color(0xFF968040);
+  static const goldShade = Color(0xFF3A2A0A);
 
   /// Outer board / wood chrome.
   static const wood = Color(0xFF2A1C12);
@@ -47,7 +47,7 @@ abstract final class Palette {
   static const warning = Color(0xFFEFB07A);
 
   /// Hairline gold used for panel edges.
-  static const edge = Color(0x738A6B28);
+  static const edge = Color(0x737A5F24);
 
   /// The behind-everything wash — dark wood base under the plank texture.
   static const shellGradient = LinearGradient(
@@ -123,7 +123,7 @@ BoxDecoration woodBoardFill({
   Color color = Palette.board,
   BorderRadius? borderRadius,
   BoxBorder? border,
-  double textureOpacity = 0.85,
+  double textureOpacity = 1,
 }) {
   return BoxDecoration(
     color: color,
@@ -133,11 +133,12 @@ BoxDecoration woodBoardFill({
   );
 }
 
-/// Shell / loading / frame wash: wood planks over a dark board base.
+/// Shell / loading / frame wash: wood planks as the dominant outer board.
 BoxDecoration woodShellDecoration({Gradient? gradient}) {
   return BoxDecoration(
-    gradient: gradient ?? Palette.shellGradient,
-    image: woodPanelImage(opacity: 0.9),
+    color: Palette.board,
+    gradient: gradient,
+    image: woodPanelImage(opacity: 1),
   );
 }
 
