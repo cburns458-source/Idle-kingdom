@@ -27,7 +27,7 @@ extension on ChromeStyle {
         ChromeStyle.nesUi =>
           'MIT package: NesButton / NesContainer / NesProgressBar. Hard pixel chrome.',
         ChromeStyle.pixelUi =>
-          'MIT primitives: PixelBox / PixelButton + LCG texture. Compose the shell.',
+          'Pure pixel + max not-modern: stair corners, dense grain on every plate, chunky shadows, zero pills.',
         ChromeStyle.kenneyFantasy =>
           'CC0 9-slice fantasy panels. Every chrome role becomes a framed plate.',
         ChromeStyle.leather =>
@@ -60,7 +60,7 @@ class LabHome extends StatefulWidget {
 }
 
 class _LabHomeState extends State<LabHome> {
-  ChromeStyle _style = ChromeStyle.nesUi;
+  ChromeStyle _style = ChromeStyle.pixelUi;
 
   @override
   Widget build(BuildContext context) {
@@ -353,64 +353,144 @@ class _NesShell extends StatelessWidget {
 class _PixelShell extends StatelessWidget {
   const _PixelShell();
 
+  /// Pure pixel + max not-modern: sharp stairs, dense grain, hard shadows.
   static const panel = PixelShapeStyle(
+    corners: PixelCorners.lg,
+    fillColor: Color(0xFF2E1C10),
+    borderColor: Color(0xFFF0E0B8),
+    borderWidth: 3,
+    shadow: PixelShadow(
+      offset: Offset(3, 3),
+      color: Color(0xEE000000),
+    ),
+    texture: PixelTexture(
+      color: Color(0x55FFFFFF),
+      density: 0.42,
+      size: 1,
+      seed: 17,
+    ),
+  );
+
+  static const inset = PixelShapeStyle(
     corners: PixelCorners.md,
-    fillColor: Color(0xFF3A2818),
-    borderColor: Color(0xFFE8D5A3),
+    fillColor: Color(0xFF24160E),
+    borderColor: Color(0xFFC9B07A),
     borderWidth: 2,
-    texture: PixelTexture(color: Color(0x33FFFFFF), density: 0.18, seed: 11),
+    texture: PixelTexture(
+      color: Color(0x44FFFFFF),
+      density: 0.38,
+      size: 1,
+      seed: 29,
+    ),
   );
 
   static const btn = PixelShapeStyle(
-    corners: PixelCorners.sm,
+    corners: PixelCorners.lg,
     fillColor: Color(0xFF5F7A45),
-    borderColor: Color(0xFFF4E7C8),
-    borderWidth: 2,
-    texture: PixelTexture(color: Color(0x22000000), density: 0.12, seed: 3),
+    borderColor: Color(0xFFF0E0B8),
+    borderWidth: 3,
+    shadow: PixelShadow(
+      offset: Offset(3, 3),
+      color: Color(0xDD000000),
+    ),
+    texture: PixelTexture(
+      color: Color(0x33000000),
+      density: 0.28,
+      size: 1,
+      seed: 3,
+    ),
   );
 
   static const btnAlt = PixelShapeStyle(
+    corners: PixelCorners.lg,
+    fillColor: Color(0xFF5A3A22),
+    borderColor: Color(0xFFE0C878),
+    borderWidth: 3,
+    shadow: PixelShadow(
+      offset: Offset(3, 3),
+      color: Color(0xDD000000),
+    ),
+    texture: PixelTexture(
+      color: Color(0x33000000),
+      density: 0.28,
+      size: 1,
+      seed: 7,
+    ),
+  );
+
+  static const portrait = PixelShapeStyle(
     corners: PixelCorners.sm,
-    fillColor: Color(0xFF6A4A30),
-    borderColor: Color(0xFFD4AF37),
-    borderWidth: 2,
+    fillColor: Color(0xFF6A8FA8),
+    borderColor: Color(0xFFF0E0B8),
+    borderWidth: 3,
+    shadow: PixelShadow(
+      offset: Offset(2, 2),
+      color: Color(0xCC000000),
+    ),
+    texture: PixelTexture(
+      color: Color(0x22000000),
+      density: 0.2,
+      size: 1,
+      seed: 5,
+    ),
   );
 
   @override
   Widget build(BuildContext context) {
     return ColoredBox(
-      color: const Color(0xFF1C120C),
+      color: const Color(0xFF140E0A),
       child: Padding(
-        padding: const EdgeInsets.all(8),
+        padding: const EdgeInsets.all(10),
         child: Column(
           children: [
             PixelBox(
               logicalWidth: 48,
-              logicalHeight: 14,
+              logicalHeight: 16,
               width: double.infinity,
-              height: 64,
+              height: 72,
               style: panel,
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.fromLTRB(10, 10, 10, 8),
               child: Row(
                 children: [
                   PixelBox(
                     logicalWidth: 10,
                     logicalHeight: 10,
-                    width: 40,
-                    height: 40,
-                    style: panel.copyWith(fillColor: const Color(0xFF9EC8E8)),
+                    width: 42,
+                    height: 42,
+                    style: portrait,
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 10),
                   const Expanded(
-                    child: Text(
-                      'Tester  HP ####----',
-                      style: TextStyle(color: Color(0xFFF4E7C8), fontSize: 11),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          'TESTER  LV12',
+                          style: TextStyle(
+                            color: Color(0xFFF0E0B8),
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.6,
+                          ),
+                        ),
+                        SizedBox(height: 6),
+                        Text(
+                          'HP ████████░░',
+                          style: TextStyle(
+                            color: Color(0xFF8FCE6B),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 1.2,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
             Expanded(
               child: PixelBox(
                 logicalWidth: 48,
@@ -419,44 +499,82 @@ class _PixelShell extends StatelessWidget {
                 height: double.infinity,
                 style: panel,
                 label: const Text(
-                  'MEADOW',
-                  style: TextStyle(color: Color(0xFFFFE7A8), fontSize: 10),
+                  'MEADOW ROAD',
+                  style: TextStyle(
+                    color: Color(0xFFF0E0B8),
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.8,
+                  ),
                 ),
-                padding: const EdgeInsets.fromLTRB(10, 16, 10, 10),
+                padding: const EdgeInsets.fromLTRB(12, 18, 12, 12),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const Text(
-                      'Gather flax · 0:12',
-                      style: TextStyle(color: Color(0xFFCBB894), fontSize: 12),
+                    Expanded(
+                      child: PixelBox(
+                        logicalWidth: 40,
+                        logicalHeight: 18,
+                        width: double.infinity,
+                        height: double.infinity,
+                        style: inset,
+                        padding: const EdgeInsets.all(10),
+                        alignment: Alignment.topLeft,
+                        child: const Text(
+                          'Gather flax\n0:12 remaining\n\nGrain on every plate.\nNo pills. No hairlines.',
+                          style: TextStyle(
+                            color: Color(0xFFD2C09A),
+                            fontSize: 11,
+                            height: 1.35,
+                          ),
+                        ),
+                      ),
                     ),
-                    const Spacer(),
+                    const SizedBox(height: 10),
                     Row(
                       children: [
                         Expanded(
                           child: PixelButton(
                             logicalWidth: 20,
-                            logicalHeight: 8,
-                            height: 36,
+                            logicalHeight: 9,
+                            height: 40,
                             normalStyle: btn,
+                            pressedStyle: btn.copyWith(
+                              fillColor: const Color(0xFF4A6234),
+                            ),
+                            pressChildOffset: const Offset(0, 2),
                             onPressed: () {},
                             child: const Text(
                               'GATHER',
-                              style: TextStyle(color: Color(0xFFF4E7C8), fontSize: 11),
+                              style: TextStyle(
+                                color: Color(0xFFF0E0B8),
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 1,
+                              ),
                             ),
                           ),
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: 10),
                         Expanded(
                           child: PixelButton(
                             logicalWidth: 20,
-                            logicalHeight: 8,
-                            height: 36,
+                            logicalHeight: 9,
+                            height: 40,
                             normalStyle: btnAlt,
+                            pressedStyle: btnAlt.copyWith(
+                              fillColor: const Color(0xFF452A18),
+                            ),
+                            pressChildOffset: const Offset(0, 2),
                             onPressed: () {},
                             child: const Text(
                               'TRAVEL',
-                              style: TextStyle(color: Color(0xFFF4E7C8), fontSize: 11),
+                              style: TextStyle(
+                                color: Color(0xFFF0E0B8),
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 1,
+                              ),
                             ),
                           ),
                         ),
@@ -466,31 +584,37 @@ class _PixelShell extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
             Row(
               children: [
                 for (final label in ['MAP', 'SKILL', 'BAG', 'SOCIAL'])
                   Expanded(
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 2),
+                      padding: const EdgeInsets.symmetric(horizontal: 3),
                       child: PixelButton(
                         logicalWidth: 12,
-                        logicalHeight: 8,
-                        height: 34,
+                        logicalHeight: 9,
+                        height: 40,
                         normalStyle: label == 'MAP' ? btn : btnAlt,
+                        pressChildOffset: const Offset(0, 2),
                         onPressed: () {},
                         child: Text(
                           label,
-                          style: const TextStyle(color: Color(0xFFF4E7C8), fontSize: 9),
+                          style: const TextStyle(
+                            color: Color(0xFFF0E0B8),
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.4,
+                          ),
                         ),
                       ),
                     ),
                   ),
               ],
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 8),
             const Text(
-              'Covers boxes/buttons/grids/texture. Dialogs/icons: compose from boxes.',
+              'pixel_ui · stair corners · dense LCG grain · hard shadows · zero modern chrome',
               textAlign: TextAlign.center,
               style: TextStyle(color: Color(0xFF8A7A5C), fontSize: 9),
             ),
