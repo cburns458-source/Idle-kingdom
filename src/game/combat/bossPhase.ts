@@ -10,6 +10,8 @@ import { getEnemy } from './engine'
 export interface SquidlingVictoryResult {
   save: PlayerSave
   xpGained: number
+  /** Always Fishing for Squidling kills. */
+  xpSkillId: string
   message: string
   /** True when the boss resumes; false when another add remains. */
   bossResumed: boolean
@@ -69,7 +71,7 @@ export function applySquidlingVictory(
     const nextSquidling =
       profile?.squidlingEnemyId != null ? getEnemy(db, profile.squidlingEnemyId) : undefined
     if (!nextSquidling) {
-      return { save: next, xpGained: xpAmount, message: 'Squidling defeated.', bossResumed: false }
+      return { save: next, xpGained: xpAmount, xpSkillId: FISHING_SKILL_ID, message: 'Squidling defeated.', bossResumed: false }
     }
     const total = profile?.squidlingCount ?? remaining + 1
     const defeated = total - remaining
@@ -84,18 +86,19 @@ export function applySquidlingVictory(
         combatSkipEnemyAttack: false,
       },
       xpGained: xpAmount,
+      xpSkillId: FISHING_SKILL_ID,
       message: `Squidling defeated (${defeated}/${total}). Another emerges!`,
       bossResumed: false,
     }
   }
 
   if (!bossId) {
-    return { save: next, xpGained: xpAmount, message: 'Squidling defeated.', bossResumed: false }
+    return { save: next, xpGained: xpAmount, xpSkillId: FISHING_SKILL_ID, message: 'Squidling defeated.', bossResumed: false }
   }
 
   const boss = getEnemy(db, bossId)
   if (!boss) {
-    return { save: next, xpGained: xpAmount, message: 'Squidling defeated.', bossResumed: false }
+    return { save: next, xpGained: xpAmount, xpSkillId: FISHING_SKILL_ID, message: 'Squidling defeated.', bossResumed: false }
   }
 
   return {
@@ -112,6 +115,7 @@ export function applySquidlingVictory(
       combatBossSleepRoundsRemaining: null,
     },
     xpGained: xpAmount,
+      xpSkillId: FISHING_SKILL_ID,
     message: `Squidling defeated. ${boss['Display Name']} returns at ${pendingHp} HP!`,
     bossResumed: true,
   }

@@ -113,14 +113,15 @@ ActionRewardBundle _victoryRewardBundle(
   num xpGained,
   List<LootGrant> loot,
   num goldGained,
-  num nowMs,
-) {
-  final levelBefore = getSkillProgress(before, _combatSkillId).level;
-  final levelAfter = getSkillProgress(after, _combatSkillId).level;
+  num nowMs, [
+  String xpSkillId = _combatSkillId,
+]) {
+  final levelBefore = getSkillProgress(before, xpSkillId).level;
+  final levelAfter = getSkillProgress(after, xpSkillId).level;
   final summary = summarizeXpReward(
     db,
     after,
-    _combatSkillId,
+    xpSkillId,
     xpGained,
     levelAfter > levelBefore ? levelAfter : null,
   );
@@ -211,6 +212,7 @@ void _resolveDueCombatRound(
               const <LootGrant>[],
               0,
               roundEnd,
+              squidlingResult.xpSkillId,
             ),
           ),
         );
@@ -249,6 +251,7 @@ void _resolveDueCombatRound(
           victory.loot,
           victory.goldGained,
           roundEnd,
+          victory.xpSkillId,
         ),
       ),
     );
