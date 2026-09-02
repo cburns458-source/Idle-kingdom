@@ -243,6 +243,71 @@ bool skillHasRecipeBook(GameDatabase db, String skillId) {
       );
 }
 
+/// Where a named output belongs in the skill menu / recipe book.
+class SkillMenuPlacement {
+  const SkillMenuPlacement({required this.tabId, required this.tabLabel, this.sectionTitle});
+
+  final String tabId;
+  final String tabLabel;
+  final String? sectionTitle;
+}
+
+SkillMenuPlacement skillMenuPlacementForOutput(
+  GameDatabase db,
+  String skillId,
+  String displayName, [
+  String outputId = '',
+]) {
+  if (skillId == smithingSkillId) {
+    final material = _smithingMaterial(displayName);
+    if (material != null) {
+      return SkillMenuPlacement(
+        tabId: 'basic-metal',
+        tabLabel: 'Basic metal',
+        sectionTitle: '$material items',
+      );
+    }
+    return const SkillMenuPlacement(tabId: 'other', tabLabel: 'Other');
+  }
+  if (skillId == artisanrySkillId) {
+    if (_isBowName(displayName)) {
+      return const SkillMenuPlacement(tabId: 'bows', tabLabel: 'Bows');
+    }
+    final item = outputId.isNotEmpty
+        ? db.items.firstWhereOrNull((row) => row.itemId == outputId)
+        : _itemByName(db, displayName);
+    if (_isJewelryItem(item, displayName)) {
+      return const SkillMenuPlacement(tabId: 'jewelry', tabLabel: 'Jewelry');
+    }
+    final material = _armorMaterial(displayName);
+    if (material != null && _isGroupedArmorMaterial(material)) {
+      return SkillMenuPlacement(
+        tabId: 'other',
+        tabLabel: 'Other',
+        sectionTitle: '$material equipment',
+      );
+    }
+    return const SkillMenuPlacement(tabId: 'other', tabLabel: 'Other');
+  }
+  if (skillId == arcanaSkillId) {
+    if (outputId == _essenceItemId || displayName == 'Essence') {
+      return const SkillMenuPlacement(tabId: 'essence', tabLabel: 'Essence');
+    }
+    if (_isSpellName(displayName)) {
+      return const SkillMenuPlacement(tabId: 'spells', tabLabel: 'Spells');
+    }
+    if (_isArcanaWeaponName(displayName, outputId)) {
+      return const SkillMenuPlacement(tabId: 'weapons', tabLabel: 'Weapons');
+    }
+    return const SkillMenuPlacement(tabId: 'enchantments', tabLabel: 'Enchantments');
+  }
+  if (skillMenuView(db, skillId).tabs.any((tab) => tab.id == 'actions')) {
+    return const SkillMenuPlacement(tabId: 'actions', tabLabel: 'Actions');
+  }
+  final first = skillMenuView(db, skillId).tabs.first;
+  return SkillMenuPlacement(tabId: first.id, tabLabel: first.label);
+}
+
 String projectOutputName(GameDatabase db, ProjectRow project) {
   final outputId = project.raw['Output Item / Target ID'];
   if (outputId is! String || outputId.isEmpty) return jsString(project.raw['Display Name']);

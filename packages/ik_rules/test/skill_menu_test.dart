@@ -185,6 +185,30 @@ void main() {
     );
   });
 
+  test('recipe books expand skill-menu groups into individual rows', () {
+    final save = createNewSave(db, 0);
+    final smithing = recipeBookView(save, db, smithingSkillId);
+    expect(smithing.tabs.map((tab) => tab.label), contains('Basic metal'));
+    final steel = smithing.tabs.first.sections.where((section) => section.title == 'Steel items');
+    expect(steel, isNotEmpty);
+    expect(steel.first.entries.any((entry) => entry.name == 'Steel Sword'), isTrue);
+    expect(steel.first.entries.any((entry) => entry.name == 'Steel items'), isFalse);
+
+    final artisanry = recipeBookView(save, db, artisanrySkillId);
+    expect(
+      artisanry.tabs.map((tab) => tab.label),
+      containsAll(<String>['Bows', 'Jewelry', 'Other']),
+    );
+    final other = artisanry.tabs.firstWhere((tab) => tab.id == 'other');
+    expect(other.sections.any((section) => section.title == 'Leather equipment'), isTrue);
+    expect(
+      other.sections
+          .expand((section) => section.entries)
+          .any((entry) => entry.name == 'Leather Helmet'),
+      isTrue,
+    );
+  });
+
   test('squid noodle soup heals 1,100', () {
     final item = db.items.firstWhere((row) => row.itemId == 'ITEM-0302');
     expect(item.displayName, 'Squid Noodle Soup');

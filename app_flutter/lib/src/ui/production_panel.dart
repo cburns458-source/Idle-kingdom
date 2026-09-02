@@ -85,7 +85,8 @@ class _ProductionPickerState extends State<ProductionPicker> {
     showStationRecipeBook(
       context,
       title: widget.activity.contextualName ?? widget.activity.internalKey,
-      rows: recipeLogForEntries(recipeBookForActivity(save, db, widget.activity.activityId)),
+      entries: recipeBookForActivity(save, db, widget.activity.activityId),
+      db: db,
     );
   }
 

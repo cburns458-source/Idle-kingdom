@@ -121,39 +121,56 @@ bool equipmentStackOwned(PlayerSave save, EquippedStack need) {
   return false;
 }
 
-/// While preset 1 is active, copy live gear onto its snapshot.
-/// Empty live slots do not wipe a stored piece that is no longer owned, so a
-/// partial apply cannot forget missing items.
+bool _slotEmpty(EquippedStack? stack) => stack == null || stack.quantity <= 0;
+
+bool _sameStackIdentity(EquippedStack a, EquippedStack b) {
+  return a.itemId == b.itemId &&
+      (a.enchantmentId ?? '') == (b.enchantmentId ?? '') &&
+      (a.favorite == true) == (b.favorite == true);
+}
+
+bool _stacksMatchForLoadout(String slotId, EquippedStack? live, EquippedStack? stored) {
+  final liveEmpty = _slotEmpty(live);
+  final storedEmpty = _slotEmpty(stored);
+  if (liveEmpty && storedEmpty) return true;
+  if (liveEmpty || storedEmpty) return false;
+  if (!_sameStackIdentity(live!, stored!)) return false;
+  if (isStackableConsumableSlot(slotId)) return true;
+  return live.quantity == stored.quantity;
+}
+
+bool presetHasEquippedItem(EquipmentPreset preset) {
+  return preset.slots.values.any((stack) => !_slotEmpty(stack));
+}
+
+/// True when worn gear matches the stored snapshot. Food and potion compare
+/// item identity only, so eating a few does not deselect the preset.
+bool presetMatchesLoadout(PlayerSave save, int index) {
+  final normalized = _normalizeEquipmentPresets(save);
+  if (index < 0 || index >= normalized.equipmentPresets.length) return false;
+  final stored = normalized.equipmentPresets[index].slots;
+  for (final slotId in save.equipment.slots.keys) {
+    if (!_stacksMatchForLoadout(slotId, save.equipment.slots[slotId], stored[slotId])) {
+      return false;
+    }
+  }
+  return true;
+}
+
+/// Location and equipment chips: matching non-empty snapshots, or an empty
+/// snapshot only while it is the last applied preset.
+bool shouldHighlightEquipmentPreset(PlayerSave save, int index) {
+  if (!presetMatchesLoadout(save, index)) return false;
+  final normalized = _normalizeEquipmentPresets(save);
+  if (presetHasEquippedItem(normalized.equipmentPresets[index])) return true;
+  return normalized.activeEquipmentPresetIndex == index;
+}
+
+/// Normalize preset rows. Worn gear is never copied onto a snapshot.
 PlayerSave trackActiveEquipmentPreset(PlayerSave save) {
   final normalized = _normalizeEquipmentPresets(save);
-  if (normalized.activeEquipmentPresetIndex != 0) {
-    return save.copyWith(
-      equipmentPresets: normalized.equipmentPresets,
-      activeEquipmentPresetIndex: normalized.activeEquipmentPresetIndex,
-    );
-  }
-  final stored = clonePresetSlots(normalized.equipmentPresets[0].slots);
-  for (final slotId in save.equipment.slots.keys) {
-    final live = save.equipment.slots[slotId];
-    if (live != null && live.quantity > 0) {
-      stored[slotId] = cloneEquippedStack(live);
-      continue;
-    }
-    final remembered = stored[slotId];
-    if (remembered != null && remembered.quantity > 0 && !equipmentStackOwned(save, remembered)) {
-      continue;
-    }
-    stored[slotId] = null;
-  }
-  final next = <EquipmentPreset>[
-    for (var index = 0; index < normalized.equipmentPresets.length; index += 1)
-      if (index == 0)
-        normalized.equipmentPresets[index].copyWith(slots: stored)
-      else
-        normalized.equipmentPresets[index],
-  ];
   return save.copyWith(
-    equipmentPresets: next,
+    equipmentPresets: normalized.equipmentPresets,
     activeEquipmentPresetIndex: normalized.activeEquipmentPresetIndex,
   );
 }
@@ -208,8 +225,7 @@ PlayerSave setEquipmentPresetIcon(PlayerSave save, int index, EquipmentPresetIco
   );
 }
 
-/// Write one slot onto a stored preset. Does not change worn gear.
-PlayerSave setEquipmentPresetSlot(
+PlayerSave _writeEquipmentPresetSlot(
   GameDatabase db,
   PlayerSave save,
   int index,
@@ -242,6 +258,31 @@ PlayerSave setEquipmentPresetSlot(
   );
 }
 
+/// Write one slot onto a stored preset. Does not change worn gear.
+PlayerSave setEquipmentPresetSlot(
+  GameDatabase db,
+  PlayerSave save,
+  int index,
+  String slotId,
+  EquippedStack? stack,
+) {
+  return _writeEquipmentPresetSlot(db, save, index, slotId, stack);
+}
+
+/// Write one slot onto a selected preset and wear that snapshot.
+PlayerSave editSelectedEquipmentPresetSlot(
+  GameDatabase db,
+  PlayerSave save,
+  int index,
+  String slotId,
+  EquippedStack? stack,
+) {
+  final next = _writeEquipmentPresetSlot(db, save, index, slotId, stack);
+  if (identical(next, save)) return save;
+  final applied = applyEquipmentPreset(db, next, index, refresh: true);
+  return applied.ok ? applied.save! : next;
+}
+
 class _PoolEntry {
   _PoolEntry({
     required this.itemId,
@@ -271,21 +312,25 @@ bool _takeFromPool(Map<String, _PoolEntry> pool, EquippedStack need) {
 
 /// Instant in-place swap to a stored preset. Missing pieces are skipped and
 /// those slots stay empty. Blocks only when the bag cannot hold what comes off.
-EquipResult applyEquipmentPreset(GameDatabase db, PlayerSave save, int index) {
+EquipResult applyEquipmentPreset(
+  GameDatabase db,
+  PlayerSave save,
+  int index, {
+  bool refresh = false,
+}) {
   // db reserved for future requirement checks on apply.
   final _ = db;
   final normalized = _normalizeEquipmentPresets(save);
   if (index < 0 || index >= equipmentPresetCount) {
     return const EquipResult.failed('That preset does not exist.');
   }
-  var working = save.copyWith(
+  final working = save.copyWith(
     equipmentPresets: normalized.equipmentPresets,
     activeEquipmentPresetIndex: normalized.activeEquipmentPresetIndex,
   );
-  if (working.activeEquipmentPresetIndex == 0) {
-    working = trackActiveEquipmentPreset(working);
-  }
-  if (index == working.activeEquipmentPresetIndex) {
+  if (!refresh &&
+      index == working.activeEquipmentPresetIndex &&
+      presetMatchesLoadout(working, index)) {
     return EquipResult.ok(working);
   }
 
