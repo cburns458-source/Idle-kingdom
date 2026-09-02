@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:idle_kingdoms/src/theme.dart';
 import 'package:ik_content/ik_content.dart';
 import 'package:ik_rules/ik_rules.dart';
 
@@ -15,6 +16,47 @@ void main() {
   Future<void> openLog(WidgetTester tester) async {
     await openChinScreen(tester, 'Log');
   }
+
+  testWidgets('log journal copy uses panel ink on wood and stone plates', (tester) async {
+    final controller = buildController(database, seed: startedCharacter(database));
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller);
+    await openLog(tester);
+
+    void expectPackInk(UiChromePack pack) {
+      final chrome = UiChrome.forPack(pack);
+      final easy = tester.widget<Text>(find.text('Easy'));
+      expect(easy.style?.color, chrome.panelInk);
+      expect(easy.style?.color, isNot(Palette.parchmentText));
+      expect(easy.style?.color, isNot(Palette.gold));
+
+      final completion = logCompletion(database.launch, controller.save);
+      final overall = tester.widget<Text>(find.text('${completion.overall.percent}% complete'));
+      expect(overall.style?.color, chrome.embossFace);
+      if (pack == UiChromePack.stone) {
+        expect(overall.style?.color, isNot(Palette.gold));
+      }
+
+      final section = tester.widget<Text>(find.text(completion.section('achievements')!.label));
+      expect(section.style?.color, chrome.embossFace);
+
+      final bandMuted = find
+          .descendant(
+            of: find.ancestor(of: find.text('Easy'), matching: find.byType(ExpansionTile)),
+            matching: find.byType(MutedText),
+          )
+          .first;
+      final band = tester.widget<Text>(find.descendant(of: bandMuted, matching: find.byType(Text)));
+      expect(band.style?.color, chrome.panelMuted);
+      expect(band.style?.color, isNot(Palette.muted));
+      expect(band.style?.color, isNot(Palette.parchmentText));
+    }
+
+    expectPackInk(UiChromePack.wood);
+    controller.setUiChromePack(UiChromePack.stone);
+    await tester.pump();
+    expectPackInk(UiChromePack.stone);
+  });
 
   testWidgets('opens on the achievements a save has not reached', (tester) async {
     final controller = buildController(database, seed: startedCharacter(database));

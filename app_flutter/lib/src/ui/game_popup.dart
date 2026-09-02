@@ -42,6 +42,7 @@ Future<T?> showGamePopup<T>({
   bool barrierDismissible = true,
 }) {
   final reduceMotion = BatterySaverScope.of(context);
+  final chrome = UiChrome.of(context);
   return showGeneralDialog<T>(
     context: context,
     useRootNavigator: false,
@@ -49,24 +50,27 @@ Future<T?> showGamePopup<T>({
     barrierLabel: 'Dismiss',
     barrierColor: const Color(0xCC120C08),
     transitionDuration: reduceMotion ? Duration.zero : const Duration(milliseconds: 220),
-    pageBuilder: (context, animation, secondary) {
-      return SafeArea(
-        child: Align(
-          alignment: placement == GamePopupPlacement.topHalf
-              ? const Alignment(0, -0.65)
-              : Alignment.center,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: ConstrainedBox(
-              constraints: BoxConstraints(
-                maxWidth: 400,
-                maxHeight:
-                    MediaQuery.sizeOf(context).height *
-                    (placement == GamePopupPlacement.topHalf ? 0.48 : 0.7),
-              ),
-              child: Material(
-                type: MaterialType.transparency,
-                child: KeyedSubtree(key: const Key('game-popup'), child: builder(context)),
+    pageBuilder: (dialogContext, animation, secondary) {
+      return UiChromeScope(
+        chrome: chrome,
+        child: SafeArea(
+          child: Align(
+            alignment: placement == GamePopupPlacement.topHalf
+                ? const Alignment(0, -0.65)
+                : Alignment.center,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: 400,
+                  maxHeight:
+                      MediaQuery.sizeOf(context).height *
+                      (placement == GamePopupPlacement.topHalf ? 0.48 : 0.7),
+                ),
+                child: Material(
+                  type: MaterialType.transparency,
+                  child: KeyedSubtree(key: const Key('game-popup'), child: builder(dialogContext)),
+                ),
               ),
             ),
           ),

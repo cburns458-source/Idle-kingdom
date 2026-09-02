@@ -427,7 +427,7 @@ class GameTextButton extends StatelessWidget {
                   fontFamily: gameFontFamily,
                   fontSize: 12,
                   fontWeight: FontWeight.w400,
-                  color: selected ? chrome.primaryLabel : ink,
+                  color: selected ? chrome.embossFace : ink,
                   height: 1.1,
                 ),
               ),
@@ -808,12 +808,43 @@ class GamePanel extends StatelessWidget {
   final bool framed;
 
   Widget _inked(BuildContext context, Widget plateChild) {
-    final ink = UiChrome.of(context).panelInk;
-    return DefaultTextStyle.merge(
-      style: TextStyle(color: ink, fontFamily: gameFontFamily),
-      child: IconTheme.merge(
-        data: IconThemeData(color: ink),
-        child: plateChild,
+    final chrome = UiChrome.of(context);
+    final ink = chrome.panelInk;
+    final muted = chrome.panelMuted;
+    final theme = Theme.of(context);
+    return _PanelForeground(
+      child: Theme(
+        data: theme.copyWith(
+          listTileTheme: theme.listTileTheme.copyWith(
+            textColor: ink,
+            iconColor: ink,
+            titleTextStyle: TextStyle(
+              color: ink,
+              fontFamily: gameFontFamily,
+              fontWeight: FontWeight.w400,
+              fontSize: 16,
+            ),
+            subtitleTextStyle: TextStyle(
+              color: muted,
+              fontFamily: gameFontFamily,
+              fontSize: 12.5,
+              height: 1.35,
+            ),
+          ),
+          expansionTileTheme: ExpansionTileThemeData(
+            textColor: ink,
+            collapsedTextColor: ink,
+            iconColor: ink,
+            collapsedIconColor: muted,
+          ),
+        ),
+        child: DefaultTextStyle.merge(
+          style: TextStyle(color: ink, fontFamily: gameFontFamily),
+          child: IconTheme.merge(
+            data: IconThemeData(color: ink),
+            child: plateChild,
+          ),
+        ),
       ),
     );
   }
@@ -1048,6 +1079,18 @@ class _MeterFillClipper extends CustomClipper<Path> {
   bool shouldReclip(covariant _MeterFillClipper oldClipper) => oldClipper.step != step;
 }
 
+/// Marks a [GamePanel] subtree so [MutedText] stays on pack panel ink.
+class _PanelForeground extends InheritedWidget {
+  const _PanelForeground({required super.child});
+
+  static bool of(BuildContext context) {
+    return context.dependOnInheritedWidgetOfExactType<_PanelForeground>() != null;
+  }
+
+  @override
+  bool updateShouldNotify(_PanelForeground oldWidget) => false;
+}
+
 /// Small muted caption, the equivalent of the CSS `.muted.tiny` pairing.
 class MutedText extends StatelessWidget {
   const MutedText(this.text, {super.key, this.textAlign, this.color});
@@ -1061,7 +1104,8 @@ class MutedText extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final inherited = DefaultTextStyle.of(context).style.color;
-    final onPanel = inherited != null && inherited.computeLuminance() < 0.45;
+    final onPanel =
+        _PanelForeground.of(context) || (inherited != null && inherited.computeLuminance() < 0.45);
     return Text(
       text,
       textAlign: textAlign,

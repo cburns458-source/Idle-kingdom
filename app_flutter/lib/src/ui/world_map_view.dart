@@ -407,9 +407,9 @@ class _SelectionPanel extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(12),
-      decoration: const BoxDecoration(
-        color: Palette.slot,
-        border: Border(top: BorderSide(color: Palette.edge)),
+      decoration: BoxDecoration(
+        color: UiChrome.of(context).slot,
+        border: const Border(top: BorderSide(color: Palette.edge)),
       ),
       child: place == null
           ? const MutedText('Pick a place to see what is there. Double-tap one to go.')

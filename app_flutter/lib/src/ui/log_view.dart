@@ -55,10 +55,10 @@ class _LogViewState extends State<LogView> {
             onClose: widget.onClose!,
             trailing: Text(
               '${jsNumberToString(completion.overall.percent)}% complete',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12.5,
                 fontWeight: FontWeight.w400,
-                color: Palette.gold,
+                color: UiChrome.of(context).embossFace,
               ),
             ),
           )
@@ -73,10 +73,10 @@ class _LogViewState extends State<LogView> {
                 const Text('Log', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w400)),
                 Text(
                   '${jsNumberToString(completion.overall.percent)}% complete',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12.5,
                     fontWeight: FontWeight.w400,
-                    color: Palette.gold,
+                    color: UiChrome.of(context).embossFace,
                   ),
                 ),
               ],
@@ -125,10 +125,10 @@ class _LogViewState extends State<LogView> {
                 const SizedBox(width: 8),
                 Text(
                   section.label,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w400,
-                    color: Palette.gold,
+                    color: UiChrome.of(context).embossFace,
                   ),
                 ),
               ],
@@ -227,7 +227,11 @@ class _DifficultyBand extends StatelessWidget {
               childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
               title: Text(
                 difficulty,
-                style: const TextStyle(fontWeight: FontWeight.w400, fontSize: 16),
+                style: TextStyle(
+                  fontWeight: FontWeight.w400,
+                  fontSize: 16,
+                  color: UiChrome.of(context).panelInk,
+                ),
               ),
               subtitle: Padding(
                 padding: const EdgeInsets.only(top: 6),
@@ -238,7 +242,7 @@ class _DifficultyBand extends StatelessWidget {
                     const SizedBox(height: 4),
                     MeterBar(
                       value: completion.total <= 0 ? 0 : completion.done / completion.total,
-                      color: Palette.gold,
+                      color: UiChrome.of(context).embossFace,
                       height: 6,
                     ),
                   ],

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:idle_kingdoms/src/theme.dart';
+import 'package:idle_kingdoms/src/ui/ingredient_chip.dart';
 import 'package:ik_content/ik_content.dart';
 
 import 'support/harness.dart';
@@ -90,6 +91,23 @@ void main() {
     final arrow = tester.widget<Icon>(find.byIcon(Icons.expand_more));
     expect(arrow.color, UiChrome.stone.primaryLabel);
     expect(arrow.color, isNot(Palette.gold));
+  });
+
+  testWidgets('Stone wells drop the wood slot brown', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildAppTheme(),
+        home: UiChromeScope(
+          chrome: UiChrome.stone,
+          child: const Scaffold(body: IngredientChip(item: null, need: 2, owned: 1)),
+        ),
+      ),
+    );
+
+    final well = tester.widget<Container>(find.byType(Container).first);
+    expect(well.decoration, isA<BoxDecoration>());
+    expect((well.decoration as BoxDecoration).color, UiChrome.stone.slot);
+    expect((well.decoration as BoxDecoration).color, isNot(Palette.slot));
   });
 
   testWidgets('GameButton wears the active pack fill', (tester) async {
