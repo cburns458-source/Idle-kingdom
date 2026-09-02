@@ -8,6 +8,7 @@ import '../npcs/knowledge.dart';
 import '../production/recipes.dart';
 import '../projects/projects.dart';
 
+const String _essenceItemId = 'ITEM-0011';
 const String miningSkillId = 'SKL-0002';
 const String fishingSkillId = 'SKL-0003';
 const String harvestingSkillId = 'SKL-0004';
@@ -354,9 +355,18 @@ List<SkillMenuTab> _arcanaTabs(GameDatabase db) {
     }
   }
   return <SkillMenuTab>[
+    _listTab('essence', 'Essence', _arcanaEssenceEntries(db)),
     _listTab('spells', 'Spells', _dedupeByName(spells)),
     _listTab('weapons', 'Weapons', _dedupeByName(weapons)),
     _listTab('enchantments', 'Enchantments', _dedupeByName(enchantments)),
+  ];
+}
+
+List<SkillMenuListItem> _arcanaEssenceEntries(GameDatabase db) {
+  final item = db.items.firstWhereOrNull((row) => row.raw['Item ID'] == _essenceItemId);
+  if (item == null) return const <SkillMenuListItem>[];
+  return <SkillMenuListItem>[
+    SkillMenuListItem(id: _essenceItemId, displayName: item.displayName, level: 1),
   ];
 }
 

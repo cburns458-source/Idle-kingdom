@@ -229,7 +229,7 @@ describe('quest tours', () => {
     expect(completed.rewardBundle.loot).toEqual([])
   })
 
-  it('locks Delve and Mages quarters until Wizard Studies is accepted', () => {
+  it('locks Harness essence and Mages quarters until Wizard Studies is accepted', () => {
     const { launch } = prepareDatabase(rawDatabase)
     let save = { ...createNewSave(launch), currentLocationId: 'LOC-0007' }
     expect(activityVisibleForSave(launch, save, 'ACT-0008')).toBe(false)

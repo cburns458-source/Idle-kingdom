@@ -64,8 +64,16 @@ class _ShopPanelState extends State<ShopPanel> {
 
   Future<void> _addBuy(ShopRow shop, String itemId, num unit, String name) async {
     final item = controller.indexes.itemsById[itemId];
+    final nowMs = controller.session.clock();
+    final remaining = shopRemainingToday(save, shop, itemId, nowMs);
+    final already = _buys[itemId] ?? 0;
+    final stockLeft = remaining == null ? null : (remaining - already).clamp(0, remaining);
     // A cosmetic is a one-time unlock, so it is in the offer or it is not.
     if (item?.category == 'Cosmetic') {
+      if (stockLeft != null && stockLeft < 1) {
+        setState(() => _error = 'That item is sold out for today.');
+        return;
+      }
       setState(() {
         _error = null;
         if (_buys.remove(itemId) == null) _buys[itemId] = 1;
@@ -78,6 +86,15 @@ class _ShopPanelState extends State<ShopPanel> {
         _total(_sells, (id) => playerSellPrice(db, shop, id)) -
         _total(_buys, (id) => playerBuyPrice(db, shop, id));
     final affordable = unit <= 0 ? null : (budget / unit).floor();
+    num? max;
+    if (affordable != null && affordable >= 1) max = affordable;
+    if (stockLeft != null) {
+      max = max == null ? stockLeft : (max < stockLeft ? max : stockLeft);
+    }
+    if (max != null && max < 1) {
+      setState(() => _error = 'That item is sold out for today.');
+      return;
+    }
     final quantity = await askQuantity(
       context,
       subtitle: 'Buy',
@@ -88,9 +105,10 @@ class _ShopPanelState extends State<ShopPanel> {
           _sells.isEmpty
               ? 'Afford up to ${formatThousands(affordable)} with current gold'
               : 'Afford up to ${formatThousands(affordable)} counting the sells on offer',
+        if (stockLeft != null) '${formatThousands(stockLeft)} left in today\'s stock',
       ],
       confirmLabel: 'Add to offer',
-      max: affordable == null || affordable < 1 ? null : affordable,
+      max: max?.floor(),
     );
     if (quantity == null || !mounted) return;
     setState(() {
@@ -129,6 +147,7 @@ class _ShopPanelState extends State<ShopPanel> {
       save,
       widget.shopId,
       ShopOffer(buys: _lines(_buys), sells: _lines(_sells)),
+      nowMs: controller.session.clock(),
     );
     if (!result.ok) {
       setState(() => _error = result.reason);
@@ -165,6 +184,7 @@ class _ShopPanelState extends State<ShopPanel> {
     final buyTotal = _total(_buys, (id) => playerBuyPrice(db, shop, id));
     final sellTotal = _total(_sells, (id) => playerSellPrice(db, shop, id));
     final net = sellTotal - buyTotal;
+    final nowMs = controller.session.clock();
     final stock = shopStockForPlayer(db, save, shop);
     final sellable = _sellable(shop);
 
@@ -226,6 +246,7 @@ class _ShopPanelState extends State<ShopPanel> {
                           itemId: entry.itemId,
                           unit: playerBuyPrice(db, shop, entry.itemId),
                           offered: _buys[entry.itemId],
+                          remaining: shopRemainingToday(save, shop, entry.itemId, nowMs),
                           onTap: (unit, name) => _addBuy(shop, entry.itemId, unit, name),
                         ),
                     ],
@@ -292,10 +313,12 @@ class _ShopPanelState extends State<ShopPanel> {
     required void Function(num unit, String name) onTap,
     num? owned,
     num? offered,
+    num? remaining,
   }) {
     final item = controller.indexes.itemsById[itemId];
     final name = item?.displayName ?? itemId;
-    final enabled = unit != null && (owned == null || owned > 0);
+    final soldOut = remaining != null && remaining <= 0;
+    final enabled = unit != null && (owned == null || owned > 0) && !soldOut;
 
     return Tooltip(
       message: name,
@@ -324,9 +347,13 @@ class _ShopPanelState extends State<ShopPanel> {
                     Text(
                       unit == null
                           ? '—'
-                          : owned == null
+                          : owned != null
+                          ? '${formatThousands(unit)}g · ${formatThousands(owned)}'
+                          : remaining == null
                           ? '${formatThousands(unit)}g'
-                          : '${formatThousands(unit)}g · ${formatThousands(owned)}',
+                          : soldOut
+                          ? 'sold out'
+                          : '${formatThousands(unit)}g · ${formatThousands(remaining)} left',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(fontSize: 10.5, color: Palette.muted, height: 1.1),

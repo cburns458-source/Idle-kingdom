@@ -209,7 +209,7 @@ WIZARD'S TOWER
 - Wizard's Shop.
 - Arcana access.
 - Magical NPCs.
-- Essence Mining.
+- Essence gathering (Harness essence).
 - Enchantment progression.
 
 KINGSWOODS
@@ -489,7 +489,7 @@ Equipment-compatible non-Combat Activities may generate Combat Actions. After vi
 ======================================================================
 
 8.1 MINING
-Mining gathers ores, coal, clay, gems, and Essence and requires an appropriate pickaxe or other defined tool.
+Mining gathers ores, coal, clay, and gems and requires an appropriate pickaxe or other defined tool.
 
 Current resources:
 - Clay.
@@ -501,7 +501,6 @@ Current resources:
 - Gold Ore.
 - Titanium Ore.
 - Tungsten Ore.
-- Essence.
 - Sapphire.
 - Emerald.
 - Ruby.
@@ -514,7 +513,7 @@ Current Proficiency Levels:
 - Level 60: Titanium Ore.
 - Level 70: Tungsten Ore.
 
-Essence is a Mining resource used by Arcana and is available near or within the Wizard's Tower.
+Essence is an Arcana resource harnessed at the Wizard's Tower (Harness essence, Arcana 1).
 
 8.2 FISHING
 Fishing catches fish and water-related resources.
@@ -754,7 +753,7 @@ Output:
 Arcana is the instant Special Production skill for item enchantment and magical production.
 
 Core resources and relationships:
-- Essence is a primary Arcana resource gathered through Mining.
+- Essence is a primary Arcana resource gathered through Harness essence at the Wizard's Tower.
 - Crafting creates Enchanting Tablets and Spell Tablets.
 - Arcana consumes an Enchanting Tablet, Essence, and any project-specific materials to apply an enchantment to a valid item.
 - Arcana may also craft prepared Spells (for example Strength Spell) that equip into Spell slots. Equipped spells are always active; they do not cycle.
@@ -870,7 +869,7 @@ Mining Store:
 
 Wizard's Shop:
 - Sells magical items.
-- May sell Essence at a premium so Mining remains the primary efficient source.
+- May sell Essence at a premium so Harness essence remains the primary efficient source.
 
 Additional world shops may be attached to appropriate Locations and NPCs.
 

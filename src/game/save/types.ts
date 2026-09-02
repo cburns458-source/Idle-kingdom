@@ -1,4 +1,4 @@
-export const SAVE_VERSION = 40
+export const SAVE_VERSION = 41
 export const SAVE_STORAGE_KEY = 'idle-kingdoms.demo.save'
 export const STARTING_LOCATION_ID = 'LOC-0001'
 /** Base gold before race kit; race starters grant the real starting gold. */
@@ -232,6 +232,10 @@ export interface PlayerSave {
   rankedPvpWins: number
   /** Ranked arena losses. */
   rankedPvpLosses: number
+  /** UTC date key (`YYYY-MM-DD`) for shop daily purchase caps. */
+  shopPurchaseDayKey: string | null
+  /** Units bought today, keyed by `shopId:itemId`. */
+  shopPurchasesToday: Record<string, number>
   /** Merchant tip rewards already claimed (one-time dialogue grants). */
   claimedMerchantTipIds: string[]
   /** One-time Kingswoods Sling grant. Existing saves keep false until they visit. */

@@ -625,6 +625,19 @@ export const SAVE_MIGRATIONS: SaveMigration[] = [
       return grantPetsForCollectedCritters(withMotto)
     },
   },
+  {
+    fromVersion: 40,
+    toVersion: 41,
+    migrate: (save) => ({
+      ...save,
+      shopPurchaseDayKey: typeof save.shopPurchaseDayKey === 'string' ? save.shopPurchaseDayKey : null,
+      shopPurchasesToday:
+        save.shopPurchasesToday && typeof save.shopPurchasesToday === 'object'
+          ? save.shopPurchasesToday
+          : {},
+      saveVersion: 41,
+    }),
+  },
 ]
 
 export function migrateSave(save: PlayerSave, nowMs: number = Date.now()): PlayerSave {

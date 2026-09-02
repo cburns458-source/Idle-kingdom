@@ -104,8 +104,9 @@ ShopTransactionResult confirmShopOffer(
   GameDatabase db,
   PlayerSave save,
   String shopId,
-  ShopOffer offer,
-) {
+  ShopOffer offer, {
+  num? nowMs,
+}) {
   final shop = getShop(db, shopId);
   if (shop == null) return const ShopTransactionResult.failed('Shop not found.');
 
@@ -116,10 +117,24 @@ ShopTransactionResult confirmShopOffer(
     return const ShopTransactionResult.failed('Add items to the offer first.');
   }
 
+  final clock = nowMs ?? DateTime.now().toUtc().millisecondsSinceEpoch;
+  var next = syncShopPurchaseDay(save, clock);
+  final reserved = <String, num>{};
   for (final line in offer.buys) {
     if (!shopSellsItem(shop, line.itemId)) {
       return const ShopTransactionResult.failed('The shop does not sell that item.');
     }
+    final remaining = shopRemainingToday(next, shop, line.itemId, clock);
+    if (remaining == null) continue;
+    final already = reserved[line.itemId] ?? 0;
+    final qty = line.quantity.floor();
+    if (already + qty > remaining) {
+      final left = (remaining - already).clamp(0, remaining);
+      return ShopTransactionResult.failed(
+        left <= 0 ? 'That item is sold out for today.' : "Only $left left in today's stock.",
+      );
+    }
+    reserved[line.itemId] = already + qty;
   }
 
   final buyCost = _lineTotal(offer.buys, (itemId) => playerBuyPrice(db, shop, itemId));
@@ -128,11 +143,10 @@ ShopTransactionResult confirmShopOffer(
   if (!sellCredit.ok) return ShopTransactionResult.failed(sellCredit.reason);
 
   final goldDelta = sellCredit.total - buyCost.total;
-  if (save.gold + goldDelta < 0) {
+  if (next.gold + goldDelta < 0) {
     return const ShopTransactionResult.failed('Not enough gold for this purchase.');
   }
 
-  var next = save;
   if (offer.sells.isNotEmpty) {
     final removed = _removeSellableInventory(next, offer.sells);
     if (removed == null) {
@@ -191,6 +205,14 @@ ShopTransactionResult confirmShopOffer(
       next,
       offer.sells.map((line) => (itemId: line.itemId, quantity: line.quantity)),
       shopLocation.isEmpty ? save.currentLocationId : shopLocation,
+    );
+  }
+  if (offer.buys.isNotEmpty) {
+    next = recordShopPurchases(
+      next,
+      shopId,
+      offer.buys.map((line) => (itemId: line.itemId, quantity: line.quantity)),
+      clock,
     );
   }
 

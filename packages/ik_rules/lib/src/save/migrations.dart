@@ -604,6 +604,23 @@ final List<SaveMigration> saveMigrations = <SaveMigration>[
       return next;
     },
   ),
+  SaveMigration(
+    fromVersion: 40,
+    toVersion: 41,
+    migrate: (save, nowMs) {
+      final next = _bumped(save, 41);
+      next['shopPurchaseDayKey'] = save['shopPurchaseDayKey'] is String
+          ? save['shopPurchaseDayKey']
+          : null;
+      final rawPurchases = save['shopPurchasesToday'];
+      next['shopPurchasesToday'] = rawPurchases is Map
+          ? Map<String, Object?>.from(
+              rawPurchases.map((key, value) => MapEntry(key.toString(), value)),
+            )
+          : <String, Object?>{};
+      return next;
+    },
+  ),
 ];
 
 /// Thrown when a save cannot be brought to the current version.

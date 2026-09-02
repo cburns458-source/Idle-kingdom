@@ -48,6 +48,33 @@ void main() {
     expect(inventoryCount(controller.save, woodenAxeId), 2);
   });
 
+  testWidgets('caps a buy at the shop offer daily remaining', (tester) async {
+    final controller = buildController(
+      database,
+      seed: shopper().copyWith(
+        shopPurchaseDayKey: '2026-01-01',
+        shopPurchasesToday: const <String, num>{'SHP-0001:ITEM-0100': 99},
+      ),
+    );
+    addTearDown(controller.dispose);
+
+    await pumpPanel(tester, ShopPanel(controller: controller, shopId: shopId));
+    expect(find.textContaining('1 left'), findsWidgets);
+
+    await tester.tap(find.byTooltip('Wooden Axe'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining("left in today's stock"), findsOne);
+    await tester.tap(find.text('Add to offer'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Confirm trade'));
+    await tester.pump();
+
+    expect(inventoryCount(controller.save, woodenAxeId), 1);
+    expect(controller.save.shopPurchasesToday['SHP-0001:ITEM-0100'], 100);
+    expect(find.text('sold out'), findsWidgets);
+    expect(find.text('Add to offer'), findsNothing);
+  });
+
   testWidgets('sells from the bag, and a second tap withdraws the offer', (tester) async {
     final controller = buildController(
       database,

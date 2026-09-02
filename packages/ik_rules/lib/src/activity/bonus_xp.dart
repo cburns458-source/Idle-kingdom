@@ -17,10 +17,7 @@ class BonusXpGrant {
 }
 
 /// Extra skill XP granted on specific Actions beyond Relevant Skill ID / XP Reward.
-const Map<String, BonusXpGrant> _bonusSkillXp = <String, BonusXpGrant>{
-  // Delve for Essence: Mining XP from the action row + Arcana XP here.
-  'ACN-0028': BonusXpGrant(skillId: 'SKL-0013', xp: 100),
-};
+const Map<String, BonusXpGrant> _bonusSkillXp = <String, BonusXpGrant>{};
 
 BonusXpGrant? bonusSkillXpForAction(String actionId) => _bonusSkillXp[actionId];
 

@@ -349,7 +349,7 @@ describe('npc conversation', () => {
     const shop = npcConversation(launch, save, npc('NPC-0009'))
     expect(shop.greeting?.kind).toBe('merchant')
     expect(shop.quests[0]!.canTalk).toBe(true)
-    expect(shop.quests[0]!.talkLine).toMatch(/mine under the tower/)
+    expect(shop.quests[0]!.talkLine).toMatch(/halls under the tower/)
     expect(shop.quests[0]!.talkLine).not.toMatch(/ten essence/)
     expect(shop.quests[0]!.ready).toBe(false)
 
