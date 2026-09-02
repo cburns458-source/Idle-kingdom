@@ -81,6 +81,7 @@ class EquipmentPresetsBar extends StatelessWidget {
     final gap = compact ? 4.0 : 6.0;
     final current = showCurrentButton
         ? _LabelChip(
+            key: const Key('current-loadout'),
             compact: compact,
             square: _stageSquareChips,
             label: 'Current',
@@ -93,6 +94,7 @@ class EquipmentPresetsBar extends StatelessWidget {
     final presetButtons = [
       for (var i = 0; i < equipmentPresetCount; i += 1)
         _PresetButton(
+          key: Key('preset-chip-$i'),
           preset: i < presets.length ? presets[i] : null,
           index: i,
           selected: i == selectedPresetIndex || shouldHighlightEquipmentPreset(save, i),
@@ -121,6 +123,7 @@ class EquipmentPresetsBar extends StatelessWidget {
         : null;
     final settings = showSettingsButton
         ? _SettingsChip(
+            key: const Key('preset-settings'),
             compact: compact,
             square: _stageSquareChips || showCurrentButton,
             onPressed: () => _openPresetSettings(context),
@@ -454,7 +457,12 @@ class _LabelChip extends StatelessWidget {
 }
 
 class _SettingsChip extends StatelessWidget {
-  const _SettingsChip({required this.onPressed, required this.compact, required this.square});
+  const _SettingsChip({
+    super.key,
+    required this.onPressed,
+    required this.compact,
+    required this.square,
+  });
 
   final VoidCallback onPressed;
   final bool compact;
@@ -495,6 +503,7 @@ class _SettingsChip extends StatelessWidget {
 
 class _PresetButton extends StatelessWidget {
   const _PresetButton({
+    super.key,
     required this.preset,
     required this.index,
     required this.selected,

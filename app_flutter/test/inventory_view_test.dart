@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/semantics.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:idle_kingdoms/src/pixel_chrome.dart';
 import 'package:idle_kingdoms/src/theme.dart';
 import 'package:idle_kingdoms/src/ui/inventory_view.dart';
 import 'package:ik_content/ik_content.dart';
@@ -399,16 +399,20 @@ void main() {
     expect(controller.save.activeEquipmentPresetIndex, 0);
     expect(controller.save.equipment.slots['SLOT-0001']?.itemId, 'ITEM-0111');
     expect(controller.save.equipmentPresets[0].slots['SLOT-0001']?.itemId, 'ITEM-0111');
-    expect(
-      tester
-          .getSemantics(find.bySemanticsLabel('Current loadout'))
-          .hasFlag(SemanticsFlag.isSelected),
-      isTrue,
-    );
-    expect(
-      tester.getSemantics(find.bySemanticsLabel('Preset 1')).hasFlag(SemanticsFlag.isSelected),
-      isTrue,
-    );
+    Material chipMaterial(Key key) {
+      return tester.widget<Material>(
+        find.descendant(of: find.byKey(key), matching: find.byType(Material)),
+      );
+    }
+
+    PixelSteppedBorder chipBorder(Key key) {
+      return chipMaterial(key).shape! as PixelSteppedBorder;
+    }
+
+    expect(chipBorder(const Key('current-loadout')).side.width, 3);
+    expect(chipBorder(const Key('current-loadout')).side.color, Palette.gold);
+    expect(chipBorder(const Key('preset-chip-0')).side.width, 3);
+    expect(chipBorder(const Key('preset-chip-0')).side.color, Palette.gold);
 
     await tester.tap(find.text('Items'));
     await tester.pump();
@@ -598,13 +602,13 @@ void main() {
     await tester.pump();
 
     final current = tester.getSize(
-      find.descendant(of: find.bySemanticsLabel('Current loadout'), matching: find.byType(InkWell)),
+      find.descendant(of: find.byKey(const Key('current-loadout')), matching: find.byType(InkWell)),
     );
     final preset = tester.getSize(
-      find.ancestor(of: find.text('I'), matching: find.byType(InkWell)),
+      find.descendant(of: find.byKey(const Key('preset-chip-0')), matching: find.byType(InkWell)),
     );
     final settings = tester.getSize(
-      find.descendant(of: find.byTooltip('Preset settings'), matching: find.byType(InkWell)),
+      find.descendant(of: find.byKey(const Key('preset-settings')), matching: find.byType(InkWell)),
     );
     expect(preset.width, preset.height);
     expect(preset.width, 34);
