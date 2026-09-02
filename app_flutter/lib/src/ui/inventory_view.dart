@@ -904,7 +904,6 @@ class _ItemTile extends StatelessWidget {
     required this.onTap,
     required this.onLongPress,
     required this.onToggleFavorite,
-    this.missing = false,
   });
 
   final ItemRow? item;
@@ -913,7 +912,6 @@ class _ItemTile extends StatelessWidget {
   final bool favorite;
   final bool selected;
   final bool selecting;
-  final bool missing;
   final VoidCallback onTap;
   final VoidCallback onLongPress;
   final VoidCallback? onToggleFavorite;
@@ -928,75 +926,69 @@ class _ItemTile extends StatelessWidget {
         ? const Color(0xFF2F3A24)
         : slot;
     return Tooltip(
-      message: missing ? '$name (missing)' : name,
+      message: name,
       onTriggered: onLongPress,
-      child: Opacity(
-        opacity: missing ? 0.45 : 1,
-        child: PixelInkPlate(
-          onTap: onTap,
-          step: PixelChrome.stepTight,
-          fillColor: fill,
-          material: PixelPlateMaterial.none,
-          strokeWidth: selected ? 2.5 : 2,
-          selected: selected || enchanted,
-          shadow: false,
-          padding: const EdgeInsets.all(4),
-          child: GestureDetector(
-            onLongPress: onLongPress,
-            behavior: HitTestBehavior.deferToChild,
-            child: DefaultTextStyle.merge(
-              style: const TextStyle(color: Palette.parchmentText),
-              child: Stack(
-                children: [
-                  Center(child: ItemIcon(item: item, size: 36)),
-                  if (!enchanted && quantity > 1)
-                    Positioned(
-                      right: 0,
-                      bottom: 0,
-                      child: Text(
-                        '${quantity.round()}',
-                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w400),
-                      ),
+      child: PixelInkPlate(
+        onTap: onTap,
+        step: PixelChrome.stepTight,
+        fillColor: fill,
+        material: PixelPlateMaterial.none,
+        strokeWidth: selected ? 2.5 : 2,
+        selected: selected || enchanted,
+        shadow: false,
+        padding: const EdgeInsets.all(4),
+        child: GestureDetector(
+          onLongPress: onLongPress,
+          behavior: HitTestBehavior.deferToChild,
+          child: DefaultTextStyle.merge(
+            style: const TextStyle(color: Palette.parchmentText),
+            child: Stack(
+              children: [
+                Center(child: ItemIcon(item: item, size: 36)),
+                if (!enchanted && quantity > 1)
+                  Positioned(
+                    right: 0,
+                    bottom: 0,
+                    child: Text(
+                      '${quantity.round()}',
+                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w400),
                     ),
-                  if (selected)
-                    const Positioned(
-                      left: 0,
-                      top: 0,
-                      child: Icon(Icons.check, size: 14, color: Palette.gold),
-                    ),
-                  if (enchanted || (onToggleFavorite != null && !selecting))
-                    Positioned(
-                      right: 0,
-                      top: 0,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          if (enchanted)
-                            const Text(
-                              '★',
-                              style: TextStyle(fontSize: 11, color: Palette.softGreen),
-                            ),
-                          if (onToggleFavorite != null && !selecting)
-                            GestureDetector(
-                              behavior: HitTestBehavior.opaque,
-                              onTap: onToggleFavorite,
-                              child: Tooltip(
-                                message: favorite ? 'Unfavorite' : 'Favorite',
-                                child: Padding(
-                                  padding: const EdgeInsets.all(4),
-                                  child: Icon(
-                                    favorite ? Icons.favorite : Icons.favorite_border,
-                                    size: 14,
-                                    color: favorite ? Palette.gold : const Color(0x80F4E7C8),
-                                  ),
+                  ),
+                if (selected)
+                  const Positioned(
+                    left: 0,
+                    top: 0,
+                    child: Icon(Icons.check, size: 14, color: Palette.gold),
+                  ),
+                if (enchanted || (onToggleFavorite != null && !selecting))
+                  Positioned(
+                    right: 0,
+                    top: 0,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (enchanted)
+                          const Text('★', style: TextStyle(fontSize: 11, color: Palette.softGreen)),
+                        if (onToggleFavorite != null && !selecting)
+                          GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onTap: onToggleFavorite,
+                            child: Tooltip(
+                              message: favorite ? 'Unfavorite' : 'Favorite',
+                              child: Padding(
+                                padding: const EdgeInsets.all(4),
+                                child: Icon(
+                                  favorite ? Icons.favorite : Icons.favorite_border,
+                                  size: 14,
+                                  color: favorite ? Palette.gold : const Color(0x80F4E7C8),
                                 ),
                               ),
                             ),
-                        ],
-                      ),
+                          ),
+                      ],
                     ),
-                ],
-              ),
+                  ),
+              ],
             ),
           ),
         ),
