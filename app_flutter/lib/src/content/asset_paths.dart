@@ -315,9 +315,12 @@ String avatarFrameAssetPath() => '$_assetRoot/player/avatar_frame_pixel.png';
 /// resolving as legs rather than as a chest plate.
 String itemIconStem(ItemRow? item) {
   if (item == null) return 'default';
+  final pinned = _itemIcons[item.itemId];
+  // Rare potato keeps Internal Key / Icon Asset Key `golden_spud` for the
+  // audit, but it is drawn with the regular potato art.
+  if (item.itemId == 'ITEM-0026' && pinned != null) return pinned;
   final fromRow = item.iconAssetKey?.trim();
   if (fromRow != null && fromRow.isNotEmpty) return fromRow;
-  final pinned = _itemIcons[item.itemId];
   if (pinned != null) return pinned;
 
   final category = (item.category ?? '').toLowerCase();

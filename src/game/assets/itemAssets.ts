@@ -29,10 +29,16 @@ export function itemAssetPath(item: ItemRow | string | undefined): string {
     return withAssetVersion(`/assets/icons/items/item_${stem}.webp`)
   }
 
+  const byId = ITEM_ID_ICONS[item['Item ID']]
+  // Rare potato keeps Internal Key / Icon Asset Key `golden_spud` for the
+  // audit, but it is drawn with the regular potato art.
+  if (item['Item ID'] === 'ITEM-0026' && byId) {
+    return withAssetVersion(`/assets/icons/items/item_${byId}.webp`)
+  }
+
   const fromRow = item['Icon Asset Key']?.trim()
   if (fromRow) return withAssetVersion(`/assets/icons/items/item_${fromRow}.webp`)
 
-  const byId = ITEM_ID_ICONS[item['Item ID']]
   if (byId) return withAssetVersion(`/assets/icons/items/item_${byId}.webp`)
 
   const key = (item['Internal Key'] ?? '').toLowerCase()
