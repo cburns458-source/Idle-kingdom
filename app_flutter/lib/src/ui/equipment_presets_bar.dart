@@ -130,12 +130,7 @@ class EquipmentPresetsBar extends StatelessWidget {
           )
         : null;
     if (axis == Axis.vertical) {
-      final buttons = [
-        if (current != null) current,
-        ...presetButtons,
-        if (saveChip != null) saveChip,
-        if (settings != null) settings,
-      ];
+      final buttons = [?current, ...presetButtons, ?saveChip, ?settings];
       return Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -156,11 +151,7 @@ class EquipmentPresetsBar extends StatelessWidget {
         ],
       );
     }
-    final buttons = [
-      ...presetButtons,
-      if (saveChip != null) saveChip,
-      if (settings != null) settings,
-    ];
+    final buttons = [...presetButtons, ?saveChip, ?settings];
     return Row(
       children: [
         for (var i = 0; i < buttons.length; i += 1) ...[
