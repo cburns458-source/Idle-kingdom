@@ -10,7 +10,10 @@ import {
   getShop,
   playerBuyPrice,
   playerSellPrice,
+  recordShopPurchases,
+  shopRemainingToday,
   shopSellsItem,
+  syncShopPurchaseDay,
 } from './shops'
 
 /** Cosmetic ID(s) newly granted by a shop purchase (for the Wardrobe-unlock popup). */
@@ -60,6 +63,7 @@ export function confirmShopOffer(
   save: PlayerSave,
   shopId: string,
   offer: ShopOffer,
+  nowMs: number = Date.now(),
 ): ShopTransactionResult {
   const shop = getShop(db, shopId)
   if (!shop) return { ok: false, reason: 'Shop not found.' }
@@ -73,10 +77,27 @@ export function confirmShopOffer(
     return { ok: false, reason: 'Add items to the offer first.' }
   }
 
+  let next = syncShopPurchaseDay(save, nowMs)
+  const reserved = new Map<string, number>()
   for (const line of buys) {
     if (!shopSellsItem(shop, line.itemId)) {
       return { ok: false, reason: 'The shop does not sell that item.' }
     }
+    const remaining = shopRemainingToday(next, shop, line.itemId, nowMs)
+    if (remaining == null) continue
+    const already = reserved.get(line.itemId) ?? 0
+    const qty = Math.floor(line.quantity)
+    if (already + qty > remaining) {
+      const left = Math.max(0, remaining - already)
+      return {
+        ok: false,
+        reason:
+          left <= 0
+            ? 'That item is sold out for today.'
+            : `Only ${left} left in today's stock.`,
+      }
+    }
+    reserved.set(line.itemId, already + qty)
   }
 
   const buyCost = lineTotal(buys, (itemId) => playerBuyPrice(db, shop, itemId))
@@ -85,11 +106,10 @@ export function confirmShopOffer(
   if (!sellCredit.ok) return sellCredit
 
   const goldDelta = sellCredit.total - buyCost.total
-  if (save.gold + goldDelta < 0) {
+  if (next.gold + goldDelta < 0) {
     return { ok: false, reason: 'Not enough gold for this purchase.' }
   }
 
-  let next = save
   if (sells.length > 0) {
     const removed = removeSellableInventory(next, sells)
     if (!removed) {
@@ -143,6 +163,9 @@ export function confirmShopOffer(
   if (sells.length > 0) {
     const shopLocation = String(shop['Location ID'] ?? save.currentLocationId)
     next = recordItemsSoldAtLocation(next, sells, shopLocation)
+  }
+  if (buys.length > 0) {
+    next = recordShopPurchases(next, shopId, buys, nowMs)
   }
 
   const parts: string[] = []

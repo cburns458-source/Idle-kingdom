@@ -7,7 +7,7 @@
 
 import '../../json_support.dart';
 
-const int saveVersion = 40;
+const int saveVersion = 41;
 
 const String saveStorageKey = 'idle-kingdoms.demo.save';
 
@@ -640,6 +640,8 @@ class PlayerSave {
     required this.rankedPvpFightsToday,
     required this.rankedPvpWins,
     required this.rankedPvpLosses,
+    this.shopPurchaseDayKey,
+    required this.shopPurchasesToday,
     required this.claimedMerchantTipIds,
     required this.claimedKingswoodsSling,
     required this.critterCollections,
@@ -727,6 +729,8 @@ class PlayerSave {
       rankedPvpFightsToday: json['rankedPvpFightsToday'] as num,
       rankedPvpWins: json['rankedPvpWins'] as num,
       rankedPvpLosses: json['rankedPvpLosses'] as num,
+      shopPurchaseDayKey: json['shopPurchaseDayKey'] as String?,
+      shopPurchasesToday: mapOf(json['shopPurchasesToday'], (Object? value) => value as num),
       claimedMerchantTipIds: listOf(
         json['claimedMerchantTipIds'],
         (Object? entry) => entry as String,
@@ -856,6 +860,12 @@ class PlayerSave {
 
   /// Ranked arena losses.
   final num rankedPvpLosses;
+
+  /// UTC date key (`YYYY-MM-DD`) for shop daily purchase caps.
+  final String? shopPurchaseDayKey;
+
+  /// Units bought today, keyed by `shopId:itemId`.
+  final Map<String, num> shopPurchasesToday;
 
   /// Merchant tip rewards already claimed (one-time dialogue grants).
   final List<String> claimedMerchantTipIds;
@@ -996,6 +1006,8 @@ class PlayerSave {
       'rankedPvpFightsToday': rankedPvpFightsToday,
       'rankedPvpWins': rankedPvpWins,
       'rankedPvpLosses': rankedPvpLosses,
+      'shopPurchaseDayKey': shopPurchaseDayKey,
+      'shopPurchasesToday': shopPurchasesToday,
       'claimedMerchantTipIds': claimedMerchantTipIds,
       'claimedKingswoodsSling': claimedKingswoodsSling,
       'critterCollections': critterCollections.map((entry) => entry.toJson()).toList(),
@@ -1068,6 +1080,8 @@ class PlayerSave {
     num? rankedPvpFightsToday,
     num? rankedPvpWins,
     num? rankedPvpLosses,
+    Object? shopPurchaseDayKey = _unset,
+    Map<String, num>? shopPurchasesToday,
     List<String>? claimedMerchantTipIds,
     bool? claimedKingswoodsSling,
     List<CritterCollectionEntry>? critterCollections,
@@ -1141,6 +1155,10 @@ class PlayerSave {
       rankedPvpFightsToday: rankedPvpFightsToday ?? this.rankedPvpFightsToday,
       rankedPvpWins: rankedPvpWins ?? this.rankedPvpWins,
       rankedPvpLosses: rankedPvpLosses ?? this.rankedPvpLosses,
+      shopPurchaseDayKey: shopPurchaseDayKey == _unset
+          ? this.shopPurchaseDayKey
+          : shopPurchaseDayKey as String?,
+      shopPurchasesToday: shopPurchasesToday ?? this.shopPurchasesToday,
       claimedMerchantTipIds: claimedMerchantTipIds ?? this.claimedMerchantTipIds,
       claimedKingswoodsSling: claimedKingswoodsSling ?? this.claimedKingswoodsSling,
       critterCollections: critterCollections ?? this.critterCollections,

@@ -19,8 +19,20 @@ export const GENERAL_SELL_MULT = 1
 
 export interface ShopStockEntry {
   itemId: string
+  /** 1-based shop entry slot. */
+  slot: number
+  /** Daily buy cap for this offer. Null means unlimited. */
+  dailyLimit: number | null
   /** Shop sells this item to the player. */
   mode: 'Sell'
+}
+
+export function shopPurchaseKey(shopId: string, itemId: string): string {
+  return `${shopId}:${itemId}`
+}
+
+export function shopDayKey(nowMs: number): string {
+  return new Date(nowMs).toISOString().slice(0, 10)
 }
 
 export function shopStockEntries(shop: ShopRow): ShopStockEntry[] {
@@ -31,9 +43,64 @@ export function shopStockEntries(shop: ShopRow): ShopStockEntry[] {
     const mode = record[`Entry ${i} Mode`]
     if (typeof itemId !== 'string' || itemId.length === 0) continue
     if (typeof mode === 'string' && mode.toLowerCase() === 'buy') continue
-    out.push({ itemId, mode: 'Sell' })
+    const rawLimit = record[`Entry ${i} Daily Limit`]
+    const dailyLimit =
+      typeof rawLimit === 'number' && Number.isFinite(rawLimit) && rawLimit > 0
+        ? Math.floor(rawLimit)
+        : null
+    out.push({ itemId, slot: i, dailyLimit, mode: 'Sell' })
   }
   return out
+}
+
+export function syncShopPurchaseDay(save: PlayerSave, nowMs: number): PlayerSave {
+  const key = shopDayKey(nowMs)
+  if (save.shopPurchaseDayKey === key) return save
+  return { ...save, shopPurchaseDayKey: key, shopPurchasesToday: {} }
+}
+
+export function shopPurchasedToday(
+  save: PlayerSave,
+  shopId: string,
+  itemId: string,
+  nowMs: number,
+): number {
+  const synced = syncShopPurchaseDay(save, nowMs)
+  return Math.max(0, Math.floor(Number(synced.shopPurchasesToday[shopPurchaseKey(shopId, itemId)]) || 0))
+}
+
+export function shopDailyLimit(shop: ShopRow, itemId: string): number | null {
+  return shopStockEntries(shop).find((entry) => entry.itemId === itemId)?.dailyLimit ?? null
+}
+
+/** Remaining units the player can buy today. Null means the offer is unlimited. */
+export function shopRemainingToday(
+  save: PlayerSave,
+  shop: ShopRow,
+  itemId: string,
+  nowMs: number,
+): number | null {
+  const limit = shopDailyLimit(shop, itemId)
+  if (limit == null) return null
+  const shopId = shop['Shop ID']
+  return Math.max(0, limit - shopPurchasedToday(save, shopId, itemId, nowMs))
+}
+
+export function recordShopPurchases(
+  save: PlayerSave,
+  shopId: string,
+  lines: { itemId: string; quantity: number }[],
+  nowMs: number,
+): PlayerSave {
+  let next = syncShopPurchaseDay(save, nowMs)
+  const counts = { ...next.shopPurchasesToday }
+  for (const line of lines) {
+    const qty = Math.floor(line.quantity)
+    if (qty <= 0) continue
+    const key = shopPurchaseKey(shopId, line.itemId)
+    counts[key] = Math.max(0, Math.floor(Number(counts[key]) || 0)) + qty
+  }
+  return { ...next, shopPurchasesToday: counts }
 }
 
 export function getShop(db: GameDatabase, shopId: string): ShopRow | undefined {

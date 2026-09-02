@@ -11,6 +11,7 @@ import {
   projectSkillRequirements,
 } from '../projects/projects'
 
+export const ESSENCE_ITEM_ID = 'ITEM-0011'
 export const MINING_SKILL_ID = 'SKL-0002'
 export const FISHING_SKILL_ID = 'SKL-0003'
 export const HARVESTING_SKILL_ID = 'SKL-0004'
@@ -292,10 +293,17 @@ function arcanaTabs(db: GameDatabase): SkillMenuTab[] {
     else enchantments.push(project)
   }
   return [
+    listTab('essence', 'Essence', arcanaEssenceEntries(db)),
     listTab('spells', 'Spells', dedupeByName(spells)),
     listTab('weapons', 'Weapons', dedupeByName(weapons)),
     listTab('enchantments', 'Enchantments', dedupeByName(enchantments)),
   ]
+}
+
+function arcanaEssenceEntries(db: GameDatabase): SkillMenuListItem[] {
+  const item = db.Items.find((row) => row['Item ID'] === ESSENCE_ITEM_ID)
+  if (!item) return []
+  return [{ id: item['Item ID'], displayName: item['Display Name'], level: 1 }]
 }
 
 function combatEnemyEntries(db: GameDatabase): SkillMenuListItem[] {

@@ -8,6 +8,7 @@ import '../inventory/gold.dart';
 import '../js_compat.dart';
 import '../races/races.dart';
 import '../save/generated/save_models.dart';
+import '../time.dart';
 
 const String essenceItemId = 'ITEM-0011';
 const num shopBuyMult = 2;
@@ -17,15 +18,30 @@ const num generalSellMult = 1;
 
 /// One line of a shop's stock. Only sell-to-player entries are listed.
 class ShopStockEntry {
-  const ShopStockEntry({required this.itemId});
+  const ShopStockEntry({required this.itemId, required this.slot, required this.dailyLimit});
 
   final String itemId;
+
+  /// 1-based shop entry slot.
+  final int slot;
+
+  /// Daily buy cap for this offer. Null means unlimited.
+  final num? dailyLimit;
 
   /// Always `Sell`: the shop sells this item to the player.
   String get mode => 'Sell';
 
-  Map<String, Object?> toJson() => <String, Object?>{'itemId': itemId, 'mode': mode};
+  Map<String, Object?> toJson() => <String, Object?>{
+    'itemId': itemId,
+    'slot': slot,
+    'dailyLimit': dailyLimit,
+    'mode': mode,
+  };
 }
+
+String shopPurchaseKey(String shopId, String itemId) => '$shopId:$itemId';
+
+String shopDayKey(num nowMs) => isoFromMs(nowMs).substring(0, 10);
 
 List<ShopStockEntry> shopStockEntries(ShopRow shop) {
   final out = <ShopStockEntry>[];
@@ -34,9 +50,53 @@ List<ShopStockEntry> shopStockEntries(ShopRow shop) {
     final mode = shop.raw['Entry $i Mode'];
     if (itemId is! String || itemId.isEmpty) continue;
     if (mode is String && mode.toLowerCase() == 'buy') continue;
-    out.add(ShopStockEntry(itemId: itemId));
+    final rawLimit = shop.raw['Entry $i Daily Limit'];
+    final dailyLimit = rawLimit is num && rawLimit.isFinite && rawLimit > 0
+        ? rawLimit.floor()
+        : null;
+    out.add(ShopStockEntry(itemId: itemId, slot: i, dailyLimit: dailyLimit));
   }
   return out;
+}
+
+PlayerSave syncShopPurchaseDay(PlayerSave save, num nowMs) {
+  final key = shopDayKey(nowMs);
+  if (save.shopPurchaseDayKey == key) return save;
+  return save.copyWith(shopPurchaseDayKey: key, shopPurchasesToday: const <String, num>{});
+}
+
+num shopPurchasedToday(PlayerSave save, String shopId, String itemId, num nowMs) {
+  final synced = syncShopPurchaseDay(save, nowMs);
+  return jsNumber(synced.shopPurchasesToday[shopPurchaseKey(shopId, itemId)] ?? 0).floor().clamp(0, 1 << 30);
+}
+
+num? shopDailyLimit(ShopRow shop, String itemId) {
+  return shopStockEntries(shop).where((entry) => entry.itemId == itemId).firstOrNull?.dailyLimit;
+}
+
+/// Remaining units the player can buy today. Null means the offer is unlimited.
+num? shopRemainingToday(PlayerSave save, ShopRow shop, String itemId, num nowMs) {
+  final limit = shopDailyLimit(shop, itemId);
+  if (limit == null) return null;
+  final shopId = jsString(shop.raw['Shop ID']);
+  return (limit - shopPurchasedToday(save, shopId, itemId, nowMs)).clamp(0, limit);
+}
+
+PlayerSave recordShopPurchases(
+  PlayerSave save,
+  String shopId,
+  Iterable<({String itemId, num quantity})> lines,
+  num nowMs,
+) {
+  var next = syncShopPurchaseDay(save, nowMs);
+  final counts = Map<String, num>.from(next.shopPurchasesToday);
+  for (final line in lines) {
+    final qty = line.quantity.floor();
+    if (qty <= 0) continue;
+    final key = shopPurchaseKey(shopId, line.itemId);
+    counts[key] = jsNumber(counts[key] ?? 0).floor() + qty;
+  }
+  return next.copyWith(shopPurchasesToday: counts);
 }
 
 ShopRow? getShop(GameDatabase db, String shopId) {

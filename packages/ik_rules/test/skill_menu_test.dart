@@ -119,6 +119,17 @@ void main() {
     expect(tools.any((row) => row.displayName == 'Magic Net' && row.level == 45), isTrue);
   });
 
+  test('arcana lists Essence at level 1 on its own tab', () {
+    final arcana = skillMenuView(db, arcanaSkillId);
+    expect(arcana.tabs.map((tab) => tab.label), ['Essence', 'Spells', 'Weapons', 'Enchantments']);
+    final essence = arcana.tabs.firstWhere((tab) => tab.id == 'essence').sections.first.entries;
+    expect(essence.any((row) => row.displayName == 'Essence' && row.level == 1), isTrue);
+    expect(
+      actionsForSkill(db, miningSkillId).any((row) => row.displayName.contains('essence')),
+      isFalse,
+    );
+  });
+
   test('gathering tools include the wooden starters at level 1', () {
     final mining = skillMenuView(db, miningSkillId);
     expect(mining.tabs.map((tab) => tab.label), ['Actions', 'Tools']);

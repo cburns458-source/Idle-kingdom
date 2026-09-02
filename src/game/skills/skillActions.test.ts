@@ -131,7 +131,9 @@ describe('skill menu entries', () => {
   it('puts battle staves on an Arcana Weapons tab', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const arcana = skillMenuView(launch, 'SKL-0013')
-    expect(arcana.tabs.map((tab) => tab.label)).toEqual(['Spells', 'Weapons', 'Enchantments'])
+    expect(arcana.tabs.map((tab) => tab.label)).toEqual(['Essence', 'Spells', 'Weapons', 'Enchantments'])
+    const essence = arcana.tabs.find((tab) => tab.id === 'essence')?.sections[0]?.entries ?? []
+    expect(essence).toEqual([{ id: 'ITEM-0011', displayName: 'Essence', level: 1 }])
     const weapons = arcana.tabs.find((tab) => tab.id === 'weapons')?.sections[0]?.entries ?? []
     expect(weapons.map((item) => item.displayName)).toEqual([
       'Staff of Sparks',

@@ -189,4 +189,47 @@ describe('shops', () => {
       playerSellPrice(launch, launch.Shops.find((row) => row['Shop ID'] === 'SHP-0001')!, 'ITEM-0128'),
     )
   })
+
+  it('caps shop buys per offer per UTC day', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const shop = launch.Shops.find((row) => row['Shop ID'] === 'SHP-0001')!
+    const axe = shopStockEntries(shop).find((entry) => entry.itemId === 'ITEM-0100')
+    expect(axe?.dailyLimit).toBe(100)
+    const day = Date.UTC(2026, 8, 2, 12)
+    let save = {
+      ...createNewSave(launch),
+      currentLocationId: 'LOC-0024',
+      gold: 100_000,
+    }
+    const first = confirmShopOffer(
+      launch,
+      save,
+      'SHP-0001',
+      { buys: [{ itemId: 'ITEM-0100', quantity: 100 }], sells: [] },
+      day,
+    )
+    expect(first.ok).toBe(true)
+    if (!first.ok) return
+    save = first.save
+    expect(save.shopPurchasesToday['SHP-0001:ITEM-0100']).toBe(100)
+    const over = confirmShopOffer(
+      launch,
+      save,
+      'SHP-0001',
+      { buys: [{ itemId: 'ITEM-0100', quantity: 1 }], sells: [] },
+      day,
+    )
+    expect(over.ok).toBe(false)
+    if (!over.ok) expect(over.reason).toMatch(/sold out/i)
+    const nextDay = confirmShopOffer(
+      launch,
+      save,
+      'SHP-0001',
+      { buys: [{ itemId: 'ITEM-0100', quantity: 1 }], sells: [] },
+      day + 24 * 60 * 60 * 1000,
+    )
+    expect(nextDay.ok).toBe(true)
+    if (!nextDay.ok) return
+    expect(nextDay.save.shopPurchasesToday['SHP-0001:ITEM-0100']).toBe(1)
+  })
 })

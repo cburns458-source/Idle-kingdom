@@ -85,33 +85,27 @@ describe('primary activity engine', () => {
     expect(completed.result.bonusXp).toEqual([])
   })
 
-  it('grants 100 Arcana XP when delving for essence', () => {
+  it('grants 100 Arcana XP when harnessing essence', () => {
     const { launch } = prepareDatabase(rawDatabase)
-    let save = createNewSave(launch)
-    // Meet Mining proficiency 5 so Delve awards full XP.
-    save = {
-      ...save,
-      skills: save.skills.map((skill) =>
-        skill.skillId === 'SKL-0002' ? { ...skill, level: 5, xp: 3713 } : skill,
-      ),
-    }
+    const save = createNewSave(launch)
     const action = launch.Actions.find((row) => row['Action ID'] === 'ACN-0028')
     expect(action).toBeTruthy()
+    expect(action!['Display Name']).toBe('Harness essence')
+    expect(action!['Relevant Skill ID']).toBe('SKL-0013')
+    expect(action!['Proficiency Level']).toBe(1)
+    expect(action!['XP Reward']).toBe(100)
 
     const completed = completeGatheringAction(launch, save, action!, () => 0)
-    expect(completed.result.xpGained).toBe(350)
-    expect(completed.result.bonusXp).toEqual([{ skillId: 'SKL-0013', xp: 100 }])
-    expect(completed.result.xpRewards.map((reward) => reward.skillId)).toEqual([
-      'SKL-0002',
-      'SKL-0013',
-    ])
-    expect(completed.result.xpRewards[1]).toMatchObject({
+    expect(completed.result.xpGained).toBe(100)
+    expect(completed.result.bonusXp).toEqual([])
+    expect(completed.result.xpRewards.map((reward) => reward.skillId)).toEqual(['SKL-0013'])
+    expect(completed.result.xpRewards[0]).toMatchObject({
       skillId: 'SKL-0013',
       skillName: 'Arcana',
       xp: 100,
       leveledUp: false,
     })
-    expect(completed.save.skills.find((skill) => skill.skillId === 'SKL-0002')?.xp).toBe(3713 + 350)
+    expect(completed.save.skills.find((skill) => skill.skillId === 'SKL-0002')?.xp).toBe(0)
     expect(completed.save.skills.find((skill) => skill.skillId === 'SKL-0013')?.xp).toBe(100)
   })
 
@@ -139,16 +133,21 @@ describe('primary activity engine', () => {
     expect(completed.save.skills.find((skill) => skill.skillId === 'SKL-0004')?.xp).toBe(250)
   })
 
-  it('halves Delve for Essence XP and Arcana bonus below mining proficiency', () => {
+  it('halves Harness essence Arcana XP below Arcana proficiency', () => {
     const { launch } = prepareDatabase(rawDatabase)
-    const save = createNewSave(launch)
+    const save = {
+      ...createNewSave(launch),
+      skills: createNewSave(launch).skills.map((skill) =>
+        skill.skillId === 'SKL-0013' ? { ...skill, level: 0, xp: 0 } : skill,
+      ),
+    }
     const action = launch.Actions.find((row) => row['Action ID'] === 'ACN-0028')!
-    expect(action['Proficiency Level']).toBe(5)
+    expect(action['Proficiency Level']).toBe(1)
 
     const completed = completeGatheringAction(launch, save, action, () => 0)
-    expect(completed.result.xpGained).toBe(175)
-    expect(completed.result.bonusXp).toEqual([{ skillId: 'SKL-0013', xp: 50 }])
-    expect(completed.save.skills.find((skill) => skill.skillId === 'SKL-0002')?.xp).toBe(175)
+    expect(completed.result.xpGained).toBe(50)
+    expect(completed.result.bonusXp).toEqual([])
+    expect(completed.save.skills.find((skill) => skill.skillId === 'SKL-0002')?.xp).toBe(0)
     expect(completed.save.skills.find((skill) => skill.skillId === 'SKL-0013')?.xp).toBe(50)
   })
 

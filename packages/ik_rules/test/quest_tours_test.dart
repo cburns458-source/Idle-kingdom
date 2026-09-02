@@ -50,7 +50,7 @@ void main() {
     expect(isCosmeticUnlocked(completed.save!, 'COS-0002'), isTrue);
   });
 
-  test('Delve stays hidden until Wizard Studies is accepted', () {
+  test('Harness essence stays hidden until Wizard Studies is accepted', () {
     var save = _save(db, locationId: 'LOC-0007');
     expect(activityVisibleForSave(db, save, 'ACT-0008'), isFalse);
     expect(

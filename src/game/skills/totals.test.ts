@@ -27,6 +27,8 @@ function sampleSave(skills: Array<{ skillId: string; level: number; xp: number }
     rankedPvpFightsToday: 0,
     rankedPvpWins: 0,
     rankedPvpLosses: 0,
+    shopPurchaseDayKey: null,
+    shopPurchasesToday: {},
     hasEverDied: false,
     favoriteActivityByLocationId: {},
     heldActionByActivityId: {},
