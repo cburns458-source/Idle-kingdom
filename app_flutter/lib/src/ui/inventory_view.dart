@@ -57,7 +57,7 @@ class InventoryView extends StatefulWidget {
   final InventoryPane? pane;
   final bool showHeader;
 
-  /// When provided by [CharacterView], which snapshot is selected (null = Current).
+  /// When provided by [CharacterView], which snapshot is being edited (null = Current).
   final int? selectedPresetIndex;
   final ValueChanged<int?>? onSelectedPresetIndexChanged;
 
@@ -141,7 +141,13 @@ class _InventoryViewState extends State<InventoryView> {
     setState(() => _message = reason);
   }
 
+  bool get _editingPreset => _selectedPresetIndex != null;
+
   void _equipAt(int index, {String? preferredSlotId}) {
+    if (_editingPreset) {
+      _assignToEditingPreset(index, preferredSlotId: preferredSlotId);
+      return;
+    }
     final result = equipInventoryIndex(db, save, index, preferredSlotId: preferredSlotId);
     if (!result.ok) {
       setState(() => _message = result.reason);
@@ -149,10 +155,66 @@ class _InventoryViewState extends State<InventoryView> {
     }
     setState(() => _message = null);
     controller.commitLoadout(result.save!);
-    if (_selectedPresetIndex != null) _setSelectedPresetIndex(null);
+  }
+
+  void _assignToEditingPreset(int inventoryIndex, {String? preferredSlotId}) {
+    final editing = _selectedPresetIndex;
+    if (editing == null || inventoryIndex < 0 || inventoryIndex >= save.inventory.length) return;
+    final stack = save.inventory[inventoryIndex];
+    _stampEditingPreset(
+      preferredSlotId: preferredSlotId,
+      itemId: stack.itemId,
+      quantity: stack.quantity,
+      enchantmentId: stack.enchantmentId,
+      favorite: stack.favorite == true,
+    );
+  }
+
+  void _stampEditingPreset({
+    required String itemId,
+    required num quantity,
+    String? preferredSlotId,
+    String? enchantmentId,
+    bool favorite = false,
+  }) {
+    final editing = _selectedPresetIndex;
+    if (editing == null) return;
+    final gear = equipmentForItemId(db, itemId);
+    var slotId = preferredSlotId ?? gear?.slotId;
+    if (slotId == null) {
+      setState(() => _message = 'That does not go on a preset.');
+      return;
+    }
+    if (preferredSlotId != null && !_itemFitsSlot(itemId, preferredSlotId)) {
+      setState(() => _message = 'That does not fit this slot.');
+      return;
+    }
+    if (isSpellSlotId(preferredSlotId ?? '') && preferredSlotId != null) {
+      slotId = preferredSlotId;
+    }
+    final next = setEquipmentPresetSlot(
+      db,
+      save,
+      editing,
+      slotId,
+      EquippedStack(
+        itemId: itemId,
+        quantity: isStackableConsumableSlot(slotId) ? quantity : 1,
+        enchantmentId: enchantmentId,
+        favorite: favorite ? true : null,
+      ),
+    );
+    setState(() => _message = null);
+    controller.commit(next);
   }
 
   void _unequip(String slotId) {
+    if (_editingPreset) {
+      final next = setEquipmentPresetSlot(db, save, _selectedPresetIndex!, slotId, null);
+      setState(() => _message = null);
+      controller.commit(next);
+      return;
+    }
     final result = unequipSlot(save, slotId);
     if (!result.ok) {
       setState(() => _message = result.reason);
@@ -160,7 +222,13 @@ class _InventoryViewState extends State<InventoryView> {
     }
     setState(() => _message = null);
     controller.commitLoadout(result.save!);
-    if (_selectedPresetIndex != null) _setSelectedPresetIndex(null);
+  }
+
+  void _finishEditingPreset() {
+    if (_selectedPresetIndex == null) return;
+    _setSelectedPresetIndex(null);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Preset saved.')));
   }
 
   void _toggleFavorite(int index) {
@@ -529,11 +597,18 @@ class _InventoryViewState extends State<InventoryView> {
                   showCurrentButton: true,
                   selectedPresetIndex: _selectedPresetIndex,
                   onSelectCurrent: () => _setSelectedPresetIndex(null),
-                  onSelectPreset: _setSelectedPresetIndex,
+                  onEditPreset: _setSelectedPresetIndex,
+                  onSaveEditingPreset: _finishEditingPreset,
                   onMessage: (message) {
                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
                   },
                 ),
+                if (_editingPreset) ...[
+                  const SizedBox(height: 8),
+                  MutedText(
+                    'Editing ${_presetName(_selectedPresetIndex!)}. Worn gear is unchanged until you Apply.',
+                  ),
+                ],
                 const SizedBox(height: 10),
                 GridView.count(
                   crossAxisCount: 4,
@@ -607,17 +682,35 @@ class _InventoryViewState extends State<InventoryView> {
 
   bool _itemFitsSlot(String itemId, String slotId) => itemFitsEquipmentSlot(db, itemId, slotId);
 
+  String _presetName(int index) {
+    if (index < 0 || index >= save.equipmentPresets.length) return 'Preset ${index + 1}';
+    return save.equipmentPresets[index].name;
+  }
+
   Future<void> _openSlotEquipPicker(String slotId) async {
     final slot = db.equipmentSlots.where((row) => row.slotId == slotId).firstOrNull;
-    final candidates = <({int index, InventoryStack stack})>[
+    final candidates = <({int? index, EquippedStack stack})>[
       for (var i = 0; i < save.inventory.length; i += 1)
-        if (_itemFitsSlot(save.inventory[i].itemId, slotId)) (index: i, stack: save.inventory[i]),
+        if (_itemFitsSlot(save.inventory[i].itemId, slotId))
+          (
+            index: i,
+            stack: EquippedStack(
+              itemId: save.inventory[i].itemId,
+              quantity: save.inventory[i].quantity,
+              enchantmentId: save.inventory[i].enchantmentId,
+              favorite: save.inventory[i].favorite == true ? true : null,
+            ),
+          ),
+      if (_editingPreset)
+        for (final equipped in save.equipment.slots.values)
+          if (equipped != null && _itemFitsSlot(equipped.itemId, slotId))
+            (index: null, stack: equipped),
     ];
     if (candidates.isEmpty) {
       setState(() => _message = 'No items in your bag fit that slot.');
       return;
     }
-    final chosen = await showGamePopup<int>(
+    final chosen = await showGamePopup<({int? index, EquippedStack stack})>(
       context: context,
       builder: (context) {
         return GamePopupCard(
@@ -643,7 +736,7 @@ class _InventoryViewState extends State<InventoryView> {
                     final qty = entry.stack.quantity;
                     return GamePanel(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                      onTap: () => Navigator.of(context).pop(entry.index),
+                      onTap: () => Navigator.of(context).pop(entry),
                       child: Row(
                         children: [
                           ItemIcon(item: item, size: 28),
@@ -667,11 +760,26 @@ class _InventoryViewState extends State<InventoryView> {
       },
     );
     if (!mounted || chosen == null) return;
-    _equipAt(chosen, preferredSlotId: slotId);
+    if (chosen.index != null) {
+      _equipAt(chosen.index!, preferredSlotId: slotId);
+      return;
+    }
+    _stampEditingPreset(
+      preferredSlotId: slotId,
+      itemId: chosen.stack.itemId,
+      quantity: chosen.stack.quantity,
+      enchantmentId: chosen.stack.enchantmentId,
+      favorite: chosen.stack.favorite == true,
+    );
   }
 
   Widget _slotTile(String slotId) {
-    final stack = save.equipment.slots[slotId];
+    final live = save.equipment.slots[slotId];
+    final stack = _editingPreset
+        ? (_selectedPresetIndex! < save.equipmentPresets.length
+              ? save.equipmentPresets[_selectedPresetIndex!].slots[slotId]
+              : null)
+        : live;
     final slot = db.equipmentSlots.where((row) => row.slotId == slotId).firstOrNull;
     if (stack == null) {
       return GamePanel(
