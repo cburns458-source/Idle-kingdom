@@ -41,12 +41,8 @@ class _NpcPanelState extends State<NpcPanel> {
 
   GameController get controller => widget.controller;
 
-  NpcConversation get conversation => npcConversation(
-    controller.db,
-    controller.save,
-    widget.npc,
-    controller.session.clock(),
-  );
+  NpcConversation get conversation =>
+      npcConversation(controller.db, controller.save, widget.npc, controller.session.clock());
 
   void _close() {
     widget.onClose();
@@ -54,11 +50,7 @@ class _NpcPanelState extends State<NpcPanel> {
 
   /// Takes the merchant's advice, if they had any left, and leaves.
   void _dismissMerchant({String? thenOpenShop}) {
-    final claimed = takeMerchantTip(
-      controller.db,
-      controller.save,
-      conversation.npcId,
-    );
+    final claimed = takeMerchantTip(controller.db, controller.save, conversation.npcId);
     if (claimed != null) {
       controller.commit(claimed.save!);
       controller.announce(claimed.message!);
@@ -83,11 +75,7 @@ class _NpcPanelState extends State<NpcPanel> {
   }
 
   void _donate(String questId) {
-    final result = donateForQuestFromNpc(
-      controller.db,
-      controller.save,
-      questId,
-    );
+    final result = donateForQuestFromNpc(controller.db, controller.save, questId);
     if (!result.ok) {
       setState(() => _error = result.reason);
       return;
@@ -111,11 +99,7 @@ class _NpcPanelState extends State<NpcPanel> {
   }
 
   void _commitLearn() {
-    final result = learnMentorProjects(
-      controller.db,
-      controller.save,
-      conversation.npcId,
-    );
+    final result = learnMentorProjects(controller.db, controller.save, conversation.npcId);
     if (!result.ok) {
       setState(() => _error = result.reason);
       return;
@@ -129,11 +113,7 @@ class _NpcPanelState extends State<NpcPanel> {
   }
 
   void _commitTalk() {
-    final result = talkWithQuestNpc(
-      controller.db,
-      controller.save,
-      conversation.npcId,
-    );
+    final result = talkWithQuestNpc(controller.db, controller.save, conversation.npcId);
     if (!result.ok) {
       setState(() => _error = result.reason);
       return;
@@ -178,9 +158,7 @@ class _NpcPanelState extends State<NpcPanel> {
     controller.announce(result.message!);
     final bundle = result.rewardBundle;
     if (bundle != null &&
-        (bundle.goldGained > 0 ||
-            bundle.xpRewards.isNotEmpty ||
-            bundle.loot.isNotEmpty)) {
+        (bundle.goldGained > 0 || bundle.xpRewards.isNotEmpty || bundle.loot.isNotEmpty)) {
       controller.noteReward(bundle);
     }
     setState(() => _error = null);
@@ -189,18 +167,10 @@ class _NpcPanelState extends State<NpcPanel> {
         .map((id) => ShopCosmeticGrant(cosmeticId: id, isFirstEver: wasEmpty))
         .toList();
     controller.noteCosmeticUnlocks(granted);
-    await showQuestRewards(
-      context,
-      questName: result.questName!,
-      rewards: result.rewards,
-    );
+    await showQuestRewards(context, questName: result.questName!, rewards: result.rewards);
     if (!mounted) return;
     if (result.pendingSkillXp > 0) {
-      await showSkillXpPicker(
-        context,
-        controller: controller,
-        amount: result.pendingSkillXp,
-      );
+      await showSkillXpPicker(context, controller: controller, amount: result.pendingSkillXp);
     }
   }
 
@@ -213,10 +183,7 @@ class _NpcPanelState extends State<NpcPanel> {
         name: conversation.name,
         line: whereaboutsLine,
         actions: [
-          GameButton(
-            label: 'Continue',
-            onPressed: () => setState(() => _whereaboutsLine = null),
-          ),
+          GameButton(label: 'Continue', onPressed: () => setState(() => _whereaboutsLine = null)),
         ],
       );
     }
@@ -233,9 +200,7 @@ class _NpcPanelState extends State<NpcPanel> {
   }
 
   Widget _openingDialogue(NpcConversation conversation) {
-    final talkQuest = conversation.quests
-        .where((quest) => quest.canTalk)
-        .firstOrNull;
+    final talkQuest = conversation.quests.where((quest) => quest.canTalk).firstOrNull;
     if (talkQuest != null) {
       return _playerDialogue(
         name: conversation.name,
@@ -245,16 +210,11 @@ class _NpcPanelState extends State<NpcPanel> {
       );
     }
 
-    final donateQuest = conversation.quests
-        .where((quest) => quest.canDonate)
-        .firstOrNull;
+    final donateQuest = conversation.quests.where((quest) => quest.canDonate).firstOrNull;
     if (donateQuest != null) {
       return _playerDialogue(
         name: conversation.name,
-        line:
-            donateQuest.pitchLine ??
-            donateQuest.summary ??
-            conversation.description,
+        line: donateQuest.pitchLine ?? donateQuest.summary ?? conversation.description,
         journal: _requirementJournal(donateQuest.questId),
         error: _error,
         actions: [
@@ -264,24 +224,16 @@ class _NpcPanelState extends State<NpcPanel> {
             compact: true,
             onPressed: _close,
           ),
-          GameButton(
-            label: donateQuest.donateLabel,
-            onPressed: () => _donate(donateQuest.questId),
-          ),
+          GameButton(label: donateQuest.donateLabel, onPressed: () => _donate(donateQuest.questId)),
         ],
       );
     }
 
-    final acceptQuest = conversation.quests
-        .where((quest) => quest.canAccept)
-        .firstOrNull;
+    final acceptQuest = conversation.quests.where((quest) => quest.canAccept).firstOrNull;
     if (acceptQuest != null) {
       return _playerDialogue(
         name: conversation.name,
-        line:
-            acceptQuest.pitchLine ??
-            acceptQuest.summary ??
-            conversation.description,
+        line: acceptQuest.pitchLine ?? acceptQuest.summary ?? conversation.description,
         journal: _requirementJournal(acceptQuest.questId),
         error: _error,
         actions: [
@@ -291,17 +243,12 @@ class _NpcPanelState extends State<NpcPanel> {
             compact: true,
             onPressed: _close,
           ),
-          GameButton(
-            label: acceptQuest.acceptLabel,
-            onPressed: () => _accept(acceptQuest.questId),
-          ),
+          GameButton(label: acceptQuest.acceptLabel, onPressed: () => _accept(acceptQuest.questId)),
         ],
       );
     }
 
-    final turnInQuest = conversation.quests
-        .where((quest) => quest.canTurnIn)
-        .firstOrNull;
+    final turnInQuest = conversation.quests.where((quest) => quest.canTurnIn).firstOrNull;
     if (turnInQuest != null) {
       return _playerDialogue(
         name: conversation.name,
@@ -358,9 +305,7 @@ class _NpcPanelState extends State<NpcPanel> {
       );
     }
 
-    final activeQuest = conversation.quests
-        .where((quest) => quest.status == 'active')
-        .firstOrNull;
+    final activeQuest = conversation.quests.where((quest) => quest.status == 'active').firstOrNull;
     if (activeQuest != null) {
       return _playerDialogue(
         name: conversation.name,
@@ -372,9 +317,7 @@ class _NpcPanelState extends State<NpcPanel> {
 
     if (conversation.isMerchant) {
       final greeting = conversation.greeting;
-      final line = greeting is MerchantGreeting
-          ? greeting.line
-          : conversation.description;
+      final line = greeting is MerchantGreeting ? greeting.line : conversation.description;
       return _playerDialogue(
         name: conversation.name,
         line: line,
@@ -393,8 +336,7 @@ class _NpcPanelState extends State<NpcPanel> {
               label: whereabouts.label,
               tone: GameButtonTone.secondary,
               compact: true,
-              onPressed: () =>
-                  setState(() => _whereaboutsLine = whereabouts.line),
+              onPressed: () => setState(() => _whereaboutsLine = whereabouts.line),
             ),
           GameButton(label: 'Done', onPressed: _close),
         ],
@@ -412,11 +354,9 @@ class _NpcPanelState extends State<NpcPanel> {
               label: whereabouts.label,
               tone: GameButtonTone.secondary,
               compact: true,
-              onPressed: () =>
-                  setState(() => _whereaboutsLine = whereabouts.line),
+              onPressed: () => setState(() => _whereaboutsLine = whereabouts.line),
             ),
-          if (!mentor.known)
-            GameButton(label: mentor.learnLabel, onPressed: _learn),
+          if (!mentor.known) GameButton(label: mentor.learnLabel, onPressed: _learn),
           GameButton(label: 'Done', onPressed: _close),
         ],
       );
@@ -432,8 +372,7 @@ class _NpcPanelState extends State<NpcPanel> {
             label: whereabouts.label,
             tone: GameButtonTone.secondary,
             compact: true,
-            onPressed: () =>
-                setState(() => _whereaboutsLine = whereabouts.line),
+            onPressed: () => setState(() => _whereaboutsLine = whereabouts.line),
           ),
           GameButton(label: 'Done', onPressed: _close),
         ],
@@ -444,9 +383,7 @@ class _NpcPanelState extends State<NpcPanel> {
       return _raceChangeDialogue(conversation, raceChange);
     }
 
-    final completed = conversation.quests
-        .where((quest) => quest.status == 'completed')
-        .firstOrNull;
+    final completed = conversation.quests.where((quest) => quest.status == 'completed').firstOrNull;
     return _playerDialogue(
       name: conversation.name,
       line: completed?.completedNote ?? conversation.description,
@@ -455,10 +392,7 @@ class _NpcPanelState extends State<NpcPanel> {
     );
   }
 
-  Widget _raceChangeDialogue(
-    NpcConversation conversation,
-    RaceChangeOffer raceChange,
-  ) {
+  Widget _raceChangeDialogue(NpcConversation conversation, RaceChangeOffer raceChange) {
     final selected = raceChange.options
         .where((option) => option.raceId == _selectedRaceId)
         .firstOrNull;
@@ -493,13 +427,10 @@ class _NpcPanelState extends State<NpcPanel> {
                 : selected.canAfford && raceChange.ready
                 ? 'Change to ${selected.name}'
                 : 'Need more',
-            onPressed:
-                selected.current || !selected.canAfford || !raceChange.ready
+            onPressed: selected.current || !selected.canAfford || !raceChange.ready
                 ? null
                 : () {
-                    final reason = controller.changeRaceWithVesper(
-                      selected.raceId,
-                    );
+                    final reason = controller.changeRaceWithVesper(selected.raceId);
                     if (reason != null) {
                       setState(() => _error = reason);
                       return;
@@ -554,17 +485,9 @@ class _NpcPanelState extends State<NpcPanel> {
       detail: raceChange.ready ? raceChange.warning : null,
       error: _error,
       actions: [
-        GameButton(
-          label: 'Done',
-          tone: GameButtonTone.secondary,
-          compact: true,
-          onPressed: _close,
-        ),
+        GameButton(label: 'Done', tone: GameButtonTone.secondary, compact: true, onPressed: _close),
         if (raceChange.ready)
-          GameButton(
-            label: 'Change race',
-            onPressed: () => setState(() => _pickingRace = true),
-          ),
+          GameButton(label: 'Change race', onPressed: () => setState(() => _pickingRace = true)),
       ],
     );
   }
@@ -631,38 +554,24 @@ class _DialogueCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   name,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w400,
-                  ),
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w400),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 6),
           Text(line, style: const TextStyle(fontSize: 15)),
-          if (detail case final detail?) ...[
-            const SizedBox(height: 4),
-            MutedText(detail),
-          ],
+          if (detail case final detail?) ...[const SizedBox(height: 4), MutedText(detail)],
           if (journal.isNotEmpty) ...[
             const SizedBox(height: 8),
             for (final step in journal) _QuestMenuLine(step: step),
           ],
           if (error case final error?) ...[
             const SizedBox(height: 6),
-            Text(
-              error,
-              style: const TextStyle(color: Palette.danger, fontSize: 12),
-            ),
+            Text(error, style: const TextStyle(color: Palette.danger, fontSize: 12)),
           ],
           const SizedBox(height: 10),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            alignment: WrapAlignment.end,
-            children: actions,
-          ),
+          Wrap(spacing: 8, runSpacing: 8, alignment: WrapAlignment.end, children: actions),
         ],
       ),
     );
@@ -679,10 +588,7 @@ class _QuestMenuLine extends StatelessWidget {
     if (step.state == 'header') {
       return Padding(
         padding: const EdgeInsets.only(bottom: 4, top: 2),
-        child: Text(
-          step.label,
-          style: const TextStyle(fontWeight: FontWeight.w600),
-        ),
+        child: Text(step.label, style: const TextStyle(fontWeight: FontWeight.w600)),
       );
     }
     return Padding(
@@ -692,19 +598,13 @@ class _QuestMenuLine extends StatelessWidget {
         children: [
           Text(
             step.state == 'done' ? '✓' : '•',
-            style: TextStyle(
-              color: step.state == 'done' ? Palette.softGreen : Palette.gold,
-            ),
+            style: TextStyle(color: step.state == 'done' ? Palette.softGreen : Palette.gold),
           ),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               step.label,
-              style: TextStyle(
-                color: step.state == 'done'
-                    ? Palette.muted
-                    : Palette.parchmentText,
-              ),
+              style: TextStyle(color: step.state == 'done' ? Palette.muted : Palette.parchmentText),
             ),
           ),
         ],
@@ -728,10 +628,7 @@ Future<void> showQuestRewards(
         mainAxisSize: MainAxisSize.min,
         children: [
           const MutedText('Thank you'),
-          Text(
-            questName,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w400),
-          ),
+          Text(questName, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w400)),
           if (spokenLine case final spoken?) ...[
             const SizedBox(height: 8),
             Text(spoken, style: const TextStyle(fontSize: 15)),
@@ -743,16 +640,10 @@ Future<void> showQuestRewards(
             for (final reward in rewards)
               Padding(
                 padding: const EdgeInsets.only(bottom: 2),
-                child: Text(
-                  '· $reward',
-                  style: const TextStyle(color: Palette.gold),
-                ),
+                child: Text('· $reward', style: const TextStyle(color: Palette.gold)),
               ),
           const SizedBox(height: 10),
-          GameButton(
-            label: 'Collect',
-            onPressed: () => Navigator.of(context).pop(),
-          ),
+          GameButton(label: 'Collect', onPressed: () => Navigator.of(context).pop()),
         ],
       ),
     ),
