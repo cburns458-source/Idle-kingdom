@@ -190,12 +190,13 @@ void main() {
     await pumpPanel(tester, NpcPanel(controller: controller, npc: npcOf(roseId), onClose: () {}));
     expect(find.text('Talk'), findsNothing);
     expect(find.textContaining('wild berries'), findsOne);
-    expect(find.textContaining('Talk to Rose 0 / 1'), findsOne);
+    expect(find.textContaining('Talk to Rose 0 / 1'), findsNothing);
 
     await tester.tap(find.text('Continue'));
     await tester.pump();
-    expect(find.textContaining("Rabbit's Foot 5 / 5"), findsOne);
-    expect(find.textContaining('1500 / 1000'), findsOne);
+    expect(find.textContaining("Rabbit's Foot"), findsNothing);
+    expect(find.textContaining('1500 / 1000'), findsNothing);
+    expect(find.text('Turn in'), findsOne);
 
     await tester.tap(find.text('Turn in'));
     await tester.pumpAndSettle();
@@ -225,7 +226,7 @@ void main() {
     expect(getQuestProgress(controller.save, 'QST-0001').status, 'active');
     expect(find.text('Talk'), findsNothing);
     expect(find.textContaining('baked potatoes'), findsOne);
-    expect(find.textContaining('Talk to King 0 / 1'), findsOne);
+    expect(find.textContaining('Talk to King 0 / 1'), findsNothing);
   });
 
   testWidgets('the Beggar at The Town asks for 25 gold', (tester) async {
