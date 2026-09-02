@@ -313,7 +313,7 @@ class GameButton extends StatefulWidget {
   /// Smaller than [compact] — header chips such as Sell items.
   final bool dense;
 
-  /// Gold wash for the active tab or conversation.
+  /// Thicker rim and a darkened fill for the active tab or conversation.
   final bool selected;
 
   final String? tooltip;
@@ -349,9 +349,8 @@ class _GameButtonState extends State<GameButton> {
             shadow: false,
             material: PixelPlateMaterial.none,
             gradient: primary
-                ? (down ? chrome.primaryPressed : chrome.primaryFill)
-                : (down ? chrome.secondaryPressed : chrome.secondaryFill),
-            fillColor: widget.selected ? chrome.embossFaceSelected.withValues(alpha: 0.28) : null,
+                ? (down || widget.selected ? chrome.primaryPressed : chrome.primaryFill)
+                : (down || widget.selected ? chrome.secondaryPressed : chrome.secondaryFill),
             padding: widget.dense
                 ? const EdgeInsets.symmetric(horizontal: 8, vertical: 4)
                 : widget.compact
