@@ -167,6 +167,7 @@ class WorldMapView extends StatelessWidget {
             isHere: selected?.locationId == save.currentLocationId,
             isPortal: selected != null && isSubMapGateway(selected),
             onTravel: onTravel,
+            onOpenHere: onOpenHere,
             canTravel: !controller.isRecovering && !walking,
           ),
         ),
@@ -380,6 +381,7 @@ class _SelectionPanel extends StatelessWidget {
     required this.isHere,
     required this.isPortal,
     required this.onTravel,
+    this.onOpenHere,
     required this.canTravel,
   });
 
@@ -391,6 +393,7 @@ class _SelectionPanel extends StatelessWidget {
   /// Gateways travel into their landing, or return to the world without moving.
   final bool isPortal;
   final ValueChanged<String> onTravel;
+  final VoidCallback? onOpenHere;
   final bool canTravel;
 
   @override
@@ -442,7 +445,7 @@ class _SelectionPanel extends StatelessWidget {
                 ),
                 const SizedBox(width: 10),
                 if (isHere && !isPortal)
-                  const MutedText('You are here.')
+                  GameButton(label: 'Open', onPressed: canTravel ? onOpenHere : null)
                 else
                   GameButton(
                     label: 'Travel',

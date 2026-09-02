@@ -59,14 +59,16 @@ class EquipmentPresetsBar extends StatelessWidget {
           square: compact && axis == Axis.vertical,
           label: 'Current',
           semanticsLabel: 'Current loadout',
-          selected: true,
+          selected: selectedPresetIndex == null,
           onPressed: () => onSelectCurrent?.call(),
         ),
       for (var i = 0; i < equipmentPresetCount; i += 1)
         _PresetButton(
           preset: i < presets.length ? presets[i] : null,
           index: i,
-          selected: shouldHighlightEquipmentPreset(save, i) || i == selectedPresetIndex,
+          selected: showCurrentButton
+              ? i == selectedPresetIndex
+              : shouldHighlightEquipmentPreset(save, i),
           compact: compact,
           square: compact && axis == Axis.vertical,
           skillsById: controller.indexes.skillsById,
@@ -123,7 +125,7 @@ class EquipmentPresetsBar extends StatelessWidget {
   Future<void> _openPresetSettings(BuildContext context) async {
     final save = controller.save;
     final skills = controller.db.skills
-        .where((row) => row.raw['Release Phase'] == 'Launch')
+        .where((row) => row.releasePhase == 'Launch')
         .toList();
     final presets = [
       for (var i = 0; i < equipmentPresetCount; i += 1)
@@ -158,13 +160,13 @@ class EquipmentPresetsBar extends StatelessWidget {
   }
 
   Future<void> _editPreset(BuildContext context, int index) async {
-    final save = controller.save;
+    final save = trackActiveEquipmentPreset(controller.save);
     if (index < 0 || index >= save.equipmentPresets.length) return;
     final preset = save.equipmentPresets[index];
     final nameController = TextEditingController(text: preset.name);
     var icon = preset.icon;
     final skills = controller.db.skills
-        .where((row) => row.raw['Release Phase'] == 'Launch')
+        .where((row) => row.releasePhase == 'Launch')
         .toList();
 
     final confirmed = await showGamePopup<bool>(
@@ -174,49 +176,51 @@ class EquipmentPresetsBar extends StatelessWidget {
           builder: (context, setLocal) {
             return SizedBox(
               width: 340,
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Text('Preset ${index + 1}', style: const TextStyle(fontSize: 16)),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: nameController,
-                      maxLength: equipmentPresetNameMax,
-                      decoration: const InputDecoration(
-                        labelText: 'Name',
-                        isDense: true,
-                        border: OutlineInputBorder(),
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text('Preset ${index + 1}', style: const TextStyle(fontSize: 16)),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: nameController,
+                        maxLength: equipmentPresetNameMax,
+                        decoration: const InputDecoration(
+                          labelText: 'Name',
+                          isDense: true,
+                          border: OutlineInputBorder(),
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    _PresetIconPicker(
-                      icon: icon,
-                      skills: skills,
-                      onChanged: (next) => setLocal(() => icon = next),
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: GameButton(
-                            label: 'Cancel',
-                            tone: GameButtonTone.secondary,
-                            onPressed: () => Navigator.of(context).pop(false),
+                      const SizedBox(height: 8),
+                      _PresetIconPicker(
+                        icon: icon,
+                        skills: skills,
+                        onChanged: (next) => setLocal(() => icon = next),
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: GameButton(
+                              label: 'Cancel',
+                              tone: GameButtonTone.secondary,
+                              onPressed: () => Navigator.of(context).pop(false),
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: GameButton(
-                            label: 'Save',
-                            onPressed: () => Navigator.of(context).pop(true),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: GameButton(
+                              label: 'Save',
+                              onPressed: () => Navigator.of(context).pop(true),
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                  ],
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
             );
@@ -434,7 +438,11 @@ class _PresetIcon extends StatelessWidget {
       return GameImage(goldIconPath(), width: size, height: size);
     }
     if (icon.kind == 'skill' && icon.skillId != null) {
-      return GameImage(skillIconPath(skillsById[icon.skillId!]), width: size, height: size);
+      final skill = skillsById[icon.skillId!];
+      return Tooltip(
+        message: skill?.displayName ?? icon.skillId!,
+        child: GameImage(skillIconPath(skill), width: size, height: size),
+      );
     }
     final n = (icon.numeral ?? 1).floor().clamp(1, 4);
     return Text(
@@ -452,16 +460,22 @@ class _PresetIcon extends StatelessWidget {
 }
 
 class _IconChoice extends StatelessWidget {
-  const _IconChoice({required this.selected, required this.onTap, required this.child});
+  const _IconChoice({
+    required this.selected,
+    required this.onTap,
+    required this.child,
+    this.tooltip,
+  });
 
   final bool selected;
   final VoidCallback onTap;
   final Widget child;
+  final String? tooltip;
 
   @override
   Widget build(BuildContext context) {
     final chrome = UiChrome.of(context);
-    return Material(
+    final tile = Material(
       color: selected ? Color.lerp(chrome.slot, chrome.embossFace, 0.18)! : chrome.slot,
       shape: PixelSteppedBorder(
         step: 2,
@@ -472,10 +486,11 @@ class _IconChoice extends StatelessWidget {
       ),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.zero /* pixel step 2 */,
+        customBorder: PixelSteppedBorder(step: 2),
         child: SizedBox(width: 32, height: 32, child: Center(child: child)),
       ),
     );
+    return tooltip == null ? tile : Tooltip(message: tooltip!, child: tile);
   }
 }
 
@@ -641,6 +656,8 @@ class _PresetIconPicker extends StatelessWidget {
   final List<SkillRow> skills;
   final ValueChanged<EquipmentPresetIcon> onChanged;
 
+  bool _romanSelected(int n) => icon.kind == 'roman' && (icon.numeral ?? 0).floor() == n;
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -648,28 +665,37 @@ class _PresetIconPicker extends StatelessWidget {
       children: [
         const MutedText('Icon'),
         const SizedBox(height: 6),
-        Wrap(
-          spacing: 6,
-          runSpacing: 6,
-          children: [
-            for (var n = 1; n <= 4; n += 1)
-              _IconChoice(
-                selected: icon.kind == 'roman' && icon.numeral == n,
-                onTap: () => onChanged(EquipmentPresetIcon(kind: 'roman', numeral: n)),
-                child: Text(_roman[n - 1], style: const TextStyle(fontWeight: FontWeight.w600)),
-              ),
-            _IconChoice(
-              selected: icon.kind == 'coin',
-              onTap: () => onChanged(const EquipmentPresetIcon(kind: 'coin')),
-              child: GameImage(goldIconPath(), width: 18, height: 18),
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxHeight: 168),
+          child: SingleChildScrollView(
+            child: Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                for (var n = 1; n <= 4; n += 1)
+                  _IconChoice(
+                    selected: _romanSelected(n),
+                    tooltip: 'Roman ${_roman[n - 1]}',
+                    onTap: () => onChanged(EquipmentPresetIcon(kind: 'roman', numeral: n)),
+                    child: Text(_roman[n - 1], style: const TextStyle(fontWeight: FontWeight.w600)),
+                  ),
+                _IconChoice(
+                  selected: icon.kind == 'coin',
+                  tooltip: 'Coin',
+                  onTap: () => onChanged(const EquipmentPresetIcon(kind: 'coin')),
+                  child: GameImage(goldIconPath(), width: 18, height: 18),
+                ),
+                for (final skill in skills)
+                  _IconChoice(
+                    selected: icon.kind == 'skill' && icon.skillId == skill.skillId,
+                    tooltip: skill.displayName,
+                    onTap: () =>
+                        onChanged(EquipmentPresetIcon(kind: 'skill', skillId: skill.skillId)),
+                    child: GameImage(skillIconPath(skill), width: 18, height: 18),
+                  ),
+              ],
             ),
-            for (final skill in skills)
-              _IconChoice(
-                selected: icon.kind == 'skill' && icon.skillId == skill.skillId,
-                onTap: () => onChanged(EquipmentPresetIcon(kind: 'skill', skillId: skill.skillId)),
-                child: GameImage(skillIconPath(skill), width: 18, height: 18),
-              ),
-          ],
+          ),
         ),
       ],
     );

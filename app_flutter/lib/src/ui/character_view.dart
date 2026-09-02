@@ -22,7 +22,7 @@ class CharacterView extends StatefulWidget {
 class _CharacterViewState extends State<CharacterView> {
   CharacterTab _tab = CharacterTab.inventory;
 
-  /// Shared so Equipment → Inventory keeps which preset the paper doll edits.
+  /// Shared so Equipment → Inventory keeps which snapshot is selected.
   int? _selectedPresetIndex;
 
   @override

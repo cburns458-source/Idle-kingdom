@@ -57,7 +57,7 @@ class InventoryView extends StatefulWidget {
   final InventoryPane? pane;
   final bool showHeader;
 
-  /// When provided by [CharacterView], the selected preset survives Equipment → Inventory.
+  /// When provided by [CharacterView], which snapshot is selected (null = Current).
   final int? selectedPresetIndex;
   final ValueChanged<int?>? onSelectedPresetIndexChanged;
 
@@ -78,7 +78,6 @@ class _InventoryViewState extends State<InventoryView> {
   int? get _selectedPresetIndex => widget.onSelectedPresetIndexChanged != null
       ? widget.selectedPresetIndex
       : _localSelectedPresetIndex;
-  bool get _editingPreset => _selectedPresetIndex != null;
 
   void _setSelectedPresetIndex(int? index) {
     final notify = widget.onSelectedPresetIndexChanged;
@@ -143,10 +142,6 @@ class _InventoryViewState extends State<InventoryView> {
   }
 
   void _equipAt(int index, {String? preferredSlotId}) {
-    if (_editingPreset) {
-      _assignToEditingPreset(index, preferredSlotId: preferredSlotId);
-      return;
-    }
     final result = equipInventoryIndex(db, save, index, preferredSlotId: preferredSlotId);
     if (!result.ok) {
       setState(() => _message = result.reason);
@@ -154,49 +149,10 @@ class _InventoryViewState extends State<InventoryView> {
     }
     setState(() => _message = null);
     controller.commitLoadout(result.save!);
-  }
-
-  void _assignToEditingPreset(int inventoryIndex, {String? preferredSlotId}) {
-    final editing = _selectedPresetIndex;
-    if (editing == null || inventoryIndex < 0 || inventoryIndex >= save.inventory.length) return;
-    final stack = save.inventory[inventoryIndex];
-    final gear = equipmentForItemId(db, stack.itemId);
-    var slotId = preferredSlotId ?? gear?.slotId;
-    if (slotId == null) {
-      setState(() => _message = 'That does not go on a preset.');
-      return;
-    }
-    if (preferredSlotId != null && !_itemFitsSlot(stack.itemId, preferredSlotId)) {
-      setState(() => _message = 'That does not fit this slot.');
-      return;
-    }
-    if (isSpellSlotId(preferredSlotId ?? '') && preferredSlotId != null) {
-      slotId = preferredSlotId;
-    }
-    final quantity = isStackableConsumableSlot(slotId) ? stack.quantity : 1;
-    final next = editSelectedEquipmentPresetSlot(
-      db,
-      save,
-      editing,
-      slotId,
-      EquippedStack(
-        itemId: stack.itemId,
-        quantity: quantity,
-        enchantmentId: stack.enchantmentId,
-        favorite: stack.favorite == true ? true : null,
-      ),
-    );
-    setState(() => _message = null);
-    controller.commitLoadout(next);
+    if (_selectedPresetIndex != null) _setSelectedPresetIndex(null);
   }
 
   void _unequip(String slotId) {
-    if (_editingPreset) {
-      final next = editSelectedEquipmentPresetSlot(db, save, _selectedPresetIndex!, slotId, null);
-      setState(() => _message = null);
-      controller.commitLoadout(next);
-      return;
-    }
     final result = unequipSlot(save, slotId);
     if (!result.ok) {
       setState(() => _message = result.reason);
@@ -204,6 +160,7 @@ class _InventoryViewState extends State<InventoryView> {
     }
     setState(() => _message = null);
     controller.commitLoadout(result.save!);
+    if (_selectedPresetIndex != null) _setSelectedPresetIndex(null);
   }
 
   void _toggleFavorite(int index) {
@@ -714,14 +671,7 @@ class _InventoryViewState extends State<InventoryView> {
   }
 
   Widget _slotTile(String slotId) {
-    final live = save.equipment.slots[slotId];
-    final preview = _editingPreset
-        ? (_selectedPresetIndex! < save.equipmentPresets.length
-              ? save.equipmentPresets[_selectedPresetIndex!].slots[slotId]
-              : null)
-        : live;
-    final stack = preview;
-    final missing = stack != null && _editingPreset && !equipmentStackOwned(save, stack);
+    final stack = save.equipment.slots[slotId];
     final slot = db.equipmentSlots.where((row) => row.slotId == slotId).firstOrNull;
     if (stack == null) {
       return GamePanel(
@@ -753,7 +703,6 @@ class _InventoryViewState extends State<InventoryView> {
       favorite: false,
       selected: false,
       selecting: false,
-      missing: missing,
       onTap: () => _unequip(slotId),
       onLongPress: () => _showDetail(equipped: stack, slotId: slotId),
       onToggleFavorite: null,
