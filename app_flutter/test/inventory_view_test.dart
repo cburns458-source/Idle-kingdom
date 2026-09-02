@@ -358,7 +358,9 @@ void main() {
     expect(find.text('Eat'), findsOne);
   });
 
-  testWidgets('equipping while a preset is selected edits current loadout only', (tester) async {
+  testWidgets('applying a preset wears it; bag equips still change current gear only', (
+    tester,
+  ) async {
     var save = unequippedCharacter();
     save = addItemToInventory(save, 'ITEM-0111', 1);
     save = addItemToInventory(save, 'ITEM-0110', 1);
@@ -374,11 +376,9 @@ void main() {
     await tester.pump();
 
     expect(find.text('Current'), findsOneWidget);
+    expect(find.text('Apply'), findsNothing);
     expect(find.text('Edit'), findsNothing);
-    expect(find.text('Done'), findsNothing);
 
-    await tester.tap(find.text('Current'));
-    await tester.pump();
     await tester.tap(find.text('Items'));
     await tester.pump();
     await tester.tap(find.byTooltip('Copper Hatchet').first);
@@ -390,9 +390,14 @@ void main() {
     await tester.tap(find.text('Equipment'));
     await tester.pump();
     await tester.tap(find.text('I'));
-    await tester.pump();
+    await tester.pumpAndSettle();
+    expect(find.text('Apply'), findsOne);
+    expect(find.text('Edit'), findsOne);
+    await tester.tap(find.text('Apply'));
+    await tester.pumpAndSettle();
     expect(controller.save.activeEquipmentPresetIndex, 0);
     expect(controller.save.equipment.slots['SLOT-0001']?.itemId, 'ITEM-0111');
+    expect(controller.save.equipmentPresets[0].slots['SLOT-0001']?.itemId, 'ITEM-0111');
 
     await tester.tap(find.text('Items'));
     await tester.pump();
@@ -401,12 +406,50 @@ void main() {
 
     expect(controller.save.equipmentPresets[0].slots['SLOT-0001']?.itemId, 'ITEM-0111');
     expect(controller.save.equipment.slots['SLOT-0001']?.itemId, 'ITEM-0110');
+  });
 
+  testWidgets('editing a preset does not change worn gear until Apply', (tester) async {
+    var save = unequippedCharacter();
+    save = addItemToInventory(save, 'ITEM-0111', 1);
+    save = addItemToInventory(save, 'ITEM-0110', 1);
+    final equipped = equipItemFromInventory(database.launch, save, 'ITEM-0111');
+    expect(equipped.ok, isTrue);
+    save = saveActiveEquipmentPreset(equipped.save!);
+
+    final controller = buildController(database, seed: save);
+    addTearDown(controller.dispose);
+
+    await pumpPanel(tester, InventoryView(controller: controller));
     await tester.tap(find.text('Equipment'));
     await tester.pump();
     await tester.tap(find.text('I'));
-    await tester.pump();
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Edit'));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('Worn gear is unchanged'), findsOne);
     expect(controller.save.equipment.slots['SLOT-0001']?.itemId, 'ITEM-0111');
+
+    await tester.tap(find.text('Items'));
+    await tester.pump();
+    await tester.tap(find.byTooltip('Copper Hatchet').first);
+    await tester.pump();
+
+    expect(controller.save.equipment.slots['SLOT-0001']?.itemId, 'ITEM-0111');
+    expect(controller.save.equipmentPresets[0].slots['SLOT-0001']?.itemId, 'ITEM-0110');
+
+    await tester.tap(find.text('Equipment'));
+    await tester.pump();
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+    expect(controller.save.equipment.slots['SLOT-0001']?.itemId, 'ITEM-0111');
+    expect(controller.save.equipmentPresets[0].slots['SLOT-0001']?.itemId, 'ITEM-0110');
+
+    await tester.tap(find.text('I'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Apply'));
+    await tester.pumpAndSettle();
+    expect(controller.save.equipment.slots['SLOT-0001']?.itemId, 'ITEM-0110');
   });
 
   testWidgets('opens preset settings for all four presets from equipment bar', (tester) async {
@@ -468,7 +511,9 @@ void main() {
     expect(controller.save.equipmentPresets[0].slots['SLOT-0001']?.itemId, 'ITEM-0111');
 
     await tester.tap(find.text('I'));
-    await tester.pump();
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Edit'));
+    await tester.pumpAndSettle();
     expect(
       tester
           .widget<InkWell>(
@@ -481,8 +526,19 @@ void main() {
       isNotNull,
     );
     await tester.tap(find.text('Save'));
-    await tester.pump();
+    await tester.pumpAndSettle();
     expect(controller.save.equipmentPresets[0].slots['SLOT-0001']?.itemId, 'ITEM-0111');
+    expect(
+      tester
+          .widget<InkWell>(
+            find.descendant(
+              of: find.byKey(const Key('save-preset')),
+              matching: find.byType(InkWell),
+            ),
+          )
+          .onTap,
+      isNull,
+    );
   });
 
   testWidgets('saves a chosen skill icon onto a preset', (tester) async {
