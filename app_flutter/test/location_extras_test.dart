@@ -374,9 +374,9 @@ void main() {
       findsWidgets,
     );
     expect(find.text('Town Gate'), findsNothing);
-    expect(find.text('You are here.'), findsOne);
+    expect(find.descendant(of: find.byType(WorldMapView), matching: find.text('Open')), findsOne);
 
-    await tester.tap(find.byTooltip('Close'));
+    await tester.tap(find.descendant(of: find.byType(WorldMapView), matching: find.text('Open')));
     await tester.pump();
     expect(find.byType(WorldMapView), findsNothing);
     expect(find.byTooltip('Back to Town'), findsOne);
@@ -459,7 +459,7 @@ void main() {
       find.descendant(of: find.byType(WorldMapView), matching: find.text('General Store')),
       findsWidgets,
     );
-    expect(find.text('You are here.'), findsOne);
+    expect(find.descendant(of: find.byType(WorldMapView), matching: find.text('Open')), findsOne);
   });
 
   testWidgets('Enter Forest Gate opens the Ancient Forest at Forest Path', (tester) async {

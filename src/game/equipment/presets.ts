@@ -175,14 +175,13 @@ export function presetMatchesLoadout(save: PlayerSave, index: number): boolean {
 }
 
 /**
- * Location and equipment chips: matching non-empty snapshots, or an empty
- * snapshot only while it is the last applied preset.
+ * Location chips: the last applied snapshot, and only while worn gear matches.
+ * Matching clones do not highlight together.
  */
 export function shouldHighlightEquipmentPreset(save: PlayerSave, index: number): boolean {
-  if (!presetMatchesLoadout(save, index)) return false
-  const { equipmentPresets, activeEquipmentPresetIndex } = normalizeEquipmentPresets(save)
-  if (presetHasEquippedItem(equipmentPresets[index]!)) return true
-  return activeEquipmentPresetIndex === index
+  const { activeEquipmentPresetIndex } = normalizeEquipmentPresets(save)
+  if (activeEquipmentPresetIndex !== index) return false
+  return presetMatchesLoadout(save, index)
 }
 
 /** Normalize preset rows. Worn gear is never copied onto a snapshot. */

@@ -358,7 +358,7 @@ void main() {
     expect(find.text('Eat'), findsOne);
   });
 
-  testWidgets('current loadout stays put until a selected preset is edited', (tester) async {
+  testWidgets('equipping while a preset is selected edits current loadout only', (tester) async {
     var save = unequippedCharacter();
     save = addItemToInventory(save, 'ITEM-0111', 1);
     save = addItemToInventory(save, 'ITEM-0110', 1);
@@ -399,8 +399,14 @@ void main() {
     await tester.tap(find.byTooltip('Copper Hatchet').first);
     await tester.pump();
 
-    expect(controller.save.equipmentPresets[0].slots['SLOT-0001']?.itemId, 'ITEM-0110');
+    expect(controller.save.equipmentPresets[0].slots['SLOT-0001']?.itemId, 'ITEM-0111');
     expect(controller.save.equipment.slots['SLOT-0001']?.itemId, 'ITEM-0110');
+
+    await tester.tap(find.text('Equipment'));
+    await tester.pump();
+    await tester.tap(find.text('I'));
+    await tester.pump();
+    expect(controller.save.equipment.slots['SLOT-0001']?.itemId, 'ITEM-0111');
   });
 
   testWidgets('opens preset settings for all four presets from equipment bar', (tester) async {
@@ -422,5 +428,27 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(controller.save.equipmentPresets[1].name, 'Mining Kit');
+  });
+
+  testWidgets('saves a chosen skill icon onto a preset', (tester) async {
+    final controller = buildController(database, seed: startedCharacter(database));
+    addTearDown(controller.dispose);
+
+    await pumpPanel(tester, InventoryView(controller: controller));
+    await tester.tap(find.text('Equipment'));
+    await tester.pump();
+
+    await tester.tap(find.byTooltip('Preset settings'));
+    await tester.pumpAndSettle();
+
+    final mining = find.byTooltip('Mining');
+    await tester.ensureVisible(mining.first);
+    await tester.tap(mining.first);
+    await tester.pump();
+    await tester.tap(find.widgetWithText(GameButton, 'Save'));
+    await tester.pumpAndSettle();
+
+    expect(controller.save.equipmentPresets[0].icon.kind, 'skill');
+    expect(controller.save.equipmentPresets[0].icon.skillId, 'SKL-0002');
   });
 }

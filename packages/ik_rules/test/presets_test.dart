@@ -137,6 +137,8 @@ void main() {
       foodSlotId: const EquippedStack(itemId: 'ITEM-0058', quantity: 5),
     });
     expect(presetMatchesLoadout(save, 1), isTrue);
+    expect(shouldHighlightEquipmentPreset(save, 1), isFalse);
+    save = save.copyWith(activeEquipmentPresetIndex: 1);
     expect(shouldHighlightEquipmentPreset(save, 1), isTrue);
     expect(shouldHighlightEquipmentPreset(save, 0), isFalse);
 
@@ -149,6 +151,29 @@ void main() {
       ),
     );
     expect(presetMatchesLoadout(save, 1), isFalse);
+  });
+
+  test('matching clones do not highlight together', () {
+    var save = createNewSave(db, 0);
+    save = save.copyWith(
+      equipment: EquipmentLoadout(
+        slots: {
+          ...save.equipment.slots,
+          'SLOT-0001': const EquippedStack(itemId: 'ITEM-0111', quantity: 1),
+        },
+      ),
+      activeEquipmentPresetIndex: 0,
+    );
+    save = _withPresetSlots(save, 0, {
+      'SLOT-0001': const EquippedStack(itemId: 'ITEM-0111', quantity: 1),
+    });
+    save = _withPresetSlots(save, 1, {
+      'SLOT-0001': const EquippedStack(itemId: 'ITEM-0111', quantity: 1),
+    });
+    expect(presetMatchesLoadout(save, 0), isTrue);
+    expect(presetMatchesLoadout(save, 1), isTrue);
+    expect(shouldHighlightEquipmentPreset(save, 0), isTrue);
+    expect(shouldHighlightEquipmentPreset(save, 1), isFalse);
   });
 
   test('editing a selected preset wears the new snapshot', () {

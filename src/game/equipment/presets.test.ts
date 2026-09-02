@@ -193,6 +193,8 @@ describe('equipment presets', () => {
       ),
     }
     expect(presetMatchesLoadout(save, 1)).toBe(true)
+    expect(shouldHighlightEquipmentPreset(save, 1)).toBe(false)
+    save = { ...save, activeEquipmentPresetIndex: 1 }
     expect(shouldHighlightEquipmentPreset(save, 1)).toBe(true)
     expect(shouldHighlightEquipmentPreset(save, 0)).toBe(false)
 
@@ -206,6 +208,36 @@ describe('equipment presets', () => {
       },
     }
     expect(presetMatchesLoadout(save, 1)).toBe(false)
+  })
+
+  it('matching clones do not highlight together', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    let save = createNewSave(launch)
+    save = {
+      ...save,
+      equipment: {
+        slots: {
+          ...save.equipment.slots,
+          'SLOT-0001': { itemId: 'ITEM-0111', quantity: 1 },
+        },
+      },
+      activeEquipmentPresetIndex: 0,
+      equipmentPresets: save.equipmentPresets.map((preset, index) =>
+        index === 0 || index === 1
+          ? {
+              ...preset,
+              slots: {
+                ...preset.slots,
+                'SLOT-0001': { itemId: 'ITEM-0111', quantity: 1 },
+              },
+            }
+          : preset,
+      ),
+    }
+    expect(presetMatchesLoadout(save, 0)).toBe(true)
+    expect(presetMatchesLoadout(save, 1)).toBe(true)
+    expect(shouldHighlightEquipmentPreset(save, 0)).toBe(true)
+    expect(shouldHighlightEquipmentPreset(save, 1)).toBe(false)
   })
 
   it('editing a selected preset wears the new snapshot', () => {
