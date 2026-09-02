@@ -302,6 +302,9 @@ String npcAssetPath(String npcId) => '$_assetRoot/${_npcArt[npcId] ?? 'npc/npc_k
 
 String uiMapAssetPath() => '$_assetRoot/icons/ui/ui_map.webp';
 
+/// Three-figure plate for the location Nearby adventurers chip.
+String uiNearbyAssetPath() => '$_assetRoot/icons/ui/ui_nearby.webp';
+
 /// Full-stage ink cloud when Mother Squid inks a strike.
 String uiInkSplatAssetPath() => '$_assetRoot/icons/ui/ui_ink_splat.webp';
 

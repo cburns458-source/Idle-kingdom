@@ -309,10 +309,10 @@ class _LocationViewState extends State<LocationView> {
                                               : widget.multiplayer.nearbyHasAllies
                                               ? Palette.softGreen
                                               : Palette.gold,
-                                          child: const Icon(
-                                            Icons.groups,
-                                            size: 18,
-                                            color: Color(0xF2ECD6A8),
+                                          child: GameImage(
+                                            uiNearbyAssetPath(),
+                                            width: 32,
+                                            height: 32,
                                           ),
                                         );
                                       },

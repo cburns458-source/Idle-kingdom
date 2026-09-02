@@ -71,6 +71,10 @@ export function uiMapAssetPath(): string {
   return withAssetVersion('/assets/icons/ui/ui_map.webp')
 }
 
+export function uiNearbyAssetPath(): string {
+  return withAssetVersion('/assets/icons/ui/ui_nearby.webp')
+}
+
 export function uiInkSplatAssetPath(): string {
   return withAssetVersion('/assets/icons/ui/ui_ink_splat.webp')
 }
