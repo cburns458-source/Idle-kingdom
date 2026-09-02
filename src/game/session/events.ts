@@ -26,6 +26,8 @@ export type SessionEvent =
       enemyHit: number | null
       thornsHit: number
       outcome: 'ongoing' | 'victory' | 'defeat'
+      /** True when Mother Squid (or another ink boss) clouded this round. */
+      bossInkActive: boolean
     }
   /** Food was eaten after a win, for the green heal pop. */
   | { kind: 'food-healed'; healed: number; foodName: string }

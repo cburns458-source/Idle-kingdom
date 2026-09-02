@@ -885,10 +885,11 @@ class _SortMenu extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final chrome = UiChrome.of(context);
     return PopupMenuButton<InventorySortMode>(
       tooltip: 'Sort',
       initialValue: mode,
-      color: Palette.parchmentDeep,
+      color: chrome.board,
       position: PopupMenuPosition.under,
       offset: const Offset(-80, 4),
       constraints: const BoxConstraints(minWidth: 148, maxWidth: 180),
@@ -903,21 +904,17 @@ class _SortMenu extends StatelessWidget {
               style: TextStyle(
                 fontFamily: gameFontFamily,
                 fontWeight: FontWeight.w400,
-                color: Palette.parchmentText,
+                color: chrome.primaryLabel,
               ),
             ),
           ),
       ],
       child: DecoratedBox(
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFF6A4A30), Color(0xFF45301F)],
-          ),
+          gradient: chrome.secondaryFill,
           borderRadius: BorderRadius.zero /* pixel step 3 */,
           border: Border.all(
-            color: mode == InventorySortMode.group ? const Color(0x739A7B32) : Palette.gold,
+            color: mode == InventorySortMode.group ? chrome.embossFace : chrome.embossFaceSelected,
           ),
           boxShadow: const [BoxShadow(offset: Offset(0, 2), color: Color(0x40000000))],
         ),

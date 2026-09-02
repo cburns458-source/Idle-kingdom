@@ -92,6 +92,7 @@ class CombatRoundEvent extends SessionEvent {
     required this.enemyHit,
     required this.thornsHit,
     required this.outcome,
+    this.bossInkActive = false,
   });
 
   final String enemyId;
@@ -105,6 +106,9 @@ class CombatRoundEvent extends SessionEvent {
 
   /// One of `ongoing`, `victory`, `defeat`.
   final String outcome;
+
+  /// True when Mother Squid (or another ink boss) clouded this round.
+  final bool bossInkActive;
 
   @override
   String get kind => 'combat-round';
@@ -121,6 +125,7 @@ class CombatRoundEvent extends SessionEvent {
     'enemyHit': enemyHit,
     'thornsHit': thornsHit,
     'outcome': outcome,
+    'bossInkActive': bossInkActive,
   };
 }
 

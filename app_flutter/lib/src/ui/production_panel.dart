@@ -129,21 +129,23 @@ class _ProductionPickerState extends State<ProductionPicker> {
                   : 'No recipes you can make right now. Open the recipe book to see what you need.',
             )
           else ...[
-            GameDropdown<String>(
-              label: 'Recipe',
-              value: recipe.recipeId,
-              items: [
-                for (final row in recipes)
-                  GameDropdownItem(
-                    value: row.recipeId,
-                    label: '${row.displayName} (Lv ${row.proficiencyLevel})',
-                  ),
-              ],
-              onChanged: (value) => setState(() {
-                _recipeId = value;
-                _quantity = 1;
-                _error = null;
-              }),
+            GamePanel(
+              child: GameDropdown<String>(
+                label: 'Recipe',
+                value: recipe.recipeId,
+                items: [
+                  for (final row in recipes)
+                    GameDropdownItem(
+                      value: row.recipeId,
+                      label: '${row.displayName} (Lv ${row.proficiencyLevel})',
+                    ),
+                ],
+                onChanged: (value) => setState(() {
+                  _recipeId = value;
+                  _quantity = 1;
+                  _error = null;
+                }),
+              ),
             ),
             const SizedBox(height: 10),
             _RecipeDetails(controller: controller, recipe: recipe),

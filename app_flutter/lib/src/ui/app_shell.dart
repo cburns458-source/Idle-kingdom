@@ -855,20 +855,25 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
                     ),
                     child: Material(
                       key: const Key('chat-panel'),
-                      color: Palette.parchmentDeep,
+                      color: UiChrome.of(context).board,
                       elevation: 12,
                       shadowColor: const Color(0x73000000),
                       clipBehavior: Clip.antiAlias,
                       shape: PixelSteppedBorder(
                         step: 3,
-                        side: const BorderSide(color: Palette.edge),
+                        side: BorderSide(
+                          color: UiChrome.of(context).embossFace.withValues(alpha: 0.55),
+                        ),
                       ),
-                      child: ChatSheet(
-                        controller: controller,
-                        multiplayer: multiplayer,
-                        locationId: save.currentLocationId,
-                        citadelHub: _inCitadel,
-                        onClose: _closeChat,
+                      child: DecoratedBox(
+                        decoration: chromeBoardFill(context, textureOpacity: 0.4),
+                        child: ChatSheet(
+                          controller: controller,
+                          multiplayer: multiplayer,
+                          locationId: save.currentLocationId,
+                          citadelHub: _inCitadel,
+                          onClose: _closeChat,
+                        ),
                       ),
                     ),
                   ),
@@ -1031,7 +1036,7 @@ class _BatterySaverPlaque extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       key: const Key('battery-saver-plaque'),
-      color: Palette.parchmentDeep,
+      color: UiChrome.of(context).board,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8),
         side: const BorderSide(color: Palette.gold, width: 1),

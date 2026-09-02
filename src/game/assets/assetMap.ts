@@ -70,3 +70,7 @@ export function locationAssetPath(locationId: string): string {
 export function uiMapAssetPath(): string {
   return withAssetVersion('/assets/icons/ui/ui_map.webp')
 }
+
+export function uiInkSplatAssetPath(): string {
+  return withAssetVersion('/assets/icons/ui/ui_ink_splat.webp')
+}

@@ -91,6 +91,7 @@ describe('session tick', () => {
     const resolved = advanceSession(db, fighting, START_MS + roundMs, firstOfPool)
     const round = resolved.events.find((event) => event.kind === 'combat-round')
     expect(round).toBeTruthy()
+    if (round?.kind === 'combat-round') expect(round.bossInkActive).toBe(false)
     expect(resolved.save.combatEnemyHp!).toBeLessThan(fighting.combatEnemyHp!)
   })
 

@@ -302,6 +302,9 @@ String npcAssetPath(String npcId) => '$_assetRoot/${_npcArt[npcId] ?? 'npc/npc_k
 
 String uiMapAssetPath() => '$_assetRoot/icons/ui/ui_map.webp';
 
+/// Full-stage ink cloud when Mother Squid inks a strike.
+String uiInkSplatAssetPath() => '$_assetRoot/icons/ui/ui_ink_splat.webp';
+
 /// The pixel ring drawn over the HUD portrait.
 String avatarFrameAssetPath() => '$_assetRoot/player/avatar_frame_pixel.png';
 

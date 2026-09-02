@@ -55,7 +55,7 @@ class _WardrobeSheetState extends State<WardrobeSheet> {
     final slot = wardrobeSlotView(controller.db, save, _slotId);
 
     return ColoredBox(
-      color: Palette.parchmentDeep,
+      color: UiChrome.of(context).board,
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(

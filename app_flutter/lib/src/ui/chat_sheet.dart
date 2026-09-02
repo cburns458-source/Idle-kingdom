@@ -36,9 +36,11 @@ class ChatLauncher extends StatelessWidget {
         return Tooltip(
           message: tooltip,
           child: Material(
-            color: open ? const Color(0xD9546E3E) : Palette.parchment,
+            color: open ? const Color(0xD9546E3E) : UiChrome.of(context).iconButtonFill,
             shape: CircleBorder(
-              side: BorderSide(color: open ? const Color(0x66BEDC96) : Palette.edge),
+              side: BorderSide(
+                color: open ? const Color(0x66BEDC96) : UiChrome.of(context).embossFace,
+              ),
             ),
             child: InkWell(
               customBorder: const CircleBorder(),

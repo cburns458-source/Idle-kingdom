@@ -52,6 +52,46 @@ void main() {
     expect(UiChrome.stone.embossShade, const Color(0xFF141618));
   });
 
+  testWidgets('Stone chat and dropdowns drop the wood parchment fill', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildAppTheme(),
+        home: UiChromeScope(
+          chrome: UiChrome.stone,
+          child: Scaffold(
+            body: Builder(
+              builder: (context) {
+                return Column(
+                  children: [
+                    Material(key: const Key('chat-panel'), color: UiChrome.of(context).board),
+                    GameDropdown<String>(
+                      label: 'Recipe',
+                      value: 'a',
+                      items: const [GameDropdownItem(value: 'a', label: 'Baked Potato (Lv 1)')],
+                      onChanged: (_) {},
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+
+    final chat = tester.widget<Material>(find.byKey(const Key('chat-panel')));
+    expect(chat.color, UiChrome.stone.board);
+    expect(chat.color, isNot(Palette.parchmentDeep));
+
+    final field = tester.widget<Text>(find.text('Baked Potato (Lv 1)'));
+    expect(field.style?.color, UiChrome.stone.primaryLabel);
+    expect(field.style?.color, isNot(UiChrome.stone.panelInk));
+
+    final arrow = tester.widget<Icon>(find.byIcon(Icons.expand_more));
+    expect(arrow.color, UiChrome.stone.primaryLabel);
+    expect(arrow.color, isNot(Palette.gold));
+  });
+
   testWidgets('GameButton wears the active pack fill', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
