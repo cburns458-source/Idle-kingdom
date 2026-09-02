@@ -776,7 +776,7 @@ void main() {
     final band = tester.getRect(find.byTooltip('Expand list'));
     expect(shop.overlaps(stage), isTrue);
     expect(shop.height, greaterThan(200));
-    expect(shop.bottom, lessThanOrEqualTo(band.top + 8));
+    expect(shop.bottom, lessThanOrEqualTo(band.top));
     expect(find.text('Confirm trade').hitTestable(), findsOne);
     expect(
       tester.getTopLeft(find.textContaining('Offer —')).dy,
