@@ -909,6 +909,7 @@ class OverlayChipButton extends StatelessWidget {
     this.dark = false,
     this.highlight = false,
     this.highlightColor,
+    this.plain = false,
   });
 
   final String tooltip;
@@ -924,19 +925,29 @@ class OverlayChipButton extends StatelessWidget {
   /// Overrides [highlight] when the nearby chip should be green instead of gold.
   final Color? highlightColor;
 
+  /// Skip the green/brown plate so a framed icon can be the whole button.
+  final bool plain;
+
   @override
   Widget build(BuildContext context) {
     final rim = highlightColor ?? (highlight ? Palette.gold : null);
-    final side = BorderSide(
-      color:
-          rim ?? (dark ? const Color(0x8C9A7B32) : Palette.softGreenShade.withValues(alpha: 0.70)),
-      width: rim != null ? 2 : 1,
-    );
+    final side = plain
+        ? BorderSide.none
+        : BorderSide(
+            color:
+                rim ??
+                (dark ? const Color(0x8C9A7B32) : Palette.softGreenShade.withValues(alpha: 0.70)),
+            width: rim != null ? 2 : 1,
+          );
     return Tooltip(
       message: tooltip,
       child: Material(
-        color: dark ? Palette.slot : Palette.softGreen,
-        elevation: 6,
+        color: plain
+            ? const Color(0x00000000)
+            : dark
+            ? Palette.slot
+            : Palette.softGreen,
+        elevation: plain ? 0 : 6,
         shadowColor: const Color(0x47000000),
         shape: PixelSteppedBorder(step: PixelChrome.step, side: side),
         child: InkWell(
