@@ -200,6 +200,7 @@ function resolveDueCombatRound(
     enemyHit: round.enemyHit,
     thornsHit: round.thornsHit,
     outcome: round.outcome,
+    bossInkActive: round.bossInkActive,
   })
 
   if (round.outcome === 'victory') {

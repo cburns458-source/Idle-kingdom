@@ -59,7 +59,11 @@ class _BottomNavState extends State<BottomNav> {
       _closeNest();
       return;
     }
-    final entry = OverlayEntry(builder: _buildNestOverlay);
+    final chrome = UiChrome.of(context);
+    final entry = OverlayEntry(
+      builder: (overlayContext) =>
+          UiChromeScope(chrome: chrome, child: _buildNestOverlay(overlayContext)),
+    );
     _nestEntry = entry;
     Overlay.of(context, rootOverlay: true).insert(entry);
     setState(() {});
@@ -159,11 +163,15 @@ class _NestPopup extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final chrome = UiChrome.of(context);
     return Material(
-      color: const Color(0xFA302014),
+      color: chrome.board,
       elevation: 12,
       shadowColor: const Color(0x73000000),
-      shape: PixelSteppedBorder(step: 3, side: const BorderSide(color: Color(0x669A7B32))),
+      shape: PixelSteppedBorder(
+        step: 3,
+        side: BorderSide(color: chrome.embossFace.withValues(alpha: 0.7)),
+      ),
       child: Semantics(
         container: true,
         label: 'More screens',
@@ -241,7 +249,7 @@ class _NavSection extends StatelessWidget {
         ? SizedBox(
             height: 42,
             child: Material(
-              color: selected ? const Color(0xD9546E3E) : const Color(0x8C281C12),
+              color: selected ? const Color(0xD9546E3E) : UiChrome.of(context).slot,
               child: InkWell(
                 onTap: onTap,
                 child: Align(

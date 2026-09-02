@@ -429,6 +429,29 @@ class _StageShell extends StatelessWidget {
   }
 }
 
+class _InkSplatOverlay extends StatelessWidget {
+  const _InkSplatOverlay({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween<double>(begin: 0, end: 1),
+      duration: const Duration(milliseconds: 180),
+      curve: Curves.easeOut,
+      builder: (context, value, child) {
+        return Opacity(
+          opacity: value,
+          child: Transform.scale(scale: 0.82 + 0.18 * value, child: child),
+        );
+      },
+      child: ColoredBox(
+        color: const Color(0x73120818),
+        child: Center(child: GameImage(uiInkSplatAssetPath(), width: 196, height: 196)),
+      ),
+    );
+  }
+}
+
 class _TwoPortraits extends StatelessWidget {
   const _TwoPortraits({
     required this.player,
@@ -661,8 +684,9 @@ class _CombatStage extends StatelessWidget {
     final round = controller.lastRound;
     final seq = controller.lastRoundSeq;
     final showFloaters = controller.showLastRoundFloaters;
+    final ink = controller.inkPopup;
 
-    return _StageShell(
+    final shell = _StageShell(
       semanticsLabel: 'Combat',
       scene: _TwoPortraits(
         player: SizedBox(
@@ -704,20 +728,6 @@ class _CombatStage extends StatelessWidget {
                       fontWeight: FontWeight.w400,
                       letterSpacing: 1,
                       color: Color(0xFFB8D4FF),
-                      shadows: overlayShadow,
-                    ),
-                  ),
-                ),
-              if (save.combatBossInkActive)
-                const Align(
-                  alignment: Alignment(0.12, -0.55),
-                  child: Text(
-                    'INK',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w400,
-                      letterSpacing: 1,
-                      color: Color(0xFF2A1A4A),
                       shadows: overlayShadow,
                     ),
                   ),
@@ -787,6 +797,16 @@ class _CombatStage extends StatelessWidget {
           borderColor: const Color(0x38FFECC4),
         ),
       ),
+    );
+    if (ink == null) return shell;
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        shell,
+        Positioned.fill(
+          child: IgnorePointer(child: _InkSplatOverlay(key: ValueKey('ink-${ink.seq}'))),
+        ),
+      ],
     );
   }
 }

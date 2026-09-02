@@ -64,6 +64,7 @@ void main() {
     expectBundled(itemIconPath(null), 'an unknown item');
     expectBundled(goldIconPath(), 'gold');
     expectBundled(uiMapAssetPath(), 'the map button');
+    expectBundled(uiInkSplatAssetPath(), 'the ink splat');
   });
 
   test('every item has a unique Icon Asset Key matching its Internal Key', () {

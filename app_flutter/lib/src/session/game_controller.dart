@@ -82,6 +82,16 @@ class HealPopup {
   final int seq;
 }
 
+/// Mother Squid ink cloud, held so the combat stage can flash a splat.
+class InkPopup {
+  const InkPopup({required this.shownAtMs, required this.seq});
+
+  final num shownAtMs;
+
+  /// Bumps each proc so a new splat can restart.
+  final int seq;
+}
+
 /// The screen-facing half of the session.
 ///
 /// The rules and the tick live in `ik_runtime`; this holds the things that are
@@ -162,6 +172,7 @@ class GameController extends ChangeNotifier {
   int _roundSeq = 0;
   CraftPopup? _craftPopup;
   HealPopup? _healPopup;
+  InkPopup? _inkPopup;
   CombatOutcomeHold? _outcomeHold;
   num? _liveEnemyHp;
 
@@ -279,6 +290,9 @@ class GameController extends ChangeNotifier {
   /// How long the green heal pop stays after a victory eat.
   static const int healPopupHoldMs = stagePopupHoldMs;
 
+  /// How long the ink splat stays over the combat stage.
+  static const int inkPopupHoldMs = 1200;
+
   /// How long player and enemy hit numbers stay up.
   static const int combatFloaterHoldMs = stagePopupHoldMs;
 
@@ -295,6 +309,14 @@ class GameController extends ChangeNotifier {
     final popup = _healPopup;
     if (popup == null) return null;
     if (session.clock() - popup.shownAtMs >= healPopupHoldMs) return null;
+    return popup;
+  }
+
+  /// The last ink cloud, or null once its hold is up.
+  InkPopup? get inkPopup {
+    final popup = _inkPopup;
+    if (popup == null) return null;
+    if (session.clock() - popup.shownAtMs >= inkPopupHoldMs) return null;
     return popup;
   }
 
@@ -708,6 +730,9 @@ class GameController extends ChangeNotifier {
         _lastRound = round;
         _lastRoundAtMs = session.clock();
         _roundSeq += 1;
+        if (round.bossInkActive) {
+          _inkPopup = InkPopup(shownAtMs: session.clock(), seq: (_inkPopup?.seq ?? 0) + 1);
+        }
         if (round.outcome == 'victory' || round.outcome == 'defeat') {
           _outcomeHold = CombatOutcomeHold(
             enemyId: round.enemyId,
@@ -732,6 +757,7 @@ class GameController extends ChangeNotifier {
     _lastRoundAtMs = null;
     _craftPopup = null;
     _healPopup = null;
+    _inkPopup = null;
     _outcomeHold = null;
     _liveEnemyHp = null;
   }
@@ -743,6 +769,9 @@ class GameController extends ChangeNotifier {
     }
     if (_healPopup != null && now - _healPopup!.shownAtMs >= healPopupHoldMs) {
       _healPopup = null;
+    }
+    if (_inkPopup != null && now - _inkPopup!.shownAtMs >= inkPopupHoldMs) {
+      _inkPopup = null;
     }
   }
 

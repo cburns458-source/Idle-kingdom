@@ -313,7 +313,8 @@
       "algae": "/assets/icons/items/item_algae.webp"
     },
     "ui": {
-      "map": "/assets/icons/ui/ui_map.webp"
+      "map": "/assets/icons/ui/ui_map.webp",
+      "ink_splat": "/assets/icons/ui/ui_ink_splat.webp"
     }
   }
 }

@@ -65,15 +65,18 @@ class DesktopChatRail extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       key: const Key('chat-panel'),
-      color: Palette.parchmentDeep,
+      color: UiChrome.of(context).board,
       clipBehavior: Clip.antiAlias,
-      child: ChatSheet(
-        controller: controller,
-        multiplayer: multiplayer,
-        locationId: locationId,
-        citadelHub: citadelHub,
-        embedded: true,
-        onClose: () {},
+      child: DecoratedBox(
+        decoration: chromeBoardFill(context, textureOpacity: 0.4),
+        child: ChatSheet(
+          controller: controller,
+          multiplayer: multiplayer,
+          locationId: locationId,
+          citadelHub: citadelHub,
+          embedded: true,
+          onClose: () {},
+        ),
       ),
     );
   }

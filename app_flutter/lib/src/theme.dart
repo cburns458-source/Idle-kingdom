@@ -351,7 +351,7 @@ class _GameButtonState extends State<GameButton> {
             gradient: primary
                 ? (down ? chrome.primaryPressed : chrome.primaryFill)
                 : (down ? chrome.secondaryPressed : chrome.secondaryFill),
-            fillColor: widget.selected ? const Color(0x339A7B32) : null,
+            fillColor: widget.selected ? chrome.embossFaceSelected.withValues(alpha: 0.28) : null,
             padding: widget.dense
                 ? const EdgeInsets.symmetric(horizontal: 8, vertical: 4)
                 : widget.compact
@@ -408,7 +408,8 @@ class GameTextButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ink = UiChrome.of(context).panelInk;
+    final chrome = UiChrome.of(context);
+    final ink = chrome.panelInk;
     return Semantics(
       button: true,
       enabled: onPressed != null,
@@ -427,7 +428,7 @@ class GameTextButton extends StatelessWidget {
                   fontFamily: gameFontFamily,
                   fontSize: 12,
                   fontWeight: FontWeight.w400,
-                  color: selected ? Palette.gold : ink,
+                  color: selected ? chrome.primaryLabel : ink,
                   height: 1.1,
                 ),
               ),
@@ -510,6 +511,7 @@ class GameDropdown<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final chrome = UiChrome.of(context);
     final selected = items.where((item) => item.value == value).firstOrNull;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -519,7 +521,7 @@ class GameDropdown<T> extends StatelessWidget {
         PopupMenuButton<T>(
           tooltip: label,
           enabled: items.isNotEmpty,
-          color: Palette.parchmentDeep,
+          color: chrome.board,
           offset: const Offset(0, 8),
           constraints: const BoxConstraints(minWidth: 220, maxWidth: 360),
           onSelected: onChanged,
@@ -533,14 +535,14 @@ class GameDropdown<T> extends StatelessWidget {
                   style: TextStyle(
                     fontFamily: gameFontFamily,
                     fontWeight: FontWeight.w400,
-                    color: item.enabled ? Palette.parchmentText : Palette.muted,
+                    color: item.enabled ? chrome.primaryLabel : Palette.muted,
                   ),
                 ),
               ),
           ],
           child: PixelPlate(
             step: PixelChrome.stepTight,
-            fillColor: UiChrome.of(context).iconButtonFill,
+            fillColor: chrome.iconButtonFill,
             strokeWidth: 1.5,
             shadow: false,
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
@@ -551,14 +553,15 @@ class GameDropdown<T> extends StatelessWidget {
                     selected?.label ?? '',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily: gameFontFamily,
                       fontWeight: FontWeight.w400,
                       fontSize: 13.5,
+                      color: chrome.primaryLabel,
                     ),
                   ),
                 ),
-                const Icon(Icons.expand_more, size: 20, color: Palette.gold),
+                Icon(Icons.expand_more, size: 20, color: chrome.primaryLabel),
               ],
             ),
           ),
@@ -583,6 +586,7 @@ class GameSelectField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final chrome = UiChrome.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -591,7 +595,7 @@ class GameSelectField extends StatelessWidget {
         PixelInkPlate(
           onTap: onPressed,
           step: PixelChrome.stepTight,
-          fillColor: UiChrome.of(context).iconButtonFill,
+          fillColor: chrome.iconButtonFill,
           strokeWidth: 1.5,
           shadow: false,
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
@@ -602,14 +606,15 @@ class GameSelectField extends StatelessWidget {
                   value,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: gameFontFamily,
                     fontWeight: FontWeight.w400,
                     fontSize: 13.5,
+                    color: chrome.primaryLabel,
                   ),
                 ),
               ),
-              const Icon(Icons.expand_more, size: 20, color: Palette.gold),
+              Icon(Icons.expand_more, size: 20, color: chrome.primaryLabel),
             ],
           ),
         ),
@@ -649,7 +654,7 @@ class GameSwitch extends StatelessWidget {
               strokeWidth: 1.5,
               shadow: false,
               material: PixelPlateMaterial.none,
-              fillColor: value ? const Color(0xFF5F7A45) : const Color(0xFF3D2A1A),
+              fillColor: value ? const Color(0xFF5F7A45) : UiChrome.of(context).slot,
               padding: const EdgeInsets.all(2),
               child: AnimatedAlign(
                 duration: const Duration(milliseconds: 120),
@@ -699,7 +704,7 @@ class DockRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return PixelPlate(
       step: PixelChrome.step,
-      fillColor: Palette.slot,
+      fillColor: UiChrome.of(context).slot,
       material: PixelPlateMaterial.none,
       strokeWidth: 1.5,
       shadow: false,
@@ -716,6 +721,7 @@ class DockRow extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 13.5,
                     fontWeight: FontWeight.w400,
+                    color: Palette.parchmentText,
                     shadows: overlayShadow,
                   ),
                 ),
@@ -945,7 +951,7 @@ class OverlayChipButton extends StatelessWidget {
         color: plain
             ? const Color(0x00000000)
             : dark
-            ? Palette.slot
+            ? UiChrome.of(context).slot
             : Palette.softGreen,
         elevation: plain ? 0 : 6,
         shadowColor: const Color(0x47000000),
