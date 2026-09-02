@@ -403,13 +403,12 @@ class _NpcPanelState extends State<NpcPanel> {
         line: '${selected.name}. ${selected.summary}',
         detail: raceChange.warning,
         error: _error,
-        progress: [
+        journal: [
           for (final line in selected.lines)
-            QuestProgressLine(
+            QuestJournalStep(
               key: line.itemId ?? 'gold',
-              label: line.name,
-              current: line.owned,
-              required: line.required,
+              label: '${line.name} ${line.owned} / ${line.required}',
+              state: line.owned >= line.required ? 'done' : 'current',
             ),
         ],
         actions: [
