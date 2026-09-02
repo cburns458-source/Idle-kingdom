@@ -50,6 +50,12 @@ class EquipmentPresetsBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return ListenableBuilder(listenable: controller, builder: (context, _) => _bar(context));
+  }
+
+  bool get _saveEnabled => !showCurrentButton || selectedPresetIndex != null;
+
+  Widget _bar(BuildContext context) {
     final save = controller.save;
     final presets = save.equipmentPresets;
     final buttons = <Widget>[
@@ -60,6 +66,7 @@ class EquipmentPresetsBar extends StatelessWidget {
           label: 'Current',
           semanticsLabel: 'Current loadout',
           selected: selectedPresetIndex == null,
+          filled: true,
           onPressed: () => onSelectCurrent?.call(),
         ),
       for (var i = 0; i < equipmentPresetCount; i += 1)
@@ -89,10 +96,7 @@ class EquipmentPresetsBar extends StatelessWidget {
         _SaveChip(
           compact: compact,
           square: compact && axis == Axis.vertical,
-          onPressed: () {
-            controller.commitLoadout(saveActiveEquipmentPreset(controller.save));
-            onMessage?.call('Preset saved.');
-          },
+          onPressed: _saveEnabled ? _saveSelectedPreset : null,
         ),
       if (showSettingsButton)
         _SettingsChip(
@@ -122,6 +126,21 @@ class EquipmentPresetsBar extends StatelessWidget {
     );
   }
 
+  void _saveSelectedPreset() {
+    final target = showCurrentButton
+        ? selectedPresetIndex
+        : controller.save.activeEquipmentPresetIndex.floor();
+    if (target == null || target < 0 || target >= equipmentPresetCount) return;
+    controller.commitLoadout(
+      saveActiveEquipmentPreset(controller.save.copyWith(activeEquipmentPresetIndex: target)),
+    );
+    onMessage?.call('Preset saved.');
+  }
+
+  void _commitPresetIcon(int index, EquipmentPresetIcon icon) {
+    controller.commit(setEquipmentPresetIcon(controller.save, index, icon));
+  }
+
   Future<void> _openPresetSettings(BuildContext context) async {
     final save = controller.save;
     final skills = controller.db.skills.where((row) => row.releasePhase == 'Launch').toList();
@@ -140,6 +159,7 @@ class EquipmentPresetsBar extends StatelessWidget {
       context: context,
       builder: (context) {
         return _AllPresetsSettingsDialog(
+          controller: controller,
           presets: presets,
           skills: skills,
           skillsById: controller.indexes.skillsById,
@@ -151,7 +171,6 @@ class EquipmentPresetsBar extends StatelessWidget {
     var next = controller.save;
     for (var i = 0; i < result.length; i += 1) {
       next = renameEquipmentPreset(next, i, result[i].name);
-      next = setEquipmentPresetIcon(next, i, result[i].icon);
     }
     controller.commit(next);
     onMessage?.call('Preset settings saved.');
@@ -194,7 +213,10 @@ class EquipmentPresetsBar extends StatelessWidget {
                       _PresetIconPicker(
                         icon: icon,
                         skills: skills,
-                        onChanged: (next) => setLocal(() => icon = next),
+                        onChanged: (next) {
+                          setLocal(() => icon = next);
+                          _commitPresetIcon(index, next);
+                        },
                       ),
                       const SizedBox(height: 12),
                       Row(
@@ -239,13 +261,14 @@ class EquipmentPresetsBar extends StatelessWidget {
 class _SaveChip extends StatelessWidget {
   const _SaveChip({required this.onPressed, required this.compact, required this.square});
 
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
   final bool compact;
   final bool square;
 
   @override
   Widget build(BuildContext context) {
     return _LabelChip(
+      key: const Key('save-preset'),
       compact: compact,
       square: square,
       label: 'Save',
@@ -257,53 +280,62 @@ class _SaveChip extends StatelessWidget {
 
 class _LabelChip extends StatelessWidget {
   const _LabelChip({
+    super.key,
     required this.onPressed,
     required this.compact,
     required this.square,
     required this.label,
     required this.semanticsLabel,
     this.selected = false,
+    this.filled = false,
   });
 
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
   final bool compact;
   final bool square;
   final String label;
   final String semanticsLabel;
   final bool selected;
+  final bool filled;
 
   @override
   Widget build(BuildContext context) {
     final step = square ? 2.0 : 2.0;
+    final chrome = UiChrome.of(context);
+    final solid = filled || selected;
     return Semantics(
       button: true,
+      enabled: onPressed != null,
       selected: selected,
       label: semanticsLabel,
-      child: Material(
-        color: selected ? Palette.gold.withValues(alpha: 0.22) : UiChrome.of(context).slot,
-        shape: PixelSteppedBorder(
-          step: step,
-          side: BorderSide(
-            color: selected ? Palette.gold : Palette.edge,
-            width: selected ? 1.5 : 1,
+      child: Opacity(
+        opacity: onPressed == null ? 0.45 : 1,
+        child: Material(
+          color: solid ? Palette.gold.withValues(alpha: selected ? 0.32 : 0.2) : chrome.slot,
+          shape: PixelSteppedBorder(
+            step: step,
+            side: BorderSide(
+              color: selected ? Palette.gold : (filled ? const Color(0xCCE8C36A) : Palette.edge),
+              width: selected ? 3 : 1,
+            ),
           ),
-        ),
-        child: InkWell(
-          onTap: onPressed,
-          customBorder: PixelSteppedBorder(step: step),
-          child: SizedBox(
-            width: square ? _stageSquare : null,
-            height: square ? _stageSquare : (compact ? 28 : 34),
-            child: Center(
-              child: Text(
-                label,
-                style: TextStyle(
-                  fontFamily: gameFontFamily,
-                  fontSize: square ? 10 : 11,
-                  fontWeight: FontWeight.w400,
-                  color: Palette.heading,
-                  height: 1,
-                  shadows: square ? overlayShadow : null,
+          child: InkWell(
+            onTap: onPressed,
+            customBorder: PixelSteppedBorder(step: step),
+            child: SizedBox(
+              width: square ? _stageSquare : null,
+              height: square ? _stageSquare : (compact ? 28 : 34),
+              child: Center(
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    fontFamily: gameFontFamily,
+                    fontSize: square ? 10 : 11,
+                    fontWeight: FontWeight.w400,
+                    color: Palette.heading,
+                    height: 1,
+                    shadows: square ? overlayShadow : null,
+                  ),
                 ),
               ),
             ),
@@ -383,7 +415,7 @@ class _PresetButton extends StatelessWidget {
     final label = preset?.name ?? 'Preset ${index + 1}';
     final step = square ? 2.0 : 2.0;
     final chrome = UiChrome.of(context);
-    final fill = selected ? Color.lerp(chrome.slot, chrome.embossFace, 0.18)! : chrome.slot;
+    final fill = selected ? Color.lerp(chrome.slot, Palette.gold, 0.28)! : chrome.slot;
     return Tooltip(
       message: '$label\n$tooltipHint',
       child: Semantics(
@@ -395,8 +427,8 @@ class _PresetButton extends StatelessWidget {
           shape: PixelSteppedBorder(
             step: step,
             side: BorderSide(
-              color: selected ? chrome.embossFace : Palette.edge,
-              width: selected ? 2 : 1,
+              color: selected ? Palette.gold : Palette.edge,
+              width: selected ? 3 : 1,
             ),
           ),
           child: InkWell(
@@ -492,11 +524,13 @@ class _IconChoice extends StatelessWidget {
 
 class _AllPresetsSettingsDialog extends StatefulWidget {
   const _AllPresetsSettingsDialog({
+    required this.controller,
     required this.presets,
     required this.skills,
     required this.skillsById,
   });
 
+  final GameController controller;
   final List<EquipmentPreset> presets;
   final List<SkillRow> skills;
   final Map<String, SkillRow> skillsById;
@@ -526,6 +560,22 @@ class _AllPresetsSettingsDialogState extends State<_AllPresetsSettingsDialog> {
     super.dispose();
   }
 
+  Widget _rowAt(int index) {
+    return _PresetSettingsRow(
+      index: index,
+      nameController: _nameControllers[index],
+      icon: _icons[index],
+      skills: widget.skills,
+      skillsById: widget.skillsById,
+      onIconChanged: (icon) => _setIcon(index, icon),
+    );
+  }
+
+  void _setIcon(int index, EquipmentPresetIcon icon) {
+    setState(() => _icons[index] = icon);
+    widget.controller.commit(setEquipmentPresetIcon(widget.controller.save, index, icon));
+  }
+
   void _save() {
     final next = <EquipmentPreset>[
       for (var i = 0; i < widget.presets.length; i += 1)
@@ -553,14 +603,7 @@ class _AllPresetsSettingsDialogState extends State<_AllPresetsSettingsDialog> {
                   children: [
                     for (var i = 0; i < widget.presets.length; i += 1) ...[
                       if (i > 0) const SizedBox(height: 12),
-                      _PresetSettingsRow(
-                        index: i,
-                        nameController: _nameControllers[i],
-                        icon: _icons[i],
-                        skills: widget.skills,
-                        skillsById: widget.skillsById,
-                        onIconChanged: (icon) => setState(() => _icons[i] = icon),
-                      ),
+                      _rowAt(i),
                     ],
                   ],
                 ),
