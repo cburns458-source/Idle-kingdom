@@ -31,11 +31,11 @@ void main() {
     expect(save.activeEquipmentPresetIndex, 0);
   });
 
-  test('auto-tracks preset 1 while active and saves snapshots for others', () {
+  test('save snapshots the worn loadout; switching does not rewrite other presets', () {
     var save = addItemToInventory(createNewSave(db, 0), 'ITEM-0111', 1);
     final equipped = equipItemFromInventory(db, save, 'ITEM-0111');
     expect(equipped.ok, isTrue);
-    save = trackActiveEquipmentPreset(equipped.save!);
+    save = saveActiveEquipmentPreset(equipped.save!);
     expect(save.equipmentPresets[0].slots['SLOT-0001']?.itemId, 'ITEM-0111');
 
     final toTwo = applyEquipmentPreset(db, save, 1);
@@ -49,6 +49,7 @@ void main() {
     expect(hatchet.ok, isTrue);
     onTwo = saveActiveEquipmentPreset(hatchet.save!);
     expect(onTwo.equipmentPresets[1].slots['SLOT-0001']?.itemId, 'ITEM-0110');
+    expect(onTwo.equipmentPresets[0].slots['SLOT-0001']?.itemId, 'ITEM-0111');
 
     final back = applyEquipmentPreset(db, onTwo, 0);
     expect(back.ok, isTrue);
@@ -82,7 +83,7 @@ void main() {
     var save = addItemToInventory(createNewSave(db, 0), 'ITEM-0111', 1);
     final equipped = equipItemFromInventory(db, save, 'ITEM-0111');
     expect(equipped.ok, isTrue);
-    save = trackActiveEquipmentPreset(equipped.save!);
+    save = saveActiveEquipmentPreset(equipped.save!);
     save = _withPresetSlots(save, 1, {
       'SLOT-0001': const EquippedStack(itemId: 'ITEM-0111', quantity: 1),
       'SLOT-0003': const EquippedStack(itemId: 'ITEM-0155', quantity: 1),
@@ -104,32 +105,87 @@ void main() {
     expect(again.save!.equipment.slots['SLOT-0003']?.itemId, 'ITEM-0155');
   });
 
-  test(
-    'keeps an unowned stored piece on preset 1 and clears it when the piece is still in the bag',
-    () {
-      var save = createNewSave(db, 0);
-      save = save.copyWith(
-        equipment: EquipmentLoadout(
-          slots: {
-            ...save.equipment.slots,
-            'SLOT-0001': const EquippedStack(itemId: 'ITEM-0111', quantity: 1),
-          },
-        ),
-      );
-      save = _withPresetSlots(save, 0, {
-        'SLOT-0001': const EquippedStack(itemId: 'ITEM-0111', quantity: 1),
-        'SLOT-0003': const EquippedStack(itemId: 'ITEM-0155', quantity: 1),
-      });
+  test('does not copy worn gear onto a preset when tracking', () {
+    var save = createNewSave(db, 0);
+    save = save.copyWith(
+      equipment: EquipmentLoadout(
+        slots: {
+          ...save.equipment.slots,
+          'SLOT-0001': const EquippedStack(itemId: 'ITEM-0111', quantity: 1),
+        },
+      ),
+    );
+    final tracked = trackActiveEquipmentPreset(save);
+    expect(tracked.equipmentPresets[0].slots['SLOT-0001'], isNull);
+    expect(presetMatchesLoadout(tracked, 0), isFalse);
+    expect(shouldHighlightEquipmentPreset(tracked, 0), isFalse);
+  });
 
-      final kept = trackActiveEquipmentPreset(save);
-      expect(kept.equipmentPresets[0].slots['SLOT-0001']?.itemId, 'ITEM-0111');
-      expect(kept.equipmentPresets[0].slots['SLOT-0003']?.itemId, 'ITEM-0155');
+  test('matches loadouts by item identity and ignores food quantity', () {
+    var save = createNewSave(db, 0);
+    save = save.copyWith(
+      equipment: EquipmentLoadout(
+        slots: {
+          ...save.equipment.slots,
+          'SLOT-0001': const EquippedStack(itemId: 'ITEM-0111', quantity: 1),
+          foodSlotId: const EquippedStack(itemId: 'ITEM-0058', quantity: 2),
+        },
+      ),
+    );
+    save = _withPresetSlots(save, 1, {
+      'SLOT-0001': const EquippedStack(itemId: 'ITEM-0111', quantity: 1),
+      foodSlotId: const EquippedStack(itemId: 'ITEM-0058', quantity: 5),
+    });
+    expect(presetMatchesLoadout(save, 1), isTrue);
+    expect(shouldHighlightEquipmentPreset(save, 1), isTrue);
+    expect(shouldHighlightEquipmentPreset(save, 0), isFalse);
 
-      final withHelm = addItemToInventory(save, 'ITEM-0155', 1);
-      final cleared = trackActiveEquipmentPreset(withHelm);
-      expect(cleared.equipmentPresets[0].slots['SLOT-0003'], isNull);
-    },
-  );
+    save = save.copyWith(
+      equipment: EquipmentLoadout(
+        slots: {
+          ...save.equipment.slots,
+          foodSlotId: const EquippedStack(itemId: 'ITEM-0059', quantity: 2),
+        },
+      ),
+    );
+    expect(presetMatchesLoadout(save, 1), isFalse);
+  });
+
+  test('editing a selected preset wears the new snapshot', () {
+    var save = addItemToInventory(createNewSave(db, 0), 'ITEM-0111', 1);
+    save = addItemToInventory(save, 'ITEM-0110', 1);
+    final equipped = equipItemFromInventory(db, save, 'ITEM-0111');
+    expect(equipped.ok, isTrue);
+    save = saveActiveEquipmentPreset(equipped.save!);
+
+    final next = editSelectedEquipmentPresetSlot(
+      db,
+      save,
+      0,
+      'SLOT-0001',
+      const EquippedStack(itemId: 'ITEM-0110', quantity: 1),
+    );
+    expect(next.equipmentPresets[0].slots['SLOT-0001']?.itemId, 'ITEM-0110');
+    expect(next.equipment.slots['SLOT-0001']?.itemId, 'ITEM-0110');
+    expect(next.inventory.any((stack) => stack.itemId == 'ITEM-0111'), isTrue);
+  });
+
+  test('applying the active preset still restores it after the loadout diverged', () {
+    var save = addItemToInventory(createNewSave(db, 0), 'ITEM-0111', 1);
+    save = addItemToInventory(save, 'ITEM-0110', 1);
+    final equipped = equipItemFromInventory(db, save, 'ITEM-0111');
+    expect(equipped.ok, isTrue);
+    save = saveActiveEquipmentPreset(equipped.save!);
+    final hatchet = equipItemFromInventory(db, save, 'ITEM-0110');
+    expect(hatchet.ok, isTrue);
+    save = hatchet.save!;
+    expect(save.activeEquipmentPresetIndex, 0);
+    expect(save.equipment.slots['SLOT-0001']?.itemId, 'ITEM-0110');
+
+    final restored = applyEquipmentPreset(db, save, 0);
+    expect(restored.ok, isTrue);
+    expect(restored.save!.equipment.slots['SLOT-0001']?.itemId, 'ITEM-0111');
+  });
 
   test('writes a snapshot slot without changing worn gear or the active preset', () {
     final save = addItemToInventory(createNewSave(db, 0), 'ITEM-0111', 1);

@@ -8,6 +8,7 @@ import type {
   PlayerSave,
 } from '../save/types'
 import {
+  isStackableConsumableSlot,
   isTwoHandedItem,
   OFFHAND_SLOT_ID,
   WEAPON_TOOL_SLOT_ID,
@@ -130,34 +131,64 @@ export function equipmentStackOwned(save: PlayerSave, need: EquippedStack): bool
   return false
 }
 
+function slotEmpty(stack: EquippedStack | null | undefined): boolean {
+  return !stack || stack.quantity <= 0
+}
+
+function sameStackIdentity(a: EquippedStack, b: EquippedStack): boolean {
+  return (
+    a.itemId === b.itemId &&
+    (a.enchantmentId ?? '') === (b.enchantmentId ?? '') &&
+    (a.favorite === true) === (b.favorite === true)
+  )
+}
+
+function stacksMatchForLoadout(
+  slotId: string,
+  live: EquippedStack | null | undefined,
+  stored: EquippedStack | null | undefined,
+): boolean {
+  const liveEmpty = slotEmpty(live)
+  const storedEmpty = slotEmpty(stored)
+  if (liveEmpty && storedEmpty) return true
+  if (liveEmpty || storedEmpty || !live || !stored) return false
+  if (!sameStackIdentity(live, stored)) return false
+  if (isStackableConsumableSlot(slotId)) return true
+  return live.quantity === stored.quantity
+}
+
+export function presetHasEquippedItem(preset: EquipmentPreset): boolean {
+  return Object.values(preset.slots).some((stack) => !slotEmpty(stack))
+}
+
+/** True when worn gear matches the stored snapshot. Food and potion compare item identity only. */
+export function presetMatchesLoadout(save: PlayerSave, index: number): boolean {
+  const { equipmentPresets } = normalizeEquipmentPresets(save)
+  if (index < 0 || index >= equipmentPresets.length) return false
+  const stored = equipmentPresets[index]!.slots
+  for (const slotId of Object.keys(save.equipment.slots)) {
+    if (!stacksMatchForLoadout(slotId, save.equipment.slots[slotId], stored[slotId] ?? null)) {
+      return false
+    }
+  }
+  return true
+}
+
 /**
- * While preset 1 is active, copy live gear onto its snapshot.
- * Empty live slots do not wipe a stored piece that is no longer owned, so a
- * partial apply cannot forget missing items.
+ * Location and equipment chips: matching non-empty snapshots, or an empty
+ * snapshot only while it is the last applied preset.
  */
+export function shouldHighlightEquipmentPreset(save: PlayerSave, index: number): boolean {
+  if (!presetMatchesLoadout(save, index)) return false
+  const { equipmentPresets, activeEquipmentPresetIndex } = normalizeEquipmentPresets(save)
+  if (presetHasEquippedItem(equipmentPresets[index]!)) return true
+  return activeEquipmentPresetIndex === index
+}
+
+/** Normalize preset rows. Worn gear is never copied onto a snapshot. */
 export function trackActiveEquipmentPreset(save: PlayerSave): PlayerSave {
   const { equipmentPresets, activeEquipmentPresetIndex } = normalizeEquipmentPresets(save)
-  if (activeEquipmentPresetIndex !== 0) {
-    return { ...save, equipmentPresets, activeEquipmentPresetIndex }
-  }
-  const slotIds = Object.keys(save.equipment.slots)
-  const stored = clonePresetSlots(equipmentPresets[0]!.slots)
-  for (const slotId of slotIds) {
-    const live = save.equipment.slots[slotId] ?? null
-    if (live && live.quantity > 0) {
-      stored[slotId] = cloneEquippedStack(live)
-      continue
-    }
-    const remembered = stored[slotId]
-    if (remembered && remembered.quantity > 0 && !equipmentStackOwned(save, remembered)) {
-      continue
-    }
-    stored[slotId] = null
-  }
-  const next = equipmentPresets.map((preset, index) =>
-    index === 0 ? { ...preset, slots: stored } : preset,
-  )
-  return { ...save, equipmentPresets: next, activeEquipmentPresetIndex }
+  return { ...save, equipmentPresets, activeEquipmentPresetIndex }
 }
 
 export function saveActiveEquipmentPreset(save: PlayerSave): PlayerSave {
@@ -198,8 +229,7 @@ export function setEquipmentPresetIcon(
   return { ...save, equipmentPresets: next, activeEquipmentPresetIndex }
 }
 
-/** Write one slot onto a stored preset. Does not change worn gear. */
-export function setEquipmentPresetSlot(
+function writeEquipmentPresetSlot(
   db: GameDatabase,
   save: PlayerSave,
   index: number,
@@ -219,6 +249,31 @@ export function setEquipmentPresetSlot(
   }
   const next = equipmentPresets.map((preset, i) => (i === index ? { ...preset, slots } : preset))
   return { ...save, equipmentPresets: next, activeEquipmentPresetIndex }
+}
+
+/** Write one slot onto a stored preset. Does not change worn gear. */
+export function setEquipmentPresetSlot(
+  db: GameDatabase,
+  save: PlayerSave,
+  index: number,
+  slotId: string,
+  stack: EquippedStack | null,
+): PlayerSave {
+  return writeEquipmentPresetSlot(db, save, index, slotId, stack)
+}
+
+/** Write one slot onto a selected preset and wear that snapshot. */
+export function editSelectedEquipmentPresetSlot(
+  db: GameDatabase,
+  save: PlayerSave,
+  index: number,
+  slotId: string,
+  stack: EquippedStack | null,
+): PlayerSave {
+  const next = writeEquipmentPresetSlot(db, save, index, slotId, stack)
+  if (next === save) return save
+  const applied = applyEquipmentPreset(db, next, index, true)
+  return applied.ok ? applied.save : next
 }
 
 type PoolEntry = {
@@ -259,16 +314,18 @@ export function applyEquipmentPreset(
   _db: GameDatabase,
   save: PlayerSave,
   index: number,
+  refresh = false,
 ): EquipResult {
   const normalized = normalizeEquipmentPresets(save)
   if (index < 0 || index >= EQUIPMENT_PRESET_COUNT) {
     return { ok: false, reason: 'That preset does not exist.' }
   }
-  let working: PlayerSave = { ...save, ...normalized }
-  if (working.activeEquipmentPresetIndex === 0) {
-    working = trackActiveEquipmentPreset(working)
-  }
-  if (index === working.activeEquipmentPresetIndex) {
+  const working: PlayerSave = { ...save, ...normalized }
+  if (
+    !refresh &&
+    index === working.activeEquipmentPresetIndex &&
+    presetMatchesLoadout(working, index)
+  ) {
     return { ok: true, save: working }
   }
 

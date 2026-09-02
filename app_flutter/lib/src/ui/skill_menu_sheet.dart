@@ -72,7 +72,9 @@ class _SkillMenuBodyState extends State<_SkillMenuBody> {
     showStationRecipeBook(
       context,
       title: widget.skillName,
-      rows: recipeLogForEntries(recipeBookForSkill(widget.save, widget.db, widget.skillId)),
+      entries: recipeBookForSkill(widget.save, widget.db, widget.skillId),
+      db: widget.db,
+      skillId: widget.skillId,
       emptyMessage: 'Nothing is written for this skill yet.',
     );
   }

@@ -637,8 +637,7 @@ class GameController extends ChangeNotifier {
   }
 
   /// [commit] for anything that changed the loadout, so max HP follows the gear.
-  void commitLoadout(PlayerSave next) =>
-      commit(withRecalculatedVitals(db, trackActiveEquipmentPreset(next)));
+  void commitLoadout(PlayerSave next) => commit(withRecalculatedVitals(db, next));
 
   /// Advances the game by one frame. The shell drives this from a ticker, so it
   /// stops when the app is backgrounded. A long hide is batch-resolved like a
