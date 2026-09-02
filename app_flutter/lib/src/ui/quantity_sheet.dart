@@ -187,6 +187,14 @@ class _QuantitySheetState extends State<_QuantitySheet> {
               Text(error, style: const TextStyle(color: Palette.danger, fontSize: 12)),
             ],
             const SizedBox(height: 10),
+            if (widget.removeLabel case final removeLabel?) ...[
+              GameButton(
+                label: removeLabel,
+                tone: GameButtonTone.secondary,
+                onPressed: () => Navigator.of(context).pop(quantityRemoveSentinel),
+              ),
+              const SizedBox(height: 8),
+            ],
             Row(
               children: [
                 GameButton(
@@ -195,15 +203,6 @@ class _QuantitySheetState extends State<_QuantitySheet> {
                   compact: true,
                   onPressed: () => Navigator.of(context).pop(),
                 ),
-                if (widget.removeLabel case final removeLabel?) ...[
-                  const SizedBox(width: 8),
-                  GameButton(
-                    label: removeLabel,
-                    tone: GameButtonTone.secondary,
-                    compact: true,
-                    onPressed: () => Navigator.of(context).pop(quantityRemoveSentinel),
-                  ),
-                ],
                 const SizedBox(width: 8),
                 Expanded(
                   child: GameButton(label: widget.confirmLabel, onPressed: _confirm),
