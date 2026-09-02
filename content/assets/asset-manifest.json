@@ -314,6 +314,7 @@
     },
     "ui": {
       "map": "/assets/icons/ui/ui_map.webp",
+      "nearby": "/assets/icons/ui/ui_nearby.webp",
       "ink_splat": "/assets/icons/ui/ui_ink_splat.webp"
     }
   }

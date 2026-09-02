@@ -581,6 +581,12 @@ void main() {
     expect(icon.path, uiMapAssetPath());
     expect(icon.width, 32);
     expect(icon.height, 32);
+    final nearbyIcon = tester.widget<GameImage>(
+      find.descendant(of: find.byTooltip('Nearby adventurers'), matching: find.byType(GameImage)),
+    );
+    expect(nearbyIcon.path, uiNearbyAssetPath());
+    expect(nearbyIcon.width, 32);
+    expect(nearbyIcon.height, 32);
   });
 
   testWidgets('Wizard Tower hides Special production until Wizard Studies is completed', (
