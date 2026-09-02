@@ -430,6 +430,61 @@ void main() {
     expect(controller.save.equipmentPresets[1].name, 'Mining Kit');
   });
 
+  testWidgets('Save stays disabled until a preset chip is chosen', (tester) async {
+    var save = unequippedCharacter();
+    save = addItemToInventory(save, 'ITEM-0111', 1);
+    save = addItemToInventory(save, 'ITEM-0110', 1);
+    final equipped = equipItemFromInventory(database.launch, save, 'ITEM-0111');
+    expect(equipped.ok, isTrue);
+    save = saveActiveEquipmentPreset(equipped.save!);
+
+    final controller = buildController(database, seed: save);
+    addTearDown(controller.dispose);
+
+    await pumpPanel(tester, InventoryView(controller: controller));
+    await tester.tap(find.text('Equipment'));
+    await tester.pump();
+
+    expect(
+      tester
+          .widget<InkWell>(
+            find.descendant(
+              of: find.byKey(const Key('save-preset')),
+              matching: find.byType(InkWell),
+            ),
+          )
+          .onTap,
+      isNull,
+    );
+
+    await tester.tap(find.text('Items'));
+    await tester.pump();
+    await tester.tap(find.byTooltip('Copper Hatchet').first);
+    await tester.pump();
+    await tester.tap(find.text('Equipment'));
+    await tester.pump();
+    await tester.tap(find.text('Save'));
+    await tester.pump();
+    expect(controller.save.equipmentPresets[0].slots['SLOT-0001']?.itemId, 'ITEM-0111');
+
+    await tester.tap(find.text('I'));
+    await tester.pump();
+    expect(
+      tester
+          .widget<InkWell>(
+            find.descendant(
+              of: find.byKey(const Key('save-preset')),
+              matching: find.byType(InkWell),
+            ),
+          )
+          .onTap,
+      isNotNull,
+    );
+    await tester.tap(find.text('Save'));
+    await tester.pump();
+    expect(controller.save.equipmentPresets[0].slots['SLOT-0001']?.itemId, 'ITEM-0111');
+  });
+
   testWidgets('saves a chosen skill icon onto a preset', (tester) async {
     final controller = buildController(database, seed: startedCharacter(database));
     addTearDown(controller.dispose);
@@ -445,10 +500,25 @@ void main() {
     await tester.ensureVisible(mining.first);
     await tester.tap(mining.first);
     await tester.pump();
-    await tester.tap(find.widgetWithText(GameButton, 'Save'));
-    await tester.pumpAndSettle();
 
     expect(controller.save.equipmentPresets[0].icon.kind, 'skill');
     expect(controller.save.equipmentPresets[0].icon.skillId, 'SKL-0002');
+
+    await tester.ensureVisible(find.byTooltip('Coin').first);
+    await tester.tap(find.byTooltip('Coin').first);
+    await tester.pump();
+    expect(controller.save.equipmentPresets[0].icon.kind, 'coin');
+
+    await tester.ensureVisible(mining.at(1));
+    await tester.tap(mining.at(1));
+    await tester.pump();
+    expect(controller.save.equipmentPresets[1].icon.kind, 'skill');
+    expect(controller.save.equipmentPresets[1].icon.skillId, 'SKL-0002');
+    expect(controller.save.equipmentPresets[0].icon.kind, 'coin');
+
+    await tester.tap(find.widgetWithText(GameButton, 'Cancel'));
+    await tester.pumpAndSettle();
+    expect(controller.save.equipmentPresets[0].icon.kind, 'coin');
+    expect(controller.save.equipmentPresets[1].icon.skillId, 'SKL-0002');
   });
 }
