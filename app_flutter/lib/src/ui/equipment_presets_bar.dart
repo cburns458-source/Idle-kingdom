@@ -124,9 +124,7 @@ class EquipmentPresetsBar extends StatelessWidget {
 
   Future<void> _openPresetSettings(BuildContext context) async {
     final save = controller.save;
-    final skills = controller.db.skills
-        .where((row) => row.releasePhase == 'Launch')
-        .toList();
+    final skills = controller.db.skills.where((row) => row.releasePhase == 'Launch').toList();
     final presets = [
       for (var i = 0; i < equipmentPresetCount; i += 1)
         i < save.equipmentPresets.length
@@ -165,9 +163,7 @@ class EquipmentPresetsBar extends StatelessWidget {
     final preset = save.equipmentPresets[index];
     final nameController = TextEditingController(text: preset.name);
     var icon = preset.icon;
-    final skills = controller.db.skills
-        .where((row) => row.releasePhase == 'Launch')
-        .toList();
+    final skills = controller.db.skills.where((row) => row.releasePhase == 'Launch').toList();
 
     final confirmed = await showGamePopup<bool>(
       context: context,
