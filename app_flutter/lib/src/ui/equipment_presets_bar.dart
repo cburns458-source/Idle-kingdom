@@ -280,7 +280,7 @@ class _LabelChip extends StatelessWidget {
       selected: selected,
       label: semanticsLabel,
       child: Material(
-        color: selected ? Palette.gold.withValues(alpha: 0.22) : Palette.slot,
+        color: selected ? Palette.gold.withValues(alpha: 0.22) : UiChrome.of(context).slot,
         shape: PixelSteppedBorder(
           step: step,
           side: BorderSide(
@@ -330,7 +330,7 @@ class _SettingsChip extends StatelessWidget {
         button: true,
         label: 'Preset settings',
         child: Material(
-          color: Palette.slot,
+          color: UiChrome.of(context).slot,
           shape: PixelSteppedBorder(step: step),
           child: InkWell(
             onTap: onPressed,
@@ -599,7 +599,7 @@ class _PresetSettingsRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: Palette.slot,
+        color: UiChrome.of(context).slot,
         borderRadius: BorderRadius.zero /* pixel step 2 */,
         border: Border.all(color: Palette.edge),
       ),

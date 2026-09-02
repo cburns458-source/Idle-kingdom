@@ -427,7 +427,7 @@ class GameTextButton extends StatelessWidget {
                   fontFamily: gameFontFamily,
                   fontSize: 12,
                   fontWeight: FontWeight.w400,
-                  color: selected ? chrome.primaryLabel : ink,
+                  color: selected ? chrome.embossFace : ink,
                   height: 1.1,
                 ),
               ),
@@ -808,12 +808,41 @@ class GamePanel extends StatelessWidget {
   final bool framed;
 
   Widget _inked(BuildContext context, Widget plateChild) {
-    final ink = UiChrome.of(context).panelInk;
-    return DefaultTextStyle.merge(
-      style: TextStyle(color: ink, fontFamily: gameFontFamily),
-      child: IconTheme.merge(
-        data: IconThemeData(color: ink),
-        child: plateChild,
+    final chrome = UiChrome.of(context);
+    final ink = chrome.panelInk;
+    final muted = chrome.panelMuted;
+    final theme = Theme.of(context);
+    return Theme(
+      data: theme.copyWith(
+        listTileTheme: theme.listTileTheme.copyWith(
+          textColor: ink,
+          iconColor: ink,
+          titleTextStyle: TextStyle(
+            color: ink,
+            fontFamily: gameFontFamily,
+            fontWeight: FontWeight.w400,
+            fontSize: 16,
+          ),
+          subtitleTextStyle: TextStyle(
+            color: muted,
+            fontFamily: gameFontFamily,
+            fontSize: 12.5,
+            height: 1.35,
+          ),
+        ),
+        expansionTileTheme: ExpansionTileThemeData(
+          textColor: ink,
+          collapsedTextColor: ink,
+          iconColor: ink,
+          collapsedIconColor: muted,
+        ),
+      ),
+      child: DefaultTextStyle.merge(
+        style: TextStyle(color: ink, fontFamily: gameFontFamily),
+        child: IconTheme.merge(
+          data: IconThemeData(color: ink),
+          child: plateChild,
+        ),
       ),
     );
   }

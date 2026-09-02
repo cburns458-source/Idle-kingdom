@@ -178,8 +178,12 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
       setState(() {});
       return;
     }
+    final chrome = controller.chrome;
     _socialAlertEntry = OverlayEntry(
-      builder: (context) => SocialAlertOverlay(message: message, onClose: _dismissSocialAlert),
+      builder: (overlayContext) => UiChromeScope(
+        chrome: chrome,
+        child: SocialAlertOverlay(message: message, onClose: _dismissSocialAlert),
+      ),
     );
     overlay.insert(_socialAlertEntry!);
     setState(() {});
