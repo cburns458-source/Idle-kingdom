@@ -67,7 +67,9 @@ PlayerSave syncShopPurchaseDay(PlayerSave save, num nowMs) {
 
 num shopPurchasedToday(PlayerSave save, String shopId, String itemId, num nowMs) {
   final synced = syncShopPurchaseDay(save, nowMs);
-  return jsNumber(synced.shopPurchasesToday[shopPurchaseKey(shopId, itemId)] ?? 0).floor().clamp(0, 1 << 30);
+  return jsNumber(synced.shopPurchasesToday[shopPurchaseKey(shopId, itemId)] ?? 0)
+      .floor()
+      .clamp(0, 1 << 30);
 }
 
 num? shopDailyLimit(ShopRow shop, String itemId) {
@@ -88,7 +90,7 @@ PlayerSave recordShopPurchases(
   Iterable<({String itemId, num quantity})> lines,
   num nowMs,
 ) {
-  var next = syncShopPurchaseDay(save, nowMs);
+  final next = syncShopPurchaseDay(save, nowMs);
   final counts = Map<String, num>.from(next.shopPurchasesToday);
   for (final line in lines) {
     final qty = line.quantity.floor();
