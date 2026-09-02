@@ -382,30 +382,38 @@ class _QuestJournalRow extends StatelessWidget {
               for (final step in row.steps)
                 Padding(
                   padding: const EdgeInsets.only(top: 6),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        step.state == 'done' ? '✓' : '•',
-                        style: TextStyle(
-                          color: step.state == 'done'
-                              ? Palette.softGreen
-                              : UiChrome.of(context).embossFace,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
+                  child: step.state == 'header'
+                      ? Text(
                           step.label,
                           style: TextStyle(
-                            color: step.state == 'done'
-                                ? UiChrome.of(context).panelMuted
-                                : UiChrome.of(context).panelInk,
+                            fontWeight: FontWeight.w600,
+                            color: UiChrome.of(context).panelInk,
                           ),
+                        )
+                      : Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              step.state == 'done' ? '✓' : '•',
+                              style: TextStyle(
+                                color: step.state == 'done'
+                                    ? Palette.softGreen
+                                    : UiChrome.of(context).embossFace,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                step.label,
+                                style: TextStyle(
+                                  color: step.state == 'done'
+                                      ? UiChrome.of(context).panelMuted
+                                      : UiChrome.of(context).panelInk,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
-                    ],
-                  ),
                 ),
             ],
           ),

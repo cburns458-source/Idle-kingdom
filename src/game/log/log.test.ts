@@ -58,13 +58,19 @@ describe('quest log', () => {
     )
     expect(rows.find((row) => row.questId === 'QST-0001')!.steps).toEqual([])
     expect(rows.find((row) => row.questId === 'QST-0007')!.steps).toEqual([
+      { key: 'header:required', label: 'Required', state: 'header' },
       { key: 'skill:SKL-0008', label: 'Reach Metallurgy 35 (1 / 35)', state: 'current' },
       { key: 'skill:SKL-0011', label: 'Reach Smithing 35 (1 / 35)', state: 'current' },
     ])
     expect(rows.find((row) => row.questId === 'QST-0008')!.steps).toEqual([
+      { key: 'header:required', label: 'Required', state: 'header' },
       { key: 'skill:SKL-0002', label: 'Reach Mining 60 (1 / 60)', state: 'current' },
       { key: 'quest:QST-0007', label: 'Complete Forged in Fire', state: 'current' },
     ])
+    expect(rows.find((row) => row.questId === 'QST-0001')!.steps.map((step) => step.state)).not.toContain(
+      'header',
+    )
+    expect(rows.find((row) => row.questId === 'QST-0006')!.steps).toEqual([])
   })
 
   it('reveals journal steps for an active quest with talk progress', () => {
@@ -81,45 +87,36 @@ describe('quest log', () => {
     ])
   })
 
-  it('opens the Citadel tour on Hear the guide', () => {
+  it('lists only Citadel visit stops while the tour is active', () => {
     const save = {
       ...createNewSave(launch),
       quests: [{ questId: 'QST-0004', status: 'active' as const, progress: 0, counters: {} }],
     }
     const row = questLog(launch, save).find((entry) => entry.questId === 'QST-0004')!
-    expect(row.steps).toEqual([
-      { key: 'QSTP-0008', label: 'Hear the guide', state: 'current' },
-      { key: 'talk:NPC-0013', label: 'Talk to Citadel Guide 0 / 1', state: 'current' },
-    ])
-  })
-
-  it('lists every remaining Citadel stop after the guide is heard', () => {
-    const save = {
-      ...createNewSave(launch),
-      quests: [
-        {
-          questId: 'QST-0004',
-          status: 'active' as const,
-          progress: 1,
-          counters: { 'talk:NPC-0013': 1 },
-        },
-      ],
-    }
-    const row = questLog(launch, save).find((entry) => entry.questId === 'QST-0004')!
-    expect(row.steps[0]).toEqual({ key: 'QSTP-0008', label: 'Hear the guide', state: 'done' })
     expect(row.steps.map((step) => step.label)).toEqual([
-      'Hear the guide',
-      'Talk to Market Master 0 / 1',
+      'Look around the Citadel',
       'Visit Grand Bazaar 0 / 1',
       'Visit Processing District 0 / 1',
       'Visit Citadel Bank 0 / 1',
-      'Visit Guild Hall 0 / 1',
-      'Inspect the Grand Bazaar 0 / 1',
-      'Inspect the Bounty Board 0 / 1',
-      'Use a Processing District station 0 / 1',
-      'Talk to Citadel Guide 0 / 1',
+      'Visit Gathering Outskirts 0 / 1',
+      'Visit Combat Training Grounds 0 / 1',
     ])
-    expect(row.steps.slice(1).every((step) => step.state === 'current')).toBe(true)
+    expect(row.steps.map((step) => step.label).join('\n')).not.toMatch(/Talk|Inspect|Guild Hall/)
+  })
+
+  it('opens Getting Started on gathering potatoes, not talking to Fennel', () => {
+    const save = {
+      ...createNewSave(launch),
+      quests: [{ questId: 'QST-0006', status: 'active' as const, progress: 0, counters: {} }],
+    }
+    const row = questLog(launch, save).find((entry) => entry.questId === 'QST-0006')!
+    expect(row.steps[0]).toEqual({
+      key: 'QSTP-0013',
+      label: 'Gather five potatoes',
+      state: 'current',
+    })
+    expect(row.steps.map((step) => step.label).join('\n')).not.toMatch(/Talk to Fennel|Hear Fennel/)
+    expect(row.steps.map((step) => step.label)).not.toContain('Cook the potatoes in town')
   })
 
   it('opens Wizard Studies on Hear the shopkeeper out', () => {

@@ -91,7 +91,7 @@ function achievementNote(achievement: AchievementRow): string {
 export interface QuestLogStep {
   key: string
   label: string
-  state: 'done' | 'current'
+  state: 'done' | 'current' | 'header'
 }
 
 export interface QuestLogRow {

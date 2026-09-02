@@ -1,17 +1,19 @@
 import 'package:collection/collection.dart';
 import 'package:ik_content/ik_content.dart';
 
+import '../npcs/knowledge.dart';
 import '../save/generated/save_models.dart';
 import '../world/constants.dart';
 import '../world/travel.dart';
 import 'quests.dart';
 import 'steps.dart';
 
-/// First Hint target on an active quest step, or the step's Visit target.
+/// First Hint target on an active Getting Started step, or that step's Visit target.
 String? questVisitHintLocationId(GameDatabase db, PlayerSave save) {
   for (final quest in asQuestRows(db)) {
     final questId = quest['Quest ID'];
     if (questId is! String) continue;
+    if (questId != gettingStartedQuestId) continue;
     if (getQuestProgress(save, questId).status != 'active') continue;
     final step = questActiveStepObjectives(db, save, quest);
     if (step == null) continue;

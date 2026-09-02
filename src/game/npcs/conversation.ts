@@ -29,12 +29,14 @@ import {
 import type { PlayerSave } from '../save/types'
 import { configString } from '../activity/gathering'
 import {
+  ARCHMAGE_HMPH,
   ARCHMAGE_ID,
   ARCANA_SKILL_ID,
   GENERAL_STORE_MERCHANT_ID,
   MASTER_DWARF_ID,
   QUILL_ID,
   SMITHING_SKILL_ID,
+  WIZARD_STUDIES_QUEST_ID,
   claimMerchantTip,
   hasNpcKnowledge,
   shopIdForMerchant,
@@ -286,7 +288,11 @@ function questBlock(
     canAccept: isGiver && status === 'inactive' && !needsDonate,
     canDonate: isGiver && status === 'inactive' && needsDonate,
     donated,
-    canTurnIn: turnInId === npcId && status === 'active' && !parsed.autoCompleteOnTalk,
+    canTurnIn:
+      turnInId === npcId &&
+      status === 'active' &&
+      !parsed.autoCompleteOnTalk &&
+      !parsed.autoCompleteOnVisit,
     canTalk: status === 'active' && questCanTalkToNpc(db, save, quest, npcId) && !talkedThisStep,
     talkLabel: 'Talk',
     talkLine: questTalkLine(db, questId, npcId, save),
@@ -315,6 +321,12 @@ function mentorBlock(db: GameDatabase, save: PlayerSave, npcId: string): NpcMent
       learnLabel: 'Ask about hunting',
       line: quillTeachLine(db),
     }
+  }
+  if (
+    npcId === ARCHMAGE_ID &&
+    getQuestProgress(save, WIZARD_STUDIES_QUEST_ID).status !== 'completed'
+  ) {
+    return null
   }
   const skillId = skillForKnowledgeNpc(npcId)
   if (!skillId) return null
@@ -389,12 +401,16 @@ export function npcConversation(
     .map((quest) => questBlock(db, save, quest, npcId))
   const whereabouts = whereaboutsFor(db, npcId, nowMs)
   const raceChange = npcId === VESPER_ID ? raceChangeOffer(db, save, nowMs) : undefined
+  const archmageLocked =
+    npcId === ARCHMAGE_ID && getQuestProgress(save, WIZARD_STUDIES_QUEST_ID).status === 'inactive'
   return {
     npcId,
     name: npc['Display Name'],
     role: npc.Role ?? null,
-    description:
-      npc.Description ?? configString(db, 'copy.default_npc_description', FALLBACK_NPC_DESCRIPTION),
+    description: archmageLocked
+      ? ARCHMAGE_HMPH
+      : npc.Description ??
+        configString(db, 'copy.default_npc_description', FALLBACK_NPC_DESCRIPTION),
     isMerchant: (npc.Role ?? '').toLowerCase() === 'merchant',
     shopId: shopIdForMerchant(db, npc),
     greeting: greetingFor(db, save, npc, quests),
@@ -416,6 +432,12 @@ export function learnMentorProjects(
   save: PlayerSave,
   npcId: string,
 ): { ok: true; save: PlayerSave; message: string } | { ok: false; reason: string } {
+  if (
+    npcId === ARCHMAGE_ID &&
+    getQuestProgress(save, WIZARD_STUDIES_QUEST_ID).status !== 'completed'
+  ) {
+    return { ok: false, reason: 'The Archmage will not teach you yet.' }
+  }
   const result = unlockNpcKnowledge(save, npcId)
   if (!result.ok) return result
   if (npcId === QUILL_ID) {

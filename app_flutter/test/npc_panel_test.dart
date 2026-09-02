@@ -190,12 +190,13 @@ void main() {
     await pumpPanel(tester, NpcPanel(controller: controller, npc: npcOf(roseId), onClose: () {}));
     expect(find.text('Talk'), findsNothing);
     expect(find.textContaining('wild berries'), findsOne);
-    expect(find.textContaining('Talk to Rose 0 / 1'), findsOne);
+    expect(find.textContaining('Talk to Rose 0 / 1'), findsNothing);
 
     await tester.tap(find.text('Continue'));
     await tester.pump();
-    expect(find.textContaining("Rabbit's Foot 5 / 5"), findsOne);
-    expect(find.textContaining('1500 / 1000'), findsOne);
+    expect(find.textContaining("Rabbit's Foot"), findsNothing);
+    expect(find.textContaining('1500 / 1000'), findsNothing);
+    expect(find.text('Turn in'), findsOne);
 
     await tester.tap(find.text('Turn in'));
     await tester.pumpAndSettle();
@@ -225,7 +226,7 @@ void main() {
     expect(getQuestProgress(controller.save, 'QST-0001').status, 'active');
     expect(find.text('Talk'), findsNothing);
     expect(find.textContaining('baked potatoes'), findsOne);
-    expect(find.textContaining('Talk to King 0 / 1'), findsOne);
+    expect(find.textContaining('Talk to King 0 / 1'), findsNothing);
   });
 
   testWidgets('the Beggar at The Town asks for 25 gold', (tester) async {
@@ -281,11 +282,8 @@ void main() {
     expect(getQuestProgress(controller.save, 'QST-0006').status, 'active');
     expect(find.text('Talk'), findsNothing);
     expect(find.text('Turn in'), findsNothing);
-    expect(find.textContaining('five potatoes from the field'), findsOne);
-    await tester.tap(find.text('Continue'));
-    await tester.pump();
-    expect(find.text('Talk'), findsNothing);
-    expect(find.textContaining('Show Potato 0 / 5'), findsOne);
+    expect(find.textContaining('Show Potato 0 / 5'), findsNothing);
+    expect(find.textContaining('Gather five potatoes'), findsNothing);
 
     controller.commit(addItemToInventory(controller.save, 'ITEM-0025', 5));
     await pumpPanel(
@@ -297,7 +295,8 @@ void main() {
         onClose: () {},
       ),
     );
-    expect(find.textContaining('kitchen in town'), findsOne);
+    expect(find.textContaining('You can cook them at the kitchen'), findsOne);
+    expect(find.textContaining('Show Potato'), findsNothing);
     expect(
       controller.save.inventory.where((stack) => stack.itemId == 'ITEM-0025').single.quantity,
       5,

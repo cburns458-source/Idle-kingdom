@@ -292,53 +292,38 @@ describe('npc conversation', () => {
     expect(warnedChoice.quests[0]!.canChooseCombat).toBe(true)
   })
 
-  it('lets the Citadel guide welcome visitors without listing every hall', () => {
+  it('does not ask the Citadel guide or market master for talk or inspect work', () => {
     const save = {
       ...saveAt('LOC-0028'),
       quests: [{ questId: 'QST-0004', status: 'active' as const, progress: 0 }],
     }
     const guide = npcConversation(launch, save, npc('NPC-0013'))
     expect(guide.greeting).toBeNull()
-    expect(guide.quests[0]!.canTalk).toBe(true)
-    expect(guide.quests[0]!.talkLine).toMatch(/other halls/)
-    expect(guide.quests[0]!.talkLine).not.toMatch(/Guild Hall/)
-    expect(guide.quests[0]!.talkLine).not.toMatch(/Bounty Board/)
-    expect(guide.quests[0]!.ready).toBe(false)
+    expect(guide.quests[0]!.canTalk).toBe(false)
+    expect(guide.quests[0]!.canTurnIn).toBe(false)
+    expect(guide.quests[0]!.progressLines.map((line) => line.label)).toEqual([
+      'Visit Grand Bazaar',
+      'Visit Processing District',
+      'Visit Citadel Bank',
+      'Visit Gathering Outskirts',
+      'Visit Combat Training Grounds',
+    ])
 
-    const marketTooSoon = npcConversation(
+    const market = npcConversation(
       launch,
       { ...save, currentLocationId: 'LOC-0029' },
       npc('NPC-0006'),
     )
-    expect(marketTooSoon.quests).toEqual([])
+    expect(market.quests).toEqual([])
+  })
 
-    const heard = {
-      ...save,
-      currentLocationId: 'LOC-0029',
-      quests: [
-        {
-          questId: 'QST-0004',
-          status: 'active' as const,
-          progress: 1,
-          counters: { 'talk:NPC-0013': 1 },
-        },
-      ],
-    }
-    const market = npcConversation(launch, heard, npc('NPC-0006'))
-    expect(market.quests[0]!.canTalk).toBe(true)
-    expect(market.quests[0]!.talkLine).toMatch(/no obligation to buy/)
-
-    const guideAgain = npcConversation(launch, { ...heard, currentLocationId: 'LOC-0028' }, npc('NPC-0013'))
-    expect(guideAgain.quests[0]!.progressLines.map((line) => line.label)).toEqual([
-      'Talk to Market Master',
-      'Visit Grand Bazaar',
-      'Visit Processing District',
-      'Visit Citadel Bank',
-      'Visit Guild Hall',
-      'Inspect the Grand Bazaar',
-      'Inspect the Bounty Board',
-      'Use a Processing District station',
-    ])
+  it('keeps the Archmage at Hmph until Wizard Studies is accepted', () => {
+    const save = saveAt('LOC-0007')
+    const before = npcConversation(launch, save, npc('NPC-0004'))
+    expect(before.description).toBe('Hmph.')
+    expect(before.mentor).toBeNull()
+    expect(before.quests).toEqual([])
+    expect(learnMentorProjects(launch, save, 'NPC-0004').ok).toBe(false)
   })
 
   it('reveals the Archmage essence request only after the shopkeeper is heard', () => {
@@ -354,6 +339,7 @@ describe('npc conversation', () => {
     expect(shop.quests[0]!.ready).toBe(false)
 
     expect(npcConversation(launch, save, npc('NPC-0004')).quests).toEqual([])
+    expect(npcConversation(launch, save, npc('NPC-0004')).mentor).toBeNull()
 
     const heard = {
       ...save,
@@ -371,6 +357,7 @@ describe('npc conversation', () => {
     expect(archmage.quests[0]!.talkLine).toMatch(/ten essence/)
     expect(archmage.quests[0]!.ready).toBe(false)
     expect(archmage.quests[0]!.idlePrompt).toBe('What else do you need?')
+    expect(archmage.mentor).toBeNull()
   })
 
   it('lets Helge thank the player after Going Deeper', () => {
