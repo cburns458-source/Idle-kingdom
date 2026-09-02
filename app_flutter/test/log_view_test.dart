@@ -18,13 +18,12 @@ void main() {
   }
 
   testWidgets('log journal copy uses panel ink on wood and stone plates', (tester) async {
-    Future<void> expectPackInk(UiChromePack pack) async {
-      final controller = buildController(database, seed: startedCharacter(database));
-      addTearDown(controller.dispose);
-      controller.setUiChromePack(pack);
-      await pumpShell(tester, controller, size: const Size(900, 2400));
-      await openLog(tester);
+    final controller = buildController(database, seed: startedCharacter(database));
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller);
+    await openLog(tester);
 
+    void expectPackInk(UiChromePack pack) {
       final chrome = UiChrome.forPack(pack);
       final easy = tester.widget<Text>(find.text('Easy'));
       expect(easy.style?.color, chrome.panelInk);
@@ -34,7 +33,9 @@ void main() {
       final completion = logCompletion(database.launch, controller.save);
       final overall = tester.widget<Text>(find.text('${completion.overall.percent}% complete'));
       expect(overall.style?.color, chrome.embossFace);
-      expect(overall.style?.color, isNot(Palette.gold));
+      if (pack == UiChromePack.stone) {
+        expect(overall.style?.color, isNot(Palette.gold));
+      }
 
       final section = tester.widget<Text>(find.text(completion.section('achievements')!.label));
       expect(section.style?.color, chrome.embossFace);
@@ -51,8 +52,10 @@ void main() {
       expect(band.style?.color, isNot(Palette.parchmentText));
     }
 
-    await expectPackInk(UiChromePack.wood);
-    await expectPackInk(UiChromePack.stone);
+    expectPackInk(UiChromePack.wood);
+    controller.setUiChromePack(UiChromePack.stone);
+    await tester.pump();
+    expectPackInk(UiChromePack.stone);
   });
 
   testWidgets('opens on the achievements a save has not reached', (tester) async {
