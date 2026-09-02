@@ -214,9 +214,14 @@ class _CosmeticTile extends StatelessWidget {
         width: 92,
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
         decoration: BoxDecoration(
-          color: selected ? const Color(0x339A7B32) : Palette.slot,
+          color: selected
+              ? Color.lerp(UiChrome.of(context).slot, UiChrome.of(context).embossFace, 0.18)
+              : UiChrome.of(context).slot,
           borderRadius: BorderRadius.zero /* pixel step 3 */,
-          border: Border.all(color: selected ? Palette.gold : Palette.edge),
+          border: Border.all(
+            color: selected ? UiChrome.of(context).embossFace : Palette.edge,
+            width: selected ? 2 : 1,
+          ),
         ),
         child: Column(
           children: [

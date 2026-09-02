@@ -1,4 +1,5 @@
 import { summarizeXpReward } from '../activity/rewardSummary'
+import { requirementsForEntity } from '../activity/requirements'
 import { addItemToInventory } from '../activity/rewards'
 import type { ActionRewardBundle, ActionXpRewardSummary, LootGrant } from '../activity/types'
 import { applyXp, getSkillProgress } from '../activity/xp'
@@ -367,6 +368,10 @@ export function completeQuest(
     }
   }
 
+  for (const label of facilityUnlockRewardLabels(db, questId)) {
+    rewards.push({ label })
+  }
+
   const nextQuests = next.quests.filter((row) => row.questId !== questId)
   const progressTotal = status.progressLines.reduce((sum, line) => sum + line.required, 0)
   nextQuests.push({ questId, status: 'completed', progress: progressTotal, counters: {} })
@@ -496,4 +501,20 @@ export function questStatusLabel(
   if (status === 'completed') return 'Completed'
   if (status === 'active') return 'Active'
   return 'Not started'
+}
+
+/** Facilities gated by `Quest Complete` on [questId], listed when that quest finishes. */
+export function facilityUnlockRewardLabels(db: GameDatabase, questId: string): string[] {
+  const labels: string[] = []
+  for (const facility of db.Facilities) {
+    const facilityId = String(facility['Facility ID'] ?? '')
+    const gated = requirementsForEntity(db, 'Facility', facilityId).some((requirement) => {
+      if (requirement['Requirement Type'] !== 'Quest Complete') return false
+      return String(requirement['Reference ID / Value'] ?? '') === questId
+    })
+    if (!gated) continue
+    const name = facility['Display Name']
+    labels.push(`Unlocked ${typeof name === 'string' && name ? name : facilityId}`)
+  }
+  return labels
 }

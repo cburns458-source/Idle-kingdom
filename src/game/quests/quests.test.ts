@@ -59,7 +59,7 @@ describe('quest tours', () => {
     expect(completed.ok).toBe(true)
     if (!completed.ok) return
     expect(completed.rewards.some((reward) => reward.label === '10,000 Cooking XP')).toBe(true)
-    expect(completed.rewards.some((reward) => /Golden Spud/i.test(reward.label))).toBe(true)
+    expect(completed.rewards.some((reward) => /Potato/i.test(reward.label))).toBe(true)
   })
 
   it("reveals Rose's shopping list after she is heard", () => {
@@ -229,7 +229,7 @@ describe('quest tours', () => {
     expect(completed.rewardBundle.loot).toEqual([])
   })
 
-  it('locks Harness essence and Mages quarters until Wizard Studies is accepted', () => {
+  it('locks Harness essence until accept and Mages quarters until Wizard Studies is completed', () => {
     const { launch } = prepareDatabase(rawDatabase)
     let save = { ...createNewSave(launch), currentLocationId: 'LOC-0007' }
     expect(activityVisibleForSave(launch, save, 'ACT-0008')).toBe(false)
@@ -248,7 +248,7 @@ describe('quest tours', () => {
       specialProductionStationsVisibleAt(launch, save, 'LOC-0007').some(
         (station) => station.facility['Facility ID'] === 'FAC-0008',
       ),
-    ).toBe(true)
+    ).toBe(false)
 
     save = addItemToInventory(save, 'ITEM-0011', 10)
     expect(completeQuest(launch, save, 'QST-0005').ok).toBe(false)
@@ -263,8 +263,16 @@ describe('quest tours', () => {
     expect(completed.ok).toBe(true)
     if (!completed.ok) return
     expect(completed.rewards.some((reward) => /Arcana XP/i.test(reward.label))).toBe(true)
+    expect(completed.rewards.some((reward) => reward.label === 'Unlocked Mages quarters')).toBe(
+      true,
+    )
     expect(completed.save.unlockedNpcIds).toContain('NPC-0004')
     expect(activityVisibleForSave(launch, completed.save, 'ACT-0008')).toBe(true)
+    expect(
+      specialProductionStationsVisibleAt(launch, completed.save, 'LOC-0007').some(
+        (station) => station.facility['Facility ID'] === 'FAC-0008',
+      ),
+    ).toBe(true)
   })
 
   it('walks Getting Started from accept through Fennel looking at cooked potatoes', () => {

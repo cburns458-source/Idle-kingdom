@@ -382,6 +382,8 @@ class _PresetButton extends StatelessWidget {
     final icon = preset?.icon ?? defaultEquipmentPresetIcon(index);
     final label = preset?.name ?? 'Preset ${index + 1}';
     final step = square ? 2.0 : 2.0;
+    final chrome = UiChrome.of(context);
+    final fill = selected ? Color.lerp(chrome.slot, chrome.embossFace, 0.18)! : chrome.slot;
     return Tooltip(
       message: '$label\n$tooltipHint',
       child: Semantics(
@@ -389,12 +391,12 @@ class _PresetButton extends StatelessWidget {
         selected: selected,
         label: label,
         child: Material(
-          color: selected ? Palette.gold.withValues(alpha: 0.22) : Palette.slot,
+          color: fill,
           shape: PixelSteppedBorder(
             step: step,
             side: BorderSide(
-              color: selected ? Palette.gold : Palette.edge,
-              width: selected ? 1.5 : 1,
+              color: selected ? chrome.embossFace : Palette.edge,
+              width: selected ? 2 : 1,
             ),
           ),
           child: InkWell(
@@ -458,11 +460,15 @@ class _IconChoice extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final chrome = UiChrome.of(context);
     return Material(
-      color: selected ? Palette.gold.withValues(alpha: 0.25) : Palette.slot,
+      color: selected ? Color.lerp(chrome.slot, chrome.embossFace, 0.18)! : chrome.slot,
       shape: PixelSteppedBorder(
         step: 2,
-        side: BorderSide(color: selected ? Palette.gold : Palette.edge),
+        side: BorderSide(
+          color: selected ? chrome.embossFace : Palette.edge,
+          width: selected ? 2 : 1,
+        ),
       ),
       child: InkWell(
         onTap: onTap,
