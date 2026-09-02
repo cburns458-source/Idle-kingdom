@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:idle_kingdoms/src/theme.dart';
 import 'package:idle_kingdoms/src/ui/inventory_view.dart';
@@ -398,6 +399,16 @@ void main() {
     expect(controller.save.activeEquipmentPresetIndex, 0);
     expect(controller.save.equipment.slots['SLOT-0001']?.itemId, 'ITEM-0111');
     expect(controller.save.equipmentPresets[0].slots['SLOT-0001']?.itemId, 'ITEM-0111');
+    expect(
+      tester
+          .getSemantics(find.bySemanticsLabel('Current loadout'))
+          .hasFlag(SemanticsFlag.isSelected),
+      isTrue,
+    );
+    expect(
+      tester.getSemantics(find.bySemanticsLabel('Preset 1')).hasFlag(SemanticsFlag.isSelected),
+      isTrue,
+    );
 
     await tester.tap(find.text('Items'));
     await tester.pump();
@@ -576,5 +587,30 @@ void main() {
     await tester.pumpAndSettle();
     expect(controller.save.equipmentPresets[0].icon.kind, 'coin');
     expect(controller.save.equipmentPresets[1].icon.skillId, 'SKL-0002');
+  });
+
+  testWidgets('equipment bar keeps Current wide and presets square', (tester) async {
+    final controller = buildController(database, seed: startedCharacter(database));
+    addTearDown(controller.dispose);
+
+    await pumpPanel(tester, InventoryView(controller: controller));
+    await tester.tap(find.text('Equipment'));
+    await tester.pump();
+
+    final current = tester.getSize(
+      find.descendant(of: find.bySemanticsLabel('Current loadout'), matching: find.byType(InkWell)),
+    );
+    final preset = tester.getSize(
+      find.ancestor(of: find.text('I'), matching: find.byType(InkWell)),
+    );
+    final settings = tester.getSize(
+      find.descendant(of: find.byTooltip('Preset settings'), matching: find.byType(InkWell)),
+    );
+    expect(preset.width, preset.height);
+    expect(preset.width, 34);
+    expect(settings.width, settings.height);
+    expect(settings.width, 34);
+    expect(current.height, 34);
+    expect(current.width, greaterThan(preset.width));
   });
 }

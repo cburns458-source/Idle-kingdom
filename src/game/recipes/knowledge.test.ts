@@ -38,6 +38,12 @@ describe('recipe knowledge', () => {
     const entries = listRecipeBookEntries(save, launch)
     expect(entries.some((entry) => entry.kind === 'recipe')).toBe(true)
     expect(entries.some((entry) => entry.known)).toBe(true)
+    const gloves = entries.find((entry) => entry.name === "Falconer's Gloves")
+    expect(gloves?.materials).toContain('Ancient Binding')
+    expect(gloves?.materials).not.toContain('ITEM-0290')
+    const squid = entries.find((entry) => entry.name === 'Cooked Baby Giant Squid')
+    expect(squid?.materials).toContain('Starroot')
+    expect(squid?.materials).not.toContain('ITEM-0208')
   })
 
   it('skill recipe books list locked and unlocked rows for that skill', () => {

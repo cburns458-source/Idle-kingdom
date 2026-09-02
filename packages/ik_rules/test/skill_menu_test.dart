@@ -185,6 +185,18 @@ void main() {
     );
   });
 
+  test('launch recipe book names Ancient Binding and Starroot', () {
+    final launch = filterLaunchContent(db);
+    final save = createNewSave(launch, 0);
+    final entries = listRecipeBookEntries(save, launch);
+    final gloves = entries.firstWhere((entry) => entry.name == "Falconer's Gloves");
+    expect(gloves.materials, contains('Ancient Binding'));
+    expect(gloves.materials, isNot(contains('ITEM-0290')));
+    final squid = entries.firstWhere((entry) => entry.name == 'Cooked Baby Giant Squid');
+    expect(squid.materials, contains('Starroot'));
+    expect(squid.materials, isNot(contains('ITEM-0208')));
+  });
+
   test('recipe books expand skill-menu groups into individual rows', () {
     final save = createNewSave(db, 0);
     final smithing = recipeBookView(save, db, smithingSkillId);

@@ -258,7 +258,7 @@ void main() {
     expect(find.text('Confirm trade').hitTestable(), findsOne);
     final shop = tester.getRect(find.byType(ShopPanel));
     final band = tester.getRect(find.byTooltip('Expand list'));
-    expect(shop.bottom, lessThanOrEqualTo(band.top + 8));
+    expect(shop.bottom, lessThanOrEqualTo(band.top));
     await tester.ensureVisible(find.byTooltip('Clay'));
     expect(find.byTooltip('Clay').hitTestable(), findsOne);
     expect(find.text('Confirm trade').hitTestable(), findsOne);

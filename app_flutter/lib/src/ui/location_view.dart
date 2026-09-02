@@ -129,6 +129,9 @@ class _LocationViewState extends State<LocationView> {
 
   static const double _collapsedBand = 176;
 
+  /// Keeps shop, NPC, bank, guild, citadel, and arena off the title and band.
+  static const double _overlayGap = 6;
+
   /// Town, the cave mouth, and the castle gate still use the old square plates.
   static const Set<String> _squarePlates = {'LOC-0002', 'LOC-0010', 'LOC-0013'};
 
@@ -402,20 +405,20 @@ class _LocationViewState extends State<LocationView> {
                               ),
                             if (stage != null && !running && !liftArena)
                               Positioned(
-                                top: 0,
+                                top: _overlayGap,
                                 left: 13,
                                 right: 13,
-                                bottom: _collapsedBand + 8,
+                                bottom: _collapsedBand + 8 + _overlayGap,
                                 child: openPanel is ArenaOpen
                                     ? stage
                                     : _fittedPanel(stage, fill: _panelFillsSlot(openPanel)),
                               ),
                             if (overlayPanel != null && !liftArena)
                               Positioned(
-                                top: 0,
+                                top: _overlayGap,
                                 left: 13,
                                 right: 13,
-                                bottom: _collapsedBand + 8,
+                                bottom: _collapsedBand + 8 + _overlayGap,
                                 child: openPanel is ArenaOpen
                                     ? overlayPanel
                                     : _fittedPanel(overlayPanel, fill: _panelFillsSlot(openPanel)),
@@ -424,9 +427,9 @@ class _LocationViewState extends State<LocationView> {
                               Positioned(
                                 left: 10,
                                 right: 10,
-                                bottom: 8 + keyboard,
+                                bottom: 8 + keyboard + _overlayGap,
                                 child: SizedBox(
-                                  height: (card.maxHeight - keyboard - 16).clamp(
+                                  height: (card.maxHeight - keyboard - 16 - _overlayGap).clamp(
                                     180,
                                     card.maxHeight * 0.62,
                                   ),

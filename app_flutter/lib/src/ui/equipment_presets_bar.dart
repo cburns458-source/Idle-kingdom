@@ -15,6 +15,16 @@ enum _PresetTapChoice { apply, edit }
 /// Square side on the location stage: room for III or a skill icon, not a sliver.
 const double _stageSquare = 32;
 
+/// Equipment-page chips match the bar height so settings and presets stay square.
+const double _pageSquare = 34;
+
+double _chipSide({required bool compact}) => compact ? _stageSquare : _pageSquare;
+
+double _chipHeight({required bool compact, required bool square}) {
+  if (square) return _chipSide(compact: compact);
+  return compact ? 28 : _pageSquare;
+}
+
 /// Preset buttons (optional Current / Save chips); used above the paper doll and on location art.
 class EquipmentPresetsBar extends StatelessWidget {
   const EquipmentPresetsBar({
@@ -63,29 +73,31 @@ class EquipmentPresetsBar extends StatelessWidget {
 
   bool get _saveEnabled => onSaveEditingPreset != null ? _editing : !showCurrentButton || _editing;
 
+  bool get _stageSquareChips => compact && axis == Axis.vertical;
+
   Widget _bar(BuildContext context) {
     final save = controller.save;
     final presets = save.equipmentPresets;
-    final buttons = <Widget>[
-      if (showCurrentButton)
-        _LabelChip(
-          compact: compact,
-          square: compact && axis == Axis.vertical,
-          label: 'Current',
-          semanticsLabel: 'Current loadout',
-          selected: selectedPresetIndex == null,
-          filled: true,
-          onPressed: () => onSelectCurrent?.call(),
-        ),
+    final gap = compact ? 4.0 : 6.0;
+    final current = showCurrentButton
+        ? _LabelChip(
+            compact: compact,
+            square: _stageSquareChips,
+            label: 'Current',
+            semanticsLabel: 'Current loadout',
+            selected: selectedPresetIndex == null,
+            filled: true,
+            onPressed: () => onSelectCurrent?.call(),
+          )
+        : null;
+    final presetButtons = [
       for (var i = 0; i < equipmentPresetCount; i += 1)
         _PresetButton(
           preset: i < presets.length ? presets[i] : null,
           index: i,
-          selected: showCurrentButton
-              ? i == selectedPresetIndex
-              : shouldHighlightEquipmentPreset(save, i),
+          selected: i == selectedPresetIndex || shouldHighlightEquipmentPreset(save, i),
           compact: compact,
-          square: compact && axis == Axis.vertical,
+          square: _stageSquareChips || showCurrentButton,
           skillsById: controller.indexes.skillsById,
           tooltipHint: allowLongPressEdit
               ? 'Tap for Apply or Edit. Long-press to rename.'
@@ -99,34 +111,57 @@ class EquipmentPresetsBar extends StatelessWidget {
           },
           onLongPress: allowLongPressEdit ? () => _editPreset(context, i) : null,
         ),
-      if (showSaveButton)
-        _SaveChip(
-          compact: compact,
-          square: compact && axis == Axis.vertical,
-          onPressed: _saveEnabled ? _saveSelectedPreset : null,
-        ),
-      if (showSettingsButton)
-        _SettingsChip(
-          compact: compact,
-          square: compact && axis == Axis.vertical,
-          onPressed: () => _openPresetSettings(context),
-        ),
     ];
+    final saveChip = showSaveButton
+        ? _SaveChip(
+            compact: compact,
+            square: _stageSquareChips,
+            onPressed: _saveEnabled ? _saveSelectedPreset : null,
+          )
+        : null;
+    final settings = showSettingsButton
+        ? _SettingsChip(
+            compact: compact,
+            square: _stageSquareChips || showCurrentButton,
+            onPressed: () => _openPresetSettings(context),
+          )
+        : null;
     if (axis == Axis.vertical) {
+      final buttons = [
+        if (current != null) current,
+        ...presetButtons,
+        if (saveChip != null) saveChip,
+        if (settings != null) settings,
+      ];
       return Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           for (var i = 0; i < buttons.length; i += 1) ...[
-            if (i > 0) SizedBox(height: compact ? 4 : 6),
+            if (i > 0) SizedBox(height: gap),
             buttons[i],
           ],
         ],
       );
     }
+    if (showCurrentButton) {
+      return Row(
+        children: [
+          if (current != null) Expanded(child: current),
+          for (final preset in presetButtons) ...[SizedBox(width: gap), preset],
+          if (saveChip != null) ...[SizedBox(width: gap), saveChip],
+          if (settings != null) ...[SizedBox(width: gap), settings],
+        ],
+      );
+    }
+    final buttons = [
+      ...presetButtons,
+      if (saveChip != null) saveChip,
+      if (settings != null) settings,
+    ];
     return Row(
       children: [
         for (var i = 0; i < buttons.length; i += 1) ...[
-          if (i > 0) SizedBox(width: compact ? 4 : 6),
+          if (i > 0) SizedBox(width: gap),
           Expanded(child: buttons[i]),
         ],
       ],
@@ -392,18 +427,21 @@ class _LabelChip extends StatelessWidget {
             onTap: onPressed,
             customBorder: PixelSteppedBorder(step: step),
             child: SizedBox(
-              width: square ? _stageSquare : null,
-              height: square ? _stageSquare : (compact ? 28 : 34),
-              child: Center(
-                child: Text(
-                  label,
-                  style: TextStyle(
-                    fontFamily: gameFontFamily,
-                    fontSize: square ? 10 : 11,
-                    fontWeight: FontWeight.w400,
-                    color: Palette.heading,
-                    height: 1,
-                    shadows: square ? overlayShadow : null,
+              width: square ? _chipSide(compact: compact) : null,
+              height: _chipHeight(compact: compact, square: square),
+              child: Padding(
+                padding: square ? EdgeInsets.zero : const EdgeInsets.symmetric(horizontal: 8),
+                child: Center(
+                  child: Text(
+                    label,
+                    style: TextStyle(
+                      fontFamily: gameFontFamily,
+                      fontSize: square ? 10 : 11,
+                      fontWeight: FontWeight.w400,
+                      color: Palette.heading,
+                      height: 1,
+                      shadows: square ? overlayShadow : null,
+                    ),
                   ),
                 ),
               ),
@@ -437,8 +475,8 @@ class _SettingsChip extends StatelessWidget {
             onTap: onPressed,
             customBorder: PixelSteppedBorder(step: step),
             child: SizedBox(
-              width: square ? _stageSquare : null,
-              height: square ? _stageSquare : (compact ? 28 : 34),
+              width: square ? _chipSide(compact: compact) : null,
+              height: _chipHeight(compact: compact, square: square),
               child: Center(
                 child: Icon(
                   Icons.settings,
@@ -505,8 +543,8 @@ class _PresetButton extends StatelessWidget {
             onLongPress: onLongPress,
             customBorder: PixelSteppedBorder(step: step),
             child: SizedBox(
-              width: square ? _stageSquare : null,
-              height: square ? _stageSquare : (compact ? 28 : 34),
+              width: square ? _chipSide(compact: compact) : null,
+              height: _chipHeight(compact: compact, square: square),
               child: Center(
                 child: _PresetIcon(
                   icon: icon,
