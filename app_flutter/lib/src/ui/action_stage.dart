@@ -868,23 +868,24 @@ class _ActionProgress extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Expanded(
-          child: Semantics(
-            label: 'Action progress',
-            child: PillBar(
-              value: progress,
-              gradient: Meters.action,
-              height: _stageFooterHeight,
-              borderColor: const Color(0x38FFECC4),
-            ),
-          ),
-        ),
-        const SizedBox(width: 9),
         Text(
           '${formatDurationMs(durationMs * progress)} / ${formatDurationMs(durationMs)}',
+          textAlign: TextAlign.center,
           style: const TextStyle(fontSize: 12.5, color: _sceneNameColor, shadows: overlayShadow),
+        ),
+        const SizedBox(height: 4),
+        Semantics(
+          label: 'Action progress',
+          child: PillBar(
+            value: progress,
+            gradient: Meters.action,
+            height: _stageFooterHeight,
+            borderColor: const Color(0x38FFECC4),
+          ),
         ),
       ],
     );

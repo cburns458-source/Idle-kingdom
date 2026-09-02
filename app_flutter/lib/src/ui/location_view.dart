@@ -63,13 +63,19 @@ class CitadelHubOpen extends LocationPanel {
   final CitadelHubTab tab;
 }
 
-/// Opening a shop replaces any shop already on the stack so menus do not pile up.
-/// An NPC under that shop stays, so Close still returns to the NPC.
-List<LocationPanel> pushLocationPanel(List<LocationPanel> open, LocationPanel panel) {
+/// Pushes [panel], replacing any already-open panel of the same type.
+///
+/// Location-band opens pass [nest] false so the previous menu (NPC, arena, …)
+/// closes. Nested opens (NPC → shop, guild hall → bank) pass [nest] true so
+/// Close still returns to the parent.
+List<LocationPanel> pushLocationPanel(
+  List<LocationPanel> open,
+  LocationPanel panel, {
+  bool nest = false,
+}) {
   final next = List<LocationPanel>.of(open);
-  if (panel is ShopOpen) {
-    next.removeWhere((entry) => entry is ShopOpen);
-  }
+  next.removeWhere((entry) => entry.runtimeType == panel.runtimeType);
+  if (!nest) next.clear();
   next.add(panel);
   return next;
 }
@@ -131,7 +137,7 @@ class _LocationViewState extends State<LocationView> {
 
   GameController get controller => widget.controller;
 
-  void _openPanel(LocationPanel panel) {
+  void _openPanel(LocationPanel panel, {bool nest = false}) {
     var save = controller.save;
     if (panel is CitadelHubOpen) {
       save = applyQuestInspectProgress(
@@ -142,7 +148,7 @@ class _LocationViewState extends State<LocationView> {
     }
     if (!identical(save, controller.save)) controller.commit(save);
     setState(() {
-      final next = pushLocationPanel(_open, panel);
+      final next = pushLocationPanel(_open, panel, nest: nest);
       _open
         ..clear()
         ..addAll(next);
@@ -534,14 +540,14 @@ class _LocationViewState extends State<LocationView> {
           controller: controller,
           multiplayer: widget.multiplayer,
           onClose: _closePanel,
-          onOpenBank: () => _openPanel(const BankOpen()),
+          onOpenBank: () => _openPanel(const BankOpen(), nest: true),
         );
       case NpcOpen(npc: final npc):
         return NpcPanel(
           controller: controller,
           npc: npc,
           onClose: _closePanel,
-          onOpenShop: (shopId) => _openPanel(ShopOpen(shopId)),
+          onOpenShop: (shopId) => _openPanel(ShopOpen(shopId), nest: true),
         );
       case CitadelHubOpen(tab: final tab):
         return CitadelHubPanel(
@@ -695,7 +701,9 @@ class _LocationViewState extends State<LocationView> {
   }
 
   List<Widget> _shops(String locationId) {
-    final shops = controller.indexes.shopsByLocationId[locationId] ?? const [];
+    final shops = (controller.indexes.shopsByLocationId[locationId] ?? const [])
+        .where((shop) => canAccessShop(controller.db, controller.save, shop).ok)
+        .toList();
     if (shops.isEmpty) return const [];
     return [
       for (final shop in shops)

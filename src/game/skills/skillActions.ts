@@ -188,6 +188,57 @@ export function skillHasRecipeBook(db: GameDatabase, skillId: string): boolean {
   )
 }
 
+export interface SkillMenuPlacement {
+  tabId: string
+  tabLabel: string
+  sectionTitle: string | null
+}
+
+/** Where a named output belongs in the skill menu / recipe book. */
+export function skillMenuPlacementForOutput(
+  db: GameDatabase,
+  skillId: string,
+  displayName: string,
+  outputId = '',
+): SkillMenuPlacement {
+  if (skillId === SMITHING_SKILL_ID) {
+    const material = smithingMaterial(displayName)
+    if (material) {
+      return { tabId: 'basic-metal', tabLabel: 'Basic metal', sectionTitle: `${material} items` }
+    }
+    return { tabId: 'other', tabLabel: 'Other', sectionTitle: null }
+  }
+  if (skillId === ARTISANRY_SKILL_ID) {
+    if (isBowName(displayName)) return { tabId: 'bows', tabLabel: 'Bows', sectionTitle: null }
+    const item = outputId
+      ? db.Items.find((row) => row['Item ID'] === outputId)
+      : itemByName(db, displayName)
+    if (isJewelryItem(item, displayName)) {
+      return { tabId: 'jewelry', tabLabel: 'Jewelry', sectionTitle: null }
+    }
+    const material = armorMaterial(displayName)
+    if (material && isGroupedArmorMaterial(material)) {
+      return { tabId: 'other', tabLabel: 'Other', sectionTitle: `${material} equipment` }
+    }
+    return { tabId: 'other', tabLabel: 'Other', sectionTitle: null }
+  }
+  if (skillId === ARCANA_SKILL_ID) {
+    if (outputId === ESSENCE_ITEM_ID || displayName === 'Essence') {
+      return { tabId: 'essence', tabLabel: 'Essence', sectionTitle: null }
+    }
+    if (isSpellName(displayName)) return { tabId: 'spells', tabLabel: 'Spells', sectionTitle: null }
+    if (isArcanaWeaponName(displayName, outputId)) {
+      return { tabId: 'weapons', tabLabel: 'Weapons', sectionTitle: null }
+    }
+    return { tabId: 'enchantments', tabLabel: 'Enchantments', sectionTitle: null }
+  }
+  if (skillMenuView(db, skillId).tabs.some((tab) => tab.id === 'actions')) {
+    return { tabId: 'actions', tabLabel: 'Actions', sectionTitle: null }
+  }
+  const first = skillMenuView(db, skillId).tabs[0]!
+  return { tabId: first.id, tabLabel: first.label, sectionTitle: null }
+}
+
 export function projectOutputName(db: GameDatabase, project: ProjectRow): string {
   const outputId = project['Output Item / Target ID']
   if (!outputId) return project['Display Name']

@@ -13,7 +13,7 @@ const _roman = <String>['I', 'II', 'III', 'IV'];
 /// Square side on the location stage: room for III or a skill icon, not a sliver.
 const double _stageSquare = 32;
 
-/// Four preset buttons (optional Save chip); used above the paper doll and on location art.
+/// Preset buttons (optional Current / Save chips); used above the paper doll and on location art.
 class EquipmentPresetsBar extends StatelessWidget {
   const EquipmentPresetsBar({
     super.key,
@@ -22,11 +22,11 @@ class EquipmentPresetsBar extends StatelessWidget {
     this.compact = false,
     this.showSaveButton = true,
     this.showSettingsButton = false,
+    this.showCurrentButton = false,
     this.allowLongPressEdit = true,
-    this.editingIndex,
-    this.onStartEdit,
-    this.onFinishEdit,
-    this.onSelectForEdit,
+    this.selectedPresetIndex,
+    this.onSelectCurrent,
+    this.onSelectPreset,
     this.onMessage,
   });
 
@@ -36,41 +36,42 @@ class EquipmentPresetsBar extends StatelessWidget {
   final bool showSaveButton;
   final bool showSettingsButton;
 
+  /// Equipment page only: current worn gear, shown before the four presets.
+  final bool showCurrentButton;
+
   /// When false (location stage), taps only switch presets.
   final bool allowLongPressEdit;
 
-  /// When set, the bar is in inventory Edit mode: taps preview a snapshot.
-  final int? editingIndex;
-  final VoidCallback? onStartEdit;
-  final VoidCallback? onFinishEdit;
-  final ValueChanged<int>? onSelectForEdit;
+  /// Equipment-page selection: which preset the paper doll is editing.
+  final int? selectedPresetIndex;
+  final VoidCallback? onSelectCurrent;
+  final ValueChanged<int>? onSelectPreset;
   final ValueChanged<String>? onMessage;
-
-  bool get _editing => editingIndex != null;
 
   @override
   Widget build(BuildContext context) {
     final save = controller.save;
     final presets = save.equipmentPresets;
-    final active = save.activeEquipmentPresetIndex.floor().clamp(0, equipmentPresetCount - 1);
-    final highlighted = (editingIndex ?? active).clamp(0, equipmentPresetCount - 1);
     final buttons = <Widget>[
+      if (showCurrentButton)
+        _LabelChip(
+          compact: compact,
+          square: compact && axis == Axis.vertical,
+          label: 'Current',
+          semanticsLabel: 'Current loadout',
+          selected: true,
+          onPressed: () => onSelectCurrent?.call(),
+        ),
       for (var i = 0; i < equipmentPresetCount; i += 1)
         _PresetButton(
           preset: i < presets.length ? presets[i] : null,
           index: i,
-          selected: i == highlighted,
+          selected: shouldHighlightEquipmentPreset(save, i) || i == selectedPresetIndex,
           compact: compact,
           square: compact && axis == Axis.vertical,
           skillsById: controller.indexes.skillsById,
-          tooltipHint: _editing
-              ? 'Preview this loadout'
-              : (allowLongPressEdit ? 'Long-press to edit name' : 'Tap to switch preset'),
+          tooltipHint: allowLongPressEdit ? 'Long-press to edit name' : 'Tap to switch preset',
           onTap: () {
-            if (_editing) {
-              onSelectForEdit?.call(i);
-              return;
-            }
             final result = applyEquipmentPreset(controller.db, controller.save, i);
             if (!result.ok) {
               onMessage?.call(result.reason ?? 'Could not switch presets.');
@@ -78,10 +79,11 @@ class EquipmentPresetsBar extends StatelessWidget {
             }
             controller.commitLoadout(result.save!);
             if (result.warning != null) onMessage?.call(result.warning!);
+            onSelectPreset?.call(i);
           },
           onLongPress: allowLongPressEdit ? () => _editPreset(context, i) : null,
         ),
-      if (showSaveButton && !_editing)
+      if (showSaveButton)
         _SaveChip(
           compact: compact,
           square: compact && axis == Axis.vertical,
@@ -89,22 +91,6 @@ class EquipmentPresetsBar extends StatelessWidget {
             controller.commitLoadout(saveActiveEquipmentPreset(controller.save));
             onMessage?.call('Preset saved.');
           },
-        ),
-      if (onStartEdit != null && !_editing)
-        _LabelChip(
-          compact: compact,
-          square: compact && axis == Axis.vertical,
-          label: 'Edit',
-          semanticsLabel: 'Edit presets',
-          onPressed: onStartEdit!,
-        ),
-      if (_editing && onFinishEdit != null)
-        _LabelChip(
-          compact: compact,
-          square: compact && axis == Axis.vertical,
-          label: 'Done',
-          semanticsLabel: 'Done editing presets',
-          onPressed: onFinishEdit!,
         ),
       if (showSettingsButton)
         _SettingsChip(
@@ -276,6 +262,7 @@ class _LabelChip extends StatelessWidget {
     required this.square,
     required this.label,
     required this.semanticsLabel,
+    this.selected = false,
   });
 
   final VoidCallback onPressed;
@@ -283,16 +270,24 @@ class _LabelChip extends StatelessWidget {
   final bool square;
   final String label;
   final String semanticsLabel;
+  final bool selected;
 
   @override
   Widget build(BuildContext context) {
     final step = square ? 2.0 : 2.0;
     return Semantics(
       button: true,
+      selected: selected,
       label: semanticsLabel,
       child: Material(
-        color: Palette.slot,
-        shape: PixelSteppedBorder(step: step),
+        color: selected ? Palette.gold.withValues(alpha: 0.22) : Palette.slot,
+        shape: PixelSteppedBorder(
+          step: step,
+          side: BorderSide(
+            color: selected ? Palette.gold : Palette.edge,
+            width: selected ? 1.5 : 1,
+          ),
+        ),
         child: InkWell(
           onTap: onPressed,
           customBorder: PixelSteppedBorder(step: step),
@@ -387,6 +382,8 @@ class _PresetButton extends StatelessWidget {
     final icon = preset?.icon ?? defaultEquipmentPresetIcon(index);
     final label = preset?.name ?? 'Preset ${index + 1}';
     final step = square ? 2.0 : 2.0;
+    final chrome = UiChrome.of(context);
+    final fill = selected ? Color.lerp(chrome.slot, chrome.embossFace, 0.18)! : chrome.slot;
     return Tooltip(
       message: '$label\n$tooltipHint',
       child: Semantics(
@@ -394,12 +391,12 @@ class _PresetButton extends StatelessWidget {
         selected: selected,
         label: label,
         child: Material(
-          color: selected ? Palette.gold.withValues(alpha: 0.22) : Palette.slot,
+          color: fill,
           shape: PixelSteppedBorder(
             step: step,
             side: BorderSide(
-              color: selected ? Palette.gold : Palette.edge,
-              width: selected ? 1.5 : 1,
+              color: selected ? chrome.embossFace : Palette.edge,
+              width: selected ? 2 : 1,
             ),
           ),
           child: InkWell(
@@ -463,11 +460,15 @@ class _IconChoice extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final chrome = UiChrome.of(context);
     return Material(
-      color: selected ? Palette.gold.withValues(alpha: 0.25) : Palette.slot,
+      color: selected ? Color.lerp(chrome.slot, chrome.embossFace, 0.18)! : chrome.slot,
       shape: PixelSteppedBorder(
         step: 2,
-        side: BorderSide(color: selected ? Palette.gold : Palette.edge),
+        side: BorderSide(
+          color: selected ? chrome.embossFace : Palette.edge,
+          width: selected ? 2 : 1,
+        ),
       ),
       child: InkWell(
         onTap: onTap,

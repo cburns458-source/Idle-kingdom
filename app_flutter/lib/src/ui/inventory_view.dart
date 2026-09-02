@@ -46,8 +46,8 @@ class InventoryView extends StatefulWidget {
     this.onClose,
     this.pane,
     this.showHeader = true,
-    this.editingPresetIndex,
-    this.onEditingPresetIndexChanged,
+    this.selectedPresetIndex,
+    this.onSelectedPresetIndexChanged,
   });
 
   final GameController controller;
@@ -57,9 +57,9 @@ class InventoryView extends StatefulWidget {
   final InventoryPane? pane;
   final bool showHeader;
 
-  /// When provided by [CharacterView], edit mode survives Equipment → Inventory.
-  final int? editingPresetIndex;
-  final ValueChanged<int?>? onEditingPresetIndexChanged;
+  /// When provided by [CharacterView], the selected preset survives Equipment → Inventory.
+  final int? selectedPresetIndex;
+  final ValueChanged<int?>? onSelectedPresetIndexChanged;
 
   @override
   State<InventoryView> createState() => _InventoryViewState();
@@ -73,19 +73,19 @@ class _InventoryViewState extends State<InventoryView> {
   InventorySortMode _sortMode = InventorySortMode.group;
   final TextEditingController _search = TextEditingController();
   late InventorySorter _sorter = InventorySorter(widget.controller.db);
-  int? _localEditingPresetIndex;
+  int? _localSelectedPresetIndex;
   bool get _lockedPane => widget.pane != null;
-  int? get _editingPresetIndex => widget.onEditingPresetIndexChanged != null
-      ? widget.editingPresetIndex
-      : _localEditingPresetIndex;
-  bool get _editingPreset => _editingPresetIndex != null;
+  int? get _selectedPresetIndex => widget.onSelectedPresetIndexChanged != null
+      ? widget.selectedPresetIndex
+      : _localSelectedPresetIndex;
+  bool get _editingPreset => _selectedPresetIndex != null;
 
-  void _setEditingPresetIndex(int? index) {
-    final notify = widget.onEditingPresetIndexChanged;
+  void _setSelectedPresetIndex(int? index) {
+    final notify = widget.onSelectedPresetIndexChanged;
     if (notify != null) {
       notify(index);
     } else {
-      setState(() => _localEditingPresetIndex = index);
+      setState(() => _localSelectedPresetIndex = index);
     }
   }
 
@@ -108,8 +108,8 @@ class _InventoryViewState extends State<InventoryView> {
       _message = null;
       _showSources = false;
       _showBonuses = false;
-      if (widget.onEditingPresetIndexChanged == null) {
-        _localEditingPresetIndex = null;
+      if (widget.onSelectedPresetIndexChanged == null) {
+        _localSelectedPresetIndex = null;
       }
     }
   }
@@ -157,7 +157,7 @@ class _InventoryViewState extends State<InventoryView> {
   }
 
   void _assignToEditingPreset(int inventoryIndex, {String? preferredSlotId}) {
-    final editing = _editingPresetIndex;
+    final editing = _selectedPresetIndex;
     if (editing == null || inventoryIndex < 0 || inventoryIndex >= save.inventory.length) return;
     final stack = save.inventory[inventoryIndex];
     final gear = equipmentForItemId(db, stack.itemId);
@@ -174,7 +174,7 @@ class _InventoryViewState extends State<InventoryView> {
       slotId = preferredSlotId;
     }
     final quantity = isStackableConsumableSlot(slotId) ? stack.quantity : 1;
-    final next = setEquipmentPresetSlot(
+    final next = editSelectedEquipmentPresetSlot(
       db,
       save,
       editing,
@@ -187,14 +187,14 @@ class _InventoryViewState extends State<InventoryView> {
       ),
     );
     setState(() => _message = null);
-    controller.commit(next);
+    controller.commitLoadout(next);
   }
 
   void _unequip(String slotId) {
     if (_editingPreset) {
-      final next = setEquipmentPresetSlot(db, save, _editingPresetIndex!, slotId, null);
+      final next = editSelectedEquipmentPresetSlot(db, save, _selectedPresetIndex!, slotId, null);
       setState(() => _message = null);
-      controller.commit(next);
+      controller.commitLoadout(next);
       return;
     }
     final result = unequipSlot(save, slotId);
@@ -569,22 +569,14 @@ class _InventoryViewState extends State<InventoryView> {
                 EquipmentPresetsBar(
                   controller: controller,
                   showSettingsButton: true,
-                  editingIndex: _editingPresetIndex,
-                  onStartEdit: () => _setEditingPresetIndex(
-                    save.activeEquipmentPresetIndex.floor().clamp(0, equipmentPresetCount - 1),
-                  ),
-                  onFinishEdit: () => _setEditingPresetIndex(null),
-                  onSelectForEdit: _setEditingPresetIndex,
+                  showCurrentButton: true,
+                  selectedPresetIndex: _selectedPresetIndex,
+                  onSelectCurrent: () => _setSelectedPresetIndex(null),
+                  onSelectPreset: _setSelectedPresetIndex,
                   onMessage: (message) {
                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
                   },
                 ),
-                if (_editingPreset) ...[
-                  const SizedBox(height: 8),
-                  MutedText(
-                    'Editing ${save.equipmentPresets[_editingPresetIndex!].name} — worn gear unchanged.',
-                  ),
-                ],
                 const SizedBox(height: 10),
                 GridView.count(
                   crossAxisCount: 4,
@@ -724,8 +716,8 @@ class _InventoryViewState extends State<InventoryView> {
   Widget _slotTile(String slotId) {
     final live = save.equipment.slots[slotId];
     final preview = _editingPreset
-        ? (_editingPresetIndex! < save.equipmentPresets.length
-              ? save.equipmentPresets[_editingPresetIndex!].slots[slotId]
+        ? (_selectedPresetIndex! < save.equipmentPresets.length
+              ? save.equipmentPresets[_selectedPresetIndex!].slots[slotId]
               : null)
         : live;
     final stack = preview;

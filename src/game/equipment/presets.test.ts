@@ -10,10 +10,13 @@ import { SAVE_VERSION } from '../save/types'
 import { equipItemFromInventory } from './loadout'
 import {
   applyEquipmentPreset,
+  editSelectedEquipmentPresetSlot,
+  presetMatchesLoadout,
   renameEquipmentPreset,
   saveActiveEquipmentPreset,
   setEquipmentPresetIcon,
   setEquipmentPresetSlot,
+  shouldHighlightEquipmentPreset,
   trackActiveEquipmentPreset,
 } from './presets'
 
@@ -37,14 +40,14 @@ describe('equipment presets', () => {
     expect(migrated.equipmentPresets).toHaveLength(4)
   })
 
-  it('auto-tracks preset 1 while active and saves snapshots for others', () => {
+  it('save snapshots the worn loadout; switching does not rewrite other presets', () => {
     const { launch } = prepareDatabase(rawDatabase)
     let save = createNewSave(launch)
     save = addItemToInventory(save, 'ITEM-0111', 1)
     const equipped = equipItemFromInventory(launch, save, 'ITEM-0111')
     expect(equipped.ok).toBe(true)
     if (!equipped.ok) return
-    save = trackActiveEquipmentPreset(equipped.save)
+    save = saveActiveEquipmentPreset(equipped.save)
     expect(save.equipmentPresets[0]?.slots['SLOT-0001']?.itemId).toBe('ITEM-0111')
 
     const toTwo = applyEquipmentPreset(launch, save, 1)
@@ -61,6 +64,7 @@ describe('equipment presets', () => {
     if (!hatchet.ok) return
     onTwo = saveActiveEquipmentPreset(hatchet.save)
     expect(onTwo.equipmentPresets[1]?.slots['SLOT-0001']?.itemId).toBe('ITEM-0110')
+    expect(onTwo.equipmentPresets[0]?.slots['SLOT-0001']?.itemId).toBe('ITEM-0111')
 
     const back = applyEquipmentPreset(launch, onTwo, 0)
     expect(back.ok).toBe(true)
@@ -109,7 +113,7 @@ describe('equipment presets', () => {
     const equipped = equipItemFromInventory(launch, save, 'ITEM-0111')
     expect(equipped.ok).toBe(true)
     if (!equipped.ok) return
-    save = trackActiveEquipmentPreset(equipped.save)
+    save = saveActiveEquipmentPreset(equipped.save)
     save = {
       ...save,
       equipmentPresets: save.equipmentPresets.map((preset, index) =>
@@ -145,7 +149,7 @@ describe('equipment presets', () => {
     expect(again.save.equipment.slots['SLOT-0003']?.itemId).toBe('ITEM-0155')
   })
 
-  it('keeps an unowned stored piece on preset 1 and clears it when the piece is still in the bag', () => {
+  it('does not copy worn gear onto a preset when tracking', () => {
     const { launch } = prepareDatabase(rawDatabase)
     let save = createNewSave(launch)
     save = {
@@ -156,27 +160,91 @@ describe('equipment presets', () => {
           'SLOT-0001': { itemId: 'ITEM-0111', quantity: 1 },
         },
       },
+    }
+    const tracked = trackActiveEquipmentPreset(save)
+    expect(tracked.equipmentPresets[0]?.slots['SLOT-0001']).toBeNull()
+    expect(presetMatchesLoadout(tracked, 0)).toBe(false)
+    expect(shouldHighlightEquipmentPreset(tracked, 0)).toBe(false)
+  })
+
+  it('matches loadouts by item identity and ignores food quantity', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    let save = createNewSave(launch)
+    save = {
+      ...save,
+      equipment: {
+        slots: {
+          ...save.equipment.slots,
+          'SLOT-0001': { itemId: 'ITEM-0111', quantity: 1 },
+          'SLOT-0011': { itemId: 'ITEM-0058', quantity: 2 },
+        },
+      },
       equipmentPresets: save.equipmentPresets.map((preset, index) =>
-        index === 0
+        index === 1
           ? {
               ...preset,
               slots: {
                 ...preset.slots,
                 'SLOT-0001': { itemId: 'ITEM-0111', quantity: 1 },
-                'SLOT-0003': { itemId: 'ITEM-0155', quantity: 1 },
+                'SLOT-0011': { itemId: 'ITEM-0058', quantity: 5 },
               },
             }
           : preset,
       ),
-      activeEquipmentPresetIndex: 0,
     }
-    const kept = trackActiveEquipmentPreset(save)
-    expect(kept.equipmentPresets[0]?.slots['SLOT-0001']?.itemId).toBe('ITEM-0111')
-    expect(kept.equipmentPresets[0]?.slots['SLOT-0003']?.itemId).toBe('ITEM-0155')
+    expect(presetMatchesLoadout(save, 1)).toBe(true)
+    expect(shouldHighlightEquipmentPreset(save, 1)).toBe(true)
+    expect(shouldHighlightEquipmentPreset(save, 0)).toBe(false)
 
-    const withHelm = addItemToInventory(save, 'ITEM-0155', 1)
-    const cleared = trackActiveEquipmentPreset(withHelm)
-    expect(cleared.equipmentPresets[0]?.slots['SLOT-0003']).toBeNull()
+    save = {
+      ...save,
+      equipment: {
+        slots: {
+          ...save.equipment.slots,
+          'SLOT-0011': { itemId: 'ITEM-0059', quantity: 2 },
+        },
+      },
+    }
+    expect(presetMatchesLoadout(save, 1)).toBe(false)
+  })
+
+  it('editing a selected preset wears the new snapshot', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    let save = createNewSave(launch)
+    save = addItemToInventory(save, 'ITEM-0111', 1)
+    save = addItemToInventory(save, 'ITEM-0110', 1)
+    const equipped = equipItemFromInventory(launch, save, 'ITEM-0111')
+    expect(equipped.ok).toBe(true)
+    if (!equipped.ok) return
+    save = saveActiveEquipmentPreset(equipped.save)
+    const next = editSelectedEquipmentPresetSlot(launch, save, 0, 'SLOT-0001', {
+      itemId: 'ITEM-0110',
+      quantity: 1,
+    })
+    expect(next.equipmentPresets[0]?.slots['SLOT-0001']?.itemId).toBe('ITEM-0110')
+    expect(next.equipment.slots['SLOT-0001']?.itemId).toBe('ITEM-0110')
+    expect(next.inventory.some((stack) => stack.itemId === 'ITEM-0111')).toBe(true)
+  })
+
+  it('applying the active preset still restores it after the loadout diverged', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    let save = createNewSave(launch)
+    save = addItemToInventory(save, 'ITEM-0111', 1)
+    save = addItemToInventory(save, 'ITEM-0110', 1)
+    const equipped = equipItemFromInventory(launch, save, 'ITEM-0111')
+    expect(equipped.ok).toBe(true)
+    if (!equipped.ok) return
+    save = saveActiveEquipmentPreset(equipped.save)
+    const hatchet = equipItemFromInventory(launch, save, 'ITEM-0110')
+    expect(hatchet.ok).toBe(true)
+    if (!hatchet.ok) return
+    save = hatchet.save
+    expect(save.activeEquipmentPresetIndex).toBe(0)
+    expect(save.equipment.slots['SLOT-0001']?.itemId).toBe('ITEM-0110')
+    const restored = applyEquipmentPreset(launch, save, 0)
+    expect(restored.ok).toBe(true)
+    if (!restored.ok) return
+    expect(restored.save.equipment.slots['SLOT-0001']?.itemId).toBe('ITEM-0111')
   })
 
   it('writes a snapshot slot without changing worn gear or the active preset', () => {

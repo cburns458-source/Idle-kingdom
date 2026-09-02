@@ -583,6 +583,43 @@ void main() {
     expect(icon.height, 32);
   });
 
+  testWidgets('Wizard Tower hides Special production until Wizard Studies is completed', (
+    tester,
+  ) async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(currentLocationId: 'LOC-0007'),
+    );
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller);
+
+    expect(find.widgetWithText(GameButton, 'Special production'), findsNothing);
+    expect(find.text('Mages quarters'), findsNothing);
+
+    final accepted = acceptQuest(database.launch, controller.save, 'QST-0005');
+    expect(accepted.ok, isTrue);
+    controller.commit(accepted.save!);
+    await tester.pump();
+
+    expect(find.widgetWithText(GameButton, 'Special production'), findsNothing);
+    expect(find.text('Mages quarters'), findsNothing);
+
+    controller.commit(
+      accepted.save!.copyWith(
+        quests: [
+          ...accepted.save!.quests.where((quest) => quest.questId != 'QST-0005'),
+          const QuestProgress(questId: 'QST-0005', status: 'completed', progress: 1),
+        ],
+      ),
+    );
+    await tester.pump();
+
+    expect(find.widgetWithText(GameButton, 'Special production'), findsOne);
+    await tester.tap(find.widgetWithText(GameButton, 'Special production'));
+    await tester.pump();
+    expect(find.text('Mages quarters'), findsOne);
+  });
+
   testWidgets('the workshop lists Special production as its own tab', (tester) async {
     final controller = buildController(
       database,

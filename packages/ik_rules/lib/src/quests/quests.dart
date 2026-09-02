@@ -1,6 +1,7 @@
 import 'package:collection/collection.dart';
 import 'package:ik_content/ik_content.dart';
 
+import '../activity/requirements.dart';
 import '../activity/reward_summary.dart';
 import '../activity/rewards.dart';
 import '../activity/types.dart';
@@ -388,6 +389,8 @@ QuestCompletion completeQuest(
     }
   }
 
+  rewards.addAll(facilityUnlockRewardLabels(db, questId));
+
   final progressTotal = status.progressLines.fold<num>(0, (sum, line) => sum + line.required);
   next = next.copyWith(
     quests: [
@@ -537,4 +540,21 @@ String questStatusLabel(String status) {
   if (status == 'completed') return 'Completed';
   if (status == 'active') return 'Active';
   return 'Not started';
+}
+
+/// Facilities gated by `Quest Complete` on [questId], listed when that quest finishes.
+List<String> facilityUnlockRewardLabels(GameDatabase db, String questId) {
+  final labels = <String>[];
+  for (final facility in db.facilities) {
+    final facilityId = jsString(facility.raw['Facility ID']);
+    final gated = requirementsForEntity(db, 'Facility', facilityId).any((requirement) {
+      if (requirement.requirementType != 'Quest Complete') return false;
+      final reference = requirement.referenceIdValue;
+      return reference is String && reference == questId;
+    });
+    if (!gated) continue;
+    final name = facility.raw['Display Name'];
+    labels.add('Unlocked ${name is String && name.isNotEmpty ? name : facilityId}');
+  }
+  return labels;
 }

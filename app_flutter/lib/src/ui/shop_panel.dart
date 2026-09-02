@@ -67,10 +67,9 @@ class _ShopPanelState extends State<ShopPanel> {
     final nowMs = controller.session.clock();
     final remaining = shopRemainingToday(save, shop, itemId, nowMs);
     final already = _buys[itemId] ?? 0;
-    final stockLeft = remaining == null ? null : (remaining - already).clamp(0, remaining);
     // A cosmetic is a one-time unlock, so it is in the offer or it is not.
     if (item?.category == 'Cosmetic') {
-      if (stockLeft != null && stockLeft < 1) {
+      if (remaining != null && remaining < 1) {
         setState(() => _error = 'That item is sold out for today.');
         return;
       }
@@ -81,15 +80,17 @@ class _ShopPanelState extends State<ShopPanel> {
       return;
     }
 
+    final editing = already > 0;
     final budget =
         save.gold +
         _total(_sells, (id) => playerSellPrice(db, shop, id)) -
         _total(_buys, (id) => playerBuyPrice(db, shop, id));
-    final affordable = unit <= 0 ? null : (budget / unit).floor();
+    final available = budget + already * unit;
+    final affordable = unit <= 0 ? null : (available / unit).floor();
     num? max;
     if (affordable != null && affordable >= 1) max = affordable;
-    if (stockLeft != null) {
-      max = max == null ? stockLeft : (max < stockLeft ? max : stockLeft);
+    if (remaining != null) {
+      max = max == null ? remaining : (max < remaining ? max : remaining);
     }
     if (max != null && max < 1) {
       setState(() => _error = 'That item is sold out for today.');
@@ -105,36 +106,51 @@ class _ShopPanelState extends State<ShopPanel> {
           _sells.isEmpty
               ? 'Afford up to ${formatThousands(affordable)} with current gold'
               : 'Afford up to ${formatThousands(affordable)} counting the sells on offer',
-        if (stockLeft != null) '${formatThousands(stockLeft)} left in today\'s stock',
+        if (remaining != null) '${formatThousands(remaining)} left in today\'s stock',
       ],
-      confirmLabel: 'Add to offer',
+      confirmLabel: editing ? 'Update offer' : 'Add to offer',
+      initialValue: editing ? already.floor() : 1,
       max: max?.floor(),
+      removeLabel: editing ? 'Remove from offer' : null,
     );
-    if (quantity == null || !mounted) return;
+    if (!mounted) return;
+    if (quantity == quantityRemoveSentinel) {
+      setState(() {
+        _error = null;
+        _buys.remove(itemId);
+      });
+      return;
+    }
+    if (quantity == null) return;
     setState(() {
       _error = null;
-      _buys[itemId] = (_buys[itemId] ?? 0) + quantity;
+      _buys[itemId] = editing ? quantity : already + quantity;
     });
   }
 
-  /// Offers [itemId], or takes it back out when it is already on the counter.
+  /// Offers [itemId], or opens the pad again to change or take it off the counter.
   Future<void> _toggleSell(String itemId, num unit, String name, num owned) async {
-    if (_sells.containsKey(itemId)) {
+    final already = _sells[itemId];
+    final editing = already != null;
+    final quantity = await askQuantity(
+      context,
+      subtitle: 'Sell',
+      title: name,
+      details: ['${formatThousands(unit)} gold each', 'You have ${formatThousands(owned)}'],
+      confirmLabel: editing ? 'Update offer' : 'Add to offer',
+      initialValue: editing ? already.floor() : 1,
+      max: owned.floor(),
+      removeLabel: editing ? 'Remove from offer' : null,
+    );
+    if (!mounted) return;
+    if (quantity == quantityRemoveSentinel) {
       setState(() {
         _error = null;
         _sells.remove(itemId);
       });
       return;
     }
-    final quantity = await askQuantity(
-      context,
-      subtitle: 'Sell',
-      title: name,
-      details: ['${formatThousands(unit)} gold each', 'You have ${formatThousands(owned)}'],
-      confirmLabel: 'Add to offer',
-      max: owned.floor(),
-    );
-    if (quantity == null || !mounted) return;
+    if (quantity == null) return;
     setState(() {
       _error = null;
       _sells[itemId] = quantity;
@@ -326,7 +342,7 @@ class _ShopPanelState extends State<ShopPanel> {
         onTap: enabled ? () => onTap(unit, name) : null,
         step: PixelChrome.stepTight,
         fillColor: offered != null
-            ? Color.lerp(UiChrome.of(context).slot, Palette.gold, 0.18)!
+            ? Color.lerp(UiChrome.of(context).slot, UiChrome.of(context).embossFace, 0.18)!
             : UiChrome.of(context).slot,
         material: PixelPlateMaterial.none,
         strokeWidth: offered != null ? 2.5 : 2,

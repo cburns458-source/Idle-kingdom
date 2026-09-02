@@ -104,9 +104,9 @@ class _ProjectPickerState extends State<ProjectPicker> {
     showStationRecipeBook(
       context,
       title: widget.station.label,
-      rows: recipeLogForEntries(
-        recipeBookForProjectStation(controller.save, controller.db, facilityId, skillId),
-      ),
+      entries: recipeBookForProjectStation(controller.save, controller.db, facilityId, skillId),
+      db: controller.db,
+      skillId: skillId,
     );
   }
 

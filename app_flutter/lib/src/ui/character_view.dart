@@ -22,8 +22,8 @@ class CharacterView extends StatefulWidget {
 class _CharacterViewState extends State<CharacterView> {
   CharacterTab _tab = CharacterTab.inventory;
 
-  /// Shared so Equipment → Inventory keeps preset Edit mode.
-  int? _editingPresetIndex;
+  /// Shared so Equipment → Inventory keeps which preset the paper doll edits.
+  int? _selectedPresetIndex;
 
   @override
   Widget build(BuildContext context) {
@@ -55,7 +55,7 @@ class _CharacterViewState extends State<CharacterView> {
                     tone: _tab == tab ? GameButtonTone.primary : GameButtonTone.secondary,
                     onPressed: () => setState(() {
                       if (tab == CharacterTab.skills) {
-                        _editingPresetIndex = null;
+                        _selectedPresetIndex = null;
                       }
                       _tab = tab;
                     }),
@@ -73,16 +73,16 @@ class _CharacterViewState extends State<CharacterView> {
               controller: widget.controller,
               pane: InventoryPane.items,
               showHeader: false,
-              editingPresetIndex: _editingPresetIndex,
-              onEditingPresetIndexChanged: (index) => setState(() => _editingPresetIndex = index),
+              selectedPresetIndex: _selectedPresetIndex,
+              onSelectedPresetIndexChanged: (index) => setState(() => _selectedPresetIndex = index),
             ),
             CharacterTab.equipment => InventoryView(
               key: const ValueKey(InventoryPane.equipment),
               controller: widget.controller,
               pane: InventoryPane.equipment,
               showHeader: false,
-              editingPresetIndex: _editingPresetIndex,
-              onEditingPresetIndexChanged: (index) => setState(() => _editingPresetIndex = index),
+              selectedPresetIndex: _selectedPresetIndex,
+              onSelectedPresetIndexChanged: (index) => setState(() => _selectedPresetIndex = index),
             ),
           },
         ),

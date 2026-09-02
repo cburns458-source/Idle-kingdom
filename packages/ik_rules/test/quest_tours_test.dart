@@ -50,7 +50,7 @@ void main() {
     expect(isCosmeticUnlocked(completed.save!, 'COS-0002'), isTrue);
   });
 
-  test('Harness essence stays hidden until Wizard Studies is accepted', () {
+  test('Harness essence unlocks on accept; Mages quarters wait for completion', () {
     var save = _save(db, locationId: 'LOC-0007');
     expect(activityVisibleForSave(db, save, 'ACT-0008'), isFalse);
     expect(
@@ -73,6 +73,21 @@ void main() {
         'LOC-0007',
       ).any((station) => station.facility.raw['Facility ID'] == 'FAC-0008'),
       isFalse,
+    );
+
+    save = addItemToInventory(save, 'ITEM-0011', 10);
+    save = applyQuestTalkProgress(db, save, 'NPC-0009');
+    save = applyQuestTalkProgress(db, save, 'NPC-0004');
+    final completed = completeQuest(db, save, 'QST-0005');
+    expect(completed.ok, isTrue);
+    expect(completed.rewards, contains('Unlocked Mages quarters'));
+    expect(
+      specialProductionStationsVisibleAt(
+        db,
+        completed.save!,
+        'LOC-0007',
+      ).any((station) => station.facility.raw['Facility ID'] == 'FAC-0008'),
+      isTrue,
     );
   });
 

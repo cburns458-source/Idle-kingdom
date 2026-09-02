@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest'
 import { prepareDatabase } from '../data/loadDatabase'
 import { canKnowRecipe, getRecipe } from '../production/recipes'
 import { createNewSave } from '../save/saveStore'
+import { recipeBookView } from './bookView'
 import { knowsRecipe, listRecipeBookEntries, recipeBookForSkill, unlockRecipeId } from './knowledge'
 
 const rawDatabase = JSON.parse(
@@ -74,5 +75,27 @@ describe('recipe knowledge', () => {
     const firstLocked = entries.findIndex((entry) => !entry.known)
     const laterKnown = entries.slice(firstLocked + 1).some((entry) => entry.known)
     expect(laterKnown).toBe(true)
+  })
+
+  it('expands skill-menu groups into individual recipe-book rows', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const save = createNewSave(launch)
+    const smithing = recipeBookView(save, launch, 'SKL-0011')
+    expect(smithing.tabs.map((tab) => tab.label)).toContain('Basic metal')
+    const steel = smithing.tabs[0]?.sections.find((section) => section.title === 'Steel items')
+    expect(steel?.entries.some((entry) => entry.name === 'Steel Sword')).toBe(true)
+    expect(steel?.entries.some((entry) => entry.name === 'Steel items')).toBe(false)
+
+    const artisanry = recipeBookView(save, launch, 'SKL-0012')
+    expect(artisanry.tabs.map((tab) => tab.label)).toEqual(
+      expect.arrayContaining(['Bows', 'Jewelry', 'Other']),
+    )
+    const other = artisanry.tabs.find((tab) => tab.id === 'other')
+    expect(other?.sections.some((section) => section.title === 'Leather equipment')).toBe(true)
+    expect(
+      other?.sections
+        .flatMap((section) => section.entries)
+        .some((entry) => entry.name === 'Leather Helmet'),
+    ).toBe(true)
   })
 })

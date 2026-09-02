@@ -38,6 +38,20 @@ void main() {
       expect(itemIconStem(item(itemId: 'ITEM-0295', displayName: 'Spell')), 'spell');
     });
 
+    test('draws the rare potato with the regular potato art', () {
+      expect(
+        itemIconStem(
+          item(
+            itemId: 'ITEM-0026',
+            displayName: 'Potato',
+            internalKey: 'golden_spud',
+            iconAssetKey: 'golden_spud',
+          ),
+        ),
+        'potato',
+      );
+    });
+
     test('maps platelegs to legs instead of chest', () {
       expect(
         itemIconStem(

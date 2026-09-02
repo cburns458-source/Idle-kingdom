@@ -325,7 +325,9 @@ class _LogRow extends StatelessWidget {
                   title,
                   style: TextStyle(
                     fontWeight: FontWeight.w400,
-                    color: highlight ? Palette.gold : UiChrome.of(context).panelInk,
+                    color: highlight
+                        ? UiChrome.of(context).embossFace
+                        : UiChrome.of(context).panelInk,
                   ),
                 ),
                 if (detail case final detail?) MutedText(detail),
@@ -369,7 +371,9 @@ class _QuestJournalRow extends StatelessWidget {
               row.name,
               style: TextStyle(
                 fontWeight: FontWeight.w400,
-                color: row.completed ? Palette.gold : UiChrome.of(context).panelInk,
+                color: row.completed
+                    ? UiChrome.of(context).embossFace
+                    : UiChrome.of(context).panelInk,
               ),
             ),
             subtitle: MutedText(row.detail),
@@ -379,14 +383,22 @@ class _QuestJournalRow extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.only(top: 6),
                   child: step.state == 'header'
-                      ? Text(step.label, style: const TextStyle(fontWeight: FontWeight.w600))
+                      ? Text(
+                          step.label,
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: UiChrome.of(context).panelInk,
+                          ),
+                        )
                       : Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
                               step.state == 'done' ? '✓' : '•',
                               style: TextStyle(
-                                color: step.state == 'done' ? Palette.softGreen : Palette.gold,
+                                color: step.state == 'done'
+                                    ? Palette.softGreen
+                                    : UiChrome.of(context).embossFace,
                               ),
                             ),
                             const SizedBox(width: 8),
@@ -395,7 +407,7 @@ class _QuestJournalRow extends StatelessWidget {
                                 step.label,
                                 style: TextStyle(
                                   color: step.state == 'done'
-                                      ? Palette.muted
+                                      ? UiChrome.of(context).panelMuted
                                       : UiChrome.of(context).panelInk,
                                 ),
                               ),
@@ -440,7 +452,9 @@ class _MiniquestList extends StatelessWidget {
                     row.name,
                     style: TextStyle(
                       fontWeight: FontWeight.w400,
-                      color: row.ready ? Palette.gold : UiChrome.of(context).panelInk,
+                      color: row.ready
+                          ? UiChrome.of(context).embossFace
+                          : UiChrome.of(context).panelInk,
                     ),
                   ),
                   MutedText(row.detail),
@@ -451,7 +465,7 @@ class _MiniquestList extends StatelessWidget {
                               ? row.repeatLabel
                               : '${row.repeatLabel} · ${row.repeatEveryLabel}')
                         : row.repeatLabel,
-                    style: const TextStyle(fontSize: 12, color: Palette.gold),
+                    style: TextStyle(fontSize: 12, color: UiChrome.of(context).embossFace),
                   ),
                 ],
               ),

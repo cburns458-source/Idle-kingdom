@@ -93,9 +93,11 @@ void main() {
 
     expect(find.text('×4'), findsOne);
 
-    // Tapping the offered item again takes it back off the counter.
+    // Tapping the offered item again opens the pad so it can be taken off.
     await tester.tap(find.byTooltip('Clay'));
-    await tester.pump();
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Remove from offer'));
+    await tester.pumpAndSettle();
     expect(find.text('×4'), findsNothing);
 
     // Put it back and go through with it.
@@ -110,6 +112,30 @@ void main() {
 
     expect(controller.save.gold, unit * 4);
     expect(inventoryCount(controller.save, clayId), 0);
+  });
+
+  testWidgets('the buy pad can take an item off the offer', (tester) async {
+    final controller = buildController(database, seed: shopper());
+    addTearDown(controller.dispose);
+
+    await pumpPanel(tester, ShopPanel(controller: controller, shopId: shopId));
+    await tester.tap(find.byTooltip('Wooden Axe'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Add to offer'));
+    await tester.pumpAndSettle();
+    expect(find.text('×1'), findsOne);
+
+    await tester.tap(find.byTooltip('Wooden Axe'));
+    await tester.pumpAndSettle();
+    expect(find.text('Update offer'), findsOne);
+    await tester.tap(find.text('Remove from offer'));
+    await tester.pumpAndSettle();
+    expect(find.text('×1'), findsNothing);
+    expect(find.text('Confirm trade'), findsOne);
+    expect(
+      tester.widget<GameButton>(find.widgetWithText(GameButton, 'Confirm trade')).onPressed,
+      isNull,
+    );
   });
 
   testWidgets('refuses a trade the purse cannot cover', (tester) async {

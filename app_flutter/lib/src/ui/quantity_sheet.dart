@@ -4,6 +4,9 @@ import '../theme.dart';
 import 'format.dart';
 import 'game_popup.dart';
 
+/// Returned by [askQuantity] when the player takes an item off a shop offer.
+const int quantityRemoveSentinel = -1;
+
 /// Asks for a whole number, with a keypad so a thumb can answer.
 ///
 /// Returns the chosen quantity, or null when dismissed. The keypad is here
@@ -20,6 +23,10 @@ Future<int?> askQuantity(
   int initialValue = 1,
   int min = 1,
   int? max,
+
+  /// Shop offer pads. When set, the keypad can take the item off the offer.
+  /// A confirmed remove returns [quantityRemoveSentinel].
+  String? removeLabel,
 }) {
   return showGamePopup<int>(
     context: context,
@@ -31,6 +38,7 @@ Future<int?> askQuantity(
       initialValue: initialValue,
       min: min,
       max: max,
+      removeLabel: removeLabel,
     ),
   );
 }
@@ -44,6 +52,7 @@ class _QuantitySheet extends StatefulWidget {
     required this.initialValue,
     required this.min,
     required this.max,
+    this.removeLabel,
   });
 
   final String title;
@@ -53,6 +62,7 @@ class _QuantitySheet extends StatefulWidget {
   final int initialValue;
   final int min;
   final int? max;
+  final String? removeLabel;
 
   @override
   State<_QuantitySheet> createState() => _QuantitySheetState();
@@ -177,6 +187,14 @@ class _QuantitySheetState extends State<_QuantitySheet> {
               Text(error, style: const TextStyle(color: Palette.danger, fontSize: 12)),
             ],
             const SizedBox(height: 10),
+            if (widget.removeLabel case final removeLabel?) ...[
+              GameButton(
+                label: removeLabel,
+                tone: GameButtonTone.secondary,
+                onPressed: () => Navigator.of(context).pop(quantityRemoveSentinel),
+              ),
+              const SizedBox(height: 8),
+            ],
             Row(
               children: [
                 GameButton(

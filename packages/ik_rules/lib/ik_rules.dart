@@ -83,6 +83,7 @@ export 'src/quests/steps.dart';
 export 'src/races/assign_race.dart';
 export 'src/races/change_race.dart';
 export 'src/races/races.dart';
+export 'src/recipes/book_view.dart';
 export 'src/recipes/knowledge.dart';
 export 'src/rng/mulberry32.dart';
 export 'src/save/character_name.dart';

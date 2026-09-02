@@ -490,9 +490,18 @@ void main() {
   }
 
   testWidgets('location stage presets are tappable heading-colored squares', (tester) async {
+    final base = startedCharacter(database);
     final controller = buildController(
       database,
-      seed: startedCharacter(database).copyWith(currentLocationId: 'LOC-0001'),
+      seed: base.copyWith(
+        currentLocationId: 'LOC-0001',
+        equipment: EquipmentLoadout(
+          slots: {
+            ...base.equipment.slots,
+            'SLOT-0003': const EquippedStack(itemId: 'ITEM-0155', quantity: 1),
+          },
+        ),
+      ),
     );
     addTearDown(controller.dispose);
     await pumpShell(tester, controller, size: const Size(420, 420 * 16 / 9));
@@ -514,6 +523,10 @@ void main() {
     );
     expect(square.width, 32);
     expect(square.height, 32);
+
+    expect(shouldHighlightEquipmentPreset(controller.save, 0), isFalse);
+    expect(shouldHighlightEquipmentPreset(controller.save, 1), isFalse);
+    expect(shouldHighlightEquipmentPreset(controller.save, 2), isFalse);
 
     await tester.tap(stageNumeral('II'));
     await tester.pump();
