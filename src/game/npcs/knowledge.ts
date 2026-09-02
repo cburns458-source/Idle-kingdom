@@ -23,6 +23,8 @@ export const QUILL_MISSING_REASON = 'Speak with Quill to learn how to make bows 
 
 export const FENNEL_ID = 'NPC-0014'
 export const GETTING_STARTED_QUEST_ID = 'QST-0006'
+export const WIZARD_STUDIES_QUEST_ID = 'QST-0005'
+export const ARCHMAGE_HMPH = 'Hmph.'
 export const FENNEL_WELCOME =
   'Welcome to the lands. I am Fennel. This farm is a good place to start — harvest, cook, and fight are all close by. Come talk to me when you want to learn the rest.'
 

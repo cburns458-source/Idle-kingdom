@@ -205,7 +205,6 @@ class _NpcPanelState extends State<NpcPanel> {
       return _playerDialogue(
         name: conversation.name,
         line: talkQuest.talkLine ?? talkQuest.idlePrompt,
-        progress: talkQuest.progressLines,
         error: _error,
         actions: [GameButton(label: 'Continue', onPressed: _commitTalk)],
       );
@@ -216,6 +215,7 @@ class _NpcPanelState extends State<NpcPanel> {
       return _playerDialogue(
         name: conversation.name,
         line: donateQuest.pitchLine ?? donateQuest.summary ?? conversation.description,
+        journal: _requirementJournal(donateQuest.questId),
         error: _error,
         actions: [
           GameButton(
@@ -234,6 +234,7 @@ class _NpcPanelState extends State<NpcPanel> {
       return _playerDialogue(
         name: conversation.name,
         line: acceptQuest.pitchLine ?? acceptQuest.summary ?? conversation.description,
+        journal: _requirementJournal(acceptQuest.questId),
         error: _error,
         actions: [
           GameButton(
@@ -252,7 +253,6 @@ class _NpcPanelState extends State<NpcPanel> {
       return _playerDialogue(
         name: conversation.name,
         line: turnInQuest.talkLine ?? turnInQuest.idlePrompt,
-        progress: turnInQuest.progressLines,
         error: _error,
         actions: [
           if (turnInQuest.canBribe)
@@ -284,7 +284,6 @@ class _NpcPanelState extends State<NpcPanel> {
       return _playerDialogue(
         name: conversation.name,
         line: choiceQuest.talkLine ?? choiceQuest.idlePrompt,
-        progress: choiceQuest.progressLines,
         error: _error,
         actions: [
           if (choiceQuest.canBribe)
@@ -311,7 +310,6 @@ class _NpcPanelState extends State<NpcPanel> {
       return _playerDialogue(
         name: conversation.name,
         line: activeQuest.idlePrompt,
-        progress: activeQuest.progressLines,
         error: _error,
         actions: [GameButton(label: 'Done', onPressed: _close)],
       );
@@ -495,12 +493,18 @@ class _NpcPanelState extends State<NpcPanel> {
     );
   }
 
+  List<QuestJournalStep> _requirementJournal(String questId) {
+    final quest = getQuest(controller.db, questId);
+    if (quest == null) return const <QuestJournalStep>[];
+    return questRequirementJournal(controller.db, controller.save, quest);
+  }
+
   Widget _playerDialogue({
     required String name,
     required String line,
     String? detail,
     String? error,
-    List<QuestProgressLine> progress = const [],
+    List<QuestJournalStep> journal = const [],
     required List<Widget> actions,
   }) {
     return _DialogueCard(
@@ -508,7 +512,7 @@ class _NpcPanelState extends State<NpcPanel> {
       line: line,
       detail: detail,
       error: error,
-      progress: progress,
+      journal: journal,
       actions: actions,
       npcId: widget.npc.npcId,
     );
@@ -524,7 +528,7 @@ class _DialogueCard extends StatelessWidget {
     required this.npcId,
     this.detail,
     this.error,
-    this.progress = const [],
+    this.journal = const [],
   });
 
   final String name;
@@ -533,7 +537,7 @@ class _DialogueCard extends StatelessWidget {
   /// What listening is worth, when the greeting is an offer.
   final String? detail;
   final String? error;
-  final List<QuestProgressLine> progress;
+  final List<QuestJournalStep> journal;
   final List<Widget> actions;
   final String npcId;
 
@@ -559,34 +563,9 @@ class _DialogueCard extends StatelessWidget {
           const SizedBox(height: 6),
           Text(line, style: const TextStyle(fontSize: 15)),
           if (detail case final detail?) ...[const SizedBox(height: 4), MutedText(detail)],
-          if (progress.isNotEmpty) ...[
+          if (journal.isNotEmpty) ...[
             const SizedBox(height: 8),
-            for (final line in progress)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 4),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      line.current >= line.required ? '✓' : '•',
-                      style: TextStyle(
-                        color: line.current >= line.required ? Palette.softGreen : Palette.gold,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        line.caption,
-                        style: TextStyle(
-                          color: line.current >= line.required
-                              ? Palette.muted
-                              : Palette.parchmentText,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+            for (final step in journal) _QuestMenuLine(step: step),
           ],
           if (error case final error?) ...[
             const SizedBox(height: 6),
@@ -594,6 +573,43 @@ class _DialogueCard extends StatelessWidget {
           ],
           const SizedBox(height: 10),
           Wrap(spacing: 8, runSpacing: 8, alignment: WrapAlignment.end, children: actions),
+        ],
+      ),
+    );
+  }
+}
+
+class _QuestMenuLine extends StatelessWidget {
+  const _QuestMenuLine({required this.step});
+
+  final QuestJournalStep step;
+
+  @override
+  Widget build(BuildContext context) {
+    if (step.state == 'header') {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 4, top: 2),
+        child: Text(step.label, style: const TextStyle(fontWeight: FontWeight.w600)),
+      );
+    }
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            step.state == 'done' ? '✓' : '•',
+            style: TextStyle(color: step.state == 'done' ? Palette.softGreen : Palette.gold),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              step.label,
+              style: TextStyle(
+                color: step.state == 'done' ? Palette.muted : Palette.parchmentText,
+              ),
+            ),
+          ),
         ],
       ),
     );

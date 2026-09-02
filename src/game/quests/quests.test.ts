@@ -11,7 +11,6 @@ import { isCosmeticUnlocked } from '../cosmetics/cosmetics'
 import { createNewSave } from '../save/saveStore'
 import {
   applyQuestActionProgress,
-  applyQuestInspectProgress,
   applyQuestProcessProgress,
   applyQuestTalkProgress,
   applyQuestVisitProgress,
@@ -207,26 +206,13 @@ describe('quest tours', () => {
     save = applyTravelArrival(launch, save, 'LOC-0029', Date.parse('2026-01-01T00:00:01.000Z'))
     save = applyTravelArrival(launch, save, 'LOC-0030', Date.parse('2026-01-01T00:00:02.000Z'))
     save = applyTravelArrival(launch, save, 'LOC-0035', Date.parse('2026-01-01T00:00:03.000Z'))
-    save = applyTravelArrival(launch, save, 'LOC-0033', Date.parse('2026-01-01T00:00:04.000Z'))
-    save = applyQuestInspectProgress(launch, save, 'bazaar')
-    save = applyQuestInspectProgress(launch, save, 'bounties')
-    save = applyQuestInspectProgress(launch, save, 'processing')
-    save = applyQuestTalkProgress(launch, save, 'NPC-0006')
-    expect(hasQuestFlag(save, 'QST-0004', 'talk:NPC-0006')).toBe(false)
+    save = applyTravelArrival(launch, save, 'LOC-0031', Date.parse('2026-01-01T00:00:04.000Z'))
+    expect(getQuestProgress(save, 'QST-0004').status).toBe('active')
     expect(completeQuest(launch, save, 'QST-0004').ok).toBe(false)
 
-    save = applyQuestTalkProgress(launch, save, 'NPC-0013')
-    expect(completeQuest(launch, save, 'QST-0004').ok).toBe(false)
-    save = applyQuestTalkProgress(launch, save, 'NPC-0006')
-    save = { ...save, currentLocationId: 'LOC-0028' }
-    expect(completeQuest(launch, save, 'QST-0004').ok).toBe(false)
-    save = applyQuestTalkProgress(launch, save, 'NPC-0013')
-    const completed = completeQuest(launch, save, 'QST-0004')
-    expect(completed.ok).toBe(true)
-    if (!completed.ok) return
-    expect(completed.save.gold).toBe(save.gold + 1000)
-    expect(completed.rewardBundle.goldGained).toBe(1000)
-    expect(completed.rewardBundle.loot).toEqual([])
+    save = applyTravelArrival(launch, save, 'LOC-0032', Date.parse('2026-01-01T00:00:05.000Z'))
+    expect(getQuestProgress(save, 'QST-0004').status).toBe('completed')
+    expect(save.gold).toBe(createNewSave(launch).gold + 1000)
   })
 
   it('locks Harness essence and Mages quarters until Wizard Studies is accepted', () => {
@@ -248,7 +234,7 @@ describe('quest tours', () => {
       specialProductionStationsVisibleAt(launch, save, 'LOC-0007').some(
         (station) => station.facility['Facility ID'] === 'FAC-0008',
       ),
-    ).toBe(true)
+    ).toBe(false)
 
     save = addItemToInventory(save, 'ITEM-0011', 10)
     expect(completeQuest(launch, save, 'QST-0005').ok).toBe(false)
@@ -265,6 +251,11 @@ describe('quest tours', () => {
     expect(completed.rewards.some((reward) => /Arcana XP/i.test(reward.label))).toBe(true)
     expect(completed.save.unlockedNpcIds).toContain('NPC-0004')
     expect(activityVisibleForSave(launch, completed.save, 'ACT-0008')).toBe(true)
+    expect(
+      specialProductionStationsVisibleAt(launch, completed.save, 'LOC-0007').some(
+        (station) => station.facility['Facility ID'] === 'FAC-0008',
+      ),
+    ).toBe(true)
   })
 
   it('walks Getting Started from accept through Fennel looking at cooked potatoes', () => {
@@ -278,14 +269,17 @@ describe('quest tours', () => {
     if (!accepted.ok) return
     save = accepted.save
 
-    expect(npcConversation(launch, save, fennel).quests[0]?.canTalk).toBe(true)
-    expect(npcConversation(launch, save, fennel).quests[0]?.canTurnIn).toBe(false)
-    save = applyQuestTalkProgress(launch, save, 'NPC-0014')
     expect(npcConversation(launch, save, fennel).quests[0]?.canTalk).toBe(false)
+    expect(npcConversation(launch, save, fennel).quests[0]?.canTurnIn).toBe(false)
 
     save = addItemToInventory(save, 'ITEM-0025', 5)
     expect(npcConversation(launch, save, fennel).quests[0]?.canTalk).toBe(true)
-    expect(npcConversation(launch, save, fennel).quests[0]?.talkLine).toMatch(/kitchen in town/i)
+    expect(npcConversation(launch, save, fennel).quests[0]?.talkLine).toMatch(
+      /you can cook them at the kitchen/i,
+    )
+    expect(npcConversation(launch, save, fennel).quests[0]?.talkLine).not.toMatch(
+      /Open the world map/i,
+    )
     save = applyQuestTalkProgress(launch, save, 'NPC-0014')
     expect(save.inventory.find((stack) => stack.itemId === 'ITEM-0025')?.quantity).toBe(5)
 
@@ -592,5 +586,12 @@ describe('quest tours', () => {
       ],
     }
     expect(questVisitHintLocationId(launch, bring)).toBe('LOC-0001')
+
+    const citadel = {
+      ...createNewSave(launch),
+      currentLocationId: 'LOC-0028',
+      quests: [{ questId: 'QST-0004', status: 'active' as const, progress: 0, counters: {} }],
+    }
+    expect(questVisitHintLocationId(launch, citadel)).toBeNull()
   })
 })

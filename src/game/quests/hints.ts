@@ -2,13 +2,15 @@ import type { GameDatabase } from '../data/types'
 import type { PlayerSave } from '../save/types'
 import { MAIN_MAP_ID } from '../world/constants'
 import { getLocationMapId } from '../world/travel'
+import { GETTING_STARTED_QUEST_ID } from '../npcs/knowledge'
 import { asQuestRows, getQuestProgress } from './quests'
 import { questActiveStepObjectives } from './steps'
 
-/** First Hint target on an active quest step, or the step's Visit target. */
+/** First Hint target on an active Getting Started step, or that step's Visit target. */
 export function questVisitHintLocationId(db: GameDatabase, save: PlayerSave): string | null {
   for (const quest of asQuestRows(db)) {
     const questId = quest['Quest ID']
+    if (questId !== GETTING_STARTED_QUEST_ID) continue
     if (getQuestProgress(save, questId).status !== 'active') continue
     const step = questActiveStepObjectives(db, save, quest)
     if (!step) continue

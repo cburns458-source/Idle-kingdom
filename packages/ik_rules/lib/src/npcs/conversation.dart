@@ -398,7 +398,11 @@ NpcQuestBlock _questBlock(GameDatabase db, PlayerSave save, QuestRow quest, Stri
     canAccept: isGiver && status == 'inactive' && !needsDonate,
     canDonate: isGiver && status == 'inactive' && needsDonate,
     donated: donated,
-    canTurnIn: turnInId == npcId && status == 'active' && !parsed.autoCompleteOnTalk,
+    canTurnIn:
+        turnInId == npcId &&
+        status == 'active' &&
+        !parsed.autoCompleteOnTalk &&
+        !parsed.autoCompleteOnVisit,
     canTalk: status == 'active' && questCanTalkToNpc(db, save, quest, npcId) && !talkedThisStep,
     talkLabel: 'Talk',
     talkLine: questTalkLine(db, questId, npcId, save),
@@ -422,6 +426,9 @@ NpcMentorBlock? _mentorBlock(GameDatabase db, PlayerSave save, String npcId) {
       learnLabel: 'Ask about hunting',
       line: quillTeachLine(db),
     );
+  }
+  if (npcId == archmageId && getQuestProgress(save, wizardStudiesQuestId).status != 'completed') {
+    return null;
   }
   final skillId = skillForKnowledgeNpc(npcId);
   if (skillId == null) return null;
@@ -487,11 +494,15 @@ NpcConversation npcConversation(GameDatabase db, PlayerSave save, NpcRow npc, [n
   final description = npc.raw['Description'];
   final clock = nowMs ?? DateTime.now().millisecondsSinceEpoch;
   final whereabouts = _whereaboutsFor(db, npcId, clock);
+  final archmageLocked =
+      npcId == archmageId && getQuestProgress(save, wizardStudiesQuestId).status == 'inactive';
   return NpcConversation(
     npcId: npcId,
     name: displayName is String ? displayName : npcId,
     role: role is String ? role : null,
-    description: description is String
+    description: archmageLocked
+        ? archmageHmph
+        : description is String
         ? description
         : configString(db, 'copy.default_npc_description', _fallbackNpcDescription),
     isMerchant: lowerOrEmpty(role) == 'merchant',
@@ -537,6 +548,9 @@ class NpcActionResult {
 /// The caller does not need to know which mentor teaches what: the message
 /// names the skill the same way the button that offered it did.
 NpcActionResult learnMentorProjects(GameDatabase db, PlayerSave save, String npcId) {
+  if (npcId == archmageId && getQuestProgress(save, wizardStudiesQuestId).status != 'completed') {
+    return const NpcActionResult.failed('The Archmage will not teach you yet.');
+  }
   final result = unlockNpcKnowledge(save, npcId);
   if (!result.ok) return NpcActionResult.failed(result.reason!);
   if (npcId == quillId) {

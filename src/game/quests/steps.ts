@@ -20,7 +20,7 @@ import {
 import { hasQuestFlag } from './progress'
 import type { StructuredQuestObjectives } from './types'
 
-export type QuestJournalStepState = 'done' | 'current'
+export type QuestJournalStepState = 'done' | 'current' | 'header'
 
 export interface QuestJournalStep {
   key: string
@@ -182,13 +182,6 @@ export function currentStepTalkKey(
   return step ? `talk:${npcId}:${step['Step ID']}` : `talk:${npcId}`
 }
 
-const CITADEL_QUEST_ID = 'QST-0004'
-const CITADEL_GUIDE_NPC_ID = 'NPC-0013'
-
-export function citadelGuideHeard(save: PlayerSave): boolean {
-  return Number(getQuestProgress(save, CITADEL_QUEST_ID).counters?.[`talk:${CITADEL_GUIDE_NPC_ID}`] ?? 0) >= 1
-}
-
 export function questStepJournal(
   db: GameDatabase,
   save: PlayerSave,
@@ -199,21 +192,6 @@ export function questStepJournal(
   if (steps.length === 0) return []
 
   const currentIndex = getCurrentStepIndex(db, save, quest)
-  if (questId === CITADEL_QUEST_ID && citadelGuideHeard(save) && currentIndex >= 1) {
-    const heard = steps[0]!
-    const remaining = steps.slice(1).flatMap((step) =>
-      stepProgressLines(db, save, questId, step.Notes ?? '', step['Step ID']).map((line) => ({
-        key: line.key,
-        label: formatQuestProgressLine(line),
-        state: (line.current >= line.required ? 'done' : 'current') as QuestJournalStepState,
-      })),
-    )
-    return [
-      { key: heard['Step ID'], label: heard['Journal Label'], state: 'done' },
-      ...remaining,
-    ]
-  }
-
   if (currentIndex >= steps.length) {
     return questCompletedJournal(db, quest)
   }
@@ -267,7 +245,8 @@ export function questRequirementJournal(
       state: done ? 'done' : 'current',
     })
   }
-  return steps
+  if (steps.length === 0) return steps
+  return [{ key: 'header:required', label: 'Required', state: 'header' }, ...steps]
 }
 
 /** Objectives for the active step only, or none once every step is done. */

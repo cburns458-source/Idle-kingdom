@@ -27,6 +27,8 @@ const String quillMissingReason = 'Speak with Quill to learn how to make bows an
 
 const String fennelId = 'NPC-0014';
 const String gettingStartedQuestId = 'QST-0006';
+const String wizardStudiesQuestId = 'QST-0005';
+const String archmageHmph = 'Hmph.';
 const String fennelWelcome =
     'Welcome to the lands. I am Fennel. This farm is a good place to start — harvest, cook, and fight are all close by. Come talk to me when you want to learn the rest.';
 

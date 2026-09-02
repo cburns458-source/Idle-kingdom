@@ -378,28 +378,30 @@ class _QuestJournalRow extends StatelessWidget {
               for (final step in row.steps)
                 Padding(
                   padding: const EdgeInsets.only(top: 6),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        step.state == 'done' ? '✓' : '•',
-                        style: TextStyle(
-                          color: step.state == 'done' ? Palette.softGreen : Palette.gold,
+                  child: step.state == 'header'
+                      ? Text(step.label, style: const TextStyle(fontWeight: FontWeight.w600))
+                      : Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              step.state == 'done' ? '✓' : '•',
+                              style: TextStyle(
+                                color: step.state == 'done' ? Palette.softGreen : Palette.gold,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                step.label,
+                                style: TextStyle(
+                                  color: step.state == 'done'
+                                      ? Palette.muted
+                                      : UiChrome.of(context).panelInk,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          step.label,
-                          style: TextStyle(
-                            color: step.state == 'done'
-                                ? Palette.muted
-                                : UiChrome.of(context).panelInk,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
                 ),
             ],
           ),

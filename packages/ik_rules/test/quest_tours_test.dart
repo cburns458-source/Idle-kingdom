@@ -72,7 +72,7 @@ void main() {
         save,
         'LOC-0007',
       ).any((station) => station.facility.raw['Facility ID'] == 'FAC-0008'),
-      isTrue,
+      isFalse,
     );
   });
 
@@ -85,23 +85,17 @@ void main() {
     );
   });
 
-  test('Visiting the Citadel ends by talking to the guide again', () {
+  test('Visiting the Citadel finishes after the visit stops', () {
     var save = applyTravelArrival(db, _save(db, locationId: 'LOC-0002'), 'LOC-0028', 0);
     save = applyTravelArrival(db, save, 'LOC-0029', 1);
     save = applyTravelArrival(db, save, 'LOC-0030', 2);
     save = applyTravelArrival(db, save, 'LOC-0035', 3);
-    save = applyTravelArrival(db, save, 'LOC-0033', 4);
-    save = applyQuestInspectProgress(db, save, 'bazaar');
-    save = applyQuestInspectProgress(db, save, 'bounties');
-    save = applyQuestInspectProgress(db, save, 'processing');
-    save = applyQuestTalkProgress(db, save, 'NPC-0013');
-    save = applyQuestTalkProgress(db, save, 'NPC-0006');
-    save = save.copyWith(currentLocationId: 'LOC-0028');
+    save = applyTravelArrival(db, save, 'LOC-0031', 4);
+    expect(getQuestProgress(save, 'QST-0004').status, 'active');
     expect(completeQuest(db, save, 'QST-0004').ok, isFalse);
-    save = applyQuestTalkProgress(db, save, 'NPC-0013');
-    final completed = completeQuest(db, save, 'QST-0004');
-    expect(completed.ok, isTrue);
-    expect(completed.save!.gold, save.gold + 1000);
+    save = applyTravelArrival(db, save, 'LOC-0032', 5);
+    expect(getQuestProgress(save, 'QST-0004').status, 'completed');
+    expect(save.gold, 1000);
   });
 
   test('Getting Started completes when Fennel sees the cooked potatoes', () {
@@ -113,14 +107,15 @@ void main() {
     expect(accepted.ok, isTrue);
     save = accepted.save!;
 
-    expect(npcConversation(db, save, fennel).quests.single.canTalk, isTrue);
-    expect(npcConversation(db, save, fennel).quests.single.canTurnIn, isFalse);
-    save = applyQuestTalkProgress(db, save, 'NPC-0014');
     expect(npcConversation(db, save, fennel).quests.single.canTalk, isFalse);
+    expect(npcConversation(db, save, fennel).quests.single.canTurnIn, isFalse);
 
     save = addItemToInventory(save, 'ITEM-0025', 5);
     expect(npcConversation(db, save, fennel).quests.single.canTalk, isTrue);
-    expect(npcConversation(db, save, fennel).quests.single.talkLine, contains('kitchen in town'));
+    expect(
+      npcConversation(db, save, fennel).quests.single.talkLine,
+      contains('You can cook them at the kitchen'),
+    );
     save = applyQuestTalkProgress(db, save, 'NPC-0014');
     expect(save.inventory.where((stack) => stack.itemId == 'ITEM-0025').single.quantity, 5);
 
