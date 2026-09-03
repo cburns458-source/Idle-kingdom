@@ -77,23 +77,9 @@ void main() {
           nowMs,
           Mulberry32(seed).asFunction,
         );
-        // A journey is only half the story, so the arrival that ends it is
-        // recorded alongside the plan.
-        final arrival = plan is TravelTimed
-            ? arriveFromTravel(
-                db,
-                plan.save,
-                destinationId,
-                nowMs + plan.durationMs,
-                Mulberry32(seed).asFunction,
-              )
-            : null;
 
         expect(
-          checkParity(fixture, <String, Object?>{
-            'plan': plan.toJson(),
-            'arrival': arrival?.toJson(),
-          }),
+          checkParity(fixture, <String, Object?>{'plan': plan.toJson(), 'arrival': null}),
           isNull,
         );
       });

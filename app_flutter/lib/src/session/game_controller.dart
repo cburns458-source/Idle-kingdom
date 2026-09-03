@@ -13,26 +13,6 @@ import 'local_player_art.dart';
 import 'map_travel_pref.dart';
 import 'ui_chrome.dart';
 
-/// A journey in progress, which the client animates itself.
-class TravelInFlight {
-  const TravelInFlight({
-    required this.fromLocationId,
-    required this.toLocationId,
-    required this.startedAtMs,
-    required this.durationMs,
-  });
-
-  final String fromLocationId;
-  final String toLocationId;
-  final num startedAtMs;
-  final num durationMs;
-
-  double progressAt(num nowMs) {
-    if (durationMs <= 0) return 1;
-    return math.min(1, math.max(0, (nowMs - startedAtMs) / durationMs));
-  }
-}
-
 /// The last killing blow, kept so the stage can hold sprites before swapping.
 class CombatOutcomeHold {
   const CombatOutcomeHold({
@@ -158,8 +138,6 @@ class GameController extends ChangeNotifier {
   final List<ActionRewardBundle> _recentRewards = <ActionRewardBundle>[];
   String? _message;
   String? _activityError;
-  TravelInFlight? _travel;
-  double _travelProgress = 0;
   UnattendedResult? _awaySummary;
   bool _returningFromAway = false;
   CosmeticUnlockNotice? _cosmeticUnlock;
@@ -253,9 +231,6 @@ class GameController extends ChangeNotifier {
     if (itemId is! String || qty is! num || skillId is! String) return false;
     return !canFitItemQuantity(save, itemId, productionOutputReservePerCraft(skillId, qty));
   }
-
-  TravelInFlight? get travel => _travel;
-  double get travelProgress => _travelProgress;
 
   /// The catch-up from the last boot, until the player dismisses it.
   UnattendedResult? get awaySummary => _awaySummary;
@@ -649,7 +624,6 @@ class GameController extends ChangeNotifier {
       _liveEnemyHp = save.combatEnemyHp;
     }
     final previous = save;
-    final wasTravelling = _travel != null;
     final craftBefore = _craftPopup;
     final healBefore = _healPopup;
     final skillUpsBefore = _pendingSkillLevelUps.length;
@@ -670,7 +644,6 @@ class GameController extends ChangeNotifier {
     }
     final slingTouched = _offerKingswoodsSling();
     _expireStageFx();
-    _advanceTravel();
     _queueSkillLevelUps(previous, save);
     onSaveCommitted?.call(previous, save);
     // Progress bars / timers always move with the clock.
@@ -682,7 +655,6 @@ class GameController extends ChangeNotifier {
         result.changed ||
         result.events.isNotEmpty ||
         slingTouched ||
-        (wasTravelling && _travel == null) ||
         !identical(craftBefore, _craftPopup) ||
         !identical(healBefore, _healPopup) ||
         skillUpsBefore != _pendingSkillLevelUps.length ||
@@ -772,20 +744,6 @@ class GameController extends ChangeNotifier {
     if (_inkPopup != null && now - _inkPopup!.shownAtMs >= inkPopupHoldMs) {
       _inkPopup = null;
     }
-  }
-
-  void _advanceTravel() {
-    final journey = _travel;
-    if (journey == null) return;
-    final nowMs = session.clock();
-    _travelProgress = journey.progressAt(nowMs);
-    if (_travelProgress < 1) return;
-    _travel = null;
-    _travelProgress = 0;
-    final claimedSling = save.claimedKingswoodsSling;
-    final ownedSling = saveOwnsSling(save);
-    _showArrival(session.arrive(journey.toLocationId));
-    _noteKingswoodsSling(claimedBefore: claimedSling, ownedBefore: ownedSling);
   }
 
   /// Starts or replaces the primary activity at the current location.
@@ -886,9 +844,6 @@ class GameController extends ChangeNotifier {
 
   /// Travels to [destinationId], reporting whether the request was accepted.
   bool travelTo(String destinationId, String browseMapId) {
-    if (_travel != null) return false;
-    final nowMs = session.clock();
-    final from = save.currentLocationId;
     final claimedSling = save.claimedKingswoodsSling;
     final ownedSling = saveOwnsSling(save);
     final plan = session.travelTo(destinationId, browseMapId);
@@ -899,23 +854,12 @@ class GameController extends ChangeNotifier {
         _recentRewards.clear();
         _showArrival(arrival);
         _noteKingswoodsSling(claimedBefore: claimedSling, ownedBefore: ownedSling);
-      case TravelTimed(durationMs: final durationMs):
-        _recentRewards.clear();
-        _travel = TravelInFlight(
-          fromLocationId: from,
-          toLocationId: destinationId,
-          startedAtMs: nowMs,
-          durationMs: durationMs,
-        );
-        _travelProgress = 0;
-        notifyListeners();
     }
     return true;
   }
 
   /// Travels into the player's guild hall from the Guilds screen.
   bool travelToGuildHall() {
-    if (_travel != null) return false;
     final plan = session.travelToGuildHall();
     switch (plan) {
       case TravelBlocked():
@@ -923,8 +867,6 @@ class GameController extends ChangeNotifier {
       case TravelInstant(arrival: final arrival):
         _recentRewards.clear();
         _showArrival(arrival);
-      case TravelTimed():
-        return false;
     }
     return true;
   }
