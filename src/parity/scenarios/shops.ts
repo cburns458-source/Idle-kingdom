@@ -32,6 +32,10 @@ import { scenario, type JsonValue, type ParityScenario } from '../types'
 import { contentDatabase } from './contentDatabase'
 import { asJson, baseSave } from './saveFixtures'
 
+/// Offer fixtures stamp `shopPurchaseDayKey` from this clock. Wall time made
+/// the recorded day roll over every UTC midnight.
+const OFFER_NOW_MS = Date.parse('2026-09-02T00:00:00.000Z')
+
 type SaveKind =
   | 'base'
   | 'bare'
@@ -396,6 +400,7 @@ export const shopScenarios: ParityScenario[] = [
           saveFor(entry.save),
           entry.shopId,
           entry.offer,
+          OFFER_NOW_MS,
         )
         return (result.ok
           ? {
