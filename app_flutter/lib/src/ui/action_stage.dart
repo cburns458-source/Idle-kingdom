@@ -39,8 +39,9 @@ const Color _healColor = Color(0xFF7CFF9E);
 const Color _foodHurtColor = Color(0xFFFF6B6B);
 const Color _sceneNameColor = Color(0xFFF4EFD8);
 
-/// Temporary stage lunge: 3.9s loop, outbound arc then a slide home.
-const Duration _stageHopDuration = Duration(milliseconds: 3900);
+/// Temporary stage lunge: a 1s hop, then rest, repeating every 3.9s.
+const Duration _stageHopPeriod = Duration(milliseconds: 3900);
+const double _stageHopMotionEnd = 1000 / 3900;
 const double _stageHopOutboundEnd = 0.55;
 const double _stageHopInwardPx = 36;
 const double _stageHopPeakPx = 16;
@@ -49,15 +50,17 @@ const double _stageHopRecoilPx = 10;
 enum _StageHopKind { player, enemy, actionRecoil }
 
 Offset _stageHopOffset(double t, _StageHopKind kind) {
+  final clamped = t.clamp(0.0, 1.0);
+  if (clamped >= _stageHopMotionEnd) return Offset.zero;
+  final hopT = clamped / _stageHopMotionEnd;
   final inward = kind == _StageHopKind.actionRecoil ? _stageHopRecoilPx : _stageHopInwardPx;
   final peak = kind == _StageHopKind.actionRecoil ? 0.0 : _stageHopPeakPx;
   final xSign = kind == _StageHopKind.enemy ? -1.0 : 1.0;
-  final clamped = t.clamp(0.0, 1.0);
-  if (clamped <= _stageHopOutboundEnd) {
-    final u = clamped / _stageHopOutboundEnd;
+  if (hopT <= _stageHopOutboundEnd) {
+    final u = hopT / _stageHopOutboundEnd;
     return Offset(xSign * inward * u, -peak * 4 * u * (1 - u));
   }
-  final u = (clamped - _stageHopOutboundEnd) / (1 - _stageHopOutboundEnd);
+  final u = (hopT - _stageHopOutboundEnd) / (1 - _stageHopOutboundEnd);
   return Offset(xSign * inward * (1 - u), 0);
 }
 
@@ -480,7 +483,7 @@ class _InkSplatOverlay extends StatelessWidget {
   }
 }
 
-/// One 3.9s clock for both stage slots so the lunge stays in sync.
+/// One 3.9s clock for both stage slots; the hop plays in the first second.
 class _StageHopHost extends StatefulWidget {
   const _StageHopHost({required this.active, required this.child});
 
@@ -497,7 +500,7 @@ class _StageHopHostState extends State<_StageHopHost> with SingleTickerProviderS
   @override
   void initState() {
     super.initState();
-    _clock = AnimationController(vsync: this, duration: _stageHopDuration);
+    _clock = AnimationController(vsync: this, duration: _stageHopPeriod);
   }
 
   @override
