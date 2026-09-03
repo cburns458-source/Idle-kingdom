@@ -181,8 +181,7 @@ class GameSession {
   /// Milliseconds left of a death pause, or 0 when not recovering.
   num get deathPauseRemaining => deathPauseRemainingMs(save, clock());
 
-  /// Starts travel. An instant arrival is already stored when this returns; a
-  /// journey stores the stopped activity and is finished with [arrive].
+  /// Starts travel. An accepted request has already stored the arrival.
   TravelPlan travelTo(String destinationId, String browseMapId) {
     final plan = planTravel(db, save, destinationId, browseMapId, clock(), random);
     switch (plan) {
@@ -190,8 +189,6 @@ class GameSession {
         break;
       case TravelInstant(arrival: final arrival):
         apply(arrival.save);
-      case TravelTimed(save: final stopped):
-        apply(stopped);
     }
     return plan;
   }
@@ -204,16 +201,7 @@ class GameSession {
         break;
       case TravelInstant(arrival: final arrival):
         apply(arrival.save);
-      case TravelTimed():
-        break;
     }
     return plan;
-  }
-
-  /// Completes a journey the client has finished animating.
-  TravelArrival arrive(String destinationId) {
-    final arrival = arriveFromTravel(db, save, destinationId, clock(), random);
-    apply(arrival.save);
-    return arrival;
   }
 }
