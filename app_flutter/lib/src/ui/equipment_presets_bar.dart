@@ -239,6 +239,10 @@ class EquipmentPresetsBar extends StatelessWidget {
     controller.commit(setEquipmentPresetIcon(controller.save, index, icon));
   }
 
+  void _commitPresetName(int index, String name) {
+    controller.commit(renameEquipmentPreset(controller.save, index, name));
+  }
+
   Future<void> _openPresetSettings(BuildContext context) async {
     final save = controller.save;
     final skills = controller.db.skills.where((row) => row.releasePhase == 'Launch').toList();
@@ -306,6 +310,8 @@ class EquipmentPresetsBar extends StatelessWidget {
                           isDense: true,
                           border: OutlineInputBorder(),
                         ),
+                        onEditingComplete: () => _commitPresetName(index, nameController.text),
+                        onSubmitted: (value) => _commitPresetName(index, value),
                       ),
                       const SizedBox(height: 8),
                       _PresetIconPicker(
@@ -313,6 +319,7 @@ class EquipmentPresetsBar extends StatelessWidget {
                         skills: skills,
                         onChanged: (next) {
                           setLocal(() => icon = next);
+                          _commitPresetName(index, nameController.text);
                           _commitPresetIcon(index, next);
                         },
                       ),
@@ -675,10 +682,16 @@ class _AllPresetsSettingsDialogState extends State<_AllPresetsSettingsDialog> {
       skills: widget.skills,
       skillsById: widget.skillsById,
       onIconChanged: (icon) => _setIcon(index, icon),
+      onNameCommitted: (name) => _commitName(index, name),
     );
   }
 
+  void _commitName(int index, String name) {
+    widget.controller.commit(renameEquipmentPreset(widget.controller.save, index, name));
+  }
+
   void _setIcon(int index, EquipmentPresetIcon icon) {
+    _commitName(index, _nameControllers[index].text);
     setState(() => _icons[index] = icon);
     widget.controller.commit(setEquipmentPresetIcon(widget.controller.save, index, icon));
   }
@@ -747,6 +760,7 @@ class _PresetSettingsRow extends StatelessWidget {
     required this.skills,
     required this.skillsById,
     required this.onIconChanged,
+    required this.onNameCommitted,
   });
 
   final int index;
@@ -755,6 +769,7 @@ class _PresetSettingsRow extends StatelessWidget {
   final List<SkillRow> skills;
   final Map<String, SkillRow> skillsById;
   final ValueChanged<EquipmentPresetIcon> onIconChanged;
+  final ValueChanged<String> onNameCommitted;
 
   @override
   Widget build(BuildContext context) {
@@ -785,6 +800,8 @@ class _PresetSettingsRow extends StatelessWidget {
                 isDense: true,
                 border: OutlineInputBorder(),
               ),
+              onEditingComplete: () => onNameCommitted(nameController.text),
+              onSubmitted: onNameCommitted,
             ),
             const SizedBox(height: 8),
             _PresetIconPicker(icon: icon, skills: skills, onChanged: onIconChanged),

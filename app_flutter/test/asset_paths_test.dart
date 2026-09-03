@@ -38,17 +38,17 @@ void main() {
       expect(itemIconStem(item(itemId: 'ITEM-0295', displayName: 'Spell')), 'spell');
     });
 
-    test('draws the rare potato with the regular potato art', () {
+    test('draws Golden Spud with its own item icon', () {
       expect(
         itemIconStem(
           item(
             itemId: 'ITEM-0026',
-            displayName: 'Potato',
+            displayName: 'Golden Spud',
             internalKey: 'golden_spud',
             iconAssetKey: 'golden_spud',
           ),
         ),
-        'potato',
+        'golden_spud',
       );
     });
 

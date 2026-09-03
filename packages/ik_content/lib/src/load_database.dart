@@ -4,7 +4,7 @@ import 'validate.dart';
 
 /// Bump when Launch content rows change, matching `DATABASE_CONTENT_VERSION` in
 /// [src/game/data/loadDatabase.ts](../../../../src/game/data/loadDatabase.ts).
-const String databaseContentVersion = '2026-09-02-recipe-item-names';
+const String databaseContentVersion = '2026-09-03-golden-spud';
 
 /// Path of the shared database inside `content/`. How those bytes are read is
 /// the host's problem: this package stays free of IO so it can be tested

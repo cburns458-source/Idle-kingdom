@@ -143,19 +143,22 @@ class WorldMapView extends StatelessWidget {
             left: 0,
             right: 0,
             top: 0,
-            child: PageHeader(title: 'Map', onClose: onClose!),
-          ),
-        if (browseMapId != mainMapId)
-          Positioned(
-            right: 12,
-            top: onClose == null ? 12 : 56,
-            child: OverlayChipButton(
-              tooltip: 'Open world map',
-              onPressed: () => onBrowseMap(mainMapId),
-              plain: true,
-              child: GameImage(uiMapAssetPath(), width: 32, height: 32),
+            child: PageHeader(
+              title: 'Map',
+              onClose: onClose!,
+              trailing: browseMapId != mainMapId ? _worldMapChip() : null,
+              close: browseMapId != mainMapId
+                  ? OverlayChipButton(
+                      tooltip: 'Close',
+                      onPressed: onClose!,
+                      plain: true,
+                      child: const Icon(Icons.close, size: 18, color: Palette.heading),
+                    )
+                  : null,
             ),
-          ),
+          )
+        else if (browseMapId != mainMapId)
+          Positioned(right: 12, top: 12, child: _worldMapChip()),
         Positioned(
           left: 0,
           right: 0,
@@ -172,6 +175,15 @@ class WorldMapView extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _worldMapChip() {
+    return OverlayChipButton(
+      tooltip: 'Open world map',
+      onPressed: () => onBrowseMap(mainMapId),
+      plain: true,
+      child: GameImage(uiMapAssetPath(), width: 32, height: 32),
     );
   }
 }

@@ -75,7 +75,7 @@ const Map<String, String> _itemIcons = <String, String>{
   'ITEM-0006': 'coal',
   'ITEM-0011': 'essence',
   'ITEM-0025': 'potato',
-  'ITEM-0026': 'potato',
+  'ITEM-0026': 'golden_spud',
   'ITEM-0028': 'berries',
   'ITEM-0046': 'dragon_scale',
   'ITEM-0058': 'baked_potato',
@@ -157,7 +157,7 @@ const Map<String, String> _actionArt = <String, String>{
   'ACN-0027': 'actions/acn_mine_tungsten.webp',
   'ACN-0028': 'actions/acn_delve_essence.webp',
   'ACN-0035': 'actions/acn_harvest_potato.webp',
-  'ACN-0036': 'actions/acn_harvest_potato_golden.webp',
+  'ACN-0036': 'actions/acn_harvest_potato.webp',
   'ACN-0046': 'actions/acn_cut_cedar.webp',
   'ACN-0047': 'actions/acn_cut_oak.webp',
   'ACN-0048': 'actions/acn_cut_poplar.webp',
@@ -319,9 +319,6 @@ String avatarFrameAssetPath() => '$_assetRoot/player/avatar_frame_pixel.png';
 String itemIconStem(ItemRow? item) {
   if (item == null) return 'default';
   final pinned = _itemIcons[item.itemId];
-  // Rare potato keeps Internal Key / Icon Asset Key `golden_spud` for the
-  // audit, but it is drawn with the regular potato art.
-  if (item.itemId == 'ITEM-0026' && pinned != null) return pinned;
   final fromRow = item.iconAssetKey?.trim();
   if (fromRow != null && fromRow.isNotEmpty) return fromRow;
   if (pinned != null) return pinned;

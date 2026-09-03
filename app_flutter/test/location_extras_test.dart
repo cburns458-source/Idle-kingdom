@@ -589,6 +589,34 @@ void main() {
     expect(nearbyIcon.height, 32);
   });
 
+  testWidgets('submap map header lays world map beside a matching close chip', (tester) async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(currentLocationId: townKitchenId),
+    );
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller);
+
+    await tester.tap(find.byTooltip('Back to Town'));
+    await tester.pump();
+
+    final close = tester.getRect(
+      find.descendant(of: find.byType(WorldMapView), matching: find.byTooltip('Close')),
+    );
+    final map = tester.getRect(
+      find.descendant(of: find.byType(WorldMapView), matching: find.byTooltip('Open world map')),
+    );
+    expect(map.right, lessThanOrEqualTo(close.left - 7));
+    expect(map.center.dy, closeTo(close.center.dy, 4));
+    final chips = find.descendant(
+      of: find.byType(WorldMapView),
+      matching: find.byType(OverlayChipButton),
+    );
+    expect(tester.widgetList(chips), hasLength(2));
+    expect(tester.getSize(chips.at(0)), const Size(32, 32));
+    expect(tester.getSize(chips.at(1)), const Size(32, 32));
+  });
+
   testWidgets('Wizard Tower hides Special production until Wizard Studies is completed', (
     tester,
   ) async {
