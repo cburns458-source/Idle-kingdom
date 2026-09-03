@@ -592,6 +592,29 @@ void main() {
     expect(controller.save.equipmentPresets[1].icon.skillId, 'SKL-0002');
   });
 
+  testWidgets('preset names save when an icon is picked even if Cancel is tapped', (tester) async {
+    final controller = buildController(database, seed: startedCharacter(database));
+    addTearDown(controller.dispose);
+
+    await pumpPanel(tester, InventoryView(controller: controller));
+    await tester.tap(find.text('Equipment'));
+    await tester.pump();
+
+    await tester.tap(find.byTooltip('Preset settings'));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField).first, 'Farm Kit');
+    final mining = find.byTooltip('Mining');
+    await tester.ensureVisible(mining.first);
+    await tester.tap(mining.first);
+    await tester.pump();
+    expect(controller.save.equipmentPresets[0].name, 'Farm Kit');
+
+    await tester.tap(find.widgetWithText(GameButton, 'Cancel'));
+    await tester.pumpAndSettle();
+    expect(controller.save.equipmentPresets[0].name, 'Farm Kit');
+  });
+
   testWidgets('equipment bar keeps Current wide and presets square', (tester) async {
     final controller = buildController(database, seed: startedCharacter(database));
     addTearDown(controller.dispose);

@@ -234,7 +234,7 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
           if (!mounted) return;
         }
         for (final notice in levelUps) {
-          await showSkillLevelUp(context, notice);
+          await showSkillLevelUp(context, notice, chrome: controller.chrome);
           if (!mounted) return;
         }
       } finally {

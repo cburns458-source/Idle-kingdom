@@ -7,7 +7,7 @@ const ITEM_ID_ICONS: Record<string, string> = {
   'ITEM-0006': 'coal',
   'ITEM-0011': 'essence',
   'ITEM-0025': 'potato',
-  'ITEM-0026': 'potato',
+  'ITEM-0026': 'golden_spud',
   'ITEM-0028': 'berries',
   'ITEM-0046': 'dragon_scale',
   'ITEM-0058': 'baked_potato',
@@ -30,11 +30,6 @@ export function itemAssetPath(item: ItemRow | string | undefined): string {
   }
 
   const byId = ITEM_ID_ICONS[item['Item ID']]
-  // Rare potato keeps Internal Key / Icon Asset Key `golden_spud` for the
-  // audit, but it is drawn with the regular potato art.
-  if (item['Item ID'] === 'ITEM-0026' && byId) {
-    return withAssetVersion(`/assets/icons/items/item_${byId}.webp`)
-  }
 
   const fromRow = item['Icon Asset Key']?.trim()
   if (fromRow) return withAssetVersion(`/assets/icons/items/item_${fromRow}.webp`)

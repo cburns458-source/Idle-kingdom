@@ -17,7 +17,7 @@ export const ACTION_ASSET_PATHS: Record<string, string> = {
   'ACN-0027': '/assets/actions/acn_mine_tungsten.webp',
   'ACN-0028': '/assets/actions/acn_delve_essence.webp',
   'ACN-0035': '/assets/actions/acn_harvest_potato.webp',
-  'ACN-0036': '/assets/actions/acn_harvest_potato_golden.webp',
+  'ACN-0036': '/assets/actions/acn_harvest_potato.webp',
   'ACN-0046': '/assets/actions/acn_cut_cedar.webp',
   'ACN-0047': '/assets/actions/acn_cut_oak.webp',
   'ACN-0048': '/assets/actions/acn_cut_poplar.webp',

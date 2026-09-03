@@ -40,9 +40,10 @@ Future<T?> showGamePopup<T>({
   GamePopupPlacement placement = GamePopupPlacement.center,
   Rect? origin,
   bool barrierDismissible = true,
+  UiChrome? chrome,
 }) {
   final reduceMotion = BatterySaverScope.of(context);
-  final chrome = UiChrome.of(context);
+  final resolvedChrome = chrome ?? UiChrome.of(context);
   return showGeneralDialog<T>(
     context: context,
     useRootNavigator: false,
@@ -52,7 +53,7 @@ Future<T?> showGamePopup<T>({
     transitionDuration: reduceMotion ? Duration.zero : const Duration(milliseconds: 220),
     pageBuilder: (dialogContext, animation, secondary) {
       return UiChromeScope(
-        chrome: chrome,
+        chrome: resolvedChrome,
         child: SafeArea(
           child: Align(
             alignment: placement == GamePopupPlacement.topHalf

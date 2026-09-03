@@ -49,17 +49,17 @@ describe('itemAssetPath', () => {
     expect(itemAssetPath('ITEM-0103')).toContain('item_fishing_tool.webp')
   })
 
-  it('draws the rare potato with the regular potato art', () => {
+  it('draws Golden Spud with its own item icon', () => {
     expect(
       itemAssetPath(
         item({
           'Item ID': 'ITEM-0026',
-          'Display Name': 'Potato',
+          'Display Name': 'Golden Spud',
           'Internal Key': 'golden_spud',
           'Icon Asset Key': 'golden_spud',
         }),
       ),
-    ).toContain('item_potato.webp')
+    ).toContain('item_golden_spud.webp')
   })
 
   it('maps platelegs to legs instead of chest', () => {
