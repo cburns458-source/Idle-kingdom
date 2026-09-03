@@ -13,3 +13,4 @@ workspace:
   - packages/ik_content
   - packages/ik_runtime
   - packages/ik_net
+  - packages/ik_bot

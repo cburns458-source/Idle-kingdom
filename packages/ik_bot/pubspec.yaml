@@ -1,0 +1,25 @@
+name: ik_bot
+description: >-
+  Headless gather-and-craft bot. Plays through GameSession like the Flutter
+  client and can sign in to the live backend.
+publish_to: none
+version: 0.1.0
+resolution: workspace
+
+environment:
+  sdk: ^3.13.0
+
+dependencies:
+  ik_content: ^0.1.0
+  ik_net: ^0.1.0
+  ik_rules: ^0.1.0
+  ik_runtime: ^0.1.0
+  supabase: ^2.16.0
+
+dev_dependencies:
+  ik_parity: ^0.1.0
+  lints: ^6.0.0
+  test: ^1.25.0
+
+executables:
+  live_bot: live_bot
