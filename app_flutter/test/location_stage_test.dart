@@ -583,4 +583,127 @@ void main() {
     expect(controller.inkPopup, isNotNull);
     expect(find.byKey(ValueKey('ink-${controller.inkPopup!.seq}')), findsOne);
   });
+
+  testWidgets('gathering hops the adventurer inward and nudges action art back', (tester) async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(currentLocationId: 'LOC-0009'),
+    );
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller, size: const Size(420, 420 * 16 / 9));
+
+    await tapVisible(
+      tester,
+      find.descendant(
+        of: dockRow('Gather meadow supplies'),
+        matching: find.bySemanticsLabel('Start'),
+      ),
+    );
+
+    final playerSlot = tester.getRect(find.bySemanticsLabel('Adventurer'));
+    final playerRest = tester.getRect(
+      find.descendant(of: find.bySemanticsLabel('Adventurer'), matching: find.byType(Image)),
+    );
+    final actionRest = tester.getRect(
+      find.byWidgetPredicate((widget) => assetNamed(widget, '/actions/')),
+    );
+
+    await tester.pump(const Duration(milliseconds: 1950));
+
+    final playerMid = tester.getRect(
+      find.descendant(of: find.bySemanticsLabel('Adventurer'), matching: find.byType(Image)),
+    );
+    final actionMid = tester.getRect(
+      find.byWidgetPredicate((widget) => assetNamed(widget, '/actions/')),
+    );
+    expect(tester.getRect(find.bySemanticsLabel('Adventurer')).top, closeTo(playerSlot.top, 1));
+    expect(playerMid.left, greaterThan(playerRest.left + 8));
+    expect(playerMid.top, lessThan(playerRest.top - 2));
+    expect(actionMid.left, greaterThan(actionRest.left + 2));
+    expect(actionMid.top, closeTo(actionRest.top, 1));
+  });
+
+  testWidgets('a workstation stays still while the adventurer hops', (tester) async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(
+        currentLocationId: 'LOC-0023',
+        inventory: const [InventoryStack(itemId: 'ITEM-0025', quantity: 3)],
+      ),
+    );
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller, size: const Size(900, 2400));
+
+    await tapVisible(
+      tester,
+      find.descendant(
+        of: dockRow('Cook at the kitchen'),
+        matching: find.bySemanticsLabel('Recipes'),
+      ),
+    );
+    await tester.pump(const Duration(milliseconds: 250));
+    await tester.tap(find.text('Max'));
+    await tester.pump();
+    await tester.tap(find.text('Start queue'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 250));
+
+    expect(controller.save.productionRecipeId, isNotNull);
+    final stationRest = tester.getRect(
+      find.byWidgetPredicate((widget) => assetNamed(widget, '/workstations/')),
+    );
+    final playerRest = tester.getRect(
+      find.descendant(of: find.bySemanticsLabel('Adventurer'), matching: find.byType(Image)),
+    );
+
+    await tester.pump(const Duration(milliseconds: 1950));
+
+    final stationMid = tester.getRect(
+      find.byWidgetPredicate((widget) => assetNamed(widget, '/workstations/')),
+    );
+    final playerMid = tester.getRect(
+      find.descendant(of: find.bySemanticsLabel('Adventurer'), matching: find.byType(Image)),
+    );
+    expect(stationMid.left, closeTo(stationRest.left, 1));
+    expect(stationMid.top, closeTo(stationRest.top, 1));
+    expect(playerMid.left, greaterThan(playerRest.left + 8));
+  });
+
+  testWidgets('battery saver keeps stage art at rest', (tester) async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(currentLocationId: 'LOC-0009'),
+    );
+    addTearDown(controller.dispose);
+    controller.setBatterySaver(true);
+    await pumpShell(tester, controller, size: const Size(420, 420 * 16 / 9));
+
+    await tapVisible(
+      tester,
+      find.descendant(
+        of: dockRow('Gather meadow supplies'),
+        matching: find.bySemanticsLabel('Start'),
+      ),
+    );
+
+    final playerRest = tester.getRect(
+      find.descendant(of: find.bySemanticsLabel('Adventurer'), matching: find.byType(Image)),
+    );
+    final actionRest = tester.getRect(
+      find.byWidgetPredicate((widget) => assetNamed(widget, '/actions/')),
+    );
+
+    await tester.pump(const Duration(milliseconds: 1950));
+
+    final playerMid = tester.getRect(
+      find.descendant(of: find.bySemanticsLabel('Adventurer'), matching: find.byType(Image)),
+    );
+    final actionMid = tester.getRect(
+      find.byWidgetPredicate((widget) => assetNamed(widget, '/actions/')),
+    );
+    expect(playerMid.left, closeTo(playerRest.left, 1));
+    expect(playerMid.top, closeTo(playerRest.top, 1));
+    expect(actionMid.left, closeTo(actionRest.left, 1));
+    expect(actionMid.top, closeTo(actionRest.top, 1));
+  });
 }

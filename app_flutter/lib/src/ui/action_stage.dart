@@ -39,6 +39,28 @@ const Color _healColor = Color(0xFF7CFF9E);
 const Color _foodHurtColor = Color(0xFFFF6B6B);
 const Color _sceneNameColor = Color(0xFFF4EFD8);
 
+/// Temporary stage lunge: 3.9s loop, outbound arc then a slide home.
+const Duration _stageHopDuration = Duration(milliseconds: 3900);
+const double _stageHopOutboundEnd = 0.55;
+const double _stageHopInwardPx = 36;
+const double _stageHopPeakPx = 16;
+const double _stageHopRecoilPx = 10;
+
+enum _StageHopKind { player, enemy, actionRecoil }
+
+Offset _stageHopOffset(double t, _StageHopKind kind) {
+  final inward = kind == _StageHopKind.actionRecoil ? _stageHopRecoilPx : _stageHopInwardPx;
+  final peak = kind == _StageHopKind.actionRecoil ? 0.0 : _stageHopPeakPx;
+  final xSign = kind == _StageHopKind.enemy ? -1.0 : 1.0;
+  final clamped = t.clamp(0.0, 1.0);
+  if (clamped <= _stageHopOutboundEnd) {
+    final u = clamped / _stageHopOutboundEnd;
+    return Offset(xSign * inward * u, -peak * 4 * u * (1 - u));
+  }
+  final u = (clamped - _stageHopOutboundEnd) / (1 - _stageHopOutboundEnd);
+  return Offset(xSign * inward * (1 - u), 0);
+}
+
 /// Shared two-column stage for combat, gathering, and production.
 ///
 /// Player art lives on [LocationIdlePlayer], under this stage, so the adventurer
@@ -131,54 +153,58 @@ class LocationIdlePlayer extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _TwoPortraits(
-                  player: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      EquipmentPresetsBar(
-                        controller: controller,
-                        axis: Axis.vertical,
-                        compact: true,
-                        showSaveButton: false,
-                        allowLongPressEdit: false,
-                        onMessage: controller.announce,
-                      ),
-                      const SizedBox(width: 4),
-                      Expanded(
-                        child: IgnorePointer(
-                          child: _playerWithPet(
-                            save: save,
-                            player: _Portrait(
-                              assetPath: playerAssetPath(save.appearance, raceId: save.raceId),
-                              bytes: controller.localPlayerPng,
-                              semanticsLabel: 'Adventurer',
-                              alignment: Alignment.centerRight,
-                              height: _playerArtHeight,
-                              slotHeight: _portraitSlotHeight,
-                              filterQuality: FilterQuality.high,
+                _StageHopHost(
+                  active: save.currentActivityId != null,
+                  child: _TwoPortraits(
+                    player: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        EquipmentPresetsBar(
+                          controller: controller,
+                          axis: Axis.vertical,
+                          compact: true,
+                          showSaveButton: false,
+                          allowLongPressEdit: false,
+                          onMessage: controller.announce,
+                        ),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: IgnorePointer(
+                            child: _playerWithPet(
+                              save: save,
+                              player: _Portrait(
+                                assetPath: playerAssetPath(save.appearance, raceId: save.raceId),
+                                bytes: controller.localPlayerPng,
+                                semanticsLabel: 'Adventurer',
+                                alignment: Alignment.centerRight,
+                                height: _playerArtHeight,
+                                slotHeight: _portraitSlotHeight,
+                                filterQuality: FilterQuality.high,
+                                hop: save.currentActivityId != null ? _StageHopKind.player : null,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                  scene: _groundedSceneArt(controller),
-                  playerCaption: ExcludeSemantics(
-                    child: Opacity(
-                      opacity: 0,
-                      child: _FighterCaption(
-                        name: save.characterName ?? 'Adventurer',
-                        hpLabel: '${hp.round()}/${maxHp.round()}',
-                        alignEnd: false,
-                        meter: _Meter(
-                          label: 'Player health',
-                          value: maxHp <= 0 ? 0 : (hp / maxHp).clamp(0, 1).toDouble(),
-                          gradient: Meters.hudHp,
+                      ],
+                    ),
+                    scene: _groundedSceneArt(controller),
+                    playerCaption: ExcludeSemantics(
+                      child: Opacity(
+                        opacity: 0,
+                        child: _FighterCaption(
+                          name: save.characterName ?? 'Adventurer',
+                          hpLabel: '${hp.round()}/${maxHp.round()}',
+                          alignEnd: false,
+                          meter: _Meter(
+                            label: 'Player health',
+                            value: maxHp <= 0 ? 0 : (hp / maxHp).clamp(0, 1).toDouble(),
+                            gradient: Meters.hudHp,
+                          ),
                         ),
                       ),
                     ),
+                    sceneCaption: const SizedBox(height: _captionMinHeight),
                   ),
-                  sceneCaption: const SizedBox(height: _captionMinHeight),
                 ),
                 const SizedBox(height: 7),
                 const SizedBox(height: _stageFooterHeight),
@@ -240,6 +266,7 @@ Widget _groundedSceneArt(GameController controller) {
       height: _enemyArtHeight,
       slotHeight: _portraitSlotHeight,
       alignment: Alignment.centerLeft,
+      hop: _StageHopKind.enemy,
     );
   }
   if (save.productionRecipeId != null || controller.craftPopup != null) {
@@ -265,6 +292,7 @@ Widget _groundedSceneArt(GameController controller) {
     slotHeight: _portraitSlotHeight,
     alignment: Alignment.bottomLeft,
     gaplessPlayback: true,
+    hop: _StageHopKind.actionRecoil,
   );
 }
 
@@ -452,6 +480,79 @@ class _InkSplatOverlay extends StatelessWidget {
   }
 }
 
+/// One 3.9s clock for both stage slots so the lunge stays in sync.
+class _StageHopHost extends StatefulWidget {
+  const _StageHopHost({required this.active, required this.child});
+
+  final bool active;
+  final Widget child;
+
+  @override
+  State<_StageHopHost> createState() => _StageHopHostState();
+}
+
+class _StageHopHostState extends State<_StageHopHost> with SingleTickerProviderStateMixin {
+  late final AnimationController _clock;
+
+  @override
+  void initState() {
+    super.initState();
+    _clock = AnimationController(vsync: this, duration: _stageHopDuration);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _syncClock();
+  }
+
+  @override
+  void didUpdateWidget(covariant _StageHopHost oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _syncClock();
+  }
+
+  void _syncClock() {
+    final reduceMotion = BatterySaverScope.of(context);
+    if (!widget.active || reduceMotion) {
+      _clock.stop();
+      _clock.value = 0;
+    } else if (!_clock.isAnimating) {
+      _clock.repeat();
+    }
+  }
+
+  @override
+  void dispose() {
+    _clock.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _clock,
+      builder: (context, child) {
+        return _StageHopTicker(t: _clock.value, child: child!);
+      },
+      child: widget.child,
+    );
+  }
+}
+
+class _StageHopTicker extends InheritedWidget {
+  const _StageHopTicker({required this.t, required super.child});
+
+  final double t;
+
+  static double of(BuildContext context) {
+    return context.dependOnInheritedWidgetOfExactType<_StageHopTicker>()?.t ?? 0;
+  }
+
+  @override
+  bool updateShouldNotify(_StageHopTicker oldWidget) => t != oldWidget.t;
+}
+
 class _TwoPortraits extends StatelessWidget {
   const _TwoPortraits({
     required this.player,
@@ -501,6 +602,7 @@ class _Portrait extends StatelessWidget {
     this.slotHeight,
     this.filterQuality = FilterQuality.none,
     this.gaplessPlayback = false,
+    this.hop,
   });
 
   final String? assetPath;
@@ -521,6 +623,9 @@ class _Portrait extends StatelessWidget {
 
   /// Keep the last frame while the next gathering action art loads.
   final bool gaplessPlayback;
+
+  /// Temporary lunge; only the raster moves so the slot stays put.
+  final _StageHopKind? hop;
 
   @override
   Widget build(BuildContext context) {
@@ -552,12 +657,18 @@ class _Portrait extends StatelessWidget {
         width: double.infinity,
         child: Stack(
           fit: StackFit.expand,
+          clipBehavior: Clip.none,
           children: [
             ?placeholder,
             if (art != null)
               Align(
                 alignment: Alignment.bottomCenter,
-                child: SizedBox(height: height, width: double.infinity, child: art),
+                child: Transform.translate(
+                  offset: hop == null
+                      ? Offset.zero
+                      : _stageHopOffset(_StageHopTicker.of(context), hop!),
+                  child: SizedBox(height: height, width: double.infinity, child: art),
+                ),
               ),
             ?overlay,
           ],
