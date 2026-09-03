@@ -132,10 +132,16 @@ class BotPolicy {
   }
 
   BotIntent? _citadelProduction(GameDatabase db, PlayerSave save) {
+    final craft = _firstReadyCitadelCraft(db, save);
+    if (craft == null) return null;
     if (save.currentLocationId != citadelProcessingId) {
       return _route(db, save, citadelProcessingId);
     }
     if (hasRunningPrimaryActivity(save)) return const BotWait('producing');
+    return BotStartProduction(craft.activityId, craft.recipeId, craft.quantity);
+  }
+
+  _CraftPick? _firstReadyCitadelCraft(GameDatabase db, PlayerSave save) {
     final activities = db.activities.where(
       (activity) => activity.locationId == citadelProcessingId,
     );
@@ -146,7 +152,7 @@ class BotPolicy {
       final recipe = ready.first;
       final qty = maxCraftsFromMaterials(save, recipe);
       if (qty < 1) continue;
-      return BotStartProduction(activity.activityId, recipe.recipeId, qty);
+      return _CraftPick(activity.activityId, recipe.recipeId, qty);
     }
     return null;
   }
@@ -164,7 +170,17 @@ class BotPolicy {
       if (best.locationId != save.currentLocationId) return _route(db, save, best.locationId);
       return BotStartGather(best.activityId);
     }
-    return const BotWait('no-gather');
+    // After a Citadel trip the current tile may have no gather. Use a
+    // below-proficiency node somewhere rather than idle at a station.
+    _GatherPick? fallback;
+    for (final location in db.locations) {
+      final pick = _bestGatherHere(db, save, location.locationId, allowBelow: true);
+      if (pick == null) continue;
+      if (fallback == null || pick.score > fallback.score) fallback = pick;
+    }
+    if (fallback == null) return const BotWait('no-gather');
+    if (fallback.locationId != save.currentLocationId) return _route(db, save, fallback.locationId);
+    return BotStartGather(fallback.activityId);
   }
 
   _GatherPick? _bestGatherAnywhere(GameDatabase db, PlayerSave save) {
@@ -286,4 +302,12 @@ class _GatherPick {
   final String activityId;
   final String locationId;
   final double score;
+}
+
+class _CraftPick {
+  const _CraftPick(this.activityId, this.recipeId, this.quantity);
+
+  final String activityId;
+  final String recipeId;
+  final num quantity;
 }
