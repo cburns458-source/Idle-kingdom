@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:ik_content/ik_content.dart';
 import 'package:ik_rules/ik_rules.dart';
 import 'package:ik_runtime/ik_runtime.dart';
@@ -39,8 +40,10 @@ const Color _healColor = Color(0xFF7CFF9E);
 const Color _foodHurtColor = Color(0xFFFF6B6B);
 const Color _sceneNameColor = Color(0xFFF4EFD8);
 
-/// Temporary stage lunge: a 1s hop, then rest, repeating every 3.9s.
-const Duration _stageHopPeriod = Duration(milliseconds: 3900);
+/// Temporary stage lunge: wait 3.5s after the action starts, then a 1s hop
+/// every 3.9s.
+const int _stageHopDelayMs = 3500;
+const int _stageHopPeriodMs = 3900;
 const double _stageHopMotionEnd = 1000 / 3900;
 const double _stageHopOutboundEnd = 0.55;
 const double _stageHopInwardPx = 36;
@@ -158,6 +161,7 @@ class LocationIdlePlayer extends StatelessWidget {
               children: [
                 _StageHopHost(
                   active: save.currentActivityId != null,
+                  actionKey: save.currentActivityId,
                   child: _TwoPortraits(
                     player: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -483,11 +487,13 @@ class _InkSplatOverlay extends StatelessWidget {
   }
 }
 
-/// One 3.9s clock for both stage slots; the hop plays in the first second.
+/// Shared elapsed clock for both stage slots. The hop waits 3.5s after the
+/// action starts, then plays in the first second of each 3.9s cycle.
 class _StageHopHost extends StatefulWidget {
-  const _StageHopHost({required this.active, required this.child});
+  const _StageHopHost({required this.active, required this.actionKey, required this.child});
 
   final bool active;
+  final String? actionKey;
   final Widget child;
 
   @override
@@ -495,13 +501,8 @@ class _StageHopHost extends StatefulWidget {
 }
 
 class _StageHopHostState extends State<_StageHopHost> with SingleTickerProviderStateMixin {
-  late final AnimationController _clock;
-
-  @override
-  void initState() {
-    super.initState();
-    _clock = AnimationController(vsync: this, duration: _stageHopPeriod);
-  }
+  Ticker? _ticker;
+  Duration _elapsed = Duration.zero;
 
   @override
   void didChangeDependencies() {
@@ -512,34 +513,49 @@ class _StageHopHostState extends State<_StageHopHost> with SingleTickerProviderS
   @override
   void didUpdateWidget(covariant _StageHopHost oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (oldWidget.actionKey != widget.actionKey) {
+      _stopTicker(reset: true);
+    }
     _syncClock();
   }
 
   void _syncClock() {
     final reduceMotion = BatterySaverScope.of(context);
     if (!widget.active || reduceMotion) {
-      _clock.stop();
-      _clock.value = 0;
-    } else if (!_clock.isAnimating) {
-      _clock.repeat();
+      _stopTicker(reset: true);
+      return;
     }
+    _startTicker();
+  }
+
+  void _startTicker() {
+    if (_ticker != null) return;
+    _ticker = createTicker((elapsed) {
+      setState(() => _elapsed = elapsed);
+    })..start();
+  }
+
+  void _stopTicker({required bool reset}) {
+    _ticker?.dispose();
+    _ticker = null;
+    if (reset) _elapsed = Duration.zero;
+  }
+
+  double _periodT(Duration elapsed) {
+    final ms = elapsed.inMilliseconds;
+    if (ms < _stageHopDelayMs) return 1;
+    return ((ms - _stageHopDelayMs) % _stageHopPeriodMs) / _stageHopPeriodMs;
   }
 
   @override
   void dispose() {
-    _clock.dispose();
+    _ticker?.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _clock,
-      builder: (context, child) {
-        return _StageHopTicker(t: _clock.value, child: child!);
-      },
-      child: widget.child,
-    );
+    return _StageHopTicker(t: _periodT(_elapsed), child: widget.child);
   }
 }
 

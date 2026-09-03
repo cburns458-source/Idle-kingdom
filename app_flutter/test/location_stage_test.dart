@@ -608,6 +608,13 @@ void main() {
       find.byWidgetPredicate((widget) => assetNamed(widget, '/actions/')),
     );
 
+    await tester.pump(const Duration(milliseconds: 3500));
+    final playerWaiting = tester.getRect(
+      find.descendant(of: find.bySemanticsLabel('Adventurer'), matching: find.byType(Image)),
+    );
+    expect(playerWaiting.left, closeTo(playerRest.left, 1));
+    expect(playerWaiting.top, closeTo(playerRest.top, 1));
+
     await tester.pump(const Duration(milliseconds: 500));
 
     final playerMid = tester.getRect(
@@ -662,7 +669,7 @@ void main() {
       find.descendant(of: find.bySemanticsLabel('Adventurer'), matching: find.byType(Image)),
     );
 
-    await tester.pump(const Duration(milliseconds: 500));
+    await tester.pump(const Duration(milliseconds: 4000));
 
     final stationMid = tester.getRect(
       find.byWidgetPredicate((widget) => assetNamed(widget, '/workstations/')),
@@ -699,7 +706,7 @@ void main() {
       find.byWidgetPredicate((widget) => assetNamed(widget, '/actions/')),
     );
 
-    await tester.pump(const Duration(milliseconds: 1950));
+    await tester.pump(const Duration(milliseconds: 4000));
 
     final playerMid = tester.getRect(
       find.descendant(of: find.bySemanticsLabel('Adventurer'), matching: find.byType(Image)),
