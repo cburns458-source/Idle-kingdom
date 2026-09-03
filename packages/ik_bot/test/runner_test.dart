@@ -126,6 +126,7 @@ void main() {
   test('turns in a ready quest at the giver', () {
     bootHuman();
     session.apply(addItemsToInventory(session.save, bakedPotato, 10).save);
+    session.apply(addItemsToInventory(session.save, 'ITEM-0059', 10).save);
     session.apply(
       session.save.copyWith(
         quests: const <QuestProgress>[
@@ -133,6 +134,7 @@ void main() {
         ],
       ),
     );
+    session.apply(applyQuestTalkProgress(db, session.save, 'NPC-0001'));
     final intents = playUntil(
       () => getQuestProgress(session.save, 'QST-0001').status == 'completed',
     );
