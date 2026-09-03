@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:idle_kingdoms/src/theme.dart';
 import 'package:idle_kingdoms/src/ui/chat_sheet.dart';
+import 'package:idle_kingdoms/src/ui/motto_text.dart';
+import 'package:idle_kingdoms/src/ui/player_profile_sheet.dart';
 import 'package:idle_kingdoms/src/ui/social_view.dart';
 import 'package:ik_content/ik_content.dart';
 import 'package:ik_net/ik_net.dart';
+import 'package:ik_net/testing.dart';
 
 import 'support/harness.dart';
 
@@ -107,6 +110,55 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    final name = tester.widget<Text>(find.text('Vari: '));
+    expect(name.style?.color, const Color(0xFFFFAA33));
+  });
+
+  testWidgets('a hosted second account sees Vari motto and chat name color', (tester) async {
+    final clock = TestClock();
+    final transport = FakeTransport();
+    final net = buildRemoteMultiplayer(database, transport: transport, clock: clock);
+    addTearDown(net.dispose);
+    final farm = startedCharacter(database)
+        .copyWith(characterName: 'Vari', motto: 'Keep the watch.');
+    await net.signUp('vari@example.com', 'Vari', 'secret', farm, adopt: (save, {nowMs}) {});
+    net.setNameColorDraft('#FA3');
+    await net.publishRanking(farm, ignoreDebounce: true);
+    await net.selectChatTab(ChatTab.global, farm.currentLocationId);
+    await net.sendChat('Hello from Vari', farm.currentLocationId);
+    final variId = net.session!.userId;
+
+    await net.signOut(farm);
+    final rival = startedCharacter(database).copyWith(characterName: 'Rival');
+    await net.signUp('rival@example.com', 'Rival', 'secret', rival, adopt: (save, {nowMs}) {});
+
+    expect(
+      (await net.service.publicProfile(variId, db: database.launch))?.motto,
+      'Keep the watch.',
+    );
+    expect(await net.service.publishedNameColors(<String>[variId]), <String, String>{
+      variId: '#FFAA33',
+    });
+
+    final game = buildController(database, seed: rival, clock: clock);
+    addTearDown(game.dispose);
+    await pumpPanel(tester, PlayerProfileSheet(controller: game, multiplayer: net, userId: variId));
+    await tester.pumpAndSettle();
+    expect(find.byType(MottoText), findsOneWidget);
+    expect(find.text('Keep the watch.'), findsOneWidget);
+
+    await pumpPanel(
+      tester,
+      ChatSheet(
+        controller: game,
+        multiplayer: net,
+        locationId: rival.currentLocationId,
+        citadelHub: false,
+        onClose: () {},
+      ),
+    );
+    await net.selectChatTab(ChatTab.global, rival.currentLocationId);
+    await tester.pumpAndSettle();
     final name = tester.widget<Text>(find.text('Vari: '));
     expect(name.style?.color, const Color(0xFFFFAA33));
   });

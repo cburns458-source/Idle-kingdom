@@ -93,6 +93,51 @@ class RemoteMultiplayerService implements MultiplayerService {
     return parts.join(', ');
   }
 
+  /// Motto and name color are published on ranking / save. A stale PostgREST
+  /// cache can look like a skipped migration and pin the flags false for the
+  /// rest of the session, so Vari sees her own local values while everyone
+  /// else reads an empty profile row. Each publish and each other-account
+  /// read tries the columns again.
+  void _reenablePublishedProfileColumns() {
+    _profilesHaveNameColor = null;
+    _profilesHaveMottoPet = null;
+  }
+
+  bool _stripMissingProfileColumns(Map<String, Object?> row, String? reason) {
+    var stripped = false;
+    if (remoteMissingGearPrivacyColumn(reason) && row.containsKey(remoteEquipmentJsonColumn)) {
+      _profilesHaveGearPrivacy = false;
+      row.remove(remoteEquipmentJsonColumn);
+      stripped = true;
+    }
+    if (remoteMissingNameColorColumn(reason) && row.containsKey(remoteNameColorColumn)) {
+      _profilesHaveNameColor = false;
+      row.remove(remoteNameColorColumn);
+      stripped = true;
+    }
+    if (remoteMissingMottoPetColumns(reason) &&
+        (row.containsKey(remoteMottoColumn) || row.containsKey(remotePetCosmeticIdColumn))) {
+      _profilesHaveMottoPet = false;
+      row.remove(remoteMottoColumn);
+      row.remove(remotePetCosmeticIdColumn);
+      stripped = true;
+    }
+    return stripped;
+  }
+
+  /// Writes [row], dropping optional columns the project has not got yet.
+  Future<String?> _upsertProfileRow(Map<String, Object?> row) async {
+    final current = Map<String, Object?>.of(row);
+    for (var attempt = 0; attempt < 6; attempt++) {
+      final refused = await transport.upsert(RemoteTables.profiles, <RemoteRow>[
+        current,
+      ], onConflict: 'user_id');
+      if (refused == null) return null;
+      if (!_stripMissingProfileColumns(current, refused)) return refused;
+    }
+    return 'Could not update profile.';
+  }
+
   /// Whether friend tables exist on the project. Null until a read tells us.
   /// Missing migration 014 falls back to the device list.
   bool? _friendsHosted;
@@ -277,9 +322,22 @@ class RemoteMultiplayerService implements MultiplayerService {
       equals: <String, Object?>{'user_id': userId},
       limit: 1,
     );
-    if (!result.ok && remoteMissingChatPrivacyColumn(result.reason)) {
-      _profilesHaveChatPrivacy = false;
-      _reads.clearIf(remoteMissingChatPrivacyColumn);
+    for (var attempt = 0; attempt < 6 && !result.ok; attempt++) {
+      if (remoteMissingChatPrivacyColumn(result.reason)) {
+        _profilesHaveChatPrivacy = false;
+        _reads.clearIf(remoteMissingChatPrivacyColumn);
+      } else if (remoteMissingGearPrivacyColumn(result.reason)) {
+        _profilesHaveGearPrivacy = false;
+        _reads.clearIf(remoteMissingGearPrivacyColumn);
+      } else if (remoteMissingNameColorColumn(result.reason)) {
+        _profilesHaveNameColor = false;
+        _reads.clearIf(remoteMissingNameColorColumn);
+      } else if (remoteMissingMottoPetColumns(result.reason)) {
+        _profilesHaveMottoPet = false;
+        _reads.clearIf(remoteMissingMottoPetColumns);
+      } else {
+        break;
+      }
       result = await transport.select(
         RemoteTables.profiles,
         columns: _publicProfileSelectColumns,
@@ -287,36 +345,7 @@ class RemoteMultiplayerService implements MultiplayerService {
         limit: 1,
       );
     }
-    if (!result.ok && remoteMissingGearPrivacyColumn(result.reason)) {
-      _profilesHaveGearPrivacy = false;
-      _reads.clearIf(remoteMissingGearPrivacyColumn);
-      result = await transport.select(
-        RemoteTables.profiles,
-        columns: _publicProfileSelectColumns,
-        equals: <String, Object?>{'user_id': userId},
-        limit: 1,
-      );
-    }
-    if (!result.ok && remoteMissingNameColorColumn(result.reason)) {
-      _profilesHaveNameColor = false;
-      _reads.clearIf(remoteMissingNameColorColumn);
-      result = await transport.select(
-        RemoteTables.profiles,
-        columns: _publicProfileSelectColumns,
-        equals: <String, Object?>{'user_id': userId},
-        limit: 1,
-      );
-    }
-    if (!result.ok && remoteMissingMottoPetColumns(result.reason)) {
-      _profilesHaveMottoPet = false;
-      _reads.clearIf(remoteMissingMottoPetColumns);
-      result = await transport.select(
-        RemoteTables.profiles,
-        columns: _publicProfileSelectColumns,
-        equals: <String, Object?>{'user_id': userId},
-        limit: 1,
-      );
-    } else if (result.ok) {
+    if (result.ok) {
       _profilesHaveChatPrivacy ??= true;
       _profilesHaveGearPrivacy ??= true;
       _profilesHaveNameColor ??= true;
@@ -358,6 +387,7 @@ class RemoteMultiplayerService implements MultiplayerService {
 
   @override
   Future<PublicPlayerProfile?> publicProfile(String userId, {GameDatabase? db}) async {
+    _reenablePublishedProfileColumns();
     final account = await profile(userId);
     if (account == null) return null;
 
@@ -511,6 +541,7 @@ class RemoteMultiplayerService implements MultiplayerService {
     if (refused != null) return CloudSyncResult.failed(refused);
 
     await _refreshPvpLiveStats(stamped);
+    _reenablePublishedProfileColumns();
     final profileRow = <String, Object?>{
       'user_id': current.userId,
       'appearance_json': appearanceJsonForRemote(stamped.appearance, stamped.raceId),
@@ -520,24 +551,9 @@ class RemoteMultiplayerService implements MultiplayerService {
           .map((row) => row.toJson())
           .toList();
     }
-    if (_profilesHaveMottoPet != false) {
-      profileRow[remoteMottoColumn] = stamped.motto;
-      profileRow[remotePetCosmeticIdColumn] = stamped.cosmetics.equipped[petCosmeticSlotId];
-    }
-    final refusedProfile = await transport.upsert(RemoteTables.profiles, <RemoteRow>[
-      profileRow,
-    ], onConflict: 'user_id');
-    if (refusedProfile != null && remoteMissingGearPrivacyColumn(refusedProfile)) {
-      _profilesHaveGearPrivacy = false;
-      profileRow.remove(remoteEquipmentJsonColumn);
-      await transport.upsert(RemoteTables.profiles, <RemoteRow>[profileRow], onConflict: 'user_id');
-    }
-    if (refusedProfile != null && remoteMissingMottoPetColumns(refusedProfile)) {
-      _profilesHaveMottoPet = false;
-      profileRow.remove(remoteMottoColumn);
-      profileRow.remove(remotePetCosmeticIdColumn);
-      await transport.upsert(RemoteTables.profiles, <RemoteRow>[profileRow], onConflict: 'user_id');
-    }
+    profileRow[remoteMottoColumn] = stamped.motto;
+    profileRow[remotePetCosmeticIdColumn] = stamped.cosmetics.equipped[petCosmeticSlotId];
+    await _upsertProfileRow(profileRow);
     return CloudSyncResult.ok(stamped, CloudSyncSource.uploaded);
   }
 
@@ -604,6 +620,7 @@ class RemoteMultiplayerService implements MultiplayerService {
       leaderboardRowsFor(current.userId, snapshot, isoFromMs(_nowMs())),
       onConflict: remoteLeaderboardConflict,
     );
+    _reenablePublishedProfileColumns();
     final profileRow = <String, Object?>{
       'user_id': current.userId,
       'username': current.username,
@@ -614,32 +631,12 @@ class RemoteMultiplayerService implements MultiplayerService {
           .map((row) => row.toJson())
           .toList();
     }
-    if (publishNameColor && _profilesHaveNameColor != false) {
+    if (publishNameColor) {
       profileRow[remoteNameColorColumn] = normalizeNameColorHex(nameColor);
     }
-    if (_profilesHaveMottoPet != false) {
-      profileRow[remoteMottoColumn] = save.motto;
-      profileRow[remotePetCosmeticIdColumn] = save.cosmetics.equipped[petCosmeticSlotId];
-    }
-    final refusedProfile = await transport.upsert(RemoteTables.profiles, <RemoteRow>[
-      profileRow,
-    ], onConflict: 'user_id');
-    if (refusedProfile != null && remoteMissingGearPrivacyColumn(refusedProfile)) {
-      _profilesHaveGearPrivacy = false;
-      profileRow.remove(remoteEquipmentJsonColumn);
-      await transport.upsert(RemoteTables.profiles, <RemoteRow>[profileRow], onConflict: 'user_id');
-    }
-    if (refusedProfile != null && remoteMissingNameColorColumn(refusedProfile)) {
-      _profilesHaveNameColor = false;
-      profileRow.remove(remoteNameColorColumn);
-      await transport.upsert(RemoteTables.profiles, <RemoteRow>[profileRow], onConflict: 'user_id');
-    }
-    if (refusedProfile != null && remoteMissingMottoPetColumns(refusedProfile)) {
-      _profilesHaveMottoPet = false;
-      profileRow.remove(remoteMottoColumn);
-      profileRow.remove(remotePetCosmeticIdColumn);
-      await transport.upsert(RemoteTables.profiles, <RemoteRow>[profileRow], onConflict: 'user_id');
-    }
+    profileRow[remoteMottoColumn] = save.motto;
+    profileRow[remotePetCosmeticIdColumn] = save.cosmetics.equipped[petCosmeticSlotId];
+    await _upsertProfileRow(profileRow);
     // A roster lists each member's name, look, and level, and only that member
     // may write their own row, so the submit that refreshes the boards refreshes
     // the roster too.
@@ -653,6 +650,7 @@ class RemoteMultiplayerService implements MultiplayerService {
   Future<Map<String, String>> publishedNameColors(Iterable<String> userIds) async {
     final ids = userIds.where((id) => id.isNotEmpty).toSet().toList();
     if (ids.isEmpty) return const <String, String>{};
+    _reenablePublishedProfileColumns();
     // Parallel profile reads — sequential awaits made chat open feel stuck.
     final profiles = await Future.wait(ids.map(profile));
     final colors = <String, String>{};

@@ -724,6 +724,89 @@ void main() {
     });
   });
 
+  test('another account reads the published motto and name color', () async {
+    final transport = FakeTransport();
+    final hero = await _signedIn(transport, MemorySaveStorage());
+    final db = _database();
+    final save = createNewSave(
+      db,
+      _nowMs,
+    ).copyWith(characterName: 'Vari', motto: 'Keep the watch.');
+    expect(
+      (await hero.submitLeaderboard(db, save, nameColor: '#FA3', publishNameColor: true)).ok,
+      isTrue,
+    );
+
+    final rival = _service(transport, MemorySaveStorage());
+    await rival.signUp('rival@example.com', 'Rival', 'secret');
+    final profile = await rival.publicProfile(hero.session!.userId, db: db);
+    expect(profile?.motto, 'Keep the watch.');
+    expect(await rival.publishedNameColors(<String>[hero.session!.userId]), <String, String>{
+      hero.session!.userId: '#FFAA33',
+    });
+  });
+
+  test(
+    'a schema-cache name_color error still publishes motto, then color on the next submit',
+    () async {
+      final transport = FakeTransport();
+      final service = await _signedIn(transport, MemorySaveStorage());
+      final db = _database();
+      final save = createNewSave(
+        db,
+        _nowMs,
+      ).copyWith(characterName: 'Vari', motto: 'Keep the watch.');
+
+      transport.failOnce['upsert:profiles'] =
+          "Could not find the 'name_color' column of 'profiles' in the schema cache";
+      expect(
+        (await service.submitLeaderboard(db, save, nameColor: '#FA3', publishNameColor: true)).ok,
+        isTrue,
+      );
+      expect(transport.tables[RemoteTables.profiles]!.single['motto'], 'Keep the watch.');
+      expect(transport.tables[RemoteTables.profiles]!.single.containsKey('name_color'), isFalse);
+
+      expect(
+        (await service.submitLeaderboard(db, save, nameColor: '#FA3', publishNameColor: true)).ok,
+        isTrue,
+      );
+      expect(transport.tables[RemoteTables.profiles]!.single['name_color'], '#FFAA33');
+      expect(transport.tables[RemoteTables.profiles]!.single['motto'], 'Keep the watch.');
+    },
+  );
+
+  test('a later ranking submit writes motto and color after the columns appear', () async {
+    final transport = FakeTransport();
+    transport.missingColumns.addAll(const <String>['name_color', 'motto', 'pet_cosmetic_id']);
+    final hero = await _signedIn(transport, MemorySaveStorage());
+    final db = _database();
+    final save = createNewSave(
+      db,
+      _nowMs,
+    ).copyWith(characterName: 'Vari', motto: 'Keep the watch.');
+    expect(
+      (await hero.submitLeaderboard(db, save, nameColor: '#FA3', publishNameColor: true)).ok,
+      isTrue,
+    );
+    expect(transport.tables[RemoteTables.profiles]!.single.containsKey('name_color'), isFalse);
+    expect(transport.tables[RemoteTables.profiles]!.single.containsKey('motto'), isFalse);
+
+    transport.missingColumns.clear();
+    expect(
+      (await hero.submitLeaderboard(db, save, nameColor: '#FA3', publishNameColor: true)).ok,
+      isTrue,
+    );
+    expect(transport.tables[RemoteTables.profiles]!.single['name_color'], '#FFAA33');
+    expect(transport.tables[RemoteTables.profiles]!.single['motto'], 'Keep the watch.');
+
+    final rival = _service(transport, MemorySaveStorage());
+    await rival.signUp('rival@example.com', 'Rival', 'secret');
+    expect((await rival.publicProfile(hero.session!.userId, db: db))?.motto, 'Keep the watch.');
+    expect(await rival.publishedNameColors(<String>[hero.session!.userId]), <String, String>{
+      hero.session!.userId: '#FFAA33',
+    });
+  });
+
   test('loads a profile when name_color is missing', () async {
     final transport = FakeTransport();
     transport.missingColumns.add('name_color');

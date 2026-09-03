@@ -5,6 +5,9 @@ import 'package:test/test.dart';
 
 import 'support/fixtures.dart';
 
+/// Same pin as `src/parity/scenarios/shops.ts`, so offer day keys stay recorded.
+const num offerNowMs = 1788307200000; // 2026-09-02T00:00:00.000Z
+
 List<String> _stringList(ParityFixture fixture, String key) {
   return fixture.inputField<List<Object?>>(key).map((value) => value! as String).toList();
 }
@@ -132,6 +135,7 @@ void main() {
           saveOf(fixture),
           fixture.inputField<String>('shopId'),
           _offerOf(fixture),
+          nowMs: offerNowMs,
         );
         expect(checkParity(fixture, result.toJson()), isNull);
       });
