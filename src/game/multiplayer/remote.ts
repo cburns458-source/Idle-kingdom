@@ -86,6 +86,39 @@ export function isPublicAdventurerUsername(username: string): boolean {
   return !isPendingAccountUsername(username)
 }
 
+/** True when PostgREST refused a profiles column, including a stale schema cache. */
+export function remoteMissingProfileColumn(reason: string | null | undefined, columns: string[]): boolean {
+  if (!reason) return false
+  const lower = reason.toLowerCase()
+  if (!columns.some((column) => lower.includes(column.toLowerCase()))) return false
+  return lower.includes('does not exist') || lower.includes('schema cache')
+}
+
+/** Drops the optional profile fields [reason] says the project has not got. */
+export function stripMissingRemoteProfileColumns(row: RemoteRow, reason: string): boolean {
+  let stripped = false
+  if (
+    remoteMissingProfileColumn(reason, ['equipment_json', 'privacy_public_gear']) &&
+    'equipment_json' in row
+  ) {
+    delete row.equipment_json
+    stripped = true
+  }
+  if (remoteMissingProfileColumn(reason, ['name_color']) && 'name_color' in row) {
+    delete row.name_color
+    stripped = true
+  }
+  if (
+    remoteMissingProfileColumn(reason, ['motto', 'pet_cosmetic_id']) &&
+    ('motto' in row || 'pet_cosmetic_id' in row)
+  ) {
+    delete row.motto
+    delete row.pet_cosmetic_id
+    stripped = true
+  }
+  return stripped
+}
+
 export function remoteEmail(raw: string): string {
   return raw.trim().toLowerCase()
 }

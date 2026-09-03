@@ -10,6 +10,7 @@ import {
   REMOTE_LEADERBOARD_CONFLICT,
   REMOTE_NOT_CONFIGURED,
   REMOTE_TABLES,
+  stripMissingRemoteProfileColumns,
   type RemoteRow,
 } from './remote'
 import { rankLeaderboardEntries, buildLeaderboardSnapshot } from './snapshots'
@@ -48,7 +49,7 @@ export async function submitLeaderboardFromSave(
     onConflict: REMOTE_LEADERBOARD_CONFLICT,
   })
   if (error) return { ok: false, reason: error.message }
-  const { error: profileError } = await client.from(REMOTE_TABLES.profiles).upsert({
+  const profileRow: RemoteRow = {
     user_id: session.userId,
     username: session.username,
     appearance_json: save.appearance,
@@ -56,14 +57,18 @@ export async function submitLeaderboardFromSave(
     motto: save.motto ?? null,
     pet_cosmetic_id: save.cosmetics.equipped[PET_COSMETIC_SLOT_ID] ?? null,
     ...(options?.publishNameColor ? { name_color: options.nameColor ?? null } : {}),
-  })
-  if (profileError) {
-    // Graceful fallback when optional columns (name_color / motto / pet) are missing.
-    await client.from(REMOTE_TABLES.profiles).upsert({
-      user_id: session.userId,
-      username: session.username,
-      appearance_json: save.appearance,
-    })
+  }
+  for (let attempt = 0; attempt < 6; attempt += 1) {
+    const { error: profileError } = await client.from(REMOTE_TABLES.profiles).upsert(profileRow)
+    if (!profileError) break
+    if (!stripMissingRemoteProfileColumns(profileRow, profileError.message)) {
+      await client.from(REMOTE_TABLES.profiles).upsert({
+        user_id: session.userId,
+        username: session.username,
+        appearance_json: save.appearance,
+      })
+      break
+    }
   }
   return { ok: true }
 }

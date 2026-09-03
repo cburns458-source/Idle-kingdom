@@ -88,9 +88,10 @@ const String remoteChatPrivacyUnavailable = 'Chat privacy is not available on th
 bool remoteMissingChatPrivacyColumn(String? reason) {
   if (reason == null || reason.isEmpty) return false;
   if (reason == remoteChatPrivacyUnavailable) return true;
-  final lower = reason.toLowerCase();
-  if (!lower.contains('does not exist')) return false;
-  return lower.contains('privacy_direct_messages') || lower.contains('privacy_local_chat');
+  return remoteMissingProfileColumn(reason, const <String>[
+    'privacy_direct_messages',
+    'privacy_local_chat',
+  ]);
 }
 
 /// What a skipped gear-privacy migration looks like from PostgREST.
@@ -100,9 +101,10 @@ const String remoteGearPrivacyUnavailable = 'Gear privacy is not available on th
 bool remoteMissingGearPrivacyColumn(String? reason) {
   if (reason == null || reason.isEmpty) return false;
   if (reason == remoteGearPrivacyUnavailable) return true;
-  final lower = reason.toLowerCase();
-  if (!lower.contains('does not exist')) return false;
-  return lower.contains('privacy_public_gear') || lower.contains('equipment_json');
+  return remoteMissingProfileColumn(reason, const <String>[
+    'privacy_public_gear',
+    remoteEquipmentJsonColumn,
+  ]);
 }
 
 /// What a skipped guild skill-milestone migration looks like from PostgREST.
@@ -119,21 +121,25 @@ bool remoteMissingGuildSkillMilestoneColumn(String? reason) {
   return lower.contains('skill_milestone_settings');
 }
 
-/// True when [reason] is the hosted project missing the name-color column.
-bool remoteMissingNameColorColumn(String? reason) {
+/// True when PostgREST refused a `profiles` column — either it is not in
+/// Postgres, or the schema cache has not reloaded after the migration.
+bool remoteMissingProfileColumn(String? reason, Iterable<String> columns) {
   if (reason == null || reason.isEmpty) return false;
   final lower = reason.toLowerCase();
-  if (!lower.contains('does not exist')) return false;
-  return lower.contains('name_color');
+  final named = columns.any((column) => lower.contains(column.toLowerCase()));
+  if (!named) return false;
+  return lower.contains('does not exist') || lower.contains('schema cache');
 }
 
+/// True when [reason] is the hosted project missing the name-color column.
+bool remoteMissingNameColorColumn(String? reason) =>
+    remoteMissingProfileColumn(reason, const <String>[remoteNameColorColumn]);
+
 /// True when [reason] is the hosted project missing motto / pet profile columns.
-bool remoteMissingMottoPetColumns(String? reason) {
-  if (reason == null || reason.isEmpty) return false;
-  final lower = reason.toLowerCase();
-  if (!lower.contains('does not exist')) return false;
-  return lower.contains('motto') || lower.contains('pet_cosmetic_id');
-}
+bool remoteMissingMottoPetColumns(String? reason) => remoteMissingProfileColumn(
+  reason,
+  const <String>[remoteMottoColumn, remotePetCosmeticIdColumn],
+);
 
 /// True when [reason] is the hosted project missing migration 015.
 bool remoteMissingPvpSnapshotsTable(String? reason) {
