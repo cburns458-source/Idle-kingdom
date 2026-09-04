@@ -14,6 +14,8 @@ import {
   saveRowFor,
   sessionFromSignIn,
   sessionFromSignUp,
+  stripMissingRemoteProfileColumns,
+  remoteMissingProfileColumn,
   type RemoteRow,
 } from './remote'
 import {
@@ -337,6 +339,39 @@ describe('remote chat', () => {
       guildTag: 'DEV',
       rankIcon: '★',
       guest: true,
+    })
+  })
+})
+
+describe('optional profile columns', () => {
+  it('treats a stale schema cache as a missing column', () => {
+    expect(
+      remoteMissingProfileColumn(
+        "Could not find the 'name_color' column of 'profiles' in the schema cache",
+        ['name_color'],
+      ),
+    ).toBe(true)
+    expect(remoteMissingProfileColumn('column profiles.motto does not exist', ['motto'])).toBe(true)
+    expect(remoteMissingProfileColumn('Connection closed.', ['name_color'])).toBe(false)
+  })
+
+  it('strips only the columns the error named', () => {
+    const row: RemoteRow = {
+      user_id: 'usr_1',
+      name_color: '#FFAA33',
+      motto: 'Keep the watch.',
+      pet_cosmetic_id: 'CSM-0001',
+    }
+    expect(
+      stripMissingRemoteProfileColumns(
+        row,
+        "Could not find the 'name_color' column of 'profiles' in the schema cache",
+      ),
+    ).toBe(true)
+    expect(row).toEqual({
+      user_id: 'usr_1',
+      motto: 'Keep the watch.',
+      pet_cosmetic_id: 'CSM-0001',
     })
   })
 })

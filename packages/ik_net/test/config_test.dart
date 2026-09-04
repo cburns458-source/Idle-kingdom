@@ -95,6 +95,27 @@ void main() {
     expect(remoteMissingChatPrivacyColumn('Connection closed.'), isFalse);
   });
 
+  test('treats a stale PostgREST schema cache as a missing profile column', () {
+    expect(
+      remoteMissingNameColorColumn(
+        "Could not find the 'name_color' column of 'profiles' in the schema cache",
+      ),
+      isTrue,
+    );
+    expect(
+      remoteMissingMottoPetColumns(
+        "Could not find the 'motto' column of 'profiles' in the schema cache",
+      ),
+      isTrue,
+    );
+    expect(remoteMissingNameColorColumn('column profiles.name_color does not exist'), isTrue);
+    expect(remoteMissingNameColorColumn('Connection closed.'), isFalse);
+    expect(
+      remoteMissingMottoPetColumns('Could not find the table public.profiles in the schema cache'),
+      isFalse,
+    );
+  });
+
   test('reads a view-shaped board row with its profile folded in', () {
     final entries = leaderboardEntriesFrom(<RemoteRow>[
       <String, Object?>{

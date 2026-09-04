@@ -11,6 +11,8 @@ import {
   REMOTE_SAVE_CONFLICT,
   REMOTE_TABLES,
   saveRowFor,
+  stripMissingRemoteProfileColumns,
+  type RemoteRow,
 } from './remote'
 import type { CloudSaveRecord } from './types'
 
@@ -78,17 +80,22 @@ export async function pushCloudSave(
   if (error) return { ok: false, reason: error.message }
   // Publish motto / pet onto the profile row so other players can see them
   // (RLS blocks reading another account's cloud save).
-  const { error: profileError } = await client.from(REMOTE_TABLES.profiles).upsert({
+  const profileRow: RemoteRow = {
     user_id: session.userId,
     appearance_json: stamped.appearance,
     motto: stamped.motto ?? null,
     pet_cosmetic_id: stamped.cosmetics.equipped[PET_COSMETIC_SLOT_ID] ?? null,
-  })
-  if (profileError) {
-    await client.from(REMOTE_TABLES.profiles).upsert({
-      user_id: session.userId,
-      appearance_json: stamped.appearance,
-    })
+  }
+  for (let attempt = 0; attempt < 6; attempt += 1) {
+    const { error: profileError } = await client.from(REMOTE_TABLES.profiles).upsert(profileRow)
+    if (!profileError) break
+    if (!stripMissingRemoteProfileColumns(profileRow, profileError.message)) {
+      await client.from(REMOTE_TABLES.profiles).upsert({
+        user_id: session.userId,
+        appearance_json: stamped.appearance,
+      })
+      break
+    }
   }
   return { ok: true, save: stamped, source: 'uploaded' }
 }

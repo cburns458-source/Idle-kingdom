@@ -29,7 +29,6 @@ import 'playable_frame.dart';
 import 'social_alert.dart';
 import 'social_view.dart';
 import 'top_hud.dart';
-import 'travel_overlay.dart';
 import 'wardrobe_sheet.dart';
 import 'world_map_view.dart';
 
@@ -885,8 +884,6 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
               ],
             ),
           ),
-        if (controller.travel case final journey?)
-          TravelOverlay(controller: controller, journey: journey),
         if (controller.returningFromAway)
           const ReturningOverlay()
         else if (controller.awaySummary case final summary?)

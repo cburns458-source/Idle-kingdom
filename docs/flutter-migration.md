@@ -143,10 +143,10 @@ tick that resolves it, and enough afterwards to see the follow-up — and compar
 the events, the progress bar, and the whole save at every step.
 
 Travel is the other thing a client would otherwise have to re-derive.
-`planTravel` answers a travel request with `blocked`, `instant` (the arrival has
-already happened), or `timed` (the activity is stopped and the client animates
-the journey, then calls `arriveFromTravel`). Hostility is folded into the
-arrival, so forced combat and its message arrive together.
+`planTravel` answers a travel request with `blocked` or `instant` (the arrival
+has already happened). A client may play a map-walk animation first; the save
+only changes on `planTravel`. Hostility is folded into the arrival, so forced
+combat and its message arrive together.
 
 `prepareSaveForWrite` is the one path to storage: it moves the unattended anchor
 to the write time and catches achievements and statistics up. Boot is the single

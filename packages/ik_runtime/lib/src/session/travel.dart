@@ -54,7 +54,7 @@ class TravelBlocked extends TravelPlan {
   Map<String, Object?> toJson() => <String, Object?>{'kind': kind};
 }
 
-/// Adjacent enough to arrive with no journey; [arrival] has already happened.
+/// Adjacent enough to arrive immediately; [arrival] has already happened.
 class TravelInstant extends TravelPlan {
   const TravelInstant(this.arrival);
 
@@ -65,25 +65,6 @@ class TravelInstant extends TravelPlan {
 
   @override
   Map<String, Object?> toJson() => <String, Object?>{'kind': kind, 'arrival': arrival.toJson()};
-}
-
-/// A journey the client animates. [save] has the current activity stopped, and
-/// the client calls [arriveFromTravel] once [durationMs] has passed.
-class TravelTimed extends TravelPlan {
-  const TravelTimed({required this.save, required this.durationMs});
-
-  final PlayerSave save;
-  final num durationMs;
-
-  @override
-  String get kind => 'timed';
-
-  @override
-  Map<String, Object?> toJson() => <String, Object?>{
-    'kind': kind,
-    'durationMs': durationMs,
-    'save': save.toJson(),
-  };
 }
 
 TravelArrival _arrivalOf(GameDatabase db, HostileTravelArrivalResult result) {
@@ -98,9 +79,9 @@ TravelArrival _arrivalOf(GameDatabase db, HostileTravelArrivalResult result) {
 
 /// Decides what travelling to [destinationId] does right now.
 ///
-/// The journey itself is the client's to animate, but everything that touches the
-/// save — the route check, stopping the current activity, and the arrival — is
-/// decided here so every client behaves the same.
+/// Destinations open immediately. A client may play a walk animation first, but
+/// the save only changes here — route check, activity stop, and arrival — so
+/// every client lands the same way.
 TravelPlan planTravel(
   GameDatabase db,
   PlayerSave save,
@@ -130,26 +111,9 @@ TravelPlan planTravel(
     return const TravelBlocked();
   }
 
-  final durationMs = travelDurationMs(findConnection(db, save.currentLocationId, destinationId));
-  if (durationMs <= 0) {
-    return TravelInstant(
-      _arrivalOf(db, applyHostileTravelArrival(db, save, arrivalId, nowMs, random)),
-    );
-  }
-
-  // Timed travel stops the current activity the moment the journey begins.
-  return TravelTimed(save: beginTravelActivityChange(db, save, nowMs), durationMs: durationMs);
-}
-
-/// Completes a timed journey started from a [TravelTimed] plan.
-TravelArrival arriveFromTravel(
-  GameDatabase db,
-  PlayerSave save,
-  String destinationId,
-  num nowMs,
-  RandomFn random,
-) {
-  return _arrivalOf(db, applyHostileTravelArrival(db, save, destinationId, nowMs, random));
+  return TravelInstant(
+    _arrivalOf(db, applyHostileTravelArrival(db, save, arrivalId, nowMs, random)),
+  );
 }
 
 /// Guild Travel: the hall is a per-guild instance, reachable from the guild

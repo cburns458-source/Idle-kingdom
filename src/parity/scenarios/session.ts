@@ -6,15 +6,9 @@ import type { PlayerSave } from '../../game/save/types'
 import { prepareSaveForWrite } from '../../game/session/persist'
 import { actionProgressAt } from '../../game/session/progress'
 import { advanceSession } from '../../game/session/tick'
-import { arriveFromTravel, planTravel, type TravelPlan } from '../../game/session/travel'
+import { planTravel, type TravelArrival, type TravelPlan } from '../../game/session/travel'
 import { scenario, type JsonValue, type ParityScenario } from '../types'
-import {
-  asDatabase,
-  contentDatabase,
-  location,
-  minimalDatabase,
-  type JsonDatabase,
-} from './contentDatabase'
+import { contentDatabase } from './contentDatabase'
 import {
   asJson,
   baseSave,
@@ -260,7 +254,7 @@ function travelSaveFor(kind: TravelSaveKind): PlayerSave {
   }
 }
 
-/** `planTravel` plus, for a journey, the arrival that ends it. */
+/** `planTravel` plus a null arrival slot kept so recorded fixtures stay shaped. */
 function plannedTravel(
   db: GameDatabase,
   save: PlayerSave,
@@ -271,30 +265,16 @@ function plannedTravel(
   const plan = planTravel(db, save, destinationId, browseMapId, nowMs, mulberry32(SEED))
   return {
     plan: planJson(plan),
-    arrival:
-      plan.kind === 'timed'
-        ? (arrivalJson(
-            arriveFromTravel(
-              db,
-              plan.save,
-              destinationId,
-              nowMs + plan.durationMs,
-              mulberry32(SEED),
-            ),
-          ) as JsonValue)
-        : null,
+    arrival: null,
   } as unknown as JsonValue
 }
 
 function planJson(plan: TravelPlan): JsonValue {
   if (plan.kind === 'blocked') return { kind: plan.kind }
-  if (plan.kind === 'instant') {
-    return { kind: plan.kind, arrival: arrivalJson(plan.arrival) }
-  }
-  return { kind: plan.kind, durationMs: plan.durationMs, save: asJson(plan.save) }
+  return { kind: plan.kind, arrival: arrivalJson(plan.arrival) }
 }
 
-function arrivalJson(arrival: ReturnType<typeof arriveFromTravel>): JsonValue {
+function arrivalJson(arrival: TravelArrival): JsonValue {
   return {
     save: asJson(arrival.save),
     forcedActivityId: arrival.forcedActivityId,
@@ -323,32 +303,6 @@ const TRAVEL_CASES: Array<{
   { name: 'submap-node', kind: 'town', destinationId: 'LOC-0011', browseMapId: 'MAP-0002' },
   { name: 'death-paused', kind: 'downed', destinationId: TOWN_LOCATION_ID, browseMapId: 'MAP-0001' },
 ]
-
-/**
- * The shipped connections all leave `Base Duration` empty, which means instant
- * travel, so the journey branch needs a database that names a duration.
- */
-function timedTravelDatabase(): JsonDatabase {
-  const base = minimalDatabase()
-  return {
-    ...base,
-    Locations: [...base.Locations, location('LOC-0003', 'Goblin Camp')],
-    TravelConnections: [
-      {
-        'Connection ID': 'TRV-0001',
-        'From Location ID': 'LOC-0002',
-        'To Location ID': 'LOC-0003',
-        Method: 'Road',
-        Direction: 'Two-way',
-        'Base Duration': 90,
-        'Required Mount / Status': null,
-        Status: 'Confirmed',
-        'Release Phase': 'Launch',
-        Notes: null,
-      },
-    ],
-  }
-}
 
 export const sessionScenarios: ParityScenario[] = [
   scenario(
@@ -407,28 +361,6 @@ export const sessionScenarios: ParityScenario[] = [
           FIXED_TIMESTAMP_MS,
         ),
     ),
-  ),
-
-  scenario(
-    'session/travel',
-    'timed-journey',
-    {
-      source: 'inline',
-      database: timedTravelDatabase() as unknown as JsonValue,
-      seed: SEED,
-      nowMs: FIXED_TIMESTAMP_MS,
-      destinationId: 'LOC-0003',
-      browseMapId: 'MAP-0001',
-      save: asJson(baseSave(asDatabase(timedTravelDatabase()))),
-    },
-    () =>
-      plannedTravel(
-        asDatabase(timedTravelDatabase()),
-        baseSave(asDatabase(timedTravelDatabase())),
-        'LOC-0003',
-        'MAP-0001',
-        FIXED_TIMESTAMP_MS,
-      ),
   ),
 
   ...(['idle', 'gathering', 'fighting', 'production'] as const).map((kind) =>
