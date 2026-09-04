@@ -75,10 +75,7 @@ class BotRunner {
   void _travel(String locationId) {
     final dest = db.locations.where((row) => row.locationId == locationId).firstOrNull;
     if (dest == null) return;
-    final plan = session.travelTo(locationId, getLocationMapId(dest));
-    if (plan is TravelTimed) {
-      session.arrive(locationId);
-    }
+    session.travelTo(locationId, getLocationMapId(dest));
   }
 
   void _startGather(String activityId) {
