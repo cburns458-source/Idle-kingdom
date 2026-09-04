@@ -608,7 +608,14 @@ void main() {
       find.byWidgetPredicate((widget) => assetNamed(widget, '/actions/')),
     );
 
-    await tester.pump(const Duration(milliseconds: 1950));
+    await tester.pump(const Duration(milliseconds: 3500));
+    final playerWaiting = tester.getRect(
+      find.descendant(of: find.bySemanticsLabel('Adventurer'), matching: find.byType(Image)),
+    );
+    expect(playerWaiting.left, closeTo(playerRest.left, 1));
+    expect(playerWaiting.top, closeTo(playerRest.top, 1));
+
+    await tester.pump(const Duration(milliseconds: 500));
 
     final playerMid = tester.getRect(
       find.descendant(of: find.bySemanticsLabel('Adventurer'), matching: find.byType(Image)),
@@ -621,6 +628,13 @@ void main() {
     expect(playerMid.top, lessThan(playerRest.top - 2));
     expect(actionMid.left, greaterThan(actionRest.left + 2));
     expect(actionMid.top, closeTo(actionRest.top, 1));
+
+    await tester.pump(const Duration(milliseconds: 1000));
+    final playerResting = tester.getRect(
+      find.descendant(of: find.bySemanticsLabel('Adventurer'), matching: find.byType(Image)),
+    );
+    expect(playerResting.left, closeTo(playerRest.left, 1));
+    expect(playerResting.top, closeTo(playerRest.top, 1));
   });
 
   testWidgets('a workstation stays still while the adventurer hops', (tester) async {
@@ -646,7 +660,6 @@ void main() {
     await tester.pump();
     await tester.tap(find.text('Start queue'));
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 250));
 
     expect(controller.save.productionRecipeId, isNotNull);
     final stationRest = tester.getRect(
@@ -656,7 +669,7 @@ void main() {
       find.descendant(of: find.bySemanticsLabel('Adventurer'), matching: find.byType(Image)),
     );
 
-    await tester.pump(const Duration(milliseconds: 1950));
+    await tester.pump(const Duration(milliseconds: 4000));
 
     final stationMid = tester.getRect(
       find.byWidgetPredicate((widget) => assetNamed(widget, '/workstations/')),
@@ -693,7 +706,7 @@ void main() {
       find.byWidgetPredicate((widget) => assetNamed(widget, '/actions/')),
     );
 
-    await tester.pump(const Duration(milliseconds: 1950));
+    await tester.pump(const Duration(milliseconds: 4000));
 
     final playerMid = tester.getRect(
       find.descendant(of: find.bySemanticsLabel('Adventurer'), matching: find.byType(Image)),
