@@ -55,13 +55,22 @@ void main() {
   });
 
   test('shows projects that make and use items', () {
-    final sword = codex.item('ITEM-0128')!;
-    expect(sword.craftedBy, isNotEmpty);
-    expect(sword.craftedBy.first.isProject, isTrue);
-    expect(sword.craftedBy.first.id, 'PRJ-0003');
+    final iron = codex.item('ITEM-0128')!;
+    expect(iron.craftedBy, isNotEmpty);
+    expect(iron.craftedBy.every((row) => row.isProject), isTrue);
+    expect(iron.craftedBy.first.id, 'PRJ-0003');
+
+    final steel = codex.item('ITEM-0130')!;
+    expect(steel.craftedBy, isNotEmpty);
+    expect(steel.craftedBy.every((row) => row.isProject), isTrue);
+    expect(steel.craftedBy.map((row) => row.id), contains('PRJ-0005'));
+    expect(steel.craftedBy.every((row) => !row.id.startsWith('RCP-')), isTrue);
 
     final leather = codex.item('ITEM-0045')!;
     expect(leather.usedIn.any((row) => row.output.itemId == 'ITEM-0308'), isTrue);
+
+    final hide = codex.item('ITEM-0197')!;
+    expect(hide.usedIn.any((row) => row.id == 'PRJ-0049'), isTrue);
   });
 
   test('lists cow drops and skeleton locations', () {

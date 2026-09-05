@@ -51,12 +51,17 @@ describe('codex index', () => {
   })
 
   it('shows projects that make and use items', () => {
-    const sword = codex.item('ITEM-0128')!
-    expect(sword.craftedBy[0]?.isProject).toBe(true)
-    expect(sword.craftedBy[0]?.id).toBe('PRJ-0003')
+    const iron = codex.item('ITEM-0128')!
+    expect(iron.craftedBy[0]?.isProject).toBe(true)
+    expect(iron.craftedBy[0]?.id).toBe('PRJ-0003')
+    const steel = codex.item('ITEM-0130')!
+    expect(steel.craftedBy.every((row) => row.isProject)).toBe(true)
+    expect(steel.craftedBy.map((row) => row.id)).toContain('PRJ-0005')
+    expect(steel.craftedBy.every((row) => !row.id.startsWith('RCP-'))).toBe(true)
     expect(codex.item('ITEM-0045')!.usedIn.some((row) => row.output.itemId === 'ITEM-0308')).toBe(
       true,
     )
+    expect(codex.item('ITEM-0197')!.usedIn.some((row) => row.id === 'PRJ-0049')).toBe(true)
   })
 
   it('lists cow drops and skeleton locations', () => {

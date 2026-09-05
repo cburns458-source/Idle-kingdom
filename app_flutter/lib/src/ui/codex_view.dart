@@ -304,6 +304,7 @@ class _ItemPage extends StatelessWidget {
                     [
                       entry.groupLabel,
                       if (entry.category case final category?) category,
+                      if (entry.subtype case final subtype?) subtype,
                     ].join(' · '),
                   ),
                 ],
