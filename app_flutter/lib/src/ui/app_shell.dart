@@ -17,6 +17,7 @@ import 'chat_sheet.dart';
 import 'desktop_side_chrome.dart';
 import 'critter_overlay.dart';
 import 'character_view.dart';
+import 'codex_view.dart';
 import 'location_view.dart';
 import 'log_view.dart';
 import 'menu_view.dart';
@@ -32,7 +33,7 @@ import 'top_hud.dart';
 import 'wardrobe_sheet.dart';
 import 'world_map_view.dart';
 
-enum GameScreen { location, map, character, log, leaderboards, guilds, account, menu }
+enum GameScreen { location, map, character, log, codex, leaderboards, guilds, account, menu }
 
 /// Sits on the chin. Kept low on the location screen so it does not cover
 /// Expand list or the activity buttons.
@@ -44,6 +45,7 @@ const double chatLauncherBottomOnMap = 192;
 const Set<GameScreen> _chinScreens = {
   GameScreen.character,
   GameScreen.log,
+  GameScreen.codex,
   GameScreen.leaderboards,
   GameScreen.guilds,
   GameScreen.account,
@@ -97,6 +99,7 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
   bool _returnHoldArmed = false;
   Timer? _returnHold;
   bool _questRewardQueued = false;
+  String? _codexItemId;
 
   GameController get controller => widget.controller;
   MultiplayerController get multiplayer => widget.multiplayer;
@@ -409,8 +412,14 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
     setState(() => _chatOpen = false);
   }
 
+  void _openCodexItem(String itemId) {
+    _codexItemId = itemId;
+    _selectScreen(GameScreen.codex);
+  }
+
   void _selectScreen(GameScreen screen) {
     if (screen == GameScreen.account) screen = GameScreen.menu;
+    if (screen != GameScreen.codex) _codexItemId = null;
     if (screen == GameScreen.location) {
       _popToLocation();
       return;
@@ -965,9 +974,20 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
           walkProgress: _mapWalk?.value,
         );
       case GameScreen.character:
-        return CharacterView(controller: controller, onClose: _popPage);
+        return CharacterView(
+          controller: controller,
+          onClose: _popPage,
+          onOpenCodexItem: _openCodexItem,
+        );
       case GameScreen.log:
         return LogView(controller: controller, onClose: _popPage);
+      case GameScreen.codex:
+        return CodexView(
+          key: ValueKey('codex-${_codexItemId ?? ''}'),
+          controller: controller,
+          onClose: _popPage,
+          initialItemId: _codexItemId,
+        );
       case GameScreen.leaderboards:
         return SocialView(
           controller: controller,

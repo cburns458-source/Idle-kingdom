@@ -23,6 +23,7 @@ class ItemDetailSheet extends StatelessWidget {
     this.onEquip,
     this.onEat,
     this.eatEnabled = true,
+    this.onOpenCodex,
   });
 
   final GameController controller;
@@ -42,6 +43,9 @@ class ItemDetailSheet extends StatelessWidget {
 
   /// False during combat so Eat stays visible but cannot fire.
   final bool eatEnabled;
+
+  /// Opens this item in the Codex encyclopedia.
+  final VoidCallback? onOpenCodex;
 
   @override
   Widget build(BuildContext context) {
@@ -140,6 +144,20 @@ class ItemDetailSheet extends StatelessWidget {
                       onPressed: () {
                         Navigator.of(context).pop();
                         onEquip!();
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                ],
+                if (onOpenCodex != null) ...[
+                  Expanded(
+                    child: GameButton(
+                      label: 'Codex',
+                      compact: true,
+                      tone: GameButtonTone.secondary,
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                        onOpenCodex!();
                       },
                     ),
                   ),

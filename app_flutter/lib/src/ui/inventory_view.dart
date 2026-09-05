@@ -48,6 +48,7 @@ class InventoryView extends StatefulWidget {
     this.showHeader = true,
     this.selectedPresetIndex,
     this.onSelectedPresetIndexChanged,
+    this.onOpenCodexItem,
   });
 
   final GameController controller;
@@ -60,6 +61,7 @@ class InventoryView extends StatefulWidget {
   /// When provided by [CharacterView], which snapshot is being edited (null = Current).
   final int? selectedPresetIndex;
   final ValueChanged<int?>? onSelectedPresetIndexChanged;
+  final ValueChanged<String>? onOpenCodexItem;
 
   @override
   State<InventoryView> createState() => _InventoryViewState();
@@ -363,6 +365,9 @@ class _InventoryViewState extends State<InventoryView> {
                 if (!mounted) return;
                 _equipAt(inventoryIndex);
               }
+            : null,
+        onOpenCodex: itemId != null && widget.onOpenCodexItem != null
+            ? () => widget.onOpenCodexItem!(itemId)
             : null,
       ),
     );

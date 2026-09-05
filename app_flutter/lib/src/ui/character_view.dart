@@ -10,10 +10,11 @@ enum CharacterTab { inventory, equipment, skills }
 
 /// Skills, the bag, and worn gear behind one chin tab.
 class CharacterView extends StatefulWidget {
-  const CharacterView({super.key, required this.controller, this.onClose});
+  const CharacterView({super.key, required this.controller, this.onClose, this.onOpenCodexItem});
 
   final GameController controller;
   final VoidCallback? onClose;
+  final ValueChanged<String>? onOpenCodexItem;
 
   @override
   State<CharacterView> createState() => _CharacterViewState();
@@ -75,6 +76,7 @@ class _CharacterViewState extends State<CharacterView> {
               showHeader: false,
               selectedPresetIndex: _selectedPresetIndex,
               onSelectedPresetIndexChanged: (index) => setState(() => _selectedPresetIndex = index),
+              onOpenCodexItem: widget.onOpenCodexItem,
             ),
             CharacterTab.equipment => InventoryView(
               key: const ValueKey(InventoryPane.equipment),
@@ -83,6 +85,7 @@ class _CharacterViewState extends State<CharacterView> {
               showHeader: false,
               selectedPresetIndex: _selectedPresetIndex,
               onSelectedPresetIndexChanged: (index) => setState(() => _selectedPresetIndex = index),
+              onOpenCodexItem: widget.onOpenCodexItem,
             ),
           },
         ),

@@ -28,7 +28,7 @@ class DesktopMenuRail extends StatelessWidget {
           children: [
             const Text('Menu', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w400)),
             const SizedBox(height: 4),
-            const MutedText('Settings, log, and social pages.'),
+            const MutedText('Settings, log, Codex, and social pages.'),
             const SizedBox(height: 16),
             for (final item in nestMenuItems)
               Padding(

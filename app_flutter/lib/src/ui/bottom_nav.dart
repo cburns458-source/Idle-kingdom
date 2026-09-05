@@ -7,6 +7,7 @@ import 'app_shell.dart';
 const List<(GameScreen, String)> nestMenuItems = [
   (GameScreen.menu, 'Settings'),
   (GameScreen.log, 'Log'),
+  (GameScreen.codex, 'Codex'),
   (GameScreen.leaderboards, 'Leaderboards'),
   (GameScreen.guilds, 'Guilds'),
 ];
