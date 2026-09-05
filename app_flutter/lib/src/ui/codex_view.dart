@@ -226,7 +226,7 @@ class _CodexViewState extends State<CodexView> {
           key: Key('codex-enemy-${entry.enemyId}'),
           leading: GameImage(enemyAssetPath(entry.enemyId), width: 36, height: 36),
           title: entry.displayName,
-          detail: [if (level != null) level, if (places.isNotEmpty) places].join(' · '),
+          detail: [?level, if (places.isNotEmpty) places].join(' · '),
           onTap: () => _pushEnemy(entry.enemyId),
         );
       },
@@ -300,13 +300,7 @@ class _ItemPage extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(entry.displayName, style: const TextStyle(fontSize: 16)),
-                  MutedText(
-                    [
-                      entry.groupLabel,
-                      if (entry.category case final category?) category,
-                      if (entry.subtype case final subtype?) subtype,
-                    ].join(' · '),
-                  ),
+                  MutedText([entry.groupLabel, ?entry.category, ?entry.subtype].join(' · ')),
                 ],
               ),
             ),
@@ -355,11 +349,12 @@ class _ItemPage extends StatelessWidget {
   }
 
   String? _obtainDetail(CodexObtainSource source) {
+    final drop = source.dropChance == null ? null : '${formatThousands(source.dropChance!)}% drop';
     final parts = <String>[
-      if (source.detail case final detail?) detail,
+      ?source.detail,
       if (source.locations.isNotEmpty) source.locations.map((row) => row.displayName).join(', '),
-      if (source.dropChance != null) '${formatThousands(source.dropChance!)}% drop',
-      if (_qty(source.minQuantity, source.maxQuantity) case final qty?) qty,
+      ?drop,
+      ?_qty(source.minQuantity, source.maxQuantity),
     ];
     return parts.isEmpty ? null : parts.join(' · ');
   }
@@ -423,7 +418,7 @@ class _EnemyPage extends StatelessWidget {
                 leading: ItemIcon(item: itemsById[drop.itemId], size: 28),
                 title: drop.displayName,
                 detail: [
-                  if (_qty(drop.minQuantity, drop.maxQuantity) case final qty?) qty,
+                  ?_qty(drop.minQuantity, drop.maxQuantity),
                   if (drop.weight != null) 'Weight ${formatThousands(drop.weight!)}',
                 ].join(' · '),
                 onTap: () => onOpenItem(drop.itemId),
@@ -443,11 +438,10 @@ class _CraftBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final header = [
-      craft.displayName,
-      if (craft.level != null) '${craft.skillName} ${formatThousands(craft.level!)}',
-      if (craft.facilityName case final facility?) facility,
-    ].join(' · ');
+    final level = craft.level == null
+        ? null
+        : '${craft.skillName} ${formatThousands(craft.level!)}';
+    final header = [craft.displayName, ?level, ?craft.facilityName].join(' · ');
     return GamePanel(
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
       child: Column(
