@@ -6,6 +6,7 @@ import '../inventory/sort.dart';
 import '../js_compat.dart';
 import '../production/recipes.dart';
 import '../projects/projects.dart';
+import '../save/generated/save_models.dart';
 import '../shops/shops.dart';
 import '../spells/spells.dart';
 
