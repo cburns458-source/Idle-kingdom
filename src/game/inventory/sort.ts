@@ -17,6 +17,45 @@ export const GROUP_ALCHEMY = 12
 export const GROUP_ARCANA = 13
 export const GROUP_OTHER = 14
 
+/** Display order for Codex filter chips; matches grouped bag order. */
+export const INVENTORY_GROUP_ORDER = [
+  GROUP_COMBAT,
+  GROUP_MINING,
+  GROUP_METALLURGY,
+  GROUP_SMITHING,
+  GROUP_ARTISANRY,
+  GROUP_COOKING,
+  GROUP_FISHING,
+  GROUP_HARVESTING,
+  GROUP_HUNTING,
+  GROUP_WOODCUTTING,
+  GROUP_CRAFTING,
+  GROUP_ALCHEMY,
+  GROUP_ARCANA,
+  GROUP_OTHER,
+] as const
+
+export const INVENTORY_GROUP_LABELS: Record<number, string> = {
+  [GROUP_COMBAT]: 'Combat',
+  [GROUP_MINING]: 'Mining',
+  [GROUP_METALLURGY]: 'Metallurgy',
+  [GROUP_SMITHING]: 'Smithing',
+  [GROUP_ARTISANRY]: 'Artisanry',
+  [GROUP_COOKING]: 'Cooking',
+  [GROUP_FISHING]: 'Fishing',
+  [GROUP_HARVESTING]: 'Harvesting',
+  [GROUP_HUNTING]: 'Hunting',
+  [GROUP_WOODCUTTING]: 'Woodcutting',
+  [GROUP_CRAFTING]: 'Crafting',
+  [GROUP_ALCHEMY]: 'Alchemy',
+  [GROUP_ARCANA]: 'Arcana',
+  [GROUP_OTHER]: 'Other',
+}
+
+export function inventoryGroupLabel(group: number): string {
+  return INVENTORY_GROUP_LABELS[group] ?? 'Other'
+}
+
 const SKILL_GROUP: Record<string, number> = {
   'SKL-0002': GROUP_MINING,
   'SKL-0003': GROUP_FISHING,

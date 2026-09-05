@@ -22,6 +22,43 @@ const int groupAlchemy = 12;
 const int groupArcana = 13;
 const int groupOther = 14;
 
+/// Display order for Codex filter chips; matches grouped bag order.
+const List<int> inventoryGroupOrder = <int>[
+  groupCombat,
+  groupMining,
+  groupMetallurgy,
+  groupSmithing,
+  groupArtisanry,
+  groupCooking,
+  groupFishing,
+  groupHarvesting,
+  groupHunting,
+  groupWoodcutting,
+  groupCrafting,
+  groupAlchemy,
+  groupArcana,
+  groupOther,
+];
+
+const Map<int, String> inventoryGroupLabels = <int, String>{
+  groupCombat: 'Combat',
+  groupMining: 'Mining',
+  groupMetallurgy: 'Metallurgy',
+  groupSmithing: 'Smithing',
+  groupArtisanry: 'Artisanry',
+  groupCooking: 'Cooking',
+  groupFishing: 'Fishing',
+  groupHarvesting: 'Harvesting',
+  groupHunting: 'Hunting',
+  groupWoodcutting: 'Woodcutting',
+  groupCrafting: 'Crafting',
+  groupAlchemy: 'Alchemy',
+  groupArcana: 'Arcana',
+  groupOther: 'Other',
+};
+
+String inventoryGroupLabel(int group) => inventoryGroupLabels[group] ?? 'Other';
+
 const Map<String, int> _skillGroup = <String, int>{
   'SKL-0002': groupMining,
   'SKL-0003': groupFishing,

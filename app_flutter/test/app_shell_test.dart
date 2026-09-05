@@ -550,7 +550,7 @@ void main() {
     expect(find.text('Show bonuses'), findsOne);
   });
 
-  testWidgets('the chin nest opens Settings, Log, Leaderboards, and Guilds', (tester) async {
+  testWidgets('the chin nest opens Settings, Log, Codex, Leaderboards, and Guilds', (tester) async {
     final controller = buildController(database, seed: startedCharacter(database));
     addTearDown(controller.dispose);
     await pumpShell(tester, controller);
@@ -567,6 +567,7 @@ void main() {
 
     expect(find.text('Settings'), findsOne);
     expect(find.text('Log'), findsOne);
+    expect(find.text('Codex'), findsOne);
     expect(find.text('Leaderboards'), findsOne);
     expect(find.text('Guilds'), findsOne);
     expect(find.text('Account'), findsNothing);
@@ -722,7 +723,7 @@ void main() {
     expect(find.byKey(const Key('chat-panel')), findsOne);
     expect(find.byTooltip('Close chat'), findsNothing);
     expect(find.text('Menu'), findsOne);
-    expect(find.text('Settings, log, and social pages.'), findsOne);
+    expect(find.text('Settings, log, Codex, and social pages.'), findsOne);
     final frame = tester.getSize(find.byType(AppShell));
     expect(frame.height, 1080);
     expect(tester.getSize(find.byKey(const Key('chat-panel'))).width, desktopRailWidth);
