@@ -51,6 +51,8 @@ class StructuredQuestObjectives {
     required this.autoStartLocationId,
     required this.autoCompleteOnTalk,
     required this.autoCompleteOnVisit,
+    required this.autoCompleteOnAction,
+    required this.requiresAnySeed,
     required this.unlockLocationIds,
     required this.rewardRecipeIds,
     required this.rewardProjectNpcIds,
@@ -89,6 +91,8 @@ class StructuredQuestObjectives {
   final String? autoStartLocationId;
   final bool autoCompleteOnTalk;
   final bool autoCompleteOnVisit;
+  final bool autoCompleteOnAction;
+  final bool requiresAnySeed;
   final List<String> unlockLocationIds;
   final List<String> rewardRecipeIds;
   final List<String> rewardProjectNpcIds;
@@ -128,6 +132,8 @@ class StructuredQuestObjectives {
     'autoStartLocationId': autoStartLocationId,
     'autoCompleteOnTalk': autoCompleteOnTalk,
     'autoCompleteOnVisit': autoCompleteOnVisit,
+    'autoCompleteOnAction': autoCompleteOnAction,
+    'requiresAnySeed': requiresAnySeed,
     'unlockLocationIds': unlockLocationIds,
     'rewardRecipeIds': rewardRecipeIds,
     'rewardProjectNpcIds': rewardProjectNpcIds,
@@ -304,6 +310,8 @@ StructuredQuestObjectives parseNotesObjectives(
     autoStartLocationId: null,
     autoCompleteOnTalk: false,
     autoCompleteOnVisit: false,
+    autoCompleteOnAction: false,
+    requiresAnySeed: false,
     unlockLocationIds: const <String>[],
     rewardRecipeIds: const <String>[],
     rewardProjectNpcIds: const <String>[],
@@ -400,6 +408,8 @@ StructuredQuestObjectives parseStructuredObjectives(QuestRow quest) {
     autoStartLocationId: _singleId(autoStartNote),
     autoCompleteOnTalk: RegExp(r'AutoCompleteOnTalk', caseSensitive: false).hasMatch(notes),
     autoCompleteOnVisit: RegExp(r'AutoCompleteOnVisit', caseSensitive: false).hasMatch(notes),
+    autoCompleteOnAction: RegExp(r'AutoCompleteOnAction', caseSensitive: false).hasMatch(notes),
+    requiresAnySeed: RegExp(r'RequiresAnySeed', caseSensitive: false).hasMatch(notes),
     unlockLocationIds: unlockNote == null ? const <String>[] : _parseIdList(unlockNote),
     rewardRecipeIds: rewardRecipeNote == null ? const <String>[] : _parseIdList(rewardRecipeNote),
     rewardProjectNpcIds: rewardNpcNote == null ? const <String>[] : _parseIdList(rewardNpcNote),

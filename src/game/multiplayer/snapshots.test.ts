@@ -54,7 +54,7 @@ describe('leaderboard snapshot builder', () => {
     expect(snapshot.boards.find((board) => board.boardKey === 'critters_collected')?.value).toBe(2)
     expect(snapshot.boards.find((board) => board.boardKey === 'bounties_completed')?.value).toBe(1)
     const launchSkills = launch.Skills.filter((skill) => skill['Release Phase'] === 'Launch')
-    expect(launchSkills.length).toBe(13)
+    expect(launchSkills.length).toBe(15)
     for (const skill of launchSkills) {
       expect(keys).toContain(`skill:${skill['Skill ID']}`)
     }

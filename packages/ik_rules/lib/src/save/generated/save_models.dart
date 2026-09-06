@@ -7,7 +7,7 @@
 
 import '../../json_support.dart';
 
-const int saveVersion = 41;
+const int saveVersion = 42;
 
 const String saveStorageKey = 'idle-kingdoms.demo.save';
 
@@ -546,6 +546,95 @@ class InventoryStack {
   }
 }
 
+/// Parallel location timer (Botany plot or hunting/fishing trap).
+/// Does not occupy the Primary Activity slot. Cap: one per location.
+class LocationTimer {
+  const LocationTimer({
+    required this.locationId,
+    required this.kind,
+    required this.inputItemId,
+    this.outputItemId,
+    required this.outputQuantity,
+    required this.skillId,
+    required this.xpReward,
+    required this.startedAt,
+    required this.durationMs,
+  });
+
+  factory LocationTimer.fromJson(Map<String, Object?> json) {
+    return LocationTimer(
+      locationId: json['locationId'] as String,
+      kind: json['kind'] as String,
+      inputItemId: json['inputItemId'] as String,
+      outputItemId: json['outputItemId'] as String?,
+      outputQuantity: json['outputQuantity'] as num,
+      skillId: json['skillId'] as String,
+      xpReward: json['xpReward'] as num,
+      startedAt: json['startedAt'] as String,
+      durationMs: json['durationMs'] as num,
+    );
+  }
+
+  final String locationId;
+
+  /// `botany` | `hunting_trap` | `fishing_trap`
+  final String kind;
+
+  /// Seed/sapling or trap item consumed to start the timer.
+  final String inputItemId;
+
+  /// Crop/log for botany; null for traps (rolled on collect).
+  final String? outputItemId;
+
+  final num outputQuantity;
+
+  final String skillId;
+
+  final num xpReward;
+
+  final String startedAt;
+
+  final num durationMs;
+
+  Map<String, Object?> toJson() {
+    return <String, Object?>{
+      'locationId': locationId,
+      'kind': kind,
+      'inputItemId': inputItemId,
+      'outputItemId': outputItemId,
+      'outputQuantity': outputQuantity,
+      'skillId': skillId,
+      'xpReward': xpReward,
+      'startedAt': startedAt,
+      'durationMs': durationMs,
+    };
+  }
+
+  LocationTimer copyWith({
+    String? locationId,
+    String? kind,
+    String? inputItemId,
+    Object? outputItemId = _unset,
+    num? outputQuantity,
+    String? skillId,
+    num? xpReward,
+    String? startedAt,
+    num? durationMs,
+  }) {
+    return LocationTimer(
+      locationId: locationId ?? this.locationId,
+      kind: kind ?? this.kind,
+      inputItemId: inputItemId ?? this.inputItemId,
+      outputItemId: outputItemId == _unset ? this.outputItemId : outputItemId as String?,
+      outputQuantity: outputQuantity ?? this.outputQuantity,
+      skillId: skillId ?? this.skillId,
+      xpReward: xpReward ?? this.xpReward,
+      startedAt: startedAt ?? this.startedAt,
+      durationMs: durationMs ?? this.durationMs,
+    );
+  }
+}
+
 /// Selected Appearance Option ID per category.
 class PlayerAppearance {
   const PlayerAppearance({
@@ -682,6 +771,7 @@ class PlayerSave {
     required this.playTimeMs,
     required this.currentHp,
     required this.maxHp,
+    required this.locationTimers,
   });
 
   factory PlayerSave.fromJson(Map<String, Object?> json) {
@@ -783,6 +873,10 @@ class PlayerSave {
       playTimeMs: json['playTimeMs'] as num,
       currentHp: json['currentHp'] as num,
       maxHp: json['maxHp'] as num,
+      locationTimers: listOf(
+        json['locationTimers'],
+        (Object? entry) => LocationTimer.fromJson(asJsonMap(entry)),
+      ),
     );
   }
 
@@ -976,6 +1070,10 @@ class PlayerSave {
 
   final num maxHp;
 
+  /// Background Botany / trap timers. At most one entry per locationId.
+  /// Runs in parallel with the Primary Activity.
+  final List<LocationTimer> locationTimers;
+
   Map<String, Object?> toJson() {
     return <String, Object?>{
       'saveVersion': saveVersion,
@@ -1048,6 +1146,7 @@ class PlayerSave {
       'playTimeMs': playTimeMs,
       'currentHp': currentHp,
       'maxHp': maxHp,
+      'locationTimers': locationTimers.map((entry) => entry.toJson()).toList(),
     };
   }
 
@@ -1122,6 +1221,7 @@ class PlayerSave {
     num? playTimeMs,
     num? currentHp,
     num? maxHp,
+    List<LocationTimer>? locationTimers,
   }) {
     return PlayerSave(
       saveVersion: saveVersion ?? this.saveVersion,
@@ -1233,6 +1333,7 @@ class PlayerSave {
       playTimeMs: playTimeMs ?? this.playTimeMs,
       currentHp: currentHp ?? this.currentHp,
       maxHp: maxHp ?? this.maxHp,
+      locationTimers: locationTimers ?? this.locationTimers,
     );
   }
 }

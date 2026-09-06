@@ -50,6 +50,8 @@ export interface StructuredQuestObjectives {
   autoCompleteOnTalk: boolean
   /** Complete the quest when the last Visit finishes. */
   autoCompleteOnVisit: boolean
+  autoCompleteOnAction: boolean
+  requiresAnySeed: boolean
   unlockLocationIds: string[]
   rewardRecipeIds: string[]
   rewardProjectNpcIds: string[]

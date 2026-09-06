@@ -305,7 +305,7 @@ describe('quest tours', () => {
     if (!finished.ok) return
     expect(getQuestProgress(finished.save, 'QST-0006').status).toBe('completed')
     expect(finished.save.inventory.find((stack) => stack.itemId === 'ITEM-0058')?.quantity).toBe(5)
-    expect(npcsAtLocationForSave(launch, finished.save, 'LOC-0001')).toEqual([])
+    expect(npcsAtLocationForSave(launch, finished.save, 'LOC-0001').map((npc) => npc['NPC ID'])).toEqual(['NPC-0014'])
   })
 
   it('walks Forged in Fire and Going Deeper, and keeps a player already in the shaft', () => {

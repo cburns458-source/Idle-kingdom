@@ -825,6 +825,43 @@ class GameController extends ChangeNotifier {
     announce(result.message!);
   }
 
+  void plantBestBotanySeedHere() {
+    final result = plantBestBotanySeed(db, save);
+    if (!result.ok) {
+      report(result.reason);
+      return;
+    }
+    commit(result.save!);
+    announce('Seed planted.');
+  }
+
+  void placeTrapHere(String trapItemId) {
+    final result = placeTrap(db, save, trapItemId);
+    if (!result.ok) {
+      report(result.reason);
+      return;
+    }
+    commit(result.save!);
+    announce('Trap placed.');
+  }
+
+  void collectTimerAt(String locationId) {
+    final result = collectLocationTimer(db, save, locationId);
+    if (!result.ok) {
+      report(result.reason);
+      return;
+    }
+    commit(result.save!);
+    final parts = <String>[];
+    for (final loot in result.loot) {
+      parts.add('${loot.displayName} x${loot.quantity}');
+    }
+    if (result.xpGained > 0) {
+      parts.add('+${result.xpGained} XP');
+    }
+    announce(parts.isEmpty ? 'Collected.' : 'Collected: ${parts.join(', ')}.');
+  }
+
   void toggleFavorite(String activityId) {
     commit(toggleFavoriteActivity(save, save.currentLocationId, activityId));
   }

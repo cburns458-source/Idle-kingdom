@@ -621,6 +621,31 @@ final List<SaveMigration> saveMigrations = <SaveMigration>[
       return next;
     },
   ),
+  SaveMigration(
+    fromVersion: 41,
+    toVersion: 42,
+    migrate: (save, nowMs) {
+      final next = _bumped(save, 42);
+      final skills = <Map<String, Object?>>[
+        for (final row in (save['skills'] as List? ?? const <Object?>[]))
+          if (row is Map) Map<String, Object?>.from(row),
+      ];
+      final existing = <String>{
+        for (final row in skills)
+          if (row['skillId'] is String) row['skillId']! as String,
+      };
+      for (final skillId in <String>['SKL-0014', 'SKL-0015']) {
+        if (!existing.contains(skillId)) {
+          skills.add(<String, Object?>{'skillId': skillId, 'level': 1, 'xp': 0});
+        }
+      }
+      next['skills'] = skills;
+      next['locationTimers'] = save['locationTimers'] is List
+          ? save['locationTimers']
+          : <Object?>[];
+      return next;
+    },
+  ),
 ];
 
 /// Thrown when a save cannot be brought to the current version.

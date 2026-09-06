@@ -113,6 +113,8 @@ export const DEPTHS_MAP_NODE_LAYOUT: Record<string, NodePosition> = {
   'LOC-0041': { x: 50, y: 86 },
   // The Shallows landing, sunlit water past the stairs
   'LOC-0043': { x: 50, y: 62 },
+  // Kelp Forest, left-middle of the submap
+  'LOC-0045': { x: 25, y: 48 },
   // The Depths plaza farther down
   'LOC-0042': { x: 50, y: 36 },
 }

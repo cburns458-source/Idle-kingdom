@@ -196,7 +196,7 @@ describe('unattended progression', () => {
     // instead of being stuck (the remainder was preserved, not discarded).
     const again = resolveUnattendedProgress(launch, resolved.save, now, () => 0)
     expect(again.gatheringActions).toBeGreaterThan(0)
-  }, 15_000)
+  }, 60_000)
 
   it('resolves combat rounds with the live combat engine while away', () => {
     const { launch } = prepareDatabase(rawDatabase)

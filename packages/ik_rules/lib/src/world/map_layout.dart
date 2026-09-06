@@ -108,6 +108,8 @@ const Map<String, NodePosition> depthsMapNodeLayout = <String, NodePosition>{
   'LOC-0041': NodePosition(x: 50, y: 86),
   // The Shallows landing, sunlit water past the stairs
   'LOC-0043': NodePosition(x: 50, y: 62),
+  // Kelp Forest, left-middle of the submap
+  'LOC-0045': NodePosition(x: 25, y: 48),
   // The Depths plaza farther down
   'LOC-0042': NodePosition(x: 50, y: 36),
 };

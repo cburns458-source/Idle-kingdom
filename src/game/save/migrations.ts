@@ -638,6 +638,25 @@ export const SAVE_MIGRATIONS: SaveMigration[] = [
       saveVersion: 41,
     }),
   },
+  {
+    fromVersion: 41,
+    toVersion: 42,
+    migrate: (save) => {
+      const skillIds = new Set(save.skills.map((row) => row.skillId))
+      const skills = [...save.skills]
+      for (const skillId of ['SKL-0014', 'SKL-0015']) {
+        if (!skillIds.has(skillId)) {
+          skills.push({ skillId, level: 1, xp: 0 })
+        }
+      }
+      return {
+        ...save,
+        skills,
+        locationTimers: Array.isArray(save.locationTimers) ? save.locationTimers : [],
+        saveVersion: 42,
+      }
+    },
+  },
 ]
 
 export function migrateSave(save: PlayerSave, nowMs: number = Date.now()): PlayerSave {

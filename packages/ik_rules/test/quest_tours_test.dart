@@ -117,20 +117,23 @@ void main() {
     final fennel = db.npcs.firstWhere((row) => row.raw['NPC ID'] == 'NPC-0014');
     expect(fennel.raw['Location ID'], 'LOC-0001');
 
+    NpcQuestBlock gettingStarted(PlayerSave save) => npcConversation(
+      db,
+      save,
+      fennel,
+    ).quests.singleWhere((quest) => quest.questId == 'QST-0006');
+
     var save = _save(db, locationId: 'LOC-0001');
     final accepted = acceptQuest(db, save, 'QST-0006');
     expect(accepted.ok, isTrue);
     save = accepted.save!;
 
-    expect(npcConversation(db, save, fennel).quests.single.canTalk, isFalse);
-    expect(npcConversation(db, save, fennel).quests.single.canTurnIn, isFalse);
+    expect(gettingStarted(save).canTalk, isFalse);
+    expect(gettingStarted(save).canTurnIn, isFalse);
 
     save = addItemToInventory(save, 'ITEM-0025', 5);
-    expect(npcConversation(db, save, fennel).quests.single.canTalk, isTrue);
-    expect(
-      npcConversation(db, save, fennel).quests.single.talkLine,
-      contains('You can cook them at the kitchen'),
-    );
+    expect(gettingStarted(save).canTalk, isTrue);
+    expect(gettingStarted(save).talkLine, contains('You can cook them at the kitchen'));
     save = applyQuestTalkProgress(db, save, 'NPC-0014');
     expect(save.inventory.where((stack) => stack.itemId == 'ITEM-0025').single.quantity, 5);
 
@@ -138,15 +141,12 @@ void main() {
     save = applyQuestProcessProgress(db, save, 'RCP-0001', 5);
     save = addItemToInventory(save, 'ITEM-0058', 5);
     save = save.copyWith(currentLocationId: 'LOC-0001');
-    expect(npcConversation(db, save, fennel).quests.single.talkLine, contains('sword and shield'));
+    expect(gettingStarted(save).talkLine, contains('sword and shield'));
 
     final advice = talkWithQuestNpc(db, save, 'NPC-0014');
     expect(advice.ok, isTrue);
     expect(getQuestProgress(advice.save!, 'QST-0006').status, 'active');
-    expect(
-      npcConversation(db, advice.save!, fennel).quests.single.talkLine,
-      contains('Good luck on your adventure'),
-    );
+    expect(gettingStarted(advice.save!).talkLine, contains('Good luck on your adventure'));
 
     final finished = talkWithQuestNpc(db, advice.save!, 'NPC-0014');
     expect(finished.ok, isTrue);
@@ -155,7 +155,11 @@ void main() {
       finished.save!.inventory.where((stack) => stack.itemId == 'ITEM-0058').single.quantity,
       5,
     );
-    expect(npcsAtLocationForSave(db, finished.save!, 'LOC-0001'), isEmpty);
+    // Fennel stays to teach Botany (QST-0011) after Getting Started.
+    expect(
+      npcsAtLocationForSave(db, finished.save!, 'LOC-0001').map((npc) => npc.raw['NPC ID']),
+      contains('NPC-0014'),
+    );
   });
 
   test('Forged in Fire unlocks the forge; Going Deeper opens the shaft without kicking anyone', () {

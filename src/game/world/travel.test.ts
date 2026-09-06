@@ -316,12 +316,29 @@ describe('travel rules', () => {
     expect(enterSubMapLabel(launch, sunken)).toBe('Enter The Depths')
 
     const forestNodes = locationsForMapView(launch, FOREST_MAP_ID).map((row) => row['Location ID'])
-    expect(forestNodes).toEqual(
+    // Vine gate: only Forest Path is open until Through the Thicket unlocks the glade and grove.
+    expect(forestNodes).toEqual(expect.arrayContaining([FOREST_PATH_ID]))
+    expect(forestNodes).not.toContain(STARLIGHT_GLADE_ID)
+    expect(forestNodes).not.toContain(OLD_ENT_GROVE_ID)
+    expect(forestNodes).not.toContain(FOREST_GATEWAY_ID)
+    expect(canTravelTo(launch, FOREST_PATH_ID, OLD_ENT_GROVE_ID, FOREST_MAP_ID)).toBe(false)
+    expect(canTravelTo(launch, FOREST_PATH_ID, STARLIGHT_GLADE_ID, FOREST_MAP_ID)).toBe(false)
+    const forestUnlocked = locationsForMapView(launch, FOREST_MAP_ID, {
+      unlockedLocationIds: [STARLIGHT_GLADE_ID, OLD_ENT_GROVE_ID],
+    }).map((row) => row['Location ID'])
+    expect(forestUnlocked).toEqual(
       expect.arrayContaining([FOREST_PATH_ID, STARLIGHT_GLADE_ID, OLD_ENT_GROVE_ID]),
     )
-    expect(forestNodes).not.toContain(FOREST_GATEWAY_ID)
-    expect(canTravelTo(launch, FOREST_PATH_ID, OLD_ENT_GROVE_ID, FOREST_MAP_ID)).toBe(true)
-    expect(canTravelTo(launch, FOREST_PATH_ID, STARLIGHT_GLADE_ID, FOREST_MAP_ID)).toBe(true)
+    expect(
+      canTravelTo(launch, FOREST_PATH_ID, OLD_ENT_GROVE_ID, FOREST_MAP_ID, {
+        unlockedLocationIds: [OLD_ENT_GROVE_ID],
+      }),
+    ).toBe(true)
+    expect(
+      canTravelTo(launch, FOREST_PATH_ID, STARLIGHT_GLADE_ID, FOREST_MAP_ID, {
+        unlockedLocationIds: [STARLIGHT_GLADE_ID],
+      }),
+    ).toBe(true)
 
     const depthNodes = locationsForMapView(launch, DEPTHS_MAP_ID).map((row) => row['Location ID'])
     expect(depthNodes).toEqual(expect.arrayContaining([THE_SHALLOWS_ID, THE_DEPTHS_ID]))

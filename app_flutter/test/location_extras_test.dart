@@ -481,9 +481,10 @@ void main() {
       find.descendant(of: find.byType(WorldMapView), matching: find.text('Forest Path')),
       findsWidgets,
     );
+    // Grove stays gated until Through the Thicket clears the vines.
     expect(
       find.descendant(of: find.byType(WorldMapView), matching: find.text('Old Ent Grove')),
-      findsWidgets,
+      findsNothing,
     );
     expect(find.text('Forest Gate'), findsNothing);
   });

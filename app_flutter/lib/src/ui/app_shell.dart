@@ -30,10 +30,22 @@ import 'playable_frame.dart';
 import 'social_alert.dart';
 import 'social_view.dart';
 import 'top_hud.dart';
+import 'timers_view.dart';
 import 'wardrobe_sheet.dart';
 import 'world_map_view.dart';
 
-enum GameScreen { location, map, character, log, codex, leaderboards, guilds, account, menu }
+enum GameScreen {
+  location,
+  map,
+  character,
+  log,
+  codex,
+  timers,
+  leaderboards,
+  guilds,
+  account,
+  menu,
+}
 
 /// Sits on the chin. Kept low on the location screen so it does not cover
 /// Expand list or the activity buttons.
@@ -46,6 +58,7 @@ const Set<GameScreen> _chinScreens = {
   GameScreen.character,
   GameScreen.log,
   GameScreen.codex,
+  GameScreen.timers,
   GameScreen.leaderboards,
   GameScreen.guilds,
   GameScreen.account,
@@ -988,6 +1001,8 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
           onClose: _popPage,
           initialItemId: _codexItemId,
         );
+      case GameScreen.timers:
+        return TimersView(controller: controller, onClose: _popPage);
       case GameScreen.leaderboards:
         return SocialView(
           controller: controller,

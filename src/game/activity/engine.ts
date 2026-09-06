@@ -25,6 +25,7 @@ import type {
 } from './types'
 import { addLifetimeStat, recordGatheredDrops } from '../achievements/progress'
 import { applyQuestActionProgress } from '../quests/progress'
+import { applyQuestAutoCompleteOnAction } from '../quests/quests'
 import { WEAPON_TOOL_SLOT_ID } from '../save/types'
 import { GATHERING_ACTIONS_STAT } from '../log/milestones'
 import { bonusSkillXpForAction, bowHuntingCombatXpBonus } from './bonusXp'
@@ -242,6 +243,32 @@ export function completeGatheringAction(
   action: ActionRow,
   random: RandomFn = Math.random,
 ): { save: PlayerSave; result: ActionCompletionResult } {
+  const notes = action.Notes ?? ''
+  const failChanceMatch = /FailChance:(\d+)/i.exec(notes)
+  const failDamageMatch = /FailDamagePercent:(\d+)/i.exec(notes)
+  if (/ThieveryPickpocket/i.test(notes) && failChanceMatch) {
+    const failChance = Number(failChanceMatch[1])
+    if (random() * 100 < failChance) {
+      const damagePercent = Number(failDamageMatch?.[1] ?? 10)
+      const damage = Math.max(1, Math.floor((save.maxHp * damagePercent) / 100))
+      const nextHp = Math.max(1, save.currentHp - damage)
+      return {
+        save: withoutHeldAction({ ...save, currentHp: nextHp }, save.currentActivityId),
+        result: {
+          actionId: action['Action ID'],
+          actionName: action['Display Name'],
+          skillId: action['Relevant Skill ID'],
+          xpGained: 0,
+          bonusXp: [],
+          xpRewards: [],
+          goldGained: 0,
+          loot: [],
+          leveledUpTo: null,
+        },
+      }
+    }
+  }
+
   const rewarded = resolveActionRewards(db, save, action, random)
   const xpAmount = gatheringXpReward(db, save, action)
   let next = clearActivePotionEffect(rewarded.save)
@@ -294,6 +321,7 @@ export function completeGatheringAction(
     )
   }
   next = applyQuestActionProgress(db, next, action['Action ID'])
+  next = applyQuestAutoCompleteOnAction(db, next).save
 
   return {
     save: withoutHeldAction(next, save.currentActivityId),
