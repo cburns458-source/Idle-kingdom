@@ -249,8 +249,12 @@ GatheringCompletion completeGatheringAction(
   final notes = action.raw['Notes'];
   final notesText = notes is String ? notes : '';
   final failChanceMatch = RegExp(r'FailChance:(\d+)', caseSensitive: false).firstMatch(notesText);
-  final failDamageMatch = RegExp(r'FailDamagePercent:(\d+)', caseSensitive: false).firstMatch(notesText);
-  if (RegExp(r'ThieveryPickpocket', caseSensitive: false).hasMatch(notesText) && failChanceMatch != null) {
+  final failDamageMatch = RegExp(
+    r'FailDamagePercent:(\d+)',
+    caseSensitive: false,
+  ).firstMatch(notesText);
+  if (RegExp(r'ThieveryPickpocket', caseSensitive: false).hasMatch(notesText) &&
+      failChanceMatch != null) {
     final failChance = num.parse(failChanceMatch.group(1)!);
     if (random() * 100 < failChance) {
       final damagePercent = num.parse(failDamageMatch?.group(1) ?? '10');

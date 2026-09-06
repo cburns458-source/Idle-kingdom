@@ -23,18 +23,27 @@ class TimersView extends StatelessWidget {
         final nowMs = DateTime.now().millisecondsSinceEpoch;
         final timers = save.locationTimers;
         return ColoredBox(
-          color: chrome.sheet,
+          color: chrome.panel,
           child: SafeArea(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                PageHeader(title: 'Timers', onClose: onClose),
+                if (onClose != null)
+                  PageHeader(title: 'Timers', onClose: onClose!)
+                else
+                  const Padding(
+                    padding: EdgeInsets.fromLTRB(12, 12, 12, 8),
+                    child: Text(
+                      'Timers',
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.w400),
+                    ),
+                  ),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
                   child: Text(
                     'One timer per location. Botany plots and traps run beside your '
                     'Primary Activity.',
-                    style: TextStyle(color: chrome.muted, height: 1.35),
+                    style: TextStyle(color: chrome.panelMuted, height: 1.35),
                   ),
                 ),
                 Padding(
@@ -64,13 +73,13 @@ class TimersView extends StatelessWidget {
                       ? Center(
                           child: Text(
                             'No active timers.',
-                            style: TextStyle(color: chrome.muted),
+                            style: TextStyle(color: chrome.panelMuted),
                           ),
                         )
                       : ListView.separated(
                           padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
                           itemCount: timers.length,
-                          separatorBuilder: (_, __) => const SizedBox(height: 8),
+                          separatorBuilder: (_, _) => const SizedBox(height: 8),
                           itemBuilder: (context, index) {
                             final timer = timers[index];
                             final location = db.locations.firstWhere(
@@ -80,9 +89,10 @@ class TimersView extends StatelessWidget {
                             final ready = timerIsReady(timer, nowMs);
                             final remainMs = (timerCompletesAtMs(timer) - nowMs).clamp(0, 1 << 62);
                             final remainSec = (remainMs / 1000).ceil();
-                            final title = location.raw['Display Name'] as String? ?? timer.locationId;
+                            final title =
+                                location.raw['Display Name'] as String? ?? timer.locationId;
                             return Material(
-                              color: chrome.card,
+                              color: chrome.slot,
                               borderRadius: BorderRadius.circular(12),
                               child: ListTile(
                                 title: Text(title),
@@ -93,7 +103,8 @@ class TimersView extends StatelessWidget {
                                 ),
                                 trailing: ready
                                     ? FilledButton(
-                                        onPressed: () => controller.collectTimerAt(timer.locationId),
+                                        onPressed: () =>
+                                            controller.collectTimerAt(timer.locationId),
                                         child: const Text('Collect'),
                                       )
                                     : null,

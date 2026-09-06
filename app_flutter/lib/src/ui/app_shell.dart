@@ -34,7 +34,18 @@ import 'timers_view.dart';
 import 'wardrobe_sheet.dart';
 import 'world_map_view.dart';
 
-enum GameScreen { location, map, character, log, codex, timers, leaderboards, guilds, account, menu }
+enum GameScreen {
+  location,
+  map,
+  character,
+  log,
+  codex,
+  timers,
+  leaderboards,
+  guilds,
+  account,
+  menu,
+}
 
 /// Sits on the chin. Kept low on the location screen so it does not cover
 /// Expand list or the activity buttons.

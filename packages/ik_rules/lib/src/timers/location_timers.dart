@@ -24,11 +24,7 @@ const Set<String> fishingTrapLocations = <String>{'LOC-0003', 'LOC-0004'};
 const num trapDurationMs = 5 * 60 * 1000;
 
 class BotanySeedSpec {
-  const BotanySeedSpec({
-    required this.outputItemId,
-    required this.growSeconds,
-    required this.xp,
-  });
+  const BotanySeedSpec({required this.outputItemId, required this.growSeconds, required this.xp});
 
   final String outputItemId;
   final num growSeconds;
@@ -140,15 +136,11 @@ bool courtyardBotanyUnlocked(PlayerSave save) {
   return (
     ok: true,
     save: removed.copyWith(
-      locationTimers: [
-        ...removed.locationTimers.where((row) => row.locationId != loc),
-        timer,
-      ],
+      locationTimers: [...removed.locationTimers.where((row) => row.locationId != loc), timer],
     ),
     reason: '',
   );
 }
-
 
 ({bool ok, PlayerSave? save, String reason}) plantBestBotanySeed(
   GameDatabase db,
@@ -179,13 +171,21 @@ bool courtyardBotanyUnlocked(PlayerSave save) {
   if (have < 1) return (ok: false, kind: null, reason: 'You do not have that trap.');
   if (trapItemId == huntingTrapItemId) {
     if (!huntingTrapLocations.contains(loc)) {
-      return (ok: false, kind: null, reason: 'Hunting traps only work in the Kingswoods and Meadow.');
+      return (
+        ok: false,
+        kind: null,
+        reason: 'Hunting traps only work in the Kingswoods and Meadow.',
+      );
     }
     return (ok: true, kind: 'hunting_trap', reason: '');
   }
   if (trapItemId == fishingTrapItemId) {
     if (!fishingTrapLocations.contains(loc)) {
-      return (ok: false, kind: null, reason: 'Fishing traps only work at the Goblin Camp and Docks.');
+      return (
+        ok: false,
+        kind: null,
+        reason: 'Fishing traps only work at the Goblin Camp and Docks.',
+      );
     }
     return (ok: true, kind: 'fishing_trap', reason: '');
   }
@@ -222,10 +222,7 @@ bool courtyardBotanyUnlocked(PlayerSave save) {
   return (
     ok: true,
     save: removed.copyWith(
-      locationTimers: [
-        ...removed.locationTimers.where((row) => row.locationId != loc),
-        timer,
-      ],
+      locationTimers: [...removed.locationTimers.where((row) => row.locationId != loc), timer],
     ),
     reason: '',
   );
@@ -314,14 +311,17 @@ LocationTimerCollectResult collectLocationTimer(
   if (timer.kind == 'botany') {
     final outputId = timer.outputItemId;
     if (outputId == null) {
-      return const LocationTimerCollectResult(ok: false, reason: 'Botany timer is missing its crop.');
+      return const LocationTimerCollectResult(
+        ok: false,
+        reason: 'Botany timer is missing its crop.',
+      );
     }
     final granted = addItemsToInventory(next, outputId, timer.outputQuantity, null, false, db);
     next = granted.save;
     if (granted.added > 0) {
       final name = db.items
-              .firstWhereOrNull((item) => item.raw['Item ID'] == outputId)
-              ?.raw['Display Name'];
+          .firstWhereOrNull((item) => item.raw['Item ID'] == outputId)
+          ?.raw['Display Name'];
       loot.add(
         LootGrant(
           itemId: outputId,
@@ -338,8 +338,8 @@ LocationTimerCollectResult collectLocationTimer(
       xpGained = rolled.xp;
       if (granted.added > 0) {
         final name = db.items
-                .firstWhereOrNull((item) => item.raw['Item ID'] == rolled.itemId)
-                ?.raw['Display Name'];
+            .firstWhereOrNull((item) => item.raw['Item ID'] == rolled.itemId)
+            ?.raw['Display Name'];
         loot.add(
           LootGrant(
             itemId: rolled.itemId,

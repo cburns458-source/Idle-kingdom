@@ -862,7 +862,6 @@ class GameController extends ChangeNotifier {
     announce(parts.isEmpty ? 'Collected.' : 'Collected: ${parts.join(', ')}.');
   }
 
-
   void toggleFavorite(String activityId) {
     commit(toggleFavoriteActivity(save, save.currentLocationId, activityId));
   }
