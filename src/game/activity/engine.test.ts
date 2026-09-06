@@ -157,6 +157,7 @@ describe('primary activity engine', () => {
     expect(woodland.map((pair) => pair.action['Action ID']).sort()).toEqual([
       'ACN-0107',
       'ACN-0108',
+      'ACN-0184',
     ])
 
     const pasture = eligiblePoolEntries(launch, 'POOL-0001')
@@ -182,9 +183,10 @@ describe('primary activity engine', () => {
     expect(meadow.map((pair) => pair.action['Action ID']).sort()).toEqual([
       'ACN-0105',
       'ACN-0106',
+      'ACN-0184',
     ])
-    // Weights are equal (50/50); high roll selects the second entry (Fernleaf).
-    expect(pickWeightedAction(meadow, () => 0.99)?.['Action ID']).toBe('ACN-0106')
+    // Weights 50/50/25; mid roll lands on the second entry (Fernleaf).
+    expect(pickWeightedAction(meadow, () => 0.5)?.['Action ID']).toBe('ACN-0106')
   })
 
   it('hunts rabbit and duck in the meadows, elk and pheasant in the kingswoods', () => {

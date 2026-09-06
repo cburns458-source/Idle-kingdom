@@ -1,0 +1,111 @@
+{
+  "botanyBySeedItemId": {
+    "ITEM-0324": {
+      "output": "ITEM-0025",
+      "grow": 120,
+      "xp": 50
+    },
+    "ITEM-0325": {
+      "output": "ITEM-0026",
+      "grow": 300,
+      "xp": 200
+    },
+    "ITEM-0326": {
+      "output": "ITEM-0015",
+      "grow": 180,
+      "xp": 80
+    },
+    "ITEM-0327": {
+      "output": "ITEM-0016",
+      "grow": 210,
+      "xp": 100
+    },
+    "ITEM-0328": {
+      "output": "ITEM-0017",
+      "grow": 210,
+      "xp": 100
+    },
+    "ITEM-0329": {
+      "output": "ITEM-0018",
+      "grow": 270,
+      "xp": 140
+    },
+    "ITEM-0330": {
+      "output": "ITEM-0019",
+      "grow": 330,
+      "xp": 180
+    },
+    "ITEM-0331": {
+      "output": "ITEM-0219",
+      "grow": 480,
+      "xp": 300
+    },
+    "ITEM-0332": {
+      "output": "ITEM-0030",
+      "grow": 120,
+      "xp": 50
+    },
+    "ITEM-0333": {
+      "output": "ITEM-0031",
+      "grow": 150,
+      "xp": 60
+    },
+    "ITEM-0334": {
+      "output": "ITEM-0032",
+      "grow": 150,
+      "xp": 60
+    },
+    "ITEM-0335": {
+      "output": "ITEM-0028",
+      "grow": 150,
+      "xp": 60
+    },
+    "ITEM-0336": {
+      "output": "ITEM-0033",
+      "grow": 180,
+      "xp": 80
+    },
+    "ITEM-0337": {
+      "output": "ITEM-0207",
+      "grow": 240,
+      "xp": 120
+    },
+    "ITEM-0338": {
+      "output": "ITEM-0208",
+      "grow": 300,
+      "xp": 150
+    },
+    "ITEM-0339": {
+      "output": "ITEM-0027",
+      "grow": 120,
+      "xp": 50
+    },
+    "ITEM-0340": {
+      "output": "ITEM-0029",
+      "grow": 150,
+      "xp": 60
+    },
+    "ITEM-0349": {
+      "output": "ITEM-0341",
+      "grow": 120,
+      "xp": 50
+    }
+  },
+  "huntingTrapItemId": "ITEM-0346",
+  "fishingTrapItemId": "ITEM-0347",
+  "trapSites": {
+    "hunting": [
+      "LOC-0008",
+      "LOC-0009"
+    ],
+    "fishing": [
+      "LOC-0003",
+      "LOC-0004"
+    ]
+  },
+  "pirateHookItemId": "ITEM-0344",
+  "dragonGlovesItemId": "ITEM-0345",
+  "mushroomItemId": "ITEM-0341",
+  "kelpItemId": "ITEM-0342",
+  "driedKelpItemId": "ITEM-0343"
+}

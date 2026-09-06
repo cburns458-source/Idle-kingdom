@@ -122,6 +122,14 @@ export function playerDamageRange(
     max = configNumber(db, 'unarmed_max_damage', 30) + enchantBonus
   }
 
+  // Gloves with Min Damage (Pirate Hook / Dragon Gloves) raise minimum only.
+  const glovesMinBonus = equippedRows(db, save).reduce((sum, row) => {
+    if (row['Slot ID'] !== 'SLOT-0007') return sum
+    const bonus = row['Min Damage']
+    return typeof bonus === 'number' && Number.isFinite(bonus) ? sum + bonus : sum
+  }, 0)
+  min += glovesMinBonus
+
   return scaleDamageRange(min, max, combined)
 }
 

@@ -9,6 +9,7 @@ import type { GameDatabase, SkillRow } from '../data/types'
 import { unlockRecipeId } from '../recipes/knowledge'
 import { removeIngredients } from '../production/inventory'
 import type { PlayerSave, QuestProgress } from '../save/types'
+import { inventoryHasAnyBotanySeed } from '../timers/locationTimers'
 import { unlockLocation } from '../world/submaps'
 import { meetsTotalLevelRequirement, isMiniquest } from './miniquests'
 import { parseStructuredObjectives, questObjectiveProgress } from './objectives'
@@ -65,7 +66,7 @@ export function questsTouchingNpc(
 
 /** Skill and prior-quest gates from quest Notes. */
 export function questAvailableForSave(
-  _db: GameDatabase,
+  db: GameDatabase,
   save: PlayerSave,
   quest: QuestRow,
 ): boolean {
@@ -76,6 +77,9 @@ export function questAvailableForSave(
   }
   for (const requiredQuestId of parsed.requiresQuestIds) {
     if (getQuestProgress(save, requiredQuestId).status !== 'completed') return false
+  }
+  if (parsed.requiresAnySeed) {
+    if (!inventoryHasAnyBotanySeed(db, save)) return false
   }
   return true
 }
@@ -477,6 +481,34 @@ export function applyQuestAutoCompleteOnVisit(
   for (const quest of asQuestRows(db)) {
     const parsed = parseStructuredObjectives(quest)
     if (!parsed.autoCompleteOnVisit) continue
+    if (getQuestProgress(next, quest['Quest ID']).status !== 'active') continue
+    if (!questAllStepsComplete(db, next, quest)) continue
+    const completed = completeQuest(db, next, quest['Quest ID'], { ignoreLocation: true })
+    if (completed.ok) {
+      next = completed.save
+      completions.push({
+        questId: quest['Quest ID'],
+        questName: completed.questName,
+        rewards: completed.rewards.map((reward) => reward.label),
+        pendingSkillXp: completed.pendingSkillXp,
+        rewardBundle: completed.rewardBundle,
+        message: completed.message,
+      })
+    }
+  }
+  return { save: next, completions }
+}
+
+/** Completes action-finish quests after gathering/combat action progress is applied. */
+export function applyQuestAutoCompleteOnAction(
+  db: GameDatabase,
+  save: PlayerSave,
+): { save: PlayerSave; completions: QuestArrivalCompletion[] } {
+  let next = save
+  const completions: QuestArrivalCompletion[] = []
+  for (const quest of asQuestRows(db)) {
+    const parsed = parseStructuredObjectives(quest)
+    if (!parsed.autoCompleteOnAction) continue
     if (getQuestProgress(next, quest['Quest ID']).status !== 'active') continue
     if (!questAllStepsComplete(db, next, quest)) continue
     const completed = completeQuest(db, next, quest['Quest ID'], { ignoreLocation: true })

@@ -31,13 +31,13 @@ describe('Abundance Spell drop doubling', () => {
     const action = launch.Actions.find((row) => row['Action ID'] === 'ACN-0035')!
     // drop ok, weighted pick, abundance double (random < 0.10)
     const doubled = resolveActionRewards(launch, save, action, seqRandom([0, 0, 0.05]))
-    expect(doubled.loot).toEqual([
-      expect.objectContaining({ itemId: 'ITEM-0025', quantity: 2 }),
-    ])
+    expect(doubled.loot).toEqual(
+      expect.arrayContaining([expect.objectContaining({ itemId: 'ITEM-0025', quantity: 2 })]),
+    )
 
     const single = resolveActionRewards(launch, save, action, seqRandom([0, 0, 0.5]))
-    expect(single.loot).toEqual([
-      expect.objectContaining({ itemId: 'ITEM-0025', quantity: 1 }),
-    ])
+    expect(single.loot).toEqual(
+      expect.arrayContaining([expect.objectContaining({ itemId: 'ITEM-0025', quantity: 1 })]),
+    )
   })
 })

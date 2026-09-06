@@ -118,6 +118,14 @@ DamageRange playerDamageRange(GameDatabase db, PlayerSave save) {
     }
   }
 
+  // Gloves with Min Damage (Pirate Hook / Dragon Gloves) raise minimum only.
+  final glovesMinBonus = _equippedRows(db, save).fold<num>(0, (sum, row) {
+    if (row.raw['Slot ID'] != 'SLOT-0007') return sum;
+    final bonus = row.raw['Min Damage'];
+    return bonus is num ? sum + bonus : sum;
+  });
+  base = DamageRange(min: base.min + glovesMinBonus, max: base.max);
+
   return _scaleDamageRange(base.min, base.max, combined);
 }
 

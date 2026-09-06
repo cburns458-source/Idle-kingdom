@@ -19,6 +19,7 @@ import 'miniquests.dart';
 import 'objectives.dart';
 import 'progress.dart';
 import 'steps.dart';
+import '../timers/location_timers.dart';
 
 /// Set when the player pays AcceptGold without starting the quest yet.
 const String acceptGoldFlag = 'accept-gold';
@@ -72,6 +73,9 @@ bool questAvailableForSave(GameDatabase db, PlayerSave save, QuestRow quest) {
   }
   for (final requiredQuestId in parsed.requiresQuestIds) {
     if (getQuestProgress(save, requiredQuestId).status != 'completed') return false;
+  }
+  if (parsed.requiresAnySeed) {
+    if (!inventoryHasAnyBotanySeed(db, save)) return false;
   }
   return true;
 }
@@ -460,6 +464,33 @@ QuestVisitAutoComplete applyQuestAutoCompleteOnVisit(GameDatabase db, PlayerSave
   for (final quest in asQuestRows(db)) {
     final parsed = parseStructuredObjectives(quest);
     if (!parsed.autoCompleteOnVisit) continue;
+    final questId = jsString(quest['Quest ID']);
+    if (getQuestProgress(next, questId).status != 'active') continue;
+    if (!questAllStepsComplete(db, next, quest)) continue;
+    final completed = completeQuest(db, next, questId, ignoreLocation: true);
+    if (completed.ok) {
+      next = completed.save!;
+      completions.add(
+        QuestArrivalCompletion(
+          questId: questId,
+          questName: completed.questName!,
+          rewards: completed.rewards,
+          pendingSkillXp: completed.pendingSkillXp,
+          rewardBundle: completed.rewardBundle,
+          message: completed.message!,
+        ),
+      );
+    }
+  }
+  return QuestVisitAutoComplete(save: next, completions: completions);
+}
+
+QuestVisitAutoComplete applyQuestAutoCompleteOnAction(GameDatabase db, PlayerSave save) {
+  var next = save;
+  final completions = <QuestArrivalCompletion>[];
+  for (final quest in asQuestRows(db)) {
+    final parsed = parseStructuredObjectives(quest);
+    if (!parsed.autoCompleteOnAction) continue;
     final questId = jsString(quest['Quest ID']);
     if (getQuestProgress(next, questId).status != 'active') continue;
     if (!questAllStepsComplete(db, next, quest)) continue;

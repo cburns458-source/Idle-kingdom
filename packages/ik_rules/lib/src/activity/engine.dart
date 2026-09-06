@@ -10,6 +10,7 @@ import '../potions/effects.dart';
 import '../production/engine.dart';
 import '../production/recipes.dart';
 import '../quests/progress.dart';
+import '../quests/quests.dart';
 import '../rng/mulberry32.dart';
 import '../save/generated/save_models.dart';
 import '../time.dart';
@@ -245,6 +246,33 @@ GatheringCompletion completeGatheringAction(
   ActionRow action,
   RandomFn random,
 ) {
+  final notes = action.raw['Notes'];
+  final notesText = notes is String ? notes : '';
+  final failChanceMatch = RegExp(r'FailChance:(\d+)', caseSensitive: false).firstMatch(notesText);
+  final failDamageMatch = RegExp(r'FailDamagePercent:(\d+)', caseSensitive: false).firstMatch(notesText);
+  if (RegExp(r'ThieveryPickpocket', caseSensitive: false).hasMatch(notesText) && failChanceMatch != null) {
+    final failChance = num.parse(failChanceMatch.group(1)!);
+    if (random() * 100 < failChance) {
+      final damagePercent = num.parse(failDamageMatch?.group(1) ?? '10');
+      final damage = (save.maxHp * damagePercent / 100).floor().clamp(1, 1 << 30);
+      final nextHp = (save.currentHp - damage).clamp(1, save.maxHp);
+      return GatheringCompletion(
+        save: withoutHeldAction(save.copyWith(currentHp: nextHp), save.currentActivityId),
+        result: ActionCompletionResult(
+          actionId: jsString(action.raw['Action ID']),
+          actionName: jsString(action.raw['Display Name']),
+          skillId: jsString(action.raw['Relevant Skill ID']),
+          xpGained: 0,
+          bonusXp: const <BonusXpGrant>[],
+          xpRewards: const <ActionXpRewardSummary>[],
+          goldGained: 0,
+          loot: const <LootGrant>[],
+          leveledUpTo: null,
+        ),
+      );
+    }
+  }
+
   final skillId = jsString(action.raw['Relevant Skill ID']);
   final rewarded = resolveActionRewards(db, save, action, random);
   final xpAmount = gatheringXpReward(db, save, action);
@@ -287,6 +315,7 @@ GatheringCompletion completeGatheringAction(
     );
   }
   next = applyQuestActionProgress(db, next, jsString(action.raw['Action ID']));
+  next = applyQuestAutoCompleteOnAction(db, next).save;
 
   return GatheringCompletion(
     save: withoutHeldAction(next, save.currentActivityId),

@@ -141,6 +141,7 @@ export function createNewSave(db: GameDatabase, nowMs: number = Date.now()): Pla
     playTimeMs: 0,
     currentHp: maxHp,
     maxHp,
+    locationTimers: [],
   }
 }
 

@@ -1,4 +1,4 @@
-export const SAVE_VERSION = 41
+export const SAVE_VERSION = 42
 export const SAVE_STORAGE_KEY = 'idle-kingdoms.demo.save'
 export const STARTING_LOCATION_ID = 'LOC-0001'
 /** Base gold before race kit; race starters grant the real starting gold. */
@@ -184,6 +184,25 @@ export interface CritterSpawn {
   appearedAt: string
 }
 
+/**
+ * Parallel location timer (Botany plot or hunting/fishing trap).
+ * Does not occupy the Primary Activity slot. Cap: one per location.
+ */
+export interface LocationTimer {
+  locationId: string
+  /** `botany` | `hunting_trap` | `fishing_trap` */
+  kind: 'botany' | 'hunting_trap' | 'fishing_trap'
+  /** Seed/sapling or trap item consumed to start the timer. */
+  inputItemId: string
+  /** Crop/log for botany; null for traps (rolled on collect). */
+  outputItemId: string | null
+  outputQuantity: number
+  skillId: string
+  xpReward: number
+  startedAt: string
+  durationMs: number
+}
+
 export interface PlayerSave {
   saveVersion: number
   createdAt: string
@@ -315,6 +334,11 @@ export interface PlayerSave {
   playTimeMs: number
   currentHp: number
   maxHp: number
+  /**
+   * Background Botany / trap timers. At most one entry per locationId.
+   * Runs in parallel with the Primary Activity.
+   */
+  locationTimers: LocationTimer[]
 }
 
 export interface SaveMigration {
