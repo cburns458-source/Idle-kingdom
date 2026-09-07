@@ -30,32 +30,17 @@ describe('bank storage', () => {
     expect(locationHasBank(byId.get('LOC-0024'))).toBe(false)
     expect(locationHasBank(byId.get('LOC-0009'))).toBe(false)
     expect(locationHasBank(undefined)).toBe(false)
-    expect(
-      locationHasBank({
-        'Location ID': 'LOC-9999',
-        'Internal Key': 'west_bank',
-        'Display Name': 'West Bank',
-        'Map ID': 'MAP-0006',
-        'Location Type': 'Settlement',
-        Status: 'Planned',
-        'Release Phase': 'Launch',
-      }),
-    ).toBe(true)
+    const westBank = {
+      ...byId.get('LOC-0034')!,
+      'Location ID': 'LOC-9999',
+      'Internal Key': 'west_bank',
+      'Display Name': 'West Bank',
+    }
+    expect(locationHasBank(westBank)).toBe(true)
 
     const withFuture = withBankDepositBoxActivities({
       ...launch,
-      Locations: [
-        ...launch.Locations,
-        {
-          'Location ID': 'LOC-9999',
-          'Internal Key': 'west_bank',
-          'Display Name': 'West Bank',
-          'Map ID': 'MAP-0006',
-          'Location Type': 'Settlement',
-          Status: 'Planned',
-          'Release Phase': 'Launch',
-        },
-      ],
+      Locations: [...launch.Locations, westBank],
     })
     expect(
       withFuture.Activities.some(

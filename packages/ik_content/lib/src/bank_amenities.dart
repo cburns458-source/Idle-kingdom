@@ -67,9 +67,6 @@ GameDatabase withBankDepositBoxActivities(GameDatabase db) {
   if (extras.isEmpty) return db;
 
   final next = Map<String, Object?>.of(db.raw);
-  next['Activities'] = [
-    ...db.activities.map((row) => row.raw),
-    ...extras,
-  ];
+  next['Activities'] = [...db.activities.map((row) => row.raw), ...extras];
   return GameDatabase(next);
 }
