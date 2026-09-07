@@ -120,6 +120,33 @@ describe('primary activity engine', () => {
     }
   })
 
+  it('rejects deposit-box thievery without equipped lockpicks', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    let save = createNewSave(launch)
+    save = {
+      ...save,
+      currentLocationId: 'LOC-0034',
+      skills: save.skills.map((row) =>
+        row.skillId === 'SKL-0015' ? { ...row, level: 50, xp: 0 } : row,
+      ),
+    }
+    const blocked = validateActivityStart(launch, save, 'ACT-0059')
+    expect(blocked.ok).toBe(false)
+    if (!blocked.ok) expect(blocked.reason.toLowerCase()).toContain('lockpick')
+
+    save = {
+      ...save,
+      equipment: {
+        ...save.equipment,
+        slots: {
+          ...save.equipment.slots,
+          'SLOT-0001': { itemId: 'ITEM-0351', quantity: 3 },
+        },
+      },
+    }
+    expect(validateActivityStart(launch, save, 'ACT-0059').ok).toBe(true)
+  })
+
   it('doubles gathering duration and halves XP below proficiency', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const save = createNewSave(launch)

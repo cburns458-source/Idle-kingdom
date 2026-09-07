@@ -91,14 +91,7 @@ class _CodexViewState extends State<CodexView> {
         else
           Padding(
             padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
-            child: Text(
-              title,
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w400,
-                color: UiChrome.of(context).panelInk,
-              ),
-            ),
+            child: Text(title, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w400)),
           ),
         Expanded(
           child: switch (route) {
@@ -235,8 +228,8 @@ class _CodexViewState extends State<CodexView> {
           leading: GameImage(enemyAssetPath(entry.enemyId), width: 36, height: 36),
           title: entry.displayName,
           detail: [?level, if (places.isNotEmpty) places].join(' · '),
-          ink: chrome.panelInk,
-          muted: chrome.panelMuted,
+          ink: Palette.parchmentText,
+          muted: chrome.embossFace,
           onTap: () => _pushEnemy(entry.enemyId),
         );
       },
@@ -299,6 +292,9 @@ class _ItemPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final chrome = UiChrome.of(context);
+    // Detail text sits on the board (like Log / Leaderboard), not a tan panel.
+    final ink = Palette.parchmentText;
+    final muted = chrome.embossFace;
     return ListView(
       padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
       children: [
@@ -310,10 +306,10 @@ class _ItemPage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(entry.displayName, style: TextStyle(fontSize: 16, color: chrome.panelInk)),
+                  Text(entry.displayName, style: TextStyle(fontSize: 16, color: ink)),
                   Text(
                     [entry.groupLabel, ?entry.category, ?entry.subtype].join(' · '),
-                    style: TextStyle(fontSize: 12.5, color: chrome.panelMuted, height: 1.35),
+                    style: TextStyle(fontSize: 12.5, color: muted, height: 1.35),
                   ),
                 ],
               ),
@@ -324,7 +320,7 @@ class _ItemPage extends StatelessWidget {
           const SizedBox(height: 10),
           Text(
             description,
-            style: TextStyle(fontSize: 12.5, color: chrome.panelMuted, height: 1.35),
+            style: TextStyle(fontSize: 12.5, color: muted, height: 1.35),
           ),
         ],
         if (entry.statLines.isNotEmpty) ...[
@@ -332,29 +328,29 @@ class _ItemPage extends StatelessWidget {
           for (final line in entry.statLines)
             Padding(
               padding: const EdgeInsets.only(bottom: 2),
-              child: Text(line, style: TextStyle(fontSize: 13, color: chrome.panelInk)),
+              child: Text(line, style: TextStyle(fontSize: 13, color: ink)),
             ),
         ],
         _Section(
           title: 'Obtained from',
           empty: 'No known source yet.',
-          ink: chrome.panelInk,
-          muted: chrome.panelMuted,
+          ink: ink,
+          muted: muted,
           children: [
             for (final source in entry.obtainedFrom)
               _LinkRow(
                 title: source.title,
                 detail: _obtainDetail(source),
-                ink: chrome.panelInk,
-                muted: chrome.panelMuted,
+                ink: ink,
+                muted: muted,
               ),
           ],
         ),
         _Section(
           title: 'Crafted by',
           empty: 'Not crafted.',
-          ink: chrome.panelInk,
-          muted: chrome.panelMuted,
+          ink: ink,
+          muted: muted,
           children: [
             for (final craft in entry.craftedBy)
               _CraftBlock(craft: craft, itemsById: itemsById, onOpenItem: onOpenItem),
@@ -363,8 +359,8 @@ class _ItemPage extends StatelessWidget {
         _Section(
           title: 'Used in',
           empty: 'Not used in any recipe.',
-          ink: chrome.panelInk,
-          muted: chrome.panelMuted,
+          ink: ink,
+          muted: muted,
           children: [
             for (final craft in entry.usedIn)
               _CraftBlock(craft: craft, itemsById: itemsById, onOpenItem: onOpenItem),
@@ -396,6 +392,8 @@ class _EnemyPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final chrome = UiChrome.of(context);
+    final ink = Palette.parchmentText;
+    final muted = chrome.embossFace;
     final places = entry.locations.map((row) => row.displayName).join(', ');
     return ListView(
       padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
@@ -408,16 +406,16 @@ class _EnemyPage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(entry.displayName, style: TextStyle(fontSize: 16, color: chrome.panelInk)),
+                  Text(entry.displayName, style: TextStyle(fontSize: 16, color: ink)),
                   if (entry.combatLevel != null)
                     Text(
                       'Level ${formatThousands(entry.combatLevel!)}',
-                      style: TextStyle(fontSize: 12.5, color: chrome.panelMuted, height: 1.35),
+                      style: TextStyle(fontSize: 12.5, color: muted, height: 1.35),
                     ),
                   if (places.isNotEmpty)
                     Text(
                       places,
-                      style: TextStyle(fontSize: 12.5, color: chrome.panelMuted, height: 1.35),
+                      style: TextStyle(fontSize: 12.5, color: muted, height: 1.35),
                     ),
                 ],
               ),
@@ -428,28 +426,28 @@ class _EnemyPage extends StatelessWidget {
         Text(
           'Health ${formatThousands(entry.maximumHp)} · '
           'Damage ${formatThousands(entry.minDamage)}–${formatThousands(entry.maxDamage)}',
-          style: TextStyle(fontSize: 13, color: chrome.panelInk),
+          style: TextStyle(fontSize: 13, color: ink),
         ),
         if (entry.combatXp != null)
           Text(
             '${entry.xpSkillLabel} XP ${formatThousands(entry.combatXp!)}',
-            style: TextStyle(fontSize: 13, color: chrome.panelInk),
+            style: TextStyle(fontSize: 13, color: ink),
           ),
         if (entry.minimumGold != null || entry.maximumGold != null)
           Text(
             'Gold ${_range(entry.minimumGold, entry.maximumGold)}',
-            style: TextStyle(fontSize: 13, color: chrome.panelInk),
+            style: TextStyle(fontSize: 13, color: ink),
           ),
         if (entry.dropChance != null)
           Text(
             '${formatThousands(entry.dropChance!)}% drop',
-            style: TextStyle(fontSize: 13, color: chrome.panelInk),
+            style: TextStyle(fontSize: 13, color: ink),
           ),
         _Section(
           title: 'Drops',
           empty: 'No item drops.',
-          ink: chrome.panelInk,
-          muted: chrome.panelMuted,
+          ink: ink,
+          muted: muted,
           children: [
             for (final drop in entry.drops)
               _LinkRow(
@@ -461,8 +459,8 @@ class _EnemyPage extends StatelessWidget {
                   if (drop.dropRatePercent != null)
                     'Drop rate ${_formatPercent(drop.dropRatePercent!)}',
                 ].join(' · '),
-                ink: chrome.panelInk,
-                muted: chrome.panelMuted,
+                ink: ink,
+                muted: muted,
                 onTap: () => onOpenItem(drop.itemId),
               ),
           ],

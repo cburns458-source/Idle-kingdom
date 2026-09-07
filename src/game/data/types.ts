@@ -56,6 +56,12 @@ export interface ItemRow {
   'Icon Asset Key': string | null
   Description: string | null
   'Functional / Source Tags': string | null
+  /**
+   * When `Yes`, the item may stack in its equipment slot (e.g. lockpicks in
+   * Weapon/Tool). Prefer this over hardcoding item ids; `stackable_tool` tags
+   * are treated the same way for older rows.
+   */
+  Stackable?: string | null
   Notes: string | null
 }
 

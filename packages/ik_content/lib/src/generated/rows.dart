@@ -315,6 +315,11 @@ class ItemRow extends DbRow {
 
   String? get functionalSourceTags => stringOrNull('Functional / Source Tags');
 
+  /// When `Yes`, the item may stack in its equipment slot (e.g. lockpicks in
+  /// Weapon/Tool). Prefer this over hardcoding item ids; `stackable_tool` tags
+  /// are treated the same way for older rows.
+  String? get stackable => stringOrNull('Stackable');
+
   String? get notes => stringOrNull('Notes');
 }
 

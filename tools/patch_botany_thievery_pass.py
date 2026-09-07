@@ -106,7 +106,7 @@ def main() -> None:
                 "Associated Skill ID": "SKL-0014",
                 "Equipment Slot ID": None,
                 "Functional / Source Tags": "botany_seed; shallows_only",
-                "Stackable": "Yes",
+                "Stackable": None,
                 "Base Sell Value": 5,
                 "Status": "Confirmed",
                 "Release Phase": "Launch",
@@ -123,6 +123,7 @@ def main() -> None:
             f"Xp:{xp_for(40, 'seed')}; RequiresLevel:40; ShallowsOnly"
         )
         items[KELP_SPORES]["Functional / Source Tags"] = "botany_seed; shallows_only"
+        items[KELP_SPORES]["Stackable"] = None
         items[KELP_SPORES]["Icon Asset Key"] = "kelp_spores"
 
     # Strip cut seeds
