@@ -104,15 +104,17 @@ void main() {
     await tester.pump();
 
     await tester.scrollUntilVisible(
-      find.textContaining('70. Tungsten items'),
+      find.textContaining('70. Titanium items'),
       200,
       scrollable: find.descendant(
         of: find.byKey(const Key('game-popup')),
         matching: find.byType(Scrollable),
       ),
     );
-    expect(find.textContaining('70. Tungsten items'), findsOne);
+    expect(find.textContaining('70. Titanium items'), findsOne);
+    expect(find.textContaining('60. Tungsten items'), findsOne);
     expect(find.textContaining('Tungsten Sword'), findsNothing);
+    expect(find.textContaining('Titanium Sword'), findsNothing);
   });
 
   testWidgets('combat lists armor tiers as equipment instead of every piece', (tester) async {
