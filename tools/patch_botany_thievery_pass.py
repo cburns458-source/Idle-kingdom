@@ -162,9 +162,16 @@ def main() -> None:
     eq_ids = {e.get("Item ID") for e in db["Equipment"]}
     if lock_id not in eq_ids:
         sample = next(e for e in db["Equipment"] if e.get("Slot ID") == "SLOT-0001")
+        existing_eq_nums = [
+            int(str(e["Equipment ID"]).split("-")[1])
+            for e in db["Equipment"]
+            if isinstance(e.get("Equipment ID"), str) and str(e["Equipment ID"]).startswith("EQP-")
+        ]
+        next_eq = f"EQP-{max(existing_eq_nums, default=0) + 1:04d}"
         row = {k: None for k in sample.keys()}
         row.update(
             {
+                "Equipment ID": next_eq,
                 "Item ID": lock_id,
                 "Slot ID": "SLOT-0001",
                 "Internal Key": "lockpicks",

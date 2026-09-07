@@ -74,8 +74,8 @@ describe('locationTimers', () => {
     expect(timerIsReady(timer!, Date.parse('2026-01-01T01:00:00.000Z'))).toBe(false)
     expect(timerIsReady(timer!, Date.parse('2026-01-01T03:00:00.000Z'))).toBe(true)
 
-    // Deterministic: produce rolls always 1 (random=0); return rolls skip (random>=0.5).
-    const rolls = [0, 0.6, 0, 0.6, 0, 0.6]
+    // Produce rolls first (3x), then seed-return rolls (3x).
+    const rolls = [0, 0, 0, 0.99, 0.99, 0.99]
     let i = 0
     const collected = collectLocationTimer(
       launch,
@@ -89,6 +89,9 @@ describe('locationTimers', () => {
     const produce = collected.loot.find((row) => row.itemId === 'ITEM-0025')
     expect(produce?.quantity).toBe(3)
     expect(collected.loot.some((row) => row.itemId === 'ITEM-0324')).toBe(false)
+    expect(
+      collected.save.inventory.find((stack) => stack.itemId === 'ITEM-0025')?.quantity,
+    ).toBe(3)
     expect(timerAtLocation(collected.save, 'LOC-0001')).toBeUndefined()
   })
 
