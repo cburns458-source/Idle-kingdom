@@ -318,10 +318,7 @@ class _ItemPage extends StatelessWidget {
         ),
         if (entry.description case final description? when description.isNotEmpty) ...[
           const SizedBox(height: 10),
-          Text(
-            description,
-            style: TextStyle(fontSize: 12.5, color: muted, height: 1.35),
-          ),
+          Text(description, style: TextStyle(fontSize: 12.5, color: muted, height: 1.35)),
         ],
         if (entry.statLines.isNotEmpty) ...[
           const SizedBox(height: 10),
@@ -338,12 +335,7 @@ class _ItemPage extends StatelessWidget {
           muted: muted,
           children: [
             for (final source in entry.obtainedFrom)
-              _LinkRow(
-                title: source.title,
-                detail: _obtainDetail(source),
-                ink: ink,
-                muted: muted,
-              ),
+              _LinkRow(title: source.title, detail: _obtainDetail(source), ink: ink, muted: muted),
           ],
         ),
         _Section(
@@ -413,10 +405,7 @@ class _EnemyPage extends StatelessWidget {
                       style: TextStyle(fontSize: 12.5, color: muted, height: 1.35),
                     ),
                   if (places.isNotEmpty)
-                    Text(
-                      places,
-                      style: TextStyle(fontSize: 12.5, color: muted, height: 1.35),
-                    ),
+                    Text(places, style: TextStyle(fontSize: 12.5, color: muted, height: 1.35)),
                 ],
               ),
             ),
