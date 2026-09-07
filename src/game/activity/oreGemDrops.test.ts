@@ -79,14 +79,14 @@ describe('ore gem secondary drop tables', () => {
       {
         actionId: 'ACN-0026',
         name: 'Mine titanium ore',
-        secondaryChance: 4,
+        secondaryChance: 5,
         tableId: 'RWT-0060',
         gems: ['ITEM-0012', 'ITEM-0013', 'ITEM-0014'],
       },
       {
         actionId: 'ACN-0027',
         name: 'Mine tungsten ore',
-        secondaryChance: 5,
+        secondaryChance: 4,
         tableId: 'RWT-0060',
         gems: ['ITEM-0012', 'ITEM-0013', 'ITEM-0014'],
       },
