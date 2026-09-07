@@ -1,6 +1,3 @@
-import 'dart:convert';
-import 'dart:io';
-
 import 'package:ik_content/ik_content.dart';
 import 'package:ik_parity/ik_parity.dart';
 import 'package:ik_rules/ik_rules.dart';
@@ -10,11 +7,6 @@ import 'support/fixtures.dart';
 
 LocationRow _loc(String id, [String? mapId]) {
   return LocationRow({'Location ID': id, 'Map ID': ?mapId});
-}
-
-Object? _loadRawDatabase() {
-  final file = File('../../content/data/game-database.json');
-  return jsonDecode(file.readAsStringSync());
 }
 
 void main() {
@@ -40,7 +32,7 @@ void main() {
   });
 
   test('prepared databases expose deposit-box thievery at every bank', () {
-    final loaded = prepareDatabase(_loadRawDatabase());
+    final loaded = prepareDatabase(contentDatabaseJson());
     final depositActs = loaded.launch.activities.where((row) => row.poolId == depositBoxPoolId);
     final bankLocs = loaded.launch.locations.where(locationLooksLikeBank);
     for (final location in bankLocs) {
