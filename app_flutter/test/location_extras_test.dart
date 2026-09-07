@@ -650,8 +650,7 @@ void main() {
     await tester.pump();
 
     expect(find.widgetWithText(GameButton, 'Other'), findsOne);
-    await tester.tap(find.widgetWithText(GameButton, 'Other'));
-    await tester.pump();
+    await tapVisible(tester, find.widgetWithText(GameButton, 'Other'));
     expect(find.text('Mages quarters'), findsOne);
   });
 
@@ -664,8 +663,7 @@ void main() {
     await pumpShell(tester, controller);
 
     expect(find.widgetWithText(GameButton, 'Other'), findsOne);
-    await tester.tap(find.widgetWithText(GameButton, 'Other'));
-    await tester.pump();
+    await tapVisible(tester, find.widgetWithText(GameButton, 'Other'));
     expect(find.text('Smithing forge'), findsOne);
   });
 

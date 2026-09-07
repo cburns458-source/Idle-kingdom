@@ -64,7 +64,7 @@ void main() {
     await tester.tap(find.byKey(const Key('codex-drop-ITEM-0054')));
     await tester.pump();
     expect(find.text('Obtained from'), findsOne);
-    expect(find.text('Raw Beef'), findsWidgets);
+    expect(find.text('Beef'), findsWidgets);
     // Item pages no longer list enemies as obtain sources.
     expect(find.text('No known source yet.'), findsOne);
   });
@@ -74,7 +74,21 @@ void main() {
     addTearDown(controller.dispose);
 
     await pumpPanel(tester, CodexView(controller: controller));
-    expect(find.byKey(Key('codex-filter-$groupBotany')), findsOne);
-    expect(find.byKey(Key('codex-filter-$groupThievery')), findsOne);
+    expect(inventoryGroupOrder, containsAll([groupBotany, groupThievery]));
+    expect(inventoryGroupLabel(groupBotany), 'Botany');
+    expect(inventoryGroupLabel(groupThievery), 'Thievery');
+    expect(find.text('Botany'), findsNothing);
+    // Chips are in a horizontal list; drag until the Botany/Thievery labels paint.
+    final filterList = find.descendant(of: find.byType(CodexView), matching: find.byType(ListView));
+    for (var i = 0; i < 8; i++) {
+      await tester.drag(filterList.first, const Offset(-120, 0));
+      await tester.pump();
+      if (find.text('Botany').evaluate().isNotEmpty &&
+          find.text('Thievery').evaluate().isNotEmpty) {
+        break;
+      }
+    }
+    expect(find.text('Botany'), findsWidgets);
+    expect(find.text('Thievery'), findsWidgets);
   });
 }

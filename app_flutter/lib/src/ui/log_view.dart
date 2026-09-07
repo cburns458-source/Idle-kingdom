@@ -110,14 +110,48 @@ class _LogViewState extends State<LogView> {
             children: [
               if (_tab == _LogTab.quests)
                 Expanded(
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: GameButton(
-                      label: _miniquestsOpen ? 'Miniquests ▴' : 'Miniquests ▾',
-                      compact: true,
-                      selected: _miniquestsOpen,
-                      tone: _miniquestsOpen ? GameButtonTone.primary : GameButtonTone.secondary,
-                      onPressed: () => setState(() => _miniquestsOpen = !_miniquestsOpen),
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        GameButton(
+                          label: _miniquestsOpen ? 'Miniquests ▴' : 'Miniquests ▾',
+                          compact: true,
+                          dense: true,
+                          selected: _miniquestsOpen,
+                          tone: _miniquestsOpen ? GameButtonTone.primary : GameButtonTone.secondary,
+                          onPressed: () => setState(() => _miniquestsOpen = !_miniquestsOpen),
+                        ),
+                        const SizedBox(width: 6),
+                        for (final sort in QuestLogSort.values) ...[
+                          GameButton(
+                            label: switch (sort) {
+                              QuestLogSort.completion => 'Status',
+                              QuestLogSort.content => 'Release',
+                              QuestLogSort.alphabetical => 'A–Z',
+                            },
+                            compact: true,
+                            dense: true,
+                            selected: _questSort == sort,
+                            tone: _questSort == sort
+                                ? GameButtonTone.primary
+                                : GameButtonTone.secondary,
+                            onPressed: () => setState(() => _questSort = sort),
+                          ),
+                          const SizedBox(width: 6),
+                        ],
+                        GameButton(
+                          label: _hideUnstartableQuests ? 'Hide locked ✓' : 'Hide locked',
+                          compact: true,
+                          dense: true,
+                          selected: _hideUnstartableQuests,
+                          tone: _hideUnstartableQuests
+                              ? GameButtonTone.primary
+                              : GameButtonTone.secondary,
+                          onPressed: () =>
+                              setState(() => _hideUnstartableQuests = !_hideUnstartableQuests),
+                        ),
+                      ],
                     ),
                   ),
                 )
@@ -137,38 +171,6 @@ class _LogViewState extends State<LogView> {
             ],
           ),
         ),
-        if (_tab == _LogTab.quests)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-            child: Wrap(
-              spacing: 6,
-              runSpacing: 6,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                for (final sort in QuestLogSort.values)
-                  GameButton(
-                    label: switch (sort) {
-                      QuestLogSort.completion => 'Status',
-                      QuestLogSort.content => 'Release',
-                      QuestLogSort.alphabetical => 'A–Z',
-                    },
-                    compact: true,
-                    dense: true,
-                    selected: _questSort == sort,
-                    tone: _questSort == sort ? GameButtonTone.primary : GameButtonTone.secondary,
-                    onPressed: () => setState(() => _questSort = sort),
-                  ),
-                GameButton(
-                  label: _hideUnstartableQuests ? 'Hide locked ✓' : 'Hide locked',
-                  compact: true,
-                  dense: true,
-                  selected: _hideUnstartableQuests,
-                  tone: _hideUnstartableQuests ? GameButtonTone.primary : GameButtonTone.secondary,
-                  onPressed: () => setState(() => _hideUnstartableQuests = !_hideUnstartableQuests),
-                ),
-              ],
-            ),
-          ),
         if (_tab == _LogTab.quests && _miniquestsOpen)
           Padding(
             padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),

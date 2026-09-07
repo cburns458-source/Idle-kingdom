@@ -165,10 +165,8 @@ class QuestLogRow {
     'questId': questId,
     'name': name,
     'detail': detail,
-    'status': status,
     'statusLabel': statusLabel,
     'completed': completed,
-    'available': available,
     'steps': steps.map((step) => step.toJson()).toList(),
   };
 }
