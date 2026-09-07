@@ -340,7 +340,7 @@ export function resolveUnattendedProgress(
         break
       }
 
-      const completed = completeGatheringAction(db, current, action, random)
+      const completed = completeGatheringAction(db, current, action, random, due)
       gatheringActions += 1
       let next = completed.save
       // Clear completed action fields before generating the next one.
