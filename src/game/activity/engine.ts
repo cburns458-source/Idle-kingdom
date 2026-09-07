@@ -1,13 +1,15 @@
 import {
+  applyCombatDefeat,
   beginCombatSave,
   clearCombatSave,
   enemyForAction,
   isDeathPaused,
 } from '../combat/engine'
+import { consumeFoodAfterVictory } from '../combat/food'
 import { clearProductionSave } from '../production/engine'
 import { isStandardProductionActivity, recipesForActivity } from '../production/recipes'
 import type { ActionRow, ActivityRow, GameDatabase } from '../data/types'
-import type { PlayerSave } from '../save/types'
+import type { EquippedStack, PlayerSave } from '../save/types'
 import { clearActivePotionEffect, tryConsumePotionForScope } from '../potions/effects'
 import { gatheringDurationMs, gatheringXpReward } from './gathering'
 import { heldActionIdFor, withHeldAction, withoutHeldAction } from './heldAction'
@@ -27,11 +29,14 @@ import { addLifetimeStat, recordGatheredDrops } from '../achievements/progress'
 import { applyQuestActionProgress } from '../quests/progress'
 import { applyQuestAutoCompleteOnAction } from '../quests/quests'
 import { WEAPON_TOOL_SLOT_ID } from '../save/types'
+import { slotStack } from '../equipment/loadout'
 import { GATHERING_ACTIONS_STAT } from '../log/milestones'
 import { bonusSkillXpForAction, bowHuntingCombatXpBonus } from './bonusXp'
 import { summarizeXpReward } from './rewardSummary'
 import { applyXp } from './xp'
 import { bossRespawnUntilMs, isBossEnemy, isBossRespawnReady } from '../combat/boss'
+
+const LOCKPICK_ITEM_ID = 'ITEM-0351'
 
 export const COMING_SOON_REASON = 'Coming soon.'
 
@@ -237,42 +242,91 @@ export function generateNextAction(
   }
 }
 
+function consumeLockpick(save: PlayerSave): PlayerSave {
+  const tool = slotStack(save, WEAPON_TOOL_SLOT_ID)
+  if (!tool || tool.itemId !== LOCKPICK_ITEM_ID || tool.quantity <= 0) return save
+  const nextQty = tool.quantity - 1
+  const nextTool: EquippedStack | null =
+    nextQty > 0 ? { ...tool, quantity: nextQty } : null
+  return {
+    ...save,
+    equipment: {
+      ...save.equipment,
+      slots: {
+        ...save.equipment.slots,
+        [WEAPON_TOOL_SLOT_ID]: nextTool,
+      },
+    },
+  }
+}
+
 export function completeGatheringAction(
   db: GameDatabase,
   save: PlayerSave,
   action: ActionRow,
   random: RandomFn = Math.random,
+  nowMs: number = Date.now(),
 ): { save: PlayerSave; result: ActionCompletionResult } {
   const notes = action.Notes ?? ''
-  const failChanceMatch = /FailChance:(\d+)/i.exec(notes)
-  const failDamageMatch = /FailDamagePercent:(\d+)/i.exec(notes)
-  if (/ThieveryPickpocket/i.test(notes) && failChanceMatch) {
-    const failChance = Number(failChanceMatch[1])
-    if (random() * 100 < failChance) {
-      const damagePercent = Number(failDamageMatch?.[1] ?? 10)
-      const damage = Math.max(1, Math.floor((save.maxHp * damagePercent) / 100))
-      const nextHp = Math.max(1, save.currentHp - damage)
+  const emptyResult = (): ActionCompletionResult => ({
+    actionId: action['Action ID'],
+    actionName: action['Display Name'],
+    skillId: action['Relevant Skill ID'],
+    xpGained: 0,
+    bonusXp: [],
+    xpRewards: [],
+    goldGained: 0,
+    loot: [],
+    leveledUpTo: null,
+  })
+
+  if (/RequiresLockpick/i.test(notes)) {
+    const tool = slotStack(save, WEAPON_TOOL_SLOT_ID)
+    if (!tool || tool.quantity <= 0 || tool.itemId !== LOCKPICK_ITEM_ID) {
       return {
-        save: withoutHeldAction({ ...save, currentHp: nextHp }, save.currentActivityId),
-        result: {
-          actionId: action['Action ID'],
-          actionName: action['Display Name'],
-          skillId: action['Relevant Skill ID'],
-          xpGained: 0,
-          bonusXp: [],
-          xpRewards: [],
-          goldGained: 0,
-          loot: [],
-          leveledUpTo: null,
-        },
+        save: withoutHeldAction(save, save.currentActivityId),
+        result: emptyResult(),
       }
     }
   }
 
-  const rewarded = resolveActionRewards(db, save, action, random)
-  const xpAmount = gatheringXpReward(db, save, action)
+  const failChanceMatch = /FailChance:(\d+)/i.exec(notes)
+  if (
+    /Thievery/i.test(notes) &&
+    failChanceMatch &&
+    !/NoConsequences/i.test(notes)
+  ) {
+    const failChance = Number(failChanceMatch[1])
+    if (random() * 100 < failChance) {
+      const damagePercent = Number(/FailDamagePercent:(\d+)/i.exec(notes)?.[1] ?? 10)
+      const damage = Math.max(1, Math.floor((save.maxHp * damagePercent) / 100))
+      const nextHp = save.currentHp - damage
+      let next: PlayerSave = { ...save, currentHp: nextHp }
+      if (/RequiresLockpick/i.test(notes)) {
+        next = consumeLockpick(next)
+      }
+      if (nextHp <= 0) {
+        next = applyCombatDefeat(db, next, nowMs)
+      } else {
+        next = consumeFoodAfterVictory(db, next).save
+      }
+      return {
+        save: withoutHeldAction(next, save.currentActivityId),
+        result: emptyResult(),
+      }
+    }
+  }
+
+  let working = save
+  if (/RequiresLockpick/i.test(notes)) {
+    working = consumeLockpick(working)
+  }
+
+  const skillId = action['Relevant Skill ID']
+  const rewarded = resolveActionRewards(db, working, action, random)
+  const xpAmount = gatheringXpReward(db, working, action)
   let next = clearActivePotionEffect(rewarded.save)
-  const xpApplied = applyXp(next, db, action['Relevant Skill ID'], xpAmount)
+  const xpApplied = applyXp(next, db, skillId, xpAmount)
   next = xpApplied.save
   let leveledUpTo = xpApplied.leveledUpTo
 
@@ -281,18 +335,18 @@ export function completeGatheringAction(
   const primaryReward = summarizeXpReward(
     db,
     next,
-    action['Relevant Skill ID'],
+    skillId,
     xpAmount,
     xpApplied.leveledUpTo,
   )
   if (primaryReward) xpRewards.push(primaryReward)
 
-  function applyBonusXp(skillId: string, amount: number) {
+  function applyBonusXp(bonusSkillId: string, amount: number) {
     if (amount <= 0) return
-    const applied = applyXp(next, db, skillId, amount)
+    const applied = applyXp(next, db, bonusSkillId, amount)
     next = applied.save
-    bonusXp.push({ skillId, xp: amount })
-    const reward = summarizeXpReward(db, next, skillId, amount, applied.leveledUpTo)
+    bonusXp.push({ skillId: bonusSkillId, xp: amount })
+    const reward = summarizeXpReward(db, next, bonusSkillId, amount, applied.leveledUpTo)
     if (reward) xpRewards.push(reward)
     if (applied.leveledUpTo != null) {
       leveledUpTo = applied.leveledUpTo
@@ -322,13 +376,16 @@ export function completeGatheringAction(
   }
   next = applyQuestActionProgress(db, next, action['Action ID'])
   next = applyQuestAutoCompleteOnAction(db, next).save
+  if (/Thievery/i.test(notes)) {
+    next = consumeFoodAfterVictory(db, next).save
+  }
 
   return {
     save: withoutHeldAction(next, save.currentActivityId),
     result: {
       actionId: action['Action ID'],
       actionName: action['Display Name'],
-      skillId: action['Relevant Skill ID'],
+      skillId,
       xpGained: xpAmount,
       bonusXp,
       xpRewards,

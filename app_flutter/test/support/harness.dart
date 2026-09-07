@@ -222,6 +222,14 @@ Future<void> tapVisible(WidgetTester tester, Finder button) async {
   await tester.pump();
 }
 
+/// Selects a location option-band tab (Activities / Shops / People / Other).
+Future<void> selectLocationBandTab(WidgetTester tester, String tab) async {
+  final finder = find.widgetWithText(GameButton, tab);
+  expect(finder, findsWidgets);
+  await tester.tap(finder.first);
+  await tester.pump();
+}
+
 /// Pumps one panel on its own, for panels a player opens from a location.
 ///
 /// The surface is made tall because these panels are built to scroll inside the

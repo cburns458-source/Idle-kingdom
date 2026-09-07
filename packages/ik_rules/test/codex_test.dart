@@ -73,13 +73,18 @@ void main() {
     expect(hide.usedIn.any((row) => row.id == 'PRJ-0049'), isTrue);
   });
 
-  test('lists cow drops and skeleton locations', () {
+  test('lists cow drops on the bestiary, not as item obtain sources', () {
     final beef = codex.item('ITEM-0054')!;
-    expect(beef.obtainedFrom.any((row) => row.enemyId == 'ENM-0001'), isTrue);
+    expect(beef.obtainedFrom.any((row) => row.enemyId == 'ENM-0001'), isFalse);
+    expect(
+      beef.obtainedFrom.every((row) => row.kind != CodexObtainKind.action || row.enemyId == null),
+      isTrue,
+    );
 
     final cow = codex.enemy('ENM-0001')!;
     expect(cow.drops.map((row) => row.itemId), containsAll(['ITEM-0054', 'ITEM-0045']));
     expect(cow.drops.where((row) => row.itemId == 'ITEM-0054').length, 1);
+    expect(cow.drops.firstWhere((row) => row.itemId == 'ITEM-0054').dropRatePercent, isNotNull);
     expect(cow.locations.map((row) => row.displayName), contains('The Farm'));
 
     final skeleton = codex.enemy('ENM-0008')!;
@@ -87,5 +92,25 @@ void main() {
       skeleton.locations.map((row) => row.displayName),
       containsAll(['Wizard\'s Tower', 'Castle Crypt']),
     );
+  });
+
+  test('hides golden spud sources and mystery harvest action', () {
+    final spud = codex.item('ITEM-0026')!;
+    expect(spud.obtainedFrom, isEmpty);
+    expect(
+      codex.items.any((row) => row.obtainedFrom.any((source) => source.actionId == 'ACN-0036')),
+      isFalse,
+    );
+  });
+
+  test('labels Mother Squid and Squidling XP as Fishing', () {
+    final mother = codex.enemy('ENM-0023');
+    final squidling = codex.enemy('ENM-0024');
+    if (mother != null) {
+      expect(mother.xpSkillLabel, 'Fishing');
+    }
+    if (squidling != null) {
+      expect(squidling.xpSkillLabel, 'Fishing');
+    }
   });
 }

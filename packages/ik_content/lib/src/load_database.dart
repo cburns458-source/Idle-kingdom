@@ -1,3 +1,4 @@
+import 'bank_amenities.dart';
 import 'generated/rows.dart';
 import 'indexes.dart';
 import 'validate.dart';
@@ -53,11 +54,12 @@ LoadedDatabase prepareDatabase(Object? raw) {
     );
   }
 
-  final launch = filterLaunchContent(source);
+  final launch = withBankDepositBoxActivities(filterLaunchContent(source));
+  final sourceView = withBankDepositBoxActivities(source);
   return LoadedDatabase(
-    source: source,
+    source: sourceView,
     launch: launch,
-    sourceIndexes: buildIndexes(source),
+    sourceIndexes: buildIndexes(sourceView),
     launchIndexes: buildIndexes(launch),
     issues: issues,
     needsDataCount: countNeedsData(source),

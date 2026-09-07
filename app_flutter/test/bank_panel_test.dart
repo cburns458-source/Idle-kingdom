@@ -104,6 +104,7 @@ void main() {
       tester,
       LocationView(controller: town, multiplayer: buildMultiplayer(database), onOpenMap: () {}),
     );
+    await selectLocationBandTab(tester, 'Other');
     await tester.tap(find.widgetWithText(GameButton, 'Bank'));
     await tester.pump();
     expect(find.text('Item storage'), findsOne);

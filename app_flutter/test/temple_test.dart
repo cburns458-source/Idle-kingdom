@@ -28,8 +28,7 @@ void main() {
     expect(find.text('Temple'), findsWidgets);
     expect(find.text('Train with the monks'), findsOne);
     expect(find.text('Pick weeds'), findsOne);
-    await tester.tap(find.widgetWithText(GameButton, 'Blessing'));
-    await tester.pump();
+    await selectLocationBandTab(tester, 'Other');
     expect(find.text('Be blessed'), findsOne);
     expect(find.bySemanticsLabel('Bless'), findsOne);
 

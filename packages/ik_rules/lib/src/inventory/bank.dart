@@ -6,13 +6,10 @@ import 'add_items.dart';
 import 'capacity.dart';
 import 'gold.dart';
 
-/// Dedicated bank nodes on the Town and Citadel maps.
-const List<String> bankLocationIds = <String>['LOC-0034', 'LOC-0035'];
+/// Dedicated bank nodes on the Town and Citadel maps (and any future `*_bank`).
+const List<String> bankLocationIds = knownBankLocationIds;
 
-bool locationHasBank(LocationRow? location) {
-  if (location == null) return false;
-  return bankLocationIds.contains(location.locationId);
-}
+bool locationHasBank(LocationRow? location) => locationLooksLikeBank(location);
 
 List<InventoryStack> bankStacks(PlayerSave save) => save.bank;
 

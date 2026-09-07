@@ -1,15 +1,64 @@
-import type { GameDatabase, LocationRow } from '../data/types'
+import type { GameDatabase, LocationRow, ActivityRow } from '../data/types'
 import type { InventoryStack, PlayerSave } from '../save/types'
 import { addItemToInventoryExact } from '../activity/rewards'
 import { canFitItemQuantity, inventorySlotsFree, INVENTORY_SLOT_LIMIT } from './capacity'
 import { isGoldCurrencyItem } from './gold'
 
-/** Dedicated bank nodes on the Town and Citadel maps. */
+/** Dedicated bank nodes (Town, Citadel) plus any future `*_bank` location. */
 export const BANK_LOCATION_IDS = ['LOC-0034', 'LOC-0035'] as const
+
+/** Pool shared by every bank's "Pick a deposit box" thievery activity. */
+export const DEPOSIT_BOX_POOL_ID = 'POOL-0047'
 
 export function locationHasBank(location: LocationRow | undefined | null): boolean {
   if (!location) return false
-  return (BANK_LOCATION_IDS as readonly string[]).includes(location['Location ID'])
+  if ((BANK_LOCATION_IDS as readonly string[]).includes(location['Location ID'])) return true
+  const key = (location['Internal Key'] ?? '').trim().toLowerCase()
+  if (key.endsWith('_bank') || key === 'bank') return true
+  return /\bbank\b/i.test(location['Display Name'] ?? '')
+}
+
+function activitySerial(activityId: string): number {
+  const match = /^ACT-(\d+)$/.exec(activityId)
+  return match ? Number(match[1]) : 0
+}
+
+/**
+ * Ensures every bank location has a deposit-box thievery activity.
+ * Current Town/Citadel banks already ship with ACT-0059 / ACT-0060; future bank
+ * locations get a cloned activity so authors only need to add the location.
+ */
+export function withBankDepositBoxActivities(db: GameDatabase): GameDatabase {
+  const template = db.Activities.find((row) => row['Pool ID'] === DEPOSIT_BOX_POOL_ID)
+  if (!template) return db
+
+  const covered = new Set(
+    db.Activities.filter((row) => row['Pool ID'] === DEPOSIT_BOX_POOL_ID).map(
+      (row) => row['Location ID'],
+    ),
+  )
+
+  let nextSerial = 0
+  for (const row of db.Activities) {
+    nextSerial = Math.max(nextSerial, activitySerial(row['Activity ID']))
+  }
+
+  const extras: ActivityRow[] = []
+  for (const location of db.Locations) {
+    if (!locationHasBank(location)) continue
+    if (covered.has(location['Location ID'])) continue
+    nextSerial += 1
+    const id = `ACT-${String(nextSerial).padStart(4, '0')}`
+    extras.push({
+      ...template,
+      'Activity ID': id,
+      'Internal Key': `pick_deposit_box_${location['Location ID'].toLowerCase()}`,
+      'Location ID': location['Location ID'],
+    })
+  }
+
+  if (extras.length === 0) return db
+  return { ...db, Activities: [...db.Activities, ...extras] }
 }
 
 export function bankStacks(save: Pick<PlayerSave, 'bank'>): InventoryStack[] {

@@ -6,6 +6,7 @@ import {
   validateDatabase,
 } from './validate'
 import type { DatabaseIndexes, GameDatabase, ValidationIssue } from './types'
+import { withBankDepositBoxActivities } from '../inventory/bank'
 
 /** Bump when Launch content rows change so browsers skip stale JSON. */
 export const DATABASE_CONTENT_VERSION = '2026-09-03-golden-spud'
@@ -43,11 +44,12 @@ export function prepareDatabase(raw: unknown): LoadedDatabase {
     throw new Error(`Database validation failed (${errors.length} error(s)): ${summary}`)
   }
 
-  const launch = filterLaunchContent(source)
+  const launch = withBankDepositBoxActivities(filterLaunchContent(source))
+  const sourceView = withBankDepositBoxActivities(source)
   return {
-    source,
+    source: sourceView,
     launch,
-    sourceIndexes: buildIndexes(source),
+    sourceIndexes: buildIndexes(sourceView),
     launchIndexes: buildIndexes(launch),
     issues,
     needsDataCount: countNeedsData(source),
