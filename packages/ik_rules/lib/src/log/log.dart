@@ -137,8 +137,10 @@ class QuestLogRow {
     required this.questId,
     required this.name,
     required this.detail,
+    required this.status,
     required this.statusLabel,
     required this.completed,
+    required this.available,
     required this.steps,
   });
 
@@ -147,8 +149,14 @@ class QuestLogRow {
 
   /// Vague report of the situation, plus who gave it.
   final String detail;
+
+  /// Raw progress: inactive, active, or completed.
+  final String status;
   final String statusLabel;
   final bool completed;
+
+  /// Whether an inactive quest can be started on this save.
+  final bool available;
 
   /// Revealed steps for active quests.
   final List<QuestJournalStep> steps;
@@ -157,10 +165,24 @@ class QuestLogRow {
     'questId': questId,
     'name': name,
     'detail': detail,
+    'status': status,
     'statusLabel': statusLabel,
     'completed': completed,
+    'available': available,
     'steps': steps.map((step) => step.toJson()).toList(),
   };
+}
+
+/// How the quest journal orders its rows.
+enum QuestLogSort {
+  /// Completed, then active, then not started — content order within each band.
+  completion,
+
+  /// Database / release content order.
+  content,
+
+  /// A–Z by display name.
+  alphabetical,
 }
 
 List<QuestLogRow> questLog(GameDatabase db, PlayerSave save) {
@@ -184,11 +206,48 @@ List<QuestLogRow> questLog(GameDatabase db, PlayerSave save) {
       questId: questId,
       name: jsString(quest['Display Name']),
       detail: '${summary is String ? summary : 'No summary.'} · $npcName',
+      status: status,
       statusLabel: questStatusLabel(status),
       completed: status == 'completed',
+      available: status != 'inactive' || questAvailableForSave(db, save, quest),
       steps: steps,
     );
   }).toList();
+}
+
+/// Filter and sort a [questLog] for the journal organizer controls.
+List<QuestLogRow> organizeQuestLog(
+  List<QuestLogRow> rows, {
+  QuestLogSort sort = QuestLogSort.content,
+  bool hideUnstartable = false,
+}) {
+  final filtered = hideUnstartable
+      ? [
+          for (final row in rows)
+            if (row.status != 'inactive' || row.available) row,
+        ]
+      : List<QuestLogRow>.of(rows);
+
+  int completionRank(QuestLogRow row) {
+    if (row.status == 'completed') return 0;
+    if (row.status == 'active') return 1;
+    return 2;
+  }
+
+  switch (sort) {
+    case QuestLogSort.completion:
+      filtered.sort((a, b) {
+        final byStatus = completionRank(a).compareTo(completionRank(b));
+        if (byStatus != 0) return byStatus;
+        return a.name.toLowerCase().compareTo(b.name.toLowerCase());
+      });
+    case QuestLogSort.alphabetical:
+      filtered.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+    case QuestLogSort.content:
+      final order = <String, int>{for (var i = 0; i < rows.length; i++) rows[i].questId: i};
+      filtered.sort((a, b) => (order[a.questId] ?? 0).compareTo(order[b.questId] ?? 0));
+  }
+  return filtered;
 }
 
 /// One line of the recipe book, said the way a locked one has to be said.

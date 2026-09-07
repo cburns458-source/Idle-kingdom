@@ -570,16 +570,18 @@ class _LocationViewState extends State<LocationView> {
       sections.add(_BandSection(label, children));
     }
 
-    add('Activities', _activities(locationId));
-    add('Blessing', _blessing());
-    add('Special production', _stations(locationId));
-    add('People', _people(locationId));
+    add('Activities', [..._activities(locationId), ..._locationTimers(locationId)]);
     add('Shops', _shops(locationId));
-    add('Bank', _bank());
-    add('Arena', _arena());
-    add('Guild hall', _guildHall());
-    add(citadelHubTitleFor(locationId), _citadelBoards(locationId));
-    add('Search', _searches(locationId));
+    add('People', _people(locationId));
+    add('Other', [
+      ..._blessing(),
+      ..._stations(locationId),
+      ..._bank(),
+      ..._arena(),
+      ..._guildHall(),
+      ..._citadelBoards(locationId),
+      ..._searches(locationId),
+    ]);
     return sections;
   }
 
@@ -632,6 +634,112 @@ class _LocationViewState extends State<LocationView> {
           ),
         ),
     ];
+  }
+
+  /// Botany patches and hunting/fishing traps for this location.
+  List<Widget> _locationTimers(String locationId) {
+    final cards = <Widget>[];
+    final nowMs = controller.session.clock();
+    final existing = timerAtLocation(controller.save, locationId);
+
+    if (existing != null) {
+      final ready = timerIsReady(existing, nowMs);
+      final remainMs = (timerCompletesAtMs(existing) - nowMs).clamp(0, 1 << 62);
+      final remainSec = (remainMs / 1000).ceil();
+      final kindLabel = switch (existing.kind) {
+        'botany' => 'Botany patch',
+        'hunting_trap' => 'Hunting trap',
+        'fishing_trap' => 'Fishing trap',
+        _ => existing.kind.replaceAll('_', ' '),
+      };
+      cards.add(
+        Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: _InteractionCard(
+            title: kindLabel,
+            subtitle: ready ? 'Ready to collect.' : '${remainSec}s left.',
+            actionLabel: ready ? 'Collect' : 'Waiting',
+            tone: GameButtonTone.primary,
+            onPressed: ready && !controller.isRecovering
+                ? () => controller.collectTimerAt(locationId)
+                : null,
+          ),
+        ),
+      );
+      return cards;
+    }
+
+    if (locationHasBotanyPatch(locationId)) {
+      final courtyardLocked =
+          locationId == courtyardLocationId && !courtyardBotanyUnlocked(controller.save);
+      final hasSeed = inventoryHasAnyBotanySeed(controller.db, controller.save);
+      cards.add(
+        Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: _InteractionCard(
+            title: 'Botany patch',
+            subtitle: courtyardLocked
+                ? 'Complete The Grand Feast to unlock.'
+                : hasSeed
+                ? 'Plant your best eligible seed.'
+                : 'Bring a seed or sapling to plant.',
+            actionLabel: 'Plant',
+            tone: GameButtonTone.primary,
+            onPressed: controller.isRecovering || courtyardLocked || !hasSeed
+                ? null
+                : () => controller.plantBestBotanySeedHere(),
+          ),
+        ),
+      );
+    }
+
+    if (huntingTrapLocations.contains(locationId)) {
+      final canPlace = canPlaceTrap(
+        controller.db,
+        controller.save,
+        huntingTrapItemId,
+        locationId: locationId,
+      );
+      cards.add(
+        Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: _InteractionCard(
+            title: 'Hunting trap',
+            subtitle: canPlace.ok ? 'Place a hunting trap here.' : canPlace.reason,
+            actionLabel: 'Place trap',
+            tone: GameButtonTone.primary,
+            onPressed: controller.isRecovering || !canPlace.ok
+                ? null
+                : () => controller.placeTrapHere(huntingTrapItemId),
+          ),
+        ),
+      );
+    }
+
+    if (fishingTrapLocations.contains(locationId)) {
+      final canPlace = canPlaceTrap(
+        controller.db,
+        controller.save,
+        fishingTrapItemId,
+        locationId: locationId,
+      );
+      cards.add(
+        Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: _InteractionCard(
+            title: 'Fishing trap',
+            subtitle: canPlace.ok ? 'Place a fishing trap here.' : canPlace.reason,
+            actionLabel: 'Place trap',
+            tone: GameButtonTone.primary,
+            onPressed: controller.isRecovering || !canPlace.ok
+                ? null
+                : () => controller.placeTrapHere(fishingTrapItemId),
+          ),
+        ),
+      );
+    }
+
+    return cards;
   }
 
   List<Widget> _blessing() {

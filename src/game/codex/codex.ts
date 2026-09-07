@@ -13,7 +13,15 @@ import { isSpellItem, spellTooltipLines } from '../spells/spells'
 export { INVENTORY_GROUP_ORDER, inventoryGroupLabel }
 
 /** How an item enters the world. New kinds can be appended without rewriting pages. */
-export type CodexObtainKind = 'action' | 'enemyDrop' | 'shop' | 'quest' | 'starter'
+export type CodexObtainKind = 'action' | 'shop' | 'starter'
+
+const GOLDEN_SPUD_ITEM_ID = 'ITEM-0026'
+const HIDE_FROM_CODEX_ACTION_ID = 'ACN-0036'
+
+function notesHideFromCodex(notes: unknown): boolean {
+  if (typeof notes !== 'string') return false
+  return /HideFromCodex|MysteryDrop/i.test(notes)
+}
 
 export interface CodexItemRef {
   itemId: string
@@ -21,6 +29,8 @@ export interface CodexItemRef {
   minQuantity?: number | null
   maxQuantity?: number | null
   weight?: number | null
+  /** Weight share of the reward table, as a percent (0–100). */
+  dropRatePercent?: number | null
 }
 
 export interface CodexEnemyRef {
@@ -81,6 +91,8 @@ export interface CodexEnemyEntry {
   minDamage: number
   maxDamage: number
   combatXp?: number | null
+  /** Skill name shown beside XP (Fishing for Mother Squid / Squidlings). */
+  xpSkillLabel: string
   minimumGold?: number | null
   maximumGold?: number | null
   dropChance?: number | null
@@ -162,6 +174,7 @@ export class CodexIndex {
 
     const addObtain = (itemId: string | null | undefined, source: CodexObtainSource) => {
       if (!itemId || !names.has(itemId)) return
+      if (itemId === GOLDEN_SPUD_ITEM_ID) return
       const list = obtained.get(itemId) ?? []
       const key = obtainKey(source)
       if (list.some((row) => obtainKey(row) === key)) return
@@ -185,6 +198,9 @@ export class CodexIndex {
 
     for (const action of this.db.Actions) {
       if (action.Category === 'Standard Production') continue
+      if (action['Action ID'] === HIDE_FROM_CODEX_ACTION_ID || notesHideFromCodex(action.Notes)) {
+        continue
+      }
       const locs = actionLocations.get(action['Action ID']) ?? []
       const skillName = skills.get(action['Relevant Skill ID'])
       const level = action['Proficiency Level']
@@ -204,55 +220,26 @@ export class CodexIndex {
         })
       }
 
-      if (action.Category === 'Combat' && action['Target ID']) {
-        for (const tableId of actionTableIds(action)) {
-          for (const drop of tableItems.get(tableId) ?? []) {
-            addObtain(drop.itemId, {
-              kind: 'enemyDrop',
-              title: this.enemyName(action['Target ID']),
-              detail,
-              actionId: action['Action ID'],
-              enemyId: action['Target ID'],
-              locations: locs,
-              dropChance: action['Drop Chance'],
-              minQuantity: drop.minQuantity,
-              maxQuantity: drop.maxQuantity,
-            })
-          }
-        }
-      } else {
-        for (const table of actionTables(action)) {
-          for (const drop of tableItems.get(table.id) ?? []) {
-            addObtain(drop.itemId, {
-              kind: 'action',
-              title: action['Display Name'],
-              detail,
-              actionId: action['Action ID'],
-              locations: locs,
-              dropChance: table.chance,
-              minQuantity: drop.minQuantity,
-              maxQuantity: drop.maxQuantity,
-            })
-          }
+      // Combat enemy drops stay on bestiary pages only — not item obtain lists.
+      if (action.Category === 'Combat') continue
+
+      for (const table of actionTables(action)) {
+        for (const drop of tableItems.get(table.id) ?? []) {
+          addObtain(drop.itemId, {
+            kind: 'action',
+            title: action['Display Name'],
+            detail,
+            actionId: action['Action ID'],
+            locations: locs,
+            dropChance: table.chance,
+            minQuantity: drop.minQuantity,
+            maxQuantity: drop.maxQuantity,
+          })
         }
       }
     }
 
-    for (const enemy of this.db.Enemies) {
-      const tableId = enemy['Reward Table ID']
-      if (!tableId) continue
-      for (const drop of tableItems.get(tableId) ?? []) {
-        addObtain(drop.itemId, {
-          kind: 'enemyDrop',
-          title: enemy['Display Name'],
-          enemyId: enemy['Enemy ID'],
-          locations: this.enemyLocations(enemy, actionLocations, locations),
-          dropChance: enemy['Drop Chance'],
-          minQuantity: drop.minQuantity,
-          maxQuantity: drop.maxQuantity,
-        })
-      }
-    }
+    // Enemy reward tables are listed on bestiary pages, not as item obtain sources.
 
     for (const recipe of this.db.Recipes) {
       const outputId = recipe['Output Item ID']
@@ -320,19 +307,7 @@ export class CodexIndex {
       }
     }
 
-    for (const quest of this.db.Quests) {
-      const itemId = quest['Reward Item ID']
-      if (typeof itemId !== 'string' || !itemId) continue
-      const qty = quest['Reward Item Quantity']
-      addObtain(itemId, {
-        kind: 'quest',
-        title: typeof quest['Display Name'] === 'string' ? quest['Display Name'] : 'Quest',
-        questId: typeof quest['Quest ID'] === 'string' ? quest['Quest ID'] : null,
-        locations: [],
-        minQuantity: typeof qty === 'number' ? qty : null,
-        maxQuantity: typeof qty === 'number' ? qty : null,
-      })
-    }
+    // Quest rewards are not listed as item obtain sources.
 
     for (const starter of this.db.RaceStartingItems) {
       const race = this.db.Races.find((row) => row['Race ID'] === starter['Race ID'])
@@ -369,6 +344,19 @@ export class CodexIndex {
       })
     }
 
+    const fishingEnemyIds = new Set<string>()
+    for (const enemy of this.db.Enemies) {
+      const notes = typeof enemy.Notes === 'string' ? enemy.Notes : ''
+      if (/damage_mode:fishing/i.test(notes)) {
+        fishingEnemyIds.add(enemy['Enemy ID'])
+        const squidling = notes.match(/squidling_enemy:([A-Z0-9-]+)/i)?.[1]
+        if (squidling) fishingEnemyIds.add(squidling)
+      }
+      if (/squidling/i.test(enemy['Display Name']) || /squidling/i.test(notes)) {
+        fishingEnemyIds.add(enemy['Enemy ID'])
+      }
+    }
+
     const enemies = [...this.db.Enemies]
     enemies.sort((a, b) => {
       const level = (a['Combat Level'] ?? 0) - (b['Combat Level'] ?? 0)
@@ -377,6 +365,15 @@ export class CodexIndex {
     })
     for (const enemy of enemies) {
       const tableId = enemy['Reward Table ID']
+      const drops = (tableId ? (tableItems.get(tableId) ?? []) : []).filter(
+        (drop) => drop.itemId !== GOLDEN_SPUD_ITEM_ID,
+      )
+      const totalWeight = drops.reduce((sum, drop) => sum + (drop.weight ?? 0), 0)
+      const dropsWithRate = drops.map((drop) => ({
+        ...drop,
+        dropRatePercent:
+          drop.weight != null && totalWeight > 0 ? (drop.weight / totalWeight) * 100 : null,
+      }))
       this.enemyOrder.push(enemy['Enemy ID'])
       this.enemiesById.set(enemy['Enemy ID'], {
         enemyId: enemy['Enemy ID'],
@@ -386,17 +383,14 @@ export class CodexIndex {
         minDamage: enemy['Min Damage'],
         maxDamage: enemy['Max Damage'],
         combatXp: enemy['Combat XP'],
+        xpSkillLabel: fishingEnemyIds.has(enemy['Enemy ID']) ? 'Fishing' : 'Combat',
         minimumGold: enemy['Minimum Gold'],
         maximumGold: enemy['Maximum Gold'],
         dropChance: enemy['Drop Chance'],
         locations: this.enemyLocations(enemy, actionLocations, locations),
-        drops: tableId ? (tableItems.get(tableId) ?? []) : [],
+        drops: dropsWithRate,
       })
     }
-  }
-
-  private enemyName(enemyId: string): string {
-    return this.db.Enemies.find((row) => row['Enemy ID'] === enemyId)?.['Display Name'] ?? enemyId
   }
 
   private actionLocations(locations: Map<string, string>): Map<string, CodexLocationRef[]> {
@@ -475,10 +469,6 @@ export class CodexIndex {
     }
     return out
   }
-}
-
-function actionTableIds(action: ActionRow): string[] {
-  return actionTables(action).map((table) => table.id)
 }
 
 function actionTables(action: ActionRow): Array<{ id: string; chance: number | null }> {

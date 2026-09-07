@@ -59,10 +59,22 @@ void main() {
     expect(find.text('Cow'), findsWidgets);
     expect(find.text('The Farm'), findsWidgets);
     expect(find.text('Drops'), findsOne);
+    expect(find.textContaining('Drop rate'), findsWidgets);
 
     await tester.tap(find.byKey(const Key('codex-drop-ITEM-0054')));
     await tester.pump();
     expect(find.text('Obtained from'), findsOne);
-    expect(find.text('Cow'), findsWidgets);
+    expect(find.text('Raw Beef'), findsWidgets);
+    // Item pages no longer list enemies as obtain sources.
+    expect(find.text('No known source yet.'), findsOne);
+  });
+
+  testWidgets('codex filter chips include Botany and Thievery', (tester) async {
+    final controller = buildController(database, seed: startedCharacter(database));
+    addTearDown(controller.dispose);
+
+    await pumpPanel(tester, CodexView(controller: controller));
+    expect(find.byKey(Key('codex-filter-$groupBotany')), findsOne);
+    expect(find.byKey(Key('codex-filter-$groupThievery')), findsOne);
   });
 }
