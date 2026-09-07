@@ -88,6 +88,8 @@ const Map<String, String> _itemIcons = <String, String>{
   'ITEM-0288': 'insignia',
   'ITEM-0295': 'spell',
   'ITEM-0296': 'cosmetic_outfit_travelers_tunic',
+  'ITEM-0350': 'kelp_spores',
+  'ITEM-0351': 'lockpicks',
 };
 
 const Map<String, String> _slotIcons = <String, String>{
@@ -195,10 +197,12 @@ const Map<String, String> _actionArt = <String, String>{
   'ACN-0182': 'actions/acn_hunt_duck.webp',
   'ACN-0183': 'actions/acn_harvest_potato.webp',
   'ACN-0184': 'actions/acn_gather_wild_roots.webp',
-  'ACN-0185': 'actions/acn_harvest_potato.webp',
-  'ACN-0186': 'actions/acn_harvest_potato.webp',
-  'ACN-0187': 'actions/acn_harvest_potato.webp',
-  'ACN-0188': 'actions/acn_harvest_potato.webp',
+  'ACN-0185': 'actions/acn_steal_general_store.webp',
+  'ACN-0186': 'actions/acn_steal_barracks.webp',
+  'ACN-0187': 'actions/acn_pick_safe.webp',
+  'ACN-0188': 'actions/acn_steal_kitchen.webp',
+  'ACN-0190': 'actions/acn_steal_goblins.webp',
+  'ACN-0191': 'actions/acn_pick_deposit_box.webp',
 };
 
 /// Launch races that have bundled player sprites.

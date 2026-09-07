@@ -1,10 +1,11 @@
+import 'bank_amenities.dart';
 import 'generated/rows.dart';
 import 'indexes.dart';
 import 'validate.dart';
 
 /// Bump when Launch content rows change, matching `DATABASE_CONTENT_VERSION` in
 /// [src/game/data/loadDatabase.ts](../../../../src/game/data/loadDatabase.ts).
-const String databaseContentVersion = '2026-09-07-swap-titanium-tungsten';
+const String databaseContentVersion = '2026-09-07-swap-titanium-tungsten-merge';
 
 /// Path of the shared database inside `content/`. How those bytes are read is
 /// the host's problem: this package stays free of IO so it can be tested
@@ -53,11 +54,12 @@ LoadedDatabase prepareDatabase(Object? raw) {
     );
   }
 
-  final launch = filterLaunchContent(source);
+  final launch = withBankDepositBoxActivities(filterLaunchContent(source));
+  final sourceView = withBankDepositBoxActivities(source);
   return LoadedDatabase(
-    source: source,
+    source: sourceView,
     launch: launch,
-    sourceIndexes: buildIndexes(source),
+    sourceIndexes: buildIndexes(sourceView),
     launchIndexes: buildIndexes(launch),
     issues: issues,
     needsDataCount: countNeedsData(source),

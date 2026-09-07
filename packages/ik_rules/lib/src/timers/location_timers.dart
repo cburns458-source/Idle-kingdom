@@ -14,9 +14,21 @@ const String thieverySkillId = 'SKL-0015';
 const String glovesSlotId = 'SLOT-0007';
 const String courtyardLocationId = 'LOC-0014';
 const String grandFeastQuestId = 'QST-0001';
+const String shallowsLocationId = 'LOC-0043';
 
 const String huntingTrapItemId = 'ITEM-0346';
 const String fishingTrapItemId = 'ITEM-0347';
+
+/// Botany patches: Farm, Courtyard, Gathering Outskirts, Mountains, Shallows, Temple, Meadow.
+const Set<String> botanyPatchLocations = <String>{
+  'LOC-0001',
+  'LOC-0014',
+  'LOC-0031',
+  'LOC-0006',
+  'LOC-0043',
+  'LOC-0036',
+  'LOC-0009',
+};
 
 const Set<String> huntingTrapLocations = <String>{'LOC-0008', 'LOC-0009'};
 const Set<String> fishingTrapLocations = <String>{'LOC-0003', 'LOC-0004'};
@@ -24,11 +36,21 @@ const Set<String> fishingTrapLocations = <String>{'LOC-0003', 'LOC-0004'};
 const num trapDurationMs = 5 * 60 * 1000;
 
 class BotanySeedSpec {
-  const BotanySeedSpec({required this.outputItemId, required this.growSeconds, required this.xp});
+  const BotanySeedSpec({
+    required this.outputItemId,
+    required this.growSeconds,
+    required this.xp,
+    required this.requiresLevel,
+    required this.shallowsOnly,
+    required this.isSapling,
+  });
 
   final String outputItemId;
   final num growSeconds;
   final num xp;
+  final num requiresLevel;
+  final bool shallowsOnly;
+  final bool isSapling;
 }
 
 ItemRow? _itemById(GameDatabase db, String itemId) =>
@@ -56,8 +78,23 @@ BotanySeedSpec? parseBotanySeedSpec(GameDatabase db, String itemId) {
       0;
   final xp =
       num.tryParse(RegExp(r'Xp:(\d+)', caseSensitive: false).firstMatch(text)?.group(1) ?? '') ?? 0;
+  final requiresLevel =
+      num.tryParse(
+        RegExp(r'RequiresLevel:(\d+)', caseSensitive: false).firstMatch(text)?.group(1) ?? '',
+      ) ??
+      1;
   if (output == null || grow <= 0) return null;
-  return BotanySeedSpec(outputItemId: output, growSeconds: grow, xp: xp < 0 ? 0 : xp);
+  final tags = _itemTags(item);
+  return BotanySeedSpec(
+    outputItemId: output,
+    growSeconds: grow,
+    xp: xp < 0 ? 0 : xp,
+    requiresLevel: requiresLevel < 1 ? 1 : requiresLevel,
+    shallowsOnly:
+        RegExp(r'ShallowsOnly', caseSensitive: false).hasMatch(text) ||
+        tags.contains('shallows_only'),
+    isSapling: tags.contains('botany_sapling'),
+  );
 }
 
 bool inventoryHasAnyBotanySeed(GameDatabase db, PlayerSave save) {
@@ -81,30 +118,57 @@ bool courtyardBotanyUnlocked(PlayerSave save) {
   return getQuestProgress(save, grandFeastQuestId).status == 'completed';
 }
 
-({bool ok, String reason}) canPlantBotanySeed(
+bool locationHasBotanyPatch(String locationId) => botanyPatchLocations.contains(locationId);
+
+({bool ok, num quantity, String reason}) canPlantBotanySeed(
   GameDatabase db,
   PlayerSave save,
   String seedItemId, {
   String? locationId,
+  num plantQuantity = 1,
 }) {
   final loc = locationId ?? save.currentLocationId;
-  if (loc != courtyardLocationId) {
-    return (ok: false, reason: 'Botany plots are only in the Courtyard.');
+  if (!locationHasBotanyPatch(loc)) {
+    return (ok: false, quantity: 0, reason: 'There is no Botany patch here.');
   }
-  if (!courtyardBotanyUnlocked(save)) {
-    return (ok: false, reason: 'Complete The Grand Feast to unlock the Courtyard plot.');
+  if (loc == courtyardLocationId && !courtyardBotanyUnlocked(save)) {
+    return (
+      ok: false,
+      quantity: 0,
+      reason: 'Complete The Grand Feast to unlock the Courtyard plot.',
+    );
   }
   if (timerAtLocation(save, loc) != null) {
-    return (ok: false, reason: 'This location already has a timer running.');
+    return (ok: false, quantity: 0, reason: 'This patch is already growing.');
   }
-  if (parseBotanySeedSpec(db, seedItemId) == null) {
-    return (ok: false, reason: 'That item cannot be planted.');
+  final spec = parseBotanySeedSpec(db, seedItemId);
+  if (spec == null) {
+    return (ok: false, quantity: 0, reason: 'That item cannot be planted.');
+  }
+  if (spec.shallowsOnly && loc != shallowsLocationId) {
+    return (ok: false, quantity: 0, reason: 'Kelp only grows in The Shallows.');
+  }
+  if (!spec.shallowsOnly && loc == shallowsLocationId) {
+    return (ok: false, quantity: 0, reason: 'The Shallows plot only accepts kelp.');
+  }
+  final botanyLevel = getSkillProgress(save, botanySkillId).level;
+  if (botanyLevel < spec.requiresLevel) {
+    return (ok: false, quantity: 0, reason: 'Requires Botany level ${spec.requiresLevel}.');
   }
   final have = save.inventory
       .where((stack) => stack.itemId == seedItemId)
       .fold<num>(0, (sum, stack) => sum + stack.quantity);
-  if (have < 1) return (ok: false, reason: 'You do not have that seed.');
-  return (ok: true, reason: '');
+  if (have < 1) return (ok: false, quantity: 0, reason: 'You do not have that seed.');
+  final maxQty = spec.isSapling ? 1 : 3;
+  // Math.max(1, Math.min(maxQty, Math.floor(plantQuantity), have))
+  var quantity = plantQuantity.floor();
+  if (quantity > maxQty) quantity = maxQty;
+  if (quantity > have.floor()) quantity = have.floor();
+  if (quantity < 1) quantity = 1;
+  if (spec.isSapling && quantity != 1) {
+    return (ok: false, quantity: 0, reason: 'A patch holds one sapling.');
+  }
+  return (ok: true, quantity: quantity, reason: '');
 }
 
 ({bool ok, PlayerSave? save, String reason}) plantBotanySeed(
@@ -112,12 +176,21 @@ bool courtyardBotanyUnlocked(PlayerSave save) {
   PlayerSave save,
   String seedItemId, {
   num? nowMs,
+  num plantQuantity = 3,
 }) {
   final loc = save.currentLocationId;
-  final gate = canPlantBotanySeed(db, save, seedItemId, locationId: loc);
+  final gate = canPlantBotanySeed(
+    db,
+    save,
+    seedItemId,
+    locationId: loc,
+    plantQuantity: plantQuantity,
+  );
   if (!gate.ok) return (ok: false, save: null, reason: gate.reason);
   final spec = parseBotanySeedSpec(db, seedItemId)!;
-  final removed = removeIngredients(save, [RecipeIngredient(itemId: seedItemId, quantity: 1)]);
+  final removed = removeIngredients(save, [
+    RecipeIngredient(itemId: seedItemId, quantity: gate.quantity),
+  ]);
   if (removed == null) return (ok: false, save: null, reason: 'You do not have that seed.');
   final started = DateTime.fromMillisecondsSinceEpoch(
     (nowMs ?? DateTime.now().millisecondsSinceEpoch).round(),
@@ -127,9 +200,10 @@ bool courtyardBotanyUnlocked(PlayerSave save) {
     kind: 'botany',
     inputItemId: seedItemId,
     outputItemId: spec.outputItemId,
-    outputQuantity: 1,
+    // Planted count; yield is rolled on collect.
+    outputQuantity: gate.quantity,
     skillId: botanySkillId,
-    xpReward: spec.xp,
+    xpReward: spec.xp * gate.quantity,
     startedAt: started,
     durationMs: spec.growSeconds * 1000,
   );
@@ -149,10 +223,13 @@ bool courtyardBotanyUnlocked(PlayerSave save) {
 }) {
   for (final stack in save.inventory) {
     if (stack.quantity <= 0) continue;
-    if (parseBotanySeedSpec(db, stack.itemId) == null) continue;
-    return plantBotanySeed(db, save, stack.itemId, nowMs: nowMs);
+    final spec = parseBotanySeedSpec(db, stack.itemId);
+    if (spec == null) continue;
+    final qty = spec.isSapling ? 1 : (stack.quantity < 3 ? stack.quantity : 3);
+    final planted = plantBotanySeed(db, save, stack.itemId, nowMs: nowMs, plantQuantity: qty);
+    if (planted.ok) return planted;
   }
-  return (ok: false, save: null, reason: 'You have no plantable seeds or saplings.');
+  return (ok: false, save: null, reason: 'You have no plantable seeds or saplings for this patch.');
 }
 
 ({bool ok, String? kind, String reason}) canPlaceTrap(
@@ -265,6 +342,10 @@ const Map<String, List<({String itemId, num weight, num xp})>> _trapLoot =
   return (itemId: last.itemId, xp: last.xp);
 }
 
+num _rollInclusive(num Function() random, int min, int max) {
+  return min + (random() * (max - min + 1)).floor();
+}
+
 class LocationTimerCollectResult {
   const LocationTimerCollectResult({
     required this.ok,
@@ -316,17 +397,39 @@ LocationTimerCollectResult collectLocationTimer(
         reason: 'Botany timer is missing its crop.',
       );
     }
-    final granted = addItemsToInventory(next, outputId, timer.outputQuantity, null, false, db);
+    final planted = timer.outputQuantity > 0 ? timer.outputQuantity.round() : 1;
+    final plantedCount = planted < 1 ? 1 : planted;
+    var produceQty = 0;
+    for (var i = 0; i < plantedCount; i++) {
+      produceQty += _rollInclusive(rng, 1, 5).round();
+    }
+    final granted = addItemsToInventory(next, outputId, produceQty, null, false, db);
     next = granted.save;
-    if (granted.added > 0) {
-      final name = db.items
-          .firstWhereOrNull((item) => item.raw['Item ID'] == outputId)
+    final produceName = db.items
+        .firstWhereOrNull((item) => item.raw['Item ID'] == outputId)
+        ?.raw['Display Name'];
+    loot.add(
+      LootGrant(
+        itemId: outputId,
+        quantity: produceQty,
+        displayName: produceName is String ? produceName : outputId,
+      ),
+    );
+    var returned = 0;
+    for (var i = 0; i < plantedCount; i++) {
+      if (rng() < 0.5) returned += 1;
+    }
+    if (returned > 0) {
+      final back = addItemsToInventory(next, timer.inputItemId, returned, null, false, db);
+      next = back.save;
+      final seedName = db.items
+          .firstWhereOrNull((item) => item.raw['Item ID'] == timer.inputItemId)
           ?.raw['Display Name'];
       loot.add(
         LootGrant(
-          itemId: outputId,
-          quantity: granted.added,
-          displayName: name is String ? name : outputId,
+          itemId: timer.inputItemId,
+          quantity: returned,
+          displayName: seedName is String ? seedName : timer.inputItemId,
         ),
       );
     }
@@ -336,25 +439,21 @@ LocationTimerCollectResult collectLocationTimer(
       final granted = addItemsToInventory(next, rolled.itemId, 1, null, false, db);
       next = granted.save;
       xpGained = rolled.xp;
-      if (granted.added > 0) {
-        final name = db.items
-            .firstWhereOrNull((item) => item.raw['Item ID'] == rolled.itemId)
-            ?.raw['Display Name'];
-        loot.add(
-          LootGrant(
-            itemId: rolled.itemId,
-            quantity: granted.added,
-            displayName: name is String ? name : rolled.itemId,
-          ),
-        );
-      }
+      final name = db.items
+          .firstWhereOrNull((item) => item.raw['Item ID'] == rolled.itemId)
+          ?.raw['Display Name'];
+      loot.add(
+        LootGrant(
+          itemId: rolled.itemId,
+          quantity: 1,
+          displayName: name is String ? name : rolled.itemId,
+        ),
+      );
     }
     next = addItemsToInventory(next, timer.inputItemId, 1, null, false, db).save;
   }
 
-  if (xpGained > 0) {
-    next = applyXp(next, db, skillId, xpGained).save;
-  }
+  next = applyXp(next, db, skillId, xpGained).save;
 
   return LocationTimerCollectResult(
     ok: true,

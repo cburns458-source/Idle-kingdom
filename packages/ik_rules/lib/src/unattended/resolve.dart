@@ -341,7 +341,7 @@ UnattendedResult resolveUnattendedProgress(
         break;
       }
 
-      final completed = completeGatheringAction(db, current, action, random);
+      final completed = completeGatheringAction(db, current, action, random, due);
       gatheringActions += 1;
       // Clear completed action fields before generating the next one.
       var next = clearCombatSave(

@@ -628,7 +628,7 @@ void main() {
     addTearDown(controller.dispose);
     await pumpShell(tester, controller);
 
-    expect(find.widgetWithText(GameButton, 'Special production'), findsNothing);
+    expect(find.widgetWithText(GameButton, 'Other'), findsNothing);
     expect(find.text('Mages quarters'), findsNothing);
 
     final accepted = acceptQuest(database.launch, controller.save, 'QST-0005');
@@ -636,7 +636,7 @@ void main() {
     controller.commit(accepted.save!);
     await tester.pump();
 
-    expect(find.widgetWithText(GameButton, 'Special production'), findsNothing);
+    expect(find.widgetWithText(GameButton, 'Other'), findsNothing);
     expect(find.text('Mages quarters'), findsNothing);
 
     controller.commit(
@@ -649,13 +649,12 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.widgetWithText(GameButton, 'Special production'), findsOne);
-    await tester.tap(find.widgetWithText(GameButton, 'Special production'));
-    await tester.pump();
+    expect(find.widgetWithText(GameButton, 'Other'), findsOne);
+    await tapVisible(tester, find.widgetWithText(GameButton, 'Other'));
     expect(find.text('Mages quarters'), findsOne);
   });
 
-  testWidgets('the workshop lists Special production as its own tab', (tester) async {
+  testWidgets('the workshop lists Special production under Other', (tester) async {
     final controller = buildController(
       database,
       seed: startedCharacter(database).copyWith(currentLocationId: 'LOC-0025'),
@@ -663,8 +662,9 @@ void main() {
     addTearDown(controller.dispose);
     await pumpShell(tester, controller);
 
-    expect(find.widgetWithText(GameButton, 'Special production'), findsOne);
-    expect(find.text('Special production'), findsOne);
+    expect(find.widgetWithText(GameButton, 'Other'), findsOne);
+    await tapVisible(tester, find.widgetWithText(GameButton, 'Other'));
+    expect(find.text('Smithing forge'), findsOne);
   });
 
   testWidgets('the option band shows one tab per group at the kitchen', (tester) async {

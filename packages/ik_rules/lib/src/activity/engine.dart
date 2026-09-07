@@ -4,6 +4,8 @@ import 'package:ik_content/ik_content.dart';
 import '../achievements/progress.dart';
 import '../combat/boss.dart';
 import '../combat/engine.dart';
+import '../combat/food.dart';
+import '../equipment/loadout.dart';
 import '../log/milestones.dart';
 import '../js_compat.dart';
 import '../potions/effects.dart';
@@ -23,6 +25,8 @@ import 'reward_summary.dart';
 import 'rewards.dart';
 import 'types.dart';
 import 'xp.dart';
+
+const String _lockpickItemId = 'ITEM-0351';
 
 const String comingSoonReason = 'Coming soon.';
 
@@ -244,42 +248,77 @@ GatheringCompletion completeGatheringAction(
   GameDatabase db,
   PlayerSave save,
   ActionRow action,
-  RandomFn random,
-) {
+  RandomFn random, [
+  num? nowMs,
+]) {
   final notes = action.raw['Notes'];
   final notesText = notes is String ? notes : '';
-  final failChanceMatch = RegExp(r'FailChance:(\d+)', caseSensitive: false).firstMatch(notesText);
-  final failDamageMatch = RegExp(
-    r'FailDamagePercent:(\d+)',
-    caseSensitive: false,
-  ).firstMatch(notesText);
-  if (RegExp(r'ThieveryPickpocket', caseSensitive: false).hasMatch(notesText) &&
-      failChanceMatch != null) {
-    final failChance = num.parse(failChanceMatch.group(1)!);
-    if (random() * 100 < failChance) {
-      final damagePercent = num.parse(failDamageMatch?.group(1) ?? '10');
-      final damage = (save.maxHp * damagePercent / 100).floor().clamp(1, 1 << 30);
-      final nextHp = (save.currentHp - damage).clamp(1, save.maxHp);
+  final now = nowMs ?? DateTime.now().millisecondsSinceEpoch;
+
+  ActionCompletionResult emptyResult() => ActionCompletionResult(
+    actionId: jsString(action.raw['Action ID']),
+    actionName: jsString(action.raw['Display Name']),
+    skillId: jsString(action.raw['Relevant Skill ID']),
+    xpGained: 0,
+    bonusXp: const <BonusXpGrant>[],
+    xpRewards: const <ActionXpRewardSummary>[],
+    goldGained: 0,
+    loot: const <LootGrant>[],
+    leveledUpTo: null,
+  );
+
+  if (RegExp(r'RequiresLockpick', caseSensitive: false).hasMatch(notesText)) {
+    final tool = slotStack(save, weaponToolSlotId);
+    if (tool == null || tool.quantity <= 0 || tool.itemId != _lockpickItemId) {
       return GatheringCompletion(
-        save: withoutHeldAction(save.copyWith(currentHp: nextHp), save.currentActivityId),
-        result: ActionCompletionResult(
-          actionId: jsString(action.raw['Action ID']),
-          actionName: jsString(action.raw['Display Name']),
-          skillId: jsString(action.raw['Relevant Skill ID']),
-          xpGained: 0,
-          bonusXp: const <BonusXpGrant>[],
-          xpRewards: const <ActionXpRewardSummary>[],
-          goldGained: 0,
-          loot: const <LootGrant>[],
-          leveledUpTo: null,
-        ),
+        save: withoutHeldAction(save, save.currentActivityId),
+        result: emptyResult(),
       );
     }
   }
 
+  final failChanceMatch = RegExp(r'FailChance:(\d+)', caseSensitive: false).firstMatch(notesText);
+  if (RegExp(r'Thievery', caseSensitive: false).hasMatch(notesText) &&
+      failChanceMatch != null &&
+      !RegExp(r'NoConsequences', caseSensitive: false).hasMatch(notesText)) {
+    final failChance = num.parse(failChanceMatch.group(1)!);
+    if (random() * 100 < failChance) {
+      final damagePercent =
+          num.tryParse(
+            RegExp(
+                  r'FailDamagePercent:(\d+)',
+                  caseSensitive: false,
+                ).firstMatch(notesText)?.group(1) ??
+                '',
+          ) ??
+          10;
+      final damage = (save.maxHp * damagePercent / 100).floor();
+      final appliedDamage = damage < 1 ? 1 : damage;
+      final nextHp = save.currentHp - appliedDamage;
+      var next = save.copyWith(currentHp: nextHp);
+      if (RegExp(r'RequiresLockpick', caseSensitive: false).hasMatch(notesText)) {
+        next = _consumeLockpick(next);
+      }
+      if (nextHp <= 0) {
+        next = applyCombatDefeat(db, next, now);
+      } else {
+        next = consumeFoodAfterVictory(db, next).save;
+      }
+      return GatheringCompletion(
+        save: withoutHeldAction(next, save.currentActivityId),
+        result: emptyResult(),
+      );
+    }
+  }
+
+  var working = save;
+  if (RegExp(r'RequiresLockpick', caseSensitive: false).hasMatch(notesText)) {
+    working = _consumeLockpick(working);
+  }
+
   final skillId = jsString(action.raw['Relevant Skill ID']);
-  final rewarded = resolveActionRewards(db, save, action, random);
-  final xpAmount = gatheringXpReward(db, save, action);
+  final rewarded = resolveActionRewards(db, working, action, random);
+  final xpAmount = gatheringXpReward(db, working, action);
   final xpApplied = applyXp(clearActivePotionEffect(rewarded.save), db, skillId, xpAmount);
   var next = xpApplied.save;
   var leveledUpTo = xpApplied.leveledUpTo;
@@ -320,6 +359,9 @@ GatheringCompletion completeGatheringAction(
   }
   next = applyQuestActionProgress(db, next, jsString(action.raw['Action ID']));
   next = applyQuestAutoCompleteOnAction(db, next).save;
+  if (RegExp(r'Thievery', caseSensitive: false).hasMatch(notesText)) {
+    next = consumeFoodAfterVictory(db, next).save;
+  }
 
   return GatheringCompletion(
     save: withoutHeldAction(next, save.currentActivityId),
@@ -333,6 +375,20 @@ GatheringCompletion completeGatheringAction(
       goldGained: rewarded.goldGained,
       loot: rewarded.loot,
       leveledUpTo: leveledUpTo,
+    ),
+  );
+}
+
+PlayerSave _consumeLockpick(PlayerSave save) {
+  final tool = slotStack(save, weaponToolSlotId);
+  if (tool == null || tool.itemId != _lockpickItemId || tool.quantity <= 0) return save;
+  final nextQty = tool.quantity - 1;
+  return save.copyWith(
+    equipment: EquipmentLoadout(
+      slots: <String, EquippedStack?>{
+        ...save.equipment.slots,
+        weaponToolSlotId: nextQty > 0 ? tool.copyWith(quantity: nextQty) : null,
+      },
     ),
   );
 }

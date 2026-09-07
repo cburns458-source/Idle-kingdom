@@ -17,10 +17,12 @@ const int groupFishing = 7;
 const int groupHarvesting = 8;
 const int groupHunting = 9;
 const int groupWoodcutting = 10;
-const int groupCrafting = 11;
-const int groupAlchemy = 12;
-const int groupArcana = 13;
-const int groupOther = 14;
+const int groupBotany = 11;
+const int groupThievery = 12;
+const int groupCrafting = 13;
+const int groupAlchemy = 14;
+const int groupArcana = 15;
+const int groupOther = 16;
 
 /// Display order for Codex filter chips; matches grouped bag order.
 const List<int> inventoryGroupOrder = <int>[
@@ -34,6 +36,8 @@ const List<int> inventoryGroupOrder = <int>[
   groupHarvesting,
   groupHunting,
   groupWoodcutting,
+  groupBotany,
+  groupThievery,
   groupCrafting,
   groupAlchemy,
   groupArcana,
@@ -51,6 +55,8 @@ const Map<int, String> inventoryGroupLabels = <int, String>{
   groupHarvesting: 'Harvesting',
   groupHunting: 'Hunting',
   groupWoodcutting: 'Woodcutting',
+  groupBotany: 'Botany',
+  groupThievery: 'Thievery',
   groupCrafting: 'Crafting',
   groupAlchemy: 'Alchemy',
   groupArcana: 'Arcana',
@@ -72,6 +78,8 @@ const Map<String, int> _skillGroup = <String, int>{
   'SKL-0011': groupSmithing,
   'SKL-0012': groupArtisanry,
   'SKL-0013': groupArcana,
+  'SKL-0014': groupBotany,
+  'SKL-0015': groupThievery,
 };
 
 const Map<String, int> _armorSlotRank = <String, int>{

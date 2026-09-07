@@ -440,7 +440,7 @@ export function advanceSession(
       return out.result()
     }
 
-    const finished = completeGatheringAction(db, out.current, action, random)
+    const finished = completeGatheringAction(db, out.current, action, random, due)
     out.set(finished.save)
     out.creditCritterTime(actionState.durationMs, due, random)
     out.emit({

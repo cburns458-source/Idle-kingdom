@@ -28,6 +28,7 @@ void main() {
       LocationView(controller: plaza, multiplayer: buildMultiplayer(database), onOpenMap: () {}),
       size: const Size(900, 2400),
     );
+    await selectLocationBandTab(tester, 'Other');
     await tester.tap(find.widgetWithText(GameButton, 'Arena'));
     await tester.pump();
     expect(find.text('Player fights'), findsOne);
@@ -125,6 +126,7 @@ void main() {
     await pumpShell(tester, controller, size: const Size(900, 2400));
 
     await tapVisible(tester, find.byTooltip('Expand list'));
+    await selectLocationBandTab(tester, 'Other');
     await tester.tap(find.widgetWithText(GameButton, 'Arena'));
     await tester.pump();
     await tapVisible(

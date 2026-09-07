@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:idle_kingdoms/src/session/multiplayer_controller.dart';
-import 'package:idle_kingdoms/src/theme.dart';
 import 'package:ik_content/ik_content.dart';
 import 'package:ik_net/ik_net.dart';
 import 'package:ik_rules/ik_rules.dart';
@@ -44,8 +43,7 @@ void main() {
     addTearDown(controller.dispose);
     await pumpShell(tester, controller, size: const Size(900, 2400));
 
-    await tester.tap(find.widgetWithText(GameButton, 'Citadel Plaza'));
-    await tester.pump();
+    await selectLocationBandTab(tester, 'Other');
     expect(find.text('Hourly Bounties'), findsOne);
     expect(find.text('Grand Bazaar'), findsNothing);
   });
@@ -55,8 +53,7 @@ void main() {
     addTearDown(controller.dispose);
     await pumpShell(tester, controller, size: const Size(900, 2400));
 
-    await tester.tap(find.widgetWithText(GameButton, 'Message board'));
-    await tester.pump();
+    await selectLocationBandTab(tester, 'Other');
     expect(find.text('Message board'), findsWidgets);
     expect(find.text('Grand Bazaar'), findsWidgets);
     expect(find.text('Hourly Bounties'), findsNothing);
@@ -81,8 +78,7 @@ void main() {
     addTearDown(net.dispose);
     await pumpShell(tester, controller, multiplayer: net, size: const Size(900, 2400));
 
-    await tester.tap(find.widgetWithText(GameButton, 'Citadel Plaza'));
-    await tester.pump();
+    await selectLocationBandTab(tester, 'Other');
     await tapVisible(tester, find.byTooltip('Expand list'));
     await tapVisible(tester, find.text('Open'));
     await tester.pump();
@@ -106,8 +102,7 @@ void main() {
     addTearDown(net.dispose);
     await pumpShell(tester, controller, multiplayer: net, size: const Size(900, 2400));
 
-    await tester.tap(find.widgetWithText(GameButton, 'Message board'));
-    await tester.pump();
+    await selectLocationBandTab(tester, 'Other');
     await tapVisible(tester, find.byTooltip('Expand list'));
     await tapVisible(tester, find.text('Post').first);
     await tester.pump();

@@ -1,5 +1,5 @@
 import { addItemsToInventory } from '../activity/rewards'
-import { applyXp } from '../activity/xp'
+import { applyXp, getSkillProgress } from '../activity/xp'
 import type { GameDatabase, ItemRow } from '../data/types'
 import { removeIngredients } from '../production/inventory'
 import { getQuestProgress } from '../quests/quests'
@@ -10,9 +10,21 @@ export const THIEVERY_SKILL_ID = 'SKL-0015'
 export const GLOVES_SLOT_ID = 'SLOT-0007'
 export const COURTYARD_LOCATION_ID = 'LOC-0014'
 export const GRAND_FEAST_QUEST_ID = 'QST-0001'
+export const SHALLOWS_LOCATION_ID = 'LOC-0043'
 
 export const HUNTING_TRAP_ITEM_ID = 'ITEM-0346'
 export const FISHING_TRAP_ITEM_ID = 'ITEM-0347'
+
+/** Botany patches: Farm, Courtyard, Gathering Outskirts, Mountains, Shallows, Temple, Meadow. */
+export const BOTANY_PATCH_LOCATIONS = new Set([
+  'LOC-0001',
+  'LOC-0014',
+  'LOC-0031',
+  'LOC-0006',
+  'LOC-0043',
+  'LOC-0036',
+  'LOC-0009',
+])
 
 export const HUNTING_TRAP_LOCATIONS = new Set(['LOC-0008', 'LOC-0009'])
 export const FISHING_TRAP_LOCATIONS = new Set(['LOC-0003', 'LOC-0004'])
@@ -24,6 +36,9 @@ export interface BotanySeedSpec {
   outputItemId: string
   growSeconds: number
   xp: number
+  requiresLevel: number
+  shallowsOnly: boolean
+  isSapling: boolean
 }
 
 function itemById(db: GameDatabase, itemId: string): ItemRow | undefined {
@@ -46,8 +61,17 @@ export function parseBotanySeedSpec(db: GameDatabase, itemId: string): BotanySee
   const output = /Output:([A-Z0-9-]+)/i.exec(notes)?.[1]
   const grow = Number(/GrowSeconds:(\d+)/i.exec(notes)?.[1] ?? 0)
   const xp = Number(/Xp:(\d+)/i.exec(notes)?.[1] ?? 0)
+  const requiresLevel = Number(/RequiresLevel:(\d+)/i.exec(notes)?.[1] ?? 1)
   if (!output || grow <= 0) return null
-  return { outputItemId: output, growSeconds: grow, xp: Math.max(0, xp) }
+  const tags = itemTags(item)
+  return {
+    outputItemId: output,
+    growSeconds: grow,
+    xp: Math.max(0, xp),
+    requiresLevel: requiresLevel < 1 ? 1 : requiresLevel,
+    shallowsOnly: /ShallowsOnly/i.test(notes) || tags.includes('shallows_only'),
+    isSapling: tags.includes('botany_sapling'),
+  }
 }
 
 export function inventoryHasAnyBotanySeed(db: GameDatabase, save: PlayerSave): boolean {
@@ -73,27 +97,61 @@ export function courtyardBotanyUnlocked(save: PlayerSave): boolean {
   return getQuestProgress(save, GRAND_FEAST_QUEST_ID).status === 'completed'
 }
 
+export function locationHasBotanyPatch(locationId: string): boolean {
+  return BOTANY_PATCH_LOCATIONS.has(locationId)
+}
+
 export function canPlantBotanySeed(
   db: GameDatabase,
   save: PlayerSave,
   seedItemId: string,
   locationId: string = save.currentLocationId,
-): { ok: true } | { ok: false; reason: string } {
-  if (locationId !== COURTYARD_LOCATION_ID) {
-    return { ok: false, reason: 'Botany plots are only in the Courtyard.' }
+  plantQuantity: number = 1,
+): { ok: true; quantity: number } | { ok: false; quantity: number; reason: string } {
+  if (!locationHasBotanyPatch(locationId)) {
+    return { ok: false, quantity: 0, reason: 'There is no Botany patch here.' }
   }
-  if (!courtyardBotanyUnlocked(save)) {
-    return { ok: false, reason: 'Complete The Grand Feast to unlock the Courtyard plot.' }
+  if (locationId === COURTYARD_LOCATION_ID && !courtyardBotanyUnlocked(save)) {
+    return {
+      ok: false,
+      quantity: 0,
+      reason: 'Complete The Grand Feast to unlock the Courtyard plot.',
+    }
   }
   if (timerAtLocation(save, locationId)) {
-    return { ok: false, reason: 'This location already has a timer running.' }
+    return { ok: false, quantity: 0, reason: 'This patch is already growing.' }
   }
-  if (!parseBotanySeedSpec(db, seedItemId)) {
-    return { ok: false, reason: 'That item cannot be planted.' }
+  const spec = parseBotanySeedSpec(db, seedItemId)
+  if (!spec) {
+    return { ok: false, quantity: 0, reason: 'That item cannot be planted.' }
   }
-  const have = save.inventory.find((stack) => stack.itemId === seedItemId)?.quantity ?? 0
-  if (have < 1) return { ok: false, reason: 'You do not have that seed.' }
-  return { ok: true }
+  if (spec.shallowsOnly && locationId !== SHALLOWS_LOCATION_ID) {
+    return { ok: false, quantity: 0, reason: 'Kelp only grows in The Shallows.' }
+  }
+  if (!spec.shallowsOnly && locationId === SHALLOWS_LOCATION_ID) {
+    return { ok: false, quantity: 0, reason: 'The Shallows plot only accepts kelp.' }
+  }
+  const botanyLevel = getSkillProgress(save, BOTANY_SKILL_ID).level
+  if (botanyLevel < spec.requiresLevel) {
+    return {
+      ok: false,
+      quantity: 0,
+      reason: `Requires Botany level ${spec.requiresLevel}.`,
+    }
+  }
+  const have = save.inventory
+    .filter((stack) => stack.itemId === seedItemId)
+    .reduce((sum, stack) => sum + stack.quantity, 0)
+  if (have < 1) return { ok: false, quantity: 0, reason: 'You do not have that seed.' }
+  const maxQty = spec.isSapling ? 1 : 3
+  let quantity = Math.floor(plantQuantity)
+  if (quantity > maxQty) quantity = maxQty
+  if (quantity > Math.floor(have)) quantity = Math.floor(have)
+  if (quantity < 1) quantity = 1
+  if (spec.isSapling && quantity !== 1) {
+    return { ok: false, quantity: 0, reason: 'A patch holds one sapling.' }
+  }
+  return { ok: true, quantity }
 }
 
 export function plantBotanySeed(
@@ -101,21 +159,23 @@ export function plantBotanySeed(
   save: PlayerSave,
   seedItemId: string,
   nowMs: number = Date.now(),
+  plantQuantity: number = 3,
 ): { ok: true; save: PlayerSave } | { ok: false; reason: string } {
   const locationId = save.currentLocationId
-  const gate = canPlantBotanySeed(db, save, seedItemId, locationId)
-  if (!gate.ok) return gate
+  const gate = canPlantBotanySeed(db, save, seedItemId, locationId, plantQuantity)
+  if (!gate.ok) return { ok: false, reason: gate.reason }
   const spec = parseBotanySeedSpec(db, seedItemId)!
-  const removed = removeIngredients(save, [{ itemId: seedItemId, quantity: 1 }])
+  const removed = removeIngredients(save, [{ itemId: seedItemId, quantity: gate.quantity }])
   if (!removed) return { ok: false, reason: 'You do not have that seed.' }
   const timer: LocationTimer = {
     locationId,
     kind: 'botany',
     inputItemId: seedItemId,
     outputItemId: spec.outputItemId,
-    outputQuantity: 1,
+    // Planted count; yield is rolled on collect.
+    outputQuantity: gate.quantity,
     skillId: BOTANY_SKILL_ID,
-    xpReward: spec.xp,
+    xpReward: spec.xp * gate.quantity,
     startedAt: new Date(nowMs).toISOString(),
     durationMs: spec.growSeconds * 1000,
   }
@@ -131,7 +191,6 @@ export function plantBotanySeed(
   }
 }
 
-
 export function plantBestBotanySeed(
   db: GameDatabase,
   save: PlayerSave,
@@ -139,10 +198,16 @@ export function plantBestBotanySeed(
 ): { ok: true; save: PlayerSave } | { ok: false; reason: string } {
   for (const stack of save.inventory) {
     if (stack.quantity <= 0) continue
-    if (!parseBotanySeedSpec(db, stack.itemId)) continue
-    return plantBotanySeed(db, save, stack.itemId, nowMs)
+    const spec = parseBotanySeedSpec(db, stack.itemId)
+    if (!spec) continue
+    const qty = spec.isSapling ? 1 : Math.min(3, stack.quantity)
+    const planted = plantBotanySeed(db, save, stack.itemId, nowMs, qty)
+    if (planted.ok) return planted
   }
-  return { ok: false, reason: 'You have no plantable seeds or saplings.' }
+  return {
+    ok: false,
+    reason: 'You have no plantable seeds or saplings for this patch.',
+  }
 }
 
 export function canPlaceTrap(
@@ -246,6 +311,10 @@ function rollTrapLoot(
   return { itemId: last.itemId, xp: last.xp }
 }
 
+function rollInclusive(random: () => number, min: number, max: number): number {
+  return min + Math.floor(random() * (max - min + 1))
+}
+
 export function collectLocationTimer(
   db: GameDatabase,
   save: PlayerSave,
@@ -278,22 +347,34 @@ export function collectLocationTimer(
 
   if (timer.kind === 'botany') {
     if (!timer.outputItemId) return { ok: false, reason: 'Botany timer is missing its crop.' }
-    const granted = addItemsToInventory(
-      next,
-      timer.outputItemId,
-      timer.outputQuantity,
-      null,
-      false,
-      db,
-    )
+    const planted = timer.outputQuantity > 0 ? Math.round(timer.outputQuantity) : 1
+    const plantedCount = planted < 1 ? 1 : planted
+    let produceQty = 0
+    for (let i = 0; i < plantedCount; i += 1) {
+      produceQty += rollInclusive(random, 1, 5)
+    }
+    const granted = addItemsToInventory(next, timer.outputItemId, produceQty, null, false, db)
     next = granted.save
-    if (granted.added > 0) {
+    loot.push({
+      itemId: timer.outputItemId,
+      quantity: produceQty,
+      displayName:
+        db.Items.find((item) => item['Item ID'] === timer.outputItemId)?.['Display Name'] ??
+        timer.outputItemId,
+    })
+    let returned = 0
+    for (let i = 0; i < plantedCount; i += 1) {
+      if (random() < 0.5) returned += 1
+    }
+    if (returned > 0) {
+      const back = addItemsToInventory(next, timer.inputItemId, returned, null, false, db)
+      next = back.save
       loot.push({
-        itemId: timer.outputItemId,
-        quantity: granted.added,
+        itemId: timer.inputItemId,
+        quantity: returned,
         displayName:
-          db.Items.find((item) => item['Item ID'] === timer.outputItemId)?.['Display Name'] ??
-          timer.outputItemId,
+          db.Items.find((item) => item['Item ID'] === timer.inputItemId)?.['Display Name'] ??
+          timer.inputItemId,
       })
     }
   } else {
@@ -302,23 +383,19 @@ export function collectLocationTimer(
       const granted = addItemsToInventory(next, rolled.itemId, 1, null, false, db)
       next = granted.save
       xpGained = rolled.xp
-      if (granted.added > 0) {
-        loot.push({
-          itemId: rolled.itemId,
-          quantity: granted.added,
-          displayName:
-            db.Items.find((item) => item['Item ID'] === rolled.itemId)?.['Display Name'] ??
-            rolled.itemId,
-        })
-      }
+      loot.push({
+        itemId: rolled.itemId,
+        quantity: 1,
+        displayName:
+          db.Items.find((item) => item['Item ID'] === rolled.itemId)?.['Display Name'] ??
+          rolled.itemId,
+      })
     }
     // Return the trap so it can be placed again.
     next = addItemsToInventory(next, timer.inputItemId, 1, null, false, db).save
   }
 
-  if (xpGained > 0) {
-    next = applyXp(next, db, skillId, xpGained).save
-  }
+  next = applyXp(next, db, skillId, xpGained).save
 
   return { ok: true, save: next, loot, xpGained, skillId }
 }

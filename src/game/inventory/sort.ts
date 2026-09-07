@@ -12,10 +12,12 @@ export const GROUP_FISHING = 7
 export const GROUP_HARVESTING = 8
 export const GROUP_HUNTING = 9
 export const GROUP_WOODCUTTING = 10
-export const GROUP_CRAFTING = 11
-export const GROUP_ALCHEMY = 12
-export const GROUP_ARCANA = 13
-export const GROUP_OTHER = 14
+export const GROUP_BOTANY = 11
+export const GROUP_THIEVERY = 12
+export const GROUP_CRAFTING = 13
+export const GROUP_ALCHEMY = 14
+export const GROUP_ARCANA = 15
+export const GROUP_OTHER = 16
 
 /** Display order for Codex filter chips; matches grouped bag order. */
 export const INVENTORY_GROUP_ORDER = [
@@ -29,6 +31,8 @@ export const INVENTORY_GROUP_ORDER = [
   GROUP_HARVESTING,
   GROUP_HUNTING,
   GROUP_WOODCUTTING,
+  GROUP_BOTANY,
+  GROUP_THIEVERY,
   GROUP_CRAFTING,
   GROUP_ALCHEMY,
   GROUP_ARCANA,
@@ -46,6 +50,8 @@ export const INVENTORY_GROUP_LABELS: Record<number, string> = {
   [GROUP_HARVESTING]: 'Harvesting',
   [GROUP_HUNTING]: 'Hunting',
   [GROUP_WOODCUTTING]: 'Woodcutting',
+  [GROUP_BOTANY]: 'Botany',
+  [GROUP_THIEVERY]: 'Thievery',
   [GROUP_CRAFTING]: 'Crafting',
   [GROUP_ALCHEMY]: 'Alchemy',
   [GROUP_ARCANA]: 'Arcana',
@@ -69,6 +75,8 @@ const SKILL_GROUP: Record<string, number> = {
   'SKL-0011': GROUP_SMITHING,
   'SKL-0012': GROUP_ARTISANRY,
   'SKL-0013': GROUP_ARCANA,
+  'SKL-0014': GROUP_BOTANY,
+  'SKL-0015': GROUP_THIEVERY,
 }
 
 const ARMOR_SLOT_RANK: Record<string, number> = {
