@@ -627,7 +627,7 @@ def main() -> None:
     # Add/replace farewell dialogue
     dialogues = db["QuestDialogue"]
     farewell = next(
-        (d for d in dialogues if d.get("Dialogue ID") == "QDL-0020"),
+        (d for d in dialogues if d.get("Dialogue ID") == "QDL-0024"),
         None,
     )
     line = (
@@ -638,19 +638,23 @@ def main() -> None:
         farewell["Line"] = line
         farewell["Quest ID"] = "QST-0001"
         farewell["NPC ID"] = "NPC-0001"
-        farewell["Notes"] = "Completion farewell; unlocks Courtyard Botany plot."
+        farewell["Notes"] = "When: completed; unlocks Courtyard Botany plot."
     else:
         dialogues.append(
             {
-                "Dialogue ID": "QDL-0020",
+                "Dialogue ID": "QDL-0024",
                 "Quest ID": "QST-0001",
                 "NPC ID": "NPC-0001",
                 "Line": line,
                 "Status": "Confirmed",
                 "Release Phase": "Launch",
-                "Notes": "Completion farewell; unlocks Courtyard Botany plot.",
+                "Notes": "When: completed; unlocks Courtyard Botany plot.",
             }
         )
+    # Helge Going Deeper completion (must keep When: completed so completedNote works)
+    helge_farewell = next((d for d in dialogues if d.get("Dialogue ID") == "QDL-0020"), None)
+    if helge_farewell and helge_farewell.get("Quest ID") == "QST-0008":
+        helge_farewell["Notes"] = "When: completed"
 
     # --- First Planting botany intro dialogue ---
     q11 = next(q for q in db["Quests"] if q["Quest ID"] == "QST-0011")

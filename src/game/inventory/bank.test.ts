@@ -8,6 +8,7 @@ import {
   depositToBank,
   locationHasBank,
   stackIsUnbankableGold,
+  withBankDepositBoxActivities,
   withdrawFromBank,
 } from './bank'
 import { GOLD_ITEM_ID } from './gold'
@@ -19,7 +20,7 @@ const rawDatabase = JSON.parse(
 describe('bank storage', () => {
   const { launch, launchIndexes } = prepareDatabase(rawDatabase)
 
-  it('is only at the Town Bank and Citadel Bank nodes', () => {
+  it('is at Town Bank, Citadel Bank, and any future *_bank location', () => {
     const byId = launchIndexes.locationsById
     expect(locationHasBank(byId.get('LOC-0034'))).toBe(true)
     expect(locationHasBank(byId.get('LOC-0035'))).toBe(true)
@@ -29,6 +30,48 @@ describe('bank storage', () => {
     expect(locationHasBank(byId.get('LOC-0024'))).toBe(false)
     expect(locationHasBank(byId.get('LOC-0009'))).toBe(false)
     expect(locationHasBank(undefined)).toBe(false)
+    expect(
+      locationHasBank({
+        'Location ID': 'LOC-9999',
+        'Internal Key': 'west_bank',
+        'Display Name': 'West Bank',
+        'Map ID': 'MAP-0006',
+        'Location Type': 'Settlement',
+        Status: 'Planned',
+        'Release Phase': 'Launch',
+      }),
+    ).toBe(true)
+
+    const withFuture = withBankDepositBoxActivities({
+      ...launch,
+      Locations: [
+        ...launch.Locations,
+        {
+          'Location ID': 'LOC-9999',
+          'Internal Key': 'west_bank',
+          'Display Name': 'West Bank',
+          'Map ID': 'MAP-0006',
+          'Location Type': 'Settlement',
+          Status: 'Planned',
+          'Release Phase': 'Launch',
+        },
+      ],
+    })
+    expect(
+      withFuture.Activities.some(
+        (row) => row['Pool ID'] === 'POOL-0047' && row['Location ID'] === 'LOC-9999',
+      ),
+    ).toBe(true)
+  })
+
+  it('exposes deposit-box thievery at every bank location', () => {
+    const depositActs = launch.Activities.filter((row) => row['Pool ID'] === 'POOL-0047')
+    const bankLocs = launch.Locations.filter((row) => locationHasBank(row)).map(
+      (row) => row['Location ID'],
+    )
+    for (const locId of bankLocs) {
+      expect(depositActs.some((row) => row['Location ID'] === locId)).toBe(true)
+    }
   })
 
   it('deposits and withdraws stacks, and refuses gold', () => {
