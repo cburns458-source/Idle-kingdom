@@ -120,6 +120,43 @@ void main() {
     expect(tools.any((row) => row.displayName == 'Magic Net' && row.level == 45), isTrue);
   });
 
+  test('thievery splits into Shops and Lockpicking', () {
+    final thievery = skillMenuView(db, thieverySkillMenuId);
+    expect(thievery.tabs.map((tab) => tab.label), ['Shops', 'Lockpicking']);
+    final shops = thievery.tabs.firstWhere((tab) => tab.id == 'shops').sections.first.entries;
+    final lockpicking = thievery.tabs
+        .firstWhere((tab) => tab.id == 'lockpicking')
+        .sections
+        .first
+        .entries;
+    expect(shops.map((row) => row.displayName).toList(), [
+      'Steal from the general store',
+      'Steal from the barracks',
+      'Steal from goblins',
+      'Steal from the kitchen',
+      'Steal from the mining merchant',
+    ]);
+    expect(
+      shops.any((row) => row.displayName == 'Steal from the mining merchant' && row.level == 64),
+      isTrue,
+    );
+    expect(lockpicking.map((row) => row.displayName).toList(), [
+      "Pick the king's safe",
+      'Pick a deposit box',
+    ]);
+  });
+
+  test('fishing Actions hide Mother Squid combat', () {
+    final fishing = skillMenuView(db, fishingSkillId);
+    final actions = fishing.tabs.firstWhere((tab) => tab.id == 'actions').sections.first.entries;
+    expect(actions.any((row) => row.displayName == 'Fight Mother Squid'), isFalse);
+    expect(actions.any((row) => row.displayName == 'Catch crawfish'), isTrue);
+    expect(
+      actionsForSkill(db, fishingSkillId).any((row) => row.displayName == 'Fight Mother Squid'),
+      isTrue,
+    );
+  });
+
   test('arcana lists Essence at level 1 on its own tab', () {
     final arcana = skillMenuView(db, arcanaSkillId);
     expect(arcana.tabs.map((tab) => tab.label), ['Essence', 'Spells', 'Weapons', 'Enchantments']);

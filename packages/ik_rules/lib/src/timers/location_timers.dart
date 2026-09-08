@@ -167,8 +167,24 @@ List<PlantableBotanyOption> listPlantableBotanyOptions(
   return options;
 }
 
+/// Any timer at a location (first match). Prefer [timerAtLocationKind] when kind matters.
 LocationTimer? timerAtLocation(PlayerSave save, String locationId) {
   return save.locationTimers.firstWhereOrNull((timer) => timer.locationId == locationId);
+}
+
+/// Timer matching both location and kind (at most one of each kind per spot).
+LocationTimer? timerAtLocationKind(PlayerSave save, String locationId, String kind) {
+  return save.locationTimers.firstWhereOrNull(
+    (timer) => timer.locationId == locationId && timer.kind == kind,
+  );
+}
+
+List<LocationTimer> _withoutLocationTimerKind(
+  List<LocationTimer> timers,
+  String locationId,
+  String kind,
+) {
+  return timers.where((row) => !(row.locationId == locationId && row.kind == kind)).toList();
 }
 
 /// Stable key for a timer spot in [PlayerSave.discoveredTimerSpotIds].
@@ -237,7 +253,7 @@ bool locationHasBotanyPatch(String locationId) => botanyPatchLocations.contains(
       reason: 'Complete The Grand Feast to unlock the Courtyard plot.',
     );
   }
-  if (timerAtLocation(save, loc) != null) {
+  if (timerAtLocationKind(save, loc, 'botany') != null) {
     return (ok: false, quantity: 0, reason: 'This patch is already growing.');
   }
   final spec = parseBotanySeedSpec(db, seedItemId);
@@ -310,7 +326,10 @@ bool locationHasBotanyPatch(String locationId) => botanyPatchLocations.contains(
     ok: true,
     save: discoverTimerSpotsForLocation(
       removed.copyWith(
-        locationTimers: [...removed.locationTimers.where((row) => row.locationId != loc), timer],
+        locationTimers: [
+          ..._withoutLocationTimerKind(removed.locationTimers, loc, 'botany'),
+          timer,
+        ],
       ),
       loc,
     ),
@@ -341,13 +360,6 @@ bool locationHasBotanyPatch(String locationId) => botanyPatchLocations.contains(
   String? locationId,
 }) {
   final loc = locationId ?? save.currentLocationId;
-  if (timerAtLocation(save, loc) != null) {
-    return (ok: false, kind: null, reason: 'This location already has a timer running.');
-  }
-  final have = save.inventory
-      .where((stack) => stack.itemId == trapItemId)
-      .fold<num>(0, (sum, stack) => sum + stack.quantity);
-  if (have < 1) return (ok: false, kind: null, reason: 'You do not have that trap.');
   if (trapItemId == huntingTrapItemId) {
     if (!huntingTrapLocations.contains(loc)) {
       return (
@@ -356,6 +368,13 @@ bool locationHasBotanyPatch(String locationId) => botanyPatchLocations.contains(
         reason: 'Hunting traps only work in the Kingswoods and Meadow.',
       );
     }
+    if (timerAtLocationKind(save, loc, 'hunting_trap') != null) {
+      return (ok: false, kind: null, reason: 'A hunting trap is already set here.');
+    }
+    final have = save.inventory
+        .where((stack) => stack.itemId == trapItemId)
+        .fold<num>(0, (sum, stack) => sum + stack.quantity);
+    if (have < 1) return (ok: false, kind: null, reason: 'You do not have that trap.');
     return (ok: true, kind: 'hunting_trap', reason: '');
   }
   if (trapItemId == fishingTrapItemId) {
@@ -366,6 +385,13 @@ bool locationHasBotanyPatch(String locationId) => botanyPatchLocations.contains(
         reason: 'Fishing traps only work at the Goblin Camp and Docks.',
       );
     }
+    if (timerAtLocationKind(save, loc, 'fishing_trap') != null) {
+      return (ok: false, kind: null, reason: 'A fishing trap is already set here.');
+    }
+    final have = save.inventory
+        .where((stack) => stack.itemId == trapItemId)
+        .fold<num>(0, (sum, stack) => sum + stack.quantity);
+    if (have < 1) return (ok: false, kind: null, reason: 'You do not have that trap.');
     return (ok: true, kind: 'fishing_trap', reason: '');
   }
   return (ok: false, kind: null, reason: 'That is not a placeable trap.');
@@ -402,7 +428,7 @@ bool locationHasBotanyPatch(String locationId) => botanyPatchLocations.contains(
     ok: true,
     save: discoverTimerSpotsForLocation(
       removed.copyWith(
-        locationTimers: [...removed.locationTimers.where((row) => row.locationId != loc), timer],
+        locationTimers: [..._withoutLocationTimerKind(removed.locationTimers, loc, kind), timer],
       ),
       loc,
     ),
@@ -472,13 +498,14 @@ class LocationTimerCollectResult {
 LocationTimerCollectResult collectLocationTimer(
   GameDatabase db,
   PlayerSave save,
-  String locationId, {
+  String locationId,
+  String kind, {
   num? nowMs,
   num Function()? random,
 }) {
   final rng = random ?? () => 0.5;
   final now = nowMs ?? DateTime.now().millisecondsSinceEpoch;
-  final timer = timerAtLocation(save, locationId);
+  final timer = timerAtLocationKind(save, locationId, kind);
   if (timer == null) {
     return const LocationTimerCollectResult(ok: false, reason: 'No timer at this location.');
   }
@@ -488,7 +515,7 @@ LocationTimerCollectResult collectLocationTimer(
   }
 
   var next = save.copyWith(
-    locationTimers: save.locationTimers.where((row) => row.locationId != locationId).toList(),
+    locationTimers: _withoutLocationTimerKind(save.locationTimers, locationId, kind),
   );
   final loot = <LootGrant>[];
   var xpGained = timer.xpReward;
@@ -539,7 +566,7 @@ LocationTimerCollectResult collectLocationTimer(
       );
     }
   } else {
-    final rolled = _rollTrapLoot(locationId, rng);
+    final rolled = _rollTrapLoot(timer.locationId, rng);
     if (rolled != null) {
       final granted = addItemsToInventory(next, rolled.itemId, 1, null, false, db);
       next = granted.save;

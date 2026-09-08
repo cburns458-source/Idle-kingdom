@@ -11,8 +11,8 @@ import 'page_header.dart';
 
 /// Parallel Botany / trap spots that do not block the Primary Activity.
 ///
-/// Lists discovered spots (even empty). Timers start at the location; travel
-/// here to collect when ready.
+/// Lists discovered spots (even empty). Timers start at the location; Travel
+/// appears only when a timer is Ready so you can go collect.
 class TimersView extends StatefulWidget {
   const TimersView({super.key, required this.controller, this.onClose});
 
@@ -47,14 +47,8 @@ class _TimersViewState extends State<TimersView> {
     for (final key in save.discoveredTimerSpotIds) {
       final parsed = parseTimerSpotKey(key);
       if (parsed == null || parsed.kind != kind) continue;
-      final active = timerAtLocation(save, parsed.locationId);
-      spots.add(
-        _DiscoveredSpot(
-          kind: parsed.kind,
-          locationId: parsed.locationId,
-          timer: active?.kind == kind ? active : null,
-        ),
-      );
+      final active = timerAtLocationKind(save, parsed.locationId, kind);
+      spots.add(_DiscoveredSpot(kind: parsed.kind, locationId: parsed.locationId, timer: active));
     }
     spots.sort((a, b) => a.locationId.compareTo(b.locationId));
     return spots;
@@ -69,6 +63,7 @@ class _TimersViewState extends State<TimersView> {
         final save = controller.save;
         final db = controller.db;
         final nowMs = controller.session.clock();
+        final here = save.currentLocationId;
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -82,7 +77,7 @@ class _TimersViewState extends State<TimersView> {
             Padding(
               padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
               child: Text(
-                'Timers start at locations. Travel here to collect when ready.',
+                'Timers start at locations. Travel appears when a spot is ready to collect.',
                 style: TextStyle(color: chrome.embossFace, height: 1.35, fontSize: 12.5),
               ),
             ),
@@ -96,6 +91,7 @@ class _TimersViewState extends State<TimersView> {
                     spots: _spotsForKind(save, 'botany'),
                     db: db,
                     nowMs: nowMs,
+                    currentLocationId: here,
                     onTravel: (locationId, mapId) => controller.travelTo(locationId, mapId),
                   ),
                   const SizedBox(height: 12),
@@ -105,6 +101,7 @@ class _TimersViewState extends State<TimersView> {
                     spots: _spotsForKind(save, 'hunting_trap'),
                     db: db,
                     nowMs: nowMs,
+                    currentLocationId: here,
                     onTravel: (locationId, mapId) => controller.travelTo(locationId, mapId),
                   ),
                   const SizedBox(height: 12),
@@ -114,6 +111,7 @@ class _TimersViewState extends State<TimersView> {
                     spots: _spotsForKind(save, 'fishing_trap'),
                     db: db,
                     nowMs: nowMs,
+                    currentLocationId: here,
                     onTravel: (locationId, mapId) => controller.travelTo(locationId, mapId),
                   ),
                 ],
@@ -141,6 +139,7 @@ class _TimerSection extends StatelessWidget {
     required this.spots,
     required this.db,
     required this.nowMs,
+    required this.currentLocationId,
     required this.onTravel,
   });
 
@@ -149,29 +148,41 @@ class _TimerSection extends StatelessWidget {
   final List<_DiscoveredSpot> spots;
   final GameDatabase db;
   final num nowMs;
+  final String currentLocationId;
   final void Function(String locationId, String mapId) onTravel;
 
   @override
   Widget build(BuildContext context) {
     final chrome = UiChrome.of(context);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(title, style: const TextStyle(fontWeight: FontWeight.w400, fontSize: 16)),
-        const SizedBox(height: 4),
-        Text(
-          spots.isEmpty ? emptyLabel : '${spots.length} spot${spots.length == 1 ? '' : 's'}',
-          style: TextStyle(color: chrome.embossFace, fontSize: 12.5),
-        ),
-        if (spots.isEmpty)
-          const SizedBox(height: 4)
-        else
-          for (final spot in spots)
-            Padding(
-              padding: const EdgeInsets.only(top: 8),
-              child: _TimerRow(spot: spot, db: db, nowMs: nowMs, onTravel: onTravel),
-            ),
-      ],
+    return GamePanel(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            title,
+            style: TextStyle(fontWeight: FontWeight.w400, fontSize: 16, color: chrome.panelInk),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            spots.isEmpty ? emptyLabel : '${spots.length} spot${spots.length == 1 ? '' : 's'}',
+            style: TextStyle(color: chrome.embossFace, fontSize: 12.5),
+          ),
+          if (spots.isEmpty)
+            const SizedBox(height: 4)
+          else
+            for (final spot in spots)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: _TimerRow(
+                  spot: spot,
+                  db: db,
+                  nowMs: nowMs,
+                  currentLocationId: currentLocationId,
+                  onTravel: onTravel,
+                ),
+              ),
+        ],
+      ),
     );
   }
 }
@@ -181,12 +192,14 @@ class _TimerRow extends StatelessWidget {
     required this.spot,
     required this.db,
     required this.nowMs,
+    required this.currentLocationId,
     required this.onTravel,
   });
 
   final _DiscoveredSpot spot;
   final GameDatabase db;
   final num nowMs;
+  final String currentLocationId;
   final void Function(String locationId, String mapId) onTravel;
 
   @override
@@ -199,31 +212,34 @@ class _TimerRow extends StatelessWidget {
     final mapId = getLocationMapId(location);
     final title = location.raw['Display Name'] as String? ?? spot.locationId;
     final timer = spot.timer;
+    final ready = timer != null && timerIsReady(timer, nowMs);
     final String status;
     if (timer == null) {
       status = 'Empty';
-    } else if (timerIsReady(timer, nowMs)) {
+    } else if (ready) {
       status = 'Ready';
     } else {
       final remainMs = (timerCompletesAtMs(timer) - nowMs).clamp(0, timer.durationMs);
       status = 'Growing · ${formatDurationMs(remainMs)} left';
     }
+    final showTravel = ready && spot.locationId != currentLocationId;
     return Row(
       children: [
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title, style: const TextStyle(fontSize: 14)),
+              Text(title, style: TextStyle(fontSize: 14, color: chrome.panelInk)),
               Text(status, style: TextStyle(color: chrome.embossFace, fontSize: 12.5)),
             ],
           ),
         ),
-        GameButton(
-          label: 'Travel',
-          compact: true,
-          onPressed: () => onTravel(spot.locationId, mapId),
-        ),
+        if (showTravel)
+          GameButton(
+            label: 'Travel',
+            compact: true,
+            onPressed: () => onTravel(spot.locationId, mapId),
+          ),
       ],
     );
   }

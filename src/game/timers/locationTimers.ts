@@ -125,6 +125,7 @@ export function listPlantableBotanyOptions(
   return options
 }
 
+/** Any timer at a location (first match). Prefer [timerAtLocationKind] when kind matters. */
 export function timerAtLocation(
   save: PlayerSave,
   locationId: string,
@@ -133,6 +134,27 @@ export function timerAtLocation(
 }
 
 export type TimerSpotKind = 'botany' | 'hunting_trap' | 'fishing_trap'
+
+/** Timer matching both location and kind (at most one of each kind per spot). */
+export function timerAtLocationKind(
+  save: PlayerSave,
+  locationId: string,
+  kind: TimerSpotKind | string,
+): LocationTimer | undefined {
+  return (save.locationTimers ?? []).find(
+    (timer) => timer.locationId === locationId && timer.kind === kind,
+  )
+}
+
+function withoutLocationTimerKind(
+  timers: LocationTimer[] | undefined,
+  locationId: string,
+  kind: string,
+): LocationTimer[] {
+  return (timers ?? []).filter(
+    (row) => !(row.locationId === locationId && row.kind === kind),
+  )
+}
 
 /** Stable key for a timer spot in `discoveredTimerSpotIds`. */
 export function timerSpotKey(kind: TimerSpotKind, locationId: string): string {
@@ -208,7 +230,7 @@ export function canPlantBotanySeed(
       reason: 'Complete The Grand Feast to unlock the Courtyard plot.',
     }
   }
-  if (timerAtLocation(save, locationId)) {
+  if (timerAtLocationKind(save, locationId, 'botany')) {
     return { ok: false, quantity: 0, reason: 'This patch is already growing.' }
   }
   const spec = parseBotanySeedSpec(db, seedItemId)
@@ -275,7 +297,7 @@ export function plantBotanySeed(
       {
         ...removed,
         locationTimers: [
-          ...(removed.locationTimers ?? []).filter((row) => row.locationId !== locationId),
+          ...withoutLocationTimerKind(removed.locationTimers, locationId, 'botany'),
           timer,
         ],
       },
@@ -309,21 +331,26 @@ export function canPlaceTrap(
   trapItemId: string,
   locationId: string = save.currentLocationId,
 ): { ok: true; kind: 'hunting_trap' | 'fishing_trap' } | { ok: false; reason: string } {
-  if (timerAtLocation(save, locationId)) {
-    return { ok: false, reason: 'This location already has a timer running.' }
-  }
-  const have = save.inventory.find((stack) => stack.itemId === trapItemId)?.quantity ?? 0
-  if (have < 1) return { ok: false, reason: 'You do not have that trap.' }
   if (trapItemId === HUNTING_TRAP_ITEM_ID) {
     if (!HUNTING_TRAP_LOCATIONS.has(locationId)) {
       return { ok: false, reason: 'Hunting traps only work in the Kingswoods and Meadow.' }
     }
+    if (timerAtLocationKind(save, locationId, 'hunting_trap')) {
+      return { ok: false, reason: 'A hunting trap is already set here.' }
+    }
+    const have = save.inventory.find((stack) => stack.itemId === trapItemId)?.quantity ?? 0
+    if (have < 1) return { ok: false, reason: 'You do not have that trap.' }
     return { ok: true, kind: 'hunting_trap' }
   }
   if (trapItemId === FISHING_TRAP_ITEM_ID) {
     if (!FISHING_TRAP_LOCATIONS.has(locationId)) {
       return { ok: false, reason: 'Fishing traps only work at the Goblin Camp and Docks.' }
     }
+    if (timerAtLocationKind(save, locationId, 'fishing_trap')) {
+      return { ok: false, reason: 'A fishing trap is already set here.' }
+    }
+    const have = save.inventory.find((stack) => stack.itemId === trapItemId)?.quantity ?? 0
+    if (have < 1) return { ok: false, reason: 'You do not have that trap.' }
     return { ok: true, kind: 'fishing_trap' }
   }
   return { ok: false, reason: 'That is not a placeable trap.' }
@@ -358,7 +385,7 @@ export function placeTrap(
       {
         ...removed,
         locationTimers: [
-          ...(removed.locationTimers ?? []).filter((row) => row.locationId !== locationId),
+          ...withoutLocationTimerKind(removed.locationTimers, locationId, gate.kind),
           timer,
         ],
       },
@@ -415,6 +442,7 @@ export function collectLocationTimer(
   db: GameDatabase,
   save: PlayerSave,
   locationId: string,
+  kind: TimerSpotKind | string,
   nowMs: number = Date.now(),
   random: () => number = Math.random,
 ):
@@ -426,7 +454,7 @@ export function collectLocationTimer(
       skillId: string
     }
   | { ok: false; reason: string } {
-  const timer = timerAtLocation(save, locationId)
+  const timer = timerAtLocationKind(save, locationId, kind)
   if (!timer) return { ok: false, reason: 'No timer at this location.' }
   if (!timerIsReady(timer, nowMs)) {
     const remainSec = Math.ceil((timerCompletesAtMs(timer) - nowMs) / 1000)
@@ -435,7 +463,7 @@ export function collectLocationTimer(
 
   let next: PlayerSave = {
     ...save,
-    locationTimers: (save.locationTimers ?? []).filter((row) => row.locationId !== locationId),
+    locationTimers: withoutLocationTimerKind(save.locationTimers, locationId, kind),
   }
   const loot: Array<{ itemId: string; quantity: number; displayName: string }> = []
   let xpGained = timer.xpReward
@@ -474,7 +502,7 @@ export function collectLocationTimer(
       })
     }
   } else {
-    const rolled = rollTrapLoot(locationId, random)
+    const rolled = rollTrapLoot(timer.locationId, random)
     if (rolled) {
       const granted = addItemsToInventory(next, rolled.itemId, 1, null, false, db)
       next = granted.save

@@ -11,14 +11,23 @@ import '../shops/shops.dart';
 import '../spells/spells.dart';
 
 /// How an item enters the world. New kinds can be appended without rewriting pages.
-enum CodexObtainKind { action, shop, starter }
+enum CodexObtainKind { action, enemy, shop, starter, quest }
 
 const String _goldenSpudItemId = 'ITEM-0026';
+const String _chefHatItemId = 'ITEM-0165';
 const String _hideFromCodexActionId = 'ACN-0036';
 
 bool _notesHideFromCodex(Object? notes) {
   final text = notes is String ? notes : '';
   return RegExp(r'HideFromCodex|MysteryDrop', caseSensitive: false).hasMatch(text);
+}
+
+/// Quest rewards in Obtained from: non-cosmetic gear/tools only (Tool / Weapon / Armor).
+/// Category Cosmetic is omitted; Chef's Hat ([_chefHatItemId]) is also omitted as vanity headwear.
+bool _includeQuestRewardAsObtainSource(String? category, String itemId) {
+  if (itemId == _chefHatItemId) return false;
+  if (category == 'Cosmetic') return false;
+  return category == 'Tool' || category == 'Weapon' || category == 'Armor';
 }
 
 /// A clickable item mention on a Codex page.
@@ -383,9 +392,7 @@ class CodexIndex {
         );
       }
 
-      // Combat enemy drops stay on bestiary pages only — not item obtain lists.
-      if (action.category == 'Combat') continue;
-
+      // Gathering, combat, and other action reward tables (including secondary combat loot).
       for (final table in _actionTables(action)) {
         for (final drop in tableItems[table.id] ?? const <CodexItemRef>[]) {
           addObtain(
@@ -405,7 +412,25 @@ class CodexIndex {
       }
     }
 
-    // Enemy reward tables are listed on bestiary pages, not as item obtain sources.
+    for (final enemy in db.enemies) {
+      final tableId = enemy.rewardTableId;
+      if (tableId == null || tableId.isEmpty) continue;
+      final locs = _enemyLocations(enemy, actionLocations, locations);
+      for (final drop in tableItems[tableId] ?? const <CodexItemRef>[]) {
+        addObtain(
+          drop.itemId,
+          CodexObtainSource(
+            kind: CodexObtainKind.enemy,
+            title: enemy.displayName,
+            enemyId: enemy.enemyId,
+            locations: locs,
+            dropChance: enemy.dropChance,
+            minQuantity: drop.minQuantity,
+            maxQuantity: drop.maxQuantity,
+          ),
+        );
+      }
+    }
 
     for (final recipe in db.recipes) {
       if (!recipe.outputItemId.startsWith('ITEM-')) continue;
@@ -488,7 +513,27 @@ class CodexIndex {
       }
     }
 
-    // Quest rewards are not listed as item obtain sources.
+    // Quest rewards: non-cosmetic gear/tools only (see _includeQuestRewardAsObtainSource).
+    final itemCategory = <String, String?>{for (final item in db.items) item.itemId: item.category};
+    for (final quest in db.quests) {
+      final rewardId = quest['Reward Item ID'];
+      if (rewardId is! String || rewardId.isEmpty) continue;
+      if (!_includeQuestRewardAsObtainSource(itemCategory[rewardId], rewardId)) continue;
+      final qty = quest['Reward Item Quantity'];
+      final qtyNum = qty is num ? qty : null;
+      final title = quest['Display Name'];
+      final questId = quest['Quest ID'];
+      addObtain(
+        rewardId,
+        CodexObtainSource(
+          kind: CodexObtainKind.quest,
+          title: title is String ? title : '${questId ?? 'Quest'}',
+          questId: questId is String ? questId : null,
+          minQuantity: qtyNum,
+          maxQuantity: qtyNum,
+        ),
+      );
+    }
 
     for (final starter in db.raceStartingItems) {
       final race = db.races.firstWhereOrNull((row) => row.raceId == starter.raceId);

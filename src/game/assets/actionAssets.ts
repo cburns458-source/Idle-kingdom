@@ -60,6 +60,7 @@ export const ACTION_ASSET_PATHS: Record<string, string> = {
   'ACN-0188': '/assets/actions/acn_steal_kitchen.webp',
   'ACN-0190': '/assets/actions/acn_steal_goblins.webp',
   'ACN-0191': '/assets/actions/acn_pick_deposit_box.webp',
+  'ACN-0192': '/assets/actions/acn_steal_general_store.webp',
 }
 
 const FALLBACK_ACTION_ASSET = '/assets/actions/acn_harvest_potato.webp'

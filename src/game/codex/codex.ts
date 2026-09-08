@@ -13,14 +13,25 @@ import { isSpellItem, spellTooltipLines } from '../spells/spells'
 export { INVENTORY_GROUP_ORDER, inventoryGroupLabel }
 
 /** How an item enters the world. New kinds can be appended without rewriting pages. */
-export type CodexObtainKind = 'action' | 'shop' | 'starter'
+export type CodexObtainKind = 'action' | 'enemy' | 'shop' | 'starter' | 'quest'
 
 const GOLDEN_SPUD_ITEM_ID = 'ITEM-0026'
+const CHEF_HAT_ITEM_ID = 'ITEM-0165'
 const HIDE_FROM_CODEX_ACTION_ID = 'ACN-0036'
 
 function notesHideFromCodex(notes: unknown): boolean {
   if (typeof notes !== 'string') return false
   return /HideFromCodex|MysteryDrop/i.test(notes)
+}
+
+/**
+ * Quest rewards in Obtained from: non-cosmetic gear/tools only (Tool / Weapon / Armor).
+ * Category Cosmetic is omitted; Chef's Hat (ITEM-0165) is also omitted as vanity headwear.
+ */
+function includeQuestRewardAsObtainSource(category: string | null | undefined, itemId: string): boolean {
+  if (itemId === CHEF_HAT_ITEM_ID) return false
+  if (category === 'Cosmetic') return false
+  return category === 'Tool' || category === 'Weapon' || category === 'Armor'
 }
 
 export interface CodexItemRef {
@@ -220,9 +231,7 @@ export class CodexIndex {
         })
       }
 
-      // Combat enemy drops stay on bestiary pages only — not item obtain lists.
-      if (action.Category === 'Combat') continue
-
+      // Gathering, combat, and other action reward tables (including secondary combat loot).
       for (const table of actionTables(action)) {
         for (const drop of tableItems.get(table.id) ?? []) {
           addObtain(drop.itemId, {
@@ -239,7 +248,22 @@ export class CodexIndex {
       }
     }
 
-    // Enemy reward tables are listed on bestiary pages, not as item obtain sources.
+    for (const enemy of this.db.Enemies) {
+      const tableId = enemy['Reward Table ID']
+      if (!tableId) continue
+      const locs = this.enemyLocations(enemy, actionLocations, locations)
+      for (const drop of tableItems.get(tableId) ?? []) {
+        addObtain(drop.itemId, {
+          kind: 'enemy',
+          title: enemy['Display Name'],
+          enemyId: enemy['Enemy ID'],
+          locations: locs,
+          dropChance: enemy['Drop Chance'],
+          minQuantity: drop.minQuantity,
+          maxQuantity: drop.maxQuantity,
+        })
+      }
+    }
 
     for (const recipe of this.db.Recipes) {
       const outputId = recipe['Output Item ID']
@@ -307,7 +331,25 @@ export class CodexIndex {
       }
     }
 
-    // Quest rewards are not listed as item obtain sources.
+    // Quest rewards: non-cosmetic gear/tools only (see includeQuestRewardAsObtainSource).
+    const itemCategory = new Map(this.db.Items.map((item) => [item['Item ID'], item.Category]))
+    for (const quest of this.db.Quests) {
+      const rewardId = typeof quest['Reward Item ID'] === 'string' ? quest['Reward Item ID'] : null
+      if (!rewardId) continue
+      if (!includeQuestRewardAsObtainSource(itemCategory.get(rewardId), rewardId)) continue
+      const qty = typeof quest['Reward Item Quantity'] === 'number' ? quest['Reward Item Quantity'] : null
+      const title =
+        typeof quest['Display Name'] === 'string' ? quest['Display Name'] : String(quest['Quest ID'] ?? 'Quest')
+      const questId = typeof quest['Quest ID'] === 'string' ? quest['Quest ID'] : null
+      addObtain(rewardId, {
+        kind: 'quest',
+        title,
+        questId,
+        locations: [],
+        minQuantity: qty,
+        maxQuantity: qty,
+      })
+    }
 
     for (const starter of this.db.RaceStartingItems) {
       const race = this.db.Races.find((row) => row['Race ID'] === starter['Race ID'])
