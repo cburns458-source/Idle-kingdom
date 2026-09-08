@@ -131,6 +131,13 @@ export function validateActivityStart(
     if (failures.length > 0) {
       return { ok: false, reason: failures[0]! }
     }
+    const notes = action.Notes ?? ''
+    if (/RequiresLockpick/i.test(notes)) {
+      const tool = slotStack(save, WEAPON_TOOL_SLOT_ID)
+      if (!tool || tool.quantity <= 0 || tool.itemId !== LOCKPICK_ITEM_ID) {
+        return { ok: false, reason: 'Equip lockpicks in the Weapon/Tool slot first.' }
+      }
+    }
   }
 
   return { ok: true }

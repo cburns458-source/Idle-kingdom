@@ -14,6 +14,8 @@ const String fishingSkillId = 'SKL-0003';
 const String harvestingSkillId = 'SKL-0004';
 const String huntingSkillId = 'SKL-0005';
 const String woodcuttingSkillId = 'SKL-0006';
+const String botanySkillMenuId = 'SKL-0014';
+const String thieverySkillMenuId = 'SKL-0015';
 
 const List<String> _woodenMiningTools = <String>['ITEM-0102'];
 const List<String> _woodenWoodcuttingTools = <String>['ITEM-0100', 'ITEM-0101'];
@@ -340,6 +342,12 @@ List<SkillMenuTab> _tabsForSkill(GameDatabase db, String skillId) {
       _listTab('tools', 'Tools', _gatheringToolEntries(db, skillId)),
     ];
   }
+  if (skillId == botanySkillMenuId) {
+    return _botanyTabs(db);
+  }
+  if (skillId == thieverySkillMenuId) {
+    return <SkillMenuTab>[_listTab('actions', 'Actions', actionsForSkill(db, skillId))];
+  }
   if (skillId == smithingSkillId) {
     return _smithingTabs(db);
   }
@@ -350,6 +358,53 @@ List<SkillMenuTab> _tabsForSkill(GameDatabase db, String skillId) {
     return _arcanaTabs(db);
   }
   return <SkillMenuTab>[_listTab('actions', 'Actions', skillMenuEntries(db, skillId))];
+}
+
+List<SkillMenuListItem> _botanyPlantEntries(GameDatabase db, {required bool saplings}) {
+  final needle = saplings ? 'botany_sapling' : 'botany_seed';
+  final entries = <SkillMenuListItem>[];
+  for (final item in db.items) {
+    if (item.releasePhase != 'Launch') continue;
+    if (item.status != 'Confirmed' && item.status != 'Planned') continue;
+    final tags = (item.functionalSourceTags ?? '').toLowerCase();
+    if (!tags.contains(needle)) continue;
+    final notes = item.notes ?? '';
+    final level =
+        num.tryParse(
+          RegExp(r'RequiresLevel:(\d+)', caseSensitive: false).firstMatch(notes)?.group(1) ?? '',
+        ) ??
+        1;
+    final grow =
+        num.tryParse(
+          RegExp(r'GrowSeconds:(\d+)', caseSensitive: false).firstMatch(notes)?.group(1) ?? '',
+        ) ??
+        0;
+    final growLabel = grow >= 3600
+        ? '${(grow / 3600).round()}h'
+        : grow >= 60
+        ? '${(grow / 60).round()}m'
+        : '${grow.round()}s';
+    entries.add(
+      SkillMenuListItem(
+        id: item.itemId,
+        displayName: grow > 0 ? '${item.displayName} ($growLabel)' : item.displayName,
+        level: level < 1 ? 1 : level,
+      ),
+    );
+  }
+  entries.sort((a, b) {
+    final level = (a.level ?? 0).compareTo(b.level ?? 0);
+    if (level != 0) return level;
+    return a.displayName.toLowerCase().compareTo(b.displayName.toLowerCase());
+  });
+  return entries;
+}
+
+List<SkillMenuTab> _botanyTabs(GameDatabase db) {
+  return <SkillMenuTab>[
+    _listTab('seeds', 'Seeds', _botanyPlantEntries(db, saplings: false)),
+    _listTab('saplings', 'Saplings', _botanyPlantEntries(db, saplings: true)),
+  ];
 }
 
 List<SkillMenuTab> _smithingTabs(GameDatabase db) {

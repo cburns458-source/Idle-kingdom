@@ -44,6 +44,27 @@ describe('equipment loadout', () => {
     })
   })
 
+  it('stacks Stackable Yes tools in the Weapon/Tool slot', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    let save = createNewSave(launch)
+    save = { ...save, inventory: [] }
+    save = addItemToInventory(save, 'ITEM-0351', 20)
+    const equipped = equipItemFromInventory(launch, save, 'ITEM-0351')
+    expect(equipped.ok).toBe(true)
+    if (!equipped.ok) return
+    expect(equipped.save.equipment.slots[WEAPON_TOOL_SLOT_ID]).toEqual({
+      itemId: 'ITEM-0351',
+      quantity: 20,
+    })
+    expect(equipped.save.inventory.find((stack) => stack.itemId === 'ITEM-0351')).toBeUndefined()
+
+    save = addItemToInventory(equipped.save, 'ITEM-0351', 5)
+    const topped = equipItemFromInventory(launch, save, 'ITEM-0351')
+    expect(topped.ok).toBe(true)
+    if (!topped.ok) return
+    expect(topped.save.equipment.slots[WEAPON_TOOL_SLOT_ID]?.quantity).toBe(25)
+  })
+
   it('consumes from the equipped food stack across multiple victories', () => {
     const { launch } = prepareDatabase(rawDatabase)
     let save = createNewSave(launch)

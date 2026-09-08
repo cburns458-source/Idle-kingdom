@@ -71,6 +71,18 @@ bool isPotionSlot(String slotId) => slotId == potionSlotId;
 /// Food and potion slots hold full stacks (any quantity).
 bool isStackableConsumableSlot(String slotId) => isFoodSlot(slotId) || isPotionSlot(slotId);
 
+/// Items with Stackable Yes (or `stackable_tool` tag) stack in their equipment slot.
+bool itemStacksInEquipmentSlot(GameDatabase db, String itemId, String slotId) {
+  if (isStackableConsumableSlot(slotId)) return true;
+  final item = db.items.firstWhereOrNull((row) => row.itemId == itemId);
+  if (item == null) return false;
+  if (item.equipmentSlotId != slotId) return false;
+  final stackable = (item.stackable ?? '').trim().toLowerCase();
+  if (stackable == 'yes') return true;
+  final tags = (item.functionalSourceTags ?? '').toLowerCase();
+  return tags.contains('stackable_tool');
+}
+
 PlayerSave _removeItemQuantity(
   PlayerSave save,
   String itemId,
@@ -262,12 +274,14 @@ EquipResult equipInventoryIndex(
   final enchantmentId = invStack.enchantmentId;
   final favorite = invStack.favorite == true;
 
-  if (isStackableConsumableSlot(slotId)) {
+  if (itemStacksInEquipmentSlot(db, itemId, slotId)) {
     if (isNotBlank(enchantmentId)) {
       return EquipResult.failed(
         isPotionSlot(slotId)
             ? 'Enchanted items cannot fill the potion slot.'
-            : 'Enchanted items cannot fill the food slot.',
+            : isFoodSlot(slotId)
+            ? 'Enchanted items cannot fill the food slot.'
+            : 'Enchanted items cannot stack in this slot.',
       );
     }
     final moveQty = invStack.quantity;

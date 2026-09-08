@@ -201,7 +201,7 @@ class _InventoryViewState extends State<InventoryView> {
       slotId,
       EquippedStack(
         itemId: itemId,
-        quantity: isStackableConsumableSlot(slotId) ? quantity : 1,
+        quantity: itemStacksInEquipmentSlot(db, itemId, slotId) ? quantity : 1,
         enchantmentId: enchantmentId,
         favorite: favorite ? true : null,
       ),

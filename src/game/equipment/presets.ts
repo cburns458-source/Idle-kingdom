@@ -153,7 +153,9 @@ function stacksMatchForLoadout(
   if (liveEmpty && storedEmpty) return true
   if (liveEmpty || storedEmpty || !live || !stored) return false
   if (!sameStackIdentity(live, stored)) return false
-  if (isStackableConsumableSlot(slotId)) return true
+  // Food, potions, and Weapon/Tool stacks (lockpicks) compare identity only so
+  // consuming from the slot does not deselect the preset.
+  if (isStackableConsumableSlot(slotId) || slotId === WEAPON_TOOL_SLOT_ID) return true
   return live.quantity === stored.quantity
 }
 

@@ -64,7 +64,7 @@ class ItemDetailSheet extends StatelessWidget {
         'Equip a spell from your bag. Spells are always active.',
     ];
 
-    final description = item?.description;
+    final description = id != null && isBotanySeedItem(db, id) ? null : item?.description;
     final priced = id == null ? null : sellPriceAtLocation(db, controller.save, id);
 
     return GamePopupCard(

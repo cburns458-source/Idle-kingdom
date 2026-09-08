@@ -133,7 +133,7 @@ describe('locationTimers', () => {
       launch,
       placed.save,
       'LOC-0008',
-      Date.parse('2026-01-01T00:06:00.000Z'),
+      Date.parse('2026-01-01T06:00:00.000Z'),
       () => 0,
     )
     expect(collected.ok).toBe(true)
