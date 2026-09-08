@@ -326,7 +326,10 @@ bool locationHasBotanyPatch(String locationId) => botanyPatchLocations.contains(
     ok: true,
     save: discoverTimerSpotsForLocation(
       removed.copyWith(
-        locationTimers: [..._withoutLocationTimerKind(removed.locationTimers, loc, 'botany'), timer],
+        locationTimers: [
+          ..._withoutLocationTimerKind(removed.locationTimers, loc, 'botany'),
+          timer,
+        ],
       ),
       loc,
     ),

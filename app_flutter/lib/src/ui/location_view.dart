@@ -17,13 +17,13 @@ import 'critter_overlay.dart';
 import 'format.dart';
 import 'game_image.dart';
 import 'game_popup.dart';
-import 'catalog_popup.dart';
 import 'nearby_panel.dart';
 import 'npc_panel.dart';
 import 'production_panel.dart';
 import 'project_panel.dart';
 import 'reward_strip.dart';
 import 'shop_panel.dart';
+import 'botany_plant_popup.dart';
 
 /// Whatever the player has open on top of the location, if anything.
 sealed class LocationPanel {
@@ -201,28 +201,14 @@ class _LocationViewState extends State<LocationView> {
       controller.report('You have no plantable seeds or saplings for this patch.');
       return;
     }
-    final chosen = await showGameCatalogPopup(
+    final chosen = await showBotanyPlantGridPopup(
       context: buttonContext,
-      eyebrow: 'Botany',
-      title: 'Plant a seed or sapling',
-      selectable: true,
-      emptyMessage: 'No plantable seeds here.',
+      controller: controller,
+      options: options,
       origin: popupOrigin(buttonContext),
-      entries: [
-        for (final option in options)
-          CatalogPopupEntry(
-            title: option.displayName,
-            detail: option.canPlant
-                ? '${formatDurationSeconds(option.spec.growSeconds)} · plant ${option.plantQuantity}'
-                : option.reason,
-            enabled: option.canPlant,
-            emphasized: option.canPlant,
-          ),
-      ],
     );
     if (chosen == null || !buttonContext.mounted) return;
-    final option = options[chosen];
-    controller.plantBotanySeedHere(option.itemId, plantQuantity: option.plantQuantity);
+    controller.plantBotanySeedHere(chosen.itemId, plantQuantity: chosen.plantQuantity);
   }
 
   LocationPanel? get _currentPanel => _open.isEmpty ? null : _open.last;
