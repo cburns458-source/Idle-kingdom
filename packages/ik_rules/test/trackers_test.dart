@@ -15,11 +15,9 @@ void main() {
     fresh = createNewSave(db, 1_000);
   });
 
-  ActionRow action(String id) =>
-      db.actions.firstWhere((row) => row.actionId == id);
+  ActionRow action(String id) => db.actions.firstWhere((row) => row.actionId == id);
 
-  EnemyRow enemy(String id) =>
-      db.enemies.firstWhere((row) => row.enemyId == id);
+  EnemyRow enemy(String id) => db.enemies.firstWhere((row) => row.enemyId == id);
 
   test('cow and bull open separate loot sections', () {
     final cow = applyCombatVictory(
@@ -38,10 +36,7 @@ void main() {
       () => 0,
       3_000,
     );
-    expect(
-      both.save.lootTrackers.keys,
-      containsAll(['enemy:ENM-0001', 'enemy:ENM-0002']),
-    );
+    expect(both.save.lootTrackers.keys, containsAll(['enemy:ENM-0001', 'enemy:ENM-0002']));
     expect(both.save.lootTrackers['enemy:ENM-0001']!.completions, 1);
     expect(both.save.lootTrackers['enemy:ENM-0002']!.completions, 1);
   });
@@ -79,14 +74,7 @@ void main() {
   test('standard production awards XP but not loot items', () {
     var save = addItemsToInventory(fresh, 'ITEM-0025', 10).save;
     save = save.copyWith(currentLocationId: 'LOC-0023');
-    final queued = beginProductionQueue(
-      db,
-      save,
-      'ACT-0017',
-      'RCP-0001',
-      1,
-      1_000,
-    );
+    final queued = beginProductionQueue(db, save, 'ACT-0017', 'RCP-0001', 1, 1_000);
     expect(queued.ok, isTrue);
     final finished = completeProductionCraft(db, queued.save!, 5_000, () => 0);
     expect(finished, isNotNull);
@@ -95,11 +83,7 @@ void main() {
   });
 
   test('xp/hr uses elapsed time since the tracker started', () {
-    final entry = XpTrackerEntry(
-      skillId: 'SKL-0001',
-      startedAtMs: 0,
-      xpGained: 3_600,
-    );
+    final entry = XpTrackerEntry(skillId: 'SKL-0001', startedAtMs: 0, xpGained: 3_600);
     expect(xpPerHour(entry, 3_600_000), 3_600);
   });
 }

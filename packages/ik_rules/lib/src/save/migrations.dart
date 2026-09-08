@@ -669,9 +669,7 @@ final List<SaveMigration> saveMigrations = <SaveMigration>[
       next['lootTrackers'] = save['lootTrackers'] is Map
           ? save['lootTrackers']
           : <String, Object?>{};
-      next['xpTrackers'] = save['xpTrackers'] is Map
-          ? save['xpTrackers']
-          : <String, Object?>{};
+      next['xpTrackers'] = save['xpTrackers'] is Map ? save['xpTrackers'] : <String, Object?>{};
       return next;
     },
   ),

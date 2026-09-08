@@ -156,6 +156,7 @@ void main() {
           saveOf(fixture),
           _action(db, fixture.inputField<String>('actionId')),
           Mulberry32(fixture.inputField<num>('seed').toInt()).asFunction,
+          fixture.inputField<num>('nowMs'),
         );
         expect(
           checkParity(fixture, {

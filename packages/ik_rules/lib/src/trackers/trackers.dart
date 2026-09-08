@@ -3,8 +3,6 @@ import 'package:ik_content/ik_content.dart';
 import '../activity/rewards.dart';
 import '../save/generated/save_models.dart';
 
-const String totalXpTrackerId = 'total';
-
 String lootTrackerKey(String kind, String sourceId) => '$kind:$sourceId';
 
 /// Combat actions key by enemy so Cow and Bull stay separate.
@@ -42,9 +40,7 @@ PlayerSave creditLootTracker(
     gold: (existing?.gold ?? 0) + gold,
     items: items,
   );
-  return save.copyWith(
-    lootTrackers: <String, LootTrackerEntry>{...save.lootTrackers, key: next},
-  );
+  return save.copyWith(lootTrackers: <String, LootTrackerEntry>{...save.lootTrackers, key: next});
 }
 
 PlayerSave creditXpTracker(PlayerSave save, String skillId, num xp, num nowMs) {
@@ -55,16 +51,10 @@ PlayerSave creditXpTracker(PlayerSave save, String skillId, num xp, num nowMs) {
     startedAtMs: existing?.startedAtMs ?? nowMs,
     xpGained: (existing?.xpGained ?? 0) + xp,
   );
-  return save.copyWith(
-    xpTrackers: <String, XpTrackerEntry>{...save.xpTrackers, skillId: next},
-  );
+  return save.copyWith(xpTrackers: <String, XpTrackerEntry>{...save.xpTrackers, skillId: next});
 }
 
-PlayerSave creditXpAwards(
-  PlayerSave save,
-  List<({String skillId, num xp})> awards,
-  num nowMs,
-) {
+PlayerSave creditXpAwards(PlayerSave save, List<({String skillId, num xp})> awards, num nowMs) {
   var next = save;
   num total = 0;
   for (final award in awards) {

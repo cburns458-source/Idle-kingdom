@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:ik_content/ik_content.dart';
 import 'package:ik_rules/ik_rules.dart';
@@ -14,6 +13,11 @@ import 'item_icon.dart';
 import 'page_header.dart';
 
 enum _TrackerTab { loot, xp }
+
+String? _firstString(Iterable<String> values) {
+  final iterator = values.iterator;
+  return iterator.moveNext() ? iterator.current : null;
+}
 
 /// RuneScape-style loot and XP trackers that persist on the save until reset.
 class TrackerView extends StatefulWidget {
@@ -59,10 +63,7 @@ class _TrackerViewState extends State<TrackerView> {
             else
               const Padding(
                 padding: EdgeInsets.fromLTRB(12, 12, 12, 8),
-                child: Text(
-                  'Tracker',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w400),
-                ),
+                child: Text('Tracker', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w400)),
               ),
             Padding(
               padding: const EdgeInsets.fromLTRB(12, 0, 12, 4),
@@ -75,9 +76,7 @@ class _TrackerViewState extends State<TrackerView> {
                         label: tab == _TrackerTab.loot ? 'Loot' : 'XP',
                         compact: true,
                         selected: _tab == tab,
-                        tone: _tab == tab
-                            ? GameButtonTone.primary
-                            : GameButtonTone.secondary,
+                        tone: _tab == tab ? GameButtonTone.primary : GameButtonTone.secondary,
                         onPressed: () => setState(() => _tab = tab),
                       ),
                     ),
@@ -108,27 +107,22 @@ class _TrackerViewState extends State<TrackerView> {
                 compact: true,
                 dense: true,
                 tone: GameButtonTone.secondary,
-                onPressed: () =>
-                    controller.commit(resetAllLootTrackers(controller.save)),
+                onPressed: () => controller.commit(resetAllLootTrackers(controller.save)),
               ),
             ),
           ),
         Expanded(
           child: rows.isEmpty
-              ? const Center(
-                  child: MutedText('Finish an action to start a loot tracker.'),
-                )
+              ? const Center(child: MutedText('Finish an action to start a loot tracker.'))
               : ListView.separated(
                   padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
                   itemCount: rows.length,
-                  separatorBuilder: (context, index) =>
-                      const SizedBox(height: 8),
+                  separatorBuilder: (context, index) => const SizedBox(height: 8),
                   itemBuilder: (context, index) => _LootCard(
                     entry: rows[index],
                     controller: controller,
-                    onReset: () => controller.commit(
-                      resetLootTracker(controller.save, rows[index].key),
-                    ),
+                    onReset: () =>
+                        controller.commit(resetLootTracker(controller.save, rows[index].key)),
                   ),
                 ),
         ),
@@ -153,30 +147,25 @@ class _TrackerViewState extends State<TrackerView> {
                 compact: true,
                 dense: true,
                 tone: GameButtonTone.secondary,
-                onPressed: () =>
-                    controller.commit(resetAllXpTrackers(controller.save)),
+                onPressed: () => controller.commit(resetAllXpTrackers(controller.save)),
               ),
             ),
           ),
         Expanded(
           child: rows.isEmpty
-              ? const Center(
-                  child: MutedText('Gain XP to start an XP tracker.'),
-                )
+              ? const Center(child: MutedText('Gain XP to start an XP tracker.'))
               : ListView.separated(
                   padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
                   itemCount: rows.length,
-                  separatorBuilder: (context, index) =>
-                      const SizedBox(height: 8),
+                  separatorBuilder: (context, index) => const SizedBox(height: 8),
                   itemBuilder: (context, index) {
                     final entry = rows[index];
                     return _XpRow(
                       entry: entry,
                       title: _xpTitle(entry.skillId),
                       nowMs: nowMs,
-                      onReset: () => controller.commit(
-                        resetXpTracker(controller.save, entry.skillId),
-                      ),
+                      onReset: () =>
+                          controller.commit(resetXpTracker(controller.save, entry.skillId)),
                     );
                   },
                 ),
@@ -187,20 +176,15 @@ class _TrackerViewState extends State<TrackerView> {
 
   String _xpTitle(String skillId) {
     if (skillId == totalXpTrackerId) return 'Total XP';
-    return controller.db.skills
-            .where((row) => row.skillId == skillId)
-            .map((row) => row.displayName)
-            .firstOrNull ??
+    return _firstString(
+          controller.db.skills.where((row) => row.skillId == skillId).map((row) => row.displayName),
+        ) ??
         skillId;
   }
 }
 
 class _LootCard extends StatelessWidget {
-  const _LootCard({
-    required this.entry,
-    required this.controller,
-    required this.onReset,
-  });
+  const _LootCard({required this.entry, required this.controller, required this.onReset});
 
   final LootTrackerEntry entry;
   final GameController controller;
@@ -270,19 +254,21 @@ class _LootCard extends StatelessWidget {
 
   String _lootTitle() {
     if (entry.kind == 'enemy') {
-      return controller.db.enemies
-              .where((row) => row.enemyId == entry.sourceId)
-              .map((row) => row.displayName)
-              .firstOrNull ??
+      return _firstString(
+            controller.db.enemies
+                .where((row) => row.enemyId == entry.sourceId)
+                .map((row) => row.displayName),
+          ) ??
           entry.sourceId;
     }
     if (entry.kind == 'timer') {
       return _timerTitle(entry.sourceId);
     }
-    return controller.db.actions
-            .where((row) => row.actionId == entry.sourceId)
-            .map((row) => row.displayName)
-            .firstOrNull ??
+    return _firstString(
+          controller.db.actions
+              .where((row) => row.actionId == entry.sourceId)
+              .map((row) => row.displayName),
+        ) ??
         entry.sourceId;
   }
 
@@ -291,10 +277,11 @@ class _LootCard extends StatelessWidget {
     final kind = parts.isNotEmpty ? parts.first : sourceId;
     final locationId = parts.length > 1 ? parts.sublist(1).join(':') : '';
     final location =
-        controller.db.locations
-            .where((row) => row.locationId == locationId)
-            .map((row) => row.displayName)
-            .firstOrNull ??
+        _firstString(
+          controller.db.locations
+              .where((row) => row.locationId == locationId)
+              .map((row) => row.displayName),
+        ) ??
         locationId;
     final label = switch (kind) {
       'botany' => 'Botany',
@@ -307,18 +294,10 @@ class _LootCard extends StatelessWidget {
 
   String _lootDetail() {
     final countLabel = switch (entry.kind) {
-      'enemy' =>
-        entry.completions == 1
-            ? '1 kill'
-            : '${formatThousands(entry.completions)} kills',
+      'enemy' => entry.completions == 1 ? '1 kill' : '${formatThousands(entry.completions)} kills',
       'timer' =>
-        entry.completions == 1
-            ? '1 collect'
-            : '${formatThousands(entry.completions)} collects',
-      _ =>
-        entry.completions == 1
-            ? '1 action'
-            : '${formatThousands(entry.completions)} actions',
+        entry.completions == 1 ? '1 collect' : '${formatThousands(entry.completions)} collects',
+      _ => entry.completions == 1 ? '1 action' : '${formatThousands(entry.completions)} actions',
     };
     if (entry.gold <= 0) return countLabel;
     return '$countLabel · ${formatThousands(entry.gold)} gold';
