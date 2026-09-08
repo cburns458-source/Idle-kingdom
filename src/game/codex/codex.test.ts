@@ -64,9 +64,12 @@ describe('codex index', () => {
     expect(codex.item('ITEM-0197')!.usedIn.some((row) => row.id === 'PRJ-0049')).toBe(true)
   })
 
-  it('lists cow drops on the bestiary, not as item obtain sources', () => {
+  it('lists cow drops on the bestiary and as item obtain sources', () => {
     expect(codex.item('ITEM-0054')!.obtainedFrom.some((row) => row.enemyId === 'ENM-0001')).toBe(
-      false,
+      true,
+    )
+    expect(codex.item('ITEM-0054')!.obtainedFrom.some((row) => row.actionId === 'ACN-0001')).toBe(
+      true,
     )
     const cow = codex.enemy('ENM-0001')!
     expect(cow.drops.map((row) => row.itemId)).toEqual(
@@ -80,6 +83,21 @@ describe('codex index', () => {
     expect(codex.enemy('ENM-0008')!.locations.map((row) => row.displayName)).toEqual(
       expect.arrayContaining(["Wizard's Tower", 'Castle Crypt']),
     )
+  })
+
+  it('lists secondary combat action loot as obtain sources', () => {
+    expect(codex.item('ITEM-0122')!.obtainedFrom.some((row) => row.actionId === 'ACN-0004')).toBe(
+      true,
+    )
+  })
+
+  it('lists excavator pickaxe quest reward but not chef hat quest', () => {
+    const pick = codex.item('ITEM-0313')!
+    expect(pick.obtainedFrom.some((row) => row.kind === 'quest' && row.questId === 'QST-0008')).toBe(
+      true,
+    )
+    const hat = codex.item('ITEM-0165')!
+    expect(hat.obtainedFrom.some((row) => row.kind === 'quest')).toBe(false)
   })
 
   it('hides golden spud sources and mystery harvest action', () => {

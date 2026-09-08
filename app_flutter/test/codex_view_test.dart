@@ -32,7 +32,7 @@ void main() {
     expect(find.byKey(const Key('codex-item-ITEM-0003')), findsOne);
   });
 
-  testWidgets('opens an item and follows a recipe ingredient', (tester) async {
+  testWidgets('opens an item and replaces detail when following a recipe link', (tester) async {
     final controller = buildController(database, seed: startedCharacter(database));
     addTearDown(controller.dispose);
 
@@ -48,7 +48,10 @@ void main() {
 
     await tester.tap(find.text('Close'));
     await tester.pump();
-    expect(find.text('Baked Potato'), findsWidgets);
+    // Replace (not stack): close returns to catalog, not the previous item.
+    expect(find.text('Items'), findsOne);
+    expect(find.text('Bestiary'), findsOne);
+    expect(find.text('Used in'), findsNothing);
   });
 
   testWidgets('opens a bestiary drop into the item page', (tester) async {
@@ -65,8 +68,8 @@ void main() {
     await tester.pump();
     expect(find.text('Obtained from'), findsOne);
     expect(find.text('Beef'), findsWidgets);
-    // Item pages no longer list enemies as obtain sources.
-    expect(find.text('No known source yet.'), findsOne);
+    expect(find.byKey(const Key('codex-obtain-enemy-ENM-0001')), findsOne);
+    expect(find.text('Cow'), findsWidgets);
   });
 
   testWidgets('codex filter chips include Botany and Thievery', (tester) async {

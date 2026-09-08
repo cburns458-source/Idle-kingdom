@@ -73,13 +73,11 @@ void main() {
     expect(hide.usedIn.any((row) => row.id == 'PRJ-0049'), isTrue);
   });
 
-  test('lists cow drops on the bestiary, not as item obtain sources', () {
+  test('lists cow drops on the bestiary and as item obtain sources', () {
     final beef = codex.item('ITEM-0054')!;
-    expect(beef.obtainedFrom.any((row) => row.enemyId == 'ENM-0001'), isFalse);
-    expect(
-      beef.obtainedFrom.every((row) => row.kind != CodexObtainKind.action || row.enemyId == null),
-      isTrue,
-    );
+    expect(beef.obtainedFrom.any((row) => row.enemyId == 'ENM-0001'), isTrue);
+    expect(beef.obtainedFrom.any((row) => row.actionId == 'ACN-0001'), isTrue);
+    expect(beef.obtainedFrom.any((row) => row.kind == CodexObtainKind.enemy), isTrue);
 
     final cow = codex.enemy('ENM-0001')!;
     expect(cow.drops.map((row) => row.itemId), containsAll(['ITEM-0054', 'ITEM-0045']));
@@ -92,6 +90,21 @@ void main() {
       skeleton.locations.map((row) => row.displayName),
       containsAll(['Wizard\'s Tower', 'Castle Crypt']),
     );
+  });
+
+  test('lists secondary combat action loot as obtain sources', () {
+    final staff = codex.item('ITEM-0122')!;
+    expect(staff.obtainedFrom.any((row) => row.actionId == 'ACN-0004'), isTrue);
+  });
+
+  test('lists excavator pickaxe quest reward but not chef hat quest', () {
+    final pick = codex.item('ITEM-0313')!;
+    expect(
+      pick.obtainedFrom.any((row) => row.kind == CodexObtainKind.quest && row.questId == 'QST-0008'),
+      isTrue,
+    );
+    final hat = codex.item('ITEM-0165')!;
+    expect(hat.obtainedFrom.any((row) => row.kind == CodexObtainKind.quest), isFalse);
   });
 
   test('hides golden spud sources and mystery harvest action', () {

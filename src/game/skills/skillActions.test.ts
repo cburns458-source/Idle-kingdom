@@ -183,6 +183,42 @@ describe('skill menu entries', () => {
     expect(saplings.every((item) => !/\d+h|\d+m|\d+s/.test(item.displayName))).toBe(true)
   })
 
+  it('splits Thievery into Shops and Lockpicking tabs', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const thievery = skillMenuView(launch, 'SKL-0015')
+    expect(thievery.tabs.map((tab) => tab.label)).toEqual(['Shops', 'Lockpicking'])
+    const shops = thievery.tabs.find((tab) => tab.id === 'shops')?.sections[0]?.entries ?? []
+    const lockpicking =
+      thievery.tabs.find((tab) => tab.id === 'lockpicking')?.sections[0]?.entries ?? []
+    expect(shops.map((item) => item.displayName)).toEqual([
+      'Steal from the general store',
+      'Steal from the barracks',
+      'Steal from goblins',
+      'Steal from the kitchen',
+      'Steal from the mining merchant',
+    ])
+    expect(shops.find((item) => item.displayName === 'Steal from the mining merchant')?.level).toBe(
+      64,
+    )
+    expect(lockpicking.map((item) => item.displayName)).toEqual([
+      "Pick the king's safe",
+      'Pick a deposit box',
+    ])
+    expect(shops.some((item) => item.displayName.includes('Pick'))).toBe(false)
+    expect(lockpicking.some((item) => item.displayName.includes('Steal'))).toBe(false)
+  })
+
+  it('hides Mother Squid combat from the fishing Actions tab', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const fishing = skillMenuView(launch, 'SKL-0003')
+    const actions = fishing.tabs.find((tab) => tab.id === 'actions')?.sections[0]?.entries ?? []
+    expect(actions.some((item) => item.displayName === 'Fight Mother Squid')).toBe(false)
+    expect(actions.some((item) => item.displayName === 'Catch crawfish')).toBe(true)
+    expect(actionsForSkill(launch, 'SKL-0003').some((item) => item.displayName === 'Fight Mother Squid')).toBe(
+      true,
+    )
+  })
+
   it('groups smithing by material and numbers every menu row', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const mining = skillMenuDisplayEntries(launch, 'SKL-0002')

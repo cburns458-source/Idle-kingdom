@@ -139,6 +139,29 @@ bool actionIsQuestOnly(GameDatabase db, String actionId) {
   });
 }
 
+bool _isGatheringSkillMenuAction(ActionRow action) {
+  return action.category != 'Combat';
+}
+
+String _thieveryActionNotes(ActionRow action) => action.notes ?? '';
+
+/// Lockpick / safe / deposit-box thievery (RequiresLockpick family).
+bool isThieveryLockpickAction(ActionRow action) {
+  final notes = _thieveryActionNotes(action);
+  return RegExp(r'RequiresLockpick', caseSensitive: false).hasMatch(notes) ||
+      RegExp(r'ThieveryLockpick', caseSensitive: false).hasMatch(notes) ||
+      RegExp(r'BankThievery', caseSensitive: false).hasMatch(notes);
+}
+
+/// Shop-style steals, including Steal from goblins.
+bool isThieveryShopAction(ActionRow action) {
+  if (action.raw['Relevant Skill ID'] != thieverySkillMenuId) return false;
+  if (isThieveryLockpickAction(action)) return false;
+  final notes = _thieveryActionNotes(action);
+  return RegExp(r'ThieverySteal', caseSensitive: false).hasMatch(notes) ||
+      action.category == 'Gathering';
+}
+
 /// Actions for a skill menu: display names only, unique by name.
 List<SkillMenuListItem> actionsForSkill(GameDatabase db, String skillId) {
   final rows = db.actions
@@ -303,6 +326,15 @@ SkillMenuPlacement skillMenuPlacementForOutput(
     }
     return const SkillMenuPlacement(tabId: 'enchantments', tabLabel: 'Enchantments');
   }
+  if (skillId == thieverySkillMenuId) {
+    final action = outputId.isNotEmpty
+        ? db.actions.firstWhereOrNull((row) => row.actionId == outputId)
+        : db.actions.firstWhereOrNull((row) => row.displayName == displayName);
+    if (action != null && isThieveryLockpickAction(action)) {
+      return const SkillMenuPlacement(tabId: 'lockpicking', tabLabel: 'Lockpicking');
+    }
+    return const SkillMenuPlacement(tabId: 'shops', tabLabel: 'Shops');
+  }
   if (skillMenuView(db, skillId).tabs.any((tab) => tab.id == 'actions')) {
     return const SkillMenuPlacement(tabId: 'actions', tabLabel: 'Actions');
   }
@@ -338,7 +370,7 @@ List<SkillMenuTab> _tabsForSkill(GameDatabase db, String skillId) {
       skillId == huntingSkillId ||
       skillId == woodcuttingSkillId) {
     return <SkillMenuTab>[
-      _listTab('actions', 'Actions', actionsForSkill(db, skillId)),
+      _listTab('actions', 'Actions', _gatheringSkillActions(db, skillId)),
       _listTab('tools', 'Tools', _gatheringToolEntries(db, skillId)),
     ];
   }
@@ -346,7 +378,7 @@ List<SkillMenuTab> _tabsForSkill(GameDatabase db, String skillId) {
     return _botanyTabs(db);
   }
   if (skillId == thieverySkillMenuId) {
-    return <SkillMenuTab>[_listTab('actions', 'Actions', actionsForSkill(db, skillId))];
+    return _thieveryTabs(db);
   }
   if (skillId == smithingSkillId) {
     return _smithingTabs(db);
@@ -358,6 +390,33 @@ List<SkillMenuTab> _tabsForSkill(GameDatabase db, String skillId) {
     return _arcanaTabs(db);
   }
   return <SkillMenuTab>[_listTab('actions', 'Actions', skillMenuEntries(db, skillId))];
+}
+
+List<SkillMenuListItem> _gatheringSkillActions(GameDatabase db, String skillId) {
+  return [
+    for (final item in actionsForSkill(db, skillId))
+      if (db.actions.firstWhereOrNull((row) => row.actionId == item.id)
+          case final action?)
+        if (_isGatheringSkillMenuAction(action)) item,
+  ];
+}
+
+List<SkillMenuTab> _thieveryTabs(GameDatabase db) {
+  final shops = <SkillMenuListItem>[];
+  final lockpicking = <SkillMenuListItem>[];
+  for (final item in actionsForSkill(db, thieverySkillMenuId)) {
+    final action = db.actions.firstWhereOrNull((row) => row.actionId == item.id);
+    if (action == null) continue;
+    if (isThieveryLockpickAction(action)) {
+      lockpicking.add(item);
+    } else if (isThieveryShopAction(action)) {
+      shops.add(item);
+    }
+  }
+  return <SkillMenuTab>[
+    _listTab('shops', 'Shops', shops),
+    _listTab('lockpicking', 'Lockpicking', lockpicking),
+  ];
 }
 
 List<SkillMenuListItem> _botanyPlantEntries(GameDatabase db, {required bool saplings}) {

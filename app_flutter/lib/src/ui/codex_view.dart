@@ -12,7 +12,7 @@ import 'page_header.dart';
 
 enum _CodexTab { items, bestiary }
 
-/// Item Codex and Bestiary. Detail pages stack so taps can walk the links.
+/// Item Codex and Bestiary. Catalog is the root; at most one detail page is open.
 class CodexView extends StatefulWidget {
   const CodexView({
     super.key,
@@ -34,6 +34,7 @@ class CodexView extends StatefulWidget {
 class _CodexViewState extends State<CodexView> {
   late final CodexIndex _codex = CodexIndex(widget.controller.db);
   final TextEditingController _search = TextEditingController();
+  /// Empty = catalog. One route = the open item or enemy detail (replaced, never stacked).
   final List<_CodexRoute> _stack = <_CodexRoute>[];
   _CodexTab _tab = _CodexTab.items;
   int? _group;
@@ -56,19 +57,27 @@ class _CodexViewState extends State<CodexView> {
     super.dispose();
   }
 
-  void _pushItem(String itemId) {
+  void _openItem(String itemId) {
     if (_codex.item(itemId) == null) return;
-    setState(() => _stack.add(_CodexItemRoute(itemId)));
+    setState(() {
+      _stack
+        ..clear()
+        ..add(_CodexItemRoute(itemId));
+    });
   }
 
-  void _pushEnemy(String enemyId) {
+  void _openEnemy(String enemyId) {
     if (_codex.enemy(enemyId) == null) return;
-    setState(() => _stack.add(_CodexEnemyRoute(enemyId)));
+    setState(() {
+      _stack
+        ..clear()
+        ..add(_CodexEnemyRoute(enemyId));
+    });
   }
 
   void _close() {
     if (_stack.isNotEmpty) {
-      setState(() => _stack.removeLast());
+      setState(() => _stack.clear());
       return;
     }
     widget.onClose?.call();
@@ -99,12 +108,13 @@ class _CodexViewState extends State<CodexView> {
               entry: _codex.item(itemId)!,
               item: widget.controller.indexes.itemsById[itemId],
               itemsById: widget.controller.indexes.itemsById,
-              onOpenItem: _pushItem,
+              onOpenItem: _openItem,
+              onOpenEnemy: _openEnemy,
             ),
             _CodexEnemyRoute(:final enemyId) => _EnemyPage(
               entry: _codex.enemy(enemyId)!,
               itemsById: widget.controller.indexes.itemsById,
-              onOpenItem: _pushItem,
+              onOpenItem: _openItem,
             ),
             null => _catalog(),
           },
@@ -194,7 +204,7 @@ class _CodexViewState extends State<CodexView> {
           message: entry.displayName,
           child: PixelInkPlate(
             key: Key('codex-item-${entry.itemId}'),
-            onTap: () => _pushItem(entry.itemId),
+            onTap: () => _openItem(entry.itemId),
             step: PixelChrome.stepTight,
             fillColor: UiChrome.of(context).slot,
             material: PixelPlateMaterial.none,
@@ -230,7 +240,7 @@ class _CodexViewState extends State<CodexView> {
           detail: [?level, if (places.isNotEmpty) places].join(' · '),
           ink: Palette.parchmentText,
           muted: chrome.embossFace,
-          onTap: () => _pushEnemy(entry.enemyId),
+          onTap: () => _openEnemy(entry.enemyId),
         );
       },
     );
@@ -282,12 +292,14 @@ class _ItemPage extends StatelessWidget {
     required this.item,
     required this.itemsById,
     required this.onOpenItem,
+    required this.onOpenEnemy,
   });
 
   final CodexItemEntry entry;
   final ItemRow? item;
   final Map<String, ItemRow> itemsById;
   final ValueChanged<String> onOpenItem;
+  final ValueChanged<String> onOpenEnemy;
 
   @override
   Widget build(BuildContext context) {
@@ -335,7 +347,14 @@ class _ItemPage extends StatelessWidget {
           muted: muted,
           children: [
             for (final source in entry.obtainedFrom)
-              _LinkRow(title: source.title, detail: _obtainDetail(source), ink: ink, muted: muted),
+              _LinkRow(
+                key: source.enemyId != null ? Key('codex-obtain-enemy-${source.enemyId}') : null,
+                title: source.title,
+                detail: _obtainDetail(source),
+                ink: ink,
+                muted: muted,
+                onTap: source.enemyId == null ? null : () => onOpenEnemy(source.enemyId!),
+              ),
           ],
         ),
         _Section(

@@ -97,6 +97,32 @@ export function actionIsQuestOnly(db: GameDatabase, actionId: string): boolean {
   )
 }
 
+/** Gathering skill menus list world actions, not boss/combat rows tagged to the skill. */
+function isGatheringSkillMenuAction(action: ActionRow): boolean {
+  return action.Category !== 'Combat'
+}
+
+function thieveryActionNotes(action: ActionRow): string {
+  return action.Notes ?? ''
+}
+
+/** Lockpick / safe / deposit-box thievery (RequiresLockpick family). */
+export function isThieveryLockpickAction(action: ActionRow): boolean {
+  const notes = thieveryActionNotes(action)
+  return (
+    /RequiresLockpick/i.test(notes) ||
+    /ThieveryLockpick/i.test(notes) ||
+    /BankThievery/i.test(notes)
+  )
+}
+
+/** Shop-style steals, including Steal from goblins. */
+export function isThieveryShopAction(action: ActionRow): boolean {
+  if (action['Relevant Skill ID'] !== THIEVERY_SKILL_ID) return false
+  if (isThieveryLockpickAction(action)) return false
+  return /ThieverySteal/i.test(thieveryActionNotes(action)) || action.Category === 'Gathering'
+}
+
 /** Actions for a skill menu: display names only, unique by name, proficiency when set. */
 export function actionsForSkill(db: GameDatabase, skillId: string): SkillMenuListItem[] {
   const rows = db.Actions.filter(
@@ -234,6 +260,16 @@ export function skillMenuPlacementForOutput(
     }
     return { tabId: 'enchantments', tabLabel: 'Enchantments', sectionTitle: null }
   }
+  if (skillId === THIEVERY_SKILL_ID) {
+    const action =
+      (outputId
+        ? db.Actions.find((row) => row['Action ID'] === outputId)
+        : undefined) ?? db.Actions.find((row) => row['Display Name'] === displayName)
+    if (action && isThieveryLockpickAction(action)) {
+      return { tabId: 'lockpicking', tabLabel: 'Lockpicking', sectionTitle: null }
+    }
+    return { tabId: 'shops', tabLabel: 'Shops', sectionTitle: null }
+  }
   if (skillMenuView(db, skillId).tabs.some((tab) => tab.id === 'actions')) {
     return { tabId: 'actions', tabLabel: 'Actions', sectionTitle: null }
   }
@@ -270,18 +306,35 @@ function tabsForSkill(db: GameDatabase, skillId: string): SkillMenuTab[] {
     skillId === WOODCUTTING_SKILL_ID
   ) {
     return [
-      listTab('actions', 'Actions', actionsForSkill(db, skillId)),
+      listTab('actions', 'Actions', gatheringSkillActions(db, skillId)),
       listTab('tools', 'Tools', gatheringToolEntries(db, skillId)),
     ]
   }
   if (skillId === BOTANY_SKILL_ID) return botanyTabs(db)
-  if (skillId === THIEVERY_SKILL_ID) {
-    return [listTab('actions', 'Actions', actionsForSkill(db, skillId))]
-  }
+  if (skillId === THIEVERY_SKILL_ID) return thieveryTabs(db)
   if (skillId === SMITHING_SKILL_ID) return smithingTabs(db)
   if (skillId === ARTISANRY_SKILL_ID) return artisanryTabs(db)
   if (skillId === ARCANA_SKILL_ID) return arcanaTabs(db)
   return [listTab('actions', 'Actions', skillMenuEntries(db, skillId))]
+}
+
+function gatheringSkillActions(db: GameDatabase, skillId: string): SkillMenuListItem[] {
+  return actionsForSkill(db, skillId).filter((item) => {
+    const action = db.Actions.find((row) => row['Action ID'] === item.id)
+    return action != null && isGatheringSkillMenuAction(action)
+  })
+}
+
+function thieveryTabs(db: GameDatabase): SkillMenuTab[] {
+  const shops: SkillMenuListItem[] = []
+  const lockpicking: SkillMenuListItem[] = []
+  for (const item of actionsForSkill(db, THIEVERY_SKILL_ID)) {
+    const action = db.Actions.find((row) => row['Action ID'] === item.id)
+    if (!action) continue
+    if (isThieveryLockpickAction(action)) lockpicking.push(item)
+    else if (isThieveryShopAction(action)) shops.push(item)
+  }
+  return [listTab('shops', 'Shops', shops), listTab('lockpicking', 'Lockpicking', lockpicking)]
 }
 
 function botanyPlantEntries(db: GameDatabase, saplings: boolean): SkillMenuListItem[] {
