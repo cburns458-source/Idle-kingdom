@@ -11,6 +11,7 @@ import '../production/inventory.dart';
 import '../production/recipes.dart';
 import '../quests/progress.dart';
 import '../save/generated/save_models.dart';
+import '../trackers/trackers.dart';
 import 'enchantments.dart';
 import 'projects.dart';
 
@@ -216,6 +217,7 @@ ProjectCompleteResult completeSpecialProject(
   final xpTotal = jsNumber(project.raw['XP Reward']) * crafts;
   final xpApplied = applyXp(next, db, skillId, xpTotal);
   next = xpApplied.save;
+  next = creditXpAwards(next, [(skillId: skillId, xp: xpTotal)], nowMs);
   next = applyQuestProcessProgress(db, next, jsString(project.raw['Project ID']), crafts);
   next = applyBountyProjectProgress(next, jsString(project.raw['Project ID']), crafts, nowMs);
   next = recordProjectMilestones(db, next, jsString(project.raw['Project ID']), crafts);

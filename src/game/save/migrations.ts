@@ -668,6 +668,17 @@ export const SAVE_MIGRATIONS: SaveMigration[] = [
       saveVersion: 43,
     }),
   },
+  {
+    fromVersion: 43,
+    toVersion: 44,
+    migrate: (save) => ({
+      ...save,
+      lootTrackers:
+        save.lootTrackers && typeof save.lootTrackers === 'object' ? save.lootTrackers : {},
+      xpTrackers: save.xpTrackers && typeof save.xpTrackers === 'object' ? save.xpTrackers : {},
+      saveVersion: 44,
+    }),
+  },
 ]
 
 export function migrateSave(save: PlayerSave, nowMs: number = Date.now()): PlayerSave {

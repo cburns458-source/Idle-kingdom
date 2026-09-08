@@ -1,5 +1,6 @@
 import { addItemToInventoryExact } from '../activity/rewards'
 import { applyXp } from '../activity/xp'
+import { creditXpAwards } from '../trackers/trackers'
 import type { GameDatabase } from '../data/types'
 import { removeIngredients } from '../production/inventory'
 import type { PlayerSave } from '../save/types'
@@ -191,6 +192,7 @@ export function completeSpecialProject(
   const xpTotal = project['XP Reward'] * crafts
   const xpApplied = applyXp(next, db, project['Skill ID'], xpTotal)
   next = xpApplied.save
+  next = creditXpAwards(next, [{ skillId: project['Skill ID'], xp: xpTotal }], nowMs)
   next = applyQuestProcessProgress(db, next, project['Project ID'], crafts)
   next = applyBountyProjectProgress(next, project['Project ID'], crafts, nowMs)
   next = recordProjectMilestones(db, next, project['Project ID'], crafts)

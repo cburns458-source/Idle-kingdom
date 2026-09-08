@@ -1,4 +1,4 @@
-export const SAVE_VERSION = 43
+export const SAVE_VERSION = 44
 export const SAVE_STORAGE_KEY = 'idle-kingdoms.demo.save'
 export const STARTING_LOCATION_ID = 'LOC-0001'
 /** Base gold before race kit; race starters grant the real starting gold. */
@@ -184,6 +184,27 @@ export interface CritterSpawn {
   appearedAt: string
 }
 
+/** One loot-tracker section, started on the first completion of that source. */
+export interface LootTrackerEntry {
+  key: string
+  kind: 'enemy' | 'action' | 'timer'
+  sourceId: string
+  startedAtMs: number
+  completions: number
+  gold: number
+  items: Record<string, number>
+}
+
+/** One XP-tracker row, started the first time that skill (or total) is awarded XP. */
+export interface XpTrackerEntry {
+  skillId: string
+  startedAtMs: number
+  xpGained: number
+}
+
+/** Skill-id used for the combined XP tracker. */
+export const TOTAL_XP_TRACKER_ID = 'total'
+
 /**
  * Parallel location timer (Botany plot or hunting/fishing trap).
  * Does not occupy the Primary Activity slot. Cap: one per location.
@@ -344,6 +365,10 @@ export interface PlayerSave {
    * `fishing_trap:LOC-xxxx`). Listed in the Timers menu even with no active timer.
    */
   discoveredTimerSpotIds: string[]
+  /** RuneScape-style loot tracker sections, keyed by `kind:sourceId`. */
+  lootTrackers: Record<string, LootTrackerEntry>
+  /** RuneScape-style XP tracker rows, keyed by skill id or `total`. */
+  xpTrackers: Record<string, XpTrackerEntry>
 }
 
 export interface SaveMigration {

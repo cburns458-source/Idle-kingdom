@@ -1,5 +1,6 @@
 import { addItemsToInventory } from '../activity/rewards'
 import { applyXp, getSkillProgress } from '../activity/xp'
+import { creditLootTracker, creditXpAwards } from '../trackers/trackers'
 import type { GameDatabase, ItemRow } from '../data/types'
 import { removeIngredients } from '../production/inventory'
 import { getQuestProgress } from '../quests/quests'
@@ -520,6 +521,8 @@ export function collectLocationTimer(
   }
 
   next = applyXp(next, db, skillId, xpGained).save
+  next = creditLootTracker(next, 'timer', `${kind}:${locationId}`, loot, 0, nowMs)
+  next = creditXpAwards(next, [{ skillId, xp: xpGained }], nowMs)
 
   return { ok: true, save: next, loot, xpGained, skillId }
 }

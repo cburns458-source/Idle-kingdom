@@ -90,6 +90,8 @@ function saveWithInventory(itemIds: string[]): PlayerSave {
     playTimeMs: 0,
     locationTimers: [],
     discoveredTimerSpotIds: [],
+    lootTrackers: {},
+    xpTrackers: {},
   }
 }
 

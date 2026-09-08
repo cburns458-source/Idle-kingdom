@@ -18,6 +18,7 @@ import '../potions/effects.dart';
 import '../quests/progress.dart';
 import '../recipes/knowledge.dart';
 import '../rng/mulberry32.dart';
+import '../trackers/trackers.dart';
 import '../save/generated/save_models.dart';
 import '../time.dart';
 import 'inventory.dart';
@@ -198,6 +199,7 @@ ProductionCraftResult? completeProductionCraft(
   next = applyQuestProcessProgress(db, next, jsString(recipe.raw['Recipe ID']), 1);
   next = applyBountyProcessProgress(next, jsString(recipe.raw['Recipe ID']), 1, nowMs);
   next = recordProductionMilestones(db, next, outputItemId, outputQty);
+  next = creditXpAwards(next, [(skillId: skillId, xp: xpGained)], nowMs);
 
   final itemName = db.items
       .firstWhereOrNull((item) => item.raw['Item ID'] == outputItemId)

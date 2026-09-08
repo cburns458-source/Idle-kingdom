@@ -90,6 +90,8 @@ function sampleSave(skills: Array<{ skillId: string; level: number; xp: number }
     maxHp: 1000,
     locationTimers: [],
     discoveredTimerSpotIds: [],
+    lootTrackers: {},
+    xpTrackers: {},
   }
 }
 

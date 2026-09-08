@@ -406,7 +406,7 @@ SessionTickResult advanceSession(GameDatabase db, PlayerSave save, num nowMs, Ra
       return out.result();
     }
 
-    final finished = completeGatheringAction(db, out.current, action, random);
+    final finished = completeGatheringAction(db, out.current, action, random, due);
     out.set(finished.save);
     out.creditCritterTime(actionState.durationMs, due, random);
     out.emit(

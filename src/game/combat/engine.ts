@@ -19,6 +19,7 @@ import {
 } from '../projects/enchantments'
 import { applyBountyDefeatProgress } from '../bounties/progress'
 import { applyQuestDefeatProgress } from '../quests/progress'
+import { creditLootTracker, creditXpAwards } from '../trackers/trackers'
 import { applyRaceGoldGain } from '../races/races'
 import { itemHasCapability, WEAPON_TOOL_SLOT_ID } from '../equipment/loadout'
 import { currentHpAfterMaxChange } from '../equipment/vitals'
@@ -419,6 +420,8 @@ export function applyCombatVictory(
   next = applyQuestDefeatProgress(db, next, enemy['Enemy ID'], 1)
   next = applyBountyDefeatProgress(next, enemy['Enemy ID'], 1, nowMs)
   next = withoutHeldAction(next, save.currentActivityId)
+  next = creditLootTracker(next, 'enemy', enemy['Enemy ID'], rewarded.loot, goldGained, nowMs)
+  next = creditXpAwards(next, [{ skillId: xpSkillId, xp: xpAmount }], nowMs)
 
   return {
     save: next,

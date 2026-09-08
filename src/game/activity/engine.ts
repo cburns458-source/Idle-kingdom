@@ -29,6 +29,7 @@ import { addLifetimeStat, recordGatheredDrops } from '../achievements/progress'
 import { applyQuestActionProgress } from '../quests/progress'
 import { applyQuestAutoCompleteOnAction } from '../quests/quests'
 import { WEAPON_TOOL_SLOT_ID } from '../save/types'
+import { creditLootTracker, creditXpAwards, lootSourceForAction } from '../trackers/trackers'
 import { slotStack } from '../equipment/loadout'
 import { GATHERING_ACTIONS_STAT } from '../log/milestones'
 import { bonusSkillXpForAction, bowHuntingCombatXpBonus } from './bonusXp'
@@ -365,6 +366,13 @@ export function completeGatheringAction(
     next = addLifetimeStat(next, GATHERING_ACTIONS_STAT)
     next = applyQuestActionProgress(db, next, action['Action ID'])
     next = applyQuestAutoCompleteOnAction(db, next).save
+    const source = lootSourceForAction(action)
+    next = creditLootTracker(next, source.kind, source.sourceId, [], 0, nowMs)
+    next = creditXpAwards(
+      next,
+      xpRewards.map((reward) => ({ skillId: reward.skillId, xp: reward.xp })),
+      nowMs,
+    )
 
     return {
       save: withoutHeldAction(next, save.currentActivityId),
@@ -481,6 +489,13 @@ export function completeGatheringAction(
   }
   next = applyQuestActionProgress(db, next, action['Action ID'])
   next = applyQuestAutoCompleteOnAction(db, next).save
+  const source = lootSourceForAction(action)
+  next = creditLootTracker(next, source.kind, source.sourceId, rewarded.loot, rewarded.goldGained, nowMs)
+  next = creditXpAwards(
+    next,
+    xpRewards.map((reward) => ({ skillId: reward.skillId, xp: reward.xp })),
+    nowMs,
+  )
   let foodHealed = 0
   if (isThievery) {
     const fed = consumeFoodAfterVictory(db, next)

@@ -195,11 +195,17 @@ export const activityScenarios: ParityScenario[] = [
       scenario(
         'activity/complete',
         `${kind}-${actionId.toLowerCase()}`,
-        withSave(kind, { actionId, seed: SEED }),
+        withSave(kind, { actionId, seed: SEED, nowMs: NOW_MS }),
         () => {
           const db = contentDatabase()
           const action = db.Actions.find((row) => row['Action ID'] === actionId)!
-          const completed = completeGatheringAction(db, saveFor(kind), action, mulberry32(SEED))
+          const completed = completeGatheringAction(
+            db,
+            saveFor(kind),
+            action,
+            mulberry32(SEED),
+            NOW_MS,
+          )
           return {
             save: asJson(completed.save),
             result: completed.result,
