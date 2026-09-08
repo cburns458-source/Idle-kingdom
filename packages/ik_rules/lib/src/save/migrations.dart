@@ -661,6 +661,20 @@ final List<SaveMigration> saveMigrations = <SaveMigration>[
       return next;
     },
   ),
+  SaveMigration(
+    fromVersion: 43,
+    toVersion: 44,
+    migrate: (save, nowMs) {
+      final next = _bumped(save, 44);
+      next['lootTrackers'] = save['lootTrackers'] is Map
+          ? save['lootTrackers']
+          : <String, Object?>{};
+      next['xpTrackers'] = save['xpTrackers'] is Map
+          ? save['xpTrackers']
+          : <String, Object?>{};
+      return next;
+    },
+  ),
 ];
 
 /// Thrown when a save cannot be brought to the current version.

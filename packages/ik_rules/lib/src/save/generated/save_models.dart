@@ -7,7 +7,7 @@
 
 import '../../json_support.dart';
 
-const int saveVersion = 43;
+const int saveVersion = 44;
 
 const String saveStorageKey = 'idle-kingdoms.demo.save';
 
@@ -69,6 +69,9 @@ const List<String> appearanceCategories = <String>[
   'beard',
   'genderPresentation',
 ];
+
+/// Skill-id used for the combined XP tracker.
+const String totalXpTrackerId = 'total';
 
 /// Distinguishes "leave unchanged" from "set to null" in copyWith.
 const Object _unset = Object();
@@ -635,6 +638,77 @@ class LocationTimer {
   }
 }
 
+/// One loot-tracker section, started on the first completion of that source.
+class LootTrackerEntry {
+  const LootTrackerEntry({
+    required this.key,
+    required this.kind,
+    required this.sourceId,
+    required this.startedAtMs,
+    required this.completions,
+    required this.gold,
+    required this.items,
+  });
+
+  factory LootTrackerEntry.fromJson(Map<String, Object?> json) {
+    return LootTrackerEntry(
+      key: json['key'] as String,
+      kind: json['kind'] as String,
+      sourceId: json['sourceId'] as String,
+      startedAtMs: json['startedAtMs'] as num,
+      completions: json['completions'] as num,
+      gold: json['gold'] as num,
+      items: mapOf(json['items'], (Object? value) => value as num),
+    );
+  }
+
+  final String key;
+
+  final String kind;
+
+  final String sourceId;
+
+  final num startedAtMs;
+
+  final num completions;
+
+  final num gold;
+
+  final Map<String, num> items;
+
+  Map<String, Object?> toJson() {
+    return <String, Object?>{
+      'key': key,
+      'kind': kind,
+      'sourceId': sourceId,
+      'startedAtMs': startedAtMs,
+      'completions': completions,
+      'gold': gold,
+      'items': items,
+    };
+  }
+
+  LootTrackerEntry copyWith({
+    String? key,
+    String? kind,
+    String? sourceId,
+    num? startedAtMs,
+    num? completions,
+    num? gold,
+    Map<String, num>? items,
+  }) {
+    return LootTrackerEntry(
+      key: key ?? this.key,
+      kind: kind ?? this.kind,
+      sourceId: sourceId ?? this.sourceId,
+      startedAtMs: startedAtMs ?? this.startedAtMs,
+      completions: completions ?? this.completions,
+      gold: gold ?? this.gold,
+      items: items ?? this.items,
+    );
+  }
+}
+
 /// Selected Appearance Option ID per category.
 class PlayerAppearance {
   const PlayerAppearance({
@@ -773,6 +847,8 @@ class PlayerSave {
     required this.maxHp,
     required this.locationTimers,
     required this.discoveredTimerSpotIds,
+    required this.lootTrackers,
+    required this.xpTrackers,
   });
 
   factory PlayerSave.fromJson(Map<String, Object?> json) {
@@ -881,6 +957,14 @@ class PlayerSave {
       discoveredTimerSpotIds: listOf(
         json['discoveredTimerSpotIds'],
         (Object? entry) => entry as String,
+      ),
+      lootTrackers: mapOf(
+        json['lootTrackers'],
+        (Object? value) => LootTrackerEntry.fromJson(asJsonMap(value)),
+      ),
+      xpTrackers: mapOf(
+        json['xpTrackers'],
+        (Object? value) => XpTrackerEntry.fromJson(asJsonMap(value)),
       ),
     );
   }
@@ -1083,6 +1167,12 @@ class PlayerSave {
   /// `fishing_trap:LOC-xxxx`). Listed in the Timers menu even with no active timer.
   final List<String> discoveredTimerSpotIds;
 
+  /// RuneScape-style loot tracker sections, keyed by `kind:sourceId`.
+  final Map<String, LootTrackerEntry> lootTrackers;
+
+  /// RuneScape-style XP tracker rows, keyed by skill id or `total`.
+  final Map<String, XpTrackerEntry> xpTrackers;
+
   Map<String, Object?> toJson() {
     return <String, Object?>{
       'saveVersion': saveVersion,
@@ -1157,6 +1247,8 @@ class PlayerSave {
       'maxHp': maxHp,
       'locationTimers': locationTimers.map((entry) => entry.toJson()).toList(),
       'discoveredTimerSpotIds': discoveredTimerSpotIds,
+      'lootTrackers': lootTrackers.map((key, value) => MapEntry(key, value.toJson())),
+      'xpTrackers': xpTrackers.map((key, value) => MapEntry(key, value.toJson())),
     };
   }
 
@@ -1233,6 +1325,8 @@ class PlayerSave {
     num? maxHp,
     List<LocationTimer>? locationTimers,
     List<String>? discoveredTimerSpotIds,
+    Map<String, LootTrackerEntry>? lootTrackers,
+    Map<String, XpTrackerEntry>? xpTrackers,
   }) {
     return PlayerSave(
       saveVersion: saveVersion ?? this.saveVersion,
@@ -1346,6 +1440,8 @@ class PlayerSave {
       maxHp: maxHp ?? this.maxHp,
       locationTimers: locationTimers ?? this.locationTimers,
       discoveredTimerSpotIds: discoveredTimerSpotIds ?? this.discoveredTimerSpotIds,
+      lootTrackers: lootTrackers ?? this.lootTrackers,
+      xpTrackers: xpTrackers ?? this.xpTrackers,
     );
   }
 }
@@ -1514,6 +1610,37 @@ class SkillProgress {
       skillId: skillId ?? this.skillId,
       level: level ?? this.level,
       xp: xp ?? this.xp,
+    );
+  }
+}
+
+/// One XP-tracker row, started the first time that skill (or total) is awarded XP.
+class XpTrackerEntry {
+  const XpTrackerEntry({required this.skillId, required this.startedAtMs, required this.xpGained});
+
+  factory XpTrackerEntry.fromJson(Map<String, Object?> json) {
+    return XpTrackerEntry(
+      skillId: json['skillId'] as String,
+      startedAtMs: json['startedAtMs'] as num,
+      xpGained: json['xpGained'] as num,
+    );
+  }
+
+  final String skillId;
+
+  final num startedAtMs;
+
+  final num xpGained;
+
+  Map<String, Object?> toJson() {
+    return <String, Object?>{'skillId': skillId, 'startedAtMs': startedAtMs, 'xpGained': xpGained};
+  }
+
+  XpTrackerEntry copyWith({String? skillId, num? startedAtMs, num? xpGained}) {
+    return XpTrackerEntry(
+      skillId: skillId ?? this.skillId,
+      startedAtMs: startedAtMs ?? this.startedAtMs,
+      xpGained: xpGained ?? this.xpGained,
     );
   }
 }

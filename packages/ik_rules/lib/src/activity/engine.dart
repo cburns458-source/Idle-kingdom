@@ -16,6 +16,7 @@ import '../quests/quests.dart';
 import '../rng/mulberry32.dart';
 import '../save/generated/save_models.dart';
 import '../time.dart';
+import '../trackers/trackers.dart';
 import 'bonus_xp.dart';
 import 'gathering.dart';
 import 'held_action.dart';
@@ -343,6 +344,11 @@ GatheringCompletion completeGatheringAction(
     next = addLifetimeStat(next, gatheringActionsStat);
     next = applyQuestActionProgress(db, next, jsString(action.raw['Action ID']));
     next = applyQuestAutoCompleteOnAction(db, next).save;
+    final source = lootSourceForAction(action);
+    next = creditLootTracker(next, source.kind, source.sourceId, const <LootGrant>[], 0, now);
+    next = creditXpAwards(next, [
+      for (final reward in xpRewards) (skillId: reward.skillId, xp: reward.xp),
+    ], now);
 
     return GatheringCompletion(
       save: withoutHeldAction(next, save.currentActivityId),
@@ -471,6 +477,18 @@ GatheringCompletion completeGatheringAction(
   }
   next = applyQuestActionProgress(db, next, jsString(action.raw['Action ID']));
   next = applyQuestAutoCompleteOnAction(db, next).save;
+  final source = lootSourceForAction(action);
+  next = creditLootTracker(
+    next,
+    source.kind,
+    source.sourceId,
+    rewarded.loot,
+    rewarded.goldGained,
+    now,
+  );
+  next = creditXpAwards(next, [
+    for (final reward in xpRewards) (skillId: reward.skillId, xp: reward.xp),
+  ], now);
   num foodHealed = 0;
   if (isThievery) {
     final fed = consumeFoodAfterVictory(db, next);

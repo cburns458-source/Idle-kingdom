@@ -8,6 +8,7 @@ import '../production/inventory.dart';
 import '../production/recipes.dart';
 import '../quests/quests.dart';
 import '../save/generated/save_models.dart';
+import '../trackers/trackers.dart';
 
 const String botanySkillId = 'SKL-0014';
 const String thieverySkillId = 'SKL-0015';
@@ -586,6 +587,8 @@ LocationTimerCollectResult collectLocationTimer(
   }
 
   next = applyXp(next, db, skillId, xpGained).save;
+  next = creditLootTracker(next, 'timer', '$kind:$locationId', loot, 0, now);
+  next = creditXpAwards(next, [(skillId: skillId, xp: xpGained)], now);
 
   return LocationTimerCollectResult(
     ok: true,

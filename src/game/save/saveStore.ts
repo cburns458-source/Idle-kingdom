@@ -143,6 +143,8 @@ export function createNewSave(db: GameDatabase, nowMs: number = Date.now()): Pla
     maxHp,
     locationTimers: [],
     discoveredTimerSpotIds: [],
+    lootTrackers: {},
+    xpTrackers: {},
   }
 }
 

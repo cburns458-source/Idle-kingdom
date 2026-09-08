@@ -9,6 +9,7 @@ const List<(GameScreen, String)> nestMenuItems = [
   (GameScreen.log, 'Log'),
   (GameScreen.codex, 'Codex'),
   (GameScreen.timers, 'Timers'),
+  (GameScreen.tracker, 'Tracker'),
   (GameScreen.leaderboards, 'Leaderboards'),
   (GameScreen.guilds, 'Guilds'),
 ];

@@ -568,6 +568,7 @@ void main() {
     expect(find.text('Settings'), findsOne);
     expect(find.text('Log'), findsOne);
     expect(find.text('Codex'), findsOne);
+    expect(find.text('Tracker'), findsOne);
     expect(find.text('Leaderboards'), findsOne);
     expect(find.text('Guilds'), findsOne);
     expect(find.text('Account'), findsNothing);

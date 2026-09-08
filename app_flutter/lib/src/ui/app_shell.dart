@@ -31,6 +31,7 @@ import 'social_alert.dart';
 import 'social_view.dart';
 import 'top_hud.dart';
 import 'timers_view.dart';
+import 'tracker_view.dart';
 import 'wardrobe_sheet.dart';
 import 'world_map_view.dart';
 
@@ -41,6 +42,7 @@ enum GameScreen {
   log,
   codex,
   timers,
+  tracker,
   leaderboards,
   guilds,
   account,
@@ -59,6 +61,7 @@ const Set<GameScreen> _chinScreens = {
   GameScreen.log,
   GameScreen.codex,
   GameScreen.timers,
+  GameScreen.tracker,
   GameScreen.leaderboards,
   GameScreen.guilds,
   GameScreen.account,
@@ -1008,6 +1011,8 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
         );
       case GameScreen.timers:
         return TimersView(controller: controller, onClose: _popPage);
+      case GameScreen.tracker:
+        return TrackerView(controller: controller, onClose: _popPage);
       case GameScreen.leaderboards:
         return SocialView(
           controller: controller,

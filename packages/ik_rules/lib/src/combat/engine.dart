@@ -21,6 +21,7 @@ import '../rng/mulberry32.dart';
 import '../cosmetics/cosmetics.dart';
 import '../save/generated/save_models.dart';
 import '../time.dart';
+import '../trackers/trackers.dart';
 import 'boss.dart';
 import 'food.dart';
 import '../skills/skill_actions.dart' show fishingSkillId;
@@ -471,6 +472,15 @@ CombatVictoryResult applyCombatVictory(
   next = applyQuestDefeatProgress(db, next, jsString(enemy.raw['Enemy ID']), 1);
   next = applyBountyDefeatProgress(next, jsString(enemy.raw['Enemy ID']), 1, nowMs);
   next = withoutHeldAction(next, save.currentActivityId);
+  next = creditLootTracker(
+    next,
+    'enemy',
+    jsString(enemy.raw['Enemy ID']),
+    rewarded.loot,
+    goldGained,
+    nowMs,
+  );
+  next = creditXpAwards(next, [(skillId: xpSkillId, xp: xpAmount)], nowMs);
 
   return CombatVictoryResult(
     save: next,
