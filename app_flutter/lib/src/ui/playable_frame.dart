@@ -30,7 +30,7 @@ double _textScaleFactor(TextScaler scaler) => scaler.scale(100) / 100;
 TextScaler playableUiTextScaler(TextScaler parent) =>
     TextScaler.linear(_textScaleFactor(parent) * playableUiTextScale);
 
-/// Undo [playableUiTextScale] so HUD and combat numbers stay full size.
+/// Undo [playableUiTextScale] so combat numbers stay full size.
 TextScaler playableHudTextScaler(TextScaler parent) =>
     TextScaler.linear(_textScaleFactor(parent) / playableUiTextScale);
 

@@ -67,11 +67,12 @@ class _SkillTile extends StatelessWidget {
     final fraction = needed <= 0 ? 1.0 : (into / needed).clamp(0, 1).toDouble();
 
     final name = row?.displayName ?? skillId;
+    final tooltip = progress.atCap
+        ? '$name · ${formatThousands(progress.totalXp)} total xp'
+        : '$name · ${formatThousands(progress.totalXp)} total xp\n'
+              '${formatThousands(needed - into)} xp to level ${progress.nextLevel}';
     return Tooltip(
-      message: progress.atCap
-          ? '$name · mastered\n${formatThousands(progress.totalXp)} total xp'
-          : '$name · ${formatThousands(progress.totalXp)} total xp\n'
-                '${formatThousands(needed - into)} xp to level ${progress.nextLevel}',
+      message: tooltip,
       child: GamePanel(
         padding: const EdgeInsets.fromLTRB(5, 6, 5, 5),
         child: InkWell(
@@ -92,7 +93,7 @@ class _SkillTile extends StatelessWidget {
               ),
               const SizedBox(height: 2),
               Text(
-                progress.atCap ? 'Max' : 'Lv ${progress.level}',
+                'Lv ${progress.level}',
                 style: const TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w400,
