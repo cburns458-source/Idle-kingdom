@@ -868,7 +868,9 @@ class _CombatStage extends StatelessWidget {
                     ),
                   ),
                 ),
-              if (showFloaters && round != null && round.playerHit > 0)
+              if (showFloaters &&
+                  round != null &&
+                  (round.playerHit > 0 || equippedWeaponIsLockpick(save)))
                 _DamageFloater(
                   key: ValueKey('player-hit-$seq'),
                   text: round.playerCrit

@@ -9,7 +9,14 @@ import { TEMPLE_LOCATION_ID } from '../world/blessing'
 export const FOOD_SLOT_ID = 'SLOT-0011'
 export const POTION_SLOT_ID = 'SLOT-0012'
 export const OFFHAND_SLOT_ID = 'SLOT-0002'
+/** Stackable lockpicks that occupy the Weapon/Tool slot. */
+export const LOCKPICK_ITEM_ID = 'ITEM-0351'
 export { WEAPON_TOOL_SLOT_ID }
+
+/** True when lockpicks are equipped in Weapon/Tool. */
+export function equippedWeaponIsLockpick(save: PlayerSave): boolean {
+  return save.equipment.slots[WEAPON_TOOL_SLOT_ID]?.itemId === LOCKPICK_ITEM_ID
+}
 
 export function isDaggerItem(db: GameDatabase, itemId: string): boolean {
   const item = db.Items.find((row) => row['Item ID'] === itemId)

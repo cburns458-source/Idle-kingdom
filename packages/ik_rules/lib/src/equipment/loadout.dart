@@ -16,6 +16,14 @@ const String foodSlotId = 'SLOT-0011';
 const String potionSlotId = 'SLOT-0012';
 const String offhandSlotId = 'SLOT-0002';
 
+/// Stackable lockpicks that occupy the Weapon/Tool slot.
+const String lockpickItemId = 'ITEM-0351';
+
+/// True when lockpicks are equipped in Weapon/Tool.
+bool equippedWeaponIsLockpick(PlayerSave save) {
+  return save.equipment.slots[weaponToolSlotId]?.itemId == lockpickItemId;
+}
+
 /// Whether [itemId] can be equipped into [slotId] (including spell / dagger rules).
 bool itemFitsEquipmentSlot(GameDatabase db, String itemId, String slotId) {
   final equipment = db.equipment.firstWhereOrNull((row) => row.raw['Item ID'] == itemId);

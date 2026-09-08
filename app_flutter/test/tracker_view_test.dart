@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:idle_kingdoms/src/content/asset_paths.dart';
+import 'package:idle_kingdoms/src/theme.dart';
+import 'package:idle_kingdoms/src/ui/game_image.dart';
 import 'package:idle_kingdoms/src/ui/tracker_view.dart';
 import 'package:ik_content/ik_content.dart';
 import 'package:ik_rules/ik_rules.dart';
@@ -110,5 +113,61 @@ void main() {
     await tester.tap(find.text('XP'));
     await tester.pump();
     expect(find.text('Total XP'), findsOne);
+  });
+
+  testWidgets('gold shows as a drop chip instead of a subtitle count', (tester) async {
+    final controller = buildController(database, seed: startedCharacter(database));
+    addTearDown(controller.dispose);
+    controller.commit(
+      creditLootTracker(controller.save, 'enemy', 'ENM-0001', const <LootGrant>[], 12, testStartMs),
+    );
+
+    await pumpPanel(tester, TrackerView(controller: controller));
+    expect(find.text('Cow'), findsOne);
+    expect(find.text('1 kill'), findsOne);
+    expect(find.textContaining('kill ·'), findsNothing);
+    expect(find.textContaining('Gold ×12'), findsOne);
+    expect(find.text('No item drops yet.'), findsNothing);
+  });
+
+  testWidgets('loot and XP rows use the requested art', (tester) async {
+    final controller = buildController(database, seed: startedCharacter(database));
+    addTearDown(controller.dispose);
+    final harvest = action('ACN-0035');
+    var save = creditLootTracker(
+      controller.save,
+      'action',
+      harvest.actionId,
+      const <LootGrant>[],
+      0,
+      testStartMs,
+    );
+    save = creditLootTracker(save, 'timer', 'botany:LOC-0001', const <LootGrant>[], 0, testStartMs);
+    save = creditXpTracker(save, combatSkillId, 50, testStartMs);
+    save = creditXpTracker(save, totalXpTrackerId, 50, testStartMs);
+    controller.commit(save);
+
+    await pumpPanel(tester, TrackerView(controller: controller));
+    expect(
+      find.byWidgetPredicate(
+        (widget) => widget is GameImage && widget.path == actionAssetPath(harvest.actionId),
+      ),
+      findsOne,
+    );
+    expect(
+      find.byWidgetPredicate((widget) => widget is GameImage && widget.path.contains('skl_botany')),
+      findsOne,
+    );
+
+    await tester.tap(find.text('XP'));
+    await tester.pump();
+    final totalRow = find.ancestor(of: find.text('Total XP'), matching: find.byType(GamePanel));
+    expect(find.descendant(of: totalRow, matching: find.byType(GameImage)), findsNothing);
+    final combatRow = find.ancestor(of: find.text('Combat'), matching: find.byType(GamePanel));
+    expect(find.descendant(of: combatRow, matching: find.byType(GameImage)), findsOne);
+    expect(
+      find.byWidgetPredicate((widget) => widget is GameImage && widget.path.contains('skl_combat')),
+      findsOne,
+    );
   });
 }

@@ -221,28 +221,32 @@ CombatRoundResult resolveCombatRound(
   var playerCrit = false;
   num? staffHit;
   num? offhandHit;
+  final lockpickCombat = equippedWeaponIsLockpick(save);
 
-  if (fishingMode) {
-    final fishingRange = fishingCombatDamageRange(db, save);
-    playerHit = rollDamage(fishingRange.min, fishingRange.max, random);
-    if (bossInkActive) playerHit = math.max(1, (playerHit / 2).floor());
-    playerHit = applySleepIncoming(playerHit, asleep);
-  } else {
-    final playerRange = playerDamageRange(db, save);
-    playerHit = rollDamage(playerRange.min, playerRange.max, random);
-    final critChance = equippedEnchantmentCritChancePercent(db, save);
-    if (critChance > 0 && random() * 100 < critChance) {
-      playerCrit = true;
-      playerHit = math.max(1, (playerHit * criticalStrikeDamageMultiplier()).floor());
+  if (!lockpickCombat) {
+    if (fishingMode) {
+      final fishingRange = fishingCombatDamageRange(db, save);
+      playerHit = rollDamage(fishingRange.min, fishingRange.max, random);
+      if (bossInkActive) playerHit = math.max(1, (playerHit / 2).floor());
+      playerHit = applySleepIncoming(playerHit, asleep);
+    } else {
+      final playerRange = playerDamageRange(db, save);
+      playerHit = rollDamage(playerRange.min, playerRange.max, random);
+      final critChance = equippedEnchantmentCritChancePercent(db, save);
+      if (critChance > 0 && random() * 100 < critChance) {
+        playerCrit = true;
+        playerHit = math.max(1, (playerHit * criticalStrikeDamageMultiplier()).floor());
+      }
+      if (bossInkActive) playerHit = math.max(1, (playerHit / 2).floor());
+      playerHit = applySleepIncoming(playerHit, asleep);
     }
-    if (bossInkActive) playerHit = math.max(1, (playerHit / 2).floor());
-    playerHit = applySleepIncoming(playerHit, asleep);
   }
 
   var nextEnemyHp = math.max(0, enemyHp - playerHit);
   final weaponId = save.equipment.slots[weaponToolSlotId]?.itemId;
 
-  if (!fishingMode &&
+  if (!lockpickCombat &&
+      !fishingMode &&
       nextEnemyHp > 0 &&
       isNotBlank(weaponId) &&
       itemHasCapability(db, weaponId!, 'staff_sparks')) {
@@ -251,7 +255,7 @@ CombatRoundResult resolveCombatRound(
     nextEnemyHp = math.max(0, nextEnemyHp - staffHit);
   }
 
-  if (!fishingMode && nextEnemyHp > 0) {
+  if (!lockpickCombat && !fishingMode && nextEnemyHp > 0) {
     final offhandRange = playerOffhandDamageRange(db, save);
     if (offhandRange != null) {
       offhandHit = applySleepIncoming(
@@ -263,12 +267,13 @@ CombatRoundResult resolveCombatRound(
     }
   }
 
-  if (nextEnemyHp > 0) {
+  if (!lockpickCombat && nextEnemyHp > 0) {
     nextEnemyHp = applyPotionEnemyRoundDamage(nextEnemyHp, enemyMaxHp, save.activePotionEffect);
   }
 
   var skipNextEnemyAttack = false;
-  if (nextEnemyHp > 0 &&
+  if (!lockpickCombat &&
+      nextEnemyHp > 0 &&
       isNotBlank(weaponId) &&
       itemHasCapability(db, weaponId!, 'staff_binding')) {
     skipNextEnemyAttack = random() < 0.5;
@@ -364,6 +369,7 @@ CombatRoundResult resolveCombatRound(
   final thornsPercent = equippedEnchantmentThornsPercent(db, save);
   num thornsHit = thornsPercent > 0 ? (enemyHit * thornsPercent / 100).round() : 0;
   thornsHit = applySleepIncoming(thornsHit, asleep);
+  if (lockpickCombat) thornsHit = 0;
   if (thornsHit > 0) {
     nextEnemyHp = math.max(0, nextEnemyHp - thornsHit);
   }

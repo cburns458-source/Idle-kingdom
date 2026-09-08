@@ -297,18 +297,7 @@ QuestCompletion completeQuest(
   var goldGained = 0.0;
   num pendingSkillXp = 0;
   final bribed = hasQuestFlag(save, questId, 'choice:bribe');
-  final xpGrants = parsed.rewardXp.isNotEmpty
-      ? parsed.rewardXp
-      : (quest['Reward XP Skill ID'] is String &&
-            (quest['Reward XP Skill ID'] as String).isNotEmpty &&
-            quest['Reward XP Amount'] is num)
-      ? <QuestCounterTarget>[
-          QuestCounterTarget(
-            targetId: quest['Reward XP Skill ID']! as String,
-            quantity: quest['Reward XP Amount']! as num,
-          ),
-        ]
-      : const <QuestCounterTarget>[];
+  final xpGrants = _questXpGrants(quest, parsed);
   if (bribed && parsed.branchSkillXp > 0) {
     pendingSkillXp = parsed.branchSkillXp;
     rewards.add('Choose ${jsLocaleNumber(pendingSkillXp)} XP in a non-combat skill');
@@ -571,6 +560,83 @@ String questStatusLabel(String status) {
   if (status == 'completed') return 'Completed';
   if (status == 'active') return 'Active';
   return 'Not started';
+}
+
+List<QuestCounterTarget> _questXpGrants(QuestRow quest, StructuredQuestObjectives parsed) {
+  if (parsed.rewardXp.isNotEmpty) return parsed.rewardXp;
+  if (quest['Reward XP Skill ID'] is String &&
+      (quest['Reward XP Skill ID'] as String).isNotEmpty &&
+      quest['Reward XP Amount'] is num) {
+    return <QuestCounterTarget>[
+      QuestCounterTarget(
+        targetId: quest['Reward XP Skill ID']! as String,
+        quantity: quest['Reward XP Amount']! as num,
+      ),
+    ];
+  }
+  return const <QuestCounterTarget>[];
+}
+
+/// Payout lines shown on turn-in, reconstructed for a completed journal.
+List<String> questCompletionRewardLabels(GameDatabase db, QuestRow quest, [PlayerSave? save]) {
+  final questId = jsString(quest['Quest ID']);
+  final parsed = parseStructuredObjectives(quest);
+  final rewards = <String>[];
+  final bribed = save != null && hasQuestFlag(save, questId, 'choice:bribe');
+  if (bribed && parsed.branchSkillXp > 0) {
+    rewards.add('Choose ${jsLocaleNumber(parsed.branchSkillXp)} XP in a non-combat skill');
+  } else {
+    for (final grant in _questXpGrants(quest, parsed)) {
+      if (grant.quantity <= 0) continue;
+      rewards.add('${jsLocaleNumber(grant.quantity)} ${_skillName(db, grant.targetId)} XP');
+    }
+  }
+
+  if (parsed.rewardGold > 0) {
+    rewards.add('${jsLocaleNumber(parsed.rewardGold)} gold');
+  }
+
+  final rewardItemId = quest['Reward Item ID'];
+  final rewardQty = quest['Reward Item Quantity'];
+  if (rewardItemId is String && rewardItemId.isNotEmpty && rewardQty is num && rewardQty > 0) {
+    final itemName = db.items
+        .firstWhereOrNull((item) => item.raw['Item ID'] == rewardItemId)
+        ?.raw['Display Name'];
+    rewards.add('${jsNumberToString(rewardQty)}× ${itemName is String ? itemName : 'item'}');
+  }
+
+  for (final locationId in parsed.unlockLocationIds) {
+    final locationName = db.locations
+        .firstWhereOrNull((location) => location.raw['Location ID'] == locationId)
+        ?.raw['Display Name'];
+    rewards.add('Unlocked ${locationName is String ? locationName : locationId}');
+  }
+
+  for (final recipeId in parsed.rewardRecipeIds) {
+    final recipeName = db.recipes
+        .firstWhereOrNull((recipe) => recipe.raw['Recipe ID'] == recipeId)
+        ?.raw['Display Name'];
+    rewards.add('Learned ${recipeName is String ? recipeName : recipeId}');
+  }
+
+  for (final npcId in parsed.rewardProjectNpcIds) {
+    final npcName = db.npcs
+        .firstWhereOrNull((row) => row.raw['NPC ID'] == npcId)
+        ?.raw['Display Name'];
+    rewards.add('Project knowledge from ${npcName is String ? npcName : npcId}');
+  }
+
+  for (final cosmeticId in parsed.rewardCosmeticIds) {
+    final cosmetic = cosmeticById(db, cosmeticId);
+    final itemId = cosmetic?.raw['Item ID'];
+    final itemName = itemId is String
+        ? db.items.firstWhereOrNull((item) => item.raw['Item ID'] == itemId)?.raw['Display Name']
+        : null;
+    rewards.add(itemName is String ? itemName : cosmeticId);
+  }
+
+  rewards.addAll(facilityUnlockRewardLabels(db, questId));
+  return rewards;
 }
 
 /// Facilities gated by `Quest Complete` on [questId], listed when that quest finishes.

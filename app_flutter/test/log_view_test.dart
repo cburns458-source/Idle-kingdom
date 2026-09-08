@@ -170,6 +170,33 @@ void main() {
     expect(find.text('Prepare food for the feast'), findsNothing);
   });
 
+  testWidgets('completed quests list the turn-in rewards after the steps', (tester) async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(
+        quests: const <QuestProgress>[
+          QuestProgress(questId: 'QST-0001', status: 'completed', progress: 10),
+        ],
+      ),
+    );
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller);
+    await openLog(tester);
+
+    await tester.tap(find.text('Quests'));
+    await tester.pump();
+    expect(find.text('Rewards'), findsNothing);
+    expect(find.text('10,000 Cooking XP'), findsNothing);
+
+    await tester.tap(find.text('The Grand Feast'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text('Hear what the King needs'), findsOne);
+    expect(find.text('Rewards'), findsOne);
+    expect(find.text('10,000 Cooking XP'), findsOne);
+    expect(find.textContaining('Golden Spud'), findsOne);
+  });
+
   testWidgets('the Log no longer carries a recipe book page', (tester) async {
     final controller = buildController(database, seed: startedCharacter(database));
     addTearDown(controller.dispose);

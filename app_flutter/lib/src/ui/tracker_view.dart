@@ -163,6 +163,9 @@ class _TrackerViewState extends State<TrackerView> {
                     return _XpRow(
                       entry: entry,
                       title: _xpTitle(entry.skillId),
+                      iconPath: entry.skillId == totalXpTrackerId
+                          ? null
+                          : skillIconPath(_skillById(entry.skillId)),
                       nowMs: nowMs,
                       onReset: () =>
                           controller.commit(resetXpTracker(controller.save, entry.skillId)),
@@ -176,11 +179,29 @@ class _TrackerViewState extends State<TrackerView> {
 
   String _xpTitle(String skillId) {
     if (skillId == totalXpTrackerId) return 'Total XP';
-    return _firstString(
-          controller.db.skills.where((row) => row.skillId == skillId).map((row) => row.displayName),
-        ) ??
-        skillId;
+    return _skillById(skillId)?.displayName ?? skillId;
   }
+
+  SkillRow? _skillById(String skillId) {
+    return _firstWhere(controller.db.skills, (row) => row.skillId == skillId);
+  }
+}
+
+T? _firstWhere<T>(Iterable<T> values, bool Function(T value) test) {
+  for (final value in values) {
+    if (test(value)) return value;
+  }
+  return null;
+}
+
+String? _timerSkillId(String sourceId) {
+  final kind = sourceId.split(':').first;
+  return switch (kind) {
+    'botany' => 'SKL-0014',
+    'hunting_trap' => 'SKL-0005',
+    'fishing_trap' => 'SKL-0003',
+    _ => null,
+  };
 }
 
 class _LootCard extends StatelessWidget {
@@ -194,6 +215,9 @@ class _LootCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final itemsById = controller.indexes.itemsById;
     final itemIds = entry.items.keys.toList()..sort();
+    final goldId = currencyItemId(controller.db);
+    final goldItem = itemsById[goldId];
+    final hasGold = entry.gold > 0;
     return GamePanel(
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
       child: Column(
@@ -222,7 +246,7 @@ class _LootCard extends StatelessWidget {
               ),
             ],
           ),
-          if (itemIds.isEmpty) ...[
+          if (itemIds.isEmpty && !hasGold) ...[
             const SizedBox(height: 8),
             const MutedText('No item drops yet.'),
           ] else ...[
@@ -231,6 +255,11 @@ class _LootCard extends StatelessWidget {
               spacing: 8,
               runSpacing: 8,
               children: [
+                if (hasGold)
+                  _DropChip(
+                    item: goldItem,
+                    label: '${goldItem?.displayName ?? 'Gold'} ×${formatThousands(entry.gold)}',
+                  ),
                 for (final itemId in itemIds)
                   _DropChip(
                     item: itemsById[itemId],
@@ -249,7 +278,14 @@ class _LootCard extends StatelessWidget {
     if (entry.kind == 'enemy') {
       return GameImage(enemyAssetPath(entry.sourceId), width: 36, height: 36);
     }
-    return const SizedBox(width: 36, height: 36);
+    if (entry.kind == 'timer') {
+      final skillId = _timerSkillId(entry.sourceId);
+      final skill = skillId == null
+          ? null
+          : _firstWhere(controller.db.skills, (row) => row.skillId == skillId);
+      return GameImage(skillIconPath(skill), width: 36, height: 36);
+    }
+    return GameImage(actionAssetPath(entry.sourceId), width: 36, height: 36);
   }
 
   String _lootTitle() {
@@ -299,8 +335,7 @@ class _LootCard extends StatelessWidget {
         entry.completions == 1 ? '1 collect' : '${formatThousands(entry.completions)} collects',
       _ => entry.completions == 1 ? '1 action' : '${formatThousands(entry.completions)} actions',
     };
-    if (entry.gold <= 0) return countLabel;
-    return '$countLabel · ${formatThousands(entry.gold)} gold';
+    return countLabel;
   }
 }
 
@@ -327,12 +362,14 @@ class _XpRow extends StatelessWidget {
   const _XpRow({
     required this.entry,
     required this.title,
+    required this.iconPath,
     required this.nowMs,
     required this.onReset,
   });
 
   final XpTrackerEntry entry;
   final String title;
+  final String? iconPath;
   final num nowMs;
   final VoidCallback onReset;
 
@@ -342,6 +379,10 @@ class _XpRow extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
       child: Row(
         children: [
+          if (iconPath != null) ...[
+            GameImage(iconPath!, width: 30, height: 30),
+            const SizedBox(width: 10),
+          ],
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

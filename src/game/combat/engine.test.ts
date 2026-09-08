@@ -10,6 +10,7 @@ import {
   isDeathPaused,
   resolveCombatRound,
 } from './engine'
+import { LOCKPICK_ITEM_ID, WEAPON_TOOL_SLOT_ID } from '../equipment/loadout'
 import { tryConsumeFoodAfterVictory } from './food'
 import { applyMitigation, playerDamageRange, staffSparksDamageRange } from './stats'
 
@@ -313,6 +314,34 @@ describe('combat engine', () => {
     expect(second.enemyHit).toBeNull()
     expect(second.playerHp).toBe(save.currentHp)
     expect(second.outcome).toBe('ongoing')
+  })
+
+  it('deals no enemy damage when lockpicks are in the weapon slot', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const base = createNewSave(launch)
+    const save = {
+      ...base,
+      equipment: {
+        ...base.equipment,
+        slots: {
+          ...base.equipment.slots,
+          [WEAPON_TOOL_SLOT_ID]: { itemId: LOCKPICK_ITEM_ID, quantity: 5 },
+        },
+      },
+    }
+    const enemy = launch.Enemies.find((row) => row['Enemy ID'] === 'ENM-0001')!
+    const action = launch.Actions.find((row) => row['Action ID'] === 'ACN-0001')!
+    const started = beginCombatSave(launch, save, action, enemy)
+    const maxHp = Number(enemy['Maximum HP'] ?? 0)
+    const round = resolveCombatRound(launch, started, enemy, maxHp, () => 0.999)
+    expect(round.playerHit).toBe(0)
+    expect(round.playerCrit).toBe(false)
+    expect(round.offhandHit).toBeNull()
+    expect(round.staffHit).toBeNull()
+    expect(round.thornsHit).toBe(0)
+    expect(round.enemyHp).toBe(maxHp)
+    expect(round.enemyHit).toBeGreaterThan(0)
+    expect(round.outcome).toBe('ongoing')
   })
 
   it('starts a death pause with no rewards on defeat', () => {
