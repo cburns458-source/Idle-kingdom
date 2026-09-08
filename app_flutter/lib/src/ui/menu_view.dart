@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:ik_content/ik_content.dart';
 import 'package:ik_net/ik_net.dart';
 import 'package:ik_rules/ik_rules.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../session/game_controller.dart';
 import '../session/multiplayer_controller.dart';
@@ -14,6 +15,7 @@ import 'catalog_popup.dart';
 import 'page_header.dart';
 import 'player_sprite.dart';
 
+const String _discordInviteUrl = 'https://discord.gg/mMU72xpeU';
 const String _playerArtHeading = 'Player sprite';
 const String _playerArtBlurb =
     'Use a PNG on this device only. Other players still see the default adventurer. '
@@ -139,6 +141,25 @@ class _MenuViewState extends State<MenuView> {
           if (_tab == _SettingsTab.account)
             AccountPanel(controller: controller, multiplayer: widget.multiplayer, embedded: true)
           else ...[
+            GamePanel(
+              framed: true,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Text('Discord', style: TextStyle(fontWeight: FontWeight.w400)),
+                  const MutedText('Chat with other players on the Restoria server.'),
+                  const SizedBox(height: 10),
+                  GameButton(
+                    label: 'Join Discord',
+                    onPressed: () => launchUrl(
+                      Uri.parse(_discordInviteUrl),
+                      mode: LaunchMode.externalApplication,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 10),
             _SettingsFold(
               heading: 'UI',
               children: [

@@ -271,6 +271,42 @@ void main() {
     expect(find.text('0'), findsWidgets);
   });
 
+  testWidgets('lockpick plus off-hand dagger shows 0 and the dagger hit', (tester) async {
+    final clock = TestClock();
+    final seed = startedCharacter(database).copyWith(currentLocationId: 'LOC-0001');
+    final controller = buildController(
+      database,
+      seed: seed.copyWith(
+        equipment: seed.equipment.copyWith(
+          slots: <String, EquippedStack?>{
+            ...seed.equipment.slots,
+            weaponToolSlotId: const EquippedStack(itemId: lockpickItemId, quantity: 5),
+            offhandSlotId: const EquippedStack(itemId: 'ITEM-0125', quantity: 1),
+          },
+        ),
+      ),
+      clock: clock,
+    );
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller);
+
+    await tapVisible(
+      tester,
+      find.descendant(of: dockRow('Tend the pasture'), matching: find.bySemanticsLabel('Start')),
+    );
+
+    clock.advance(configNumber(database.launch, 'combat_round_duration', 4) * 1000);
+    controller.tick();
+    await tester.pump();
+
+    expect(controller.lastRound, isNotNull);
+    expect(controller.lastRound!.playerHit, 0);
+    expect(controller.lastRound!.offhandHit, greaterThan(0));
+    expect(controller.showLastRoundFloaters, isTrue);
+    expect(find.text('0'), findsWidgets);
+    expect(find.text('${controller.lastRound!.offhandHit!.round()}'), findsWidgets);
+  });
+
   testWidgets('a finished craft pops the item over the workstation', (tester) async {
     final clock = TestClock();
     final controller = buildController(

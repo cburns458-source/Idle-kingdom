@@ -10,7 +10,7 @@ import {
   isDeathPaused,
   resolveCombatRound,
 } from './engine'
-import { LOCKPICK_ITEM_ID, WEAPON_TOOL_SLOT_ID } from '../equipment/loadout'
+import { LOCKPICK_ITEM_ID, OFFHAND_SLOT_ID, WEAPON_TOOL_SLOT_ID } from '../equipment/loadout'
 import { tryConsumeFoodAfterVictory } from './food'
 import { applyMitigation, playerDamageRange, staffSparksDamageRange } from './stats'
 
@@ -342,6 +342,31 @@ describe('combat engine', () => {
     expect(round.enemyHp).toBe(maxHp)
     expect(round.enemyHit).toBeGreaterThan(0)
     expect(round.outcome).toBe('ongoing')
+  })
+
+  it('lets an off-hand dagger hit when lockpicks deal no main-hand damage', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const base = createNewSave(launch)
+    const save = {
+      ...base,
+      equipment: {
+        ...base.equipment,
+        slots: {
+          ...base.equipment.slots,
+          [WEAPON_TOOL_SLOT_ID]: { itemId: LOCKPICK_ITEM_ID, quantity: 5 },
+          [OFFHAND_SLOT_ID]: { itemId: 'ITEM-0125', quantity: 1 },
+        },
+      },
+    }
+    const enemy = launch.Enemies.find((row) => row['Enemy ID'] === 'ENM-0001')!
+    const action = launch.Actions.find((row) => row['Action ID'] === 'ACN-0001')!
+    const started = beginCombatSave(launch, save, action, enemy)
+    const maxHp = Number(enemy['Maximum HP'] ?? 0)
+    const round = resolveCombatRound(launch, started, enemy, maxHp, () => 0)
+    expect(round.playerHit).toBe(0)
+    expect(round.offhandHit).toBeGreaterThan(0)
+    expect(round.enemyHp).toBe(maxHp - (round.offhandHit ?? 0))
+    expect(round.staffHit).toBeNull()
   })
 
   it('starts a death pause with no rewards on defeat', () => {

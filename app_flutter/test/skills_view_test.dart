@@ -244,4 +244,42 @@ void main() {
     );
     expect(tooltip.message!.split('\n'), hasLength(2));
   });
+
+  testWidgets('a capped skill shows its level, not mastered', (tester) async {
+    final last = database.launch.xpCurve.last;
+    final seed = startedCharacter(database);
+    final first = seed.skills.first;
+    final name = database.launch.skills
+        .firstWhere((row) => row.skillId == first.skillId)
+        .displayName;
+    final capXp = last.totalXpAtLevel + (last.xpToNextLevel ?? 0);
+    final controller = buildController(
+      database,
+      seed: seed.copyWith(
+        skills: <SkillProgress>[
+          first.copyWith(level: last.level, xp: capXp),
+          ...seed.skills.skip(1),
+        ],
+      ),
+    );
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller);
+
+    await tester.tap(find.text('Character'));
+    await tester.pump();
+    await tester.tap(find.widgetWithText(GameButton, 'Skills'));
+    await tester.pump();
+
+    expect(find.text('Mastered'), findsNothing);
+    expect(find.textContaining('mastered'), findsNothing);
+    expect(find.text('Max'), findsNothing);
+    expect(find.text('Lv ${last.level}'), findsOne);
+
+    final tooltip = tester.widget<Tooltip>(
+      find.ancestor(of: find.text(name), matching: find.byType(Tooltip)).first,
+    );
+    expect(tooltip.message, isNot(contains('mastered')));
+    expect(tooltip.message, isNot(contains('Mastered')));
+    expect(tooltip.message, contains('${formatThousands(capXp)} total xp'));
+  });
 }

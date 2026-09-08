@@ -593,8 +593,7 @@ void main() {
       find.descendant(of: find.byType(MenuView), matching: find.text('Character')),
       findsNothing,
     );
-    await tester.tap(_settingsSwitch('Map travel animation'));
-    await tester.pump();
+    await tapVisible(tester, _settingsSwitch('Map travel animation'));
     expect(controller.mapTravelAnimation, isTrue);
   });
 
@@ -626,8 +625,7 @@ void main() {
     await tester.pump();
     expect(find.text('Battery saver'), findsOne);
     expect(find.text('Skip animations and refresh the screen less often.'), findsOne);
-    await tester.tap(_settingsSwitch('Battery saver'));
-    await tester.pump();
+    await tapVisible(tester, _settingsSwitch('Battery saver'));
     expect(controller.batterySaver, isTrue);
     expect(controller.reduceMotion, isTrue);
 
@@ -642,12 +640,10 @@ void main() {
     expect(find.text('Skip animations and refresh the screen less often.'), findsOne);
     expect(find.byKey(const Key('battery-saver-plaque')), findsNothing);
 
-    await tester.tap(_settingsSwitch('Map travel animation'));
-    await tester.pump();
+    await tapVisible(tester, _settingsSwitch('Map travel animation'));
     expect(controller.mapTravelAnimation, isFalse);
 
-    await tester.tap(_settingsSwitch('Battery saver'));
-    await tester.pump();
+    await tapVisible(tester, _settingsSwitch('Battery saver'));
     expect(controller.batterySaver, isFalse);
 
     await tester.tap(find.widgetWithText(GameButton, 'Close'));

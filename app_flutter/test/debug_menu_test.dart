@@ -72,6 +72,7 @@ void main() {
     await pumpShell(tester, controller, size: const Size(900, 2400));
 
     await openChinScreen(tester, 'Settings');
+    expect(find.text('Join Discord'), findsOne);
     await tester.tap(find.text('UI'));
     await tester.pump();
     expect(find.text('Guild tag on HUD'), findsOne);

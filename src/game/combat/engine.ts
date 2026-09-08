@@ -204,7 +204,8 @@ export function resolveCombatRound(
     nextEnemyHp = Math.max(0, nextEnemyHp - staffHit)
   }
 
-  if (!lockpickCombat && !fishingMode && nextEnemyHp > 0) {
+  // Lockpicks deal no main-hand damage; an off-hand dagger can still swing.
+  if (!fishingMode && nextEnemyHp > 0) {
     const offhandRange = playerOffhandDamageRange(db, save)
     if (offhandRange) {
       offhandHit = applySleepIncoming(rollDamage(offhandRange.min, offhandRange.max, random), asleep)

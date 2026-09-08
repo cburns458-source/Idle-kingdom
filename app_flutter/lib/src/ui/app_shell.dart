@@ -765,16 +765,12 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
                 );
               },
             ),
-            MediaQuery(
-              data: MediaQuery.of(context)
-                  .copyWith(textScaler: playableHudTextScaler(MediaQuery.textScalerOf(context))),
-              child: RepaintBoundary(
-                child: TopHud(
-                  controller: controller,
-                  multiplayer: multiplayer,
-                  onOpenWardrobe: _openWardrobe,
-                  batterySaver: controller.batterySaver,
-                ),
+            RepaintBoundary(
+              child: TopHud(
+                controller: controller,
+                multiplayer: multiplayer,
+                onOpenWardrobe: _openWardrobe,
+                batterySaver: controller.batterySaver,
               ),
             ),
             Expanded(
