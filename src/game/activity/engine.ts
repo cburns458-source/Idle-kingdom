@@ -412,7 +412,8 @@ export function completeGatheringAction(
       return awardXpOnly(next, {
         damageTaken: damage,
         foodHealed,
-        showZeroDamageHit: requiresLockpick,
+        // Real fail damage uses the floater amount; zero-hit is for lockpick success.
+        showZeroDamageHit: false,
         thieveryFailed: true,
         lockpickBroke,
       })

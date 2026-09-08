@@ -399,7 +399,8 @@ GatheringCompletion completeGatheringAction(
         next,
         damageTaken: appliedDamage,
         foodHealed: foodHealed,
-        showZeroDamageHit: requiresLockpick,
+        // Real fail damage uses the floater amount; zero-hit is for lockpick success.
+        showZeroDamageHit: false,
         thieveryFailed: true,
         lockpickBroke: lockpickBroke,
       );

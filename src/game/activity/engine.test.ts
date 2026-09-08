@@ -171,9 +171,73 @@ describe('primary activity engine', () => {
     expect(completed.result.thieveryFailed).toBe(true)
     expect(completed.result.xpGained).toBeGreaterThan(0)
     expect(completed.result.loot).toEqual([])
+    expect(completed.result.showZeroDamageHit).toBe(false)
+    expect(completed.result.damageTaken).toBeGreaterThan(0)
     expect(completed.save.skills.find((row) => row.skillId === 'SKL-0015')?.xp ?? 0).toBeGreaterThan(
       beforeXp,
     )
+  })
+
+  it('shows a zero-damage floater on lockpick success and grants full XP with no loot when the pick breaks', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const action = launch.Actions.find((row) => row['Action ID'] === 'ACN-0187')!
+    expect(action.Notes).toMatch(/RequiresLockpick/i)
+    expect(action.Notes).toMatch(/FailChance:45/i)
+
+    const saveWithPicks = () => {
+      const base = createNewSave(launch)
+      return {
+        ...base,
+        currentHp: base.maxHp,
+        skills: base.skills.map((row) =>
+          row.skillId === 'SKL-0015' ? { ...row, level: 1, xp: 0 } : row,
+        ),
+        equipment: {
+          ...base.equipment,
+          slots: {
+            ...base.equipment.slots,
+            'SLOT-0001': { itemId: 'ITEM-0351', quantity: 3 },
+          },
+        },
+      }
+    }
+
+    // Pass fail check (50 >= 45), then survive break roll (60 >= 50).
+    const intactRolls = [0.5, 0.6]
+    let intactI = 0
+    const intact = completeGatheringAction(
+      launch,
+      saveWithPicks(),
+      action,
+      () => intactRolls[intactI++] ?? 0.99,
+    )
+    expect(intact.result.thieveryFailed).toBe(false)
+    expect(intact.result.lockpickBroke).toBe(false)
+    expect(intact.result.showZeroDamageHit).toBe(true)
+    expect(intact.result.damageTaken).toBe(0)
+    expect(intact.result.xpGained).toBeGreaterThan(0)
+    expect(intact.save.equipment.slots['SLOT-0001']?.quantity).toBe(3)
+
+    // Pass fail check, then always break the pick (0 < 50).
+    const beforeXp = saveWithPicks().skills.find((row) => row.skillId === 'SKL-0015')?.xp ?? 0
+    const brokeRolls = [0.5, 0]
+    let brokeI = 0
+    const broke = completeGatheringAction(
+      launch,
+      saveWithPicks(),
+      action,
+      () => brokeRolls[brokeI++] ?? 0,
+    )
+    expect(broke.result.thieveryFailed).toBe(false)
+    expect(broke.result.lockpickBroke).toBe(true)
+    expect(broke.result.showZeroDamageHit).toBe(true)
+    expect(broke.result.damageTaken).toBe(0)
+    expect(broke.result.loot).toEqual([])
+    expect(broke.result.xpGained).toBeGreaterThan(0)
+    expect(broke.save.skills.find((row) => row.skillId === 'SKL-0015')?.xp ?? 0).toBeGreaterThan(
+      beforeXp,
+    )
+    expect(broke.save.equipment.slots['SLOT-0001']?.quantity).toBe(2)
   })
 
   it('doubles gathering duration and halves XP below proficiency', () => {
