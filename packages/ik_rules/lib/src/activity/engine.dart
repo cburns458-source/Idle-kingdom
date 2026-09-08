@@ -27,8 +27,6 @@ import 'rewards.dart';
 import 'types.dart';
 import 'xp.dart';
 
-const String _lockpickItemId = 'ITEM-0351';
-
 const String comingSoonReason = 'Coming soon.';
 
 ActivityRow? getActivity(GameDatabase db, String activityId) {
@@ -121,7 +119,7 @@ ActivityStartResult validateActivityStart(GameDatabase db, PlayerSave save, Stri
     final notesText = notes is String ? notes : '';
     if (RegExp(r'RequiresLockpick', caseSensitive: false).hasMatch(notesText)) {
       final tool = slotStack(save, weaponToolSlotId);
-      if (tool == null || tool.quantity <= 0 || tool.itemId != _lockpickItemId) {
+      if (tool == null || tool.quantity <= 0 || tool.itemId != lockpickItemId) {
         return const ActivityStartResult.failed('Equip lockpicks in the Weapon/Tool slot first.');
       }
     }
@@ -298,7 +296,7 @@ GatheringCompletion completeGatheringAction(
 
   if (requiresLockpick) {
     final tool = slotStack(save, weaponToolSlotId);
-    if (tool == null || tool.quantity <= 0 || tool.itemId != _lockpickItemId) {
+    if (tool == null || tool.quantity <= 0 || tool.itemId != lockpickItemId) {
       return GatheringCompletion(
         save: withoutHeldAction(save, save.currentActivityId),
         result: emptyResult(),
@@ -519,7 +517,7 @@ GatheringCompletion completeGatheringAction(
 
 PlayerSave _consumeLockpick(PlayerSave save) {
   final tool = slotStack(save, weaponToolSlotId);
-  if (tool == null || tool.itemId != _lockpickItemId || tool.quantity <= 0) return save;
+  if (tool == null || tool.itemId != lockpickItemId || tool.quantity <= 0) return save;
   final nextQty = tool.quantity - 1;
   return save.copyWith(
     equipment: EquipmentLoadout(

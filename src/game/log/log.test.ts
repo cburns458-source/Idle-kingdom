@@ -162,7 +162,27 @@ describe('quest log', () => {
     expect(row.statusLabel).toBe('Completed')
     expect(row.completed).toBe(true)
     expect(row.steps.length).toBeGreaterThan(0)
-    expect(row.steps.every((step) => step.state === 'done')).toBe(true)
+    expect(row.steps.some((step) => step.state === 'done')).toBe(true)
+    expect(row.steps.find((step) => step.key === 'header:rewards')).toEqual({
+      key: 'header:rewards',
+      label: 'Rewards',
+      state: 'header',
+    })
+    expect(row.steps.some((step) => step.label === '10,000 Cooking XP')).toBe(true)
+    expect(row.steps.some((step) => /Golden Spud/i.test(step.label))).toBe(true)
+    expect(row.steps.filter((step) => step.state !== 'header').every((step) => step.state === 'done')).toBe(
+      true,
+    )
+  })
+
+  it('keeps reward lines off in-progress quests', () => {
+    const save = {
+      ...createNewSave(launch),
+      quests: [{ questId: 'QST-0001', status: 'active' as const, progress: 0, counters: {} }],
+    }
+    const row = questLog(launch, save).find((entry) => entry.questId === 'QST-0001')!
+    expect(row.steps.some((step) => step.key === 'header:rewards')).toBe(false)
+    expect(row.steps.some((step) => step.label === 'Rewards')).toBe(false)
   })
 })
 

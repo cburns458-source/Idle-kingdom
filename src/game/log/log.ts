@@ -8,7 +8,12 @@ import type { GameDatabase } from '../data/types'
 import type { QuestRow } from '../quests/quests'
 import { hideFromQuestLog } from '../quests/miniquests'
 import { questLegacyJournalSteps } from '../quests/objectives'
-import { asQuestRows, getQuestProgress, questStatusLabel } from '../quests/quests'
+import {
+  asQuestRows,
+  getQuestProgress,
+  questCompletionRewardLabels,
+  questStatusLabel,
+} from '../quests/quests'
 
 export { miniQuestLog } from '../quests/miniquests'
 export type { MiniQuestLogRow } from '../quests/miniquests'
@@ -105,6 +110,23 @@ export interface QuestLogRow {
   steps: QuestLogStep[]
 }
 
+function questRewardJournal(
+  db: GameDatabase,
+  quest: QuestRow,
+  save: PlayerSave,
+): QuestLogStep[] {
+  const rewards = questCompletionRewardLabels(db, quest, save)
+  if (rewards.length === 0) return []
+  return [
+    { key: 'header:rewards', label: 'Rewards', state: 'header' },
+    ...rewards.map((label, index) => ({
+      key: `reward:${index}`,
+      label,
+      state: 'done' as const,
+    })),
+  ]
+}
+
 export function questLog(db: GameDatabase, save: PlayerSave): QuestLogRow[] {
   return asQuestRows(db).filter((quest) => !hideFromQuestLog(quest)).map((quest) => {
     const questId = quest['Quest ID']
@@ -119,7 +141,10 @@ export function questLog(db: GameDatabase, save: PlayerSave): QuestLogRow[] {
           : questLegacyJournalSteps(db, save, questRow)
         : status === 'inactive'
           ? questRequirementJournal(db, save, questRow)
-          : questCompletedJournal(db, questRow)
+          : [
+              ...questCompletedJournal(db, questRow),
+              ...questRewardJournal(db, questRow, save),
+            ]
 
     return {
       questId,

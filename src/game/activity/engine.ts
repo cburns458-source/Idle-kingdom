@@ -28,16 +28,13 @@ import type {
 import { addLifetimeStat, recordGatheredDrops } from '../achievements/progress'
 import { applyQuestActionProgress } from '../quests/progress'
 import { applyQuestAutoCompleteOnAction } from '../quests/quests'
-import { WEAPON_TOOL_SLOT_ID } from '../save/types'
+import { LOCKPICK_ITEM_ID, WEAPON_TOOL_SLOT_ID, slotStack } from '../equipment/loadout'
 import { creditLootTracker, creditXpAwards, lootSourceForAction } from '../trackers/trackers'
-import { slotStack } from '../equipment/loadout'
 import { GATHERING_ACTIONS_STAT } from '../log/milestones'
 import { bonusSkillXpForAction, bowHuntingCombatXpBonus } from './bonusXp'
 import { summarizeXpReward } from './rewardSummary'
 import { applyXp, getSkillProgress } from './xp'
 import { bossRespawnUntilMs, isBossEnemy, isBossRespawnReady } from '../combat/boss'
-
-const LOCKPICK_ITEM_ID = 'ITEM-0351'
 
 export const COMING_SOON_REASON = 'Coming soon.'
 

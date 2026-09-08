@@ -282,12 +282,7 @@ export function completeQuest(
   let goldGained = 0
   let pendingSkillXp = 0
   const bribed = hasQuestFlag(save, questId, 'choice:bribe')
-  const xpGrants =
-    parsed.rewardXp.length > 0
-      ? parsed.rewardXp
-      : quest['Reward XP Skill ID'] && typeof quest['Reward XP Amount'] === 'number'
-        ? [{ skillId: quest['Reward XP Skill ID'], amount: quest['Reward XP Amount'] }]
-        : []
+  const xpGrants = questXpGrants(quest, parsed)
   if (bribed && parsed.branchSkillXp > 0) {
     pendingSkillXp = parsed.branchSkillXp
     rewards.push({
@@ -298,9 +293,7 @@ export function completeQuest(
       if (grant.amount <= 0) continue
       const applied = applyXp(next, db, grant.skillId, grant.amount)
       next = applied.save
-      const skillName =
-        db.Skills.find((skill) => skill['Skill ID'] === grant.skillId)?.['Display Name'] ?? 'skill'
-      rewards.push({ label: `${grant.amount.toLocaleString()} ${skillName} XP` })
+      rewards.push({ label: `${grant.amount.toLocaleString()} ${skillDisplayName(db, grant.skillId)} XP` })
       const xpLine = summarizeXpReward(db, next, grant.skillId, grant.amount, applied.leveledUpTo)
       if (xpLine) xpRewards.push(xpLine)
     }
@@ -533,6 +526,83 @@ export function questStatusLabel(
   if (status === 'completed') return 'Completed'
   if (status === 'active') return 'Active'
   return 'Not started'
+}
+
+function questXpGrants(
+  quest: QuestRow,
+  parsed: ReturnType<typeof parseStructuredObjectives>,
+): Array<{ skillId: string; amount: number }> {
+  if (parsed.rewardXp.length > 0) return parsed.rewardXp
+  if (quest['Reward XP Skill ID'] && typeof quest['Reward XP Amount'] === 'number') {
+    return [{ skillId: quest['Reward XP Skill ID'], amount: quest['Reward XP Amount'] }]
+  }
+  return []
+}
+
+function skillDisplayName(db: GameDatabase, skillId: string): string {
+  return db.Skills.find((skill) => skill['Skill ID'] === skillId)?.['Display Name'] ?? 'skill'
+}
+
+/** Payout lines shown on turn-in, reconstructed for a completed journal. */
+export function questCompletionRewardLabels(
+  db: GameDatabase,
+  quest: QuestRow,
+  save?: PlayerSave,
+): string[] {
+  const questId = quest['Quest ID']
+  const parsed = parseStructuredObjectives(quest)
+  const rewards: string[] = []
+  const bribed = save != null && hasQuestFlag(save, questId, 'choice:bribe')
+  if (bribed && parsed.branchSkillXp > 0) {
+    rewards.push(`Choose ${parsed.branchSkillXp.toLocaleString()} XP in a non-combat skill`)
+  } else {
+    for (const grant of questXpGrants(quest, parsed)) {
+      if (grant.amount <= 0) continue
+      rewards.push(`${grant.amount.toLocaleString()} ${skillDisplayName(db, grant.skillId)} XP`)
+    }
+  }
+
+  if (parsed.rewardGold > 0) {
+    rewards.push(`${parsed.rewardGold.toLocaleString()} gold`)
+  }
+
+  const rewardItemId = quest['Reward Item ID']
+  const rewardQty = quest['Reward Item Quantity']
+  if (rewardItemId && typeof rewardQty === 'number' && rewardQty > 0) {
+    const itemName =
+      db.Items.find((item) => item['Item ID'] === rewardItemId)?.['Display Name'] ?? 'item'
+    rewards.push(`${rewardQty}× ${itemName}`)
+  }
+
+  for (const locationId of parsed.unlockLocationIds) {
+    const locName =
+      db.Locations.find((location) => location['Location ID'] === locationId)?.['Display Name'] ??
+      locationId
+    rewards.push(`Unlocked ${locName}`)
+  }
+
+  for (const recipeId of parsed.rewardRecipeIds) {
+    const name =
+      db.Recipes.find((recipe) => recipe['Recipe ID'] === recipeId)?.['Display Name'] ?? recipeId
+    rewards.push(`Learned ${name}`)
+  }
+
+  for (const rewardNpcId of parsed.rewardProjectNpcIds) {
+    const name = db.NPCs.find((row) => row['NPC ID'] === rewardNpcId)?.['Display Name'] ?? rewardNpcId
+    rewards.push(`Project knowledge from ${name}`)
+  }
+
+  for (const cosmeticId of parsed.rewardCosmeticIds) {
+    const cosmetic = cosmeticById(db, cosmeticId)
+    const itemId = cosmetic?.['Item ID']
+    const itemName = itemId
+      ? db.Items.find((item) => item['Item ID'] === itemId)?.['Display Name']
+      : undefined
+    rewards.push(itemName ?? cosmeticId)
+  }
+
+  rewards.push(...facilityUnlockRewardLabels(db, questId))
+  return rewards
 }
 
 /** Facilities gated by `Quest Complete` on [questId], listed when that quest finishes. */

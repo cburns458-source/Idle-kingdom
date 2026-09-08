@@ -21,7 +21,7 @@ import { applyBountyDefeatProgress } from '../bounties/progress'
 import { applyQuestDefeatProgress } from '../quests/progress'
 import { creditLootTracker, creditXpAwards } from '../trackers/trackers'
 import { applyRaceGoldGain } from '../races/races'
-import { itemHasCapability, WEAPON_TOOL_SLOT_ID } from '../equipment/loadout'
+import { equippedWeaponIsLockpick, itemHasCapability, WEAPON_TOOL_SLOT_ID } from '../equipment/loadout'
 import { currentHpAfterMaxChange } from '../equipment/vitals'
 import { ARCANA_SKILL_ID } from '../npcs/knowledge'
 import {
@@ -163,39 +163,48 @@ export function resolveCombatRound(
     bossInkActive = true
   }
 
-  let playerHit: number
+  let playerHit = 0
   let playerCrit = false
   let offhandHit: number | null = null
   let staffHit: number | null = null
+  const lockpickCombat = equippedWeaponIsLockpick(save)
 
-  if (fishingMode) {
-    const fishingRange = fishingCombatDamageRange(db, save)
-    playerHit = rollDamage(fishingRange.min, fishingRange.max, random)
-    if (bossInkActive) playerHit = Math.max(1, Math.floor(playerHit / 2))
-    playerHit = applySleepIncoming(playerHit, asleep)
-  } else {
-    const playerRange = playerDamageRange(db, save)
-    playerHit = rollDamage(playerRange.min, playerRange.max, random)
-    const critChance = equippedEnchantmentCritChancePercent(db, save)
-    if (critChance > 0 && random() * 100 < critChance) {
-      playerCrit = true
-      playerHit = Math.max(1, Math.floor(playerHit * criticalStrikeDamageMultiplier()))
+  if (!lockpickCombat) {
+    if (fishingMode) {
+      const fishingRange = fishingCombatDamageRange(db, save)
+      playerHit = rollDamage(fishingRange.min, fishingRange.max, random)
+      if (bossInkActive) playerHit = Math.max(1, Math.floor(playerHit / 2))
+      playerHit = applySleepIncoming(playerHit, asleep)
+    } else {
+      const playerRange = playerDamageRange(db, save)
+      playerHit = rollDamage(playerRange.min, playerRange.max, random)
+      const critChance = equippedEnchantmentCritChancePercent(db, save)
+      if (critChance > 0 && random() * 100 < critChance) {
+        playerCrit = true
+        playerHit = Math.max(1, Math.floor(playerHit * criticalStrikeDamageMultiplier()))
+      }
+      if (bossInkActive) playerHit = Math.max(1, Math.floor(playerHit / 2))
+      playerHit = applySleepIncoming(playerHit, asleep)
     }
-    if (bossInkActive) playerHit = Math.max(1, Math.floor(playerHit / 2))
-    playerHit = applySleepIncoming(playerHit, asleep)
   }
 
   let nextEnemyHp = Math.max(0, enemyHp - playerHit)
 
   const weaponId = save.equipment.slots[WEAPON_TOOL_SLOT_ID]?.itemId ?? null
 
-  if (!fishingMode && nextEnemyHp > 0 && weaponId && itemHasCapability(db, weaponId, 'staff_sparks')) {
+  if (
+    !lockpickCombat &&
+    !fishingMode &&
+    nextEnemyHp > 0 &&
+    weaponId &&
+    itemHasCapability(db, weaponId, 'staff_sparks')
+  ) {
     const sparks = staffSparksDamageRange(getSkillProgress(save, ARCANA_SKILL_ID).level)
     staffHit = applySleepIncoming(rollDamage(sparks.min, sparks.max, random), asleep)
     nextEnemyHp = Math.max(0, nextEnemyHp - staffHit)
   }
 
-  if (!fishingMode && nextEnemyHp > 0) {
+  if (!lockpickCombat && !fishingMode && nextEnemyHp > 0) {
     const offhandRange = playerOffhandDamageRange(db, save)
     if (offhandRange) {
       offhandHit = applySleepIncoming(rollDamage(offhandRange.min, offhandRange.max, random), asleep)
@@ -204,7 +213,7 @@ export function resolveCombatRound(
     }
   }
 
-  if (nextEnemyHp > 0) {
+  if (!lockpickCombat && nextEnemyHp > 0) {
     nextEnemyHp = applyPotionEnemyRoundDamage(
       nextEnemyHp,
       enemyMaxHp,
@@ -214,7 +223,12 @@ export function resolveCombatRound(
 
   // Binding procs on this hit: they still attack this round, then skip the next.
   let skipNextEnemyAttack = false
-  if (nextEnemyHp > 0 && weaponId && itemHasCapability(db, weaponId, 'staff_binding')) {
+  if (
+    !lockpickCombat &&
+    nextEnemyHp > 0 &&
+    weaponId &&
+    itemHasCapability(db, weaponId, 'staff_binding')
+  ) {
     skipNextEnemyAttack = random() < 0.5
   }
 
@@ -310,6 +324,7 @@ export function resolveCombatRound(
   const thornsPercent = equippedEnchantmentThornsPercent(db, save)
   let thornsHit = thornsPercent > 0 ? Math.round((enemyHit * thornsPercent) / 100) : 0
   thornsHit = applySleepIncoming(thornsHit, asleep)
+  if (lockpickCombat) thornsHit = 0
   if (thornsHit > 0) {
     nextEnemyHp = Math.max(0, nextEnemyHp - thornsHit)
   }

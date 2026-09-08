@@ -183,6 +183,16 @@ enum QuestLogSort {
   alphabetical,
 }
 
+List<QuestJournalStep> _questRewardJournal(GameDatabase db, QuestRow quest, PlayerSave save) {
+  final rewards = questCompletionRewardLabels(db, quest, save);
+  if (rewards.isEmpty) return const <QuestJournalStep>[];
+  return [
+    const QuestJournalStep(key: 'header:rewards', label: 'Rewards', state: 'header'),
+    for (var index = 0; index < rewards.length; index++)
+      QuestJournalStep(key: 'reward:$index', label: rewards[index], state: 'done'),
+  ];
+}
+
 List<QuestLogRow> questLog(GameDatabase db, PlayerSave save) {
   return asQuestRows(db).where((quest) => !hideFromQuestLog(quest)).map((quest) {
     final questId = jsString(quest['Quest ID']);
@@ -198,7 +208,7 @@ List<QuestLogRow> questLog(GameDatabase db, PlayerSave save) {
               : questLegacyJournalSteps(db, save, quest)
         : status == 'inactive'
         ? questRequirementJournal(db, save, quest)
-        : questCompletedJournal(db, quest);
+        : [...questCompletedJournal(db, quest), ..._questRewardJournal(db, quest, save)];
 
     return QuestLogRow(
       questId: questId,
