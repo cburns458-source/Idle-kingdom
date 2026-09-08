@@ -266,7 +266,7 @@ void main() {
 
     expect(controller.lastRound, isNotNull);
     expect(controller.lastRound!.playerHit, 0);
-    expect(controller.lastRound!.enemyHp, maxHp);
+    expect(controller.stagedEnemyHp, maxHp);
     expect(controller.showLastRoundFloaters, isTrue);
     expect(find.text('0'), findsWidgets);
   });

@@ -126,7 +126,7 @@ void main() {
     expect(find.text('Cow'), findsOne);
     expect(find.text('1 kill'), findsOne);
     expect(find.textContaining('kill ·'), findsNothing);
-    expect(find.textContaining('Gold Coin ×12'), findsOne);
+    expect(find.textContaining('Gold ×12'), findsOne);
     expect(find.text('No item drops yet.'), findsNothing);
   });
 
