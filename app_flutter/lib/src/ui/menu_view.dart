@@ -276,6 +276,14 @@ class _MenuViewState extends State<MenuView> {
                           onChanged: widget.multiplayer.setFilterChatProfanity,
                         ),
                         const SizedBox(height: 16),
+                        _togglePanel(
+                          title: 'Guild milestones',
+                          detail:
+                              'Show guild skill-level posts in chat and as notification bubbles.',
+                          value: widget.multiplayer.showGuildMilestones,
+                          onChanged: widget.multiplayer.setShowGuildMilestones,
+                        ),
+                        const SizedBox(height: 16),
                         _NameColorField(multiplayer: widget.multiplayer),
                         const SizedBox(height: 16),
                         const Align(

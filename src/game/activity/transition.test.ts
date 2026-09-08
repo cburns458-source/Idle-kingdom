@@ -72,7 +72,11 @@ describe('immediate activity changes (no change cooldown)', () => {
       currentLocationId: 'LOC-0009',
       deathPauseUntil: new Date(now + 30_000).toISOString(),
     }
-    expect(requestActivityStart(launch, pausedIdle, 'ACT-0012', now).ok).toBe(false)
+    const blockedStart = requestActivityStart(launch, pausedIdle, 'ACT-0012', now)
+    expect(blockedStart.ok).toBe(false)
+    expect(blockedStart.ok === false ? blockedStart.reason : null).toBe(
+      'You need to recover before you can do that.',
+    )
 
     const started = requestActivityStart(
       launch,
@@ -89,6 +93,9 @@ describe('immediate activity changes (no change cooldown)', () => {
     }
     const stop = requestActivityStop(launch, paused, now + 1_000)
     expect(stop.ok).toBe(false)
+    expect(stop.ok === false ? stop.reason : null).toBe(
+      'You need to recover before you can do that.',
+    )
     expect(stop.ok === false ? paused.currentActivityId : null).toBe('ACT-0012')
   })
 

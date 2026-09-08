@@ -548,4 +548,27 @@ describe('chat line names', () => {
     expect(lines[0]?.body).toBe('Vari reached Mining 60')
     expect(lines[1]?.username).toBe('★ Hero')
   })
+
+  it('can hide guild skill milestone lines from the transcript', () => {
+    const lines = chatLines(
+      [
+        chatMessage({
+          channelKey: 'guild:gld_1',
+          username: 'Hero',
+          body: 'Vari reached Mining 60',
+          rankIcon: '★',
+        }),
+        chatMessage({
+          channelKey: 'guild:gld_1',
+          username: 'Hero',
+          body: 'Nice one',
+          rankIcon: '★',
+        }),
+      ],
+      'usr_1',
+      { hideGuildMilestones: true },
+    )
+    expect(lines).toHaveLength(1)
+    expect(lines[0]?.body).toBe('Nice one')
+  })
 })

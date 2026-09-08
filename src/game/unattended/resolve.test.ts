@@ -239,4 +239,38 @@ describe('unattended progression', () => {
       resolved.combatVictories,
     )
   })
+
+  it('regens HP while idle away and skips an unfinished combat round', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const startedAt = Date.parse('2026-01-01T00:00:00.000Z')
+    const idle = resolveUnattendedProgress(
+      launch,
+      {
+        ...createNewSave(launch),
+        currentHp: 1,
+        unattendedProgressAt: new Date(startedAt).toISOString(),
+      },
+      startedAt + 60_000,
+      () => 0,
+    )
+    expect(idle.save.currentHp).toBe(11)
+
+    const fighting = resolveUnattendedProgress(
+      launch,
+      {
+        ...createNewSave(launch),
+        currentLocationId: 'LOC-0001',
+        currentActivityId: 'ACT-0001',
+        currentHp: 1,
+        unattendedProgressAt: new Date(startedAt).toISOString(),
+        combatEnemyId: 'ENM-0001',
+        combatEnemyHp: 100,
+        combatRoundStartedAt: new Date(startedAt).toISOString(),
+      },
+      startedAt + 2_000,
+      () => 0,
+    )
+    expect(fighting.save.currentHp).toBe(1)
+    expect(fighting.save.combatEnemyId).toBe('ENM-0001')
+  })
 })

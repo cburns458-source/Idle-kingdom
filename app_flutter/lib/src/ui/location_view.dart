@@ -681,8 +681,11 @@ class _LocationViewState extends State<LocationView> {
               subtitle: ready ? 'Ready to collect.' : '${formatDurationMs(remainMs)} left.',
               actionLabel: ready ? 'Collect' : 'Waiting',
               tone: GameButtonTone.primary,
-              onPressed: ready && !controller.isRecovering
-                  ? () => controller.collectTimerAt(locationId, kind)
+              onPressed: ready
+                  ? () {
+                      if (controller.rejectIfRecovering()) return;
+                      controller.collectTimerAt(locationId, kind);
+                    }
                   : null,
             ),
           ),
@@ -712,9 +715,12 @@ class _LocationViewState extends State<LocationView> {
                   : 'Bring a seed or sapling to plant.',
               actionLabel: 'Plant',
               tone: GameButtonTone.primary,
-              onPressed: controller.isRecovering || courtyardLocked || !hasSeed
+              onPressed: courtyardLocked || !hasSeed
                   ? null
-                  : () => _openBotanyPlantMenu(context, locationId),
+                  : () {
+                      if (controller.rejectIfRecovering()) return;
+                      _openBotanyPlantMenu(context, locationId);
+                    },
             ),
           ),
         );
@@ -739,9 +745,12 @@ class _LocationViewState extends State<LocationView> {
             subtitle: canPlace.ok ? 'Place a hunting trap here.' : canPlace.reason,
             actionLabel: 'Place trap',
             tone: GameButtonTone.primary,
-            onPressed: controller.isRecovering || !canPlace.ok
+            onPressed: !canPlace.ok
                 ? null
-                : () => controller.placeTrapHere(huntingTrapItemId),
+                : () {
+                    if (controller.rejectIfRecovering()) return;
+                    controller.placeTrapHere(huntingTrapItemId);
+                  },
           ),
         );
       },
@@ -765,9 +774,12 @@ class _LocationViewState extends State<LocationView> {
             subtitle: canPlace.ok ? 'Place a fishing trap here.' : canPlace.reason,
             actionLabel: 'Place trap',
             tone: GameButtonTone.primary,
-            onPressed: controller.isRecovering || !canPlace.ok
+            onPressed: !canPlace.ok
                 ? null
-                : () => controller.placeTrapHere(fishingTrapItemId),
+                : () {
+                    if (controller.rejectIfRecovering()) return;
+                    controller.placeTrapHere(fishingTrapItemId);
+                  },
           ),
         );
       },
@@ -786,7 +798,10 @@ class _LocationViewState extends State<LocationView> {
           subtitle: amenityCopy(controller.db, 'blessing').subtitle,
           actionLabel: amenityCopy(controller.db, 'blessing').actionLabel,
           tone: GameButtonTone.primary,
-          onPressed: controller.isRecovering ? null : _bless,
+          onPressed: () {
+            if (controller.rejectIfRecovering()) return;
+            _bless();
+          },
         ),
       ),
     ];
@@ -931,10 +946,12 @@ class _LocationViewState extends State<LocationView> {
                       '${formatDurationMs(locationSearchCooldownRemainingMs(controller.save, spot, nowMs))}.',
             actionLabel: spot.buttonLabel,
             tone: GameButtonTone.primary,
-            onPressed:
-                controller.isRecovering || !canClaimLocationSearch(controller.save, spot, nowMs)
+            onPressed: !canClaimLocationSearch(controller.save, spot, nowMs)
                 ? null
-                : () => _search(spot.searchId),
+                : () {
+                    if (controller.rejectIfRecovering()) return;
+                    _search(spot.searchId);
+                  },
           ),
         ),
     ];
@@ -1141,7 +1158,6 @@ class _ActivityCard extends StatelessWidget {
     final check = validateActivityStart(controller.db, controller.save, activityId);
     final production = isStandardProductionActivity(controller.db, activity);
 
-    final recovering = controller.isRecovering;
     final hostileLock = locationIsHostileFor(controller.db, controller.save);
     final favorited = favoriteActivityAt(controller.save) == activityId;
     final questProgress = questActionProgressForActivity(
@@ -1170,7 +1186,12 @@ class _ActivityCard extends StatelessWidget {
               label: 'Stop',
               tone: GameButtonTone.secondary,
               compact: true,
-              onPressed: recovering || hostileLock ? null : controller.stopActivity,
+              onPressed: hostileLock
+                  ? null
+                  : () {
+                      if (controller.rejectIfRecovering()) return;
+                      controller.stopActivity();
+                    },
             )
           : GameButton(
               // Enabled even when the check failed: starting is what turns a
@@ -1181,11 +1202,14 @@ class _ActivityCard extends StatelessWidget {
                   ? 'Replace'
                   : 'Start',
               compact: true,
-              onPressed: recovering
-                  ? null
-                  : production
-                  ? () => onOpenWorkshop(context)
-                  : () => _startOrComingSoon(context, controller, activity),
+              onPressed: () {
+                if (controller.rejectIfRecovering()) return;
+                if (production) {
+                  onOpenWorkshop(context);
+                  return;
+                }
+                _startOrComingSoon(context, controller, activity);
+              },
             ),
     );
   }

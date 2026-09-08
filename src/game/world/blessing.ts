@@ -1,6 +1,6 @@
 import { configString } from '../activity/gathering'
 import type { GameDatabase, LocationRow } from '../data/types'
-import { isDeathPaused } from '../combat/engine'
+import { isDeathPaused, RECOVERING_BLOCKED_REASON } from '../combat/engine'
 import { withRecalculatedVitals } from '../equipment/vitals'
 import type { PlayerSave } from '../save/types'
 
@@ -33,7 +33,7 @@ export function requestBlessing(db: GameDatabase, save: PlayerSave, nowMs: numbe
     return {
       ok: false,
       alreadyFull: false,
-      reason: 'Cannot receive a blessing while recovering from defeat.',
+      reason: RECOVERING_BLOCKED_REASON,
     }
   }
   const location = db.Locations.find((row) => row['Location ID'] === save.currentLocationId)

@@ -58,6 +58,14 @@ void main() {
     expect(net.filterChatProfanity, isFalse);
   });
 
+  test('guild milestone lines start shown and can be hidden', () {
+    final net = buildMultiplayer(database);
+    addTearDown(net.dispose);
+    expect(net.showGuildMilestones, isTrue);
+    net.setShowGuildMilestones(false);
+    expect(net.showGuildMilestones, isFalse);
+  });
+
   testWidgets('Settings shows the testing tools and the chat filter', (tester) async {
     final controller = buildController(database, seed: startedCharacter(database));
     addTearDown(controller.dispose);
@@ -80,6 +88,13 @@ void main() {
     );
     await tester.pump();
     expect(find.text('Filter chat'), findsOne);
+    await tester.scrollUntilVisible(
+      find.text('Guild milestones'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pump();
+    expect(find.text('Guild milestones'), findsOne);
     await tester.scrollUntilVisible(
       find.text('Chat name color'),
       300,

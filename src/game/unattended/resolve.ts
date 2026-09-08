@@ -25,6 +25,7 @@ import { applyActivityTimeTowardCritters } from '../critters/critters'
 import { resolveProductionProgress } from '../production/engine'
 import { accruePlayTime } from '../save/playTime'
 import type { PlayerSave } from '../save/types'
+import { applyNaturalHpRegen } from '../vitals/regen'
 
 /**
  * Safety valve on the combat/gathering catch-up loop (one discrete
@@ -133,6 +134,8 @@ export function resolveUnattendedProgress(
       )
       current = critter.save
       pushCritterSpawn(critter.spawned)
+      current = applyNaturalHpRegen(db, current, production.activityMs).save
+      lastResolvedMs = anchor + production.activityMs
     }
   }
 
@@ -359,6 +362,7 @@ export function resolveUnattendedProgress(
       )
       next = critter.save
       pushCritterSpawn(critter.spawned)
+      next = applyNaturalHpRegen(db, next, actionState.durationMs).save
 
       const activityId = current.currentActivityId
       if (!activityStillValid(db, next, activityId)) {
@@ -423,6 +427,10 @@ export function resolveUnattendedProgress(
   // of step budget while there was still more due within the window, only
   // advance the anchor as far as the simulation actually got — the
   // remainder will be caught up on the next load instead of being lost.
+  if (!current.combatEnemyId) {
+    current = applyNaturalHpRegen(db, current, endMs - lastResolvedMs).save
+  }
+
   const stampAt = hitStepLimit ? Math.min(nowMs, lastResolvedMs) : nowMs
   const stamped = accruePlayTime(stampUnattendedProgressAt(current, stampAt), effectiveElapsedMs)
   const changed =

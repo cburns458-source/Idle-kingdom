@@ -1011,8 +1011,15 @@ List<ChatLineView> chatLines(
   List<ChatMessage> messages,
   String? viewerId, {
   bool filterProfanityEnabled = false,
+  bool hideGuildMilestones = false,
 }) {
   return messages
+      .where(
+        (message) =>
+            !hideGuildMilestones ||
+            !message.channelKey.startsWith('guild:') ||
+            !isGuildSkillMilestoneBody(message.body),
+      )
       .map(
         (message) => ChatLineView(
           messageId: message.id,

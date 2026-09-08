@@ -66,6 +66,9 @@ class GameSession {
   /// set so the next live frame does not add that window again.
   num? _playAccruedAt;
 
+  /// Leftover non-combat ms that have not yet granted a whole HP.
+  num _hpRegenCarryMs = 0;
+
   /// The save being played. Throws before [boot], which is what loads it.
   PlayerSave get save {
     final current = _save;
@@ -88,6 +91,7 @@ class GameSession {
     final synced = syncProgressionMeta(db, unattended.save, nowMs);
     _save = repository.write(synced);
     _playAccruedAt = nowMs;
+    _hpRegenCarryMs = 0;
     return SessionBoot(save: save, created: loaded.created, unattended: unattended);
   }
 
@@ -101,6 +105,7 @@ class GameSession {
     final synced = syncProgressionMeta(db, unattended.save, at);
     _save = repository.write(synced);
     _playAccruedAt = at;
+    _hpRegenCarryMs = 0;
     return SessionBoot(save: save, created: false, unattended: unattended);
   }
 
@@ -109,6 +114,7 @@ class GameSession {
     final nowMs = clock();
     _save = repository.write(createNewSave(db, nowMs));
     _playAccruedAt = nowMs;
+    _hpRegenCarryMs = 0;
   }
 
   /// Advances whatever is due, storing the save only when something happened.
@@ -141,6 +147,7 @@ class GameSession {
     final synced = syncProgressionMeta(db, unattended.save, nowMs);
     _save = repository.write(synced);
     _playAccruedAt = nowMs;
+    _hpRegenCarryMs = 0;
     return SessionTickResult(
       save: save,
       changed: unattended.changed,
@@ -168,11 +175,14 @@ class GameSession {
   PlayerSave _creditLivePlayTime(PlayerSave current, num nowMs) {
     final last = _playAccruedAt;
     _playAccruedAt = nowMs;
+    final elapsed = last == null ? 0 : nowMs - last;
     final credited = last == null
         ? current
-        : creditElapsedPlayTime(current, nowMs - last, unattendedCapMs(db));
-    if (credited.unattendedProgressAt == isoFromMs(nowMs)) return credited;
-    return stampUnattendedProgressAt(credited, nowMs);
+        : creditElapsedPlayTime(current, elapsed, unattendedCapMs(db));
+    final regen = applyNaturalHpRegen(db, credited, elapsed + _hpRegenCarryMs);
+    _hpRegenCarryMs = regen.remainderMs;
+    if (regen.save.unattendedProgressAt == isoFromMs(nowMs)) return regen.save;
+    return stampUnattendedProgressAt(regen.save, nowMs);
   }
 
   /// How far along the action in progress is, from 0 to 1.

@@ -114,9 +114,7 @@ ActivityChangeResult requestActivityStart(
   RandomFn random,
 ) {
   if (isDeathPaused(save, nowMs)) {
-    return const ActivityChangeResult.failed(
-      'Cannot change activities while recovering from defeat.',
-    );
+    return const ActivityChangeResult.failed(recoveringBlockedReason);
   }
   final hostile = _hostileStartBlocked(db, save, activityId);
   if (hostile != null) return ActivityChangeResult.failed(hostile);
@@ -151,9 +149,7 @@ ActivityChangeResult requestProductionStart(
   num nowMs,
 ) {
   if (isDeathPaused(save, nowMs)) {
-    return const ActivityChangeResult.failed(
-      'Cannot change activities while recovering from defeat.',
-    );
+    return const ActivityChangeResult.failed(recoveringBlockedReason);
   }
   if (locationIsHostileFor(db, save)) {
     return const ActivityChangeResult.failed(hostileActivityStartReason);
@@ -175,9 +171,7 @@ ActivityChangeResult requestProductionStart(
 /// Stops the current Primary Activity immediately.
 ActivityChangeResult requestActivityStop(GameDatabase db, PlayerSave save, num nowMs) {
   if (isDeathPaused(save, nowMs)) {
-    return const ActivityChangeResult.failed(
-      'Cannot change activities while recovering from defeat.',
-    );
+    return const ActivityChangeResult.failed(recoveringBlockedReason);
   }
   if (locationIsHostileFor(db, save)) {
     return const ActivityChangeResult.failed(hostileActivityLockReason);

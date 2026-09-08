@@ -522,6 +522,9 @@ PlayerSave applyCombatDefeat(GameDatabase db, PlayerSave save, num nowMs) {
   );
 }
 
+/// Shown whenever an action is refused because the death pause is still running.
+const String recoveringBlockedReason = 'You need to recover before you can do that.';
+
 bool isDeathPaused(PlayerSave save, num nowMs) {
   if (isBlank(save.deathPauseUntil)) return false;
   return jsDateParse(save.deathPauseUntil) > nowMs;

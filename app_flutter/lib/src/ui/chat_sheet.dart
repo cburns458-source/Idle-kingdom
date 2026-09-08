@@ -205,6 +205,7 @@ class _ChatSheetState extends State<ChatSheet> {
           source,
           net.session?.userId,
           filterProfanityEnabled: net.filterChatProfanity,
+          hideGuildMilestones: !net.showGuildMilestones,
         );
         final showComposer = net.chatTab != ChatTab.dm || net.selectedDmPeerId != null;
         final inset = MediaQuery.viewInsetsOf(context).bottom;

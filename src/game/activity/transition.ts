@@ -1,6 +1,6 @@
 import type { GameDatabase } from '../data/types'
 import type { ActivityTransition, PlayerSave } from '../save/types'
-import { isDeathPaused } from '../combat/engine'
+import { isDeathPaused, RECOVERING_BLOCKED_REASON } from '../combat/engine'
 import type { RandomFn } from './pools'
 import { cancelProductionActivity, beginProductionQueue } from '../production/engine'
 import { isStandardProductionActivity } from '../production/recipes'
@@ -131,7 +131,7 @@ export function requestActivityStart(
   random: RandomFn = Math.random,
 ): { ok: true; save: PlayerSave } | { ok: false; reason: string } {
   if (isDeathPaused(save, nowMs)) {
-    return { ok: false, reason: 'Cannot change activities while recovering from defeat.' }
+    return { ok: false, reason: RECOVERING_BLOCKED_REASON }
   }
   const hostile = hostileStartBlocked(db, save, activityId)
   if (hostile) return { ok: false, reason: hostile }
@@ -168,7 +168,7 @@ export function requestProductionStart(
   nowMs: number = Date.now(),
 ): { ok: true; save: PlayerSave } | { ok: false; reason: string } {
   if (isDeathPaused(save, nowMs)) {
-    return { ok: false, reason: 'Cannot change activities while recovering from defeat.' }
+    return { ok: false, reason: RECOVERING_BLOCKED_REASON }
   }
   if (locationIsHostileFor(db, save)) {
     return { ok: false, reason: HOSTILE_ACTIVITY_START_REASON }
@@ -194,7 +194,7 @@ export function requestActivityStop(
   nowMs: number = Date.now(),
 ): { ok: true; save: PlayerSave } | { ok: false; reason: string } {
   if (isDeathPaused(save, nowMs)) {
-    return { ok: false, reason: 'Cannot change activities while recovering from defeat.' }
+    return { ok: false, reason: RECOVERING_BLOCKED_REASON }
   }
   if (locationIsHostileFor(db, save)) {
     return { ok: false, reason: HOSTILE_ACTIVITY_LOCK_REASON }

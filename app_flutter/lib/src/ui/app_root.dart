@@ -17,6 +17,7 @@ import '../session/hud_level_pref.dart';
 import '../session/hud_title_pref.dart';
 import '../session/map_travel_pref.dart';
 import '../session/multiplayer_controller.dart';
+import '../session/quest_log_sort_pref.dart';
 import '../storage/legacy_browser_save.dart';
 import '../storage/prefs_store.dart';
 import '../storage/save_adoption.dart';
@@ -90,6 +91,7 @@ class _BootGateState extends State<_BootGate> {
       activityIcons: ActivityIconsPref.load(storage),
       uiChrome: UiChromePref.load(storage),
       batterySaverPref: BatterySaverPref.load(storage),
+      questLogSort: QuestLogSortPref.load(storage),
     )..adoptBoot(boot);
     final backend = await _multiplayerService(storage);
     _ensureDemoWorld(backend.service, database.launch);
