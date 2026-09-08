@@ -46,12 +46,18 @@ describe('ore pool weights', () => {
     )
   })
 
-  it('replaces elder rock troll coal with titanium ore at the same quantity', () => {
+  it('keeps elder rock troll ore drops with swapped titanium/tungsten packages', () => {
     const { launch } = prepareDatabase(rawDatabase)
-    const row = launch.RewardEntries.find((entry) => entry['Reward Entry ID'] === 'RWE-0050')
-    expect(row?.['Reward ID / Value']).toBe('ITEM-0009')
-    expect(row?.Weight).toBe(25)
-    expect(row?.['Minimum Quantity']).toBe(3)
-    expect(row?.['Maximum Quantity']).toBe(5)
+    const titanium = launch.RewardEntries.find((entry) => entry['Reward Entry ID'] === 'RWE-0050')
+    expect(titanium?.['Reward ID / Value']).toBe('ITEM-0009')
+    expect(titanium?.Weight).toBe(35)
+    expect(titanium?.['Minimum Quantity']).toBe(1)
+    expect(titanium?.['Maximum Quantity']).toBe(2)
+
+    const tungsten = launch.RewardEntries.find((entry) => entry['Reward Entry ID'] === 'RWE-0049')
+    expect(tungsten?.['Reward ID / Value']).toBe('ITEM-0010')
+    expect(tungsten?.Weight).toBe(25)
+    expect(tungsten?.['Minimum Quantity']).toBe(3)
+    expect(tungsten?.['Maximum Quantity']).toBe(5)
   })
 })

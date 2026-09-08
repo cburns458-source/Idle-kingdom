@@ -21,7 +21,8 @@ void main() {
     final view = skillMenuView(db, smithingSkillId);
     expect(view.tabs.map((tab) => tab.label), ['Basic metal']);
     final rows = skillMenuDisplayEntries(db, smithingSkillId);
-    expect(rows.any((row) => row.displayName == 'Tungsten items' && row.level == 70), isTrue);
+    expect(rows.any((row) => row.displayName == 'Tungsten items' && row.level == 60), isTrue);
+    expect(rows.any((row) => row.displayName == 'Titanium items' && row.level == 70), isTrue);
     expect(rows.where((row) => row.displayName == 'Tungsten Sword'), isEmpty);
     expect(projectsForSkill(db, smithingSkillId).length, greaterThan(rows.length));
     expect(

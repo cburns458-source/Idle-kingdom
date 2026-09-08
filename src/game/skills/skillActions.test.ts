@@ -192,7 +192,10 @@ describe('skill menu entries', () => {
     expect(skillMenuLine(mining[0]!)).toMatch(/^\d+\. /)
 
     const smithing = skillMenuDisplayEntries(launch, 'SKL-0011')
-    expect(smithing.some((item) => item.displayName === 'Tungsten items' && item.level === 70)).toBe(
+    expect(smithing.some((item) => item.displayName === 'Tungsten items' && item.level === 60)).toBe(
+      true,
+    )
+    expect(smithing.some((item) => item.displayName === 'Titanium items' && item.level === 70)).toBe(
       true,
     )
     expect(smithing.some((item) => item.displayName === 'Tungsten Sword')).toBe(false)
