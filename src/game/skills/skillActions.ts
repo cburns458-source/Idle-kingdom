@@ -17,6 +17,8 @@ export const FISHING_SKILL_ID = 'SKL-0003'
 export const HARVESTING_SKILL_ID = 'SKL-0004'
 export const HUNTING_SKILL_ID = 'SKL-0005'
 export const WOODCUTTING_SKILL_ID = 'SKL-0006'
+export const BOTANY_SKILL_ID = 'SKL-0014'
+export const THIEVERY_SKILL_ID = 'SKL-0015'
 
 const WOODEN_MINING_TOOLS = ['ITEM-0102']
 const WOODEN_WOODCUTTING_TOOLS = ['ITEM-0100', 'ITEM-0101']
@@ -272,10 +274,48 @@ function tabsForSkill(db: GameDatabase, skillId: string): SkillMenuTab[] {
       listTab('tools', 'Tools', gatheringToolEntries(db, skillId)),
     ]
   }
+  if (skillId === BOTANY_SKILL_ID) return botanyTabs(db)
+  if (skillId === THIEVERY_SKILL_ID) {
+    return [listTab('actions', 'Actions', actionsForSkill(db, skillId))]
+  }
   if (skillId === SMITHING_SKILL_ID) return smithingTabs(db)
   if (skillId === ARTISANRY_SKILL_ID) return artisanryTabs(db)
   if (skillId === ARCANA_SKILL_ID) return arcanaTabs(db)
   return [listTab('actions', 'Actions', skillMenuEntries(db, skillId))]
+}
+
+function botanyPlantEntries(db: GameDatabase, saplings: boolean): SkillMenuListItem[] {
+  const needle = saplings ? 'botany_sapling' : 'botany_seed'
+  const entries: SkillMenuListItem[] = []
+  for (const item of db.Items) {
+    if (item.Status !== 'Confirmed' && item.Status !== 'Planned') continue
+    if (item['Release Phase'] !== 'Launch') continue
+    const tags = (item['Functional / Source Tags'] ?? '').toLowerCase()
+    if (!tags.includes(needle)) continue
+    const notes = item.Notes ?? ''
+    const level = Number(/RequiresLevel:(\d+)/i.exec(notes)?.[1] ?? 1)
+    const grow = Number(/GrowSeconds:(\d+)/i.exec(notes)?.[1] ?? 0)
+    const growLabel =
+      grow >= 3600 ? `${Math.round(grow / 3600)}h` : grow >= 60 ? `${Math.round(grow / 60)}m` : `${grow}s`
+    entries.push({
+      id: item['Item ID'],
+      displayName: grow > 0 ? `${item['Display Name']} (${growLabel})` : item['Display Name'],
+      level: level < 1 ? 1 : level,
+    })
+  }
+  entries.sort((a, b) => {
+    const level = (a.level ?? 0) - (b.level ?? 0)
+    if (level !== 0) return level
+    return a.displayName.localeCompare(b.displayName)
+  })
+  return entries
+}
+
+function botanyTabs(db: GameDatabase): SkillMenuTab[] {
+  return [
+    listTab('seeds', 'Seeds', botanyPlantEntries(db, false)),
+    listTab('saplings', 'Saplings', botanyPlantEntries(db, true)),
+  ]
 }
 
 function smithingTabs(db: GameDatabase): SkillMenuTab[] {

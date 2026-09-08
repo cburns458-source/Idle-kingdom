@@ -116,6 +116,14 @@ ActivityStartResult validateActivityStart(GameDatabase db, PlayerSave save, Stri
       requirementsForEntity(db, 'Action', jsString(candidate.action.raw['Action ID'])),
     );
     if (failures.isNotEmpty) return ActivityStartResult.failed(failures.first);
+    final notes = candidate.action.raw['Notes'];
+    final notesText = notes is String ? notes : '';
+    if (RegExp(r'RequiresLockpick', caseSensitive: false).hasMatch(notesText)) {
+      final tool = slotStack(save, weaponToolSlotId);
+      if (tool == null || tool.quantity <= 0 || tool.itemId != _lockpickItemId) {
+        return const ActivityStartResult.failed('Equip lockpicks in the Weapon/Tool slot first.');
+      }
+    }
   }
 
   return const ActivityStartResult.ok();

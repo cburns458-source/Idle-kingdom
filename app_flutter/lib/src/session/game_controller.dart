@@ -825,6 +825,16 @@ class GameController extends ChangeNotifier {
     announce(result.message!);
   }
 
+  void plantBotanySeedHere(String seedItemId, {num plantQuantity = 3}) {
+    final result = plantBotanySeed(db, save, seedItemId, plantQuantity: plantQuantity);
+    if (!result.ok) {
+      report(result.reason);
+      return;
+    }
+    commit(result.save!);
+    announce('Seed planted.');
+  }
+
   void plantBestBotanySeedHere() {
     final result = plantBestBotanySeed(db, save);
     if (!result.ok) {

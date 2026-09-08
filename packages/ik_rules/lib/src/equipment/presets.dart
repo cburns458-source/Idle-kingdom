@@ -135,7 +135,8 @@ bool _stacksMatchForLoadout(String slotId, EquippedStack? live, EquippedStack? s
   if (liveEmpty && storedEmpty) return true;
   if (liveEmpty || storedEmpty) return false;
   if (!_sameStackIdentity(live!, stored!)) return false;
-  if (isStackableConsumableSlot(slotId)) return true;
+  // Food, potions, and Weapon/Tool stacks compare identity only.
+  if (isStackableConsumableSlot(slotId) || slotId == weaponToolSlotId) return true;
   return live.quantity == stored.quantity;
 }
 

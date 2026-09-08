@@ -33,7 +33,7 @@ const Set<String> botanyPatchLocations = <String>{
 const Set<String> huntingTrapLocations = <String>{'LOC-0008', 'LOC-0009'};
 const Set<String> fishingTrapLocations = <String>{'LOC-0003', 'LOC-0004'};
 
-const num trapDurationMs = 5 * 60 * 1000;
+const num trapDurationMs = 6 * 60 * 60 * 1000;
 
 class BotanySeedSpec {
   const BotanySeedSpec({
@@ -99,6 +99,72 @@ BotanySeedSpec? parseBotanySeedSpec(GameDatabase db, String itemId) {
 
 bool inventoryHasAnyBotanySeed(GameDatabase db, PlayerSave save) {
   return save.inventory.any((stack) => stack.quantity > 0 && isBotanySeedItem(db, stack.itemId));
+}
+
+class PlantableBotanyOption {
+  const PlantableBotanyOption({
+    required this.itemId,
+    required this.displayName,
+    required this.spec,
+    required this.owned,
+    required this.plantQuantity,
+    required this.canPlant,
+    required this.reason,
+  });
+
+  final String itemId;
+  final String displayName;
+  final BotanySeedSpec spec;
+  final num owned;
+  final num plantQuantity;
+  final bool canPlant;
+  final String reason;
+}
+
+/// Seeds/saplings the player owns that could be offered on a patch menu.
+List<PlantableBotanyOption> listPlantableBotanyOptions(
+  GameDatabase db,
+  PlayerSave save, {
+  String? locationId,
+}) {
+  final loc = locationId ?? save.currentLocationId;
+  final options = <PlantableBotanyOption>[];
+  final seen = <String>{};
+  for (final stack in save.inventory) {
+    if (stack.quantity <= 0) continue;
+    if (!seen.add(stack.itemId)) continue;
+    final spec = parseBotanySeedSpec(db, stack.itemId);
+    if (spec == null) continue;
+    final owned = save.inventory
+        .where((row) => row.itemId == stack.itemId)
+        .fold<num>(0, (sum, row) => sum + row.quantity);
+    final desired = spec.isSapling ? 1 : (owned < 3 ? owned : 3);
+    final gate = canPlantBotanySeed(
+      db,
+      save,
+      stack.itemId,
+      locationId: loc,
+      plantQuantity: desired,
+    );
+    final item = _itemById(db, stack.itemId);
+    options.add(
+      PlantableBotanyOption(
+        itemId: stack.itemId,
+        displayName: item?.displayName ?? stack.itemId,
+        spec: spec,
+        owned: owned,
+        plantQuantity: gate.ok ? gate.quantity : desired,
+        canPlant: gate.ok,
+        reason: gate.reason,
+      ),
+    );
+  }
+  options.sort((a, b) {
+    final level = a.spec.requiresLevel.compareTo(b.spec.requiresLevel);
+    if (level != 0) return level;
+    return a.displayName.toLowerCase().compareTo(b.displayName.toLowerCase());
+  });
+  return options;
 }
 
 LocationTimer? timerAtLocation(PlayerSave save, String locationId) {

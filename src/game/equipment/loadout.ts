@@ -62,6 +62,25 @@ export function isStackableConsumableSlot(slotId: string): boolean {
   return isFoodSlot(slotId) || isPotionSlot(slotId)
 }
 
+/**
+ * Items flagged Stackable Yes (or `stackable_tool` tag) stack in their equipment
+ * slot — currently used for lockpicks in Weapon/Tool.
+ */
+export function itemStacksInEquipmentSlot(
+  db: GameDatabase,
+  itemId: string,
+  slotId: string,
+): boolean {
+  if (isStackableConsumableSlot(slotId)) return true
+  const item = db.Items.find((row) => row['Item ID'] === itemId)
+  if (!item) return false
+  if ((item['Equipment Slot ID'] ?? null) !== slotId) return false
+  const stackable = (item.Stackable ?? '').trim().toLowerCase()
+  if (stackable === 'yes') return true
+  const tags = (item['Functional / Source Tags'] ?? '').toLowerCase()
+  return tags.includes('stackable_tool')
+}
+
 function removeItemQuantity(
   save: PlayerSave,
   itemId: string,
@@ -261,13 +280,15 @@ export function equipInventoryIndex(
   const enchantmentId = invStack.enchantmentId ?? null
   const favorite = invStack.favorite === true
 
-  if (isStackableConsumableSlot(slotId)) {
+  if (itemStacksInEquipmentSlot(db, itemId, slotId)) {
     if (enchantmentId) {
       return {
         ok: false,
         reason: isPotionSlot(slotId)
           ? 'Enchanted items cannot fill the potion slot.'
-          : 'Enchanted items cannot fill the food slot.',
+          : isFoodSlot(slotId)
+            ? 'Enchanted items cannot fill the food slot.'
+            : 'Enchanted items cannot stack in this slot.',
       }
     }
     const moveQty = invStack.quantity

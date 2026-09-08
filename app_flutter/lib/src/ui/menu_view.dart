@@ -687,7 +687,7 @@ class _SettingsFoldState extends State<_SettingsFold> {
                 Icon(
                   _open ? Icons.expand_less : Icons.expand_more,
                   size: 20,
-                  color: UiChrome.of(context).panelInk,
+                  color: Palette.parchmentText,
                 ),
               ],
             ),

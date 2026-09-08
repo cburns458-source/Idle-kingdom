@@ -29,8 +29,8 @@ export const BOTANY_PATCH_LOCATIONS = new Set([
 export const HUNTING_TRAP_LOCATIONS = new Set(['LOC-0008', 'LOC-0009'])
 export const FISHING_TRAP_LOCATIONS = new Set(['LOC-0003', 'LOC-0004'])
 
-/** Default trap soak time: 5 minutes. */
-export const TRAP_DURATION_MS = 5 * 60 * 1000
+/** Default trap soak time: 6 hours. */
+export const TRAP_DURATION_MS = 6 * 60 * 60 * 1000
 
 export interface BotanySeedSpec {
   outputItemId: string
@@ -76,6 +76,53 @@ export function parseBotanySeedSpec(db: GameDatabase, itemId: string): BotanySee
 
 export function inventoryHasAnyBotanySeed(db: GameDatabase, save: PlayerSave): boolean {
   return save.inventory.some((stack) => stack.quantity > 0 && isBotanySeedItem(db, stack.itemId))
+}
+
+export interface PlantableBotanyOption {
+  itemId: string
+  displayName: string
+  spec: BotanySeedSpec
+  owned: number
+  plantQuantity: number
+  canPlant: boolean
+  reason: string
+}
+
+/** Seeds/saplings the player owns that could be offered on a patch menu. */
+export function listPlantableBotanyOptions(
+  db: GameDatabase,
+  save: PlayerSave,
+  locationId: string = save.currentLocationId,
+): PlantableBotanyOption[] {
+  const options: PlantableBotanyOption[] = []
+  const seen = new Set<string>()
+  for (const stack of save.inventory) {
+    if (stack.quantity <= 0) continue
+    if (seen.has(stack.itemId)) continue
+    seen.add(stack.itemId)
+    const spec = parseBotanySeedSpec(db, stack.itemId)
+    if (!spec) continue
+    const owned = save.inventory
+      .filter((row) => row.itemId === stack.itemId)
+      .reduce((sum, row) => sum + row.quantity, 0)
+    const desired = spec.isSapling ? 1 : Math.min(3, owned)
+    const gate = canPlantBotanySeed(db, save, stack.itemId, locationId, desired)
+    options.push({
+      itemId: stack.itemId,
+      displayName: itemById(db, stack.itemId)?.['Display Name'] ?? stack.itemId,
+      spec,
+      owned,
+      plantQuantity: gate.ok ? gate.quantity : desired,
+      canPlant: gate.ok,
+      reason: gate.ok ? '' : gate.reason,
+    })
+  }
+  options.sort((a, b) => {
+    const level = a.spec.requiresLevel - b.spec.requiresLevel
+    if (level !== 0) return level
+    return a.displayName.localeCompare(b.displayName)
+  })
+  return options
 }
 
 export function timerAtLocation(

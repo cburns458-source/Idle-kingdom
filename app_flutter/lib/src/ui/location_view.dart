@@ -17,6 +17,7 @@ import 'critter_overlay.dart';
 import 'format.dart';
 import 'game_image.dart';
 import 'game_popup.dart';
+import 'catalog_popup.dart';
 import 'nearby_panel.dart';
 import 'npc_panel.dart';
 import 'production_panel.dart';
@@ -188,6 +189,40 @@ class _LocationViewState extends State<LocationView> {
       station: station,
       origin: popupOrigin(buttonContext),
     );
+  }
+
+  Future<void> _openBotanyPlantMenu(BuildContext buttonContext, String locationId) async {
+    final options = listPlantableBotanyOptions(
+      controller.db,
+      controller.save,
+      locationId: locationId,
+    );
+    if (options.isEmpty) {
+      controller.report('You have no plantable seeds or saplings for this patch.');
+      return;
+    }
+    final chosen = await showGameCatalogPopup(
+      context: buttonContext,
+      eyebrow: 'Botany',
+      title: 'Plant a seed or sapling',
+      selectable: true,
+      emptyMessage: 'No plantable seeds here.',
+      origin: popupOrigin(buttonContext),
+      entries: [
+        for (final option in options)
+          CatalogPopupEntry(
+            title: option.displayName,
+            detail: option.canPlant
+                ? '${formatDurationSeconds(option.spec.growSeconds)} · plant ${option.plantQuantity}'
+                : option.reason,
+            enabled: option.canPlant,
+            emphasized: option.canPlant,
+          ),
+      ],
+    );
+    if (chosen == null || !buttonContext.mounted) return;
+    final option = options[chosen];
+    controller.plantBotanySeedHere(option.itemId, plantQuantity: option.plantQuantity);
   }
 
   LocationPanel? get _currentPanel => _open.isEmpty ? null : _open.last;
@@ -644,8 +679,7 @@ class _LocationViewState extends State<LocationView> {
 
     if (existing != null) {
       final ready = timerIsReady(existing, nowMs);
-      final remainMs = (timerCompletesAtMs(existing) - nowMs).clamp(0, 1 << 62);
-      final remainSec = (remainMs / 1000).ceil();
+      final remainMs = (timerCompletesAtMs(existing) - nowMs).clamp(0, existing.durationMs);
       final kindLabel = switch (existing.kind) {
         'botany' => 'Botany patch',
         'hunting_trap' => 'Hunting trap',
@@ -657,7 +691,7 @@ class _LocationViewState extends State<LocationView> {
           padding: const EdgeInsets.only(bottom: 8),
           child: _InteractionCard(
             title: kindLabel,
-            subtitle: ready ? 'Ready to collect.' : '${remainSec}s left.',
+            subtitle: ready ? 'Ready to collect.' : '${formatDurationMs(remainMs)} left.',
             actionLabel: ready ? 'Collect' : 'Waiting',
             tone: GameButtonTone.primary,
             onPressed: ready && !controller.isRecovering
@@ -676,18 +710,20 @@ class _LocationViewState extends State<LocationView> {
       cards.add(
         Padding(
           padding: const EdgeInsets.only(bottom: 8),
-          child: _InteractionCard(
-            title: 'Botany patch',
-            subtitle: courtyardLocked
-                ? 'Complete The Grand Feast to unlock.'
-                : hasSeed
-                ? 'Plant your best eligible seed.'
-                : 'Bring a seed or sapling to plant.',
-            actionLabel: 'Plant',
-            tone: GameButtonTone.primary,
-            onPressed: controller.isRecovering || courtyardLocked || !hasSeed
-                ? null
-                : () => controller.plantBestBotanySeedHere(),
+          child: Builder(
+            builder: (context) => _InteractionCard(
+              title: 'Botany patch',
+              subtitle: courtyardLocked
+                  ? 'Complete The Grand Feast to unlock.'
+                  : hasSeed
+                  ? 'Choose a seed or sapling to plant.'
+                  : 'Bring a seed or sapling to plant.',
+              actionLabel: 'Plant',
+              tone: GameButtonTone.primary,
+              onPressed: controller.isRecovering || courtyardLocked || !hasSeed
+                  ? null
+                  : () => _openBotanyPlantMenu(context, locationId),
+            ),
           ),
         ),
       );
