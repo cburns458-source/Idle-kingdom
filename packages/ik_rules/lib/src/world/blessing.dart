@@ -38,7 +38,7 @@ class BlessResult {
 /// Instant Temple heal. Does not start an activity or change equipment.
 BlessResult requestBlessing(GameDatabase db, PlayerSave save, num nowMs) {
   if (isDeathPaused(save, nowMs)) {
-    return const BlessResult.failed('Cannot receive a blessing while recovering from defeat.');
+    return const BlessResult.failed(recoveringBlockedReason);
   }
   final location = db.locations.firstWhereOrNull((row) => row.locationId == save.currentLocationId);
   if (!locationHasBlessing(location)) {

@@ -212,9 +212,12 @@ class _ProductionPickerState extends State<ProductionPicker> {
             Expanded(
               child: GameButton(
                 label: 'Start queue',
-                onPressed: ceiling < 1 || controller.isRecovering
+                onPressed: ceiling < 1
                     ? null
-                    : () => _start(recipe, quantity),
+                    : () {
+                        if (controller.rejectIfRecovering()) return;
+                        _start(recipe, quantity);
+                      },
               ),
             ),
           ],

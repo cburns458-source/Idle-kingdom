@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:idle_kingdoms/src/session/game_controller.dart';
 import 'package:idle_kingdoms/src/session/multiplayer_controller.dart';
+import 'package:idle_kingdoms/src/session/quest_log_sort_pref.dart';
 import 'package:idle_kingdoms/src/session/tester_access.dart';
 import 'package:idle_kingdoms/src/theme.dart';
 import 'package:idle_kingdoms/src/ui/app_shell.dart';
@@ -60,7 +61,12 @@ PlayerSave startedCharacter(LoadedDatabase database) {
 }
 
 /// A booted controller over an in-memory save slot and a clock the test drives.
-GameController buildController(LoadedDatabase database, {PlayerSave? seed, TestClock? clock}) {
+GameController buildController(
+  LoadedDatabase database, {
+  PlayerSave? seed,
+  TestClock? clock,
+  QuestLogSortPref? questLogSort,
+}) {
   final testClock = clock ?? TestClock();
   final repository = SaveRepository(storage: MemorySaveStorage(), clock: testClock.read);
   if (seed != null) repository.write(seed);
@@ -72,7 +78,8 @@ GameController buildController(LoadedDatabase database, {PlayerSave? seed, TestC
     random: () => 0,
   );
   final boot = session.boot();
-  return GameController(database: database, session: session)..adoptBoot(boot);
+  return GameController(database: database, session: session, questLogSort: questLogSort)
+    ..adoptBoot(boot);
 }
 
 /// Registers [account] on the local backend. Does not sign them in.

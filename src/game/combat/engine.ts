@@ -477,6 +477,9 @@ export function applyCombatDefeat(
   )
 }
 
+/** Shown whenever an action is refused because the death pause is still running. */
+export const RECOVERING_BLOCKED_REASON = 'You need to recover before you can do that.'
+
 export function isDeathPaused(save: PlayerSave, nowMs: number = Date.now()): boolean {
   if (!save.deathPauseUntil) return false
   return Date.parse(save.deathPauseUntil) > nowMs

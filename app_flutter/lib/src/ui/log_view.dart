@@ -37,7 +37,6 @@ class LogView extends StatefulWidget {
 class _LogViewState extends State<LogView> {
   _LogTab _tab = _LogTab.achievements;
   bool _miniquestsOpen = false;
-  QuestLogSort _questSort = QuestLogSort.content;
   bool _hideUnstartableQuests = false;
 
   GameController get controller => widget.controller;
@@ -123,23 +122,11 @@ class _LogViewState extends State<LogView> {
                           onPressed: () => setState(() => _miniquestsOpen = !_miniquestsOpen),
                         ),
                         const SizedBox(width: 6),
-                        for (final sort in QuestLogSort.values) ...[
-                          GameButton(
-                            label: switch (sort) {
-                              QuestLogSort.completion => 'Status',
-                              QuestLogSort.content => 'Release',
-                              QuestLogSort.alphabetical => 'A–Z',
-                            },
-                            compact: true,
-                            dense: true,
-                            selected: _questSort == sort,
-                            tone: _questSort == sort
-                                ? GameButtonTone.primary
-                                : GameButtonTone.secondary,
-                            onPressed: () => setState(() => _questSort = sort),
-                          ),
-                          const SizedBox(width: 6),
-                        ],
+                        _QuestSortMenu(
+                          mode: controller.questLogSort.sort,
+                          onSelected: controller.setQuestLogSort,
+                        ),
+                        const SizedBox(width: 6),
                         GameButton(
                           label: _hideUnstartableQuests ? 'Hide locked ✓' : 'Hide locked',
                           compact: true,
@@ -198,7 +185,7 @@ class _LogViewState extends State<LogView> {
                 _LogTab.quests => _Rows([
                   for (final row in organizeQuestLog(
                     questLog(db, save),
-                    sort: _questSort,
+                    sort: controller.questLogSort.sort,
                     hideUnstartable: _hideUnstartableQuests,
                   ))
                     _QuestJournalRow(row: row),
@@ -517,6 +504,67 @@ class _MiniquestList extends StatelessWidget {
             ),
           ),
       ],
+    );
+  }
+}
+
+class _QuestSortMenu extends StatelessWidget {
+  const _QuestSortMenu({required this.mode, required this.onSelected});
+
+  final QuestLogSort mode;
+  final ValueChanged<QuestLogSort> onSelected;
+
+  static String _label(QuestLogSort mode) {
+    return switch (mode) {
+      QuestLogSort.completion => 'Status',
+      QuestLogSort.content => 'Release',
+      QuestLogSort.alphabetical => 'A–Z',
+    };
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final chrome = UiChrome.of(context);
+    return PopupMenuButton<QuestLogSort>(
+      tooltip: 'Sort',
+      initialValue: mode,
+      color: chrome.board,
+      position: PopupMenuPosition.under,
+      offset: const Offset(-80, 4),
+      constraints: const BoxConstraints(minWidth: 148, maxWidth: 180),
+      onSelected: onSelected,
+      itemBuilder: (context) => [
+        for (final option in QuestLogSort.values)
+          CheckedPopupMenuItem<QuestLogSort>(
+            value: option,
+            checked: option == mode,
+            child: Text(
+              _label(option),
+              style: TextStyle(
+                fontFamily: gameFontFamily,
+                fontWeight: FontWeight.w400,
+                color: chrome.primaryLabel,
+              ),
+            ),
+          ),
+      ],
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: chrome.secondaryFill,
+          borderRadius: BorderRadius.zero /* pixel step 3 */,
+          border: Border.all(
+            color: mode == QuestLogSort.content ? chrome.embossFace : chrome.embossFaceSelected,
+          ),
+          boxShadow: const [BoxShadow(offset: Offset(0, 2), color: Color(0x40000000))],
+        ),
+        child: const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          child: Text(
+            'Sort',
+            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w400, color: Color(0xFFFFF4D4)),
+          ),
+        ),
+      ),
     );
   }
 }

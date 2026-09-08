@@ -15,6 +15,7 @@ import '../production/engine.dart';
 import '../rng/mulberry32.dart';
 import '../save/generated/save_models.dart';
 import '../save/play_time.dart';
+import '../vitals/regen.dart';
 import '../time.dart';
 
 /// Safety valve on the combat/gathering catch-up loop (one discrete round/action
@@ -143,6 +144,8 @@ UnattendedResult resolveUnattendedProgress(
       );
       current = critter.save;
       pushCritterSpawn(critter.spawned);
+      current = applyNaturalHpRegen(db, current, production.activityMs).save;
+      lastResolvedMs = anchor + production.activityMs;
     }
   }
 
@@ -360,6 +363,7 @@ UnattendedResult resolveUnattendedProgress(
       );
       next = critter.save;
       pushCritterSpawn(critter.spawned);
+      next = applyNaturalHpRegen(db, next, actionState.durationMs).save;
 
       final activityId = current.currentActivityId!;
       if (!activityStillValid(db, next, activityId)) {
@@ -427,6 +431,10 @@ UnattendedResult resolveUnattendedProgress(
   // budget while there was still more due within the window, only advance the
   // anchor as far as the simulation actually got — the remainder will be caught
   // up on the next load instead of being lost.
+  if (isBlank(current.combatEnemyId)) {
+    current = applyNaturalHpRegen(db, current, endMs - lastResolvedMs).save;
+  }
+
   final stampAt = hitStepLimit ? math.min(nowMs, lastResolvedMs) : nowMs;
   final stamped = accruePlayTime(stampUnattendedProgressAt(current, stampAt), effectiveElapsedMs);
   const deep = DeepCollectionEquality();

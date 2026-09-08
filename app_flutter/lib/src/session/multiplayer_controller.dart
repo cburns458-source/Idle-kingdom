@@ -46,10 +46,20 @@ class MultiplayerController extends ChangeNotifier {
 
   static const String hideChatBubbleStorageKey = 'idle-kingdoms.client.hide-chat-bubble';
 
+  static const String showGuildMilestonesStorageKey = 'idle-kingdoms.client.show-guild-milestones';
+
   bool get filterChatProfanity => storage.getItem(chatFilterStorageKey) != '0';
 
   void setFilterChatProfanity(bool value) {
     storage.setItem(chatFilterStorageKey, value ? '1' : '0');
+    notifyListeners();
+  }
+
+  /// When on (default), guild skill-milestone lines appear in chat and notify.
+  bool get showGuildMilestones => storage.getItem(showGuildMilestonesStorageKey) != '0';
+
+  void setShowGuildMilestones(bool value) {
+    storage.setItem(showGuildMilestonesStorageKey, value ? '1' : '0');
     notifyListeners();
   }
 
@@ -954,6 +964,16 @@ class MultiplayerController extends ChangeNotifier {
     if (cursor == null) {
       _storeChannelCursor(channel);
       return 0;
+    }
+    if (!showGuildMilestones && (tab == ChatTab.guild || tab == ChatTab.guest)) {
+      final viewerId = session?.userId;
+      final sinceMs = jsDateParse(cursor);
+      final messages = await service.listChat(channel);
+      return messages.where((row) {
+        if (viewerId != null && row.userId == viewerId) return false;
+        if (jsDateParse(row.createdAt) <= sinceMs) return false;
+        return !isGuildSkillMilestoneBody(row.body);
+      }).length;
     }
     return service.countUnreadChat(channel, cursor);
   }

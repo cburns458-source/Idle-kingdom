@@ -519,8 +519,14 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
     _arrive(locationId);
   }
 
+  void _travelFromTimers(String locationId, String mapId) {
+    if (controller.rejectIfRecovering()) return;
+    if (!controller.travelTo(locationId, mapId)) return;
+    _popToLocation();
+  }
+
   void _travelTo(String locationId) {
-    if (controller.isRecovering) return;
+    if (controller.rejectIfRecovering()) return;
     if (_openMapPortal(locationId)) return;
     if (locationId == controller.save.currentLocationId) {
       _arrive(locationId);
@@ -1010,7 +1016,7 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
           initialItemId: _codexItemId,
         );
       case GameScreen.timers:
-        return TimersView(controller: controller, onClose: _popPage);
+        return TimersView(controller: controller, onClose: _popPage, onTravel: _travelFromTimers);
       case GameScreen.tracker:
         return TrackerView(controller: controller, onClose: _popPage);
       case GameScreen.leaderboards:
@@ -1027,6 +1033,7 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
           section: SocialTab.guilds,
           onClose: _popPage,
           onTravelToHall: () {
+            if (controller.rejectIfRecovering()) return;
             if (!controller.travelToGuildHall()) return;
             _popToLocation();
           },

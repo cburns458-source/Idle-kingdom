@@ -108,7 +108,7 @@ class WorldMapView extends StatelessWidget {
                       isHere: !walking && node.locationId == save.currentLocationId,
                       isSelected: node.locationId == selectedLocationId,
                       onTap: () => onSelect(node.locationId),
-                      onDoubleTap: controller.isRecovering || walking
+                      onDoubleTap: walking
                           ? null
                           : isSubMapGateway(node)
                           ? () => onTravel(node.locationId)
@@ -171,7 +171,7 @@ class WorldMapView extends StatelessWidget {
             isPortal: selected != null && isSubMapGateway(selected),
             onTravel: onTravel,
             onOpenHere: onOpenHere,
-            canTravel: !controller.isRecovering && !walking,
+            canTravel: !walking,
           ),
         ),
       ],

@@ -397,7 +397,7 @@ void main() {
     );
   });
 
-  testWidgets('death pause says Recovering and greys travel and new actions', (tester) async {
+  testWidgets('death pause says Recovering and refuses travel and new actions', (tester) async {
     final controller = buildController(
       database,
       seed: startedCharacter(database).copyWith(
@@ -423,7 +423,7 @@ void main() {
           matching: find.bySemanticsLabel('Stop'),
         ),
       ),
-      isSemantics(label: 'Stop', isButton: true, isEnabled: false),
+      isSemantics(label: 'Stop', isButton: true, isEnabled: true),
     );
     expect(
       tester.getSemantics(
@@ -432,8 +432,18 @@ void main() {
           matching: find.bySemanticsLabel('Replace'),
         ),
       ),
-      isSemantics(label: 'Replace', isButton: true, isEnabled: false),
+      isSemantics(label: 'Replace', isButton: true, isEnabled: true),
     );
+
+    await tapVisible(
+      tester,
+      find.descendant(
+        of: dockRow('Search for small game'),
+        matching: find.bySemanticsLabel('Replace'),
+      ),
+    );
+    expect(find.text(recoveringBlockedReason), findsOne);
+    expect(controller.save.currentActivityId, 'ACT-0012');
 
     await tester.tap(find.byTooltip('Open world map'));
     await tester.pump();
@@ -441,8 +451,11 @@ void main() {
     await tester.pump();
     expect(
       tester.getSemantics(find.bySemanticsLabel('Travel')),
-      isSemantics(label: 'Travel', isButton: true, isEnabled: false),
+      isSemantics(label: 'Travel', isButton: true, isEnabled: true),
     );
+    await tester.tap(find.bySemanticsLabel('Travel'));
+    await tester.pump();
+    expect(find.text(recoveringBlockedReason), findsWidgets);
     expect(controller.save.currentLocationId, 'LOC-0009');
 
     await tester.tap(find.text('Character'));

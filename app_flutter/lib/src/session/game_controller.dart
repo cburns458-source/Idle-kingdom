@@ -11,6 +11,7 @@ import 'hud_level_pref.dart';
 import 'hud_title_pref.dart';
 import 'local_player_art.dart';
 import 'map_travel_pref.dart';
+import 'quest_log_sort_pref.dart';
 import 'ui_chrome.dart';
 
 /// The last killing blow, kept so the stage can hold sprites before swapping.
@@ -118,13 +119,15 @@ class GameController extends ChangeNotifier {
     ActivityIconsPref? activityIcons,
     UiChromePref? uiChrome,
     BatterySaverPref? batterySaverPref,
+    QuestLogSortPref? questLogSort,
   }) : localArt = localArt ?? LocalPlayerArt(),
        mapTravel = mapTravel ?? MapTravelPref(),
        hudLevel = hudLevel ?? HudLevelPref(),
        hudTitle = hudTitle ?? HudTitlePref(),
        activityIcons = activityIcons ?? ActivityIconsPref(),
        uiChrome = uiChrome ?? UiChromePref(),
-       batterySaverPref = batterySaverPref ?? BatterySaverPref();
+       batterySaverPref = batterySaverPref ?? BatterySaverPref(),
+       questLogSort = questLogSort ?? QuestLogSortPref();
 
   final LoadedDatabase database;
 
@@ -151,6 +154,9 @@ class GameController extends ChangeNotifier {
 
   /// Client-only toggle that skips cosmetic motion and paints less often.
   final BatterySaverPref batterySaverPref;
+
+  /// Client-only quest journal sort.
+  final QuestLogSortPref questLogSort;
 
   /// Clock-driven progress bars and timers.
   ///
@@ -651,6 +657,18 @@ class GameController extends ChangeNotifier {
   /// Says what an intent did, in the place tick messages appear.
   void announce(String text) {
     _message = text;
+    notifyListeners();
+  }
+
+  /// True when the death pause blocked an intent; announces the shared copy.
+  bool rejectIfRecovering() {
+    if (!isRecovering) return false;
+    announce(recoveringBlockedReason);
+    return true;
+  }
+
+  void setQuestLogSort(QuestLogSort value) {
+    questLogSort.setSort(value);
     notifyListeners();
   }
 

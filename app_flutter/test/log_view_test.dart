@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:idle_kingdoms/src/session/quest_log_sort_pref.dart';
 import 'package:idle_kingdoms/src/theme.dart';
+import 'package:idle_kingdoms/src/ui/log_view.dart';
 import 'package:ik_content/ik_content.dart';
 import 'package:ik_rules/ik_rules.dart';
+import 'package:ik_runtime/ik_runtime.dart';
 
 import 'support/harness.dart';
 
@@ -269,5 +272,55 @@ void main() {
     expect(find.text('A Change of Skin'), findsOne);
     expect(find.textContaining('Every 7 days'), findsOne);
     expect(find.textContaining('Available now'), findsOne);
+  });
+
+  testWidgets('quest sort is a menu and persists the chosen order', (tester) async {
+    final prefs = MemorySaveStorage();
+    final first = buildController(
+      database,
+      seed: startedCharacter(database),
+      questLogSort: QuestLogSortPref.load(prefs),
+    );
+    addTearDown(first.dispose);
+    await pumpShell(tester, first);
+    await openLog(tester);
+    await tester.tap(find.text('Quests'));
+    await tester.pump();
+
+    expect(find.textContaining('Miniquests'), findsOne);
+    expect(find.textContaining('Hide locked'), findsOne);
+    expect(find.byTooltip('Sort'), findsOne);
+    expect(find.text('Status'), findsNothing);
+    expect(find.text('Release'), findsNothing);
+
+    await tester.tap(find.byTooltip('Sort'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.tap(find.widgetWithText(CheckedPopupMenuItem<QuestLogSort>, 'A–Z'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(prefs.getItem(QuestLogSortPref.storageKey), QuestLogSort.alphabetical.name);
+
+    final again = buildController(
+      database,
+      seed: startedCharacter(database),
+      questLogSort: QuestLogSortPref.load(prefs),
+    );
+    addTearDown(again.dispose);
+    expect(again.questLogSort.sort, QuestLogSort.alphabetical);
+    await pumpPanel(tester, LogView(controller: again));
+    await tester.tap(find.text('Quests'));
+    await tester.pump();
+    await tester.tap(find.byTooltip('Sort'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(
+      tester
+          .widget<CheckedPopupMenuItem<QuestLogSort>>(
+            find.widgetWithText(CheckedPopupMenuItem<QuestLogSort>, 'A–Z'),
+          )
+          .checked,
+      isTrue,
+    );
   });
 }

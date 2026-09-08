@@ -14,10 +14,13 @@ import 'page_header.dart';
 /// Lists discovered spots (even empty). Timers start at the location; Travel
 /// appears only when a timer is Ready so you can go collect.
 class TimersView extends StatefulWidget {
-  const TimersView({super.key, required this.controller, this.onClose});
+  const TimersView({super.key, required this.controller, this.onClose, this.onTravel});
 
   final GameController controller;
   final VoidCallback? onClose;
+
+  /// Instant travel that should also open the location stage.
+  final void Function(String locationId, String mapId)? onTravel;
 
   @override
   State<TimersView> createState() => _TimersViewState();
@@ -40,6 +43,15 @@ class _TimersViewState extends State<TimersView> {
   void dispose() {
     _ticker?.cancel();
     super.dispose();
+  }
+
+  void _travel(String locationId, String mapId) {
+    final travel = widget.onTravel;
+    if (travel != null) {
+      travel(locationId, mapId);
+      return;
+    }
+    controller.travelTo(locationId, mapId);
   }
 
   List<_DiscoveredSpot> _spotsForKind(PlayerSave save, String kind) {
@@ -92,7 +104,7 @@ class _TimersViewState extends State<TimersView> {
                     db: db,
                     nowMs: nowMs,
                     currentLocationId: here,
-                    onTravel: (locationId, mapId) => controller.travelTo(locationId, mapId),
+                    onTravel: _travel,
                   ),
                   const SizedBox(height: 12),
                   _TimerSection(
@@ -102,7 +114,7 @@ class _TimersViewState extends State<TimersView> {
                     db: db,
                     nowMs: nowMs,
                     currentLocationId: here,
-                    onTravel: (locationId, mapId) => controller.travelTo(locationId, mapId),
+                    onTravel: _travel,
                   ),
                   const SizedBox(height: 12),
                   _TimerSection(
@@ -112,7 +124,7 @@ class _TimersViewState extends State<TimersView> {
                     db: db,
                     nowMs: nowMs,
                     currentLocationId: here,
-                    onTravel: (locationId, mapId) => controller.travelTo(locationId, mapId),
+                    onTravel: _travel,
                   ),
                 ],
               ),

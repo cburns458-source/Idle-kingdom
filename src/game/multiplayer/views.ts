@@ -703,9 +703,19 @@ export interface ChatLineView {
 export function chatLines(
   messages: ChatMessage[],
   viewerId: string | null,
-  { filterProfanityEnabled = false }: { filterProfanityEnabled?: boolean } = {},
+  {
+    filterProfanityEnabled = false,
+    hideGuildMilestones = false,
+  }: { filterProfanityEnabled?: boolean; hideGuildMilestones?: boolean } = {},
 ): ChatLineView[] {
-  return messages.map((message) => ({
+  return messages
+    .filter(
+      (message) =>
+        !hideGuildMilestones ||
+        !message.channelKey.startsWith('guild:') ||
+        !isGuildSkillMilestoneBody(message.body),
+    )
+    .map((message) => ({
     messageId: message.id,
     userId: message.userId,
     username:
