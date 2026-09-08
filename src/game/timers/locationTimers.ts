@@ -331,8 +331,6 @@ export function canPlaceTrap(
   trapItemId: string,
   locationId: string = save.currentLocationId,
 ): { ok: true; kind: 'hunting_trap' | 'fishing_trap' } | { ok: false; reason: string } {
-  const have = save.inventory.find((stack) => stack.itemId === trapItemId)?.quantity ?? 0
-  if (have < 1) return { ok: false, reason: 'You do not have that trap.' }
   if (trapItemId === HUNTING_TRAP_ITEM_ID) {
     if (!HUNTING_TRAP_LOCATIONS.has(locationId)) {
       return { ok: false, reason: 'Hunting traps only work in the Kingswoods and Meadow.' }
@@ -340,6 +338,8 @@ export function canPlaceTrap(
     if (timerAtLocationKind(save, locationId, 'hunting_trap')) {
       return { ok: false, reason: 'A hunting trap is already set here.' }
     }
+    const have = save.inventory.find((stack) => stack.itemId === trapItemId)?.quantity ?? 0
+    if (have < 1) return { ok: false, reason: 'You do not have that trap.' }
     return { ok: true, kind: 'hunting_trap' }
   }
   if (trapItemId === FISHING_TRAP_ITEM_ID) {
@@ -349,6 +349,8 @@ export function canPlaceTrap(
     if (timerAtLocationKind(save, locationId, 'fishing_trap')) {
       return { ok: false, reason: 'A fishing trap is already set here.' }
     }
+    const have = save.inventory.find((stack) => stack.itemId === trapItemId)?.quantity ?? 0
+    if (have < 1) return { ok: false, reason: 'You do not have that trap.' }
     return { ok: true, kind: 'fishing_trap' }
   }
   return { ok: false, reason: 'That is not a placeable trap.' }

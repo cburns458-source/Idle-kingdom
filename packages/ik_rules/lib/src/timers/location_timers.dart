@@ -357,10 +357,6 @@ bool locationHasBotanyPatch(String locationId) => botanyPatchLocations.contains(
   String? locationId,
 }) {
   final loc = locationId ?? save.currentLocationId;
-  final have = save.inventory
-      .where((stack) => stack.itemId == trapItemId)
-      .fold<num>(0, (sum, stack) => sum + stack.quantity);
-  if (have < 1) return (ok: false, kind: null, reason: 'You do not have that trap.');
   if (trapItemId == huntingTrapItemId) {
     if (!huntingTrapLocations.contains(loc)) {
       return (
@@ -372,6 +368,10 @@ bool locationHasBotanyPatch(String locationId) => botanyPatchLocations.contains(
     if (timerAtLocationKind(save, loc, 'hunting_trap') != null) {
       return (ok: false, kind: null, reason: 'A hunting trap is already set here.');
     }
+    final have = save.inventory
+        .where((stack) => stack.itemId == trapItemId)
+        .fold<num>(0, (sum, stack) => sum + stack.quantity);
+    if (have < 1) return (ok: false, kind: null, reason: 'You do not have that trap.');
     return (ok: true, kind: 'hunting_trap', reason: '');
   }
   if (trapItemId == fishingTrapItemId) {
@@ -385,6 +385,10 @@ bool locationHasBotanyPatch(String locationId) => botanyPatchLocations.contains(
     if (timerAtLocationKind(save, loc, 'fishing_trap') != null) {
       return (ok: false, kind: null, reason: 'A fishing trap is already set here.');
     }
+    final have = save.inventory
+        .where((stack) => stack.itemId == trapItemId)
+        .fold<num>(0, (sum, stack) => sum + stack.quantity);
+    if (have < 1) return (ok: false, kind: null, reason: 'You do not have that trap.');
     return (ok: true, kind: 'fishing_trap', reason: '');
   }
   return (ok: false, kind: null, reason: 'That is not a placeable trap.');
