@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:idle_kingdoms/src/session/quest_log_sort_pref.dart';
 import 'package:idle_kingdoms/src/theme.dart';
+import 'package:idle_kingdoms/src/ui/log_view.dart';
 import 'package:ik_content/ik_content.dart';
 import 'package:ik_rules/ik_rules.dart';
 import 'package:ik_runtime/ik_runtime.dart';
@@ -293,9 +294,11 @@ void main() {
     expect(find.text('Release'), findsNothing);
 
     await tester.tap(find.byTooltip('Sort'));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
     await tester.tap(find.widgetWithText(CheckedPopupMenuItem<QuestLogSort>, 'A–Z'));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
     expect(prefs.getItem(QuestLogSortPref.storageKey), QuestLogSort.alphabetical.name);
 
     final again = buildController(
@@ -304,12 +307,13 @@ void main() {
       questLogSort: QuestLogSortPref.load(prefs),
     );
     addTearDown(again.dispose);
-    await pumpShell(tester, again);
-    await openLog(tester);
+    expect(again.questLogSort.sort, QuestLogSort.alphabetical);
+    await pumpPanel(tester, LogView(controller: again));
     await tester.tap(find.text('Quests'));
     await tester.pump();
     await tester.tap(find.byTooltip('Sort'));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
     expect(
       tester
           .widget<CheckedPopupMenuItem<QuestLogSort>>(

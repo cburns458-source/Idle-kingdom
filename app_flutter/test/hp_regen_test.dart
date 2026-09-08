@@ -1,6 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ik_content/ik_content.dart';
-import 'package:ik_rules/ik_rules.dart';
 
 import 'support/harness.dart';
 
