@@ -417,6 +417,9 @@ SessionTickResult advanceSession(GameDatabase db, PlayerSave save, num nowMs, Ra
           loot: finished.result.loot,
           goldGained: finished.result.goldGained,
         ),
+        damageTaken: finished.result.damageTaken,
+        foodHealed: finished.result.foodHealed,
+        showZeroDamageHit: finished.result.showZeroDamageHit,
       ),
     );
     _continueActivity(

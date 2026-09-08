@@ -51,6 +51,21 @@ class CraftPopup {
   final num shownAtMs;
 }
 
+/// Botany / trap haul waiting for the quest-style reward popup.
+class TimerCollectNotice {
+  const TimerCollectNotice({
+    required this.locationId,
+    required this.title,
+    required this.rewards,
+    this.rewardBundle,
+  });
+
+  final String locationId;
+  final String title;
+  final List<String> rewards;
+  final ActionRewardBundle? rewardBundle;
+}
+
 /// Food eaten after a win, held so the stage can float the heal.
 class HealPopup {
   const HealPopup({required this.amount, required this.shownAtMs, required this.seq});
@@ -59,6 +74,17 @@ class HealPopup {
   final num shownAtMs;
 
   /// Bumps each eat so a new pop can restart even when the amount repeats.
+  final int seq;
+}
+
+/// Damage taken outside a combat round (e.g. thievery fail), including a 0 hit.
+class DamagePopup {
+  const DamagePopup({required this.amount, required this.shownAtMs, required this.seq});
+
+  final num amount;
+  final num shownAtMs;
+
+  /// Bumps each hit so a new pop can restart even when the amount repeats.
   final int seq;
 }
 
@@ -143,6 +169,7 @@ class GameController extends ChangeNotifier {
   CosmeticUnlockNotice? _cosmeticUnlock;
   String? _discoveryNotice;
   List<QuestArrivalCompletion> _pendingQuestCompletions = <QuestArrivalCompletion>[];
+  List<TimerCollectNotice> _pendingTimerCollects = <TimerCollectNotice>[];
   List<SkillLevelUpNotice> _pendingSkillLevelUps = <SkillLevelUpNotice>[];
   AutoEquipProposal? _autoEquip;
   CombatRoundEvent? _lastRound;
@@ -150,6 +177,7 @@ class GameController extends ChangeNotifier {
   int _roundSeq = 0;
   CraftPopup? _craftPopup;
   HealPopup? _healPopup;
+  DamagePopup? _damagePopup;
   InkPopup? _inkPopup;
   CombatOutcomeHold? _outcomeHold;
   num? _liveEnemyHp;
@@ -166,6 +194,13 @@ class GameController extends ChangeNotifier {
   List<QuestArrivalCompletion> takePendingQuestCompletions() {
     final pending = List<QuestArrivalCompletion>.of(_pendingQuestCompletions);
     _pendingQuestCompletions = <QuestArrivalCompletion>[];
+    return pending;
+  }
+
+  /// Timer hauls waiting for the quest-style reward popup.
+  List<TimerCollectNotice> takePendingTimerCollects() {
+    final pending = List<TimerCollectNotice>.of(_pendingTimerCollects);
+    _pendingTimerCollects = <TimerCollectNotice>[];
     return pending;
   }
 
@@ -284,6 +319,14 @@ class GameController extends ChangeNotifier {
     final popup = _healPopup;
     if (popup == null) return null;
     if (session.clock() - popup.shownAtMs >= healPopupHoldMs) return null;
+    return popup;
+  }
+
+  /// The last non-combat damage floater (thievery), or null once its second is up.
+  DamagePopup? get damagePopup {
+    final popup = _damagePopup;
+    if (popup == null) return null;
+    if (session.clock() - popup.shownAtMs >= combatFloaterHoldMs) return null;
     return popup;
   }
 
@@ -626,6 +669,7 @@ class GameController extends ChangeNotifier {
     final previous = save;
     final craftBefore = _craftPopup;
     final healBefore = _healPopup;
+    final damageBefore = _damagePopup;
     final skillUpsBefore = _pendingSkillLevelUps.length;
     final messageBefore = _message;
     final activityErrorBefore = _activityError;
@@ -657,6 +701,7 @@ class GameController extends ChangeNotifier {
         slingTouched ||
         !identical(craftBefore, _craftPopup) ||
         !identical(healBefore, _healPopup) ||
+        !identical(damageBefore, _damagePopup) ||
         skillUpsBefore != _pendingSkillLevelUps.length ||
         !identical(messageBefore, _message) ||
         !identical(activityErrorBefore, _activityError) ||
@@ -675,8 +720,27 @@ class GameController extends ChangeNotifier {
 
   void _applyEvent(SessionEvent event) {
     switch (event) {
-      case RewardsEvent(bundle: final bundle):
+      case RewardsEvent(
+        bundle: final bundle,
+        damageTaken: final damageTaken,
+        foodHealed: final foodHealed,
+        showZeroDamageHit: final showZeroDamageHit,
+      ):
         noteReward(bundle);
+        if (damageTaken > 0 || showZeroDamageHit) {
+          _damagePopup = DamagePopup(
+            amount: damageTaken,
+            shownAtMs: session.clock(),
+            seq: (_damagePopup?.seq ?? 0) + 1,
+          );
+        }
+        if (foodHealed != 0) {
+          _healPopup = HealPopup(
+            amount: foodHealed,
+            shownAtMs: session.clock(),
+            seq: (_healPopup?.seq ?? 0) + 1,
+          );
+        }
       case MessageEvent(text: final text):
         _message = text;
       case ActivityStoppedEvent(reason: final reason):
@@ -728,6 +792,7 @@ class GameController extends ChangeNotifier {
     _lastRoundAtMs = null;
     _craftPopup = null;
     _healPopup = null;
+    _damagePopup = null;
     _inkPopup = null;
     _outcomeHold = null;
     _liveEnemyHp = null;
@@ -740,6 +805,9 @@ class GameController extends ChangeNotifier {
     }
     if (_healPopup != null && now - _healPopup!.shownAtMs >= healPopupHoldMs) {
       _healPopup = null;
+    }
+    if (_damagePopup != null && now - _damagePopup!.shownAtMs >= combatFloaterHoldMs) {
+      _damagePopup = null;
     }
     if (_inkPopup != null && now - _inkPopup!.shownAtMs >= inkPopupHoldMs) {
       _inkPopup = null;
@@ -856,20 +924,79 @@ class GameController extends ChangeNotifier {
   }
 
   void collectTimerAt(String locationId) {
-    final result = collectLocationTimer(db, save, locationId);
+    _collectTimerAt(locationId, announceText: true);
+  }
+
+  /// Collects a ready timer, notes the reward strip, and queues a popup notice.
+  bool _collectTimerAt(String locationId, {required bool announceText}) {
+    final before = save;
+    final result = collectLocationTimer(db, before, locationId);
     if (!result.ok) {
-      report(result.reason);
-      return;
+      if (announceText) report(result.reason);
+      return false;
     }
-    commit(result.save!);
-    final parts = <String>[];
+    final next = result.save!;
+    commit(next);
+    final notice = _timerCollectNotice(before, next, locationId, result);
+    if (notice.rewardBundle != null) noteReward(notice.rewardBundle!);
+    _pendingTimerCollects = [..._pendingTimerCollects, notice];
+    if (announceText) {
+      announce(notice.rewards.isEmpty ? 'Collected.' : 'Collected: ${notice.rewards.join(', ')}.');
+    }
+    return true;
+  }
+
+  TimerCollectNotice _timerCollectNotice(
+    PlayerSave before,
+    PlayerSave after,
+    String locationId,
+    LocationTimerCollectResult result,
+  ) {
+    final location = db.locations.where((row) => row.raw['Location ID'] == locationId).firstOrNull;
+    final locationName = location?.raw['Display Name'];
+    final displayLocation = locationName is String ? locationName : locationId;
+    final timerKind = before.locationTimers
+        .where((row) => row.locationId == locationId)
+        .map((row) => row.kind)
+        .firstOrNull;
+    final title = switch (timerKind) {
+      'botany' => displayLocation,
+      'hunting_trap' || 'fishing_trap' => 'Trap haul',
+      _ => 'Harvest',
+    };
+    final rewards = <String>[];
     for (final loot in result.loot) {
-      parts.add('${loot.displayName} x${loot.quantity}');
+      rewards.add('${loot.displayName} x${loot.quantity}');
     }
-    if (result.xpGained > 0) {
-      parts.add('+${result.xpGained} XP');
+    ActionXpRewardSummary? xpSummary;
+    if (result.xpGained > 0 && result.skillId.isNotEmpty) {
+      final beforeLevel = getSkillProgress(before, result.skillId).level;
+      final afterLevel = getSkillProgress(after, result.skillId).level;
+      xpSummary = summarizeXpReward(
+        db,
+        after,
+        result.skillId,
+        result.xpGained,
+        afterLevel > beforeLevel ? afterLevel : null,
+      );
+      if (xpSummary != null) {
+        rewards.add('+${result.xpGained} ${xpSummary.skillName} XP');
+      } else {
+        rewards.add('+${result.xpGained} XP');
+      }
     }
-    announce(parts.isEmpty ? 'Collected.' : 'Collected: ${parts.join(', ')}.');
+    final bundle = ActionRewardBundle(
+      id: 'timer-$locationId-${session.clock()}',
+      xpRewards: [?xpSummary],
+      loot: result.loot,
+      goldGained: 0,
+    );
+    return TimerCollectNotice(
+      locationId: locationId,
+      title: title.isEmpty ? 'Harvest' : title,
+      rewards: rewards,
+      rewardBundle: bundle,
+    );
   }
 
   void toggleFavorite(String activityId) {
@@ -1048,8 +1175,21 @@ class GameController extends ChangeNotifier {
         if (bundle != null) noteReward(bundle);
       }
     }
+    _discoverAndCollectArrivalTimers();
     _offerArrivalFavoriteEquip(arrival);
     notifyListeners();
+  }
+
+  /// Discovers timer spots at the destination and auto-collects a ready timer.
+  void _discoverAndCollectArrivalTimers() {
+    final destinationId = save.currentLocationId;
+    final discovered = discoverTimerSpotsForLocation(save, destinationId);
+    if (!identical(discovered, save)) {
+      session.apply(discovered);
+    }
+    final timer = timerAtLocation(save, destinationId);
+    if (timer == null || !timerIsReady(timer, session.clock())) return;
+    _collectTimerAt(destinationId, announceText: false);
   }
 
   /// Favorite start already ran in the rules. If it failed only because the

@@ -657,6 +657,17 @@ export const SAVE_MIGRATIONS: SaveMigration[] = [
       }
     },
   },
+  {
+    fromVersion: 42,
+    toVersion: 43,
+    migrate: (save) => ({
+      ...save,
+      discoveredTimerSpotIds: Array.isArray(save.discoveredTimerSpotIds)
+        ? save.discoveredTimerSpotIds.filter((id): id is string => typeof id === 'string')
+        : [],
+      saveVersion: 43,
+    }),
+  },
 ]
 
 export function migrateSave(save: PlayerSave, nowMs: number = Date.now()): PlayerSave {

@@ -374,20 +374,10 @@ List<SkillMenuListItem> _botanyPlantEntries(GameDatabase db, {required bool sapl
           RegExp(r'RequiresLevel:(\d+)', caseSensitive: false).firstMatch(notes)?.group(1) ?? '',
         ) ??
         1;
-    final grow =
-        num.tryParse(
-          RegExp(r'GrowSeconds:(\d+)', caseSensitive: false).firstMatch(notes)?.group(1) ?? '',
-        ) ??
-        0;
-    final growLabel = grow >= 3600
-        ? '${(grow / 3600).round()}h'
-        : grow >= 60
-        ? '${(grow / 60).round()}m'
-        : '${grow.round()}s';
     entries.add(
       SkillMenuListItem(
         id: item.itemId,
-        displayName: grow > 0 ? '${item.displayName} ($growLabel)' : item.displayName,
+        displayName: item.displayName,
         level: level < 1 ? 1 : level,
       ),
     );

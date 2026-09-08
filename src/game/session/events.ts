@@ -6,7 +6,16 @@ import type { ActionRewardBundle } from '../activity/types'
  */
 export type SessionEvent =
   /** One completed action's combined XP / loot / gold line. */
-  | { kind: 'rewards'; bundle: ActionRewardBundle }
+  | {
+      kind: 'rewards'
+      bundle: ActionRewardBundle
+      /** HP lost on a thievery failure (combat-style floater). */
+      damageTaken?: number
+      /** Food healed after a thievery resolution. */
+      foodHealed?: number
+      /** Lockpick actions show a 0 damage floater like a combat swing. */
+      showZeroDamageHit?: boolean
+    }
   /** Transient status line, e.g. the blow-by-blow of a combat round. */
   | { kind: 'message'; text: string }
   /** The running activity ended on its own; the text explains why. */

@@ -54,6 +54,11 @@ class ActionCompletionResult {
     required this.goldGained,
     required this.loot,
     required this.leveledUpTo,
+    this.damageTaken = 0,
+    this.foodHealed = 0,
+    this.showZeroDamageHit = false,
+    this.thieveryFailed = false,
+    this.lockpickBroke = false,
   });
 
   final String actionId;
@@ -70,6 +75,17 @@ class ActionCompletionResult {
   final List<LootGrant> loot;
   final num? leveledUpTo;
 
+  /// HP lost on a thievery failure (for combat-style floaters).
+  final num damageTaken;
+
+  /// Food healed after a thievery resolution.
+  final num foodHealed;
+
+  /// Lockpick actions show a 0 damage floater like a combat swing.
+  final bool showZeroDamageHit;
+  final bool thieveryFailed;
+  final bool lockpickBroke;
+
   Map<String, Object?> toJson() => <String, Object?>{
     'actionId': actionId,
     'actionName': actionName,
@@ -80,6 +96,11 @@ class ActionCompletionResult {
     'goldGained': goldGained,
     'loot': loot.map((grant) => grant.toJson()).toList(),
     'leveledUpTo': leveledUpTo,
+    'damageTaken': damageTaken,
+    'foodHealed': foodHealed,
+    'showZeroDamageHit': showZeroDamageHit,
+    'thieveryFailed': thieveryFailed,
+    'lockpickBroke': lockpickBroke,
   };
 }
 

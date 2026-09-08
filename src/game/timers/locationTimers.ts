@@ -132,6 +132,49 @@ export function timerAtLocation(
   return (save.locationTimers ?? []).find((timer) => timer.locationId === locationId)
 }
 
+export type TimerSpotKind = 'botany' | 'hunting_trap' | 'fishing_trap'
+
+/** Stable key for a timer spot in `discoveredTimerSpotIds`. */
+export function timerSpotKey(kind: TimerSpotKind, locationId: string): string {
+  return `${kind}:${locationId}`
+}
+
+/** Split a spot key back into kind + location, or null if malformed. */
+export function parseTimerSpotKey(
+  key: string,
+): { kind: TimerSpotKind; locationId: string } | null {
+  const sep = key.indexOf(':')
+  if (sep <= 0) return null
+  const kind = key.slice(0, sep)
+  const locationId = key.slice(sep + 1)
+  if (!locationId) return null
+  if (kind !== 'botany' && kind !== 'hunting_trap' && kind !== 'fishing_trap') return null
+  return { kind, locationId }
+}
+
+/**
+ * Marks Botany / hunting / fishing spots at [locationId] as discovered when the
+ * location supports them. Safe to call on plant, place, or travel arrival.
+ */
+export function discoverTimerSpotsForLocation(
+  save: PlayerSave,
+  locationId: string,
+): PlayerSave {
+  const discovered = new Set(save.discoveredTimerSpotIds ?? [])
+  let changed = false
+  const add = (kind: TimerSpotKind) => {
+    const key = timerSpotKey(kind, locationId)
+    if (discovered.has(key)) return
+    discovered.add(key)
+    changed = true
+  }
+  if (BOTANY_PATCH_LOCATIONS.has(locationId)) add('botany')
+  if (HUNTING_TRAP_LOCATIONS.has(locationId)) add('hunting_trap')
+  if (FISHING_TRAP_LOCATIONS.has(locationId)) add('fishing_trap')
+  if (!changed) return save
+  return { ...save, discoveredTimerSpotIds: [...discovered] }
+}
+
 export function timerCompletesAtMs(timer: LocationTimer): number {
   return Date.parse(timer.startedAt) + timer.durationMs
 }
@@ -228,17 +271,18 @@ export function plantBotanySeed(
   }
   return {
     ok: true,
-    save: {
-      ...removed,
-      locationTimers: [
-        ...(removed.locationTimers ?? []).filter((row) => row.locationId !== locationId),
-        timer,
-      ],
-    },
+    save: discoverTimerSpotsForLocation(
+      {
+        ...removed,
+        locationTimers: [
+          ...(removed.locationTimers ?? []).filter((row) => row.locationId !== locationId),
+          timer,
+        ],
+      },
+      locationId,
+    ),
   }
 }
-
-export function plantBestBotanySeed(
   db: GameDatabase,
   save: PlayerSave,
   nowMs: number = Date.now(),
@@ -308,13 +352,16 @@ export function placeTrap(
   }
   return {
     ok: true,
-    save: {
-      ...removed,
-      locationTimers: [
-        ...(removed.locationTimers ?? []).filter((row) => row.locationId !== locationId),
-        timer,
-      ],
-    },
+    save: discoverTimerSpotsForLocation(
+      {
+        ...removed,
+        locationTimers: [
+          ...(removed.locationTimers ?? []).filter((row) => row.locationId !== locationId),
+          timer,
+        ],
+      },
+      locationId,
+    ),
   }
 }
 

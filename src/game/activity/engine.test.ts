@@ -8,6 +8,7 @@ import {
   clearActivitySave,
   completeGatheringAction,
   generateNextAction,
+  lockpickBreakChancePercent,
   validateActivityStart,
 } from './engine'
 import { gatheringDurationMs, gatheringXpReward } from './gathering'
@@ -145,6 +146,34 @@ describe('primary activity engine', () => {
       },
     }
     expect(validateActivityStart(launch, save, 'ACT-0059').ok).toBe(true)
+  })
+
+  it('scales lockpick break chance from 50% at L1 to 99.5% at L100', () => {
+    expect(lockpickBreakChancePercent(1)).toBe(50)
+    expect(lockpickBreakChancePercent(100)).toBe(99.5)
+  })
+
+  it('grants XP with empty loot when a thievery fail check always fails', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const action = launch.Actions.find((row) => row['Action ID'] === 'ACN-0185')!
+    expect(action.Notes).toMatch(/FailChance:30/i)
+    let save = createNewSave(launch)
+    save = {
+      ...save,
+      currentHp: save.maxHp,
+      skills: save.skills.map((row) =>
+        row.skillId === 'SKL-0015' ? { ...row, level: 1, xp: 0 } : row,
+      ),
+    }
+    const beforeXp = save.skills.find((row) => row.skillId === 'SKL-0015')?.xp ?? 0
+    // random() * 100 < FailChance → always fail the steal check.
+    const completed = completeGatheringAction(launch, save, action, () => 0)
+    expect(completed.result.thieveryFailed).toBe(true)
+    expect(completed.result.xpGained).toBeGreaterThan(0)
+    expect(completed.result.loot).toEqual([])
+    expect(completed.save.skills.find((row) => row.skillId === 'SKL-0015')?.xp ?? 0).toBeGreaterThan(
+      beforeXp,
+    )
   })
 
   it('doubles gathering duration and halves XP below proficiency', () => {

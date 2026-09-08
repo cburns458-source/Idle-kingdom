@@ -89,6 +89,7 @@ function saveWithInventory(itemIds: string[]): PlayerSave {
     unattendedProgressAt: null,
     playTimeMs: 0,
     locationTimers: [],
+    discoveredTimerSpotIds: [],
   }
 }
 

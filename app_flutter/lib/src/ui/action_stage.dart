@@ -823,7 +823,13 @@ class _CombatStage extends StatelessWidget {
           height: _portraitSlotHeight,
           width: double.infinity,
           child:
-              _playerFloaters(round, seq, showFloaters, controller.healPopup) ??
+              _playerFloaters(
+                round,
+                seq,
+                showFloaters,
+                controller.healPopup,
+                controller.damagePopup,
+              ) ??
               const SizedBox.expand(),
         ),
         scene: _Portrait(
@@ -1039,7 +1045,19 @@ class _GatheringStage extends StatelessWidget {
     return _StageShell(
       semanticsLabel: 'Gathering',
       scene: _TwoPortraits(
-        player: const SizedBox(height: _portraitSlotHeight),
+        player: SizedBox(
+          height: _portraitSlotHeight,
+          width: double.infinity,
+          child:
+              _playerFloaters(
+                null,
+                0,
+                false,
+                controller.healPopup,
+                controller.damagePopup,
+              ) ??
+              const SizedBox.expand(),
+        ),
         scene: const SizedBox(height: _portraitSlotHeight),
         playerCaption: const SizedBox(height: _captionMinHeight),
         sceneCaption: ConstrainedBox(
@@ -1272,18 +1290,36 @@ String _queueLine(GameController controller, String recipeId) {
 }
 
 /// Hits taken and food eaten, stacked so a heal after a win still shows.
-Widget? _playerFloaters(CombatRoundEvent? round, int seq, bool showHits, HealPopup? heal) {
-  final hit = showHits && round != null && (round.enemyHit ?? 0) > 0;
-  if (!hit && heal == null) return null;
+///
+/// Combat hits stay `> 0`. Thievery [DamagePopup] may show `0` when a lockpick
+/// swing connects without HP loss.
+Widget? _playerFloaters(
+  CombatRoundEvent? round,
+  int seq,
+  bool showHits,
+  HealPopup? heal,
+  DamagePopup? damage,
+) {
+  final combatHit = showHits && round != null && (round.enemyHit ?? 0) > 0;
+  final thieveryHit = damage != null && damage.amount >= 0;
+  if (!combatHit && !thieveryHit && heal == null) return null;
   return Stack(
     children: [
-      if (hit)
+      if (combatHit)
         _DamageFloater(
           key: ValueKey('enemy-hit-$seq'),
           text: '${round.enemyHit!.round()}',
           color: _enemyHitColor,
           alignment: const Alignment(-0.16, -0.16),
           offset: _floaterOffset(seq, 1),
+        ),
+      if (thieveryHit)
+        _DamageFloater(
+          key: ValueKey('thievery-hit-${damage.seq}'),
+          text: '${damage.amount.round()}',
+          color: _enemyHitColor,
+          alignment: const Alignment(-0.16, -0.16),
+          offset: _floaterOffset(damage.seq, 1),
         ),
       if (heal != null)
         _DamageFloater(

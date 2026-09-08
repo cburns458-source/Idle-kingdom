@@ -127,6 +127,7 @@ PlayerSave createNewSave(GameDatabase db, num nowMs) {
     currentHp: maxHp,
     maxHp: maxHp,
     locationTimers: const <LocationTimer>[],
+    discoveredTimerSpotIds: const <String>[],
   );
 }
 
