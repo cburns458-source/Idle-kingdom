@@ -148,7 +148,7 @@ class TopHud extends StatelessWidget {
                                     title,
                                     maxLines: 1,
                                     style: const TextStyle(
-                                      fontSize: 16,
+                                      fontSize: 14,
                                       fontWeight: FontWeight.w400,
                                       height: 1.15,
                                     ),
@@ -159,7 +159,7 @@ class TopHud extends StatelessWidget {
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(
-                                    fontSize: 11.5,
+                                    fontSize: 10.5,
                                     fontWeight: FontWeight.w400,
                                     color: Color(0xFFC8D7B6),
                                     height: 1.2,
@@ -173,7 +173,7 @@ class TopHud extends StatelessWidget {
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                     style: const TextStyle(
-                                      fontSize: 11.5,
+                                      fontSize: 10.5,
                                       fontWeight: FontWeight.w400,
                                       color: Color(0xFFC8D7B6),
                                       height: 1.2,
@@ -204,7 +204,7 @@ class TopHud extends StatelessWidget {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
-                                fontSize: 12,
+                                fontSize: 11,
                                 fontWeight: FontWeight.w400,
                                 color: Color(0xFFFFF4D4),
                               ),
@@ -223,7 +223,7 @@ class TopHud extends StatelessWidget {
                                           ? formatThousands(heal.amount)
                                           : '+${formatThousands(heal.amount)}',
                                       style: TextStyle(
-                                        fontSize: 11,
+                                        fontSize: 10,
                                         fontWeight: FontWeight.w400,
                                         color: heal.amount < 0
                                             ? const Color(0xFFE8A090)
@@ -239,7 +239,7 @@ class TopHud extends StatelessWidget {
                                               '${formatThousands(maxHp)}',
                                     textAlign: TextAlign.right,
                                     style: TextStyle(
-                                      fontSize: 11,
+                                      fontSize: 10,
                                       fontWeight: FontWeight.w400,
                                       color: controller.isRecovering
                                           ? const Color(0xFFE8A090)
@@ -299,7 +299,7 @@ class _ActivityReadout extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.right,
             style: const TextStyle(
-              fontSize: 11,
+              fontSize: 10,
               fontWeight: FontWeight.w400,
               color: Color(0xFFF4EFD8),
               height: 1.1,
@@ -310,7 +310,7 @@ class _ActivityReadout extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.right,
-            style: const TextStyle(fontSize: 10.5, color: Color(0xFFC8D7B6), height: 1.1),
+            style: const TextStyle(fontSize: 9.5, color: Color(0xFFC8D7B6), height: 1.1),
           ),
         ],
       ),

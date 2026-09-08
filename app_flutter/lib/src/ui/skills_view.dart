@@ -134,9 +134,6 @@ class _Totals extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final save = controller.save;
-    final mastered = save.skills.where((skill) {
-      return skillXpProgress(controller.db, skill.xp).atCap;
-    }).length;
 
     return Container(
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
@@ -148,7 +145,6 @@ class _Totals extends StatelessWidget {
         children: [
           _Total(label: 'Total level', value: formatThousands(totalLevel(save))),
           _Total(label: 'Total xp', value: formatThousands(totalSkillXp(save))),
-          _Total(label: 'Mastered', value: '$mastered / ${save.skills.length}'),
         ],
       ),
     );

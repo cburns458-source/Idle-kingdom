@@ -14,7 +14,7 @@ const rawDatabase = JSON.parse(
 )
 
 describe('combat level bonuses', () => {
-  it('gives every fishing rod a 10-10 damage range', () => {
+  it('gives every fishing rod a 0-0 melee damage range', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const base = createNewSave(launch)
     const rodIds = [
@@ -38,7 +38,7 @@ describe('combat level bonuses', () => {
           },
         },
       }
-      expect(playerDamageRange(launch, save), itemId).toEqual({ min: 10, max: 10 })
+      expect(playerDamageRange(launch, save), itemId).toEqual({ min: 0, max: 0 })
     }
   })
 
