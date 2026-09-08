@@ -936,10 +936,11 @@ class GameController extends ChangeNotifier {
       return false;
     }
     final next = result.save!;
-    commit(next);
     final notice = _timerCollectNotice(before, next, locationId, result);
     if (notice.rewardBundle != null) noteReward(notice.rewardBundle!);
+    // Queue before commit so the shell flush sees the notice on notify.
     _pendingTimerCollects = [..._pendingTimerCollects, notice];
+    commit(next);
     if (announceText) {
       announce(notice.rewards.isEmpty ? 'Collected.' : 'Collected: ${notice.rewards.join(', ')}.');
     }
