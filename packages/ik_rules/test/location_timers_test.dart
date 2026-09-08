@@ -82,7 +82,10 @@ void main() {
     expect(timerAtLocationKind(placed.save!, 'LOC-0009', 'botany')?.kind, 'botany');
     expect(timerAtLocationKind(placed.save!, 'LOC-0009', 'hunting_trap')?.kind, 'hunting_trap');
     expect(canPlantBotanySeed(db, placed.save!, 'ITEM-0324').ok, isFalse);
-    expect(canPlaceTrap(db, placed.save!, huntingTrapItemId).reason, 'A hunting trap is already set here.');
+    expect(
+      canPlaceTrap(db, placed.save!, huntingTrapItemId).reason,
+      'A hunting trap is already set here.',
+    );
 
     final collectedBotany = collectLocationTimer(
       db,

@@ -100,7 +100,9 @@ void main() {
   test('lists excavator pickaxe quest reward but not chef hat quest', () {
     final pick = codex.item('ITEM-0313')!;
     expect(
-      pick.obtainedFrom.any((row) => row.kind == CodexObtainKind.quest && row.questId == 'QST-0008'),
+      pick.obtainedFrom.any(
+        (row) => row.kind == CodexObtainKind.quest && row.questId == 'QST-0008',
+      ),
       isTrue,
     );
     final hat = codex.item('ITEM-0165')!;

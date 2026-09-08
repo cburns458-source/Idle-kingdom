@@ -514,9 +514,7 @@ class CodexIndex {
     }
 
     // Quest rewards: non-cosmetic gear/tools only (see _includeQuestRewardAsObtainSource).
-    final itemCategory = <String, String?>{
-      for (final item in db.items) item.itemId: item.category,
-    };
+    final itemCategory = <String, String?>{for (final item in db.items) item.itemId: item.category};
     for (final quest in db.quests) {
       final rewardId = quest['Reward Item ID'];
       if (rewardId is! String || rewardId.isEmpty) continue;

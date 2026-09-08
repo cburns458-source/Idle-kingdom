@@ -34,6 +34,7 @@ class CodexView extends StatefulWidget {
 class _CodexViewState extends State<CodexView> {
   late final CodexIndex _codex = CodexIndex(widget.controller.db);
   final TextEditingController _search = TextEditingController();
+
   /// Empty = catalog. One route = the open item or enemy detail (replaced, never stacked).
   final List<_CodexRoute> _stack = <_CodexRoute>[];
   _CodexTab _tab = _CodexTab.items;

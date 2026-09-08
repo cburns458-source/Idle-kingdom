@@ -259,9 +259,10 @@ describe('locationTimers', () => {
     expect(timerAtLocationKind(placed.save, 'LOC-0009', 'botany')?.kind).toBe('botany')
     expect(timerAtLocationKind(placed.save, 'LOC-0009', 'hunting_trap')?.kind).toBe('hunting_trap')
     expect(canPlantBotanySeed(launch, placed.save, 'ITEM-0324').ok).toBe(false)
-    expect(canPlaceTrap(launch, placed.save, HUNTING_TRAP_ITEM_ID).reason).toBe(
-      'A hunting trap is already set here.',
-    )
+    const blockedTrap = canPlaceTrap(launch, placed.save, HUNTING_TRAP_ITEM_ID)
+    expect(blockedTrap.ok).toBe(false)
+    if (blockedTrap.ok) return
+    expect(blockedTrap.reason).toBe('A hunting trap is already set here.')
 
     const collectedBotany = collectLocationTimer(
       launch,
