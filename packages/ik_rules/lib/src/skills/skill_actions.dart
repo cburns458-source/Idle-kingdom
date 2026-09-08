@@ -393,12 +393,13 @@ List<SkillMenuTab> _tabsForSkill(GameDatabase db, String skillId) {
 }
 
 List<SkillMenuListItem> _gatheringSkillActions(GameDatabase db, String skillId) {
-  return [
-    for (final item in actionsForSkill(db, skillId))
-      if (db.actions.firstWhereOrNull((row) => row.actionId == item.id)
-          case final action?)
-        if (_isGatheringSkillMenuAction(action)) item,
-  ];
+  final items = <SkillMenuListItem>[];
+  for (final item in actionsForSkill(db, skillId)) {
+    final action = db.actions.firstWhereOrNull((row) => row.actionId == item.id);
+    if (action == null || !_isGatheringSkillMenuAction(action)) continue;
+    items.add(item);
+  }
+  return items;
 }
 
 List<SkillMenuTab> _thieveryTabs(GameDatabase db) {
