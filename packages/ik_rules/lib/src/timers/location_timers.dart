@@ -171,6 +171,39 @@ LocationTimer? timerAtLocation(PlayerSave save, String locationId) {
   return save.locationTimers.firstWhereOrNull((timer) => timer.locationId == locationId);
 }
 
+/// Stable key for a timer spot in [PlayerSave.discoveredTimerSpotIds].
+String timerSpotKey(String kind, String locationId) => '$kind:$locationId';
+
+/// Split a spot key back into kind + location, or null if malformed.
+({String kind, String locationId})? parseTimerSpotKey(String key) {
+  final sep = key.indexOf(':');
+  if (sep <= 0) return null;
+  final kind = key.substring(0, sep);
+  final locationId = key.substring(sep + 1);
+  if (locationId.isEmpty) return null;
+  if (kind != 'botany' && kind != 'hunting_trap' && kind != 'fishing_trap') return null;
+  return (kind: kind, locationId: locationId);
+}
+
+/// Marks Botany / hunting / fishing spots at [locationId] as discovered when the
+/// location supports them. Safe to call on plant, place, or travel arrival.
+PlayerSave discoverTimerSpotsForLocation(PlayerSave save, String locationId) {
+  final discovered = <String>{...save.discoveredTimerSpotIds};
+  var changed = false;
+  void add(String kind) {
+    final key = timerSpotKey(kind, locationId);
+    if (discovered.contains(key)) return;
+    discovered.add(key);
+    changed = true;
+  }
+
+  if (botanyPatchLocations.contains(locationId)) add('botany');
+  if (huntingTrapLocations.contains(locationId)) add('hunting_trap');
+  if (fishingTrapLocations.contains(locationId)) add('fishing_trap');
+  if (!changed) return save;
+  return save.copyWith(discoveredTimerSpotIds: discovered.toList());
+}
+
 num timerCompletesAtMs(LocationTimer timer) {
   return DateTime.parse(timer.startedAt).millisecondsSinceEpoch + timer.durationMs;
 }
@@ -275,8 +308,11 @@ bool locationHasBotanyPatch(String locationId) => botanyPatchLocations.contains(
   );
   return (
     ok: true,
-    save: removed.copyWith(
-      locationTimers: [...removed.locationTimers.where((row) => row.locationId != loc), timer],
+    save: discoverTimerSpotsForLocation(
+      removed.copyWith(
+        locationTimers: [...removed.locationTimers.where((row) => row.locationId != loc), timer],
+      ),
+      loc,
     ),
     reason: '',
   );
@@ -364,8 +400,11 @@ bool locationHasBotanyPatch(String locationId) => botanyPatchLocations.contains(
   );
   return (
     ok: true,
-    save: removed.copyWith(
-      locationTimers: [...removed.locationTimers.where((row) => row.locationId != loc), timer],
+    save: discoverTimerSpotsForLocation(
+      removed.copyWith(
+        locationTimers: [...removed.locationTimers.where((row) => row.locationId != loc), timer],
+      ),
+      loc,
     ),
     reason: '',
   );

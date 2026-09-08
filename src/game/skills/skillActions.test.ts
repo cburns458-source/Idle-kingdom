@@ -171,18 +171,16 @@ describe('skill menu entries', () => {
     expect(tools.some((item) => item.displayName === 'Magic Net' && item.level === 45)).toBe(true)
   })
 
-  it('lists Botany Seeds and Saplings with grow times', () => {
+  it('lists Botany Seeds and Saplings without grow times', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const botany = skillMenuView(launch, 'SKL-0014')
     expect(botany.tabs.map((tab) => tab.label)).toEqual(['Seeds', 'Saplings'])
     const seeds = botany.tabs.find((tab) => tab.id === 'seeds')?.sections[0]?.entries ?? []
     const saplings = botany.tabs.find((tab) => tab.id === 'saplings')?.sections[0]?.entries ?? []
-    expect(seeds.some((item) => item.displayName.includes('Potato Seed') && item.displayName.includes('3h'))).toBe(
-      true,
-    )
-    expect(
-      saplings.some((item) => item.displayName.includes('Cedar Sapling') && item.displayName.includes('12h')),
-    ).toBe(true)
+    expect(seeds.some((item) => item.displayName === 'Potato Seed')).toBe(true)
+    expect(saplings.some((item) => item.displayName === 'Cedar Sapling')).toBe(true)
+    expect(seeds.every((item) => !/\d+h|\d+m|\d+s/.test(item.displayName))).toBe(true)
+    expect(saplings.every((item) => !/\d+h|\d+m|\d+s/.test(item.displayName))).toBe(true)
   })
 
   it('groups smithing by material and numbers every menu row', () => {

@@ -14,16 +14,42 @@ sealed class SessionEvent {
 }
 
 /// One completed action's combined XP / loot / gold line.
+///
+/// Optional thievery floater fields travel with gathering rewards so the UI can
+/// show damage / zero-hit / food heal without a separate combat round.
 class RewardsEvent extends SessionEvent {
-  const RewardsEvent(this.bundle);
+  const RewardsEvent(
+    this.bundle, {
+    this.damageTaken = 0,
+    this.foodHealed = 0,
+    this.showZeroDamageHit = false,
+  });
 
   final ActionRewardBundle bundle;
+
+  /// HP lost on a thievery failure (combat-style floater).
+  final num damageTaken;
+
+  /// Food healed after a thievery resolution.
+  final num foodHealed;
+
+  /// Lockpick actions show a 0 damage floater like a combat swing.
+  final bool showZeroDamageHit;
 
   @override
   String get kind => 'rewards';
 
   @override
-  Map<String, Object?> toJson() => <String, Object?>{'kind': kind, 'bundle': bundle.toJson()};
+  Map<String, Object?> toJson() {
+    final json = <String, Object?>{'kind': kind, 'bundle': bundle.toJson()};
+    // Omit defaults so existing session parity fixtures stay byte-stable.
+    if (damageTaken != 0 || foodHealed != 0 || showZeroDamageHit) {
+      json['damageTaken'] = damageTaken;
+      json['foodHealed'] = foodHealed;
+      json['showZeroDamageHit'] = showZeroDamageHit;
+    }
+    return json;
+  }
 }
 
 /// Transient status line, e.g. the blow-by-blow of a combat round.

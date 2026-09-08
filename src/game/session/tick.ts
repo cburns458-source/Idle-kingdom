@@ -443,6 +443,9 @@ export function advanceSession(
     const finished = completeGatheringAction(db, out.current, action, random, due)
     out.set(finished.save)
     out.creditCritterTime(actionState.durationMs, due, random)
+    const damageTaken = finished.result.damageTaken ?? 0
+    const foodHealed = finished.result.foodHealed ?? 0
+    const showZeroDamageHit = finished.result.showZeroDamageHit ?? false
     out.emit({
       kind: 'rewards',
       bundle: {
@@ -451,6 +454,9 @@ export function advanceSession(
         loot: finished.result.loot,
         goldGained: finished.result.goldGained,
       },
+      ...(damageTaken !== 0 || foodHealed !== 0 || showZeroDamageHit
+        ? { damageTaken, foodHealed, showZeroDamageHit }
+        : {}),
     })
     continueActivity(
       db,

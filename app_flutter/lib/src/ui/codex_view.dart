@@ -538,7 +538,7 @@ class _ItemChip extends StatelessWidget {
           ItemIcon(item: item, size: 22),
           const SizedBox(width: 6),
           Flexible(
-            child: Text(label, style: TextStyle(fontSize: 12.5, color: chrome.panelInk)),
+            child: Text(label, style: TextStyle(fontSize: 12.5, color: Palette.parchmentText)),
           ),
         ],
       ),

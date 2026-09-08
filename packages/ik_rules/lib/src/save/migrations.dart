@@ -646,6 +646,21 @@ final List<SaveMigration> saveMigrations = <SaveMigration>[
       return next;
     },
   ),
+  SaveMigration(
+    fromVersion: 42,
+    toVersion: 43,
+    migrate: (save, nowMs) {
+      final next = _bumped(save, 43);
+      final raw = save['discoveredTimerSpotIds'];
+      next['discoveredTimerSpotIds'] = raw is List
+          ? <Object?>[
+              for (final entry in raw)
+                if (entry is String) entry,
+            ]
+          : <Object?>[];
+      return next;
+    },
+  ),
 ];
 
 /// Thrown when a save cannot be brought to the current version.

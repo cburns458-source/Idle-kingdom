@@ -7,7 +7,7 @@
 
 import '../../json_support.dart';
 
-const int saveVersion = 42;
+const int saveVersion = 43;
 
 const String saveStorageKey = 'idle-kingdoms.demo.save';
 
@@ -772,6 +772,7 @@ class PlayerSave {
     required this.currentHp,
     required this.maxHp,
     required this.locationTimers,
+    required this.discoveredTimerSpotIds,
   });
 
   factory PlayerSave.fromJson(Map<String, Object?> json) {
@@ -876,6 +877,10 @@ class PlayerSave {
       locationTimers: listOf(
         json['locationTimers'],
         (Object? entry) => LocationTimer.fromJson(asJsonMap(entry)),
+      ),
+      discoveredTimerSpotIds: listOf(
+        json['discoveredTimerSpotIds'],
+        (Object? entry) => entry as String,
       ),
     );
   }
@@ -1074,6 +1079,10 @@ class PlayerSave {
   /// Runs in parallel with the Primary Activity.
   final List<LocationTimer> locationTimers;
 
+  /// Timer spot keys the player has found (`botany:LOC-xxxx`, `hunting_trap:LOC-xxxx`,
+  /// `fishing_trap:LOC-xxxx`). Listed in the Timers menu even with no active timer.
+  final List<String> discoveredTimerSpotIds;
+
   Map<String, Object?> toJson() {
     return <String, Object?>{
       'saveVersion': saveVersion,
@@ -1147,6 +1156,7 @@ class PlayerSave {
       'currentHp': currentHp,
       'maxHp': maxHp,
       'locationTimers': locationTimers.map((entry) => entry.toJson()).toList(),
+      'discoveredTimerSpotIds': discoveredTimerSpotIds,
     };
   }
 
@@ -1222,6 +1232,7 @@ class PlayerSave {
     num? currentHp,
     num? maxHp,
     List<LocationTimer>? locationTimers,
+    List<String>? discoveredTimerSpotIds,
   }) {
     return PlayerSave(
       saveVersion: saveVersion ?? this.saveVersion,
@@ -1334,6 +1345,7 @@ class PlayerSave {
       currentHp: currentHp ?? this.currentHp,
       maxHp: maxHp ?? this.maxHp,
       locationTimers: locationTimers ?? this.locationTimers,
+      discoveredTimerSpotIds: discoveredTimerSpotIds ?? this.discoveredTimerSpotIds,
     );
   }
 }

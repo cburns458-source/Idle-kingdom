@@ -294,12 +294,9 @@ function botanyPlantEntries(db: GameDatabase, saplings: boolean): SkillMenuListI
     if (!tags.includes(needle)) continue
     const notes = item.Notes ?? ''
     const level = Number(/RequiresLevel:(\d+)/i.exec(notes)?.[1] ?? 1)
-    const grow = Number(/GrowSeconds:(\d+)/i.exec(notes)?.[1] ?? 0)
-    const growLabel =
-      grow >= 3600 ? `${Math.round(grow / 3600)}h` : grow >= 60 ? `${Math.round(grow / 60)}m` : `${grow}s`
     entries.push({
       id: item['Item ID'],
-      displayName: grow > 0 ? `${item['Display Name']} (${growLabel})` : item['Display Name'],
+      displayName: item['Display Name'],
       level: level < 1 ? 1 : level,
     })
   }

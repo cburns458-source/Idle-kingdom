@@ -1,4 +1,4 @@
-export const SAVE_VERSION = 42
+export const SAVE_VERSION = 43
 export const SAVE_STORAGE_KEY = 'idle-kingdoms.demo.save'
 export const STARTING_LOCATION_ID = 'LOC-0001'
 /** Base gold before race kit; race starters grant the real starting gold. */
@@ -339,6 +339,11 @@ export interface PlayerSave {
    * Runs in parallel with the Primary Activity.
    */
   locationTimers: LocationTimer[]
+  /**
+   * Timer spot keys the player has found (`botany:LOC-xxxx`, `hunting_trap:LOC-xxxx`,
+   * `fishing_trap:LOC-xxxx`). Listed in the Timers menu even with no active timer.
+   */
+  discoveredTimerSpotIds: string[]
 }
 
 export interface SaveMigration {

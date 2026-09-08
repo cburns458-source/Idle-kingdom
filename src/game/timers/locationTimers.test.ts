@@ -8,13 +8,16 @@ import {
   canPlaceTrap,
   canPlantBotanySeed,
   collectLocationTimer,
+  discoverTimerSpotsForLocation,
   FISHING_TRAP_ITEM_ID,
   HUNTING_TRAP_ITEM_ID,
   locationHasBotanyPatch,
+  parseTimerSpotKey,
   placeTrap,
   plantBotanySeed,
   timerAtLocation,
   timerIsReady,
+  timerSpotKey,
 } from './locationTimers'
 
 const rawDatabase = JSON.parse(
@@ -22,6 +25,77 @@ const rawDatabase = JSON.parse(
 )
 
 describe('locationTimers', () => {
+  it('builds and parses timer spot keys', () => {
+    expect(timerSpotKey('botany', 'LOC-0001')).toBe('botany:LOC-0001')
+    expect(timerSpotKey('hunting_trap', 'LOC-0008')).toBe('hunting_trap:LOC-0008')
+    expect(timerSpotKey('fishing_trap', 'LOC-0003')).toBe('fishing_trap:LOC-0003')
+    expect(parseTimerSpotKey('botany:LOC-0001')).toEqual({
+      kind: 'botany',
+      locationId: 'LOC-0001',
+    })
+    expect(parseTimerSpotKey('hunting_trap:LOC-0009')).toEqual({
+      kind: 'hunting_trap',
+      locationId: 'LOC-0009',
+    })
+    expect(parseTimerSpotKey('')).toBeNull()
+    expect(parseTimerSpotKey('botany')).toBeNull()
+    expect(parseTimerSpotKey('botany:')).toBeNull()
+    expect(parseTimerSpotKey(':LOC-0001')).toBeNull()
+    expect(parseTimerSpotKey('unknown:LOC-0001')).toBeNull()
+  })
+
+  it('discovers botany and trap spots for a location without duplicates', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    let save = createNewSave(launch)
+    expect(save.discoveredTimerSpotIds).toEqual([])
+
+    save = discoverTimerSpotsForLocation(save, 'LOC-0001')
+    expect(save.discoveredTimerSpotIds).toEqual(['botany:LOC-0001'])
+    expect(discoverTimerSpotsForLocation(save, 'LOC-0001')).toBe(save)
+
+    save = discoverTimerSpotsForLocation(save, 'LOC-0008')
+    expect(save.discoveredTimerSpotIds).toEqual(['botany:LOC-0001', 'hunting_trap:LOC-0008'])
+
+    save = discoverTimerSpotsForLocation(save, 'LOC-0009')
+    expect(save.discoveredTimerSpotIds).toContain('botany:LOC-0009')
+    expect(save.discoveredTimerSpotIds).toContain('hunting_trap:LOC-0009')
+
+    save = discoverTimerSpotsForLocation(save, 'LOC-0003')
+    expect(save.discoveredTimerSpotIds).toContain('fishing_trap:LOC-0003')
+
+    expect(discoverTimerSpotsForLocation(save, 'LOC-9999')).toBe(save)
+  })
+
+  it('records discovery when planting or placing', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    let save = createNewSave(launch)
+    save = {
+      ...save,
+      currentLocationId: 'LOC-0001',
+      inventory: [{ itemId: 'ITEM-0324', quantity: 3 }],
+    }
+    const planted = plantBotanySeed(
+      launch,
+      save,
+      'ITEM-0324',
+      Date.parse('2026-01-01T00:00:00.000Z'),
+      3,
+    )
+    expect(planted.ok).toBe(true)
+    if (!planted.ok) return
+    expect(planted.save.discoveredTimerSpotIds).toContain('botany:LOC-0001')
+
+    save = {
+      ...createNewSave(launch),
+      currentLocationId: 'LOC-0008',
+      inventory: [{ itemId: HUNTING_TRAP_ITEM_ID, quantity: 1 }],
+    }
+    const placed = placeTrap(launch, save, HUNTING_TRAP_ITEM_ID, Date.parse('2026-01-01T00:00:00.000Z'))
+    expect(placed.ok).toBe(true)
+    if (!placed.ok) return
+    expect(placed.save.discoveredTimerSpotIds).toContain('hunting_trap:LOC-0008')
+  })
+
   it('allows botany patches at multi-location set, with courtyard Grand Feast gate', () => {
     const { launch } = prepareDatabase(rawDatabase)
     let save = createNewSave(launch)

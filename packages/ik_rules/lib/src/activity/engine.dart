@@ -252,6 +252,22 @@ class GatheringCompletion {
   final ActionCompletionResult result;
 }
 
+num lockpickBreakChancePercent(num thieveryLevel) {
+  final level = thieveryLevel.floor() < 1 ? 1 : thieveryLevel.floor();
+  final chance = 50 + (level - 1) * 0.5;
+  return chance > 100 ? 100 : chance;
+}
+
+({PlayerSave save, bool broke}) _maybeBreakLockpick(
+  PlayerSave save,
+  RandomFn random,
+  num thieveryLevel,
+) {
+  final chance = lockpickBreakChancePercent(thieveryLevel);
+  if (random() * 100 >= chance) return (save: save, broke: false);
+  return (save: _consumeLockpick(save), broke: true);
+}
+
 GatheringCompletion completeGatheringAction(
   GameDatabase db,
   PlayerSave save,
@@ -262,11 +278,15 @@ GatheringCompletion completeGatheringAction(
   final notes = action.raw['Notes'];
   final notesText = notes is String ? notes : '';
   final now = nowMs ?? DateTime.now().millisecondsSinceEpoch;
+  final requiresLockpick = RegExp(r'RequiresLockpick', caseSensitive: false).hasMatch(notesText);
+  final isThievery = RegExp(r'Thievery', caseSensitive: false).hasMatch(notesText);
+  final skillId = jsString(action.raw['Relevant Skill ID']);
+  final thieveryLevel = getSkillProgress(save, 'SKL-0015').level;
 
   ActionCompletionResult emptyResult() => ActionCompletionResult(
     actionId: jsString(action.raw['Action ID']),
     actionName: jsString(action.raw['Display Name']),
-    skillId: jsString(action.raw['Relevant Skill ID']),
+    skillId: skillId,
     xpGained: 0,
     bonusXp: const <BonusXpGrant>[],
     xpRewards: const <ActionXpRewardSummary>[],
@@ -275,7 +295,7 @@ GatheringCompletion completeGatheringAction(
     leveledUpTo: null,
   );
 
-  if (RegExp(r'RequiresLockpick', caseSensitive: false).hasMatch(notesText)) {
+  if (requiresLockpick) {
     final tool = slotStack(save, weaponToolSlotId);
     if (tool == null || tool.quantity <= 0 || tool.itemId != _lockpickItemId) {
       return GatheringCompletion(
@@ -285,8 +305,68 @@ GatheringCompletion completeGatheringAction(
     }
   }
 
+  GatheringCompletion awardXpOnly(
+    PlayerSave base, {
+    num damageTaken = 0,
+    num foodHealed = 0,
+    bool showZeroDamageHit = false,
+    bool thieveryFailed = false,
+    bool lockpickBroke = false,
+  }) {
+    final xpAmount = gatheringXpReward(db, base, action);
+    var next = clearActivePotionEffect(base);
+    final xpApplied = applyXp(next, db, skillId, xpAmount);
+    next = xpApplied.save;
+    var leveledUpTo = xpApplied.leveledUpTo;
+    final bonusXp = <BonusXpGrant>[];
+    final xpRewards = <ActionXpRewardSummary>[];
+    final primaryReward = summarizeXpReward(db, next, skillId, xpAmount, xpApplied.leveledUpTo);
+    if (primaryReward != null) xpRewards.add(primaryReward);
+
+    void applyBonusXp(String bonusSkillId, num amount) {
+      if (amount <= 0) return;
+      final applied = applyXp(next, db, bonusSkillId, amount);
+      next = applied.save;
+      bonusXp.add(BonusXpGrant(skillId: bonusSkillId, xp: amount));
+      final reward = summarizeXpReward(db, next, bonusSkillId, amount, applied.leveledUpTo);
+      if (reward != null) xpRewards.add(reward);
+      if (applied.leveledUpTo != null) leveledUpTo = applied.leveledUpTo;
+    }
+
+    final bonus = bonusSkillXpForAction(jsString(action.raw['Action ID']));
+    if (bonus != null && bonus.xp > 0) {
+      applyBonusXp(bonus.skillId, gatheringXpReward(db, save, action, bonus.xp));
+    }
+    final bowBonus = bowHuntingCombatXpBonus(db, save, skillId, xpAmount);
+    if (bowBonus != null) applyBonusXp(bowBonus.skillId, bowBonus.xp);
+
+    next = addLifetimeStat(next, gatheringActionsStat);
+    next = applyQuestActionProgress(db, next, jsString(action.raw['Action ID']));
+    next = applyQuestAutoCompleteOnAction(db, next).save;
+
+    return GatheringCompletion(
+      save: withoutHeldAction(next, save.currentActivityId),
+      result: ActionCompletionResult(
+        actionId: jsString(action.raw['Action ID']),
+        actionName: jsString(action.raw['Display Name']),
+        skillId: skillId,
+        xpGained: xpAmount,
+        bonusXp: bonusXp,
+        xpRewards: xpRewards,
+        goldGained: 0,
+        loot: const <LootGrant>[],
+        leveledUpTo: leveledUpTo,
+        damageTaken: damageTaken,
+        foodHealed: foodHealed,
+        showZeroDamageHit: showZeroDamageHit,
+        thieveryFailed: thieveryFailed,
+        lockpickBroke: lockpickBroke,
+      ),
+    );
+  }
+
   final failChanceMatch = RegExp(r'FailChance:(\d+)', caseSensitive: false).firstMatch(notesText);
-  if (RegExp(r'Thievery', caseSensitive: false).hasMatch(notesText) &&
+  if (isThievery &&
       failChanceMatch != null &&
       !RegExp(r'NoConsequences', caseSensitive: false).hasMatch(notesText)) {
     final failChance = num.parse(failChanceMatch.group(1)!);
@@ -304,27 +384,54 @@ GatheringCompletion completeGatheringAction(
       final appliedDamage = damage < 1 ? 1 : damage;
       final nextHp = save.currentHp - appliedDamage;
       var next = save.copyWith(currentHp: nextHp);
-      if (RegExp(r'RequiresLockpick', caseSensitive: false).hasMatch(notesText)) {
-        next = _consumeLockpick(next);
+      var lockpickBroke = false;
+      if (requiresLockpick) {
+        final rolled = _maybeBreakLockpick(next, random, thieveryLevel);
+        next = rolled.save;
+        lockpickBroke = rolled.broke;
       }
+      num foodHealed = 0;
       if (nextHp <= 0) {
         next = applyCombatDefeat(db, next, now);
       } else {
-        next = consumeFoodAfterVictory(db, next).save;
+        final fed = consumeFoodAfterVictory(db, next);
+        next = fed.save;
+        foodHealed = fed.healed;
       }
-      return GatheringCompletion(
-        save: withoutHeldAction(next, save.currentActivityId),
-        result: emptyResult(),
+      return awardXpOnly(
+        next,
+        damageTaken: appliedDamage,
+        foodHealed: foodHealed,
+        // Real fail damage uses the floater amount; zero-hit is for lockpick success.
+        showZeroDamageHit: false,
+        thieveryFailed: true,
+        lockpickBroke: lockpickBroke,
       );
     }
   }
 
   var working = save;
-  if (RegExp(r'RequiresLockpick', caseSensitive: false).hasMatch(notesText)) {
-    working = _consumeLockpick(working);
+  var lockpickBroke = false;
+  if (requiresLockpick) {
+    final rolled = _maybeBreakLockpick(working, random, thieveryLevel);
+    working = rolled.save;
+    lockpickBroke = rolled.broke;
+    if (lockpickBroke) {
+      num foodHealed = 0;
+      if (isThievery) {
+        final fed = consumeFoodAfterVictory(db, working);
+        working = fed.save;
+        foodHealed = fed.healed;
+      }
+      return awardXpOnly(
+        working,
+        foodHealed: foodHealed,
+        showZeroDamageHit: true,
+        lockpickBroke: true,
+      );
+    }
   }
 
-  final skillId = jsString(action.raw['Relevant Skill ID']);
   final rewarded = resolveActionRewards(db, working, action, random);
   final xpAmount = gatheringXpReward(db, working, action);
   final xpApplied = applyXp(clearActivePotionEffect(rewarded.save), db, skillId, xpAmount);
@@ -350,9 +457,6 @@ GatheringCompletion completeGatheringAction(
   if (bonus != null && bonus.xp > 0) {
     applyBonusXp(bonus.skillId, gatheringXpReward(db, save, action, bonus.xp));
   }
-
-  // Qualifying bow-based Hunting Actions also grant Combat XP (10% of the
-  // Hunting XP just awarded) when a bow is the equipped Weapon/Tool.
   final bowBonus = bowHuntingCombatXpBonus(db, save, skillId, xpAmount);
   if (bowBonus != null) applyBonusXp(bowBonus.skillId, bowBonus.xp);
 
@@ -367,8 +471,11 @@ GatheringCompletion completeGatheringAction(
   }
   next = applyQuestActionProgress(db, next, jsString(action.raw['Action ID']));
   next = applyQuestAutoCompleteOnAction(db, next).save;
-  if (RegExp(r'Thievery', caseSensitive: false).hasMatch(notesText)) {
-    next = consumeFoodAfterVictory(db, next).save;
+  num foodHealed = 0;
+  if (isThievery) {
+    final fed = consumeFoodAfterVictory(db, next);
+    next = fed.save;
+    foodHealed = fed.healed;
   }
 
   return GatheringCompletion(
@@ -383,6 +490,11 @@ GatheringCompletion completeGatheringAction(
       goldGained: rewarded.goldGained,
       loot: rewarded.loot,
       leveledUpTo: leveledUpTo,
+      damageTaken: 0,
+      foodHealed: foodHealed,
+      showZeroDamageHit: requiresLockpick,
+      thieveryFailed: false,
+      lockpickBroke: false,
     ),
   );
 }

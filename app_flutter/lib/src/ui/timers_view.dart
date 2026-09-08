@@ -9,9 +9,10 @@ import '../theme.dart';
 import 'format.dart';
 import 'page_header.dart';
 
-/// Parallel Botany / trap timers that do not block the Primary Activity.
+/// Parallel Botany / trap spots that do not block the Primary Activity.
 ///
-/// Display and collect only — plant and place start from the location band.
+/// Lists discovered spots (even empty). Timers start at the location; travel
+/// here to collect when ready.
 class TimersView extends StatefulWidget {
   const TimersView({super.key, required this.controller, this.onClose});
 
@@ -41,6 +42,24 @@ class _TimersViewState extends State<TimersView> {
     super.dispose();
   }
 
+  List<_DiscoveredSpot> _spotsForKind(PlayerSave save, String kind) {
+    final spots = <_DiscoveredSpot>[];
+    for (final key in save.discoveredTimerSpotIds) {
+      final parsed = parseTimerSpotKey(key);
+      if (parsed == null || parsed.kind != kind) continue;
+      final active = timerAtLocation(save, parsed.locationId);
+      spots.add(
+        _DiscoveredSpot(
+          kind: parsed.kind,
+          locationId: parsed.locationId,
+          timer: active?.kind == kind ? active : null,
+        ),
+      );
+    }
+    spots.sort((a, b) => a.locationId.compareTo(b.locationId));
+    return spots;
+  }
+
   @override
   Widget build(BuildContext context) {
     final chrome = UiChrome.of(context);
@@ -50,7 +69,6 @@ class _TimersViewState extends State<TimersView> {
         final save = controller.save;
         final db = controller.db;
         final nowMs = controller.session.clock();
-        final timers = save.locationTimers;
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -64,8 +82,7 @@ class _TimersViewState extends State<TimersView> {
             Padding(
               padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
               child: Text(
-                'Start plant and trap work at the location, like production. '
-                'Collect here when a timer is ready.',
+                'Timers start at locations. Travel here to collect when ready.',
                 style: TextStyle(color: chrome.embossFace, height: 1.35, fontSize: 12.5),
               ),
             ),
@@ -75,29 +92,29 @@ class _TimersViewState extends State<TimersView> {
                 children: [
                   _TimerSection(
                     title: 'Botany',
-                    emptyLabel: 'No botany timers.',
-                    timers: timers.where((timer) => timer.kind == 'botany').toList(),
+                    emptyLabel: 'No botany spots discovered yet.',
+                    spots: _spotsForKind(save, 'botany'),
                     db: db,
                     nowMs: nowMs,
-                    onCollect: controller.collectTimerAt,
+                    onTravel: (locationId, mapId) => controller.travelTo(locationId, mapId),
                   ),
                   const SizedBox(height: 12),
                   _TimerSection(
                     title: 'Hunting',
-                    emptyLabel: 'No hunting traps.',
-                    timers: timers.where((timer) => timer.kind == 'hunting_trap').toList(),
+                    emptyLabel: 'No hunting traps discovered yet.',
+                    spots: _spotsForKind(save, 'hunting_trap'),
                     db: db,
                     nowMs: nowMs,
-                    onCollect: controller.collectTimerAt,
+                    onTravel: (locationId, mapId) => controller.travelTo(locationId, mapId),
                   ),
                   const SizedBox(height: 12),
                   _TimerSection(
                     title: 'Fishing',
-                    emptyLabel: 'No fishing traps.',
-                    timers: timers.where((timer) => timer.kind == 'fishing_trap').toList(),
+                    emptyLabel: 'No fishing traps discovered yet.',
+                    spots: _spotsForKind(save, 'fishing_trap'),
                     db: db,
                     nowMs: nowMs,
-                    onCollect: controller.collectTimerAt,
+                    onTravel: (locationId, mapId) => controller.travelTo(locationId, mapId),
                   ),
                 ],
               ),
@@ -109,22 +126,30 @@ class _TimersViewState extends State<TimersView> {
   }
 }
 
+class _DiscoveredSpot {
+  const _DiscoveredSpot({required this.kind, required this.locationId, required this.timer});
+
+  final String kind;
+  final String locationId;
+  final LocationTimer? timer;
+}
+
 class _TimerSection extends StatelessWidget {
   const _TimerSection({
     required this.title,
     required this.emptyLabel,
-    required this.timers,
+    required this.spots,
     required this.db,
     required this.nowMs,
-    required this.onCollect,
+    required this.onTravel,
   });
 
   final String title;
   final String emptyLabel;
-  final List<LocationTimer> timers;
+  final List<_DiscoveredSpot> spots;
   final GameDatabase db;
   final num nowMs;
-  final ValueChanged<String> onCollect;
+  final void Function(String locationId, String mapId) onTravel;
 
   @override
   Widget build(BuildContext context) {
@@ -135,16 +160,16 @@ class _TimerSection extends StatelessWidget {
         Text(title, style: const TextStyle(fontWeight: FontWeight.w400, fontSize: 16)),
         const SizedBox(height: 4),
         Text(
-          timers.isEmpty ? emptyLabel : '${timers.length} active',
+          spots.isEmpty ? emptyLabel : '${spots.length} spot${spots.length == 1 ? '' : 's'}',
           style: TextStyle(color: chrome.embossFace, fontSize: 12.5),
         ),
-        if (timers.isEmpty)
+        if (spots.isEmpty)
           const SizedBox(height: 4)
         else
-          for (final timer in timers)
+          for (final spot in spots)
             Padding(
               padding: const EdgeInsets.only(top: 8),
-              child: _TimerRow(timer: timer, db: db, nowMs: nowMs, onCollect: onCollect),
+              child: _TimerRow(spot: spot, db: db, nowMs: nowMs, onTravel: onTravel),
             ),
       ],
     );
@@ -153,29 +178,36 @@ class _TimerSection extends StatelessWidget {
 
 class _TimerRow extends StatelessWidget {
   const _TimerRow({
-    required this.timer,
+    required this.spot,
     required this.db,
     required this.nowMs,
-    required this.onCollect,
+    required this.onTravel,
   });
 
-  final LocationTimer timer;
+  final _DiscoveredSpot spot;
   final GameDatabase db;
   final num nowMs;
-  final ValueChanged<String> onCollect;
+  final void Function(String locationId, String mapId) onTravel;
 
   @override
   Widget build(BuildContext context) {
     final chrome = UiChrome.of(context);
     final location = db.locations.firstWhere(
-      (row) => row.raw['Location ID'] == timer.locationId,
+      (row) => row.raw['Location ID'] == spot.locationId,
       orElse: () => db.locations.first,
     );
-    final ready = timerIsReady(timer, nowMs);
-    final remainMs = (timerCompletesAtMs(timer) - nowMs).clamp(0, timer.durationMs);
-    final title = location.raw['Display Name'] as String? ?? timer.locationId;
-    final kindLabel = timer.kind.replaceAll('_', ' ');
-    final remainLabel = formatDurationMs(remainMs);
+    final mapId = getLocationMapId(location);
+    final title = location.raw['Display Name'] as String? ?? spot.locationId;
+    final timer = spot.timer;
+    final String status;
+    if (timer == null) {
+      status = 'Empty';
+    } else if (timerIsReady(timer, nowMs)) {
+      status = 'Ready';
+    } else {
+      final remainMs = (timerCompletesAtMs(timer) - nowMs).clamp(0, timer.durationMs);
+      status = 'Growing · ${formatDurationMs(remainMs)} left';
+    }
     return Row(
       children: [
         Expanded(
@@ -183,15 +215,15 @@ class _TimerRow extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(title, style: const TextStyle(fontSize: 14)),
-              Text(
-                ready ? 'Ready · $kindLabel' : '$kindLabel · $remainLabel left',
-                style: TextStyle(color: chrome.embossFace, fontSize: 12.5),
-              ),
+              Text(status, style: TextStyle(color: chrome.embossFace, fontSize: 12.5)),
             ],
           ),
         ),
-        if (ready)
-          GameButton(label: 'Collect', compact: true, onPressed: () => onCollect(timer.locationId)),
+        GameButton(
+          label: 'Travel',
+          compact: true,
+          onPressed: () => onTravel(spot.locationId, mapId),
+        ),
       ],
     );
   }

@@ -44,6 +44,14 @@ export interface ActionCompletionResult {
   goldGained: number
   loot: LootGrant[]
   leveledUpTo: number | null
+  /** HP lost on a thievery failure (for combat-style floaters). */
+  damageTaken?: number
+  /** Food healed after a thievery resolution. */
+  foodHealed?: number
+  /** Lockpick actions show a 0 damage floater like a combat swing. */
+  showZeroDamageHit?: boolean
+  thieveryFailed?: boolean
+  lockpickBroke?: boolean
 }
 
 export interface ActivityStartFailure {

@@ -220,8 +220,9 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
   void _flushPendingDialogs() {
     if (_questRewardQueued) return;
     final pending = controller.takePendingQuestCompletions();
+    final timerCollects = controller.takePendingTimerCollects();
     final levelUps = controller.takePendingSkillLevelUps();
-    if (pending.isEmpty && levelUps.isEmpty) return;
+    if (pending.isEmpty && timerCollects.isEmpty && levelUps.isEmpty) return;
     _questRewardQueued = true;
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       try {
@@ -246,6 +247,10 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
               amount: completion.pendingSkillXp,
             );
           }
+          if (!mounted) return;
+        }
+        for (final haul in timerCollects) {
+          await showQuestRewards(context, questName: haul.title, rewards: haul.rewards);
           if (!mounted) return;
         }
         for (final notice in levelUps) {
