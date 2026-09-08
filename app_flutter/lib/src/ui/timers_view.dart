@@ -47,12 +47,12 @@ class _TimersViewState extends State<TimersView> {
     for (final key in save.discoveredTimerSpotIds) {
       final parsed = parseTimerSpotKey(key);
       if (parsed == null || parsed.kind != kind) continue;
-      final active = timerAtLocation(save, parsed.locationId);
+      final active = timerAtLocationKind(save, parsed.locationId, kind);
       spots.add(
         _DiscoveredSpot(
           kind: parsed.kind,
           locationId: parsed.locationId,
-          timer: active?.kind == kind ? active : null,
+          timer: active,
         ),
       );
     }

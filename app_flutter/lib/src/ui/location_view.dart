@@ -675,40 +675,46 @@ class _LocationViewState extends State<LocationView> {
   List<Widget> _locationTimers(String locationId) {
     final cards = <Widget>[];
     final nowMs = controller.session.clock();
-    final existing = timerAtLocation(controller.save, locationId);
 
-    if (existing != null) {
-      final ready = timerIsReady(existing, nowMs);
-      final remainMs = (timerCompletesAtMs(existing) - nowMs).clamp(0, existing.durationMs);
-      final kindLabel = switch (existing.kind) {
-        'botany' => 'Botany patch',
-        'hunting_trap' => 'Hunting trap',
-        'fishing_trap' => 'Fishing trap',
-        _ => existing.kind.replaceAll('_', ' '),
-      };
-      cards.add(
-        Padding(
-          padding: const EdgeInsets.only(bottom: 8),
-          child: _InteractionCard(
-            title: kindLabel,
-            subtitle: ready ? 'Ready to collect.' : '${formatDurationMs(remainMs)} left.',
-            actionLabel: ready ? 'Collect' : 'Waiting',
-            tone: GameButtonTone.primary,
-            onPressed: ready && !controller.isRecovering
-                ? () => controller.collectTimerAt(locationId)
-                : null,
+    void addActiveOrIdle({
+      required String kind,
+      required String title,
+      required bool locationSupports,
+      required Widget Function() idleCard,
+    }) {
+      if (!locationSupports) return;
+      final existing = timerAtLocationKind(controller.save, locationId, kind);
+      if (existing != null) {
+        final ready = timerIsReady(existing, nowMs);
+        final remainMs = (timerCompletesAtMs(existing) - nowMs).clamp(0, existing.durationMs);
+        cards.add(
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: _InteractionCard(
+              title: title,
+              subtitle: ready ? 'Ready to collect.' : '${formatDurationMs(remainMs)} left.',
+              actionLabel: ready ? 'Collect' : 'Waiting',
+              tone: GameButtonTone.primary,
+              onPressed: ready && !controller.isRecovering
+                  ? () => controller.collectTimerAt(locationId, kind)
+                  : null,
+            ),
           ),
-        ),
-      );
-      return cards;
+        );
+        return;
+      }
+      cards.add(idleCard());
     }
 
-    if (locationHasBotanyPatch(locationId)) {
-      final courtyardLocked =
-          locationId == courtyardLocationId && !courtyardBotanyUnlocked(controller.save);
-      final hasSeed = inventoryHasAnyBotanySeed(controller.db, controller.save);
-      cards.add(
-        Padding(
+    addActiveOrIdle(
+      kind: 'botany',
+      title: 'Botany patch',
+      locationSupports: locationHasBotanyPatch(locationId),
+      idleCard: () {
+        final courtyardLocked =
+            locationId == courtyardLocationId && !courtyardBotanyUnlocked(controller.save);
+        final hasSeed = inventoryHasAnyBotanySeed(controller.db, controller.save);
+        return Padding(
           padding: const EdgeInsets.only(bottom: 8),
           child: Builder(
             builder: (context) => _InteractionCard(
@@ -725,19 +731,22 @@ class _LocationViewState extends State<LocationView> {
                   : () => _openBotanyPlantMenu(context, locationId),
             ),
           ),
-        ),
-      );
-    }
+        );
+      },
+    );
 
-    if (huntingTrapLocations.contains(locationId)) {
-      final canPlace = canPlaceTrap(
-        controller.db,
-        controller.save,
-        huntingTrapItemId,
-        locationId: locationId,
-      );
-      cards.add(
-        Padding(
+    addActiveOrIdle(
+      kind: 'hunting_trap',
+      title: 'Hunting trap',
+      locationSupports: huntingTrapLocations.contains(locationId),
+      idleCard: () {
+        final canPlace = canPlaceTrap(
+          controller.db,
+          controller.save,
+          huntingTrapItemId,
+          locationId: locationId,
+        );
+        return Padding(
           padding: const EdgeInsets.only(bottom: 8),
           child: _InteractionCard(
             title: 'Hunting trap',
@@ -748,19 +757,22 @@ class _LocationViewState extends State<LocationView> {
                 ? null
                 : () => controller.placeTrapHere(huntingTrapItemId),
           ),
-        ),
-      );
-    }
+        );
+      },
+    );
 
-    if (fishingTrapLocations.contains(locationId)) {
-      final canPlace = canPlaceTrap(
-        controller.db,
-        controller.save,
-        fishingTrapItemId,
-        locationId: locationId,
-      );
-      cards.add(
-        Padding(
+    addActiveOrIdle(
+      kind: 'fishing_trap',
+      title: 'Fishing trap',
+      locationSupports: fishingTrapLocations.contains(locationId),
+      idleCard: () {
+        final canPlace = canPlaceTrap(
+          controller.db,
+          controller.save,
+          fishingTrapItemId,
+          locationId: locationId,
+        );
+        return Padding(
           padding: const EdgeInsets.only(bottom: 8),
           child: _InteractionCard(
             title: 'Fishing trap',
@@ -771,9 +783,9 @@ class _LocationViewState extends State<LocationView> {
                 ? null
                 : () => controller.placeTrapHere(fishingTrapItemId),
           ),
-        ),
-      );
-    }
+        );
+      },
+    );
 
     return cards;
   }

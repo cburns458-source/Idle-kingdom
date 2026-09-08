@@ -923,20 +923,20 @@ class GameController extends ChangeNotifier {
     announce('Trap placed.');
   }
 
-  void collectTimerAt(String locationId) {
-    _collectTimerAt(locationId, announceText: true);
+  void collectTimerAt(String locationId, String kind) {
+    _collectTimerAt(locationId, kind, announceText: true);
   }
 
   /// Collects a ready timer, notes the reward strip, and queues a popup notice.
-  bool _collectTimerAt(String locationId, {required bool announceText}) {
+  bool _collectTimerAt(String locationId, String kind, {required bool announceText}) {
     final before = save;
-    final result = collectLocationTimer(db, before, locationId);
+    final result = collectLocationTimer(db, before, locationId, kind);
     if (!result.ok) {
       if (announceText) report(result.reason);
       return false;
     }
     final next = result.save!;
-    final notice = _timerCollectNotice(before, next, locationId, result);
+    final notice = _timerCollectNotice(before, next, locationId, kind, result);
     if (notice.rewardBundle != null) noteReward(notice.rewardBundle!);
     // Queue before commit so the shell flush sees the notice on notify.
     _pendingTimerCollects = [..._pendingTimerCollects, notice];
@@ -951,16 +951,13 @@ class GameController extends ChangeNotifier {
     PlayerSave before,
     PlayerSave after,
     String locationId,
+    String kind,
     LocationTimerCollectResult result,
   ) {
     final location = db.locations.where((row) => row.raw['Location ID'] == locationId).firstOrNull;
     final locationName = location?.raw['Display Name'];
     final displayLocation = locationName is String ? locationName : locationId;
-    final timerKind = before.locationTimers
-        .where((row) => row.locationId == locationId)
-        .map((row) => row.kind)
-        .firstOrNull;
-    final title = switch (timerKind) {
+    final title = switch (kind) {
       'botany' => displayLocation,
       'hunting_trap' || 'fishing_trap' => 'Trap haul',
       _ => 'Harvest',
@@ -1181,16 +1178,21 @@ class GameController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Discovers timer spots at the destination and auto-collects a ready timer.
+  /// Discovers timer spots at the destination and auto-collects ready timers.
   void _discoverAndCollectArrivalTimers() {
     final destinationId = save.currentLocationId;
     final discovered = discoverTimerSpotsForLocation(save, destinationId);
     if (!identical(discovered, save)) {
       session.apply(discovered);
     }
-    final timer = timerAtLocation(save, destinationId);
-    if (timer == null || !timerIsReady(timer, session.clock())) return;
-    _collectTimerAt(destinationId, announceText: false);
+    final nowMs = session.clock();
+    final readyKinds = save.locationTimers
+        .where((timer) => timer.locationId == destinationId && timerIsReady(timer, nowMs))
+        .map((timer) => timer.kind)
+        .toList();
+    for (final kind in readyKinds) {
+      _collectTimerAt(destinationId, kind, announceText: false);
+    }
   }
 
   /// Favorite start already ran in the rules. If it failed only because the

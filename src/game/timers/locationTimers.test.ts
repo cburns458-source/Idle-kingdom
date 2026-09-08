@@ -16,6 +16,7 @@ import {
   placeTrap,
   plantBotanySeed,
   timerAtLocation,
+  timerAtLocationKind,
   timerIsReady,
   timerSpotKey,
 } from './locationTimers'
@@ -155,6 +156,7 @@ describe('locationTimers', () => {
       launch,
       planted.save,
       'LOC-0001',
+      'botany',
       Date.parse('2026-01-01T03:00:00.000Z'),
       () => rolls[i++] ?? 0,
     )
@@ -167,6 +169,7 @@ describe('locationTimers', () => {
       collected.save.inventory.find((stack) => stack.itemId === 'ITEM-0025')?.quantity,
     ).toBe(3)
     expect(timerAtLocation(collected.save, 'LOC-0001')).toBeUndefined()
+    expect(timerAtLocationKind(collected.save, 'LOC-0001', 'botany')).toBeUndefined()
   })
 
   it('restricts The Shallows to kelp-only plantables', () => {
@@ -207,6 +210,7 @@ describe('locationTimers', () => {
       launch,
       placed.save,
       'LOC-0008',
+      'hunting_trap',
       Date.parse('2026-01-01T06:00:00.000Z'),
       () => 0,
     )
@@ -216,5 +220,74 @@ describe('locationTimers', () => {
     expect(
       collected.save.inventory.find((stack) => stack.itemId === HUNTING_TRAP_ITEM_ID)?.quantity,
     ).toBe(1)
+  })
+
+  it('allows botany and hunting trap together at Meadow and collects one without the other', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    let save = createNewSave(launch)
+    save = {
+      ...save,
+      currentLocationId: 'LOC-0009',
+      inventory: [
+        { itemId: 'ITEM-0324', quantity: 3 },
+        { itemId: HUNTING_TRAP_ITEM_ID, quantity: 1 },
+      ],
+    }
+    expect(canPlantBotanySeed(launch, save, 'ITEM-0324').ok).toBe(true)
+    expect(canPlaceTrap(launch, save, HUNTING_TRAP_ITEM_ID).ok).toBe(true)
+
+    const planted = plantBotanySeed(
+      launch,
+      save,
+      'ITEM-0324',
+      Date.parse('2026-01-01T00:00:00.000Z'),
+      3,
+    )
+    expect(planted.ok).toBe(true)
+    if (!planted.ok) return
+    expect(timerAtLocationKind(planted.save, 'LOC-0009', 'botany')?.kind).toBe('botany')
+    expect(canPlaceTrap(launch, planted.save, HUNTING_TRAP_ITEM_ID).ok).toBe(true)
+
+    const placed = placeTrap(
+      launch,
+      planted.save,
+      HUNTING_TRAP_ITEM_ID,
+      Date.parse('2026-01-01T00:00:00.000Z'),
+    )
+    expect(placed.ok).toBe(true)
+    if (!placed.ok) return
+    expect(timerAtLocationKind(placed.save, 'LOC-0009', 'botany')?.kind).toBe('botany')
+    expect(timerAtLocationKind(placed.save, 'LOC-0009', 'hunting_trap')?.kind).toBe('hunting_trap')
+    expect(canPlantBotanySeed(launch, placed.save, 'ITEM-0324').ok).toBe(false)
+    expect(canPlaceTrap(launch, placed.save, HUNTING_TRAP_ITEM_ID).reason).toBe(
+      'A hunting trap is already set here.',
+    )
+
+    const collectedBotany = collectLocationTimer(
+      launch,
+      placed.save,
+      'LOC-0009',
+      'botany',
+      Date.parse('2026-01-01T03:00:00.000Z'),
+      () => 0,
+    )
+    expect(collectedBotany.ok).toBe(true)
+    if (!collectedBotany.ok) return
+    expect(timerAtLocationKind(collectedBotany.save, 'LOC-0009', 'botany')).toBeUndefined()
+    expect(timerAtLocationKind(collectedBotany.save, 'LOC-0009', 'hunting_trap')?.kind).toBe(
+      'hunting_trap',
+    )
+
+    const collectedTrap = collectLocationTimer(
+      launch,
+      collectedBotany.save,
+      'LOC-0009',
+      'hunting_trap',
+      Date.parse('2026-01-01T06:00:00.000Z'),
+      () => 0,
+    )
+    expect(collectedTrap.ok).toBe(true)
+    if (!collectedTrap.ok) return
+    expect(timerAtLocation(collectedTrap.save, 'LOC-0009')).toBeUndefined()
   })
 })
