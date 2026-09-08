@@ -283,6 +283,8 @@ export function plantBotanySeed(
     ),
   }
 }
+
+export function plantBestBotanySeed(
   db: GameDatabase,
   save: PlayerSave,
   nowMs: number = Date.now(),
