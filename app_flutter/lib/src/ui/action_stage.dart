@@ -1049,13 +1049,7 @@ class _GatheringStage extends StatelessWidget {
           height: _portraitSlotHeight,
           width: double.infinity,
           child:
-              _playerFloaters(
-                null,
-                0,
-                false,
-                controller.healPopup,
-                controller.damagePopup,
-              ) ??
+              _playerFloaters(null, 0, false, controller.healPopup, controller.damagePopup) ??
               const SizedBox.expand(),
         ),
         scene: const SizedBox(height: _portraitSlotHeight),

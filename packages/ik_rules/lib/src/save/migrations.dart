@@ -653,7 +653,10 @@ final List<SaveMigration> saveMigrations = <SaveMigration>[
       final next = _bumped(save, 43);
       final raw = save['discoveredTimerSpotIds'];
       next['discoveredTimerSpotIds'] = raw is List
-          ? <Object?>[for (final entry in raw) if (entry is String) entry]
+          ? <Object?>[
+              for (final entry in raw)
+                if (entry is String) entry,
+            ]
           : <Object?>[];
       return next;
     },

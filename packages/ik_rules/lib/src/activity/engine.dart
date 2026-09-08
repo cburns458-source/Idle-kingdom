@@ -373,7 +373,10 @@ GatheringCompletion completeGatheringAction(
     if (random() * 100 < failChance) {
       final damagePercent =
           num.tryParse(
-            RegExp(r'FailDamagePercent:(\d+)', caseSensitive: false).firstMatch(notesText)?.group(1) ??
+            RegExp(
+                  r'FailDamagePercent:(\d+)',
+                  caseSensitive: false,
+                ).firstMatch(notesText)?.group(1) ??
                 '',
           ) ??
           10;
