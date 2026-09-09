@@ -87,8 +87,10 @@ void main() {
     expect(find.descendant(of: popup, matching: find.byTooltip('Close')), findsOne);
     await tester.tap(find.text('Recipe book'));
     await tester.pump();
-    expect(find.textContaining('Baked potato'), findsWidgets);
     expect(find.textContaining('Unlocks at Cooking'), findsWidgets);
+    await tester.tap(find.widgetWithText(GameButton, 'Other').last);
+    await tester.pump();
+    expect(find.textContaining('Baked potato'), findsWidgets);
   });
 
   testWidgets('smithing lists material groups instead of every item', (tester) async {
