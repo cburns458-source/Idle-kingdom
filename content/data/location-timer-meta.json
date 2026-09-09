@@ -92,7 +92,6 @@
     }
   },
   "huntingTrapItemId": "ITEM-0346",
-  "fishingTrapItemId": "ITEM-0347",
   "trapSites": {
     "hunting": [
       "LOC-0008",
@@ -107,5 +106,6 @@
   "dragonGlovesItemId": "ITEM-0345",
   "mushroomItemId": "ITEM-0341",
   "kelpItemId": "ITEM-0342",
-  "driedKelpItemId": "ITEM-0343"
+  "driedKelpItemId": "ITEM-0343",
+  "fishingPotItemId": "ITEM-0347"
 }

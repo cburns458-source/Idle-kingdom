@@ -199,7 +199,7 @@ String? _timerSkillId(String sourceId) {
   return switch (kind) {
     'botany' => 'SKL-0014',
     'hunting_trap' => 'SKL-0005',
-    'fishing_trap' => 'SKL-0003',
+    'fishing_pot' => 'SKL-0003',
     _ => null,
   };
 }
@@ -322,7 +322,7 @@ class _LootCard extends StatelessWidget {
     final label = switch (kind) {
       'botany' => 'Botany',
       'hunting_trap' => 'Hunting trap',
-      'fishing_trap' => 'Fishing trap',
+      'fishing_pot' => 'Fishing pot',
       _ => kind,
     };
     return location.isEmpty ? label : '$label · $location';

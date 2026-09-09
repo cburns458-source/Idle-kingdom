@@ -757,29 +757,45 @@ class _LocationViewState extends State<LocationView> {
     );
 
     addActiveOrIdle(
-      kind: 'fishing_trap',
-      title: 'Fishing trap',
-      locationSupports: fishingTrapLocations.contains(locationId),
+      kind: 'fishing_pot',
+      title: 'Fishing pot',
+      locationSupports: fishingPotLocations.contains(locationId),
       idleCard: () {
         final canPlace = canPlaceTrap(
           controller.db,
           controller.save,
-          fishingTrapItemId,
+          fishingPotItemId,
           locationId: locationId,
         );
+        final lock = fishingPotLockedUntilDay(controller.save, locationId);
         return Padding(
           padding: const EdgeInsets.only(bottom: 8),
-          child: _InteractionCard(
-            title: 'Fishing trap',
-            subtitle: canPlace.ok ? 'Place a fishing trap here.' : canPlace.reason,
-            actionLabel: 'Place trap',
-            tone: GameButtonTone.primary,
-            onPressed: !canPlace.ok
-                ? null
-                : () {
-                    if (controller.rejectIfRecovering()) return;
-                    controller.placeTrapHere(fishingTrapItemId);
-                  },
+          child: Builder(
+            builder: (context) => _InteractionCard(
+              title: 'Fishing pot',
+              subtitle: canPlace.ok
+                  ? 'Place a fishing pot here.'
+                  : lock.locked
+                  ? 'Already fished here today.'
+                  : canPlace.reason,
+              actionLabel: lock.locked ? 'Overfished' : 'Place pot',
+              tone: GameButtonTone.primary,
+              onPressed: canPlace.ok
+                  ? () {
+                      if (controller.rejectIfRecovering()) return;
+                      controller.placeTrapHere(fishingPotItemId);
+                    }
+                  : lock.locked
+                  ? () {
+                      showGameAlert(
+                        context: context,
+                        title: "You shouldn't overfish",
+                        message:
+                            'Come back in ${formatDurationMs(lock.msRemaining)} when the waters reset.',
+                      );
+                    }
+                  : null,
+            ),
           ),
         );
       },

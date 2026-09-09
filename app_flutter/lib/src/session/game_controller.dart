@@ -938,7 +938,7 @@ class GameController extends ChangeNotifier {
       return;
     }
     commit(result.save!);
-    announce('Trap placed.');
+    announce(trapItemId == fishingPotItemId ? 'Fishing pot placed.' : 'Trap placed.');
   }
 
   void collectTimerAt(String locationId, String kind) {
@@ -977,7 +977,8 @@ class GameController extends ChangeNotifier {
     final displayLocation = locationName is String ? locationName : locationId;
     final title = switch (kind) {
       'botany' => displayLocation,
-      'hunting_trap' || 'fishing_trap' => 'Trap haul',
+      'hunting_trap' => 'Trap haul',
+      'fishing_pot' => 'Pot haul',
       _ => 'Harvest',
     };
     final rewards = <String>[];

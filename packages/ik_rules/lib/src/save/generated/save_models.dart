@@ -7,7 +7,7 @@
 
 import '../../json_support.dart';
 
-const int saveVersion = 44;
+const int saveVersion = 45;
 
 const String saveStorageKey = 'idle-kingdoms.demo.save';
 
@@ -549,7 +549,7 @@ class InventoryStack {
   }
 }
 
-/// Parallel location timer (Botany plot or hunting/fishing trap).
+/// Parallel location timer (Botany plot, hunting trap, or fishing pot).
 /// Does not occupy the Primary Activity slot. Cap: one per location.
 class LocationTimer {
   const LocationTimer({
@@ -580,13 +580,13 @@ class LocationTimer {
 
   final String locationId;
 
-  /// `botany` | `hunting_trap` | `fishing_trap`
+  /// `botany` | `hunting_trap` | `fishing_pot`
   final String kind;
 
-  /// Seed/sapling or trap item consumed to start the timer.
+  /// Seed/sapling or trap/pot item consumed to start the timer.
   final String inputItemId;
 
-  /// Crop/log for botany; null for traps (rolled on collect).
+  /// Crop/log for botany; null for traps/pots (rolled on collect).
   final String? outputItemId;
 
   final num outputQuantity;
@@ -847,6 +847,7 @@ class PlayerSave {
     required this.maxHp,
     required this.locationTimers,
     required this.discoveredTimerSpotIds,
+    required this.fishingPotDayKeyByLocationId,
     required this.lootTrackers,
     required this.xpTrackers,
   });
@@ -957,6 +958,10 @@ class PlayerSave {
       discoveredTimerSpotIds: listOf(
         json['discoveredTimerSpotIds'],
         (Object? entry) => entry as String,
+      ),
+      fishingPotDayKeyByLocationId: mapOf(
+        json['fishingPotDayKeyByLocationId'],
+        (Object? value) => value as String,
       ),
       lootTrackers: mapOf(
         json['lootTrackers'],
@@ -1159,13 +1164,17 @@ class PlayerSave {
 
   final num maxHp;
 
-  /// Background Botany / trap timers. At most one entry per locationId.
+  /// Background Botany / trap / pot timers. At most one entry per locationId.
   /// Runs in parallel with the Primary Activity.
   final List<LocationTimer> locationTimers;
 
   /// Timer spot keys the player has found (`botany:LOC-xxxx`, `hunting_trap:LOC-xxxx`,
-  /// `fishing_trap:LOC-xxxx`). Listed in the Timers menu even with no active timer.
+  /// `fishing_pot:LOC-xxxx`). Listed in the Timers menu even with no active timer.
   final List<String> discoveredTimerSpotIds;
+
+  /// UTC day key (`YYYY-MM-DD`) of the last fishing-pot place at each location.
+  /// One pot place per site per UTC day.
+  final Map<String, String> fishingPotDayKeyByLocationId;
 
   /// RuneScape-style loot tracker sections, keyed by `kind:sourceId`.
   final Map<String, LootTrackerEntry> lootTrackers;
@@ -1247,6 +1256,7 @@ class PlayerSave {
       'maxHp': maxHp,
       'locationTimers': locationTimers.map((entry) => entry.toJson()).toList(),
       'discoveredTimerSpotIds': discoveredTimerSpotIds,
+      'fishingPotDayKeyByLocationId': fishingPotDayKeyByLocationId,
       'lootTrackers': lootTrackers.map((key, value) => MapEntry(key, value.toJson())),
       'xpTrackers': xpTrackers.map((key, value) => MapEntry(key, value.toJson())),
     };
@@ -1325,6 +1335,7 @@ class PlayerSave {
     num? maxHp,
     List<LocationTimer>? locationTimers,
     List<String>? discoveredTimerSpotIds,
+    Map<String, String>? fishingPotDayKeyByLocationId,
     Map<String, LootTrackerEntry>? lootTrackers,
     Map<String, XpTrackerEntry>? xpTrackers,
   }) {
@@ -1440,6 +1451,8 @@ class PlayerSave {
       maxHp: maxHp ?? this.maxHp,
       locationTimers: locationTimers ?? this.locationTimers,
       discoveredTimerSpotIds: discoveredTimerSpotIds ?? this.discoveredTimerSpotIds,
+      fishingPotDayKeyByLocationId:
+          fishingPotDayKeyByLocationId ?? this.fishingPotDayKeyByLocationId,
       lootTrackers: lootTrackers ?? this.lootTrackers,
       xpTrackers: xpTrackers ?? this.xpTrackers,
     );

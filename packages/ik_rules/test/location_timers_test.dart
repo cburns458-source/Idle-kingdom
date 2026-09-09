@@ -13,7 +13,7 @@ void main() {
   test('timerSpotKey and parseTimerSpotKey round-trip', () {
     expect(timerSpotKey('botany', 'LOC-0001'), 'botany:LOC-0001');
     expect(timerSpotKey('hunting_trap', 'LOC-0008'), 'hunting_trap:LOC-0008');
-    expect(timerSpotKey('fishing_trap', 'LOC-0003'), 'fishing_trap:LOC-0003');
+    expect(timerSpotKey('fishing_pot', 'LOC-0003'), 'fishing_pot:LOC-0003');
     expect(parseTimerSpotKey('botany:LOC-0001'), (kind: 'botany', locationId: 'LOC-0001'));
     expect(parseTimerSpotKey('hunting_trap:LOC-0009'), (
       kind: 'hunting_trap',
@@ -38,7 +38,7 @@ void main() {
     expect(save.discoveredTimerSpotIds, containsAll(['botany:LOC-0009', 'hunting_trap:LOC-0009']));
 
     save = discoverTimerSpotsForLocation(save, 'LOC-0003');
-    expect(save.discoveredTimerSpotIds, contains('fishing_trap:LOC-0003'));
+    expect(save.discoveredTimerSpotIds, contains('fishing_pot:LOC-0003'));
 
     expect(identical(discoverTimerSpotsForLocation(save, 'LOC-9999'), save), isTrue);
   });

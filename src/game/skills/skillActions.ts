@@ -10,6 +10,7 @@ import {
   isEnchantmentOutput,
   projectSkillRequirements,
 } from '../projects/projects'
+import { FISHING_POT_ITEM_ID, POT_FISH_BY_LOCATION } from '../timers/locationTimers'
 
 export const ESSENCE_ITEM_ID = 'ITEM-0011'
 export const MINING_SKILL_ID = 'SKL-0002'
@@ -298,9 +299,9 @@ function tabsForSkill(db: GameDatabase, skillId: string): SkillMenuTab[] {
       listTab('other', 'Other', combatOtherEntries(db)),
     ]
   }
+  if (skillId === FISHING_SKILL_ID) return fishingTabs(db)
   if (
     skillId === MINING_SKILL_ID ||
-    skillId === FISHING_SKILL_ID ||
     skillId === HARVESTING_SKILL_ID ||
     skillId === HUNTING_SKILL_ID ||
     skillId === WOODCUTTING_SKILL_ID
@@ -365,6 +366,38 @@ function botanyTabs(db: GameDatabase): SkillMenuTab[] {
   return [
     listTab('seeds', 'Seeds', botanyPlantEntries(db, false)),
     listTab('saplings', 'Saplings', botanyPlantEntries(db, true)),
+  ]
+}
+
+function potFishingEntries(db: GameDatabase): SkillMenuListItem[] {
+  const entries: SkillMenuListItem[] = []
+  const pot = db.Items.find((row) => row['Item ID'] === FISHING_POT_ITEM_ID)
+  if (pot) {
+    entries.push({ id: pot['Item ID'], displayName: pot['Display Name'], level: 14 })
+  }
+  const seen = new Set<string>()
+  for (const table of Object.values(POT_FISH_BY_LOCATION)) {
+    for (const row of table) {
+      if (seen.has(row.itemId)) continue
+      seen.add(row.itemId)
+      const item = db.Items.find((entry) => entry['Item ID'] === row.itemId)
+      if (!item) continue
+      entries.push({
+        id: item['Item ID'],
+        displayName: item['Display Name'],
+        level: row.fishingLevel,
+      })
+    }
+  }
+  entries.sort(compareMenuItems)
+  return entries
+}
+
+function fishingTabs(db: GameDatabase): SkillMenuTab[] {
+  return [
+    listTab('actions', 'Actions', gatheringSkillActions(db, FISHING_SKILL_ID)),
+    listTab('tools', 'Tools', gatheringToolEntries(db, FISHING_SKILL_ID)),
+    listTab('pot_fishing', 'Pot fishing', potFishingEntries(db)),
   ]
 }
 

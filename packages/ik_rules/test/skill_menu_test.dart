@@ -148,13 +148,23 @@ void main() {
 
   test('fishing Actions hide Mother Squid combat', () {
     final fishing = skillMenuView(db, fishingSkillId);
+    expect(fishing.tabs.map((tab) => tab.label), ['Actions', 'Tools', 'Pot fishing']);
     final actions = fishing.tabs.firstWhere((tab) => tab.id == 'actions').sections.first.entries;
     expect(actions.any((row) => row.displayName == 'Fight Mother Squid'), isFalse);
-    expect(actions.any((row) => row.displayName == 'Catch crawfish'), isTrue);
+    expect(actions.any((row) => row.displayName == 'Catch perch'), isTrue);
     expect(
       actionsForSkill(db, fishingSkillId).any((row) => row.displayName == 'Fight Mother Squid'),
       isTrue,
     );
+  });
+
+  test('fishing Pot fishing tab lists pot catches', () {
+    final fishing = skillMenuView(db, fishingSkillId);
+    final pot = fishing.tabs.firstWhere((tab) => tab.id == 'pot_fishing').sections.first.entries;
+    expect(pot.any((row) => row.displayName == 'Fishing Pot' && row.level == 14), isTrue);
+    expect(pot.any((row) => row.displayName == 'Raw Crawfish' && row.level == 14), isTrue);
+    expect(pot.any((row) => row.displayName == 'Raw Lobster' && row.level == 75), isTrue);
+    expect(pot.any((row) => row.displayName == 'Raw Perch'), isFalse);
   });
 
   test('arcana lists Essence at level 1 on its own tab', () {

@@ -128,6 +128,7 @@ PlayerSave createNewSave(GameDatabase db, num nowMs) {
     maxHp: maxHp,
     locationTimers: const <LocationTimer>[],
     discoveredTimerSpotIds: const <String>[],
+    fishingPotDayKeyByLocationId: const <String, String>{},
     lootTrackers: const <String, LootTrackerEntry>{},
     xpTrackers: const <String, XpTrackerEntry>{},
   );
