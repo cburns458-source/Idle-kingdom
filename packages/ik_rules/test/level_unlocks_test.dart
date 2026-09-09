@@ -40,21 +40,21 @@ void main() {
     }
   });
 
-  test('artisanry 24 to 25 lists Noose Wand without a mentor', () {
+  test('artisanry 24 to 25 lists Bola without a mentor', () {
     final save = atLevel(artisanrySkillId, 25);
     final unlocks = skillUnlocksBetween(db, save, artisanrySkillId, 24, 25);
-    expect(unlocks.projects, contains('Noose Wand'));
+    expect(unlocks.projects, contains('Bola'));
     expect(unlocks.projects, contains('Lucky Necklace'));
     expect(unlocks.projects, isNot(contains('Cedar Bow')));
   });
 
-  test('arcana 39 to 40 lists Magic Net only after the Archmage', () {
+  test('arcana 39 to 40 lists Magic Bola only after the Archmage', () {
     final locked = skillUnlocksBetween(db, atLevel(arcanaSkillId, 40), arcanaSkillId, 39, 40);
-    expect(locked.projects, isNot(contains('Magic Net')));
+    expect(locked.projects, isNot(contains('Magic Bola')));
 
     final taught = atLevel(arcanaSkillId, 40, mentors: [archmageId]);
     final unlocks = skillUnlocksBetween(db, taught, arcanaSkillId, 39, 40);
-    expect(unlocks.projects, contains('Magic Net'));
+    expect(unlocks.projects, contains('Magic Bola'));
   });
 
   test('mining 4 to 5 names the copper-mine activity, not the ore action', () {

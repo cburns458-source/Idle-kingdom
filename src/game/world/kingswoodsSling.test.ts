@@ -17,7 +17,7 @@ describe('Kingswoods sling', () => {
     expect(first.granted).toBe(true)
     expect(first.save.claimedKingswoodsSling).toBe(true)
     expect(first.save.inventory.find((stack) => stack.itemId === SLING_ITEM_ID)?.quantity).toBe(1)
-    expect(first.message).toContain('Sling')
+    expect(first.message).toContain('Bola')
 
     const second = maybeGrantKingswoodsSling(launch, first.save)
     expect(second.granted).toBe(false)

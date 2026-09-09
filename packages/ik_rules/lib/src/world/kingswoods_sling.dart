@@ -6,7 +6,7 @@ import '../save/generated/save_models.dart';
 
 const String kingswoodsLocationId = 'LOC-0008';
 const String slingItemId = 'ITEM-0109';
-const String kingswoodsSlingFoundMessage = 'You found a Sling among the trees.';
+const String kingswoodsSlingFoundMessage = 'You found a Bola among the trees.';
 
 bool saveOwnsSling(PlayerSave save) {
   if (save.inventory.any((stack) => stack.itemId == slingItemId)) return true;
@@ -21,7 +21,7 @@ class KingswoodsSlingGrant {
   final String? message;
 }
 
-/// First visit to the Kingswoods grants a Sling once, if the bag has room.
+/// First visit to the Kingswoods grants a Bola once, if the bag has room.
 KingswoodsSlingGrant maybeGrantKingswoodsSling(GameDatabase db, PlayerSave save) {
   if (save.currentLocationId != kingswoodsLocationId) {
     return KingswoodsSlingGrant(save: save, granted: false);
@@ -44,6 +44,6 @@ KingswoodsSlingGrant maybeGrantKingswoodsSling(GameDatabase db, PlayerSave save)
   return KingswoodsSlingGrant(
     save: added.save!.copyWith(claimedKingswoodsSling: true),
     granted: true,
-    message: 'You found a ${name ?? 'Sling'} among the trees.',
+    message: 'You found a ${name ?? 'Bola'} among the trees.',
   );
 }

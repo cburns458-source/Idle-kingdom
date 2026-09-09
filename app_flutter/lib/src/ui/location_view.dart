@@ -728,35 +728,6 @@ class _LocationViewState extends State<LocationView> {
     );
 
     addActiveOrIdle(
-      kind: 'hunting_trap',
-      title: 'Hunting trap',
-      locationSupports: huntingTrapLocations.contains(locationId),
-      idleCard: () {
-        final canPlace = canPlaceTrap(
-          controller.db,
-          controller.save,
-          huntingTrapItemId,
-          locationId: locationId,
-        );
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 8),
-          child: _InteractionCard(
-            title: 'Hunting trap',
-            subtitle: canPlace.ok ? 'Place a hunting trap here.' : canPlace.reason,
-            actionLabel: 'Place trap',
-            tone: GameButtonTone.primary,
-            onPressed: !canPlace.ok
-                ? null
-                : () {
-                    if (controller.rejectIfRecovering()) return;
-                    controller.placeTrapHere(huntingTrapItemId);
-                  },
-          ),
-        );
-      },
-    );
-
-    addActiveOrIdle(
       kind: 'fishing_pot',
       title: 'Fishing pot',
       locationSupports: fishingPotLocations.contains(locationId),

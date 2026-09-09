@@ -110,14 +110,16 @@ void main() {
     expect(other.any((row) => row.displayName == 'Boar Spear'), isTrue);
   });
 
-  test('hunting tools include net and sling', () {
+  test('hunting tools include sling and bola', () {
     final hunting = skillMenuView(db, huntingSkillId);
     expect(hunting.tabs.map((tab) => tab.label), ['Actions', 'Tools']);
     final tools = hunting.tabs.firstWhere((tab) => tab.id == 'tools').sections.first.entries;
-    expect(tools.any((row) => row.displayName == 'Net' && row.level == 1), isTrue);
-    expect(tools.any((row) => row.displayName == 'Sling' && row.level == 5), isTrue);
-    expect(tools.any((row) => row.displayName == 'Noose Wand' && row.level == 25), isTrue);
-    expect(tools.any((row) => row.displayName == 'Magic Net' && row.level == 45), isTrue);
+    expect(tools.any((row) => row.displayName == 'Sling' && row.level == 1), isTrue);
+    expect(tools.any((row) => row.displayName == 'Bola' && row.level == 15), isTrue);
+    expect(tools.any((row) => row.displayName == 'Magic Bola' && row.level == 45), isTrue);
+    expect(tools.any((row) => row.displayName == 'Net'), isFalse);
+    expect(tools.any((row) => row.displayName == 'Noose Wand'), isFalse);
+    expect(tools.any((row) => row.displayName == 'Magic Net'), isFalse);
   });
 
   test('thievery splits into Shops and Lockpicking', () {

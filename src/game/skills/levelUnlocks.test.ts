@@ -44,20 +44,20 @@ describe('skill unlocks between levels', () => {
     }
   })
 
-  it('lists Noose Wand at artisanry 25 without a mentor', () => {
+  it('lists Bola at artisanry 25 without a mentor', () => {
     const save = atLevel(ARTISANRY_SKILL_ID, 25)
     const unlocks = skillUnlocksBetween(launch, save, ARTISANRY_SKILL_ID, 24, 25)
-    expect(unlocks.projects).toContain('Noose Wand')
+    expect(unlocks.projects).toContain('Bola')
     expect(unlocks.projects).toContain('Lucky Necklace')
     expect(unlocks.projects).not.toContain('Cedar Bow')
   })
 
-  it('lists Magic Net at arcana 40 only after the Archmage', () => {
+  it('lists Magic Bola at arcana 40 only after the Archmage', () => {
     const locked = skillUnlocksBetween(launch, atLevel(ARCANA_SKILL_ID, 40), ARCANA_SKILL_ID, 39, 40)
-    expect(locked.projects).not.toContain('Magic Net')
+    expect(locked.projects).not.toContain('Magic Bola')
 
     const taught = atLevel(ARCANA_SKILL_ID, 40, [ARCHMAGE_ID])
     const unlocks = skillUnlocksBetween(launch, taught, ARCANA_SKILL_ID, 39, 40)
-    expect(unlocks.projects).toContain('Magic Net')
+    expect(unlocks.projects).toContain('Magic Bola')
   })
 })

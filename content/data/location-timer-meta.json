@@ -91,12 +91,7 @@
       "xp": 50
     }
   },
-  "huntingTrapItemId": "ITEM-0346",
   "trapSites": {
-    "hunting": [
-      "LOC-0008",
-      "LOC-0009"
-    ],
     "fishing": [
       "LOC-0003",
       "LOC-0004"

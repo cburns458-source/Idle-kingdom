@@ -171,15 +171,16 @@ describe('skill menu entries', () => {
     expect(pot.some((item) => item.displayName === 'Raw Perch')).toBe(false)
   })
 
-  it('lists net and sling on the hunting Tools tab', () => {
+  it('lists sling, bola, and magic bola on the hunting Tools tab', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const hunting = skillMenuView(launch, 'SKL-0005')
     expect(hunting.tabs.map((tab) => tab.label)).toEqual(['Actions', 'Tools'])
     const tools = hunting.tabs.find((tab) => tab.id === 'tools')?.sections[0]?.entries ?? []
-    expect(tools.some((item) => item.displayName === 'Net' && item.level === 1)).toBe(true)
-    expect(tools.some((item) => item.displayName === 'Sling' && item.level === 5)).toBe(true)
-    expect(tools.some((item) => item.displayName === 'Noose Wand' && item.level === 25)).toBe(true)
-    expect(tools.some((item) => item.displayName === 'Magic Net' && item.level === 45)).toBe(true)
+    expect(tools.some((item) => item.displayName === 'Sling' && item.level === 1)).toBe(true)
+    expect(tools.some((item) => item.displayName === 'Bola' && item.level === 15)).toBe(true)
+    expect(tools.some((item) => item.displayName === 'Magic Bola' && item.level === 45)).toBe(true)
+    expect(tools.some((item) => item.displayName === 'Noose Wand')).toBe(false)
+    expect(tools.some((item) => item.displayName === 'Net')).toBe(false)
   })
 
   it('lists Botany Seeds and Saplings without grow times', () => {

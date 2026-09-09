@@ -893,10 +893,9 @@ bool _isFishingToolName(String name) {
 bool _isHuntingToolName(String name) {
   return _endsWithWord(name, 'Bow') ||
       _endsWithWord(name, 'Spear') ||
-      name == 'Net' ||
       name == 'Sling' ||
-      name == 'Noose Wand' ||
-      name == 'Magic Net';
+      name == 'Bola' ||
+      name == 'Magic Bola';
 }
 
 bool _isBowName(String name) => _endsWithWord(name, 'Bow');

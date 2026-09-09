@@ -549,7 +549,7 @@ class InventoryStack {
   }
 }
 
-/// Parallel location timer (Botany plot, hunting trap, or fishing pot).
+/// Parallel location timer (Botany plot or fishing pot).
 /// Does not occupy the Primary Activity slot. Cap: one per location.
 class LocationTimer {
   const LocationTimer({
@@ -580,13 +580,13 @@ class LocationTimer {
 
   final String locationId;
 
-  /// `botany` | `hunting_trap` | `fishing_pot`
+  /// `botany` | `fishing_pot`
   final String kind;
 
-  /// Seed/sapling or trap/pot item consumed to start the timer.
+  /// Seed/sapling or pot item consumed to start the timer.
   final String inputItemId;
 
-  /// Crop/log for botany; null for traps/pots (rolled on collect).
+  /// Crop/log for botany; null for pots (rolled on collect).
   final String? outputItemId;
 
   final num outputQuantity;
@@ -1058,7 +1058,7 @@ class PlayerSave {
   /// Merchant tip rewards already claimed (one-time dialogue grants).
   final List<String> claimedMerchantTipIds;
 
-  /// One-time Kingswoods Sling grant. Existing saves keep false until they visit.
+  /// One-time Kingswoods Bola grant. Existing saves keep false until they visit.
   final bool claimedKingswoodsSling;
 
   /// Critter collection counts (unlocked entries in the Log).
@@ -1164,12 +1164,12 @@ class PlayerSave {
 
   final num maxHp;
 
-  /// Background Botany / trap / pot timers. At most one entry per locationId.
+  /// Background Botany / fishing pot timers. At most one entry per locationId.
   /// Runs in parallel with the Primary Activity.
   final List<LocationTimer> locationTimers;
 
-  /// Timer spot keys the player has found (`botany:LOC-xxxx`, `hunting_trap:LOC-xxxx`,
-  /// `fishing_pot:LOC-xxxx`). Listed in the Timers menu even with no active timer.
+  /// Timer spot keys the player has found (`botany:LOC-xxxx`, `fishing_pot:LOC-xxxx`).
+  /// Listed in the Timers menu even with no active timer.
   final List<String> discoveredTimerSpotIds;
 
   /// UTC day key (`YYYY-MM-DD`) of the last fishing-pot place at each location.
