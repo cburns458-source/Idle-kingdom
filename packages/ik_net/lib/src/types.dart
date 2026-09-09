@@ -118,6 +118,7 @@ class MultiplayerProfile {
     this.nameColor,
     this.motto,
     this.petCosmeticId,
+    this.usernameRenamedAt,
     required this.updatedAt,
   });
 
@@ -136,6 +137,7 @@ class MultiplayerProfile {
     nameColor: json['nameColor'] as String?,
     motto: json['motto'] as String?,
     petCosmeticId: json['petCosmeticId'] as String?,
+    usernameRenamedAt: json['usernameRenamedAt'] as String?,
     updatedAt: json['updatedAt']! as String,
   );
 
@@ -159,6 +161,9 @@ class MultiplayerProfile {
 
   /// Equipped pet cosmetic ID from CSLOT-0002; null when none.
   final String? petCosmeticId;
+
+  /// When the public username last changed. Null until the first weekly rename.
+  final String? usernameRenamedAt;
   final String updatedAt;
 
   MultiplayerProfile copyWith({
@@ -175,11 +180,13 @@ class MultiplayerProfile {
     String? nameColor,
     String? motto,
     String? petCosmeticId,
+    String? usernameRenamedAt,
     String? updatedAt,
     bool clearGuild = false,
     bool clearNameColor = false,
     bool clearMotto = false,
     bool clearPetCosmeticId = false,
+    bool clearUsernameRenamedAt = false,
   }) => MultiplayerProfile(
     userId: userId,
     username: username ?? this.username,
@@ -195,6 +202,9 @@ class MultiplayerProfile {
     nameColor: clearNameColor ? null : (nameColor ?? this.nameColor),
     motto: clearMotto ? null : (motto ?? this.motto),
     petCosmeticId: clearPetCosmeticId ? null : (petCosmeticId ?? this.petCosmeticId),
+    usernameRenamedAt: clearUsernameRenamedAt
+        ? null
+        : (usernameRenamedAt ?? this.usernameRenamedAt),
     updatedAt: updatedAt ?? this.updatedAt,
   );
 
@@ -214,6 +224,7 @@ class MultiplayerProfile {
     if (nameColor != null) 'nameColor': nameColor,
     if (motto != null) 'motto': motto,
     if (petCosmeticId != null) 'petCosmeticId': petCosmeticId,
+    if (usernameRenamedAt != null) 'usernameRenamedAt': usernameRenamedAt,
     'updatedAt': updatedAt,
   };
 }

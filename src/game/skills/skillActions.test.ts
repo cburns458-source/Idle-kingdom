@@ -230,6 +230,20 @@ describe('skill menu entries', () => {
     )
   })
 
+  it('splits cooking into fish, meat, stew, and other', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const cooking = skillMenuView(launch, 'SKL-0007')
+    expect(cooking.tabs.map((tab) => tab.label)).toEqual(['Fish', 'Meat', 'Stew', 'Other'])
+    const fish = cooking.tabs.find((tab) => tab.id === 'fish')?.sections[0]?.entries ?? []
+    const meat = cooking.tabs.find((tab) => tab.id === 'meat')?.sections[0]?.entries ?? []
+    const stew = cooking.tabs.find((tab) => tab.id === 'stew')?.sections[0]?.entries ?? []
+    const other = cooking.tabs.find((tab) => tab.id === 'other')?.sections[0]?.entries ?? []
+    expect(fish.some((item) => item.displayName === 'Cooked perch')).toBe(true)
+    expect(meat.some((item) => item.displayName === 'Cooked beef')).toBe(true)
+    expect(stew.some((item) => item.displayName === 'Crawfish Stew')).toBe(true)
+    expect(other.some((item) => item.displayName.toLowerCase().includes('potato'))).toBe(true)
+  })
+
   it('groups smithing by material and numbers every menu row', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const mining = skillMenuDisplayEntries(launch, 'SKL-0002')

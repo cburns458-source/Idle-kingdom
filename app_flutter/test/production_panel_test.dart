@@ -61,8 +61,10 @@ void main() {
 
     await tester.tap(find.text('Recipe book'));
     await tester.pumpAndSettle();
-    expect(find.textContaining('Baked potato'), findsWidgets);
     expect(find.textContaining('Unlocks at Cooking'), findsWidgets);
+    await tester.tap(find.widgetWithText(GameButton, 'Other'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Baked potato'), findsWidgets);
   });
 
   testWidgets('starts the quantity over when the recipe changes', (tester) async {

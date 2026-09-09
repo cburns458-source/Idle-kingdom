@@ -29,6 +29,9 @@ abstract interface class MultiplayerService {
   /// Sets the account name from the first character name. Later names stay put.
   Future<ActionResult> claimAccountUsername(String name);
 
+  /// Changes a claimed public username once per week when the name is free.
+  Future<ActionResult> renameAccountUsername(String name);
+
   /// Emails a one-time sign-in link, where the backend can send one.
   Future<ActionResult> sendMagicLink(String email);
 
@@ -279,6 +282,17 @@ class LocalMultiplayerService implements MultiplayerService {
         current.username.toLowerCase() == cleaned.toLowerCase()) {
       _sessions.write(current.copyWith(username: cleaned));
     }
+    return result;
+  }
+
+  @override
+  Future<ActionResult> renameAccountUsername(String name) async {
+    final current = session;
+    if (current == null) return const ActionResult.failed('Sign in required.');
+    final result = _backend.renameAccountUsername(current.userId, name);
+    if (!result.ok) return result;
+    final cleaned = remoteUsername(name);
+    _sessions.write(current.copyWith(username: cleaned));
     return result;
   }
 

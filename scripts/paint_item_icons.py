@@ -1308,7 +1308,7 @@ def paint_unique(c: Canvas, name: str) -> bool:
             {'m': (220, 160, 64), 'M': (176, 96, 40), 'D': (120, 60, 24)},
         )
         return True
-    if 'butterfly' in n:
+    if 'weasel' in n or 'butterfly' in n:
         c.stamp_centered(
             ['mmm.mmm', 'mMgggMm', 'mMMMMMm', '.mMMMm.', '..mMm..', '...M...'],
             {'m': (220, 120, 200), 'M': (160, 64, 160), 'g': (240, 200, 80)},

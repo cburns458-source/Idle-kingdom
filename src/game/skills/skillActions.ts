@@ -18,6 +18,7 @@ export const FISHING_SKILL_ID = 'SKL-0003'
 export const HARVESTING_SKILL_ID = 'SKL-0004'
 export const HUNTING_SKILL_ID = 'SKL-0005'
 export const WOODCUTTING_SKILL_ID = 'SKL-0006'
+export const COOKING_SKILL_ID = 'SKL-0007'
 export const BOTANY_SKILL_ID = 'SKL-0014'
 export const THIEVERY_SKILL_ID = 'SKL-0015'
 
@@ -271,6 +272,7 @@ export function skillMenuPlacementForOutput(
     }
     return { tabId: 'shops', tabLabel: 'Shops', sectionTitle: null }
   }
+  if (skillId === COOKING_SKILL_ID) return cookingPlacement(displayName)
   if (skillMenuView(db, skillId).tabs.some((tab) => tab.id === 'actions')) {
     return { tabId: 'actions', tabLabel: 'Actions', sectionTitle: null }
   }
@@ -300,6 +302,7 @@ function tabsForSkill(db: GameDatabase, skillId: string): SkillMenuTab[] {
     ]
   }
   if (skillId === FISHING_SKILL_ID) return fishingTabs(db)
+  if (skillId === COOKING_SKILL_ID) return cookingTabs(db)
   if (
     skillId === MINING_SKILL_ID ||
     skillId === HARVESTING_SKILL_ID ||
@@ -398,6 +401,64 @@ function fishingTabs(db: GameDatabase): SkillMenuTab[] {
     listTab('actions', 'Actions', gatheringSkillActions(db, FISHING_SKILL_ID)),
     listTab('tools', 'Tools', gatheringToolEntries(db, FISHING_SKILL_ID)),
     listTab('pot_fishing', 'Pot fishing', potFishingEntries(db)),
+  ]
+}
+
+const COOKING_FISH_NAMES = [
+  'perch',
+  'trout',
+  'salmon',
+  'tuna',
+  'shark',
+  'squid',
+  'catfish',
+  'crawfish',
+  'crab',
+  'lobster',
+  'eel',
+]
+
+const COOKING_MEAT_NAMES = ['rabbit', 'pheasant', 'beef', 'venison']
+
+function cookingTabId(displayName: string): 'fish' | 'meat' | 'stew' | 'other' {
+  const lower = displayName.toLowerCase()
+  if (lower.includes('stew') || lower.includes('soup')) return 'stew'
+  if (COOKING_FISH_NAMES.some((name) => lower.includes(name))) return 'fish'
+  if (COOKING_MEAT_NAMES.some((name) => lower.includes(name))) return 'meat'
+  return 'other'
+}
+
+function cookingPlacement(displayName: string): SkillMenuPlacement {
+  const tabId = cookingTabId(displayName)
+  const labels = { fish: 'Fish', meat: 'Meat', stew: 'Stew', other: 'Other' } as const
+  return { tabId, tabLabel: labels[tabId], sectionTitle: null }
+}
+
+function cookingTabs(db: GameDatabase): SkillMenuTab[] {
+  const fish: SkillMenuListItem[] = []
+  const meat: SkillMenuListItem[] = []
+  const stew: SkillMenuListItem[] = []
+  const other: SkillMenuListItem[] = []
+  for (const item of skillMenuEntries(db, COOKING_SKILL_ID)) {
+    switch (cookingTabId(item.displayName)) {
+      case 'fish':
+        fish.push(item)
+        break
+      case 'meat':
+        meat.push(item)
+        break
+      case 'stew':
+        stew.push(item)
+        break
+      default:
+        other.push(item)
+    }
+  }
+  return [
+    listTab('fish', 'Fish', fish),
+    listTab('meat', 'Meat', meat),
+    listTab('stew', 'Stew', stew),
+    listTab('other', 'Other', other),
   ]
 }
 

@@ -57,6 +57,7 @@ void main() {
 
   test('orders metal tiers and cook levels low to high', () {
     expect(names(['ITEM-0005', 'ITEM-0003', 'ITEM-0004']), ['ITEM-0003', 'ITEM-0004', 'ITEM-0005']);
+    expect(names(['ITEM-0009', 'ITEM-0010']), ['ITEM-0010', 'ITEM-0009']);
     expect(sorter.groupOf('ITEM-0058'), groupCooking);
     expect(sorter.groupOf('ITEM-0061'), groupCooking);
     expect(names(['ITEM-0061', 'ITEM-0058']), ['ITEM-0058', 'ITEM-0061']);

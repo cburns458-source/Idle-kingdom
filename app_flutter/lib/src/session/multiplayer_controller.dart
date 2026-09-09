@@ -255,6 +255,9 @@ class MultiplayerController extends ChangeNotifier {
   String get privacyDirectMessages => _ownProfile?.privacyDirectMessages ?? chatPrivacyPublic;
   String get privacyLocalChat => _ownProfile?.privacyLocalChat ?? chatPrivacyPublic;
   bool get privacyPublicGear => _ownProfile?.privacyPublicGear ?? true;
+
+  /// Last time this account changed its public username, if ever.
+  String? get usernameRenamedAt => _ownProfile?.usernameRenamedAt;
   List<ChatMessage> get messages => _messages;
 
   /// Who claimed each of this hour's bounties first, as far as the last read saw.
@@ -399,6 +402,17 @@ class MultiplayerController extends ChangeNotifier {
   /// Sets the account name from the first character name. Later names stay put.
   Future<String?> claimAccountUsername(String name) async {
     final result = await service.claimAccountUsername(name);
+    notifyListeners();
+    return result.ok ? null : result.reason;
+  }
+
+  /// Changes the public multiplayer name once per week when the name is free.
+  Future<String?> renameAccountUsername(String name) async {
+    final result = await service.renameAccountUsername(name);
+    final me = service.session?.userId;
+    if (result.ok && me != null) {
+      _ownProfile = await service.profile(me);
+    }
     notifyListeners();
     return result.ok ? null : result.reason;
   }
@@ -1304,7 +1318,7 @@ class MultiplayerController extends ChangeNotifier {
       final result = await service.decideGuildApplication(applicationId, accept);
       if (!result.ok) return result.reason;
       await refresh(save);
-      return accept ? 'Accepted.' : 'Declined.';
+      return null;
     });
   }
 
@@ -1337,7 +1351,7 @@ class MultiplayerController extends ChangeNotifier {
       final result = await service.setGuildMemberRole(guildId, userId, role);
       if (!result.ok) return result.reason;
       await refresh(save);
-      return 'Rank updated.';
+      return null;
     });
   }
 

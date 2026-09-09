@@ -104,8 +104,8 @@ function metalTier(name: string): number {
   if (name.includes('ancient alloy')) return 11
   if (name.includes('reinforced steel')) return 6
   if (name.includes('moonstone')) return 13
-  if (name.includes('tungsten')) return 10
-  if (name.includes('titanium')) return 9
+  if (name.includes('tungsten')) return 9
+  if (name.includes('titanium')) return 10
   if (name.includes('aether')) return 12
   if (name.includes('ancient')) return 11
   if (/\bbronze\b/.test(name)) return 3

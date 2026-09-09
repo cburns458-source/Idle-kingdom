@@ -211,6 +211,45 @@ void main() {
     );
     expect(cooking.any((row) => row.displayName == 'Squid noodle soup' && row.level == 80), isTrue);
 
+    final view = skillMenuView(db, 'SKL-0007');
+    expect(view.tabs.map((tab) => tab.label), ['Fish', 'Meat', 'Stew', 'Other']);
+    expect(
+      view.tabs
+          .firstWhere((tab) => tab.id == 'fish')
+          .sections
+          .first
+          .entries
+          .any((row) => row.displayName == 'Cooked perch'),
+      isTrue,
+    );
+    expect(
+      view.tabs
+          .firstWhere((tab) => tab.id == 'meat')
+          .sections
+          .first
+          .entries
+          .any((row) => row.displayName == 'Cooked beef'),
+      isTrue,
+    );
+    expect(
+      view.tabs
+          .firstWhere((tab) => tab.id == 'stew')
+          .sections
+          .first
+          .entries
+          .any((row) => row.displayName == 'Crawfish Stew'),
+      isTrue,
+    );
+    expect(
+      view.tabs
+          .firstWhere((tab) => tab.id == 'other')
+          .sections
+          .first
+          .entries
+          .any((row) => row.displayName.toLowerCase().contains('potato')),
+      isTrue,
+    );
+
     final save = createNewSave(db, 0);
     final book = recipeBookForSkill(save, db, 'SKL-0007');
     expect(book, isNotEmpty);

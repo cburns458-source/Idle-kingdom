@@ -75,6 +75,10 @@ describe('inventory group sort', () => {
       'ITEM-0004', // Tin Ore
       'ITEM-0005', // Iron Ore
     ])
+    expect(names(['ITEM-0009', 'ITEM-0010'])).toEqual([
+      'ITEM-0010', // Tungsten Ore
+      'ITEM-0009', // Titanium Ore
+    ])
     expect(sorter.groupOf('ITEM-0058')).toBe(GROUP_COOKING) // Baked Potato
     expect(sorter.groupOf('ITEM-0061')).toBe(GROUP_COOKING) // Cooked Salmon
     expect(names(['ITEM-0061', 'ITEM-0058'])).toEqual(['ITEM-0058', 'ITEM-0061'])

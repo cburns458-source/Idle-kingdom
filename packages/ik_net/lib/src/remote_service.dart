@@ -84,12 +84,16 @@ class RemoteMultiplayerService implements MultiplayerService {
   /// Whether `profiles` has `motto` / `pet_cosmetic_id`. Null until a read tells us.
   bool? _profilesHaveMottoPet;
 
+  /// Whether `profiles` has `username_renamed_at`. Null until a read tells us.
+  bool? _profilesHaveUsernameRenamedAt;
+
   String get _publicProfileSelectColumns {
     final parts = <String>[remotePublicProfileBaseColumns];
     if (_profilesHaveChatPrivacy != false) parts.add(remoteChatPrivacyColumns);
     if (_profilesHaveGearPrivacy != false) parts.add(remoteGearProfileColumns);
     if (_profilesHaveNameColor != false) parts.add(remoteNameColorColumn);
     if (_profilesHaveMottoPet != false) parts.add(remoteMottoPetColumns);
+    if (_profilesHaveUsernameRenamedAt != false) parts.add(remoteUsernameRenamedAtColumn);
     return parts.join(', ');
   }
 
@@ -120,6 +124,12 @@ class RemoteMultiplayerService implements MultiplayerService {
       _profilesHaveMottoPet = false;
       row.remove(remoteMottoColumn);
       row.remove(remotePetCosmeticIdColumn);
+      stripped = true;
+    }
+    if (remoteMissingUsernameRenamedAtColumn(reason) &&
+        row.containsKey(remoteUsernameRenamedAtColumn)) {
+      _profilesHaveUsernameRenamedAt = false;
+      row.remove(remoteUsernameRenamedAtColumn);
       stripped = true;
     }
     return stripped;
@@ -252,6 +262,55 @@ class RemoteMultiplayerService implements MultiplayerService {
     return const ActionResult.ok();
   }
 
+  @override
+  Future<ActionResult> renameAccountUsername(String name) async {
+    final current = session;
+    if (current == null) return const ActionResult.failed('Sign in required.');
+    final cleaned = remoteUsername(name);
+    if (cleaned.length < 2) return const ActionResult.failed('Enter a name to continue.');
+    if (isPendingAccountUsername(current.username)) {
+      return claimAccountUsername(cleaned);
+    }
+    if (current.username.toLowerCase() == cleaned.toLowerCase()) {
+      return const ActionResult.ok();
+    }
+    final listed = await transport.select(RemoteTables.profiles, columns: 'user_id, username');
+    if (listed.ok) {
+      final taken = (listed.rows ?? const <RemoteRow>[]).any((row) {
+        final userId = '${row['user_id']}';
+        final username = row['username'];
+        return userId != current.userId &&
+            username is String &&
+            username.toLowerCase() == cleaned.toLowerCase();
+      });
+      if (taken) return const ActionResult.failed('That name is taken.');
+    }
+    final nowMs = await authoritativeNowMs();
+    final mine = await profile(current.userId);
+    final remaining = usernameRenameRemainingMs(mine?.usernameRenamedAt, nowMs);
+    if (remaining != null) {
+      return ActionResult.failed(usernameRenameCooldownReason(remaining));
+    }
+    final stamp = DateTime.fromMillisecondsSinceEpoch(nowMs.round(), isUtc: true).toIso8601String();
+    final row = <String, Object?>{
+      'user_id': current.userId,
+      'username': cleaned,
+      remoteUsernameRenamedAtColumn: stamp,
+    };
+    final refused = await _upsertProfileRow(row);
+    if (refused != null) {
+      if (refused.toLowerCase().contains('duplicate key') ||
+          refused.toLowerCase().contains('unique')) {
+        return const ActionResult.failed('That name is taken.');
+      }
+      return ActionResult.failed(refused);
+    }
+    await transport.updateAuthUsername(cleaned);
+    _local.backend.upsertProfile(current.userId, username: cleaned, usernameRenamedAt: stamp);
+    _adopt(current.copyWith(username: cleaned));
+    return const ActionResult.ok();
+  }
+
   Future<String?> _profileUsername(String userId) async {
     final result = await transport.select(
       RemoteTables.profiles,
@@ -335,6 +394,9 @@ class RemoteMultiplayerService implements MultiplayerService {
       } else if (remoteMissingMottoPetColumns(result.reason)) {
         _profilesHaveMottoPet = false;
         _reads.clearIf(remoteMissingMottoPetColumns);
+      } else if (remoteMissingUsernameRenamedAtColumn(result.reason)) {
+        _profilesHaveUsernameRenamedAt = false;
+        _reads.clearIf(remoteMissingUsernameRenamedAtColumn);
       } else {
         break;
       }
@@ -350,6 +412,7 @@ class RemoteMultiplayerService implements MultiplayerService {
       _profilesHaveGearPrivacy ??= true;
       _profilesHaveNameColor ??= true;
       _profilesHaveMottoPet ??= true;
+      _profilesHaveUsernameRenamedAt ??= true;
     }
     if (!result.ok) return null;
     final profile = multiplayerProfileFromRemote(result.single);
