@@ -151,7 +151,7 @@ class TopHud extends StatelessWidget {
                                       title,
                                       maxLines: 1,
                                       style: const TextStyle(
-                                        fontSize: 12,
+                                        fontSize: 16,
                                         fontWeight: FontWeight.w400,
                                         height: 1.05,
                                       ),
@@ -162,7 +162,7 @@ class TopHud extends StatelessWidget {
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                     style: const TextStyle(
-                                      fontSize: 9,
+                                      fontSize: 8,
                                       fontWeight: FontWeight.w400,
                                       color: Color(0xFFC8D7B6),
                                       height: 1.05,
@@ -176,7 +176,7 @@ class TopHud extends StatelessWidget {
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                       style: const TextStyle(
-                                        fontSize: 9,
+                                        fontSize: 8,
                                         fontWeight: FontWeight.w400,
                                         color: Color(0xFFC8D7B6),
                                         height: 1.05,
@@ -198,7 +198,7 @@ class TopHud extends StatelessWidget {
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
-                            GameImage(goldIconPath(), width: 11, height: 11),
+                            GameImage(goldIconPath(), width: 9, height: 9),
                             const SizedBox(width: 3),
                             Expanded(
                               child: Text(
@@ -206,7 +206,7 @@ class TopHud extends StatelessWidget {
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
-                                  fontSize: 10,
+                                  fontSize: 8,
                                   fontWeight: FontWeight.w400,
                                   color: Color(0xFFFFF4D4),
                                   height: 1.05,
@@ -305,7 +305,7 @@ class _ActivityReadout extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.right,
             style: const TextStyle(
-              fontSize: 9,
+              fontSize: 11,
               fontWeight: FontWeight.w400,
               color: Color(0xFFF4EFD8),
               height: 1.05,
@@ -316,7 +316,7 @@ class _ActivityReadout extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.right,
-            style: const TextStyle(fontSize: 8.5, color: Color(0xFFC8D7B6), height: 1.05),
+            style: const TextStyle(fontSize: 9, color: Color(0xFFC8D7B6), height: 1.05),
           ),
         ],
       ),

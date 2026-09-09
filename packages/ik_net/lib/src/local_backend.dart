@@ -168,6 +168,43 @@ class LocalMultiplayerBackend {
     return const ActionResult.ok();
   }
 
+  /// Changes a claimed public username, once per week, if the name is free.
+  ActionResult renameAccountUsername(String userId, String name) {
+    final cleaned = remoteUsername(name);
+    if (cleaned.length < 2) {
+      return const ActionResult.failed('Enter a name to continue.');
+    }
+    final db = _db();
+    final accountIndex = db.users.indexWhere((row) => row.userId == userId);
+    if (accountIndex < 0) return const ActionResult.failed('Sign in required.');
+    final current = db.users[accountIndex].username;
+    if (isPendingAccountUsername(current)) {
+      return claimAccountUsername(userId, cleaned);
+    }
+    if (current.toLowerCase() == cleaned.toLowerCase()) return const ActionResult.ok();
+    if (db.users.any(
+      (row) => row.userId != userId && row.username.toLowerCase() == cleaned.toLowerCase(),
+    )) {
+      return const ActionResult.failed('That name is taken.');
+    }
+    final profileIndex = db.profiles.indexWhere((row) => row.userId == userId);
+    final lastRename = profileIndex >= 0 ? db.profiles[profileIndex].usernameRenamedAt : null;
+    final remaining = usernameRenameRemainingMs(lastRename, ports.nowMs());
+    if (remaining != null) {
+      return ActionResult.failed(usernameRenameCooldownReason(remaining));
+    }
+    db.users[accountIndex] = db.users[accountIndex].copyWith(username: cleaned);
+    if (profileIndex >= 0) {
+      db.profiles[profileIndex] = db.profiles[profileIndex].copyWith(
+        username: cleaned,
+        usernameRenamedAt: _nowIso(),
+        updatedAt: _nowIso(),
+      );
+    }
+    _write(db);
+    return const ActionResult.ok();
+  }
+
   SessionResult signIn(String email, String password) {
     final db = _db();
     final cleanEmail = email.trim().toLowerCase();
@@ -279,9 +316,11 @@ class LocalMultiplayerBackend {
     String? nameColor,
     String? motto,
     String? petCosmeticId,
+    String? usernameRenamedAt,
     bool clearNameColor = false,
     bool clearMotto = false,
     bool clearPetCosmeticId = false,
+    bool clearUsernameRenamedAt = false,
   }) {
     final db = _db();
     final index = db.profiles.indexWhere((row) => row.userId == userId);
@@ -297,9 +336,11 @@ class LocalMultiplayerBackend {
       nameColor: nameColor,
       motto: motto,
       petCosmeticId: petCosmeticId,
+      usernameRenamedAt: usernameRenamedAt,
       clearNameColor: clearNameColor,
       clearMotto: clearMotto,
       clearPetCosmeticId: clearPetCosmeticId,
+      clearUsernameRenamedAt: clearUsernameRenamedAt,
       updatedAt: _nowIso(),
     );
     _write(db);

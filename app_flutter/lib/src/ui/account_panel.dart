@@ -36,11 +36,16 @@ class AccountPanel extends StatefulWidget {
 class _AccountPanelState extends State<AccountPanel> {
   MultiplayerController get net => widget.multiplayer;
   late final TextEditingController _motto;
+  late final TextEditingController _name;
+  String? _nameError;
 
   @override
   void initState() {
     super.initState();
     _motto = TextEditingController(text: widget.controller.save.motto ?? '');
+    _name = TextEditingController(
+      text: net.session?.username ?? displayNameForSave(widget.controller.save, ''),
+    );
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted || !net.isSignedIn) return;
       net.refresh(widget.controller.save);
@@ -50,7 +55,34 @@ class _AccountPanelState extends State<AccountPanel> {
   @override
   void dispose() {
     _motto.dispose();
+    _name.dispose();
     super.dispose();
+  }
+
+  Future<void> _saveName() async {
+    final cleaned = normalizeCharacterName(_name.text);
+    if (cleaned == null) {
+      setState(() => _nameError = 'Enter a name to continue.');
+      return;
+    }
+    if (cleaned.length < 2) {
+      setState(() => _nameError = 'Enter a name to continue.');
+      return;
+    }
+    final reason = await net.renameAccountUsername(cleaned);
+    if (!mounted) return;
+    if (reason != null) {
+      setState(() => _nameError = reason);
+      return;
+    }
+    widget.controller.commit(widget.controller.save.copyWith(characterName: cleaned));
+    _name.text = cleaned;
+    setState(() => _nameError = null);
+    if (net.isSignedIn) {
+      await net.flushAccountSave(widget.controller.save);
+      await net.publishRanking(widget.controller.save, ignoreDebounce: true);
+    }
+    if (mounted) setState(() {});
   }
 
   Future<void> _saveMotto() async {
@@ -92,6 +124,44 @@ class _AccountPanelState extends State<AccountPanel> {
       return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: children);
     }
     return ListView(padding: const EdgeInsets.all(12), children: children);
+  }
+
+  Widget _renamePanel() {
+    final nowMs = widget.controller.session.clock();
+    final remaining = usernameRenameRemainingMs(net.usernameRenamedAt, nowMs);
+    final pending = isPendingAccountUsername(net.session?.username ?? '');
+    return GamePanel(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Player name', style: TextStyle(fontWeight: FontWeight.w400)),
+          const MutedText('Shown to other players. You can change it once per week.'),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _name,
+            maxLength: characterNameMaxLength,
+            decoration: const InputDecoration(labelText: 'Name', hintText: 'Unique public name'),
+          ),
+          if (_nameError != null) ...[
+            const SizedBox(height: 4),
+            Text(_nameError!, style: const TextStyle(color: Color(0xFFE8A090))),
+          ],
+          if (remaining != null && !pending) ...[
+            const SizedBox(height: 4),
+            MutedText(usernameRenameCooldownReason(remaining)),
+          ],
+          const SizedBox(height: 6),
+          Align(
+            alignment: Alignment.centerRight,
+            child: GameButton(
+              label: 'Change name',
+              compact: true,
+              onPressed: net.busy ? null : _saveName,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _character() {
@@ -137,6 +207,8 @@ class _AccountPanelState extends State<AccountPanel> {
         style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
       ),
       MutedText(session.email),
+      const SizedBox(height: 12),
+      _renamePanel(),
       const SizedBox(height: 12),
       GamePanel(
         child: Row(

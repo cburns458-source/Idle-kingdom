@@ -15,13 +15,14 @@ LocalMultiplayerService _service(
   MemorySaveStorage storage, {
   num startMs = _nowMs,
   int idOffset = 0,
+  num Function()? nowMs,
 }) {
   final num clock = startMs;
   var counter = idOffset;
   return LocalMultiplayerService(
     storage: storage,
     ports: LocalBackendPorts(
-      nowMs: () => clock,
+      nowMs: nowMs ?? () => clock,
       newId: (prefix) => '${prefix}_${(counter += 1).toString().padLeft(4, '0')}',
     ),
   );
@@ -67,6 +68,29 @@ void main() {
     await rival.signUp('rival@example.com', '', 'secret');
     expect((await rival.claimAccountUsername('Hero')).reason, 'That name is taken.');
     expect(isPendingAccountUsername(rival.session!.username), isTrue);
+  });
+
+  test('renames a claimed username once per week when the name is free', () async {
+    var nowMs = 1.0e12;
+    final storage = MemorySaveStorage();
+    final service = _service(storage, nowMs: () => nowMs);
+    await service.signUp('hero@example.com', '', 'secret');
+    expect((await service.claimAccountUsername('Hero')).ok, isTrue);
+
+    expect((await service.renameAccountUsername('A')).reason, 'Enter a name to continue.');
+    expect((await service.renameAccountUsername('Vari')).ok, isTrue);
+    expect(service.session?.username, 'Vari');
+    expect((await service.profile(service.session!.userId))?.username, 'Vari');
+
+    expect((await service.renameAccountUsername('Later')).reason, contains('rename again'));
+    nowMs += usernameRenameCooldownMs;
+    expect((await service.renameAccountUsername('Later')).ok, isTrue);
+    expect(service.session?.username, 'Later');
+
+    final rival = _service(storage, idOffset: 200, nowMs: () => nowMs);
+    await rival.signUp('rival@example.com', '', 'secret');
+    expect((await rival.claimAccountUsername('Scout')).ok, isTrue);
+    expect((await rival.renameAccountUsername('Later')).reason, 'That name is taken.');
   });
 
   test('refuses everything that needs an account', () async {

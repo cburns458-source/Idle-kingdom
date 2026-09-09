@@ -30,4 +30,27 @@ describe('requirements', () => {
     expect(result.met).toBe(false)
     expect(result.detail).toBe('Unknown requirement.')
   })
+
+  it('requires a harpoon for sea turtle, not a fishing rod', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const requirement = launch.Requirements.find((row) => row['Requirement ID'] === 'REQ-0118')!
+    expect(requirement['Reference ID / Value']).toBe('harpoon')
+    const base = createNewSave(launch)
+    const withRod = {
+      ...base,
+      equipment: {
+        ...base.equipment,
+        slots: { ...base.equipment.slots, 'SLOT-0001': { itemId: 'ITEM-0103', quantity: 1 } },
+      },
+    }
+    const withHarpoon = {
+      ...base,
+      equipment: {
+        ...base.equipment,
+        slots: { ...base.equipment.slots, 'SLOT-0001': { itemId: 'ITEM-0113', quantity: 1 } },
+      },
+    }
+    expect(evaluateRequirement(launch, withRod, requirement).met).toBe(false)
+    expect(evaluateRequirement(launch, withHarpoon, requirement).met).toBe(true)
+  })
 })

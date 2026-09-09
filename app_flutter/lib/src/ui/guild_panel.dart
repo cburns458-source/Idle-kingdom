@@ -351,25 +351,17 @@ class _GuildPanelState extends State<GuildPanel> {
               multiplayer: net,
               userId: row.userId,
             ),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (row.manageable)
-                  _RankPicker(
+            trailing: row.manageable || row.removable
+                ? _MemberOverflow(
+                    enabled: !net.busy,
+                    showPromote: row.manageable,
+                    showRemove: row.removable,
                     role: row.role,
                     options: options,
-                    onChanged: (role) => net.setMemberRole(row.userId, role, save),
+                    onPromote: (role) => net.setMemberRole(row.userId, role, save),
+                    onRemove: () => net.removeMember(row.userId, save),
                   )
-                else
-                  Text('${row.totalLevel}', style: const TextStyle(fontWeight: FontWeight.w400)),
-                if (row.removable)
-                  GameIconButton(
-                    onPressed: net.busy ? null : () => net.removeMember(row.userId, save),
-                    tooltip: 'Remove member',
-                    icon: Icons.person_remove,
-                  ),
-              ],
-            ),
+                : Text('${row.totalLevel}', style: const TextStyle(fontWeight: FontWeight.w400)),
           ),
           const SizedBox(height: 6),
         ],
@@ -397,10 +389,14 @@ class _GuildPanelState extends State<GuildPanel> {
                 userId: guest.userId,
               ),
               trailing: header.canRemoveGuests && guest.userId != net.session?.userId
-                  ? GameIconButton(
-                      onPressed: net.busy ? null : () => net.removeGuest(guest.userId, save),
-                      tooltip: 'Remove guest',
-                      icon: Icons.person_remove,
+                  ? _MemberOverflow(
+                      enabled: !net.busy,
+                      showPromote: false,
+                      showRemove: true,
+                      role: guildRoleRecruit,
+                      options: const <GuildRankOption>[],
+                      onPromote: (_) {},
+                      onRemove: () => net.removeGuest(guest.userId, save),
                     )
                   : null,
             ),
@@ -795,39 +791,60 @@ class _GuildDetailPageState extends State<_GuildDetailPage> {
   }
 }
 
-class _RankPicker extends StatelessWidget {
-  const _RankPicker({required this.role, required this.options, required this.onChanged});
+/// Overflow for roster and guest rows: Promote opens the rank list, Remove kicks.
+class _MemberOverflow extends StatelessWidget {
+  const _MemberOverflow({
+    required this.enabled,
+    required this.showPromote,
+    required this.showRemove,
+    required this.role,
+    required this.options,
+    required this.onPromote,
+    required this.onRemove,
+  });
 
+  final bool enabled;
+  final bool showPromote;
+  final bool showRemove;
   final GuildRole role;
   final List<GuildRankOption> options;
-  final ValueChanged<GuildRole> onChanged;
+  final ValueChanged<GuildRole> onPromote;
+  final VoidCallback onRemove;
+
+  Future<void> _pickRank(BuildContext context) async {
+    final chosen = await showGameCatalogPopup(
+      context: context,
+      eyebrow: 'Rank',
+      title: 'Guild rank',
+      selectable: true,
+      entries: [
+        for (final option in options)
+          CatalogPopupEntry(title: option.label, emphasized: option.role == role),
+      ],
+    );
+    if (chosen == null) return;
+    final next = options[chosen].role;
+    if (next != role) onPromote(next);
+  }
 
   @override
   Widget build(BuildContext context) {
-    return GameButton(
-      label:
-          options
-              .where((option) => option.role == role)
-              .map((option) => option.label)
-              .firstOrNull ??
-          role,
-      tone: GameButtonTone.secondary,
-      compact: true,
-      onPressed: () async {
-        final chosen = await showGameCatalogPopup(
-          context: context,
-          eyebrow: 'Rank',
-          title: 'Guild rank',
-          selectable: true,
-          entries: [
-            for (final option in options)
-              CatalogPopupEntry(title: option.label, emphasized: option.role == role),
-          ],
-        );
-        if (chosen == null) return;
-        final next = options[chosen].role;
-        if (next != role) onChanged(next);
+    return PopupMenuButton<String>(
+      enabled: enabled,
+      tooltip: 'Member actions',
+      padding: EdgeInsets.zero,
+      icon: const Icon(Icons.more_vert, size: 20),
+      onSelected: (value) {
+        if (value == 'promote') {
+          _pickRank(context);
+        } else if (value == 'remove') {
+          onRemove();
+        }
       },
+      itemBuilder: (context) => [
+        if (showPromote) const PopupMenuItem<String>(value: 'promote', child: Text('Promote')),
+        if (showRemove) const PopupMenuItem<String>(value: 'remove', child: Text('Remove')),
+      ],
     );
   }
 }

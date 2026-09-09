@@ -106,8 +106,8 @@ int _metalTier(String name) {
   if (name.contains('ancient alloy')) return 11;
   if (name.contains('reinforced steel')) return 6;
   if (name.contains('moonstone')) return 13;
-  if (name.contains('tungsten')) return 10;
-  if (name.contains('titanium')) return 9;
+  if (name.contains('tungsten')) return 9;
+  if (name.contains('titanium')) return 10;
   if (name.contains('aether')) return 12;
   if (name.contains('ancient')) return 11;
   if (RegExp(r'\bbronze\b').hasMatch(name)) return 3;

@@ -141,6 +141,9 @@ bool remoteMissingMottoPetColumns(String? reason) => remoteMissingProfileColumn(
   const <String>[remoteMottoColumn, remotePetCosmeticIdColumn],
 );
 
+bool remoteMissingUsernameRenamedAtColumn(String? reason) =>
+    remoteMissingProfileColumn(reason, const <String>[remoteUsernameRenamedAtColumn]);
+
 /// True when [reason] is the hosted project missing migration 015.
 bool remoteMissingPvpSnapshotsTable(String? reason) {
   if (reason == null || reason.isEmpty) return false;
@@ -211,6 +214,31 @@ const String remoteNameColorColumn = 'name_color';
 const String remoteMottoColumn = 'motto';
 const String remotePetCosmeticIdColumn = 'pet_cosmetic_id';
 const String remoteMottoPetColumns = '$remoteMottoColumn, $remotePetCosmeticIdColumn';
+const String remoteUsernameRenamedAtColumn = 'username_renamed_at';
+
+/// How long after a rename before the account may take another public name.
+const int usernameRenameCooldownMs = 7 * 24 * 60 * 60 * 1000;
+
+/// Remaining cooldown, or null when a rename is allowed now.
+int? usernameRenameRemainingMs(String? renamedAtIso, num nowMs) {
+  if (renamedAtIso == null || renamedAtIso.isEmpty) return null;
+  final last = DateTime.tryParse(renamedAtIso);
+  if (last == null) return null;
+  final remaining = last.millisecondsSinceEpoch + usernameRenameCooldownMs - nowMs;
+  if (remaining <= 0) return null;
+  return remaining.round();
+}
+
+String usernameRenameCooldownReason(int remainingMs) {
+  const hourMs = 60 * 60 * 1000;
+  const dayMs = 24 * hourMs;
+  if (remainingMs < dayMs) {
+    final hours = remainingMs <= hourMs ? 1 : ((remainingMs + hourMs - 1) ~/ hourMs);
+    return hours == 1 ? 'You can rename again in 1 hour.' : 'You can rename again in $hours hours.';
+  }
+  final days = (remainingMs + dayMs - 1) ~/ dayMs;
+  return days == 1 ? 'You can rename again in 1 day.' : 'You can rename again in $days days.';
+}
 
 /// Columns a public profile sheet asks for when the privacy migrations are on.
 const String remotePublicProfileColumns =
@@ -651,6 +679,7 @@ MultiplayerProfile? multiplayerProfileFromRemote(RemoteRow? row) {
     nameColor: normalizeNameColorHex(_optStr(row['name_color'])),
     motto: _optStr(row['motto']),
     petCosmeticId: _optStr(row['pet_cosmetic_id']),
+    usernameRenamedAt: _optStr(row['username_renamed_at']),
     updatedAt: _str(row['updated_at']),
   );
 }

@@ -362,7 +362,7 @@ class _MapNodeState extends State<_MapNode> with SingleTickerProviderStateMixin 
             style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w400,
-              color: isHere ? Palette.gold : Palette.parchmentText,
+              color: Palette.parchmentText,
               shadows: overlayShadow,
             ),
           ),

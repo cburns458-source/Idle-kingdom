@@ -3,6 +3,7 @@ import 'package:ik_content/ik_content.dart';
 
 import '../activity/requirements.dart';
 import '../combat/stats.dart' show combatSkillId;
+import '../equipment/specialist.dart' show cookingSkillId;
 import '../js_compat.dart';
 import '../npcs/knowledge.dart';
 import '../production/recipes.dart';
@@ -336,6 +337,9 @@ SkillMenuPlacement skillMenuPlacementForOutput(
     }
     return const SkillMenuPlacement(tabId: 'shops', tabLabel: 'Shops');
   }
+  if (skillId == cookingSkillId) {
+    return _cookingPlacement(displayName);
+  }
   if (skillMenuView(db, skillId).tabs.any((tab) => tab.id == 'actions')) {
     return const SkillMenuPlacement(tabId: 'actions', tabLabel: 'Actions');
   }
@@ -367,6 +371,9 @@ List<SkillMenuTab> _tabsForSkill(GameDatabase db, String skillId) {
   }
   if (skillId == fishingSkillId) {
     return _fishingTabs(db);
+  }
+  if (skillId == cookingSkillId) {
+    return _cookingTabs(db);
   }
   if (skillId == miningSkillId ||
       skillId == harvestingSkillId ||
@@ -486,6 +493,64 @@ List<SkillMenuTab> _fishingTabs(GameDatabase db) {
     _listTab('actions', 'Actions', _gatheringSkillActions(db, fishingSkillId)),
     _listTab('tools', 'Tools', _gatheringToolEntries(db, fishingSkillId)),
     _listTab('pot_fishing', 'Pot fishing', _potFishingEntries(db)),
+  ];
+}
+
+const List<String> _cookingFishNames = <String>[
+  'perch',
+  'trout',
+  'salmon',
+  'tuna',
+  'shark',
+  'squid',
+  'catfish',
+  'crawfish',
+  'crab',
+  'lobster',
+  'eel',
+];
+
+const List<String> _cookingMeatNames = <String>['rabbit', 'pheasant', 'beef', 'venison'];
+
+SkillMenuPlacement _cookingPlacement(String displayName) {
+  return switch (_cookingTabId(displayName)) {
+    'fish' => const SkillMenuPlacement(tabId: 'fish', tabLabel: 'Fish'),
+    'meat' => const SkillMenuPlacement(tabId: 'meat', tabLabel: 'Meat'),
+    'stew' => const SkillMenuPlacement(tabId: 'stew', tabLabel: 'Stew'),
+    _ => const SkillMenuPlacement(tabId: 'other', tabLabel: 'Other'),
+  };
+}
+
+String _cookingTabId(String displayName) {
+  final lower = displayName.toLowerCase();
+  if (lower.contains('stew') || lower.contains('soup')) return 'stew';
+  if (_cookingFishNames.any(lower.contains)) return 'fish';
+  if (_cookingMeatNames.any(lower.contains)) return 'meat';
+  return 'other';
+}
+
+List<SkillMenuTab> _cookingTabs(GameDatabase db) {
+  final fish = <SkillMenuListItem>[];
+  final meat = <SkillMenuListItem>[];
+  final stew = <SkillMenuListItem>[];
+  final other = <SkillMenuListItem>[];
+  for (final item in skillMenuEntries(db, cookingSkillId)) {
+    switch (_cookingTabId(item.displayName)) {
+      case 'fish':
+        fish.add(item);
+      case 'meat':
+        meat.add(item);
+      case 'stew':
+        stew.add(item);
+      default:
+        other.add(item);
+    }
+  }
+  return <SkillMenuTab>[
+    _listTab('fish', 'Fish', fish),
+    _listTab('meat', 'Meat', meat),
+    _listTab('stew', 'Stew', stew),
+    _listTab('other', 'Other', other),
   ];
 }
 

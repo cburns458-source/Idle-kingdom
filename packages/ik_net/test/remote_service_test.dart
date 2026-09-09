@@ -76,6 +76,31 @@ void main() {
     expect(isPendingAccountUsername(rival.session!.username), isTrue);
   });
 
+  test('renames a claimed username once per week when the name is free', () async {
+    var nowMs = _nowMs;
+    final transport = FakeTransport(nowMs: () => nowMs);
+    final first = RemoteMultiplayerService(
+      transport: transport,
+      storage: MemorySaveStorage(),
+      ports: LocalBackendPorts(nowMs: () => nowMs, newId: (prefix) => '${prefix}_${nowMs.toInt()}'),
+    );
+    await first.signUp('hero@example.com', '', 'secret');
+    expect((await first.claimAccountUsername('Hero')).ok, isTrue);
+    expect((await first.renameAccountUsername('Vari')).ok, isTrue);
+    expect(first.session?.username, 'Vari');
+    expect(transport.tables[RemoteTables.profiles]!.single['username'], 'Vari');
+
+    expect((await first.renameAccountUsername('Later')).reason, contains('rename again'));
+    nowMs += usernameRenameCooldownMs;
+    expect((await first.renameAccountUsername('Later')).ok, isTrue);
+    expect(first.session?.username, 'Later');
+
+    final rival = _service(transport, MemorySaveStorage(), startMs: nowMs);
+    await rival.signUp('rival@example.com', '', 'secret');
+    expect((await rival.claimAccountUsername('Scout')).ok, isTrue);
+    expect((await rival.renameAccountUsername('Later')).reason, 'That name is taken.');
+  });
+
   test('trims and shortens a name before the account carries it', () async {
     final transport = FakeTransport();
     final service = _service(transport, MemorySaveStorage());

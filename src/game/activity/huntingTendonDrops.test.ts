@@ -36,10 +36,10 @@ describe('hunting Animal Tendon drops', () => {
     )
   })
 
-  it('does not grant tendons on butterfly hunt', () => {
+  it('does not grant tendons on weasel hunt', () => {
     const save = createNewSave(launch)
-    const butterfly = launch.Actions.find((row) => row['Action ID'] === 'ACN-0015')!
-    const result = resolveActionRewards(launch, save, butterfly, seqRandom([0, 0]))
+    const weasel = launch.Actions.find((row) => row['Action ID'] === 'ACN-0015')!
+    const result = resolveActionRewards(launch, save, weasel, seqRandom([0, 0]))
     expect(result.loot.every((grant) => grant.itemId !== 'ITEM-0044')).toBe(true)
   })
 })

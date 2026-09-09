@@ -226,7 +226,7 @@ Rare wood search is a separate Activity: cedar 70%, oak 30%.
 
 MEADOW
 Hunting pool:
-- Butterfly: 10%.
+- Weasel: 10%.
 - Rabbit: 90%.
 
 Harvesting pool:
@@ -574,8 +574,8 @@ Elk:
 Duck:
 - Hunting Action.
 
-Butterfly:
-- Butterfly Wing.
+Weasel:
+- Weasel Tail.
 
 Hunting tools:
 - Net.
