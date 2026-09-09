@@ -19,6 +19,7 @@ const String shallowsLocationId = 'LOC-0043';
 
 const String huntingTrapItemId = 'ITEM-0346';
 const String fishingPotItemId = 'ITEM-0347';
+
 /// Deprecated alias for [fishingPotItemId].
 const String fishingTrapItemId = fishingPotItemId;
 
@@ -35,6 +36,7 @@ const Set<String> botanyPatchLocations = <String>{
 
 const Set<String> huntingTrapLocations = <String>{'LOC-0008', 'LOC-0009'};
 const Set<String> fishingPotLocations = <String>{'LOC-0003', 'LOC-0004'};
+
 /// Deprecated alias for [fishingPotLocations].
 const Set<String> fishingTrapLocations = fishingPotLocations;
 
@@ -359,9 +361,10 @@ bool locationHasBotanyPatch(String locationId) => botanyPatchLocations.contains(
 }
 
 String fishingPotUtcDayKey(num nowMs) {
-  return DateTime.fromMillisecondsSinceEpoch(nowMs.round(), isUtc: true)
-      .toIso8601String()
-      .substring(0, 10);
+  return DateTime.fromMillisecondsSinceEpoch(
+    nowMs.round(),
+    isUtc: true,
+  ).toIso8601String().substring(0, 10);
 }
 
 /// Ms until the next UTC midnight after [nowMs].
@@ -495,11 +498,7 @@ num msUntilNextUtcDay(num nowMs) {
       },
     );
   }
-  return (
-    ok: true,
-    save: discoverTimerSpotsForLocation(next, loc),
-    reason: '',
-  );
+  return (ok: true, save: discoverTimerSpotsForLocation(next, loc), reason: '');
 }
 
 /// Hunting trap loot tables by location.
@@ -537,7 +536,9 @@ List<({String itemId, num fishingLevel, num xpEach})> potFishOptionsForLocation(
   num fishingLevel,
 ) {
   return [
-    for (final row in potFishByLocation[locationId] ?? const <({String itemId, num fishingLevel, num xpEach})>[])
+    for (final row
+        in potFishByLocation[locationId] ??
+            const <({String itemId, num fishingLevel, num xpEach})>[])
       if (fishingLevel >= row.fishingLevel) row,
   ];
 }
@@ -663,14 +664,7 @@ LocationTimerCollectResult collectLocationTimer(
     final fishingLevel = getSkillProgress(save, 'SKL-0003').level;
     final rolled = _rollFishingPotLoot(timer.locationId, fishingLevel, rng);
     if (rolled != null) {
-      final granted = addItemsToInventory(
-        next,
-        rolled.itemId,
-        rolled.quantity,
-        null,
-        false,
-        db,
-      );
+      final granted = addItemsToInventory(next, rolled.itemId, rolled.quantity, null, false, db);
       next = granted.save;
       xpGained = rolled.xp;
       final name = db.items

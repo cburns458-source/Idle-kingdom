@@ -163,10 +163,7 @@ class _SkillMenuBodyState extends State<_SkillMenuBody> {
 
   List<CatalogPopupEntry> _potFishingStatusEntries() {
     final nowMs = DateTime.now().millisecondsSinceEpoch;
-    final sites = <(String, String)>[
-      ('LOC-0003', 'Goblin Camp'),
-      ('LOC-0004', 'Docks'),
-    ];
+    final sites = <(String, String)>[('LOC-0003', 'Goblin Camp'), ('LOC-0004', 'Docks')];
     final lines = <CatalogPopupEntry>[
       const CatalogPopupEntry(title: 'Sites', dimmed: true),
       const CatalogPopupEntry(title: 'Goblin Camp · crawfish, catfish, eel'),

@@ -697,9 +697,7 @@ final List<SaveMigration> saveMigrations = <SaveMigration>[
       ];
       final rawDays = save['fishingPotDayKeyByLocationId'];
       next['fishingPotDayKeyByLocationId'] = rawDays is Map
-          ? Map<String, Object?>.from(
-              rawDays.map((key, value) => MapEntry(key.toString(), value)),
-            )
+          ? Map<String, Object?>.from(rawDays.map((key, value) => MapEntry(key.toString(), value)))
           : <String, Object?>{};
       return next;
     },

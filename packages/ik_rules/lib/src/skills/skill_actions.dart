@@ -473,11 +473,7 @@ List<SkillMenuListItem> _potFishingEntries(GameDatabase db) {
       final item = db.items.firstWhereOrNull((entry) => entry.itemId == row.itemId);
       if (item == null) continue;
       entries.add(
-        SkillMenuListItem(
-          id: item.itemId,
-          displayName: item.displayName,
-          level: row.fishingLevel,
-        ),
+        SkillMenuListItem(id: item.itemId, displayName: item.displayName, level: row.fishingLevel),
       );
     }
   }

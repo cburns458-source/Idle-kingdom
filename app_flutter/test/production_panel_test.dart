@@ -13,7 +13,7 @@ void main() {
   const kitchenActivityId = 'ACT-0017';
   const kitchenLocationId = 'LOC-0023';
   const rawPotatoId = 'ITEM-0025';
-  const rawCrawfishId = 'ITEM-0047';
+  const rawPerchId = 'ITEM-0047';
   const bakedPotatoRecipeId = 'RCP-0001';
 
   setUpAll(() {
@@ -71,7 +71,7 @@ void main() {
       seed: cook().copyWith(
         inventory: const [
           InventoryStack(itemId: rawPotatoId, quantity: 10),
-          InventoryStack(itemId: rawCrawfishId, quantity: 4),
+          InventoryStack(itemId: rawPerchId, quantity: 4),
         ],
       ),
     );
@@ -85,7 +85,7 @@ void main() {
     // Picking another recipe starts over at one, since its materials differ.
     await tester.tap(find.byType(GameDropdown<String>));
     await tester.pumpAndSettle();
-    await tester.tap(find.textContaining('Cooked Crawfish').last);
+    await tester.tap(find.textContaining('Cooked Perch').last);
     await tester.pumpAndSettle();
 
     expect(find.widgetWithText(GameButton, '1'), findsOne);
