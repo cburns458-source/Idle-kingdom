@@ -550,7 +550,7 @@ class InventoryStack {
 }
 
 /// Parallel location timer (Botany plot or fishing pot).
-/// Does not occupy the Primary Activity slot. Cap: one per location.
+/// Does not occupy the Primary Activity slot. Cap: one per kind per location.
 class LocationTimer {
   const LocationTimer({
     required this.locationId,
@@ -583,10 +583,10 @@ class LocationTimer {
   /// `botany` | `fishing_pot`
   final String kind;
 
-  /// Seed/sapling or pot item consumed to start the timer.
+  /// Seed/sapling or trap/pot item consumed to start the timer.
   final String inputItemId;
 
-  /// Crop/log for botany; null for pots (rolled on collect).
+  /// Crop/log for botany; null for traps/pots (rolled on collect).
   final String? outputItemId;
 
   final num outputQuantity;
@@ -1058,7 +1058,7 @@ class PlayerSave {
   /// Merchant tip rewards already claimed (one-time dialogue grants).
   final List<String> claimedMerchantTipIds;
 
-  /// One-time Kingswoods Bola grant. Existing saves keep false until they visit.
+  /// One-time Kingswoods Sling grant. Existing saves keep false until they visit.
   final bool claimedKingswoodsSling;
 
   /// Critter collection counts (unlocked entries in the Log).
@@ -1164,7 +1164,7 @@ class PlayerSave {
 
   final num maxHp;
 
-  /// Background Botany / fishing pot timers. At most one entry per locationId.
+  /// Background Botany / fishing pot timers. At most one entry per kind per locationId.
   /// Runs in parallel with the Primary Activity.
   final List<LocationTimer> locationTimers;
 
