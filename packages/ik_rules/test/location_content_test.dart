@@ -56,7 +56,7 @@ void main() {
     expect(_weights(db, activity.raw['Pool ID']! as String), {'ACN-0046': 70, 'ACN-0047': 30});
   });
 
-  test('catch crawfish and hunt pheasant sit on the early gather curve', () {
+  test('catch perch and hunt pheasant sit on the early gather curve', () {
     final crawfish = db.actions.firstWhere((row) => row.raw['Action ID'] == 'ACN-0099');
     expect(crawfish.raw['XP Reward'], 200);
     expect(crawfish.raw['Base Duration Seconds'], 10);

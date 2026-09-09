@@ -673,6 +673,35 @@ final List<SaveMigration> saveMigrations = <SaveMigration>[
       return next;
     },
   ),
+  SaveMigration(
+    fromVersion: 44,
+    toVersion: 45,
+    migrate: (save, nowMs) {
+      final next = _bumped(save, 45);
+      next['locationTimers'] = <Object?>[
+        for (final row in (save['locationTimers'] as List? ?? const <Object?>[]))
+          if (row is Map)
+            <String, Object?>{
+              ...Map<String, Object?>.from(row),
+              if (row['kind'] == 'fishing_trap') 'kind': 'fishing_pot',
+            }
+          else
+            row,
+      ];
+      next['discoveredTimerSpotIds'] = <Object?>[
+        for (final entry in (save['discoveredTimerSpotIds'] as List? ?? const <Object?>[]))
+          if (entry is String)
+            entry.startsWith('fishing_trap:')
+                ? entry.replaceFirst('fishing_trap:', 'fishing_pot:')
+                : entry,
+      ];
+      final rawDays = save['fishingPotDayKeyByLocationId'];
+      next['fishingPotDayKeyByLocationId'] = rawDays is Map
+          ? Map<String, Object?>.from(rawDays.map((key, value) => MapEntry(key.toString(), value)))
+          : <String, Object?>{};
+      return next;
+    },
+  ),
 ];
 
 /// Thrown when a save cannot be brought to the current version.

@@ -1,4 +1,4 @@
-export const SAVE_VERSION = 44
+export const SAVE_VERSION = 45
 export const SAVE_STORAGE_KEY = 'idle-kingdoms.demo.save'
 export const STARTING_LOCATION_ID = 'LOC-0001'
 /** Base gold before race kit; race starters grant the real starting gold. */
@@ -206,16 +206,16 @@ export interface XpTrackerEntry {
 export const TOTAL_XP_TRACKER_ID = 'total'
 
 /**
- * Parallel location timer (Botany plot or hunting/fishing trap).
+ * Parallel location timer (Botany plot, hunting trap, or fishing pot).
  * Does not occupy the Primary Activity slot. Cap: one per location.
  */
 export interface LocationTimer {
   locationId: string
-  /** `botany` | `hunting_trap` | `fishing_trap` */
-  kind: 'botany' | 'hunting_trap' | 'fishing_trap'
-  /** Seed/sapling or trap item consumed to start the timer. */
+  /** `botany` | `hunting_trap` | `fishing_pot` */
+  kind: 'botany' | 'hunting_trap' | 'fishing_pot'
+  /** Seed/sapling or trap/pot item consumed to start the timer. */
   inputItemId: string
-  /** Crop/log for botany; null for traps (rolled on collect). */
+  /** Crop/log for botany; null for traps/pots (rolled on collect). */
   outputItemId: string | null
   outputQuantity: number
   skillId: string
@@ -356,15 +356,20 @@ export interface PlayerSave {
   currentHp: number
   maxHp: number
   /**
-   * Background Botany / trap timers. At most one entry per locationId.
+   * Background Botany / trap / pot timers. At most one entry per locationId.
    * Runs in parallel with the Primary Activity.
    */
   locationTimers: LocationTimer[]
   /**
    * Timer spot keys the player has found (`botany:LOC-xxxx`, `hunting_trap:LOC-xxxx`,
-   * `fishing_trap:LOC-xxxx`). Listed in the Timers menu even with no active timer.
+   * `fishing_pot:LOC-xxxx`). Listed in the Timers menu even with no active timer.
    */
   discoveredTimerSpotIds: string[]
+  /**
+   * UTC day key (`YYYY-MM-DD`) of the last fishing-pot place at each location.
+   * One pot place per site per UTC day.
+   */
+  fishingPotDayKeyByLocationId: Record<string, string>
   /** RuneScape-style loot tracker sections, keyed by `kind:sourceId`. */
   lootTrackers: Record<string, LootTrackerEntry>
   /** RuneScape-style XP tracker rows, keyed by skill id or `total`. */

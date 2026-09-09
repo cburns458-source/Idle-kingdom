@@ -164,7 +164,7 @@ describe('npc conversation', () => {
     const conversation = npcConversation(launch, save, npc('NPC-0001'))
     expect(conversation.greeting).toBeNull()
     expect(conversation.quests[0]!.canTalk).toBe(true)
-    expect(conversation.quests[0]!.talkLine).toContain('cooked crawfish')
+    expect(conversation.quests[0]!.talkLine).toContain('cooked perch')
     expect(conversation.quests[0]!.ready).toBe(false)
   })
 

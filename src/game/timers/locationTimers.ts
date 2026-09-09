@@ -14,7 +14,9 @@ export const GRAND_FEAST_QUEST_ID = 'QST-0001'
 export const SHALLOWS_LOCATION_ID = 'LOC-0043'
 
 export const HUNTING_TRAP_ITEM_ID = 'ITEM-0346'
-export const FISHING_TRAP_ITEM_ID = 'ITEM-0347'
+export const FISHING_POT_ITEM_ID = 'ITEM-0347'
+/** @deprecated Use FISHING_POT_ITEM_ID */
+export const FISHING_TRAP_ITEM_ID = FISHING_POT_ITEM_ID
 
 /** Botany patches: Farm, Courtyard, Gathering Outskirts, Mountains, Shallows, Temple, Meadow. */
 export const BOTANY_PATCH_LOCATIONS = new Set([
@@ -28,7 +30,9 @@ export const BOTANY_PATCH_LOCATIONS = new Set([
 ])
 
 export const HUNTING_TRAP_LOCATIONS = new Set(['LOC-0008', 'LOC-0009'])
-export const FISHING_TRAP_LOCATIONS = new Set(['LOC-0003', 'LOC-0004'])
+export const FISHING_POT_LOCATIONS = new Set(['LOC-0003', 'LOC-0004'])
+/** @deprecated Use FISHING_POT_LOCATIONS */
+export const FISHING_TRAP_LOCATIONS = FISHING_POT_LOCATIONS
 
 /** Default trap soak time: 6 hours. */
 export const TRAP_DURATION_MS = 6 * 60 * 60 * 1000
@@ -134,7 +138,7 @@ export function timerAtLocation(
   return (save.locationTimers ?? []).find((timer) => timer.locationId === locationId)
 }
 
-export type TimerSpotKind = 'botany' | 'hunting_trap' | 'fishing_trap'
+export type TimerSpotKind = 'botany' | 'hunting_trap' | 'fishing_pot'
 
 /** Timer matching both location and kind (at most one of each kind per spot). */
 export function timerAtLocationKind(
@@ -171,7 +175,7 @@ export function parseTimerSpotKey(
   const kind = key.slice(0, sep)
   const locationId = key.slice(sep + 1)
   if (!locationId) return null
-  if (kind !== 'botany' && kind !== 'hunting_trap' && kind !== 'fishing_trap') return null
+  if (kind !== 'botany' && kind !== 'hunting_trap' && kind !== 'fishing_pot') return null
   return { kind, locationId }
 }
 
@@ -193,7 +197,7 @@ export function discoverTimerSpotsForLocation(
   }
   if (BOTANY_PATCH_LOCATIONS.has(locationId)) add('botany')
   if (HUNTING_TRAP_LOCATIONS.has(locationId)) add('hunting_trap')
-  if (FISHING_TRAP_LOCATIONS.has(locationId)) add('fishing_trap')
+  if (FISHING_POT_LOCATIONS.has(locationId)) add('fishing_pot')
   if (!changed) return save
   return { ...save, discoveredTimerSpotIds: [...discovered] }
 }
@@ -326,12 +330,41 @@ export function plantBestBotanySeed(
   }
 }
 
+export function fishingPotUtcDayKey(nowMs: number): string {
+  return new Date(nowMs).toISOString().slice(0, 10)
+}
+
+/** Ms until the next UTC midnight after `nowMs`. */
+export function msUntilNextUtcDay(nowMs: number): number {
+  const next = Date.UTC(
+    new Date(nowMs).getUTCFullYear(),
+    new Date(nowMs).getUTCMonth(),
+    new Date(nowMs).getUTCDate() + 1,
+  )
+  return Math.max(0, next - nowMs)
+}
+
+export function fishingPotLockedUntilDay(
+  save: PlayerSave,
+  locationId: string,
+  nowMs: number = Date.now(),
+): { locked: boolean; dayKey: string; msRemaining: number } {
+  const dayKey = fishingPotUtcDayKey(nowMs)
+  const used = save.fishingPotDayKeyByLocationId?.[locationId]
+  if (used === dayKey) {
+    return { locked: true, dayKey, msRemaining: msUntilNextUtcDay(nowMs) }
+  }
+  return { locked: false, dayKey, msRemaining: 0 }
+}
+
 export function canPlaceTrap(
   _db: GameDatabase,
   save: PlayerSave,
   trapItemId: string,
   locationId: string = save.currentLocationId,
-): { ok: true; kind: 'hunting_trap' | 'fishing_trap' } | { ok: false; reason: string } {
+  nowMs: number = Date.now(),
+): { ok: true; kind: 'hunting_trap' | 'fishing_pot' } | { ok: false; reason: string } {
+  void _db
   if (trapItemId === HUNTING_TRAP_ITEM_ID) {
     if (!HUNTING_TRAP_LOCATIONS.has(locationId)) {
       return { ok: false, reason: 'Hunting traps only work in the Kingswoods and Meadow.' }
@@ -343,16 +376,32 @@ export function canPlaceTrap(
     if (have < 1) return { ok: false, reason: 'You do not have that trap.' }
     return { ok: true, kind: 'hunting_trap' }
   }
-  if (trapItemId === FISHING_TRAP_ITEM_ID) {
-    if (!FISHING_TRAP_LOCATIONS.has(locationId)) {
-      return { ok: false, reason: 'Fishing traps only work at the Goblin Camp and Docks.' }
+  if (trapItemId === FISHING_POT_ITEM_ID) {
+    if (!FISHING_POT_LOCATIONS.has(locationId)) {
+      return { ok: false, reason: 'Fishing pots only work at the Goblin Camp and Docks.' }
     }
-    if (timerAtLocationKind(save, locationId, 'fishing_trap')) {
-      return { ok: false, reason: 'A fishing trap is already set here.' }
+    if (timerAtLocationKind(save, locationId, 'fishing_pot')) {
+      return { ok: false, reason: 'A fishing pot is already set here.' }
+    }
+    const lock = fishingPotLockedUntilDay(save, locationId, nowMs)
+    if (lock.locked) {
+      return {
+        ok: false,
+        reason: 'You should not overfish. Come back after the daily reset.',
+      }
+    }
+    const fishingLevel = getSkillProgress(save, 'SKL-0003').level
+    const unlocked = potFishOptionsForLocation(locationId, fishingLevel)
+    if (unlocked.length === 0) {
+      const need = locationId === 'LOC-0004' ? 35 : 14
+      return {
+        ok: false,
+        reason: `You need Fishing ${need} before this pot will catch anything.`,
+      }
     }
     const have = save.inventory.find((stack) => stack.itemId === trapItemId)?.quantity ?? 0
-    if (have < 1) return { ok: false, reason: 'You do not have that trap.' }
-    return { ok: true, kind: 'fishing_trap' }
+    if (have < 1) return { ok: false, reason: 'You do not have a fishing pot.' }
+    return { ok: true, kind: 'fishing_pot' }
   }
   return { ok: false, reason: 'That is not a placeable trap.' }
 }
@@ -364,10 +413,15 @@ export function placeTrap(
   nowMs: number = Date.now(),
 ): { ok: true; save: PlayerSave } | { ok: false; reason: string } {
   const locationId = save.currentLocationId
-  const gate = canPlaceTrap(db, save, trapItemId, locationId)
+  const gate = canPlaceTrap(db, save, trapItemId, locationId, nowMs)
   if (!gate.ok) return gate
   const removed = removeIngredients(save, [{ itemId: trapItemId, quantity: 1 }])
-  if (!removed) return { ok: false, reason: 'You do not have that trap.' }
+  if (!removed) {
+    return {
+      ok: false,
+      reason: gate.kind === 'fishing_pot' ? 'You do not have a fishing pot.' : 'You do not have that trap.',
+    }
+  }
   const skillId = gate.kind === 'hunting_trap' ? 'SKL-0005' : 'SKL-0003'
   const timer: LocationTimer = {
     locationId,
@@ -380,23 +434,34 @@ export function placeTrap(
     startedAt: new Date(nowMs).toISOString(),
     durationMs: TRAP_DURATION_MS,
   }
+  let next: PlayerSave = {
+    ...removed,
+    locationTimers: [
+      ...withoutLocationTimerKind(removed.locationTimers, locationId, gate.kind),
+      timer,
+    ],
+  }
+  if (gate.kind === 'fishing_pot') {
+    next = {
+      ...next,
+      fishingPotDayKeyByLocationId: {
+        ...(next.fishingPotDayKeyByLocationId ?? {}),
+        [locationId]: fishingPotUtcDayKey(nowMs),
+      },
+    }
+  }
   return {
     ok: true,
-    save: discoverTimerSpotsForLocation(
-      {
-        ...removed,
-        locationTimers: [
-          ...withoutLocationTimerKind(removed.locationTimers, locationId, gate.kind),
-          timer,
-        ],
-      },
-      locationId,
-    ),
+    save: discoverTimerSpotsForLocation(next, locationId),
   }
 }
 
-/** Simple trap loot tables by location. */
-const TRAP_LOOT: Record<string, Array<{ itemId: string; weight: number; xp: number }>> = {
+function rollInclusive(random: () => number, min: number, max: number): number {
+  return min + Math.floor(random() * (max - min + 1))
+}
+
+/** Hunting trap loot tables by location. */
+const HUNTING_TRAP_LOOT: Record<string, Array<{ itemId: string; weight: number; xp: number }>> = {
   'LOC-0008': [
     { itemId: 'ITEM-0053', weight: 50, xp: 200 },
     { itemId: 'ITEM-0055', weight: 30, xp: 350 },
@@ -407,23 +472,37 @@ const TRAP_LOOT: Record<string, Array<{ itemId: string; weight: number; xp: numb
     { itemId: 'ITEM-0193', weight: 45, xp: 180 },
     { itemId: 'ITEM-0053', weight: 10, xp: 200 },
   ],
+}
+
+/** Pot-fishing catches: Goblin Camp freshwater vs Docks saltwater. */
+export const POT_FISH_BY_LOCATION: Record<
+  string,
+  Array<{ itemId: string; fishingLevel: number; xpEach: number }>
+> = {
   'LOC-0003': [
-    { itemId: 'ITEM-0047', weight: 50, xp: 120 },
-    { itemId: 'ITEM-0048', weight: 35, xp: 200 },
-    { itemId: 'ITEM-0049', weight: 15, xp: 300 },
+    { itemId: 'ITEM-0352', fishingLevel: 14, xpEach: 150 },
+    { itemId: 'ITEM-0354', fishingLevel: 44, xpEach: 350 },
+    { itemId: 'ITEM-0356', fishingLevel: 64, xpEach: 520 },
   ],
   'LOC-0004': [
-    { itemId: 'ITEM-0050', weight: 40, xp: 350 },
-    { itemId: 'ITEM-0049', weight: 35, xp: 300 },
-    { itemId: 'ITEM-0048', weight: 25, xp: 200 },
+    { itemId: 'ITEM-0353', fishingLevel: 35, xpEach: 280 },
+    { itemId: 'ITEM-0355', fishingLevel: 55, xpEach: 450 },
+    { itemId: 'ITEM-0357', fishingLevel: 75, xpEach: 650 },
   ],
 }
 
-function rollTrapLoot(
+export function potFishOptionsForLocation(
+  locationId: string,
+  fishingLevel: number,
+): Array<{ itemId: string; fishingLevel: number; xpEach: number }> {
+  return (POT_FISH_BY_LOCATION[locationId] ?? []).filter((row) => fishingLevel >= row.fishingLevel)
+}
+
+function rollHuntingTrapLoot(
   locationId: string,
   random: () => number,
 ): { itemId: string; xp: number } | null {
-  const table = TRAP_LOOT[locationId]
+  const table = HUNTING_TRAP_LOOT[locationId]
   if (!table || table.length === 0) return null
   const total = table.reduce((sum, row) => sum + row.weight, 0)
   let roll = random() * total
@@ -435,8 +514,16 @@ function rollTrapLoot(
   return { itemId: last.itemId, xp: last.xp }
 }
 
-function rollInclusive(random: () => number, min: number, max: number): number {
-  return min + Math.floor(random() * (max - min + 1))
+function rollFishingPotLoot(
+  locationId: string,
+  fishingLevel: number,
+  random: () => number,
+): { itemId: string; quantity: number; xp: number } | null {
+  const options = potFishOptionsForLocation(locationId, fishingLevel)
+  if (options.length === 0) return null
+  const pick = options[Math.floor(random() * options.length)]!
+  const quantity = rollInclusive(random, 6, 12)
+  return { itemId: pick.itemId, quantity, xp: pick.xpEach * quantity }
 }
 
 export function collectLocationTimer(
@@ -502,8 +589,24 @@ export function collectLocationTimer(
           timer.inputItemId,
       })
     }
+  } else if (timer.kind === 'fishing_pot') {
+    const fishingLevel = getSkillProgress(save, 'SKL-0003').level
+    const rolled = rollFishingPotLoot(timer.locationId, fishingLevel, random)
+    if (rolled) {
+      const granted = addItemsToInventory(next, rolled.itemId, rolled.quantity, null, false, db)
+      next = granted.save
+      xpGained = rolled.xp
+      loot.push({
+        itemId: rolled.itemId,
+        quantity: rolled.quantity,
+        displayName:
+          db.Items.find((item) => item['Item ID'] === rolled.itemId)?.['Display Name'] ??
+          rolled.itemId,
+      })
+    }
+    next = addItemsToInventory(next, timer.inputItemId, 1, null, false, db).save
   } else {
-    const rolled = rollTrapLoot(timer.locationId, random)
+    const rolled = rollHuntingTrapLoot(timer.locationId, random)
     if (rolled) {
       const granted = addItemsToInventory(next, rolled.itemId, 1, null, false, db)
       next = granted.save

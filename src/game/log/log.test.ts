@@ -148,7 +148,7 @@ describe('quest log', () => {
       { key: 'QSTP-0001', label: 'Hear what the King needs', state: 'done' },
       { key: 'QSTP-0002', label: 'Prepare food for the feast', state: 'current' },
       { key: 'deliver:ITEM-0058', label: 'Deliver Baked Potato 0 / 10', state: 'current' },
-      { key: 'deliver:ITEM-0059', label: 'Deliver Cooked Crawfish 0 / 10', state: 'current' },
+      { key: 'deliver:ITEM-0059', label: 'Deliver Cooked Perch 0 / 10', state: 'current' },
     ])
   })
 

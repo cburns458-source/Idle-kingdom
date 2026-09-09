@@ -4,6 +4,7 @@ import 'package:ik_rules/ik_rules.dart';
 
 import '../theme.dart';
 import 'catalog_popup.dart';
+import 'format.dart';
 import 'game_popup.dart';
 import 'recipe_book_sheet.dart';
 
@@ -86,6 +87,7 @@ class _SkillMenuBodyState extends State<_SkillMenuBody> {
         if (section.title case final title?) CatalogPopupEntry(title: title, dimmed: true),
         for (final entry in section.entries) CatalogPopupEntry(title: skillMenuLine(entry)),
       ],
+      if (_tab.id == 'pot_fishing') ..._potFishingStatusEntries(),
     ];
 
     return Column(
@@ -157,6 +159,28 @@ class _SkillMenuBodyState extends State<_SkillMenuBody> {
         ),
       ],
     );
+  }
+
+  List<CatalogPopupEntry> _potFishingStatusEntries() {
+    final nowMs = DateTime.now().millisecondsSinceEpoch;
+    final sites = <(String, String)>[('LOC-0003', 'Goblin Camp'), ('LOC-0004', 'Docks')];
+    final lines = <CatalogPopupEntry>[
+      const CatalogPopupEntry(title: 'Sites', dimmed: true),
+      const CatalogPopupEntry(title: 'Goblin Camp · crawfish, catfish, eel'),
+      const CatalogPopupEntry(title: 'Docks · red crab, Dungeness, lobster'),
+      const CatalogPopupEntry(title: 'Daily status', dimmed: true),
+    ];
+    for (final (locationId, name) in sites) {
+      final lock = fishingPotLockedUntilDay(widget.save, locationId, nowMs: nowMs);
+      lines.add(
+        CatalogPopupEntry(
+          title: lock.locked
+              ? '$name · overfished (${formatDurationMs(lock.msRemaining)} left)'
+              : '$name · ready today',
+        ),
+      );
+    }
+    return lines;
   }
 }
 

@@ -105,6 +105,7 @@ class _TimersViewState extends State<TimersView> {
                     nowMs: nowMs,
                     currentLocationId: here,
                     onTravel: _travel,
+                    save: save,
                   ),
                   const SizedBox(height: 12),
                   _TimerSection(
@@ -115,16 +116,18 @@ class _TimersViewState extends State<TimersView> {
                     nowMs: nowMs,
                     currentLocationId: here,
                     onTravel: _travel,
+                    save: save,
                   ),
                   const SizedBox(height: 12),
                   _TimerSection(
                     title: 'Fishing',
-                    emptyLabel: 'No fishing traps discovered yet.',
-                    spots: _spotsForKind(save, 'fishing_trap'),
+                    emptyLabel: 'No fishing pots discovered yet.',
+                    spots: _spotsForKind(save, 'fishing_pot'),
                     db: db,
                     nowMs: nowMs,
                     currentLocationId: here,
                     onTravel: _travel,
+                    save: save,
                   ),
                 ],
               ),
@@ -153,6 +156,7 @@ class _TimerSection extends StatelessWidget {
     required this.nowMs,
     required this.currentLocationId,
     required this.onTravel,
+    required this.save,
   });
 
   final String title;
@@ -162,6 +166,7 @@ class _TimerSection extends StatelessWidget {
   final num nowMs;
   final String currentLocationId;
   final void Function(String locationId, String mapId) onTravel;
+  final PlayerSave save;
 
   @override
   Widget build(BuildContext context) {
@@ -191,6 +196,7 @@ class _TimerSection extends StatelessWidget {
                   nowMs: nowMs,
                   currentLocationId: currentLocationId,
                   onTravel: onTravel,
+                  save: save,
                 ),
               ),
         ],
@@ -206,6 +212,7 @@ class _TimerRow extends StatelessWidget {
     required this.nowMs,
     required this.currentLocationId,
     required this.onTravel,
+    required this.save,
   });
 
   final _DiscoveredSpot spot;
@@ -213,6 +220,7 @@ class _TimerRow extends StatelessWidget {
   final num nowMs;
   final String currentLocationId;
   final void Function(String locationId, String mapId) onTravel;
+  final PlayerSave save;
 
   @override
   Widget build(BuildContext context) {
@@ -227,7 +235,14 @@ class _TimerRow extends StatelessWidget {
     final ready = timer != null && timerIsReady(timer, nowMs);
     final String status;
     if (timer == null) {
-      status = 'Empty';
+      if (spot.kind == 'fishing_pot') {
+        final lock = fishingPotLockedUntilDay(save, spot.locationId, nowMs: nowMs);
+        status = lock.locked
+            ? 'Overfished · resets in ${formatDurationMs(lock.msRemaining)}'
+            : 'Empty';
+      } else {
+        status = 'Empty';
+      }
     } else if (ready) {
       status = 'Ready';
     } else {

@@ -154,10 +154,21 @@ describe('skill menu entries', () => {
   it('does not list a net on the fishing Tools tab', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const fishing = skillMenuView(launch, 'SKL-0003')
+    expect(fishing.tabs.map((tab) => tab.label)).toEqual(['Actions', 'Tools', 'Pot fishing'])
     const tools = fishing.tabs.find((tab) => tab.id === 'tools')?.sections[0]?.entries ?? []
     expect(tools.some((item) => item.displayName === 'Net')).toBe(false)
     expect(tools.some((item) => item.displayName === 'Fishing Net')).toBe(false)
     expect(tools.some((item) => item.displayName.includes('Fishing Rod'))).toBe(true)
+  })
+
+  it('lists pot fishing catches on the fishing Pot fishing tab', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const fishing = skillMenuView(launch, 'SKL-0003')
+    const pot = fishing.tabs.find((tab) => tab.id === 'pot_fishing')?.sections[0]?.entries ?? []
+    expect(pot.some((item) => item.displayName === 'Fishing Pot' && item.level === 14)).toBe(true)
+    expect(pot.some((item) => item.displayName === 'Raw Crawfish' && item.level === 14)).toBe(true)
+    expect(pot.some((item) => item.displayName === 'Raw Lobster' && item.level === 75)).toBe(true)
+    expect(pot.some((item) => item.displayName === 'Raw Perch')).toBe(false)
   })
 
   it('lists net and sling on the hunting Tools tab', () => {
@@ -213,7 +224,7 @@ describe('skill menu entries', () => {
     const fishing = skillMenuView(launch, 'SKL-0003')
     const actions = fishing.tabs.find((tab) => tab.id === 'actions')?.sections[0]?.entries ?? []
     expect(actions.some((item) => item.displayName === 'Fight Mother Squid')).toBe(false)
-    expect(actions.some((item) => item.displayName === 'Catch crawfish')).toBe(true)
+    expect(actions.some((item) => item.displayName === 'Catch perch')).toBe(true)
     expect(actionsForSkill(launch, 'SKL-0003').some((item) => item.displayName === 'Fight Mother Squid')).toBe(
       true,
     )

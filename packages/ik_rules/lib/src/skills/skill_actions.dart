@@ -7,6 +7,7 @@ import '../js_compat.dart';
 import '../npcs/knowledge.dart';
 import '../production/recipes.dart';
 import '../projects/projects.dart';
+import '../timers/location_timers.dart' show fishingPotItemId, potFishByLocation;
 
 const String _essenceItemId = 'ITEM-0011';
 const String miningSkillId = 'SKL-0002';
@@ -364,8 +365,10 @@ List<SkillMenuTab> _tabsForSkill(GameDatabase db, String skillId) {
       _listTab('other', 'Other', _combatOtherEntries(db)),
     ];
   }
+  if (skillId == fishingSkillId) {
+    return _fishingTabs(db);
+  }
   if (skillId == miningSkillId ||
-      skillId == fishingSkillId ||
       skillId == harvestingSkillId ||
       skillId == huntingSkillId ||
       skillId == woodcuttingSkillId) {
@@ -454,6 +457,35 @@ List<SkillMenuTab> _botanyTabs(GameDatabase db) {
   return <SkillMenuTab>[
     _listTab('seeds', 'Seeds', _botanyPlantEntries(db, saplings: false)),
     _listTab('saplings', 'Saplings', _botanyPlantEntries(db, saplings: true)),
+  ];
+}
+
+List<SkillMenuListItem> _potFishingEntries(GameDatabase db) {
+  final entries = <SkillMenuListItem>[];
+  final pot = db.items.firstWhereOrNull((row) => row.itemId == fishingPotItemId);
+  if (pot != null) {
+    entries.add(SkillMenuListItem(id: pot.itemId, displayName: pot.displayName, level: 14));
+  }
+  final seen = <String>{};
+  for (final table in potFishByLocation.values) {
+    for (final row in table) {
+      if (!seen.add(row.itemId)) continue;
+      final item = db.items.firstWhereOrNull((entry) => entry.itemId == row.itemId);
+      if (item == null) continue;
+      entries.add(
+        SkillMenuListItem(id: item.itemId, displayName: item.displayName, level: row.fishingLevel),
+      );
+    }
+  }
+  entries.sort(_compareMenuItems);
+  return entries;
+}
+
+List<SkillMenuTab> _fishingTabs(GameDatabase db) {
+  return <SkillMenuTab>[
+    _listTab('actions', 'Actions', _gatheringSkillActions(db, fishingSkillId)),
+    _listTab('tools', 'Tools', _gatheringToolEntries(db, fishingSkillId)),
+    _listTab('pot_fishing', 'Pot fishing', _potFishingEntries(db)),
   ];
 }
 

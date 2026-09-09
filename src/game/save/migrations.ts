@@ -679,6 +679,33 @@ export const SAVE_MIGRATIONS: SaveMigration[] = [
       saveVersion: 44,
     }),
   },
+  {
+    fromVersion: 44,
+    toVersion: 45,
+    migrate: (save) => {
+      const locationTimers = (Array.isArray(save.locationTimers) ? save.locationTimers : []).map(
+        (timer) =>
+          timer && typeof timer === 'object' && (timer as { kind?: string }).kind === 'fishing_trap'
+            ? { ...timer, kind: 'fishing_pot' as const }
+            : timer,
+      )
+      const discoveredTimerSpotIds = (
+        Array.isArray(save.discoveredTimerSpotIds) ? save.discoveredTimerSpotIds : []
+      )
+        .filter((id): id is string => typeof id === 'string')
+        .map((id) => (id.startsWith('fishing_trap:') ? id.replace(/^fishing_trap:/, 'fishing_pot:') : id))
+      return {
+        ...save,
+        locationTimers,
+        discoveredTimerSpotIds,
+        fishingPotDayKeyByLocationId:
+          save.fishingPotDayKeyByLocationId && typeof save.fishingPotDayKeyByLocationId === 'object'
+            ? save.fishingPotDayKeyByLocationId
+            : {},
+        saveVersion: 45,
+      }
+    },
+  },
 ]
 
 export function migrateSave(save: PlayerSave, nowMs: number = Date.now()): PlayerSave {
