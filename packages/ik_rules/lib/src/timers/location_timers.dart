@@ -17,7 +17,6 @@ const String courtyardLocationId = 'LOC-0014';
 const String grandFeastQuestId = 'QST-0001';
 const String shallowsLocationId = 'LOC-0043';
 
-const String huntingTrapItemId = 'ITEM-0346';
 const String fishingPotItemId = 'ITEM-0347';
 
 /// Deprecated alias for [fishingPotItemId].
@@ -34,7 +33,6 @@ const Set<String> botanyPatchLocations = <String>{
   'LOC-0009',
 };
 
-const Set<String> huntingTrapLocations = <String>{'LOC-0008', 'LOC-0009'};
 const Set<String> fishingPotLocations = <String>{'LOC-0003', 'LOC-0004'};
 
 /// Deprecated alias for [fishingPotLocations].
@@ -204,11 +202,11 @@ String timerSpotKey(String kind, String locationId) => '$kind:$locationId';
   final kind = key.substring(0, sep);
   final locationId = key.substring(sep + 1);
   if (locationId.isEmpty) return null;
-  if (kind != 'botany' && kind != 'hunting_trap' && kind != 'fishing_pot') return null;
+  if (kind != 'botany' && kind != 'fishing_pot') return null;
   return (kind: kind, locationId: locationId);
 }
 
-/// Marks Botany / hunting / fishing spots at [locationId] as discovered when the
+/// Marks Botany / fishing pot spots at [locationId] as discovered when the
 /// location supports them. Safe to call on plant, place, or travel arrival.
 PlayerSave discoverTimerSpotsForLocation(PlayerSave save, String locationId) {
   final discovered = <String>{...save.discoveredTimerSpotIds};
@@ -221,7 +219,6 @@ PlayerSave discoverTimerSpotsForLocation(PlayerSave save, String locationId) {
   }
 
   if (botanyPatchLocations.contains(locationId)) add('botany');
-  if (huntingTrapLocations.contains(locationId)) add('hunting_trap');
   if (fishingTrapLocations.contains(locationId)) add('fishing_pot');
   if (!changed) return save;
   return save.copyWith(discoveredTimerSpotIds: discovered.toList());
@@ -398,23 +395,6 @@ num msUntilNextUtcDay(num nowMs) {
 }) {
   final loc = locationId ?? save.currentLocationId;
   final now = nowMs ?? DateTime.now().millisecondsSinceEpoch;
-  if (trapItemId == huntingTrapItemId) {
-    if (!huntingTrapLocations.contains(loc)) {
-      return (
-        ok: false,
-        kind: null,
-        reason: 'Hunting traps only work in the Kingswoods and Meadow.',
-      );
-    }
-    if (timerAtLocationKind(save, loc, 'hunting_trap') != null) {
-      return (ok: false, kind: null, reason: 'A hunting trap is already set here.');
-    }
-    final have = save.inventory
-        .where((stack) => stack.itemId == trapItemId)
-        .fold<num>(0, (sum, stack) => sum + stack.quantity);
-    if (have < 1) return (ok: false, kind: null, reason: 'You do not have that trap.');
-    return (ok: true, kind: 'hunting_trap', reason: '');
-  }
   if (trapItemId == fishingPotItemId) {
     if (!fishingPotLocations.contains(loc)) {
       return (
@@ -465,16 +445,9 @@ num msUntilNextUtcDay(num nowMs) {
   if (!gate.ok) return (ok: false, save: null, reason: gate.reason);
   final removed = removeIngredients(save, [RecipeIngredient(itemId: trapItemId, quantity: 1)]);
   if (removed == null) {
-    return (
-      ok: false,
-      save: null,
-      reason: gate.kind == 'fishing_pot'
-          ? 'You do not have a fishing pot.'
-          : 'You do not have that trap.',
-    );
+    return (ok: false, save: null, reason: 'You do not have a fishing pot.');
   }
   final kind = gate.kind!;
-  final skillId = kind == 'hunting_trap' ? 'SKL-0005' : 'SKL-0003';
   final started = DateTime.fromMillisecondsSinceEpoch(now.round()).toIso8601String();
   final timer = LocationTimer(
     locationId: loc,
@@ -482,39 +455,22 @@ num msUntilNextUtcDay(num nowMs) {
     inputItemId: trapItemId,
     outputItemId: null,
     outputQuantity: 1,
-    skillId: skillId,
-    xpReward: kind == 'hunting_trap' ? 200 : 150,
+    skillId: 'SKL-0003',
+    xpReward: 150,
     startedAt: started,
     durationMs: trapDurationMs,
   );
   var next = removed.copyWith(
     locationTimers: [..._withoutLocationTimerKind(removed.locationTimers, loc, kind), timer],
   );
-  if (kind == 'fishing_pot') {
-    next = next.copyWith(
-      fishingPotDayKeyByLocationId: <String, String>{
-        ...next.fishingPotDayKeyByLocationId,
-        loc: fishingPotUtcDayKey(now),
-      },
-    );
-  }
+  next = next.copyWith(
+    fishingPotDayKeyByLocationId: <String, String>{
+      ...next.fishingPotDayKeyByLocationId,
+      loc: fishingPotUtcDayKey(now),
+    },
+  );
   return (ok: true, save: discoverTimerSpotsForLocation(next, loc), reason: '');
 }
-
-/// Hunting trap loot tables by location.
-const Map<String, List<({String itemId, num weight, num xp})>> _huntingTrapLoot =
-    <String, List<({String itemId, num weight, num xp})>>{
-      'LOC-0008': [
-        (itemId: 'ITEM-0053', weight: 50, xp: 200),
-        (itemId: 'ITEM-0055', weight: 30, xp: 350),
-        (itemId: 'ITEM-0052', weight: 20, xp: 180),
-      ],
-      'LOC-0009': [
-        (itemId: 'ITEM-0052', weight: 45, xp: 180),
-        (itemId: 'ITEM-0193', weight: 45, xp: 180),
-        (itemId: 'ITEM-0053', weight: 10, xp: 200),
-      ],
-    };
 
 /// Pot-fishing catches: Goblin Camp freshwater vs Docks saltwater.
 const Map<String, List<({String itemId, num fishingLevel, num xpEach})>> potFishByLocation =
@@ -541,19 +497,6 @@ List<({String itemId, num fishingLevel, num xpEach})> potFishOptionsForLocation(
             const <({String itemId, num fishingLevel, num xpEach})>[])
       if (fishingLevel >= row.fishingLevel) row,
   ];
-}
-
-({String itemId, num xp})? _rollHuntingTrapLoot(String locationId, num Function() random) {
-  final table = _huntingTrapLoot[locationId];
-  if (table == null || table.isEmpty) return null;
-  final total = table.fold<num>(0, (sum, row) => sum + row.weight);
-  var roll = random() * total;
-  for (final row in table) {
-    roll -= row.weight;
-    if (roll <= 0) return (itemId: row.itemId, xp: row.xp);
-  }
-  final last = table.last;
-  return (itemId: last.itemId, xp: last.xp);
 }
 
 ({String itemId, num quantity, num xp})? _rollFishingPotLoot(
@@ -680,23 +623,7 @@ LocationTimerCollectResult collectLocationTimer(
     }
     next = addItemsToInventory(next, timer.inputItemId, 1, null, false, db).save;
   } else {
-    final rolled = _rollHuntingTrapLoot(timer.locationId, rng);
-    if (rolled != null) {
-      final granted = addItemsToInventory(next, rolled.itemId, 1, null, false, db);
-      next = granted.save;
-      xpGained = rolled.xp;
-      final name = db.items
-          .firstWhereOrNull((item) => item.raw['Item ID'] == rolled.itemId)
-          ?.raw['Display Name'];
-      loot.add(
-        LootGrant(
-          itemId: rolled.itemId,
-          quantity: 1,
-          displayName: name is String ? name : rolled.itemId,
-        ),
-      );
-    }
-    next = addItemsToInventory(next, timer.inputItemId, 1, null, false, db).save;
+    return LocationTimerCollectResult(ok: false, reason: 'Unknown timer kind.');
   }
 
   next = applyXp(next, db, skillId, xpGained).save;

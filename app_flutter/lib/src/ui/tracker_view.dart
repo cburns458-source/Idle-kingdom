@@ -198,7 +198,6 @@ String? _timerSkillId(String sourceId) {
   final kind = sourceId.split(':').first;
   return switch (kind) {
     'botany' => 'SKL-0014',
-    'hunting_trap' => 'SKL-0005',
     'fishing_pot' => 'SKL-0003',
     _ => null,
   };
@@ -321,7 +320,6 @@ class _LootCard extends StatelessWidget {
         locationId;
     final label = switch (kind) {
       'botany' => 'Botany',
-      'hunting_trap' => 'Hunting trap',
       'fishing_pot' => 'Fishing pot',
       _ => kind,
     };

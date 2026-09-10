@@ -61,7 +61,7 @@ describe('location search', () => {
     expect(result.ok).toBe(true)
     if (!result.ok) return
     expect(result.itemId).toBe('ITEM-0109')
-    expect(result.itemName).toBe('Sling')
+    expect(result.itemName).toBe('Bola')
     expect(result.save.inventory.find((stack) => stack.itemId === 'ITEM-0109')?.quantity).toBe(1)
     expect(result.save.locationSearchClaims['SRCH-0001']).toBe(new Date(nowMs).toISOString())
   })
@@ -98,7 +98,7 @@ describe('location search', () => {
   it('does not consume the search or reset the cooldown when the inventory is full', () => {
     const launch = dbWithSearch()
     let save = createNewSave(launch)
-    // Fill every inventory slot with a non-stacking-relevant item so the Sling has no room.
+    // Fill every inventory slot with a non-stacking-relevant item so the Bola has no room.
     save = {
       ...save,
       inventory: Array.from({ length: 180 }, () => ({ itemId: 'ITEM-0002', quantity: 1 })),

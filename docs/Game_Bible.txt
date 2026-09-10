@@ -480,8 +480,8 @@ Equipment-compatible non-Combat Activities may generate Combat Actions. After vi
 
 7.9 WEAPONS AND TOOLS
 - Purpose-built weapons are intended for Combat.
-- Hunting Net has a Damage Range of 1-1.
-- Sling supports basic ranged Combat and Hunting.
+- Sling (ex-net, Hunting Level 1) is the starter hunting tool.
+- Bola (Hunting Level 15) deals 0 damage and grants 4% action time reduction.
 - Bows are both Hunting tools and Combat weapons.
 
 ======================================================================
@@ -578,14 +578,15 @@ Weasel:
 - Weasel Tail.
 
 Hunting tools:
-- Net.
-- Sling.
+- Sling (ex-net).
+- Bola.
+- Magic Bola.
 - Bow.
 
 Tool progression:
-- Hunting Level 1: Net, Damage Range 1-1, for small creatures.
-- Hunting Level 5: Sling, supporting basic ranged Combat and Hunting.
+- Hunting Level 1: Sling (ex-net), starter hunting tool.
 - Hunting Level 10: Regular Bow.
+- Hunting Level 15: Bola, 0 damage, 4% action time reduction.
 
 Bow progression:
 - Regular Bow.

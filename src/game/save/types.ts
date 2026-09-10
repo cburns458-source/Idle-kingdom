@@ -206,13 +206,13 @@ export interface XpTrackerEntry {
 export const TOTAL_XP_TRACKER_ID = 'total'
 
 /**
- * Parallel location timer (Botany plot, hunting trap, or fishing pot).
- * Does not occupy the Primary Activity slot. Cap: one per location.
+ * Parallel location timer (Botany plot or fishing pot).
+ * Does not occupy the Primary Activity slot. Cap: one per kind per location.
  */
 export interface LocationTimer {
   locationId: string
-  /** `botany` | `hunting_trap` | `fishing_pot` */
-  kind: 'botany' | 'hunting_trap' | 'fishing_pot'
+  /** `botany` | `fishing_pot` */
+  kind: 'botany' | 'fishing_pot'
   /** Seed/sapling or trap/pot item consumed to start the timer. */
   inputItemId: string
   /** Crop/log for botany; null for traps/pots (rolled on collect). */
@@ -356,13 +356,13 @@ export interface PlayerSave {
   currentHp: number
   maxHp: number
   /**
-   * Background Botany / trap / pot timers. At most one entry per locationId.
+   * Background Botany / fishing pot timers. At most one entry per kind per locationId.
    * Runs in parallel with the Primary Activity.
    */
   locationTimers: LocationTimer[]
   /**
-   * Timer spot keys the player has found (`botany:LOC-xxxx`, `hunting_trap:LOC-xxxx`,
-   * `fishing_pot:LOC-xxxx`). Listed in the Timers menu even with no active timer.
+   * Timer spot keys the player has found (`botany:LOC-xxxx`, `fishing_pot:LOC-xxxx`).
+   * Listed in the Timers menu even with no active timer.
    */
   discoveredTimerSpotIds: string[]
   /**

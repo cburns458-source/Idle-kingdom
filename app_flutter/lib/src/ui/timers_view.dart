@@ -109,17 +109,6 @@ class _TimersViewState extends State<TimersView> {
                   ),
                   const SizedBox(height: 12),
                   _TimerSection(
-                    title: 'Hunting',
-                    emptyLabel: 'No hunting traps discovered yet.',
-                    spots: _spotsForKind(save, 'hunting_trap'),
-                    db: db,
-                    nowMs: nowMs,
-                    currentLocationId: here,
-                    onTravel: _travel,
-                    save: save,
-                  ),
-                  const SizedBox(height: 12),
-                  _TimerSection(
                     title: 'Fishing',
                     emptyLabel: 'No fishing pots discovered yet.',
                     spots: _spotsForKind(save, 'fishing_pot'),

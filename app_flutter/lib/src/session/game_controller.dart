@@ -977,7 +977,6 @@ class GameController extends ChangeNotifier {
     final displayLocation = locationName is String ? locationName : locationId;
     final title = switch (kind) {
       'botany' => displayLocation,
-      'hunting_trap' => 'Trap haul',
       'fishing_pot' => 'Pot haul',
       _ => 'Harvest',
     };

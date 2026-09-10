@@ -549,8 +549,8 @@ class InventoryStack {
   }
 }
 
-/// Parallel location timer (Botany plot, hunting trap, or fishing pot).
-/// Does not occupy the Primary Activity slot. Cap: one per location.
+/// Parallel location timer (Botany plot or fishing pot).
+/// Does not occupy the Primary Activity slot. Cap: one per kind per location.
 class LocationTimer {
   const LocationTimer({
     required this.locationId,
@@ -580,7 +580,7 @@ class LocationTimer {
 
   final String locationId;
 
-  /// `botany` | `hunting_trap` | `fishing_pot`
+  /// `botany` | `fishing_pot`
   final String kind;
 
   /// Seed/sapling or trap/pot item consumed to start the timer.
@@ -1164,12 +1164,12 @@ class PlayerSave {
 
   final num maxHp;
 
-  /// Background Botany / trap / pot timers. At most one entry per locationId.
+  /// Background Botany / fishing pot timers. At most one entry per kind per locationId.
   /// Runs in parallel with the Primary Activity.
   final List<LocationTimer> locationTimers;
 
-  /// Timer spot keys the player has found (`botany:LOC-xxxx`, `hunting_trap:LOC-xxxx`,
-  /// `fishing_pot:LOC-xxxx`). Listed in the Timers menu even with no active timer.
+  /// Timer spot keys the player has found (`botany:LOC-xxxx`, `fishing_pot:LOC-xxxx`).
+  /// Listed in the Timers menu even with no active timer.
   final List<String> discoveredTimerSpotIds;
 
   /// UTC day key (`YYYY-MM-DD`) of the last fishing-pot place at each location.

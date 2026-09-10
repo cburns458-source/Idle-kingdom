@@ -238,7 +238,7 @@ void main() {
       await tapHunt(tester);
 
       expect(find.text('Equip required tool?'), findsOne);
-      expect(find.textContaining('Equip Net (hunting tool)'), findsOne);
+      expect(find.textContaining('Equip Sling (hunting tool)'), findsOne);
     });
 
     testWidgets('equips and starts on confirm', (tester) async {

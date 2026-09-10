@@ -10,20 +10,20 @@ void main() {
     db = assertGameDatabaseShape(contentDatabaseJson());
   });
 
-  test('the first visit to the Kingswoods grants a Sling', () {
+  test('the first visit to the Kingswoods grants a Bola', () {
     final save = createNewSave(db, 0).copyWith(currentLocationId: kingswoodsLocationId);
     final first = maybeGrantKingswoodsSling(db, save);
     expect(first.granted, isTrue);
     expect(first.save.claimedKingswoodsSling, isTrue);
     expect(first.save.inventory.any((stack) => stack.itemId == slingItemId), isTrue);
-    expect(first.message, contains('Sling'));
+    expect(first.message, contains('Bola'));
 
     final second = maybeGrantKingswoodsSling(db, first.save);
     expect(second.granted, isFalse);
     expect(second.save.inventory.where((stack) => stack.itemId == slingItemId).single.quantity, 1);
   });
 
-  test('a player who already has a Sling is only stamped as claimed', () {
+  test('a player who already has a Bola is only stamped as claimed', () {
     final save = createNewSave(db, 0).copyWith(
       currentLocationId: kingswoodsLocationId,
       inventory: const <InventoryStack>[InventoryStack(itemId: slingItemId, quantity: 1)],

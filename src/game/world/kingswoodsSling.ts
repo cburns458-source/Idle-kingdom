@@ -3,8 +3,9 @@ import type { GameDatabase } from '../data/types'
 import type { PlayerSave } from '../save/types'
 
 export const KINGSWOODS_LOCATION_ID = 'LOC-0008'
+/** Kingswoods grant item (display name is now Bola; id kept for saves). */
 export const SLING_ITEM_ID = 'ITEM-0109'
-export const KINGSWOODS_SLING_FOUND_MESSAGE = 'You found a Sling among the trees.'
+export const KINGSWOODS_SLING_FOUND_MESSAGE = 'You found a Bola among the trees.'
 
 export function saveOwnsSling(save: PlayerSave): boolean {
   if (save.inventory.some((stack) => stack.itemId === SLING_ITEM_ID)) return true
@@ -17,7 +18,7 @@ export interface KingswoodsSlingGrant {
   message: string | null
 }
 
-/** First visit to the Kingswoods grants a Sling once, if the bag has room. */
+/** First visit to the Kingswoods grants a Bola once, if the bag has room. */
 export function maybeGrantKingswoodsSling(
   db: GameDatabase,
   save: PlayerSave,
@@ -36,7 +37,7 @@ export function maybeGrantKingswoodsSling(
     return { save, granted: false, message: null }
   }
   const itemName =
-    db.Items.find((item) => item['Item ID'] === SLING_ITEM_ID)?.['Display Name'] ?? 'Sling'
+    db.Items.find((item) => item['Item ID'] === SLING_ITEM_ID)?.['Display Name'] ?? 'Bola'
   return {
     save: { ...added.save, claimedKingswoodsSling: true },
     granted: true,
