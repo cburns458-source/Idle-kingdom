@@ -95,6 +95,48 @@ List<String> missingToolCapabilities(GameDatabase db, PlayerSave save, String ac
       .toList();
 }
 
+bool activityRequiresLockpick(GameDatabase db, String activityId) {
+  final activity = db.activities.firstWhereOrNull((row) => row.raw['Activity ID'] == activityId);
+  final poolId = activity?.raw['Pool ID'];
+  if (poolId is! String || poolId.isEmpty) return false;
+  for (final candidate in eligiblePoolEntries(db, poolId)) {
+    final notes = candidate.action.raw['Notes'];
+    final notesText = notes is String ? notes : '';
+    if (RegExp(r'RequiresLockpick', caseSensitive: false).hasMatch(notesText)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+AutoEquipProposal? _proposeLockpickEquip(
+  GameDatabase db,
+  PlayerSave save,
+  String activityId,
+  String failureReason,
+) {
+  if (!activityRequiresLockpick(db, activityId)) return null;
+  if (equippedWeaponIsLockpick(save)) return null;
+  final stack = save.inventory.firstWhereOrNull(
+    (row) => row.itemId == lockpickItemId && row.quantity > 0,
+  );
+  if (stack == null) return null;
+  final equipment = db.equipment.firstWhereOrNull((row) => row.raw['Item ID'] == lockpickItemId);
+  if (equipment == null || equipmentRequirementFailure(db, save, equipment) != null) {
+    return null;
+  }
+  final displayName = db.items
+      .firstWhereOrNull((item) => item.raw['Item ID'] == lockpickItemId)
+      ?.raw['Display Name'];
+  return AutoEquipProposal(
+    activityId: activityId,
+    itemId: lockpickItemId,
+    itemName: displayName is String ? displayName : lockpickItemId,
+    capabilities: const <String>['lockpick'],
+    failureReason: failureReason,
+  );
+}
+
 /// Proposes the highest-tier bag item that unblocks a missing tool capability.
 ///
 /// Returns null when nothing is missing or nothing in the bag qualifies.
@@ -105,7 +147,9 @@ AutoEquipProposal? proposeAutoEquipForActivity(
   String failureReason,
 ) {
   final missing = missingToolCapabilities(db, save, activityId);
-  if (missing.isEmpty) return null;
+  if (missing.isEmpty) {
+    return _proposeLockpickEquip(db, save, activityId, failureReason);
+  }
 
   String? bestItemId;
   String bestItemName = '';

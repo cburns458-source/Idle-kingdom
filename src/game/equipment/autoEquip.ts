@@ -6,7 +6,13 @@ import {
 } from '../activity/requirements'
 import type { EquipmentRow, GameDatabase, RequirementRow } from '../data/types'
 import type { PlayerSave } from '../save/types'
-import { equipmentRequirementFailure, equipItemFromInventory, type EquipResult } from './loadout'
+import {
+  equipmentRequirementFailure,
+  equippedWeaponIsLockpick,
+  equipItemFromInventory,
+  LOCKPICK_ITEM_ID,
+  type EquipResult,
+} from './loadout'
 
 export interface AutoEquipProposal {
   activityId: string
@@ -94,6 +100,36 @@ export function missingToolCapabilities(
   )
 }
 
+export function activityRequiresLockpick(db: GameDatabase, activityId: string): boolean {
+  const activity = db.Activities.find((row) => row['Activity ID'] === activityId)
+  if (!activity?.['Pool ID']) return false
+  for (const { action } of eligiblePoolEntries(db, activity['Pool ID'])) {
+    if (/RequiresLockpick/i.test(String(action.Notes ?? ''))) return true
+  }
+  return false
+}
+
+function proposeLockpickEquip(
+  db: GameDatabase,
+  save: PlayerSave,
+  activityId: string,
+  failureReason: string,
+): AutoEquipProposal | null {
+  if (!activityRequiresLockpick(db, activityId)) return null
+  if (equippedWeaponIsLockpick(save)) return null
+  const stack = save.inventory.find((row) => row.itemId === LOCKPICK_ITEM_ID && row.quantity > 0)
+  if (!stack) return null
+  const equipment = db.Equipment.find((row) => row['Item ID'] === LOCKPICK_ITEM_ID)
+  if (!equipment || equipmentRequirementFailure(db, save, equipment)) return null
+  return {
+    activityId,
+    itemId: LOCKPICK_ITEM_ID,
+    itemName: db.Items.find((item) => item['Item ID'] === LOCKPICK_ITEM_ID)?.['Display Name'] ?? LOCKPICK_ITEM_ID,
+    capabilities: ['lockpick'],
+    failureReason,
+  }
+}
+
 /**
  * If activity start is blocked by missing tool capabilities and the bag has a
  * compatible item the player can equip, propose the highest-tier option.
@@ -105,7 +141,7 @@ export function proposeAutoEquipForActivity(
   failureReason: string,
 ): AutoEquipProposal | null {
   const missing = missingToolCapabilities(db, save, activityId)
-  if (missing.length === 0) return null
+  if (missing.length === 0) return proposeLockpickEquip(db, save, activityId, failureReason)
 
   let best: { itemId: string; itemName: string; score: number } | null = null
 

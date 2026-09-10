@@ -312,6 +312,75 @@ void main() {
     );
   });
 
+  test('Through the Thicket auto-starts on the Forest Path and names Chop vines', () {
+    final save = applyTravelArrival(db, _save(db, locationId: 'LOC-0002'), 'LOC-0040', 0);
+    expect(getQuestProgress(save, 'QST-0010').status, 'active');
+
+    final quest = db.quests.firstWhere((row) => row['Quest ID'] == 'QST-0010');
+    expect(questLegacyJournalSteps(db, save, quest).map((step) => step.label), [
+      'Chop vines 0 / 50',
+    ]);
+    expect(
+      questLog(
+        db,
+        save,
+      ).singleWhere((row) => row.questId == 'QST-0010').steps.map((step) => step.label),
+      contains('Chop vines 0 / 50'),
+    );
+    expect(questActionProgressForActivity(db, save, 'ACT-0048').map((line) => line.caption), [
+      'Chop vines 0 / 50',
+    ]);
+  });
+
+  test('Through the Thicket finishes on the 50th vine and unlocks the grove and glade', () {
+    var save = applyTravelArrival(db, _save(db, locationId: 'LOC-0002'), 'LOC-0040', 0);
+    save = applyQuestActionProgress(db, save, 'ACN-0179', 49);
+    expect(getQuestProgress(save, 'QST-0010').status, 'active');
+    expect(
+      getQuestProgress(applyQuestAutoCompleteOnAction(db, save).save, 'QST-0010').status,
+      'active',
+    );
+
+    save = applyQuestActionProgress(db, save, 'ACN-0179', 1);
+    final finished = applyQuestAutoCompleteOnAction(db, save);
+    expect(getQuestProgress(finished.save, 'QST-0010').status, 'completed');
+    expect(finished.save.unlockedLocationIds, containsAll(<String>['LOC-0044', 'LOC-0018']));
+    expect(questActionProgressForActivity(db, finished.save, 'ACT-0048'), isEmpty);
+    expect(
+      locationsForMapView(
+        db,
+        forestMapId,
+        finished.save.unlockedLocationIds,
+        const <String>[],
+        finished.save.currentLocationId,
+        finished.save,
+      ).map((row) => row.locationId),
+      containsAll(<String>['LOC-0044', 'LOC-0018']),
+    );
+    expect(
+      canTravelTo(
+        db,
+        'LOC-0040',
+        'LOC-0044',
+        forestMapId,
+        finished.save.unlockedLocationIds,
+        finished.save,
+      ),
+      isTrue,
+    );
+    expect(
+      canTravelTo(
+        db,
+        'LOC-0040',
+        'LOC-0018',
+        forestMapId,
+        finished.save.unlockedLocationIds,
+        finished.save,
+      ),
+      isTrue,
+    );
+  });
+
   test('wardrobe lists The Undying in the Titles slot', () {
     final save = createNewSave(db, 0);
     final tabs = wardrobeSlotTabs(db);

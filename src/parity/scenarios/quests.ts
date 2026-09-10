@@ -64,6 +64,7 @@ const OBJECTIVE_TYPES = [
   'Unlock Travel',
   'Mount route',
   'Guild collaboration',
+  'Action',
   'Something else',
   '',
   null,

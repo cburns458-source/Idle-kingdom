@@ -591,7 +591,9 @@ class _LocationViewState extends State<LocationView> {
       sections.add(_BandSection(label, children));
     }
 
-    add('Activities', [..._activities(locationId), ..._locationTimers(locationId)]);
+    add('Activities', _activities(locationId));
+    add('Patches', _locationTimers(locationId, kind: 'botany'));
+    add('Traps', _locationTimers(locationId, kind: 'fishing_pot'));
     add('Shops', _shops(locationId));
     add('People', _people(locationId));
     add('Other', [
@@ -657,8 +659,8 @@ class _LocationViewState extends State<LocationView> {
     ];
   }
 
-  /// Botany patches and hunting/fishing traps for this location.
-  List<Widget> _locationTimers(String locationId) {
+  /// Botany patches and fishing pots for this location.
+  List<Widget> _locationTimers(String locationId, {String? kind}) {
     final cards = <Widget>[];
     final nowMs = controller.session.clock();
 
@@ -698,7 +700,7 @@ class _LocationViewState extends State<LocationView> {
     addActiveOrIdle(
       kind: 'botany',
       title: 'Botany patch',
-      locationSupports: locationHasBotanyPatch(locationId),
+      locationSupports: (kind == null || kind == 'botany') && locationHasBotanyPatch(locationId),
       idleCard: () {
         final courtyardLocked =
             locationId == courtyardLocationId && !courtyardBotanyUnlocked(controller.save);
@@ -730,7 +732,8 @@ class _LocationViewState extends State<LocationView> {
     addActiveOrIdle(
       kind: 'fishing_pot',
       title: 'Fishing pot',
-      locationSupports: fishingPotLocations.contains(locationId),
+      locationSupports:
+          (kind == null || kind == 'fishing_pot') && fishingPotLocations.contains(locationId),
       idleCard: () {
         final canPlace = canPlaceTrap(
           controller.db,

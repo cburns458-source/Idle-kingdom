@@ -190,6 +190,18 @@ describe('shops', () => {
     )
   })
 
+  it('stocks grape seed at the Seed Stall and no other 50+ seeds', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const shop = launch.Shops.find((row) => row['Shop ID'] === 'SHP-0009')!
+    expect(shop['Location ID']).toBe('LOC-0029')
+    const stock = shopStockEntries(shop).map((entry) => entry.itemId)
+    expect(stock).toContain('ITEM-0340')
+    expect(stock).not.toContain('ITEM-0329')
+    expect(stock).not.toContain('ITEM-0330')
+    expect(stock).not.toContain('ITEM-0336')
+    expect(stock).not.toContain('ITEM-0337')
+  })
+
   it('caps shop buys per offer per UTC day', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const shop = launch.Shops.find((row) => row['Shop ID'] === 'SHP-0001')!

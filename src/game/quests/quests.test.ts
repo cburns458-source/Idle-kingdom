@@ -18,6 +18,7 @@ import {
 } from './progress'
 import {
   acceptQuest,
+  applyQuestAutoCompleteOnAction,
   applyQuestBranchSkillXp,
   bribeQuestNpc,
   chooseQuestCombatRoute,
@@ -26,9 +27,10 @@ import {
   getQuest,
   getQuestProgress,
 } from './quests'
-import { formatQuestProgressLine } from './objectives'
+import { formatQuestProgressLine, questLegacyJournalSteps } from './objectives'
 import { questActionProgressForActivity, questStepJournal } from './steps'
-import { CAVE_MAP_ID } from '../world/constants'
+import { questLog } from '../log/log'
+import { CAVE_MAP_ID, FOREST_MAP_ID } from '../world/constants'
 import { applyHostileTravelArrival } from '../world/hostility'
 import { applyTravelArrival, applyTravelArrivalResult, canTravelTo, locationsForMapView } from '../world/travel'
 import { questVisitHintLocationId } from './hints'
@@ -596,5 +598,47 @@ describe('quest tours', () => {
       quests: [{ questId: 'QST-0004', status: 'active' as const, progress: 0, counters: {} }],
     }
     expect(questVisitHintLocationId(launch, citadel)).toBeNull()
+  })
+
+  it('auto-starts Through the Thicket on the Forest Path and names Chop vines', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const save = applyTravelArrival(launch, createNewSave(launch), 'LOC-0040')
+    expect(getQuestProgress(save, 'QST-0010').status).toBe('active')
+
+    const quest = getQuest(launch, 'QST-0010')!
+    const journal = questLegacyJournalSteps(launch, save, quest).map((step) => step.label)
+    expect(journal.join('\n')).not.toMatch(/ACN-0179/)
+    expect(journal).toContain('Chop vines 0 / 50')
+    expect(
+      questLog(launch, save)
+        .find((row) => row.questId === 'QST-0010')
+        ?.steps.map((step) => step.label),
+    ).toContain('Chop vines 0 / 50')
+    expect(
+      questActionProgressForActivity(launch, save, 'ACT-0048').map((line) =>
+        formatQuestProgressLine(line),
+      ),
+    ).toEqual(['Chop vines 0 / 50'])
+  })
+
+  it('completes Through the Thicket on the 50th vine and unlocks the grove and glade', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    let save = applyTravelArrival(launch, createNewSave(launch), 'LOC-0040')
+    save = applyQuestActionProgress(launch, save, 'ACN-0179', 49)
+    expect(getQuestProgress(save, 'QST-0010').status).toBe('active')
+    expect(applyQuestAutoCompleteOnAction(launch, save).save.quests.find((row) => row.questId === 'QST-0010')?.status).toBe(
+      'active',
+    )
+
+    save = applyQuestActionProgress(launch, save, 'ACN-0179', 1)
+    const finished = applyQuestAutoCompleteOnAction(launch, save)
+    expect(getQuestProgress(finished.save, 'QST-0010').status).toBe('completed')
+    expect(finished.save.unlockedLocationIds).toEqual(expect.arrayContaining(['LOC-0044', 'LOC-0018']))
+    expect(questActionProgressForActivity(launch, finished.save, 'ACT-0048')).toEqual([])
+    expect(
+      locationsForMapView(launch, FOREST_MAP_ID, finished.save).map((row) => row['Location ID']),
+    ).toEqual(expect.arrayContaining(['LOC-0044', 'LOC-0018']))
+    expect(canTravelTo(launch, 'LOC-0040', 'LOC-0044', FOREST_MAP_ID, finished.save)).toBe(true)
+    expect(canTravelTo(launch, 'LOC-0040', 'LOC-0018', FOREST_MAP_ID, finished.save)).toBe(true)
   })
 })

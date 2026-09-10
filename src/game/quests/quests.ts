@@ -240,6 +240,7 @@ export function completeQuest(
     parsed.talkNpcIds.length > 0 ||
     parsed.visitLocationIds.length > 0 ||
     parsed.inspectIds.length > 0 ||
+    parsed.actionTargets.length > 0 ||
     parsed.goldCost > 0 ||
     questUsesSteps(db, questId)
   if (!hasObjectives) {
@@ -503,7 +504,11 @@ export function applyQuestAutoCompleteOnAction(
     const parsed = parseStructuredObjectives(quest)
     if (!parsed.autoCompleteOnAction) continue
     if (getQuestProgress(next, quest['Quest ID']).status !== 'active') continue
-    if (!questAllStepsComplete(db, next, quest)) continue
+    if (questUsesSteps(db, quest['Quest ID'])) {
+      if (!questAllStepsComplete(db, next, quest)) continue
+    } else if (!questObjectiveProgress(db, next, quest).ready) {
+      continue
+    }
     const completed = completeQuest(db, next, quest['Quest ID'], { ignoreLocation: true })
     if (completed.ok) {
       next = completed.save
