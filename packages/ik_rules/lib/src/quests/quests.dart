@@ -251,6 +251,7 @@ QuestCompletion completeQuest(
       parsed.talkNpcIds.isNotEmpty ||
       parsed.visitLocationIds.isNotEmpty ||
       parsed.inspectIds.isNotEmpty ||
+      parsed.actionTargets.isNotEmpty ||
       parsed.goldCost > 0 ||
       questUsesSteps(db, questId);
   if (!hasObjectives) {

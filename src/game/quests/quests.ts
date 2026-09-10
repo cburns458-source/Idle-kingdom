@@ -240,6 +240,7 @@ export function completeQuest(
     parsed.talkNpcIds.length > 0 ||
     parsed.visitLocationIds.length > 0 ||
     parsed.inspectIds.length > 0 ||
+    parsed.actionTargets.length > 0 ||
     parsed.goldCost > 0 ||
     questUsesSteps(db, questId)
   if (!hasObjectives) {
