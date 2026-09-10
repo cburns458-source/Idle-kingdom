@@ -143,12 +143,37 @@ const Map<String, Map<String, NodePosition>> _layouts = <String, Map<String, Nod
   depthsMapId: depthsMapNodeLayout,
 };
 
-Map<String, NodePosition> layoutForMap(String mapId) {
+List<Map<String, Object?>> mapNodesOf(GameDatabase db) {
+  final value = db.raw['MapNodes'];
+  if (value is! List) return const <Map<String, Object?>>[];
+  return [
+    for (final row in value)
+      if (row is Map<String, Object?>) row,
+  ];
+}
+
+Map<String, NodePosition> mapNodeLayoutFromDatabase(GameDatabase db, String mapId) {
+  final out = <String, NodePosition>{};
+  for (final row in mapNodesOf(db)) {
+    if (row['Map ID'] != mapId) continue;
+    final locationId = row['Location ID'];
+    final x = row['X'];
+    final y = row['Y'];
+    if (locationId is! String || locationId.isEmpty) continue;
+    if (x is! num || y is! num) continue;
+    out[locationId] = NodePosition(x: x, y: y);
+  }
+  return out;
+}
+
+Map<String, NodePosition> layoutForMap(String mapId, [GameDatabase? db]) {
+  final fromDb = db == null ? const <String, NodePosition>{} : mapNodeLayoutFromDatabase(db, mapId);
+  if (fromDb.isNotEmpty) return fromDb;
   return _layouts[mapId] ?? mainMapNodeLayout;
 }
 
-NodePosition positionForLocation(LocationRow location) {
+NodePosition positionForLocation(LocationRow location, [GameDatabase? db]) {
   final mapId = location.raw['Map ID'];
-  final layout = layoutForMap(mapId is String ? mapId : mainMapId);
+  final layout = layoutForMap(mapId is String ? mapId : mainMapId, db);
   return layout[location.raw['Location ID']] ?? const NodePosition(x: 50, y: 50);
 }

@@ -228,9 +228,8 @@ num timerCompletesAtMs(LocationTimer timer) {
   return DateTime.parse(timer.startedAt).millisecondsSinceEpoch + timer.durationMs;
 }
 
-bool timerIsReady(LocationTimer timer, [num? nowMs]) {
-  final now = nowMs ?? DateTime.now().millisecondsSinceEpoch;
-  return now >= timerCompletesAtMs(timer);
+bool timerIsReady(LocationTimer timer, num nowMs) {
+  return nowMs >= timerCompletesAtMs(timer);
 }
 
 bool courtyardBotanyUnlocked(PlayerSave save) {
@@ -294,7 +293,7 @@ bool locationHasBotanyPatch(String locationId) => botanyPatchLocations.contains(
   GameDatabase db,
   PlayerSave save,
   String seedItemId, {
-  num? nowMs,
+  required num nowMs,
   num plantQuantity = 3,
 }) {
   final loc = save.currentLocationId;
@@ -311,9 +310,7 @@ bool locationHasBotanyPatch(String locationId) => botanyPatchLocations.contains(
     RecipeIngredient(itemId: seedItemId, quantity: gate.quantity),
   ]);
   if (removed == null) return (ok: false, save: null, reason: 'You do not have that seed.');
-  final started = DateTime.fromMillisecondsSinceEpoch(
-    (nowMs ?? DateTime.now().millisecondsSinceEpoch).round(),
-  ).toIso8601String();
+  final started = DateTime.fromMillisecondsSinceEpoch(nowMs.round()).toIso8601String();
   final timer = LocationTimer(
     locationId: loc,
     kind: 'botany',
@@ -344,7 +341,7 @@ bool locationHasBotanyPatch(String locationId) => botanyPatchLocations.contains(
 ({bool ok, PlayerSave? save, String reason}) plantBestBotanySeed(
   GameDatabase db,
   PlayerSave save, {
-  num? nowMs,
+  required num nowMs,
 }) {
   for (final stack in save.inventory) {
     if (stack.quantity <= 0) continue;
@@ -375,9 +372,9 @@ num msUntilNextUtcDay(num nowMs) {
 ({bool locked, String dayKey, num msRemaining}) fishingPotLockedUntilDay(
   PlayerSave save,
   String locationId, {
-  num? nowMs,
+  required num nowMs,
 }) {
-  final now = nowMs ?? DateTime.now().millisecondsSinceEpoch;
+  final now = nowMs;
   final dayKey = fishingPotUtcDayKey(now);
   final used = save.fishingPotDayKeyByLocationId[locationId];
   if (used == dayKey) {
@@ -391,10 +388,10 @@ num msUntilNextUtcDay(num nowMs) {
   PlayerSave save,
   String trapItemId, {
   String? locationId,
-  num? nowMs,
+  required num nowMs,
 }) {
   final loc = locationId ?? save.currentLocationId;
-  final now = nowMs ?? DateTime.now().millisecondsSinceEpoch;
+  final now = nowMs;
   if (trapItemId == fishingPotItemId) {
     if (!fishingPotLocations.contains(loc)) {
       return (
@@ -437,10 +434,10 @@ num msUntilNextUtcDay(num nowMs) {
   GameDatabase db,
   PlayerSave save,
   String trapItemId, {
-  num? nowMs,
+  required num nowMs,
 }) {
   final loc = save.currentLocationId;
-  final now = nowMs ?? DateTime.now().millisecondsSinceEpoch;
+  final now = nowMs;
   final gate = canPlaceTrap(db, save, trapItemId, locationId: loc, nowMs: now);
   if (!gate.ok) return (ok: false, save: null, reason: gate.reason);
   final removed = removeIngredients(save, [RecipeIngredient(itemId: trapItemId, quantity: 1)]);
@@ -538,11 +535,11 @@ LocationTimerCollectResult collectLocationTimer(
   PlayerSave save,
   String locationId,
   String kind, {
-  num? nowMs,
+  required num nowMs,
   num Function()? random,
 }) {
   final rng = random ?? () => 0.5;
-  final now = nowMs ?? DateTime.now().millisecondsSinceEpoch;
+  final now = nowMs;
   final timer = timerAtLocationKind(save, locationId, kind);
   if (timer == null) {
     return const LocationTimerCollectResult(ok: false, reason: 'No timer at this location.');

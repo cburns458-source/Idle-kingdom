@@ -143,6 +143,19 @@ void main() {
     expect(session.save.playTimeMs, playAfterHide);
   });
 
+  test('batches live play-time credits to one second', () {
+    session.boot();
+    expect(session.save.playTimeMs, 0);
+
+    now += 400;
+    expect(session.tick().changed, isFalse);
+    expect(session.save.playTimeMs, 0);
+
+    now += 600;
+    expect(session.tick().changed, isFalse);
+    expect(session.save.playTimeMs, 1000);
+  });
+
   test('accrues live ticks in memory and caps a long gap like unattended time', () {
     session.boot();
     expect(session.save.playTimeMs, 0);

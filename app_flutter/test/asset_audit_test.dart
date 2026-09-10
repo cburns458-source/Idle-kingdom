@@ -99,33 +99,36 @@ void main() {
     // tables do not know would quietly show another place, so pin them here.
     for (final map in db.maps) {
       expect(
-        hasMapArt(map.mapId),
+        hasMapArt(map.mapId, db: db),
         isTrue,
         reason: 'map ${map.mapId} (${map.displayName}) is not in the art table',
       );
-      expectBundled(mapAssetPath(map.mapId), 'map ${map.mapId}');
+      expectBundled(mapAssetPath(map.mapId, db: db), 'map ${map.mapId}');
     }
     for (final location in db.locations) {
       // A horizon gateway is browsed on the map and never entered, so it has no
       // background of its own to be missing.
       if (isFutureHorizonLocation(location.locationId)) continue;
       expect(
-        hasLocationArt(location.locationId),
+        hasLocationArt(location.locationId, db: db),
         isTrue,
         reason: 'location ${location.locationId} (${location.displayName}) is not in the art table',
       );
-      expectBundled(locationAssetPath(location.locationId), 'location ${location.locationId}');
+      expectBundled(
+        locationAssetPath(location.locationId, db: db),
+        'location ${location.locationId}',
+      );
     }
   });
 
   test('every enemy has its own art', () {
     for (final enemy in db.enemies) {
       expect(
-        hasEnemyArt(enemy.enemyId),
+        hasEnemyArt(enemy.enemyId, db: db),
         isTrue,
         reason: 'enemy ${enemy.enemyId} (${enemy.displayName}) is not in the art table',
       );
-      expectBundled(enemyAssetPath(enemy.enemyId), 'enemy ${enemy.enemyId}');
+      expectBundled(enemyAssetPath(enemy.enemyId, db: db), 'enemy ${enemy.enemyId}');
     }
   });
 
@@ -133,14 +136,17 @@ void main() {
     for (final action in db.actions) {
       if (action.category != 'Gathering') continue;
       expect(
-        hasActionArt(action.actionId),
+        hasActionArt(action.actionId, db: db),
         isTrue,
         reason: 'action ${action.actionId} (${action.displayName}) is not in the art table',
       );
-      expectBundled(actionAssetPath(action.actionId), 'action ${action.actionId}');
+      expectBundled(actionAssetPath(action.actionId, db: db), 'action ${action.actionId}');
     }
     for (final facility in db.facilities) {
-      expectBundled(workstationAssetPath(facility.facilityId), 'facility ${facility.facilityId}');
+      expectBundled(
+        workstationAssetPath(facility.facilityId, db: db),
+        'facility ${facility.facilityId}',
+      );
     }
     expectBundled(workstationAssetPath(null), 'a station without a facility');
   });

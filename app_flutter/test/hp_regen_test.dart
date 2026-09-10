@@ -20,11 +20,13 @@ void main() {
     addTearDown(controller.dispose);
 
     expect(controller.save.currentHp, 1);
-    clock.advance(5999);
+    // Live play-time / HP regen batch to 1000ms, so the grant lands on a
+    // 1-second tick rather than a 1ms boundary.
+    clock.advance(5000);
     controller.tick();
     expect(controller.save.currentHp, 1);
 
-    clock.advance(1);
+    clock.advance(1000);
     controller.tick();
     expect(controller.save.currentHp, 2);
 

@@ -163,19 +163,27 @@ class GameSession {
   /// lands, so no caller can skip the write pipeline.
   PlayerSave apply(PlayerSave next) {
     final nowMs = clock();
-    final credited = _creditLivePlayTime(next, nowMs);
+    final credited = _creditLivePlayTime(next, nowMs, flush: true);
     _save = repository.write(prepareSaveForWrite(db, credited, nowMs));
     return save;
   }
 
   /// Credits the gap since the last live reading, capped like unattended time.
   ///
+  /// Live frames batch this to [livePlayCreditMinMs] so Chrome does not allocate
+  /// a new save 60 times a second. [apply] flushes so a write is never short.
+  ///
   /// Also moves the unattended anchor in memory so a pause flush, then a kill,
   /// catch-up from this frame instead of replaying time the player was here.
-  PlayerSave _creditLivePlayTime(PlayerSave current, num nowMs) {
+  static const num livePlayCreditMinMs = 1000;
+
+  PlayerSave _creditLivePlayTime(PlayerSave current, num nowMs, {bool flush = false}) {
     final last = _playAccruedAt;
-    _playAccruedAt = nowMs;
     final elapsed = last == null ? 0 : nowMs - last;
+    if (last != null && elapsed < livePlayCreditMinMs && !flush) {
+      return current;
+    }
+    _playAccruedAt = nowMs;
     final credited = last == null
         ? current
         : creditElapsedPlayTime(current, elapsed, unattendedCapMs(db));

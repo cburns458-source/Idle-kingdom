@@ -72,7 +72,7 @@ bool canMakeProject(GameDatabase db, PlayerSave save, ProjectRow project) {
   if (!meetsProjectSkills(save, project) || !meetsProjectKnowledge(db, save, project)) {
     return false;
   }
-  if (maxProjectQuantity(save, project) < 1) return false;
+  if (maxProjectQuantity(db, save, project) < 1) return false;
   final outputId = jsString(project.raw['Output Item / Target ID']);
   if (!isEnchantmentOutput(outputId)) return true;
   final enchantment = getEnchantment(db, outputId);
@@ -301,7 +301,7 @@ ProjectDetail? projectDetail(GameDatabase db, PlayerSave save, String projectId)
                     '${jsNumberToString(requirement.level)}',
               )
               .join(' · '),
-    ingredients: projectInputsForSave(save, project)
+    ingredients: projectInputsForSave(db, save, project)
         .map(
           (input) => ProjectIngredientLine(
             itemId: input.itemId,
@@ -315,7 +315,7 @@ ProjectDetail? projectDetail(GameDatabase db, PlayerSave save, String projectId)
     goldOwned: save.gold,
     isEnchantment: enchantment != null,
     lockedReason: reason,
-    maxQuantity: reason == null ? maxProjectQuantity(save, project) : 0,
+    maxQuantity: reason == null ? maxProjectQuantity(db, save, project) : 0,
     enchantTargets: enchantment == null
         ? const <EnchantTargetOption>[]
         : eligibleEnchantmentTargets(db, save, enchantment),

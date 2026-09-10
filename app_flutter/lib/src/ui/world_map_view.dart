@@ -85,7 +85,7 @@ class WorldMapView extends StatelessWidget {
     return Stack(
       fit: StackFit.expand,
       children: [
-        GameImage(mapAssetPath(browseMapId), fit: BoxFit.cover),
+        GameImage(mapAssetPath(browseMapId, db: controller.db), fit: BoxFit.cover),
         // Nodes are pinned to the art rather than to this widget, so they stay
         // on their landmarks whatever shape the viewport is.
         LayoutBuilder(
@@ -96,7 +96,12 @@ class WorldMapView extends StatelessWidget {
               children: [
                 for (final node in nodes)
                   _PinnedToArt(
-                    position: positionOnBrowseMap(node.locationId, browseMapId, node),
+                    position: positionOnBrowseMap(
+                      node.locationId,
+                      browseMapId,
+                      node,
+                      controller.db,
+                    ),
                     box: box,
                     aspectRatio: artAspect,
                     anchorFromTop: mapNodeDotCenter,
@@ -120,8 +125,8 @@ class WorldMapView extends StatelessWidget {
                 if (walking)
                   _PinnedToArt(
                     position: lerpNodePosition(
-                      positionOnBrowseMap(walkFromId!, browseMapId, fromRow),
-                      positionOnBrowseMap(walkToId!, browseMapId, toRow),
+                      positionOnBrowseMap(walkFromId!, browseMapId, fromRow, controller.db),
+                      positionOnBrowseMap(walkToId!, browseMapId, toRow, controller.db),
                       walkProgress!,
                     ),
                     box: box,

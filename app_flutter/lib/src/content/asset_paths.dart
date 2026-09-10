@@ -223,19 +223,71 @@ const Map<String, String> _racePlayerKeys = <String, String>{
 ///
 /// The fallbacks are there so an unmapped id cannot break a screen; these say
 /// whether one was needed, which is what the asset audit checks.
-bool hasMapArt(String mapId) => _mapArt.containsKey(mapId);
+String? _relativeAsset(String? key) {
+  final trimmed = key?.trim();
+  if (trimmed == null || trimmed.isEmpty) return null;
+  return trimmed;
+}
 
-bool hasLocationArt(String locationId) => _locationArt.containsKey(locationId);
+String _bundleAsset(String relative) =>
+    relative.startsWith(_assetRoot) ? relative : '$_assetRoot/$relative';
 
-bool hasEnemyArt(String enemyId) => _enemyArt.containsKey(enemyId);
+bool hasMapArt(String mapId, {GameDatabase? db}) {
+  if (_mapArt.containsKey(mapId)) return true;
+  return db?.maps.any((map) => map.mapId == mapId && (map.assetKey?.trim().isNotEmpty ?? false)) ??
+      false;
+}
 
-bool hasActionArt(String actionId) => _actionArt.containsKey(actionId);
+bool hasLocationArt(String locationId, {GameDatabase? db}) {
+  if (_locationArt.containsKey(locationId)) return true;
+  return db?.locations.any(
+        (location) =>
+            location.locationId == locationId &&
+            (location.backgroundAssetKey?.trim().isNotEmpty ?? false),
+      ) ??
+      false;
+}
 
-String mapAssetPath(String mapId) {
+bool hasEnemyArt(String enemyId, {GameDatabase? db}) {
+  if (_enemyArt.containsKey(enemyId)) return true;
+  return db?.enemies.any(
+        (enemy) => enemy.enemyId == enemyId && (enemy.spriteAssetKey?.trim().isNotEmpty ?? false),
+      ) ??
+      false;
+}
+
+bool hasActionArt(String actionId, {GameDatabase? db}) {
+  if (_actionArt.containsKey(actionId)) return true;
+  if (db == null) return false;
+  for (final action in db.actions) {
+    if (action.actionId != actionId) continue;
+    final key = action.raw['Sprite Asset Key'];
+    return key is String && key.trim().isNotEmpty;
+  }
+  return false;
+}
+
+String mapAssetPath(String mapId, {GameDatabase? db}) {
+  if (db != null) {
+    for (final map in db.maps) {
+      if (map.mapId != mapId) continue;
+      final key = _relativeAsset(map.assetKey);
+      if (key != null) return _bundleAsset(key.contains('/') ? key : 'maps/$key.webp');
+    }
+  }
   return '$_assetRoot/${_mapArt[mapId] ?? 'maps/map_idale_main.webp'}';
 }
 
-String locationAssetPath(String locationId) {
+String locationAssetPath(String locationId, {GameDatabase? db}) {
+  if (db != null) {
+    for (final location in db.locations) {
+      if (location.locationId != locationId) continue;
+      final key = _relativeAsset(location.backgroundAssetKey);
+      if (key != null) {
+        return _bundleAsset(key.contains('/') ? key : 'locations/$key.webp');
+      }
+    }
+  }
   return '$_assetRoot/${_locationArt[locationId] ?? 'locations/loc_town.webp'}';
 }
 
@@ -251,16 +303,39 @@ String slotIconPath(String slotId) {
   return '$_assetRoot/icons/slots/slot_${_slotIcons[slotId] ?? 'weapon_tool'}.webp';
 }
 
-String enemyAssetPath(String enemyId) {
+String enemyAssetPath(String enemyId, {GameDatabase? db}) {
+  if (db != null) {
+    for (final enemy in db.enemies) {
+      if (enemy.enemyId != enemyId) continue;
+      final key = _relativeAsset(enemy.spriteAssetKey);
+      if (key != null) return _bundleAsset(key.contains('/') ? key : 'enemies/$key.webp');
+    }
+  }
   return '$_assetRoot/${_enemyArt[enemyId] ?? 'enemies/enm_cow.webp'}';
 }
 
-String workstationAssetPath(String? facilityId) {
+String workstationAssetPath(String? facilityId, {GameDatabase? db}) {
   const fallback = 'workstations/ws_crafting_bench.webp';
+  if (facilityId != null && db != null) {
+    for (final facility in db.facilities) {
+      if (facility.facilityId != facilityId) continue;
+      final rawKey = facility.raw['Sprite Asset Key'];
+      final key = rawKey is String ? _relativeAsset(rawKey) : null;
+      if (key != null) return _bundleAsset(key.contains('/') ? key : 'workstations/$key.webp');
+    }
+  }
   return '$_assetRoot/${_workstationArt[facilityId] ?? fallback}';
 }
 
-String actionAssetPath(String actionId) {
+String actionAssetPath(String actionId, {GameDatabase? db}) {
+  if (db != null) {
+    for (final action in db.actions) {
+      if (action.actionId != actionId) continue;
+      final rawKey = action.raw['Sprite Asset Key'];
+      final key = rawKey is String ? _relativeAsset(rawKey) : null;
+      if (key != null) return _bundleAsset(key.contains('/') ? key : 'actions/$key.webp');
+    }
+  }
   return '$_assetRoot/${_actionArt[actionId] ?? 'actions/acn_harvest_potato.webp'}';
 }
 
@@ -314,7 +389,17 @@ const Map<String, String> _npcArt = <String, String>{
 };
 
 /// Named plate for an NPC, copied from a gender-matched player sprite.
-String npcAssetPath(String npcId) => '$_assetRoot/${_npcArt[npcId] ?? 'npc/npc_king.png'}';
+String npcAssetPath(String npcId, {GameDatabase? db}) {
+  if (db != null) {
+    for (final npc in db.npcs) {
+      if (npc.npcId != npcId) continue;
+      final rawKey = npc.raw['Sprite Asset Key'];
+      final key = rawKey is String ? _relativeAsset(rawKey) : null;
+      if (key != null) return _bundleAsset(key.contains('/') ? key : 'npc/$key.png');
+    }
+  }
+  return '$_assetRoot/${_npcArt[npcId] ?? 'npc/npc_king.png'}';
+}
 
 String uiMapAssetPath() => '$_assetRoot/icons/ui/ui_map.webp';
 

@@ -121,6 +121,7 @@ void main() {
       db,
       save,
       fennel,
+      0,
     ).quests.singleWhere((quest) => quest.questId == 'QST-0006');
 
     var save = _save(db, locationId: 'LOC-0001');
@@ -157,7 +158,7 @@ void main() {
     );
     // Fennel stays to teach Botany (QST-0011) after Getting Started.
     expect(
-      npcsAtLocationForSave(db, finished.save!, 'LOC-0001').map((npc) => npc.raw['NPC ID']),
+      npcsAtLocationForSave(db, finished.save!, 'LOC-0001', 0).map((npc) => npc.raw['NPC ID']),
       contains('NPC-0014'),
     );
   });
@@ -174,9 +175,9 @@ void main() {
         SkillProgress(skillId: 'SKL-0002', level: 60, xp: 0),
       ],
     );
-    expect(npcConversation(db, _save(db, locationId: 'LOC-0012'), merchant).quests, isEmpty);
+    expect(npcConversation(db, _save(db, locationId: 'LOC-0012'), merchant, 0).quests, isEmpty);
 
-    final pitched = npcConversation(db, save, merchant);
+    final pitched = npcConversation(db, save, merchant, 0);
     expect(pitched.quests.single.questId, 'QST-0007');
     expect(pitched.quests.single.pitchLine, contains('Could you help me get the old forge'));
     expect(pitched.quests.single.canAccept, isTrue);

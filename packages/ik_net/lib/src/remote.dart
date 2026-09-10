@@ -689,7 +689,7 @@ List<PublicEquippedSlot> _equipmentFromRemote(Object? raw) {
   if (value is String && value.trim().isNotEmpty) {
     try {
       value = jsonDecode(value);
-    } catch (_) {
+    } on FormatException {
       return const <PublicEquippedSlot>[];
     }
   }

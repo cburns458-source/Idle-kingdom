@@ -40,5 +40,10 @@ num gatheringXpReward(GameDatabase db, PlayerSave save, ActionRow action, [num? 
   final afterProficiency = !isBelowProficiency(save, action)
       ? amount.floor()
       : (amount * configNumber(db, 'gathering_below_proficiency_xp_multiplier', 0.5)).floor();
-  return applyQuiverHuntingXp(afterProficiency, save, jsString(action.raw['Relevant Skill ID']));
+  return applyQuiverHuntingXp(
+    db,
+    afterProficiency,
+    save,
+    jsString(action.raw['Relevant Skill ID']),
+  );
 }

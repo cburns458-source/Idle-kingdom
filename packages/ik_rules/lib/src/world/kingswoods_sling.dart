@@ -5,45 +5,55 @@ import '../inventory/add_items.dart';
 import '../save/generated/save_models.dart';
 
 const String kingswoodsLocationId = 'LOC-0008';
-const String slingItemId = 'ITEM-0109';
-const String kingswoodsSlingFoundMessage = 'You found a Bola among the trees.';
+const String bolaItemId = 'ITEM-0109';
+const String slingItemId = bolaItemId;
+const String kingswoodsBolaFoundMessage = 'You found a Bola among the trees.';
+const String kingswoodsSlingFoundMessage = kingswoodsBolaFoundMessage;
 
-bool saveOwnsSling(PlayerSave save) {
-  if (save.inventory.any((stack) => stack.itemId == slingItemId)) return true;
-  return save.equipment.slots.values.any((stack) => stack?.itemId == slingItemId);
+bool saveOwnsBola(PlayerSave save) {
+  if (save.inventory.any((stack) => stack.itemId == bolaItemId)) return true;
+  return save.equipment.slots.values.any((stack) => stack?.itemId == bolaItemId);
 }
 
-class KingswoodsSlingGrant {
-  const KingswoodsSlingGrant({required this.save, required this.granted, this.message});
+bool saveOwnsSling(PlayerSave save) => saveOwnsBola(save);
+
+class KingswoodsBolaGrant {
+  const KingswoodsBolaGrant({required this.save, required this.granted, this.message});
 
   final PlayerSave save;
   final bool granted;
   final String? message;
 }
 
+typedef KingswoodsSlingGrant = KingswoodsBolaGrant;
+
 /// First visit to the Kingswoods grants a Bola once, if the bag has room.
-KingswoodsSlingGrant maybeGrantKingswoodsSling(GameDatabase db, PlayerSave save) {
+KingswoodsBolaGrant maybeGrantKingswoodsBola(GameDatabase db, PlayerSave save) {
   if (save.currentLocationId != kingswoodsLocationId) {
-    return KingswoodsSlingGrant(save: save, granted: false);
+    return KingswoodsBolaGrant(save: save, granted: false);
   }
   if (save.claimedKingswoodsSling) {
-    return KingswoodsSlingGrant(save: save, granted: false);
+    return KingswoodsBolaGrant(save: save, granted: false);
   }
-  if (saveOwnsSling(save)) {
-    return KingswoodsSlingGrant(save: save.copyWith(claimedKingswoodsSling: true), granted: false);
+  if (saveOwnsBola(save)) {
+    return KingswoodsBolaGrant(save: save.copyWith(claimedKingswoodsSling: true), granted: false);
   }
-  final added = addItemToInventoryExact(save, slingItemId, 1);
+  final added = addItemToInventoryExact(save, bolaItemId, 1);
   if (!added.ok) {
-    return KingswoodsSlingGrant(save: save, granted: false);
+    return KingswoodsBolaGrant(save: save, granted: false);
   }
   final name = db.items
-      .where((item) => item.raw['Item ID'] == slingItemId)
+      .where((item) => item.raw['Item ID'] == bolaItemId)
       .map((item) => item.raw['Display Name'])
       .whereType<String>()
       .firstOrNull;
-  return KingswoodsSlingGrant(
+  return KingswoodsBolaGrant(
     save: added.save!.copyWith(claimedKingswoodsSling: true),
     granted: true,
     message: 'You found a ${name ?? 'Bola'} among the trees.',
   );
+}
+
+KingswoodsBolaGrant maybeGrantKingswoodsSling(GameDatabase db, PlayerSave save) {
+  return maybeGrantKingswoodsBola(db, save);
 }

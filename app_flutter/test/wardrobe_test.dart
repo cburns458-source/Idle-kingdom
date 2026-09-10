@@ -156,6 +156,7 @@ void main() {
         buys: <ShopOfferLine>[ShopOfferLine(itemId: 'ITEM-0296', quantity: 1)],
         sells: <ShopOfferLine>[],
       ),
+      nowMs: controller.session.clock(),
     );
     expect(result.ok, isTrue, reason: result.reason);
     controller.commitLoadout(result.save!);

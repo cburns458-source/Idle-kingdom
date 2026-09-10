@@ -270,7 +270,7 @@ class GameController extends ChangeNotifier {
     final qty = recipe.raw['Output Quantity'];
     final skillId = recipe.raw['Skill ID'];
     if (itemId is! String || qty is! num || skillId is! String) return false;
-    return !canFitItemQuantity(save, itemId, productionOutputReservePerCraft(skillId, qty));
+    return !canFitItemQuantity(save, itemId, productionOutputReservePerCraft(db, skillId, qty));
   }
 
   /// The catch-up from the last boot, until the player dismisses it.
@@ -707,7 +707,10 @@ class GameController extends ChangeNotifier {
     final slingTouched = _offerKingswoodsSling();
     _expireStageFx();
     _queueSkillLevelUps(previous, save);
-    onSaveCommitted?.call(previous, save);
+    final gameplayChanged = result.changed || result.events.isNotEmpty || slingTouched;
+    if (gameplayChanged || skillUpsBefore != _pendingSkillLevelUps.length) {
+      onSaveCommitted?.call(previous, save);
+    }
     // Progress bars / timers always move with the clock.
     progress.notifyListeners();
     // Shell chrome only rebuilds when activity/UI structure changes.
@@ -912,7 +915,13 @@ class GameController extends ChangeNotifier {
   }
 
   void plantBotanySeedHere(String seedItemId, {num plantQuantity = 3}) {
-    final result = plantBotanySeed(db, save, seedItemId, plantQuantity: plantQuantity);
+    final result = plantBotanySeed(
+      db,
+      save,
+      seedItemId,
+      nowMs: session.clock(),
+      plantQuantity: plantQuantity,
+    );
     if (!result.ok) {
       report(result.reason);
       return;
@@ -922,7 +931,7 @@ class GameController extends ChangeNotifier {
   }
 
   void plantBestBotanySeedHere() {
-    final result = plantBestBotanySeed(db, save);
+    final result = plantBestBotanySeed(db, save, nowMs: session.clock());
     if (!result.ok) {
       report(result.reason);
       return;
@@ -932,7 +941,7 @@ class GameController extends ChangeNotifier {
   }
 
   void placeTrapHere(String trapItemId) {
-    final result = placeTrap(db, save, trapItemId);
+    final result = placeTrap(db, save, trapItemId, nowMs: session.clock());
     if (!result.ok) {
       report(result.reason);
       return;
@@ -948,7 +957,7 @@ class GameController extends ChangeNotifier {
   /// Collects a ready timer, notes the reward strip, and queues a popup notice.
   bool _collectTimerAt(String locationId, String kind, {required bool announceText}) {
     final before = save;
-    final result = collectLocationTimer(db, before, locationId, kind);
+    final result = collectLocationTimer(db, before, locationId, kind, nowMs: session.clock());
     if (!result.ok) {
       if (announceText) report(result.reason);
       return false;

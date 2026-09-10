@@ -124,8 +124,8 @@ String? _repeatEveryLabel(Map<String, Object?> quest) {
   return null;
 }
 
-List<MiniQuestLogRow> miniQuestLog(GameDatabase db, PlayerSave save, [num? nowMs]) {
-  final clock = nowMs ?? DateTime.now().millisecondsSinceEpoch;
+List<MiniQuestLogRow> miniQuestLog(GameDatabase db, PlayerSave save, num nowMs) {
+  final clock = nowMs;
   return db.quests
       .where(isMiniquest)
       .where((quest) {

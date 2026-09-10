@@ -15,18 +15,18 @@ void main() {
     final first = maybeGrantKingswoodsSling(db, save);
     expect(first.granted, isTrue);
     expect(first.save.claimedKingswoodsSling, isTrue);
-    expect(first.save.inventory.any((stack) => stack.itemId == slingItemId), isTrue);
+    expect(first.save.inventory.any((stack) => stack.itemId == bolaItemId), isTrue);
     expect(first.message, contains('Bola'));
 
     final second = maybeGrantKingswoodsSling(db, first.save);
     expect(second.granted, isFalse);
-    expect(second.save.inventory.where((stack) => stack.itemId == slingItemId).single.quantity, 1);
+    expect(second.save.inventory.where((stack) => stack.itemId == bolaItemId).single.quantity, 1);
   });
 
   test('a player who already has a Bola is only stamped as claimed', () {
     final save = createNewSave(db, 0).copyWith(
       currentLocationId: kingswoodsLocationId,
-      inventory: const <InventoryStack>[InventoryStack(itemId: slingItemId, quantity: 1)],
+      inventory: const <InventoryStack>[InventoryStack(itemId: bolaItemId, quantity: 1)],
     );
     final result = maybeGrantKingswoodsSling(db, save);
     expect(result.granted, isFalse);

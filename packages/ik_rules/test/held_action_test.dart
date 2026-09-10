@@ -68,7 +68,7 @@ void main() {
   test('finishing a gathering action forgets it so the next roll can change', () {
     var save = requestActivityStart(db, _inMeadow(db), 'ACT-0012', 0, () => 0).save!;
     final action = db.actions.firstWhere((row) => row.raw['Action ID'] == 'ACN-0105');
-    save = completeGatheringAction(db, save, action, () => 0).save;
+    save = completeGatheringAction(db, save, action, () => 0, 0).save;
     expect(save.heldActionByActivityId.containsKey('ACT-0012'), isFalse);
 
     final next = generateNextAction(db, save, 'ACT-0012', () => 0.999, 10);

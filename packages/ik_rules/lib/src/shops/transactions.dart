@@ -105,7 +105,7 @@ ShopTransactionResult confirmShopOffer(
   PlayerSave save,
   String shopId,
   ShopOffer offer, {
-  num? nowMs,
+  required num nowMs,
 }) {
   final shop = getShop(db, shopId);
   if (shop == null) return const ShopTransactionResult.failed('Shop not found.');
@@ -117,7 +117,7 @@ ShopTransactionResult confirmShopOffer(
     return const ShopTransactionResult.failed('Add items to the offer first.');
   }
 
-  final clock = nowMs ?? DateTime.now().toUtc().millisecondsSinceEpoch;
+  final clock = nowMs;
   var next = syncShopPurchaseDay(save, clock);
   final reserved = <String, num>{};
   for (final line in offer.buys) {

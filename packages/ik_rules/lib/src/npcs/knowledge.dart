@@ -45,17 +45,12 @@ bool npcVisibleForSave(NpcRow npc, PlayerSave save) {
   return getQuestProgress(save, questId).status != 'completed';
 }
 
-List<NpcRow> npcsAtLocation(GameDatabase db, String locationId, [num? nowMs]) {
-  final clock = nowMs ?? DateTime.now().millisecondsSinceEpoch;
+List<NpcRow> npcsAtLocation(GameDatabase db, String locationId, num nowMs) {
+  final clock = nowMs;
   return db.npcs.where((npc) => npcLocationAt(npc, clock) == locationId).toList();
 }
 
-List<NpcRow> npcsAtLocationForSave(
-  GameDatabase db,
-  PlayerSave save,
-  String locationId, [
-  num? nowMs,
-]) {
+List<NpcRow> npcsAtLocationForSave(GameDatabase db, PlayerSave save, String locationId, num nowMs) {
   return npcsAtLocation(
     db,
     locationId,

@@ -108,7 +108,7 @@ ProjectValidation validateProjectCompletion(
 
   final crafts = quantity.floor();
   if (crafts <= 0) return const ProjectValidation.failed('Choose a quantity of at least 1.');
-  if (crafts > maxProjectQuantity(save, project)) {
+  if (crafts > maxProjectQuantity(db, save, project)) {
     return const ProjectValidation.failed('Missing materials or gold for that quantity.');
   }
 
@@ -154,6 +154,7 @@ ProjectCompleteResult completeSpecialProject(
   final withMaterials = removeIngredients(
     save,
     projectInputsForSave(
+      db,
       save,
       project,
     ).map((input) => RecipeIngredient(itemId: input.itemId, quantity: input.quantity)).toList(),
