@@ -89,4 +89,50 @@ describe('auto-equip for activity requirements', () => {
     if (!equipped.ok) return
     expect(validateActivityStart(launch, equipped.save, 'ACT-0005').ok).toBe(true)
   })
+
+  it('proposes lockpicks from the bag for deposit-box thievery', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    let save = createNewSave(launch)
+    save = {
+      ...save,
+      currentLocationId: 'LOC-0034',
+      skills: save.skills.map((row) =>
+        row.skillId === 'SKL-0015' ? { ...row, level: 50, xp: 0 } : row,
+      ),
+    }
+    save = forceUnequip(save, 'SLOT-0001')
+    save = addItemToInventory(save, 'ITEM-0351', 5)
+
+    const blocked = validateActivityStart(launch, save, 'ACT-0059')
+    expect(blocked.ok).toBe(false)
+    if (blocked.ok) return
+
+    const proposal = proposeAutoEquipForActivity(launch, save, 'ACT-0059', blocked.reason)
+    expect(proposal?.itemId).toBe('ITEM-0351')
+    expect(proposal?.itemName).toMatch(/Lockpicks/i)
+    expect(proposal?.capabilities).toEqual(['lockpick'])
+
+    const equipped = applyAutoEquipProposal(launch, save, proposal!)
+    expect(equipped.ok).toBe(true)
+    if (!equipped.ok) return
+    expect(validateActivityStart(launch, equipped.save, 'ACT-0059').ok).toBe(true)
+  })
+
+  it('returns null for lockpick work when the bag has none', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    let save = createNewSave(launch)
+    save = {
+      ...save,
+      currentLocationId: 'LOC-0034',
+      skills: save.skills.map((row) =>
+        row.skillId === 'SKL-0015' ? { ...row, level: 50, xp: 0 } : row,
+      ),
+    }
+    save = forceUnequip(save, 'SLOT-0001')
+
+    const blocked = validateActivityStart(launch, save, 'ACT-0059')
+    expect(blocked.ok).toBe(false)
+    if (blocked.ok) return
+    expect(proposeAutoEquipForActivity(launch, save, 'ACT-0059', blocked.reason)).toBeNull()
+  })
 })

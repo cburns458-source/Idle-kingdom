@@ -8,6 +8,7 @@ export type QuestObjectiveKind =
   | 'construct_portal'
   | 'unlock_travel'
   | 'guild_collab'
+  | 'action'
 
 export interface QuestCounterTarget {
   /** ITEM / ENM / RCP / PRJ / LOC / FAC id depending on kind. */

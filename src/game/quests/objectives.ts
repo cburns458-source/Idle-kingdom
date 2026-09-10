@@ -80,6 +80,7 @@ export function normalizeObjectiveKind(raw: string | null | undefined): QuestObj
     return 'unlock_travel'
   }
   if (value.includes('guild')) return 'guild_collab'
+  if (value === 'action') return 'action'
   return 'gather_deliver'
 }
 
@@ -181,6 +182,15 @@ export function parseNotesObjectives(
     }
   }
 
+  let actionTargets = actionMatch ? parseIdQtyList(actionMatch) : []
+  if (actionTargets.length === 0 && kind === 'action') {
+    const targetId = options.fallbackTargetId
+    const required = options.fallbackQuantity
+    if (targetId && typeof required === 'number' && required > 0) {
+      actionTargets = [{ targetId, quantity: required }]
+    }
+  }
+
   return {
     kind,
     delivers,
@@ -196,7 +206,7 @@ export function parseNotesObjectives(
     hintLocationIds: hintMatch ? parseIdList(hintMatch) : [],
     inspectIds: inspectMatch ? parseTokenList(inspectMatch) : [],
     holds: holdMatch ? parseIdQtyList(holdMatch) : [],
-    actionTargets: actionMatch ? parseIdQtyList(actionMatch) : [],
+    actionTargets,
     requiresSkills: [],
     requiresQuestIds: [],
     unlockOnAcceptLocationIds: [],
@@ -211,8 +221,8 @@ export function parseNotesObjectives(
     autoStartLocationId: null,
     autoCompleteOnTalk: false,
     autoCompleteOnVisit: false,
-  autoCompleteOnAction: false,
-  requiresAnySeed: false,
+    autoCompleteOnAction: false,
+    requiresAnySeed: false,
     unlockLocationIds: [],
     rewardRecipeIds: [],
     rewardProjectNpcIds: [],

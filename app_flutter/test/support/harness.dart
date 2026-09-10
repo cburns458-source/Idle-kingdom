@@ -229,7 +229,7 @@ Future<void> tapVisible(WidgetTester tester, Finder button) async {
   await tester.pump();
 }
 
-/// Selects a location option-band tab (Activities / Shops / People / Other).
+/// Selects a location option-band tab (Activities / Patches / Traps / Shops / People / Other).
 Future<void> selectLocationBandTab(WidgetTester tester, String tab) async {
   final finder = find.widgetWithText(GameButton, tab);
   expect(finder, findsWidgets);

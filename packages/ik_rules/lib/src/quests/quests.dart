@@ -482,7 +482,11 @@ QuestVisitAutoComplete applyQuestAutoCompleteOnAction(GameDatabase db, PlayerSav
     if (!parsed.autoCompleteOnAction) continue;
     final questId = jsString(quest['Quest ID']);
     if (getQuestProgress(next, questId).status != 'active') continue;
-    if (!questAllStepsComplete(db, next, quest)) continue;
+    if (questUsesSteps(db, questId)) {
+      if (!questAllStepsComplete(db, next, quest)) continue;
+    } else if (!questObjectiveProgress(db, next, quest).ready) {
+      continue;
+    }
     final completed = completeQuest(db, next, questId, ignoreLocation: true);
     if (completed.ok) {
       next = completed.save!;

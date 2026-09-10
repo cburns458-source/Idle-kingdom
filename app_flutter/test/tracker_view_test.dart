@@ -25,13 +25,13 @@ void main() {
     addTearDown(controller.dispose);
 
     await pumpPanel(tester, TrackerView(controller: controller));
-    expect(find.text('Loot'), findsOne);
     expect(find.text('XP'), findsOne);
-    expect(find.text('Finish an action to start a loot tracker.'), findsOne);
-
-    await tester.tap(find.text('XP'));
-    await tester.pump();
+    expect(find.text('Loot'), findsOne);
     expect(find.text('Gain XP to start an XP tracker.'), findsOne);
+
+    await tester.tap(find.text('Loot'));
+    await tester.pump();
+    expect(find.text('Finish an action to start a loot tracker.'), findsOne);
   });
 
   testWidgets('combat victory opens a cow loot section that reset can clear', (tester) async {
@@ -48,6 +48,8 @@ void main() {
     controller.commit(victory.save);
 
     await pumpPanel(tester, TrackerView(controller: controller));
+    await tester.tap(find.text('Loot'));
+    await tester.pump();
     expect(find.text('Cow'), findsOne);
     expect(find.textContaining('kill'), findsOne);
     expect(find.byKey(const Key('tracker-reset-loot-enemy:ENM-0001')), findsOne);
@@ -73,8 +75,6 @@ void main() {
     controller.commit(victory.save);
 
     await pumpPanel(tester, TrackerView(controller: controller));
-    await tester.tap(find.text('XP'));
-    await tester.pump();
     expect(find.text('Total XP'), findsOne);
     expect(find.text('Combat'), findsOne);
     expect(find.textContaining('XP/hr'), findsWidgets);
@@ -108,11 +108,11 @@ void main() {
     controller.commit(finished!.save);
 
     await pumpPanel(tester, TrackerView(controller: controller));
-    expect(find.text('Finish an action to start a loot tracker.'), findsOne);
-
-    await tester.tap(find.text('XP'));
-    await tester.pump();
     expect(find.text('Total XP'), findsOne);
+
+    await tester.tap(find.text('Loot'));
+    await tester.pump();
+    expect(find.text('Finish an action to start a loot tracker.'), findsOne);
   });
 
   testWidgets('gold shows as a drop chip instead of a subtitle count', (tester) async {
@@ -123,6 +123,8 @@ void main() {
     );
 
     await pumpPanel(tester, TrackerView(controller: controller));
+    await tester.tap(find.text('Loot'));
+    await tester.pump();
     expect(find.text('Cow'), findsOne);
     expect(find.text('1 kill'), findsOne);
     expect(find.textContaining('kill ·'), findsNothing);
@@ -148,6 +150,8 @@ void main() {
     controller.commit(save);
 
     await pumpPanel(tester, TrackerView(controller: controller));
+    await tester.tap(find.text('Loot'));
+    await tester.pump();
     expect(
       find.byWidgetPredicate(
         (widget) => widget is GameImage && widget.path == actionAssetPath(harvest.actionId),

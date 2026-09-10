@@ -315,6 +315,54 @@ void main() {
       expect(find.text('Equip & Start'), findsOne);
     });
 
+    PlayerSave withLockpicksInBag() {
+      final save = startedCharacter(database);
+      return save.copyWith(
+        currentLocationId: 'LOC-0034',
+        skills: [
+          ...save.skills.where((skill) => skill.skillId != 'SKL-0015'),
+          const SkillProgress(skillId: 'SKL-0015', level: 50, xp: 0),
+        ],
+        inventory: <InventoryStack>[
+          ...save.inventory,
+          const InventoryStack(itemId: 'ITEM-0351', quantity: 5),
+        ],
+      );
+    }
+
+    Future<void> tapDepositBox(WidgetTester tester) async {
+      final card = find.ancestor(
+        of: find.text('Pick a deposit box'),
+        matching: find.byType(DockRow),
+      );
+      await tapVisible(tester, find.descendant(of: card, matching: find.bySemanticsLabel('Start')));
+    }
+
+    testWidgets('offers lockpicks from the bag the same way as other tools', (tester) async {
+      final controller = buildController(database, seed: withLockpicksInBag());
+      addTearDown(controller.dispose);
+      await pumpShell(tester, controller);
+
+      await tapDepositBox(tester);
+
+      expect(find.text('Equip required tool?'), findsOne);
+      expect(find.textContaining('Equip Lockpicks (lockpick)'), findsOne);
+    });
+
+    testWidgets('equips lockpicks and starts on confirm', (tester) async {
+      final controller = buildController(database, seed: withLockpicksInBag());
+      addTearDown(controller.dispose);
+      await pumpShell(tester, controller);
+      await tapDepositBox(tester);
+
+      await tester.tap(find.text('Equip & Start'));
+      await tester.pump();
+
+      expect(slotStack(controller.save, 'SLOT-0001')?.itemId, 'ITEM-0351');
+      expect(controller.save.currentActivityId, 'ACT-0059');
+      expect(find.text('Equip required tool?'), findsNothing);
+    });
+
     testWidgets('a refusal floats over the dock and fades away', (tester) async {
       final controller = buildController(database, seed: startedWithoutNet());
       addTearDown(controller.dispose);
@@ -677,6 +725,8 @@ void main() {
 
     expect(find.widgetWithText(GameButton, 'Activities'), findsOne);
     expect(find.widgetWithText(GameButton, 'People'), findsOne);
+    expect(find.widgetWithText(GameButton, 'Patches'), findsNothing);
+    expect(find.widgetWithText(GameButton, 'Traps'), findsNothing);
     expect(find.text('Cook at the kitchen'), findsOne);
     expect(find.text('Rose'), findsNothing);
 
@@ -684,6 +734,34 @@ void main() {
     await tester.pump();
     expect(find.text('Rose'), findsOne);
     expect(find.text('Cook at the kitchen'), findsNothing);
+  });
+
+  testWidgets('the farm option band has a Patches tab', (tester) async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(currentLocationId: 'LOC-0001'),
+    );
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller);
+
+    expect(find.widgetWithText(GameButton, 'Patches'), findsOne);
+    expect(find.widgetWithText(GameButton, 'Traps'), findsNothing);
+    await selectLocationBandTab(tester, 'Patches');
+    expect(find.text('Plant'), findsOne);
+  });
+
+  testWidgets('the docks option band has a Traps tab', (tester) async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(currentLocationId: 'LOC-0004'),
+    );
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller);
+
+    expect(find.widgetWithText(GameButton, 'Traps'), findsOne);
+    expect(find.widgetWithText(GameButton, 'Patches'), findsNothing);
+    await selectLocationBandTab(tester, 'Traps');
+    expect(find.text('Place pot'), findsOne);
   });
 
   testWidgets('expanding the option list does not carry to the next location', (tester) async {

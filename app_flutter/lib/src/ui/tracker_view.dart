@@ -12,7 +12,7 @@ import 'game_image.dart';
 import 'item_icon.dart';
 import 'page_header.dart';
 
-enum _TrackerTab { loot, xp }
+enum _TrackerTab { xp, loot }
 
 String? _firstString(Iterable<String> values) {
   final iterator = values.iterator;
@@ -31,7 +31,7 @@ class TrackerView extends StatefulWidget {
 }
 
 class _TrackerViewState extends State<TrackerView> {
-  _TrackerTab _tab = _TrackerTab.loot;
+  _TrackerTab _tab = _TrackerTab.xp;
   Timer? _ticker;
 
   GameController get controller => widget.controller;
@@ -70,7 +70,7 @@ class _TrackerViewState extends State<TrackerView> {
               child: Row(
                 children: [
                   for (final tab in _TrackerTab.values) ...[
-                    if (tab != _TrackerTab.loot) const SizedBox(width: 6),
+                    if (tab != _TrackerTab.xp) const SizedBox(width: 6),
                     Expanded(
                       child: GameButton(
                         label: tab == _TrackerTab.loot ? 'Loot' : 'XP',
@@ -84,7 +84,7 @@ class _TrackerViewState extends State<TrackerView> {
                 ],
               ),
             ),
-            Expanded(child: _tab == _TrackerTab.loot ? _lootTab() : _xpTab()),
+            Expanded(child: _tab == _TrackerTab.xp ? _xpTab() : _lootTab()),
           ],
         );
       },

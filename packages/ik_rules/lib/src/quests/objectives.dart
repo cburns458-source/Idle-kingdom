@@ -195,6 +195,7 @@ String normalizeObjectiveKind(Object? raw) {
     return 'unlock_travel';
   }
   if (value.contains('guild')) return 'guild_collab';
+  if (value == 'action') return 'action';
   return 'gather_deliver';
 }
 
@@ -278,6 +279,20 @@ StructuredQuestObjectives parseNotesObjectives(
     }
   }
 
+  var actionTargets = actionNote == null
+      ? const <QuestCounterTarget>[]
+      : _parseIdQtyList(actionNote);
+  if (actionTargets.isEmpty && kind == 'action') {
+    if (fallbackTargetId != null &&
+        fallbackTargetId.isNotEmpty &&
+        fallbackQuantity != null &&
+        fallbackQuantity > 0) {
+      actionTargets = <QuestCounterTarget>[
+        QuestCounterTarget(targetId: fallbackTargetId, quantity: fallbackQuantity),
+      ];
+    }
+  }
+
   return StructuredQuestObjectives(
     kind: kind,
     delivers: delivers,
@@ -295,7 +310,7 @@ StructuredQuestObjectives parseNotesObjectives(
     hintLocationIds: hintNote == null ? const <String>[] : _parseIdList(hintNote),
     inspectIds: inspectNote == null ? const <String>[] : _parseTokenList(inspectNote),
     holds: holdNote == null ? const <QuestCounterTarget>[] : _parseIdQtyList(holdNote),
-    actionTargets: actionNote == null ? const <QuestCounterTarget>[] : _parseIdQtyList(actionNote),
+    actionTargets: actionTargets,
     requiresSkills: const <QuestCounterTarget>[],
     requiresQuestIds: const <String>[],
     unlockOnAcceptLocationIds: const <String>[],
