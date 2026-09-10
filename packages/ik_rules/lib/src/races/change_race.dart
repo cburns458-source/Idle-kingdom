@@ -230,8 +230,8 @@ bool _canAfford(PlayerSave save, RaceChangeCost cost) {
   return cost.items.every((item) => inventoryCount(save, item.itemId) >= item.quantity);
 }
 
-RaceChangeOffer raceChangeOffer(GameDatabase db, PlayerSave save, [num? nowMs]) {
-  final clock = nowMs ?? DateTime.now().millisecondsSinceEpoch;
+RaceChangeOffer raceChangeOffer(GameDatabase db, PlayerSave save, num nowMs) {
+  final clock = nowMs;
   final quest = raceChangeQuest(db);
   final ready = raceChangeReady(db, save, clock);
   final readyAt = quest == null ? null : miniquestRepeatReadyAt(save, quest);
@@ -264,8 +264,8 @@ RaceChangeOffer raceChangeOffer(GameDatabase db, PlayerSave save, [num? nowMs]) 
   );
 }
 
-ChangeRaceResult changeRaceAtNpc(GameDatabase db, PlayerSave save, String raceId, [num? nowMs]) {
-  final clock = nowMs ?? DateTime.now().millisecondsSinceEpoch;
+ChangeRaceResult changeRaceAtNpc(GameDatabase db, PlayerSave save, String raceId, num nowMs) {
+  final clock = nowMs;
   final npc = db.npcs.firstWhereOrNull((row) => row.raw['NPC ID'] == vesperId);
   if (npc == null) return const ChangeRaceResult.failed('Vesper is not here.');
   if (save.currentLocationId != npc.raw['Location ID']) {

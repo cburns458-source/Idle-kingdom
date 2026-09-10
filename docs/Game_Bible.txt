@@ -188,8 +188,9 @@ THE DOCKS
 
 THE DEPTHS
 - Underwater sub-map, entered from Sunken Approach on the main map.
-- Open from the start. Landing node is The Depths.
-- A quiet ruined plaza for now. Mother Squid is planned for a later node.
+- Open from the start. Landing node is The Shallows.
+- Nodes include The Shallows, Kelp Forest, and The Depths plaza.
+- Mother Squid is a Launch Combat encounter at The Depths, with Squidlings.
 
 COPPER MINE
 Mining pool:
@@ -274,7 +275,7 @@ TEMPLE
 - Main-map node.
 - Combat Activity: Train with the monks. Unarmed training against a Monk. Requires empty Weapon or Tool and Off-hand. No item drops.
 - Gathering Activity: Pick weeds (Augur Weed commonly, Moonblossom rarely). Same empty-hand rules.
-- Blessing is a location amenity, not an Activity. It restores the player to full health.
+- Blessing is a location amenity, not an Activity. It restores the player to 110% of current maximum HP. Extra blessing does not stack above that.
 
 THE CITADEL
 Shared hub sub-map. Landing district is Citadel Plaza.
@@ -389,6 +390,14 @@ Special Production:
 12. Artisanry
 13. Arcana
 
+Parallel skills:
+14. Botany
+15. Thievery
+
+Botany plants seeds and saplings at location patches and collects when ready.
+Thievery steals and picks locks at defined locations. Lockpicks occupy the
+Weapon or Tool slot.
+
 6.2 LEVELS AND EXPERIENCE
 - Skills begin at Level 1.
 - Displayed levels run from 1 through 100.
@@ -489,7 +498,7 @@ Equipment-compatible non-Combat Activities may generate Combat Actions. After vi
 ======================================================================
 
 8.1 MINING
-Mining gathers ores, coal, clay, and gems and requires an appropriate pickaxe or other defined tool.
+Mining gathers ores, coal, and clay and requires an appropriate pickaxe or other defined tool.
 
 Current resources:
 - Clay.
@@ -501,9 +510,9 @@ Current resources:
 - Gold Ore.
 - Titanium Ore.
 - Tungsten Ore.
-- Sapphire.
-- Emerald.
-- Ruby.
+
+Sapphire, Emerald, and Ruby Deep Mines actions are listed in data as Needs Data
+and are not playable until timing, XP, and weights are filled.
 
 Current Proficiency Levels:
 - Level 1: Copper Ore.
@@ -928,17 +937,20 @@ Statistics should support the same core progression categories where useful.
 - On wider desktop screens, the portrait game viewport may appear alongside supporting website content.
 
 15.2 TOP HUD
-The top HUD should prioritize:
-- Total experience.
+The compact HUD shows:
+- Character name and race.
+- Total level / experience totals.
 - Gold.
-- Current Activity.
-- Current combat or progression information when relevant.
+- Current HP.
+- Current Activity, action or enemy, and elapsed timer.
+
+Mastered skill labels are omitted from the HUD; skill detail lives in the Skills screen.
 
 15.3 BOTTOM NAVIGATION
 The chin has three sections:
 - Current Location (returns to the location screen).
 - Character (inventory, equipment, appearance, and related character management).
-- Menu nest: Settings, Log, Leaderboards, Guilds.
+- Menu nest: Settings, Log, Codex, Timers, Tracker, Leaderboards, Guilds.
 
 A chat launcher sits on the location and map screens. Account management is reached from Settings or the social flow after sign-in.
 
@@ -984,12 +996,11 @@ The default mood should not be dark or gritty. Every screen should feel comforta
 - Main-map and Location backgrounds may use square source compositions that crop or scale into the portrait viewport.
 
 16.3 INTERFACE STYLE
-- Medium-brown parchment panels.
-- Gold highlights.
+- Dark wood outer boards with tan inner panels.
+- Dull antique-gold highlights and pixel stepped corners.
 - Soft green accents.
-- Rounded buttons.
-- Subtle shadows.
 - Large touch-friendly controls.
+- Subtle shadows.
 - Uncluttered mobile-first layout.
 
 16.4 ITEM ICONS

@@ -116,6 +116,7 @@ ProductionQueueResult beginProductionQueue(
 
   final outputTotal =
       productionOutputReservePerCraft(
+        db,
         jsString(recipe.raw['Skill ID']),
         jsNumber(recipe.raw['Output Quantity']),
       ) *
@@ -176,8 +177,8 @@ ProductionCraftResult? completeProductionCraft(
   final skillId = jsString(recipe.raw['Skill ID']);
   final baseQty = jsNumber(recipe.raw['Output Quantity']);
   var outputQty = skillId == alchemySkillId
-      ? alchemyPotionOutputQuantity(baseQty, save, skillId, random)
-      : chefHatOutputQuantity(baseQty, save, skillId, random);
+      ? alchemyPotionOutputQuantity(db, baseQty, save, skillId, random)
+      : chefHatOutputQuantity(db, baseQty, save, skillId, random);
   final outputItemId = jsString(recipe.raw['Output Item ID']);
   if (outputQty > baseQty && !canFitItemQuantity(save, outputItemId, outputQty)) {
     if (skillId == alchemySkillId) {

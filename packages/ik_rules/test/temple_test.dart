@@ -28,6 +28,8 @@ void main() {
     expect(location.raw['Display Name'], 'Temple');
     expect(location.raw['Map ID'], mainMapId);
     expect(layoutForMap(mainMapId).containsKey('LOC-0036'), isTrue);
+    expect(layoutForMap(mainMapId, db).containsKey('LOC-0036'), isTrue);
+    expect(layoutForMap(mainMapId, db)['LOC-0036']!.x, layoutForMap(mainMapId)['LOC-0036']!.x);
     expect(canTravelTo(db, 'LOC-0002', 'LOC-0036', mainMapId), isTrue);
     expect(locationHasBlessing(location), isTrue);
 

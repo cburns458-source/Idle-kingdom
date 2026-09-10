@@ -479,7 +479,7 @@ NpcWhereabouts? _whereaboutsFor(GameDatabase db, String npcId, num clock) {
   return null;
 }
 
-NpcConversation npcConversation(GameDatabase db, PlayerSave save, NpcRow npc, [num? nowMs]) {
+NpcConversation npcConversation(GameDatabase db, PlayerSave save, NpcRow npc, num nowMs) {
   final npcId = npc.raw['NPC ID'] as String;
   final quests = <NpcQuestBlock>[];
   for (final quest in questsTouchingNpc(db, save, npcId)) {
@@ -492,7 +492,7 @@ NpcConversation npcConversation(GameDatabase db, PlayerSave save, NpcRow npc, [n
   final displayName = npc.raw['Display Name'];
   final role = npc.raw['Role'];
   final description = npc.raw['Description'];
-  final clock = nowMs ?? DateTime.now().millisecondsSinceEpoch;
+  final clock = nowMs;
   final whereabouts = _whereaboutsFor(db, npcId, clock);
   final archmageLocked =
       npcId == archmageId && getQuestProgress(save, wizardStudiesQuestId).status == 'inactive';
@@ -645,7 +645,7 @@ NpcActionResult chooseCombatForQuest(
   );
 }
 
-NpcActionResult changeRaceWithNpc(GameDatabase db, PlayerSave save, String raceId, [num? nowMs]) {
+NpcActionResult changeRaceWithNpc(GameDatabase db, PlayerSave save, String raceId, num nowMs) {
   final result = changeRaceAtNpc(db, save, raceId, nowMs);
   if (!result.ok) return NpcActionResult.failed(result.reason!);
   return NpcActionResult.ok(save: result.save!, message: result.message!);

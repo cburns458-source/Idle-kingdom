@@ -34,14 +34,14 @@ void main() {
     expect(assigned.ok, isTrue);
     final atHall = assigned.save!.copyWith(currentLocationId: 'LOC-0015');
     expect(
-      npcsAtLocationForSave(db, atHall, 'LOC-0015').map((npc) => npc.npcId),
+      npcsAtLocationForSave(db, atHall, 'LOC-0015', nowMs).map((npc) => npc.npcId),
       isNot(contains(vesperId)),
     );
     expect(miniQuestLog(db, atHall, nowMs), isEmpty);
 
     final ready = _withTotalLevel(atHall, raceChangeTotalLevel);
     expect(
-      npcsAtLocationForSave(db, ready, 'LOC-0015').map((npc) => npc.npcId),
+      npcsAtLocationForSave(db, ready, 'LOC-0015', nowMs).map((npc) => npc.npcId),
       contains(vesperId),
     );
     expect(miniQuestLog(db, ready, nowMs).map((row) => row.questId), [raceChangeMiniquestId]);

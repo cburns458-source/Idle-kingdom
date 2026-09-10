@@ -560,8 +560,8 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
     final from = controller.indexes.locationsById[fromId];
     final to = controller.indexes.locationsById[locationId];
     final durationMs = mapWalkDurationMs(
-      positionOnBrowseMap(fromId, _browseMapId, from),
-      positionOnBrowseMap(locationId, _browseMapId, to),
+      positionOnBrowseMap(fromId, _browseMapId, from, controller.db),
+      positionOnBrowseMap(locationId, _browseMapId, to, controller.db),
     );
 
     _mapWalk?.dispose();

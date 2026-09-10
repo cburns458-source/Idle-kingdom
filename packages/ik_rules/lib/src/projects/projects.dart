@@ -87,11 +87,14 @@ List<ProjectInput> projectInputs(ProjectRow project) {
 }
 
 /// Project inputs after equipped modifiers (Wizard's Hat essence discount).
-List<ProjectInput> projectInputsForSave(PlayerSave save, ProjectRow project) {
+List<ProjectInput> projectInputsForSave(GameDatabase db, PlayerSave save, ProjectRow project) {
   return projectInputs(project)
       .map(
         (input) => input.itemId == essenceItemId
-            ? ProjectInput(itemId: input.itemId, quantity: wizardEssenceCost(input.quantity, save))
+            ? ProjectInput(
+                itemId: input.itemId,
+                quantity: wizardEssenceCost(db, input.quantity, save),
+              )
             : input,
       )
       .toList();
@@ -174,8 +177,8 @@ List<UnmetProjectSkill> unmetProjectSkillRequirements(
 }
 
 /// Crafts affordable from bag materials. Infinite when the project needs none.
-num maxProjectsFromMaterials(PlayerSave save, ProjectRow project) {
-  final inputs = projectInputsForSave(save, project);
+num maxProjectsFromMaterials(GameDatabase db, PlayerSave save, ProjectRow project) {
+  final inputs = projectInputsForSave(db, save, project);
   if (inputs.isEmpty) return double.infinity;
   num max = double.infinity;
   for (final input in inputs) {
@@ -191,8 +194,8 @@ num maxProjectsFromGold(PlayerSave save, ProjectRow project) {
   return (save.gold / cost).floor();
 }
 
-num maxProjectQuantity(PlayerSave save, ProjectRow project) {
-  final materialMax = maxProjectsFromMaterials(save, project);
+num maxProjectQuantity(GameDatabase db, PlayerSave save, ProjectRow project) {
+  final materialMax = maxProjectsFromMaterials(db, save, project);
   final goldMax = maxProjectsFromGold(save, project);
   if (!materialMax.isFinite && !goldMax.isFinite) return 1;
   return math.max(0, math.min(materialMax, goldMax));

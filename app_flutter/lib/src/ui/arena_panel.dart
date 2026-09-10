@@ -82,16 +82,25 @@ class _ArenaPanelState extends State<ArenaPanel> {
   }
 
   Future<void> _loadOpponents() async {
-    final rows = await multiplayer.service.listArenaOpponents();
-    final own = await multiplayer.service.ownPvpSnapshot();
-    if (!mounted) return;
-    setState(() {
-      _all = rows;
-      _matches = searchArenaOpponents(rows, _search.text);
-      _ownLoadout = own;
-      _equipmentSaved = own != null;
-      _loading = false;
-    });
+    try {
+      final rows = await multiplayer.service.listArenaOpponents();
+      final own = await multiplayer.service.ownPvpSnapshot();
+      if (!mounted) return;
+      setState(() {
+        _all = rows;
+        _matches = searchArenaOpponents(rows, _search.text);
+        _ownLoadout = own;
+        _equipmentSaved = own != null;
+        _loading = false;
+        _error = null;
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _error = 'Could not load arena opponents: $error';
+      });
+    }
   }
 
   void _filter() {
@@ -211,11 +220,11 @@ class _ArenaPanelState extends State<ArenaPanel> {
           _error = result.reason ?? 'Could not save PvP equipment.';
         }
       });
-    } catch (_) {
+    } catch (error) {
       if (!mounted) return;
       setState(() {
         _savingEquipment = false;
-        _error = 'Could not save PvP equipment.';
+        _error = 'Could not save PvP equipment: $error';
       });
     }
   }

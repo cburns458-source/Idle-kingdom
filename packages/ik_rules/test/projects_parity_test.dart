@@ -51,9 +51,9 @@ void main() {
                   save,
                   project,
                 ).map((entry) => entry.toJson()).toList(),
-                'materialMax': maxProjectsFromMaterials(save, project),
+                'materialMax': maxProjectsFromMaterials(db, save, project),
                 'goldMax': maxProjectsFromGold(save, project),
-                'quantityMax': maxProjectQuantity(save, project),
+                'quantityMax': maxProjectQuantity(db, save, project),
               },
             )
             .toList();

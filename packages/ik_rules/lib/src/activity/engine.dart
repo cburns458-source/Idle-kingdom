@@ -271,12 +271,12 @@ GatheringCompletion completeGatheringAction(
   GameDatabase db,
   PlayerSave save,
   ActionRow action,
-  RandomFn random, [
-  num? nowMs,
-]) {
+  RandomFn random,
+  num nowMs,
+) {
   final notes = action.raw['Notes'];
   final notesText = notes is String ? notes : '';
-  final now = nowMs ?? DateTime.now().millisecondsSinceEpoch;
+  final now = nowMs;
   final requiresLockpick = RegExp(r'RequiresLockpick', caseSensitive: false).hasMatch(notesText);
   final isThievery = RegExp(r'Thievery', caseSensitive: false).hasMatch(notesText);
   final skillId = jsString(action.raw['Relevant Skill ID']);

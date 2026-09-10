@@ -268,7 +268,7 @@ Widget _groundedSceneArt(GameController controller) {
     final enemyId = controller.stagedEnemyId ?? save.combatEnemyId;
     if (enemyId == null) return const SizedBox(height: _portraitSlotHeight);
     return _Portrait(
-      assetPath: enemyAssetPath(enemyId),
+      assetPath: enemyAssetPath(enemyId, db: controller.db),
       semanticsLabel: 'Enemy',
       height: _enemyArtHeight,
       slotHeight: _portraitSlotHeight,
@@ -280,7 +280,7 @@ Widget _groundedSceneArt(GameController controller) {
     final recipeId = save.productionRecipeId;
     final recipe = recipeId == null ? null : getRecipe(controller.db, recipeId);
     return _Portrait(
-      assetPath: workstationAssetPath(recipe?.facilityId),
+      assetPath: workstationAssetPath(recipe?.facilityId, db: controller.db),
       semanticsLabel: recipe?.displayName ?? 'Workstation',
       height: _actionArtHeight,
       slotHeight: _portraitSlotHeight,
@@ -293,7 +293,7 @@ Widget _groundedSceneArt(GameController controller) {
       : controller.indexes.actionsById[save.currentActionId!];
   if (action == null) return const SizedBox(height: _portraitSlotHeight);
   return _Portrait(
-    assetPath: actionAssetPath(action.actionId),
+    assetPath: actionAssetPath(action.actionId, db: controller.db),
     semanticsLabel: action.displayName,
     height: _actionArtHeight,
     slotHeight: _portraitSlotHeight,

@@ -38,10 +38,15 @@ String mapWalkStartLocationId(GameDatabase db, String currentLocationId, String 
 }
 
 /// Node placement on the map the player is looking at, not the node's home map.
-NodePosition positionOnBrowseMap(String locationId, String browseMapId, LocationRow? location) {
-  final layout = layoutForMap(browseMapId);
+NodePosition positionOnBrowseMap(
+  String locationId,
+  String browseMapId,
+  LocationRow? location, [
+  GameDatabase? db,
+]) {
+  final layout = layoutForMap(browseMapId, db);
   return layout[locationId] ??
-      (location == null ? const NodePosition(x: 50, y: 50) : positionForLocation(location));
+      (location == null ? const NodePosition(x: 50, y: 50) : positionForLocation(location, db));
 }
 
 Alignment alignmentOf(NodePosition position) {

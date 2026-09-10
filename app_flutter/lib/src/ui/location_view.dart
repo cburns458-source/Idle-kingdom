@@ -508,7 +508,7 @@ class _LocationViewState extends State<LocationView> {
   Widget _locationPlate(String locationId) {
     final square = _squarePlates.contains(locationId);
     return GameImage(
-      locationAssetPath(locationId),
+      locationAssetPath(locationId, db: controller.db),
       fit: BoxFit.cover,
       alignment: square ? Alignment.topCenter : Alignment.bottomCenter,
       filterQuality: square ? FilterQuality.none : FilterQuality.medium,
@@ -740,8 +740,13 @@ class _LocationViewState extends State<LocationView> {
           controller.save,
           fishingPotItemId,
           locationId: locationId,
+          nowMs: controller.session.clock(),
         );
-        final lock = fishingPotLockedUntilDay(controller.save, locationId);
+        final lock = fishingPotLockedUntilDay(
+          controller.save,
+          locationId,
+          nowMs: controller.session.clock(),
+        );
         return Padding(
           padding: const EdgeInsets.only(bottom: 8),
           child: Builder(
