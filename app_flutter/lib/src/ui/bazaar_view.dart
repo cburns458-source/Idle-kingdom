@@ -108,7 +108,7 @@ class _BazaarViewState extends State<BazaarView> {
 
     final maxQuantity = buying
         ? bazaarOfferValueCap
-        : (onHand ?? tradableOnHand(save, itemId)).floor();
+        : (onHand ?? bazaarTradableOnHand(save, itemId, controller.db)).floor();
     if (maxQuantity < 1) {
       net.announce('You are not carrying any $name. $bazaarWithdrawFirst');
       return;
@@ -350,7 +350,7 @@ class _BazaarViewState extends State<BazaarView> {
       ..sort((a, b) => a.unitPrice.compareTo(b.unitPrice));
     final bids = net.market.offers.where((row) => row.isBuy).toList()
       ..sort((a, b) => b.unitPrice.compareTo(a.unitPrice));
-    final onHand = tradableOnHand(save, itemId);
+    final onHand = bazaarTradableOnHand(save, itemId, controller.db);
 
     return GamePanel(
       framed: true,
@@ -566,20 +566,6 @@ String bazaarTaxLine(num unitPrice) {
     return 'Sales at $bazaarTaxThreshold gold an item or less are untaxed.';
   }
   return 'Sales over $bazaarTaxThreshold gold an item pay $bazaarTaxPercent%.';
-}
-
-/// How much of [itemId] the bag holds in stacks the exchange will take.
-///
-/// The server works this out again from its own copy of the save; this is so a
-/// keypad can cap itself and a refusal can be given before the round trip.
-num tradableOnHand(PlayerSave save, String itemId) {
-  var total = 0 as num;
-  for (final stack in save.inventory) {
-    if (stack.itemId != itemId) continue;
-    if (bazaarStackRefusal(stack) != null) continue;
-    total += stack.quantity;
-  }
-  return total;
 }
 
 /// One line in a list: an icon, a title, and whatever is worth saying under it.

@@ -38,12 +38,20 @@ class CloudSyncResult {
         };
 }
 
+/// The most gold a save may hold and still be accepted.
+///
+/// Named because the Bazaar has to respect it from the other side: a trade that
+/// paid out over this would produce a save the backend then refuses to store,
+/// so the exchange caps an offer's worth and leaves what will not fit in the
+/// collection box.
+const int cloudSaveGoldCap = 1000000000;
+
 /// Bounds a cloud snapshot has to be inside before it is accepted.
 ///
 /// Gameplay is resolved on the client, so this cannot prove a save is honest;
 /// it only rejects the values no legitimate save reaches.
 ValidationResult softValidateSave(PlayerSave save) {
-  if (!save.gold.isFinite || save.gold < 0 || save.gold > 1000000000) {
+  if (!save.gold.isFinite || save.gold < 0 || save.gold > cloudSaveGoldCap) {
     return const ValidationResult.failed('Cloud save gold is out of bounds.');
   }
   for (final skill in save.skills) {

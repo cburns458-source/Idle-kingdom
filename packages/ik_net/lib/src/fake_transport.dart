@@ -1,3 +1,4 @@
+import 'fake_exchange.dart';
 import 'remote.dart';
 import 'remote_transport.dart';
 import 'types.dart';
@@ -9,7 +10,19 @@ import 'types.dart';
 /// a leaderboard row to its profile — because those are the assumptions that
 /// would otherwise only be checked against a live project.
 class FakeTransport implements RemoteTransport {
-  FakeTransport({this.startIso = '2026-08-13T00:00:00.000Z', this.nowMs});
+  FakeTransport({this.startIso = '2026-08-13T00:00:00.000Z', this.nowMs})
+    : _project = _FakeProject();
+
+  /// A second client on the project [other] is already connected to.
+  ///
+  /// The tables, the accounts, and the exchange are shared; who is signed in is
+  /// not. That is what lets two players meet on one order book, which is the
+  /// only way a market can be tested at all — a hosted project has many clients
+  /// and one set of tables, and a single transport can only be one client.
+  FakeTransport.joining(FakeTransport other)
+    : startIso = other.startIso,
+      nowMs = other.nowMs,
+      _project = other._project;
 
   /// The instant the first stamped row is written at.
   final String startIso;
@@ -17,40 +30,22 @@ class FakeTransport implements RemoteTransport {
   /// Optional authoritative clock for [serverNowMs], matching a hosted now().
   final num Function()? nowMs;
 
+  final _FakeProject _project;
+
   /// A fresh timestamp, a second later each time.
   ///
   /// Rows a real table stamps for itself are microseconds apart, which is what
   /// makes `order by created_at` mean anything; identical stamps would leave the
   /// order of a board undefined and a test passing by luck.
   String stamp() {
-    final at = DateTime.parse(startIso).add(Duration(seconds: _stamps++));
+    final at = DateTime.parse(startIso).add(Duration(seconds: _project.stamps++));
     return at.toUtc().toIso8601String();
   }
 
-  int _stamps = 0;
-
-  final Map<String, List<RemoteRow>> tables = <String, List<RemoteRow>>{
-    RemoteTables.profiles: <RemoteRow>[],
-    RemoteTables.saves: <RemoteRow>[],
-    RemoteTables.leaderboard: <RemoteRow>[],
-    RemoteTables.chat: <RemoteRow>[],
-    RemoteTables.bountyClaims: <RemoteRow>[],
-    RemoteTables.bazaarPosts: <RemoteRow>[],
-    RemoteTables.guilds: <RemoteRow>[],
-    RemoteTables.guildMembers: <RemoteRow>[],
-    RemoteTables.guildApplications: <RemoteRow>[],
-    RemoteTables.guildGuests: <RemoteRow>[],
-    RemoteTables.guildHalls: <RemoteRow>[],
-    RemoteTables.guildProjects: <RemoteRow>[],
-    RemoteTables.guildChallenges: <RemoteRow>[],
-    RemoteTables.activityPresence: <RemoteRow>[],
-    RemoteTables.friendRequests: <RemoteRow>[],
-    RemoteTables.friendships: <RemoteRow>[],
-    RemoteTables.pvpSnapshots: <RemoteRow>[],
-  };
+  Map<String, List<RemoteRow>> get tables => _project.tables;
 
   /// Accounts by email, as an auth provider would hold them.
-  final Map<String, FakeAccount> accounts = <String, FakeAccount>{};
+  Map<String, FakeAccount> get accounts => _project.accounts;
 
   /// Records an account the provider already knows.
   ///
@@ -72,37 +67,41 @@ class FakeTransport implements RemoteTransport {
   }
 
   /// Every call made, so a test can assert what went over the wire.
-  final List<String> calls = <String>[];
+  List<String> get calls => _project.calls;
 
   /// Emails a magic link was requested for.
-  final List<String> magicLinks = <String>[];
+  List<String> get magicLinks => _project.magicLinks;
 
   /// The reason the next call of any kind should fail with, used once.
   String? failNextWith;
 
   /// Reasons keyed by the call they refuse, such as `insert:bazaar_posts`, each
   /// used once. For making one step of a sequence fail rather than the next one.
-  final Map<String, String> failOnce = <String, String>{};
+  Map<String, String> get failOnce => _project.failOnce;
 
   /// Columns this stand-in pretends the project has not got, as a skipped
   /// migration would. A select or upsert that names one of them is refused.
-  final Set<String> missingColumns = <String>{};
+  Set<String> get missingColumns => _project.missingColumns;
 
   /// Tables this stand-in pretends the project has not got, as a skipped
   /// migration would.
-  final Set<String> missingTables = <String>{};
+  Set<String> get missingTables => _project.missingTables;
 
   /// Every select's column list, so a test can see a retry drop missing ones.
-  final List<String> selectedColumns = <String>[];
+  List<String> get selectedColumns => _project.selectedColumns;
 
   /// Set to answer the send-chat function with something unusable.
   RemoteRow? chatFunctionReply;
 
+  /// The Bazaar exchange, which is a function call rather than a set of tables
+  /// because its tables are closed to clients.
+  FakeExchange get exchange =>
+      _project.exchange ??= FakeExchange(saves: tables[RemoteTables.saves]!, stamp: stamp);
+
   bool signedOut = false;
-  int _ids = 0;
   FakeAccount? _current;
 
-  String _nextId(String prefix) => '${prefix}_${(_ids += 1).toString().padLeft(4, '0')}';
+  String _nextId(String prefix) => '${prefix}_${(_project.ids += 1).toString().padLeft(4, '0')}';
 
   String? _takeFailure(String call) {
     final named = failOnce.remove(call);
@@ -463,6 +462,15 @@ class FakeTransport implements RemoteTransport {
     calls.add('invoke:$function');
     final reason = _takeFailure('invoke:$function');
     if (reason != null) return RemoteInvokeResult.failed(reason);
+    if (function == remoteBazaarMarketFunction) {
+      final caller = _current;
+      if (caller == null) return const RemoteInvokeResult.failed('Not signed in.');
+      return exchange.call(
+        userId: caller.userId,
+        username: caller.username ?? 'Adventurer',
+        body: body,
+      );
+    }
     if (function != remoteSendChatFunction) {
       return RemoteInvokeResult.failed('No such function: $function');
     }
@@ -489,6 +497,45 @@ class FakeTransport implements RemoteTransport {
     if (reason != null) return null;
     return nowMs?.call();
   }
+}
+
+/// Everything one project holds, as opposed to one client connected to it.
+///
+/// Split out so [FakeTransport.joining] can hand a second client the same
+/// tables, the same accounts, and the same exchange without also handing it the
+/// same session.
+class _FakeProject {
+  final Map<String, List<RemoteRow>> tables = <String, List<RemoteRow>>{
+    RemoteTables.profiles: <RemoteRow>[],
+    RemoteTables.saves: <RemoteRow>[],
+    RemoteTables.leaderboard: <RemoteRow>[],
+    RemoteTables.chat: <RemoteRow>[],
+    RemoteTables.bountyClaims: <RemoteRow>[],
+    RemoteTables.bazaarPosts: <RemoteRow>[],
+    RemoteTables.guilds: <RemoteRow>[],
+    RemoteTables.guildMembers: <RemoteRow>[],
+    RemoteTables.guildApplications: <RemoteRow>[],
+    RemoteTables.guildGuests: <RemoteRow>[],
+    RemoteTables.guildHalls: <RemoteRow>[],
+    RemoteTables.guildProjects: <RemoteRow>[],
+    RemoteTables.guildChallenges: <RemoteRow>[],
+    RemoteTables.activityPresence: <RemoteRow>[],
+    RemoteTables.friendRequests: <RemoteRow>[],
+    RemoteTables.friendships: <RemoteRow>[],
+    RemoteTables.pvpSnapshots: <RemoteRow>[],
+  };
+
+  final Map<String, FakeAccount> accounts = <String, FakeAccount>{};
+  final List<String> calls = <String>[];
+  final List<String> magicLinks = <String>[];
+  final Map<String, String> failOnce = <String, String>{};
+  final Set<String> missingColumns = <String>{};
+  final Set<String> missingTables = <String>{};
+  final List<String> selectedColumns = <String>[];
+
+  FakeExchange? exchange;
+  int stamps = 0;
+  int ids = 0;
 }
 
 class FakeAccount {

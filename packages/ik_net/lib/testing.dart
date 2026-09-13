@@ -5,4 +5,5 @@
 /// against the same idea of what a backend does.
 library;
 
+export 'src/fake_exchange.dart';
 export 'src/fake_transport.dart';

@@ -17,6 +17,8 @@ import 'package:collection/collection.dart';
 import 'package:ik_content/ik_content.dart';
 import 'package:ik_rules/ik_rules.dart';
 
+import 'cloud_save.dart';
+
 typedef BazaarSide = String;
 
 const BazaarSide bazaarBuy = 'buy';
@@ -529,6 +531,79 @@ String? bazaarOfferRefusal({
 const String bazaarNoSlots = 'All three offer slots are in use.';
 
 const String bazaarOfferTooLarge = 'An offer cannot be worth more than 1,000,000,000 gold.';
+
+// --- What an offer costs a save ---------------------------------------------
+//
+// The server has its own copy of this arithmetic, in
+// `supabase/functions/_shared/save_items.ts`, and its copy is the one that
+// decides: it runs against the save the backend stores, which is the only one a
+// player cannot edit. These are here so a keypad can cap itself and a refusal
+// can be given before the round trip, and so the test stand-in for the exchange
+// works the same way the real one does rather than approximately.
+
+/// How much of [itemId] the bag holds in stacks the exchange will take.
+///
+/// The bank is deliberately not counted. Items have to be withdrawn before they
+/// can be listed, and the server enforces that by only ever reading `inventory`.
+num bazaarTradableOnHand(PlayerSave save, String itemId, [GameDatabase? db]) {
+  var total = 0 as num;
+  for (final stack in save.inventory) {
+    if (stack.itemId != itemId) continue;
+    if (bazaarStackRefusal(stack, db) != null) continue;
+    total += stack.quantity.floor();
+  }
+  return total;
+}
+
+/// The save with [quantity] of [itemId] escrowed out of the bag, or null when
+/// the bag does not hold that much in stacks the exchange will take.
+PlayerSave? bazaarTakeItems(PlayerSave save, String itemId, num quantity, [GameDatabase? db]) {
+  final want = quantity.floor();
+  if (want <= 0) return null;
+  if (bazaarTradableOnHand(save, itemId, db) < want) return null;
+
+  var left = want;
+  final kept = <InventoryStack>[];
+  for (final stack in save.inventory) {
+    if (left <= 0 || stack.itemId != itemId || bazaarStackRefusal(stack, db) != null) {
+      kept.add(stack);
+      continue;
+    }
+    final taken = left < stack.quantity.floor() ? left : stack.quantity.floor();
+    left -= taken;
+    final remaining = stack.quantity - taken;
+    if (remaining > 0) kept.add(stack.copyWith(quantity: remaining));
+  }
+  if (left > 0) return null;
+  return save.copyWith(inventory: kept);
+}
+
+/// The save with [quantity] of [itemId] put in, or null when it will not fit.
+///
+/// All or nothing: the collection box hands over a row at a time, and half a row
+/// taken would need somewhere to remember the other half.
+PlayerSave? bazaarGiveItems(PlayerSave save, String itemId, num quantity, [GameDatabase? db]) {
+  final want = quantity.floor();
+  if (want <= 0) return null;
+  final added = addItemToInventoryExact(save, itemId, want, null, false, db);
+  return added.ok ? added.save : null;
+}
+
+/// The save with [amount] gold escrowed, or null when the purse is short.
+PlayerSave? bazaarTakeGold(PlayerSave save, num amount) {
+  final want = amount.floor();
+  if (want <= 0 || save.gold < want) return null;
+  return save.copyWith(gold: save.gold - want);
+}
+
+/// The save with [amount] gold paid in, or null when it would break the ceiling
+/// a cloud save is checked against.
+PlayerSave? bazaarGiveGold(PlayerSave save, num amount) {
+  final want = amount.floor();
+  if (want <= 0) return null;
+  if (save.gold + want > cloudSaveGoldCap) return null;
+  return save.copyWith(gold: save.gold + want);
+}
 
 List<Map<String, Object?>> _rows(Object? value) {
   if (value is! List) return const <Map<String, Object?>>[];
