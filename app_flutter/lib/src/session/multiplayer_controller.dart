@@ -192,7 +192,6 @@ class MultiplayerController extends ChangeNotifier {
   List<BountyClaimRecord> _bountyClaims = const <BountyClaimRecord>[];
   List<BazaarPost> _bazaarPosts = const <BazaarPost>[];
   MarketSnapshot _market = MarketSnapshot.empty;
-  String? _marketItemId;
   ChatTab _chatTab = ChatTab.global;
   String? _selectedDmPeerId;
   final List<String> _openDmPeerIds = <String>[];
@@ -508,7 +507,6 @@ class MultiplayerController extends ChangeNotifier {
     _bountyClaims = const <BountyClaimRecord>[];
     _bazaarPosts = const <BazaarPost>[];
     _market = MarketSnapshot.empty;
-    _marketItemId = null;
     _unreadDms = 0;
     _unread.clear();
     _localUnread.clear();
@@ -1442,20 +1440,19 @@ class MultiplayerController extends ChangeNotifier {
   // Bazaar is not just another panel calling a rules function: nothing on this
   // device is allowed to decide what an offer costs.
 
-  /// Which item the book is being read for, so a refresh keeps looking at it.
-  String? get marketItemId => _marketItemId;
-
   MarketSnapshot get market => _market;
 
-  /// Reads the book, the player's offers, their trades, and their box.
-  Future<void> refreshMarket({String? itemId, bool keepItem = false}) async {
-    if (!keepItem || itemId != null) _marketItemId = itemId;
+  /// Reads the player's offers, their trades, their box, and the guide prices.
+  ///
+  /// No item is named, because the screen shows the player their own three slots
+  /// rather than anybody's book, and so has nothing to ask one item about.
+  Future<void> refreshMarket() async {
     if (!isSignedIn) {
       _market = MarketSnapshot.empty;
       notifyListeners();
       return;
     }
-    _market = await service.bazaarMarket(itemId: _marketItemId);
+    _market = await service.bazaarMarket();
     final problem = service.takeReadProblem();
     if (problem != null) _notice = problem;
     notifyListeners();
@@ -1487,7 +1484,7 @@ class MultiplayerController extends ChangeNotifier {
       );
       if (!result.ok) return result.reason;
       if (result.save case final written?) onSaved(written);
-      await refreshMarket(itemId: itemId);
+      await refreshMarket();
       return result.message;
     });
   }
@@ -1496,7 +1493,7 @@ class MultiplayerController extends ChangeNotifier {
     return run(() async {
       final result = await service.cancelBazaarOffer(orderId);
       if (!result.ok) return result.reason;
-      await refreshMarket(keepItem: true);
+      await refreshMarket();
       return result.message;
     });
   }
@@ -1506,7 +1503,7 @@ class MultiplayerController extends ChangeNotifier {
       final result = await service.collectBazaarBox(db, save);
       if (!result.ok) return result.reason;
       if (result.save case final written?) onSaved(written);
-      await refreshMarket(keepItem: true);
+      await refreshMarket();
       return result.message;
     });
   }
