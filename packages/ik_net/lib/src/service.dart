@@ -5,6 +5,7 @@ import 'package:ik_runtime/ik_runtime.dart';
 import 'bazaar.dart';
 import 'cloud_save.dart';
 import 'local_backend.dart';
+import 'market.dart';
 import 'presence.dart';
 import 'remote.dart';
 import 'results.dart';
@@ -188,6 +189,37 @@ abstract interface class MultiplayerService {
   Future<List<BazaarPost>> bazaarPosts({int limit = 40});
 
   Future<BazaarPostResult> postBazaar(BazaarPostKind kind, String body);
+
+  /// The exchange as the signed-in player sees it, with depth for [itemId].
+  ///
+  /// One read, because the screen wants all of it at once and because the tables
+  /// are shut to clients: the book, the guide prices, and a player's own offers,
+  /// trades, and collection box all come back from the same call.
+  Future<MarketSnapshot> bazaarMarket({String? itemId});
+
+  /// Puts an offer on the book, escrowing what it costs.
+  ///
+  /// The escrow is taken from the copy of the save the backend holds, not from
+  /// [save], which is why [save] goes up first: whatever the server can see is
+  /// what a player is able to offer. The result carries the save the server
+  /// wrote, and the caller adopts it rather than working the escrow out again.
+  Future<MarketActionResult> placeBazaarOffer(
+    GameDatabase db,
+    PlayerSave save, {
+    required BazaarSide side,
+    required String itemId,
+    required num unitPrice,
+    required num quantity,
+  });
+
+  /// Takes an offer off the book. Whatever has not traded goes to the box.
+  ///
+  /// No save comes back because nothing is handed over directly: a cancelled
+  /// remainder is something to come and collect, the same as a completed trade.
+  Future<MarketActionResult> cancelBazaarOffer(String orderId);
+
+  /// Empties as much of the collection box into the save as will fit.
+  Future<MarketActionResult> collectBazaarBox(GameDatabase db, PlayerSave save);
 
   /// Players who have a fighter snapshot others can search or rank against.
   ///
@@ -807,6 +839,34 @@ class LocalMultiplayerService implements MultiplayerService {
     }
     return _backend.postBazaar(current, kind, body);
   }
+
+  /// An empty book, always.
+  ///
+  /// The exchange is other players, and on this device there are none: a demo
+  /// world with prices in it would be the game inventing an economy, and a
+  /// player would learn the wrong thing about what their items are worth. An
+  /// empty book says what is true, which is that there is nobody to trade with
+  /// until they are playing on an account.
+  @override
+  Future<MarketSnapshot> bazaarMarket({String? itemId}) async => MarketSnapshot.empty;
+
+  @override
+  Future<MarketActionResult> placeBazaarOffer(
+    GameDatabase db,
+    PlayerSave save, {
+    required BazaarSide side,
+    required String itemId,
+    required num unitPrice,
+    required num quantity,
+  }) async => const MarketActionResult.failed(bazaarHostedOnly);
+
+  @override
+  Future<MarketActionResult> cancelBazaarOffer(String orderId) async =>
+      const MarketActionResult.failed(bazaarHostedOnly);
+
+  @override
+  Future<MarketActionResult> collectBazaarBox(GameDatabase db, PlayerSave save) async =>
+      const MarketActionResult.failed(bazaarHostedOnly);
 
   @override
   Future<List<ArenaOpponent>> listArenaOpponents() async {
