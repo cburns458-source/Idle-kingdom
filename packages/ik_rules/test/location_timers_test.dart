@@ -127,7 +127,42 @@ void main() {
       random: () => 0,
     );
     expect(collected.ok, isFalse);
-    expect(collected.reason, timerInventoryFullReason);
+    expect(collected.reason, timerInventoryFullHarvestReason);
     expect(timerAtLocationKind(save, 'LOC-0001', 'botany'), isNotNull);
+  });
+
+  test('full inventory asks for room to collect a pot catch', () {
+    final save = createNewSave(db, 0).copyWith(
+      currentLocationId: 'LOC-0003',
+      skills: const [SkillProgress(skillId: 'SKL-0003', level: 14, xp: 2000)],
+      inventory: [
+        for (var index = 0; index < inventorySlotLimit; index++)
+          InventoryStack(itemId: 'FILL-$index', quantity: 1),
+      ],
+      locationTimers: [
+        LocationTimer(
+          locationId: 'LOC-0003',
+          kind: 'fishing_pot',
+          inputItemId: fishingPotItemId,
+          outputItemId: null,
+          outputQuantity: 1,
+          skillId: 'SKL-0003',
+          xpReward: 150,
+          startedAt: '2026-01-01T00:00:00.000Z',
+          durationMs: 1,
+        ),
+      ],
+    );
+    final collected = collectLocationTimer(
+      db,
+      save,
+      'LOC-0003',
+      'fishing_pot',
+      nowMs: DateTime.utc(2026, 1, 1, 8).millisecondsSinceEpoch,
+      random: () => 0,
+    );
+    expect(collected.ok, isFalse);
+    expect(collected.reason, timerInventoryFullCatchReason);
+    expect(timerAtLocationKind(save, 'LOC-0003', 'fishing_pot'), isNotNull);
   });
 }

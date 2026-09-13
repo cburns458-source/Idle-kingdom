@@ -374,10 +374,6 @@ function botanyTabs(db: GameDatabase): SkillMenuTab[] {
 
 function potFishingEntries(db: GameDatabase): SkillMenuListItem[] {
   const entries: SkillMenuListItem[] = []
-  const pot = db.Items.find((row) => row['Item ID'] === FISHING_POT_ITEM_ID)
-  if (pot) {
-    entries.push({ id: pot['Item ID'], displayName: pot['Display Name'], level: 14 })
-  }
   const seen = new Set<string>()
   for (const table of Object.values(POT_FISH_BY_LOCATION)) {
     for (const row of table) {

@@ -166,7 +166,7 @@ describe('skill menu entries', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const fishing = skillMenuView(launch, 'SKL-0003')
     const pot = fishing.tabs.find((tab) => tab.id === 'pot_fishing')?.sections[0]?.entries ?? []
-    expect(pot.some((item) => item.displayName === 'Fishing Pot' && item.level === 14)).toBe(true)
+    expect(pot.some((item) => item.displayName === 'Fishing Pot')).toBe(false)
     expect(pot.some((item) => item.displayName === 'Raw Crawfish' && item.level === 14)).toBe(true)
     expect(pot.some((item) => item.displayName === 'Raw Lobster' && item.level === 75)).toBe(true)
     expect(pot.some((item) => item.displayName === 'Raw Perch')).toBe(false)

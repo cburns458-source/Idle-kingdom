@@ -469,10 +469,6 @@ List<SkillMenuTab> _botanyTabs(GameDatabase db) {
 
 List<SkillMenuListItem> _potFishingEntries(GameDatabase db) {
   final entries = <SkillMenuListItem>[];
-  final pot = db.items.firstWhereOrNull((row) => row.itemId == fishingPotItemId);
-  if (pot != null) {
-    entries.add(SkillMenuListItem(id: pot.itemId, displayName: pot.displayName, level: 14));
-  }
   final seen = <String>{};
   for (final table in potFishByLocation.values) {
     for (final row in table) {

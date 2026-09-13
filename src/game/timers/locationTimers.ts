@@ -36,9 +36,25 @@ export const FISHING_TRAP_LOCATIONS = FISHING_POT_LOCATIONS
 /** Default trap soak time: 6 hours. */
 export const TRAP_DURATION_MS = 6 * 60 * 60 * 1000
 
-/** Ready timers stay in place when the bag cannot take the haul. */
-export const TIMER_INVENTORY_FULL_REASON =
-  'Come back with more room to collect your harvest/catch.'
+/** Ready botany timers stay in place when the bag cannot take the haul. */
+export const TIMER_INVENTORY_FULL_HARVEST_REASON =
+  'Come back with more room to collect your harvest.'
+
+/** Ready fishing pots stay in place when the bag cannot take the haul. */
+export const TIMER_INVENTORY_FULL_CATCH_REASON =
+  'Come back with more room to collect your catch.'
+
+export function timerInventoryFullReason(kind: string): string {
+  return kind === 'fishing_pot'
+    ? TIMER_INVENTORY_FULL_CATCH_REASON
+    : TIMER_INVENTORY_FULL_HARVEST_REASON
+}
+
+export function isTimerInventoryFullReason(reason: string): boolean {
+  return (
+    reason === TIMER_INVENTORY_FULL_HARVEST_REASON || reason === TIMER_INVENTORY_FULL_CATCH_REASON
+  )
+}
 
 export interface BotanySeedSpec {
   outputItemId: string
@@ -549,7 +565,7 @@ export function collectLocationTimer(
   }
 
   if (!canFitTimerGrants(save, grants, db)) {
-    return { ok: false, reason: TIMER_INVENTORY_FULL_REASON }
+    return { ok: false, reason: timerInventoryFullReason(timer.kind) }
   }
 
   let next: PlayerSave = {

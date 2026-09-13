@@ -169,7 +169,7 @@ void main() {
   test('fishing Pot fishing tab lists pot catches', () {
     final fishing = skillMenuView(db, fishingSkillId);
     final pot = fishing.tabs.firstWhere((tab) => tab.id == 'pot_fishing').sections.first.entries;
-    expect(pot.any((row) => row.displayName == 'Fishing Pot' && row.level == 14), isTrue);
+    expect(pot.any((row) => row.displayName == 'Fishing Pot'), isFalse);
     expect(pot.any((row) => row.displayName == 'Raw Crawfish' && row.level == 14), isTrue);
     expect(pot.any((row) => row.displayName == 'Raw Lobster' && row.level == 75), isTrue);
     expect(pot.any((row) => row.displayName == 'Raw Perch'), isFalse);

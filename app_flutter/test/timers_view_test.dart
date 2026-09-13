@@ -7,8 +7,13 @@ import 'package:ik_rules/ik_rules.dart';
 import 'support/harness.dart';
 
 PlayerSave _readyMeadowBotany(LoadedDatabase database) {
-  return startedCharacter(database).copyWith(
+  final base = startedCharacter(database);
+  return base.copyWith(
     discoveredTimerSpotIds: const <String>['botany:LOC-0009'],
+    inventory: [
+      ...base.inventory,
+      const InventoryStack(itemId: 'ITEM-0324', quantity: 3),
+    ],
     locationTimers: <LocationTimer>[
       LocationTimer(
         locationId: 'LOC-0009',
@@ -81,9 +86,9 @@ void main() {
     expect(find.text('Collect'), findsOne);
     await tester.tap(find.widgetWithText(GameButton, 'Collect'));
     await tester.pump();
-    expect(find.text('Replant?'), findsOne);
-    expect(find.text('Replant'), findsOne);
-    expect(find.text('Not now'), findsOne);
+    expect(find.text('Plant a seed or sapling'), findsOne);
+    expect(find.text('Plant'), findsWidgets);
+    expect(find.text('Close'), findsOne);
   });
 
   testWidgets('auto-collect with a full bag keeps the harvest and asks for room', (tester) async {
@@ -104,7 +109,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
 
-    expect(find.text(timerInventoryFullReason), findsOne);
+    expect(find.text(timerInventoryFullHarvestReason), findsOne);
     expect(timerAtLocationKind(controller.save, 'LOC-0009', 'botany'), isNotNull);
     // Reward popups use a Collect button. A full bag must not take the haul.
     expect(find.text('Collect'), findsNothing);

@@ -10,7 +10,8 @@ import {
   collectLocationTimer,
   discoverTimerSpotsForLocation,
   FISHING_POT_ITEM_ID,
-  TIMER_INVENTORY_FULL_REASON,
+  TIMER_INVENTORY_FULL_CATCH_REASON,
+  TIMER_INVENTORY_FULL_HARVEST_REASON,
   locationHasBotanyPatch,
   parseTimerSpotKey,
   placeTrap,
@@ -305,8 +306,48 @@ describe('locationTimers', () => {
     )
     expect(collected.ok).toBe(false)
     if (collected.ok) return
-    expect(collected.reason).toBe(TIMER_INVENTORY_FULL_REASON)
+    expect(collected.reason).toBe(TIMER_INVENTORY_FULL_HARVEST_REASON)
     expect(timerAtLocationKind(planted, 'LOC-0001', 'botany')).toBeTruthy()
     expect(planted.inventory).toHaveLength(180)
+  })
+
+  it('asks for room to collect a catch when a pot haul will not fit', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const soaked = {
+      ...createNewSave(launch),
+      currentLocationId: 'LOC-0003',
+      skills: createNewSave(launch).skills.map((row) =>
+        row.skillId === 'SKL-0003' ? { ...row, level: 14, xp: 2000 } : row,
+      ),
+      inventory: Array.from({ length: 180 }, (_, index) => ({
+        itemId: `FILL-${index}`,
+        quantity: 1,
+      })),
+      locationTimers: [
+        {
+          locationId: 'LOC-0003',
+          kind: 'fishing_pot' as const,
+          inputItemId: FISHING_POT_ITEM_ID,
+          outputItemId: null,
+          outputQuantity: 1,
+          skillId: 'SKL-0003',
+          xpReward: 150,
+          startedAt: '2026-01-01T00:00:00.000Z',
+          durationMs: 1,
+        },
+      ],
+    }
+    const collected = collectLocationTimer(
+      launch,
+      soaked,
+      'LOC-0003',
+      'fishing_pot',
+      Date.parse('2026-01-01T08:00:00.000Z'),
+      () => 0,
+    )
+    expect(collected.ok).toBe(false)
+    if (collected.ok) return
+    expect(collected.reason).toBe(TIMER_INVENTORY_FULL_CATCH_REASON)
+    expect(timerAtLocationKind(soaked, 'LOC-0003', 'fishing_pot')).toBeTruthy()
   })
 })

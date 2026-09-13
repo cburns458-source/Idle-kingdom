@@ -20,8 +20,17 @@ const String shallowsLocationId = 'LOC-0043';
 
 const String fishingPotItemId = 'ITEM-0347';
 
-/// Ready timers stay in place when the bag cannot take the haul.
-const String timerInventoryFullReason = 'Come back with more room to collect your harvest/catch.';
+/// Ready botany timers stay in place when the bag cannot take the haul.
+const String timerInventoryFullHarvestReason = 'Come back with more room to collect your harvest.';
+
+/// Ready fishing pots stay in place when the bag cannot take the haul.
+const String timerInventoryFullCatchReason = 'Come back with more room to collect your catch.';
+
+String timerInventoryFullReasonFor(String kind) =>
+    kind == 'fishing_pot' ? timerInventoryFullCatchReason : timerInventoryFullHarvestReason;
+
+bool isTimerInventoryFullReason(String reason) =>
+    reason == timerInventoryFullHarvestReason || reason == timerInventoryFullCatchReason;
 
 /// Deprecated alias for [fishingPotItemId].
 const String fishingTrapItemId = fishingPotItemId;
@@ -612,7 +621,7 @@ LocationTimerCollectResult collectLocationTimer(
   }
 
   if (!_canFitTimerGrants(db, save, grants)) {
-    return const LocationTimerCollectResult(ok: false, reason: timerInventoryFullReason);
+    return LocationTimerCollectResult(ok: false, reason: timerInventoryFullReasonFor(timer.kind));
   }
 
   var next = save.copyWith(

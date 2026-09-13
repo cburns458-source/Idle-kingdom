@@ -71,7 +71,7 @@ class TimerCollectNotice {
   final List<String> rewards;
   final ActionRewardBundle? rewardBundle;
 
-  /// Botany always; fishing pots only when the site is not overfished.
+  /// Botany and fishing pots always offer to plant / place again after a haul.
   final bool canRepeat;
 }
 
@@ -975,7 +975,7 @@ class GameController extends ChangeNotifier {
     final before = save;
     final result = collectLocationTimer(db, before, locationId, kind, nowMs: session.clock());
     if (!result.ok) {
-      if (result.reason == timerInventoryFullReason) {
+      if (isTimerInventoryFullReason(result.reason)) {
         _pendingTimerRoomAlerts = [..._pendingTimerRoomAlerts, result.reason];
         notifyListeners();
       } else if (announceText) {
@@ -1038,17 +1038,7 @@ class GameController extends ChangeNotifier {
       goldGained: 0,
     );
     final timer = timerAtLocationKind(before, locationId, kind);
-    final canRepeat = switch (kind) {
-      'botany' => true,
-      'fishing_pot' => canPlaceTrap(
-        db,
-        after,
-        fishingPotItemId,
-        locationId: locationId,
-        nowMs: session.clock(),
-      ).ok,
-      _ => false,
-    };
+    final canRepeat = kind == 'botany' || kind == 'fishing_pot';
     return TimerCollectNotice(
       locationId: locationId,
       kind: kind,
@@ -1060,22 +1050,15 @@ class GameController extends ChangeNotifier {
     );
   }
 
-  /// Replants the last seed or places the pot again after a collect.
+  /// Places the pot again after a collect. Botany uses the seed picker instead.
   void repeatTimerPlacement(String locationId, String kind, String inputItemId) {
     if (save.currentLocationId != locationId) {
       report('Travel back to collect and replant.');
       return;
     }
-    if (kind == 'botany') {
-      final same = canPlantBotanySeed(db, save, inputItemId);
-      if (same.ok) {
-        plantBotanySeedHere(inputItemId);
-        return;
-      }
-      plantBestBotanySeedHere();
-      return;
+    if (kind == 'fishing_pot') {
+      placeTrapHere(inputItemId);
     }
-    placeTrapHere(inputItemId);
   }
 
   void toggleFavorite(String activityId) {

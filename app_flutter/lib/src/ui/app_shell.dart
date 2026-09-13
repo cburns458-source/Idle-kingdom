@@ -33,6 +33,7 @@ import 'top_hud.dart';
 import 'timers_view.dart';
 import 'tracker_view.dart';
 import 'wardrobe_sheet.dart';
+import 'botany_plant_popup.dart';
 import 'game_popup.dart';
 import 'world_map_view.dart';
 
@@ -221,6 +222,30 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
     _maybePresentSocialNotice();
   }
 
+  Future<void> _offerBotanyReplant(String locationId) async {
+    if (!mounted) return;
+    if (controller.save.currentLocationId != locationId) {
+      controller.report('Travel back to collect and replant.');
+      return;
+    }
+    final options = listPlantableBotanyOptions(
+      controller.db,
+      controller.save,
+      locationId: locationId,
+    );
+    if (options.isEmpty) {
+      controller.report('You have no plantable seeds or saplings for this patch.');
+      return;
+    }
+    final chosen = await showBotanyPlantGridPopup(
+      context: context,
+      controller: controller,
+      options: options,
+    );
+    if (!mounted || chosen == null) return;
+    controller.plantBotanySeedHere(chosen.itemId, plantQuantity: chosen.plantQuantity);
+  }
+
   void _flushPendingDialogs() {
     if (_questRewardQueued) return;
     final pending = controller.takePendingQuestCompletions();
@@ -259,21 +284,14 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
         for (final haul in timerCollects) {
           await showQuestRewards(context, questName: haul.title, rewards: haul.rewards);
           if (!mounted) return;
-          if (haul.canRepeat) {
-            final replant = haul.kind == 'botany';
-            final item = controller.db.items
-                .where((row) => row.raw['Item ID'] == haul.inputItemId)
-                .firstOrNull;
-            final itemName = item?.raw['Display Name'] is String
-                ? item!.raw['Display Name']! as String
-                : haul.inputItemId;
+          if (haul.kind == 'botany') {
+            await _offerBotanyReplant(haul.locationId);
+          } else if (haul.canRepeat) {
             final confirmed = await showGameAlert(
               context: context,
-              title: replant ? 'Replant?' : 'Place pot again?',
-              message: replant
-                  ? 'Plant $itemName here again?'
-                  : 'Place the fishing pot here again?',
-              confirmLabel: replant ? 'Replant' : 'Place pot',
+              title: 'Place pot again?',
+              message: 'Place the fishing pot here again?',
+              confirmLabel: 'Place pot',
               cancelLabel: 'Not now',
             );
             if (!mounted) return;
