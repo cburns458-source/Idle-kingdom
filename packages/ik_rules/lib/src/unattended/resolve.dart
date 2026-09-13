@@ -166,7 +166,7 @@ UnattendedResult resolveUnattendedProgress(
     }
     if (isNotBlank(current.deathPauseUntil) && pauseLeft <= 0) {
       final pauseEnded = jsDateParse(current.deathPauseUntil);
-      final resumed = current.copyWith(deathPauseUntil: null);
+      final resumed = applyDeathRecovery(db, current);
       final activityId = resumed.currentActivityId!;
       if (!activityStillValid(db, resumed, activityId)) {
         current = clearActivitySave(resumed, pauseEnded);

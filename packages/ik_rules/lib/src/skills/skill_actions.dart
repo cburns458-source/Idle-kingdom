@@ -469,10 +469,6 @@ List<SkillMenuTab> _botanyTabs(GameDatabase db) {
 
 List<SkillMenuListItem> _potFishingEntries(GameDatabase db) {
   final entries = <SkillMenuListItem>[];
-  final pot = db.items.firstWhereOrNull((row) => row.itemId == fishingPotItemId);
-  if (pot != null) {
-    entries.add(SkillMenuListItem(id: pot.itemId, displayName: pot.displayName, level: 14));
-  }
   final seen = <String>{};
   for (final table in potFishByLocation.values) {
     for (final row in table) {
@@ -739,7 +735,7 @@ List<SkillMenuListItem> _gatheringToolEntries(GameDatabase db, String skillId) {
     ..._projectItemsWhere(db, (item, name) => spec.match(item, name), null),
     ..._woodenItems(db, spec.woodenIds),
   ];
-  return _dedupeByName([
+  final entries = _dedupeByName([
     for (final item in items)
       SkillMenuListItem(
         id: item.id,
@@ -747,6 +743,14 @@ List<SkillMenuListItem> _gatheringToolEntries(GameDatabase db, String skillId) {
         level: _equipLevelForSkill(db, item.displayName, skillId) ?? item.level,
       ),
   ]);
+  if (skillId == fishingSkillId) {
+    final pot = db.items.firstWhereOrNull((row) => row.itemId == fishingPotItemId);
+    if (pot != null && entries.every((item) => item.displayName != pot.displayName)) {
+      entries.add(SkillMenuListItem(id: pot.itemId, displayName: pot.displayName, level: 14));
+    }
+    return _dedupeByName(entries);
+  }
+  return entries;
 }
 
 num? _equipLevelForSkill(GameDatabase db, String displayName, String skillId) {
@@ -887,7 +891,7 @@ bool _isWoodcuttingToolName(String name) {
 }
 
 bool _isFishingToolName(String name) {
-  return name.contains('Fishing Rod') || _endsWithWord(name, 'Harpoon');
+  return name.contains('Fishing Rod') || _endsWithWord(name, 'Harpoon') || name == 'Fishing Pot';
 }
 
 bool _isHuntingToolName(String name) {

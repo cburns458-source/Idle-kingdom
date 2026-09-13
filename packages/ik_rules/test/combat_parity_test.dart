@@ -233,4 +233,15 @@ void main() {
       });
     }
   });
+
+  test('death pause ends at half of max HP', () {
+    final db = assertGameDatabaseShape(contentDatabaseJson());
+    final save = createNewSave(db, 0);
+    final defeated = applyCombatDefeat(db, save, 0);
+    expect(defeated.currentHp, 0);
+    final recovered = applyDeathRecovery(db, defeated);
+    expect(recovered.deathPauseUntil, isNull);
+    expect(recovered.currentHp, deathRecoveryHp(recovered.maxHp));
+    expect(recovered.currentHp, greaterThan(0));
+  });
 }

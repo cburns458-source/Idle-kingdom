@@ -26,6 +26,14 @@ class _HudStatus {
 /// How wide the HUD hit-point track is. Short, and parked on the HUD's bottom edge.
 const double _hudHpBarWidth = 88;
 
+/// Name stays the heading. Everything else matches body UI (~12) without
+/// matching the name, so race / gold / activity stay readable in 68px.
+const double _hudNameSize = 16;
+const double _hudMetaSize = 11;
+const double _hudActivitySize = 12;
+const double _hudActivityDetailSize = 11;
+const double _hudHpSize = 11;
+
 /// Name, race, totals, gold, HP, and what is running.
 class TopHud extends StatelessWidget {
   const TopHud({
@@ -151,7 +159,7 @@ class TopHud extends StatelessWidget {
                                       title,
                                       maxLines: 1,
                                       style: const TextStyle(
-                                        fontSize: 16,
+                                        fontSize: _hudNameSize,
                                         fontWeight: FontWeight.w400,
                                         height: 1.05,
                                       ),
@@ -162,7 +170,7 @@ class TopHud extends StatelessWidget {
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                     style: const TextStyle(
-                                      fontSize: 8,
+                                      fontSize: _hudMetaSize,
                                       fontWeight: FontWeight.w400,
                                       color: Color(0xFFC8D7B6),
                                       height: 1.05,
@@ -176,7 +184,7 @@ class TopHud extends StatelessWidget {
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                       style: const TextStyle(
-                                        fontSize: 8,
+                                        fontSize: _hudMetaSize,
                                         fontWeight: FontWeight.w400,
                                         color: Color(0xFFC8D7B6),
                                         height: 1.05,
@@ -189,7 +197,7 @@ class TopHud extends StatelessWidget {
                             if (status != null) ...[
                               const SizedBox(width: 6),
                               ConstrainedBox(
-                                constraints: const BoxConstraints(maxWidth: 132),
+                                constraints: const BoxConstraints(maxWidth: 148),
                                 child: _ActivityReadout(status: status),
                               ),
                             ],
@@ -198,7 +206,7 @@ class TopHud extends StatelessWidget {
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
-                            GameImage(goldIconPath(), width: 9, height: 9),
+                            GameImage(goldIconPath(), width: 11, height: 11),
                             const SizedBox(width: 3),
                             Expanded(
                               child: Text(
@@ -206,7 +214,7 @@ class TopHud extends StatelessWidget {
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
-                                  fontSize: 8,
+                                  fontSize: _hudMetaSize,
                                   fontWeight: FontWeight.w400,
                                   color: Color(0xFFFFF4D4),
                                   height: 1.05,
@@ -226,7 +234,7 @@ class TopHud extends StatelessWidget {
                                             ? formatThousands(heal.amount)
                                             : '+${formatThousands(heal.amount)}',
                                         style: TextStyle(
-                                          fontSize: 9,
+                                          fontSize: _hudHpSize,
                                           fontWeight: FontWeight.w400,
                                           height: 1.05,
                                           color: heal.amount < 0
@@ -243,7 +251,7 @@ class TopHud extends StatelessWidget {
                                                 '${formatThousands(maxHp)}',
                                       textAlign: TextAlign.right,
                                       style: TextStyle(
-                                        fontSize: 9,
+                                        fontSize: _hudHpSize,
                                         fontWeight: FontWeight.w400,
                                         height: 1.05,
                                         color: controller.isRecovering
@@ -305,7 +313,7 @@ class _ActivityReadout extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.right,
             style: const TextStyle(
-              fontSize: 11,
+              fontSize: _hudActivitySize,
               fontWeight: FontWeight.w400,
               color: Color(0xFFF4EFD8),
               height: 1.05,
@@ -316,7 +324,11 @@ class _ActivityReadout extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.right,
-            style: const TextStyle(fontSize: 9, color: Color(0xFFC8D7B6), height: 1.05),
+            style: const TextStyle(
+              fontSize: _hudActivityDetailSize,
+              color: Color(0xFFC8D7B6),
+              height: 1.05,
+            ),
           ),
         ],
       ),
