@@ -37,6 +37,18 @@ class SlotGlyph extends StatelessWidget {
   }
 }
 
+/// The coin on its own, where the amount is already said in words nearby.
+class GoldCoin extends StatelessWidget {
+  const GoldCoin({super.key, this.size = 22});
+
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    return GameImage(goldIconPath(), width: size, height: size);
+  }
+}
+
 /// A gold amount with the coin beside it.
 class GoldAmount extends StatelessWidget {
   const GoldAmount({super.key, required this.amount, this.size = 14, this.style});
