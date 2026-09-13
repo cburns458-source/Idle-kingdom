@@ -30,6 +30,13 @@ bool _includeQuestRewardAsObtainSource(String? category, String itemId) {
   return category == 'Tool' || category == 'Weapon' || category == 'Armor';
 }
 
+/// Pets and quest-key items stay in the database; they do not appear in the Codex catalog.
+bool includeInCodexCatalog({String? category, String? subtype}) {
+  if (subtype == 'Pet') return false;
+  if (category == 'Quest') return false;
+  return true;
+}
+
 /// A clickable item mention on a Codex page.
 class CodexItemRef {
   const CodexItemRef({
@@ -260,6 +267,65 @@ class CodexEnemyEntry {
   };
 }
 
+/// One reward table on an action page (primary ore, secondary gems, and so on).
+class CodexActionDropTable {
+  const CodexActionDropTable({
+    required this.label,
+    required this.tableId,
+    this.dropChance,
+    this.drops = const <CodexItemRef>[],
+  });
+
+  final String label;
+  final String tableId;
+  final num? dropChance;
+  final List<CodexItemRef> drops;
+
+  Map<String, Object?> toJson() => <String, Object?>{
+    'label': label,
+    'tableId': tableId,
+    if (dropChance != null) 'dropChance': dropChance,
+    'drops': [for (final row in drops) row.toJson()],
+  };
+}
+
+/// Everything the Codex shows for one action.
+class CodexActionEntry {
+  const CodexActionEntry({
+    required this.actionId,
+    required this.displayName,
+    this.category,
+    this.skillId,
+    this.skillName,
+    this.level,
+    this.locations = const <CodexLocationRef>[],
+    this.target,
+    this.tables = const <CodexActionDropTable>[],
+  });
+
+  final String actionId;
+  final String displayName;
+  final String? category;
+  final String? skillId;
+  final String? skillName;
+  final num? level;
+  final List<CodexLocationRef> locations;
+  final CodexItemRef? target;
+  final List<CodexActionDropTable> tables;
+
+  Map<String, Object?> toJson() => <String, Object?>{
+    'actionId': actionId,
+    'displayName': displayName,
+    if (category != null) 'category': category,
+    if (skillId != null) 'skillId': skillId,
+    if (skillName != null) 'skillName': skillName,
+    if (level != null) 'level': level,
+    'locations': [for (final row in locations) row.toJson()],
+    if (target != null) 'target': target!.toJson(),
+    'tables': [for (final row in tables) row.toJson()],
+  };
+}
+
 /// Reverse indexes over whatever [GameDatabase] is passed in.
 ///
 /// Built from tables, not hardcoded ids, so new items, recipes, and enemies
@@ -274,16 +340,22 @@ class CodexIndex {
 
   final Map<String, CodexItemEntry> _items = <String, CodexItemEntry>{};
   final Map<String, CodexEnemyEntry> _enemies = <String, CodexEnemyEntry>{};
+  final Map<String, CodexActionEntry> _actions = <String, CodexActionEntry>{};
   final List<String> _itemOrder = <String>[];
   final List<String> _enemyOrder = <String>[];
+  final List<String> _actionOrder = <String>[];
 
   List<CodexItemEntry> get items => [for (final id in _itemOrder) _items[id]!];
 
   List<CodexEnemyEntry> get enemies => [for (final id in _enemyOrder) _enemies[id]!];
 
+  List<CodexActionEntry> get actions => [for (final id in _actionOrder) _actions[id]!];
+
   CodexItemEntry? item(String itemId) => _items[itemId];
 
   CodexEnemyEntry? enemy(String enemyId) => _enemies[enemyId];
+
+  CodexActionEntry? action(String actionId) => _actions[actionId];
 
   /// Filter chips plus the same name search the bag uses.
   List<CodexItemEntry> itemsMatching({int? group, String query = ''}) {
@@ -301,6 +373,17 @@ class CodexIndex {
       for (final id in _enemyOrder)
         if (needle.isEmpty || _enemies[id]!.displayName.toLowerCase().contains(needle))
           _enemies[id]!,
+    ];
+  }
+
+  List<CodexActionEntry> actionsMatching([String query = '']) {
+    final needle = query.trim().toLowerCase();
+    return [
+      for (final id in _actionOrder)
+        if (needle.isEmpty ||
+            _actions[id]!.displayName.toLowerCase().contains(needle) ||
+            (_actions[id]!.skillName ?? '').toLowerCase().contains(needle))
+          _actions[id]!,
     ];
   }
 
@@ -558,7 +641,9 @@ class CodexIndex {
     for (final itemId in itemIds) {
       final item = db.items.firstWhere((row) => row.itemId == itemId);
       final group = _sorter.groupOf(itemId);
-      _itemOrder.add(itemId);
+      if (includeInCodexCatalog(category: item.category, subtype: item.subtype)) {
+        _itemOrder.add(itemId);
+      }
       _items[itemId] = CodexItemEntry(
         itemId: itemId,
         displayName: item.displayName,
@@ -607,22 +692,13 @@ class CodexIndex {
           ? const <CodexItemRef>[]
           : [
               for (final drop in tableItems[tableId] ?? const <CodexItemRef>[])
-                if (drop.itemId != _goldenSpudItemId) drop,
+                if (drop.itemId != _goldenSpudItemId &&
+                    includeInCodexCatalog(
+                      category: _items[drop.itemId]?.category,
+                      subtype: _items[drop.itemId]?.subtype,
+                    ))
+                  drop,
             ];
-      final totalWeight = drops.fold<num>(0, (sum, drop) => sum + (drop.weight ?? 0));
-      final dropsWithRate = [
-        for (final drop in drops)
-          CodexItemRef(
-            itemId: drop.itemId,
-            displayName: drop.displayName,
-            minQuantity: drop.minQuantity,
-            maxQuantity: drop.maxQuantity,
-            weight: drop.weight,
-            dropRatePercent: drop.weight != null && totalWeight > 0
-                ? (drop.weight! / totalWeight) * 100
-                : null,
-          ),
-      ];
       _enemyOrder.add(enemy.enemyId);
       _enemies[enemy.enemyId] = CodexEnemyEntry(
         enemyId: enemy.enemyId,
@@ -637,7 +713,66 @@ class CodexIndex {
         maximumGold: enemy.maximumGold,
         dropChance: enemy.dropChance,
         locations: _enemyLocations(enemy, actionLocations, locations),
-        drops: dropsWithRate,
+        drops: _withDropRates(drops),
+      );
+    }
+
+    final actionRows = [
+      for (final action in db.actions)
+        if (action.category != 'Standard Production' &&
+            action.actionId != _hideFromCodexActionId &&
+            !_notesHideFromCodex(action.raw['Notes']))
+          action,
+    ];
+    actionRows.sort((a, b) {
+      final skillA = (skills[a.relevantSkillId] ?? '').toLowerCase();
+      final skillB = (skills[b.relevantSkillId] ?? '').toLowerCase();
+      final skill = skillA.compareTo(skillB);
+      if (skill != 0) return skill;
+      final level = jsNumber(a.proficiencyLevel ?? 0).compareTo(jsNumber(b.proficiencyLevel ?? 0));
+      if (level != 0) return level;
+      return a.displayName.toLowerCase().compareTo(b.displayName.toLowerCase());
+    });
+    for (final action in actionRows) {
+      final tables = <CodexActionDropTable>[];
+      for (final table in _actionTables(action)) {
+        final drops = [
+          for (final drop in tableItems[table.id] ?? const <CodexItemRef>[])
+            if (drop.itemId != _goldenSpudItemId &&
+                includeInCodexCatalog(
+                  category: _items[drop.itemId]?.category,
+                  subtype: _items[drop.itemId]?.subtype,
+                ))
+              drop,
+        ];
+        if (drops.isEmpty) continue;
+        tables.add(
+          CodexActionDropTable(
+            label: table.label,
+            tableId: table.id,
+            dropChance: table.chance,
+            drops: _withDropRates(drops),
+          ),
+        );
+      }
+      final targetId = action.targetType == 'Item' ? action.targetId : null;
+      final targetItem = targetId == null ? null : _items[targetId];
+      _actionOrder.add(action.actionId);
+      _actions[action.actionId] = CodexActionEntry(
+        actionId: action.actionId,
+        displayName: action.displayName,
+        category: action.category,
+        skillId: action.relevantSkillId,
+        skillName: skills[action.relevantSkillId],
+        level: action.proficiencyLevel,
+        locations: actionLocations[action.actionId] ?? const <CodexLocationRef>[],
+        target:
+            targetId != null &&
+                targetItem != null &&
+                includeInCodexCatalog(category: targetItem.category, subtype: targetItem.subtype)
+            ? CodexItemRef(itemId: targetId, displayName: targetItem.displayName)
+            : null,
+        tables: tables,
       );
     }
   }
@@ -724,19 +859,37 @@ class CodexIndex {
 }
 
 class _TableChance {
-  const _TableChance(this.id, this.chance);
+  const _TableChance(this.id, this.chance, this.label);
   final String id;
   final num? chance;
+  final String label;
 }
 
 List<_TableChance> _actionTables(ActionRow action) {
   return [
     if (action.rewardTableId != null && action.rewardTableId!.isNotEmpty)
-      _TableChance(action.rewardTableId!, action.dropChance),
+      _TableChance(action.rewardTableId!, action.dropChance, 'Primary'),
     if (action.secondaryRewardTableId != null && action.secondaryRewardTableId!.isNotEmpty)
-      _TableChance(action.secondaryRewardTableId!, action.secondaryDropChance),
+      _TableChance(action.secondaryRewardTableId!, action.secondaryDropChance, 'Secondary'),
     if (action.tertiaryRewardTableId != null && action.tertiaryRewardTableId!.isNotEmpty)
-      _TableChance(action.tertiaryRewardTableId!, action.tertiaryDropChance),
+      _TableChance(action.tertiaryRewardTableId!, action.tertiaryDropChance, 'Tertiary'),
+  ];
+}
+
+List<CodexItemRef> _withDropRates(List<CodexItemRef> drops) {
+  final totalWeight = drops.fold<num>(0, (sum, drop) => sum + (drop.weight ?? 0));
+  return [
+    for (final drop in drops)
+      CodexItemRef(
+        itemId: drop.itemId,
+        displayName: drop.displayName,
+        minQuantity: drop.minQuantity,
+        maxQuantity: drop.maxQuantity,
+        weight: drop.weight,
+        dropRatePercent: drop.weight != null && totalWeight > 0
+            ? (drop.weight! / totalWeight) * 100
+            : null,
+      ),
   ];
 }
 

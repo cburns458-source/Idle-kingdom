@@ -10,9 +10,15 @@ import 'game_image.dart';
 import 'item_icon.dart';
 import 'page_header.dart';
 
-enum _CodexTab { items, bestiary }
+enum _CodexTab { items, actions, bestiary }
 
-/// Item Codex and Bestiary. Catalog is the root; at most one detail page is open.
+String _tabLabel(_CodexTab tab) => switch (tab) {
+  _CodexTab.items => 'Items',
+  _CodexTab.actions => 'Actions',
+  _CodexTab.bestiary => 'Bestiary',
+};
+
+/// Item Codex, action catalog, and Bestiary. Catalog is the root; at most one detail page is open.
 class CodexView extends StatefulWidget {
   const CodexView({
     super.key,
@@ -20,12 +26,14 @@ class CodexView extends StatefulWidget {
     this.onClose,
     this.initialItemId,
     this.initialEnemyId,
+    this.initialActionId,
   });
 
   final GameController controller;
   final VoidCallback? onClose;
   final String? initialItemId;
   final String? initialEnemyId;
+  final String? initialActionId;
 
   @override
   State<CodexView> createState() => _CodexViewState();
@@ -45,10 +53,13 @@ class _CodexViewState extends State<CodexView> {
     super.initState();
     final itemId = widget.initialItemId;
     final enemyId = widget.initialEnemyId;
+    final actionId = widget.initialActionId;
     if (itemId != null && _codex.item(itemId) != null) {
       _stack.add(_CodexItemRoute(itemId));
     } else if (enemyId != null && _codex.enemy(enemyId) != null) {
       _stack.add(_CodexEnemyRoute(enemyId));
+    } else if (actionId != null && _codex.action(actionId) != null) {
+      _stack.add(_CodexActionRoute(actionId));
     }
   }
 
@@ -76,6 +87,15 @@ class _CodexViewState extends State<CodexView> {
     });
   }
 
+  void _openAction(String actionId) {
+    if (_codex.action(actionId) == null) return;
+    setState(() {
+      _stack
+        ..clear()
+        ..add(_CodexActionRoute(actionId));
+    });
+  }
+
   void _close() {
     if (_stack.isNotEmpty) {
       setState(() => _stack.clear());
@@ -90,6 +110,7 @@ class _CodexViewState extends State<CodexView> {
     final title = switch (route) {
       _CodexItemRoute(:final itemId) => _codex.item(itemId)?.displayName ?? 'Codex',
       _CodexEnemyRoute(:final enemyId) => _codex.enemy(enemyId)?.displayName ?? 'Codex',
+      _CodexActionRoute(:final actionId) => _codex.action(actionId)?.displayName ?? 'Codex',
       null => 'Codex',
     };
 
@@ -111,9 +132,16 @@ class _CodexViewState extends State<CodexView> {
               itemsById: widget.controller.indexes.itemsById,
               onOpenItem: _openItem,
               onOpenEnemy: _openEnemy,
+              onOpenAction: _openAction,
             ),
             _CodexEnemyRoute(:final enemyId) => _EnemyPage(
               entry: _codex.enemy(enemyId)!,
+              itemsById: widget.controller.indexes.itemsById,
+              onOpenItem: _openItem,
+            ),
+            _CodexActionRoute(:final actionId) => _ActionPage(
+              entry: _codex.action(actionId)!,
+              db: widget.controller.db,
               itemsById: widget.controller.indexes.itemsById,
               onOpenItem: _openItem,
             ),
@@ -136,7 +164,7 @@ class _CodexViewState extends State<CodexView> {
                 if (tab != _CodexTab.items) const SizedBox(width: 6),
                 Expanded(
                   child: GameButton(
-                    label: tab == _CodexTab.items ? 'Items' : 'Bestiary',
+                    label: _tabLabel(tab),
                     compact: true,
                     selected: _tab == tab,
                     tone: _tab == tab ? GameButtonTone.primary : GameButtonTone.secondary,
@@ -180,7 +208,13 @@ class _CodexViewState extends State<CodexView> {
               ],
             ),
           ),
-        Expanded(child: _tab == _CodexTab.items ? _itemGrid() : _enemyList()),
+        Expanded(
+          child: switch (_tab) {
+            _CodexTab.items => _itemGrid(),
+            _CodexTab.actions => _actionList(),
+            _CodexTab.bestiary => _enemyList(),
+          },
+        ),
       ],
     );
   }
@@ -213,6 +247,37 @@ class _CodexViewState extends State<CodexView> {
             padding: const EdgeInsets.all(4),
             child: Center(child: ItemIcon(item: item, size: 36)),
           ),
+        );
+      },
+    );
+  }
+
+  Widget _actionList() {
+    final rows = _codex.actionsMatching(_search.text);
+    if (rows.isEmpty) {
+      return const Center(child: MutedText('Nothing in the Codex matches.'));
+    }
+    final chrome = UiChrome.of(context);
+    return ListView.separated(
+      padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+      itemCount: rows.length,
+      separatorBuilder: (context, index) => const SizedBox(height: 8),
+      itemBuilder: (context, index) {
+        final entry = rows[index];
+        final level = entry.level == null ? null : 'Level ${formatThousands(entry.level!)}';
+        final places = entry.locations.map((row) => row.displayName).join(', ');
+        return _LinkRow(
+          key: Key('codex-action-${entry.actionId}'),
+          leading: GameImage(
+            actionAssetPath(entry.actionId, db: widget.controller.db),
+            width: 36,
+            height: 36,
+          ),
+          title: entry.displayName,
+          detail: [?entry.skillName, ?level, if (places.isNotEmpty) places].join(' · '),
+          ink: Palette.parchmentText,
+          muted: chrome.embossFace,
+          onTap: () => _openAction(entry.actionId),
         );
       },
     );
@@ -262,6 +327,11 @@ class _CodexEnemyRoute extends _CodexRoute {
   final String enemyId;
 }
 
+class _CodexActionRoute extends _CodexRoute {
+  const _CodexActionRoute(this.actionId);
+  final String actionId;
+}
+
 class _FilterChip extends StatelessWidget {
   const _FilterChip({
     super.key,
@@ -294,6 +364,7 @@ class _ItemPage extends StatelessWidget {
     required this.itemsById,
     required this.onOpenItem,
     required this.onOpenEnemy,
+    required this.onOpenAction,
   });
 
   final CodexItemEntry entry;
@@ -301,6 +372,7 @@ class _ItemPage extends StatelessWidget {
   final Map<String, ItemRow> itemsById;
   final ValueChanged<String> onOpenItem;
   final ValueChanged<String> onOpenEnemy;
+  final ValueChanged<String> onOpenAction;
 
   @override
   Widget build(BuildContext context) {
@@ -349,12 +421,20 @@ class _ItemPage extends StatelessWidget {
           children: [
             for (final source in entry.obtainedFrom)
               _LinkRow(
-                key: source.enemyId != null ? Key('codex-obtain-enemy-${source.enemyId}') : null,
+                key: source.enemyId != null
+                    ? Key('codex-obtain-enemy-${source.enemyId}')
+                    : source.actionId != null
+                    ? Key('codex-obtain-action-${source.actionId}')
+                    : null,
                 title: source.title,
                 detail: _obtainDetail(source),
                 ink: ink,
                 muted: muted,
-                onTap: source.enemyId == null ? null : () => onOpenEnemy(source.enemyId!),
+                onTap: source.enemyId != null
+                    ? () => onOpenEnemy(source.enemyId!)
+                    : source.actionId != null
+                    ? () => onOpenAction(source.actionId!)
+                    : null,
               ),
           ],
         ),
@@ -474,6 +554,97 @@ class _EnemyPage extends StatelessWidget {
               ),
           ],
         ),
+      ],
+    );
+  }
+}
+
+class _ActionPage extends StatelessWidget {
+  const _ActionPage({
+    required this.entry,
+    required this.db,
+    required this.itemsById,
+    required this.onOpenItem,
+  });
+
+  final CodexActionEntry entry;
+  final GameDatabase db;
+  final Map<String, ItemRow> itemsById;
+  final ValueChanged<String> onOpenItem;
+
+  @override
+  Widget build(BuildContext context) {
+    final chrome = UiChrome.of(context);
+    final ink = Palette.parchmentText;
+    final muted = chrome.embossFace;
+    final places = entry.locations.map((row) => row.displayName).join(', ');
+    final level = entry.level == null ? null : 'Level ${formatThousands(entry.level!)}';
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+      children: [
+        Row(
+          children: [
+            GameImage(actionAssetPath(entry.actionId, db: db), width: 56, height: 56),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(entry.displayName, style: TextStyle(fontSize: 16, color: ink)),
+                  if (entry.skillName != null || level != null)
+                    Text(
+                      [?entry.skillName, ?level].join(' · '),
+                      style: TextStyle(fontSize: 12.5, color: muted, height: 1.35),
+                    ),
+                  if (places.isNotEmpty)
+                    Text(places, style: TextStyle(fontSize: 12.5, color: muted, height: 1.35)),
+                ],
+              ),
+            ),
+          ],
+        ),
+        if (entry.target case final target?)
+          _Section(
+            title: 'Produces',
+            empty: 'No item output.',
+            ink: ink,
+            muted: muted,
+            children: [
+              _LinkRow(
+                key: Key('codex-action-target-${target.itemId}'),
+                leading: ItemIcon(item: itemsById[target.itemId], size: 28),
+                title: target.displayName,
+                ink: ink,
+                muted: muted,
+                onTap: () => onOpenItem(target.itemId),
+              ),
+            ],
+          ),
+        for (final table in entry.tables)
+          _Section(
+            title: table.dropChance == null
+                ? table.label
+                : '${table.label} · ${formatThousands(table.dropChance!)}% drop',
+            empty: 'No item drops.',
+            ink: ink,
+            muted: muted,
+            children: [
+              for (final drop in table.drops)
+                _LinkRow(
+                  key: Key('codex-action-drop-${table.label}-${drop.itemId}'),
+                  leading: ItemIcon(item: itemsById[drop.itemId], size: 28),
+                  title: drop.displayName,
+                  detail: [
+                    ?_qty(drop.minQuantity, drop.maxQuantity),
+                    if (drop.dropRatePercent != null)
+                      'Drop rate ${_formatPercent(drop.dropRatePercent!)}',
+                  ].join(' · '),
+                  ink: ink,
+                  muted: muted,
+                  onTap: () => onOpenItem(drop.itemId),
+                ),
+            ],
+          ),
       ],
     );
   }

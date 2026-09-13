@@ -3,7 +3,7 @@ import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { prepareDatabase } from '../data/loadDatabase'
 import { GROUP_MINING, InventorySorter } from '../inventory/sort'
-import { CodexIndex } from './codex'
+import { CodexIndex, includeInCodexCatalog } from './codex'
 
 const rawDatabase = JSON.parse(
   readFileSync(resolve(process.cwd(), 'content/data/game-database.json'), 'utf8'),
@@ -14,15 +14,41 @@ describe('codex index', () => {
   const sorter = new InventorySorter(launch)
   const codex = new CodexIndex(launch)
 
-  it('lists every launch item and enemy', () => {
-    expect(new Set(codex.items.map((row) => row.itemId))).toEqual(
-      new Set(launch.Items.map((row) => row['Item ID'])),
+  it('lists every launch item and enemy except pets and quest items', () => {
+    const catalogIds = new Set(
+      launch.Items.filter((row) => includeInCodexCatalog(row)).map((row) => row['Item ID']),
     )
+    expect(new Set(codex.items.map((row) => row.itemId))).toEqual(catalogIds)
+    expect(catalogIds.has('ITEM-0299')).toBe(false)
+    expect(catalogIds.has('ITEM-0320')).toBe(false)
+    expect(codex.item('ITEM-0299')?.displayName).toBe('Stolen Coin Purse')
+    expect(codex.item('ITEM-0320')?.displayName).toBe('Fly Pet')
     expect(new Set(codex.enemies.map((row) => row.enemyId))).toEqual(
       new Set(launch.Enemies.map((row) => row['Enemy ID'])),
     )
     expect(codex.item('ITEM-0209')?.displayName).toBe('Ancient Alloy')
     expect(codex.item('ITEM-0276')?.displayName).toBe('Ancient Alloy Sword')
+    expect(codex.item('ITEM-0325')?.displayName).toBe('Golden Spud Seed')
+    expect(codex.item('ITEM-0346')?.displayName).toBe('Hunting Trap')
+    expect(codex.item('ITEM-0091')).toBeUndefined()
+    expect(codex.item('ITEM-0096')).toBeUndefined()
+    expect(codex.item('ITEM-0144')).toBeUndefined()
+    expect(codex.item('ITEM-0286')).toBeUndefined()
+    expect(launch.Items.find((row) => row['Item ID'] === 'ITEM-0263')?.['Base Sell Value']).toBe(550)
+    expect(launch.Items.find((row) => row['Item ID'] === 'ITEM-0250')?.['Base Sell Value']).toBe(850)
+  })
+
+  it('lists gathering actions with secondary gem tables', () => {
+    expect(codex.actions.some((row) => row.actionId === 'ACN-0018')).toBe(true)
+    expect(codex.actions.every((row) => row.category !== 'Standard Production')).toBe(true)
+    expect(codex.action('ACN-0036')).toBeUndefined()
+    const mine = codex.action('ACN-0018')!
+    expect(mine.displayName.toLowerCase()).toContain('copper')
+    expect(mine.tables.map((table) => table.label)).toEqual(['Primary', 'Secondary'])
+    const gems = mine.tables.find((table) => table.label === 'Secondary')!
+    expect(gems.dropChance).toBe(1)
+    expect(gems.drops.map((row) => row.displayName)).toContain('Sapphire')
+    expect(codex.actionsMatching('mine copper').map((row) => row.actionId)).toContain('ACN-0018')
   })
 
   it('uses the same inventory groups as the bag', () => {

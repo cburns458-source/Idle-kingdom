@@ -34,6 +34,20 @@ function includeQuestRewardAsObtainSource(category: string | null | undefined, i
   return category === 'Tool' || category === 'Weapon' || category === 'Armor'
 }
 
+/** Pets and quest-key items stay in the database; they do not appear in the Codex catalog. */
+export function includeInCodexCatalog(item: {
+  Category?: string | null
+  Subtype?: string | null
+  category?: string | null
+  subtype?: string | null
+}): boolean {
+  const subtype = item.Subtype ?? item.subtype
+  const category = item.Category ?? item.category
+  if (subtype === 'Pet') return false
+  if (category === 'Quest') return false
+  return true
+}
+
 export interface CodexItemRef {
   itemId: string
   displayName: string
@@ -111,6 +125,25 @@ export interface CodexEnemyEntry {
   drops: CodexItemRef[]
 }
 
+export interface CodexActionDropTable {
+  label: 'Primary' | 'Secondary' | 'Tertiary'
+  tableId: string
+  dropChance: number | null
+  drops: CodexItemRef[]
+}
+
+export interface CodexActionEntry {
+  actionId: string
+  displayName: string
+  category?: string | null
+  skillId?: string | null
+  skillName?: string | null
+  level?: number | null
+  locations: CodexLocationRef[]
+  target?: CodexItemRef | null
+  tables: CodexActionDropTable[]
+}
+
 function obtainKey(source: CodexObtainSource): string {
   return [
     source.kind,
@@ -128,8 +161,10 @@ export class CodexIndex {
   private readonly sorter: InventorySorter
   private readonly itemsById = new Map<string, CodexItemEntry>()
   private readonly enemiesById = new Map<string, CodexEnemyEntry>()
+  private readonly actionsById = new Map<string, CodexActionEntry>()
   private readonly itemOrder: string[] = []
   private readonly enemyOrder: string[] = []
+  private readonly actionOrder: string[] = []
 
   constructor(db: GameDatabase) {
     this.db = db
@@ -145,12 +180,20 @@ export class CodexIndex {
     return this.enemyOrder.map((id) => this.enemiesById.get(id)!)
   }
 
+  get actions(): CodexActionEntry[] {
+    return this.actionOrder.map((id) => this.actionsById.get(id)!)
+  }
+
   item(itemId: string): CodexItemEntry | undefined {
     return this.itemsById.get(itemId)
   }
 
   enemy(enemyId: string): CodexEnemyEntry | undefined {
     return this.enemiesById.get(enemyId)
+  }
+
+  action(actionId: string): CodexActionEntry | undefined {
+    return this.actionsById.get(actionId)
   }
 
   itemsMatching(group?: number | null, query = ''): CodexItemEntry[] {
@@ -165,6 +208,19 @@ export class CodexIndex {
     return this.enemyOrder
       .map((id) => this.enemiesById.get(id)!)
       .filter((entry) => !needle || entry.displayName.toLowerCase().includes(needle))
+  }
+
+  actionsMatching(query = ''): CodexActionEntry[] {
+    const needle = query.trim().toLowerCase()
+    return this.actionOrder
+      .map((id) => this.actionsById.get(id)!)
+      .filter((entry) => {
+        if (!needle) return true
+        return (
+          entry.displayName.toLowerCase().includes(needle) ||
+          (entry.skillName ?? '').toLowerCase().includes(needle)
+        )
+      })
   }
 
   private build() {
@@ -367,7 +423,7 @@ export class CodexIndex {
     for (const itemId of itemIds) {
       const item = this.db.Items.find((row) => row['Item ID'] === itemId)!
       const group = this.sorter.groupOf(itemId)
-      this.itemOrder.push(itemId)
+      if (includeInCodexCatalog(item)) this.itemOrder.push(itemId)
       this.itemsById.set(itemId, {
         itemId,
         displayName: item['Display Name'],
@@ -408,14 +464,12 @@ export class CodexIndex {
     for (const enemy of enemies) {
       const tableId = enemy['Reward Table ID']
       const drops = (tableId ? (tableItems.get(tableId) ?? []) : []).filter(
-        (drop) => drop.itemId !== GOLDEN_SPUD_ITEM_ID,
+        (drop) => drop.itemId !== GOLDEN_SPUD_ITEM_ID && this.itemsById.has(drop.itemId),
       )
-      const totalWeight = drops.reduce((sum, drop) => sum + (drop.weight ?? 0), 0)
-      const dropsWithRate = drops.map((drop) => ({
-        ...drop,
-        dropRatePercent:
-          drop.weight != null && totalWeight > 0 ? (drop.weight / totalWeight) * 100 : null,
-      }))
+      const catalogDrops = drops.filter((drop) => {
+        const item = this.itemsById.get(drop.itemId)
+        return item ? includeInCodexCatalog(item) : false
+      })
       this.enemyOrder.push(enemy['Enemy ID'])
       this.enemiesById.set(enemy['Enemy ID'], {
         enemyId: enemy['Enemy ID'],
@@ -430,7 +484,58 @@ export class CodexIndex {
         maximumGold: enemy['Maximum Gold'],
         dropChance: enemy['Drop Chance'],
         locations: this.enemyLocations(enemy, actionLocations, locations),
-        drops: dropsWithRate,
+        drops: withDropRates(catalogDrops),
+      })
+    }
+
+    const actions = this.db.Actions.filter((action) => {
+      if (action.Category === 'Standard Production') return false
+      if (action['Action ID'] === HIDE_FROM_CODEX_ACTION_ID || notesHideFromCodex(action.Notes)) {
+        return false
+      }
+      return true
+    })
+    actions.sort((a, b) => {
+      const skillA = (skills.get(a['Relevant Skill ID']) ?? '').toLowerCase()
+      const skillB = (skills.get(b['Relevant Skill ID']) ?? '').toLowerCase()
+      if (skillA !== skillB) return skillA.localeCompare(skillB)
+      const level = (a['Proficiency Level'] ?? 0) - (b['Proficiency Level'] ?? 0)
+      if (level !== 0) return level
+      return a['Display Name'].toLowerCase().localeCompare(b['Display Name'].toLowerCase())
+    })
+    for (const action of actions) {
+      const tables: CodexActionDropTable[] = []
+      for (const table of actionTables(action)) {
+        const drops = (tableItems.get(table.id) ?? []).filter((drop) => {
+          if (drop.itemId === GOLDEN_SPUD_ITEM_ID) return false
+          const item = this.itemsById.get(drop.itemId)
+          return item ? includeInCodexCatalog(item) : false
+        })
+        if (drops.length === 0) continue
+        tables.push({
+          label: table.label,
+          tableId: table.id,
+          dropChance: table.chance,
+          drops: withDropRates(drops),
+        })
+      }
+      const targetId =
+        action['Target Type'] === 'Item' && action['Target ID'] ? action['Target ID'] : null
+      const targetItem = targetId ? this.itemsById.get(targetId) : undefined
+      this.actionOrder.push(action['Action ID'])
+      this.actionsById.set(action['Action ID'], {
+        actionId: action['Action ID'],
+        displayName: action['Display Name'],
+        category: action.Category,
+        skillId: action['Relevant Skill ID'],
+        skillName: skills.get(action['Relevant Skill ID']) ?? null,
+        level: action['Proficiency Level'],
+        locations: actionLocations.get(action['Action ID']) ?? [],
+        target:
+          targetId && targetItem && includeInCodexCatalog(targetItem)
+            ? { itemId: targetId, displayName: targetItem.displayName }
+            : null,
+        tables,
       })
     }
   }
@@ -513,18 +618,45 @@ export class CodexIndex {
   }
 }
 
-function actionTables(action: ActionRow): Array<{ id: string; chance: number | null }> {
-  const out: Array<{ id: string; chance: number | null }> = []
+function actionTables(
+  action: ActionRow,
+): Array<{ id: string; chance: number | null; label: 'Primary' | 'Secondary' | 'Tertiary' }> {
+  const out: Array<{
+    id: string
+    chance: number | null
+    label: 'Primary' | 'Secondary' | 'Tertiary'
+  }> = []
   if (action['Reward Table ID']) {
-    out.push({ id: action['Reward Table ID'], chance: action['Drop Chance'] })
+    out.push({
+      id: action['Reward Table ID'],
+      chance: action['Drop Chance'],
+      label: 'Primary',
+    })
   }
   if (action['Secondary Reward Table ID']) {
-    out.push({ id: action['Secondary Reward Table ID'], chance: action['Secondary Drop Chance'] })
+    out.push({
+      id: action['Secondary Reward Table ID'],
+      chance: action['Secondary Drop Chance'],
+      label: 'Secondary',
+    })
   }
   if (action['Tertiary Reward Table ID']) {
-    out.push({ id: action['Tertiary Reward Table ID'], chance: action['Tertiary Drop Chance'] })
+    out.push({
+      id: action['Tertiary Reward Table ID'],
+      chance: action['Tertiary Drop Chance'],
+      label: 'Tertiary',
+    })
   }
   return out
+}
+
+function withDropRates(drops: CodexItemRef[]): CodexItemRef[] {
+  const totalWeight = drops.reduce((sum, drop) => sum + (drop.weight ?? 0), 0)
+  return drops.map((drop) => ({
+    ...drop,
+    dropRatePercent:
+      drop.weight != null && totalWeight > 0 ? (drop.weight / totalWeight) * 100 : null,
+  }))
 }
 
 function minNum(left: number | null | undefined, right: number | null | undefined): number | null {
