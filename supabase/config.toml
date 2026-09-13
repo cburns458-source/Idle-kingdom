@@ -1,2 +1,5 @@
 [functions.send-chat]
 verify_jwt = true
+
+[functions.bazaar]
+verify_jwt = true

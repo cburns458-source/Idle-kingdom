@@ -12,6 +12,7 @@ import '../session/multiplayer_controller.dart';
 import '../theme.dart';
 import 'auth_gate_sheet.dart';
 import 'away_summary_sheet.dart';
+import 'bazaar_view.dart';
 import 'bottom_nav.dart';
 import 'chat_sheet.dart';
 import 'desktop_side_chrome.dart';
@@ -47,6 +48,7 @@ enum GameScreen {
   tracker,
   leaderboards,
   guilds,
+  bazaar,
   account,
   menu,
 }
@@ -66,6 +68,7 @@ const Set<GameScreen> _chinScreens = {
   GameScreen.tracker,
   GameScreen.leaderboards,
   GameScreen.guilds,
+  GameScreen.bazaar,
   GameScreen.account,
   GameScreen.menu,
 };
@@ -1086,6 +1089,8 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
             _popToLocation();
           },
         );
+      case GameScreen.bazaar:
+        return BazaarView(controller: controller, multiplayer: multiplayer, onClose: _popPage);
       case GameScreen.account:
         return MenuView(controller: controller, multiplayer: multiplayer, onClose: _popPage);
       case GameScreen.menu:

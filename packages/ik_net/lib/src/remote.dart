@@ -45,6 +45,10 @@ class RemoteTables {
 /// The edge function that writes chat, since a client may not insert directly.
 const String remoteSendChatFunction = 'send-chat';
 
+/// The Bazaar exchange. Reads and writes both, since neither its tables nor the
+/// routines behind them are reachable by a signed-in client.
+const String remoteBazaarMarketFunction = 'bazaar';
+
 const String remoteNotConfigured = 'Supabase is not configured.';
 const String remoteSignUpFailed = 'Sign-up failed.';
 const String remoteSignInFailed = 'Sign-in failed.';
@@ -481,6 +485,19 @@ const String remoteChatSendFailed = 'The chat message was not accepted.';
 
 /// The same, for a Bazaar notice the board did not hand back.
 const String remoteBazaarPostFailed = 'The notice was not accepted.';
+
+/// The exchange wrote a save this build cannot parse.
+///
+/// Not a fault the player can do anything about, but it has to be said out loud:
+/// the escrow has already been taken on the server, and a silent failure here
+/// would look like items vanishing.
+const String remoteBazaarSaveUnreadable =
+    'The Bazaar wrote a save this version cannot read. Your offer stands; update and reopen it.';
+
+/// A backend row, however the wire typed its map.
+RemoteRow remoteRowFrom(Map<Object?, Object?> row) => <String, Object?>{
+  for (final entry in row.entries) entry.key.toString(): entry.value,
+};
 
 /// Why an upload stops: the account has a newer save than the one being sent.
 const String remoteSaveConflict = 'A newer cloud save exists.';

@@ -3,13 +3,16 @@ import 'package:flutter/material.dart';
 import '../theme.dart';
 import 'app_shell.dart';
 
-/// Settings / Log / Leaderboards / Guilds — the hamburger nest and the desktop rail.
+/// Settings / Log / Bazaar / Leaderboards / Guilds — the hamburger nest and the
+/// desktop rail. The Bazaar is here rather than at a location because an offer
+/// on the book fills wherever its owner happens to be standing.
 const List<(GameScreen, String)> nestMenuItems = [
   (GameScreen.menu, 'Settings'),
   (GameScreen.log, 'Log'),
   (GameScreen.codex, 'Codex'),
   (GameScreen.timers, 'Timers'),
   (GameScreen.tracker, 'Tracker'),
+  (GameScreen.bazaar, 'Bazaar'),
   (GameScreen.leaderboards, 'Leaderboards'),
   (GameScreen.guilds, 'Guilds'),
 ];

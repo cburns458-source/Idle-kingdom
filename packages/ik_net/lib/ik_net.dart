@@ -15,6 +15,7 @@ export 'src/emblems.dart';
 export 'src/guild_rules.dart';
 export 'src/local_backend.dart';
 export 'src/local_db.dart';
+export 'src/market.dart';
 export 'src/moderation.dart';
 export 'src/name_color.dart';
 export 'src/noted_reads.dart';

@@ -191,6 +191,8 @@ class MultiplayerController extends ChangeNotifier {
   List<ChatMessage> _messages = const <ChatMessage>[];
   List<BountyClaimRecord> _bountyClaims = const <BountyClaimRecord>[];
   List<BazaarPost> _bazaarPosts = const <BazaarPost>[];
+  MarketSnapshot _market = MarketSnapshot.empty;
+  String? _marketItemId;
   ChatTab _chatTab = ChatTab.global;
   String? _selectedDmPeerId;
   final List<String> _openDmPeerIds = <String>[];
@@ -505,6 +507,8 @@ class MultiplayerController extends ChangeNotifier {
     _dmPeerNames.clear();
     _bountyClaims = const <BountyClaimRecord>[];
     _bazaarPosts = const <BazaarPost>[];
+    _market = MarketSnapshot.empty;
+    _marketItemId = null;
     _unreadDms = 0;
     _unread.clear();
     _localUnread.clear();
@@ -1427,6 +1431,83 @@ class MultiplayerController extends ChangeNotifier {
       if (!result.ok) return result.reason;
       await refreshBazaar();
       return bazaarPostedNotice;
+    });
+  }
+
+  // --- The Bazaar exchange --------------------------------------------------
+  //
+  // Every one of these hands a save back rather than working one out. The
+  // exchange escrows from the copy the backend holds, so the save that returns
+  // is the one it wrote, and [onSaved] commits it. That is the whole reason the
+  // Bazaar is not just another panel calling a rules function: nothing on this
+  // device is allowed to decide what an offer costs.
+
+  /// Which item the book is being read for, so a refresh keeps looking at it.
+  String? get marketItemId => _marketItemId;
+
+  MarketSnapshot get market => _market;
+
+  /// Reads the book, the player's offers, their trades, and their box.
+  Future<void> refreshMarket({String? itemId, bool keepItem = false}) async {
+    if (!keepItem || itemId != null) _marketItemId = itemId;
+    if (!isSignedIn) {
+      _market = MarketSnapshot.empty;
+      notifyListeners();
+      return;
+    }
+    _market = await service.bazaarMarket(itemId: _marketItemId);
+    final problem = service.takeReadProblem();
+    if (problem != null) _notice = problem;
+    notifyListeners();
+  }
+
+  Future<void> placeMarketOffer({
+    required BazaarSide side,
+    required String itemId,
+    required num unitPrice,
+    required num quantity,
+    required PlayerSave save,
+    required void Function(PlayerSave save) onSaved,
+  }) {
+    return run(() async {
+      final refusal = bazaarOfferRefusal(
+        side: side,
+        unitPrice: unitPrice,
+        quantity: quantity,
+        slotsFree: _market.slotsFree,
+      );
+      if (refusal != null) return refusal;
+      final result = await service.placeBazaarOffer(
+        db,
+        save,
+        side: side,
+        itemId: itemId,
+        unitPrice: unitPrice,
+        quantity: quantity,
+      );
+      if (!result.ok) return result.reason;
+      if (result.save case final written?) onSaved(written);
+      await refreshMarket(itemId: itemId);
+      return result.message;
+    });
+  }
+
+  Future<void> cancelMarketOffer(String orderId) {
+    return run(() async {
+      final result = await service.cancelBazaarOffer(orderId);
+      if (!result.ok) return result.reason;
+      await refreshMarket(keepItem: true);
+      return result.message;
+    });
+  }
+
+  Future<void> collectMarketBox(PlayerSave save, void Function(PlayerSave save) onSaved) {
+    return run(() async {
+      final result = await service.collectBazaarBox(db, save);
+      if (!result.ok) return result.reason;
+      if (result.save case final written?) onSaved(written);
+      await refreshMarket(keepItem: true);
+      return result.message;
     });
   }
 

@@ -7,6 +7,7 @@ import 'bazaar.dart';
 import 'cloud_save.dart';
 import 'config.dart';
 import 'local_backend.dart';
+import 'market.dart';
 import 'name_color.dart';
 import 'noted_reads.dart';
 import 'presence.dart';
@@ -25,8 +26,12 @@ import 'types.dart';
 /// What a server owns goes over the wire: accounts, cloud saves, leaderboards,
 /// chat, guilds, presence, and arena fighter snapshots — so other devices can
 /// find someone to fight without reading their private save. What is left on
-/// the device is what only the device can answer: ignores, the Bazaar, and
-/// bounty claims.
+/// the device is what only the device can answer: ignores, and the notice board.
+///
+/// The Bazaar exchange is the exception to how all of this works. Everywhere
+/// else the device resolves play and this stores the result; there the server
+/// resolves it, because an offer spends items and gold that end up in somebody
+/// else's hands.
 class RemoteMultiplayerService implements MultiplayerService {
   RemoteMultiplayerService({
     required RemoteTransport transport,
@@ -1442,6 +1447,101 @@ class RemoteMultiplayerService implements MultiplayerService {
       return BazaarPostResult.failed(written.reason ?? remoteBazaarPostFailed);
     }
     return BazaarPostResult.ok(bazaarPostFrom(row));
+  }
+
+  // --- The Bazaar exchange ---------------------------------------------------
+  //
+  // The one part of the game the server decides rather than checks. Everything
+  // else here stores what the client resolved, which is safe while a lie can
+  // only spoil the liar's own save. An offer is different: an invented sell
+  // order is gold in somebody else's purse. So the escrow comes out of the copy
+  // of the save the backend holds, and the save that comes back is the one it
+  // wrote — never one worked out on the device and reported afterwards.
+
+  @override
+  Future<MarketSnapshot> bazaarMarket({String? itemId}) async {
+    if (!isSignedIn) return MarketSnapshot.empty;
+    final result = await transport.invoke(remoteBazaarMarketFunction, <String, Object?>{
+      'action': 'read',
+      'itemId': ?itemId,
+    });
+    if (!result.ok) {
+      _reads.note(result.reason!);
+      return MarketSnapshot.empty;
+    }
+    final data = result.data ?? const <String, Object?>{};
+    final refused = data['error'];
+    if (refused is String && refused.isNotEmpty) {
+      _reads.note(refused);
+      return MarketSnapshot.empty;
+    }
+    return MarketSnapshot.fromJson(data);
+  }
+
+  @override
+  Future<MarketActionResult> placeBazaarOffer(
+    GameDatabase db,
+    PlayerSave save, {
+    required BazaarSide side,
+    required String itemId,
+    required num unitPrice,
+    required num quantity,
+  }) async {
+    if (!isSignedIn) return const MarketActionResult.failed(bazaarSignInToTrade);
+    // The server escrows from the stored save, so the stored save has to be this
+    // one. Pushing first is what turns "the client says it has 400 logs" into
+    // "the backend can see 400 logs".
+    final pushed = await pushSave(db, save);
+    if (!pushed.ok) return MarketActionResult.failed(pushed.reason!);
+
+    return _marketAction(<String, Object?>{
+      'action': 'place',
+      'side': side,
+      'itemId': itemId,
+      'unitPrice': unitPrice.floor(),
+      'quantity': quantity.floor(),
+    });
+  }
+
+  @override
+  Future<MarketActionResult> cancelBazaarOffer(String orderId) async {
+    if (!isSignedIn) return const MarketActionResult.failed(bazaarSignInToTrade);
+    return _marketAction(<String, Object?>{'action': 'cancel', 'orderId': orderId});
+  }
+
+  @override
+  Future<MarketActionResult> collectBazaarBox(GameDatabase db, PlayerSave save) async {
+    if (!isSignedIn) return const MarketActionResult.failed(bazaarSignInToTrade);
+    final pushed = await pushSave(db, save);
+    if (!pushed.ok) return MarketActionResult.failed(pushed.reason!);
+    return _marketAction(<String, Object?>{'action': 'collect'});
+  }
+
+  Future<MarketActionResult> _marketAction(RemoteRow body) async {
+    final result = await transport.invoke(remoteBazaarMarketFunction, body);
+    if (!result.ok) return MarketActionResult.failed(friendlyRemoteError(result.reason!));
+    final data = result.data ?? const <String, Object?>{};
+    final refused = data['error'];
+    if (refused is String && refused.isNotEmpty) return MarketActionResult.failed(refused);
+
+    PlayerSave? written;
+    final payload = data['save'];
+    if (payload != null) {
+      try {
+        written = parseSave(payload, _nowMs());
+      } on Object {
+        return const MarketActionResult.failed(remoteBazaarSaveUnreadable);
+      }
+      final validation = softValidateSave(written);
+      if (!validation.ok) return MarketActionResult.failed(validation.reason!);
+    }
+    final order = data['order'];
+    final message = data['message'];
+    return MarketActionResult.ok(
+      save: written,
+      message: message is String && message.isNotEmpty ? message : null,
+      order: order is Map ? MarketOrder.fromJson(remoteRowFrom(order)) : null,
+    );
   }
 
   @override
