@@ -464,7 +464,7 @@ export function applyCombatDefeat(
         {
           ...save,
           maxHp,
-          currentHp: maxHp,
+          currentHp: 0,
           deathPauseUntil: new Date(nowMs + pauseSec * 1000).toISOString(),
           hasEverDied: true,
           currentActionId: null,
@@ -476,6 +476,22 @@ export function applyCombatDefeat(
     ),
     save.currentActivityId,
   )
+}
+
+/** HP restored when the death pause ends. */
+export function deathRecoveryHp(maxHp: number): number {
+  return Math.max(1, Math.floor(maxHp * 0.5))
+}
+
+/** Clears the death pause and restores half of current max HP. */
+export function applyDeathRecovery(db: GameDatabase, save: PlayerSave): PlayerSave {
+  const maxHp = playerMaxHp(db, save)
+  return {
+    ...save,
+    maxHp,
+    currentHp: deathRecoveryHp(maxHp),
+    deathPauseUntil: null,
+  }
 }
 
 /** Shown whenever an action is refused because the death pause is still running. */

@@ -12,6 +12,7 @@ import { resolveActivityTransitions } from '../activity/transition'
 import {
   applyCombatDefeat,
   applyCombatVictory,
+  applyDeathRecovery,
   clearCombatSave,
   deathPauseRemainingMs,
   getEnemy,
@@ -156,7 +157,7 @@ export function resolveUnattendedProgress(
     }
     if (current.deathPauseUntil && pauseLeft <= 0) {
       const pauseEnded = Date.parse(current.deathPauseUntil)
-      let resumed: PlayerSave = { ...current, deathPauseUntil: null }
+      let resumed: PlayerSave = applyDeathRecovery(db, current)
       if (!activityStillValid(db, resumed, resumed.currentActivityId!)) {
         current = clearActivitySave(resumed, pauseEnded)
         messages.push('Activity stopped after defeat — requirements no longer met.')

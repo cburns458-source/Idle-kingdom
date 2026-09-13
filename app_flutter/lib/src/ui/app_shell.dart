@@ -33,6 +33,8 @@ import 'top_hud.dart';
 import 'timers_view.dart';
 import 'tracker_view.dart';
 import 'wardrobe_sheet.dart';
+import 'botany_plant_popup.dart';
+import 'game_popup.dart';
 import 'world_map_view.dart';
 
 enum GameScreen {
@@ -220,12 +222,39 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
     _maybePresentSocialNotice();
   }
 
+  Future<void> _offerBotanyReplant(String locationId) async {
+    if (!mounted) return;
+    if (controller.save.currentLocationId != locationId) {
+      controller.report('Travel back to collect and replant.');
+      return;
+    }
+    final options = listPlantableBotanyOptions(
+      controller.db,
+      controller.save,
+      locationId: locationId,
+    );
+    if (options.isEmpty) {
+      controller.report('You have no plantable seeds or saplings for this patch.');
+      return;
+    }
+    final chosen = await showBotanyPlantGridPopup(
+      context: context,
+      controller: controller,
+      options: options,
+    );
+    if (!mounted || chosen == null) return;
+    controller.plantBotanySeedHere(chosen.itemId, plantQuantity: chosen.plantQuantity);
+  }
+
   void _flushPendingDialogs() {
     if (_questRewardQueued) return;
     final pending = controller.takePendingQuestCompletions();
     final timerCollects = controller.takePendingTimerCollects();
+    final roomAlerts = controller.takePendingTimerRoomAlerts();
     final levelUps = controller.takePendingSkillLevelUps();
-    if (pending.isEmpty && timerCollects.isEmpty && levelUps.isEmpty) return;
+    if (pending.isEmpty && timerCollects.isEmpty && roomAlerts.isEmpty && levelUps.isEmpty) {
+      return;
+    }
     _questRewardQueued = true;
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       try {
@@ -253,10 +282,33 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
           if (!mounted) return;
         }
         for (final haul in timerCollects) {
+          if (!mounted) return;
           await showQuestRewards(context, questName: haul.title, rewards: haul.rewards);
+          if (!mounted) return;
+          if (haul.kind == 'botany') {
+            await _offerBotanyReplant(haul.locationId);
+            if (!mounted) return;
+          } else if (haul.canRepeat) {
+            final confirmed = await showGameAlert(
+              context: context,
+              title: 'Place pot again?',
+              message: 'Place the fishing pot here again?',
+              confirmLabel: 'Place pot',
+              cancelLabel: 'Not now',
+            );
+            if (!mounted) return;
+            if (confirmed) {
+              controller.repeatTimerPlacement(haul.locationId, haul.kind, haul.inputItemId);
+            }
+          }
+        }
+        for (final alert in roomAlerts) {
+          if (!mounted) return;
+          await showGameAlert(context: context, message: alert);
           if (!mounted) return;
         }
         for (final notice in levelUps) {
+          if (!mounted) return;
           await showSkillLevelUp(context, notice, chrome: controller.chrome);
           if (!mounted) return;
         }

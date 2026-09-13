@@ -10,6 +10,8 @@ import {
   collectLocationTimer,
   discoverTimerSpotsForLocation,
   FISHING_POT_ITEM_ID,
+  TIMER_INVENTORY_FULL_CATCH_REASON,
+  TIMER_INVENTORY_FULL_HARVEST_REASON,
   locationHasBotanyPatch,
   parseTimerSpotKey,
   placeTrap,
@@ -192,7 +194,7 @@ describe('locationTimers', () => {
     expect(canPlantBotanySeed(launch, save, 'ITEM-0350').ok).toBe(false)
   })
 
-  it('places fishing pots once per UTC day and rolls 6-12 level-gated fish', () => {
+  it('places fishing pots once per UTC day and rolls 1-3 of each unlocked fish', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const dayStart = Date.parse('2026-03-01T12:00:00.000Z')
     let save = createNewSave(launch)
@@ -221,10 +223,15 @@ describe('locationTimers', () => {
     )
     expect(collected.ok).toBe(true)
     if (!collected.ok) return
-    expect(collected.loot.some((row) => row.itemId === 'ITEM-0352')).toBe(true)
-    const qty = collected.loot.find((row) => row.itemId === 'ITEM-0352')?.quantity ?? 0
-    expect(qty).toBeGreaterThanOrEqual(6)
-    expect(qty).toBeLessThanOrEqual(12)
+    expect(collected.loot.map((row) => row.itemId)).toEqual(
+      expect.arrayContaining(['ITEM-0352', 'ITEM-0354', FISHING_POT_ITEM_ID]),
+    )
+    expect(collected.loot.some((row) => row.itemId === 'ITEM-0356')).toBe(false)
+    for (const fishId of ['ITEM-0352', 'ITEM-0354'] as const) {
+      const qty = collected.loot.find((row) => row.itemId === fishId)?.quantity ?? 0
+      expect(qty).toBeGreaterThanOrEqual(1)
+      expect(qty).toBeLessThanOrEqual(3)
+    }
     expect(
       collected.save.inventory.find((stack) => stack.itemId === FISHING_POT_ITEM_ID)?.quantity,
     ).toBe(2)
@@ -264,5 +271,83 @@ describe('locationTimers', () => {
     expect(goblin.ok).toBe(false)
     if (goblin.ok) return
     expect(goblin.reason).toContain('14')
+  })
+
+  it('leaves a ready timer in place when the bag cannot hold the haul', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const planted = {
+      ...createNewSave(launch),
+      currentLocationId: 'LOC-0001',
+      inventory: Array.from({ length: 180 }, (_, index) => ({
+        itemId: `FILL-${index}`,
+        quantity: 1,
+      })),
+      locationTimers: [
+        {
+          locationId: 'LOC-0001',
+          kind: 'botany' as const,
+          inputItemId: 'ITEM-0324',
+          outputItemId: 'ITEM-0025',
+          outputQuantity: 1,
+          skillId: 'SKL-0014',
+          xpReward: 10,
+          startedAt: '2026-01-01T00:00:00.000Z',
+          durationMs: 1,
+        },
+      ],
+    }
+    const collected = collectLocationTimer(
+      launch,
+      planted,
+      'LOC-0001',
+      'botany',
+      Date.parse('2026-01-01T01:00:00.000Z'),
+      () => 0,
+    )
+    expect(collected.ok).toBe(false)
+    if (collected.ok) return
+    expect(collected.reason).toBe(TIMER_INVENTORY_FULL_HARVEST_REASON)
+    expect(timerAtLocationKind(planted, 'LOC-0001', 'botany')).toBeTruthy()
+    expect(planted.inventory).toHaveLength(180)
+  })
+
+  it('asks for room to collect a catch when a pot haul will not fit', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const soaked = {
+      ...createNewSave(launch),
+      currentLocationId: 'LOC-0003',
+      skills: createNewSave(launch).skills.map((row) =>
+        row.skillId === 'SKL-0003' ? { ...row, level: 14, xp: 2000 } : row,
+      ),
+      inventory: Array.from({ length: 180 }, (_, index) => ({
+        itemId: `FILL-${index}`,
+        quantity: 1,
+      })),
+      locationTimers: [
+        {
+          locationId: 'LOC-0003',
+          kind: 'fishing_pot' as const,
+          inputItemId: FISHING_POT_ITEM_ID,
+          outputItemId: null,
+          outputQuantity: 1,
+          skillId: 'SKL-0003',
+          xpReward: 150,
+          startedAt: '2026-01-01T00:00:00.000Z',
+          durationMs: 1,
+        },
+      ],
+    }
+    const collected = collectLocationTimer(
+      launch,
+      soaked,
+      'LOC-0003',
+      'fishing_pot',
+      Date.parse('2026-01-01T08:00:00.000Z'),
+      () => 0,
+    )
+    expect(collected.ok).toBe(false)
+    if (collected.ok) return
+    expect(collected.reason).toBe(TIMER_INVENTORY_FULL_CATCH_REASON)
+    expect(timerAtLocationKind(soaked, 'LOC-0003', 'fishing_pot')).toBeTruthy()
   })
 })

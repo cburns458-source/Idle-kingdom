@@ -1,5 +1,6 @@
 import { addItemsToInventory } from '../activity/rewards'
 import { applyXp, getSkillProgress } from '../activity/xp'
+import { canFitItemQuantity } from '../inventory/capacity'
 import { creditLootTracker, creditXpAwards } from '../trackers/trackers'
 import type { GameDatabase, ItemRow } from '../data/types'
 import { removeIngredients } from '../production/inventory'
@@ -34,6 +35,26 @@ export const FISHING_TRAP_LOCATIONS = FISHING_POT_LOCATIONS
 
 /** Default trap soak time: 6 hours. */
 export const TRAP_DURATION_MS = 6 * 60 * 60 * 1000
+
+/** Ready botany timers stay in place when the bag cannot take the haul. */
+export const TIMER_INVENTORY_FULL_HARVEST_REASON =
+  'Come back with more room to collect your harvest.'
+
+/** Ready fishing pots stay in place when the bag cannot take the haul. */
+export const TIMER_INVENTORY_FULL_CATCH_REASON =
+  'Come back with more room to collect your catch.'
+
+export function timerInventoryFullReason(kind: string): string {
+  return kind === 'fishing_pot'
+    ? TIMER_INVENTORY_FULL_CATCH_REASON
+    : TIMER_INVENTORY_FULL_HARVEST_REASON
+}
+
+export function isTimerInventoryFullReason(reason: string): boolean {
+  return (
+    reason === TIMER_INVENTORY_FULL_HARVEST_REASON || reason === TIMER_INVENTORY_FULL_CATCH_REASON
+  )
+}
 
 export interface BotanySeedSpec {
   outputItemId: string
@@ -465,12 +486,28 @@ function rollFishingPotLoot(
   locationId: string,
   fishingLevel: number,
   random: () => number,
-): { itemId: string; quantity: number; xp: number } | null {
-  const options = potFishOptionsForLocation(locationId, fishingLevel)
-  if (options.length === 0) return null
-  const pick = options[Math.floor(random() * options.length)]!
-  const quantity = rollInclusive(random, 6, 12)
-  return { itemId: pick.itemId, quantity, xp: pick.xpEach * quantity }
+): Array<{ itemId: string; quantity: number; xp: number }> {
+  return potFishOptionsForLocation(locationId, fishingLevel).map((row) => {
+    const quantity = rollInclusive(random, 1, 3)
+    return { itemId: row.itemId, quantity, xp: row.xpEach * quantity }
+  })
+}
+
+function timerItemName(db: GameDatabase, itemId: string): string {
+  return db.Items.find((item) => item['Item ID'] === itemId)?.['Display Name'] ?? itemId
+}
+
+function canFitTimerGrants(
+  save: PlayerSave,
+  grants: Array<{ itemId: string; quantity: number }>,
+  db: GameDatabase,
+): boolean {
+  let probe = save
+  for (const grant of grants) {
+    if (!canFitItemQuantity(probe, grant.itemId, grant.quantity, null, false, db)) return false
+    probe = addItemsToInventory(probe, grant.itemId, grant.quantity, null, false, db).save
+  }
+  return true
 }
 
 export function collectLocationTimer(
@@ -496,11 +533,7 @@ export function collectLocationTimer(
     return { ok: false, reason: `Not ready yet (${remainSec}s left).` }
   }
 
-  let next: PlayerSave = {
-    ...save,
-    locationTimers: withoutLocationTimerKind(save.locationTimers, locationId, kind),
-  }
-  const loot: Array<{ itemId: string; quantity: number; displayName: string }> = []
+  const grants: Array<{ itemId: string; quantity: number }> = []
   let xpGained = timer.xpReward
   const skillId = timer.skillId
 
@@ -512,48 +545,41 @@ export function collectLocationTimer(
     for (let i = 0; i < plantedCount; i += 1) {
       produceQty += rollInclusive(random, 1, 5)
     }
-    const granted = addItemsToInventory(next, timer.outputItemId, produceQty, null, false, db)
-    next = granted.save
-    loot.push({
-      itemId: timer.outputItemId,
-      quantity: produceQty,
-      displayName:
-        db.Items.find((item) => item['Item ID'] === timer.outputItemId)?.['Display Name'] ??
-        timer.outputItemId,
-    })
+    grants.push({ itemId: timer.outputItemId, quantity: produceQty })
     let returned = 0
     for (let i = 0; i < plantedCount; i += 1) {
       if (random() < 0.5) returned += 1
     }
-    if (returned > 0) {
-      const back = addItemsToInventory(next, timer.inputItemId, returned, null, false, db)
-      next = back.save
-      loot.push({
-        itemId: timer.inputItemId,
-        quantity: returned,
-        displayName:
-          db.Items.find((item) => item['Item ID'] === timer.inputItemId)?.['Display Name'] ??
-          timer.inputItemId,
-      })
-    }
+    if (returned > 0) grants.push({ itemId: timer.inputItemId, quantity: returned })
   } else if (timer.kind === 'fishing_pot') {
     const fishingLevel = getSkillProgress(save, 'SKL-0003').level
     const rolled = rollFishingPotLoot(timer.locationId, fishingLevel, random)
-    if (rolled) {
-      const granted = addItemsToInventory(next, rolled.itemId, rolled.quantity, null, false, db)
-      next = granted.save
-      xpGained = rolled.xp
-      loot.push({
-        itemId: rolled.itemId,
-        quantity: rolled.quantity,
-        displayName:
-          db.Items.find((item) => item['Item ID'] === rolled.itemId)?.['Display Name'] ??
-          rolled.itemId,
-      })
+    xpGained = 0
+    for (const row of rolled) {
+      grants.push({ itemId: row.itemId, quantity: row.quantity })
+      xpGained += row.xp
     }
-    next = addItemsToInventory(next, timer.inputItemId, 1, null, false, db).save
+    grants.push({ itemId: timer.inputItemId, quantity: 1 })
   } else {
     return { ok: false, reason: 'Unknown timer kind.' }
+  }
+
+  if (!canFitTimerGrants(save, grants, db)) {
+    return { ok: false, reason: timerInventoryFullReason(timer.kind) }
+  }
+
+  let next: PlayerSave = {
+    ...save,
+    locationTimers: withoutLocationTimerKind(save.locationTimers, locationId, kind),
+  }
+  const loot: Array<{ itemId: string; quantity: number; displayName: string }> = []
+  for (const grant of grants) {
+    next = addItemsToInventory(next, grant.itemId, grant.quantity, null, false, db).save
+    loot.push({
+      itemId: grant.itemId,
+      quantity: grant.quantity,
+      displayName: timerItemName(db, grant.itemId),
+    })
   }
 
   next = applyXp(next, db, skillId, xpGained).save

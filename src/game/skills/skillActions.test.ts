@@ -159,13 +159,14 @@ describe('skill menu entries', () => {
     expect(tools.some((item) => item.displayName === 'Net')).toBe(false)
     expect(tools.some((item) => item.displayName === 'Fishing Net')).toBe(false)
     expect(tools.some((item) => item.displayName.includes('Fishing Rod'))).toBe(true)
+    expect(tools.some((item) => item.displayName === 'Fishing Pot' && item.level === 14)).toBe(true)
   })
 
   it('lists pot fishing catches on the fishing Pot fishing tab', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const fishing = skillMenuView(launch, 'SKL-0003')
     const pot = fishing.tabs.find((tab) => tab.id === 'pot_fishing')?.sections[0]?.entries ?? []
-    expect(pot.some((item) => item.displayName === 'Fishing Pot' && item.level === 14)).toBe(true)
+    expect(pot.some((item) => item.displayName === 'Fishing Pot')).toBe(false)
     expect(pot.some((item) => item.displayName === 'Raw Crawfish' && item.level === 14)).toBe(true)
     expect(pot.some((item) => item.displayName === 'Raw Lobster' && item.level === 75)).toBe(true)
     expect(pot.some((item) => item.displayName === 'Raw Perch')).toBe(false)

@@ -509,7 +509,7 @@ PlayerSave applyCombatDefeat(GameDatabase db, PlayerSave save, num nowMs) {
       revokeCosmetic(
         save.copyWith(
           maxHp: maxHp,
-          currentHp: maxHp,
+          currentHp: 0,
           deathPauseUntil: isoFromMs(nowMs + pauseSec * 1000),
           hasEverDied: true,
           currentActionId: null,
@@ -521,6 +521,15 @@ PlayerSave applyCombatDefeat(GameDatabase db, PlayerSave save, num nowMs) {
     ),
     save.currentActivityId,
   );
+}
+
+/// HP restored when the death pause ends.
+num deathRecoveryHp(num maxHp) => math.max(1, (maxHp * 0.5).floor());
+
+/// Clears the death pause and restores half of current max HP.
+PlayerSave applyDeathRecovery(GameDatabase db, PlayerSave save) {
+  final maxHp = playerMaxHp(db, save);
+  return save.copyWith(maxHp: maxHp, currentHp: deathRecoveryHp(maxHp), deathPauseUntil: null);
 }
 
 /// Shown whenever an action is refused because the death pause is still running.
