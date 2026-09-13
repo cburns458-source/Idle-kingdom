@@ -342,7 +342,7 @@ SessionTickResult advanceSession(GameDatabase db, PlayerSave save, num nowMs, Ra
   if (isNotBlank(out.current.deathPauseUntil)) {
     if (deathPauseRemainingMs(out.current, nowMs) > 0) return out.result();
     final pauseEnded = jsDateParse(out.current.deathPauseUntil);
-    out.set(out.current.copyWith(deathPauseUntil: null));
+    out.set(applyDeathRecovery(db, out.current));
     _continueActivity(
       db,
       out,

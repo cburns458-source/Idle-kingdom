@@ -160,6 +160,12 @@ void main() {
     );
   });
 
+  test('fishing Tools tab lists the fishing pot', () {
+    final fishing = skillMenuView(db, fishingSkillId);
+    final tools = fishing.tabs.firstWhere((tab) => tab.id == 'tools').sections.first.entries;
+    expect(tools.any((row) => row.displayName == 'Fishing Pot' && row.level == 14), isTrue);
+  });
+
   test('fishing Pot fishing tab lists pot catches', () {
     final fishing = skillMenuView(db, fishingSkillId);
     final pot = fishing.tabs.firstWhere((tab) => tab.id == 'pot_fishing').sections.first.entries;

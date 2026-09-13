@@ -33,6 +33,7 @@ import 'top_hud.dart';
 import 'timers_view.dart';
 import 'tracker_view.dart';
 import 'wardrobe_sheet.dart';
+import 'game_popup.dart';
 import 'world_map_view.dart';
 
 enum GameScreen {
@@ -224,8 +225,11 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
     if (_questRewardQueued) return;
     final pending = controller.takePendingQuestCompletions();
     final timerCollects = controller.takePendingTimerCollects();
+    final roomAlerts = controller.takePendingTimerRoomAlerts();
     final levelUps = controller.takePendingSkillLevelUps();
-    if (pending.isEmpty && timerCollects.isEmpty && levelUps.isEmpty) return;
+    if (pending.isEmpty && timerCollects.isEmpty && roomAlerts.isEmpty && levelUps.isEmpty) {
+      return;
+    }
     _questRewardQueued = true;
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       try {
@@ -254,6 +258,32 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
         }
         for (final haul in timerCollects) {
           await showQuestRewards(context, questName: haul.title, rewards: haul.rewards);
+          if (!mounted) return;
+          if (haul.canRepeat) {
+            final replant = haul.kind == 'botany';
+            final item = controller.db.items
+                .where((row) => row.raw['Item ID'] == haul.inputItemId)
+                .firstOrNull;
+            final itemName = item?.raw['Display Name'] is String
+                ? item!.raw['Display Name']! as String
+                : haul.inputItemId;
+            final confirmed = await showGameAlert(
+              context: context,
+              title: replant ? 'Replant?' : 'Place pot again?',
+              message: replant
+                  ? 'Plant $itemName here again?'
+                  : 'Place the fishing pot here again?',
+              confirmLabel: replant ? 'Replant' : 'Place pot',
+              cancelLabel: 'Not now',
+            );
+            if (!mounted) return;
+            if (confirmed) {
+              controller.repeatTimerPlacement(haul.locationId, haul.kind, haul.inputItemId);
+            }
+          }
+        }
+        for (final alert in roomAlerts) {
+          await showGameAlert(context: context, message: alert);
           if (!mounted) return;
         }
         for (final notice in levelUps) {

@@ -67,4 +67,46 @@ void main() {
     expect(find.text('Timers'), findsOne);
     expect(find.text(recoveringBlockedReason), findsOne);
   });
+
+  testWidgets('collecting a patch offers to replant', (tester) async {
+    final controller = buildController(database, seed: _readyMeadowBotany(database));
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller, size: const Size(420, 900));
+
+    await openChinScreen(tester, 'Timers');
+    await tester.tap(find.widgetWithText(GameButton, 'Travel'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.text('Collect'), findsOne);
+    await tester.tap(find.widgetWithText(GameButton, 'Collect'));
+    await tester.pump();
+    expect(find.text('Replant?'), findsOne);
+    expect(find.text('Replant'), findsOne);
+    expect(find.text('Not now'), findsOne);
+  });
+
+  testWidgets('auto-collect with a full bag keeps the harvest and asks for room', (tester) async {
+    final controller = buildController(
+      database,
+      seed: _readyMeadowBotany(database).copyWith(
+        inventory: [
+          for (var index = 0; index < inventorySlotLimit; index++)
+            InventoryStack(itemId: 'FILL-$index', quantity: 1),
+        ],
+      ),
+    );
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller, size: const Size(420, 900));
+
+    await openChinScreen(tester, 'Timers');
+    await tester.tap(find.widgetWithText(GameButton, 'Travel'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.text(timerInventoryFullReason), findsOne);
+    expect(timerAtLocationKind(controller.save, 'LOC-0009', 'botany'), isNotNull);
+    // Reward popups use a Collect button. A full bag must not take the haul.
+    expect(find.text('Collect'), findsNothing);
+  });
 }

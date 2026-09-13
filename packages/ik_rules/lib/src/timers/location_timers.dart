@@ -4,6 +4,7 @@ import 'package:ik_content/ik_content.dart';
 import '../activity/rewards.dart';
 import '../activity/xp.dart';
 import '../inventory/add_items.dart';
+import '../inventory/capacity.dart';
 import '../production/inventory.dart';
 import '../production/recipes.dart';
 import '../quests/quests.dart';
@@ -18,6 +19,9 @@ const String grandFeastQuestId = 'QST-0001';
 const String shallowsLocationId = 'LOC-0043';
 
 const String fishingPotItemId = 'ITEM-0347';
+
+/// Ready timers stay in place when the bag cannot take the haul.
+const String timerInventoryFullReason = 'Come back with more room to collect your harvest/catch.';
 
 /// Deprecated alias for [fishingPotItemId].
 const String fishingTrapItemId = fishingPotItemId;
@@ -496,16 +500,37 @@ List<({String itemId, num fishingLevel, num xpEach})> potFishOptionsForLocation(
   ];
 }
 
-({String itemId, num quantity, num xp})? _rollFishingPotLoot(
+List<({String itemId, num quantity, num xp})> _rollFishingPotLoot(
   String locationId,
   num fishingLevel,
   num Function() random,
 ) {
-  final options = potFishOptionsForLocation(locationId, fishingLevel);
-  if (options.isEmpty) return null;
-  final pick = options[(random() * options.length).floor()];
-  final quantity = _rollInclusive(random, 6, 12);
-  return (itemId: pick.itemId, quantity: quantity, xp: pick.xpEach * quantity);
+  return potFishOptionsForLocation(locationId, fishingLevel).map((row) {
+    final quantity = _rollInclusive(random, 1, 3);
+    return (itemId: row.itemId, quantity: quantity, xp: row.xpEach * quantity);
+  }).toList();
+}
+
+String _timerItemName(GameDatabase db, String itemId) {
+  final name = db.items
+      .firstWhereOrNull((item) => item.raw['Item ID'] == itemId)
+      ?.raw['Display Name'];
+  return name is String ? name : itemId;
+}
+
+bool _canFitTimerGrants(
+  GameDatabase db,
+  PlayerSave save,
+  List<({String itemId, num quantity})> grants,
+) {
+  var probe = save;
+  for (final grant in grants) {
+    if (!canFitItemQuantity(probe, grant.itemId, grant.quantity, null, false, db)) {
+      return false;
+    }
+    probe = addItemsToInventory(probe, grant.itemId, grant.quantity, null, false, db).save;
+  }
+  return true;
 }
 
 num _rollInclusive(num Function() random, int min, int max) {
@@ -549,10 +574,7 @@ LocationTimerCollectResult collectLocationTimer(
     return LocationTimerCollectResult(ok: false, reason: 'Not ready yet (${remainSec}s left).');
   }
 
-  var next = save.copyWith(
-    locationTimers: _withoutLocationTimerKind(save.locationTimers, locationId, kind),
-  );
-  final loot = <LootGrant>[];
+  final grants = <({String itemId, num quantity})>[];
   var xpGained = timer.xpReward;
   final skillId = timer.skillId;
 
@@ -570,57 +592,42 @@ LocationTimerCollectResult collectLocationTimer(
     for (var i = 0; i < plantedCount; i++) {
       produceQty += _rollInclusive(rng, 1, 5).round();
     }
-    final granted = addItemsToInventory(next, outputId, produceQty, null, false, db);
-    next = granted.save;
-    final produceName = db.items
-        .firstWhereOrNull((item) => item.raw['Item ID'] == outputId)
-        ?.raw['Display Name'];
-    loot.add(
-      LootGrant(
-        itemId: outputId,
-        quantity: produceQty,
-        displayName: produceName is String ? produceName : outputId,
-      ),
-    );
+    grants.add((itemId: outputId, quantity: produceQty));
     var returned = 0;
     for (var i = 0; i < plantedCount; i++) {
       if (rng() < 0.5) returned += 1;
     }
-    if (returned > 0) {
-      final back = addItemsToInventory(next, timer.inputItemId, returned, null, false, db);
-      next = back.save;
-      final seedName = db.items
-          .firstWhereOrNull((item) => item.raw['Item ID'] == timer.inputItemId)
-          ?.raw['Display Name'];
-      loot.add(
-        LootGrant(
-          itemId: timer.inputItemId,
-          quantity: returned,
-          displayName: seedName is String ? seedName : timer.inputItemId,
-        ),
-      );
-    }
+    if (returned > 0) grants.add((itemId: timer.inputItemId, quantity: returned));
   } else if (timer.kind == 'fishing_pot') {
     final fishingLevel = getSkillProgress(save, 'SKL-0003').level;
     final rolled = _rollFishingPotLoot(timer.locationId, fishingLevel, rng);
-    if (rolled != null) {
-      final granted = addItemsToInventory(next, rolled.itemId, rolled.quantity, null, false, db);
-      next = granted.save;
-      xpGained = rolled.xp;
-      final name = db.items
-          .firstWhereOrNull((item) => item.raw['Item ID'] == rolled.itemId)
-          ?.raw['Display Name'];
-      loot.add(
-        LootGrant(
-          itemId: rolled.itemId,
-          quantity: rolled.quantity,
-          displayName: name is String ? name : rolled.itemId,
-        ),
-      );
+    xpGained = 0;
+    for (final row in rolled) {
+      grants.add((itemId: row.itemId, quantity: row.quantity));
+      xpGained += row.xp;
     }
-    next = addItemsToInventory(next, timer.inputItemId, 1, null, false, db).save;
+    grants.add((itemId: timer.inputItemId, quantity: 1));
   } else {
     return LocationTimerCollectResult(ok: false, reason: 'Unknown timer kind.');
+  }
+
+  if (!_canFitTimerGrants(db, save, grants)) {
+    return const LocationTimerCollectResult(ok: false, reason: timerInventoryFullReason);
+  }
+
+  var next = save.copyWith(
+    locationTimers: _withoutLocationTimerKind(save.locationTimers, locationId, kind),
+  );
+  final loot = <LootGrant>[];
+  for (final grant in grants) {
+    next = addItemsToInventory(next, grant.itemId, grant.quantity, null, false, db).save;
+    loot.add(
+      LootGrant(
+        itemId: grant.itemId,
+        quantity: grant.quantity,
+        displayName: _timerItemName(db, grant.itemId),
+      ),
+    );
   }
 
   next = applyXp(next, db, skillId, xpGained).save;

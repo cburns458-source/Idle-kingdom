@@ -6,6 +6,7 @@ import { createNewSave } from '../save/saveStore'
 import {
   applyCombatDefeat,
   applyCombatVictory,
+  applyDeathRecovery,
   beginCombatSave,
   isDeathPaused,
   resolveCombatRound,
@@ -373,9 +374,13 @@ describe('combat engine', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const save = createNewSave(launch)
     const defeated = applyCombatDefeat(launch, { ...save, currentHp: 0 }, Date.parse('2026-01-01T00:00:00.000Z'))
-    expect(defeated.currentHp).toBe(1000)
+    expect(defeated.currentHp).toBe(0)
     expect(defeated.combatEnemyId).toBeNull()
     expect(isDeathPaused(defeated, Date.parse('2026-01-01T00:00:10.000Z'))).toBe(true)
     expect(isDeathPaused(defeated, Date.parse('2026-01-01T00:00:31.000Z'))).toBe(false)
+    const recovered = applyDeathRecovery(launch, defeated)
+    expect(recovered.deathPauseUntil).toBeNull()
+    expect(recovered.currentHp).toBe(Math.floor(recovered.maxHp * 0.5))
+    expect(recovered.currentHp).toBeGreaterThan(0)
   })
 })

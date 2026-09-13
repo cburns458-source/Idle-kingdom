@@ -159,6 +159,7 @@ describe('skill menu entries', () => {
     expect(tools.some((item) => item.displayName === 'Net')).toBe(false)
     expect(tools.some((item) => item.displayName === 'Fishing Net')).toBe(false)
     expect(tools.some((item) => item.displayName.includes('Fishing Rod'))).toBe(true)
+    expect(tools.some((item) => item.displayName === 'Fishing Pot' && item.level === 14)).toBe(true)
   })
 
   it('lists pot fishing catches on the fishing Pot fishing tab', () => {

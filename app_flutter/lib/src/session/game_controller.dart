@@ -56,15 +56,23 @@ class CraftPopup {
 class TimerCollectNotice {
   const TimerCollectNotice({
     required this.locationId,
+    required this.kind,
+    required this.inputItemId,
     required this.title,
     required this.rewards,
     this.rewardBundle,
+    this.canRepeat = false,
   });
 
   final String locationId;
+  final String kind;
+  final String inputItemId;
   final String title;
   final List<String> rewards;
   final ActionRewardBundle? rewardBundle;
+
+  /// Botany always; fishing pots only when the site is not overfished.
+  final bool canRepeat;
 }
 
 /// Food eaten after a win, held so the stage can float the heal.
@@ -176,6 +184,7 @@ class GameController extends ChangeNotifier {
   String? _discoveryNotice;
   List<QuestArrivalCompletion> _pendingQuestCompletions = <QuestArrivalCompletion>[];
   List<TimerCollectNotice> _pendingTimerCollects = <TimerCollectNotice>[];
+  List<String> _pendingTimerRoomAlerts = <String>[];
   List<SkillLevelUpNotice> _pendingSkillLevelUps = <SkillLevelUpNotice>[];
   AutoEquipProposal? _autoEquip;
   CombatRoundEvent? _lastRound;
@@ -207,6 +216,13 @@ class GameController extends ChangeNotifier {
   List<TimerCollectNotice> takePendingTimerCollects() {
     final pending = List<TimerCollectNotice>.of(_pendingTimerCollects);
     _pendingTimerCollects = <TimerCollectNotice>[];
+    return pending;
+  }
+
+  /// Full-bag refusals that should stay a popup, including auto-collect.
+  List<String> takePendingTimerRoomAlerts() {
+    final pending = List<String>.of(_pendingTimerRoomAlerts);
+    _pendingTimerRoomAlerts = <String>[];
     return pending;
   }
 
@@ -959,7 +975,12 @@ class GameController extends ChangeNotifier {
     final before = save;
     final result = collectLocationTimer(db, before, locationId, kind, nowMs: session.clock());
     if (!result.ok) {
-      if (announceText) report(result.reason);
+      if (result.reason == timerInventoryFullReason) {
+        _pendingTimerRoomAlerts = [..._pendingTimerRoomAlerts, result.reason];
+        notifyListeners();
+      } else if (announceText) {
+        report(result.reason);
+      }
       return false;
     }
     final next = result.save!;
@@ -1016,12 +1037,45 @@ class GameController extends ChangeNotifier {
       loot: result.loot,
       goldGained: 0,
     );
+    final timer = timerAtLocationKind(before, locationId, kind);
+    final canRepeat = switch (kind) {
+      'botany' => true,
+      'fishing_pot' => canPlaceTrap(
+        db,
+        after,
+        fishingPotItemId,
+        locationId: locationId,
+        nowMs: session.clock(),
+      ).ok,
+      _ => false,
+    };
     return TimerCollectNotice(
       locationId: locationId,
+      kind: kind,
+      inputItemId: timer?.inputItemId ?? '',
       title: title.isEmpty ? 'Harvest' : title,
       rewards: rewards,
       rewardBundle: bundle,
+      canRepeat: canRepeat,
     );
+  }
+
+  /// Replants the last seed or places the pot again after a collect.
+  void repeatTimerPlacement(String locationId, String kind, String inputItemId) {
+    if (save.currentLocationId != locationId) {
+      report('Travel back to collect and replant.');
+      return;
+    }
+    if (kind == 'botany') {
+      final same = canPlantBotanySeed(db, save, inputItemId);
+      if (same.ok) {
+        plantBotanySeedHere(inputItemId);
+        return;
+      }
+      plantBestBotanySeedHere();
+      return;
+    }
+    placeTrapHere(inputItemId);
   }
 
   void toggleFavorite(String activityId) {

@@ -107,6 +107,7 @@ describe('session tick', () => {
 
     const after = advanceSession(db, paused, START_MS + 61_000, firstOfPool)
     expect(after.save.deathPauseUntil).toBeNull()
+    expect(after.save.currentHp).toBe(Math.floor(after.save.maxHp * 0.5))
     expect(after.events.map((event) => event.kind)).toContain('recovered')
   })
 

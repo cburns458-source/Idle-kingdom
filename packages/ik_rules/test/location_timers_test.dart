@@ -62,4 +62,72 @@ void main() {
     expect(placed.ok, isTrue);
     expect(placed.save!.discoveredTimerSpotIds, contains('fishing_pot:LOC-0003'));
   });
+
+  test('fishing pots roll 1-3 of each unlocked fish and return the pot', () {
+    var save = createNewSave(db, 0).copyWith(
+      currentLocationId: 'LOC-0003',
+      skills: const [SkillProgress(skillId: 'SKL-0003', level: 50, xp: 848633)],
+      inventory: const [InventoryStack(itemId: fishingPotItemId, quantity: 1)],
+    );
+    final placed = placeTrap(
+      db,
+      save,
+      fishingPotItemId,
+      nowMs: DateTime.utc(2026, 3, 1, 12).millisecondsSinceEpoch,
+    );
+    expect(placed.ok, isTrue);
+    save = placed.save!;
+    final collected = collectLocationTimer(
+      db,
+      save,
+      'LOC-0003',
+      'fishing_pot',
+      nowMs: DateTime.utc(2026, 3, 1, 18).millisecondsSinceEpoch,
+      random: () => 0,
+    );
+    expect(collected.ok, isTrue);
+    expect(
+      collected.loot.map((row) => row.itemId),
+      containsAll(<String>['ITEM-0352', 'ITEM-0354', fishingPotItemId]),
+    );
+    expect(collected.loot.any((row) => row.itemId == 'ITEM-0356'), isFalse);
+    for (final fishId in <String>['ITEM-0352', 'ITEM-0354']) {
+      final qty = collected.loot.firstWhere((row) => row.itemId == fishId).quantity;
+      expect(qty, inInclusiveRange(1, 3));
+    }
+  });
+
+  test('full inventory leaves a ready timer uncollected', () {
+    final save = createNewSave(db, 0).copyWith(
+      currentLocationId: 'LOC-0001',
+      inventory: [
+        for (var index = 0; index < inventorySlotLimit; index++)
+          InventoryStack(itemId: 'FILL-$index', quantity: 1),
+      ],
+      locationTimers: [
+        LocationTimer(
+          locationId: 'LOC-0001',
+          kind: 'botany',
+          inputItemId: 'ITEM-0324',
+          outputItemId: 'ITEM-0025',
+          outputQuantity: 1,
+          skillId: botanySkillId,
+          xpReward: 10,
+          startedAt: '2026-01-01T00:00:00.000Z',
+          durationMs: 1,
+        ),
+      ],
+    );
+    final collected = collectLocationTimer(
+      db,
+      save,
+      'LOC-0001',
+      'botany',
+      nowMs: DateTime.utc(2026, 1, 1, 1).millisecondsSinceEpoch,
+      random: () => 0,
+    );
+    expect(collected.ok, isFalse);
+    expect(collected.reason, timerInventoryFullReason);
+    expect(timerAtLocationKind(save, 'LOC-0001', 'botany'), isNotNull);
+  });
 }

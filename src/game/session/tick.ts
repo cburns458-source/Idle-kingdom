@@ -15,6 +15,7 @@ import { getSkillProgress } from '../activity/xp'
 import {
   applyCombatDefeat,
   applyCombatVictory,
+  applyDeathRecovery,
   deathPauseRemainingMs,
   getEnemy,
   resolveCombatRound,
@@ -374,7 +375,7 @@ export function advanceSession(
   if (out.current.deathPauseUntil) {
     if (deathPauseRemainingMs(out.current, nowMs) > 0) return out.result()
     const pauseEnded = Date.parse(out.current.deathPauseUntil)
-    out.set({ ...out.current, deathPauseUntil: null })
+    out.set(applyDeathRecovery(db, out.current))
     continueActivity(
       db,
       out,
