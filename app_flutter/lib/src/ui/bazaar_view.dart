@@ -191,7 +191,7 @@ class _BazaarViewState extends State<BazaarView> {
           Expanded(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-              child: net.isSignedIn ? _body() : _signedOut(),
+              child: _tradable ? _body() : _closed(),
             ),
           ),
         ],
@@ -208,7 +208,14 @@ class _BazaarViewState extends State<BazaarView> {
     return waiting == 0 ? label : '$label ($waiting)';
   }
 
-  Widget _signedOut() {
+  /// Whether there is an exchange to read at all.
+  ///
+  /// A local demo has no other players in it, so its book would be empty
+  /// whatever was drawn; saying so beats an empty list a player would take for a
+  /// quiet market and keep checking.
+  bool get _tradable => net.isSignedIn && net.mode != MultiplayerMode.local;
+
+  Widget _closed() {
     return GamePanel(
       framed: true,
       child: SignedOutNotice(

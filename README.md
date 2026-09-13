@@ -37,4 +37,6 @@ npm test                    # The reference rules, and the fixture drift check
   reads, not a copy on one phone. A build with no Supabase project keeps those
   rows on the device so tests and local development still run. That fallback is
   not a player-facing offline mode.
-- `supabase/migrations/` is applied in order. Guilds need through `008`.
+- `supabase/migrations/` is applied in order. Guilds need through `008`; the
+  Bazaar exchange needs `024` and the `bazaar` edge function deployed, because it
+  is the one part of the game the server decides rather than stores.
