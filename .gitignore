@@ -30,3 +30,7 @@ build/
 *.iml
 .flutter-plugins
 .flutter-plugins-dependencies
+
+# Supabase CLI scratch state. Written by `functions deploy` and friends, and it
+# records which project the checkout is linked to, which is per-machine.
+supabase/.temp/
