@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:idle_kingdoms/src/session/activity_icons_pref.dart';
 import 'package:idle_kingdoms/src/session/hud_level_pref.dart';
