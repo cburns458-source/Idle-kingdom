@@ -181,11 +181,27 @@ player to arrange than the game inventing somewhere to keep the rest.
 
 ## Deploying
 
+Apply `supabase/migrations/024_bazaar_market.sql` first, or every action refuses:
+the function only reads and writes through that migration's RPCs.
+
+Then the function. `.github/workflows/deploy.yml` does it on a push to
+`test-launch` once two repository secrets exist:
+
+| Secret | Where to get it |
+| --- | --- |
+| `SUPABASE_ACCESS_TOKEN` | Supabase dashboard, Account → Access Tokens |
+| `SUPABASE_PROJECT_REF` | The project's ref, the `abcdefgh` in its dashboard URL |
+
+Until both are set the deploy job warns and skips rather than failing. By hand,
+from the repo root, is the same thing:
+
 ```bash
 supabase functions deploy bazaar
 ```
 
-Needs `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY`, all
-of which Supabase injects into deployed functions. `verify_jwt` is on, declared in
-`supabase/config.toml`. `supabase/migrations/024_bazaar_market.sql` has to be
-applied first, or every action refuses.
+Run it from the root and not from `supabase/functions/bazaar/`, because the
+function imports `../_shared/save_items.ts` and reads `verify_jwt` from
+`supabase/config.toml`; both are outside that directory.
+
+`SUPABASE_URL`, `SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY` need no
+setting up — Supabase injects all three into deployed functions.
