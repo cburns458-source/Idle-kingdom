@@ -14,25 +14,17 @@ import 'social_bits.dart';
 
 /// The exchange, opened from the hamburger wherever the player is standing.
 ///
-/// Four things a player wants from a market, in the order they want them: what
-/// is on offer, what they can put up, what they have open, and what they have
-/// already done. The collection box sits under the offers, because that is where
-/// a finished offer goes and where a cancelled one comes back.
+/// The screen is the player's three slots and nothing else. There is no tab bar
+/// and no book of everybody's offers: a slot is either empty, in which case it
+/// offers to become a buy or a sell, or it holds one order and shows how far
+/// through it is. Buying and selling are things a slot does, so they are not
+/// also buttons somewhere else.
 ///
 /// Nothing here decides anything. Every read and every write goes through
 /// [MultiplayerController] to the server, which is the only thing that knows
 /// what a save can afford; a save that comes back from a placement is adopted
 /// rather than worked out. The Citadel notice board is a separate screen and
 /// stays what it is.
-enum BazaarTab { buy, sell, offers, history }
-
-const Map<BazaarTab, String> bazaarTabLabels = <BazaarTab, String>{
-  BazaarTab.buy: 'Buy',
-  BazaarTab.sell: 'Sell',
-  BazaarTab.offers: 'Offers',
-  BazaarTab.history: 'History',
-};
-
 class BazaarView extends StatefulWidget {
   const BazaarView({
     super.key,
@@ -49,12 +41,37 @@ class BazaarView extends StatefulWidget {
   State<BazaarView> createState() => _BazaarViewState();
 }
 
+/// Where the screen is. Null is the three slots; the rest are one deep, never
+/// stacked, so closing always lands back on the slots.
+sealed class _BazaarRoute {
+  const _BazaarRoute();
+}
+
+/// Choosing what to trade: the item list for a buy, the bag for a sell.
+class _PickRoute extends _BazaarRoute {
+  const _PickRoute(this.side);
+  final BazaarSide side;
+}
+
+/// The chosen item, with a quantity and a price to name.
+class _ComposeRoute extends _BazaarRoute {
+  const _ComposeRoute(this.side, this.itemId);
+  final BazaarSide side;
+  final String itemId;
+}
+
 class _BazaarViewState extends State<BazaarView> {
   final TextEditingController _search = TextEditingController();
-  BazaarTab _tab = BazaarTab.buy;
+  late final CodexIndex _codex = CodexIndex(controller.db);
 
-  /// The item whose book is open, or null while the list is being browsed.
-  String? _looking;
+  _BazaarRoute? _route;
+
+  /// Group filter on the buy list, the same one the Codex offers.
+  int? _group;
+
+  /// What the two sections on the compose page currently say.
+  int _quantity = 1;
+  int _price = 1;
 
   GameController get controller => widget.controller;
   MultiplayerController get net => widget.multiplayer;
@@ -81,78 +98,60 @@ class _BazaarViewState extends State<BazaarView> {
 
   String _name(String itemId) => _item(itemId)?.displayName ?? itemId;
 
-  void _look(String? itemId) {
-    setState(() => _looking = itemId);
-    net.refreshMarket(itemId: itemId);
+  MarketPrice? _guide(String itemId) => net.market.pricesByItem[itemId];
+
+  /// What the exchange would suggest an item is worth: what it has been trading
+  /// at, or failing that what a shop would give, which is at least a number a
+  /// player recognises.
+  int _suggestedPrice(String itemId) {
+    final guide = _guide(itemId)?.averagePrice.floor();
+    if (guide != null && guide > 0) return guide;
+    return baseSellValue(_item(itemId))?.floor().clamp(1, bazaarOfferValueCap) ?? 1;
   }
 
-  void _selectTab(BazaarTab tab) {
+  void _pick(BazaarSide side) {
     setState(() {
-      _tab = tab;
-      _looking = null;
+      _route = _PickRoute(side);
+      _group = null;
       _search.clear();
     });
-    net.refreshMarket();
   }
 
-  /// Asks how many and at what price, then places the offer.
-  ///
-  /// Quantity first so the price keypad can cap itself: an offer may not be
-  /// worth more than a save can hold in gold, and that is a limit on the two
-  /// numbers together rather than on either of them.
-  Future<void> _offer(BazaarSide side, String itemId, {num? onHand}) async {
-    final buying = side == bazaarBuy;
-    final guide = net.market.pricesByItem[itemId];
-    final name = _name(itemId);
-    final base = baseSellValue(_item(itemId));
+  void _compose(BazaarSide side, String itemId) {
+    final onHand = bazaarTradableOnHand(save, itemId, controller.db).floor();
+    setState(() {
+      _route = _ComposeRoute(side, itemId);
+      // A sell defaults to the whole stack, because that is usually the intent;
+      // a buy has no such number to borrow, so it starts at one.
+      _quantity = side == bazaarSell ? onHand.clamp(1, bazaarOfferValueCap) : 1;
+      _price = _suggestedPrice(itemId);
+    });
+  }
 
-    final maxQuantity = buying
-        ? bazaarOfferValueCap
-        : (onHand ?? bazaarTradableOnHand(save, itemId, controller.db)).floor();
-    if (maxQuantity < 1) {
-      net.announce('You are not carrying any $name. $bazaarWithdrawFirst');
+  /// Closes one step: the picker or the compose page first, the screen last.
+  void _close() {
+    if (_route != null) {
+      setState(() {
+        _route = null;
+        _search.clear();
+      });
       return;
     }
+    widget.onClose();
+  }
 
-    final quantity = await askQuantity(
-      context,
-      title: name,
-      subtitle: buying ? 'How many to buy' : 'How many to sell',
-      details: <String>[
-        if (guide case final price?) 'Guide price: ${formatThousands(price.averagePrice)} each',
-        if (guide == null && base != null) 'Shop value: ${formatThousands(base)} each',
-        if (!buying) 'Carrying: ${formatThousands(maxQuantity)}',
-      ],
-      confirmLabel: 'Next',
-      max: maxQuantity,
-    );
-    if (quantity == null || !mounted) return;
-
-    final priceCap = (bazaarOfferValueCap / quantity).floor();
-    final suggested = guide?.averagePrice.floor() ?? base?.floor() ?? 1;
-    final unitPrice = await askQuantity(
-      context,
-      title: name,
-      subtitle: buying ? 'Price per item to pay' : 'Price per item to ask',
-      details: <String>[
-        'Quantity: ${formatThousands(quantity)}',
-        if (guide case final price?) 'Guide price: ${formatThousands(price.averagePrice)} each',
-        if (!buying) bazaarTaxLine(suggested),
-      ],
-      confirmLabel: buying ? 'Buy' : 'Sell',
-      initialValue: suggested.clamp(1, priceCap),
-      max: priceCap,
-    );
-    if (unitPrice == null || !mounted) return;
-
+  Future<void> _place(BazaarSide side, String itemId) async {
     await net.placeMarketOffer(
       side: side,
       itemId: itemId,
-      unitPrice: unitPrice,
-      quantity: quantity,
+      unitPrice: _price,
+      quantity: _quantity,
       save: save,
       onSaved: controller.commitLoadout,
     );
+    if (!mounted) return;
+    // Placed or refused, the slots are where the answer shows.
+    setState(() => _route = null);
   }
 
   @override
@@ -163,35 +162,18 @@ class _BazaarViewState extends State<BazaarView> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           PageHeader(
-            title: 'Bazaar',
-            onClose: widget.onClose,
+            title: _title,
+            onClose: _close,
             trailing: GoldAmount(
               amount: save.gold,
               style: const TextStyle(color: Palette.gold),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Wrap(
-              spacing: 6,
-              runSpacing: 6,
-              children: [
-                for (final tab in BazaarTab.values)
-                  GameButton(
-                    label: _tabLabel(tab),
-                    compact: true,
-                    selected: tab == _tab,
-                    tone: tab == _tab ? GameButtonTone.primary : GameButtonTone.secondary,
-                    onPressed: () => _selectTab(tab),
-                  ),
-              ],
             ),
           ),
           const SizedBox(height: 8),
           Expanded(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-              child: _tradable ? _body() : _closed(),
+              child: !_tradable ? _closed() : _routed(),
             ),
           ),
         ],
@@ -199,20 +181,26 @@ class _BazaarViewState extends State<BazaarView> {
     );
   }
 
-  /// The Offers tab counts what is waiting, so a filled order is noticed without
-  /// the player having to go and look.
-  String _tabLabel(BazaarTab tab) {
-    final label = bazaarTabLabels[tab]!;
-    if (tab != BazaarTab.offers) return label;
-    final waiting = net.market.collect.length;
-    return waiting == 0 ? label : '$label ($waiting)';
+  String get _title {
+    return switch (_route) {
+      _PickRoute(:final side) => side == bazaarBuy ? 'Buy' : 'Sell',
+      _ComposeRoute(:final itemId) => _name(itemId),
+      null => 'Bazaar',
+    };
+  }
+
+  Widget _routed() {
+    return switch (_route) {
+      _PickRoute(:final side) => side == bazaarBuy ? _buyList() : _sellList(),
+      _ComposeRoute(:final side, :final itemId) => _composePage(side, itemId),
+      null => _slots(),
+    };
   }
 
   /// Whether there is an exchange to read at all.
   ///
-  /// A local demo has no other players in it, so its book would be empty
-  /// whatever was drawn; saying so beats an empty list a player would take for a
-  /// quiet market and keep checking.
+  /// A local demo has no other players in it, so its slots would never fill
+  /// whatever was drawn; saying so beats a screen a player would wait on.
   bool get _tradable => net.isSignedIn && net.mode != MultiplayerMode.local;
 
   Widget _closed() {
@@ -226,230 +214,12 @@ class _BazaarViewState extends State<BazaarView> {
     );
   }
 
-  Widget _body() {
-    switch (_tab) {
-      case BazaarTab.buy:
-        return _looking == null ? _browse() : _book(_looking!);
-      case BazaarTab.sell:
-        return _looking == null ? _bag() : _book(_looking!);
-      case BazaarTab.offers:
-        return _offers();
-      case BazaarTab.history:
-        return _history();
-    }
-  }
+  // --- The three slots -------------------------------------------------------
 
-  // --- Buy: browse what is on offer ------------------------------------------
-
-  Widget _browse() {
-    final query = _search.text.trim().toLowerCase();
-    final summaries = <String, MarketSummary>{for (final row in net.market.market) row.itemId: row};
-    final prices = net.market.pricesByItem;
-    final ids =
-        <String>{...summaries.keys, ...prices.keys}
-            .where((itemId) => bazaarItemTradable(controller.db, itemId))
-            .where((itemId) => _matches(itemId, query))
-            .toList()
-          ..sort((a, b) {
-            final sellingA = summaries[a]?.sellQuantity ?? 0;
-            final sellingB = summaries[b]?.sellQuantity ?? 0;
-            if (sellingA != sellingB) return sellingB.compareTo(sellingA);
-            return _name(a).compareTo(_name(b));
-          });
-
-    return _framed(
-      blurb: bazaarBlurbMarket,
-      search: 'Search the Bazaar',
-      children: [
-        if (ids.isEmpty)
-          MutedText(query.isEmpty ? bazaarEmptyBook : 'Nothing on offer matches.')
-        else
-          for (final itemId in ids)
-            _Row(
-              item: _item(itemId),
-              title: _name(itemId),
-              lines: <String>[
-                if (summaries[itemId] case final row? when row.bestAsk > 0)
-                  'Cheapest: ${formatThousands(row.bestAsk)} · '
-                      '${formatThousands(row.sellQuantity)} on offer'
-                else
-                  'Nobody selling',
-                if (prices[itemId] case final price?)
-                  'Guide ${formatThousands(price.averagePrice)} · '
-                      'last ${formatThousands(price.lastPrice)}',
-              ],
-              onTap: () => _look(itemId),
-            ),
-      ],
-    );
-  }
-
-  bool _matches(String itemId, String query) {
-    if (query.isEmpty) return true;
-    return _name(itemId).toLowerCase().contains(query) || itemId.toLowerCase().contains(query);
-  }
-
-  // --- Sell: what the bag can put up -----------------------------------------
-
-  Widget _bag() {
-    final query = _search.text.trim().toLowerCase();
-    final held = <String, num>{};
-    final blocked = <String, String>{};
-    for (final stack in save.inventory) {
-      final refusal = bazaarStackRefusal(stack, controller.db);
-      if (refusal != null) {
-        if (!isGoldCurrencyItem(stack.itemId, controller.db)) {
-          blocked.putIfAbsent(stack.itemId, () => refusal);
-        }
-        continue;
-      }
-      if (!bazaarItemTradable(controller.db, stack.itemId)) {
-        blocked.putIfAbsent(stack.itemId, () => bazaarUntradableItem);
-        continue;
-      }
-      held[stack.itemId] = (held[stack.itemId] ?? 0) + stack.quantity;
-    }
-
-    final ids = held.keys.where((itemId) => _matches(itemId, query)).toList()
-      ..sort((a, b) => _name(a).compareTo(_name(b)));
-    final prices = net.market.pricesByItem;
-    final summaries = <String, MarketSummary>{for (final row in net.market.market) row.itemId: row};
-
-    return _framed(
-      blurb: bazaarWithdrawFirst,
-      search: 'Search your bag',
-      children: [
-        if (ids.isEmpty)
-          MutedText(
-            held.isEmpty ? 'Nothing in your bag can be listed.' : 'Nothing in your bag matches.',
-          )
-        else
-          for (final itemId in ids)
-            _Row(
-              item: _item(itemId),
-              title: _name(itemId),
-              lines: <String>[
-                'Carrying ${formatThousands(held[itemId]!)}',
-                if (summaries[itemId] case final row? when row.bestBid > 0)
-                  'Best offer: ${formatThousands(row.bestBid)} each'
-                else if (prices[itemId] case final price?)
-                  'Guide ${formatThousands(price.averagePrice)} each'
-                else if (baseSellValue(_item(itemId)) case final value?)
-                  'Shop value ${formatThousands(value)} each',
-              ],
-              onTap: () => _look(itemId),
-            ),
-        if (blocked.isNotEmpty) ...[
-          const SizedBox(height: 10),
-          const Text('Staying with you', style: TextStyle(fontWeight: FontWeight.w400)),
-          for (final entry in blocked.entries) MutedText('${_name(entry.key)} — ${entry.value}'),
-        ],
-      ],
-    );
-  }
-
-  // --- One item's book -------------------------------------------------------
-
-  Widget _book(String itemId) {
-    final buying = _tab == BazaarTab.buy;
-    final guide = net.market.pricesByItem[itemId];
-    final asks = net.market.offers.where((row) => !row.isBuy).toList()
-      ..sort((a, b) => a.unitPrice.compareTo(b.unitPrice));
-    final bids = net.market.offers.where((row) => row.isBuy).toList()
-      ..sort((a, b) => b.unitPrice.compareTo(a.unitPrice));
-    final onHand = bazaarTradableOnHand(save, itemId, controller.db);
-
-    return GamePanel(
-      framed: true,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            children: [
-              ItemIcon(item: _item(itemId), size: 34),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      _name(itemId),
-                      style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w400),
-                    ),
-                    MutedText(
-                      guide == null
-                          ? 'No trades yet.'
-                          : 'Guide ${formatThousands(guide.averagePrice)} · '
-                                'last ${formatThousands(guide.lastPrice)} · '
-                                '${formatThousands(guide.volume)} traded',
-                    ),
-                  ],
-                ),
-              ),
-              GameButton(
-                label: 'Back',
-                tone: GameButtonTone.secondary,
-                compact: true,
-                onPressed: () => _look(null),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Expanded(
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _Depth(
-                    heading: 'On offer',
-                    empty: 'Nobody is selling.',
-                    rows: asks,
-                    highlightFirst: buying,
-                  ),
-                  const SizedBox(height: 10),
-                  _Depth(
-                    heading: 'Wanted',
-                    empty: 'Nobody is buying.',
-                    rows: bids,
-                    highlightFirst: !buying,
-                  ),
-                  const SizedBox(height: 10),
-                  MutedText(
-                    buying
-                        ? 'You pay the cheapest offer, not what you name. '
-                              'Anything you named above it comes back to you.'
-                        : 'You are paid the best offer, not what you ask. '
-                              '${bazaarTaxLine(guide?.averagePrice ?? 0)}',
-                  ),
-                  const SizedBox(height: 8),
-                  if (buying)
-                    GameButton(
-                      label: 'Offer to buy',
-                      onPressed: net.busy ? null : () => _offer(bazaarBuy, itemId),
-                    )
-                  else if (onHand < 1)
-                    MutedText('You are not carrying any. $bazaarWithdrawFirst')
-                  else
-                    GameButton(
-                      label: 'Offer to sell',
-                      onPressed: net.busy ? null : () => _offer(bazaarSell, itemId, onHand: onHand),
-                    ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // --- Offers and the collection box -----------------------------------------
-
-  Widget _offers() {
+  Widget _slots() {
     final slots = bazaarSlotViews(net.market.orders);
     final box = net.market.collect;
     return _framed(
-      blurb: 'Three offers at a time. Cancelling returns whatever has not traded.',
       children: [
         for (final slot in slots) ...[
           _Slot(
@@ -457,30 +227,24 @@ class _BazaarViewState extends State<BazaarView> {
             name: slot.order == null ? '' : _name(slot.order!.itemId),
             item: slot.order == null ? null : _item(slot.order!.itemId),
             busy: net.busy,
+            onBuy: () => _pick(bazaarBuy),
+            onSell: () => _pick(bazaarSell),
             onCancel: slot.order == null ? null : () => net.cancelMarketOffer(slot.order!.id),
           ),
           const SizedBox(height: 8),
         ],
-        const SizedBox(height: 4),
-        Row(
-          children: [
-            const Expanded(
-              child: Text(
-                'Collection box',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
-              ),
-            ),
-            if (box.isNotEmpty)
-              GameButton(
-                label: 'Collect',
-                compact: true,
-                onPressed: net.busy
-                    ? null
-                    : () => net.collectMarketBox(save, controller.commitLoadout),
-              ),
-          ],
+        _Heading(
+          title: 'Collection box',
+          action: box.isEmpty
+              ? null
+              : GameButton(
+                  label: 'Collect',
+                  compact: true,
+                  onPressed: net.busy
+                      ? null
+                      : () => net.collectMarketBox(save, controller.commitLoadout),
+                ),
         ),
-        const SizedBox(height: 6),
         if (box.isEmpty)
           const MutedText(bazaarEmptyCollection)
         else
@@ -492,6 +256,22 @@ class _BazaarViewState extends State<BazaarView> {
                   : '${_name(entry.itemId!)} ×${formatThousands(entry.quantity)}',
               lines: <String>[_collectReason(entry.reason)],
               gold: entry.isGold,
+            ),
+        const _Heading(title: 'Recent trades'),
+        if (net.market.trades.isEmpty)
+          const MutedText(bazaarEmptyHistory)
+        else
+          for (final trade in net.market.trades)
+            _Row(
+              item: _item(trade.itemId),
+              title:
+                  '${trade.isBuy ? 'Bought' : 'Sold'} '
+                  '${_name(trade.itemId)} ×${formatThousands(trade.quantity)}',
+              lines: <String>[
+                '${formatThousands(trade.unitPrice)} each · '
+                    '${formatThousands(trade.net)} gold ${trade.isBuy ? 'paid' : 'received'}',
+                if (trade.tax > 0) 'Tax ${formatThousands(trade.tax)}',
+              ],
             ),
       ],
     );
@@ -512,49 +292,258 @@ class _BazaarViewState extends State<BazaarView> {
     }
   }
 
-  // --- History ---------------------------------------------------------------
+  // --- Buy: everything the exchange deals in ---------------------------------
 
-  Widget _history() {
-    final trades = net.market.trades;
+  Widget _buyList() {
+    final rows = _codex
+        .itemsMatching(group: _group, query: _search.text)
+        .where((entry) => bazaarItemTradable(controller.db, entry.itemId))
+        .toList();
+
     return _framed(
-      blurb: 'Your last $bazaarHistoryLength trades.',
-      children: [
-        if (trades.isEmpty)
-          const MutedText(bazaarEmptyHistory)
-        else
-          for (final trade in trades)
-            _Row(
-              item: _item(trade.itemId),
-              title:
-                  '${trade.isBuy ? 'Bought' : 'Sold'} '
-                  '${_name(trade.itemId)} ×${formatThousands(trade.quantity)}',
-              lines: <String>[
-                '${formatThousands(trade.unitPrice)} each · '
-                    '${formatThousands(trade.net)} gold ${trade.isBuy ? 'paid' : 'received'}',
-                if (trade.tax > 0) 'Tax ${formatThousands(trade.tax)}',
-              ],
+      search: 'Search for an item',
+      // The whole catalogue, not only what is on offer: a buy order is worth
+      // placing precisely when nobody is selling yet.
+      above: SizedBox(
+        height: 40,
+        child: ListView(
+          scrollDirection: Axis.horizontal,
+          children: [
+            _FilterChip(
+              label: 'All',
+              selected: _group == null,
+              onPressed: () => setState(() => _group = null),
             ),
+            for (final group in inventoryGroupOrder) ...[
+              const SizedBox(width: 6),
+              _FilterChip(
+                label: inventoryGroupLabel(group),
+                selected: _group == group,
+                onPressed: () => setState(() => _group = group),
+              ),
+            ],
+          ],
+        ),
+      ),
+      children: [
+        if (rows.isEmpty)
+          const MutedText('Nothing the Bazaar deals in matches.')
+        else
+          for (final entry in rows)
+            _Row(
+              item: _item(entry.itemId),
+              title: entry.displayName,
+              lines: <String>[_priceLine(entry.itemId)],
+              onTap: () => _compose(bazaarBuy, entry.itemId),
+            ),
+      ],
+    );
+  }
+
+  /// What an item has been going for, which is the only price worth quoting now
+  /// that the screen no longer shows anybody's individual offers.
+  String _priceLine(String itemId) {
+    final guide = _guide(itemId);
+    if (guide != null) {
+      return 'Average ${formatThousands(guide.averagePrice)} · '
+          'last ${formatThousands(guide.lastPrice)}';
+    }
+    final base = baseSellValue(_item(itemId));
+    return base == null ? 'No trades yet' : 'No trades yet · shop value ${formatThousands(base)}';
+  }
+
+  // --- Sell: what the bag can put up -----------------------------------------
+
+  Widget _sellList() {
+    final query = _search.text.trim().toLowerCase();
+    final held = <String, num>{};
+    final blocked = <String, String>{};
+    for (final stack in save.inventory) {
+      final refusal = bazaarStackRefusal(stack, controller.db);
+      if (refusal != null) {
+        if (!isGoldCurrencyItem(stack.itemId, controller.db)) {
+          blocked.putIfAbsent(stack.itemId, () => refusal);
+        }
+        continue;
+      }
+      if (!bazaarItemTradable(controller.db, stack.itemId)) {
+        blocked.putIfAbsent(stack.itemId, () => bazaarUntradableItem);
+        continue;
+      }
+      held[stack.itemId] = (held[stack.itemId] ?? 0) + stack.quantity;
+    }
+
+    final ids =
+        held.keys
+            .where(
+              (itemId) =>
+                  query.isEmpty ||
+                  _name(itemId).toLowerCase().contains(query) ||
+                  itemId.toLowerCase().contains(query),
+            )
+            .toList()
+          ..sort((a, b) => _name(a).compareTo(_name(b)));
+
+    return _framed(
+      blurb: bazaarWithdrawFirst,
+      search: 'Search your bag',
+      children: [
+        if (ids.isEmpty)
+          MutedText(
+            held.isEmpty ? 'Nothing in your bag can be listed.' : 'Nothing in your bag matches.',
+          )
+        else
+          for (final itemId in ids)
+            _Row(
+              item: _item(itemId),
+              title: _name(itemId),
+              lines: <String>['Carrying ${formatThousands(held[itemId]!)}', _priceLine(itemId)],
+              onTap: () => _compose(bazaarSell, itemId),
+            ),
+        if (blocked.isNotEmpty) ...[
+          const _Heading(title: 'Staying with you'),
+          for (final entry in blocked.entries) MutedText('${_name(entry.key)} — ${entry.value}'),
+        ],
+      ],
+    );
+  }
+
+  // --- The item, a quantity, and a price -------------------------------------
+
+  Widget _composePage(BazaarSide side, String itemId) {
+    final buying = side == bazaarBuy;
+    final guide = _guide(itemId);
+    final onHand = bazaarTradableOnHand(save, itemId, controller.db).floor();
+    final total = _price * _quantity;
+
+    // Both numbers are capped by what the pair may be worth together rather than
+    // by either alone, so each keypad's ceiling depends on the other's value.
+    final quantityCap = buying ? (bazaarOfferValueCap / _price).floor() : onHand;
+    final priceCap = (bazaarOfferValueCap / _quantity).floor();
+    final short = buying && save.gold < total;
+
+    return _framed(
+      children: [
+        GamePanel(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+          child: Row(
+            children: [
+              ItemIcon(item: _item(itemId), size: 40),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _name(itemId),
+                      style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w400),
+                    ),
+                    MutedText(
+                      guide == null
+                          ? 'No average price yet — you are naming it.'
+                          : 'Average Bazaar price '
+                                '${formatThousands(guide.averagePrice)} · '
+                                '${formatThousands(guide.volume)} traded',
+                    ),
+                    if (!buying) MutedText('Carrying ${formatThousands(onHand)}'),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+        _Field(
+          label: 'Quantity',
+          value: formatThousands(_quantity),
+          detail: buying ? 'How many to buy' : 'How many to sell',
+          onTap: net.busy
+              ? null
+              : () async {
+                  final chosen = await askQuantity(
+                    context,
+                    title: _name(itemId),
+                    subtitle: buying ? 'How many to buy' : 'How many to sell',
+                    details: <String>[if (!buying) 'Carrying: ${formatThousands(onHand)}'],
+                    confirmLabel: 'Set quantity',
+                    initialValue: _quantity.clamp(1, quantityCap < 1 ? 1 : quantityCap),
+                    max: quantityCap,
+                  );
+                  if (chosen == null || !mounted) return;
+                  setState(() => _quantity = chosen);
+                },
+        ),
+        const SizedBox(height: 8),
+        _Field(
+          label: 'Price each',
+          value: formatThousands(_price),
+          detail: buying ? 'Most you will pay per item' : 'Least you will take per item',
+          onTap: net.busy
+              ? null
+              : () async {
+                  final chosen = await askQuantity(
+                    context,
+                    title: _name(itemId),
+                    subtitle: buying ? 'Price per item to pay' : 'Price per item to ask',
+                    details: <String>[
+                      'Quantity: ${formatThousands(_quantity)}',
+                      if (guide case final price?)
+                        'Average: ${formatThousands(price.averagePrice)} each',
+                      if (!buying) bazaarTaxLine(_price),
+                    ],
+                    confirmLabel: 'Set price',
+                    initialValue: _price.clamp(1, priceCap < 1 ? 1 : priceCap),
+                    max: priceCap,
+                  );
+                  if (chosen == null || !mounted) return;
+                  setState(() => _price = chosen);
+                },
+        ),
+        const SizedBox(height: 10),
+        MutedText(
+          buying
+              ? 'Costs ${formatThousands(total)} gold, held until it trades. '
+                    'You pay the cheapest offer, not what you name, and the '
+                    'difference comes back to you.'
+              : 'Worth ${formatThousands(total)} gold, '
+                    '${formatThousands(bazaarSellerReceives(_price, _quantity))} after tax. '
+                    'You are paid the best offer, not what you ask.',
+        ),
+        const SizedBox(height: 10),
+        if (short)
+          MutedText(
+            'You have ${formatThousands(save.gold)} gold, and this needs '
+            '${formatThousands(total)}.',
+          )
+        else if (!buying && onHand < 1)
+          const MutedText('You are not carrying any. $bazaarWithdrawFirst')
+        else
+          GameButton(
+            label: buying ? 'Place buy order' : 'Place sell order',
+            onPressed: net.busy ? null : () => _place(side, itemId),
+          ),
       ],
     );
   }
 
   // --- Shared frame ----------------------------------------------------------
 
-  Widget _framed({required String blurb, String? search, required List<Widget> children}) {
+  Widget _framed({String? blurb, String? search, Widget? above, required List<Widget> children}) {
     return GamePanel(
       framed: true,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          MutedText(blurb),
+          if (blurb != null) MutedText(blurb),
           if (search != null) ...[
-            const SizedBox(height: 8),
+            if (blurb != null) const SizedBox(height: 8),
             TextField(
               controller: _search,
               decoration: InputDecoration(hintText: search, isDense: true),
               onChanged: (_) => setState(() {}),
             ),
           ],
+          if (above != null) ...[const SizedBox(height: 8), above],
           const SizedBox(height: 10),
           Expanded(
             child: SingleChildScrollView(
@@ -575,6 +564,75 @@ String bazaarTaxLine(num unitPrice) {
   return 'Sales over $bazaarTaxThreshold gold an item pay $bazaarTaxPercent%.';
 }
 
+/// A titled break between the parts of a page.
+class _Heading extends StatelessWidget {
+  const _Heading({required this.title, this.action});
+
+  final String title;
+  final Widget? action;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 6, bottom: 6),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w400)),
+          ),
+          ?action,
+        ],
+      ),
+    );
+  }
+}
+
+/// One of the two numbers an offer needs, and the keypad that changes it.
+class _Field extends StatelessWidget {
+  const _Field({
+    required this.label,
+    required this.value,
+    required this.detail,
+    required this.onTap,
+  });
+
+  final String label;
+  final String value;
+  final String detail;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GamePanel(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+      onTap: onTap,
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label, style: const TextStyle(fontWeight: FontWeight.w400)),
+                MutedText(detail),
+              ],
+            ),
+          ),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w400,
+              color: Palette.parchmentText,
+            ),
+          ),
+          const SizedBox(width: 6),
+          const Icon(Icons.edit_outlined, size: 16, color: Palette.muted),
+        ],
+      ),
+    );
+  }
+}
+
 /// One line in a list: an icon, a title, and whatever is worth saying under it.
 class _Row extends StatelessWidget {
   const _Row({required this.title, required this.lines, this.item, this.onTap, this.gold = false});
@@ -593,7 +651,7 @@ class _Row extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       child: Row(
         children: [
-          if (gold) const GoldAmount(amount: 0, size: 22) else ItemIcon(item: item, size: 30),
+          if (gold) const GoldCoin() else ItemIcon(item: item, size: 30),
           const SizedBox(width: 8),
           Expanded(
             child: Column(
@@ -617,62 +675,36 @@ class _Row extends StatelessWidget {
   }
 }
 
-/// One side of a book, price by price.
-class _Depth extends StatelessWidget {
-  const _Depth({
-    required this.heading,
-    required this.empty,
-    required this.rows,
-    required this.highlightFirst,
-  });
+class _FilterChip extends StatelessWidget {
+  const _FilterChip({required this.label, required this.selected, required this.onPressed});
 
-  final String heading;
-  final String empty;
-  final List<MarketOffer> rows;
-
-  /// Marks the price the player would actually deal at from this side.
-  final bool highlightFirst;
+  final String label;
+  final bool selected;
+  final VoidCallback onPressed;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(heading, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w400)),
-        const SizedBox(height: 4),
-        if (rows.isEmpty)
-          MutedText(empty)
-        else
-          for (final (index, row) in rows.take(6).indexed)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 3),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      '${formatThousands(row.unitPrice)} each',
-                      style: TextStyle(
-                        color: highlightFirst && index == 0 ? Palette.gold : null,
-                        fontWeight: FontWeight.w400,
-                      ),
-                    ),
-                  ),
-                  MutedText('${formatThousands(row.quantity)} on offer'),
-                ],
-              ),
-            ),
-      ],
+    return GameButton(
+      label: label,
+      compact: true,
+      dense: true,
+      selected: selected,
+      tone: selected ? GameButtonTone.primary : GameButtonTone.secondary,
+      onPressed: onPressed,
     );
   }
 }
 
-/// One of the three offer boxes.
+/// One of the three offer boxes: empty and offering to become an order, or
+/// holding one and showing how far through it is.
 class _Slot extends StatelessWidget {
   const _Slot({
     required this.view,
     required this.name,
     required this.item,
     required this.busy,
+    required this.onBuy,
+    required this.onSell,
     required this.onCancel,
   });
 
@@ -680,6 +712,8 @@ class _Slot extends StatelessWidget {
   final String name;
   final ItemRow? item;
   final bool busy;
+  final VoidCallback onBuy;
+  final VoidCallback onSell;
   final VoidCallback? onCancel;
 
   @override
@@ -687,12 +721,31 @@ class _Slot extends StatelessWidget {
     final order = view.order;
     if (order == null) {
       return GamePanel(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-        child: Row(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Icon(Icons.add, size: 18, color: Palette.muted),
-            const SizedBox(width: 8),
             MutedText('Slot ${view.slot + 1} — empty'),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: GameButton(
+                    label: 'Create a buy order',
+                    compact: true,
+                    onPressed: busy ? null : onBuy,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: GameButton(
+                    label: 'Create a sell order',
+                    compact: true,
+                    onPressed: busy ? null : onSell,
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
       );
@@ -732,18 +785,16 @@ class _Slot extends StatelessWidget {
               ),
             ],
           ),
-          if (order.filled > 0) ...[
-            const SizedBox(height: 6),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(2),
-              child: LinearProgressIndicator(
-                value: order.progress,
-                minHeight: 4,
-                backgroundColor: Palette.slot,
-                color: Palette.gold,
-              ),
+          const SizedBox(height: 6),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(2),
+            child: LinearProgressIndicator(
+              value: order.progress,
+              minHeight: 4,
+              backgroundColor: Palette.slot,
+              color: Palette.gold,
             ),
-          ],
+          ),
         ],
       ),
     );

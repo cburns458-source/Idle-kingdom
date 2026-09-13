@@ -2,10 +2,11 @@
 //
 // The exchange is server-decided, so the screen has almost no arithmetic in it.
 // What is worth pinning down is the rest: the hamburger reaches it from anywhere,
-// an unsigned player sees an empty book rather than a broken one, the browse and
-// sell lists show what they should and refuse what they should, the three slots
-// are always three, and placing an offer sends the two numbers the keypads
-// collected. The matching itself is covered in `packages/ik_net/test`.
+// an unsigned player sees a closed exchange rather than a broken one, the three
+// slots are always three and are the only way to start an order, the buy list
+// offers the whole catalogue while the sell list offers only the bag, and an
+// order is placed with the two numbers the sections collected. The matching
+// itself is covered in `packages/ik_net/test`.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -60,7 +61,7 @@ void main() {
   }
 
   /// Another player already resting an offer on the book, so there is something
-  /// to browse and something to trade against.
+  /// to trade against.
   Future<void> seedSeller(
     FakeTransport project, {
     String itemId = _ironOre,
@@ -97,14 +98,15 @@ void main() {
     await tester.pump();
   }
 
-  /// Taps a tab by its name, which the Offers tab appends a waiting count to.
-  Future<void> tab(WidgetTester tester, String label) async {
-    await tester.tap(
-      find.ancestor(of: find.textContaining(RegExp('^$label')), matching: find.byType(GameButton)),
-    );
+  Future<void> press(WidgetTester tester, String label) async {
+    await tester.tap(find.widgetWithText(GameButton, label).first);
     await tester.pump();
     await tester.pump();
   }
+
+  /// Opens the flow the first empty slot offers, for [side].
+  Future<void> startOrder(WidgetTester tester, BazaarSide side) =>
+      press(tester, side == bazaarBuy ? 'Create a buy order' : 'Create a sell order');
 
   /// Answers the keypad on top with [digits], then its confirming button.
   Future<void> keypad(WidgetTester tester, String digits, String confirm) async {
@@ -122,6 +124,14 @@ void main() {
     await tester.pump();
   }
 
+  /// Taps one of the two numbers on the compose page and answers its keypad.
+  Future<void> setField(WidgetTester tester, String label, String digits) async {
+    await tester.tap(find.text(label));
+    await tester.pump();
+    await tester.pump();
+    await keypad(tester, digits, label == 'Quantity' ? 'Set quantity' : 'Set price');
+  }
+
   testWidgets('opens from the hamburger wherever the player is standing', (tester) async {
     final controller = buildController(database, seed: startedCharacter(database));
     final net = buildMultiplayer(database);
@@ -131,7 +141,7 @@ void main() {
     await openChinScreen(tester, 'Bazaar');
 
     expect(find.text('Bazaar'), findsWidgets);
-    // Local play has nobody to trade with, so the book is empty and says why.
+    // Local play has nobody to trade with, so the exchange is shut and says why.
     expect(find.text(bazaarHostedOnly), findsOne);
   });
 
@@ -147,26 +157,50 @@ void main() {
     expect(project.calls, isNot(contains('invoke:$remoteBazaarMarketFunction')));
   });
 
-  testWidgets('browses what is on offer and opens one item\'s book', (tester) async {
+  testWidgets('opens on three empty slots, each offering both sides', (tester) async {
+    final player = await hostedPlayer(tester);
+    await pumpBazaar(tester, player.net, player.save);
+
+    expect(find.textContaining('— empty'), findsNWidgets(bazaarOfferSlots));
+    expect(find.widgetWithText(GameButton, 'Create a buy order'), findsNWidgets(bazaarOfferSlots));
+    expect(find.widgetWithText(GameButton, 'Create a sell order'), findsNWidgets(bazaarOfferSlots));
+    // The collection box and history are on the same page, because there is no
+    // tab bar left to hide them behind.
+    expect(find.text(bazaarEmptyCollection), findsOne);
+    expect(find.text(bazaarEmptyHistory), findsOne);
+  });
+
+  testWidgets('never shows anybody else\'s offers', (tester) async {
     final player = await hostedPlayer(tester, gold: 5000);
     await seedSeller(player.project);
     await pumpBazaar(tester, player.net, player.save);
 
-    expect(find.text('Iron Ore'), findsOne);
-    expect(find.textContaining('Cheapest: 30'), findsOne);
-    expect(find.textContaining('60 on offer'), findsOne);
-
-    await tester.tap(find.text('Iron Ore'));
-    await tester.pump();
-    await tester.pump();
-
-    expect(find.text('On offer'), findsOne);
-    expect(find.text('30 each'), findsOne);
-    expect(find.text('Nobody is buying.'), findsOne);
-    expect(find.widgetWithText(GameButton, 'Offer to buy'), findsOne);
+    // A rival is resting 60 at 30, and none of it is on the screen: the player
+    // sees their own three slots and nothing about the book.
+    expect(find.text('On offer'), findsNothing);
+    expect(find.text('Wanted'), findsNothing);
+    expect(find.textContaining('on offer'), findsNothing);
   });
 
-  testWidgets('lists only the bag stacks the exchange will take', (tester) async {
+  testWidgets('buy offers the whole catalogue, searchable, with its average price', (tester) async {
+    final player = await hostedPlayer(tester, gold: 5000);
+    await seedSeller(player.project);
+    await pumpBazaar(tester, player.net, player.save);
+    await startOrder(tester, bazaarBuy);
+
+    // Nothing has traded yet, so there is no average to quote, but the item is
+    // still listed: a buy order is worth placing when nobody is selling.
+    expect(find.text('Iron Ore'), findsOne);
+    expect(find.textContaining('No trades yet'), findsWidgets);
+
+    await tester.enterText(find.byType(TextField), 'titanium');
+    await tester.pump();
+
+    expect(find.text('Titanium Ore'), findsOne);
+    expect(find.text('Iron Ore'), findsNothing);
+  });
+
+  testWidgets('sell offers only the bag stacks the exchange will take', (tester) async {
     final player = await hostedPlayer(
       tester,
       bag: <InventoryStack>[
@@ -177,7 +211,7 @@ void main() {
       gold: 100,
     );
     await pumpBazaar(tester, player.net, player.save);
-    await tab(tester, 'Sell');
+    await startOrder(tester, bazaarSell);
 
     expect(find.text(bazaarWithdrawFirst), findsOne);
     expect(find.textContaining('Carrying 40'), findsOne);
@@ -192,41 +226,28 @@ void main() {
     final player = await hostedPlayer(tester);
     final banked = player.save.copyWith(bank: <InventoryStack>[_stack(_ironOre, 900)]);
     expect((await player.net.service.pushSave(database.launch, banked)).ok, isTrue);
-    await seedSeller(player.project);
     await pumpBazaar(tester, player.net, banked);
-    await tab(tester, 'Sell');
+    await startOrder(tester, bazaarSell);
 
     expect(find.text('Nothing in your bag can be listed.'), findsOne);
   });
 
-  testWidgets('draws three slots however many offers are open', (tester) async {
+  testWidgets('places a sell order with the two numbers the sections collected', (tester) async {
     final player = await hostedPlayer(tester, bag: <InventoryStack>[_stack(_ironOre, 40)]);
     await pumpBazaar(tester, player.net, player.save);
-    await tab(tester, 'Offers');
-
-    expect(find.textContaining('— empty'), findsNWidgets(bazaarOfferSlots));
-    expect(find.text(bazaarEmptyCollection), findsOne);
-  });
-
-  testWidgets('places a sell offer with the two numbers the keypads collected', (tester) async {
-    final player = await hostedPlayer(tester, bag: <InventoryStack>[_stack(_ironOre, 40)]);
-    await pumpBazaar(tester, player.net, player.save);
-    await tab(tester, 'Sell');
-
+    await startOrder(tester, bazaarSell);
     await tester.tap(find.text('Iron Ore'));
     await tester.pump();
     await tester.pump();
-    await tester.tap(find.widgetWithText(GameButton, 'Offer to sell'));
-    await tester.pump();
 
-    // How many, then what each. Quantity first so the price pad can cap itself.
-    expect(find.text('How many to sell'), findsOne);
-    expect(find.text('Carrying: 40'), findsOne);
-    await keypad(tester, '25', 'Next');
+    // A sell starts at the whole stack, so the quantity is already the 40 held.
+    expect(find.text('Quantity'), findsOne);
+    expect(find.text('40'), findsWidgets);
+    expect(find.text('Price each'), findsOne);
 
-    expect(find.text('Price per item to ask'), findsOne);
-    expect(find.text('Quantity: 25'), findsOne);
-    await keypad(tester, '40', 'Sell');
+    await setField(tester, 'Quantity', '25');
+    await setField(tester, 'Price each', '40');
+    await press(tester, 'Place sell order');
     await tester.pumpAndSettle();
 
     final order = player.net.market.orders.single;
@@ -240,7 +261,51 @@ void main() {
     expect(player.net.market.slotsFree, bazaarOfferSlots - 1);
   });
 
-  testWidgets('shows a filled offer in the box, and empties it on collect', (tester) async {
+  testWidgets('will not place a buy the player cannot pay for', (tester) async {
+    final player = await hostedPlayer(tester, gold: 50);
+    await pumpBazaar(tester, player.net, player.save);
+    await startOrder(tester, bazaarBuy);
+    await tester.enterText(find.byType(TextField), 'iron ore');
+    await tester.pump();
+    await tester.tap(find.text('Iron Ore'));
+    await tester.pump();
+    await tester.pump();
+
+    await setField(tester, 'Quantity', '10');
+    await setField(tester, 'Price each', '99');
+
+    // 990 gold against 50 held: the screen says so instead of offering a button
+    // the server would only refuse.
+    expect(find.textContaining('You have 50 gold'), findsOne);
+    expect(find.widgetWithText(GameButton, 'Place buy order'), findsNothing);
+  });
+
+  testWidgets('a placed order takes over its slot and shows how filled it is', (tester) async {
+    final player = await hostedPlayer(tester, bag: <InventoryStack>[_stack(_ironOre, 40)]);
+    await player.net.placeMarketOffer(
+      side: bazaarSell,
+      itemId: _ironOre,
+      unitPrice: 30,
+      quantity: 40,
+      save: player.save,
+      onSaved: (written) {},
+    );
+    await pumpBazaar(tester, player.net, player.save);
+
+    expect(find.text('Selling Iron Ore ×40'), findsOne);
+    expect(find.text('30 each · 0 of 40 traded'), findsOne);
+    // That slot is no longer offering to start anything, and the other two are.
+    expect(find.textContaining('— empty'), findsNWidgets(bazaarOfferSlots - 1));
+
+    await press(tester, 'Cancel');
+    await tester.pumpAndSettle();
+
+    expect(player.net.market.orders, isEmpty);
+    expect(find.text('Iron Ore ×40'), findsOne);
+    expect(find.text('Cancelled offer'), findsOne);
+  });
+
+  testWidgets('a filled order frees its slot and waits in the box', (tester) async {
     final player = await hostedPlayer(tester, gold: 5000);
     await seedSeller(player.project, unitPrice: 30, quantity: 10);
 
@@ -254,44 +319,19 @@ void main() {
       onSaved: (written) {},
     );
     await pumpBazaar(tester, player.net, player.save);
-    await tab(tester, 'Offers');
 
     expect(find.text('Iron Ore ×10'), findsOne);
     expect(find.text('Bought'), findsOne);
     expect(find.text('200 gold'), findsOne);
     expect(find.text('Change from a buy offer'), findsOne);
-    // The finished offer freed its slot, so all three read empty again.
+    // The finished order freed its slot, so all three offer to start again.
     expect(find.textContaining('— empty'), findsNWidgets(bazaarOfferSlots));
-    // The Offers tab counts what is waiting so a fill is noticed without looking.
-    expect(find.widgetWithText(GameButton, 'Offers (2)'), findsOne);
 
-    await tester.tap(find.widgetWithText(GameButton, 'Collect'));
+    await press(tester, 'Collect');
     await tester.pumpAndSettle();
 
     expect(player.net.market.collect, isEmpty);
     expect(find.text(bazaarEmptyCollection), findsOne);
-  });
-
-  testWidgets('cancels an open offer and leaves the remainder to collect', (tester) async {
-    final player = await hostedPlayer(tester, bag: <InventoryStack>[_stack(_ironOre, 40)]);
-    await player.net.placeMarketOffer(
-      side: bazaarSell,
-      itemId: _ironOre,
-      unitPrice: 30,
-      quantity: 40,
-      save: player.save,
-      onSaved: (written) {},
-    );
-    await pumpBazaar(tester, player.net, player.save);
-    await tab(tester, 'Offers');
-
-    expect(find.text('Selling Iron Ore ×40'), findsOne);
-    await tester.tap(find.widgetWithText(GameButton, 'Cancel'));
-    await tester.pumpAndSettle();
-
-    expect(player.net.market.orders, isEmpty);
-    expect(find.text('Iron Ore ×40'), findsOne);
-    expect(find.text('Cancelled offer'), findsOne);
   });
 
   testWidgets('lists the player\'s own last trades with the tax on the sale', (tester) async {
@@ -326,9 +366,8 @@ void main() {
       onSaved: (written) {},
     );
     await pumpBazaar(tester, player.net, player.save);
-    await tab(tester, 'History');
 
-    expect(find.text('Your last $bazaarHistoryLength trades.'), findsOne);
+    expect(find.text('Recent trades'), findsOne);
     expect(find.text('Sold Titanium Ore ×10'), findsOne);
     expect(find.text('500 each · 4,950 gold received'), findsOne);
     expect(find.text('Tax 50'), findsOne);
