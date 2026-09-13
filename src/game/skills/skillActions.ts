@@ -374,10 +374,6 @@ function botanyTabs(db: GameDatabase): SkillMenuTab[] {
 
 function potFishingEntries(db: GameDatabase): SkillMenuListItem[] {
   const entries: SkillMenuListItem[] = []
-  const pot = db.Items.find((row) => row['Item ID'] === FISHING_POT_ITEM_ID)
-  if (pot) {
-    entries.push({ id: pot['Item ID'], displayName: pot['Display Name'], level: 14 })
-  }
   const seen = new Set<string>()
   for (const table of Object.values(POT_FISH_BY_LOCATION)) {
     for (const row of table) {
@@ -621,12 +617,20 @@ function combatOtherEntries(db: GameDatabase): SkillMenuListItem[] {
 function gatheringToolEntries(db: GameDatabase, skillId: string): SkillMenuListItem[] {
   const spec = gatheringToolSpec(skillId)
   if (!spec) return []
-  return dedupeByName(
+  const entries = dedupeByName(
     [...projectItemsWhere(db, spec.match, null), ...woodenItems(db, spec.woodenIds)].map((item) => ({
       ...item,
       level: equipLevelForSkill(db, item.displayName, skillId) ?? item.level,
     })),
   )
+  if (skillId === FISHING_SKILL_ID) {
+    const pot = db.Items.find((row) => row['Item ID'] === FISHING_POT_ITEM_ID)
+    if (pot && !entries.some((item) => item.displayName === pot['Display Name'])) {
+      entries.push({ id: pot['Item ID'], displayName: pot['Display Name'], level: 14 })
+    }
+    return dedupeByName(entries)
+  }
+  return entries
 }
 
 function equipLevelForSkill(db: GameDatabase, displayName: string, skillId: string): number | null {
@@ -780,7 +784,7 @@ function isWoodcuttingToolName(name: string): boolean {
 }
 
 function isFishingToolName(name: string): boolean {
-  return name.includes('Fishing Rod') || endsWithWord(name, 'Harpoon')
+  return name.includes('Fishing Rod') || endsWithWord(name, 'Harpoon') || name === 'Fishing Pot'
 }
 
 function isHuntingToolName(name: string): boolean {
