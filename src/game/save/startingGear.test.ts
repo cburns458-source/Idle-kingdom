@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest'
 import { prepareDatabase } from '../data/loadDatabase'
 import { migrateSave } from './migrations'
 import { createNewSave } from './saveStore'
-import { replaceFishingNetsWithNet } from './startingGear'
+import { removeRetiredItems, replaceFishingNetsWithNet } from './startingGear'
 import {
   RETIRED_FISHING_NET_ITEM_ID,
   SAVE_VERSION,
@@ -64,5 +64,40 @@ describe('fishing net retirement', () => {
     expect(migrated.inventory).toEqual([
       { itemId: STARTING_HUNTING_TOOL_ID, quantity: 1, favorite: true },
     ])
+  })
+})
+
+describe('retired item cleanup', () => {
+  it('drops leftover 325/346 stacks from bag, bank, and worn slots', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const base = createNewSave(launch)
+    const next = removeRetiredItems({
+      ...base,
+      inventory: [
+        { itemId: 'ITEM-0325', quantity: 2 },
+        { itemId: 'ITEM-0003', quantity: 4 },
+      ],
+      bank: [{ itemId: 'ITEM-0346', quantity: 1 }],
+      equipment: {
+        slots: {
+          ...base.equipment.slots,
+          [WEAPON_TOOL_SLOT_ID]: { itemId: 'ITEM-0144', quantity: 1 },
+        },
+      },
+    })
+    expect(next.inventory).toEqual([{ itemId: 'ITEM-0003', quantity: 4 }])
+    expect(next.bank).toEqual([])
+    expect(next.equipment.slots[WEAPON_TOOL_SLOT_ID]).toBeNull()
+  })
+
+  it('migrates leftover retired stacks when loading a v45 save', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const migrated = migrateSave({
+      ...createNewSave(launch),
+      saveVersion: 45,
+      inventory: [{ itemId: 'ITEM-0325', quantity: 1 }],
+    })
+    expect(migrated.saveVersion).toBe(SAVE_VERSION)
+    expect(migrated.inventory).toEqual([])
   })
 })

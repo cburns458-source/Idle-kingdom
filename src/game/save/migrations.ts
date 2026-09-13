@@ -1,6 +1,10 @@
 import { createDefaultEquipmentPresets } from '../equipment/presets'
 import { grantPetsForCollectedCritters } from '../critters/pets'
-import { ensureStartingHuntingTool, replaceFishingNetsWithNet } from './startingGear'
+import {
+  ensureStartingHuntingTool,
+  removeRetiredItems,
+  replaceFishingNetsWithNet,
+} from './startingGear'
 import type {
   ActivePotionEffect,
   EquippedStack,
@@ -705,6 +709,14 @@ export const SAVE_MIGRATIONS: SaveMigration[] = [
         saveVersion: 45,
       }
     },
+  },
+  {
+    fromVersion: 45,
+    toVersion: 46,
+    migrate: (save) => ({
+      ...removeRetiredItems(save),
+      saveVersion: 46,
+    }),
   },
 ]
 

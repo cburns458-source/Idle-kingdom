@@ -90,6 +90,68 @@ function mergeRemappedStacks<T extends InventoryStack>(stacks: T[]): T[] {
   return merged
 }
 
+const RETIRED_ITEM_IDS = new Set([
+  'ITEM-0091', // Gem Setting
+  'ITEM-0096', // Steel Spear Head
+  'ITEM-0144', // Enchanted Sword
+  'ITEM-0286', // Bone Shard
+  'ITEM-0325', // Golden Spud Seed
+  'ITEM-0346', // Hunting Trap
+])
+
+function isRetiredItemId(itemId: string | null | undefined): boolean {
+  return typeof itemId === 'string' && RETIRED_ITEM_IDS.has(itemId)
+}
+
+function dropRetiredStacks<T extends InventoryStack>(stacks: T[]): T[] {
+  return stacks.filter((stack) => !isRetiredItemId(stack.itemId))
+}
+
+function dropRetiredEquipped(stack: EquippedStack | null): EquippedStack | null {
+  if (!stack || isRetiredItemId(stack.itemId)) return null
+  return stack
+}
+
+/** Strip deleted leftover stacks so they cannot show as raw item IDs. */
+export function removeRetiredItems(save: PlayerSave): PlayerSave {
+  const slots: Record<string, EquippedStack | null> = {}
+  for (const [slotId, stack] of Object.entries(save.equipment.slots)) {
+    slots[slotId] = dropRetiredEquipped(stack)
+  }
+  const presets = (save.equipmentPresets ?? []).map((preset) => ({
+    ...preset,
+    slots: Object.fromEntries(
+      Object.entries(preset.slots ?? {}).map(([slotId, stack]) => [
+        slotId,
+        dropRetiredEquipped(stack),
+      ]),
+    ),
+  }))
+  const locationTimers = (save.locationTimers ?? []).filter(
+    (timer) => !isRetiredItemId(timer.inputItemId) && !isRetiredItemId(timer.outputItemId),
+  )
+  const lootTrackers = Object.fromEntries(
+    Object.entries(save.lootTrackers ?? {}).map(([key, entry]) => [
+      key,
+      {
+        ...entry,
+        items: Object.fromEntries(
+          Object.entries(entry.items ?? {}).filter(([itemId]) => !isRetiredItemId(itemId)),
+        ),
+      },
+    ]),
+  )
+  return {
+    ...save,
+    inventory: dropRetiredStacks(save.inventory),
+    bank: dropRetiredStacks(save.bank ?? []),
+    equipment: { ...save.equipment, slots },
+    equipmentPresets: presets,
+    locationTimers,
+    lootTrackers,
+  }
+}
+
 /** Turn leftover Fishing Nets into the regular hunting Net. */
 export function replaceFishingNetsWithNet(save: PlayerSave): PlayerSave {
   const slots: Record<string, EquippedStack | null> = {}

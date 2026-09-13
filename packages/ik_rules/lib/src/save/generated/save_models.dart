@@ -7,7 +7,7 @@
 
 import '../../json_support.dart';
 
-const int saveVersion = 45;
+const int saveVersion = 46;
 
 const String saveStorageKey = 'idle-kingdoms.demo.save';
 

@@ -19,6 +19,7 @@ void main() {
 
     await pumpPanel(tester, CodexView(controller: controller));
     expect(find.text('Items'), findsOne);
+    expect(find.text('Actions'), findsOne);
     expect(find.text('Bestiary'), findsOne);
     expect(find.byKey(const Key('codex-filter-all')), findsOne);
 
@@ -50,8 +51,43 @@ void main() {
     await tester.pump();
     // Replace (not stack): close returns to catalog, not the previous item.
     expect(find.text('Items'), findsOne);
+    expect(find.text('Actions'), findsOne);
     expect(find.text('Bestiary'), findsOne);
     expect(find.text('Used in'), findsNothing);
+  });
+
+  testWidgets('hides pets, cosmetics, and quest items from the item catalog', (tester) async {
+    final controller = buildController(database, seed: startedCharacter(database));
+    addTearDown(controller.dispose);
+
+    await pumpPanel(tester, CodexView(controller: controller));
+    await tester.enterText(find.byType(TextField), 'fly pet');
+    await tester.pump();
+    expect(find.byKey(const Key('codex-item-ITEM-0320')), findsNothing);
+
+    await tester.enterText(find.byType(TextField), "traveler's tunic");
+    await tester.pump();
+    expect(find.byKey(const Key('codex-item-ITEM-0296')), findsNothing);
+
+    await tester.enterText(find.byType(TextField), 'purse');
+    await tester.pump();
+    expect(find.byKey(const Key('codex-item-ITEM-0299')), findsNothing);
+    expect(find.text('Nothing in the Codex matches.'), findsOne);
+  });
+
+  testWidgets('opens a mining action with secondary gem drops', (tester) async {
+    final controller = buildController(database, seed: startedCharacter(database));
+    addTearDown(controller.dispose);
+
+    await pumpPanel(tester, CodexView(controller: controller, initialActionId: 'ACN-0018'));
+    expect(find.text('Mine copper ore'), findsWidgets);
+    expect(find.textContaining('Secondary'), findsOne);
+    expect(find.text('Sapphire'), findsWidgets);
+
+    await tester.tap(find.byKey(const Key('codex-action-drop-Secondary-ITEM-0012')));
+    await tester.pump();
+    expect(find.text('Obtained from'), findsOne);
+    expect(find.byKey(const Key('codex-obtain-action-ACN-0018')), findsOne);
   });
 
   testWidgets('opens a bestiary drop into the item page', (tester) async {
