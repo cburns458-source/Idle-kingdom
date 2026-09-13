@@ -282,10 +282,12 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
           if (!mounted) return;
         }
         for (final haul in timerCollects) {
+          if (!mounted) return;
           await showQuestRewards(context, questName: haul.title, rewards: haul.rewards);
           if (!mounted) return;
           if (haul.kind == 'botany') {
             await _offerBotanyReplant(haul.locationId);
+            if (!mounted) return;
           } else if (haul.canRepeat) {
             final confirmed = await showGameAlert(
               context: context,
@@ -301,10 +303,12 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
           }
         }
         for (final alert in roomAlerts) {
+          if (!mounted) return;
           await showGameAlert(context: context, message: alert);
           if (!mounted) return;
         }
         for (final notice in levelUps) {
+          if (!mounted) return;
           await showSkillLevelUp(context, notice, chrome: controller.chrome);
           if (!mounted) return;
         }
