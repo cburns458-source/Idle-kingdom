@@ -57,7 +57,20 @@ const PRICE_LIMIT = 400
 /** Resting orders a read looks at when building the book. */
 const BOOK_LIMIT = 2000
 
-type Client = ReturnType<typeof createClient>
+/**
+ * A client for this project, which has no generated `Database` type.
+ *
+ * Named rather than written as `ReturnType<typeof createClient>`, because that
+ * resolves the generic *defaults* — where the schema is `never` — instead of the
+ * client `createClient(url, key)` actually returns. Every row read through a
+ * `never` schema is itself typed `never`, so `deno check` rejects reading any
+ * column off it and the mistake looks like a dozen unrelated errors.
+ */
+function connect(url: string, key: string, options?: Parameters<typeof createClient>[2]) {
+  return createClient(url, key, options)
+}
+
+type Client = ReturnType<typeof connect>
 
 type OrderRow = {
   id: string
@@ -87,7 +100,7 @@ Deno.serve(async (req) => {
     return json({ error: 'Function is missing Supabase secrets.' }, 500)
   }
 
-  const asUser = createClient(supabaseUrl, anonKey, {
+  const asUser = connect(supabaseUrl, anonKey, {
     global: { headers: { Authorization: req.headers.get('Authorization') ?? '' } },
   })
   const { data: userData, error: userError } = await asUser.auth.getUser()
@@ -103,7 +116,7 @@ Deno.serve(async (req) => {
     return refused('The Bazaar did not understand that.')
   }
 
-  const admin = createClient(supabaseUrl, serviceKey)
+  const admin = connect(supabaseUrl, serviceKey)
   const action = typeof payload.action === 'string' ? payload.action : ''
 
   try {

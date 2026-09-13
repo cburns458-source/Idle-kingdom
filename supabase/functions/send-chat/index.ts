@@ -14,6 +14,21 @@ type SendBody = {
   body?: unknown
 }
 
+/**
+ * A client for this project, which has no generated `Database` type.
+ *
+ * Named rather than written as `ReturnType<typeof createClient>`, because that
+ * resolves the generic *defaults* — where the schema is `never` — instead of the
+ * client `createClient(url, key)` actually returns. Every row read through a
+ * `never` schema is itself typed `never`, so `deno check` rejects reading any
+ * column off it.
+ */
+function connect(url: string, key: string, options?: Parameters<typeof createClient>[2]) {
+  return createClient(url, key, options)
+}
+
+type Client = ReturnType<typeof connect>
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: cors() })
@@ -27,7 +42,7 @@ Deno.serve(async (req) => {
     return json({ error: 'Function is missing Supabase secrets.' }, 500)
   }
 
-  const asUser = createClient(supabaseUrl, anonKey, {
+  const asUser = connect(supabaseUrl, anonKey, {
     global: { headers: { Authorization: authHeader } },
   })
   const { data: userData, error: userError } = await asUser.auth.getUser()
@@ -59,7 +74,7 @@ Deno.serve(async (req) => {
     return json({ error: 'Chat has been disabled.' }, 400)
   }
 
-  const admin = createClient(supabaseUrl, serviceKey)
+  const admin = connect(supabaseUrl, serviceKey)
   const username = await resolveUsername(admin, user.id, user.user_metadata)
 
   const { data: membership } = await admin
@@ -169,7 +184,7 @@ function channelKind(key: string): string | null {
 }
 
 async function resolveUsername(
-  admin: ReturnType<typeof createClient>,
+  admin: Client,
   userId: string,
   metadata: Record<string, unknown> | undefined,
 ): Promise<string> {

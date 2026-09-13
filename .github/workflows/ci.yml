@@ -28,6 +28,30 @@ jobs:
       # Also asserts committed parity fixtures still match the TypeScript rules.
       - run: npm test
 
+  functions:
+    name: Edge functions (Deno typecheck)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      # `npm run typecheck` covers `src` and `tools`; it cannot cover these,
+      # because Deno's `npm:` specifiers and `.ts` imports are not tsc's. The
+      # Bazaar is the one part of the game the server decides, so an edge
+      # function that does not compile is a market that refuses every offer.
+      #
+      # Each function's entry point, not every file: Deno follows the imports
+      # into `_shared` itself, and naming the entries leaves out the vitest test
+      # beside them, which is checked by `npm test` instead.
+      #
+      # From the functions directory, so that `supabase/functions/deno.json` is
+      # the config Deno finds. Run from the repo root it walks up to the root
+      # `package.json` instead, decides this is a node project, and looks for
+      # `npm:` packages in a `node_modules` this job has no reason to install.
+      - run: deno check */index.ts
+        working-directory: supabase/functions
+
   dart:
     name: Dart packages (analyze, format, parity replay)
     runs-on: ubuntu-latest
