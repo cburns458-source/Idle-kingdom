@@ -702,6 +702,11 @@ final List<SaveMigration> saveMigrations = <SaveMigration>[
       return next;
     },
   ),
+  SaveMigration(
+    fromVersion: 45,
+    toVersion: 46,
+    migrate: (save, nowMs) => _bumped(removeRetiredItemsJson(save), 46),
+  ),
 ];
 
 /// Thrown when a save cannot be brought to the current version.

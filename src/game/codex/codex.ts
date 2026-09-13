@@ -34,7 +34,7 @@ function includeQuestRewardAsObtainSource(category: string | null | undefined, i
   return category === 'Tool' || category === 'Weapon' || category === 'Armor'
 }
 
-/** Pets and quest-key items stay in the database; they do not appear in the Codex catalog. */
+/** Pets, cosmetics, and quest-key items stay in the database; they stay out of the Codex. */
 export function includeInCodexCatalog(item: {
   Category?: string | null
   Subtype?: string | null
@@ -44,7 +44,7 @@ export function includeInCodexCatalog(item: {
   const subtype = item.Subtype ?? item.subtype
   const category = item.Category ?? item.category
   if (subtype === 'Pet') return false
-  if (category === 'Quest') return false
+  if (category === 'Cosmetic' || category === 'Quest') return false
   return true
 }
 
@@ -489,7 +489,7 @@ export class CodexIndex {
     }
 
     const actions = this.db.Actions.filter((action) => {
-      if (action.Category === 'Standard Production') return false
+      if (action.Category !== 'Gathering') return false
       if (action['Action ID'] === HIDE_FROM_CODEX_ACTION_ID || notesHideFromCodex(action.Notes)) {
         return false
       }

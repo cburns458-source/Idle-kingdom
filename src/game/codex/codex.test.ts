@@ -14,33 +14,38 @@ describe('codex index', () => {
   const sorter = new InventorySorter(launch)
   const codex = new CodexIndex(launch)
 
-  it('lists every launch item and enemy except pets and quest items', () => {
+  it('lists every launch item and enemy except pets, cosmetics, and quest items', () => {
     const catalogIds = new Set(
       launch.Items.filter((row) => includeInCodexCatalog(row)).map((row) => row['Item ID']),
     )
     expect(new Set(codex.items.map((row) => row.itemId))).toEqual(catalogIds)
     expect(catalogIds.has('ITEM-0299')).toBe(false)
+    expect(catalogIds.has('ITEM-0296')).toBe(false)
     expect(catalogIds.has('ITEM-0320')).toBe(false)
     expect(codex.item('ITEM-0299')?.displayName).toBe('Stolen Coin Purse')
+    expect(codex.item('ITEM-0296')?.displayName).toBe("Traveler's Tunic")
     expect(codex.item('ITEM-0320')?.displayName).toBe('Fly Pet')
     expect(new Set(codex.enemies.map((row) => row.enemyId))).toEqual(
       new Set(launch.Enemies.map((row) => row['Enemy ID'])),
     )
     expect(codex.item('ITEM-0209')?.displayName).toBe('Ancient Alloy')
     expect(codex.item('ITEM-0276')?.displayName).toBe('Ancient Alloy Sword')
-    expect(codex.item('ITEM-0325')?.displayName).toBe('Golden Spud Seed')
-    expect(codex.item('ITEM-0346')?.displayName).toBe('Hunting Trap')
+    expect(codex.item('ITEM-0325')).toBeUndefined()
+    expect(codex.item('ITEM-0346')).toBeUndefined()
     expect(codex.item('ITEM-0091')).toBeUndefined()
     expect(codex.item('ITEM-0096')).toBeUndefined()
     expect(codex.item('ITEM-0144')).toBeUndefined()
     expect(codex.item('ITEM-0286')).toBeUndefined()
     expect(launch.Items.find((row) => row['Item ID'] === 'ITEM-0263')?.['Base Sell Value']).toBe(550)
     expect(launch.Items.find((row) => row['Item ID'] === 'ITEM-0250')?.['Base Sell Value']).toBe(850)
+    expect(launch.Items.find((row) => row['Item ID'] === 'ITEM-0009')?.['Base Sell Value']).toBe(280)
+    expect(launch.Items.find((row) => row['Item ID'] === 'ITEM-0010')?.['Base Sell Value']).toBe(180)
   })
 
   it('lists gathering actions with secondary gem tables', () => {
     expect(codex.actions.some((row) => row.actionId === 'ACN-0018')).toBe(true)
-    expect(codex.actions.every((row) => row.category !== 'Standard Production')).toBe(true)
+    expect(codex.actions.every((row) => row.category === 'Gathering')).toBe(true)
+    expect(codex.action('ACN-0001')).toBeUndefined()
     expect(codex.action('ACN-0036')).toBeUndefined()
     const mine = codex.action('ACN-0018')!
     expect(mine.displayName.toLowerCase()).toContain('copper')
@@ -109,6 +114,15 @@ describe('codex index', () => {
     expect(codex.enemy('ENM-0008')!.locations.map((row) => row.displayName)).toEqual(
       expect.arrayContaining(["Wizard's Tower", 'Castle Crypt']),
     )
+    expect(codex.enemy('ENM-0008')!.drops.map((row) => row.itemId)).toEqual(
+      expect.arrayContaining(['ITEM-0129', 'ITEM-0012']),
+    )
+    expect(codex.enemy('ENM-0008')!.drops.map((row) => row.itemId)).not.toContain('ITEM-0286')
+    expect(codex.enemy('ENM-0008')!.drops.find((row) => row.itemId === 'ITEM-0129')?.dropRatePercent).toBe(
+      60,
+    )
+    expect(codex.enemy('ENM-0009')!.drops.map((row) => row.itemId)).not.toContain('ITEM-0286')
+    expect(codex.enemy('ENM-0006')!.drops.map((row) => row.itemId)).not.toContain('ITEM-0144')
   })
 
   it('lists secondary combat action loot as obtain sources', () => {

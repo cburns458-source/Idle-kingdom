@@ -128,3 +128,80 @@ SaveJson replaceFishingNetsWithNetJson(SaveJson save) {
 
 PlayerSave replaceFishingNetsWithNet(PlayerSave save) =>
     PlayerSave.fromJson(replaceFishingNetsWithNetJson(save.toJson()));
+
+const Set<String> _retiredItemIds = <String>{
+  'ITEM-0091',
+  'ITEM-0096',
+  'ITEM-0144',
+  'ITEM-0286',
+  'ITEM-0325',
+  'ITEM-0346',
+};
+
+bool _isRetiredItemId(Object? itemId) => itemId is String && _retiredItemIds.contains(itemId);
+
+List<Object?> _dropRetiredStacks(List<Object?> stacks) {
+  return [
+    for (final entry in stacks)
+      if (entry is! SaveJson || !_isRetiredItemId(entry['itemId'])) entry,
+  ];
+}
+
+Object? _dropRetiredEquipped(Object? stack) {
+  final object = asObject(stack);
+  if (object == null) return stack;
+  return _isRetiredItemId(object['itemId']) ? null : object;
+}
+
+/// Strip deleted leftover stacks so they cannot show as raw item IDs.
+SaveJson removeRetiredItemsJson(SaveJson save) {
+  final next = copySave(save);
+  next['inventory'] = _dropRetiredStacks(arrayOrEmpty(save, 'inventory'));
+  next['bank'] = _dropRetiredStacks(arrayOrEmpty(save, 'bank'));
+  final slots = objectOrEmpty(objectAt(save, 'equipment') ?? <String, Object?>{}, 'slots');
+  next['equipment'] = <String, Object?>{
+    'slots': <String, Object?>{
+      for (final entry in slots.entries) entry.key: _dropRetiredEquipped(entry.value),
+    },
+  };
+  next['equipmentPresets'] = <Object?>[
+    for (final row in arrayOrEmpty(save, 'equipmentPresets'))
+      if (row is SaveJson)
+        <String, Object?>{
+          ...row,
+          'slots': <String, Object?>{
+            for (final entry in objectOrEmpty(row, 'slots').entries)
+              entry.key: _dropRetiredEquipped(entry.value),
+          },
+        }
+      else
+        row,
+  ];
+  next['locationTimers'] = <Object?>[
+    for (final row in arrayOrEmpty(save, 'locationTimers'))
+      if (row is! SaveJson ||
+          (!_isRetiredItemId(row['inputItemId']) && !_isRetiredItemId(row['outputItemId'])))
+        row,
+  ];
+  final loot = objectOrEmpty(save, 'lootTrackers');
+  final nextLoot = <String, Object?>{};
+  for (final entry in loot.entries) {
+    final tracker = asObject(entry.value);
+    if (tracker == null) {
+      nextLoot[entry.key] = entry.value;
+      continue;
+    }
+    nextLoot[entry.key] = <String, Object?>{
+      ...tracker,
+      'items': <String, Object?>{
+        for (final item in objectOrEmpty(tracker, 'items').entries)
+          if (!_isRetiredItemId(item.key)) item.key: item.value,
+      },
+    };
+  }
+  next['lootTrackers'] = nextLoot;
+  return next;
+}
+
+PlayerSave removeRetiredItems(PlayerSave save) =>
+    PlayerSave.fromJson(removeRetiredItemsJson(save.toJson()));

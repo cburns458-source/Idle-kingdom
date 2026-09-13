@@ -14,15 +14,17 @@ void main() {
     codex = CodexIndex(db);
   });
 
-  test('lists every launch item and enemy except pets and quest items', () {
+  test('lists every launch item and enemy except pets, cosmetics, and quest items', () {
     final catalogIds = db.items
         .where((row) => includeInCodexCatalog(category: row.category, subtype: row.subtype))
         .map((row) => row.itemId)
         .toSet();
     expect(codex.items.map((row) => row.itemId).toSet(), catalogIds);
     expect(catalogIds.contains('ITEM-0299'), isFalse);
+    expect(catalogIds.contains('ITEM-0296'), isFalse);
     expect(catalogIds.contains('ITEM-0320'), isFalse);
     expect(codex.item('ITEM-0299')?.displayName, 'Stolen Coin Purse');
+    expect(codex.item('ITEM-0296')?.displayName, "Traveler's Tunic");
     expect(codex.item('ITEM-0320')?.displayName, 'Fly Pet');
     expect(
       codex.enemies.map((row) => row.enemyId).toSet(),
@@ -30,19 +32,22 @@ void main() {
     );
     expect(codex.item('ITEM-0209')?.displayName, 'Ancient Alloy');
     expect(codex.item('ITEM-0276')?.displayName, 'Ancient Alloy Sword');
-    expect(codex.item('ITEM-0325')?.displayName, 'Golden Spud Seed');
-    expect(codex.item('ITEM-0346')?.displayName, 'Hunting Trap');
+    expect(codex.item('ITEM-0325'), isNull);
+    expect(codex.item('ITEM-0346'), isNull);
     expect(codex.item('ITEM-0091'), isNull);
     expect(codex.item('ITEM-0096'), isNull);
     expect(codex.item('ITEM-0144'), isNull);
     expect(codex.item('ITEM-0286'), isNull);
     expect(db.items.firstWhere((row) => row.itemId == 'ITEM-0263').baseSellValue, 550);
     expect(db.items.firstWhere((row) => row.itemId == 'ITEM-0250').baseSellValue, 850);
+    expect(db.items.firstWhere((row) => row.itemId == 'ITEM-0009').baseSellValue, 280);
+    expect(db.items.firstWhere((row) => row.itemId == 'ITEM-0010').baseSellValue, 180);
   });
 
   test('lists gathering actions with secondary gem tables', () {
     expect(codex.actions.any((row) => row.actionId == 'ACN-0018'), isTrue);
-    expect(codex.actions.every((row) => row.category != 'Standard Production'), isTrue);
+    expect(codex.actions.every((row) => row.category == 'Gathering'), isTrue);
+    expect(codex.action('ACN-0001'), isNull);
     expect(codex.action('ACN-0036'), isNull);
     final mine = codex.action('ACN-0018')!;
     expect(mine.displayName.toLowerCase(), contains('copper'));
@@ -119,6 +124,11 @@ void main() {
       skeleton.locations.map((row) => row.displayName),
       containsAll(['Wizard\'s Tower', 'Castle Crypt']),
     );
+    expect(skeleton.drops.map((row) => row.itemId), containsAll(['ITEM-0129', 'ITEM-0012']));
+    expect(skeleton.drops.map((row) => row.itemId), isNot(contains('ITEM-0286')));
+    expect(skeleton.drops.firstWhere((row) => row.itemId == 'ITEM-0129').dropRatePercent, 60);
+    expect(codex.enemy('ENM-0009')!.drops.map((row) => row.itemId), isNot(contains('ITEM-0286')));
+    expect(codex.enemy('ENM-0006')!.drops.map((row) => row.itemId), isNot(contains('ITEM-0144')));
   });
 
   test('lists secondary combat action loot as obtain sources', () {

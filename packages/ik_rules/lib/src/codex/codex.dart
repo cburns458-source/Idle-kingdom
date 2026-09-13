@@ -30,10 +30,10 @@ bool _includeQuestRewardAsObtainSource(String? category, String itemId) {
   return category == 'Tool' || category == 'Weapon' || category == 'Armor';
 }
 
-/// Pets and quest-key items stay in the database; they do not appear in the Codex catalog.
+/// Pets, cosmetics, and quest-key items stay in the database; they stay out of the Codex.
 bool includeInCodexCatalog({String? category, String? subtype}) {
   if (subtype == 'Pet') return false;
-  if (category == 'Quest') return false;
+  if (category == 'Cosmetic' || category == 'Quest') return false;
   return true;
 }
 
@@ -719,7 +719,7 @@ class CodexIndex {
 
     final actionRows = [
       for (final action in db.actions)
-        if (action.category != 'Standard Production' &&
+        if (action.category == 'Gathering' &&
             action.actionId != _hideFromCodexActionId &&
             !_notesHideFromCodex(action.raw['Notes']))
           action,

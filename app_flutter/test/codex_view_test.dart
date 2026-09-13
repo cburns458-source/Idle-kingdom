@@ -56,7 +56,7 @@ void main() {
     expect(find.text('Used in'), findsNothing);
   });
 
-  testWidgets('hides pets and quest items from the item catalog', (tester) async {
+  testWidgets('hides pets, cosmetics, and quest items from the item catalog', (tester) async {
     final controller = buildController(database, seed: startedCharacter(database));
     addTearDown(controller.dispose);
 
@@ -64,6 +64,10 @@ void main() {
     await tester.enterText(find.byType(TextField), 'fly pet');
     await tester.pump();
     expect(find.byKey(const Key('codex-item-ITEM-0320')), findsNothing);
+
+    await tester.enterText(find.byType(TextField), "traveler's tunic");
+    await tester.pump();
+    expect(find.byKey(const Key('codex-item-ITEM-0296')), findsNothing);
 
     await tester.enterText(find.byType(TextField), 'purse');
     await tester.pump();
