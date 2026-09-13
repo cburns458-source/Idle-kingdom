@@ -25,13 +25,19 @@ npm run lint
 npm run typecheck
 npm run gen:dart:check   # the Dart row models against src/game/data/types.ts
 npm test                 # also replays the committed parity fixtures
-deno check supabase/functions/*/index.ts   # only if you touched an edge function
+cd supabase/functions && deno check */index.ts   # only if you touched a function
 cd app_flutter && flutter analyze && flutter test && flutter build web --release --pwa-strategy=none
 ```
 
 `npm run typecheck` covers `src` and `tools` and cannot cover the edge
 functions, because Deno's `npm:` specifiers and `.ts` imports are not tsc's. That
 is why the `deno check` line is separate, and why it needs Deno rather than node.
+
+Run it from `supabase/functions`, not the repo root. That directory holds a
+`deno.json` whose only job is to stop Deno walking up to the root `package.json`,
+deciding the functions are part of a node project, and demanding they resolve
+`npm:` imports out of `node_modules` — which is not how the deployed runtime
+loads them.
 
 The formatter is the gate most easily forgotten and it fails the build on its
 own, so run it last thing before committing.

@@ -41,7 +41,8 @@ jobs:
       # refusing every offer, and the failure would only show up as a 500 in a
       # player's face. Cheap enough to repeat here rather than trust the run on
       # the merge commit.
-      - run: deno check supabase/functions/*/index.ts
+      - run: deno check */index.ts
+        working-directory: supabase/functions
 
       - uses: supabase/setup-cli@v1
         with:

@@ -44,7 +44,13 @@ jobs:
       # Each function's entry point, not every file: Deno follows the imports
       # into `_shared` itself, and naming the entries leaves out the vitest test
       # beside them, which is checked by `npm test` instead.
-      - run: deno check supabase/functions/*/index.ts
+      #
+      # From the functions directory, so that `supabase/functions/deno.json` is
+      # the config Deno finds. Run from the repo root it walks up to the root
+      # `package.json` instead, decides this is a node project, and looks for
+      # `npm:` packages in a `node_modules` this job has no reason to install.
+      - run: deno check */index.ts
+        working-directory: supabase/functions
 
   dart:
     name: Dart packages (analyze, format, parity replay)
