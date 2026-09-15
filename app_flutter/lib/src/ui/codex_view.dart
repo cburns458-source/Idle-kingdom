@@ -88,12 +88,24 @@ class _CodexViewState extends State<CodexView> {
   }
 
   void _openAction(String actionId) {
-    if (_codex.action(actionId) == null) return;
-    setState(() {
-      _stack
-        ..clear()
-        ..add(_CodexActionRoute(actionId));
-    });
+    if (_codex.action(actionId) != null) {
+      setState(() {
+        _stack
+          ..clear()
+          ..add(_CodexActionRoute(actionId));
+      });
+      return;
+    }
+    for (final action in widget.controller.db.actions) {
+      if (action.actionId != actionId) continue;
+      if (action.category == 'Combat' &&
+          action.targetType == 'Enemy' &&
+          action.targetId != null &&
+          action.targetId!.isNotEmpty) {
+        _openEnemy(action.targetId!);
+      }
+      return;
+    }
   }
 
   void _close() {
@@ -258,12 +270,35 @@ class _CodexViewState extends State<CodexView> {
       return const Center(child: MutedText('Nothing in the Codex matches.'));
     }
     final chrome = UiChrome.of(context);
+    final items = <Object>[];
+    String? lastSkill;
+    for (final entry in rows) {
+      final skill = entry.skillName ?? 'Other';
+      if (skill != lastSkill) {
+        items.add(skill);
+        lastSkill = skill;
+      }
+      items.add(entry);
+    }
     return ListView.separated(
       padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-      itemCount: rows.length,
-      separatorBuilder: (context, index) => const SizedBox(height: 8),
+      itemCount: items.length,
+      separatorBuilder: (context, index) {
+        if (items[index] is String) return const SizedBox(height: 4);
+        return const SizedBox(height: 8);
+      },
       itemBuilder: (context, index) {
-        final entry = rows[index];
+        final item = items[index];
+        if (item is String) {
+          return Padding(
+            padding: EdgeInsets.fromLTRB(4, index == 0 ? 0 : 8, 4, 2),
+            child: Text(
+              item,
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: chrome.embossFace),
+            ),
+          );
+        }
+        final entry = item as CodexActionEntry;
         final level = entry.level == null ? null : 'Level ${formatThousands(entry.level!)}';
         final places = entry.locations.map((row) => row.displayName).join(', ');
         return _LinkRow(
@@ -274,7 +309,7 @@ class _CodexViewState extends State<CodexView> {
             height: 36,
           ),
           title: entry.displayName,
-          detail: [?entry.skillName, ?level, if (places.isNotEmpty) places].join(' · '),
+          detail: [?level, if (places.isNotEmpty) places].join(' · '),
           ink: Palette.parchmentText,
           muted: chrome.embossFace,
           onTap: () => _openAction(entry.actionId),

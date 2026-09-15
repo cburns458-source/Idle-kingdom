@@ -71,6 +71,15 @@ void main() {
         matching: find.bySemanticsLabel('Start'),
       ),
     );
+    await tester.pump();
+
+    expect(find.byKey(const Key('game-popup')), findsOne);
+    expect(find.text('Unequip weapons?'), findsOne);
+    expect(controller.save.currentActivityId, isNull);
+    expect(slotItemId(controller.save, weaponToolSlotId), 'ITEM-0100');
+
+    await tester.tap(find.text('Unequip & start'));
+    await tester.pump();
 
     expect(controller.save.currentActivityId, 'ACT-0035');
     expect(controller.save.combatEnemyId, 'ENM-0020');

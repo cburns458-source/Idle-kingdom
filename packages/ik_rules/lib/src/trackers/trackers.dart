@@ -96,8 +96,34 @@ PlayerSave resetAllXpTrackers(PlayerSave save) {
   return save.copyWith(xpTrackers: const <String, XpTrackerEntry>{});
 }
 
-num xpPerHour(XpTrackerEntry entry, num nowMs) {
-  final elapsed = nowMs - entry.startedAtMs;
+bool trackersPaused(PlayerSave save) => save.trackerPausedAtMs != null;
+
+PlayerSave pauseTrackers(PlayerSave save, num nowMs) {
+  if (save.trackerPausedAtMs != null) return save;
+  return save.copyWith(trackerPausedAtMs: nowMs);
+}
+
+PlayerSave resumeTrackers(PlayerSave save, num nowMs) {
+  final pausedAt = save.trackerPausedAtMs;
+  if (pausedAt == null) return save;
+  final delta = nowMs - pausedAt;
+  final shift = delta < 0 ? 0 : delta;
+  return save.copyWith(
+    trackerPausedAtMs: null,
+    lootTrackers: <String, LootTrackerEntry>{
+      for (final entry in save.lootTrackers.entries)
+        entry.key: entry.value.copyWith(startedAtMs: entry.value.startedAtMs + shift),
+    },
+    xpTrackers: <String, XpTrackerEntry>{
+      for (final entry in save.xpTrackers.entries)
+        entry.key: entry.value.copyWith(startedAtMs: entry.value.startedAtMs + shift),
+    },
+  );
+}
+
+num xpPerHour(XpTrackerEntry entry, num nowMs, [PlayerSave? save]) {
+  final end = save?.trackerPausedAtMs ?? nowMs;
+  final elapsed = end - entry.startedAtMs;
   final window = elapsed < 1 ? 1 : elapsed;
   return (entry.xpGained / window) * 3600000;
 }

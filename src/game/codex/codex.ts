@@ -18,10 +18,25 @@ export type CodexObtainKind = 'action' | 'enemy' | 'shop' | 'starter' | 'quest'
 const GOLDEN_SPUD_ITEM_ID = 'ITEM-0026'
 const CHEF_HAT_ITEM_ID = 'ITEM-0165'
 const HIDE_FROM_CODEX_ACTION_ID = 'ACN-0036'
+const MINING_SKILL_ID = 'SKL-0002'
+const ORE_GEM_TABLE_IDS = new Set(['RWT-0058', 'RWT-0059', 'RWT-0060'])
 
 function notesHideFromCodex(notes: unknown): boolean {
   if (typeof notes !== 'string') return false
   return /HideFromCodex|MysteryDrop/i.test(notes)
+}
+
+function hideActionFromCodex(action: ActionRow): boolean {
+  if (action['Action ID'] === HIDE_FROM_CODEX_ACTION_ID || notesHideFromCodex(action.Notes)) {
+    return true
+  }
+  return action.Category === 'Gathering' && action.Status === 'Needs Data'
+}
+
+function combatEnemyId(action: ActionRow): string | null {
+  if (action.Category !== 'Combat') return null
+  if (action['Target Type'] === 'Enemy' && action['Target ID']) return action['Target ID']
+  return null
 }
 
 /**
@@ -126,7 +141,7 @@ export interface CodexEnemyEntry {
 }
 
 export interface CodexActionDropTable {
-  label: 'Primary' | 'Secondary' | 'Tertiary'
+  label: 'Primary' | 'Secondary' | 'Tertiary' | 'Drops' | 'Gems'
   tableId: string
   dropChance: number | null
   drops: CodexItemRef[]
@@ -265,9 +280,7 @@ export class CodexIndex {
 
     for (const action of this.db.Actions) {
       if (action.Category === 'Standard Production') continue
-      if (action['Action ID'] === HIDE_FROM_CODEX_ACTION_ID || notesHideFromCodex(action.Notes)) {
-        continue
-      }
+      if (hideActionFromCodex(action)) continue
       const locs = actionLocations.get(action['Action ID']) ?? []
       const skillName = skills.get(action['Relevant Skill ID'])
       const level = action['Proficiency Level']
@@ -276,6 +289,7 @@ export class CodexIndex {
         typeof level === 'number' ? `Level ${level}` : null,
       ].filter((part): part is string => !!part)
       const detail = detailParts.length > 0 ? detailParts.join(' · ') : null
+      const enemyId = combatEnemyId(action)
 
       if (action['Target Type'] === 'Item' && action['Target ID']) {
         addObtain(action['Target ID'], {
@@ -283,6 +297,7 @@ export class CodexIndex {
           title: action['Display Name'],
           detail,
           actionId: action['Action ID'],
+          enemyId,
           locations: locs,
         })
       }
@@ -295,6 +310,7 @@ export class CodexIndex {
             title: action['Display Name'],
             detail,
             actionId: action['Action ID'],
+            enemyId,
             locations: locs,
             dropChance: table.chance,
             minQuantity: drop.minQuantity,
@@ -490,9 +506,7 @@ export class CodexIndex {
 
     const actions = this.db.Actions.filter((action) => {
       if (action.Category !== 'Gathering') return false
-      if (action['Action ID'] === HIDE_FROM_CODEX_ACTION_ID || notesHideFromCodex(action.Notes)) {
-        return false
-      }
+      if (hideActionFromCodex(action)) return false
       return true
     })
     actions.sort((a, b) => {
@@ -504,21 +518,7 @@ export class CodexIndex {
       return a['Display Name'].toLowerCase().localeCompare(b['Display Name'].toLowerCase())
     })
     for (const action of actions) {
-      const tables: CodexActionDropTable[] = []
-      for (const table of actionTables(action)) {
-        const drops = (tableItems.get(table.id) ?? []).filter((drop) => {
-          if (drop.itemId === GOLDEN_SPUD_ITEM_ID) return false
-          const item = this.itemsById.get(drop.itemId)
-          return item ? includeInCodexCatalog(item) : false
-        })
-        if (drops.length === 0) continue
-        tables.push({
-          label: table.label,
-          tableId: table.id,
-          dropChance: table.chance,
-          drops: withDropRates(drops),
-        })
-      }
+      const tables = catalogActionTables(action, tableItems, this.itemsById)
       const targetId =
         action['Target Type'] === 'Item' && action['Target ID'] ? action['Target ID'] : null
       const targetItem = targetId ? this.itemsById.get(targetId) : undefined
@@ -648,6 +648,61 @@ function actionTables(
     })
   }
   return out
+}
+
+function isOreGemTable(action: ActionRow, tableId: string): boolean {
+  return action['Relevant Skill ID'] === MINING_SKILL_ID && ORE_GEM_TABLE_IDS.has(tableId)
+}
+
+function catalogActionTables(
+  action: ActionRow,
+  tableItems: Map<string, CodexItemRef[]>,
+  itemsById: Map<string, CodexItemEntry>,
+): CodexActionDropTable[] {
+  const keepDrop = (drop: CodexItemRef): boolean => {
+    if (drop.itemId === GOLDEN_SPUD_ITEM_ID) return false
+    const item = itemsById.get(drop.itemId)
+    return item ? includeInCodexCatalog(item) : false
+  }
+  const merged: CodexItemRef[] = []
+  const gems: CodexActionDropTable[] = []
+  let mergedTableId: string | null = null
+  for (const table of actionTables(action)) {
+    const drops = (tableItems.get(table.id) ?? []).filter(keepDrop)
+    if (drops.length === 0) continue
+    if (isOreGemTable(action, table.id)) {
+      gems.push({
+        label: 'Gems',
+        tableId: table.id,
+        dropChance: table.chance,
+        drops: withEffectiveDropRates(drops, table.chance),
+      })
+      continue
+    }
+    if (!mergedTableId) mergedTableId = table.id
+    merged.push(...withEffectiveDropRates(drops, table.chance))
+  }
+  const out: CodexActionDropTable[] = []
+  if (merged.length > 0 && mergedTableId) {
+    out.push({
+      label: 'Drops',
+      tableId: mergedTableId,
+      dropChance: null,
+      drops: merged,
+    })
+  }
+  out.push(...gems)
+  return out
+}
+
+function withEffectiveDropRates(drops: CodexItemRef[], tableChance: number | null): CodexItemRef[] {
+  const totalWeight = drops.reduce((sum, drop) => sum + (drop.weight ?? 0), 0)
+  const chance = tableChance ?? 100
+  return drops.map((drop) => ({
+    ...drop,
+    dropRatePercent:
+      drop.weight != null && totalWeight > 0 ? (drop.weight / totalWeight) * chance : null,
+  }))
 }
 
 function withDropRates(drops: CodexItemRef[]): CodexItemRef[] {

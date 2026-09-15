@@ -44,18 +44,33 @@ void main() {
     expect(db.items.firstWhere((row) => row.itemId == 'ITEM-0010').baseSellValue, 180);
   });
 
-  test('lists gathering actions with secondary gem tables', () {
+  test('lists gathering actions with gem tables kept separate from the merged drop pool', () {
     expect(codex.actions.any((row) => row.actionId == 'ACN-0018'), isTrue);
     expect(codex.actions.every((row) => row.category == 'Gathering'), isTrue);
     expect(codex.action('ACN-0001'), isNull);
     expect(codex.action('ACN-0036'), isNull);
+    expect(codex.action('ACN-0166'), isNull);
+    expect(codex.action('ACN-0167'), isNull);
+    expect(codex.action('ACN-0168'), isNull);
     final mine = codex.action('ACN-0018')!;
     expect(mine.displayName.toLowerCase(), contains('copper'));
-    expect(mine.tables.map((table) => table.label), ['Primary', 'Secondary']);
-    final gems = mine.tables.firstWhere((table) => table.label == 'Secondary');
+    expect(mine.tables.map((table) => table.label), ['Drops', 'Gems']);
+    final ore = mine.tables.firstWhere((table) => table.label == 'Drops');
+    expect(ore.drops.map((row) => row.displayName), contains('Copper Ore'));
+    expect(ore.drops.map((row) => row.displayName), isNot(contains('Sapphire')));
+    final gems = mine.tables.firstWhere((table) => table.label == 'Gems');
     expect(gems.dropChance, 1);
     expect(gems.drops.map((row) => row.displayName), contains('Sapphire'));
     expect(codex.actionsMatching('mine copper').map((row) => row.actionId), contains('ACN-0018'));
+  });
+
+  test('folds hunting secondary and tertiary drops into the primary pool', () {
+    final hunt = codex.action('ACN-0014')!;
+    expect(hunt.tables.map((table) => table.label), ['Drops']);
+    expect(
+      hunt.tables.first.drops.map((row) => row.displayName),
+      containsAll(['Venison', 'Leather', 'Elk Horns', 'Animal Tendons']),
+    );
   });
 
   test('uses the same inventory groups as the bag', () {
@@ -131,9 +146,11 @@ void main() {
     expect(codex.enemy('ENM-0006')!.drops.map((row) => row.itemId), isNot(contains('ITEM-0144')));
   });
 
-  test('lists secondary combat action loot as obtain sources', () {
+  test('lists secondary combat action loot as obtain sources that open the bestiary enemy', () {
     final staff = codex.item('ITEM-0122')!;
-    expect(staff.obtainedFrom.any((row) => row.actionId == 'ACN-0004'), isTrue);
+    final fight = staff.obtainedFrom.firstWhere((row) => row.actionId == 'ACN-0004');
+    expect(fight.enemyId, 'ENM-0004');
+    expect(fight.title.toLowerCase(), contains('goblin'));
   });
 
   test('lists excavator pickaxe quest reward but not chef hat quest', () {

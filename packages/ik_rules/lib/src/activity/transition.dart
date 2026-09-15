@@ -88,6 +88,59 @@ String? _hostileStartBlocked(GameDatabase db, PlayerSave save, String activityId
   return hostileActivityStartReason;
 }
 
+class EmptySlotOccupant {
+  const EmptySlotOccupant({
+    required this.slotId,
+    required this.slotName,
+    required this.itemId,
+    required this.itemName,
+  });
+
+  final String slotId;
+  final String slotName;
+  final String itemId;
+  final String itemName;
+}
+
+/// Equipped items that would be unequipped to satisfy Empty Slot requirements.
+List<EmptySlotOccupant> occupiedEmptySlotRequirements(
+  GameDatabase db,
+  PlayerSave save,
+  String activityId,
+) {
+  final out = <EmptySlotOccupant>[];
+  for (final requirement in requirementsForEntity(db, 'Activity', activityId)) {
+    if (requirement.requirementType != 'Empty Slot') continue;
+    final slotId = jsString(requirement.referenceIdValue ?? '');
+    if (slotId.isEmpty) continue;
+    final equipped = slotStack(save, slotId);
+    if (equipped == null || isBlank(equipped.itemId) || equipped.quantity <= 0) continue;
+    var slotName = slotId;
+    for (final slot in db.equipmentSlots) {
+      if (slot.slotId == slotId) {
+        slotName = slot.displayName;
+        break;
+      }
+    }
+    var itemName = equipped.itemId;
+    for (final item in db.items) {
+      if (item.itemId == equipped.itemId) {
+        itemName = item.displayName;
+        break;
+      }
+    }
+    out.add(
+      EmptySlotOccupant(
+        slotId: slotId,
+        slotName: slotName,
+        itemId: equipped.itemId,
+        itemName: itemName,
+      ),
+    );
+  }
+  return out;
+}
+
 /// Unequips slots an activity requires empty, the same way a missing skill
 /// requirement is resolved before start rather than left as a hard block.
 EquipResult unequipEmptySlotRequirements(GameDatabase db, PlayerSave save, String activityId) {

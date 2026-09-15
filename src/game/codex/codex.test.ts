@@ -42,18 +42,31 @@ describe('codex index', () => {
     expect(launch.Items.find((row) => row['Item ID'] === 'ITEM-0010')?.['Base Sell Value']).toBe(180)
   })
 
-  it('lists gathering actions with secondary gem tables', () => {
+  it('lists gathering actions with gem tables kept separate from the merged drop pool', () => {
     expect(codex.actions.some((row) => row.actionId === 'ACN-0018')).toBe(true)
     expect(codex.actions.every((row) => row.category === 'Gathering')).toBe(true)
     expect(codex.action('ACN-0001')).toBeUndefined()
     expect(codex.action('ACN-0036')).toBeUndefined()
+    expect(codex.action('ACN-0166')).toBeUndefined()
+    expect(codex.action('ACN-0167')).toBeUndefined()
+    expect(codex.action('ACN-0168')).toBeUndefined()
     const mine = codex.action('ACN-0018')!
     expect(mine.displayName.toLowerCase()).toContain('copper')
-    expect(mine.tables.map((table) => table.label)).toEqual(['Primary', 'Secondary'])
-    const gems = mine.tables.find((table) => table.label === 'Secondary')!
+    expect(mine.tables.map((table) => table.label)).toEqual(['Drops', 'Gems'])
+    const ore = mine.tables.find((table) => table.label === 'Drops')!
+    expect(ore.drops.map((row) => row.displayName)).toContain('Copper Ore')
+    expect(ore.drops.map((row) => row.displayName)).not.toContain('Sapphire')
+    const gems = mine.tables.find((table) => table.label === 'Gems')!
     expect(gems.dropChance).toBe(1)
     expect(gems.drops.map((row) => row.displayName)).toContain('Sapphire')
     expect(codex.actionsMatching('mine copper').map((row) => row.actionId)).toContain('ACN-0018')
+  })
+
+  it('folds hunting secondary and tertiary drops into the primary pool', () => {
+    const hunt = codex.action('ACN-0014')!
+    expect(hunt.tables.map((table) => table.label)).toEqual(['Drops'])
+    const names = hunt.tables[0]!.drops.map((row) => row.displayName)
+    expect(names).toEqual(expect.arrayContaining(['Venison', 'Leather', 'Elk Horns', 'Animal Tendons']))
   })
 
   it('uses the same inventory groups as the bag', () => {
@@ -125,10 +138,11 @@ describe('codex index', () => {
     expect(codex.enemy('ENM-0006')!.drops.map((row) => row.itemId)).not.toContain('ITEM-0144')
   })
 
-  it('lists secondary combat action loot as obtain sources', () => {
-    expect(codex.item('ITEM-0122')!.obtainedFrom.some((row) => row.actionId === 'ACN-0004')).toBe(
-      true,
-    )
+  it('lists secondary combat action loot as obtain sources that open the bestiary enemy', () => {
+    const staff = codex.item('ITEM-0122')!
+    const fight = staff.obtainedFrom.find((row) => row.actionId === 'ACN-0004')
+    expect(fight?.enemyId).toBe('ENM-0004')
+    expect(fight?.title.toLowerCase()).toContain('goblin')
   })
 
   it('lists excavator pickaxe quest reward but not chef hat quest', () => {

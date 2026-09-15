@@ -99,16 +99,14 @@ class _TrackerViewState extends State<TrackerView> {
         if (rows.isNotEmpty)
           Padding(
             padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
-            child: Align(
-              alignment: Alignment.centerRight,
-              child: GameButton(
-                key: const Key('tracker-reset-all-loot'),
-                label: 'Reset all',
-                compact: true,
-                dense: true,
-                tone: GameButtonTone.secondary,
-                onPressed: () => controller.commit(resetAllLootTrackers(controller.save)),
-              ),
+            child: _TrackerToolbar(
+              loot: true,
+              paused: trackersPaused(controller.save),
+              onStop: () =>
+                  controller.commit(pauseTrackers(controller.save, controller.session.clock())),
+              onStart: () =>
+                  controller.commit(resumeTrackers(controller.save, controller.session.clock())),
+              onResetAll: () => controller.commit(resetAllLootTrackers(controller.save)),
             ),
           ),
         Expanded(
@@ -139,16 +137,14 @@ class _TrackerViewState extends State<TrackerView> {
         if (rows.isNotEmpty)
           Padding(
             padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
-            child: Align(
-              alignment: Alignment.centerRight,
-              child: GameButton(
-                key: const Key('tracker-reset-all-xp'),
-                label: 'Reset all',
-                compact: true,
-                dense: true,
-                tone: GameButtonTone.secondary,
-                onPressed: () => controller.commit(resetAllXpTrackers(controller.save)),
-              ),
+            child: _TrackerToolbar(
+              loot: false,
+              paused: trackersPaused(controller.save),
+              onStop: () =>
+                  controller.commit(pauseTrackers(controller.save, controller.session.clock())),
+              onStart: () =>
+                  controller.commit(resumeTrackers(controller.save, controller.session.clock())),
+              onResetAll: () => controller.commit(resetAllXpTrackers(controller.save)),
             ),
           ),
         Expanded(
@@ -167,6 +163,7 @@ class _TrackerViewState extends State<TrackerView> {
                           ? null
                           : skillIconPath(_skillById(entry.skillId)),
                       nowMs: nowMs,
+                      save: controller.save,
                       onReset: () =>
                           controller.commit(resetXpTracker(controller.save, entry.skillId)),
                     );
@@ -356,12 +353,65 @@ class _DropChip extends StatelessWidget {
   }
 }
 
+class _TrackerToolbar extends StatelessWidget {
+  const _TrackerToolbar({
+    required this.loot,
+    required this.paused,
+    required this.onStop,
+    required this.onStart,
+    required this.onResetAll,
+  });
+
+  final bool loot;
+  final bool paused;
+  final VoidCallback onStop;
+  final VoidCallback onStart;
+  final VoidCallback onResetAll;
+
+  @override
+  Widget build(BuildContext context) {
+    final suffix = loot ? 'loot' : 'xp';
+    return Row(
+      children: [
+        const Spacer(),
+        GameButton(
+          key: Key('tracker-stop-$suffix'),
+          label: 'Stop',
+          compact: true,
+          dense: true,
+          tone: GameButtonTone.secondary,
+          onPressed: paused ? null : onStop,
+        ),
+        const SizedBox(width: 6),
+        GameButton(
+          key: Key('tracker-start-$suffix'),
+          label: 'Start',
+          compact: true,
+          dense: true,
+          tone: GameButtonTone.secondary,
+          onPressed: paused ? onStart : null,
+        ),
+        const SizedBox(width: 6),
+        GameButton(
+          key: Key('tracker-reset-all-$suffix'),
+          label: 'Reset all',
+          compact: true,
+          dense: true,
+          tone: GameButtonTone.secondary,
+          onPressed: onResetAll,
+        ),
+      ],
+    );
+  }
+}
+
 class _XpRow extends StatelessWidget {
   const _XpRow({
     required this.entry,
     required this.title,
     required this.iconPath,
     required this.nowMs,
+    required this.save,
     required this.onReset,
   });
 
@@ -369,6 +419,7 @@ class _XpRow extends StatelessWidget {
   final String title;
   final String? iconPath;
   final num nowMs;
+  final PlayerSave save;
   final VoidCallback onReset;
 
   @override
@@ -387,7 +438,7 @@ class _XpRow extends StatelessWidget {
               children: [
                 Text(title, style: const TextStyle(fontSize: 15)),
                 MutedText(
-                  '${formatThousands(entry.xpGained)} XP · ${formatThousands(xpPerHour(entry, nowMs))} XP/hr',
+                  '${formatThousands(entry.xpGained)} XP · ${formatThousands(xpPerHour(entry, nowMs, save))} XP/hr',
                 ),
               ],
             ),

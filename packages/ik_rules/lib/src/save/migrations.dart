@@ -707,6 +707,15 @@ final List<SaveMigration> saveMigrations = <SaveMigration>[
     toVersion: 46,
     migrate: (save, nowMs) => _bumped(removeRetiredItemsJson(save), 46),
   ),
+  SaveMigration(
+    fromVersion: 46,
+    toVersion: 47,
+    migrate: (save, nowMs) {
+      final next = _bumped(save, 47);
+      next['trackerPausedAtMs'] = null;
+      return next;
+    },
+  ),
 ];
 
 /// Thrown when a save cannot be brought to the current version.

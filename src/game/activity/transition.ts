@@ -102,6 +102,38 @@ function hostileStartBlocked(
   return HOSTILE_ACTIVITY_START_REASON
 }
 
+export interface EmptySlotOccupant {
+  slotId: string
+  slotName: string
+  itemId: string
+  itemName: string
+}
+
+/** Equipped items that would be unequipped to satisfy Empty Slot requirements. */
+export function occupiedEmptySlotRequirements(
+  db: GameDatabase,
+  save: PlayerSave,
+  activityId: string,
+): EmptySlotOccupant[] {
+  const out: EmptySlotOccupant[] = []
+  for (const requirement of requirementsForEntity(db, 'Activity', activityId)) {
+    if (requirement['Requirement Type'] !== 'Empty Slot') continue
+    const slotId = String(requirement['Reference ID / Value'] ?? '')
+    if (!slotId) continue
+    const equipped = save.equipment.slots[slotId]
+    if (!equipped?.itemId || equipped.quantity <= 0) continue
+    const slot = db.EquipmentSlots.find((row) => row['Slot ID'] === slotId)
+    const item = db.Items.find((row) => row['Item ID'] === equipped.itemId)
+    out.push({
+      slotId,
+      slotName: slot?.['Display Name'] ?? slotId,
+      itemId: equipped.itemId,
+      itemName: item?.['Display Name'] ?? equipped.itemId,
+    })
+  }
+  return out
+}
+
 /** Unequip slots an activity requires empty before start validation. */
 export function unequipEmptySlotRequirements(
   db: GameDatabase,
