@@ -405,6 +405,9 @@ class CodexIndex {
 
   void _build() {
     final names = <String, String>{for (final item in db.items) item.itemId: item.displayName};
+    final enemyNames = <String, String>{
+      for (final enemy in db.enemies) enemy.enemyId: enemy.displayName,
+    };
     final skills = <String, String>{
       for (final skill in db.skills) skill.skillId: skill.displayName,
     };
@@ -464,54 +467,6 @@ class CodexIndex {
       }
     }
 
-    for (final action in db.actions) {
-      if (action.category == 'Standard Production') continue;
-      if (_hideActionFromCodex(action)) continue;
-      final locs = actionLocations[action.actionId] ?? const <CodexLocationRef>[];
-      final skillName = skills[action.relevantSkillId];
-      final level = action.proficiencyLevel;
-      final detailParts = <String>[
-        if (skillName != null && skillName.isNotEmpty) skillName,
-        if (level != null) 'Level ${jsNumberToString(level)}',
-      ];
-      final detail = detailParts.isEmpty ? null : detailParts.join(' · ');
-      final enemyId = _combatEnemyId(action);
-
-      if (action.targetType == 'Item' && action.targetId != null) {
-        addObtain(
-          action.targetId,
-          CodexObtainSource(
-            kind: CodexObtainKind.action,
-            title: action.displayName,
-            detail: detail,
-            actionId: action.actionId,
-            enemyId: enemyId,
-            locations: locs,
-          ),
-        );
-      }
-
-      // Gathering, combat, and other action reward tables (including secondary combat loot).
-      for (final table in _actionTables(action)) {
-        for (final drop in tableItems[table.id] ?? const <CodexItemRef>[]) {
-          addObtain(
-            drop.itemId,
-            CodexObtainSource(
-              kind: CodexObtainKind.action,
-              title: action.displayName,
-              detail: detail,
-              actionId: action.actionId,
-              enemyId: enemyId,
-              locations: locs,
-              dropChance: table.chance,
-              minQuantity: drop.minQuantity,
-              maxQuantity: drop.maxQuantity,
-            ),
-          );
-        }
-      }
-    }
-
     for (final enemy in db.enemies) {
       final tableId = enemy.rewardTableId;
       if (tableId == null || tableId.isEmpty) continue;
@@ -529,6 +484,62 @@ class CodexIndex {
             maxQuantity: drop.maxQuantity,
           ),
         );
+      }
+    }
+
+    for (final action in db.actions) {
+      if (action.category == 'Standard Production') continue;
+      if (_hideActionFromCodex(action)) continue;
+      final locs = actionLocations[action.actionId] ?? const <CodexLocationRef>[];
+      final skillName = skills[action.relevantSkillId];
+      final level = action.proficiencyLevel;
+      final detailParts = <String>[
+        if (skillName != null && skillName.isNotEmpty) skillName,
+        if (level != null) 'Level ${jsNumberToString(level)}',
+      ];
+      final detail = detailParts.isEmpty ? null : detailParts.join(' · ');
+      final enemyId = _combatEnemyId(action);
+      final enemyTitle = enemyId == null ? null : enemyNames[enemyId];
+      CodexObtainSource obtainFromAction({num? dropChance, num? minQuantity, num? maxQuantity}) {
+        if (enemyId != null) {
+          return CodexObtainSource(
+            kind: CodexObtainKind.enemy,
+            title: enemyTitle ?? action.displayName,
+            enemyId: enemyId,
+            locations: locs,
+            dropChance: dropChance,
+            minQuantity: minQuantity,
+            maxQuantity: maxQuantity,
+          );
+        }
+        return CodexObtainSource(
+          kind: CodexObtainKind.action,
+          title: action.displayName,
+          detail: detail,
+          actionId: action.actionId,
+          locations: locs,
+          dropChance: dropChance,
+          minQuantity: minQuantity,
+          maxQuantity: maxQuantity,
+        );
+      }
+
+      if (action.targetType == 'Item' && action.targetId != null) {
+        addObtain(action.targetId, obtainFromAction());
+      }
+
+      // Gathering, combat, and other action reward tables (including secondary combat loot).
+      for (final table in _actionTables(action)) {
+        for (final drop in tableItems[table.id] ?? const <CodexItemRef>[]) {
+          addObtain(
+            drop.itemId,
+            obtainFromAction(
+              dropChance: table.chance,
+              minQuantity: drop.minQuantity,
+              maxQuantity: drop.maxQuantity,
+            ),
+          );
+        }
       }
     }
 
@@ -739,8 +750,8 @@ class CodexIndex {
         if (action.category == 'Gathering' && !_hideActionFromCodex(action)) action,
     ];
     actionRows.sort((a, b) {
-      final skillA = (skills[a.relevantSkillId] ?? '').toLowerCase();
-      final skillB = (skills[b.relevantSkillId] ?? '').toLowerCase();
+      final skillA = a.relevantSkillId ?? '';
+      final skillB = b.relevantSkillId ?? '';
       final skill = skillA.compareTo(skillB);
       if (skill != 0) return skill;
       final level = jsNumber(a.proficiencyLevel ?? 0).compareTo(jsNumber(b.proficiencyLevel ?? 0));

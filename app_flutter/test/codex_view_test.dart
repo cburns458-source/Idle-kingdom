@@ -139,11 +139,19 @@ void main() {
     await tester.tap(find.text('Actions'));
     await tester.pump();
     expect(find.text('Mining'), findsWidgets);
-    expect(find.text('Woodcutting'), findsWidgets);
     expect(find.text('Mine copper ore'), findsWidgets);
     expect(find.text('Mine sapphire'), findsNothing);
     expect(find.text('Mine emerald'), findsNothing);
     expect(find.text('Mine ruby'), findsNothing);
+    await tester.scrollUntilVisible(
+      find.text('Woodcutting'),
+      400,
+      scrollable: find.descendant(
+        of: find.byKey(const Key('codex-action-list')),
+        matching: find.byType(Scrollable),
+      ),
+    );
+    expect(find.text('Woodcutting'), findsWidgets);
   });
 
   testWidgets('fight obtain lines open the bestiary enemy', (tester) async {

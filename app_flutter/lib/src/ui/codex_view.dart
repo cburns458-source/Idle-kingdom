@@ -281,6 +281,7 @@ class _CodexViewState extends State<CodexView> {
       items.add(entry);
     }
     return ListView.separated(
+      key: const Key('codex-action-list'),
       padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
       itemCount: items.length,
       separatorBuilder: (context, index) {

@@ -125,7 +125,8 @@ void main() {
   test('lists cow drops on the bestiary and as item obtain sources', () {
     final beef = codex.item('ITEM-0054')!;
     expect(beef.obtainedFrom.any((row) => row.enemyId == 'ENM-0001'), isTrue);
-    expect(beef.obtainedFrom.any((row) => row.actionId == 'ACN-0001'), isTrue);
+    expect(beef.obtainedFrom.where((row) => row.enemyId == 'ENM-0001').length, 1);
+    expect(beef.obtainedFrom.any((row) => row.actionId == 'ACN-0001'), isFalse);
     expect(beef.obtainedFrom.any((row) => row.kind == CodexObtainKind.enemy), isTrue);
 
     final cow = codex.enemy('ENM-0001')!;
@@ -148,8 +149,9 @@ void main() {
 
   test('lists secondary combat action loot as obtain sources that open the bestiary enemy', () {
     final staff = codex.item('ITEM-0122')!;
-    final fight = staff.obtainedFrom.firstWhere((row) => row.actionId == 'ACN-0004');
-    expect(fight.enemyId, 'ENM-0004');
+    final fight = staff.obtainedFrom.firstWhere((row) => row.enemyId == 'ENM-0004');
+    expect(fight.kind, CodexObtainKind.enemy);
+    expect(fight.actionId, isNull);
     expect(fight.title.toLowerCase(), contains('goblin'));
   });
 
