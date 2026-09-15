@@ -75,16 +75,16 @@ void main() {
     expect(find.text('Nothing in the Codex matches.'), findsOne);
   });
 
-  testWidgets('opens a mining action with secondary gem drops', (tester) async {
+  testWidgets('opens a mining action with gem drops kept off the ore pool', (tester) async {
     final controller = buildController(database, seed: startedCharacter(database));
     addTearDown(controller.dispose);
 
     await pumpPanel(tester, CodexView(controller: controller, initialActionId: 'ACN-0018'));
     expect(find.text('Mine copper ore'), findsWidgets);
-    expect(find.textContaining('Secondary'), findsOne);
+    expect(find.textContaining('Gems'), findsOne);
     expect(find.text('Sapphire'), findsWidgets);
 
-    await tester.tap(find.byKey(const Key('codex-action-drop-Secondary-ITEM-0012')));
+    await tester.tap(find.byKey(const Key('codex-action-drop-Gems-ITEM-0012')));
     await tester.pump();
     expect(find.text('Obtained from'), findsOne);
     expect(find.byKey(const Key('codex-obtain-action-ACN-0018')), findsOne);
@@ -129,5 +129,41 @@ void main() {
     }
     expect(find.text('Botany'), findsWidgets);
     expect(find.text('Thievery'), findsWidgets);
+  });
+
+  testWidgets('groups gathering actions by skill and hides gem mining', (tester) async {
+    final controller = buildController(database, seed: startedCharacter(database));
+    addTearDown(controller.dispose);
+
+    await pumpPanel(tester, CodexView(controller: controller));
+    await tester.tap(find.text('Actions'));
+    await tester.pump();
+    expect(find.text('Mining'), findsWidgets);
+    expect(find.text('Mine copper ore'), findsWidgets);
+    expect(find.text('Mine sapphire'), findsNothing);
+    expect(find.text('Mine emerald'), findsNothing);
+    expect(find.text('Mine ruby'), findsNothing);
+    await tester.scrollUntilVisible(
+      find.text('Woodcutting'),
+      400,
+      scrollable: find.descendant(
+        of: find.byKey(const Key('codex-action-list')),
+        matching: find.byType(Scrollable),
+      ),
+    );
+    expect(find.text('Woodcutting'), findsWidgets);
+  });
+
+  testWidgets('fight obtain lines open the bestiary enemy', (tester) async {
+    final controller = buildController(database, seed: startedCharacter(database));
+    addTearDown(controller.dispose);
+
+    await pumpPanel(tester, CodexView(controller: controller, initialItemId: 'ITEM-0122'));
+    expect(find.byKey(const Key('codex-obtain-enemy-ENM-0004')), findsOne);
+
+    await tester.tap(find.byKey(const Key('codex-obtain-enemy-ENM-0004')));
+    await tester.pump();
+    expect(find.text('Goblin Chief'), findsWidgets);
+    expect(find.text('Drops'), findsOne);
   });
 }

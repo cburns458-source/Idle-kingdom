@@ -42,6 +42,7 @@ const INTRODUCED_AT: Array<[number, string[]]> = [
   [32, ['combatBossSleepRoundsRemaining', 'bossRespawnUntilByEnemyId']],
   [35, ['hasSeenFennelIntro']],
   [44, ['lootTrackers', 'xpTrackers']],
+  [47, ['trackerPausedAtMs']],
 ]
 
 /**

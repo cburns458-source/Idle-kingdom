@@ -1,4 +1,4 @@
-export const SAVE_VERSION = 46
+export const SAVE_VERSION = 47
 export const SAVE_STORAGE_KEY = 'idle-kingdoms.demo.save'
 export const STARTING_LOCATION_ID = 'LOC-0001'
 /** Base gold before race kit; race starters grant the real starting gold. */
@@ -374,6 +374,11 @@ export interface PlayerSave {
   lootTrackers: Record<string, LootTrackerEntry>
   /** RuneScape-style XP tracker rows, keyed by skill id or `total`. */
   xpTrackers: Record<string, XpTrackerEntry>
+  /**
+   * When set, tracker XP/hr uses this timestamp as "now" so Start/Stop on the
+   * tracker pages can freeze rates without clearing the rows.
+   */
+  trackerPausedAtMs: number | null
 }
 
 export interface SaveMigration {

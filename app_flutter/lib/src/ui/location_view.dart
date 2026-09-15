@@ -1132,6 +1132,23 @@ Future<void> _startOrComingSoon(
     );
     return;
   }
+  final occupants = occupiedEmptySlotRequirements(
+    controller.db,
+    controller.save,
+    activity.activityId,
+  );
+  if (occupants.isNotEmpty) {
+    final names = occupants.map((row) => row.itemName).join(', ');
+    final confirmed = await showGameAlert(
+      context: context,
+      title: 'Unequip weapons?',
+      message: 'The monks keep your hands empty at the Temple. Unequip $names and start training?',
+      confirmLabel: 'Unequip & start',
+      cancelLabel: 'Cancel',
+      placement: GamePopupPlacement.center,
+    );
+    if (confirmed != true || !context.mounted) return;
+  }
   controller.startActivity(activity.activityId);
 }
 

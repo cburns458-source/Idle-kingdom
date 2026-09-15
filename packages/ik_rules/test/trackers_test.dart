@@ -82,8 +82,26 @@ void main() {
     expect(finished.save.xpTrackers.containsKey(totalXpTrackerId), isTrue);
   });
 
+  test('new saves start with trackers stopped', () {
+    expect(trackersPaused(fresh), isTrue);
+    final mined = completeGatheringAction(db, fresh, action('ACN-0018'), () => 0, 4_000);
+    expect(xpPerHour(mined.save.xpTrackers['SKL-0002']!, 10_000, mined.save), 0);
+  });
+
   test('xp/hr uses elapsed time since the tracker started', () {
     final entry = XpTrackerEntry(skillId: 'SKL-0001', startedAtMs: 0, xpGained: 3_600);
     expect(xpPerHour(entry, 3_600_000), 3_600);
+  });
+
+  test('stop freezes xp/hr and start excludes the paused window', () {
+    final runningSave = resumeTrackers(fresh, 1_000);
+    final mined = completeGatheringAction(db, runningSave, action('ACN-0018'), () => 0, 4_000);
+    final running = xpPerHour(mined.save.xpTrackers['SKL-0002']!, 10_000, mined.save);
+    final paused = pauseTrackers(mined.save, 10_000);
+    expect(trackersPaused(paused), isTrue);
+    expect(xpPerHour(paused.xpTrackers['SKL-0002']!, 20_000, paused), running);
+    final resumed = resumeTrackers(paused, 20_000);
+    expect(trackersPaused(resumed), isFalse);
+    expect(xpPerHour(resumed.xpTrackers['SKL-0002']!, 20_000, resumed), running);
   });
 }

@@ -16,10 +16,26 @@ enum CodexObtainKind { action, enemy, shop, starter, quest }
 const String _goldenSpudItemId = 'ITEM-0026';
 const String _chefHatItemId = 'ITEM-0165';
 const String _hideFromCodexActionId = 'ACN-0036';
+const String _miningSkillId = 'SKL-0002';
+const Set<String> _oreGemTableIds = {'RWT-0058', 'RWT-0059', 'RWT-0060'};
 
 bool _notesHideFromCodex(Object? notes) {
   final text = notes is String ? notes : '';
   return RegExp(r'HideFromCodex|MysteryDrop', caseSensitive: false).hasMatch(text);
+}
+
+bool _hideActionFromCodex(ActionRow action) {
+  if (action.actionId == _hideFromCodexActionId || _notesHideFromCodex(action.notes)) {
+    return true;
+  }
+  return action.category == 'Gathering' && action.status == 'Needs Data';
+}
+
+String? _combatEnemyId(ActionRow action) {
+  if (action.category != 'Combat') return null;
+  final targetId = action.targetId;
+  if (action.targetType == 'Enemy' && targetId != null && targetId.isNotEmpty) return targetId;
+  return null;
 }
 
 /// Quest rewards in Obtained from: non-cosmetic gear/tools only (Tool / Weapon / Armor).
@@ -267,7 +283,7 @@ class CodexEnemyEntry {
   };
 }
 
-/// One reward table on an action page (primary ore, secondary gems, and so on).
+/// One reward table on an action page (merged drop pool, ore gems, and so on).
 class CodexActionDropTable {
   const CodexActionDropTable({
     required this.label,
@@ -389,6 +405,9 @@ class CodexIndex {
 
   void _build() {
     final names = <String, String>{for (final item in db.items) item.itemId: item.displayName};
+    final enemyNames = <String, String>{
+      for (final enemy in db.enemies) enemy.enemyId: enemy.displayName,
+    };
     final skills = <String, String>{
       for (final skill in db.skills) skill.skillId: skill.displayName,
     };
@@ -448,53 +467,6 @@ class CodexIndex {
       }
     }
 
-    for (final action in db.actions) {
-      if (action.category == 'Standard Production') continue;
-      if (action.actionId == _hideFromCodexActionId || _notesHideFromCodex(action.raw['Notes'])) {
-        continue;
-      }
-      final locs = actionLocations[action.actionId] ?? const <CodexLocationRef>[];
-      final skillName = skills[action.relevantSkillId];
-      final level = action.proficiencyLevel;
-      final detailParts = <String>[
-        if (skillName != null && skillName.isNotEmpty) skillName,
-        if (level != null) 'Level ${jsNumberToString(level)}',
-      ];
-      final detail = detailParts.isEmpty ? null : detailParts.join(' · ');
-
-      if (action.targetType == 'Item' && action.targetId != null) {
-        addObtain(
-          action.targetId,
-          CodexObtainSource(
-            kind: CodexObtainKind.action,
-            title: action.displayName,
-            detail: detail,
-            actionId: action.actionId,
-            locations: locs,
-          ),
-        );
-      }
-
-      // Gathering, combat, and other action reward tables (including secondary combat loot).
-      for (final table in _actionTables(action)) {
-        for (final drop in tableItems[table.id] ?? const <CodexItemRef>[]) {
-          addObtain(
-            drop.itemId,
-            CodexObtainSource(
-              kind: CodexObtainKind.action,
-              title: action.displayName,
-              detail: detail,
-              actionId: action.actionId,
-              locations: locs,
-              dropChance: table.chance,
-              minQuantity: drop.minQuantity,
-              maxQuantity: drop.maxQuantity,
-            ),
-          );
-        }
-      }
-    }
-
     for (final enemy in db.enemies) {
       final tableId = enemy.rewardTableId;
       if (tableId == null || tableId.isEmpty) continue;
@@ -512,6 +484,62 @@ class CodexIndex {
             maxQuantity: drop.maxQuantity,
           ),
         );
+      }
+    }
+
+    for (final action in db.actions) {
+      if (action.category == 'Standard Production') continue;
+      if (_hideActionFromCodex(action)) continue;
+      final locs = actionLocations[action.actionId] ?? const <CodexLocationRef>[];
+      final skillName = skills[action.relevantSkillId];
+      final level = action.proficiencyLevel;
+      final detailParts = <String>[
+        if (skillName != null && skillName.isNotEmpty) skillName,
+        if (level != null) 'Level ${jsNumberToString(level)}',
+      ];
+      final detail = detailParts.isEmpty ? null : detailParts.join(' · ');
+      final enemyId = _combatEnemyId(action);
+      final enemyTitle = enemyId == null ? null : enemyNames[enemyId];
+      CodexObtainSource obtainFromAction({num? dropChance, num? minQuantity, num? maxQuantity}) {
+        if (enemyId != null) {
+          return CodexObtainSource(
+            kind: CodexObtainKind.enemy,
+            title: enemyTitle ?? action.displayName,
+            enemyId: enemyId,
+            locations: locs,
+            dropChance: dropChance,
+            minQuantity: minQuantity,
+            maxQuantity: maxQuantity,
+          );
+        }
+        return CodexObtainSource(
+          kind: CodexObtainKind.action,
+          title: action.displayName,
+          detail: detail,
+          actionId: action.actionId,
+          locations: locs,
+          dropChance: dropChance,
+          minQuantity: minQuantity,
+          maxQuantity: maxQuantity,
+        );
+      }
+
+      if (action.targetType == 'Item' && action.targetId != null) {
+        addObtain(action.targetId, obtainFromAction());
+      }
+
+      // Gathering, combat, and other action reward tables (including secondary combat loot).
+      for (final table in _actionTables(action)) {
+        for (final drop in tableItems[table.id] ?? const <CodexItemRef>[]) {
+          addObtain(
+            drop.itemId,
+            obtainFromAction(
+              dropChance: table.chance,
+              minQuantity: drop.minQuantity,
+              maxQuantity: drop.maxQuantity,
+            ),
+          );
+        }
       }
     }
 
@@ -719,14 +747,11 @@ class CodexIndex {
 
     final actionRows = [
       for (final action in db.actions)
-        if (action.category == 'Gathering' &&
-            action.actionId != _hideFromCodexActionId &&
-            !_notesHideFromCodex(action.raw['Notes']))
-          action,
+        if (action.category == 'Gathering' && !_hideActionFromCodex(action)) action,
     ];
     actionRows.sort((a, b) {
-      final skillA = (skills[a.relevantSkillId] ?? '').toLowerCase();
-      final skillB = (skills[b.relevantSkillId] ?? '').toLowerCase();
+      final skillA = a.relevantSkillId;
+      final skillB = b.relevantSkillId;
       final skill = skillA.compareTo(skillB);
       if (skill != 0) return skill;
       final level = jsNumber(a.proficiencyLevel ?? 0).compareTo(jsNumber(b.proficiencyLevel ?? 0));
@@ -734,27 +759,7 @@ class CodexIndex {
       return a.displayName.toLowerCase().compareTo(b.displayName.toLowerCase());
     });
     for (final action in actionRows) {
-      final tables = <CodexActionDropTable>[];
-      for (final table in _actionTables(action)) {
-        final drops = [
-          for (final drop in tableItems[table.id] ?? const <CodexItemRef>[])
-            if (drop.itemId != _goldenSpudItemId &&
-                includeInCodexCatalog(
-                  category: _items[drop.itemId]?.category,
-                  subtype: _items[drop.itemId]?.subtype,
-                ))
-              drop,
-        ];
-        if (drops.isEmpty) continue;
-        tables.add(
-          CodexActionDropTable(
-            label: table.label,
-            tableId: table.id,
-            dropChance: table.chance,
-            drops: _withDropRates(drops),
-          ),
-        );
-      }
+      final tables = _catalogActionTables(action, tableItems, _items);
       final targetId = action.targetType == 'Item' ? action.targetId : null;
       final targetItem = targetId == null ? null : _items[targetId];
       _actionOrder.add(action.actionId);
@@ -873,6 +878,70 @@ List<_TableChance> _actionTables(ActionRow action) {
       _TableChance(action.secondaryRewardTableId!, action.secondaryDropChance, 'Secondary'),
     if (action.tertiaryRewardTableId != null && action.tertiaryRewardTableId!.isNotEmpty)
       _TableChance(action.tertiaryRewardTableId!, action.tertiaryDropChance, 'Tertiary'),
+  ];
+}
+
+bool _isOreGemTable(ActionRow action, String tableId) {
+  return action.relevantSkillId == _miningSkillId && _oreGemTableIds.contains(tableId);
+}
+
+List<CodexActionDropTable> _catalogActionTables(
+  ActionRow action,
+  Map<String, List<CodexItemRef>> tableItems,
+  Map<String, CodexItemEntry> items,
+) {
+  bool keepDrop(CodexItemRef drop) {
+    if (drop.itemId == _goldenSpudItemId) return false;
+    final item = items[drop.itemId];
+    if (item == null) return false;
+    return includeInCodexCatalog(category: item.category, subtype: item.subtype);
+  }
+
+  final merged = <CodexItemRef>[];
+  final gems = <CodexActionDropTable>[];
+  String? mergedTableId;
+  for (final table in _actionTables(action)) {
+    final drops = [
+      for (final drop in tableItems[table.id] ?? const <CodexItemRef>[])
+        if (keepDrop(drop)) drop,
+    ];
+    if (drops.isEmpty) continue;
+    if (_isOreGemTable(action, table.id)) {
+      gems.add(
+        CodexActionDropTable(
+          label: 'Gems',
+          tableId: table.id,
+          dropChance: table.chance,
+          drops: _withEffectiveDropRates(drops, table.chance),
+        ),
+      );
+      continue;
+    }
+    mergedTableId ??= table.id;
+    merged.addAll(_withEffectiveDropRates(drops, table.chance));
+  }
+  return [
+    if (merged.isNotEmpty && mergedTableId != null)
+      CodexActionDropTable(label: 'Drops', tableId: mergedTableId, drops: merged),
+    ...gems,
+  ];
+}
+
+List<CodexItemRef> _withEffectiveDropRates(List<CodexItemRef> drops, num? tableChance) {
+  final totalWeight = drops.fold<num>(0, (sum, drop) => sum + (drop.weight ?? 0));
+  final chance = tableChance ?? 100;
+  return [
+    for (final drop in drops)
+      CodexItemRef(
+        itemId: drop.itemId,
+        displayName: drop.displayName,
+        minQuantity: drop.minQuantity,
+        maxQuantity: drop.maxQuantity,
+        weight: drop.weight,
+        dropRatePercent: drop.weight != null && totalWeight > 0
+            ? (drop.weight! / totalWeight) * chance
+            : null,
+      ),
   ];
 }
 

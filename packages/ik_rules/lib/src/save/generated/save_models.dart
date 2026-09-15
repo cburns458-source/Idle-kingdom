@@ -7,7 +7,7 @@
 
 import '../../json_support.dart';
 
-const int saveVersion = 46;
+const int saveVersion = 47;
 
 const String saveStorageKey = 'idle-kingdoms.demo.save';
 
@@ -850,6 +850,7 @@ class PlayerSave {
     required this.fishingPotDayKeyByLocationId,
     required this.lootTrackers,
     required this.xpTrackers,
+    this.trackerPausedAtMs,
   });
 
   factory PlayerSave.fromJson(Map<String, Object?> json) {
@@ -971,6 +972,7 @@ class PlayerSave {
         json['xpTrackers'],
         (Object? value) => XpTrackerEntry.fromJson(asJsonMap(value)),
       ),
+      trackerPausedAtMs: json['trackerPausedAtMs'] as num?,
     );
   }
 
@@ -1182,6 +1184,10 @@ class PlayerSave {
   /// RuneScape-style XP tracker rows, keyed by skill id or `total`.
   final Map<String, XpTrackerEntry> xpTrackers;
 
+  /// When set, tracker XP/hr uses this timestamp as "now" so Start/Stop on the
+  /// tracker pages can freeze rates without clearing the rows.
+  final num? trackerPausedAtMs;
+
   Map<String, Object?> toJson() {
     return <String, Object?>{
       'saveVersion': saveVersion,
@@ -1259,6 +1265,7 @@ class PlayerSave {
       'fishingPotDayKeyByLocationId': fishingPotDayKeyByLocationId,
       'lootTrackers': lootTrackers.map((key, value) => MapEntry(key, value.toJson())),
       'xpTrackers': xpTrackers.map((key, value) => MapEntry(key, value.toJson())),
+      'trackerPausedAtMs': trackerPausedAtMs,
     };
   }
 
@@ -1338,6 +1345,7 @@ class PlayerSave {
     Map<String, String>? fishingPotDayKeyByLocationId,
     Map<String, LootTrackerEntry>? lootTrackers,
     Map<String, XpTrackerEntry>? xpTrackers,
+    Object? trackerPausedAtMs = _unset,
   }) {
     return PlayerSave(
       saveVersion: saveVersion ?? this.saveVersion,
@@ -1455,6 +1463,9 @@ class PlayerSave {
           fishingPotDayKeyByLocationId ?? this.fishingPotDayKeyByLocationId,
       lootTrackers: lootTrackers ?? this.lootTrackers,
       xpTrackers: xpTrackers ?? this.xpTrackers,
+      trackerPausedAtMs: trackerPausedAtMs == _unset
+          ? this.trackerPausedAtMs
+          : trackerPausedAtMs as num?,
     );
   }
 }

@@ -174,4 +174,38 @@ void main() {
       findsOne,
     );
   });
+
+  testWidgets('Start and Stop sit next to Reset all on both tracker tabs', (tester) async {
+    final controller = buildController(database, seed: startedCharacter(database));
+    addTearDown(controller.dispose);
+    final victory = applyCombatVictory(
+      database.launch,
+      controller.save,
+      action('ACN-0001'),
+      enemy('ENM-0001'),
+      () => 0,
+      testStartMs + 2_000,
+    );
+    controller.commit(victory.save);
+
+    await pumpPanel(tester, TrackerView(controller: controller));
+    expect(find.byKey(const Key('tracker-start-xp')), findsOne);
+    expect(find.byKey(const Key('tracker-stop-xp')), findsOne);
+    expect(find.byKey(const Key('tracker-reset-all-xp')), findsOne);
+    expect(trackersPaused(controller.save), isTrue);
+
+    await tester.tap(find.byKey(const Key('tracker-start-xp')));
+    await tester.pump();
+    expect(trackersPaused(controller.save), isFalse);
+
+    await tester.tap(find.byKey(const Key('tracker-stop-xp')));
+    await tester.pump();
+    expect(trackersPaused(controller.save), isTrue);
+
+    await tester.tap(find.text('Loot'));
+    await tester.pump();
+    expect(find.byKey(const Key('tracker-start-loot')), findsOne);
+    expect(find.byKey(const Key('tracker-stop-loot')), findsOne);
+    expect(find.byKey(const Key('tracker-reset-all-loot')), findsOne);
+  });
 }

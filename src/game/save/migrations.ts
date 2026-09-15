@@ -718,6 +718,15 @@ export const SAVE_MIGRATIONS: SaveMigration[] = [
       saveVersion: 46,
     }),
   },
+  {
+    fromVersion: 46,
+    toVersion: 47,
+    migrate: (save, nowMs) => ({
+      ...save,
+      trackerPausedAtMs: nowMs,
+      saveVersion: 47,
+    }),
+  },
 ]
 
 export function migrateSave(save: PlayerSave, nowMs: number = Date.now()): PlayerSave {

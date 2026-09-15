@@ -125,11 +125,16 @@ describe('shops', () => {
     expect(result.ok).toBe(false)
   })
 
-  it('stocks the Armory with bronze and iron swords and plate, and buys back at 1×', () => {
+  it('does not stock tungsten or titanium; titanium base sell stays above tungsten', () => {
     const { launch } = prepareDatabase(rawDatabase)
-    const shop = launch.Shops.find((row) => row['Shop ID'] === 'SHP-0007')!
-    expect(shop['Location ID']).toBe('LOC-0032')
-    expect(shopStockEntries(shop).map((entry) => entry.itemId)).toEqual([
+    const mining = launch.Shops.find((row) => row['Shop ID'] === 'SHP-0002')!
+    expect(shopStockEntries(mining).map((entry) => entry.itemId)).toEqual([
+      'ITEM-0111',
+      'ITEM-0115',
+      'ITEM-0119',
+    ])
+    const armory = launch.Shops.find((row) => row['Shop ID'] === 'SHP-0007')!
+    expect(shopStockEntries(armory).map((entry) => entry.itemId)).toEqual([
       'ITEM-0224',
       'ITEM-0228',
       'ITEM-0229',
@@ -139,6 +144,26 @@ describe('shops', () => {
       'ITEM-0156',
       'ITEM-0157',
     ])
+    const pairs: Array<[string, string]> = [
+      ['ITEM-0010', 'ITEM-0009'],
+      ['ITEM-0080', 'ITEM-0079'],
+      ['ITEM-0260', 'ITEM-0247'],
+      ['ITEM-0263', 'ITEM-0250'],
+      ['ITEM-0267', 'ITEM-0254'],
+      ['ITEM-0268', 'ITEM-0255'],
+      ['ITEM-0269', 'ITEM-0256'],
+    ]
+    for (const [tungstenId, titaniumId] of pairs) {
+      const tungsten = launch.Items.find((row) => row['Item ID'] === tungstenId)!
+      const titanium = launch.Items.find((row) => row['Item ID'] === titaniumId)!
+      expect(titanium['Base Sell Value']!).toBeGreaterThan(tungsten['Base Sell Value']!)
+    }
+  })
+
+  it('stocks the Armory with bronze and iron swords and plate, and buys back at 1×', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const shop = launch.Shops.find((row) => row['Shop ID'] === 'SHP-0007')!
+    expect(shop['Location ID']).toBe('LOC-0032')
     expect(playerBuyPrice(launch, shop, 'ITEM-0224')).toBe(120)
     expect(playerSellPrice(launch, shop, 'ITEM-0224')).toBe(60)
     expect(playerSellPrice(launch, shop, 'ITEM-0128')).toBe(
