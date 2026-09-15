@@ -192,14 +192,15 @@ void main() {
     expect(find.byKey(const Key('tracker-start-xp')), findsOne);
     expect(find.byKey(const Key('tracker-stop-xp')), findsOne);
     expect(find.byKey(const Key('tracker-reset-all-xp')), findsOne);
-
-    await tester.tap(find.byKey(const Key('tracker-stop-xp')));
-    await tester.pump();
     expect(trackersPaused(controller.save), isTrue);
 
     await tester.tap(find.byKey(const Key('tracker-start-xp')));
     await tester.pump();
     expect(trackersPaused(controller.save), isFalse);
+
+    await tester.tap(find.byKey(const Key('tracker-stop-xp')));
+    await tester.pump();
+    expect(trackersPaused(controller.save), isTrue);
 
     await tester.tap(find.text('Loot'));
     await tester.pump();

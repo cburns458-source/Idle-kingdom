@@ -146,7 +146,7 @@ export function createNewSave(db: GameDatabase, nowMs: number = Date.now()): Pla
     fishingPotDayKeyByLocationId: {},
     lootTrackers: {},
     xpTrackers: {},
-    trackerPausedAtMs: null,
+    trackerPausedAtMs: nowMs,
   }
 }
 

@@ -117,19 +117,23 @@ export function resumeTrackers(save: PlayerSave, nowMs: number): PlayerSave {
   const pausedAt = save.trackerPausedAtMs
   if (pausedAt == null) return save
   const delta = Math.max(0, nowMs - pausedAt)
+  const shiftStarted = (startedAtMs: number) =>
+    startedAtMs >= pausedAt ? nowMs : startedAtMs + delta
   const lootTrackers: Record<string, LootTrackerEntry> = {}
   for (const [key, entry] of Object.entries(save.lootTrackers)) {
-    lootTrackers[key] = { ...entry, startedAtMs: entry.startedAtMs + delta }
+    lootTrackers[key] = { ...entry, startedAtMs: shiftStarted(entry.startedAtMs) }
   }
   const xpTrackers: Record<string, XpTrackerEntry> = {}
   for (const [key, entry] of Object.entries(save.xpTrackers)) {
-    xpTrackers[key] = { ...entry, startedAtMs: entry.startedAtMs + delta }
+    xpTrackers[key] = { ...entry, startedAtMs: shiftStarted(entry.startedAtMs) }
   }
   return { ...save, trackerPausedAtMs: null, lootTrackers, xpTrackers }
 }
 
 export function xpPerHour(entry: XpTrackerEntry, nowMs: number, save?: PlayerSave): number {
-  const end = save?.trackerPausedAtMs ?? nowMs
+  const pausedAt = save?.trackerPausedAtMs
+  if (pausedAt != null && entry.startedAtMs >= pausedAt) return 0
+  const end = pausedAt ?? nowMs
   const elapsed = Math.max(1, end - entry.startedAtMs)
   return (entry.xpGained / elapsed) * 3_600_000
 }

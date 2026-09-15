@@ -57,13 +57,26 @@ describe('trackers', () => {
     expect(finished!.save.xpTrackers[TOTAL_XP_TRACKER_ID]).toBeDefined()
   })
 
+  it('starts stopped, with xp/hr at 0 until Start', () => {
+    const fresh = createNewSave(launch, 1000)
+    expect(trackersPaused(fresh)).toBe(true)
+    const mined = completeGatheringAction(launch, fresh, action('ACN-0018'), () => 0, 4000)
+    expect(trackersPaused(mined.save)).toBe(true)
+    expect(xpPerHour(mined.save.xpTrackers['SKL-0002']!, 10_000, mined.save)).toBe(0)
+    const started = resumeTrackers(mined.save, 10_000)
+    expect(trackersPaused(started)).toBe(false)
+    expect(started.xpTrackers['SKL-0002']!.startedAtMs).toBe(10_000)
+    const gained = started.xpTrackers['SKL-0002']!.xpGained
+    expect(xpPerHour(started.xpTrackers['SKL-0002']!, 10_000 + 3_600_000, started)).toBe(gained)
+  })
+
   it('computes xp/hr from elapsed time', () => {
     expect(xpPerHour({ skillId: 'SKL-0001', startedAtMs: 0, xpGained: 3600 }, 3_600_000)).toBe(3600)
   })
 
   it('freezes xp/hr while stopped and excludes paused time after start', () => {
-    const fresh = createNewSave(launch, 1000)
-    const mined = completeGatheringAction(launch, fresh, action('ACN-0018'), () => 0, 4000)
+    const runningSave = resumeTrackers(createNewSave(launch, 1000), 1000)
+    const mined = completeGatheringAction(launch, runningSave, action('ACN-0018'), () => 0, 4000)
     const running = xpPerHour(mined.save.xpTrackers['SKL-0002']!, 10_000, mined.save)
     const paused = pauseTrackers(mined.save, 10_000)
     expect(trackersPaused(paused)).toBe(true)

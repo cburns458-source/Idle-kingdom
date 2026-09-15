@@ -721,9 +721,9 @@ export const SAVE_MIGRATIONS: SaveMigration[] = [
   {
     fromVersion: 46,
     toVersion: 47,
-    migrate: (save) => ({
+    migrate: (save, nowMs) => ({
       ...save,
-      trackerPausedAtMs: null,
+      trackerPausedAtMs: nowMs,
       saveVersion: 47,
     }),
   },

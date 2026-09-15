@@ -108,21 +108,24 @@ PlayerSave resumeTrackers(PlayerSave save, num nowMs) {
   if (pausedAt == null) return save;
   final delta = nowMs - pausedAt;
   final shift = delta < 0 ? 0 : delta;
+  num shiftStarted(num startedAtMs) => startedAtMs >= pausedAt ? nowMs : startedAtMs + shift;
   return save.copyWith(
     trackerPausedAtMs: null,
     lootTrackers: <String, LootTrackerEntry>{
       for (final entry in save.lootTrackers.entries)
-        entry.key: entry.value.copyWith(startedAtMs: entry.value.startedAtMs + shift),
+        entry.key: entry.value.copyWith(startedAtMs: shiftStarted(entry.value.startedAtMs)),
     },
     xpTrackers: <String, XpTrackerEntry>{
       for (final entry in save.xpTrackers.entries)
-        entry.key: entry.value.copyWith(startedAtMs: entry.value.startedAtMs + shift),
+        entry.key: entry.value.copyWith(startedAtMs: shiftStarted(entry.value.startedAtMs)),
     },
   );
 }
 
 num xpPerHour(XpTrackerEntry entry, num nowMs, [PlayerSave? save]) {
-  final end = save?.trackerPausedAtMs ?? nowMs;
+  final pausedAt = save?.trackerPausedAtMs;
+  if (pausedAt != null && entry.startedAtMs >= pausedAt) return 0;
+  final end = pausedAt ?? nowMs;
   final elapsed = end - entry.startedAtMs;
   final window = elapsed < 1 ? 1 : elapsed;
   return (entry.xpGained / window) * 3600000;

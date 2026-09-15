@@ -712,7 +712,7 @@ final List<SaveMigration> saveMigrations = <SaveMigration>[
     toVersion: 47,
     migrate: (save, nowMs) {
       final next = _bumped(save, 47);
-      next['trackerPausedAtMs'] = null;
+      next['trackerPausedAtMs'] = nowMs;
       return next;
     },
   ),
