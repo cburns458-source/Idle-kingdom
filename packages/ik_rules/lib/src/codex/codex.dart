@@ -750,8 +750,8 @@ class CodexIndex {
         if (action.category == 'Gathering' && !_hideActionFromCodex(action)) action,
     ];
     actionRows.sort((a, b) {
-      final skillA = a.relevantSkillId ?? '';
-      final skillB = b.relevantSkillId ?? '';
+      final skillA = a.relevantSkillId;
+      final skillB = b.relevantSkillId;
       final skill = skillA.compareTo(skillB);
       if (skill != 0) return skill;
       final level = jsNumber(a.proficiencyLevel ?? 0).compareTo(jsNumber(b.proficiencyLevel ?? 0));
