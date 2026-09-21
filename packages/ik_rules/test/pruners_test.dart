@@ -10,7 +10,7 @@ void main() {
     db = assertGameDatabaseShape(contentDatabaseJson());
   });
 
-  PlayerSave _withPruners(PlayerSave save) {
+  PlayerSave withPruners(PlayerSave save) {
     return save.copyWith(
       equipment: save.equipment.copyWith(
         slots: <String, EquippedStack?>{
@@ -21,7 +21,7 @@ void main() {
     );
   }
 
-  num _xp(PlayerSave save, String skillId) {
+  num xpOn(PlayerSave save, String skillId) {
     for (final row in save.skills) {
       if (row.skillId == skillId) return row.xp;
     }
@@ -33,14 +33,14 @@ void main() {
     expect(requirement.referenceIdValue, 'woodcutting_tool');
     final base = createNewSave(db, 0);
     expect(evaluateRequirement(db, base, requirement).met, isFalse);
-    expect(evaluateRequirement(db, _withPruners(base), requirement).met, isTrue);
+    expect(evaluateRequirement(db, withPruners(base), requirement).met, isTrue);
 
     final action = db.actions.firstWhere((row) => row.raw['Action ID'] == 'ACN-0035');
-    final completed = completeGatheringAction(db, _withPruners(base), action, () => 0, 0);
+    final completed = completeGatheringAction(db, withPruners(base), action, () => 0, 0);
     expect(completed.result.skillId, botanySkillId);
     expect(completed.result.xpGained, 200);
     expect(completed.result.bonusXp, isEmpty);
-    expect(_xp(completed.save, 'SKL-0004'), 0);
-    expect(_xp(completed.save, botanySkillId), 200);
+    expect(xpOn(completed.save, 'SKL-0004'), 0);
+    expect(xpOn(completed.save, botanySkillId), 200);
   });
 }
