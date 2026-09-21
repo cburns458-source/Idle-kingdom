@@ -542,6 +542,31 @@ void main() {
       expect(open.isPartlyFilled, isTrue);
       expect(open.goldEscrow, 30 * 90);
       expect(open.status, 'open');
+      expect((await buyer.bazaarMarket()).trades, isEmpty);
+      expect((await seller.bazaarMarket()).trades, hasLength(1));
+    });
+
+    test('does not list a cancelled offer when no items moved', () async {
+      final project = _project();
+      final db = _database();
+      final seller = await _trader(
+        project,
+        db,
+        'seller@example.com',
+        'Seller',
+        bag: <InventoryStack>[_stack(_ironOre, 10)],
+      );
+      final placed = await seller.placeBazaarOffer(
+        db,
+        _stored(project, seller),
+        side: bazaarSell,
+        itemId: _ironOre,
+        unitPrice: 30,
+        quantity: 10,
+      );
+      expect((await seller.bazaarMarket()).trades, isEmpty);
+      expect((await seller.cancelBazaarOffer(placed.order!.id)).ok, isTrue);
+      expect((await seller.bazaarMarket()).trades, isEmpty);
     });
 
     test('records the trade for both sides, newest first, ten at most', () async {

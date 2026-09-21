@@ -8,6 +8,7 @@ import '../quests/objectives.dart';
 import '../quests/progress.dart';
 import '../quests/quests.dart';
 import '../quests/steps.dart';
+import '../timers/location_timers.dart';
 import '../races/change_race.dart';
 import '../rng/mulberry32.dart';
 import '../save/generated/save_models.dart';
@@ -481,6 +482,7 @@ NpcWhereabouts? _whereaboutsFor(GameDatabase db, String npcId, num clock) {
 
 NpcConversation npcConversation(GameDatabase db, PlayerSave save, NpcRow npc, num nowMs) {
   final npcId = npc.raw['NPC ID'] as String;
+  save = applyQuestAutoStartOnSeed(db, save);
   final quests = <NpcQuestBlock>[];
   for (final quest in questsTouchingNpc(db, save, npcId)) {
     if (isMiniquest(quest)) continue;
@@ -603,6 +605,9 @@ NpcActionResult donateForQuestFromNpc(GameDatabase db, PlayerSave save, String q
 
 NpcActionResult talkWithQuestNpc(GameDatabase db, PlayerSave save, String npcId) {
   var next = applyQuestTalkProgress(db, save, npcId);
+  if (farmBotanyUnlocked(next)) {
+    next = discoverTimerSpotsForLocation(next, farmLocationId);
+  }
   for (final quest in questsTouchingNpc(db, next, npcId)) {
     final parsed = parseStructuredObjectives(quest);
     if (!parsed.autoCompleteOnTalk) continue;

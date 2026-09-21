@@ -31,7 +31,12 @@ function knowledgeSourceOf(recipe: RecipeRow): string {
  */
 export function isAutomaticLevelUnlock(recipe: RecipeRow): boolean {
   const source = knowledgeSourceOf(recipe).toLowerCase()
-  return !source || source.includes('automatic') || source.includes('level unlock')
+  return (
+    !source ||
+    source === 'auto' ||
+    source.includes('automatic') ||
+    source.includes('level unlock')
+  )
 }
 
 /** Whether the player knows a production recipe (can craft if otherwise eligible). */
@@ -44,9 +49,28 @@ export function knowsRecipe(save: PlayerSave, db: GameDatabase, recipeId: string
   return level >= recipe['Proficiency Level']
 }
 
-/** Hard proficiency + knowledge-source gate used by production lists. */
+/** Extra Skill Level rows on a recipe (e.g. lockpicks also need Thievery 20). */
+export function meetsRecipeExtraSkills(
+  save: PlayerSave,
+  db: GameDatabase,
+  recipe: RecipeRow,
+): boolean {
+  const recipeId = recipe['Recipe ID']
+  for (const requirement of db.Requirements) {
+    if (requirement['Entity Type'] !== 'Recipe' || requirement['Entity ID'] !== recipeId) continue
+    if (requirement['Requirement Type'] !== 'Skill Level') continue
+    const operator = (requirement.Operator ?? '>=').toLowerCase()
+    if (operator === 'proficiency') continue
+    const skillId = String(requirement['Reference ID / Value'] ?? '')
+    const required = Number(requirement['Required Value'] ?? 1)
+    if (getSkillProgress(save, skillId).level < required) return false
+  }
+  return true
+}
+
+/** Hard proficiency + knowledge-source + extra skill gates used by production. */
 export function canKnowRecipe(save: PlayerSave, db: GameDatabase, recipe: RecipeRow): boolean {
-  return knowsRecipe(save, db, recipe['Recipe ID'])
+  return knowsRecipe(save, db, recipe['Recipe ID']) && meetsRecipeExtraSkills(save, db, recipe)
 }
 
 export function unlockRecipeId(save: PlayerSave, recipeId: string): PlayerSave {

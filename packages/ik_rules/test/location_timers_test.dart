@@ -31,6 +31,12 @@ void main() {
     expect(save.discoveredTimerSpotIds, isEmpty);
 
     save = discoverTimerSpotsForLocation(save, 'LOC-0001');
+    expect(save.discoveredTimerSpotIds, isEmpty);
+
+    save = save.copyWith(
+      quests: const [QuestProgress(questId: 'QST-0011', status: 'completed', progress: 1)],
+    );
+    save = discoverTimerSpotsForLocation(save, 'LOC-0001');
     expect(save.discoveredTimerSpotIds, ['botany:LOC-0001']);
     expect(identical(discoverTimerSpotsForLocation(save, 'LOC-0001'), save), isTrue);
 
@@ -48,6 +54,7 @@ void main() {
     var save = createNewSave(db, 0).copyWith(
       currentLocationId: 'LOC-0001',
       inventory: const [InventoryStack(itemId: 'ITEM-0324', quantity: 3)],
+      quests: const [QuestProgress(questId: 'QST-0011', status: 'completed', progress: 1)],
     );
     final planted = plantBotanySeed(db, save, 'ITEM-0324', nowMs: 0, plantQuantity: 3);
     expect(planted.ok, isTrue);
@@ -164,5 +171,44 @@ void main() {
     expect(collected.ok, isFalse);
     expect(collected.reason, timerInventoryFullCatchReason);
     expect(timerAtLocationKind(save, 'LOC-0003', 'fishing_pot'), isNotNull);
+  });
+
+  test('farm patch stays locked until Fennel is heard', () {
+    var save = createNewSave(db, 0).copyWith(
+      currentLocationId: 'LOC-0001',
+      inventory: const [InventoryStack(itemId: 'ITEM-0324', quantity: 2)],
+    );
+    expect(farmBotanyUnlocked(save), isFalse);
+    expect(canPlantBotanySeed(db, save, 'ITEM-0324').ok, isFalse);
+
+    save = save.copyWith(
+      quests: const [
+        QuestProgress(
+          questId: 'QST-0011',
+          status: 'active',
+          progress: 1,
+          counters: <String, num>{'talk:NPC-0014': 1},
+        ),
+      ],
+    );
+    expect(farmBotanyUnlocked(save), isTrue);
+    expect(canPlantBotanySeed(db, save, 'ITEM-0324', plantQuantity: 2).ok, isTrue);
+  });
+
+  test('plants mixed seed types on one patch', () {
+    final save = createNewSave(db, 0).copyWith(
+      currentLocationId: 'LOC-0031',
+      skills: const [SkillProgress(skillId: 'SKL-0014', level: 10, xp: 0)],
+      inventory: const [
+        InventoryStack(itemId: 'ITEM-0324', quantity: 1),
+        InventoryStack(itemId: 'ITEM-0339', quantity: 2),
+      ],
+    );
+    final planted = plantBotanySelection(db, save, const ['ITEM-0324', 'ITEM-0339'], nowMs: 0);
+    expect(planted.ok, isTrue);
+    final timer = timerAtLocationKind(planted.save!, 'LOC-0031', 'botany');
+    expect(timer?.plantedItemIds, ['ITEM-0324', 'ITEM-0339']);
+    expect(timer?.outputQuantity, 2);
+    expect(timer?.xpReward, 1600);
   });
 }

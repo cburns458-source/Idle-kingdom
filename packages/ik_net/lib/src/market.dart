@@ -263,6 +263,7 @@ class MarketTrade {
     required this.tax,
     required this.side,
     required this.createdAt,
+    this.status = 'filled',
   });
 
   factory MarketTrade.fromJson(Map<String, Object?> json) => MarketTrade(
@@ -273,6 +274,7 @@ class MarketTrade {
     tax: _num(json['tax']),
     side: _str(json['side']),
     createdAt: _str(json['createdAt']),
+    status: _str(json['status']).isEmpty ? 'filled' : _str(json['status']),
   );
 
   final String id;
@@ -289,7 +291,12 @@ class MarketTrade {
   final BazaarSide side;
   final String createdAt;
 
+  /// `filled` after the offer closed by trading, or `cancelled`.
+  final String status;
+
   bool get isBuy => side == bazaarBuy;
+
+  bool get isCancelled => status == 'cancelled';
 
   num get total => unitPrice * quantity;
 
@@ -304,6 +311,7 @@ class MarketTrade {
     'quantity': quantity,
     'tax': tax,
     'side': side,
+    'status': status,
     'createdAt': createdAt,
   };
 }

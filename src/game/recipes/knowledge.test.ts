@@ -5,7 +5,13 @@ import { prepareDatabase } from '../data/loadDatabase'
 import { canKnowRecipe, getRecipe } from '../production/recipes'
 import { createNewSave } from '../save/saveStore'
 import { recipeBookView } from './bookView'
-import { knowsRecipe, listRecipeBookEntries, recipeBookForSkill, unlockRecipeId } from './knowledge'
+import {
+  isAutomaticLevelUnlock,
+  knowsRecipe,
+  listRecipeBookEntries,
+  recipeBookForSkill,
+  unlockRecipeId,
+} from './knowledge'
 
 const rawDatabase = JSON.parse(
   readFileSync(resolve(process.cwd(), 'content/data/game-database.json'), 'utf8'),
@@ -39,8 +45,29 @@ describe('recipe knowledge', () => {
     expect(entries.some((entry) => entry.kind === 'recipe')).toBe(true)
     expect(entries.some((entry) => entry.known)).toBe(true)
     const gloves = entries.find((entry) => entry.name === "Falconer's Gloves")
-    expect(gloves?.materials).toContain('Ancient Binding')
+    expect(gloves?.materials).toContain('Great Stag Hide')
+    expect(gloves?.materials).not.toContain('Ancient Binding')
     expect(gloves?.materials).not.toContain('ITEM-0290')
+    const lockpicks = launch.Recipes.find((recipe) => recipe['Recipe ID'] === 'RCP-0062')
+    expect(lockpicks).toBeDefined()
+    expect(isAutomaticLevelUnlock(lockpicks!)).toBe(true)
+    const crafter = {
+      ...save,
+      skills: save.skills.map((skill) =>
+        skill.skillId === 'SKL-0009' ? { ...skill, level: 20 } : skill,
+      ),
+    }
+    expect(knowsRecipe(crafter, launch, 'RCP-0062')).toBe(true)
+    expect(canKnowRecipe(crafter, launch, lockpicks!)).toBe(false)
+    const thiefCrafter = {
+      ...save,
+      skills: save.skills.map((skill) =>
+        skill.skillId === 'SKL-0009' || skill.skillId === 'SKL-0015'
+          ? { ...skill, level: 20 }
+          : skill,
+      ),
+    }
+    expect(canKnowRecipe(thiefCrafter, launch, lockpicks!)).toBe(true)
     const squid = entries.find((entry) => entry.name === 'Cooked Baby Giant Squid')
     expect(squid?.materials).toContain('Starroot')
     expect(squid?.materials).not.toContain('ITEM-0208')

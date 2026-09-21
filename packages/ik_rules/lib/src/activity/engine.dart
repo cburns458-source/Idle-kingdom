@@ -11,10 +11,12 @@ import '../js_compat.dart';
 import '../potions/effects.dart';
 import '../production/engine.dart';
 import '../production/recipes.dart';
+import '../inventory/add_items.dart';
 import '../quests/progress.dart';
 import '../quests/quests.dart';
 import '../rng/mulberry32.dart';
 import '../save/generated/save_models.dart';
+import '../timers/location_timers.dart';
 import '../time.dart';
 import '../trackers/trackers.dart';
 import 'bonus_xp.dart';
@@ -28,6 +30,53 @@ import 'types.dart';
 import 'xp.dart';
 
 const String comingSoonReason = 'Coming soon.';
+const Set<String> prunableSkillIds = <String>{'SKL-0004', 'SKL-0006'};
+const num pruningSeedChancePercent = 10;
+
+bool isPruningToolEquipped(GameDatabase db, PlayerSave save) {
+  final tool = slotStack(save, weaponToolSlotId);
+  return tool != null && tool.quantity > 0 && itemHasCapability(db, tool.itemId, 'pruning_tool');
+}
+
+String? pruningSeedItemId(GameDatabase db, ActionRow action) {
+  final tableId = action.raw['Secondary Reward Table ID'];
+  if (tableId is! String || tableId.isEmpty) return null;
+  for (final entry in db.rewardEntries.where((row) => row.raw['Reward Table ID'] == tableId)) {
+    final itemId = entry.raw['Reward ID / Value'];
+    if (entry.raw['Reward Type'] == 'Item' && itemId is String && isBotanySeedItem(db, itemId)) {
+      return itemId;
+    }
+  }
+  return null;
+}
+
+ActionRewards _resolvePruningRewards(
+  GameDatabase db,
+  PlayerSave save,
+  ActionRow action,
+  RandomFn random,
+) {
+  final seedItemId = pruningSeedItemId(db, action);
+  if (seedItemId == null || random() * 100 >= pruningSeedChancePercent) {
+    return ActionRewards(save: save, loot: const <LootGrant>[], goldGained: 0);
+  }
+  final granted = addItemsToInventory(save, seedItemId, 1, null, false, db);
+  if (granted.added <= 0) {
+    return ActionRewards(save: granted.save, loot: const <LootGrant>[], goldGained: 0);
+  }
+  final name = db.items.firstWhereOrNull((item) => item.raw['Item ID'] == seedItemId)?.displayName;
+  return ActionRewards(
+    save: granted.save,
+    loot: <LootGrant>[
+      LootGrant(
+        itemId: seedItemId,
+        quantity: granted.added,
+        displayName: name is String ? name : seedItemId,
+      ),
+    ],
+    goldGained: 0,
+  );
+}
 
 ActivityRow? getActivity(GameDatabase db, String activityId) {
   return db.activities.firstWhereOrNull((row) => row.raw['Activity ID'] == activityId);
@@ -436,8 +485,13 @@ GatheringCompletion completeGatheringAction(
     }
   }
 
-  final rewarded = resolveActionRewards(db, working, action, random);
-  final xpAmount = gatheringXpReward(db, working, action);
+  final pruning = isPruningToolEquipped(db, working) && prunableSkillIds.contains(skillId);
+  final rewarded = pruning
+      ? _resolvePruningRewards(db, working, action, random)
+      : resolveActionRewards(db, working, action, random);
+  final fullXp = gatheringXpReward(db, working, action);
+  final botanyXp = pruning ? (fullXp / 4).floor() : 0;
+  final xpAmount = pruning ? fullXp - botanyXp : fullXp;
   final xpApplied = applyXp(clearActivePotionEffect(rewarded.save), db, skillId, xpAmount);
   var next = xpApplied.save;
   var leveledUpTo = xpApplied.leveledUpTo;
@@ -463,6 +517,7 @@ GatheringCompletion completeGatheringAction(
   }
   final bowBonus = bowHuntingCombatXpBonus(db, save, skillId, xpAmount);
   if (bowBonus != null) applyBonusXp(bowBonus.skillId, bowBonus.xp);
+  if (botanyXp > 0) applyBonusXp(botanySkillId, botanyXp);
 
   next = addLifetimeStat(next, gatheringActionsStat);
   if (rewarded.loot.isNotEmpty) {
@@ -475,6 +530,7 @@ GatheringCompletion completeGatheringAction(
   }
   next = applyQuestActionProgress(db, next, jsString(action.raw['Action ID']));
   next = applyQuestAutoCompleteOnAction(db, next).save;
+  next = applyQuestAutoStartOnSeed(db, next);
   final source = lootSourceForAction(action);
   next = creditLootTracker(
     next,

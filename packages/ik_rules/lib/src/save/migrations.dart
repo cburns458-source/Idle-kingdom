@@ -716,6 +716,18 @@ final List<SaveMigration> saveMigrations = <SaveMigration>[
       return next;
     },
   ),
+  SaveMigration(
+    fromVersion: 47,
+    toVersion: 48,
+    migrate: (save, _) {
+      final next = _bumped(save, 48);
+      final pausedAt = save['trackerPausedAtMs'];
+      next['lootTrackerPausedAtMs'] = pausedAt;
+      next['xpTrackerPausedAtMs'] = pausedAt;
+      next.remove('trackerPausedAtMs');
+      return next;
+    },
+  ),
 ];
 
 /// Thrown when a save cannot be brought to the current version.

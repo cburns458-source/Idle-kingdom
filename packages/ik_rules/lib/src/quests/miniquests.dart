@@ -21,11 +21,14 @@ num requiredTotalLevelFromNotes(String? notes) {
 
 bool isMiniquest(Map<String, Object?> quest) {
   final notes = quest['Notes'] is String ? quest['Notes']! as String : '';
-  return RegExp(r'(?:^|;)\s*Miniquest\b', caseSensitive: false).hasMatch(notes) ||
-      RegExp(r'(?:^|;)\s*HideFromQuestLog\b', caseSensitive: false).hasMatch(notes);
+  return RegExp(r'(?:^|;)\s*Miniquest\b', caseSensitive: false).hasMatch(notes);
 }
 
-bool hideFromQuestLog(Map<String, Object?> quest) => isMiniquest(quest);
+bool hideFromQuestLog(Map<String, Object?> quest) {
+  final notes = quest['Notes'] is String ? quest['Notes']! as String : '';
+  return isMiniquest(quest) ||
+      RegExp(r'(?:^|;)\s*HideFromQuestLog\b', caseSensitive: false).hasMatch(notes);
+}
 
 num? miniquestRepeatMs(Map<String, Object?> quest) {
   final notes = quest['Notes'] is String ? quest['Notes']! as String : '';

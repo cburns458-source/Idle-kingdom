@@ -265,11 +265,14 @@ class _BazaarViewState extends State<BazaarView> {
             _Row(
               item: _item(trade.itemId),
               title:
-                  '${trade.isBuy ? 'Bought' : 'Sold'} '
+                  '${trade.isCancelled ? (trade.isBuy ? 'Cancelled buy' : 'Cancelled sell') : (trade.isBuy ? 'Bought' : 'Sold')} '
                   '${_name(trade.itemId)} ×${formatThousands(trade.quantity)}',
               lines: <String>[
-                '${formatThousands(trade.unitPrice)} each · '
-                    '${formatThousands(trade.net)} gold ${trade.isBuy ? 'paid' : 'received'}',
+                if (trade.isCancelled)
+                  '${formatThousands(trade.unitPrice)} each · offer cancelled'
+                else
+                  '${formatThousands(trade.unitPrice)} each · '
+                      '${formatThousands(trade.net)} gold ${trade.isBuy ? 'paid' : 'received'}',
                 if (trade.tax > 0) 'Tax ${formatThousands(trade.tax)}',
               ],
             ),

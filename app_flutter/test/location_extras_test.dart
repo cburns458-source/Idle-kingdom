@@ -736,10 +736,23 @@ void main() {
     expect(find.text('Cook at the kitchen'), findsNothing);
   });
 
-  testWidgets('the farm option band has a Patches tab', (tester) async {
+  testWidgets('the farm option band hides Patches before Fennel unlocks the plot', (tester) async {
     final controller = buildController(
       database,
       seed: startedCharacter(database).copyWith(currentLocationId: 'LOC-0001'),
+    );
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller);
+    expect(find.widgetWithText(GameButton, 'Patches'), findsNothing);
+  });
+
+  testWidgets('the farm option band has a Patches tab after First Planting', (tester) async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(
+        currentLocationId: 'LOC-0001',
+        quests: const [QuestProgress(questId: 'QST-0011', status: 'completed', progress: 1)],
+      ),
     );
     addTearDown(controller.dispose);
     await pumpShell(tester, controller);

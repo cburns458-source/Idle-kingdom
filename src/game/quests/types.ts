@@ -35,6 +35,10 @@ export interface StructuredQuestObjectives {
   holds: QuestCounterTarget[]
   /** Gathering/combat actions that count toward the step. */
   actionTargets: QuestCounterTarget[]
+  /** Seeds/saplings planted to finish the step. */
+  plantTargets: QuestCounterTarget[]
+  /** Items granted the first time a Talk step is heard. */
+  giveOnTalk: QuestCounterTarget[]
   requiresSkills: Array<{ skillId: string; level: number }>
   requiresQuestIds: string[]
   unlockOnAcceptLocationIds: string[]
@@ -52,6 +56,8 @@ export interface StructuredQuestObjectives {
   /** Complete the quest when the last Visit finishes. */
   autoCompleteOnVisit: boolean
   autoCompleteOnAction: boolean
+  autoCompleteOnPlant: boolean
+  autoStartOnSeed: boolean
   requiresAnySeed: boolean
   unlockLocationIds: string[]
   rewardRecipeIds: string[]

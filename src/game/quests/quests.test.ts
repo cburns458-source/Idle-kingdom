@@ -11,6 +11,7 @@ import { isCosmeticUnlocked } from '../cosmetics/cosmetics'
 import { createNewSave } from '../save/saveStore'
 import {
   applyQuestActionProgress,
+  applyQuestAutoStartOnSeed,
   applyQuestProcessProgress,
   applyQuestTalkProgress,
   applyQuestVisitProgress,
@@ -33,6 +34,8 @@ import { questLog } from '../log/log'
 import { CAVE_MAP_ID, FOREST_MAP_ID } from '../world/constants'
 import { applyHostileTravelArrival } from '../world/hostility'
 import { applyTravelArrival, applyTravelArrivalResult, canTravelTo, locationsForMapView } from '../world/travel'
+import { hideFromQuestLog } from './miniquests'
+import { canPlantBotanySeed, farmBotanyUnlocked, plantBotanySeed } from '../timers/locationTimers'
 import { questVisitHintLocationId } from './hints'
 
 const rawDatabase = JSON.parse(
@@ -640,5 +643,43 @@ describe('quest tours', () => {
     ).toEqual(expect.arrayContaining(['LOC-0044', 'LOC-0018']))
     expect(canTravelTo(launch, 'LOC-0040', 'LOC-0044', FOREST_MAP_ID, finished.save)).toBe(true)
     expect(canTravelTo(launch, 'LOC-0040', 'LOC-0018', FOREST_MAP_ID, finished.save)).toBe(true)
+  })
+
+  it('starts First Planting on a seed, unlocks the farm after Fennel, and finishes on plant', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const quest = getQuest(launch, 'QST-0011')!
+    expect(hideFromQuestLog(quest)).toBe(true)
+    expect(questLog(launch, createNewSave(launch)).some((row) => row.questId === 'QST-0011')).toBe(
+      false,
+    )
+
+    let save = {
+      ...createNewSave(launch),
+      currentLocationId: 'LOC-0001',
+      inventory: [{ itemId: 'ITEM-0324', quantity: 1 }],
+    }
+    save = applyQuestAutoStartOnSeed(launch, save)
+    expect(getQuestProgress(save, 'QST-0011').status).toBe('active')
+    expect(farmBotanyUnlocked(save)).toBe(false)
+    expect(canPlantBotanySeed(launch, save, 'ITEM-0324').ok).toBe(false)
+
+    const talked = talkWithQuestNpc(launch, save, 'NPC-0014')
+    expect(talked.ok).toBe(true)
+    if (!talked.ok) return
+    save = talked.save
+    expect(save.inventory.find((stack) => stack.itemId === 'ITEM-0324')?.quantity).toBe(2)
+    expect(farmBotanyUnlocked(save)).toBe(true)
+    expect(hasQuestFlag(save, 'QST-0011', 'talk:NPC-0014')).toBe(true)
+
+    const planted = plantBotanySeed(launch, save, 'ITEM-0324', 0, 1)
+    expect(planted.ok).toBe(true)
+    if (!planted.ok) return
+    expect(getQuestProgress(planted.save, 'QST-0011').status).toBe('completed')
+
+    const again = applyQuestAutoStartOnSeed(launch, {
+      ...planted.save,
+      inventory: [{ itemId: 'ITEM-0324', quantity: 3 }],
+    })
+    expect(getQuestProgress(again, 'QST-0011').status).toBe('completed')
   })
 })

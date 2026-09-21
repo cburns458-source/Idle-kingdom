@@ -18,7 +18,7 @@ import {
   requirementsForEntity,
   unmetHardRequirements,
 } from './requirements'
-import { resolveActionRewards } from './rewards'
+import { addItemsToInventory, resolveActionRewards } from './rewards'
 import type {
   ActionCompletionResult,
   ActionXpRewardSummary,
@@ -26,9 +26,10 @@ import type {
   ActivityStartResult,
 } from './types'
 import { addLifetimeStat, recordGatheredDrops } from '../achievements/progress'
-import { applyQuestActionProgress } from '../quests/progress'
+import { applyQuestActionProgress, applyQuestAutoStartOnSeed } from '../quests/progress'
 import { applyQuestAutoCompleteOnAction } from '../quests/quests'
-import { LOCKPICK_ITEM_ID, WEAPON_TOOL_SLOT_ID, slotStack } from '../equipment/loadout'
+import { itemHasCapability, LOCKPICK_ITEM_ID, WEAPON_TOOL_SLOT_ID, slotStack } from '../equipment/loadout'
+import { BOTANY_SKILL_ID, isBotanySeedItem } from '../timers/locationTimers'
 import { creditLootTracker, creditXpAwards, lootSourceForAction } from '../trackers/trackers'
 import { GATHERING_ACTIONS_STAT } from '../log/milestones'
 import { bonusSkillXpForAction, bowHuntingCombatXpBonus } from './bonusXp'
@@ -283,6 +284,51 @@ function maybeBreakLockpick(
   return { save: consumeLockpick(save), broke: true }
 }
 
+const PRUNABLE_SKILL_IDS = new Set(['SKL-0004', 'SKL-0006'])
+export const PRUNING_SEED_CHANCE_PERCENT = 10
+
+export function isPruningToolEquipped(db: GameDatabase, save: PlayerSave): boolean {
+  const tool = slotStack(save, WEAPON_TOOL_SLOT_ID)
+  return !!tool && tool.quantity > 0 && itemHasCapability(db, tool.itemId, 'pruning_tool')
+}
+
+export function pruningSeedItemId(db: GameDatabase, action: ActionRow): string | null {
+  const tableId = action['Secondary Reward Table ID']
+  if (!tableId) return null
+  for (const entry of db.RewardEntries.filter((row) => row['Reward Table ID'] === tableId)) {
+    const itemId = entry['Reward ID / Value']
+    if (entry['Reward Type'] === 'Item' && itemId && isBotanySeedItem(db, itemId)) {
+      return itemId
+    }
+  }
+  return null
+}
+
+function resolvePruningRewards(
+  db: GameDatabase,
+  save: PlayerSave,
+  action: ActionRow,
+  random: RandomFn,
+): { save: PlayerSave; loot: ActionCompletionResult['loot']; goldGained: number } {
+  const seedItemId = pruningSeedItemId(db, action)
+  if (!seedItemId || random() * 100 >= PRUNING_SEED_CHANCE_PERCENT) {
+    return { save, loot: [], goldGained: 0 }
+  }
+  const granted = addItemsToInventory(save, seedItemId, 1, null, false, db)
+  if (granted.added <= 0) return { save: granted.save, loot: [], goldGained: 0 }
+  return {
+    save: granted.save,
+    loot: [
+      {
+        itemId: seedItemId,
+        quantity: granted.added,
+        displayName: db.Items.find((item) => item['Item ID'] === seedItemId)?.['Display Name'] ?? seedItemId,
+      },
+    ],
+    goldGained: 0,
+  }
+}
+
 export function completeGatheringAction(
   db: GameDatabase,
   save: PlayerSave,
@@ -446,8 +492,13 @@ export function completeGatheringAction(
     }
   }
 
-  const rewarded = resolveActionRewards(db, working, action, random)
-  const xpAmount = gatheringXpReward(db, working, action)
+  const pruning = isPruningToolEquipped(db, working) && PRUNABLE_SKILL_IDS.has(skillId)
+  const rewarded = pruning
+    ? resolvePruningRewards(db, working, action, random)
+    : resolveActionRewards(db, working, action, random)
+  const fullXp = gatheringXpReward(db, working, action)
+  const botanyXp = pruning ? Math.floor(fullXp / 4) : 0
+  const xpAmount = pruning ? fullXp - botanyXp : fullXp
   let next = clearActivePotionEffect(rewarded.save)
   const xpApplied = applyXp(next, db, skillId, xpAmount)
   next = xpApplied.save
@@ -474,6 +525,7 @@ export function completeGatheringAction(
   }
   const bowBonus = bowHuntingCombatXpBonus(db, save, action, xpAmount)
   if (bowBonus) applyBonusXp(bowBonus.skillId, bowBonus.xp)
+  if (botanyXp > 0) applyBonusXp(BOTANY_SKILL_ID, botanyXp)
 
   next = addLifetimeStat(next, GATHERING_ACTIONS_STAT)
   if (rewarded.loot.length > 0) {
@@ -486,6 +538,7 @@ export function completeGatheringAction(
   }
   next = applyQuestActionProgress(db, next, action['Action ID'])
   next = applyQuestAutoCompleteOnAction(db, next).save
+  next = applyQuestAutoStartOnSeed(db, next)
   const source = lootSourceForAction(action)
   next = creditLootTracker(next, source.kind, source.sourceId, rewarded.loot, rewarded.goldGained, nowMs)
   next = creditXpAwards(

@@ -29,6 +29,7 @@ export function creditLootTracker(
   gold: number,
   nowMs: number,
 ): PlayerSave {
+  if (save.lootTrackerPausedAtMs != null) return save
   const key = lootTrackerKey(kind, sourceId)
   const existing = save.lootTrackers[key]
   const items = { ...(existing?.items ?? {}) }
@@ -54,7 +55,7 @@ export function creditXpTracker(
   xp: number,
   nowMs: number,
 ): PlayerSave {
-  if (xp <= 0) return save
+  if (xp <= 0 || save.xpTrackerPausedAtMs != null) return save
   const existing = save.xpTrackers[skillId]
   const next: XpTrackerEntry = {
     skillId,
@@ -104,34 +105,54 @@ export function resetAllXpTrackers(save: PlayerSave): PlayerSave {
   return { ...save, xpTrackers: {} }
 }
 
-export function trackersPaused(save: PlayerSave): boolean {
-  return save.trackerPausedAtMs != null
+export function lootTrackersPaused(save: PlayerSave): boolean {
+  return save.lootTrackerPausedAtMs != null
 }
 
-export function pauseTrackers(save: PlayerSave, nowMs: number): PlayerSave {
-  if (save.trackerPausedAtMs != null) return save
-  return { ...save, trackerPausedAtMs: nowMs }
+export function xpTrackersPaused(save: PlayerSave): boolean {
+  return save.xpTrackerPausedAtMs != null
 }
 
-export function resumeTrackers(save: PlayerSave, nowMs: number): PlayerSave {
-  const pausedAt = save.trackerPausedAtMs
+export function pauseLootTrackers(save: PlayerSave, nowMs: number): PlayerSave {
+  if (save.lootTrackerPausedAtMs != null) return save
+  return { ...save, lootTrackerPausedAtMs: nowMs }
+}
+
+export function pauseXpTrackers(save: PlayerSave, nowMs: number): PlayerSave {
+  if (save.xpTrackerPausedAtMs != null) return save
+  return { ...save, xpTrackerPausedAtMs: nowMs }
+}
+
+function shiftStarted(startedAtMs: number, pausedAt: number, nowMs: number): number {
+  return startedAtMs >= pausedAt ? nowMs : startedAtMs + Math.max(0, nowMs - pausedAt)
+}
+
+export function resumeLootTrackers(save: PlayerSave, nowMs: number): PlayerSave {
+  const pausedAt = save.lootTrackerPausedAtMs
   if (pausedAt == null) return save
-  const delta = Math.max(0, nowMs - pausedAt)
-  const shiftStarted = (startedAtMs: number) =>
-    startedAtMs >= pausedAt ? nowMs : startedAtMs + delta
   const lootTrackers: Record<string, LootTrackerEntry> = {}
   for (const [key, entry] of Object.entries(save.lootTrackers)) {
-    lootTrackers[key] = { ...entry, startedAtMs: shiftStarted(entry.startedAtMs) }
+    lootTrackers[key] = { ...entry, startedAtMs: shiftStarted(entry.startedAtMs, pausedAt, nowMs) }
   }
+  return { ...save, lootTrackerPausedAtMs: null, lootTrackers }
+}
+
+export function resumeXpTrackers(save: PlayerSave, nowMs: number): PlayerSave {
+  const pausedAt = save.xpTrackerPausedAtMs
+  if (pausedAt == null) return save
   const xpTrackers: Record<string, XpTrackerEntry> = {}
   for (const [key, entry] of Object.entries(save.xpTrackers)) {
-    xpTrackers[key] = { ...entry, startedAtMs: shiftStarted(entry.startedAtMs) }
+    xpTrackers[key] = { ...entry, startedAtMs: shiftStarted(entry.startedAtMs, pausedAt, nowMs) }
   }
-  return { ...save, trackerPausedAtMs: null, lootTrackers, xpTrackers }
+  return { ...save, xpTrackerPausedAtMs: null, xpTrackers }
+}
+
+export function resumeAllTrackers(save: PlayerSave, nowMs: number): PlayerSave {
+  return resumeXpTrackers(resumeLootTrackers(save, nowMs), nowMs)
 }
 
 export function xpPerHour(entry: XpTrackerEntry, nowMs: number, save?: PlayerSave): number {
-  const pausedAt = save?.trackerPausedAtMs
+  const pausedAt = save?.xpTrackerPausedAtMs
   if (pausedAt != null && entry.startedAtMs >= pausedAt) return 0
   const end = pausedAt ?? nowMs
   const elapsed = Math.max(1, end - entry.startedAtMs)

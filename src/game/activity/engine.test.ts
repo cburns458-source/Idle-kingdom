@@ -329,4 +329,30 @@ describe('primary activity engine', () => {
     expect(clearActivitySave(save, now + 1000)).toEqual(save)
     expect(beginActivitySave(save, 'ACT-0002', new Date(now + 1000).toISOString())).toEqual(save)
   })
+
+  it('converts harvest XP and drops when Pruners are equipped', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const action = launch.Actions.find((row) => row['Action ID'] === 'ACN-0035')!
+    expect(action['XP Reward']).toBe(200)
+    const save = {
+      ...createNewSave(launch),
+      currentLocationId: 'LOC-0001',
+      equipment: {
+        ...createNewSave(launch).equipment,
+        slots: {
+          ...createNewSave(launch).equipment.slots,
+          'SLOT-0001': { itemId: 'ITEM-0363', quantity: 1 },
+        },
+      },
+    }
+    const seed = completeGatheringAction(launch, save, action, () => 0)
+    expect(seed.result.xpGained).toBe(150)
+    expect(seed.result.bonusXp).toEqual([{ skillId: 'SKL-0014', xp: 50 }])
+    expect(seed.result.loot.map((row) => row.itemId)).toEqual(['ITEM-0324'])
+    expect(seed.save.inventory.find((stack) => stack.itemId === 'ITEM-0025')).toBeUndefined()
+
+    const barren = completeGatheringAction(launch, save, action, () => 0.5)
+    expect(barren.result.loot).toEqual([])
+    expect(barren.result.xpGained).toBe(150)
+  })
 })

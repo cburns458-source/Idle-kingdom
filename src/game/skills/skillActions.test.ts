@@ -131,12 +131,13 @@ describe('skill menu entries', () => {
   it('puts battle staves on an Arcana Weapons tab', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const arcana = skillMenuView(launch, 'SKL-0013')
-    expect(arcana.tabs.map((tab) => tab.label)).toEqual(['Essence', 'Spells', 'Weapons', 'Enchantments'])
+    expect(arcana.tabs.map((tab) => tab.label)).toEqual(['Essence', 'Spells', 'Equipment', 'Enchants'])
     const essence = arcana.tabs.find((tab) => tab.id === 'essence')?.sections[0]?.entries ?? []
     expect(essence).toEqual([{ id: 'ITEM-0011', displayName: 'Essence', level: 1 }])
-    const weapons = arcana.tabs.find((tab) => tab.id === 'weapons')?.sections[0]?.entries ?? []
+    const weapons = arcana.tabs.find((tab) => tab.id === 'equipment')?.sections[0]?.entries ?? []
     expect(weapons.map((item) => item.displayName)).toEqual([
       'Staff of Sparks',
+      'Magic Bola',
       'Staff of Binding',
       "Mage's Wand",
       'Staff of Power',
@@ -144,9 +145,15 @@ describe('skill menu entries', () => {
     expect(weapons.find((item) => item.displayName === 'Staff of Sparks')?.level).toBe(35)
     expect(weapons.find((item) => item.displayName === 'Staff of Binding')?.level).toBe(45)
     expect(weapons.find((item) => item.displayName === 'Staff of Power')?.level).toBe(65)
+    expect(weapons.find((item) => item.displayName === 'Magic Bola')?.level).toBe(40)
     expect(
       arcana.tabs
-        .find((tab) => tab.id === 'enchantments')
+        .find((tab) => tab.id === 'enchants')
+        ?.sections[0]?.entries.some((item) => item.displayName === 'Magic Bola'),
+    ).toBe(false)
+    expect(
+      arcana.tabs
+        .find((tab) => tab.id === 'enchants')
         ?.sections[0]?.entries.some((item) => item.displayName.startsWith('Staff of')),
     ).toBe(false)
   })

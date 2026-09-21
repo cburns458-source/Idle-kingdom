@@ -93,7 +93,8 @@ function sampleSave(skills: Array<{ skillId: string; level: number; xp: number }
     fishingPotDayKeyByLocationId: {},
     lootTrackers: {},
     xpTrackers: {},
-    trackerPausedAtMs: null,
+    lootTrackerPausedAtMs: null,
+    xpTrackerPausedAtMs: null,
   }
 }
 

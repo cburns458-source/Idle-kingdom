@@ -93,7 +93,8 @@ function saveWithInventory(itemIds: string[]): PlayerSave {
     fishingPotDayKeyByLocationId: {},
     lootTrackers: {},
     xpTrackers: {},
-    trackerPausedAtMs: null,
+    lootTrackerPausedAtMs: null,
+    xpTrackerPausedAtMs: null,
   }
 }
 

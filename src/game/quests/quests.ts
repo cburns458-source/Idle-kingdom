@@ -9,11 +9,12 @@ import type { GameDatabase, SkillRow } from '../data/types'
 import { unlockRecipeId } from '../recipes/knowledge'
 import { removeIngredients } from '../production/inventory'
 import type { PlayerSave, QuestProgress } from '../save/types'
-import { inventoryHasAnyBotanySeed } from '../timers/locationTimers'
+import { playerHasAnyBotanySeed } from '../timers/locationTimers'
 import { unlockLocation } from '../world/submaps'
 import { meetsTotalLevelRequirement, isMiniquest } from './miniquests'
 import { parseStructuredObjectives, questObjectiveProgress } from './objectives'
 import {
+  applyQuestAutoStartOnSeed,
   applyQuestLearnRecipeProgress,
   hasQuestFlag,
   recordQuestFlag,
@@ -79,7 +80,7 @@ export function questAvailableForSave(
     if (getQuestProgress(save, requiredQuestId).status !== 'completed') return false
   }
   if (parsed.requiresAnySeed) {
-    if (!inventoryHasAnyBotanySeed(db, save)) return false
+    if (!playerHasAnyBotanySeed(db, save)) return false
   }
   return true
 }
@@ -241,6 +242,7 @@ export function completeQuest(
     parsed.visitLocationIds.length > 0 ||
     parsed.inspectIds.length > 0 ||
     parsed.actionTargets.length > 0 ||
+    parsed.plantTargets.length > 0 ||
     parsed.goldCost > 0 ||
     questUsesSteps(db, questId)
   if (!hasObjectives) {
@@ -374,6 +376,7 @@ export function completeQuest(
   const progressTotal = status.progressLines.reduce((sum, line) => sum + line.required, 0)
   nextQuests.push({ questId, status: 'completed', progress: progressTotal, counters: {} })
   next = { ...next, quests: nextQuests, unlockedLocationIds: unlocked }
+  next = applyQuestAutoStartOnSeed(db, next)
 
   return {
     ok: true,
@@ -477,6 +480,38 @@ export function applyQuestAutoCompleteOnVisit(
     if (!parsed.autoCompleteOnVisit) continue
     if (getQuestProgress(next, quest['Quest ID']).status !== 'active') continue
     if (!questAllStepsComplete(db, next, quest)) continue
+    const completed = completeQuest(db, next, quest['Quest ID'], { ignoreLocation: true })
+    if (completed.ok) {
+      next = completed.save
+      completions.push({
+        questId: quest['Quest ID'],
+        questName: completed.questName,
+        rewards: completed.rewards.map((reward) => reward.label),
+        pendingSkillXp: completed.pendingSkillXp,
+        rewardBundle: completed.rewardBundle,
+        message: completed.message,
+      })
+    }
+  }
+  return { save: next, completions }
+}
+
+/** Completes plant-finish quests after a patch is planted. */
+export function applyQuestAutoCompleteOnPlant(
+  db: GameDatabase,
+  save: PlayerSave,
+): { save: PlayerSave; completions: QuestArrivalCompletion[] } {
+  let next = save
+  const completions: QuestArrivalCompletion[] = []
+  for (const quest of asQuestRows(db)) {
+    const parsed = parseStructuredObjectives(quest)
+    if (!parsed.autoCompleteOnPlant) continue
+    if (getQuestProgress(next, quest['Quest ID']).status !== 'active') continue
+    if (questUsesSteps(db, quest['Quest ID'])) {
+      if (!questAllStepsComplete(db, next, quest)) continue
+    } else if (!questObjectiveProgress(db, next, quest).ready) {
+      continue
+    }
     const completed = completeQuest(db, next, quest['Quest ID'], { ignoreLocation: true })
     if (completed.ok) {
       next = completed.save

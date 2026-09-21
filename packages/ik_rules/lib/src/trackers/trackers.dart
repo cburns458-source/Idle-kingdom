@@ -24,6 +24,7 @@ PlayerSave creditLootTracker(
   num gold,
   num nowMs,
 ) {
+  if (save.lootTrackerPausedAtMs != null) return save;
   final key = lootTrackerKey(kind, sourceId);
   final existing = save.lootTrackers[key];
   final items = <String, num>{...?existing?.items};
@@ -44,7 +45,7 @@ PlayerSave creditLootTracker(
 }
 
 PlayerSave creditXpTracker(PlayerSave save, String skillId, num xp, num nowMs) {
-  if (xp <= 0) return save;
+  if (xp <= 0 || save.xpTrackerPausedAtMs != null) return save;
   final existing = save.xpTrackers[skillId];
   final next = XpTrackerEntry(
     skillId: skillId,
@@ -96,34 +97,59 @@ PlayerSave resetAllXpTrackers(PlayerSave save) {
   return save.copyWith(xpTrackers: const <String, XpTrackerEntry>{});
 }
 
-bool trackersPaused(PlayerSave save) => save.trackerPausedAtMs != null;
+bool lootTrackersPaused(PlayerSave save) => save.lootTrackerPausedAtMs != null;
 
-PlayerSave pauseTrackers(PlayerSave save, num nowMs) {
-  if (save.trackerPausedAtMs != null) return save;
-  return save.copyWith(trackerPausedAtMs: nowMs);
+bool xpTrackersPaused(PlayerSave save) => save.xpTrackerPausedAtMs != null;
+
+PlayerSave pauseLootTrackers(PlayerSave save, num nowMs) {
+  if (save.lootTrackerPausedAtMs != null) return save;
+  return save.copyWith(lootTrackerPausedAtMs: nowMs);
 }
 
-PlayerSave resumeTrackers(PlayerSave save, num nowMs) {
-  final pausedAt = save.trackerPausedAtMs;
-  if (pausedAt == null) return save;
+PlayerSave pauseXpTrackers(PlayerSave save, num nowMs) {
+  if (save.xpTrackerPausedAtMs != null) return save;
+  return save.copyWith(xpTrackerPausedAtMs: nowMs);
+}
+
+num _shiftStarted(num startedAtMs, num pausedAt, num nowMs) {
   final delta = nowMs - pausedAt;
   final shift = delta < 0 ? 0 : delta;
-  num shiftStarted(num startedAtMs) => startedAtMs >= pausedAt ? nowMs : startedAtMs + shift;
+  return startedAtMs >= pausedAt ? nowMs : startedAtMs + shift;
+}
+
+PlayerSave resumeLootTrackers(PlayerSave save, num nowMs) {
+  final pausedAt = save.lootTrackerPausedAtMs;
+  if (pausedAt == null) return save;
   return save.copyWith(
-    trackerPausedAtMs: null,
+    lootTrackerPausedAtMs: null,
     lootTrackers: <String, LootTrackerEntry>{
       for (final entry in save.lootTrackers.entries)
-        entry.key: entry.value.copyWith(startedAtMs: shiftStarted(entry.value.startedAtMs)),
-    },
-    xpTrackers: <String, XpTrackerEntry>{
-      for (final entry in save.xpTrackers.entries)
-        entry.key: entry.value.copyWith(startedAtMs: shiftStarted(entry.value.startedAtMs)),
+        entry.key: entry.value.copyWith(
+          startedAtMs: _shiftStarted(entry.value.startedAtMs, pausedAt, nowMs),
+        ),
     },
   );
 }
 
+PlayerSave resumeXpTrackers(PlayerSave save, num nowMs) {
+  final pausedAt = save.xpTrackerPausedAtMs;
+  if (pausedAt == null) return save;
+  return save.copyWith(
+    xpTrackerPausedAtMs: null,
+    xpTrackers: <String, XpTrackerEntry>{
+      for (final entry in save.xpTrackers.entries)
+        entry.key: entry.value.copyWith(
+          startedAtMs: _shiftStarted(entry.value.startedAtMs, pausedAt, nowMs),
+        ),
+    },
+  );
+}
+
+PlayerSave resumeAllTrackers(PlayerSave save, num nowMs) =>
+    resumeXpTrackers(resumeLootTrackers(save, nowMs), nowMs);
+
 num xpPerHour(XpTrackerEntry entry, num nowMs, [PlayerSave? save]) {
-  final pausedAt = save?.trackerPausedAtMs;
+  final pausedAt = save?.xpTrackerPausedAtMs;
   if (pausedAt != null && entry.startedAtMs >= pausedAt) return 0;
   final end = pausedAt ?? nowMs;
   final elapsed = end - entry.startedAtMs;

@@ -153,7 +153,7 @@ async function read(
 ): Promise<Response> {
   const itemId = isItemId(request.itemId) ? request.itemId : null
 
-  const [own, resting, trades, box, prices] = await Promise.all([
+  const [own, resting, fills, finished, box, prices] = await Promise.all([
     admin
       .from('bazaar_orders')
       .select('*')
@@ -170,7 +170,14 @@ async function read(
       .select('*')
       .or(`buyer_id.eq.${userId},seller_id.eq.${userId}`)
       .order('created_at', { ascending: false })
-      .limit(HISTORY_LIMIT),
+      .limit(HISTORY_LIMIT * 4),
+    admin
+      .from('bazaar_orders')
+      .select('*')
+      .eq('user_id', userId)
+      .in('status', ['filled', 'cancelled'])
+      .order('updated_at', { ascending: false })
+      .limit(HISTORY_LIMIT * 4),
     admin.from('bazaar_collect').select('*').eq('user_id', userId).order('created_at'),
     admin
       .from('bazaar_prices')
@@ -186,8 +193,10 @@ async function read(
       orders: ((own.data ?? []) as OrderRow[]).map(orderJson),
       offers: aggregateOffers(open, itemId),
       market: summarizeMarket(open),
-      trades: ((trades.data ?? []) as Array<Record<string, unknown>>).map((row) =>
-        tradeJson(row, userId),
+      trades: recentTrades(
+        userId,
+        (fills.data ?? []) as Array<Record<string, unknown>>,
+        (finished.data ?? []) as OrderRow[],
       ),
       collect: ((box.data ?? []) as Array<Record<string, unknown>>).map(collectJson),
       prices: ((prices.data ?? []) as Array<Record<string, unknown>>).map(priceJson),
@@ -581,8 +590,26 @@ function tradeJson(row: Record<string, unknown>, userId: string): Record<string,
     quantity: Number(row.quantity ?? 0),
     tax: Number(row.tax ?? 0),
     side: row.buyer_id === userId ? 'buy' : 'sell',
+    status: 'filled',
     createdAt: String(row.created_at ?? ''),
   }
+}
+
+/** Fills from finished offers. Cancelled offers that never traded stay hidden. */
+function recentTrades(
+  userId: string,
+  fills: Array<Record<string, unknown>>,
+  finished: OrderRow[],
+): Array<Record<string, unknown>> {
+  const done = new Set(finished.map((row) => String(row.id)))
+  return fills
+    .filter((row) => {
+      const orderId = row.buyer_id === userId ? row.buy_order_id : row.sell_order_id
+      return typeof orderId === 'string' && done.has(orderId)
+    })
+    .map((row) => tradeJson(row, userId))
+    .sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)))
+    .slice(0, HISTORY_LIMIT)
 }
 
 function collectJson(row: Record<string, unknown>): Record<string, unknown> {

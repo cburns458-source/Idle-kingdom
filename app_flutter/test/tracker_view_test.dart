@@ -28,10 +28,16 @@ void main() {
     expect(find.text('XP'), findsOne);
     expect(find.text('Loot'), findsOne);
     expect(find.text('Gain XP to start an XP tracker.'), findsOne);
+    expect(find.byKey(const Key('tracker-on-xp')), findsOne);
+    expect(find.byKey(const Key('tracker-off-xp')), findsOne);
+    expect(find.byKey(const Key('tracker-reset-all-xp')), findsOne);
 
     await tester.tap(find.text('Loot'));
     await tester.pump();
     expect(find.text('Finish an action to start a loot tracker.'), findsOne);
+    expect(find.byKey(const Key('tracker-on-loot')), findsOne);
+    expect(find.byKey(const Key('tracker-off-loot')), findsOne);
+    expect(find.byKey(const Key('tracker-reset-all-loot')), findsOne);
   });
 
   testWidgets('combat victory opens a cow loot section that reset can clear', (tester) async {
@@ -39,7 +45,7 @@ void main() {
     addTearDown(controller.dispose);
     final victory = applyCombatVictory(
       database.launch,
-      controller.save,
+      resumeAllTrackers(controller.save, testStartMs),
       action('ACN-0001'),
       enemy('ENM-0001'),
       () => 0,
@@ -66,7 +72,7 @@ void main() {
     addTearDown(controller.dispose);
     final victory = applyCombatVictory(
       database.launch,
-      controller.save,
+      resumeAllTrackers(controller.save, testStartMs),
       action('ACN-0001'),
       enemy('ENM-0001'),
       () => 0,
@@ -88,7 +94,7 @@ void main() {
     final controller = buildController(database, seed: startedCharacter(database));
     addTearDown(controller.dispose);
     var save = addItemsToInventory(controller.save, 'ITEM-0025', 10).save;
-    save = save.copyWith(currentLocationId: 'LOC-0023');
+    save = resumeAllTrackers(save, testStartMs).copyWith(currentLocationId: 'LOC-0023');
     final queued = beginProductionQueue(
       database.launch,
       save,
@@ -119,7 +125,14 @@ void main() {
     final controller = buildController(database, seed: startedCharacter(database));
     addTearDown(controller.dispose);
     controller.commit(
-      creditLootTracker(controller.save, 'enemy', 'ENM-0001', const <LootGrant>[], 12, testStartMs),
+      creditLootTracker(
+        resumeLootTrackers(controller.save, testStartMs),
+        'enemy',
+        'ENM-0001',
+        const <LootGrant>[],
+        12,
+        testStartMs,
+      ),
     );
 
     await pumpPanel(tester, TrackerView(controller: controller));
@@ -136,14 +149,8 @@ void main() {
     final controller = buildController(database, seed: startedCharacter(database));
     addTearDown(controller.dispose);
     final harvest = action('ACN-0035');
-    var save = creditLootTracker(
-      controller.save,
-      'action',
-      harvest.actionId,
-      const <LootGrant>[],
-      0,
-      testStartMs,
-    );
+    var save = resumeAllTrackers(controller.save, testStartMs);
+    save = creditLootTracker(save, 'action', harvest.actionId, const <LootGrant>[], 0, testStartMs);
     save = creditLootTracker(save, 'timer', 'botany:LOC-0001', const <LootGrant>[], 0, testStartMs);
     save = creditXpTracker(save, combatSkillId, 50, testStartMs);
     save = creditXpTracker(save, totalXpTrackerId, 50, testStartMs);
@@ -175,37 +182,35 @@ void main() {
     );
   });
 
-  testWidgets('Start and Stop sit next to Reset all on both tracker tabs', (tester) async {
+  testWidgets('On and Off sit next to Reset all on both tracker tabs', (tester) async {
     final controller = buildController(database, seed: startedCharacter(database));
     addTearDown(controller.dispose);
-    final victory = applyCombatVictory(
-      database.launch,
-      controller.save,
-      action('ACN-0001'),
-      enemy('ENM-0001'),
-      () => 0,
-      testStartMs + 2_000,
-    );
-    controller.commit(victory.save);
 
     await pumpPanel(tester, TrackerView(controller: controller));
-    expect(find.byKey(const Key('tracker-start-xp')), findsOne);
-    expect(find.byKey(const Key('tracker-stop-xp')), findsOne);
+    expect(find.byKey(const Key('tracker-on-xp')), findsOne);
+    expect(find.byKey(const Key('tracker-off-xp')), findsOne);
     expect(find.byKey(const Key('tracker-reset-all-xp')), findsOne);
-    expect(trackersPaused(controller.save), isTrue);
+    expect(xpTrackersPaused(controller.save), isTrue);
+    expect(lootTrackersPaused(controller.save), isTrue);
 
-    await tester.tap(find.byKey(const Key('tracker-start-xp')));
+    await tester.tap(find.byKey(const Key('tracker-on-xp')));
     await tester.pump();
-    expect(trackersPaused(controller.save), isFalse);
+    expect(xpTrackersPaused(controller.save), isFalse);
+    expect(lootTrackersPaused(controller.save), isTrue);
 
-    await tester.tap(find.byKey(const Key('tracker-stop-xp')));
+    await tester.tap(find.byKey(const Key('tracker-off-xp')));
     await tester.pump();
-    expect(trackersPaused(controller.save), isTrue);
+    expect(xpTrackersPaused(controller.save), isTrue);
 
     await tester.tap(find.text('Loot'));
     await tester.pump();
-    expect(find.byKey(const Key('tracker-start-loot')), findsOne);
-    expect(find.byKey(const Key('tracker-stop-loot')), findsOne);
+    expect(find.byKey(const Key('tracker-on-loot')), findsOne);
+    expect(find.byKey(const Key('tracker-off-loot')), findsOne);
     expect(find.byKey(const Key('tracker-reset-all-loot')), findsOne);
+
+    await tester.tap(find.byKey(const Key('tracker-on-loot')));
+    await tester.pump();
+    expect(lootTrackersPaused(controller.save), isFalse);
+    expect(xpTrackersPaused(controller.save), isTrue);
   });
 }

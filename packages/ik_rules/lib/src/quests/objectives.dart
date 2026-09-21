@@ -37,6 +37,8 @@ class StructuredQuestObjectives {
     required this.inspectIds,
     required this.holds,
     required this.actionTargets,
+    required this.plantTargets,
+    required this.giveOnTalk,
     required this.requiresSkills,
     required this.requiresQuestIds,
     required this.unlockOnAcceptLocationIds,
@@ -52,6 +54,8 @@ class StructuredQuestObjectives {
     required this.autoCompleteOnTalk,
     required this.autoCompleteOnVisit,
     required this.autoCompleteOnAction,
+    required this.autoCompleteOnPlant,
+    required this.autoStartOnSeed,
     required this.requiresAnySeed,
     required this.unlockLocationIds,
     required this.rewardRecipeIds,
@@ -77,6 +81,8 @@ class StructuredQuestObjectives {
   final List<String> inspectIds;
   final List<QuestCounterTarget> holds;
   final List<QuestCounterTarget> actionTargets;
+  final List<QuestCounterTarget> plantTargets;
+  final List<QuestCounterTarget> giveOnTalk;
   final List<QuestCounterTarget> requiresSkills;
   final List<String> requiresQuestIds;
   final List<String> unlockOnAcceptLocationIds;
@@ -92,6 +98,8 @@ class StructuredQuestObjectives {
   final bool autoCompleteOnTalk;
   final bool autoCompleteOnVisit;
   final bool autoCompleteOnAction;
+  final bool autoCompleteOnPlant;
+  final bool autoStartOnSeed;
   final bool requiresAnySeed;
   final List<String> unlockLocationIds;
   final List<String> rewardRecipeIds;
@@ -114,6 +122,8 @@ class StructuredQuestObjectives {
     'inspectIds': inspectIds,
     'holds': holds.map((line) => line.toJson()).toList(),
     'actionTargets': actionTargets.map((line) => line.toJson()).toList(),
+    'plantTargets': plantTargets.map((line) => line.toJson()).toList(),
+    'giveOnTalk': giveOnTalk.map((line) => line.toJson()).toList(),
     'requiresSkills': requiresSkills
         .map((line) => <String, Object?>{'skillId': line.targetId, 'level': line.quantity})
         .toList(),
@@ -133,6 +143,8 @@ class StructuredQuestObjectives {
     'autoCompleteOnTalk': autoCompleteOnTalk,
     'autoCompleteOnVisit': autoCompleteOnVisit,
     'autoCompleteOnAction': autoCompleteOnAction,
+    'autoCompleteOnPlant': autoCompleteOnPlant,
+    'autoStartOnSeed': autoStartOnSeed,
     'requiresAnySeed': requiresAnySeed,
     'unlockLocationIds': unlockLocationIds,
     'rewardRecipeIds': rewardRecipeIds,
@@ -248,6 +260,8 @@ StructuredQuestObjectives parseNotesObjectives(
   final inspectNote = _noteField(notes, r'Inspect:\s*([^;]+)');
   final holdNote = _noteField(notes, r'Hold:\s*([^;]+)');
   final actionNote = _noteField(notes, r'Action:\s*([^;]+)');
+  final plantNote = _noteField(notes, r'Plant:\s*([^;]+)');
+  final giveOnTalkNote = _noteField(notes, r'GiveOnTalk:\s*([^;]+)');
   final goldNote = _noteField(notes, r'GoldCost:\s*(\d+)');
 
   if (delivers.isEmpty && kind == 'gather_deliver') {
@@ -311,6 +325,19 @@ StructuredQuestObjectives parseNotesObjectives(
     inspectIds: inspectNote == null ? const <String>[] : _parseTokenList(inspectNote),
     holds: holdNote == null ? const <QuestCounterTarget>[] : _parseIdQtyList(holdNote),
     actionTargets: actionTargets,
+    plantTargets: plantNote == null
+        ? const <QuestCounterTarget>[]
+        : () {
+            final qty = _parseIdQtyList(plantNote);
+            if (qty.isNotEmpty) return qty;
+            return [
+              for (final id in _parseIdList(plantNote))
+                QuestCounterTarget(targetId: id, quantity: 1),
+            ];
+          }(),
+    giveOnTalk: giveOnTalkNote == null
+        ? const <QuestCounterTarget>[]
+        : _parseIdQtyList(giveOnTalkNote),
     requiresSkills: const <QuestCounterTarget>[],
     requiresQuestIds: const <String>[],
     unlockOnAcceptLocationIds: const <String>[],
@@ -326,6 +353,8 @@ StructuredQuestObjectives parseNotesObjectives(
     autoCompleteOnTalk: false,
     autoCompleteOnVisit: false,
     autoCompleteOnAction: false,
+    autoCompleteOnPlant: false,
+    autoStartOnSeed: false,
     requiresAnySeed: false,
     unlockLocationIds: const <String>[],
     rewardRecipeIds: const <String>[],
@@ -401,6 +430,8 @@ StructuredQuestObjectives parseStructuredObjectives(QuestRow quest) {
     inspectIds: objectives.inspectIds,
     holds: objectives.holds,
     actionTargets: objectives.actionTargets,
+    plantTargets: objectives.plantTargets,
+    giveOnTalk: objectives.giveOnTalk,
     requiresSkills: requiresSkillNote == null
         ? const <QuestCounterTarget>[]
         : _parseSkillAmountList(requiresSkillNote),
@@ -424,6 +455,8 @@ StructuredQuestObjectives parseStructuredObjectives(QuestRow quest) {
     autoCompleteOnTalk: RegExp(r'AutoCompleteOnTalk', caseSensitive: false).hasMatch(notes),
     autoCompleteOnVisit: RegExp(r'AutoCompleteOnVisit', caseSensitive: false).hasMatch(notes),
     autoCompleteOnAction: RegExp(r'AutoCompleteOnAction', caseSensitive: false).hasMatch(notes),
+    autoCompleteOnPlant: RegExp(r'AutoCompleteOnPlant', caseSensitive: false).hasMatch(notes),
+    autoStartOnSeed: RegExp(r'AutoStartOnSeed', caseSensitive: false).hasMatch(notes),
     requiresAnySeed: RegExp(r'RequiresAnySeed', caseSensitive: false).hasMatch(notes),
     unlockLocationIds: unlockNote == null ? const <String>[] : _parseIdList(unlockNote),
     rewardRecipeIds: rewardRecipeNote == null ? const <String>[] : _parseIdList(rewardRecipeNote),
@@ -590,6 +623,13 @@ QuestObjectiveStatus objectiveProgressFromStructured(
         key: 'action:${line.targetId}',
         label: _actionName(db, line.targetId),
         current: counters['action:${line.targetId}'] ?? 0,
+        required: line.quantity,
+      ),
+    for (final line in structured.plantTargets)
+      QuestProgressLine(
+        key: 'plant:${line.targetId}',
+        label: 'Plant ${_itemName(db, line.targetId)}',
+        current: counters['plant:${line.targetId}'] ?? 0,
         required: line.quantity,
       ),
     if (structured.goldCost > 0)

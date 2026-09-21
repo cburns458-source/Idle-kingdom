@@ -10,15 +10,15 @@ import 'item_icon.dart';
 
 /// Shop/inventory-style grid for planting seeds and saplings.
 ///
-/// Grow time is shown only after a selection, as a confirm hint — not on every
-/// cell.
-Future<PlantableBotanyOption?> showBotanyPlantGridPopup({
+/// Taps add one seed (up to three, mixed types allowed). A sapling takes the
+/// whole patch. Grow time is the longest selected seed.
+Future<List<String>?> showBotanyPlantGridPopup({
   required BuildContext context,
   required GameController controller,
   required List<PlantableBotanyOption> options,
   Rect? origin,
 }) {
-  return showGamePopup<PlantableBotanyOption>(
+  return showGamePopup<List<String>>(
     context: context,
     origin: origin ?? popupOrigin(context),
     builder: (context) => _BotanyPlantGridPopup(controller: controller, options: options),
@@ -36,12 +36,48 @@ class _BotanyPlantGridPopup extends StatefulWidget {
 }
 
 class _BotanyPlantGridPopupState extends State<_BotanyPlantGridPopup> {
-  int? _selected;
+  final List<String> _picked = <String>[];
+
+  int _pickedOf(String itemId) => _picked.where((id) => id == itemId).length;
+
+  PlantableBotanyOption? _optionFor(String itemId) {
+    for (final option in widget.options) {
+      if (option.itemId == itemId) return option;
+    }
+    return null;
+  }
+
+  bool get _hasSapling => _picked.any((itemId) => _optionFor(itemId)?.spec.isSapling == true);
+
+  void _tap(PlantableBotanyOption option) {
+    if (!option.canPlant) return;
+    setState(() {
+      if (option.spec.isSapling) {
+        _picked
+          ..clear()
+          ..add(option.itemId);
+        return;
+      }
+      if (_hasSapling) _picked.clear();
+      if (_picked.length >= 3) return;
+      if (_pickedOf(option.itemId) >= option.owned.round()) return;
+      _picked.add(option.itemId);
+    });
+  }
+
+  num get _growSeconds {
+    num grow = 0;
+    for (final itemId in _picked) {
+      final seconds = _optionFor(itemId)?.spec.growSeconds ?? 0;
+      if (seconds > grow) grow = seconds;
+    }
+    return grow;
+  }
 
   @override
   Widget build(BuildContext context) {
     final chrome = UiChrome.of(context);
-    final selected = _selected == null ? null : widget.options[_selected!];
+    final canPlant = _picked.isNotEmpty;
     return GamePopupCard(
       child: GamePanel(
         child: ConstrainedBox(
@@ -67,24 +103,27 @@ class _BotanyPlantGridPopupState extends State<_BotanyPlantGridPopup> {
                   childAspectRatio: 1,
                   shrinkWrap: true,
                   children: [
-                    for (var i = 0; i < widget.options.length; i++)
+                    for (final option in widget.options)
                       _PlantTile(
-                        option: widget.options[i],
-                        item: widget.controller.indexes.itemsById[widget.options[i].itemId],
-                        selected: _selected == i,
-                        onTap: widget.options[i].canPlant
-                            ? () => setState(() => _selected = i)
-                            : null,
+                        option: option,
+                        item: widget.controller.indexes.itemsById[option.itemId],
+                        selected: _pickedOf(option.itemId) > 0,
+                        selectedCount: _pickedOf(option.itemId),
+                        onTap: option.canPlant ? () => _tap(option) : null,
                       ),
                   ],
                 ),
               ),
-              if (selected != null) ...[
+              if (canPlant) ...[
                 const SizedBox(height: 10),
-                Text(selected.displayName, style: TextStyle(fontSize: 14, color: chrome.panelInk)),
                 Text(
-                  'Grows in ${formatDurationSeconds(selected.spec.growSeconds)} · '
-                  'plant ${selected.plantQuantity.round()}',
+                  _picked.length == 1
+                      ? (_optionFor(_picked.first)?.displayName ?? 'Seed')
+                      : '${_picked.length} seeds selected',
+                  style: TextStyle(fontSize: 14, color: chrome.panelInk),
+                ),
+                Text(
+                  'Grows in ${formatDurationSeconds(_growSeconds)} · plant ${_picked.length}',
                   style: TextStyle(color: chrome.embossFace, fontSize: 12.5),
                 ),
               ],
@@ -97,10 +136,17 @@ class _BotanyPlantGridPopupState extends State<_BotanyPlantGridPopup> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: GameButton(
+                      label: 'Clear',
+                      onPressed: _picked.isEmpty ? null : () => setState(_picked.clear),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: GameButton(
                       label: 'Plant',
-                      onPressed: selected == null || !selected.canPlant
-                          ? null
-                          : () => Navigator.of(context).pop(selected),
+                      onPressed: canPlant
+                          ? () => Navigator.of(context).pop(List<String>.from(_picked))
+                          : null,
                     ),
                   ),
                 ],
@@ -118,12 +164,14 @@ class _PlantTile extends StatelessWidget {
     required this.option,
     required this.item,
     required this.selected,
+    required this.selectedCount,
     required this.onTap,
   });
 
   final PlantableBotanyOption option;
   final ItemRow? item;
   final bool selected;
+  final int selectedCount;
   final VoidCallback? onTap;
 
   @override
@@ -161,6 +209,19 @@ class _PlantTile extends StatelessWidget {
                       fontSize: 11,
                       fontWeight: FontWeight.w400,
                       color: Palette.parchmentText,
+                    ),
+                  ),
+                ),
+              if (selectedCount > 0)
+                Positioned(
+                  left: 0,
+                  top: 0,
+                  child: Text(
+                    '$selectedCount',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w400,
+                      color: Palette.gold,
                     ),
                   ),
                 ),

@@ -207,8 +207,8 @@ class _LocationViewState extends State<LocationView> {
       options: options,
       origin: popupOrigin(buttonContext),
     );
-    if (chosen == null || !buttonContext.mounted) return;
-    controller.plantBotanySeedHere(chosen.itemId, plantQuantity: chosen.plantQuantity);
+    if (chosen == null || chosen.isEmpty || !buttonContext.mounted) return;
+    controller.plantBotanySelectionHere(chosen);
   }
 
   LocationPanel? get _currentPanel => _open.isEmpty ? null : _open.last;
@@ -700,7 +700,10 @@ class _LocationViewState extends State<LocationView> {
     addActiveOrIdle(
       kind: 'botany',
       title: 'Botany patch',
-      locationSupports: (kind == null || kind == 'botany') && locationHasBotanyPatch(locationId),
+      locationSupports:
+          (kind == null || kind == 'botany') &&
+          locationHasBotanyPatch(locationId) &&
+          botanyPatchUnlocked(controller.save, locationId),
       idleCard: () {
         final courtyardLocked =
             locationId == courtyardLocationId && !courtyardBotanyUnlocked(controller.save);

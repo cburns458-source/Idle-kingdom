@@ -121,10 +121,11 @@ describe("Mage's Wand", () => {
     })
 
     const weapons =
-      skillMenuView(launch, 'SKL-0013').tabs.find((tab) => tab.id === 'weapons')?.sections[0]
+      skillMenuView(launch, 'SKL-0013').tabs.find((tab) => tab.id === 'equipment')?.sections[0]
         ?.entries ?? []
     expect(weapons.map((entry) => entry.displayName)).toEqual([
       'Staff of Sparks',
+      'Magic Bola',
       'Staff of Binding',
       "Mage's Wand",
       'Staff of Power',

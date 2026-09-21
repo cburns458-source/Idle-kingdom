@@ -8,7 +8,17 @@ import { prepareDatabase } from '../data/loadDatabase'
 import { createNewSave } from '../save/saveStore'
 import { addItemsToInventory } from '../activity/rewards'
 import { TOTAL_XP_TRACKER_ID } from '../save/types'
-import { pauseTrackers, resetLootTracker, resumeTrackers, trackersPaused, xpPerHour } from './trackers'
+import {
+  lootTrackersPaused,
+  pauseLootTrackers,
+  pauseXpTrackers,
+  resetLootTracker,
+  resumeAllTrackers,
+  resumeLootTrackers,
+  resumeXpTrackers,
+  xpPerHour,
+  xpTrackersPaused,
+} from './trackers'
 
 const rawDatabase = JSON.parse(
   readFileSync(resolve(process.cwd(), 'content/data/game-database.json'), 'utf8'),
@@ -20,7 +30,7 @@ describe('trackers', () => {
   const enemy = (id: string) => launch.Enemies.find((row) => row['Enemy ID'] === id)!
 
   it('opens separate loot sections for cow and bull', () => {
-    const fresh = createNewSave(launch, 1000)
+    const fresh = resumeAllTrackers(createNewSave(launch, 1000), 1000)
     const cow = applyCombatVictory(launch, fresh, action('ACN-0001'), enemy('ENM-0001'), () => 0, 2000)
     const both = applyCombatVictory(launch, cow.save, action('ACN-0002'), enemy('ENM-0002'), () => 0, 3000)
     expect(Object.keys(both.save.lootTrackers)).toEqual(
@@ -29,7 +39,7 @@ describe('trackers', () => {
   })
 
   it('resetting cows leaves the bull section', () => {
-    const fresh = createNewSave(launch, 1000)
+    const fresh = resumeAllTrackers(createNewSave(launch, 1000), 1000)
     const cow = applyCombatVictory(launch, fresh, action('ACN-0001'), enemy('ENM-0001'), () => 0, 2000)
     const both = applyCombatVictory(launch, cow.save, action('ACN-0002'), enemy('ENM-0002'), () => 0, 3000)
     const reset = resetLootTracker(both.save, 'enemy:ENM-0001')
@@ -38,7 +48,7 @@ describe('trackers', () => {
   })
 
   it('starts an action loot section when mining copper', () => {
-    const fresh = createNewSave(launch, 1000)
+    const fresh = resumeAllTrackers(createNewSave(launch, 1000), 1000)
     const completed = completeGatheringAction(launch, fresh, action('ACN-0018'), () => 0, 4000)
     expect(completed.save.lootTrackers['action:ACN-0018']).toBeDefined()
     expect(completed.save.xpTrackers['SKL-0002']).toBeDefined()
@@ -46,7 +56,7 @@ describe('trackers', () => {
   })
 
   it('does not track standard production outputs as loot', () => {
-    let save = addItemsToInventory(createNewSave(launch, 1000), 'ITEM-0025', 10).save
+    let save = resumeAllTrackers(addItemsToInventory(createNewSave(launch, 1000), 'ITEM-0025', 10).save, 1000)
     save = { ...save, currentLocationId: 'LOC-0023' }
     const queued = beginProductionQueue(launch, save, 'ACT-0017', 'RCP-0001', 1, 1000)
     expect(queued.ok).toBe(true)
@@ -57,32 +67,47 @@ describe('trackers', () => {
     expect(finished!.save.xpTrackers[TOTAL_XP_TRACKER_ID]).toBeDefined()
   })
 
-  it('starts stopped, with xp/hr at 0 until Start', () => {
+  it('starts off, so nothing is tracked until On', () => {
     const fresh = createNewSave(launch, 1000)
-    expect(trackersPaused(fresh)).toBe(true)
+    expect(lootTrackersPaused(fresh)).toBe(true)
+    expect(xpTrackersPaused(fresh)).toBe(true)
     const mined = completeGatheringAction(launch, fresh, action('ACN-0018'), () => 0, 4000)
-    expect(trackersPaused(mined.save)).toBe(true)
-    expect(xpPerHour(mined.save.xpTrackers['SKL-0002']!, 10_000, mined.save)).toBe(0)
-    const started = resumeTrackers(mined.save, 10_000)
-    expect(trackersPaused(started)).toBe(false)
-    expect(started.xpTrackers['SKL-0002']!.startedAtMs).toBe(10_000)
-    const gained = started.xpTrackers['SKL-0002']!.xpGained
-    expect(xpPerHour(started.xpTrackers['SKL-0002']!, 10_000 + 3_600_000, started)).toBe(gained)
+    expect(mined.save.lootTrackers['action:ACN-0018']).toBeUndefined()
+    expect(mined.save.xpTrackers['SKL-0002']).toBeUndefined()
+    const started = resumeAllTrackers(mined.save, 10_000)
+    const tracked = completeGatheringAction(launch, started, action('ACN-0018'), () => 0, 12_000)
+    expect(tracked.save.lootTrackers['action:ACN-0018']).toBeDefined()
+    expect(xpPerHour(tracked.save.xpTrackers['SKL-0002']!, 12_000 + 3_600_000, tracked.save)).toBe(
+      tracked.save.xpTrackers['SKL-0002']!.xpGained,
+    )
+  })
+
+  it('pauses loot and XP independently', () => {
+    let save = resumeAllTrackers(createNewSave(launch, 1000), 1000)
+    save = pauseLootTrackers(save, 1000)
+    const mined = completeGatheringAction(launch, save, action('ACN-0018'), () => 0, 4000)
+    expect(mined.save.lootTrackers['action:ACN-0018']).toBeUndefined()
+    expect(mined.save.xpTrackers['SKL-0002']).toBeDefined()
+
+    save = resumeLootTrackers(pauseXpTrackers(mined.save, 4000), 4000)
+    const again = completeGatheringAction(launch, save, action('ACN-0018'), () => 0, 6000)
+    expect(again.save.lootTrackers['action:ACN-0018']).toBeDefined()
+    expect(again.save.xpTrackers['SKL-0002']!.xpGained).toBe(mined.save.xpTrackers['SKL-0002']!.xpGained)
   })
 
   it('computes xp/hr from elapsed time', () => {
     expect(xpPerHour({ skillId: 'SKL-0001', startedAtMs: 0, xpGained: 3600 }, 3_600_000)).toBe(3600)
   })
 
-  it('freezes xp/hr while stopped and excludes paused time after start', () => {
-    const runningSave = resumeTrackers(createNewSave(launch, 1000), 1000)
+  it('freezes xp/hr while XP is off and excludes paused time after On', () => {
+    const runningSave = resumeAllTrackers(createNewSave(launch, 1000), 1000)
     const mined = completeGatheringAction(launch, runningSave, action('ACN-0018'), () => 0, 4000)
     const running = xpPerHour(mined.save.xpTrackers['SKL-0002']!, 10_000, mined.save)
-    const paused = pauseTrackers(mined.save, 10_000)
-    expect(trackersPaused(paused)).toBe(true)
+    const paused = pauseXpTrackers(mined.save, 10_000)
+    expect(xpTrackersPaused(paused)).toBe(true)
     expect(xpPerHour(paused.xpTrackers['SKL-0002']!, 20_000, paused)).toBe(running)
-    const resumed = resumeTrackers(paused, 20_000)
-    expect(trackersPaused(resumed)).toBe(false)
+    const resumed = resumeXpTrackers(paused, 20_000)
+    expect(xpTrackersPaused(resumed)).toBe(false)
     expect(xpPerHour(resumed.xpTrackers['SKL-0002']!, 20_000, resumed)).toBe(running)
   })
 })
