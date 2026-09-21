@@ -69,7 +69,9 @@ describe('unattended progression', () => {
     expect(resolved.gatheringActions).toBe(uncapped.gatheringActions)
     expect(resolved.gatheringActions).toBeGreaterThan(0)
     expect(resolved.save.playTimeMs).toBe(24 * 3_600_000)
-  })
+    // 12–120s gathering actions make a full 24h catch-up simulate thousands of
+    // completions; keep CI runners under the default 5s vitest timeout.
+  }, 60_000)
 
   it('advances a production queue within the capped window', () => {
     const { launch } = prepareDatabase(rawDatabase)

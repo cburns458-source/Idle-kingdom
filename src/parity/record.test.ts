@@ -82,24 +82,35 @@ describe('parity fixtures', () => {
 
   for (const entry of parityScenarios) {
     const label = `${entry.module}/${entry.name}`
-    it(RECORDING ? `records ${label}` : `matches recorded ${label}`, () => {
-      const path = fixturePath(entry)
-      const body = fixtureBody(entry)
+    // Long unattended gathering windows simulate thousands of short actions
+    // after the 12–120s duration remap; CI runners need more than 5s.
+    const timeoutMs =
+      label.includes('unattended/resolve/gathering-') ||
+      label.includes('unattended/resolve/production-')
+        ? 60_000
+        : undefined
+    it(
+      RECORDING ? `records ${label}` : `matches recorded ${label}`,
+      () => {
+        const path = fixturePath(entry)
+        const body = fixtureBody(entry)
 
-      if (RECORDING) {
-        mkdirSync(dirname(path), { recursive: true })
-        writeFileSync(path, body, 'utf8')
-        return
-      }
+        if (RECORDING) {
+          mkdirSync(dirname(path), { recursive: true })
+          writeFileSync(path, body, 'utf8')
+          return
+        }
 
-      expect(
-        existsSync(path),
-        `Missing fixture for ${label}. Run: npm run parity:record`,
-      ).toBe(true)
-      expect(
-        readFileSync(path, 'utf8'),
-        `Fixture drift for ${label}. If the TypeScript change is intended, re-record with npm run parity:record and re-run the Dart parity suite.`,
-      ).toBe(body)
-    })
+        expect(
+          existsSync(path),
+          `Missing fixture for ${label}. Run: npm run parity:record`,
+        ).toBe(true)
+        expect(
+          readFileSync(path, 'utf8'),
+          `Fixture drift for ${label}. If the TypeScript change is intended, re-record with npm run parity:record and re-run the Dart parity suite.`,
+        ).toBe(body)
+      },
+      timeoutMs,
+    )
   }
 })
