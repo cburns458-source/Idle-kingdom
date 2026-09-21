@@ -1,7 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
+import '../session/game_controller.dart';
+import '../session/multiplayer_controller.dart';
 import '../theme.dart';
 import 'app_shell.dart';
+import 'notification_bubble.dart';
 
 /// Settings / Log / Bazaar / Leaderboards / Guilds — the hamburger nest and the
 /// desktop rail. The Bazaar is here rather than at a location because an offer
@@ -26,12 +31,18 @@ class BottomNav extends StatefulWidget {
     required this.screen,
     required this.locationName,
     required this.onSelect,
+    required this.controller,
+    required this.multiplayer,
+    this.nowMs,
     this.showMenu = true,
   });
 
   final GameScreen screen;
   final String locationName;
   final ValueChanged<GameScreen> onSelect;
+  final GameController controller;
+  final MultiplayerController multiplayer;
+  final num Function()? nowMs;
 
   /// When false, the hamburger is omitted (desktop rails own those pages).
   final bool showMenu;
@@ -43,12 +54,40 @@ class BottomNav extends StatefulWidget {
 class _BottomNavState extends State<BottomNav> {
   final LayerLink _nestLink = LayerLink();
   OverlayEntry? _nestEntry;
+  Timer? _ticker;
 
   bool get _nestOpen => _nestEntry != null;
   bool get _nestActive => _nestOpen || nestMenuScreens.contains(widget.screen);
 
+  num _clock() => widget.nowMs?.call() ?? widget.controller.session.clock();
+
+  int get _timerReady => timerReadyBadgeCount(widget.controller.save, _clock());
+
+  int get _bazaarReady => bazaarReadyBadgeCount(widget.multiplayer.market);
+
+  int get _menuReady => _timerReady + _bazaarReady;
+
+  int _badgeFor(GameScreen screen) {
+    return switch (screen) {
+      GameScreen.timers => _timerReady,
+      GameScreen.bazaar => _bazaarReady,
+      _ => 0,
+    };
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted) return;
+      setState(() {});
+      _nestEntry?.markNeedsBuild();
+    });
+  }
+
   @override
   void dispose() {
+    _ticker?.cancel();
     _nestEntry?.remove();
     _nestEntry = null;
     super.dispose();
@@ -93,6 +132,7 @@ class _BottomNavState extends State<BottomNav> {
           offset: const Offset(0, -8),
           child: _NestPopup(
             screen: widget.screen,
+            badgeFor: _badgeFor,
             onSelect: (screen) {
               _closeNest();
               _selectTab(screen);
@@ -114,47 +154,52 @@ class _BottomNavState extends State<BottomNav> {
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: chromeBoardFill(
-        context,
-        border: const Border(top: BorderSide(color: Palette.edge)),
-      ),
-      child: SizedBox(
-        height: 48,
-        child: Row(
-          children: [
-            Expanded(
-              child: _NavSection(
-                label: widget.locationName,
-                selected: widget.screen == GameScreen.location,
-                tooltip: widget.locationName,
-                onTap: () => _selectTab(GameScreen.location),
-              ),
-            ),
-            const VerticalDivider(width: 1, color: Palette.edge),
-            Expanded(
-              child: _NavSection(
-                label: 'Character',
-                selected: widget.screen == GameScreen.character,
-                onTap: () => _selectTab(GameScreen.character),
-              ),
-            ),
-            if (widget.showMenu) ...[
-              const VerticalDivider(width: 1, color: Palette.edge),
+    return ListenableBuilder(
+      listenable: Listenable.merge(<Listenable>[widget.controller, widget.multiplayer]),
+      builder: (context, _) => DecoratedBox(
+        decoration: chromeBoardFill(
+          context,
+          border: const Border(top: BorderSide(color: Palette.edge)),
+        ),
+        child: SizedBox(
+          height: 48,
+          child: Row(
+            children: [
               Expanded(
-                child: CompositedTransformTarget(
-                  link: _nestLink,
-                  child: _NavSection(
-                    selected: _nestActive,
-                    tooltip: 'Open menu',
-                    semanticsLabel: 'Open menu',
-                    onTap: _toggleNest,
-                    child: const Icon(Icons.menu, size: 22),
-                  ),
+                child: _NavSection(
+                  label: widget.locationName,
+                  selected: widget.screen == GameScreen.location,
+                  tooltip: widget.locationName,
+                  onTap: () => _selectTab(GameScreen.location),
                 ),
               ),
+              const VerticalDivider(width: 1, color: Palette.edge),
+              Expanded(
+                child: _NavSection(
+                  label: 'Character',
+                  selected: widget.screen == GameScreen.character,
+                  onTap: () => _selectTab(GameScreen.character),
+                ),
+              ),
+              if (widget.showMenu) ...[
+                const VerticalDivider(width: 1, color: Palette.edge),
+                Expanded(
+                  child: CompositedTransformTarget(
+                    link: _nestLink,
+                    child: _NavSection(
+                      selected: _nestActive,
+                      tooltip: 'Open menu',
+                      semanticsLabel: _menuReady > 0
+                          ? 'Open menu, $_menuReady waiting'
+                          : 'Open menu',
+                      onTap: _toggleNest,
+                      child: Badged(count: _menuReady, child: const Icon(Icons.menu, size: 22)),
+                    ),
+                  ),
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );
@@ -162,10 +207,11 @@ class _BottomNavState extends State<BottomNav> {
 }
 
 class _NestPopup extends StatelessWidget {
-  const _NestPopup({required this.screen, required this.onSelect});
+  const _NestPopup({required this.screen, required this.onSelect, required this.badgeFor});
 
   final GameScreen screen;
   final ValueChanged<GameScreen> onSelect;
+  final int Function(GameScreen screen) badgeFor;
 
   @override
   Widget build(BuildContext context) {
@@ -197,6 +243,7 @@ class _NestPopup extends StatelessWidget {
                       label: item.$2,
                       selected: screen == item.$1,
                       alignStart: true,
+                      badge: badgeFor(item.$1),
                       onTap: () => onSelect(item.$1),
                     ),
                   ),
@@ -218,6 +265,7 @@ class _NavSection extends StatelessWidget {
     this.tooltip,
     this.semanticsLabel,
     this.alignStart = false,
+    this.badge = 0,
   }) : assert(label != null || child != null);
 
   final String? label;
@@ -227,18 +275,29 @@ class _NavSection extends StatelessWidget {
   final String? tooltip;
   final String? semanticsLabel;
   final bool alignStart;
+  final int badge;
 
   @override
   Widget build(BuildContext context) {
+    final labelText = label == null
+        ? null
+        : Text(
+            label!,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: alignStart ? TextAlign.left : TextAlign.center,
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w400),
+          );
     final content =
         child ??
-        Text(
-          label!,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          textAlign: alignStart ? TextAlign.left : TextAlign.center,
-          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w400),
-        );
+        (badge > 0 && labelText != null
+            ? Row(
+                children: [
+                  Expanded(child: labelText),
+                  NotificationBubble(count: badge),
+                ],
+              )
+            : labelText!);
     final button = Material(
       color: selected ? const Color(0xD9546E3E) : Colors.transparent,
       child: InkWell(

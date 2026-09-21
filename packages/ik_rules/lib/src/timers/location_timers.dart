@@ -259,6 +259,11 @@ bool timerIsReady(LocationTimer timer, num nowMs) {
   return nowMs >= timerCompletesAtMs(timer);
 }
 
+/// Ready Botany / fishing pots waiting to be collected.
+num readyLocationTimerCount(PlayerSave save, num nowMs) {
+  return save.locationTimers.where((timer) => timerIsReady(timer, nowMs)).length;
+}
+
 bool courtyardBotanyUnlocked(PlayerSave save) {
   return getQuestProgress(save, grandFeastQuestId).status == 'completed';
 }

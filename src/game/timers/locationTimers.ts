@@ -241,6 +241,11 @@ export function timerIsReady(timer: LocationTimer, nowMs: number = Date.now()): 
   return nowMs >= timerCompletesAtMs(timer)
 }
 
+/** Ready Botany / fishing pots waiting to be collected. */
+export function readyLocationTimerCount(save: PlayerSave, nowMs: number = Date.now()): number {
+  return save.locationTimers.filter((timer) => timerIsReady(timer, nowMs)).length
+}
+
 export function courtyardBotanyUnlocked(save: PlayerSave): boolean {
   return getQuestProgress(save, GRAND_FEAST_QUEST_ID).status === 'completed'
 }

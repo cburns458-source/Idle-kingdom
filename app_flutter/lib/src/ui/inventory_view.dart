@@ -588,48 +588,131 @@ class _InventoryViewState extends State<InventoryView> {
       children: [
         _combatStats(),
         const SizedBox(height: 10),
-        // Four columns keep the paper-doll arrangement, but the whole doll is
-        // capped so the slots stay tile-sized instead of filling the screen.
-        Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 320),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                EquipmentPresetsBar(
-                  controller: controller,
-                  showSettingsButton: true,
-                  showCurrentButton: true,
-                  selectedPresetIndex: _selectedPresetIndex,
-                  onSelectCurrent: () => _setSelectedPresetIndex(null),
-                  onEditPreset: _setSelectedPresetIndex,
-                  onSaveEditingPreset: _finishEditingPreset,
-                  onMessage: (message) {
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
-                  },
-                ),
-                if (_editingPreset) ...[
-                  const SizedBox(height: 8),
-                  MutedText(
-                    'Editing ${_presetName(_selectedPresetIndex!)}. Worn gear is unchanged until you Apply.',
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            EquipmentPresetsBar(
+              controller: controller,
+              axis: Axis.vertical,
+              showSettingsButton: true,
+              showCurrentButton: true,
+              selectedPresetIndex: _selectedPresetIndex,
+              onSelectCurrent: () => _setSelectedPresetIndex(null),
+              onEditPreset: _setSelectedPresetIndex,
+              onSaveEditingPreset: _finishEditingPreset,
+              onMessage: (message) {
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+              },
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (_editingPreset) ...[
+                    MutedText(
+                      'Editing ${_presetName(_selectedPresetIndex!)}. Worn gear is unchanged until you Apply.',
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+                  Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 320),
+                      child: GridView.count(
+                        crossAxisCount: 4,
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        mainAxisSpacing: 6,
+                        crossAxisSpacing: 6,
+                        children: [for (final slotId in equipmentGridOrder) _slotTile(slotId)],
+                      ),
+                    ),
                   ),
                 ],
-                const SizedBox(height: 10),
-                GridView.count(
-                  crossAxisCount: 4,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  mainAxisSpacing: 6,
-                  crossAxisSpacing: 6,
-                  children: [for (final slotId in equipmentGridOrder) _slotTile(slotId)],
-                ),
-              ],
+              ),
             ),
-          ),
+            const SizedBox(width: 8),
+            _attributeColumn(),
+          ],
         ),
-        const SizedBox(height: 10),
-        _eatAtHealth(),
       ],
+    );
+  }
+
+  Widget _attributeColumn() {
+    return SizedBox(
+      width: 92,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          GameButton(
+            key: const Key('show-bonuses'),
+            label: _showBonuses ? 'Hide bonuses' : 'Show bonuses',
+            tone: GameButtonTone.secondary,
+            compact: true,
+            dense: true,
+            onPressed: () => setState(() => _showBonuses = !_showBonuses),
+          ),
+          const SizedBox(height: 8),
+          GameButton(
+            key: const Key('show-sources'),
+            label: _showSources ? 'Hide sources' : 'Show sources',
+            tone: GameButtonTone.secondary,
+            compact: true,
+            dense: true,
+            onPressed: () => setState(() => _showSources = !_showSources),
+          ),
+          const SizedBox(height: 8),
+          GameButton(
+            key: const Key('eat-options'),
+            label: 'Eat',
+            tone: GameButtonTone.secondary,
+            compact: true,
+            dense: true,
+            onPressed: _openEatMenu,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _openEatMenu() async {
+    await showGamePopup<void>(
+      context: context,
+      builder: (context) {
+        return GamePopupCard(
+          child: ListenableBuilder(
+            listenable: controller,
+            builder: (context, _) {
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Text('Eat', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 8),
+                  _eatAtHealth(),
+                  const SizedBox(height: 12),
+                  GameButton(
+                    label: 'Eat now',
+                    onPressed: _eatVisible && !isInCombat(save)
+                        ? () {
+                            _eatAt();
+                            Navigator.of(context).pop();
+                          }
+                        : null,
+                  ),
+                  const SizedBox(height: 8),
+                  GameButton(
+                    label: 'Close',
+                    tone: GameButtonTone.secondary,
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                ],
+              );
+            },
+          ),
+        );
+      },
     );
   }
 
@@ -840,30 +923,6 @@ class _InventoryViewState extends State<InventoryView> {
               ),
               _Stat(label: 'Health', value: '${summary.maxHp}'),
               _Stat(label: 'DR', value: '${summary.damageReduction}'),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Flexible(
-                child: GameButton(
-                  label: _showBonuses ? 'Hide bonuses' : 'Show bonuses',
-                  tone: GameButtonTone.secondary,
-                  compact: true,
-                  dense: true,
-                  onPressed: () => setState(() => _showBonuses = !_showBonuses),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Flexible(
-                child: GameButton(
-                  label: _showSources ? 'Hide sources' : 'Show sources',
-                  tone: GameButtonTone.secondary,
-                  compact: true,
-                  dense: true,
-                  onPressed: () => setState(() => _showSources = !_showSources),
-                ),
-              ),
             ],
           ),
           if (_showBonuses && summary.activeBonuses.isEmpty)

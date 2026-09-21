@@ -193,12 +193,26 @@ void main() {
     expect(find.text('DR'), findsOne);
     expect(find.text('Show bonuses'), findsOne);
     expect(find.text('Show sources'), findsOne);
-    expect(find.textContaining('Eat at'), findsOne);
+    expect(find.text('Eat'), findsOne);
+    expect(find.textContaining('Eat at'), findsNothing);
     final bonuses = tester.getRect(find.text('Show bonuses'));
     final sources = tester.getRect(find.text('Show sources'));
-    expect((bonuses.center.dy - sources.center.dy).abs(), lessThan(8));
-    expect(bonuses.right, lessThan(sources.left));
+    final eat = tester.getRect(find.text('Eat'));
+    final helmet = tester.getRect(find.text('Helmet'));
+    final current = tester.getRect(find.byKey(const Key('current-loadout')));
+    expect(bonuses.bottom, lessThan(sources.top + 1));
+    expect(sources.bottom, lessThan(eat.top + 1));
+    expect(helmet.right, lessThan(bonuses.left + 1));
+    expect(current.right, lessThan(helmet.left + 1));
     expect(find.textContaining('Human'), findsNothing);
+
+    await tester.tap(find.text('Eat'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Eat at'), findsOne);
+    expect(find.text('Eat now'), findsOne);
+    await tester.tap(find.text('Close'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Eat at'), findsNothing);
 
     await tester.tap(find.text('Show bonuses'));
     await tester.pump();

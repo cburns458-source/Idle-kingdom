@@ -21,6 +21,9 @@ const String boardTotalExperience = 'total_experience';
 const String boardPacifistTotalLevel = 'total_level_combat_1';
 
 const String boardGoldEarned = 'gold_earned';
+
+/// Current purse, not lifetime gold earned.
+const String boardGold = 'gold';
 const String boardMonstersKilled = 'monsters_killed';
 const String boardBossesKilled = 'bosses_killed';
 const String boardCrittersCollected = 'critters_collected';

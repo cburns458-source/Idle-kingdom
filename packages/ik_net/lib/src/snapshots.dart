@@ -64,6 +64,7 @@ LeaderboardSnapshotValues buildLeaderboardSnapshot(GameDatabase db, PlayerSave s
       boardKey: boardGoldEarned,
       value: jsNumber(save.statistics.values['gold_earned'] ?? 0),
     ),
+    LeaderboardBoardValue(boardKey: boardGold, value: jsNumber(save.gold)),
     LeaderboardBoardValue(
       boardKey: boardMonstersKilled,
       value: jsNumber(save.statistics.values['monsters_killed'] ?? 0),
@@ -108,6 +109,7 @@ String boardLabel(GameDatabase db, MultiplayerBoardKey boardKey) {
   if (boardKey == boardPacifistTotalLevel) return 'Pacifist Total Level';
   if (boardKey == boardTotalExperience) return 'Total XP';
   if (boardKey == boardGoldEarned) return 'Gold Earned';
+  if (boardKey == boardGold) return 'Gold';
   if (boardKey == boardMonstersKilled) return 'Monsters Killed';
   if (boardKey == boardBossesKilled) return 'Total kills';
   if (boardKey.startsWith(bossBoardPrefix)) {
@@ -204,6 +206,7 @@ List<MultiplayerBoardKey> launchBoardKeys(GameDatabase db) => <MultiplayerBoardK
   boardGuildTotalLevel,
   boardPacifistTotalLevel,
   boardGoldEarned,
+  boardGold,
   boardMonstersKilled,
   boardCrittersCollected,
   boardBountiesCompleted,

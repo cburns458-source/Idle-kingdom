@@ -25,7 +25,7 @@ double _chipHeight({required bool compact, required bool square}) {
   return compact ? 28 : _pageSquare;
 }
 
-/// Preset buttons (optional Current / Save chips); used above the paper doll and on location art.
+/// Preset buttons (optional Current / Save chips); used left of the paper doll and on location art.
 class EquipmentPresetsBar extends StatelessWidget {
   const EquipmentPresetsBar({
     super.key,
