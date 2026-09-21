@@ -465,8 +465,7 @@ void main() {
     await tester.pump();
     expect(find.bySemanticsLabel('Travelling'), findsOne);
 
-    await tester.tap(find.text('Character'));
-    await tester.pump();
+    await openChinInventory(tester);
     expect(controller.save.currentLocationId, 'LOC-0009');
     expect(find.bySemanticsLabel('Travelling'), findsNothing);
   });
@@ -527,27 +526,18 @@ void main() {
     addTearDown(controller.dispose);
     await pumpShell(tester, controller);
 
-    await tester.tap(find.text('Character'));
-    await tester.pump();
+    await openChinInventory(tester);
     expect(find.textContaining('slots'), findsOne);
-
-    await tester.tap(find.widgetWithText(GameButton, 'Skills'));
-    await tester.pump();
-    expect(find.text('Combat'), findsWidgets);
-
-    await tester.tap(find.widgetWithText(GameButton, 'Inventory'));
-    await tester.pump();
-    expect(find.textContaining('slots'), findsOne);
-
-    await tester.tap(find.widgetWithText(GameButton, 'Equipment'));
-    await tester.pump();
-    expect(find.textContaining('slots'), findsNothing);
-    expect(find.text('Sell items'), findsNothing);
     expect(find.text('Damage'), findsOne);
     expect(find.text('Health'), findsOne);
     expect(find.text('DR'), findsOne);
     expect(find.text('Helmet'), findsOne);
     expect(find.text('Show bonuses'), findsOne);
+    expect(find.text('Sell items'), findsOne);
+
+    await openChinSkills(tester);
+    expect(find.text('Combat'), findsWidgets);
+    expect(find.text('Total level'), findsOne);
   });
 
   testWidgets('the chin nest opens Settings, Log, Codex, Leaderboards, and Guilds', (tester) async {
@@ -555,10 +545,13 @@ void main() {
     addTearDown(controller.dispose);
     await pumpShell(tester, controller);
 
-    expect(find.text('Character'), findsOne);
+    expect(find.byTooltip('Inventory'), findsOne);
+    expect(find.byTooltip('Skills'), findsOne);
+    expect(find.byTooltip('Log'), findsOne);
+    expect(find.byTooltip('Open menu'), findsOne);
+    expect(find.text('Character'), findsNothing);
     expect(find.text('Skills'), findsNothing);
     expect(find.text('Inventory'), findsNothing);
-    expect(find.byTooltip('Open menu'), findsOne);
     expect(find.text('Log'), findsNothing);
     expect(find.text('Social'), findsNothing);
 
@@ -566,14 +559,16 @@ void main() {
     await tester.pump();
 
     expect(find.text('Settings'), findsOne);
-    expect(find.text('Log'), findsOne);
+    expect(find.text('Log'), findsNothing);
     expect(find.text('Codex'), findsOne);
     expect(find.text('Tracker'), findsOne);
     expect(find.text('Leaderboards'), findsOne);
     expect(find.text('Guilds'), findsOne);
     expect(find.text('Account'), findsNothing);
 
-    await tester.tap(find.text('Log'));
+    await tester.tapAt(const Offset(8, 8));
+    await tester.pump();
+    await tester.tap(find.byTooltip('Log'));
     await tester.pump();
     expect(find.text('Deeds unlocked on this save.'), findsOne);
   });
@@ -720,7 +715,7 @@ void main() {
     expect(find.byKey(const Key('chat-panel')), findsOne);
     expect(find.byTooltip('Close chat'), findsNothing);
     expect(find.text('Menu'), findsOne);
-    expect(find.text('Settings, log, Codex, and social pages.'), findsOne);
+    expect(find.text('Settings, Codex, and social pages.'), findsOne);
     final frame = tester.getSize(find.byType(AppShell));
     expect(frame.height, 1080);
     expect(tester.getSize(find.byKey(const Key('chat-panel'))).width, desktopRailWidth);
@@ -732,11 +727,11 @@ void main() {
     await pumpShell(tester, controller, size: const Size(1920, 1080));
     await tester.pump();
 
-    await tester.tap(find.widgetWithText(GameButton, 'Log'));
+    await tester.tap(find.byTooltip('Log'));
     await tester.pump();
     expect(find.text('Deeds unlocked on this save.'), findsOne);
 
-    await tester.tap(find.widgetWithText(GameButton, 'Log'));
+    await tester.tap(find.byTooltip('Log'));
     await tester.pump();
     expect(find.text('Deeds unlocked on this save.'), findsNothing);
     expect(find.byTooltip('Open world map'), findsOne);
@@ -802,23 +797,17 @@ void main() {
     addTearDown(controller.dispose);
     await pumpShell(tester, controller);
 
-    await tester.tap(find.text('Character'));
-    await tester.pump();
+    await openChinInventory(tester);
     expect(find.textContaining('slots'), findsOne);
     expect(find.text('Total level'), findsNothing);
 
-    await tester.tap(find.widgetWithText(GameButton, 'Skills'));
-    await tester.pump();
+    await openChinSkills(tester);
     expect(find.text('Total level'), findsOne);
-
-    await tester.tap(find.widgetWithText(GameButton, 'Inventory'));
-    await tester.pump();
-    expect(find.textContaining('slots'), findsOne);
-    expect(find.text('Total level'), findsNothing);
+    expect(find.textContaining('slots'), findsNothing);
 
     await tester.tap(find.widgetWithText(GameButton, 'Close'));
     await tester.pump();
-    expect(find.textContaining('slots'), findsNothing);
+    expect(find.text('Total level'), findsNothing);
     expect(find.byTooltip('Open world map'), findsOne);
 
     await openChinScreen(tester, 'Log');

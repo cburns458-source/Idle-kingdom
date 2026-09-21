@@ -29,15 +29,15 @@ class SkillsView extends StatelessWidget {
             PageHeader(title: 'Skills', onClose: onClose!)
           else
             const Padding(
-              padding: EdgeInsets.fromLTRB(12, 12, 12, 8),
-              child: Text('Skills', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w400)),
+              padding: EdgeInsets.fromLTRB(10, 8, 10, 6),
+              child: Text('Skills', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w400)),
             ),
         Expanded(
           child: GridView.extent(
-            padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-            maxCrossAxisExtent: 96,
-            mainAxisSpacing: 7,
-            crossAxisSpacing: 7,
+            padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
+            maxCrossAxisExtent: 76,
+            mainAxisSpacing: 5,
+            crossAxisSpacing: 5,
             childAspectRatio: 0.86,
             children: [
               for (final skill in save.skills)
@@ -74,28 +74,28 @@ class _SkillTile extends StatelessWidget {
     return Tooltip(
       message: tooltip,
       child: GamePanel(
-        padding: const EdgeInsets.fromLTRB(5, 6, 5, 5),
+        padding: const EdgeInsets.fromLTRB(4, 5, 4, 4),
         child: InkWell(
           onTap: () => _openSkillMenu(context, controller, skillId, row?.displayName ?? skillId),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              GameImage(skillIconPath(row), width: 30, height: 30),
-              const SizedBox(height: 3),
+              GameImage(skillIconPath(row), width: 24, height: 24),
+              const SizedBox(height: 2),
               Flexible(
                 child: Text(
                   row?.displayName ?? skillId,
                   textAlign: TextAlign.center,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w400, height: 1.15),
+                  style: const TextStyle(fontSize: 9.5, fontWeight: FontWeight.w400, height: 1.15),
                 ),
               ),
-              const SizedBox(height: 2),
+              const SizedBox(height: 1),
               Text(
                 'Lv ${progress.level}',
                 style: const TextStyle(
-                  fontSize: 11,
+                  fontSize: 10,
                   fontWeight: FontWeight.w400,
                   color: Palette.gold,
                 ),
