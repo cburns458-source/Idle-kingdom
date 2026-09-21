@@ -433,9 +433,10 @@ CombatVictoryResult applyCombatVictory(
   );
 
   final xpAmount = jsNumber(enemy.raw['Combat XP'] ?? action.raw['XP Reward'] ?? 0);
-  // Prefer fishing-mode bosses (Fight Mother Squid). Ordinary fights split XP
-  // across Might / Vitality by the player's attack style.
-  final fishingMode = bossProfile(enemy)?.damageMode == 'fishing';
+  // Prefer fishing-mode bosses and Fishing-tagged fight actions (Mother Squid /
+  // Squidling fallthrough). Ordinary fights split XP across Might / Vitality.
+  final fishingMode =
+      bossProfile(enemy)?.damageMode == 'fishing' || action.relevantSkillId == fishingSkillId;
   final xpAwards = <({String skillId, num xp})>[];
   var xpSkillId = mightSkillId;
   if (fishingMode) {

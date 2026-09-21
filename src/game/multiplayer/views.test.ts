@@ -439,9 +439,9 @@ describe('presence views', () => {
       nowMs,
     )
     expect(rows[0].statusLabel).toBe('Online')
-    expect(rows[0].subtitle).toBe('Combat 7')
-    expect(rows[1].subtitle).toBe('Combat 7 · Iron League')
-    expect(rows[2].subtitle).toBe('Combat 1')
+    expect(rows[0].subtitle).toBe('Might 7')
+    expect(rows[1].subtitle).toBe('Might 7 · Iron League')
+    expect(rows[2].subtitle).toBe('Might 1')
     expect(rows[3].statusLabel).toBe('Away')
   })
 
@@ -470,7 +470,7 @@ describe('presence views', () => {
     const view = publicProfileView(profile, skillName)
     expect(view.summaryLine).toBe('Total level 214 · Iron League · 12% log')
     expect(view.skillLines).toHaveLength(8)
-    expect(view.skillLines[0]).toBe('Combat 1')
+    expect(view.skillLines[0]).toBe('Might 1')
     expect(view.skillsHidden).toBe(false)
 
     const hidden = publicProfileView({ ...profile, guildName: null, publicSkills: [] }, skillName)

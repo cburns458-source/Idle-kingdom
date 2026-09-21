@@ -79,7 +79,8 @@ void main() {
   });
 
   test('dock fishing rolls tuna or shark, never a seagull', () {
-    var save = raiseSkillToMinimumLevel(createNewSave(db, 0), db, 'SKL-0001', 60).save;
+    var save = raiseSkillToMinimumLevel(createNewSave(db, 0), db, mightSkillId, 60).save;
+    save = raiseSkillToMinimumLevel(save, db, vitalitySkillId, 60).save;
     save = raiseSkillToMinimumLevel(save, db, 'SKL-0003', 65).save;
     final fisher = equipStackToSlot(
       save.copyWith(currentLocationId: 'LOC-0004'),

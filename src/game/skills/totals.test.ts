@@ -7,6 +7,7 @@ function sampleSave(skills: Array<{ skillId: string; level: number; xp: number }
     saveVersion: 2,
     createdAt: '',
     updatedAt: '',
+    attackStyle: 'balanced',
     skills,
     inventory: [],
     bank: [],
