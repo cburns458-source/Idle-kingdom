@@ -566,6 +566,8 @@ void main() {
     expect(find.text('Guilds'), findsOne);
     expect(find.text('Account'), findsNothing);
 
+    await tester.tapAt(const Offset(8, 8));
+    await tester.pump();
     await tester.tap(find.byTooltip('Log'));
     await tester.pump();
     expect(find.text('Deeds unlocked on this save.'), findsOne);

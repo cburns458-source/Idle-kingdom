@@ -435,6 +435,7 @@ class _InventoryViewState extends State<InventoryView> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         GridView.builder(
+          key: const Key('inventory-bag'),
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
@@ -886,7 +887,9 @@ class _ItemTile extends StatelessWidget {
             style: const TextStyle(color: Palette.parchmentText),
             child: Stack(
               children: [
-                Center(child: ItemIcon(item: item, size: iconSize)),
+                Center(
+                  child: ItemIcon(item: item, size: iconSize),
+                ),
                 if (!enchanted && quantity > 1)
                   Positioned(
                     right: 0,

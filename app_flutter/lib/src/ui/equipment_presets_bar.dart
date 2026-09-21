@@ -78,11 +78,7 @@ class EquipmentPresetsBar extends StatelessWidget {
         ),
     ];
     final saveChip = showSaveButton
-        ? _SaveChip(
-            compact: compact,
-            square: _stageSquareChips,
-            onPressed: _saveSelectedPreset,
-          )
+        ? _SaveChip(compact: compact, square: _stageSquareChips, onPressed: _saveSelectedPreset)
         : null;
     final settings = showSettingsButton
         ? _SettingsChip(
@@ -291,8 +287,6 @@ class _LabelChip extends StatelessWidget {
     required this.square,
     required this.label,
     required this.semanticsLabel,
-    this.selected = false,
-    this.filled = false,
   });
 
   final VoidCallback? onPressed;
@@ -300,29 +294,21 @@ class _LabelChip extends StatelessWidget {
   final bool square;
   final String label;
   final String semanticsLabel;
-  final bool selected;
-  final bool filled;
 
   @override
   Widget build(BuildContext context) {
     final step = square ? 2.0 : 2.0;
-    final chrome = UiChrome.of(context);
-    final solid = filled || selected;
     return Semantics(
       button: true,
       enabled: onPressed != null,
-      selected: selected,
       label: semanticsLabel,
       child: Opacity(
         opacity: onPressed == null ? 0.45 : 1,
         child: Material(
-          color: solid ? Palette.gold.withValues(alpha: selected ? 0.32 : 0.2) : chrome.slot,
+          color: UiChrome.of(context).slot,
           shape: PixelSteppedBorder(
             step: step,
-            side: BorderSide(
-              color: selected ? Palette.gold : (filled ? const Color(0xCCE8C36A) : Palette.edge),
-              width: selected ? 3 : 1,
-            ),
+            side: const BorderSide(color: Palette.edge),
           ),
           child: InkWell(
             onTap: onPressed,

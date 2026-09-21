@@ -1096,10 +1096,7 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
       motion: _screen == GameScreen.map ? _PageMotion.expandFromChip : _PageMotion.slideUp,
       child: RepaintBoundary(
         child: DecoratedBox(
-          decoration: chromeShellDecoration(
-            context,
-            gradient: UiChrome.of(context).frameGradient,
-          ),
+          decoration: chromeShellDecoration(context, gradient: UiChrome.of(context).frameGradient),
           child: _coveringPage(),
         ),
       ),

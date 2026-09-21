@@ -360,13 +360,22 @@ void main() {
     expect(find.text('Apply'), findsNothing);
     expect(find.text('Edit'), findsNothing);
 
-    await tester.tap(find.byTooltip('Copper Hatchet').first);
-    await tester.pump();
+    Future<void> tapBagHatchet() async {
+      final hatchet = find.descendant(
+        of: find.byKey(const Key('inventory-bag')),
+        matching: find.byTooltip('Copper Hatchet'),
+      );
+      await tester.ensureVisible(hatchet);
+      await tester.tap(hatchet);
+      await tester.pump();
+    }
+
+    await tapBagHatchet();
 
     expect(controller.save.equipment.slots['SLOT-0001']?.itemId, 'ITEM-0110');
     expect(controller.save.equipmentPresets[0].slots['SLOT-0001']?.itemId, 'ITEM-0111');
 
-    await tester.tap(find.text('I'));
+    await tester.tap(find.byKey(const Key('preset-chip-0')));
     await tester.pumpAndSettle();
     expect(find.text('Apply'), findsNothing);
     expect(controller.save.activeEquipmentPresetIndex, 0);
@@ -385,8 +394,9 @@ void main() {
     expect(chipBorder(const Key('preset-chip-0')).side.width, 3);
     expect(chipBorder(const Key('preset-chip-0')).side.color, Palette.gold);
 
-    await tester.tap(find.byTooltip('Copper Hatchet').first);
-    await tester.pump();
+    final wornAgain = equipItemFromInventory(database.launch, controller.save, 'ITEM-0110');
+    expect(wornAgain.ok, isTrue);
+    controller.commitLoadout(wornAgain.save!);
 
     expect(controller.save.equipmentPresets[0].slots['SLOT-0001']?.itemId, 'ITEM-0111');
     expect(controller.save.equipment.slots['SLOT-0001']?.itemId, 'ITEM-0110');
@@ -521,9 +531,7 @@ void main() {
 
   testWidgets('the bag fits six to eight items on a row', (tester) async {
     final seed = unequippedCharacter().copyWith(
-      inventory: [
-        for (var i = 0; i < 16; i += 1) InventoryStack(itemId: 'ITEM-0002', quantity: 1),
-      ],
+      inventory: [for (var i = 0; i < 16; i += 1) InventoryStack(itemId: 'ITEM-0002', quantity: 1)],
     );
     final controller = buildController(database, seed: seed);
     addTearDown(controller.dispose);
