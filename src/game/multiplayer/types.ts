@@ -48,6 +48,8 @@ export type MultiplayerBoardKey =
   /** Total level among players who have never raised Combat past level 1. */
   | 'total_level_combat_1'
   | 'gold_earned'
+  /** Current purse, not lifetime gold earned. */
+  | 'gold'
   | 'monsters_killed'
   | 'bosses_killed'
   | 'critters_collected'

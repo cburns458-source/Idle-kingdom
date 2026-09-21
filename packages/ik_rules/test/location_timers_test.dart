@@ -211,4 +211,30 @@ void main() {
     expect(timer?.outputQuantity, 2);
     expect(timer?.xpReward, 1600);
   });
+
+  test('readyLocationTimerCount only counts finished pots', () {
+    final running = LocationTimer(
+      locationId: 'LOC-0001',
+      kind: 'botany',
+      inputItemId: 'ITEM-0324',
+      outputQuantity: 1,
+      skillId: botanySkillId,
+      xpReward: 10,
+      startedAt: DateTime.fromMillisecondsSinceEpoch(0).toUtc().toIso8601String(),
+      durationMs: 10_000,
+    );
+    final ready = LocationTimer(
+      locationId: 'LOC-0003',
+      kind: 'fishing_pot',
+      inputItemId: 'ITEM-0103',
+      outputQuantity: 1,
+      skillId: 'SKL-0007',
+      xpReward: 10,
+      startedAt: DateTime.fromMillisecondsSinceEpoch(0).toUtc().toIso8601String(),
+      durationMs: 1,
+    );
+    final save = createNewSave(db, 0).copyWith(locationTimers: [running, ready]);
+    expect(readyLocationTimerCount(save, 5_000), 1);
+    expect(readyLocationTimerCount(save, 10_000), 2);
+  });
 }

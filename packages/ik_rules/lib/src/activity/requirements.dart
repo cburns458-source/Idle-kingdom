@@ -34,6 +34,8 @@ Set<String> _equippedCapabilityTags(GameDatabase db, PlayerSave save) {
       if (tag.isNotEmpty) tags.add(tag);
     }
   }
+  // Pruners stand in for a hatchet on woodcutting activities.
+  if (tags.contains('pruning_tool')) tags.add('woodcutting_tool');
   return tags;
 }
 

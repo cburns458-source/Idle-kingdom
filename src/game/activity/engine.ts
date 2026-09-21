@@ -506,16 +506,16 @@ export function completeGatheringAction(
     ? resolvePruningRewards(db, working, action, random)
     : resolveActionRewards(db, working, action, random)
   const fullXp = gatheringXpReward(db, working, action)
-  const botanyXp = pruning ? Math.floor(fullXp / 4) : 0
-  const xpAmount = pruning ? fullXp - botanyXp : fullXp
+  const primarySkillId = pruning ? BOTANY_SKILL_ID : skillId
+  const xpAmount = fullXp
   let next = clearActivePotionEffect(rewarded.save)
-  const xpApplied = applyXp(next, db, skillId, xpAmount)
+  const xpApplied = applyXp(next, db, primarySkillId, xpAmount)
   next = xpApplied.save
   let leveledUpTo = xpApplied.leveledUpTo
 
   const bonusXp: { skillId: string; xp: number }[] = []
   const xpRewards: ActionXpRewardSummary[] = []
-  const primaryReward = summarizeXpReward(db, next, skillId, xpAmount, xpApplied.leveledUpTo)
+  const primaryReward = summarizeXpReward(db, next, primarySkillId, xpAmount, xpApplied.leveledUpTo)
   if (primaryReward) xpRewards.push(primaryReward)
 
   const applyBonusXp = (bonusSkillId: string, amount: number) => {
@@ -528,13 +528,14 @@ export function completeGatheringAction(
     if (applied.leveledUpTo != null) leveledUpTo = applied.leveledUpTo
   }
 
-  const bonus = bonusSkillXpForAction(action)
-  if (bonus && bonus.xp > 0) {
-    applyBonusXp(bonus.skillId, gatheringXpReward(db, save, action, bonus.xp))
+  if (!pruning) {
+    const bonus = bonusSkillXpForAction(action)
+    if (bonus && bonus.xp > 0) {
+      applyBonusXp(bonus.skillId, gatheringXpReward(db, save, action, bonus.xp))
+    }
+    const bowBonus = bowHuntingCombatXpBonus(db, save, action, xpAmount)
+    if (bowBonus) applyBonusXp(bowBonus.skillId, bowBonus.xp)
   }
-  const bowBonus = bowHuntingCombatXpBonus(db, save, action, xpAmount)
-  if (bowBonus) applyBonusXp(bowBonus.skillId, bowBonus.xp)
-  if (botanyXp > 0) applyBonusXp(BOTANY_SKILL_ID, botanyXp)
 
   next = addLifetimeStat(next, GATHERING_ACTIONS_STAT)
   if (rewarded.loot.length > 0) {
@@ -567,7 +568,7 @@ export function completeGatheringAction(
     result: {
       actionId: action['Action ID'],
       actionName: action['Display Name'],
-      skillId,
+      skillId: primarySkillId,
       xpGained: xpAmount,
       bonusXp,
       xpRewards,

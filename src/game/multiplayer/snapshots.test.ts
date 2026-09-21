@@ -39,6 +39,7 @@ describe('leaderboard snapshot builder', () => {
     // Total XP rides along on the total level board instead of holding its own.
     expect(keys).not.toContain('total_experience')
     expect(keys).toContain('gold_earned')
+    expect(keys).toContain('gold')
     expect(keys).toContain('monsters_killed')
     expect(keys).toContain('bosses_killed')
     expect(keys).toContain('boss:ENM-0006')
@@ -61,9 +62,12 @@ describe('leaderboard snapshot builder', () => {
     expect(boardLabel(launch, 'total_level')).toBe('Total Level & XP')
     expect(boardLabel(launch, 'total_level_combat_1')).toBe('Pacifist Total Level')
     expect(boardLabel(launch, 'guild_total_level')).toBe('Guild Total Level')
+    expect(boardLabel(launch, 'gold')).toBe('Gold')
+    expect(boardLabel(launch, 'gold_earned')).toBe('Gold Earned')
     expect(boardLabel(launch, 'log_completion')).toBe('Log Completion')
     expect(boardLabel(launch, 'bosses_killed')).toBe('Total kills')
     expect(boardLabel(launch, 'boss:ENM-0006')).toBe('Dragon')
+    expect(snapshot.boards.find((board) => board.boardKey === 'gold')?.value).toBe(save.gold)
   })
 
   it('backfills boss kills from per-enemy stats', () => {

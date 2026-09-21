@@ -7,6 +7,7 @@ import 'package:idle_kingdoms/src/session/tester_access.dart';
 import 'package:idle_kingdoms/src/theme.dart';
 import 'package:idle_kingdoms/src/ui/app_shell.dart';
 import 'package:idle_kingdoms/src/ui/menu_view.dart';
+import 'package:idle_kingdoms/src/ui/notification_bubble.dart';
 import 'package:idle_kingdoms/src/ui/playable_frame.dart';
 import 'package:idle_kingdoms/src/ui/reward_strip.dart';
 import 'package:ik_content/ik_content.dart';
@@ -572,6 +573,34 @@ void main() {
     await tester.tap(find.byTooltip('Log'));
     await tester.pump();
     expect(find.text('Deeds unlocked on this save.'), findsOne);
+  });
+
+  testWidgets('ready timers badge the hamburger and the Timers nest item', (tester) async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(
+        locationTimers: [
+          LocationTimer(
+            locationId: 'LOC-0001',
+            kind: 'botany',
+            inputItemId: 'ITEM-0324',
+            outputQuantity: 1,
+            skillId: 'SKL-0014',
+            xpReward: 10,
+            startedAt: DateTime.utc(2020).toIso8601String(),
+            durationMs: 1,
+          ),
+        ],
+      ),
+    );
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller);
+    expect(find.byType(NotificationBubble), findsOne);
+
+    await tester.tap(find.byTooltip('Open menu'));
+    await tester.pump();
+    expect(find.text('Timers'), findsOne);
+    expect(find.byType(NotificationBubble), findsWidgets);
   });
 
   testWidgets('the map travel walk is off until Settings turns it on', (tester) async {

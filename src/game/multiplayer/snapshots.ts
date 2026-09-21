@@ -49,6 +49,7 @@ export function buildLeaderboardSnapshot(
       secondaryValue: pacifist ? xp : 0,
     },
     { boardKey: 'gold_earned', value: Number(save.statistics.values.gold_earned ?? 0) },
+    { boardKey: 'gold', value: Number(save.gold ?? 0) },
     { boardKey: 'monsters_killed', value: Number(save.statistics.values.monsters_killed ?? 0) },
     { boardKey: 'bosses_killed', value: totalBossKills(db, save) },
     ...launchBossEnemies(db).map((enemy) => ({
@@ -86,6 +87,7 @@ export function boardLabel(db: GameDatabase, boardKey: MultiplayerBoardKey): str
   if (boardKey === 'total_level_combat_1') return 'Pacifist Total Level'
   if (boardKey === 'total_experience') return 'Total XP'
   if (boardKey === 'gold_earned') return 'Gold Earned'
+  if (boardKey === 'gold') return 'Gold'
   if (boardKey === 'monsters_killed') return 'Monsters Killed'
   if (boardKey === 'bosses_killed') return 'Total kills'
   if (boardKey.startsWith('boss:')) {

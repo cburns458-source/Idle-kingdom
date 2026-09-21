@@ -346,13 +346,43 @@ describe('primary activity engine', () => {
       },
     }
     const seed = completeGatheringAction(launch, save, action, () => 0)
-    expect(seed.result.xpGained).toBe(150)
-    expect(seed.result.bonusXp).toEqual([{ skillId: 'SKL-0014', xp: 50 }])
+    expect(seed.result.skillId).toBe('SKL-0014')
+    expect(seed.result.xpGained).toBe(200)
+    expect(seed.result.bonusXp).toEqual([])
+    expect(seed.save.skills.find((skill) => skill.skillId === 'SKL-0004')?.xp ?? 0).toBe(0)
+    expect(seed.save.skills.find((skill) => skill.skillId === 'SKL-0014')?.xp).toBe(200)
     expect(seed.result.loot.map((row) => row.itemId)).toEqual(['ITEM-0324'])
     expect(seed.save.inventory.find((stack) => stack.itemId === 'ITEM-0025')).toBeUndefined()
 
     const barren = completeGatheringAction(launch, save, action, () => 0.5)
     expect(barren.result.loot).toEqual([])
-    expect(barren.result.xpGained).toBe(150)
+    expect(barren.result.xpGained).toBe(200)
+    expect(barren.result.skillId).toBe('SKL-0014')
+  })
+
+  it('lets Pruners start hardwood chopping and still awards only Botany XP', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const base = createNewSave(launch)
+    const atGrove = {
+      ...base,
+      currentLocationId: 'LOC-0018',
+      equipment: {
+        ...base.equipment,
+        slots: { ...base.equipment.slots, 'SLOT-0001': { itemId: 'ITEM-0363', quantity: 1 } },
+      },
+    }
+    expect(validateActivityStart(launch, { ...base, currentLocationId: 'LOC-0018' }, 'ACT-0040').ok).toBe(
+      false,
+    )
+    expect(validateActivityStart(launch, atGrove, 'ACT-0040').ok).toBe(true)
+
+    const action = launch.Actions.find((row) => row['Action ID'] === 'ACN-0049')!
+    const completed = completeGatheringAction(launch, atGrove, action, () => 0)
+    expect(completed.result.skillId).toBe('SKL-0014')
+    expect(completed.result.xpGained).toBeGreaterThan(0)
+    expect(completed.save.skills.find((skill) => skill.skillId === 'SKL-0006')?.xp ?? 0).toBe(0)
+    expect(completed.save.skills.find((skill) => skill.skillId === 'SKL-0014')?.xp).toBe(
+      completed.result.xpGained,
+    )
   })
 })

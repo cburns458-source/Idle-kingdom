@@ -499,15 +499,21 @@ GatheringCompletion completeGatheringAction(
       ? _resolvePruningRewards(db, working, action, random)
       : resolveActionRewards(db, working, action, random);
   final fullXp = gatheringXpReward(db, working, action);
-  final botanyXp = pruning ? (fullXp / 4).floor() : 0;
-  final xpAmount = pruning ? fullXp - botanyXp : fullXp;
-  final xpApplied = applyXp(clearActivePotionEffect(rewarded.save), db, skillId, xpAmount);
+  final primarySkillId = pruning ? botanySkillId : skillId;
+  final xpAmount = fullXp;
+  final xpApplied = applyXp(clearActivePotionEffect(rewarded.save), db, primarySkillId, xpAmount);
   var next = xpApplied.save;
   var leveledUpTo = xpApplied.leveledUpTo;
 
   final bonusXp = <BonusXpGrant>[];
   final xpRewards = <ActionXpRewardSummary>[];
-  final primaryReward = summarizeXpReward(db, next, skillId, xpAmount, xpApplied.leveledUpTo);
+  final primaryReward = summarizeXpReward(
+    db,
+    next,
+    primarySkillId,
+    xpAmount,
+    xpApplied.leveledUpTo,
+  );
   if (primaryReward != null) xpRewards.add(primaryReward);
 
   void applyBonusXp(String bonusSkillId, num amount) {
@@ -520,13 +526,14 @@ GatheringCompletion completeGatheringAction(
     if (applied.leveledUpTo != null) leveledUpTo = applied.leveledUpTo;
   }
 
-  final bonus = bonusSkillXpForAction(jsString(action.raw['Action ID']));
-  if (bonus != null && bonus.xp > 0) {
-    applyBonusXp(bonus.skillId, gatheringXpReward(db, save, action, bonus.xp));
+  if (!pruning) {
+    final bonus = bonusSkillXpForAction(jsString(action.raw['Action ID']));
+    if (bonus != null && bonus.xp > 0) {
+      applyBonusXp(bonus.skillId, gatheringXpReward(db, save, action, bonus.xp));
+    }
+    final bowBonus = bowHuntingCombatXpBonus(db, save, skillId, xpAmount);
+    if (bowBonus != null) applyBonusXp(bowBonus.skillId, bowBonus.xp);
   }
-  final bowBonus = bowHuntingCombatXpBonus(db, save, skillId, xpAmount);
-  if (bowBonus != null) applyBonusXp(bowBonus.skillId, bowBonus.xp);
-  if (botanyXp > 0) applyBonusXp(botanySkillId, botanyXp);
 
   next = addLifetimeStat(next, gatheringActionsStat);
   if (rewarded.loot.isNotEmpty) {
@@ -564,7 +571,7 @@ GatheringCompletion completeGatheringAction(
     result: ActionCompletionResult(
       actionId: jsString(action.raw['Action ID']),
       actionName: jsString(action.raw['Display Name']),
-      skillId: skillId,
+      skillId: primarySkillId,
       xpGained: xpAmount,
       bonusXp: bonusXp,
       xpRewards: xpRewards,

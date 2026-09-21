@@ -150,6 +150,7 @@ export function launchBoardKeys(db: GameDatabase): MultiplayerBoardKey[] {
     'guild_total_level',
     'total_level_combat_1',
     'gold_earned',
+    'gold',
     'monsters_killed',
     'critters_collected',
     'bounties_completed',

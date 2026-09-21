@@ -53,4 +53,20 @@ describe('requirements', () => {
     expect(evaluateRequirement(launch, withRod, requirement).met).toBe(false)
     expect(evaluateRequirement(launch, withHarpoon, requirement).met).toBe(true)
   })
+
+  it('lets equipped Pruners satisfy a woodcutting tool requirement', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const requirement = launch.Requirements.find((row) => row['Requirement ID'] === 'REQ-0110')!
+    expect(requirement['Reference ID / Value']).toBe('woodcutting_tool')
+    const base = createNewSave(launch)
+    const withPruners = {
+      ...base,
+      equipment: {
+        ...base.equipment,
+        slots: { ...base.equipment.slots, 'SLOT-0001': { itemId: 'ITEM-0363', quantity: 1 } },
+      },
+    }
+    expect(evaluateRequirement(launch, base, requirement).met).toBe(false)
+    expect(evaluateRequirement(launch, withPruners, requirement).met).toBe(true)
+  })
 })
