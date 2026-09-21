@@ -370,7 +370,8 @@ export function completeGatheringAction(
   }
 
   const gatheringLevel = getSkillProgress(save, skillId).level
-  if (!rollGatheringSuccess(gatheringLevel, random)) {
+  const proficiencyLevel = Number(action['Proficiency Level'] ?? 1)
+  if (!rollGatheringSuccess(gatheringLevel, random, proficiencyLevel)) {
     return {
       save: withoutHeldAction(save, save.currentActivityId),
       result: emptyResult(),

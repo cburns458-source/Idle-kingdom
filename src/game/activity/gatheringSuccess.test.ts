@@ -27,6 +27,13 @@ describe('gathering success chance', () => {
     expect(gatheringSuccessChancePercent(200)).toBe(100)
   })
 
+  it('adds 1% per level above proficiency', () => {
+    // Level 15 base = 50.5 + 0.5*14 = 57.5; proficiency 10 → +5 = 62.5
+    expect(gatheringSuccessChancePercent(15, 10)).toBe(62.5)
+    expect(gatheringSuccessChancePercent(10, 10)).toBe(55)
+    expect(gatheringSuccessChancePercent(5, 10)).toBe(52.5)
+  })
+
   it('grants nothing on a failed success roll', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const action = launch.Actions.find((row) => row['Action ID'] === 'ACN-0018')!
@@ -42,6 +49,9 @@ describe('gathering success chance', () => {
   it('rollGatheringSuccess matches the percent threshold', () => {
     expect(rollGatheringSuccess(1, () => 0.504)).toBe(true)
     expect(rollGatheringSuccess(1, () => 0.505)).toBe(false)
+    // Level 15 / proficiency 10 → 62.5%
+    expect(rollGatheringSuccess(15, () => 0.624, 10)).toBe(true)
+    expect(rollGatheringSuccess(15, () => 0.625, 10)).toBe(false)
   })
 })
 

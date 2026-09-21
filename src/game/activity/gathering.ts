@@ -16,15 +16,28 @@ export function configString(db: GameDatabase, key: string, fallback: string): s
   return typeof value === 'string' && value.length > 0 ? value : fallback
 }
 
-/** Level 1 = 50.5%, +0.5% per level, 100% at level 100. */
-export function gatheringSuccessChancePercent(level: number): number {
+/**
+ * Level 1 = 50.5%, +0.5% per skill level up to 100% at level 100.
+ * Plus +1% for each level above the action's proficiency level.
+ */
+export function gatheringSuccessChancePercent(
+  level: number,
+  proficiencyLevel: number = 1,
+): number {
   const lvl = Math.max(1, Math.floor(Number(level) || 1))
-  return Math.min(100, 50.5 + 0.5 * (lvl - 1))
+  const proficiency = Math.max(1, Math.floor(Number(proficiencyLevel) || 1))
+  const base = 50.5 + 0.5 * (lvl - 1)
+  const aboveProficiency = Math.max(0, lvl - proficiency)
+  return Math.min(100, base + aboveProficiency)
 }
 
 /** False means the action yields no loot and no XP. */
-export function rollGatheringSuccess(level: number, random: RandomFn = Math.random): boolean {
-  return random() * 100 < gatheringSuccessChancePercent(level)
+export function rollGatheringSuccess(
+  level: number,
+  random: RandomFn = Math.random,
+  proficiencyLevel: number = 1,
+): boolean {
+  return random() * 100 < gatheringSuccessChancePercent(level, proficiencyLevel)
 }
 
 export function gatheringDurationMs(
