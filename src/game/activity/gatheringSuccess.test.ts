@@ -21,10 +21,11 @@ const rawDatabase = JSON.parse(
 
 describe('gathering success chance', () => {
   it('scales from 50.5% at level 1 to 100% at level 100', () => {
-    expect(gatheringSuccessChancePercent(1)).toBe(50.5)
-    expect(gatheringSuccessChancePercent(2)).toBe(51)
-    expect(gatheringSuccessChancePercent(100)).toBe(100)
-    expect(gatheringSuccessChancePercent(200)).toBe(100)
+    // Pass proficiency >= level so this isolates the base curve.
+    expect(gatheringSuccessChancePercent(1, 1)).toBe(50.5)
+    expect(gatheringSuccessChancePercent(2, 2)).toBe(51)
+    expect(gatheringSuccessChancePercent(100, 100)).toBe(100)
+    expect(gatheringSuccessChancePercent(200, 200)).toBe(100)
   })
 
   it('adds 1% per level above proficiency', () => {
