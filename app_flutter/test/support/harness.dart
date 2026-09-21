@@ -211,10 +211,29 @@ Future<void> pumpShell(
 }
 
 /// Opens a screen that lives in the chin's hamburger nest.
+///
+/// Log is a first-class chin tab, so that label taps the book icon instead.
 Future<void> openChinScreen(WidgetTester tester, String label) async {
+  if (label == 'Log') {
+    await tester.tap(find.byTooltip('Log'));
+    await tester.pump();
+    return;
+  }
   await tester.tap(find.byTooltip('Open menu'));
   await tester.pump();
   await tester.tap(find.text(label));
+  await tester.pump();
+}
+
+/// Opens the combined bag-and-gear sheet from the chin backpack.
+Future<void> openChinInventory(WidgetTester tester) async {
+  await tester.tap(find.byTooltip('Inventory'));
+  await tester.pump();
+}
+
+/// Opens the skills sheet from the chin bar-chart icon.
+Future<void> openChinSkills(WidgetTester tester) async {
+  await tester.tap(find.byTooltip('Skills'));
   await tester.pump();
 }
 

@@ -33,10 +33,10 @@ const List<String> equipmentGridOrder = <String>[
   'SLOT-0016', // Spell 4
 ];
 
-enum _InventoryTab { items, equipment }
-
-/// Which pane [InventoryView] should open on, and whether the other is offered.
-enum InventoryPane { items, equipment }
+/// Bag tiles aim for 6–8 per row in the playable column.
+const double inventoryBagTileExtent = 52;
+const double inventoryBagTileSpacing = 4;
+const double inventoryBagIconSize = 24;
 
 /// The bag and the worn gear, with the combat numbers they add up to.
 class InventoryView extends StatefulWidget {
@@ -44,23 +44,13 @@ class InventoryView extends StatefulWidget {
     super.key,
     required this.controller,
     this.onClose,
-    this.pane,
     this.showHeader = true,
-    this.selectedPresetIndex,
-    this.onSelectedPresetIndexChanged,
     this.onOpenCodexItem,
   });
 
   final GameController controller;
   final VoidCallback? onClose;
-
-  /// When set, only this pane is shown and the Items / Equipment toggle is hidden.
-  final InventoryPane? pane;
   final bool showHeader;
-
-  /// When provided by [CharacterView], which snapshot is being edited (null = Current).
-  final int? selectedPresetIndex;
-  final ValueChanged<int?>? onSelectedPresetIndexChanged;
   final ValueChanged<String>? onOpenCodexItem;
 
   @override
@@ -68,50 +58,18 @@ class InventoryView extends StatefulWidget {
 }
 
 class _InventoryViewState extends State<InventoryView> {
-  late _InventoryTab _tab = _paneTab(widget.pane);
   String? _message;
   bool _showSources = false;
   bool _showBonuses = false;
   InventorySortMode _sortMode = InventorySortMode.group;
   final TextEditingController _search = TextEditingController();
   late InventorySorter _sorter = InventorySorter(widget.controller.db);
-  int? _localSelectedPresetIndex;
-  bool get _lockedPane => widget.pane != null;
-  int? get _selectedPresetIndex => widget.onSelectedPresetIndexChanged != null
-      ? widget.selectedPresetIndex
-      : _localSelectedPresetIndex;
-
-  void _setSelectedPresetIndex(int? index) {
-    final notify = widget.onSelectedPresetIndexChanged;
-    if (notify != null) {
-      notify(index);
-    } else {
-      setState(() => _localSelectedPresetIndex = index);
-    }
-  }
-
-  /// Character locks this to one pane. Prefer that over leftover inner-tab state
-  /// so Equipment cannot keep showing the bag after Inventory.
-  _InventoryTab get _activeTab => _lockedPane ? _paneTab(widget.pane) : _tab;
-
-  static _InventoryTab _paneTab(InventoryPane? pane) =>
-      pane == InventoryPane.equipment ? _InventoryTab.equipment : _InventoryTab.items;
 
   @override
   void didUpdateWidget(InventoryView oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.controller != widget.controller) {
       _sorter = InventorySorter(widget.controller.db);
-    }
-    if (oldWidget.pane != widget.pane) {
-      _tab = _paneTab(widget.pane);
-      _selling = null;
-      _message = null;
-      _showSources = false;
-      _showBonuses = false;
-      if (widget.onSelectedPresetIndexChanged == null) {
-        _localSelectedPresetIndex = null;
-      }
     }
   }
 
@@ -143,13 +101,7 @@ class _InventoryViewState extends State<InventoryView> {
     setState(() => _message = reason);
   }
 
-  bool get _editingPreset => _selectedPresetIndex != null;
-
   void _equipAt(int index, {String? preferredSlotId}) {
-    if (_editingPreset) {
-      _assignToEditingPreset(index, preferredSlotId: preferredSlotId);
-      return;
-    }
     final result = equipInventoryIndex(db, save, index, preferredSlotId: preferredSlotId);
     if (!result.ok) {
       setState(() => _message = result.reason);
@@ -159,64 +111,7 @@ class _InventoryViewState extends State<InventoryView> {
     controller.commitLoadout(result.save!);
   }
 
-  void _assignToEditingPreset(int inventoryIndex, {String? preferredSlotId}) {
-    final editing = _selectedPresetIndex;
-    if (editing == null || inventoryIndex < 0 || inventoryIndex >= save.inventory.length) return;
-    final stack = save.inventory[inventoryIndex];
-    _stampEditingPreset(
-      preferredSlotId: preferredSlotId,
-      itemId: stack.itemId,
-      quantity: stack.quantity,
-      enchantmentId: stack.enchantmentId,
-      favorite: stack.favorite == true,
-    );
-  }
-
-  void _stampEditingPreset({
-    required String itemId,
-    required num quantity,
-    String? preferredSlotId,
-    String? enchantmentId,
-    bool favorite = false,
-  }) {
-    final editing = _selectedPresetIndex;
-    if (editing == null) return;
-    final gear = equipmentForItemId(db, itemId);
-    var slotId = preferredSlotId ?? gear?.slotId;
-    if (slotId == null) {
-      setState(() => _message = 'That does not go on a preset.');
-      return;
-    }
-    if (preferredSlotId != null && !_itemFitsSlot(itemId, preferredSlotId)) {
-      setState(() => _message = 'That does not fit this slot.');
-      return;
-    }
-    if (isSpellSlotId(preferredSlotId ?? '') && preferredSlotId != null) {
-      slotId = preferredSlotId;
-    }
-    final next = setEquipmentPresetSlot(
-      db,
-      save,
-      editing,
-      slotId,
-      EquippedStack(
-        itemId: itemId,
-        quantity: itemStacksInEquipmentSlot(db, itemId, slotId) ? quantity : 1,
-        enchantmentId: enchantmentId,
-        favorite: favorite ? true : null,
-      ),
-    );
-    setState(() => _message = null);
-    controller.commit(next);
-  }
-
   void _unequip(String slotId) {
-    if (_editingPreset) {
-      final next = setEquipmentPresetSlot(db, save, _selectedPresetIndex!, slotId, null);
-      setState(() => _message = null);
-      controller.commit(next);
-      return;
-    }
     final result = unequipSlot(save, slotId);
     if (!result.ok) {
       setState(() => _message = result.reason);
@@ -224,13 +119,6 @@ class _InventoryViewState extends State<InventoryView> {
     }
     setState(() => _message = null);
     controller.commitLoadout(result.save!);
-  }
-
-  void _finishEditingPreset() {
-    if (_selectedPresetIndex == null) return;
-    _setSelectedPresetIndex(null);
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Preset saved.')));
   }
 
   void _toggleFavorite(int index) {
@@ -386,7 +274,7 @@ class _InventoryViewState extends State<InventoryView> {
             Column(
               children: [
                 _header(),
-                Expanded(child: _activeTab == _InventoryTab.items ? _bag() : _paperDoll()),
+                Expanded(child: _body()),
               ],
             ),
             if (_message case final message?)
@@ -411,7 +299,7 @@ class _InventoryViewState extends State<InventoryView> {
     final selling = _selling;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
+      padding: const EdgeInsets.fromLTRB(10, 8, 10, 4),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -419,45 +307,9 @@ class _InventoryViewState extends State<InventoryView> {
             if (widget.onClose != null)
               PageHeader(title: 'Inventory', onClose: widget.onClose!)
             else
-              const Text('Inventory', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w400)),
-          if (!_lockedPane) ...[
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  child: GameButton(
-                    label: 'Items',
-                    compact: true,
-                    selected: _activeTab == _InventoryTab.items,
-                    tone: GameButtonTone.secondary,
-                    onPressed: () => setState(() {
-                      _tab = _InventoryTab.items;
-                      _selling = null;
-                      _message = null;
-                      _showSources = false;
-                      _showBonuses = false;
-                    }),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: GameButton(
-                    label: 'Equipment',
-                    compact: true,
-                    selected: _activeTab == _InventoryTab.equipment,
-                    tone: GameButtonTone.secondary,
-                    onPressed: () => setState(() {
-                      _tab = _InventoryTab.equipment;
-                      _selling = null;
-                      _message = null;
-                    }),
-                  ),
-                ),
-              ],
-            ),
-          ],
+              const Text('Inventory', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w400)),
           if (selling != null) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             Row(
               children: [
                 GameButton(
@@ -477,8 +329,8 @@ class _InventoryViewState extends State<InventoryView> {
                 ),
               ],
             ),
-          ] else if (_activeTab == _InventoryTab.items) ...[
-            const SizedBox(height: 8),
+          ] else ...[
+            const SizedBox(height: 6),
             Row(
               children: [
                 GameButton(
@@ -509,7 +361,7 @@ class _InventoryViewState extends State<InventoryView> {
               ],
             ),
             if (_sortMode == InventorySortMode.search) ...[
-              const SizedBox(height: 8),
+              const SizedBox(height: 6),
               TextField(
                 controller: _search,
                 autofocus: true,
@@ -523,26 +375,72 @@ class _InventoryViewState extends State<InventoryView> {
     );
   }
 
+  Widget _body() {
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(10, 4, 10, 10),
+      children: [
+        _combatStats(),
+        const SizedBox(height: 8),
+        Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 220),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                EquipmentPresetsBar(
+                  controller: controller,
+                  showSettingsButton: true,
+                  onMessage: (message) {
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+                  },
+                ),
+                const SizedBox(height: 8),
+                GridView.count(
+                  crossAxisCount: 4,
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  mainAxisSpacing: 4,
+                  crossAxisSpacing: 4,
+                  children: [for (final slotId in equipmentGridOrder) _slotTile(slotId)],
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        _eatAtHealth(),
+        const SizedBox(height: 8),
+        _bag(),
+      ],
+    );
+  }
+
   Widget _bag() {
     if (save.inventory.isEmpty) {
-      return const Center(child: MutedText('No items yet. Fight or gather to fill this grid.'));
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 16),
+        child: Center(child: MutedText('No items yet. Fight or gather to fill this grid.')),
+      );
     }
     final selling = _selling;
     final indexes = _sorter.displayIndexes(save.inventory, _sortMode, _search.text);
     if (indexes.isEmpty) {
-      return const Center(child: MutedText('Nothing in the bag matches.'));
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 16),
+        child: Center(child: MutedText('Nothing in the bag matches.')),
+      );
     }
 
-    return ListView(
-      padding: const EdgeInsets.all(12),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-            maxCrossAxisExtent: 84,
-            mainAxisSpacing: 8,
-            crossAxisSpacing: 8,
+            maxCrossAxisExtent: inventoryBagTileExtent,
+            mainAxisSpacing: inventoryBagTileSpacing,
+            crossAxisSpacing: inventoryBagTileSpacing,
           ),
           itemCount: indexes.length,
           itemBuilder: (context, visible) {
@@ -557,6 +455,7 @@ class _InventoryViewState extends State<InventoryView> {
               favorite: isFavoriteStack(stack),
               selected: selling?.containsKey(index) ?? false,
               selecting: selling != null,
+              iconSize: inventoryBagIconSize,
               onTap: () {
                 if (selling != null) {
                   _toggleSelection(index);
@@ -578,57 +477,6 @@ class _InventoryViewState extends State<InventoryView> {
             'Shops pay full value; selling in the field pays half.',
           ),
         ],
-      ],
-    );
-  }
-
-  Widget _paperDoll() {
-    return ListView(
-      padding: const EdgeInsets.all(12),
-      children: [
-        _combatStats(),
-        const SizedBox(height: 10),
-        // Four columns keep the paper-doll arrangement, but the whole doll is
-        // capped so the slots stay tile-sized instead of filling the screen.
-        Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 320),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                EquipmentPresetsBar(
-                  controller: controller,
-                  showSettingsButton: true,
-                  showCurrentButton: true,
-                  selectedPresetIndex: _selectedPresetIndex,
-                  onSelectCurrent: () => _setSelectedPresetIndex(null),
-                  onEditPreset: _setSelectedPresetIndex,
-                  onSaveEditingPreset: _finishEditingPreset,
-                  onMessage: (message) {
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
-                  },
-                ),
-                if (_editingPreset) ...[
-                  const SizedBox(height: 8),
-                  MutedText(
-                    'Editing ${_presetName(_selectedPresetIndex!)}. Worn gear is unchanged until you Apply.',
-                  ),
-                ],
-                const SizedBox(height: 10),
-                GridView.count(
-                  crossAxisCount: 4,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  mainAxisSpacing: 6,
-                  crossAxisSpacing: 6,
-                  children: [for (final slotId in equipmentGridOrder) _slotTile(slotId)],
-                ),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: 10),
-        _eatAtHealth(),
       ],
     );
   }
@@ -687,11 +535,6 @@ class _InventoryViewState extends State<InventoryView> {
 
   bool _itemFitsSlot(String itemId, String slotId) => itemFitsEquipmentSlot(db, itemId, slotId);
 
-  String _presetName(int index) {
-    if (index < 0 || index >= save.equipmentPresets.length) return 'Preset ${index + 1}';
-    return save.equipmentPresets[index].name;
-  }
-
   Future<void> _openSlotEquipPicker(String slotId) async {
     final slot = db.equipmentSlots.where((row) => row.slotId == slotId).firstOrNull;
     final candidates = <({int? index, EquippedStack stack})>[
@@ -706,10 +549,6 @@ class _InventoryViewState extends State<InventoryView> {
               favorite: save.inventory[i].favorite == true ? true : null,
             ),
           ),
-      if (_editingPreset)
-        for (final equipped in save.equipment.slots.values)
-          if (equipped != null && _itemFitsSlot(equipped.itemId, slotId))
-            (index: null, stack: equipped),
     ];
     if (candidates.isEmpty) {
       setState(() => _message = 'No items in your bag fit that slot.');
@@ -767,24 +606,11 @@ class _InventoryViewState extends State<InventoryView> {
     if (!mounted || chosen == null) return;
     if (chosen.index != null) {
       _equipAt(chosen.index!, preferredSlotId: slotId);
-      return;
     }
-    _stampEditingPreset(
-      preferredSlotId: slotId,
-      itemId: chosen.stack.itemId,
-      quantity: chosen.stack.quantity,
-      enchantmentId: chosen.stack.enchantmentId,
-      favorite: chosen.stack.favorite == true,
-    );
   }
 
   Widget _slotTile(String slotId) {
-    final live = save.equipment.slots[slotId];
-    final stack = _editingPreset
-        ? (_selectedPresetIndex! < save.equipmentPresets.length
-              ? save.equipmentPresets[_selectedPresetIndex!].slots[slotId]
-              : null)
-        : live;
+    final stack = save.equipment.slots[slotId];
     final slot = db.equipmentSlots.where((row) => row.slotId == slotId).firstOrNull;
     if (stack == null) {
       return GamePanel(
@@ -793,15 +619,15 @@ class _InventoryViewState extends State<InventoryView> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            SlotGlyph(slotId: slotId, size: 26),
-            const SizedBox(height: 2),
+            SlotGlyph(slotId: slotId, size: 20),
+            const SizedBox(height: 1),
             Flexible(
               child: Text(
                 slot?.displayName ?? slotId,
                 textAlign: TextAlign.center,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: 8.5, height: 1.1, color: Color(0x80F4E7C8)),
+                style: const TextStyle(fontSize: 8, height: 1.1, color: Color(0x80F4E7C8)),
               ),
             ),
           ],
@@ -816,6 +642,7 @@ class _InventoryViewState extends State<InventoryView> {
       favorite: false,
       selected: false,
       selecting: false,
+      iconSize: 22,
       onTap: () => _unequip(slotId),
       onLongPress: () => _showDetail(equipped: stack, slotId: slotId),
       onToggleFavorite: null,
@@ -1017,6 +844,7 @@ class _ItemTile extends StatelessWidget {
     required this.onTap,
     required this.onLongPress,
     required this.onToggleFavorite,
+    this.iconSize = inventoryBagIconSize,
   });
 
   final ItemRow? item;
@@ -1025,6 +853,7 @@ class _ItemTile extends StatelessWidget {
   final bool favorite;
   final bool selected;
   final bool selecting;
+  final double iconSize;
   final VoidCallback onTap;
   final VoidCallback onLongPress;
   final VoidCallback? onToggleFavorite;
@@ -1049,7 +878,7 @@ class _ItemTile extends StatelessWidget {
         strokeWidth: selected ? 2.5 : 2,
         selected: selected || enchanted,
         shadow: false,
-        padding: const EdgeInsets.all(4),
+        padding: const EdgeInsets.all(2),
         child: GestureDetector(
           onLongPress: onLongPress,
           behavior: HitTestBehavior.deferToChild,
@@ -1057,14 +886,14 @@ class _ItemTile extends StatelessWidget {
             style: const TextStyle(color: Palette.parchmentText),
             child: Stack(
               children: [
-                Center(child: ItemIcon(item: item, size: 36)),
+                Center(child: ItemIcon(item: item, size: iconSize)),
                 if (!enchanted && quantity > 1)
                   Positioned(
                     right: 0,
                     bottom: 0,
                     child: Text(
                       '${quantity.round()}',
-                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w400),
+                      style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w400),
                     ),
                   ),
                 if (selected)

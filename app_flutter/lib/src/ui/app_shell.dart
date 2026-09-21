@@ -17,11 +17,12 @@ import 'bottom_nav.dart';
 import 'chat_sheet.dart';
 import 'desktop_side_chrome.dart';
 import 'critter_overlay.dart';
-import 'character_view.dart';
 import 'codex_view.dart';
+import 'inventory_view.dart';
 import 'location_view.dart';
 import 'log_view.dart';
 import 'menu_view.dart';
+import 'skills_view.dart';
 import 'npc_panel.dart';
 import 'new_character_sheet.dart';
 import 'skill_level_up_popup.dart';
@@ -42,6 +43,7 @@ enum GameScreen {
   location,
   map,
   character,
+  skills,
   log,
   codex,
   timers,
@@ -55,13 +57,14 @@ enum GameScreen {
 
 /// Sits on the chin. Kept low on the location screen so it does not cover
 /// Expand list or the activity buttons.
-const double chatLauncherBottom = 62;
+const double chatLauncherBottom = 54;
 
 /// On the map, sits above the Travel strip.
 const double chatLauncherBottomOnMap = 192;
 
 const Set<GameScreen> _chinScreens = {
   GameScreen.character,
+  GameScreen.skills,
   GameScreen.log,
   GameScreen.codex,
   GameScreen.timers,
@@ -72,6 +75,8 @@ const Set<GameScreen> _chinScreens = {
   GameScreen.account,
   GameScreen.menu,
 };
+
+const Set<GameScreen> _partialSheetScreens = {GameScreen.character, GameScreen.skills};
 
 enum _PageMotion { slideUp, slideDown, expandFromChip }
 
@@ -841,22 +846,7 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
                     onEnterGateway: _enterGateway,
                     onOpenGuilds: () => _selectScreen(GameScreen.guilds),
                   ),
-                  if (_screen != GameScreen.location)
-                    _PageLayer(
-                      key: ValueKey(_screen),
-                      motion: _screen == GameScreen.map
-                          ? _PageMotion.expandFromChip
-                          : _PageMotion.slideUp,
-                      child: RepaintBoundary(
-                        child: DecoratedBox(
-                          decoration: chromeShellDecoration(
-                            context,
-                            gradient: UiChrome.of(context).frameGradient,
-                          ),
-                          child: _coveringPage(),
-                        ),
-                      ),
-                    ),
+                  if (_screen != GameScreen.location) _sheetLayer(),
                   if (_wardrobeOpen)
                     _PageLayer(
                       motion: _PageMotion.slideDown,
@@ -1052,11 +1042,13 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
           walkProgress: _mapWalk?.value,
         );
       case GameScreen.character:
-        return CharacterView(
+        return InventoryView(
           controller: controller,
           onClose: _popPage,
           onOpenCodexItem: _openCodexItem,
         );
+      case GameScreen.skills:
+        return SkillsView(controller: controller, onClose: _popPage);
       case GameScreen.log:
         return LogView(controller: controller, onClose: _popPage);
       case GameScreen.codex:
@@ -1096,6 +1088,39 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
       case GameScreen.menu:
         return MenuView(controller: controller, multiplayer: multiplayer, onClose: _popPage);
     }
+  }
+
+  Widget _sheetLayer() {
+    final page = _PageLayer(
+      key: ValueKey(_screen),
+      motion: _screen == GameScreen.map ? _PageMotion.expandFromChip : _PageMotion.slideUp,
+      child: RepaintBoundary(
+        child: DecoratedBox(
+          decoration: chromeShellDecoration(
+            context,
+            gradient: UiChrome.of(context).frameGradient,
+          ),
+          child: _coveringPage(),
+        ),
+      ),
+    );
+    if (!_partialSheetScreens.contains(_screen)) return page;
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        Positioned.fill(
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: _popPage,
+            child: const ColoredBox(color: Color(0x66120C08)),
+          ),
+        ),
+        Align(
+          alignment: Alignment.bottomCenter,
+          child: FractionallySizedBox(heightFactor: 0.65, widthFactor: 1, child: page),
+        ),
+      ],
+    );
   }
 }
 

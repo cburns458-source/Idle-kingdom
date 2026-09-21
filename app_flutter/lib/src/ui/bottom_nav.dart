@@ -3,12 +3,12 @@ import 'package:flutter/material.dart';
 import '../theme.dart';
 import 'app_shell.dart';
 
-/// Settings / Log / Bazaar / Leaderboards / Guilds — the hamburger nest and the
-/// desktop rail. The Bazaar is here rather than at a location because an offer
-/// on the book fills wherever its owner happens to be standing.
+/// Settings / Bazaar / Leaderboards / Guilds — the hamburger nest and the
+/// desktop rail. Log lives on the chin. The Bazaar is here rather than at a
+/// location because an offer on the book fills wherever its owner happens to be
+/// standing.
 const List<(GameScreen, String)> nestMenuItems = [
   (GameScreen.menu, 'Settings'),
-  (GameScreen.log, 'Log'),
   (GameScreen.codex, 'Codex'),
   (GameScreen.timers, 'Timers'),
   (GameScreen.tracker, 'Tracker'),
@@ -19,7 +19,10 @@ const List<(GameScreen, String)> nestMenuItems = [
 
 final Set<GameScreen> nestMenuScreens = {for (final item in nestMenuItems) item.$1};
 
-/// The chin: where you are, character, and the nest for everything else.
+/// Chin height. Short enough that location art keeps more of the column.
+const double chinHeight = 40;
+
+/// The chin: bag, skills, where you are, the log, and the nest.
 class BottomNav extends StatefulWidget {
   const BottomNav({
     super.key,
@@ -112,6 +115,8 @@ class _BottomNavState extends State<BottomNav> {
     widget.onSelect(screen);
   }
 
+  static const _divider = VerticalDivider(width: 1, color: Palette.edge);
+
   @override
   Widget build(BuildContext context) {
     return DecoratedBox(
@@ -120,10 +125,31 @@ class _BottomNavState extends State<BottomNav> {
         border: const Border(top: BorderSide(color: Palette.edge)),
       ),
       child: SizedBox(
-        height: 48,
+        height: chinHeight,
         child: Row(
           children: [
             Expanded(
+              child: _NavSection(
+                selected: widget.screen == GameScreen.character,
+                tooltip: 'Inventory',
+                semanticsLabel: 'Inventory',
+                onTap: () => _selectTab(GameScreen.character),
+                child: const Icon(Icons.backpack, size: 20),
+              ),
+            ),
+            _divider,
+            Expanded(
+              child: _NavSection(
+                selected: widget.screen == GameScreen.skills,
+                tooltip: 'Skills',
+                semanticsLabel: 'Skills',
+                onTap: () => _selectTab(GameScreen.skills),
+                child: const Icon(Icons.bar_chart, size: 20),
+              ),
+            ),
+            _divider,
+            Expanded(
+              flex: 2,
               child: _NavSection(
                 label: widget.locationName,
                 selected: widget.screen == GameScreen.location,
@@ -131,16 +157,18 @@ class _BottomNavState extends State<BottomNav> {
                 onTap: () => _selectTab(GameScreen.location),
               ),
             ),
-            const VerticalDivider(width: 1, color: Palette.edge),
+            _divider,
             Expanded(
               child: _NavSection(
-                label: 'Character',
-                selected: widget.screen == GameScreen.character,
-                onTap: () => _selectTab(GameScreen.character),
+                selected: widget.screen == GameScreen.log,
+                tooltip: 'Log',
+                semanticsLabel: 'Log',
+                onTap: () => _selectTab(GameScreen.log),
+                child: const Icon(Icons.menu_book, size: 20),
               ),
             ),
             if (widget.showMenu) ...[
-              const VerticalDivider(width: 1, color: Palette.edge),
+              _divider,
               Expanded(
                 child: CompositedTransformTarget(
                   link: _nestLink,
@@ -149,7 +177,7 @@ class _BottomNavState extends State<BottomNav> {
                     tooltip: 'Open menu',
                     semanticsLabel: 'Open menu',
                     onTap: _toggleNest,
-                    child: const Icon(Icons.menu, size: 22),
+                    child: const Icon(Icons.menu, size: 20),
                   ),
                 ),
               ),
@@ -237,7 +265,7 @@ class _NavSection extends StatelessWidget {
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           textAlign: alignStart ? TextAlign.left : TextAlign.center,
-          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w400),
+          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w400),
         );
     final button = Material(
       color: selected ? const Color(0xD9546E3E) : Colors.transparent,
@@ -246,14 +274,14 @@ class _NavSection extends StatelessWidget {
         child: SizedBox.expand(
           child: Align(
             alignment: alignStart ? Alignment.centerLeft : Alignment.center,
-            child: Padding(padding: const EdgeInsets.symmetric(horizontal: 8), child: content),
+            child: Padding(padding: const EdgeInsets.symmetric(horizontal: 6), child: content),
           ),
         ),
       ),
     );
     final sized = alignStart
         ? SizedBox(
-            height: 42,
+            height: 36,
             child: Material(
               color: selected ? const Color(0xD9546E3E) : UiChrome.of(context).slot,
               child: InkWell(

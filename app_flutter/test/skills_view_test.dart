@@ -19,10 +19,7 @@ void main() {
     addTearDown(controller.dispose);
     await pumpShell(tester, controller);
 
-    await tester.tap(find.text('Character'));
-    await tester.pump();
-    await tester.tap(find.widgetWithText(GameButton, 'Skills'));
-    await tester.pump();
+    await openChinSkills(tester);
     await tester.tap(find.text('Mining'));
     await tester.pump();
 
@@ -35,10 +32,7 @@ void main() {
     addTearDown(controller.dispose);
     await pumpShell(tester, controller);
 
-    await tester.tap(find.text('Character'));
-    await tester.pump();
-    await tester.tap(find.widgetWithText(GameButton, 'Skills'));
-    await tester.pump();
+    await openChinSkills(tester);
     await tester.tap(find.text('Combat'));
     await tester.pump();
 
@@ -64,10 +58,7 @@ void main() {
     addTearDown(controller.dispose);
     await pumpShell(tester, controller);
 
-    await tester.tap(find.text('Character'));
-    await tester.pump();
-    await tester.tap(find.widgetWithText(GameButton, 'Skills'));
-    await tester.pump();
+    await openChinSkills(tester);
     await tester.tap(find.text('Cooking'));
     await tester.pump();
 
@@ -98,10 +89,7 @@ void main() {
     addTearDown(controller.dispose);
     await pumpShell(tester, controller);
 
-    await tester.tap(find.text('Character'));
-    await tester.pump();
-    await tester.tap(find.widgetWithText(GameButton, 'Skills'));
-    await tester.pump();
+    await openChinSkills(tester);
     await tester.tap(find.text('Smithing'));
     await tester.pump();
 
@@ -124,10 +112,7 @@ void main() {
     addTearDown(controller.dispose);
     await pumpShell(tester, controller);
 
-    await tester.tap(find.text('Character'));
-    await tester.pump();
-    await tester.tap(find.widgetWithText(GameButton, 'Skills'));
-    await tester.pump();
+    await openChinSkills(tester);
     await tester.tap(find.text('Combat'));
     await tester.pump();
 
@@ -193,10 +178,7 @@ void main() {
     addTearDown(controller.dispose);
     await pumpShell(tester, controller);
 
-    await tester.tap(find.text('Character'));
-    await tester.pump();
-    await tester.tap(find.widgetWithText(GameButton, 'Skills'));
-    await tester.pump();
+    await openChinSkills(tester);
     await tester.tap(find.text('Artisanry'));
     await tester.pump();
 
@@ -223,10 +205,7 @@ void main() {
     addTearDown(controller.dispose);
     await pumpShell(tester, controller);
 
-    await tester.tap(find.text('Character'));
-    await tester.pump();
-    await tester.tap(find.widgetWithText(GameButton, 'Skills'));
-    await tester.pump();
+    await openChinSkills(tester);
 
     final progress = skillXpProgress(
       database.launch,
@@ -267,10 +246,7 @@ void main() {
     addTearDown(controller.dispose);
     await pumpShell(tester, controller);
 
-    await tester.tap(find.text('Character'));
-    await tester.pump();
-    await tester.tap(find.widgetWithText(GameButton, 'Skills'));
-    await tester.pump();
+    await openChinSkills(tester);
 
     expect(find.text('Mastered'), findsNothing);
     expect(find.textContaining('mastered'), findsNothing);

@@ -10,13 +10,11 @@ import 'game_popup.dart';
 
 const _roman = <String>['I', 'II', 'III', 'IV'];
 
-enum _PresetTapChoice { apply, edit }
-
 /// Square side on the location stage: room for III or a skill icon, not a sliver.
 const double _stageSquare = 32;
 
-/// Equipment-page chips match the bar height so settings and presets stay square.
-const double _pageSquare = 34;
+/// Inventory-sheet chips stay short so the doll and bag share the page.
+const double _pageSquare = 30;
 
 double _chipSide({required bool compact}) => compact ? _stageSquare : _pageSquare;
 
@@ -34,13 +32,8 @@ class EquipmentPresetsBar extends StatelessWidget {
     this.compact = false,
     this.showSaveButton = true,
     this.showSettingsButton = false,
-    this.showCurrentButton = false,
     this.allowLongPressEdit = true,
-    this.selectedPresetIndex,
-    this.onSelectCurrent,
     this.onSelectPreset,
-    this.onEditPreset,
-    this.onSaveEditingPreset,
     this.onMessage,
   });
 
@@ -50,18 +43,10 @@ class EquipmentPresetsBar extends StatelessWidget {
   final bool showSaveButton;
   final bool showSettingsButton;
 
-  /// Equipment page only: current worn gear, shown before the four presets.
-  final bool showCurrentButton;
-
-  /// When false (location stage), taps apply the snapshot to worn gear.
+  /// When false (location stage), long-press rename is off.
   final bool allowLongPressEdit;
 
-  /// Equipment-page selection: which preset the paper doll is editing.
-  final int? selectedPresetIndex;
-  final VoidCallback? onSelectCurrent;
   final ValueChanged<int>? onSelectPreset;
-  final ValueChanged<int>? onEditPreset;
-  final VoidCallback? onSaveEditingPreset;
   final ValueChanged<String>? onMessage;
 
   @override
@@ -69,48 +54,26 @@ class EquipmentPresetsBar extends StatelessWidget {
     return ListenableBuilder(listenable: controller, builder: (context, _) => _bar(context));
   }
 
-  bool get _editing => selectedPresetIndex != null;
-
-  bool get _saveEnabled => onSaveEditingPreset != null ? _editing : !showCurrentButton || _editing;
-
   bool get _stageSquareChips => compact && axis == Axis.vertical;
 
   Widget _bar(BuildContext context) {
     final save = controller.save;
     final presets = save.equipmentPresets;
     final gap = compact ? 4.0 : 6.0;
-    final current = showCurrentButton
-        ? _LabelChip(
-            key: const Key('current-loadout'),
-            compact: compact,
-            square: _stageSquareChips,
-            label: 'Current',
-            semanticsLabel: 'Current loadout',
-            selected: selectedPresetIndex == null,
-            filled: true,
-            onPressed: () => onSelectCurrent?.call(),
-          )
-        : null;
     final presetButtons = [
       for (var i = 0; i < equipmentPresetCount; i += 1)
         _PresetButton(
           key: Key('preset-chip-$i'),
           preset: i < presets.length ? presets[i] : null,
           index: i,
-          selected: i == selectedPresetIndex || shouldHighlightEquipmentPreset(save, i),
+          selected: shouldHighlightEquipmentPreset(save, i),
           compact: compact,
-          square: _stageSquareChips || showCurrentButton,
+          square: _stageSquareChips,
           skillsById: controller.indexes.skillsById,
           tooltipHint: allowLongPressEdit
-              ? 'Tap for Apply or Edit. Long-press to rename.'
+              ? 'Tap to apply this preset. Long-press to rename.'
               : 'Tap to apply this preset',
-          onTap: () {
-            if (showCurrentButton || onEditPreset != null) {
-              _offerApplyOrEdit(context, i);
-              return;
-            }
-            _applyPreset(i);
-          },
+          onTap: () => _applyPreset(i),
           onLongPress: allowLongPressEdit ? () => _editPreset(context, i) : null,
         ),
     ];
@@ -118,19 +81,19 @@ class EquipmentPresetsBar extends StatelessWidget {
         ? _SaveChip(
             compact: compact,
             square: _stageSquareChips,
-            onPressed: _saveEnabled ? _saveSelectedPreset : null,
+            onPressed: _saveSelectedPreset,
           )
         : null;
     final settings = showSettingsButton
         ? _SettingsChip(
             key: const Key('preset-settings'),
             compact: compact,
-            square: _stageSquareChips || showCurrentButton,
+            square: _stageSquareChips,
             onPressed: () => _openPresetSettings(context),
           )
         : null;
     if (axis == Axis.vertical) {
-      final buttons = [?current, ...presetButtons, ?saveChip, ?settings];
+      final buttons = [...presetButtons, ?saveChip, ?settings];
       return Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -138,16 +101,6 @@ class EquipmentPresetsBar extends StatelessWidget {
             if (i > 0) SizedBox(height: gap),
             buttons[i],
           ],
-        ],
-      );
-    }
-    if (showCurrentButton) {
-      return Row(
-        children: [
-          if (current != null) Expanded(child: current),
-          for (final preset in presetButtons) ...[SizedBox(width: gap), preset],
-          if (saveChip != null) ...[SizedBox(width: gap), saveChip],
-          if (settings != null) ...[SizedBox(width: gap), settings],
         ],
       );
     }
@@ -163,15 +116,8 @@ class EquipmentPresetsBar extends StatelessWidget {
   }
 
   void _saveSelectedPreset() {
-    final custom = onSaveEditingPreset;
-    if (custom != null) {
-      custom();
-      return;
-    }
-    final target = showCurrentButton
-        ? selectedPresetIndex
-        : controller.save.activeEquipmentPresetIndex.floor();
-    if (target == null || target < 0 || target >= equipmentPresetCount) return;
+    final target = controller.save.activeEquipmentPresetIndex.floor();
+    if (target < 0 || target >= equipmentPresetCount) return;
     controller.commitLoadout(
       saveActiveEquipmentPreset(controller.save.copyWith(activeEquipmentPresetIndex: target)),
     );
@@ -187,52 +133,6 @@ class EquipmentPresetsBar extends StatelessWidget {
     controller.commitLoadout(result.save!);
     if (result.warning != null) onMessage?.call(result.warning!);
     onSelectPreset?.call(index);
-    onSelectCurrent?.call();
-  }
-
-  Future<void> _offerApplyOrEdit(BuildContext context, int index) async {
-    final presets = controller.save.equipmentPresets;
-    final name = index < presets.length ? presets[index].name : 'Preset ${index + 1}';
-    final choice = await showGamePopup<_PresetTapChoice>(
-      context: context,
-      builder: (context) {
-        return GamePopupCard(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(name, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w400)),
-              const SizedBox(height: 6),
-              const MutedText('Apply wears this snapshot. Edit changes the snapshot only.'),
-              const SizedBox(height: 12),
-              GameButton(
-                label: 'Apply',
-                onPressed: () => Navigator.of(context).pop(_PresetTapChoice.apply),
-              ),
-              const SizedBox(height: 8),
-              GameButton(
-                label: 'Edit',
-                tone: GameButtonTone.secondary,
-                onPressed: () => Navigator.of(context).pop(_PresetTapChoice.edit),
-              ),
-              const SizedBox(height: 8),
-              GameButton(
-                label: 'Cancel',
-                tone: GameButtonTone.secondary,
-                onPressed: () => Navigator.of(context).pop(),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-    if (!context.mounted || choice == null) return;
-    switch (choice) {
-      case _PresetTapChoice.apply:
-        _applyPreset(index);
-      case _PresetTapChoice.edit:
-        (onEditPreset ?? onSelectPreset)?.call(index);
-    }
   }
 
   void _commitPresetIcon(int index, EquipmentPresetIcon icon) {

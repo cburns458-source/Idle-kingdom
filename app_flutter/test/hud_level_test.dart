@@ -99,7 +99,7 @@ void main() {
     final bar = tester.getRect(
       find.descendant(of: find.byType(TopHud), matching: find.byType(PillBar)),
     );
-    expect(bar.width, 88);
+    expect(bar.width, 76);
     expect(hp.right, closeTo(hud.right, 16));
     expect(bar.right, closeTo(hud.right, 16));
     expect(bar.top, greaterThan(hp.bottom - 1));

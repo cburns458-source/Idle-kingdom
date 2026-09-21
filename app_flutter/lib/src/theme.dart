@@ -352,16 +352,16 @@ class _GameButtonState extends State<GameButton> {
                 ? (down || widget.selected ? chrome.primaryPressed : chrome.primaryFill)
                 : (down || widget.selected ? chrome.secondaryPressed : chrome.secondaryFill),
             padding: widget.dense
-                ? const EdgeInsets.symmetric(horizontal: 8, vertical: 4)
+                ? const EdgeInsets.symmetric(horizontal: 7, vertical: 3)
                 : widget.compact
-                ? const EdgeInsets.symmetric(horizontal: 10, vertical: 6)
-                : const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
+                ? const EdgeInsets.symmetric(horizontal: 8, vertical: 5)
+                : const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             child: ConstrainedBox(
               constraints: widget.dense
-                  ? const BoxConstraints(minHeight: 26)
+                  ? const BoxConstraints(minHeight: 24)
                   : widget.compact
-                  ? const BoxConstraints(minHeight: 32)
-                  : const BoxConstraints(minHeight: 36, minWidth: 72),
+                  ? const BoxConstraints(minHeight: 28)
+                  : const BoxConstraints(minHeight: 32, minWidth: 64),
               child: Align(
                 alignment: Alignment.center,
                 child: Text(
@@ -372,10 +372,10 @@ class _GameButtonState extends State<GameButton> {
                   style: TextStyle(
                     fontFamily: gameFontFamily,
                     fontSize: widget.dense
-                        ? 11
+                        ? 10.5
                         : widget.compact
-                        ? 12
-                        : 12.5,
+                        ? 11
+                        : 11.5,
                     fontWeight: FontWeight.w400,
                     color: primary ? chrome.primaryLabel : chrome.secondaryLabel,
                   ),
