@@ -375,50 +375,53 @@ class _InventoryViewState extends State<InventoryView> {
   }
 
   Widget _body() {
-    return ListView(
+    return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(10, 4, 10, 10),
-      children: [
-        Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 220),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                GameButton(
-                  label: 'Attributes',
-                  tone: GameButtonTone.secondary,
-                  compact: true,
-                  dense: true,
-                  onPressed: _openAttributes,
-                ),
-                const SizedBox(height: 8),
-                EquipmentPresetsBar(
-                  controller: controller,
-                  showSettingsButton: true,
-                  onMessage: (message) {
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
-                  },
-                ),
-                const SizedBox(height: 8),
-                GridView.count(
-                  crossAxisCount: 4,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  mainAxisSpacing: 4,
-                  crossAxisSpacing: 4,
-                  children: [for (final slotId in equipmentGridOrder) _slotTile(slotId)],
-                ),
-              ],
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 220),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  GameButton(
+                    label: 'Attributes',
+                    tone: GameButtonTone.secondary,
+                    compact: true,
+                    dense: true,
+                    onPressed: _openAttributes,
+                  ),
+                  const SizedBox(height: 8),
+                  EquipmentPresetsBar(
+                    controller: controller,
+                    showSettingsButton: true,
+                    onMessage: (message) {
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  GridView.count(
+                    crossAxisCount: 4,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    mainAxisSpacing: 4,
+                    crossAxisSpacing: 4,
+                    children: [for (final slotId in equipmentGridOrder) _slotTile(slotId)],
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
-        const SizedBox(height: 8),
-        _eatAtHealth(),
-        const SizedBox(height: 8),
-        _bagToolbar(),
-        const SizedBox(height: 8),
-        _bag(),
-      ],
+          const SizedBox(height: 8),
+          _eatAtHealth(),
+          const SizedBox(height: 8),
+          _bagToolbar(),
+          const SizedBox(height: 8),
+          _bag(),
+        ],
+      ),
     );
   }
 
