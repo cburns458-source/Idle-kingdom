@@ -30,8 +30,8 @@ describe('shallows and starlight content', () => {
     const algae = launch.Actions.find((row) => row['Action ID'] === 'ACN-0180')!
     expect(algae['Proficiency Level']).toBe(40)
     expect(algae['Target ID']).toBe('ITEM-0319')
-    expect(algae['XP Reward']).toBe(3000)
-    expect(algae['Base Duration Seconds']).toBe(180)
+    expect(algae['XP Reward']).toBe(250)
+    expect(algae['Base Duration Seconds']).toBe(15)
   })
 
   it('puts clear vines on Forest Path and hunt/moonblossoms at Starlight Glade', () => {
@@ -41,7 +41,7 @@ describe('shallows and starlight content', () => {
     const clear = launch.Actions.find((row) => row['Action ID'] === 'ACN-0179')!
     expect(clear['Proficiency Level']).toBe(40)
     expect(clear['Drop Chance']).toBe(0)
-    expect(clear['XP Reward']).toBe(5000)
+    expect(clear['XP Reward']).toBe(583)
 
     const gladeActs = launch.Activities.filter((row) => row['Location ID'] === STARLIGHT_GLADE_ID)
     expect(gladeActs.map((row) => row['Contextual Name']).sort()).toEqual([

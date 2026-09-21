@@ -57,14 +57,14 @@ void main() {
     expect(augur.displayName, 'Gather augur weed');
     expect(augur.relevantSkillId, 'SKL-0004');
     expect(augur.proficiencyLevel, 50);
-    expect(augur.xpReward, 50000);
-    expect(augur.baseDurationSeconds, 360);
+    expect(augur.xpReward, 2361);
+    expect(augur.baseDurationSeconds, 17);
 
     final moonblossom = db.actions.firstWhere((row) => row.actionId == 'ACN-0110');
     expect(moonblossom.displayName, 'Gather moonblossom');
     expect(moonblossom.proficiencyLevel, 70);
-    expect(moonblossom.xpReward, 75000);
-    expect(moonblossom.baseDurationSeconds, 540);
+    expect(moonblossom.xpReward, 2778);
+    expect(moonblossom.baseDurationSeconds, 20);
 
     expect(db.actions.any((row) => row.actionId == 'ACN-0174'), isFalse);
 

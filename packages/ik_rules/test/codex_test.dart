@@ -63,7 +63,7 @@ void main() {
     expect(ore.drops.map((row) => row.displayName), contains('Copper Ore'));
     expect(ore.drops.map((row) => row.displayName), isNot(contains('Sapphire')));
     final gems = mine.tables.firstWhere((table) => table.label == 'Gems');
-    expect(gems.dropChance, 1);
+    expect(gems.dropChance, 0.5);
     expect(gems.drops.map((row) => row.displayName), contains('Sapphire'));
     expect(codex.actionsMatching('mine copper').map((row) => row.actionId), contains('ACN-0018'));
   });

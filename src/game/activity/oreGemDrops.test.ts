@@ -37,56 +37,56 @@ describe('ore gem secondary drop tables', () => {
       {
         actionId: 'ACN-0018',
         name: 'Mine copper ore',
-        secondaryChance: 1,
+        secondaryChance: 0.5,
         tableId: 'RWT-0058',
         gems: ['ITEM-0012'],
       },
       {
         actionId: 'ACN-0020',
         name: 'Mine tin ore',
-        secondaryChance: 1,
+        secondaryChance: 0.5,
         tableId: 'RWT-0058',
         gems: ['ITEM-0012'],
       },
       {
         actionId: 'ACN-0021',
         name: 'Mine coal',
-        secondaryChance: 2,
+        secondaryChance: 1,
         tableId: 'RWT-0059',
         gems: ['ITEM-0012', 'ITEM-0013'],
       },
       {
         actionId: 'ACN-0022',
         name: 'Mine iron ore',
-        secondaryChance: 2,
+        secondaryChance: 1,
         tableId: 'RWT-0059',
         gems: ['ITEM-0012', 'ITEM-0013'],
       },
       {
         actionId: 'ACN-0097',
         name: 'Mine silver ore',
-        secondaryChance: 3,
+        secondaryChance: 1.5,
         tableId: 'RWT-0059',
         gems: ['ITEM-0012', 'ITEM-0013'],
       },
       {
         actionId: 'ACN-0098',
         name: 'Mine gold ore',
-        secondaryChance: 4,
+        secondaryChance: 2,
         tableId: 'RWT-0060',
         gems: ['ITEM-0012', 'ITEM-0013', 'ITEM-0014'],
       },
       {
         actionId: 'ACN-0026',
         name: 'Mine titanium ore',
-        secondaryChance: 5,
+        secondaryChance: 2.5,
         tableId: 'RWT-0060',
         gems: ['ITEM-0012', 'ITEM-0013', 'ITEM-0014'],
       },
       {
         actionId: 'ACN-0027',
         name: 'Mine tungsten ore',
-        secondaryChance: 4,
+        secondaryChance: 2,
         tableId: 'RWT-0060',
         gems: ['ITEM-0012', 'ITEM-0013', 'ITEM-0014'],
       },
@@ -116,9 +116,9 @@ describe('ore gem secondary drop tables', () => {
     const action = launch.Actions.find((row) => row['Action ID'] === 'ACN-0018')!
 
     // resolveActionRewards rolls:
-    // 1) primary drop chance (95%) — 0 succeeds
+    // 1) primary drop chance (47.5%) — 0 succeeds
     // 2) primary weighted pick — 0 picks the only ore entry
-    // 3) secondary drop chance (1%) — 0 succeeds (0 < 0.01)
+    // 3) secondary drop chance (0.5%) — 0 succeeds
     // 4) secondary weighted pick — 0 picks Sapphire
     const rewarded = resolveActionRewards(launch, save, action, sequenceRandom([0, 0, 0, 0]))
     const ore = rewarded.loot.find((entry) => entry.itemId === 'ITEM-0003')
@@ -133,7 +133,7 @@ describe('ore gem secondary drop tables', () => {
     const save = createNewSave(launch)
     const action = launch.Actions.find((row) => row['Action ID'] === 'ACN-0018')!
 
-    // Primary succeeds (0), primary pick (0), secondary fails (0.5 => 50 >= 1).
+    // Primary succeeds (0), primary pick (0), secondary fails (0.5 => 50 >= 0.5).
     const rewarded = resolveActionRewards(launch, save, action, sequenceRandom([0, 0, 0.5]))
     expect(rewarded.loot.some((entry) => GEM_IDS.has(entry.itemId))).toBe(false)
     expect(rewarded.loot.some((entry) => entry.itemId === 'ITEM-0003')).toBe(true)
@@ -184,8 +184,8 @@ describe('ore gem secondary drop tables', () => {
       if (rewarded.loot.some((entry) => entry.itemId === 'ITEM-0012')) gems += 1
     }
     const rate = gems / trials
-    // Configured 1% secondary; allow statistical noise.
-    expect(rate).toBeGreaterThan(0.005)
-    expect(rate).toBeLessThan(0.02)
+    // Configured 0.5% secondary; allow statistical noise.
+    expect(rate).toBeGreaterThan(0.002)
+    expect(rate).toBeLessThan(0.012)
   })
 })

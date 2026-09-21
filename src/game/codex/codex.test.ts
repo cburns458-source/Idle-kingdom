@@ -57,7 +57,7 @@ describe('codex index', () => {
     expect(ore.drops.map((row) => row.displayName)).toContain('Copper Ore')
     expect(ore.drops.map((row) => row.displayName)).not.toContain('Sapphire')
     const gems = mine.tables.find((table) => table.label === 'Gems')!
-    expect(gems.dropChance).toBe(1)
+    expect(gems.dropChance).toBe(0.5)
     expect(gems.drops.map((row) => row.displayName)).toContain('Sapphire')
     expect(codex.actionsMatching('mine copper').map((row) => row.actionId)).toContain('ACN-0018')
   })

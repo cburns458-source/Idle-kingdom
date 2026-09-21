@@ -22,12 +22,12 @@ describe('hunting Animal Tendon drops', () => {
     const duck = launch.Actions.find((row) => row['Action ID'] === 'ACN-0013')!
     const rabbit = launch.Actions.find((row) => row['Action ID'] === 'ACN-0016')!
 
-    const duckDrop = resolveActionRewards(launch, save, duck, seqRandom([0.95, 0.05]))
+    const duckDrop = resolveActionRewards(launch, save, duck, seqRandom([0, 0, 0, 0]))
     expect(duckDrop.loot).toContainEqual(
       expect.objectContaining({ itemId: 'ITEM-0044', quantity: 1 }),
     )
 
-    const rabbitDrop = resolveActionRewards(launch, save, rabbit, seqRandom([0, 0, 0.02, 0.03]))
+    const rabbitDrop = resolveActionRewards(launch, save, rabbit, seqRandom([0, 0, 0, 0, 0, 0]))
     expect(rabbitDrop.loot).toContainEqual(
       expect.objectContaining({ itemId: 'ITEM-0038', quantity: 1 }),
     )

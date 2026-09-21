@@ -31,7 +31,7 @@ import 'xp.dart';
 
 const String comingSoonReason = 'Coming soon.';
 const Set<String> prunableSkillIds = <String>{'SKL-0004', 'SKL-0006'};
-const num pruningSeedChancePercent = 10;
+const num pruningSeedChancePercent = 5;
 
 bool isPruningToolEquipped(GameDatabase db, PlayerSave save) {
   final tool = slotStack(save, weaponToolSlotId);
@@ -351,6 +351,15 @@ GatheringCompletion completeGatheringAction(
         result: emptyResult(),
       );
     }
+  }
+
+  final gatheringLevel = getSkillProgress(save, skillId).level;
+  final proficiencyLevel = jsNumber(action.raw['Proficiency Level'] ?? 1);
+  if (!rollGatheringSuccess(gatheringLevel, random, proficiencyLevel)) {
+    return GatheringCompletion(
+      save: withoutHeldAction(save, save.currentActivityId),
+      result: emptyResult(),
+    );
   }
 
   GatheringCompletion awardXpOnly(
