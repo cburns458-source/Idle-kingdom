@@ -528,11 +528,12 @@ void main() {
 
     await openChinInventory(tester);
     expect(find.textContaining('slots'), findsOne);
-    expect(find.text('Damage'), findsOne);
-    expect(find.text('Health'), findsOne);
-    expect(find.text('DR'), findsOne);
+    expect(find.widgetWithText(GameButton, 'Attributes'), findsOne);
+    expect(find.text('Damage'), findsNothing);
+    expect(find.text('Health'), findsNothing);
+    expect(find.text('DR'), findsNothing);
     expect(find.text('Helmet'), findsOne);
-    expect(find.text('Show bonuses'), findsOne);
+    expect(find.text('Show bonuses'), findsNothing);
     expect(find.text('Sell items'), findsOne);
 
     await openChinSkills(tester);

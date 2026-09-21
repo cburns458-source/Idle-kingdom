@@ -105,7 +105,7 @@ class TopHud extends StatelessWidget {
         : 'Lv ${formatThousands(totalLevel(save))}';
 
     return SizedBox(
-      height: HudPortrait.size,
+      height: HudPortrait.size + 2,
       child: DecoratedBox(
         decoration: chromeBoardFill(
           context,
@@ -117,7 +117,7 @@ class TopHud extends StatelessWidget {
           ),
         ),
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(6, 0, 8, 0),
+          padding: const EdgeInsets.fromLTRB(6, 0, 8, 2),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [

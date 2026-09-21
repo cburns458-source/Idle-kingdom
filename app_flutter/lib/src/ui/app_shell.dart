@@ -57,7 +57,7 @@ enum GameScreen {
 
 /// Sits on the chin. Kept low on the location screen so it does not cover
 /// Expand list or the activity buttons.
-const double chatLauncherBottom = 54;
+const double chatLauncherBottom = 74;
 
 /// On the map, sits above the Travel strip.
 const double chatLauncherBottomOnMap = 192;
@@ -1114,7 +1114,7 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
         ),
         Align(
           alignment: Alignment.bottomCenter,
-          child: FractionallySizedBox(heightFactor: 0.65, widthFactor: 1, child: page),
+          child: FractionallySizedBox(heightFactor: 0.78, widthFactor: 1, child: page),
         ),
       ],
     );

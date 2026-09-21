@@ -19,8 +19,8 @@ const List<(GameScreen, String)> nestMenuItems = [
 
 final Set<GameScreen> nestMenuScreens = {for (final item in nestMenuItems) item.$1};
 
-/// Chin height. Short enough that location art keeps more of the column.
-const double chinHeight = 40;
+/// Chin height. Icon tabs are tall; the location chip stays narrower.
+const double chinHeight = 60;
 
 /// The chin: bag, skills, where you are, the log, and the nest.
 class BottomNav extends StatefulWidget {
@@ -134,7 +134,7 @@ class _BottomNavState extends State<BottomNav> {
                 tooltip: 'Inventory',
                 semanticsLabel: 'Inventory',
                 onTap: () => _selectTab(GameScreen.character),
-                child: const Icon(Icons.backpack, size: 20),
+                child: const Icon(Icons.backpack, size: 24),
               ),
             ),
             _divider,
@@ -144,12 +144,11 @@ class _BottomNavState extends State<BottomNav> {
                 tooltip: 'Skills',
                 semanticsLabel: 'Skills',
                 onTap: () => _selectTab(GameScreen.skills),
-                child: const Icon(Icons.bar_chart, size: 20),
+                child: const Icon(Icons.bar_chart, size: 24),
               ),
             ),
             _divider,
             Expanded(
-              flex: 2,
               child: _NavSection(
                 label: widget.locationName,
                 selected: widget.screen == GameScreen.location,
@@ -164,7 +163,7 @@ class _BottomNavState extends State<BottomNav> {
                 tooltip: 'Log',
                 semanticsLabel: 'Log',
                 onTap: () => _selectTab(GameScreen.log),
-                child: const Icon(Icons.menu_book, size: 20),
+                child: const Icon(Icons.menu_book, size: 24),
               ),
             ),
             if (widget.showMenu) ...[
@@ -177,7 +176,7 @@ class _BottomNavState extends State<BottomNav> {
                     tooltip: 'Open menu',
                     semanticsLabel: 'Open menu',
                     onTap: _toggleNest,
-                    child: const Icon(Icons.menu, size: 20),
+                    child: const Icon(Icons.menu, size: 24),
                   ),
                 ),
               ),

@@ -59,8 +59,6 @@ class InventoryView extends StatefulWidget {
 
 class _InventoryViewState extends State<InventoryView> {
   String? _message;
-  bool _showSources = false;
-  bool _showBonuses = false;
   InventorySortMode _sortMode = InventorySortMode.group;
   final TextEditingController _search = TextEditingController();
   late InventorySorter _sorter = InventorySorter(widget.controller.db);
@@ -296,21 +294,22 @@ class _InventoryViewState extends State<InventoryView> {
   }
 
   Widget _header() {
-    final selling = _selling;
-
+    if (!widget.showHeader) return const SizedBox.shrink();
     return Padding(
       padding: const EdgeInsets.fromLTRB(10, 8, 10, 4),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          if (widget.showHeader)
-            if (widget.onClose != null)
-              PageHeader(title: 'Inventory', onClose: widget.onClose!)
-            else
-              const Text('Inventory', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w400)),
-          if (selling != null) ...[
-            const SizedBox(height: 6),
-            Row(
+      child: widget.onClose != null
+          ? PageHeader(title: 'Inventory', onClose: widget.onClose!)
+          : const Text('Inventory', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w400)),
+    );
+  }
+
+  /// Sell, slot count, and sort sit on the bag — not above the paper doll.
+  Widget _bagToolbar() {
+    final selling = _selling;
+    return KeyedSubtree(
+      key: const Key('inventory-bag-toolbar'),
+      child: selling != null
+          ? Row(
               children: [
                 GameButton(
                   label: 'Cancel',
@@ -328,96 +327,157 @@ class _InventoryViewState extends State<InventoryView> {
                   ),
                 ),
               ],
-            ),
-          ] else ...[
-            const SizedBox(height: 6),
-            Row(
+            )
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                GameButton(
-                  label: 'Sell items',
-                  tone: GameButtonTone.secondary,
-                  compact: true,
-                  dense: true,
-                  onPressed: save.inventory.isEmpty
-                      ? null
-                      : () => setState(() {
-                          _selling = <int, int>{};
-                          _message = null;
-                        }),
+                Row(
+                  children: [
+                    GameButton(
+                      label: 'Sell items',
+                      tone: GameButtonTone.secondary,
+                      compact: true,
+                      dense: true,
+                      onPressed: save.inventory.isEmpty
+                          ? null
+                          : () => setState(() {
+                              _selling = <int, int>{};
+                              _message = null;
+                            }),
+                    ),
+                    Expanded(
+                      child: Center(
+                        child: MutedText('${inventorySlotCount(save)} / $inventorySlotLimit slots'),
+                      ),
+                    ),
+                    _SortMenu(
+                      mode: _sortMode,
+                      onSelected: (mode) => setState(() {
+                        _sortMode = mode;
+                        if (mode != InventorySortMode.search) _search.clear();
+                        _message = null;
+                      }),
+                    ),
+                  ],
                 ),
-                Expanded(
-                  child: Center(
-                    child: MutedText('${inventorySlotCount(save)} / $inventorySlotLimit slots'),
+                if (_sortMode == InventorySortMode.search) ...[
+                  const SizedBox(height: 6),
+                  TextField(
+                    controller: _search,
+                    autofocus: true,
+                    decoration: const InputDecoration(hintText: 'Search by name', isDense: true),
+                    onChanged: (_) => setState(() {}),
                   ),
-                ),
-                _SortMenu(
-                  mode: _sortMode,
-                  onSelected: (mode) => setState(() {
-                    _sortMode = mode;
-                    if (mode != InventorySortMode.search) _search.clear();
-                    _message = null;
-                  }),
-                ),
+                ],
               ],
             ),
-            if (_sortMode == InventorySortMode.search) ...[
-              const SizedBox(height: 6),
-              TextField(
-                controller: _search,
-                autofocus: true,
-                decoration: const InputDecoration(hintText: 'Search by name', isDense: true),
-                onChanged: (_) => setState(() {}),
+    );
+  }
+
+  Widget _body() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(10, 4, 10, 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 220),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  GameButton(
+                    label: 'Attributes',
+                    tone: GameButtonTone.secondary,
+                    compact: true,
+                    dense: true,
+                    onPressed: _openAttributes,
+                  ),
+                  const SizedBox(height: 8),
+                  EquipmentPresetsBar(
+                    controller: controller,
+                    showSettingsButton: true,
+                    onMessage: (message) {
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  GridView.count(
+                    crossAxisCount: 4,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    mainAxisSpacing: 4,
+                    crossAxisSpacing: 4,
+                    children: [for (final slotId in equipmentGridOrder) _slotTile(slotId)],
+                  ),
+                ],
               ),
-            ],
-          ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          _eatAtHealth(),
+          const SizedBox(height: 8),
+          _bagToolbar(),
+          const SizedBox(height: 8),
+          _bag(),
         ],
       ),
     );
   }
 
-  Widget _body() {
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(10, 4, 10, 10),
-      children: [
-        _combatStats(),
-        const SizedBox(height: 8),
-        Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 220),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                EquipmentPresetsBar(
-                  controller: controller,
-                  showSettingsButton: true,
-                  onMessage: (message) {
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
-                  },
+  Future<void> _openAttributes() {
+    return showGamePopup<void>(
+      context: context,
+      origin: popupOrigin(context),
+      builder: (dialogContext) {
+        var showBonuses = false;
+        var showSources = false;
+        return StatefulBuilder(
+          builder: (context, setOverlay) {
+            return GamePopupCard(
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      children: [
+                        const Expanded(
+                          child: Text(
+                            'Attributes',
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
+                          ),
+                        ),
+                        GameButton(
+                          label: 'Close',
+                          tone: GameButtonTone.secondary,
+                          compact: true,
+                          dense: true,
+                          onPressed: () => Navigator.of(context).pop(),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    _combatStats(
+                      showBonuses: showBonuses,
+                      showSources: showSources,
+                      onToggleBonuses: () => setOverlay(() => showBonuses = !showBonuses),
+                      onToggleSources: () => setOverlay(() => showSources = !showSources),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 8),
-                GridView.count(
-                  crossAxisCount: 4,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  mainAxisSpacing: 4,
-                  crossAxisSpacing: 4,
-                  children: [for (final slotId in equipmentGridOrder) _slotTile(slotId)],
-                ),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: 8),
-        _eatAtHealth(),
-        const SizedBox(height: 8),
-        _bag(),
-      ],
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
   Widget _bag() {
     if (save.inventory.isEmpty) {
       return const Padding(
+        key: Key('inventory-bag'),
         padding: EdgeInsets.symmetric(vertical: 16),
         child: Center(child: MutedText('No items yet. Fight or gather to fill this grid.')),
       );
@@ -426,6 +486,7 @@ class _InventoryViewState extends State<InventoryView> {
     final indexes = _sorter.displayIndexes(save.inventory, _sortMode, _search.text);
     if (indexes.isEmpty) {
       return const Padding(
+        key: Key('inventory-bag'),
         padding: EdgeInsets.symmetric(vertical: 16),
         child: Center(child: MutedText('Nothing in the bag matches.')),
       );
@@ -650,7 +711,12 @@ class _InventoryViewState extends State<InventoryView> {
     );
   }
 
-  Widget _combatStats() {
+  Widget _combatStats({
+    required bool showBonuses,
+    required bool showSources,
+    required VoidCallback onToggleBonuses,
+    required VoidCallback onToggleSources,
+  }) {
     final summary = playerCombatStatSummary(db, save);
     final damage = summary.damage;
     final offhand = summary.offhandDamage;
@@ -675,28 +741,28 @@ class _InventoryViewState extends State<InventoryView> {
             children: [
               Flexible(
                 child: GameButton(
-                  label: _showBonuses ? 'Hide bonuses' : 'Show bonuses',
+                  label: showBonuses ? 'Hide bonuses' : 'Show bonuses',
                   tone: GameButtonTone.secondary,
                   compact: true,
                   dense: true,
-                  onPressed: () => setState(() => _showBonuses = !_showBonuses),
+                  onPressed: onToggleBonuses,
                 ),
               ),
               const SizedBox(width: 8),
               Flexible(
                 child: GameButton(
-                  label: _showSources ? 'Hide sources' : 'Show sources',
+                  label: showSources ? 'Hide sources' : 'Show sources',
                   tone: GameButtonTone.secondary,
                   compact: true,
                   dense: true,
-                  onPressed: () => setState(() => _showSources = !_showSources),
+                  onPressed: onToggleSources,
                 ),
               ),
             ],
           ),
-          if (_showBonuses && summary.activeBonuses.isEmpty)
+          if (showBonuses && summary.activeBonuses.isEmpty)
             const Padding(padding: EdgeInsets.only(top: 4), child: MutedText('No active bonuses.')),
-          if (_showBonuses)
+          if (showBonuses)
             for (final bonus in summary.activeBonuses)
               Padding(
                 padding: const EdgeInsets.only(top: 4),
@@ -713,7 +779,7 @@ class _InventoryViewState extends State<InventoryView> {
                   style: const TextStyle(fontSize: 12, height: 1.3),
                 ),
               ),
-          if (_showSources) ...[
+          if (showSources) ...[
             _breakdownSection('Main-hand', summary.mainhandBreakdown),
             if (summary.offhandBreakdown.isNotEmpty)
               _breakdownSection('Off-hand', summary.offhandBreakdown),
