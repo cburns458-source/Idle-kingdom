@@ -166,18 +166,49 @@ void main() {
 
     expect(find.text('Sell items'), findsOne);
     expect(find.textContaining('slots'), findsOne);
-    expect(find.text('Damage'), findsOne);
+    expect(find.widgetWithText(GameButton, 'Attributes'), findsOne);
+    expect(find.text('Damage'), findsNothing);
     expect(find.text('Helmet'), findsOne);
   });
 
-  testWidgets('combat stats sit above the bag on the combined sheet', (tester) async {
+  testWidgets('item total, sell, and sort sit above the bag, not the doll', (tester) async {
     final controller = buildController(database, seed: startedCharacter(database));
     addTearDown(controller.dispose);
 
     await pumpPanel(tester, InventoryView(controller: controller));
-    expect(find.text('Damage'), findsOne);
-    expect(find.text('Health'), findsOne);
-    expect(find.text('DR'), findsOne);
+
+    final helmet = tester.getRect(find.text('Helmet'));
+    final sell = tester.getRect(find.text('Sell items'));
+    final slots = tester.getRect(find.textContaining('slots'));
+    final sort = tester.getRect(find.byTooltip('Sort'));
+    final bag = tester.getRect(find.byKey(const Key('inventory-bag')));
+    expect(sell.top, greaterThan(helmet.bottom));
+    expect(slots.top, greaterThan(helmet.bottom));
+    expect(sort.top, greaterThan(helmet.bottom));
+    expect(bag.top, greaterThan(sell.bottom));
+    expect(bag.top, greaterThan(slots.bottom));
+    expect(bag.top, greaterThan(sort.bottom));
+  });
+
+  testWidgets('Attributes opens an overlay with damage, health, and DR', (tester) async {
+    final controller = buildController(database, seed: startedCharacter(database));
+    addTearDown(controller.dispose);
+
+    await pumpPanel(tester, InventoryView(controller: controller));
+    expect(find.text('Damage'), findsNothing);
+    expect(find.text('Health'), findsNothing);
+    expect(find.text('DR'), findsNothing);
+    expect(find.text('Show bonuses'), findsNothing);
+
+    await tester.tap(find.widgetWithText(GameButton, 'Attributes'));
+    await tester.pumpAndSettle();
+
+    final popup = find.byKey(const Key('game-popup'));
+    expect(popup, findsOne);
+    expect(find.descendant(of: popup, matching: find.text('Attributes')), findsOne);
+    expect(find.descendant(of: popup, matching: find.text('Damage')), findsOne);
+    expect(find.descendant(of: popup, matching: find.text('Health')), findsOne);
+    expect(find.descendant(of: popup, matching: find.text('DR')), findsOne);
     expect(find.text('Show bonuses'), findsOne);
     expect(find.text('Show sources'), findsOne);
     expect(find.textContaining('Eat at'), findsOne);
@@ -217,6 +248,8 @@ void main() {
     await pumpPanel(tester, InventoryView(controller: controller));
 
     expect(find.textContaining('High Elf'), findsNothing);
+    await tester.tap(find.widgetWithText(GameButton, 'Attributes'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Show bonuses'));
     await tester.pump();
 
@@ -236,6 +269,8 @@ void main() {
     await pumpPanel(tester, InventoryView(controller: controller));
 
     expect(find.textContaining('action time'), findsNothing);
+    await tester.tap(find.widgetWithText(GameButton, 'Attributes'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Show bonuses'));
     await tester.pump();
 
