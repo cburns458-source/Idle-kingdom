@@ -1,6 +1,7 @@
 import { recordItemsSoldAtLocation } from '../achievements/progress'
 import { addItemToInventoryExact } from '../activity/rewards'
 import { grantCosmetic } from '../cosmetics/cosmetics'
+import { applyQuestAutoStartOnSeed } from '../quests/progress'
 import { canFitItemQuantity } from '../inventory/capacity'
 import { isFavoriteStack } from '../inventory/favorites'
 import type { GameDatabase } from '../data/types'
@@ -166,6 +167,7 @@ export function confirmShopOffer(
   }
   if (buys.length > 0) {
     next = recordShopPurchases(next, shopId, buys, nowMs)
+    next = applyQuestAutoStartOnSeed(db, next)
   }
 
   const parts: string[] = []

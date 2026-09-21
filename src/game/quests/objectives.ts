@@ -100,6 +100,8 @@ const EMPTY_OBJECTIVES: StructuredQuestObjectives = {
   inspectIds: [],
   holds: [],
   actionTargets: [],
+  plantTargets: [],
+  giveOnTalk: [],
   requiresSkills: [],
   requiresQuestIds: [],
   unlockOnAcceptLocationIds: [],
@@ -115,6 +117,8 @@ const EMPTY_OBJECTIVES: StructuredQuestObjectives = {
   autoCompleteOnTalk: false,
   autoCompleteOnVisit: false,
   autoCompleteOnAction: false,
+  autoCompleteOnPlant: false,
+  autoStartOnSeed: false,
   requiresAnySeed: false,
   unlockLocationIds: [],
   rewardRecipeIds: [],
@@ -156,6 +160,8 @@ export function parseNotesObjectives(
   const inspectMatch = noteField(notes, String.raw`Inspect:\s*([^;]+)`)
   const holdMatch = noteField(notes, String.raw`Hold:\s*([^;]+)`)
   const actionMatch = noteField(notes, String.raw`Action:\s*([^;]+)`)
+  const plantMatch = noteField(notes, String.raw`Plant:\s*([^;]+)`)
+  const giveOnTalkMatch = noteField(notes, String.raw`GiveOnTalk:\s*([^;]+)`)
   const goldMatch = noteField(notes, String.raw`GoldCost:\s*(\d+)`)
 
   if (delivers.length === 0 && kind === 'gather_deliver') {
@@ -207,6 +213,12 @@ export function parseNotesObjectives(
     inspectIds: inspectMatch ? parseTokenList(inspectMatch) : [],
     holds: holdMatch ? parseIdQtyList(holdMatch) : [],
     actionTargets,
+    plantTargets: plantMatch
+      ? parseIdQtyList(plantMatch).length > 0
+        ? parseIdQtyList(plantMatch)
+        : parseIdList(plantMatch).map((targetId) => ({ targetId, quantity: 1 }))
+      : [],
+    giveOnTalk: giveOnTalkMatch ? parseIdQtyList(giveOnTalkMatch) : [],
     requiresSkills: [],
     requiresQuestIds: [],
     unlockOnAcceptLocationIds: [],
@@ -222,6 +234,8 @@ export function parseNotesObjectives(
     autoCompleteOnTalk: false,
     autoCompleteOnVisit: false,
     autoCompleteOnAction: false,
+    autoCompleteOnPlant: false,
+    autoStartOnSeed: false,
     requiresAnySeed: false,
     unlockLocationIds: [],
     rewardRecipeIds: [],
@@ -267,6 +281,8 @@ export function parseStructuredObjectives(quest: QuestRow): StructuredQuestObjec
     autoCompleteOnTalk: /AutoCompleteOnTalk/i.test(notes),
     autoCompleteOnVisit: /AutoCompleteOnVisit/i.test(notes),
     autoCompleteOnAction: /AutoCompleteOnAction/i.test(notes),
+    autoCompleteOnPlant: /AutoCompleteOnPlant/i.test(notes),
+    autoStartOnSeed: /AutoStartOnSeed/i.test(notes),
     requiresAnySeed: /RequiresAnySeed/i.test(notes),
     requiresSkills: requiresSkillMatch ? parseSkillLevelList(requiresSkillMatch) : [],
     requiresQuestIds: requiresQuestMatch ? parseIdList(requiresQuestMatch) : [],
@@ -414,6 +430,16 @@ export function objectiveProgressFromStructured(
         key: `action:${line.targetId}`,
         label: name,
         current: Number(counters[`action:${line.targetId}`] ?? 0),
+        required: line.quantity,
+      }
+    }),
+    ...structured.plantTargets.map((line) => {
+      const name =
+        db.Items.find((item) => item['Item ID'] === line.targetId)?.['Display Name'] ?? line.targetId
+      return {
+        key: `plant:${line.targetId}`,
+        label: `Plant ${name}`,
+        current: Number(counters[`plant:${line.targetId}`] ?? 0),
         required: line.quantity,
       }
     }),

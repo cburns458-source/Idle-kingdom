@@ -1,9 +1,15 @@
 import type { GameDatabase, NpcRow } from '../data/types'
 import { questObjectiveProgress, parseStructuredObjectives } from '../quests/objectives'
 import {
+  applyQuestAutoStartOnSeed,
   applyQuestTalkProgress,
   hasQuestFlag,
 } from '../quests/progress'
+import {
+  FARM_LOCATION_ID,
+  discoverTimerSpotsForLocation,
+  farmBotanyUnlocked,
+} from '../timers/locationTimers'
 import { isMiniquest } from '../quests/miniquests'
 import {
   acceptQuest,
@@ -391,6 +397,7 @@ export function npcConversation(
   nowMs: number = Date.now(),
 ): NpcConversation {
   const npcId = npc['NPC ID']
+  save = applyQuestAutoStartOnSeed(db, save)
   const quests = questsTouchingNpc(db, save, npcId)
     .filter((quest) => {
       if (isMiniquest(quest)) return false
@@ -515,6 +522,9 @@ export function talkWithQuestNpc(
   npcId: string,
 ): { ok: true; save: PlayerSave; message: string } | { ok: false; reason: string } {
   let next = applyQuestTalkProgress(db, save, npcId)
+  if (farmBotanyUnlocked(next)) {
+    next = discoverTimerSpotsForLocation(next, FARM_LOCATION_ID)
+  }
   for (const quest of questsTouchingNpc(db, next, npcId)) {
     const parsed = parseStructuredObjectives(quest)
     if (!parsed.autoCompleteOnTalk) continue

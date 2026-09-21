@@ -4,14 +4,19 @@ import { canFitItemQuantity } from '../inventory/capacity'
 import { creditLootTracker, creditXpAwards } from '../trackers/trackers'
 import type { GameDatabase, ItemRow } from '../data/types'
 import { removeIngredients } from '../production/inventory'
-import { getQuestProgress } from '../quests/quests'
+import { applyQuestAutoStartOnSeed, applyQuestPlantProgress } from '../quests/progress'
+import { applyQuestAutoCompleteOnPlant, getQuestProgress } from '../quests/quests'
 import type { LocationTimer, PlayerSave } from '../save/types'
 
 export const BOTANY_SKILL_ID = 'SKL-0014'
 export const THIEVERY_SKILL_ID = 'SKL-0015'
 export const GLOVES_SLOT_ID = 'SLOT-0007'
+export const FARM_LOCATION_ID = 'LOC-0001'
 export const COURTYARD_LOCATION_ID = 'LOC-0014'
 export const GRAND_FEAST_QUEST_ID = 'QST-0001'
+export const FIRST_PLANTING_QUEST_ID = 'QST-0011'
+export const FENNEL_NPC_ID = 'NPC-0014'
+export const POTATO_SEED_ITEM_ID = 'ITEM-0324'
 export const SHALLOWS_LOCATION_ID = 'LOC-0043'
 
 export const FISHING_POT_ITEM_ID = 'ITEM-0347'
@@ -100,6 +105,12 @@ export function parseBotanySeedSpec(db: GameDatabase, itemId: string): BotanySee
 
 export function inventoryHasAnyBotanySeed(db: GameDatabase, save: PlayerSave): boolean {
   return save.inventory.some((stack) => stack.quantity > 0 && isBotanySeedItem(db, stack.itemId))
+}
+
+/** Inventory or bank — used to auto-start / unlock First Planting. */
+export function playerHasAnyBotanySeed(db: GameDatabase, save: PlayerSave): boolean {
+  const stacks = [...save.inventory, ...(save.bank ?? [])]
+  return stacks.some((stack) => stack.quantity > 0 && isBotanySeedItem(db, stack.itemId))
 }
 
 export interface PlantableBotanyOption {
@@ -214,7 +225,9 @@ export function discoverTimerSpotsForLocation(
     discovered.add(key)
     changed = true
   }
-  if (BOTANY_PATCH_LOCATIONS.has(locationId)) add('botany')
+  if (BOTANY_PATCH_LOCATIONS.has(locationId) && botanyPatchUnlocked(save, locationId)) {
+    add('botany')
+  }
   if (FISHING_POT_LOCATIONS.has(locationId)) add('fishing_pot')
   if (!changed) return save
   return { ...save, discoveredTimerSpotIds: [...discovered] }
@@ -230,6 +243,20 @@ export function timerIsReady(timer: LocationTimer, nowMs: number = Date.now()): 
 
 export function courtyardBotanyUnlocked(save: PlayerSave): boolean {
   return getQuestProgress(save, GRAND_FEAST_QUEST_ID).status === 'completed'
+}
+
+export function farmBotanyUnlocked(save: PlayerSave): boolean {
+  const progress = getQuestProgress(save, FIRST_PLANTING_QUEST_ID)
+  if (progress.status === 'completed') return true
+  const counters = progress.counters ?? {}
+  return Object.keys(counters).some(
+    (key) => key === `talk:${FENNEL_NPC_ID}` || key.startsWith(`talk:${FENNEL_NPC_ID}:`),
+  )
+}
+
+export function botanyPatchUnlocked(save: PlayerSave, locationId: string): boolean {
+  if (locationId === FARM_LOCATION_ID) return farmBotanyUnlocked(save)
+  return true
 }
 
 export function locationHasBotanyPatch(locationId: string): boolean {
@@ -252,6 +279,9 @@ export function canPlantBotanySeed(
       quantity: 0,
       reason: 'Complete The Grand Feast to unlock the Courtyard plot.',
     }
+  }
+  if (!botanyPatchUnlocked(save, locationId)) {
+    return { ok: false, quantity: 0, reason: 'Speak with Fennel before using this plot.' }
   }
   if (timerAtLocationKind(save, locationId, 'botany')) {
     return { ok: false, quantity: 0, reason: 'This patch is already growing.' }
@@ -289,6 +319,88 @@ export function canPlantBotanySeed(
   return { ok: true, quantity }
 }
 
+function countedIngredients(itemIds: string[]): Array<{ itemId: string; quantity: number }> {
+  const counts = new Map<string, number>()
+  for (const itemId of itemIds) {
+    counts.set(itemId, (counts.get(itemId) ?? 0) + 1)
+  }
+  return [...counts.entries()].map(([itemId, quantity]) => ({ itemId, quantity }))
+}
+
+export function canPlantBotanySelection(
+  db: GameDatabase,
+  save: PlayerSave,
+  seedItemIds: string[],
+  locationId: string = save.currentLocationId,
+): { ok: true; plantedItemIds: string[] } | { ok: false; reason: string } {
+  const plantedItemIds = seedItemIds.filter((itemId) => itemId.length > 0)
+  if (plantedItemIds.length < 1) {
+    return { ok: false, reason: 'Choose a seed or sapling to plant.' }
+  }
+  if (plantedItemIds.length > 3) {
+    return { ok: false, reason: 'A patch holds at most three seeds.' }
+  }
+  const specs = plantedItemIds.map((itemId) => parseBotanySeedSpec(db, itemId))
+  if (specs.some((spec) => !spec)) {
+    return { ok: false, reason: 'That item cannot be planted.' }
+  }
+  const saplingCount = specs.filter((spec) => spec?.isSapling).length
+  if (saplingCount > 0 && plantedItemIds.length !== 1) {
+    return { ok: false, reason: 'A patch holds one sapling.' }
+  }
+  const uniqueIds = [...new Set(plantedItemIds)]
+  for (const itemId of uniqueIds) {
+    const want = plantedItemIds.filter((id) => id === itemId).length
+    const gate = canPlantBotanySeed(db, save, itemId, locationId, want)
+    if (!gate.ok) return { ok: false, reason: gate.reason }
+    if (gate.quantity < want) {
+      return { ok: false, reason: 'You do not have that seed.' }
+    }
+  }
+  return { ok: true, plantedItemIds }
+}
+
+export function plantBotanySelection(
+  db: GameDatabase,
+  save: PlayerSave,
+  seedItemIds: string[],
+  nowMs: number = Date.now(),
+): { ok: true; save: PlayerSave } | { ok: false; reason: string } {
+  const locationId = save.currentLocationId
+  const gate = canPlantBotanySelection(db, save, seedItemIds, locationId)
+  if (!gate.ok) return { ok: false, reason: gate.reason }
+  const plantedItemIds = gate.plantedItemIds
+  const specs = plantedItemIds.map((itemId) => parseBotanySeedSpec(db, itemId)!)
+  const removed = removeIngredients(save, countedIngredients(plantedItemIds))
+  if (!removed) return { ok: false, reason: 'You do not have that seed.' }
+  const first = specs[0]!
+  const timer: LocationTimer = {
+    locationId,
+    kind: 'botany',
+    inputItemId: plantedItemIds[0]!,
+    outputItemId: first.outputItemId,
+    outputQuantity: plantedItemIds.length,
+    skillId: BOTANY_SKILL_ID,
+    xpReward: specs.reduce((sum, spec) => sum + spec.xp, 0),
+    startedAt: new Date(nowMs).toISOString(),
+    durationMs: Math.max(...specs.map((spec) => spec.growSeconds)) * 1000,
+    plantedItemIds,
+  }
+  let next = discoverTimerSpotsForLocation(
+    {
+      ...removed,
+      locationTimers: [
+        ...withoutLocationTimerKind(removed.locationTimers, locationId, 'botany'),
+        timer,
+      ],
+    },
+    locationId,
+  )
+  next = applyQuestPlantProgress(db, next, plantedItemIds)
+  next = applyQuestAutoStartOnSeed(db, next)
+  return { ok: true, save: applyQuestAutoCompleteOnPlant(db, next).save }
+}
+
 export function plantBotanySeed(
   db: GameDatabase,
   save: PlayerSave,
@@ -299,34 +411,12 @@ export function plantBotanySeed(
   const locationId = save.currentLocationId
   const gate = canPlantBotanySeed(db, save, seedItemId, locationId, plantQuantity)
   if (!gate.ok) return { ok: false, reason: gate.reason }
-  const spec = parseBotanySeedSpec(db, seedItemId)!
-  const removed = removeIngredients(save, [{ itemId: seedItemId, quantity: gate.quantity }])
-  if (!removed) return { ok: false, reason: 'You do not have that seed.' }
-  const timer: LocationTimer = {
-    locationId,
-    kind: 'botany',
-    inputItemId: seedItemId,
-    outputItemId: spec.outputItemId,
-    // Planted count; yield is rolled on collect.
-    outputQuantity: gate.quantity,
-    skillId: BOTANY_SKILL_ID,
-    xpReward: spec.xp * gate.quantity,
-    startedAt: new Date(nowMs).toISOString(),
-    durationMs: spec.growSeconds * 1000,
-  }
-  return {
-    ok: true,
-    save: discoverTimerSpotsForLocation(
-      {
-        ...removed,
-        locationTimers: [
-          ...withoutLocationTimerKind(removed.locationTimers, locationId, 'botany'),
-          timer,
-        ],
-      },
-      locationId,
-    ),
-  }
+  return plantBotanySelection(
+    db,
+    save,
+    Array.from({ length: gate.quantity }, () => seedItemId),
+    nowMs,
+  )
 }
 
 export function plantBestBotanySeed(
@@ -538,19 +628,28 @@ export function collectLocationTimer(
   const skillId = timer.skillId
 
   if (timer.kind === 'botany') {
-    if (!timer.outputItemId) return { ok: false, reason: 'Botany timer is missing its crop.' }
-    const planted = timer.outputQuantity > 0 ? Math.round(timer.outputQuantity) : 1
-    const plantedCount = planted < 1 ? 1 : planted
-    let produceQty = 0
-    for (let i = 0; i < plantedCount; i += 1) {
-      produceQty += rollInclusive(random, 1, 5)
+    const plantedIds =
+      timer.plantedItemIds && timer.plantedItemIds.length > 0
+        ? timer.plantedItemIds
+        : Array.from(
+            { length: Math.max(1, timer.outputQuantity > 0 ? Math.round(timer.outputQuantity) : 1) },
+            () => timer.inputItemId,
+          )
+    const produce = new Map<string, number>()
+    const returned = new Map<string, number>()
+    for (const seedItemId of plantedIds) {
+      const spec = parseBotanySeedSpec(db, seedItemId)
+      const outputItemId = spec?.outputItemId ?? timer.outputItemId
+      if (!outputItemId) return { ok: false, reason: 'Botany timer is missing its crop.' }
+      produce.set(outputItemId, (produce.get(outputItemId) ?? 0) + rollInclusive(random, 1, 5))
     }
-    grants.push({ itemId: timer.outputItemId, quantity: produceQty })
-    let returned = 0
-    for (let i = 0; i < plantedCount; i += 1) {
-      if (random() < 0.5) returned += 1
+    for (const seedItemId of plantedIds) {
+      if (random() < 0.5) {
+        returned.set(seedItemId, (returned.get(seedItemId) ?? 0) + 1)
+      }
     }
-    if (returned > 0) grants.push({ itemId: timer.inputItemId, quantity: returned })
+    for (const [itemId, quantity] of produce) grants.push({ itemId, quantity })
+    for (const [itemId, quantity] of returned) grants.push({ itemId, quantity })
   } else if (timer.kind === 'fishing_pot') {
     const fishingLevel = getSkillProgress(save, 'SKL-0003').level
     const rolled = rollFishingPotLoot(timer.locationId, fishingLevel, random)
@@ -585,6 +684,7 @@ export function collectLocationTimer(
   next = applyXp(next, db, skillId, xpGained).save
   next = creditLootTracker(next, 'timer', `${kind}:${locationId}`, loot, 0, nowMs)
   next = creditXpAwards(next, [{ skillId, xp: xpGained }], nowMs)
+  next = applyQuestAutoStartOnSeed(db, next)
 
   return { ok: true, save: next, loot, xpGained, skillId }
 }

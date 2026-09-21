@@ -222,6 +222,8 @@ export interface LocationTimer {
   xpReward: number
   startedAt: string
   durationMs: number
+  /** Mixed plantings; missing on older saves (treat as inputItemId × outputQuantity). */
+  plantedItemIds?: string[]
 }
 
 export interface PlayerSave {

@@ -1,5 +1,7 @@
+import 'package:collection/collection.dart';
 import 'package:ik_content/ik_content.dart';
 
+import '../inventory/add_items.dart';
 import '../js_compat.dart';
 import '../save/generated/save_models.dart';
 import 'objectives.dart';
@@ -133,15 +135,90 @@ PlayerSave recordQuestFlag(PlayerSave save, String questId, String key) {
   );
 }
 
-/// Marks a Talk objective when the player hears that NPC's quest line.
-PlayerSave applyQuestTalkProgress(GameDatabase db, PlayerSave save, String npcId) {
+bool _saveHasBotanySeed(GameDatabase db, PlayerSave save) {
+  bool isSeed(String itemId) {
+    final item = db.items.where((row) => row.raw['Item ID'] == itemId).firstOrNull;
+    final tags = (item?.functionalSourceTags ?? '').toLowerCase();
+    return tags.contains('botany_seed') || tags.contains('botany_sapling');
+  }
+
+  return [
+    ...save.inventory,
+    ...save.bank,
+  ].any((stack) => stack.quantity > 0 && isSeed(stack.itemId));
+}
+
+/// Auto-accepts quests whose AutoStartOnSeed note is set and a seed is owned.
+PlayerSave applyQuestAutoStartOnSeed(GameDatabase db, PlayerSave save) {
+  if (!_saveHasBotanySeed(db, save)) return save;
   var next = save;
   for (final quest in asQuestRows(db)) {
+    final structured = parseStructuredObjectives(quest);
+    if (!structured.autoStartOnSeed) continue;
     final questId = jsString(quest['Quest ID']);
+    final progress = getQuestProgress(next, questId);
+    if (progress.status != 'inactive') continue;
+    next = next.copyWith(
+      quests: [
+        ...next.quests.where((row) => row.questId != questId),
+        QuestProgress(questId: questId, status: 'active', progress: 0),
+      ],
+    );
+  }
+  return next;
+}
+
+PlayerSave _grantGiveOnTalk(
+  GameDatabase db,
+  PlayerSave save,
+  String questId,
+  List<QuestCounterTarget> grants,
+) {
+  var next = save;
+  for (final grant in grants) {
+    final flag = 'give:${grant.targetId}';
+    if (hasQuestFlag(next, questId, flag)) continue;
+    next = addItemToInventory(next, grant.targetId, grant.quantity, null, false, db);
+    next = recordQuestFlag(next, questId, flag);
+  }
+  return next;
+}
+
+/// Marks a Talk objective when the player hears that NPC's quest line.
+PlayerSave applyQuestTalkProgress(GameDatabase db, PlayerSave save, String npcId) {
+  var next = applyQuestAutoStartOnSeed(db, save);
+  for (final quest in asQuestRows(db)) {
+    final questId = jsString(quest['Quest ID']);
+    if (getQuestProgress(next, questId).status != 'active') continue;
     if (!questCanTalkToNpc(db, next, quest, npcId)) continue;
+    final stepObjectives =
+        questActiveStepObjectives(db, next, quest) ?? parseStructuredObjectives(quest);
+    if (stepObjectives.giveOnTalk.isNotEmpty && !hasQuestFlag(next, questId, 'talk:$npcId')) {
+      next = _grantGiveOnTalk(db, next, questId, stepObjectives.giveOnTalk);
+    }
     final stepKey = currentStepTalkKey(db, next, quest, npcId);
     next = setQuestFlag(next, questId, 'talk:$npcId');
     next = setQuestFlag(next, questId, stepKey);
+  }
+  return applyQuestAutoStartOnSeed(db, next);
+}
+
+/// Marks Plant objectives after seeds go into a patch.
+PlayerSave applyQuestPlantProgress(GameDatabase db, PlayerSave save, List<String> plantedItemIds) {
+  if (plantedItemIds.isEmpty) return save;
+  var next = save;
+  for (final itemId in plantedItemIds.toSet()) {
+    for (final quest in asQuestRows(db)) {
+      final questId = jsString(quest['Quest ID']);
+      if (getQuestProgress(next, questId).status != 'active') continue;
+      if (!questObjectiveSources(
+        db,
+        quest,
+      ).any((row) => row.plantTargets.any((target) => target.targetId == itemId))) {
+        continue;
+      }
+      next = _bumpCounter(next, questId, 'plant:$itemId', 1);
+    }
   }
   return next;
 }
@@ -214,5 +291,9 @@ PlayerSave applyQuestAutoStart(GameDatabase db, PlayerSave save, String location
 }
 
 PlayerSave applyQuestLocationProgress(GameDatabase db, PlayerSave save, String locationId) {
-  return applyQuestVisitProgress(db, applyQuestAutoStart(db, save, locationId), locationId);
+  return applyQuestVisitProgress(
+    db,
+    applyQuestAutoStartOnSeed(db, applyQuestAutoStart(db, save, locationId)),
+    locationId,
+  );
 }

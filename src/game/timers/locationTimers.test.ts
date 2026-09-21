@@ -15,7 +15,9 @@ import {
   locationHasBotanyPatch,
   parseTimerSpotKey,
   placeTrap,
+  farmBotanyUnlocked,
   plantBotanySeed,
+  plantBotanySelection,
   timerAtLocation,
   timerAtLocationKind,
   timerIsReady,
@@ -48,6 +50,13 @@ describe('locationTimers', () => {
     expect(save.discoveredTimerSpotIds).toEqual([])
 
     save = discoverTimerSpotsForLocation(save, 'LOC-0001')
+    expect(save.discoveredTimerSpotIds).toEqual([])
+
+    save = {
+      ...save,
+      quests: [{ questId: 'QST-0011', status: 'completed', progress: 1 }],
+    }
+    save = discoverTimerSpotsForLocation(save, 'LOC-0001')
     expect(save.discoveredTimerSpotIds).toEqual(['botany:LOC-0001'])
     expect(discoverTimerSpotsForLocation(save, 'LOC-0001')).toBe(save)
 
@@ -72,6 +81,7 @@ describe('locationTimers', () => {
       ...save,
       currentLocationId: 'LOC-0001',
       inventory: [{ itemId: 'ITEM-0324', quantity: 3 }],
+      quests: [{ questId: 'QST-0011', status: 'completed', progress: 1 }],
     }
     const planted = plantBotanySeed(
       launch,
@@ -127,6 +137,7 @@ describe('locationTimers', () => {
       ...save,
       currentLocationId: 'LOC-0001',
       inventory: [{ itemId: 'ITEM-0324', quantity: 5 }],
+      quests: [{ questId: 'QST-0011', status: 'completed', progress: 1 }],
     }
     const gate = canPlantBotanySeed(launch, save, 'ITEM-0324', 'LOC-0001', 5)
     expect(gate.ok).toBe(true)
@@ -190,7 +201,11 @@ describe('locationTimers', () => {
     expect(canPlantBotanySeed(launch, save, 'ITEM-0324').ok).toBe(false)
     expect(canPlantBotanySeed(launch, save, 'ITEM-0350').ok).toBe(true)
 
-    save = { ...save, currentLocationId: 'LOC-0001' }
+    save = {
+      ...save,
+      currentLocationId: 'LOC-0001',
+      quests: [{ questId: 'QST-0011', status: 'completed', progress: 1 }],
+    }
     expect(canPlantBotanySeed(launch, save, 'ITEM-0350').ok).toBe(false)
   })
 
@@ -349,5 +364,71 @@ describe('locationTimers', () => {
     if (collected.ok) return
     expect(collected.reason).toBe(TIMER_INVENTORY_FULL_CATCH_REASON)
     expect(timerAtLocationKind(soaked, 'LOC-0003', 'fishing_pot')).toBeTruthy()
+  })
+
+  it('hides the farm patch until Fennel is heard or First Planting is complete', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    let save = {
+      ...createNewSave(launch),
+      currentLocationId: 'LOC-0001',
+      inventory: [{ itemId: 'ITEM-0324', quantity: 2 }],
+    }
+    expect(farmBotanyUnlocked(save)).toBe(false)
+    expect(canPlantBotanySeed(launch, save, 'ITEM-0324').ok).toBe(false)
+
+    save = {
+      ...save,
+      quests: [
+        {
+          questId: 'QST-0011',
+          status: 'active',
+          progress: 1,
+          counters: { 'talk:NPC-0014': 1 },
+        },
+      ],
+    }
+    expect(farmBotanyUnlocked(save)).toBe(true)
+    expect(canPlantBotanySeed(launch, save, 'ITEM-0324', 'LOC-0001', 2).ok).toBe(true)
+  })
+
+  it('plants mixed seed types on one patch and harvests each crop', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const save = {
+      ...createNewSave(launch),
+      currentLocationId: 'LOC-0031',
+      skills: createNewSave(launch).skills.map((row) =>
+        row.skillId === 'SKL-0014' ? { ...row, level: 10, xp: 0 } : row,
+      ),
+      inventory: [
+        { itemId: 'ITEM-0324', quantity: 1 },
+        { itemId: 'ITEM-0339', quantity: 2 },
+      ],
+    }
+    const planted = plantBotanySelection(launch, save, ['ITEM-0324', 'ITEM-0339'], 0)
+    expect(planted.ok).toBe(true)
+    if (!planted.ok) return
+    expect(planted.save.inventory.find((stack) => stack.itemId === 'ITEM-0324')).toBeUndefined()
+    expect(planted.save.inventory.find((stack) => stack.itemId === 'ITEM-0339')?.quantity).toBe(1)
+    const timer = timerAtLocationKind(planted.save, 'LOC-0031', 'botany')
+    expect(timer?.plantedItemIds).toEqual(['ITEM-0324', 'ITEM-0339'])
+    expect(timer?.outputQuantity).toBe(2)
+    expect(timer?.xpReward).toBe(1600)
+
+    const rolls = [0, 0, 0.99, 0.99]
+    let i = 0
+    const collected = collectLocationTimer(
+      launch,
+      planted.save,
+      'LOC-0031',
+      'botany',
+      10800 * 1000,
+      () => rolls[i++] ?? 0,
+    )
+    expect(collected.ok).toBe(true)
+    if (!collected.ok) return
+    expect(collected.loot.find((row) => row.itemId === 'ITEM-0025')?.quantity).toBe(1)
+    expect(collected.loot.find((row) => row.itemId === 'ITEM-0027')?.quantity).toBe(1)
+    expect(collected.loot.some((row) => row.itemId === 'ITEM-0324')).toBe(false)
+    expect(collected.loot.some((row) => row.itemId === 'ITEM-0339')).toBe(false)
   })
 })

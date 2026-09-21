@@ -245,8 +245,8 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
       controller: controller,
       options: options,
     );
-    if (!mounted || chosen == null) return;
-    controller.plantBotanySeedHere(chosen.itemId, plantQuantity: chosen.plantQuantity);
+    if (!mounted || chosen == null || chosen.isEmpty) return;
+    controller.plantBotanySelectionHere(chosen);
   }
 
   void _flushPendingDialogs() {

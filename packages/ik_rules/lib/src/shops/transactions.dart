@@ -7,6 +7,7 @@ import '../inventory/add_items.dart';
 import '../inventory/capacity.dart';
 import '../inventory/favorites.dart';
 import '../js_compat.dart';
+import '../quests/progress.dart';
 import '../save/generated/save_models.dart';
 import 'shops.dart';
 
@@ -214,6 +215,7 @@ ShopTransactionResult confirmShopOffer(
       offer.buys.map((line) => (itemId: line.itemId, quantity: line.quantity)),
       clock,
     );
+    next = applyQuestAutoStartOnSeed(db, next);
   }
 
   final parts = <String>[

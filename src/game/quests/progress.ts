@@ -1,8 +1,14 @@
+import { addItemToInventory } from '../activity/rewards'
+import type { GameDatabase, ItemRow } from '../data/types'
 import type { PlayerSave } from '../save/types'
 import { asQuestRows, getQuestProgress } from './quests'
 import { parseStructuredObjectives } from './objectives'
-import { currentStepTalkKey, questCanTalkToNpc, questObjectiveSources } from './steps'
-import type { GameDatabase } from '../data/types'
+import {
+  currentStepTalkKey,
+  questActiveStepObjectives,
+  questCanTalkToNpc,
+  questObjectiveSources,
+} from './steps'
 
 function saveHasActiveQuest(save: PlayerSave): boolean {
   return save.quests.some((row) => row.status === 'active')
@@ -125,18 +131,100 @@ export function recordQuestFlag(save: PlayerSave, questId: string, key: string):
   return { ...save, quests: nextQuests }
 }
 
+function itemTags(item: ItemRow | undefined): string {
+  return (item?.['Functional / Source Tags'] ?? '').toLowerCase()
+}
+
+function saveHasBotanySeed(db: GameDatabase, save: PlayerSave): boolean {
+  const stacks = [...save.inventory, ...(save.bank ?? [])]
+  return stacks.some((stack) => {
+    if (stack.quantity <= 0) return false
+    const item = db.Items.find((row) => row['Item ID'] === stack.itemId)
+    const tags = itemTags(item)
+    return tags.includes('botany_seed') || tags.includes('botany_sapling')
+  })
+}
+
+/** Auto-accepts quests whose AutoStartOnSeed note is set and a seed is owned. */
+export function applyQuestAutoStartOnSeed(db: GameDatabase, save: PlayerSave): PlayerSave {
+  if (!saveHasBotanySeed(db, save)) return save
+  let next = save
+  for (const quest of asQuestRows(db)) {
+    const structured = parseStructuredObjectives(quest)
+    if (!structured.autoStartOnSeed) continue
+    const questId = quest['Quest ID']
+    const progress = getQuestProgress(next, questId)
+    if (progress.status !== 'inactive') continue
+    next = {
+      ...next,
+      quests: [
+        ...next.quests.filter((row) => row.questId !== questId),
+        { questId, status: 'active', progress: 0 },
+      ],
+    }
+  }
+  return next
+}
+
+function grantGiveOnTalk(
+  db: GameDatabase,
+  save: PlayerSave,
+  questId: string,
+  grants: Array<{ targetId: string; quantity: number }>,
+): PlayerSave {
+  let next = save
+  for (const grant of grants) {
+    const flag = `give:${grant.targetId}`
+    if (hasQuestFlag(next, questId, flag)) continue
+    next = addItemToInventory(next, grant.targetId, grant.quantity, null, false, db)
+    next = recordQuestFlag(next, questId, flag)
+  }
+  return next
+}
+
 /** Marks a Talk objective when the player hears that NPC's quest line. */
 export function applyQuestTalkProgress(
   db: GameDatabase,
   save: PlayerSave,
   npcId: string,
 ): PlayerSave {
-  let next = save
+  let next = applyQuestAutoStartOnSeed(db, save)
   for (const quest of asQuestRows(db)) {
+    if (getQuestProgress(next, quest['Quest ID']).status !== 'active') continue
     if (!questCanTalkToNpc(db, next, quest, npcId)) continue
+    const questId = quest['Quest ID']
+    const stepObjectives =
+      questActiveStepObjectives(db, next, quest) ?? parseStructuredObjectives(quest)
+    if (stepObjectives.giveOnTalk.length > 0 && !hasQuestFlag(next, questId, `talk:${npcId}`)) {
+      next = grantGiveOnTalk(db, next, questId, stepObjectives.giveOnTalk)
+    }
     const stepKey = currentStepTalkKey(db, next, quest, npcId)
-    next = setQuestFlag(next, quest['Quest ID'], `talk:${npcId}`)
-    next = setQuestFlag(next, quest['Quest ID'], stepKey)
+    next = setQuestFlag(next, questId, `talk:${npcId}`)
+    next = setQuestFlag(next, questId, stepKey)
+  }
+  return applyQuestAutoStartOnSeed(db, next)
+}
+
+/** Marks Plant objectives after seeds go into a patch. */
+export function applyQuestPlantProgress(
+  db: GameDatabase,
+  save: PlayerSave,
+  plantedItemIds: string[],
+): PlayerSave {
+  if (plantedItemIds.length === 0) return save
+  let next = save
+  for (const itemId of new Set(plantedItemIds)) {
+    for (const quest of asQuestRows(db)) {
+      if (getQuestProgress(next, quest['Quest ID']).status !== 'active') continue
+      if (
+        !questObjectiveSources(db, quest).some((row) =>
+          row.plantTargets.some((target) => target.targetId === itemId),
+        )
+      ) {
+        continue
+      }
+      next = bumpCounter(next, quest['Quest ID'], `plant:${itemId}`, 1)
+    }
   }
   return next
 }
@@ -222,5 +310,9 @@ export function applyQuestLocationProgress(
   save: PlayerSave,
   locationId: string,
 ): PlayerSave {
-  return applyQuestVisitProgress(db, applyQuestAutoStart(db, save, locationId), locationId)
+  return applyQuestVisitProgress(
+    db,
+    applyQuestAutoStartOnSeed(db, applyQuestAutoStart(db, save, locationId)),
+    locationId,
+  )
 }

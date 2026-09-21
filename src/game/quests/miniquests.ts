@@ -25,11 +25,12 @@ export function requiredTotalLevelFromNotes(notes: string | null | undefined): n
 
 export function isMiniquest(quest: MiniQuestSource): boolean {
   const notes = quest.Notes ?? ''
-  return /(?:^|;)\s*Miniquest\b/i.test(notes) || /(?:^|;)\s*HideFromQuestLog\b/i.test(notes)
+  return /(?:^|;)\s*Miniquest\b/i.test(notes)
 }
 
 export function hideFromQuestLog(quest: MiniQuestSource): boolean {
-  return isMiniquest(quest)
+  const notes = quest.Notes ?? ''
+  return isMiniquest(quest) || /(?:^|;)\s*HideFromQuestLog\b/i.test(notes)
 }
 
 export function miniquestRepeatMs(quest: MiniQuestSource): number | null {

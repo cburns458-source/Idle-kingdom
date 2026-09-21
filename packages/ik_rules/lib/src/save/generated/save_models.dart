@@ -562,6 +562,7 @@ class LocationTimer {
     required this.xpReward,
     required this.startedAt,
     required this.durationMs,
+    this.plantedItemIds,
   });
 
   factory LocationTimer.fromJson(Map<String, Object?> json) {
@@ -575,6 +576,7 @@ class LocationTimer {
       xpReward: json['xpReward'] as num,
       startedAt: json['startedAt'] as String,
       durationMs: json['durationMs'] as num,
+      plantedItemIds: listOrNull(json['plantedItemIds'], (Object? entry) => entry as String),
     );
   }
 
@@ -599,6 +601,9 @@ class LocationTimer {
 
   final num durationMs;
 
+  /// Mixed plantings; missing on older saves (treat as inputItemId × outputQuantity).
+  final List<String>? plantedItemIds;
+
   Map<String, Object?> toJson() {
     return <String, Object?>{
       'locationId': locationId,
@@ -610,6 +615,7 @@ class LocationTimer {
       'xpReward': xpReward,
       'startedAt': startedAt,
       'durationMs': durationMs,
+      if (plantedItemIds != null) 'plantedItemIds': plantedItemIds,
     };
   }
 
@@ -623,6 +629,7 @@ class LocationTimer {
     num? xpReward,
     String? startedAt,
     num? durationMs,
+    Object? plantedItemIds = _unset,
   }) {
     return LocationTimer(
       locationId: locationId ?? this.locationId,
@@ -634,6 +641,9 @@ class LocationTimer {
       xpReward: xpReward ?? this.xpReward,
       startedAt: startedAt ?? this.startedAt,
       durationMs: durationMs ?? this.durationMs,
+      plantedItemIds: plantedItemIds == _unset
+          ? this.plantedItemIds
+          : plantedItemIds as List<String>?,
     );
   }
 }

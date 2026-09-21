@@ -75,7 +75,7 @@ bool questAvailableForSave(GameDatabase db, PlayerSave save, QuestRow quest) {
     if (getQuestProgress(save, requiredQuestId).status != 'completed') return false;
   }
   if (parsed.requiresAnySeed) {
-    if (!inventoryHasAnyBotanySeed(db, save)) return false;
+    if (!playerHasAnyBotanySeed(db, save)) return false;
   }
   return true;
 }
@@ -252,6 +252,7 @@ QuestCompletion completeQuest(
       parsed.visitLocationIds.isNotEmpty ||
       parsed.inspectIds.isNotEmpty ||
       parsed.actionTargets.isNotEmpty ||
+      parsed.plantTargets.isNotEmpty ||
       parsed.goldCost > 0 ||
       questUsesSteps(db, questId);
   if (!hasObjectives) {
@@ -398,6 +399,7 @@ QuestCompletion completeQuest(
     ],
     unlockedLocationIds: unlocked,
   );
+  next = applyQuestAutoStartOnSeed(db, next);
 
   return QuestCompletion.ok(
     save: next,
@@ -457,6 +459,37 @@ QuestVisitAutoComplete applyQuestAutoCompleteOnVisit(GameDatabase db, PlayerSave
     final questId = jsString(quest['Quest ID']);
     if (getQuestProgress(next, questId).status != 'active') continue;
     if (!questAllStepsComplete(db, next, quest)) continue;
+    final completed = completeQuest(db, next, questId, ignoreLocation: true);
+    if (completed.ok) {
+      next = completed.save!;
+      completions.add(
+        QuestArrivalCompletion(
+          questId: questId,
+          questName: completed.questName!,
+          rewards: completed.rewards,
+          pendingSkillXp: completed.pendingSkillXp,
+          rewardBundle: completed.rewardBundle,
+          message: completed.message!,
+        ),
+      );
+    }
+  }
+  return QuestVisitAutoComplete(save: next, completions: completions);
+}
+
+QuestVisitAutoComplete applyQuestAutoCompleteOnPlant(GameDatabase db, PlayerSave save) {
+  var next = save;
+  final completions = <QuestArrivalCompletion>[];
+  for (final quest in asQuestRows(db)) {
+    final parsed = parseStructuredObjectives(quest);
+    if (!parsed.autoCompleteOnPlant) continue;
+    final questId = jsString(quest['Quest ID']);
+    if (getQuestProgress(next, questId).status != 'active') continue;
+    if (questUsesSteps(db, questId)) {
+      if (!questAllStepsComplete(db, next, quest)) continue;
+    } else if (!questObjectiveProgress(db, next, quest).ready) {
+      continue;
+    }
     final completed = completeQuest(db, next, questId, ignoreLocation: true);
     if (completed.ok) {
       next = completed.save!;
