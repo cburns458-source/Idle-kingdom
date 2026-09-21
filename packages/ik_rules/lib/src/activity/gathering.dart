@@ -7,8 +7,20 @@ import '../equipment/loadout.dart';
 import '../equipment/specialist.dart';
 import '../js_compat.dart';
 import '../projects/enchantments.dart';
+import '../rng/mulberry32.dart';
 import '../save/generated/save_models.dart';
 import 'xp.dart';
+
+/// Level 1 = 50.5%, +0.5% per level, 100% at level 100.
+num gatheringSuccessChancePercent(num level) {
+  final lvl = math.max(1, level.floor());
+  return math.min(100, 50.5 + 0.5 * (lvl - 1));
+}
+
+/// False means the action yields no loot and no XP.
+bool rollGatheringSuccess(num level, RandomFn random) {
+  return random() * 100 < gatheringSuccessChancePercent(level);
+}
 
 num gatheringDurationMs(GameDatabase db, PlayerSave save, ActionRow action) {
   final baseSeconds = jsNumber(action.raw['Base Duration Seconds'] ?? 0);

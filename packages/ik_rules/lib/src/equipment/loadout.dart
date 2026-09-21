@@ -391,6 +391,9 @@ PlayerSave equipStackToSlot(PlayerSave save, String slotId, String itemId, num q
 
 bool _isEquipmentSkillId(Object? value) => value is String && value.isNotEmpty && value != 'None';
 
+/// Per-skill action time reduction cap; excess is ignored and not shown.
+const num actionTimeReductionCapPercent = 50;
+
 /// Action-time reduction totals keyed by required and secondary skills.
 Map<String, num> equippedActionTimeReductionBySkill(GameDatabase db, PlayerSave save) {
   final totals = <String, num>{};
@@ -408,10 +411,13 @@ Map<String, num> equippedActionTimeReductionBySkill(GameDatabase db, PlayerSave 
       totals[id] = (totals[id] ?? 0) + amount;
     }
   }
+  for (final skillId in totals.keys.toList()) {
+    totals[skillId] = math.min(actionTimeReductionCapPercent, math.max(0, totals[skillId]!));
+  }
   return totals;
 }
 
-/// Reduction that applies only to actions of this skill.
+/// Reduction that applies only to actions of this skill (capped).
 num equippedActionTimeReductionPercent(GameDatabase db, PlayerSave save, String? skillId) {
   if (isBlank(skillId)) return 0;
   return math.max(0, equippedActionTimeReductionBySkill(db, save)[skillId!] ?? 0);

@@ -11,7 +11,7 @@ import { isStandardProductionActivity, recipesForActivity } from '../production/
 import type { ActionRow, ActivityRow, GameDatabase } from '../data/types'
 import type { EquippedStack, PlayerSave } from '../save/types'
 import { clearActivePotionEffect, tryConsumePotionForScope } from '../potions/effects'
-import { gatheringDurationMs, gatheringXpReward } from './gathering'
+import { gatheringDurationMs, gatheringXpReward, rollGatheringSuccess } from './gathering'
 import { heldActionIdFor, withHeldAction, withoutHeldAction } from './heldAction'
 import { eligiblePoolEntries, isSelectableAction, pickWeightedAction, type RandomFn } from './pools'
 import {
@@ -285,7 +285,7 @@ function maybeBreakLockpick(
 }
 
 const PRUNABLE_SKILL_IDS = new Set(['SKL-0004', 'SKL-0006'])
-export const PRUNING_SEED_CHANCE_PERCENT = 10
+export const PRUNING_SEED_CHANCE_PERCENT = 5
 
 export function isPruningToolEquipped(db: GameDatabase, save: PlayerSave): boolean {
   const tool = slotStack(save, WEAPON_TOOL_SLOT_ID)
@@ -366,6 +366,14 @@ export function completeGatheringAction(
         save: withoutHeldAction(save, save.currentActivityId),
         result: emptyResult(),
       }
+    }
+  }
+
+  const gatheringLevel = getSkillProgress(save, skillId).level
+  if (!rollGatheringSuccess(gatheringLevel, random)) {
+    return {
+      save: withoutHeldAction(save, save.currentActivityId),
+      result: emptyResult(),
     }
   }
 

@@ -33,9 +33,9 @@ describe('primary activity engine', () => {
 
     const completed = completeGatheringAction(launch, generated!.save, generated!.action, () => 0)
     // Below Harvesting 10 proficiency: half XP on wild roots.
-    expect(completed.result.xpGained).toBe(250)
+    expect(completed.result.xpGained).toBe(100)
     expect(completed.save.inventory.some((stack) => stack.itemId === 'ITEM-0030')).toBe(true)
-    expect(completed.save.skills.find((skill) => skill.skillId === 'SKL-0004')?.xp).toBe(250)
+    expect(completed.save.skills.find((skill) => skill.skillId === 'SKL-0004')?.xp).toBe(100)
     expect(completed.save.statistics.values.gathering_actions_completed).toBe(1)
   })
 
@@ -46,7 +46,7 @@ describe('primary activity engine', () => {
 
     // No bow equipped: no Combat XP bonus.
     const withoutBow = completeGatheringAction(launch, save, huntButterfly, () => 0)
-    expect(withoutBow.result.xpGained).toBe(250)
+    expect(withoutBow.result.xpGained).toBe(300)
     expect(withoutBow.result.bonusXp).toEqual([])
     expect(
       withoutBow.save.skills.find((skill) => skill.skillId === 'SKL-0001')?.xp ?? 0,
@@ -62,11 +62,11 @@ describe('primary activity engine', () => {
       },
     }
     const withBow = completeGatheringAction(launch, save, huntButterfly, () => 0)
-    expect(withBow.result.xpGained).toBe(250)
-    expect(withBow.result.bonusXp).toEqual([{ skillId: 'SKL-0001', xp: 25 }])
-    expect(withBow.save.skills.find((skill) => skill.skillId === 'SKL-0001')?.xp).toBe(25)
+    expect(withBow.result.xpGained).toBe(300)
+    expect(withBow.result.bonusXp).toEqual([{ skillId: 'SKL-0001', xp: 30 }])
+    expect(withBow.save.skills.find((skill) => skill.skillId === 'SKL-0001')?.xp).toBe(30)
     const combatReward = withBow.result.xpRewards.find((reward) => reward.skillId === 'SKL-0001')
-    expect(combatReward?.xp).toBe(25)
+    expect(combatReward?.xp).toBe(30)
   })
 
   it('grants no bow Combat XP bonus for non-Hunting gathering, even with a bow equipped', () => {
@@ -94,20 +94,20 @@ describe('primary activity engine', () => {
     expect(action!['Display Name']).toBe('Harness essence')
     expect(action!['Relevant Skill ID']).toBe('SKL-0013')
     expect(action!['Proficiency Level']).toBe(1)
-    expect(action!['XP Reward']).toBe(100)
+    expect(action!['XP Reward']).toBe(40)
 
     const completed = completeGatheringAction(launch, save, action!, () => 0)
-    expect(completed.result.xpGained).toBe(100)
+    expect(completed.result.xpGained).toBe(40)
     expect(completed.result.bonusXp).toEqual([])
     expect(completed.result.xpRewards.map((reward) => reward.skillId)).toEqual(['SKL-0013'])
     expect(completed.result.xpRewards[0]).toMatchObject({
       skillId: 'SKL-0013',
       skillName: 'Arcana',
-      xp: 100,
+      xp: 40,
       leveledUp: false,
     })
     expect(completed.save.skills.find((skill) => skill.skillId === 'SKL-0002')?.xp).toBe(0)
-    expect(completed.save.skills.find((skill) => skill.skillId === 'SKL-0013')?.xp).toBe(100)
+    expect(completed.save.skills.find((skill) => skill.skillId === 'SKL-0013')?.xp).toBe(40)
   })
 
   it('rejects copper mining without a mining tool', () => {
@@ -202,8 +202,8 @@ describe('primary activity engine', () => {
       }
     }
 
-    // Pass fail check (50 >= 45), then survive break roll (60 >= 50).
-    const intactRolls = [0.5, 0.6]
+    // Success (0), pass fail check (50 >= 45), then survive break roll (60 >= 50).
+    const intactRolls = [0, 0.5, 0.6]
     let intactI = 0
     const intact = completeGatheringAction(
       launch,
@@ -218,9 +218,9 @@ describe('primary activity engine', () => {
     expect(intact.result.xpGained).toBeGreaterThan(0)
     expect(intact.save.equipment.slots['SLOT-0001']?.quantity).toBe(3)
 
-    // Pass fail check, then always break the pick (0 < 50).
+    // Success, pass fail check, then always break the pick (0 < 50).
     const beforeXp = saveWithPicks().skills.find((row) => row.skillId === 'SKL-0015')?.xp ?? 0
-    const brokeRolls = [0.5, 0]
+    const brokeRolls = [0, 0.5, 0]
     let brokeI = 0
     const broke = completeGatheringAction(
       launch,
@@ -245,12 +245,12 @@ describe('primary activity engine', () => {
     const save = createNewSave(launch)
     const roots = launch.Actions.find((action) => action['Action ID'] === 'ACN-0105')!
     expect(roots['Proficiency Level']).toBe(10)
-    expect(gatheringDurationMs(launch, save, roots)).toBe(60_000)
-    expect(gatheringXpReward(launch, save, roots)).toBe(250)
+    expect(gatheringDurationMs(launch, save, roots)).toBe(24_000)
+    expect(gatheringXpReward(launch, save, roots)).toBe(100)
 
     const completed = completeGatheringAction(launch, save, roots, () => 0)
-    expect(completed.result.xpGained).toBe(250)
-    expect(completed.save.skills.find((skill) => skill.skillId === 'SKL-0004')?.xp).toBe(250)
+    expect(completed.result.xpGained).toBe(100)
+    expect(completed.save.skills.find((skill) => skill.skillId === 'SKL-0004')?.xp).toBe(100)
   })
 
   it('halves Harness essence Arcana XP below Arcana proficiency', () => {
@@ -265,10 +265,10 @@ describe('primary activity engine', () => {
     expect(action['Proficiency Level']).toBe(1)
 
     const completed = completeGatheringAction(launch, save, action, () => 0)
-    expect(completed.result.xpGained).toBe(50)
+    expect(completed.result.xpGained).toBe(20)
     expect(completed.result.bonusXp).toEqual([])
     expect(completed.save.skills.find((skill) => skill.skillId === 'SKL-0002')?.xp).toBe(0)
-    expect(completed.save.skills.find((skill) => skill.skillId === 'SKL-0013')?.xp).toBe(50)
+    expect(completed.save.skills.find((skill) => skill.skillId === 'SKL-0013')?.xp).toBe(20)
   })
 
   it('excludes Needs Data actions and includes Combat when complete', () => {

@@ -39,11 +39,11 @@ describe('cooked beef and tablet recipes', () => {
     const action = launch.Actions.find((row) => row['Action ID'] === 'ACN-0120')!
     const equipment = launch.Equipment.find((row) => row['Equipment ID'] === 'EQP-0010')!
     expect(recipe['Proficiency Level']).toBe(1)
-    expect(recipe['Base Duration Seconds']).toBe(10)
-    expect(recipe['XP Reward']).toBe(200)
+    expect(recipe['Base Duration Seconds']).toBe(12)
+    expect(recipe['XP Reward']).toBe(240)
     expect(action['Proficiency Level']).toBe(1)
-    expect(action['Base Duration Seconds']).toBe(10)
-    expect(action['XP Reward']).toBe(200)
+    expect(action['Base Duration Seconds']).toBe(12)
+    expect(action['XP Reward']).toBe(240)
     expect(equipment['Healing Amount']).toBe(40)
   })
 
