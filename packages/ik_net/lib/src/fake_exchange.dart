@@ -80,13 +80,7 @@ class FakeExchange {
         })
         .map((fill) => fill.toJson(userId))
         .toList();
-    final cancelled = orders
-        .where(
-          (order) => order.userId == userId && order.status == 'cancelled' && order.filled == 0,
-        )
-        .map((order) => order.toCancelTradeJson())
-        .toList();
-    final history = <RemoteRow>[...mine, ...cancelled]
+    final history = <RemoteRow>[...mine]
       ..sort((a, b) => (b['createdAt']! as String).compareTo(a['createdAt']! as String));
     final waiting = box.where((entry) => entry.userId == userId).toList()
       ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
@@ -569,17 +563,6 @@ class FakeExchangeOrder {
     'slot': slot,
     'status': status,
     'createdAt': createdAt,
-  };
-
-  RemoteRow toCancelTradeJson() => <String, Object?>{
-    'id': id,
-    'itemId': itemId,
-    'unitPrice': unitPrice,
-    'quantity': quantity,
-    'tax': 0,
-    'side': side,
-    'status': 'cancelled',
-    'createdAt': updatedAt,
   };
 }
 

@@ -58,6 +58,16 @@ describe('recipe knowledge', () => {
       ),
     }
     expect(knowsRecipe(crafter, launch, 'RCP-0062')).toBe(true)
+    expect(canKnowRecipe(crafter, launch, lockpicks!)).toBe(false)
+    const thiefCrafter = {
+      ...save,
+      skills: save.skills.map((skill) =>
+        skill.skillId === 'SKL-0009' || skill.skillId === 'SKL-0015'
+          ? { ...skill, level: 20 }
+          : skill,
+      ),
+    }
+    expect(canKnowRecipe(thiefCrafter, launch, lockpicks!)).toBe(true)
     const squid = entries.find((entry) => entry.name === 'Cooked Baby Giant Squid')
     expect(squid?.materials).toContain('Starroot')
     expect(squid?.materials).not.toContain('ITEM-0208')

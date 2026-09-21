@@ -113,11 +113,15 @@ RequirementCheck evaluateRequirement(GameDatabase db, PlayerSave save, Requireme
       );
     }
     final met = skill.level >= required;
+    final skillName = db.skills
+        .firstWhereOrNull((row) => row.raw['Skill ID'] == reference)
+        ?.raw['Display Name'];
+    final label = skillName is String && skillName.isNotEmpty ? skillName : reference;
     return RequirementCheck(
       met: met,
       detail: met
           ? 'Level ${jsNumberToString(skill.level)}'
-          : 'Requires $reference level ${jsNumberToString(required)}',
+          : 'Requires $label level ${jsNumberToString(required)}',
     );
   }
 

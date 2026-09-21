@@ -546,7 +546,7 @@ void main() {
       expect((await seller.bazaarMarket()).trades, hasLength(1));
     });
 
-    test('lists a cancelled offer in recent trades only after it closes', () async {
+    test('does not list a cancelled offer when no items moved', () async {
       final project = _project();
       final db = _database();
       final seller = await _trader(
@@ -566,11 +566,7 @@ void main() {
       );
       expect((await seller.bazaarMarket()).trades, isEmpty);
       expect((await seller.cancelBazaarOffer(placed.order!.id)).ok, isTrue);
-      final trades = (await seller.bazaarMarket()).trades;
-      expect(trades, hasLength(1));
-      expect(trades.single.status, 'cancelled');
-      expect(trades.single.itemId, _ironOre);
-      expect(trades.single.quantity, 10);
+      expect((await seller.bazaarMarket()).trades, isEmpty);
     });
 
     test('records the trade for both sides, newest first, ten at most', () async {

@@ -193,4 +193,33 @@ describe('standard production', () => {
     expect(canKnowRecipe(save, launch, luck)).toBe(false)
     expect(recipesForActivity(launch, save, 'ACT-0020')).toHaveLength(0)
   })
+
+  it('requires Thievery 20 as well as Crafting 20 to make lockpicks', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const lockpicks = getRecipe(launch, 'RCP-0062')!
+    const withSkills = (save: ReturnType<typeof createNewSave>, levels: Record<string, number>) => ({
+      ...save,
+      skills: save.skills.map((skill) =>
+        skill.skillId in levels ? { ...skill, level: levels[skill.skillId]! } : skill,
+      ),
+    })
+    let save = addItemToInventory(createNewSave(launch), 'ITEM-0076', 1)
+    const crafter = withSkills(save, { 'SKL-0009': 20 })
+    expect(canKnowRecipe(crafter, launch, lockpicks)).toBe(false)
+    expect(
+      recipesForActivity(launch, crafter, 'ACT-0019').some(
+        (recipe) => recipe['Recipe ID'] === 'RCP-0062',
+      ),
+    ).toBe(false)
+    const refused = beginProductionQueue(launch, crafter, 'ACT-0019', 'RCP-0062', 1)
+    expect(refused.ok).toBe(false)
+    if (!refused.ok) {
+      expect(refused.reason).toMatch(/Thievery/)
+    }
+
+    const both = withSkills(save, { 'SKL-0009': 20, 'SKL-0015': 20 })
+    expect(canKnowRecipe(both, launch, lockpicks)).toBe(true)
+    const queued = beginProductionQueue(launch, both, 'ACT-0019', 'RCP-0062', 1)
+    expect(queued.ok).toBe(true)
+  })
 })

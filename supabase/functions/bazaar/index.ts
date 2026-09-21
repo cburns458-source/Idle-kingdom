@@ -595,36 +595,19 @@ function tradeJson(row: Record<string, unknown>, userId: string): Record<string,
   }
 }
 
-function cancelTradeJson(row: OrderRow): Record<string, unknown> {
-  return {
-    id: String(row.id ?? ''),
-    itemId: String(row.item_id ?? ''),
-    unitPrice: Number(row.unit_price ?? 0),
-    quantity: Number(row.quantity ?? 0),
-    tax: 0,
-    side: String(row.side ?? ''),
-    status: 'cancelled',
-    createdAt: String(row.updated_at ?? row.created_at ?? ''),
-  }
-}
-
-/** Fills from finished offers, plus cancelled offers that never traded. */
+/** Fills from finished offers. Cancelled offers that never traded stay hidden. */
 function recentTrades(
   userId: string,
   fills: Array<Record<string, unknown>>,
   finished: OrderRow[],
 ): Array<Record<string, unknown>> {
   const done = new Set(finished.map((row) => String(row.id)))
-  const fromFills = fills
+  return fills
     .filter((row) => {
       const orderId = row.buyer_id === userId ? row.buy_order_id : row.sell_order_id
       return typeof orderId === 'string' && done.has(orderId)
     })
     .map((row) => tradeJson(row, userId))
-  const fromCancels = finished
-    .filter((row) => row.status === 'cancelled' && Number(row.filled ?? 0) === 0)
-    .map(cancelTradeJson)
-  return [...fromFills, ...fromCancels]
     .sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)))
     .slice(0, HISTORY_LIMIT)
 }

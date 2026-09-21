@@ -119,11 +119,11 @@ export function evaluateRequirement(
       }
     }
     const met = skill.level >= required
+    const skillName =
+      db.Skills.find((row) => row['Skill ID'] === reference)?.['Display Name'] ?? reference
     return {
       met,
-      detail: met
-        ? `Level ${skill.level}`
-        : `Requires ${reference} level ${required}`,
+      detail: met ? `Level ${skill.level}` : `Requires ${skillName} level ${required}`,
     }
   }
 

@@ -28,6 +28,8 @@ export function productionCraftDurationMs(
   return applyPotionDurationMs(reduced, potionEffect)
 }
 import { removeIngredients } from './inventory'
+import { requirementsForEntity, unmetHardRequirements } from '../activity/requirements'
+import { knowsRecipe } from '../recipes/knowledge'
 import {
   canKnowRecipe,
   facilityIdForActivity,
@@ -86,7 +88,15 @@ export function beginProductionQueue(
     return { ok: false, reason: 'That recipe is not available.' }
   }
   if (!canKnowRecipe(save, db, recipe)) {
-    return { ok: false, reason: 'You have not learned that recipe yet.' }
+    if (!knowsRecipe(save, db, recipeId)) {
+      return { ok: false, reason: 'You have not learned that recipe yet.' }
+    }
+    const unmet = unmetHardRequirements(
+      db,
+      save,
+      requirementsForEntity(db, 'Recipe', recipeId),
+    )
+    return { ok: false, reason: unmet[0] ?? 'You cannot make that yet.' }
   }
   if (!recipeMatchesFacility(recipe['Facility ID'], facilityIdForActivity(db, activityId) ?? '')) {
     return { ok: false, reason: 'That recipe cannot be made at this station.' }

@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:collection/collection.dart';
 import 'package:ik_content/ik_content.dart';
 
+import '../activity/requirements.dart';
 import '../activity/reward_summary.dart';
 import '../activity/rewards.dart';
 import '../activity/types.dart';
@@ -88,7 +89,11 @@ ProductionQueueResult beginProductionQueue(
     return const ProductionQueueResult.failed('That recipe is not available.');
   }
   if (!canKnowRecipe(save, db, recipe)) {
-    return const ProductionQueueResult.failed('You have not learned that recipe yet.');
+    if (!knowsRecipe(save, db, recipeId)) {
+      return const ProductionQueueResult.failed('You have not learned that recipe yet.');
+    }
+    final unmet = unmetHardRequirements(db, save, requirementsForEntity(db, 'Recipe', recipeId));
+    return ProductionQueueResult.failed(unmet.isEmpty ? 'You cannot make that yet.' : unmet.first);
   }
   if (!recipeMatchesFacility(
     jsString(recipe.raw['Facility ID']),
