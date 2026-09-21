@@ -29,6 +29,26 @@ void main() {
     database = loadDatabaseFromRepo();
   });
 
+  testWidgets('skills sit in a 4 by 4 grid with Vitality after Might', (tester) async {
+    final controller = buildController(database, seed: startedCharacter(database));
+    addTearDown(controller.dispose);
+    await pumpSkillShell(tester, controller);
+    await openChinSkills(tester);
+
+    final might = tester.getRect(find.text('Might'));
+    final vitality = tester.getRect(find.text('Vitality'));
+    final mining = tester.getRect(find.text('Mining'));
+    final fishing = tester.getRect(find.text('Fishing'));
+    final harvesting = tester.getRect(find.text('Harvesting'));
+    expect((vitality.center.dy - might.center.dy).abs(), lessThan(8));
+    expect(might.right, lessThan(vitality.left));
+    expect((mining.center.dy - vitality.center.dy).abs(), lessThan(8));
+    expect(vitality.right, lessThan(mining.left));
+    expect((fishing.center.dy - mining.center.dy).abs(), lessThan(8));
+    expect(mining.right, lessThan(fishing.left));
+    expect(harvesting.top, greaterThan(might.bottom));
+  });
+
   testWidgets('a skill tile opens a numbered proficiency list', (tester) async {
     final controller = buildController(database, seed: startedCharacter(database));
     addTearDown(controller.dispose);
@@ -47,9 +67,9 @@ void main() {
 
     await openSkillTile(tester, 'Might');
 
-    expect(find.text('Enemies'), findsOne);
+    expect(find.text('Enemies'), findsNothing);
     final popup = find.byKey(const Key('game-popup'));
-    expect(find.descendant(of: popup, matching: find.text('Equipment')), findsOne);
+    expect(find.descendant(of: popup, matching: find.text('Equipment')), findsNothing);
     expect(find.descendant(of: popup, matching: find.text('Weapons')), findsOne);
     expect(find.descendant(of: popup, matching: find.text('Other')), findsOne);
     expect(find.text('Pressure the guards'), findsNothing);
@@ -59,9 +79,9 @@ void main() {
     );
     expect(find.descendant(of: popup, matching: find.byTooltip('Close')), findsOne);
     final tabs = tester.widget<Row>(
-      find.ancestor(of: find.text('Enemies'), matching: find.byType(Row)).first,
+      find.ancestor(of: find.text('Weapons'), matching: find.byType(Row)).first,
     );
-    expect(tabs.children.whereType<Expanded>(), hasLength(4));
+    expect(tabs.children.whereType<Expanded>(), hasLength(2));
   });
 
   testWidgets('cooking opens a recipe book that includes locked recipes', (tester) async {
@@ -122,24 +142,7 @@ void main() {
     await openSkillTile(tester, 'Might');
 
     final popup = find.byKey(const Key('game-popup'));
-    await tester.tap(find.descendant(of: popup, matching: find.text('Equipment')));
-    await tester.pump();
-    expect(find.textContaining('Leather equipment'), findsOne);
-    await tester.scrollUntilVisible(
-      find.textContaining('Tungsten equipment'),
-      200,
-      scrollable: find.descendant(
-        of: find.byKey(const Key('game-popup')),
-        matching: find.byType(Scrollable),
-      ),
-    );
-    expect(find.textContaining('Tungsten equipment'), findsOne);
-    expect(find.textContaining('Tungsten Helmet'), findsNothing);
-    expect(find.textContaining('Tungsten Shield'), findsNothing);
-    expect(find.textContaining('Tungsten Sword'), findsNothing);
-
-    await tester.tap(find.descendant(of: popup, matching: find.text('Weapons')));
-    await tester.pump();
+    expect(find.descendant(of: popup, matching: find.text('Weapons')), findsOne);
     await tester.scrollUntilVisible(
       find.textContaining('Tungsten weapons'),
       200,
@@ -157,15 +160,7 @@ void main() {
     await tester.pump();
     expect(find.textContaining('Leather Helmet'), findsNothing);
     expect(find.textContaining('Wooden Sword'), findsOne);
-    await tester.scrollUntilVisible(
-      find.textContaining('Bull Horn Helmet'),
-      200,
-      scrollable: find.descendant(
-        of: find.byKey(const Key('game-popup')),
-        matching: find.byType(Scrollable),
-      ),
-    );
-    expect(find.textContaining('Bull Horn Helmet'), findsOne);
+    expect(find.textContaining('Bull Horn Helmet'), findsNothing);
     await tester.scrollUntilVisible(
       find.textContaining('Cedar Bow'),
       200,
@@ -176,6 +171,40 @@ void main() {
     );
     expect(find.textContaining('Cedar Bow'), findsOne);
     expect(find.textContaining('Boar Spear'), findsOne);
+
+    await tester.tap(find.descendant(of: popup, matching: find.byTooltip('Close')));
+    await tester.pumpAndSettle();
+    await openSkillTile(tester, 'Vitality');
+    final vitality = find.byKey(const Key('game-popup'));
+    await tester.tap(find.descendant(of: vitality, matching: find.text('Equipment')));
+    await tester.pump();
+    expect(find.textContaining('Leather equipment'), findsOne);
+    await tester.scrollUntilVisible(
+      find.textContaining('Tungsten equipment'),
+      200,
+      scrollable: find.descendant(
+        of: find.byKey(const Key('game-popup')),
+        matching: find.byType(Scrollable),
+      ),
+    );
+    expect(find.textContaining('Tungsten equipment'), findsOne);
+    expect(find.textContaining('Tungsten Helmet'), findsNothing);
+    expect(find.textContaining('Tungsten Shield'), findsNothing);
+    expect(find.textContaining('Tungsten Sword'), findsNothing);
+
+    await tester.tap(find.descendant(of: vitality, matching: find.text('Other')));
+    await tester.pump();
+    await tester.scrollUntilVisible(
+      find.textContaining('Bull Horn Helmet'),
+      200,
+      scrollable: find.descendant(
+        of: find.byKey(const Key('game-popup')),
+        matching: find.byType(Scrollable),
+      ),
+    );
+    expect(find.textContaining('Bull Horn Helmet'), findsOne);
+    expect(find.textContaining('Wooden Sword'), findsNothing);
+    expect(find.textContaining('Cedar Bow'), findsNothing);
   });
 
   testWidgets('artisanry lists leather equipment on Other', (tester) async {

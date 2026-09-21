@@ -361,12 +361,16 @@ String projectOutputName(GameDatabase db, ProjectRow project) {
 }
 
 List<SkillMenuTab> _tabsForSkill(GameDatabase db, String skillId) {
-  if (skillId == mightSkillId || skillId == vitalitySkillId) {
+  if (skillId == mightSkillId) {
     return <SkillMenuTab>[
-      _listTab('enemies', 'Enemies', _combatEnemyEntries(db)),
-      _listTab('gear', 'Equipment', _combatEquipmentEntries(db)),
       _listTab('weapons', 'Weapons', _combatWeaponEntries(db)),
-      _listTab('other', 'Other', _combatOtherEntries(db)),
+      _listTab('other', 'Other', _combatOtherWeaponEntries(db)),
+    ];
+  }
+  if (skillId == vitalitySkillId) {
+    return <SkillMenuTab>[
+      _listTab('gear', 'Equipment', _combatEquipmentEntries(db)),
+      _listTab('other', 'Other', _combatOtherEquipmentEntries(db)),
     ];
   }
   if (skillId == fishingSkillId) {
@@ -633,22 +637,6 @@ List<SkillMenuListItem> _arcanaEssenceEntries(GameDatabase db) {
   ];
 }
 
-List<SkillMenuListItem> _combatEnemyEntries(GameDatabase db) {
-  final items = <SkillMenuListItem>[];
-  final seen = <String>{};
-  for (final action in db.actions) {
-    if (action.raw['Relevant Skill ID'] != mightSkillId) continue;
-    if (action.raw['Status'] == 'Needs Data') continue;
-    if (actionIsQuestOnly(db, action.actionId)) continue;
-    final enemy = _enemyForCombatAction(db, action);
-    if (enemy == null) continue;
-    final name = enemy.displayName.trim();
-    if (name.isEmpty || !seen.add(name)) continue;
-    items.add(SkillMenuListItem(id: action.actionId, displayName: name, level: enemy.combatLevel));
-  }
-  return _dedupeByName(items);
-}
-
 List<SkillMenuListItem> _combatGearItems(GameDatabase db) {
   return <SkillMenuListItem>[
     ..._projectItemsWhere(db, (item, _) => _isCombatGearItem(item), <String>{
@@ -699,6 +687,20 @@ bool _isCombatOtherItem(SkillMenuListItem item) {
   final weapon = _weaponMaterial(item.displayName);
   if (weapon != null) return !_isMetalMaterial(weapon);
   return true;
+}
+
+List<SkillMenuListItem> _combatOtherWeaponEntries(GameDatabase db) {
+  return [
+    for (final item in _combatOtherEntries(db))
+      if (_armorMaterial(item.displayName) == null) item,
+  ];
+}
+
+List<SkillMenuListItem> _combatOtherEquipmentEntries(GameDatabase db) {
+  return [
+    for (final item in _combatOtherEntries(db))
+      if (_armorMaterial(item.displayName) != null) item,
+  ];
 }
 
 const Set<String> _metalMaterials = <String>{
@@ -945,13 +947,6 @@ ItemRow? _itemByName(GameDatabase db, String name) {
 String _projectOutputId(GameDatabase db, String projectId) {
   final project = db.projects.firstWhereOrNull((row) => row.raw['Project ID'] == projectId);
   return jsString(project?.raw['Output Item / Target ID']);
-}
-
-EnemyRow? _enemyForCombatAction(GameDatabase db, ActionRow action) {
-  if (action.category != 'Combat') return null;
-  final targetId = action.targetId;
-  if (targetId == null || targetId.isEmpty) return null;
-  return db.enemies.firstWhereOrNull((row) => row.raw['Enemy ID'] == targetId);
 }
 
 num? _projectLevelForSkill(ProjectRow project, String skillId) {

@@ -131,14 +131,6 @@ class EquipmentPresetsBar extends StatelessWidget {
     onSelectPreset?.call(index);
   }
 
-  void _commitPresetIcon(int index, EquipmentPresetIcon icon) {
-    controller.commit(setEquipmentPresetIcon(controller.save, index, icon));
-  }
-
-  void _commitPresetName(int index, String name) {
-    controller.commit(renameEquipmentPreset(controller.save, index, name));
-  }
-
   Future<void> _openPresetSettings(BuildContext context) async {
     final save = controller.save;
     final skills = controller.db.skills.where((row) => row.releasePhase == 'Launch').toList();
@@ -157,7 +149,6 @@ class EquipmentPresetsBar extends StatelessWidget {
       context: context,
       builder: (context) {
         return _AllPresetsSettingsDialog(
-          controller: controller,
           presets: presets,
           skills: skills,
           skillsById: controller.indexes.skillsById,
@@ -169,6 +160,7 @@ class EquipmentPresetsBar extends StatelessWidget {
     var next = controller.save;
     for (var i = 0; i < result.length; i += 1) {
       next = renameEquipmentPreset(next, i, result[i].name);
+      next = setEquipmentPresetIcon(next, i, result[i].icon);
     }
     controller.commit(next);
     onMessage?.call('Preset settings saved.');
@@ -206,8 +198,6 @@ class EquipmentPresetsBar extends StatelessWidget {
                           isDense: true,
                           border: OutlineInputBorder(),
                         ),
-                        onEditingComplete: () => _commitPresetName(index, nameController.text),
-                        onSubmitted: (value) => _commitPresetName(index, value),
                       ),
                       const SizedBox(height: 8),
                       _PresetIconPicker(
@@ -215,8 +205,6 @@ class EquipmentPresetsBar extends StatelessWidget {
                         skills: skills,
                         onChanged: (next) {
                           setLocal(() => icon = next);
-                          _commitPresetName(index, nameController.text);
-                          _commitPresetIcon(index, next);
                         },
                       ),
                       const SizedBox(height: 12),
@@ -524,13 +512,11 @@ class _IconChoice extends StatelessWidget {
 
 class _AllPresetsSettingsDialog extends StatefulWidget {
   const _AllPresetsSettingsDialog({
-    required this.controller,
     required this.presets,
     required this.skills,
     required this.skillsById,
   });
 
-  final GameController controller;
   final List<EquipmentPreset> presets;
   final List<SkillRow> skills;
   final Map<String, SkillRow> skillsById;
@@ -567,19 +553,9 @@ class _AllPresetsSettingsDialogState extends State<_AllPresetsSettingsDialog> {
       icon: _icons[index],
       skills: widget.skills,
       skillsById: widget.skillsById,
-      onIconChanged: (icon) => _setIcon(index, icon),
-      onNameCommitted: (name) => _commitName(index, name),
+      onIconChanged: (icon) => setState(() => _icons[index] = icon),
+      onNameCommitted: (_) {},
     );
-  }
-
-  void _commitName(int index, String name) {
-    widget.controller.commit(renameEquipmentPreset(widget.controller.save, index, name));
-  }
-
-  void _setIcon(int index, EquipmentPresetIcon icon) {
-    _commitName(index, _nameControllers[index].text);
-    setState(() => _icons[index] = icon);
-    widget.controller.commit(setEquipmentPresetIcon(widget.controller.save, index, icon));
   }
 
   void _save() {

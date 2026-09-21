@@ -432,6 +432,15 @@ class _InventoryViewState extends State<InventoryView> {
               ),
               const SizedBox(height: 8),
               GameButton(
+                key: const Key('inventory-stance'),
+                label: 'Stance',
+                tone: GameButtonTone.secondary,
+                compact: true,
+                dense: true,
+                onPressed: _openStanceMenu,
+              ),
+              const SizedBox(height: 8),
+              GameButton(
                 key: const Key('inventory-eat'),
                 label: 'Eat',
                 tone: GameButtonTone.secondary,
@@ -490,6 +499,63 @@ class _InventoryViewState extends State<InventoryView> {
               ),
             );
           },
+        );
+      },
+    );
+  }
+
+  Future<void> _openStanceMenu() {
+    return showGamePopup<void>(
+      context: context,
+      origin: popupOrigin(context),
+      builder: (dialogContext) {
+        return GamePopupCard(
+          child: ListenableBuilder(
+            listenable: controller,
+            builder: (context, _) {
+              final style = normalizeAttackStyle(save.attackStyle);
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    children: [
+                      const Expanded(
+                        child: Text(
+                          'Stance',
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
+                        ),
+                      ),
+                      GameButton(
+                        label: 'Close',
+                        tone: GameButtonTone.secondary,
+                        compact: true,
+                        dense: true,
+                        onPressed: () => Navigator.of(context).pop(),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  for (final entry in const <(String, String)>[
+                    ('offensive', 'Offensive'),
+                    ('balanced', 'Balanced'),
+                    ('defensive', 'Defensive'),
+                  ]) ...[
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 6),
+                      child: GameButton(
+                        label: entry.$2,
+                        selected: style == entry.$1,
+                        tone: style == entry.$1 ? GameButtonTone.primary : GameButtonTone.secondary,
+                        onPressed: () => controller.setAttackStyle(entry.$1),
+                      ),
+                    ),
+                  ],
+                  MutedText(_attackStyleHint(style)),
+                ],
+              );
+            },
+          ),
         );
       },
     );
@@ -804,7 +870,6 @@ class _InventoryViewState extends State<InventoryView> {
     final summary = playerCombatStatSummary(db, save);
     final damage = summary.damage;
     final offhand = summary.offhandDamage;
-    final style = normalizeAttackStyle(save.attackStyle);
     return GamePanel(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -821,31 +886,6 @@ class _InventoryViewState extends State<InventoryView> {
               _Stat(label: 'DR', value: '${summary.damageReduction}'),
             ],
           ),
-          const SizedBox(height: 8),
-          MutedText('Attack style'),
-          const SizedBox(height: 4),
-          Row(
-            children: [
-              for (final entry in const <(String, String)>[
-                ('offensive', 'Offensive'),
-                ('balanced', 'Balanced'),
-                ('defensive', 'Defensive'),
-              ]) ...[
-                if (entry.$1 != 'offensive') const SizedBox(width: 6),
-                Flexible(
-                  child: GameButton(
-                    label: entry.$2,
-                    tone: style == entry.$1 ? GameButtonTone.primary : GameButtonTone.secondary,
-                    compact: true,
-                    dense: true,
-                    onPressed: () => widget.controller.setAttackStyle(entry.$1),
-                  ),
-                ),
-              ],
-            ],
-          ),
-          const SizedBox(height: 4),
-          MutedText(_attackStyleHint(style)),
           const SizedBox(height: 10),
           Row(
             children: [
