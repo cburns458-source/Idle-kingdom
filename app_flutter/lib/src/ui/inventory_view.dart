@@ -380,48 +380,69 @@ class _InventoryViewState extends State<InventoryView> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 220),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  GameButton(
-                    label: 'Attributes',
-                    tone: GameButtonTone.secondary,
-                    compact: true,
-                    dense: true,
-                    onPressed: _openAttributes,
-                  ),
-                  const SizedBox(height: 8),
-                  EquipmentPresetsBar(
-                    controller: controller,
-                    showSettingsButton: true,
-                    onMessage: (message) {
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
-                    },
-                  ),
-                  const SizedBox(height: 8),
-                  GridView.count(
-                    crossAxisCount: 4,
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    mainAxisSpacing: 4,
-                    crossAxisSpacing: 4,
-                    children: [for (final slotId in equipmentGridOrder) _slotTile(slotId)],
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
-          _eatAtHealth(),
+          _dollRow(),
           const SizedBox(height: 8),
           _bagToolbar(),
           const SizedBox(height: 8),
           _bag(),
         ],
       ),
+    );
+  }
+
+  /// Presets left of the doll, Attributes and Eat on the right. The sheet is
+  /// as wide as the playable column so the side chips do not crush the slots.
+  Widget _dollRow() {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        EquipmentPresetsBar(
+          controller: controller,
+          axis: Axis.vertical,
+          compact: true,
+          showSettingsButton: true,
+          onMessage: (message) {
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+          },
+        ),
+        const SizedBox(width: 6),
+        Expanded(
+          child: GridView.count(
+            crossAxisCount: 4,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            mainAxisSpacing: 4,
+            crossAxisSpacing: 4,
+            children: [for (final slotId in equipmentGridOrder) _slotTile(slotId)],
+          ),
+        ),
+        const SizedBox(width: 6),
+        SizedBox(
+          width: 96,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              GameButton(
+                key: const Key('inventory-attributes'),
+                label: 'Attributes',
+                tone: GameButtonTone.secondary,
+                compact: true,
+                dense: true,
+                onPressed: _openAttributes,
+              ),
+              const SizedBox(height: 8),
+              GameButton(
+                key: const Key('inventory-eat'),
+                label: 'Eat',
+                tone: GameButtonTone.secondary,
+                compact: true,
+                dense: true,
+                onPressed: _openEatMenu,
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -466,6 +487,69 @@ class _InventoryViewState extends State<InventoryView> {
                     ),
                   ],
                 ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _openEatMenu() {
+    return showGamePopup<void>(
+      context: context,
+      origin: popupOrigin(context),
+      builder: (dialogContext) {
+        String? refusal;
+        return StatefulBuilder(
+          builder: (context, setOverlay) {
+            return GamePopupCard(
+              child: ListenableBuilder(
+                listenable: controller,
+                builder: (context, _) {
+                  return Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Row(
+                        children: [
+                          const Expanded(
+                            child: Text(
+                              'Eat',
+                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
+                            ),
+                          ),
+                          GameButton(
+                            label: 'Close',
+                            tone: GameButtonTone.secondary,
+                            compact: true,
+                            dense: true,
+                            onPressed: () => Navigator.of(context).pop(),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      _eatAtHealth(),
+                      const SizedBox(height: 10),
+                      GameButton(
+                        key: const Key('eat-now'),
+                        label: 'Eat now',
+                        onPressed: isInCombat(save)
+                            ? null
+                            : () {
+                                final reason = controller.eatFood();
+                                if (!context.mounted) return;
+                                if (reason != null) {
+                                  setOverlay(() => refusal = reason);
+                                  return;
+                                }
+                                Navigator.of(context).pop();
+                              },
+                      ),
+                      if (refusal != null) ...[const SizedBox(height: 8), MutedText(refusal!)],
+                    ],
+                  );
+                },
               ),
             );
           },

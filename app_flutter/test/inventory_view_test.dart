@@ -211,7 +211,7 @@ void main() {
     expect(find.descendant(of: popup, matching: find.text('DR')), findsOne);
     expect(find.text('Show bonuses'), findsOne);
     expect(find.text('Show sources'), findsOne);
-    expect(find.textContaining('Eat at'), findsOne);
+    expect(find.textContaining('Eat at'), findsNothing);
     final bonuses = tester.getRect(find.text('Show bonuses'));
     final sources = tester.getRect(find.text('Show sources'));
     expect((bonuses.center.dy - sources.center.dy).abs(), lessThan(8));
@@ -369,11 +369,18 @@ void main() {
     addTearDown(controller.dispose);
 
     await pumpPanel(tester, InventoryView(controller: controller));
-    expect(find.text('Eat'), findsNothing);
+    expect(find.byKey(const Key('inventory-eat')), findsOne);
+    expect(
+      find.descendant(of: find.byTooltip('Wild berries').first, matching: find.text('Eat')),
+      findsNothing,
+    );
 
     await tester.longPress(find.byTooltip('Wild berries').first);
     await tester.pumpAndSettle();
-    expect(find.text('Eat'), findsOne);
+    expect(
+      find.descendant(of: find.byKey(const Key('game-popup')), matching: find.text('Eat')),
+      findsOne,
+    );
   });
 
   testWidgets('applying a preset wears it; bag equips still change current gear only', (
@@ -548,7 +555,7 @@ void main() {
     expect(controller.save.equipmentPresets[0].name, 'Farm Kit');
   });
 
-  testWidgets('equipment bar keeps Save and settings next to the four presets', (tester) async {
+  testWidgets('presets sit left of the doll; Attributes and Eat sit right', (tester) async {
     final controller = buildController(database, seed: startedCharacter(database));
     addTearDown(controller.dispose);
 
@@ -558,10 +565,95 @@ void main() {
     expect(find.byKey(const Key('preset-chip-0')), findsOne);
     expect(find.byKey(const Key('save-preset')), findsOne);
     expect(find.byKey(const Key('preset-settings')), findsOne);
-    final preset = tester.getSize(
-      find.descendant(of: find.byKey(const Key('preset-chip-0')), matching: find.byType(InkWell)),
+    expect(find.byKey(const Key('inventory-attributes')), findsOne);
+    expect(find.byKey(const Key('inventory-eat')), findsOne);
+    expect(find.textContaining('Eat at'), findsNothing);
+
+    final helmet = tester.getRect(find.text('Helmet'));
+    final preset = tester.getRect(find.byKey(const Key('preset-chip-0')));
+    final saveChip = tester.getRect(find.byKey(const Key('save-preset')));
+    final settings = tester.getRect(find.byKey(const Key('preset-settings')));
+    final attributes = tester.getRect(find.byKey(const Key('inventory-attributes')));
+    final eat = tester.getRect(find.byKey(const Key('inventory-eat')));
+    expect(preset.right, lessThan(helmet.left));
+    expect(saveChip.right, lessThan(helmet.left));
+    expect(settings.right, lessThan(helmet.left));
+    expect(saveChip.top, greaterThan(preset.bottom - 1));
+    expect(settings.top, greaterThan(saveChip.bottom - 1));
+    expect(attributes.left, greaterThan(helmet.right));
+    expect(eat.left, greaterThan(helmet.right));
+    expect(eat.top, greaterThan(attributes.bottom - 1));
+    expect(
+      tester
+          .getSize(
+            find.descendant(
+              of: find.byKey(const Key('preset-chip-0')),
+              matching: find.byType(InkWell),
+            ),
+          )
+          .height,
+      32,
     );
-    expect(preset.height, 30);
+  });
+
+  testWidgets('the Eat button opens the threshold picker and Eat now', (tester) async {
+    var save = startedCharacter(database);
+    save = addItemToInventory(save, 'ITEM-0028', 2);
+    final equipped = equipItemFromInventory(database.launch, save, 'ITEM-0028');
+    expect(equipped.ok, isTrue);
+    final controller = buildController(
+      database,
+      seed: equipped.save!.copyWith(
+        settings: equipped.save!.settings.copyWith(showEatButton: false),
+      ),
+    );
+    addTearDown(controller.dispose);
+
+    await pumpPanel(tester, InventoryView(controller: controller));
+    expect(find.byKey(const Key('inventory-eat')), findsOne);
+    expect(find.textContaining('Eat at'), findsNothing);
+    expect(find.text('Eat now'), findsNothing);
+
+    await tester.tap(find.byKey(const Key('inventory-eat')));
+    await tester.pumpAndSettle();
+
+    final popup = find.byKey(const Key('game-popup'));
+    expect(popup, findsOne);
+    expect(find.textContaining('Eat at'), findsOne);
+    expect(find.byKey(const Key('eat-now')), findsOne);
+
+    final before = controller.save.equipment.slots[foodSlotId]?.quantity ?? 0;
+    expect(before, greaterThan(0));
+    await tester.tap(find.byKey(const Key('eat-now')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('game-popup')), findsNothing);
+    expect(controller.save.equipment.slots[foodSlotId]?.quantity ?? 0, before - 1);
+  });
+
+  testWidgets('Eat now with an empty food slot stays open and says so', (tester) async {
+    final controller = buildController(database, seed: unequippedCharacter());
+    addTearDown(controller.dispose);
+
+    await pumpPanel(tester, InventoryView(controller: controller));
+    await tester.tap(find.byKey(const Key('inventory-eat')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('eat-now')));
+    await tester.pump();
+    expect(find.byKey(const Key('game-popup')), findsOne);
+    expect(find.text('Nothing to eat.'), findsOne);
+  });
+
+  testWidgets('the doll row stays usable on a phone-wide sheet', (tester) async {
+    final controller = buildController(database, seed: startedCharacter(database));
+    addTearDown(controller.dispose);
+
+    await pumpPanel(tester, InventoryView(controller: controller), size: const Size(390, 844));
+
+    final helmet = tester.getRect(find.text('Helmet'));
+    expect(helmet.width, greaterThan(36));
+    expect(tester.takeException(), isNull);
+    expect(find.byKey(const Key('preset-chip-0')), findsOne);
+    expect(find.byKey(const Key('inventory-eat')), findsOne);
   });
 
   testWidgets('the bag fits six to eight items on a row', (tester) async {
