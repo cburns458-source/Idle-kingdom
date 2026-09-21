@@ -588,52 +588,48 @@ class _InventoryViewState extends State<InventoryView> {
       children: [
         _combatStats(),
         const SizedBox(height: 10),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            EquipmentPresetsBar(
-              controller: controller,
-              axis: Axis.vertical,
-              showSettingsButton: true,
-              showCurrentButton: true,
-              selectedPresetIndex: _selectedPresetIndex,
-              onSelectCurrent: () => _setSelectedPresetIndex(null),
-              onEditPreset: _setSelectedPresetIndex,
-              onSaveEditingPreset: _finishEditingPreset,
-              onMessage: (message) {
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
-              },
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  if (_editingPreset) ...[
-                    MutedText(
-                      'Editing ${_presetName(_selectedPresetIndex!)}. Worn gear is unchanged until you Apply.',
-                    ),
-                    const SizedBox(height: 8),
-                  ],
-                  Center(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 320),
-                      child: GridView.count(
-                        crossAxisCount: 4,
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        mainAxisSpacing: 6,
-                        crossAxisSpacing: 6,
-                        children: [for (final slotId in equipmentGridOrder) _slotTile(slotId)],
-                      ),
-                    ),
-                  ),
-                ],
+        if (_editingPreset) ...[
+          MutedText(
+            'Editing ${_presetName(_selectedPresetIndex!)}. Worn gear is unchanged until you Apply.',
+          ),
+          const SizedBox(height: 8),
+        ],
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.topCenter,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              EquipmentPresetsBar(
+                controller: controller,
+                axis: Axis.vertical,
+                showSettingsButton: true,
+                showCurrentButton: true,
+                selectedPresetIndex: _selectedPresetIndex,
+                onSelectCurrent: () => _setSelectedPresetIndex(null),
+                onEditPreset: _setSelectedPresetIndex,
+                onSaveEditingPreset: _finishEditingPreset,
+                onMessage: (message) {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+                },
               ),
-            ),
-            const SizedBox(width: 8),
-            _attributeColumn(),
-          ],
+              const SizedBox(width: 8),
+              SizedBox(
+                width: 292,
+                child: GridView.count(
+                  crossAxisCount: 4,
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  mainAxisSpacing: 6,
+                  crossAxisSpacing: 6,
+                  children: [for (final slotId in equipmentGridOrder) _slotTile(slotId)],
+                ),
+              ),
+              const SizedBox(width: 8),
+              _attributeColumn(),
+            ],
+          ),
         ),
       ],
     );
@@ -641,7 +637,7 @@ class _InventoryViewState extends State<InventoryView> {
 
   Widget _attributeColumn() {
     return SizedBox(
-      width: 92,
+      width: 96,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -649,8 +645,6 @@ class _InventoryViewState extends State<InventoryView> {
             key: const Key('show-bonuses'),
             label: _showBonuses ? 'Hide bonuses' : 'Show bonuses',
             tone: GameButtonTone.secondary,
-            compact: true,
-            dense: true,
             onPressed: () => setState(() => _showBonuses = !_showBonuses),
           ),
           const SizedBox(height: 8),
@@ -658,8 +652,6 @@ class _InventoryViewState extends State<InventoryView> {
             key: const Key('show-sources'),
             label: _showSources ? 'Hide sources' : 'Show sources',
             tone: GameButtonTone.secondary,
-            compact: true,
-            dense: true,
             onPressed: () => setState(() => _showSources = !_showSources),
           ),
           const SizedBox(height: 8),
@@ -667,8 +659,6 @@ class _InventoryViewState extends State<InventoryView> {
             key: const Key('eat-options'),
             label: 'Eat',
             tone: GameButtonTone.secondary,
-            compact: true,
-            dense: true,
             onPressed: _openEatMenu,
           ),
         ],

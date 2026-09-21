@@ -629,7 +629,7 @@ void main() {
     expect(controller.save.equipmentPresets[0].name, 'Farm Kit');
   });
 
-  testWidgets('equipment bar keeps Current wide and presets square', (tester) async {
+  testWidgets('equipment bar stacks square chips left of the paper doll', (tester) async {
     final controller = buildController(database, seed: startedCharacter(database));
     addTearDown(controller.dispose);
 
@@ -650,7 +650,11 @@ void main() {
     expect(preset.width, 34);
     expect(settings.width, settings.height);
     expect(settings.width, 34);
-    expect(current.height, 34);
-    expect(current.width, greaterThan(preset.width));
+    expect(current.width, current.height);
+    expect(current.width, 34);
+    expect(
+      tester.getRect(find.byKey(const Key('current-loadout'))).right,
+      lessThan(tester.getRect(find.text('Helmet')).left),
+    );
   });
 }

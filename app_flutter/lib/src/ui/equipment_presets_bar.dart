@@ -75,6 +75,8 @@ class EquipmentPresetsBar extends StatelessWidget {
 
   bool get _stageSquareChips => compact && axis == Axis.vertical;
 
+  bool get _verticalSquares => axis == Axis.vertical;
+
   Widget _bar(BuildContext context) {
     final save = controller.save;
     final presets = save.equipmentPresets;
@@ -83,7 +85,7 @@ class EquipmentPresetsBar extends StatelessWidget {
         ? _LabelChip(
             key: const Key('current-loadout'),
             compact: compact,
-            square: _stageSquareChips,
+            square: _stageSquareChips || _verticalSquares,
             label: 'Current',
             semanticsLabel: 'Current loadout',
             selected: selectedPresetIndex == null,
@@ -117,7 +119,7 @@ class EquipmentPresetsBar extends StatelessWidget {
     final saveChip = showSaveButton
         ? _SaveChip(
             compact: compact,
-            square: _stageSquareChips,
+            square: _stageSquareChips || _verticalSquares,
             onPressed: _saveEnabled ? _saveSelectedPreset : null,
           )
         : null;
@@ -125,7 +127,7 @@ class EquipmentPresetsBar extends StatelessWidget {
         ? _SettingsChip(
             key: const Key('preset-settings'),
             compact: compact,
-            square: _stageSquareChips || showCurrentButton,
+            square: _stageSquareChips || _verticalSquares || showCurrentButton,
             onPressed: () => _openPresetSettings(context),
           )
         : null;
