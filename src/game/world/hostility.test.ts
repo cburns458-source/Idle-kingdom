@@ -35,7 +35,9 @@ describe('hostile travel forcing', () => {
     save = {
       ...save,
       skills: save.skills.map((skill) =>
-        skill.skillId === 'SKL-0001' ? { ...skill, level: 10, xp: 50_000 } : skill,
+        skill.skillId === 'SKL-0001' || skill.skillId === 'SKL-0016'
+          ? { ...skill, level: 7, xp: 50_000 }
+          : skill,
       ),
     }
     expect(forcedHostileActivity(launch, save, 'LOC-0003')).toBeNull()

@@ -27,12 +27,16 @@ import { ARCANA_SKILL_ID } from '../npcs/knowledge'
 import {
   applyMitigation,
   fishingCombatDamageRange,
+  MIGHT_SKILL_ID,
+  normalizeAttackStyle,
   playerDamageRange,
   playerDamageReduction,
   playerMaxHp,
   playerOffhandDamageRange,
   rollDamage,
+  splitCombatVictoryXp,
   staffSparksDamageRange,
+  VITALITY_SKILL_ID,
 } from './stats'
 import { applySleepIncoming, bossProfile, enemyEncounterDamageRange, enemyEncounterMaxHp, isBossAddFight, isBossEnemy, withBossRespawn } from './boss'
 
@@ -71,8 +75,10 @@ export interface CombatRoundResult {
 export interface CombatVictoryResult {
   save: PlayerSave
   xpGained: number
-  /** Skill that received [xpGained] (Fishing for Mother Squid). */
+  /** Primary skill for the XP toast (Fishing for Mother Squid; Might otherwise). */
   xpSkillId: string
+  /** Every skill that received XP this victory (style split may list two). */
+  xpAwards: { skillId: string; xp: number }[]
   goldGained: number
   loot: LootGrant[]
   foodConsumed: boolean
@@ -382,14 +388,33 @@ export function applyCombatVictory(
   }
 
   const xpAmount = Number(enemy['Combat XP'] ?? action['XP Reward'] ?? 0)
-  // Prefer fishing-mode bosses, then the action's Relevant Skill (Fight Mother Squid
-  // is Fishing). Falls back to Combat for ordinary fights.
-  const xpSkillId =
-    bossProfile(enemy)?.damageMode === 'fishing'
-      ? FISHING_SKILL_ID
-      : String(action['Relevant Skill ID'] || 'SKL-0001')
-  const xpApplied = applyXp(next, db, xpSkillId, xpAmount)
-  next = xpApplied.save
+  // Prefer fishing-mode bosses (Fight Mother Squid). Ordinary fights split XP
+  // across Might / Vitality by the player's attack style.
+  const fishingMode = bossProfile(enemy)?.damageMode === 'fishing'
+  const xpAwards: { skillId: string; xp: number }[] = []
+  let xpSkillId = MIGHT_SKILL_ID
+  if (fishingMode) {
+    xpSkillId = FISHING_SKILL_ID
+    if (xpAmount > 0) {
+      const xpApplied = applyXp(next, db, FISHING_SKILL_ID, xpAmount)
+      next = xpApplied.save
+      xpAwards.push({ skillId: FISHING_SKILL_ID, xp: xpAmount })
+    }
+  } else {
+    const split = splitCombatVictoryXp(xpAmount, normalizeAttackStyle(save.attackStyle))
+    if (split.mightXp > 0) {
+      const applied = applyXp(next, db, MIGHT_SKILL_ID, split.mightXp)
+      next = applied.save
+      xpAwards.push({ skillId: MIGHT_SKILL_ID, xp: split.mightXp })
+      xpSkillId = MIGHT_SKILL_ID
+    }
+    if (split.vitalityXp > 0) {
+      const applied = applyXp(next, db, VITALITY_SKILL_ID, split.vitalityXp)
+      next = applied.save
+      xpAwards.push({ skillId: VITALITY_SKILL_ID, xp: split.vitalityXp })
+      if (split.mightXp <= 0) xpSkillId = VITALITY_SKILL_ID
+    }
+  }
 
   const minGold = Number(enemy['Minimum Gold'] ?? 0)
   const maxGold = Number(enemy['Maximum Gold'] ?? minGold)
@@ -437,12 +462,13 @@ export function applyCombatVictory(
   next = applyBountyDefeatProgress(next, enemy['Enemy ID'], 1, nowMs)
   next = withoutHeldAction(next, save.currentActivityId)
   next = creditLootTracker(next, 'enemy', enemy['Enemy ID'], rewarded.loot, goldGained, nowMs)
-  next = creditXpAwards(next, [{ skillId: xpSkillId, xp: xpAmount }], nowMs)
+  next = creditXpAwards(next, xpAwards, nowMs)
 
   return {
     save: next,
     xpGained: xpAmount,
     xpSkillId,
+    xpAwards,
     goldGained,
     loot: rewarded.loot,
     foodConsumed: food.consumed,

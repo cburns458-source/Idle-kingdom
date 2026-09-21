@@ -44,7 +44,9 @@ void main() {
         raceId: 'RACE-0003',
         skills: [
           for (final skill in mira.skills)
-            skill.skillId == combatSkillId ? skill.copyWith(level: 20) : skill,
+            skill.skillId == mightSkillId || skill.skillId == vitalitySkillId
+                ? skill.copyWith(level: 20)
+                : skill,
         ],
       ),
       weaponToolSlotId,
@@ -53,11 +55,11 @@ void main() {
     );
     expect(harness.writeCloudSave(demoMiraId, later, force: true).ok, isTrue);
     final snapshot = harness.opponentSave(demoMiraId)!;
-    expect(combatLevelOf(snapshot), 20);
+    expect(combatLevelOf(snapshot), 30);
     expect(snapshot.raceId, 'RACE-0003');
     expect(slotItemId(snapshot, weaponToolSlotId), 'ITEM-0128');
 
     final listed = harness.listArenaOpponents().firstWhere((row) => row.userId == demoMiraId);
-    expect(listed.combatLevel, 20);
+    expect(listed.combatLevel, 30);
   });
 }

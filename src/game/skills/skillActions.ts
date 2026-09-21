@@ -1,7 +1,7 @@
 import type { ActionRow, GameDatabase, ItemRow, RequirementRow } from '../data/types'
 import type { ProjectRow } from '../data/projectTypes'
 import { requirementsForEntity } from '../activity/requirements'
-import { COMBAT_SKILL_ID } from '../combat/stats'
+import { COMBAT_SKILL_ID, MIGHT_SKILL_ID, VITALITY_SKILL_ID } from '../combat/stats'
 import { ARTISANRY_SKILL_ID, ARCANA_SKILL_ID, SMITHING_SKILL_ID } from '../npcs/knowledge'
 import { isCompleteRecipe } from '../production/recipes'
 import {
@@ -293,7 +293,7 @@ export function projectOutputName(db: GameDatabase, project: ProjectRow): string
 }
 
 function tabsForSkill(db: GameDatabase, skillId: string): SkillMenuTab[] {
-  if (skillId === COMBAT_SKILL_ID) {
+  if (skillId === COMBAT_SKILL_ID || skillId === VITALITY_SKILL_ID || skillId === MIGHT_SKILL_ID) {
     return [
       listTab('enemies', 'Enemies', combatEnemyEntries(db)),
       listTab('gear', 'Equipment', combatEquipmentEntries(db)),
@@ -541,7 +541,7 @@ function combatEnemyEntries(db: GameDatabase): SkillMenuListItem[] {
   const items: SkillMenuListItem[] = []
   const seen = new Set<string>()
   for (const action of db.Actions) {
-    if (action['Relevant Skill ID'] !== COMBAT_SKILL_ID) continue
+    if (action['Relevant Skill ID'] !== MIGHT_SKILL_ID) continue
     if (action.Status === 'Needs Data') continue
     if (actionIsQuestOnly(db, action['Action ID'])) continue
     const enemy = enemyForCombatAction(db, action)

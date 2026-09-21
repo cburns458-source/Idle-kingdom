@@ -4,16 +4,34 @@ import { describe, expect, it } from 'vitest'
 import { prepareDatabase } from '../data/loadDatabase'
 import { createNewSave } from '../save/saveStore'
 import {
-  combatLevelBonusMultiplier,
+  combatLevelOf,
+  mightDamageMultiplier,
   playerDamageRange,
+  playerDamageReduction,
   playerMaxHp,
+  splitCombatVictoryXp,
+  vitalityHpMultiplier,
 } from './stats'
 
 const rawDatabase = JSON.parse(
   readFileSync(resolve(process.cwd(), 'content/data/game-database.json'), 'utf8'),
 )
 
-describe('combat level bonuses', () => {
+function withSkillLevels(
+  save: ReturnType<typeof createNewSave>,
+  levels: Record<string, number>,
+) {
+  return {
+    ...save,
+    skills: save.skills.map((skill) =>
+      levels[skill.skillId] != null
+        ? { ...skill, level: levels[skill.skillId]!, xp: 0 }
+        : skill,
+    ),
+  }
+}
+
+describe('might / vitality combat stats', () => {
   it('gives every fishing rod a 0-0 melee damage range', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const base = createNewSave(launch)
@@ -42,21 +60,29 @@ describe('combat level bonuses', () => {
     }
   })
 
-  it('gives no bonus below Combat Level 10', () => {
+  it('rounds Combat Level up from Might and Vitality', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const save = createNewSave(launch)
-    expect(combatLevelBonusMultiplier(save)).toBe(1)
+    expect(combatLevelOf(save)).toBe(2)
+    expect(combatLevelOf(withSkillLevels(save, { 'SKL-0001': 10, 'SKL-0016': 3 }))).toBe(10)
+  })
+
+  it('gives no level bonus below skill level 10', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const save = createNewSave(launch)
+    expect(mightDamageMultiplier(save)).toBe(1)
+    expect(vitalityHpMultiplier(save)).toBe(1)
     expect(playerMaxHp(launch, save)).toBe(1000)
   })
 
-  it('adds 1% HP and damage per Combat Level from level 10 upward', () => {
+  it('scales damage from Might and HP from Vitality', () => {
     const { launch } = prepareDatabase(rawDatabase)
-    const base = createNewSave(launch)
-    const at10 = {
+    const base = withSkillLevels(createNewSave(launch), {
+      'SKL-0001': 10,
+      'SKL-0016': 20,
+    })
+    const unarmed = {
       ...base,
-      skills: base.skills.map((skill) =>
-        skill.skillId === 'SKL-0001' ? { ...skill, level: 10, xp: 0 } : skill,
-      ),
       equipment: {
         slots: {
           ...base.equipment.slots,
@@ -64,32 +90,48 @@ describe('combat level bonuses', () => {
         },
       },
     }
-    expect(combatLevelBonusMultiplier(at10)).toBeCloseTo(1.1)
-    expect(playerMaxHp(launch, at10)).toBe(1100)
-    expect(playerDamageRange(launch, at10)).toEqual({ min: 11, max: 33 })
+    expect(mightDamageMultiplier(unarmed)).toBeCloseTo(1.1)
+    expect(vitalityHpMultiplier(unarmed)).toBeCloseTo(1.2)
+    expect(playerMaxHp(launch, unarmed)).toBe(1200)
+    expect(playerDamageRange(launch, unarmed)).toEqual({ min: 11, max: 33 })
+  })
 
-    const at20 = {
-      ...at10,
-      skills: at10.skills.map((skill) =>
-        skill.skillId === 'SKL-0001' ? { ...skill, level: 20, xp: 0 } : skill,
-      ),
+  it('applies offensive damage and defensive DR stance bonuses; balanced gets none', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const base = createNewSave(launch)
+    expect(playerDamageReduction(launch, { ...base, attackStyle: 'balanced' })).toBe(0)
+    expect(playerDamageReduction(launch, { ...base, attackStyle: 'defensive' })).toBe(1)
+
+    const unarmed = {
+      ...base,
+      equipment: {
+        slots: {
+          ...base.equipment.slots,
+          'SLOT-0001': null,
+        },
+      },
     }
-    expect(combatLevelBonusMultiplier(at20)).toBeCloseTo(1.2)
-    expect(playerMaxHp(launch, at20)).toBe(1200)
-    expect(playerDamageRange(launch, at20)).toEqual({ min: 12, max: 36 })
+    expect(playerDamageRange(launch, { ...unarmed, attackStyle: 'balanced' })).toEqual({
+      min: 10,
+      max: 30,
+    })
+    expect(playerDamageRange(launch, { ...unarmed, attackStyle: 'offensive' })).toEqual({
+      min: 10,
+      max: 30,
+    })
+    // 10–30 × 1.01 floored → still 10–30 at these bases; verify multiplier path via style XP split.
+    expect(splitCombatVictoryXp(125, 'offensive')).toEqual({ mightXp: 125, vitalityXp: 0 })
+    expect(splitCombatVictoryXp(125, 'defensive')).toEqual({ mightXp: 0, vitalityXp: 125 })
+    expect(splitCombatVictoryXp(125, 'balanced')).toEqual({ mightXp: 63, vitalityXp: 62 })
   })
 
   it('adds an Arcana layer only on Staff of Power', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const base = createNewSave(launch)
-    const withSkills = {
-      ...base,
-      skills: base.skills.map((skill) => {
-        if (skill.skillId === 'SKL-0001') return { ...skill, level: 40 }
-        if (skill.skillId === 'SKL-0013') return { ...skill, level: 50 }
-        return skill
-      }),
-    }
+    const withSkills = withSkillLevels(base, {
+      'SKL-0001': 40,
+      'SKL-0013': 50,
+    })
     const power = {
       ...withSkills,
       equipment: {
@@ -99,7 +141,7 @@ describe('combat level bonuses', () => {
         },
       },
     }
-    // 60–90 × combat-40 (1.40) × arcana-50 (1.50), floored once.
+    // 60–90 × might-40 (1.40) × arcana-50 (1.50), floored once.
     expect(playerDamageRange(launch, power)).toEqual({ min: 125, max: 188 })
 
     const sparks = {

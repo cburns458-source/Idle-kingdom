@@ -1,11 +1,13 @@
 import {
   applyMitigation,
-  combatLevelBonusMultiplier,
+  combatLevelOf,
+  mightDamageMultiplier,
   playerDamageRange,
   playerDamageReduction,
   playerMaxHp,
   playerOffhandDamageRange,
   rollDamage,
+  vitalityHpMultiplier,
 } from '../../game/combat/stats'
 import { mulberry32 } from '../../game/rng/mulberry32'
 import type { PlayerSave } from '../../game/save/types'
@@ -45,7 +47,9 @@ function withCombatLevel(save: PlayerSave, level: number): PlayerSave {
   return {
     ...save,
     skills: save.skills.map((skill) =>
-      skill.skillId === 'SKL-0001' ? { ...skill, level } : skill,
+      skill.skillId === 'SKL-0001' || skill.skillId === 'SKL-0016'
+        ? { ...skill, level }
+        : skill,
     ),
   }
 }
@@ -60,7 +64,9 @@ export const combatStatScenarios: ParityScenario[] = [
         damageReduction: playerDamageReduction(db, save),
         damageRange: playerDamageRange(db, save),
         offhandRange: playerOffhandDamageRange(db, save),
-        levelMultiplier: combatLevelBonusMultiplier(save),
+        combatLevel: combatLevelOf(save),
+        mightMultiplier: mightDamageMultiplier(save),
+        vitalityMultiplier: vitalityHpMultiplier(save),
       } as unknown as JsonValue
     }),
   ),
@@ -72,7 +78,9 @@ export const combatStatScenarios: ParityScenario[] = [
         const save = withCombatLevel(saveFor('geared'), level)
         return {
           level,
-          multiplier: combatLevelBonusMultiplier(save),
+          combatLevel: combatLevelOf(save),
+          mightMultiplier: mightDamageMultiplier(save),
+          vitalityMultiplier: vitalityHpMultiplier(save),
           maxHp: playerMaxHp(db, save),
           damageRange: playerDamageRange(db, save),
         }

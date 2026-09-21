@@ -1,4 +1,3 @@
-import '../activity/xp.dart';
 import '../combat/stats.dart';
 import '../save/generated/save_models.dart';
 import '../skills/totals.dart';
@@ -31,8 +30,6 @@ class ArenaOpponent {
     if (appearance != null) 'appearance': appearance!.toJson(),
   };
 }
-
-num combatLevelOf(PlayerSave save) => getSkillProgress(save, combatSkillId).level;
 
 /// UTC calendar day, matching `toISOString().slice(0, 10)`.
 String rankedPvpDayKey(num nowMs) => isoFromMs(nowMs).substring(0, 10);

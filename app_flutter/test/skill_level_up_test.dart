@@ -36,15 +36,15 @@ void main() {
     await pumpShell(tester, controller);
     await tester.pump();
 
-    expect(controller.debugAddSkillLevels(combatSkillId, 10), 'Combat is now level 11.');
+    expect(controller.debugAddSkillLevels(mightSkillId, 10), 'Might is now level 11.');
     await tester.pump();
     await tester.pump();
 
-    expect(find.text('Level 11 Combat'), findsOne);
+    expect(find.text('Level 11 Might'), findsOne);
     expect(find.textContaining('Fight '), findsNothing);
     await tester.tap(find.text('Continue'));
     await tester.pump();
-    expect(find.text('Level 11 Combat'), findsNothing);
+    expect(find.text('Level 11 Might'), findsNothing);
   });
 
   testWidgets('a stone level-up uses panel ink instead of parchment gold', (tester) async {

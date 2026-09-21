@@ -2,7 +2,7 @@ import 'package:collection/collection.dart';
 import 'package:ik_content/ik_content.dart';
 
 import '../activity/requirements.dart';
-import '../combat/stats.dart' show combatSkillId;
+import '../combat/stats.dart' show mightSkillId, vitalitySkillId;
 import '../equipment/specialist.dart' show cookingSkillId;
 import '../js_compat.dart';
 import '../npcs/knowledge.dart';
@@ -361,7 +361,7 @@ String projectOutputName(GameDatabase db, ProjectRow project) {
 }
 
 List<SkillMenuTab> _tabsForSkill(GameDatabase db, String skillId) {
-  if (skillId == combatSkillId) {
+  if (skillId == mightSkillId || skillId == vitalitySkillId) {
     return <SkillMenuTab>[
       _listTab('enemies', 'Enemies', _combatEnemyEntries(db)),
       _listTab('gear', 'Equipment', _combatEquipmentEntries(db)),
@@ -637,7 +637,7 @@ List<SkillMenuListItem> _combatEnemyEntries(GameDatabase db) {
   final items = <SkillMenuListItem>[];
   final seen = <String>{};
   for (final action in db.actions) {
-    if (action.raw['Relevant Skill ID'] != combatSkillId) continue;
+    if (action.raw['Relevant Skill ID'] != mightSkillId) continue;
     if (action.raw['Status'] == 'Needs Data') continue;
     if (actionIsQuestOnly(db, action.actionId)) continue;
     final enemy = _enemyForCombatAction(db, action);

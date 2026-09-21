@@ -30,8 +30,6 @@ import { isStandardProductionActivity } from '../production/recipes'
 import type { PlayerSave } from '../save/types'
 import type { SessionEvent } from './events'
 
-const COMBAT_SKILL_ID = 'SKL-0001'
-
 export interface SessionTickResult {
   save: PlayerSave
   /** False when nothing was due, which is the common case between frames. */
@@ -134,24 +132,27 @@ function victoryRewardBundle(
   before: PlayerSave,
   after: PlayerSave,
   enemy: EnemyRow,
-  xpGained: number,
+  xpAwards: { skillId: string; xp: number }[],
   loot: ActionRewardBundle['loot'],
   goldGained: number,
   nowMs: number,
-  xpSkillId: string = COMBAT_SKILL_ID,
 ): ActionRewardBundle {
-  const levelBefore = getSkillProgress(before, xpSkillId).level
-  const levelAfter = getSkillProgress(after, xpSkillId).level
-  const summary = summarizeXpReward(
-    db,
-    after,
-    xpSkillId,
-    xpGained,
-    levelAfter > levelBefore ? levelAfter : null,
-  )
+  const xpRewards = xpAwards.flatMap((award) => {
+    if (award.xp <= 0) return []
+    const levelBefore = getSkillProgress(before, award.skillId).level
+    const levelAfter = getSkillProgress(after, award.skillId).level
+    const summary = summarizeXpReward(
+      db,
+      after,
+      award.skillId,
+      award.xp,
+      levelAfter > levelBefore ? levelAfter : null,
+    )
+    return summary ? [summary] : []
+  })
   return {
     id: `combat-${enemy['Enemy ID']}-${nowMs}`,
-    xpRewards: summary ? [summary] : [],
+    xpRewards,
     loot,
     goldGained,
   }
@@ -223,11 +224,10 @@ function resolveDueCombatRound(
             before,
             out.current,
             enemy,
-            squidlingResult.xpGained,
+            [{ skillId: squidlingResult.xpSkillId, xp: squidlingResult.xpGained }],
             [],
             0,
             roundEnd,
-            squidlingResult.xpSkillId,
           ),
         })
       }
@@ -267,11 +267,10 @@ function resolveDueCombatRound(
         before,
         out.current,
         enemy,
-        victory.xpGained,
+        victory.xpAwards,
         victory.loot,
         victory.goldGained,
         roundEnd,
-        victory.xpSkillId,
       ),
     })
     out.emit({

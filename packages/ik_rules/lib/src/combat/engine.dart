@@ -114,6 +114,7 @@ class CombatVictoryResult {
     required this.save,
     required this.xpGained,
     required this.xpSkillId,
+    required this.xpAwards,
     required this.goldGained,
     required this.loot,
     required this.foodConsumed,
@@ -124,8 +125,11 @@ class CombatVictoryResult {
   final PlayerSave save;
   final num xpGained;
 
-  /// Skill that received [xpGained] (Fishing for Mother Squid).
+  /// Primary skill for the XP toast (Fishing for Mother Squid; Might otherwise).
   final String xpSkillId;
+
+  /// Every skill that received XP this victory (style split may list two).
+  final List<({String skillId, num xp})> xpAwards;
   final num goldGained;
   final List<LootGrant> loot;
   final bool foodConsumed;
@@ -429,13 +433,30 @@ CombatVictoryResult applyCombatVictory(
   );
 
   final xpAmount = jsNumber(enemy.raw['Combat XP'] ?? action.raw['XP Reward'] ?? 0);
-  // Prefer fishing-mode bosses, then the action's Relevant Skill (Fight Mother Squid
-  // is Fishing). Falls back to Combat for ordinary fights.
-  final relevantSkill = action.relevantSkillId;
-  final xpSkillId = bossProfile(enemy)?.damageMode == 'fishing'
-      ? fishingSkillId
-      : (relevantSkill.isNotEmpty ? relevantSkill : combatSkillId);
-  next = applyXp(next, db, xpSkillId, xpAmount).save;
+  // Prefer fishing-mode bosses (Fight Mother Squid). Ordinary fights split XP
+  // across Might / Vitality by the player's attack style.
+  final fishingMode = bossProfile(enemy)?.damageMode == 'fishing';
+  final xpAwards = <({String skillId, num xp})>[];
+  var xpSkillId = mightSkillId;
+  if (fishingMode) {
+    xpSkillId = fishingSkillId;
+    if (xpAmount > 0) {
+      next = applyXp(next, db, fishingSkillId, xpAmount).save;
+      xpAwards.add((skillId: fishingSkillId, xp: xpAmount));
+    }
+  } else {
+    final split = splitCombatVictoryXp(xpAmount, normalizeAttackStyle(save.attackStyle));
+    if (split.mightXp > 0) {
+      next = applyXp(next, db, mightSkillId, split.mightXp).save;
+      xpAwards.add((skillId: mightSkillId, xp: split.mightXp));
+      xpSkillId = mightSkillId;
+    }
+    if (split.vitalityXp > 0) {
+      next = applyXp(next, db, vitalitySkillId, split.vitalityXp).save;
+      xpAwards.add((skillId: vitalitySkillId, xp: split.vitalityXp));
+      if (split.mightXp <= 0) xpSkillId = vitalitySkillId;
+    }
+  }
 
   final minGold = jsNumber(enemy.raw['Minimum Gold'] ?? 0);
   final maxGold = jsNumber(enemy.raw['Maximum Gold'] ?? minGold);
@@ -487,12 +508,13 @@ CombatVictoryResult applyCombatVictory(
     goldGained,
     nowMs,
   );
-  next = creditXpAwards(next, [(skillId: xpSkillId, xp: xpAmount)], nowMs);
+  next = creditXpAwards(next, xpAwards, nowMs);
 
   return CombatVictoryResult(
     save: next,
     xpGained: xpAmount,
     xpSkillId: xpSkillId,
+    xpAwards: xpAwards,
     goldGained: goldGained,
     loot: rewarded.loot,
     foodConsumed: food.consumed,

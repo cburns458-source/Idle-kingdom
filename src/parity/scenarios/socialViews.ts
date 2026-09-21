@@ -184,7 +184,7 @@ const PROFILE: PublicPlayerProfile = {
   })),
 }
 
-const SKILL_NAMES: Record<string, string> = { 'SKL-0001': 'Combat', 'SKL-0002': 'Woodcutting' }
+const SKILL_NAMES: Record<string, string> = { 'SKL-0001': 'Might', 'SKL-0002': 'Woodcutting' }
 
 function skillName(skillId: string | null): string {
   return skillId === null ? 'Unknown' : (SKILL_NAMES[skillId] ?? skillId)

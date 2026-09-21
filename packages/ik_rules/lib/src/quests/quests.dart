@@ -539,9 +539,11 @@ QuestVisitAutoComplete applyQuestAutoCompleteOnAction(GameDatabase db, PlayerSav
   return QuestVisitAutoComplete(save: next, completions: completions);
 }
 
-/// Skills the bribe-route popup may grant, Combat excluded.
+/// Skills the bribe-route popup may grant; Might and Vitality excluded.
 List<SkillRow> selectableNonCombatSkills(GameDatabase db) {
-  return db.skills.where((skill) => skill.skillId != combatSkillId).toList();
+  return db.skills
+      .where((skill) => skill.skillId != mightSkillId && skill.skillId != vitalitySkillId)
+      .toList();
 }
 
 QuestActionResult applyQuestBranchSkillXp(
@@ -551,8 +553,8 @@ QuestActionResult applyQuestBranchSkillXp(
   num amount,
 ) {
   if (amount <= 0) return QuestActionResult.ok(save);
-  if (skillId == combatSkillId) {
-    return const QuestActionResult.failed('Pick a skill other than Combat.');
+  if (skillId == mightSkillId || skillId == vitalitySkillId) {
+    return const QuestActionResult.failed('Pick a skill other than Might or Vitality.');
   }
   if (db.skills.every((skill) => skill.skillId != skillId)) {
     return const QuestActionResult.failed('Unknown skill.');

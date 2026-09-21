@@ -7,7 +7,7 @@
 
 import '../../json_support.dart';
 
-const int saveVersion = 48;
+const int saveVersion = 49;
 
 const String saveStorageKey = 'idle-kingdoms.demo.save';
 
@@ -791,6 +791,7 @@ class PlayerSave {
     this.characterName,
     this.motto,
     this.raceId,
+    required this.attackStyle,
     required this.skills,
     required this.inventory,
     required this.bank,
@@ -872,6 +873,7 @@ class PlayerSave {
       characterName: json['characterName'] as String?,
       motto: json['motto'] as String?,
       raceId: json['raceId'] as String?,
+      attackStyle: json['attackStyle'] as String,
       skills: listOf(json['skills'], (Object? entry) => SkillProgress.fromJson(asJsonMap(entry))),
       inventory: listOf(
         json['inventory'],
@@ -1002,6 +1004,9 @@ class PlayerSave {
 
   /// Selected playable Race ID; null until first-run (or one-time) race picker completes.
   final String? raceId;
+
+  /// Global attack style for Might/Vitality XP routing and stance bonuses.
+  final String attackStyle;
 
   final List<SkillProgress> skills;
 
@@ -1212,6 +1217,7 @@ class PlayerSave {
       'characterName': characterName,
       'motto': motto,
       'raceId': raceId,
+      'attackStyle': attackStyle,
       'skills': skills.map((entry) => entry.toJson()).toList(),
       'inventory': inventory.map((entry) => entry.toJson()).toList(),
       'bank': bank.map((entry) => entry.toJson()).toList(),
@@ -1293,6 +1299,7 @@ class PlayerSave {
     Object? characterName = _unset,
     Object? motto = _unset,
     Object? raceId = _unset,
+    String? attackStyle,
     List<SkillProgress>? skills,
     List<InventoryStack>? inventory,
     List<InventoryStack>? bank,
@@ -1372,6 +1379,7 @@ class PlayerSave {
       characterName: characterName == _unset ? this.characterName : characterName as String?,
       motto: motto == _unset ? this.motto : motto as String?,
       raceId: raceId == _unset ? this.raceId : raceId as String?,
+      attackStyle: attackStyle ?? this.attackStyle,
       skills: skills ?? this.skills,
       inventory: inventory ?? this.inventory,
       bank: bank ?? this.bank,

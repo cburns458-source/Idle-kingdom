@@ -196,7 +196,7 @@ final PublicPlayerProfile _profile = PublicPlayerProfile(
 );
 
 const Map<String, String> _skillNames = <String, String>{
-  'SKL-0001': 'Combat',
+  'SKL-0001': 'Might',
   'SKL-0002': 'Woodcutting',
 };
 

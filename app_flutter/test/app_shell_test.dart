@@ -536,7 +536,7 @@ void main() {
     expect(find.text('Sell items'), findsOne);
 
     await openChinSkills(tester);
-    expect(find.text('Combat'), findsWidgets);
+    expect(find.text('Might'), findsWidgets);
     expect(find.text('Total level'), findsOne);
   });
 

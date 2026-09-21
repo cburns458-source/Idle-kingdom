@@ -45,7 +45,7 @@ void main() {
     addTearDown(controller.dispose);
     await pumpSkillShell(tester, controller);
 
-    await openSkillTile(tester, 'Combat');
+    await openSkillTile(tester, 'Might');
 
     expect(find.text('Enemies'), findsOne);
     final popup = find.byKey(const Key('game-popup'));
@@ -119,7 +119,7 @@ void main() {
     addTearDown(controller.dispose);
     await pumpSkillShell(tester, controller);
 
-    await openSkillTile(tester, 'Combat');
+    await openSkillTile(tester, 'Might');
 
     final popup = find.byKey(const Key('game-popup'));
     await tester.tap(find.descendant(of: popup, matching: find.text('Equipment')));

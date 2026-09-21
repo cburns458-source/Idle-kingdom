@@ -6,8 +6,7 @@ import {
 } from '../activity/engine'
 import type { RandomFn } from '../activity/pools'
 import { clearActivityTransition } from '../activity/transition'
-import { getSkillProgress } from '../activity/xp'
-import { COMBAT_SKILL_ID } from '../combat/stats'
+import { combatLevelOf } from '../combat/stats'
 import type { ActivityRow, GameDatabase } from '../data/types'
 import { raceBypassesForcedHostilityAt } from '../races/races'
 import type { PlayerSave } from '../save/types'
@@ -54,7 +53,7 @@ export function forcedHostileActivity(
   locationId: string,
 ): ActivityRow | null {
   if (raceBypassesForcedHostilityAt(db, save, locationId)) return null
-  const combatLevel = getSkillProgress(save, COMBAT_SKILL_ID).level
+  const combatLevel = combatLevelOf(save)
   for (const activity of hostileActivitiesAt(db, locationId)) {
     const warning = activity['Danger Warning Combat Level']
     if (typeof warning === 'number' && combatLevel < warning) {

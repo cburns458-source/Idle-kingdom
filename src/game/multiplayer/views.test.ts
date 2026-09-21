@@ -424,7 +424,7 @@ describe('leaderboard views', () => {
 })
 
 describe('presence views', () => {
-  const skillName = (skillId: string | null) => (skillId === 'SKL-0001' ? 'Combat' : 'Unknown')
+  const skillName = (skillId: string | null) => (skillId === 'SKL-0001' ? 'Might' : 'Unknown')
 
   it('names the skill a peer is working', () => {
     const nowMs = Date.parse('2026-08-12T21:00:00.000Z')

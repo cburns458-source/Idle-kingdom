@@ -118,7 +118,7 @@ void applyDemoWorld(LocalDb db, GameDatabase gameDb, {required num nowMs, requir
     activityId: demoMiraActivityId,
     appearance: miraLook,
     raceId: miraRaceId,
-    skillLevels: const <String, num>{demoMiraSkillId: 14, combatSkillId: 8},
+    skillLevels: const <String, num>{demoMiraSkillId: 14, mightSkillId: 5, vitalitySkillId: 5},
     nowMs: nowMs,
     nowIso: nowIso,
   );
@@ -130,7 +130,7 @@ void applyDemoWorld(LocalDb db, GameDatabase gameDb, {required num nowMs, requir
     locationId: demoBramLocationId,
     appearance: bramLook,
     raceId: bramRaceId,
-    skillLevels: const <String, num>{demoBramSkillId: 11, combatSkillId: 6},
+    skillLevels: const <String, num>{demoBramSkillId: 11, mightSkillId: 4, vitalitySkillId: 4},
     nowMs: nowMs,
     nowIso: nowIso,
   );
@@ -142,7 +142,7 @@ void applyDemoWorld(LocalDb db, GameDatabase gameDb, {required num nowMs, requir
     locationId: demoKaelLocationId,
     appearance: kaelLook,
     raceId: kaelRaceId,
-    skillLevels: const <String, num>{demoKaelSkillId: 18},
+    skillLevels: const <String, num>{demoKaelSkillId: 12, vitalitySkillId: 12},
     nowMs: nowMs,
     nowIso: nowIso,
   );
