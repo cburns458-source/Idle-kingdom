@@ -96,19 +96,18 @@ class _TrackerViewState extends State<TrackerView> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (rows.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
-            child: _TrackerToolbar(
-              loot: true,
-              paused: trackersPaused(controller.save),
-              onStop: () =>
-                  controller.commit(pauseTrackers(controller.save, controller.session.clock())),
-              onStart: () =>
-                  controller.commit(resumeTrackers(controller.save, controller.session.clock())),
-              onResetAll: () => controller.commit(resetAllLootTrackers(controller.save)),
-            ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
+          child: _TrackerToolbar(
+            loot: true,
+            paused: lootTrackersPaused(controller.save),
+            onOff: () =>
+                controller.commit(pauseLootTrackers(controller.save, controller.session.clock())),
+            onOn: () =>
+                controller.commit(resumeLootTrackers(controller.save, controller.session.clock())),
+            onResetAll: () => controller.commit(resetAllLootTrackers(controller.save)),
           ),
+        ),
         Expanded(
           child: rows.isEmpty
               ? const Center(child: MutedText('Finish an action to start a loot tracker.'))
@@ -134,19 +133,18 @@ class _TrackerViewState extends State<TrackerView> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (rows.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
-            child: _TrackerToolbar(
-              loot: false,
-              paused: trackersPaused(controller.save),
-              onStop: () =>
-                  controller.commit(pauseTrackers(controller.save, controller.session.clock())),
-              onStart: () =>
-                  controller.commit(resumeTrackers(controller.save, controller.session.clock())),
-              onResetAll: () => controller.commit(resetAllXpTrackers(controller.save)),
-            ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
+          child: _TrackerToolbar(
+            loot: false,
+            paused: xpTrackersPaused(controller.save),
+            onOff: () =>
+                controller.commit(pauseXpTrackers(controller.save, controller.session.clock())),
+            onOn: () =>
+                controller.commit(resumeXpTrackers(controller.save, controller.session.clock())),
+            onResetAll: () => controller.commit(resetAllXpTrackers(controller.save)),
           ),
+        ),
         Expanded(
           child: rows.isEmpty
               ? const Center(child: MutedText('Gain XP to start an XP tracker.'))
@@ -357,15 +355,15 @@ class _TrackerToolbar extends StatelessWidget {
   const _TrackerToolbar({
     required this.loot,
     required this.paused,
-    required this.onStop,
-    required this.onStart,
+    required this.onOff,
+    required this.onOn,
     required this.onResetAll,
   });
 
   final bool loot;
   final bool paused;
-  final VoidCallback onStop;
-  final VoidCallback onStart;
+  final VoidCallback onOff;
+  final VoidCallback onOn;
   final VoidCallback onResetAll;
 
   @override
@@ -375,21 +373,21 @@ class _TrackerToolbar extends StatelessWidget {
       children: [
         const Spacer(),
         GameButton(
-          key: Key('tracker-stop-$suffix'),
-          label: 'Stop',
+          key: Key('tracker-off-$suffix'),
+          label: 'Off',
           compact: true,
           dense: true,
           tone: GameButtonTone.secondary,
-          onPressed: paused ? null : onStop,
+          onPressed: paused ? null : onOff,
         ),
         const SizedBox(width: 6),
         GameButton(
-          key: Key('tracker-start-$suffix'),
-          label: 'Start',
+          key: Key('tracker-on-$suffix'),
+          label: 'On',
           compact: true,
           dense: true,
           tone: GameButtonTone.secondary,
-          onPressed: paused ? onStart : null,
+          onPressed: paused ? onOn : null,
         ),
         const SizedBox(width: 6),
         GameButton(

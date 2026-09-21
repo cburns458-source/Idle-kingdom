@@ -177,7 +177,7 @@ void main() {
 
   test('arcana lists Essence at level 1 on its own tab', () {
     final arcana = skillMenuView(db, arcanaSkillId);
-    expect(arcana.tabs.map((tab) => tab.label), ['Essence', 'Spells', 'Weapons', 'Enchantments']);
+    expect(arcana.tabs.map((tab) => tab.label), ['Essence', 'Spells', 'Equipment', 'Enchants']);
     final essence = arcana.tabs.firstWhere((tab) => tab.id == 'essence').sections.first.entries;
     expect(essence.any((row) => row.displayName == 'Essence' && row.level == 1), isTrue);
     expect(
@@ -285,7 +285,8 @@ void main() {
     final save = createNewSave(launch, 0);
     final entries = listRecipeBookEntries(save, launch);
     final gloves = entries.firstWhere((entry) => entry.name == "Falconer's Gloves");
-    expect(gloves.materials, contains('Ancient Binding'));
+    expect(gloves.materials, contains('Great Stag Hide'));
+    expect(gloves.materials, isNot(contains('Ancient Binding')));
     expect(gloves.materials, isNot(contains('ITEM-0290')));
     final squid = entries.firstWhere((entry) => entry.name == 'Cooked Baby Giant Squid');
     expect(squid.materials, contains('Starroot'));

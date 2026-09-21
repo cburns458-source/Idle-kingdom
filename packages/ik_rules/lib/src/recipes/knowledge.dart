@@ -26,7 +26,10 @@ String _knowledgeSourceOf(RecipeRow recipe) {
 /// Source; this gate already handles them.
 bool isAutomaticLevelUnlock(RecipeRow recipe) {
   final source = _knowledgeSourceOf(recipe).toLowerCase();
-  return source.isEmpty || source.contains('automatic') || source.contains('level unlock');
+  return source.isEmpty ||
+      source == 'auto' ||
+      source.contains('automatic') ||
+      source.contains('level unlock');
 }
 
 /// Whether the player knows a production recipe (can craft if otherwise eligible).

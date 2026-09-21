@@ -43,6 +43,7 @@ const INTRODUCED_AT: Array<[number, string[]]> = [
   [35, ['hasSeenFennelIntro']],
   [44, ['lootTrackers', 'xpTrackers']],
   [47, ['trackerPausedAtMs']],
+  [48, ['lootTrackerPausedAtMs', 'xpTrackerPausedAtMs']],
 ]
 
 /**

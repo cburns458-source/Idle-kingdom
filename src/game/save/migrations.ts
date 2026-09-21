@@ -727,6 +727,21 @@ export const SAVE_MIGRATIONS: SaveMigration[] = [
       saveVersion: 47,
     }),
   },
+  {
+    fromVersion: 47,
+    toVersion: 48,
+    migrate: (save) => {
+      const legacy = save as PlayerSave & { trackerPausedAtMs?: number | null }
+      const pausedAt = legacy.trackerPausedAtMs ?? null
+      const { trackerPausedAtMs: _dropped, ...rest } = legacy
+      return {
+        ...rest,
+        lootTrackerPausedAtMs: pausedAt,
+        xpTrackerPausedAtMs: pausedAt,
+        saveVersion: 48,
+      }
+    },
+  },
 ]
 
 export function migrateSave(save: PlayerSave, nowMs: number = Date.now()): PlayerSave {

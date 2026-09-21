@@ -7,7 +7,7 @@
 
 import '../../json_support.dart';
 
-const int saveVersion = 47;
+const int saveVersion = 48;
 
 const String saveStorageKey = 'idle-kingdoms.demo.save';
 
@@ -850,7 +850,8 @@ class PlayerSave {
     required this.fishingPotDayKeyByLocationId,
     required this.lootTrackers,
     required this.xpTrackers,
-    this.trackerPausedAtMs,
+    this.lootTrackerPausedAtMs,
+    this.xpTrackerPausedAtMs,
   });
 
   factory PlayerSave.fromJson(Map<String, Object?> json) {
@@ -972,7 +973,8 @@ class PlayerSave {
         json['xpTrackers'],
         (Object? value) => XpTrackerEntry.fromJson(asJsonMap(value)),
       ),
-      trackerPausedAtMs: json['trackerPausedAtMs'] as num?,
+      lootTrackerPausedAtMs: json['lootTrackerPausedAtMs'] as num?,
+      xpTrackerPausedAtMs: json['xpTrackerPausedAtMs'] as num?,
     );
   }
 
@@ -1184,9 +1186,13 @@ class PlayerSave {
   /// RuneScape-style XP tracker rows, keyed by skill id or `total`.
   final Map<String, XpTrackerEntry> xpTrackers;
 
-  /// When set, tracker XP/hr uses this timestamp as "now" so Start/Stop on the
-  /// tracker pages can freeze rates without clearing the rows.
-  final num? trackerPausedAtMs;
+  /// When set, loot tracking is off: new drops are ignored and existing loot
+  /// rows stay frozen until On.
+  final num? lootTrackerPausedAtMs;
+
+  /// When set, XP tracking is off: new XP is ignored, XP/hr freezes, and
+  /// existing XP rows stay until On.
+  final num? xpTrackerPausedAtMs;
 
   Map<String, Object?> toJson() {
     return <String, Object?>{
@@ -1265,7 +1271,8 @@ class PlayerSave {
       'fishingPotDayKeyByLocationId': fishingPotDayKeyByLocationId,
       'lootTrackers': lootTrackers.map((key, value) => MapEntry(key, value.toJson())),
       'xpTrackers': xpTrackers.map((key, value) => MapEntry(key, value.toJson())),
-      'trackerPausedAtMs': trackerPausedAtMs,
+      'lootTrackerPausedAtMs': lootTrackerPausedAtMs,
+      'xpTrackerPausedAtMs': xpTrackerPausedAtMs,
     };
   }
 
@@ -1345,7 +1352,8 @@ class PlayerSave {
     Map<String, String>? fishingPotDayKeyByLocationId,
     Map<String, LootTrackerEntry>? lootTrackers,
     Map<String, XpTrackerEntry>? xpTrackers,
-    Object? trackerPausedAtMs = _unset,
+    Object? lootTrackerPausedAtMs = _unset,
+    Object? xpTrackerPausedAtMs = _unset,
   }) {
     return PlayerSave(
       saveVersion: saveVersion ?? this.saveVersion,
@@ -1463,9 +1471,12 @@ class PlayerSave {
           fishingPotDayKeyByLocationId ?? this.fishingPotDayKeyByLocationId,
       lootTrackers: lootTrackers ?? this.lootTrackers,
       xpTrackers: xpTrackers ?? this.xpTrackers,
-      trackerPausedAtMs: trackerPausedAtMs == _unset
-          ? this.trackerPausedAtMs
-          : trackerPausedAtMs as num?,
+      lootTrackerPausedAtMs: lootTrackerPausedAtMs == _unset
+          ? this.lootTrackerPausedAtMs
+          : lootTrackerPausedAtMs as num?,
+      xpTrackerPausedAtMs: xpTrackerPausedAtMs == _unset
+          ? this.xpTrackerPausedAtMs
+          : xpTrackerPausedAtMs as num?,
     );
   }
 }

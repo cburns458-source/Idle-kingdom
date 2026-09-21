@@ -131,7 +131,8 @@ PlayerSave createNewSave(GameDatabase db, num nowMs) {
     fishingPotDayKeyByLocationId: const <String, String>{},
     lootTrackers: const <String, LootTrackerEntry>{},
     xpTrackers: const <String, XpTrackerEntry>{},
-    trackerPausedAtMs: nowMs,
+    lootTrackerPausedAtMs: nowMs,
+    xpTrackerPausedAtMs: nowMs,
   );
 }
 

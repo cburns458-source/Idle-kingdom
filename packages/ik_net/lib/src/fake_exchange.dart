@@ -68,8 +68,26 @@ class FakeExchange {
     final own = orders.where((order) => order.userId == userId && order.isOpen).toList()
       ..sort((a, b) => a.slot.compareTo(b.slot));
     final resting = orders.where((order) => order.isOpen && order.remaining > 0).toList();
-    final mine = fills.where((fill) => fill.buyerId == userId || fill.sellerId == userId).toList()
-      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    final finishedIds = <String>{
+      for (final order in orders)
+        if (order.userId == userId && !order.isOpen) order.id,
+    };
+    final mine = fills
+        .where((fill) {
+          final orderId = fill.buyerId == userId ? fill.buyOrderId : fill.sellOrderId;
+          return (fill.buyerId == userId || fill.sellerId == userId) &&
+              finishedIds.contains(orderId);
+        })
+        .map((fill) => fill.toJson(userId))
+        .toList();
+    final cancelled = orders
+        .where(
+          (order) => order.userId == userId && order.status == 'cancelled' && order.filled == 0,
+        )
+        .map((order) => order.toCancelTradeJson())
+        .toList();
+    final history = <RemoteRow>[...mine, ...cancelled]
+      ..sort((a, b) => (b['createdAt']! as String).compareTo(a['createdAt']! as String));
     final waiting = box.where((entry) => entry.userId == userId).toList()
       ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
     final guides = prices.values.toList()..sort((a, b) => b.volume.compareTo(a.volume));
@@ -79,7 +97,7 @@ class FakeExchange {
       'orders': own.map((order) => order.toJson()).toList(),
       'offers': _depth(resting, itemId is String ? itemId : null),
       'market': _summaries(resting),
-      'trades': mine.take(bazaarHistoryLength).map((fill) => fill.toJson(userId)).toList(),
+      'trades': history.take(bazaarHistoryLength).toList(),
       'collect': waiting.map((entry) => entry.toJson()).toList(),
       'prices': guides.map((price) => price.toJson()).toList(),
     };
@@ -286,6 +304,8 @@ class FakeExchange {
           tax: tax,
           buyerId: buyer.userId,
           sellerId: seller.userId,
+          buyOrderId: buyer.id,
+          sellOrderId: seller.id,
           createdAt: stamp(),
         ),
       );
@@ -293,7 +313,10 @@ class FakeExchange {
 
       resting.filled += quantity;
       if (resting.isBuy) resting.goldEscrow -= price * quantity;
-      if (resting.remaining <= 0) resting.status = 'filled';
+      if (resting.remaining <= 0) {
+        resting.status = 'filled';
+        resting.updatedAt = stamp();
+      }
       incoming.filled += quantity;
       _notePrice(incoming.itemId, price, quantity);
     }
@@ -312,7 +335,10 @@ class FakeExchange {
       );
     }
     incoming.goldEscrow = incoming.isBuy ? incoming.unitPrice * incoming.remaining : 0;
-    if (incoming.remaining <= 0) incoming.status = 'filled';
+    if (incoming.remaining <= 0) {
+      incoming.status = 'filled';
+      incoming.updatedAt = stamp();
+    }
     return incoming.filled;
   }
 
@@ -392,6 +418,7 @@ class FakeExchange {
     }
     order.status = 'cancelled';
     order.goldEscrow = 0;
+    order.updatedAt = stamp();
 
     return RemoteInvokeResult.ok(<String, Object?>{
       'ok': true,
@@ -505,9 +532,10 @@ class FakeExchangeOrder {
     required this.goldEscrow,
     required this.slot,
     required this.createdAt,
+    String? updatedAt,
     this.filled = 0,
     this.status = 'open',
-  });
+  }) : updatedAt = updatedAt ?? createdAt;
 
   final String id;
   final String userId;
@@ -517,6 +545,7 @@ class FakeExchangeOrder {
   final int unitPrice;
   final int quantity;
   final String createdAt;
+  String updatedAt;
 
   int filled;
   int goldEscrow;
@@ -541,6 +570,17 @@ class FakeExchangeOrder {
     'status': status,
     'createdAt': createdAt,
   };
+
+  RemoteRow toCancelTradeJson() => <String, Object?>{
+    'id': id,
+    'itemId': itemId,
+    'unitPrice': unitPrice,
+    'quantity': quantity,
+    'tax': 0,
+    'side': side,
+    'status': 'cancelled',
+    'createdAt': updatedAt,
+  };
 }
 
 /// One completed trade.
@@ -553,6 +593,8 @@ class FakeExchangeFill {
     required this.tax,
     required this.buyerId,
     required this.sellerId,
+    required this.buyOrderId,
+    required this.sellOrderId,
     required this.createdAt,
   });
 
@@ -563,6 +605,8 @@ class FakeExchangeFill {
   final int tax;
   final String buyerId;
   final String sellerId;
+  final String buyOrderId;
+  final String sellOrderId;
   final String createdAt;
 
   RemoteRow toJson(String userId) => <String, Object?>{
@@ -572,6 +616,7 @@ class FakeExchangeFill {
     'quantity': quantity,
     'tax': tax,
     'side': buyerId == userId ? bazaarBuy : bazaarSell,
+    'status': 'filled',
     'createdAt': createdAt,
   };
 }

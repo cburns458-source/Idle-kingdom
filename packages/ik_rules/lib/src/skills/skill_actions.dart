@@ -324,9 +324,9 @@ SkillMenuPlacement skillMenuPlacementForOutput(
       return const SkillMenuPlacement(tabId: 'spells', tabLabel: 'Spells');
     }
     if (_isArcanaWeaponName(displayName, outputId)) {
-      return const SkillMenuPlacement(tabId: 'weapons', tabLabel: 'Weapons');
+      return const SkillMenuPlacement(tabId: 'equipment', tabLabel: 'Equipment');
     }
-    return const SkillMenuPlacement(tabId: 'enchantments', tabLabel: 'Enchantments');
+    return const SkillMenuPlacement(tabId: 'enchants', tabLabel: 'Enchants');
   }
   if (skillId == thieverySkillMenuId) {
     final action = outputId.isNotEmpty
@@ -620,8 +620,8 @@ List<SkillMenuTab> _arcanaTabs(GameDatabase db) {
   return <SkillMenuTab>[
     _listTab('essence', 'Essence', _arcanaEssenceEntries(db)),
     _listTab('spells', 'Spells', _dedupeByName(spells)),
-    _listTab('weapons', 'Weapons', _dedupeByName(weapons)),
-    _listTab('enchantments', 'Enchantments', _dedupeByName(enchantments)),
+    _listTab('equipment', 'Equipment', _dedupeByName(weapons)),
+    _listTab('enchants', 'Enchants', _dedupeByName(enchantments)),
   ];
 }
 
@@ -930,7 +930,8 @@ bool _isArcanaWeaponName(String name, String outputId) {
   if (outputId.startsWith('ENCH-')) return false;
   return RegExp(r'staff of\b', caseSensitive: false).hasMatch(name) ||
       RegExp(r'\bstaff\b', caseSensitive: false).hasMatch(name) ||
-      RegExp(r'\bwand\b', caseSensitive: false).hasMatch(name);
+      RegExp(r'\bwand\b', caseSensitive: false).hasMatch(name) ||
+      name == 'Magic Bola';
 }
 
 bool _isEnchantmentName(String name, String outputId) {

@@ -31,7 +31,12 @@ function knowledgeSourceOf(recipe: RecipeRow): string {
  */
 export function isAutomaticLevelUnlock(recipe: RecipeRow): boolean {
   const source = knowledgeSourceOf(recipe).toLowerCase()
-  return !source || source.includes('automatic') || source.includes('level unlock')
+  return (
+    !source ||
+    source === 'auto' ||
+    source.includes('automatic') ||
+    source.includes('level unlock')
+  )
 }
 
 /** Whether the player knows a production recipe (can craft if otherwise eligible). */

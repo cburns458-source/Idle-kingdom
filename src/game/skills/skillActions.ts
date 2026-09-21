@@ -258,9 +258,9 @@ export function skillMenuPlacementForOutput(
     }
     if (isSpellName(displayName)) return { tabId: 'spells', tabLabel: 'Spells', sectionTitle: null }
     if (isArcanaWeaponName(displayName, outputId)) {
-      return { tabId: 'weapons', tabLabel: 'Weapons', sectionTitle: null }
+      return { tabId: 'equipment', tabLabel: 'Equipment', sectionTitle: null }
     }
-    return { tabId: 'enchantments', tabLabel: 'Enchantments', sectionTitle: null }
+    return { tabId: 'enchants', tabLabel: 'Enchants', sectionTitle: null }
   }
   if (skillId === THIEVERY_SKILL_ID) {
     const action =
@@ -526,8 +526,8 @@ function arcanaTabs(db: GameDatabase): SkillMenuTab[] {
   return [
     listTab('essence', 'Essence', arcanaEssenceEntries(db)),
     listTab('spells', 'Spells', dedupeByName(spells)),
-    listTab('weapons', 'Weapons', dedupeByName(weapons)),
-    listTab('enchantments', 'Enchantments', dedupeByName(enchantments)),
+    listTab('equipment', 'Equipment', dedupeByName(weapons)),
+    listTab('enchants', 'Enchants', dedupeByName(enchantments)),
   ]
 }
 
@@ -822,7 +822,12 @@ function isSpellName(name: string): boolean {
 
 function isArcanaWeaponName(name: string, outputId: string): boolean {
   if (outputId.startsWith('ENCH-')) return false
-  return /staff of\b/i.test(name) || /\bstaff\b/i.test(name) || /\bwand\b/i.test(name)
+  return (
+    /staff of\b/i.test(name) ||
+    /\bstaff\b/i.test(name) ||
+    /\bwand\b/i.test(name) ||
+    name === 'Magic Bola'
+  )
 }
 
 function isEnchantmentName(name: string, outputId: string): boolean {
