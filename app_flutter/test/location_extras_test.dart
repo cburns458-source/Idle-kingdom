@@ -100,7 +100,7 @@ void main() {
     expect(find.text('The Farm'), findsWidgets);
     expect(find.text('Pasture-focused starting area with Cow and Bull encounters.'), findsNothing);
     expect(
-      find.descendant(of: find.byType(WorldMapView), matching: find.byTooltip('Combat')),
+      find.descendant(of: find.byType(WorldMapView), matching: find.byTooltip('Might')),
       findsOne,
     );
     expect(
@@ -112,7 +112,7 @@ void main() {
     controller.setShowActivityIcons(false);
     await tester.pump();
     expect(
-      find.descendant(of: find.byType(WorldMapView), matching: find.byTooltip('Combat')),
+      find.descendant(of: find.byType(WorldMapView), matching: find.byTooltip('Might')),
       findsNothing,
     );
     expect(

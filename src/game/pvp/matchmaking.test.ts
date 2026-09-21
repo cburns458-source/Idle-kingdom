@@ -61,7 +61,7 @@ describe('arena matchmaking', () => {
 
   it('caps ranked fights at 5 a UTC day and pays 1000 gold on a win', () => {
     let save = createNewSave(launch, NOW)
-    expect(combatLevelOf(save)).toBe(1)
+    expect(combatLevelOf(save)).toBe(2)
     expect(rankedPvpDayKey(NOW)).toBe('2026-08-13')
     expect(rankedFightsRemaining(save, NOW)).toBe(RANKED_PVP_DAILY_CAP)
     expect(canStartRankedPvp(save, NOW).ok).toBe(true)

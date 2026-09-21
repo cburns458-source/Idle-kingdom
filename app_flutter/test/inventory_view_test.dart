@@ -43,8 +43,6 @@ void main() {
     expect(controller.save.equipment.slots[slotId]?.itemId, gear.itemId);
 
     // The paper doll shows it, and tapping it there puts it back in the bag.
-    await tester.tap(find.text('Equipment'));
-    await tester.pump();
     await tester.tap(find.byTooltip(name).first);
     await tester.pump();
 
@@ -139,8 +137,6 @@ void main() {
     await tester.pumpAndSettle();
     expect(controller.save.equipment.slots[weaponToolSlotId]?.itemId, 'ITEM-0110');
 
-    await tester.tap(find.text('Equipment'));
-    await tester.pump();
     await tester.longPress(find.byTooltip('Copper Hatchet').first);
     await tester.pumpAndSettle();
     expect(find.text('Woodcutting: -3% action time'), findsOne);
@@ -162,57 +158,65 @@ void main() {
     expect(find.textContaining('value each'), findsOne);
   });
 
-  testWidgets('a locked equipment pane shows the paper doll, not the bag', (tester) async {
+  testWidgets('the combined sheet shows the paper doll and the bag together', (tester) async {
     final controller = buildController(database, seed: startedCharacter(database));
     addTearDown(controller.dispose);
 
-    await pumpPanel(
-      tester,
-      InventoryView(controller: controller, pane: InventoryPane.equipment, showHeader: false),
-    );
+    await pumpPanel(tester, InventoryView(controller: controller, showHeader: false));
 
-    expect(find.text('Sell items'), findsNothing);
-    expect(find.textContaining('slots'), findsNothing);
-    expect(find.text('Damage'), findsOne);
+    expect(find.text('Sell items'), findsOne);
+    expect(find.textContaining('slots'), findsOne);
+    expect(find.widgetWithText(GameButton, 'Attributes'), findsOne);
+    expect(find.text('Damage'), findsNothing);
     expect(find.text('Helmet'), findsOne);
   });
 
-  testWidgets('combat stats live on the equipment page, not the bag', (tester) async {
+  testWidgets('item total, sell, and sort sit above the bag, not the doll', (tester) async {
+    final controller = buildController(database, seed: startedCharacter(database));
+    addTearDown(controller.dispose);
+
+    await pumpPanel(tester, InventoryView(controller: controller));
+
+    final helmet = tester.getRect(find.text('Helmet'));
+    final sell = tester.getRect(find.text('Sell items'));
+    final slots = tester.getRect(find.textContaining('slots'));
+    final sort = tester.getRect(find.byTooltip('Sort'));
+    final bag = tester.getRect(find.byKey(const Key('inventory-bag')));
+    expect(sell.top, greaterThan(helmet.bottom));
+    expect(slots.top, greaterThan(helmet.bottom));
+    expect(sort.top, greaterThan(helmet.bottom));
+    expect(bag.top, greaterThan(sell.bottom));
+    expect(bag.top, greaterThan(slots.bottom));
+    expect(bag.top, greaterThan(sort.bottom));
+  });
+
+  testWidgets('Attributes opens an overlay with damage, health, and DR', (tester) async {
     final controller = buildController(database, seed: startedCharacter(database));
     addTearDown(controller.dispose);
 
     await pumpPanel(tester, InventoryView(controller: controller));
     expect(find.text('Damage'), findsNothing);
-    expect(find.text('Show sources'), findsNothing);
+    expect(find.text('Health'), findsNothing);
+    expect(find.text('DR'), findsNothing);
+    expect(find.text('Show bonuses'), findsNothing);
 
-    await tester.tap(find.text('Equipment'));
-    await tester.pump();
+    await tester.tap(find.widgetWithText(GameButton, 'Attributes'));
+    await tester.pumpAndSettle();
 
-    expect(find.text('Damage'), findsOne);
-    expect(find.text('Health'), findsOne);
-    expect(find.text('DR'), findsOne);
+    final popup = find.byKey(const Key('game-popup'));
+    expect(popup, findsOne);
+    expect(find.descendant(of: popup, matching: find.text('Attributes')), findsOne);
+    expect(find.descendant(of: popup, matching: find.text('Damage')), findsOne);
+    expect(find.descendant(of: popup, matching: find.text('Health')), findsOne);
+    expect(find.descendant(of: popup, matching: find.text('DR')), findsOne);
     expect(find.text('Show bonuses'), findsOne);
     expect(find.text('Show sources'), findsOne);
-    expect(find.text('Eat'), findsOne);
-    expect(find.textContaining('Eat at'), findsNothing);
+    expect(find.textContaining('Eat at'), findsOne);
     final bonuses = tester.getRect(find.text('Show bonuses'));
     final sources = tester.getRect(find.text('Show sources'));
-    final eat = tester.getRect(find.text('Eat'));
-    final helmet = tester.getRect(find.text('Helmet'));
-    final current = tester.getRect(find.byKey(const Key('current-loadout')));
-    expect(bonuses.bottom, lessThan(sources.top + 1));
-    expect(sources.bottom, lessThan(eat.top + 1));
-    expect(helmet.right, lessThan(bonuses.left + 1));
-    expect(current.right, lessThan(helmet.left + 1));
+    expect((bonuses.center.dy - sources.center.dy).abs(), lessThan(8));
+    expect(bonuses.right, lessThan(sources.left));
     expect(find.textContaining('Human'), findsNothing);
-
-    await tester.tap(find.text('Eat'));
-    await tester.pumpAndSettle();
-    expect(find.textContaining('Eat at'), findsOne);
-    expect(find.text('Eat now'), findsOne);
-    await tester.tap(find.text('Close'));
-    await tester.pumpAndSettle();
-    expect(find.textContaining('Eat at'), findsNothing);
 
     await tester.tap(find.text('Show bonuses'));
     await tester.pump();
@@ -242,10 +246,10 @@ void main() {
     addTearDown(controller.dispose);
 
     await pumpPanel(tester, InventoryView(controller: controller));
-    await tester.tap(find.text('Equipment'));
-    await tester.pump();
 
     expect(find.textContaining('High Elf'), findsNothing);
+    await tester.tap(find.widgetWithText(GameButton, 'Attributes'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Show bonuses'));
     await tester.pump();
 
@@ -263,10 +267,10 @@ void main() {
     addTearDown(controller.dispose);
 
     await pumpPanel(tester, InventoryView(controller: controller));
-    await tester.tap(find.text('Equipment'));
-    await tester.pump();
 
     expect(find.textContaining('action time'), findsNothing);
+    await tester.tap(find.widgetWithText(GameButton, 'Attributes'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Show bonuses'));
     await tester.pump();
 
@@ -386,29 +390,29 @@ void main() {
     addTearDown(controller.dispose);
 
     await pumpPanel(tester, InventoryView(controller: controller));
-    await tester.tap(find.text('Equipment'));
-    await tester.pump();
 
-    expect(find.text('Current'), findsOneWidget);
+    expect(find.text('Current'), findsNothing);
     expect(find.text('Apply'), findsNothing);
     expect(find.text('Edit'), findsNothing);
 
-    await tester.tap(find.text('Items'));
-    await tester.pump();
-    await tester.tap(find.byTooltip('Copper Hatchet').first);
-    await tester.pump();
+    Future<void> tapBagHatchet() async {
+      final hatchet = find.descendant(
+        of: find.byKey(const Key('inventory-bag')),
+        matching: find.byTooltip('Copper Hatchet'),
+      );
+      await tester.ensureVisible(hatchet);
+      await tester.tap(hatchet);
+      await tester.pump();
+    }
+
+    await tapBagHatchet();
 
     expect(controller.save.equipment.slots['SLOT-0001']?.itemId, 'ITEM-0110');
     expect(controller.save.equipmentPresets[0].slots['SLOT-0001']?.itemId, 'ITEM-0111');
 
-    await tester.tap(find.text('Equipment'));
-    await tester.pump();
-    await tester.tap(find.text('I'));
+    await tester.tap(find.byKey(const Key('preset-chip-0')));
     await tester.pumpAndSettle();
-    expect(find.text('Apply'), findsOne);
-    expect(find.text('Edit'), findsOne);
-    await tester.tap(find.text('Apply'));
-    await tester.pumpAndSettle();
+    expect(find.text('Apply'), findsNothing);
     expect(controller.save.activeEquipmentPresetIndex, 0);
     expect(controller.save.equipment.slots['SLOT-0001']?.itemId, 'ITEM-0111');
     expect(controller.save.equipmentPresets[0].slots['SLOT-0001']?.itemId, 'ITEM-0111');
@@ -422,21 +426,18 @@ void main() {
       return chipMaterial(key).shape! as PixelSteppedBorder;
     }
 
-    expect(chipBorder(const Key('current-loadout')).side.width, 3);
-    expect(chipBorder(const Key('current-loadout')).side.color, Palette.gold);
     expect(chipBorder(const Key('preset-chip-0')).side.width, 3);
     expect(chipBorder(const Key('preset-chip-0')).side.color, Palette.gold);
 
-    await tester.tap(find.text('Items'));
-    await tester.pump();
-    await tester.tap(find.byTooltip('Copper Hatchet').first);
-    await tester.pump();
+    final wornAgain = equipItemFromInventory(database.launch, controller.save, 'ITEM-0110');
+    expect(wornAgain.ok, isTrue);
+    controller.commitLoadout(wornAgain.save!);
 
     expect(controller.save.equipmentPresets[0].slots['SLOT-0001']?.itemId, 'ITEM-0111');
     expect(controller.save.equipment.slots['SLOT-0001']?.itemId, 'ITEM-0110');
   });
 
-  testWidgets('editing a preset does not change worn gear until Apply', (tester) async {
+  testWidgets('Save stamps currently worn gear onto the active preset', (tester) async {
     var save = unequippedCharacter();
     save = addItemToInventory(save, 'ITEM-0111', 1);
     save = addItemToInventory(save, 'ITEM-0110', 1);
@@ -448,36 +449,28 @@ void main() {
     addTearDown(controller.dispose);
 
     await pumpPanel(tester, InventoryView(controller: controller));
-    await tester.tap(find.text('Equipment'));
-    await tester.pump();
-    await tester.tap(find.text('I'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Edit'));
-    await tester.pumpAndSettle();
+    expect(controller.save.equipmentPresets[0].slots['SLOT-0001']?.itemId, 'ITEM-0111');
 
-    expect(find.textContaining('Worn gear is unchanged'), findsOne);
-    expect(controller.save.equipment.slots['SLOT-0001']?.itemId, 'ITEM-0111');
-
-    await tester.tap(find.text('Items'));
-    await tester.pump();
     await tester.tap(find.byTooltip('Copper Hatchet').first);
     await tester.pump();
+    expect(controller.save.equipment.slots['SLOT-0001']?.itemId, 'ITEM-0110');
+    expect(controller.save.equipmentPresets[0].slots['SLOT-0001']?.itemId, 'ITEM-0111');
 
-    expect(controller.save.equipment.slots['SLOT-0001']?.itemId, 'ITEM-0111');
-    expect(controller.save.equipmentPresets[0].slots['SLOT-0001']?.itemId, 'ITEM-0110');
-
-    await tester.tap(find.text('Equipment'));
-    await tester.pump();
+    expect(
+      tester
+          .widget<InkWell>(
+            find.descendant(
+              of: find.byKey(const Key('save-preset')),
+              matching: find.byType(InkWell),
+            ),
+          )
+          .onTap,
+      isNotNull,
+    );
     await tester.tap(find.text('Save'));
     await tester.pumpAndSettle();
-    expect(controller.save.equipment.slots['SLOT-0001']?.itemId, 'ITEM-0111');
-    expect(controller.save.equipmentPresets[0].slots['SLOT-0001']?.itemId, 'ITEM-0110');
-
-    await tester.tap(find.text('I'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Apply'));
-    await tester.pumpAndSettle();
     expect(controller.save.equipment.slots['SLOT-0001']?.itemId, 'ITEM-0110');
+    expect(controller.save.equipmentPresets[0].slots['SLOT-0001']?.itemId, 'ITEM-0110');
   });
 
   testWidgets('opens preset settings for all four presets from equipment bar', (tester) async {
@@ -485,8 +478,6 @@ void main() {
     addTearDown(controller.dispose);
 
     await pumpPanel(tester, InventoryView(controller: controller));
-    await tester.tap(find.text('Equipment'));
-    await tester.pump();
 
     await tester.tap(find.byTooltip('Preset settings'));
     await tester.pumpAndSettle();
@@ -501,81 +492,11 @@ void main() {
     expect(controller.save.equipmentPresets[1].name, 'Mining Kit');
   });
 
-  testWidgets('Save stays disabled until a preset chip is chosen', (tester) async {
-    var save = unequippedCharacter();
-    save = addItemToInventory(save, 'ITEM-0111', 1);
-    save = addItemToInventory(save, 'ITEM-0110', 1);
-    final equipped = equipItemFromInventory(database.launch, save, 'ITEM-0111');
-    expect(equipped.ok, isTrue);
-    save = saveActiveEquipmentPreset(equipped.save!);
-
-    final controller = buildController(database, seed: save);
-    addTearDown(controller.dispose);
-
-    await pumpPanel(tester, InventoryView(controller: controller));
-    await tester.tap(find.text('Equipment'));
-    await tester.pump();
-
-    expect(
-      tester
-          .widget<InkWell>(
-            find.descendant(
-              of: find.byKey(const Key('save-preset')),
-              matching: find.byType(InkWell),
-            ),
-          )
-          .onTap,
-      isNull,
-    );
-
-    await tester.tap(find.text('Items'));
-    await tester.pump();
-    await tester.tap(find.byTooltip('Copper Hatchet').first);
-    await tester.pump();
-    await tester.tap(find.text('Equipment'));
-    await tester.pump();
-    await tester.tap(find.text('Save'));
-    await tester.pump();
-    expect(controller.save.equipmentPresets[0].slots['SLOT-0001']?.itemId, 'ITEM-0111');
-
-    await tester.tap(find.text('I'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Edit'));
-    await tester.pumpAndSettle();
-    expect(
-      tester
-          .widget<InkWell>(
-            find.descendant(
-              of: find.byKey(const Key('save-preset')),
-              matching: find.byType(InkWell),
-            ),
-          )
-          .onTap,
-      isNotNull,
-    );
-    await tester.tap(find.text('Save'));
-    await tester.pumpAndSettle();
-    expect(controller.save.equipmentPresets[0].slots['SLOT-0001']?.itemId, 'ITEM-0111');
-    expect(
-      tester
-          .widget<InkWell>(
-            find.descendant(
-              of: find.byKey(const Key('save-preset')),
-              matching: find.byType(InkWell),
-            ),
-          )
-          .onTap,
-      isNull,
-    );
-  });
-
   testWidgets('saves a chosen skill icon onto a preset', (tester) async {
     final controller = buildController(database, seed: startedCharacter(database));
     addTearDown(controller.dispose);
 
     await pumpPanel(tester, InventoryView(controller: controller));
-    await tester.tap(find.text('Equipment'));
-    await tester.pump();
 
     await tester.tap(find.byTooltip('Preset settings'));
     await tester.pumpAndSettle();
@@ -611,8 +532,6 @@ void main() {
     addTearDown(controller.dispose);
 
     await pumpPanel(tester, InventoryView(controller: controller));
-    await tester.tap(find.text('Equipment'));
-    await tester.pump();
 
     await tester.tap(find.byTooltip('Preset settings'));
     await tester.pumpAndSettle();
@@ -629,32 +548,40 @@ void main() {
     expect(controller.save.equipmentPresets[0].name, 'Farm Kit');
   });
 
-  testWidgets('equipment bar stacks square chips left of the paper doll', (tester) async {
+  testWidgets('equipment bar keeps Save and settings next to the four presets', (tester) async {
     final controller = buildController(database, seed: startedCharacter(database));
     addTearDown(controller.dispose);
 
     await pumpPanel(tester, InventoryView(controller: controller));
-    await tester.tap(find.text('Equipment'));
-    await tester.pump();
 
-    final current = tester.getSize(
-      find.descendant(of: find.byKey(const Key('current-loadout')), matching: find.byType(InkWell)),
-    );
+    expect(find.byKey(const Key('current-loadout')), findsNothing);
+    expect(find.byKey(const Key('preset-chip-0')), findsOne);
+    expect(find.byKey(const Key('save-preset')), findsOne);
+    expect(find.byKey(const Key('preset-settings')), findsOne);
     final preset = tester.getSize(
       find.descendant(of: find.byKey(const Key('preset-chip-0')), matching: find.byType(InkWell)),
     );
-    final settings = tester.getSize(
-      find.descendant(of: find.byKey(const Key('preset-settings')), matching: find.byType(InkWell)),
+    expect(preset.height, 30);
+  });
+
+  testWidgets('the bag fits six to eight items on a row', (tester) async {
+    final seed = unequippedCharacter().copyWith(
+      inventory: [for (var i = 0; i < 16; i += 1) InventoryStack(itemId: 'ITEM-0002', quantity: 1)],
     );
-    expect(preset.width, preset.height);
-    expect(preset.width, 34);
-    expect(settings.width, settings.height);
-    expect(settings.width, 34);
-    expect(current.width, current.height);
-    expect(current.width, 34);
-    expect(
-      tester.getRect(find.byKey(const Key('current-loadout'))).right,
-      lessThan(tester.getRect(find.text('Helmet')).left),
-    );
+    final controller = buildController(database, seed: seed);
+    addTearDown(controller.dispose);
+
+    await pumpPanel(tester, InventoryView(controller: controller), size: const Size(420, 2400));
+
+    final clay = find.byTooltip('Clay');
+    expect(clay, findsWidgets);
+    final firstRowTop = tester.getRect(clay.at(0)).center.dy;
+    var columns = 0;
+    for (var i = 0; i < clay.evaluate().length; i += 1) {
+      if ((tester.getRect(clay.at(i)).center.dy - firstRowTop).abs() < 8) {
+        columns += 1;
+      }
+    }
+    expect(columns, inInclusiveRange(6, 8));
   });
 }

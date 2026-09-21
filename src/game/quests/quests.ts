@@ -3,7 +3,7 @@ import { requirementsForEntity } from '../activity/requirements'
 import { addItemToInventory } from '../activity/rewards'
 import type { ActionRewardBundle, ActionXpRewardSummary, LootGrant } from '../activity/types'
 import { applyXp, getSkillProgress } from '../activity/xp'
-import { COMBAT_SKILL_ID } from '../combat/stats'
+import { MIGHT_SKILL_ID, VITALITY_SKILL_ID } from '../combat/stats'
 import { cosmeticById, grantCosmetic } from '../cosmetics/cosmetics'
 import type { GameDatabase, SkillRow } from '../data/types'
 import { unlockRecipeId } from '../recipes/knowledge'
@@ -397,9 +397,11 @@ export function completeQuest(
   }
 }
 
-/** Skills the bribe-route popup may grant, Combat excluded. */
+/** Skills the bribe-route popup may grant; Might and Vitality excluded. */
 export function selectableNonCombatSkills(db: GameDatabase): SkillRow[] {
-  return db.Skills.filter((skill) => skill['Skill ID'] !== COMBAT_SKILL_ID)
+  return db.Skills.filter(
+    (skill) => skill['Skill ID'] !== MIGHT_SKILL_ID && skill['Skill ID'] !== VITALITY_SKILL_ID,
+  )
 }
 
 export function applyQuestBranchSkillXp(
@@ -409,8 +411,8 @@ export function applyQuestBranchSkillXp(
   amount: number,
 ): { ok: true; save: PlayerSave } | { ok: false; reason: string } {
   if (amount <= 0) return { ok: true, save }
-  if (skillId === COMBAT_SKILL_ID) {
-    return { ok: false, reason: 'Pick a skill other than Combat.' }
+  if (skillId === MIGHT_SKILL_ID || skillId === VITALITY_SKILL_ID) {
+    return { ok: false, reason: 'Pick a skill other than Might or Vitality.' }
   }
   if (!db.Skills.some((skill) => skill['Skill ID'] === skillId)) {
     return { ok: false, reason: 'Unknown skill.' }

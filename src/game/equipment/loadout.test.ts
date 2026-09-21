@@ -162,9 +162,11 @@ describe('equipment loadout', () => {
 
     const beef = launch.Recipes.find((recipe) => recipe['Recipe ID'] === 'RCP-0009')!
     const copper = launch.Recipes.find((recipe) => recipe['Recipe ID'] === 'RCP-0014')!
-    expect(productionCraftDurationMs(launch, equipped.save, beef, null)).toBe(10_000 * 0.95)
-    expect(productionCraftDurationMs(launch, equipped.save, copper, null)).toBe(15_000 * 0.95)
-    expect(productionCraftDurationMs(launch, save, beef, null)).toBe(10_000)
+    const beefMs = Number(beef['Base Duration Seconds']) * 1000
+    const copperMs = Number(copper['Base Duration Seconds']) * 1000
+    expect(productionCraftDurationMs(launch, equipped.save, beef, null)).toBe(beefMs * 0.95)
+    expect(productionCraftDurationMs(launch, equipped.save, copper, null)).toBe(copperMs * 0.95)
+    expect(productionCraftDurationMs(launch, save, beef, null)).toBe(beefMs)
   })
 
   it('clamps current HP when max HP drops', () => {

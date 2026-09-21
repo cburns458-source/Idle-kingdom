@@ -57,9 +57,9 @@ void main() {
     expect(summary.mainhandBreakdown.map((line) => line.label), isNot(contains('Unarmed')));
     expect(summary.mainhandBreakdown.map((line) => line.label), contains('Steel Sword'));
     expect(summary.mainhandBreakdown.map((line) => line.label), contains('Enchantments'));
-    expect(summary.mainhandBreakdown.map((line) => line.label), contains('Combat Level 25'));
+    expect(summary.mainhandBreakdown.map((line) => line.label), contains('Might 25'));
     expect(
-      summary.mainhandBreakdown.firstWhere((line) => line.label == 'Combat Level 25').detail,
+      summary.mainhandBreakdown.firstWhere((line) => line.label == 'Might 25').detail,
       '×1.25',
     );
     expect(summary.mainhandBreakdown.map((line) => line.label), contains('Strength Spell'));
@@ -68,9 +68,9 @@ void main() {
 
     final offhand = playerOffhandDamageRange(db, save);
     if (offhand != null) {
-      expect(summary.offhandBreakdown.map((line) => line.label), contains('Combat Level 25'));
+      expect(summary.offhandBreakdown.map((line) => line.label), contains('Might 25'));
       expect(
-        summary.offhandBreakdown.firstWhere((line) => line.label == 'Combat Level 25').detail,
+        summary.offhandBreakdown.firstWhere((line) => line.label == 'Might 25').detail,
         '×1.25',
       );
       expect(summary.offhandBreakdown.last.label, 'Total');
@@ -80,6 +80,7 @@ void main() {
 
     expect(summary.healthBreakdown.map((line) => line.label), isNot(contains('Base')));
     expect(summary.healthBreakdown.map((line) => line.label), contains('Steel Helmet'));
+    expect(summary.healthBreakdown.map((line) => line.label), contains('Vitality 25'));
     expect(summary.healthBreakdown.map((line) => line.label), contains('High Elf'));
     expect(summary.healthBreakdown.last.detail, '1647');
 

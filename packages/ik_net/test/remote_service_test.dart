@@ -1048,7 +1048,9 @@ void main() {
       characterName: 'Rival',
       skills: [
         for (final skill in rivalBase.skills)
-          skill.skillId == combatSkillId ? skill.copyWith(level: 9) : skill,
+          skill.skillId == mightSkillId || skill.skillId == vitalitySkillId
+              ? skill.copyWith(level: 6)
+              : skill,
       ],
     );
     expect((await rival.pushSave(db, rivalSave)).ok, isTrue);
@@ -1080,7 +1082,9 @@ void main() {
         raceId: 'RACE-0004',
         skills: [
           for (final skill in rivalSave.skills)
-            skill.skillId == combatSkillId ? skill.copyWith(level: 20) : skill,
+            skill.skillId == mightSkillId || skill.skillId == vitalitySkillId
+                ? skill.copyWith(level: 13)
+                : skill,
         ],
       ),
       weaponToolSlotId,

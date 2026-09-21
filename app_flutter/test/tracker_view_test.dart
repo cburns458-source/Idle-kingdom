@@ -82,7 +82,7 @@ void main() {
 
     await pumpPanel(tester, TrackerView(controller: controller));
     expect(find.text('Total XP'), findsOne);
-    expect(find.text('Combat'), findsOne);
+    expect(find.text('Might'), findsOne);
     expect(find.textContaining('XP/hr'), findsWidgets);
 
     await tester.tap(find.byKey(const Key('tracker-reset-all-xp')));
@@ -174,10 +174,10 @@ void main() {
     await tester.pump();
     final totalRow = find.ancestor(of: find.text('Total XP'), matching: find.byType(GamePanel));
     expect(find.descendant(of: totalRow, matching: find.byType(GameImage)), findsNothing);
-    final combatRow = find.ancestor(of: find.text('Combat'), matching: find.byType(GamePanel));
+    final combatRow = find.ancestor(of: find.text('Might'), matching: find.byType(GamePanel)).first;
     expect(find.descendant(of: combatRow, matching: find.byType(GameImage)), findsOne);
     expect(
-      find.byWidgetPredicate((widget) => widget is GameImage && widget.path.contains('skl_combat')),
+      find.byWidgetPredicate((widget) => widget is GameImage && widget.path.contains('skl_might')),
       findsOne,
     );
   });

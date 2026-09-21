@@ -13,7 +13,7 @@ export function bonusSkillXpForAction(
 }
 
 const HUNTING_SKILL_ID = 'SKL-0005'
-const COMBAT_SKILL_ID = 'SKL-0001'
+const MIGHT_SKILL_ID = 'SKL-0001'
 const BOW_CAPABILITY_TAG = 'bow_combat_xp'
 
 function equippedWeaponHasCapability(db: GameDatabase, save: PlayerSave, tag: string): boolean {
@@ -28,7 +28,7 @@ function equippedWeaponHasCapability(db: GameDatabase, save: PlayerSave, tag: st
 }
 
 /**
- * Qualifying bow-based Hunting Actions grant Combat XP equal to a
+ * Qualifying bow-based Hunting Actions grant Might XP equal to a
  * percentage (default 10%, see Config `bow_hunting_combat_xp_percent`) of
  * the Hunting XP just awarded, whenever the equipped Weapon/Tool is a bow
  * (`bow_combat_xp` capability on its Equipment row).
@@ -45,5 +45,5 @@ export function bowHuntingCombatXpBonus(
   if (!equippedWeaponHasCapability(db, save, BOW_CAPABILITY_TAG)) return null
   const percent = configNumber(db, 'bow_hunting_combat_xp_percent', 10)
   const xp = Math.floor(huntingXpAwarded * (percent / 100))
-  return xp > 0 ? { skillId: COMBAT_SKILL_ID, xp } : null
+  return xp > 0 ? { skillId: MIGHT_SKILL_ID, xp } : null
 }

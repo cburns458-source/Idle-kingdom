@@ -5,6 +5,7 @@ import 'package:ik_content/ik_content.dart';
 
 import '../js_compat.dart';
 import '../loot/drop_chance.dart';
+import 'loadout.dart';
 
 String? _skillDisplayName(GameDatabase? db, String? skillId) {
   if (isBlank(skillId)) return null;
@@ -52,21 +53,24 @@ List<String> equipmentTooltipStatLines(EquipmentRow? equipment, [GameDatabase? d
     );
   }
 
-  final atr = equipment.raw['Action Time Reduction %'];
-  if (atr is num && atr > 0) {
-    final skills = <String>[];
-    for (final id in <Object?>[
-      equipment.raw['Required Skill ID'],
-      equipment.raw['Secondary Required Skill ID'],
-    ]) {
-      final name = _skillDisplayName(db, id is String ? id : null);
-      if (name != null) skills.add(name);
+  final atrRaw = equipment.raw['Action Time Reduction %'];
+  if (atrRaw is num && atrRaw > 0) {
+    final atr = math.min(actionTimeReductionCapPercent, atrRaw);
+    if (atr > 0) {
+      final skills = <String>[];
+      for (final id in <Object?>[
+        equipment.raw['Required Skill ID'],
+        equipment.raw['Secondary Required Skill ID'],
+      ]) {
+        final name = _skillDisplayName(db, id is String ? id : null);
+        if (name != null) skills.add(name);
+      }
+      lines.add(
+        skills.isEmpty
+            ? '-${jsNumberToString(atr)}% action time'
+            : '${skills.join(', ')}: -${jsNumberToString(atr)}% action time',
+      );
     }
-    lines.add(
-      skills.isEmpty
-          ? '-${jsNumberToString(atr)}% action time'
-          : '${skills.join(', ')}: -${jsNumberToString(atr)}% action time',
-    );
   }
 
   final dropBonus = parseRelativeDropChanceBonusPercent(equipment.raw['Capabilities / Effects']);

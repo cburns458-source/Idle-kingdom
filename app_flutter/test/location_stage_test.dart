@@ -494,10 +494,7 @@ void main() {
     expect(find.text(recoveringBlockedReason), findsWidgets);
     expect(controller.save.currentLocationId, 'LOC-0009');
 
-    await tester.tap(find.text('Character'));
-    await tester.pump();
-    await tester.tap(find.widgetWithText(GameButton, 'Inventory'));
-    await tester.pump();
+    await openChinInventory(tester);
     expect(find.textContaining('slots'), findsOne);
   });
 

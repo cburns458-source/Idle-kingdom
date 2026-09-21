@@ -169,7 +169,7 @@ describe('quest tours', () => {
     expect(completed.ok).toBe(true)
     if (!completed.ok) return
     expect(completed.pendingSkillXp).toBe(0)
-    expect(completed.rewards.some((reward) => /25,000 Combat XP/i.test(reward.label))).toBe(true)
+    expect(completed.rewards.some((reward) => /25,000 Might XP/i.test(reward.label))).toBe(true)
   })
 
   it('lets the general store merchant hint at the barracks without requiring it', () => {

@@ -1,19 +1,90 @@
 import type { EquipmentRow, GameDatabase } from '../data/types'
 import { getSkillProgress } from '../activity/xp'
-import { equippedActionTimeReductionPercent, OFFHAND_SLOT_ID, WEAPON_TOOL_SLOT_ID, isDaggerItem, itemHasCapability } from '../equipment/loadout'
+import {
+  equippedActionTimeReductionPercent,
+  OFFHAND_SLOT_ID,
+  WEAPON_TOOL_SLOT_ID,
+  isDaggerItem,
+  itemHasCapability,
+} from '../equipment/loadout'
 import { FISHING_SKILL_ID } from '../skills/skillActions'
 import { ARCANA_SKILL_ID } from '../npcs/knowledge'
 import { equippedEnchantmentDamageBonus } from '../projects/enchantments'
 import { raceMaxHpMultiplier } from '../races/races'
-import type { PlayerSave } from '../save/types'
+import type { AttackStyle, PlayerSave } from '../save/types'
 import { configNumber } from '../activity/gathering'
 import { activeSpellDamageRangeMultiplier } from '../spells/spells'
 
-export const COMBAT_SKILL_ID = 'SKL-0001'
-/** Combat Level bonuses begin at this level (inclusive). */
+/** Might — weapons and damage scaling. Formerly Combat (`SKL-0001`). */
+export const MIGHT_SKILL_ID = 'SKL-0001'
+/** Vitality — armor/shields and max HP scaling. */
+export const VITALITY_SKILL_ID = 'SKL-0016'
+/** @deprecated Use MIGHT_SKILL_ID. Kept for transitional call sites. */
+export const COMBAT_SKILL_ID = MIGHT_SKILL_ID
+
+/** Level bonuses (Might→damage, Vitality→HP) begin at this level (inclusive). */
 export const COMBAT_LEVEL_BONUS_START = 10
-/** Each Combat Level grants this percent to max HP and damage range once the bonus is active. */
+/** Each contributing skill level grants this percent once the bonus is active. */
 export const COMBAT_LEVEL_BONUS_PERCENT_PER_LEVEL = 1
+
+export const ATTACK_STYLES = ['offensive', 'defensive', 'balanced'] as const
+
+export function normalizeAttackStyle(value: unknown): AttackStyle {
+  if (value === 'offensive' || value === 'defensive' || value === 'balanced') return value
+  return 'balanced'
+}
+
+/**
+ * Combined Combat Level = ceil((Might + Vitality) × 0.75).
+ * Replaces the old single Combat skill level everywhere gates/UI need it.
+ */
+export function combatLevelOf(save: Pick<PlayerSave, 'skills'>): number {
+  const might = getSkillProgress(save as PlayerSave, MIGHT_SKILL_ID).level
+  const vitality = getSkillProgress(save as PlayerSave, VITALITY_SKILL_ID).level
+  return Math.ceil((might + vitality) * 0.75)
+}
+
+/** Multiplier from a single skill's level (Might or Vitality). */
+export function skillLevelBonusMultiplier(level: number): number {
+  if (level < COMBAT_LEVEL_BONUS_START) return 1
+  return 1 + (level * COMBAT_LEVEL_BONUS_PERCENT_PER_LEVEL) / 100
+}
+
+export function mightDamageMultiplier(save: PlayerSave): number {
+  return skillLevelBonusMultiplier(getSkillProgress(save, MIGHT_SKILL_ID).level)
+}
+
+export function vitalityHpMultiplier(save: PlayerSave): number {
+  return skillLevelBonusMultiplier(getSkillProgress(save, VITALITY_SKILL_ID).level)
+}
+
+/** Flat style damage bonus percent (0 for balanced). */
+export function attackStyleDamageBonusPercent(style: AttackStyle): number {
+  if (style === 'offensive') return 1
+  return 0
+}
+
+/** Flat style damage-reduction points (0 for balanced). */
+export function attackStyleDamageReduction(style: AttackStyle): number {
+  if (style === 'defensive') return 1
+  return 0
+}
+
+/**
+ * Split kill XP across Might / Vitality by attack style.
+ * Balanced splits evenly; odd remainder goes to Might.
+ */
+export function splitCombatVictoryXp(
+  totalXp: number,
+  style: AttackStyle,
+): { mightXp: number; vitalityXp: number } {
+  const amount = Math.max(0, Math.floor(Number(totalXp) || 0))
+  if (amount <= 0) return { mightXp: 0, vitalityXp: 0 }
+  if (style === 'offensive') return { mightXp: amount, vitalityXp: 0 }
+  if (style === 'defensive') return { mightXp: 0, vitalityXp: amount }
+  const vitalityXp = Math.floor(amount / 2)
+  return { mightXp: amount - vitalityXp, vitalityXp }
+}
 
 function equippedRows(db: GameDatabase, save: PlayerSave): EquipmentRow[] {
   const rows: EquipmentRow[] = []
@@ -25,17 +96,6 @@ function equippedRows(db: GameDatabase, save: PlayerSave): EquipmentRow[] {
   return rows
 }
 
-/**
- * Multiplier from Combat Level.
- * Below level 10: none.
- * Level 10+: +1% per Combat Level (level 10 → ×1.10, level 20 → ×1.20).
- */
-export function combatLevelBonusMultiplier(save: PlayerSave): number {
-  const level = getSkillProgress(save, COMBAT_SKILL_ID).level
-  if (level < COMBAT_LEVEL_BONUS_START) return 1
-  return 1 + (level * COMBAT_LEVEL_BONUS_PERCENT_PER_LEVEL) / 100
-}
-
 function scaleStat(value: number, multiplier: number): number {
   return Math.max(0, Math.floor(value * multiplier))
 }
@@ -45,14 +105,15 @@ function damageRangeMultipliers(
   save: PlayerSave,
   nowMs: number,
 ): number {
-  const levelMult = combatLevelBonusMultiplier(save)
+  const levelMult = mightDamageMultiplier(save)
+  const styleMult = 1 + attackStyleDamageBonusPercent(normalizeAttackStyle(save.attackStyle)) / 100
   const spellMult = activeSpellDamageRangeMultiplier(db, save, nowMs)
   const potionBonus = save.activePotionEffect?.damageBonusPercent
   const potionMult =
     potionBonus && potionBonus > 0 && save.activePotionEffect?.scope === 'one_combat_encounter'
       ? 1 + potionBonus / 100
       : 1
-  return levelMult * spellMult * potionMult
+  return levelMult * styleMult * spellMult * potionMult
 }
 
 function scaleDamageRange(
@@ -82,7 +143,6 @@ export function staffSparksDamageRange(arcanaLevel: number): { min: number; max:
 
 /**
  * Mother Squid fishing combat: (2000 × Fishing ATR% + Fishing Level) ± 10%.
- * ATR is the equipped Action Time Reduction percent for Fishing (SKL-0003).
  */
 export function fishingCombatDamageRange(
   db: GameDatabase,
@@ -122,7 +182,6 @@ export function playerDamageRange(
     max = configNumber(db, 'unarmed_max_damage', 30) + enchantBonus
   }
 
-  // Gloves with Min Damage (Pirate Hook / Dragon Gloves) raise minimum only.
   const glovesMinBonus = equippedRows(db, save).reduce((sum, row) => {
     if (row['Slot ID'] !== 'SLOT-0007') return sum
     const bonus = row['Min Damage']
@@ -133,10 +192,6 @@ export function playerDamageRange(
   return scaleDamageRange(min, max, combined)
 }
 
-/**
- * Off-hand dagger damage range, or null when no dagger is equipped there.
- * Uses the same global enchant / spell / potion / race multipliers as main-hand.
- */
 export function playerOffhandDamageRange(
   db: GameDatabase,
   save: PlayerSave,
@@ -159,24 +214,24 @@ export function playerOffhandDamageRange(
 }
 
 export function playerDamageReduction(db: GameDatabase, save: PlayerSave): number {
-  return equippedRows(db, save).reduce((sum, row) => sum + Number(row['Damage Reduction'] ?? 0), 0)
+  const gear = equippedRows(db, save).reduce(
+    (sum, row) => sum + Number(row['Damage Reduction'] ?? 0),
+    0,
+  )
+  return gear + attackStyleDamageReduction(normalizeAttackStyle(save.attackStyle))
 }
 
 export function playerMaxHp(db: GameDatabase, save: PlayerSave): number {
   const base = configNumber(db, 'starting_max_hp', 1000)
   const bonus = equippedRows(db, save).reduce((sum, row) => sum + Number(row['HP Bonus'] ?? 0), 0)
-  const levelMult = combatLevelBonusMultiplier(save)
+  const levelMult = vitalityHpMultiplier(save)
   const raceMult = raceMaxHpMultiplier(db, save)
   return Math.max(1, scaleStat(base + bonus, levelMult * raceMult))
 }
 
-/**
- * Max HP from base + Combat Level + race only — equipment HP bonuses are ignored.
- * Mother Squid scales HP and damage from this value.
- */
 export function playerBaseMaxHp(db: GameDatabase, save: PlayerSave): number {
   const base = configNumber(db, 'starting_max_hp', 1000)
-  const levelMult = combatLevelBonusMultiplier(save)
+  const levelMult = vitalityHpMultiplier(save)
   const raceMult = raceMaxHpMultiplier(db, save)
   return Math.max(1, scaleStat(base, levelMult * raceMult))
 }
@@ -193,4 +248,9 @@ export function applyMitigation(
   damageFloor: number,
 ): number {
   return Math.max(damageFloor, rawDamage - Math.max(0, reduction))
+}
+
+/** @deprecated Use mightDamageMultiplier / vitalityHpMultiplier. */
+export function combatLevelBonusMultiplier(save: PlayerSave): number {
+  return mightDamageMultiplier(save)
 }

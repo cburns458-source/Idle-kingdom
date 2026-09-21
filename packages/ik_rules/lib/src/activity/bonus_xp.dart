@@ -22,7 +22,7 @@ const Map<String, BonusXpGrant> _bonusSkillXp = <String, BonusXpGrant>{};
 BonusXpGrant? bonusSkillXpForAction(String actionId) => _bonusSkillXp[actionId];
 
 const String _huntingSkillId = 'SKL-0005';
-const String _combatSkillId = 'SKL-0001';
+const String _mightSkillId = 'SKL-0001';
 const String _bowCapabilityTag = 'bow_combat_xp';
 
 bool _equippedWeaponHasCapability(GameDatabase db, PlayerSave save, String tag) {
@@ -32,9 +32,9 @@ bool _equippedWeaponHasCapability(GameDatabase db, PlayerSave save, String tag) 
   return capabilityTags(equipment?.raw['Capabilities / Effects']).contains(tag);
 }
 
-/// Combat XP earned alongside Hunting XP when a bow is equipped.
+/// Might XP earned alongside Hunting XP when a bow is equipped.
 ///
-/// Qualifying bow-based Hunting Actions grant Combat XP equal to a percentage
+/// Qualifying bow-based Hunting Actions grant Might XP equal to a percentage
 /// (default 10%, see Config `bow_hunting_combat_xp_percent`) of the Hunting XP
 /// just awarded, whenever the equipped Weapon/Tool carries the `bow_combat_xp`
 /// capability. See docs/Game_Bible.txt section 8.4.
@@ -49,5 +49,5 @@ BonusXpGrant? bowHuntingCombatXpBonus(
   if (!_equippedWeaponHasCapability(db, save, _bowCapabilityTag)) return null;
   final percent = configNumber(db, 'bow_hunting_combat_xp_percent', 10);
   final xp = (huntingXpAwarded * (percent / 100)).floor();
-  return xp > 0 ? BonusXpGrant(skillId: _combatSkillId, xp: xp) : null;
+  return xp > 0 ? BonusXpGrant(skillId: _mightSkillId, xp: xp) : null;
 }

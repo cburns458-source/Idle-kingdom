@@ -99,17 +99,17 @@ void main() {
     final bar = tester.getRect(
       find.descendant(of: find.byType(TopHud), matching: find.byType(PillBar)),
     );
-    expect(bar.width, 88);
+    expect(bar.width, 76);
     expect(hp.right, closeTo(hud.right, 16));
     expect(bar.right, closeTo(hud.right, 16));
     expect(bar.top, greaterThan(hp.bottom - 1));
     expect(bar.bottom, closeTo(hud.bottom, 12));
     final portrait = tester.getRect(find.byType(HudPortrait));
-    expect(hud.height, HudPortrait.size);
+    expect(hud.height, HudPortrait.size + 2);
     expect(portrait.width, HudPortrait.size);
     expect(portrait.height, HudPortrait.size);
     expect(portrait.top, closeTo(hud.top, 0.5));
-    expect(portrait.bottom, closeTo(hud.bottom, 0.5));
+    expect(portrait.bottom, closeTo(hud.bottom - 2, 0.5));
   });
 
   testWidgets('hit points sit under the activity, on the right', (tester) async {

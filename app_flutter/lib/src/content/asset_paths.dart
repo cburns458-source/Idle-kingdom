@@ -342,7 +342,7 @@ String actionAssetPath(String actionId, {GameDatabase? db}) {
 String critterAssetPath(String internalKey) => '$_assetRoot/critters/crt_$internalKey.webp';
 
 String skillIconPath(SkillRow? skill) {
-  if (skill == null) return '$_assetRoot/icons/skills/skl_combat.webp';
+  if (skill == null) return '$_assetRoot/icons/skills/skl_might.webp';
   final key = skill.internalKey.trim().toLowerCase().replaceAll(' ', '_');
   return '$_assetRoot/icons/skills/skl_$key.webp';
 }

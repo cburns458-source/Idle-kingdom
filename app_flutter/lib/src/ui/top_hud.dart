@@ -24,11 +24,11 @@ class _HudStatus {
 }
 
 /// How wide the HUD hit-point track is. Short, and parked on the HUD's bottom edge.
-const double _hudHpBarWidth = 88;
+const double _hudHpBarWidth = 76;
 
 /// Name stays the heading. Everything else matches body UI (~12) without
-/// matching the name, so race / gold / activity stay readable in 68px.
-const double _hudNameSize = 16;
+/// matching the name, so race / gold / activity stay readable in 56px.
+const double _hudNameSize = 14;
 const double _hudMetaSize = 11;
 const double _hudActivitySize = 12;
 const double _hudActivityDetailSize = 11;
@@ -105,7 +105,7 @@ class TopHud extends StatelessWidget {
         : 'Lv ${formatThousands(totalLevel(save))}';
 
     return SizedBox(
-      height: HudPortrait.size,
+      height: HudPortrait.size + 2,
       child: DecoratedBox(
         decoration: chromeBoardFill(
           context,
@@ -117,7 +117,7 @@ class TopHud extends StatelessWidget {
           ),
         ),
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(6, 0, 8, 0),
+          padding: const EdgeInsets.fromLTRB(6, 0, 8, 2),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
@@ -347,7 +347,7 @@ class HudPortrait extends StatelessWidget {
     required this.onTap,
   });
 
-  static const double size = 68;
+  static const double size = 56;
 
   final PlayerAppearance appearance;
 

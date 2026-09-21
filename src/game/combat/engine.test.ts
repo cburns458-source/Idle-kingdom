@@ -74,7 +74,8 @@ describe('combat engine', () => {
     const action = launch.Actions.find((row) => row['Action ID'] === 'ACN-0001')!
     const victory = applyCombatVictory(launch, save, action, enemy, () => 0)
     expect(victory.xpGained).toBe(125)
-    expect(victory.save.skills.find((skill) => skill.skillId === 'SKL-0001')?.xp).toBe(125)
+    expect(victory.save.skills.find((skill) => skill.skillId === 'SKL-0001')?.xp).toBe(63)
+    expect(victory.save.skills.find((skill) => skill.skillId === 'SKL-0016')?.xp).toBe(62)
     expect(victory.goldGained).toBe(0)
     expect(victory.foodConsumed).toBe(true)
     expect(victory.save.currentHp).toBeGreaterThan(900)

@@ -13,7 +13,11 @@ ActionRow _action(GameDatabase db, String actionId) {
 PlayerSave _withCombatLevel(PlayerSave save, num level) {
   return save.copyWith(
     skills: save.skills
-        .map((skill) => skill.skillId == combatSkillId ? skill.copyWith(level: level) : skill)
+        .map(
+          (skill) => skill.skillId == mightSkillId || skill.skillId == vitalitySkillId
+              ? skill.copyWith(level: level)
+              : skill,
+        )
         .toList(),
   );
 }
@@ -31,7 +35,9 @@ void main() {
             'damageReduction': playerDamageReduction(db, save),
             'damageRange': playerDamageRange(db, save).toJson(),
             'offhandRange': playerOffhandDamageRange(db, save)?.toJson(),
-            'levelMultiplier': combatLevelBonusMultiplier(save),
+            'combatLevel': combatLevelOf(save),
+            'mightMultiplier': mightDamageMultiplier(save),
+            'vitalityMultiplier': vitalityHpMultiplier(save),
           }),
           isNull,
         );
@@ -47,7 +53,9 @@ void main() {
           final save = _withCombatLevel(saveOf(fixture), level);
           return <String, Object?>{
             'level': level,
-            'multiplier': combatLevelBonusMultiplier(save),
+            'combatLevel': combatLevelOf(save),
+            'mightMultiplier': mightDamageMultiplier(save),
+            'vitalityMultiplier': vitalityHpMultiplier(save),
             'maxHp': playerMaxHp(db, save),
             'damageRange': playerDamageRange(db, save).toJson(),
           };

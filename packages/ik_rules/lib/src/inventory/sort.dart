@@ -262,7 +262,7 @@ class InventorySorter {
     }
 
     final skill = item?.associatedSkillId;
-    if (skill == 'SKL-0001') {
+    if (skill == 'SKL-0001' || skill == 'SKL-0016') {
       if (category == 'raw food' || tags.contains('cooking_input')) return groupHunting;
       return groupCombat;
     }

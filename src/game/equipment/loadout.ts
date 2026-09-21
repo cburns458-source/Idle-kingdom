@@ -397,6 +397,9 @@ function isEquipmentSkillId(value: unknown): value is string {
   return typeof value === 'string' && value.length > 0 && value !== 'None'
 }
 
+/** Per-skill action time reduction cap; excess is ignored and not shown. */
+export const ACTION_TIME_REDUCTION_CAP_PERCENT = 50
+
 /** Action-time reduction totals keyed by required and secondary skills. */
 export function equippedActionTimeReductionBySkill(
   db: GameDatabase,
@@ -413,10 +416,13 @@ export function equippedActionTimeReductionBySkill(
       totals[skillId] = (totals[skillId] ?? 0) + amount
     }
   }
+  for (const skillId of Object.keys(totals)) {
+    totals[skillId] = Math.min(ACTION_TIME_REDUCTION_CAP_PERCENT, Math.max(0, totals[skillId]!))
+  }
   return totals
 }
 
-/** Reduction that applies only to actions of this skill. */
+/** Reduction that applies only to actions of this skill (capped). */
 export function equippedActionTimeReductionPercent(
   db: GameDatabase,
   save: PlayerSave,

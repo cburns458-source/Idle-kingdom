@@ -1,7 +1,8 @@
-import { getSkillProgress } from '../activity/xp'
-import { COMBAT_SKILL_ID } from '../combat/stats'
+import { combatLevelOf } from '../combat/stats'
 import type { PlayerSave } from '../save/types'
 import { totalLevel } from '../skills/totals'
+
+export { combatLevelOf }
 
 export const RANKED_PVP_DAILY_CAP = 5
 export const RANKED_PVP_WIN_GOLD = 1000
@@ -12,10 +13,6 @@ export interface ArenaOpponent {
   username: string
   combatLevel: number
   totalLevel: number
-}
-
-export function combatLevelOf(save: Pick<PlayerSave, 'skills'>): number {
-  return getSkillProgress(save as PlayerSave, COMBAT_SKILL_ID).level
 }
 
 /** UTC calendar day, matching `toISOString().slice(0, 10)`. */

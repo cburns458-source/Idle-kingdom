@@ -49,9 +49,9 @@ export function richSave(db: GameDatabase): PlayerSave {
     raceId: 'RACE-0001',
     gold: 12_345,
     currentLocationId: 'LOC-0002',
-    skills: base.skills.map((skill, index) => {
-      if (index === 0) return { ...skill, level: 12, xp: 1_500 }
-      if (index === 1) return { ...skill, level: 3, xp: 120 }
+    skills: base.skills.map((skill) => {
+      if (skill.skillId === 'SKL-0001') return { ...skill, level: 12, xp: 1_500 }
+      if (skill.skillId === 'SKL-0002') return { ...skill, level: 3, xp: 120 }
       return skill
     }),
     inventory: [
@@ -85,7 +85,9 @@ export function gearedSave(db: GameDatabase): PlayerSave {
     gold: 5_000,
     currentLocationId: 'LOC-0002',
     skills: base.skills.map((skill) =>
-      skill.skillId === 'SKL-0001' ? { ...skill, level: 25, xp: 8_000 } : { ...skill, level: 20, xp: 4_500 },
+      skill.skillId === 'SKL-0001' || skill.skillId === 'SKL-0016'
+        ? { ...skill, level: 25, xp: 8_000 }
+        : { ...skill, level: 20, xp: 4_500 },
     ),
     inventory: [
       { itemId: 'ITEM-0114', quantity: 1 },
@@ -257,7 +259,9 @@ export function combatSave(db: GameDatabase): PlayerSave {
     currentLocationId: 'LOC-0003',
     currentHp: 700,
     skills: base.skills.map((skill) =>
-      skill.skillId === 'SKL-0001' ? { ...skill, level: 20, xp: 40_000 } : skill,
+      skill.skillId === 'SKL-0001' || skill.skillId === 'SKL-0016'
+        ? { ...skill, level: 20, xp: 40_000 }
+        : skill,
     ),
     inventory: [{ itemId: 'ITEM-0058', quantity: 5 }],
     equipment: {

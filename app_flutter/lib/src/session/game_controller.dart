@@ -500,6 +500,14 @@ class GameController extends ChangeNotifier {
     commit(save.copyWith(settings: save.settings.copyWith(showEatButton: value)));
   }
 
+  String get attackStyle => normalizeAttackStyle(save.attackStyle);
+
+  void setAttackStyle(String style) {
+    final next = normalizeAttackStyle(style);
+    if (normalizeAttackStyle(save.attackStyle) == next) return;
+    commit(save.copyWith(attackStyle: next));
+  }
+
   num get eatHealthThresholdPercent =>
       clampEatHealthThresholdPercent(save.settings.eatHealthThresholdPercent);
 

@@ -1,11 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:idle_kingdoms/src/session/game_controller.dart';
 import 'package:idle_kingdoms/src/theme.dart';
 import 'package:idle_kingdoms/src/ui/format.dart';
 import 'package:ik_content/ik_content.dart';
 import 'package:ik_rules/ik_rules.dart';
 
 import 'support/harness.dart';
+
+const Size _skillShellSize = Size(420, 840);
+
+Future<void> pumpSkillShell(WidgetTester tester, GameController controller) {
+  return pumpShell(tester, controller, size: _skillShellSize);
+}
+
+Future<void> openSkillTile(WidgetTester tester, String name) async {
+  await openChinSkills(tester);
+  final tile = find.text(name);
+  await tester.ensureVisible(tile);
+  await tester.tap(tile);
+  await tester.pump();
+}
 
 void main() {
   late LoadedDatabase database;
@@ -17,14 +32,9 @@ void main() {
   testWidgets('a skill tile opens a numbered proficiency list', (tester) async {
     final controller = buildController(database, seed: startedCharacter(database));
     addTearDown(controller.dispose);
-    await pumpShell(tester, controller);
+    await pumpSkillShell(tester, controller);
 
-    await tester.tap(find.text('Character'));
-    await tester.pump();
-    await tester.tap(find.widgetWithText(GameButton, 'Skills'));
-    await tester.pump();
-    await tester.tap(find.text('Mining'));
-    await tester.pump();
+    await openSkillTile(tester, 'Mining');
 
     expect(find.textContaining('Mine copper ore'), findsOne);
     expect(find.textContaining(RegExp(r'^\d+\. ')), findsWidgets);
@@ -33,14 +43,9 @@ void main() {
   testWidgets('combat lists enemy and gear tabs without quest-only fights', (tester) async {
     final controller = buildController(database, seed: startedCharacter(database));
     addTearDown(controller.dispose);
-    await pumpShell(tester, controller);
+    await pumpSkillShell(tester, controller);
 
-    await tester.tap(find.text('Character'));
-    await tester.pump();
-    await tester.tap(find.widgetWithText(GameButton, 'Skills'));
-    await tester.pump();
-    await tester.tap(find.text('Combat'));
-    await tester.pump();
+    await openSkillTile(tester, 'Might');
 
     expect(find.text('Enemies'), findsOne);
     final popup = find.byKey(const Key('game-popup'));
@@ -62,14 +67,9 @@ void main() {
   testWidgets('cooking opens a recipe book that includes locked recipes', (tester) async {
     final controller = buildController(database, seed: startedCharacter(database));
     addTearDown(controller.dispose);
-    await pumpShell(tester, controller);
+    await pumpSkillShell(tester, controller);
 
-    await tester.tap(find.text('Character'));
-    await tester.pump();
-    await tester.tap(find.widgetWithText(GameButton, 'Skills'));
-    await tester.pump();
-    await tester.tap(find.text('Cooking'));
-    await tester.pump();
+    await openSkillTile(tester, 'Cooking');
 
     final popup = find.byKey(const Key('game-popup'));
     expect(
@@ -96,14 +96,9 @@ void main() {
   testWidgets('smithing lists material groups instead of every item', (tester) async {
     final controller = buildController(database, seed: startedCharacter(database));
     addTearDown(controller.dispose);
-    await pumpShell(tester, controller);
+    await pumpSkillShell(tester, controller);
 
-    await tester.tap(find.text('Character'));
-    await tester.pump();
-    await tester.tap(find.widgetWithText(GameButton, 'Skills'));
-    await tester.pump();
-    await tester.tap(find.text('Smithing'));
-    await tester.pump();
+    await openSkillTile(tester, 'Smithing');
 
     await tester.scrollUntilVisible(
       find.textContaining('70. Titanium items'),
@@ -122,14 +117,9 @@ void main() {
   testWidgets('combat lists armor tiers as equipment instead of every piece', (tester) async {
     final controller = buildController(database, seed: startedCharacter(database));
     addTearDown(controller.dispose);
-    await pumpShell(tester, controller);
+    await pumpSkillShell(tester, controller);
 
-    await tester.tap(find.text('Character'));
-    await tester.pump();
-    await tester.tap(find.widgetWithText(GameButton, 'Skills'));
-    await tester.pump();
-    await tester.tap(find.text('Combat'));
-    await tester.pump();
+    await openSkillTile(tester, 'Might');
 
     final popup = find.byKey(const Key('game-popup'));
     await tester.tap(find.descendant(of: popup, matching: find.text('Equipment')));
@@ -191,14 +181,9 @@ void main() {
   testWidgets('artisanry lists leather equipment on Other', (tester) async {
     final controller = buildController(database, seed: startedCharacter(database));
     addTearDown(controller.dispose);
-    await pumpShell(tester, controller);
+    await pumpSkillShell(tester, controller);
 
-    await tester.tap(find.text('Character'));
-    await tester.pump();
-    await tester.tap(find.widgetWithText(GameButton, 'Skills'));
-    await tester.pump();
-    await tester.tap(find.text('Artisanry'));
-    await tester.pump();
+    await openSkillTile(tester, 'Artisanry');
 
     final popup = find.byKey(const Key('game-popup'));
     await tester.tap(find.descendant(of: popup, matching: find.text('Other')));
@@ -221,12 +206,9 @@ void main() {
     final raised = raiseSkillToMinimumLevel(save, database.launch, 'SKL-0002', 5);
     final controller = buildController(database, seed: raised.save);
     addTearDown(controller.dispose);
-    await pumpShell(tester, controller);
+    await pumpSkillShell(tester, controller);
 
-    await tester.tap(find.text('Character'));
-    await tester.pump();
-    await tester.tap(find.widgetWithText(GameButton, 'Skills'));
-    await tester.pump();
+    await openChinSkills(tester);
 
     final progress = skillXpProgress(
       database.launch,
@@ -265,12 +247,9 @@ void main() {
       ),
     );
     addTearDown(controller.dispose);
-    await pumpShell(tester, controller);
+    await pumpSkillShell(tester, controller);
 
-    await tester.tap(find.text('Character'));
-    await tester.pump();
-    await tester.tap(find.widgetWithText(GameButton, 'Skills'));
-    await tester.pump();
+    await openChinSkills(tester);
 
     expect(find.text('Mastered'), findsNothing);
     expect(find.textContaining('mastered'), findsNothing);

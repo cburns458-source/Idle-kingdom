@@ -22,7 +22,7 @@ const double playableFrameSideChatMinLeftover = desktopRailWidth * 2 + desktopRa
 const double playableFrameSideChatMinWidth = 1000;
 
 /// Menus and location copy sit smaller than HUD and combat numbers.
-const double playableUiTextScale = 0.81;
+const double playableUiTextScale = 0.75;
 
 double _textScaleFactor(TextScaler scaler) => scaler.scale(100) / 100;
 
