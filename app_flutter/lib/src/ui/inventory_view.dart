@@ -720,6 +720,7 @@ class _InventoryViewState extends State<InventoryView> {
     final summary = playerCombatStatSummary(db, save);
     final damage = summary.damage;
     final offhand = summary.offhandDamage;
+    final style = normalizeAttackStyle(save.attackStyle);
     return GamePanel(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -736,6 +737,31 @@ class _InventoryViewState extends State<InventoryView> {
               _Stat(label: 'DR', value: '${summary.damageReduction}'),
             ],
           ),
+          const SizedBox(height: 8),
+          MutedText('Attack style'),
+          const SizedBox(height: 4),
+          Row(
+            children: [
+              for (final entry in const <(String, String)>[
+                ('offensive', 'Offensive'),
+                ('balanced', 'Balanced'),
+                ('defensive', 'Defensive'),
+              ]) ...[
+                if (entry.$1 != 'offensive') const SizedBox(width: 6),
+                Flexible(
+                  child: GameButton(
+                    label: entry.$2,
+                    tone: style == entry.$1 ? GameButtonTone.primary : GameButtonTone.secondary,
+                    compact: true,
+                    dense: true,
+                    onPressed: () => widget.controller.setAttackStyle(entry.$1),
+                  ),
+                ),
+              ],
+            ],
+          ),
+          const SizedBox(height: 4),
+          MutedText(_attackStyleHint(style)),
           const SizedBox(height: 10),
           Row(
             children: [
@@ -789,6 +815,14 @@ class _InventoryViewState extends State<InventoryView> {
         ],
       ),
     );
+  }
+
+  String _attackStyleHint(String style) {
+    return switch (style) {
+      'offensive' => '+1% damage · kill XP to Might',
+      'defensive' => '+1 DR · kill XP to Vitality',
+      _ => 'No stance bonus · kill XP split 50/50',
+    };
   }
 
   Widget _breakdownSection(String title, List<CombatStatContribution> lines) {

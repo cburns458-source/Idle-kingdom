@@ -15,13 +15,74 @@ import '../rng/mulberry32.dart';
 import '../save/generated/save_models.dart';
 import '../spells/spells.dart';
 
-const String combatSkillId = 'SKL-0001';
+/// Might — weapons and damage scaling. Formerly Combat (`SKL-0001`).
+const String mightSkillId = 'SKL-0001';
 
-/// Combat Level bonuses begin at this level (inclusive).
+/// Vitality — armor/shields and max HP scaling.
+const String vitalitySkillId = 'SKL-0016';
+
+/// @deprecated Use [mightSkillId]. Kept for transitional call sites.
+const String combatSkillId = mightSkillId;
+
+/// Level bonuses (Might→damage, Vitality→HP) begin at this level (inclusive).
 const int combatLevelBonusStart = 10;
 
-/// Each Combat Level grants this percent to max HP and damage range once the bonus is active.
+/// Each contributing skill level grants this percent once the bonus is active.
 const num combatLevelBonusPercentPerLevel = 1;
+
+const List<String> attackStyles = <String>['offensive', 'defensive', 'balanced'];
+
+String normalizeAttackStyle(Object? value) {
+  if (value == 'offensive' || value == 'defensive' || value == 'balanced') {
+    return value as String;
+  }
+  return 'balanced';
+}
+
+/// Combined Combat Level = ceil((Might + Vitality) × 0.75).
+num combatLevelOf(PlayerSave save) {
+  final might = getSkillProgress(save, mightSkillId).level;
+  final vitality = getSkillProgress(save, vitalitySkillId).level;
+  return ((might + vitality) * 0.75).ceil();
+}
+
+/// Multiplier from a single skill's level (Might or Vitality).
+num skillLevelBonusMultiplier(num level) {
+  if (level < combatLevelBonusStart) return 1;
+  return 1 + (level * combatLevelBonusPercentPerLevel) / 100;
+}
+
+num mightDamageMultiplier(PlayerSave save) {
+  return skillLevelBonusMultiplier(getSkillProgress(save, mightSkillId).level);
+}
+
+num vitalityHpMultiplier(PlayerSave save) {
+  return skillLevelBonusMultiplier(getSkillProgress(save, vitalitySkillId).level);
+}
+
+/// Flat style damage bonus percent (0 for balanced).
+num attackStyleDamageBonusPercent(String style) {
+  if (style == 'offensive') return 1;
+  return 0;
+}
+
+/// Flat style damage-reduction points (0 for balanced).
+num attackStyleDamageReduction(String style) {
+  if (style == 'defensive') return 1;
+  return 0;
+}
+
+/// Split kill XP across Might / Vitality by attack style.
+///
+/// Balanced splits evenly; odd remainder goes to Might.
+({num mightXp, num vitalityXp}) splitCombatVictoryXp(num totalXp, String style) {
+  final amount = math.max(0, (jsNumber(totalXp)).floor());
+  if (amount <= 0) return (mightXp: 0, vitalityXp: 0);
+  if (style == 'offensive') return (mightXp: amount, vitalityXp: 0);
+  if (style == 'defensive') return (mightXp: 0, vitalityXp: amount);
+  final vitalityXp = (amount / 2).floor();
+  return (mightXp: amount - vitalityXp, vitalityXp: vitalityXp);
+}
 
 /// An inclusive damage range.
 class DamageRange {
@@ -43,19 +104,11 @@ List<EquipmentRow> _equippedRows(GameDatabase db, PlayerSave save) {
   return rows;
 }
 
-/// Multiplier from Combat Level.
-///
-/// Below level 10: none. Level 10+: +1% per Combat Level (level 10 → ×1.10).
-num combatLevelBonusMultiplier(PlayerSave save) {
-  final level = getSkillProgress(save, combatSkillId).level;
-  if (level < combatLevelBonusStart) return 1;
-  return 1 + (level * combatLevelBonusPercentPerLevel) / 100;
-}
-
 num _scaleStat(num value, num multiplier) => math.max(0, (value * multiplier).floor());
 
 num _damageRangeMultipliers(GameDatabase db, PlayerSave save) {
-  final levelMult = combatLevelBonusMultiplier(save);
+  final levelMult = mightDamageMultiplier(save);
+  final styleMult = 1 + attackStyleDamageBonusPercent(normalizeAttackStyle(save.attackStyle)) / 100;
   final spellMult = activeSpellDamageRangeMultiplier(db, save);
   final potion = save.activePotionEffect;
   final potionBonus = potion?.damageBonusPercent;
@@ -63,7 +116,7 @@ num _damageRangeMultipliers(GameDatabase db, PlayerSave save) {
       potionBonus != null && potionBonus > 0 && potion?.scope == 'one_combat_encounter'
       ? 1 + potionBonus / 100
       : 1;
-  return levelMult * spellMult * potionMult;
+  return levelMult * styleMult * spellMult * potionMult;
 }
 
 DamageRange _scaleDamageRange(num min, num max, num multiplier) {
@@ -130,8 +183,6 @@ DamageRange playerDamageRange(GameDatabase db, PlayerSave save) {
 }
 
 /// Off-hand dagger damage range, or null when no dagger is equipped there.
-///
-/// Uses the same global enchant / spell / potion / race multipliers as main-hand.
 DamageRange? playerOffhandDamageRange(GameDatabase db, PlayerSave save) {
   final offhandId = save.equipment.slots[offhandSlotId]?.itemId;
   if (isBlank(offhandId) || !isDaggerItem(db, offhandId!)) return null;
@@ -149,10 +200,11 @@ DamageRange? playerOffhandDamageRange(GameDatabase db, PlayerSave save) {
 }
 
 num playerDamageReduction(GameDatabase db, PlayerSave save) {
-  return _equippedRows(
+  final gear = _equippedRows(
     db,
     save,
   ).fold<num>(0, (sum, row) => sum + jsNumber(row.raw['Damage Reduction'] ?? 0));
+  return gear + attackStyleDamageReduction(normalizeAttackStyle(save.attackStyle));
 }
 
 num playerMaxHp(GameDatabase db, PlayerSave save) {
@@ -161,15 +213,15 @@ num playerMaxHp(GameDatabase db, PlayerSave save) {
     db,
     save,
   ).fold<num>(0, (sum, row) => sum + jsNumber(row.raw['HP Bonus'] ?? 0));
-  final levelMult = combatLevelBonusMultiplier(save);
+  final levelMult = vitalityHpMultiplier(save);
   final raceMult = raceMaxHpMultiplier(db, save);
   return math.max(1, _scaleStat(base + bonus, levelMult * raceMult));
 }
 
-/// Max HP from base + Combat Level + race only — equipment HP bonuses are ignored.
+/// Max HP from base + Vitality + race only — equipment HP bonuses are ignored.
 num playerBaseMaxHp(GameDatabase db, PlayerSave save) {
   final base = configNumber(db, 'starting_max_hp', 1000);
-  final levelMult = combatLevelBonusMultiplier(save);
+  final levelMult = vitalityHpMultiplier(save);
   final raceMult = raceMaxHpMultiplier(db, save);
   return math.max(1, _scaleStat(base, levelMult * raceMult));
 }
@@ -183,3 +235,6 @@ num rollDamage(num min, num max, RandomFn random) {
 num applyMitigation(num rawDamage, num reduction, num damageFloor) {
   return math.max(damageFloor, rawDamage - math.max(0, reduction));
 }
+
+/// @deprecated Use [mightDamageMultiplier] / [vitalityHpMultiplier].
+num combatLevelBonusMultiplier(PlayerSave save) => mightDamageMultiplier(save);

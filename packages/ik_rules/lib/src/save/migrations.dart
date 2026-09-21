@@ -728,6 +728,38 @@ final List<SaveMigration> saveMigrations = <SaveMigration>[
       return next;
     },
   ),
+  SaveMigration(
+    fromVersion: 48,
+    toVersion: 49,
+    migrate: (save, _) {
+      final next = _bumped(save, 49);
+      final skills = arrayOrEmpty(next, 'skills').map(copyEntry).toList();
+      Map<String, Object?>? might;
+      final ids = <String>{};
+      for (final entry in skills) {
+        final row = asObject(entry);
+        if (row == null) continue;
+        final id = row['skillId'];
+        if (id is String) {
+          ids.add(id);
+          if (id == 'SKL-0001') might = row;
+        }
+      }
+      if (!ids.contains('SKL-0016')) {
+        skills.add(<String, Object?>{
+          'skillId': 'SKL-0016',
+          'level': might?['level'] ?? 1,
+          'xp': might?['xp'] ?? 0,
+        });
+      }
+      next['skills'] = skills;
+      final style = next['attackStyle'];
+      next['attackStyle'] = style == 'offensive' || style == 'defensive' || style == 'balanced'
+          ? style
+          : 'balanced';
+      return next;
+    },
+  ),
 ];
 
 /// Thrown when a save cannot be brought to the current version.

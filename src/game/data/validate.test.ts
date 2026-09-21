@@ -34,7 +34,8 @@ describe('database loading', () => {
     const loaded = prepareDatabase(rawDatabase)
     const town = loaded.launchIndexes.locationsById.get('LOC-0002')
     expect(town?.['Display Name']).toBe('The Town')
-    expect(loaded.launchIndexes.skillsById.get('SKL-0001')?.['Display Name']).toBe('Combat')
+    expect(loaded.launchIndexes.skillsById.get('SKL-0001')?.['Display Name']).toBe('Might')
+    expect(loaded.launchIndexes.skillsById.get('SKL-0016')?.['Display Name']).toBe('Vitality')
   })
 
   it('rejects unknown requirement types and missing drop chances', () => {

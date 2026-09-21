@@ -4,8 +4,6 @@ import 'package:ik_rules/ik_rules.dart';
 
 import 'events.dart';
 
-const String _combatSkillId = 'SKL-0001';
-
 class SessionTickResult {
   const SessionTickResult({
     required this.save,
@@ -110,24 +108,28 @@ ActionRewardBundle _victoryRewardBundle(
   PlayerSave before,
   PlayerSave after,
   EnemyRow enemy,
-  num xpGained,
+  List<({String skillId, num xp})> xpAwards,
   List<LootGrant> loot,
   num goldGained,
-  num nowMs, [
-  String xpSkillId = _combatSkillId,
-]) {
-  final levelBefore = getSkillProgress(before, xpSkillId).level;
-  final levelAfter = getSkillProgress(after, xpSkillId).level;
-  final summary = summarizeXpReward(
-    db,
-    after,
-    xpSkillId,
-    xpGained,
-    levelAfter > levelBefore ? levelAfter : null,
-  );
+  num nowMs,
+) {
+  final xpRewards = <ActionXpRewardSummary>[];
+  for (final award in xpAwards) {
+    if (award.xp <= 0) continue;
+    final levelBefore = getSkillProgress(before, award.skillId).level;
+    final levelAfter = getSkillProgress(after, award.skillId).level;
+    final summary = summarizeXpReward(
+      db,
+      after,
+      award.skillId,
+      award.xp,
+      levelAfter > levelBefore ? levelAfter : null,
+    );
+    if (summary != null) xpRewards.add(summary);
+  }
   return ActionRewardBundle(
     id: 'combat-${jsString(enemy.raw['Enemy ID'])}-${jsNumberToString(nowMs)}',
-    xpRewards: summary != null ? <ActionXpRewardSummary>[summary] : const <ActionXpRewardSummary>[],
+    xpRewards: xpRewards,
     loot: loot,
     goldGained: goldGained,
   );
@@ -209,11 +211,10 @@ void _resolveDueCombatRound(
               before,
               out.current,
               enemy,
-              squidlingResult.xpGained,
+              [(skillId: squidlingResult.xpSkillId, xp: squidlingResult.xpGained)],
               const <LootGrant>[],
               0,
               roundEnd,
-              squidlingResult.xpSkillId,
             ),
           ),
         );
@@ -248,11 +249,10 @@ void _resolveDueCombatRound(
           before,
           out.current,
           enemy,
-          victory.xpGained,
+          victory.xpAwards,
           victory.loot,
           victory.goldGained,
           roundEnd,
-          victory.xpSkillId,
         ),
       ),
     );

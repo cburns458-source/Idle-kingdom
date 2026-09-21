@@ -144,6 +144,7 @@ class _Totals extends StatelessWidget {
       ),
       child: Row(
         children: [
+          _Total(label: 'Combat level', value: formatThousands(combatLevelOf(save))),
           _Total(label: 'Total level', value: formatThousands(totalLevel(save))),
           _Total(label: 'Total xp', value: formatThousands(totalSkillXp(save))),
         ],

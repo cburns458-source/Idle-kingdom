@@ -42,10 +42,10 @@ void main() {
     expect(potatoCount(controller.save), beforePotatoes + 110);
 
     expect(getSkillProgress(controller.save, combatSkillId).level, 1);
-    expect(controller.debugAddSkillLevels(combatSkillId, 10), 'Combat is now level 11.');
-    expect(getSkillProgress(controller.save, combatSkillId).level, 11);
-    expect(controller.debugRemoveSkillLevels(combatSkillId, 1), 'Combat is now level 10.');
-    expect(getSkillProgress(controller.save, combatSkillId).level, 10);
+    expect(controller.debugAddSkillLevels(mightSkillId, 10), 'Might is now level 11.');
+    expect(getSkillProgress(controller.save, mightSkillId).level, 11);
+    expect(controller.debugRemoveSkillLevels(mightSkillId, 1), 'Might is now level 10.');
+    expect(getSkillProgress(controller.save, mightSkillId).level, 10);
     expect(controller.debugResetAllSkills(), 'Every skill is back at level 1.');
     expect(controller.save.skills.every((skill) => skill.level == 1 && skill.xp == 0), isTrue);
   });

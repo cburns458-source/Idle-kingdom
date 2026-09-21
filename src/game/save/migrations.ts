@@ -742,6 +742,32 @@ export const SAVE_MIGRATIONS: SaveMigration[] = [
       }
     },
   },
+  {
+    fromVersion: 48,
+    toVersion: 49,
+    migrate: (save) => {
+      const might = save.skills.find((row) => row.skillId === 'SKL-0001')
+      const skillIds = new Set(save.skills.map((row) => row.skillId))
+      const skills = [...save.skills]
+      if (!skillIds.has('SKL-0016')) {
+        skills.push({
+          skillId: 'SKL-0016',
+          level: might?.level ?? 1,
+          xp: might?.xp ?? 0,
+        })
+      }
+      const style = (save as PlayerSave & { attackStyle?: unknown }).attackStyle
+      return {
+        ...save,
+        skills,
+        attackStyle:
+          style === 'offensive' || style === 'defensive' || style === 'balanced'
+            ? style
+            : 'balanced',
+        saveVersion: 49,
+      }
+    },
+  },
 ]
 
 export function migrateSave(save: PlayerSave, nowMs: number = Date.now()): PlayerSave {

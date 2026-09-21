@@ -10,6 +10,7 @@ function saveWithInventory(itemIds: string[]): PlayerSave {
     characterName: 'Test',
     motto: null,
     raceId: null,
+    attackStyle: 'balanced',
     skills: [],
     inventory: itemIds.map((itemId) => ({ itemId, quantity: 1 })),
     bank: [],

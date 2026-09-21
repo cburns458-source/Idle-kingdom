@@ -4,7 +4,6 @@ import 'package:ik_content/ik_content.dart';
 import '../activity/engine.dart';
 import '../activity/favorites.dart';
 import '../activity/transition.dart';
-import '../activity/xp.dart';
 import '../combat/stats.dart';
 import '../js_compat.dart';
 import '../races/races.dart';
@@ -52,7 +51,7 @@ const String hostileActivityStartReason =
 /// The hostile activity at this location the player is under-level for, if any.
 ActivityRow? forcedHostileActivity(GameDatabase db, PlayerSave save, String locationId) {
   if (raceBypassesForcedHostilityAt(db, save, locationId)) return null;
-  final combatLevel = getSkillProgress(save, combatSkillId).level;
+  final combatLevel = combatLevelOf(save);
   for (final activity in hostileActivitiesAt(db, locationId)) {
     final warning = activity.raw['Danger Warning Combat Level'];
     if (warning is num && combatLevel < warning) return activity;

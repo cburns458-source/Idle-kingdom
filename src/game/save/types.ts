@@ -1,4 +1,4 @@
-export const SAVE_VERSION = 48
+export const SAVE_VERSION = 49
 export const SAVE_STORAGE_KEY = 'idle-kingdoms.demo.save'
 export const STARTING_LOCATION_ID = 'LOC-0001'
 /** Base gold before race kit; race starters grant the real starting gold. */
@@ -52,6 +52,9 @@ export interface SkillProgress {
   level: number
   xp: number
 }
+
+/** Global combat attack style (shared across equipment presets). */
+export type AttackStyle = 'offensive' | 'defensive' | 'balanced'
 
 export interface InventoryStack {
   itemId: string
@@ -236,6 +239,8 @@ export interface PlayerSave {
   motto: string | null
   /** Selected playable Race ID; null until first-run (or one-time) race picker completes. */
   raceId: string | null
+  /** Global attack style for Might/Vitality XP routing and stance bonuses. */
+  attackStyle: AttackStyle
   skills: SkillProgress[]
   inventory: InventoryStack[]
   /** Stash at the Town Bank and Citadel Bank. Same slot rules as the bag. */

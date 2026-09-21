@@ -506,7 +506,7 @@ export class CodexIndex {
         minDamage: enemy['Min Damage'],
         maxDamage: enemy['Max Damage'],
         combatXp: enemy['Combat XP'],
-        xpSkillLabel: fishingEnemyIds.has(enemy['Enemy ID']) ? 'Fishing' : 'Combat',
+        xpSkillLabel: fishingEnemyIds.has(enemy['Enemy ID']) ? 'Fishing' : 'Might',
         minimumGold: enemy['Minimum Gold'],
         maximumGold: enemy['Maximum Gold'],
         dropChance: enemy['Drop Chance'],

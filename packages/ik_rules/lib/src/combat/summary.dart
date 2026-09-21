@@ -236,15 +236,21 @@ List<CombatStatContribution> _damageMultiplierLines(GameDatabase db, PlayerSave 
     lines.add(CombatStatContribution(label: 'Enchantments', detail: _signed(enchantBonus)));
   }
 
-  final level = getSkillProgress(save, combatSkillId).level;
-  final levelMult = combatLevelBonusMultiplier(save);
+  final mightLevel = getSkillProgress(save, mightSkillId).level;
+  final levelMult = mightDamageMultiplier(save);
   if (levelMult != 1) {
     lines.add(
       CombatStatContribution(
-        label: 'Combat Level ${jsNumberToString(level)}',
+        label: 'Might ${jsNumberToString(mightLevel)}',
         detail: _multiplier(levelMult),
       ),
     );
+  }
+
+  final style = normalizeAttackStyle(save.attackStyle);
+  final styleBonus = attackStyleDamageBonusPercent(style);
+  if (styleBonus > 0) {
+    lines.add(CombatStatContribution(label: 'Offensive stance', detail: _percent(styleBonus)));
   }
 
   for (final stack in equippedSpellStacks(save)) {
@@ -310,12 +316,12 @@ List<CombatStatContribution> _healthBreakdown(GameDatabase db, PlayerSave save) 
     lines.add(CombatStatContribution(label: _itemName(db, stack.itemId), detail: _signed(bonus)));
   }
 
-  final level = getSkillProgress(save, combatSkillId).level;
-  final levelMult = combatLevelBonusMultiplier(save);
+  final vitalityLevel = getSkillProgress(save, vitalitySkillId).level;
+  final levelMult = vitalityHpMultiplier(save);
   if (levelMult != 1) {
     lines.add(
       CombatStatContribution(
-        label: 'Combat Level ${jsNumberToString(level)}',
+        label: 'Vitality ${jsNumberToString(vitalityLevel)}',
         detail: _multiplier(levelMult),
       ),
     );
@@ -350,6 +356,11 @@ List<CombatStatContribution> _reductionBreakdown(GameDatabase db, PlayerSave sav
         detail: jsNumberToString(reduction),
       ),
     );
+  }
+  final style = normalizeAttackStyle(save.attackStyle);
+  final styleDr = attackStyleDamageReduction(style);
+  if (styleDr > 0) {
+    lines.add(CombatStatContribution(label: 'Defensive stance', detail: jsNumberToString(styleDr)));
   }
   lines.add(
     CombatStatContribution(

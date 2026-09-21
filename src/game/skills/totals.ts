@@ -1,4 +1,4 @@
-import { COMBAT_SKILL_ID } from '../combat/stats'
+import { MIGHT_SKILL_ID, VITALITY_SKILL_ID } from '../combat/stats'
 import type { PlayerSave } from '../save/types'
 
 /** Only the skill list is read, so callers can pass just that. */
@@ -14,12 +14,12 @@ export function totalLevel(save: SkillTotalsInput): number {
 }
 
 /**
- * Whether this character has never raised Combat past where it started.
- *
- * A save with no Combat row at all counts: the skill only appears once it has
- * been touched, and an untouched Combat is the whole point.
+ * Whether this character has never raised Might or Vitality past where they started.
  */
 export function isPacifistSave(save: SkillTotalsInput): boolean {
-  const combat = save.skills.find((skill) => skill.skillId === COMBAT_SKILL_ID)
-  return combat == null || combat.level <= 1
+  const might = save.skills.find((skill) => skill.skillId === MIGHT_SKILL_ID)
+  const vitality = save.skills.find((skill) => skill.skillId === VITALITY_SKILL_ID)
+  const mightOk = might == null || might.level <= 1
+  const vitalityOk = vitality == null || vitality.level <= 1
+  return mightOk && vitalityOk
 }
