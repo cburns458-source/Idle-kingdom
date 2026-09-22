@@ -585,7 +585,7 @@ describe('locationTimers', () => {
     expect(planted.ok).toBe(true)
     if (!planted.ok) return
     // 3 produce rolls, 3 successful returns, then potato/grape/carrot mutations.
-    const rolls = [0, 0, 0, 0, 0, 0, 0.6, 0.6, 0.6]
+    const rolls = [0, 0, 0, 0, 0.6, 0, 0.6, 0, 0.6]
     let i = 0
     const collected = collectLocationTimer(
       launch,

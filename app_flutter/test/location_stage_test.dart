@@ -727,13 +727,13 @@ void main() {
     expect(tester.getSize(loot), const Size(32, 20));
 
     await tester.tap(xp);
-    await tester.pumpAndSettle();
+    await tester.pump();
     expect(find.byKey(const Key('tracker-on-xp')), findsOne);
     await tester.tapAt(const Offset(8, 8));
-    await tester.pumpAndSettle();
+    await tester.pump();
 
     await tester.tap(loot);
-    await tester.pumpAndSettle();
+    await tester.pump();
     expect(find.byKey(const Key('tracker-on-loot')), findsOne);
   });
 

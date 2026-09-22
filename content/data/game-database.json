@@ -6488,7 +6488,7 @@
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Description": "Plantable in a botany plot. Potato and carrot plots can return this seed.",
-      "Icon Asset Key": "potato_seed",
+      "Icon Asset Key": "turnip_seed",
       "Notes": "BotanyPlant; Output:ITEM-0370; GrowSeconds:10800; Xp:6000; RequiresLevel:27",
       "Base Sell Value": 5,
       "Stackable": null
@@ -6505,7 +6505,7 @@
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Description": "Plot-only harvest. Unused for now.",
-      "Icon Asset Key": "potato",
+      "Icon Asset Key": "turnip",
       "Notes": null,
       "Base Sell Value": 11,
       "Stackable": null
@@ -6522,7 +6522,7 @@
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Description": "Plantable in a botany plot. Grape and potato plots can return this seed.",
-      "Icon Asset Key": "grape_seed",
+      "Icon Asset Key": "elder_berry_seed",
       "Notes": "BotanyPlant; Output:ITEM-0372; GrowSeconds:10800; Xp:9600; RequiresLevel:47",
       "Base Sell Value": 5,
       "Stackable": null
@@ -6539,7 +6539,7 @@
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Description": "Plot-only harvest. Unused for now.",
-      "Icon Asset Key": "grapes",
+      "Icon Asset Key": "elder_berry",
       "Notes": null,
       "Base Sell Value": 28,
       "Stackable": null
@@ -6556,7 +6556,7 @@
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Description": "Plantable in a botany plot. Fernleaf and augur weed plots can return this seed.",
-      "Icon Asset Key": "augur_weed_seed",
+      "Icon Asset Key": "hagroot_seed",
       "Notes": "BotanyPlant; Output:ITEM-0374; GrowSeconds:10800; Xp:42000; RequiresLevel:67",
       "Base Sell Value": 5,
       "Stackable": null
@@ -6573,7 +6573,7 @@
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Description": "Plot-only harvest. Unused for now.",
-      "Icon Asset Key": "augur_weed",
+      "Icon Asset Key": "hagroot",
       "Notes": null,
       "Base Sell Value": 180,
       "Stackable": null
@@ -6590,7 +6590,7 @@
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Description": "Plantable in a botany plot. Augur weed and moonblossom plots can return this seed.",
-      "Icon Asset Key": "moonblossom_seed",
+      "Icon Asset Key": "emberblossom_seed",
       "Notes": "BotanyPlant; Output:ITEM-0376; GrowSeconds:10800; Xp:45000; RequiresLevel:77",
       "Base Sell Value": 5,
       "Stackable": null
@@ -6607,7 +6607,7 @@
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Description": "Plot-only harvest. Unused for now.",
-      "Icon Asset Key": "moonblossom",
+      "Icon Asset Key": "emberblossom",
       "Notes": null,
       "Base Sell Value": 450,
       "Stackable": null

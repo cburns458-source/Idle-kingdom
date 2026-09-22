@@ -370,7 +370,7 @@ void main() {
       grapeSeedItemId,
     ], nowMs: 0);
     expect(planted.ok, isTrue);
-    final rolls = <num>[0, 0, 0, 0, 0, 0, 0.6, 0.6, 0.6];
+    final rolls = <num>[0, 0, 0, 0, 0.6, 0, 0.6, 0, 0.6];
     var i = 0;
     final collected = collectLocationTimer(
       db,
