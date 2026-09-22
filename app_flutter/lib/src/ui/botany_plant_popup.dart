@@ -191,7 +191,7 @@ class _PlantTile extends StatelessWidget {
           onTap: onTap,
           step: PixelChrome.stepTight,
           fillColor: fill,
-          material: PixelPlateMaterial.none,
+          material: PixelPlateMaterial.grain,
           strokeWidth: selected ? 2.5 : 2,
           selected: selected,
           shadow: false,

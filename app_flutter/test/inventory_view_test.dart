@@ -158,6 +158,31 @@ void main() {
     expect(find.textContaining('value each'), findsOne);
   });
 
+  testWidgets('Inventory title and Close sit off the tan panel', (tester) async {
+    final controller = buildController(database, seed: startedCharacter(database));
+    addTearDown(controller.dispose);
+
+    await pumpPanel(tester, InventoryView(controller: controller, onClose: () {}));
+
+    expect(find.text('Inventory'), findsOne);
+    expect(find.widgetWithText(GameButton, 'Close'), findsOne);
+    expect(
+      find.descendant(of: find.byType(GamePanel), matching: find.text('Inventory')),
+      findsNothing,
+    );
+    expect(
+      find.descendant(
+        of: find.byType(GamePanel),
+        matching: find.widgetWithText(GameButton, 'Close'),
+      ),
+      findsNothing,
+    );
+    expect(
+      find.descendant(of: find.byType(GamePanel), matching: find.text('Sell items')),
+      findsOne,
+    );
+  });
+
   testWidgets('the combined sheet shows the paper doll and the bag together', (tester) async {
     final controller = buildController(database, seed: startedCharacter(database));
     addTearDown(controller.dispose);

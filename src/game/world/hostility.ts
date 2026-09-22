@@ -1,4 +1,4 @@
-import { favoriteActivityAt } from '../activity/favorites'
+import { canFavoriteActivity, favoriteActivityAt } from '../activity/favorites'
 import {
   beginActivitySave,
   generateNextAction,
@@ -179,6 +179,7 @@ function startFavoriteActivity(
 ): PlayerSave {
   const favoriteId = favoriteActivityAt(save, locationId)
   if (!favoriteId) return save
+  if (!canFavoriteActivity(db, favoriteId)) return save
   const validation = validateActivityStart(db, save, favoriteId)
   if (!validation.ok) return save
   const nowIso = new Date(nowMs).toISOString()

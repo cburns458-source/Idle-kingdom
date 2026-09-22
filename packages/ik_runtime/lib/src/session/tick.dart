@@ -380,7 +380,7 @@ SessionTickResult advanceSession(GameDatabase db, PlayerSave save, num nowMs, Ra
     final due = jsDateParse(startedAt) + durationMs!;
     if (due > nowMs) return out.result();
 
-    final finished = completeProductionCraft(db, out.current, due);
+    final finished = completeProductionCraft(db, out.current, due, random);
     if (finished == null) {
       out.emit(const InventoryFullEvent());
       return out.result();
@@ -390,6 +390,9 @@ SessionTickResult advanceSession(GameDatabase db, PlayerSave save, num nowMs, Ra
     final output = finished.reward.loot.firstOrNull;
     if (output != null) {
       out.emit(CraftCompletedEvent(itemId: output.itemId, displayName: output.displayName));
+    }
+    if (finished.failed) {
+      out.emit(MessageEvent('Ruined the ${finished.outputName} — materials lost.'));
     }
     out.emit(RewardsEvent(finished.reward));
     return out.result();

@@ -1,7 +1,8 @@
 import { addItemToInventory, addItemToInventoryExact } from '../activity/rewards'
 import { summarizeXpReward } from '../activity/rewardSummary'
 import type { ActionRewardBundle } from '../activity/types'
-import { applyXp } from '../activity/xp'
+import { applyXp, getSkillProgress } from '../activity/xp'
+import { rollGatheringSuccess } from '../activity/gathering'
 import { creditXpAwards } from '../trackers/trackers'
 import type { RandomFn } from '../activity/pools'
 import { chefHatOutputQuantity, alchemyPotionOutputQuantity, productionOutputReservePerCraft, ALCHEMY_SKILL_ID } from '../equipment/specialist'
@@ -11,7 +12,7 @@ import type { GameDatabase } from '../data/types'
 import type { RecipeRow } from '../data/recipeTypes'
 import {
   applyPotionDurationMs,
-  clearActivePotionEffect,
+  tickPotionAction,
   tryConsumePotionForScope,
 } from '../potions/effects'
 import type { ActivePotionEffect, PlayerSave } from '../save/types'
@@ -46,7 +47,7 @@ import { recordProductionMilestones } from '../achievements/progress'
 import { applyQuestProcessProgress } from '../quests/progress'
 
 export function clearProductionSave(save: PlayerSave): PlayerSave {
-  return clearActivePotionEffect({
+  return {
     ...save,
     productionRecipeId: null,
     productionQuantityTotal: null,
@@ -54,7 +55,7 @@ export function clearProductionSave(save: PlayerSave): PlayerSave {
     currentActionId: null,
     actionStartedAt: null,
     actionDurationMs: null,
-  })
+  }
 }
 
 /** Stop production and refund materials for crafts still remaining in the queue. */
@@ -153,20 +154,42 @@ export function beginProductionQueue(
 export function completeProductionCraft(
   db: GameDatabase,
   save: PlayerSave,
-  nowMs: number = Date.now(),
-  random: RandomFn = Math.random,
+  nowMs: number,
+  random: RandomFn,
 ): {
   save: PlayerSave
   finishedQueue: boolean
   xpGained: number
   outputName: string
   outputQty: number
+  /** True when the craft was botched: the materials are gone, nothing came back. */
+  failed: boolean
   /** Same reward summary shape used by gathering/combat panels. */
   reward: ActionRewardBundle
 } | null {
   if (!save.productionRecipeId || !save.productionQuantityRemaining) return null
   const recipe = getRecipe(db, save.productionRecipeId)
   if (!recipe) return null
+
+  // The materials left the bag when the queue was placed, so a botched craft
+  // costs them: rolling before the output means a full bag cannot save them.
+  const craftLevel = getSkillProgress(save, recipe['Skill ID']).level
+  if (!rollGatheringSuccess(craftLevel, random, recipe['Proficiency Level'])) {
+    const outputItem = db.Items.find((item) => item['Item ID'] === recipe['Output Item ID'])
+    return finishProductionCraft(db, save, recipe, nowMs, {
+      next: save,
+      outputName: outputItem?.['Display Name'] ?? recipe['Display Name'],
+      outputQty: 0,
+      xpGained: 0,
+      failed: true,
+      reward: {
+        id: `craft-${recipe['Recipe ID']}-${nowMs}-${save.productionQuantityRemaining - 1}`,
+        xpRewards: [],
+        loot: [],
+        goldGained: 0,
+      },
+    })
+  }
 
   const baseQty = recipe['Output Quantity']
   let outputQty =
@@ -217,27 +240,72 @@ export function completeProductionCraft(
     goldGained: 0,
   }
 
+  return finishProductionCraft(db, save, recipe, nowMs, {
+    next,
+    outputName,
+    outputQty,
+    xpGained,
+    failed: false,
+    reward,
+  })
+}
+
+/**
+ * Closes one craft off: ends the queue or starts the next craft's timer.
+ *
+ * Shared by the craft that worked and the craft that was botched, so a failure
+ * moves the queue along exactly as a success does — it just brings nothing back.
+ */
+function finishProductionCraft(
+  db: GameDatabase,
+  save: PlayerSave,
+  recipe: RecipeRow,
+  nowMs: number,
+  craft: {
+    next: PlayerSave
+    outputName: string
+    outputQty: number
+    xpGained: number
+    failed: boolean
+    reward: ActionRewardBundle
+  },
+): {
+  save: PlayerSave
+  finishedQueue: boolean
+  xpGained: number
+  outputName: string
+  outputQty: number
+  failed: boolean
+  reward: ActionRewardBundle
+} {
+  const remaining = (save.productionQuantityRemaining ?? 1) - 1
+  const tail = {
+    finishedQueue: remaining <= 0,
+    xpGained: craft.xpGained,
+    outputName: craft.outputName,
+    outputQty: craft.outputQty,
+    failed: craft.failed,
+    reward: craft.reward,
+  }
   if (remaining <= 0) {
     return {
-      save: clearProductionSave({
-        ...next,
-        currentActivityId: null,
-        activityStartedAt: null,
-      }),
-      finishedQueue: true,
-      xpGained,
-      outputName,
-      outputQty,
-      reward,
+      save: clearProductionSave(
+        tickPotionAction({
+          ...craft.next,
+          currentActivityId: null,
+          activityStartedAt: null,
+        }),
+      ),
+      ...tail,
     }
   }
 
   const startedAt = new Date(nowMs).toISOString()
-  const cleared = clearActivePotionEffect({
-    ...next,
+  const ticked = tickPotionAction({
+    ...craft.next,
     productionQuantityRemaining: remaining,
   })
-  const potion = tryConsumePotionForScope(db, cleared, 'one_standard_production_action')
+  const potion = tryConsumePotionForScope(db, ticked, 'one_standard_production_action')
   const durationMs = productionCraftDurationMs(db, potion.save, recipe, potion.effect)
   return {
     save: {
@@ -247,11 +315,7 @@ export function completeProductionCraft(
       actionStartedAt: startedAt,
       actionDurationMs: durationMs,
     },
-    finishedQueue: false,
-    xpGained,
-    outputName,
-    outputQty,
-    reward,
+    ...tail,
   }
 }
 
@@ -259,8 +323,8 @@ export function completeProductionCraft(
 export function resolveProductionProgress(
   db: GameDatabase,
   save: PlayerSave,
-  nowMs: number = Date.now(),
-  random: RandomFn = Math.random,
+  nowMs: number,
+  random: RandomFn,
 ): {
   save: PlayerSave
   craftsCompleted: number
@@ -272,7 +336,7 @@ export function resolveProductionProgress(
   let craftsCompleted = 0
   let activityMs = 0
   /** Aggregate identical outputs so AFK summaries show one line per item. */
-  const craftTotals = new Map<string, { qty: number; xp: number }>()
+  const craftTotals = new Map<string, { qty: number; xp: number; ruined: number }>()
   const craftOrder: string[] = []
   let blockedByInventory = false
 
@@ -299,17 +363,22 @@ export function resolveProductionProgress(
       craftTotals.set(completed.outputName, {
         qty: completed.outputQty,
         xp: completed.xpGained,
+        ruined: completed.failed ? 1 : 0,
       })
     } else {
       existing.qty += completed.outputQty
       existing.xp += completed.xpGained
+      if (completed.failed) existing.ruined += 1
     }
     if (completed.finishedQueue) break
   }
 
-  const messages = craftOrder.map((name) => {
+  const messages = craftOrder.flatMap((name) => {
     const total = craftTotals.get(name)!
-    return `Crafted ${total.qty} ${name} (+${total.xp} XP)`
+    const lines: string[] = []
+    if (total.qty > 0) lines.push(`Crafted ${total.qty} ${name} (+${total.xp} XP)`)
+    if (total.ruined > 0) lines.push(`Ruined ${total.ruined} ${name}`)
+    return lines
   })
 
   return { save: current, craftsCompleted, messages, activityMs, blockedByInventory }

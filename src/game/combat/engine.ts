@@ -11,7 +11,11 @@ import { STARTER_TITLE_COSMETIC_ID } from '../save/types'
 import type { PlayerSave } from '../save/types'
 import type { LootGrant } from '../activity/types'
 import { consumeFoodAfterVictory } from './food'
-import { applyPotionEnemyRoundDamage, tryConsumePotionForScope } from '../potions/effects'
+import {
+  applyPotionEnemyRoundDamage,
+  tickPotionAction,
+  tryConsumePotionForScope,
+} from '../potions/effects'
 import {
   criticalStrikeDamageMultiplier,
   equippedEnchantmentCritChancePercent,
@@ -118,7 +122,7 @@ export function beginCombatSave(
     combatBossAddsRemaining: null,
     combatBossAddsTriggered: false,
     combatBossInkActive: false,
-    activePotionEffect: potion.effect,
+    activePotionEffect: potion.effect ?? potion.save.activePotionEffect,
     deathPauseUntil: null,
   }
 }
@@ -136,8 +140,6 @@ export function clearCombatSave(save: PlayerSave): PlayerSave {
     combatBossAddsRemaining: null,
     combatBossAddsTriggered: false,
     combatBossInkActive: false,
-    activePotionEffect:
-      save.activePotionEffect?.scope === 'one_combat_encounter' ? null : save.activePotionEffect,
   }
 }
 
@@ -459,7 +461,7 @@ export function applyCombatVictory(
   }
 
   const food = consumeFoodAfterVictory(db, next, { skipHealing: options?.skipVictoryFood })
-  next = withBossRespawn(clearCombatSave(food.save), enemy, nowMs)
+  next = withBossRespawn(tickPotionAction(clearCombatSave(food.save)), enemy, nowMs)
   next = applyQuestDefeatProgress(db, next, enemy['Enemy ID'], 1)
   next = applyBountyDefeatProgress(next, enemy['Enemy ID'], 1, nowMs)
   next = withoutHeldAction(next, save.currentActivityId)
@@ -487,7 +489,7 @@ export function applyCombatDefeat(
   const pauseSec = configNumber(db, 'death_pause', 30)
   const maxHp = playerMaxHp(db, save)
   return withoutHeldAction(
-    clearCombatSave(
+    tickPotionAction(clearCombatSave(
       revokeCosmetic(
         {
           ...save,
@@ -501,7 +503,7 @@ export function applyCombatDefeat(
         },
         STARTER_TITLE_COSMETIC_ID,
       ),
-    ),
+    )),
     save.currentActivityId,
   )
 }

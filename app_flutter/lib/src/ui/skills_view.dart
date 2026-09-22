@@ -128,7 +128,7 @@ class _SkillTile extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 3),
-              MeterBar(value: fraction, color: Palette.gold, height: 4),
+              MeterBar(value: fraction, color: Palette.skillXp, height: 4),
             ],
           ),
         ),
@@ -165,8 +165,8 @@ class _Totals extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
-      decoration: BoxDecoration(
-        color: UiChrome.of(context).slot,
+      decoration: chromeSlotFill(
+        context,
         border: const Border(top: BorderSide(color: Palette.edge)),
       ),
       child: Row(

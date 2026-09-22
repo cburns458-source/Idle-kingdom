@@ -19,6 +19,9 @@ export function configString(db: GameDatabase, key: string, fallback: string): s
 /**
  * Level 1 = 40%, +0.5% per skill level (89.5% at level 100).
  * Plus +1% for each level above the action's proficiency level.
+ *
+ * A standard production craft rolls against this same curve, reading the
+ * recipe's proficiency level in place of the action's.
  */
 export function gatheringSuccessChancePercent(
   level: number,

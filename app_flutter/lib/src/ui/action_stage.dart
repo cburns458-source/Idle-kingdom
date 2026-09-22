@@ -180,18 +180,29 @@ class LocationIdlePlayer extends StatelessWidget {
                         const SizedBox(width: 4),
                         Expanded(
                           child: IgnorePointer(
-                            child: _playerWithPet(
-                              save: save,
-                              player: _Portrait(
-                                assetPath: playerAssetPath(save.appearance, raceId: save.raceId),
-                                bytes: controller.localPlayerPng,
-                                semanticsLabel: 'Adventurer',
-                                alignment: Alignment.centerRight,
-                                height: _playerArtHeight,
-                                slotHeight: _portraitSlotHeight,
-                                filterQuality: FilterQuality.high,
-                                hop: save.currentActivityId != null ? _StageHopKind.player : null,
-                              ),
+                            child: Stack(
+                              clipBehavior: Clip.none,
+                              children: [
+                                _playerWithPet(
+                                  save: save,
+                                  player: _Portrait(
+                                    assetPath: playerAssetPath(
+                                      save.appearance,
+                                      raceId: save.raceId,
+                                    ),
+                                    bytes: controller.localPlayerPng,
+                                    semanticsLabel: 'Adventurer',
+                                    alignment: Alignment.centerRight,
+                                    height: _playerArtHeight,
+                                    slotHeight: _portraitSlotHeight,
+                                    filterQuality: FilterQuality.high,
+                                    hop: save.currentActivityId != null
+                                        ? _StageHopKind.player
+                                        : null,
+                                  ),
+                                ),
+                                _PotionBadge(controller: controller),
+                              ],
                             ),
                           ),
                         ),
@@ -218,6 +229,62 @@ class LocationIdlePlayer extends StatelessWidget {
                 ),
                 const SizedBox(height: 7),
                 const SizedBox(height: _stageFooterHeight),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Potion bottle and remaining-action count, pinned to the top-right of the art.
+class _PotionBadge extends StatelessWidget {
+  const _PotionBadge({required this.controller});
+
+  final GameController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final effect = controller.save.activePotionEffect;
+    if (effect == null) return const SizedBox.shrink();
+    final remaining = potionActionsRemaining(effect);
+    if (remaining <= 0) return const SizedBox.shrink();
+    ItemRow? item;
+    for (final row in controller.db.items) {
+      if (row.itemId == effect.itemId) {
+        item = row;
+        break;
+      }
+    }
+    return Align(
+      alignment: Alignment.topRight,
+      child: Padding(
+        padding: const EdgeInsets.only(top: 4, right: 4),
+        child: Semantics(
+          key: const Key('potion-action-badge'),
+          label: '${item?.displayName ?? 'Potion'} · $remaining actions left',
+          child: SizedBox(
+            width: 36,
+            height: 36,
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                ItemIcon(item: item, size: 36),
+                Positioned(
+                  right: -2,
+                  bottom: -2,
+                  child: Text(
+                    '$remaining',
+                    style: TextStyle(
+                      fontFamily: gameFontFamily,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: Palette.gold,
+                      shadows: const [Shadow(color: Color(0xE6000000), blurRadius: 2)],
+                    ),
+                  ),
+                ),
               ],
             ),
           ),

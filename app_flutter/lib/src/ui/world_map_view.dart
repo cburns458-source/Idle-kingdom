@@ -424,8 +424,8 @@ class _SelectionPanel extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: UiChrome.of(context).slot,
+      decoration: chromeSlotFill(
+        context,
         border: const Border(top: BorderSide(color: Palette.edge)),
       ),
       child: place == null

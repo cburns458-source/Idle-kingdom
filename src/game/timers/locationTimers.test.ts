@@ -243,13 +243,13 @@ describe('locationTimers', () => {
     if (!collected.ok) return
     expect(collected.loot.map((row) => row.itemId)).toEqual(['ITEM-0352', FISHING_POT_ITEM_ID])
     expect(collected.loot.find((row) => row.itemId === 'ITEM-0352')?.quantity).toBe(9)
-    expect(collected.xpGained).toBe(1350)
-    expect(collected.bonusXp).toEqual([{ skillId: 'SKL-0005', xp: 1350 }])
+    expect(collected.xpGained).toBe(4050)
+    expect(collected.bonusXp).toEqual([{ skillId: 'SKL-0005', xp: 4050 }])
     expect(getSkillProgress(collected.save, 'SKL-0003').xp).toBe(
-      getSkillProgress(placed.save, 'SKL-0003').xp + 1350,
+      getSkillProgress(placed.save, 'SKL-0003').xp + 4050,
     )
     expect(getSkillProgress(collected.save, 'SKL-0005').xp).toBe(
-      getSkillProgress(placed.save, 'SKL-0005').xp + 1350,
+      getSkillProgress(placed.save, 'SKL-0005').xp + 4050,
     )
     expect(
       collected.save.inventory.find((stack) => stack.itemId === FISHING_POT_ITEM_ID)?.quantity,
@@ -315,8 +315,8 @@ describe('locationTimers', () => {
     expect(haul.ok).toBe(true)
     if (!haul.ok) return
     expect(haul.loot.find((row) => row.itemId === 'ITEM-0352')?.quantity).toBe(9)
-    expect(haul.xpGained).toBe(1350)
-    expect(haul.bonusXp).toEqual([{ skillId: 'SKL-0005', xp: 1350 }])
+    expect(haul.xpGained).toBe(4050)
+    expect(haul.bonusXp).toEqual([{ skillId: 'SKL-0005', xp: 4050 }])
 
     const docks = {
       ...base,
@@ -352,8 +352,8 @@ describe('locationTimers', () => {
     expect(lobster.ok).toBe(true)
     if (!lobster.ok) return
     expect(lobster.loot.find((row) => row.itemId === 'ITEM-0357')?.quantity).toBe(9)
-    expect(lobster.xpGained).toBe(5850)
-    expect(lobster.bonusXp).toEqual([{ skillId: 'SKL-0005', xp: 5850 }])
+    expect(lobster.xpGained).toBe(17550)
+    expect(lobster.bonusXp).toEqual([{ skillId: 'SKL-0005', xp: 17550 }])
   })
 
   it('blocks dock pots until Fishing 35 and goblin pots until Fishing 14', () => {

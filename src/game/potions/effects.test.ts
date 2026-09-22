@@ -14,8 +14,10 @@ import {
   applyPotionDurationMs,
   applyPotionEnemyRoundDamage,
   parsePotionEffect,
+  tickPotionAction,
   tryConsumePotionForScope,
 } from './effects'
+import { POTION_ACTION_DURATION } from '../save/types'
 import { playerDamageRange } from '../combat/stats'
 
 const rawDatabase = JSON.parse(
@@ -168,5 +170,30 @@ describe('potion effects', () => {
     const result = tryConsumePotionForScope(launch, save, 'one_action')
     expect(result.consumed).toBe(false)
     expect(result.save.equipment.slots[POTION_SLOT_ID]?.quantity).toBe(1)
+  })
+
+  it('keeps a drunk potion for six actions and only then drinks another', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    let save = withPotion(createNewSave(launch), 'ITEM-0070', 2)
+    const first = tryConsumePotionForScope(launch, save, 'one_action')
+    expect(first.consumed).toBe(true)
+    expect(first.effect?.actionsRemaining).toBe(POTION_ACTION_DURATION)
+    expect(first.save.equipment.slots[POTION_SLOT_ID]?.quantity).toBe(1)
+
+    save = first.save
+    for (let i = POTION_ACTION_DURATION; i > 1; i -= 1) {
+      const reuse = tryConsumePotionForScope(launch, save, 'one_action')
+      expect(reuse.consumed).toBe(false)
+      expect(reuse.save.equipment.slots[POTION_SLOT_ID]?.quantity).toBe(1)
+      save = tickPotionAction(reuse.save)
+      expect(save.activePotionEffect?.actionsRemaining).toBe(i - 1)
+    }
+
+    save = tickPotionAction(save)
+    expect(save.activePotionEffect).toBeNull()
+    const next = tryConsumePotionForScope(launch, save, 'one_action')
+    expect(next.consumed).toBe(true)
+    expect(next.effect?.actionsRemaining).toBe(POTION_ACTION_DURATION)
+    expect(next.save.equipment.slots[POTION_SLOT_ID]).toBeNull()
   })
 })

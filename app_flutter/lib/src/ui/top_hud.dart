@@ -106,7 +106,7 @@ class TopHud extends StatelessWidget {
     return SizedBox(
       height: HudPortrait.size + 2,
       child: DecoratedBox(
-        decoration: chromeBoardFill(
+        decoration: chromeBarFill(
           context,
           border: Border(
             bottom: BorderSide(

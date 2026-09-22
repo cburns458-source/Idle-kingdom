@@ -21,9 +21,8 @@ class IngredientChip extends StatelessWidget {
       message: name,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-        decoration: BoxDecoration(
-          color: UiChrome.of(context).slot,
-          borderRadius: BorderRadius.zero /* pixel step 2 */,
+        decoration: chromeSlotFill(
+          context,
           border: Border.all(color: short ? Palette.danger : Palette.edge),
         ),
         child: Row(

@@ -127,11 +127,7 @@ class _QuantitySheetState extends State<_QuantitySheet> {
                 Expanded(
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: UiChrome.of(context).slot,
-                      borderRadius: BorderRadius.zero /* pixel step 2 */,
-                      border: Border.all(color: Palette.edge),
-                    ),
+                    decoration: chromeSlotFill(context, border: Border.all(color: Palette.edge)),
                     child: Text(
                       _text,
                       textAlign: TextAlign.center,

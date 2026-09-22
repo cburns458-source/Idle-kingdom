@@ -17,6 +17,7 @@ import 'bottom_nav.dart';
 import 'chat_sheet.dart';
 import 'desktop_side_chrome.dart';
 import 'critter_overlay.dart';
+import 'format.dart';
 import 'codex_view.dart';
 import 'inventory_view.dart';
 import 'location_view.dart';
@@ -260,6 +261,27 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
     if (!mounted) return;
     if (controller.save.currentLocationId != locationId) {
       controller.report('Travel back to collect and replace the pot.');
+      return;
+    }
+    final nowMs = controller.session.clock();
+    final lock = fishingPotLockedUntilDay(controller.save, locationId, nowMs: nowMs);
+    if (lock.locked) {
+      await showGameAlert(
+        context: context,
+        title: "You shouldn't overfish",
+        message: 'Come back in ${formatDurationMs(lock.msRemaining)} when the waters reset.',
+      );
+      return;
+    }
+    final canPlace = canPlaceTrap(
+      controller.db,
+      controller.save,
+      fishingPotItemId,
+      locationId: locationId,
+      nowMs: nowMs,
+    );
+    if (!canPlace.ok) {
+      await showGameAlert(context: context, message: canPlace.reason);
       return;
     }
     final options = potBaitOptionsForLocation(controller.db, controller.save, locationId);

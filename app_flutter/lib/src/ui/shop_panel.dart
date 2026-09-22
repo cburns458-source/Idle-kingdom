@@ -344,7 +344,7 @@ class _ShopPanelState extends State<ShopPanel> {
         fillColor: offered != null
             ? Color.lerp(UiChrome.of(context).slot, UiChrome.of(context).embossFace, 0.18)!
             : UiChrome.of(context).slot,
-        material: PixelPlateMaterial.none,
+        material: PixelPlateMaterial.grain,
         strokeWidth: offered != null ? 2.5 : 2,
         selected: offered != null,
         shadow: false,

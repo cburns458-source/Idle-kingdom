@@ -4,6 +4,7 @@ import 'package:idle_kingdoms/src/session/game_controller.dart';
 import 'package:idle_kingdoms/src/theme.dart';
 import 'package:idle_kingdoms/src/ui/format.dart';
 import 'package:idle_kingdoms/src/ui/game_image.dart';
+import 'package:idle_kingdoms/src/ui/skills_view.dart';
 import 'package:ik_content/ik_content.dart';
 import 'package:ik_rules/ik_rules.dart';
 
@@ -66,6 +67,14 @@ void main() {
       find.ancestor(of: find.text('Might'), matching: find.byType(GamePanel)).first,
     );
     expect(iconRect.shortestSide, greaterThan(tile.shortestSide * 0.55));
+
+    final bars = tester.widgetList<MeterBar>(
+      find.descendant(of: find.byType(SkillsView), matching: find.byType(MeterBar)),
+    );
+    expect(bars, hasLength(16));
+    expect(bars.every((bar) => bar.color == Palette.skillXp), isTrue);
+    expect(Palette.skillXp, isNot(Palette.softGreen));
+    expect(Palette.skillXp, isNot(Palette.gold));
   });
 
   testWidgets('a skill tile opens a numbered proficiency list', (tester) async {
@@ -173,12 +182,13 @@ void main() {
     expect(find.textContaining('Tungsten weapons'), findsOne);
     expect(find.textContaining('Tungsten Sword'), findsNothing);
     expect(find.textContaining('Tungsten Shield'), findsNothing);
-    expect(find.textContaining('Wooden weapons'), findsNothing);
+    expect(find.textContaining('Wooden weapons'), findsOne);
+    expect(find.textContaining('Copper weapons'), findsOne);
 
     await tester.tap(find.descendant(of: popup, matching: find.text('Other')));
     await tester.pump();
     expect(find.textContaining('Leather Helmet'), findsNothing);
-    expect(find.textContaining('Wooden Sword'), findsOne);
+    expect(find.textContaining('Wooden Sword'), findsNothing);
     expect(find.textContaining('Bull Horn Helmet'), findsNothing);
     await tester.scrollUntilVisible(
       find.textContaining('Cedar Bow'),

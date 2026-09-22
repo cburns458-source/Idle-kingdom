@@ -166,7 +166,7 @@ describe('Step 11 release audit', () => {
     if (cook.ok) {
       const duration = cook.save.actionDurationMs ?? 0
       const started = Date.parse(cook.save.actionStartedAt ?? new Date().toISOString())
-      const finished = completeProductionCraft(launch, cook.save, started + duration)
+      const finished = completeProductionCraft(launch, cook.save, started + duration, () => 0)
       expect(finished).toBeTruthy()
       expect(finished!.outputQty).toBeGreaterThan(0)
       save = finished!.save

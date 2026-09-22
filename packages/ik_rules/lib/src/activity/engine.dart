@@ -374,7 +374,7 @@ GatheringCompletion completeGatheringAction(
     bool lockpickBroke = false,
   }) {
     final xpAmount = gatheringXpReward(db, base, action);
-    var next = clearActivePotionEffect(base);
+    var next = tickPotionAction(base);
     final xpApplied = applyXp(next, db, skillId, xpAmount);
     next = xpApplied.save;
     var leveledUpTo = xpApplied.leveledUpTo;
@@ -504,7 +504,7 @@ GatheringCompletion completeGatheringAction(
   final fullXp = gatheringXpReward(db, working, action);
   final primarySkillId = pruning ? botanySkillId : skillId;
   final xpAmount = pruning ? (fullXp * pruningXpFraction).floor() : fullXp;
-  final xpApplied = applyXp(clearActivePotionEffect(rewarded.save), db, primarySkillId, xpAmount);
+  final xpApplied = applyXp(tickPotionAction(rewarded.save), db, primarySkillId, xpAmount);
   var next = xpApplied.save;
   var leveledUpTo = xpApplied.leveledUpTo;
 

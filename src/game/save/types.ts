@@ -40,6 +40,9 @@ export type PotionConsumeScope =
   | 'one_action'
   | 'one_standard_production_action'
 
+/** How many actions a freshly drunk potion covers. */
+export const POTION_ACTION_DURATION = 6
+
 /** Data-driven potion effect active for the current eligible action/encounter. */
 export interface ActivePotionEffect {
   scope: PotionConsumeScope
@@ -48,6 +51,11 @@ export interface ActivePotionEffect {
   enemyMaxHpDamagePercent: number | null
   relativeDropChanceBonusPercent: number | null
   baseDurationReductionPercent: number | null
+  /**
+   * Actions still covered by this bottle. Missing on older saves, which
+   * are treated as one action left — the old one-shot behaviour.
+   */
+  actionsRemaining: number | null
 }
 
 export interface SkillProgress {

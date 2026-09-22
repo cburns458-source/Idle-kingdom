@@ -77,7 +77,8 @@ void main() {
         .firstWhere((tab) => tab.id == 'weapons')
         .sections
         .expand((section) => section.entries);
-    expect(weapons.any((row) => row.displayName == 'Wooden weapons'), isFalse);
+    expect(weapons.any((row) => row.displayName == 'Wooden weapons' && row.level == 1), isTrue);
+    expect(weapons.any((row) => row.displayName == 'Copper weapons' && row.level == 1), isTrue);
     expect(weapons.any((row) => row.displayName == 'Tungsten weapons'), isTrue);
     expect(weapons.any((row) => row.displayName == 'Steel weapons'), isTrue);
     expect(weapons.any((row) => row.displayName == 'Wooden Sword'), isFalse);
@@ -92,7 +93,7 @@ void main() {
     expect(gear.any((row) => row.displayName == 'Tungsten equipment'), isTrue);
     expect(gear.any((row) => row.displayName == 'Reinforced Steel equipment'), isTrue);
     expect(gear.any((row) => row.displayName == 'Bull Horn equipment'), isFalse);
-    expect(gear.any((row) => row.displayName == 'Wooden equipment'), isFalse);
+    expect(gear.any((row) => row.displayName == 'Wooden equipment' && row.level == 1), isTrue);
     expect(gear.any((row) => row.displayName == 'Leather equipment' && row.level == 1), isTrue);
     expect(gear.any((row) => row.displayName == 'Leather Helmet'), isFalse);
     expect(gear.any((row) => row.displayName == 'Tungsten Helmet'), isFalse);
@@ -107,7 +108,7 @@ void main() {
         .sections
         .expand((section) => section.entries);
     expect(mightOther.any((row) => row.displayName == 'Bull Horn Helmet'), isFalse);
-    expect(mightOther.any((row) => row.displayName == 'Wooden Sword' && row.level == 1), isTrue);
+    expect(mightOther.any((row) => row.displayName == 'Wooden Sword'), isFalse);
     expect(mightOther.any((row) => row.displayName == 'Leather Helmet'), isFalse);
     expect(mightOther.any((row) => row.displayName == 'Leather equipment'), isFalse);
     expect(mightOther.any((row) => row.displayName == 'Cedar Bow'), isTrue);

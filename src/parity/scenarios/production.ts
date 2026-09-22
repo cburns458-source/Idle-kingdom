@@ -221,7 +221,7 @@ export const productionScenarios: ParityScenario[] = [
   ),
 
   scenario('production/craft', 'mid-queue', withSave('queued', { nowMs: NOW_MS + 10_000 }), () => {
-    const completed = completeProductionCraft(contentDatabase(), saveFor('queued'), NOW_MS + 10_000)
+    const completed = completeProductionCraft(contentDatabase(), saveFor('queued'), NOW_MS + 10_000, () => 0)
     return (completed == null
       ? null
       : {
@@ -235,7 +235,7 @@ export const productionScenarios: ParityScenario[] = [
   }),
 
   scenario('production/craft', 'no-queue', withSave('kitchen', { nowMs: NOW_MS }), () => {
-    const completed = completeProductionCraft(contentDatabase(), saveFor('kitchen'), NOW_MS)
+    const completed = completeProductionCraft(contentDatabase(), saveFor('kitchen'), NOW_MS, () => 0)
     return completed == null ? null : ({ finishedQueue: completed.finishedQueue } as JsonValue)
   }),
 
@@ -250,6 +250,7 @@ export const productionScenarios: ParityScenario[] = [
           contentDatabase(),
           saveFor('queued'),
           NOW_MS + elapsed,
+          () => 0,
         )
         return {
           save: asJson(resolved.save),

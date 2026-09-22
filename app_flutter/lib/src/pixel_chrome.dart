@@ -201,7 +201,7 @@ class _RivetPainter extends CustomPainter {
 }
 
 /// Fill material for [PixelPlate] — wood outer boards vs tan inner panels.
-enum PixelPlateMaterial { auto, wood, tan, none }
+enum PixelPlateMaterial { auto, wood, tan, grain, none }
 
 /// Wood plate with stepped corners and gold emboss rim. Keeps child layout size.
 class PixelPlate extends StatelessWidget {
@@ -234,17 +234,18 @@ class PixelPlate extends StatelessWidget {
 
   DecorationImage? _texture(BuildContext context) {
     if (fillColor == null && gradient == null) return null;
-    // Auto: panel texture on light fills only. Dark fills stay solid so board
-    // texture is reserved for shell / HUD boards, not every button and slot.
+    // Auto: panel texture on light fills; dark wells get the same grain as
+    // buttons and slots. [none] stays a true flat fill.
     final kind = material == PixelPlateMaterial.auto
         ? ((fillColor != null && fillColor!.computeLuminance() > 0.28)
               ? PixelPlateMaterial.tan
-              : PixelPlateMaterial.none)
+              : PixelPlateMaterial.grain)
         : material;
     final chrome = UiChrome.of(context);
     return switch (kind) {
       PixelPlateMaterial.wood => chrome.boardFillImage(opacity: 0.45),
       PixelPlateMaterial.tan => chrome.panelPlateImage(),
+      PixelPlateMaterial.grain => chrome.buttonGrainImage(),
       PixelPlateMaterial.none => null,
       PixelPlateMaterial.auto => null,
     };

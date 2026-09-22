@@ -8,6 +8,7 @@ import '../activity/reward_summary.dart';
 import '../activity/rewards.dart';
 import '../activity/types.dart';
 import '../achievements/progress.dart';
+import '../activity/gathering.dart';
 import '../activity/xp.dart';
 import '../bounties/progress.dart';
 import '../inventory/add_items.dart';
@@ -38,15 +39,13 @@ num productionCraftDurationMs(
 }
 
 PlayerSave clearProductionSave(PlayerSave save) {
-  return clearActivePotionEffect(
-    save.copyWith(
-      productionRecipeId: null,
-      productionQuantityTotal: null,
-      productionQuantityRemaining: null,
-      currentActionId: null,
-      actionStartedAt: null,
-      actionDurationMs: null,
-    ),
+  return save.copyWith(
+    productionRecipeId: null,
+    productionQuantityTotal: null,
+    productionQuantityRemaining: null,
+    currentActionId: null,
+    actionStartedAt: null,
+    actionDurationMs: null,
   );
 }
 
@@ -157,6 +156,7 @@ class ProductionCraftResult {
     required this.xpGained,
     required this.outputName,
     required this.outputQty,
+    required this.failed,
     required this.reward,
   });
 
@@ -165,15 +165,18 @@ class ProductionCraftResult {
   final num xpGained;
   final String outputName;
   final num outputQty;
+
+  /// True when the craft was botched: the materials are gone, nothing came back.
+  final bool failed;
   final ActionRewardBundle reward;
 }
 
 ProductionCraftResult? completeProductionCraft(
   GameDatabase db,
   PlayerSave save,
-  num nowMs, [
-  RandomFn random = _noChefProc,
-]) {
+  num nowMs,
+  RandomFn random,
+) {
   final recipeId = save.productionRecipeId;
   final remainingBefore = save.productionQuantityRemaining ?? 0;
   if (isBlank(recipeId) || remainingBefore == 0) return null;
@@ -181,11 +184,39 @@ ProductionCraftResult? completeProductionCraft(
   if (recipe == null) return null;
 
   final skillId = jsString(recipe.raw['Skill ID']);
+  final outputItemId = jsString(recipe.raw['Output Item ID']);
+  // The materials left the bag when the queue was placed, so a botched craft
+  // costs them: rolling before the output means a full bag cannot save them.
+  final craftLevel = getSkillProgress(save, skillId).level;
+  if (!rollGatheringSuccess(craftLevel, random, jsNumber(recipe.raw['Proficiency Level']))) {
+    final ruinedName = db.items
+        .firstWhereOrNull((item) => item.raw['Item ID'] == outputItemId)
+        ?.raw['Display Name'];
+    return _finishProductionCraft(
+      db,
+      save,
+      recipe,
+      nowMs,
+      next: save,
+      outputName: ruinedName is String ? ruinedName : jsString(recipe.raw['Display Name']),
+      outputQty: 0,
+      xpGained: 0,
+      failed: true,
+      reward: ActionRewardBundle(
+        id:
+            'craft-${recipe.raw['Recipe ID']}-${jsNumberToString(nowMs)}-'
+            '${jsNumberToString(remainingBefore - 1)}',
+        xpRewards: const <ActionXpRewardSummary>[],
+        loot: const <LootGrant>[],
+        goldGained: 0,
+      ),
+    );
+  }
+
   final baseQty = jsNumber(recipe.raw['Output Quantity']);
   var outputQty = skillId == alchemySkillId
       ? alchemyPotionOutputQuantity(db, baseQty, save, skillId, random)
       : chefHatOutputQuantity(db, baseQty, save, skillId, random);
-  final outputItemId = jsString(recipe.raw['Output Item ID']);
   if (outputQty > baseQty && !canFitItemQuantity(save, outputItemId, outputQty)) {
     if (skillId == alchemySkillId) {
       outputQty = math.min(outputQty, maxAddableQuantity(save, outputItemId));
@@ -224,19 +255,53 @@ ProductionCraftResult? completeProductionCraft(
     goldGained: 0,
   );
 
+  return _finishProductionCraft(
+    db,
+    save,
+    recipe,
+    nowMs,
+    next: next,
+    outputName: outputName,
+    outputQty: outputQty,
+    xpGained: xpGained,
+    failed: false,
+    reward: reward,
+  );
+}
+
+/// Closes one craft off: ends the queue or starts the next craft's timer.
+///
+/// Shared by the craft that worked and the craft that was botched, so a failure
+/// moves the queue along exactly as a success does — it just brings nothing back.
+ProductionCraftResult _finishProductionCraft(
+  GameDatabase db,
+  PlayerSave save,
+  RecipeRow recipe,
+  num nowMs, {
+  required PlayerSave next,
+  required String outputName,
+  required num outputQty,
+  required num xpGained,
+  required bool failed,
+  required ActionRewardBundle reward,
+}) {
+  final remaining = (save.productionQuantityRemaining ?? 1) - 1;
   if (remaining <= 0) {
     return ProductionCraftResult(
-      save: clearProductionSave(next.copyWith(currentActivityId: null, activityStartedAt: null)),
+      save: clearProductionSave(
+        tickPotionAction(next.copyWith(currentActivityId: null, activityStartedAt: null)),
+      ),
       finishedQueue: true,
       xpGained: xpGained,
       outputName: outputName,
       outputQty: outputQty,
+      failed: failed,
       reward: reward,
     );
   }
 
-  final cleared = clearActivePotionEffect(next.copyWith(productionQuantityRemaining: remaining));
-  final potion = tryConsumePotionForScope(db, cleared, 'one_standard_production_action');
+  final ticked = tickPotionAction(next.copyWith(productionQuantityRemaining: remaining));
+  final potion = tryConsumePotionForScope(db, ticked, 'one_standard_production_action');
   return ProductionCraftResult(
     save: potion.save.copyWith(
       productionQuantityRemaining: remaining,
@@ -248,6 +313,7 @@ ProductionCraftResult? completeProductionCraft(
     xpGained: xpGained,
     outputName: outputName,
     outputQty: outputQty,
+    failed: failed,
     reward: reward,
   );
 }
@@ -276,21 +342,20 @@ class ProductionProgressResult {
 }
 
 class _CraftTotal {
-  _CraftTotal(this.qty, this.xp);
+  _CraftTotal(this.qty, this.xp, this.ruined);
 
   num qty;
   num xp;
+  num ruined;
 }
-
-double _noChefProc() => 1;
 
 /// Advances a production queue by elapsed offline/online time.
 ProductionProgressResult resolveProductionProgress(
   GameDatabase db,
   PlayerSave save,
-  num nowMs, [
-  RandomFn random = _noChefProc,
-]) {
+  num nowMs,
+  RandomFn random,
+) {
   var current = save;
   num craftsCompleted = 0;
   num activityMs = 0;
@@ -315,10 +380,15 @@ ProductionProgressResult resolveProductionProgress(
     activityMs += durationMs;
     final existing = craftTotals[completed.outputName];
     if (existing == null) {
-      craftTotals[completed.outputName] = _CraftTotal(completed.outputQty, completed.xpGained);
+      craftTotals[completed.outputName] = _CraftTotal(
+        completed.outputQty,
+        completed.xpGained,
+        completed.failed ? 1 : 0,
+      );
     } else {
       existing.qty += completed.outputQty;
       existing.xp += completed.xpGained;
+      if (completed.failed) existing.ruined += 1;
     }
     if (completed.finishedQueue) break;
   }
@@ -326,13 +396,19 @@ ProductionProgressResult resolveProductionProgress(
   return ProductionProgressResult(
     save: current,
     craftsCompleted: craftsCompleted,
-    messages: craftTotals.entries
-        .map(
-          (entry) =>
-              'Crafted ${jsNumberToString(entry.value.qty)} ${entry.key} '
-              '(+${jsNumberToString(entry.value.xp)} XP)',
-        )
-        .toList(),
+    messages: craftTotals.entries.expand((entry) {
+      final lines = <String>[];
+      if (entry.value.qty > 0) {
+        lines.add(
+          'Crafted ${jsNumberToString(entry.value.qty)} ${entry.key} '
+          '(+${jsNumberToString(entry.value.xp)} XP)',
+        );
+      }
+      if (entry.value.ruined > 0) {
+        lines.add('Ruined ${jsNumberToString(entry.value.ruined)} ${entry.key}');
+      }
+      return lines;
+    }).toList(),
     activityMs: activityMs,
     blockedByInventory: blockedByInventory,
   );

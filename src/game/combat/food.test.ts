@@ -251,6 +251,7 @@ describe('manual eat', () => {
       launch,
       queued.save,
       Date.parse('2026-01-01T00:00:20.000Z'),
+      () => 0,
     )
     expect(crafted).not.toBeNull()
     expect(crafted?.save.equipment.slots['SLOT-0011']?.quantity).toBe(4)

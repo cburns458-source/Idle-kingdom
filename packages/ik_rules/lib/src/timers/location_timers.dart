@@ -624,14 +624,14 @@ num msUntilNextUtcDay(num nowMs) {
 const Map<String, List<({String itemId, num fishingLevel, num xpEach})>> potFishByLocation =
     <String, List<({String itemId, num fishingLevel, num xpEach})>>{
       'LOC-0003': [
-        (itemId: 'ITEM-0352', fishingLevel: 14, xpEach: 150),
-        (itemId: 'ITEM-0354', fishingLevel: 44, xpEach: 350),
-        (itemId: 'ITEM-0356', fishingLevel: 64, xpEach: 520),
+        (itemId: 'ITEM-0352', fishingLevel: 14, xpEach: 450),
+        (itemId: 'ITEM-0354', fishingLevel: 44, xpEach: 1050),
+        (itemId: 'ITEM-0356', fishingLevel: 64, xpEach: 1560),
       ],
       'LOC-0004': [
-        (itemId: 'ITEM-0353', fishingLevel: 35, xpEach: 280),
-        (itemId: 'ITEM-0355', fishingLevel: 55, xpEach: 450),
-        (itemId: 'ITEM-0357', fishingLevel: 75, xpEach: 650),
+        (itemId: 'ITEM-0353', fishingLevel: 35, xpEach: 840),
+        (itemId: 'ITEM-0355', fishingLevel: 55, xpEach: 1350),
+        (itemId: 'ITEM-0357', fishingLevel: 75, xpEach: 1950),
       ],
     };
 

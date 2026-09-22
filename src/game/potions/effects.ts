@@ -1,6 +1,11 @@
 import { POTION_SLOT_ID, slotStack } from '../equipment/loadout'
 import type { EquipmentRow, GameDatabase } from '../data/types'
-import type { ActivePotionEffect, PlayerSave, PotionConsumeScope } from '../save/types'
+import {
+  POTION_ACTION_DURATION,
+  type ActivePotionEffect,
+  type PlayerSave,
+  type PotionConsumeScope,
+} from '../save/types'
 
 export function capabilityTags(effects: string | null | undefined): string[] {
   if (typeof effects !== 'string') return []
@@ -64,7 +69,25 @@ export function parsePotionEffect(
     enemyMaxHpDamagePercent,
     relativeDropChanceBonusPercent,
     baseDurationReductionPercent,
+    actionsRemaining: POTION_ACTION_DURATION,
   }
+}
+
+/** Actions still covered. Older saves with no count have one action left. */
+export function potionActionsRemaining(effect: ActivePotionEffect | null | undefined): number {
+  if (!effect) return 0
+  const left = effect.actionsRemaining
+  if (typeof left === 'number' && Number.isFinite(left)) return Math.max(0, Math.floor(left))
+  return 1
+}
+
+/** Spend one action of the active bottle. Clears the overlay when it runs out. */
+export function tickPotionAction(save: PlayerSave): PlayerSave {
+  const effect = save.activePotionEffect
+  if (!effect) return save
+  const left = potionActionsRemaining(effect) - 1
+  if (left <= 0) return { ...save, activePotionEffect: null }
+  return { ...save, activePotionEffect: { ...effect, actionsRemaining: left } }
 }
 
 export function clearActivePotionEffect(save: PlayerSave): PlayerSave {
@@ -86,6 +109,11 @@ export function tryConsumePotionForScope(
   effect: ActivePotionEffect | null
   potionName: string | null
 } {
+  const existing = save.activePotionEffect
+  if (existing && potionActionsRemaining(existing) > 0 && existing.scope === scope) {
+    return { save, consumed: false, effect: existing, potionName: null }
+  }
+
   const potion = slotStack(save, POTION_SLOT_ID)
   if (!potion || potion.quantity <= 0) {
     const cleared =

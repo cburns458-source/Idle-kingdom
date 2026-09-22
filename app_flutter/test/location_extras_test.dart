@@ -812,6 +812,57 @@ void main() {
     expect(timerAtLocationKind(controller.save, 'LOC-0004', 'fishing_pot')?.baitItemIds, isNull);
   });
 
+  testWidgets('an overfished pot says so before the bait picker', (tester) async {
+    final started = startedCharacter(database);
+    final controller = buildController(
+      database,
+      seed: started.copyWith(
+        currentLocationId: 'LOC-0004',
+        fishingPotDayKeyByLocationId: {'LOC-0004': fishingPotUtcDayKey(testStartMs)},
+        skills: [
+          for (final skill in started.skills)
+            if (skill.skillId == 'SKL-0003')
+              const SkillProgress(skillId: 'SKL-0003', level: 35, xp: 0)
+            else
+              skill,
+        ],
+        inventory: [
+          ...started.inventory,
+          const InventoryStack(itemId: fishingPotItemId, quantity: 1),
+        ],
+      ),
+    );
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller);
+
+    await selectLocationBandTab(tester, 'Traps');
+    expect(find.text('Already fished here today.'), findsOne);
+    await tapVisible(tester, find.widgetWithText(GameButton, 'Overfished'));
+    await tester.pump();
+    expect(find.text("You shouldn't overfish"), findsOne);
+    expect(find.text('Add three bait fish, or place it empty'), findsNothing);
+  });
+
+  testWidgets('standard production has no favorite star', (tester) async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(currentLocationId: 'LOC-0023'),
+    );
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller);
+
+    expect(find.text('Cook at the kitchen'), findsOne);
+    final cook = find.ancestor(
+      of: find.text('Cook at the kitchen'),
+      matching: find.byType(DockRow),
+    );
+    expect(
+      find.descendant(of: cook, matching: find.byTooltip('Favorite this activity')),
+      findsNothing,
+    );
+    expect(find.byTooltip('Favorite this activity'), findsOne);
+  });
+
   testWidgets('expanding the option list does not carry to the next location', (tester) async {
     final controller = buildController(
       database,

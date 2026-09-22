@@ -96,15 +96,15 @@ void main() {
     expect(collected.ok, isTrue);
     expect(collected.loot.map((row) => row.itemId), ['ITEM-0352', fishingPotItemId]);
     expect(collected.loot.firstWhere((row) => row.itemId == 'ITEM-0352').quantity, 9);
-    expect(collected.xpGained, 1350);
-    expect(collected.bonusXp, [(skillId: 'SKL-0005', xp: 1350)]);
+    expect(collected.xpGained, 4050);
+    expect(collected.bonusXp, [(skillId: 'SKL-0005', xp: 4050)]);
     expect(
       getSkillProgress(collected.save!, 'SKL-0003').xp,
-      getSkillProgress(save, 'SKL-0003').xp + 1350,
+      getSkillProgress(save, 'SKL-0003').xp + 4050,
     );
     expect(
       getSkillProgress(collected.save!, 'SKL-0005').xp,
-      getSkillProgress(save, 'SKL-0005').xp + 1350,
+      getSkillProgress(save, 'SKL-0005').xp + 4050,
     );
   });
 
@@ -163,8 +163,8 @@ void main() {
     );
     expect(haul.ok, isTrue);
     expect(haul.loot.firstWhere((row) => row.itemId == 'ITEM-0352').quantity, 9);
-    expect(haul.xpGained, 1350);
-    expect(haul.bonusXp, [(skillId: 'SKL-0005', xp: 1350)]);
+    expect(haul.xpGained, 4050);
+    expect(haul.bonusXp, [(skillId: 'SKL-0005', xp: 4050)]);
 
     final docks = createNewSave(db, 0).copyWith(
       currentLocationId: 'LOC-0004',
@@ -197,8 +197,8 @@ void main() {
     );
     expect(lobster.ok, isTrue);
     expect(lobster.loot.firstWhere((row) => row.itemId == 'ITEM-0357').quantity, 9);
-    expect(lobster.xpGained, 5850);
-    expect(lobster.bonusXp, [(skillId: 'SKL-0005', xp: 5850)]);
+    expect(lobster.xpGained, 17550);
+    expect(lobster.bonusXp, [(skillId: 'SKL-0005', xp: 17550)]);
   });
 
   test('full inventory leaves a ready timer uncollected', () {

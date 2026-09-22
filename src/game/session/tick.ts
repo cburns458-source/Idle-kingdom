@@ -410,7 +410,7 @@ export function advanceSession(
     const due = Date.parse(startedAt) + durationMs
     if (due > nowMs) return out.result()
 
-    const finished = completeProductionCraft(db, out.current, due)
+    const finished = completeProductionCraft(db, out.current, due, random)
     if (!finished) {
       out.emit({ kind: 'inventory-full' })
       return out.result()
@@ -424,6 +424,9 @@ export function advanceSession(
         itemId: output.itemId,
         displayName: output.displayName,
       })
+    }
+    if (finished.failed) {
+      out.emit({ kind: 'message', text: `Ruined the ${finished.outputName} — materials lost.` })
     }
     out.emit({ kind: 'rewards', bundle: finished.reward })
     return out.result()

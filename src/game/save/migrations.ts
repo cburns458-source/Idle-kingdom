@@ -271,6 +271,7 @@ export const SAVE_MIGRATIONS: SaveMigration[] = [
               enemyMaxHpDamagePercent: null,
               relativeDropChanceBonusPercent: null,
               baseDurationReductionPercent: null,
+              actionsRemaining: 1,
             }
           : null)
       const { combatPotionDamageBonusPercent: _removed, ...rest } = legacy

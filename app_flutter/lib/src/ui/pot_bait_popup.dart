@@ -156,7 +156,7 @@ class _BaitTile extends StatelessWidget {
           onTap: onTap,
           step: PixelChrome.stepTight,
           fillColor: fill,
-          material: PixelPlateMaterial.none,
+          material: PixelPlateMaterial.grain,
           selected: selected,
           shadow: false,
           padding: const EdgeInsets.all(2),

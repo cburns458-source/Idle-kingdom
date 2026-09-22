@@ -945,9 +945,8 @@ class _SymbolButton extends StatelessWidget {
         width: 34,
         height: 34,
         padding: const EdgeInsets.all(6),
-        decoration: BoxDecoration(
-          color: UiChrome.of(context).slot,
-          borderRadius: BorderRadius.zero /* pixel step 2 */,
+        decoration: chromeSlotFill(
+          context,
           border: Border.all(
             color: selected ? Palette.gold : Palette.edge,
             width: selected ? 2 : 1,

@@ -261,45 +261,49 @@ class _InventoryViewState extends State<InventoryView> {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(8, 4, 8, 8),
-      child: GamePanel(
-        framed: true,
-        padding: EdgeInsets.zero,
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            Column(
-              children: [
-                _header(),
-                Expanded(child: _body()),
-              ],
-            ),
-            if (_message case final message?)
-              Positioned(
-                top: 8,
-                left: 12,
-                right: 12,
-                child: OverlayNotice(
-                  key: ValueKey(message),
-                  text: message,
-                  tone: Palette.danger,
-                  onDismissed: () => setState(() => _message = null),
-                ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _header(),
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
+            child: GamePanel(
+              framed: true,
+              padding: EdgeInsets.zero,
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  _body(),
+                  if (_message case final message?)
+                    Positioned(
+                      top: 8,
+                      left: 12,
+                      right: 12,
+                      child: OverlayNotice(
+                        key: ValueKey(message),
+                        text: message,
+                        tone: Palette.danger,
+                        onDismissed: () => setState(() => _message = null),
+                      ),
+                    ),
+                ],
               ),
-          ],
+            ),
+          ),
         ),
-      ),
+      ],
     );
   }
 
   Widget _header() {
     if (!widget.showHeader) return const SizedBox.shrink();
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(10, 8, 10, 4),
-      child: widget.onClose != null
-          ? PageHeader(title: 'Inventory', onClose: widget.onClose!)
-          : const Text('Inventory', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w400)),
+    if (widget.onClose != null) {
+      return PageHeader(title: 'Inventory', onClose: widget.onClose!);
+    }
+    return const Padding(
+      padding: EdgeInsets.fromLTRB(10, 8, 10, 6),
+      child: Text('Inventory', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w400)),
     );
   }
 
@@ -1104,7 +1108,7 @@ class _ItemTile extends StatelessWidget {
         onTap: onTap,
         step: PixelChrome.stepTight,
         fillColor: fill,
-        material: PixelPlateMaterial.none,
+        material: PixelPlateMaterial.grain,
         strokeWidth: selected ? 2.5 : 2,
         selected: selected || enchanted,
         shadow: false,
