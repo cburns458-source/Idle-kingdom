@@ -47,7 +47,7 @@ export const pvpScenarios: ParityScenario[] = [
 
   scenario('pvp/matchmaking', 'ranked-cap', { source: 'content', nowMs: NOW_MS }, () => {
     const db = contentDatabase()
-    let save = { ...createNewSave(db, NOW_MS), attackStyle: 'balanced' as const }
+    let save: PlayerSave = { ...createNewSave(db, NOW_MS), attackStyle: 'balanced' }
     const remainingFresh = rankedFightsRemaining(save, NOW_MS)
     const startOk = canStartRankedPvp(save, NOW_MS)
     save = applyRankedPvpResult(save, true, NOW_MS)
