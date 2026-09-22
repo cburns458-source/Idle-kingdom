@@ -218,12 +218,10 @@ void main() {
     expect(helmet.raw['Damage Reduction'], 0);
   });
 
-  test('cooking lists cooked squid and soup, and the book keeps locked recipes', () {
+  test('cooking lists soup stock and soup, and the book keeps locked recipes', () {
     final cooking = actionsForSkill(db, 'SKL-0007');
-    expect(
-      cooking.any((row) => row.displayName == 'Cooked Baby Giant Squid' && row.level == 80),
-      isTrue,
-    );
+    expect(cooking.any((row) => row.displayName == 'Cooked Baby Giant Squid'), isFalse);
+    expect(cooking.any((row) => row.displayName == 'Soup Stock' && row.level == 16), isTrue);
     expect(cooking.any((row) => row.displayName == 'Squid noodle soup' && row.level == 80), isTrue);
 
     final view = skillMenuView(db, 'SKL-0007');
@@ -257,6 +255,15 @@ void main() {
     );
     expect(
       view.tabs
+          .firstWhere((tab) => tab.id == 'stew')
+          .sections
+          .first
+          .entries
+          .any((row) => row.displayName == 'Soup Stock'),
+      isTrue,
+    );
+    expect(
+      view.tabs
           .firstWhere((tab) => tab.id == 'other')
           .sections
           .first
@@ -269,13 +276,17 @@ void main() {
     final book = recipeBookForSkill(save, db, 'SKL-0007');
     expect(book, isNotEmpty);
     expect(book.any((entry) => entry.known), isTrue);
-    expect(book.any((entry) => entry.name.contains('Baby Giant Squid') && !entry.known), isTrue);
+    expect(book.any((entry) => entry.name == 'Squid Noodle Soup' && !entry.known), isTrue);
     expect(
       listRecipeBookEntries(
         save,
         db,
-      ).any((entry) => entry.name == 'Cooked Baby Giant Squid' && !entry.known),
+      ).any((entry) => entry.name == 'Squid Noodle Soup' && !entry.known),
       isTrue,
+    );
+    expect(
+      listRecipeBookEntries(save, db).any((entry) => entry.name == 'Cooked Baby Giant Squid'),
+      isFalse,
     );
     expect(
       listRecipeBookEntries(save, db).any((entry) => entry.name == 'Squid Noodle Soup'),
@@ -295,9 +306,12 @@ void main() {
     expect(gloves.materials, contains('Great Stag Hide'));
     expect(gloves.materials, isNot(contains('Ancient Binding')));
     expect(gloves.materials, isNot(contains('ITEM-0290')));
-    final squid = entries.firstWhere((entry) => entry.name == 'Cooked Baby Giant Squid');
-    expect(squid.materials, contains('Starroot'));
-    expect(squid.materials, isNot(contains('ITEM-0208')));
+    final leftover = db.recipes.firstWhere((row) => row.raw['Recipe ID'] == 'RCP-0044');
+    expect(leftover.raw['Status'], 'Needs Data');
+    expect(leftover.raw['Ingredient 3 Item ID'], 'ITEM-0208');
+    final soup = entries.firstWhere((entry) => entry.name == 'Squid Noodle Soup');
+    expect(soup.materials, contains('Soup Stock'));
+    expect(soup.materials, isNot(contains('Starroot')));
   });
 
   test('recipe books expand skill-menu groups into individual rows', () {
@@ -329,11 +343,16 @@ void main() {
     expect(item.displayName, 'Squid Noodle Soup');
     final equipment = db.equipment.firstWhere((row) => row.raw['Item ID'] == 'ITEM-0302');
     expect(equipment.raw['Healing Amount'], 1100);
-    final action = db.actions.firstWhere((row) => row.actionId == 'ACN-0127');
+    final leftoverAction = db.actions.firstWhere((row) => row.actionId == 'ACN-0127');
+    expect(leftoverAction.raw['Status'], 'Needs Data');
+    final leftoverRecipe = db.recipes.firstWhere((row) => row.raw['Recipe ID'] == 'RCP-0044');
+    expect(leftoverRecipe.raw['Status'], 'Needs Data');
+    final action = db.actions.firstWhere((row) => row.actionId == 'ACN-0175');
     expect(action.proficiencyLevel, 80);
     expect(action.releasePhase, 'Launch');
-    final recipe = db.recipes.firstWhere((row) => row.raw['Recipe ID'] == 'RCP-0044');
+    final recipe = db.recipes.firstWhere((row) => row.raw['Recipe ID'] == 'RCP-0060');
     expect(recipe.raw['Proficiency Level'], 80);
     expect(recipe.raw['Release Phase'], 'Launch');
+    expect(db.actions.firstWhere((row) => row.actionId == 'ACN-0104').proficiencyLevel, 70);
   });
 }

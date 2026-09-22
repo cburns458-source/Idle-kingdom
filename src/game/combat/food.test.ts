@@ -56,6 +56,32 @@ describe('cooked beef and tablet recipes', () => {
     expect(spell['Ingredient 2 Item ID']).toBe('ITEM-0033')
     expect(spell['Ingredient 2 Quantity']).toBe(2)
   })
+
+  it('adds soup stock at cooking 16 with no ingredients and uses it in stews', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const stock = launch.Recipes.find((row) => row['Recipe ID'] === 'RCP-0068')!
+    expect(stock['Display Name']).toBe('Soup Stock')
+    expect(stock['Facility ID']).toBe('FAC-0001')
+    expect(stock['Proficiency Level']).toBe(16)
+    expect(stock['Base Duration Seconds']).toBe(12)
+    expect(stock['XP Reward']).toBe(0)
+    expect(stock['Ingredient 1 Item ID']).toBeNull()
+    expect(stock['Ingredient 2 Item ID']).toBeNull()
+    expect(stock['Ingredient 3 Item ID']).toBeNull()
+    expect(stock['Ingredient 4 Item ID']).toBeNull()
+    for (const recipeId of ['RCP-0012', 'RCP-0013', 'RCP-0060', 'RCP-0063', 'RCP-0064', 'RCP-0065', 'RCP-0066']) {
+      const recipe = launch.Recipes.find((row) => row['Recipe ID'] === recipeId)!
+      expect(recipe['Ingredient 4 Item ID']).toBe('ITEM-0364')
+      expect(recipe['Ingredient 4 Quantity']).toBe(1)
+    }
+    expect(launch.Recipes.find((row) => row['Recipe ID'] === 'RCP-0012')?.['XP Reward']).toBe(3266)
+    expect(launch.Recipes.find((row) => row['Recipe ID'] === 'RCP-0060')?.['XP Reward']).toBe(10666)
+    const leftover = launch.Recipes.find((row) => row['Recipe ID'] === 'RCP-0044')!
+    expect(leftover.Status).toBe('Needs Data')
+    expect(launch.Actions.find((row) => row['Action ID'] === 'ACN-0127')?.Status).toBe('Needs Data')
+    expect(launch.Actions.find((row) => row['Action ID'] === 'ACN-0104')?.['Proficiency Level']).toBe(70)
+    expect(launch.Recipes.find((row) => row['Recipe ID'] === 'RCP-0060')?.['Proficiency Level']).toBe(80)
+  })
 })
 
 describe('gluttony food on victory', () => {
@@ -116,6 +142,17 @@ describe('gluttony food on victory', () => {
     expect(full.consumed).toBe(false)
     expect(full.save.equipment.slots['SLOT-0011']?.quantity).toBe(4)
   })
+
+  it('skips auto-eat entirely when the toggle is off', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const save = {
+      ...withFoodAndSpells(launch, 4, 2),
+      settings: { ...withFoodAndSpells(launch, 4, 2).settings, autoEat: false },
+    }
+    const skipped = consumeFoodAfterVictory(launch, save)
+    expect(skipped.consumed).toBe(false)
+    expect(skipped.save.equipment.slots['SLOT-0011']?.quantity).toBe(4)
+  })
 })
 
 describe('manual eat', () => {
@@ -159,6 +196,23 @@ describe('manual eat', () => {
       eatEquippedFood(launch, { ...withFoodAndSpells(launch, 2, 0), combatEnemyId: 'ENM-0001' })
         .reason,
     ).toBe('You cannot eat during combat.')
+    const autoOff = {
+      ...save,
+      settings: { ...save.settings, autoEat: false },
+    }
+    expect(eatInventoryFood(launch, autoOff, 0).reason).toBe('You cannot eat during combat.')
+  })
+
+  it('still lets manual eat work outside combat when auto-eat is off', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const save = {
+      ...withFoodAndSpells(launch, 2, 0),
+      settings: { ...withFoodAndSpells(launch, 2, 0).settings, autoEat: false },
+    }
+    const eaten = eatEquippedFood(launch, save)
+    expect(eaten.ok).toBe(true)
+    if (!eaten.ok) return
+    expect(eaten.save.equipment.slots['SLOT-0011']?.quantity).toBe(1)
   })
 
   it('lets damaging food hurt but never drop below 1 HP', () => {

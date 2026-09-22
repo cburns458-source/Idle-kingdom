@@ -54,6 +54,7 @@ FoodConsumption tryConsumeFoodAfterVictory(GameDatabase db, PlayerSave save) {
   final maxHp = playerMaxHp(db, save);
   FoodConsumption unchanged(PlayerSave next) =>
       FoodConsumption(save: next, consumed: false, healed: 0, foodName: null);
+  if (save.settings.autoEat == false) return unchanged(save.copyWith(maxHp: maxHp));
 
   final food = slotStack(save, foodSlotId);
   if (food == null || food.quantity <= 0) {

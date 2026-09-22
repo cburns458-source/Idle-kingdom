@@ -1,5 +1,6 @@
 import { addItemsToInventory } from '../activity/rewards'
 import { applyXp, getSkillProgress } from '../activity/xp'
+import { consumeFoodAfterVictory } from '../combat/food'
 import { canFitItemQuantity } from '../inventory/capacity'
 import { creditLootTracker, creditXpAwards } from '../trackers/trackers'
 import type { GameDatabase, ItemRow } from '../data/types'
@@ -22,6 +23,21 @@ export const SHALLOWS_LOCATION_ID = 'LOC-0043'
 export const FISHING_POT_ITEM_ID = 'ITEM-0347'
 /** @deprecated Use FISHING_POT_ITEM_ID */
 export const FISHING_TRAP_ITEM_ID = FISHING_POT_ITEM_ID
+export const FISHING_SKILL_ID = 'SKL-0003'
+export const HUNTING_SKILL_ID = 'SKL-0005'
+export const POT_BAIT_COUNT = 3
+export const POT_CATCH_MIN = 3
+export const POT_CATCH_MAX = 6
+
+/** Rod fish → pot catch, ordered by overall fishing level. */
+export const POT_BAIT_TO_CATCH: Record<string, string> = {
+  'ITEM-0047': 'ITEM-0352', // Perch → Crawfish
+  'ITEM-0048': 'ITEM-0353', // Trout → Red Crab
+  'ITEM-0049': 'ITEM-0354', // Salmon → Catfish
+  'ITEM-0050': 'ITEM-0355', // Tuna → Dungeness
+  'ITEM-0051': 'ITEM-0356', // Shark → Eel
+  'ITEM-0191': 'ITEM-0357', // Baby Giant Squid → Lobster
+}
 
 /** Botany patches: Farm, Courtyard, Gathering Outskirts, Mountains, Shallows, Temple, Meadow. */
 export const BOTANY_PATCH_LOCATIONS = new Set([
@@ -513,13 +529,26 @@ export function placeTrap(
   save: PlayerSave,
   trapItemId: string,
   nowMs: number = Date.now(),
+  baitItemIds: string[] = [],
 ): { ok: true; save: PlayerSave } | { ok: false; reason: string } {
   const locationId = save.currentLocationId
   const gate = canPlaceTrap(db, save, trapItemId, locationId, nowMs)
   if (!gate.ok) return gate
-  const removed = removeIngredients(save, [{ itemId: trapItemId, quantity: 1 }])
+  const bait = normalizePotBait(baitItemIds)
+  if (bait === null) {
+    return { ok: false, reason: 'Add three bait fish, or place the pot with no bait.' }
+  }
+  const fishingLevel = getSkillProgress(save, FISHING_SKILL_ID).level
+  if (bait.length > 0) {
+    const invalid = bait.find((itemId) => !isValidPotBait(locationId, fishingLevel, itemId))
+    if (invalid) {
+      return { ok: false, reason: 'That bait does not match a pot catch here.' }
+    }
+  }
+  const consumed = [{ itemId: trapItemId, quantity: 1 }, ...countItemIds(bait)]
+  const removed = removeIngredients(save, consumed)
   if (!removed) {
-    return { ok: false, reason: 'You do not have a fishing pot.' }
+    return { ok: false, reason: bait.length > 0 ? 'You do not have that bait.' : 'You do not have a fishing pot.' }
   }
   const timer: LocationTimer = {
     locationId,
@@ -527,10 +556,11 @@ export function placeTrap(
     inputItemId: trapItemId,
     outputItemId: null,
     outputQuantity: 1,
-    skillId: 'SKL-0003',
+    skillId: FISHING_SKILL_ID,
     xpReward: 150,
     startedAt: new Date(nowMs).toISOString(),
     durationMs: TRAP_DURATION_MS,
+    baitItemIds: bait.length > 0 ? bait : undefined,
   }
   const next: PlayerSave = {
     ...removed,
@@ -577,15 +607,92 @@ export function potFishOptionsForLocation(
   return (POT_FISH_BY_LOCATION[locationId] ?? []).filter((row) => fishingLevel >= row.fishingLevel)
 }
 
+export function potCatchForBait(baitItemId: string): string | null {
+  return POT_BAIT_TO_CATCH[baitItemId] ?? null
+}
+
+export function isValidPotBait(locationId: string, fishingLevel: number, baitItemId: string): boolean {
+  const catchId = potCatchForBait(baitItemId)
+  if (!catchId) return false
+  return potFishOptionsForLocation(locationId, fishingLevel).some((row) => row.itemId === catchId)
+}
+
+export function potBaitOptionsForLocation(
+  db: GameDatabase,
+  save: PlayerSave,
+  locationId: string,
+): Array<{ itemId: string; displayName: string; catchItemId: string; owned: number }> {
+  const fishingLevel = getSkillProgress(save, FISHING_SKILL_ID).level
+  const options: Array<{ itemId: string; displayName: string; catchItemId: string; owned: number }> = []
+  for (const [baitId, catchId] of Object.entries(POT_BAIT_TO_CATCH)) {
+    if (!isValidPotBait(locationId, fishingLevel, baitId)) continue
+    const item = db.Items.find((row) => row['Item ID'] === baitId)
+    options.push({
+      itemId: baitId,
+      displayName: item?.['Display Name'] ?? baitId,
+      catchItemId: catchId,
+      owned: save.inventory.find((stack) => stack.itemId === baitId)?.quantity ?? 0,
+    })
+  }
+  return options
+}
+
+function normalizePotBait(baitItemIds: string[] | undefined): string[] | null {
+  const bait = (baitItemIds ?? []).filter((id) => id.length > 0)
+  if (bait.length === 0) return []
+  if (bait.length !== POT_BAIT_COUNT) return null
+  return bait
+}
+
+function countItemIds(itemIds: string[]): Array<{ itemId: string; quantity: number }> {
+  const counts = new Map<string, number>()
+  for (const itemId of itemIds) counts.set(itemId, (counts.get(itemId) ?? 0) + 1)
+  return [...counts.entries()].map(([itemId, quantity]) => ({ itemId, quantity }))
+}
+
+function mergeLootRows(
+  rows: Array<{ itemId: string; quantity: number; xp: number }>,
+): Array<{ itemId: string; quantity: number; xp: number }> {
+  const merged = new Map<string, { itemId: string; quantity: number; xp: number }>()
+  for (const row of rows) {
+    const existing = merged.get(row.itemId)
+    if (!existing) {
+      merged.set(row.itemId, { ...row })
+      continue
+    }
+    existing.quantity += row.quantity
+    existing.xp += row.xp
+  }
+  return [...merged.values()]
+}
+
 function rollFishingPotLoot(
   locationId: string,
   fishingLevel: number,
+  baitItemIds: string[] | undefined,
   random: () => number,
 ): Array<{ itemId: string; quantity: number; xp: number }> {
-  return potFishOptionsForLocation(locationId, fishingLevel).map((row) => {
-    const quantity = rollInclusive(random, 1, 3)
-    return { itemId: row.itemId, quantity, xp: row.xpEach * quantity }
-  })
+  const unlocked = potFishOptionsForLocation(locationId, fishingLevel)
+  const byId = new Map(unlocked.map((row) => [row.itemId, row]))
+  const bait = normalizePotBait(baitItemIds) ?? []
+  const rolls: Array<{ itemId: string; quantity: number; xp: number }> = []
+  if (bait.length === 0) {
+    if (unlocked.length === 0) return []
+    for (let i = 0; i < POT_BAIT_COUNT; i += 1) {
+      const row = unlocked[Math.floor(random() * unlocked.length)]!
+      const quantity = rollInclusive(random, POT_CATCH_MIN, POT_CATCH_MAX)
+      rolls.push({ itemId: row.itemId, quantity, xp: row.xpEach * quantity })
+    }
+    return mergeLootRows(rolls)
+  }
+  for (const baitId of bait) {
+    const catchId = potCatchForBait(baitId)
+    const row = catchId ? byId.get(catchId) : undefined
+    if (!row) continue
+    const quantity = rollInclusive(random, POT_CATCH_MIN, POT_CATCH_MAX)
+    rolls.push({ itemId: row.itemId, quantity, xp: row.xpEach * quantity })
+  }
+  return mergeLootRows(rolls)
 }
 
 function timerItemName(db: GameDatabase, itemId: string): string {
@@ -619,6 +726,7 @@ export function collectLocationTimer(
       loot: Array<{ itemId: string; quantity: number; displayName: string }>
       xpGained: number
       skillId: string
+      bonusXp: Array<{ skillId: string; xp: number }>
     }
   | { ok: false; reason: string } {
   const timer = timerAtLocationKind(save, locationId, kind)
@@ -656,8 +764,8 @@ export function collectLocationTimer(
     for (const [itemId, quantity] of produce) grants.push({ itemId, quantity })
     for (const [itemId, quantity] of returned) grants.push({ itemId, quantity })
   } else if (timer.kind === 'fishing_pot') {
-    const fishingLevel = getSkillProgress(save, 'SKL-0003').level
-    const rolled = rollFishingPotLoot(timer.locationId, fishingLevel, random)
+    const fishingLevel = getSkillProgress(save, FISHING_SKILL_ID).level
+    const rolled = rollFishingPotLoot(timer.locationId, fishingLevel, timer.baitItemIds, random)
     xpGained = 0
     for (const row of rolled) {
       grants.push({ itemId: row.itemId, quantity: row.quantity })
@@ -687,9 +795,17 @@ export function collectLocationTimer(
   }
 
   next = applyXp(next, db, skillId, xpGained).save
+  const bonusXp: Array<{ skillId: string; xp: number }> = []
+  const awards = [{ skillId, xp: xpGained }]
+  if (timer.kind === 'fishing_pot' && xpGained > 0) {
+    next = applyXp(next, db, HUNTING_SKILL_ID, xpGained).save
+    bonusXp.push({ skillId: HUNTING_SKILL_ID, xp: xpGained })
+    awards.push({ skillId: HUNTING_SKILL_ID, xp: xpGained })
+  }
   next = creditLootTracker(next, 'timer', `${kind}:${locationId}`, loot, 0, nowMs)
-  next = creditXpAwards(next, [{ skillId, xp: xpGained }], nowMs)
+  next = creditXpAwards(next, awards, nowMs)
   next = applyQuestAutoStartOnSeed(db, next)
+  next = consumeFoodAfterVictory(db, next).save
 
-  return { ok: true, save: next, loot, xpGained, skillId }
+  return { ok: true, save: next, loot, xpGained, skillId, bonusXp }
 }

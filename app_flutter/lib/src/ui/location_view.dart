@@ -24,6 +24,7 @@ import 'project_panel.dart';
 import 'reward_strip.dart';
 import 'shop_panel.dart';
 import 'botany_plant_popup.dart';
+import 'pot_bait_popup.dart';
 
 /// Whatever the player has open on top of the location, if anything.
 sealed class LocationPanel {
@@ -209,6 +210,18 @@ class _LocationViewState extends State<LocationView> {
     );
     if (chosen == null || chosen.isEmpty || !buttonContext.mounted) return;
     controller.plantBotanySelectionHere(chosen);
+  }
+
+  Future<void> _openPotBaitMenu(BuildContext buttonContext, String locationId) async {
+    final options = potBaitOptionsForLocation(controller.db, controller.save, locationId);
+    final chosen = await showPotBaitGridPopup(
+      context: buttonContext,
+      controller: controller,
+      options: options,
+      origin: popupOrigin(buttonContext),
+    );
+    if (chosen == null || !buttonContext.mounted) return;
+    controller.placeTrapHere(fishingPotItemId, baitItemIds: chosen);
   }
 
   LocationPanel? get _currentPanel => _open.isEmpty ? null : _open.last;
@@ -765,7 +778,7 @@ class _LocationViewState extends State<LocationView> {
               onPressed: canPlace.ok
                   ? () {
                       if (controller.rejectIfRecovering()) return;
-                      controller.placeTrapHere(fishingPotItemId);
+                      _openPotBaitMenu(context, locationId);
                     }
                   : lock.locked
                   ? () {

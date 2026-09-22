@@ -111,6 +111,7 @@ export function createNewSave(db: GameDatabase, nowMs: number = Date.now()): Pla
       showActivityRewards: true,
       hudShowTotalXp: false,
       showEatButton: true,
+      autoEat: true,
       eatHealthThresholdPercent: 100,
       eatHealthThresholdAsPercent: false,
     },

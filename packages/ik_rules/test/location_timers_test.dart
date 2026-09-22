@@ -70,7 +70,7 @@ void main() {
     expect(placed.save!.discoveredTimerSpotIds, contains('fishing_pot:LOC-0003'));
   });
 
-  test('fishing pots roll 1-3 of each unlocked fish and return the pot', () {
+  test('fishing pots roll 3-6 fish per bait slot and return the pot', () {
     var save = createNewSave(db, 0).copyWith(
       currentLocationId: 'LOC-0003',
       skills: const [SkillProgress(skillId: 'SKL-0003', level: 50, xp: 848633)],
@@ -84,6 +84,7 @@ void main() {
     );
     expect(placed.ok, isTrue);
     save = placed.save!;
+    expect(timerAtLocationKind(save, 'LOC-0003', 'fishing_pot')?.baitItemIds, isNull);
     final collected = collectLocationTimer(
       db,
       save,
@@ -93,15 +94,111 @@ void main() {
       random: () => 0,
     );
     expect(collected.ok, isTrue);
+    expect(collected.loot.map((row) => row.itemId), ['ITEM-0352', fishingPotItemId]);
+    expect(collected.loot.firstWhere((row) => row.itemId == 'ITEM-0352').quantity, 9);
+    expect(collected.xpGained, 1350);
+    expect(collected.bonusXp, [(skillId: 'SKL-0005', xp: 1350)]);
     expect(
-      collected.loot.map((row) => row.itemId),
-      containsAll(<String>['ITEM-0352', 'ITEM-0354', fishingPotItemId]),
+      getSkillProgress(collected.save!, 'SKL-0003').xp,
+      getSkillProgress(save, 'SKL-0003').xp + 1350,
     );
-    expect(collected.loot.any((row) => row.itemId == 'ITEM-0356'), isFalse);
-    for (final fishId in <String>['ITEM-0352', 'ITEM-0354']) {
-      final qty = collected.loot.firstWhere((row) => row.itemId == fishId).quantity;
-      expect(qty, inInclusiveRange(1, 3));
-    }
+    expect(
+      getSkillProgress(collected.save!, 'SKL-0005').xp,
+      getSkillProgress(save, 'SKL-0005').xp + 1350,
+    );
+  });
+
+  test('baits pots by overall fishing level and awards matching hunter XP', () {
+    final camp = createNewSave(db, 0).copyWith(
+      currentLocationId: 'LOC-0003',
+      skills: const [SkillProgress(skillId: 'SKL-0003', level: 75, xp: 0)],
+      inventory: const [
+        InventoryStack(itemId: fishingPotItemId, quantity: 1),
+        InventoryStack(itemId: 'ITEM-0047', quantity: 3),
+        InventoryStack(itemId: 'ITEM-0048', quantity: 3),
+        InventoryStack(itemId: 'ITEM-0191', quantity: 3),
+      ],
+    );
+    expect(potBaitOptionsForLocation(db, camp, 'LOC-0003').map((row) => row.itemId), [
+      'ITEM-0047',
+      'ITEM-0049',
+      'ITEM-0051',
+    ]);
+    expect(
+      placeTrap(
+        db,
+        camp,
+        fishingPotItemId,
+        nowMs: 0,
+        baitItemIds: const ['ITEM-0048', 'ITEM-0048', 'ITEM-0048'],
+      ).ok,
+      isFalse,
+    );
+    expect(
+      placeTrap(db, camp, fishingPotItemId, nowMs: 0, baitItemIds: const ['ITEM-0047']).ok,
+      isFalse,
+    );
+
+    final baited = placeTrap(
+      db,
+      camp,
+      fishingPotItemId,
+      nowMs: 0,
+      baitItemIds: const ['ITEM-0047', 'ITEM-0047', 'ITEM-0047'],
+    );
+    expect(baited.ok, isTrue);
+    expect(baited.save!.inventory.any((stack) => stack.itemId == 'ITEM-0047'), isFalse);
+    expect(timerAtLocationKind(baited.save!, 'LOC-0003', 'fishing_pot')?.baitItemIds, [
+      'ITEM-0047',
+      'ITEM-0047',
+      'ITEM-0047',
+    ]);
+    final haul = collectLocationTimer(
+      db,
+      baited.save!,
+      'LOC-0003',
+      'fishing_pot',
+      nowMs: trapDurationMs,
+      random: () => 0,
+    );
+    expect(haul.ok, isTrue);
+    expect(haul.loot.firstWhere((row) => row.itemId == 'ITEM-0352').quantity, 9);
+    expect(haul.xpGained, 1350);
+    expect(haul.bonusXp, [(skillId: 'SKL-0005', xp: 1350)]);
+
+    final docks = createNewSave(db, 0).copyWith(
+      currentLocationId: 'LOC-0004',
+      skills: const [SkillProgress(skillId: 'SKL-0003', level: 75, xp: 0)],
+      inventory: const [
+        InventoryStack(itemId: fishingPotItemId, quantity: 1),
+        InventoryStack(itemId: 'ITEM-0191', quantity: 3),
+      ],
+    );
+    expect(potBaitOptionsForLocation(db, docks, 'LOC-0004').map((row) => row.itemId), [
+      'ITEM-0048',
+      'ITEM-0050',
+      'ITEM-0191',
+    ]);
+    final lobsterPot = placeTrap(
+      db,
+      docks,
+      fishingPotItemId,
+      nowMs: 0,
+      baitItemIds: const ['ITEM-0191', 'ITEM-0191', 'ITEM-0191'],
+    );
+    expect(lobsterPot.ok, isTrue);
+    final lobster = collectLocationTimer(
+      db,
+      lobsterPot.save!,
+      'LOC-0004',
+      'fishing_pot',
+      nowMs: trapDurationMs,
+      random: () => 0,
+    );
+    expect(lobster.ok, isTrue);
+    expect(lobster.loot.firstWhere((row) => row.itemId == 'ITEM-0357').quantity, 9);
+    expect(lobster.xpGained, 5850);
+    expect(lobster.bonusXp, [(skillId: 'SKL-0005', xp: 5850)]);
   });
 
   test('full inventory leaves a ready timer uncollected', () {

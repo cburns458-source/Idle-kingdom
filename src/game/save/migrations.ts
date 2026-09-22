@@ -21,13 +21,60 @@ import {
   DEFAULT_SKIN_TONE_ID,
   OUTFIT_COSMETIC_SLOT_ID,
   PET_COSMETIC_SLOT_ID,
+  RETIRED_COOKED_BABY_GIANT_SQUID_ITEM_ID,
   SAVE_VERSION,
+  SQUID_NOODLE_SOUP_ITEM_ID,
   STARTER_OUTFIT_COSMETIC_ID,
   STARTER_TITLE_COSMETIC_ID,
   TITLE_COSMETIC_SLOT_ID,
 } from './types'
 
 const FOOD_SLOT_ID = 'SLOT-0011'
+
+function remapCookedSquidId(itemId: string): string {
+  return itemId === RETIRED_COOKED_BABY_GIANT_SQUID_ITEM_ID ? SQUID_NOODLE_SOUP_ITEM_ID : itemId
+}
+
+function mergeStacksByItem<T extends { itemId: string; quantity: number }>(stacks: T[]): T[] {
+  const merged: T[] = []
+  const indexById = new Map<string, number>()
+  for (const stack of stacks) {
+    const next = { ...stack, itemId: remapCookedSquidId(stack.itemId) }
+    const existing = indexById.get(`${next.itemId}\0${next.enchantmentId ?? ''}\0${next.favorite === true ? '1' : '0'}`)
+    if (existing == null) {
+      indexById.set(`${next.itemId}\0${next.enchantmentId ?? ''}\0${next.favorite === true ? '1' : '0'}`, merged.length)
+      merged.push(next)
+      continue
+    }
+    merged[existing] = { ...merged[existing], quantity: merged[existing].quantity + next.quantity }
+  }
+  return merged
+}
+
+function replaceCookedSquidWithSoup(save: PlayerSave): PlayerSave {
+  const remapSlot = (stack: EquippedStack | null): EquippedStack | null => {
+    if (!stack) return null
+    return { ...stack, itemId: remapCookedSquidId(stack.itemId) }
+  }
+  const slots: Record<string, EquippedStack | null> = {}
+  for (const [slotId, stack] of Object.entries(save.equipment?.slots ?? {})) {
+    slots[slotId] = remapSlot(stack)
+  }
+  const presets = (save.equipmentPresets ?? []).map((preset) => {
+    const nextSlots: Record<string, EquippedStack | null> = {}
+    for (const [slotId, stack] of Object.entries(preset.slots ?? {})) {
+      nextSlots[slotId] = remapSlot(stack)
+    }
+    return { ...preset, slots: nextSlots }
+  })
+  return {
+    ...save,
+    inventory: mergeStacksByItem(save.inventory ?? []),
+    bank: mergeStacksByItem(save.bank ?? []),
+    equipment: { slots },
+    equipmentPresets: presets,
+  }
+}
 
 function clampEatHealthThresholdPercent(value: unknown): number {
   const n = Math.round(Number(value))
@@ -41,6 +88,7 @@ function normalizeSettings(settings?: Partial<PlayerSettings> | null): PlayerSet
     showActivityRewards: settings?.showActivityRewards ?? true,
     hudShowTotalXp: settings?.hudShowTotalXp ?? false,
     showEatButton: settings?.showEatButton ?? true,
+    autoEat: settings?.autoEat ?? true,
     eatHealthThresholdPercent: clampEatHealthThresholdPercent(
       settings?.eatHealthThresholdPercent ?? 100,
     ),
@@ -767,6 +815,15 @@ export const SAVE_MIGRATIONS: SaveMigration[] = [
         saveVersion: 49,
       }
     },
+  },
+  {
+    fromVersion: 49,
+    toVersion: 50,
+    migrate: (save) => ({
+      ...replaceCookedSquidWithSoup(save),
+      settings: normalizeSettings(save.settings),
+      saveVersion: 50,
+    }),
   },
 ]
 

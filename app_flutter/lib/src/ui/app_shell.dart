@@ -36,6 +36,7 @@ import 'timers_view.dart';
 import 'tracker_view.dart';
 import 'wardrobe_sheet.dart';
 import 'botany_plant_popup.dart';
+import 'pot_bait_popup.dart';
 import 'game_popup.dart';
 import 'world_map_view.dart';
 
@@ -254,6 +255,22 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
     controller.plantBotanySelectionHere(chosen);
   }
 
+  Future<void> _offerPotBait(String locationId) async {
+    if (!mounted) return;
+    if (controller.save.currentLocationId != locationId) {
+      controller.report('Travel back to collect and replace the pot.');
+      return;
+    }
+    final options = potBaitOptionsForLocation(controller.db, controller.save, locationId);
+    final chosen = await showPotBaitGridPopup(
+      context: context,
+      controller: controller,
+      options: options,
+    );
+    if (!mounted || chosen == null) return;
+    controller.placeTrapHere(fishingPotItemId, baitItemIds: chosen);
+  }
+
   void _flushPendingDialogs() {
     if (_questRewardQueued) return;
     final pending = controller.takePendingQuestCompletions();
@@ -296,18 +313,9 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
           if (haul.kind == 'botany') {
             await _offerBotanyReplant(haul.locationId);
             if (!mounted) return;
-          } else if (haul.canRepeat) {
-            final confirmed = await showGameAlert(
-              context: context,
-              title: 'Place pot again?',
-              message: 'Place the fishing pot here again?',
-              confirmLabel: 'Place pot',
-              cancelLabel: 'Not now',
-            );
+          } else if (haul.kind == 'fishing_pot' && haul.canRepeat) {
+            await _offerPotBait(haul.locationId);
             if (!mounted) return;
-            if (confirmed) {
-              controller.repeatTimerPlacement(haul.locationId, haul.kind, haul.inputItemId);
-            }
           }
         }
         for (final alert in roomAlerts) {

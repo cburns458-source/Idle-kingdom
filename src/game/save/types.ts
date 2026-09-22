@@ -1,4 +1,4 @@
-export const SAVE_VERSION = 49
+export const SAVE_VERSION = 50
 export const SAVE_STORAGE_KEY = 'idle-kingdoms.demo.save'
 export const STARTING_LOCATION_ID = 'LOC-0001'
 /** Base gold before race kit; race starters grant the real starting gold. */
@@ -7,6 +7,9 @@ export const STARTING_GOLD = 0
 export const STARTING_HUNTING_TOOL_ID = 'ITEM-0108'
 /** Retired fishing-net item. Existing copies become the hunting Net. */
 export const RETIRED_FISHING_NET_ITEM_ID = 'ITEM-0104'
+/** Retired cook. Existing copies become Squid Noodle Soup. */
+export const RETIRED_COOKED_BABY_GIANT_SQUID_ITEM_ID = 'ITEM-0192'
+export const SQUID_NOODLE_SOUP_ITEM_ID = 'ITEM-0302'
 export const WEAPON_TOOL_SLOT_ID = 'SLOT-0001'
 /** New-player starter kit item IDs. */
 export const STARTING_BAKED_POTATO_ID = 'ITEM-0058'
@@ -125,6 +128,11 @@ export interface PlayerSettings {
   /** When false, the Eat button is hidden on the food item detail sheet. */
   showEatButton: boolean
   /**
+   * When false, equipped food is never eaten automatically. Manual Eat still
+   * works outside combat.
+   */
+  autoEat: boolean
+  /**
    * Auto-eat when current HP is at or below this percent of max HP (1–100).
    * 100 keeps the old rule: eat whenever current HP is below maximum.
    */
@@ -227,6 +235,8 @@ export interface LocationTimer {
   durationMs: number
   /** Mixed plantings; missing on older saves (treat as inputItemId × outputQuantity). */
   plantedItemIds?: string[]
+  /** Raw bait fish for a pot; missing or empty means an unbaited equal-pool haul. */
+  baitItemIds?: string[]
 }
 
 export interface PlayerSave {

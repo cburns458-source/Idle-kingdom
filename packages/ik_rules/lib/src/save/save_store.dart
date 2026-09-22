@@ -96,6 +96,7 @@ PlayerSave createNewSave(GameDatabase db, num nowMs) {
       showActivityRewards: true,
       hudShowTotalXp: false,
       showEatButton: true,
+      autoEat: true,
       eatHealthThresholdPercent: 100,
       eatHealthThresholdAsPercent: false,
     ),

@@ -559,12 +559,9 @@ GatheringCompletion completeGatheringAction(
   next = creditXpAwards(next, [
     for (final reward in xpRewards) (skillId: reward.skillId, xp: reward.xp),
   ], now);
-  num foodHealed = 0;
-  if (isThievery) {
-    final fed = consumeFoodAfterVictory(db, next);
-    next = fed.save;
-    foodHealed = fed.healed;
-  }
+  final fed = consumeFoodAfterVictory(db, next);
+  next = fed.save;
+  final foodHealed = fed.healed;
 
   return GatheringCompletion(
     save: withoutHeldAction(next, save.currentActivityId),

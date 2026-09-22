@@ -69,6 +69,25 @@ describe('standard production', () => {
     expect(queued.save.productionRecipeId).toBe('RCP-0001')
   })
 
+  it('lets soup stock queue at a kitchen with no ingredients', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const cook = {
+      ...createNewSave(launch),
+      skills: createNewSave(launch).skills.map((row) =>
+        row.skillId === 'SKL-0007' ? { ...row, level: 16, xp: 0 } : row,
+      ),
+    }
+    expect(readyRecipesForActivity(launch, cook, 'ACT-0017').some((row) => row['Recipe ID'] === 'RCP-0068')).toBe(
+      true,
+    )
+    const queued = beginProductionQueue(launch, cook, 'ACT-0017', 'RCP-0068', 3)
+    expect(queued.ok).toBe(true)
+    if (!queued.ok) return
+    expect(queued.save.productionRecipeId).toBe('RCP-0068')
+    expect(queued.save.productionQuantityTotal).toBe(3)
+    expect(queued.save.inventory).toEqual(cook.inventory)
+  })
+
   it('rejects queues larger than materials or the 24h cap', () => {
     const { launch } = prepareDatabase(rawDatabase)
     let save = createNewSave(launch)

@@ -18,11 +18,13 @@ import {
   farmBotanyUnlocked,
   plantBotanySeed,
   plantBotanySelection,
+  potBaitOptionsForLocation,
   timerAtLocation,
   timerAtLocationKind,
   timerIsReady,
   timerSpotKey,
 } from './locationTimers'
+import { getSkillProgress } from '../activity/xp'
 
 const rawDatabase = JSON.parse(
   readFileSync(resolve(process.cwd(), 'content/data/game-database.json'), 'utf8'),
@@ -209,7 +211,7 @@ describe('locationTimers', () => {
     expect(canPlantBotanySeed(launch, save, 'ITEM-0350').ok).toBe(false)
   })
 
-  it('places fishing pots once per UTC day and rolls 1-3 of each unlocked fish', () => {
+  it('places fishing pots once per UTC day and rolls 3-6 fish per bait slot', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const dayStart = Date.parse('2026-03-01T12:00:00.000Z')
     let save = createNewSave(launch)
@@ -227,6 +229,7 @@ describe('locationTimers', () => {
     if (!placed.ok) return
     expect(placed.save.fishingPotDayKeyByLocationId['LOC-0003']).toBe('2026-03-01')
     expect(timerAtLocationKind(placed.save, 'LOC-0003', 'fishing_pot')?.kind).toBe('fishing_pot')
+    expect(timerAtLocationKind(placed.save, 'LOC-0003', 'fishing_pot')?.baitItemIds).toBeUndefined()
 
     const collected = collectLocationTimer(
       launch,
@@ -238,15 +241,16 @@ describe('locationTimers', () => {
     )
     expect(collected.ok).toBe(true)
     if (!collected.ok) return
-    expect(collected.loot.map((row) => row.itemId)).toEqual(
-      expect.arrayContaining(['ITEM-0352', 'ITEM-0354', FISHING_POT_ITEM_ID]),
+    expect(collected.loot.map((row) => row.itemId)).toEqual(['ITEM-0352', FISHING_POT_ITEM_ID])
+    expect(collected.loot.find((row) => row.itemId === 'ITEM-0352')?.quantity).toBe(9)
+    expect(collected.xpGained).toBe(1350)
+    expect(collected.bonusXp).toEqual([{ skillId: 'SKL-0005', xp: 1350 }])
+    expect(getSkillProgress(collected.save, 'SKL-0003').xp).toBe(
+      getSkillProgress(placed.save, 'SKL-0003').xp + 1350,
     )
-    expect(collected.loot.some((row) => row.itemId === 'ITEM-0356')).toBe(false)
-    for (const fishId of ['ITEM-0352', 'ITEM-0354'] as const) {
-      const qty = collected.loot.find((row) => row.itemId === fishId)?.quantity ?? 0
-      expect(qty).toBeGreaterThanOrEqual(1)
-      expect(qty).toBeLessThanOrEqual(3)
-    }
+    expect(getSkillProgress(collected.save, 'SKL-0005').xp).toBe(
+      getSkillProgress(placed.save, 'SKL-0005').xp + 1350,
+    )
     expect(
       collected.save.inventory.find((stack) => stack.itemId === FISHING_POT_ITEM_ID)?.quantity,
     ).toBe(2)
@@ -260,6 +264,96 @@ describe('locationTimers', () => {
     expect(canPlaceTrap(launch, collected.save, FISHING_POT_ITEM_ID, 'LOC-0003', nextDay).ok).toBe(
       true,
     )
+  })
+
+  it('baits pots by overall fishing level and awards matching hunter XP', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const dayStart = Date.parse('2026-03-01T12:00:00.000Z')
+    const base = createNewSave(launch)
+    const camp = {
+      ...base,
+      currentLocationId: 'LOC-0003',
+      skills: base.skills.map((row) =>
+        row.skillId === 'SKL-0003' ? { ...row, level: 75, xp: 0 } : row,
+      ),
+      inventory: [
+        { itemId: FISHING_POT_ITEM_ID, quantity: 1 },
+        { itemId: 'ITEM-0047', quantity: 3 },
+        { itemId: 'ITEM-0048', quantity: 3 },
+        { itemId: 'ITEM-0191', quantity: 3 },
+      ],
+    }
+    const campBait = potBaitOptionsForLocation(launch, camp, 'LOC-0003').map((row) => row.itemId)
+    expect(campBait).toEqual(['ITEM-0047', 'ITEM-0049', 'ITEM-0051'])
+    expect(placeTrap(launch, camp, FISHING_POT_ITEM_ID, dayStart, ['ITEM-0048', 'ITEM-0048', 'ITEM-0048']).ok).toBe(
+      false,
+    )
+    expect(placeTrap(launch, camp, FISHING_POT_ITEM_ID, dayStart, ['ITEM-0047']).ok).toBe(false)
+
+    const baited = placeTrap(launch, camp, FISHING_POT_ITEM_ID, dayStart, [
+      'ITEM-0047',
+      'ITEM-0047',
+      'ITEM-0047',
+    ])
+    expect(baited.ok).toBe(true)
+    if (!baited.ok) return
+    expect(baited.save.inventory.find((stack) => stack.itemId === 'ITEM-0047')).toBeUndefined()
+    expect(timerAtLocationKind(baited.save, 'LOC-0003', 'fishing_pot')?.baitItemIds).toEqual([
+      'ITEM-0047',
+      'ITEM-0047',
+      'ITEM-0047',
+    ])
+
+    const haul = collectLocationTimer(
+      launch,
+      baited.save,
+      'LOC-0003',
+      'fishing_pot',
+      Date.parse('2026-03-01T18:00:00.000Z'),
+      () => 0,
+    )
+    expect(haul.ok).toBe(true)
+    if (!haul.ok) return
+    expect(haul.loot.find((row) => row.itemId === 'ITEM-0352')?.quantity).toBe(9)
+    expect(haul.xpGained).toBe(1350)
+    expect(haul.bonusXp).toEqual([{ skillId: 'SKL-0005', xp: 1350 }])
+
+    const docks = {
+      ...base,
+      currentLocationId: 'LOC-0004',
+      skills: base.skills.map((row) =>
+        row.skillId === 'SKL-0003' ? { ...row, level: 75, xp: 0 } : row,
+      ),
+      inventory: [
+        { itemId: FISHING_POT_ITEM_ID, quantity: 1 },
+        { itemId: 'ITEM-0191', quantity: 3 },
+      ],
+    }
+    expect(potBaitOptionsForLocation(launch, docks, 'LOC-0004').map((row) => row.itemId)).toEqual([
+      'ITEM-0048',
+      'ITEM-0050',
+      'ITEM-0191',
+    ])
+    const lobsterPot = placeTrap(launch, docks, FISHING_POT_ITEM_ID, dayStart, [
+      'ITEM-0191',
+      'ITEM-0191',
+      'ITEM-0191',
+    ])
+    expect(lobsterPot.ok).toBe(true)
+    if (!lobsterPot.ok) return
+    const lobster = collectLocationTimer(
+      launch,
+      lobsterPot.save,
+      'LOC-0004',
+      'fishing_pot',
+      Date.parse('2026-03-01T18:00:00.000Z'),
+      () => 0,
+    )
+    expect(lobster.ok).toBe(true)
+    if (!lobster.ok) return
+    expect(lobster.loot.find((row) => row.itemId === 'ITEM-0357')?.quantity).toBe(9)
+    expect(lobster.xpGained).toBe(5850)
+    expect(lobster.bonusXp).toEqual([{ skillId: 'SKL-0005', xp: 5850 }])
   })
 
   it('blocks dock pots until Fishing 35 and goblin pots until Fishing 14', () => {

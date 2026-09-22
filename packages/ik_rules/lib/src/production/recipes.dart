@@ -50,7 +50,7 @@ num inventoryCount(PlayerSave save, String itemId) {
 
 num maxCraftsFromMaterials(PlayerSave save, RecipeRow recipe) {
   final ingredients = recipeIngredients(recipe);
-  if (ingredients.isEmpty) return 0;
+  if (ingredients.isEmpty) return double.infinity;
   num max = double.infinity;
   for (final ingredient in ingredients) {
     max = math.min(max, (inventoryCount(save, ingredient.itemId) / ingredient.quantity).floor());
