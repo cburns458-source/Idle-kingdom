@@ -10,9 +10,6 @@ import 'game_popup.dart';
 import 'page_header.dart';
 import 'skill_menu_sheet.dart';
 
-/// Skills-page tile icon size. 2.2× the original 24px display, then another 2×.
-const double skillTileIconSize = 24 * 2.2 * 2;
-
 /// Every skill as a tile, with the totals they add up to along the bottom.
 class SkillsView extends StatelessWidget {
   const SkillsView({super.key, required this.controller, this.onClose, this.showHeader = true});
@@ -91,21 +88,12 @@ class _SkillTile extends StatelessWidget {
     return Tooltip(
       message: tooltip,
       child: GamePanel(
-        padding: const EdgeInsets.fromLTRB(4, 5, 4, 4),
+        padding: const EdgeInsets.fromLTRB(2, 2, 2, 3),
         child: InkWell(
           onTap: () => _openSkillMenu(context, controller, skillId, row?.displayName ?? skillId),
           child: Column(
             children: [
-              Expanded(
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: GameImage(
-                    skillIconPath(row),
-                    width: skillTileIconSize,
-                    height: skillTileIconSize,
-                  ),
-                ),
-              ),
+              Expanded(child: GameImage(skillIconPath(row), fit: BoxFit.contain)),
               const SizedBox(height: 2),
               Text(
                 row?.displayName ?? skillId,

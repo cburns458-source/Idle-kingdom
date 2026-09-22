@@ -4,7 +4,6 @@ import 'package:idle_kingdoms/src/session/game_controller.dart';
 import 'package:idle_kingdoms/src/theme.dart';
 import 'package:idle_kingdoms/src/ui/format.dart';
 import 'package:idle_kingdoms/src/ui/game_image.dart';
-import 'package:idle_kingdoms/src/ui/skills_view.dart';
 import 'package:ik_content/ik_content.dart';
 import 'package:ik_rules/ik_rules.dart';
 
@@ -58,9 +57,15 @@ void main() {
         )
         .toList();
     expect(skillIcons, hasLength(16));
-    expect(skillIcons.first.width, skillTileIconSize);
-    expect(skillIcons.first.height, skillTileIconSize);
-    expect(skillTileIconSize, 24 * 2.2 * 2);
+    expect(skillIcons.first.fit, BoxFit.contain);
+
+    final iconRect = tester.getRect(
+      find.byWidgetPredicate((widget) => widget is GameImage && widget.path.contains('skl_might')),
+    );
+    final tile = tester.getRect(
+      find.ancestor(of: find.text('Might'), matching: find.byType(GamePanel)).first,
+    );
+    expect(iconRect.shortestSide, greaterThan(tile.shortestSide * 0.55));
   });
 
   testWidgets('a skill tile opens a numbered proficiency list', (tester) async {
