@@ -27,6 +27,13 @@ class _HudStatus {
 /// How wide the HUD hit-point track is. Short, and parked on the HUD's bottom edge.
 const double _hudHpBarWidth = 76;
 
+/// Uploaded wordmark is 1920×960. Displayed at 2:1 without editing the file.
+const double _hudRestoriaHeight = 28;
+const double _hudRestoriaWidth = 56;
+
+/// Mail and Settings sit on the header's top-right. Smaller than the old 28 chip.
+const double _hudHeaderButtonSize = 24;
+
 /// Name stays the heading. Everything else matches body UI (~12) without
 /// matching the name, so race / gold / activity stay readable in 56px.
 const double _hudNameSize = 14;
@@ -43,6 +50,7 @@ class TopHud extends StatelessWidget {
     required this.multiplayer,
     required this.onOpenWardrobe,
     required this.onOpenMailbox,
+    required this.onOpenSettings,
     this.batterySaver = false,
   });
 
@@ -50,6 +58,7 @@ class TopHud extends StatelessWidget {
   final MultiplayerController multiplayer;
   final VoidCallback onOpenWardrobe;
   final VoidCallback onOpenMailbox;
+  final VoidCallback onOpenSettings;
   final bool batterySaver;
 
   /// A running craft queue reads as the item and how much of the order is left;
@@ -120,32 +129,33 @@ class TopHud extends StatelessWidget {
         ),
         child: Padding(
           padding: const EdgeInsets.fromLTRB(6, 0, 8, 2),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              HudPortrait(
-                appearance: save.appearance,
-                raceId: save.raceId,
-                bytes: controller.localPlayerPng,
-                hint:
-                    !batterySaver &&
-                    !save.hasSeenWardrobeIntro &&
-                    save.cosmetics.unlocked.isNotEmpty,
-                onTap: onOpenWardrobe,
-              ),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Builder(
-                  builder: (context) {
-                    return Column(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final side = math.max(0.0, (constraints.maxWidth - _hudRestoriaWidth) / 2);
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  SizedBox(
+                    width: side,
+                    child: Row(
                       children: [
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              child: Column(
+                        HudPortrait(
+                          appearance: save.appearance,
+                          raceId: save.raceId,
+                          bytes: controller.localPlayerPng,
+                          hint:
+                              !batterySaver &&
+                              !save.hasSeenWardrobeIntro &&
+                              save.cosmetics.unlocked.isNotEmpty,
+                          onTap: onOpenWardrobe,
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   // Shrinks rather than clips, so a title is never cut in half.
@@ -190,43 +200,75 @@ class TopHud extends StatelessWidget {
                                   ),
                                 ],
                               ),
-                            ),
-                            _ActivitySlot(controller: controller, status: _status),
-                          ],
-                        ),
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            GameImage(goldIconPath(), width: 11, height: 11),
-                            const SizedBox(width: 3),
-                            Expanded(
-                              child: Text(
-                                formatThousands(save.gold),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  fontSize: _hudMetaSize,
-                                  fontWeight: FontWeight.w400,
-                                  color: Color(0xFFFFF4D4),
-                                  height: 1.05,
-                                ),
+                              Row(
+                                children: [
+                                  GameImage(goldIconPath(), width: 11, height: 11),
+                                  const SizedBox(width: 3),
+                                  Expanded(
+                                    child: Text(
+                                      formatThousands(save.gold),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontSize: _hudMetaSize,
+                                        fontWeight: FontWeight.w400,
+                                        color: Color(0xFFFFF4D4),
+                                        height: 1.05,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ),
-                            const SizedBox(width: 6),
-                            _HealthReadout(controller: controller),
-                          ],
+                            ],
+                          ),
                         ),
                       ],
-                    );
-                  },
-                ),
-              ),
-              const SizedBox(width: 6),
-              MailboxHudButton(
-                unread: unreadMailCount(save, controller.session.clock()).toInt(),
-                onTap: onOpenMailbox,
-              ),
-            ],
+                    ),
+                  ),
+                  ExcludeSemantics(
+                    child: IgnorePointer(
+                      child: GameImage(
+                        uiRestoriaAssetPath(),
+                        key: const Key('hud-restoria'),
+                        width: _hudRestoriaWidth,
+                        height: _hudRestoriaHeight,
+                        fit: BoxFit.contain,
+                        filterQuality: FilterQuality.medium,
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                    width: side,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: _ActivitySlot(controller: controller, status: _status),
+                            ),
+                            const SizedBox(width: 4),
+                            MailboxHudButton(
+                              unread: unreadMailCount(save, controller.session.clock()).toInt(),
+                              onTap: onOpenMailbox,
+                              size: _hudHeaderButtonSize,
+                            ),
+                            const SizedBox(width: 4),
+                            _HudSettingsButton(onTap: onOpenSettings),
+                          ],
+                        ),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: _HealthReadout(controller: controller),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              );
+            },
           ),
         ),
       ),
@@ -251,13 +293,7 @@ class _ActivitySlot extends StatelessWidget {
       builder: (context, _) {
         final reading = status();
         if (reading == null) return const SizedBox.shrink();
-        return Padding(
-          padding: const EdgeInsets.only(left: 6),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 148),
-            child: _ActivityReadout(status: reading),
-          ),
-        );
+        return _ActivityReadout(status: reading);
       },
     );
   }
@@ -374,6 +410,34 @@ class _ActivityReadout extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Settings gear on the HUD header. The uploaded `.px` had no raster to convert.
+class _HudSettingsButton extends StatelessWidget {
+  const _HudSettingsButton({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: 'Settings',
+      child: Tooltip(
+        message: 'Settings',
+        child: GestureDetector(
+          key: const Key('hud-settings'),
+          onTap: onTap,
+          behavior: HitTestBehavior.opaque,
+          child: const SizedBox(
+            width: _hudHeaderButtonSize,
+            height: _hudHeaderButtonSize,
+            child: Icon(Icons.settings, size: 20, color: Color(0xFFFFF4D4)),
+          ),
+        ),
       ),
     );
   }

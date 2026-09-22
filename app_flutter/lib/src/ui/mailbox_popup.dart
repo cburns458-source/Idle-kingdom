@@ -234,10 +234,13 @@ class _MailDetail extends StatelessWidget {
 
 /// HUD mailbox chip with an unread count.
 class MailboxHudButton extends StatelessWidget {
-  const MailboxHudButton({super.key, required this.unread, required this.onTap});
+  const MailboxHudButton({super.key, required this.unread, required this.onTap, this.size = 24});
 
   final int unread;
   final VoidCallback onTap;
+
+  /// Slightly smaller than the old 28px HUD chip so it sits on the header row.
+  final double size;
 
   @override
   Widget build(BuildContext context) {
@@ -252,12 +255,12 @@ class MailboxHudButton extends StatelessWidget {
           onTap: onTap,
           behavior: HitTestBehavior.opaque,
           child: SizedBox(
-            width: 28,
-            height: 28,
+            width: size,
+            height: size,
             child: Stack(
               clipBehavior: Clip.none,
               children: [
-                GameImage(uiMailboxAssetPath(), width: 28, height: 28),
+                GameImage(uiMailboxAssetPath(), width: size, height: size),
                 if (unread > 0)
                   Positioned(
                     right: -3,

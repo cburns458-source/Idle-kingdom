@@ -99,3 +99,7 @@ export function uiMenuAssetPath(): string {
 export function uiMailboxAssetPath(): string {
   return withAssetVersion('/assets/icons/ui/ui_mailbox.webp')
 }
+
+export function uiRestoriaAssetPath(): string {
+  return withAssetVersion('/assets/icons/ui/ui_restoria.webp')
+}

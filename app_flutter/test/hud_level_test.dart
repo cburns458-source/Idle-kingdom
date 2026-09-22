@@ -101,11 +101,20 @@ void main() {
     );
     expect(bar.width, 76);
     final mailbox = tester.getRect(find.byKey(const Key('mailbox-button')));
-    expect(mailbox.right, closeTo(hud.right, 12));
-    expect(hp.right, lessThan(mailbox.left + 1));
-    expect(bar.right, lessThan(mailbox.left + 1));
-    expect(hp.right, closeTo(mailbox.left, 10));
-    expect(bar.right, closeTo(mailbox.left, 10));
+    final settings = tester.getRect(find.byKey(const Key('hud-settings')));
+    final restoria = tester.getRect(find.byKey(const Key('hud-restoria')));
+    expect(mailbox.width, 24);
+    expect(mailbox.height, 24);
+    expect(settings.width, 24);
+    expect(settings.height, 24);
+    expect(settings.right, closeTo(hud.right, 12));
+    expect(mailbox.right, lessThan(settings.left + 1));
+    expect(mailbox.top, closeTo(hud.top, 6));
+    expect(settings.top, closeTo(hud.top, 6));
+    expect(restoria.center.dx, closeTo(hud.center.dx, 8));
+    expect(hp.right, closeTo(hud.right, 16));
+    expect(bar.right, closeTo(hud.right, 16));
+    expect(hp.top, greaterThan(mailbox.bottom - 2));
     expect(bar.top, greaterThan(hp.bottom - 1));
     expect(bar.bottom, closeTo(hud.bottom, 12));
     final portrait = tester.getRect(find.byType(HudPortrait));
@@ -136,11 +145,47 @@ void main() {
     final bar = tester.getRect(
       find.descendant(of: find.byType(TopHud), matching: find.byType(PillBar)),
     );
+    final mailbox = tester.getRect(find.byKey(const Key('mailbox-button')));
     expect(hp.top, greaterThan(activity.bottom - 2));
-    expect(hp.right, closeTo(activity.right, 8));
+    expect(activity.right, lessThanOrEqualTo(mailbox.left + 1));
+    expect(hp.right, closeTo(hud.right, 16));
     expect(bar.top, greaterThan(hp.bottom - 1));
-    expect(bar.right, closeTo(activity.right, 8));
+    expect(bar.right, closeTo(hud.right, 16));
     expect(bar.bottom, closeTo(hud.bottom, 12));
+  });
+
+  testWidgets('the HUD gear opens Settings', (tester) async {
+    final controller = buildController(database, seed: startedCharacter(database));
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller);
+
+    expect(find.text('Settings and save tools.'), findsNothing);
+    await tester.tap(find.byKey(const Key('hud-settings')));
+    await tester.pump();
+    expect(find.text('Settings and save tools.'), findsOne);
+
+    await tester.tap(find.byTooltip('Open menu'));
+    await tester.pump();
+    expect(find.text('Codex'), findsOne);
+    expect(find.widgetWithText(GameButton, 'Settings'), findsNothing);
+  });
+
+  testWidgets('the HUD header fits a phone-narrow frame without growing', (tester) async {
+    final controller = buildController(database, seed: startedCharacter(database));
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller, size: const Size(390, 844));
+
+    final hud = tester.getRect(find.byType(TopHud));
+    final mailbox = tester.getRect(find.byKey(const Key('mailbox-button')));
+    final settings = tester.getRect(find.byKey(const Key('hud-settings')));
+    final restoria = tester.getRect(find.byKey(const Key('hud-restoria')));
+    expect(hud.height, HudPortrait.size + 2);
+    expect(hud.width, 390);
+    expect(restoria.center.dx, closeTo(hud.center.dx, 8));
+    expect(settings.right, closeTo(hud.right, 12));
+    expect(mailbox.right, lessThan(settings.left + 1));
+    expect(mailbox.top, closeTo(hud.top, 6));
+    expect(find.byType(TopHud), findsOne);
   });
 
   testWidgets('the HUD guild tag stays off until Settings turns it on', (tester) async {

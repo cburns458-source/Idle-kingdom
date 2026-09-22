@@ -212,8 +212,14 @@ Future<void> pumpShell(
 
 /// Opens a screen that lives in the chin's hamburger nest.
 ///
-/// Log is a first-class chin tab, so that label taps the book icon instead.
+/// Settings is on the HUD gear. Log is a first-class chin tab, so that label
+/// taps the book icon instead.
 Future<void> openChinScreen(WidgetTester tester, String label) async {
+  if (label == 'Settings') {
+    await tester.tap(find.byKey(const Key('hud-settings')));
+    await tester.pump();
+    return;
+  }
   if (label == 'Log') {
     await tester.tap(find.byTooltip('Log'));
     await tester.pump();

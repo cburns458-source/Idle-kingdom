@@ -424,6 +424,9 @@ String uiMenuAssetPath() => '$_assetRoot/icons/ui/ui_menu.webp';
 /// HUD mailbox button.
 String uiMailboxAssetPath() => '$_assetRoot/icons/ui/ui_mailbox.webp';
 
+/// HUD wordmark. Converted from the uploaded JPEG without crop, resize, or knockout.
+String uiRestoriaAssetPath() => '$_assetRoot/icons/ui/ui_restoria.webp';
+
 /// The pixel ring drawn over the HUD portrait.
 String avatarFrameAssetPath() => '$_assetRoot/player/avatar_frame_pixel.png';
 

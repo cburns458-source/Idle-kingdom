@@ -911,6 +911,9 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
                 multiplayer: multiplayer,
                 onOpenWardrobe: _openWardrobe,
                 onOpenMailbox: _openMailbox,
+                onOpenSettings: () => _selectScreen(
+                  _screen == GameScreen.menu ? GameScreen.location : GameScreen.menu,
+                ),
                 batterySaver: controller.batterySaver,
               ),
             ),
