@@ -59,7 +59,25 @@ ActivePotionEffect? parsePotionEffect(EquipmentRow? equipment, String itemId) {
     enemyMaxHpDamagePercent: enemyMaxHpDamagePercent,
     relativeDropChanceBonusPercent: relativeDropChanceBonusPercent,
     baseDurationReductionPercent: baseDurationReductionPercent,
+    actionsRemaining: potionActionDuration,
   );
+}
+
+/// Actions still covered. Older saves with no count have one action left.
+num potionActionsRemaining(ActivePotionEffect? effect) {
+  if (effect == null) return 0;
+  final left = effect.actionsRemaining;
+  if (left != null) return math.max(0, left.floor());
+  return 1;
+}
+
+/// Spends one action of the active bottle. Clears the overlay when it runs out.
+PlayerSave tickPotionAction(PlayerSave save) {
+  final effect = save.activePotionEffect;
+  if (effect == null) return save;
+  final left = potionActionsRemaining(effect) - 1;
+  if (left <= 0) return save.copyWith(activePotionEffect: null);
+  return save.copyWith(activePotionEffect: effect.copyWith(actionsRemaining: left));
 }
 
 PlayerSave clearActivePotionEffect(PlayerSave save) {
@@ -85,6 +103,11 @@ class PotionConsumption {
 ///
 /// Future potions work automatically if they use the same capability tag patterns.
 PotionConsumption tryConsumePotionForScope(GameDatabase db, PlayerSave save, String scope) {
+  final existing = save.activePotionEffect;
+  if (existing != null && potionActionsRemaining(existing) > 0 && existing.scope == scope) {
+    return PotionConsumption(save: save, consumed: false, effect: existing, potionName: null);
+  }
+
   final potion = slotStack(save, potionSlotId);
   if (potion == null || potion.quantity <= 0) {
     final cleared = potion != null

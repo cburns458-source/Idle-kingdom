@@ -172,7 +172,7 @@ PlayerSave beginCombatSave(
     combatBossAddsRemaining: null,
     combatBossAddsTriggered: false,
     combatBossInkActive: false,
-    activePotionEffect: potion.effect,
+    activePotionEffect: potion.effect ?? potion.save.activePotionEffect,
     deathPauseUntil: null,
   );
 }
@@ -189,9 +189,6 @@ PlayerSave clearCombatSave(PlayerSave save) {
     combatBossAddsRemaining: null,
     combatBossAddsTriggered: false,
     combatBossInkActive: false,
-    activePotionEffect: save.activePotionEffect?.scope == 'one_combat_encounter'
-        ? null
-        : save.activePotionEffect,
   );
 }
 
@@ -497,7 +494,7 @@ CombatVictoryResult applyCombatVictory(
   }
 
   final food = consumeFoodAfterVictory(db, next, skipHealing: skipVictoryFood);
-  next = withBossRespawn(clearCombatSave(food.save), enemy, nowMs);
+  next = withBossRespawn(tickPotionAction(clearCombatSave(food.save)), enemy, nowMs);
   next = applyQuestDefeatProgress(db, next, jsString(enemy.raw['Enemy ID']), 1);
   next = applyBountyDefeatProgress(next, jsString(enemy.raw['Enemy ID']), 1, nowMs);
   next = withoutHeldAction(next, save.currentActivityId);
@@ -528,18 +525,20 @@ PlayerSave applyCombatDefeat(GameDatabase db, PlayerSave save, num nowMs) {
   final pauseSec = configNumber(db, 'death_pause', 30);
   final maxHp = playerMaxHp(db, save);
   return withoutHeldAction(
-    clearCombatSave(
-      revokeCosmetic(
-        save.copyWith(
-          maxHp: maxHp,
-          currentHp: 0,
-          deathPauseUntil: isoFromMs(nowMs + pauseSec * 1000),
-          hasEverDied: true,
-          currentActionId: null,
-          actionStartedAt: null,
-          actionDurationMs: null,
+    tickPotionAction(
+      clearCombatSave(
+        revokeCosmetic(
+          save.copyWith(
+            maxHp: maxHp,
+            currentHp: 0,
+            deathPauseUntil: isoFromMs(nowMs + pauseSec * 1000),
+            hasEverDied: true,
+            currentActionId: null,
+            actionStartedAt: null,
+            actionDurationMs: null,
+          ),
+          starterTitleCosmeticId,
         ),
-        starterTitleCosmeticId,
       ),
     ),
     save.currentActivityId,

@@ -129,6 +129,7 @@ describe('standard production', () => {
       launch,
       queued.save,
       Date.parse('2026-01-01T00:00:20.000Z'),
+      () => 0,
     )
     expect(finished).not.toBeNull()
     if (!finished) return
@@ -161,6 +162,7 @@ describe('standard production', () => {
       launch,
       queued.save,
       Date.parse('2026-01-01T00:00:45.000Z'),
+      () => 0,
     )
     expect(resolved.craftsCompleted).toBe(2)
     expect(resolved.save.productionRecipeId).toBeNull()
@@ -200,7 +202,7 @@ describe('standard production', () => {
         quantity: 1,
       })),
     }
-    const blocked = completeProductionCraft(launch, filled)
+    const blocked = completeProductionCraft(launch, filled, Date.now(), () => 0)
     expect(blocked).toBeNull()
     expect(filled.productionQuantityRemaining).toBe(2)
 
@@ -209,9 +211,28 @@ describe('standard production', () => {
     expect(cancelled.inventory.find((stack) => stack.itemId === 'ITEM-0025')?.quantity).toBe(2)
 
     const opened = { ...filled, inventory: [] }
-    const finished = completeProductionCraft(launch, opened)
+    const finished = completeProductionCraft(launch, opened, Date.now(), () => 0)
     expect(finished?.outputQty).toBe(1)
     expect(finished?.save.productionQuantityRemaining).toBe(1)
+  })
+
+  it('a botched craft spends the materials and grants nothing', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    let save = createNewSave(launch)
+    save = addItemToInventory(save, 'ITEM-0025', 1)
+    const queued = beginProductionQueue(launch, save, 'ACT-0017', 'RCP-0001', 1)
+    expect(queued.ok).toBe(true)
+    if (!queued.ok) return
+
+    const ruined = completeProductionCraft(launch, queued.save, Date.now(), () => 0.99)
+    expect(ruined).not.toBeNull()
+    if (!ruined) return
+    expect(ruined.failed).toBe(true)
+    expect(ruined.outputQty).toBe(0)
+    expect(ruined.xpGained).toBe(0)
+    expect(ruined.reward.loot).toEqual([])
+    expect(queued.save.inventory.find((stack) => stack.itemId === 'ITEM-0025')).toBeUndefined()
+    expect(ruined.save.inventory.find((stack) => stack.itemId === 'ITEM-0058')).toBeUndefined()
   })
 
   it('hard-gates alchemy until proficiency level', () => {

@@ -66,6 +66,9 @@ const String defaultBeardId = 'APR-0014';
 
 const String defaultGenderPresentationId = 'APR-0017';
 
+/// How many actions a freshly drunk potion covers.
+const int potionActionDuration = 6;
+
 const List<String> appearanceCategories = <String>[
   'skinTone',
   'hairstyle',
@@ -128,6 +131,7 @@ class ActivePotionEffect {
     this.enemyMaxHpDamagePercent,
     this.relativeDropChanceBonusPercent,
     this.baseDurationReductionPercent,
+    this.actionsRemaining,
   });
 
   factory ActivePotionEffect.fromJson(Map<String, Object?> json) {
@@ -138,6 +142,7 @@ class ActivePotionEffect {
       enemyMaxHpDamagePercent: json['enemyMaxHpDamagePercent'] as num?,
       relativeDropChanceBonusPercent: json['relativeDropChanceBonusPercent'] as num?,
       baseDurationReductionPercent: json['baseDurationReductionPercent'] as num?,
+      actionsRemaining: json['actionsRemaining'] as num?,
     );
   }
 
@@ -153,6 +158,10 @@ class ActivePotionEffect {
 
   final num? baseDurationReductionPercent;
 
+  /// Actions still covered by this bottle. Missing on older saves, which
+  /// are treated as one action left — the old one-shot behaviour.
+  final num? actionsRemaining;
+
   Map<String, Object?> toJson() {
     return <String, Object?>{
       'scope': scope,
@@ -161,6 +170,7 @@ class ActivePotionEffect {
       'enemyMaxHpDamagePercent': enemyMaxHpDamagePercent,
       'relativeDropChanceBonusPercent': relativeDropChanceBonusPercent,
       'baseDurationReductionPercent': baseDurationReductionPercent,
+      'actionsRemaining': actionsRemaining,
     };
   }
 
@@ -171,6 +181,7 @@ class ActivePotionEffect {
     Object? enemyMaxHpDamagePercent = _unset,
     Object? relativeDropChanceBonusPercent = _unset,
     Object? baseDurationReductionPercent = _unset,
+    Object? actionsRemaining = _unset,
   }) {
     return ActivePotionEffect(
       scope: scope ?? this.scope,
@@ -187,6 +198,9 @@ class ActivePotionEffect {
       baseDurationReductionPercent: baseDurationReductionPercent == _unset
           ? this.baseDurationReductionPercent
           : baseDurationReductionPercent as num?,
+      actionsRemaining: actionsRemaining == _unset
+          ? this.actionsRemaining
+          : actionsRemaining as num?,
     );
   }
 }

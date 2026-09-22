@@ -53,7 +53,7 @@ void main() {
     final filled = queued.save!.copyWith(
       inventory: [for (var i = 0; i < 180; i++) InventoryStack(itemId: 'FILL-$i', quantity: 1)],
     );
-    expect(completeProductionCraft(db, filled, 1_000_000), isNull);
+    expect(completeProductionCraft(db, filled, 1_000_000, () => 0), isNull);
 
     final room = filled.copyWith(inventory: filled.inventory.take(179).toList());
     final cancelled = cancelProductionActivity(db, room);

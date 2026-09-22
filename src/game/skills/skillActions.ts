@@ -572,7 +572,7 @@ function combatWeaponEntries(db: GameDatabase): SkillMenuListItem[] {
   for (const item of combatGearItems(db)) {
     if (armorMaterial(item.displayName)) continue
     const material = weaponMaterial(item.displayName)
-    if (!material || !isMetalMaterial(material)) continue
+    if (!material || !isWeaponMenuMaterial(material)) continue
     const key = `${item.level ?? ''}|${material}`
     if (seen.has(key)) continue
     seen.add(key)
@@ -591,7 +591,7 @@ function combatOtherEntries(db: GameDatabase): SkillMenuListItem[] {
       const armor = armorMaterial(item.displayName)
       if (armor) return !isGroupedArmorMaterial(armor)
       const weapon = weaponMaterial(item.displayName)
-      if (weapon) return !isMetalMaterial(weapon)
+      if (weapon) return !isWeaponMenuMaterial(weapon)
       return true
     }),
   )
@@ -737,8 +737,13 @@ function isMetalMaterial(material: string): boolean {
   return /^(copper|tin|bronze|iron|steel|titanium|tungsten|silver|gold|mithril)/i.test(lower)
 }
 
+function isWeaponMenuMaterial(material: string): boolean {
+  return isMetalMaterial(material) || material.toLowerCase() === 'wooden'
+}
+
 function isGroupedArmorMaterial(material: string): boolean {
-  return isMetalMaterial(material) || material.toLowerCase() === 'leather'
+  const lower = material.toLowerCase()
+  return isMetalMaterial(material) || lower === 'leather' || lower === 'wooden'
 }
 
 function smithingMaterial(name: string): string | null {

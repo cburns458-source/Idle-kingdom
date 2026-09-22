@@ -191,6 +191,7 @@ void main() {
           databaseOf(fixture),
           saveOf(fixture),
           fixture.inputField<num>('nowMs'),
+          () => 0,
         );
         // The no-queue case records only the flag, since there is nothing else.
         final actual = completed == null
@@ -217,6 +218,7 @@ void main() {
           databaseOf(fixture),
           saveOf(fixture),
           fixture.inputField<num>('nowMs'),
+          () => 0,
         );
         expect(checkParity(fixture, resolved.toJson()), isNull);
       });

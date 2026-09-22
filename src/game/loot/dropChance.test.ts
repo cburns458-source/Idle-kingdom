@@ -47,6 +47,7 @@ describe('relative drop chance stacking', () => {
       enemyMaxHpDamagePercent: null,
       relativeDropChanceBonusPercent: 25,
       baseDurationReductionPercent: null,
+      actionsRemaining: 6,
     }
     const save = {
       ...base,

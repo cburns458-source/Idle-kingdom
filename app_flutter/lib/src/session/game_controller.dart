@@ -1190,6 +1190,10 @@ class GameController extends ChangeNotifier {
   }
 
   void toggleFavorite(String activityId) {
+    if (!canFavoriteActivity(db, activityId)) {
+      report('Only combat and gathering can be starred.');
+      return;
+    }
     commit(toggleFavoriteActivity(save, save.currentLocationId, activityId));
   }
 
@@ -1396,6 +1400,7 @@ class GameController extends ChangeNotifier {
     }
     final favoriteId = favoriteActivityAt(save);
     if (favoriteId == null || save.currentActivityId == favoriteId) return;
+    if (!canFavoriteActivity(db, favoriteId)) return;
     final validation = validateActivityStart(db, save, favoriteId);
     if (validation.ok) return;
     final proposal = proposeAutoEquipForActivity(db, save, favoriteId, validation.reason!);

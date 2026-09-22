@@ -212,7 +212,7 @@ void main() {
       0,
     );
     expect(queued.ok, isTrue);
-    final crafted = completeProductionCraft(db, queued.save!, 20_000);
+    final crafted = completeProductionCraft(db, queued.save!, 20_000, () => 0);
     expect(crafted, isNotNull);
     expect(crafted!.save.equipment.slots[foodSlotId]?.quantity, 4);
 

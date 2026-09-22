@@ -124,6 +124,11 @@ BoxDecoration panelFill({
   );
 }
 
+/// Solid button-coloured bar for the HUD and chin, with the same grain buttons use.
+BoxDecoration chromeBarFill(BuildContext context, {BorderRadius? borderRadius, BoxBorder? border}) {
+  return UiChrome.of(context).barFill(borderRadius: borderRadius, border: border);
+}
+
 /// Dark outer board (HUD strip, nav chin, shell). Uses the active [UiChrome].
 BoxDecoration chromeBoardFill(
   BuildContext context, {
@@ -347,7 +352,7 @@ class _GameButtonState extends State<GameButton> {
             step: widget.dense ? PixelChrome.stepTight : PixelChrome.step,
             strokeWidth: widget.selected ? 2.5 : 2,
             shadow: false,
-            material: PixelPlateMaterial.none,
+            material: PixelPlateMaterial.grain,
             gradient: primary
                 ? (down || widget.selected ? chrome.primaryPressed : chrome.primaryFill)
                 : (down || widget.selected ? chrome.secondaryPressed : chrome.secondaryFill),
@@ -470,6 +475,7 @@ class GameIconButton extends StatelessWidget {
           onTap: onPressed,
           step: PixelChrome.stepTight,
           fillColor: UiChrome.of(context).iconButtonFill,
+          material: PixelPlateMaterial.grain,
           strokeWidth: 1.5,
           shadow: false,
           child: SizedBox.square(
@@ -542,6 +548,7 @@ class GameDropdown<T> extends StatelessWidget {
           child: PixelPlate(
             step: PixelChrome.stepTight,
             fillColor: chrome.iconButtonFill,
+            material: PixelPlateMaterial.grain,
             strokeWidth: 1.5,
             shadow: false,
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
@@ -595,6 +602,7 @@ class GameSelectField extends StatelessWidget {
           onTap: onPressed,
           step: PixelChrome.stepTight,
           fillColor: chrome.iconButtonFill,
+          material: PixelPlateMaterial.grain,
           strokeWidth: 1.5,
           shadow: false,
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),

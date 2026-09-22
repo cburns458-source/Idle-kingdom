@@ -10,7 +10,7 @@ import { clearProductionSave } from '../production/engine'
 import { isStandardProductionActivity, recipesForActivity } from '../production/recipes'
 import type { ActionRow, ActivityRow, GameDatabase } from '../data/types'
 import type { EquippedStack, PlayerSave } from '../save/types'
-import { clearActivePotionEffect, tryConsumePotionForScope } from '../potions/effects'
+import { tickPotionAction, tryConsumePotionForScope } from '../potions/effects'
 import { gatheringDurationMs, gatheringXpReward, rollGatheringSuccess } from './gathering'
 import { heldActionIdFor, withHeldAction, withoutHeldAction } from './heldAction'
 import { eligiblePoolEntries, isSelectableAction, pickWeightedAction, type RandomFn } from './pools'
@@ -391,7 +391,7 @@ export function completeGatheringAction(
     } = {},
   ): { save: PlayerSave; result: ActionCompletionResult } => {
     const xpAmount = gatheringXpReward(db, base, action)
-    let next = clearActivePotionEffect(base)
+    let next = tickPotionAction(base)
     const xpApplied = applyXp(next, db, skillId, xpAmount)
     next = xpApplied.save
     let leveledUpTo = xpApplied.leveledUpTo
@@ -510,7 +510,7 @@ export function completeGatheringAction(
   const fullXp = gatheringXpReward(db, working, action)
   const primarySkillId = pruning ? BOTANY_SKILL_ID : skillId
   const xpAmount = pruning ? Math.floor(fullXp * PRUNING_XP_FRACTION) : fullXp
-  let next = clearActivePotionEffect(rewarded.save)
+  let next = tickPotionAction(rewarded.save)
   const xpApplied = applyXp(next, db, primarySkillId, xpAmount)
   next = xpApplied.save
   let leveledUpTo = xpApplied.leveledUpTo

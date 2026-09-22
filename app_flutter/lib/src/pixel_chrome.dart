@@ -201,7 +201,7 @@ class _RivetPainter extends CustomPainter {
 }
 
 /// Fill material for [PixelPlate] — wood outer boards vs tan inner panels.
-enum PixelPlateMaterial { auto, wood, tan, none }
+enum PixelPlateMaterial { auto, wood, tan, grain, none }
 
 /// Wood plate with stepped corners and gold emboss rim. Keeps child layout size.
 class PixelPlate extends StatelessWidget {
@@ -245,6 +245,7 @@ class PixelPlate extends StatelessWidget {
     return switch (kind) {
       PixelPlateMaterial.wood => chrome.boardFillImage(opacity: 0.45),
       PixelPlateMaterial.tan => chrome.panelPlateImage(),
+      PixelPlateMaterial.grain => chrome.buttonGrainImage(),
       PixelPlateMaterial.none => null,
       PixelPlateMaterial.auto => null,
     };

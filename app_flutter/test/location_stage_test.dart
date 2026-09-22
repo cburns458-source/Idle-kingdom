@@ -803,4 +803,29 @@ void main() {
     expect(actionMid.left, closeTo(actionRest.left, 1));
     expect(actionMid.top, closeTo(actionRest.top, 1));
   });
+
+  testWidgets('an active potion shows its icon and remaining actions on the player', (
+    tester,
+  ) async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(
+        currentLocationId: 'LOC-0001',
+        activePotionEffect: const ActivePotionEffect(
+          scope: 'one_action',
+          itemId: 'ITEM-0070',
+          relativeDropChanceBonusPercent: 25,
+          actionsRemaining: 6,
+        ),
+      ),
+    );
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller, size: const Size(420, 420 * 16 / 9));
+
+    expect(find.bySemanticsLabel('Luck Potion · 6 actions left'), findsOne);
+    expect(
+      find.byWidgetPredicate((widget) => assetNamed(widget, 'item_luck_potion')),
+      findsWidgets,
+    );
+  });
 }

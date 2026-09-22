@@ -30,6 +30,11 @@ function withHelmet(save: ReturnType<typeof createNewSave>, itemId: string) {
   }
 }
 
+function rolls(...values: number[]): () => number {
+  let i = 0
+  return () => values[Math.min(i++, values.length - 1)]!
+}
+
 function withBack(save: ReturnType<typeof createNewSave>, itemId: string) {
   return {
     ...save,
@@ -48,8 +53,8 @@ describe('specialist hats and quiver', () => {
     const queued = beginProductionQueue(launch, save, 'ACT-0017', 'RCP-0001', 1)
     expect(queued.ok).toBe(true)
     if (!queued.ok) return
-    const missed = completeProductionCraft(launch, queued.save, Date.now(), () => 0.5)
-    const hit = completeProductionCraft(launch, queued.save, Date.now(), () => 0)
+    const missed = completeProductionCraft(launch, queued.save, Date.now(), rolls(0, 0.5))
+    const hit = completeProductionCraft(launch, queued.save, Date.now(), rolls(0, 0))
     expect(missed?.outputQty).toBe(1)
     expect(hit?.outputQty).toBe(2)
     expect(missed?.xpGained).toBe(hit?.xpGained)
@@ -122,17 +127,17 @@ describe('specialist hats and quiver', () => {
     expect(queued.ok).toBe(true)
     if (!queued.ok) return
 
-    const low = completeProductionCraft(launch, queued.save, Date.now(), () => 0)
-    const mid = completeProductionCraft(launch, queued.save, Date.now(), () => 0.4)
-    const high = completeProductionCraft(launch, queued.save, Date.now(), () => 0.9)
+    const low = completeProductionCraft(launch, queued.save, Date.now(), rolls(0, 0))
+    const mid = completeProductionCraft(launch, queued.save, Date.now(), rolls(0, 0.4))
+    const high = completeProductionCraft(launch, queued.save, Date.now(), rolls(0, 0.9))
     expect(low?.outputQty).toBe(1)
     expect(mid?.outputQty).toBe(2)
     expect(high?.outputQty).toBe(3)
     expect(low?.xpGained).toBe(high?.xpGained)
 
     const withGoggles = withHelmet(queued.save, ALCHEMIST_GOGGLES_ITEM_ID)
-    const gLow = completeProductionCraft(launch, withGoggles, Date.now(), () => 0)
-    const gHigh = completeProductionCraft(launch, withGoggles, Date.now(), () => 0.9)
+    const gLow = completeProductionCraft(launch, withGoggles, Date.now(), rolls(0, 0))
+    const gHigh = completeProductionCraft(launch, withGoggles, Date.now(), rolls(0, 0.9))
     expect(gLow?.outputQty).toBe(2)
     expect(gHigh?.outputQty).toBe(3)
     expect(gLow?.xpGained).toBe(gHigh?.xpGained)

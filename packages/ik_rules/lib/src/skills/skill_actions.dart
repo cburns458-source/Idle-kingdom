@@ -666,7 +666,7 @@ List<SkillMenuListItem> _combatWeaponEntries(GameDatabase db) {
   for (final item in _combatGearItems(db)) {
     if (_armorMaterial(item.displayName) != null) continue;
     final material = _weaponMaterial(item.displayName);
-    if (material == null || !_isMetalMaterial(material)) continue;
+    if (material == null || !_isWeaponMenuMaterial(material)) continue;
     final key = '${item.level ?? ''}|$material';
     if (!seen.add(key)) continue;
     grouped.add(SkillMenuListItem(id: key, displayName: '$material weapons', level: item.level));
@@ -685,7 +685,7 @@ bool _isCombatOtherItem(SkillMenuListItem item) {
   final armor = _armorMaterial(item.displayName);
   if (armor != null) return !_isGroupedArmorMaterial(armor);
   final weapon = _weaponMaterial(item.displayName);
-  if (weapon != null) return !_isMetalMaterial(weapon);
+  if (weapon != null) return !_isWeaponMenuMaterial(weapon);
   return true;
 }
 
@@ -726,8 +726,13 @@ bool _isMetalMaterial(String material) {
   ).hasMatch(lower);
 }
 
+bool _isWeaponMenuMaterial(String material) {
+  return _isMetalMaterial(material) || material.toLowerCase() == 'wooden';
+}
+
 bool _isGroupedArmorMaterial(String material) {
-  return _isMetalMaterial(material) || material.toLowerCase() == 'leather';
+  final lower = material.toLowerCase();
+  return _isMetalMaterial(material) || lower == 'leather' || lower == 'wooden';
 }
 
 List<SkillMenuListItem> _gatheringToolEntries(GameDatabase db, String skillId) {

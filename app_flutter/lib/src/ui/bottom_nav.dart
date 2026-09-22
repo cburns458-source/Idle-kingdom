@@ -162,7 +162,7 @@ class _BottomNavState extends State<BottomNav> {
     return ListenableBuilder(
       listenable: Listenable.merge(<Listenable>[widget.controller, widget.multiplayer]),
       builder: (context, _) => DecoratedBox(
-        decoration: chromeBoardFill(
+        decoration: chromeBarFill(
           context,
           border: const Border(top: BorderSide(color: Palette.edge)),
         ),

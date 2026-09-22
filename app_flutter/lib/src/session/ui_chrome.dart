@@ -75,6 +75,7 @@ class UiChrome {
   DecorationImage? _boardFill40;
   DecorationImage? _boardPlate45;
   DecorationImage? _panelPlate32;
+  DecorationImage? _buttonGrain;
   BoxDecoration? _shellDecoration;
   BoxDecoration? _frameDecoration;
 
@@ -214,6 +215,28 @@ class UiChrome {
     return _boardImage(opacity);
   }
 
+  /// Fine grain tiled over buttons and the HUD / chin bar.
+  DecorationImage buttonGrainImage({double opacity = 0.12}) {
+    if (opacity == 0.12) {
+      return _buttonGrain ??= DecorationImage(
+        image: const AssetImage('assets/ui/panel-grain.png'),
+        repeat: ImageRepeat.repeat,
+        fit: BoxFit.none,
+        alignment: Alignment.topLeft,
+        filterQuality: FilterQuality.none,
+        opacity: 0.12,
+      );
+    }
+    return DecorationImage(
+      image: const AssetImage('assets/ui/panel-grain.png'),
+      repeat: ImageRepeat.repeat,
+      fit: BoxFit.none,
+      alignment: Alignment.topLeft,
+      filterQuality: FilterQuality.none,
+      opacity: opacity,
+    );
+  }
+
   /// Tiled inner-panel texture for [PixelPlate] tan plates.
   DecorationImage panelPlateImage({double opacity = 0.32}) {
     if (opacity == 0.32) {
@@ -253,6 +276,16 @@ class UiChrome {
       );
     }
     return BoxDecoration(color: board, gradient: gradient, image: boardFillImage());
+  }
+
+  /// Solid button-coloured bar for the HUD and chin.
+  BoxDecoration barFill({BorderRadius? borderRadius, BoxBorder? border}) {
+    return BoxDecoration(
+      color: iconButtonFill,
+      borderRadius: borderRadius,
+      border: border,
+      image: buttonGrainImage(),
+    );
   }
 
   /// Board fill with optional border / radius (image is pack-cached).

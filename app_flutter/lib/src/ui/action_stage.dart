@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'dart:typed_data';
 
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:ik_content/ik_content.dart';
@@ -191,6 +192,7 @@ class LocationIdlePlayer extends StatelessWidget {
                                 slotHeight: _portraitSlotHeight,
                                 filterQuality: FilterQuality.high,
                                 hop: save.currentActivityId != null ? _StageHopKind.player : null,
+                                overlay: _PotionBadge(controller: controller),
                               ),
                             ),
                           ),
@@ -218,6 +220,55 @@ class LocationIdlePlayer extends StatelessWidget {
                 ),
                 const SizedBox(height: 7),
                 const SizedBox(height: _stageFooterHeight),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Potion bottle and remaining-action count, pinned to the top-right of the art.
+class _PotionBadge extends StatelessWidget {
+  const _PotionBadge({required this.controller});
+
+  final GameController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final effect = controller.save.activePotionEffect;
+    if (effect == null) return const SizedBox.shrink();
+    final remaining = potionActionsRemaining(effect);
+    if (remaining <= 0) return const SizedBox.shrink();
+    final item = controller.db.items.where((row) => row.itemId == effect.itemId).firstOrNull;
+    return Align(
+      alignment: Alignment.topRight,
+      child: Padding(
+        padding: const EdgeInsets.only(top: 4, right: 4),
+        child: Semantics(
+          label: '${item?.displayName ?? 'Potion'} · $remaining actions left',
+          child: SizedBox(
+            width: 36,
+            height: 36,
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                ItemIcon(item: item, size: 36),
+                Positioned(
+                  right: -2,
+                  bottom: -2,
+                  child: Text(
+                    '$remaining',
+                    style: TextStyle(
+                      fontFamily: gameFontFamily,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: Palette.gold,
+                      shadows: const [Shadow(color: Color(0xE6000000), blurRadius: 2)],
+                    ),
+                  ),
+                ),
               ],
             ),
           ),

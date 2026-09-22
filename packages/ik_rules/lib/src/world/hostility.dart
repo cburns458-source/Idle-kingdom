@@ -180,6 +180,7 @@ PlayerSave _startFavoriteActivity(
 ) {
   final favoriteId = favoriteActivityAt(save, locationId);
   if (favoriteId == null) return save;
+  if (!canFavoriteActivity(db, favoriteId)) return save;
   final validation = validateActivityStart(db, save, favoriteId);
   if (!validation.ok) return save;
   final started = beginActivitySave(save, favoriteId, isoFromMs(nowMs));
