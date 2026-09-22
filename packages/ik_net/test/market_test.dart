@@ -160,21 +160,22 @@ void main() {
     });
   });
 
-  group('the three slots', () {
-    test('draw the same three boxes whatever is in them', () {
+  group('the six slots', () {
+    test('draw the same six boxes whatever is in them', () {
       final views = bazaarSlotViews(<MarketOrder>[_order(slot: 2)]);
-      expect(views.map((view) => view.slot).toList(), <int>[0, 1, 2]);
+      expect(views.map((view) => view.slot).toList(), <int>[0, 1, 2, 3, 4, 5]);
       expect(views[0].isEmpty, isTrue);
       expect(views[2].order?.slot, 2);
+      expect(views[5].isEmpty, isTrue);
     });
 
     test('ignore an order claiming a slot that does not exist', () {
-      expect(bazaarSlotViews(<MarketOrder>[_order(slot: 7)]).every((view) => view.isEmpty), isTrue);
+      expect(bazaarSlotViews(<MarketOrder>[_order(slot: 9)]).every((view) => view.isEmpty), isTrue);
     });
 
-    test('report how many are free, which is what refuses a fourth offer', () {
+    test('report how many are free, which is what refuses one offer too many', () {
       final snapshot = MarketSnapshot(orders: <MarketOrder>[_order(slot: 0), _order(slot: 1)]);
-      expect(snapshot.slotsFree, 1);
+      expect(snapshot.slotsFree, bazaarOfferSlots - 2);
       expect(
         bazaarOfferRefusal(side: bazaarBuy, unitPrice: 5, quantity: 5, slotsFree: 0),
         bazaarNoSlots,

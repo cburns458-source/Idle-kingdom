@@ -29,6 +29,33 @@ String formatPlayTimeMs(num milliseconds) {
   return '${minutes}m';
 }
 
+const List<String> _monthNames = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
+];
+
+/// A save timestamp as a day: `22 Sep 2026`, in the reader's own time zone.
+///
+/// Returns null for anything that is not a timestamp, so a save written before
+/// the field existed shows no line rather than a wrong one.
+String? formatSaveDate(String? iso) {
+  if (iso == null || iso.isEmpty) return null;
+  final parsed = DateTime.tryParse(iso);
+  if (parsed == null) return null;
+  final local = parsed.toLocal();
+  return '${local.day} ${_monthNames[local.month - 1]} ${local.year}';
+}
+
 /// 12345 -> "12,345", the grouping JavaScript's `toLocaleString()` gives.
 String formatThousands(num value) {
   if (!value.isFinite) return value.isNegative ? '-∞' : '∞';

@@ -25,7 +25,7 @@ const BazaarSide bazaarBuy = 'buy';
 const BazaarSide bazaarSell = 'sell';
 
 /// Offers a player may have open at once. Each one is a buy or a sell.
-const int bazaarOfferSlots = 3;
+const int bazaarOfferSlots = 6;
 
 /// Trades of their own a player can look back over.
 const int bazaarHistoryLength = 10;
@@ -61,7 +61,7 @@ bool bazaarTaxApplies(num unitPrice) => unitPrice.floor() > bazaarTaxThreshold;
 /// Gold is the currency rather than a good. An enchanted item is one of a kind
 /// and would lose that in a pile. A favourite is the flag a player sets on the
 /// things they do not want sold, and the exchange honours it the way the shops
-/// already do. The server checks all three again against its own copy of the
+/// already do. The server checks all six again against its own copy of the
 /// save; this is so the screen does not offer what would only be refused.
 String? bazaarStackRefusal(InventoryStack stack, [GameDatabase? db]) {
   if (isGoldCurrencyItem(stack.itemId, db)) return bazaarGoldNotTraded;
@@ -95,12 +95,12 @@ const String bazaarHostedOnly = 'The Bazaar opens once you are playing on an acc
 const String bazaarSignInToTrade = 'Sign in to trade at the Bazaar.';
 
 const String bazaarBlurbMarket =
-    'Buy and sell with every other player. Three offers at a time; '
+    'Buy and sell with every other player. Six offers at a time; '
     'sales over 100 gold an item pay 1%.';
 
 const String bazaarEmptyBook = 'Nothing is on offer yet.';
 
-const String bazaarEmptyOffers = 'No offers open. Three slots are yours to use.';
+const String bazaarEmptyOffers = 'No offers open. Six slots are yours to use.';
 
 const String bazaarEmptyHistory = 'No trades yet.';
 
@@ -148,7 +148,7 @@ class MarketOrder {
   /// Gold the exchange still holds for a buy order.
   final num goldEscrow;
 
-  /// Which of the three boxes this offer sits in.
+  /// Which of the six boxes this offer sits in.
   final int slot;
 
   /// `open`, `filled`, or `cancelled`.
@@ -488,7 +488,7 @@ class MarketActionResult {
       : <String, Object?>{'ok': false, 'reason': reason};
 }
 
-/// One of the three offer boxes, filled or empty.
+/// One of the six offer boxes, filled or empty.
 class MarketSlotView {
   const MarketSlotView({required this.slot, this.order});
 
@@ -503,7 +503,7 @@ class MarketSlotView {
   };
 }
 
-/// The three boxes in slot order, so the screen draws the same shape either way.
+/// The six boxes in slot order, so the screen draws the same shape either way.
 List<MarketSlotView> bazaarSlotViews(List<MarketOrder> orders) {
   final bySlot = <int, MarketOrder>{
     for (final order in orders)
@@ -536,7 +536,7 @@ String? bazaarOfferRefusal({
   return null;
 }
 
-const String bazaarNoSlots = 'All three offer slots are in use.';
+const String bazaarNoSlots = 'All six offer slots are in use.';
 
 const String bazaarOfferTooLarge = 'An offer cannot be worth more than 1,000,000,000 gold.';
 

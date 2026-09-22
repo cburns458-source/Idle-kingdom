@@ -157,17 +157,19 @@ void main() {
     expect(project.calls, isNot(contains('invoke:$remoteBazaarMarketFunction')));
   });
 
-  testWidgets('opens on three empty slots, each offering both sides', (tester) async {
+  testWidgets('opens on six empty slots, each offering both sides', (tester) async {
     final player = await hostedPlayer(tester);
     await pumpBazaar(tester, player.net, player.save);
 
+    expect(bazaarOfferSlots, 6);
     expect(find.textContaining('— empty'), findsNWidgets(bazaarOfferSlots));
     expect(find.widgetWithText(GameButton, 'Create a buy order'), findsNWidgets(bazaarOfferSlots));
     expect(find.widgetWithText(GameButton, 'Create a sell order'), findsNWidgets(bazaarOfferSlots));
-    // The collection box and history are on the same page, because there is no
-    // tab bar left to hide them behind.
+    // The collection box stays on the page because it holds goods to take. The
+    // history is only a look back, so it waits behind its own button.
     expect(find.text(bazaarEmptyCollection), findsOne);
-    expect(find.text(bazaarEmptyHistory), findsOne);
+    expect(find.text(bazaarEmptyHistory), findsNothing);
+    expect(find.byKey(const Key('bazaar-recent-trades')), findsOne);
   });
 
   testWidgets('never shows anybody else\'s offers', (tester) async {
@@ -176,7 +178,7 @@ void main() {
     await pumpBazaar(tester, player.net, player.save);
 
     // A rival is resting 60 at 30, and none of it is on the screen: the player
-    // sees their own three slots and nothing about the book.
+    // sees their own six slots and nothing about the book.
     expect(find.text('On offer'), findsNothing);
     expect(find.text('Wanted'), findsNothing);
     expect(find.textContaining('on offer'), findsNothing);
@@ -368,6 +370,12 @@ void main() {
     await pumpBazaar(tester, player.net, player.save);
 
     expect(find.text('Recent trades'), findsOne);
+    expect(find.text('Sold Titanium Ore ×10'), findsNothing);
+
+    await tester.tap(find.byKey(const Key('bazaar-recent-trades')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
     expect(find.text('Sold Titanium Ore ×10'), findsOne);
     expect(find.text('500 each · 4,950 gold received'), findsOne);
     expect(find.text('Tax 50'), findsOne);

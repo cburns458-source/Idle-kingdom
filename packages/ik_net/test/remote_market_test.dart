@@ -279,7 +279,7 @@ void main() {
       expect(placed.order!.goldEscrow, 4000);
     });
 
-    test('fills three slots and then refuses a fourth', () async {
+    test('fills every slot and then refuses one more', () async {
       final project = _project();
       final db = _database();
       final buyer = await _trader(project, db, 'buyer@example.com', 'Buyer', gold: 5000);
@@ -295,7 +295,7 @@ void main() {
         expect(placed.ok, isTrue, reason: placed.reason);
         expect(placed.order!.slot, offer);
       }
-      final fourth = await buyer.placeBazaarOffer(
+      final extra = await buyer.placeBazaarOffer(
         db,
         _stored(project, buyer),
         side: bazaarBuy,
@@ -303,7 +303,7 @@ void main() {
         unitPrice: 10,
         quantity: 10,
       );
-      expect(fourth.reason, bazaarNoSlots);
+      expect(extra.reason, bazaarNoSlots);
       expect((await buyer.bazaarMarket()).slotsFree, 0);
     });
 
@@ -382,8 +382,8 @@ void main() {
       expect(box.firstWhere((entry) => entry.isGold).gold, 200);
       expect(box.firstWhere((entry) => !entry.isGold).quantity, 10);
 
-      // The slot is freed the moment the order finishes, so three offers means
-      // three open offers rather than three offers ever.
+      // The slot is freed the moment the order finishes, so six offers means
+      // six open offers rather than six offers ever.
       expect((await buyer.bazaarMarket()).slotsFree, bazaarOfferSlots);
     });
 

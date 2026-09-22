@@ -43,7 +43,7 @@ import {
 } from '../_shared/save_items.ts'
 
 /** Offers open at once, per account. */
-const OFFER_SLOTS = 3
+const OFFER_SLOTS = 6
 
 /** Box rows one claim will try to take. */
 const COLLECT_BATCH = 40
@@ -300,7 +300,7 @@ async function place(
     .eq('user_id', userId)
     .eq('status', 'open')
   if ((open.data ?? []).length >= OFFER_SLOTS) {
-    return refused('All three offer slots are in use.')
+    return refused('All six offer slots are in use.')
   }
 
   let next: SavePayload | null
@@ -541,7 +541,7 @@ function refusalFor(error: unknown): string {
   if (message.includes('BAZAAR_NO_SAVE')) {
     return 'Play a little and let the game save before trading.'
   }
-  if (message.includes('BAZAAR_NO_SLOTS')) return 'All three offer slots are in use.'
+  if (message.includes('BAZAAR_NO_SLOTS')) return 'All six offer slots are in use.'
   if (message.includes('BAZAAR_NO_ORDER')) return 'That offer is not yours.'
   if (message.includes('BAZAAR_CLOSED')) return 'That offer has already closed.'
   if (message.includes('BAZAAR_NOTHING')) return 'The collection box is empty.'
@@ -649,7 +649,7 @@ function cors(): HeadersInit {
  *
  * The client reaches this through `functions.invoke`, which throws on any status
  * at or above 400 and hands the caller a stringified body rather than the reason
- * in it. A refusal is not a fault — "all three slots are in use" is the exchange
+ * in it. A refusal is not a fault — "all six slots are in use" is the exchange
  * working — so it comes back as a result the client can read the message out of.
  * Genuine faults still answer 401 and 500.
  */
