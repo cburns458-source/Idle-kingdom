@@ -37,6 +37,7 @@ void main() {
     expect(activities.map((row) => row.raw['Contextual Name']), [
       'Train with the monks',
       'Pick weeds',
+      'Collect compost',
     ]);
     expect(db.activities.any((row) => row.activityId == 'ACT-0036'), isFalse);
   });

@@ -26,7 +26,7 @@ describe('Temple', () => {
     const names = launch.Activities.filter((row) => row['Location ID'] === 'LOC-0036').map(
       (row) => row['Contextual Name'],
     )
-    expect(names).toEqual(['Train with the monks', 'Pick weeds'])
+    expect(names).toEqual(['Train with the monks', 'Pick weeds', 'Collect compost'])
     expect(launch.Activities.some((row) => row['Activity ID'] === 'ACT-0036')).toBe(false)
   })
 

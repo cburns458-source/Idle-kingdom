@@ -6624,7 +6624,7 @@
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Description": "Patch fertilizer. Spend it when planting to give each seed a better chance to live.",
-      "Icon Asset Key": "wild_roots",
+      "Icon Asset Key": "compost",
       "Notes": null,
       "Base Sell Value": 0,
       "Stackable": null

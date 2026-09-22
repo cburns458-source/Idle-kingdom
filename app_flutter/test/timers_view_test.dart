@@ -25,6 +25,7 @@ PlayerSave _readyMeadowBotany(LoadedDatabase database) {
         xpReward: 10,
         startedAt: isoFromMs(testStartMs - 1000),
         durationMs: 500,
+        usedCompost: true,
       ),
     ],
   );

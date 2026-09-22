@@ -643,7 +643,6 @@ describe('locationTimers', () => {
         { itemId: POTATO_SEED_ITEM_ID, quantity: 2 },
         { itemId: COMPOST_ITEM_ID, quantity: 3 },
       ],
-      quests: [{ questId: 'QST-0011', status: 'completed', progress: 1 }],
     }
     const refused = plantBotanySelection(launch, save, [POTATO_SEED_ITEM_ID], 0, true)
     expect(refused.ok).toBe(true)
