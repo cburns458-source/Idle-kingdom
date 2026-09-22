@@ -1658,7 +1658,7 @@ class PlayerSettings {
       autoEat: json['autoEat'] as bool,
       eatHealthThresholdPercent: json['eatHealthThresholdPercent'] as num,
       eatHealthThresholdAsPercent: json['eatHealthThresholdAsPercent'] as bool,
-      skipHostileTravelWarning: json['skipHostileTravelWarning'] as bool? ?? false,
+      skipHostileTravelWarning: json['skipHostileTravelWarning'] as bool,
     );
   }
 
@@ -1686,6 +1686,7 @@ class PlayerSettings {
   final bool eatHealthThresholdAsPercent;
 
   /// When true, skip the hostile-location travel confirm popup.
+  /// Set by the "Don't ask again" control on that popup.
   final bool skipHostileTravelWarning;
 
   Map<String, Object?> toJson() {
