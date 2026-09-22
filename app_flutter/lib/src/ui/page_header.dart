@@ -10,6 +10,7 @@ class PageHeader extends StatelessWidget {
     required this.onClose,
     this.trailing,
     this.close,
+    this.padding = const EdgeInsets.fromLTRB(10, 8, 10, 6),
   });
 
   final String title;
@@ -19,10 +20,13 @@ class PageHeader extends StatelessWidget {
   /// Replaces the compact text Close when a same-size chip is needed.
   final Widget? close;
 
+  /// Inventory sits 2px closer to the title so the doll is not flush on the plate.
+  final EdgeInsetsGeometry padding;
+
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(10, 8, 10, 6),
+      padding: padding,
       child: Row(
         children: [
           Expanded(

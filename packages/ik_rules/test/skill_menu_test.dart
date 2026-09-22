@@ -79,6 +79,8 @@ void main() {
         .expand((section) => section.entries);
     expect(weapons.any((row) => row.displayName == 'Wooden weapons' && row.level == 1), isTrue);
     expect(weapons.any((row) => row.displayName == 'Copper weapons' && row.level == 1), isTrue);
+    final weaponNames = weapons.map((row) => row.displayName).toList();
+    expect(weaponNames.indexOf('Wooden weapons'), lessThan(weaponNames.indexOf('Copper weapons')));
     expect(weapons.any((row) => row.displayName == 'Tungsten weapons'), isTrue);
     expect(weapons.any((row) => row.displayName == 'Steel weapons'), isTrue);
     expect(weapons.any((row) => row.displayName == 'Wooden Sword'), isFalse);
@@ -95,6 +97,8 @@ void main() {
     expect(gear.any((row) => row.displayName == 'Bull Horn equipment'), isFalse);
     expect(gear.any((row) => row.displayName == 'Wooden equipment' && row.level == 1), isTrue);
     expect(gear.any((row) => row.displayName == 'Leather equipment' && row.level == 1), isTrue);
+    final gearNames = gear.map((row) => row.displayName).toList();
+    expect(gearNames.indexOf('Wooden equipment'), lessThan(gearNames.indexOf('Leather equipment')));
     expect(gear.any((row) => row.displayName == 'Leather Helmet'), isFalse);
     expect(gear.any((row) => row.displayName == 'Tungsten Helmet'), isFalse);
     expect(gear.any((row) => row.displayName == 'Tungsten Shield'), isFalse);
@@ -203,6 +207,14 @@ void main() {
       ),
       isTrue,
     );
+    final toolNames = mining.tabs.last.sections.first.entries
+        .map((row) => row.displayName)
+        .toList();
+    final woodenPick = toolNames.indexOf('Wooden Pickaxe');
+    final copperPick = toolNames.indexOf('Copper Pickaxe');
+    if (copperPick >= 0) {
+      expect(woodenPick, lessThan(copperPick));
+    }
   });
 
   test('artisanry puts Lucky Necklace on Jewelry', () {

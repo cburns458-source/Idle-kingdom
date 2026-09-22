@@ -636,6 +636,15 @@ void main() {
     expect(nearbyIcon.path, uiNearbyAssetPath());
     expect(nearbyIcon.width, 32);
     expect(nearbyIcon.height, 32);
+
+    Material plate(String tooltip) {
+      return tester.widget<Material>(
+        find.descendant(of: find.byTooltip(tooltip), matching: find.byType(Material)).first,
+      );
+    }
+
+    expect(plate('Back to Town').clipBehavior, Clip.antiAlias);
+    expect(plate('Nearby adventurers').clipBehavior, Clip.antiAlias);
   });
 
   testWidgets('submap map header lays world map beside a matching close chip', (tester) async {

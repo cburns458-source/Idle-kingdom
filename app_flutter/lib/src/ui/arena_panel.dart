@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ik_net/ik_net.dart';
 import 'package:ik_rules/ik_rules.dart';
 
 import '../session/game_controller.dart';
@@ -7,6 +8,7 @@ import '../theme.dart';
 import 'action_stage.dart';
 import 'format.dart';
 import 'item_icon.dart';
+import 'player_gear_sheet.dart';
 
 enum _ArenaTab { search, ranked }
 
@@ -105,6 +107,21 @@ class _ArenaPanelState extends State<ArenaPanel> {
 
   void _filter() {
     setState(() => _matches = searchArenaOpponents(_all, _search.text));
+  }
+
+  Future<void> _viewOpponentGear(ArenaOpponent opponent) async {
+    final themSave = await multiplayer.service.readOpponentSave(opponent.userId);
+    if (!mounted) return;
+    if (themSave == null) {
+      setState(() => _error = 'That player has no saved fight loadout.');
+      return;
+    }
+    await openPlayerGear(
+      context,
+      controller: controller,
+      username: opponent.username,
+      equipment: publicEquipmentFromSave(themSave),
+    );
   }
 
   Future<void> _fightOpponent(ArenaOpponent opponent, {required bool ranked}) async {
@@ -345,9 +362,22 @@ class _ArenaPanelState extends State<ArenaPanel> {
                         child: DockRow(
                           title: row.username,
                           lines: [MutedText('Combat ${formatThousands(row.combatLevel)}')],
-                          trailing: GameButton(
-                            label: 'Fight',
-                            onPressed: () => _fightOpponent(row, ranked: false),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              GameButton(
+                                label: 'View gear',
+                                tone: GameButtonTone.secondary,
+                                compact: true,
+                                onPressed: () => _viewOpponentGear(row),
+                              ),
+                              const SizedBox(width: 6),
+                              GameButton(
+                                label: 'Fight',
+                                compact: true,
+                                onPressed: () => _fightOpponent(row, ranked: false),
+                              ),
+                            ],
                           ),
                         ),
                       ),
@@ -411,6 +441,13 @@ class _ArenaPanelState extends State<ArenaPanel> {
           round: _round,
           roundSeq: _roundSeq,
           finished: finished,
+        ),
+        const SizedBox(height: 8),
+        PlayerGearSheet(
+          controller: controller,
+          username: opponent.username,
+          equipment: publicEquipmentFromSave(_them),
+          embedded: true,
         ),
         const SizedBox(height: 8),
         if (!finished)

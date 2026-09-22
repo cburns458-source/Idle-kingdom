@@ -1003,6 +1003,7 @@ class OverlayChipButton extends StatelessWidget {
         elevation: plain ? 0 : 6,
         shadowColor: const Color(0x47000000),
         shape: PixelSteppedBorder(step: PixelChrome.step, side: side),
+        clipBehavior: plain ? Clip.none : Clip.antiAlias,
         child: Ink(
           decoration: plain
               ? null

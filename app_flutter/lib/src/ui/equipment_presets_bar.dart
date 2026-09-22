@@ -295,14 +295,15 @@ class _LabelChip extends StatelessWidget {
       label: semanticsLabel,
       child: Opacity(
         opacity: onPressed == null ? 0.45 : 1,
-        child: DecoratedBox(
-          decoration: chromeSlotFill(context),
-          child: Material(
-            color: Colors.transparent,
-            shape: PixelSteppedBorder(
-              step: step,
-              side: const BorderSide(color: Palette.edge),
-            ),
+        child: Material(
+          color: Colors.transparent,
+          shape: PixelSteppedBorder(
+            step: step,
+            side: const BorderSide(color: Palette.edge),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Ink(
+            decoration: chromeSlotFill(context),
             child: InkWell(
               onTap: onPressed,
               customBorder: PixelSteppedBorder(step: step),
@@ -354,11 +355,12 @@ class _SettingsChip extends StatelessWidget {
       child: Semantics(
         button: true,
         label: 'Preset settings',
-        child: DecoratedBox(
-          decoration: chromeSlotFill(context),
-          child: Material(
-            color: Colors.transparent,
-            shape: PixelSteppedBorder(step: step),
+        child: Material(
+          color: Colors.transparent,
+          shape: PixelSteppedBorder(step: step),
+          clipBehavior: Clip.antiAlias,
+          child: Ink(
+            decoration: chromeSlotFill(context),
             child: InkWell(
               onTap: onPressed,
               customBorder: PixelSteppedBorder(step: step),
@@ -419,17 +421,18 @@ class _PresetButton extends StatelessWidget {
         button: true,
         selected: selected,
         label: label,
-        child: DecoratedBox(
-          decoration: chromeSlotFill(context, color: fill),
-          child: Material(
-            color: Colors.transparent,
-            shape: PixelSteppedBorder(
-              step: step,
-              side: BorderSide(
-                color: selected ? Palette.gold : Palette.edge,
-                width: selected ? 3 : 1,
-              ),
+        child: Material(
+          color: Colors.transparent,
+          shape: PixelSteppedBorder(
+            step: step,
+            side: BorderSide(
+              color: selected ? Palette.gold : Palette.edge,
+              width: selected ? 3 : 1,
             ),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Ink(
+            decoration: chromeSlotFill(context, color: fill),
             child: InkWell(
               onTap: onTap,
               onLongPress: onLongPress,
@@ -438,11 +441,7 @@ class _PresetButton extends StatelessWidget {
                 width: square ? _chipSide(compact: compact) : null,
                 height: _chipHeight(compact: compact, square: square),
                 child: Center(
-                  child: _PresetIcon(
-                    icon: icon,
-                    skillsById: skillsById,
-                    size: square ? 18 : (compact ? 14 : 16),
-                  ),
+                  child: _PresetIcon(icon: icon, skillsById: skillsById, size: square ? 26 : 24),
                 ),
               ),
             ),
@@ -503,19 +502,20 @@ class _IconChoice extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final chrome = UiChrome.of(context);
-    final tile = DecoratedBox(
-      decoration: chromeSlotFill(
-        context,
-        color: selected ? Color.lerp(chrome.slot, chrome.embossFace, 0.18)! : chrome.slot,
+    final tile = Material(
+      color: Colors.transparent,
+      shape: PixelSteppedBorder(
+        step: 2,
+        side: BorderSide(
+          color: selected ? chrome.embossFace : Palette.edge,
+          width: selected ? 2 : 1,
+        ),
       ),
-      child: Material(
-        color: Colors.transparent,
-        shape: PixelSteppedBorder(
-          step: 2,
-          side: BorderSide(
-            color: selected ? chrome.embossFace : Palette.edge,
-            width: selected ? 2 : 1,
-          ),
+      clipBehavior: Clip.antiAlias,
+      child: Ink(
+        decoration: chromeSlotFill(
+          context,
+          color: selected ? Color.lerp(chrome.slot, chrome.embossFace, 0.18)! : chrome.slot,
         ),
         child: InkWell(
           onTap: onTap,
@@ -664,7 +664,7 @@ class _PresetSettingsRow extends StatelessWidget {
           children: [
             Row(
               children: [
-                _PresetIcon(icon: icon, skillsById: skillsById, size: 18),
+                _PresetIcon(icon: icon, skillsById: skillsById, size: 26),
                 const SizedBox(width: 8),
                 Text('Preset ${index + 1}', style: const TextStyle(fontWeight: FontWeight.w600)),
               ],
@@ -718,13 +718,16 @@ class _PresetIconPicker extends StatelessWidget {
                     selected: _romanSelected(n),
                     tooltip: 'Roman ${_roman[n - 1]}',
                     onTap: () => onChanged(EquipmentPresetIcon(kind: 'roman', numeral: n)),
-                    child: Text(_roman[n - 1], style: const TextStyle(fontWeight: FontWeight.w600)),
+                    child: Text(
+                      _roman[n - 1],
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                    ),
                   ),
                 _IconChoice(
                   selected: icon.kind == 'coin',
                   tooltip: 'Coin',
                   onTap: () => onChanged(const EquipmentPresetIcon(kind: 'coin')),
-                  child: GameImage(goldIconPath(), width: 18, height: 18),
+                  child: GameImage(goldIconPath(), width: 26, height: 26),
                 ),
                 for (final skill in skills)
                   _IconChoice(
@@ -732,7 +735,7 @@ class _PresetIconPicker extends StatelessWidget {
                     tooltip: skill.displayName,
                     onTap: () =>
                         onChanged(EquipmentPresetIcon(kind: 'skill', skillId: skill.skillId)),
-                    child: GameImage(skillIconPath(skill), width: 18, height: 18),
+                    child: GameImage(skillIconPath(skill), width: 26, height: 26),
                   ),
               ],
             ),

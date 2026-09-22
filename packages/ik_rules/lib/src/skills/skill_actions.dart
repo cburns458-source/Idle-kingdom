@@ -853,10 +853,21 @@ List<SkillMenuListItem> _dedupeByName(List<SkillMenuListItem> items) {
   ];
 }
 
+const Map<String, int> _starterMaterialRank = <String, int>{'wooden': 0, 'leather': 1, 'copper': 2};
+
+int? _starterMaterialRankOf(String name) {
+  final parts = name.trim().split(RegExp(r'\s+'));
+  if (parts.isEmpty) return null;
+  return _starterMaterialRank[parts.first.toLowerCase()];
+}
+
 int _compareMenuItems(SkillMenuListItem a, SkillMenuListItem b) {
   final aLevel = a.level ?? double.infinity;
   final bLevel = b.level ?? double.infinity;
   if (aLevel != bLevel) return aLevel < bLevel ? -1 : 1;
+  final aRank = _starterMaterialRankOf(a.displayName);
+  final bRank = _starterMaterialRankOf(b.displayName);
+  if (aRank != null && bRank != null && aRank != bRank) return aRank - bRank;
   return jsLocaleCompare(a.displayName, b.displayName);
 }
 

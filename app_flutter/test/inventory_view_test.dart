@@ -193,7 +193,18 @@ void main() {
     expect(find.textContaining('slots'), findsOne);
     expect(find.widgetWithText(GameButton, 'Attributes'), findsOne);
     expect(find.text('Damage'), findsNothing);
-    expect(find.text('Helmet'), findsOne);
+    expect(find.text('Helmet'), findsNothing);
+    expect(find.text('Weapon or Tool'), findsNothing);
+    expect(find.byKey(const Key('equipment-slot-SLOT-0003')), findsOne);
+    expect(find.byTooltip('Helmet'), findsOne);
+    final emptyWell = tester.widget<PixelInkPlate>(
+      find.descendant(
+        of: find.byKey(const Key('equipment-slot-SLOT-0003')),
+        matching: find.byType(PixelInkPlate),
+      ),
+    );
+    expect(emptyWell.fillColor, UiChrome.wood.slot);
+    expect(emptyWell.material, PixelPlateMaterial.grain);
   });
 
   testWidgets('item total, sell, and sort sit above the bag, not the doll', (tester) async {
@@ -202,7 +213,7 @@ void main() {
 
     await pumpPanel(tester, InventoryView(controller: controller));
 
-    final helmet = tester.getRect(find.text('Helmet'));
+    final helmet = tester.getRect(find.byKey(const Key('equipment-slot-SLOT-0003')));
     final sell = tester.getRect(find.text('Sell items'));
     final slots = tester.getRect(find.textContaining('slots'));
     final sort = tester.getRect(find.byTooltip('Sort'));
@@ -656,7 +667,7 @@ void main() {
     expect(find.byKey(const Key('inventory-eat')), findsOne);
     expect(find.textContaining('Eat at'), findsNothing);
 
-    final helmet = tester.getRect(find.text('Helmet'));
+    final helmet = tester.getRect(find.byKey(const Key('equipment-slot-SLOT-0003')));
     final preset = tester.getRect(find.byKey(const Key('preset-chip-0')));
     final saveChip = tester.getRect(find.byKey(const Key('save-preset')));
     final settings = tester.getRect(find.byKey(const Key('preset-settings')));
@@ -744,7 +755,7 @@ void main() {
 
     await pumpPanel(tester, InventoryView(controller: controller), size: const Size(390, 844));
 
-    final helmet = tester.getRect(find.text('Helmet'));
+    final helmet = tester.getRect(find.byKey(const Key('equipment-slot-SLOT-0003')));
     expect(helmet.width, greaterThan(36));
     expect(tester.takeException(), isNull);
     expect(find.byKey(const Key('preset-chip-0')), findsOne);

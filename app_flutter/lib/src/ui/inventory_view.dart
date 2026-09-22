@@ -299,10 +299,14 @@ class _InventoryViewState extends State<InventoryView> {
   Widget _header() {
     if (!widget.showHeader) return const SizedBox.shrink();
     if (widget.onClose != null) {
-      return PageHeader(title: 'Inventory', onClose: widget.onClose!);
+      return PageHeader(
+        title: 'Inventory',
+        onClose: widget.onClose!,
+        padding: const EdgeInsets.fromLTRB(10, 8, 10, 4),
+      );
     }
     return const Padding(
-      padding: EdgeInsets.fromLTRB(10, 8, 10, 6),
+      padding: EdgeInsets.fromLTRB(10, 8, 10, 4),
       child: Text('Inventory', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w400)),
     );
   }
@@ -380,7 +384,7 @@ class _InventoryViewState extends State<InventoryView> {
 
   Widget _body() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(10, 4, 10, 10),
+      padding: const EdgeInsets.fromLTRB(10, 6, 10, 10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -833,40 +837,46 @@ class _InventoryViewState extends State<InventoryView> {
   Widget _slotTile(String slotId) {
     final stack = save.equipment.slots[slotId];
     final slot = db.equipmentSlots.where((row) => row.slotId == slotId).firstOrNull;
-    if (stack == null) {
-      return GamePanel(
-        padding: const EdgeInsets.all(3),
-        onTap: () => _openSlotEquipPicker(slotId),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            SlotGlyph(slotId: slotId, size: 20),
-            const SizedBox(height: 1),
-            Flexible(
-              child: Text(
-                slot?.displayName ?? slotId,
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: 8, height: 1.1, color: Color(0x80F4E7C8)),
+    return KeyedSubtree(
+      key: Key('equipment-slot-$slotId'),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final side = constraints.maxWidth < constraints.maxHeight
+              ? constraints.maxWidth
+              : constraints.maxHeight;
+          final iconSize = (side - 6).clamp(20.0, 48.0);
+          if (stack == null) {
+            return Tooltip(
+              message: slot?.displayName ?? slotId,
+              child: PixelInkPlate(
+                onTap: () => _openSlotEquipPicker(slotId),
+                step: PixelChrome.stepTight,
+                fillColor: UiChrome.of(context).slot,
+                material: PixelPlateMaterial.grain,
+                strokeWidth: 2,
+                shadow: false,
+                padding: const EdgeInsets.all(2),
+                child: Center(
+                  child: SlotGlyph(slotId: slotId, size: iconSize),
+                ),
               ),
-            ),
-          ],
-        ),
-      );
-    }
+            );
+          }
 
-    return _ItemTile(
-      item: controller.indexes.itemsById[stack.itemId],
-      quantity: stack.quantity,
-      enchanted: stack.enchantmentId != null,
-      favorite: false,
-      selected: false,
-      selecting: false,
-      iconSize: 22,
-      onTap: () => _unequip(slotId),
-      onLongPress: () => _showDetail(equipped: stack, slotId: slotId),
-      onToggleFavorite: null,
+          return _ItemTile(
+            item: controller.indexes.itemsById[stack.itemId],
+            quantity: stack.quantity,
+            enchanted: stack.enchantmentId != null,
+            favorite: false,
+            selected: false,
+            selecting: false,
+            iconSize: iconSize,
+            onTap: () => _unequip(slotId),
+            onLongPress: () => _showDetail(equipped: stack, slotId: slotId),
+            onToggleFavorite: null,
+          );
+        },
+      ),
     );
   }
 
