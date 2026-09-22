@@ -2,11 +2,15 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../content/asset_paths.dart';
 import '../session/game_controller.dart';
 import '../session/multiplayer_controller.dart';
 import '../theme.dart';
 import 'app_shell.dart';
+import 'game_image.dart';
 import 'notification_bubble.dart';
+
+const double _chinIconSize = 32;
 
 /// Settings / Bazaar / Leaderboards / Guilds — the hamburger nest and the
 /// desktop rail. Log lives on the chin. The Bazaar is here rather than at a
@@ -176,7 +180,7 @@ class _BottomNavState extends State<BottomNav> {
                   tooltip: 'Inventory',
                   semanticsLabel: 'Inventory',
                   onTap: () => _selectTab(GameScreen.character),
-                  child: const Icon(Icons.backpack, size: 24),
+                  child: GameImage(uiInventoryAssetPath(), width: _chinIconSize, height: _chinIconSize),
                 ),
               ),
               _divider,
@@ -186,7 +190,7 @@ class _BottomNavState extends State<BottomNav> {
                   tooltip: 'Skills',
                   semanticsLabel: 'Skills',
                   onTap: () => _selectTab(GameScreen.skills),
-                  child: const Icon(Icons.bar_chart, size: 24),
+                  child: GameImage(uiStatsAssetPath(), width: _chinIconSize, height: _chinIconSize),
                 ),
               ),
               _divider,
@@ -205,7 +209,7 @@ class _BottomNavState extends State<BottomNav> {
                   tooltip: 'Log',
                   semanticsLabel: 'Log',
                   onTap: () => _selectTab(GameScreen.log),
-                  child: const Icon(Icons.menu_book, size: 24),
+                  child: GameImage(uiLogAssetPath(), width: _chinIconSize, height: _chinIconSize),
                 ),
               ),
               if (widget.showMenu) ...[
@@ -220,7 +224,10 @@ class _BottomNavState extends State<BottomNav> {
                           ? 'Open menu, $_menuReady waiting'
                           : 'Open menu',
                       onTap: _toggleNest,
-                      child: Badged(count: _menuReady, child: const Icon(Icons.menu, size: 24)),
+                      child: Badged(
+                        count: _menuReady,
+                        child: GameImage(uiMenuAssetPath(), width: _chinIconSize, height: _chinIconSize),
+                      ),
                     ),
                   ),
                 ),

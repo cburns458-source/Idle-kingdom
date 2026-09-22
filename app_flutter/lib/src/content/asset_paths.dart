@@ -409,6 +409,18 @@ String uiNearbyAssetPath() => '$_assetRoot/icons/ui/ui_nearby.webp';
 /// Full-stage ink cloud when Mother Squid inks a strike.
 String uiInkSplatAssetPath() => '$_assetRoot/icons/ui/ui_ink_splat.webp';
 
+/// Chin Inventory tab (leather bag).
+String uiInventoryAssetPath() => '$_assetRoot/icons/ui/ui_inventory.webp';
+
+/// Chin Skills / stats tab (bar chart).
+String uiStatsAssetPath() => '$_assetRoot/icons/ui/ui_stats.webp';
+
+/// Chin Log tab (closed book).
+String uiLogAssetPath() => '$_assetRoot/icons/ui/ui_log.webp';
+
+/// Chin hamburger nest (signpost).
+String uiMenuAssetPath() => '$_assetRoot/icons/ui/ui_menu.webp';
+
 /// The pixel ring drawn over the HUD portrait.
 String avatarFrameAssetPath() => '$_assetRoot/player/avatar_frame_pixel.png';
 

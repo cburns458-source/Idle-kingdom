@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:idle_kingdoms/src/content/asset_paths.dart';
 import 'package:idle_kingdoms/src/session/battery_saver_pref.dart';
 import 'package:idle_kingdoms/src/session/game_controller.dart';
 import 'package:idle_kingdoms/src/session/multiplayer_controller.dart';
 import 'package:idle_kingdoms/src/session/tester_access.dart';
 import 'package:idle_kingdoms/src/theme.dart';
 import 'package:idle_kingdoms/src/ui/app_shell.dart';
+import 'package:idle_kingdoms/src/ui/game_image.dart';
 import 'package:idle_kingdoms/src/ui/inventory_view.dart';
 import 'package:idle_kingdoms/src/ui/menu_view.dart';
 import 'package:idle_kingdoms/src/ui/skills_view.dart';
@@ -555,6 +557,38 @@ void main() {
     expect(find.byTooltip('Skills'), findsOne);
     expect(find.byTooltip('Log'), findsOne);
     expect(find.byTooltip('Open menu'), findsOne);
+    expect(
+      tester
+          .widget<GameImage>(
+            find.descendant(of: find.byTooltip('Inventory'), matching: find.byType(GameImage)),
+          )
+          .path,
+      uiInventoryAssetPath(),
+    );
+    expect(
+      tester
+          .widget<GameImage>(
+            find.descendant(of: find.byTooltip('Skills'), matching: find.byType(GameImage)),
+          )
+          .path,
+      uiStatsAssetPath(),
+    );
+    expect(
+      tester
+          .widget<GameImage>(
+            find.descendant(of: find.byTooltip('Log'), matching: find.byType(GameImage)),
+          )
+          .path,
+      uiLogAssetPath(),
+    );
+    expect(
+      tester
+          .widget<GameImage>(
+            find.descendant(of: find.byTooltip('Open menu'), matching: find.byType(GameImage)),
+          )
+          .path,
+      uiMenuAssetPath(),
+    );
     expect(find.text('Character'), findsNothing);
     expect(find.text('Skills'), findsNothing);
     expect(find.text('Inventory'), findsNothing);
