@@ -171,11 +171,18 @@ void main() {
     );
     expect(find.textContaining('Cedar Bow'), findsOne);
     expect(find.textContaining('Boar Spear'), findsOne);
+  });
 
-    await tester.tap(find.descendant(of: popup, matching: find.byTooltip('Close')));
-    await tester.pumpAndSettle();
+  testWidgets('Vitality lists armor tiers as equipment instead of every piece', (tester) async {
+    final controller = buildController(database, seed: startedCharacter(database));
+    addTearDown(controller.dispose);
+    await pumpSkillShell(tester, controller);
+
     await openSkillTile(tester, 'Vitality');
     final vitality = find.byKey(const Key('game-popup'));
+    expect(find.descendant(of: vitality, matching: find.text('Enemies')), findsNothing);
+    expect(find.descendant(of: vitality, matching: find.text('Weapons')), findsNothing);
+    expect(find.descendant(of: vitality, matching: find.text('Equipment')), findsOne);
     await tester.tap(find.descendant(of: vitality, matching: find.text('Equipment')));
     await tester.pump();
     expect(find.textContaining('Leather equipment'), findsOne);
