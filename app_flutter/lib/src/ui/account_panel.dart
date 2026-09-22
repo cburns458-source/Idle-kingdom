@@ -101,7 +101,7 @@ class _AccountPanelState extends State<AccountPanel> {
     return ListenableBuilder(
       listenable: Listenable.merge(<Listenable>[
         widget.controller,
-        widget.controller.progress,
+        widget.controller.secondsProgress,
         net,
       ]),
       builder: (context, _) => _build(),
