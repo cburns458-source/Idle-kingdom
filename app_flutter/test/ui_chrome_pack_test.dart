@@ -44,6 +44,21 @@ void main() {
     expect(controller.uiChromePack, UiChromePack.wood);
   });
 
+  testWidgets('a pushed page draws its board in the chosen pack', (tester) async {
+    final controller = buildController(database, seed: startedCharacter(database));
+    addTearDown(controller.dispose);
+    controller.setUiChromePack(UiChromePack.stone);
+    await pumpShell(tester, controller, size: const Size(900, 2400));
+    await tester.pump();
+
+    await openChinScreen(tester, 'Log');
+    final board = tester.widget<DecoratedBox>(find.byKey(const Key('page-board')));
+    final fill = board.decoration as BoxDecoration;
+    expect(fill.color, UiChrome.stone.board);
+    expect(fill.gradient, UiChrome.stone.frameGradient);
+    expect(fill.color, isNot(UiChrome.wood.board));
+  });
+
   test('Wood primaries are brown; Stone turns those browns grey and gold iron', () {
     expect(UiChrome.wood.primaryFill.colors, isNot(contains(const Color(0xFF7F9D63))));
     expect(UiChrome.wood.primaryFill.colors.first, const Color(0xFF8B5E34));

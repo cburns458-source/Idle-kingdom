@@ -861,7 +861,7 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
                       onOpenGuilds: () => _selectScreen(GameScreen.guilds),
                     ),
                   ),
-                  if (_screen != GameScreen.location) _sheetLayer(),
+                  if (_screen != GameScreen.location) _sheetLayer(context),
                   if (_wardrobeOpen)
                     _PageLayer(
                       motion: _PageMotion.slideDown,
@@ -1108,12 +1108,16 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
     }
   }
 
-  Widget _sheetLayer() {
+  /// [context] must come from inside the shell's [UiChromeScope]. The state's own
+  /// context sits above it, so reading the pack from there draws every pushed
+  /// page on wood boards while the panels inside it follow the chosen pack.
+  Widget _sheetLayer(BuildContext context) {
     final page = _PageLayer(
       key: ValueKey(_screen),
       motion: _screen == GameScreen.map ? _PageMotion.expandFromChip : _PageMotion.slideUp,
       child: RepaintBoundary(
         child: DecoratedBox(
+          key: const Key('page-board'),
           decoration: chromeShellDecoration(context, gradient: UiChrome.of(context).frameGradient),
           child: _coveringPage(),
         ),
