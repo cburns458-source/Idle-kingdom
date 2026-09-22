@@ -92,6 +92,18 @@ void main() {
     await tester.enterText(find.byType(TextField), 'mi');
     await tester.pump();
     expect(find.text('Mira'), findsOne);
+    expect(find.text('View gear'), findsOne);
+    expect(
+      tester.getRect(find.text('View gear')).left,
+      lessThan(tester.getRect(find.text('Fight')).left),
+    );
+
+    await tester.tap(find.text('View gear'));
+    await tester.pumpAndSettle();
+    expect(find.text("Mira's gear"), findsOne);
+    expect(find.text('This player hides their gear.'), findsNothing);
+    await tester.tap(find.text('Close'));
+    await tester.pumpAndSettle();
 
     await tester.tap(find.text('Ranked'));
     await tester.pump();

@@ -710,10 +710,26 @@ function dedupeByName(items: SkillMenuListItem[]): SkillMenuListItem[] {
   return out
 }
 
+const STARTER_MATERIAL_RANK: Record<string, number> = {
+  wooden: 0,
+  leather: 1,
+  copper: 2,
+}
+
+function starterMaterialRank(name: string): number | null {
+  const first = name.trim().split(/\s+/)[0]?.toLowerCase()
+  if (!first) return null
+  const rank = STARTER_MATERIAL_RANK[first]
+  return rank === undefined ? null : rank
+}
+
 function compareMenuItems(a: SkillMenuListItem, b: SkillMenuListItem): number {
   const aLevel = a.level ?? Number.POSITIVE_INFINITY
   const bLevel = b.level ?? Number.POSITIVE_INFINITY
   if (aLevel !== bLevel) return aLevel - bLevel
+  const aRank = starterMaterialRank(a.displayName)
+  const bRank = starterMaterialRank(b.displayName)
+  if (aRank != null && bRank != null && aRank !== bRank) return aRank - bRank
   return a.displayName.localeCompare(b.displayName)
 }
 

@@ -88,6 +88,9 @@ describe('skill menu entries', () => {
     expect(gear.some((item) => item.displayName === 'Bull Horn equipment')).toBe(false)
     expect(gear.some((item) => item.displayName === 'Wooden equipment' && item.level === 1)).toBe(true)
     expect(gear.some((item) => item.displayName === 'Leather equipment' && item.level === 1)).toBe(true)
+    expect(gear.findIndex((item) => item.displayName === 'Wooden equipment')).toBeLessThan(
+      gear.findIndex((item) => item.displayName === 'Leather equipment'),
+    )
     expect(gear.some((item) => item.displayName === 'Leather Helmet')).toBe(false)
     expect(gear.some((item) => item.displayName === 'Tungsten Helmet')).toBe(false)
     expect(gear.some((item) => item.displayName === 'Tungsten Shield')).toBe(false)
@@ -95,6 +98,9 @@ describe('skill menu entries', () => {
     expect(weapons.some((item) => item.displayName === 'Tungsten weapons')).toBe(true)
     expect(weapons.some((item) => item.displayName === 'Wooden weapons' && item.level === 1)).toBe(true)
     expect(weapons.some((item) => item.displayName === 'Copper weapons' && item.level === 1)).toBe(true)
+    expect(weapons.findIndex((item) => item.displayName === 'Wooden weapons')).toBeLessThan(
+      weapons.findIndex((item) => item.displayName === 'Copper weapons'),
+    )
     expect(weapons.some((item) => item.displayName === 'Steel weapons')).toBe(true)
     expect(weapons.some((item) => item.displayName === 'Tungsten Sword')).toBe(false)
     expect(weapons.some((item) => item.displayName === 'Wooden Sword')).toBe(false)

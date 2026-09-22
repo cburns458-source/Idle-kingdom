@@ -538,7 +538,8 @@ void main() {
     expect(find.text('Damage'), findsNothing);
     expect(find.text('Health'), findsNothing);
     expect(find.text('DR'), findsNothing);
-    expect(find.text('Helmet'), findsOne);
+    expect(find.text('Helmet'), findsNothing);
+    expect(find.byKey(const Key('equipment-slot-SLOT-0003')), findsOne);
     expect(find.text('Show bonuses'), findsNothing);
     expect(find.text('Sell items'), findsOne);
 
