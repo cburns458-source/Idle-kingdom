@@ -15,6 +15,8 @@ PATHS = [
 SOUP_STOCK_ITEM = "ITEM-0364"
 SOUP_STOCK_RECIPE = "RCP-0068"
 SOUP_STOCK_ACTION = "ACN-0198"
+WATER_ITEM = "ITEM-0365"
+KITCHEN_SCRAPS_ITEM = "ITEM-0366"
 
 STEW_RECIPES = {
     "RCP-0012": 1633 * 2,
@@ -47,6 +49,68 @@ def patch(db: dict) -> None:
     for item in db["Items"]:
         if item["Item ID"] == "ITEM-0192":
             item["Notes"] = "Unused leftover cook. Existing copies migrate to Squid Noodle Soup."
+        if item["Item ID"] == SOUP_STOCK_ITEM:
+            item["Notes"] = (
+                "Water + kitchen scraps. Infinite on-hand in a kitchen. Cooking 16. 12 seconds. No XP."
+            )
+
+    for recipe in db["Recipes"]:
+        if recipe["Recipe ID"] == SOUP_STOCK_RECIPE:
+            recipe["Notes"] = (
+                "Water + kitchen scraps. Infinite on-hand in a kitchen. Used in all stews and soups."
+            )
+            recipe["Ingredient 1 Item ID"] = WATER_ITEM
+            recipe["Ingredient 1 Quantity"] = 1
+            recipe["Ingredient 2 Item ID"] = KITCHEN_SCRAPS_ITEM
+            recipe["Ingredient 2 Quantity"] = 1
+
+    for action in db["Actions"]:
+        if action["Action ID"] == SOUP_STOCK_ACTION:
+            action["Notes"] = (
+                "Production is hard-gated by Proficiency Level. Water + kitchen scraps, infinite in a kitchen."
+            )
+
+    if not any(item["Item ID"] == WATER_ITEM for item in db["Items"]):
+        db["Items"].append(
+            {
+                "Item ID": WATER_ITEM,
+                "Internal Key": "water",
+                "Display Name": "Water",
+                "Category": "Ingredient",
+                "Subtype": "Cooking ingredient",
+                "Associated Skill ID": "SKL-0007",
+                "Equipment Slot ID": None,
+                "Functional / Source Tags": "cooking_input; kitchen_ambient",
+                "Status": "Planned",
+                "Release Phase": "Launch",
+                "Description": "Fresh water from the kitchen tap.",
+                "Icon Asset Key": "water",
+                "Notes": "Ambient kitchen ingredient. Infinite on-hand at a kitchen. Never consumed.",
+                "Base Sell Value": 0,
+                "Stackable": None,
+            }
+        )
+
+    if not any(item["Item ID"] == KITCHEN_SCRAPS_ITEM for item in db["Items"]):
+        db["Items"].append(
+            {
+                "Item ID": KITCHEN_SCRAPS_ITEM,
+                "Internal Key": "kitchen_scraps",
+                "Display Name": "Kitchen Scraps",
+                "Category": "Ingredient",
+                "Subtype": "Cooking ingredient",
+                "Associated Skill ID": "SKL-0007",
+                "Equipment Slot ID": None,
+                "Functional / Source Tags": "cooking_input; kitchen_ambient",
+                "Status": "Planned",
+                "Release Phase": "Launch",
+                "Description": "Trimmings and leftover bits from the kitchen board.",
+                "Icon Asset Key": "kitchen_scraps",
+                "Notes": "Ambient kitchen ingredient. Infinite on-hand at a kitchen. Never consumed.",
+                "Base Sell Value": 0,
+                "Stackable": None,
+            }
+        )
 
     if not any(item["Item ID"] == SOUP_STOCK_ITEM for item in db["Items"]):
         db["Items"].append(
@@ -63,7 +127,7 @@ def patch(db: dict) -> None:
                 "Release Phase": "Launch",
                 "Description": "Plain kitchen stock. Used in every stew and soup.",
                 "Icon Asset Key": "soup_stock",
-                "Notes": "No ingredients. Cooking 16. 12 seconds. No XP.",
+                "Notes": "Water + kitchen scraps. Infinite on-hand in a kitchen. Cooking 16. 12 seconds. No XP.",
                 "Base Sell Value": 1,
                 "Stackable": None,
             }
@@ -86,11 +150,11 @@ def patch(db: dict) -> None:
                 "Action ID": SOUP_STOCK_ACTION,
                 "Status": "Planned",
                 "Release Phase": "Launch",
-                "Notes": "No ingredients. Kitchen only. Used in all stews and soups.",
-                "Ingredient 1 Item ID": None,
-                "Ingredient 1 Quantity": None,
-                "Ingredient 2 Item ID": None,
-                "Ingredient 2 Quantity": None,
+                "Notes": "Water + kitchen scraps. Infinite on-hand in a kitchen. Used in all stews and soups.",
+                "Ingredient 1 Item ID": "ITEM-0365",
+                "Ingredient 1 Quantity": 1,
+                "Ingredient 2 Item ID": "ITEM-0366",
+                "Ingredient 2 Quantity": 1,
                 "Ingredient 3 Item ID": None,
                 "Ingredient 3 Quantity": None,
                 "Ingredient 4 Item ID": None,
@@ -118,7 +182,7 @@ def patch(db: dict) -> None:
                 "Secondary Reward Table ID": None,
                 "Status": "Planned",
                 "Release Phase": "Launch",
-                "Notes": "Production is hard-gated by Proficiency Level. No ingredients.",
+                "Notes": "Production is hard-gated by Proficiency Level. Water + kitchen scraps, infinite in a kitchen.",
             }
         )
 

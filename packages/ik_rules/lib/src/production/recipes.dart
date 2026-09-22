@@ -44,8 +44,23 @@ List<RecipeIngredient> recipeIngredients(RecipeRow recipe) {
   return out;
 }
 
+const String waterItemId = 'ITEM-0365';
+const String kitchenScrapsItemId = 'ITEM-0366';
+const Set<String> kitchenAmbientItemIds = <String>{waterItemId, kitchenScrapsItemId};
+const Set<String> kitchenLocationIds = <String>{'LOC-0023', 'LOC-0015', 'LOC-0030'};
+
+bool isKitchenAmbientIngredient(String itemId) => kitchenAmbientItemIds.contains(itemId);
+
+bool isAtKitchen(PlayerSave save) => kitchenLocationIds.contains(save.currentLocationId);
+
 num inventoryCount(PlayerSave save, String itemId) {
   return save.inventory.firstWhereOrNull((stack) => stack.itemId == itemId)?.quantity ?? 0;
+}
+
+/// Bag count, or infinite water/scraps while standing in a kitchen.
+num ingredientOwned(PlayerSave save, String itemId) {
+  if (isKitchenAmbientIngredient(itemId) && isAtKitchen(save)) return double.infinity;
+  return inventoryCount(save, itemId);
 }
 
 num maxCraftsFromMaterials(PlayerSave save, RecipeRow recipe) {
@@ -53,9 +68,15 @@ num maxCraftsFromMaterials(PlayerSave save, RecipeRow recipe) {
   if (ingredients.isEmpty) return double.infinity;
   num max = double.infinity;
   for (final ingredient in ingredients) {
-    max = math.min(max, (inventoryCount(save, ingredient.itemId) / ingredient.quantity).floor());
+    final owned = ingredientOwned(save, ingredient.itemId);
+    if (!owned.isFinite) {
+      if (owned.isInfinite && owned > 0) continue;
+      return 0;
+    }
+    max = math.min(max, (owned / ingredient.quantity).floor());
   }
-  return max.isFinite ? math.max(0, max) : 0;
+  if (!max.isFinite) return max.isInfinite && max > 0 ? double.infinity : 0;
+  return math.max(0, max);
 }
 
 num queueCapSeconds(GameDatabase db) {

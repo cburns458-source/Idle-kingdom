@@ -57,7 +57,7 @@ describe('cooked beef and tablet recipes', () => {
     expect(spell['Ingredient 2 Quantity']).toBe(2)
   })
 
-  it('adds soup stock at cooking 16 with no ingredients and uses it in stews', () => {
+  it('adds soup stock at cooking 16 from water and scraps and uses it in stews', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const stock = launch.Recipes.find((row) => row['Recipe ID'] === 'RCP-0068')!
     expect(stock['Display Name']).toBe('Soup Stock')
@@ -65,8 +65,10 @@ describe('cooked beef and tablet recipes', () => {
     expect(stock['Proficiency Level']).toBe(16)
     expect(stock['Base Duration Seconds']).toBe(12)
     expect(stock['XP Reward']).toBe(0)
-    expect(stock['Ingredient 1 Item ID']).toBeNull()
-    expect(stock['Ingredient 2 Item ID']).toBeNull()
+    expect(stock['Ingredient 1 Item ID']).toBe('ITEM-0365')
+    expect(stock['Ingredient 1 Quantity']).toBe(1)
+    expect(stock['Ingredient 2 Item ID']).toBe('ITEM-0366')
+    expect(stock['Ingredient 2 Quantity']).toBe(1)
     expect(stock['Ingredient 3 Item ID']).toBeNull()
     expect(stock['Ingredient 4 Item ID']).toBeNull()
     for (const recipeId of ['RCP-0012', 'RCP-0013', 'RCP-0060', 'RCP-0063', 'RCP-0064', 'RCP-0065', 'RCP-0066']) {

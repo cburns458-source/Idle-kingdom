@@ -36,8 +36,27 @@ export function recipeIngredients(recipe: RecipeRow): RecipeIngredient[] {
   return out
 }
 
+export const WATER_ITEM_ID = 'ITEM-0365'
+export const KITCHEN_SCRAPS_ITEM_ID = 'ITEM-0366'
+export const KITCHEN_AMBIENT_ITEM_IDS = new Set([WATER_ITEM_ID, KITCHEN_SCRAPS_ITEM_ID])
+export const KITCHEN_LOCATION_IDS = new Set(['LOC-0023', 'LOC-0015', 'LOC-0030'])
+
+export function isKitchenAmbientIngredient(itemId: string): boolean {
+  return KITCHEN_AMBIENT_ITEM_IDS.has(itemId)
+}
+
+export function isAtKitchen(save: PlayerSave): boolean {
+  return KITCHEN_LOCATION_IDS.has(save.currentLocationId)
+}
+
 export function inventoryCount(save: PlayerSave, itemId: string): number {
   return save.inventory.find((stack) => stack.itemId === itemId)?.quantity ?? 0
+}
+
+/** Bag count, or infinite water/scraps while standing in a kitchen. */
+export function ingredientOwned(save: PlayerSave, itemId: string): number {
+  if (isKitchenAmbientIngredient(itemId) && isAtKitchen(save)) return Number.POSITIVE_INFINITY
+  return inventoryCount(save, itemId)
 }
 
 export function maxCraftsFromMaterials(save: PlayerSave, recipe: RecipeRow): number {
@@ -45,9 +64,15 @@ export function maxCraftsFromMaterials(save: PlayerSave, recipe: RecipeRow): num
   if (ingredients.length === 0) return Number.POSITIVE_INFINITY
   let max = Number.POSITIVE_INFINITY
   for (const ingredient of ingredients) {
-    max = Math.min(max, Math.floor(inventoryCount(save, ingredient.itemId) / ingredient.quantity))
+    const owned = ingredientOwned(save, ingredient.itemId)
+    if (!Number.isFinite(owned)) {
+      if (owned === Number.POSITIVE_INFINITY) continue
+      return 0
+    }
+    max = Math.min(max, Math.floor(owned / ingredient.quantity))
   }
-  return Number.isFinite(max) ? Math.max(0, max) : 0
+  if (!Number.isFinite(max)) return max === Number.POSITIVE_INFINITY ? Number.POSITIVE_INFINITY : 0
+  return Math.max(0, max)
 }
 
 export function queueCapSeconds(db: GameDatabase): number {

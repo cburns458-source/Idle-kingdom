@@ -59,6 +59,7 @@ PlayerSave cancelProductionActivity(GameDatabase db, PlayerSave save) {
     final recipe = getRecipe(db, save.productionRecipeId!);
     if (recipe != null) {
       for (final ingredient in recipeIngredients(recipe)) {
+        if (isKitchenAmbientIngredient(ingredient.itemId)) continue;
         next = addItemToInventory(next, ingredient.itemId, ingredient.quantity * remaining);
       }
     }

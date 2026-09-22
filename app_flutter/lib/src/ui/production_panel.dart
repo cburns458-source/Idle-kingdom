@@ -273,7 +273,7 @@ class _RecipeDetails extends StatelessWidget {
               IngredientChip(
                 item: controller.indexes.itemsById[ingredient.itemId],
                 need: ingredient.quantity,
-                owned: inventoryCount(controller.save, ingredient.itemId),
+                owned: ingredientOwned(controller.save, ingredient.itemId),
               ),
           ],
         ),

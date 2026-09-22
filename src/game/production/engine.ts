@@ -36,6 +36,7 @@ import {
   facilityIdForActivity,
   getRecipe,
   isCompleteRecipe,
+  isKitchenAmbientIngredient,
   maxCraftsFromMaterials,
   maxCraftsFromQueueCap,
   recipeIngredients,
@@ -65,6 +66,7 @@ export function cancelProductionActivity(db: GameDatabase, save: PlayerSave): Pl
     const recipe = getRecipe(db, save.productionRecipeId)
     if (recipe) {
       for (const ingredient of recipeIngredients(recipe)) {
+        if (isKitchenAmbientIngredient(ingredient.itemId)) continue
         next = addItemToInventory(next, ingredient.itemId, ingredient.quantity * remaining)
       }
     }

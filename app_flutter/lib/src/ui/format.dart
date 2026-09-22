@@ -31,6 +31,7 @@ String formatPlayTimeMs(num milliseconds) {
 
 /// 12345 -> "12,345", the grouping JavaScript's `toLocaleString()` gives.
 String formatThousands(num value) {
+  if (!value.isFinite) return value.isNegative ? '-∞' : '∞';
   final digits = value.round().abs().toString();
   final grouped = StringBuffer();
   for (var index = 0; index < digits.length; index++) {
