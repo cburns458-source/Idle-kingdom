@@ -4,6 +4,7 @@ import 'package:idle_kingdoms/src/session/game_controller.dart';
 import 'package:idle_kingdoms/src/theme.dart';
 import 'package:idle_kingdoms/src/ui/format.dart';
 import 'package:idle_kingdoms/src/ui/game_image.dart';
+import 'package:idle_kingdoms/src/ui/skills_view.dart';
 import 'package:ik_content/ik_content.dart';
 import 'package:ik_rules/ik_rules.dart';
 
