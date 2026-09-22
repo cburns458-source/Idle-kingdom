@@ -748,12 +748,15 @@ void main() {
     await tester.tap(xp);
     await tester.pump();
     expect(find.byKey(const Key('tracker-on-xp')), findsOne);
-    await tester.tapAt(const Offset(8, 8));
+    expect(find.byTooltip('Close'), findsOne);
+    await tester.tap(find.byTooltip('Close'));
     await tester.pump();
+    expect(find.byKey(const Key('tracker-on-xp')), findsNothing);
 
     await tester.tap(loot);
     await tester.pump();
     expect(find.byKey(const Key('tracker-on-loot')), findsOne);
+    expect(find.byTooltip('Close'), findsOne);
   });
 
   test('the reward strip keeps six completed actions', () {
