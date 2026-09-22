@@ -50,7 +50,8 @@ class PlayerGearSheet extends StatelessWidget {
         : GamePanel(
             framed: true,
             padding: const EdgeInsets.all(8),
-            child: Center(
+            child: Align(
+              alignment: embedded ? Alignment.topLeft : Alignment.center,
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 320),
                 child: GridView.count(
@@ -128,7 +129,7 @@ class _GearSlotTile extends StatelessWidget {
           final side = constraints.maxWidth < constraints.maxHeight
               ? constraints.maxWidth
               : constraints.maxHeight;
-          final iconSize = (side - 6).clamp(20.0, 48.0);
+          final iconSize = paperDollArtSize(side);
           final well = PixelPlate(
             step: PixelChrome.stepTight,
             fillColor: UiChrome.of(context).slot,

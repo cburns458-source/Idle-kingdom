@@ -1253,6 +1253,11 @@ List<PublicEquippedSlot> publicEquipmentFromSave(PlayerSave? save) {
   return out;
 }
 
+/// PvP dolls leave food and potion wells empty.
+List<PublicEquippedSlot> publicPvpEquipmentFromSave(PlayerSave? save) {
+  return publicEquipmentFromSave(save == null ? null : stripPvpConsumables(save));
+}
+
 class PublicPlayerProfile {
   const PublicPlayerProfile({
     required this.userId,

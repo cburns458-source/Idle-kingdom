@@ -32,6 +32,7 @@ export type SessionEvent =
       playerCrit: boolean
       offhandHit: number | null
       staffHit: number | null
+      poisonHit: number | null
       enemyHit: number | null
       thornsHit: number
       outcome: 'ongoing' | 'victory' | 'defeat'

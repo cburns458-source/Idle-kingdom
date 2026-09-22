@@ -54,6 +54,8 @@ export interface CombatRoundResult {
   offhandHit: number | null
   /** Staff of Sparks extra hit this round, or null when none / skipped. */
   staffHit: number | null
+  /** Poison tick this round, including 0 when the effect is up but deals nothing. */
+  poisonHit: number | null
   /** Persist Binding: skip the enemy's next attack. */
   skipNextEnemyAttack: boolean
   enemyHit: number | null
@@ -175,6 +177,7 @@ export function resolveCombatRound(
   let playerCrit = false
   let offhandHit: number | null = null
   let staffHit: number | null = null
+  let poisonHit: number | null = null
   const lockpickCombat = equippedWeaponIsLockpick(save)
 
   if (!lockpickCombat) {
@@ -222,12 +225,19 @@ export function resolveCombatRound(
     }
   }
 
-  if (!lockpickCombat && nextEnemyHp > 0) {
-    nextEnemyHp = applyPotionEnemyRoundDamage(
-      nextEnemyHp,
-      enemyMaxHp,
-      save.activePotionEffect,
-    )
+  const poisonPercent = save.activePotionEffect?.enemyMaxHpDamagePercent
+  if (poisonPercent != null && poisonPercent > 0) {
+    if (lockpickCombat || nextEnemyHp <= 0) {
+      poisonHit = 0
+    } else {
+      const afterPoison = applyPotionEnemyRoundDamage(
+        nextEnemyHp,
+        enemyMaxHp,
+        save.activePotionEffect,
+      )
+      poisonHit = nextEnemyHp - afterPoison
+      nextEnemyHp = afterPoison
+    }
   }
 
   // Binding procs on this hit: they still attack this round, then skip the next.
@@ -266,6 +276,7 @@ export function resolveCombatRound(
       playerCrit,
       offhandHit,
       staffHit,
+      poisonHit,
       skipNextEnemyAttack: false,
       enemyHit: null,
       thornsHit: 0,
@@ -287,6 +298,7 @@ export function resolveCombatRound(
       playerCrit,
       offhandHit,
       staffHit,
+      poisonHit,
       skipNextEnemyAttack: false,
       enemyHit: null,
       thornsHit: 0,
@@ -308,6 +320,7 @@ export function resolveCombatRound(
       playerCrit,
       offhandHit,
       staffHit,
+      poisonHit,
       skipNextEnemyAttack,
       enemyHit: null,
       thornsHit: 0,
@@ -343,6 +356,7 @@ export function resolveCombatRound(
     playerCrit,
     offhandHit,
     staffHit,
+    poisonHit,
     skipNextEnemyAttack,
     enemyHit,
     thornsHit,

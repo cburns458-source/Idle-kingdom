@@ -62,4 +62,21 @@ void main() {
     final listed = harness.listArenaOpponents().firstWhere((row) => row.userId == demoMiraId);
     expect(listed.combatLevel, 30);
   });
+
+  test('savePvpEquipment drops food and potions', () {
+    final harness = LocalMultiplayerBackend(storage: MemorySaveStorage());
+    harness.ensureDemoWorld(database);
+    final hero = harness.signUp('hero@example.com', 'Hero', 'secret').session!;
+    var save = equipStackToSlot(createNewSave(database, 1), foodSlotId, 'ITEM-0058', 2);
+    save = equipStackToSlot(save, potionSlotId, 'ITEM-0073', 1);
+    expect(harness.writeCloudSave(hero.userId, save).ok, isTrue);
+    expect(harness.savePvpEquipment(hero.userId, save).ok, isTrue);
+
+    final stored = harness.ownPvpSnapshot(hero.userId)!;
+    expect(slotItemId(stored, foodSlotId), isNull);
+    expect(slotItemId(stored, potionSlotId), isNull);
+    expect(slotItemId(save, foodSlotId), 'ITEM-0058');
+    expect(publicPvpEquipmentFromSave(save).any((slot) => slot.slotId == foodSlotId), isFalse);
+    expect(publicPvpEquipmentFromSave(save).any((slot) => slot.slotId == potionSlotId), isFalse);
+  });
 }

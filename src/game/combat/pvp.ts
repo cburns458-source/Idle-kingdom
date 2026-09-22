@@ -1,5 +1,6 @@
 import { configNumber } from '../activity/gathering'
 import type { GameDatabase } from '../data/types'
+import { FOOD_SLOT_ID, POTION_SLOT_ID } from '../equipment/loadout'
 import type { PlayerSave } from '../save/types'
 import {
   criticalStrikeDamageMultiplier,
@@ -100,19 +101,35 @@ export function overlayPvpLiveStats(snapshot: PlayerSave, live: PlayerSave): Pla
   }
 }
 
+/** Food and potions are not part of a PvP loadout. */
+export function stripPvpConsumables(save: PlayerSave): PlayerSave {
+  return {
+    ...save,
+    equipment: {
+      ...save.equipment,
+      slots: {
+        ...save.equipment.slots,
+        [FOOD_SLOT_ID]: null,
+        [POTION_SLOT_ID]: null,
+      },
+    },
+    activePotionEffect: null,
+  }
+}
+
 /** Saved loadout plus the live character: gear from [loadout], combat and race from [live]. */
 export function composePvpFighter(db: GameDatabase, live: PlayerSave, loadout: PlayerSave): PlayerSave {
   return preparePvpFighter(db, { ...live, equipment: loadout.equipment })
 }
 
-/** Snapshot PvP: the given save, at full HP, with potions stripped. */
+/** Snapshot PvP: the given save, at full HP, with food and potions stripped. */
 export function preparePvpFighter(db: GameDatabase, save: PlayerSave): PlayerSave {
-  const maxHp = playerMaxHp(db, save)
+  const stripped = stripPvpConsumables(save)
+  const maxHp = playerMaxHp(db, stripped)
   return {
-    ...save,
+    ...stripped,
     maxHp,
     currentHp: maxHp,
-    activePotionEffect: null,
     combatEnemyId: null,
     combatEnemyHp: null,
     combatRoundStartedAt: null,

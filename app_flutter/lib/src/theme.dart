@@ -20,7 +20,7 @@ abstract final class Palette {
   static const parchmentDeep = Color(0xFF3D2A1A);
 
   /// Dull antique brass (borders, accents) — not bright jewelry gold.
-  static const gold = Color(0xFF7A5F24);
+  static const gold = Color(0xFFD4AF37);
   static const goldHighlight = Color(0xFF968040);
   static const goldShade = Color(0xFF3A2A0A);
 

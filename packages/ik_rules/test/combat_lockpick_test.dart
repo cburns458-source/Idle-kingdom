@@ -30,6 +30,7 @@ void main() {
     expect(round.playerCrit, isFalse);
     expect(round.offhandHit, isNull);
     expect(round.staffHit, isNull);
+    expect(round.poisonHit, isNull);
     expect(round.thornsHit, 0);
     expect(round.enemyHp, maxHp);
     expect(round.enemyHit, greaterThan(0));
@@ -57,5 +58,6 @@ void main() {
     expect(round.offhandHit, greaterThan(0));
     expect(round.enemyHp, maxHp - (round.offhandHit ?? 0));
     expect(round.staffHit, isNull);
+    expect(round.poisonHit, isNull);
   });
 }

@@ -115,6 +115,7 @@ class CombatRoundEvent extends SessionEvent {
     required this.playerCrit,
     required this.offhandHit,
     required this.staffHit,
+    required this.poisonHit,
     required this.enemyHit,
     required this.thornsHit,
     required this.outcome,
@@ -127,6 +128,7 @@ class CombatRoundEvent extends SessionEvent {
   final bool playerCrit;
   final num? offhandHit;
   final num? staffHit;
+  final num? poisonHit;
   final num? enemyHit;
   final num thornsHit;
 
@@ -148,6 +150,7 @@ class CombatRoundEvent extends SessionEvent {
     'playerCrit': playerCrit,
     'offhandHit': offhandHit,
     'staffHit': staffHit,
+    'poisonHit': poisonHit,
     'enemyHit': enemyHit,
     'thornsHit': thornsHit,
     'outcome': outcome,

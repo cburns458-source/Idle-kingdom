@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:ik_content/ik_content.dart';
 
 import '../config.dart';
+import '../equipment/loadout.dart';
 import '../projects/enchantments.dart';
 import '../rng/mulberry32.dart';
 import '../save/generated/save_models.dart';
@@ -142,19 +143,33 @@ PlayerSave overlayPvpLiveStats(PlayerSave snapshot, PlayerSave live) {
   );
 }
 
+/// Food and potions are not part of a PvP loadout.
+PlayerSave stripPvpConsumables(PlayerSave save) {
+  return save.copyWith(
+    equipment: save.equipment.copyWith(
+      slots: <String, EquippedStack?>{
+        ...save.equipment.slots,
+        foodSlotId: null,
+        potionSlotId: null,
+      },
+    ),
+    activePotionEffect: null,
+  );
+}
+
 /// Saved loadout plus the live character: gear from [loadout], combat and race
-/// from [live]. Full HP, no potions.
+/// from [live]. Full HP, no food or potions.
 PlayerSave composePvpFighter(GameDatabase db, PlayerSave live, PlayerSave loadout) {
   return preparePvpFighter(db, live.copyWith(equipment: loadout.equipment));
 }
 
-/// Snapshot PvP: the given save, at full HP, with potions stripped.
+/// Snapshot PvP: the given save, at full HP, with food and potions stripped.
 PlayerSave preparePvpFighter(GameDatabase db, PlayerSave save) {
-  final maxHp = playerMaxHp(db, save);
-  return save.copyWith(
+  final stripped = stripPvpConsumables(save);
+  final maxHp = playerMaxHp(db, stripped);
+  return stripped.copyWith(
     maxHp: maxHp,
     currentHp: maxHp,
-    activePotionEffect: null,
     combatEnemyId: null,
     combatEnemyHp: null,
     combatRoundStartedAt: null,

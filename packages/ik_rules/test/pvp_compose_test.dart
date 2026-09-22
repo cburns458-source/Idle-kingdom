@@ -50,6 +50,24 @@ void main() {
     expect(playerDamageRange(db, fighter).min, greaterThan(playerDamageRange(db, gathering).min));
   });
 
+  test('compose strips food and potions from old snapshots', () {
+    final base = createNewSave(db, 0);
+    final loaded = equipStackToSlot(
+      equipStackToSlot(base, foodSlotId, 'ITEM-0058', 2),
+      potionSlotId,
+      'ITEM-0073',
+      1,
+    );
+    expect(slotItemId(loaded, foodSlotId), 'ITEM-0058');
+    expect(slotItemId(loaded, potionSlotId), 'ITEM-0073');
+
+    final fighter = composePvpFighter(db, loaded, loaded);
+    expect(slotItemId(fighter, foodSlotId), isNull);
+    expect(slotItemId(fighter, potionSlotId), isNull);
+    expect(fighter.activePotionEffect, isNull);
+    expect(slotItemId(loaded, foodSlotId), 'ITEM-0058');
+  });
+
   test('overlay keeps snapshot gear and copies live combat and race', () {
     final base = createNewSave(db, 0);
     final snapshot = equipStackToSlot(base, weaponToolSlotId, 'ITEM-0128', 1);

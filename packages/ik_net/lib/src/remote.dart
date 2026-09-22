@@ -601,16 +601,17 @@ RemoteRow pvpSnapshotRowFor({
   required PlayerSave save,
   required String updatedAt,
 }) {
+  final loadout = stripPvpConsumables(save);
   final username = remoteUsername(
-    isNotBlank(session.username) ? session.username : (save.characterName ?? session.userId),
+    isNotBlank(session.username) ? session.username : (loadout.characterName ?? session.userId),
   );
   return <String, Object?>{
     'user_id': session.userId,
     'username': username.isEmpty ? 'Adventurer' : username,
-    'combat_level': combatLevelOf(save),
-    'total_level': totalLevel(save),
-    'appearance_json': appearanceJsonForRemote(save.appearance, save.raceId),
-    'payload': save.toJson(),
+    'combat_level': combatLevelOf(loadout),
+    'total_level': totalLevel(loadout),
+    'appearance_json': appearanceJsonForRemote(loadout.appearance, loadout.raceId),
+    'payload': loadout.toJson(),
     'updated_at': updatedAt,
   };
 }

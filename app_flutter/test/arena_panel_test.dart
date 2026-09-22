@@ -5,6 +5,7 @@ import 'package:idle_kingdoms/src/ui/app_shell.dart';
 import 'package:idle_kingdoms/src/ui/action_stage.dart';
 import 'package:idle_kingdoms/src/ui/arena_panel.dart';
 import 'package:idle_kingdoms/src/ui/location_view.dart';
+import 'package:idle_kingdoms/src/ui/player_gear_sheet.dart';
 import 'package:ik_content/ik_content.dart';
 import 'package:ik_rules/ik_rules.dart';
 
@@ -113,7 +114,12 @@ void main() {
     await tester.pump();
 
     expect(find.text('Bram'), findsWidgets);
+    expect(find.byType(PlayerGearSheet), findsOne);
     if (find.text('Skip').evaluate().isNotEmpty) {
+      final gear = tester.getRect(find.byType(PlayerGearSheet));
+      final skip = tester.getRect(find.text('Skip'));
+      expect(skip.left, greaterThan(gear.left));
+      expect(gear.width, lessThan(tester.getSize(find.byType(ArenaPanel)).width * 0.6));
       await tester.tap(find.text('Skip'));
       await tester.pump();
     }
@@ -127,6 +133,43 @@ void main() {
       goldBefore + (controller.save.rankedPvpWins > 0 ? rankedPvpWinGold : 0),
     );
     expect(controller.save.rankedPvpWins + controller.save.rankedPvpLosses, 1);
+    if (find.text('Back').evaluate().isNotEmpty) {
+      final gear = tester.getRect(find.byType(PlayerGearSheet));
+      final back = tester.getRect(find.text('Back'));
+      expect(back.left, greaterThan(gear.left));
+    }
+  });
+
+  testWidgets('saving PvP equipment drops food and potions', (tester) async {
+    final seed = startedCharacter(database);
+    final controller = buildController(
+      database,
+      seed: seed.copyWith(
+        equipment: seed.equipment.copyWith(
+          slots: <String, EquippedStack?>{
+            ...seed.equipment.slots,
+            foodSlotId: const EquippedStack(itemId: 'ITEM-0058', quantity: 2),
+            potionSlotId: const EquippedStack(itemId: 'ITEM-0073', quantity: 1),
+          },
+        ),
+      ),
+    );
+    final net = buildMultiplayer(database);
+    addTearDown(controller.dispose);
+    addTearDown(net.dispose);
+
+    await pumpPanel(tester, ArenaPanel(controller: controller, multiplayer: net));
+    await tester.pump();
+    await tester.pump();
+    await tester.tap(find.text('Save equipment'));
+    await tester.pump();
+
+    expect(slotItemId(controller.save, foodSlotId), 'ITEM-0058');
+    expect(slotItemId(controller.save, potionSlotId), 'ITEM-0073');
+    final stored = await net.service.ownPvpSnapshot();
+    expect(stored, isNotNull);
+    expect(slotItemId(stored!, foodSlotId), isNull);
+    expect(slotItemId(stored, potionSlotId), isNull);
   });
 
   testWidgets('arena search sits above the keyboard', (tester) async {

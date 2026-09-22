@@ -418,14 +418,15 @@ class LocalMultiplayerBackend {
     if (getProfile(userId) == null) {
       return const ActionResult.failed('Sign in to save PvP equipment.');
     }
+    final loadout = stripPvpConsumables(save);
     final db = _db();
     db.pvpSnapshots = db.pvpSnapshots.where((row) => row.userId != userId).toList();
     db.pvpSnapshots.add(
       CloudSaveRecord(
         userId: userId,
-        saveVersion: save.saveVersion,
-        updatedAt: isNotBlank(save.updatedAt) ? save.updatedAt : _nowIso(),
-        payload: save,
+        saveVersion: loadout.saveVersion,
+        updatedAt: isNotBlank(loadout.updatedAt) ? loadout.updatedAt : _nowIso(),
+        payload: loadout,
       ),
     );
     _write(db);

@@ -24,6 +24,11 @@ void main() {
     return save;
   }
 
+  test('paper doll art is 10 percent smaller than the well', () {
+    expect(paperDollArtSize(54), 43.2);
+    expect(paperDollArtSize(20), 18.0);
+  });
+
   testWidgets('equips from the bag and takes it off again', (tester) async {
     final controller = buildController(database, seed: unequippedCharacter());
     addTearDown(controller.dispose);

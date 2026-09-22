@@ -38,6 +38,9 @@ const double inventoryBagTileExtent = 52;
 const double inventoryBagTileSpacing = 4;
 const double inventoryBagIconSize = 24;
 
+/// Item / glyph size inside a paper-doll well. The well stays full-size.
+double paperDollArtSize(double side) => ((side - 6).clamp(20.0, 48.0) * 0.9);
+
 /// The bag and the worn gear, with the combat numbers they add up to.
 class InventoryView extends StatefulWidget {
   const InventoryView({
@@ -844,7 +847,7 @@ class _InventoryViewState extends State<InventoryView> {
           final side = constraints.maxWidth < constraints.maxHeight
               ? constraints.maxWidth
               : constraints.maxHeight;
-          final iconSize = (side - 6).clamp(20.0, 48.0);
+          final iconSize = paperDollArtSize(side);
           if (stack == null) {
             return Tooltip(
               message: slot?.displayName ?? slotId,

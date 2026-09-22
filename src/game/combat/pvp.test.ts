@@ -6,7 +6,7 @@ import { mulberry32 } from '../rng/mulberry32'
 import { createNewSave } from '../save/saveStore'
 import { composePvpFighter, overlayPvpLiveStats, simulatePvpFight } from './pvp'
 import { COMBAT_SKILL_ID, playerDamageRange, playerMaxHp } from './stats'
-import { equipStackToSlot, WEAPON_TOOL_SLOT_ID } from '../equipment/loadout'
+import { equipStackToSlot, FOOD_SLOT_ID, POTION_SLOT_ID, WEAPON_TOOL_SLOT_ID } from '../equipment/loadout'
 import type { PlayerSave } from '../save/types'
 
 function withCombat(save: PlayerSave, level: number): PlayerSave {
@@ -76,5 +76,22 @@ describe('pvp snapshot combat', () => {
     expect(merged.equipment.slots[WEAPON_TOOL_SLOT_ID]?.itemId).toBe('ITEM-0128')
     expect(merged.skills.find((skill) => skill.skillId === COMBAT_SKILL_ID)?.level).toBe(20)
     expect(merged.raceId).toBe('RACE-0004')
+  })
+
+  it('strips food and potions when composing a fighter', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const base = createNewSave(launch)
+    const loaded = equipStackToSlot(
+      equipStackToSlot(base, FOOD_SLOT_ID, 'ITEM-0058', 2),
+      POTION_SLOT_ID,
+      'ITEM-0073',
+      1,
+    )
+    expect(loaded.equipment.slots[FOOD_SLOT_ID]?.itemId).toBe('ITEM-0058')
+    expect(loaded.equipment.slots[POTION_SLOT_ID]?.itemId).toBe('ITEM-0073')
+    const fighter = composePvpFighter(launch, loaded, loaded)
+    expect(fighter.equipment.slots[FOOD_SLOT_ID]).toBeNull()
+    expect(fighter.equipment.slots[POTION_SLOT_ID]).toBeNull()
+    expect(fighter.activePotionEffect).toBeNull()
   })
 })

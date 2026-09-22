@@ -165,18 +165,19 @@ function roundMessage(enemy: EnemyRow, round: ReturnType<typeof resolveCombatRou
     round.offhandHit != null && round.offhandHit > 0 ? ` Off-hand hits ${round.offhandHit}.` : ''
   const sparksLabel =
     round.staffHit != null && round.staffHit > 0 ? ` Sparks hit ${round.staffHit}.` : ''
+  const poisonLabel = round.poisonHit != null ? ` Poison hits ${round.poisonHit}.` : ''
   const name = enemy['Display Name']
   if (round.enemyHit == null) {
     return round.enemyAsleep
-      ? `You ${hitLabel}.${offhandLabel}${sparksLabel}${inkLabel} ${name} sleeps.`
-      : `You ${hitLabel}.${offhandLabel}${sparksLabel}${inkLabel} ${name} is bound and cannot attack.`
+      ? `You ${hitLabel}.${offhandLabel}${sparksLabel}${poisonLabel}${inkLabel} ${name} sleeps.`
+      : `You ${hitLabel}.${offhandLabel}${sparksLabel}${poisonLabel}${inkLabel} ${name} is bound and cannot attack.`
   }
   const swing = round.enemyRampage
     ? `${name} rampages for ${round.enemyHit}`
     : `${name} hits ${round.enemyHit}`
   return round.thornsHit > 0
-    ? `You ${hitLabel}.${offhandLabel}${sparksLabel}${inkLabel} ${swing}. Thorns reflects ${round.thornsHit}.`
-    : `You ${hitLabel}.${offhandLabel}${sparksLabel}${inkLabel} ${swing}.`
+    ? `You ${hitLabel}.${offhandLabel}${sparksLabel}${poisonLabel}${inkLabel} ${swing}. Thorns reflects ${round.thornsHit}.`
+    : `You ${hitLabel}.${offhandLabel}${sparksLabel}${poisonLabel}${inkLabel} ${swing}.`
 }
 
 function resolveDueCombatRound(
@@ -199,6 +200,7 @@ function resolveDueCombatRound(
     playerCrit: round.playerCrit,
     offhandHit: round.offhandHit,
     staffHit: round.staffHit,
+    poisonHit: round.poisonHit,
     enemyHit: round.enemyHit,
     thornsHit: round.thornsHit,
     outcome: round.outcome,

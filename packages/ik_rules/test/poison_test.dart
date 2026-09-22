@@ -54,4 +54,38 @@ void main() {
     expect(applyPotionEnemyRoundDamage(5, 1000, effect), 5);
     expect(applyPotionEnemyRoundDamage(1000, 1000, null), 1000);
   });
+
+  test('resolveCombatRound reports poisonHit including 0 on lockpick or floor', () {
+    var save = equipStackToSlot(createNewSave(db, 0), potionSlotId, 'ITEM-0073', 1);
+    final enemy = db.enemies.firstWhere((row) => row.raw['Enemy ID'] == 'ENM-0001');
+    final action = db.actions.firstWhere((row) => row.raw['Action ID'] == 'ACN-0001');
+    final started = beginCombatSave(db, save, action, enemy, '2026-01-01T00:00:00.000Z');
+    final maxHp = enemyEncounterMaxHp(db, started, enemy);
+    final round = resolveCombatRound(db, started, enemy, maxHp, () => 0);
+
+    expect(round.poisonHit, isNotNull);
+    final afterSwing = maxHp - round.playerHit - (round.offhandHit ?? 0) - (round.staffHit ?? 0);
+    if (afterSwing <= 0) {
+      expect(round.poisonHit, 0);
+      expect(round.enemyHp, 0);
+    } else {
+      expect(round.poisonHit, afterSwing - round.enemyHp);
+    }
+
+    final lockpick = started.copyWith(
+      equipment: started.equipment.copyWith(
+        slots: <String, EquippedStack?>{
+          ...started.equipment.slots,
+          weaponToolSlotId: const EquippedStack(itemId: lockpickItemId, quantity: 5),
+        },
+      ),
+    );
+    final skipped = resolveCombatRound(db, lockpick, enemy, maxHp, () => 0);
+    expect(skipped.playerHit, 0);
+    expect(skipped.poisonHit, 0);
+    expect(skipped.enemyHp, maxHp);
+
+    final atFloor = resolveCombatRound(db, started, enemy, potionEnemyHpFloor(maxHp), () => 0);
+    expect(atFloor.poisonHit, 0);
+  });
 }

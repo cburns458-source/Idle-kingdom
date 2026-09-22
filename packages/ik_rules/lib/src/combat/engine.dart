@@ -34,6 +34,7 @@ class CombatRoundResult {
     required this.playerCrit,
     required this.offhandHit,
     required this.staffHit,
+    required this.poisonHit,
     required this.skipNextEnemyAttack,
     required this.enemyHit,
     required this.thornsHit,
@@ -58,6 +59,9 @@ class CombatRoundResult {
 
   /// Staff of Sparks extra hit this round, or null when none / skipped.
   final num? staffHit;
+
+  /// Poison tick this round, including 0 when the effect is up but deals nothing.
+  final num? poisonHit;
 
   /// Persist Binding: skip the enemy's next attack.
   final bool skipNextEnemyAttack;
@@ -94,6 +98,7 @@ class CombatRoundResult {
     'playerCrit': playerCrit,
     'offhandHit': offhandHit,
     'staffHit': staffHit,
+    'poisonHit': poisonHit,
     'skipNextEnemyAttack': skipNextEnemyAttack,
     'enemyHit': enemyHit,
     'thornsHit': thornsHit,
@@ -222,6 +227,7 @@ CombatRoundResult resolveCombatRound(
   var playerCrit = false;
   num? staffHit;
   num? offhandHit;
+  num? poisonHit;
   final lockpickCombat = equippedWeaponIsLockpick(save);
 
   if (!lockpickCombat) {
@@ -269,8 +275,19 @@ CombatRoundResult resolveCombatRound(
     }
   }
 
-  if (!lockpickCombat && nextEnemyHp > 0) {
-    nextEnemyHp = applyPotionEnemyRoundDamage(nextEnemyHp, enemyMaxHp, save.activePotionEffect);
+  final poisonPercent = save.activePotionEffect?.enemyMaxHpDamagePercent;
+  if (poisonPercent != null && poisonPercent > 0) {
+    if (lockpickCombat || nextEnemyHp <= 0) {
+      poisonHit = 0;
+    } else {
+      final afterPoison = applyPotionEnemyRoundDamage(
+        nextEnemyHp,
+        enemyMaxHp,
+        save.activePotionEffect,
+      );
+      poisonHit = nextEnemyHp - afterPoison;
+      nextEnemyHp = afterPoison;
+    }
   }
 
   var skipNextEnemyAttack = false;
@@ -304,6 +321,7 @@ CombatRoundResult resolveCombatRound(
       playerCrit: playerCrit,
       offhandHit: offhandHit,
       staffHit: staffHit,
+      poisonHit: poisonHit,
       skipNextEnemyAttack: false,
       enemyHit: null,
       thornsHit: 0,
@@ -325,6 +343,7 @@ CombatRoundResult resolveCombatRound(
       playerCrit: playerCrit,
       offhandHit: offhandHit,
       staffHit: staffHit,
+      poisonHit: poisonHit,
       skipNextEnemyAttack: false,
       enemyHit: null,
       thornsHit: 0,
@@ -346,6 +365,7 @@ CombatRoundResult resolveCombatRound(
       playerCrit: playerCrit,
       offhandHit: offhandHit,
       staffHit: staffHit,
+      poisonHit: poisonHit,
       skipNextEnemyAttack: skipNextEnemyAttack,
       enemyHit: null,
       thornsHit: 0,
@@ -381,6 +401,7 @@ CombatRoundResult resolveCombatRound(
     playerCrit: playerCrit,
     offhandHit: offhandHit,
     staffHit: staffHit,
+    poisonHit: poisonHit,
     skipNextEnemyAttack: skipNextEnemyAttack,
     enemyHit: enemyHit,
     thornsHit: thornsHit,

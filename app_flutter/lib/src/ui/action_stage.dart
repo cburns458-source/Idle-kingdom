@@ -36,6 +36,7 @@ const Color _playerHitColor = Color(0xFFFF8A3D);
 const Color _critHitColor = Color(0xFFFFD166);
 const Color _offhandHitColor = Color(0xFFF0A868);
 const Color _staffHitColor = Color(0xFF6EC8FF);
+const Color _poisonHitColor = Color(0xFF39FF14);
 const Color _enemyHitColor = Color(0xFFFFD0D0);
 const Color _healColor = Color(0xFF7CFF9E);
 const Color _foodHurtColor = Color(0xFFFF6B6B);
@@ -390,6 +391,9 @@ class PvpActionStage extends StatelessWidget {
     required this.themHp,
     required this.themMaxHp,
     required this.roundProgress,
+    this.controller,
+    this.roundStartedAt,
+    this.roundMs,
     this.round,
     this.roundSeq = 0,
     this.finished = false,
@@ -407,6 +411,9 @@ class PvpActionStage extends StatelessWidget {
   final num themHp;
   final num themMaxHp;
   final double roundProgress;
+  final GameController? controller;
+  final num? roundStartedAt;
+  final num? roundMs;
   final PvpRoundResult? round;
   final int roundSeq;
   final bool finished;
@@ -494,11 +501,32 @@ class PvpActionStage extends StatelessWidget {
       ),
       footer: Semantics(
         label: 'Round progress',
-        child: PillBar(
-          value: finished ? 1 : roundProgress.clamp(0, 1),
-          gradient: Meters.combatRound,
-          height: _stageFooterHeight,
-        ),
+        child: controller == null
+            ? PillBar(
+                value: finished ? 1 : roundProgress.clamp(0, 1),
+                gradient: Meters.combatRound,
+                height: _stageFooterHeight,
+                borderColor: const Color(0x38FFECC4),
+              )
+            : _OnTheClock(
+                controller: controller!,
+                builder: (context) {
+                  final started = roundStartedAt ?? 0;
+                  final ms = roundMs ?? 4000;
+                  final elapsed = controller!.session.clock() - started;
+                  final value = finished
+                      ? 1.0
+                      : ms <= 0
+                      ? 1.0
+                      : (elapsed / ms).clamp(0.0, 1.0).toDouble();
+                  return PillBar(
+                    value: value,
+                    gradient: Meters.combatRound,
+                    height: _stageFooterHeight,
+                    borderColor: const Color(0x38FFECC4),
+                  );
+                },
+              ),
       ),
     );
   }
@@ -991,6 +1019,15 @@ class _CombatStage extends StatelessWidget {
                   color: _staffHitColor,
                   alignment: const Alignment(0.18, -0.38),
                   offset: _floaterOffset(seq, 4),
+                  fontSize: 17,
+                ),
+              if (showFloaters && round != null && round.poisonHit != null)
+                _DamageFloater(
+                  key: ValueKey('poison-hit-$seq'),
+                  text: '${round.poisonHit!.round()}',
+                  color: _poisonHitColor,
+                  alignment: const Alignment(-0.22, -0.48),
+                  offset: _floaterOffset(seq, 6),
                   fontSize: 17,
                 ),
             ],

@@ -120,7 +120,7 @@ class _ArenaPanelState extends State<ArenaPanel> {
       context,
       controller: controller,
       username: opponent.username,
-      equipment: publicEquipmentFromSave(themSave),
+      equipment: publicPvpEquipmentFromSave(themSave),
     );
   }
 
@@ -232,7 +232,7 @@ class _ArenaPanelState extends State<ArenaPanel> {
         _savingEquipment = false;
         if (result.ok) {
           _equipmentSaved = true;
-          _ownLoadout = save;
+          _ownLoadout = stripPvpConsumables(save);
         } else {
           _error = result.reason ?? 'Could not save PvP equipment.';
         }
@@ -438,48 +438,70 @@ class _ArenaPanelState extends State<ArenaPanel> {
           themHp: _themHp,
           themMaxHp: _themMaxHp,
           roundProgress: _roundProgress,
+          controller: controller,
+          roundStartedAt: _roundStartedAt,
+          roundMs: _roundMs,
           round: _round,
           roundSeq: _roundSeq,
           finished: finished,
         ),
         const SizedBox(height: 8),
-        PlayerGearSheet(
-          controller: controller,
-          username: opponent.username,
-          equipment: publicEquipmentFromSave(_them),
-          embedded: true,
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: PlayerGearSheet(
+                controller: controller,
+                username: opponent.username,
+                equipment: publicPvpEquipmentFromSave(_them),
+                embedded: true,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (!finished)
+                    GameButton(label: 'Skip', tone: GameButtonTone.secondary, onPressed: _skipFight)
+                  else ...[
+                    Text(
+                      _outcome == 'win' ? 'Victory' : 'Defeat',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w400,
+                        color: _outcome == 'win'
+                            ? const Color(0xFFB6E38A)
+                            : const Color(0xFFFF8A8A),
+                      ),
+                    ),
+                    if (_rankedFight && _outcome == 'win')
+                      const Padding(
+                        padding: EdgeInsets.only(top: 4),
+                        child: MutedText('Ranked purse: 1,000 gold.', textAlign: TextAlign.center),
+                      )
+                    else if (_rankedFight)
+                      const Padding(
+                        padding: EdgeInsets.only(top: 4),
+                        child: MutedText(
+                          'Ranked fight recorded. No gold.',
+                          textAlign: TextAlign.center,
+                        ),
+                      )
+                    else
+                      const Padding(
+                        padding: EdgeInsets.only(top: 4),
+                        child: MutedText('Search fight. No gold.', textAlign: TextAlign.center),
+                      ),
+                    const SizedBox(height: 8),
+                    GameButton(label: 'Back', onPressed: _clearFight),
+                  ],
+                ],
+              ),
+            ),
+          ],
         ),
-        const SizedBox(height: 8),
-        if (!finished)
-          GameButton(label: 'Skip', tone: GameButtonTone.secondary, onPressed: _skipFight)
-        else ...[
-          Text(
-            _outcome == 'win' ? 'Victory' : 'Defeat',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w400,
-              color: _outcome == 'win' ? const Color(0xFFB6E38A) : const Color(0xFFFF8A8A),
-            ),
-          ),
-          if (_rankedFight && _outcome == 'win')
-            const Padding(
-              padding: EdgeInsets.only(top: 4),
-              child: MutedText('Ranked purse: 1,000 gold.', textAlign: TextAlign.center),
-            )
-          else if (_rankedFight)
-            const Padding(
-              padding: EdgeInsets.only(top: 4),
-              child: MutedText('Ranked fight recorded. No gold.', textAlign: TextAlign.center),
-            )
-          else
-            const Padding(
-              padding: EdgeInsets.only(top: 4),
-              child: MutedText('Search fight. No gold.', textAlign: TextAlign.center),
-            ),
-          const SizedBox(height: 8),
-          GameButton(label: 'Back', onPressed: _clearFight),
-        ],
       ],
     );
   }

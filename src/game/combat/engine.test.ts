@@ -11,7 +11,13 @@ import {
   isDeathPaused,
   resolveCombatRound,
 } from './engine'
-import { LOCKPICK_ITEM_ID, OFFHAND_SLOT_ID, WEAPON_TOOL_SLOT_ID } from '../equipment/loadout'
+import {
+  LOCKPICK_ITEM_ID,
+  OFFHAND_SLOT_ID,
+  POTION_SLOT_ID,
+  WEAPON_TOOL_SLOT_ID,
+} from '../equipment/loadout'
+import { potionEnemyHpFloor } from '../potions/effects'
 import { tryConsumeFoodAfterVictory } from './food'
 import { applyMitigation, playerDamageRange, staffSparksDamageRange } from './stats'
 
@@ -341,6 +347,7 @@ describe('combat engine', () => {
     expect(round.playerCrit).toBe(false)
     expect(round.offhandHit).toBeNull()
     expect(round.staffHit).toBeNull()
+    expect(round.poisonHit).toBeNull()
     expect(round.thornsHit).toBe(0)
     expect(round.enemyHp).toBe(maxHp)
     expect(round.enemyHit).toBeGreaterThan(0)
@@ -370,6 +377,55 @@ describe('combat engine', () => {
     expect(round.offhandHit).toBeGreaterThan(0)
     expect(round.enemyHp).toBe(maxHp - (round.offhandHit ?? 0))
     expect(round.staffHit).toBeNull()
+    expect(round.poisonHit).toBeNull()
+  })
+
+  it('reports poison damage after the swing and 0 at the floor or on lockpick', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const base = createNewSave(launch)
+    const save = {
+      ...base,
+      equipment: {
+        ...base.equipment,
+        slots: {
+          ...base.equipment.slots,
+          [POTION_SLOT_ID]: { itemId: 'ITEM-0073', quantity: 1 },
+        },
+      },
+    }
+    const enemy = launch.Enemies.find((row) => row['Enemy ID'] === 'ENM-0001')!
+    const action = launch.Actions.find((row) => row['Action ID'] === 'ACN-0001')!
+    const started = beginCombatSave(launch, save, action, enemy)
+    const maxHp = Number(started.combatEnemyHp ?? enemy['Maximum HP'] ?? 0)
+    const round = resolveCombatRound(launch, started, enemy, maxHp, () => 0)
+    expect(round.poisonHit).not.toBeNull()
+    const afterSwing = maxHp - round.playerHit - (round.offhandHit ?? 0) - (round.staffHit ?? 0)
+    if (afterSwing <= 0) {
+      expect(round.poisonHit).toBe(0)
+      expect(round.enemyHp).toBe(0)
+    } else {
+      expect(round.poisonHit).toBe(afterSwing - round.enemyHp)
+      expect(round.enemyHp).toBe(afterSwing - (round.poisonHit ?? 0))
+    }
+
+    const floorHp = potionEnemyHpFloor(maxHp)
+    const lockpick = {
+      ...started,
+      equipment: {
+        ...started.equipment,
+        slots: {
+          ...started.equipment.slots,
+          [WEAPON_TOOL_SLOT_ID]: { itemId: LOCKPICK_ITEM_ID, quantity: 5 },
+        },
+      },
+    }
+    const skipped = resolveCombatRound(launch, lockpick, enemy, maxHp, () => 0)
+    expect(skipped.playerHit).toBe(0)
+    expect(skipped.poisonHit).toBe(0)
+    expect(skipped.enemyHp).toBe(maxHp)
+
+    const atFloor = resolveCombatRound(launch, started, enemy, floorHp, () => 0)
+    expect(atFloor.poisonHit).toBe(0)
   })
 
   it('starts a death pause with no rewards on defeat', () => {
