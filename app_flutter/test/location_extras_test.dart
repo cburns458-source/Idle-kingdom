@@ -801,13 +801,13 @@ void main() {
     await pumpShell(tester, controller);
 
     await selectLocationBandTab(tester, 'Traps');
-    await tester.tap(find.text('Place pot'));
-    await tester.pumpAndSettle();
+    await tapVisible(tester, find.widgetWithText(GameButton, 'Place pot'));
+    await tester.pump();
     expect(find.text('Add three bait fish, or place it empty'), findsOne);
     expect(find.text('No bait · random unlocked catch'), findsOne);
 
-    await tester.tap(find.widgetWithText(GameButton, 'No bait'));
-    await tester.pumpAndSettle();
+    await tapVisible(tester, find.widgetWithText(GameButton, 'No bait'));
+    await tester.pump();
     expect(timerAtLocationKind(controller.save, 'LOC-0004', 'fishing_pot'), isNotNull);
     expect(timerAtLocationKind(controller.save, 'LOC-0004', 'fishing_pot')?.baitItemIds, isNull);
   });
