@@ -34,12 +34,14 @@ bool isAutomaticLevelUnlock(RecipeRow recipe) {
 
 /// Whether the player knows a production recipe (can craft if otherwise eligible).
 bool knowsRecipe(PlayerSave save, GameDatabase db, String recipeId) {
-  if (save.unlockedRecipeIds.contains(recipeId)) return true;
   final recipe = getRecipe(db, recipeId);
   if (recipe == null || !isCompleteRecipe(recipe)) return false;
-  if (!isAutomaticLevelUnlock(recipe)) return false;
-  final level = getSkillProgress(save, jsString(recipe.raw['Skill ID'])).level;
-  return level >= jsNumber(recipe.raw['Proficiency Level']);
+  if (!save.unlockedRecipeIds.contains(recipeId)) {
+    if (!isAutomaticLevelUnlock(recipe)) return false;
+    final level = getSkillProgress(save, jsString(recipe.raw['Skill ID'])).level;
+    if (level < jsNumber(recipe.raw['Proficiency Level'])) return false;
+  }
+  return meetsRecipeExtraSkills(save, db, recipe);
 }
 
 /// Extra Skill Level rows on a recipe (e.g. lockpicks also need Thievery 20).

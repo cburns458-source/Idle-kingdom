@@ -3,7 +3,6 @@ import 'package:ik_content/ik_content.dart';
 
 import '../activity/rewards.dart';
 import '../activity/xp.dart';
-import '../combat/food.dart';
 import '../inventory/add_items.dart';
 import '../inventory/capacity.dart';
 import '../production/inventory.dart';
@@ -898,7 +897,6 @@ LocationTimerCollectResult collectLocationTimer(
   next = creditLootTracker(next, 'timer', '$kind:$locationId', loot, 0, now);
   next = creditXpAwards(next, awards, now);
   next = applyQuestAutoStartOnSeed(db, next);
-  next = consumeFoodAfterVictory(db, next).save;
 
   return LocationTimerCollectResult(
     ok: true,

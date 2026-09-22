@@ -2,7 +2,6 @@ import { addItemToInventory, addItemToInventoryExact } from '../activity/rewards
 import { summarizeXpReward } from '../activity/rewardSummary'
 import type { ActionRewardBundle } from '../activity/types'
 import { applyXp } from '../activity/xp'
-import { consumeFoodAfterVictory } from '../combat/food'
 import { creditXpAwards } from '../trackers/trackers'
 import type { RandomFn } from '../activity/pools'
 import { chefHatOutputQuantity, alchemyPotionOutputQuantity, productionOutputReservePerCraft, ALCHEMY_SKILL_ID } from '../equipment/specialist'
@@ -187,7 +186,6 @@ export function completeProductionCraft(
   const xpApplied = applyXp(next, db, recipe['Skill ID'], xpGained)
   next = xpApplied.save
   next = creditXpAwards(next, [{ skillId: recipe['Skill ID'], xp: xpGained }], nowMs)
-  next = consumeFoodAfterVictory(db, next).save
 
   const remaining = save.productionQuantityRemaining - 1
   next = applyQuestProcessProgress(db, next, recipe['Recipe ID'], 1)

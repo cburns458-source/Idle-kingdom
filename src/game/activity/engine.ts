@@ -286,6 +286,8 @@ function maybeBreakLockpick(
 
 const PRUNABLE_SKILL_IDS = new Set(['SKL-0004', 'SKL-0006'])
 export const PRUNING_SEED_CHANCE_PERCENT = 5
+/** Pruners convert 25% of the usual gather XP to Botany. */
+export const PRUNING_XP_FRACTION = 0.25
 
 export function isPruningToolEquipped(db: GameDatabase, save: PlayerSave): boolean {
   const tool = slotStack(save, WEAPON_TOOL_SLOT_ID)
@@ -507,7 +509,7 @@ export function completeGatheringAction(
     : resolveActionRewards(db, working, action, random)
   const fullXp = gatheringXpReward(db, working, action)
   const primarySkillId = pruning ? BOTANY_SKILL_ID : skillId
-  const xpAmount = fullXp
+  const xpAmount = pruning ? Math.floor(fullXp * PRUNING_XP_FRACTION) : fullXp
   let next = clearActivePotionEffect(rewarded.save)
   const xpApplied = applyXp(next, db, primarySkillId, xpAmount)
   next = xpApplied.save

@@ -57,7 +57,7 @@ describe('recipe knowledge', () => {
         skill.skillId === 'SKL-0009' ? { ...skill, level: 20 } : skill,
       ),
     }
-    expect(knowsRecipe(crafter, launch, 'RCP-0062')).toBe(true)
+    expect(knowsRecipe(crafter, launch, 'RCP-0062')).toBe(false)
     expect(canKnowRecipe(crafter, launch, lockpicks!)).toBe(false)
     const thiefCrafter = {
       ...save,
@@ -67,6 +67,7 @@ describe('recipe knowledge', () => {
           : skill,
       ),
     }
+    expect(knowsRecipe(thiefCrafter, launch, 'RCP-0062')).toBe(true)
     expect(canKnowRecipe(thiefCrafter, launch, lockpicks!)).toBe(true)
     const leftover = launch.Recipes.find((recipe) => recipe['Recipe ID'] === 'RCP-0044')
     expect(leftover?.Status).toBe('Needs Data')

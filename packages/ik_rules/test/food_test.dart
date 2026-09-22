@@ -174,4 +174,43 @@ void main() {
     expect(eaten.ok, isTrue);
     expect(eaten.save!.equipment.slots[foodSlotId]?.quantity, 1);
   });
+
+  test('does not auto-eat after standard production or a botany harvest', () {
+    final hungry = _withFoodAndSpells(db, foodQty: 4, gluttonyCount: 0);
+    final queued = beginProductionQueue(
+      db,
+      addItemToInventory(hungry, 'ITEM-0025', 1),
+      'ACT-0017',
+      'RCP-0001',
+      1,
+      0,
+    );
+    expect(queued.ok, isTrue);
+    final crafted = completeProductionCraft(db, queued.save!, 20_000);
+    expect(crafted, isNotNull);
+    expect(crafted!.save.equipment.slots[foodSlotId]?.quantity, 4);
+
+    final planted = plantBotanySeed(
+      db,
+      hungry.copyWith(
+        currentLocationId: 'LOC-0001',
+        inventory: const [InventoryStack(itemId: 'ITEM-0324', quantity: 1)],
+        quests: const [QuestProgress(questId: 'QST-0011', status: 'completed', progress: 1)],
+      ),
+      'ITEM-0324',
+      nowMs: 0,
+      plantQuantity: 1,
+    );
+    expect(planted.ok, isTrue);
+    final harvested = collectLocationTimer(
+      db,
+      planted.save!,
+      'LOC-0001',
+      'botany',
+      nowMs: 3 * 3600 * 1000,
+      random: () => 0,
+    );
+    expect(harvested.ok, isTrue);
+    expect(harvested.save!.equipment.slots[foodSlotId]?.quantity, 4);
+  });
 }

@@ -634,7 +634,7 @@ void main() {
     );
   });
 
-  testWidgets('the Eat button opens the threshold picker and Eat now', (tester) async {
+  testWidgets('the Eat button opens the threshold picker and Auto-eat', (tester) async {
     var save = startedCharacter(database);
     save = addItemToInventory(save, 'ITEM-0028', 2);
     final equipped = equipItemFromInventory(database.launch, save, 'ITEM-0028');
@@ -649,8 +649,8 @@ void main() {
 
     await pumpPanel(tester, InventoryView(controller: controller));
     expect(find.byKey(const Key('inventory-eat')), findsOne);
+    expect(find.byKey(const Key('inventory-eat-now')), findsOne);
     expect(find.textContaining('Eat at'), findsNothing);
-    expect(find.text('Eat now'), findsNothing);
 
     await tester.tap(find.byKey(const Key('inventory-eat')));
     await tester.pumpAndSettle();
@@ -660,31 +660,29 @@ void main() {
     expect(find.textContaining('Eat at'), findsOne);
     expect(find.byKey(const Key('auto-eat')), findsOne);
     expect(find.text('Auto-eat on'), findsOne);
-    expect(find.byKey(const Key('eat-now')), findsOne);
+    expect(find.byKey(const Key('eat-now')), findsNothing);
 
     await tester.tap(find.byKey(const Key('auto-eat')));
     await tester.pump();
     expect(controller.autoEat, isFalse);
     expect(find.text('Auto-eat off'), findsOne);
+    await tester.tap(find.text('Close'));
+    await tester.pumpAndSettle();
 
     final before = controller.save.equipment.slots[foodSlotId]?.quantity ?? 0;
     expect(before, greaterThan(0));
-    await tester.tap(find.byKey(const Key('eat-now')));
+    await tester.tap(find.byKey(const Key('inventory-eat-now')));
     await tester.pumpAndSettle();
-    expect(find.byKey(const Key('game-popup')), findsNothing);
     expect(controller.save.equipment.slots[foodSlotId]?.quantity ?? 0, before - 1);
   });
 
-  testWidgets('Eat now with an empty food slot stays open and says so', (tester) async {
+  testWidgets('Eat now with an empty food slot says so', (tester) async {
     final controller = buildController(database, seed: unequippedCharacter());
     addTearDown(controller.dispose);
 
     await pumpPanel(tester, InventoryView(controller: controller));
-    await tester.tap(find.byKey(const Key('inventory-eat')));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('eat-now')));
+    await tester.tap(find.byKey(const Key('inventory-eat-now')));
     await tester.pump();
-    expect(find.byKey(const Key('game-popup')), findsOne);
     expect(find.text('Nothing to eat.'), findsOne);
   });
 

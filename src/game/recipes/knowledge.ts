@@ -41,12 +41,15 @@ export function isAutomaticLevelUnlock(recipe: RecipeRow): boolean {
 
 /** Whether the player knows a production recipe (can craft if otherwise eligible). */
 export function knowsRecipe(save: PlayerSave, db: GameDatabase, recipeId: string): boolean {
-  if ((save.unlockedRecipeIds ?? []).includes(recipeId)) return true
   const recipe = getRecipe(db, recipeId)
   if (!recipe || !isCompleteRecipe(recipe)) return false
-  if (!isAutomaticLevelUnlock(recipe)) return false
-  const level = getSkillProgress(save, recipe['Skill ID']).level
-  return level >= recipe['Proficiency Level']
+  const unlocked = (save.unlockedRecipeIds ?? []).includes(recipeId)
+  if (!unlocked) {
+    if (!isAutomaticLevelUnlock(recipe)) return false
+    const level = getSkillProgress(save, recipe['Skill ID']).level
+    if (level < recipe['Proficiency Level']) return false
+  }
+  return meetsRecipeExtraSkills(save, db, recipe)
 }
 
 /** Extra Skill Level rows on a recipe (e.g. lockpicks also need Thievery 20). */

@@ -29,16 +29,17 @@ void main() {
 
     final base = createNewSave(db, 0);
     final crafter = _withLevels(base, const <String, num>{'SKL-0009': 20});
-    expect(knowsRecipe(crafter, db, 'RCP-0062'), isTrue);
+    expect(knowsRecipe(crafter, db, 'RCP-0062'), isFalse);
     expect(canKnowRecipe(crafter, db, recipe), isFalse);
 
     final both = _withLevels(base, const <String, num>{'SKL-0009': 20, 'SKL-0015': 20});
+    expect(knowsRecipe(both, db, 'RCP-0062'), isTrue);
     expect(canKnowRecipe(both, db, recipe), isTrue);
 
     final withBar = addItemToInventory(crafter, 'ITEM-0076', 1);
     final refused = beginProductionQueue(db, withBar, 'ACT-0019', 'RCP-0062', 1, 0);
     expect(refused.ok, isFalse);
-    expect(refused.reason, contains('Thievery'));
+    expect(refused.reason, contains('learned that recipe'));
 
     final queued = beginProductionQueue(
       db,

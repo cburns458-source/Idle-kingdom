@@ -38,9 +38,9 @@ void main() {
     final action = db.actions.firstWhere((row) => row.raw['Action ID'] == 'ACN-0035');
     final completed = completeGatheringAction(db, withPruners(base), action, () => 0, 0);
     expect(completed.result.skillId, botanySkillId);
-    expect(completed.result.xpGained, 200);
+    expect(completed.result.xpGained, 50);
     expect(completed.result.bonusXp, isEmpty);
     expect(xpOn(completed.save, 'SKL-0004'), 0);
-    expect(xpOn(completed.save, botanySkillId), 200);
+    expect(xpOn(completed.save, botanySkillId), 50);
   });
 }
