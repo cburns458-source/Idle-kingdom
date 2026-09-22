@@ -94,48 +94,38 @@ class _SkillTile extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(4, 5, 4, 4),
         child: InkWell(
           onTap: () => _openSkillMenu(context, controller, skillId, row?.displayName ?? skillId),
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              return FittedBox(
-                fit: BoxFit.scaleDown,
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(maxWidth: constraints.maxWidth),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      GameImage(
-                        skillIconPath(row),
-                        width: skillTileIconSize,
-                        height: skillTileIconSize,
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        row?.displayName ?? skillId,
-                        textAlign: TextAlign.center,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 9.5,
-                          fontWeight: FontWeight.w400,
-                          height: 1.15,
-                        ),
-                      ),
-                      const SizedBox(height: 1),
-                      Text(
-                        'Lv ${progress.level}',
-                        style: const TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w400,
-                          color: Palette.gold,
-                        ),
-                      ),
-                      const SizedBox(height: 3),
-                      MeterBar(value: fraction, color: Palette.gold, height: 4),
-                    ],
+          child: Column(
+            children: [
+              Expanded(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: GameImage(
+                    skillIconPath(row),
+                    width: skillTileIconSize,
+                    height: skillTileIconSize,
                   ),
                 ),
-              );
-            },
+              ),
+              const SizedBox(height: 2),
+              Text(
+                row?.displayName ?? skillId,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 9.5, fontWeight: FontWeight.w400, height: 1.15),
+              ),
+              const SizedBox(height: 1),
+              Text(
+                'Lv ${progress.level}',
+                style: const TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w400,
+                  color: Palette.gold,
+                ),
+              ),
+              const SizedBox(height: 3),
+              MeterBar(value: fraction, color: Palette.gold, height: 4),
+            ],
           ),
         ),
       ),
