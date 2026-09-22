@@ -79,3 +79,19 @@ export function uiNearbyAssetPath(): string {
 export function uiInkSplatAssetPath(): string {
   return withAssetVersion('/assets/icons/ui/ui_ink_splat.webp')
 }
+
+export function uiInventoryAssetPath(): string {
+  return withAssetVersion('/assets/icons/ui/ui_inventory.webp')
+}
+
+export function uiStatsAssetPath(): string {
+  return withAssetVersion('/assets/icons/ui/ui_stats.webp')
+}
+
+export function uiLogAssetPath(): string {
+  return withAssetVersion('/assets/icons/ui/ui_log.webp')
+}
+
+export function uiMenuAssetPath(): string {
+  return withAssetVersion('/assets/icons/ui/ui_menu.webp')
+}
