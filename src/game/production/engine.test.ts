@@ -69,14 +69,19 @@ describe('standard production', () => {
     expect(queued.save.productionRecipeId).toBe('RCP-0001')
   })
 
-  it('lets soup stock queue at a kitchen with no ingredients', () => {
+  it('lets soup stock queue at a kitchen with water and scraps on tap', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const cook = {
       ...createNewSave(launch),
+      currentLocationId: 'LOC-0023',
       skills: createNewSave(launch).skills.map((row) =>
         row.skillId === 'SKL-0007' ? { ...row, level: 16, xp: 0 } : row,
       ),
     }
+    const away = { ...cook, currentLocationId: 'LOC-0001' }
+    expect(readyRecipesForActivity(launch, away, 'ACT-0017').some((row) => row['Recipe ID'] === 'RCP-0068')).toBe(
+      false,
+    )
     expect(readyRecipesForActivity(launch, cook, 'ACT-0017').some((row) => row['Recipe ID'] === 'RCP-0068')).toBe(
       true,
     )
@@ -86,6 +91,10 @@ describe('standard production', () => {
     expect(queued.save.productionRecipeId).toBe('RCP-0068')
     expect(queued.save.productionQuantityTotal).toBe(3)
     expect(queued.save.inventory).toEqual(cook.inventory)
+    const cancelled = cancelProductionActivity(launch, queued.save)
+    expect(cancelled.inventory).toEqual(cook.inventory)
+    expect(cancelled.inventory.some((stack) => stack.itemId === 'ITEM-0365')).toBe(false)
+    expect(cancelled.inventory.some((stack) => stack.itemId === 'ITEM-0366')).toBe(false)
   })
 
   it('rejects queues larger than materials or the 24h cap', () => {

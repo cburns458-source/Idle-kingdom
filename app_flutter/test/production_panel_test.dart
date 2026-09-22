@@ -67,6 +67,36 @@ void main() {
     expect(find.textContaining('Baked potato'), findsWidgets);
   });
 
+  testWidgets('shows soup stock from kitchen water and scraps with an empty bag', (tester) async {
+    final cook16 = startedCharacter(database).copyWith(
+      currentLocationId: kitchenLocationId,
+      inventory: const <InventoryStack>[],
+      skills: [
+        for (final row in startedCharacter(database).skills)
+          if (row.skillId == 'SKL-0007') row.copyWith(level: 16) else row,
+      ],
+    );
+    final controller = buildController(database, seed: cook16);
+    addTearDown(controller.dispose);
+
+    await pumpPanel(tester, ProductionPicker(controller: controller, activity: kitchen()));
+
+    expect(find.textContaining('Soup Stock'), findsWidgets);
+    expect(find.textContaining('materials ∞'), findsOne);
+    expect(find.text('∞/1'), findsNWidgets(2));
+    expect(find.byTooltip('Water'), findsOne);
+    expect(find.byTooltip('Kitchen Scraps'), findsOne);
+
+    await tester.tap(find.widgetWithText(GameButton, 'Max'));
+    await tester.pump();
+    await tester.tap(find.text('Start queue'));
+    await tester.pump();
+
+    expect(controller.save.productionRecipeId, 'RCP-0068');
+    expect(controller.save.productionQuantityTotal, 7200);
+    expect(controller.save.inventory, isEmpty);
+  });
+
   testWidgets('starts the quantity over when the recipe changes', (tester) async {
     final controller = buildController(
       database,

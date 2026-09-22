@@ -1082,6 +1082,52 @@ def paint_component(c: Canvas, name: str) -> None:
 
 def paint_unique(c: Canvas, name: str) -> bool:
     n = name.lower()
+    if n == 'water':
+        c.stamp_centered(
+            [
+                '....mmmm....',
+                '...mMMMMm...',
+                '...mMMMMm...',
+                '..mmWWWWmm..',
+                '.mWWWWWWWWm.',
+                '.mWWWWWWWWm.',
+                '.mWWWWWWWWm.',
+                '..mWWWWWWm..',
+                '...DDDDDD...',
+            ],
+            {
+                'm': (186, 210, 230),
+                'M': (120, 164, 196),
+                'W': (72, 148, 214),
+                'D': (48, 88, 132),
+            },
+        )
+        return True
+    if 'kitchen scrap' in n:
+        c.stamp_centered(
+            [
+                '...gg........',
+                '..gGGoo......',
+                '.ooOOORrr....',
+                'ooOORRRbbb...',
+                '.oORRbbBB....',
+                '..rrbBBDd....',
+                '...bBDdD.....',
+            ],
+            {
+                'g': (132, 176, 72),
+                'G': (86, 128, 48),
+                'o': (220, 168, 88),
+                'O': (176, 120, 52),
+                'r': (196, 92, 56),
+                'R': (148, 64, 36),
+                'b': (168, 124, 72),
+                'B': (120, 84, 46),
+                'd': (92, 62, 34),
+                'D': (64, 42, 24),
+            },
+        )
+        return True
     if 'chef' in n and 'hat' in n:
         paint_chef_hat(c)
         return True

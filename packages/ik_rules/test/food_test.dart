@@ -21,14 +21,22 @@ void main() {
     db = assertGameDatabaseShape(contentDatabaseJson());
   });
 
-  test('soup stock is kitchen-only with no ingredients and feeds every stew', () {
+  test('soup stock is kitchen-only from water and scraps and feeds every stew', () {
     final stock = db.recipes.firstWhere((row) => row.raw['Recipe ID'] == 'RCP-0068');
     expect(stock.raw['Facility ID'], 'FAC-0001');
     expect(stock.raw['Proficiency Level'], 16);
     expect(stock.raw['Base Duration Seconds'], 12);
     expect(stock.raw['XP Reward'], 0);
-    expect(stock.raw['Ingredient 1 Item ID'], isNull);
-    expect(maxCraftsFromMaterials(createNewSave(db, 0), stock), double.infinity);
+    expect(stock.raw['Ingredient 1 Item ID'], 'ITEM-0365');
+    expect(stock.raw['Ingredient 1 Quantity'], 1);
+    expect(stock.raw['Ingredient 2 Item ID'], 'ITEM-0366');
+    expect(stock.raw['Ingredient 2 Quantity'], 1);
+    final away = createNewSave(db, 0);
+    expect(maxCraftsFromMaterials(away, stock), 0);
+    final kitchen = away.copyWith(currentLocationId: 'LOC-0023');
+    expect(maxCraftsFromMaterials(kitchen, stock), double.infinity);
+    expect(ingredientOwned(kitchen, 'ITEM-0365'), double.infinity);
+    expect(ingredientOwned(away, 'ITEM-0365'), 0);
     for (final recipeId in <String>[
       'RCP-0012',
       'RCP-0013',
@@ -46,6 +54,24 @@ void main() {
       3266,
     );
     expect(db.actions.firstWhere((row) => row.actionId == 'ACN-0104').proficiencyLevel, 70);
+
+    final queued = beginProductionQueue(
+      db,
+      kitchen.copyWith(
+        skills: [
+          for (final row in kitchen.skills)
+            if (row.skillId == 'SKL-0007') row.copyWith(level: 16) else row,
+        ],
+      ),
+      'ACT-0017',
+      'RCP-0068',
+      3,
+      0,
+    );
+    expect(queued.ok, isTrue);
+    expect(queued.save!.inventory, isEmpty);
+    final cancelled = cancelProductionActivity(db, queued.save!);
+    expect(cancelled.inventory, isEmpty);
   });
 
   test('Gluttony is an Arcana 30 spell that costs tuna, stew, and essence', () {

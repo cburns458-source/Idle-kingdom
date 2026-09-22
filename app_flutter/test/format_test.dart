@@ -17,6 +17,19 @@ void main() {
     });
   });
 
+  group('formatThousands', () {
+    test('groups the way the game always has', () {
+      expect(formatThousands(0), '0');
+      expect(formatThousands(12345), '12,345');
+      expect(formatThousands(-12), '-12');
+    });
+
+    test('prints infinity instead of throwing', () {
+      expect(formatThousands(double.infinity), '∞');
+      expect(formatThousands(double.negativeInfinity), '-∞');
+    });
+  });
+
   group('formatPlayTimeMs', () {
     test('hides seconds after the first minute', () {
       expect(formatPlayTimeMs(0), '0m');
