@@ -93,7 +93,21 @@ class _SkillTile extends StatelessWidget {
           onTap: () => _openSkillMenu(context, controller, skillId, row?.displayName ?? skillId),
           child: Column(
             children: [
-              Expanded(child: GameImage(skillIconPath(row), fit: BoxFit.contain)),
+              Expanded(
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final side = constraints.maxWidth < constraints.maxHeight
+                        ? constraints.maxWidth
+                        : constraints.maxHeight;
+                    return GameImage(
+                      skillIconPath(row),
+                      width: side,
+                      height: side,
+                      fit: BoxFit.contain,
+                    );
+                  },
+                ),
+              ),
               const SizedBox(height: 2),
               Text(
                 row?.displayName ?? skillId,
