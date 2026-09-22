@@ -1128,6 +1128,7 @@ class _ItemTile extends StatelessWidget {
         padding: const EdgeInsets.all(2),
         child: GestureDetector(
           onLongPress: onLongPress,
+          onSecondaryTap: onLongPress,
           behavior: HitTestBehavior.deferToChild,
           child: DefaultTextStyle.merge(
             style: const TextStyle(color: Palette.parchmentText),

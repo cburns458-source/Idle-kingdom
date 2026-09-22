@@ -1305,6 +1305,36 @@ class GameController extends ChangeNotifier {
     return '$name is now level $target.';
   }
 
+  /// Marks a mailbox letter read. Opening the letter is what clears unread.
+  void readMailboxMessage(String messageId) {
+    commit(markMailRead(save, messageId, session.clock()));
+  }
+
+  /// Claims attached items into the bag, or returns why they would not fit.
+  String? claimMailboxMessage(String messageId) {
+    final result = claimMailAttachments(save, messageId, session.clock(), db);
+    if (!result.ok) return result.reason;
+    commit(result.save!);
+    return 'Items claimed.';
+  }
+
+  /// Clears selected quest progress and optional first-run intro flags.
+  String? debugResetQuests(List<String> questIds, {bool fennel = false, bool wardrobe = false}) {
+    if (questIds.isEmpty && !fennel && !wardrobe) {
+      return 'Pick a quest or intro flag.';
+    }
+    var next = resetQuestProgress(save, questIds);
+    next = resetIntroFlags(next, fennel: fennel, wardrobe: wardrobe);
+    commit(next);
+    final parts = <String>[];
+    if (questIds.isNotEmpty) {
+      parts.add(questIds.length == 1 ? '1 quest' : '${questIds.length} quests');
+    }
+    if (fennel) parts.add('Fennel intro');
+    if (wardrobe) parts.add('wardrobe intro');
+    return 'Reset ${parts.join(', ')}.';
+  }
+
   /// Sets every skill back to level 1.
   String? debugResetAllSkills() {
     var next = save;

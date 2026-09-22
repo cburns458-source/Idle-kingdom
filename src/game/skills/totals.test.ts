@@ -97,6 +97,7 @@ function sampleSave(skills: Array<{ skillId: string; level: number; xp: number }
     xpTrackers: {},
     lootTrackerPausedAtMs: null,
     xpTrackerPausedAtMs: null,
+    mailbox: [],
   }
 }
 

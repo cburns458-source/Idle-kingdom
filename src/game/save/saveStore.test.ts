@@ -36,6 +36,7 @@ describe('local save', () => {
     expect(save.combatSkipEnemyAttack).toBe(false)
     expect(save.combatBossSleepRoundsRemaining).toBeNull()
     expect(save.bossRespawnUntilByEnemyId).toEqual({})
+    expect(save.mailbox.some((message) => message.id === 'mail-mailbox-test')).toBe(true)
   })
 
   it('auto-creates then reloads the same save', () => {

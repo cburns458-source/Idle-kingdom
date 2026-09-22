@@ -95,3 +95,7 @@ export function uiLogAssetPath(): string {
 export function uiMenuAssetPath(): string {
   return withAssetVersion('/assets/icons/ui/ui_menu.webp')
 }
+
+export function uiMailboxAssetPath(): string {
+  return withAssetVersion('/assets/icons/ui/ui_mailbox.webp')
+}

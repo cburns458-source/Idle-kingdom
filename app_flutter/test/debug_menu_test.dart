@@ -48,6 +48,21 @@ void main() {
     expect(getSkillProgress(controller.save, mightSkillId).level, 10);
     expect(controller.debugResetAllSkills(), 'Every skill is back at level 1.');
     expect(controller.save.skills.every((skill) => skill.level == 1 && skill.xp == 0), isTrue);
+
+    controller.commit(
+      controller.save.copyWith(
+        hasSeenFennelIntro: true,
+        hasSeenWardrobeIntro: true,
+        quests: const [QuestProgress(questId: 'QST-0004', status: 'completed', progress: 1)],
+      ),
+    );
+    expect(
+      controller.debugResetQuests(const ['QST-0004'], fennel: true, wardrobe: true),
+      'Reset 1 quest, Fennel intro, wardrobe intro.',
+    );
+    expect(getQuestProgress(controller.save, 'QST-0004').status, 'inactive');
+    expect(controller.save.hasSeenFennelIntro, isFalse);
+    expect(controller.save.hasSeenWardrobeIntro, isFalse);
   });
 
   test('chat filter starts on and can be turned off', () {
@@ -134,6 +149,7 @@ void main() {
     expect(find.bySemanticsLabel('Add 1 level'), findsOne);
     expect(find.bySemanticsLabel('Remove 1 level'), findsOne);
     expect(find.bySemanticsLabel('Reset all skills'), findsOne);
+    expect(find.bySemanticsLabel('Reset quests…'), findsOne);
 
     await tester.scrollUntilVisible(
       find.text('Player sprite'),

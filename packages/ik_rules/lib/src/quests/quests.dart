@@ -602,6 +602,26 @@ String questStatusLabel(String status) {
   return 'Not started';
 }
 
+/// Drops selected quest rows and their miniquest completion stamps.
+PlayerSave resetQuestProgress(PlayerSave save, Iterable<String> questIds) {
+  final ids = questIds.toSet();
+  if (ids.isEmpty) return save;
+  final miniquestCompletedAt = Map<String, String>.of(save.miniquestCompletedAt)
+    ..removeWhere((questId, _) => ids.contains(questId));
+  return save.copyWith(
+    quests: save.quests.where((quest) => !ids.contains(quest.questId)).toList(),
+    miniquestCompletedAt: miniquestCompletedAt,
+  );
+}
+
+/// Clears first-run intro flags so those hints can fire again.
+PlayerSave resetIntroFlags(PlayerSave save, {bool fennel = false, bool wardrobe = false}) {
+  return save.copyWith(
+    hasSeenFennelIntro: fennel ? false : save.hasSeenFennelIntro,
+    hasSeenWardrobeIntro: wardrobe ? false : save.hasSeenWardrobeIntro,
+  );
+}
+
 List<QuestCounterTarget> _questXpGrants(QuestRow quest, StructuredQuestObjectives parsed) {
   if (parsed.rewardXp.isNotEmpty) return parsed.rewardXp;
   if (quest['Reward XP Skill ID'] is String &&

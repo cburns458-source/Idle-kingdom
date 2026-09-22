@@ -71,7 +71,7 @@ class EquipmentPresetsBar extends StatelessWidget {
           square: _stageSquareChips,
           skillsById: controller.indexes.skillsById,
           tooltipHint: allowLongPressEdit
-              ? 'Tap to apply this preset. Long-press to rename.'
+              ? 'Tap to apply this preset. Long-press or right-click to rename.'
               : 'Tap to apply this preset',
           onTap: () => _applyPreset(i),
           onLongPress: allowLongPressEdit ? () => _editPreset(context, i) : null,
@@ -188,7 +188,10 @@ class EquipmentPresetsBar extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Text('Preset ${index + 1}', style: const TextStyle(fontSize: 16)),
+                      Text(
+                        'Preset ${index + 1}',
+                        style: const TextStyle(fontSize: gamePopupTitleSize),
+                      ),
                       const SizedBox(height: 8),
                       TextField(
                         controller: nameController,
@@ -436,6 +439,7 @@ class _PresetButton extends StatelessWidget {
             child: InkWell(
               onTap: onTap,
               onLongPress: onLongPress,
+              onSecondaryTap: onLongPress,
               customBorder: PixelSteppedBorder(step: step),
               child: SizedBox(
                 width: square ? _chipSide(compact: compact) : null,
@@ -600,7 +604,7 @@ class _AllPresetsSettingsDialogState extends State<_AllPresetsSettingsDialog> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Text('Preset settings', style: TextStyle(fontSize: 16)),
+                const Text('Preset settings', style: TextStyle(fontSize: gamePopupTitleSize)),
                 const SizedBox(height: 8),
                 Expanded(
                   child: ListView.separated(

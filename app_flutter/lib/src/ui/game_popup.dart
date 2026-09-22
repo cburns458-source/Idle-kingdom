@@ -8,9 +8,15 @@ enum GamePopupPlacement {
   /// Center of the playable frame.
   center,
 
-  /// Centered, but in the top half (chat and social alerts).
+  /// Same as [center]; kept so older call sites still compile.
   topHalf,
 }
+
+/// Shared card size for every floating popup.
+const double gamePopupMaxWidth = 280;
+const double gamePopupMaxHeight = 360;
+const double gamePopupTitleSize = 14;
+const double gamePopupBodySize = 12;
 
 /// The box a control occupies, for popups that grow out of that control.
 Rect? popupOrigin(BuildContext context) {
@@ -56,17 +62,13 @@ Future<T?> showGamePopup<T>({
         chrome: resolvedChrome,
         child: SafeArea(
           child: Align(
-            alignment: placement == GamePopupPlacement.topHalf
-                ? const Alignment(0, -0.65)
-                : Alignment.center,
+            alignment: Alignment.center,
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: ConstrainedBox(
                 constraints: BoxConstraints(
-                  maxWidth: 400,
-                  maxHeight:
-                      MediaQuery.sizeOf(context).height *
-                      (placement == GamePopupPlacement.topHalf ? 0.48 : 0.7),
+                  maxWidth: gamePopupMaxWidth,
+                  maxHeight: gamePopupMaxHeight,
                 ),
                 child: Material(
                   type: MaterialType.transparency,
@@ -113,7 +115,11 @@ class GamePopupCard extends StatelessWidget {
       child: DecoratedBox(
         decoration: chromeBoardFill(context, textureOpacity: 0.4),
         child: DefaultTextStyle.merge(
-          style: const TextStyle(color: Palette.parchmentText, fontFamily: gameFontFamily),
+          style: const TextStyle(
+            color: Palette.parchmentText,
+            fontFamily: gameFontFamily,
+            fontSize: gamePopupBodySize,
+          ),
           child: IconTheme.merge(
             data: const IconThemeData(color: Palette.parchmentText),
             child: Padding(padding: padding ?? const EdgeInsets.all(16), child: child),
@@ -145,7 +151,10 @@ Future<bool> showGameAlert({
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             if (title != null)
-              Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w400)),
+              Text(
+                title,
+                style: const TextStyle(fontSize: gamePopupTitleSize, fontWeight: FontWeight.w400),
+              ),
             if (title != null) const SizedBox(height: 8),
             Text(message, style: const TextStyle(height: 1.4)),
             const SizedBox(height: 14),

@@ -70,6 +70,7 @@ void main() {
     expectBundled(uiStatsAssetPath(), 'the Skills chin tab');
     expectBundled(uiLogAssetPath(), 'the Log chin tab');
     expectBundled(uiMenuAssetPath(), 'the hamburger chin tab');
+    expectBundled(uiMailboxAssetPath(), 'the HUD mailbox');
   });
 
   test('every item has a unique Icon Asset Key matching its Internal Key', () {

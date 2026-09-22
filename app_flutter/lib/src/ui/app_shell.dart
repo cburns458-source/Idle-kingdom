@@ -23,6 +23,7 @@ import 'inventory_view.dart';
 import 'location_view.dart';
 import 'out_of_sight.dart';
 import 'log_view.dart';
+import 'mailbox_popup.dart';
 import 'menu_view.dart';
 import 'skills_view.dart';
 import 'npc_panel.dart';
@@ -675,6 +676,10 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
     setState(() {});
   }
 
+  Future<void> _openMailbox() {
+    return showMailboxPopup(context: context, controller: controller);
+  }
+
   /// Opening the wardrobe is also what retires the portrait's hint.
   void _openWardrobe() {
     final save = controller.save;
@@ -864,6 +869,7 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
                 controller: controller,
                 multiplayer: multiplayer,
                 onOpenWardrobe: _openWardrobe,
+                onOpenMailbox: _openMailbox,
                 batterySaver: controller.batterySaver,
               ),
             ),

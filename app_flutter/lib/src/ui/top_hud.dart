@@ -10,6 +10,7 @@ import '../session/multiplayer_controller.dart';
 import '../theme.dart';
 import 'format.dart';
 import 'game_image.dart';
+import 'mailbox_popup.dart';
 import 'player_sprite.dart';
 
 /// What the player is busy with, read out in the corner of the HUD.
@@ -41,12 +42,14 @@ class TopHud extends StatelessWidget {
     required this.controller,
     required this.multiplayer,
     required this.onOpenWardrobe,
+    required this.onOpenMailbox,
     this.batterySaver = false,
   });
 
   final GameController controller;
   final MultiplayerController multiplayer;
   final VoidCallback onOpenWardrobe;
+  final VoidCallback onOpenMailbox;
   final bool batterySaver;
 
   /// A running craft queue reads as the item and how much of the order is left;
@@ -211,6 +214,11 @@ class TopHud extends StatelessWidget {
                             ),
                             const SizedBox(width: 6),
                             _HealthReadout(controller: controller),
+                            const SizedBox(width: 6),
+                            MailboxHudButton(
+                              unread: unreadMailCount(save, controller.session.clock()).toInt(),
+                              onTap: onOpenMailbox,
+                            ),
                           ],
                         ),
                       ],

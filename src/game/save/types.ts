@@ -1,4 +1,4 @@
-export const SAVE_VERSION = 50
+export const SAVE_VERSION = 51
 export const SAVE_STORAGE_KEY = 'idle-kingdoms.demo.save'
 export const STARTING_LOCATION_ID = 'LOC-0001'
 /** Base gold before race kit; race starters grant the real starting gold. */
@@ -221,6 +221,24 @@ export interface XpTrackerEntry {
   xpGained: number
 }
 
+/** Item attached to a mailbox message. Claimed into the bag all at once. */
+export interface MailAttachment {
+  itemId: string
+  quantity: number
+}
+
+/** One mailbox message. System mail uses [catalogId]; player gifts may leave it null. */
+export interface MailMessage {
+  id: string
+  catalogId: string | null
+  subject: string
+  body: string
+  sentAt: string
+  readAt: string | null
+  attachments: MailAttachment[]
+  claimedAt: string | null
+}
+
 /** Skill-id used for the combined XP tracker. */
 export const TOTAL_XP_TRACKER_ID = 'total'
 
@@ -409,6 +427,11 @@ export interface PlayerSave {
    * existing XP rows stay until On.
    */
   xpTrackerPausedAtMs: number | null
+  /**
+   * Kingdom post. Unread until opened, stays after read, and drops 90 days
+   * after [MailMessage.sentAt].
+   */
+  mailbox: MailMessage[]
 }
 
 export interface SaveMigration {

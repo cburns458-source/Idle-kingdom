@@ -163,6 +163,21 @@ void main() {
     expect(find.textContaining('value each'), findsOne);
   });
 
+  testWidgets('right-click opens the same item detail as long-press', (tester) async {
+    final seed = unequippedCharacter().copyWith(
+      inventory: [const InventoryStack(itemId: 'ITEM-0002', quantity: 5)],
+    );
+    final controller = buildController(database, seed: seed);
+    addTearDown(controller.dispose);
+
+    await pumpPanel(tester, InventoryView(controller: controller));
+    await tester.tap(find.byTooltip('Clay'), buttons: kSecondaryButton);
+    await tester.pumpAndSettle();
+
+    expect(find.text('×5'), findsOne);
+    expect(find.textContaining('value each'), findsOne);
+  });
+
   testWidgets('Inventory title and Close sit off the tan panel', (tester) async {
     final controller = buildController(database, seed: startedCharacter(database));
     addTearDown(controller.dispose);
