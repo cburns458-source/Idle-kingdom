@@ -47,6 +47,8 @@ class _MenuViewState extends State<MenuView> {
   late String _skillId;
   String _itemId = 'ITEM-0025';
   _SettingsTab _tab = _SettingsTab.general;
+  late final List<SkillRow> _sortedSkills;
+  late final List<ItemRow> _sortedItems;
 
   GameController get controller => widget.controller;
 
@@ -55,6 +57,9 @@ class _MenuViewState extends State<MenuView> {
     super.initState();
     _raceId = controller.save.raceId ?? races(controller.db).first.raceId;
     _skillId = controller.db.skills.first.skillId;
+    _sortedSkills = [...controller.db.skills]
+      ..sort((a, b) => a.displayName.compareTo(b.displayName));
+    _sortedItems = [...controller.db.items]..sort((a, b) => a.displayName.compareTo(b.displayName));
   }
 
   void _runTool(String? Function() action) {
@@ -237,6 +242,27 @@ class _MenuViewState extends State<MenuView> {
                   ),
                 ),
                 const SizedBox(height: 16),
+                _togglePanel(
+                  title: 'Show title on HUD',
+                  detail: 'Show your equipped title, like The Undying, after your name.',
+                  value: controller.showTitleOnHud,
+                  onChanged: controller.setShowTitleOnHud,
+                ),
+                const SizedBox(height: 16),
+                _togglePanel(
+                  title: 'Show Eat button',
+                  detail: 'Show Eat on the food item detail sheet.',
+                  value: controller.showEatButton,
+                  onChanged: controller.setShowEatButton,
+                ),
+                const SizedBox(height: 16),
+                _togglePanel(
+                  title: 'Activity icons',
+                  detail: 'Show skill and shop icons under a location name on the map.',
+                  value: controller.showActivityIcons,
+                  onChanged: controller.setShowActivityIcons,
+                ),
+                const SizedBox(height: 16),
                 ListenableBuilder(
                   listenable: widget.multiplayer,
                   builder: (context, _) {
@@ -250,31 +276,10 @@ class _MenuViewState extends State<MenuView> {
                         ),
                         const SizedBox(height: 16),
                         _togglePanel(
-                          title: 'Show title on HUD',
-                          detail: 'Show your equipped title, like The Undying, after your name.',
-                          value: controller.showTitleOnHud,
-                          onChanged: controller.setShowTitleOnHud,
-                        ),
-                        const SizedBox(height: 16),
-                        _togglePanel(
-                          title: 'Show Eat button',
-                          detail: 'Show Eat on the food item detail sheet.',
-                          value: controller.showEatButton,
-                          onChanged: controller.setShowEatButton,
-                        ),
-                        const SizedBox(height: 16),
-                        _togglePanel(
                           title: 'Hide chat bubble',
                           detail: 'Hide the chat button in the corner of the game.',
                           value: widget.multiplayer.hideChatBubble,
                           onChanged: widget.multiplayer.setHideChatBubble,
-                        ),
-                        const SizedBox(height: 16),
-                        _togglePanel(
-                          title: 'Activity icons',
-                          detail: 'Show skill and shop icons under a location name on the map.',
-                          value: controller.showActivityIcons,
-                          onChanged: controller.setShowActivityIcons,
                         ),
                       ],
                     );
@@ -483,10 +488,8 @@ class _MenuViewState extends State<MenuView> {
 
   Widget _buildTestingTools() {
     final raceRows = races(controller.db);
-    final skillRows = [...controller.db.skills]
-      ..sort((a, b) => a.displayName.compareTo(b.displayName));
-    final itemRows = [...controller.db.items]
-      ..sort((a, b) => a.displayName.compareTo(b.displayName));
+    final skillRows = _sortedSkills;
+    final itemRows = _sortedItems;
     final selectedSkill = getSkillProgress(controller.save, _skillId);
     return GamePanel(
       framed: true,

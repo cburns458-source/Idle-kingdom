@@ -180,6 +180,7 @@ class LocationIdlePlayer extends StatelessWidget {
                               compact: true,
                               showSaveButton: false,
                               allowLongPressEdit: false,
+                              listenToController: false,
                               onMessage: controller.announce,
                             ),
                             if (controller.showEatButton) ...[
