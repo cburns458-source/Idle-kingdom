@@ -100,8 +100,7 @@ class _BankPanelState extends State<BankPanel> {
   Widget build(BuildContext context) {
     final bag = <({int index, InventoryStack stack})>[
       for (final entry in save.inventory.indexed)
-        if (!stackIsUnbankableGold(entry.$2) && _matches(entry.$2))
-          (index: entry.$1, stack: entry.$2),
+        if (!stackIsUnbankable(entry.$2) && _matches(entry.$2)) (index: entry.$1, stack: entry.$2),
     ]..sort((a, b) => _sorter.compareGrouped(a.stack, b.stack, a.index, b.index));
     final chest = <({int index, InventoryStack stack})>[
       for (final entry in bankStacks(save).indexed)

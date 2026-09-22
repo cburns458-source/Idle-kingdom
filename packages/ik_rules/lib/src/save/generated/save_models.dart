@@ -7,7 +7,7 @@
 
 import '../../json_support.dart';
 
-const int saveVersion = 53;
+const int saveVersion = 54;
 
 const String saveStorageKey = 'idle-kingdoms.demo.save';
 
@@ -583,6 +583,7 @@ class LocationTimer {
     required this.durationMs,
     this.plantedItemIds,
     this.baitItemIds,
+    this.usedCompost,
   });
 
   factory LocationTimer.fromJson(Map<String, Object?> json) {
@@ -598,6 +599,7 @@ class LocationTimer {
       durationMs: json['durationMs'] as num,
       plantedItemIds: listOrNull(json['plantedItemIds'], (Object? entry) => entry as String),
       baitItemIds: listOrNull(json['baitItemIds'], (Object? entry) => entry as String),
+      usedCompost: json['usedCompost'] as bool?,
     );
   }
 
@@ -628,6 +630,9 @@ class LocationTimer {
   /// Raw bait fish for a pot; missing or empty means an unbaited equal-pool haul.
   final List<String>? baitItemIds;
 
+  /// Compost was spent at plant time. Missing on older plots means no compost.
+  final bool? usedCompost;
+
   Map<String, Object?> toJson() {
     return <String, Object?>{
       'locationId': locationId,
@@ -641,6 +646,7 @@ class LocationTimer {
       'durationMs': durationMs,
       if (plantedItemIds != null) 'plantedItemIds': plantedItemIds,
       if (baitItemIds != null) 'baitItemIds': baitItemIds,
+      if (usedCompost != null) 'usedCompost': usedCompost,
     };
   }
 
@@ -656,6 +662,7 @@ class LocationTimer {
     num? durationMs,
     Object? plantedItemIds = _unset,
     Object? baitItemIds = _unset,
+    Object? usedCompost = _unset,
   }) {
     return LocationTimer(
       locationId: locationId ?? this.locationId,
@@ -671,6 +678,7 @@ class LocationTimer {
           ? this.plantedItemIds
           : plantedItemIds as List<String>?,
       baitItemIds: baitItemIds == _unset ? this.baitItemIds : baitItemIds as List<String>?,
+      usedCompost: usedCompost == _unset ? this.usedCompost : usedCompost as bool?,
     );
   }
 }

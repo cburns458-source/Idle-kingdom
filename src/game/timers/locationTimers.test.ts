@@ -5,12 +5,16 @@ import { prepareDatabase } from '../data/loadDatabase'
 import { createNewSave } from '../save/saveStore'
 import {
   BOTANY_PATCH_LOCATIONS,
+  botanySuccessChancePercent,
   canPlaceTrap,
   canPlantBotanySeed,
   collectLocationTimer,
   CARROT_SEED_ITEM_ID,
+  COMPOST_ITEM_ID,
+  compostCollectActivityAt,
   ELDER_BERRY_SEED_ITEM_ID,
   GRAPE_SEED_ITEM_ID,
+  locationHasCompostCollect,
   MOONBLOSSOM_SEED_ITEM_ID,
   parseBotanySeedSpec,
   POTATO_SEED_ITEM_ID,
@@ -171,8 +175,8 @@ describe('locationTimers', () => {
     expect(timerIsReady(timer!, Date.parse('2026-01-01T01:00:00.000Z'))).toBe(false)
     expect(timerIsReady(timer!, Date.parse('2026-01-01T03:00:00.000Z'))).toBe(true)
 
-    // Produce rolls first (3x), then seed-return rolls (3x).
-    const rolls = [0, 0, 0, 0.99, 0.99, 0.99]
+    // Success (3x), produce (3x), then seed-return (3x).
+    const rolls = [0, 0, 0, 0, 0, 0, 0.99, 0.99, 0.99]
     let i = 0
     const collected = collectLocationTimer(
       launch,
@@ -516,7 +520,7 @@ describe('locationTimers', () => {
     expect(timer?.outputQuantity).toBe(2)
     expect(timer?.xpReward).toBe(1600)
 
-    const rolls = [0, 0, 0.99, 0.99]
+    const rolls = [0, 0, 0, 0, 0.99, 0.99]
     let i = 0
     const collected = collectLocationTimer(
       launch,
@@ -584,8 +588,8 @@ describe('locationTimers', () => {
     ], 0)
     expect(planted.ok).toBe(true)
     if (!planted.ok) return
-    // 3 produce rolls, 3 successful returns, then potato/grape/carrot mutations.
-    const rolls = [0, 0, 0, 0, 0.6, 0, 0.6, 0, 0.6]
+    // 3 successes, 3 produce rolls, 3 successful returns, then potato/grape/carrot mutations.
+    const rolls = [0, 0, 0, 0, 0, 0, 0, 0.6, 0, 0.6, 0, 0.6]
     let i = 0
     const collected = collectLocationTimer(
       launch,
@@ -607,5 +611,128 @@ describe('locationTimers', () => {
     expect(parseBotanySeedSpec(launch, MOONBLOSSOM_SEED_ITEM_ID)?.requiresLevel).toBe(70)
     expect(parseBotanySeedSpec(launch, TURNIP_SEED_ITEM_ID)?.xp).toBe(6000)
     expect(parseBotanySeedSpec(launch, TURNIP_SEED_ITEM_ID)?.requiresLevel).toBe(27)
+  })
+
+  it('computes live-plant chance from level, requirement, and compost', () => {
+    expect(botanySuccessChancePercent(1, 1)).toBe(25.5)
+    expect(botanySuccessChancePercent(10, 1)).toBe(34.5)
+    expect(botanySuccessChancePercent(10, 10)).toBe(30)
+    expect(botanySuccessChancePercent(10, 10, true)).toBe(55)
+    expect(botanySuccessChancePercent(200, 1, true)).toBe(100)
+  })
+
+  it('offers compost collect at every botany patch except The Shallows', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    expect(locationHasCompostCollect('LOC-0001')).toBe(true)
+    expect(locationHasCompostCollect('LOC-0043')).toBe(false)
+    expect(locationHasCompostCollect('LOC-0002')).toBe(false)
+    expect(compostCollectActivityAt(launch, 'LOC-0001')?.['Activity ID']).toBe('ACT-0062')
+    expect(compostCollectActivityAt(launch, 'LOC-0043')).toBeUndefined()
+    expect(launch.Items.some((item) => item['Item ID'] === COMPOST_ITEM_ID)).toBe(true)
+  })
+
+  it('spends compost when planting and only awards lived plants', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const save = {
+      ...createNewSave(launch),
+      currentLocationId: 'LOC-0031',
+      skills: createNewSave(launch).skills.map((row) =>
+        row.skillId === 'SKL-0014' ? { ...row, level: 1, xp: 0 } : row,
+      ),
+      inventory: [
+        { itemId: POTATO_SEED_ITEM_ID, quantity: 2 },
+        { itemId: COMPOST_ITEM_ID, quantity: 3 },
+      ],
+      quests: [{ questId: 'QST-0011', status: 'completed', progress: 1 }],
+    }
+    const refused = plantBotanySelection(launch, save, [POTATO_SEED_ITEM_ID], 0, true)
+    expect(refused.ok).toBe(true)
+    if (!refused.ok) return
+    expect(refused.save.inventory.find((stack) => stack.itemId === COMPOST_ITEM_ID)?.quantity).toBe(2)
+    expect(timerAtLocationKind(refused.save, 'LOC-0031', 'botany')?.usedCompost).toBe(true)
+
+    const short = plantBotanySelection(
+      launch,
+      { ...save, inventory: [{ itemId: POTATO_SEED_ITEM_ID, quantity: 1 }] },
+      [POTATO_SEED_ITEM_ID],
+      0,
+      true,
+    )
+    expect(short.ok).toBe(false)
+    if (short.ok) return
+    expect(short.reason).toBe('You need 1 compost for this planting.')
+
+    const kelp = plantBotanySelection(
+      launch,
+      {
+        ...save,
+        currentLocationId: 'LOC-0043',
+        skills: save.skills.map((row) =>
+          row.skillId === 'SKL-0014' ? { ...row, level: 40, xp: 0 } : row,
+        ),
+        inventory: [
+          { itemId: 'ITEM-0350', quantity: 1 },
+          { itemId: COMPOST_ITEM_ID, quantity: 5 },
+        ],
+      },
+      ['ITEM-0350'],
+      0,
+      true,
+    )
+    expect(kelp.ok).toBe(false)
+    if (kelp.ok) return
+    expect(kelp.reason).toBe('Compost cannot be used on kelp.')
+
+    const planted = plantBotanySelection(launch, save, [POTATO_SEED_ITEM_ID, POTATO_SEED_ITEM_ID], 0)
+    expect(planted.ok).toBe(true)
+    if (!planted.ok) return
+    const rolls = [0.99, 0.99]
+    let i = 0
+    const collected = collectLocationTimer(
+      launch,
+      planted.save,
+      'LOC-0031',
+      'botany',
+      10800 * 1000,
+      () => rolls[i++] ?? 0,
+    )
+    expect(collected.ok).toBe(true)
+    if (!collected.ok) return
+    expect(collected.loot).toEqual([])
+    expect(collected.xpGained).toBe(0)
+  })
+
+  it('mutates only from seeds that lived', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const save = {
+      ...createNewSave(launch),
+      currentLocationId: 'LOC-0031',
+      skills: createNewSave(launch).skills.map((row) =>
+        row.skillId === 'SKL-0014' ? { ...row, level: 55, xp: 0 } : row,
+      ),
+      inventory: [
+        { itemId: POTATO_SEED_ITEM_ID, quantity: 1 },
+        { itemId: CARROT_SEED_ITEM_ID, quantity: 1 },
+      ],
+    }
+    const planted = plantBotanySelection(launch, save, [POTATO_SEED_ITEM_ID, CARROT_SEED_ITEM_ID], 0)
+    expect(planted.ok).toBe(true)
+    if (!planted.ok) return
+    // Potato lives + produce, carrot dies, potato seed returns (no mutation roll).
+    const rolls = [0, 0, 0.99, 0]
+    let i = 0
+    const collected = collectLocationTimer(
+      launch,
+      planted.save,
+      'LOC-0031',
+      'botany',
+      10800 * 1000,
+      () => rolls[i++] ?? 0,
+    )
+    expect(collected.ok).toBe(true)
+    if (!collected.ok) return
+    expect(collected.loot.some((row) => row.itemId === TURNIP_SEED_ITEM_ID)).toBe(false)
+    expect(collected.loot.some((row) => row.itemId === POTATO_SEED_ITEM_ID)).toBe(true)
+    expect(collected.xpGained).toBe(1000)
   })
 })

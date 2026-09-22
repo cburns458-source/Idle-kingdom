@@ -84,6 +84,15 @@ describe('bank storage', () => {
     expect(gold.reason).toBe('Gold cannot be deposited.')
     expect(stackIsUnbankableGold({ itemId: GOLD_ITEM_ID })).toBe(true)
 
+    const compost = depositToBank(
+      { ...save, inventory: [{ itemId: 'ITEM-0377', quantity: 4 }] },
+      0,
+      4,
+    )
+    expect(compost.ok).toBe(false)
+    if (compost.ok) return
+    expect(compost.reason).toBe('Compost cannot be deposited.')
+
     const withdrawn = withdrawFromBank(save, 0, 2)
     expect(withdrawn.ok).toBe(true)
     if (!withdrawn.ok) return

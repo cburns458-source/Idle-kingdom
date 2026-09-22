@@ -134,6 +134,29 @@ void main() {
     expect(tools.any((row) => row.displayName == 'Magic Net'), isFalse);
   });
 
+  test('botany lists plants by kind without seed or sapling words', () {
+    final botany = skillMenuView(db, botanySkillMenuId);
+    expect(botany.tabs.map((tab) => tab.label), ['Flowers', 'Crops', 'Herbs', 'Trees']);
+    final flowers = botany.tabs.firstWhere((tab) => tab.id == 'flowers').sections.first.entries;
+    final crops = botany.tabs.firstWhere((tab) => tab.id == 'crops').sections.first.entries;
+    final herbs = botany.tabs.firstWhere((tab) => tab.id == 'herbs').sections.first.entries;
+    final trees = botany.tabs.firstWhere((tab) => tab.id == 'trees').sections.first.entries;
+    expect(botany.tabs.any((tab) => tab.id == 'fruit_trees'), isFalse);
+    expect(crops.any((row) => row.displayName == 'Potato'), isTrue);
+    expect(crops.any((row) => row.displayName == 'Grape'), isTrue);
+    expect(herbs.any((row) => row.displayName == 'Kelp'), isTrue);
+    expect(flowers.any((row) => row.displayName == 'Moonblossom'), isTrue);
+    expect(trees.any((row) => row.displayName == 'Cedar'), isTrue);
+    expect(
+      botany.tabs.every(
+        (tab) => tab.sections.first.entries.every(
+          (row) => !RegExp(r'Seed|Sapling|Spores').hasMatch(row.displayName),
+        ),
+      ),
+      isTrue,
+    );
+  });
+
   test('thievery splits into Shops and Lockpicking', () {
     final thievery = skillMenuView(db, thieverySkillMenuId);
     expect(thievery.tabs.map((tab) => tab.label), ['Shops', 'Lockpicking']);

@@ -6611,6 +6611,23 @@
       "Notes": null,
       "Base Sell Value": 450,
       "Stackable": null
+    },
+    {
+      "Item ID": "ITEM-0377",
+      "Internal Key": "compost",
+      "Display Name": "Compost",
+      "Category": "Resource",
+      "Subtype": "Fertilizer",
+      "Associated Skill ID": "SKL-0014",
+      "Equipment Slot ID": null,
+      "Functional / Source Tags": "unbankable; botany_compost",
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Description": "Patch fertilizer. Spend it when planting to give each seed a better chance to live.",
+      "Icon Asset Key": "wild_roots",
+      "Notes": null,
+      "Base Sell Value": 0,
+      "Stackable": null
     }
   ],
   "Equipment": [
@@ -12330,6 +12347,84 @@
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Notes": null
+    },
+    {
+      "Activity ID": "ACT-0062",
+      "Internal Key": "collect_compost_farm",
+      "Contextual Name": "Collect compost",
+      "Location ID": "LOC-0001",
+      "Description": "Scoop compost from the farm patch.",
+      "Danger Warning Combat Level": null,
+      "Pool ID": "POOL-0049",
+      "Pool Internal Key": "collect_compost",
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Notes": "Patches-tab compost gather. Hidden from the Activities tab."
+    },
+    {
+      "Activity ID": "ACT-0063",
+      "Internal Key": "collect_compost_courtyard",
+      "Contextual Name": "Collect compost",
+      "Location ID": "LOC-0014",
+      "Description": "Scoop compost from the courtyard plot.",
+      "Danger Warning Combat Level": null,
+      "Pool ID": "POOL-0049",
+      "Pool Internal Key": "collect_compost",
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Notes": "Patches-tab compost gather. Hidden from the Activities tab."
+    },
+    {
+      "Activity ID": "ACT-0064",
+      "Internal Key": "collect_compost_outskirts",
+      "Contextual Name": "Collect compost",
+      "Location ID": "LOC-0031",
+      "Description": "Scoop compost from the outskirts patch.",
+      "Danger Warning Combat Level": null,
+      "Pool ID": "POOL-0049",
+      "Pool Internal Key": "collect_compost",
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Notes": "Patches-tab compost gather. Hidden from the Activities tab."
+    },
+    {
+      "Activity ID": "ACT-0065",
+      "Internal Key": "collect_compost_mountains",
+      "Contextual Name": "Collect compost",
+      "Location ID": "LOC-0006",
+      "Description": "Scoop compost from the mountain patch.",
+      "Danger Warning Combat Level": null,
+      "Pool ID": "POOL-0049",
+      "Pool Internal Key": "collect_compost",
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Notes": "Patches-tab compost gather. Hidden from the Activities tab."
+    },
+    {
+      "Activity ID": "ACT-0066",
+      "Internal Key": "collect_compost_temple",
+      "Contextual Name": "Collect compost",
+      "Location ID": "LOC-0036",
+      "Description": "Scoop compost from the temple patch.",
+      "Danger Warning Combat Level": null,
+      "Pool ID": "POOL-0049",
+      "Pool Internal Key": "collect_compost",
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Notes": "Patches-tab compost gather. Hidden from the Activities tab."
+    },
+    {
+      "Activity ID": "ACT-0067",
+      "Internal Key": "collect_compost_meadow",
+      "Contextual Name": "Collect compost",
+      "Location ID": "LOC-0009",
+      "Description": "Scoop compost from the meadow patch.",
+      "Danger Warning Combat Level": null,
+      "Pool ID": "POOL-0049",
+      "Pool Internal Key": "collect_compost",
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Notes": "Patches-tab compost gather. Hidden from the Activities tab."
     }
   ],
   "PoolEntries": [
@@ -13089,6 +13184,14 @@
       "Pool Entry ID": "PEN-0102",
       "Pool ID": "POOL-0048",
       "Action ID": "ACN-0192",
+      "Weight": 100,
+      "Status": "Confirmed",
+      "Notes": null
+    },
+    {
+      "Pool Entry ID": "PEN-0103",
+      "Pool ID": "POOL-0049",
+      "Action ID": "ACN-0199",
       "Weight": 100,
       "Status": "Confirmed",
       "Notes": null
@@ -15824,6 +15927,27 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": "Production is hard-gated by Proficiency Level. Water + kitchen scraps, infinite in a kitchen."
+    },
+    {
+      "Action ID": "ACN-0199",
+      "Internal Key": "collect_compost",
+      "Display Name": "Collect compost",
+      "Category": "Gathering",
+      "Relevant Skill ID": "SKL-0014",
+      "Target Type": "Item",
+      "Target ID": "ITEM-0377",
+      "Proficiency Level": 1,
+      "Base Duration Seconds": 12,
+      "XP Reward": 0,
+      "Guaranteed Gold": 0,
+      "Drop Chance": 100,
+      "Reward Table ID": "RWT-0156",
+      "Secondary Drop Chance": null,
+      "Secondary Reward Table ID": null,
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Notes": "Same compost gather at every botany patch except The Shallows.",
+      "Sprite Asset Key": "actions/acn_gather_wild_roots.webp"
     }
   ],
   "Requirements": [
@@ -20831,6 +20955,21 @@
       "XP Amount": null,
       "Status": "Confirmed",
       "Notes": "Guaranteed 1 coal"
+    },
+    {
+      "Reward Entry ID": "RWE-T01560",
+      "Reward Table ID": "RWT-0156",
+      "Reward Table Name": "Collect Compost",
+      "Purpose": "Primary output",
+      "Reward Type": "Item",
+      "Reward ID / Value": "ITEM-0377",
+      "Weight": 100,
+      "Minimum Quantity": 1,
+      "Maximum Quantity": 1,
+      "Skill ID": null,
+      "XP Amount": null,
+      "Status": "Confirmed",
+      "Notes": "Guaranteed 1 compost every 12s"
     }
   ],
   "Recipes": [

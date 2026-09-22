@@ -209,8 +209,8 @@ class _LocationViewState extends State<LocationView> {
       options: options,
       origin: popupOrigin(buttonContext),
     );
-    if (chosen == null || chosen.isEmpty || !buttonContext.mounted) return;
-    controller.plantBotanySelectionHere(chosen);
+    if (chosen == null || chosen.seedItemIds.isEmpty || !buttonContext.mounted) return;
+    controller.plantBotanySelectionHere(chosen.seedItemIds, usedCompost: chosen.usedCompost);
   }
 
   Future<void> _openPotBaitMenu(BuildContext buttonContext, String locationId) async {
@@ -606,7 +606,10 @@ class _LocationViewState extends State<LocationView> {
     }
 
     add('Activities', _activities(locationId));
-    add('Patches', _locationTimers(locationId, kind: 'botany'));
+    add('Patches', [
+      ..._locationTimers(locationId, kind: 'botany'),
+      ..._compostCollect(locationId),
+    ]);
     add('Traps', _locationTimers(locationId, kind: 'fishing_pot'));
     add('Shops', _shops(locationId));
     add('People', _people(locationId));
@@ -656,7 +659,9 @@ class _LocationViewState extends State<LocationView> {
   List<Widget> _activities(String locationId) {
     final activities = (controller.indexes.activitiesByLocationId[locationId] ?? const [])
         .where(
-          (activity) => activityVisibleForSave(controller.db, controller.save, activity.activityId),
+          (activity) =>
+              !isCompostCollectActivity(activity) &&
+              activityVisibleForSave(controller.db, controller.save, activity.activityId),
         )
         .toList();
     if (activities.isEmpty) return const [];
@@ -798,6 +803,29 @@ class _LocationViewState extends State<LocationView> {
     );
 
     return cards;
+  }
+
+  List<Widget> _compostCollect(String locationId) {
+    if (!locationHasCompostCollect(locationId)) return const [];
+    if (!botanyPatchUnlocked(controller.save, locationId)) return const [];
+    if (locationId == courtyardLocationId && !courtyardBotanyUnlocked(controller.save)) {
+      return const [];
+    }
+    final activity = compostCollectActivityAt(controller.db, locationId);
+    if (activity == null) return const [];
+    if (!activityVisibleForSave(controller.db, controller.save, activity.activityId)) {
+      return const [];
+    }
+    return [
+      Padding(
+        padding: const EdgeInsets.only(bottom: 8),
+        child: _ActivityCard(
+          controller: controller,
+          activity: activity,
+          onOpenWorkshop: (buttonContext) => _openWorkshop(activity, buttonContext),
+        ),
+      ),
+    ];
   }
 
   List<Widget> _blessing() {

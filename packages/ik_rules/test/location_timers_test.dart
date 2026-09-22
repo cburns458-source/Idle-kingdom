@@ -370,7 +370,7 @@ void main() {
       grapeSeedItemId,
     ], nowMs: 0);
     expect(planted.ok, isTrue);
-    final rolls = <num>[0, 0, 0, 0, 0.6, 0, 0.6, 0, 0.6];
+    final rolls = <num>[0, 0, 0, 0, 0, 0, 0, 0.6, 0, 0.6, 0, 0.6];
     var i = 0;
     final collected = collectLocationTimer(
       db,
@@ -390,5 +390,122 @@ void main() {
     expect(parseBotanySeedSpec(db, moonblossomSeedItemId)?.requiresLevel, 70);
     expect(parseBotanySeedSpec(db, turnipSeedItemId)?.xp, 6000);
     expect(parseBotanySeedSpec(db, turnipSeedItemId)?.requiresLevel, 27);
+  });
+
+  test('computes live-plant chance from level, requirement, and compost', () {
+    expect(botanySuccessChancePercent(1, 1), 25.5);
+    expect(botanySuccessChancePercent(10, 1), 34.5);
+    expect(botanySuccessChancePercent(10, 10), 30);
+    expect(botanySuccessChancePercent(10, 10, usedCompost: true), 55);
+    expect(botanySuccessChancePercent(200, 1, usedCompost: true), 100);
+  });
+
+  test('offers compost collect at every botany patch except The Shallows', () {
+    expect(locationHasCompostCollect('LOC-0001'), isTrue);
+    expect(locationHasCompostCollect('LOC-0043'), isFalse);
+    expect(locationHasCompostCollect('LOC-0002'), isFalse);
+    expect(compostCollectActivityAt(db, 'LOC-0001')?.activityId, 'ACT-0062');
+    expect(compostCollectActivityAt(db, 'LOC-0043'), isNull);
+    expect(db.items.any((item) => item.itemId == compostItemId), isTrue);
+  });
+
+  test('spends compost when planting and only awards lived plants', () {
+    final save = createNewSave(db, 0).copyWith(
+      currentLocationId: 'LOC-0031',
+      skills: const [SkillProgress(skillId: 'SKL-0014', level: 1, xp: 0)],
+      inventory: const [
+        InventoryStack(itemId: potatoSeedItemId, quantity: 2),
+        InventoryStack(itemId: compostItemId, quantity: 3),
+      ],
+      quests: const [QuestProgress(questId: 'QST-0011', status: 'completed', progress: 1)],
+    );
+    final planted = plantBotanySelection(
+      db,
+      save,
+      const [potatoSeedItemId],
+      nowMs: 0,
+      usedCompost: true,
+    );
+    expect(planted.ok, isTrue);
+    expect(
+      planted.save!.inventory.where((stack) => stack.itemId == compostItemId).first.quantity,
+      2,
+    );
+    expect(timerAtLocationKind(planted.save!, 'LOC-0031', 'botany')?.usedCompost, isTrue);
+
+    final short = plantBotanySelection(
+      db,
+      save.copyWith(inventory: const [InventoryStack(itemId: potatoSeedItemId, quantity: 1)]),
+      const [potatoSeedItemId],
+      nowMs: 0,
+      usedCompost: true,
+    );
+    expect(short.ok, isFalse);
+    expect(short.reason, 'You need 1 compost for this planting.');
+
+    final kelp = plantBotanySelection(
+      db,
+      save.copyWith(
+        currentLocationId: 'LOC-0043',
+        skills: const [SkillProgress(skillId: 'SKL-0014', level: 40, xp: 0)],
+        inventory: const [
+          InventoryStack(itemId: 'ITEM-0350', quantity: 1),
+          InventoryStack(itemId: compostItemId, quantity: 5),
+        ],
+      ),
+      const ['ITEM-0350'],
+      nowMs: 0,
+      usedCompost: true,
+    );
+    expect(kelp.ok, isFalse);
+    expect(kelp.reason, 'Compost cannot be used on kelp.');
+
+    final dying = plantBotanySelection(db, save, const [
+      potatoSeedItemId,
+      potatoSeedItemId,
+    ], nowMs: 0);
+    expect(dying.ok, isTrue);
+    var i = 0;
+    final collected = collectLocationTimer(
+      db,
+      dying.save!,
+      'LOC-0031',
+      'botany',
+      nowMs: 10800 * 1000,
+      random: () => <num>[0.99, 0.99][i++],
+    );
+    expect(collected.ok, isTrue);
+    expect(collected.loot, isEmpty);
+    expect(collected.xpGained, 0);
+  });
+
+  test('mutates only from seeds that lived', () {
+    final save = createNewSave(db, 0).copyWith(
+      currentLocationId: 'LOC-0031',
+      skills: const [SkillProgress(skillId: 'SKL-0014', level: 55, xp: 0)],
+      inventory: const [
+        InventoryStack(itemId: potatoSeedItemId, quantity: 1),
+        InventoryStack(itemId: carrotSeedItemId, quantity: 1),
+      ],
+    );
+    final planted = plantBotanySelection(db, save, const [
+      potatoSeedItemId,
+      carrotSeedItemId,
+    ], nowMs: 0);
+    expect(planted.ok, isTrue);
+    var i = 0;
+    final rolls = <num>[0, 0, 0.99, 0];
+    final collected = collectLocationTimer(
+      db,
+      planted.save!,
+      'LOC-0031',
+      'botany',
+      nowMs: 10800 * 1000,
+      random: () => rolls[i++],
+    );
+    expect(collected.ok, isTrue);
+    expect(collected.loot.any((row) => row.itemId == turnipSeedItemId), isFalse);
+    expect(collected.loot.any((row) => row.itemId == potatoSeedItemId), isTrue);
+    expect(collected.xpGained, 1000);
   });
 }

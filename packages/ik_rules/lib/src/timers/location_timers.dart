@@ -31,6 +31,12 @@ const String elderBerrySeedItemId = 'ITEM-0371';
 const String hagrootSeedItemId = 'ITEM-0373';
 const String emberblossomSeedItemId = 'ITEM-0375';
 const String shallowsLocationId = 'LOC-0043';
+const String compostItemId = 'ITEM-0377';
+const String compostCollectPoolId = 'POOL-0049';
+const String compostCollectActionId = 'ACN-0199';
+const num compostSeedCost = 1;
+const num compostSaplingCost = 5;
+const String botanyAllDiedTitle = 'Oh no everything died!';
 
 /// Parent pairs that can return a different seed when both are in the planted pool.
 class BotanySeedMutation {
@@ -74,6 +80,47 @@ String rollReturnedBotanySeed(
   return products[index];
 }
 
+/// Strip Seed / Sapling / Spores so skill menus and plant lists show the plant.
+String botanyPlantDisplayName(String name) {
+  final stripped = name.replaceFirst(
+    RegExp(r'\s+(Seed|Sapling|Spores)$', caseSensitive: false),
+    '',
+  );
+  final trimmed = stripped.trim();
+  return trimmed.isEmpty ? name : trimmed;
+}
+
+/// Live-plant chance, 0–100. Compost adds +25. Already-growing plots treat missing compost as off.
+num botanySuccessChancePercent(num botanyLevel, num requiredLevel, {bool usedCompost = false}) {
+  final level = botanyLevel < 0 ? 0 : botanyLevel;
+  final required = requiredLevel < 1 ? 1 : requiredLevel;
+  final extra = level - required;
+  final chance = 25 + 0.5 * level + 0.5 * (extra < 0 ? 0 : extra) + (usedCompost ? 25 : 0);
+  return chance > 100 ? 100 : chance;
+}
+
+num compostCostForSpecs(Iterable<BotanySeedSpec> specs) {
+  var cost = 0.0;
+  for (final spec in specs) {
+    cost += spec.isSapling ? compostSaplingCost : compostSeedCost;
+  }
+  return cost;
+}
+
+num inventoryCompostCount(PlayerSave save) {
+  return save.inventory
+      .where((stack) => stack.itemId == compostItemId)
+      .fold<num>(0, (sum, stack) => sum + stack.quantity);
+}
+
+bool isCompostCollectActivity(ActivityRow activity) => activity.poolId == compostCollectPoolId;
+
+ActivityRow? compostCollectActivityAt(GameDatabase db, String locationId) {
+  return db.activities.firstWhereOrNull(
+    (row) => row.locationId == locationId && isCompostCollectActivity(row),
+  );
+}
+
 const String fishingPotItemId = 'ITEM-0347';
 const int potBaitCount = 3;
 const int potCatchMin = 3;
@@ -114,6 +161,9 @@ const Set<String> botanyPatchLocations = <String>{
   'LOC-0036',
   'LOC-0009',
 };
+
+bool locationHasCompostCollect(String locationId) =>
+    botanyPatchLocations.contains(locationId) && locationId != shallowsLocationId;
 
 const Set<String> fishingPotLocations = <String>{'LOC-0003', 'LOC-0004'};
 
@@ -244,7 +294,7 @@ List<PlantableBotanyOption> listPlantableBotanyOptions(
     options.add(
       PlantableBotanyOption(
         itemId: stack.itemId,
-        displayName: item?.displayName ?? stack.itemId,
+        displayName: botanyPlantDisplayName(item?.displayName ?? stack.itemId),
         spec: spec,
         owned: owned,
         plantQuantity: gate.ok ? gate.quantity : desired,
@@ -460,14 +510,40 @@ List<RecipeIngredient> _countedIngredients(List<String> itemIds) {
   PlayerSave save,
   List<String> seedItemIds, {
   required num nowMs,
+  bool usedCompost = false,
 }) {
   final loc = save.currentLocationId;
   final gate = canPlantBotanySelection(db, save, seedItemIds, locationId: loc);
   if (!gate.ok) return (ok: false, save: null, reason: gate.reason);
   final plantedItemIds = gate.plantedItemIds;
   final specs = [for (final itemId in plantedItemIds) parseBotanySeedSpec(db, itemId)!];
-  final removed = removeIngredients(save, _countedIngredients(plantedItemIds));
-  if (removed == null) return (ok: false, save: null, reason: 'You do not have that seed.');
+  if (usedCompost) {
+    if (specs.any((spec) => spec.shallowsOnly)) {
+      return (ok: false, save: null, reason: 'Compost cannot be used on kelp.');
+    }
+    final cost = compostCostForSpecs(specs);
+    if (inventoryCompostCount(save) < cost) {
+      return (
+        ok: false,
+        save: null,
+        reason: cost == 1
+            ? 'You need 1 compost for this planting.'
+            : 'You need ${cost.round()} compost for this planting.',
+      );
+    }
+  }
+  final consumed = [
+    ..._countedIngredients(plantedItemIds),
+    if (usedCompost) RecipeIngredient(itemId: compostItemId, quantity: compostCostForSpecs(specs)),
+  ];
+  final removed = removeIngredients(save, consumed);
+  if (removed == null) {
+    return (
+      ok: false,
+      save: null,
+      reason: usedCompost ? 'You do not have enough compost.' : 'You do not have that seed.',
+    );
+  }
   final first = specs.first;
   final started = DateTime.fromMillisecondsSinceEpoch(nowMs.round()).toIso8601String();
   var grow = specs.first.growSeconds;
@@ -487,6 +563,7 @@ List<RecipeIngredient> _countedIngredients(List<String> itemIds) {
     startedAt: started,
     durationMs: grow * 1000,
     plantedItemIds: plantedItemIds,
+    usedCompost: usedCompost ? true : null,
   );
   var next = discoverTimerSpotsForLocation(
     removed.copyWith(
@@ -881,8 +958,12 @@ LocationTimerCollectResult collectLocationTimer(
             timer.outputQuantity > 0 ? timer.outputQuantity.round().clamp(1, 99) : 1,
             timer.inputItemId,
           );
+    final botanyLevel = getSkillProgress(save, botanySkillId).level;
+    final usedCompost = timer.usedCompost == true;
+    final successfulIds = <String>[];
     final produce = <String, num>{};
     final returned = <String, num>{};
+    var harvestXp = 0.0;
     for (final seedItemId in plantedIds) {
       final spec = parseBotanySeedSpec(db, seedItemId);
       final outputId = spec?.outputItemId ?? timer.outputItemId;
@@ -892,14 +973,23 @@ LocationTimerCollectResult collectLocationTimer(
           reason: 'Botany timer is missing its crop.',
         );
       }
+      final chance = botanySuccessChancePercent(
+        botanyLevel,
+        spec?.requiresLevel ?? 1,
+        usedCompost: usedCompost,
+      );
+      if (rng() * 100 >= chance) continue;
+      successfulIds.add(seedItemId);
       produce[outputId] = (produce[outputId] ?? 0) + _rollInclusive(rng, 1, 5).round();
+      harvestXp += spec?.xp ?? 0;
     }
-    for (final seedItemId in plantedIds) {
+    for (final seedItemId in successfulIds) {
       if (rng() < 0.5) {
-        final returnedId = rollReturnedBotanySeed(plantedIds, seedItemId, rng);
+        final returnedId = rollReturnedBotanySeed(successfulIds, seedItemId, rng);
         returned[returnedId] = (returned[returnedId] ?? 0) + 1;
       }
     }
+    xpGained = harvestXp;
     for (final entry in produce.entries) {
       grants.add((itemId: entry.key, quantity: entry.value));
     }

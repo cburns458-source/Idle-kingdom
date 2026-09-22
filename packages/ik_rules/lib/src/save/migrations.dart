@@ -853,6 +853,7 @@ final List<SaveMigration> saveMigrations = <SaveMigration>[
       return next;
     },
   ),
+  SaveMigration(fromVersion: 53, toVersion: 54, migrate: (save, _) => _bumped(save, 54)),
 ];
 
 /// Thrown when a save cannot be brought to the current version.

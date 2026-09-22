@@ -27,6 +27,12 @@ export const ELDER_BERRY_SEED_ITEM_ID = 'ITEM-0371'
 export const HAGROOT_SEED_ITEM_ID = 'ITEM-0373'
 export const EMBERBLOSSOM_SEED_ITEM_ID = 'ITEM-0375'
 export const SHALLOWS_LOCATION_ID = 'LOC-0043'
+export const COMPOST_ITEM_ID = 'ITEM-0377'
+export const COMPOST_COLLECT_POOL_ID = 'POOL-0049'
+export const COMPOST_COLLECT_ACTION_ID = 'ACN-0199'
+export const COMPOST_SEED_COST = 1
+export const COMPOST_SAPLING_COST = 5
+export const BOTANY_ALL_DIED_TITLE = 'Oh no everything died!'
 
 /** Parent pairs that can return a different seed when both are in the planted pool. */
 export const BOTANY_SEED_MUTATIONS: ReadonlyArray<{ parents: readonly string[]; product: string }> =
@@ -59,6 +65,51 @@ export function rollReturnedBotanySeed(
   return products[index] ?? returningSeedId
 }
 
+/** Strip Seed / Sapling / Spores so skill menus and plant lists show the plant. */
+export function botanyPlantDisplayName(name: string): string {
+  const stripped = name.replace(/\s+(Seed|Sapling|Spores)$/i, '').trim()
+  return stripped.length > 0 ? stripped : name
+}
+
+/** Live-plant chance, 0–100. Compost adds +25. Already-growing plots treat missing compost as off. */
+export function botanySuccessChancePercent(
+  botanyLevel: number,
+  requiredLevel: number,
+  usedCompost = false,
+): number {
+  const level = Math.max(0, botanyLevel)
+  const required = requiredLevel < 1 ? 1 : requiredLevel
+  const chance = 25 + 0.5 * level + 0.5 * Math.max(0, level - required) + (usedCompost ? 25 : 0)
+  return Math.min(100, chance)
+}
+
+export function compostCostForSpecs(specs: ReadonlyArray<{ isSapling: boolean }>): number {
+  return specs.reduce(
+    (sum, spec) => sum + (spec.isSapling ? COMPOST_SAPLING_COST : COMPOST_SEED_COST),
+    0,
+  )
+}
+
+export function inventoryCompostCount(save: PlayerSave): number {
+  return save.inventory
+    .filter((stack) => stack.itemId === COMPOST_ITEM_ID)
+    .reduce((sum, stack) => sum + stack.quantity, 0)
+}
+
+export function isCompostCollectActivity(activity: {
+  'Pool ID'?: string | null
+  'Internal Key'?: string | null
+  'Location ID'?: string | null
+}): boolean {
+  return activity['Pool ID'] === COMPOST_COLLECT_POOL_ID
+}
+
+export function compostCollectActivityAt(db: GameDatabase, locationId: string) {
+  return db.Activities.find(
+    (row) => row['Location ID'] === locationId && isCompostCollectActivity(row),
+  )
+}
+
 export const FISHING_POT_ITEM_ID = 'ITEM-0347'
 /** @deprecated Use FISHING_POT_ITEM_ID */
 export const FISHING_TRAP_ITEM_ID = FISHING_POT_ITEM_ID
@@ -88,6 +139,10 @@ export const BOTANY_PATCH_LOCATIONS = new Set([
   'LOC-0036',
   'LOC-0009',
 ])
+
+export function locationHasCompostCollect(locationId: string): boolean {
+  return BOTANY_PATCH_LOCATIONS.has(locationId) && locationId !== SHALLOWS_LOCATION_ID
+}
 
 export const FISHING_POT_LOCATIONS = new Set(['LOC-0003', 'LOC-0004'])
 /** @deprecated Use FISHING_POT_LOCATIONS */
@@ -199,7 +254,9 @@ export function listPlantableBotanyOptions(
     const gate = canPlantBotanySeed(db, save, stack.itemId, locationId, desired)
     options.push({
       itemId: stack.itemId,
-      displayName: itemById(db, stack.itemId)?.['Display Name'] ?? stack.itemId,
+      displayName: botanyPlantDisplayName(
+        itemById(db, stack.itemId)?.['Display Name'] ?? stack.itemId,
+      ),
       spec,
       owned,
       plantQuantity: gate.ok ? gate.quantity : desired,
@@ -425,14 +482,36 @@ export function plantBotanySelection(
   save: PlayerSave,
   seedItemIds: string[],
   nowMs: number = Date.now(),
+  usedCompost = false,
 ): { ok: true; save: PlayerSave } | { ok: false; reason: string } {
   const locationId = save.currentLocationId
   const gate = canPlantBotanySelection(db, save, seedItemIds, locationId)
   if (!gate.ok) return { ok: false, reason: gate.reason }
   const plantedItemIds = gate.plantedItemIds
   const specs = plantedItemIds.map((itemId) => parseBotanySeedSpec(db, itemId)!)
-  const removed = removeIngredients(save, countedIngredients(plantedItemIds))
-  if (!removed) return { ok: false, reason: 'You do not have that seed.' }
+  if (usedCompost) {
+    if (specs.some((spec) => spec.shallowsOnly)) {
+      return { ok: false, reason: 'Compost cannot be used on kelp.' }
+    }
+    const cost = compostCostForSpecs(specs)
+    if (inventoryCompostCount(save) < cost) {
+      return {
+        ok: false,
+        reason: cost === 1 ? 'You need 1 compost for this planting.' : `You need ${cost} compost for this planting.`,
+      }
+    }
+  }
+  const consumed = [
+    ...countedIngredients(plantedItemIds),
+    ...(usedCompost ? [{ itemId: COMPOST_ITEM_ID, quantity: compostCostForSpecs(specs) }] : []),
+  ]
+  const removed = removeIngredients(save, consumed)
+  if (!removed) {
+    return {
+      ok: false,
+      reason: usedCompost ? 'You do not have enough compost.' : 'You do not have that seed.',
+    }
+  }
   const first = specs[0]!
   const timer: LocationTimer = {
     locationId,
@@ -445,6 +524,7 @@ export function plantBotanySelection(
     startedAt: new Date(nowMs).toISOString(),
     durationMs: Math.max(...specs.map((spec) => spec.growSeconds)) * 1000,
     plantedItemIds,
+    usedCompost: usedCompost || undefined,
   }
   let next = discoverTimerSpotsForLocation(
     {
@@ -787,20 +867,29 @@ export function collectLocationTimer(
             { length: Math.max(1, timer.outputQuantity > 0 ? Math.round(timer.outputQuantity) : 1) },
             () => timer.inputItemId,
           )
+    const botanyLevel = getSkillProgress(save, BOTANY_SKILL_ID).level
+    const usedCompost = timer.usedCompost === true
+    const successfulIds: string[] = []
     const produce = new Map<string, number>()
     const returned = new Map<string, number>()
+    let harvestXp = 0
     for (const seedItemId of plantedIds) {
       const spec = parseBotanySeedSpec(db, seedItemId)
       const outputItemId = spec?.outputItemId ?? timer.outputItemId
       if (!outputItemId) return { ok: false, reason: 'Botany timer is missing its crop.' }
+      const chance = botanySuccessChancePercent(botanyLevel, spec?.requiresLevel ?? 1, usedCompost)
+      if (random() * 100 >= chance) continue
+      successfulIds.push(seedItemId)
       produce.set(outputItemId, (produce.get(outputItemId) ?? 0) + rollInclusive(random, 1, 5))
+      harvestXp += spec?.xp ?? 0
     }
-    for (const seedItemId of plantedIds) {
+    for (const seedItemId of successfulIds) {
       if (random() < 0.5) {
-        const returnedId = rollReturnedBotanySeed(plantedIds, seedItemId, random)
+        const returnedId = rollReturnedBotanySeed(successfulIds, seedItemId, random)
         returned.set(returnedId, (returned.get(returnedId) ?? 0) + 1)
       }
     }
+    xpGained = harvestXp
     for (const [itemId, quantity] of produce) grants.push({ itemId, quantity })
     for (const [itemId, quantity] of returned) grants.push({ itemId, quantity })
   } else if (timer.kind === 'fishing_pot') {

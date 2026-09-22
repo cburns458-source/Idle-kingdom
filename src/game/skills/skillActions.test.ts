@@ -202,16 +202,23 @@ describe('skill menu entries', () => {
     expect(tools.some((item) => item.displayName === 'Net')).toBe(false)
   })
 
-  it('lists Botany Seeds and Saplings without grow times', () => {
+  it('lists Botany plants by kind without seed or sapling words', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const botany = skillMenuView(launch, 'SKL-0014')
-    expect(botany.tabs.map((tab) => tab.label)).toEqual(['Seeds', 'Saplings'])
-    const seeds = botany.tabs.find((tab) => tab.id === 'seeds')?.sections[0]?.entries ?? []
-    const saplings = botany.tabs.find((tab) => tab.id === 'saplings')?.sections[0]?.entries ?? []
-    expect(seeds.some((item) => item.displayName === 'Potato Seed')).toBe(true)
-    expect(saplings.some((item) => item.displayName === 'Cedar Sapling')).toBe(true)
-    expect(seeds.every((item) => !/\d+h|\d+m|\d+s/.test(item.displayName))).toBe(true)
-    expect(saplings.every((item) => !/\d+h|\d+m|\d+s/.test(item.displayName))).toBe(true)
+    expect(botany.tabs.map((tab) => tab.label)).toEqual(['Flowers', 'Crops', 'Herbs', 'Trees'])
+    const flowers = botany.tabs.find((tab) => tab.id === 'flowers')?.sections[0]?.entries ?? []
+    const crops = botany.tabs.find((tab) => tab.id === 'crops')?.sections[0]?.entries ?? []
+    const herbs = botany.tabs.find((tab) => tab.id === 'herbs')?.sections[0]?.entries ?? []
+    const trees = botany.tabs.find((tab) => tab.id === 'trees')?.sections[0]?.entries ?? []
+    expect(botany.tabs.some((tab) => tab.id === 'fruit_trees')).toBe(false)
+    expect(crops.some((item) => item.displayName === 'Potato')).toBe(true)
+    expect(crops.some((item) => item.displayName === 'Grape')).toBe(true)
+    expect(herbs.some((item) => item.displayName === 'Kelp')).toBe(true)
+    expect(flowers.some((item) => item.displayName === 'Moonblossom')).toBe(true)
+    expect(trees.some((item) => item.displayName === 'Cedar')).toBe(true)
+    expect(botany.tabs.every((tab) => tab.sections[0]?.entries.every((item) => !/Seed|Sapling|Spores/.test(item.displayName)))).toBe(true)
+    expect(crops.every((item) => !/\d+h|\d+m|\d+s/.test(item.displayName))).toBe(true)
+    expect(trees.every((item) => !/\d+h|\d+m|\d+s/.test(item.displayName))).toBe(true)
   })
 
   it('splits Thievery into Shops and Lockpicking tabs', () => {

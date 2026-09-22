@@ -10,7 +10,11 @@ import {
   isEnchantmentOutput,
   projectSkillRequirements,
 } from '../projects/projects'
-import { FISHING_POT_ITEM_ID, POT_FISH_BY_LOCATION } from '../timers/locationTimers'
+import {
+  botanyPlantDisplayName,
+  FISHING_POT_ITEM_ID,
+  POT_FISH_BY_LOCATION,
+} from '../timers/locationTimers'
 
 export const ESSENCE_ITEM_ID = 'ITEM-0011'
 export const MINING_SKILL_ID = 'SKL-0002'
@@ -345,34 +349,66 @@ function thieveryTabs(db: GameDatabase): SkillMenuTab[] {
   return [listTab('shops', 'Shops', shops), listTab('lockpicking', 'Lockpicking', lockpicking)]
 }
 
-function botanyPlantEntries(db: GameDatabase, saplings: boolean): SkillMenuListItem[] {
-  const needle = saplings ? 'botany_sapling' : 'botany_seed'
-  const entries: SkillMenuListItem[] = []
+const BOTANY_CROP_SEED_IDS = new Set([
+  'ITEM-0324',
+  'ITEM-0339',
+  'ITEM-0369',
+  'ITEM-0340',
+  'ITEM-0371',
+])
+const BOTANY_HERB_SEED_IDS = new Set([
+  'ITEM-0333',
+  'ITEM-0334',
+  'ITEM-0336',
+  'ITEM-0373',
+  'ITEM-0350',
+])
+const BOTANY_FLOWER_SEED_IDS = new Set(['ITEM-0337', 'ITEM-0375'])
+
+function botanyTabIdForPlant(itemId: string, tags: string): string {
+  if (BOTANY_CROP_SEED_IDS.has(itemId)) return 'crops'
+  if (BOTANY_HERB_SEED_IDS.has(itemId)) return 'herbs'
+  if (BOTANY_FLOWER_SEED_IDS.has(itemId)) return 'flowers'
+  if (tags.includes('botany_sapling')) return 'trees'
+  return 'fruit_trees'
+}
+
+function botanyTabs(db: GameDatabase): SkillMenuTab[] {
+  const buckets: Record<string, SkillMenuListItem[]> = {
+    flowers: [],
+    crops: [],
+    herbs: [],
+    trees: [],
+    fruit_trees: [],
+  }
   for (const item of db.Items) {
     if (item.Status !== 'Confirmed' && item.Status !== 'Planned') continue
     if (item['Release Phase'] !== 'Launch') continue
     const tags = (item['Functional / Source Tags'] ?? '').toLowerCase()
-    if (!tags.includes(needle)) continue
+    if (!tags.includes('botany_seed') && !tags.includes('botany_sapling')) continue
     const notes = item.Notes ?? ''
     const level = Number(/RequiresLevel:(\d+)/i.exec(notes)?.[1] ?? 1)
-    entries.push({
+    const entry: SkillMenuListItem = {
       id: item['Item ID'],
-      displayName: item['Display Name'],
+      displayName: botanyPlantDisplayName(item['Display Name']),
       level: level < 1 ? 1 : level,
+    }
+    const tabId = botanyTabIdForPlant(item['Item ID'], tags)
+    ;(buckets[tabId] ?? buckets.fruit_trees)!.push(entry)
+  }
+  for (const entries of Object.values(buckets)) {
+    entries.sort((a, b) => {
+      const level = (a.level ?? 0) - (b.level ?? 0)
+      if (level !== 0) return level
+      return a.displayName.localeCompare(b.displayName)
     })
   }
-  entries.sort((a, b) => {
-    const level = (a.level ?? 0) - (b.level ?? 0)
-    if (level !== 0) return level
-    return a.displayName.localeCompare(b.displayName)
-  })
-  return entries
-}
-
-function botanyTabs(db: GameDatabase): SkillMenuTab[] {
   return [
-    listTab('seeds', 'Seeds', botanyPlantEntries(db, false)),
-    listTab('saplings', 'Saplings', botanyPlantEntries(db, true)),
+    listTab('flowers', 'Flowers', buckets.flowers ?? []),
+    listTab('crops', 'Crops', buckets.crops ?? []),
+    listTab('herbs', 'Herbs', buckets.herbs ?? []),
+    listTab('trees', 'Trees', buckets.trees ?? []),
+    listTab('fruit_trees', 'Fruit trees', buckets.fruit_trees ?? []),
   ]
 }
 

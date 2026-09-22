@@ -1,4 +1,4 @@
-export const SAVE_VERSION = 53
+export const SAVE_VERSION = 54
 export const SAVE_STORAGE_KEY = 'idle-kingdoms.demo.save'
 export const STARTING_LOCATION_ID = 'LOC-0001'
 /** Base gold before race kit; race starters grant the real starting gold. */
@@ -273,6 +273,8 @@ export interface LocationTimer {
   plantedItemIds?: string[]
   /** Raw bait fish for a pot; missing or empty means an unbaited equal-pool haul. */
   baitItemIds?: string[]
+  /** Compost was spent at plant time. Missing on older plots means no compost. */
+  usedCompost?: boolean
 }
 
 export interface PlayerSave {

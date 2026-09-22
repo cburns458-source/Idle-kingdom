@@ -19,6 +19,10 @@ int bankSlotsFree(PlayerSave save) => inventorySlotsFree(save.copyWith(inventory
 bool stackIsUnbankableGold(InventoryStack stack) =>
     isGoldCurrencyItem(stack.itemId) && isBlank(stack.enchantmentId);
 
+/// Compost stays in the bag; gold currency still uses [stackIsUnbankableGold].
+bool stackIsUnbankable(InventoryStack stack) =>
+    stackIsUnbankableGold(stack) || stack.itemId == 'ITEM-0377';
+
 bool canFitInBank(
   PlayerSave save,
   String itemId,
@@ -26,7 +30,11 @@ bool canFitInBank(
   String? enchantmentId,
   bool favorite = false,
 ]) {
-  if (isGoldCurrencyItem(itemId) && isBlank(enchantmentId)) return false;
+  if (stackIsUnbankable(
+    InventoryStack(itemId: itemId, quantity: 1, enchantmentId: enchantmentId),
+  )) {
+    return false;
+  }
   return canFitItemQuantity(_withBankAsBag(save), itemId, quantity, enchantmentId, favorite);
 }
 
@@ -88,8 +96,10 @@ BankMoveResult _moveStack({
   );
   if (taken == null) return const BankMoveResult.failed('That stack is not there.');
   final piece = taken.taken;
-  if (stackIsUnbankableGold(piece)) {
-    return const BankMoveResult.failed('Gold cannot be deposited.');
+  if (stackIsUnbankable(piece)) {
+    return BankMoveResult.failed(
+      piece.itemId == 'ITEM-0377' ? 'Compost cannot be deposited.' : 'Gold cannot be deposited.',
+    );
   }
   final favorite = piece.favorite == true;
   final target = toBank

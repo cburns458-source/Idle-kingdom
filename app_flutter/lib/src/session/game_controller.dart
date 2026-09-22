@@ -1071,8 +1071,14 @@ class GameController extends ChangeNotifier {
     announce('Seed planted.');
   }
 
-  void plantBotanySelectionHere(List<String> seedItemIds) {
-    final result = plantBotanySelection(db, save, seedItemIds, nowMs: session.clock());
+  void plantBotanySelectionHere(List<String> seedItemIds, {bool usedCompost = false}) {
+    final result = plantBotanySelection(
+      db,
+      save,
+      seedItemIds,
+      nowMs: session.clock(),
+      usedCompost: usedCompost,
+    );
     if (!result.ok) {
       report(result.reason);
       return;
@@ -1146,7 +1152,9 @@ class GameController extends ChangeNotifier {
     final location = db.locations.where((row) => row.raw['Location ID'] == locationId).firstOrNull;
     final locationName = location?.raw['Display Name'];
     final displayLocation = locationName is String ? locationName : locationId;
+    final died = kind == 'botany' && result.loot.isEmpty && result.xpGained <= 0;
     final title = switch (kind) {
+      'botany' when died => botanyAllDiedTitle,
       'botany' => displayLocation,
       'fishing_pot' => 'Pot haul',
       _ => 'Harvest',

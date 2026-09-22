@@ -864,6 +864,14 @@ export const SAVE_MIGRATIONS: SaveMigration[] = [
       saveVersion: 53,
     }),
   },
+  {
+    fromVersion: 53,
+    toVersion: 54,
+    migrate: (save) => ({
+      ...save,
+      saveVersion: 54,
+    }),
+  },
 ]
 
 export function migrateSave(save: PlayerSave, nowMs: number = Date.now()): PlayerSave {

@@ -637,7 +637,7 @@ Future<void> showQuestRewards(
             Text(spoken, style: const TextStyle(fontSize: 15)),
           ],
           const SizedBox(height: 8),
-          if (rewards.isEmpty)
+          if (rewards.isEmpty && questName != botanyAllDiedTitle)
             const MutedText('No rewards.')
           else
             for (final reward in rewards)

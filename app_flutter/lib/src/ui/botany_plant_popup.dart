@@ -8,17 +8,24 @@ import 'format.dart';
 import 'game_popup.dart';
 import 'item_icon.dart';
 
+class BotanyPlantChoice {
+  const BotanyPlantChoice({required this.seedItemIds, this.usedCompost = false});
+
+  final List<String> seedItemIds;
+  final bool usedCompost;
+}
+
 /// Shop/inventory-style grid for planting seeds and saplings.
 ///
 /// Taps add one seed (up to three, mixed types allowed). A sapling takes the
 /// whole patch. Grow time is the longest selected seed.
-Future<List<String>?> showBotanyPlantGridPopup({
+Future<BotanyPlantChoice?> showBotanyPlantGridPopup({
   required BuildContext context,
   required GameController controller,
   required List<PlantableBotanyOption> options,
   Rect? origin,
 }) {
-  return showGamePopup<List<String>>(
+  return showGamePopup<BotanyPlantChoice>(
     context: context,
     origin: origin ?? popupOrigin(context),
     builder: (context) => _BotanyPlantGridPopup(controller: controller, options: options),
@@ -37,6 +44,7 @@ class _BotanyPlantGridPopup extends StatefulWidget {
 
 class _BotanyPlantGridPopupState extends State<_BotanyPlantGridPopup> {
   final List<String> _picked = <String>[];
+  bool _useCompost = false;
 
   int _pickedOf(String itemId) => _picked.where((id) => id == itemId).length;
 
@@ -49,6 +57,19 @@ class _BotanyPlantGridPopupState extends State<_BotanyPlantGridPopup> {
 
   bool get _hasSapling => _picked.any((itemId) => _optionFor(itemId)?.spec.isSapling == true);
 
+  bool get _hasKelp => _picked.any((itemId) => _optionFor(itemId)?.spec.shallowsOnly == true);
+
+  List<BotanySeedSpec> get _pickedSpecs => [
+    for (final itemId in _picked)
+      if (_optionFor(itemId) case final option?) option.spec,
+  ];
+
+  num get _compostCost => compostCostForSpecs(_pickedSpecs);
+
+  num get _compostOwned => inventoryCompostCount(widget.controller.save);
+
+  bool get _compostAllowed => _picked.isNotEmpty && !_hasKelp;
+
   void _tap(PlantableBotanyOption option) {
     if (!option.canPlant) return;
     setState(() {
@@ -56,12 +77,13 @@ class _BotanyPlantGridPopupState extends State<_BotanyPlantGridPopup> {
         _picked
           ..clear()
           ..add(option.itemId);
-        return;
+      } else {
+        if (_hasSapling) _picked.clear();
+        if (_picked.length < 3 && _pickedOf(option.itemId) < option.owned.round()) {
+          _picked.add(option.itemId);
+        }
       }
-      if (_hasSapling) _picked.clear();
-      if (_picked.length >= 3) return;
-      if (_pickedOf(option.itemId) >= option.owned.round()) return;
-      _picked.add(option.itemId);
+      if (_hasKelp) _useCompost = false;
     });
   }
 
@@ -74,10 +96,31 @@ class _BotanyPlantGridPopupState extends State<_BotanyPlantGridPopup> {
     return grow;
   }
 
+  void _plant() {
+    if (_picked.isEmpty) return;
+    if (_useCompost && _hasKelp) {
+      widget.controller.report('Compost cannot be used on kelp.');
+      return;
+    }
+    if (_useCompost && _compostOwned < _compostCost) {
+      final need = _compostCost.round();
+      widget.controller.report(
+        need == 1
+            ? 'You need 1 compost for this planting.'
+            : 'You need $need compost for this planting.',
+      );
+      return;
+    }
+    Navigator.of(context)
+        .pop(BotanyPlantChoice(seedItemIds: List<String>.from(_picked), usedCompost: _useCompost));
+  }
+
   @override
   Widget build(BuildContext context) {
     final chrome = UiChrome.of(context);
     final canPlant = _picked.isNotEmpty;
+    final compostCost = _compostCost.round();
+    final compostOwned = _compostOwned.round();
     return GamePopupCard(
       child: GamePanel(
         child: ConstrainedBox(
@@ -130,6 +173,25 @@ class _BotanyPlantGridPopupState extends State<_BotanyPlantGridPopup> {
                   'Grows in ${formatDurationSeconds(_growSeconds)} · plant ${_picked.length}',
                   style: TextStyle(color: chrome.embossFace, fontSize: 12.5),
                 ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        _hasKelp
+                            ? 'Compost cannot be used on kelp.'
+                            : 'Use compost ($compostCost) · have $compostOwned',
+                        style: TextStyle(fontSize: 13, color: chrome.panelInk),
+                      ),
+                    ),
+                    GameSwitch(
+                      value: _useCompost,
+                      onChanged: _compostAllowed
+                          ? (value) => setState(() => _useCompost = value)
+                          : null,
+                    ),
+                  ],
+                ),
               ],
               const SizedBox(height: 10),
               Row(
@@ -141,17 +203,17 @@ class _BotanyPlantGridPopupState extends State<_BotanyPlantGridPopup> {
                   Expanded(
                     child: GameButton(
                       label: 'Clear',
-                      onPressed: _picked.isEmpty ? null : () => setState(_picked.clear),
+                      onPressed: _picked.isEmpty
+                          ? null
+                          : () => setState(() {
+                              _picked.clear();
+                              _useCompost = false;
+                            }),
                     ),
                   ),
                   const SizedBox(width: 8),
                   Expanded(
-                    child: GameButton(
-                      label: 'Plant',
-                      onPressed: canPlant
-                          ? () => Navigator.of(context).pop(List<String>.from(_picked))
-                          : null,
-                    ),
+                    child: GameButton(label: 'Plant', onPressed: canPlant ? _plant : null),
                   ),
                 ],
               ),

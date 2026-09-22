@@ -8,7 +8,8 @@ import '../js_compat.dart';
 import '../npcs/knowledge.dart';
 import '../production/recipes.dart';
 import '../projects/projects.dart';
-import '../timers/location_timers.dart' show fishingPotItemId, potFishByLocation;
+import '../timers/location_timers.dart'
+    show botanyPlantDisplayName, fishingPotItemId, potFishByLocation;
 
 const String _essenceItemId = 'ITEM-0011';
 const String miningSkillId = 'SKL-0002';
@@ -434,40 +435,70 @@ List<SkillMenuTab> _thieveryTabs(GameDatabase db) {
   ];
 }
 
-List<SkillMenuListItem> _botanyPlantEntries(GameDatabase db, {required bool saplings}) {
-  final needle = saplings ? 'botany_sapling' : 'botany_seed';
-  final entries = <SkillMenuListItem>[];
+const Set<String> _botanyCropSeedIds = <String>{
+  'ITEM-0324',
+  'ITEM-0339',
+  'ITEM-0369',
+  'ITEM-0340',
+  'ITEM-0371',
+};
+const Set<String> _botanyHerbSeedIds = <String>{
+  'ITEM-0333',
+  'ITEM-0334',
+  'ITEM-0336',
+  'ITEM-0373',
+  'ITEM-0350',
+};
+const Set<String> _botanyFlowerSeedIds = <String>{'ITEM-0337', 'ITEM-0375'};
+
+String _botanyTabIdForPlant(String itemId, String tags) {
+  if (_botanyCropSeedIds.contains(itemId)) return 'crops';
+  if (_botanyHerbSeedIds.contains(itemId)) return 'herbs';
+  if (_botanyFlowerSeedIds.contains(itemId)) return 'flowers';
+  if (tags.contains('botany_sapling')) return 'trees';
+  return 'fruit_trees';
+}
+
+List<SkillMenuTab> _botanyTabs(GameDatabase db) {
+  final buckets = <String, List<SkillMenuListItem>>{
+    'flowers': <SkillMenuListItem>[],
+    'crops': <SkillMenuListItem>[],
+    'herbs': <SkillMenuListItem>[],
+    'trees': <SkillMenuListItem>[],
+    'fruit_trees': <SkillMenuListItem>[],
+  };
   for (final item in db.items) {
     if (item.releasePhase != 'Launch') continue;
     if (item.status != 'Confirmed' && item.status != 'Planned') continue;
     final tags = (item.functionalSourceTags ?? '').toLowerCase();
-    if (!tags.contains(needle)) continue;
+    if (!tags.contains('botany_seed') && !tags.contains('botany_sapling')) continue;
     final notes = item.notes ?? '';
     final level =
         num.tryParse(
           RegExp(r'RequiresLevel:(\d+)', caseSensitive: false).firstMatch(notes)?.group(1) ?? '',
         ) ??
         1;
-    entries.add(
-      SkillMenuListItem(
-        id: item.itemId,
-        displayName: item.displayName,
-        level: level < 1 ? 1 : level,
-      ),
+    final entry = SkillMenuListItem(
+      id: item.itemId,
+      displayName: botanyPlantDisplayName(item.displayName),
+      level: level < 1 ? 1 : level,
     );
+    final tabId = _botanyTabIdForPlant(item.itemId, tags);
+    (buckets[tabId] ?? buckets['fruit_trees']!).add(entry);
   }
-  entries.sort((a, b) {
-    final level = (a.level ?? 0).compareTo(b.level ?? 0);
-    if (level != 0) return level;
-    return a.displayName.toLowerCase().compareTo(b.displayName.toLowerCase());
-  });
-  return entries;
-}
-
-List<SkillMenuTab> _botanyTabs(GameDatabase db) {
+  for (final entries in buckets.values) {
+    entries.sort((a, b) {
+      final level = (a.level ?? 0).compareTo(b.level ?? 0);
+      if (level != 0) return level;
+      return a.displayName.toLowerCase().compareTo(b.displayName.toLowerCase());
+    });
+  }
   return <SkillMenuTab>[
-    _listTab('seeds', 'Seeds', _botanyPlantEntries(db, saplings: false)),
-    _listTab('saplings', 'Saplings', _botanyPlantEntries(db, saplings: true)),
+    _listTab('flowers', 'Flowers', buckets['flowers']!),
+    _listTab('crops', 'Crops', buckets['crops']!),
+    _listTab('herbs', 'Herbs', buckets['herbs']!),
+    _listTab('trees', 'Trees', buckets['trees']!),
+    _listTab('fruit_trees', 'Fruit trees', buckets['fruit_trees']!),
   ];
 }
 
