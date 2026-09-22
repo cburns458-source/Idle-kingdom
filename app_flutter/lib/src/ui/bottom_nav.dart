@@ -180,7 +180,11 @@ class _BottomNavState extends State<BottomNav> {
                   tooltip: 'Inventory',
                   semanticsLabel: 'Inventory',
                   onTap: () => _selectTab(GameScreen.character),
-                  child: GameImage(uiInventoryAssetPath(), width: _chinIconSize, height: _chinIconSize),
+                  child: GameImage(
+                    uiInventoryAssetPath(),
+                    width: _chinIconSize,
+                    height: _chinIconSize,
+                  ),
                 ),
               ),
               _divider,
@@ -226,7 +230,11 @@ class _BottomNavState extends State<BottomNav> {
                       onTap: _toggleNest,
                       child: Badged(
                         count: _menuReady,
-                        child: GameImage(uiMenuAssetPath(), width: _chinIconSize, height: _chinIconSize),
+                        child: GameImage(
+                          uiMenuAssetPath(),
+                          width: _chinIconSize,
+                          height: _chinIconSize,
+                        ),
                       ),
                     ),
                   ),
