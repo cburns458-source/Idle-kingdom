@@ -27,11 +27,7 @@ class _HudStatus {
 /// How wide the HUD hit-point track is. Short, and parked on the HUD's bottom edge.
 const double _hudHpBarWidth = 76;
 
-/// Uploaded wordmark is 1920×960 with a transparent field. Displayed at 2:1.
-const double _hudRestoriaHeight = 28;
-const double _hudRestoriaWidth = 56;
-
-/// Settings sits left of the wordmark, mail sits right. Smaller than the old 28 chip.
+/// Settings and mail sit as a pair at the top middle. Smaller than the old 28 chip.
 const double _hudHeaderButtonSize = 24;
 
 /// Name stays the heading. Everything else matches body UI (~12) without
@@ -131,14 +127,14 @@ class TopHud extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(6, 0, 8, 2),
           child: LayoutBuilder(
             builder: (context, constraints) {
-              const cluster =
-                  _hudHeaderButtonSize + 4 + _hudRestoriaWidth + 4 + _hudHeaderButtonSize;
+              const cluster = _hudHeaderButtonSize + 4 + _hudHeaderButtonSize;
               final side = math.max(0.0, (constraints.maxWidth - cluster) / 2);
               return Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   SizedBox(
                     width: side,
+                    height: constraints.maxHeight,
                     child: Row(
                       children: [
                         HudPortrait(
@@ -229,19 +225,6 @@ class TopHud extends StatelessWidget {
                   ),
                   _HudSettingsButton(onTap: onOpenSettings),
                   const SizedBox(width: 4),
-                  ExcludeSemantics(
-                    child: IgnorePointer(
-                      child: GameImage(
-                        uiRestoriaAssetPath(),
-                        key: const Key('hud-restoria'),
-                        width: _hudRestoriaWidth,
-                        height: _hudRestoriaHeight,
-                        fit: BoxFit.contain,
-                        filterQuality: FilterQuality.medium,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 4),
                   MailboxHudButton(
                     unread: unreadMailCount(save, controller.session.clock()).toInt(),
                     onTap: onOpenMailbox,
@@ -249,6 +232,7 @@ class TopHud extends StatelessWidget {
                   ),
                   SizedBox(
                     width: side,
+                    height: constraints.maxHeight,
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       crossAxisAlignment: CrossAxisAlignment.stretch,

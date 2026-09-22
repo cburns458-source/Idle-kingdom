@@ -102,14 +102,15 @@ void main() {
     expect(bar.width, 76);
     final mailbox = tester.getRect(find.byKey(const Key('mailbox-button')));
     final settings = tester.getRect(find.byKey(const Key('hud-settings')));
-    final restoria = tester.getRect(find.byKey(const Key('hud-restoria')));
+    expect(find.byKey(const Key('hud-restoria')), findsNothing);
     expect(mailbox.width, 24);
     expect(mailbox.height, 24);
     expect(settings.width, 24);
     expect(settings.height, 24);
-    expect(settings.right, lessThanOrEqualTo(restoria.left + 1));
-    expect(mailbox.left, greaterThanOrEqualTo(restoria.right - 1));
-    expect(restoria.center.dx, closeTo(hud.center.dx, 8));
+    expect(settings.right, lessThanOrEqualTo(mailbox.left + 1));
+    expect((settings.left + mailbox.right) / 2, closeTo(hud.center.dx, 8));
+    expect(settings.top, closeTo(hud.top, 6));
+    expect(mailbox.top, closeTo(hud.top, 6));
     expect(hp.right, closeTo(hud.right, 16));
     expect(bar.right, closeTo(hud.right, 16));
     expect(bar.top, greaterThan(hp.bottom - 1));
@@ -175,12 +176,13 @@ void main() {
     final hud = tester.getRect(find.byType(TopHud));
     final mailbox = tester.getRect(find.byKey(const Key('mailbox-button')));
     final settings = tester.getRect(find.byKey(const Key('hud-settings')));
-    final restoria = tester.getRect(find.byKey(const Key('hud-restoria')));
+    expect(find.byKey(const Key('hud-restoria')), findsNothing);
     expect(hud.height, HudPortrait.size + 2);
     expect(hud.width, 390);
-    expect(restoria.center.dx, closeTo(hud.center.dx, 8));
-    expect(settings.right, lessThanOrEqualTo(restoria.left + 1));
-    expect(mailbox.left, greaterThanOrEqualTo(restoria.right - 1));
+    expect(settings.right, lessThanOrEqualTo(mailbox.left + 1));
+    expect((settings.left + mailbox.right) / 2, closeTo(hud.center.dx, 8));
+    expect(settings.top, closeTo(hud.top, 6));
+    expect(mailbox.top, closeTo(hud.top, 6));
     expect(find.byType(TopHud), findsOne);
   });
 
