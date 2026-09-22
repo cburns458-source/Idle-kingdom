@@ -92,11 +92,7 @@ class SocialPortrait extends StatelessWidget {
     return Container(
       width: size,
       height: height ?? size,
-      decoration: BoxDecoration(
-        color: UiChrome.of(context).slot,
-        borderRadius: BorderRadius.zero /* pixel step 2 */,
-        border: Border.all(color: borderColor ?? Palette.edge),
-      ),
+      decoration: chromeSlotFill(context, border: Border.all(color: borderColor ?? Palette.edge)),
       clipBehavior: Clip.antiAlias,
       child: fullArt
           ? image
@@ -128,11 +124,7 @@ class NpcPortrait extends StatelessWidget {
     return Container(
       width: size,
       height: size,
-      decoration: BoxDecoration(
-        color: UiChrome.of(context).slot,
-        borderRadius: BorderRadius.zero /* pixel step 2 */,
-        border: Border.all(color: borderColor ?? Palette.edge),
-      ),
+      decoration: chromeSlotFill(context, border: Border.all(color: borderColor ?? Palette.edge)),
       clipBehavior: Clip.antiAlias,
       child: Transform.scale(
         scale: playerPortraitHeadZoom,

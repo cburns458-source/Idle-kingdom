@@ -200,7 +200,7 @@ class _BankPanelState extends State<BankPanel> {
         fillColor: stack.favorite == true
             ? Color.lerp(UiChrome.of(context).slot, Palette.gold, 0.18)!
             : UiChrome.of(context).slot,
-        material: PixelPlateMaterial.none,
+        material: PixelPlateMaterial.grain,
         strokeWidth: stack.favorite == true ? 2.5 : 2,
         selected: stack.favorite == true,
         shadow: false,

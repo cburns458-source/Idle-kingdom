@@ -215,16 +215,18 @@ class UiChrome {
     return _boardImage(opacity);
   }
 
-  /// Fine grain tiled over buttons and the HUD / chin bar.
-  DecorationImage buttonGrainImage({double opacity = 0.12}) {
-    if (opacity == 0.12) {
+  /// Fine grain tiled over buttons, HUD / chin, and slot wells.
+  ///
+  /// Opacity matches [panelGrainImage] on tan panels (0.06).
+  DecorationImage buttonGrainImage({double opacity = 0.06}) {
+    if (opacity == 0.06) {
       return _buttonGrain ??= DecorationImage(
         image: const AssetImage('assets/ui/panel-grain.png'),
         repeat: ImageRepeat.repeat,
         fit: BoxFit.none,
         alignment: Alignment.topLeft,
         filterQuality: FilterQuality.none,
-        opacity: 0.12,
+        opacity: 0.06,
       );
     }
     return DecorationImage(
@@ -282,6 +284,16 @@ class UiChrome {
   BoxDecoration barFill({BorderRadius? borderRadius, BoxBorder? border}) {
     return BoxDecoration(
       color: iconButtonFill,
+      borderRadius: borderRadius,
+      border: border,
+      image: buttonGrainImage(),
+    );
+  }
+
+  /// Recessed well fill: pack slot color plus the same grain buttons use.
+  BoxDecoration slotFill({Color? color, BorderRadius? borderRadius, BoxBorder? border}) {
+    return BoxDecoration(
+      color: color ?? slot,
       borderRadius: borderRadius,
       border: border,
       image: buttonGrainImage(),

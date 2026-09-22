@@ -234,12 +234,12 @@ class PixelPlate extends StatelessWidget {
 
   DecorationImage? _texture(BuildContext context) {
     if (fillColor == null && gradient == null) return null;
-    // Auto: panel texture on light fills only. Dark fills stay solid so board
-    // texture is reserved for shell / HUD boards, not every button and slot.
+    // Auto: panel texture on light fills; dark wells get the same grain as
+    // buttons and slots. [none] stays a true flat fill.
     final kind = material == PixelPlateMaterial.auto
         ? ((fillColor != null && fillColor!.computeLuminance() > 0.28)
               ? PixelPlateMaterial.tan
-              : PixelPlateMaterial.none)
+              : PixelPlateMaterial.grain)
         : material;
     final chrome = UiChrome.of(context);
     return switch (kind) {

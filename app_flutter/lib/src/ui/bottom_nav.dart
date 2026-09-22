@@ -340,15 +340,21 @@ class _NavSection extends StatelessWidget {
     final sized = alignStart
         ? SizedBox(
             height: 36,
-            child: Material(
-              color: selected ? const Color(0xD9546E3E) : UiChrome.of(context).slot,
-              child: InkWell(
-                onTap: onTap,
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    child: content,
+            child: DecoratedBox(
+              decoration: chromeSlotFill(
+                context,
+                color: selected ? const Color(0xD9546E3E) : UiChrome.of(context).slot,
+              ),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: onTap,
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      child: content,
+                    ),
                   ),
                 ),
               ),

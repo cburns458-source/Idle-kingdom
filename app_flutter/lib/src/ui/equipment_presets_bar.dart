@@ -292,30 +292,33 @@ class _LabelChip extends StatelessWidget {
       label: semanticsLabel,
       child: Opacity(
         opacity: onPressed == null ? 0.45 : 1,
-        child: Material(
-          color: UiChrome.of(context).slot,
-          shape: PixelSteppedBorder(
-            step: step,
-            side: const BorderSide(color: Palette.edge),
-          ),
-          child: InkWell(
-            onTap: onPressed,
-            customBorder: PixelSteppedBorder(step: step),
-            child: SizedBox(
-              width: square ? _chipSide(compact: compact) : null,
-              height: _chipHeight(compact: compact, square: square),
-              child: Padding(
-                padding: square ? EdgeInsets.zero : const EdgeInsets.symmetric(horizontal: 8),
-                child: Center(
-                  child: Text(
-                    label,
-                    style: TextStyle(
-                      fontFamily: gameFontFamily,
-                      fontSize: square ? 10 : 11,
-                      fontWeight: FontWeight.w400,
-                      color: Palette.heading,
-                      height: 1,
-                      shadows: square ? overlayShadow : null,
+        child: DecoratedBox(
+          decoration: chromeSlotFill(context),
+          child: Material(
+            color: Colors.transparent,
+            shape: PixelSteppedBorder(
+              step: step,
+              side: const BorderSide(color: Palette.edge),
+            ),
+            child: InkWell(
+              onTap: onPressed,
+              customBorder: PixelSteppedBorder(step: step),
+              child: SizedBox(
+                width: square ? _chipSide(compact: compact) : null,
+                height: _chipHeight(compact: compact, square: square),
+                child: Padding(
+                  padding: square ? EdgeInsets.zero : const EdgeInsets.symmetric(horizontal: 8),
+                  child: Center(
+                    child: Text(
+                      label,
+                      style: TextStyle(
+                        fontFamily: gameFontFamily,
+                        fontSize: square ? 10 : 11,
+                        fontWeight: FontWeight.w400,
+                        color: Palette.heading,
+                        height: 1,
+                        shadows: square ? overlayShadow : null,
+                      ),
                     ),
                   ),
                 ),
@@ -348,21 +351,24 @@ class _SettingsChip extends StatelessWidget {
       child: Semantics(
         button: true,
         label: 'Preset settings',
-        child: Material(
-          color: UiChrome.of(context).slot,
-          shape: PixelSteppedBorder(step: step),
-          child: InkWell(
-            onTap: onPressed,
-            customBorder: PixelSteppedBorder(step: step),
-            child: SizedBox(
-              width: square ? _chipSide(compact: compact) : null,
-              height: _chipHeight(compact: compact, square: square),
-              child: Center(
-                child: Icon(
-                  Icons.settings,
-                  size: square ? 16 : 15,
-                  color: Palette.heading,
-                  shadows: square ? overlayShadow : null,
+        child: DecoratedBox(
+          decoration: chromeSlotFill(context),
+          child: Material(
+            color: Colors.transparent,
+            shape: PixelSteppedBorder(step: step),
+            child: InkWell(
+              onTap: onPressed,
+              customBorder: PixelSteppedBorder(step: step),
+              child: SizedBox(
+                width: square ? _chipSide(compact: compact) : null,
+                height: _chipHeight(compact: compact, square: square),
+                child: Center(
+                  child: Icon(
+                    Icons.settings,
+                    size: square ? 16 : 15,
+                    color: Palette.heading,
+                    shadows: square ? overlayShadow : null,
+                  ),
                 ),
               ),
             ),
@@ -410,27 +416,30 @@ class _PresetButton extends StatelessWidget {
         button: true,
         selected: selected,
         label: label,
-        child: Material(
-          color: fill,
-          shape: PixelSteppedBorder(
-            step: step,
-            side: BorderSide(
-              color: selected ? Palette.gold : Palette.edge,
-              width: selected ? 3 : 1,
+        child: DecoratedBox(
+          decoration: chromeSlotFill(context, color: fill),
+          child: Material(
+            color: Colors.transparent,
+            shape: PixelSteppedBorder(
+              step: step,
+              side: BorderSide(
+                color: selected ? Palette.gold : Palette.edge,
+                width: selected ? 3 : 1,
+              ),
             ),
-          ),
-          child: InkWell(
-            onTap: onTap,
-            onLongPress: onLongPress,
-            customBorder: PixelSteppedBorder(step: step),
-            child: SizedBox(
-              width: square ? _chipSide(compact: compact) : null,
-              height: _chipHeight(compact: compact, square: square),
-              child: Center(
-                child: _PresetIcon(
-                  icon: icon,
-                  skillsById: skillsById,
-                  size: square ? 18 : (compact ? 14 : 16),
+            child: InkWell(
+              onTap: onTap,
+              onLongPress: onLongPress,
+              customBorder: PixelSteppedBorder(step: step),
+              child: SizedBox(
+                width: square ? _chipSide(compact: compact) : null,
+                height: _chipHeight(compact: compact, square: square),
+                child: Center(
+                  child: _PresetIcon(
+                    icon: icon,
+                    skillsById: skillsById,
+                    size: square ? 18 : (compact ? 14 : 16),
+                  ),
                 ),
               ),
             ),
@@ -491,19 +500,25 @@ class _IconChoice extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final chrome = UiChrome.of(context);
-    final tile = Material(
-      color: selected ? Color.lerp(chrome.slot, chrome.embossFace, 0.18)! : chrome.slot,
-      shape: PixelSteppedBorder(
-        step: 2,
-        side: BorderSide(
-          color: selected ? chrome.embossFace : Palette.edge,
-          width: selected ? 2 : 1,
-        ),
+    final tile = DecoratedBox(
+      decoration: chromeSlotFill(
+        context,
+        color: selected ? Color.lerp(chrome.slot, chrome.embossFace, 0.18)! : chrome.slot,
       ),
-      child: InkWell(
-        onTap: onTap,
-        customBorder: PixelSteppedBorder(step: 2),
-        child: SizedBox(width: 32, height: 32, child: Center(child: child)),
+      child: Material(
+        color: Colors.transparent,
+        shape: PixelSteppedBorder(
+          step: 2,
+          side: BorderSide(
+            color: selected ? chrome.embossFace : Palette.edge,
+            width: selected ? 2 : 1,
+          ),
+        ),
+        child: InkWell(
+          onTap: onTap,
+          customBorder: PixelSteppedBorder(step: 2),
+          child: SizedBox(width: 32, height: 32, child: Center(child: child)),
+        ),
       ),
     );
     return tooltip == null ? tile : Tooltip(message: tooltip!, child: tile);
@@ -636,11 +651,7 @@ class _PresetSettingsRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DecoratedBox(
-      decoration: BoxDecoration(
-        color: UiChrome.of(context).slot,
-        borderRadius: BorderRadius.zero /* pixel step 2 */,
-        border: Border.all(color: Palette.edge),
-      ),
+      decoration: chromeSlotFill(context, border: Border.all(color: Palette.edge)),
       child: Padding(
         padding: const EdgeInsets.all(10),
         child: Column(

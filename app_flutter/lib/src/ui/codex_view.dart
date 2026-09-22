@@ -254,7 +254,7 @@ class _CodexViewState extends State<CodexView> {
             onTap: () => _openItem(entry.itemId),
             step: PixelChrome.stepTight,
             fillColor: UiChrome.of(context).slot,
-            material: PixelPlateMaterial.none,
+            material: PixelPlateMaterial.grain,
             shadow: false,
             padding: const EdgeInsets.all(4),
             child: Center(child: ItemIcon(item: item, size: 36)),
@@ -756,7 +756,7 @@ class _ItemChip extends StatelessWidget {
       onTap: onTap,
       step: PixelChrome.stepTight,
       fillColor: chrome.slot,
-      material: PixelPlateMaterial.none,
+      material: PixelPlateMaterial.grain,
       shadow: false,
       padding: const EdgeInsets.fromLTRB(8, 6, 10, 6),
       child: Row(

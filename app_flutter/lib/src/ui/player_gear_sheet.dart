@@ -121,7 +121,7 @@ class _GearSlotTile extends StatelessWidget {
       return PixelPlate(
         step: PixelChrome.stepTight,
         fillColor: UiChrome.of(context).slot,
-        material: PixelPlateMaterial.none,
+        material: PixelPlateMaterial.grain,
         strokeWidth: 2,
         shadow: false,
         padding: const EdgeInsets.all(3),
@@ -148,7 +148,7 @@ class _GearSlotTile extends StatelessWidget {
       child: PixelPlate(
         step: PixelChrome.stepTight,
         fillColor: UiChrome.of(context).slot,
-        material: PixelPlateMaterial.none,
+        material: PixelPlateMaterial.grain,
         strokeWidth: 2,
         shadow: false,
         padding: const EdgeInsets.all(4),

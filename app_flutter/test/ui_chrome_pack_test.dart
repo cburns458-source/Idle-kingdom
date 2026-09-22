@@ -123,6 +123,7 @@ void main() {
     expect(well.decoration, isA<BoxDecoration>());
     expect((well.decoration as BoxDecoration).color, UiChrome.stone.slot);
     expect((well.decoration as BoxDecoration).color, isNot(Palette.slot));
+    expect((well.decoration as BoxDecoration).image, isNotNull);
   });
 
   testWidgets('GameButton wears the active pack fill', (tester) async {

@@ -32,11 +32,7 @@ class CritterOverlay extends StatelessWidget {
         borderRadius: BorderRadius.zero /* pixel step 3 */,
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-          decoration: BoxDecoration(
-            color: UiChrome.of(context).slot,
-            borderRadius: BorderRadius.zero /* pixel step 3 */,
-            border: Border.all(color: Palette.gold),
-          ),
+          decoration: chromeSlotFill(context, border: Border.all(color: Palette.gold)),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [

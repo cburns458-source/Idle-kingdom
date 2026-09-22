@@ -66,6 +66,14 @@ void main() {
       find.ancestor(of: find.text('Might'), matching: find.byType(GamePanel)).first,
     );
     expect(iconRect.shortestSide, greaterThan(tile.shortestSide * 0.55));
+
+    final bars = tester.widgetList<MeterBar>(
+      find.descendant(of: find.byType(SkillsView), matching: find.byType(MeterBar)),
+    );
+    expect(bars, hasLength(16));
+    expect(bars.every((bar) => bar.color == Palette.skillXp), isTrue);
+    expect(Palette.skillXp, isNot(Palette.softGreen));
+    expect(Palette.skillXp, isNot(Palette.gold));
   });
 
   testWidgets('a skill tile opens a numbered proficiency list', (tester) async {

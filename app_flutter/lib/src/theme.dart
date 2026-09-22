@@ -28,6 +28,9 @@ abstract final class Palette {
   static const wood = Color(0xFF2A1C12);
   static const softGreen = Color(0xFF2E8B57);
   static const softGreenShade = Color(0xFF1F5E3B);
+
+  /// Skills-page XP bars: the same hue as [softGreen], brighter.
+  static const skillXp = Color(0xFF3EBE68);
   static const ink = Color(0xFF1F1610);
   static const danger = Color(0xFFC2603F);
 
@@ -127,6 +130,16 @@ BoxDecoration panelFill({
 /// Solid button-coloured bar for the HUD and chin, with the same grain buttons use.
 BoxDecoration chromeBarFill(BuildContext context, {BorderRadius? borderRadius, BoxBorder? border}) {
   return UiChrome.of(context).barFill(borderRadius: borderRadius, border: border);
+}
+
+/// Recessed slot well: pack slot color plus the same grain buttons use.
+BoxDecoration chromeSlotFill(
+  BuildContext context, {
+  Color? color,
+  BorderRadius? borderRadius,
+  BoxBorder? border,
+}) {
+  return UiChrome.of(context).slotFill(color: color, borderRadius: borderRadius, border: border);
 }
 
 /// Dark outer board (HUD strip, nav chin, shell). Uses the active [UiChrome].
@@ -660,7 +673,7 @@ class GameSwitch extends StatelessWidget {
               step: PixelChrome.stepTight,
               strokeWidth: 1.5,
               shadow: false,
-              material: PixelPlateMaterial.none,
+              material: PixelPlateMaterial.grain,
               fillColor: value ? const Color(0xFF5F7A45) : UiChrome.of(context).slot,
               padding: const EdgeInsets.all(2),
               child: AnimatedAlign(
@@ -712,7 +725,7 @@ class DockRow extends StatelessWidget {
     return PixelPlate(
       step: PixelChrome.step,
       fillColor: UiChrome.of(context).slot,
-      material: PixelPlateMaterial.none,
+      material: PixelPlateMaterial.grain,
       strokeWidth: 1.5,
       shadow: false,
       padding: const EdgeInsets.fromLTRB(9, 7, 9, 7),
@@ -986,18 +999,22 @@ class OverlayChipButton extends StatelessWidget {
     return Tooltip(
       message: tooltip,
       child: Material(
-        color: plain
-            ? const Color(0x00000000)
-            : dark
-            ? UiChrome.of(context).slot
-            : Palette.softGreen,
+        color: Colors.transparent,
         elevation: plain ? 0 : 6,
         shadowColor: const Color(0x47000000),
         shape: PixelSteppedBorder(step: PixelChrome.step, side: side),
-        child: InkWell(
-          onTap: onPressed,
-          customBorder: PixelSteppedBorder(step: PixelChrome.step),
-          child: SizedBox(width: 32, height: 32, child: Center(child: child)),
+        child: Ink(
+          decoration: plain
+              ? null
+              : chromeSlotFill(
+                  context,
+                  color: dark ? UiChrome.of(context).slot : Palette.softGreen,
+                ),
+          child: InkWell(
+            onTap: onPressed,
+            customBorder: PixelSteppedBorder(step: PixelChrome.step),
+            child: SizedBox(width: 32, height: 32, child: Center(child: child)),
+          ),
         ),
       ),
     );
