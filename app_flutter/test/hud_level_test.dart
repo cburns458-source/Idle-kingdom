@@ -107,14 +107,11 @@ void main() {
     expect(mailbox.height, 24);
     expect(settings.width, 24);
     expect(settings.height, 24);
-    expect(settings.right, closeTo(hud.right, 12));
-    expect(mailbox.right, lessThan(settings.left + 1));
-    expect(mailbox.top, closeTo(hud.top, 6));
-    expect(settings.top, closeTo(hud.top, 6));
+    expect(settings.right, lessThanOrEqualTo(restoria.left + 1));
+    expect(mailbox.left, greaterThanOrEqualTo(restoria.right - 1));
     expect(restoria.center.dx, closeTo(hud.center.dx, 8));
     expect(hp.right, closeTo(hud.right, 16));
     expect(bar.right, closeTo(hud.right, 16));
-    expect(hp.top, greaterThan(mailbox.bottom - 2));
     expect(bar.top, greaterThan(hp.bottom - 1));
     expect(bar.bottom, closeTo(hud.bottom, 12));
     final portrait = tester.getRect(find.byType(HudPortrait));
@@ -147,7 +144,7 @@ void main() {
     );
     final mailbox = tester.getRect(find.byKey(const Key('mailbox-button')));
     expect(hp.top, greaterThan(activity.bottom - 2));
-    expect(activity.right, lessThanOrEqualTo(mailbox.left + 1));
+    expect(mailbox.right, lessThanOrEqualTo(activity.left + 1));
     expect(hp.right, closeTo(hud.right, 16));
     expect(bar.top, greaterThan(hp.bottom - 1));
     expect(bar.right, closeTo(hud.right, 16));
@@ -182,9 +179,8 @@ void main() {
     expect(hud.height, HudPortrait.size + 2);
     expect(hud.width, 390);
     expect(restoria.center.dx, closeTo(hud.center.dx, 8));
-    expect(settings.right, closeTo(hud.right, 12));
-    expect(mailbox.right, lessThan(settings.left + 1));
-    expect(mailbox.top, closeTo(hud.top, 6));
+    expect(settings.right, lessThanOrEqualTo(restoria.left + 1));
+    expect(mailbox.left, greaterThanOrEqualTo(restoria.right - 1));
     expect(find.byType(TopHud), findsOne);
   });
 

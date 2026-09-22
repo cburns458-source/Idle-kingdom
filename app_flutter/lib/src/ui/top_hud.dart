@@ -27,11 +27,11 @@ class _HudStatus {
 /// How wide the HUD hit-point track is. Short, and parked on the HUD's bottom edge.
 const double _hudHpBarWidth = 76;
 
-/// Uploaded wordmark is 1920×960. Displayed at 2:1 without editing the file.
+/// Uploaded wordmark is 1920×960 with a transparent field. Displayed at 2:1.
 const double _hudRestoriaHeight = 28;
 const double _hudRestoriaWidth = 56;
 
-/// Mail and Settings sit on the header's top-right. Smaller than the old 28 chip.
+/// Settings sits left of the wordmark, mail sits right. Smaller than the old 28 chip.
 const double _hudHeaderButtonSize = 24;
 
 /// Name stays the heading. Everything else matches body UI (~12) without
@@ -131,7 +131,9 @@ class TopHud extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(6, 0, 8, 2),
           child: LayoutBuilder(
             builder: (context, constraints) {
-              final side = math.max(0.0, (constraints.maxWidth - _hudRestoriaWidth) / 2);
+              const cluster =
+                  _hudHeaderButtonSize + 4 + _hudRestoriaWidth + 4 + _hudHeaderButtonSize;
+              final side = math.max(0.0, (constraints.maxWidth - cluster) / 2);
               return Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
@@ -225,6 +227,8 @@ class TopHud extends StatelessWidget {
                       ],
                     ),
                   ),
+                  _HudSettingsButton(onTap: onOpenSettings),
+                  const SizedBox(width: 4),
                   ExcludeSemantics(
                     child: IgnorePointer(
                       child: GameImage(
@@ -237,28 +241,19 @@ class TopHud extends StatelessWidget {
                       ),
                     ),
                   ),
+                  const SizedBox(width: 4),
+                  MailboxHudButton(
+                    unread: unreadMailCount(save, controller.session.clock()).toInt(),
+                    onTap: onOpenMailbox,
+                    size: _hudHeaderButtonSize,
+                  ),
                   SizedBox(
                     width: side,
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              child: _ActivitySlot(controller: controller, status: _status),
-                            ),
-                            const SizedBox(width: 4),
-                            MailboxHudButton(
-                              unread: unreadMailCount(save, controller.session.clock()).toInt(),
-                              onTap: onOpenMailbox,
-                              size: _hudHeaderButtonSize,
-                            ),
-                            const SizedBox(width: 4),
-                            _HudSettingsButton(onTap: onOpenSettings),
-                          ],
-                        ),
+                        _ActivitySlot(controller: controller, status: _status),
                         Align(
                           alignment: Alignment.centerRight,
                           child: _HealthReadout(controller: controller),
