@@ -136,9 +136,9 @@ class UiChrome {
   static final stone = UiChrome(
     pack: UiChromePack.stone,
     label: 'Stone',
-    board: const Color(0xFF2A2C30),
+    board: const Color(0xFF2C2C2C),
     panel: const Color(0xFFB8B4A8),
-    slot: const Color(0xFF3A3C42),
+    slot: const Color(0xFF3D3D3D),
     panelInk: const Color(0xFF1E2024),
     panelMuted: const Color(0xFF5A5E66),
     boardTextureAsset: 'assets/ui/stone-panel.png',
@@ -146,45 +146,45 @@ class UiChrome {
     shellGradient: const LinearGradient(
       begin: Alignment(-0.6, -1),
       end: Alignment(0.6, 1),
-      colors: [Color(0xFF181A1E), Color(0xFF2A2C30), Color(0xFF121418)],
+      colors: [Color(0xFF181818), Color(0xFF2C2C2C), Color(0xFF121212)],
       stops: [0, 0.45, 1],
     ),
     frameGradient: const LinearGradient(
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
-      colors: [Color(0xFF3A3C42), Color(0xFF2A2C30)],
+      colors: [Color(0xFF3D3D3D), Color(0xFF2C2C2C)],
     ),
     primaryFill: const LinearGradient(
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
-      colors: [Color(0xFF6A6E78), Color(0xFF4A4E56)],
+      colors: [Color(0xFF717171), Color(0xFF4F4F4F)],
     ),
     primaryPressed: const LinearGradient(
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
-      colors: [Color(0xFF52565E), Color(0xFF363A42)],
+      colors: [Color(0xFF585858), Color(0xFF3A3A3A)],
     ),
     secondaryFill: const LinearGradient(
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
-      colors: [Color(0xFF4A4E56), Color(0xFF32363C)],
+      colors: [Color(0xFF4F4F4F), Color(0xFF363636)],
     ),
     secondaryPressed: const LinearGradient(
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
-      colors: [Color(0xFF363A40), Color(0xFF22262C)],
+      colors: [Color(0xFF3A3A3A), Color(0xFF242424)],
     ),
     primaryLabel: const Color(0xFFF2F0EA),
     secondaryLabel: const Color(0xFFE8E6E0),
-    iconButtonFill: const Color(0xFF32363C),
-    embossFace: const Color(0xFF4A4E56),
-    embossHighlight: const Color(0xFF5A5E66),
-    embossShade: const Color(0xFF141618),
-    embossFaceSelected: const Color(0xFF6A6E78),
-    embossHighlightSelected: const Color(0xFF7A7E86),
-    embossShadeSelected: const Color(0xFF0A0C0E),
-    rivetFill: const Color(0xFF5A5E66),
-    rivetShade: const Color(0xFF1A1C20),
+    iconButtonFill: const Color(0xFF363636),
+    embossFace: const Color(0xFF4F4F4F),
+    embossHighlight: const Color(0xFF5E5E5E),
+    embossShade: const Color(0xFF141414),
+    embossFaceSelected: const Color(0xFF717171),
+    embossHighlightSelected: const Color(0xFF808080),
+    embossShadeSelected: const Color(0xFF0C0C0C),
+    rivetFill: const Color(0xFF5E5E5E),
+    rivetShade: const Color(0xFF1C1C1C),
   );
 
   static UiChrome forPack(UiChromePack pack) => switch (pack) {
@@ -216,17 +216,15 @@ class UiChrome {
   }
 
   /// Fine grain tiled over buttons, HUD / chin, and slot wells.
-  ///
-  /// Opacity matches [panelGrainImage] on tan panels (0.06).
-  DecorationImage buttonGrainImage({double opacity = 0.06}) {
-    if (opacity == 0.06) {
+  DecorationImage buttonGrainImage({double opacity = 0.04}) {
+    if (opacity == 0.04) {
       return _buttonGrain ??= DecorationImage(
         image: const AssetImage('assets/ui/panel-grain.png'),
         repeat: ImageRepeat.repeat,
         fit: BoxFit.none,
         alignment: Alignment.topLeft,
         filterQuality: FilterQuality.none,
-        opacity: 0.06,
+        opacity: 0.04,
       );
     }
     return DecorationImage(

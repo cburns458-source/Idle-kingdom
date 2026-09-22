@@ -47,7 +47,7 @@ export const pvpScenarios: ParityScenario[] = [
 
   scenario('pvp/matchmaking', 'ranked-cap', { source: 'content', nowMs: NOW_MS }, () => {
     const db = contentDatabase()
-    let save = createNewSave(db, NOW_MS)
+    let save = { ...createNewSave(db, NOW_MS), attackStyle: 'balanced' as const }
     const remainingFresh = rankedFightsRemaining(save, NOW_MS)
     const startOk = canStartRankedPvp(save, NOW_MS)
     save = applyRankedPvpResult(save, true, NOW_MS)
@@ -74,8 +74,11 @@ export const pvpScenarios: ParityScenario[] = [
 
   scenario('pvp/fight', 'snapshot', { source: 'content', seed: 20260813, nowMs: NOW_MS }, () => {
     const db = contentDatabase()
-    const you = createNewSave(db, NOW_MS)
-    const them = withCombatLevel(createNewSave(db, NOW_MS), 18)
+    const you = { ...createNewSave(db, NOW_MS), attackStyle: 'balanced' as const }
+    const them = withCombatLevel(
+      { ...createNewSave(db, NOW_MS), attackStyle: 'balanced' as const },
+      18,
+    )
     const fight = simulatePvpFight(db, you, them, mulberry32(20260813))
     return {
       outcome: fight.outcome,

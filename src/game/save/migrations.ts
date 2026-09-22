@@ -815,7 +815,7 @@ export const SAVE_MIGRATIONS: SaveMigration[] = [
         attackStyle:
           style === 'offensive' || style === 'defensive' || style === 'balanced'
             ? style
-            : 'balanced',
+            : 'offensive',
         saveVersion: 49,
       }
     },

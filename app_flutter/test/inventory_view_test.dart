@@ -263,23 +263,24 @@ void main() {
     addTearDown(controller.dispose);
 
     await pumpPanel(tester, InventoryView(controller: controller));
-    expect(controller.save.attackStyle, 'balanced');
+    expect(controller.save.attackStyle, 'offensive');
 
     await tester.tap(find.byKey(const Key('inventory-stance')));
     await tester.pumpAndSettle();
 
     final popup = find.byKey(const Key('game-popup'));
     expect(find.descendant(of: popup, matching: find.text('Stance')), findsOne);
-    expect(find.textContaining('No stance bonus'), findsOne);
-
-    await tester.tap(find.widgetWithText(GameButton, 'Offensive'));
-    await tester.pump();
-    expect(controller.save.attackStyle, 'offensive');
     expect(find.textContaining('+1% damage'), findsOne);
     expect(
       tester.widget<GameButton>(find.widgetWithText(GameButton, 'Offensive')).selected,
       isTrue,
     );
+
+    await tester.tap(find.widgetWithText(GameButton, 'Balanced'));
+    await tester.pump();
+    expect(controller.save.attackStyle, 'balanced');
+    expect(find.textContaining('No stance bonus'), findsOne);
+    expect(tester.widget<GameButton>(find.widgetWithText(GameButton, 'Balanced')).selected, isTrue);
 
     await tester.tap(find.widgetWithText(GameButton, 'Defensive'));
     await tester.pump();
@@ -553,6 +554,32 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(controller.save.equipmentPresets[1].name, 'Mining Kit');
+  });
+
+  testWidgets('preset settings Save keeps name and icon on a phone sheet', (tester) async {
+    final controller = buildController(database, seed: startedCharacter(database));
+    addTearDown(controller.dispose);
+
+    await pumpPanel(tester, InventoryView(controller: controller), size: const Size(390, 844));
+
+    await tester.tap(find.byTooltip('Preset settings'));
+    await tester.pumpAndSettle();
+
+    expect(tester.getRect(find.widgetWithText(GameButton, 'Save')).bottom, lessThan(844));
+
+    await tester.enterText(find.byType(TextField).first, 'Farm Kit');
+    final mining = find.byTooltip('Mining');
+    await tester.ensureVisible(mining.first);
+    await tester.tap(mining.first);
+    await tester.pump();
+
+    await tester.ensureVisible(find.widgetWithText(GameButton, 'Save'));
+    await tester.tap(find.widgetWithText(GameButton, 'Save'));
+    await tester.pumpAndSettle();
+
+    expect(controller.save.equipmentPresets[0].name, 'Farm Kit');
+    expect(controller.save.equipmentPresets[0].icon.kind, 'skill');
+    expect(controller.save.equipmentPresets[0].icon.skillId, 'SKL-0002');
   });
 
   testWidgets('saves a chosen skill icon onto a preset', (tester) async {

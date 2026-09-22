@@ -13,7 +13,12 @@ export const FIXED_TIMESTAMP_MS = Date.parse(FIXED_TIMESTAMP)
  * proves the generated model round-trips every field.
  */
 export function baseSave(db: GameDatabase): PlayerSave {
-  return pinTimestamps(createNewSave(db, FIXED_TIMESTAMP_MS))
+  return pinTimestamps({
+    ...createNewSave(db, FIXED_TIMESTAMP_MS),
+    // Scenarios pin Balanced so recorded combat numbers stay still; a real
+    // new character from createNewSave starts Offensive.
+    attackStyle: 'balanced',
+  })
 }
 
 const ISO_TIMESTAMP = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z$/

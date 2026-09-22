@@ -820,7 +820,7 @@ final List<SaveMigration> saveMigrations = <SaveMigration>[
       final style = next['attackStyle'];
       next['attackStyle'] = style == 'offensive' || style == 'defensive' || style == 'balanced'
           ? style
-          : 'balanced';
+          : 'offensive';
       return next;
     },
   ),
