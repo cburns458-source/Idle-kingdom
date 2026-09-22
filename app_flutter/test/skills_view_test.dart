@@ -60,7 +60,7 @@ void main() {
     expect(skillIcons, hasLength(16));
     expect(skillIcons.first.width, skillTileIconSize);
     expect(skillIcons.first.height, skillTileIconSize);
-    expect(skillTileIconSize, 24 * 2.2);
+    expect(skillTileIconSize, 24 * 2.2 * 2);
   });
 
   testWidgets('a skill tile opens a numbered proficiency list', (tester) async {
