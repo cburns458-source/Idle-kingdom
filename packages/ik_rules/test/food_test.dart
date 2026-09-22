@@ -168,27 +168,47 @@ void main() {
     expect(skipped.save.equipment.slots[foodSlotId]?.quantity, 4);
   });
 
-  test('manual eat is refused during combat', () {
+  test('manual eat is refused during combat when auto-eat is on', () {
     final save = createNewSave(db, 0).copyWith(
       combatEnemyId: 'ENM-0001',
+      combatRoundStartedAt: '2026-01-01T00:00:00.000Z',
       inventory: const [InventoryStack(itemId: 'ITEM-0058', quantity: 1)],
     );
     expect(eatInventoryFood(db, save, 0).reason, 'You cannot eat during combat.');
     expect(
       eatEquippedFood(
         db,
-        _withFoodAndSpells(db, foodQty: 2, gluttonyCount: 0).copyWith(combatEnemyId: 'ENM-0001'),
+        _withFoodAndSpells(
+          db,
+          foodQty: 2,
+          gluttonyCount: 0,
+        ).copyWith(combatEnemyId: 'ENM-0001', combatRoundStartedAt: '2026-01-01T00:00:00.000Z'),
       ).reason,
       'You cannot eat during combat.',
     );
-    expect(
-      eatInventoryFood(
-        db,
-        save.copyWith(settings: save.settings.copyWith(autoEat: false)),
-        0,
-      ).reason,
-      'You cannot eat during combat.',
+  });
+
+  test('manual eat once per combat round when auto-eat is off', () {
+    const round = '2026-01-01T00:00:00.000Z';
+    final base = _withFoodAndSpells(db, foodQty: 3, gluttonyCount: 0);
+    final save = base.copyWith(
+      combatEnemyId: 'ENM-0001',
+      combatRoundStartedAt: round,
+      settings: base.settings.copyWith(autoEat: false),
     );
+    final first = eatEquippedFood(db, save);
+    expect(first.ok, isTrue);
+    expect(first.save!.combatManualEatRoundStartedAt, round);
+    expect(first.save!.equipment.slots[foodSlotId]?.quantity, 2);
+
+    expect(eatEquippedFood(db, first.save!).reason, 'Already eaten this round.');
+
+    final nextRound = eatEquippedFood(
+      db,
+      first.save!.copyWith(combatRoundStartedAt: '2026-01-01T00:00:04.000Z'),
+    );
+    expect(nextRound.ok, isTrue);
+    expect(nextRound.save!.equipment.slots[foodSlotId]?.quantity, 1);
   });
 
   test('manual eat still works outside combat when auto-eat is off', () {

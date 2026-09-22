@@ -1,4 +1,4 @@
-export const SAVE_VERSION = 52
+export const SAVE_VERSION = 53
 export const SAVE_STORAGE_KEY = 'idle-kingdoms.demo.save'
 export const STARTING_LOCATION_ID = 'LOC-0001'
 /** Base gold before race kit; race starters grant the real starting gold. */
@@ -152,6 +152,11 @@ export interface PlayerSettings {
    * Set by the "Don't ask again" control on that popup.
    */
   skipHostileTravelWarning: boolean
+  /**
+   * When true, equipped potions are not auto-applied. Toggled from the stage
+   * potion button (🚫). An already-running effect is left alone.
+   */
+  potionsPaused: boolean
 }
 
 export const APPEARANCE_CATEGORIES = [
@@ -356,6 +361,11 @@ export interface PlayerSave {
   combatEnemyId: string | null
   combatEnemyHp: number | null
   combatRoundStartedAt: string | null
+  /**
+   * When set to the current [combatRoundStartedAt], the player already used
+   * their one manual eat this combat round (auto-eat off only).
+   */
+  combatManualEatRoundStartedAt: string | null
   /**
    * Staff of Binding: when true, the enemy skips their next attack.
    * Cleared after that skipped swing, or when combat ends.

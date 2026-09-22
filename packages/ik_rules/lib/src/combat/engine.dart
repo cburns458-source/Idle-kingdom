@@ -187,6 +187,7 @@ PlayerSave clearCombatSave(PlayerSave save) {
     combatEnemyId: null,
     combatEnemyHp: null,
     combatRoundStartedAt: null,
+    combatManualEatRoundStartedAt: null,
     combatSkipEnemyAttack: false,
     combatBossSleepRoundsRemaining: null,
     combatBossPendingId: null,

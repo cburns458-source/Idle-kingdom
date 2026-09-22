@@ -565,6 +565,15 @@ class GameController extends ChangeNotifier {
     commit(save.copyWith(settings: save.settings.copyWith(showEatButton: value)));
   }
 
+  bool get potionsPaused => save.settings.potionsPaused;
+
+  void setPotionsPaused(bool value) {
+    if (save.settings.potionsPaused == value) return;
+    commit(save.copyWith(settings: save.settings.copyWith(potionsPaused: value)));
+  }
+
+  void togglePotionsPaused() => setPotionsPaused(!potionsPaused);
+
   bool get autoEat => save.settings.autoEat;
 
   void setAutoEat(bool value) {

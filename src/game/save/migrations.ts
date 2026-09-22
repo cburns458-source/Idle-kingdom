@@ -97,6 +97,7 @@ function normalizeSettings(settings?: Partial<PlayerSettings> | null): PlayerSet
     ),
     eatHealthThresholdAsPercent: settings?.eatHealthThresholdAsPercent ?? false,
     skipHostileTravelWarning: settings?.skipHostileTravelWarning ?? false,
+    potionsPaused: settings?.potionsPaused ?? false,
   }
 }
 
@@ -849,6 +850,18 @@ export const SAVE_MIGRATIONS: SaveMigration[] = [
       ...save,
       settings: normalizeSettings(save.settings),
       saveVersion: 52,
+    }),
+  },
+  {
+    fromVersion: 52,
+    toVersion: 53,
+    migrate: (save) => ({
+      ...save,
+      settings: normalizeSettings(save.settings),
+      combatManualEatRoundStartedAt:
+        (save as PlayerSave & { combatManualEatRoundStartedAt?: string | null })
+          .combatManualEatRoundStartedAt ?? null,
+      saveVersion: 53,
     }),
   },
 ]

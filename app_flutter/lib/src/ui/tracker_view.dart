@@ -29,13 +29,17 @@ Future<void> showTrackerPopup({
   return showGamePopup<void>(
     context: context,
     origin: origin,
-    maxWidth: 320,
-    maxHeight: 420,
+    placement: GamePopupPlacement.leftHalf,
+    barrierColor: const Color(0x00000000),
+    barrierDismissible: true,
     builder: (dialogContext) {
-      return SizedBox(
-        width: 320,
-        height: 420,
-        child: TrackerView(controller: controller, kind: kind),
+      return GamePopupCard(
+        padding: EdgeInsets.zero,
+        child: TrackerView(
+          controller: controller,
+          kind: kind,
+          onClose: () => Navigator.of(dialogContext).pop(),
+        ),
       );
     },
   );

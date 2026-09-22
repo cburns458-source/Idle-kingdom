@@ -692,8 +692,27 @@ void main() {
     await tester.pump();
     expect(controller.save.equipment.slots[foodSlotId]?.quantity ?? 0, before - 1);
 
-    controller.commit(controller.save.copyWith(combatEnemyId: 'ENM-0001'));
+    controller.commit(
+      controller.save.copyWith(
+        combatEnemyId: 'ENM-0001',
+        combatRoundStartedAt: '2026-01-01T00:00:00.000Z',
+      ),
+    );
     await tester.pump();
+    expect(tester.widget<InkWell>(eat).onTap, isNull);
+
+    controller.commit(
+      controller.save.copyWith(
+        settings: controller.save.settings.copyWith(autoEat: false),
+        combatManualEatRoundStartedAt: null,
+      ),
+    );
+    await tester.pump();
+    expect(tester.widget<InkWell>(eat).onTap, isNotNull);
+    final mid = controller.save.equipment.slots[foodSlotId]?.quantity ?? 0;
+    await tester.tap(eat);
+    await tester.pump();
+    expect(controller.save.equipment.slots[foodSlotId]?.quantity ?? 0, mid - 1);
     expect(tester.widget<InkWell>(eat).onTap, isNull);
   });
 
@@ -729,12 +748,15 @@ void main() {
     await tester.tap(xp);
     await tester.pump();
     expect(find.byKey(const Key('tracker-on-xp')), findsOne);
-    await tester.tapAt(const Offset(8, 8));
+    expect(find.byTooltip('Close'), findsOne);
+    await tester.tap(find.byTooltip('Close'));
     await tester.pump();
+    expect(find.byKey(const Key('tracker-on-xp')), findsNothing);
 
     await tester.tap(loot);
     await tester.pump();
     expect(find.byKey(const Key('tracker-on-loot')), findsOne);
+    expect(find.byTooltip('Close'), findsOne);
   });
 
   test('the reward strip keeps six completed actions', () {
@@ -919,19 +941,21 @@ void main() {
     expect(actionMid.top, closeTo(actionRest.top, 1));
   });
 
-  testWidgets('an active potion shows its icon and remaining actions on the player', (
-    tester,
-  ) async {
+  testWidgets('an active potion shows remaining actions on the stage potion chip', (tester) async {
+    var save = startedCharacter(database).copyWith(currentLocationId: 'LOC-0001');
+    save = addItemsToInventory(save, 'ITEM-0070', 3).save;
+    final equipped = equipItemFromInventory(database.launch, save, 'ITEM-0070');
+    expect(equipped.ok, isTrue);
     final controller = buildController(
       database,
-      seed: startedCharacter(database).copyWith(
-        currentLocationId: 'LOC-0001',
+      seed: equipped.save!.copyWith(
         activePotionEffect: const ActivePotionEffect(
           scope: 'one_action',
           itemId: 'ITEM-0070',
           relativeDropChanceBonusPercent: 25,
           actionsRemaining: 6,
         ),
+        currentActivityId: 'ACT-0001',
       ),
     );
     addTearDown(controller.dispose);
@@ -939,11 +963,19 @@ void main() {
     expect(controller.save.activePotionEffect?.actionsRemaining, 6);
     await pumpShell(tester, controller, size: const Size(420, 420 * 16 / 9));
 
-    expect(find.byKey(const Key('potion-action-badge')), findsOne);
-    expect(find.text('6'), findsWidgets);
+    expect(find.byKey(const Key('potion-action-badge')), findsNothing);
+    expect(find.byKey(const Key('stage-potion')), findsOne);
+    // Fresh bottle mid-action shows duration−1 (6→5).
+    expect(find.text('5'), findsWidgets);
+    expect(find.text('3'), findsWidgets);
     expect(
       find.byWidgetPredicate((widget) => assetNamed(widget, 'item_luck_potion')),
       findsWidgets,
     );
+
+    await tester.tap(find.byKey(const Key('stage-potion')));
+    await tester.pump();
+    expect(controller.save.settings.potionsPaused, isTrue);
+    expect(find.text('🚫'), findsOne);
   });
 }

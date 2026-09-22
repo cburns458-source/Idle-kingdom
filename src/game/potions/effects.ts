@@ -81,6 +81,19 @@ export function potionActionsRemaining(effect: ActivePotionEffect | null | undef
   return 1
 }
 
+/** Stage badge count: a fresh bottle counts the in-progress apply (6→5). */
+export function potionStageRemaining(
+  effect: ActivePotionEffect | null | undefined,
+  save: PlayerSave,
+): number {
+  const left = potionActionsRemaining(effect)
+  if (left <= 0) return 0
+  const busy =
+    save.currentActivityId != null || (save.combatEnemyId != null && save.combatEnemyId !== '')
+  if (busy && left >= POTION_ACTION_DURATION) return left - 1
+  return left
+}
+
 /** Spend one action of the active bottle. Clears the overlay when it runs out. */
 export function tickPotionAction(save: PlayerSave): PlayerSave {
   const effect = save.activePotionEffect
@@ -112,6 +125,11 @@ export function tryConsumePotionForScope(
   const existing = save.activePotionEffect
   if (existing && potionActionsRemaining(existing) > 0 && existing.scope === scope) {
     return { save, consumed: false, effect: existing, potionName: null }
+  }
+
+  // Pause blocks new bottles only; an already-running effect keeps ticking.
+  if (save.settings.potionsPaused) {
+    return { save, consumed: false, effect: null, potionName: null }
   }
 
   const potion = slotStack(save, POTION_SLOT_ID)

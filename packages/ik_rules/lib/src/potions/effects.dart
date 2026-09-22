@@ -71,6 +71,17 @@ num potionActionsRemaining(ActivePotionEffect? effect) {
   return 1;
 }
 
+/// Stage badge count: a fresh bottle counts the in-progress apply (6→5).
+num potionStageRemaining(ActivePotionEffect? effect, PlayerSave save) {
+  final left = potionActionsRemaining(effect);
+  if (left <= 0) return 0;
+  final busy =
+      save.currentActivityId != null ||
+      (save.combatEnemyId != null && save.combatEnemyId!.isNotEmpty);
+  if (busy && left >= potionActionDuration) return left - 1;
+  return left;
+}
+
 /// Spends one action of the active bottle. Clears the overlay when it runs out.
 PlayerSave tickPotionAction(PlayerSave save) {
   final effect = save.activePotionEffect;
@@ -106,6 +117,11 @@ PotionConsumption tryConsumePotionForScope(GameDatabase db, PlayerSave save, Str
   final existing = save.activePotionEffect;
   if (existing != null && potionActionsRemaining(existing) > 0 && existing.scope == scope) {
     return PotionConsumption(save: save, consumed: false, effect: existing, potionName: null);
+  }
+
+  // Pause blocks new bottles only; an already-running effect keeps ticking.
+  if (save.settings.potionsPaused) {
+    return PotionConsumption(save: save, consumed: false, effect: null, potionName: null);
   }
 
   final potion = slotStack(save, potionSlotId);
