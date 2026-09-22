@@ -33,6 +33,9 @@ function shouldAutoEatHealingFood(save: PlayerSave, maxHp: number): boolean {
 
 export function tryConsumeFoodAfterVictory(db: GameDatabase, save: PlayerSave): FoodConsumption {
   const maxHp = playerMaxHp(db, save)
+  if (save.settings.autoEat === false) {
+    return { save: { ...save, maxHp }, consumed: false, healed: 0, foodName: null }
+  }
   const food = slotStack(save, FOOD_SLOT_ID)
   if (!food || food.quantity <= 0) {
     const cleared =

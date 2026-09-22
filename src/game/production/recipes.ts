@@ -42,7 +42,7 @@ export function inventoryCount(save: PlayerSave, itemId: string): number {
 
 export function maxCraftsFromMaterials(save: PlayerSave, recipe: RecipeRow): number {
   const ingredients = recipeIngredients(recipe)
-  if (ingredients.length === 0) return 0
+  if (ingredients.length === 0) return Number.POSITIVE_INFINITY
   let max = Number.POSITIVE_INFINITY
   for (const ingredient of ingredients) {
     max = Math.min(max, Math.floor(inventoryCount(save, ingredient.itemId) / ingredient.quantity))

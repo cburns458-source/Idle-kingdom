@@ -556,12 +556,9 @@ export function completeGatheringAction(
     xpRewards.map((reward) => ({ skillId: reward.skillId, xp: reward.xp })),
     nowMs,
   )
-  let foodHealed = 0
-  if (isThievery) {
-    const fed = consumeFoodAfterVictory(db, next)
-    next = fed.save
-    foodHealed = fed.healed
-  }
+  const fed = consumeFoodAfterVictory(db, next)
+  next = fed.save
+  const foodHealed = fed.healed
 
   return {
     save: withoutHeldAction(next, save.currentActivityId),

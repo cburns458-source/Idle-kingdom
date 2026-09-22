@@ -3631,7 +3631,7 @@
       "Release Phase": "Launch",
       "Description": null,
       "Icon Asset Key": "cooked_baby_giant_squid",
-      "Notes": null,
+      "Notes": "Unused leftover cook. Existing copies migrate to Squid Noodle Soup.",
       "Base Sell Value": 2500,
       "Stackable": null
     },
@@ -6389,6 +6389,23 @@
       "Icon Asset Key": "pruners",
       "Notes": "Seed Stall. No skill requirement. Converts 1/4 XP to Botany and 10% node seeds.",
       "Base Sell Value": 18,
+      "Stackable": null
+    },
+    {
+      "Item ID": "ITEM-0364",
+      "Internal Key": "soup_stock",
+      "Display Name": "Soup Stock",
+      "Category": "Ingredient",
+      "Subtype": "Cooking ingredient",
+      "Associated Skill ID": "SKL-0007",
+      "Equipment Slot ID": null,
+      "Functional / Source Tags": "cooking_output; cooking_input",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Description": "Plain kitchen stock. Used in every stew and soup.",
+      "Icon Asset Key": "soup_stock",
+      "Notes": "No ingredients. Cooking 16. 12 seconds. No XP.",
+      "Base Sell Value": 1,
       "Stackable": null
     }
   ],
@@ -13760,7 +13777,7 @@
       "Relevant Skill ID": "SKL-0003",
       "Target Type": "Item",
       "Target ID": "ITEM-0191",
-      "Proficiency Level": 80,
+      "Proficiency Level": 70,
       "Base Duration Seconds": 20,
       "XP Reward": 2778,
       "Guaranteed Gold": 0,
@@ -14243,9 +14260,9 @@
       "Reward Table ID": "RWT-0079",
       "Secondary Drop Chance": null,
       "Secondary Reward Table ID": null,
-      "Status": "Planned",
+      "Status": "Needs Data",
       "Release Phase": "Launch",
-      "Notes": "Production is hard-gated by Proficiency Level."
+      "Notes": "Unused leftover. Replaced by Squid Noodle Soup."
     },
     {
       "Action ID": "ACN-0128",
@@ -15547,6 +15564,26 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": "Production is hard-gated by Proficiency Level."
+    },
+    {
+      "Action ID": "ACN-0198",
+      "Internal Key": "cook_soup_stock",
+      "Display Name": "Soup Stock",
+      "Category": "Standard Production",
+      "Relevant Skill ID": "SKL-0007",
+      "Target Type": "Item",
+      "Target ID": "ITEM-0364",
+      "Proficiency Level": 16,
+      "Base Duration Seconds": 12,
+      "XP Reward": 0,
+      "Guaranteed Gold": 0,
+      "Drop Chance": 100,
+      "Reward Table ID": null,
+      "Secondary Drop Chance": null,
+      "Secondary Reward Table ID": null,
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": "Production is hard-gated by Proficiency Level. No ingredients."
     }
   ],
   "Requirements": [
@@ -20817,7 +20854,7 @@
       "Facility ID": "FAC-0001",
       "Proficiency Level": 35,
       "Base Duration Seconds": 14,
-      "XP Reward": 1633,
+      "XP Reward": 3266,
       "Knowledge Source": "Automatic level unlock",
       "Action ID": "ACN-0122",
       "Status": "Planned",
@@ -20829,8 +20866,8 @@
       "Ingredient 2 Quantity": 3,
       "Ingredient 3 Item ID": "ITEM-0341",
       "Ingredient 3 Quantity": 1,
-      "Ingredient 4 Item ID": null,
-      "Ingredient 4 Quantity": null
+      "Ingredient 4 Item ID": "ITEM-0364",
+      "Ingredient 4 Quantity": 1
     },
     {
       "Recipe ID": "RCP-0013",
@@ -20842,7 +20879,7 @@
       "Facility ID": "FAC-0001",
       "Proficiency Level": 55,
       "Base Duration Seconds": 15,
-      "XP Reward": 2083,
+      "XP Reward": 4166,
       "Knowledge Source": "Automatic level unlock",
       "Action ID": "ACN-0125",
       "Status": "Planned",
@@ -20854,8 +20891,8 @@
       "Ingredient 2 Quantity": 3,
       "Ingredient 3 Item ID": "ITEM-0031",
       "Ingredient 3 Quantity": 2,
-      "Ingredient 4 Item ID": null,
-      "Ingredient 4 Quantity": null
+      "Ingredient 4 Item ID": "ITEM-0364",
+      "Ingredient 4 Quantity": 1
     },
     {
       "Recipe ID": "RCP-0014",
@@ -21345,9 +21382,9 @@
       "XP Reward": 3542,
       "Knowledge Source": "Automatic level unlock",
       "Action ID": "ACN-0127",
-      "Status": "Planned",
+      "Status": "Needs Data",
       "Release Phase": "Launch",
-      "Notes": null,
+      "Notes": "Unused leftover. Replaced by Squid Noodle Soup.",
       "Ingredient 1 Item ID": "ITEM-0191",
       "Ingredient 1 Quantity": 1,
       "Ingredient 2 Item ID": "ITEM-0207",
@@ -21717,7 +21754,7 @@
       "Facility ID": "FAC-0001",
       "Proficiency Level": 80,
       "Base Duration Seconds": 16,
-      "XP Reward": 5333,
+      "XP Reward": 10666,
       "Knowledge Source": "Automatic level unlock",
       "Action ID": "ACN-0175",
       "Status": "Planned",
@@ -21729,8 +21766,8 @@
       "Ingredient 2 Quantity": 5,
       "Ingredient 3 Item ID": "ITEM-0191",
       "Ingredient 3 Quantity": 1,
-      "Ingredient 4 Item ID": null,
-      "Ingredient 4 Quantity": null
+      "Ingredient 4 Item ID": "ITEM-0364",
+      "Ingredient 4 Quantity": 1
     },
     {
       "Recipe ID": "RCP-0061",
@@ -21792,7 +21829,7 @@
       "Facility ID": "FAC-0001",
       "Proficiency Level": 16,
       "Base Duration Seconds": 13,
-      "XP Reward": 1156,
+      "XP Reward": 2312,
       "Knowledge Source": "Automatic level unlock",
       "Action ID": "ACN-0193",
       "Status": "Planned",
@@ -21804,8 +21841,8 @@
       "Ingredient 2 Quantity": 3,
       "Ingredient 3 Item ID": "ITEM-0341",
       "Ingredient 3 Quantity": 3,
-      "Ingredient 4 Item ID": null,
-      "Ingredient 4 Quantity": null
+      "Ingredient 4 Item ID": "ITEM-0364",
+      "Ingredient 4 Quantity": 1
     },
     {
       "Recipe ID": "RCP-0064",
@@ -21817,7 +21854,7 @@
       "Facility ID": "FAC-0001",
       "Proficiency Level": 36,
       "Base Duration Seconds": 14,
-      "XP Reward": 1680,
+      "XP Reward": 3360,
       "Knowledge Source": "Automatic level unlock",
       "Action ID": "ACN-0194",
       "Status": "Planned",
@@ -21829,8 +21866,8 @@
       "Ingredient 2 Quantity": 3,
       "Ingredient 3 Item ID": "ITEM-0341",
       "Ingredient 3 Quantity": 3,
-      "Ingredient 4 Item ID": null,
-      "Ingredient 4 Quantity": null
+      "Ingredient 4 Item ID": "ITEM-0364",
+      "Ingredient 4 Quantity": 1
     },
     {
       "Recipe ID": "RCP-0065",
@@ -21842,7 +21879,7 @@
       "Facility ID": "FAC-0001",
       "Proficiency Level": 56,
       "Base Duration Seconds": 15,
-      "XP Reward": 2108,
+      "XP Reward": 4216,
       "Knowledge Source": "Automatic level unlock",
       "Action ID": "ACN-0195",
       "Status": "Planned",
@@ -21854,8 +21891,8 @@
       "Ingredient 2 Quantity": 3,
       "Ingredient 3 Item ID": "ITEM-0341",
       "Ingredient 3 Quantity": 3,
-      "Ingredient 4 Item ID": null,
-      "Ingredient 4 Quantity": null
+      "Ingredient 4 Item ID": "ITEM-0364",
+      "Ingredient 4 Quantity": 1
     },
     {
       "Recipe ID": "RCP-0066",
@@ -21867,7 +21904,7 @@
       "Facility ID": "FAC-0001",
       "Proficiency Level": 76,
       "Base Duration Seconds": 16,
-      "XP Reward": 2667,
+      "XP Reward": 5334,
       "Knowledge Source": "Automatic level unlock",
       "Action ID": "ACN-0196",
       "Status": "Planned",
@@ -21879,8 +21916,8 @@
       "Ingredient 2 Quantity": 3,
       "Ingredient 3 Item ID": "ITEM-0341",
       "Ingredient 3 Quantity": 3,
-      "Ingredient 4 Item ID": null,
-      "Ingredient 4 Quantity": null
+      "Ingredient 4 Item ID": "ITEM-0364",
+      "Ingredient 4 Quantity": 1
     },
     {
       "Recipe ID": "RCP-0067",
@@ -21900,6 +21937,31 @@
       "Notes": "Plain cook; no stew for catfish.",
       "Ingredient 1 Item ID": "ITEM-0354",
       "Ingredient 1 Quantity": 1,
+      "Ingredient 2 Item ID": null,
+      "Ingredient 2 Quantity": null,
+      "Ingredient 3 Item ID": null,
+      "Ingredient 3 Quantity": null,
+      "Ingredient 4 Item ID": null,
+      "Ingredient 4 Quantity": null
+    },
+    {
+      "Recipe ID": "RCP-0068",
+      "Internal Key": "cook_soup_stock",
+      "Display Name": "Soup Stock",
+      "Skill ID": "SKL-0007",
+      "Output Item ID": "ITEM-0364",
+      "Output Quantity": 1,
+      "Facility ID": "FAC-0001",
+      "Proficiency Level": 16,
+      "Base Duration Seconds": 12,
+      "XP Reward": 0,
+      "Knowledge Source": "Automatic level unlock",
+      "Action ID": "ACN-0198",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": "No ingredients. Kitchen only. Used in all stews and soups.",
+      "Ingredient 1 Item ID": null,
+      "Ingredient 1 Quantity": null,
       "Ingredient 2 Item ID": null,
       "Ingredient 2 Quantity": null,
       "Ingredient 3 Item ID": null,

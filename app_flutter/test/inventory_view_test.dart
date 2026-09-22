@@ -658,7 +658,14 @@ void main() {
     final popup = find.byKey(const Key('game-popup'));
     expect(popup, findsOne);
     expect(find.textContaining('Eat at'), findsOne);
+    expect(find.byKey(const Key('auto-eat')), findsOne);
+    expect(find.text('Auto-eat on'), findsOne);
     expect(find.byKey(const Key('eat-now')), findsOne);
+
+    await tester.tap(find.byKey(const Key('auto-eat')));
+    await tester.pump();
+    expect(controller.autoEat, isFalse);
+    expect(find.text('Auto-eat off'), findsOne);
 
     final before = controller.save.equipment.slots[foodSlotId]?.quantity ?? 0;
     expect(before, greaterThan(0));

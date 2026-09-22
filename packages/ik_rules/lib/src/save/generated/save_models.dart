@@ -7,7 +7,7 @@
 
 import '../../json_support.dart';
 
-const int saveVersion = 49;
+const int saveVersion = 50;
 
 const String saveStorageKey = 'idle-kingdoms.demo.save';
 
@@ -21,6 +21,11 @@ const String startingHuntingToolId = 'ITEM-0108';
 
 /// Retired fishing-net item. Existing copies become the hunting Net.
 const String retiredFishingNetItemId = 'ITEM-0104';
+
+/// Retired cook. Existing copies become Squid Noodle Soup.
+const String retiredCookedBabyGiantSquidItemId = 'ITEM-0192';
+
+const String squidNoodleSoupItemId = 'ITEM-0302';
 
 const String weaponToolSlotId = 'SLOT-0001';
 
@@ -563,6 +568,7 @@ class LocationTimer {
     required this.startedAt,
     required this.durationMs,
     this.plantedItemIds,
+    this.baitItemIds,
   });
 
   factory LocationTimer.fromJson(Map<String, Object?> json) {
@@ -577,6 +583,7 @@ class LocationTimer {
       startedAt: json['startedAt'] as String,
       durationMs: json['durationMs'] as num,
       plantedItemIds: listOrNull(json['plantedItemIds'], (Object? entry) => entry as String),
+      baitItemIds: listOrNull(json['baitItemIds'], (Object? entry) => entry as String),
     );
   }
 
@@ -604,6 +611,9 @@ class LocationTimer {
   /// Mixed plantings; missing on older saves (treat as inputItemId × outputQuantity).
   final List<String>? plantedItemIds;
 
+  /// Raw bait fish for a pot; missing or empty means an unbaited equal-pool haul.
+  final List<String>? baitItemIds;
+
   Map<String, Object?> toJson() {
     return <String, Object?>{
       'locationId': locationId,
@@ -616,6 +626,7 @@ class LocationTimer {
       'startedAt': startedAt,
       'durationMs': durationMs,
       if (plantedItemIds != null) 'plantedItemIds': plantedItemIds,
+      if (baitItemIds != null) 'baitItemIds': baitItemIds,
     };
   }
 
@@ -630,6 +641,7 @@ class LocationTimer {
     String? startedAt,
     num? durationMs,
     Object? plantedItemIds = _unset,
+    Object? baitItemIds = _unset,
   }) {
     return LocationTimer(
       locationId: locationId ?? this.locationId,
@@ -644,6 +656,7 @@ class LocationTimer {
       plantedItemIds: plantedItemIds == _unset
           ? this.plantedItemIds
           : plantedItemIds as List<String>?,
+      baitItemIds: baitItemIds == _unset ? this.baitItemIds : baitItemIds as List<String>?,
     );
   }
 }
@@ -1505,6 +1518,7 @@ class PlayerSettings {
     required this.showActivityRewards,
     required this.hudShowTotalXp,
     required this.showEatButton,
+    required this.autoEat,
     required this.eatHealthThresholdPercent,
     required this.eatHealthThresholdAsPercent,
   });
@@ -1515,6 +1529,7 @@ class PlayerSettings {
       showActivityRewards: json['showActivityRewards'] as bool,
       hudShowTotalXp: json['hudShowTotalXp'] as bool,
       showEatButton: json['showEatButton'] as bool,
+      autoEat: json['autoEat'] as bool,
       eatHealthThresholdPercent: json['eatHealthThresholdPercent'] as num,
       eatHealthThresholdAsPercent: json['eatHealthThresholdAsPercent'] as bool,
     );
@@ -1532,6 +1547,10 @@ class PlayerSettings {
   /// When false, the Eat button is hidden on the food item detail sheet.
   final bool showEatButton;
 
+  /// When false, equipped food is never eaten automatically. Manual Eat still
+  /// works outside combat.
+  final bool autoEat;
+
   /// Auto-eat when current HP is at or below this percent of max HP (1–100).
   /// 100 keeps the old rule: eat whenever current HP is below maximum.
   final num eatHealthThresholdPercent;
@@ -1545,6 +1564,7 @@ class PlayerSettings {
       'showActivityRewards': showActivityRewards,
       'hudShowTotalXp': hudShowTotalXp,
       'showEatButton': showEatButton,
+      'autoEat': autoEat,
       'eatHealthThresholdPercent': eatHealthThresholdPercent,
       'eatHealthThresholdAsPercent': eatHealthThresholdAsPercent,
     };
@@ -1555,6 +1575,7 @@ class PlayerSettings {
     bool? showActivityRewards,
     bool? hudShowTotalXp,
     bool? showEatButton,
+    bool? autoEat,
     num? eatHealthThresholdPercent,
     bool? eatHealthThresholdAsPercent,
   }) {
@@ -1563,6 +1584,7 @@ class PlayerSettings {
       showActivityRewards: showActivityRewards ?? this.showActivityRewards,
       hudShowTotalXp: hudShowTotalXp ?? this.hudShowTotalXp,
       showEatButton: showEatButton ?? this.showEatButton,
+      autoEat: autoEat ?? this.autoEat,
       eatHealthThresholdPercent: eatHealthThresholdPercent ?? this.eatHealthThresholdPercent,
       eatHealthThresholdAsPercent: eatHealthThresholdAsPercent ?? this.eatHealthThresholdAsPercent,
     );

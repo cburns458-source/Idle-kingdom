@@ -500,6 +500,13 @@ class GameController extends ChangeNotifier {
     commit(save.copyWith(settings: save.settings.copyWith(showEatButton: value)));
   }
 
+  bool get autoEat => save.settings.autoEat;
+
+  void setAutoEat(bool value) {
+    if (save.settings.autoEat == value) return;
+    commit(save.copyWith(settings: save.settings.copyWith(autoEat: value)));
+  }
+
   String get attackStyle => normalizeAttackStyle(save.attackStyle);
 
   void setAttackStyle(String style) {
@@ -974,8 +981,14 @@ class GameController extends ChangeNotifier {
     announce('Seed planted.');
   }
 
-  void placeTrapHere(String trapItemId) {
-    final result = placeTrap(db, save, trapItemId, nowMs: session.clock());
+  void placeTrapHere(String trapItemId, {List<String> baitItemIds = const <String>[]}) {
+    final result = placeTrap(
+      db,
+      save,
+      trapItemId,
+      nowMs: session.clock(),
+      baitItemIds: baitItemIds,
+    );
     if (!result.ok) {
       report(result.reason);
       return;
@@ -1032,26 +1045,33 @@ class GameController extends ChangeNotifier {
     for (final loot in result.loot) {
       rewards.add('${loot.displayName} x${loot.quantity}');
     }
-    ActionXpRewardSummary? xpSummary;
-    if (result.xpGained > 0 && result.skillId.isNotEmpty) {
-      final beforeLevel = getSkillProgress(before, result.skillId).level;
-      final afterLevel = getSkillProgress(after, result.skillId).level;
-      xpSummary = summarizeXpReward(
+    final xpRewards = <ActionXpRewardSummary>[];
+    void addXpLine(String skillId, num xp) {
+      if (xp <= 0 || skillId.isEmpty) return;
+      final beforeLevel = getSkillProgress(before, skillId).level;
+      final afterLevel = getSkillProgress(after, skillId).level;
+      final summary = summarizeXpReward(
         db,
         after,
-        result.skillId,
-        result.xpGained,
+        skillId,
+        xp,
         afterLevel > beforeLevel ? afterLevel : null,
       );
-      if (xpSummary != null) {
-        rewards.add('+${result.xpGained} ${xpSummary.skillName} XP');
+      if (summary != null) {
+        xpRewards.add(summary);
+        rewards.add('+${xp.round()} ${summary.skillName} XP');
       } else {
-        rewards.add('+${result.xpGained} XP');
+        rewards.add('+${xp.round()} XP');
       }
+    }
+
+    addXpLine(result.skillId, result.xpGained);
+    for (final bonus in result.bonusXp) {
+      addXpLine(bonus.skillId, bonus.xp);
     }
     final bundle = ActionRewardBundle(
       id: 'timer-$locationId-${session.clock()}',
-      xpRewards: [?xpSummary],
+      xpRewards: xpRewards,
       loot: result.loot,
       goldGained: 0,
     );
@@ -1066,17 +1086,6 @@ class GameController extends ChangeNotifier {
       rewardBundle: bundle,
       canRepeat: canRepeat,
     );
-  }
-
-  /// Places the pot again after a collect. Botany uses the seed picker instead.
-  void repeatTimerPlacement(String locationId, String kind, String inputItemId) {
-    if (save.currentLocationId != locationId) {
-      report('Travel back to collect and replant.');
-      return;
-    }
-    if (kind == 'fishing_pot') {
-      placeTrapHere(inputItemId);
-    }
   }
 
   void toggleFavorite(String activityId) {

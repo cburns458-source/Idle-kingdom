@@ -59,6 +59,7 @@ function saveWithInventory(itemIds: string[]): PlayerSave {
       showActivityRewards: true,
       hudShowTotalXp: false,
       showEatButton: true,
+      autoEat: true,
       eatHealthThresholdPercent: 100,
       eatHealthThresholdAsPercent: false,
     },

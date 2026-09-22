@@ -68,9 +68,12 @@ describe('recipe knowledge', () => {
       ),
     }
     expect(canKnowRecipe(thiefCrafter, launch, lockpicks!)).toBe(true)
-    const squid = entries.find((entry) => entry.name === 'Cooked Baby Giant Squid')
-    expect(squid?.materials).toContain('Starroot')
-    expect(squid?.materials).not.toContain('ITEM-0208')
+    const leftover = launch.Recipes.find((recipe) => recipe['Recipe ID'] === 'RCP-0044')
+    expect(leftover?.Status).toBe('Needs Data')
+    expect(leftover?.['Ingredient 3 Item ID']).toBe('ITEM-0208')
+    const soup = entries.find((entry) => entry.name === 'Squid Noodle Soup')
+    expect(soup?.materials).toContain('Soup Stock')
+    expect(soup?.materials).not.toContain('Starroot')
   })
 
   it('skill recipe books list locked and unlocked rows for that skill', () => {
@@ -81,9 +84,8 @@ describe('recipe knowledge', () => {
     expect(cooking.some((entry) => entry.known)).toBe(true)
     expect(cooking.some((entry) => !entry.known)).toBe(true)
     expect(cooking.every((entry) => entry.skill === 'Cooking')).toBe(true)
-    expect(cooking.some((entry) => entry.name.includes('Baby Giant Squid') && !entry.known)).toBe(
-      true,
-    )
+    expect(cooking.some((entry) => entry.name === 'Squid Noodle Soup' && !entry.known)).toBe(true)
+    expect(cooking.some((entry) => entry.name === 'Cooked Baby Giant Squid')).toBe(false)
     const artisanry = recipeBookForSkill(save, launch, 'SKL-0012')
     expect(artisanry.some((entry) => entry.name === 'Leather Helmet' && entry.known)).toBe(true)
     expect(artisanry.some((entry) => entry.name === 'Leather Gloves' && entry.known)).toBe(true)

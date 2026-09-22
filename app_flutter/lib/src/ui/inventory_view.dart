@@ -598,6 +598,20 @@ class _InventoryViewState extends State<InventoryView> {
                       _eatAtHealth(),
                       const SizedBox(height: 10),
                       GameButton(
+                        key: const Key('auto-eat'),
+                        label: controller.autoEat ? 'Auto-eat on' : 'Auto-eat off',
+                        selected: controller.autoEat,
+                        tone: controller.autoEat
+                            ? GameButtonTone.primary
+                            : GameButtonTone.secondary,
+                        onPressed: () => controller.setAutoEat(!controller.autoEat),
+                      ),
+                      const SizedBox(height: 6),
+                      const MutedText(
+                        'Eats after a finished action when HP is at the threshold. Off also stops combat and thievery auto-eat. Manual Eat still works outside combat.',
+                      ),
+                      const SizedBox(height: 10),
+                      GameButton(
                         key: const Key('eat-now'),
                         label: 'Eat now',
                         onPressed: isInCombat(save)

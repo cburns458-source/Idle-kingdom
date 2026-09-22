@@ -56,6 +56,7 @@ function sampleSave(skills: Array<{ skillId: string; level: number; xp: number }
       showActivityRewards: true,
       hudShowTotalXp: false,
       showEatButton: true,
+      autoEat: true,
       eatHealthThresholdPercent: 100,
       eatHealthThresholdAsPercent: false,
     },

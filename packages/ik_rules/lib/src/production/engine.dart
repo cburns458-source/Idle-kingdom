@@ -10,6 +10,7 @@ import '../activity/types.dart';
 import '../achievements/progress.dart';
 import '../activity/xp.dart';
 import '../bounties/progress.dart';
+import '../combat/food.dart';
 import '../inventory/add_items.dart';
 import '../inventory/capacity.dart';
 import '../js_compat.dart';
@@ -206,6 +207,7 @@ ProductionCraftResult? completeProductionCraft(
   next = applyBountyProcessProgress(next, jsString(recipe.raw['Recipe ID']), 1, nowMs);
   next = recordProductionMilestones(db, next, outputItemId, outputQty);
   next = creditXpAwards(next, [(skillId: skillId, xp: xpGained)], nowMs);
+  next = consumeFoodAfterVictory(db, next).save;
 
   final itemName = db.items
       .firstWhereOrNull((item) => item.raw['Item ID'] == outputItemId)

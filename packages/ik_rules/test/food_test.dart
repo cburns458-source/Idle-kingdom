@@ -21,6 +21,33 @@ void main() {
     db = assertGameDatabaseShape(contentDatabaseJson());
   });
 
+  test('soup stock is kitchen-only with no ingredients and feeds every stew', () {
+    final stock = db.recipes.firstWhere((row) => row.raw['Recipe ID'] == 'RCP-0068');
+    expect(stock.raw['Facility ID'], 'FAC-0001');
+    expect(stock.raw['Proficiency Level'], 16);
+    expect(stock.raw['Base Duration Seconds'], 12);
+    expect(stock.raw['XP Reward'], 0);
+    expect(stock.raw['Ingredient 1 Item ID'], isNull);
+    expect(maxCraftsFromMaterials(createNewSave(db, 0), stock), double.infinity);
+    for (final recipeId in <String>[
+      'RCP-0012',
+      'RCP-0013',
+      'RCP-0060',
+      'RCP-0063',
+      'RCP-0064',
+      'RCP-0065',
+      'RCP-0066',
+    ]) {
+      final recipe = db.recipes.firstWhere((row) => row.raw['Recipe ID'] == recipeId);
+      expect(recipe.raw['Ingredient 4 Item ID'], 'ITEM-0364');
+    }
+    expect(
+      db.recipes.firstWhere((row) => row.raw['Recipe ID'] == 'RCP-0012').raw['XP Reward'],
+      3266,
+    );
+    expect(db.actions.firstWhere((row) => row.actionId == 'ACN-0104').proficiencyLevel, 70);
+  });
+
   test('Gluttony is an Arcana 30 spell that costs tuna, stew, and essence', () {
     final project = db.projects.firstWhere((row) => row.raw['Project ID'] == 'PRJ-0153');
     expect(project.displayName, 'Gluttony Spell');
@@ -95,6 +122,16 @@ void main() {
     expect(eaten.save.equipment.slots[foodSlotId]?.quantity, 3);
   });
 
+  test('skips auto-eat entirely when the toggle is off', () {
+    final base = _withFoodAndSpells(db, foodQty: 4, gluttonyCount: 2);
+    final skipped = consumeFoodAfterVictory(
+      db,
+      base.copyWith(settings: base.settings.copyWith(autoEat: false)),
+    );
+    expect(skipped.consumed, isFalse);
+    expect(skipped.save.equipment.slots[foodSlotId]?.quantity, 4);
+  });
+
   test('skips healing food and Gluttony extras on a one-hit clean kill', () {
     final skipped = consumeFoodAfterVictory(
       db,
@@ -118,5 +155,23 @@ void main() {
       ).reason,
       'You cannot eat during combat.',
     );
+    expect(
+      eatInventoryFood(
+        db,
+        save.copyWith(settings: save.settings.copyWith(autoEat: false)),
+        0,
+      ).reason,
+      'You cannot eat during combat.',
+    );
+  });
+
+  test('manual eat still works outside combat when auto-eat is off', () {
+    final base = _withFoodAndSpells(db, foodQty: 2, gluttonyCount: 0);
+    final eaten = eatEquippedFood(
+      db,
+      base.copyWith(settings: base.settings.copyWith(autoEat: false)),
+    );
+    expect(eaten.ok, isTrue);
+    expect(eaten.save!.equipment.slots[foodSlotId]?.quantity, 1);
   });
 }

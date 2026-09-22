@@ -777,6 +777,41 @@ void main() {
     expect(find.text('Place pot'), findsOne);
   });
 
+  testWidgets('Place pot opens the bait picker and can set an empty pot', (tester) async {
+    final started = startedCharacter(database);
+    final controller = buildController(
+      database,
+      seed: started.copyWith(
+        currentLocationId: 'LOC-0004',
+        skills: [
+          for (final skill in started.skills)
+            if (skill.skillId == 'SKL-0003')
+              const SkillProgress(skillId: 'SKL-0003', level: 35, xp: 0)
+            else
+              skill,
+        ],
+        inventory: [
+          ...started.inventory,
+          const InventoryStack(itemId: fishingPotItemId, quantity: 1),
+          const InventoryStack(itemId: 'ITEM-0048', quantity: 3),
+        ],
+      ),
+    );
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller);
+
+    await selectLocationBandTab(tester, 'Traps');
+    await tapVisible(tester, find.widgetWithText(GameButton, 'Place pot'));
+    await tester.pump();
+    expect(find.text('Add three bait fish, or place it empty'), findsOne);
+    expect(find.text('No bait · random unlocked catch'), findsOne);
+
+    await tapVisible(tester, find.widgetWithText(GameButton, 'No bait'));
+    await tester.pump();
+    expect(timerAtLocationKind(controller.save, 'LOC-0004', 'fishing_pot'), isNotNull);
+    expect(timerAtLocationKind(controller.save, 'LOC-0004', 'fishing_pot')?.baitItemIds, isNull);
+  });
+
   testWidgets('expanding the option list does not carry to the next location', (tester) async {
     final controller = buildController(
       database,

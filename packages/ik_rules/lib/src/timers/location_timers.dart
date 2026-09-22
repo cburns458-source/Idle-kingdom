@@ -3,6 +3,7 @@ import 'package:ik_content/ik_content.dart';
 
 import '../activity/rewards.dart';
 import '../activity/xp.dart';
+import '../combat/food.dart';
 import '../inventory/add_items.dart';
 import '../inventory/capacity.dart';
 import '../production/inventory.dart';
@@ -24,6 +25,19 @@ const String potatoSeedItemId = 'ITEM-0324';
 const String shallowsLocationId = 'LOC-0043';
 
 const String fishingPotItemId = 'ITEM-0347';
+const int potBaitCount = 3;
+const int potCatchMin = 3;
+const int potCatchMax = 6;
+
+/// Rod fish → pot catch, ordered by overall fishing level.
+const Map<String, String> potBaitToCatch = <String, String>{
+  'ITEM-0047': 'ITEM-0352',
+  'ITEM-0048': 'ITEM-0353',
+  'ITEM-0049': 'ITEM-0354',
+  'ITEM-0050': 'ITEM-0355',
+  'ITEM-0051': 'ITEM-0356',
+  'ITEM-0191': 'ITEM-0357',
+};
 
 /// Ready botany timers stay in place when the bag cannot take the haul.
 const String timerInventoryFullHarvestReason = 'Come back with more room to collect your harvest.';
@@ -556,14 +570,30 @@ num msUntilNextUtcDay(num nowMs) {
   PlayerSave save,
   String trapItemId, {
   required num nowMs,
+  List<String> baitItemIds = const <String>[],
 }) {
   final loc = save.currentLocationId;
   final now = nowMs;
   final gate = canPlaceTrap(db, save, trapItemId, locationId: loc, nowMs: now);
   if (!gate.ok) return (ok: false, save: null, reason: gate.reason);
-  final removed = removeIngredients(save, [RecipeIngredient(itemId: trapItemId, quantity: 1)]);
+  final bait = _normalizePotBait(baitItemIds);
+  if (bait == null) {
+    return (ok: false, save: null, reason: 'Add three bait fish, or place the pot with no bait.');
+  }
+  final fishingLevel = getSkillProgress(save, 'SKL-0003').level;
+  if (bait.any((itemId) => !isValidPotBait(loc, fishingLevel, itemId))) {
+    return (ok: false, save: null, reason: 'That bait does not match a pot catch here.');
+  }
+  final removed = removeIngredients(save, [
+    RecipeIngredient(itemId: trapItemId, quantity: 1),
+    ..._countItemIds(bait),
+  ]);
   if (removed == null) {
-    return (ok: false, save: null, reason: 'You do not have a fishing pot.');
+    return (
+      ok: false,
+      save: null,
+      reason: bait.isNotEmpty ? 'You do not have that bait.' : 'You do not have a fishing pot.',
+    );
   }
   final kind = gate.kind!;
   final started = DateTime.fromMillisecondsSinceEpoch(now.round()).toIso8601String();
@@ -577,6 +607,7 @@ num msUntilNextUtcDay(num nowMs) {
     xpReward: 150,
     startedAt: started,
     durationMs: trapDurationMs,
+    baitItemIds: bait.isEmpty ? null : bait,
   );
   var next = removed.copyWith(
     locationTimers: [..._withoutLocationTimerKind(removed.locationTimers, loc, kind), timer],
@@ -617,15 +648,111 @@ List<({String itemId, num fishingLevel, num xpEach})> potFishOptionsForLocation(
   ];
 }
 
+String? potCatchForBait(String baitItemId) => potBaitToCatch[baitItemId];
+
+bool isValidPotBait(String locationId, num fishingLevel, String baitItemId) {
+  final catchId = potCatchForBait(baitItemId);
+  if (catchId == null) return false;
+  return potFishOptionsForLocation(locationId, fishingLevel).any((row) => row.itemId == catchId);
+}
+
+class PotBaitOption {
+  const PotBaitOption({
+    required this.itemId,
+    required this.displayName,
+    required this.catchItemId,
+    required this.owned,
+  });
+
+  final String itemId;
+  final String displayName;
+  final String catchItemId;
+  final num owned;
+}
+
+List<PotBaitOption> potBaitOptionsForLocation(GameDatabase db, PlayerSave save, String locationId) {
+  final fishingLevel = getSkillProgress(save, 'SKL-0003').level;
+  return [
+    for (final entry in potBaitToCatch.entries)
+      if (isValidPotBait(locationId, fishingLevel, entry.key))
+        PotBaitOption(
+          itemId: entry.key,
+          displayName:
+              db.items.firstWhereOrNull((item) => item.itemId == entry.key)?.displayName ??
+              entry.key,
+          catchItemId: entry.value,
+          owned:
+              save.inventory.firstWhereOrNull((stack) => stack.itemId == entry.key)?.quantity ?? 0,
+        ),
+  ];
+}
+
+List<String>? _normalizePotBait(List<String> baitItemIds) {
+  final bait = [
+    for (final id in baitItemIds)
+      if (id.isNotEmpty) id,
+  ];
+  if (bait.isEmpty) return const <String>[];
+  if (bait.length != potBaitCount) return null;
+  return bait;
+}
+
+List<RecipeIngredient> _countItemIds(List<String> itemIds) {
+  final counts = <String, int>{};
+  for (final itemId in itemIds) {
+    counts[itemId] = (counts[itemId] ?? 0) + 1;
+  }
+  return [
+    for (final entry in counts.entries) RecipeIngredient(itemId: entry.key, quantity: entry.value),
+  ];
+}
+
+List<({String itemId, num quantity, num xp})> _mergeLootRows(
+  List<({String itemId, num quantity, num xp})> rows,
+) {
+  final merged = <String, ({String itemId, num quantity, num xp})>{};
+  for (final row in rows) {
+    final existing = merged[row.itemId];
+    if (existing == null) {
+      merged[row.itemId] = row;
+      continue;
+    }
+    merged[row.itemId] = (
+      itemId: row.itemId,
+      quantity: existing.quantity + row.quantity,
+      xp: existing.xp + row.xp,
+    );
+  }
+  return merged.values.toList();
+}
+
 List<({String itemId, num quantity, num xp})> _rollFishingPotLoot(
   String locationId,
   num fishingLevel,
+  List<String>? baitItemIds,
   num Function() random,
 ) {
-  return potFishOptionsForLocation(locationId, fishingLevel).map((row) {
-    final quantity = _rollInclusive(random, 1, 3);
-    return (itemId: row.itemId, quantity: quantity, xp: row.xpEach * quantity);
-  }).toList();
+  final unlocked = potFishOptionsForLocation(locationId, fishingLevel);
+  final byId = {for (final row in unlocked) row.itemId: row};
+  final bait = _normalizePotBait(baitItemIds ?? const <String>[]) ?? const <String>[];
+  final rolls = <({String itemId, num quantity, num xp})>[];
+  if (bait.isEmpty) {
+    if (unlocked.isEmpty) return const [];
+    for (var i = 0; i < potBaitCount; i += 1) {
+      final row = unlocked[(random() * unlocked.length).floor()];
+      final quantity = _rollInclusive(random, potCatchMin, potCatchMax);
+      rolls.add((itemId: row.itemId, quantity: quantity, xp: row.xpEach * quantity));
+    }
+    return _mergeLootRows(rolls);
+  }
+  for (final baitId in bait) {
+    final catchId = potCatchForBait(baitId);
+    final row = catchId == null ? null : byId[catchId];
+    if (row == null) continue;
+    final quantity = _rollInclusive(random, potCatchMin, potCatchMax);
+    rolls.add((itemId: row.itemId, quantity: quantity, xp: row.xpEach * quantity));
+  }
+  return _mergeLootRows(rolls);
 }
 
 String _timerItemName(GameDatabase db, String itemId) {
@@ -661,6 +788,7 @@ class LocationTimerCollectResult {
     this.loot = const <LootGrant>[],
     this.xpGained = 0,
     this.skillId = '',
+    this.bonusXp = const <({String skillId, num xp})>[],
     this.reason = '',
   });
 
@@ -669,6 +797,7 @@ class LocationTimerCollectResult {
   final List<LootGrant> loot;
   final num xpGained;
   final String skillId;
+  final List<({String skillId, num xp})> bonusXp;
   final String reason;
 }
 
@@ -728,7 +857,7 @@ LocationTimerCollectResult collectLocationTimer(
     }
   } else if (timer.kind == 'fishing_pot') {
     final fishingLevel = getSkillProgress(save, 'SKL-0003').level;
-    final rolled = _rollFishingPotLoot(timer.locationId, fishingLevel, rng);
+    final rolled = _rollFishingPotLoot(timer.locationId, fishingLevel, timer.baitItemIds, rng);
     xpGained = 0;
     for (final row in rolled) {
       grants.add((itemId: row.itemId, quantity: row.quantity));
@@ -759,9 +888,17 @@ LocationTimerCollectResult collectLocationTimer(
   }
 
   next = applyXp(next, db, skillId, xpGained).save;
+  final bonusXp = <({String skillId, num xp})>[];
+  final awards = <({String skillId, num xp})>[(skillId: skillId, xp: xpGained)];
+  if (timer.kind == 'fishing_pot' && xpGained > 0) {
+    next = applyXp(next, db, 'SKL-0005', xpGained).save;
+    bonusXp.add((skillId: 'SKL-0005', xp: xpGained));
+    awards.add((skillId: 'SKL-0005', xp: xpGained));
+  }
   next = creditLootTracker(next, 'timer', '$kind:$locationId', loot, 0, now);
-  next = creditXpAwards(next, [(skillId: skillId, xp: xpGained)], now);
+  next = creditXpAwards(next, awards, now);
   next = applyQuestAutoStartOnSeed(db, next);
+  next = consumeFoodAfterVictory(db, next).save;
 
   return LocationTimerCollectResult(
     ok: true,
@@ -769,5 +906,6 @@ LocationTimerCollectResult collectLocationTimer(
     loot: loot,
     xpGained: xpGained,
     skillId: skillId,
+    bonusXp: bonusXp,
   );
 }

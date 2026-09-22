@@ -254,7 +254,14 @@ describe('skill menu entries', () => {
     expect(fish.some((item) => item.displayName === 'Cooked perch')).toBe(true)
     expect(meat.some((item) => item.displayName === 'Cooked beef')).toBe(true)
     expect(stew.some((item) => item.displayName === 'Crawfish Stew')).toBe(true)
+    expect(stew.some((item) => item.displayName === 'Soup Stock')).toBe(true)
     expect(other.some((item) => item.displayName.toLowerCase().includes('potato'))).toBe(true)
+    expect(actionsForSkill(launch, 'SKL-0007').some((item) => item.displayName === 'Cooked Baby Giant Squid')).toBe(
+      false,
+    )
+    expect(actionsForSkill(launch, 'SKL-0003').find((item) => item.displayName === 'Catch Baby Giant Squid')?.level).toBe(
+      70,
+    )
   })
 
   it('groups smithing by material and numbers every menu row', () => {

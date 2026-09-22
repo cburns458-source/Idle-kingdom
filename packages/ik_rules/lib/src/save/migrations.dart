@@ -115,6 +115,7 @@ SaveJson _normalizeSettings(SaveJson save, int version) {
     'showActivityRewards': settings['showActivityRewards'] ?? true,
     'hudShowTotalXp': settings['hudShowTotalXp'] ?? false,
     'showEatButton': settings['showEatButton'] ?? true,
+    'autoEat': settings['autoEat'] ?? true,
     'eatHealthThresholdPercent': _clampEatHealthThresholdPercent(
       settings['eatHealthThresholdPercent'] ?? 100,
     ),
@@ -127,6 +128,68 @@ num _clampEatHealthThresholdPercent(Object? value) {
   final n = jsNumber(value).round();
   if (n.isNaN) return 100;
   return n.clamp(1, 100);
+}
+
+const String _retiredCookedSquidItemId = 'ITEM-0192';
+const String _squidNoodleSoupItemId = 'ITEM-0302';
+
+String _remapCookedSquidId(String itemId) {
+  return itemId == _retiredCookedSquidItemId ? _squidNoodleSoupItemId : itemId;
+}
+
+List<Object?> _mergeRemappedStacks(List<Object?> stacks) {
+  final merged = <SaveJson>[];
+  final indexByKey = <String, int>{};
+  for (final raw in stacks) {
+    final stack = asObject(raw);
+    if (stack == null) continue;
+    final itemId = stack['itemId'];
+    if (itemId is! String) continue;
+    final next = SaveJson.of(stack)..['itemId'] = _remapCookedSquidId(itemId);
+    final key =
+        '${next['itemId']}\u0000${next['enchantmentId'] ?? ''}\u0000${next['favorite'] == true ? '1' : '0'}';
+    final existing = indexByKey[key];
+    if (existing == null) {
+      indexByKey[key] = merged.length;
+      merged.add(next);
+      continue;
+    }
+    merged[existing]['quantity'] =
+        jsNumber(merged[existing]['quantity']) + jsNumber(next['quantity']);
+  }
+  return merged;
+}
+
+Object? _remapEquippedStack(Object? raw) {
+  final stack = asObject(raw);
+  if (stack == null) return raw;
+  final itemId = stack['itemId'];
+  if (itemId is! String) return raw;
+  return SaveJson.of(stack)..['itemId'] = _remapCookedSquidId(itemId);
+}
+
+SaveJson _replaceCookedSquidWithSoup(SaveJson save) {
+  final next = copySave(save);
+  next['inventory'] = _mergeRemappedStacks(arrayOrEmpty(save, 'inventory'));
+  next['bank'] = _mergeRemappedStacks(arrayOrEmpty(save, 'bank'));
+  final equipment = objectAt(save, 'equipment') ?? <String, Object?>{};
+  final slots = objectOrEmpty(equipment, 'slots');
+  next['equipment'] = <String, Object?>{
+    'slots': <String, Object?>{
+      for (final entry in slots.entries) entry.key: _remapEquippedStack(entry.value),
+    },
+  };
+  final presets = arrayOrEmpty(save, 'equipmentPresets').map((raw) {
+    final preset = asObject(raw);
+    if (preset == null) return raw;
+    final presetSlots = objectOrEmpty(preset, 'slots');
+    return SaveJson.of(preset)
+      ..['slots'] = <String, Object?>{
+        for (final entry in presetSlots.entries) entry.key: _remapEquippedStack(entry.value),
+      };
+  }).toList();
+  next['equipmentPresets'] = presets;
+  return next;
 }
 
 /// Ordered migrations from older save versions up to [saveVersion].
@@ -757,6 +820,14 @@ final List<SaveMigration> saveMigrations = <SaveMigration>[
       next['attackStyle'] = style == 'offensive' || style == 'defensive' || style == 'balanced'
           ? style
           : 'balanced';
+      return next;
+    },
+  ),
+  SaveMigration(
+    fromVersion: 49,
+    toVersion: 50,
+    migrate: (save, _) {
+      final next = _normalizeSettings(_replaceCookedSquidWithSoup(save), 50);
       return next;
     },
   ),
