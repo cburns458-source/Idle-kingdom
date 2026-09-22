@@ -99,11 +99,13 @@ class _SkillTile extends StatelessWidget {
                     final side = constraints.maxWidth < constraints.maxHeight
                         ? constraints.maxWidth
                         : constraints.maxHeight;
-                    return GameImage(
-                      skillIconPath(row),
-                      width: side,
-                      height: side,
-                      fit: BoxFit.contain,
+                    return Center(
+                      child: GameImage(
+                        skillIconPath(row),
+                        width: side * 0.5,
+                        height: side * 0.5,
+                        fit: BoxFit.contain,
+                      ),
                     );
                   },
                 ),

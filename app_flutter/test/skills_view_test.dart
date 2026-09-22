@@ -65,7 +65,8 @@ void main() {
     final tile = tester.getRect(
       find.ancestor(of: find.text('Might'), matching: find.byType(GamePanel)).first,
     );
-    expect(iconRect.shortestSide, greaterThan(tile.shortestSide * 0.55));
+    expect(iconRect.shortestSide, greaterThan(tile.shortestSide * 0.25));
+    expect(iconRect.shortestSide, lessThan(tile.shortestSide * 0.5));
   });
 
   testWidgets('a skill tile opens a numbered proficiency list', (tester) async {
