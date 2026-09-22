@@ -347,16 +347,16 @@ describe('primary activity engine', () => {
     }
     const seed = completeGatheringAction(launch, save, action, () => 0)
     expect(seed.result.skillId).toBe('SKL-0014')
-    expect(seed.result.xpGained).toBe(200)
+    expect(seed.result.xpGained).toBe(50)
     expect(seed.result.bonusXp).toEqual([])
     expect(seed.save.skills.find((skill) => skill.skillId === 'SKL-0004')?.xp ?? 0).toBe(0)
-    expect(seed.save.skills.find((skill) => skill.skillId === 'SKL-0014')?.xp).toBe(200)
+    expect(seed.save.skills.find((skill) => skill.skillId === 'SKL-0014')?.xp).toBe(50)
     expect(seed.result.loot.map((row) => row.itemId)).toEqual(['ITEM-0324'])
     expect(seed.save.inventory.find((stack) => stack.itemId === 'ITEM-0025')).toBeUndefined()
 
-    const barren = completeGatheringAction(launch, save, action, () => 0.5)
+    const barren = completeGatheringAction(launch, save, action, () => 0.1)
     expect(barren.result.loot).toEqual([])
-    expect(barren.result.xpGained).toBe(200)
+    expect(barren.result.xpGained).toBe(50)
     expect(barren.result.skillId).toBe('SKL-0014')
   })
 

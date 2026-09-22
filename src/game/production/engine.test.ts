@@ -242,7 +242,7 @@ describe('standard production', () => {
     const refused = beginProductionQueue(launch, crafter, 'ACT-0019', 'RCP-0062', 1)
     expect(refused.ok).toBe(false)
     if (!refused.ok) {
-      expect(refused.reason).toMatch(/Thievery/)
+      expect(refused.reason).toMatch(/learned that recipe/)
     }
 
     const both = withSkills(save, { 'SKL-0009': 20, 'SKL-0015': 20 })

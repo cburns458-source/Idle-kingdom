@@ -448,6 +448,21 @@ class _InventoryViewState extends State<InventoryView> {
                 dense: true,
                 onPressed: _openEatMenu,
               ),
+              const SizedBox(height: 8),
+              GameButton(
+                key: const Key('inventory-eat-now'),
+                label: 'Eat now',
+                tone: GameButtonTone.secondary,
+                compact: true,
+                dense: true,
+                onPressed: isInCombat(save)
+                    ? null
+                    : () {
+                        final reason = controller.eatFood();
+                        if (reason == null || !mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(reason)));
+                      },
+              ),
             ],
           ),
         ),
@@ -566,73 +581,49 @@ class _InventoryViewState extends State<InventoryView> {
       context: context,
       origin: popupOrigin(context),
       builder: (dialogContext) {
-        String? refusal;
-        return StatefulBuilder(
-          builder: (context, setOverlay) {
-            return GamePopupCard(
-              child: ListenableBuilder(
-                listenable: controller,
-                builder: (context, _) {
-                  return Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
+        return GamePopupCard(
+          child: ListenableBuilder(
+            listenable: controller,
+            builder: (context, _) {
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
                     children: [
-                      Row(
-                        children: [
-                          const Expanded(
-                            child: Text(
-                              'Eat',
-                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
-                            ),
-                          ),
-                          GameButton(
-                            label: 'Close',
-                            tone: GameButtonTone.secondary,
-                            compact: true,
-                            dense: true,
-                            onPressed: () => Navigator.of(context).pop(),
-                          ),
-                        ],
+                      const Expanded(
+                        child: Text(
+                          'Eat',
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
+                        ),
                       ),
-                      const SizedBox(height: 10),
-                      _eatAtHealth(),
-                      const SizedBox(height: 10),
                       GameButton(
-                        key: const Key('auto-eat'),
-                        label: controller.autoEat ? 'Auto-eat on' : 'Auto-eat off',
-                        selected: controller.autoEat,
-                        tone: controller.autoEat
-                            ? GameButtonTone.primary
-                            : GameButtonTone.secondary,
-                        onPressed: () => controller.setAutoEat(!controller.autoEat),
+                        label: 'Close',
+                        tone: GameButtonTone.secondary,
+                        compact: true,
+                        dense: true,
+                        onPressed: () => Navigator.of(context).pop(),
                       ),
-                      const SizedBox(height: 6),
-                      const MutedText(
-                        'Eats after a finished action when HP is at the threshold. Off also stops combat and thievery auto-eat. Manual Eat still works outside combat.',
-                      ),
-                      const SizedBox(height: 10),
-                      GameButton(
-                        key: const Key('eat-now'),
-                        label: 'Eat now',
-                        onPressed: isInCombat(save)
-                            ? null
-                            : () {
-                                final reason = controller.eatFood();
-                                if (!context.mounted) return;
-                                if (reason != null) {
-                                  setOverlay(() => refusal = reason);
-                                  return;
-                                }
-                                Navigator.of(context).pop();
-                              },
-                      ),
-                      if (refusal != null) ...[const SizedBox(height: 8), MutedText(refusal!)],
                     ],
-                  );
-                },
-              ),
-            );
-          },
+                  ),
+                  const SizedBox(height: 10),
+                  _eatAtHealth(),
+                  const SizedBox(height: 10),
+                  GameButton(
+                    key: const Key('auto-eat'),
+                    label: controller.autoEat ? 'Auto-eat on' : 'Auto-eat off',
+                    selected: controller.autoEat,
+                    tone: controller.autoEat ? GameButtonTone.primary : GameButtonTone.secondary,
+                    onPressed: () => controller.setAutoEat(!controller.autoEat),
+                  ),
+                  const SizedBox(height: 6),
+                  const MutedText(
+                    'Eats after a finished gather, thievery, or combat victory when HP is at the threshold. Off also stops combat and thievery auto-eat. Manual Eat still works outside combat.',
+                  ),
+                ],
+              );
+            },
+          ),
         );
       },
     );

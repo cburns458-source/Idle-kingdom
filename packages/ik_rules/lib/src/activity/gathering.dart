@@ -11,12 +11,12 @@ import '../rng/mulberry32.dart';
 import '../save/generated/save_models.dart';
 import 'xp.dart';
 
-/// Level 1 = 50.5%, +0.5% per skill level up to 100% at level 100.
+/// Level 1 = 40%, +0.5% per skill level (89.5% at level 100).
 /// Plus +1% for each level above the action's proficiency level.
 num gatheringSuccessChancePercent(num level, [num proficiencyLevel = 1]) {
   final lvl = math.max(1, level.floor());
   final proficiency = math.max(1, proficiencyLevel.floor());
-  final base = 50.5 + 0.5 * (lvl - 1);
+  final base = 40 + 0.5 * (lvl - 1);
   final aboveProficiency = math.max(0, lvl - proficiency);
   return math.min(100, base + aboveProficiency);
 }

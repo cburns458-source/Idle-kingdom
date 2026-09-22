@@ -20,19 +20,19 @@ const rawDatabase = JSON.parse(
 )
 
 describe('gathering success chance', () => {
-  it('scales from 50.5% at level 1 to 100% at level 100', () => {
+  it('scales from 40% at level 1 along the same +0.5% curve', () => {
     // Pass proficiency >= level so this isolates the base curve.
-    expect(gatheringSuccessChancePercent(1, 1)).toBe(50.5)
-    expect(gatheringSuccessChancePercent(2, 2)).toBe(51)
-    expect(gatheringSuccessChancePercent(100, 100)).toBe(100)
+    expect(gatheringSuccessChancePercent(1, 1)).toBe(40)
+    expect(gatheringSuccessChancePercent(2, 2)).toBe(40.5)
+    expect(gatheringSuccessChancePercent(100, 100)).toBe(89.5)
     expect(gatheringSuccessChancePercent(200, 200)).toBe(100)
   })
 
   it('adds 1% per level above proficiency', () => {
-    // Level 15 base = 50.5 + 0.5*14 = 57.5; proficiency 10 → +5 = 62.5
-    expect(gatheringSuccessChancePercent(15, 10)).toBe(62.5)
-    expect(gatheringSuccessChancePercent(10, 10)).toBe(55)
-    expect(gatheringSuccessChancePercent(5, 10)).toBe(52.5)
+    // Level 15 base = 40 + 0.5*14 = 47; proficiency 10 → +5 = 52
+    expect(gatheringSuccessChancePercent(15, 10)).toBe(52)
+    expect(gatheringSuccessChancePercent(10, 10)).toBe(44.5)
+    expect(gatheringSuccessChancePercent(5, 10)).toBe(42)
   })
 
   it('grants nothing on a failed success roll', () => {
@@ -40,19 +40,19 @@ describe('gathering success chance', () => {
     const action = launch.Actions.find((row) => row['Action ID'] === 'ACN-0018')!
     const save = createNewSave(launch)
     const beforeXp = save.skills.find((row) => row.skillId === 'SKL-0002')?.xp ?? 0
-    // Level 1 needs random() < 0.505; 0.51 fails.
-    const completed = completeGatheringAction(launch, save, action, () => 0.51)
+    // Level 1 needs random() < 0.40; 0.41 fails.
+    const completed = completeGatheringAction(launch, save, action, () => 0.41)
     expect(completed.result.xpGained).toBe(0)
     expect(completed.result.loot).toEqual([])
     expect(completed.save.skills.find((row) => row.skillId === 'SKL-0002')?.xp ?? 0).toBe(beforeXp)
   })
 
   it('rollGatheringSuccess matches the percent threshold', () => {
-    expect(rollGatheringSuccess(1, () => 0.504)).toBe(true)
-    expect(rollGatheringSuccess(1, () => 0.505)).toBe(false)
-    // Level 15 / proficiency 10 → 62.5%
-    expect(rollGatheringSuccess(15, () => 0.624, 10)).toBe(true)
-    expect(rollGatheringSuccess(15, () => 0.625, 10)).toBe(false)
+    expect(rollGatheringSuccess(1, () => 0.399)).toBe(true)
+    expect(rollGatheringSuccess(1, () => 0.4)).toBe(false)
+    // Level 15 / proficiency 10 → 52%
+    expect(rollGatheringSuccess(15, () => 0.519, 10)).toBe(true)
+    expect(rollGatheringSuccess(15, () => 0.52, 10)).toBe(false)
   })
 })
 

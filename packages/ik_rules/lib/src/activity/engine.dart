@@ -33,6 +33,9 @@ const String comingSoonReason = 'Coming soon.';
 const Set<String> prunableSkillIds = <String>{'SKL-0004', 'SKL-0006'};
 const num pruningSeedChancePercent = 5;
 
+/// Pruners convert 25% of the usual gather XP to Botany.
+const num pruningXpFraction = 0.25;
+
 bool isPruningToolEquipped(GameDatabase db, PlayerSave save) {
   final tool = slotStack(save, weaponToolSlotId);
   return tool != null && tool.quantity > 0 && itemHasCapability(db, tool.itemId, 'pruning_tool');
@@ -500,7 +503,7 @@ GatheringCompletion completeGatheringAction(
       : resolveActionRewards(db, working, action, random);
   final fullXp = gatheringXpReward(db, working, action);
   final primarySkillId = pruning ? botanySkillId : skillId;
-  final xpAmount = fullXp;
+  final xpAmount = pruning ? (fullXp * pruningXpFraction).floor() : fullXp;
   final xpApplied = applyXp(clearActivePotionEffect(rewarded.save), db, primarySkillId, xpAmount);
   var next = xpApplied.save;
   var leveledUpTo = xpApplied.leveledUpTo;

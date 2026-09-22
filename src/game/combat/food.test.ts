@@ -1,9 +1,12 @@
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
+import { addItemToInventory } from '../activity/rewards'
 import { prepareDatabase } from '../data/loadDatabase'
+import { beginProductionQueue, completeProductionCraft } from '../production/engine'
 import { createNewSave } from '../save/saveStore'
 import type { EquippedStack } from '../save/types'
+import { collectLocationTimer, plantBotanySeed } from '../timers/locationTimers'
 import {
   consumeFoodAfterVictory,
   eatEquippedFood,
@@ -229,5 +232,52 @@ describe('manual eat', () => {
     if (!eaten.ok) return
     expect(eaten.healed).toBe(-7)
     expect(eaten.save.currentHp).toBe(1)
+  })
+
+  it('does not auto-eat after standard production or a botany harvest', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const hungry = withFoodAndSpells(launch, 4, 0)
+    const queued = beginProductionQueue(
+      launch,
+      addItemToInventory(hungry, 'ITEM-0025', 1),
+      'ACT-0017',
+      'RCP-0001',
+      1,
+      Date.parse('2026-01-01T00:00:00.000Z'),
+    )
+    expect(queued.ok).toBe(true)
+    if (!queued.ok) return
+    const crafted = completeProductionCraft(
+      launch,
+      queued.save,
+      Date.parse('2026-01-01T00:00:20.000Z'),
+    )
+    expect(crafted).not.toBeNull()
+    expect(crafted?.save.equipment.slots['SLOT-0011']?.quantity).toBe(4)
+
+    const planted = plantBotanySeed(
+      launch,
+      {
+        ...hungry,
+        currentLocationId: 'LOC-0001',
+        inventory: [{ itemId: 'ITEM-0324', quantity: 1 }],
+        quests: [{ questId: 'QST-0011', status: 'completed', progress: 1 }],
+      },
+      'ITEM-0324',
+      Date.parse('2026-01-01T00:00:00.000Z'),
+      1,
+    )
+    expect(planted.ok).toBe(true)
+    if (!planted.ok) return
+    const harvested = collectLocationTimer(
+      launch,
+      planted.save,
+      'LOC-0001',
+      'botany',
+      Date.parse('2026-01-01T03:00:00.000Z'),
+      () => 0,
+    )
+    expect(harvested.ok).toBe(true)
+    expect(harvested.ok && harvested.save.equipment.slots['SLOT-0011']?.quantity).toBe(4)
   })
 })

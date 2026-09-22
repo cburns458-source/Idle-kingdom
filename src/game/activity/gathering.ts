@@ -17,7 +17,7 @@ export function configString(db: GameDatabase, key: string, fallback: string): s
 }
 
 /**
- * Level 1 = 50.5%, +0.5% per skill level up to 100% at level 100.
+ * Level 1 = 40%, +0.5% per skill level (89.5% at level 100).
  * Plus +1% for each level above the action's proficiency level.
  */
 export function gatheringSuccessChancePercent(
@@ -26,7 +26,7 @@ export function gatheringSuccessChancePercent(
 ): number {
   const lvl = Math.max(1, Math.floor(Number(level) || 1))
   const proficiency = Math.max(1, Math.floor(Number(proficiencyLevel) || 1))
-  const base = 50.5 + 0.5 * (lvl - 1)
+  const base = 40 + 0.5 * (lvl - 1)
   const aboveProficiency = Math.max(0, lvl - proficiency)
   return Math.min(100, base + aboveProficiency)
 }

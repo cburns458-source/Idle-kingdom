@@ -1,6 +1,5 @@
 import { addItemsToInventory } from '../activity/rewards'
 import { applyXp, getSkillProgress } from '../activity/xp'
-import { consumeFoodAfterVictory } from '../combat/food'
 import { canFitItemQuantity } from '../inventory/capacity'
 import { creditLootTracker, creditXpAwards } from '../trackers/trackers'
 import type { GameDatabase, ItemRow } from '../data/types'
@@ -805,7 +804,6 @@ export function collectLocationTimer(
   next = creditLootTracker(next, 'timer', `${kind}:${locationId}`, loot, 0, nowMs)
   next = creditXpAwards(next, awards, nowMs)
   next = applyQuestAutoStartOnSeed(db, next)
-  next = consumeFoodAfterVictory(db, next).save
 
   return { ok: true, save: next, loot, xpGained, skillId, bonusXp }
 }
