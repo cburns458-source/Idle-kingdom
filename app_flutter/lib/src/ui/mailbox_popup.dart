@@ -260,7 +260,7 @@ class MailboxHudButton extends StatelessWidget {
             child: Stack(
               clipBehavior: Clip.none,
               children: [
-                GameImage(uiMailboxAssetPath(), width: size, height: size),
+                GameImage(uiHudMailAssetPath(), width: size, height: size),
                 if (unread > 0)
                   Positioned(
                     right: -3,

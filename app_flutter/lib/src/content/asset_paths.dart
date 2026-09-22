@@ -424,6 +424,15 @@ String uiMenuAssetPath() => '$_assetRoot/icons/ui/ui_menu.webp';
 /// HUD mailbox button.
 String uiMailboxAssetPath() => '$_assetRoot/icons/ui/ui_mailbox.webp';
 
+/// HUD mail envelope from the uploaded HUD icon set.
+String uiHudMailAssetPath() => '$_assetRoot/icons/ui/ui_hud_mail.webp';
+
+/// HUD settings gear from the uploaded HUD icon set.
+String uiSettingsAssetPath() => '$_assetRoot/icons/ui/ui_settings.webp';
+
+/// HUD gold chip from the uploaded HUD icon set.
+String uiHudGoldAssetPath() => '$_assetRoot/icons/ui/ui_hud_gold.webp';
+
 /// HUD wordmark. Converted from the uploaded PNG without crop, resize, or knockout.
 String uiRestoriaAssetPath() => '$_assetRoot/icons/ui/ui_restoria.webp';
 

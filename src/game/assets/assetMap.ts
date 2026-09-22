@@ -100,6 +100,18 @@ export function uiMailboxAssetPath(): string {
   return withAssetVersion('/assets/icons/ui/ui_mailbox.webp')
 }
 
+export function uiHudMailAssetPath(): string {
+  return withAssetVersion('/assets/icons/ui/ui_hud_mail.webp')
+}
+
+export function uiSettingsAssetPath(): string {
+  return withAssetVersion('/assets/icons/ui/ui_settings.webp')
+}
+
+export function uiHudGoldAssetPath(): string {
+  return withAssetVersion('/assets/icons/ui/ui_hud_gold.webp')
+}
+
 export function uiRestoriaAssetPath(): string {
   return withAssetVersion('/assets/icons/ui/ui_restoria.webp')
 }

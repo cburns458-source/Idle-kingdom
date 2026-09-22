@@ -106,6 +106,9 @@ void main() {
   test('paths carry the content prefix Flutter bundles', () {
     expect(goldIconPath(), 'content/assets/icons/items/item_gold.webp');
     expect(uiMailboxAssetPath(), 'content/assets/icons/ui/ui_mailbox.webp');
+    expect(uiHudMailAssetPath(), 'content/assets/icons/ui/ui_hud_mail.webp');
+    expect(uiSettingsAssetPath(), 'content/assets/icons/ui/ui_settings.webp');
+    expect(uiHudGoldAssetPath(), 'content/assets/icons/ui/ui_hud_gold.webp');
     expect(uiRestoriaAssetPath(), 'content/assets/icons/ui/ui_restoria.webp');
     expect(slotIconPath('SLOT-0003'), 'content/assets/icons/slots/slot_helmet.webp');
     expect(enemyAssetPath('ENM-0006'), 'content/assets/enemies/enm_dragon.webp');

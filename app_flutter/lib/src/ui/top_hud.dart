@@ -204,7 +204,7 @@ class TopHud extends StatelessWidget {
                               ),
                               Row(
                                 children: [
-                                  GameImage(goldIconPath(), width: 11, height: 11),
+                                  GameImage(uiHudGoldAssetPath(), width: 11, height: 11),
                                   const SizedBox(width: 3),
                                   Expanded(
                                     child: Text(
@@ -414,7 +414,7 @@ class _ActivityReadout extends StatelessWidget {
   }
 }
 
-/// Settings gear on the HUD header. The uploaded `.px` had no raster to convert.
+/// Settings gear on the HUD header.
 class _HudSettingsButton extends StatelessWidget {
   const _HudSettingsButton({required this.onTap});
 
@@ -431,10 +431,15 @@ class _HudSettingsButton extends StatelessWidget {
           key: const Key('hud-settings'),
           onTap: onTap,
           behavior: HitTestBehavior.opaque,
-          child: const SizedBox(
+          child: SizedBox(
             width: _hudHeaderButtonSize,
             height: _hudHeaderButtonSize,
-            child: Icon(Icons.settings, size: 20, color: Color(0xFFFFF4D4)),
+            child: GameImage(
+              uiSettingsAssetPath(),
+              width: _hudHeaderButtonSize,
+              height: _hudHeaderButtonSize,
+              fit: BoxFit.contain,
+            ),
           ),
         ),
       ),

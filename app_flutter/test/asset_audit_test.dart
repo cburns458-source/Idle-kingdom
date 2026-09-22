@@ -71,6 +71,9 @@ void main() {
     expectBundled(uiLogAssetPath(), 'the Log chin tab');
     expectBundled(uiMenuAssetPath(), 'the hamburger chin tab');
     expectBundled(uiMailboxAssetPath(), 'the HUD mailbox');
+    expectBundled(uiHudMailAssetPath(), 'the HUD mail envelope');
+    expectBundled(uiSettingsAssetPath(), 'the HUD settings gear');
+    expectBundled(uiHudGoldAssetPath(), 'the HUD gold chip');
     expectBundled(uiRestoriaAssetPath(), 'the HUD wordmark');
   });
 
