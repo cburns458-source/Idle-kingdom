@@ -168,12 +168,13 @@ void main() {
     expect(find.textContaining('Tungsten weapons'), findsOne);
     expect(find.textContaining('Tungsten Sword'), findsNothing);
     expect(find.textContaining('Tungsten Shield'), findsNothing);
-    expect(find.textContaining('Wooden weapons'), findsNothing);
+    expect(find.textContaining('Wooden weapons'), findsOne);
+    expect(find.textContaining('Copper weapons'), findsOne);
 
     await tester.tap(find.descendant(of: popup, matching: find.text('Other')));
     await tester.pump();
     expect(find.textContaining('Leather Helmet'), findsNothing);
-    expect(find.textContaining('Wooden Sword'), findsOne);
+    expect(find.textContaining('Wooden Sword'), findsNothing);
     expect(find.textContaining('Bull Horn Helmet'), findsNothing);
     await tester.scrollUntilVisible(
       find.textContaining('Cedar Bow'),

@@ -814,12 +814,11 @@ void main() {
 
   testWidgets('an overfished pot says so before the bait picker', (tester) async {
     final started = startedCharacter(database);
-    final nowMs = DateTime.now().millisecondsSinceEpoch;
     final controller = buildController(
       database,
       seed: started.copyWith(
         currentLocationId: 'LOC-0004',
-        fishingPotDayKeyByLocationId: {'LOC-0004': fishingPotUtcDayKey(nowMs)},
+        fishingPotDayKeyByLocationId: {'LOC-0004': fishingPotUtcDayKey(testStartMs)},
         skills: [
           for (final skill in started.skills)
             if (skill.skillId == 'SKL-0003')
@@ -853,7 +852,15 @@ void main() {
     await pumpShell(tester, controller);
 
     expect(find.text('Cook at the kitchen'), findsOne);
-    expect(find.byTooltip('Favorite this activity'), findsNothing);
+    final cook = find.ancestor(
+      of: find.text('Cook at the kitchen'),
+      matching: find.byType(DockRow),
+    );
+    expect(
+      find.descendant(of: cook, matching: find.byTooltip('Favorite this activity')),
+      findsNothing,
+    );
+    expect(find.byTooltip('Favorite this activity'), findsOne);
   });
 
   testWidgets('expanding the option list does not carry to the next location', (tester) async {

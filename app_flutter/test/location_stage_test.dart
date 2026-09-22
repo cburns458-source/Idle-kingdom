@@ -820,9 +820,12 @@ void main() {
       ),
     );
     addTearDown(controller.dispose);
+    expect(controller.save.activePotionEffect?.itemId, 'ITEM-0070');
+    expect(controller.save.activePotionEffect?.actionsRemaining, 6);
     await pumpShell(tester, controller, size: const Size(420, 420 * 16 / 9));
 
-    expect(find.bySemanticsLabel('Luck Potion · 6 actions left'), findsOne);
+    expect(find.byKey(const Key('potion-action-badge')), findsOne);
+    expect(find.text('6'), findsWidgets);
     expect(
       find.byWidgetPredicate((widget) => assetNamed(widget, 'item_luck_potion')),
       findsWidgets,

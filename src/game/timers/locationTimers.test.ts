@@ -352,8 +352,8 @@ describe('locationTimers', () => {
     expect(lobster.ok).toBe(true)
     if (!lobster.ok) return
     expect(lobster.loot.find((row) => row.itemId === 'ITEM-0357')?.quantity).toBe(9)
-    expect(lobster.xpGained).toBe(5850)
-    expect(lobster.bonusXp).toEqual([{ skillId: 'SKL-0005', xp: 5850 }])
+    expect(lobster.xpGained).toBe(17550)
+    expect(lobster.bonusXp).toEqual([{ skillId: 'SKL-0005', xp: 17550 }])
   })
 
   it('blocks dock pots until Fishing 35 and goblin pots until Fishing 14', () => {

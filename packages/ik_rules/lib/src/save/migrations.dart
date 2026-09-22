@@ -291,6 +291,7 @@ final List<SaveMigration> saveMigrations = <SaveMigration>[
                   'enemyMaxHpDamagePercent': null,
                   'relativeDropChanceBonusPercent': null,
                   'baseDurationReductionPercent': null,
+                  'actionsRemaining': 1,
                 }
               : null);
       next.remove('combatPotionDamageBonusPercent');

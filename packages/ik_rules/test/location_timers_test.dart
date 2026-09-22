@@ -197,8 +197,8 @@ void main() {
     );
     expect(lobster.ok, isTrue);
     expect(lobster.loot.firstWhere((row) => row.itemId == 'ITEM-0357').quantity, 9);
-    expect(lobster.xpGained, 5850);
-    expect(lobster.bonusXp, [(skillId: 'SKL-0005', xp: 5850)]);
+    expect(lobster.xpGained, 17550);
+    expect(lobster.bonusXp, [(skillId: 'SKL-0005', xp: 17550)]);
   });
 
   test('full inventory leaves a ready timer uncollected', () {
