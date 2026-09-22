@@ -214,17 +214,17 @@ class TopHud extends StatelessWidget {
                             ),
                             const SizedBox(width: 6),
                             _HealthReadout(controller: controller),
-                            const SizedBox(width: 6),
-                            MailboxHudButton(
-                              unread: unreadMailCount(save, controller.session.clock()).toInt(),
-                              onTap: onOpenMailbox,
-                            ),
                           ],
                         ),
                       ],
                     );
                   },
                 ),
+              ),
+              const SizedBox(width: 6),
+              MailboxHudButton(
+                unread: unreadMailCount(save, controller.session.clock()).toInt(),
+                onTap: onOpenMailbox,
               ),
             ],
           ),

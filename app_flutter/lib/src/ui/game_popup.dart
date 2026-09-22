@@ -47,6 +47,8 @@ Future<T?> showGamePopup<T>({
   Rect? origin,
   bool barrierDismissible = true,
   UiChrome? chrome,
+  double maxWidth = gamePopupMaxWidth,
+  double maxHeight = gamePopupMaxHeight,
 }) {
   final reduceMotion = BatterySaverScope.of(context);
   final resolvedChrome = chrome ?? UiChrome.of(context);
@@ -66,10 +68,7 @@ Future<T?> showGamePopup<T>({
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  maxWidth: gamePopupMaxWidth,
-                  maxHeight: gamePopupMaxHeight,
-                ),
+                constraints: BoxConstraints(maxWidth: maxWidth, maxHeight: maxHeight),
                 child: Material(
                   type: MaterialType.transparency,
                   child: KeyedSubtree(key: const Key('game-popup'), child: builder(dialogContext)),

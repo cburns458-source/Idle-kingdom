@@ -100,8 +100,12 @@ void main() {
       find.descendant(of: find.byType(TopHud), matching: find.byType(PillBar)),
     );
     expect(bar.width, 76);
-    expect(hp.right, closeTo(hud.right, 16));
-    expect(bar.right, closeTo(hud.right, 16));
+    final mailbox = tester.getRect(find.byKey(const Key('mailbox-button')));
+    expect(mailbox.right, closeTo(hud.right, 12));
+    expect(hp.right, lessThan(mailbox.left + 1));
+    expect(bar.right, lessThan(mailbox.left + 1));
+    expect(hp.right, closeTo(mailbox.left, 10));
+    expect(bar.right, closeTo(mailbox.left, 10));
     expect(bar.top, greaterThan(hp.bottom - 1));
     expect(bar.bottom, closeTo(hud.bottom, 12));
     final portrait = tester.getRect(find.byType(HudPortrait));

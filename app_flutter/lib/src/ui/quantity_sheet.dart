@@ -30,6 +30,7 @@ Future<int?> askQuantity(
 }) {
   return showGamePopup<int>(
     context: context,
+    maxHeight: 560,
     builder: (context) => _QuantitySheet(
       title: title,
       subtitle: subtitle,

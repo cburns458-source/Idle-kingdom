@@ -23,6 +23,8 @@ Future<void> openPlayerProfile(
   return showGamePopup<void>(
     context: context,
     origin: popupOrigin(context),
+    maxWidth: 320,
+    maxHeight: 560,
     builder: (context) =>
         PlayerProfileSheet(controller: controller, multiplayer: multiplayer, userId: userId),
   );

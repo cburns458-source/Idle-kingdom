@@ -147,6 +147,7 @@ class EquipmentPresetsBar extends StatelessWidget {
 
     final result = await showGamePopup<List<EquipmentPreset>?>(
       context: context,
+      maxHeight: 520,
       builder: (context) {
         return _AllPresetsSettingsDialog(
           presets: presets,
@@ -176,6 +177,8 @@ class EquipmentPresetsBar extends StatelessWidget {
 
     final confirmed = await showGamePopup<bool>(
       context: context,
+      maxWidth: 340,
+      maxHeight: 520,
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setLocal) {
@@ -607,10 +610,15 @@ class _AllPresetsSettingsDialogState extends State<_AllPresetsSettingsDialog> {
                 const Text('Preset settings', style: TextStyle(fontSize: gamePopupTitleSize)),
                 const SizedBox(height: 8),
                 Expanded(
-                  child: ListView.separated(
-                    itemCount: widget.presets.length,
-                    separatorBuilder: (context, index) => const SizedBox(height: 12),
-                    itemBuilder: (_, index) => _rowAt(index),
+                  child: SingleChildScrollView(
+                    child: Column(
+                      children: [
+                        for (var index = 0; index < widget.presets.length; index += 1) ...[
+                          if (index > 0) const SizedBox(height: 12),
+                          _rowAt(index),
+                        ],
+                      ],
+                    ),
                   ),
                 ),
                 const SizedBox(height: 12),

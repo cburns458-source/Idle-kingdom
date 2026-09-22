@@ -112,7 +112,9 @@ class ItemDetailSheet extends StatelessWidget {
               const SizedBox(height: 8),
               Row(
                 children: [
-                  MutedText(priced.shopId == null ? 'Field value each' : 'Shop pays each'),
+                  Expanded(
+                    child: MutedText(priced.shopId == null ? 'Field value each' : 'Shop pays each'),
+                  ),
                   const SizedBox(width: 6),
                   GoldAmount(amount: priced.unitPrice, style: const TextStyle(fontSize: 13)),
                 ],

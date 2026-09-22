@@ -212,6 +212,8 @@ class _GuildPanelState extends State<GuildPanel> {
   Future<void> _openCreateSheet() {
     return showGamePopup<void>(
       context: context,
+      maxWidth: 400,
+      maxHeight: 600,
       builder: (context) => GamePopupCard(
         padding: EdgeInsets.only(
           left: 16,
@@ -447,6 +449,8 @@ class _GuildPanelState extends State<GuildPanel> {
   Future<void> _openSettingsSheet(GuildRecord guild) async {
     final settings = await showGamePopup<_GuildSettings>(
       context: context,
+      maxWidth: 360,
+      maxHeight: 560,
       builder: (context) => GamePopupCard(child: _GuildSettingsSheet(guild: guild)),
     );
     if (settings == null || !mounted) return;

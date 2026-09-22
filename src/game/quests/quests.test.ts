@@ -9,6 +9,7 @@ import { npcsAtLocationForSave } from '../npcs/knowledge'
 import { specialProductionStationsVisibleAt } from '../projects/projects'
 import { isCosmeticUnlocked } from '../cosmetics/cosmetics'
 import { createNewSave } from '../save/saveStore'
+import type { PlayerSave } from '../save/types'
 import {
   applyQuestActionProgress,
   applyQuestAutoStartOnSeed,
@@ -687,7 +688,7 @@ describe('quest tours', () => {
 
   it('resets selected quests and intro flags only', () => {
     const { launch } = prepareDatabase(rawDatabase)
-    let save = {
+    let save: PlayerSave = {
       ...createNewSave(launch),
       hasSeenFennelIntro: true,
       hasSeenWardrobeIntro: true,

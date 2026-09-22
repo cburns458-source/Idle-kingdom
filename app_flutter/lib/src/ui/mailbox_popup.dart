@@ -75,7 +75,8 @@ class _MailboxPopupState extends State<_MailboxPopup> {
                         message: open,
                         notice: _notice,
                         onClaim: () {
-                          setState(() => _notice = controller.claimMailboxMessage(open.id));
+                          final id = open!.id;
+                          setState(() => _notice = controller.claimMailboxMessage(id));
                         },
                       ),
               ),
