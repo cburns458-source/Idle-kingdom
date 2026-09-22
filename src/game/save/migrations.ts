@@ -35,18 +35,21 @@ function remapCookedSquidId(itemId: string): string {
   return itemId === RETIRED_COOKED_BABY_GIANT_SQUID_ITEM_ID ? SQUID_NOODLE_SOUP_ITEM_ID : itemId
 }
 
-function mergeStacksByItem<T extends { itemId: string; quantity: number }>(stacks: T[]): T[] {
+function mergeStacksByItem<
+  T extends { itemId: string; quantity: number; enchantmentId?: string | null; favorite?: boolean },
+>(stacks: T[]): T[] {
   const merged: T[] = []
   const indexById = new Map<string, number>()
   for (const stack of stacks) {
     const next = { ...stack, itemId: remapCookedSquidId(stack.itemId) }
-    const existing = indexById.get(`${next.itemId}\0${next.enchantmentId ?? ''}\0${next.favorite === true ? '1' : '0'}`)
+    const key = `${next.itemId}\0${next.enchantmentId ?? ''}\0${next.favorite === true ? '1' : '0'}`
+    const existing = indexById.get(key)
     if (existing == null) {
-      indexById.set(`${next.itemId}\0${next.enchantmentId ?? ''}\0${next.favorite === true ? '1' : '0'}`, merged.length)
+      indexById.set(key, merged.length)
       merged.push(next)
       continue
     }
-    merged[existing] = { ...merged[existing], quantity: merged[existing].quantity + next.quantity }
+    merged[existing] = { ...merged[existing], quantity: merged[existing]!.quantity + next.quantity }
   }
   return merged
 }
