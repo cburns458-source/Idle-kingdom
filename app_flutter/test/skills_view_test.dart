@@ -3,6 +3,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:idle_kingdoms/src/session/game_controller.dart';
 import 'package:idle_kingdoms/src/theme.dart';
 import 'package:idle_kingdoms/src/ui/format.dart';
+import 'package:idle_kingdoms/src/ui/game_image.dart';
+import 'package:idle_kingdoms/src/ui/skills_view.dart';
 import 'package:ik_content/ik_content.dart';
 import 'package:ik_rules/ik_rules.dart';
 
@@ -47,6 +49,18 @@ void main() {
     expect((fishing.center.dy - mining.center.dy).abs(), lessThan(8));
     expect(mining.right, lessThan(fishing.left));
     expect(harvesting.top, greaterThan(might.bottom));
+
+    final skillIcons = tester
+        .widgetList<GameImage>(
+          find.byWidgetPredicate(
+            (widget) => widget is GameImage && widget.path.contains('/icons/skills/'),
+          ),
+        )
+        .toList();
+    expect(skillIcons, hasLength(16));
+    expect(skillIcons.first.width, skillTileIconSize);
+    expect(skillIcons.first.height, skillTileIconSize);
+    expect(skillTileIconSize, 24 * 2.2);
   });
 
   testWidgets('a skill tile opens a numbered proficiency list', (tester) async {
