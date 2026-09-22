@@ -115,6 +115,7 @@ export function createNewSave(db: GameDatabase, nowMs: number = Date.now()): Pla
       autoEat: true,
       eatHealthThresholdPercent: 100,
       eatHealthThresholdAsPercent: false,
+      skipHostileTravelWarning: false,
     },
     currentLocationId: STARTING_LOCATION_ID,
     currentActivityId: null,

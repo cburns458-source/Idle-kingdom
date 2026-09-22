@@ -608,17 +608,31 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
   }
 
   void _enterGateway(String locationId) {
+    unawaited(_enterGatewayAsync(locationId));
+  }
+
+  Future<void> _enterGatewayAsync(String locationId) async {
+    if (!await _confirmHostileTravel(locationId)) return;
     _arrive(locationId);
   }
 
   void _travelFromTimers(String locationId, String mapId) {
     if (controller.rejectIfRecovering()) return;
+    unawaited(_travelFromTimersAsync(locationId, mapId));
+  }
+
+  Future<void> _travelFromTimersAsync(String locationId, String mapId) async {
+    if (!await _confirmHostileTravel(locationId)) return;
     if (!controller.travelTo(locationId, mapId)) return;
     _popToLocation();
   }
 
   void _travelTo(String locationId) {
     if (controller.rejectIfRecovering()) return;
+    unawaited(_travelToAsync(locationId));
+  }
+
+  Future<void> _travelToAsync(String locationId) async {
     if (_openMapPortal(locationId)) return;
     if (locationId == controller.save.currentLocationId) {
       _arrive(locationId);
@@ -639,6 +653,7 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
     )) {
       return;
     }
+    if (!await _confirmHostileTravel(locationId)) return;
     if (!controller.mapTravelAnimation || controller.batterySaver) {
       _arrive(locationId);
       return;
@@ -674,6 +689,32 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
           })
           ..forward();
     setState(() {});
+  }
+
+  /// Returns false when the player cancels a hostile travel warning.
+  Future<bool> _confirmHostileTravel(String locationId) async {
+    if (!mounted) return false;
+    if (controller.save.settings.skipHostileTravelWarning) return true;
+    final warning = locationDangerWarningLevel(controller.db, locationId);
+    if (warning == null) return true;
+    final choice = await showHostileTravelWarning(
+      context: context,
+      message: hostileTravelWarningMessage(warning),
+    );
+    if (!mounted) return false;
+    switch (choice) {
+      case HostileTravelChoice.cancel:
+        return false;
+      case HostileTravelChoice.travel:
+        return true;
+      case HostileTravelChoice.dontAskAgain:
+        controller.commit(
+          controller.save.copyWith(
+            settings: controller.save.settings.copyWith(skipHostileTravelWarning: true),
+          ),
+        );
+        return true;
+    }
   }
 
   Future<void> _openMailbox() {

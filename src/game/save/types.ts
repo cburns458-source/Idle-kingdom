@@ -1,4 +1,4 @@
-export const SAVE_VERSION = 51
+export const SAVE_VERSION = 52
 export const SAVE_STORAGE_KEY = 'idle-kingdoms.demo.save'
 export const STARTING_LOCATION_ID = 'LOC-0001'
 /** Base gold before race kit; race starters grant the real starting gold. */
@@ -147,6 +147,11 @@ export interface PlayerSettings {
   eatHealthThresholdPercent: number
   /** When true, the Equipment eat-at slider is shown as a percent. */
   eatHealthThresholdAsPercent: boolean
+  /**
+   * When true, skip the hostile-location travel confirm popup.
+   * Set by the "Don't ask again" control on that popup.
+   */
+  skipHostileTravelWarning: boolean
 }
 
 export const APPEARANCE_CATEGORIES = [

@@ -38,6 +38,20 @@ List<ActivityRow> hostileActivitiesAt(GameDatabase db, String locationId) {
   return rows;
 }
 
+/// Lowest Danger Warning Combat Level at this location, if any.
+num? locationDangerWarningLevel(GameDatabase db, String locationId) {
+  final first = hostileActivitiesAt(db, locationId).firstOrNull;
+  final warning = first?.raw['Danger Warning Combat Level'];
+  if (warning is num && warning.isFinite && warning > 0) return warning;
+  return null;
+}
+
+/// Map-travel confirm copy for a hostile destination.
+String hostileTravelWarningMessage(num combatLevelWarning) {
+  return 'Are you sure you want to travel here? You may be attacked. '
+      'Combat level warning: $combatLevelWarning';
+}
+
 /// The player is under-level for a danger-warning activity here.
 bool locationIsHostileFor(GameDatabase db, PlayerSave save, [String? locationId]) {
   return forcedHostileActivity(db, save, locationId ?? save.currentLocationId) != null;

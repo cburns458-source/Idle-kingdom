@@ -15,14 +15,14 @@ abstract final class PixelChrome {
   /// Tighter stair for compact chips / icon buttons.
   static const double stepTight = 2;
 
-  /// Gold emboss face — the same yellow gold as [Palette.gold].
-  static const Color goldFace = Color(0xFFD4AF37);
+  /// Gold emboss face — the same mid gold as [Palette.gold].
+  static const Color goldFace = Color(0xFFA7872D);
 
   /// Soft top-left highlight on embossed borders.
-  static const Color goldHighlight = Color(0xFFE8C84A);
+  static const Color goldHighlight = Color(0xFFBFA445);
 
   /// Bottom-right shade on embossed gold borders.
-  static const Color goldShade = Color(0xFF7A5A12);
+  static const Color goldShade = Color(0xFF5A420E);
 
   /// Dark wood plate under gold rims.
   static const Color wood = Color(0xFF2A1C12);

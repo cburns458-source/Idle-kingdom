@@ -79,7 +79,9 @@ void main() {
       ..['saveVersion'] = 50
       ..remove('mailbox');
     final migrated = migrateSaveJson(legacy, nowMs);
-    expect(migrated['saveVersion'], 51);
+    expect(migrated['saveVersion'], saveVersion);
     expect(migrated['mailbox'], isEmpty);
+    final settings = migrated['settings'] as Map<String, Object?>?;
+    expect(settings?['skipHostileTravelWarning'], isFalse);
   });
 }

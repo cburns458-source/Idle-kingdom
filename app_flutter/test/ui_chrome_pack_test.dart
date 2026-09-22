@@ -63,9 +63,9 @@ void main() {
     expect(UiChrome.wood.primaryFill.colors, isNot(contains(const Color(0xFF7F9D63))));
     expect(UiChrome.wood.primaryFill.colors.first, const Color(0xFF8B5E34));
     expect(UiChrome.wood.embossFace, Palette.gold);
-    expect(Palette.gold, const Color(0xFFD4AF37));
+    expect(Palette.gold, const Color(0xFFA7872D));
     expect(PixelChrome.goldFace, Palette.gold);
-    expect(Palette.goldHighlight, const Color(0xFFE8C84A));
+    expect(Palette.goldHighlight, const Color(0xFFBFA445));
     expect(UiChrome.stone.primaryFill.colors.first, const Color(0xFF717171));
     expect(UiChrome.stone.embossFace, const Color(0xFF4F4F4F));
     expect(UiChrome.stone.embossShade, const Color(0xFF141414));
