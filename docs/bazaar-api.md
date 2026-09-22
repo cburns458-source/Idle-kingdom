@@ -74,7 +74,7 @@ other side of it, and the exposure is worth knowing about rather than discoverin
 Refusals a player is meant to read answer **200** with `{"ok": false, "error": "..."}`.
 This is deliberate: `functions.invoke` throws on any status at or above 400 and
 hands the caller a stringified body rather than the reason inside it, and "all
-three slots are in use" is the exchange working rather than a fault. Genuine
+six slots are in use" is the exchange working rather than a fault. Genuine
 faults answer `401` (no usable token) and `500` (missing function secrets).
 
 ### `read`
@@ -102,7 +102,7 @@ faults answer `401` (no usable token) and `500` (missing function secrets).
 }
 ```
 
-`orders` is the caller's own open offers, at most three. `offers` is the depth of
+`orders` is the caller's own open offers, at most six. `offers` is the depth of
 one item's book and is empty unless `itemId` was named — the book comes back added
 up rather than row by row, because who is selling is nobody's business. `market`
 is one line per item with anything resting, for browsing. `trades` is the caller's

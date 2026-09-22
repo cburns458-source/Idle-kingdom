@@ -7,6 +7,7 @@ import '../session/game_controller.dart';
 import '../session/multiplayer_controller.dart';
 import '../theme.dart';
 import 'format.dart';
+import 'game_popup.dart';
 import 'item_icon.dart';
 import 'page_header.dart';
 import 'quantity_sheet.dart';
@@ -14,7 +15,7 @@ import 'social_bits.dart';
 
 /// The exchange, opened from the hamburger wherever the player is standing.
 ///
-/// The screen is the player's three slots and nothing else. There is no tab bar
+/// The screen is the player's six slots and nothing else. There is no tab bar
 /// and no book of everybody's offers: a slot is either empty, in which case it
 /// offers to become a buy or a sell, or it holds one order and shows how far
 /// through it is. Buying and selling are things a slot does, so they are not
@@ -41,7 +42,7 @@ class BazaarView extends StatefulWidget {
   State<BazaarView> createState() => _BazaarViewState();
 }
 
-/// Where the screen is. Null is the three slots; the rest are one deep, never
+/// Where the screen is. Null is the six slots; the rest are one deep, never
 /// stacked, so closing always lands back on the slots.
 sealed class _BazaarRoute {
   const _BazaarRoute();
@@ -214,7 +215,7 @@ class _BazaarViewState extends State<BazaarView> {
     );
   }
 
-  // --- The three slots -------------------------------------------------------
+  // --- The six slots ---------------------------------------------------------
 
   Widget _slots() {
     final slots = bazaarSlotViews(net.market.orders);
@@ -257,25 +258,87 @@ class _BazaarViewState extends State<BazaarView> {
               lines: <String>[_collectReason(entry.reason)],
               gold: entry.isGold,
             ),
-        const _Heading(title: 'Recent trades'),
-        if (net.market.trades.isEmpty)
-          const MutedText(bazaarEmptyHistory)
+        _Heading(
+          title: 'Recent trades',
+          action: GameButton(
+            key: const Key('bazaar-recent-trades'),
+            label: 'Open',
+            compact: true,
+            onPressed: _openRecentTrades,
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// The history is a look back, not something to act on, so it sits behind a
+  /// button rather than lengthening the slots the screen is actually for.
+  Future<void> _openRecentTrades() {
+    return showGamePopup<void>(
+      context: context,
+      origin: popupOrigin(context),
+      builder: (dialogContext) {
+        return GamePopupCard(
+          child: ListenableBuilder(
+            listenable: net,
+            builder: (context, _) {
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    children: [
+                      const Expanded(
+                        child: Text(
+                          'Recent trades',
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
+                        ),
+                      ),
+                      GameButton(
+                        label: 'Close',
+                        tone: GameButtonTone.secondary,
+                        compact: true,
+                        dense: true,
+                        onPressed: () => Navigator.of(context).pop(),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  if (net.market.trades.isEmpty)
+                    const MutedText(bazaarEmptyHistory)
+                  else
+                    Flexible(
+                      child: SingleChildScrollView(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: <Widget>[
+                            for (final trade in net.market.trades) _tradeRow(trade),
+                          ],
+                        ),
+                      ),
+                    ),
+                ],
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _tradeRow(MarketTrade trade) {
+    return _Row(
+      item: _item(trade.itemId),
+      title:
+          '${trade.isCancelled ? (trade.isBuy ? 'Cancelled buy' : 'Cancelled sell') : (trade.isBuy ? 'Bought' : 'Sold')} '
+          '${_name(trade.itemId)} ×${formatThousands(trade.quantity)}',
+      lines: <String>[
+        if (trade.isCancelled)
+          '${formatThousands(trade.unitPrice)} each · offer cancelled'
         else
-          for (final trade in net.market.trades)
-            _Row(
-              item: _item(trade.itemId),
-              title:
-                  '${trade.isCancelled ? (trade.isBuy ? 'Cancelled buy' : 'Cancelled sell') : (trade.isBuy ? 'Bought' : 'Sold')} '
-                  '${_name(trade.itemId)} ×${formatThousands(trade.quantity)}',
-              lines: <String>[
-                if (trade.isCancelled)
-                  '${formatThousands(trade.unitPrice)} each · offer cancelled'
-                else
-                  '${formatThousands(trade.unitPrice)} each · '
-                      '${formatThousands(trade.net)} gold ${trade.isBuy ? 'paid' : 'received'}',
-                if (trade.tax > 0) 'Tax ${formatThousands(trade.tax)}',
-              ],
-            ),
+          '${formatThousands(trade.unitPrice)} each · '
+              '${formatThousands(trade.net)} gold ${trade.isBuy ? 'paid' : 'received'}',
+        if (trade.tax > 0) 'Tax ${formatThousands(trade.tax)}',
       ],
     );
   }
@@ -698,7 +761,7 @@ class _FilterChip extends StatelessWidget {
   }
 }
 
-/// One of the three offer boxes: empty and offering to become an order, or
+/// One of the six offer boxes: empty and offering to become an order, or
 /// holding one and showing how far through it is.
 class _Slot extends StatelessWidget {
   const _Slot({

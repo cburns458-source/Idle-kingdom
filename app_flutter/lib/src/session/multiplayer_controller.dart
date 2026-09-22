@@ -1444,7 +1444,7 @@ class MultiplayerController extends ChangeNotifier {
 
   /// Reads the player's offers, their trades, their box, and the guide prices.
   ///
-  /// No item is named, because the screen shows the player their own three slots
+  /// No item is named, because the screen shows the player their own six slots
   /// rather than anybody's book, and so has nothing to ask one item about.
   Future<void> refreshMarket() async {
     if (!isSignedIn) {
