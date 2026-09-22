@@ -93,7 +93,6 @@ class TopHud extends StatelessWidget {
 
   Widget _buildHud(BuildContext context) {
     final save = controller.save;
-    final maxHp = playerMaxHp(controller.db, save);
     final raceName = raceDisplayName(controller.db, save.raceId) ?? 'Unsworn';
     final characterName = controller.showTitleOnHud
         ? displayNameForSave(save, 'Adventurer')
@@ -133,13 +132,8 @@ class TopHud extends StatelessWidget {
               ),
               const SizedBox(width: 6),
               Expanded(
-                child: ListenableBuilder(
-                  listenable: controller.progress,
-                  builder: (context, _) {
-                    final hpFraction = controller.isRecovering || maxHp <= 0
-                        ? 0.0
-                        : (save.currentHp / maxHp).clamp(0, 1).toDouble();
-                    final status = _status();
+                child: Builder(
+                  builder: (context) {
                     return Column(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -194,13 +188,7 @@ class TopHud extends StatelessWidget {
                                 ],
                               ),
                             ),
-                            if (status != null) ...[
-                              const SizedBox(width: 6),
-                              ConstrainedBox(
-                                constraints: const BoxConstraints(maxWidth: 148),
-                                child: _ActivityReadout(status: status),
-                              ),
-                            ],
+                            _ActivitySlot(controller: controller, status: _status),
                           ],
                         ),
                         Row(
@@ -222,64 +210,7 @@ class TopHud extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(width: 6),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    if (controller.healPopup case final heal?) ...[
-                                      Text(
-                                        heal.amount < 0
-                                            ? formatThousands(heal.amount)
-                                            : '+${formatThousands(heal.amount)}',
-                                        style: TextStyle(
-                                          fontSize: _hudHpSize,
-                                          fontWeight: FontWeight.w400,
-                                          height: 1.05,
-                                          color: heal.amount < 0
-                                              ? const Color(0xFFE8A090)
-                                              : const Color(0xFF9FE3A8),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 4),
-                                    ],
-                                    Text(
-                                      controller.isRecovering
-                                          ? 'Recovering…'
-                                          : '${formatThousands(save.currentHp)}/'
-                                                '${formatThousands(maxHp)}',
-                                      textAlign: TextAlign.right,
-                                      style: TextStyle(
-                                        fontSize: _hudHpSize,
-                                        fontWeight: FontWeight.w400,
-                                        height: 1.05,
-                                        color: controller.isRecovering
-                                            ? const Color(0xFFE8A090)
-                                            : const Color(0xFFF0D78C),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 1),
-                                SizedBox(
-                                  width: _hudHpBarWidth,
-                                  child: Semantics(
-                                    label: 'Hit points',
-                                    value:
-                                        '${formatThousands(save.currentHp)} / '
-                                        '${formatThousands(maxHp)}',
-                                    child: PillBar(
-                                      value: hpFraction,
-                                      gradient: Meters.hudHp,
-                                      height: 7,
-                                      trackColor: Palette.ink,
-                                      borderColor: const Color(0x599A7B32),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
+                            _HealthReadout(controller: controller),
                           ],
                         ),
                       ],
@@ -291,6 +222,110 @@ class TopHud extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// The activity line, which is the only part of the HUD's top row on the clock.
+///
+/// It listens to progress on its own so the name, race, and totals beside it are
+/// not rebuilt with every frame of its timer.
+class _ActivitySlot extends StatelessWidget {
+  const _ActivitySlot({required this.controller, required this.status});
+
+  final GameController controller;
+  final _HudStatus? Function() status;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: controller.progress,
+      builder: (context, _) {
+        final reading = status();
+        if (reading == null) return const SizedBox.shrink();
+        return Padding(
+          padding: const EdgeInsets.only(left: 6),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 148),
+            child: _ActivityReadout(status: reading),
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// Hit points and their bar: the other clock-driven corner of the HUD, since
+/// natural regain moves them without anything else on the board changing.
+class _HealthReadout extends StatelessWidget {
+  const _HealthReadout({required this.controller});
+
+  final GameController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: controller.progress,
+      builder: (context, _) {
+        final save = controller.save;
+        final maxHp = playerMaxHp(controller.db, save);
+        final fraction = controller.isRecovering || maxHp <= 0
+            ? 0.0
+            : (save.currentHp / maxHp).clamp(0, 1).toDouble();
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (controller.healPopup case final heal?) ...[
+                  Text(
+                    heal.amount < 0
+                        ? formatThousands(heal.amount)
+                        : '+${formatThousands(heal.amount)}',
+                    style: TextStyle(
+                      fontSize: _hudHpSize,
+                      fontWeight: FontWeight.w400,
+                      height: 1.05,
+                      color: heal.amount < 0 ? const Color(0xFFE8A090) : const Color(0xFF9FE3A8),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                ],
+                Text(
+                  controller.isRecovering
+                      ? 'Recovering…'
+                      : '${formatThousands(save.currentHp)}/${formatThousands(maxHp)}',
+                  textAlign: TextAlign.right,
+                  style: TextStyle(
+                    fontSize: _hudHpSize,
+                    fontWeight: FontWeight.w400,
+                    height: 1.05,
+                    color: controller.isRecovering
+                        ? const Color(0xFFE8A090)
+                        : const Color(0xFFF0D78C),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 1),
+            SizedBox(
+              width: _hudHpBarWidth,
+              child: Semantics(
+                label: 'Hit points',
+                value: '${formatThousands(save.currentHp)} / ${formatThousands(maxHp)}',
+                child: PillBar(
+                  value: fraction,
+                  gradient: Meters.hudHp,
+                  height: 7,
+                  trackColor: Palette.ink,
+                  borderColor: const Color(0x599A7B32),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }

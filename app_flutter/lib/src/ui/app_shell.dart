@@ -20,6 +20,7 @@ import 'critter_overlay.dart';
 import 'codex_view.dart';
 import 'inventory_view.dart';
 import 'location_view.dart';
+import 'out_of_sight.dart';
 import 'log_view.dart';
 import 'menu_view.dart';
 import 'skills_view.dart';
@@ -849,13 +850,16 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
                 fit: StackFit.expand,
                 clipBehavior: Clip.none,
                 children: [
-                  LocationView(
-                    controller: controller,
-                    multiplayer: multiplayer,
-                    onOpenMap: _showMap,
-                    onOpenSubMap: _browseSubMap,
-                    onEnterGateway: _enterGateway,
-                    onOpenGuilds: () => _selectScreen(GameScreen.guilds),
+                  OutOfSight(
+                    hidden: _screen != GameScreen.location || _wardrobeOpen,
+                    child: LocationView(
+                      controller: controller,
+                      multiplayer: multiplayer,
+                      onOpenMap: _showMap,
+                      onOpenSubMap: _browseSubMap,
+                      onEnterGateway: _enterGateway,
+                      onOpenGuilds: () => _selectScreen(GameScreen.guilds),
+                    ),
                   ),
                   if (_screen != GameScreen.location) _sheetLayer(),
                   if (_wardrobeOpen)
