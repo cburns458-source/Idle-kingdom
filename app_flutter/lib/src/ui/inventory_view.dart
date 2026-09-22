@@ -66,11 +66,23 @@ class _InventoryViewState extends State<InventoryView> {
   final TextEditingController _search = TextEditingController();
   late InventorySorter _sorter = InventorySorter(widget.controller.db);
 
+  /// Cached bag order; invalidated when inventory, sort, or search change.
+  List<int>? _cachedBagIndexes;
+  int? _bagCacheInventoryIdentity;
+  int? _bagCacheInventoryLength;
+  InventorySortMode? _bagCacheSortMode;
+  String? _bagCacheSearch;
+
+  /// Equippable lookup per item id for this database.
+  final Map<String, bool> _equippableByItemId = <String, bool>{};
+
   @override
   void didUpdateWidget(InventoryView oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.controller != widget.controller) {
       _sorter = InventorySorter(widget.controller.db);
+      _equippableByItemId.clear();
+      _invalidateBagCache();
     }
   }
 
@@ -78,6 +90,41 @@ class _InventoryViewState extends State<InventoryView> {
   void dispose() {
     _search.dispose();
     super.dispose();
+  }
+
+  void _invalidateBagCache() {
+    _cachedBagIndexes = null;
+    _bagCacheInventoryIdentity = null;
+    _bagCacheInventoryLength = null;
+    _bagCacheSortMode = null;
+    _bagCacheSearch = null;
+  }
+
+  List<int> _bagIndexes(PlayerSave save) {
+    final identity = identityHashCode(save.inventory);
+    final length = save.inventory.length;
+    final search = _search.text;
+    if (_cachedBagIndexes != null &&
+        _bagCacheInventoryIdentity == identity &&
+        _bagCacheInventoryLength == length &&
+        _bagCacheSortMode == _sortMode &&
+        _bagCacheSearch == search) {
+      return _cachedBagIndexes!;
+    }
+    final indexes = _sorter.displayIndexes(save.inventory, _sortMode, search);
+    _cachedBagIndexes = indexes;
+    _bagCacheInventoryIdentity = identity;
+    _bagCacheInventoryLength = length;
+    _bagCacheSortMode = _sortMode;
+    _bagCacheSearch = search;
+    return indexes;
+  }
+
+  bool _isEquippable(String itemId) {
+    return _equippableByItemId.putIfAbsent(
+      itemId,
+      () => equipmentForItemId(db, itemId)?.slotId != null,
+    );
   }
 
   /// Non-null while picking stacks to sell; values are chosen quantities.
@@ -386,16 +433,18 @@ class _InventoryViewState extends State<InventoryView> {
   }
 
   Widget _body() {
-    return SingleChildScrollView(
+    // Doll + toolbar stay fixed; the bag owns its own scroll viewport so only
+    // on-screen tiles layout/paint (look unchanged, scroll work drops a lot).
+    return Padding(
       padding: const EdgeInsets.fromLTRB(10, 6, 10, 10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _dollRow(),
+          RepaintBoundary(child: _dollRow()),
           const SizedBox(height: 8),
           _bagToolbar(),
           const SizedBox(height: 8),
-          _bag(),
+          Expanded(child: RepaintBoundary(child: _bag())),
         ],
       ),
     );
@@ -649,7 +698,7 @@ class _InventoryViewState extends State<InventoryView> {
       );
     }
     final selling = _selling;
-    final indexes = _sorter.displayIndexes(save.inventory, _sortMode, _search.text);
+    final indexes = _bagIndexes(save);
     if (indexes.isEmpty) {
       return const Padding(
         key: Key('inventory-bag'),
@@ -661,42 +710,42 @@ class _InventoryViewState extends State<InventoryView> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        GridView.builder(
-          key: const Key('inventory-bag'),
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-            maxCrossAxisExtent: inventoryBagTileExtent,
-            mainAxisSpacing: inventoryBagTileSpacing,
-            crossAxisSpacing: inventoryBagTileSpacing,
+        Expanded(
+          child: GridView.builder(
+            key: const Key('inventory-bag'),
+            gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+              maxCrossAxisExtent: inventoryBagTileExtent,
+              mainAxisSpacing: inventoryBagTileSpacing,
+              crossAxisSpacing: inventoryBagTileSpacing,
+            ),
+            itemCount: indexes.length,
+            itemBuilder: (context, visible) {
+              final index = indexes[visible];
+              final stack = save.inventory[index];
+              final item = controller.indexes.itemsById[stack.itemId];
+              final equippable = _isEquippable(stack.itemId);
+              return _ItemTile(
+                item: item,
+                quantity: stack.quantity,
+                enchanted: stack.enchantmentId != null,
+                favorite: isFavoriteStack(stack),
+                selected: selling?.containsKey(index) ?? false,
+                selecting: selling != null,
+                iconSize: inventoryBagIconSize,
+                onTap: () {
+                  if (selling != null) {
+                    _toggleSelection(index);
+                  } else if (equippable) {
+                    _equipAt(index);
+                  } else {
+                    _showDetail(stack: stack, inventoryIndex: index);
+                  }
+                },
+                onLongPress: () => _showDetail(stack: stack, inventoryIndex: index),
+                onToggleFavorite: () => _toggleFavorite(index),
+              );
+            },
           ),
-          itemCount: indexes.length,
-          itemBuilder: (context, visible) {
-            final index = indexes[visible];
-            final stack = save.inventory[index];
-            final item = controller.indexes.itemsById[stack.itemId];
-            final equippable = equipmentForItemId(db, stack.itemId)?.slotId != null;
-            return _ItemTile(
-              item: item,
-              quantity: stack.quantity,
-              enchanted: stack.enchantmentId != null,
-              favorite: isFavoriteStack(stack),
-              selected: selling?.containsKey(index) ?? false,
-              selecting: selling != null,
-              iconSize: inventoryBagIconSize,
-              onTap: () {
-                if (selling != null) {
-                  _toggleSelection(index);
-                } else if (equippable) {
-                  _equipAt(index);
-                } else {
-                  _showDetail(stack: stack, inventoryIndex: index);
-                }
-              },
-              onLongPress: () => _showDetail(stack: stack, inventoryIndex: index),
-              onToggleFavorite: () => _toggleFavorite(index),
-            );
-          },
         ),
         if (selling != null) ...[
           const SizedBox(height: 8),

@@ -33,6 +33,7 @@ class EquipmentPresetsBar extends StatelessWidget {
     this.showSaveButton = true,
     this.showSettingsButton = false,
     this.allowLongPressEdit = true,
+    this.listenToController = true,
     this.onSelectPreset,
     this.onMessage,
   });
@@ -46,11 +47,16 @@ class EquipmentPresetsBar extends StatelessWidget {
   /// When false (location stage), long-press rename is off.
   final bool allowLongPressEdit;
 
+  /// When false, skip a nested [ListenableBuilder] — the parent already rebuilds
+  /// with [controller] (e.g. inventory under the shell listen).
+  final bool listenToController;
+
   final ValueChanged<int>? onSelectPreset;
   final ValueChanged<String>? onMessage;
 
   @override
   Widget build(BuildContext context) {
+    if (!listenToController) return _bar(context);
     return ListenableBuilder(listenable: controller, builder: (context, _) => _bar(context));
   }
 
