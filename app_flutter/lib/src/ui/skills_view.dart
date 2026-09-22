@@ -10,9 +10,6 @@ import 'game_popup.dart';
 import 'page_header.dart';
 import 'skill_menu_sheet.dart';
 
-/// Skills-page tile icon size. 2.2× the original 24px display.
-const double skillTileIconSize = 24 * 2.2;
-
 /// Every skill as a tile, with the totals they add up to along the bottom.
 class SkillsView extends StatelessWidget {
   const SkillsView({super.key, required this.controller, this.onClose, this.showHeader = true});
@@ -91,51 +88,48 @@ class _SkillTile extends StatelessWidget {
     return Tooltip(
       message: tooltip,
       child: GamePanel(
-        padding: const EdgeInsets.fromLTRB(4, 5, 4, 4),
+        padding: const EdgeInsets.fromLTRB(2, 2, 2, 3),
         child: InkWell(
           onTap: () => _openSkillMenu(context, controller, skillId, row?.displayName ?? skillId),
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              return FittedBox(
-                fit: BoxFit.scaleDown,
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(maxWidth: constraints.maxWidth),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      GameImage(
+          child: Column(
+            children: [
+              Expanded(
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final side = constraints.maxWidth < constraints.maxHeight
+                        ? constraints.maxWidth
+                        : constraints.maxHeight;
+                    return Center(
+                      child: GameImage(
                         skillIconPath(row),
-                        width: skillTileIconSize,
-                        height: skillTileIconSize,
+                        width: side,
+                        height: side,
+                        fit: BoxFit.contain,
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        row?.displayName ?? skillId,
-                        textAlign: TextAlign.center,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 9.5,
-                          fontWeight: FontWeight.w400,
-                          height: 1.15,
-                        ),
-                      ),
-                      const SizedBox(height: 1),
-                      Text(
-                        'Lv ${progress.level}',
-                        style: const TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w400,
-                          color: Palette.gold,
-                        ),
-                      ),
-                      const SizedBox(height: 3),
-                      MeterBar(value: fraction, color: Palette.gold, height: 4),
-                    ],
-                  ),
+                    );
+                  },
                 ),
-              );
-            },
+              ),
+              const SizedBox(height: 2),
+              Text(
+                row?.displayName ?? skillId,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 9.5, fontWeight: FontWeight.w400, height: 1.15),
+              ),
+              const SizedBox(height: 1),
+              Text(
+                'Lv ${progress.level}',
+                style: const TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w400,
+                  color: Palette.gold,
+                ),
+              ),
+              const SizedBox(height: 3),
+              MeterBar(value: fraction, color: Palette.gold, height: 4),
+            ],
           ),
         ),
       ),
