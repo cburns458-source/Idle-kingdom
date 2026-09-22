@@ -198,19 +198,14 @@ class LocationIdlePlayer extends StatelessWidget {
                             child: _playerWithPet(
                               save: save,
                               player: _Portrait(
-                                assetPath: playerAssetPath(
-                                  save.appearance,
-                                  raceId: save.raceId,
-                                ),
+                                assetPath: playerAssetPath(save.appearance, raceId: save.raceId),
                                 bytes: controller.localPlayerPng,
                                 semanticsLabel: 'Adventurer',
                                 alignment: Alignment.centerRight,
                                 height: _playerArtHeight,
                                 slotHeight: _portraitSlotHeight,
                                 filterQuality: FilterQuality.high,
-                                hop: save.currentActivityId != null
-                                    ? _StageHopKind.player
-                                    : null,
+                                hop: save.currentActivityId != null ? _StageHopKind.player : null,
                               ),
                             ),
                           ),
@@ -1613,12 +1608,7 @@ class _StagePotionButton extends StatelessWidget {
                       ),
                     if (paused)
                       const Positioned.fill(
-                        child: Center(
-                          child: Text(
-                            '🚫',
-                            style: TextStyle(fontSize: 22, height: 1),
-                          ),
-                        ),
+                        child: Center(child: Text('🚫', style: TextStyle(fontSize: 22, height: 1))),
                       ),
                   ],
                 ),

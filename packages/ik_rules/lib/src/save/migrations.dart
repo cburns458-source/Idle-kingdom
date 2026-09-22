@@ -849,7 +849,7 @@ final List<SaveMigration> saveMigrations = <SaveMigration>[
     toVersion: 53,
     migrate: (save, _) {
       final next = _normalizeSettings(save, 53);
-      next['combatManualEatRoundStartedAt'] = save['combatManualEatRoundStartedAt'] ?? null;
+      next['combatManualEatRoundStartedAt'] = save['combatManualEatRoundStartedAt'];
       return next;
     },
   ),

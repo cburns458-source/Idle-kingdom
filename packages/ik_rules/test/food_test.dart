@@ -178,10 +178,11 @@ void main() {
     expect(
       eatEquippedFood(
         db,
-        _withFoodAndSpells(db, foodQty: 2, gluttonyCount: 0).copyWith(
-          combatEnemyId: 'ENM-0001',
-          combatRoundStartedAt: '2026-01-01T00:00:00.000Z',
-        ),
+        _withFoodAndSpells(
+          db,
+          foodQty: 2,
+          gluttonyCount: 0,
+        ).copyWith(combatEnemyId: 'ENM-0001', combatRoundStartedAt: '2026-01-01T00:00:00.000Z'),
       ).reason,
       'You cannot eat during combat.',
     );

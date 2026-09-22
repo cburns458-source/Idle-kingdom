@@ -76,7 +76,8 @@ num potionStageRemaining(ActivePotionEffect? effect, PlayerSave save) {
   final left = potionActionsRemaining(effect);
   if (left <= 0) return 0;
   final busy =
-      save.currentActivityId != null || (save.combatEnemyId != null && save.combatEnemyId!.isNotEmpty);
+      save.currentActivityId != null ||
+      (save.combatEnemyId != null && save.combatEnemyId!.isNotEmpty);
   if (busy && left >= potionActionDuration) return left - 1;
   return left;
 }

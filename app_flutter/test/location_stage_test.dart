@@ -941,9 +941,7 @@ void main() {
     expect(actionMid.top, closeTo(actionRest.top, 1));
   });
 
-  testWidgets('an active potion shows remaining actions on the stage potion chip', (
-    tester,
-  ) async {
+  testWidgets('an active potion shows remaining actions on the stage potion chip', (tester) async {
     var save = startedCharacter(database).copyWith(currentLocationId: 'LOC-0001');
     save = addItemsToInventory(save, 'ITEM-0070', 3).save;
     final equipped = equipItemFromInventory(database.launch, save, 'ITEM-0070');

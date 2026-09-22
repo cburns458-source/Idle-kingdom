@@ -75,12 +75,11 @@ Future<T?> showGamePopup<T>({
   final resolvedChrome = chrome ?? UiChrome.of(context);
   final size = MediaQuery.sizeOf(context);
   final ceiling = gamePopupCeilingHeight(context);
-  final resolvedMaxWidth = maxWidth ??
-      (placement == GamePopupPlacement.leftHalf ? size.width / 2 : gamePopupMaxWidth);
+  final resolvedMaxWidth =
+      maxWidth ?? (placement == GamePopupPlacement.leftHalf ? size.width / 2 : gamePopupMaxWidth);
   // Ceiling is HUD+20 … chin−20; short cards still shrink to their content.
   final resolvedMaxHeight = maxHeight ?? ceiling;
-  final verticalPad =
-      placement == GamePopupPlacement.leftHalf ? gamePopupHudChinGap : 12.0;
+  final verticalPad = placement == GamePopupPlacement.leftHalf ? gamePopupHudChinGap : 12.0;
   final horizontalPad = placement == GamePopupPlacement.leftHalf ? 0.0 : 16.0;
   final align = placement == GamePopupPlacement.leftHalf ? Alignment.centerLeft : Alignment.center;
 
@@ -111,7 +110,10 @@ Future<T?> showGamePopup<T>({
                   height: placement == GamePopupPlacement.leftHalf ? resolvedMaxHeight : null,
                   child: Material(
                     type: MaterialType.transparency,
-                    child: KeyedSubtree(key: const Key('game-popup'), child: builder(dialogContext)),
+                    child: KeyedSubtree(
+                      key: const Key('game-popup'),
+                      child: builder(dialogContext),
+                    ),
                   ),
                 ),
               ),
