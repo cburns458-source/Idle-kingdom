@@ -145,8 +145,7 @@ List<Object?> _mergeRemappedStacks(List<Object?> stacks) {
     if (stack == null) continue;
     final itemId = stack['itemId'];
     if (itemId is! String) continue;
-    final next = copyEntry(stack);
-    next['itemId'] = _remapCookedSquidId(itemId);
+    final next = SaveJson.of(stack)..['itemId'] = _remapCookedSquidId(itemId);
     final key =
         '${next['itemId']}\u0000${next['enchantmentId'] ?? ''}\u0000${next['favorite'] == true ? '1' : '0'}';
     final existing = indexByKey[key];
@@ -166,9 +165,7 @@ Object? _remapEquippedStack(Object? raw) {
   if (stack == null) return raw;
   final itemId = stack['itemId'];
   if (itemId is! String) return raw;
-  final next = copyEntry(stack);
-  next['itemId'] = _remapCookedSquidId(itemId);
-  return next;
+  return SaveJson.of(stack)..['itemId'] = _remapCookedSquidId(itemId);
 }
 
 SaveJson _replaceCookedSquidWithSoup(SaveJson save) {
@@ -185,12 +182,11 @@ SaveJson _replaceCookedSquidWithSoup(SaveJson save) {
   final presets = arrayOrEmpty(save, 'equipmentPresets').map((raw) {
     final preset = asObject(raw);
     if (preset == null) return raw;
-    final copied = copyEntry(preset);
     final presetSlots = objectOrEmpty(preset, 'slots');
-    copied['slots'] = <String, Object?>{
-      for (final entry in presetSlots.entries) entry.key: _remapEquippedStack(entry.value),
-    };
-    return copied;
+    return SaveJson.of(preset)
+      ..['slots'] = <String, Object?>{
+        for (final entry in presetSlots.entries) entry.key: _remapEquippedStack(entry.value),
+      };
   }).toList();
   next['equipmentPresets'] = presets;
   return next;
