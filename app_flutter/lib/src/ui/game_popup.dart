@@ -1,7 +1,11 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../session/battery_saver_pref.dart';
 import '../theme.dart';
+import 'bottom_nav.dart';
+import 'top_hud.dart';
 
 /// Where a floating popup settles. Footer / bottom sheets are not used.
 enum GamePopupPlacement {
@@ -10,13 +14,26 @@ enum GamePopupPlacement {
 
   /// Same as [center]; kept so older call sites still compile.
   topHalf,
+
+  /// Flush to the left half of the playable frame (XP / Loot trackers).
+  leftHalf,
 }
 
 /// Shared card size for every floating popup.
-const double gamePopupMaxWidth = 280;
+const double gamePopupMaxWidth = 320;
 const double gamePopupMaxHeight = 360;
-const double gamePopupTitleSize = 14;
-const double gamePopupBodySize = 12;
+const double gamePopupTitleSize = 11;
+const double gamePopupBodySize = 10;
+
+/// Gap under the HUD and above the chin when a popup grows to fit.
+const double gamePopupHudChinGap = 20;
+
+/// Tallest a popup may grow: frame height minus HUD, chin, and [gamePopupHudChinGap] each.
+double gamePopupCeilingHeight(BuildContext context) {
+  final h = MediaQuery.sizeOf(context).height;
+  final hud = HudPortrait.size + 2;
+  return math.max(gamePopupMaxHeight, h - hud - chinHeight - gamePopupHudChinGap * 2);
+}
 
 /// The box a control occupies, for popups that grow out of that control.
 Rect? popupOrigin(BuildContext context) {
@@ -26,6 +43,9 @@ Rect? popupOrigin(BuildContext context) {
 }
 
 Alignment _alignmentFor(BuildContext context, Rect? origin, GamePopupPlacement placement) {
+  if (placement == GamePopupPlacement.leftHalf) {
+    return Alignment.centerLeft;
+  }
   if (origin != null) {
     final overlay = Overlay.maybeOf(context)?.context.findRenderObject() as RenderBox?;
     if (overlay != null && overlay.hasSize && overlay.size.width > 0 && overlay.size.height > 0) {
@@ -46,32 +66,53 @@ Future<T?> showGamePopup<T>({
   GamePopupPlacement placement = GamePopupPlacement.center,
   Rect? origin,
   bool barrierDismissible = true,
+  Color? barrierColor,
   UiChrome? chrome,
-  double maxWidth = gamePopupMaxWidth,
-  double maxHeight = gamePopupMaxHeight,
+  double? maxWidth,
+  double? maxHeight,
 }) {
   final reduceMotion = BatterySaverScope.of(context);
   final resolvedChrome = chrome ?? UiChrome.of(context);
+  final size = MediaQuery.sizeOf(context);
+  final ceiling = gamePopupCeilingHeight(context);
+  final resolvedMaxWidth = maxWidth ??
+      (placement == GamePopupPlacement.leftHalf ? size.width / 2 : gamePopupMaxWidth);
+  // Ceiling is HUD+20 … chin−20; short cards still shrink to their content.
+  final resolvedMaxHeight = maxHeight ?? ceiling;
+  final verticalPad =
+      placement == GamePopupPlacement.leftHalf ? gamePopupHudChinGap : 12.0;
+  final horizontalPad = placement == GamePopupPlacement.leftHalf ? 0.0 : 16.0;
+  final align = placement == GamePopupPlacement.leftHalf ? Alignment.centerLeft : Alignment.center;
+
   return showGeneralDialog<T>(
     context: context,
     useRootNavigator: false,
     barrierDismissible: barrierDismissible,
     barrierLabel: 'Dismiss',
-    barrierColor: const Color(0xCC120C08),
+    barrierColor: barrierColor ?? const Color(0xCC120C08),
     transitionDuration: reduceMotion ? Duration.zero : const Duration(milliseconds: 220),
     pageBuilder: (dialogContext, animation, secondary) {
       return UiChromeScope(
         chrome: resolvedChrome,
         child: SafeArea(
           child: Align(
-            alignment: Alignment.center,
+            alignment: align,
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: EdgeInsets.symmetric(horizontal: horizontalPad, vertical: verticalPad),
               child: ConstrainedBox(
-                constraints: BoxConstraints(maxWidth: maxWidth, maxHeight: maxHeight),
-                child: Material(
-                  type: MaterialType.transparency,
-                  child: KeyedSubtree(key: const Key('game-popup'), child: builder(dialogContext)),
+                constraints: BoxConstraints(
+                  maxWidth: resolvedMaxWidth,
+                  maxHeight: resolvedMaxHeight,
+                  minWidth: placement == GamePopupPlacement.leftHalf ? resolvedMaxWidth : 0,
+                  minHeight: placement == GamePopupPlacement.leftHalf ? resolvedMaxHeight : 0,
+                ),
+                child: SizedBox(
+                  width: placement == GamePopupPlacement.leftHalf ? resolvedMaxWidth : null,
+                  height: placement == GamePopupPlacement.leftHalf ? resolvedMaxHeight : null,
+                  child: Material(
+                    type: MaterialType.transparency,
+                    child: KeyedSubtree(key: const Key('game-popup'), child: builder(dialogContext)),
+                  ),
                 ),
               ),
             ),

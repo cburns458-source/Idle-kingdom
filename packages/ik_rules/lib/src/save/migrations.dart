@@ -121,6 +121,7 @@ SaveJson _normalizeSettings(SaveJson save, int version) {
     ),
     'eatHealthThresholdAsPercent': settings['eatHealthThresholdAsPercent'] ?? false,
     'skipHostileTravelWarning': settings['skipHostileTravelWarning'] ?? false,
+    'potionsPaused': settings['potionsPaused'] ?? false,
   };
   return next;
 }
@@ -843,6 +844,15 @@ final List<SaveMigration> saveMigrations = <SaveMigration>[
     },
   ),
   SaveMigration(fromVersion: 51, toVersion: 52, migrate: (save, _) => _normalizeSettings(save, 52)),
+  SaveMigration(
+    fromVersion: 52,
+    toVersion: 53,
+    migrate: (save, _) {
+      final next = _normalizeSettings(save, 53);
+      next['combatManualEatRoundStartedAt'] = save['combatManualEatRoundStartedAt'] ?? null;
+      return next;
+    },
+  ),
 ];
 
 /// Thrown when a save cannot be brought to the current version.

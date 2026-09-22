@@ -183,37 +183,33 @@ class LocationIdlePlayer extends StatelessWidget {
                               onMessage: controller.announce,
                             ),
                             if (controller.showEatButton) ...[
-                              const SizedBox(height: 4),
+                              const SizedBox(height: 6),
                               _StageEatNowButton(controller: controller),
                             ],
+                            const SizedBox(height: 6),
+                            _StagePotionButton(controller: controller),
                           ],
                         ),
                         const SizedBox(width: 4),
                         Expanded(
                           child: IgnorePointer(
-                            child: Stack(
-                              clipBehavior: Clip.none,
-                              children: [
-                                _playerWithPet(
-                                  save: save,
-                                  player: _Portrait(
-                                    assetPath: playerAssetPath(
-                                      save.appearance,
-                                      raceId: save.raceId,
-                                    ),
-                                    bytes: controller.localPlayerPng,
-                                    semanticsLabel: 'Adventurer',
-                                    alignment: Alignment.centerRight,
-                                    height: _playerArtHeight,
-                                    slotHeight: _portraitSlotHeight,
-                                    filterQuality: FilterQuality.high,
-                                    hop: save.currentActivityId != null
-                                        ? _StageHopKind.player
-                                        : null,
-                                  ),
+                            child: _playerWithPet(
+                              save: save,
+                              player: _Portrait(
+                                assetPath: playerAssetPath(
+                                  save.appearance,
+                                  raceId: save.raceId,
                                 ),
-                                _PotionBadge(controller: controller),
-                              ],
+                                bytes: controller.localPlayerPng,
+                                semanticsLabel: 'Adventurer',
+                                alignment: Alignment.centerRight,
+                                height: _playerArtHeight,
+                                slotHeight: _portraitSlotHeight,
+                                filterQuality: FilterQuality.high,
+                                hop: save.currentActivityId != null
+                                    ? _StageHopKind.player
+                                    : null,
+                              ),
                             ),
                           ),
                         ),
@@ -240,62 +236,6 @@ class LocationIdlePlayer extends StatelessWidget {
                 ),
                 const SizedBox(height: 7),
                 const SizedBox(height: _stageFooterHeight),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Potion bottle and remaining-action count, pinned to the top-right of the art.
-class _PotionBadge extends StatelessWidget {
-  const _PotionBadge({required this.controller});
-
-  final GameController controller;
-
-  @override
-  Widget build(BuildContext context) {
-    final effect = controller.save.activePotionEffect;
-    if (effect == null) return const SizedBox.shrink();
-    final remaining = potionActionsRemaining(effect);
-    if (remaining <= 0) return const SizedBox.shrink();
-    ItemRow? item;
-    for (final row in controller.db.items) {
-      if (row.itemId == effect.itemId) {
-        item = row;
-        break;
-      }
-    }
-    return Align(
-      alignment: Alignment.topRight,
-      child: Padding(
-        padding: const EdgeInsets.only(top: 4, right: 4),
-        child: Semantics(
-          key: const Key('potion-action-badge'),
-          label: '${item?.displayName ?? 'Potion'} · $remaining actions left',
-          child: SizedBox(
-            width: 36,
-            height: 36,
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                ItemIcon(item: item, size: 36),
-                Positioned(
-                  right: -2,
-                  bottom: -2,
-                  child: Text(
-                    '$remaining',
-                    style: TextStyle(
-                      fontFamily: gameFontFamily,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color: Palette.gold,
-                      shadows: const [Shadow(color: Color(0xE6000000), blurRadius: 2)],
-                    ),
-                  ),
-                ),
               ],
             ),
           ),
@@ -1503,10 +1443,11 @@ Offset _floaterOffset(int seq, int salt) {
   return Offset(((mixed % 49) - 24).toDouble(), (((mixed ~/ 7) % 37) - 18).toDouble());
 }
 
-const double _stageEatSide = 44;
-const String _cookedPheasantItemId = 'ITEM-0065';
+/// Shared stage chip for equipped food / potion under the presets.
+const double _stageChipSide = 44;
 
-/// Icon-only Eat now under the location-stage presets. Dark while fighting.
+/// Icon-only Eat now under the location-stage presets. Uses equipped food;
+/// when auto-eat is off, one tap per combat round is allowed.
 class _StageEatNowButton extends StatelessWidget {
   const _StageEatNowButton({required this.controller});
 
@@ -1514,16 +1455,20 @@ class _StageEatNowButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final enabled = !isInCombat(controller.save);
-    final item = controller.indexes.itemsById[_cookedPheasantItemId];
+    final save = controller.save;
+    final food = slotStack(save, foodSlotId);
+    final blocked = manualEatBlockedReason(save);
+    final enabled = food != null && food.quantity > 0 && blocked == null;
+    final item = food == null ? null : controller.indexes.itemsById[food.itemId];
+    final label = blocked ?? (food == null ? 'No food equipped' : 'Eat now');
     return Semantics(
       button: true,
       enabled: enabled,
-      label: 'Eat now',
+      label: label,
       child: Opacity(
         opacity: enabled ? 1 : 0.45,
         child: Tooltip(
-          message: 'Eat now',
+          message: label,
           child: Material(
             color: Colors.transparent,
             shape: PixelSteppedBorder(step: 2, side: const BorderSide(color: Palette.edge)),
@@ -1540,9 +1485,133 @@ class _StageEatNowButton extends StatelessWidget {
                     : null,
                 customBorder: PixelSteppedBorder(step: 2),
                 child: SizedBox(
-                  width: _stageEatSide,
-                  height: _stageEatSide,
-                  child: Center(child: ItemIcon(item: item, size: 36)),
+                  width: _stageChipSide,
+                  height: _stageChipSide,
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Center(
+                        child: food == null
+                            ? SlotGlyph(slotId: foodSlotId, size: 36)
+                            : ItemIcon(item: item, size: 36),
+                      ),
+                      if (food != null && food.quantity > 0)
+                        Positioned(
+                          right: 1,
+                          bottom: 0,
+                          child: Text(
+                            '${food.quantity.round()}',
+                            style: TextStyle(
+                              fontFamily: gameFontFamily,
+                              fontSize: 9,
+                              fontWeight: FontWeight.w400,
+                              color: Palette.parchmentText,
+                              shadows: const [Shadow(color: Color(0xE6000000), blurRadius: 2)],
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Equipped potion chip: stack bottom-right, remaining actions top-right (yellow).
+/// Tap toggles potions-paused (🚫). An already-running effect is left alone.
+class _StagePotionButton extends StatelessWidget {
+  const _StagePotionButton({required this.controller});
+
+  final GameController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final save = controller.save;
+    final potion = slotStack(save, potionSlotId);
+    final effect = save.activePotionEffect;
+    final remaining = potionStageRemaining(effect, save);
+    final paused = save.settings.potionsPaused;
+    final itemId = effect?.itemId ?? potion?.itemId;
+    final item = itemId == null ? null : controller.indexes.itemsById[itemId];
+    final stackQty = potion?.quantity ?? 0;
+    final label = paused
+        ? 'Potions paused'
+        : remaining > 0
+        ? '${item?.displayName ?? 'Potion'} · ${remaining.round()} left'
+        : potion == null
+        ? 'No potion equipped'
+        : item?.displayName ?? 'Potion';
+    return Semantics(
+      key: const Key('stage-potion'),
+      button: true,
+      label: label,
+      child: Tooltip(
+        message: paused ? 'Resume potions' : 'Pause potions',
+        child: Material(
+          color: Colors.transparent,
+          shape: PixelSteppedBorder(step: 2, side: const BorderSide(color: Palette.edge)),
+          clipBehavior: Clip.antiAlias,
+          child: Ink(
+            decoration: chromeSlotFill(context),
+            child: InkWell(
+              onTap: controller.togglePotionsPaused,
+              customBorder: PixelSteppedBorder(step: 2),
+              child: SizedBox(
+                width: _stageChipSide,
+                height: _stageChipSide,
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    Center(
+                      child: item == null
+                          ? SlotGlyph(slotId: potionSlotId, size: 36)
+                          : ItemIcon(item: item, size: 36),
+                    ),
+                    if (stackQty > 0)
+                      Positioned(
+                        right: 1,
+                        bottom: 0,
+                        child: Text(
+                          '${stackQty.round()}',
+                          style: TextStyle(
+                            fontFamily: gameFontFamily,
+                            fontSize: 9,
+                            fontWeight: FontWeight.w400,
+                            color: Palette.parchmentText,
+                            shadows: const [Shadow(color: Color(0xE6000000), blurRadius: 2)],
+                          ),
+                        ),
+                      ),
+                    if (remaining > 0)
+                      Positioned(
+                        right: 0,
+                        top: -1,
+                        child: Text(
+                          '${remaining.round()}',
+                          style: TextStyle(
+                            fontFamily: gameFontFamily,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: Palette.gold,
+                            shadows: const [Shadow(color: Color(0xE6000000), blurRadius: 2)],
+                          ),
+                        ),
+                      ),
+                    if (paused)
+                      const Positioned.fill(
+                        child: Center(
+                          child: Text(
+                            '🚫',
+                            style: TextStyle(fontSize: 22, height: 1),
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
               ),
             ),

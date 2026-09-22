@@ -7,7 +7,7 @@
 
 import '../../json_support.dart';
 
-const int saveVersion = 52;
+const int saveVersion = 53;
 
 const String saveStorageKey = 'idle-kingdoms.demo.save';
 
@@ -966,6 +966,7 @@ class PlayerSave {
     this.combatEnemyId,
     this.combatEnemyHp,
     this.combatRoundStartedAt,
+    this.combatManualEatRoundStartedAt,
     required this.combatSkipEnemyAttack,
     this.combatBossSleepRoundsRemaining,
     this.combatBossPendingId,
@@ -1073,6 +1074,7 @@ class PlayerSave {
       combatEnemyId: json['combatEnemyId'] as String?,
       combatEnemyHp: json['combatEnemyHp'] as num?,
       combatRoundStartedAt: json['combatRoundStartedAt'] as String?,
+      combatManualEatRoundStartedAt: json['combatManualEatRoundStartedAt'] as String?,
       combatSkipEnemyAttack: json['combatSkipEnemyAttack'] as bool,
       combatBossSleepRoundsRemaining: json['combatBossSleepRoundsRemaining'] as num?,
       combatBossPendingId: json['combatBossPendingId'] as String?,
@@ -1258,6 +1260,10 @@ class PlayerSave {
 
   final String? combatRoundStartedAt;
 
+  /// When set to the current [combatRoundStartedAt], the player already used
+  /// their one manual eat this combat round (auto-eat off only).
+  final String? combatManualEatRoundStartedAt;
+
   /// Staff of Binding: when true, the enemy skips their next attack.
   /// Cleared after that skipped swing, or when combat ends.
   final bool combatSkipEnemyAttack;
@@ -1398,6 +1404,7 @@ class PlayerSave {
       'combatEnemyId': combatEnemyId,
       'combatEnemyHp': combatEnemyHp,
       'combatRoundStartedAt': combatRoundStartedAt,
+      'combatManualEatRoundStartedAt': combatManualEatRoundStartedAt,
       'combatSkipEnemyAttack': combatSkipEnemyAttack,
       'combatBossSleepRoundsRemaining': combatBossSleepRoundsRemaining,
       'combatBossPendingId': combatBossPendingId,
@@ -1481,6 +1488,7 @@ class PlayerSave {
     Object? combatEnemyId = _unset,
     Object? combatEnemyHp = _unset,
     Object? combatRoundStartedAt = _unset,
+    Object? combatManualEatRoundStartedAt = _unset,
     bool? combatSkipEnemyAttack,
     Object? combatBossSleepRoundsRemaining = _unset,
     Object? combatBossPendingId = _unset,
@@ -1579,6 +1587,9 @@ class PlayerSave {
       combatRoundStartedAt: combatRoundStartedAt == _unset
           ? this.combatRoundStartedAt
           : combatRoundStartedAt as String?,
+      combatManualEatRoundStartedAt: combatManualEatRoundStartedAt == _unset
+          ? this.combatManualEatRoundStartedAt
+          : combatManualEatRoundStartedAt as String?,
       combatSkipEnemyAttack: combatSkipEnemyAttack ?? this.combatSkipEnemyAttack,
       combatBossSleepRoundsRemaining: combatBossSleepRoundsRemaining == _unset
           ? this.combatBossSleepRoundsRemaining
@@ -1647,6 +1658,7 @@ class PlayerSettings {
     required this.eatHealthThresholdPercent,
     required this.eatHealthThresholdAsPercent,
     required this.skipHostileTravelWarning,
+    required this.potionsPaused,
   });
 
   factory PlayerSettings.fromJson(Map<String, Object?> json) {
@@ -1659,6 +1671,7 @@ class PlayerSettings {
       eatHealthThresholdPercent: json['eatHealthThresholdPercent'] as num,
       eatHealthThresholdAsPercent: json['eatHealthThresholdAsPercent'] as bool,
       skipHostileTravelWarning: json['skipHostileTravelWarning'] as bool,
+      potionsPaused: json['potionsPaused'] as bool,
     );
   }
 
@@ -1689,6 +1702,10 @@ class PlayerSettings {
   /// Set by the "Don't ask again" control on that popup.
   final bool skipHostileTravelWarning;
 
+  /// When true, equipped potions are not auto-applied. Toggled from the stage
+  /// potion button (🚫). An already-running effect is left alone.
+  final bool potionsPaused;
+
   Map<String, Object?> toJson() {
     return <String, Object?>{
       'soundEnabled': soundEnabled,
@@ -1699,6 +1716,7 @@ class PlayerSettings {
       'eatHealthThresholdPercent': eatHealthThresholdPercent,
       'eatHealthThresholdAsPercent': eatHealthThresholdAsPercent,
       'skipHostileTravelWarning': skipHostileTravelWarning,
+      'potionsPaused': potionsPaused,
     };
   }
 
@@ -1711,6 +1729,7 @@ class PlayerSettings {
     num? eatHealthThresholdPercent,
     bool? eatHealthThresholdAsPercent,
     bool? skipHostileTravelWarning,
+    bool? potionsPaused,
   }) {
     return PlayerSettings(
       soundEnabled: soundEnabled ?? this.soundEnabled,
@@ -1721,6 +1740,7 @@ class PlayerSettings {
       eatHealthThresholdPercent: eatHealthThresholdPercent ?? this.eatHealthThresholdPercent,
       eatHealthThresholdAsPercent: eatHealthThresholdAsPercent ?? this.eatHealthThresholdAsPercent,
       skipHostileTravelWarning: skipHostileTravelWarning ?? this.skipHostileTravelWarning,
+      potionsPaused: potionsPaused ?? this.potionsPaused,
     );
   }
 }

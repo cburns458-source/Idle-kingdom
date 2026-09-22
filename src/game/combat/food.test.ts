@@ -194,18 +194,45 @@ describe('manual eat', () => {
     const save = {
       ...createNewSave(launch),
       combatEnemyId: 'ENM-0001',
+      combatRoundStartedAt: '2026-01-01T00:00:00.000Z',
       inventory: [{ itemId: 'ITEM-0058', quantity: 1 }],
     }
     expect(eatInventoryFood(launch, save, 0).reason).toBe('You cannot eat during combat.')
     expect(
-      eatEquippedFood(launch, { ...withFoodAndSpells(launch, 2, 0), combatEnemyId: 'ENM-0001' })
-        .reason,
+      eatEquippedFood(launch, {
+        ...withFoodAndSpells(launch, 2, 0),
+        combatEnemyId: 'ENM-0001',
+        combatRoundStartedAt: '2026-01-01T00:00:00.000Z',
+      }).reason,
     ).toBe('You cannot eat during combat.')
-    const autoOff = {
-      ...save,
-      settings: { ...save.settings, autoEat: false },
+  })
+
+  it('lets one manual eat per combat round when auto-eat is off', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const round = '2026-01-01T00:00:00.000Z'
+    const save = {
+      ...withFoodAndSpells(launch, 3, 0),
+      combatEnemyId: 'ENM-0001',
+      combatRoundStartedAt: round,
+      settings: { ...withFoodAndSpells(launch, 3, 0).settings, autoEat: false },
     }
-    expect(eatInventoryFood(launch, autoOff, 0).reason).toBe('You cannot eat during combat.')
+    const first = eatEquippedFood(launch, save)
+    expect(first.ok).toBe(true)
+    if (!first.ok) return
+    expect(first.save.combatManualEatRoundStartedAt).toBe(round)
+    expect(first.save.equipment.slots['SLOT-0011']?.quantity).toBe(2)
+
+    const second = eatEquippedFood(launch, first.save)
+    expect(second.ok).toBe(false)
+    expect(second.reason).toBe('Already eaten this round.')
+
+    const nextRound = eatEquippedFood(launch, {
+      ...first.save,
+      combatRoundStartedAt: '2026-01-01T00:00:04.000Z',
+    })
+    expect(nextRound.ok).toBe(true)
+    if (!nextRound.ok) return
+    expect(nextRound.save.equipment.slots['SLOT-0011']?.quantity).toBe(1)
   })
 
   it('still lets manual eat work outside combat when auto-eat is off', () => {

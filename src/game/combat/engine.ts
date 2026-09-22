@@ -135,6 +135,7 @@ export function clearCombatSave(save: PlayerSave): PlayerSave {
     combatEnemyId: null,
     combatEnemyHp: null,
     combatRoundStartedAt: null,
+    combatManualEatRoundStartedAt: null,
     combatSkipEnemyAttack: false,
     combatBossSleepRoundsRemaining: null,
     combatBossPendingId: null,

@@ -172,6 +172,18 @@ describe('potion effects', () => {
     expect(result.save.equipment.slots[POTION_SLOT_ID]?.quantity).toBe(1)
   })
 
+  it('skips new drinks while potions are paused', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const save = {
+      ...withPotion(createNewSave(launch), 'ITEM-0070', 1),
+      settings: { ...createNewSave(launch).settings, potionsPaused: true },
+    }
+    const result = tryConsumePotionForScope(launch, save, 'one_action')
+    expect(result.consumed).toBe(false)
+    expect(result.save.equipment.slots[POTION_SLOT_ID]?.quantity).toBe(1)
+    expect(result.save.activePotionEffect).toBeNull()
+  })
+
   it('keeps a drunk potion for six actions and only then drinks another', () => {
     const { launch } = prepareDatabase(rawDatabase)
     let save = withPotion(createNewSave(launch), 'ITEM-0070', 2)

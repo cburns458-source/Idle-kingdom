@@ -164,6 +164,28 @@ bool isEdibleItem(GameDatabase db, String itemId) => foodHealAmount(db, itemId) 
 
 bool isInCombat(PlayerSave save) => save.combatEnemyId != null && save.combatEnemyId!.isNotEmpty;
 
+/// True when this combat round already had a manual eat (auto-eat off).
+bool alreadyManualAteThisCombatRound(PlayerSave save) {
+  if (!isInCombat(save) || save.combatRoundStartedAt == null) return false;
+  return save.combatManualEatRoundStartedAt == save.combatRoundStartedAt;
+}
+
+/// Manual eat while fighting is allowed only with auto-eat off, once per round.
+/// Missed rounds do not stack.
+String? manualEatBlockedReason(PlayerSave save) {
+  if (!isInCombat(save)) return null;
+  if (save.settings.autoEat != false) {
+    return 'You cannot eat during combat.';
+  }
+  if (alreadyManualAteThisCombatRound(save)) {
+    return 'Already eaten this round.';
+  }
+  if (save.combatRoundStartedAt == null) {
+    return 'You cannot eat during combat.';
+  }
+  return null;
+}
+
 class EatFoodResult {
   const EatFoodResult.ok({required this.save, required this.healed, required this.foodName})
     : reason = null;
@@ -201,11 +223,15 @@ class EatFoodResult {
   );
 }
 
+PlayerSave _markCombatManualEat(PlayerSave save) {
+  if (!isInCombat(save) || save.combatRoundStartedAt == null) return save;
+  return save.copyWith(combatManualEatRoundStartedAt: save.combatRoundStartedAt);
+}
+
 /// One-tap eat from a bag stack. Consumes even at full HP (shows +0).
 EatFoodResult eatInventoryFood(GameDatabase db, PlayerSave save, num index) {
-  if (isInCombat(save)) {
-    return const EatFoodResult.failed('You cannot eat during combat.');
-  }
+  final blocked = manualEatBlockedReason(save);
+  if (blocked != null) return EatFoodResult.failed(blocked);
   final i = index.toInt();
   if (i < 0 || i >= save.inventory.length) {
     return const EatFoodResult.failed('Nothing to eat.');
@@ -226,7 +252,7 @@ EatFoodResult eatInventoryFood(GameDatabase db, PlayerSave save, num index) {
         stack.copyWith(quantity: nextQuantity),
   ];
   return EatFoodResult.ok(
-    save: eaten.save.copyWith(inventory: inventory),
+    save: _markCombatManualEat(eaten.save.copyWith(inventory: inventory)),
     healed: eaten.healed,
     foodName: eaten.foodName,
   );
@@ -234,9 +260,8 @@ EatFoodResult eatInventoryFood(GameDatabase db, PlayerSave save, num index) {
 
 /// One-tap eat from the equipped food slot. Consumes even at full HP (shows +0).
 EatFoodResult eatEquippedFood(GameDatabase db, PlayerSave save) {
-  if (isInCombat(save)) {
-    return const EatFoodResult.failed('You cannot eat during combat.');
-  }
+  final blocked = manualEatBlockedReason(save);
+  if (blocked != null) return EatFoodResult.failed(blocked);
   final food = slotStack(save, foodSlotId);
   if (food == null || food.quantity <= 0) {
     return const EatFoodResult.failed('Nothing to eat.');
@@ -248,12 +273,14 @@ EatFoodResult eatEquippedFood(GameDatabase db, PlayerSave save) {
   final eaten = _applyManualEat(db, save, food.itemId);
   final nextQuantity = food.quantity - 1;
   return EatFoodResult.ok(
-    save: eaten.save.copyWith(
-      equipment: EquipmentLoadout(
-        slots: {
-          ...eaten.save.equipment.slots,
-          foodSlotId: nextQuantity > 0 ? food.copyWith(quantity: nextQuantity) : null,
-        },
+    save: _markCombatManualEat(
+      eaten.save.copyWith(
+        equipment: EquipmentLoadout(
+          slots: {
+            ...eaten.save.equipment.slots,
+            foodSlotId: nextQuantity > 0 ? food.copyWith(quantity: nextQuantity) : null,
+          },
+        ),
       ),
     ),
     healed: eaten.healed,
